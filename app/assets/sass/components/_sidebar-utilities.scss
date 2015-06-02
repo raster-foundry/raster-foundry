@@ -1,0 +1,101 @@
+.sidebar-utility-header {
+	position: relative;
+	margin-bottom: 10px;
+	
+	.nav-tabs {
+		background: $off-white;
+		display: table;
+    width: 100%;
+    border-bottom: none;
+    &:after {
+			display: none;
+    }
+	}
+
+	li {
+		float: none;
+    display: table-cell;
+    text-align: center;
+
+    &:first-child a {
+    	border-left-color: $white !important;
+    }
+	}
+
+	li a {
+		@include font-size(13);
+		margin: 0;
+		padding: 20px 2px;
+		color: $base;
+		line-height: 1;
+		border-top: none !important;
+		border-bottom: 1px solid $gray-lightest;
+		border-radius: 0;
+
+		&:hover {
+			background: $white;
+			border-color: transparent;
+		}
+	}
+
+	li.active a {
+		border-bottom-color: $gray-lightest;
+		border-top: none;
+		color: $brand-primary-dark;
+
+		&:hover, &:active, &:focus {
+			color: $brand-primary-dark;
+		}
+	}
+
+	.btn {
+		position: absolute;
+		left: 100%;
+		top: 0;
+	  border-radius: 0;
+	  padding: 20px;
+	  font-size: 13px;
+	  line-height: 1;
+	}
+}
+
+.sidebar-utility-toolbar {
+	position: relative;
+	background: $white;
+	border-bottom: 1px solid $gray-lightest;
+	@include clearfix;
+}
+
+.utility-tools {
+	width: 50%;
+	float: left;
+	
+  .tool-toggle {
+		padding: 20px 5px;
+		display: block;
+		border-radius: 0;
+		float: left;
+	  width: 33.333%;
+	  text-align: center;
+	  border-right: 1px solid $gray-lightest;
+	}
+
+	.checkbox {
+		margin: 20px;
+	}
+}
+
+.tool-toggle-target {
+	display: none;
+
+	&.active {
+		display: block;
+	}
+}
+
+
+.sidebar-utility-content {
+  width: 100%;
+  bottom: 0;
+  top: 54px;
+}

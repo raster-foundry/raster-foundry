@@ -1,0 +1,170 @@
+.map-utility {
+
+}
+
+%utility-panel-styles {
+  width: 340px;
+  position: absolute;
+  top: 90px;
+  bottom: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: .4s all ease-in-out;
+}
+
+.utility-panel {
+  @extend %utility-panel-styles;
+  background: $white;
+  left: -100%;
+  z-index: map-get($z-index, utility);
+
+  .map-utility.active & {
+		left: 0;
+		transition: .8s all ease-in-out;
+	}
+}
+
+/* .utility-panel.in {
+  left: 0;
+}
+
+.utility-panel.out {
+  left: -100%;
+} */
+
+.utility-panel-secondary {
+  @extend %utility-panel-styles;
+  background: rgba($white, .9);
+  left: 340px;
+  border-left: 1px solid $gray-lightest;
+  border-right: 1px solid $gray-lightest;
+  z-index: map-get($z-index, utility) - 1;
+  display: none;
+
+  &.active {
+    display: block;
+  }
+
+  .close {
+    margin-top: 10px;
+    margin-right: -10px;
+    @include font-size(30);
+  }
+}
+
+.utility-panel-head {
+  padding: 20px 25px;
+  background: $off-white;
+  border-bottom: 1px solid $gray-lightest;
+  position: fixed;
+  z-index: 1;
+  width: 340px;
+
+  a {
+    text-align: center;
+    color: $base;
+    border: 1px solid $gray-lightest;
+    display: block;
+    border-radius: $border-radius-base;
+    background: $white;
+    height: 70px;
+    padding-left: 5px;
+    padding-right: 5px;
+    vertical-align: middle;
+    overflow: hidden;
+    position: relative;
+    @include font-size(13);
+
+    &:after {
+      font-family: "raster-foundry";
+      font-style: normal;
+      font-weight: normal;
+      display: block;
+      position: absolute;
+      color: rgba($gray-lightest, .25);
+      @include font-size(70);
+      left: 50%;
+      top: 0;
+      transform: translate(-50%, 30%);
+      transition: .4s all ease-in-out;
+    }
+
+    span {
+      display: block;
+      position: relative;
+      z-index: 1;
+      transition: .4s all ease-in-out;
+    }
+
+    &:hover {
+      text-decoration: none;
+
+      span {
+        transform: scale(.9);
+      }
+    }
+
+    &:hover:after {
+      transform: translate(-50%, 0);
+      @include font-size(50);
+      color: rgba($gray-lightest, .7);
+    }
+  }
+
+  #upload-data {
+    border: 2px dashed $brand-primary;
+
+    &:after {
+      content: '\e801';
+    }
+  }
+
+  #processing-data {
+    &:after {
+      content: '\e807';
+    }
+  }
+
+  + .list-group {
+    margin-top: 110px;
+  }
+}
+
+.utility-panel-body {
+  padding: 20px 25px;
+  @include font-size(13);
+  
+  img {
+    border-radius: $border-radius-base;
+    margin: 15px 0;
+  }
+
+  p {
+    @include font-size(13);
+    line-height: 2;
+  }
+
+  hr {
+    margin-left: -25px;
+    margin-right: -25px;
+  }
+
+  dl {
+    margin: 0;
+  }
+
+  dt {
+    font-weight: 400;
+    width: 50%;
+    vertical-align: baseline;
+    float: left;
+  }
+
+  dd {
+    font-weight: 500;
+    margin-bottom: 15px;
+    width: 50%;
+    vertical-align: top;
+    float: left;
+  }
+}

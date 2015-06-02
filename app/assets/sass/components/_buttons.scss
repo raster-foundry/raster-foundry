@@ -1,0 +1,149 @@
+.btn {
+	transition: .4s ease-in-out background, .4s ease-in-out border-color;
+
+	&:hover, 
+	&:active, &.active,
+	&:focus, &.focus,
+	&:active:focus, &.active.focus {
+		outline: none;
+	}
+}
+
+/// Dark Buttons
+.btn-dark {
+	background-color: $base;
+	border-color: $base;
+	color: $white;
+
+	&:hover, 
+	&:active, &.active,
+	&:focus, &.focus  {
+		background-color: darken($base, 5%);
+		border-color: darken($base, 5%);
+		color: $white;
+	}
+}
+
+/// Default Button
+.btn-default {
+	background-color: $white;
+	border-color: $white;
+	color: $base;
+
+	&:hover, 
+	&:active, &.active,
+	&:focus, &.focus  {
+		background-color: $off-white;
+		border-color: $off-white;
+		color: $base;
+	}
+}
+
+/// Primary button
+.btn-primary {
+	background-color: $brand-primary-dark;
+	border-color: $brand-primary-dark;
+	color: $white;
+
+	&:hover, 
+	&:active, &.active,
+	&:focus, &.focus  {
+		background-color: $brand-primary;
+		border-color: $brand-primary;
+		color: $white;
+	}
+}
+
+.btn-primary-outline {
+	background-color: transparent;
+	border-color: $brand-primary-dark;
+	color: $brand-primary-dark;
+
+	&:hover, 
+	&:active, &.active,
+	&:focus, &.focus  {
+		background-color: transparent;
+		border-color: $brand-primary;
+		color: $brand-primary-dark;
+	}
+}
+
+/// Secondary button
+.btn-secondary {
+	background-color: $brand-secondary-dark;
+	border-color: $brand-secondary-dark;
+	color: $white;
+
+	&:hover, 
+	&:active, &.active,
+	&:focus, &.focus  {
+		background-color: $brand-secondary;
+		border-color: $brand-secondary;
+		color: $white;
+	}
+}
+
+.btn-secondary-outline {
+	background-color: transparent;
+	border-color: $brand-secondary-dark;
+	color: $brand-secondary-dark;
+
+	&:hover, 
+	&:active, &.active,
+	&:focus, &.focus  {
+		background-color: transparent;
+		border-color: $brand-secondary;
+		color: $brand-secondary;
+	}
+}
+
+// btn toggle
+// Used to toggle an active state between presses
+// Usually to reveal different icons
+// example: Favorting and unfavoriting imagery layer
+.btn-toggle-control {
+	display: inline-block;
+	vertical-align: middle;
+	margin-right: 5px;
+	padding: 0;
+	background: none;
+	color: $gray-lightest;
+	@include font-size(20);
+	transition: .4s ease-in-out color;
+
+	&:focus, &.focus,
+	&:hover, &.hover {
+		color: $base;
+	}
+
+	.control-active {
+		display: none;
+	}
+
+	.control-inactive {
+		display: block;
+	}
+
+	&.active, &:active {
+		box-shadow: none;
+
+		.control-active {
+			display: block;
+		}
+
+		.control-inactive {
+			display: none;
+		}
+	}
+}
+
+
+// Dropdown buttons
+.dropdown-toggle {
+	.open> & {
+		&.btn-default {
+			border-color: transparent;
+			background-color: $off-white;
+		}
+	}
+}

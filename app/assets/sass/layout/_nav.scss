@@ -1,0 +1,108 @@
+// dropdown menu comtainer in sidebar
+.primary-nav {
+	float: left;
+  width: 100%;
+  position: absolute;
+  top: 0;
+}
+
+// dropdown making up main nav
+.primary-nav li.dropdown {
+	background: $white;
+
+	> a {
+		@include font-size(24);
+		line-height: 1;
+		color: $base;
+		padding: 23px 20px 23px 100px;
+		font-weight: 100;
+		background: none;
+		border-bottom: 1px solid $gray-lightest;
+
+		&:hover, 
+		&:focus {
+			background: $white;
+			color: $base;
+		}
+
+		> i {
+			// hides until hovered
+			visibility: hidden;
+			opacity: 0;
+
+		  @include font-size(24);
+		  background: $gray-dark;
+		  color: $white;
+		  text-align: center;
+		  line-height: 71px;
+		  width: 80px;
+			position: absolute;
+		  left: 0;
+		  top: 0;
+		  z-index: 1;
+		  transition: .2s ease-in-out all;
+		}
+	}
+
+	&:after {
+		content: '';
+		transition: .2s ease-in-out background;
+		background-color: transparent;
+	}
+
+	&.open:after {
+		  content: '';
+		  display: block;
+		  position: fixed;
+		  top: 0;
+		  bottom: 0;
+		  left: 0;
+		  width: 100%;
+		  background-color: rgba($gray-darker, .4);
+		  z-index: -1;
+	}
+
+	&.open a {
+		border-color: $gray-lightest;
+	}
+
+	&.open a i, 
+	a:hover i {
+		visibility: visible;
+		opacity: 1;
+	}
+}
+
+// dropdown menu shown on open
+.primary-nav .dropdown-menu {
+	width: 100%;
+	margin: 0;
+	border: none;
+	border-radius: 0;
+	padding: 0;
+
+	li > a {
+		@include font-size(18);
+		color: $base;
+		padding: 20px 20px 20px 0;
+		font-weight: 300;
+		background: none;
+		position: relative;
+
+		i {
+			text-align: center;
+		  width: 80px;
+		  display: inline-block;
+		  margin-right: 10px;
+		}
+	}
+
+	a:hover {
+		background: $off-white;
+	}
+
+	li.divider {
+		margin: 0;
+	}
+}
+
