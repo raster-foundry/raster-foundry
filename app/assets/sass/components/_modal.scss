@@ -30,14 +30,13 @@
 }
 
 
-/// Upload Modal
+/// import Modal
 ///
-.upload-modal .modal-body {
-	padding: 0;
+.import-modal .modal-body {
 
-	.upload-browse, .upload-uri {
+	.import-browse, .import-uri {
 		text-align: center;
-		padding: 40px;
+		padding: 35px;
 		
 		i {
 			display: inline-block;
@@ -45,17 +44,19 @@
 		}
 		
 		h3 {
-			color: $brand-primary-dark;
-			font-weight: 100;
+			color: $brand-primary;
 		}
 		
 		h5 {
-			font-weight: 400;
 			line-height: 1.4;
+		}
+
+		form {
+			margin: 40px 0 0;
 		}
 	}
 	
-	.upload-browse {
+	.import-browse {
 
 		i {
 			@include font-size(200);
@@ -64,7 +65,7 @@
 		}
 	}
 
-	.upload-uri {
+	.import-uri {
 		background: $off-white;
 		border-radius: 0 5px 5px 0;
 		border-left: 1px solid $gray-lightest;
@@ -92,15 +93,24 @@
 	}
 
 	form {
-		margin-top: 40px;
+		margin: 20px;
 
 		.form-action {
-			margin-top: 0;
+			padding-top: 20px;
+			@extend .clearfix;
 
 			.btn {
+				margin-bottom: 0;
+			}
+
+			input[type="submit"] {
 				float: right;
 				width: 50%;
 				margin-bottom: 0;
+			}
+
+			.btn:only-child {
+				float: none;
 			}
 		}
 	}

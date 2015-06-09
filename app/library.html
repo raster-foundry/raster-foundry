@@ -44,7 +44,7 @@
 	            <li><a href="#"><i class="rf-icon-book"></i> Library</a></li>
 	            <li class="divider"></li>
 	            <li><a href="#"><i class="rf-icon-user"></i> Settings</a></li>
-	            <li><a href="#"><i class="rf-icon-logout"></i> Logout</a></li>
+	            <li><a href="/"><i class="rf-icon-logout"></i> Logout</a></li>
 	          </ul>
 	        </li>
 			</ul>
@@ -65,25 +65,30 @@
 			    <li role="presentation"><a href="#favorites" aria-controls="favorites" role="tab" data-toggle="tab">Favorites</a></li>
 			    <li role="presentation"><a href="#processing" aria-controls="processing" role="tab" data-toggle="tab">Processing</a></li>
 			  </ul>
-			  <a href="#" class="btn btn-secondary" id="import-imagery"><i class="rf-icon-upload-cloud-outline"></i> Import</a>
     	</div>
 
 			<!-- Tab content Parent Div -->
     	<div class="sidebar-utility-content">
 				
-				<!-- Imports Tab Pane -->
 			  <div class="tab-content">
-			    <div role="tabpanel" class="tab-pane animated fadeInLeft active animated fadeInLeft" id="imports">
+					<!-- Imports Tab Pane -->
+			    <div role="tabpanel" class="tab-pane active animated fadeInLeft" id="imports">
 			    	
 						<!-- Sorting, Search, Add to workspace -->
 			    	<div class="sidebar-utility-toolbar">
-				    	<div class="utility-tools">
-		    				<button class="tool-toggle btn btn-default" type="button" data-toggle="collapse" data-target="#search-imagery" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-search"></i></button>
-
-		    				<button class="tool-toggle btn btn-default" type="button" data-toggle="collapse" data-target="#sort-imagery" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-sort-alt-up"></i> </button>
+				    	<div class="utility-tools col-2">
+				    		<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Import Imagery Layer">
+									<button class="btn btn-secondary" id="import-imagery" type="button" data-toggle="modal" data-target="#import-imagery-modal"><i class="rf-icon-upload"></i></button>
+				    		</span>
+				    		<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Search">
+		    					<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#search-imagery" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-search"></i></button>
+								</span>
+								<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Sort">
+		    					<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#sort-imagery" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-sort-alt-up"></i> </button>
+	    					</span>
 			        </div>
 
-			        <div class="utility-tools text-right">
+			        <div class="utility-tools col-2 text-right">
 								<div class="checkbox btn-combo">
 									<input type="checkbox">
 									<label></label>
@@ -113,7 +118,7 @@
 			    	<!-- Imagery Layers -->
 						<div class="list-group">
 							<!-- List Group Item -->
-							<div class="list-group-item">
+							<div class="list-group-item link">
 								<div class="list-group-detail">
 									<a class="list-group-hover" href="#">Details</a>
 									<img src="http://placehold.it/200x200">
@@ -123,7 +128,7 @@
 									<p>Organization Name</p>
 								</div>
 								<div class="list-group-tool">
-									<button type="button" class="btn btn-toggle-control" data-toggle="button" aria-pressed="true" autocomplete="off">
+									<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
 									  <i class="rf-icon-star control-active text-primary"></i> 
 									  <i class="rf-icon-star-empty control-inactive"></i>
 									</button>
@@ -134,7 +139,7 @@
 								</div>
 							</div>
 							<!-- List Group Item -->
-							<div class="list-group-item">
+							<div class="list-group-item link">
 								<div class="list-group-detail">
 									<a class="list-group-hover" href="#">Details</a>
 									<img src="http://placehold.it/200x200">
@@ -144,7 +149,7 @@
 									<p>Organization Name</p>
 								</div>
 								<div class="list-group-tool">
-									<button type="button" class="btn btn-toggle-control" data-toggle="button" aria-pressed="true" autocomplete="off">
+									<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
 									  <i class="rf-icon-star control-active text-primary"></i> 
 									  <i class="rf-icon-star-empty control-inactive"></i>
 									</button>
@@ -155,7 +160,7 @@
 								</div>
 							</div>
 							<!-- List Group Item -->
-							<div class="list-group-item">
+							<div class="list-group-item link">
 								<div class="list-group-detail">
 									<a class="list-group-hover" href="#">Details</a>
 									<img src="http://placehold.it/200x200">
@@ -165,7 +170,7 @@
 									<p>Organization Name</p>
 								</div>
 								<div class="list-group-tool">
-									<button type="button" class="btn btn-toggle-control" data-toggle="button" aria-pressed="true" autocomplete="off">
+									<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
 									  <i class="rf-icon-star control-active text-primary"></i> 
 									  <i class="rf-icon-star-empty control-inactive"></i>
 									</button>
@@ -176,7 +181,7 @@
 								</div>
 							</div>
 							<!-- List Group Item -->
-							<div class="list-group-item">
+							<div class="list-group-item link">
 								<div class="list-group-detail">
 									<a class="list-group-hover" href="#">Details</a>
 									<img src="http://placehold.it/200x200">
@@ -186,196 +191,7 @@
 									<p>Organization Name</p>
 								</div>
 								<div class="list-group-tool">
-									<button type="button" class="btn btn-toggle-control" data-toggle="button" aria-pressed="true" autocomplete="off">
-									  <i class="rf-icon-star control-active text-primary"></i> 
-									  <i class="rf-icon-star-empty control-inactive"></i>
-									</button>
-									<div class="checkbox">
-										<input type="checkbox">
-										<label></label>
-									</div>
-								</div>
-							</div>
-							<!-- List Group Item -->
-							<div class="list-group-item">
-								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
-									<img src="http://placehold.it/200x200">
-								</div>
-								<div class="list-group-content">
-									<h5>Imagery Layer Name</h5>
-									<p>Organization Name</p>
-								</div>
-								<div class="list-group-tool">
-									<button type="button" class="btn btn-toggle-control" data-toggle="button" aria-pressed="true" autocomplete="off">
-									  <i class="rf-icon-star control-active text-primary"></i> 
-									  <i class="rf-icon-star-empty control-inactive"></i>
-									</button>
-									<div class="checkbox">
-										<input type="checkbox">
-										<label></label>
-									</div>
-								</div>
-							</div>
-							<!-- List Group Item -->
-							<div class="list-group-item">
-								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
-									<img src="http://placehold.it/200x200">
-								</div>
-								<div class="list-group-content">
-									<h5>Imagery Layer Name</h5>
-									<p>Organization Name</p>
-								</div>
-								<div class="list-group-tool">
-									<button type="button" class="btn btn-toggle-control" data-toggle="button" aria-pressed="true" autocomplete="off">
-									  <i class="rf-icon-star control-active text-primary"></i> 
-									  <i class="rf-icon-star-empty control-inactive"></i>
-									</button>
-									<div class="checkbox">
-										<input type="checkbox">
-										<label></label>
-									</div>
-								</div>
-							</div>
-							<!-- List Group Item -->
-							<div class="list-group-item">
-								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
-									<img src="http://placehold.it/200x200">
-								</div>
-								<div class="list-group-content">
-									<h5>Imagery Layer Name</h5>
-									<p>Organization Name</p>
-								</div>
-								<div class="list-group-tool">
-									<button type="button" class="btn btn-toggle-control" data-toggle="button" aria-pressed="true" autocomplete="off">
-									  <i class="rf-icon-star control-active text-primary"></i> 
-									  <i class="rf-icon-star-empty control-inactive"></i>
-									</button>
-									<div class="checkbox">
-										<input type="checkbox">
-										<label></label>
-									</div>
-								</div>
-							</div>
-							<!-- List Group Item -->
-							<div class="list-group-item">
-								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
-									<img src="http://placehold.it/200x200">
-								</div>
-								<div class="list-group-content">
-									<h5>Imagery Layer Name</h5>
-									<p>Organization Name</p>
-								</div>
-								<div class="list-group-tool">
-									<button type="button" class="btn btn-toggle-control" data-toggle="button" aria-pressed="true" autocomplete="off">
-									  <i class="rf-icon-star control-active text-primary"></i> 
-									  <i class="rf-icon-star-empty control-inactive"></i>
-									</button>
-									<div class="checkbox">
-										<input type="checkbox">
-										<label></label>
-									</div>
-								</div>
-							</div>
-							<!-- List Group Item -->
-							<div class="list-group-item">
-								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
-									<img src="http://placehold.it/200x200">
-								</div>
-								<div class="list-group-content">
-									<h5>Imagery Layer Name</h5>
-									<p>Organization Name</p>
-								</div>
-								<div class="list-group-tool">
-									<button type="button" class="btn btn-toggle-control" data-toggle="button" aria-pressed="true" autocomplete="off">
-									  <i class="rf-icon-star control-active text-primary"></i> 
-									  <i class="rf-icon-star-empty control-inactive"></i>
-									</button>
-									<div class="checkbox">
-										<input type="checkbox">
-										<label></label>
-									</div>
-								</div>
-							</div>
-							<!-- List Group Item -->
-							<div class="list-group-item">
-								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
-									<img src="http://placehold.it/200x200">
-								</div>
-								<div class="list-group-content">
-									<h5>Imagery Layer Name</h5>
-									<p>Organization Name</p>
-								</div>
-								<div class="list-group-tool">
-									<button type="button" class="btn btn-toggle-control" data-toggle="button" aria-pressed="true" autocomplete="off">
-									  <i class="rf-icon-star control-active text-primary"></i> 
-									  <i class="rf-icon-star-empty control-inactive"></i>
-									</button>
-									<div class="checkbox">
-										<input type="checkbox">
-										<label></label>
-									</div>
-								</div>
-							</div>
-							<!-- List Group Item -->
-							<div class="list-group-item">
-								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
-									<img src="http://placehold.it/200x200">
-								</div>
-								<div class="list-group-content">
-									<h5>Imagery Layer Name</h5>
-									<p>Organization Name</p>
-								</div>
-								<div class="list-group-tool">
-									<button type="button" class="btn btn-toggle-control" data-toggle="button" aria-pressed="true" autocomplete="off">
-									  <i class="rf-icon-star control-active text-primary"></i> 
-									  <i class="rf-icon-star-empty control-inactive"></i>
-									</button>
-									<div class="checkbox">
-										<input type="checkbox">
-										<label></label>
-									</div>
-								</div>
-							</div>
-							<!-- List Group Item -->
-							<div class="list-group-item">
-								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
-									<img src="http://placehold.it/200x200">
-								</div>
-								<div class="list-group-content">
-									<h5>Imagery Layer Name</h5>
-									<p>Organization Name</p>
-								</div>
-								<div class="list-group-tool">
-									<button type="button" class="btn btn-toggle-control" data-toggle="button" aria-pressed="true" autocomplete="off">
-									  <i class="rf-icon-star control-active text-primary"></i> 
-									  <i class="rf-icon-star-empty control-inactive"></i>
-									</button>
-									<div class="checkbox">
-										<input type="checkbox">
-										<label></label>
-									</div>
-								</div>
-							</div>
-							<!-- List Group Item -->
-							<div class="list-group-item">
-								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
-									<img src="http://placehold.it/200x200">
-								</div>
-								<div class="list-group-content">
-									<h5>Imagery Layer Name</h5>
-									<p>Organization Name</p>
-								</div>
-								<div class="list-group-tool">
-									<button type="button" class="btn btn-toggle-control" data-toggle="button" aria-pressed="true" autocomplete="off">
+									<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
 									  <i class="rf-icon-star control-active text-primary"></i> 
 									  <i class="rf-icon-star-empty control-inactive"></i>
 									</button>
@@ -393,13 +209,13 @@
 			    	
 			    	<!-- Sorting, Search, Add to workspace -->
 			    	<div class="sidebar-utility-toolbar">
-				    	<div class="utility-tools">
+				    	<div class="utility-tools col-2">
 		    				<button class="tool-toggle btn btn-default" type="button" data-toggle="collapse" data-target="#search-catalog" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-search"></i></button>
 
 		    				<button class="tool-toggle btn btn-default" type="button" data-toggle="collapse" data-target="#sort-catalog" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-sort-alt-up"></i> </button>
 			        </div>
 
-			        <div class="utility-tools text-right">
+			        <div class="utility-tools col-2 text-right">
 								<div class="checkbox btn-combo">
 									<input type="checkbox">
 									<label></label>
@@ -408,16 +224,200 @@
 							</div>
 			    	</div>
 
+			    	<!-- Imagery Layers -->
+						<div class="list-group">
+							<!-- List Group Item -->
+							<div class="list-group-item link">
+								<div class="list-group-detail">
+									<a class="list-group-hover" href="#">Details</a>
+									<img src="http://placehold.it/200x200">
+								</div>
+								<div class="list-group-content">
+									<h5>Imagery Layer Name</h5>
+									<p>Organization Name</p>
+								</div>
+								<div class="list-group-tool">
+									<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
+									  <i class="rf-icon-star control-active text-primary"></i> 
+									  <i class="rf-icon-star-empty control-inactive"></i>
+									</button>
+									<div class="checkbox">
+										<input type="checkbox">
+										<label></label>
+									</div>
+								</div>
+							</div>
+							<!-- List Group Item -->
+							<div class="list-group-item link">
+								<div class="list-group-detail">
+									<a class="list-group-hover" href="#">Details</a>
+									<img src="http://placehold.it/200x200">
+								</div>
+								<div class="list-group-content">
+									<h5>Imagery Layer Name</h5>
+									<p>Organization Name</p>
+								</div>
+								<div class="list-group-tool">
+									<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
+									  <i class="rf-icon-star control-active text-primary"></i> 
+									  <i class="rf-icon-star-empty control-inactive"></i>
+									</button>
+									<div class="checkbox">
+										<input type="checkbox">
+										<label></label>
+									</div>
+								</div>
+							</div>
+							<!-- List Group Item -->
+							<div class="list-group-item link">
+								<div class="list-group-detail">
+									<a class="list-group-hover" href="#">Details</a>
+									<img src="http://placehold.it/200x200">
+								</div>
+								<div class="list-group-content">
+									<h5>Imagery Layer Name</h5>
+									<p>Organization Name</p>
+								</div>
+								<div class="list-group-tool">
+									<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
+									  <i class="rf-icon-star control-active text-primary"></i> 
+									  <i class="rf-icon-star-empty control-inactive"></i>
+									</button>
+									<div class="checkbox">
+										<input type="checkbox">
+										<label></label>
+									</div>
+								</div>
+							</div>
+							<!-- List Group Item -->
+							<div class="list-group-item link">
+								<div class="list-group-detail">
+									<a class="list-group-hover" href="#">Details</a>
+									<img src="http://placehold.it/200x200">
+								</div>
+								<div class="list-group-content">
+									<h5>Imagery Layer Name</h5>
+									<p>Organization Name</p>
+								</div>
+								<div class="list-group-tool">
+									<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
+									  <i class="rf-icon-star control-active text-primary"></i> 
+									  <i class="rf-icon-star-empty control-inactive"></i>
+									</button>
+									<div class="checkbox">
+										<input type="checkbox">
+										<label></label>
+									</div>
+								</div>
+							</div>
+						</div>
 			    </div>
 
 			    <!-- Favorites Tab Pane -->
-			    <div role="tabpanel" class="tab-pane animated fadeInLeft" id="favorites">...</div>
+			    <div role="tabpanel" class="tab-pane animated fadeInLeft" id="favorites"></div>
 
 			    <!-- Processing Tab Pane -->
-			    <div role="tabpanel" class="tab-pane animated fadeInLeft" id="processing">...</div>
+			    <div role="tabpanel" class="tab-pane animated fadeInLeft" id="processing"></div>
 			  </div>
 
     	</div>
+
+    	<!-- Imagery Layer Details Panel -->
+		  <div class="layer-detail animated slideInLeft">
+				<div class="sidebar-utility-toolbar">
+		    	<div class="utility-tools col-2">
+    				<ul class="nav nav-tabs" role="tablist">
+					    <li role="presentation" class="active"><a href="#layer-detail" aria-controls="layer-detail" role="tab" data-toggle="tab">Details</a></li>
+					    <li role="presentation"><a href="#layer-images" aria-controls="ayer-images" role="tab" data-toggle="tab">Images</a></li>
+					  </ul>
+	        </div>
+
+	        <div class="utility-tools col-2 text-right">
+						<button type="button" class="close"><i class=" rf-icon-cancel"></i></button>
+					</div>
+	    	</div>
+	    	<div class="tab-content">
+	    		<div  role="tabpanel" class="tab-pane active" id="layer-detail">
+	    			<div class="layer-detail-content">
+							<h4>Imagery Layer Name 1</h4>
+							<img class="img-preview" src="http://placehold.it/400x150">
+							<p>These Landsat 7 composites are made from Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex. </p>
+							<p>Ea commodo consequat. Duis aute irure dolor in reprehend in voluptate velit esse cill.</p>
+							<hr>
+							<dl> 
+							  <dt>Title:</dt>
+							  <dd>Imagery Layer Name 1</dd>
+							  
+							  <dt>Provider:</dt>
+							  <dd>Organization Name</dd>
+							  
+							  <dt>Capture Start Date:</dt>
+							  <dd>March 15, 2015</dd>
+							  
+							  <dt>Capture End Date:</dt>
+							  <dd>March 30, 2015</dd>
+							  
+							  <dt>Area:</dt>
+							  <dd>120 sq. Miles</dd>
+							  
+							  <dt>Source Data Projection: </dt>
+							  <dd>N/A</dd>
+							  
+							  <dt>Total Images: </dt>
+							  <dd>162</dd>
+
+							  <dt>Tags:</dt>
+							  <dd>
+								  <a href="#">earthquake</a>,
+								  <a href="#">damage assessment </a>,
+								  <a href="#">evi</a>,
+								  <a href="#">Landsat</a>
+								</dd>
+							</dl>
+						</div>
+					</div>
+					<div  role="tabpanel" class="tab-pane" id="layer-images">
+						<div class="list-group">
+							<div class="list-group-item link">
+								<div class="list-group-detail">
+									<img src="http://placehold.it/200x200">
+								</div>
+								<div class="list-group-content">
+									<h5>P1020861.JPG</h5>
+									<a href="#">View Metadata</a>
+								</div>
+							</div>
+							<div class="list-group-item link">
+								<div class="list-group-detail">
+									<img src="http://placehold.it/200x200">
+								</div>
+								<div class="list-group-content">
+									<h5>P1020861.JPG</h5>
+									<a href="#">View Metadata</a>
+								</div>
+							</div>
+							<div class="list-group-item link">
+								<div class="list-group-detail">
+									<img src="http://placehold.it/200x200">
+								</div>
+								<div class="list-group-content">
+									<h5>P1020861.JPG</h5>
+									<a href="#">View Metadata</a>
+								</div>
+							</div>
+							<div class="list-group-item link">
+								<div class="list-group-detail">
+									<img src="http://placehold.it/200x200">
+								</div>
+								<div class="list-group-content">
+									<h5>P1020861.JPG</h5>
+									<a href="#">View Metadata</a>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
     </div>
 	  <!-- /sidebar utilities -->
 	</div>
@@ -430,31 +430,33 @@
 	<!-- /map-container -->
 
 	<!-- Upload Files Modal -->
-	<div class="modal fade upload-modal" id="uploadFileModal" tabindex="-1" role="dialog" aria-labelledby="uploadFileModal" aria-hidden="true">
-		<div id="pane-1" class="pane active">
+	<div class="modal import-modal fade" id="import-imagery-modal" tabindex="-1" role="dialog" aria-labelledby="import-imagery-modal" aria-hidden="true">
+		<div id="pane-1" class="pane animated fadeInDown active">
 		  <div class="modal-dialog modal-lg">
 		    <div class="modal-content">
-	        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-		      <div class="modal-body">
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><i class="rf-icon-cancel"></i></button>
+		      <div class="modal-body no-padding">
 		      	<div class="container-fluid">
 							<div class="row">
-				      	<div class="col-md-7 upload-browse">
+				      	<div class="col-md-7 import-browse">
 				      		<i class="rf-icon-upload-cloud-outline"></i>
-									<h3>Drag &amp; Drop</h3>
-									<h5>to store your data and assets here, or <a href="#">browse</a>.</h5>
+									<h3 class="font-400">Drag &amp; Drop</h3>
+									<h4 class="font-300">to store your imagery here, or <a href="#">browse</a>.</h4>
+									<em>zip files or single image files accepted</em>
 				      	</div>
-				      	<div class="col-md-5 upload-uri">
+				      	<div class="col-md-5 import-uri">
 									<i class="rf-icon-link"></i>
-									<h3>Upload with a URI</h3>
-									<h5>Are your assets hosted on somewhere already? Enter the URI to import.</h5>
+									<h3 class="font-400">Upload with a URI</h3>
+									<h4 class="font-300">Is your imagery hosted somewhere already? Enter the URI to import.</h4>
+									<em>Examples: S3, DropBox, FTP</em>
 									<form>
-										<div class="form-group">
+										<div class="form-group floating-label">
 											<input class="form-control" type="url">
 											<label>URI</label>
 										</div>
-										<div class="form-action">
+										<div class="form-action text-right">
 											<!-- <input type="submit" class="btn btn-primary" value="Continue"> -->
-											<button class="btn btn-primary" data-toggle-pane data-pane-target="#pane-2">Continue</button>
+											<button class="btn btn-secondary" data-toggle-pane data-pane-target="#pane-2">Continue</button>
 										</div>
 									</form>
 				      	</div>
@@ -465,21 +467,76 @@
 		  </div>
 	  </div>
 		
-		<div id="pane-2" class="pane">
+		<div id="pane-2" class="pane animated fadeInDown">
 		  <div class="modal-dialog">
 		    <div class="modal-content">
 	        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 		      <div class="modal-body">
 		      	<form>
 							<div class="form-group">
-								<input class="form-control" type="url">
 								<label>URI</label>
+								<input class="form-control" type="url">
 							</div>
-							
+							<div class="form-group">
+								<label>Description</label>
+								<textarea class="form-control" rows="4"></textarea>
+							</div>
+							<div class="form-group">
+								<label>Tags</label>
+								<input class="form-control" type="url">
+							</div>
+							<div class="row">
+								<div class="col-md-6">
+									<div class="form-group">
+										<label>Capture Start Date</label>
+										<input class="form-control" type="date">
+									</div>
+								</div>
+								<div class="col-md-6">
+									<div class="form-group">
+										<label>Capture End Date</label>
+										<input class="form-control" type="date">
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-6">
+									<div class="form-group">
+										<label>Area</label>
+										<div class="select-group">
+											<input class="form-control" type="number">
+											<select class="form-control">
+												<option>sq. mi</option>
+												<option>sq. km</option>
+											</select>
+										</div>
+									</div>
+								</div>
+								<div class="col-md-6">
+									<div class="form-group">
+										<label>Source Data Projection</label>
+										<select class="form-control">
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-6">
+									<div class="form-group">
+										<label>Total Images</label>
+										<input class="form-control" type="number" readonly>
+									</div>
+								</div>
+							</div>
+							<ul class="list-group">
+							  <li class="list-group-item">file_name.tiff <a href="#" class="pull-right"><i class="rf-icon-cancel"></i></a></li>
+							  <li class="list-group-item">file_name_2.tiff <a href="#" class="pull-right"><i class="rf-icon-cancel"></i></a></li>
+							  <li class="list-group-item">file_name_3.tiff <a href="#" class="pull-right"><i class="rf-icon-cancel"></i></a></li>
+							</ul>
 
 							<div class="form-action">
-								<button class="btn btn-link">Cancel</button>
-								<input type="submit" class="btn btn-primary" value="Continue">
+								<input type="submit" class="btn btn-secondary pull-right" value="Submit">
+								<button class="btn btn-link text-muted">Cancel</button>
 							</div>
 		      	</form>
 		      </div>

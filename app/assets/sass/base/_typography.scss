@@ -1,3 +1,9 @@
+p {
+	white-space: normal;
+	@include font-size(13);
+	line-height: 2;
+}
+
 h4 {
 	@include font-size(16);
 }

@@ -1,9 +1,5 @@
-.sidebar-utility-header {
-	position: relative;
-	margin-bottom: 10px;
-	
+.sidebar-utility {
 	.nav-tabs {
-		background: $off-white;
 		display: table;
     width: 100%;
     border-bottom: none;
@@ -16,10 +12,6 @@
 		float: none;
     display: table-cell;
     text-align: center;
-
-    &:first-child a {
-    	border-left-color: $white !important;
-    }
 	}
 
 	li a {
@@ -47,13 +39,28 @@
 			color: $brand-primary-dark;
 		}
 	}
+}
+
+.sidebar-utility-header {
+	position: relative;
+	margin-bottom: 20px;
+	
+	li a { 
+		background: $gray;
+		border-right-color: $gray-darker;
+		border-bottom-color: $gray-darker;
+	}
+
+	li.active a {
+		border-bottom-color: $white;
+	}
 
 	.btn {
 		position: absolute;
 		left: 100%;
 		top: 0;
 	  border-radius: 0;
-	  padding: 20px;
+	  padding: 20px 20px 19px;
 	  font-size: 13px;
 	  line-height: 1;
 	}
@@ -67,17 +74,26 @@
 }
 
 .utility-tools {
-	width: 50%;
+	width: 100%;
 	float: left;
+
+	&.col-2 {
+		width: 50%;
+	}
 	
   .tool-toggle {
-		padding: 20px 5px;
 		display: block;
-		border-radius: 0;
 		float: left;
 	  width: 33.333%;
 	  text-align: center;
 	  border-right: 1px solid $gray-lightest;
+
+	  .btn {
+	  	padding: 20px 5px;
+	  	border-radius: 0;
+	  	display: block;
+	  	width: 100%;
+	  }
 	}
 
 	.checkbox {
@@ -98,4 +114,11 @@
   width: 100%;
   bottom: 0;
   top: 54px;
+  //transform: scale(1);
+  transition: transfrom 1s ease-in-out;
+
+  &.out {
+  	//transform: scale(.9);
+  	transition: transfrom 1s ease-in-out;
+  }
 }

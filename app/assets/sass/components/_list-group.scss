@@ -1,93 +1,98 @@
-%list-group-content {
-	display: inline-block;
-	vertical-align: middle;
-}
 
-.list-group {
-	margin: 0;
-	background: $white;
-	position: absolute;
-	overflow: auto;
-	max-height: 60%;
-	widows: 100%;
-}
 
-.list-group-item {
-	white-space: nowrap;
-	padding: 20px 25px;
-	border-bottom: 1px solid $gray-lightest;
-	transition: .4s ease-in-out all;
-	position: relative;
+.sidebar {
+	%list-group-content {
+		display: inline-block;
+		vertical-align: middle;
+	}
 
-	&:hover {
+	.list-group {
+		background: $white;
+	}
+
+	.list-group-item {
+		white-space: nowrap;
+		padding: 20px 25px;
+		border: none;
+		border-bottom: 1px solid $gray-lightest;
+		transition: .4s ease-in-out all;
+		position: relative;
+		margin-bottom: 0;
+
+		&:first-child, &:last-child {
+			border-radius: 0;
+		}
+
+		&.link:hover {
+			background: $off-white;
+		}
+	}
+
+	.list-group-detail {
+		@extend %list-group-content;
+		width: 20%;
+		min-height: 80px;
 		background: $off-white;
+		position: relative;
+		overflow: hidden;
+
+		img {
+			width: 100%;
+			border-radius: $border-radius-base;
+			border: 1px solid $gray-lightest;
+		}
 	}
-}
 
-.list-group-detail {
-	@extend %list-group-content;
-	width: 20%;
-	min-height: 80px;
-	background: $off-white;
-	position: relative;
-	overflow: hidden;
-
-	img {
+	.list-group-hover {
+		position: absolute;
+		top: 0;
+		left: -100%;
 		width: 100%;
-		border-radius: $border-radius-base;
-		border: 1px solid $gray-lightest;
-	}
-}
-
-.list-group-hover {
-	position: absolute;
-	top: 0;
-	left: -100%;
-	width: 100%;
-	height: 100%;
-	line-height: 80px;
-	text-align: center;
-	color: $white;
-	background: rgba($gray, .9);
-	border-radius: $border-radius-base;
-  transition: .4s ease left, .6s ease opacity, .4s ease background;
-	@include opacity(0);
-
-	&:hover, &.hover,
-	&:focus, &.focus {
+		height: 100%;
+		line-height: 80px;
+		text-align: center;
 		color: $white;
-		text-decoration: none;
-		background: $gray;
-	}
-}
+		background: rgba($gray, .9);
+		border-radius: $border-radius-base;
+	  transition: .4s ease left, .6s ease opacity, .4s ease background;
+		@include opacity(0);
 
-.list-group-item:hover .list-group-hover {
-	left: 0;
-	@include opacity(1);
-}
-
-.list-group-content {
-	@extend %list-group-content;
-	width: 55%;
-	padding-left: 10px;
-	h5, p {
-		@extend %truncate;
+		&:hover, &.hover,
+		&:focus, &.focus {
+			color: $white;
+			text-decoration: none;
+			background: $gray;
+		}
 	}
 
-	h5 {
-		margin: 0;
-		color: $gray;
+	.list-group-item:hover .list-group-hover {
+		left: 0;
+		@include opacity(1);
 	}
 
-	p {
-		margin: 0;
-		@include font-size(13);
-	}
-}
+	.list-group-content {
+		@extend %list-group-content;
+		width: 55%;
+		padding-left: 10px;
+		h5, p {
+			@extend %truncate;
+		}
 
-.list-group-tool {
-	@extend %list-group-content;
-	width: 25%;
-	padding-left: 10px;
-	text-align: right;
+		h5 {
+			margin: 0;
+			color: $gray;
+		}
+
+		p {
+			margin: 0;
+			@include font-size(13);
+		}
+	}
+
+	.list-group-tool {
+		@extend %list-group-content;
+		width: 25%;
+		padding-left: 10px;
+		text-align: right;
+	}
 }

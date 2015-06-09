@@ -1,0 +1,59 @@
+.layer-detail {
+	display: none;
+	width: 100%;
+	position: absolute;
+	top: 145px;
+	bottom: 0;
+	background: $white;
+	overflow: auto;
+	box-shadow: 0 0 4px rgba(black, .2);
+
+	&.active {
+		display: block;
+	}
+
+	.sidebar-utility-toolbar li a {
+		padding-top: 24px;
+		padding-bottom: 24px;
+		border-bottom-color: $white;
+	}
+
+	.close {
+		padding: 20px;
+	}
+
+	.layer-detail-content {
+		padding: 20px 25px;
+	}
+
+	.img-preview {
+		margin-top: 15px;
+		margin-bottom: 30px;
+		border-radius: 5px;
+	}
+
+	hr {
+    margin-left: -25px;
+    margin-right: -25px;
+  }
+
+  dl {
+    margin: 0;
+    @include clearfix;
+  }
+
+  dt {
+    font-weight: 400;
+    width: 50%;
+    vertical-align: baseline;
+    float: left;
+  }
+
+  dd {
+    font-weight: 500;
+    margin-bottom: 15px;
+    width: 50%;
+    vertical-align: top;
+    float: left;
+  }
+}

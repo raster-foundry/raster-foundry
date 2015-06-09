@@ -1,10 +1,14 @@
 form {
 	.form-group {
 		margin-bottom: 30px;
+		text-align: left;
+	}
+	
+	label {
+		font-weight: 500;
 	}
 
 	.form-action {
-		margin-top: 60px;
 
 		.btn {
 			margin-bottom: 10px;
@@ -15,7 +19,7 @@ form {
 
 /// Floating Labels
 ///
-.form-group {
+.form-group.floating-label {
 	position: relative;
 	
 	%float-label {
@@ -25,7 +29,6 @@ form {
 	}
 
 	label {
-		font-weight: 400;
 		position: absolute;
 		top: 11px;
 	  left: 9px;
@@ -67,6 +70,41 @@ form {
 select.form-control {
 	z-index: 1;
 	position: relative;
+}
+
+/// readonly, disabled 
+///
+.form-control[disabled], 
+.form-control[readonly], 
+fieldset[disabled] .form-control {
+	background: lighten($gray-lightest, 5%) !important;
+}
+
+/// select groups
+///	Useage: <div class="select-group"><input class="form-control"><select class="form-control"></select></div>
+///
+.select-group {
+	@extend .clearfix;
+	input,
+	select {
+		float: left;
+	}
+
+	input {
+		width: 50%;
+	}
+
+	select {
+		width: 50%;
+	}
+
+	input.form-control {
+		margin-right: -3px;
+		position: relative;
+		z-index: 2;
+		border-bottom-right-radius: 0;
+		border-top-right-radius: 0;
+	}
 }
 
 

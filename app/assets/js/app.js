@@ -2,7 +2,7 @@ $(function() {
 	///
 	/// Closable Bootstrap Tabs
 	$('#sidebar-nav a').click(function () {
-	    var tab = $(this);
+        var tab = $(this);
 
 	    if(tab.parent('li').hasClass('active')) {
         setTimeout(function() {
@@ -16,7 +16,7 @@ $(function() {
 
 	///
 	/// Floating input labels
-	$('.form-group .form-control').change(function() {
+	$('.form-group.floating-label .form-control').change(function() {
     if($(this).val() == ""){
       $(this).siblings('label').removeClass('float-label');
     }
@@ -66,11 +66,72 @@ $(function() {
     var paneTarget = $(this).data('pane-target'),
         paneParent = $(this).closest('.pane')
 
-    $(paneParent).removeClass('active').hide()
-      $('.pane-form').find(paneTarget).show()
-      setTimeout(function() { 
-        $('.pane-form').find(paneTarget).addClass('active')
-      }, 10);
-    
+    if ($(paneParent).hasClass('active')) {
+    	$(paneParent).removeClass('active').hide()
+    	$(paneTarget).addClass('active');
+    }
   });
+
+
+  ///
+  /// Temp activation for layer-details panel
+  $('.list-group-hover').click(function(evt) {
+    evt.preventDefault()
+
+    $('.layer-detail').addClass('active');
+  });
+
+  $('.layer-detail .close').click(function(evt) {
+    evt.preventDefault()
+
+    $('.layer-detail').removeClass('active');
+  });
+
 });
+
+
+$(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+})
+
+
+
+
+
+/*/// Useful for resizing
+var setupSize = function() {
+    var bottomPadding = 10;
+
+    var resize = function(){
+        var pane = $('#main');
+        var height = $(window).height() - pane.offset().top - bottomPadding;
+        pane.css({'height': height +'px'});
+
+        var sidebar = $('#tabBody');
+        var height = $(window).height() - sidebar.offset().top - bottomPadding;
+        sidebar.css({'height': height +'px'});
+
+        var mapDiv = $('#map');
+		var wrapDiv = $('#wrap');
+        var height = $(window).height() - mapDiv.offset().top - bottomPadding - wrapDiv.height();
+        mapDiv.css({'height': height +'px'});
+        map.invalidateSize();
+    };
+    resize();
+    $(window).resize(resize);
+};
+
+// On page load
+$(document).ready(function() {
+    // Set heights
+
+    weightedOverlay.bindSliders();
+    colorRamps.bindColorRamps();
+
+    $('#clearButton').click( function() {
+        summary.clear();
+        return false;
+    });
+    setupSize();
+});
+*/

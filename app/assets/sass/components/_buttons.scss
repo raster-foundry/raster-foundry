@@ -137,6 +137,29 @@
 	}
 }
 
+// btn-favorite
+// adds animation effect on activation of layer favoriting
+.btn-favorite {
+	&:before {
+	  content: '';
+	  display: block;
+	  height: 28px;
+	  width: 28px;
+	  position: absolute;
+	  box-shadow: 0 0 0 1px $brand-primary;
+	  border-radius: 100%;
+	  opacity: 0;
+	  transform: scale(1);
+	  transition: 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55) transform, .3s ease opacity, .7s ease-out box-shadow;
+	}
+
+	&.active:before {
+		opacity: 1;
+	  transform: scale(1.2);
+	  box-shadow: 0 0 0 1px transparent;
+	}
+}
+
 
 // Dropdown buttons
 .dropdown-toggle {

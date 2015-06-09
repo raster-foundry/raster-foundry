@@ -6,19 +6,18 @@ $off-white: #f3f3f3;
 $base: #8c8da3;
 
 $brand-primary: #08ADBB;
-$brand-primary-dark: darken($brand-primary, 5%);
+$brand-primary-dark: darken($brand-primary, 5%); //#0796a3
 $brand-secondary: #7779b1;
-$brand-secondary-dark: darken($brand-secondary, 5%);
+$brand-secondary-dark: darken($brand-secondary, 5%); //#6769a8
 $brand-warning: #e2aa00;
-$brand-warning-dark: darken($brand-warning, 5%);
+$brand-warning-dark: darken($brand-warning, 5%); //#c99700
 
 $gray: #38394f;
-$gray-light: lighten($gray, 10%);
-$gray-lighter: lighten($gray, 35%);
+$gray-light: lighten($gray, 10%); //#4d4f6d
+$gray-lighter: lighten($gray, 35%); //#8c8dad
 $gray-lightest: #ddd;
-$gray-dark: darken($gray, 2%);
+$gray-dark: darken($gray, 2%); //#343549
 $gray-darker: #1b1c31;
-
 
 /// Padding variables
 ///
