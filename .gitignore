@@ -1,0 +1,5 @@
+# OSX Ignored Files
+.DS_Store
+
+# Sass Cache
+.sass-cache

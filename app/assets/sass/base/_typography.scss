@@ -1,0 +1,29 @@
+p {
+	white-space: normal;
+	@include font-size(13);
+	line-height: 2;
+}
+
+h4 {
+	@include font-size(16);
+}
+
+.text-muted {
+	color: $gray-lighter;
+}
+
+.font-100 {
+	font-weight: 100;
+}
+.font-300 {
+	font-weight: 300;
+}
+.font-400 {
+	font-weight: 400;
+}
+.font-500 {
+	font-weight: 500;
+}
+.font-600 {
+	font-weight: 600;
+}

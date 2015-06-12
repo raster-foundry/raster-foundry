@@ -1,0 +1,26 @@
+/* 
+ * Requires Sass 3.2+
+ * Placeholder selectors look like class and id selectors, except the # or . is replaced by %.
+ * Typically used with an @extend
+ */
+
+/// Helper to clear inner floats
+/// Useage: @extend %clearfix;
+%clearfix {
+	&:before, &:after {
+		content: " ";
+		display: table;
+	}
+	&:after {
+		clear: both;
+	}
+}
+
+
+/// Truncates an overflow of text to end with an ellipsis
+/// Useage: @extend %truncate;
+%truncate {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}

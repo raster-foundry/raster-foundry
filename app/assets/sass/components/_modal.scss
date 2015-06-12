@@ -1,0 +1,122 @@
+.modal-backdrop {
+	background-color: $gray-dark;
+
+	&.in {
+		@include opacity(.9);
+	}
+}
+
+.modal-content {
+	box-shadow: 0 0 20px 0 rgba(black, .1);
+}
+
+.modal {
+
+	.close {
+		font-size: 40px;
+		position: absolute;
+		right: -40px;
+		top: -40px;
+		color: $brand-primary;
+		text-shadow: none;
+		@include opacity(1);
+	}
+}
+
+.modal-dialog {
+	@include respond-to('tablet-up') {
+		margin: 60px auto;
+	}
+}
+
+
+/// import Modal
+///
+.import-modal .modal-body {
+
+	.import-browse, .import-uri {
+		text-align: center;
+		padding: 35px;
+		
+		i {
+			display: inline-block;
+			line-height: 1;
+		}
+		
+		h3 {
+			color: $brand-primary;
+		}
+		
+		h5 {
+			line-height: 1.4;
+		}
+
+		form {
+			margin: 40px 0 0;
+		}
+	}
+	
+	.import-browse {
+
+		i {
+			@include font-size(200);
+			color: $off-white;
+			margin-bottom: -20px;
+		}
+	}
+
+	.import-uri {
+		background: $off-white;
+		border-radius: 0 5px 5px 0;
+		border-left: 1px solid $gray-lightest;
+
+		i {
+			@include font-size(90);
+			color: $gray-lightest;
+			margin-bottom: -20px;
+		}
+
+		&:before {
+		  content: 'OR';
+		  display: block;
+		  position: absolute;
+		  background: $base;
+		  color: $white;
+		  font-size: 13px;
+		  left: -18px;
+		  top: 44%;
+		  border-radius: 100%;
+		  line-height: 36px;
+		  width: 36px;
+		  height: 36px;
+		}
+	}
+
+	form {
+		margin: 20px;
+
+		.form-action {
+			padding-top: 20px;
+			@extend .clearfix;
+
+			.btn {
+				margin-bottom: 0;
+			}
+
+			input[type="submit"] {
+				float: right;
+				width: 50%;
+				margin-bottom: 0;
+			}
+
+			.btn:only-child {
+				float: none;
+			}
+		}
+	}
+
+	.form-control {
+		background: $white;
+		border-color: $gray-lightest;
+	}
+}

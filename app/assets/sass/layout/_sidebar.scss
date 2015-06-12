@@ -1,0 +1,25 @@
+.sidebar {
+  width: 450px;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  bottom: 10px;
+	z-index: map-get($z-index, sidebar);
+}
+
+.sidebar-header {
+	position: relative;
+	z-index: 1;
+}
+
+.sidebar-brand {
+	background-color: $gray-dark;
+	padding: 15px 25px;
+	position: relative;
+	z-index: 1;
+	display: inline-block;
+}
+
+.sidebar-brand img {
+	max-width: 30px;
+}
