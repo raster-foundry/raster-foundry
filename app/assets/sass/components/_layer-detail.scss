@@ -22,10 +22,6 @@
 		padding: 20px;
 	}
 
-	.layer-detail-content {
-		padding: 20px 25px;
-	}
-
 	.img-preview {
 		margin-top: 15px;
 		margin-bottom: 30px;
@@ -56,4 +52,9 @@
     vertical-align: top;
     float: left;
   }
+}
+
+.layer-detail-content {
+	padding: 20px 25px;
+	overflow: auto;
 }

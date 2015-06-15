@@ -2,6 +2,10 @@ form {
 	.form-group {
 		margin-bottom: 30px;
 		text-align: left;
+
+		&:last-child {
+			margin-bottom: 0;
+		}
 	}
 	
 	label {

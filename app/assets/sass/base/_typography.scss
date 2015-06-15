@@ -8,10 +8,15 @@ h4 {
 	@include font-size(16);
 }
 
+/// Text Coloring
 .text-muted {
-	color: $gray-lighter;
+	color: lighten($gray-lighter, 10%);
+}
+.text-danger {
+	color: $brand-danger;
 }
 
+/// Font weights
 .font-100 {
 	font-weight: 100;
 }

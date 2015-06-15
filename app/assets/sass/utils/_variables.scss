@@ -7,10 +7,12 @@ $base: #8c8da3;
 
 $brand-primary: #08ADBB;
 $brand-primary-dark: darken($brand-primary, 5%); //#0796a3
-$brand-secondary: #7779b1;
-$brand-secondary-dark: darken($brand-secondary, 5%); //#6769a8
+$brand-secondary: #695baa;
+$brand-secondary-dark: darken($brand-secondary, 5%); //#5e509b
 $brand-warning: #e2aa00;
 $brand-warning-dark: darken($brand-warning, 5%); //#c99700
+$brand-danger: #ff957c;
+$brand-danger-dark: darken($brand-danger, 5%); //#ff8062
 
 $gray: #38394f;
 $gray-light: lighten($gray, 10%); //#4d4f6d
@@ -18,6 +20,8 @@ $gray-lighter: lighten($gray, 35%); //#8c8dad
 $gray-lightest: #ddd;
 $gray-dark: darken($gray, 2%); //#343549
 $gray-darker: #1b1c31;
+
+$link-color: $brand-secondary;
 
 /// Padding variables
 ///
@@ -43,6 +47,10 @@ $font-base: 'Roboto', sans-serif;;
 ///
 $border-radius-base: 5px;
 
+/// Tooltips
+///
+$tooltip-max-width:           100px;
+$tooltip-bg:                  $gray;
 
 /// Screen Sizes
 /// Used in _mixins.scss > @mixin respond-to($breakpoint)

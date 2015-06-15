@@ -36,8 +36,8 @@
 				        <span class="icon-bar"></span>
 				        <span class="icon-bar"></span>
 	          	</span>
-	          	<i class="rf-icon-book"></i>
-	          	Library 
+	          	<i class="rf-icon-map-alt"></i>
+	          	Workspace 
 	          </a>
 	          <ul class="dropdown-menu animated fadeInLeft" role="menu">
 	            <li><a href="/workspace.html"><i class="rf-icon-map-alt"></i> Workspace</a></li>
@@ -60,10 +60,9 @@
     	<div class="sidebar-utility-header">
 			  <!-- Nav tabs -->
 			  <ul class="nav nav-tabs" role="tablist">
-			    <li role="presentation" class="active"><a href="#imports" aria-controls="imports" role="tab" data-toggle="tab">My Imports</a></li>
-			    <li role="presentation"><a href="#catalog" aria-controls="catalog" role="tab" data-toggle="tab">Public Catalog</a></li>
-			    <li role="presentation"><a href="#favorites" aria-controls="favorites" role="tab" data-toggle="tab">Favorites</a></li>
-			    <li role="presentation"><a href="#processing" aria-controls="processing" role="tab" data-toggle="tab">Processing</a></li>
+			    <li role="presentation" class="active"><a href="#layers" aria-controls="layers" role="tab" data-toggle="tab">Layers</a></li>
+			    <li role="presentation"><a data-toggle="tooltip" data-placement="bottom" title="Coming Soon">Mosaic Tools</a></li>
+			    <li role="presentation"><a href="#project" aria-controls="project" role="tab" data-toggle="tab">Project</a></li>
 			  </ul>
     	</div>
     	<!-- ./sidebar-utility-header -->
@@ -73,272 +72,21 @@
 				
 			  <div class="tab-content">
 					<!-- Imports Tab Pane -->
-			    <div role="tabpanel" class="tab-pane active animated fadeInLeft" id="imports">
+			    <div role="tabpanel" class="tab-pane active animated fadeInLeft" id="layers">
 			    	
 						<!-- Sorting, Search, Add to workspace -->
 			    	<div class="sidebar-utility-toolbar">
 				    	<div class="utility-tools col-2">
-				    		<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Import Imagery Layer">
-									<button class="btn btn-secondary" id="import-imagery" type="button" data-toggle="modal" data-target="#import-imagery-modal"><i class="rf-icon-upload"></i></button>
+				    		<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="New Imagery Layer">
+									<button class="btn btn-secondary" id="import-imagery" type="button" data-toggle="modal" data-target="#import-imagery-modal"><i class="rf-icon-plus"></i><i class="rf-icon-book"></i></button>
 				    		</span>
-				    		<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Search Imports">
-		    					<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#search-imagery" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-search"></i></button>
-								</span>
-								<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Sort Imports">
-		    					<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#sort-imagery" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-sort-alt-up"></i> </button>
-	    					</span>
 			        </div>
 
 			        <div class="utility-tools col-2 text-right">
-								<div class="checkbox btn-combo">
+								<div class="checkbox btn-combo warning">
 									<input type="checkbox">
 									<label></label>
-									<button class="btn btn-primary btn-sm"><i class="rf-icon-plus"></i> Workspace</button>
-								</div>
-							</div>
-			    	</div>
-
-			    	<!-- Expandable Search and Filter blocks -->
-			    	<div class="collapse" id="search-imagery">
-			    		<div class="panel panel-default">
-							  <div class="panel-body">
-							    <form>
-					    			<fieldset>
-					    				<input type="text" class="form-control" placeholder="Search by name, organization or tag">
-					    			</fieldset>
-				    			</form>
-							  </div>
-							</div>
-			    	</div>
-
-			    	<div class="collapse" id="sort-imagery">
-			    		<form>
-			    			<fieldset>
-			    				hello
-			    			</fieldset>
-		    			</form>
-			    	</div>
-
-
-			    	<!-- Imagery Layers -->
-						<div class="list-group">
-							<!-- List Group Item -->
-							<div class="list-group-item link">
-								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
-									<img src="http://placehold.it/200x200">
-								</div>
-								<div class="list-group-content">
-									<h5>Imagery Layer Name</h5>
-									<p>Organization Name</p>
-								</div>
-								<div class="list-group-tool">
-									<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
-									  <i class="rf-icon-star control-active text-primary"></i> 
-									  <i class="rf-icon-star-empty control-inactive"></i>
-									</button>
-									<div class="checkbox">
-										<input type="checkbox">
-										<label></label>
-									</div>
-								</div>
-							</div>
-							<!-- List Group Item -->
-							<div class="list-group-item link">
-								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
-									<img src="http://placehold.it/200x200">
-								</div>
-								<div class="list-group-content">
-									<h5>Imagery Layer Name</h5>
-									<p>Organization Name</p>
-								</div>
-								<div class="list-group-tool">
-									<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
-									  <i class="rf-icon-star control-active text-primary"></i> 
-									  <i class="rf-icon-star-empty control-inactive"></i>
-									</button>
-									<div class="checkbox">
-										<input type="checkbox">
-										<label></label>
-									</div>
-								</div>
-							</div>
-							<!-- List Group Item -->
-							<div class="list-group-item link">
-								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
-									<img src="http://placehold.it/200x200">
-								</div>
-								<div class="list-group-content">
-									<h5>Imagery Layer Name</h5>
-									<p>Organization Name</p>
-								</div>
-								<div class="list-group-tool">
-									<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
-									  <i class="rf-icon-star control-active text-primary"></i> 
-									  <i class="rf-icon-star-empty control-inactive"></i>
-									</button>
-									<div class="checkbox">
-										<input type="checkbox">
-										<label></label>
-									</div>
-								</div>
-							</div>
-							<!-- List Group Item -->
-							<div class="list-group-item link">
-								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
-									<img src="http://placehold.it/200x200">
-								</div>
-								<div class="list-group-content">
-									<h5>Imagery Layer Name</h5>
-									<p>Organization Name</p>
-								</div>
-								<div class="list-group-tool">
-									<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
-									  <i class="rf-icon-star control-active text-primary"></i> 
-									  <i class="rf-icon-star-empty control-inactive"></i>
-									</button>
-									<div class="checkbox">
-										<input type="checkbox">
-										<label></label>
-									</div>
-								</div>
-							</div>
-						</div>
-			    </div> <!-- /#imports.tab-pane -->
-
-			    <!-- Catalog Tab Pane -->
-			    <div role="tabpanel" class="tab-pane animated fadeInLeft" id="catalog">
-			    	
-			    	<!-- Sorting, Search, Add to workspace -->
-			    	<div class="sidebar-utility-toolbar">
-				    	<div class="utility-tools col-2">
-				    		<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Search Catalog">
-		    					<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#search-catalog" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-search"></i></button>
-								</span>
-								<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Sort Catalog">
-		    					<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#sort-catalog" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-sort-alt-up"></i> </button>
-	    					</span>
-			        </div>
-
-			        <div class="utility-tools col-2 text-right">
-								<div class="checkbox btn-combo">
-									<input type="checkbox">
-									<label></label>
-									<button class="btn btn-primary btn-sm"><i class="rf-icon-plus"></i> Workspace</button>
-								</div>
-							</div>
-			    	</div>
-
-			    	<!-- Imagery Layers -->
-						<div class="list-group">
-							<!-- List Group Item -->
-							<div class="list-group-item link">
-								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
-									<img src="http://placehold.it/200x200">
-								</div>
-								<div class="list-group-content">
-									<h5>Imagery Layer Name</h5>
-									<p>Organization Name</p>
-								</div>
-								<div class="list-group-tool">
-									<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
-									  <i class="rf-icon-star control-active text-primary"></i> 
-									  <i class="rf-icon-star-empty control-inactive"></i>
-									</button>
-									<div class="checkbox">
-										<input type="checkbox">
-										<label></label>
-									</div>
-								</div>
-							</div>
-							<!-- List Group Item -->
-							<div class="list-group-item link">
-								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
-									<img src="http://placehold.it/200x200">
-								</div>
-								<div class="list-group-content">
-									<h5>Imagery Layer Name</h5>
-									<p>Organization Name</p>
-								</div>
-								<div class="list-group-tool">
-									<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
-									  <i class="rf-icon-star control-active text-primary"></i> 
-									  <i class="rf-icon-star-empty control-inactive"></i>
-									</button>
-									<div class="checkbox">
-										<input type="checkbox">
-										<label></label>
-									</div>
-								</div>
-							</div>
-							<!-- List Group Item -->
-							<div class="list-group-item link">
-								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
-									<img src="http://placehold.it/200x200">
-								</div>
-								<div class="list-group-content">
-									<h5>Imagery Layer Name</h5>
-									<p>Organization Name</p>
-								</div>
-								<div class="list-group-tool">
-									<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
-									  <i class="rf-icon-star control-active text-primary"></i> 
-									  <i class="rf-icon-star-empty control-inactive"></i>
-									</button>
-									<div class="checkbox">
-										<input type="checkbox">
-										<label></label>
-									</div>
-								</div>
-							</div>
-							<!-- List Group Item -->
-							<div class="list-group-item link">
-								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
-									<img src="http://placehold.it/200x200">
-								</div>
-								<div class="list-group-content">
-									<h5>Imagery Layer Name</h5>
-									<p>Organization Name</p>
-								</div>
-								<div class="list-group-tool">
-									<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
-									  <i class="rf-icon-star control-active text-primary"></i> 
-									  <i class="rf-icon-star-empty control-inactive"></i>
-									</button>
-									<div class="checkbox">
-										<input type="checkbox">
-										<label></label>
-									</div>
-								</div>
-							</div>
-						</div>
-			    </div> <!-- /#catalog.tab-pane -->
-
-			    <!-- Favorites Tab Pane -->
-			    <div role="tabpanel" class="tab-pane animated fadeInLeft" id="favorites">
-			    	<!-- Sorting, Search, Add to workspace -->
-			    	<div class="sidebar-utility-toolbar">
-				    	<div class="utility-tools col-2">
-				    		<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Search Catalog">
-		    					<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#search-catalog" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-search"></i></button>
-								</span>
-								<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Sort Catalog">
-		    					<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#sort-catalog" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-sort-alt-up"></i> </button>
-	    					</span>
-			        </div>
-
-			        <div class="utility-tools col-2 text-right">
-								<div class="checkbox btn-combo">
-									<input type="checkbox">
-									<label></label>
-									<button class="btn btn-primary btn-sm"><i class="rf-icon-plus"></i> Workspace</button>
+									<button class="btn btn-warning btn-sm"><i class="rf-trash-empty"></i> Remove Layer</button>
 								</div>
 							</div>
 			    	</div>
@@ -347,7 +95,39 @@
 						<div class="list-group">
 							<!-- List Group Item -->
 							<div class="list-group-item">
-								<p class="h5 text-muted">You have not favorited any imagery layers.</p>
+								<p class="h5 text-muted">You have no active imagery layers on this project.</p>
+							</div>
+						</div>
+			    </div> <!-- /#imports.tab-pane -->
+
+			    <!-- Favorites Tab Pane -->
+			    <div role="tabpanel" class="tab-pane animated fadeInLeft" id="project">
+			    	<!-- Sorting, Search, Add to workspace -->
+			    	<div class="sidebar-utility-toolbar">
+				    	<div class="utility-tools col-2">
+				    		<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Save Project">
+		    					<button class="btn btn-secondary" type="button" data-toggle="collapse" data-target="#search-catalog" aria-expanded="false" aria-controls="collapseExample">Save</button>
+								</span>
+								<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="New Project">
+		    					<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#sort-catalog" aria-expanded="false" aria-controls="collapseExample">New</button>
+	    					</span>
+			        </div>
+			    	</div>
+
+			    	<!-- Imagery Layers -->
+						<div class="list-group">
+							<!-- List Group Item -->
+							<div class="list-group-item">
+								<form>
+			    				<div class="form-group">
+			    					<label>Project Title</label>
+				    				<input type="text" class="form-control" value="New Project 1">
+			    				</div>
+			    				<div class="form-group">
+			    					<label>TMS url</label>
+				    				<input class="form-control" type="text" placeholder="Readonly input here…" readonly value="https://a.tiles.mapbox.com/v4/mpwilliams89.lodmp50l/page.html?access_token=pk.eyJ1IjoibXB3aWxsaWFtczg5IiwiYSI6IkE4SGVHbTQifQ.RKYyPAYg9BtLTOj96DHEjA#15/39.9469/-75.1690">
+			    				</div>
+			    			</form>
 							</div>
 						</div>
 			    </div> <!-- /#favorites.tab-pane -->

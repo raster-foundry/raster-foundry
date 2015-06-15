@@ -1,6 +1,5 @@
 .sidebar-utility {
 	.nav-tabs {
-		display: table;
     width: 100%;
     border-bottom: none;
     &:after {
@@ -12,6 +11,7 @@
 		float: none;
     display: table-cell;
     text-align: center;
+    width: 1%;
 	}
 
 	li a {
@@ -120,5 +120,13 @@
   &.out {
   	//transform: scale(.9);
   	transition: transfrom 1s ease-in-out;
+  }
+
+  .panel {
+  	margin-bottom: 0;
+  	border-top: none;
+  	border-left: none;
+  	border-right: none;
+  	border-radius: 0;
   }
 }
