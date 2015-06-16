@@ -1,4 +1,4 @@
-.layer-detail {
+.image-metadata {
 	display: none;
 	width: 100%;
 	position: absolute;
@@ -11,20 +11,19 @@
 	&.active {
 		display: block;
 	}
-
-	.sidebar-utility-toolbar li a {
-		padding-top: 24px;
-		padding-bottom: 24px;
-		border-bottom-color: $white;
-	}
-
+	
 	.close {
 		padding: 20px;
 	}
 
+	.sidebar-utility-toolbar h4,
+	.sidebar-utility-toolbar h5 {
+		margin-left: 20px;
+	}
+
 	.img-preview {
-		margin-top: 15px;
-		margin-bottom: 30px;
+		margin: 15px auto 30px;
+		display: block;
 		border-radius: 5px;
 	}
 
@@ -35,26 +34,20 @@
 
   dl {
     margin: 0;
-    @include clearfix;
+    width: 50%;
+    float: left;
   }
 
   dt {
     font-weight: 400;
-    width: 50%;
     vertical-align: baseline;
-    float: left;
+    display: block;
   }
 
   dd {
     font-weight: 500;
+    display: block;
     margin-bottom: 15px;
-    width: 50%;
     vertical-align: top;
-    float: left;
   }
-}
-
-.layer-detail-content {
-	padding: 20px 25px;
-	overflow: auto;
 }

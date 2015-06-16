@@ -66,7 +66,7 @@ $(function() {
 
 
 ///
-/// Temp activation for layer-details panel
+/// Temp activation for layer-details panel and Image Metadata
 $(function() {
     var layerDetail = $('.layer-detail');
 
@@ -82,6 +82,29 @@ $(function() {
         layerDetail.addClass('slideOutLeft')
             setTimeout(function() {
                 layerDetail.removeClass('slideOutLeft active')
+            }, 400);
+    });
+
+});
+
+
+///
+/// Temp activation for layer-details panel and Image Metadata
+$(function() {
+    var imageMetadata = $('.image-metadata');
+
+    $('.view-metadata').click(function(evt) {
+        evt.preventDefault()
+
+        imageMetadata.addClass('active');
+    });
+
+    $('.image-metadata .close').click(function(evt) {
+        evt.preventDefault()
+
+        imageMetadata.addClass('slideOutLeft')
+            setTimeout(function() {
+                imageMetadata.removeClass('slideOutLeft active')
             }, 400);
     });
 
