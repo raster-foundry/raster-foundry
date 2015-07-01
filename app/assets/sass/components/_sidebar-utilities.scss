@@ -6,54 +6,11 @@
 			display: none;
     }
 	}
-
-	li {
-		float: none;
-    display: table-cell;
-    text-align: center;
-    width: 1%;
-	}
-
-	li a {
-		@include font-size(13);
-		margin: 0;
-		padding: 20px 2px;
-		color: $base;
-		line-height: 1;
-		border-top: none !important;
-		border-bottom: 1px solid $gray-lightest;
-		border-radius: 0;
-
-		&:hover {
-			background: $white;
-			border-color: transparent;
-		}
-	}
-
-	li.active a {
-		border-bottom-color: $gray-lightest;
-		border-top: none;
-		color: $brand-primary-dark;
-
-		&:hover, &:active, &:focus {
-			color: $brand-primary-dark;
-		}
-	}
 }
 
 .sidebar-utility-header {
 	position: relative;
 	margin-bottom: 20px;
-	
-	li a { 
-		background: $gray;
-		border-right-color: $gray-darker;
-		border-bottom-color: $gray-darker;
-	}
-
-	li.active a {
-		border-bottom-color: $white;
-	}
 
 	.btn {
 		position: absolute;
@@ -61,7 +18,7 @@
 		top: 0;
 	  border-radius: 0;
 	  padding: 20px 20px 19px;
-	  font-size: 13px;
+	  @include font-size(13);
 	  line-height: 1;
 	}
 }
@@ -70,12 +27,14 @@
 	position: relative;
 	background: $white;
 	border-bottom: 1px solid $gray-lightest;
+	overflow: hidden;
 	@include clearfix;
 }
 
 .utility-tools {
 	width: 100%;
 	float: left;
+	position: relative;
 
 	&.col-2 {
 		width: 50%;
@@ -99,6 +58,24 @@
 	.checkbox {
 		margin: 20px;
 	}
+}
+
+// Class added when a layer is selected via checkbox
+.utility-tools-secondary.active {
+	position: absolute;
+	width: 100%;
+	background: $white;
+	height: 100%;
+	transition: .4s ease background;
+
+	.btn {
+		display: inline-block;
+		margin-right: 10px;
+	}
+}
+
+.utility-tools-secondary .btn {
+	display: none;
 }
 
 .tool-toggle-target {

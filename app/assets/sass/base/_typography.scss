@@ -13,7 +13,7 @@ h4 {
 	color: lighten($gray-lighter, 10%);
 }
 .text-danger {
-	color: $brand-danger;
+	color: $brand-danger !important;
 }
 
 /// Font weights

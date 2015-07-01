@@ -2,7 +2,7 @@
 	display: none;
 	width: 100%;
 	position: absolute;
-	top: 144px;
+	top: 70px;
 	bottom: 0;
 	background: $white;
 	overflow: auto;
@@ -16,15 +16,25 @@
 		padding-top: 24px;
 		padding-bottom: 24px;
 		border-bottom-color: $white;
+
+		&:hover {
+			background-color: $white; 
+		}
 	}
 
 	.close {
 		padding: 20px;
+		outline: none;
 	}
+}
+
+.layer-detail-content {
+	padding: 20px 25px;
+	overflow: auto;
 
 	.img-preview {
-		margin-top: 15px;
-		margin-bottom: 30px;
+		display: block;
+		margin: 25px auto 30px;
 		border-radius: 5px;
 	}
 
@@ -52,9 +62,4 @@
     vertical-align: top;
     float: left;
   }
-}
-
-.layer-detail-content {
-	padding: 20px 25px;
-	overflow: auto;
 }

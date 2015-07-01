@@ -3,3 +3,6 @@
 
 # Sass Cache
 .sass-cache
+
+# css map
+.css.map

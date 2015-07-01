@@ -2,10 +2,9 @@
 	display: none;
 	width: 100%;
 	position: absolute;
-	top: 144px;
+	top: 70px;
 	bottom: 0;
 	background: $white;
-	overflow: auto;
 	box-shadow: 0 0 4px rgba(black, .2);
 
 	&.active {
@@ -14,11 +13,13 @@
 	
 	.close {
 		padding: 20px;
+		outline: none;
 	}
 
-	.sidebar-utility-toolbar h4,
-	.sidebar-utility-toolbar h5 {
-		margin-left: 20px;
+	.sidebar-utility-toolbar {
+		border-bottom: none;
+		padding-top: 10px;
+		padding-left: 20px;
 	}
 
 	.img-preview {
@@ -34,8 +35,8 @@
 
   dl {
     margin: 0;
-    width: 50%;
-    float: left;
+    /* width: 50%;
+    float: left; */
   }
 
   dt {

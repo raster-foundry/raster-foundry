@@ -34,7 +34,6 @@ $(function() {
 /// Active class on checkboxes
 $(function() {
 	$('.checkbox input').click(function() {
-		var checkboxInput = $(this);
 		var checkboxParent = $(this).parent('.checkbox');
 		
 		if($(checkboxParent).hasClass('active')){
@@ -44,12 +43,12 @@ $(function() {
 			$(checkboxParent).addClass('active');
 			$(this).attr('checked', true);
 		}
-	});
+	});    
 });
 
 
 ///
-/// Toggles between modal panels
+/// Toggles between modal panes
 $(function() {
 	$('[data-toggle-pane]').click(function(evt) {
         evt.preventDefault()
@@ -66,7 +65,7 @@ $(function() {
 
 
 ///
-/// Temp activation for layer-details panel and Image Metadata
+/// Temp activation for layer-details panel
 $(function() {
     var layerDetail = $('.layer-detail');
 
@@ -89,7 +88,7 @@ $(function() {
 
 
 ///
-/// Temp activation for layer-details panel and Image Metadata
+/// Temp activation for Image Metadata
 $(function() {
     var imageMetadata = $('.image-metadata');
 
@@ -112,17 +111,28 @@ $(function() {
 
 
 ///
+/// Temp activation for secondary layer tools
+$(function() {
+    $('.select-all').click(function(){
+        $(this).parent('.utility-tools-secondary').toggleClass('active');
+    });
+});
+
+
+///
 /// Bootstrap Module
 /// Activates tooltips
 $(function () {
-    $('[data-toggle="tooltip"]').tooltip()
+    $('[data-toggle="tooltip"]').tooltip({
+        container: '.sidebar-utility-content',
+        viewport: '.sidebar'
+    })
 });
 
 
 ///
 /// Controls resizing layers panel
 var setupSize = function() {
-    //var bottomPadding = 10;
 
     var resize = function(){
         var sidebar = $('.sidebar');
@@ -134,12 +144,14 @@ var setupSize = function() {
         var sidebarUtilToolbar = $('.sidebar-utility-toolbar');
 
         var resizeListGroup = $('.sidebar .list-group');
-        var resizeLayerDetails = $('.layer-detail-content');
+        var resizeLayerDetails = $('.layer-detail .layer-detail-content, .image-metadata .layer-detail-content');
 
         var height = sidebar.height() - sidebarHeader.height() - sidebarUtilHeader.height() - sidebarUtilToolbar.height() - 30;
+
+        var heightSecondary = sidebar.height() - sidebarHeader.height() - sidebarUtilToolbar.height() - 20;
         
         resizeListGroup.css({'max-height': height + 'px'});
-        resizeLayerDetails.css({'max-height': height + 'px'});
+        resizeLayerDetails.css({'max-height': heightSecondary + 'px'});
     };
     resize();
     $(window).resize(resize);

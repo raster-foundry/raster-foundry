@@ -11,6 +11,7 @@
 .video-background { 
   z-index: -1;
 	@extend %video-sizing;
+  overflow: hidden;
 
   &:after {
   	content: '';
