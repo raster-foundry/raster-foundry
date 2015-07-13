@@ -11,6 +11,7 @@
 	<link rel="stylesheet" href="/assets/css/vendors/animate/animate.css">
 	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
 
+	<script src="assets/js/vendor/multi-level-menu/modernizr.custom.js"></script>
 	<!--[if lt IE 9]>
     <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
     <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
@@ -25,30 +26,49 @@
 		<div class="sidebar-header">
 			<a class="sidebar-brand" href="#">
 				<img src="/assets/img/logo-raster-foundry.png">
-			</a>
-
-			<!-- navigation -->
-			<ul class="nav primary-nav">
-				<li class="dropdown">
-	          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-	          	<span class="pull-right">
-	          		<span class="icon-bar"></span>
-				        <span class="icon-bar"></span>
-				        <span class="icon-bar"></span>
-	          	</span>
-	          	<i class="rf-icon-book"></i>
-	          	Library 
-	          </a>
-	          <ul class="dropdown-menu animated flipInX" role="menu">
-	            <li><a href="#"><i class="rf-icon-map-alt"></i> Workspace</a></li>
-	            <li><a href="#"><i class="rf-icon-book"></i> Library</a></li>
-	            <li class="divider"></li>
-	            <li><a href="#"><i class="rf-icon-user"></i> Settings</a></li>
-	            <li><a href="/"><i class="rf-icon-logout"></i> Logout</a></li>
-	          </ul>
-	        </li>
-			</ul>
-			<!-- /navigation -->
+			</a> <!-- /.sidebar-brand -->
+			<div id="dl-menu" class="dl-menuwrapper">
+				<button class="dl-trigger">
+					<span class="pull-right">
+						<span class="icon-bar"></span>
+		        <span class="icon-bar"></span>
+		        <span class="icon-bar"></span>
+					</span>
+					<i class="rf-icon-book"></i> Library 
+				</button>
+				<ul class="dl-menu">
+					<li class="dl-menu-group-title"><i class="rf-icon-map-alt"></i> Tile Projects</li>
+					<li class="dl-menu-group">
+						<a href="/project.html" class="new-project">New Tile Project</a>
+						<a href="/project-with-layers.html">Project Name 6</a>
+						<a href="/project-with-layers.html">Project Name 2</a>
+						<a href="/project-with-layers.html">Project Name 1</a>
+					</li>
+					<li class="dl-menu-group">
+						<a href="#" class="sub-menu-parent">More Tile Projects</a>
+						<ul class="dl-submenu">
+							<li><a href="/project.html" class="new-project">New Tile Project</a></li>
+							<li><a href="/project-with-layers.html">Project Name 1</a></li>
+							<li><a href="/project-with-layers.html">Project Name 2</a></li>
+							<li><a href="/project-with-layers.html">Project Name 3</a></li>
+							<li><a href="/project-with-layers.html">Project Name 4</a></li>
+							<li><a href="/project-with-layers.html">Project Name 5</a></li>
+							<li><a href="/project-with-layers.html">Project Name 6</a></li>
+						</ul>
+					</li>
+					<li class="divider"></li>
+					<li>
+						<a href="/library.html" class="active"><i class="rf-icon-book"></i> Library</a>
+					</li>
+					<li class="divider"></li>
+					<li>
+						<a href="#"><i class="rf-icon-user"></i> Settings</a>
+					</li>
+					<li>
+						<a href="/"><i class="rf-icon-logout"></i> Logout</a>
+					</li>
+				</ul>
+			</div><!-- /.dl-menuwrapper -->
 		</div>
 		<!-- /sidebar header -->
 
@@ -59,13 +79,14 @@
     	<!-- Utility tab controller -->
     	<div class="sidebar-utility-header">
 			  <!-- Nav tabs -->
-			  <ul class="nav nav-tabs" role="tablist">
+			  <ul class="nav nav-tabs nav-tabs-dark" role="tablist">
 			    <li role="presentation" class="active"><a href="#imports" aria-controls="imports" role="tab" data-toggle="tab">My Imports</a></li>
 			    <li role="presentation"><a href="#catalog" aria-controls="catalog" role="tab" data-toggle="tab">Public Catalog</a></li>
 			    <li role="presentation"><a href="#favorites" aria-controls="favorites" role="tab" data-toggle="tab">Favorites</a></li>
 			    <li role="presentation"><a href="#processing" aria-controls="processing" role="tab" data-toggle="tab">Processing</a></li>
 			  </ul>
     	</div>
+    	<!-- ./sidebar-utility-header -->
 
 			<!-- Tab content Parent Div -->
     	<div class="sidebar-utility-content">
@@ -80,38 +101,53 @@
 				    		<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Import Imagery Layer">
 									<button class="btn btn-secondary" id="import-imagery" type="button" data-toggle="modal" data-target="#import-imagery-modal"><i class="rf-icon-upload"></i></button>
 				    		</span>
-				    		<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Search">
+				    		<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Search Imports">
 		    					<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#search-imagery" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-search"></i></button>
 								</span>
-								<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Sort">
+								<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Sort Imports">
 		    					<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#sort-imagery" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-sort-alt-up"></i> </button>
 	    					</span>
 			        </div>
 
-			        <div class="utility-tools col-2 text-right">
-								<div class="checkbox btn-combo">
+			        <div class="utility-tools col-2 text-right utility-tools-secondary">
+								<button class="btn btn-danger btn-sm"><i class="rf-icon-trash-empty"></i> Delete</button>
+								<button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addto-imagery-modal"><i class="rf-icon-plus"></i> Add to</button>
+								<div class="checkbox toggle-all select-all">
 									<input type="checkbox">
 									<label></label>
-									<button class="btn btn-primary btn-sm"><i class="rf-icon-plus"></i> Workspace</button>
 								</div>
 							</div>
 			    	</div>
 
 			    	<!-- Expandable Search and Filter blocks -->
 			    	<div class="collapse" id="search-imagery">
-			    		<form>
-			    			<fieldset>
-			    				<input type="text" class="form-control" placeholder="Search by name, organization or tag">
-			    			</fieldset>
-		    			</form>
+			    		<div class="panel panel-default">
+							  <div class="panel-body">
+							    <form>
+					    			<fieldset>
+					    				<input type="text" class="form-control" placeholder="Search by name, organization or tag">
+					    			</fieldset>
+				    			</form>
+							  </div>
+							</div>
 			    	</div>
 
 			    	<div class="collapse" id="sort-imagery">
-			    		<form>
-			    			<fieldset>
-			    				hello
-			    			</fieldset>
-		    			</form>
+			    		<div class="panel panel-default">
+							  <div class="panel-body">
+					    		<form>
+					    			<fieldset>
+					    				<select class="form-control">
+					    					<option selected disabled>Sort Imagery Layers</option>
+					    					<option>Area</option>
+					    					<option>Capture Start Date</option>
+					    					<option>Capture End Date</option>
+					    					<option>Source Data Projection</option>
+					    				</select>
+					    			</fieldset>
+				    			</form>
+			    			</div>
+		    			</div>
 			    	</div>
 
 
@@ -120,7 +156,7 @@
 							<!-- List Group Item -->
 							<div class="list-group-item link">
 								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
+									<a class="list-group-hover" href="#">Metadata</a>
 									<img src="http://placehold.it/200x200">
 								</div>
 								<div class="list-group-content">
@@ -137,11 +173,24 @@
 										<label></label>
 									</div>
 								</div>
+								<div class="list-group-actions">
+									<div class="dropdown">
+									  <button type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="btn btn-default">
+									    <i class="rf-icon-ellipsis"></i>
+									  </button>
+									  <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dLabel">
+									    <li><a href="#">Edit Metadata</a></li>
+									    <li><a href="#">Import Options</a></li>
+									    <li class="divider"></li>
+									    <li><a href="#" class="text-danger">Delete</a></li>
+									  </ul>
+									</div>
+								</div> <!-- /.list-group-actions -->
 							</div>
 							<!-- List Group Item -->
 							<div class="list-group-item link">
 								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
+									<a class="list-group-hover" href="#">Metadata</a>
 									<img src="http://placehold.it/200x200">
 								</div>
 								<div class="list-group-content">
@@ -158,11 +207,24 @@
 										<label></label>
 									</div>
 								</div>
+								<div class="list-group-actions">
+									<div class="dropdown">
+									  <button type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="btn btn-default">
+									    <i class="rf-icon-ellipsis"></i>
+									  </button>
+									  <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dLabel">
+									    <li><a href="#">Edit Metadata</a></li>
+									    <li><a href="#">Import Options</a></li>
+									    <li class="divider"></li>
+									    <li><a href="#" class="text-danger">Delete</a></li>
+									  </ul>
+									</div>
+								</div> <!-- /.list-group-actions -->
 							</div>
 							<!-- List Group Item -->
 							<div class="list-group-item link">
 								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
+									<a class="list-group-hover" href="#">Metadata</a>
 									<img src="http://placehold.it/200x200">
 								</div>
 								<div class="list-group-content">
@@ -179,11 +241,24 @@
 										<label></label>
 									</div>
 								</div>
+								<div class="list-group-actions">
+									<div class="dropdown">
+									  <button type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="btn btn-default">
+									    <i class="rf-icon-ellipsis"></i>
+									  </button>
+									  <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dLabel">
+									    <li><a href="#">Edit Metadata</a></li>
+									    <li><a href="#">Import Options</a></li>
+									    <li class="divider"></li>
+									    <li><a href="#" class="text-danger">Delete</a></li>
+									  </ul>
+									</div>
+								</div> <!-- /.list-group-actions -->
 							</div>
 							<!-- List Group Item -->
 							<div class="list-group-item link">
 								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
+									<a class="list-group-hover" href="#">Metadata</a>
 									<img src="http://placehold.it/200x200">
 								</div>
 								<div class="list-group-content">
@@ -200,9 +275,22 @@
 										<label></label>
 									</div>
 								</div>
+								<div class="list-group-actions">
+									<div class="dropdown">
+									  <button type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="btn btn-default">
+									    <i class="rf-icon-ellipsis"></i>
+									  </button>
+									  <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dLabel">
+									    <li><a href="#">Edit Metadata</a></li>
+									    <li><a href="#">Import Options</a></li>
+									    <li class="divider"></li>
+									    <li><a href="#" class="text-danger">Delete</a></li>
+									  </ul>
+									</div>
+								</div> <!-- /.list-group-actions -->
 							</div>
 						</div>
-			    </div>
+			    </div> <!-- /#imports.tab-pane -->
 
 			    <!-- Catalog Tab Pane -->
 			    <div role="tabpanel" class="tab-pane animated fadeInLeft" id="catalog">
@@ -210,16 +298,19 @@
 			    	<!-- Sorting, Search, Add to workspace -->
 			    	<div class="sidebar-utility-toolbar">
 				    	<div class="utility-tools col-2">
-		    				<button class="tool-toggle btn btn-default" type="button" data-toggle="collapse" data-target="#search-catalog" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-search"></i></button>
-
-		    				<button class="tool-toggle btn btn-default" type="button" data-toggle="collapse" data-target="#sort-catalog" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-sort-alt-up"></i> </button>
+				    		<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Search Catalog">
+		    					<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#search-catalog" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-search"></i></button>
+								</span>
+								<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Sort Catalog">
+		    					<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#sort-catalog" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-sort-alt-up"></i> </button>
+	    					</span>
 			        </div>
 
-			        <div class="utility-tools col-2 text-right">
-								<div class="checkbox btn-combo">
+			        <div class="utility-tools col-2 text-right utility-tools-secondary">
+								<button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addto-imagery-modal"><i class="rf-icon-plus"></i> Add to</button>
+								<div class="checkbox toggle-all select-all">
 									<input type="checkbox">
 									<label></label>
-									<button class="btn btn-primary btn-sm"><i class="rf-icon-plus"></i> Workspace</button>
 								</div>
 							</div>
 			    	</div>
@@ -229,7 +320,7 @@
 							<!-- List Group Item -->
 							<div class="list-group-item link">
 								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
+									<a class="list-group-hover" href="#">Metadata</a>
 									<img src="http://placehold.it/200x200">
 								</div>
 								<div class="list-group-content">
@@ -250,7 +341,7 @@
 							<!-- List Group Item -->
 							<div class="list-group-item link">
 								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
+									<a class="list-group-hover" href="#">Metadata</a>
 									<img src="http://placehold.it/200x200">
 								</div>
 								<div class="list-group-content">
@@ -271,7 +362,7 @@
 							<!-- List Group Item -->
 							<div class="list-group-item link">
 								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
+									<a class="list-group-hover" href="#">Metadata</a>
 									<img src="http://placehold.it/200x200">
 								</div>
 								<div class="list-group-content">
@@ -292,7 +383,7 @@
 							<!-- List Group Item -->
 							<div class="list-group-item link">
 								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Details</a>
+									<a class="list-group-hover" href="#">Metadata</a>
 									<img src="http://placehold.it/200x200">
 								</div>
 								<div class="list-group-content">
@@ -311,24 +402,100 @@
 								</div>
 							</div>
 						</div>
-			    </div>
+			    </div> <!-- /#catalog.tab-pane -->
 
 			    <!-- Favorites Tab Pane -->
-			    <div role="tabpanel" class="tab-pane animated fadeInLeft" id="favorites"></div>
+			    <div role="tabpanel" class="tab-pane animated fadeInLeft" id="favorites">
+			    	<!-- Sorting, Search, Add to workspace -->
+			    	<!-- The following commented out code will only show when a user has favorites -->
+			    	<!-- <div class="sidebar-utility-toolbar">
+				    	<div class="utility-tools col-2">
+				    		<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Search Catalog">
+		    					<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#search-catalog" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-search"></i></button>
+								</span>
+								<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Sort Catalog">
+		    					<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#sort-catalog" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-sort-alt-up"></i> </button>
+	    					</span>
+			        </div>
+
+			        <div class="utility-tools col-2 text-right utility-tools-secondary">
+								<button class="btn btn-warning btn-sm"><i class="rf-icon-star"></i> Remove From Favorites</button>
+								<button class="btn btn-primary btn-sm"><i class="rf-icon-plus"></i> Add to</button>
+								<div class="checkbox toggle-all select-all">
+									<input type="checkbox">
+									<label></label>
+								</div>
+							</div>
+			    	</div> -->
+
+			    	<!-- Imagery Layers -->
+						<div class="list-group">
+							<!-- List Group Item -->
+							<div class="list-group-item">
+								<p class="h5 text-muted">Your favorited imagery layers will show up here.</p>
+							</div>
+						</div>
+			    </div> <!-- /#favorites.tab-pane -->
 
 			    <!-- Processing Tab Pane -->
-			    <div role="tabpanel" class="tab-pane animated fadeInLeft" id="processing"></div>
-			  </div>
+			    <div role="tabpanel" class="tab-pane animated fadeInLeft" id="processing">
+			    	
+			    	<!-- Imagery Layers -->
+						<div class="list-group">
+							<!-- Processing List Group Item -->
+							<div class="list-group-item">
+								<div class="list-group-detail">
+									<img src="http://placehold.it/200x200">
+								</div>
+								<div class="list-group-content">
+									<h5>Imagery Layer Name</h5>
+
+									<div class="progress">
+									  <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
+									    <span class="sr-only">60% Complete</span>
+									  </div>
+									</div>
+								</div>
+								<div class="list-group-tool">
+									<button type="button" class="btn btn-toggle-control">
+									  <i class="rf-icon-cancel text-danger"></i> 
+									</button>
+								</div>
+							</div>
+							<!-- Processing List Group Item -->
+							<div class="list-group-item">
+								<div class="list-group-detail">
+									<img src="http://placehold.it/200x200">
+								</div>
+								<div class="list-group-content">
+									<h5>Imagery Layer Name</h5>
+
+									<div class="progress">
+									  <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
+									    <span class="sr-only">60% Complete</span>
+									  </div>
+									</div>
+								</div>
+								<div class="list-group-tool">
+									<button type="button" class="btn btn-toggle-control">
+									  <i class="rf-icon-cancel text-danger"></i> 
+									</button>
+								</div>
+							</div>
+						</div> <!-- /#processing.tab-pane -->
+			    </div> 
+			  </div> <!-- /.tab-content -->
 
     	</div>
+    	<!-- ./sidebar-utility-content -->
 
-    	<!-- Imagery Layer Details Panel -->
+    	<!-- Imagery Layer Metadata Panel -->
 		  <div class="layer-detail animated slideInLeft">
 				<div class="sidebar-utility-toolbar">
 		    	<div class="utility-tools col-2">
     				<ul class="nav nav-tabs" role="tablist">
-					    <li role="presentation" class="active"><a href="#layer-detail" aria-controls="layer-detail" role="tab" data-toggle="tab">Details</a></li>
-					    <li role="presentation"><a href="#layer-images" aria-controls="ayer-images" role="tab" data-toggle="tab">Images</a></li>
+					    <li role="presentation" class="active"><a href="#layer-detail" aria-controls="layer-detail" role="tab" data-toggle="tab">Metadata</a></li>
+					    <li role="presentation"><a href="#layer-images" aria-controls="layer-images" role="tab" data-toggle="tab">Images</a></li>
 					  </ul>
 	        </div>
 
@@ -384,7 +551,7 @@
 								</div>
 								<div class="list-group-content">
 									<h5>P1020861.JPG</h5>
-									<a href="#">View Metadata</a>
+									<a href="#" class="view-metadata">View Metadata</a>
 								</div>
 							</div>
 							<div class="list-group-item link">
@@ -393,7 +560,7 @@
 								</div>
 								<div class="list-group-content">
 									<h5>P1020861.JPG</h5>
-									<a href="#">View Metadata</a>
+									<a href="#" class="view-metadata">View Metadata</a>
 								</div>
 							</div>
 							<div class="list-group-item link">
@@ -402,7 +569,7 @@
 								</div>
 								<div class="list-group-content">
 									<h5>P1020861.JPG</h5>
-									<a href="#">View Metadata</a>
+									<a href="#" class="view-metadata">View Metadata</a>
 								</div>
 							</div>
 							<div class="list-group-item link">
@@ -411,13 +578,88 @@
 								</div>
 								<div class="list-group-content">
 									<h5>P1020861.JPG</h5>
-									<a href="#">View Metadata</a>
+									<a href="#" class="view-metadata">View Metadata</a>
 								</div>
 							</div>
 						</div>
 					</div>
 				</div>
 			</div>
+			<!-- /.layer-Metadata -->
+			
+			<!-- Image Metadata Panel -->
+		  <div class="image-metadata animated slideInLeft">
+		  	<div class="sidebar-utility-toolbar">
+		    	<div class="utility-tools col-2">
+    				<h5 class="font-300">Image Metadata: </h5>
+						<h4>P1020861.JPG</h4>
+	        </div>
+
+	        <div class="utility-tools col-2 text-right">
+						<button type="button" class="close"><i class=" rf-icon-cancel"></i></button>
+					</div>
+	    	</div>
+	    	<div class="layer-detail-content">
+					<img class="img-preview" src="http://placehold.it/300x300">
+					<hr>
+					<dl> 
+					  <dt>Acquistion: </dt>
+						<dd>11-12-2015</dd>
+
+						<dt>Local Time of Day: </dt>
+						<dd>15:42</dd>
+
+						<dt>Latitude: </dt>
+						<dd>39.226º</dd>
+
+						<dt>Longitude: </dt>
+						<dd>-74.892º</dd>
+
+						<dt>Image Quality: </dt>
+						<dd>Standard</dd>
+
+						<dt>SNR: </dt>
+						<dd>75.30</dd>
+
+						<dt>Sun Alittude: </dt>
+						<dd>N/A</dd>
+
+						<dt>Sun Longitude: </dt>
+						<dd>N/A</dd>
+
+						<dt>Satellite ID: </dt>
+						<dd>N/A</dd>
+					</dl>
+
+					<dl>
+						<dt>Camera Bit Depth: </dt>
+						<dd>10</dd>
+
+						<dt>Camera Color Mode:</dt>
+						<dd>RGB</dd>
+
+						<dt>Camera Exposure Time: </dt>
+						<dd>1170μs</dd>
+
+						<dt>Camera Gain: </dt>
+						<dd>350</dd>
+
+						<dt>Camera TDI Pulses: </dt>
+						<dd>15</dd>
+
+						<dt>Cloud Cover: </dt>
+						<dd>0.26%</dd>
+
+						<dt>File Size: </dt>
+						<dd>58MB</dd>
+
+						<dt>GSD: </dt>
+						<dd>4.25 m</dd>
+					</dl>
+				</div>
+			</div>
+			<!-- /.image-metadata -->
+
     </div>
 	  <!-- /sidebar utilities -->
 	</div>
@@ -429,7 +671,7 @@
 	</div>
 	<!-- /map-container -->
 
-	<!-- Upload Files Modal -->
+	<!-- Import Files Modal -->
 	<div class="modal import-modal fade" id="import-imagery-modal" tabindex="-1" role="dialog" aria-labelledby="import-imagery-modal" aria-hidden="true">
 		<div id="pane-1" class="pane animated fadeInDown active">
 		  <div class="modal-dialog modal-lg">
@@ -462,10 +704,10 @@
 				      	</div>
 			      	</div>
 		      	</div>
-		      </div>
-		    </div>
-		  </div>
-	  </div>
+		      </div> <!-- /.modal-body -->
+		    </div> <!-- /.modal-content -->
+		  </div> <!-- /.modal-dialog -->
+	  </div> <!-- /#pane-1 -->
 		
 		<div id="pane-2" class="pane animated fadeInDown">
 		  <div class="modal-dialog">
@@ -529,22 +771,153 @@
 								</div>
 							</div>
 							<ul class="list-group">
-							  <li class="list-group-item">file_name.tiff <a href="#" class="pull-right"><i class="rf-icon-cancel"></i></a></li>
-							  <li class="list-group-item">file_name_2.tiff <a href="#" class="pull-right"><i class="rf-icon-cancel"></i></a></li>
-							  <li class="list-group-item">file_name_3.tiff <a href="#" class="pull-right"><i class="rf-icon-cancel"></i></a></li>
+							  <li class="list-group-item">file_name.tiff <a href="#" class="pull-right"><i class="rf-icon-cancel text-danger"></i></a></li>
+							  <li class="list-group-item">file_name_2.tiff <a href="#" class="pull-right"><i class="rf-icon-cancel text-danger"></i></a></li>
+							  <li class="list-group-item">file_name_3.tiff <a href="#" class="pull-right"><i class="rf-icon-cancel text-danger"></i></a></li>
 							</ul>
 
+							<div class="form-action">
+								<!-- <input type="submit" class="btn btn-secondary pull-right" value="Submit"> -->
+								<button class="btn btn-secondary pull-right" data-toggle-pane data-pane-target="#pane-3">Submit</button>
+								<button class="btn btn-link text-muted">Cancel</button>
+							</div>
+		      	</form>
+		      </div> <!-- /.modal-body -->
+		    </div> <!-- /.modal-content -->
+		  </div> <!-- /.modal-dialog -->
+	  </div> <!-- /#pane-2 -->
+
+	  <div id="pane-3" class="pane animated fadeInDown">
+		  <div class="modal-dialog">
+		    <div class="modal-content">
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+		      <div class="modal-body">
+		      	<form>
+		      		<div class="row">
+								<div class="col-md-8">
+									<div class="form-group">
+										<label>Source SRS</label>
+										<input class="form-control" type="text" value="UTM Zone 18" readonly>
+									</div>
+								</div>
+								<div class="col-md-4">
+									<label>&nbsp;</label>
+									<button class="btn btn-default-outline btn-block" value="Change SRS">Change SRS</button>
+								</div>
+							</div>
+							<div class="form-group">
+								<label>Tile SRS</label>
+								<select class="form-control">
+									<option value="">Web Mercator</option>
+									<option value="">UTM</option>
+									<option value="">WGS84 (EPSG: 4325)</option>
+									<option value="">EPSG/ESRI offline database</option>
+								</select>
+							</div>
+			      	<hr>
+							<h4>Mosaic Options</h4>
+							<div class="form-group">
+								<label>Tile Format</label>
+								<select class="form-control">
+									<option>JPEG</option>
+									<option>Overlay PNG + optimisation (8 bit palette with alpha transparency)</option>
+									<option>Overlay PNG format (32 bit RGBA with alpha transparency)</option>
+									<option>Base map JPEG format (without transparency)</option>
+									<option>Base map PNG format + optimisation (8 bit palette with alpha transparency)</option>
+									<option>Base map PNG format (24 bit RGB without transparency)</option>
+								</select>
+							</div>
+							<div class="form-group">
+								<label>Resampling</label>
+								<select class="form-control">
+									<option value="">Bilinear</option>
+									<option value="">Cubic</option>
+									<option value="">Cubic B-Spline</option>
+									<option value="">Average</option>
+									<option value="">Mode</option>
+									<option value="">Nearest Neighbor</option>
+								</select>
+							</div>
+							<div class="form-group">
+								<label>Transparency Settings</label><br>
+								<div class="radio">
+									<input name="transparency-setting" type="radio" checked>
+									<label>Default</label>
+								</div>
+								<br>
+								<div class="radio">
+									<input name="transparency-setting" type="radio">
+									<label>Color to Alpha</label>
+								</div>
+								<input type="color">
+							</div>
+							<div class="form-group">
+								<label>Tiling Scheme</label><br>
+								<div class="radio">
+									<input name="tiling-scheme" type="radio" checked>
+									<label>OGC WMTS / OpenStreetMap / Google XYZ (top-left origin)</label>
+								</div>
+								<br>
+								<div class="radio">
+									<input name="tiling-scheme" type="radio">
+									<label>OSGEO TMS (bottom-left origin)</label>
+								</div>
+							</div>
+							<hr>
+							<div class="form-group">
+			      		<label>Image Upload Progress</label>
+				      	<div class="progress">
+								  <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
+								    <span class="sr-only">60% Complete</span>
+								  </div>
+								</div>
+								<em>Mosaic won't begin until upload has completed</em>
+							</div>
 							<div class="form-action">
 								<input type="submit" class="btn btn-secondary pull-right" value="Submit">
 								<button class="btn btn-link text-muted">Cancel</button>
 							</div>
 		      	</form>
-		      </div>
-		    </div>
-		  </div>
-	  </div>
+		      </div> <!-- /.modal-body -->
+		    </div> <!-- /.modal-content -->
+		  </div> <!-- /.modal-dialog -->
+	  </div> <!-- /#pane-3 -->
 
 	</div>
+	<!-- /import modal -->
+
+	<div class="modal fade" id="addto-imagery-modal" tabindex="-1" role="dialog" aria-labelledby="addto-imagery-modal" aria-hidden="true">
+	  <div class="modal-dialog">
+	    <div class="modal-content">
+	      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><i class="rf-icon-cancel"></i></button>
+	      <div class="modal-body">
+	        <form>
+	        	<div class="form-group">
+	        		<label>Add Imagery To:</label>
+	        		<select class="form-control">
+	        			<option>New Project</option>
+	        			<option>Project Name 1</option>
+	        			<option>Project Name 2</option>
+	        			<option>Project Name 3</option>
+	        		</select>
+	        	</div>
+
+	        	<div class="form-group">
+							<label>New Project Name</label>
+							<input type="text" class="form-control">
+	        	</div>
+
+	        	<div class="form-action">
+							<!-- <input type="submit" class="btn btn-secondary pull-right" value="Add to project"> -->
+							<a href="/project-with-layers.html" class="btn btn-secondary pull-right">Add to project</a>
+							<button class="btn btn-link text-muted">Cancel</button>
+						</div>
+        	</form>
+	      </div>
+	    </div><!-- /.modal-content -->
+	  </div><!-- /.modal-dialog -->
+	</div><!-- /.modal -->
+	<!-- /add layer to project modal -->
 
 
 	<!-- JS -->
@@ -552,6 +925,13 @@
 	<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
 	<script src="/assets/js/leaflet.js"></script>
 	<script src="/assets/js/app.js"></script>
+	<script>
+		/// Multi Level Menu Init
+		$(function() {
+		    $( '#dl-menu' ).dlmenu();
+		});
+	</script>
+	<script src="assets/js/vendor/multi-level-menu/jquery.dlmenu.js"></script>
   <script src="assets/js/vendor/bootstrap/bootstrap.min.js"></script>
 </body>
 </html>

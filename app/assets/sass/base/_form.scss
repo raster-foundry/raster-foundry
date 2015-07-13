@@ -1,6 +1,6 @@
 form {
 	.form-group {
-		margin-bottom: 30px;
+		margin-bottom: 20px;
 		text-align: left;
 	}
 	
@@ -55,7 +55,7 @@ form {
 	box-shadow: none;
 	height: 40px;
 	border-radius: 4px;
-	border-color: $off-white;
+	border-color: $gray-lightest;
 	transition: .4s ease all;
 	color: $gray-light;
 	@include font-size(14);
@@ -63,13 +63,27 @@ form {
 	&:focus, &:hover {
 		outline: none;
 		box-shadow: none;
-		border: 1px solid $gray-lightest;
+		border: 1px solid $gray-lighter;
 	}
 }
 
 select.form-control {
 	z-index: 1;
 	position: relative;
+}
+
+input[type="color"] {
+	background: $off-white;
+	border: 1px solid $gray-lightest;
+	border-radius: 4px;
+	margin-left: 4px;
+	margin-right: 4px;
+
+	&:focus, &:hover {
+		outline: none;
+		box-shadow: none;
+		border: 1px solid $gray-lightest;
+	}
 }
 
 /// readonly, disabled 
@@ -109,7 +123,7 @@ fieldset[disabled] .form-control {
 
 
 /// Checkbox Styles
-/// Usage: <label class="checkbox"><input type="checkbox"> ...</label>
+/// Usage: <div class="checkbox"><input type="checkbox"><label> ...</label></div>
 ///
 .checkbox {
 	position: relative;
@@ -140,7 +154,8 @@ fieldset[disabled] .form-control {
 		position: absolute;
 		margin: 0;
 		right: 0;
-		width: 30px;
+		width: 100%;
+		min-width: 30px;
 		height: 100%;
 		z-index: 1;
 		cursor: pointer;
@@ -208,16 +223,87 @@ fieldset[disabled] .form-control {
 .checkbox.btn-combo {
 	.btn {
 		display: none;
-		position: absolute;
-		right: 35px;
-		top: -10px;
-
-		&.btn-sm {
-			top: -5px;
-		}
+		margin-right: 5px;
+	  vertical-align: middle;
+	  margin-top: -10px;
+	  margin-bottom: -11px;
 	}
 
 	&.active .btn {
 		display: inline-block;
+	}
+}
+
+
+/// Radio Styles
+/// Usage: <div class="radio"><input type="radio"><label> ...</label></div>
+///
+.radio {
+	position: relative;
+	display: inline-block;
+	
+	label {
+		padding: 0;
+		&:before {
+			content: '';
+			position: relative;
+			display: inline-block;
+			width: 20px;
+			height: 20px;
+			background: $off-white;
+			border: 1px solid $gray-lightest;
+			border-radius: 100%;
+			margin-right: 5px;
+			color: $white;
+			line-height: 1.5;
+			vertical-align: middle;
+			text-align: center;
+			transition: .4s ease-in-out all;
+			@include font-size(12);
+		}
+	}
+
+	input[type="radio"] {
+		position: absolute;
+		margin: 0;
+		right: 0;
+		width: 100%;
+		min-width: 30px;
+		height: 100%;
+		z-index: 1;
+		cursor: pointer;
+		@include opacity(0);
+
+		&:checked + label:before {
+			content: '\2022';
+			font-family: "raster-foundry";
+			background: $brand-primary;
+			border-color: $brand-primary-dark;
+		}
+
+		&:hover + label:before  {
+			border-color: $brand-primary-dark;
+		}
+	}
+
+	&.active {
+		
+		input[type="radio"] {
+			
+			+ label:before {
+				content: '\2022';
+				font-family: "raster-foundry";
+				background: $brand-primary;
+				border-color: $brand-primary-dark;
+			}
+
+			&:hover + label:before  {
+				border-color: $brand-primary-dark;
+			}
+		}
+	}
+
+	+ .radio {
+		margin-left: 15px;
 	}
 }

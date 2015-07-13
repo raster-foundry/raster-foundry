@@ -14,9 +14,9 @@
 
 .sidebar-brand {
 	background-color: $gray-dark;
-	padding: 15px 25px;
-	position: relative;
-	z-index: 1;
+	padding: 15px 25px 14px;
+	position: absolute;
+	z-index: 2;
 	display: inline-block;
 }
 

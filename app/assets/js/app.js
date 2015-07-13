@@ -1,6 +1,7 @@
+///
+/// Bootstrap Module expansion
+/// Closable Bootstrap Tabs
 $(function() {
-	///
-	/// Closable Bootstrap Tabs
 	$('#sidebar-nav a').click(function () {
         var tab = $(this);
 
@@ -13,23 +14,26 @@ $(function() {
         }, 1);
 	    }
 	});
+});
 
-	///
-	/// Floating input labels
+///
+/// Floating input labels
+$(function() {
 	$('.form-group.floating-label .form-control').change(function() {
-    if($(this).val() == ""){
-      $(this).siblings('label').removeClass('float-label');
-    }
-    else { 
-      $(this).siblings('label').addClass('float-label');
-    }
+        if($(this).val() == ""){
+          $(this).siblings('label').removeClass('float-label');
+        }
+        else { 
+          $(this).siblings('label').addClass('float-label');
+        }
 	});
+});
 
 
-	///
-	/// Active class on checkboxes
+///
+/// Active class on checkboxes
+$(function() {
 	$('.checkbox input').click(function() {
-		var checkboxInput = $(this);
 		var checkboxParent = $(this).parent('.checkbox');
 		
 		if($(checkboxParent).hasClass('active')){
@@ -39,83 +43,115 @@ $(function() {
 			$(checkboxParent).addClass('active');
 			$(this).attr('checked', true);
 		}
-	});
-
-	/*$('.togglable').click(function(e){
-    if( e.target.nodeName === '.list-group-hover' ) {
-        e.stopPropagation();
-        return;
-    }
-
-    var checkboxParent = $(this).find('.checkbox');
-    var checkboxInput = $(checkboxParent).find('input[type="checkbox"]');
-
-		if( $(checkboxParent).hasClass('active')) {
-			$(checkboxParent).removeClass('active');
-			$(checkboxInput).attr('checked', false);
-		} else {
-			$(checkboxParent).addClass('active');
-			$(checkboxInput).attr('checked', true);
-		}
-	});*/
+	});    
+});
 
 
+///
+/// Toggles between modal panes
+$(function() {
 	$('[data-toggle-pane]').click(function(evt) {
-    evt.preventDefault()
+        evt.preventDefault()
 
-    var paneTarget = $(this).data('pane-target'),
-        paneParent = $(this).closest('.pane')
+        var paneTarget = $(this).data('pane-target'),
+            paneParent = $(this).closest('.pane')
 
-    if ($(paneParent).hasClass('active')) {
-    	$(paneParent).removeClass('active').hide()
-    	$(paneTarget).addClass('active');
-    }
-  });
+        if ($(paneParent).hasClass('active')) {
+        	$(paneParent).removeClass('active').hide()
+        	$(paneTarget).addClass('active');
+        }
+    });
+});
 
 
-  ///
-  /// Temp activation for layer-details panel
-  $('.list-group-hover').click(function(evt) {
-    evt.preventDefault()
+///
+/// Temp activation for layer-details panel
+$(function() {
+    var layerDetail = $('.layer-detail');
 
-    $('.layer-detail').addClass('active');
-  });
+    $('.list-group-hover').click(function(evt) {
+        evt.preventDefault()
 
-  $('.layer-detail .close').click(function(evt) {
-    evt.preventDefault()
+        layerDetail.addClass('active');
+    });
 
-    $('.layer-detail').removeClass('active');
-  });
+    $('.layer-detail .close').click(function(evt) {
+        evt.preventDefault()
+
+        layerDetail.addClass('slideOutLeft')
+            setTimeout(function() {
+                layerDetail.removeClass('slideOutLeft active')
+            }, 400);
+    });
 
 });
 
 
+///
+/// Temp activation for Image Metadata
+$(function() {
+    var imageMetadata = $('.image-metadata');
+
+    $('.view-metadata').click(function(evt) {
+        evt.preventDefault()
+
+        imageMetadata.addClass('active');
+    });
+
+    $('.image-metadata .close').click(function(evt) {
+        evt.preventDefault()
+
+        imageMetadata.addClass('slideOutLeft')
+            setTimeout(function() {
+                imageMetadata.removeClass('slideOutLeft active')
+            }, 400);
+    });
+
+});
+
+
+///
+/// Temp activation for secondary layer tools
+$(function() {
+    $('.select-all').click(function(){
+        $(this).parent('.utility-tools-secondary').toggleClass('active');
+    });
+});
+
+
+///
+/// Bootstrap Module
+/// Activates tooltips
 $(function () {
-    $('[data-toggle="tooltip"]').tooltip()
-})
+    $('[data-toggle="tooltip"]').tooltip({
+        container: '.sidebar-utility-content',
+        viewport: '.sidebar'
+    })
+});
 
 
-
-
-
-/*/// Useful for resizing
+///
+/// Controls resizing layers panel
 var setupSize = function() {
-    var bottomPadding = 10;
 
     var resize = function(){
-        var pane = $('#main');
-        var height = $(window).height() - pane.offset().top - bottomPadding;
-        pane.css({'height': height +'px'});
+        var sidebar = $('.sidebar');
 
-        var sidebar = $('#tabBody');
-        var height = $(window).height() - sidebar.offset().top - bottomPadding;
-        sidebar.css({'height': height +'px'});
+        var sidebarHeader = $('.sidebar-header');
 
-        var mapDiv = $('#map');
-		var wrapDiv = $('#wrap');
-        var height = $(window).height() - mapDiv.offset().top - bottomPadding - wrapDiv.height();
-        mapDiv.css({'height': height +'px'});
-        map.invalidateSize();
+        var sidebarUtilHeader = $('.sidebar-utility-header');
+
+        var sidebarUtilToolbar = $('.sidebar-utility-toolbar');
+
+        var resizeListGroup = $('.sidebar .list-group');
+        var resizeLayerDetails = $('.layer-detail .layer-detail-content, .image-metadata .layer-detail-content');
+
+        var height = sidebar.height() - sidebarHeader.height() - sidebarUtilHeader.height() - sidebarUtilToolbar.height() - 30;
+
+        var heightSecondary = sidebar.height() - sidebarHeader.height() - sidebarUtilToolbar.height() - 20;
+        
+        resizeListGroup.css({'max-height': height + 'px'});
+        resizeLayerDetails.css({'max-height': heightSecondary + 'px'});
     };
     resize();
     $(window).resize(resize);
@@ -124,14 +160,5 @@ var setupSize = function() {
 // On page load
 $(document).ready(function() {
     // Set heights
-
-    weightedOverlay.bindSliders();
-    colorRamps.bindColorRamps();
-
-    $('#clearButton').click( function() {
-        summary.clear();
-        return false;
-    });
     setupSize();
 });
-*/

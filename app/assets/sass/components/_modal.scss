@@ -6,6 +6,10 @@
 	}
 }
 
+.modal-xl {
+	width: 90%;
+}
+
 .modal-content {
 	box-shadow: 0 0 20px 0 rgba(black, .1);
 }
@@ -13,13 +17,45 @@
 .modal {
 
 	.close {
-		font-size: 40px;
+		@include font-size(30);
 		position: absolute;
 		right: -40px;
-		top: -40px;
-		color: $brand-primary;
+		top: -5px;
+		color: $gray-lighter;
 		text-shadow: none;
 		@include opacity(1);
+	}
+
+	form {
+		margin: 20px;
+
+		.form-action {
+		  margin: 0 -35px -35px;
+		  padding: 20px 35px;
+		  background-color: $off-white;
+		  border-top: 1px solid $gray-lightest;
+		  border-radius: 0 0 5px 5px;
+			@extend .clearfix;
+
+			.btn {
+				margin-bottom: 0;
+			}
+
+			input[type="submit"] {
+				float: right;
+				width: 50%;
+				margin-bottom: 0;
+			}
+
+			.btn:only-child {
+				float: none;
+			}
+		}
+	}
+
+	.form-control {
+		background: $white;
+		border-color: $gray-lightest;
 	}
 }
 
@@ -82,7 +118,7 @@
 		  position: absolute;
 		  background: $base;
 		  color: $white;
-		  font-size: 13px;
+		  @include font-size(13);
 		  left: -18px;
 		  top: 44%;
 		  border-radius: 100%;
@@ -91,32 +127,37 @@
 		  height: 36px;
 		}
 	}
+}
 
-	form {
-		margin: 20px;
 
-		.form-action {
-			padding-top: 20px;
-			@extend .clearfix;
+/// Add Imagery Layer Modal
+///
+.add-imagery-modal {
 
-			.btn {
-				margin-bottom: 0;
-			}
-
-			input[type="submit"] {
-				float: right;
-				width: 50%;
-				margin-bottom: 0;
-			}
-
-			.btn:only-child {
-				float: none;
-			}
-		}
+	.modal-body {
+		padding: 0;
+	}
+	
+	.nav-tabs {
+		background: $off-white;
 	}
 
-	.form-control {
-		background: $white;
-		border-color: $gray-lightest;
+	.tab-pane.active {
+		padding: 20px;
+	}
+
+	.imagery-layers {
+		max-width: 70%;
+		float: left;
+		max-height: 70vh;
+		overflow: auto;
+	}
+
+	.imagery-sidepanel {
+		max-width: 30%;
+		float: left;
+		border-left: 2px solid $gray-lightest;
+		height: 70vh;
+		overflow: auto;
 	}
 }

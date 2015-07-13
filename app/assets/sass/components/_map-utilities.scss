@@ -1,7 +1,3 @@
-.map-utility {
-
-}
-
 %utility-panel-styles {
   width: 340px;
   position: absolute;
@@ -23,14 +19,6 @@
 		transition: .8s all ease-in-out;
 	}
 }
-
-/* .utility-panel.in {
-  left: 0;
-}
-
-.utility-panel.out {
-  left: -100%;
-} */
 
 .utility-panel-secondary {
   @extend %utility-panel-styles;
