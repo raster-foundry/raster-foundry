@@ -37,17 +37,17 @@
 					<i class="rf-icon-book"></i> Library 
 				</button>
 				<ul class="dl-menu">
-					<li class="dl-menu-group-title"><i class="rf-icon-map-alt"></i> Tile Projects</li>
+					<li class="dl-menu-group-title"><i class="rf-icon-map-alt"></i> Mosaic Projects</li>
 					<li class="dl-menu-group">
-						<a href="/project.html" class="new-project">New Tile Project</a>
+						<a href="/project.html" class="new-project">New Mosaic Project</a>
 						<a href="/project-with-layers.html">Project Name 6</a>
 						<a href="/project-with-layers.html">Project Name 2</a>
 						<a href="/project-with-layers.html">Project Name 1</a>
 					</li>
 					<li class="dl-menu-group">
-						<a href="#" class="sub-menu-parent">More Tile Projects</a>
+						<a href="#" class="sub-menu-parent">More Mosaic Projects</a>
 						<ul class="dl-submenu">
-							<li><a href="/project.html" class="new-project">New Tile Project</a></li>
+							<li><a href="/project.html" class="new-project">New Mosaic Project</a></li>
 							<li><a href="/project-with-layers.html">Project Name 1</a></li>
 							<li><a href="/project-with-layers.html">Project Name 2</a></li>
 							<li><a href="/project-with-layers.html">Project Name 3</a></li>
@@ -62,7 +62,7 @@
 					</li>
 					<li class="divider"></li>
 					<li>
-						<a href="#"><i class="rf-icon-user"></i> Settings</a>
+						<a href="/account.html"><i class="rf-icon-user"></i> Account</a>
 					</li>
 					<li>
 						<a href="/"><i class="rf-icon-logout"></i> Logout</a>
@@ -155,8 +155,8 @@
 						<div class="list-group">
 							<!-- List Group Item -->
 							<div class="list-group-item link">
+								<a class="list-group-link" href="#"></a>
 								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Metadata</a>
 									<img src="http://placehold.it/200x200">
 								</div>
 								<div class="list-group-content">
@@ -189,8 +189,8 @@
 							</div>
 							<!-- List Group Item -->
 							<div class="list-group-item link">
+								<a class="list-group-link" href="#"></a>
 								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Metadata</a>
 									<img src="http://placehold.it/200x200">
 								</div>
 								<div class="list-group-content">
@@ -223,8 +223,8 @@
 							</div>
 							<!-- List Group Item -->
 							<div class="list-group-item link">
+								<a class="list-group-link" href="#"></a>
 								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Metadata</a>
 									<img src="http://placehold.it/200x200">
 								</div>
 								<div class="list-group-content">
@@ -257,8 +257,8 @@
 							</div>
 							<!-- List Group Item -->
 							<div class="list-group-item link">
+								<a class="list-group-link" href="#"></a>
 								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Metadata</a>
 									<img src="http://placehold.it/200x200">
 								</div>
 								<div class="list-group-content">
@@ -319,8 +319,8 @@
 						<div class="list-group">
 							<!-- List Group Item -->
 							<div class="list-group-item link">
+								<a class="list-group-link" href="#"></a>
 								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Metadata</a>
 									<img src="http://placehold.it/200x200">
 								</div>
 								<div class="list-group-content">
@@ -340,8 +340,8 @@
 							</div>
 							<!-- List Group Item -->
 							<div class="list-group-item link">
+								<a class="list-group-link" href="#"></a>
 								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Metadata</a>
 									<img src="http://placehold.it/200x200">
 								</div>
 								<div class="list-group-content">
@@ -361,8 +361,8 @@
 							</div>
 							<!-- List Group Item -->
 							<div class="list-group-item link">
+								<a class="list-group-link" href="#"></a>
 								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Metadata</a>
 									<img src="http://placehold.it/200x200">
 								</div>
 								<div class="list-group-content">
@@ -382,8 +382,8 @@
 							</div>
 							<!-- List Group Item -->
 							<div class="list-group-item link">
+								<a class="list-group-link" href="#"></a>
 								<div class="list-group-detail">
-									<a class="list-group-hover" href="#">Metadata</a>
 									<img src="http://placehold.it/200x200">
 								</div>
 								<div class="list-group-content">
@@ -665,6 +665,17 @@
 	</div>
 	<!-- /sidebar -->
 
+	<div class="account-usage-block">
+		<div class="progress">
+			  <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
+			    <span class="sr-only">60% Complete</span>
+			  </div>
+			</div>
+		<span class="account-usage-label">4.8 GB of 10 GB used</span>
+		<a href="#">Manage</a>
+	</div>
+	<!-- /account-usage-block -->
+
 	<!-- map-container -->
 	<div class="map-container">
 		<div id="map"></div>
@@ -692,9 +703,9 @@
 									<h4 class="font-300">Is your imagery hosted somewhere already? Enter the URI to import.</h4>
 									<em>Examples: S3, DropBox, FTP</em>
 									<form>
-										<div class="form-group floating-label">
-											<input class="form-control" type="url">
+										<div class="form-group">
 											<label>URI</label>
+											<input class="form-control" type="url">
 										</div>
 										<div class="form-action text-right">
 											<!-- <input type="submit" class="btn btn-primary" value="Continue"> -->
