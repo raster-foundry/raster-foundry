@@ -1,3 +1,61 @@
+// Typically seen in user accounts pages
+.navbar {
+	background: $white;
+	margin: 10px;
+	position: relative;
+	
+	.sidebar-header {
+		width: 450px;
+		float: left;
+		z-index: map-get($z-index, sidebar);
+
+		@include respond-to('laptop-down') {
+			width: auto;
+			float: none;
+			padding-right: 260px;
+		}
+	}
+
+	.dl-trigger {
+		border-bottom: 0;
+	}
+
+	.nav {
+		width: 50%;
+		margin: auto;
+		text-align: center;
+		
+		a {
+			color: $base;
+			display: inline-block;
+			padding: 15px;
+			margin: 11px 5px;
+			text-decoration: none;
+
+			&:hover, 
+			&:focus {
+				color: $brand-primary;
+			}
+		}
+
+		.active {
+			color: $brand-primary;
+		}
+
+		@include respond-to('laptop-down') {
+			position: relative;
+			width: 100%;
+			border-top: 2px solid $off-white;
+		}
+	}
+
+	.account-usage-block {
+		top: 0;
+		right: 0;
+		border-left: 2px solid $off-white;
+	}
+}
+
 /// Custom Dropdown menu from codrops
 .dl-menuwrapper {
 	width: 100%;

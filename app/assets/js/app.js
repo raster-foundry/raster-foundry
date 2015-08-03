@@ -69,7 +69,7 @@ $(function() {
 $(function() {
     var layerDetail = $('.layer-detail');
 
-    $('.list-group-hover').click(function(evt) {
+    $('.list-group-item .list-group-link').click(function(evt) {
         evt.preventDefault()
 
         layerDetail.addClass('active');

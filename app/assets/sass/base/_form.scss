@@ -51,7 +51,7 @@ form {
 /// input, textarea, select all need .form-control
 ///
 .form-control {
-	background: $off-white;
+	background: $white;
 	box-shadow: none;
 	height: 40px;
 	border-radius: 4px;
@@ -305,5 +305,14 @@ fieldset[disabled] .form-control {
 
 	+ .radio {
 		margin-left: 15px;
+	}
+}
+
+.help-block {
+	color: $base;
+	margin-top: 10px;
+
+	i {
+		margin-right: 10px;
 	}
 }
