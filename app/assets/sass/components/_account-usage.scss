@@ -5,7 +5,7 @@
 	width: 260px;
 	padding: 14px 20px;
 	background: $white;
-	z-index: map-get($z-index, map);
+	z-index: 2;
 
 	.account-usage-label {
 		@include font-size(12);
