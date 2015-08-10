@@ -1,0 +1,10 @@
+{{ app_log }} {
+  rotate {{ app_log_rotate_count }}
+  {{ app_log_rotate_interval }}
+  compress
+  missingok
+  postrotate
+    restart rf-app
+  endscript
+  notifempty
+}

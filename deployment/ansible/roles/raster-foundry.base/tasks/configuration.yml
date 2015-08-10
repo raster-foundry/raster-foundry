@@ -1,0 +1,30 @@
+---
+- name: Create service account for application
+  user: name=rf
+        system=yes
+        home=/var/lib/rf
+        shell=/bin/false
+        state=present
+
+- name: Add Ansible SSH user to the group
+  user: name="{{ ansible_ssh_user }}"
+        append=yes
+        group=rf
+        state=present
+
+- name: Create configuration file directory
+  file: path="{{ envdir_home }}"
+        owner=root
+        group=rf
+        mode=0750
+        state=directory
+
+- name: Configure base settings
+  copy: content="{{ item.value }}"
+        dest="{{ envdir_home }}/{{ item.key }}"
+        owner=root
+        group=rf
+        mode=0750
+  with_dict: envdir_config
+  notify:
+    - Restart rf-app

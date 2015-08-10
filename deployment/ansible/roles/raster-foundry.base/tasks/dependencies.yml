@@ -1,0 +1,17 @@
+---
+- name: Install Geospatial libraries
+  apt: pkg={{ item }} state=present
+  with_items:
+    - "binutils=2.24*"
+    - "libproj-dev=4.8.0*"
+    - "gdal-bin=1.10.1*"
+    - "libgdal1-dev=1.10.1*"
+  when: "['tile-servers'] | is_not_in(group_names)"
+
+- name: Configure the main PostgreSQL APT repository
+  apt_repository: repo="deb http://apt.postgresql.org/pub/repos/apt/ {{ ansible_distribution_release}}-pgdg main"
+                  state=present
+
+- name: Install PostgreSQL client
+  apt: pkg=postgresql-client-{{ postgresql_version }}={{ postgresql_package_version }}
+

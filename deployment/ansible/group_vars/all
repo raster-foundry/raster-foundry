@@ -1,0 +1,25 @@
+---
+django_test_database: "{{ lookup('env', 'RF_TEST_DB_NAME') | default('test_rf', true) }}"
+
+redis_port: 6379
+postgresql_port: 5432
+kibana_port: 5601
+relp_port: 20514
+graphite_port: 2003
+statsite_port: 8125
+apache_port: 8080
+graphite_web_port: "{{ apache_port }}"
+
+postgresql_username: rf
+postgresql_password: rf
+postgresql_database: rf
+
+postgresql_version: "9.4"
+postgresql_package_version: "9.4.*-1.pgdg14.04+1"
+postgresql_support_repository_channel: "main"
+postgresql_support_libpq_version: "9.4.*.pgdg14.04+1"
+postgresql_support_psycopg2_version: "2.6"
+postgis_version: "2.1"
+postgis_package_version: "2.1.*.pgdg14.04+1"
+
+nodejs_npm_version: 2.1.17

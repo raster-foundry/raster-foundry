@@ -1,0 +1,22 @@
+---
+- name: Create service account for pgweb
+  user: name=pgweb
+        system=yes
+        home=/var/lib/pgweb
+        shell=/bin/false
+        state=present
+
+- name: Configure pgweb service definition
+  template: src=pgweb.conf.j2 dest=/etc/init/pgweb.conf
+  notify:
+    - Restart pgweb
+
+- name: Touch log file if it does not exist
+  command: touch {{ pgweb_log }}
+           creates={{ pgweb_log }}
+
+- name: Set log file permissions
+  file: path={{ pgweb_log }} owner=pgweb group=pgweb mode=0644
+
+- name: Configure pgweb log rotation
+  template: src=logrotate_pgweb.j2 dest=/etc/logrotate.d/pgweb
