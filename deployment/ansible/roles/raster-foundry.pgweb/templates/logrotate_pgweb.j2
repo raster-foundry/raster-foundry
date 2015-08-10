@@ -1,0 +1,7 @@
+{{ pgweb_log }} {
+  rotate {{ pgweb_log_rotate_count }}
+  {{ pgweb_log_rotate_interval }}
+  compress
+  missingok
+  notifempty
+}

@@ -1,0 +1,3 @@
+---
+beaver_version: "33.3.0"
+beaver_redis_url: "redis://{{ redis_host }}:{{ redis_port }}/0"

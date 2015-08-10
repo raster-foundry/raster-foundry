@@ -1,0 +1,16 @@
+---
+- name: Configure Beaver to ship logs
+  template: src="{{ item }}.conf.j2"
+            dest="{{ beaver_conf_dir }}/conf.d/{{ item }}"
+  with_items:
+    - nginx
+    - django
+    - gunicorn
+  notify:
+    - Restart Beaver
+
+- name: Add Beaver user to service group
+  user: name=beaver
+        append=yes
+        groups=adm
+        state=present

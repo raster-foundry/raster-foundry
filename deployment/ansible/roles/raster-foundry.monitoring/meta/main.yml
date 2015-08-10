@@ -1,0 +1,5 @@
+---
+dependencies:
+  - { role: "azavea.relp" }
+  - { role: "raster-foundry.collectd" }
+  - { role: "raster-foundry.beaver" }

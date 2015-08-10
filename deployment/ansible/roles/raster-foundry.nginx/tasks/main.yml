@@ -1,0 +1,6 @@
+---
+- name: Configure Nginx log format
+  template: src=log-format.conf.j2
+            dest=/etc/nginx/conf.d/log-format.conf
+  notify:
+    - Restart Nginx

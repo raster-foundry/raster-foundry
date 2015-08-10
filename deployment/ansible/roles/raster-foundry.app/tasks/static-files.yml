@@ -1,0 +1,16 @@
+---
+- name: Create folders for static files
+  file: path="{{ item }}"
+        state=directory
+        owner="{{ ansible_ssh_user }}"
+        group=rf
+        mode=0775
+  with_items:
+    - "{{ app_static_root }}"
+    - "{{ app_media_root }}"
+    - "{{ app_static_cache }}"
+
+- name: Run Django collectstatic command
+  django_manage: command=collectstatic app_path="{{ app_home }}"
+  environment: app_config
+  sudo: False

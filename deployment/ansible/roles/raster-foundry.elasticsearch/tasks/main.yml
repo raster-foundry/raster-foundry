@@ -1,0 +1,6 @@
+---
+- name: Delete ElasticSearch indexes order than 30 days
+  cron: name="elasticsearch-curator"
+        special_time=daily
+        job="/usr/local/bin/curator delete --older-than {{ curator_time_unit }}"
+        state=present
