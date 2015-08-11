@@ -1,0 +1,5 @@
+---
+dependencies:
+  - { role: "azavea.postgresql-support" }
+  - { role: "azavea.postgresql" }
+  - { role: "azavea.postgis" }

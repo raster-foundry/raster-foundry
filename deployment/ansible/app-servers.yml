@@ -1,0 +1,23 @@
+---
+- hosts: app-servers
+  sudo: True
+
+  pre_tasks:
+    - name: Update APT cache
+      apt: update_cache=yes cache_valid_time=3600
+
+    - name: Add monitoring hostname to /etc/hosts
+      lineinfile: dest="/etc/hosts"
+                  regexp="^127.0.0.1"
+                  line="127.0.0.1 localhost {{ statsite_host }}"
+      when: "['packer'] | is_in(group_names)"
+
+  roles:
+    - { role: "raster-foundry.app" }
+
+  post_tasks:
+    - name: Revert change to /etc/hosts
+      lineinfile: dest="/etc/hosts"
+                  regexp="^127.0.0.1"
+                  line="127.0.0.1 localhost"
+      when: "['packer'] | is_in(group_names)"

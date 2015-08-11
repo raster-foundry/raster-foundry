@@ -1,0 +1,21 @@
+input {
+  relp {
+    port => {{ relp_port }}
+    codec => "json"
+    tags => [ "syslog" ]
+  }
+  redis {
+    key => "logstash"
+    host => "{{ redis_host }}"
+    data_type => "list"
+  }
+}
+
+output {
+  elasticsearch {
+    embedded => false
+    host => "localhost"
+    protocol => "http"
+    cluster => "{{ elasticsearch_cluster_name }}"
+  }
+}

@@ -1,0 +1,4 @@
+- name: Configure Logstash
+  template: src=logstash.conf.j2 dest=/etc/logstash/conf.d/logstash.conf
+  notify:
+    - Restart Logstash

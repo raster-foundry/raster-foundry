@@ -1,0 +1,13 @@
+[/var/log/nginx/error.log]
+type: nginx
+tags: nginx,beaver
+
+[/var/log/nginx/access.log]
+format: rawjson
+type: nginx
+tags: nginx,beaver
+
+[/var/log/nginx/*.access.log]
+format: rawjson
+type: nginx
+tags: nginx,beaver

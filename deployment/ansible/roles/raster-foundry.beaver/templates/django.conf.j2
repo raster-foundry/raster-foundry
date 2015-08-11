@@ -1,0 +1,5 @@
+[/var/log/{upstart/rf-app.log,rf-app.log}]
+multiline_regex_after = (^\s+File.*, line \d+, in)
+multiline_regex_before = (^Traceback \(most recent call last\):)|(^\s+File.*, line \d+, in)|(^\w+Error: )
+type: django
+tags: django,beaver

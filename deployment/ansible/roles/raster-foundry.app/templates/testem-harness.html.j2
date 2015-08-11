@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+<head>
+<title>Test'em</title>
+<style>
+#sandbox { display: none; }
+</style>
+<link rel="stylesheet" href="/testem/mocha.css">
+<script src="/testem/mocha.js"></script>
+<script src="/testem.js"></script>
+<script>mocha.setup('tdd')</script>
+</head>
+<body>
+<div id="mocha"></div>
+<div id="map" style="display: none;"></div>
+<script src="js/test.vendor.js"></script>
+<script src="js/test.bundle.js"></script>
+<script>
+mocha.run()
+</script>
+</body>
+</html>
