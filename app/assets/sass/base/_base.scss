@@ -5,6 +5,7 @@ html {
 body {
 	font-family: $font-base;
 	color: $base;
+	background: $off-white;
 	@include font-size(13);
 }
 
