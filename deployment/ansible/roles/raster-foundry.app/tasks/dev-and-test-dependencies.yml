@@ -1,6 +1,6 @@
 ---
 - name: Install Firefox for UI tests
-  apt: pkg=firefox="3*" state=present
+  apt: pkg=firefox="4*" state=present
 
 - name: Install Xvfb for JavaScript tests
   apt: pkg=xvfb="2:1.15.1*" state=present
