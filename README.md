@@ -1,2 +1,1 @@
-# raster-foundry
-Raster Foundry.
+# Raster Foundry

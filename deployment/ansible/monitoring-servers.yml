@@ -1,0 +1,13 @@
+---
+- hosts: monitoring-servers
+  sudo: True
+
+  pre_tasks:
+    - name: Update APT cache
+      apt: update_cache=yes cache_valid_time=3600
+
+  roles:
+    - { role: "azavea.ntp" }
+    - { role: "raster-foundry.graphite", when: "['test'] | is_not_in(group_names)" }
+    - { role: "raster-foundry.logstash", when: "['test'] | is_not_in(group_names)" }
+    - { role: "azavea.kibana", when: "['test'] | is_not_in(group_names)" }

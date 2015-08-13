@@ -1,0 +1,9 @@
+---
+- { include: configuration.yml }
+- { include: cleanup.yml, when: "['development', 'test'] | some_are_in(group_names)" }
+- { include: app.yml, when: "['packer'] | is_in(group_names)" }
+- { include: dependencies.yml }
+- { include: dev-and-test-dependencies.yml, when: "['development', 'test'] | some_are_in(group_names)" }
+- { include: static-files.yml }
+- { include: reverse-proxy.yml }
+- { include: log-rotation.yml }

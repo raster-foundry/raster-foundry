@@ -1,0 +1,16 @@
+collectd_load_plugins:
+  - syslog
+  - apache
+  - cpu
+  - df
+  - disk
+  - entropy
+  - filecount
+  - interface
+  - load
+  - memcached
+  - memory
+  - processes
+  - swap
+  - tail
+  - write_graphite

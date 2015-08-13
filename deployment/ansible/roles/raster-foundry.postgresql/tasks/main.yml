@@ -1,0 +1,27 @@
+---
+- name: Configure PostgreSQL service definition
+  template: src=postgresql.j2
+            dest=/etc/init.d/postgresql
+            mode=0755
+  notify:
+    - Restart PostgreSQL
+
+- name: Create PostgreSQL super user
+  sudo_user: postgres
+  postgresql_user: name="{{ postgresql_username }}"
+                   password="{{ postgresql_password }}"
+                   role_attr_flags=SUPERUSER
+                   state=present
+
+- name: Create PostgreSQL database
+  sudo_user: postgres
+  postgresql_db: name="{{ postgresql_database }}"
+                 owner="{{ postgresql_username }}"
+
+- name: Add PostGIS extension
+  sudo_user: postgres
+  command: psql {{ postgresql_database }} -c "CREATE EXTENSION postgis"
+  register: psql_result
+  failed_when: >
+    psql_result.rc != 0 and ("already exists" not in psql_result.stderr)
+  changed_when: "psql_result.rc == 0"

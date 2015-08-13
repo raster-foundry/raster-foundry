@@ -1,0 +1,10 @@
+{{ app_gunicorn_log }} {
+  rotate {{ app_gunicorn_log_rotate_count }}
+  {{ app_gunicorn_log_rotate_internal }}
+  compress
+  missingok
+  postrotate
+    restart rf-app
+  endscript
+  notifempty
+}

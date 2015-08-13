@@ -1,0 +1,9 @@
+---
+dependencies:
+  - { role: "raster-foundry.base" }
+  - { role: "azavea.python", python_development: True }
+  - { role: "azavea.pip" }
+  - { role: "azavea.nodejs" }
+  - { role: "azavea.phantomjs" }
+  - { role: "raster-foundry.monitoring", collectd_prefix: "collectd.app.", when: "['test'] | is_not_in(group_names)" }
+  - { role: "raster-foundry.nginx" }

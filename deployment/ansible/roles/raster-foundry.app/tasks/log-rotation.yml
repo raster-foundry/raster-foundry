@@ -1,0 +1,29 @@
+---
+- name: Touch application log file if it does not exist
+  command: touch {{ app_log }}
+           creates={{ app_log }}
+
+- name: Set application log file permissions
+  file: path={{ app_log }}
+        owner=rf
+        group=rf
+        mode=0664
+
+- name: Configure application log rotation
+  template: src=logrotate-app.j2
+            dest=/etc/logrotate.d/rf-app
+
+- name: Touch Gunicorn log file if it does not exist
+  command: touch {{ app_gunicorn_log }}
+           creates={{ app_gunicorn_log }}
+
+- name: Set Gunicorn log file permissions
+  file: path={{ app_gunicorn_log }}
+        owner=rf
+        group=rf
+        mode=0664
+
+- name: Configure Gunicorn log rotation
+  template: src=logrotate-gunicorn.j2
+            dest=/etc/logrotate.d/rf-gunicorn
+

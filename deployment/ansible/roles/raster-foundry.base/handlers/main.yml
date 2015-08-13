@@ -1,0 +1,4 @@
+---
+- name: Restart rf-app
+  service: name=rf-app state=restarted
+  when: "['app-servers'] | is_in(group_names)"

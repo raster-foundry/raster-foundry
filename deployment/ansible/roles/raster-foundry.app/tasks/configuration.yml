@@ -1,0 +1,20 @@
+---
+- name: Configure application
+  copy: content="{{ item.value }}"
+        dest="{{ envdir_home }}/{{ item.key }}"
+        owner=root
+        group=rf
+        mode=0750
+  with_dict: app_config
+  notify:
+    - Restart rf-app
+
+- name: Configure Gunicorn settings
+  template: src=gunicorn.py.j2 dest=/etc/rf.d/gunicorn.py
+  notify:
+    - Restart rf-app
+
+- name: Configure service definition
+  template: src=upstart-app.conf.j2 dest=/etc/init/rf-app.conf
+  notify:
+    - Restart rf-app
