@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "test": "test",
-    "lint": "node_modules/.bin/jshint $(find js -name *.js)",
+    "lint": "node_modules/.bin/eslint $(find js -name *.js)",
     "livereload": "node_modules/.bin/livereloadify /var/www/rf/static --glob '**/*.*'"
   },
   "repository": {
@@ -23,9 +23,10 @@
     "bootstrap": "3.3.4",
     "browserify": "9.0.3",
     "chai": "1.10.0",
+    "eslint": "1.1.0",
+    "eslint-plugin-react": "3.2.3",
     "font-awesome": "4.3.0",
     "jquery": "2.1.3",
-    "jshint": "2.8.0",
     "leaflet": "0.7.3",
     "leaflet-draw": "git://github.com/michaelguild13/Leaflet.draw#e753b7d",
     "leaflet.locatecontrol": "0.43.0",
