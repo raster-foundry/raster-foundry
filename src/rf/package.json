@@ -18,8 +18,8 @@
   },
   "homepage": "https://github.com/azavea/raster-foundry",
   "dependencies": {
-    "backbone": "1.1.2",
-    "backbone.marionette": "2.4.1",
+    "backbone": "1.2.1",
+    "backbone.marionette": "2.4.2",
     "bootstrap": "3.3.4",
     "browserify": "9.0.3",
     "chai": "1.10.0",
