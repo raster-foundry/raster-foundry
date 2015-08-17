@@ -1,7 +1,7 @@
 'use strict';
 
 var Marionette = require('../shim/backbone.marionette'),
-    views = require('./core/views'),
+    //views = require('./core/views'),
     models = require('./core/models');
 
 var App = new Marionette.Application({

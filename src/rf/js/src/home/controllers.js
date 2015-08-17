@@ -2,7 +2,7 @@
 
 var HomeController = {
     index: function() {
-        console.log('Hello world');
+        window.console.log('Hello world');
     }
 };
 
