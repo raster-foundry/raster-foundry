@@ -1,11 +1,25 @@
 'use strict';
 
-var React = require('react');
+require('./core/setup');
+require('./routes');
 
-var HelloMessage = React.createClass({
-    render: function() {
-        return <div>Hello {this.props.name}</div>;
-    }
+// Initialize application.
+
+var $ = require('jquery'),
+    Backbone = require('../shim/backbone'),
+    App = require('./app'),
+    router = require('./router').router;
+
+App.on('start', function() {
+    $('body').on('click', '[data-url]', function(e) {
+        e.preventDefault();
+        router.navigate($(this).data('url'), { trigger: true });
+    });
+    Backbone.history.start({ pushState: true });
 });
 
-React.render(<HelloMessage name="John" />, document.body);
+App.start();
+
+// Expose application so we can interact with it via JS console.
+window.RF = App;
+window.RF.router = router;
