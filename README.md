@@ -1,5 +1,7 @@
 # Raster Foundry
 
+[![Join the chat at https://gitter.im/azavea/raster-foundry](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/azavea/raster-foundry?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ## Local Development
 
 A combination of Vagrant 1.6+ and Ansible 1.8+ is used to setup the development environment for this project. The project consists of the following virtual machines:
