@@ -2,8 +2,8 @@
 
 var $ = require('jquery'),
     React = require('react'),
-    views = require('./views'),
     router = require('../router').router,
+    coreViews = require('../core/views'),
     Login = require('./components/login'),
     Library = require('./components/library');
 
@@ -27,6 +27,12 @@ var HomeController = {
 
         var el = $('#container').get(0);
         React.render(<Library {...props} />, el);
+
+        $('#dl-menu').dlmenu();
+
+        this.mapView = new coreViews.MapView({
+            el: document.getElementById('map')
+        });
     }
 };
 
