@@ -11,4 +11,5 @@ from apps.home.views import home_page
 urlpatterns = patterns(
     '',
     url(r'^$', home_page, name='home_page'),
+    url(r'^login$', home_page, name='home_page'),
 )
