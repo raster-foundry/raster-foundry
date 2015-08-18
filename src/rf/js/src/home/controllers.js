@@ -11,7 +11,7 @@ var _logged_in = false;
 var HomeController = {
     index: function() {
         if (!_logged_in) {
-            router.navigate('/login', {trigger: true});
+            router.go('/login');
             return;
         }
 
@@ -19,7 +19,7 @@ var HomeController = {
             handleLogout: function(e) {
                 e.preventDefault();
                 _logged_in = false;
-                router.navigate('/login', {trigger: true});
+                router.go('/login');
             }
         };
 
@@ -34,7 +34,7 @@ var UserController = {
             handleLogin: function(e) {
                 e.preventDefault();
                 _logged_in = true;
-                router.navigate('/', {trigger: true});
+                router.go('/');
             }
         };
 

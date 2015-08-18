@@ -14,6 +14,11 @@ var AppRouter = Backbone.Marionette.AppRouter.extend({
         this._routeContext = {};
     },
 
+    // Update the address bar URL and trigger routing.
+    go: function(fragment) {
+        this.navigate(fragment, {trigger: true});
+    },
+
     addRoute: function(route, controller, methodName) {
         var routeName = route.toString(),
             cb = controller[methodName];
