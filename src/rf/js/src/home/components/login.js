@@ -1,9 +1,9 @@
 'use strict';
 
 var React = require('react'),
-    asset = require('../core/utils').asset;
+    asset = require('../../core/utils').asset;
 
-var LoginView = React.createBackboneClass({
+var Login = React.createBackboneClass({
     render: function() {
         return <div>
             <div className="block login-block">
@@ -35,16 +35,4 @@ var LoginView = React.createBackboneClass({
     }
 });
 
-var LibraryView = React.createBackboneClass({
-    render: function() {
-        return <div>
-            <p>Logged in!</p>
-            <p><a href="#" onClick={this.props.handleLogout}>Logout</a></p>
-        </div>;
-    }
-});
-
-module.exports = {
-    LoginView: LoginView,
-    LibraryView: LibraryView
-};
+module.exports = Login;

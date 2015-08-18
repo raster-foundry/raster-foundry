@@ -3,7 +3,9 @@
 var $ = require('jquery'),
     React = require('react'),
     views = require('./views'),
-    router = require('../router').router;
+    router = require('../router').router,
+    Login = require('./components/login'),
+    Library = require('./components/library');
 
 // TODO: Delete (for demonstration purposes only).
 var _logged_in = false;
@@ -24,7 +26,7 @@ var HomeController = {
         };
 
         var el = $('#container').get(0);
-        React.render(<views.LibraryView {...props} />, el);
+        React.render(<Library {...props} />, el);
     }
 };
 
@@ -39,7 +41,7 @@ var UserController = {
         };
 
         var el = $('#container').get(0);
-        React.render(<views.LoginView {...props} />, el);
+        React.render(<Login {...props} />, el);
     }
 };
 
