@@ -24,7 +24,7 @@ var App = Marionette.Application.extend({
     },
 
     setupNavigation: function() {
-        $('body').on('click', '[data-url]', function(e) {
+        $('#container').on('click', '[data-url]', function(e) {
             e.preventDefault();
             router.navigate($(this).data('url'), { trigger: true });
         });

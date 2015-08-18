@@ -89,13 +89,11 @@
 			} );
 
 			this.$menuitems.on( 'click.dlmenu', function( event ) {
-				
-				event.stopPropagation();
-
 				var $item = $(this),
 					$submenu = $item.children( 'ul.dl-submenu' );
 
 				if( $submenu.length > 0 ) {
+                                       event.stopPropagation();
 
 					var $flyin = $submenu.clone().css( 'opacity', 0 ).insertAfter( self.$menu ),
 						onAnimationEndFn = function() {

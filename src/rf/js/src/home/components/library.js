@@ -78,7 +78,7 @@ var Header = React.createBackboneClass({
                             <a href="/account.html"><i className="rf-icon-user"></i> Account</a>
                         </li>
                         <li>
-                            <a href="/"><i className="rf-icon-logout"></i> Logout</a>
+                            <a href="/logout" data-url="/logout"><i className="rf-icon-logout"></i> Logout</a>
                         </li>
                     </ul>
                 </div>

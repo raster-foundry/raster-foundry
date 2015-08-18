@@ -12,4 +12,5 @@ urlpatterns = patterns(
     '',
     url(r'^$', home_page, name='home_page'),
     url(r'^login$', home_page, name='home_page'),
+    url(r'^logout$', home_page, name='home_page'),
 )

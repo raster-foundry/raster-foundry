@@ -7,29 +7,13 @@ var $ = require('jquery'),
     Login = require('./components/login'),
     Library = require('./components/library');
 
-// TODO: Delete (for demonstration purposes only).
-var _logged_in = false;
-
 var HomeController = {
     index: function() {
-        if (!_logged_in) {
-            router.go('/login');
-            return;
-        }
-
-        var props = {
-            handleLogout: function(e) {
-                e.preventDefault();
-                _logged_in = false;
-                router.go('/login');
-            }
-        };
-
         var el = $('#container').get(0);
-        React.render(<Library {...props} />, el);
+        React.render(<Library />, el);
 
         this.mapView = new coreViews.MapView({
-            el: document.getElementById('map')
+            el: '#map'
         });
 
         bindEvents();
@@ -41,13 +25,16 @@ var UserController = {
         var props = {
             handleLogin: function(e) {
                 e.preventDefault();
-                _logged_in = true;
                 router.go('/');
             }
         };
 
         var el = $('#container').get(0);
         React.render(<Login {...props} />, el);
+    },
+
+    logout: function() {
+        router.go('/login');
     }
 };
 
