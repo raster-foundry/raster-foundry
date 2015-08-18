@@ -13,7 +13,6 @@ BIN="./node_modules/.bin"
 STATIC_JS_DIR="${DJANGO_STATIC_ROOT}js/"
 STATIC_CSS_DIR="${DJANGO_STATIC_ROOT}css/"
 STATIC_IMAGES_DIR="${DJANGO_STATIC_ROOT}images/"
-STATIC_FONTS_DIR="${DJANGO_STATIC_ROOT}fonts/"
 
 BROWSERIFY="$BIN/browserify"
 ENTRY_JS_FILES="./js/src/main.js"
@@ -84,17 +83,10 @@ fi
 
 COPY_IMAGES_COMMAND="cp -r \
     ./node_modules/leaflet/dist/images/* \
-    ./node_modules/leaflet-draw/dist/images/* \
     $STATIC_IMAGES_DIR"
-
-COPY_FONTS_COMMAND="cp -r \
-    ./node_modules/font-awesome/fonts/* \
-    $STATIC_FONTS_DIR"
 
 CONCAT_VENDOR_CSS_COMMAND="cat \
     ./node_modules/leaflet/dist/leaflet.css \
-    ./node_modules/leaflet-draw/dist/leaflet.draw.css \
-    ./node_modules/font-awesome/css/font-awesome.min.css \
     > $VENDOR_CSS_FILE"
 
 JS_DEPS=(jquery backbone backbone.marionette bootstrap \
@@ -121,7 +113,6 @@ VENDOR_COMMAND=""
 if [ -n "$BUILD_VENDOR_BUNDLE" ]; then
     VENDOR_COMMAND="
         $COPY_IMAGES_COMMAND &
-        $COPY_FONTS_COMMAND &
         $CONCAT_VENDOR_CSS_COMMAND &
         $BROWSERIFY $BROWSERIFY_REQ \
             -o ${STATIC_JS_DIR}vendor.js $EXTRA_ARGS &
@@ -145,8 +136,7 @@ VAGRANT_COMMAND="$TEST_COMMAND $VENDOR_COMMAND
 mkdir -p \
     $STATIC_JS_DIR \
     $STATIC_CSS_DIR \
-    $STATIC_IMAGES_DIR \
-    $STATIC_FONTS_DIR
+    $STATIC_IMAGES_DIR
 
 echo "$VAGRANT_COMMAND"
 eval "$VAGRANT_COMMAND"
