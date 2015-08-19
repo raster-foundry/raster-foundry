@@ -1,9 +1,7 @@
 'use strict';
 
 var Backbone = require('../shim/backbone'),
-    $ = require('jquery'),
     _ = require('underscore');
-
 
 var AppRouter = Backbone.Marionette.AppRouter.extend({
     // Key of last route context.
@@ -12,13 +10,8 @@ var AppRouter = Backbone.Marionette.AppRouter.extend({
     // Map of { routeName: { controller: [Object], methodName: [String] }, ... }
     _routeContext: null,
 
-    // Promise chain to ensure everything triggers in order even if there
-    // are animations in the setUp/tearDown methods.
-    _sequence: null,
-
     initialize: function() {
         this._routeContext = {};
-        this._sequence = $.Deferred().resolve().promise();
     },
 
     addRoute: function(route, controller, methodName) {
@@ -40,31 +33,13 @@ var AppRouter = Backbone.Marionette.AppRouter.extend({
         if (this._previousRouteName) {
             var prevContext = this._routeContext[this._previousRouteName],
                 cleanUp = this.getSuffixMethod(prevContext, 'CleanUp');
-            this._sequence = this._sequence.then(function() {
-                return cleanUp.apply(null, args);
-            });
+            cleanUp.apply(null, args);
         }
 
-        var self = this;
-        this._sequence = this._sequence.then(function() {
-            var result = prepare.apply(null, args);
-            // Assume result is a promise if an object is returned.
-            if (_.isObject(result)) {
-                self._previousRouteName = routeName;
-                return result.then(function() {
-                    cb.apply(null, args);
-                });
-            } else if (result !== false) {
-                // Only execute the route callback if prepare
-                // did not return false.
-                self._previousRouteName = routeName;
-                cb.apply(null, args);
-            } else {
-                // Don't execute the route function
-                // and cancel the route transition
-                return false;
-            }
-        });
+        prepare.apply(null, args);
+        cb.apply(null, args);
+
+        this._previousRouteName = routeName;
     },
 
     getSuffixMethod: function(context, suffix) {

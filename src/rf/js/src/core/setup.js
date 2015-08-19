@@ -15,6 +15,9 @@ window.jQuery = window.$ = $;
 require('../../shim/backbone');
 require('../../shim/backbone.marionette');
 
+require('react');
+require('react.backbone');
+
 require('bootstrap');
 
 var csrf = require('./csrf');
