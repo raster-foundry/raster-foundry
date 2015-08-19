@@ -15,12 +15,19 @@ var MapView = Marionette.ItemView.extend({
     _leafletMap: null,
 
     initialize: function() {
-        var map = new L.Map(this.el),
-            maxZoom = 10;
-        map.addControl(new L.Control.Zoom({position: 'topright'}));
+        var map = new L.Map(this.el);
 
-        // Center the map.
-        map.setView([40.1, -75.7], maxZoom);
+        var layer = new L.TileLayer('http://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
+            attribution: 'Raster Foundry | Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
+            maxZoom: 18
+        });
+        map.addLayer(layer);
+
+        map.addControl(new L.Control.Zoom({
+            position: 'bottomright'
+        }));
+
+        map.setView([39.9500, -75.1667], 13);
 
         // Keep the map model up-to-date with the position of the map
         this.listenTo(map, 'moveend', this.updateMapModelPosition);

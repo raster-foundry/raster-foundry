@@ -7,6 +7,8 @@
 var $ = require('jquery');
 window.jQuery = window.$ = $;
 
+require('../../shim/jquery.dlmenu.js');
+
 // Marionette attaches itself to Backbone so these must be required in
 // this order.
 // Instead of requiring both Backbone and Marionette in every module that

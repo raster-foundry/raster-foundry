@@ -14,6 +14,11 @@ var AppRouter = Backbone.Marionette.AppRouter.extend({
         this._routeContext = {};
     },
 
+    // Update the address bar URL and trigger routing.
+    go: function(fragment) {
+        this.navigate(fragment, {trigger: true});
+    },
+
     addRoute: function(route, controller, methodName) {
         var routeName = route.toString(),
             cb = controller[methodName];
@@ -33,11 +38,11 @@ var AppRouter = Backbone.Marionette.AppRouter.extend({
         if (this._previousRouteName) {
             var prevContext = this._routeContext[this._previousRouteName],
                 cleanUp = this.getSuffixMethod(prevContext, 'CleanUp');
-            cleanUp.apply(null, args);
+            cleanUp.apply(prevContext.controller, args);
         }
 
-        prepare.apply(null, args);
-        cb.apply(null, args);
+        prepare.apply(context.controller, args);
+        cb.apply(context.controller, args);
 
         this._previousRouteName = routeName;
     },
