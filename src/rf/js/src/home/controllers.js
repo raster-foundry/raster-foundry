@@ -1,6 +1,7 @@
 'use strict';
 
-var React = require('react'),
+var $ = require('jquery'),
+    React = require('react'),
     views = require('./views'),
     router = require('../router').router;
 
