@@ -3,7 +3,6 @@
 var $ = require('jquery'),
     Marionette = require('../shim/backbone.marionette'),
     Backbone = require('../shim/backbone'),
-    models = require('./core/models'),
     router = require('./router').router;
 
 var App = Marionette.Application.extend({
