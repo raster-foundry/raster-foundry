@@ -17,6 +17,9 @@
 </head>
 <body>
 <div id="container"></div>
+<script type="text/javascript">
+    window.clientSettings = {{ client_settings | safe }};
+</script>
 <script type="text/javascript" src="{% static 'js/vendor/multi-level-menu/modernizr.custom.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/vendor.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/main.js' %}"></script>

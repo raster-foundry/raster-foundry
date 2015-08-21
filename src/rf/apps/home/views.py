@@ -3,6 +3,8 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
 
+import json
+
 from django.contrib.auth.models import User
 from django.shortcuts import (render_to_response,
                               get_object_or_404)
@@ -18,9 +20,12 @@ from rest_framework.permissions import IsAuthenticated
 from apps.core.models import Layer, LayerMeta, UserFavoriteLayer
 from apps.core.serializers import LayerSerializer, LayerMetaSerializer
 
+from django.conf import settings
+
 
 def home_page(request):
-    return render_to_response('home/home.html')
+    return render_to_response('home/home.html',
+                              {'client_settings': get_client_settings()})
 
 
 class LayerFilter(django_filters.FilterSet):
@@ -155,3 +160,12 @@ class FavoriteCreateDestroyView(generics.GenericAPIView,
 
     def delete(self, request, *args, **kwargs):
         return self.destroy(request, *args, **kwargs)
+
+
+def get_client_settings():
+    client_settings = json.dumps({
+        'signerUrl': settings.CLIENT_SETTINGS['signer_url'],
+        'awsKey': settings.CLIENT_SETTINGS['aws_key'],
+        'awsBucket': settings.CLIENT_SETTINGS['aws_bucket'],
+    })
+    return client_settings
