@@ -268,6 +268,7 @@ REST_FRAMEWORK = {
 LOCAL_APPS = (
     'apps.core',
     'apps.home',
+    'apps.uploads',
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -280,3 +281,14 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 WSGI_APPLICATION = '%s.wsgi.application' % SITE_NAME
 # END WSGI CONFIGURATION
 
+# CLIENT CONFIGURATION
+CLIENT_SETTINGS = {
+    'aws_key': environ.get('RF_AWS_KEY', ''),
+    'signer_url': '/api/uploads/sign-request',
+    'aws_bucket': environ.get('RF_AWS_BUCKET', ''),
+}
+# END CLIENT CONFIGURATION
+
+# API KEYS AND SECRETS
+AWS_SECRET = environ.get('RF_AWS_SECRET', '')
+# END API KEYS AND SECRETS

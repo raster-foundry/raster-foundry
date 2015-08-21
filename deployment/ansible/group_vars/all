@@ -14,6 +14,10 @@ postgresql_username: rf
 postgresql_password: rf
 postgresql_database: rf
 
+aws_key: ""
+aws_secret: ""
+aws_bucket: ""
+
 postgresql_version: "9.4"
 postgresql_package_version: "9.4.*-1.pgdg14.04+1"
 postgresql_support_repository_channel: "main"
