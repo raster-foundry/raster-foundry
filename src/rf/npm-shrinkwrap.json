@@ -1821,11 +1821,6 @@
       "from": "leaflet@0.7.3",
       "resolved": "https://registry.npmjs.org/leaflet/-/leaflet-0.7.3.tgz"
     },
-    "leaflet-draw": {
-      "version": "0.2.3",
-      "from": "../../tmp/npm-7956-5d4ebc8c/1439841350458-0.981691962806508/e753b7d0eb9d1de8864ca85d5dafbf9ac955759c",
-      "resolved": "git://github.com/michaelguild13/Leaflet.draw#e753b7d0eb9d1de8864ca85d5dafbf9ac955759c"
-    },
     "leaflet.locatecontrol": {
       "version": "0.43.0",
       "from": "leaflet.locatecontrol@0.43.0",
