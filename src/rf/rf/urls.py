@@ -9,6 +9,7 @@ from rest_framework import routers
 
 import apps.home.urls
 import apps.home.views
+import apps.core.urls
 
 
 admin.autodiscover()
@@ -19,6 +20,7 @@ router.register(r'users', apps.home.views.UserViewSet)
 urlpatterns = patterns(
     '',
     url(r'^', include(apps.home.urls)),
+    url(r'^', include(apps.core.urls)),
     url(r'^api/', include(router.urls)),
     url(r'^api-auth/', include('rest_framework.urls',
                                namespace='rest_framework')),
