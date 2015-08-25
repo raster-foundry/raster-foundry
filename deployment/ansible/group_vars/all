@@ -14,9 +14,8 @@ postgresql_username: rf
 postgresql_password: rf
 postgresql_database: rf
 
-aws_key: ""
-aws_secret: ""
-aws_bucket: ""
+aws_profile: "{{ lookup('env', 'AWS_PROFILE') | default('rf-dev', true) }}"
+aws_bucket: "{{ lookup('env', 'RF_AWS_BUCKET') | default('', true) }}"
 
 postgresql_version: "9.4"
 postgresql_package_version: "9.4.*-1.pgdg14.04+1"

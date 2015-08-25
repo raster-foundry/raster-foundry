@@ -281,14 +281,10 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 WSGI_APPLICATION = '%s.wsgi.application' % SITE_NAME
 # END WSGI CONFIGURATION
 
-# CLIENT CONFIGURATION
-CLIENT_SETTINGS = {
-    'aws_key': environ.get('RF_AWS_KEY', ''),
-    'signer_url': '/api/uploads/sign-request',
-    'aws_bucket': environ.get('RF_AWS_BUCKET', ''),
-}
-# END CLIENT CONFIGURATION
 
-# API KEYS AND SECRETS
-AWS_SECRET = environ.get('RF_AWS_SECRET', '')
-# END API KEYS AND SECRETS
+# S3 CONFIGURATION
+
+AWS_BUCKET_NAME = environ.get('RF_AWS_BUCKET', 'raster-foundry-test-uploads-67dc48c70b3bcf89eab78dbf5cf7900')  # NOQA
+AWS_PROFILE = environ.get('AWS_PROFILE', 'rf-dev')
+
+# END S3 CONFIGURATION
