@@ -6,7 +6,6 @@ from __future__ import division
 from django.contrib.auth import (authenticate,
                                  logout as auth_logout,
                                  login as auth_login)
-from django.contrib.auth.models import User
 from django.shortcuts import redirect
 from django.contrib.auth.forms import PasswordResetForm
 from django.core.exceptions import ObjectDoesNotExist
@@ -19,6 +18,7 @@ from registration.backends.default.views import RegistrationView
 from rest_framework import decorators, status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+
 
 @decorators.api_view(['POST', 'GET'])
 @decorators.permission_classes((AllowAny, ))

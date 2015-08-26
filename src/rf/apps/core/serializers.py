@@ -18,15 +18,8 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('id', 'username')
 
 
-class LayerImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = LayerImage
-        fields = ('source_uri', 'priority', 'thumb_small',
-                  'thumb_large', 'meta_json')
-
-
-# Allow parsing a LayerTag represent as 'tag' rather than
-# the default {name: 'tag'}.
+# Allow parsing a LayerTag represented as 'tag' rather than
+# the default {'name': 'tag'}.
 class LayerTagSerializer(serializers.Serializer):
     def to_representation(self, obj):
         return obj.name
@@ -35,9 +28,14 @@ class LayerTagSerializer(serializers.Serializer):
         return {'name': data}
 
 
-class LayerTagField(serializers.Field):
+# Allow parsing a LayerImage represented as 'http://example.com'
+# rather than the default {'source_uri': 'http://example.com'}.
+class LayerImageSerializer(serializers.Serializer):
     def to_representation(self, obj):
-        return obj.name
+        return obj.source_uri
+
+    def to_internal_value(self, data):
+        return {'source_uri': data}
 
 
 class LayerSerializer(serializers.ModelSerializer):
