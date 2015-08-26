@@ -7,8 +7,10 @@ from django.contrib.gis.db.models import (Model, ForeignKey,
                                           CharField, TextField,
                                           DateField, DateTimeField,
                                           IntegerField, FloatField,
-                                          URLField)
+                                          URLField, SlugField,
+                                          BooleanField,)
 from django.contrib.auth.models import User
+from django.template.defaultfilters import slugify
 
 from apps.core import enums
 
@@ -18,10 +20,17 @@ class Layer(Model):
     Represents a single Image Layer which may contain one or more
     geospatial images.
     """
+
+    class Meta:
+        unique_together = ('user', 'name')
+
     user = ForeignKey(User)
     name = CharField(max_length=255)
+    slug = SlugField(max_length=255, blank=True)
     description = TextField(blank=True)
     organization = CharField(max_length=255, blank=True, default='')
+
+    is_public = BooleanField(default=False)
 
     capture_start = DateField()
     capture_end = DateField()
@@ -77,6 +86,10 @@ class Layer(Model):
     updated_at = DateTimeField(auto_now=True)
     deleted_at = DateTimeField(null=True, blank=True)
 
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.name)
+        super(Layer, self).save(*args, **kwargs)
+
     def __unicode__(self):
         return self.name
 
@@ -86,7 +99,7 @@ class LayerTag(Model):
     Arbitrary value used to describe a layer which may be used
     to discover similar layers with tags in common.
     """
-    layer = ForeignKey(Layer)
+    layer = ForeignKey(Layer, related_name='layer_tags')
     name = CharField(max_length=24)
 
 
@@ -99,7 +112,7 @@ class LayerImage(Model):
     This blob should be in the form of key value pairs (object literal)
     and will be displayed as-is.
     """
-    layer = ForeignKey(Layer)
+    layer = ForeignKey(Layer, related_name='layer_images')
     source_uri = URLField(max_length=2000)
     priority = IntegerField(
         default=0,
@@ -179,5 +192,5 @@ class UserFavoriteLayer(Model):
     Users may "star" their own layers or published layers.
     """
     user = ForeignKey(User)
-    layer = ForeignKey(Layer)
+    layer = ForeignKey(Layer, related_name='favorites')
     created_at = DateTimeField(auto_now_add=True)
