@@ -7,11 +7,18 @@
 	max-width: 330px;
 	transform: translate(-50%, -50%);
 	box-shadow: 0 0 30px 0 rgba(black, .35);
-	
+
 	img {
 		max-height: 70px;
 		display: block;
 		margin: 20px auto 50px;
+	}
+
+	.login-error {
+		font-size: 1.3rem;
+		height: 1.3rem;
+		margin-bottom: 15px;
+		text-align: center;
 	}
 
 	.form-action {
