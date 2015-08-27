@@ -36,20 +36,20 @@ def login(request):
                 response_data = {
                     'result': 'success',
                     'username': user.username,
-                    'guest': False,
+                    'logged_in': True,
                     'id': user.id
                 }
             else:
                 response_data = {
                     'errors': ['Please activate your account'],
-                    'guest': True,
+                    'logged_in': False,
                     'id': 0
                 }
                 status_code = status.HTTP_400_BAD_REQUEST
         else:
             response_data = {
                 'errors': ['Invalid username or password'],
-                'guest': True,
+                'logged_in': False,
                 'id': 0
             }
             status_code = status.HTTP_400_BAD_REQUEST
@@ -61,13 +61,13 @@ def login(request):
             response_data = {
                 'result': 'success',
                 'username': user.username,
-                'guest': False,
+                'logged_in': True,
                 'id': user.id
             }
         else:
             response_data = {
                 'result': 'success',
-                'guest': True,
+                'logged_in': False,
                 'id': 0
             }
 
@@ -84,7 +84,7 @@ def logout(request):
     if request.is_ajax():
         response_data = {
             'result': 'success',
-            'guest': True,
+            'logged_in': False,
             'id': 0
         }
         return Response(data=response_data)
@@ -102,7 +102,7 @@ def sign_up(request):
         user = view.register(request, form)
         response_data = {'result': 'success',
                          'username': user.username,
-                         'guest': False}
+                         'logged_in': True}
         return Response(data=response_data,
                         status=status.HTTP_200_OK)
     else:
@@ -165,7 +165,7 @@ def forgot(request):
             next(form.get_users(email))
             form.save(request=request)
             response_data = {'result': 'success',
-                             'guest': True}
+                             'logged_in': False}
             status_code = status.HTTP_200_OK
         except StopIteration:
             response_data = {'errors': ["Email cannot be found"]}

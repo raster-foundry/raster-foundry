@@ -1,10 +1,63 @@
 'use strict';
 
-var React = require('react'),
+var $ = require('jquery'),
+    React = require('react'),
     asset = require('../../core/utils').asset,
     Map = require('./map');
 
 var Library = React.createBackboneClass({
+    componentDidMount: function() {
+        this.bindEvents();
+    },
+
+    bindEvents: function() {
+        // TODO Most of the stuff in this method can be
+        // turned into separate callback methods
+        // and inline event bindings to be more idiomatic.
+        $('#dl-menu').dlmenu();
+
+        // Tooltips
+        $('[data-toggle="tooltip"]').tooltip({
+            container: '.sidebar-utility-content',
+            viewport: '.sidebar'
+        });
+
+        // Layer metadata
+        var layerDetail = $('.layer-detail');
+        $('.list-group-item .list-group-link').click(function(evt) {
+            evt.preventDefault();
+            layerDetail.addClass('active');
+        });
+
+        $('.layer-detail .close').click(function(evt) {
+            evt.preventDefault();
+            layerDetail.addClass('slideOutLeft');
+            setTimeout(function() {
+                layerDetail.removeClass('slideOutLeft active');
+            }, 400);
+        });
+
+        // Image metadata
+        var imageMetadata = $('.image-metadata');
+        $('.view-metadata').click(function(evt) {
+            evt.preventDefault();
+            imageMetadata.addClass('active');
+        });
+
+        $('.image-metadata .close').click(function(evt) {
+            evt.preventDefault();
+            imageMetadata.addClass('slideOutLeft');
+            setTimeout(function() {
+                imageMetadata.removeClass('slideOutLeft active');
+            }, 400);
+        });
+
+        // Layer tools
+        $('.select-all').click(function() {
+            $(this).parent('.utility-tools-secondary').toggleClass('active');
+        });
+    },
+
     render: function() {
         return (
             <div>

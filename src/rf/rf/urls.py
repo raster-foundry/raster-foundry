@@ -14,7 +14,7 @@ admin.autodiscover()
 
 urlpatterns = patterns(
     '',
-    url(r'^', include(apps.home.urls)),
-    url(r'^user/', include(apps.user.urls)),
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^user/', include(apps.user.urls)),
+    url(r'^', include(apps.home.urls)),
 )

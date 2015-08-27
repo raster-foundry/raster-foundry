@@ -4,7 +4,6 @@ require('./core/setup');
 require('./routes');
 
 // Initialize application.
-
 var App = require('./app'),
     router = require('./router').router;
 
