@@ -23,14 +23,9 @@ var Library = React.createBackboneClass({
         });
 
         // Layer metadata
-        var layerDetail = $('.layer-detail');
-        $('.list-group-item .list-group-link').click(function(evt) {
-            evt.preventDefault();
-            layerDetail.addClass('active');
-        });
-
         $('.layer-detail .close').click(function(evt) {
             evt.preventDefault();
+            var layerDetail = $('.layer-detail');
             layerDetail.addClass('slideOutLeft');
             setTimeout(function() {
                 layerDetail.removeClass('slideOutLeft active');
@@ -61,7 +56,7 @@ var Library = React.createBackboneClass({
     render: function() {
         return (
             <div>
-                <Sidebar />
+                <Sidebar collection={this.getCollection()}/>
                 <Map />
             </div>
         );
@@ -76,7 +71,7 @@ var Sidebar = React.createBackboneClass({
                 <div className="sidebar-utility" role="tabpanel">
                     <Tabs />
                     <div className="sidebar-utility-content">
-                        <TabContents />
+                        <TabContents collection={this.getCollection()}/>
                     </div>
                     <LayerMetadata />
                     <ImageMetadata />
@@ -158,6 +153,9 @@ var Tabs = React.createBackboneClass({
 
 var TabContents = React.createBackboneClass({
     render: function() {
+        var layerItems = this.getCollection().map(function(layer) {
+            return <LayerItem model={layer} />
+        });
         return (
             <div className="tab-content">
                 {/* Imports Tab Pane */}
@@ -214,146 +212,7 @@ var TabContents = React.createBackboneClass({
                     </div>
                     {/* Imagery Layers */}
                     <div className="list-group">
-                        {/* List Group Item */}
-                        <div className="list-group-item link">
-                            <a className="list-group-link" href="#"></a>
-                            <div className="list-group-detail">
-                                <img src="http://placehold.it/200x200" />
-                            </div>
-                            <div className="list-group-content">
-                                <h5>Imagery Layer Name</h5>
-                                <p>Organization Name</p>
-                            </div>
-                            <div className="list-group-tool">
-                                <button type="button" className="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autoComplete="off">
-                                <i className="rf-icon-star control-active text-primary"></i>
-                                <i className="rf-icon-star-empty control-inactive"></i>
-                                </button>
-                                <div className="checkbox">
-                                    <input type="checkbox" />
-                                    <label></label>
-                                </div>
-                            </div>
-                            <div className="list-group-actions">
-                                <div className="dropdown">
-                                    <button type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" className="btn btn-default">
-                                    <i className="rf-icon-ellipsis"></i>
-                                    </button>
-                                    <ul className="dropdown-menu dropdown-menu-dark" aria-labelledby="dLabel">
-                                        <li><a href="#">Edit Metadata</a></li>
-                                        <li><a href="#">Import Options</a></li>
-                                        <li className="divider"></li>
-                                        <li><a href="#" className="text-danger">Delete</a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                            {/* /.list-group-actions */}
-                        </div>
-                        {/* List Group Item */}
-                        <div className="list-group-item link">
-                            <a className="list-group-link" href="#"></a>
-                            <div className="list-group-detail">
-                                <img src="http://placehold.it/200x200" />
-                            </div>
-                            <div className="list-group-content">
-                                <h5>Imagery Layer Name</h5>
-                                <p>Organization Name</p>
-                            </div>
-                            <div className="list-group-tool">
-                                <button type="button" className="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autoComplete="off">
-                                <i className="rf-icon-star control-active text-primary"></i>
-                                <i className="rf-icon-star-empty control-inactive"></i>
-                                </button>
-                                <div className="checkbox">
-                                    <input type="checkbox" />
-                                    <label></label>
-                                </div>
-                            </div>
-                            <div className="list-group-actions">
-                                <div className="dropdown">
-                                    <button type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" className="btn btn-default">
-                                    <i className="rf-icon-ellipsis"></i>
-                                    </button>
-                                    <ul className="dropdown-menu dropdown-menu-dark" aria-labelledby="dLabel">
-                                        <li><a href="#">Edit Metadata</a></li>
-                                        <li><a href="#">Import Options</a></li>
-                                        <li className="divider"></li>
-                                        <li><a href="#" className="text-danger">Delete</a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                            {/* /.list-group-actions */}
-                        </div>
-                        {/* List Group Item */}
-                        <div className="list-group-item link">
-                            <a className="list-group-link" href="#"></a>
-                            <div className="list-group-detail">
-                                <img src="http://placehold.it/200x200" />
-                            </div>
-                            <div className="list-group-content">
-                                <h5>Imagery Layer Name</h5>
-                                <p>Organization Name</p>
-                            </div>
-                            <div className="list-group-tool">
-                                <button type="button" className="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autoComplete="off">
-                                <i className="rf-icon-star control-active text-primary"></i>
-                                <i className="rf-icon-star-empty control-inactive"></i>
-                                </button>
-                                <div className="checkbox">
-                                    <input type="checkbox" />
-                                    <label></label>
-                                </div>
-                            </div>
-                            <div className="list-group-actions">
-                                <div className="dropdown">
-                                    <button type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" className="btn btn-default">
-                                    <i className="rf-icon-ellipsis"></i>
-                                    </button>
-                                    <ul className="dropdown-menu dropdown-menu-dark" aria-labelledby="dLabel">
-                                        <li><a href="#">Edit Metadata</a></li>
-                                        <li><a href="#">Import Options</a></li>
-                                        <li className="divider"></li>
-                                        <li><a href="#" className="text-danger">Delete</a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                            {/* /.list-group-actions */}
-                        </div>
-                        {/* List Group Item */}
-                        <div className="list-group-item link">
-                            <a className="list-group-link" href="#"></a>
-                            <div className="list-group-detail">
-                                <img src="http://placehold.it/200x200" />
-                            </div>
-                            <div className="list-group-content">
-                                <h5>Imagery Layer Name</h5>
-                                <p>Organization Name</p>
-                            </div>
-                            <div className="list-group-tool">
-                                <button type="button" className="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autoComplete="off">
-                                <i className="rf-icon-star control-active text-primary"></i>
-                                <i className="rf-icon-star-empty control-inactive"></i>
-                                </button>
-                                <div className="checkbox">
-                                    <input type="checkbox" />
-                                    <label></label>
-                                </div>
-                            </div>
-                            <div className="list-group-actions">
-                                <div className="dropdown">
-                                    <button type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" className="btn btn-default">
-                                    <i className="rf-icon-ellipsis"></i>
-                                    </button>
-                                    <ul className="dropdown-menu dropdown-menu-dark" aria-labelledby="dLabel">
-                                        <li><a href="#">Edit Metadata</a></li>
-                                        <li><a href="#">Import Options</a></li>
-                                        <li className="divider"></li>
-                                        <li><a href="#" className="text-danger">Delete</a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                            {/* /.list-group-actions */}
-                        </div>
+                        { layerItems }
                     </div>
                 </div>
                 {/* /#imports.tab-pane */}
@@ -525,6 +384,74 @@ var TabContents = React.createBackboneClass({
                 </div>
             </div>
         );
+    }
+});
+
+var LayerItem = React.createBackboneClass({
+    render: function() {
+        return (
+            <div className="list-group-item link">
+                <a className="list-group-link" href="#" onClick={this.triggerLayerDetail}></a>
+                <div className="list-group-detail">
+                    <img src="http://placehold.it/200x200" />
+                </div>
+                <div className="list-group-content">
+                    <h5>{this.getModel().get('name')}</h5>
+                    <p>{this.getModel().get('organization')}</p>
+                </div>
+                <div className="list-group-tool">
+                    <button type="button" className="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autoComplete="off" onClick={this.markAsFavorite}>
+                    <i className="rf-icon-star control-active text-primary"></i>
+                    <i className="rf-icon-star-empty control-inactive"></i>
+                    </button>
+                    <div className="checkbox">
+                        <input type="checkbox" />
+                        <label></label>
+                    </div>
+                </div>
+                <div className="list-group-actions">
+                    <div className="dropdown">
+                        <button type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" className="btn btn-default">
+                        <i className="rf-icon-ellipsis"></i>
+                        </button>
+                        <ul className="dropdown-menu dropdown-menu-dark" aria-labelledby="dLabel">
+                            <li><a href="#" onClick={this.editMetaData}>Edit Metadata</a></li>
+                            <li><a href="#" onClick={this.importOptions}>Import Options</a></li>
+                            <li className="divider"></li>
+                            <li><a href="#" onClick={this.deleteLayer} className="text-danger">Delete</a></li>
+                        </ul>
+                    </div>
+                </div>
+                {/* /.list-group-actions */}
+            </div>
+        );
+    },
+
+    editMetaData: function() {
+        console.log('edit metadata');
+    },
+
+    deleteLayer: function() {
+        console.log('delete layer');
+    },
+
+    importOptions: function() {
+        console.log('trigger options');
+    },
+
+    markAsFavorite: function(e) {
+        console.log('favorite this layer');
+        // TODO This won't fire in Firefox. Seems like the element that triggers
+        // the layer detail panel is capturing the event.
+        e.stopPropagation();
+        e.preventDefault();
+    },
+
+    triggerLayerDetail: function(e) {
+        console.log('detail');
+        var layerDetail = $('.layer-detail');
+        e.preventDefault();
+        layerDetail.addClass('active');
     }
 });
 
