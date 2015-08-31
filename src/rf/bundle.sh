@@ -89,9 +89,9 @@ CONCAT_VENDOR_CSS_COMMAND="cat \
     ./node_modules/leaflet/dist/leaflet.css \
     > $VENDOR_CSS_FILE"
 
-JS_DEPS=(jquery backbone backbone.marionette bootstrap \
-         leaflet leaflet-draw leaflet.locatecontrol \
-         underscore react react.backbone)
+JS_DEPS=(jquery backbone backbone.marionette bootstrap evaporate leaflet \
+         leaflet-draw leaflet.locatecontrol underscore react react.backbone)
+
 BROWSERIFY_EXT=""
 BROWSERIFY_REQ=""
 for DEP in "${JS_DEPS[@]}"

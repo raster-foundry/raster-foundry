@@ -268,6 +268,7 @@ REST_FRAMEWORK = {
 LOCAL_APPS = (
     'apps.core',
     'apps.home',
+    'apps.uploads',
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -280,3 +281,10 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 WSGI_APPLICATION = '%s.wsgi.application' % SITE_NAME
 # END WSGI CONFIGURATION
 
+
+# S3 CONFIGURATION
+
+AWS_BUCKET_NAME = environ.get('RF_AWS_BUCKET', 'raster-foundry-test-uploads-67dc48c70b3bcf89eab78dbf5cf7900')  # NOQA
+AWS_PROFILE = environ.get('AWS_PROFILE', 'rf-dev')
+
+# END S3 CONFIGURATION

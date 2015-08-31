@@ -9,3 +9,5 @@ envdir_config:
   RF_STATSD_HOST: "{{ statsite_host }}"
   RF_CACHE_HOST: "{{ redis_host }}"
   RF_CACHE_PORT: "{{ redis_port }}"
+  AWS_PROFILE: "{{ aws_profile }}"
+  RF_AWS_BUCKET: "{{ aws_bucket }}"

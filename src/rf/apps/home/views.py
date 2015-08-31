@@ -3,10 +3,14 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
 
+import json
+import boto
+
 from django.contrib.auth.models import User
 from django.shortcuts import (render_to_response,
                               get_object_or_404)
 import django_filters
+from django.core.urlresolvers import reverse
 
 from rest_framework import (viewsets, mixins,
                             status, generics,
@@ -18,9 +22,12 @@ from rest_framework.permissions import IsAuthenticated
 from apps.core.models import Layer, LayerMeta, UserFavoriteLayer
 from apps.core.serializers import LayerSerializer, LayerMetaSerializer
 
+from django.conf import settings
+
 
 def home_page(request):
-    return render_to_response('home/home.html')
+    return render_to_response('home/home.html',
+                              {'client_settings': get_client_settings()})
 
 
 class LayerFilter(django_filters.FilterSet):
@@ -155,3 +162,15 @@ class FavoriteCreateDestroyView(generics.GenericAPIView,
 
     def delete(self, request, *args, **kwargs):
         return self.destroy(request, *args, **kwargs)
+
+
+def get_client_settings():
+    conn = boto.connect_s3(profile_name=settings.AWS_PROFILE)
+    aws_key = conn.aws_access_key_id
+
+    client_settings = json.dumps({
+        'signerUrl': reverse('sign_request'),
+        'awsKey': aws_key,
+        'awsBucket': settings.AWS_BUCKET_NAME,
+    })
+    return client_settings

@@ -4,3 +4,6 @@
 
 - name: Install Xvfb for JavaScript tests
   apt: pkg=xvfb="2:1.15.1*" state=present
+
+- name: Copy AWS Crendentials
+  copy: src=~/.aws dest=/var/lib/rf owner=rf

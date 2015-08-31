@@ -5,16 +5,18 @@ from __future__ import division
 
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
-from rest_framework import routers
 
 import apps.home.urls
 import apps.user.urls
+import apps.uploads.urls
+
 
 admin.autodiscover()
 
 urlpatterns = patterns(
     '',
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^api/uploads/', include(apps.uploads.urls)),
     url(r'^user/', include(apps.user.urls)),
     url(r'^', include(apps.home.urls)),
 )
