@@ -28,12 +28,37 @@ var HomeController = {
                 organization: 'Second the organization',
                 owner: 1
             }),
-            layerItems = new Backbone.Collection([layerItem1, layerItem2]),
-            el = $('#container').get(0),
-            LibraryView = React.createFactory(Library),
-            libraryView = LibraryView({collection: layerItems});
+            favItem1 = new Layer({
+                name: 'Fav layer name',
+                organization: 'test organization name',
+                owner: 9
+            }),
+            favItem2 = new Layer({
+                name: 'Second fav Layer',
+                organization: 'Second the organization',
+                owner: 1
+            }),
+            pubItem1 = new Layer({
+                name: 'Public layer name',
+                organization: 'test organization name',
+                owner: 10
+            }),
+            pubItem2 = new Layer({
+                name: 'Second public Layer',
+                organization: 'Second the organization',
+                owner: 10
+            }),
+            myLayerItems = new Backbone.Collection([layerItem1, layerItem2]),
+            favoriteItems = new Backbone.Collection([favItem1, favItem2]),
+            publicItems = new Backbone.Collection([pubItem1, pubItem2]),
+            layers = {
+                myLayerItems: myLayerItems,
+                favoriteLayerItems: favoriteItems,
+                publicLayerItems: publicItems
+            },
+            el = $('#container').get(0);
 
-        React.render(libraryView, el);
+        React.render(<Library layers={layers} />, el);
 
         var fileProps = {
             handleFiles: function(e) {

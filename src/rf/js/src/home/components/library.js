@@ -56,7 +56,7 @@ var Library = React.createBackboneClass({
     render: function() {
         return (
             <div>
-                <Sidebar collection={this.getCollection()}/>
+                <Sidebar layers={this.props.layers}/>
                 <Map />
             </div>
         );
@@ -71,7 +71,7 @@ var Sidebar = React.createBackboneClass({
                 <div className="sidebar-utility" role="tabpanel">
                     <Tabs />
                     <div className="sidebar-utility-content">
-                        <TabContents collection={this.getCollection()}/>
+                        <TabContents layers={this.props.layers}/>
                     </div>
                     <LayerMetadata />
                     <ImageMetadata />
@@ -153,190 +153,20 @@ var Tabs = React.createBackboneClass({
 
 var TabContents = React.createBackboneClass({
     render: function() {
-        var layerItems = this.getCollection().map(function(layer) {
-            return <LayerItem model={layer} />
-        });
         return (
             <div className="tab-content">
                 {/* Imports Tab Pane */}
-                <div role="tabpanel" className="tab-pane active animated fadeInLeft" id="imports">
-                    {/* Sorting, Search, Add to workspace */}
-                    <div className="sidebar-utility-toolbar">
-                        <div className="utility-tools col-2">
-                            <span className="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Import Imagery Layer">
-                            <button className="btn btn-secondary" id="import-imagery" type="button" data-toggle="modal" data-target="#import-imagery-modal"><i className="rf-icon-upload"></i></button>
-                            </span>
-                            <span className="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Search Imports">
-                            <button className="btn btn-default" type="button" data-toggle="collapse" data-target="#search-imagery" aria-expanded="false" aria-controls="collapseExample"><i className="rf-icon-search"></i></button>
-                            </span>
-                            <span className="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Sort Imports">
-                            <button className="btn btn-default" type="button" data-toggle="collapse" data-target="#sort-imagery" aria-expanded="false" aria-controls="collapseExample"><i className="rf-icon-sort-alt-up"></i> </button>
-                            </span>
-                        </div>
-                        <div className="utility-tools col-2 text-right utility-tools-secondary">
-                            <button className="btn btn-danger btn-sm"><i className="rf-icon-trash-empty"></i> Delete</button>
-                            <button className="btn btn-primary btn-sm" data-toggle="modal" data-target="#addto-imagery-modal"><i className="rf-icon-plus"></i> Add to</button>
-                            <div className="checkbox toggle-all select-all">
-                                <input type="checkbox" />
-                                <label></label>
-                            </div>
-                        </div>
-                    </div>
-                    {/* Expandable Search and Filter blocks */}
-                    <div className="collapse" id="search-imagery">
-                        <div className="panel panel-default">
-                            <div className="panel-body">
-                                <form>
-                                    <fieldset>
-                                        <input type="text" className="form-control" placeholder="Search by name, organization or tag" />
-                                    </fieldset>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="collapse" id="sort-imagery">
-                        <div className="panel panel-default">
-                            <div className="panel-body">
-                                <form>
-                                    <fieldset>
-                                        <select defaultValue="area" className="form-control">
-                                            <option value="area">Area</option>
-                                            <option value="capture_start">Capture Start Date</option>
-                                            <option value="capture_end">Capture End Date</option>
-                                            <option value="projection">Source Data Projection</option>
-                                        </select>
-                                    </fieldset>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                    {/* Imagery Layers */}
-                    <div className="list-group">
-                        { layerItems }
-                    </div>
-                </div>
+                <LayerCollection collection={this.props.layers.myLayerItems} id="imports" active={true} uploadsEnabled={true} />
                 {/* /#imports.tab-pane */}
+
                 {/* Catalog Tab Pane */}
-                <div role="tabpanel" className="tab-pane animated fadeInLeft" id="catalog">
-                    {/* Sorting, Search, Add to workspace */}
-                    <div className="sidebar-utility-toolbar">
-                        <div className="utility-tools col-2">
-                            <span className="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Search Catalog">
-                            <button className="btn btn-default" type="button" data-toggle="collapse" data-target="#search-catalog" aria-expanded="false" aria-controls="collapseExample"><i className="rf-icon-search"></i></button>
-                            </span>
-                            <span className="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Sort Catalog">
-                            <button className="btn btn-default" type="button" data-toggle="collapse" data-target="#sort-catalog" aria-expanded="false" aria-controls="collapseExample"><i className="rf-icon-sort-alt-up"></i> </button>
-                            </span>
-                        </div>
-                        <div className="utility-tools col-2 text-right utility-tools-secondary">
-                            <button className="btn btn-primary btn-sm" data-toggle="modal" data-target="#addto-imagery-modal"><i className="rf-icon-plus"></i> Add to</button>
-                            <div className="checkbox toggle-all select-all">
-                                <input type="checkbox" />
-                                <label></label>
-                            </div>
-                        </div>
-                    </div>
-                    {/* Imagery Layers */}
-                    <div className="list-group">
-                        {/* List Group Item */}
-                        <div className="list-group-item link">
-                            <a className="list-group-link" href="#"></a>
-                            <div className="list-group-detail">
-                                <img src="http://placehold.it/200x200" />
-                            </div>
-                            <div className="list-group-content">
-                                <h5>Imagery Layer Name</h5>
-                                <p>Organization Name</p>
-                            </div>
-                            <div className="list-group-tool">
-                                <button type="button" className="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autoComplete="off">
-                                <i className="rf-icon-star control-active text-primary"></i>
-                                <i className="rf-icon-star-empty control-inactive"></i>
-                                </button>
-                                <div className="checkbox">
-                                    <input type="checkbox" />
-                                    <label></label>
-                                </div>
-                            </div>
-                        </div>
-                        {/* List Group Item */}
-                        <div className="list-group-item link">
-                            <a className="list-group-link" href="#"></a>
-                            <div className="list-group-detail">
-                                <img src="http://placehold.it/200x200" />
-                            </div>
-                            <div className="list-group-content">
-                                <h5>Imagery Layer Name</h5>
-                                <p>Organization Name</p>
-                            </div>
-                            <div className="list-group-tool">
-                                <button type="button" className="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autoComplete="off">
-                                <i className="rf-icon-star control-active text-primary"></i>
-                                <i className="rf-icon-star-empty control-inactive"></i>
-                                </button>
-                                <div className="checkbox">
-                                    <input type="checkbox" />
-                                    <label></label>
-                                </div>
-                            </div>
-                        </div>
-                        {/* List Group Item */}
-                        <div className="list-group-item link">
-                            <a className="list-group-link" href="#"></a>
-                            <div className="list-group-detail">
-                                <img src="http://placehold.it/200x200" />
-                            </div>
-                            <div className="list-group-content">
-                                <h5>Imagery Layer Name</h5>
-                                <p>Organization Name</p>
-                            </div>
-                            <div className="list-group-tool">
-                                <button type="button" className="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autoComplete="off">
-                                <i className="rf-icon-star control-active text-primary"></i>
-                                <i className="rf-icon-star-empty control-inactive"></i>
-                                </button>
-                                <div className="checkbox">
-                                    <input type="checkbox" />
-                                    <label></label>
-                                </div>
-                            </div>
-                        </div>
-                        {/* List Group Item */}
-                        <div className="list-group-item link">
-                            <a className="list-group-link" href="#"></a>
-                            <div className="list-group-detail">
-                                <img src="http://placehold.it/200x200" />
-                            </div>
-                            <div className="list-group-content">
-                                <h5>Imagery Layer Name</h5>
-                                <p>Organization Name</p>
-                            </div>
-                            <div className="list-group-tool">
-                                <button type="button" className="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autoComplete="off">
-                                <i className="rf-icon-star control-active text-primary"></i>
-                                <i className="rf-icon-star-empty control-inactive"></i>
-                                </button>
-                                <div className="checkbox">
-                                    <input type="checkbox" />
-                                    <label></label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <LayerCollection collection={this.props.layers.publicLayerItems} id="catalog" />
                 {/* /#catalog.tab-pane */}
+
                 {/* Favorites Tab Pane */}
-                <div role="tabpanel" className="tab-pane animated fadeInLeft" id="favorites">
-                    {/* Sorting, Search, Add to workspace */}
-                    {/* Imagery Layers */}
-                    <div className="list-group">
-                        {/* List Group Item */}
-                        <div className="list-group-item">
-                            <p className="h5 text-muted">Your favorited imagery layers will show up here.</p>
-                        </div>
-                    </div>
-                </div>
+                <LayerCollection collection={this.props.layers.favoriteLayerItems} id="favorites" />
                 {/* /#favorites.tab-pane */}
+
                 {/* Processing Tab Pane */}
                 <div role="tabpanel" className="tab-pane animated fadeInLeft" id="processing">
                     {/* Imagery Layers */}
@@ -387,8 +217,115 @@ var TabContents = React.createBackboneClass({
     }
 });
 
+var LayerCollection = React.createBackboneClass({
+    render: function() {
+        var layerItems = this.getCollection().map(function(layer) {
+                return <LayerItem model={layer} key={layer.cid} />;
+            }),
+            className = 'tab-pane animated fadeInLeft';
+
+        if (this.props.active) {
+            className += ' active';
+        }
+
+        var uploadButton = '';
+        if (this.props.uploadsEnabled) {
+            uploadButton = (
+                <span className="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Import Imagery Layer">
+                    <button className="btn btn-secondary" id="import-imagery" type="button" data-toggle="modal" data-target="#import-imagery-modal">
+                        <i className="rf-icon-upload"></i>
+                    </button>
+                </span>
+            );
+        }
+
+        return (
+            <div role="tabpanel" className={className} id={this.props.id}>
+                <div className="sidebar-utility-toolbar">
+                    {/* Sorting, Search, Add to workspace */}
+                    <div className="utility-tools col-2">
+                        {uploadButton}
+                        <span className="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Search Imports">
+                        <button className="btn btn-default" type="button" data-toggle="collapse" data-target="#search-imagery" aria-expanded="false" aria-controls="collapseExample"><i className="rf-icon-search"></i></button>
+                        </span>
+                        <span className="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Sort Imports">
+                        <button className="btn btn-default" type="button" data-toggle="collapse" data-target="#sort-imagery" aria-expanded="false" aria-controls="collapseExample"><i className="rf-icon-sort-alt-up"></i> </button>
+                        </span>
+                    </div>
+                    <div className="utility-tools col-2 text-right utility-tools-secondary">
+                        <button className="btn btn-danger btn-sm"><i className="rf-icon-trash-empty"></i> Delete</button>
+                        <button className="btn btn-primary btn-sm" data-toggle="modal" data-target="#addto-imagery-modal"><i className="rf-icon-plus"></i> Add to</button>
+                        <div className="checkbox toggle-all select-all">
+                            <input type="checkbox" />
+                            <label></label>
+                        </div>
+                    </div>
+                    {/* Expandable Search and Filter blocks */}
+                </div>
+                <div className="collapse" id="search-imagery">
+                    <div className="panel panel-default">
+                        <div className="panel-body">
+                            <form>
+                                <fieldset>
+                                    <input type="text" className="form-control" placeholder="Search by name, organization or tag" />
+                                </fieldset>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div className="collapse" id="sort-imagery">
+                    <div className="panel panel-default">
+                        <div className="panel-body">
+                            <form>
+                                <fieldset>
+                                    <select defaultValue="area" className="form-control">
+                                        <option value="area">Area</option>
+                                        <option value="capture_start">Capture Start Date</option>
+                                        <option value="capture_end">Capture End Date</option>
+                                        <option value="projection">Source Data Projection</option>
+                                    </select>
+                                </fieldset>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div className="list-group">
+                    { layerItems }
+                </div>
+            </div>
+        );
+    }
+});
+
+
 var LayerItem = React.createBackboneClass({
     render: function() {
+        var self = this,
+            actions = '',
+            ActionElements = React.createClass({
+                render: function() {
+                    return (
+                        <div className="list-group-actions">
+                            <div className="dropdown">
+                                <button type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" className="btn btn-default">
+                                <i className="rf-icon-ellipsis"></i>
+                                </button>
+                                <ul className="dropdown-menu dropdown-menu-dark" aria-labelledby="dLabel">
+                                    <li><a href="#" onClick={self.editMetaData}>Edit Metadata</a></li>
+                                    <li><a href="#" onClick={self.importOptions}>Import Options</a></li>
+                                    <li className="divider"></li>
+                                    <li><a href="#" onClick={self.deleteLayer} className="text-danger">Delete</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    );
+                }
+            });
+
+        if (Number(this.getModel().get('owner')) === 1) {
+            actions = <ActionElements />;
+        }
+
         return (
             <div className="list-group-item link">
                 <a className="list-group-link" href="#" onClick={this.triggerLayerDetail}></a>
@@ -401,28 +338,15 @@ var LayerItem = React.createBackboneClass({
                 </div>
                 <div className="list-group-tool">
                     <button type="button" className="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autoComplete="off" onClick={this.markAsFavorite}>
-                    <i className="rf-icon-star control-active text-primary"></i>
-                    <i className="rf-icon-star-empty control-inactive"></i>
+                        <i className="rf-icon-star control-active text-primary"></i>
+                        <i className="rf-icon-star-empty control-inactive"></i>
                     </button>
                     <div className="checkbox">
                         <input type="checkbox" />
                         <label></label>
                     </div>
                 </div>
-                <div className="list-group-actions">
-                    <div className="dropdown">
-                        <button type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" className="btn btn-default">
-                        <i className="rf-icon-ellipsis"></i>
-                        </button>
-                        <ul className="dropdown-menu dropdown-menu-dark" aria-labelledby="dLabel">
-                            <li><a href="#" onClick={this.editMetaData}>Edit Metadata</a></li>
-                            <li><a href="#" onClick={this.importOptions}>Import Options</a></li>
-                            <li className="divider"></li>
-                            <li><a href="#" onClick={this.deleteLayer} className="text-danger">Delete</a></li>
-                        </ul>
-                    </div>
-                </div>
-                {/* /.list-group-actions */}
+                {actions}
             </div>
         );
     },
