@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block header %}
+<header>
+    <nav id="app-header" class="navbar-watershed">
+        <div class="brand"><a href="{% url 'home_page' %}">Model My Watershed</a></div>
+        <div class="navigation">
+        </div>
+    </nav>
+</header>
+{% endblock header %}
+
+{% block content %}
+<div class="container-fluid top-nav">
+    {% block title %}
+    {% endblock %}
+    {% block registration_content %}
+    {% endblock %}
+</div>
+{% endblock %}

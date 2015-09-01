@@ -6,6 +6,9 @@ from __future__ import division
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
 
+from rest_framework import routers
+import registration.backends.default.urls
+
 import apps.home.urls
 import apps.user.urls
 import apps.uploads.urls
@@ -19,4 +22,5 @@ urlpatterns = patterns(
     url(r'^api/uploads/', include(apps.uploads.urls)),
     url(r'^user/', include(apps.user.urls)),
     url(r'^', include(apps.home.urls)),
+    url(r'^accounts/', include(registration.backends.default.urls)),
 )
