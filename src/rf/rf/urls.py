@@ -6,7 +6,6 @@ from __future__ import division
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
 
-from rest_framework import routers
 import registration.backends.default.urls
 
 import apps.home.urls

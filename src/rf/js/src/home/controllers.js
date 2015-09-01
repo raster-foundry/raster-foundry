@@ -6,12 +6,10 @@ var $ = require('jquery'),
     router = require('../router').router,
     settings = require('../settings'),
     coreViews = require('../core/views'),
-    Login = require('./components/login'),
     Library = require('./components/library'),
     Modals = require('./components/modals'),
     uploads = require('../core/uploads'),
     Layer = require('../layer/models');
-
 
 function showLoginIfNeeded() {
     var user = settings.getUser();
@@ -84,19 +82,4 @@ var HomeController = {
     }
 };
 
-var UserController = {
-    login: function() {
-        var el = $('#container').get(0);
-        React.render(<Login />, el);
-    },
-
-    logout: function() {
-        settings.getUser().logout();
-        router.go('/login');
-    }
-};
-
-module.exports = {
-    HomeController: HomeController,
-    UserController: UserController
-};
+module.exports = HomeController;

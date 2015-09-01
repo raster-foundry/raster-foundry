@@ -6,7 +6,8 @@ from __future__ import division
 from django.contrib.auth import (authenticate,
                                  logout as auth_logout,
                                  login as auth_login)
-from django.shortcuts import redirect
+from django.contrib.auth.models import User
+from django.shortcuts import redirect, get_object_or_404
 from django.contrib.auth.forms import PasswordResetForm
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.sites.shortcuts import get_current_site
@@ -101,8 +102,7 @@ def sign_up(request):
     if form.is_valid():
         user = view.register(request, form)
         response_data = {'result': 'success',
-                         'username': user.username,
-                         'logged_in': True}
+                         'username': user.username}
         return Response(data=response_data,
                         status=status.HTTP_200_OK)
     else:
@@ -144,7 +144,7 @@ def resend(request):
                 response_data = {'result': 'success'}
                 status_code = status.HTTP_200_OK
         except ObjectDoesNotExist:
-            response_data = {'errors': ["Email cannot be found"]}
+            response_data = {'errors': ["Registration cannot be found"]}
             status_code = status.HTTP_400_BAD_REQUEST
     else:
         response_data = {'errors': ["Email is invalid"]}
@@ -175,3 +175,20 @@ def forgot(request):
         status_code = status.HTTP_400_BAD_REQUEST
 
     return Response(data=response_data, status=status_code)
+
+
+@decorators.permission_classes((AllowAny, ))
+def activate(request, activation_key):
+    profile = get_object_or_404(RegistrationProfile,
+                                activation_key=activation_key)
+    user = get_object_or_404(User, id=profile.user_id)
+
+    user.is_active = True
+    user.save()
+
+    # Backend needs to be added, for login without a password.
+    # see: http://cheng.logdown.com/posts/2015/06/03/
+    # django-login-users-without-password
+    user.backend = 'django.contrib.auth.backends.ModelBackend'
+    auth_login(request, user)
+    return redirect('/activate/')

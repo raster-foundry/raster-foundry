@@ -10,5 +10,7 @@ from apps.uploads.views import SignUploadRequestView
 
 urlpatterns = patterns(
     '',
-    url(r'^sign-request$', SignUploadRequestView.as_view(), name='sign_request'),
+    url(r'^sign-request$',
+        SignUploadRequestView.as_view(),
+        name='sign_request'),
 )
