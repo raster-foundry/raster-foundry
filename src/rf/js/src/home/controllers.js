@@ -13,8 +13,19 @@ var $ = require('jquery'),
     Layer = require('../layer/models');
 
 
+function showLoginIfNeeded() {
+    var user = settings.getUser();
+    user.checkAuthentication().always(function() {
+        if (!user.get('logged_in')) {
+            router.go('/login/');
+        }
+    });
+}
+
 var HomeController = {
     index: function() {
+        showLoginIfNeeded();
+
         // TODO remove these hard coded test values.
         var layerItem1 = new Layer({
                 name: 'test layer name',
