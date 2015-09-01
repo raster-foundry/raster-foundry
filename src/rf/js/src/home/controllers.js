@@ -13,8 +13,6 @@ var $ = require('jquery'),
     Layer = require('../layer/models');
 
 
-
-
 var HomeController = {
     index: function() {
         // TODO remove these hard coded test values.

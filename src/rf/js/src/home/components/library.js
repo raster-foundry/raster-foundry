@@ -3,7 +3,9 @@
 var $ = require('jquery'),
     React = require('react'),
     asset = require('../../core/utils').asset,
-    Map = require('./map');
+    Map = require('./map'),
+    settings = require('../../settings');
+
 
 var Library = React.createBackboneClass({
     componentDidMount: function() {
@@ -299,31 +301,40 @@ var LayerCollection = React.createBackboneClass({
 
 
 var LayerItem = React.createBackboneClass({
-    render: function() {
-        var self = this,
-            actions = '',
-            ActionElements = React.createClass({
-                render: function() {
-                    return (
-                        <div className="list-group-actions">
-                            <div className="dropdown">
-                                <button type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" className="btn btn-default">
-                                <i className="rf-icon-ellipsis"></i>
-                                </button>
-                                <ul className="dropdown-menu dropdown-menu-dark" aria-labelledby="dLabel">
-                                    <li><a href="#" onClick={self.editMetaData}>Edit Metadata</a></li>
-                                    <li><a href="#" onClick={self.importOptions}>Import Options</a></li>
-                                    <li className="divider"></li>
-                                    <li><a href="#" onClick={self.deleteLayer} className="text-danger">Delete</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    );
-                }
-            });
+    componentDidMount: function() {
+        var currentUser = settings.getUser(),
+            self = this;
 
-        if (Number(this.getModel().get('owner')) === 1) {
-            actions = <ActionElements />;
+        currentUser.on('change', function() {
+            self.setState({
+                currentUserId: this.get('id')
+            });
+        });
+    },
+
+    getInitialState: function() {
+        var currentUser = settings.getUser();
+        return { currentUserId: currentUser.get('id') };
+    },
+
+    render: function() {
+        var actions = '';
+        if (Number(this.getModel().get('owner')) === this.state.currentUserId) {
+            actions = (
+                <div className="list-group-actions">
+                    <div className="dropdown">
+                        <button type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" className="btn btn-default">
+                        <i className="rf-icon-ellipsis"></i>
+                        </button>
+                        <ul className="dropdown-menu dropdown-menu-dark" aria-labelledby="dLabel">
+                            <li><a href="#" onClick={this.editMetaData}>Edit Metadata</a></li>
+                            <li><a href="#" onClick={this.importOptions}>Import Options</a></li>
+                            <li className="divider"></li>
+                            <li><a href="#" onClick={this.deleteLayer} className="text-danger">Delete</a></li>
+                        </ul>
+                    </div>
+                </div>
+            );
         }
 
         return (
