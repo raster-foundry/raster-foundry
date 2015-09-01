@@ -248,10 +248,19 @@ var LayerCollection = React.createBackboneClass({
                     <div className="utility-tools col-2">
                         {uploadButton}
                         <span className="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Search Imports">
-                        <button className="btn btn-default" type="button" data-toggle="collapse" data-target="#search-imagery" aria-expanded="false" aria-controls="collapseExample"><i className="rf-icon-search"></i></button>
+                            <button className="btn btn-default" type="button"
+                                data-toggle="collapse"
+                                data-target={ '#search-imagery-' + this.props.id }
+                                aria-expanded="false" aria-controls="collapseExample">
+                                <i className="rf-icon-search"></i>
+                            </button>
                         </span>
                         <span className="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Sort Imports">
-                        <button className="btn btn-default" type="button" data-toggle="collapse" data-target="#sort-imagery" aria-expanded="false" aria-controls="collapseExample"><i className="rf-icon-sort-alt-up"></i> </button>
+                            <button className="btn btn-default" type="button"
+                                data-toggle="collapse" data-target={ '#sort-' + this.props.id }
+                                aria-expanded="false" aria-controls="collapseExample">
+                                <i className="rf-icon-sort-alt-up"></i>
+                            </button>
                         </span>
                     </div>
                     <div className="utility-tools col-2 text-right utility-tools-secondary">
@@ -264,7 +273,7 @@ var LayerCollection = React.createBackboneClass({
                     </div>
                     {/* Expandable Search and Filter blocks */}
                 </div>
-                <div className="collapse" id="search-imagery">
+                <div className="collapse" id={ 'search-imagery-' + this.props.id }>
                     <div className="panel panel-default">
                         <div className="panel-body">
                             <form>
@@ -275,7 +284,7 @@ var LayerCollection = React.createBackboneClass({
                         </div>
                     </div>
                 </div>
-                <div className="collapse" id="sort-imagery">
+                <div className="collapse" id={ 'sort-' + this.props.id }>
                     <div className="panel panel-default">
                         <div className="panel-body">
                             <form>
