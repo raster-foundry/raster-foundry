@@ -3,14 +3,13 @@
 var _ = require('underscore'),
     Evaporate = require('evaporate'),
     uuid = require('node-uuid'),
-    settings = require('../settings'),
-    coreSettings = require('../core/settings');
+    settings = require('../settings');
 
 var uploadFiles = function(files) {
     var evap = new Evaporate({
-        signerUrl: coreSettings.get('signerUrl'),
-        aws_key: coreSettings.get('awsKey'),
-        bucket: coreSettings.get('awsBucket'),
+        signerUrl: settings.get('signerUrl'),
+        aws_key: settings.get('awsKey'),
+        bucket: settings.get('awsBucket'),
         logging: false
     });
     _.each(files, function(file) {
