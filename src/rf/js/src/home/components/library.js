@@ -220,9 +220,14 @@ var TabContents = React.createBackboneClass({
 });
 
 var LayerCollection = React.createBackboneClass({
+    getInitialState: function() {
+        return { selectAll: false };
+    },
+
     render: function() {
-        var layerItems = this.getCollection().map(function(layer) {
-                return <LayerItem model={layer} key={layer.cid} />;
+        var selected = this.state.selectAll,
+            layerItems = this.getCollection().map(function(layer, i) {
+                return <LayerItem model={layer} key={layer.cid} selected={selected} ref={'layer' + i} />;
             }),
             className = 'tab-pane animated fadeInLeft';
 
@@ -267,7 +272,7 @@ var LayerCollection = React.createBackboneClass({
                         <button className="btn btn-danger btn-sm"><i className="rf-icon-trash-empty"></i> Delete</button>
                         <button className="btn btn-primary btn-sm" data-toggle="modal" data-target="#addto-imagery-modal"><i className="rf-icon-plus"></i> Add to</button>
                         <div className="checkbox toggle-all select-all">
-                            <input type="checkbox" />
+                            <input type="checkbox" checked={this.state.selectAll} onChange={this.toggleSelectAll} />
                             <label></label>
                         </div>
                     </div>
@@ -305,6 +310,14 @@ var LayerCollection = React.createBackboneClass({
                 </div>
             </div>
         );
+    },
+
+    toggleSelectAll: function(e) {
+        var state = !this.state.selectAll;
+        this.setState({ selectAll: state });
+        this.getCollection().map(function(layer, i) {
+            this.refs['layer' + i].toggleState(state);
+        }, this);
     }
 });
 
@@ -316,7 +329,7 @@ var LayerItem = React.createBackboneClass({
 
         currentUser.on('change', function() {
             self.setState({
-                currentUserId: this.get('id')
+                currentUserId: this.get('id'),
             });
         });
     },
@@ -362,7 +375,7 @@ var LayerItem = React.createBackboneClass({
                         <i className="rf-icon-star-empty control-inactive"></i>
                     </button>
                     <div className="checkbox">
-                        <input type="checkbox" />
+                        <input type="checkbox" checked={this.state.selected} onChange={this.selectItem} />
                         <label></label>
                     </div>
                 </div>
@@ -396,6 +409,14 @@ var LayerItem = React.createBackboneClass({
         var layerDetail = $('.layer-detail');
         e.preventDefault();
         layerDetail.addClass('active');
+    },
+
+    selectItem: function() {
+        this.setState({ selected: !this.state.selected });
+    },
+
+    toggleState: function(selected) {
+        this.setState({ selected: selected });
     }
 });
 
