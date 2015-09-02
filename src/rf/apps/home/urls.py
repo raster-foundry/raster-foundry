@@ -4,39 +4,40 @@ from __future__ import unicode_literals
 from __future__ import division
 
 from django.conf.urls import patterns, url, include
-from rest_framework.routers import SimpleRouter
 
-from apps.home.views import (home_page,
-                             UserLayerViewSet,
-                             LayerListView,
-                             FavoriteListView,
-                             FavoriteCreateDestroyView)
+from apps.home import views
 
 
-username_regex = r'[\w.@+-]+'
 slug_regex = r'[-_\w]+'
+username_regex = r'[\w.@+-]+'
 
-# Use router for UserLayerViewSet to generate urls automatically. This
-# can only be done for ViewSets.
-router = SimpleRouter()
-router.register(r'user/(?P<username>' + username_regex + r')/layers',
-                UserLayerViewSet, base_name='user_layers')
 
+user_patterns = [
+    url('^/layers.json$', views.user_layers, name='user_layers'),
+    url('^/layer/create/?$', views.create_layer, name='create_layer'),
+    url('^/layer/(?P<layer_id>\d+).json$', views.layer_detail,
+        name='layer_detail'),
+    url('^/layer/meta/(?P<layer_id>\d+).json$', views.layer_meta,
+        name='layer_meta'),
+]
 
 urlpatterns = patterns(
     '',
-    url(r'^', include(router.urls)),
-    url(r'user/(?P<username>' + username_regex + r')/favorites/$',
-        FavoriteListView.as_view()),
-    url(r'user/(?P<username>' + username_regex + r')/layers/(?P<slug>' +
-        slug_regex + r')/favorite/$',
-        FavoriteCreateDestroyView.as_view()),
-    url(r'layers/$', LayerListView.as_view()),
-    url(r'^$', home_page, name='home_page'),
-    url(r'login/$', home_page),
-    url(r'sign-up/$', home_page),
-    url(r'send-activation/$', home_page),
-    url(r'forgot/$', home_page),
-    url(r'logout/$', home_page),
-    url(r'activate/$', home_page),
+    url('^user/(?P<username>' + username_regex + ')', include(user_patterns)),
+    url('^layers.json$', views.my_layers, name='my_layers'),
+    url('^favorites.json$', views.my_favorites, name='my_favorites'),
+    url('^favorite/(?P<layer_id>\d+)$', views.create_or_destroy_favorite,
+        name='create_or_destroy_favorite'),
+    url('^all/layers.json$', views.all_layers, name='all_layers'),
+
+    # These all route to the home page.
+    url('^login/$', views.home_page),
+    url('^sign-up/$', views.home_page),
+    url('^send-activation/$', views.home_page),
+    url('^forgot/$', views.home_page),
+    url('^logout/$', views.home_page),
+    url('^activate/$', views.home_page),
+    url('^$', views.home_page),
+
+    url('', views.not_found, name='not_found'),
 )
