@@ -221,12 +221,15 @@ var TabContents = React.createBackboneClass({
 
 var LayerCollection = React.createBackboneClass({
     getInitialState: function() {
-        return { selectAll: false };
+        return {
+            selectAll: false,
+            visibleLayers: this.getCollection()
+        };
     },
 
     render: function() {
         var selected = this.state.selectAll,
-            layerItems = this.getCollection().map(function(layer, i) {
+            layerItems = this.state.visibleLayers.map(function(layer, i) {
                 return <LayerItem model={layer} key={layer.cid} selected={selected} ref={'layer' + i} />;
             }),
             className = 'tab-pane animated fadeInLeft';
@@ -283,7 +286,10 @@ var LayerCollection = React.createBackboneClass({
                         <div className="panel-body">
                             <form>
                                 <fieldset>
-                                    <input type="text" className="form-control" placeholder="Search by name, organization or tag" />
+                                    <input type="text"
+                                        className="form-control"
+                                        placeholder="Search by name, organization or tag"
+                                        onChange={this.triggerSearch} />
                                 </fieldset>
                             </form>
                         </div>
@@ -318,6 +324,19 @@ var LayerCollection = React.createBackboneClass({
         this.getCollection().map(function(layer, i) {
             this.refs['layer' + i].toggleState(state);
         }, this);
+    },
+
+    triggerSearch: function(e) {
+        var search = (e.target.value).toLowerCase(),
+            visibleLayers = this.getCollection();
+        if (search && search !== '') {
+            visibleLayers = this.state.visibleLayers.filter(function(item) {
+                var nameMatch = item.get('name').toLowerCase().indexOf(search) > -1,
+                    organizationMatch = item.get('organization').toLowerCase().indexOf(search) > -1;
+                return nameMatch || organizationMatch;
+            });
+        }
+        this.setState({ visibleLayers: visibleLayers });
     }
 });
 
