@@ -90,7 +90,7 @@ CONCAT_VENDOR_CSS_COMMAND="cat \
     > $VENDOR_CSS_FILE"
 
 JS_DEPS=(jquery backbone backbone.marionette bootstrap evaporate leaflet \
-         leaflet.locatecontrol underscore react react.backbone)
+         leaflet.locatecontrol moment underscore react react.backbone)
 
 BROWSERIFY_EXT=""
 BROWSERIFY_REQ=""
