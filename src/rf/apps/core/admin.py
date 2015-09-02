@@ -46,3 +46,4 @@ class LayerAdmin(admin.ModelAdmin):
 
 
 admin.site.register(models.Layer, LayerAdmin)
+admin.site.register(models.UserFavoriteLayer, admin.ModelAdmin)
