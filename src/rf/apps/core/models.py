@@ -8,11 +8,12 @@ from django.contrib.gis.db.models import (Model, ForeignKey,
                                           DateField, DateTimeField,
                                           IntegerField, FloatField,
                                           URLField, SlugField,
-                                          BooleanField,)
+                                          BooleanField, UUIDField)
 from django.contrib.auth.models import User
 from django.template.defaultfilters import slugify
 
 from apps.core import enums
+import uuid
 
 
 class Layer(Model):
@@ -132,6 +133,16 @@ class LayerImage(Model):
         null=True,
         blank=True,
         help_text='Serialized JSON of image metadata',
+    )
+    file_name = CharField(
+        blank=False,
+        default='',
+        max_length=255,
+        help_text='Filename of original file',
+    )
+    s3_uuid = UUIDField(
+        default=uuid.uuid4,
+        editable=False
     )
 
 

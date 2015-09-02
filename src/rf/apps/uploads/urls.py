@@ -5,10 +5,10 @@ from __future__ import division
 
 from django.conf.urls import patterns, url
 
-from apps.uploads import views
+from apps.uploads.views import SignUploadRequestView
 
 
 urlpatterns = patterns(
     '',
-    url(r'^sign-request$', views.sign_upload_request, name="sign_request"),
+    url(r'^sign-request$', SignUploadRequestView.as_view(), name='sign_request'),
 )

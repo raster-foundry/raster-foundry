@@ -2,23 +2,26 @@
 
 var _ = require('underscore'),
     Evaporate = require('evaporate'),
-    coreSettings = require('../core/settings');
+    uuid = require('node-uuid'),
+    settings = require('../settings');
 
 var uploadFiles = function(files) {
     var evap = new Evaporate({
-        signerUrl: coreSettings.get('signerUrl'),
-        aws_key: coreSettings.get('awsKey'),
-        bucket: coreSettings.get('awsBucket'),
+        signerUrl: settings.get('signerUrl'),
+        aws_key: settings.get('awsKey'),
+        bucket: settings.get('awsBucket'),
         logging: false
     });
     _.each(files, function(file) {
+        var user = settings.getUser(),
+            userId = user.get('id');
         // TODO Later we'll want to store the id of the file upload. We can use
         // it to cancel the upload if needed.
         // var id = evap.add({ //
         evap.add({
             // TODO - NAMES ARE CURRENTLY JUST FOR TESTING.
             // WE WANT TO USE A UUID FOR FILE NAMES.
-            name: Math.floor(Math.random() * 1000000) + '_' + file.name,
+            name: userId + '-' + uuid.v4(),
             file: file,
             complete: function() {
                 console.log('File upload complete');

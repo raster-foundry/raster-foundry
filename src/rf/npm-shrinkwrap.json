@@ -3538,6 +3538,11 @@
         }
       }
     },
+    "node-uuid": {
+      "version": "1.4.3",
+      "from": "node-uuid@",
+      "resolved": "https://registry.npmjs.org/node-uuid/-/node-uuid-1.4.3.tgz"
+    },
     "react": {
       "version": "0.13.3",
       "from": "react@0.13.3",

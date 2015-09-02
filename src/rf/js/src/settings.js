@@ -1,6 +1,13 @@
 'use strict';
 
-var settings = {};
+var defaultSettings = {},
+    settings = (function() {
+        return window.clientSettings ? window.clientSettings : defaultSettings;
+    })();
+
+function get(key) {
+    return settings[key];
+}
 
 function setUser(user) {
     settings.user = user;
@@ -12,5 +19,6 @@ function getUser() {
 
 module.exports = {
     setUser: setUser,
-    getUser: getUser
+    getUser: getUser,
+    get: get
 };
