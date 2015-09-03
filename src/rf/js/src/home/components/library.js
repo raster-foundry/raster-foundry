@@ -1,7 +1,9 @@
 'use strict';
 
 var $ = require('jquery'),
+    _ = require('underscore'),
     React = require('react'),
+    moment = require('moment'),
     asset = require('../../core/utils').asset,
     Map = require('./map'),
     settings = require('../../settings');
@@ -223,15 +225,22 @@ var LayerCollection = React.createBackboneClass({
     getInitialState: function() {
         return {
             selectAll: false,
-            visibleLayers: this.getCollection()
+            visibleLayers: this.getCollection(),
+            filterFn: _.identity,
+            sortFn: _.identity
         };
     },
 
     render: function() {
         var selected = this.state.selectAll,
-            layerItems = this.state.visibleLayers.map(function(layer, i) {
+            makeLayerItem = function(layer, i) {
                 return <LayerItem model={layer} key={layer.cid} selected={selected} ref={'layer' + i} />;
-            }),
+            },
+            layerItems = this.getCollection()
+                             .toArray()
+                             .filter(this.state.filterFn)
+                             .sort(this.state.sortFn)
+                             .map(makeLayerItem),
             className = 'tab-pane animated fadeInLeft';
 
         if (this.props.active) {
@@ -300,11 +309,12 @@ var LayerCollection = React.createBackboneClass({
                         <div className="panel-body">
                             <form>
                                 <fieldset>
-                                    <select defaultValue="area" className="form-control">
+                                    <select defaultValue="" className="form-control" onChange={this.triggerSort}>
+                                        <option value="">--Choose--</option>
                                         <option value="area">Area</option>
-                                        <option value="capture_start">Capture Start Date</option>
-                                        <option value="capture_end">Capture End Date</option>
-                                        <option value="projection">Source Data Projection</option>
+                                        <option value="captureStartDate">Capture Start Date</option>
+                                        <option value="captureEndDate">Capture End Date</option>
+                                        <option value="sourceDataProjection">Source Data Projection</option>
                                     </select>
                                 </fieldset>
                             </form>
@@ -328,15 +338,58 @@ var LayerCollection = React.createBackboneClass({
 
     triggerSearch: function(e) {
         var search = (e.target.value).toLowerCase(),
-            visibleLayers = this.getCollection();
+            filterFn = _.identity;
         if (search && search !== '') {
-            visibleLayers = this.state.visibleLayers.filter(function(item) {
+            filterFn = function(item) {
                 var nameMatch = item.get('name').toLowerCase().indexOf(search) > -1,
                     organizationMatch = item.get('organization').toLowerCase().indexOf(search) > -1;
                 return nameMatch || organizationMatch;
-            });
+            };
         }
-        this.setState({ visibleLayers: visibleLayers });
+        this.setState({ filterFn: filterFn });
+    },
+
+    triggerSort: function(e) {
+        var prop = e.target.value,
+            sortFn = _.identity,
+            dateSorter = function(a, b) {
+                // Default to most recent first.
+                // Therefore if b is after a, we want b to come first.
+                // Real dates should come before null.
+                if (a && b) {
+                    if (a.isSame(b)) {
+                        return 0;
+                    }
+                    return b.isAfter(a) ? 1 : -1;
+                } else if (a) {
+                    return -1;
+                } else {
+                    return 1;
+                }
+            },
+            numberSorter = function(a, b) {
+                return a - b;
+            },
+            stringSorter = function(a, b) {
+                if (a === b) {
+                    return 0;
+                }
+                return a > b ? 1 : -1;
+            },
+            mapping = {
+                'area': numberSorter,
+                'captureStartDate': dateSorter,
+                'captureEndDate': dateSorter,
+                'sourceDataProjection': stringSorter
+            };
+
+        if (prop && prop !== '') {
+            var sorter = mapping[prop];
+            sortFn = function(a, b) {
+                return sorter(a.get(prop), b.get(prop));
+            };
+        }
+        this.setState({ sortFn: sortFn });
     }
 });
 

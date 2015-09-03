@@ -3,6 +3,7 @@
 var $ = require('jquery'),
     Backbone = require('../../shim/backbone'),
     React = require('react'),
+    moment = require('moment'),
     router = require('../router').router,
     settings = require('../settings'),
     coreViews = require('../core/views'),
@@ -19,32 +20,56 @@ var HomeController = {
         var layerItem1 = new Layer({
                 name: 'test layer name',
                 organization: 'test organization name',
-                owner: 1
+                owner: 1,
+                area: 200,
+                captureEndDate: moment('2015-09-02'),
+                captureStartDate: moment('2015-09-01'),
+                sourceDataProjection: 'A'
             }),
             layerItem2 = new Layer({
                 name: 'Second the Layer',
                 organization: 'Second the organization',
-                owner: 1
+                owner: 1,
+                area: 100,
+                captureEndDate: moment('2015-08-20'),
+                captureStartDate: moment('2015-08-19'),
+                sourceDataProjection: 'B'
             }),
             favItem1 = new Layer({
                 name: 'Fav layer name',
                 organization: 'test organization name',
-                owner: 9
+                owner: 9,
+                area: 80,
+                captureEndDate: moment('2015-08-20'),
+                captureStartDate: moment('2015-08-19'),
+                sourceDataProjection: 'E'
             }),
             favItem2 = new Layer({
                 name: 'Second fav Layer',
                 organization: 'Second the organization',
-                owner: 1
+                owner: 1,
+                area: 90,
+                captureEndDate: moment('2015-09-02'),
+                captureStartDate: moment('2015-09-01'),
+                sourceDataProjection: 'D'
             }),
             pubItem1 = new Layer({
                 name: 'Public layer name',
                 organization: 'test organization name',
-                owner: 10
+                owner: 10,
+                area: 60,
+                captureEndDate: moment('2015-09-02'),
+                captureStartDate: moment('2015-09-01'),
+                sourceDataProjection: 'C'
             }),
             pubItem2 = new Layer({
                 name: 'Second public Layer',
                 organization: 'Second the organization',
-                owner: 10
+                owner: 10,
+                area: 90,
+                captureEndDate: moment('2015-08-20'),
+                captureStartDate: moment('2015-08-19'),
+                sourceDataProjection: 'B'
             }),
             myLayerItems = new Backbone.Collection([layerItem1, layerItem2]),
             favoriteItems = new Backbone.Collection([favItem1, favItem2]),
