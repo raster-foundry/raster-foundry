@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+	<title>Raster Foundry</title>
+	<link rel="stylesheet" href="/assets/css/main.css">
+	<link rel="stylesheet" href="/assets/font/fontello/css/raster-foundry.css">
+	<link rel="stylesheet" href="/assets/css/vendors/animate/animate.css">
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+
+	<script src="assets/js/vendor/multi-level-menu/modernizr.custom.js"></script>
+	<!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+	<!-- Import Files Modal -->
+	<div class="modal import-modal fade in open" id="import-imagery-modal" tabindex="-1" role="dialog" aria-labelledby="import-imagery-modal" aria-hidden="true">
+		<div id="pane-1" class="pane animated fadeInDown active">
+		  <div class="modal-dialog modal-lg">
+		    <div class="modal-content">
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><i class="rf-icon-cancel"></i></button>
+		      <div class="modal-body no-padding">
+
+							<div class="vertical-align-parent">
+				      	<div class="vertical-align-child col-md-7 import-browse">
+				      	<div class="drag-to-area active"> <!-- add .active to show border on drag over -->
+					      		<i class="rf-icon-upload-cloud-outline"></i>
+										<h3 class="font-400">Drag &amp; Drop</h3>
+										<h4 class="font-300">to store your imagery here, or <strong><a href="#">browse</a></strong>.</h4>
+										<em>zip files or single image files accepted</em>
+					      	</div>
+				      	</div>
+				      	<div class="vertical-align-child col-md-5 import-uri">
+									<i class="rf-icon-link"></i>
+									<h3 class="font-400">Upload with a URI</h3>
+									<h4 class="font-300">Is your imagery hosted somewhere already? Enter the URI to import.</h4>
+									<em>Examples: S3, DropBox, FTP</em>
+									<form>
+										<div class="form-group">
+											<label>URI</label>
+											<input class="form-control" type="url">
+										</div>
+										<div class="form-action text-right">
+											<!-- <input type="submit" class="btn btn-primary" value="Continue"> -->
+											<button class="btn btn-secondary" data-toggle-pane data-pane-target="#pane-2">Continue</button>
+										</div>
+									</form>
+				      	</div>
+			      	</div>
+
+		      </div> <!-- /.modal-body -->
+		    </div> <!-- /.modal-content -->
+		  </div> <!-- /.modal-dialog -->
+	  </div> <!-- /#pane-1 -->
+		
+		<div id="pane-2" class="pane animated fadeInDown">
+		  <div class="modal-dialog">
+		    <div class="modal-content">
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+		      <div class="modal-body">
+		      	<form>
+							<div class="form-group">
+								<label>URI</label>
+								<input class="form-control" type="url">
+							</div>
+							<div class="form-group">
+								<label>Description</label>
+								<textarea class="form-control" rows="4"></textarea>
+							</div>
+							<div class="form-group">
+								<label>Tags</label>
+								<input class="form-control" type="url">
+							</div>
+							<div class="row">
+								<div class="col-md-6">
+									<div class="form-group">
+										<label>Capture Start Date</label>
+										<input class="form-control" type="date">
+									</div>
+								</div>
+								<div class="col-md-6">
+									<div class="form-group">
+										<label>Capture End Date</label>
+										<input class="form-control" type="date">
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-6">
+									<div class="form-group">
+										<label>Area</label>
+										<div class="select-group">
+											<input class="form-control" type="number">
+											<select class="form-control">
+												<option>sq. mi</option>
+												<option>sq. km</option>
+											</select>
+										</div>
+									</div>
+								</div>
+								<div class="col-md-6">
+									<div class="form-group">
+										<label>Source Data Projection</label>
+										<select class="form-control">
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-6">
+									<div class="form-group">
+										<label>Total Images</label>
+										<input class="form-control" type="number" readonly>
+									</div>
+								</div>
+							</div>
+							<ul class="list-group">
+							  <li class="list-group-item">file_name.tiff <a href="#" class="pull-right"><i class="rf-icon-cancel text-danger"></i></a></li>
+							  <li class="list-group-item">file_name_2.tiff <a href="#" class="pull-right"><i class="rf-icon-cancel text-danger"></i></a></li>
+							  <li class="list-group-item">file_name_3.tiff <a href="#" class="pull-right"><i class="rf-icon-cancel text-danger"></i></a></li>
+							</ul>
+
+							<div class="form-action">
+								<!-- <input type="submit" class="btn btn-secondary pull-right" value="Submit"> -->
+								<button class="btn btn-secondary pull-right" data-toggle-pane data-pane-target="#pane-3">Submit</button>
+								<button class="btn btn-link text-muted">Cancel</button>
+							</div>
+		      	</form>
+		      </div> <!-- /.modal-body -->
+		    </div> <!-- /.modal-content -->
+		  </div> <!-- /.modal-dialog -->
+	  </div> <!-- /#pane-2 -->
+
+	  <div id="pane-3" class="pane animated fadeInDown">
+		  <div class="modal-dialog">
+		    <div class="modal-content">
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+		      <div class="modal-body">
+		      	<form>
+		      		<div class="row">
+								<div class="col-md-8">
+									<div class="form-group">
+										<label>Source SRS</label>
+										<input class="form-control" type="text" value="UTM Zone 18" readonly>
+									</div>
+								</div>
+								<div class="col-md-4">
+									<label>&nbsp;</label>
+									<button class="btn btn-default-outline btn-block" value="Change SRS">Change SRS</button>
+								</div>
+							</div>
+							<div class="form-group">
+								<label>Tile SRS</label>
+								<select class="form-control">
+									<option value="">Web Mercator</option>
+									<option value="">UTM</option>
+									<option value="">WGS84 (EPSG: 4325)</option>
+									<option value="">EPSG/ESRI offline database</option>
+								</select>
+							</div>
+			      	<hr>
+							<h4>Mosaic Options</h4>
+							<div class="form-group">
+								<label>Tile Format</label>
+								<select class="form-control">
+									<option>JPEG</option>
+									<option>Overlay PNG + optimisation (8 bit palette with alpha transparency)</option>
+									<option>Overlay PNG format (32 bit RGBA with alpha transparency)</option>
+									<option>Base map JPEG format (without transparency)</option>
+									<option>Base map PNG format + optimisation (8 bit palette with alpha transparency)</option>
+									<option>Base map PNG format (24 bit RGB without transparency)</option>
+								</select>
+							</div>
+							<div class="form-group">
+								<label>Resampling</label>
+								<select class="form-control">
+									<option value="">Bilinear</option>
+									<option value="">Cubic</option>
+									<option value="">Cubic B-Spline</option>
+									<option value="">Average</option>
+									<option value="">Mode</option>
+									<option value="">Nearest Neighbor</option>
+								</select>
+							</div>
+							<div class="form-group">
+								<label>Transparency Settings</label><br>
+								<div class="radio">
+									<input name="transparency-setting" type="radio" checked>
+									<label>Default</label>
+								</div>
+								<br>
+								<div class="radio">
+									<input name="transparency-setting" type="radio">
+									<label>Color to Alpha</label>
+								</div>
+								<input type="color">
+							</div>
+							<div class="form-group">
+								<label>Tiling Scheme</label><br>
+								<div class="radio">
+									<input name="tiling-scheme" type="radio" checked>
+									<label>OGC WMTS / OpenStreetMap / Google XYZ (top-left origin)</label>
+								</div>
+								<br>
+								<div class="radio">
+									<input name="tiling-scheme" type="radio">
+									<label>OSGEO TMS (bottom-left origin)</label>
+								</div>
+							</div>
+							<hr>
+							<div class="form-group">
+			      		<label>Image Upload Progress</label>
+				      	<div class="progress">
+								  <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
+								    <span class="sr-only">60% Complete</span>
+								  </div>
+								</div>
+								<em>Mosaic won't begin until upload has completed</em>
+							</div>
+							<div class="form-action">
+								<input type="submit" class="btn btn-secondary pull-right" value="Submit">
+								<button class="btn btn-link text-muted">Cancel</button>
+							</div>
+		      	</form>
+		      </div> <!-- /.modal-body -->
+		    </div> <!-- /.modal-content -->
+		  </div> <!-- /.modal-dialog -->
+	  </div> <!-- /#pane-3 -->
+
+	</div>
+	<!-- /import modal -->
+
+
+	<!-- JS -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+	<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+	<script src="/assets/js/leaflet.js"></script>
+	<script src="/assets/js/app.js"></script>
+	<script>
+    $(window).load(function(){
+        $('#import-imagery-modal').modal('show');
+    });
+	</script>
+	<script src="assets/js/vendor/multi-level-menu/jquery.dlmenu.js"></script>
+  <script src="assets/js/vendor/bootstrap/bootstrap.min.js"></script>
+</body>
+</html>
