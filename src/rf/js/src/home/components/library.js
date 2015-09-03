@@ -3,7 +3,6 @@
 var $ = require('jquery'),
     _ = require('underscore'),
     React = require('react'),
-    moment = require('moment'),
     asset = require('../../core/utils').asset,
     Map = require('./map'),
     settings = require('../../settings');
@@ -328,7 +327,7 @@ var LayerCollection = React.createBackboneClass({
         );
     },
 
-    toggleSelectAll: function(e) {
+    toggleSelectAll: function() {
         var state = !this.state.selectAll;
         this.setState({ selectAll: state });
         this.getCollection().map(function(layer, i) {
@@ -401,7 +400,7 @@ var LayerItem = React.createBackboneClass({
 
         currentUser.on('change', function() {
             self.setState({
-                currentUserId: this.get('id'),
+                currentUserId: this.get('id')
             });
         });
     },
