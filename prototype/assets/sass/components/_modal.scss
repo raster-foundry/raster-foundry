@@ -69,6 +69,17 @@
 ///
 .import-modal .modal-body {
 
+	.drag-to-area {
+		padding: 30px 10px;
+		border: 2px dashed transparent;
+		border-radius: $border-radius-base;
+		transition: .2s ease-in-out border;
+
+		&.active {
+			border-color: $brand-primary;
+		}
+	}
+
 	.import-browse, .import-uri {
 		text-align: center;
 		padding: 35px;
@@ -93,10 +104,52 @@
 	
 	.import-browse {
 
-		i {
+		i:not(.rf-icon-cancel) {
 			@include font-size(200);
 			color: $off-white;
 			margin-bottom: -20px;
+		}
+
+		.list-group {
+			height: 190px;
+			border: 1px solid $gray-lightest;
+			border-radius: $border-radius-base;
+			overflow: auto;
+			margin-top: -10px;
+
+			.list-group-item {
+				border-top: none;
+				border-left: none;
+				border-right: none;
+				border-radius: 0;
+				margin: 0;
+			}
+		}
+
+		@-webkit-keyframes new-import-fade {
+			from { background-color: rgba($brand-primary, .1); }
+			to { background-color: transparent; }
+			}
+		@-moz-keyframes new-import-fade {
+			from { background-color: rgba($brand-primary, .1); }
+			to { background-color: transparent; }
+		}
+		@-o-keyframes new-import-fade {
+			from { background-color: rgba($brand-primary, .1); }
+			to { background-color: transparent; }
+		}
+		@keyframes new-import-fade {
+			from { background-color: rgba($brand-primary, .1); }
+			to { background-color: transparent; }
+		}
+
+		.newest-import {
+			background-color: rgba($brand-primary, .1);
+			transition: background;
+			-webkit-animation: new-import-fade 1s 2s 1 ease forwards;
+			-moz-animation: new-import-fade 1s 2s 1 ease forwards;
+			-o-animation: new-import-fade 1s 2s 1 ease forwards;
+			animation: new-import-fade 1s 2s 1 ease forwards;
 		}
 	}
 
@@ -124,6 +177,12 @@
 		  line-height: 36px;
 		  width: 36px;
 		  height: 36px;
+
+			@include respond-to('tablet-down') {
+				left: 50%;
+				top: -15px;
+				transform: translate(-50%);
+			}
 		}
 	}
 }
