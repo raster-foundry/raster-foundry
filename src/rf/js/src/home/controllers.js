@@ -6,15 +6,24 @@ var $ = require('jquery'),
     router = require('../router').router,
     settings = require('../settings'),
     coreViews = require('../core/views'),
-    Login = require('./components/login'),
     Library = require('./components/library'),
     Modals = require('./components/modals'),
     uploads = require('../core/uploads'),
     Layer = require('../layer/models');
 
+function showLoginIfNeeded() {
+    var user = settings.getUser();
+    user.checkAuthentication().always(function() {
+        if (!user.get('logged_in')) {
+            router.go('/login/');
+        }
+    });
+}
 
 var HomeController = {
     index: function() {
+        showLoginIfNeeded();
+
         // TODO remove these hard coded test values.
         var layerItem1 = new Layer({
                 name: 'test layer name',
@@ -73,19 +82,4 @@ var HomeController = {
     }
 };
 
-var UserController = {
-    login: function() {
-        var el = $('#container').get(0);
-        React.render(<Login />, el);
-    },
-
-    logout: function() {
-        settings.getUser().logout();
-        router.go('/login');
-    }
-};
-
-module.exports = {
-    HomeController: HomeController,
-    UserController: UserController
-};
+module.exports = HomeController;

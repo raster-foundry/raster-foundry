@@ -3,10 +3,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
 
-from django.contrib.auth.models import User
-
 from rest_framework import status
-from rest_framework.exceptions import APIException
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import StaticHTMLRenderer
 from rest_framework.response import Response
@@ -17,7 +14,6 @@ from django.conf import settings
 import boto
 import boto.auth
 import boto.provider
-import uuid
 
 
 class SignUploadRequestView(APIView):
@@ -42,7 +38,8 @@ class SignUploadRequestView(APIView):
         # that came from front end JS matches the request user id before
         # signing.
         if sent_user_id != user_id:
-            return Response('User mismatch', status=status.HTTP_400_BAD_REQUEST)
+            return Response('User mismatch',
+                            status=status.HTTP_400_BAD_REQUEST)
 
         provider = boto.provider.Provider('aws',
                                           profile_name=settings.AWS_PROFILE)

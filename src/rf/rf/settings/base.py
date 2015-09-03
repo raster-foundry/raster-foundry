@@ -249,9 +249,14 @@ DJANGO_APPS = (
 
 THIRD_PARTY_APPS = (
     'rest_framework',
+    'registration',
 )
 
 # THIRD-PARTY CONFIGURATION
+
+# registration
+ACCOUNT_ACTIVATION_DAYS = 7  # One-week activation window.
+
 
 # rest_framework
 REST_FRAMEWORK = {
@@ -280,7 +285,6 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#wsgi-application
 WSGI_APPLICATION = '%s.wsgi.application' % SITE_NAME
 # END WSGI CONFIGURATION
-
 
 # S3 CONFIGURATION
 

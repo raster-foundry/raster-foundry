@@ -1,4 +1,4 @@
-.login-block {
+.user-screen-block {
 	position: absolute;
 	top: 50%;
 	left: 50%;
@@ -14,15 +14,30 @@
 		margin: 20px auto 50px;
 	}
 
-	.login-error {
-		font-size: 1.3rem;
-		height: 1.3rem;
+	.link-block {
+		margin-bottom: 20px;
+
+		.forgot {
+			position: relative;
+			left: 1rem;
+		}
+
+		.send-activation {
+			position: relative;
+			left: 5rem;
+		}
+
+		.sign-up {
+			position: relative;
+			left: 10rem;
+		}
+	}
+
+	.user-message {
 		margin-bottom: 15px;
-		text-align: center;
 	}
 
 	.form-action {
-		margin-top: 60px;
 		text-align: center;
 	}
 
