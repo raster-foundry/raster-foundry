@@ -1,6 +1,7 @@
 'use strict';
 
 var $ = require('jquery'),
+    _ = require('underscore'),
     React = require('react'),
     asset = require('../../core/utils').asset,
     Map = require('./map'),
@@ -220,10 +221,25 @@ var TabContents = React.createBackboneClass({
 });
 
 var LayerCollection = React.createBackboneClass({
+    getInitialState: function() {
+        return {
+            selectAll: false,
+            visibleLayers: this.getCollection(),
+            filterFn: _.identity,
+            sortFn: _.identity
+        };
+    },
+
     render: function() {
-        var layerItems = this.getCollection().map(function(layer) {
-                return <LayerItem model={layer} key={layer.cid} />;
-            }),
+        var selected = this.state.selectAll,
+            makeLayerItem = function(layer) {
+                return <LayerItem model={layer} key={layer.cid} selected={selected} ref={'layer-' + layer.cid} />;
+            },
+            layerItems = this.getCollection()
+                             .toArray()
+                             .filter(this.state.filterFn)
+                             .sort(this.state.sortFn)
+                             .map(makeLayerItem),
             className = 'tab-pane animated fadeInLeft';
 
         if (this.props.active) {
@@ -267,7 +283,7 @@ var LayerCollection = React.createBackboneClass({
                         <button className="btn btn-danger btn-sm"><i className="rf-icon-trash-empty"></i> Delete</button>
                         <button className="btn btn-primary btn-sm" data-toggle="modal" data-target="#addto-imagery-modal"><i className="rf-icon-plus"></i> Add to</button>
                         <div className="checkbox toggle-all select-all">
-                            <input type="checkbox" />
+                            <input type="checkbox" checked={this.state.selectAll} onChange={this.toggleSelectAll} />
                             <label></label>
                         </div>
                     </div>
@@ -278,7 +294,10 @@ var LayerCollection = React.createBackboneClass({
                         <div className="panel-body">
                             <form>
                                 <fieldset>
-                                    <input type="text" className="form-control" placeholder="Search by name, organization or tag" />
+                                    <input type="text"
+                                        className="form-control"
+                                        placeholder="Search by name, organization or tag"
+                                        onChange={this.triggerSearch} />
                                 </fieldset>
                             </form>
                         </div>
@@ -289,11 +308,12 @@ var LayerCollection = React.createBackboneClass({
                         <div className="panel-body">
                             <form>
                                 <fieldset>
-                                    <select defaultValue="area" className="form-control">
+                                    <select defaultValue="" className="form-control" onChange={this.triggerSort}>
+                                        <option value="">--Choose--</option>
                                         <option value="area">Area</option>
                                         <option value="capture_start">Capture Start Date</option>
                                         <option value="capture_end">Capture End Date</option>
-                                        <option value="projection">Source Data Projection</option>
+                                        <option value="srid">Source Data Projection</option>
                                     </select>
                                 </fieldset>
                             </form>
@@ -305,6 +325,70 @@ var LayerCollection = React.createBackboneClass({
                 </div>
             </div>
         );
+    },
+
+    toggleSelectAll: function() {
+        var state = !this.state.selectAll;
+        this.setState({ selectAll: state });
+        this.getCollection().map(function(layer) {
+            this.refs['layer-' + layer.cid].toggleState(state);
+        }, this);
+    },
+
+    triggerSearch: function(e) {
+        var search = (e.target.value).toLowerCase(),
+            filterFn = _.identity;
+        if (search && search !== '') {
+            filterFn = function(item) {
+                var nameMatch = item.get('name').toLowerCase().indexOf(search) > -1,
+                    organizationMatch = item.get('organization').toLowerCase().indexOf(search) > -1;
+                return nameMatch || organizationMatch;
+            };
+        }
+        this.setState({ filterFn: filterFn });
+    },
+
+    triggerSort: function(e) {
+        var prop = e.target.value,
+            sortFn = _.identity,
+            dateSorter = function(a, b) {
+                // Default to most recent first.
+                // Therefore if b is after a, we want b to come first.
+                // Real dates should come before null.
+                if (a && b) {
+                    if (a.isSame(b)) {
+                        return 0;
+                    }
+                    return b.isAfter(a) ? 1 : -1;
+                } else if (a) {
+                    return -1;
+                } else {
+                    return 1;
+                }
+            },
+            numberSorter = function(a, b) {
+                return a - b;
+            },
+            stringSorter = function(a, b) {
+                if (a === b) {
+                    return 0;
+                }
+                return a > b ? 1 : -1;
+            },
+            mapping = {
+                'area': numberSorter,
+                'capture_start': dateSorter,
+                'capture_end': dateSorter,
+                'srid': stringSorter
+            };
+
+        if (prop && prop !== '') {
+            var sorter = mapping[prop];
+            sortFn = function(a, b) {
+                return sorter(a.get(prop), b.get(prop));
+            };
+        }
+        this.setState({ sortFn: sortFn });
     }
 });
 
@@ -362,7 +446,7 @@ var LayerItem = React.createBackboneClass({
                         <i className="rf-icon-star-empty control-inactive"></i>
                     </button>
                     <div className="checkbox">
-                        <input type="checkbox" />
+                        <input type="checkbox" checked={this.state.selected} onChange={this.selectItem} />
                         <label></label>
                     </div>
                 </div>
@@ -396,6 +480,14 @@ var LayerItem = React.createBackboneClass({
         var layerDetail = $('.layer-detail');
         e.preventDefault();
         layerDetail.addClass('active');
+    },
+
+    selectItem: function() {
+        this.setState({ selected: !this.state.selected });
+    },
+
+    toggleState: function(selected) {
+        this.setState({ selected: selected });
     }
 });
 
