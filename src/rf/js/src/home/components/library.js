@@ -232,8 +232,8 @@ var LayerCollection = React.createBackboneClass({
 
     render: function() {
         var selected = this.state.selectAll,
-            makeLayerItem = function(layer, i) {
-                return <LayerItem model={layer} key={layer.cid} selected={selected} ref={'layer' + i} />;
+            makeLayerItem = function(layer) {
+                return <LayerItem model={layer} key={layer.cid} selected={selected} ref={'layer-' + layer.cid} />;
             },
             layerItems = this.getCollection()
                              .toArray()
@@ -330,8 +330,8 @@ var LayerCollection = React.createBackboneClass({
     toggleSelectAll: function() {
         var state = !this.state.selectAll;
         this.setState({ selectAll: state });
-        this.getCollection().map(function(layer, i) {
-            this.refs['layer' + i].toggleState(state);
+        this.getCollection().map(function(layer) {
+            this.refs['layer-' + layer.cid].toggleState(state);
         }, this);
     },
 
