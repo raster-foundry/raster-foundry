@@ -8,9 +8,9 @@ var Layer = Backbone.Model.extend({
         organization: '',
         owner: 0,
         area: 0,
-        captureEndDate: null,
-        captureStartDate: null,
-        sourceDataProjection: null
+        capture_end: null,
+        capture_start: null,
+        srid: null
     }
 });
 

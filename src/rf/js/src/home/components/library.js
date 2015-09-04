@@ -311,9 +311,9 @@ var LayerCollection = React.createBackboneClass({
                                     <select defaultValue="" className="form-control" onChange={this.triggerSort}>
                                         <option value="">--Choose--</option>
                                         <option value="area">Area</option>
-                                        <option value="captureStartDate">Capture Start Date</option>
-                                        <option value="captureEndDate">Capture End Date</option>
-                                        <option value="sourceDataProjection">Source Data Projection</option>
+                                        <option value="capture_start">Capture Start Date</option>
+                                        <option value="capture_end">Capture End Date</option>
+                                        <option value="srid">Source Data Projection</option>
                                     </select>
                                 </fieldset>
                             </form>
@@ -377,9 +377,9 @@ var LayerCollection = React.createBackboneClass({
             },
             mapping = {
                 'area': numberSorter,
-                'captureStartDate': dateSorter,
-                'captureEndDate': dateSorter,
-                'sourceDataProjection': stringSorter
+                'capture_start': dateSorter,
+                'capture_end': dateSorter,
+                'srid': stringSorter
             };
 
         if (prop && prop !== '') {
