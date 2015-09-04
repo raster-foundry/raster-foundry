@@ -40,6 +40,15 @@ hr {
 		display: table-cell;
 		min-height: 100%;
 		vertical-align: middle;
+		float: none;
+	}
+
+	@include respond-to('tablet-down') {
+		display: block;
+
+		.vertical-align-child {
+			display: block;
+		}
 	}
 }
 
