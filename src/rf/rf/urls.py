@@ -18,8 +18,8 @@ admin.autodiscover()
 urlpatterns = patterns(
     '',
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^api/uploads/', include(apps.uploads.urls)),
+    url(r'^uploads/', include(apps.uploads.urls)),
     url(r'^user/', include(apps.user.urls)),
-    url(r'^', include(apps.home.urls)),
     url(r'^accounts/', include(registration.backends.default.urls)),
+    url(r'^', include(apps.home.urls)),
 )
