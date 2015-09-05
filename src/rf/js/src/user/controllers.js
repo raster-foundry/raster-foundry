@@ -9,8 +9,8 @@ var $ = require('jquery'),
 
 function showHomeIfLoggedIn() {
     var user = settings.getUser();
-    user.checkAuthentication().always(function() {
-        if (user.get('logged_in')) {
+    user.fetch().always(function() {
+        if (user.isAuthenticated()) {
             router.go('/');
         }
     });
@@ -48,8 +48,10 @@ var UserController = {
     },
 
     logout: function() {
-        settings.getUser().logout();
-        router.go('/login');
+        var user = settings.getUser();
+        user.logout().always(function() {
+            router.go('/login');
+        });
     }
 };
 

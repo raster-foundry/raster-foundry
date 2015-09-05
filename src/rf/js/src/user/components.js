@@ -47,14 +47,20 @@ var ModelValidationMixin = {
     // Default failure handler, will display any `errors` received from server.
     handleServerFailure: function(response) {
         var server_errors = ['Server communication error'];
-        if (response && response.responseJSON && response.responseJSON.errors) {
-            server_errors = response.responseJSON.errors;
+        try {
+            server_errors = response.responseJSON.errors.all;
+        } catch (ex) {
+            // Do nothing
         }
         this.getModel().set({
             'success': false,
             'client_errors': null,
             'server_errors': server_errors
         });
+    },
+
+    setFields: function() {
+        this.getModel().set(this.getFormData());
     },
 
     // Performs Primary Action if model is in valid state.
@@ -71,13 +77,10 @@ var ModelValidationMixin = {
     renderErrors: function() {
         var self = this;
         function renderErrorItems(errorKey) {
-            var errors = '';
-            if (self.getModel().get(errorKey)) {
-                errors = self.getModel().get(errorKey).map(function(error,i) {
-                    return <li key={errorKey + '-' + i}>{error}</li>;
-                });
-            }
-            return errors;
+            var errors = self.getModel().get(errorKey) || [];
+            return errors.map(function(error, i) {
+                return <li key={errorKey + '-' + i}>{error}</li>;
+            });
         }
 
         return (
@@ -142,11 +145,11 @@ var LoginScreen = React.createBackboneClass({
         this.refs.username.setFocus();
     },
 
-    setFields: function() {
-        this.getModel().set({
+    getFormData: function() {
+        return {
             username: this.refs.username.getValue(),
             password: this.refs.password.getValue()
-        }, { silent: true });
+        };
     },
 
     primaryAction: function() {
@@ -210,10 +213,6 @@ var SignUpScreen = React.createBackboneClass({
         };
     },
 
-    setFields: function() {
-        this.getModel().set(this.getFormData());
-    },
-
     primaryAction: function() {
         this.getModel()
             .fetch({
@@ -222,13 +221,6 @@ var SignUpScreen = React.createBackboneClass({
             })
             .done(_.bind(this.handleServerSuccess, this))
             .fail(_.bind(this.handleServerFailure, this));
-    },
-
-    handleSuccess: function() {
-    },
-
-    handleFailure: function(response) {
-        this.handleServerFailure(response);
     },
 
     render: function() {
@@ -273,10 +265,6 @@ var SendActivationScreen = React.createBackboneClass({
         };
     },
 
-    setFields: function() {
-        this.getModel().set(this.getFormData());
-    },
-
     primaryAction: function() {
         this.getModel()
             .fetch({
@@ -285,13 +273,6 @@ var SendActivationScreen = React.createBackboneClass({
             })
             .done(_.bind(this.handleServerSuccess, this))
             .fail(_.bind(this.handleServerFailure, this));
-    },
-
-    handleSuccess: function() {
-    },
-
-    handleFailure: function(response) {
-        this.handleServerFailure(response);
     },
 
     render: function() {
@@ -332,10 +313,6 @@ var ForgotScreen = React.createBackboneClass({
         };
     },
 
-    setFields: function() {
-        this.getModel().set(this.getFormData());
-    },
-
     primaryAction: function() {
         this.getModel()
             .fetch({
@@ -344,13 +321,6 @@ var ForgotScreen = React.createBackboneClass({
             })
             .done(_.bind(this.handleServerSuccess, this))
             .fail(_.bind(this.handleServerFailure, this));
-    },
-
-    handleSuccess: function() {
-    },
-
-    handleFailure: function(response) {
-        this.handleServerFailure(response);
     },
 
     render: function() {

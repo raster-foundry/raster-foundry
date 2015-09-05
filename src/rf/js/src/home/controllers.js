@@ -14,9 +14,9 @@ var $ = require('jquery'),
 
 function showLoginIfNeeded() {
     var user = settings.getUser();
-    user.checkAuthentication().always(function() {
-        if (!user.get('logged_in')) {
-            router.go('/login/');
+    user.fetch().always(function() {
+        if (!user.isAuthenticated()) {
+            router.go('/login');
         }
     });
 }
