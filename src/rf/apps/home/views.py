@@ -23,8 +23,15 @@ from apps.home.filters import LayerFilter
 
 
 def home_page(request):
-    return render_to_response('home/home.html',
-                              {'client_settings': get_client_settings()})
+    user_data = json.dumps({
+        'id': request.user.id,
+        'username': request.user.username,
+    })
+    context = {
+        'user': user_data,
+        'client_settings': get_client_settings(),
+    }
+    return render_to_response('home/home.html', context)
 
 
 def get_client_settings():

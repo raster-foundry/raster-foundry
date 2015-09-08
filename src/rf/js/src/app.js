@@ -9,8 +9,16 @@ var $ = require('jquery'),
 
 var App = Marionette.Application.extend({
     initialize: function() {
-        settings.setUser(new userModels.UserModel());
+        this.setupUser();
         this.setupNavigation();
+    },
+
+    setupUser: function() {
+        var model = new userModels.UserModel();
+        if (window.user) {
+            model.set(window.user);
+        }
+        settings.setUser(model);
     },
 
     setupNavigation: function() {

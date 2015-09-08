@@ -20,6 +20,7 @@
 <div id="container"></div>
 <script type="text/javascript">
     window.clientSettings = {{ client_settings | safe }};
+    window.user = {{ user | safe }};
 </script>
 {% block content %}
 {% endblock %}

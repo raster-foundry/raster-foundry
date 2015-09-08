@@ -9,11 +9,9 @@ var $ = require('jquery'),
 
 function showHomeIfLoggedIn() {
     var user = settings.getUser();
-    user.fetch().always(function() {
-        if (user.isAuthenticated()) {
-            router.go('/');
-        }
-    });
+    if (user.isAuthenticated()) {
+        router.go('/');
+    }
 }
 
 var UserController = {
