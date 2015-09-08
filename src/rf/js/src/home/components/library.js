@@ -101,6 +101,7 @@ var Header = React.createBackboneClass({
                     <i className="rf-icon-book"></i> Library
                     </button>
                     <ul className="dl-menu">
+                        {/*
                         <li className="dl-menu-group-title"><i className="rf-icon-map-alt"></i> Mosaic Projects</li>
                         <li className="dl-menu-group">
                             <a href="/project.html" className="new-project">New Mosaic Project</a>
@@ -125,6 +126,7 @@ var Header = React.createBackboneClass({
                             <a href="/library.html" className="active"><i className="rf-icon-book"></i> Library</a>
                         </li>
                         <li className="divider"></li>
+                        */}
                         <li>
                             <a href="/account.html"><i className="rf-icon-user"></i> Account</a>
                         </li>
