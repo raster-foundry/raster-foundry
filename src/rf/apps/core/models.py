@@ -10,6 +10,7 @@ from django.contrib.gis.db.models import (Model, ForeignKey,
                                           URLField, SlugField,
                                           BooleanField, UUIDField)
 from django.contrib.auth.models import User
+from django.core.urlresolvers import reverse
 from django.template.defaultfilters import slugify
 
 from apps.core import enums
@@ -21,7 +22,6 @@ class Layer(Model):
     Represents a single Image Layer which may contain one or more
     geospatial images.
     """
-
     class Meta:
         unique_together = ('user', 'name')
 
@@ -91,8 +91,71 @@ class Layer(Model):
         self.slug = slugify(self.name)
         super(Layer, self).save(*args, **kwargs)
 
+    def to_json(self):
+        """
+        Return JSON serializable model data.
+
+        Note: Prefetch all related foreign key relationships present
+        here in your queryset before calling this method for optimal
+        performance.
+        """
+        tags = [m.to_json() for m in self.layer_tags.all()]
+        images = [m.to_json() for m in self.layer_images.all()]
+
+        return {
+            'id': self.id,
+            'name': self.name,
+            'slug': self.slug,
+            'description': self.description,
+            'organization': self.organization,
+            'is_public': self.is_public,
+            'capture_start': self.capture_start.isoformat(),
+            'capture_end': self.capture_end.isoformat(),
+            'area': self.area,
+            'area_unit': self.area_unit,
+            'projection': self.projection,
+            'srid': self.srid,
+            'tile_srid': self.tile_srid,
+            'tile_format': self.tile_format,
+            'tile_origin': self.tile_origin,
+            'resampling': self.resampling,
+            'transparency': self.transparency,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat(),
+
+            # Foreign key fields
+            'tags': tags,
+            'images': images,
+            'username': self.user.username,
+
+            # Generated fields
+            'url': self.get_absolute_url(),
+            'meta_url': self.get_meta_url(),
+            'favorite_url': self.get_favorite_url(),
+        }
+
+    def get_absolute_url(self):
+        kwargs = {
+            'layer_id': self.id,
+            'username': self.user.username,
+        }
+        return reverse('layer_detail', kwargs=kwargs)
+
+    def get_meta_url(self):
+        kwargs = {
+            'layer_id': self.id,
+            'username': self.user.username,
+        }
+        return reverse('layer_meta', kwargs=kwargs)
+
+    def get_favorite_url(self):
+        kwargs = {
+            'layer_id': self.id,
+        }
+        return reverse('create_or_destroy_favorite', kwargs=kwargs)
+
     def __unicode__(self):
-        return self.name
+        return '{0} -> {1}'.format(self.user.username, self.name)
 
 
 class LayerTag(Model):
@@ -102,6 +165,9 @@ class LayerTag(Model):
     """
     layer = ForeignKey(Layer, related_name='layer_tags')
     name = CharField(max_length=24)
+
+    def to_json(self):
+        return self.name
 
 
 class LayerImage(Model):
@@ -145,6 +211,11 @@ class LayerImage(Model):
         editable=False
     )
 
+    def to_json(self):
+        return {
+            'source_uri': self.source_uri
+        }
+
 
 class LayerMeta(Model):
     """
@@ -157,7 +228,7 @@ class LayerMeta(Model):
     The data in this table will primarily be maintained by the
     geoprocessing side of things.
     """
-    layer = ForeignKey(Layer)
+    layer = ForeignKey(Layer, related_name='layer_metas')
     state = CharField(max_length=16)
     error = TextField(null=True, blank=True)
     thumb_small = URLField(
@@ -186,6 +257,20 @@ class LayerMeta(Model):
         help_text='JSON array',
     )
 
+    def to_json(self):
+        return {
+            'id': self.id,
+            'state': self.state,
+            'error': self.error,
+            'thumb_small': self.thumb_small,
+            'thumb_large': self.thumb_large,
+            'created_at': self.created_at.isoformat(),
+            'min_zoom': self.min_zoom,
+            'max_zoom': self.max_zoom,
+            'bounds': self.bounds,
+            'center': self.center,
+        }
+
 
 class UserProfile(Model):
     """
@@ -205,3 +290,6 @@ class UserFavoriteLayer(Model):
     user = ForeignKey(User)
     layer = ForeignKey(Layer, related_name='favorites')
     created_at = DateTimeField(auto_now_add=True)
+
+    def __unicode__(self):
+        return '{0} -> {1}'.format(self.user.username, self.layer.name)

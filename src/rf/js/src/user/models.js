@@ -9,16 +9,10 @@ function isValidEmail(email) {
 }
 
 var UserModel = Backbone.Model.extend({
-    defaults: {
-        logged_in: false
-    },
-
     url: '/user/login',
 
-    // Retrieve logged_in from backend, and
-    // set username if they are logged in.
-    checkAuthentication: function() {
-        return this.fetch();
+    isAuthenticated: function() {
+        return this.id > 0;
     },
 
     // Both login and logout methods return jqXHR objects so that callbacks can
@@ -41,16 +35,8 @@ var UserModel = Backbone.Model.extend({
         });
 
         var user = this;
-        jqXHR.done(function() {
-            // We have to unset the username manually here because when the
-            // server does not return a username (because the user has been
-            // logged out), our model's username is not updated and the old
-            // username persists.
-            // Additionally, we change this silently because the login and
-            // logout functions only advertise firing a single `sync` event,
-            // and this would fire an additional `change` event. We must
-            // suppress this to maintain consistency in our API.
-            user.unset('username', {silent: true});
+        jqXHR.always(function() {
+            user.clear();
         });
 
         return jqXHR;

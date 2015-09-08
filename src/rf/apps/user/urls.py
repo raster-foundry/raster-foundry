@@ -5,20 +5,14 @@ from __future__ import division
 
 from django.conf.urls import patterns, url
 
-from apps.user.views import (login,
-                             sign_up,
-                             forgot,
-                             resend,
-                             logout,
-                             activate)
+from apps.user import views
 
 urlpatterns = patterns(
     '',
-    url(r'^logout$', logout, name='logout'),
-    url(r'^login$', login, name='login'),
-    url(r'^sign-up$', sign_up, name='sign_up'),
-    url(r'^resend$', resend, name='resend'),
-    url(r'^forgot$', forgot, name='forgot'),
-    url(r'^activate/(?P<activation_key>[A-z0-9]+)/$',
-        activate, name='activate'),
+    url('^logout$', views.logout_view),
+    url('^login$', views.login_view),
+    url('^sign-up$', views.sign_up),
+    url('^resend$', views.resend),
+    url('^forgot$', views.forgot),
+    url('^activate/(?P<activation_key>[A-z0-9]+)/$', views.activate),
 )

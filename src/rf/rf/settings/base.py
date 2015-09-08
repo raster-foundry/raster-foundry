@@ -248,7 +248,6 @@ DJANGO_APPS = (
 )
 
 THIRD_PARTY_APPS = (
-    'rest_framework',
     'registration',
 )
 
@@ -256,16 +255,6 @@ THIRD_PARTY_APPS = (
 
 # registration
 ACCOUNT_ACTIVATION_DAYS = 7  # One-week activation window.
-
-
-# rest_framework
-REST_FRAMEWORK = {
-    # Use Django's standard `django.contrib.auth` permissions,
-    # or allow read-only access for unauthenticated users.
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
-    ]
-}
 
 # END THIRD-PARTY CONFIGURATION
 

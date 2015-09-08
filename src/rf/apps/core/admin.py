@@ -29,7 +29,7 @@ class LayerAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
             'fields': (
-                'user', 'name', 'description',
+                'user', 'name', 'slug', 'description', 'is_public',
                 ('capture_start', 'capture_end'),
                 ('area', 'area_unit'),
                 'projection', 'srid',
@@ -46,3 +46,4 @@ class LayerAdmin(admin.ModelAdmin):
 
 
 admin.site.register(models.Layer, LayerAdmin)
+admin.site.register(models.UserFavoriteLayer, admin.ModelAdmin)

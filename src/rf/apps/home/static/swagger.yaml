@@ -1,0 +1,319 @@
+swagger: '2.0'
+info:
+  title: Raster Foundry API
+  version: "0.1.0"
+host: localhost:8000
+schemes:
+  - http
+consumes:
+  - application/x-www-form-urlencoded
+produces:
+  - application/json
+paths:
+  /layers.json:
+    get:
+      description: |
+          Return layers for current user.
+      responses:
+        200:
+          description: Array of layers
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Layer'
+        401:
+          description: Not authorized
+        403:
+          description: Validation error
+        default:
+          description: Unexpected error
+    parameters:
+      - name: api_key
+        in: query
+        type: string
+  /favorites.json:
+    get:
+      description: |
+          Return layers favorited by current user.
+      responses:
+        200:
+          description: Array of layers
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Layer'
+        401:
+          description: Not authorized
+        403:
+          description: Validation error
+        default:
+          description: Unexpected error
+    parameters:
+      - name: api_key
+        in: query
+        type: string
+  /favorite/{layer_id}:
+    post:
+      description: Add layer to your favorites.
+      responses:
+        200:
+          description: Layer was saved to favorites
+        401:
+          description: Not authorized
+        403:
+          description: Validation error
+        404:
+          description: Not found
+        default:
+          description: Unexpected error
+    delete:
+      description: Remove layer from your favorites.
+      responses:
+        200:
+          description: Layer was saved to favorites
+        401:
+          description: Not authorized
+        403:
+          description: Validation error
+        404:
+          description: Not found
+        default:
+          description: Unexpected error
+    parameters:
+      - name: api_key
+        in: query
+        type: string
+      - name: layer_id
+        in: path
+        type: string
+        required: true
+  /user/{username}/layers.json:
+    get:
+      description: Return all layers for the specified user.
+      responses:
+        200:
+          description: Array of layers
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Layer'
+        401:
+          description: Not authorized
+        403:
+          description: Validation error
+        404:
+          description: Not found
+        default:
+          description: Unexpected error
+    parameters:
+      - name: api_key
+        in: query
+        type: string
+      - name: username
+        in: path
+        type: string
+        required: true
+  /user/{username}/layer/{layer_id}.json:
+    get:
+      description: Return single layer.
+      responses:
+        200:
+          description: Layer object
+          schema:
+            $ref: '#/definitions/Layer'
+        403:
+          description: Validation error
+        404:
+          description: Not found
+        default:
+          description: Unexpected error
+    put:
+      description: Update layer.
+      parameters:
+        - name: body
+          in: body
+          schema:
+            $ref: '#/definitions/LayerUpdateCreate'
+      responses:
+        200:
+          description: Layer updated
+        401:
+          description: Not authorized
+        403:
+          description: Validation error
+        404:
+          description: Not found
+        default:
+          description: Unexpected error
+    delete:
+      description: Delete layer.
+      responses:
+        200:
+          description: Layer deleted
+        401:
+          description: Not authorized
+        403:
+          description: Validation error
+        404:
+          description: Not found
+        default:
+          description: Unexpected error
+    parameters:
+      - name: api_key
+        in: query
+        type: string
+      - name: username
+        in: path
+        type: string
+        required: true
+      - name: layer_id
+        in: path
+        type: integer
+        required: true
+  /user/{username}/layer/meta/{layer_id}.json:
+    get:
+      description: |
+          Return layer meta info.
+      responses:
+        200:
+          description: Layer meta object
+          schema:
+            $ref: '#/definitions/LayerMeta'
+        401:
+          description: Not authorized
+        403:
+          description: Validation error
+        404:
+          description: Not found
+        default:
+          description: Unexpected error
+    parameters:
+      - name: api_key
+        in: query
+        type: string
+      - name: username
+        in: path
+        type: string
+        required: true
+      - name: layer_id
+        in: path
+        type: integer
+        required: true
+  /user/{username}/layer/create:
+    post:
+      description: Create a new layer.
+      responses:
+        200:
+          description: Layer ID
+          schema:
+            $ref: '#/definitions/ID'
+        401:
+          description: Not authorized
+        403:
+          description: Validation error
+        404:
+          description: Not found
+        default:
+          description: Unexpected error
+    parameters:
+      - name: api_key
+        in: query
+        type: string
+      - name: username
+        in: path
+        type: string
+        required: true
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/LayerUpdateCreate'
+definitions:
+  ID:
+    properties:
+      id:
+        type: integer
+  LayerUpdateCreate:
+    required:
+      - name
+    properties:
+      name:
+        type: string
+      description:
+        type: string
+      organization:
+        type: string
+      is_public:
+        type: boolean
+      capture_start:
+        type: string
+      capture_end:
+        type: string
+      area:
+        type: string
+      area_unit:
+        type: string
+      projection:
+        type: string
+      srid:
+        type: string
+      tile_srid:
+        type: string
+      tile_format:
+        type: string
+      tile_origin:
+        type: string
+      resampling:
+        type: string
+      transparency:
+        type: string
+      tags:
+        type: array
+        items:
+          type: string
+      images:
+        type: array
+        items:
+          type: string
+  Layer:
+    allOf:
+      - $ref: '#/definitions/LayerUpdateCreate'
+      - type: object
+        properties:
+          id:
+            type: string
+          username:
+            type: string
+          slug:
+            type: string
+          created_at:
+            type: string
+          updated_at:
+            type: string
+          url:
+            type: string
+          meta_url:
+            type: string
+          favorite_url:
+            type: string
+  LayerMeta:
+    properties:
+      id:
+        type: string
+      state:
+        type: string
+      error:
+        type: string
+      thumb_small:
+        type: string
+      thumb_large:
+        type: string
+      created_at:
+        type: string
+      min_zoom:
+        type: string
+      max_zoom:
+        type: string
+      bounds:
+        type: string
+      center:
+        type: string
