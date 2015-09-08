@@ -29,3 +29,18 @@ class LayerForm(ModelForm):
             'resampling',
             'transparency',
         )
+
+    def clean(self):
+        super(LayerForm, self).clean()
+
+        # TODO: Parse tags from request (optional)
+        try:
+            self.cleaned_data['tags'] = self.data['tags']
+        except:
+            self.cleaned_data['tags'] = []
+
+        # TODO: Parse images from request (required)
+        try:
+            self.cleaned_data['images'] = self.data['images']
+        except:
+            self.cleaned_data['images'] = []

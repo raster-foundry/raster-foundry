@@ -4,7 +4,18 @@ from __future__ import unicode_literals
 from __future__ import division
 
 
-class BadRequest(Exception):
+class ApiViewException(Exception):
+
+    def to_json(self):
+        data = {'message': self.message}
+        if hasattr(self, 'errors'):
+            data.update({'errors': self.errors})
+        return data, self.status_code
+
+
+class BadRequest(ApiViewException):
+    status_code = 400
+    message = 'Bad Request'
 
     def __init__(self, errors=None):
         # The format of `errors` should be:
@@ -12,7 +23,9 @@ class BadRequest(Exception):
         self.errors = errors
 
 
-class Forbidden(Exception):
+class Forbidden(ApiViewException):
+    status_code = 403
+    message = 'Forbidden'
 
     def __init__(self, errors=None):
         # The format of `errors` should be:
@@ -20,13 +33,16 @@ class Forbidden(Exception):
         self.errors = errors
 
 
-class InvalidApiCredentials(Exception):
-    pass
+class InvalidApiCredentials(ApiViewException):
+    status_code = 401
+    message = 'Invalid API credentials'
 
 
-class MethodNotAllowed(Exception):
-    pass
+class MethodNotAllowed(ApiViewException):
+    status_code = 405
+    message = 'Method Not Allowed'
 
 
-class Unauthorized(Exception):
-    pass
+class Unauthorized(ApiViewException):
+    status_code = 401
+    message = 'Unauthorized'
