@@ -13,7 +13,6 @@ from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, Http404, render_to_response
 from django.utils import timezone
-from django.views.decorators.csrf import csrf_exempt
 
 from apps.core.exceptions import Forbidden
 from apps.core.decorators import (accepts, api_view, login_required,
@@ -46,7 +45,6 @@ def not_found(request):
     raise Http404()
 
 
-@csrf_exempt
 @api_view
 @accepts('GET', 'PUT', 'DELETE')
 def layer_detail(request, username, layer_id):
@@ -78,7 +76,6 @@ def _get_layer_or_404(request, **kwargs):
         raise Http404()
 
 
-@csrf_exempt
 @api_view
 @login_required
 @accepts('POST')
@@ -166,7 +163,6 @@ def my_favorites(request):
     return _get_layers(request, Q(id__in=ids))
 
 
-@csrf_exempt
 @api_view
 @login_required
 @accepts('POST', 'DELETE')
