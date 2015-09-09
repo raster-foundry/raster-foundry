@@ -16,12 +16,16 @@ function showLoginIfNeeded() {
     var user = settings.getUser();
     if (!user.isAuthenticated()) {
         router.go('/login');
+        return true;
     }
+    return false;
 }
 
 var HomeController = {
     index: function() {
-        showLoginIfNeeded();
+        if (showLoginIfNeeded()) {
+            return;
+        }
 
         // TODO remove these hard coded test values.
         var layerItem1 = new Layer({

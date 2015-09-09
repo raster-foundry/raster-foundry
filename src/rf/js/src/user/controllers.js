@@ -11,12 +11,16 @@ function showHomeIfLoggedIn() {
     var user = settings.getUser();
     if (user.isAuthenticated()) {
         router.go('/');
+        return true;
     }
+    return false;
 }
 
 var UserController = {
     login: function() {
-        showHomeIfLoggedIn();
+        if (showHomeIfLoggedIn()) {
+            return;
+        }
         var model = new models.LoginFormModel();
         this.renderComponent(<components.LoginScreen model={model} />);
     },
