@@ -3,15 +3,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
 
-import json
-import boto
-
 from django.contrib.auth.models import User
-from django.conf import settings
-from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, Http404, render_to_response
+from django.template import RequestContext
 from django.utils import timezone
 
 from apps.core.exceptions import Forbidden
@@ -23,27 +19,8 @@ from apps.home.filters import LayerFilter
 
 
 def home_page(request):
-    user_data = json.dumps({
-        'id': request.user.id,
-        'username': request.user.username,
-    })
-    context = {
-        'user': user_data,
-        'client_settings': get_client_settings(),
-    }
+    context = RequestContext(request)
     return render_to_response('home/home.html', context)
-
-
-def get_client_settings():
-    conn = boto.connect_s3(profile_name=settings.AWS_PROFILE)
-    aws_key = conn.aws_access_key_id
-
-    client_settings = json.dumps({
-        'signerUrl': reverse('sign_request'),
-        'awsKey': aws_key,
-        'awsBucket': settings.AWS_BUCKET_NAME,
-    })
-    return client_settings
 
 
 @api_view
