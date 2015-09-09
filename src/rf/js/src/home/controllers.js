@@ -14,16 +14,18 @@ var $ = require('jquery'),
 
 function showLoginIfNeeded() {
     var user = settings.getUser();
-    user.fetch().always(function() {
-        if (!user.isAuthenticated()) {
-            router.go('/login');
-        }
-    });
+    if (!user.isAuthenticated()) {
+        router.go('/login');
+        return true;
+    }
+    return false;
 }
 
 var HomeController = {
     index: function() {
-        showLoginIfNeeded();
+        if (showLoginIfNeeded()) {
+            return;
+        }
 
         // TODO remove these hard coded test values.
         var layerItem1 = new Layer({

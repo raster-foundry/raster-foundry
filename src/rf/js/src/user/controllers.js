@@ -9,16 +9,18 @@ var $ = require('jquery'),
 
 function showHomeIfLoggedIn() {
     var user = settings.getUser();
-    user.fetch().always(function() {
-        if (user.isAuthenticated()) {
-            router.go('/');
-        }
-    });
+    if (user.isAuthenticated()) {
+        router.go('/');
+        return true;
+    }
+    return false;
 }
 
 var UserController = {
     login: function() {
-        showHomeIfLoggedIn();
+        if (showHomeIfLoggedIn()) {
+            return;
+        }
         var model = new models.LoginFormModel();
         this.renderComponent(<components.LoginScreen model={model} />);
     },
