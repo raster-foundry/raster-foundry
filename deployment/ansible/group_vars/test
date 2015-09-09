@@ -5,7 +5,7 @@ redis_bind_address: "0.0.0.0"
 
 postgresql_listen_addresses: "*"
 postgresql_hba_mapping:
-  - { type: "host", database: "all", user: "all", address: "33.33.40.1/24", method: "md5" }
+  - { type: "host", database: "all", user: "all", address: "33.33.40.1/23", method: "md5" }
 
 services_ip: "{{ lookup('env', 'RF_SERVICES_IP') | default('33.33.40.80', true) }}"
 

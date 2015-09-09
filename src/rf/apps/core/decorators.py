@@ -9,8 +9,11 @@ from functools import wraps
 from django.http import HttpResponse, QueryDict
 from django.http.response import Http404
 
-from apps.core.exceptions import (BadRequest, Forbidden, InvalidApiCredentials,
-                                  MethodNotAllowed, Unauthorized)
+from apps.core.exceptions import (ApiViewException,
+                                  Forbidden,
+                                  InvalidApiCredentials,
+                                  MethodNotAllowed,
+                                  Unauthorized)
 from apps.core.models import User
 
 
@@ -50,28 +53,20 @@ def api_view(fn):
             if isinstance(data, HttpResponse):
                 return data
 
-            status_code = 200
             if data is None:
                 output = ''
             else:
                 output = serialize(data)
-        except BadRequest as ex:
-            status_code = 400
-            output = serialize({'message': 'Bad Request', 'errors': ex.errors})
-        except (Unauthorized, InvalidApiCredentials):
-            status_code = 401
-            output = serialize({'message': 'Unauthorized'})
-        except Forbidden as ex:
-            status_code = 403
-            output = serialize({'message': 'Forbidden', 'errors': ex.errors})
-        except MethodNotAllowed:
-            status_code = 405
-            output = serialize({'message': 'Method Not Allowed'})
+
+            status_code = 200
+            return create_response(output, data, status_code, headers)
+        except ApiViewException as ex:
+            data, status_code = ex.to_json()
+            output = serialize(data)
+            return create_response(output, data, status_code, headers)
         except Http404:
             # Let Django handle 404 responses.
             raise
-
-        return create_response(output, status_code, headers)
     return wrapper
 
 
@@ -94,6 +89,9 @@ def owner_required(fn):
 
     This should probably decorate any function that handles POST, PUT,
     or DELETE requests.
+
+    Any function using this decorator must accept a keyword argument
+    for `username`.
     """
     @wraps(fn)
     def wrapper(request, *args, **kwargs):
@@ -124,7 +122,7 @@ def serialize(data):
     return json.dumps(data)
 
 
-def create_response(content='', status_code=200, headers={}):
+def create_response(content='', data=None, status_code=200, headers={}):
     response = HttpResponse(status=status_code)
 
     for k, v in headers.iteritems():
@@ -133,6 +131,9 @@ def create_response(content='', status_code=200, headers={}):
     # To support blank responses for PUT, DELETE, and OPTIONS.
     if len(content) > 0:
         response.content = content
+
+    # For unit tests.
+    response.data = data
 
     return response
 

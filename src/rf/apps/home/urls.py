@@ -31,12 +31,12 @@ urlpatterns = patterns(
     url('^all/layers.json$', views.all_layers, name='all_layers'),
 
     # These all route to the home page.
-    url('^login/?$', views.home_page, name='login'),
-    url('^sign-up/?$', views.home_page, name='sign_up'),
-    url('^send-activation/?$', views.home_page, name='activate'),
-    url('^forgot/?$', views.home_page, name='forgot'),
-    url('^logout/?$', views.home_page, name='logout'),
-    url('^activate/?$', views.home_page, name='activate'),
+    url('^login/?$', views.home_page),
+    url('^sign-up/?$', views.home_page),
+    url('^send-activation/?$', views.home_page),
+    url('^forgot/?$', views.home_page),
+    url('^logout/?$', views.home_page),
+    url('^activate/?$', views.home_page),
     url('^$', views.home_page, name='home_page'),
 
     url('', views.not_found, name='not_found'),

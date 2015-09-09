@@ -9,6 +9,7 @@ import boto
 from django.contrib.auth.models import User
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, Http404, render_to_response
 from django.utils import timezone
@@ -17,7 +18,7 @@ from django.views.decorators.csrf import csrf_exempt
 from apps.core.exceptions import Forbidden
 from apps.core.decorators import (accepts, api_view, login_required,
                                   owner_required)
-from apps.core.models import Layer, UserFavoriteLayer
+from apps.core.models import Layer, LayerImage, LayerTag, UserFavoriteLayer
 from apps.home.forms import LayerForm
 from apps.home.filters import LayerFilter
 
@@ -49,19 +50,19 @@ def not_found(request):
 @api_view
 @accepts('GET', 'PUT', 'DELETE')
 def layer_detail(request, username, layer_id):
-    layer = _get_layer_or_404(request, username, layer_id)
+    layer = _get_layer_or_404(request, id=layer_id, user__username=username)
     if request.method == 'GET':
         return layer.to_json()
     elif request.method == 'PUT':
-        return _save_layer(request, layer)
+        return _save_layer(request, layer, username=username)
     elif request.method == 'DELETE':
-        return _delete_layer(request, layer)
+        return _delete_layer(request, layer, username=username)
 
 
 @api_view
 @accepts('GET')
 def layer_meta(request, username, layer_id):
-    layer = _get_layer_or_404(request, username, layer_id)
+    layer = _get_layer_or_404(request, id=layer_id, user__username=username)
     try:
         meta = layer.layer_metas.order_by('-created_at')[0]
         return meta.to_json()
@@ -69,9 +70,9 @@ def layer_meta(request, username, layer_id):
         raise Http404()
 
 
-def _get_layer_or_404(request, username, layer_id):
+def _get_layer_or_404(request, **kwargs):
     try:
-        crit = Q(id=layer_id, user__username=username)
+        crit = Q(**kwargs)
         return _get_layer_models(request, crit)[0]
     except IndexError:
         raise Http404()
@@ -79,15 +80,17 @@ def _get_layer_or_404(request, username, layer_id):
 
 @csrf_exempt
 @api_view
+@login_required
 @accepts('POST')
 def create_layer(request, username):
     layer = Layer()
     layer.user = request.user
-    return _save_layer(request, layer)
+    return _save_layer(request, layer, username=username)
 
 
+@transaction.atomic
 @owner_required
-def _save_layer(request, instance=None):
+def _save_layer(request, layer, username=None):
     """
     Create or update a layer model with data from POST or PUT form fields.
     """
@@ -96,9 +99,12 @@ def _save_layer(request, instance=None):
     else:
         data = request.PUT.copy()
 
+    data['tags'] = data.getlist('tags')
+    data['images'] = data.getlist('images')
+
     # TODO: Check if user has already created a layer with this name.
 
-    form = LayerForm(data, instance=instance)
+    form = LayerForm(data, instance=layer)
 
     if not form.is_valid():
         raise Forbidden(errors=form.errors)
@@ -111,13 +117,28 @@ def _save_layer(request, instance=None):
             'all': ex.message
         })
 
+    # Update tags.
+    LayerTag.objects.filter(layer=layer).delete()
+    LayerTag.objects.bulk_create([
+        LayerTag(layer=layer, name=tag)
+        for tag in form.cleaned_data['tags']
+    ])
+
+    # Update images.
+    LayerImage.objects.filter(layer=layer).delete()
+    LayerImage.objects.bulk_create([
+        LayerImage(layer=layer, source_uri=uri)
+        for uri in form.cleaned_data['images']
+    ])
+
     return layer.to_json()
 
 
 @owner_required
-def _delete_layer(request, layer):
+def _delete_layer(request, layer, username=None):
     layer.deleted_at = timezone.now()
     layer.save()
+    return 'OK'
 
 
 @api_view
@@ -158,11 +179,15 @@ def create_or_destroy_favorite(request, layer_id):
         'layer_id': layer_id,
     }
     if request.method == 'POST':
+        # Ensure user can only favorite owned/public layers.
+        _get_layer_or_404(request, id=layer_id)
+
         model, created = UserFavoriteLayer.objects.get_or_create(**kwargs)
         model.save()
     elif request.method == 'DELETE':
         model = get_object_or_404(UserFavoriteLayer, **kwargs)
         model.delete()
+    return 'OK'
 
 
 @api_view

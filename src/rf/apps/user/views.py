@@ -14,7 +14,7 @@ from registration.models import RegistrationProfile
 from registration.forms import RegistrationFormUniqueEmail
 from registration.backends.default.views import RegistrationView
 
-from apps.core.exceptions import BadRequest, Forbidden
+from apps.core.exceptions import Forbidden
 from apps.core.decorators import accepts, api_view, login_required
 
 
@@ -87,7 +87,7 @@ def sign_up(request):
         if len(errors) == 0:
             errors.append('Invalid data submitted')
 
-        raise BadRequest(errors={
+        raise Forbidden(errors={
             'all': errors
         })
 
