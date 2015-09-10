@@ -9,7 +9,6 @@ var $ = require('jquery'),
     coreViews = require('../core/views'),
     Library = require('./components/library'),
     Modals = require('./components/modals'),
-    uploads = require('../core/uploads'),
     Layer = require('../layer/models');
 
 function showLoginIfNeeded() {
@@ -94,14 +93,7 @@ var HomeController = {
 
         React.render(<Library layers={layers} />, el);
 
-        var fileProps = {
-            handleFiles: function(e) {
-                var files = e.target.files;
-                uploads.uploadFiles(files);
-            }
-        };
-
-        React.render(<Modals {...fileProps} />, $('#modals').get(0));
+        React.render(<Modals />, $('#modals').get(0));
 
         this.mapView = new coreViews.MapView({
             el: '#map'
