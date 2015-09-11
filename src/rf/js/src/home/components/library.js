@@ -3,8 +3,8 @@
 var $ = require('jquery'),
     _ = require('underscore'),
     React = require('react'),
-    asset = require('../../core/utils').asset,
     Map = require('./map'),
+    DropdownMenu = require('./menu').DropdownMenu,
     settings = require('../../settings');
 
 
@@ -17,7 +17,6 @@ var Library = React.createBackboneClass({
         // TODO Most of the stuff in this method can be
         // turned into separate callback methods
         // and inline event bindings to be more idiomatic.
-        $('#dl-menu').dlmenu();
 
         // Tooltips
         $('[data-toggle="tooltip"]').tooltip({
@@ -59,7 +58,9 @@ var Library = React.createBackboneClass({
     render: function() {
         return (
             <div>
-                <Sidebar layers={this.props.layers}/>
+                <div className="sidebar">
+                    <Sidebar layers={this.props.layers}/>
+                </div>
                 <Map />
             </div>
         );
@@ -69,8 +70,8 @@ var Library = React.createBackboneClass({
 var Sidebar = React.createBackboneClass({
     render: function() {
         return (
-            <div className="sidebar">
-                <Header />
+            <div>
+                <DropdownMenu />
                 <div className="sidebar-utility" role="tabpanel">
                     <Tabs />
                     <div className="sidebar-utility-content">
@@ -79,63 +80,6 @@ var Sidebar = React.createBackboneClass({
                     <LayerMetadata />
                     <ImageMetadata />
                 </div>
-            </div>
-        );
-    }
-});
-
-var Header = React.createBackboneClass({
-    render: function() {
-        return (
-            <div className="sidebar-header">
-                <a className="sidebar-brand" href="#">
-                <img src={asset('img/logo-raster-foundry.png')} />
-                </a> {/* /.sidebar-brand */}
-                <div id="dl-menu" className="dl-menuwrapper">
-                    <button className="dl-trigger">
-                    <span className="pull-right">
-                    <span className="icon-bar"></span>
-                    <span className="icon-bar"></span>
-                    <span className="icon-bar"></span>
-                    </span>
-                    <i className="rf-icon-book"></i> Library
-                    </button>
-                    <ul className="dl-menu">
-                        {/*
-                        <li className="dl-menu-group-title"><i className="rf-icon-map-alt"></i> Mosaic Projects</li>
-                        <li className="dl-menu-group">
-                            <a href="/project.html" className="new-project">New Mosaic Project</a>
-                            <a href="/project-with-layers.html">Project Name 6</a>
-                            <a href="/project-with-layers.html">Project Name 2</a>
-                            <a href="/project-with-layers.html">Project Name 1</a>
-                        </li>
-                        <li className="dl-menu-group">
-                            <a href="#" className="sub-menu-parent">More Mosaic Projects</a>
-                            <ul className="dl-submenu">
-                                <li><a href="/project.html" className="new-project">New Mosaic Project</a></li>
-                                <li><a href="/project-with-layers.html">Project Name 1</a></li>
-                                <li><a href="/project-with-layers.html">Project Name 2</a></li>
-                                <li><a href="/project-with-layers.html">Project Name 3</a></li>
-                                <li><a href="/project-with-layers.html">Project Name 4</a></li>
-                                <li><a href="/project-with-layers.html">Project Name 5</a></li>
-                                <li><a href="/project-with-layers.html">Project Name 6</a></li>
-                            </ul>
-                        </li>
-                        <li className="divider"></li>
-                        <li>
-                            <a href="/library.html" className="active"><i className="rf-icon-book"></i> Library</a>
-                        </li>
-                        <li className="divider"></li>
-                        */}
-                        <li>
-                            <a href="/account.html"><i className="rf-icon-user"></i> Account</a>
-                        </li>
-                        <li>
-                            <a href="/logout" data-url="/logout"><i className="rf-icon-logout"></i> Logout</a>
-                        </li>
-                    </ul>
-                </div>
-                {/* /.dl-menuwrapper */}
             </div>
         );
     }
