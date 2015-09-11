@@ -5,6 +5,16 @@ var _ = require('underscore'),
     uuid = require('node-uuid'),
     settings = require('../settings');
 
+function S3UploadException(message, mimeType, fileName) {
+    this.message = message || 'Failed to upload file.';
+    this.mimeType = mimeType || 'type unknown';
+    this.fileName = fileName || 'unknown file';
+    this.name = 'S3UploadException';
+    this.toString = function() {
+        return this.message + ' File: ' + this.fileName + ' MimeType: ' + this.mimeType;
+    };
+}
+
 var uploadFiles = function(files) {
     var evap = new Evaporate({
         signerUrl: settings.get('signerUrl'),
@@ -12,6 +22,12 @@ var uploadFiles = function(files) {
         bucket: settings.get('awsBucket'),
         logging: false
     });
+
+    var invalidMimes = _.without(_.map(files, invalidTypes), null);
+    if (invalidMimes.length > 0) {
+        throw new S3UploadException('Invalid file type.', invalidMimes[0].mimeType, invalidMimes[0].fileName);
+    }
+
     _.each(files, function(file) {
         var user = settings.getUser(),
             userId = user.get('id');
@@ -23,6 +39,7 @@ var uploadFiles = function(files) {
             // WE WANT TO USE A UUID FOR FILE NAMES.
             name: userId + '-' + uuid.v4(),
             file: file,
+            contentType: file.type,
             complete: function() {
                 console.log('File upload complete');
             },
@@ -33,6 +50,26 @@ var uploadFiles = function(files) {
     });
 };
 
+var invalidTypes = function(file) {
+    var mimeType = file.type,
+        fileName = file.name;
+
+    switch (mimeType) {
+        case 'image/png':
+        case 'image/jpeg':
+        case 'image/tiff':
+        case 'application/zip':
+            return null;
+
+        default:
+            return {
+                mimeType: mimeType,
+                fileName: fileName
+            };
+    }
+};
+
 module.exports = {
-    uploadFiles: uploadFiles
+    uploadFiles: uploadFiles,
+    S3UploadException: S3UploadException
 };
