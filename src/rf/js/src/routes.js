@@ -5,6 +5,9 @@ var router = require('./router').router,
     UserController = require('./user/controllers');
 
 router.addRoute(/^$/, HomeController, 'index');
+router.addRoute(/^account/, UserController, 'account');
+router.addRoute(/^keys/, UserController, 'keys');
+router.addRoute(/^billing/, UserController, 'billing');
 router.addRoute(/^login/, UserController, 'login');
 router.addRoute(/^sign-up/, UserController, 'signUp');
 router.addRoute(/^send-activation/, UserController, 'sendActivation');

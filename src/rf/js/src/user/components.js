@@ -4,7 +4,9 @@ var React = require('react'),
     _ = require('underscore'),
     router = require('../router').router,
     asset = require('../core/utils').asset,
-    settings = require('../settings');
+    settings = require('../settings'),
+    DropdownMenu = require('../home/components/menu').DropdownMenu,
+    HeaderMenu = require('../home/components/menu').HeaderMenu;
 
 var VideoBackground = React.createBackboneClass({
     render: function() {
@@ -359,10 +361,118 @@ var ActivateScreen = React.createBackboneClass({
     }
 });
 
+var AccountHeader = React.createBackboneClass({
+    navItems: [
+        { id: 'account', name: 'Account', url: '/account' },
+        { id: 'keys', name: 'Keys & Authentication', url: '/keys' },
+        { id: 'billing', name: 'Billing', url: '/billing' }
+    ],
+
+    render: function() {
+        return (
+            <div>
+                <DropdownMenu selected="account" />
+                <HeaderMenu items={this.navItems} selected={this.props.selected} />
+            </div>
+        );
+    }
+});
+
+var AccountScreen = React.createBackboneClass({
+    render: function() {
+        return (
+            <div>
+                <div className="navbar">
+                    <AccountHeader selected="account" />
+                </div>
+                <div className="container">
+                    <h3 className="text-center font-100">Edit your profile settings</h3>
+                    <div className="content-block">
+                        <form>
+                            <div className="form-group">
+                                <label htmlFor="username">Username</label>
+                                <input type="text" className="form-control" id="username" />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="email">Email</label>
+                                <input type="email" className="form-control" id="email" />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="organization">Organization</label>
+                                <input type="text" className="form-control" id="organization" />
+                            </div>
+                            <hr />
+                            <div className="form-group">
+                                <label htmlFor="old-password">Old Password</label>
+                                <input type="password" className="form-control" id="old-password" />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="new-password">New Password</label>
+                                <input type="password" className="form-control" id="new-password" />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="password">Confirm Password</label>
+                                <input type="password" className="form-control" id="password" />
+                            </div>
+                            <div className="form-action">
+                                <button type="submit" className="btn btn-secondary">Submit</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+});
+
+var KeysScreen = React.createBackboneClass({
+    render: function() {
+        return (
+            <div>
+                <div className="navbar">
+                    <AccountHeader selected="keys" />
+                </div>
+                <div className="container">
+                    <h3 className="text-center font-100">API Access Keys</h3>
+                    <div className="content-block">
+                        <div className="form-group">
+                            <label htmlFor="username">Your API Key</label>
+                            <a href="#" className="pull-right">Request a new API key</a>
+                            <input type="text" className="form-control" id="username" readOnly defaultValue="f2f1517443927a88ce64e13d4e811b4ce73fb93f" />
+                            <p className="help-block text-center"><i className="rf-icon-gears" /> Use your API Key to access the <a href="#">Raster Foundry API</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+});
+
+var BillingScreen = React.createBackboneClass({
+    render: function() {
+        return (
+            <div>
+                <div className="navbar">
+                    <AccountHeader selected="billing" />
+                </div>
+                <div className="container">
+                    <h3 className="text-center font-100">Billing &amp; Plan</h3>
+                    <div className="content-block">
+                        <p>Pay up</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+});
+
 module.exports = {
-    LoginScreen: LoginScreen,
-    SignUpScreen: SignUpScreen,
-    SendActivationScreen: SendActivationScreen,
+    AccountScreen: AccountScreen,
+    ActivateScreen: ActivateScreen,
+    BillingScreen: BillingScreen,
     ForgotScreen: ForgotScreen,
-    ActivateScreen: ActivateScreen
+    KeysScreen: KeysScreen,
+    LoginScreen: LoginScreen,
+    SendActivationScreen: SendActivationScreen,
+    SignUpScreen: SignUpScreen
 };

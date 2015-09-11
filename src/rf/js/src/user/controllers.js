@@ -16,7 +16,30 @@ function showHomeIfLoggedIn() {
     return false;
 }
 
+function loginRequired(fn) {
+    return function() {
+        var user = settings.getUser();
+        if (!user.isAuthenticated()) {
+            router.go('/login');
+        } else {
+            fn.apply(this, arguments);
+        }
+    };
+}
+
 var UserController = {
+    account: loginRequired(function() {
+        this.renderComponent(<components.AccountScreen />);
+    }),
+
+    billing: loginRequired(function() {
+        this.renderComponent(<components.BillingScreen />);
+    }),
+
+    keys: loginRequired(function() {
+        this.renderComponent(<components.KeysScreen />);
+    }),
+
     login: function() {
         if (showHomeIfLoggedIn()) {
             return;
