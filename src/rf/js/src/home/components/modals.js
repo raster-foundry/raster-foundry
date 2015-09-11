@@ -46,15 +46,17 @@ var UploadModal = React.createBackboneClass({
         this.setState({fileDescriptions: []});
     },
 
-    handleClickBrowse: function() {
+    handleClickBrowse: function(e) {
         React.findDOMNode(this.refs.hiddenFileInput).click();
+        e.preventDefault();
     },
 
     handleFileInputChange: function(e) {
         this.updateFiles(e.target.files);
     },
 
-    uploadFiles: function() {
+    uploadFiles: function(e) {
+        e.preventDefault();
         uploads.uploadFiles(_.pluck(this.state.fileDescriptions, 'file'));
     },
 
