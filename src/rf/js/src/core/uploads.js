@@ -37,7 +37,7 @@ var uploadFiles = function(files) {
         evap.add({
             // TODO - NAMES ARE CURRENTLY JUST FOR TESTING.
             // WE WANT TO USE A UUID FOR FILE NAMES.
-            name: userId + '-' + uuid.v4(),
+            name: userId + '-' + uuid.v4() + getExtension(file),
             file: file,
             contentType: file.type,
             complete: function() {
@@ -49,6 +49,17 @@ var uploadFiles = function(files) {
         });
     });
 };
+
+var getExtension = function(file) {
+    var mapping = {
+        'image/png': '.png',
+        'image/jpeg': '.jpg',
+        'image/tiff': '.tif',
+        'application/zip': '.zip'
+
+    };
+    return mapping[file.type] || '';
+}
 
 var invalidTypes = function(file) {
     var mimeType = file.type,
