@@ -388,6 +388,8 @@ var LayerItem = React.createBackboneClass({
     },
 
     render: function() {
+        var selected = this.getModel().get('selected');
+
         var actions = '';
         if (Number(this.getModel().get('owner')) === this.state.currentUserId) {
             actions = (
@@ -423,7 +425,7 @@ var LayerItem = React.createBackboneClass({
                         <i className="rf-icon-star-empty control-inactive"></i>
                     </button>
                     <div className="checkbox">
-                        <input type="checkbox" checked={this.state.selected} onChange={this.selectItem} />
+                        <input type="checkbox" checked={selected} onChange={this.selectItem} />
                         <label></label>
                     </div>
                 </div>
@@ -460,11 +462,12 @@ var LayerItem = React.createBackboneClass({
     },
 
     selectItem: function() {
-        this.setState({ selected: !this.state.selected });
+        var selected = this.getModel().get('selected');
+        this.getModel().set('selected', !selected);
     },
 
     toggleState: function(selected) {
-        this.setState({ selected: selected });
+        this.getModel().set('selected', selected);
     }
 });
 
