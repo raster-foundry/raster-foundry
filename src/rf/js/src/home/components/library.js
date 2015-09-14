@@ -388,7 +388,9 @@ var LayerItem = React.createBackboneClass({
     },
 
     render: function() {
-        var selected = this.getModel().get('selected');
+        var model = this.getModel(),
+            favorite = model.get('favorite'),
+            selected = model.get('selected');
 
         var actions = '';
         if (Number(this.getModel().get('owner')) === this.state.currentUserId) {
@@ -420,7 +422,9 @@ var LayerItem = React.createBackboneClass({
                     <p>{this.getModel().get('organization')}</p>
                 </div>
                 <div className="list-group-tool">
-                    <button type="button" className="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autoComplete="off" onClick={this.markAsFavorite}>
+                    <button type="button" data-toggle="button" aria-pressed="true" autoComplete="off"
+                        className={'btn btn-toggle-control btn-favorite ' + (favorite ? 'active' : '')}
+                        onClick={this.toggleFavorite}>
                         <i className="rf-icon-star control-active text-primary"></i>
                         <i className="rf-icon-star-empty control-inactive"></i>
                     </button>
@@ -446,12 +450,10 @@ var LayerItem = React.createBackboneClass({
         console.log('trigger options');
     },
 
-    markAsFavorite: function(e) {
-        console.log('favorite this layer');
-        // TODO This won't fire in Firefox. Seems like the element that triggers
-        // the layer detail panel is capturing the event.
-        e.stopPropagation();
-        e.preventDefault();
+    toggleFavorite: function() {
+        var model = this.getModel(),
+            favorite = !model.get('favorite');
+        model.set('favorite', favorite);
     },
 
     triggerLayerDetail: function(e) {

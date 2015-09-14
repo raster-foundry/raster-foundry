@@ -181,7 +181,8 @@ def _get_layer_models(request, crit=None):
     Return list of filtered layer models.
     """
     qs = Layer.objects.select_related('user') \
-                      .prefetch_related('layer_images', 'layer_tags')
+                      .prefetch_related('layer_images', 'layer_tags',
+                                        'favorites')
 
     qs = qs.filter(deleted_at__isnull=True)
 
