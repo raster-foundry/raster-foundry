@@ -59,7 +59,7 @@ var getExtension = function(file) {
 
     };
     return mapping[file.type] || '';
-}
+};
 
 var invalidTypes = function(file) {
     var mimeType = file.type,
