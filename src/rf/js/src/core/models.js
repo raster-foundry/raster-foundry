@@ -10,6 +10,45 @@ var MapModel = Backbone.Model.extend({
     }
 });
 
+var TabModel = Backbone.Model.extend({
+    defaults: {
+        activeTab: 'imports'
+    }
+});
+
+var Layer = Backbone.Model.extend({
+    defaults: {
+        name: '',
+        organization: '',
+        owner: 0,
+        area: 0,
+        capture_end: null,
+        capture_start: null,
+        srid: null
+    }
+});
+
+// TODO: Paginate
+var BaseLayers = Backbone.Collection.extend({
+});
+
+var MyLayers = BaseLayers.extend({
+    url: '/imports.json'
+});
+
+var FavoriteLayers = BaseLayers.extend({
+    url: '/favorites.json'
+});
+
+var PublicLayers = BaseLayers.extend({
+    url: '/catalog.json'
+});
+
 module.exports = {
-    MapModel: MapModel
+    FavoriteLayers: FavoriteLayers,
+    Layer: Layer,
+    MapModel: MapModel,
+    MyLayers: MyLayers,
+    PublicLayers: PublicLayers,
+    TabModel: TabModel
 };

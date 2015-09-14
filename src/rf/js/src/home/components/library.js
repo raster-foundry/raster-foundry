@@ -73,9 +73,9 @@ var Sidebar = React.createBackboneClass({
             <div>
                 <DropdownMenu />
                 <div className="sidebar-utility" role="tabpanel">
-                    <Tabs />
+                    <Tabs model={this.props.tabModel} />
                     <div className="sidebar-utility-content">
-                        <TabContents {...this.props} />
+                        <TabContents model={this.props.tabModel} {...this.props} />
                     </div>
                     <LayerMetadata />
                     <ImageMetadata />
@@ -87,13 +87,18 @@ var Sidebar = React.createBackboneClass({
 
 var Tabs = React.createBackboneClass({
     render: function() {
+        var activeTab = this.getModel().get('activeTab');
         return (
             <div className="sidebar-utility-header">
                 <ul className="nav nav-tabs nav-tabs-dark" role="tablist">
-                    <li role="presentation" className="active"><a href="#imports" aria-controls="imports" role="tab" data-toggle="tab">My Imports</a></li>
-                    <li role="presentation"><a href="#catalog" aria-controls="catalog" role="tab" data-toggle="tab">Public Catalog</a></li>
-                    <li role="presentation"><a href="#favorites" aria-controls="favorites" role="tab" data-toggle="tab">Favorites</a></li>
-                    <li role="presentation"><a href="#processing" aria-controls="processing" role="tab" data-toggle="tab">Processing</a></li>
+                    <li role="presentation" className={activeTab === 'imports' ? 'active' : ''}
+                        ><a href="/imports" data-url="/imports" aria-controls="imports" role="tab">My Imports</a></li>
+                    <li role="presentation" className={activeTab === 'catalog' ? 'active' : ''}
+                        ><a href="/catalog" data-url="/catalog" aria-controls="catalog" role="tab">Public Catalog</a></li>
+                    <li role="presentation" className={activeTab === 'favorites' ? 'active' : ''}
+                        ><a href="/favorites" data-url="/favorites" aria-controls="favorites" role="tab">Favorites</a></li>
+                    <li role="presentation" className={activeTab === 'processing' ? 'active' : ''}
+                        ><a href="/processing" data-url="/processing" aria-controls="processing" role="tab">Processing</a></li>
                 </ul>
             </div>
         );
@@ -102,22 +107,27 @@ var Tabs = React.createBackboneClass({
 
 var TabContents = React.createBackboneClass({
     render: function() {
+        var activeTab = this.getModel().get('activeTab');
         return (
             <div className="tab-content">
                 {/* Imports Tab Pane */}
-                <LayerCollection collection={this.props.myLayers} id="imports" active={true} uploadsEnabled={true} />
+                <LayerCollection collection={this.props.myLayers} id="imports" uploadsEnabled={true}
+                    active={activeTab === 'imports'} />
                 {/* /#imports.tab-pane */}
 
                 {/* Catalog Tab Pane */}
-                <LayerCollection collection={this.props.publicLayers} id="catalog" />
+                <LayerCollection collection={this.props.publicLayers} id="catalog"
+                    active={activeTab === 'catalog'} />
                 {/* /#catalog.tab-pane */}
 
                 {/* Favorites Tab Pane */}
-                <LayerCollection collection={this.props.favoriteLayers} id="favorites" />
+                <LayerCollection collection={this.props.favoriteLayers} id="favorites"
+                    active={activeTab === 'favorites'} />
                 {/* /#favorites.tab-pane */}
 
                 {/* Processing Tab Pane */}
-                <div role="tabpanel" className="tab-pane animated fadeInLeft" id="processing">
+                <div id="processing" role="tabpanel"
+                    className={'tab-pane animated fadeInLeft ' + (activeTab === 'processing' ? 'active' : '')}>
                     {/* Imagery Layers */}
                     <div className="list-group">
                         {/* Processing List Group Item */}

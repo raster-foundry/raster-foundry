@@ -94,7 +94,7 @@ class LayerTestCase(AbstractLayerTestCase):
 
     # List
     def test_list_all_layers(self):
-        url = reverse('all_layers')
+        url = reverse('catalog')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         # 2 layers from logged_in_user, and 1 public layer from other_user
@@ -298,7 +298,7 @@ class FavoriteTestCase(AbstractLayerTestCase):
 
     # List
     def test_list_favorites_from_logged_in_user(self):
-        url = reverse('my_favorites')
+        url = reverse('favorites')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 1)

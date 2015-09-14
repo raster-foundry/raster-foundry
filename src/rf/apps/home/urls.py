@@ -13,7 +13,7 @@ username_regex = r'[\w.@+-]+'
 
 
 user_patterns = [
-    url('^/layers.json$', views.user_layers, name='user_layers'),
+    url('^/imports.json$', views.user_layers, name='user_layers'),
     url('^/layer/create/?$', views.create_layer, name='create_layer'),
     url('^/layer/(?P<layer_id>\d+).json$', views.layer_detail,
         name='layer_detail'),
@@ -24,13 +24,17 @@ user_patterns = [
 urlpatterns = patterns(
     '',
     url('^user/(?P<username>' + username_regex + ')', include(user_patterns)),
-    url('^layers.json$', views.my_layers, name='my_layers'),
-    url('^favorites.json$', views.my_favorites, name='my_favorites'),
+    url('^imports.json$', views.my_layers, name='imports'),
+    url('^favorites.json$', views.my_favorites, name='favorites'),
     url('^favorite/(?P<layer_id>\d+)$', views.create_or_destroy_favorite,
         name='create_or_destroy_favorite'),
-    url('^all/layers.json$', views.all_layers, name='all_layers'),
+    url('^catalog.json$', views.all_layers, name='catalog'),
 
     # These all route to the home page.
+    url('^imports/?$', views.home_page),
+    url('^catalog/?$', views.home_page),
+    url('^favorites/?$', views.home_page),
+    url('^processing/?$', views.home_page),
     url('^login/?$', views.home_page),
     url('^sign-up/?$', views.home_page),
     url('^send-activation/?$', views.home_page),
