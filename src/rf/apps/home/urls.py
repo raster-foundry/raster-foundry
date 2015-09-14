@@ -37,6 +37,9 @@ urlpatterns = patterns(
     url('^forgot/?$', views.home_page),
     url('^logout/?$', views.home_page),
     url('^activate/?$', views.home_page),
+    url('^keys/?$', views.home_page),
+    url('^billing/?$', views.home_page),
+    url('^account/?$', views.home_page),
     url('^$', views.home_page, name='home_page'),
 
     url('', views.not_found, name='not_found'),
