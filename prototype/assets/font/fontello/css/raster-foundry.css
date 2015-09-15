@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'raster-foundry';
-  src: url('../font/raster-foundry.eot?5478438');
-  src: url('../font/raster-foundry.eot?5478438#iefix') format('embedded-opentype'),
-       url('../font/raster-foundry.woff?5478438') format('woff'),
-       url('../font/raster-foundry.ttf?5478438') format('truetype'),
-       url('../font/raster-foundry.svg?5478438#raster-foundry') format('svg');
+  src: url('../font/raster-foundry.eot?29896159');
+  src: url('../font/raster-foundry.eot?29896159#iefix') format('embedded-opentype'),
+       url('../font/raster-foundry.woff?29896159') format('woff'),
+       url('../font/raster-foundry.ttf?29896159') format('truetype'),
+       url('../font/raster-foundry.svg?29896159#raster-foundry') format('svg');
   font-weight: normal;
   font-style: normal;
 }
@@ -14,7 +14,7 @@
 @media screen and (-webkit-min-device-pixel-ratio:0) {
   @font-face {
     font-family: 'raster-foundry';
-    src: url('../font/raster-foundry.svg?5478438#raster-foundry') format('svg');
+    src: url('../font/raster-foundry.svg?29896159#raster-foundry') format('svg');
   }
 }
 */
@@ -87,3 +87,4 @@
 .rf-icon-star:before { content: '\e81e'; } /* '' */
 .rf-icon-plus:before { content: '\e81f'; } /* '' */
 .rf-icon-upload:before { content: '\e820'; } /* '' */
+.rf-icon-loader:before { content: '\e821'; } /* '' */
