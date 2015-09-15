@@ -59,7 +59,7 @@ var Library = React.createBackboneClass({
         return (
             <div>
                 <div className="sidebar">
-                    <Sidebar layers={this.props.layers}/>
+                    <Sidebar {...this.props} />
                 </div>
                 <Map />
             </div>
@@ -75,7 +75,7 @@ var Sidebar = React.createBackboneClass({
                 <div className="sidebar-utility" role="tabpanel">
                     <Tabs />
                     <div className="sidebar-utility-content">
-                        <TabContents layers={this.props.layers}/>
+                        <TabContents {...this.props} />
                     </div>
                     <LayerMetadata />
                     <ImageMetadata />
@@ -105,15 +105,15 @@ var TabContents = React.createBackboneClass({
         return (
             <div className="tab-content">
                 {/* Imports Tab Pane */}
-                <LayerCollection collection={this.props.layers.myLayerItems} id="imports" active={true} uploadsEnabled={true} />
+                <LayerCollection collection={this.props.myLayers} id="imports" active={true} uploadsEnabled={true} />
                 {/* /#imports.tab-pane */}
 
                 {/* Catalog Tab Pane */}
-                <LayerCollection collection={this.props.layers.publicLayerItems} id="catalog" />
+                <LayerCollection collection={this.props.publicLayers} id="catalog" />
                 {/* /#catalog.tab-pane */}
 
                 {/* Favorites Tab Pane */}
-                <LayerCollection collection={this.props.layers.favoriteLayerItems} id="favorites" />
+                <LayerCollection collection={this.props.favoriteLayers} id="favorites" />
                 {/* /#favorites.tab-pane */}
 
                 {/* Processing Tab Pane */}
