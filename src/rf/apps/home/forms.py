@@ -44,3 +44,9 @@ class LayerForm(ModelForm):
             self.cleaned_data['images'] = self.data['images']
         except:
             self.cleaned_data['images'] = []
+
+        start = self.cleaned_data['capture_start']
+        end = self.cleaned_data['capture_end']
+        if (end - start).seconds < 0.0:
+            self.add_error('capture_end',
+                           'capture_end is before capture_start')

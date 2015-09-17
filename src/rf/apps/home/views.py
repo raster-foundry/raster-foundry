@@ -85,12 +85,16 @@ def _save_layer(request, layer, username=None):
     data['tags'] = data.getlist('tags')
     data['images'] = data.getlist('images')
 
-    # TODO: Check if user has already created a layer with this name.
-
     form = LayerForm(data, instance=layer)
 
     if not form.is_valid():
         raise Forbidden(errors=form.errors)
+
+    if len(Layer.objects.filter(user__username=request.user.username,
+                                name=form.cleaned_data['name'])) > 0:
+        raise Forbidden(errors={
+            'duplicate_name': 'Layer with name already exists for user.'
+        })
 
     try:
         layer = form.save()

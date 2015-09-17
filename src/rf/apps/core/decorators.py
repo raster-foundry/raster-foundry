@@ -17,6 +17,19 @@ from apps.core.exceptions import (ApiViewException,
 from apps.core.models import User
 
 
+class PatchedQueryDict(QueryDict):
+    # Attempts to get key[] out of data
+    # if key doesn't exist to handle
+    # the way jQuery sends arrays.
+    def getlist(self, key):
+        bracket_key = key + '[]'
+        if key in self:
+            return super(QueryDict, self).getlist(key)
+        elif bracket_key in self:
+            return super(QueryDict, self).getlist(bracket_key)
+        return []
+
+
 def api_view(fn):
     """
     Convert raised HTTP exceptions into a valid HttpResponse
@@ -43,7 +56,10 @@ def api_view(fn):
                 raise MethodNotAllowed()
 
             if request.method == 'PUT':
-                request.PUT = QueryDict(request.body)
+                request.PUT = PatchedQueryDict(request.PUT.urlencode())
+
+            if request.method == 'POST':
+                request.POST = PatchedQueryDict(request.POST.urlencode())
 
             handle_api_authentication(request)
 
