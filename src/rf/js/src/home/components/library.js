@@ -53,6 +53,27 @@ var Library = React.createBackboneClass({
         $('.select-all').click(function() {
             $(this).parent('.utility-tools-secondary').toggleClass('active');
         });
+
+        function resize() {
+            var sidebar = $('.sidebar'),
+                sidebarHeader = $('.sidebar-header'),
+                sidebarUtilHeader = $('.sidebar-utility-header'),
+                sidebarUtilToolbar = $('.sidebar-utility-toolbar'),
+                resizeListGroup = $('.sidebar .list-group'),
+                resizeLayerDetails = $('.layer-detail .layer-detail-content, .image-metadata .layer-detail-content'),
+                height = sidebar.height() -
+                         sidebarHeader.height() -
+                         sidebarUtilHeader.height() -
+                         sidebarUtilToolbar.height() - 30,
+                heightSecondary = sidebar.height() -
+                                  sidebarHeader.height() -
+                                  sidebarUtilToolbar.height() - 20;
+            resizeListGroup.css({'max-height': height + 'px'});
+            resizeLayerDetails.css({'max-height': heightSecondary + 'px'});
+        }
+
+        resize();
+        $(window).resize(resize);
     },
 
     render: function() {
