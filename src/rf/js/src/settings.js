@@ -1,5 +1,7 @@
 'use strict';
 
+require('bootstrap-tagsinput');
+
 var defaultSettings = {},
     settings = (function() {
         return window.clientSettings ? window.clientSettings : defaultSettings;

@@ -90,10 +90,10 @@ def _save_layer(request, layer, username=None):
     if not form.is_valid():
         raise Forbidden(errors=form.errors)
 
-    if len(Layer.objects.filter(user__username=request.user.username,
-                                name=form.cleaned_data['name'])) > 0:
+    if Layer.objects.filter(user__username=request.user.username,
+                            name=form.cleaned_data['name']).count():
         raise Forbidden(errors={
-            'duplicate_name': 'Layer with name already exists for user.'
+            'name': ['Layer with name already exists for user.']
         })
 
     try:
