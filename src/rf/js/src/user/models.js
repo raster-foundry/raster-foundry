@@ -2,9 +2,13 @@
 
 var Backbone = require('../../shim/backbone');
 
-// from http://stackoverflow.com/questions/46155/validate-email-address-in-javascript
+// It's difficult to validate email addresses and there's controversy about
+// what constitutes a valid email address. So we err towards the side of
+// avoiding false negatives, and allow any email address that
+// has the form anystring@anystring.anystring
+// from http://stackoverflow.com/questions/46155/validate-email-address-in-javascript/9204568#9204568
 function isValidEmail(email) {
-    var re = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
+    var re = /\S+@\S+\.\S+/;
     return re.test(email);
 }
 
