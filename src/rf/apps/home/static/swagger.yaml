@@ -10,7 +10,7 @@ consumes:
 produces:
   - application/json
 paths:
-  /layers.json:
+  /imports.json:
     get:
       description: |
           Return layers for current user.
@@ -23,6 +23,25 @@ paths:
               $ref: '#/definitions/Layer'
         401:
           description: Not authorized
+        403:
+          description: Validation error
+        default:
+          description: Unexpected error
+    parameters:
+      - name: api_key
+        in: query
+        type: string
+  /catalog.json:
+    get:
+      description: |
+          Return all published layers.
+      responses:
+        200:
+          description: Array of layers
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Layer'
         403:
           description: Validation error
         default:
