@@ -28,14 +28,27 @@ var HomeController = {
     },
 
     setupLibrary: _.memoize(function() {
+        var self = this;
+
         var el = $('#container').get(0),
             modalsEl = $('#modals').get(0),
 
+            opts = {
+                onLayerSelected: function(model) {
+                    var layer = model.getLeafletLayer();
+                    self.mapView._leafletMap.addLayer(layer);
+                },
+                onLayerDeselected: function(model) {
+                    var layer = model.getLeafletLayer();
+                    self.mapView._leafletMap.removeLayer(layer);
+                }
+            },
+
             libraryProps = {
                 tabModel: new models.TabModel(),
-                myLayers: new models.MyLayers(),
-                favoriteLayers: new models.FavoriteLayers(),
-                publicLayers: new models.PublicLayers()
+                myLayers: new models.MyLayers(null, opts),
+                favoriteLayers: new models.FavoriteLayers(null, opts),
+                publicLayers: new models.PublicLayers(null, opts)
             },
 
             fileProps = {
@@ -67,17 +80,17 @@ var HomeController = {
         props.tabModel.set('activeTab', 'catalog');
     }),
 
-    favorites: function() {
+    favorites: loginRequired(function() {
         var props = this.setupLibrary();
         props.favoriteLayers.fetch();
         props.tabModel.set('activeTab', 'favorites');
-    },
+    }),
 
-    processing: function() {
+    processing: loginRequired(function() {
         var props = this.setupLibrary();
         // TODO: Fetch processing tab
         props.tabModel.set('activeTab', 'processing');
-    }
+    })
 };
 
 

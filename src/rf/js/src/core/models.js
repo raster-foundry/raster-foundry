@@ -1,6 +1,8 @@
 'use strict';
 
-var Backbone = require('../../shim/backbone');
+var _ = require('underscore'),
+    Backbone = require('../../shim/backbone'),
+    L = require('leaflet');
 
 var MapModel = Backbone.Model.extend({
     defaults: {
@@ -25,11 +27,35 @@ var Layer = Backbone.Model.extend({
         capture_end: null,
         capture_start: null,
         srid: null
+    },
+
+    initialize: function() {
+        this.getLeafletLayer = _.memoize(this.getLeafletLayer);
+    },
+
+    getLeafletLayer: function() {
+        return new L.TileLayer(this.get('tile_url'));
     }
 });
 
 // TODO: Paginate
 var BaseLayers = Backbone.Collection.extend({
+    model: Layer,
+
+    initialize: function(models, options) {
+        options = options || {};
+        this.onLayerSelected = options.onLayerSelected || _.noop;
+        this.onLayerDeselected = options.onLayerDeselected || _.noop;
+        this.on('change:selected', this.toggleSelected);
+    },
+
+    toggleSelected: function(model) {
+        if (model.get('selected')) {
+            this.onLayerSelected(model);
+        } else {
+            this.onLayerDeselected(model);
+        }
+    }
 });
 
 var MyLayers = BaseLayers.extend({

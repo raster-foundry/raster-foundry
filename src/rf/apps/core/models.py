@@ -139,6 +139,9 @@ class Layer(Model):
             'url': self.get_absolute_url(),
             'meta_url': self.get_meta_url(),
             'favorite_url': self.get_favorite_url(),
+
+            # TODO: Replace with actual tiles URL.
+            'tile_url': 'https://s3.amazonaws.com/raster-foundry-tiles/test_tiles/{z}/{x}/{y}.png',  # NOQA
         }
 
     def get_absolute_url(self):
