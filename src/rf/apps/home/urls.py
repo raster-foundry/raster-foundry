@@ -41,6 +41,7 @@ urlpatterns = patterns(
     url('^forgot/?$', views.home_page),
     url('^logout/?$', views.home_page),
     url('^activate/?$', views.home_page),
+    url('^reset-password/\S+/\S+/?', views.home_page),
     url('^keys/?$', views.home_page),
     url('^billing/?$', views.home_page),
     url('^account/?$', views.home_page),
