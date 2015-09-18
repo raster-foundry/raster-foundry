@@ -52,6 +52,21 @@ var ModalBaseModel = Backbone.Model.extend({
         success: false,
         client_errors: null,
         server_errors: null
+    },
+
+    setErrors: function(errors) {
+        if (errors.length) {
+            this.set({
+                'client_errors': errors,
+                'server_errors': null
+            });
+            return errors;
+        } else {
+            this.set({
+                'client_errors': null,
+                'server_errors': null
+            });
+        }
     }
 });
 
@@ -74,18 +89,7 @@ var LoginFormModel = ModalBaseModel.extend({
             errors.push('Please enter a password');
         }
 
-        if (errors.length) {
-            this.set({
-                'client_errors': errors,
-                'server_errors': null
-            });
-            return errors;
-        } else {
-            this.set({
-                'client_errors': null,
-                'server_errors': null
-            });
-        }
+        return this.setErrors(errors);
     }
 });
 
@@ -131,18 +135,7 @@ var SignUpFormModel = ModalBaseModel.extend({
             errors.push('Please check the agreement');
         }
 
-        if (errors.length) {
-            this.set({
-                'client_errors': errors,
-                'server_errors': null
-            });
-            return errors;
-        } else {
-            this.set({
-                'client_errors': null,
-                'server_errors': null
-            });
-        }
+        return this.setErrors(errors);
     }
 });
 
@@ -164,17 +157,7 @@ var ForgotFormModel = ModalBaseModel.extend({
             }
         }
 
-        if (errors.length) {
-            this.set({
-                'client_errors': errors,
-                'server_errors': null
-            });
-            return errors;
-        } else {
-            this.set({
-                'client_errors': null,
-                'server_errors': null
-            });
+        return this.setErrors(errors);
         }
     }
 });
@@ -197,18 +180,7 @@ var ResendFormModel = ModalBaseModel.extend({
             }
         }
 
-        if (errors.length) {
-            this.set({
-                'client_errors': errors,
-                'server_errors': null
-            });
-            return errors;
-        } else {
-            this.set({
-                'client_errors': null,
-                'server_errors': null
-            });
-        }
+        return this.setErrors(errors);
     }
 });
 
@@ -217,5 +189,6 @@ module.exports = {
     LoginFormModel: LoginFormModel,
     SignUpFormModel: SignUpFormModel,
     ForgotFormModel: ForgotFormModel,
+    ResetPasswordFormModel: ResetPasswordFormModel,
     ResendFormModel: ResendFormModel
 };
