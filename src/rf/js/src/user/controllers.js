@@ -63,6 +63,12 @@ var UserController = {
         this.renderComponent(<components.ForgotScreen model={model} />);
     },
 
+    resetPassword: function(uidb64, token) {
+        var model = new models.ResetPasswordFormModel();
+        this.renderComponent(<components.ResetPasswordScreen model={model}
+                                uidb64={uidb64} token={token} />);
+    },
+
     activate: function() {
         this.renderComponent(<components.ActivateScreen />);
     },
