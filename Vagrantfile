@@ -95,6 +95,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       app.vm.synced_folder "src/rf/apps", "/opt/app/apps"
     else
       app.vm.synced_folder "src/rf", "/opt/app/"
+      app.vm.synced_folder "src/mock-geoprocessing", "/opt/mock-geoprocessing/"      
       if File.directory?("#{ENV['HOME']}/.aws")
         app.vm.synced_folder "#{ENV['HOME']}/.aws", "/home/vagrant/.aws/"
       else

@@ -14,6 +14,7 @@
 
   roles:
     - { role: "raster-foundry.app" }
+    - { role: "raster-foundry.mock-geoprocessing", when: "['development', 'test'] | some_are_in(group_names)" }
 
   post_tasks:
     - name: Revert change to /etc/hosts

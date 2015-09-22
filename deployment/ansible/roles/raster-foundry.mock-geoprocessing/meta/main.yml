@@ -1,0 +1,4 @@
+---
+dependencies:
+  - { role: "raster-foundry.base" }
+  - { role: "azavea.nodejs" }
