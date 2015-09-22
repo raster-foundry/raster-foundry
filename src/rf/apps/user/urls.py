@@ -14,6 +14,7 @@ urlpatterns = patterns(
     url('^sign-up$', views.sign_up, name='sign_up'),
     url('^resend$', views.resend, name='resend'),
     url('^forgot$', views.forgot, name='forgot'),
+    url('^reset-password$', views.reset_password, name='reset_password'),
     url('^activate/(?P<activation_key>[A-z0-9]+)/$', views.activate,
         name='activate'),
 )

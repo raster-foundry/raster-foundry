@@ -3,12 +3,17 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
 
-from django.contrib.auth import authenticate, login, logout
+
+from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.models import User
-from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
+from django.contrib.auth.tokens import default_token_generator
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.sites.shortcuts import get_current_site
 from django.shortcuts import redirect, get_object_or_404
+from django.utils.encoding import force_text
+from django.utils.http import urlsafe_base64_decode
 
 from registration.models import RegistrationProfile
 from registration.forms import RegistrationFormUniqueEmail
@@ -116,6 +121,55 @@ def forgot(request):
     if form.is_valid():
         form.save(request=request)
     return 'OK'
+
+
+@api_view
+@accepts('POST')
+def reset_password(request):
+    # Adapted from contrib.auth.views.password_reset_confirm
+    UserModel = get_user_model()
+    errors = []
+    uidb64 = None
+    token = None
+
+    if 'uidb64' in request.POST:
+        uidb64 = request.POST['uidb64']
+    else:
+        errors.append('UID was not provided')
+
+    if 'token' in request.POST:
+        token = request.POST['token']
+    else:
+        errors.append('Token was not provided')
+
+    if uidb64 and token:
+        try:
+            # urlsafe_base64_decode() decodes to bytestring on Python 3
+            uid = force_text(urlsafe_base64_decode(uidb64))
+            user = UserModel._default_manager.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, UserModel.DoesNotExist):
+            user = None
+
+        if user and default_token_generator.check_token(user, token):
+            form = SetPasswordForm(user, request.POST)
+            if form.is_valid():
+                form.save()
+            elif 'password_mismatch' in form.errors:
+                errors.append('Passwords do not match')
+            else:
+                # At the moment, password_mismatch is the only possible error
+                # but this is to catch any other errors that could be added
+                # in the future.
+                errors.append('Password is invalid')
+        else:
+            errors.append('Reset URL is invalid')
+
+    if errors:
+        raise Forbidden(errors={
+            'all': errors
+        })
+    else:
+        return 'OK'
 
 
 @api_view

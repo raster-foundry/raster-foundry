@@ -346,6 +346,58 @@ var ForgotScreen = React.createBackboneClass({
     }
 });
 
+var ResetPasswordScreen = React.createBackboneClass({
+    mixins: [ModelValidationMixin],
+
+    onValidateFailure: function() {
+        this.refs.new_password1.setFocus();
+    },
+
+    getFormData: function() {
+        return {
+            new_password1: this.refs.new_password1.getValue(),
+            new_password2: this.refs.new_password2.getValue(),
+            uidb64: this.props.uidb64,
+            token: this.props.token
+        };
+    },
+
+    primaryAction: function() {
+        this.getModel()
+            .fetch({
+                method: 'POST',
+                data: this.getFormData()
+            })
+            .done(_.bind(this.handleServerSuccess, this))
+            .fail(_.bind(this.handleServerFailure, this));
+    },
+
+    render: function() {
+        var content = (
+            <div>
+                <div className="user-message">
+                    Password reset was successful.
+                </div>
+                <a href="#" data-url="/login" className="btn btn-secondary btn-block">Login</a>
+            </div>
+        );
+        if (!this.getModel().get('success')) {
+            content = (
+                <form noValidate method="post" onSubmit={this.validate}>
+                    {this.renderErrors()}
+                    <InputField name="new_password1" displayName="Password" type="password" ref="new_password1" value={this.getModel().get('new_password1')}/>
+                    <InputField name="new_password2" displayName="Re-enter Password" type="password" ref="new_password2" value={this.getModel().get('new_password2')}/>
+                    <div className="form-action">
+                        <input type="submit" className="btn btn-secondary btn-block" value="Reset Password" />
+                    </div>
+                </form>
+            );
+        }
+
+        return <UserScreen content={content} />;
+    }
+});
+
 var ActivateScreen = React.createBackboneClass({
     render: function() {
         var content = (
@@ -474,5 +526,6 @@ module.exports = {
     KeysScreen: KeysScreen,
     LoginScreen: LoginScreen,
     SendActivationScreen: SendActivationScreen,
+    ResetPasswordScreen: ResetPasswordScreen,
     SignUpScreen: SignUpScreen
 };

@@ -15,6 +15,7 @@ router.addRoute(/^billing/, UserController, 'billing');
 router.addRoute(/^login/, UserController, 'login');
 router.addRoute(/^sign-up/, UserController, 'signUp');
 router.addRoute(/^send-activation/, UserController, 'sendActivation');
+router.addRoute('reset-password/:uidb64/:token(/)', UserController, 'resetPassword');
 router.addRoute(/^forgot/, UserController, 'forgot');
 router.addRoute(/^logout/, UserController, 'logout');
 router.addRoute(/^activate/, UserController, 'activate');
