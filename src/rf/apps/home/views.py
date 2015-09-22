@@ -9,6 +9,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, Http404, render_to_response
 from django.template import RequestContext
 from django.utils import timezone
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 from apps.core.exceptions import Forbidden
 from apps.core.decorators import (accepts, api_view, login_required,
@@ -18,6 +19,7 @@ from apps.home.forms import LayerForm
 from apps.home.filters import LayerFilter
 
 
+@ensure_csrf_cookie
 def home_page(request):
     context = RequestContext(request)
     return render_to_response('home/home.html', context)
