@@ -1,0 +1,14 @@
+{
+  "name": "upload-functions",
+  "version": "1.0.0",
+  "description": "Handle uploaded files in AWS Lambda.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Azavea",
+  "license": "Apache",
+  "dependencies": {
+    "unzip": "git+https://github.com/AnkurMali/node-unzip.git#9146a6f"
+  }
+}
