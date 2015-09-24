@@ -57,7 +57,16 @@ var UploadModal = React.createBackboneClass({
 
     uploadFiles: function(e) {
         e.preventDefault();
-        uploads.uploadFiles(_.pluck(this.state.fileDescriptions, 'file'));
+        try {
+            uploads.uploadFiles(_.pluck(this.state.fileDescriptions, 'file'));
+        } catch (excp) {
+            if (excp instanceof uploads.S3UploadException) {
+                // TODO Show something useful to the user here.
+                console.error(excp);
+            } else {
+                throw excp;
+            }
+        }
     },
 
     updateFiles: function(files) {
