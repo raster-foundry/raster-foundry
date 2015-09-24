@@ -92,6 +92,17 @@ class LayerTestCase(AbstractLayerTestCase):
         response = self.save_layer(layer, user)
         self.assertEqual(response.status_code, 401)
 
+    def test_create_layer_date_errors(self):
+        # start is after end
+        layer = {
+            'name': 'n',
+            'capture_start': '2015-08-15',
+            'capture_end': '2015-08-14',
+        }
+        user = self.user_models[self.logged_in_user]
+        response = self.save_layer(layer, user)
+        self.assertEqual(response.status_code, 403)
+
     # List
     def test_list_all_layers(self):
         url = reverse('catalog')

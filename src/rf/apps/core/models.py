@@ -45,14 +45,14 @@ class Layer(Model):
     )
     projection = CharField(
         blank=True,
-        max_length=8,
+        max_length=18,
         choices=enums.PROJECTION_CHOICES,
         default=enums.WGS84,
         help_text='Source Projection',
     )
     srid = CharField(
         blank=True,
-        max_length=8,
+        max_length=18,
         choices=enums.SRID_CHOICES,
         default=enums.WGS84,
         help_text='Source SRS',
@@ -60,33 +60,33 @@ class Layer(Model):
 
     tile_srid = CharField(
         blank=True,
-        max_length=8,
+        max_length=18,
         choices=enums.SRID_CHOICES,
         default=enums.WGS84,
         help_text='Tile SRS'
     )
     tile_format = CharField(
         blank=True,
-        max_length=8,
+        max_length=18,
         choices=enums.TILE_FORMAT_CHOICES,
-        default=enums.PNG24,
+        default=enums.OVER_PNG32,
     )
     tile_origin = CharField(
         blank=True,
-        max_length=12,
+        max_length=18,
         choices=enums.TILE_ORIGIN_CHOICES,
         default=enums.TOPLEFT,
         help_text='Tiling Scheme',
     )
     resampling = CharField(
         blank=True,
-        max_length=12,
+        max_length=18,
         choices=enums.TILE_RESAMPLING_CHOICES,
         default=enums.BILINEAR,
     )
     transparency = CharField(
         blank=True,
-        max_length=8,
+        max_length=18,
         help_text='Hexadecimal (Ex. #00FF00)',
     )
 

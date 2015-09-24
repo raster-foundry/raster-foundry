@@ -87,10 +87,12 @@ COPY_IMAGES_COMMAND="cp -r \
 
 CONCAT_VENDOR_CSS_COMMAND="cat \
     ./node_modules/leaflet/dist/leaflet.css \
+    ./node_modules/bootstrap-tagsinput/dist/bootstrap-tagsinput.css \
     > $VENDOR_CSS_FILE"
 
 JS_DEPS=(jquery backbone backbone.marionette bootstrap evaporate leaflet \
-         leaflet.locatecontrol moment underscore react react.backbone)
+         leaflet.locatecontrol moment underscore react react.backbone \
+         bootstrap-tagsinput)
 
 BROWSERIFY_EXT=""
 BROWSERIFY_REQ=""

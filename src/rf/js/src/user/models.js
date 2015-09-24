@@ -44,6 +44,10 @@ var UserModel = Backbone.Model.extend({
         });
 
         return jqXHR;
+    },
+
+    getCreateLayerURL: function() {
+        return '/user/' + this.get('username') + '/layer/create';
     }
 });
 
