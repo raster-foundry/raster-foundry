@@ -1,0 +1,6 @@
+---
+- name: Configure service definition
+  template: src=upstart-rf-mock-geoprocessing.conf.j2
+            dest=/etc/init/rf-mock-geoprocessing.conf
+  notify:
+    - Restart rf-mock-geoprocessing
