@@ -72,6 +72,19 @@ class AbstractLayerTestCase(TestCase):
             layer = self.make_layer(layer_name, is_public=False)
             self.save_layer(layer, user)
 
+    def make_many_layers(self):
+        """
+        Create 30 public layers (15 for each user).
+        """
+        for username in self.usernames:
+            self.client.login(username=username, password=username)
+            user = self.user_models[username]
+
+            for i in range(0, 15):
+                layer_name = username + ' Public Layer ' + str(i)
+                layer = self.make_layer(layer_name, is_public=True)
+                self.save_layer(layer, user)
+
 
 class LayerTestCase(AbstractLayerTestCase):
     # Create
@@ -344,3 +357,39 @@ class FavoriteTestCase(AbstractLayerTestCase):
         })
         response = self.client.delete(url)
         self.assertEqual(response.status_code, 200)
+
+
+class PaginationTestCase(AbstractLayerTestCase):
+    def setup_models(self):
+        Layer.objects.all().delete()
+        super(PaginationTestCase, self).make_many_layers()
+
+    def test_pagination(self):
+        def pagination_assertion(response, pages, current, layers):
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(len(response.data), 5)
+            self.assertEqual(int(response.data['pages']), pages)
+            self.assertEqual(int(response.data['current_page']), current)
+            self.assertEqual(len(response.data['layers']), layers)
+
+        self.make_many_layers()
+        url = reverse('catalog')
+        response = self.client.get(url)
+        # 30 layers from 3 users
+        pagination_assertion(response, 3, 1, 10)
+
+        # Page 2.
+        response = self.client.get(url + '?page=2')
+        pagination_assertion(response, 3, 2, 10)
+
+        # Page 3.
+        response = self.client.get(url + '?page=3')
+        pagination_assertion(response, 3, 3, 10)
+
+        # Numbers greater than the last page should return the last page.
+        response = self.client.get(url + '?page=4')
+        pagination_assertion(response, 3, 3, 10)
+
+        # Non numbers should return the first page.
+        response = self.client.get(url + '?page=foo')
+        pagination_assertion(response, 3, 1, 10)
