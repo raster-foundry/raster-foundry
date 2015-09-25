@@ -14,5 +14,5 @@ class LayerFilter(django_filters.FilterSet):
 
     class Meta:
         model = Layer
-        fields = ('username', 'name', 'organization', 'tag')
+        fields = ('username', 'name', 'organization', 'tag', 'created_at')
         order_by = True
