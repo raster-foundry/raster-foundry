@@ -109,19 +109,21 @@ class LayerTestCase(AbstractLayerTestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         # 2 layers from logged_in_user, and 1 public layer from other_user
-        self.assertEqual(len(response.data), 3)
+        self.assertEqual(response.data['pages'], 1)
+        self.assertEqual(response.data['current_page'], 1)
+        self.assertEqual(len(response.data['layers']), 3)
 
     def test_list_layers_from_logged_in_user(self):
         url = reverse('user_layers', kwargs={'username': self.logged_in_user})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 2)
+        self.assertEqual(len(response.data['layers']), 2)
 
     def test_list_layers_from_other_user(self):
         url = reverse('user_layers', kwargs={'username': self.other_user})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data['layers']), 1)
 
     def test_list_layers_from_invalid_user(self):
         url = reverse('user_layers', kwargs={'username': self.invalid_user})
@@ -134,8 +136,9 @@ class LayerTestCase(AbstractLayerTestCase):
         url += '?name=%s Public Layer' % (self.logged_in_user,)
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['name'],
+        layers = response.data['layers']
+        self.assertEqual(len(layers), 1)
+        self.assertEqual(layers[0]['name'],
                          '%s Public Layer' % (self.logged_in_user,))
 
     def test_list_layers_with_filter_by_tag_from_logged_in_user(self):
@@ -143,25 +146,27 @@ class LayerTestCase(AbstractLayerTestCase):
         url += '?tag=%s+Public+Layer' % (self.logged_in_user,)
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['name'],
+        layers = response.data['layers']
+        self.assertEqual(len(layers), 1)
+        self.assertEqual(layers[0]['name'],
                          '%s Public Layer' % (self.logged_in_user,))
 
         url = reverse('user_layers', kwargs={'username': self.logged_in_user})
         url += '?tag=invalid+tag'
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 0)
+        self.assertEqual(len(response.data['layers']), 0)
 
     def test_list_layers_with_sorting_from_logged_in_user(self):
         url = reverse('user_layers', kwargs={'username': self.logged_in_user})
         url += '?ordering=name'
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 2)
-        self.assertEqual(response.data[0]['name'],
+        layers = response.data['layers']
+        self.assertEqual(len(layers), 2)
+        self.assertEqual(layers[0]['name'],
                          '%s Private Layer' % (self.logged_in_user,))
-        self.assertEqual(response.data[1]['name'],
+        self.assertEqual(layers[1]['name'],
                          '%s Public Layer' % (self.logged_in_user,))
 
     # Retrieve
@@ -312,7 +317,7 @@ class FavoriteTestCase(AbstractLayerTestCase):
         url = reverse('favorites')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data['layers']), 1)
 
     # Destroy
     def test_destroy_favorite_from_logged_in_user(self):
