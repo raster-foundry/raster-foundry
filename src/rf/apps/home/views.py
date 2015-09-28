@@ -3,6 +3,8 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
 
+from urllib import urlencode
+
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Q
@@ -10,6 +12,7 @@ from django.shortcuts import get_object_or_404, Http404, render_to_response
 from django.template import RequestContext
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from apps.core.exceptions import Forbidden
 from apps.core.decorators import (accepts, api_view, login_required,
@@ -17,6 +20,8 @@ from apps.core.decorators import (accepts, api_view, login_required,
 from apps.core.models import Layer, LayerImage, LayerTag, UserFavoriteLayer
 from apps.home.forms import LayerForm
 from apps.home.filters import LayerFilter
+
+RESULTS_PER_PAGE = 10
 
 
 @ensure_csrf_cookie
@@ -57,7 +62,7 @@ def layer_meta(request, username, layer_id):
 def _get_layer_or_404(request, **kwargs):
     try:
         crit = Q(**kwargs)
-        return _get_layer_models(request, crit)[0]
+        return _get_layer_models(request, crit)['layers'][0]
     except IndexError:
         raise Http404()
 
@@ -199,13 +204,56 @@ def _get_layer_models(request, crit=None):
     if crit:
         qs = qs.filter(crit)
 
-    layers = LayerFilter(request.GET, queryset=qs)
-    return layers
+    filtered_layers = LayerFilter(request.GET, queryset=qs)
+    paginator = Paginator(filtered_layers, RESULTS_PER_PAGE)
+
+    page = request.GET.get('page')
+    try:
+        layers = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        page = 1
+        layers = paginator.page(page)
+    except EmptyPage:
+        # If page is out of range, deliver last page of results.
+        page = paginator.num_pages
+        layers = paginator.page(page)
+
+    page = int(page)
+    prev_url = (page - 1) if page > 1 else None
+    next_url = (page + 1) if page < paginator.num_pages else None
+
+    return {
+        'layers': layers,
+        'pages': paginator.num_pages,
+        'current_page': page,
+        'next_url': next_url,
+        'prev_url': prev_url
+    }
 
 
 def _get_layers(request, crit=None):
     """
     Return list of JSON serializable layer models.
     """
-    models = _get_layer_models(request, crit)
-    return [m.to_json() for m in models]
+    results = _get_layer_models(request, crit)
+    models = [m.to_json() for m in results['layers']]
+    prev_url = None
+    next_url = None
+    get = request.GET.copy()
+
+    if results['prev_url'] is not None:
+        get['page'] = results['prev_url']
+        prev_url = request.path + '?' + urlencode(get)
+
+    if results['next_url'] is not None:
+        get['page'] = results['next_url']
+        next_url = request.path + '?' + urlencode(get)
+
+    return {
+        'layers': models,
+        'pages': results['pages'],
+        'current_page': results['current_page'],
+        'prev_url': prev_url,
+        'next_url': next_url
+    }

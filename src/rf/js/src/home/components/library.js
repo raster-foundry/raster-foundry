@@ -217,13 +217,26 @@ var LayerCollection = React.createBackboneClass({
                              .filter(this.state.filterFn)
                              .sort(this.state.sortFn)
                              .map(makeLayerItem),
-            className = 'tab-pane animated fadeInLeft';
+            className = 'tab-pane animated fadeInLeft',
+            pager = '',
+            uploadButton = '';
 
         if (this.props.active) {
             className += ' active';
         }
 
-        var uploadButton = '';
+        if (this.getCollection().pages > 1) {
+            var prev = '',
+                next = '';
+            if (this.getCollection().hasPrev()) {
+                prev = (<a className="prev" onClick={this.prevPage}>&lt;-</a>);
+            }
+            if (this.getCollection().hasNext()) {
+                next = (<a className="next" onClick={this.nextPage}>-&gt;</a>);
+            }
+            pager = (<div>{prev} {next}</div>);
+        }
+
         if (this.props.uploadsEnabled) {
             uploadButton = (
                 <span className="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Import Imagery Layer">
@@ -298,6 +311,7 @@ var LayerCollection = React.createBackboneClass({
                     </div>
                 </div>
                 <div className="list-group">
+                    { pager }
                     { layerItems }
                 </div>
             </div>
@@ -366,6 +380,14 @@ var LayerCollection = React.createBackboneClass({
             };
         }
         this.setState({ sortFn: sortFn });
+    },
+
+    nextPage: function() {
+        this.getCollection().getNextPage();
+    },
+
+    prevPage: function() {
+        this.getCollection().getPrevPage();
     }
 });
 

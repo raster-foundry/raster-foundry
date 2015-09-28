@@ -3,7 +3,8 @@
 var _ = require('underscore'),
     $ = require('jquery'),
     Backbone = require('../../shim/backbone'),
-    L = require('leaflet');
+    L = require('leaflet'),
+    utils = require('./utils');
 
 var MapModel = Backbone.Model.extend({
     defaults: {
@@ -48,9 +49,34 @@ var Layer = Backbone.Model.extend({
     }
 });
 
-// TODO: Paginate
 var BaseLayers = Backbone.Collection.extend({
     model: Layer,
+    currentPage: 1,
+    pages: 1,
+    prevUrl: null,
+    nextUrl: null,
+
+    hasPrev: function() {
+        return this.prevUrl !== null;
+    },
+
+    hasNext: function() {
+        return this.nextUrl !== null;
+    },
+
+    getPrevPage: function() {
+        if (this.prevUrl) {
+            var data = utils.parseQueryData(this.prevUrl);
+            this.fetch({ data: data });
+        }
+    },
+
+    getNextPage: function() {
+        if (this.nextUrl) {
+            var data = utils.parseQueryData(this.nextUrl);
+            this.fetch({ data: data });
+        }
+    },
 
     initialize: function(models, options) {
         options = options || {};
@@ -65,6 +91,14 @@ var BaseLayers = Backbone.Collection.extend({
         } else {
             this.onLayerDeselected(model);
         }
+    },
+
+    parse: function(data) {
+        this.currentPage = data.current_page;
+        this.pages = data.pages;
+        this.prevUrl = data.prev_url;
+        this.nextUrl = data.next_url;
+        return data.layers;
     }
 });
 
