@@ -393,3 +393,144 @@ class PaginationTestCase(AbstractLayerTestCase):
         # Non numbers should return the first page.
         response = self.client.get(url + '?page=foo')
         pagination_assertion(response, 3, 1, 10)
+
+
+class OrderingAndFilteringTestCase(AbstractLayerTestCase):
+    layer_data = [
+        {
+            'name': 'Alpha',
+            'tag': 'tag1',
+            'area': 3,
+            'capture_start': '2015-08-15',
+            'capture_end': '2015-08-15',
+            'srid': 'mercator'
+        },
+        {
+            'name': 'Beta',
+            'tag': 'tag2',
+            'area': 4,
+            'capture_start': '2015-08-19',
+            'capture_end': '2015-08-19',
+            'srid': 'mercator'
+        },
+        {
+            'name': 'Gamma',
+            'tag': 'tag3',
+            'area': 5,
+            'capture_start': '2015-08-08',
+            'capture_end': '2015-08-08',
+            'srid': '4326'
+        },
+        {
+            'name': 'Delta',
+            'tag': 'tag4',
+            'area': 6,
+            'capture_start': '2015-08-02',
+            'capture_end': '2015-08-02',
+            'srid': 'utm'
+        },
+        {
+            'name': 'Epsilon',
+            'tag': 'tag4',
+            'area': 1,
+            'capture_start': '2015-08-22',
+            'capture_end': '2015-08-22',
+            'srid': 'epsg'
+        },
+        {
+            'name': 'Zeta',
+            'tag': 'tag5',
+            'area': 2,
+            'capture_start': '2015-08-21',
+            'capture_end': '2015-08-21',
+            'srid': '4326'
+        }
+    ]
+
+    def setup_models(self):
+        Layer.objects.all().delete()
+
+        username = self.usernames[0]
+        self.client.login(username=username, password=username)
+        user = self.user_models[username]
+
+        for data in self.layer_data:
+            layer_name = data['name']
+            tag = data['tag']
+            layer = self.make_layer(layer_name, is_public=True)
+            layer['tags'] = [tag]
+            layer['area'] = data['area']
+            layer['capture_start'] = data['capture_end']
+            layer['capture_end'] = data['capture_end']
+            layer['srid'] = data['srid']
+            # Organization name is the reverse of the name.
+            layer['organization'] = data['name'][::-1]
+            self.save_layer(layer, user)
+
+    def confirm_order(self, layers, order):
+        for i in range(0, len(layers)):
+            layer_index = order[i] - 1
+            self.assertEqual(layers[i]['name'],
+                             self.layer_data[layer_index]['name'])
+
+    def test_area_ordering(self):
+        url = reverse('catalog')
+        response = self.client.get(url + '?o=area')
+        self.assertEqual(int(response.data['pages']), 1)
+        self.assertEqual(int(response.data['current_page']), 1)
+        layers = response.data['layers']
+        self.assertEqual(len(layers), 6)
+        self.confirm_order(layers, [5, 6, 1, 2, 3, 4])
+
+    def test_start_ordering(self):
+        url = reverse('catalog')
+        response = self.client.get(url + '?o=capture_start')
+        layers = response.data['layers']
+        self.assertEqual(len(layers), 6)
+        self.confirm_order(layers, [4, 3, 1, 2, 6, 5])
+
+    def test_end_ordering(self):
+        url = reverse('catalog')
+        response = self.client.get(url + '?o=capture_end')
+        layers = response.data['layers']
+        self.assertEqual(len(layers), 6)
+        self.confirm_order(layers, [4, 3, 1, 2, 6, 5])
+
+    def test_srid_ordering(self):
+        url = reverse('catalog')
+        response = self.client.get(url + '?o=srid')
+        layers = response.data['layers']
+        self.assertEqual(len(layers), 6)
+        order = ['4326', '4326', 'epsg', 'mercator', 'mercator', 'utm']
+        for i in range(0, 6):
+            self.assertEqual(layers[i]['srid'], order[i])
+
+    def test_filter_tag1(self):
+        url = reverse('catalog')
+        response = self.client.get(url + '?name_search=ta')
+        layers = response.data['layers']
+        self.assertEqual(len(layers), 6)
+
+    def test_filter_tag2(self):
+        url = reverse('catalog')
+        response = self.client.get(url + '?name_search=tag4')
+        layers = response.data['layers']
+        self.assertEqual(len(layers), 2)
+
+    def test_filter_tag3(self):
+        url = reverse('catalog')
+        response = self.client.get(url + '?name_search=et')
+        layers = response.data['layers']
+        self.assertEqual(len(layers), 2)
+
+    def test_filter_tag4(self):
+        url = reverse('catalog')
+        response = self.client.get(url + '?name_search=gamma')
+        layers = response.data['layers']
+        self.assertEqual(len(layers), 1)
+
+    def test_filter_tag5(self):
+        url = reverse('catalog')
+        response = self.client.get(url + '?name_search=ammag')
+        layers = response.data['layers']
+        self.assertEqual(len(layers), 1)
