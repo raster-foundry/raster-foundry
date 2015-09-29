@@ -1,5 +1,7 @@
 ---
 django_test_database: "{{ lookup('env', 'RF_TEST_DB_NAME') | default('test_rf', true) }}"
+sqs_queue: "{{ lookup('env', 'SQS_QUEUE_NAME') | default('TestQueue', true) }}"
+sqs_region: "{{ lookup('env', 'SQS_QUEUE_REGION') | default('us-east-1', true) }}"
 
 redis_port: 6379
 postgresql_port: 5432

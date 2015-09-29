@@ -9,6 +9,8 @@ worker_config:
   DJANGO_SECRET_KEY: "{{ app_secret_key }}"
   DJANGO_STATIC_ROOT: "{{ worker_static_root }}"
   DJANGO_MEDIA_ROOT: "{{ worker_media_root }}"
+  SQS_QUEUE_NAME: "{{ sqs_queue }}"
+  SQS_QUEUE_REGION: "{{ sqs_region }}"
 
 worker_postgis_version: 2.1.3
 worker_secret_key: "{{ postgresql_password | md5 }}"
