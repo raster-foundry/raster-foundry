@@ -201,9 +201,10 @@ var LayerCollection = React.createBackboneClass({
     getInitialState: function() {
         return {
             selectAll: false,
-            visibleLayers: this.getCollection(),
-            filterFn: _.identity,
-            sortFn: _.identity
+            fetchData: {
+                name_search: '',
+                o: ''
+            }
         };
     },
 
@@ -214,8 +215,6 @@ var LayerCollection = React.createBackboneClass({
             },
             layerItems = this.getCollection()
                              .toArray()
-                             .filter(this.state.filterFn)
-                             .sort(this.state.sortFn)
                              .map(makeLayerItem),
             className = 'tab-pane animated fadeInLeft',
             pager = '',
@@ -327,60 +326,32 @@ var LayerCollection = React.createBackboneClass({
     },
 
     triggerSearch: function(e) {
-        var search = (e.target.value).toLowerCase(),
-            filterFn = _.identity;
-        if (search && search !== '') {
-            filterFn = function(item) {
-                var nameMatch = item.get('name').toLowerCase().indexOf(search) > -1,
-                    organizationMatch = item.get('organization').toLowerCase().indexOf(search) > -1;
-                return nameMatch || organizationMatch;
-            };
-        }
-        this.setState({ filterFn: filterFn });
+        e.persist();
+        this.debouncedTriggerSearch(e);
     },
+
+    debouncedTriggerSearch: _.debounce(function(e) {
+        var search = (e.target.value).toLowerCase(),
+            fetchData = this.state.fetchData;
+
+        fetchData.name_search = search ? search : '';
+        this.setState({ fetchData: fetchData });
+        this.getCollection().fetch({ data: fetchData });
+    }, 200),
 
     triggerSort: function(e) {
-        var prop = e.target.value,
-            sortFn = _.identity,
-            dateSorter = function(a, b) {
-                // Default to most recent first.
-                // Therefore if b is after a, we want b to come first.
-                // Real dates should come before null.
-                if (a && b) {
-                    if (a.isSame(b)) {
-                        return 0;
-                    }
-                    return b.isAfter(a) ? 1 : -1;
-                } else if (a) {
-                    return -1;
-                } else {
-                    return 1;
-                }
-            },
-            numberSorter = function(a, b) {
-                return a - b;
-            },
-            stringSorter = function(a, b) {
-                if (a === b) {
-                    return 0;
-                }
-                return a > b ? 1 : -1;
-            },
-            mapping = {
-                'area': numberSorter,
-                'capture_start': dateSorter,
-                'capture_end': dateSorter,
-                'srid': stringSorter
-            };
-
-        if (prop && prop !== '') {
-            var sorter = mapping[prop];
-            sortFn = function(a, b) {
-                return sorter(a.get(prop), b.get(prop));
-            };
-        }
-        this.setState({ sortFn: sortFn });
+        e.persist();
+        this.debouncedTriggerSort(e);
     },
+
+    debouncedTriggerSort: _.debounce(function(e) {
+        var prop = e.target.value,
+            fetchData = this.state.fetchData;
+
+        fetchData.o = prop ? prop : '';
+        this.setState({ fetchData: fetchData });
+        this.getCollection().fetch({ data: fetchData });
+    }, 200),
 
     nextPage: function() {
         this.getCollection().getNextPage();
