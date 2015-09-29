@@ -372,7 +372,6 @@ class PaginationTestCase(AbstractLayerTestCase):
             self.assertEqual(int(response.data['current_page']), current)
             self.assertEqual(len(response.data['layers']), layers)
 
-        self.make_many_layers()
         url = reverse('catalog')
         response = self.client.get(url)
         # 30 layers from 3 users
@@ -534,3 +533,51 @@ class OrderingAndFilteringTestCase(AbstractLayerTestCase):
         response = self.client.get(url + '?name_search=ammag')
         layers = response.data['layers']
         self.assertEqual(len(layers), 1)
+
+
+class PaginationSortingAndFilteringTestCase(AbstractLayerTestCase):
+    def setup_models(self):
+        Layer.objects.all().delete()
+        username = self.usernames[0]
+        self.client.login(username=username, password=username)
+        user = self.user_models[username]
+
+        # Add one layer that can be filtered out.
+        layer_name = 'TK'
+        layer = self.make_layer(layer_name, is_public=True)
+        layer['tags'] = ['TKTK']
+        layer['area'] = 10
+        layer['capture_start'] = '2015-01-01'
+        layer['capture_end'] = '2015-01-01'
+        layer['organization'] = 'TK'
+        self.save_layer(layer, user)
+
+        # Add 30 layers.
+        super(PaginationSortingAndFilteringTestCase, self).make_many_layers()
+
+    def test_next_prev_pages(self):
+        url = reverse('catalog')
+        response = self.client.get(url)
+        self.assertEqual(response.data['prev_url'], None)
+        self.assertEqual(response.data['next_url'], '/catalog.json?page=2')
+        self.assertEqual(int(response.data['pages']), 4)
+
+        # Filter down to 30 results.
+        response = self.client.get(url + '?name_search=pub&o=area')
+        self.assertEqual(response.data['prev_url'], None)
+        self.assertEqual(response.data['next_url'],
+                         '/catalog.json?name_search=pub&page=2&o=area')
+        self.assertEqual(int(response.data['pages']), 3)
+
+        # Go to page 2
+        response = self.client.get(url + '?name_search=pub&page=2&o=area')
+        self.assertEqual(response.data['prev_url'],
+                         '/catalog.json?name_search=pub&page=1&o=area')
+        self.assertEqual(response.data['next_url'],
+                         '/catalog.json?name_search=pub&page=3&o=area')
+
+        # Go to page 3
+        response = self.client.get(url + '?name_search=pub&page=3&o=area')
+        self.assertEqual(response.data['prev_url'],
+                         '/catalog.json?name_search=pub&page=2&o=area')
+        self.assertEqual(response.data['next_url'], None)
