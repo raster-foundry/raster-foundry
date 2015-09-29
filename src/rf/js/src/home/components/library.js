@@ -364,29 +364,15 @@ var LayerCollection = React.createBackboneClass({
 
 
 var LayerItem = React.createBackboneClass({
-    componentDidMount: function() {
-        var currentUser = settings.getUser(),
-            self = this;
-
-        currentUser.on('change', function() {
-            self.setState({
-                currentUserId: this.get('id')
-            });
-        });
-    },
-
-    getInitialState: function() {
-        var currentUser = settings.getUser();
-        return { currentUserId: currentUser.get('id') };
-    },
-
     render: function() {
         var model = this.getModel(),
+            currentUser = settings.getUser(),
             favorite = model.get('favorite'),
-            selected = model.get('selected');
+            selected = model.get('selected'),
+            isOwner = model.get('username') === currentUser.get('username');
 
         var actions = '';
-        if (Number(this.getModel().get('owner')) === this.state.currentUserId) {
+        if (isOwner) {
             actions = (
                 <div className="list-group-actions">
                     <div className="dropdown">
