@@ -143,6 +143,10 @@ var InputField = React.createBackboneClass({
 var LoginBox = React.createBackboneClass({
     mixins: [ModelValidationMixin],
 
+    componentDidMount: function() {
+        this.refs.username.setFocus();
+    },
+
     onValidateFailure: function() {
         this.refs.username.setFocus();
     },
@@ -198,6 +202,10 @@ var LoginBox = React.createBackboneClass({
 
 var SignUpBox = React.createBackboneClass({
     mixins: [ModelValidationMixin],
+
+    componentDidMount: function() {
+        this.refs.username.setFocus();
+    },
 
     onValidateFailure: function() {
         this.refs.username.setFocus();
@@ -256,6 +264,10 @@ var SignUpBox = React.createBackboneClass({
 var SendActivationBox = React.createBackboneClass({
     mixins: [ModelValidationMixin],
 
+    componentDidMount: function() {
+        this.refs.email.setFocus();
+    },
+
     onValidateFailure: function() {
         this.refs.email.setFocus();
     },
@@ -304,6 +316,10 @@ var SendActivationBox = React.createBackboneClass({
 
 var ForgotBox = React.createBackboneClass({
     mixins: [ModelValidationMixin],
+
+    componentDidMount: function() {
+        this.refs.email.setFocus();
+    },
 
     onValidateFailure: function() {
         this.refs.email.setFocus();
