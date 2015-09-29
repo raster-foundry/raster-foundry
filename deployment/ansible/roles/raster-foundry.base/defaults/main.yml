@@ -19,6 +19,8 @@ django_config:
   DJANGO_MEDIA_ROOT: "{{ django_media_root }}"
   DJANGO_POSTGIS_VERSION: "{{ postgis_version }}"
   DJANGO_SECRET_KEY: "{{ django_secret_key }}"
+  SQS_QUEUE_NAME: "{{ sqs_queue }}"
+  SQS_QUEUE_REGION: "{{ sqs_region }}"
 
 postgis_version: 2.1.3
 deploy_branch: "master"
