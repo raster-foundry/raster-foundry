@@ -1,0 +1,6 @@
+---
+dependencies:
+  - { role: "raster-foundry.base" }
+  - { role: "azavea.python", python_development: True }
+  - { role: "azavea.pip" }
+  - { role: "raster-foundry.monitoring", collectd_prefix: "collectd.worker.", when: "['test'] | is_not_in(group_names)" }

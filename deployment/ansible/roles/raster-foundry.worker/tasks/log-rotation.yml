@@ -1,0 +1,14 @@
+---
+- name: Touch log file if it does not exist
+  command: touch {{ worker_log }}
+           creates={{ worker_log }}
+
+- name: Set log file permissions
+  file: path={{ worker_log }}
+        owner=rf
+        group=rf
+        mode=0664
+
+- name: Configure log rotation
+  template: src=logrotate-worker.j2
+            dest=/etc/logrotate.d/rf-worker

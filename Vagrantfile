@@ -12,20 +12,21 @@ end
 ANSIBLE_GROUPS = {
   "app-servers" => [ "app" ],
   "services" => [ "services" ],
+  "workers" => [ "worker" ],
   "monitoring-servers" => [ "services" ]
 }
 
 if !ENV["VAGRANT_ENV"].nil? && ENV["VAGRANT_ENV"] == "TEST"
   ANSIBLE_ENV_GROUPS = {
     "test:children" => [
-      "app-servers", "services"
+      "app-servers", "services", "workers"
     ]
   }
   VAGRANT_NETWORK_OPTIONS = { auto_correct: true }
 else
   ANSIBLE_ENV_GROUPS = {
     "development:children" => [
-      "app-servers", "services"
+      "app-servers", "services", "workers"
     ]
   }
   VAGRANT_NETWORK_OPTIONS = { auto_correct: false }
@@ -95,7 +96,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       app.vm.synced_folder "src/rf/apps", "/opt/app/apps"
     else
       app.vm.synced_folder "src/rf", "/opt/app/"
-      app.vm.synced_folder "src/mock-geoprocessing", "/opt/mock-geoprocessing/"      
+      app.vm.synced_folder "src/mock-geoprocessing", "/opt/mock-geoprocessing/"
       if File.directory?("#{ENV['HOME']}/.aws")
         app.vm.synced_folder "#{ENV['HOME']}/.aws", "/home/vagrant/.aws/"
       else
@@ -129,6 +130,32 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     app.vm.provision "ansible" do |ansible|
       ansible.playbook = "deployment/ansible/app-servers.yml"
+      ansible.groups = ANSIBLE_GROUPS.merge(ANSIBLE_ENV_GROUPS)
+      ansible.raw_arguments = ["--timeout=60"]
+    end
+  end
+
+  config.vm.define "worker" do |worker|
+    worker.vm.hostname = "worker"
+    worker.vm.network "private_network", ip: ENV.fetch("RF_SERVICES_IP", "33.33.40.82")
+
+    worker.vm.synced_folder ".", "/vagrant", disabled: true
+
+    worker.vm.provider "virtualbox" do |v|
+      v.memory = 1024
+    end
+
+    worker.vm.synced_folder "src/rf", "/opt/worker/"
+    if File.directory?("#{ENV['HOME']}/.aws")
+      worker.vm.synced_folder "#{ENV['HOME']}/.aws", "/home/vagrant/.aws/"
+    else
+      $stderr.puts "An AWS config profile is needed for the application to function."
+      $stderr.puts "Run `aws configure --profile rf-dev` to get started."
+      exit(1)
+    end
+
+    worker.vm.provision "ansible" do |ansible|
+      ansible.playbook = "deployment/ansible/workers.yml"
       ansible.groups = ANSIBLE_GROUPS.merge(ANSIBLE_ENV_GROUPS)
       ansible.raw_arguments = ["--timeout=60"]
     end

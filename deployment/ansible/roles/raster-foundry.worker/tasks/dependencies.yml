@@ -1,0 +1,15 @@
+---
+- name: Install Python dependencies for development and test
+  pip: chdir={{ worker_home }}/requirements requirements={{ item }}.txt
+  with_items:
+    - development
+    - test
+  when: "['development', 'test'] | some_are_in(group_names)"
+  notify:
+    - Restart rf-worker
+
+- name: Install Python dependencies for production
+  pip: chdir="{{ worker_home }}/requirements" requirements=production.txt
+  when: "['packer'] | is_in(group_names)"
+  notify:
+    - Restart rf-worker
