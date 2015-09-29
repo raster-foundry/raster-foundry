@@ -45,32 +45,36 @@ var UserController = {
             return;
         }
         var model = new models.LoginFormModel();
-        this.renderComponent(<components.LoginScreen model={model} />);
+        this.renderUserScreen(<components.LoginBox model={model} />);
     },
 
     signUp: function() {
         var model = new models.SignUpFormModel();
-        this.renderComponent(<components.SignUpScreen model={model} />);
+        this.renderUserScreen(<components.SignUpBox model={model} />);
     },
 
     sendActivation: function() {
         var model = new models.ResendFormModel();
-        this.renderComponent(<components.SendActivationScreen model={model} />);
+        this.renderUserScreen(<components.SendActivationBox model={model} />);
     },
 
     forgot: function() {
         var model = new models.ForgotFormModel();
-        this.renderComponent(<components.ForgotScreen model={model} />);
+        this.renderUserScreen(<components.ForgotBox model={model} />);
     },
 
     resetPassword: function(uidb64, token) {
         var model = new models.ResetPasswordFormModel();
-        this.renderComponent(<components.ResetPasswordScreen model={model}
+        this.renderUserScreen(<components.ResetPasswordBox model={model}
                                 uidb64={uidb64} token={token} />);
     },
 
     activate: function() {
-        this.renderComponent(<components.ActivateScreen />);
+        this.renderUserScreen(<components.ActivateBox />);
+    },
+
+    renderUserScreen: function(content) {
+        this.renderComponent(<components.UserScreen content={content} />);
     },
 
     renderComponent: function(component) {
