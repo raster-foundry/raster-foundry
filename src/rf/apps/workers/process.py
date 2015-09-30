@@ -3,8 +3,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
 
-# Eventually we'll need this.
-from apps.core import models  # NOQA
+from apps.core.models import Layer, LayerImage
 from django.conf import settings
 
 import boto.sqs
@@ -21,6 +20,11 @@ class QueueProcessor(object):
 
     def validate_image(self, data):
         # Pass image to Gdal to verify.
+        # If it succeeds continue else return False.
+
+        # TODO Get this from the data pulled out of the queued item.
+        payload_uuid = 'ad352e82-3f6b-42d6-96b0-dee22affe884'  # NOQA - JUST FOR TESTING.
+
         payload = {
             'body': 'Image validate success. Send to reproject.',
             'data': {
@@ -31,56 +35,106 @@ class QueueProcessor(object):
                 'url': {
                     'data_type': 'String',
                     'string_value': 'http://path/to/file'
+                },
+                's3_uuid': {
+                    'data_type': 'String',
+                    'string_value': payload_uuid
                 }
             }
         }
         self.post_to_queue(payload)
+
+        image = LayerImage.objects.get(s3_uuid=payload_uuid)
+        image.verified = True
+        image.save()
         return True
 
     def reproject(self, data):
         # Pass image to Gdal to verify.
-        payload = {
-            'body': 'Reproject success. Send to EMR.',
-            'data': {
-                'type': {
-                    'data_type': 'String',
-                    'string_value': 'emr_handoff'
-                },
-                'urls': {
-                    'data_type': 'String',
-                    'string_value': 'http://path/to/file1,http://path/to/file2,http://path/to/file3'  # NOQA
+        # If it succeeds continue else return False.
+
+        # TODO Get this from the data pulled out of the queued item.
+        payload_uuid = 'ad352e82-3f6b-42d6-96b0-dee22affe884'  # NOQA - JUST FOR TESTING.
+
+        image = LayerImage.objects.get(s3_uuid=payload_uuid)
+        image.reprojected = True
+        image.save()
+        layer_id = image.layer_id
+        layers = LayerImage.objects.filter(layer_id=layer_id)
+        reprojected_layers = LayerImage.objects.filter(layer_id=layer_id,
+                                                       reprojected=True)
+        ready_to_process = len(layers) == len(reprojected_layers)
+
+        if ready_to_process:
+            images_in_layer = ','.join(str(l.source_uri) for l in layers)
+            payload = {
+                'body': 'Reproject success. Send to EMR.',
+                'data': {
+                    'type': {
+                        'data_type': 'String',
+                        'string_value': 'emr_handoff'
+                    },
+                    'urls': {
+                        'data_type': 'String',
+                        'string_value': images_in_layer
+                    },
+                    'layer_id': {
+                        'data_type': 'Number',
+                        'string_value': layer_id
+                    }
                 }
             }
-        }
-        self.post_to_queue(payload)
+            self.post_to_queue(payload)
+
         return True
 
     def emr_hand_off(self, data):
         # Send data to EMR for processing.
+        # return False if it fails to start.
+        # Get some id that can be used to check on job status.
+
+        # TODO Get this from the data pulled out of the queued item.
+        job_id = '01234567890'  # JUST FOR TESTING.
+        layer_id = 3  # JUST FOR TESTING
+
         payload = {
-            'body': 'EMR success. Send to save.',
+            'body': 'EMR job started.',
             'data': {
                 'type': {
                     'data_type': 'String',
-                    'string_value': 'emr_complete'
+                    'string_value': 'emr_job_staus'
                 },
-                'thumbnail': {
-                    'data_type': 'String',
-                    'string_value': 'http://path/to/file'
+                'job_id': {
+                    'data_type': 'Number',
+                    'string_value': job_id
                 },
-                'tiles': {
-                    'data_type': 'String',
-                    'string_value': 'http://path/to/tiles'
+                'layer_id': {
+                    'data_type': 'Number',
+                    'string_value': layer_id
                 }
             }
         }
         self.post_to_queue(payload)
         return True
 
-    def save_emr_result(self, data):
+    def check_emr_status_and_save_result(self, data):
         # Update our server with data necessary for tile serving.
-        # Nothing else needs to go in the queue.
-        return True
+
+        # TODO Get this from the data pulled out of the queued item.
+        job_id = '01234567890'  # NOQA - JUST FOR TESTING.
+        layer_id = 3  # Just FOR TESTING
+        job_done = True  # JUST FOR TESTING. Check with EMR for real value.
+
+        if job_done:
+            layer = Layer.objects.get(id=layer_id)
+            layer.processed = True
+            layer.save()
+            # Nothing else needs to go in the queue. We're done.
+            return True
+
+        # If the job is not done, return false so the item goes back in the
+        # queue. We will pick it up again and test again later.
+        return False
 
     def get_queue(self):
         queue_name = settings.AWS_SQS_QUEUE
