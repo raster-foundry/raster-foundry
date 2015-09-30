@@ -89,7 +89,6 @@ class Layer(Model):
         max_length=18,
         help_text='Hexadecimal (Ex. #00FF00)',
     )
-    processed = BooleanField(default=False)
 
     created_at = DateTimeField(auto_now_add=True)
     updated_at = DateTimeField(auto_now=True)
@@ -125,7 +124,6 @@ class Layer(Model):
             'capture_end': self.capture_end.isoformat(),
             'area': self.area,
             'area_unit': self.area_unit,
-            'processed': self.processed,
             'projection': self.projection,
             'srid': self.srid,
             'tile_srid': self.tile_srid,
@@ -227,9 +225,12 @@ class LayerImage(Model):
         default=uuid.uuid4,
         editable=False
     )
-    uploaded = BooleanField(default=False)
-    verified = BooleanField(default=False)
-    reprojected = BooleanField(default=False)
+    status = CharField(
+        null=True,
+        blank=True,
+        max_length=255,
+        help_text='Image processing workflow status of the image',
+    )
 
     def to_json(self):
         return {
