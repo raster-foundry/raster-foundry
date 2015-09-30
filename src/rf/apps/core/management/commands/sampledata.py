@@ -103,6 +103,11 @@ class Command(BaseCommand):
                 layer.resampling = resampling
                 layer.transparency = transparency
 
+                layer.thumb_small = 'http://placehold.it/80x80/ffffff/000000' \
+                    if random.random() <= 0.80 else None
+                layer.thumb_large = 'http://placehold.it/400x150/ffffff/000000' \
+                    if random.random() <= 0.80 else None
+
                 layer.save()
 
         tags = rw.random_words(count=25)
@@ -123,6 +128,11 @@ class Command(BaseCommand):
                 image = LayerImage()
                 image.layer = layer
                 image.source_uri = 'http://'
+                image.file_name = '_'.join(rw.random_words(count=2)) + '.png'
+                image.thumb_small = 'http://placehold.it/80x80/ffffff/000000' \
+                    if random.random() <= 0.80 else None
+                image.thumb_large = 'http://placehold.it/300x300/ffffff/000000' \
+                    if random.random() <= 0.80 else None
                 image.priority = i
                 image.save()
 
