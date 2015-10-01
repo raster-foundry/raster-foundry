@@ -7,6 +7,7 @@ from apps.core.models import LayerImage, LayerMeta
 from django.conf import settings
 
 import time
+import json
 import boto.sqs
 from boto.sqs.message import Message
 
@@ -17,6 +18,18 @@ STATUS_PROCESSING = 'processing'
 STATUS_FAILED = 'failed'
 STATUS_COMPLETE = 'complete'
 
+JOB_VALIDATE = [
+    'ObjectCreated:CompleteMultipartUpload',
+    'ObjectCreated:Put',
+    'ObjectCreated:Post'
+]
+JOB_REPROJECT = 'reproject'
+JOB_HANDOFF = 'emr_handoff'
+JOB_TIMEOUT = 'emr_timeout'
+
+MIN_WAIT = 1  # Second.
+MAX_WAIT = 60  # Seconds.
+
 
 class QueueProcessor(object):
     """
@@ -25,6 +38,36 @@ class QueueProcessor(object):
     """
     def __init__(self):
         self.q = self.get_queue()
+        self.wait = MIN_WAIT
+
+    def start_polling(self):
+        while True and self.q:
+            messages = self.q.get_messages(num_messages=1,
+                                           message_attributes=['All'])
+            if len(messages) == 0:
+                # If nothing returned from the queue, wait a little bit more.
+                self.wait = self.wait + 1 if self.wait < MAX_WAIT else MAX_WAIT
+                time.sleep(self.wait)
+            elif len(messages) == 1:
+                self.wait = MIN_WAIT
+                delete_message = False
+                message = messages[0]
+                body = json.loads(message.get_body())
+                if 'Records' in body and body['Records'][0]:
+                    record = body['Records'][0]
+                    job_type = record['eventName']
+                    if job_type == JOB_REPROJECT:
+                        delete_message = self.reproject(record['data'])
+                    elif job_type == JOB_HANDOFF:
+                        delete_message = self.emr_hand_off(record['data'])
+                    elif job_type == JOB_TIMEOUT:
+                        delete_message = self.check_timeout(record['data'])
+                    elif job_type in JOB_VALIDATE:
+                        if record['eventSource'] == 'aws:s3':
+                            delete_message = self.validate_image(record)
+
+                if delete_message:
+                    self.q.delete_message(message)
 
     def validate_image(self, data):
         """
@@ -35,30 +78,22 @@ class QueueProcessor(object):
         # Pass image to Gdal to verify.
         # If it succeeds continue else return False.
 
-        # TODO Get this from the data pulled out of the queued item.
-        payload_uuid = 'ad352e82-3f6b-42d6-96b0-dee22affe884'  # NOQA - JUST FOR TESTING.
+        key = data['s3']['object']['key']
+        payload_uuid = self.extract_uuid_from_aws_key(key)
 
-        image = LayerImage.objects.get(s3_uuid=payload_uuid)
-        image.status = STATUS_VALIDATED
-        image.save()
+        url = self.make_s3_url(data['s3']['bucket']['name'], key)
 
-        payload = {
-            'body': 'Image validate success. Send to reproject.',
-            'data': {
-                'type': {
-                    'data_type': 'String',
-                    'string_value': 'reproject'
-                },
-                'url': {
-                    'data_type': 'String',
-                    'string_value': 'http://path/to/file'
-                },
-                's3_uuid': {
-                    'data_type': 'String',
-                    'string_value': payload_uuid
-                }
-            }
-        }
+        # TODO - Right now we don't save data to the DB with upload. So hard
+        # code something for testing.
+        try:
+            image = LayerImage.objects.get(s3_uuid=payload_uuid)
+            image.status = STATUS_VALIDATED
+            image.save()
+        except:
+            payload_uuid = '1aa064aa-1086-4ff1-a90b-09d3420e0343'
+
+        data = {'url': url, 's3_uuid': payload_uuid}
+        payload = self.make_payload(JOB_REPROJECT, data)
         self.post_to_queue(payload)
         return True
 
@@ -70,26 +105,13 @@ class QueueProcessor(object):
         # Pass image to Gdal to reproject
         # If it succeeds continue else return False.
 
-        # TODO Get this from the data pulled out of the queued item.
-        payload_uuid = 'ad352e82-3f6b-42d6-96b0-dee22affe884'  # NOQA - JUST FOR TESTING.
-
-        image = LayerImage.objects.get(s3_uuid=payload_uuid)
+        s3_uuid = data['s3_uuid']
+        image = LayerImage.objects.get(s3_uuid=s3_uuid)
         image.status = STATUS_REPROJECTED
         image.save()
 
-        payload = {
-            'body': 'Reproject success. Send to EMR.',
-            'data': {
-                'type': {
-                    'data_type': 'String',
-                    'string_value': 'emr_handoff'
-                },
-                'layer_id': {
-                    'data_type': 'Number',
-                    'string_value': image.layer_id
-                }
-            }
-        }
+        data = {'layer_id': image.layer_id}
+        payload = self.make_payload(JOB_HANDOFF, data)
         self.post_to_queue(payload)
         return True
 
@@ -102,8 +124,7 @@ class QueueProcessor(object):
         # return False if it fails to start.
         # EMR posts directly to queue upon competion.
 
-        # TODO Get this from the data pulled out of the queued item.
-        layer_id = 3  # JUST FOR TESTING
+        layer_id = data['layer_id']
         layer_images = LayerImage.objects.filter(layer_id=layer_id)
         reprojected_images = LayerImage.objects.filter(layer_id=layer_id,
                                                        status=STATUS_REPROJECTED)  # NOQA
@@ -118,23 +139,12 @@ class QueueProcessor(object):
 
             # Add a message to the queue that we can use to watch for
             # EMR timeout.
-            payload = {
-                'body': 'Sent to EMR. Waiting for result.',
-                'data': {
-                    'type': {
-                        'data_type': 'String',
-                        'string_value': 'emr_handoff'
-                    },
-                    'timeout': {
-                        'data_type': 'Number',
-                        'string_value': time.time() + TIMEOUT_SECONDS
-                    },
-                    'layer_id': {
-                        'data_type': 'Number',
-                        'string_value': layer_id
-                    }
-                }
+            data = {
+                'timeout': time.time() + TIMEOUT_SECONDS,
+                'layer_id': layer_id
             }
+
+            payload = self.make_payload(JOB_TIMEOUT, data)
             self.post_to_queue(payload)
 
         return True
@@ -145,12 +155,12 @@ class QueueProcessor(object):
         been reached.
         data -- attribute data from SQS.
         """
-        # TODO Get this from the data pulled out of the queued item.
-        layer_id = 3  # JUST FOR TESTING.
-        timeout = 1443640221  # JUST FOR TESTING.
+
+        layer_id = data['layer_id']
+        timeout = data['timeout']
         if time.time() > timeout:
             layer_meta = LayerMeta.objects.get(layer_id=layer_id)
-            if not layer_meta.state == STATUS_COMPLETE:
+            if layer_meta.state != STATUS_COMPLETE:
                 layer_meta.state = STATUS_FAILED
                 layer_meta.save()
             return True
@@ -163,16 +173,39 @@ class QueueProcessor(object):
         database.
         data -- attribute data from SQS.
         """
+
         # Update our server with data necessary for tile serving.
 
-        # TODO Get this from the data pulled out of the queued item.
-        layer_id = 3  # Just FOR TESTING
-
+        layer_id = data['layer_id']
         layer_meta = LayerMeta.objects.get(id=layer_id)
         layer_meta.state = STATUS_COMPLETE
         layer_meta.save()
         # Nothing else needs to go in the queue. We're done.
         return True
+
+    def make_payload(self, job_type, data):
+        return {
+            'Records': [
+                {
+                    'eventSource': 'rf:boto',
+                    'eventName': job_type,
+                    'data': data
+                }
+            ]
+        }
+
+    def make_s3_url(self, bucket_name, key):
+        return 'https://s3.amazonaws.com/' + bucket_name + '/' + key
+
+    def extract_uuid_from_aws_key(self, key):
+        """
+        Given an AWS key, find the uuid and return it.
+        AWS keys are a user id appended to a uuid with a file extension.
+        EX: 10-1aa064aa-1086-4ff1-a90b-09d3420e0343.tif
+        """
+        dot = key.find('.') if key.find('.') >= 0 else len(key)
+        first_dash = key.find('-')
+        return key[first_dash:dot]
 
     def get_queue(self):
         """
@@ -189,6 +222,5 @@ class QueueProcessor(object):
         data -- structured data representing the new SQS message.
         """
         m = Message()
-        m.set_body(payload['body'])
-        m.message_attributes = payload['data']
+        m.set_body(json.dumps(payload))
         self.q.write(m)
