@@ -14,6 +14,9 @@ var MapView = Marionette.ItemView.extend({
     // L.Map instance.
     _leafletMap: null,
 
+    // L.LayerGroup instance for layer tiles.
+    _tilesLayerGroup: null,
+
     initialize: function() {
         var map = new L.Map(this.el);
 
@@ -22,6 +25,9 @@ var MapView = Marionette.ItemView.extend({
             maxZoom: 18
         });
         map.addLayer(layer);
+
+        this._tilesLayerGroup = new L.LayerGroup();
+        map.addLayer(this._tilesLayerGroup);
 
         map.addControl(new L.Control.Zoom({
             position: 'bottomright'
@@ -72,6 +78,14 @@ var MapView = Marionette.ItemView.extend({
         this.model.set({
             zoom: zoom
         }, { silent: true });
+    },
+
+    addLayer: function(layer) {
+        this._tilesLayerGroup.addLayer(layer);
+    },
+
+    clearLayers: function() {
+        this._tilesLayerGroup.clearLayers();
     }
 });
 

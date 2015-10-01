@@ -77,27 +77,26 @@ var BaseLayers = Backbone.Collection.extend({
         }
     },
 
-    initialize: function(models, options) {
-        options = options || {};
-        this.onLayerSelected = options.onLayerSelected || _.noop;
-        this.onLayerDeselected = options.onLayerDeselected || _.noop;
-        this.on('change:selected', this.toggleSelected);
-    },
-
-    toggleSelected: function(model) {
-        if (model.get('selected')) {
-            this.onLayerSelected(model);
-        } else {
-            this.onLayerDeselected(model);
-        }
-    },
-
     parse: function(data) {
         this.currentPage = data.current_page;
         this.pages = data.pages;
         this.prevUrl = data.prev_url;
         this.nextUrl = data.next_url;
         return data.layers;
+    },
+
+    getActiveLayer: function() {
+        return this.findWhere({ active: true });
+    },
+
+    setActiveLayer: function(model) {
+        var activeLayer = this.getActiveLayer();
+        if (activeLayer) {
+            activeLayer.set('active', false);
+        }
+        if (model) {
+            model.set('active', true);
+        }
     }
 });
 
