@@ -140,7 +140,7 @@ var InputField = React.createBackboneClass({
     }
 });
 
-var LoginScreen = React.createBackboneClass({
+var LoginBox = React.createBackboneClass({
     mixins: [ModelValidationMixin],
 
     onValidateFailure: function() {
@@ -169,7 +169,7 @@ var LoginScreen = React.createBackboneClass({
     },
 
     render: function() {
-        var content = (
+        return (
             <div>
                 {this.renderErrors()}
                 <div className="link-block">
@@ -193,12 +193,10 @@ var LoginScreen = React.createBackboneClass({
                 </form>
             </div>
         );
-
-        return <UserScreen content={content} />;
     }
 });
 
-var SignUpScreen = React.createBackboneClass({
+var SignUpBox = React.createBackboneClass({
     mixins: [ModelValidationMixin],
 
     onValidateFailure: function() {
@@ -226,17 +224,19 @@ var SignUpScreen = React.createBackboneClass({
     },
 
     render: function() {
-        var content = (
-            <div>
-                <div className="user-message">
-                    Please check your email to activate your account.
-                </div>
-                <a href="#" data-url="/login" className="btn btn-secondary btn-block">Login</a>
-            </div>
-        );
-        if (!this.getModel().get('success')) {
+        var content = '';
+        if (this.getModel().get('success')) {
             content = (
-                <form noValidate method="post" onSubmit={this.validate}>
+                <div>
+                    <div className="user-message">
+                        Please check your email to activate your account.
+                    </div>
+                    <a href="#" data-url="/login" className="btn btn-secondary btn-block">Login</a>
+                </div>
+            );
+        } else {
+            content = (
+                <form method="post" onSubmit={this.validate} noValidate>
                     {this.renderErrors()}
                     <InputField name="username" displayName="Username" ref="username" value={this.getModel().get('username')}/>
                     <InputField name="email" displayName="Email" ref="email" type="email" value={this.getModel().get('email')}/>
@@ -249,12 +249,11 @@ var SignUpScreen = React.createBackboneClass({
                 </form>
             );
         }
-
-        return <UserScreen content={content} />;
+        return <div>{content}</div>;
     }
 });
 
-var SendActivationScreen = React.createBackboneClass({
+var SendActivationBox = React.createBackboneClass({
     mixins: [ModelValidationMixin],
 
     onValidateFailure: function() {
@@ -278,17 +277,19 @@ var SendActivationScreen = React.createBackboneClass({
     },
 
     render: function() {
-        var content = (
-            <div>
-                <div className="user-message">
-                    Please check your email to activate your account.
-                </div>
-                <a href="#" data-url="/login" className="btn btn-secondary btn-block">Login</a>
-            </div>
-        );
-        if (!this.getModel().get('success')) {
+        var content = '';
+        if (this.getModel().get('success')) {
             content = (
-                <form method="post" onSubmit={this.validate} noValidate >
+                <div>
+                    <div className="user-message">
+                        Please check your email to activate your account.
+                    </div>
+                    <a href="#" data-url="/login" className="btn btn-secondary btn-block">Login</a>
+                </div>
+            );
+        } else {
+            content = (
+                <form method="post" onSubmit={this.validate} noValidate>
                     {this.renderErrors()}
                     <InputField name="email" displayName="Email" type="email" ref="email" value={this.getModel().get('email')}/>
                     <div className="form-action">
@@ -297,12 +298,11 @@ var SendActivationScreen = React.createBackboneClass({
                 </form>
             );
         }
-
-        return <UserScreen content={content} />;
+        return <div>{content}</div>;
     }
 });
 
-var ForgotScreen = React.createBackboneClass({
+var ForgotBox = React.createBackboneClass({
     mixins: [ModelValidationMixin],
 
     onValidateFailure: function() {
@@ -326,8 +326,10 @@ var ForgotScreen = React.createBackboneClass({
     },
 
     render: function() {
-        var content = 'Please check your email to reset your password.';
-        if (!this.getModel().get('success')) {
+        var content = '';
+        if (this.getModel().get('success')) {
+            content = 'Please check your email to reset your password.';
+        } else {
             content = (
                 <form method="post" onSubmit={this.validate} noValidate>
                     {this.renderErrors()}
@@ -341,12 +343,11 @@ var ForgotScreen = React.createBackboneClass({
                 </form>
             );
         }
-
-        return <UserScreen content={content} />;
+        return <div>{content}</div>;
     }
 });
 
-var ResetPasswordScreen = React.createBackboneClass({
+var ResetPasswordBox = React.createBackboneClass({
     mixins: [ModelValidationMixin],
 
     onValidateFailure: function() {
@@ -373,17 +374,19 @@ var ResetPasswordScreen = React.createBackboneClass({
     },
 
     render: function() {
-        var content = (
-            <div>
-                <div className="user-message">
-                    Password reset was successful.
-                </div>
-                <a href="#" data-url="/login" className="btn btn-secondary btn-block">Login</a>
-            </div>
-        );
-        if (!this.getModel().get('success')) {
+        var content = '';
+        if (this.getModel().get('success')) {
             content = (
-                <form noValidate method="post" onSubmit={this.validate}>
+                <div>
+                    <div className="user-message">
+                        Password reset was successful.
+                    </div>
+                    <a href="#" data-url="/login" className="btn btn-secondary btn-block">Login</a>
+                </div>
+            );
+        } else {
+            content = (
+                <form method="post" onSubmit={this.validate} noValidate>
                     {this.renderErrors()}
                     <InputField name="new_password1" displayName="Password" type="password" ref="new_password1" value={this.getModel().get('new_password1')}/>
                     <InputField name="new_password2" displayName="Re-enter Password" type="password" ref="new_password2" value={this.getModel().get('new_password2')}/>
@@ -393,14 +396,13 @@ var ResetPasswordScreen = React.createBackboneClass({
                 </form>
             );
         }
-
-        return <UserScreen content={content} />;
+        return <div>{content}</div>;
     }
 });
 
-var ActivateScreen = React.createBackboneClass({
+var ActivateBox = React.createBackboneClass({
     render: function() {
-        var content = (
+        return (
             <div>
                 <div className="user-message">
                     Activation is complete and you are now logged in.
@@ -408,8 +410,6 @@ var ActivateScreen = React.createBackboneClass({
                 <a href="#" data-url="/" className="btn btn-secondary btn-block">Proceed To Library</a>
             </div>
         );
-
-        return <UserScreen content={content} />;
     }
 });
 
@@ -520,12 +520,13 @@ var BillingScreen = React.createBackboneClass({
 
 module.exports = {
     AccountScreen: AccountScreen,
-    ActivateScreen: ActivateScreen,
+    ActivateBox: ActivateBox,
     BillingScreen: BillingScreen,
-    ForgotScreen: ForgotScreen,
+    ForgotBox: ForgotBox,
     KeysScreen: KeysScreen,
-    LoginScreen: LoginScreen,
-    SendActivationScreen: SendActivationScreen,
-    ResetPasswordScreen: ResetPasswordScreen,
-    SignUpScreen: SignUpScreen
+    LoginBox: LoginBox,
+    SendActivationBox: SendActivationBox,
+    ResetPasswordBox: ResetPasswordBox,
+    SignUpBox: SignUpBox,
+    UserScreen: UserScreen
 };
