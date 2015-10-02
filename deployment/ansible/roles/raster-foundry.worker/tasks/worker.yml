@@ -9,13 +9,13 @@
     - "{{ django_home }}"
     - "/opt/raster-foundry"
 
-- name: Clone application source
+- name: Clone source
   git: repo=https://github.com/azavea/raster-foundry.git
        dest=/opt/raster-foundry
        version="{{ deploy_branch }}"
   sudo: False
 
-- name: Synchronize Django application into django_home
+- name: Synchronize Django application
   synchronize: archive=no
                checksum=yes
                compress=no

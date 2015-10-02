@@ -14,4 +14,3 @@
 
 - name: Install PostgreSQL client
   apt: pkg=postgresql-client-{{ postgresql_version }}={{ postgresql_package_version }}
-

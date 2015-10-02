@@ -1,0 +1,7 @@
+---
+django_home: /opt/worker
+
+log_path: /var/log/rf-worker.log
+
+django_static_root: "/dev/null"
+django_media_root: "/dev/null"

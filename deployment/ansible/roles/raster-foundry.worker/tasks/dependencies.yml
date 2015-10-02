@@ -1,5 +1,5 @@
 ---
-- name: Install application Python dependencies for development and test
+- name: Install Python dependencies for development and test
   pip: chdir={{ django_home }}/requirements requirements={{ item }}.txt
   with_items:
     - development
@@ -8,7 +8,7 @@
   notify:
     - Restart rf-django
 
-- name: Install application Python dependencies for production
+- name: Install Python dependencies for production
   pip: chdir="{{ django_home }}/requirements" requirements=production.txt
   when: "['packer'] | is_in(group_names)"
   notify:

@@ -2,7 +2,7 @@ server {
   listen *:80;
   server_name _;
 
-  root {{ app_home }}/static;
+  root {{ django_home }}/static;
 
   access_log /var/log/nginx/rf-app.access.log logstash_json;
 
@@ -13,7 +13,7 @@ server {
   {% endif %}
 
   location /favicon.ico {
-    alias {{ app_static_root }}favicon.png;
+    alias {{ django_static_root }}favicon.png;
   }
 
   location /static/ {
@@ -22,7 +22,7 @@ server {
     expires max;
     {% endif %}
 
-    alias {{ app_static_root }};
+    alias {{ django_static_root }};
   }
 
   location /media/ {
@@ -31,7 +31,7 @@ server {
     expires 1h;
     {% endif %}
 
-    alias {{ app_media_root }};
+    alias {{ django_media_root }};
   }
 
   location /health-check/ {

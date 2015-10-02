@@ -1,27 +1,13 @@
 ---
-app_home: /opt/app
-app_deploy_branch: "master"
+django_home: /opt/app
 
-app_config:
-  DJANGO_TEST_DB_NAME: "{{ django_test_database }}"
-  DJANGO_SETTINGS_MODULE: "{{ django_settings_module }}"
-  DJANGO_STATIC_ROOT: "{{ app_static_root }}"
-  DJANGO_MEDIA_ROOT: "{{ app_media_root }}"
-  DJANGO_POSTGIS_VERSION: "{{ app_postgis_version }}"
-  DJANGO_SECRET_KEY: "{{ app_secret_key }}"
-
-app_postgis_version: 2.1.3
-app_secret_key: "{{ postgresql_password | md5 }}"
-
-app_log: /var/log/rf-app.log
-app_log_rotate_count: 5
-app_log_rotate_interval: daily
+log_path: /var/log/rf-app.log
 
 app_gunicorn_log: /var/log/rf-gunicorn.log
 app_gunicorn_log_rotate_count: 5
 app_gunicorn_log_rotate_internal: daily
 
-app_static_root: /var/www/rf/static/
-app_media_root: /var/www/rf/media/
+django_static_root: /var/www/rf/static/
+django_media_root: /var/www/rf/media/
 
-app_static_cache: /var/cache/rf/static/
+django_static_cache: /var/cache/rf/static/

@@ -1,0 +1,10 @@
+---
+- hosts: workers
+  sudo: True
+
+  pre_tasks:
+    - name: Update APT cache
+      apt: update_cache=yes cache_valid_time=3600
+
+  roles:
+    - { role: "raster-foundry.worker" }
