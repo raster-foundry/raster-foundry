@@ -40,11 +40,6 @@ var Library = React.createBackboneClass({
             }, 400);
         });
 
-        // Layer tools
-        $('.select-all').click(function() {
-            $(this).parent('.utility-tools-secondary').toggleClass('active');
-        });
-
         function resize() {
             var sidebar = $('.sidebar'),
                 sidebarHeader = $('.sidebar-header'),
@@ -191,7 +186,6 @@ var TabContents = React.createBackboneClass({
 var LayerCollection = React.createBackboneClass({
     getInitialState: function() {
         return {
-            selectAll: false,
             fetchData: {
                 name_search: '',
                 o: ''
@@ -209,11 +203,9 @@ var LayerCollection = React.createBackboneClass({
 
     render: function() {
         var self = this,
-            selected = this.state.selectAll,
             makeLayerItem = function(layer) {
                 return <LayerItem model={layer}
                                   key={layer.cid}
-                                  selected={selected}
                                   ref={'layer-' + layer.cid}
                                   onLayerClicked={self.onLayerClicked} />;
             },
@@ -272,14 +264,6 @@ var LayerCollection = React.createBackboneClass({
                             </button>
                         </span>
                     </div>
-                    <div className="utility-tools col-2 text-right utility-tools-secondary">
-                        <button className="btn btn-danger btn-sm"><i className="rf-icon-trash-empty"></i> Delete</button>
-                        <button className="btn btn-primary btn-sm" data-toggle="modal" data-target="#addto-imagery-modal"><i className="rf-icon-plus"></i> Add to</button>
-                        <div className="checkbox toggle-all select-all">
-                            <input type="checkbox" checked={this.state.selectAll} onChange={this.toggleSelectAll} />
-                            <label></label>
-                        </div>
-                    </div>
                     {/* Expandable Search and Filter blocks */}
                 </div>
                 <div className="collapse" id={ 'search-imagery-' + this.props.id }>
@@ -319,14 +303,6 @@ var LayerCollection = React.createBackboneClass({
                 </div>
             </div>
         );
-    },
-
-    toggleSelectAll: function() {
-        var state = !this.state.selectAll;
-        this.setState({ selectAll: state });
-        this.getCollection().map(function(layer) {
-            this.refs['layer-' + layer.cid].toggleState(state);
-        }, this);
     },
 
     triggerSearch: function(e) {
@@ -372,7 +348,6 @@ var LayerItem = React.createBackboneClass({
         var model = this.getModel(),
             currentUser = settings.getUser(),
             favorite = model.get('favorite'),
-            selected = model.get('selected'),
             isOwner = model.get('username') === currentUser.get('username');
 
         var actions = '';
@@ -413,10 +388,6 @@ var LayerItem = React.createBackboneClass({
                         <i className="rf-icon-star control-active text-primary"></i>
                         <i className="rf-icon-star-empty control-inactive"></i>
                     </button>
-                    <div className="checkbox">
-                        <input type="checkbox" checked={selected} onChange={this.selectItem} />
-                        <label></label>
-                    </div>
                 </div>
                 {actions}
             </div>
@@ -439,15 +410,6 @@ var LayerItem = React.createBackboneClass({
         var model = this.getModel(),
             favorite = !model.get('favorite');
         model.set('favorite', favorite);
-    },
-
-    selectItem: function() {
-        var selected = this.getModel().get('selected');
-        this.getModel().set('selected', !selected);
-    },
-
-    toggleState: function(selected) {
-        this.getModel().set('selected', selected);
     }
 });
 
