@@ -25,10 +25,11 @@ JOB_VALIDATE = [
 ]
 JOB_REPROJECT = 'reproject'
 JOB_HANDOFF = 'emr_handoff'
-JOB_TIMEOUT = 'emr_timeout'
+JOB_TIMEOUT = 'timeout'
 
 MAX_WAIT = 20  # Seconds.
 DEFAULT_DELAY = 0
+TIMEOUT_DELAY = 60
 
 
 class QueueProcessor(object):
@@ -53,6 +54,9 @@ class QueueProcessor(object):
                     if job_type == JOB_REPROJECT:
                         delete_message = self.reproject(record['data'])
                     elif job_type == JOB_HANDOFF:
+                        # May want to keep the message from showing back up
+                        # on the queue by setting a new visability with
+                        # message.change_visibility()
                         delete_message = self.emr_hand_off(record['data'])
                     elif job_type == JOB_TIMEOUT:
                         delete_message = self.check_timeout(record['data'])
@@ -83,12 +87,22 @@ class QueueProcessor(object):
             image = LayerImage.objects.get(s3_uuid=payload_uuid)
             image.status = STATUS_VALIDATED
             image.save()
+            layer_id = image.layer_id
         except:
             payload_uuid = '1aa064aa-1086-4ff1-a90b-09d3420e0343'
+            layer_id = 2
 
         data = {'url': url, 's3_uuid': payload_uuid}
         payload = self.make_payload(JOB_REPROJECT, data)
         self.post_to_queue(payload)
+
+        # Add a message to the queue that we can use to watch for timeouts.
+        data = {
+            'timeout': time.time() + TIMEOUT_SECONDS,
+            'layer_id': layer_id
+        }
+        payload = self.make_payload(JOB_TIMEOUT, data)
+        self.post_to_queue(payload, TIMEOUT_DELAY)
         return True
 
     def reproject(self, data):
@@ -130,17 +144,6 @@ class QueueProcessor(object):
             layer.save()
 
             # POST TO EMR HERE.
-
-            # Add a message to the queue that we can use to watch for
-            # EMR timeout.
-            data = {
-                'timeout': time.time() + TIMEOUT_SECONDS,
-                'layer_id': layer_id
-            }
-
-            payload = self.make_payload(JOB_TIMEOUT, data)
-            self.post_to_queue(payload)
-
         return True
 
     def check_timeout(self, data):
@@ -160,7 +163,7 @@ class QueueProcessor(object):
         else:
             # Requeue the timeout message.
             payload = self.make_payload(JOB_TIMEOUT, data)
-            self.post_to_queue(payload)
+            self.post_to_queue(payload, TIMEOUT_DELAY)
 
         return True
 
