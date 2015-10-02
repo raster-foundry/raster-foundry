@@ -1,4 +1,4 @@
-description	"rf-app"
+description "rf-app"
 
 {% if ['development', 'test'] | some_are_in(group_names) -%}
 start on (vagrant-mounted)
@@ -9,6 +9,6 @@ stop on shutdown
 
 respawn
 setuid rf
-chdir {{ app_home }}
+chdir {{ django_home }}
 
-exec envdir /etc/rf.d/env gunicorn --config /etc/rf.d/gunicorn.py rf.wsgi >> {{ app_log }} 2>&1
+exec envdir /etc/rf.d/env gunicorn --config /etc/rf.d/gunicorn.py rf.wsgi >> {{ log_path }} 2>&1

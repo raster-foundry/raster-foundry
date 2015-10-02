@@ -5,7 +5,7 @@
         owner=root
         group=rf
         mode=0750
-  with_dict: app_config
+  with_dict: django_config
   notify:
     - Restart rf-app
 

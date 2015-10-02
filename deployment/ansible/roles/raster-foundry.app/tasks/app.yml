@@ -6,21 +6,21 @@
         mode=0755
         state=directory
   with_items:
-    - "{{ app_home }}"
+    - "{{ django_home }}"
     - "/opt/raster-foundry"
 
 - name: Clone application source
   git: repo=https://github.com/azavea/raster-foundry.git
        dest=/opt/raster-foundry
-       version="{{ app_deploy_branch }}"
+       version="{{ deploy_branch }}"
   sudo: False
 
-- name: Synchronize Django application into app_home
+- name: Synchronize Django application into django_home
   synchronize: archive=no
                checksum=yes
                compress=no
                recursive=yes
                set_remote_user=no
                src=/opt/raster-foundry/src/rf/
-               dest="{{ app_home }}/"
+               dest="{{ django_home }}/"
   sudo: False

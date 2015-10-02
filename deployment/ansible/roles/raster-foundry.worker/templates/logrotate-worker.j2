@@ -1,6 +1,6 @@
-{{ worker_log }} {
-  rotate {{ worker_log_rotate_count }}
-  {{ worker_log_rotate_interval }}
+{{ log_path }} {
+  rotate {{ log_rotate_count }}
+  {{ log_rotate_interval }}
   compress
   missingok
   postrotate

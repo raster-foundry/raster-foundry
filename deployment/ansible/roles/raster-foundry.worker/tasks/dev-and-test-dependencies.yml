@@ -1,3 +1,3 @@
 ---
-- name: Copy AWS Crendentials
+- name: Copy AWS Credentials
   copy: src=~/.aws dest=/var/lib/rf owner=rf

@@ -1,6 +1,6 @@
-{{ app_log }} {
-  rotate {{ app_log_rotate_count }}
-  {{ app_log_rotate_interval }}
+{{ log_path }} {
+  rotate {{ log_rotate_count }}
+  {{ log_rotate_interval }}
   compress
   missingok
   postrotate

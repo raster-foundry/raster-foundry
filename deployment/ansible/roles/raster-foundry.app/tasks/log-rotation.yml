@@ -1,10 +1,10 @@
 ---
 - name: Touch application log file if it does not exist
-  command: touch {{ app_log }}
-           creates={{ app_log }}
+  command: touch {{ log_path }}
+           creates={{ log_path }}
 
 - name: Set application log file permissions
-  file: path={{ app_log }}
+  file: path={{ log_path }}
         owner=rf
         group=rf
         mode=0664
