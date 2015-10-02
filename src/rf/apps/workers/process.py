@@ -27,8 +27,8 @@ JOB_REPROJECT = 'reproject'
 JOB_HANDOFF = 'emr_handoff'
 JOB_TIMEOUT = 'emr_timeout'
 
-MIN_WAIT = 1  # Second.
-MAX_WAIT = 60  # Seconds.
+MAX_WAIT = 20  # Seconds.
+DEFAULT_DELAY = 0
 
 
 class QueueProcessor(object):
@@ -38,20 +38,14 @@ class QueueProcessor(object):
     """
     def __init__(self):
         self.q = self.get_queue()
-        self.wait = MIN_WAIT
 
     def start_polling(self):
         while True and self.q:
-            messages = self.q.get_messages(num_messages=1,
-                                           message_attributes=['All'])
-            if len(messages) == 0:
-                # If nothing returned from the queue, wait a little bit more.
-                self.wait = self.wait + 1 if self.wait < MAX_WAIT else MAX_WAIT
-                time.sleep(self.wait)
-            elif len(messages) == 1:
-                self.wait = MIN_WAIT
+            message = self.q.read(wait_time_seconds=MAX_WAIT,
+                                  message_attributes=['All'])
+
+            if message:
                 delete_message = False
-                message = messages[0]
                 body = json.loads(message.get_body())
                 if 'Records' in body and body['Records'][0]:
                     record = body['Records'][0]
@@ -216,11 +210,11 @@ class QueueProcessor(object):
         conn = boto.sqs.connect_to_region(queue_region)
         return conn.get_queue(queue_name)
 
-    def post_to_queue(self, payload):
+    def post_to_queue(self, payload, delay=DEFAULT_DELAY):
         """
         Create an SQS message from a payload.
         data -- structured data representing the new SQS message.
         """
         m = Message()
         m.set_body(json.dumps(payload))
-        self.q.write(m)
+        self.q.write(m, delay)
