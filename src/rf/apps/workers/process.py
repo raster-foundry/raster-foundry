@@ -3,7 +3,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
 
-from apps.core.models import LayerImage, LayerMeta
+from apps.core.models import LayerImage, Layer
 from django.conf import settings
 
 import time
@@ -125,9 +125,9 @@ class QueueProcessor(object):
         ready_to_process = len(layer_images) == len(reprojected_images)
 
         if ready_to_process:
-            layer_meta = LayerMeta.objects.get(layer_id=layer_id)
-            layer_meta.state = STATUS_PROCESSING
-            layer_meta.save()
+            layer = Layer.objects.get(id=layer_id)
+            layer.status = STATUS_PROCESSING
+            layer.save()
 
             # POST TO EMR HERE.
 
@@ -153,10 +153,10 @@ class QueueProcessor(object):
         layer_id = data['layer_id']
         timeout = data['timeout']
         if time.time() > timeout:
-            layer_meta = LayerMeta.objects.get(layer_id=layer_id)
-            if layer_meta.state != STATUS_COMPLETE:
-                layer_meta.state = STATUS_FAILED
-                layer_meta.save()
+            layer = Layer.objects.get(id=layer_id)
+            if layer.status != STATUS_COMPLETE:
+                layer.status = STATUS_FAILED
+                layer.save()
         else:
             # Requeue the timeout message.
             payload = self.make_payload(JOB_TIMEOUT, data)
@@ -174,9 +174,9 @@ class QueueProcessor(object):
         # Update our server with data necessary for tile serving.
 
         layer_id = data['layer_id']
-        layer_meta = LayerMeta.objects.get(id=layer_id)
-        layer_meta.state = STATUS_COMPLETE
-        layer_meta.save()
+        layer = Layer.objects.get(id=layer_id)
+        layer.status = STATUS_COMPLETE
+        layer.save()
         # Nothing else needs to go in the queue. We're done.
         return True
 
