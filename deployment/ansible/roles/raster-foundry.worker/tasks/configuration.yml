@@ -1,15 +1,5 @@
 ---
-- name: Configure application
-  copy: content="{{ item.value }}"
-        dest="{{ envdir_home }}/{{ item.key }}"
-        owner=root
-        group=rf
-        mode=0750
-  with_dict: django_config
-  notify:
-    - Restart rf-worker
-
 - name: Configure service definition
   template: src=upstart-worker.conf.j2 dest=/etc/init/rf-worker.conf
   notify:
-    - Restart rf-worker
+    - Restart rf-django

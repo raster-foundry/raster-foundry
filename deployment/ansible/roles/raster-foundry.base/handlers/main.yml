@@ -1,4 +1,4 @@
 ---
-- name: Restart rf-app
+- name: Restart rf-django
   service: name=rf-app state=restarted
-  when: "['app-servers'] | is_in(group_names)"
+  when: "['app-servers', 'workers'] | is_in(group_names)"

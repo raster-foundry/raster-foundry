@@ -27,4 +27,14 @@
         mode=0750
   with_dict: envdir_config
   notify:
-    - Restart rf-app
+    - Restart rf-django
+
+- name: Configure django application
+  copy: content="{{ item.value }}"
+        dest="{{ envdir_home }}/{{ item.key }}"
+        owner=root
+        group=rf
+        mode=0750
+  with_dict: django_config
+  notify:
+    - Restart rf-django
