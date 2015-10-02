@@ -157,9 +157,12 @@ class QueueProcessor(object):
             if layer_meta.state != STATUS_COMPLETE:
                 layer_meta.state = STATUS_FAILED
                 layer_meta.save()
-            return True
         else:
-            return False
+            # Requeue the timeout message.
+            payload = self.make_payload(JOB_TIMEOUT, data)
+            self.post_to_queue(payload)
+
+        return True
 
     def save_result(self, data):
         """
