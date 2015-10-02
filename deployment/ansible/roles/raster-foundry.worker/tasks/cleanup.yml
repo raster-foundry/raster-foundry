@@ -1,0 +1,3 @@
+---
+- name: Delete *.pyc files
+  shell: find {{ worker_home }} -iname "*.pyc" -exec rm -f {} \;

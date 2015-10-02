@@ -1,0 +1,10 @@
+{{ worker_log }} {
+  rotate {{ worker_log_rotate_count }}
+  {{ worker_log_rotate_interval }}
+  compress
+  missingok
+  postrotate
+    restart rf-worker
+  endscript
+  notifempty
+}

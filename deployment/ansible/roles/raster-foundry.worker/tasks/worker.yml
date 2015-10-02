@@ -1,0 +1,29 @@
+---
+- name: Ensure that source directories exist
+  file: path="{{ item }}"
+        owner="{{ ansible_ssh_user }}"
+        group=rf
+        mode=0755
+        state=directory
+  with_items:
+    - "{{ worker_home }}"
+    - "/opt/raster-foundry"
+
+- name: Clone source
+  git: repo=https://github.com/azavea/raster-foundry.git
+       dest=/opt/raster-foundry
+       version="{{ worker_deploy_branch }}"
+  sudo: False
+
+- name: Synchronize Django application
+  synchronize: archive=no
+               checksum=yes
+               compress=no
+               recursive=yes
+               set_remote_user=no
+               src=/opt/raster-foundry/src/rf/
+               dest="{{ worker_home }}/"
+  sudo: False
+
+- name: Copy AWS Crendentials
+  copy: src=~/.aws dest=/var/lib/rf owner=rf

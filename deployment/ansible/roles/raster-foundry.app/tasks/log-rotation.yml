@@ -26,4 +26,3 @@
 - name: Configure Gunicorn log rotation
   template: src=logrotate-gunicorn.j2
             dest=/etc/logrotate.d/rf-gunicorn
-

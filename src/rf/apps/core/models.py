@@ -225,6 +225,12 @@ class LayerImage(Model):
         default=uuid.uuid4,
         editable=False
     )
+    status = CharField(
+        null=True,
+        blank=True,
+        max_length=255,
+        help_text='Image processing workflow status of the image',
+    )
 
     def to_json(self):
         return {

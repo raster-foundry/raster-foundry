@@ -139,7 +139,7 @@ SILENCED_SYSTEM_CHECKS = ['1_6.W001', '1_6.W002']
 
 # MEDIA CONFIGURATION
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#media-root
-MEDIA_ROOT = environ['DJANGO_MEDIA_ROOT']
+MEDIA_ROOT = environ.get('DJANGO_MEDIA_ROOT', '')
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#media-url
 MEDIA_URL = '/media/'
@@ -148,7 +148,7 @@ MEDIA_URL = '/media/'
 
 # STATIC FILE CONFIGURATION
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#static-root
-STATIC_ROOT = environ['DJANGO_STATIC_ROOT']
+STATIC_ROOT = environ.get('DJANGO_STATIC_ROOT', '')
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#static-url
 STATIC_URL = '/static/'
@@ -264,6 +264,7 @@ LOCAL_APPS = (
     'apps.core',
     'apps.home',
     'apps.uploads',
+    'apps.workers'
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
@@ -276,9 +277,11 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 WSGI_APPLICATION = '%s.wsgi.application' % SITE_NAME
 # END WSGI CONFIGURATION
 
-# S3 CONFIGURATION
+# AWS CONFIGURATION
 
 AWS_BUCKET_NAME = environ.get('RF_AWS_BUCKET', 'raster-foundry-test-uploads-67dc48c70b3bcf89eab78dbf5cf7900')  # NOQA
 AWS_PROFILE = environ.get('AWS_PROFILE', 'rf-dev')
+AWS_SQS_QUEUE = environ.get('SQS_QUEUE_NAME', 'TestQueue')
+AWS_SQS_REGION = environ.get('SQS_QUEUE_REGION', 'us-east-1')
 
-# END S3 CONFIGURATION
+# END AWS CONFIGURATION
