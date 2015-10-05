@@ -5,7 +5,8 @@ var $ = require('jquery'),
     React = require('react'),
     Map = require('./map'),
     DropdownMenu = require('./menu').DropdownMenu,
-    settings = require('../../settings');
+    settings = require('../../settings'),
+    mixins = require('../mixins');
 
 
 var Library = React.createBackboneClass({
@@ -24,16 +25,6 @@ var Library = React.createBackboneClass({
             viewport: '.sidebar'
         });
 
-        // Layer metadata
-        $('.layer-detail .close').click(function(evt) {
-            evt.preventDefault();
-            var layerDetail = $('.layer-detail');
-            layerDetail.addClass('slideOutLeft');
-            setTimeout(function() {
-                layerDetail.removeClass('slideOutLeft active');
-            }, 400);
-        });
-
         // Image metadata
         var imageMetadata = $('.image-metadata');
         $('.view-metadata').click(function(evt) {
@@ -47,11 +38,6 @@ var Library = React.createBackboneClass({
             setTimeout(function() {
                 imageMetadata.removeClass('slideOutLeft active');
             }, 400);
-        });
-
-        // Layer tools
-        $('.select-all').click(function() {
-            $(this).parent('.utility-tools-secondary').toggleClass('active');
         });
 
         function resize() {
@@ -82,7 +68,7 @@ var Library = React.createBackboneClass({
                 <div className="sidebar">
                     <Sidebar {...this.props} />
                 </div>
-                <Map />
+                <Map {...this.props} />
             </div>
         );
     }
@@ -98,7 +84,7 @@ var Sidebar = React.createBackboneClass({
                     <div className="sidebar-utility-content">
                         <TabContents model={this.props.tabModel} {...this.props} />
                     </div>
-                    <LayerMetadata />
+                    <LayerMetadata {...this.props} />
                     <ImageMetadata />
                 </div>
             </div>
@@ -200,7 +186,6 @@ var TabContents = React.createBackboneClass({
 var LayerCollection = React.createBackboneClass({
     getInitialState: function() {
         return {
-            selectAll: false,
             fetchData: {
                 name_search: '',
                 o: ''
@@ -208,10 +193,21 @@ var LayerCollection = React.createBackboneClass({
         };
     },
 
+    onLayerClicked: function(e) {
+        var $el = $(e.target),
+            cid = $el.data('cid'),
+            layers = this.getCollection(),
+            model = layers.get(cid);
+        layers.setActiveLayer(model);
+    },
+
     render: function() {
-        var selected = this.state.selectAll,
+        var self = this,
             makeLayerItem = function(layer) {
-                return <LayerItem model={layer} key={layer.cid} selected={selected} ref={'layer-' + layer.cid} />;
+                return <LayerItem model={layer}
+                                  key={layer.cid}
+                                  ref={'layer-' + layer.cid}
+                                  onLayerClicked={self.onLayerClicked} />;
             },
             layerItems = this.getCollection()
                              .toArray()
@@ -268,14 +264,6 @@ var LayerCollection = React.createBackboneClass({
                             </button>
                         </span>
                     </div>
-                    <div className="utility-tools col-2 text-right utility-tools-secondary">
-                        <button className="btn btn-danger btn-sm"><i className="rf-icon-trash-empty"></i> Delete</button>
-                        <button className="btn btn-primary btn-sm" data-toggle="modal" data-target="#addto-imagery-modal"><i className="rf-icon-plus"></i> Add to</button>
-                        <div className="checkbox toggle-all select-all">
-                            <input type="checkbox" checked={this.state.selectAll} onChange={this.toggleSelectAll} />
-                            <label></label>
-                        </div>
-                    </div>
                     {/* Expandable Search and Filter blocks */}
                 </div>
                 <div className="collapse" id={ 'search-imagery-' + this.props.id }>
@@ -317,14 +305,6 @@ var LayerCollection = React.createBackboneClass({
         );
     },
 
-    toggleSelectAll: function() {
-        var state = !this.state.selectAll;
-        this.setState({ selectAll: state });
-        this.getCollection().map(function(layer) {
-            this.refs['layer-' + layer.cid].toggleState(state);
-        }, this);
-    },
-
     triggerSearch: function(e) {
         e.persist();
         this.debouncedTriggerSearch(e);
@@ -364,29 +344,14 @@ var LayerCollection = React.createBackboneClass({
 
 
 var LayerItem = React.createBackboneClass({
-    componentDidMount: function() {
-        var currentUser = settings.getUser(),
-            self = this;
-
-        currentUser.on('change', function() {
-            self.setState({
-                currentUserId: this.get('id')
-            });
-        });
-    },
-
-    getInitialState: function() {
-        var currentUser = settings.getUser();
-        return { currentUserId: currentUser.get('id') };
-    },
-
     render: function() {
         var model = this.getModel(),
+            currentUser = settings.getUser(),
             favorite = model.get('favorite'),
-            selected = model.get('selected');
+            isOwner = model.get('username') === currentUser.get('username');
 
         var actions = '';
-        if (Number(this.getModel().get('owner')) === this.state.currentUserId) {
+        if (isOwner) {
             actions = (
                 <div className="list-group-actions">
                     <div className="dropdown">
@@ -406,7 +371,9 @@ var LayerItem = React.createBackboneClass({
 
         return (
             <div className="list-group-item link">
-                <a className="list-group-link" href="#" onClick={this.triggerLayerDetail}></a>
+                <a className="list-group-link" href="#"
+                    data-cid={this.getModel().cid}
+                    onClick={this.props.onLayerClicked}></a>
                 <div className="list-group-detail">
                     <img src="http://placehold.it/200x200" />
                 </div>
@@ -421,10 +388,6 @@ var LayerItem = React.createBackboneClass({
                         <i className="rf-icon-star control-active text-primary"></i>
                         <i className="rf-icon-star-empty control-inactive"></i>
                     </button>
-                    <div className="checkbox">
-                        <input type="checkbox" checked={selected} onChange={this.selectItem} />
-                        <label></label>
-                    </div>
                 </div>
                 {actions}
             </div>
@@ -447,30 +410,35 @@ var LayerItem = React.createBackboneClass({
         var model = this.getModel(),
             favorite = !model.get('favorite');
         model.set('favorite', favorite);
-    },
-
-    triggerLayerDetail: function(e) {
-        console.log('detail');
-        var layerDetail = $('.layer-detail');
-        e.preventDefault();
-        layerDetail.addClass('active');
-    },
-
-    selectItem: function() {
-        var selected = this.getModel().get('selected');
-        this.getModel().set('selected', !selected);
-    },
-
-    toggleState: function(selected) {
-        this.getModel().set('selected', selected);
     }
 });
 
 
 var LayerMetadata = React.createBackboneClass({
+    mixins: [
+        mixins.LayersMixin()
+    ],
+
+    onClose: function() {
+        var self = this,
+            layerDetail = $('.layer-detail');
+        layerDetail.addClass('slideOutLeft');
+        setTimeout(function() {
+            layerDetail.removeClass('slideOutLeft');
+            self.hideActiveLayer();
+        }, 400);
+    },
+
     render: function() {
+        var model = this.getActiveLayer(),
+            className = '';
+
+        if (model) {
+            className += 'active';
+        }
+
         return (
-            <div className="layer-detail animated slideInLeft">
+            <div className={'layer-detail animated slideInLeft ' + className}>
                 <div className="sidebar-utility-toolbar">
                     <div className="utility-tools col-2">
                         <ul className="nav nav-tabs" role="tablist">
@@ -479,11 +447,12 @@ var LayerMetadata = React.createBackboneClass({
                         </ul>
                     </div>
                     <div className="utility-tools col-2 text-right">
-                        <button type="button" className="close"><i className=" rf-icon-cancel"></i></button>
+                        <button type="button" className="close"
+                            onClick={this.onClose}><i className=" rf-icon-cancel"></i></button>
                     </div>
                 </div>
                 <div className="tab-content">
-                    <div  role="tabpanel" className="tab-pane active" id="layer-detail">
+                    <div role="tabpanel" className="tab-pane active" id="layer-detail">
                         <div className="layer-detail-content">
                             <h4>Imagery Layer Name 1</h4>
                             <img className="img-preview" src="http://placehold.it/400x150" />
