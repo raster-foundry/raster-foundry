@@ -89,6 +89,12 @@ class Layer(Model):
         max_length=18,
         help_text='Hexadecimal (Ex. #00FF00)',
     )
+    status = CharField(
+        null=True,
+        blank=True,
+        max_length=255,
+        help_text='Processing workflow status of the layer',
+    )
 
     created_at = DateTimeField(auto_now_add=True)
     updated_at = DateTimeField(auto_now=True)
@@ -131,6 +137,7 @@ class Layer(Model):
             'tile_origin': self.tile_origin,
             'resampling': self.resampling,
             'transparency': self.transparency,
+            'status': self.status,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
 
@@ -224,6 +231,12 @@ class LayerImage(Model):
     s3_uuid = UUIDField(
         default=uuid.uuid4,
         editable=False
+    )
+    status = CharField(
+        null=True,
+        blank=True,
+        max_length=255,
+        help_text='Image processing workflow status of the image',
     )
 
     def to_json(self):
