@@ -27,6 +27,8 @@ VENDOR_CSS_FILE="${STATIC_CSS_DIR}vendor.css"
 
 TEST_FILES="./js/src/**/tests.js"
 
+NOTIFY_COMMAND=""
+
 usage() {
     echo -n "$(basename $0) [OPTION]...
 
@@ -65,6 +67,12 @@ if [ -n "$ENABLE_WATCH" ]; then
     # This argument must be a folder in watch mode, but a
     # single file otherwise.
     ENTRY_SASS_FILE="$ENTRY_SASS_DIR"
+
+    # Requires libnotify-bin, inotify-tools, and the Python when-changed
+    # module on the guest VM.
+    # Requires the vagrant-notify plugin on the host VM.
+    NOTIFY_COMMAND="when-changed -r ${DJANGO_STATIC_ROOT} -c \
+        command notify-send \"bundle.sh\" \"Updated\" &"
 fi
 
 if [ -n "$ENABLE_DEBUG" ]; then
@@ -129,7 +137,7 @@ if [ -n "$ENABLE_TESTS" ]; then
             -o ${STATIC_JS_DIR}test.bundle.js $EXTRA_ARGS &"
 fi
 
-VAGRANT_COMMAND="$TEST_COMMAND $VENDOR_COMMAND
+VAGRANT_COMMAND="$NOTIFY_COMMAND $TEST_COMMAND $VENDOR_COMMAND
     $NODE_SASS $ENTRY_SASS_FILE -o ${STATIC_CSS_DIR} &
     $BROWSERIFY $ENTRY_JS_FILES $BROWSERIFY_EXT $REACTIFY_TRANSFORM \
         -o ${STATIC_JS_DIR}main.js $EXTRA_ARGS"
