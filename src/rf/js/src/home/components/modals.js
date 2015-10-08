@@ -348,6 +348,11 @@ var UploadModal = React.createBackboneClass({
         var self = this;
         self.postLayer()
             .done(function() {
+                // If the polling function is currently not fetching
+                // because there are no layers currently uploading or
+                // processing, we need to force a fetch so that the submitted
+                // layer will be added to pendingLayers.
+                self.props.pendingLayers.fetch();
                 self.uploadFiles();
                 self.clear();
                 $('.import-modal').modal('hide');

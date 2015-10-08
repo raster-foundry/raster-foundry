@@ -7,7 +7,6 @@ var $ = require('jquery'),
     settings = require('../settings'),
     Library = require('./components/library'),
     Modals = require('./components/modals'),
-    uploads = require('../core/uploads'),
     models = require('../core/models');
 
 var getProps = _.memoize(function() {
@@ -16,10 +15,7 @@ var getProps = _.memoize(function() {
         myLayers: new models.MyLayers(),
         favoriteLayers: new models.FavoriteLayers(),
         publicLayers: new models.PublicLayers(),
-        handleFiles: function(e) {
-            var files = e.target.files;
-            uploads.uploadFiles(files);
-        }
+        pendingLayers: settings.getPendingLayers()
     };
     return props;
 });
@@ -64,14 +60,7 @@ var HomeController = {
     favorites: libraryView(function(props) {
         props.favoriteLayers.fetch();
         props.tabModel.set('activeTab', 'favorites');
-    }),
-
-    processing: libraryView(function(props) {
-        // TODO: Fetch processing tab
-        props.tabModel.set('activeTab', 'processing');
     })
 };
-
-
 
 module.exports = HomeController;

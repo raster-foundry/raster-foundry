@@ -3,6 +3,29 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
 
+STATUS_CREATED = 'created'
+STATUS_UPLOADED = 'uploaded'
+STATUS_VALIDATED = 'validated'
+STATUS_REPROJECTED = 'reprojected'
+STATUS_PROCESSING = 'processing'
+STATUS_FAILED = 'failed'
+STATUS_COMPLETED = 'completed'
+
+LAYER_STATUS_CHOICES = (
+    (STATUS_CREATED, 'Created'),
+    (STATUS_UPLOADED, 'Uploaded'),
+    (STATUS_VALIDATED, 'Validated'),
+    (STATUS_REPROJECTED, 'Reprojected'),
+    (STATUS_PROCESSING, 'Processing'),
+    (STATUS_FAILED, 'Failed'),
+    (STATUS_COMPLETED, 'Completed'),
+)
+
+LAYER_IMAGE_STATUS_CHOICES = (
+    (STATUS_CREATED, 'Created'),
+    (STATUS_UPLOADED, 'Uploaded'),
+    (STATUS_VALIDATED, 'Validated'),
+)
 
 SQ_MI = 'sq. mi'
 SQ_KM = 'sq. km'

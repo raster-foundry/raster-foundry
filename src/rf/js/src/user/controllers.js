@@ -87,6 +87,8 @@ var UserController = {
         user.logout().always(function() {
             router.go('/login');
         });
+
+        settings.getPendingLayers().reset();
     }
 };
 

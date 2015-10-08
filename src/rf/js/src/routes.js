@@ -8,7 +8,6 @@ router.addRoute(/^$/, HomeController, 'index');
 router.addRoute(/^imports$/, HomeController, 'imports');
 router.addRoute(/^catalog$/, HomeController, 'catalog');
 router.addRoute(/^favorites$/, HomeController, 'favorites');
-router.addRoute(/^processing$/, HomeController, 'processing');
 router.addRoute(/^account/, UserController, 'account');
 router.addRoute(/^keys/, UserController, 'keys');
 router.addRoute(/^billing/, UserController, 'billing');

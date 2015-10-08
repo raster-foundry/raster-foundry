@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'raster-foundry';
-  src: url('../font/raster-foundry.eot?5478438');
-  src: url('../font/raster-foundry.eot?5478438#iefix') format('embedded-opentype'),
-       url('../font/raster-foundry.woff?5478438') format('woff'),
-       url('../font/raster-foundry.ttf?5478438') format('truetype'),
-       url('../font/raster-foundry.svg?5478438#raster-foundry') format('svg');
+  src: url('../font/raster-foundry.eot?29896159');
+  src: url('../font/raster-foundry.eot?29896159#iefix') format('embedded-opentype'),
+       url('../font/raster-foundry.woff?29896159') format('woff'),
+       url('../font/raster-foundry.ttf?29896159') format('truetype'),
+       url('../font/raster-foundry.svg?29896159#raster-foundry') format('svg');
   font-weight: normal;
   font-style: normal;
 }
@@ -14,46 +14,46 @@
 @media screen and (-webkit-min-device-pixel-ratio:0) {
   @font-face {
     font-family: 'raster-foundry';
-    src: url('../font/raster-foundry.svg?5478438#raster-foundry') format('svg');
+    src: url('../font/raster-foundry.svg?29896159#raster-foundry') format('svg');
   }
 }
 */
- 
+
  [class^="rf-icon-"]:before, [class*=" rf-icon-"]:before {
   font-family: "raster-foundry";
   font-style: normal;
   font-weight: normal;
   speak: none;
- 
+
   display: inline-block;
   text-decoration: inherit;
   width: 1em;
   margin-right: .2em;
   text-align: center;
   /* opacity: .8; */
- 
+
   /* For safety - reset parent styles, that can break glyph codes*/
   font-variant: normal;
   text-transform: none;
- 
+
   /* fix buttons height, for twitter bootstrap */
   line-height: 1em;
- 
+
   /* Animation center compensation - margins should be symmetric */
   /* remove if not needed */
   margin-left: .2em;
- 
+
   /* you can be more comfortable with increased icons size */
   /* font-size: 120%; */
- 
+
   /* Font smoothing. That was taken from TWBS */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
- 
+
   /* Uncomment for 3D effect */
   /* text-shadow: 1px 1px 1px rgba(127, 127, 127, 0.3); */
 }
- 
+
 .rf-icon-docs:before { content: '\e800'; } /* '' */
 .rf-icon-upload-cloud-outline:before { content: '\e801'; } /* '' */
 .rf-icon-list:before { content: '\e802'; } /* '' */
@@ -87,3 +87,4 @@
 .rf-icon-star:before { content: '\e81e'; } /* '' */
 .rf-icon-plus:before { content: '\e81f'; } /* '' */
 .rf-icon-upload:before { content: '\e820'; } /* '' */
+.rf-icon-loader:before { content: '\e821'; } /* '' */

@@ -22,6 +22,7 @@ from apps.home.forms import LayerForm
 from apps.home.filters import LayerFilter
 
 RESULTS_PER_PAGE = 10
+MAX_RESULTS_PER_PAGE = 100
 
 
 @ensure_csrf_cookie
@@ -203,9 +204,24 @@ def _get_layer_models(request, crit=None):
         qs = qs.filter(crit)
 
     filtered_layers = LayerFilter(request.GET, queryset=qs)
-    paginator = Paginator(filtered_layers, RESULTS_PER_PAGE)
 
     page = request.GET.get('page')
+    page_size = request.GET.get('page_size')
+
+    results_per_page = RESULTS_PER_PAGE
+    if page_size:
+        try:
+            page_size = int(page_size)
+            if page_size == 0:
+                num_layers = filtered_layers.count()
+                if num_layers > 0:
+                    results_per_page = min(num_layers, MAX_RESULTS_PER_PAGE)
+            else:
+                results_per_page = min(page_size, MAX_RESULTS_PER_PAGE)
+        except:
+            pass
+
+    paginator = Paginator(filtered_layers, results_per_page)
     try:
         layers = paginator.page(page)
     except PageNotAnInteger:

@@ -34,7 +34,6 @@ urlpatterns = patterns(
     url('^imports/?$', views.home_page),
     url('^catalog/?$', views.home_page),
     url('^favorites/?$', views.home_page),
-    url('^processing/?$', views.home_page),
     url('^login/?$', views.home_page),
     url('^sign-up/?$', views.home_page),
     url('^send-activation/?$', views.home_page),
