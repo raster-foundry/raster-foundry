@@ -25,21 +25,6 @@ var Library = React.createBackboneClass({
             viewport: '.sidebar'
         });
 
-        // Image metadata
-        var imageMetadata = $('.image-metadata');
-        $('.view-metadata').click(function(evt) {
-            evt.preventDefault();
-            imageMetadata.addClass('active');
-        });
-
-        $('.image-metadata .close').click(function(evt) {
-            evt.preventDefault();
-            imageMetadata.addClass('slideOutLeft');
-            setTimeout(function() {
-                imageMetadata.removeClass('slideOutLeft active');
-            }, 400);
-        });
-
         function resize() {
             var sidebar = $('.sidebar'),
                 sidebarHeader = $('.sidebar-header'),
@@ -76,6 +61,10 @@ var Library = React.createBackboneClass({
 });
 
 var Sidebar = React.createBackboneClass({
+    mixins: [
+        mixins.LayersMixin()
+    ],
+
     render: function() {
         return (
             <div>
@@ -86,7 +75,7 @@ var Sidebar = React.createBackboneClass({
                         <TabContents model={this.props.tabModel} {...this.props} />
                     </div>
                     <LayerMetadata {...this.props} />
-                    <ImageMetadata />
+                    <ImageMetadata {...this.props} />
                 </div>
             </div>
         );
@@ -117,8 +106,8 @@ var TabContents = React.createBackboneClass({
         return (
             <div className="tab-content">
                 {/* Imports Tab Pane */}
-                <LayerCollection collection={this.props.myLayers} id="imports" uploadsEnabled={true}
-                    active={activeTab === 'imports'} />
+                <LayerCollection collection={this.props.myLayers} id="imports"
+                    uploadsEnabled={true} active={activeTab === 'imports'} />
                 {/* /#imports.tab-pane */}
 
                 {/* Catalog Tab Pane */}
@@ -161,9 +150,7 @@ var LayerCollection = React.createBackboneClass({
                                   ref={'layer-' + layer.cid}
                                   onLayerClicked={self.onLayerClicked} />;
             },
-            layerItems = this.getCollection()
-                             .toArray()
-                             .map(makeLayerItem),
+            layerItems = this.getCollection().map(makeLayerItem),
             className = 'tab-pane animated fadeInLeft',
             pager = '',
             uploadButton = '';
@@ -335,7 +322,7 @@ var LayerItem = React.createBackboneClass({
                     data-cid={this.getModel().cid}
                     onClick={this.props.onLayerClicked}></a>
                 <div className="list-group-detail">
-                    <img src="http://placehold.it/200x200" />
+                    <img src={this.getModel().get('thumb_small')  || 'http://placehold.it/80x80'} />
                 </div>
                 <div className="list-group-content">
                     <h5>{this.getModel().get('name')}</h5>
@@ -373,32 +360,62 @@ var LayerItem = React.createBackboneClass({
     }
 });
 
+var ImageMetadataLink = React.createBackboneClass({
+    render: function() {
+        var image = this.props.image;
+        return (
+            <div className="list-group-item link">
+                <div className="list-group-detail">
+                    <img src={image.thumb_small || 'http://placehold.it/80x80'} />
+                </div>
+                <div className="list-group-content">
+                    <h5>{image.file_name}</h5>
+                    <a href="#" className="view-metadata" data-id={image.id}
+                        onClick={this.props.onClick}>View Metadata</a>
+                </div>
+            </div>
+        );
+    }
+});
 
 var LayerMetadata = React.createBackboneClass({
     mixins: [
-        mixins.LayersMixin()
+        mixins.LayersMixin(),
+        mixins.SlideInMixin
     ],
 
     onClose: function() {
-        var self = this,
-            layerDetail = $('.layer-detail');
-        layerDetail.addClass('slideOutLeft');
-        setTimeout(function() {
-            layerDetail.removeClass('slideOutLeft');
-            self.hideActiveLayer();
-        }, 400);
+        this.hideActiveLayer();
+    },
+
+    showImageDetail: function(e) {
+        var $el = $(e.target),
+            id = $el.data('id');
+        this.setActiveImage(id);
     },
 
     render: function() {
-        var model = this.getActiveLayer(),
-            className = '';
+        var self = this,
+            layer = this.getActiveLayer(),
+            tags = 'N/A';
 
-        if (model) {
-            className += 'active';
+        if (!layer) {
+            return null;
         }
 
+        if (layer.get('tags').length > 0) {
+            tags = layer.get('tags').reduce(function(left, right) {
+                return <span>{left}, {right}</span>;
+            });
+        }
+
+        var images = layer.get('images').map(function(image, i) {
+            return <ImageMetadataLink image={image} key={i}
+                    onClick={self.showImageDetail} />;
+        });
+
         return (
-            <div className={'layer-detail animated slideInLeft ' + className}>
+            <div className={'layer-detail animated active ' + this.state.slide}>
                 <div className="sidebar-utility-toolbar">
                     <div className="utility-tools col-2">
                         <ul className="nav nav-tabs" role="tablist">
@@ -408,80 +425,43 @@ var LayerMetadata = React.createBackboneClass({
                     </div>
                     <div className="utility-tools col-2 text-right">
                         <button type="button" className="close"
-                            onClick={this.onClose}><i className=" rf-icon-cancel"></i></button>
+                            onClick={this.close}><i className=" rf-icon-cancel"></i></button>
                     </div>
                 </div>
                 <div className="tab-content">
                     <div role="tabpanel" className="tab-pane active" id="layer-detail">
                         <div className="layer-detail-content">
-                            <h4>Imagery Layer Name 1</h4>
-                            <img className="img-preview" src="http://placehold.it/400x150" />
-                            <p>These Landsat 7 composites are made from Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex. </p>
-                            <p>Ea commodo consequat. Duis aute irure dolor in reprehend in voluptate velit esse cill.</p>
+                            <h4>{layer.get('name')}</h4>
+                            <img className="img-preview" src={layer.get('thumb_large') || 'http://placehold.it/400x150'} />
+                            <p>
+                                {layer.get('description')}
+                            </p>
                             <hr />
                             <dl>
-                                <dt>Title:</dt>
-                                <dd>Imagery Layer Name 1</dd>
-                                <dt>Provider:</dt>
-                                <dd>Organization Name</dd>
+                                <dt>Name:</dt>
+                                <dd>{layer.get('name')}</dd>
+                                <dt>Organization:</dt>
+                                <dd>{layer.get('organization')}</dd>
                                 <dt>Capture Start Date:</dt>
-                                <dd>March 15, 2015</dd>
+                                <dd>{layer.get('capture_start')}</dd>
                                 <dt>Capture End Date:</dt>
-                                <dd>March 30, 2015</dd>
+                                <dd>{layer.get('capture_end')}</dd>
                                 <dt>Area:</dt>
-                                <dd>120 sq. Miles</dd>
+                                <dd>{layer.get('area')} {layer.get('area_unit')}</dd>
                                 <dt>Source Data Projection: </dt>
-                                <dd>N/A</dd>
+                                <dd>{layer.get('projection')}</dd>
                                 <dt>Total Images: </dt>
-                                <dd>162</dd>
+                                <dd>{layer.get('images').length}</dd>
                                 <dt>Tags:</dt>
                                 <dd>
-                                    <a href="#">earthquake</a>,
-                                    <a href="#">damage assessment </a>,
-                                    <a href="#">evi</a>,
-                                    <a href="#">Landsat</a>
+                                    {tags}
                                 </dd>
                             </dl>
                         </div>
                     </div>
-                    <div  role="tabpanel" className="tab-pane" id="layer-images">
+                    <div role="tabpanel" className="tab-pane" id="layer-images" key="layer-images">
                         <div className="list-group">
-                            <div className="list-group-item link">
-                                <div className="list-group-detail">
-                                    <img src="http://placehold.it/200x200" />
-                                </div>
-                                <div className="list-group-content">
-                                    <h5>P1020861.JPG</h5>
-                                    <a href="#" className="view-metadata">View Metadata</a>
-                                </div>
-                            </div>
-                            <div className="list-group-item link">
-                                <div className="list-group-detail">
-                                    <img src="http://placehold.it/200x200" />
-                                </div>
-                                <div className="list-group-content">
-                                    <h5>P1020861.JPG</h5>
-                                    <a href="#" className="view-metadata">View Metadata</a>
-                                </div>
-                            </div>
-                            <div className="list-group-item link">
-                                <div className="list-group-detail">
-                                    <img src="http://placehold.it/200x200" />
-                                </div>
-                                <div className="list-group-content">
-                                    <h5>P1020861.JPG</h5>
-                                    <a href="#" className="view-metadata">View Metadata</a>
-                                </div>
-                            </div>
-                            <div className="list-group-item link">
-                                <div className="list-group-detail">
-                                    <img src="http://placehold.it/200x200" />
-                                </div>
-                                <div className="list-group-content">
-                                    <h5>P1020861.JPG</h5>
-                                    <a href="#" className="view-metadata">View Metadata</a>
-                                </div>
-                            </div>
+                            {images}
                         </div>
                     </div>
                 </div>
@@ -491,20 +471,36 @@ var LayerMetadata = React.createBackboneClass({
 });
 
 var ImageMetadata = React.createBackboneClass({
+    mixins: [
+        mixins.LayersMixin(),
+        mixins.SlideInMixin
+    ],
+
+    onClose: function() {
+        this.hideActiveImage();
+    },
+
     render: function() {
+        var layer = this.getActiveLayer(),
+            image = layer && layer.getActiveImage();
+
+        if (!image) {
+            return null;
+        }
+
         return (
-            <div className="image-metadata animated slideInLeft">
+            <div className={'image-metadata animated active ' + this.state.slide}>
                 <div className="sidebar-utility-toolbar">
                     <div className="utility-tools col-2">
                         <h5 className="font-300">Image Metadata: </h5>
-                        <h4>P1020861.JPG</h4>
+                        <h4>{image.file_name}</h4>
                     </div>
                     <div className="utility-tools col-2 text-right">
-                        <button type="button" className="close"><i className=" rf-icon-cancel"></i></button>
+                        <button type="button" className="close" onClick={this.close}><i className=" rf-icon-cancel"></i></button>
                     </div>
                 </div>
                 <div className="layer-detail-content">
-                    <img className="img-preview" src="http://placehold.it/300x300" />
+                    <img className="img-preview" src={image.thumb_large || 'http://placehold.it/300x300'} />
                     <hr />
                     <dl>
                         <dt>Acquistion: </dt>
