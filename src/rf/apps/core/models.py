@@ -106,6 +106,17 @@ class Layer(Model):
     deleted_at = DateTimeField(null=True, blank=True)
     status_updated_at = DateTimeField(default=datetime.now)
 
+    thumb_small = URLField(
+        null=True,
+        blank=True,
+        help_text='80x80 pixels',
+    )
+    thumb_large = URLField(
+        null=True,
+        blank=True,
+        help_text='400x150 pixels',
+    )
+
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
         super(Layer, self).save(*args, **kwargs)
