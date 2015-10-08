@@ -176,12 +176,19 @@ var LayerCollection = React.createBackboneClass({
             var prev = '',
                 next = '';
             if (this.getCollection().hasPrev()) {
-                prev = (<a className="prev" onClick={this.prevPage}>&lt;-</a>);
+                prev = <li className="previous"><a href="#" onClick={this.prevPage}>Previous</a></li>;
             }
             if (this.getCollection().hasNext()) {
-                next = (<a className="next" onClick={this.nextPage}>-&gt;</a>);
+                next = <li className="next"><a href="#" onClick={this.nextPage}>Next</a></li>;
             }
-            pager = (<div>{prev} {next}</div>);
+            pager = (
+                <nav>
+                    <ul className="pager">
+                        {prev}
+                        {next}
+                    </ul>
+                </nav>
+            );
         }
 
         if (this.props.uploadsEnabled) {
@@ -250,8 +257,9 @@ var LayerCollection = React.createBackboneClass({
                     </div>
                 </div>
                 <div className="list-group">
-                    { pager }
-                    { layerItems }
+                    {pager}
+                    {layerItems}
+                    {pager}
                 </div>
             </div>
         );
