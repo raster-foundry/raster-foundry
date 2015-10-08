@@ -22,7 +22,6 @@ MINIFY_PLUGIN="-p [ minifyify --no-map ]"
 
 NODE_SASS="$BIN/node-sass"
 ENTRY_SASS_DIR="./sass/"
-ENTRY_SASS_FILE="${ENTRY_SASS_DIR}main.scss"
 VENDOR_CSS_FILE="${STATIC_CSS_DIR}vendor.css"
 
 TEST_FILES="./js/src/**/tests.js"
@@ -62,9 +61,6 @@ if [ -n "$ENABLE_WATCH" ]; then
     # These flags have to appear last or watchify will exit immediately.
     EXTRA_ARGS="--verbose --poll"
     NODE_SASS="$NODE_SASS --watch --recursive"
-    # This argument must be a folder in watch mode, but a
-    # single file otherwise.
-    ENTRY_SASS_FILE="$ENTRY_SASS_DIR"
 fi
 
 if [ -n "$ENABLE_DEBUG" ]; then
@@ -130,7 +126,7 @@ if [ -n "$ENABLE_TESTS" ]; then
 fi
 
 VAGRANT_COMMAND="$TEST_COMMAND $VENDOR_COMMAND
-    $NODE_SASS $ENTRY_SASS_FILE -o ${STATIC_CSS_DIR} &
+    $NODE_SASS $ENTRY_SASS_DIR -o ${STATIC_CSS_DIR} &
     $BROWSERIFY $ENTRY_JS_FILES $BROWSERIFY_EXT $REACTIFY_TRANSFORM \
         -o ${STATIC_JS_DIR}main.js $EXTRA_ARGS"
 
