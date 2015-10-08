@@ -1,6 +1,8 @@
 'use strict';
 
-var Backbone = require('../../shim/backbone');
+var _ = require('underscore'),
+    $ = require('jquery'),
+    Backbone = require('../../shim/backbone');
 
 // It's difficult to validate email addresses and there's controversy about
 // what constitutes a valid email address. So we err towards the side of
@@ -48,6 +50,35 @@ var UserModel = Backbone.Model.extend({
 
     getCreateLayerURL: function() {
         return '/user/' + this.get('username') + '/layer/create';
+    },
+
+    // Return true if user has favorited layer.
+    hasFavorited: function(layerModel) {
+        return _.contains(this.get('favorites'), layerModel.get('id'));
+    },
+
+    toggleFavorite: function(layerModel) {
+        var favorites = this.get('favorites'),
+            layerId = layerModel.get('id');
+
+        // Needs to happen before we modify the `favorites` attribute.
+        this.syncFavorite(layerModel);
+
+        if (this.hasFavorited(layerModel)) {
+            favorites = _.without(favorites, layerId);
+        } else {
+            favorites = favorites.concat(layerId);
+        }
+        this.set('favorites', favorites);
+    },
+
+    // Sync layer favorite status to backend.
+    syncFavorite: function(layerModel) {
+        var method = this.hasFavorited(layerModel) ? 'DELETE' : 'POST';
+        $.ajax({
+            url: layerModel.get('favorite_url'),
+            method: method
+        });
     }
 });
 

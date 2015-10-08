@@ -58,9 +58,12 @@ def _user_info(request):
 
 
 def get_user_data(request):
+    favorites = list(UserFavoriteLayer.objects.filter(user_id=request.user.id)
+                     .values_list('layer_id', flat=True))
     return {
         'id': request.user.id,
         'username': request.user.username,
+        'favorites': favorites,
     }
 
 

@@ -152,8 +152,6 @@ def my_layers(request):
 @accepts('GET')
 def my_favorites(request):
     ids = UserFavoriteLayer.objects.filter(user__id=request.user.id) \
-                                   .order_by('-created_at') \
-                                   .select_related('layer') \
                                    .values_list('layer_id', flat=True)
     return _get_layers(request, Q(id__in=ids))
 
