@@ -16,10 +16,6 @@ var getProps = _.memoize(function() {
         myLayers: new models.MyLayers(),
         favoriteLayers: new models.FavoriteLayers(),
         publicLayers: new models.PublicLayers(),
-        handleFiles: function(e) {
-            var files = e.target.files;
-            uploads.uploadFiles(files);
-        }
     };
     return props;
 });
@@ -64,14 +60,7 @@ var HomeController = {
     favorites: libraryView(function(props) {
         props.favoriteLayers.fetch();
         props.tabModel.set('activeTab', 'favorites');
-    }),
-
-    processing: libraryView(function(props) {
-        // TODO: Fetch processing tab
-        props.tabModel.set('activeTab', 'processing');
     })
 };
-
-
 
 module.exports = HomeController;

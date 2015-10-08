@@ -104,8 +104,6 @@ var Tabs = React.createBackboneClass({
                         ><a href="/catalog" data-url="/catalog" aria-controls="catalog" role="tab">Public Catalog</a></li>
                     <li role="presentation" className={activeTab === 'favorites' ? 'active' : ''}
                         ><a href="/favorites" data-url="/favorites" aria-controls="favorites" role="tab">Favorites</a></li>
-                    <li role="presentation" className={activeTab === 'processing' ? 'active' : ''}
-                        ><a href="/processing" data-url="/processing" aria-controls="processing" role="tab">Processing</a></li>
                 </ul>
             </div>
         );
@@ -131,53 +129,6 @@ var TabContents = React.createBackboneClass({
                 <LayerCollection collection={this.props.favoriteLayers} id="favorites"
                     active={activeTab === 'favorites'} />
                 {/* /#favorites.tab-pane */}
-
-                {/* Processing Tab Pane */}
-                <div id="processing" role="tabpanel"
-                    className={'tab-pane animated fadeInLeft ' + (activeTab === 'processing' ? 'active' : '')}>
-                    {/* Imagery Layers */}
-                    <div className="list-group">
-                        {/* Processing List Group Item */}
-                        <div className="list-group-item">
-                            <div className="list-group-detail">
-                                <img src="http://placehold.it/200x200" />
-                            </div>
-                            <div className="list-group-content">
-                                <h5>Imagery Layer Name</h5>
-                                <div className="progress">
-                                    <div className="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style={{width: '60%'}}>
-                                        <span className="sr-only">60% Complete</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="list-group-tool">
-                                <button type="button" className="btn btn-toggle-control">
-                                <i className="rf-icon-cancel text-danger"></i>
-                                </button>
-                            </div>
-                        </div>
-                        {/* Processing List Group Item */}
-                        <div className="list-group-item">
-                            <div className="list-group-detail">
-                                <img src="http://placehold.it/200x200" />
-                            </div>
-                            <div className="list-group-content">
-                                <h5>Imagery Layer Name</h5>
-                                <div className="progress">
-                                    <div className="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style={{width: '60%'}}>
-                                        <span className="sr-only">60% Complete</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="list-group-tool">
-                                <button type="button" className="btn btn-toggle-control">
-                                <i className="rf-icon-cancel text-danger"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    {/* /#processing.tab-pane */}
-                </div>
             </div>
         );
     }
