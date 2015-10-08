@@ -19,6 +19,10 @@ var TabModel = Backbone.Model.extend({
     }
 });
 
+var STATUS_CREATED = 'created',
+    STATUS_COMPLETED = 'completed',
+    STATUS_FAILED = 'failed';
+
 var Layer = Backbone.Model.extend({
     defaults: {
         name: '',
@@ -26,7 +30,8 @@ var Layer = Backbone.Model.extend({
         area: 0,
         capture_end: null,
         capture_start: null,
-        srid: null
+        srid: null,
+        status: null
     },
 
     initialize: function() {
@@ -35,6 +40,15 @@ var Layer = Backbone.Model.extend({
 
     getLeafletLayer: function() {
         return new L.TileLayer(this.get('tile_url'));
+    },
+
+    isUploading: function() {
+        return this.get('status') === STATUS_CREATED;
+    },
+
+    isProcessing: function() {
+        var status = this.get('status');
+        return status !== STATUS_COMPLETED && status !== STATUS_FAILED;
     }
 });
 
@@ -102,11 +116,36 @@ var PublicLayers = BaseLayers.extend({
     url: '/catalog.json'
 });
 
+var PendingLayers = BaseLayers.extend({
+    initialize: function() {
+        this.created_at = new Date().getTime();
+    },
+
+    url: function() {
+        return '/imports.json?page_size=0&pending=' + this.created_at;
+    },
+
+    existsUploading: function() {
+        var uploading = this.find(function(layer) {
+            return layer.isUploading();
+        });
+        return uploading ? true : false;
+    },
+
+    existsProcessing: function() {
+        var processing = this.find(function(layer) {
+            return layer.isProcessing();
+        });
+        return processing ? true : false;
+    }
+});
+
 module.exports = {
     FavoriteLayers: FavoriteLayers,
     Layer: Layer,
     MapModel: MapModel,
     MyLayers: MyLayers,
     PublicLayers: PublicLayers,
+    PendingLayers: PendingLayers,
     TabModel: TabModel
 };

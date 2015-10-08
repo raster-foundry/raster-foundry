@@ -11,6 +11,7 @@ var App = Marionette.Application.extend({
     initialize: function() {
         this.setupUser();
         this.setupNavigation();
+        this.setupPendingLayers();
     },
 
     setupUser: function() {
@@ -27,6 +28,32 @@ var App = Marionette.Application.extend({
             router.navigate($(this).data('url'), { trigger: true });
         });
         Backbone.history.start({ pushState: true });
+    },
+
+    setupPendingLayers: function() {
+        var pendingLayers = settings.getPendingLayers(),
+            user = settings.getUser(),
+            pollInterval = 5000;
+
+        if (user.isAuthenticated()) {
+            pendingLayers.fetch();
+        }
+
+        function poll() {
+            if (pendingLayers.existsProcessing()) {
+                pendingLayers.fetch();
+            }
+            setTimeout(poll, pollInterval);
+        }
+        setTimeout(poll, pollInterval);
+
+        window.onbeforeunload = function() {
+            if (pendingLayers.existsUploading()) {
+                return 'Leaving this page will cancel uploads in progress.';
+            }
+        };
+
+        return pendingLayers;
     }
 });
 
