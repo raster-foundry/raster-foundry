@@ -393,6 +393,14 @@ class PaginationTestCase(AbstractLayerTestCase):
         response = self.client.get(url + '?page=foo')
         pagination_assertion(response, 3, 1, 10)
 
+        # page_size=0 should return all layers on a single page
+        response = self.client.get(url + '?page=foo&page_size=0')
+        pagination_assertion(response, 1, 1, 30)
+
+        # page_size=5 should return 5 layers per page
+        response = self.client.get(url + '?page_size=5')
+        pagination_assertion(response, 6, 1, 5)
+
 
 class OrderingAndFilteringTestCase(AbstractLayerTestCase):
     layer_data = [
