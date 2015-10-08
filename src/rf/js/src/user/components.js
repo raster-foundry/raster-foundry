@@ -166,6 +166,7 @@ var LoginBox = React.createBackboneClass({
 
     handleSuccess: function() {
         router.go('/');
+        settings.getPendingLayers().fetch();
     },
 
     handleFailure: function(response) {

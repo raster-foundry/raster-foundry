@@ -6,8 +6,8 @@ var $ = require('jquery'),
     Map = require('./map'),
     DropdownMenu = require('./menu').DropdownMenu,
     settings = require('../../settings'),
-    mixins = require('../mixins');
-
+    mixins = require('../mixins'),
+    ProcessingBlock = require('./processing-block');
 
 var Library = React.createBackboneClass({
     componentDidMount: function() {
@@ -69,6 +69,7 @@ var Library = React.createBackboneClass({
                     <Sidebar {...this.props} />
                 </div>
                 <Map {...this.props} />
+                <ProcessingBlock collection={this.props.pendingLayers} />
             </div>
         );
     }
