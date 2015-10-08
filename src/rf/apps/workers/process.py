@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from __future__ import division
 
 from apps.core.models import LayerImage, Layer
+import apps.core.enums as enums
 from django.conf import settings
 
 import time
@@ -12,11 +13,6 @@ import boto.sqs
 from boto.sqs.message import Message
 
 TIMEOUT_SECONDS = (60 * 10)  # 10 Minutes.
-STATUS_VALIDATED = 'validated'
-STATUS_REPROJECTED = 'reprojected'
-STATUS_PROCESSING = 'processing'
-STATUS_FAILED = 'failed'
-STATUS_COMPLETE = 'complete'
 
 JOB_VALIDATE = [
     'ObjectCreated:CompleteMultipartUpload',
@@ -85,7 +81,7 @@ class QueueProcessor(object):
         # code something for testing.
         try:
             image = LayerImage.objects.get(s3_uuid=payload_uuid)
-            image.status = STATUS_VALIDATED
+            image.status = enums.STATUS_VALIDATED
             image.save()
             layer_id = image.layer_id
         except:
@@ -115,7 +111,7 @@ class QueueProcessor(object):
 
         s3_uuid = data['s3_uuid']
         image = LayerImage.objects.get(s3_uuid=s3_uuid)
-        image.status = STATUS_REPROJECTED
+        image.status = enums.STATUS_REPROJECTED
         image.save()
 
         data = {'layer_id': image.layer_id}
@@ -134,13 +130,14 @@ class QueueProcessor(object):
 
         layer_id = data['layer_id']
         layer_images = LayerImage.objects.filter(layer_id=layer_id)
-        reprojected_images = LayerImage.objects.filter(layer_id=layer_id,
-                                                       status=STATUS_REPROJECTED)  # NOQA
+        reprojected_images = LayerImage.objects.filter(
+            layer_id=layer_id,
+            status=enums.STATUS_REPROJECTED)
         ready_to_process = len(layer_images) == len(reprojected_images)
 
         if ready_to_process:
             layer = Layer.objects.get(id=layer_id)
-            layer.status = STATUS_PROCESSING
+            layer.status = enums.STATUS_PROCESSING
             layer.save()
 
             # POST TO EMR HERE.
@@ -157,8 +154,8 @@ class QueueProcessor(object):
         timeout = data['timeout']
         if time.time() > timeout:
             layer = Layer.objects.get(id=layer_id)
-            if layer.status != STATUS_COMPLETE:
-                layer.status = STATUS_FAILED
+            if layer.status != enums.STATUS_COMPLETE:
+                layer.status = enums.STATUS_FAILED
                 layer.save()
         else:
             # Requeue the timeout message.
@@ -178,7 +175,7 @@ class QueueProcessor(object):
 
         layer_id = data['layer_id']
         layer = Layer.objects.get(id=layer_id)
-        layer.status = STATUS_COMPLETE
+        layer.status = enums.STATUS_COMPLETE
         layer.save()
         # Nothing else needs to go in the queue. We're done.
         return True

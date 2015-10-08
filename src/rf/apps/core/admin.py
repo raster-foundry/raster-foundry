@@ -29,11 +29,12 @@ class LayerAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
             'fields': (
-                'user', 'name', 'slug', 'description', 'is_public',
+                'user', 'name', 'status', 'slug',
+                'description', 'is_public',
                 ('capture_start', 'capture_end'),
                 ('area', 'area_unit'),
                 'projection', 'srid',
-                'created_at', 'updated_at', 'deleted_at'
+                'created_at', 'updated_at', 'deleted_at', 'status_updated_at'
             )
         }),
         ('Tiles', {

@@ -3,6 +3,8 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
 
+from datetime import datetime
+
 from django.contrib.gis.db.models import (Model, ForeignKey,
                                           CharField, TextField,
                                           DateField, DateTimeField,
@@ -28,6 +30,15 @@ class Layer(Model):
     user = ForeignKey(User)
     name = CharField(max_length=255)
     slug = SlugField(max_length=255, blank=True)
+
+    status = CharField(
+        blank=True,
+        max_length=12,
+        choices=enums.LAYER_STATUS_CHOICES,
+        default=enums.STATUS_CREATED,
+        help_text='Processing workflow status of the layer',
+    )
+
     description = TextField(blank=True)
     organization = CharField(max_length=255, blank=True, default='')
 
@@ -89,16 +100,11 @@ class Layer(Model):
         max_length=18,
         help_text='Hexadecimal (Ex. #00FF00)',
     )
-    status = CharField(
-        null=True,
-        blank=True,
-        max_length=255,
-        help_text='Processing workflow status of the layer',
-    )
 
     created_at = DateTimeField(auto_now_add=True)
     updated_at = DateTimeField(auto_now=True)
     deleted_at = DateTimeField(null=True, blank=True)
+    status_updated_at = DateTimeField(default=datetime.now)
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
@@ -118,6 +124,7 @@ class Layer(Model):
             'id': self.id,
             'name': self.name,
             'slug': self.slug,
+            'status': self.status,
             'description': self.description,
             'organization': self.organization,
             'is_public': self.is_public,
@@ -135,6 +142,7 @@ class Layer(Model):
             'status': self.status,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
+            'status_updated_at': self.created_at.isoformat(),
 
             # Foreign key fields
             'tags': tags,
@@ -227,9 +235,10 @@ class LayerImage(Model):
         editable=False
     )
     status = CharField(
-        null=True,
         blank=True,
-        max_length=255,
+        max_length=12,
+        choices=enums.LAYER_IMAGE_STATUS_CHOICES,
+        default=enums.STATUS_CREATED,
         help_text='Image processing workflow status of the image',
     )
 
