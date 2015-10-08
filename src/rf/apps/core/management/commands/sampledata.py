@@ -76,6 +76,8 @@ class Command(BaseCommand):
                 layer.name = li.get_sentence()
                 layer.description = li.get_sentences(2)
                 layer.organization = ' '.join(rw.random_words(count=5))
+                layer.status = 'created'
+                layer.status_updated_at = datetime.now()
 
                 layer.is_public = random.random() <= 0.80
 
@@ -127,6 +129,7 @@ class Command(BaseCommand):
             for i in range(random.randint(1, 5)):
                 image = LayerImage()
                 image.layer = layer
+                image.status = 'created'
                 image.source_uri = 'http://'
                 image.file_name = '_'.join(rw.random_words(count=2)) + '.png'
                 image.thumb_small = 'http://placehold.it/80x80/ffffff/000000' \
