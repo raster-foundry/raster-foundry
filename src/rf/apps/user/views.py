@@ -21,6 +21,7 @@ from registration.backends.default.views import RegistrationView
 
 from apps.core.exceptions import Forbidden
 from apps.core.decorators import accepts, api_view, login_required
+from apps.core.models import UserFavoriteLayer
 
 
 @api_view
@@ -53,9 +54,16 @@ def _authenticate_user(request):
 
 @login_required
 def _user_info(request):
+    return get_user_data(request)
+
+
+def get_user_data(request):
+    favorites = list(UserFavoriteLayer.objects.filter(user_id=request.user.id)
+                     .values_list('layer_id', flat=True))
     return {
         'id': request.user.id,
         'username': request.user.username,
+        'favorites': favorites,
     }
 
 

@@ -1,7 +1,6 @@
 'use strict';
 
 var _ = require('underscore'),
-    $ = require('jquery'),
     Backbone = require('../../shim/backbone'),
     L = require('leaflet'),
     utils = require('./utils');
@@ -32,19 +31,10 @@ var Layer = Backbone.Model.extend({
 
     initialize: function() {
         this.getLeafletLayer = _.memoize(this.getLeafletLayer);
-        this.on('change:favorite', this.toggleFavorite);
     },
 
     getLeafletLayer: function() {
         return new L.TileLayer(this.get('tile_url'));
-    },
-
-    toggleFavorite: function() {
-        var method = this.get('favorite') ? 'POST' : 'DELETE';
-        $.ajax({
-            url: this.get('favorite_url'),
-            method: method
-        });
     }
 });
 

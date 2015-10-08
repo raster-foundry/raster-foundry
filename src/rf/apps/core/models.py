@@ -114,11 +114,6 @@ class Layer(Model):
         tags = [m.to_json() for m in self.layer_tags.all()]
         images = [m.to_json() for m in self.layer_images.all()]
 
-        # Iterate over prefetched favorites instead of executing
-        # a new query for each layer by using a queryset filter.
-        favorite = len([row for row in self.favorites.all()
-                        if row.user_id == self.user_id]) > 0
-
         return {
             'id': self.id,
             'name': self.name,
@@ -144,7 +139,6 @@ class Layer(Model):
             # Foreign key fields
             'tags': tags,
             'images': images,
-            'favorite': favorite,
             'username': self.user.username,
 
             # Generated fields

@@ -347,7 +347,7 @@ var LayerItem = React.createBackboneClass({
     render: function() {
         var model = this.getModel(),
             currentUser = settings.getUser(),
-            favorite = model.get('favorite'),
+            favorite = currentUser.hasFavorited(model),
             isOwner = model.get('username') === currentUser.get('username');
 
         var actions = '';
@@ -408,8 +408,8 @@ var LayerItem = React.createBackboneClass({
 
     toggleFavorite: function() {
         var model = this.getModel(),
-            favorite = !model.get('favorite');
-        model.set('favorite', favorite);
+            currentUser = settings.getUser();
+        currentUser.toggleFavorite(model);
     }
 });
 
