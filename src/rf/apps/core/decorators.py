@@ -6,7 +6,7 @@ from __future__ import division
 import json
 from functools import wraps
 
-from django.http import HttpResponse, QueryDict
+from django.http import HttpResponse
 from django.http.response import Http404
 
 from apps.core.exceptions import (ApiViewException,
@@ -15,19 +15,6 @@ from apps.core.exceptions import (ApiViewException,
                                   MethodNotAllowed,
                                   Unauthorized)
 from apps.core.models import User
-
-
-class PatchedQueryDict(QueryDict):
-    # Attempts to get key[] out of data
-    # if key doesn't exist to handle
-    # the way jQuery sends arrays.
-    def getlist(self, key):
-        bracket_key = key + '[]'
-        if key in self:
-            return super(QueryDict, self).getlist(key)
-        elif bracket_key in self:
-            return super(QueryDict, self).getlist(bracket_key)
-        return []
 
 
 def api_view(fn):
@@ -54,12 +41,6 @@ def api_view(fn):
                 return create_response(status_code=200, headers=headers)
             elif request.method not in allowed_methods:
                 raise MethodNotAllowed()
-
-            if request.method == 'PUT':
-                request.PUT = PatchedQueryDict(request.PUT.urlencode())
-
-            if request.method == 'POST':
-                request.POST = PatchedQueryDict(request.POST.urlencode())
 
             handle_api_authentication(request)
 

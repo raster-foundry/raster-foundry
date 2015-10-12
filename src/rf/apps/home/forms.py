@@ -40,7 +40,6 @@ class LayerForm(ModelForm):
         except:
             self.cleaned_data['tags'] = []
 
-        # TODO: Parse images from request (required)
         try:
             self.cleaned_data['images'] = self.data['images']
         except:

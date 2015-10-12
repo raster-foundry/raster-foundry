@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from __future__ import division
 
 from urllib import urlencode
+import json
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -84,15 +85,9 @@ def _save_layer(request, layer, username=None):
     """
     Create or update a layer model with data from POST or PUT form fields.
     """
-    if request.method == 'POST':
-        data = request.POST.copy()
-    else:
-        data = request.PUT.copy()
+    body = json.loads(request.body)
 
-    data['tags'] = data.getlist('tags')
-    data['images'] = data.getlist('images')
-
-    form = LayerForm(data, instance=layer)
+    form = LayerForm(body, instance=layer)
 
     if not form.is_valid():
         raise Forbidden(errors=form.errors)

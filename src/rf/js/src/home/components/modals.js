@@ -403,7 +403,12 @@ var UploadModal = React.createBackboneClass({
                 images: images
             };
         this.submittedLayerData = layerData;
-        return $.post(url, layer);
+        return $.ajax({
+            url: url,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(layer)
+        });
     },
 
     renderErrors: function(isVisible, messages) {
