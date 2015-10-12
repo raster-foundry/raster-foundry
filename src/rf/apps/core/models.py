@@ -248,6 +248,18 @@ class LayerImage(Model):
         default=uuid.uuid4,
         editable=False
     )
+    file_extension = CharField(
+        blank=False,
+        default='',
+        max_length=10,
+        help_text='Extension of file'
+    )
+    bucket_name = CharField(
+        blank=False,
+        default='',
+        max_length=255,
+        help_text='Name of S3 bucket'
+    )
     status = CharField(
         blank=True,
         max_length=12,
@@ -259,11 +271,13 @@ class LayerImage(Model):
     def to_json(self):
         return {
             'id': self.id,
-            'source_uri': self.source_uri,
             'thumb_small': self.thumb_small,
             'thumb_large': self.thumb_large,
             'meta_json': self.meta_json,
             'file_name': self.file_name,
+            's3_uuid': str(self.s3_uuid),
+            'file_extension': self.file_extension,
+            'bucket_name': self.bucket_name,
         }
 
 

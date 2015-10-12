@@ -5,7 +5,8 @@ var React = require('react'),
     _ = require('underscore'),
     uploads = require('../../core/uploads'),
     settings = require('../../settings'),
-    moment = require('moment');
+    moment = require('moment'),
+    uuid = require('node-uuid');
 
 var FileDescription = React.createBackboneClass({
     removeFileDescription: function() {
@@ -107,9 +108,9 @@ var UploadModal = React.createBackboneClass({
         this.updateFiles(e.target.files);
     },
 
-    uploadFiles: function() {
+    uploadFiles: function(files, uuids, extensions) {
         try {
-            uploads.uploadFiles(_.pluck(this.state.fileDescriptions, 'file'));
+            uploads.uploadFiles(files, uuids, extensions);
         } catch (excp) {
             if (excp instanceof uploads.S3UploadException) {
                 // TODO Show something useful to the user here.
@@ -345,15 +346,23 @@ var UploadModal = React.createBackboneClass({
 
     attemptSubmit: function(e) {
         e.preventDefault();
-        var self = this;
-        self.postLayer()
+        var self = this,
+            files = _.pluck(this.state.fileDescriptions, 'file'),
+            fileNames = _.pluck(files, 'name'),
+            uuids = _.map(files, function() {
+                return uuid.v4();
+            }),
+            extensions = _.map(files, uploads.getExtension);
+
+        self.postLayer(fileNames, uuids, extensions)
             .done(function() {
                 // If the polling function is currently not fetching
                 // because there are no layers currently uploading or
                 // processing, we need to force a fetch so that the submitted
                 // layer will be added to pendingLayers.
                 self.props.pendingLayers.fetch();
-                self.uploadFiles();
+                self.uploadFiles(files, uuids, extensions);
+
                 self.clear();
                 $('.import-modal').modal('hide');
             })
@@ -363,8 +372,17 @@ var UploadModal = React.createBackboneClass({
             });
     },
 
-    postLayer: function() {
+    postLayer: function(fileNames, uuids, extensions) {
         var layerData = this.getLayerData(),
+            images = _.map(fileNames, function(fileName, i) {
+                var uuid = uuids[i],
+                    extension = extensions[i];
+                return {
+                    file_name: fileName,
+                    s3_uuid: uuid,
+                    file_extension: extension
+                };
+            }),
             url = settings.getUser().getCreateLayerURL(),
             layer = {
                 name: layerData.name,
@@ -381,7 +399,8 @@ var UploadModal = React.createBackboneClass({
                 tile_format: layerData.tile_format,
                 resampling: layerData.resampling,
                 transparency: layerData.transparency,
-                tile_origin: layerData.tile_origin
+                tile_origin: layerData.tile_origin,
+                images: images
             };
         this.submittedLayerData = layerData;
         return $.post(url, layer);

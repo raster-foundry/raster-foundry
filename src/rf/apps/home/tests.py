@@ -42,8 +42,16 @@ class AbstractLayerTestCase(TestCase):
             'capture_start': '2015-08-15',
             'capture_end': '2015-08-15',
             'images': [
-                'http://www.foo.com',
-                'http://www.bar.com',
+                {
+                    'file_name': 'foo.png',
+                    's3_uuid': 'a8098c1a-f86e-11da-bd1a-00112444be1e',
+                    'file_extension': '.png'
+                },
+                {
+                    'file_name': 'bar.png',
+                    's3_uuid': 'a8098c1a-f86e-11da-bd1a-00112444be1e',
+                    'file_extension': '.png'
+                },
             ],
             'tags': [
                 layer_name

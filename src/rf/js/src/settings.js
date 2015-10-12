@@ -26,9 +26,14 @@ function getPendingLayers() {
     return pendingLayers;
 }
 
+function getS3UriPrefix() {
+    return get('awsBucketUriPrefix');
+}
+
 module.exports = {
     setUser: setUser,
     getUser: getUser,
     get: get,
-    getPendingLayers: getPendingLayers
+    getPendingLayers: getPendingLayers,
+    getS3UriPrefix: getS3UriPrefix
 };
