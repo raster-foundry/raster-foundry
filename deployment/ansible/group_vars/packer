@@ -1,0 +1,3 @@
+sqs_queue: "raster-foundry"
+sqs_dead_letter_queue: "raster-foundry-dead-letter"
+s3_bucket: "raster-foundry"

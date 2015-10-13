@@ -2,4 +2,4 @@
 - name: Configure service definition
   template: src=upstart-worker.conf.j2 dest=/etc/init/rf-worker.conf
   notify:
-    - Restart rf-django
+    - Restart rf-worker

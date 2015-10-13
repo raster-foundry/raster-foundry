@@ -1,4 +1,4 @@
-description "rf-django"
+description "rf-app"
 
 {% if ['development', 'test'] | some_are_in(group_names) -%}
 start on (vagrant-mounted)
@@ -10,5 +10,9 @@ stop on shutdown
 respawn
 setuid rf
 chdir {{ django_home }}
+
+pre-start script
+    envdir /etc/rf.d/env python create-aws-resources.py >> {{ log_path }} 2>&1
+end script
 
 exec envdir /etc/rf.d/env gunicorn --config /etc/rf.d/gunicorn.py rf.wsgi >> {{ log_path }} 2>&1

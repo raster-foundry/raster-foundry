@@ -27,7 +27,7 @@
         mode=0750
   with_dict: envdir_config
   notify:
-    - Restart rf-django
+    - Restart rf-app
 
 - name: Configure django application
   copy: content="{{ item.value }}"
@@ -37,4 +37,5 @@
         mode=0750
   with_dict: django_config
   notify:
-    - Restart rf-django
+    - Restart rf-app
+    - Restart rf-worker

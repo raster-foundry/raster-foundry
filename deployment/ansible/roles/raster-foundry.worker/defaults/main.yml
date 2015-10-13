@@ -1,5 +1,5 @@
 ---
-django_home: /opt/worker
+django_home: /opt/app
 
 log_path: /var/log/rf-worker.log
 

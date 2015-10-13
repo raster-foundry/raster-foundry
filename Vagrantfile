@@ -91,19 +91,16 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     app.vm.synced_folder ".", "/vagrant", disabled: true
 
-    if Vagrant::Util::Platform.windows? || Vagrant::Util::Platform.cygwin?
-      app.vm.synced_folder "src/rf", "/opt/app/", type: "rsync", rsync__exclude: ["node_modules/", "apps/"]
-      app.vm.synced_folder "src/rf/apps", "/opt/app/apps"
+    app.vm.synced_folder "src/rf", "/opt/app/"
+    app.vm.synced_folder "src/mock-geoprocessing", "/opt/mock-geoprocessing/"
+
+    if File.directory?("#{ENV['HOME']}/.aws")
+      app.vm.synced_folder "#{ENV['HOME']}/.aws", "/home/vagrant/.aws/"
     else
-      app.vm.synced_folder "src/rf", "/opt/app/"
-      app.vm.synced_folder "src/mock-geoprocessing", "/opt/mock-geoprocessing/"
-      if File.directory?("#{ENV['HOME']}/.aws")
-        app.vm.synced_folder "#{ENV['HOME']}/.aws", "/home/vagrant/.aws/"
-      else
-        $stderr.puts "An AWS config profile is needed for the application to function."
-        $stderr.puts "Run `aws configure --profile rf-dev` to get started."
-        exit(1)
-      end
+      $stderr.puts "An AWS config profile is needed for the application to function."
+      $stderr.puts "Run `aws configure --profile rf-dev` to get started."
+
+      exit(1)
     end
 
     # Django via Nginx/Gunicorn
@@ -141,17 +138,19 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     worker.vm.synced_folder ".", "/vagrant", disabled: true
 
-    worker.vm.provider "virtualbox" do |v|
-      v.memory = 1024
-    end
-
-    worker.vm.synced_folder "src/rf", "/opt/worker/"
+    worker.vm.synced_folder "src/rf", "/opt/app/"
+    
     if File.directory?("#{ENV['HOME']}/.aws")
       worker.vm.synced_folder "#{ENV['HOME']}/.aws", "/home/vagrant/.aws/"
     else
       $stderr.puts "An AWS config profile is needed for the application to function."
       $stderr.puts "Run `aws configure --profile rf-dev` to get started."
+
       exit(1)
+    end
+
+    worker.vm.provider "virtualbox" do |v|
+      v.memory = 1024
     end
 
     worker.vm.provision "ansible" do |ansible|

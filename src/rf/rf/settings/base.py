@@ -279,9 +279,9 @@ WSGI_APPLICATION = '%s.wsgi.application' % SITE_NAME
 
 # AWS CONFIGURATION
 
-AWS_BUCKET_NAME = environ.get('RF_AWS_BUCKET', 'raster-foundry-test-uploads-67dc48c70b3bcf89eab78dbf5cf7900')  # NOQA
+AWS_BUCKET_NAME = environ.get('RF_S3_BUCKET', 'raster-foundry-test-uploads-67dc48c70b3bcf89eab78dbf5cf7900')  # NOQA
 AWS_PROFILE = environ.get('AWS_PROFILE', 'rf-dev')
-AWS_SQS_QUEUE = environ.get('SQS_QUEUE_NAME', 'TestQueue')
-AWS_SQS_REGION = environ.get('SQS_QUEUE_REGION', 'us-east-1')
+AWS_SQS_QUEUE = environ.get('RF_SQS_QUEUE', 'TestQueue')
+AWS_SQS_REGION = environ.get('RF_SQS_REGION', 'us-east-1')
 
 # END AWS CONFIGURATION

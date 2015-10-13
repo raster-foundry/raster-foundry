@@ -15,3 +15,7 @@ postgresql_host: "{{ services_ip }}"
 relp_host: "{{ services_ip }}"
 graphite_host: "{{ services_ip }}"
 statsite_host: "{{ services_ip }}"
+
+sqs_queue: "raster-foundry-{{ lookup('env', 'USER') | regex_replace('^(.*\\\\\\)?(.*)$', '\\\\2') }}"
+sqs_dead_letter_queue: "raster-foundry-{{ lookup('env', 'USER') | regex_replace('^(.*\\\\\\)?(.*)$', '\\\\2') }}-dead-letter"
+s3_bucket: "raster-foundry-{{ lookup('env', 'USER') | regex_replace('^(.*\\\\\\)?(.*)$', '\\\\2') }}"
