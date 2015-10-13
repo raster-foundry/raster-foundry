@@ -35,7 +35,8 @@ class LayerForm(ModelForm):
 
         # TODO: Parse tags from request (optional)
         try:
-            self.cleaned_data['tags'] = self.data['tags']
+            self.cleaned_data['tags'] = [tag.strip()
+                                         for tag in self.data['tags']]
         except:
             self.cleaned_data['tags'] = []
 
