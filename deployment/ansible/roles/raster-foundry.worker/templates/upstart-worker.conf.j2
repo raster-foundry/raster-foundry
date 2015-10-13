@@ -1,4 +1,4 @@
-description "rf-django"
+description "rf-worker"
 
 {% if ['development', 'test'] | some_are_in(group_names) -%}
 start on (vagrant-mounted)
@@ -7,8 +7,8 @@ start on (local-filesystems and net-device-up IFACE!=lo)
 {% endif %}
 stop on shutdown
 
-# respawn
+respawn
 setuid rf
 chdir {{ django_home }}
 
-# TODO
+exec python -mSimpleHTTPServer >> {{ log_path }} 2>&1

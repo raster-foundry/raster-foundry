@@ -1,4 +1,8 @@
 ---
+- include: vagrant-mounted.yml
+  when:
+    - "['development', 'test'] | some_are_in(group_names)"
+    - "['app-servers', 'workers'] | some_are_in(group_names)"
 - { include: chef-and-puppet.yml, when: "['development', 'test'] | some_are_in(group_names)" }
 - { include: configuration.yml }
 - { include: dependencies.yml }
