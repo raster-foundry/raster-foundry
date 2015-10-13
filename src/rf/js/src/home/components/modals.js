@@ -435,15 +435,13 @@ var UploadModal = React.createBackboneClass({
                                             <input type="file" id="files" ref="hiddenFileInput"
                                                 style={{'display':'none'}}
                                                 multiple onChange={this.handleFileInputChange} />
-                                            <em>zip files or single image files accepted</em>
                                         </div>
                                         {this.renderErrors(this.state.showPane1ClientErrors, this.state.clientErrors.files)}
                                     </div>
                                     <div className="vertical-align-child col-md-5 import-uri">
                                         <i className="rf-icon-link" />
                                         <h3 className="font-400">Upload with a URI</h3>
-                                        <h4 className="font-300">Is your imagery hosted somewhere already? Enter the URI to import.</h4>
-                                        <em>Examples: S3, DropBox, FTP</em>
+                                        <h4 className="font-300">Is your imagery hosted on S3? Enter the URI to import.</h4>
                                         <form>
                                             <div className="form-group">
                                                 <label>URI</label>
