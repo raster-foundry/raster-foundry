@@ -7,10 +7,15 @@ from apps.core.models import LayerImage, Layer
 import apps.core.enums as enums
 from django.conf import settings
 
+import os
 import time
+import uuid
 import json
 import boto.sqs
 from boto.sqs.message import Message
+from boto.s3.key import Key
+from boto.s3.connection import S3Connection
+from osgeo import gdal
 
 TIMEOUT_SECONDS = (60 * 10)  # 10 Minutes.
 
@@ -58,48 +63,84 @@ class QueueProcessor(object):
                         delete_message = self.check_timeout(record['data'])
                     elif job_type in JOB_VALIDATE:
                         if record['eventSource'] == 'aws:s3':
-                            delete_message = self.validate_image(record)
+                            delete_message = self.__validate_image(record)
 
                 if delete_message:
                     self.q.delete_message(message)
 
-    def validate_image(self, data):
+    def __validate_image(self, data):
         """
         Use Gdal to verify an image is properly formatted and can be further
         processed.
         data -- attribute data from SQS.
         """
-        # Pass image to Gdal to verify.
-        # If it succeeds continue else return False.
 
-        key = data['s3']['object']['key']
-        payload_uuid = self.extract_uuid_from_aws_key(key)
+        def ensure_band_count(key_string, range=None):
+            """
+            Gets the first `range` bytes from the s3 resource and uses it to
+            determine the number of bands in the image.
+            """
+            connection = S3Connection()
+            bucket = connection.get_bucket(settings.AWS_BUCKET_NAME)
+            s3_key = Key(bucket)
+            s3_key.key = key_string
+            random_filename = '/tmp/' + str(uuid.uuid4())
+            tempfile = open(random_filename, 'w')
+            if range is not None:
+                range = {'Range': 'bytes=' + range}
+                s3_key.get_contents_to_file(tempfile, headers=range)
+            else:
+                s3_key.get_contents_to_file(tempfile)
 
-        url = self.make_s3_url(data['s3']['bucket']['name'], key)
+            tempfile.close()
+            try:
+                validator = gdal.Open(random_filename)
+                # Tiler needs 3+ bands.
+                raster_ok = validator.RasterCount >= 3
+            except:
+                raster_ok = False
 
-        # TODO - Right now we don't save data to the DB with upload. So hard
-        # code something for testing.
-        try:
-            image = LayerImage.objects.get(s3_uuid=payload_uuid)
+            os.remove(random_filename)
+            return raster_ok
+
+        def mark_image_valid(s3_uuid, url):
+            image = LayerImage.objects.get(s3_uuid=s3_uuid)
             image.status = enums.STATUS_VALIDATED
             image.save()
             layer_id = image.layer_id
-        except:
-            payload_uuid = '1aa064aa-1086-4ff1-a90b-09d3420e0343'
-            layer_id = 2
 
-        data = {'url': url, 's3_uuid': payload_uuid}
-        payload = self.make_payload(JOB_REPROJECT, data)
-        self.post_to_queue(payload)
+            data = {'url': url, 's3_uuid': s3_uuid}
+            payload = self.make_payload(JOB_REPROJECT, data)
+            self.post_to_queue(payload)
 
-        # Add a message to the queue that we can use to watch for timeouts.
-        data = {
-            'timeout': time.time() + TIMEOUT_SECONDS,
-            'layer_id': layer_id
-        }
-        payload = self.make_payload(JOB_TIMEOUT, data)
-        self.post_to_queue(payload, TIMEOUT_DELAY)
-        return True
+            # Add a message to the queue that we can use to watch for timeouts.
+            data = {
+                'timeout': time.time() + TIMEOUT_SECONDS,
+                'layer_id': layer_id
+            }
+            payload = self.make_payload(JOB_TIMEOUT, data)
+            self.post_to_queue(payload, TIMEOUT_DELAY)
+            return True
+
+        def mark_image_invalid(s3_uuid):
+            image = LayerImage.objects.get(s3_uuid=s3_uuid)
+            image.status = enums.STATUS_INVALID
+            image.save()
+            layer_id = image.layer_id
+            layer = Layer.objects.get(id=layer_id)
+            layer.status = enums.STATUS_FAILED
+            layer.save()
+            return True
+
+        key = data['s3']['object']['key']
+        s3_uuid = self.extract_uuid_from_aws_key(key)
+        url = self.make_s3_url(data['s3']['bucket']['name'], key)
+        range = '0-1000000'  # Get first Mb(ish) of bytes.
+        # Pass image to Gdal to verify.
+        if ensure_band_count(key, range):
+            return mark_image_valid(s3_uuid, url)
+        else:
+            return mark_image_invalid(s3_uuid)
 
     def reproject(self, data):
         """
@@ -154,7 +195,7 @@ class QueueProcessor(object):
         timeout = data['timeout']
         if time.time() > timeout:
             layer = Layer.objects.get(id=layer_id)
-            if layer.status != enums.STATUS_COMPLETE:
+            if layer.status != enums.STATUS_COMPLETED:
                 layer.status = enums.STATUS_FAILED
                 layer.save()
         else:
@@ -175,7 +216,7 @@ class QueueProcessor(object):
 
         layer_id = data['layer_id']
         layer = Layer.objects.get(id=layer_id)
-        layer.status = enums.STATUS_COMPLETE
+        layer.status = enums.STATUS_COMPLETED
         layer.save()
         # Nothing else needs to go in the queue. We're done.
         return True
