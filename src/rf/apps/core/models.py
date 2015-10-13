@@ -106,6 +106,17 @@ class Layer(Model):
     deleted_at = DateTimeField(null=True, blank=True)
     status_updated_at = DateTimeField(default=datetime.now)
 
+    thumb_small = URLField(
+        null=True,
+        blank=True,
+        help_text='80x80 pixels',
+    )
+    thumb_large = URLField(
+        null=True,
+        blank=True,
+        help_text='400x150 pixels',
+    )
+
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
         super(Layer, self).save(*args, **kwargs)
@@ -143,6 +154,9 @@ class Layer(Model):
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
             'status_updated_at': self.created_at.isoformat(),
+
+            'thumb_small': self.thumb_small,
+            'thumb_large': self.thumb_large,
 
             # Foreign key fields
             'tags': tags,
@@ -244,7 +258,12 @@ class LayerImage(Model):
 
     def to_json(self):
         return {
-            'source_uri': self.source_uri
+            'id': self.id,
+            'source_uri': self.source_uri,
+            'thumb_small': self.thumb_small,
+            'thumb_large': self.thumb_large,
+            'meta_json': self.meta_json,
+            'file_name': self.file_name,
         }
 
 

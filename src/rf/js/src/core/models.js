@@ -27,11 +27,18 @@ var Layer = Backbone.Model.extend({
     defaults: {
         name: '',
         organization: '',
+        description: '',
         area: 0,
+        area_unit: 0,
         capture_end: null,
         capture_start: null,
         srid: null,
-        status: null
+        status: null,
+        images: [],
+        tags: [],
+        thumb_small: '',
+        thumb_large: '',
+        active_image: false
     },
 
     initialize: function() {
@@ -40,6 +47,11 @@ var Layer = Backbone.Model.extend({
 
     getLeafletLayer: function() {
         return new L.TileLayer(this.get('tile_url'));
+    },
+
+    getActiveImage: function() {
+        var id = this.get('active_image');
+        return _.findWhere(this.get('images'), {id: id});
     },
 
     isUploading: function() {
@@ -96,10 +108,23 @@ var BaseLayers = Backbone.Collection.extend({
     setActiveLayer: function(model) {
         var activeLayer = this.getActiveLayer();
         if (activeLayer) {
-            activeLayer.set('active', false);
+            activeLayer.set({
+                active: false,
+                active_image: false
+            });
         }
         if (model) {
-            model.set('active', true);
+            model.set({
+                active: true,
+                active_image: false
+            });
+        }
+    },
+
+    setActiveImage: function(imageId) {
+        var activeLayer = this.getActiveLayer();
+        if (activeLayer) {
+            activeLayer.set('active_image', imageId);
         }
     }
 });
