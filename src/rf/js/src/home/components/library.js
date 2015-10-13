@@ -159,6 +159,16 @@ var LayerCollection = React.createBackboneClass({
             className += ' active';
         }
 
+        if (layerItems.length === 0) {
+            layerItems = (
+                <div className="panel panel-default">
+                    <div className="panel-body">
+                        No items have been added yet.
+                    </div>
+                </div>
+            );
+        }
+
         if (this.getCollection().pages > 1) {
             var prev = '',
                 next = '';
@@ -306,9 +316,9 @@ var LayerItem = React.createBackboneClass({
                         <i className="rf-icon-ellipsis"></i>
                         </button>
                         <ul className="dropdown-menu dropdown-menu-dark" aria-labelledby="dLabel">
-                            <li><a href="#" onClick={this.editMetaData}>Edit Metadata</a></li>
-                            <li><a href="#" onClick={this.importOptions}>Import Options</a></li>
-                            <li className="divider"></li>
+                            {/*<li><a href="#" onClick={this.editMetaData}>Edit Metadata</a></li>*/}
+                            {/*<li><a href="#" onClick={this.importOptions}>Import Options</a></li>*/}
+                            {/*<li className="divider"></li>*/}
                             <li><a href="#" onClick={this.deleteLayer} className="text-danger">Delete</a></li>
                         </ul>
                     </div>
@@ -370,7 +380,7 @@ var ImageMetadataLink = React.createBackboneClass({
                 </div>
                 <div className="list-group-content">
                     <h5>{image.file_name}</h5>
-                    <a href="#" className="view-metadata" data-id={image.id}
+                    <a href="#" className="view-metadata hidden" data-id={image.id}
                         onClick={this.props.onClick}>View Metadata</a>
                 </div>
             </div>

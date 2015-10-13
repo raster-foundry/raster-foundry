@@ -527,7 +527,9 @@ var BillingScreen = React.createBackboneClass({
                 <div className="container">
                     <h3 className="text-center font-100">Billing &amp; Plan</h3>
                     <div className="content-block">
-                        <p>Pay up</p>
+                        <p>
+                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus porta aliquam turpis. Vivamus blandit maximus augue sed auctor. Maecenas non nibh congue, molestie est quis, pellentesque mi. Nulla id euismod mi. Curabitur sagittis, ligula ut porttitor lacinia, felis lectus mollis dui, quis ultrices ipsum quam sit amet turpis. Integer eu dolor ac odio auctor mollis. Suspendisse diam justo, facilisis sed ornare volutpat, tempor quis lacus.
+                        </p>
                     </div>
                 </div>
             </div>
