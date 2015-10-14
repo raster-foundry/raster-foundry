@@ -63,19 +63,19 @@ class QueueProcessor(object):
                         delete_message = self.check_timeout(record['data'])
                     elif job_type in JOB_VALIDATE:
                         if record['eventSource'] == 'aws:s3':
-                            delete_message = self.__validate_image(record)
+                            delete_message = self._validate_image(record)
 
                 if delete_message:
                     self.q.delete_message(message)
 
-    def __validate_image(self, data):
+    def _validate_image(self, data):
         """
         Use Gdal to verify an image is properly formatted and can be further
         processed.
         data -- attribute data from SQS.
         """
 
-        def ensure_band_count(key_string, range=None):
+        def ensure_band_count(key_string, byte_range=None):
             """
             Gets the first `range` bytes from the s3 resource and uses it to
             determine the number of bands in the image.
@@ -85,31 +85,30 @@ class QueueProcessor(object):
             s3_key = Key(bucket)
             s3_key.key = key_string
             random_filename = '/tmp/' + str(uuid.uuid4())
-            tempfile = open(random_filename, 'w')
-            if range is not None:
-                range = {'Range': 'bytes=' + range}
-                s3_key.get_contents_to_file(tempfile, headers=range)
-            else:
-                s3_key.get_contents_to_file(tempfile)
+            with open(random_filename, 'w') as tempfile:
+                if byte_range is not None:
+                    header_range = {'Range': 'bytes=' + byte_range}
+                    s3_key.get_contents_to_file(tempfile, headers=header_range)
+                else:
+                    s3_key.get_contents_to_file(tempfile)
 
-            tempfile.close()
             try:
                 validator = gdal.Open(random_filename)
                 # Tiler needs 3+ bands.
                 raster_ok = validator.RasterCount >= 3
-            except:
+            except AttributeError:
                 raster_ok = False
 
             os.remove(random_filename)
             return raster_ok
 
-        def mark_image_valid(s3_uuid, url):
+        def mark_image_valid(s3_uuid):
             image = LayerImage.objects.get(s3_uuid=s3_uuid)
-            image.status = enums.STATUS_VALIDATED
+            image.status = enums.STATUS_VALID
             image.save()
             layer_id = image.layer_id
 
-            data = {'url': url, 's3_uuid': s3_uuid}
+            data = {'s3_uuid': s3_uuid}
             payload = self.make_payload(JOB_REPROJECT, data)
             self.post_to_queue(payload)
 
@@ -134,11 +133,10 @@ class QueueProcessor(object):
 
         key = data['s3']['object']['key']
         s3_uuid = self.extract_uuid_from_aws_key(key)
-        url = self.make_s3_url(data['s3']['bucket']['name'], key)
-        range = '0-1000000'  # Get first Mb(ish) of bytes.
+        byte_range = '0-1000000'  # Get first Mb(ish) of bytes.
         # Pass image to Gdal to verify.
-        if ensure_band_count(key, range):
-            return mark_image_valid(s3_uuid, url)
+        if ensure_band_count(key, byte_range):
+            return mark_image_valid(s3_uuid)
         else:
             return mark_image_invalid(s3_uuid)
 
@@ -231,9 +229,6 @@ class QueueProcessor(object):
                 }
             ]
         }
-
-    def make_s3_url(self, bucket_name, key):
-        return 'https://s3.amazonaws.com/' + bucket_name + '/' + key
 
     def extract_uuid_from_aws_key(self, key):
         """
