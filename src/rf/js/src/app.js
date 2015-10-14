@@ -40,7 +40,8 @@ var App = Marionette.Application.extend({
         }
 
         function poll() {
-            if (pendingLayers.existsProcessing()) {
+            if (pendingLayers.existsUploading() ||
+                pendingLayers.existsProcessing()) {
                 pendingLayers.fetch();
             }
             setTimeout(poll, pollInterval);

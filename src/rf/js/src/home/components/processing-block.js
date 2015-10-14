@@ -6,14 +6,21 @@ var LayerStatusComponent = React.createBackboneClass({
     render: function() {
         var checkClass = 'rf-icon-check',
             spinnerClass = 'rf-icon-loader animate-spin',
+            failedClass = 'rf-icon-cancel text-danger',
             uploadingClass = spinnerClass,
             processingClass = spinnerClass;
 
-        if (!this.getModel().isUploading()) {
+        if (this.getModel().isProcessing() ||
+            this.getModel().isCompleted()) {
             uploadingClass = checkClass;
+        } else if (this.getModel().isFailed()) {
+            uploadingClass = failedClass;
         }
-        if (!this.getModel().isProcessing()) {
+
+        if (this.getModel().isCompleted()) {
             processingClass = checkClass;
+        } else if (this.getModel().isFailed()) {
+            processingClass = failedClass;
         }
 
         return (
