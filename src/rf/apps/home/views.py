@@ -4,7 +4,9 @@ from __future__ import unicode_literals
 from __future__ import division
 
 from urllib import urlencode
+import json
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Q
@@ -83,15 +85,9 @@ def _save_layer(request, layer, username=None):
     """
     Create or update a layer model with data from POST or PUT form fields.
     """
-    if request.method == 'POST':
-        data = request.POST.copy()
-    else:
-        data = request.PUT.copy()
+    body = json.loads(request.body)
 
-    data['tags'] = data.getlist('tags')
-    data['images'] = data.getlist('images')
-
-    form = LayerForm(data, instance=layer)
+    form = LayerForm(body, instance=layer)
 
     if not form.is_valid():
         raise Forbidden(errors=form.errors)
@@ -120,8 +116,12 @@ def _save_layer(request, layer, username=None):
     # Update images.
     LayerImage.objects.filter(layer=layer).delete()
     LayerImage.objects.bulk_create([
-        LayerImage(layer=layer, source_uri=uri)
-        for uri in form.cleaned_data['images']
+        LayerImage(layer=layer,
+                   s3_uuid=image['s3_uuid'],
+                   file_extension=image['file_extension'],
+                   file_name=image['file_name'],
+                   bucket_name=settings.AWS_BUCKET_NAME)
+        for image in form.cleaned_data['images']
     ])
 
     return layer.to_json()

@@ -2,7 +2,6 @@
 
 var _ = require('underscore'),
     Evaporate = require('evaporate'),
-    uuid = require('node-uuid'),
     settings = require('../settings');
 
 function S3UploadException(message, mimeType, fileName) {
@@ -15,7 +14,7 @@ function S3UploadException(message, mimeType, fileName) {
     };
 }
 
-var uploadFiles = function(files) {
+var uploadFiles = function(files, uuids, extensions) {
     var evap = new Evaporate({
         signerUrl: settings.get('signerUrl'),
         aws_key: settings.get('awsKey'),
@@ -28,16 +27,17 @@ var uploadFiles = function(files) {
         throw new S3UploadException('Invalid file type.', invalidMimes[0].mimeType, invalidMimes[0].fileName);
     }
 
-    _.each(files, function(file) {
-        var user = settings.getUser(),
-            userId = user.get('id');
+    _.each(files, function(file, i) {
+        var userId = settings.getUser().get('id'),
+            fileName = userId + '-' + uuids[i] + '.' + extensions[i];
+
         // TODO Later we'll want to store the id of the file upload. We can use
         // it to cancel the upload if needed.
         // var id = evap.add({ //
         evap.add({
             // TODO - NAMES ARE CURRENTLY JUST FOR TESTING.
             // WE WANT TO USE A UUID FOR FILE NAMES.
-            name: userId + '-' + uuid.v4() + getExtension(file),
+            name: fileName,
             file: file,
             contentType: file.type,
             complete: function() {
@@ -81,6 +81,7 @@ var invalidTypes = function(file) {
 };
 
 module.exports = {
+    getExtension: getExtension,
     uploadFiles: uploadFiles,
     S3UploadException: S3UploadException
 };

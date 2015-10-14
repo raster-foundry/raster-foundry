@@ -3,6 +3,8 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
 
+import json
+
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.test.client import Client
@@ -42,8 +44,16 @@ class AbstractLayerTestCase(TestCase):
             'capture_start': '2015-08-15',
             'capture_end': '2015-08-15',
             'images': [
-                'http://www.foo.com',
-                'http://www.bar.com',
+                {
+                    'file_name': 'foo.png',
+                    's3_uuid': 'a8098c1a-f86e-11da-bd1a-00112444be1e',
+                    'file_extension': '.png'
+                },
+                {
+                    'file_name': 'bar.png',
+                    's3_uuid': 'a8098c1a-f86e-11da-bd1a-00112444be1e',
+                    'file_extension': '.png'
+                },
             ],
             'tags': [
                 layer_name
@@ -54,7 +64,9 @@ class AbstractLayerTestCase(TestCase):
 
     def save_layer(self, layer, user):
         url = reverse('create_layer', kwargs={'username': user.username})
-        return self.client.post(url, layer)
+        return self.client.post(url,
+                                json.dumps(layer),
+                                content_type='application/json')
 
     def setup_models(self):
         """
@@ -115,6 +127,28 @@ class LayerTestCase(AbstractLayerTestCase):
         user = self.user_models[self.logged_in_user]
         response = self.save_layer(layer, user)
         self.assertEqual(response.status_code, 403)
+
+    # Modify
+    def test_modify_layer(self):
+        orig_name = 'Test Modify Layer'
+        user = self.user_models[self.logged_in_user]
+        layer = self.make_layer(orig_name, self.logged_in_user)
+        response = self.save_layer(layer, user)
+
+        new_name = 'Test Modify Layer 2'
+        layer = json.loads(response.content)
+        layer['name'] = new_name
+        url = reverse('layer_detail', kwargs={
+            'username': user.username,
+            'layer_id': layer['id']
+        })
+
+        response = self.client.put(url,
+                                   json.dumps(layer),
+                                   content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Layer.objects.filter(name=orig_name).count(), 0)
+        self.assertEqual(Layer.objects.filter(name=new_name).count(), 1)
 
     # List
     def test_list_all_layers(self):
