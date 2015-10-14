@@ -47,12 +47,12 @@ class AbstractLayerTestCase(TestCase):
                 {
                     'file_name': 'foo.png',
                     's3_uuid': 'a8098c1a-f86e-11da-bd1a-00112444be1e',
-                    'file_extension': '.png'
+                    'file_extension': 'png'
                 },
                 {
                     'file_name': 'bar.png',
                     's3_uuid': 'a8098c1a-f86e-11da-bd1a-00112444be1e',
-                    'file_extension': '.png'
+                    'file_extension': 'png'
                 },
             ],
             'tags': [

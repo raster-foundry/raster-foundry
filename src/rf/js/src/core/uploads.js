@@ -52,10 +52,10 @@ var uploadFiles = function(files, uuids, extensions) {
 
 var getExtension = function(file) {
     var mapping = {
-        'image/png': '.png',
-        'image/jpeg': '.jpg',
-        'image/tiff': '.tif',
-        'application/zip': '.zip'
+        'image/png': 'png',
+        'image/jpeg': 'jpg',
+        'image/tiff': 'tif',
+        'application/zip': 'zip'
 
     };
     return mapping[file.type] || '';
