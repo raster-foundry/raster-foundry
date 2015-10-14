@@ -3,6 +3,8 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
 
+from datetime import datetime
+
 from apps.core.models import LayerImage, Layer
 from apps.workers.image_validator import ensure_band_count
 from apps.workers.sqs_manager import SQSManager
@@ -89,6 +91,7 @@ class QueueProcessor(object):
             layer_id = image.layer_id
             layer = Layer.objects.get(id=layer_id)
             layer.status = enums.STATUS_FAILED
+            layer.status_updated_at = datetime.now()
             layer.save()
             return True
 
@@ -137,6 +140,7 @@ class QueueProcessor(object):
         if ready_to_process:
             layer = Layer.objects.get(id=layer_id)
             layer.status = enums.STATUS_PROCESSING
+            layer.status_updated_at = datetime.now()
             layer.save()
 
             # POST TO EMR HERE.
@@ -148,13 +152,13 @@ class QueueProcessor(object):
         been reached.
         data -- attribute data from SQS.
         """
-
         layer_id = data['layer_id']
         timeout = data['timeout']
         if time.time() > timeout:
             layer = Layer.objects.get(id=layer_id)
             if layer.status != enums.STATUS_COMPLETED:
                 layer.status = enums.STATUS_FAILED
+                layer.status_updated_at = datetime.now()
                 layer.save()
         else:
             # Requeue the timeout message.
@@ -174,6 +178,7 @@ class QueueProcessor(object):
         layer_id = data['layer_id']
         layer = Layer.objects.get(id=layer_id)
         layer.status = enums.STATUS_COMPLETED
+        layer.status_updated_at = datetime.now()
         layer.save()
         # Nothing else needs to go in the queue. We're done.
         return True
