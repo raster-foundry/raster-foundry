@@ -37,12 +37,13 @@ class LayerFilter(django_filters.FilterSet):
     def pending_filter(self, queryset, value):
         """
         Gets layers that are uploading or processing, or that
-        have become complete since the time of the last browser refresh.
-        This is so that layers that have become complete since the last refresh
-        will be visible to users on the frontend.
+        have become complete or failed since the time of the last browser
+        refresh. This is so that layers that have become complete or failed
+        since the last refresh will be visible to users on the frontend.
 
         value -- the time in milliseconds elapsed since 1/1/1970
         """
         refresh_time = datetime.fromtimestamp(float(value) / 1000.0)
-        return queryset.filter(~Q(status=enums.STATUS_COMPLETED) |
+        return queryset.filter((~Q(status=enums.STATUS_COMPLETED) &
+                                ~Q(status=enums.STATUS_FAILED)) |
                                Q(status_updated_at__gt=refresh_time))

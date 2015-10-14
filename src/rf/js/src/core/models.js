@@ -58,9 +58,18 @@ var Layer = Backbone.Model.extend({
         return this.get('status') === STATUS_CREATED;
     },
 
+    isCompleted: function() {
+        return this.get('status') === STATUS_COMPLETED;
+    },
+
+    isFailed: function() {
+        return this.get('status') === STATUS_FAILED;
+    },
+
     isProcessing: function() {
-        var status = this.get('status');
-        return status !== STATUS_COMPLETED && status !== STATUS_FAILED;
+        return !(this.isUploading() ||
+                 this.isCompleted() ||
+                 this.isFailed());
     }
 });
 
