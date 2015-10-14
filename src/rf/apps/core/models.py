@@ -218,7 +218,6 @@ class LayerImage(Model):
     and will be displayed as-is.
     """
     layer = ForeignKey(Layer, related_name='layer_images')
-    source_uri = URLField(max_length=2000)
     priority = IntegerField(
         default=0,
         help_text='The order which images are layered (starting from 0)'
