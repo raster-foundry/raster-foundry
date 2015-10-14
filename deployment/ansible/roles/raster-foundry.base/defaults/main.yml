@@ -14,6 +14,7 @@ envdir_config:
   RF_SQS_QUEUE: "{{ sqs_queue }}"
   RF_SQS_DEAD_LETTER_QUEUE: "{{ sqs_dead_letter_queue }}"
   RF_SQS_REGION: "{{ sqs_region }}"
+  RF_TEMP_DIR: "{{ temp_dir }}"
 
 django_config:
   DJANGO_TEST_DB_NAME: "{{ django_test_database }}"
