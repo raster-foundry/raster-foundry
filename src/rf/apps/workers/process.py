@@ -4,18 +4,11 @@ from __future__ import unicode_literals
 from __future__ import division
 
 from apps.core.models import LayerImage, Layer
+from apps.workers.image_validator import ensure_band_count
+from apps.workers.sqs_manager import SQSManager
 import apps.core.enums as enums
-from django.conf import settings
 
-import os
 import time
-import uuid
-import json
-import boto.sqs
-from boto.sqs.message import Message
-from boto.s3.key import Key
-from boto.s3.connection import S3Connection
-from osgeo import gdal
 
 TIMEOUT_SECONDS = (60 * 10)  # 10 Minutes.
 
@@ -39,18 +32,16 @@ class QueueProcessor(object):
     through the processing pipeline by adding new messages to the same queue.
     """
     def __init__(self):
-        self.q = self.get_queue()
+        self.queue = SQSManager()
 
     def start_polling(self):
-        while True and self.q:
-            message = self.q.read(wait_time_seconds=MAX_WAIT,
-                                  message_attributes=['All'])
-
-            if message:
+        while True and self.queue:
+            s3_message = self.queue.get_message()
+            if s3_message:
                 delete_message = False
-                body = json.loads(message.get_body())
-                if 'Records' in body and body['Records'][0]:
-                    record = body['Records'][0]
+                message = s3_message['body']
+                if 'Records' in message and message['Records'][0]:
+                    record = message['Records'][0]
                     job_type = record['eventName']
                     if job_type == JOB_REPROJECT:
                         delete_message = self.reproject(record['data'])
@@ -66,7 +57,7 @@ class QueueProcessor(object):
                             delete_message = self._validate_image(record)
 
                 if delete_message:
-                    self.q.delete_message(message)
+                    self.queue.remove_message(s3_message)
 
     def _validate_image(self, data):
         """
@@ -74,34 +65,6 @@ class QueueProcessor(object):
         processed.
         data -- attribute data from SQS.
         """
-
-        def ensure_band_count(key_string, byte_range=None):
-            """
-            Gets the first `range` bytes from the s3 resource and uses it to
-            determine the number of bands in the image.
-            """
-            connection = S3Connection()
-            bucket = connection.get_bucket(settings.AWS_BUCKET_NAME)
-            s3_key = Key(bucket)
-            s3_key.key = key_string
-            random_filename = '/tmp/' + str(uuid.uuid4())
-            with open(random_filename, 'w') as tempfile:
-                if byte_range is not None:
-                    header_range = {'Range': 'bytes=' + byte_range}
-                    s3_key.get_contents_to_file(tempfile, headers=header_range)
-                else:
-                    s3_key.get_contents_to_file(tempfile)
-
-            try:
-                validator = gdal.Open(random_filename)
-                # Tiler needs 3+ bands.
-                raster_ok = validator.RasterCount >= 3
-            except AttributeError:
-                raster_ok = False
-
-            os.remove(random_filename)
-            return raster_ok
-
         def mark_image_valid(s3_uuid):
             image = LayerImage.objects.get(s3_uuid=s3_uuid)
             image.status = enums.STATUS_VALID
@@ -109,16 +72,14 @@ class QueueProcessor(object):
             layer_id = image.layer_id
 
             data = {'s3_uuid': s3_uuid}
-            payload = self.make_payload(JOB_REPROJECT, data)
-            self.post_to_queue(payload)
+            self.queue.add_message(JOB_REPROJECT, data)
 
             # Add a message to the queue that we can use to watch for timeouts.
             data = {
                 'timeout': time.time() + TIMEOUT_SECONDS,
                 'layer_id': layer_id
             }
-            payload = self.make_payload(JOB_TIMEOUT, data)
-            self.post_to_queue(payload, TIMEOUT_DELAY)
+            self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
             return True
 
         def mark_image_invalid(s3_uuid):
@@ -154,8 +115,7 @@ class QueueProcessor(object):
         image.save()
 
         data = {'layer_id': image.layer_id}
-        payload = self.make_payload(JOB_HANDOFF, data)
-        self.post_to_queue(payload)
+        self.queue.add_message(JOB_HANDOFF, data)
         return True
 
     def emr_hand_off(self, data):
@@ -198,8 +158,7 @@ class QueueProcessor(object):
                 layer.save()
         else:
             # Requeue the timeout message.
-            payload = self.make_payload(JOB_TIMEOUT, data)
-            self.post_to_queue(payload, TIMEOUT_DELAY)
+            self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
 
         return True
 
@@ -219,17 +178,6 @@ class QueueProcessor(object):
         # Nothing else needs to go in the queue. We're done.
         return True
 
-    def make_payload(self, job_type, data):
-        return {
-            'Records': [
-                {
-                    'eventSource': 'rf:boto',
-                    'eventName': job_type,
-                    'data': data
-                }
-            ]
-        }
-
     def extract_uuid_from_aws_key(self, key):
         """
         Given an AWS key, find the uuid and return it.
@@ -239,21 +187,3 @@ class QueueProcessor(object):
         dot = key.find('.') if key.find('.') >= 0 else len(key)
         first_dash = key.find('-')
         return key[first_dash:dot]
-
-    def get_queue(self):
-        """
-        Get a connection to the SQS queue.
-        """
-        queue_name = settings.AWS_SQS_QUEUE
-        queue_region = settings.AWS_SQS_REGION
-        conn = boto.sqs.connect_to_region(queue_region)
-        return conn.get_queue(queue_name)
-
-    def post_to_queue(self, payload, delay=DEFAULT_DELAY):
-        """
-        Create an SQS message from a payload.
-        data -- structured data representing the new SQS message.
-        """
-        m = Message()
-        m.set_body(json.dumps(payload))
-        self.q.write(m, delay)
