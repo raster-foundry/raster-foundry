@@ -3,14 +3,25 @@
 var $ = require('jquery'),
     _ = require('underscore'),
     React = require('react'),
-    asset = require('../../core/utils').asset;
+    asset = require('../../core/utils').asset,
+    router = require('../../router').router,
+    settings = require('../../settings');
+
+function confirmLogout(e) {
+    e.preventDefault();
+    var pendingLayers = settings.getPendingLayers(),
+        confirmMessage = 'Leaving this page will cancel uploads in progress.';
+    if (!pendingLayers.existsUploading() || confirm(confirmMessage)) {
+        router.go('/logout');
+    }
+}
 
 var DropdownMenu = React.createBackboneClass({
     menuItems: [
         { id: 'library', name: 'Library', url: '/', icon: 'rf-icon-book' },
         '---',
         { id: 'account', name: 'Account', url: '/account', icon: 'rf-icon-user' },
-        { id: 'logout', name: 'Logout', url: '/logout', icon: 'rf-icon-logout' }
+        { id: 'logout', name: 'Logout', url: '#', onClick: confirmLogout, icon: 'rf-icon-logout' }
     ],
 
     componentDidMount: function() {
@@ -69,6 +80,7 @@ var DropdownMenu = React.createBackboneClass({
                                 <li key={'menu-li-' + item.id}>
                                     <a href={item.url}
                                        data-url={item.url}
+                                       onClick={item.onClick ? item.onClick : _.noop}
                                        className={item.id === selected ? 'active' : ''}
                                        ><i className={item.icon}></i> {item.name}</a>
                                 </li>
