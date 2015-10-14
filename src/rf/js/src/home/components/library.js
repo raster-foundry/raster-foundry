@@ -356,7 +356,8 @@ var LayerItem = React.createBackboneClass({
     },
 
     deleteLayer: function() {
-        console.log('delete layer');
+        this.getModel().destroy();
+        settings.getPendingLayers().remove(this.getModel());
     },
 
     importOptions: function() {
