@@ -6,7 +6,7 @@ var LayerStatusComponent = React.createBackboneClass({
     render: function() {
         var checkClass = 'rf-icon-check',
             spinnerClass = 'rf-icon-loader animate-spin',
-            failedClass = 'rf-icon-attention text-danger',
+            failedClass = 'rf-icon-attention rf-failed text-danger',
             uploadingClass = spinnerClass,
             processingClass = spinnerClass,
             actionLink = (<a href="#" className="text-danger">Cancel</a>);
