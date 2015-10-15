@@ -6,7 +6,7 @@ var LayerStatusComponent = React.createBackboneClass({
     render: function() {
         var checkClass = 'rf-icon-check',
             spinnerClass = 'rf-icon-loader animate-spin',
-            failedClass = 'rf-icon-cancel text-danger',
+            failedClass = 'rf-icon-attention text-danger',
             uploadingClass = spinnerClass,
             processingClass = spinnerClass,
             actionLink = (<a href="#" className="text-danger">Cancel</a>);
@@ -33,7 +33,15 @@ var LayerStatusComponent = React.createBackboneClass({
               <div className="list-group-content">
                 <h5>{this.getModel().get('name')}</h5>
                 <ol>
-                  <li>Uploading Images <i className={uploadingClass} /></li>
+                  <li>
+                    Uploading Images <i className={uploadingClass} />
+                    <ul className="notice">
+                      <li><strong>fileName.tiff</strong><i className="rf-icon-attention"></i></li>
+                    </ul>
+                    <span className="notice">
+                      <strong>Alert</strong> put anything in here and it should look fine. <i className="rf-icon-attention"></i>
+                    </span>
+                  </li>
                   <li>Processing Tiles <i className={processingClass} /></li>
                   {/* There may be need for more steps. */}
                 </ol>
@@ -61,7 +69,7 @@ var ProcessingBlock = React.createBackboneClass({
         }
         return (
           <div className="processing-block">
-            <a className="block-title" role="button" data-toggle="collapse" href="#processing-content" aria-expanded="false" aria-controls="processing-content">
+            <a className="block-title collapsed" role="button" data-toggle="collapse" href="#processing-content" aria-expanded="false" aria-controls="processing-content">
               <h5>Processing Layers</h5>
             </a>
             <div className="collapse" id="processing-content">
