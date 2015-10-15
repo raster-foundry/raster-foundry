@@ -3,11 +3,12 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
 
-from django.conf import settings
-
 import json
+
 import boto.sqs
 from boto.sqs.message import Message
+
+from django.conf import settings
 
 MAX_WAIT = 20  # Seconds.
 DEFAULT_DELAY = 0

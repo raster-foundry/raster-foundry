@@ -7,6 +7,7 @@ from django.conf import settings
 
 import os
 import uuid
+
 from boto.s3.key import Key
 from boto.s3.connection import S3Connection
 from osgeo import gdal

@@ -3,6 +3,8 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
 
+
+import time
 from datetime import datetime
 
 from apps.core.models import LayerImage, Layer
@@ -10,7 +12,6 @@ from apps.workers.image_validator import ensure_band_count
 from apps.workers.sqs_manager import SQSManager
 import apps.core.enums as enums
 
-import time
 
 TIMEOUT_SECONDS = (60 * 10)  # 10 Minutes.
 
