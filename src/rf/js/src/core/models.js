@@ -38,11 +38,16 @@ var Layer = Backbone.Model.extend({
         tags: [],
         thumb_small: '',
         thumb_large: '',
-        active_image: false
+        active_image: false,
+        url: null
     },
 
     initialize: function() {
         this.getLeafletLayer = _.memoize(this.getLeafletLayer);
+    },
+
+    url: function() {
+        return this.get('url');
     },
 
     getLeafletLayer: function() {
