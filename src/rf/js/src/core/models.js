@@ -144,15 +144,15 @@ var BaseLayers = Backbone.Collection.extend({
 });
 
 var MyLayers = BaseLayers.extend({
-    url: '/imports.json'
+    url: '/imports.json?live=true'
 });
 
 var FavoriteLayers = BaseLayers.extend({
-    url: '/favorites.json'
+    url: '/favorites.json?live=true'
 });
 
 var PublicLayers = BaseLayers.extend({
-    url: '/catalog.json'
+    url: '/catalog.json?live=true'
 });
 
 var PendingLayers = BaseLayers.extend({

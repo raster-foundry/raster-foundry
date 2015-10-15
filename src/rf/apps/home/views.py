@@ -16,6 +16,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
+from apps.core import enums
 from apps.core.exceptions import Forbidden
 from apps.core.decorators import (accepts, api_view, login_required,
                                   owner_required)
@@ -60,6 +61,20 @@ def layer_meta(request, username, layer_id):
         return meta.to_json()
     except IndexError:
         raise Http404()
+
+
+@api_view
+@login_required
+@accepts('POST')
+def layer_dismiss(request):
+    user_id = request.user.id
+    layer_id = request.POST.get('layer_id')
+    layer = get_object_or_404(Layer, id=layer_id, user_id=user_id)
+    if layer.status == enums.STATUS_FAILED:
+        _delete_layer(request, layer, request.user.username)
+    # TODO: Consider returning something indicitive of the result:
+    # return {'status': 'deleted'}
+    return 'OK'
 
 
 def _get_layer_or_404(request, **kwargs):
@@ -202,6 +217,9 @@ def _get_layer_models(request, crit=None):
 
     if crit:
         qs = qs.filter(crit)
+
+    if request.GET.get('pending') is None:
+        qs = qs.filter(status=enums.STATUS_COMPLETED)
 
     filtered_layers = LayerFilter(request.GET, queryset=qs)
 
