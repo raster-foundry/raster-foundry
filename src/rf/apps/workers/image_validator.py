@@ -30,12 +30,9 @@ def ensure_band_count(key_string, byte_range=None):
         else:
             s3_key.get_contents_to_file(tempfile)
 
-    try:
-        validator = gdal.Open(random_filename)
-        # Tiler needs 3+ bands.
-        raster_ok = validator.RasterCount >= 3
-    except AttributeError:
-        raster_ok = False
-
+    # Throws AttributeError if it cannot be opened.
+    validator = gdal.Open(random_filename)
+    # Tiler needs 3+ bands.
+    raster_ok = validator.RasterCount >= 3
     os.remove(random_filename)
     return raster_ok

@@ -85,9 +85,10 @@ class QueueProcessor(object):
             self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
             return True
 
-        def mark_image_invalid(s3_uuid):
+        def mark_image_invalid(s3_uuid, error_message):
             image = LayerImage.objects.get(s3_uuid=s3_uuid)
             image.status = enums.STATUS_INVALID
+            image.error = error_message
             image.save()
             layer_id = image.layer_id
             layer = Layer.objects.get(id=layer_id)
@@ -100,10 +101,15 @@ class QueueProcessor(object):
         s3_uuid = self.extract_uuid_from_aws_key(key)
         byte_range = '0-1000000'  # Get first Mb(ish) of bytes.
         # Pass image to Gdal to verify.
-        if ensure_band_count(key, byte_range):
-            return mark_image_valid(s3_uuid)
-        else:
-            return mark_image_invalid(s3_uuid)
+        try:
+            if ensure_band_count(key, byte_range):
+                return mark_image_valid(s3_uuid)
+            else:
+                errror_message = 'Image must have three or more bands.'
+                return mark_image_invalid(s3_uuid, error_message)
+        except AttributeError:
+            errror_message = 'Image was not a valid GeoTiff file.'
+            return mark_image_invalid(s3_uuid, error_message)
 
     def reproject(self, data):
         """
@@ -159,6 +165,10 @@ class QueueProcessor(object):
             layer = Layer.objects.get(id=layer_id)
             if layer.status != enums.STATUS_COMPLETED:
                 layer.status = enums.STATUS_FAILED
+                minutes = TIMEOUT_SECONDS / 60
+                layer.error = 'Layer could not be processed. ' +
+                              'The job timed out after ' + str(minutes) +
+                              ' minutes.'
                 layer.status_updated_at = datetime.now()
                 layer.save()
         else:
