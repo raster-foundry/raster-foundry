@@ -218,7 +218,7 @@ var SignUpBox = React.createBackboneClass({
             email: this.refs.email.getValue(),
             password1: this.refs.password1.getValue(),
             password2: this.refs.password2.getValue(),
-            agreed: this.refs.agreed.getValue()
+            agreed: true // this.refs.agreed.getValue()
         };
     },
 
@@ -252,7 +252,7 @@ var SignUpBox = React.createBackboneClass({
                     <InputField name="email" displayName="Email" ref="email" type="email" value={this.getModel().get('email')}/>
                     <InputField name="password1" displayName="Password" type="password" ref="password1" value={this.getModel().get('password1')}/>
                     <InputField name="password2" displayName="Re-enter Password" type="password" ref="password2" value={this.getModel().get('password2')}/>
-                    <InputField name="agreed" displayName="I agree to something" type="checkbox" ref="agreed" value={this.getModel().get('agreed')}/>
+                    {/*<InputField className="hidden" name="agreed" displayName="I agree to something" type="checkbox" ref="agreed" value={this.getModel().get('agreed')}/>*/}
                     <div className="form-action">
                         <input type="submit" className="btn btn-secondary btn-block" value="Sign Up" />
                     </div>
