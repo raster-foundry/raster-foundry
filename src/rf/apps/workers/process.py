@@ -3,14 +3,15 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
 
-from apps.core.models import LayerImage, Layer
-import apps.core.enums as enums
-from django.conf import settings
 
 import time
-import json
-import boto.sqs
-from boto.sqs.message import Message
+from datetime import datetime
+
+from apps.core.models import LayerImage, Layer
+from apps.workers.image_validator import ensure_band_count
+from apps.workers.sqs_manager import SQSManager
+import apps.core.enums as enums
+
 
 TIMEOUT_SECONDS = (60 * 10)  # 10 Minutes.
 
@@ -34,18 +35,16 @@ class QueueProcessor(object):
     through the processing pipeline by adding new messages to the same queue.
     """
     def __init__(self):
-        self.q = self.get_queue()
+        self.queue = SQSManager()
 
     def start_polling(self):
-        while True and self.q:
-            message = self.q.read(wait_time_seconds=MAX_WAIT,
-                                  message_attributes=['All'])
-
-            if message:
+        while True and self.queue:
+            s3_message = self.queue.get_message()
+            if s3_message:
                 delete_message = False
-                body = json.loads(message.get_body())
-                if 'Records' in body and body['Records'][0]:
-                    record = body['Records'][0]
+                message = s3_message['body']
+                if 'Records' in message and message['Records'][0]:
+                    record = message['Records'][0]
                     job_type = record['eventName']
                     if job_type == JOB_REPROJECT:
                         delete_message = self.reproject(record['data'])
@@ -58,48 +57,53 @@ class QueueProcessor(object):
                         delete_message = self.check_timeout(record['data'])
                     elif job_type in JOB_VALIDATE:
                         if record['eventSource'] == 'aws:s3':
-                            delete_message = self.validate_image(record)
+                            delete_message = self._validate_image(record)
 
                 if delete_message:
-                    self.q.delete_message(message)
+                    self.queue.remove_message(s3_message)
 
-    def validate_image(self, data):
+    def _validate_image(self, data):
         """
         Use Gdal to verify an image is properly formatted and can be further
         processed.
         data -- attribute data from SQS.
         """
-        # Pass image to Gdal to verify.
-        # If it succeeds continue else return False.
-
-        key = data['s3']['object']['key']
-        payload_uuid = self.extract_uuid_from_aws_key(key)
-
-        url = self.make_s3_url(data['s3']['bucket']['name'], key)
-
-        # TODO - Right now we don't save data to the DB with upload. So hard
-        # code something for testing.
-        try:
-            image = LayerImage.objects.get(s3_uuid=payload_uuid)
-            image.status = enums.STATUS_VALIDATED
+        def mark_image_valid(s3_uuid):
+            image = LayerImage.objects.get(s3_uuid=s3_uuid)
+            image.status = enums.STATUS_VALID
             image.save()
             layer_id = image.layer_id
-        except:
-            payload_uuid = '1aa064aa-1086-4ff1-a90b-09d3420e0343'
-            layer_id = 2
 
-        data = {'url': url, 's3_uuid': payload_uuid}
-        payload = self.make_payload(JOB_REPROJECT, data)
-        self.post_to_queue(payload)
+            data = {'s3_uuid': s3_uuid}
+            self.queue.add_message(JOB_REPROJECT, data)
 
-        # Add a message to the queue that we can use to watch for timeouts.
-        data = {
-            'timeout': time.time() + TIMEOUT_SECONDS,
-            'layer_id': layer_id
-        }
-        payload = self.make_payload(JOB_TIMEOUT, data)
-        self.post_to_queue(payload, TIMEOUT_DELAY)
-        return True
+            # Add a message to the queue that we can use to watch for timeouts.
+            data = {
+                'timeout': time.time() + TIMEOUT_SECONDS,
+                'layer_id': layer_id
+            }
+            self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
+            return True
+
+        def mark_image_invalid(s3_uuid):
+            image = LayerImage.objects.get(s3_uuid=s3_uuid)
+            image.status = enums.STATUS_INVALID
+            image.save()
+            layer_id = image.layer_id
+            layer = Layer.objects.get(id=layer_id)
+            layer.status = enums.STATUS_FAILED
+            layer.status_updated_at = datetime.now()
+            layer.save()
+            return True
+
+        key = data['s3']['object']['key']
+        s3_uuid = self.extract_uuid_from_aws_key(key)
+        byte_range = '0-1000000'  # Get first Mb(ish) of bytes.
+        # Pass image to Gdal to verify.
+        if ensure_band_count(key, byte_range):
+            return mark_image_valid(s3_uuid)
+        else:
+            return mark_image_invalid(s3_uuid)
 
     def reproject(self, data):
         """
@@ -115,8 +119,7 @@ class QueueProcessor(object):
         image.save()
 
         data = {'layer_id': image.layer_id}
-        payload = self.make_payload(JOB_HANDOFF, data)
-        self.post_to_queue(payload)
+        self.queue.add_message(JOB_HANDOFF, data)
         return True
 
     def emr_hand_off(self, data):
@@ -138,6 +141,7 @@ class QueueProcessor(object):
         if ready_to_process:
             layer = Layer.objects.get(id=layer_id)
             layer.status = enums.STATUS_PROCESSING
+            layer.status_updated_at = datetime.now()
             layer.save()
 
             # POST TO EMR HERE.
@@ -149,18 +153,17 @@ class QueueProcessor(object):
         been reached.
         data -- attribute data from SQS.
         """
-
         layer_id = data['layer_id']
         timeout = data['timeout']
         if time.time() > timeout:
             layer = Layer.objects.get(id=layer_id)
-            if layer.status != enums.STATUS_COMPLETE:
+            if layer.status != enums.STATUS_COMPLETED:
                 layer.status = enums.STATUS_FAILED
+                layer.status_updated_at = datetime.now()
                 layer.save()
         else:
             # Requeue the timeout message.
-            payload = self.make_payload(JOB_TIMEOUT, data)
-            self.post_to_queue(payload, TIMEOUT_DELAY)
+            self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
 
         return True
 
@@ -175,24 +178,11 @@ class QueueProcessor(object):
 
         layer_id = data['layer_id']
         layer = Layer.objects.get(id=layer_id)
-        layer.status = enums.STATUS_COMPLETE
+        layer.status = enums.STATUS_COMPLETED
+        layer.status_updated_at = datetime.now()
         layer.save()
         # Nothing else needs to go in the queue. We're done.
         return True
-
-    def make_payload(self, job_type, data):
-        return {
-            'Records': [
-                {
-                    'eventSource': 'rf:boto',
-                    'eventName': job_type,
-                    'data': data
-                }
-            ]
-        }
-
-    def make_s3_url(self, bucket_name, key):
-        return 'https://s3.amazonaws.com/' + bucket_name + '/' + key
 
     def extract_uuid_from_aws_key(self, key):
         """
@@ -203,21 +193,3 @@ class QueueProcessor(object):
         dot = key.find('.') if key.find('.') >= 0 else len(key)
         first_dash = key.find('-')
         return key[first_dash:dot]
-
-    def get_queue(self):
-        """
-        Get a connection to the SQS queue.
-        """
-        queue_name = settings.AWS_SQS_QUEUE
-        queue_region = settings.AWS_SQS_REGION
-        conn = boto.sqs.connect_to_region(queue_region)
-        return conn.get_queue(queue_name)
-
-    def post_to_queue(self, payload, delay=DEFAULT_DELAY):
-        """
-        Create an SQS message from a payload.
-        data -- structured data representing the new SQS message.
-        """
-        m = Message()
-        m.set_body(json.dumps(payload))
-        self.q.write(m, delay)

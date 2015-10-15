@@ -10,6 +10,9 @@ STATUS_REPROJECTED = 'reprojected'
 STATUS_PROCESSING = 'processing'
 STATUS_FAILED = 'failed'
 STATUS_COMPLETED = 'completed'
+STATUS_VALID = 'valid'
+STATUS_INVALID = 'invalid'
+
 
 LAYER_STATUS_CHOICES = (
     (STATUS_CREATED, 'Created'),
@@ -24,7 +27,8 @@ LAYER_STATUS_CHOICES = (
 LAYER_IMAGE_STATUS_CHOICES = (
     (STATUS_CREATED, 'Created'),
     (STATUS_UPLOADED, 'Uploaded'),
-    (STATUS_VALIDATED, 'Validated'),
+    (STATUS_VALID, 'Valid'),
+    (STATUS_INVALID, 'Invalid'),
 )
 
 SQ_MI = 'sq. mi'
