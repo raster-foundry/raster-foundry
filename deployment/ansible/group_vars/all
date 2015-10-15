@@ -26,3 +26,5 @@ postgis_version: "2.1"
 postgis_package_version: "2.1.*.pgdg14.04+1"
 
 nodejs_npm_version: 2.1.17
+
+temp_dir: "/media/ephemeral0"

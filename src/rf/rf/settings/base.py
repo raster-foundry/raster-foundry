@@ -285,3 +285,7 @@ AWS_SQS_QUEUE = environ.get('RF_SQS_QUEUE', 'TestQueue')
 AWS_SQS_REGION = environ.get('RF_SQS_REGION', 'us-east-1')
 
 # END AWS CONFIGURATION
+
+# TEMP DIR
+TEMP_DIR = environ.get('RF_TEMP_DIR', '/tmp')
+# END TEMP DIR
