@@ -1,6 +1,7 @@
 'use strict';
 
 var _ = require('underscore'),
+    $ = require('jquery'),
     Backbone = require('../../shim/backbone'),
     L = require('leaflet'),
     utils = require('./utils');
@@ -75,6 +76,18 @@ var Layer = Backbone.Model.extend({
         return !(this.isUploading() ||
                  this.isCompleted() ||
                  this.isFailed());
+    },
+
+    isDoneWorking: function() {
+        return this.isCompleted() || this.isFailed();
+    },
+
+    dismiss: function() {
+        $.ajax({
+            url: this.get('dismiss_url'),
+            method: 'POST',
+            data: { layer_id: this.get('id') }
+        });
     }
 });
 
@@ -144,15 +157,15 @@ var BaseLayers = Backbone.Collection.extend({
 });
 
 var MyLayers = BaseLayers.extend({
-    url: '/imports.json?live=true'
+    url: '/imports.json'
 });
 
 var FavoriteLayers = BaseLayers.extend({
-    url: '/favorites.json?live=true'
+    url: '/favorites.json'
 });
 
 var PublicLayers = BaseLayers.extend({
-    url: '/catalog.json?live=true'
+    url: '/catalog.json'
 });
 
 var PendingLayers = BaseLayers.extend({
