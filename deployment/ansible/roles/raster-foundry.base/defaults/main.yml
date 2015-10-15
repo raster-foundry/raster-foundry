@@ -6,14 +6,13 @@ envdir_config:
   RF_DB_PASSWORD: "{{ postgresql_password }}"
   RF_DB_HOST: "{{ postgresql_host }}"
   RF_DB_PORT: "{{ postgresql_port }}"
-  RF_STATSD_HOST: "{{ statsite_host }}"
   RF_CACHE_HOST: "{{ redis_host }}"
   RF_CACHE_PORT: "{{ redis_port }}"
   AWS_PROFILE: "{{ aws_profile }}"
+  AWS_DEFAULT_REGION: "{{ aws_region }}"
   RF_S3_BUCKET: "{{ s3_bucket }}"
   RF_SQS_QUEUE: "{{ sqs_queue }}"
   RF_SQS_DEAD_LETTER_QUEUE: "{{ sqs_dead_letter_queue }}"
-  RF_SQS_REGION: "{{ sqs_region }}"
   RF_TEMP_DIR: "{{ temp_dir }}"
 
 django_config:

@@ -22,7 +22,6 @@ def sign_request(request):
     # BUCKET BEFORE WE SIGN THE REQUEST.
     user_id = request.user.id
     bucket_name = settings.AWS_BUCKET_NAME + '/'
-    profile = settings.AWS_PROFILE
     to_sign = str(request.REQUEST.get('to_sign'))
 
     # Extract file name from the string to sign and then extract the user
@@ -40,7 +39,7 @@ def sign_request(request):
             'all': ['User mismatch']
         })
 
-    provider = boto.provider.Provider('aws', profile_name=profile)
+    provider = boto.provider.Provider('aws')
     signer = boto.auth.HmacAuthV1Handler(None, None, provider)
     signature = signer.sign_string(to_sign)
 

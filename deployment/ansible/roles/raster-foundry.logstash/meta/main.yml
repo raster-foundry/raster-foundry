@@ -1,5 +1,0 @@
----
-dependencies:
-  - { role: "azavea.relp" }
-  - { role: "raster-foundry.elasticsearch" }
-  - { role: "azavea.logstash" }

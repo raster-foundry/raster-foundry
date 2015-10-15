@@ -23,7 +23,7 @@ def page_context(request):
 
 
 def get_client_settings():
-    conn = boto.connect_s3(profile_name=settings.AWS_PROFILE)
+    conn = boto.connect_s3()
     aws_key = conn.aws_access_key_id
     client_settings = {
         'signerUrl': reverse('sign_request'),

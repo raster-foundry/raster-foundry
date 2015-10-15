@@ -1,21 +1,14 @@
 ---
 django_test_database: "{{ lookup('env', 'RF_TEST_DB_NAME') | default('test_rf', true) }}"
-sqs_region: "{{ lookup('env', 'SQS_QUEUE_REGION') | default('us-east-1', true) }}"
 
 redis_port: 6379
 postgresql_port: 5432
-kibana_port: 5601
-relp_port: 20514
-graphite_port: 2003
-statsite_port: 8125
-apache_port: 8080
-graphite_web_port: "{{ apache_port }}"
 
 postgresql_username: rf
 postgresql_password: rf
 postgresql_database: rf
 
-aws_profile: "{{ lookup('env', 'AWS_PROFILE') | default('rf-dev', true) }}"
+aws_region: "{{ lookup('env', 'AWS_DEFAULT_REGION') | default('us-east-1', true) }}"
 
 postgresql_version: "9.4"
 postgresql_package_version: "9.4.*-1.pgdg14.04+1"
