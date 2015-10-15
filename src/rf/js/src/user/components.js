@@ -178,10 +178,10 @@ var LoginBox = React.createBackboneClass({
             <div>
                 {this.renderErrors()}
                 <div className="link-block">
-                    <a href="/forgot/" data-url="/forgot/"
-                        className="text-muted small forgot">Forgot?</a>
-                    <a href="/send-activation/" data-url="/send-activation/"
-                        className="text-muted small send-activation">Send Activation Email</a>
+                    {/*<a href="/forgot/" data-url="/forgot/"
+                        className="text-muted small forgot">Forgot?</a>*/}
+                    {/*<a href="/send-activation/" data-url="/send-activation/"
+                        className="text-muted small send-activation">Send Activation Email</a>*/}
                     <a href="/sign-up/" data-url="/sign-up/"
                         className="text-muted small sign-up">Sign Up</a>
                 </div>
@@ -238,7 +238,8 @@ var SignUpBox = React.createBackboneClass({
             content = (
                 <div>
                     <div className="user-message">
-                        Please check your email to activate your account.
+                        {/*Please check your email to activate your account.*/}
+                        Thank you for registering.
                     </div>
                     <a href="#" data-url="/login" className="btn btn-secondary btn-block">Login</a>
                 </div>
