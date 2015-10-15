@@ -61,6 +61,11 @@
 			float: right;
 		}
 
+		.rf-failed:after {
+			content: 'Failed';
+			font-style: normal;
+		}
+
 		.rf-icon-check {
 			color: $brand-primary;
 		}
