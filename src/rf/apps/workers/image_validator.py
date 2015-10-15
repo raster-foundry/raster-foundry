@@ -21,7 +21,7 @@ def ensure_band_count(key_string, byte_range=None):
     bucket = connection.get_bucket(settings.AWS_BUCKET_NAME)
     s3_key = Key(bucket)
     s3_key.key = key_string
-    random_filename = '/tmp/' + str(uuid.uuid4())
+    random_filename = os.path.join(settings.TEMP_DIR, str(uuid.uuid4()))
     with open(random_filename, 'w') as tempfile:
         if byte_range is not None:
             header_range = {'Range': 'bytes=' + byte_range}
