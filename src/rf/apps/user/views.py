@@ -81,6 +81,13 @@ def sign_up(request):
     form = RegistrationFormUniqueEmail(request.POST)
     if form.is_valid():
         user = view.register(request, form)
+
+        # TODO We are manually activating the user
+        # to avoid going through the activation process. This
+        # should be removed in the future.
+        user.is_active = True
+        user.save()
+
         return {
             'user_id': user.id
         }

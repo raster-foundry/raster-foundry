@@ -178,10 +178,10 @@ var LoginBox = React.createBackboneClass({
             <div>
                 {this.renderErrors()}
                 <div className="link-block">
-                    <a href="/forgot/" data-url="/forgot/"
-                        className="text-muted small forgot">Forgot?</a>
-                    <a href="/send-activation/" data-url="/send-activation/"
-                        className="text-muted small send-activation">Send Activation Email</a>
+                    {/*<a href="/forgot/" data-url="/forgot/"
+                        className="text-muted small forgot">Forgot?</a>*/}
+                    {/*<a href="/send-activation/" data-url="/send-activation/"
+                        className="text-muted small send-activation">Send Activation Email</a>*/}
                     <a href="/sign-up/" data-url="/sign-up/"
                         className="text-muted small sign-up">Sign Up</a>
                 </div>
@@ -218,7 +218,7 @@ var SignUpBox = React.createBackboneClass({
             email: this.refs.email.getValue(),
             password1: this.refs.password1.getValue(),
             password2: this.refs.password2.getValue(),
-            agreed: this.refs.agreed.getValue()
+            agreed: true // this.refs.agreed.getValue()
         };
     },
 
@@ -238,7 +238,8 @@ var SignUpBox = React.createBackboneClass({
             content = (
                 <div>
                     <div className="user-message">
-                        Please check your email to activate your account.
+                        {/*Please check your email to activate your account.*/}
+                        Thank you for registering.
                     </div>
                     <a href="#" data-url="/login" className="btn btn-secondary btn-block">Login</a>
                 </div>
@@ -251,7 +252,7 @@ var SignUpBox = React.createBackboneClass({
                     <InputField name="email" displayName="Email" ref="email" type="email" value={this.getModel().get('email')}/>
                     <InputField name="password1" displayName="Password" type="password" ref="password1" value={this.getModel().get('password1')}/>
                     <InputField name="password2" displayName="Re-enter Password" type="password" ref="password2" value={this.getModel().get('password2')}/>
-                    <InputField name="agreed" displayName="I agree to something" type="checkbox" ref="agreed" value={this.getModel().get('agreed')}/>
+                    {/*<InputField className="hidden" name="agreed" displayName="I agree to something" type="checkbox" ref="agreed" value={this.getModel().get('agreed')}/>*/}
                     <div className="form-action">
                         <input type="submit" className="btn btn-secondary btn-block" value="Sign Up" />
                     </div>
