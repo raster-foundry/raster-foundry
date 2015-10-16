@@ -15,7 +15,8 @@ var LayerStatusComponent = React.createBackboneClass({
             layerError = false,
             layerErrorComponent = (
                 <li>
-                    {this.getModel().get('error')} <i className="rf-icon-attention"></i>
+                    {this.getModel().get('error') ? this.getModel().get('error') : 'An unknown error occured.'}
+                    <i className="rf-icon-attention"></i>
                 </li>
             );
 
