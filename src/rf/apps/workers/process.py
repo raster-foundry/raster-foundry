@@ -56,14 +56,14 @@ class QueueProcessor(object):
                     record = message['Records'][0]
                     job_type = record['eventName']
                     if job_type == JOB_REPROJECT:
-                        delete_message = self.reproject(record['data'])
+                        delete_message = self._reproject(record['data'])
                     elif job_type == JOB_HANDOFF:
                         # May want to keep the message from showing back up
                         # on the queue by setting a new visability with
                         # message.change_visibility()
-                        delete_message = self.emr_hand_off(record['data'])
+                        delete_message = self._emr_hand_off(record['data'])
                     elif job_type == JOB_TIMEOUT:
-                        delete_message = self.check_timeout(record['data'])
+                        delete_message = self._check_timeout(record['data'])
                     elif job_type in JOB_VALIDATE:
                         if record['eventSource'] == 'aws:s3':
                             delete_message = self._validate_image(record)
@@ -108,7 +108,7 @@ class QueueProcessor(object):
             return True
 
         key = data['s3']['object']['key']
-        s3_uuid = self.extract_uuid_from_aws_key(key)
+        s3_uuid = self._extract_uuid_from_aws_key(key)
         byte_range = '0-1000000'  # Get first Mb(ish) of bytes.
 
         # Image validator thros AttributeError if it cannot read the image.
@@ -122,7 +122,7 @@ class QueueProcessor(object):
             error_message = ERROR_MESSAGE_IMAGE_NOT_VALID
             return mark_image_invalid(s3_uuid, error_message)
 
-    def reproject(self, data):
+    def _reproject(self, data):
         """
         Reproject incoming image to Web Mercator.
         data -- attribute data from SQS.
@@ -139,7 +139,7 @@ class QueueProcessor(object):
         self.queue.add_message(JOB_HANDOFF, data)
         return True
 
-    def emr_hand_off(self, data):
+    def _emr_hand_off(self, data):
         """
         Passes layer imgages to EMR to begin creating custom rasters.
         data -- attribute data from SQS.
@@ -164,7 +164,7 @@ class QueueProcessor(object):
             # POST TO EMR HERE.
         return True
 
-    def check_timeout(self, data):
+    def _check_timeout(self, data):
         """
         Check an EMR job to see if it has completed before the timeout has
         been reached.
@@ -185,7 +185,7 @@ class QueueProcessor(object):
 
         return True
 
-    def save_result(self, data):
+    def _save_result(self, data):
         """
         When an EMR job has completed updates the associated model in the
         database.
@@ -202,7 +202,7 @@ class QueueProcessor(object):
         # Nothing else needs to go in the queue. We're done.
         return True
 
-    def extract_uuid_from_aws_key(self, key):
+    def _extract_uuid_from_aws_key(self, key):
         """
         Given an AWS key, find the uuid and return it.
         AWS keys are a user id appended to a uuid with a file extension.
