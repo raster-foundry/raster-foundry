@@ -42,33 +42,34 @@ var LayerStatusComponent = React.createBackboneClass({
 
         return (
             <div className="list-group-item">
-              <div className="list-group-content">
-                <h5>{this.getModel().get('name')}</h5>
-                <ol>
-                  <li>
-                    Uploading Images <i className={uploadingClass} />
-                    <ul className="notice">
-                        {_.map(this.getModel().get('images'), function(image) {
-                            if (image.error && image.error !== '') {
-                                return (
-                                    <li key={image.s3_uuid}>
-                                        <strong>{image.file_name}</strong> {image.error}
-                                        <i className="rf-icon-attention"></i>
-                                    </li>
-                                );
-                            }
-                        })}
-                    </ul>
-                  </li>
-                  <li>Processing Tiles <i className={processingClass} /></li>
-                      <ul className="notice">
-                          {layerError ? layerErrorComponent : null}
-                      </ul>
-                </ol>
-              </div>
-              <div className="list-group-tool">
-                { actionLink }
-              </div>
+                <div className="list-group-content">
+                    <h5>{this.getModel().get('name')}</h5>
+                    <ol>
+                        <li>
+                            Uploading Images <i className={uploadingClass} />
+                            <ul className="notice">
+                                {_.map(this.getModel().get('images'), function(image) {
+                                    if (image.error && image.error !== '') {
+                                        return (
+                                            <li key={image.s3_uuid}>
+                                                <strong>{image.file_name}</strong> {image.error}
+                                                <i className="rf-icon-attention"></i>
+                                            </li>
+                                        );
+                                    }
+                                })}
+                            </ul>
+                        </li>
+                        <li>Processing Tiles <i className={processingClass} />
+                            <ul className="notice">
+                                {layerError ? layerErrorComponent : null}
+                            </ul>
+                        </li>
+                    </ol>
+                </div>
+                <div className="list-group-tool">
+                    { actionLink }
+                </div>
             </div>
         );
     },
@@ -88,17 +89,17 @@ var ProcessingBlock = React.createBackboneClass({
             return null;
         }
         return (
-          <div className="processing-block">
-            <a className="block-title collapsed" role="button" data-toggle="collapse" href="#processing-content" aria-expanded="false" aria-controls="processing-content">
-              <h5>Processing Layers</h5>
-            </a>
-            <div className="collapse" id="processing-content">
-              <div className="list-group">
-                {this.getCollection().map(function(layer) {
-                    return <LayerStatusComponent removeItem={self.removeItem} model={layer} key={layer.cid} />;
-                })}
-              </div>
-            </div>
+            <div className="processing-block">
+                <h5>
+                    <a className="block-title collapsed" role="button" data-toggle="collapse" href="#processing-content" aria-expanded="false" aria-controls="processing-content">Processing Layers</a>
+                </h5>
+                <div className="collapse" id="processing-content">
+                    <div className="list-group">
+                        {this.getCollection().map(function(layer) {
+                            return <LayerStatusComponent removeItem={self.removeItem} model={layer} key={layer.cid} />;
+                        })}
+                    </div>
+                </div>
           </div>
         );
     },
