@@ -1,6 +1,7 @@
 'use strict';
 
-var React = require('react');
+var _ = require('underscore'),
+    React = require('react');
 
 var LayerStatusComponent = React.createBackboneClass({
     render: function() {
@@ -9,19 +10,30 @@ var LayerStatusComponent = React.createBackboneClass({
             failedClass = 'rf-icon-attention rf-failed text-danger',
             uploadingClass = spinnerClass,
             processingClass = spinnerClass,
-            actionLink = (<a href="#" className="text-danger">Cancel</a>);
+            actionLink = (<a href="#" className="text-danger">Cancel</a>),
+            uploadErrorsExist = false,
+            layerError = false,
+            layerErrorComponent = (
+                <li>
+                    {this.getModel().get('error')} <i className="rf-icon-attention"></i>
+                </li>
+            );
 
         if (this.getModel().isProcessing() ||
             this.getModel().isCompleted()) {
             uploadingClass = checkClass;
         } else if (this.getModel().isFailed()) {
-            uploadingClass = failedClass;
+            uploadErrorsExist = _.some(this.getModel().get('images'), function(image) {
+                return !(image.error && image.error !== '');
+            });
+            uploadingClass = uploadErrorsExist ? failedClass : checkClass;
         }
 
         if (this.getModel().isCompleted()) {
             processingClass = checkClass;
         } else if (this.getModel().isFailed()) {
             processingClass = failedClass;
+            layerError = true;
         }
 
         if (this.getModel().isDoneWorking()) {
@@ -36,14 +48,22 @@ var LayerStatusComponent = React.createBackboneClass({
                   <li>
                     Uploading Images <i className={uploadingClass} />
                     <ul className="notice">
-                      <li><strong>fileName.tiff</strong><i className="rf-icon-attention"></i></li>
+                        {_.map(this.getModel().get('images'), function(image) {
+                            if (image.error && image.error !== '') {
+                                return (
+                                    <li key={image.s3_uuid}>
+                                        <strong>{image.file_name}</strong> {image.error}
+                                        <i className="rf-icon-attention"></i>
+                                    </li>
+                                );
+                            }
+                        })}
                     </ul>
-                    <span className="notice">
-                      <strong>Alert</strong> put anything in here and it should look fine. <i className="rf-icon-attention"></i>
-                    </span>
                   </li>
                   <li>Processing Tiles <i className={processingClass} /></li>
-                  {/* There may be need for more steps. */}
+                      <ul className="notice">
+                          {layerError ? layerErrorComponent : null}
+                      </ul>
                 </ol>
               </div>
               <div className="list-group-tool">
