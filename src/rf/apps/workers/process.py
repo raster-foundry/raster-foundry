@@ -9,7 +9,7 @@ import time
 from datetime import datetime
 
 from apps.core.models import LayerImage, Layer
-from apps.workers.image_validator import ensure_band_count
+from apps.workers.image_validator import ImageValidator
 from apps.workers.sqs_manager import SQSManager
 from apps.workers.thumbnail import make_thumbs_for_layer
 import apps.core.enums as enums
@@ -32,8 +32,6 @@ TIMEOUT_DELAY = 60
 
 # Error messages
 ERROR_MESSAGE_LAYER_IMAGE_INVALID = 'Cannot process invalid images.'
-ERROR_MESSAGE_IMAGE_NOT_VALID = 'Image was not a valid GeoTiff file.'
-ERROR_MESSAGE_IMAGE_TOO_FEW_BANDS = 'Image must have three or more bands.'
 ERROR_MESSAGE_JOB_TIMEOUT = 'Layer could not be processed. ' + \
                             'The job timed out after ' + \
                             str(math.ceil(TIMEOUT_SECONDS / 60)) + ' minutes.'
@@ -127,16 +125,14 @@ class QueueProcessor(object):
         if not LayerImage.objects.filter(s3_uuid=s3_uuid).exists():
             return True
 
-        # Image validator thros AttributeError if it cannot read the image.
-        try:
-            if ensure_band_count(key, byte_range):
-                return mark_image_valid(s3_uuid, key)
-            else:
-                error_message = ERROR_MESSAGE_IMAGE_TOO_FEW_BANDS
-                return mark_image_invalid(s3_uuid, error_message)
-        except AttributeError:
-            error_message = ERROR_MESSAGE_IMAGE_NOT_VALID
-            return mark_image_invalid(s3_uuid, error_message)
+        # Image verification.
+        validator = ImageValidator(key, byte_range)
+        if not validator.image_format_is_supported():
+            return mark_image_invalid(s3_uuid, validator.get_error())
+        elif not validator.image_has_min_bands(3):
+            return mark_image_invalid(s3_uuid, validator.get_error())
+        else:
+            return mark_image_valid(s3_uuid)
 
     def _thumbnail(self, data):
         """
@@ -160,15 +156,17 @@ class QueueProcessor(object):
         # Send data to EMR for processing.
         # return False if it fails to start.
         # EMR posts directly to queue upon competion.
-
-        layer_id = data['layer_id']
-        layer = Layer.objects.get(id=layer_id)
-        layer.status = enums.STATUS_PROCESSING
-        layer.status_updated_at = datetime.now()
-        layer.save()
+        layer_id = None
+        try:
+            layer_id = data['layer_id']
+            layer_images = LayerImage.objects.filter(layer_id=layer_id)
+            valid_images = LayerImage.objects.filter(layer_id=layer_id,
+                                                     status=enums.STATUS_VALID)
+            ready_to_process = len(layer_images) == len(valid_images)
+        except LayerImage.DoesNotExist:
+            ready_to_process = False
 
         # POST TO EMR HERE.
-
         return True
 
     def _check_timeout(self, data):
