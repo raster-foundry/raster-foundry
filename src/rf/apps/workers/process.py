@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from __future__ import division
 
 
+import math
 import time
 from datetime import datetime
 
@@ -27,6 +28,14 @@ JOB_TIMEOUT = 'timeout'
 MAX_WAIT = 20  # Seconds.
 DEFAULT_DELAY = 0
 TIMEOUT_DELAY = 60
+
+# Error messages
+ERROR_MESSAGE_LAYER_IMAGE_INVALID = 'Cannot process invalid images.'
+ERROR_MESSAGE_IMAGE_NOT_VALID = 'Image was not a valid GeoTiff file.'
+ERROR_MESSAGE_IMAGE_TOO_FEW_BANDS = 'Image must have three or more bands.'
+ERROR_MESSAGE_JOB_TIMEOUT = 'Layer could not be processed. ' + \
+                            'The job timed out after ' + \
+                            str(math.ceil(TIMEOUT_SECONDS / 60)) + ' minutes.'
 
 
 class QueueProcessor(object):
@@ -92,6 +101,7 @@ class QueueProcessor(object):
             image.save()
             layer_id = image.layer_id
             layer = Layer.objects.get(id=layer_id)
+            layer.error = ERROR_MESSAGE_LAYER_IMAGE_INVALID
             layer.status = enums.STATUS_FAILED
             layer.status_updated_at = datetime.now()
             layer.save()
@@ -100,15 +110,16 @@ class QueueProcessor(object):
         key = data['s3']['object']['key']
         s3_uuid = self.extract_uuid_from_aws_key(key)
         byte_range = '0-1000000'  # Get first Mb(ish) of bytes.
-        # Pass image to Gdal to verify.
+
+        # Image validator thros AttributeError if it cannot read the image.
         try:
             if ensure_band_count(key, byte_range):
                 return mark_image_valid(s3_uuid)
             else:
-                errror_message = 'Image must have three or more bands.'
+                error_message = ERROR_MESSAGE_IMAGE_TOO_FEW_BANDS
                 return mark_image_invalid(s3_uuid, error_message)
         except AttributeError:
-            errror_message = 'Image was not a valid GeoTiff file.'
+            error_message = ERROR_MESSAGE_IMAGE_NOT_VALID
             return mark_image_invalid(s3_uuid, error_message)
 
     def reproject(self, data):
@@ -165,10 +176,7 @@ class QueueProcessor(object):
             layer = Layer.objects.get(id=layer_id)
             if layer.status != enums.STATUS_COMPLETED:
                 layer.status = enums.STATUS_FAILED
-                minutes = TIMEOUT_SECONDS / 60
-                layer.error = 'Layer could not be processed. ' +
-                              'The job timed out after ' + str(minutes) +
-                              ' minutes.'
+                layer.error = ERROR_MESSAGE_JOB_TIMEOUT
                 layer.status_updated_at = datetime.now()
                 layer.save()
         else:
