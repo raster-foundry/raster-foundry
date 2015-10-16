@@ -173,8 +173,12 @@ class QueueProcessor(object):
         layer_id = data['layer_id']
         timeout = data['timeout']
         if time.time() > timeout:
-            layer = Layer.objects.get(id=layer_id)
-            if layer.status != enums.STATUS_COMPLETED:
+            try:
+                layer = Layer.objects.get(id=layer_id)
+            except Layer.DoesNotExist:
+                layer = None
+
+            if layer is not None and layer.status != enums.STATUS_COMPLETED:
                 layer.status = enums.STATUS_FAILED
                 layer.error = ERROR_MESSAGE_JOB_TIMEOUT
                 layer.status_updated_at = datetime.now()
