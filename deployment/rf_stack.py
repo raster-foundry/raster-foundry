@@ -4,11 +4,15 @@
 import argparse
 import os
 
-from cfn.stacks import get_config
+from cfn.stacks import build_stacks, get_config
 from packer.driver import run_packer
 
 
 current_file_dir = os.path.dirname(os.path.realpath(__file__))
+
+
+def launch_stacks(rf_config, aws_profile, **kwargs):
+    build_stacks(rf_config, aws_profile, **kwargs)
 
 
 def create_ami(rf_config, aws_profile, machine_type, **kwargs):
@@ -32,6 +36,11 @@ def main():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(title='Raster Foundry Stack '
                                              'Commands')
+
+    rf_stacks = subparsers.add_parser('launch-stacks',
+                                      help='Launch Raster Foundry Stack',
+                                      parents=[common_parser])
+    rf_stacks.set_defaults(func=launch_stacks)
 
     rf_ami = subparsers.add_parser('create-ami', help='Create AMI for Raster '
                                                       'Foundry',

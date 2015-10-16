@@ -70,3 +70,5 @@ npm-debug.log
 
 # MacOS
 .DS_Store
+
+deployment/default.yml

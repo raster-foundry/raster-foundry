@@ -1,3 +1,7 @@
+from majorkirby import GlobalConfigNode
+
+from vpc import VPC
+
 import ConfigParser
 import sys
 
@@ -22,3 +26,23 @@ def get_config(rf_config_path, profile):
         sys.exit(1)
 
     return {k: v.strip('"').strip("'") for k, v in section}
+
+
+def build_graph(rf_config, aws_profile, **kwargs):
+    """
+    Builds graphs for all of the Raster Foundry stacks
+    Args:
+      rf_config (dict): dictionary representation of `default.yml`
+      aws_profile (str): name of AWS profile to use for authentication
+    """
+    global_config = GlobalConfigNode(**rf_config)
+    vpc = VPC(globalconfig=global_config, aws_profile=aws_profile)
+
+    return vpc
+
+
+def build_stacks(rf_config, aws_profile, **kwargs):
+    """Trigger actual building of graphs"""
+    vpc_graph = build_graph(rf_config, aws_profile, **kwargs)
+
+    vpc_graph.go()
