@@ -116,6 +116,11 @@ class Layer(Model):
         blank=True,
         help_text='400x150 pixels',
     )
+    error = CharField(
+        blank=True,
+        max_length=255,
+        help_text='Error that occured while processing the layer.',
+    )
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
@@ -154,6 +159,7 @@ class Layer(Model):
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
             'status_updated_at': self.created_at.isoformat(),
+            'error': self.error,
 
             'thumb_small': self.thumb_small,
             'thumb_large': self.thumb_large,
@@ -270,6 +276,11 @@ class LayerImage(Model):
         default=enums.STATUS_CREATED,
         help_text='Image processing workflow status of the image',
     )
+    error = CharField(
+        blank=True,
+        max_length=255,
+        help_text='Error that occured while processing the file.',
+    )
 
     def to_json(self):
         return {
@@ -281,6 +292,7 @@ class LayerImage(Model):
             's3_uuid': str(self.s3_uuid),
             'file_extension': self.file_extension,
             'bucket_name': self.bucket_name,
+            'error': self.error,
         }
 
 
