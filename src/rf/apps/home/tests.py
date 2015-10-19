@@ -11,6 +11,7 @@ from django.test.client import Client
 from django.core.urlresolvers import reverse
 
 from apps.core.models import Layer, LayerMeta, UserFavoriteLayer
+from apps.core import enums
 
 
 class AbstractLayerTestCase(TestCase):
@@ -64,9 +65,11 @@ class AbstractLayerTestCase(TestCase):
 
     def save_layer(self, layer, user):
         url = reverse('create_layer', kwargs={'username': user.username})
-        return self.client.post(url,
-                                json.dumps(layer),
-                                content_type='application/json')
+        response = self.client.post(url,
+                                    json.dumps(layer),
+                                    content_type='application/json')
+        Layer.objects.all().update(status=enums.STATUS_COMPLETED)
+        return response
 
     def setup_models(self):
         """
@@ -96,6 +99,8 @@ class AbstractLayerTestCase(TestCase):
                 layer_name = username + ' Public Layer ' + str(i)
                 layer = self.make_layer(layer_name, is_public=True)
                 self.save_layer(layer, user)
+
+        Layer.objects.all().update(status=enums.STATUS_COMPLETED)
 
 
 class LayerTestCase(AbstractLayerTestCase):
@@ -206,7 +211,7 @@ class LayerTestCase(AbstractLayerTestCase):
 
     def test_list_layers_with_sorting_from_logged_in_user(self):
         url = reverse('user_layers', kwargs={'username': self.logged_in_user})
-        url += '?ordering=name'
+        url += '?o=name'
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         layers = response.data['layers']

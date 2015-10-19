@@ -8,7 +8,8 @@ var LayerStatusComponent = React.createBackboneClass({
             spinnerClass = 'rf-icon-loader animate-spin',
             failedClass = 'rf-icon-cancel text-danger',
             uploadingClass = spinnerClass,
-            processingClass = spinnerClass;
+            processingClass = spinnerClass,
+            actionLink = (<a href="#" className="text-danger">Cancel</a>);
 
         if (this.getModel().isProcessing() ||
             this.getModel().isCompleted()) {
@@ -23,6 +24,10 @@ var LayerStatusComponent = React.createBackboneClass({
             processingClass = failedClass;
         }
 
+        if (this.getModel().isDoneWorking()) {
+            actionLink = (<a onClick={this.dismiss}>Dismiss</a>);
+        }
+
         return (
             <div className="list-group-item">
               <div className="list-group-content">
@@ -34,15 +39,23 @@ var LayerStatusComponent = React.createBackboneClass({
                 </ol>
               </div>
               <div className="list-group-tool">
-                <a href="#" className="text-danger">Cancel</a>
+                { actionLink }
               </div>
             </div>
         );
+    },
+
+    dismiss: function(e) {
+        e.preventDefault();
+        var model = this.getModel();
+        model.dismiss();
+        this.props.removeItem(model);
     }
 });
 
 var ProcessingBlock = React.createBackboneClass({
     render: function() {
+        var self = this;
         if (this.getCollection().length === 0) {
             return null;
         }
@@ -54,12 +67,16 @@ var ProcessingBlock = React.createBackboneClass({
             <div className="collapse" id="processing-content">
               <div className="list-group">
                 {this.getCollection().map(function(layer) {
-                    return <LayerStatusComponent model={layer} key={layer.cid} />;
+                    return <LayerStatusComponent removeItem={self.removeItem} model={layer} key={layer.cid} />;
                 })}
               </div>
             </div>
           </div>
         );
+    },
+
+    removeItem: function(model) {
+        this.getCollection().remove(model);
     }
 });
 

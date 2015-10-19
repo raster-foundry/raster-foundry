@@ -167,6 +167,7 @@ class Layer(Model):
             'url': self.get_absolute_url(),
             'meta_url': self.get_meta_url(),
             'favorite_url': self.get_favorite_url(),
+            'dismiss_url': self.get_dismiss_url(),
 
             # TODO: Replace with actual tiles URL.
             'tile_url': 'https://s3.amazonaws.com/raster-foundry-tiles/test_tiles/{z}/{x}/{y}.png',  # NOQA
@@ -191,6 +192,9 @@ class Layer(Model):
             'layer_id': self.id,
         }
         return reverse('create_or_destroy_favorite', kwargs=kwargs)
+
+    def get_dismiss_url(self):
+        return reverse('layer_dismiss')
 
     def __unicode__(self):
         return '{0} -> {1}'.format(self.user.username, self.name)
