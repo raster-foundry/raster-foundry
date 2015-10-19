@@ -57,11 +57,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       guest: 5433,
       host: 5433
     }.merge(VAGRANT_NETWORK_OPTIONS)
-    # Redis
-    services.vm.network "forwarded_port", {
-      guest: 6379,
-      host: 6379
-    }.merge(VAGRANT_NETWORK_OPTIONS)
 
     services.vm.provider "virtualbox" do |v|
       v.memory = 1024
@@ -128,7 +123,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     worker.vm.synced_folder ".", "/vagrant", disabled: true
 
     worker.vm.synced_folder "src/rf", "/opt/app/"
-    
+
     if File.directory?("#{ENV['HOME']}/.aws")
       worker.vm.synced_folder "#{ENV['HOME']}/.aws", "/home/vagrant/.aws/"
     else

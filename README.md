@@ -11,7 +11,6 @@ The `app` virtual machine contains an instance of the Django application, `servi
 
 - PostgreSQL
 - Pgweb
-- Redis
 - Logstash
 - Kibana
 - Graphite
@@ -74,7 +73,6 @@ Graphite Dashboard     | 8080 | [http://localhost:8080](http://localhost:8080)
 Kibana Dashboard       | 5601 | [http://localhost:5601](http://localhost:5601)
 PostgreSQL             | 5432 | `psql -h localhost`
 pgweb                  | 5433 | [http://localhost:5433](http://localhost:5433)
-Redis                  | 6379 | `redis-cli -h localhost 6379`
 Testem                 | 7357 | [http://localhost:7357](http://localhost:7357)
 
 ### Caching

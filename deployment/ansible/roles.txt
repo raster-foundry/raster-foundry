@@ -11,4 +11,3 @@ azavea.pip,0.1.1
 azavea.postgis,0.2.1
 azavea.postgresql,0.3.0
 azavea.postgresql-support,0.2.0
-azavea.redis,0.1.0

@@ -1,8 +1,6 @@
 ---
 django_settings_module: "rf.settings.test"
 
-redis_bind_address: "0.0.0.0"
-
 aws_profile: "{{ lookup('env', 'AWS_PROFILE') | default('rf-dev', true) }}"
 
 postgresql_listen_addresses: "*"
@@ -11,7 +9,6 @@ postgresql_hba_mapping:
 
 services_ip: "{{ lookup('env', 'RF_SERVICES_IP') | default('33.33.40.80', true) }}"
 
-redis_host: "{{ services_ip }}"
 postgresql_host: "{{ services_ip }}"
 
 sqs_queue: "raster-foundry-jenkins"

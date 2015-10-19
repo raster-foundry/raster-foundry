@@ -1,7 +1,6 @@
 ---
 django_test_database: "{{ lookup('env', 'RF_TEST_DB_NAME') | default('test_rf', true) }}"
 
-redis_port: 6379
 postgresql_port: 5432
 
 postgresql_username: rf
