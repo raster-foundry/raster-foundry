@@ -11,6 +11,7 @@ from datetime import datetime
 from apps.core.models import LayerImage, Layer
 from apps.workers.image_validator import ensure_band_count
 from apps.workers.sqs_manager import SQSManager
+from apps.workers.thumbnail import make_thumbs_for_layer
 import apps.core.enums as enums
 
 
@@ -21,7 +22,7 @@ JOB_VALIDATE = [
     'ObjectCreated:Put',
     'ObjectCreated:Post'
 ]
-JOB_REPROJECT = 'reproject'
+JOB_THUMBNAIL = 'thumbnail'
 JOB_HANDOFF = 'emr_handoff'
 JOB_TIMEOUT = 'timeout'
 
@@ -55,8 +56,8 @@ class QueueProcessor(object):
                 if 'Records' in message and message['Records'][0]:
                     record = message['Records'][0]
                     job_type = record['eventName']
-                    if job_type == JOB_REPROJECT:
-                        delete_message = self._reproject(record['data'])
+                    if job_type == JOB_THUMBNAIL:
+                        delete_message = self._thumbnail(record['data'])
                     elif job_type == JOB_HANDOFF:
                         # May want to keep the message from showing back up
                         # on the queue by setting a new visability with
@@ -77,14 +78,25 @@ class QueueProcessor(object):
         processed.
         data -- attribute data from SQS.
         """
-        def mark_image_valid(s3_uuid):
+        def mark_image_valid(s3_uuid, key):
             image = LayerImage.objects.get(s3_uuid=s3_uuid)
             image.status = enums.STATUS_VALID
             image.save()
-            layer_id = image.layer_id
 
-            data = {'s3_uuid': s3_uuid}
-            self.queue.add_message(JOB_REPROJECT, data)
+            layer_id = image.layer_id
+            layer = image.layer
+            layer_images = LayerImage.objects.filter(layer_id=layer_id)
+            validated_images = LayerImage.objects.filter(
+                layer_id=layer_id,
+                status=enums.STATUS_VALID)
+            all_validated = len(validated_images) == len(layer_images)
+            if all_validated:
+                layer.status = enums.STATUS_VALID
+                layer.status_updated_at = datetime.now()
+                layer.save()
+
+                data = {'layer_id': layer_id}
+                self.queue.add_message(JOB_THUMBNAIL, data)
 
             # Add a message to the queue that we can use to watch for timeouts.
             data = {
@@ -111,10 +123,14 @@ class QueueProcessor(object):
         s3_uuid = self._extract_uuid_from_aws_key(key)
         byte_range = '0-1000000'  # Get first Mb(ish) of bytes.
 
+        # Ignore thumbnails.
+        if not LayerImage.objects.filter(s3_uuid=s3_uuid).exists():
+            return True
+
         # Image validator thros AttributeError if it cannot read the image.
         try:
             if ensure_band_count(key, byte_range):
-                return mark_image_valid(s3_uuid)
+                return mark_image_valid(s3_uuid, key)
             else:
                 error_message = ERROR_MESSAGE_IMAGE_TOO_FEW_BANDS
                 return mark_image_invalid(s3_uuid, error_message)
@@ -122,21 +138,18 @@ class QueueProcessor(object):
             error_message = ERROR_MESSAGE_IMAGE_NOT_VALID
             return mark_image_invalid(s3_uuid, error_message)
 
-    def _reproject(self, data):
+    def _thumbnail(self, data):
         """
-        Reproject incoming image to Web Mercator.
+        Generate thumbnails for all images.
         data -- attribute data from SQS.
         """
-        # Pass image to Gdal to reproject
-        # If it succeeds continue else return False.
 
-        s3_uuid = data['s3_uuid']
-        image = LayerImage.objects.get(s3_uuid=s3_uuid)
-        image.status = enums.STATUS_REPROJECTED
-        image.save()
+        layer_id = data['layer_id']
+        make_thumbs_for_layer(layer_id)
 
-        data = {'layer_id': image.layer_id}
+        data = {'layer_id': layer_id}
         self.queue.add_message(JOB_HANDOFF, data)
+
         return True
 
     def _emr_hand_off(self, data):
@@ -144,24 +157,18 @@ class QueueProcessor(object):
         Passes layer imgages to EMR to begin creating custom rasters.
         data -- attribute data from SQS.
         """
-        # If all the images are ready send data to EMR for processing.
+        # Send data to EMR for processing.
         # return False if it fails to start.
         # EMR posts directly to queue upon competion.
 
         layer_id = data['layer_id']
-        layer_images = LayerImage.objects.filter(layer_id=layer_id)
-        reprojected_images = LayerImage.objects.filter(
-            layer_id=layer_id,
-            status=enums.STATUS_REPROJECTED)
-        ready_to_process = len(layer_images) == len(reprojected_images)
+        layer = Layer.objects.get(id=layer_id)
+        layer.status = enums.STATUS_PROCESSING
+        layer.status_updated_at = datetime.now()
+        layer.save()
 
-        if ready_to_process:
-            layer = Layer.objects.get(id=layer_id)
-            layer.status = enums.STATUS_PROCESSING
-            layer.status_updated_at = datetime.now()
-            layer.save()
+        # POST TO EMR HERE.
 
-            # POST TO EMR HERE.
         return True
 
     def _check_timeout(self, data):
