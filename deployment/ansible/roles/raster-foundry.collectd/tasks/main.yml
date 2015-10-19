@@ -1,7 +1,0 @@
-- name: Configure Collectd plugins
-  template: src={{ item }}.conf.j2 dest=/etc/collectd/collectd.conf.d/{{ item }}.conf
-  with_items:
-    - syslog
-    - write_graphite
-  notify:
-    - Restart Collectd

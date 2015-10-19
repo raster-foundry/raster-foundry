@@ -56,8 +56,7 @@ class SQSManager(object):
         Get a connection to the SQS queue.
         """
         queue_name = settings.AWS_SQS_QUEUE
-        queue_region = settings.AWS_SQS_REGION
-        conn = boto.sqs.connect_to_region(queue_region)
+        conn = boto.connect_sqs()
         return conn.get_queue(queue_name)
 
     def _post_to_queue(self, payload, delay=DEFAULT_DELAY):

@@ -1,14 +1,7 @@
-azavea.beaver,0.1.3
 azavea.build-essential,0.1.0
-azavea.collectd,0.2.0
-azavea.curator,0.1.0
 azavea.daemontools,0.1.0
-azavea.elasticsearch,0.2.0
 azavea.git,0.1.0
-azavea.graphite,0.5.0
 azavea.java,0.2.3
-azavea.kibana,0.3.1
-azavea.logstash,0.1.0
 azavea.nginx,0.2.1
 azavea.nodejs,0.3.0
 azavea.ntp,0.1.1
@@ -19,5 +12,3 @@ azavea.postgis,0.2.1
 azavea.postgresql,0.3.0
 azavea.postgresql-support,0.2.0
 azavea.redis,0.1.0
-azavea.relp,0.1.2
-azavea.statsite,0.1.1

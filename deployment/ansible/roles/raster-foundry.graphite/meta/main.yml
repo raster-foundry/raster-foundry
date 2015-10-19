@@ -1,4 +1,0 @@
----
-dependencies:
-- { role: "azavea.graphite" }
-- { role: "azavea.statsite" }

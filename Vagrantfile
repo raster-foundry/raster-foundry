@@ -12,8 +12,7 @@ end
 ANSIBLE_GROUPS = {
   "app-servers" => [ "app" ],
   "services" => [ "services" ],
-  "workers" => [ "worker" ],
-  "monitoring-servers" => [ "services" ]
+  "workers" => [ "worker" ]
 }
 
 if !ENV["VAGRANT_ENV"].nil? && ENV["VAGRANT_ENV"] == "TEST"
@@ -48,16 +47,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     services.vm.synced_folder ".", "/vagrant", disabled: true
 
-    # Graphite Web
-    services.vm.network "forwarded_port", {
-      guest: 8080,
-      host: 8080
-    }.merge(VAGRANT_NETWORK_OPTIONS)
-    # Kibana
-    services.vm.network "forwarded_port", {
-      guest: 5601,
-      host: 5601
-    }.merge(VAGRANT_NETWORK_OPTIONS)
     # PostgreSQL
     services.vm.network "forwarded_port", {
       guest: 5432,

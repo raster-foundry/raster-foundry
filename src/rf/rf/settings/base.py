@@ -223,8 +223,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django_statsd.middleware.GraphiteRequestTimingMiddleware',
-    'django_statsd.middleware.GraphiteMiddleware',
 )
 # END MIDDLEWARE CONFIGURATION
 
@@ -277,14 +275,14 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 WSGI_APPLICATION = '%s.wsgi.application' % SITE_NAME
 # END WSGI CONFIGURATION
 
+
 # AWS CONFIGURATION
-
 AWS_BUCKET_NAME = environ.get('RF_S3_BUCKET', 'raster-foundry-test-uploads-67dc48c70b3bcf89eab78dbf5cf7900')  # NOQA
-AWS_PROFILE = environ.get('AWS_PROFILE', 'rf-dev')
 AWS_SQS_QUEUE = environ.get('RF_SQS_QUEUE', 'TestQueue')
-AWS_SQS_REGION = environ.get('RF_SQS_REGION', 'us-east-1')
-
+AWS_SQS_DEAD_LETTER_QUEUE = environ.get('RF_SQS_DEAD_LETTER_QUEUE',
+                                        'TestDeadLetterQueue')
 # END AWS CONFIGURATION
+
 
 # TEMP DIR
 TEMP_DIR = environ.get('RF_TEMP_DIR', '/tmp')
