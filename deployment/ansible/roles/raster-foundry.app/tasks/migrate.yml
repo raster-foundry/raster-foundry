@@ -1,0 +1,12 @@
+---
+- name: Create Django database cache table
+  django_manage: command=createcachetable app_path="{{ django_home }}"
+  environment: django_config
+  sudo: False
+  when: "['development', 'test'] | some_are_in(group_names)"
+
+- name: Run Django database migrations
+  django_manage: command=migrate app_path="{{ django_home }}"
+  environment: django_config
+  sudo: False
+  when: "['development', 'test'] | some_are_in(group_names)"

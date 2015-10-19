@@ -7,3 +7,4 @@
 - { include: static-files.yml }
 - { include: reverse-proxy.yml }
 - { include: log-rotation.yml }
+- { include: migrate.yml }
