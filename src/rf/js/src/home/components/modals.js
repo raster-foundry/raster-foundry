@@ -47,19 +47,20 @@ var UploadModal = React.createBackboneClass({
 
     getInitialServerErrors: function() {
         return {
-            name: []
         };
     },
 
     pane1Valid: function(clientErrors) {
-        return clientErrors.files.length == 0;
+        return clientErrors.files.length === 0;
     },
 
     pane2Valid: function(clientErrors, serverErrors) {
         return clientErrors.name.length === 0 &&
             clientErrors.organization.length === 0 &&
             clientErrors.area.length === 0 &&
-            serverErrors.name.length === 0 &&
+            _.isEmpty(serverErrors.name) &&
+            _.isEmpty(serverErrors.capture_start) &&
+            _.isEmpty(serverErrors.capture_end) &&
             clientErrors.description.length === 0 &&
             clientErrors.capture_start.length === 0 &&
             clientErrors.capture_end.length === 0;
@@ -266,8 +267,10 @@ var UploadModal = React.createBackboneClass({
     getServerErrors: function(responseJSON) {
         var errors = this.getInitialServerErrors();
 
-        if (responseJSON.errors.name) {
-            errors.name = responseJSON.errors.name;
+        if (responseJSON.errors) {
+            _.each(_.keys(responseJSON.errors), function(key) {
+                errors[key] = responseJSON.errors[key];
+            });
         }
 
         return errors;
@@ -277,11 +280,19 @@ var UploadModal = React.createBackboneClass({
         // serverErrors should be removed if the input
         // value that led to the error has been changed.
         // Of course, the new value could still lead to a server error later.
-        var errors = this.state.serverErrors;
+        var errors = this.state.serverErrors,
+            self = this;
         if (this.submittedLayerData) {
-            if (this.submittedLayerData.name != layerData.name) {
-                errors.name = [];
-            }
+            // Loop over all they keys in the submitted data, if any have an
+            // associated error then check to see if the data is different and
+            // if so zero out the error.
+            _.each(_.keys(this.submittedLayerData), function(key) {
+                if (!_.isEmpty(errors[key])) {
+                    if (self.submittedLayerData[key] !== layerData[key]) {
+                        errors[key] = [];
+                    }
+                }
+            });
         }
         return errors;
     },
@@ -512,16 +523,18 @@ var UploadModal = React.createBackboneClass({
                                         <div className="col-md-6">
                                             <div className="form-group">
                                                 <label>Capture Start Date</label>
-                                                <input className="form-control" type="date" ref="capture_start" />
+                                                <input className="form-control" type="date" ref="capture_start" placeholder="mm/dd/yyyy" />
                                                 {this.renderErrors(this.state.showPane2ClientErrors, this.state.clientErrors.capture_start)}
                                                 {this.renderErrors(this.state.showPane2ClientErrors, this.state.clientErrors.capture_dates)}
+                                                {this.renderErrors(true, this.state.serverErrors.capture_start)}
                                             </div>
                                         </div>
                                         <div className="col-md-6">
                                             <div className="form-group">
                                                 <label>Capture End Date</label>
-                                                <input className="form-control" type="date" ref="capture_end"/>
+                                                <input className="form-control" type="date" ref="capture_end" placeholder="mm/dd/yyyy"/>
                                                 {this.renderErrors(this.state.showPane2ClientErrors, this.state.clientErrors.capture_end)}
+                                                {this.renderErrors(true, this.state.serverErrors.capture_end)}
                                             </div>
                                         </div>
                                     </div>
