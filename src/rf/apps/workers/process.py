@@ -6,6 +6,7 @@ from __future__ import division
 
 import math
 import time
+import uuid
 
 from apps.core.models import LayerImage, Layer
 from apps.workers.image_validator import ImageValidator
@@ -54,21 +55,11 @@ class QueueProcessor(object):
                     record = message['Records'][0]
                     job_type = record['eventName']
                     if job_type == JOB_THUMBNAIL:
-                        delete_message = self._thumbnail(record['data'])
+                        delete_message = self._thumbnail(record)
                     elif job_type == JOB_HANDOFF:
-                        # May want to keep the message from showing back up
-                        # on the queue by setting a new visability with
-                        # message.change_visibility()
-                        try:
-                            delete_message = self._emr_hand_off(record['data'])
-                        except KeyError:
-                            delete_message = False
+                        delete_message = self._emr_hand_off(record)
                     elif job_type == JOB_TIMEOUT:
-                        try:
-                            delete_message = \
-                                self._check_timeout(record['data'])
-                        except KeyError:
-                            delete_message = False
+                        delete_message = self._check_timeout(record)
                     elif job_type in JOB_VALIDATE:
                         if record['eventSource'] == 'aws:s3':
                             delete_message = self._validate_image(record)
@@ -88,12 +79,16 @@ class QueueProcessor(object):
             return False
 
         s3_uuid = self._extract_uuid_from_aws_key(key)
-        byte_range = '0-1000000'  # Get first Mb(ish) of bytes.
+        try:
+            uuid.UUID(s3_uuid)
+        except ValueError:
+            return False
 
         # Ignore thumbnails.
         if not LayerImage.objects.filter(s3_uuid=s3_uuid).exists():
             return True
 
+        byte_range = '0-1000000'  # Get first Mb(ish) of bytes.
         # Image verification.
         validator = ImageValidator(key, byte_range)
         if not validator.image_format_is_supported():
@@ -117,11 +112,21 @@ class QueueProcessor(object):
                 self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
             return updated
 
-    def _thumbnail(self, data):
+    def _thumbnail(self, record):
         """
         Generate thumbnails for all images.
         data -- attribute data from SQS.
         """
+        try:
+            data = record['data']
+            layer_id = data['layer_id']
+        except KeyError:
+            return False
+
+        try:
+            int(layer_id)
+        except ValueError:
+            return False
 
         layer_id = data['layer_id']
         make_thumbs_for_layer(layer_id)
@@ -131,7 +136,7 @@ class QueueProcessor(object):
 
         return True
 
-    def _emr_hand_off(self, data):
+    def _emr_hand_off(self, record):
         """
         Passes layer imgages to EMR to begin creating custom rasters.
         data -- attribute data from SQS.
@@ -139,35 +144,50 @@ class QueueProcessor(object):
         # Send data to EMR for processing.
         # return False if it fails to start.
         # EMR posts directly to queue upon competion.
-        layer_id = None
         try:
+            data = record['data']
             layer_id = data['layer_id']
-            layer_images = LayerImage.objects.filter(layer_id=layer_id)
-            valid_images = LayerImage.objects.filter(layer_id=layer_id,
-                                                     status=enums.STATUS_VALID)
-            ready_to_process = len(layer_images) == len(valid_images)
-        except (LayerImage.DoesNotExist, KeyError):
+        except KeyError:
             return False
 
+        try:
+            int(layer_id)
+        except ValueError:
+            return False
+
+        layer_images = LayerImage.objects.filter(layer_id=layer_id)
+        valid_images = LayerImage.objects.filter(layer_id=layer_id,
+                                                 status=enums.STATUS_VALID)
+        all_valid = len(layer_images) == len(valid_images)
+        some_images = len(layer_images) > 0
+        ready_to_process = some_images and all_valid
+
         if ready_to_process:
-            status_updates.update_layer_status(layer_id,
-                                               enums.STATUS_PROCESSING)
-
+            return status_updates.update_layer_status(layer_id,
+                                                      enums.STATUS_PROCESSING)
             # POST TO EMR HERE.
-        return True
+        else:
+            return some_images
 
-    def _check_timeout(self, data):
+    def _check_timeout(self, record):
         """
         Check an EMR job to see if it has completed before the timeout has
         been reached.
         data -- attribute data from SQS.
         """
         try:
+            data = record['data']
             layer_id = data['layer_id']
             timeout = data['timeout']
         except KeyError:
             # A bad message showed up. Leave it alone. Eventually it'll end
             # in the dead letter queue.
+            return False
+
+        try:
+            int(layer_id)
+            float(timeout)
+        except ValueError:
             return False
 
         if time.time() > timeout:
@@ -177,28 +197,37 @@ class QueueProcessor(object):
                 return False
 
             if layer is not None and layer.status != enums.STATUS_COMPLETED:
-                status_updates.update_layer_status(layer_id,
-                                                   enums.STATUS_FAILED,
-                                                   ERROR_MESSAGE_JOB_TIMEOUT)
+                return status_updates \
+                    .update_layer_status(layer_id,
+                                         enums.STATUS_FAILED,
+                                         ERROR_MESSAGE_JOB_TIMEOUT)
         else:
             # Requeue the timeout message.
             self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
 
         return True
 
-    def _save_result(self, data):
+    def _save_result(self, record):
         """
         When an EMR job has completed updates the associated model in the
         database.
         data -- attribute data from SQS.
         """
+        try:
+            data = record['data']
+            layer_id = data['layer_id']
+        except KeyError:
+            return False
+
+        try:
+            int(layer_id)
+        except ValueError:
+            return False
 
         # Update our server with data necessary for tile serving.
-
-        status_updates.update_layer_status(data['layer_id'],
-                                           enums.STATUS_COMPLETED)
         # Nothing else needs to go in the queue. We're done.
-        return True
+        return status_updates.update_layer_status(data['layer_id'],
+                                                  enums.STATUS_COMPLETED)
 
     def _extract_uuid_from_aws_key(self, key):
         """
