@@ -9,4 +9,3 @@
   roles:
     - { role: "raster-foundry.postgresql", when: "['development', 'test'] | some_are_in(group_names)" }
     - { role: "raster-foundry.pgweb", when: "['development', 'test'] | some_are_in(group_names)" }
-    - { role: "azavea.redis", when: "['development', 'test'] | some_are_in(group_names)" }

@@ -1,14 +1,22 @@
 class FilterModule(object):
     '''
-    Custom filters to guard specific Ansible task by environment using set-like
-    operations.
+    Custom filters for set operations on lists:
+
+        - is_not_in
+        - is_in
+        - some_are_into
+
+    And dictionary merging:
+
+        - combine
     '''
 
     def filters(self):
         return {
             'is_not_in': self.is_not_in,
             'is_in': self.is_in,
-            'some_are_in': self.some_are_in
+            'some_are_in': self.some_are_in,
+            'combine': self.combine,
         }
 
     def is_not_in(self, x, y):
@@ -17,7 +25,8 @@ class FilterModule(object):
             x | is_not_in(y)
 
         Arguments
-        :param t: A tuple with two elements (x and y)
+        :param x: A list
+        :param y: A list
         """
         return set(x).isdisjoint(set(y))
 
@@ -27,7 +36,8 @@ class FilterModule(object):
             x | is_in(y)
 
         Arguments
-        :param t: A tuple with two elements (x and y)
+        :param x: A list
+        :param y: A list
         """
         return set(x).issubset(set(y))
 
@@ -37,6 +47,20 @@ class FilterModule(object):
             x | some_are_in(y)
 
         Arguments
-        :param t: A tuple with two elements (x and y)
+        :param x: A list
+        :param y: A list
         """
         return len(set(x) & set(y)) > 0
+
+    def combine(self, x, y):
+        """Combines the dictionary x with the key/value pairs from y
+
+            x | combine(y)
+
+        Arguments
+        :param x: A dictionary
+        :param y: A dictionary
+        """
+        x.update(y)
+
+        return x

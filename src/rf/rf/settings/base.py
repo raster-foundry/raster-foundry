@@ -59,20 +59,10 @@ DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#caches
 CACHES = {
     'default': {
-        # The Redis database at index 0 is used by Logstash/Beaver
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://{0}:{1}/1'.format(
-            environ.get('RF_CACHE_HOST', 'localhost'),
-            environ.get('RF_CACHE_PORT', 6379)),
-        'OPTIONS': {
-            'PARSER_CLASS': 'redis.connection.HiredisParser',
-            'SOCKET_TIMEOUT': 3,
-        }
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'rf_cache',
     }
 }
-
-# Don't throw exceptions if Redis is down.
-DJANGO_REDIS_IGNORE_EXCEPTIONS = True
 # END CACHE CONFIGURATION
 
 
