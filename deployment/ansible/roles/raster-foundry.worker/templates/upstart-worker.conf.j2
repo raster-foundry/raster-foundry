@@ -11,4 +11,4 @@ respawn
 setuid rf
 chdir {{ django_home }}
 
-exec python -mSimpleHTTPServer >> {{ log_path }} 2>&1
+exec envdir /etc/rf.d/env python ./manage.py poll >> {{ log_path }} 2>&1
