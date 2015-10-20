@@ -36,7 +36,9 @@ class ImageValidator(object):
             bucket = connection.get_bucket(settings.AWS_BUCKET_NAME)
             s3_key = Key(bucket)
             s3_key.key = key_string
-            self.random_filename = os.path.join(settings.TEMP_DIR, str(uuid.uuid4()))
+            self.random_filename = os.path.join(
+                settings.TEMP_DIR, str(uuid.uuid4()))
+
             with open(self.random_filename, 'w') as tempfile:
                 if byte_range is not None:
                     header_range = {'Range': 'bytes=' + byte_range}
@@ -71,8 +73,8 @@ class ImageValidator(object):
             raster_ok = validator.RasterCount >= band_count
             if not raster_ok:
                 self.error = ERROR_MESSAGE_IMAGE_TOO_FEW_BANDS + \
-                             ' A minimum of ' + str(band_count) + \
-                             ' bands are needed for processing.'
+                    ' A minimum of ' + str(band_count) + \
+                    ' bands are needed for processing.'
         except AttributeError:
             self.error = ERROR_MESSAGE_IMAGE_NOT_VALID
             raster_ok = False
@@ -91,4 +93,4 @@ class ImageValidator(object):
         return supported
 
     def get_error(self):
-        return self.error;
+        return self.error

@@ -6,14 +6,13 @@ from __future__ import division
 
 import math
 import time
-from datetime import datetime
 
 from apps.core.models import LayerImage, Layer
 from apps.workers.image_validator import ImageValidator
 from apps.workers.sqs_manager import SQSManager
 from apps.workers.thumbnail import make_thumbs_for_layer
 import apps.core.enums as enums
-
+import apps.workers.status_updates as status_updates
 
 TIMEOUT_SECONDS = (60 * 10)  # 10 Minutes.
 
@@ -76,47 +75,6 @@ class QueueProcessor(object):
         processed.
         data -- attribute data from SQS.
         """
-        def mark_image_valid(s3_uuid, key):
-            image = LayerImage.objects.get(s3_uuid=s3_uuid)
-            image.status = enums.STATUS_VALID
-            image.save()
-
-            layer_id = image.layer_id
-            layer = image.layer
-            layer_images = LayerImage.objects.filter(layer_id=layer_id)
-            validated_images = LayerImage.objects.filter(
-                layer_id=layer_id,
-                status=enums.STATUS_VALID)
-            all_validated = len(validated_images) == len(layer_images)
-            if all_validated:
-                layer.status = enums.STATUS_VALID
-                layer.status_updated_at = datetime.now()
-                layer.save()
-
-                data = {'layer_id': layer_id}
-                self.queue.add_message(JOB_THUMBNAIL, data)
-
-            # Add a message to the queue that we can use to watch for timeouts.
-            data = {
-                'timeout': time.time() + TIMEOUT_SECONDS,
-                'layer_id': layer_id
-            }
-            self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
-            return True
-
-        def mark_image_invalid(s3_uuid, error_message):
-            image = LayerImage.objects.get(s3_uuid=s3_uuid)
-            image.status = enums.STATUS_INVALID
-            image.error = error_message
-            image.save()
-            layer_id = image.layer_id
-            layer = Layer.objects.get(id=layer_id)
-            layer.error = ERROR_MESSAGE_LAYER_IMAGE_INVALID
-            layer.status = enums.STATUS_FAILED
-            layer.status_updated_at = datetime.now()
-            layer.save()
-            return True
-
         key = data['s3']['object']['key']
         s3_uuid = self._extract_uuid_from_aws_key(key)
         byte_range = '0-1000000'  # Get first Mb(ish) of bytes.
@@ -128,11 +86,25 @@ class QueueProcessor(object):
         # Image verification.
         validator = ImageValidator(key, byte_range)
         if not validator.image_format_is_supported():
-            return mark_image_invalid(s3_uuid, validator.get_error())
+            return status_updates.mark_image_invalid(
+                s3_uuid, validator.get_error())
         elif not validator.image_has_min_bands(3):
-            return mark_image_invalid(s3_uuid, validator.get_error())
+            return status_updates.mark_image_invalid(
+                s3_uuid, validator.get_error())
         else:
-            return mark_image_valid(s3_uuid)
+            updated = status_updates.mark_image_valid(s3_uuid)
+            if updated:
+                layer_id = status_updates.get_layer_id_from_uuid(s3_uuid)
+                data = {'layer_id': layer_id}
+                self.queue.add_message(JOB_HANDOFF, data)
+
+                # Add a message to the queue to watch for timeouts.
+                data = {
+                    'timeout': time.time() + TIMEOUT_SECONDS,
+                    'layer_id': layer_id
+                }
+                self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
+            return updated
 
     def _thumbnail(self, data):
         """
@@ -166,7 +138,11 @@ class QueueProcessor(object):
         except LayerImage.DoesNotExist:
             ready_to_process = False
 
-        # POST TO EMR HERE.
+        if ready_to_process:
+            status_updates.update_layer_status(layer_id,
+                                               enums.STATUS_PROCESSING)
+
+            # POST TO EMR HERE.
         return True
 
     def _check_timeout(self, data):
@@ -184,10 +160,9 @@ class QueueProcessor(object):
                 layer = None
 
             if layer is not None and layer.status != enums.STATUS_COMPLETED:
-                layer.status = enums.STATUS_FAILED
-                layer.error = ERROR_MESSAGE_JOB_TIMEOUT
-                layer.status_updated_at = datetime.now()
-                layer.save()
+                status_updates.update_layer_status(layer_id,
+                                                   enums.STATUS_FAILED,
+                                                   ERROR_MESSAGE_JOB_TIMEOUT)
         else:
             # Requeue the timeout message.
             self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
@@ -203,11 +178,8 @@ class QueueProcessor(object):
 
         # Update our server with data necessary for tile serving.
 
-        layer_id = data['layer_id']
-        layer = Layer.objects.get(id=layer_id)
-        layer.status = enums.STATUS_COMPLETED
-        layer.status_updated_at = datetime.now()
-        layer.save()
+        status_updates.update_layer_status(data['layer_id'],
+                                           enums.STATUS_COMPLETED)
         # Nothing else needs to go in the queue. We're done.
         return True
 
