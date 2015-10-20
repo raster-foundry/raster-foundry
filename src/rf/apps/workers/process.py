@@ -59,9 +59,16 @@ class QueueProcessor(object):
                         # May want to keep the message from showing back up
                         # on the queue by setting a new visability with
                         # message.change_visibility()
-                        delete_message = self._emr_hand_off(record['data'])
+                        try:
+                            delete_message = self._emr_hand_off(record['data'])
+                        except KeyError:
+                            delete_message = False
                     elif job_type == JOB_TIMEOUT:
-                        delete_message = self._check_timeout(record['data'])
+                        try:
+                            delete_message = \
+                                self._check_timeout(record['data'])
+                        except KeyError:
+                            delete_message = False
                     elif job_type in JOB_VALIDATE:
                         if record['eventSource'] == 'aws:s3':
                             delete_message = self._validate_image(record)
@@ -75,7 +82,11 @@ class QueueProcessor(object):
         processed.
         data -- attribute data from SQS.
         """
-        key = data['s3']['object']['key']
+        try:
+            key = data['s3']['object']['key']
+        except KeyError:
+            return False
+
         s3_uuid = self._extract_uuid_from_aws_key(key)
         byte_range = '0-1000000'  # Get first Mb(ish) of bytes.
 
@@ -135,8 +146,8 @@ class QueueProcessor(object):
             valid_images = LayerImage.objects.filter(layer_id=layer_id,
                                                      status=enums.STATUS_VALID)
             ready_to_process = len(layer_images) == len(valid_images)
-        except LayerImage.DoesNotExist:
-            ready_to_process = False
+        except (LayerImage.DoesNotExist, KeyError):
+            return False
 
         if ready_to_process:
             status_updates.update_layer_status(layer_id,
@@ -151,13 +162,19 @@ class QueueProcessor(object):
         been reached.
         data -- attribute data from SQS.
         """
-        layer_id = data['layer_id']
-        timeout = data['timeout']
+        try:
+            layer_id = data['layer_id']
+            timeout = data['timeout']
+        except KeyError:
+            # A bad message showed up. Leave it alone. Eventually it'll end
+            # in the dead letter queue.
+            return False
+
         if time.time() > timeout:
             try:
                 layer = Layer.objects.get(id=layer_id)
             except Layer.DoesNotExist:
-                layer = None
+                return False
 
             if layer is not None and layer.status != enums.STATUS_COMPLETED:
                 status_updates.update_layer_status(layer_id,
