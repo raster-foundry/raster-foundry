@@ -1,6 +1,7 @@
 from majorkirby import GlobalConfigNode
 
 from vpc import VPC
+from private_hosted_zone import PrivateHostedZone
 
 import ConfigParser
 import sys
@@ -37,12 +38,14 @@ def build_graph(rf_config, aws_profile, **kwargs):
     """
     global_config = GlobalConfigNode(**rf_config)
     vpc = VPC(globalconfig=global_config, aws_profile=aws_profile)
+    private_hosted_zone = PrivateHostedZone(globalconfig=global_config,
+                                            VPC=vpc, aws_profile=aws_profile)
 
-    return vpc
+    return private_hosted_zone
 
 
 def build_stacks(rf_config, aws_profile, **kwargs):
     """Trigger actual building of graphs"""
-    vpc_graph = build_graph(rf_config, aws_profile, **kwargs)
+    private_hosted_zone_graph = build_graph(rf_config, aws_profile, **kwargs)
 
-    vpc_graph.go()
+    private_hosted_zone_graph.go()
