@@ -124,6 +124,7 @@ class Layer(Model):
 
     error = CharField(
         blank=True,
+        null=True,
         max_length=255,
         help_text='Error that occured while processing the layer.',
     )
@@ -282,6 +283,7 @@ class LayerImage(Model):
     )
     error = CharField(
         blank=True,
+        null=True,
         max_length=255,
         help_text='Error that occured while processing the file.',
     )
