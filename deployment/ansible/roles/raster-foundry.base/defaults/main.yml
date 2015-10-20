@@ -6,8 +6,6 @@ envdir_config:
   RF_DB_PASSWORD: "{{ postgresql_password }}"
   RF_DB_HOST: "{{ postgresql_host }}"
   RF_DB_PORT: "{{ postgresql_port }}"
-  RF_CACHE_HOST: "{{ redis_host }}"
-  RF_CACHE_PORT: "{{ redis_port }}"
   AWS_PROFILE: "{{ aws_profile }}"
   AWS_DEFAULT_REGION: "{{ aws_region }}"
   RF_S3_BUCKET: "{{ s3_bucket }}"
