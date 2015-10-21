@@ -60,7 +60,7 @@ var Layer = Backbone.Model.extend({
         return _.findWhere(this.get('images'), {id: id});
     },
 
-    isUploading: function() {
+    isPreValidated: function() {
         return this.get('status') === STATUS_CREATED;
     },
 
@@ -73,9 +73,15 @@ var Layer = Backbone.Model.extend({
     },
 
     isProcessing: function() {
-        return !(this.isUploading() ||
+        return !(this.isPreValidated() ||
                  this.isCompleted() ||
                  this.isFailed());
+    },
+
+    hasCopiedImages: function() {
+        return _.some(this.get('images'), function(image) {
+            return image.source_s3_bucket_key;
+        });
     },
 
     isDoneWorking: function() {
@@ -179,9 +185,16 @@ var PendingLayers = BaseLayers.extend({
 
     existsUploading: function() {
         var uploading = this.find(function(layer) {
-            return layer.isUploading();
+            return layer.isPreValidated() && !layer.hasCopiedImages();
         });
         return uploading ? true : false;
+    },
+
+    existsTransferring: function() {
+        var transferring = this.find(function(layer) {
+            return layer.isPreValidated() && layer.hasCopiedImages();
+        });
+        return transferring ? true : false;
     },
 
     existsProcessing: function() {

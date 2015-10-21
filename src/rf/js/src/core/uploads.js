@@ -10,11 +10,12 @@ function S3UploadException(message, mimeType, fileName) {
     this.fileName = fileName || 'unknown file';
     this.name = 'S3UploadException';
     this.toString = function() {
-        return this.message + ' File: ' + this.fileName + ' MimeType: ' + this.mimeType;
+        return this.message + ' File: ' + this.fileName +
+            ' MimeType: ' + this.mimeType;
     };
 }
 
-var uploadFiles = function(files, uuids, extensions) {
+var uploadFiles = function(fileDescriptions) {
     var evap = new Evaporate({
         signerUrl: settings.get('signerUrl'),
         aws_key: settings.get('awsKey'),
@@ -22,24 +23,23 @@ var uploadFiles = function(files, uuids, extensions) {
         logging: false
     });
 
-    var invalidMimes = _.without(_.map(files, invalidTypes), null);
+    var files = _.pluck(fileDescriptions, 'file'),
+        invalidMimes = _.without(_.map(files, invalidTypes), null);
+
     if (invalidMimes.length > 0) {
-        throw new S3UploadException('Invalid file type.', invalidMimes[0].mimeType, invalidMimes[0].fileName);
+        throw new S3UploadException('Invalid file type.',
+            invalidMimes[0].mimeType, invalidMimes[0].fileName);
     }
 
-    _.each(files, function(file, i) {
+    _.each(fileDescriptions, function(fileDescription) {
         var userId = settings.getUser().get('id'),
-            fileName = userId + '-' + uuids[i] + '.' + extensions[i];
+            fileName = userId + '-' +
+                fileDescription.uuid + '.' + fileDescription.extension;
 
-        // TODO Later we'll want to store the id of the file upload. We can use
-        // it to cancel the upload if needed.
-        // var id = evap.add({ //
         evap.add({
-            // TODO - NAMES ARE CURRENTLY JUST FOR TESTING.
-            // WE WANT TO USE A UUID FOR FILE NAMES.
             name: fileName,
-            file: file,
-            contentType: file.type,
+            file: fileDescription.file,
+            contentType: fileDescription.file.type,
             complete: function() {
                 console.log('File upload complete');
             },
