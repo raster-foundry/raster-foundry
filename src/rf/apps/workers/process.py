@@ -6,14 +6,14 @@ from __future__ import division
 
 import math
 import time
-from datetime import datetime
+import uuid
 
 from apps.core.models import LayerImage, Layer
-from apps.workers.image_validator import ensure_band_count
+from apps.workers.image_validator import ImageValidator
 from apps.workers.sqs_manager import SQSManager
 from apps.workers.thumbnail import make_thumbs_for_layer
 import apps.core.enums as enums
-
+import apps.workers.status_updates as status_updates
 
 TIMEOUT_SECONDS = (60 * 10)  # 10 Minutes.
 
@@ -31,9 +31,7 @@ DEFAULT_DELAY = 0
 TIMEOUT_DELAY = 60
 
 # Error messages
-ERROR_MESSAGE_LAYER_IMAGE_INVALID = 'Cannot process invalid images.'
-ERROR_MESSAGE_IMAGE_NOT_VALID = 'Image was not a valid GeoTiff file.'
-ERROR_MESSAGE_IMAGE_TOO_FEW_BANDS = 'Image must have three or more bands.'
+ERROR_MESSAGE_THUMBNAIL_FAILED = 'Thumbnail generation failed.'
 ERROR_MESSAGE_JOB_TIMEOUT = 'Layer could not be processed. ' + \
                             'The job timed out after ' + \
                             str(math.ceil(TIMEOUT_SECONDS / 60)) + ' minutes.'
@@ -57,14 +55,11 @@ class QueueProcessor(object):
                     record = message['Records'][0]
                     job_type = record['eventName']
                     if job_type == JOB_THUMBNAIL:
-                        delete_message = self._thumbnail(record['data'])
+                        delete_message = self._thumbnail(record)
                     elif job_type == JOB_HANDOFF:
-                        # May want to keep the message from showing back up
-                        # on the queue by setting a new visability with
-                        # message.change_visibility()
-                        delete_message = self._emr_hand_off(record['data'])
+                        delete_message = self._emr_hand_off(record)
                     elif job_type == JOB_TIMEOUT:
-                        delete_message = self._check_timeout(record['data'])
+                        delete_message = self._check_timeout(record)
                     elif job_type in JOB_VALIDATE:
                         if record['eventSource'] == 'aws:s3':
                             delete_message = self._validate_image(record)
@@ -78,81 +73,84 @@ class QueueProcessor(object):
         processed.
         data -- attribute data from SQS.
         """
-        def mark_image_valid(s3_uuid, key):
-            image = LayerImage.objects.get(s3_uuid=s3_uuid)
-            image.status = enums.STATUS_VALID
-            image.save()
+        try:
+            key = data['s3']['object']['key']
+        except KeyError:
+            return False
 
-            layer_id = image.layer_id
-            layer = image.layer
-            layer_images = LayerImage.objects.filter(layer_id=layer_id)
-            validated_images = LayerImage.objects.filter(
-                layer_id=layer_id,
-                status=enums.STATUS_VALID)
-            all_validated = len(validated_images) == len(layer_images)
-            if all_validated:
-                layer.status = enums.STATUS_VALID
-                layer.status_updated_at = datetime.now()
-                layer.save()
-
-                data = {'layer_id': layer_id}
-                self.queue.add_message(JOB_THUMBNAIL, data)
-
-            # Add a message to the queue that we can use to watch for timeouts.
-            data = {
-                'timeout': time.time() + TIMEOUT_SECONDS,
-                'layer_id': layer_id
-            }
-            self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
-            return True
-
-        def mark_image_invalid(s3_uuid, error_message):
-            image = LayerImage.objects.get(s3_uuid=s3_uuid)
-            image.status = enums.STATUS_INVALID
-            image.error = error_message
-            image.save()
-            layer_id = image.layer_id
-            layer = Layer.objects.get(id=layer_id)
-            layer.error = ERROR_MESSAGE_LAYER_IMAGE_INVALID
-            layer.status = enums.STATUS_FAILED
-            layer.status_updated_at = datetime.now()
-            layer.save()
-            return True
-
-        key = data['s3']['object']['key']
         s3_uuid = self._extract_uuid_from_aws_key(key)
-        byte_range = '0-1000000'  # Get first Mb(ish) of bytes.
+        try:
+            uuid.UUID(s3_uuid)
+        except ValueError:
+            return False
 
         # Ignore thumbnails.
         if not LayerImage.objects.filter(s3_uuid=s3_uuid).exists():
             return True
 
-        # Image validator thros AttributeError if it cannot read the image.
-        try:
-            if ensure_band_count(key, byte_range):
-                return mark_image_valid(s3_uuid, key)
-            else:
-                error_message = ERROR_MESSAGE_IMAGE_TOO_FEW_BANDS
-                return mark_image_invalid(s3_uuid, error_message)
-        except AttributeError:
-            error_message = ERROR_MESSAGE_IMAGE_NOT_VALID
-            return mark_image_invalid(s3_uuid, error_message)
+        byte_range = '0-1000000'  # Get first Mb(ish) of bytes.
+        # Image verification.
+        validator = ImageValidator(key, byte_range)
+        if not validator.image_format_is_supported():
+            return status_updates.mark_image_invalid(
+                s3_uuid, validator.get_error())
+        elif not validator.image_has_min_bands(3):
+            return status_updates.mark_image_invalid(
+                s3_uuid, validator.get_error())
+        else:
+            updated = status_updates.mark_image_valid(s3_uuid)
+            if updated:
+                layer_id = status_updates.get_layer_id_from_uuid(s3_uuid)
+                layer_images = LayerImage.objects.filter(layer_id=layer_id)
+                valid_images = LayerImage.objects.filter(
+                    layer_id=layer_id,
+                    status=enums.STATUS_VALID)
 
-    def _thumbnail(self, data):
+                all_valid = len(layer_images) == len(valid_images)
+                some_images = len(layer_images) > 0
+
+                if all_valid and some_images:
+                    data = {'layer_id': layer_id}
+                    self.queue.add_message(JOB_THUMBNAIL, data)
+
+                    # Add a message to the queue to watch for timeouts.
+                    data = {
+                        'timeout': time.time() + TIMEOUT_SECONDS,
+                        'layer_id': layer_id
+                    }
+                    self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
+
+            return updated
+
+    def _thumbnail(self, record):
         """
         Generate thumbnails for all images.
         data -- attribute data from SQS.
         """
+        try:
+            data = record['data']
+            layer_id = data['layer_id']
+        except KeyError:
+            return False
+
+        try:
+            int(layer_id)
+        except ValueError:
+            return False
 
         layer_id = data['layer_id']
-        make_thumbs_for_layer(layer_id)
 
-        data = {'layer_id': layer_id}
-        self.queue.add_message(JOB_HANDOFF, data)
+        if make_thumbs_for_layer(layer_id):
+            data = {'layer_id': layer_id}
+            self.queue.add_message(JOB_HANDOFF, data)
+            return True
+        else:
+            status_updates.update_layer_status(layer_id,
+                                               enums.STATUS_FAILED,
+                                               ERROR_MESSAGE_THUMBNAIL_FAILED)
+            return False
 
-        return True
-
-    def _emr_hand_off(self, data):
+    def _emr_hand_off(self, record):
         """
         Passes layer imgages to EMR to begin creating custom rasters.
         data -- attribute data from SQS.
@@ -160,58 +158,90 @@ class QueueProcessor(object):
         # Send data to EMR for processing.
         # return False if it fails to start.
         # EMR posts directly to queue upon competion.
+        try:
+            data = record['data']
+            layer_id = data['layer_id']
+        except KeyError:
+            return False
 
-        layer_id = data['layer_id']
-        layer = Layer.objects.get(id=layer_id)
-        layer.status = enums.STATUS_PROCESSING
-        layer.status_updated_at = datetime.now()
-        layer.save()
+        try:
+            int(layer_id)
+        except ValueError:
+            return False
 
-        # POST TO EMR HERE.
+        layer_images = LayerImage.objects.filter(layer_id=layer_id)
+        valid_images = LayerImage.objects.filter(layer_id=layer_id,
+                                                 status=enums.STATUS_VALID)
+        all_valid = len(layer_images) == len(valid_images)
+        some_images = len(layer_images) > 0
+        ready_to_process = some_images and all_valid
 
-        return True
+        if ready_to_process:
+            return status_updates.update_layer_status(layer_id,
+                                                      enums.STATUS_PROCESSING)
+            # POST TO EMR HERE.
+        else:
+            return some_images
 
-    def _check_timeout(self, data):
+    def _check_timeout(self, record):
         """
         Check an EMR job to see if it has completed before the timeout has
         been reached.
         data -- attribute data from SQS.
         """
-        layer_id = data['layer_id']
-        timeout = data['timeout']
+        try:
+            data = record['data']
+            layer_id = data['layer_id']
+            timeout = data['timeout']
+        except KeyError:
+            # A bad message showed up. Leave it alone. Eventually it'll end
+            # in the dead letter queue.
+            return False
+
+        try:
+            int(layer_id)
+            float(timeout)
+        except ValueError:
+            return False
+
         if time.time() > timeout:
             try:
                 layer = Layer.objects.get(id=layer_id)
             except Layer.DoesNotExist:
-                layer = None
+                return False
 
             if layer is not None and layer.status != enums.STATUS_COMPLETED:
-                layer.status = enums.STATUS_FAILED
-                layer.error = ERROR_MESSAGE_JOB_TIMEOUT
-                layer.status_updated_at = datetime.now()
-                layer.save()
+                return status_updates \
+                    .update_layer_status(layer_id,
+                                         enums.STATUS_FAILED,
+                                         ERROR_MESSAGE_JOB_TIMEOUT)
         else:
             # Requeue the timeout message.
             self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
 
         return True
 
-    def _save_result(self, data):
+    def _save_result(self, record):
         """
         When an EMR job has completed updates the associated model in the
         database.
         data -- attribute data from SQS.
         """
+        try:
+            data = record['data']
+            layer_id = data['layer_id']
+        except KeyError:
+            return False
+
+        try:
+            int(layer_id)
+        except ValueError:
+            return False
 
         # Update our server with data necessary for tile serving.
-
-        layer_id = data['layer_id']
-        layer = Layer.objects.get(id=layer_id)
-        layer.status = enums.STATUS_COMPLETED
-        layer.status_updated_at = datetime.now()
-        layer.save()
         # Nothing else needs to go in the queue. We're done.
-        return True
+        return status_updates.update_layer_status(data['layer_id'],
+                                                  enums.STATUS_COMPLETED)
 
     def _extract_uuid_from_aws_key(self, key):
         """

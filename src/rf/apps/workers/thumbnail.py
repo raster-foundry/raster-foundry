@@ -71,7 +71,11 @@ def s3_make_thumbs(image_key, user_id, thumb_dims, thumb_ext):
                             image_key,
                             image_filepath)
 
-    image = Image.open(image_filepath)
+    try:
+        image = Image.open(image_filepath)
+    except IOError:
+        raise ImageCouldNotOpenError(
+            'Image could not be read by thumbnail process.')
 
     thumb_filenames = []
     for thumb_width, thumb_height in thumb_dims:
@@ -103,9 +107,13 @@ def make_thumbs_for_layer(layer_id):
 
     for image in layer_images:
         thumb_dims = [IMAGE_THUMB_SMALL_DIMS, IMAGE_THUMB_LARGE_DIMS]
-        image.thumb_small_key, image.thumb_large_key = \
-            s3_make_thumbs(image.get_s3_key(), user_id,
-                           thumb_dims, THUMB_EXT)
+        try:
+            image.thumb_small_key, image.thumb_large_key = \
+                s3_make_thumbs(image.get_s3_key(), user_id,
+                               thumb_dims, THUMB_EXT)
+        except ImageCouldNotOpenError:
+            return False
+
         image.status = enums.STATUS_THUMBNAILED
         image.save()
 
@@ -113,9 +121,20 @@ def make_thumbs_for_layer(layer_id):
     # using thumbnails from the final image.
     layer.thumb_small_key = image.thumb_small_key
     thumb_dims = [LAYER_THUMB_LARGE_DIMS]
-    layer.thumb_large_key, = \
-        s3_make_thumbs(image.get_s3_key(), user_id,
-                       thumb_dims, THUMB_EXT)
+    try:
+        layer.thumb_large_key, = s3_make_thumbs(image.get_s3_key(),
+                                                user_id, thumb_dims,
+                                                THUMB_EXT)
+    except ImageCouldNotOpenError:
+        return False
+
     layer.status = enums.STATUS_THUMBNAILED
     layer.status_updated_at = datetime.now()
     layer.save()
+    return True
+
+
+class ImageCouldNotOpenError(ValueError):
+    """
+    Raise when a ValueError occurs trying to open an image.
+    """
