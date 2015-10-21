@@ -4,9 +4,13 @@ from __future__ import unicode_literals
 from __future__ import division
 
 import json
+import logging
 
 import boto3
 from django.conf import settings
+
+
+log = logging.getLogger(__name__)
 
 
 class SQSManager(object):
@@ -22,8 +26,19 @@ class SQSManager(object):
         response = self.client.receive_message(QueueUrl=self.queue_url,
                                                WaitTimeSeconds=20)
 
-        message = response['Messages'][0]
-        payload = json.loads(message['Body'])
+        log.debug('Received message: %s', response)
+
+        try:
+            message = response['Messages'][0]
+        except (KeyError, IndexError):
+            log.debug('Response contained no messages')
+            return None
+
+        try:
+            payload = json.loads(message['Body'])
+        except ValueError:
+            log.exception('Invalid JSON format: %s', message['Body'])
+            return None
 
         return {
             'original_message': message,

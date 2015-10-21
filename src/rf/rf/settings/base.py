@@ -90,13 +90,23 @@ POSTGIS_VERSION = tuple(
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
+    'formatters': {
+        'verbose': {
+            'format': '[%(levelname)s] %(asctime)s %(module)s %(message)s',
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
         },
     },
     'loggers': {
         'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'apps': {
             'handlers': ['console'],
             'level': 'INFO',
         },

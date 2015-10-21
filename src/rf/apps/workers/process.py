@@ -7,6 +7,7 @@ from __future__ import division
 import math
 import time
 import uuid
+import logging
 
 from apps.core.models import LayerImage, Layer
 from apps.workers.image_validator import ImageValidator
@@ -15,6 +16,8 @@ from apps.workers.thumbnail import make_thumbs_for_layer
 import apps.core.enums as enums
 import apps.workers.status_updates as status_updates
 from apps.workers.copy_images import s3_copy
+
+log = logging.getLogger(__name__)
 
 TIMEOUT_SECONDS = (60 * 10)  # 10 Minutes.
 
@@ -66,8 +69,12 @@ class QueueProcessor(object):
 
     def handle_message(self, record):
         # Parse record fields.
-        job_type = record['eventName']
-        event_source = record['eventSource']
+        try:
+            job_type = record['eventName']
+            event_source = record['eventSource']
+        except KeyError:
+            log.exception('Missing fields in message %s', record)
+            return False
 
         if job_type == JOB_THUMBNAIL:
             return self.thumbnail(record)
