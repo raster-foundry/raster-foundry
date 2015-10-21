@@ -6,7 +6,7 @@ from __future__ import division
 STATUS_CREATED = 'created'
 STATUS_UPLOADED = 'uploaded'
 STATUS_VALIDATED = 'validated'
-STATUS_REPROJECTED = 'reprojected'
+STATUS_THUMBNAILED = 'thumbnailed'
 STATUS_PROCESSING = 'processing'
 STATUS_FAILED = 'failed'
 STATUS_COMPLETED = 'completed'
@@ -18,7 +18,7 @@ LAYER_STATUS_CHOICES = (
     (STATUS_CREATED, 'Created'),
     (STATUS_UPLOADED, 'Uploaded'),
     (STATUS_VALIDATED, 'Validated'),
-    (STATUS_REPROJECTED, 'Reprojected'),
+    (STATUS_THUMBNAILED, 'Thumbnailed'),
     (STATUS_PROCESSING, 'Processing'),
     (STATUS_FAILED, 'Failed'),
     (STATUS_COMPLETED, 'Completed'),
@@ -29,6 +29,7 @@ LAYER_IMAGE_STATUS_CHOICES = (
     (STATUS_UPLOADED, 'Uploaded'),
     (STATUS_VALID, 'Valid'),
     (STATUS_INVALID, 'Invalid'),
+    (STATUS_THUMBNAILED, 'Thumbnailed'),
 )
 
 SQ_MI = 'sq. mi'

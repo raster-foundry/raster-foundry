@@ -4,7 +4,10 @@ from __future__ import unicode_literals
 from __future__ import division
 
 from datetime import datetime
+import uuid
 
+import boto3
+from django.conf import settings
 from django.contrib.gis.db.models import (Model, ForeignKey,
                                           CharField, TextField,
                                           DateField, DateTimeField,
@@ -16,7 +19,20 @@ from django.core.urlresolvers import reverse
 from django.template.defaultfilters import slugify
 
 from apps.core import enums
-import uuid
+
+
+def generate_thumb_url(thumb_key):
+    """
+    Generate a signed URL for a thumbnail associated with user_id and uuid.
+    """
+    if thumb_key:
+        s3_client = boto3.client('s3')
+        presigned_url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': settings.AWS_BUCKET_NAME, 'Key': thumb_key})
+        return presigned_url
+    else:
+        return ''
 
 
 class Layer(Model):
@@ -106,21 +122,15 @@ class Layer(Model):
     deleted_at = DateTimeField(null=True, blank=True)
     status_updated_at = DateTimeField(default=datetime.now)
 
-    thumb_small = URLField(
-        null=True,
-        blank=True,
-        help_text='80x80 pixels',
-    )
-    thumb_large = URLField(
-        null=True,
-        blank=True,
-        help_text='400x150 pixels',
-    )
     error = CharField(
         blank=True,
         max_length=255,
         help_text='Error that occured while processing the layer.',
     )
+    thumb_small_key = CharField(max_length=255, blank=True, default='',
+                                help_text='S3 key for small thumbnail')
+    thumb_large_key = CharField(max_length=255, blank=True, default='',
+                                help_text='S3 key for large thumbnail')
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
@@ -161,8 +171,8 @@ class Layer(Model):
             'status_updated_at': self.created_at.isoformat(),
             'error': self.error,
 
-            'thumb_small': self.thumb_small,
-            'thumb_large': self.thumb_large,
+            'thumb_small': generate_thumb_url(self.thumb_small_key),
+            'thumb_large': generate_thumb_url(self.thumb_large_key),
 
             # Foreign key fields
             'tags': tags,
@@ -232,16 +242,10 @@ class LayerImage(Model):
         default=0,
         help_text='The order which images are layered (starting from 0)'
     )
-    thumb_small = URLField(
-        null=True,
-        blank=True,
-        help_text='80x80 pixels',
-    )
-    thumb_large = URLField(
-        null=True,
-        blank=True,
-        help_text='300x300 pixels',
-    )
+    thumb_small_key = CharField(max_length=255, blank=True, default='',
+                                help_text='S3 key for small thumbnail')
+    thumb_large_key = CharField(max_length=255, blank=True, default='',
+                                help_text='S3 key for large thumbnail')
     meta_json = TextField(
         null=True,
         blank=True,
@@ -282,11 +286,16 @@ class LayerImage(Model):
         help_text='Error that occured while processing the file.',
     )
 
+    def get_s3_key(self):
+        return '%d-%s.%s' % (self.layer.user.id,
+                             self.s3_uuid,
+                             self.file_extension)
+
     def to_json(self):
         return {
             'id': self.id,
-            'thumb_small': self.thumb_small,
-            'thumb_large': self.thumb_large,
+            'thumb_small': generate_thumb_url(self.thumb_small_key),
+            'thumb_large': generate_thumb_url(self.thumb_large_key),
             'meta_json': self.meta_json,
             'file_name': self.file_name,
             's3_uuid': str(self.s3_uuid),
