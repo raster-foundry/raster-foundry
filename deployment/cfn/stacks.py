@@ -3,6 +3,7 @@ from majorkirby import GlobalConfigNode
 from vpc import VPC
 from private_hosted_zone import PrivateHostedZone
 from data_plane import DataPlane
+from application import Application
 
 import ConfigParser
 import sys
@@ -44,12 +45,14 @@ def build_graph(rf_config, aws_profile, **kwargs):
     data_plane = DataPlane(globalconfig=global_config, VPC=vpc,
                            PrivateHostedZone=private_hosted_zone,
                            aws_profile=aws_profile)
+    application = Application(globalconfig=global_config, VPC=vpc,
+                              DataPlane=data_plane, aws_profile=aws_profile)
 
-    return data_plane
+    return application
 
 
 def build_stacks(rf_config, aws_profile, **kwargs):
     """Trigger actual building of graphs"""
-    data_plane_graph = build_graph(rf_config, aws_profile, **kwargs)
+    application_graph = build_graph(rf_config, aws_profile, **kwargs)
 
-    data_plane_graph.go()
+    application_graph.go()
