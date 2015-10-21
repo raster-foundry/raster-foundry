@@ -13,3 +13,11 @@
   when: "['packer'] | is_in(group_names)"
   notify:
     - Restart rf-app
+
+- name: Install Python dependencies for geoprocessing
+  pip: chdir="{{ django_home }}/requirements" requirements=workers.txt
+  environment:
+    C_INCLUDE_PATH: "/usr/include/gdal"
+    CPLUS_INCLUDE_PATH: "/usr/include/gdal"
+  notify:
+    - Restart rf-app
