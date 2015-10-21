@@ -23,6 +23,8 @@ from apps.core.decorators import (accepts, api_view, login_required,
 from apps.core.models import Layer, LayerImage, LayerTag, UserFavoriteLayer
 from apps.home.forms import LayerForm
 from apps.home.filters import LayerFilter
+from apps.workers.sqs_manager import SQSManager
+from apps.workers.process import JOB_COPY_IMAGE
 
 RESULTS_PER_PAGE = 10
 MAX_RESULTS_PER_PAGE = 100
@@ -135,9 +137,18 @@ def _save_layer(request, layer, username=None):
                    s3_uuid=image['s3_uuid'],
                    file_extension=image['file_extension'],
                    file_name=image['file_name'],
-                   bucket_name=settings.AWS_BUCKET_NAME)
+                   bucket_name=settings.AWS_BUCKET_NAME,
+                   source_s3_bucket_key=image['source_s3_bucket_key'])
         for image in form.cleaned_data['images']
     ])
+
+    # Create jobs to copy images into S3 bucket
+    if layer.has_copied_images():
+        sqs_manager = SQSManager()
+        for image in LayerImage.objects.filter(layer=layer):
+            job_type = JOB_COPY_IMAGE
+            data = {'image_id': image.id}
+            sqs_manager.add_message(job_type, data)
 
     return layer.to_json()
 

@@ -133,6 +133,12 @@ class Layer(Model):
     thumb_large_key = CharField(max_length=255, blank=True, default='',
                                 help_text='S3 key for large thumbnail')
 
+    def has_copied_images(self):
+        for image in self.layer_images.all():
+            if image.source_s3_bucket_key:
+                return True
+        return False
+
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
         super(Layer, self).save(*args, **kwargs)
@@ -274,6 +280,11 @@ class LayerImage(Model):
         max_length=255,
         help_text='Name of S3 bucket'
     )
+    source_s3_bucket_key = CharField(
+        null=True,
+        max_length=255,
+        help_text='S3 <bucket>/<key> for source image (optional)'
+    )
     status = CharField(
         blank=True,
         max_length=12,
@@ -304,6 +315,7 @@ class LayerImage(Model):
             'file_extension': self.file_extension,
             'bucket_name': self.bucket_name,
             'error': self.error,
+            'source_s3_bucket_key': self.source_s3_bucket_key
         }
 
 

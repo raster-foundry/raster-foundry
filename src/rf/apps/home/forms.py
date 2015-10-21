@@ -41,7 +41,10 @@ class LayerForm(ModelForm):
             self.cleaned_data['tags'] = []
 
         try:
-            self.cleaned_data['images'] = self.data['images']
+            for image in self.data['images']:
+                if 'source_s3_bucket_key' not in image:
+                    image['source_s3_bucket_key'] = None
+                self.cleaned_data['images'] = self.data['images']
         except:
             self.cleaned_data['images'] = []
 
