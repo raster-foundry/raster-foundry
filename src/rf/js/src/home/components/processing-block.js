@@ -8,26 +8,28 @@ var LayerStatusComponent = React.createBackboneClass({
         var checkClass = 'rf-icon-check',
             spinnerClass = 'rf-icon-loader animate-spin',
             failedClass = 'rf-icon-attention rf-failed text-danger',
-            uploadingClass = spinnerClass,
+            preValidatedClass = spinnerClass,
             processingClass = spinnerClass,
             actionLink = (<a href="#" className="text-danger">Cancel</a>),
-            uploadErrorsExist = false,
+            preValidatedErrorsExist = false,
             layerError = false,
             layerErrorComponent = (
                 <li>
                     {this.getModel().get('error') ? this.getModel().get('error') : 'An unknown error occured.'}
                     <i className="rf-icon-attention"></i>
                 </li>
-            );
+            ),
+            preValidatedLabel = this.getModel().hasCopiedImages() ?
+                'Transferring Images' : 'Uploading Images';
 
         if (this.getModel().isProcessing() ||
             this.getModel().isCompleted()) {
-            uploadingClass = checkClass;
+            preValidatedClass = checkClass;
         } else if (this.getModel().isFailed()) {
-            uploadErrorsExist = _.some(this.getModel().get('images'), function(image) {
-                return !(image.error && image.error !== '');
+            preValidatedErrorsExist = _.some(this.getModel().get('images'), function(image) {
+                return image.error && image.error !== '';
             });
-            uploadingClass = uploadErrorsExist ? failedClass : checkClass;
+            preValidatedClass = preValidatedErrorsExist ? failedClass : checkClass;
         }
 
         if (this.getModel().isCompleted()) {
@@ -47,7 +49,7 @@ var LayerStatusComponent = React.createBackboneClass({
                     <h5>{this.getModel().get('name')}</h5>
                     <ol>
                         <li>
-                            Uploading Images <i className={uploadingClass} />
+                            {preValidatedLabel} <i className={preValidatedClass} />
                             <ul className="notice">
                                 {_.map(this.getModel().get('images'), function(image) {
                                     if (image.error && image.error !== '') {

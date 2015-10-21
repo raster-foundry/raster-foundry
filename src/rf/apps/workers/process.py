@@ -14,13 +14,16 @@ from apps.workers.sqs_manager import SQSManager
 from apps.workers.thumbnail import make_thumbs_for_layer
 import apps.core.enums as enums
 import apps.workers.status_updates as status_updates
+from apps.workers.copy_images import s3_copy
 
 TIMEOUT_SECONDS = (60 * 10)  # 10 Minutes.
 
+JOB_COPY_IMAGE = 'copy_image'
 JOB_VALIDATE = [
     'ObjectCreated:CompleteMultipartUpload',
     'ObjectCreated:Put',
-    'ObjectCreated:Post'
+    'ObjectCreated:Post',
+    'ObjectCreated:Copy'
 ]
 JOB_THUMBNAIL = 'thumbnail'
 JOB_HANDOFF = 'emr_handoff'
@@ -32,6 +35,7 @@ TIMEOUT_DELAY = 60
 
 # Error messages
 ERROR_MESSAGE_THUMBNAIL_FAILED = 'Thumbnail generation failed.'
+ERROR_MESSAGE_IMAGE_TRANSFER = 'Transferring image failed.'
 ERROR_MESSAGE_JOB_TIMEOUT = 'Layer could not be processed. ' + \
                             'The job timed out after ' + \
                             str(math.ceil(TIMEOUT_SECONDS / 60)) + ' minutes.'
@@ -63,6 +67,8 @@ class QueueProcessor(object):
                     elif job_type in JOB_VALIDATE:
                         if record['eventSource'] == 'aws:s3':
                             delete_message = self._validate_image(record)
+                    elif job_type == JOB_COPY_IMAGE:
+                        delete_message = self._copy_image(record)
 
                 if delete_message:
                     self.queue.remove_message(s3_message)
@@ -221,7 +227,37 @@ class QueueProcessor(object):
 
         return True
 
-    def _save_result(self, record):
+    def _copy_image(self, record):
+        """
+        Copy an image into the S3 bucket from an external source.
+        data -- attribute data from SQS.
+        """
+
+        try:
+            data = record['data']
+            image_id = data['image_id']
+        except KeyError:
+            return False
+
+        try:
+            int(image_id)
+        except ValueError:
+            return False
+
+        try:
+            image = LayerImage.objects.get(id=image_id)
+        except LayerImage.DoesNotExist:
+            return False
+
+        if image.source_s3_bucket_key:
+            success = s3_copy(image.source_s3_bucket_key, image.get_s3_key())
+            if not success:
+                return status_updates.mark_image_invalid(
+                    image.s3_uuid, ERROR_MESSAGE_IMAGE_TRANSFER)
+        else:
+            return False
+
+    def save_result(self, record):
         """
         When an EMR job has completed updates the associated model in the
         database.

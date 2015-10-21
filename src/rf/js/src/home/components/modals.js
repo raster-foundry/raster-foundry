@@ -16,7 +16,7 @@ var FileDescription = React.createBackboneClass({
     render: function() {
         return (
             <li className="list-group-item">
-                {this.props.fileDescription.file.name}
+                {this.props.fileDescription.fileName}
                 <i className='pull-right rf-icon-cancel text-danger' onClick={this.removeFileDescription}></i>
             </li>
         );
@@ -72,10 +72,12 @@ var UploadModal = React.createBackboneClass({
             fileDescriptions: [],
 
             activePane: 1,
+            s3BucketKeyError: false,
             clientErrors: this.getInitialClientErrors(),
             serverErrors: this.getInitialServerErrors(),
             showPane1ClientErrors: false,
-            showPane2ClientErrors: false
+            showPane2ClientErrors: false,
+            postInProgress: false
         };
     },
 
@@ -83,6 +85,7 @@ var UploadModal = React.createBackboneClass({
         this.setState(this.getInitialState());
         this.submittedLayerData = null;
 
+        React.findDOMNode(this.refs.s3BucketKey).value = '';
         React.findDOMNode(this.refs.name).value = '';
         React.findDOMNode(this.refs.organization).value = '';
         React.findDOMNode(this.refs.description).value = '';
@@ -106,33 +109,66 @@ var UploadModal = React.createBackboneClass({
     },
 
     handleFileInputChange: function(e) {
-        this.updateFiles(e.target.files);
+        this.addFiles(e.target.files);
     },
 
-    uploadFiles: function(files, uuids, extensions) {
-        try {
-            uploads.uploadFiles(files, uuids, extensions);
-        } catch (excp) {
-            if (excp instanceof uploads.S3UploadException) {
-                // TODO Show something useful to the user here.
-                console.error(excp);
-            } else {
-                throw excp;
-            }
+    getFileNameFromS3BucketKey: function(s3BucketKey) {
+        var uriParts = s3BucketKey.split('/');
+        return uriParts[uriParts.length - 1];
+    },
+
+    getFileExtension: function(fileName) {
+        var fileNameParts = fileName.split('.');
+        return fileNameParts[fileNameParts.length - 1];
+    },
+
+    s3BucketKeyValid: function(s3BucketKey) {
+        // example valid s3BucketKey: ab-cd.ef/gh1/i-j.k
+        var re = /^([\w-.]+\/)+[\w-]+\.\w+$/;
+        return re.test(s3BucketKey);
+    },
+
+    addS3BucketKey: function(e) {
+        e.preventDefault();
+        var s3BucketKey = React.findDOMNode(this.refs.s3BucketKey).value;
+
+        if (this.s3BucketKeyValid(s3BucketKey)) {
+            this.setState({s3BucketKeyError: false});
+            var fileName = this.getFileNameFromS3BucketKey(s3BucketKey),
+                extension = this.getFileExtension(fileName),
+                fileDescriptions = [{
+                    s3BucketKey: s3BucketKey,
+                    isNew: true,
+                    uuid: uuid.v4(),
+                    fileName: fileName,
+                    extension: extension
+                }];
+            this.updateFileDescriptions(fileDescriptions);
+        } else {
+            this.setState({s3BucketKeyError: true});
         }
     },
 
-    updateFiles: function(files) {
-        var oldFileDescriptions = _.forEach(this.state.fileDescriptions, function(fileDescription) {
-                fileDescription.isNew = false;
-            }),
-            newFileDescriptions = _.map(files, function(file) {
+    addFiles: function(files) {
+        var self = this,
+            fileDescriptions = _.map(files, function(file) {
                 return {
                     file: file,
-                    isNew: true
+                    s3BucketKey: null,
+                    isNew: true,
+                    uuid: uuid.v4(),
+                    fileName: file.name,
+                    extension: self.getFileExtension(file.name)
                 };
-            }),
-            fileDescriptions = newFileDescriptions.concat(oldFileDescriptions);
+            });
+        this.updateFileDescriptions(fileDescriptions);
+    },
+
+    updateFileDescriptions: function(fileDescriptions) {
+        var oldFileDescriptions = _.forEach(this.state.fileDescriptions, function(fileDescription) {
+                fileDescription.isNew = false;
+            });
+        fileDescriptions = fileDescriptions.concat(oldFileDescriptions);
         this.setState({'fileDescriptions': fileDescriptions});
 
         // Needed to handle the case of selecting a file, deleting the file from the list,
@@ -169,7 +205,7 @@ var UploadModal = React.createBackboneClass({
 
     onDrop: function(e) {
         e.preventDefault();
-        this.updateFiles(e.dataTransfer.files);
+        this.addFiles(e.dataTransfer.files);
         this.setState({dragActive: false});
         this.dragCounter = 0;
     },
@@ -215,7 +251,7 @@ var UploadModal = React.createBackboneClass({
         var errors = this.getInitialClientErrors();
 
         if (layerData.fileDescriptions.length === 0) {
-            errors.files = ['Please select at least one file.'];
+            errors.files = ['Please add at least one file.'];
         }
 
         if (!layerData.name) {
@@ -355,43 +391,56 @@ var UploadModal = React.createBackboneClass({
         }
     },
 
+    uploadFiles: function(fileDescriptions) {
+        try {
+            uploads.uploadFiles(fileDescriptions);
+        } catch (excp) {
+            if (excp instanceof uploads.S3UploadException) {
+                // TODO Show something useful to the user here.
+                console.error(excp);
+            } else {
+                throw excp;
+            }
+        }
+    },
+
     attemptSubmit: function(e) {
         e.preventDefault();
         var self = this,
-            files = _.pluck(this.state.fileDescriptions, 'file'),
-            fileNames = _.pluck(files, 'name'),
-            uuids = _.map(files, function() {
-                return uuid.v4();
-            }),
-            extensions = _.map(files, uploads.getExtension);
+            fileDescriptions = this.state.fileDescriptions;
 
-        self.postLayer(fileNames, uuids, extensions)
+        this.setState({postInProgress: true});
+        self.postLayer(fileDescriptions)
             .done(function() {
+                self.setState({postInProgress: false});
                 // If the polling function is currently not fetching
                 // because there are no layers currently uploading or
                 // processing, we need to force a fetch so that the submitted
                 // layer will be added to pendingLayers.
                 self.props.pendingLayers.fetch();
-                self.uploadFiles(files, uuids, extensions);
+                self.uploadFiles(_.filter(fileDescriptions,
+                    function(fileDescription) {
+                        return fileDescription.file;
+                    }));
 
                 self.clear();
                 $('.import-modal').modal('hide');
             })
             .fail(function(e) {
+                self.setState({postInProgress: false});
                 self.goToPane(2);
                 self.setState({serverErrors: self.getServerErrors(e.responseJSON)});
             });
     },
 
-    postLayer: function(fileNames, uuids, extensions) {
+    postLayer: function(fileDescriptions) {
         var layerData = this.getLayerData(),
-            images = _.map(fileNames, function(fileName, i) {
-                var uuid = uuids[i],
-                    extension = extensions[i];
+            images = _.map(fileDescriptions, function(fileDescription) {
                 return {
-                    file_name: fileName,
-                    s3_uuid: uuid,
-                    file_extension: extension
+                    file_name: fileDescription.fileName,
+                    s3_uuid: fileDescription.uuid,
+                    file_extension: fileDescription.extension,
+                    source_s3_bucket_key: fileDescription.s3BucketKey
                 };
             }),
             url = settings.getUser().getCreateLayerURL(),
@@ -413,6 +462,7 @@ var UploadModal = React.createBackboneClass({
                 tile_origin: layerData.tile_origin,
                 images: images
             };
+
         this.submittedLayerData = layerData;
         return $.ajax({
             url: url,
@@ -475,12 +525,15 @@ var UploadModal = React.createBackboneClass({
                                     </div>
                                     <div className="vertical-align-child col-md-5 import-uri">
                                         <i className="rf-icon-link" />
-                                        <h3 className="font-400">Upload with a URI</h3>
-                                        <h4 className="font-300">Is your imagery hosted on S3? Enter the URI to import.</h4>
+                                        <h3 className="font-400">Upload from S3</h3>
+                                        <h4 className="font-300">Is your imagery hosted on S3? Enter the bucket/key to import.</h4>
                                         <form>
                                             <div className="form-group">
-                                                <label>URI</label>
-                                                <input className="form-control" type="url" />
+                                                <label>bucket/key</label>
+                                                <input className="form-control" ref="s3BucketKey" placeholder="bucket/key"/>
+                                                <button className="btn btn-link text-muted"
+                                                    onClick={this.addS3BucketKey}>Add</button>
+                                                {this.renderErrors(this.state.s3BucketKeyError, ['Please enter bucket/key'])}
                                             </div>
                                             <div className="form-action text-right">
                                                 <button className="btn btn-secondary"
@@ -650,7 +703,10 @@ var UploadModal = React.createBackboneClass({
                                         </div>
                                     </div>
                                     <div className="form-action">
-                                        <input type="submit" className="btn btn-secondary pull-right" onClick={this.attemptSubmit} defaultValue="Submit" />
+                                        <button className={'btn btn-secondary pull-right ' + (this.state.postInProgress ? 'disabled' : '')}
+                                            onClick={this.attemptSubmit}>
+                                            {this.state.postInProgress ? 'Submitting...' : 'Submit'}
+                                        </button>
                                         <button className="btn btn-link text-muted"
                                             onClick={this.backPane3}>Back</button>
                                     </div>
