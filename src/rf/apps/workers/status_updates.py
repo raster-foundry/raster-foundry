@@ -9,6 +9,8 @@ from datetime import datetime
 from apps.core.models import LayerImage, Layer
 import apps.core.enums as enums
 
+ERROR_MESSAGE_LAYER_IMAGE_INVALID = 'Cannot process invalid images.'
+
 
 def mark_image_valid(s3_uuid):
     try:
@@ -31,7 +33,8 @@ def mark_image_invalid(s3_uuid, error_message):
     image.error = error_message
     image.save()
     layer_id = image.layer_id
-    return update_layer_status(layer_id, enums.STATUS_FAILED, error_message)
+    return update_layer_status(layer_id, enums.STATUS_FAILED,
+                               ERROR_MESSAGE_LAYER_IMAGE_INVALID)
 
 
 def update_layer_status(layer_id, layer_status, error_message=None):

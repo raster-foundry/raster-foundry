@@ -17,7 +17,6 @@ from osgeo import gdal
 SUPPORTED_MIMES = [  # See https://docs.python.org/2/library/imghdr.html
     'tiff',
 ]
-
 ERROR_MESSAGE_UNSUPPORTED_MIME = 'The image format is not supported.' + \
                                  ' Supported formats are: ' + \
                                  ', '.join(SUPPORTED_MIMES)

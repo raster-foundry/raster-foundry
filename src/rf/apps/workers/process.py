@@ -31,7 +31,7 @@ DEFAULT_DELAY = 0
 TIMEOUT_DELAY = 60
 
 # Error messages
-ERROR_MESSAGE_LAYER_IMAGE_INVALID = 'Cannot process invalid images.'
+ERROR_MESSAGE_THUMBNAIL_FAILED = 'Thumbnail generation failed.'
 ERROR_MESSAGE_JOB_TIMEOUT = 'Layer could not be processed. ' + \
                             'The job timed out after ' + \
                             str(math.ceil(TIMEOUT_SECONDS / 60)) + ' minutes.'
@@ -101,15 +101,25 @@ class QueueProcessor(object):
             updated = status_updates.mark_image_valid(s3_uuid)
             if updated:
                 layer_id = status_updates.get_layer_id_from_uuid(s3_uuid)
-                data = {'layer_id': layer_id}
-                self.queue.add_message(JOB_HANDOFF, data)
+                layer_images = LayerImage.objects.filter(layer_id=layer_id)
+                valid_images = LayerImage.objects.filter(
+                    layer_id=layer_id,
+                    status=enums.STATUS_VALID)
 
-                # Add a message to the queue to watch for timeouts.
-                data = {
-                    'timeout': time.time() + TIMEOUT_SECONDS,
-                    'layer_id': layer_id
-                }
-                self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
+                all_valid = len(layer_images) == len(valid_images)
+                some_images = len(layer_images) > 0
+
+                if all_valid and some_images:
+                    data = {'layer_id': layer_id}
+                    self.queue.add_message(JOB_THUMBNAIL, data)
+
+                    # Add a message to the queue to watch for timeouts.
+                    data = {
+                        'timeout': time.time() + TIMEOUT_SECONDS,
+                        'layer_id': layer_id
+                    }
+                    self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
+
             return updated
 
     def _thumbnail(self, record):
@@ -129,12 +139,16 @@ class QueueProcessor(object):
             return False
 
         layer_id = data['layer_id']
-        make_thumbs_for_layer(layer_id)
 
-        data = {'layer_id': layer_id}
-        self.queue.add_message(JOB_HANDOFF, data)
-
-        return True
+        if make_thumbs_for_layer(layer_id):
+            data = {'layer_id': layer_id}
+            self.queue.add_message(JOB_HANDOFF, data)
+            return True
+        else:
+            status_updates.update_layer_status(layer_id,
+                                               enums.STATUS_FAILED,
+                                               ERROR_MESSAGE_THUMBNAIL_FAILED)
+            return False
 
     def _emr_hand_off(self, record):
         """
