@@ -5,13 +5,8 @@ from __future__ import division
 
 import json
 
-import boto.sqs
-from boto.sqs.message import Message
-
+import boto3
 from django.conf import settings
-
-MAX_WAIT = 20  # Seconds.
-DEFAULT_DELAY = 0
 
 
 class SQSManager(object):
@@ -19,51 +14,40 @@ class SQSManager(object):
     Manages SQS queue creation and message functionality
     """
     def __init__(self):
-        self.q = self._get_queue()
+        self.client = boto3.client('sqs')
+        self.queue_url = self.client.get_queue_url(
+            QueueName=settings.AWS_SQS_QUEUE)['QueueUrl']
 
     def get_message(self):
-        message = self.q.read(wait_time_seconds=MAX_WAIT,
-                              message_attributes=['All'])
-        if message:
-            # Return raw message and parsed body.
-            return {
-                'message': message,
-                'body': json.loads(message.get_body())
-            }
-        else:
-            return None
+        response = self.client.receive_message(QueueUrl=self.queue_url,
+                                               WaitTimeSeconds=20)
 
-    def add_message(self, job_type, data, delay=DEFAULT_DELAY):
-        payload = self._make_payload(job_type, data)
-        self._post_to_queue(payload, delay)
+        message = response['Messages'][0]
+        payload = json.loads(message['Body'])
 
-    def remove_message(self, message):
-        self.q.delete_message(message['message'])
-
-    def _make_payload(self, job_type, data):
         return {
-            'Records': [
-                {
-                    'eventSource': 'rf:boto',
-                    'eventName': job_type,
-                    'data': data
-                }
-            ]
+            'original_message': message,
+            'payload': payload
         }
 
-    def _get_queue(self):
-        """
-        Get a connection to the SQS queue.
-        """
-        queue_name = settings.AWS_SQS_QUEUE
-        conn = boto.connect_sqs()
-        return conn.get_queue(queue_name)
+    def add_message(self, job_type, data, delay=0):
+        payload = self.make_payload(job_type, data)
+        self.client.send_message(
+            QueueUrl=self.queue_url,
+            MessageBody=json.dumps(payload),
+            DelaySeconds=delay,
+        )
 
-    def _post_to_queue(self, payload, delay=DEFAULT_DELAY):
-        """
-        Create an SQS message from a payload.
-        data -- structured data representing the new SQS message.
-        """
-        m = Message()
-        m.set_body(json.dumps(payload))
-        self.q.write(m, delay)
+    def make_payload(self, job_type, data):
+        return {
+            'eventSource': 'rf:boto',
+            'eventName': job_type,
+            'data': data
+        }
+
+    def remove_message(self, message):
+        handle = message['original_message']['ReceiptHandle']
+        self.client.delete_message(
+            QueueUrl=self.queue_url,
+            ReceiptHandle=handle,
+        )
