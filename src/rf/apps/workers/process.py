@@ -133,6 +133,8 @@ class QueueProcessor(object):
                 some_images = len(layer_images) > 0
 
                 if all_valid and some_images:
+                    status_updates.update_layer_status(layer_id, enums.STATUS_VALID)
+
                     data = {'layer_id': layer_id}
                     self.queue.add_message(JOB_THUMBNAIL, data)
 
@@ -267,7 +269,9 @@ class QueueProcessor(object):
 
         if image.source_s3_bucket_key:
             success = s3_copy(image.source_s3_bucket_key, image.get_s3_key())
-            if not success:
+            if success:
+                return True
+            else:
                 return status_updates.mark_image_invalid(
                     image.s3_uuid, ERROR_MESSAGE_IMAGE_TRANSFER)
         else:
