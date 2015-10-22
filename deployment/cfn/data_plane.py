@@ -163,7 +163,7 @@ class DataPlane(StackNode):
             EngineVersion='9.4.4',
             MasterUsername=Ref(self.rds_username),
             MasterUserPassword=Ref(self.rds_password),
-            MultiAZ=True,
+            MultiAZ=False,
             PreferredBackupWindow='04:00-04:30',  # 12:00AM-12:30AM ET
             PreferredMaintenanceWindow='sun:04:30-sun:05:30',  # SUN 12:30AM-01:30AM ET
             StorageType='gp2',
