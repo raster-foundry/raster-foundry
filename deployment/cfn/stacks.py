@@ -5,6 +5,7 @@ from private_hosted_zone import PrivateHostedZone
 from data_plane import DataPlane
 from application import Application
 from worker import Worker
+from public_hosted_zone import PublicHostedZone
 
 import ConfigParser
 import sys
@@ -50,14 +51,20 @@ def build_graph(rf_config, aws_profile, **kwargs):
                               DataPlane=data_plane, aws_profile=aws_profile)
     worker = Worker(globalconfig=global_config, VPC=vpc, DataPlane=data_plane,
                     aws_profile=aws_profile)
+    public_hosted_zone = PublicHostedZone(globalconfig=global_config,
+                                          Application=application,
+                                          aws_profile=aws_profile)
 
-    return application, worker
+    return data_plane, application, worker, public_hosted_zone
 
 
 def build_stacks(rf_config, aws_profile, **kwargs):
     """Trigger actual building of graphs"""
-    application_graph, worker_graph = build_graph(rf_config, aws_profile,
-                                                  **kwargs)
+    data_plane_graph, application_graph, worker_graph, \
+        public_hosted_zone_graph = build_graph(rf_config, aws_profile,
+                                               **kwargs)
 
+    data_plane_graph.go()
     application_graph.go()
     worker_graph.go()
+    public_hosted_zone_graph.go()
