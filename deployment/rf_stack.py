@@ -5,6 +5,7 @@ import argparse
 import os
 
 from cfn.stacks import build_stacks, get_config
+from ec2.amis import prune
 from packer.driver import run_packer
 
 
@@ -17,6 +18,10 @@ def launch_stacks(rf_config, aws_profile, **kwargs):
 
 def create_ami(rf_config, aws_profile, machine_type, **kwargs):
     run_packer(rf_config, machine_type, aws_profile=aws_profile)
+
+
+def prune_amis(rf_config, aws_profile, machine_type, keep, **kwargs):
+    prune(rf_config, machine_type, keep, aws_profile=aws_profile)
 
 
 def main():
@@ -50,6 +55,18 @@ def main():
                         choices=['rf-app', 'rf-worker'],
                         default=None, help='Machine type to create AMI')
     rf_ami.set_defaults(func=create_ami)
+
+    rf_prune_ami = subparsers.add_parser('prune-ami',
+                                         help='Prune stale Raster Foundry '
+                                              'AMIs',
+                                         parents=[common_parser])
+    rf_prune_ami.add_argument('--machine-type', type=str, required=True,
+                              nargs=argparse.ONE_OR_MORE,
+                              choices=['rf-app', 'rf-worker'],
+                              help='AMI type to prune')
+    rf_prune_ami.add_argument('--keep', type=int, default=10,
+                              help='Number of AMIs to keep')
+    rf_prune_ami.set_defaults(func=prune_amis)
 
     args = parser.parse_args()
     rf_config = get_config(args.rf_config_path, args.rf_profile)
