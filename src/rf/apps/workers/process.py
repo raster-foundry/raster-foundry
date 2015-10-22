@@ -7,6 +7,7 @@ from __future__ import division
 import math
 import time
 import uuid
+import logging
 
 from apps.core.models import LayerImage, Layer
 from apps.workers.image_validator import ImageValidator
@@ -15,6 +16,8 @@ from apps.workers.thumbnail import make_thumbs_for_layer
 import apps.core.enums as enums
 import apps.workers.status_updates as status_updates
 from apps.workers.copy_images import s3_copy
+
+log = logging.getLogger(__name__)
 
 TIMEOUT_SECONDS = (60 * 10)  # 10 Minutes.
 
@@ -30,7 +33,6 @@ JOB_HANDOFF = 'emr_handoff'
 JOB_TIMEOUT = 'timeout'
 
 MAX_WAIT = 20  # Seconds.
-DEFAULT_DELAY = 0
 TIMEOUT_DELAY = 60
 
 # Error messages
@@ -50,30 +52,45 @@ class QueueProcessor(object):
         self.queue = SQSManager()
 
     def start_polling(self):
-        while True and self.queue:
-            s3_message = self.queue.get_message()
-            if s3_message:
-                delete_message = False
-                message = s3_message['body']
-                if 'Records' in message and message['Records'][0]:
-                    record = message['Records'][0]
-                    job_type = record['eventName']
-                    if job_type == JOB_THUMBNAIL:
-                        delete_message = self._thumbnail(record)
-                    elif job_type == JOB_HANDOFF:
-                        delete_message = self._emr_hand_off(record)
-                    elif job_type == JOB_TIMEOUT:
-                        delete_message = self._check_timeout(record)
-                    elif job_type in JOB_VALIDATE:
-                        if record['eventSource'] == 'aws:s3':
-                            delete_message = self._validate_image(record)
-                    elif job_type == JOB_COPY_IMAGE:
-                        delete_message = self._copy_image(record)
+        while True:
+            message = self.queue.get_message()
+            if not message:
+                continue
 
-                if delete_message:
-                    self.queue.remove_message(s3_message)
+            record = message['payload']
 
-    def _validate_image(self, data):
+            # Flatten S3 event.
+            if 'Records' in record and record['Records'][0]:
+                record = record['Records'][0]
+
+            delete_message = self.handle_message(record)
+            if delete_message:
+                self.queue.remove_message(message)
+
+    def handle_message(self, record):
+        # Parse record fields.
+        try:
+            job_type = record['eventName']
+            event_source = record['eventSource']
+        except KeyError:
+            log.exception('Missing fields in message %s', record)
+            return False
+
+        if job_type == JOB_THUMBNAIL:
+            return self.thumbnail(record)
+        elif job_type == JOB_HANDOFF:
+            return self.emr_hand_off(record)
+        elif job_type == JOB_TIMEOUT:
+            return self.check_timeout(record)
+        elif job_type in JOB_VALIDATE:
+            if event_source == 'aws:s3':
+                return self.validate_image(record)
+        elif job_type == JOB_COPY_IMAGE:
+            return self.copy_image(record)
+
+        return False
+
+    def validate_image(self, data):
         """
         Use Gdal to verify an image is properly formatted and can be further
         processed.
@@ -84,7 +101,7 @@ class QueueProcessor(object):
         except KeyError:
             return False
 
-        s3_uuid = self._extract_uuid_from_aws_key(key)
+        s3_uuid = extract_uuid_from_aws_key(key)
         try:
             uuid.UUID(s3_uuid)
         except ValueError:
@@ -128,7 +145,7 @@ class QueueProcessor(object):
 
             return updated
 
-    def _thumbnail(self, record):
+    def thumbnail(self, record):
         """
         Generate thumbnails for all images.
         data -- attribute data from SQS.
@@ -156,7 +173,7 @@ class QueueProcessor(object):
                                                ERROR_MESSAGE_THUMBNAIL_FAILED)
             return False
 
-    def _emr_hand_off(self, record):
+    def emr_hand_off(self, record):
         """
         Passes layer imgages to EMR to begin creating custom rasters.
         data -- attribute data from SQS.
@@ -189,7 +206,7 @@ class QueueProcessor(object):
         else:
             return some_images
 
-    def _check_timeout(self, record):
+    def check_timeout(self, record):
         """
         Check an EMR job to see if it has completed before the timeout has
         been reached.
@@ -227,12 +244,11 @@ class QueueProcessor(object):
 
         return True
 
-    def _copy_image(self, record):
+    def copy_image(self, record):
         """
         Copy an image into the S3 bucket from an external source.
         data -- attribute data from SQS.
         """
-
         try:
             data = record['data']
             image_id = data['image_id']
@@ -274,17 +290,17 @@ class QueueProcessor(object):
         except ValueError:
             return False
 
-        # Update our server with data necessary for tile serving.
         # Nothing else needs to go in the queue. We're done.
         return status_updates.update_layer_status(data['layer_id'],
                                                   enums.STATUS_COMPLETED)
 
-    def _extract_uuid_from_aws_key(self, key):
-        """
-        Given an AWS key, find the uuid and return it.
-        AWS keys are a user id appended to a uuid with a file extension.
-        EX: 10-1aa064aa-1086-4ff1-a90b-09d3420e0343.tif
-        """
-        dot = key.find('.') if key.find('.') >= 0 else len(key)
-        first_dash = key.find('-')
-        return key[first_dash:dot]
+
+def extract_uuid_from_aws_key(key):
+    """
+    Given an AWS key, find the uuid and return it.
+    AWS keys are a user id appended to a uuid with a file extension.
+    EX: 10-1aa064aa-1086-4ff1-a90b-09d3420e0343.tif
+    """
+    dot = key.find('.') if key.find('.') >= 0 else len(key)
+    first_dash = key.find('-')
+    return key[first_dash:dot]
