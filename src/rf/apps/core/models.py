@@ -281,6 +281,7 @@ class LayerImage(Model):
         help_text='Name of S3 bucket'
     )
     source_s3_bucket_key = CharField(
+        blank=True,
         null=True,
         max_length=255,
         help_text='S3 <bucket>/<key> for source image (optional)'
