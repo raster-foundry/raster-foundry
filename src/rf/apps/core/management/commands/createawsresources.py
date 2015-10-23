@@ -198,6 +198,5 @@ class Command(BaseCommand):
                            settings.AWS_BUCKET_NAME)
 
         r.create_bucket(settings.AWS_LOGS_BUCKET)
-        r.create_bucket(settings.AWS_ARTIFACTS_BUCKET)
         r.create_readonly_bucket(settings.AWS_TILES_BUCKET)
         r.create_readonly_bucket(settings.AWS_WORKSPACE_BUCKET)

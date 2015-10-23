@@ -15,7 +15,7 @@ envdir_config:
   RF_ARTIFACTS_BUCKET: "{{ artifacts_bucket }}"
   RF_TILES_BUCKET: "{{ tiles_bucket }}"
   RF_WORKSPACE_BUCKET: "{{ workspace_bucket }}"
-  RF_WORKER_INSTANCES: "{{ worker_instances }}"
+  RF_EMR_INSTANCES: "{{ emr_instances }}"
   RF_TEMP_DIR: "{{ temp_dir }}"
 
 django_config:

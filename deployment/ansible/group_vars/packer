@@ -19,7 +19,5 @@ sqs_queue: "raster-foundry"
 sqs_dead_letter_queue: "raster-foundry-dead-letter"
 s3_bucket: "raster-foundry"
 logs_bucket: "raster-foundry-logs"
-artifacts_bucket: "raster-foundry-artifacts"
 tiles_bucket: "raster-foundry-tiles"
 workspace_bucket: "raster-foundry-workspace"
-worker_instances: 10

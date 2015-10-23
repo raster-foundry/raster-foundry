@@ -50,7 +50,7 @@ def create_cluster(layer):
                 # 'BidPrice': '0.15',
 
                 'Market': 'ON_DEMAND',
-                'InstanceCount': int(settings.AWS_WORKER_INSTANCES),
+                'InstanceCount': int(settings.AWS_EMR_INSTANCES),
             },
         ],
     }

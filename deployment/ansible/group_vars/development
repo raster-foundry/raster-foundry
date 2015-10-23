@@ -16,6 +16,5 @@ sqs_queue: "raster-foundry-{{ lookup('env', 'USER') | regex_replace('^(.*\\\\\\)
 sqs_dead_letter_queue: "raster-foundry-{{ lookup('env', 'USER') | regex_replace('^(.*\\\\\\)?(.*)$', '\\\\2') }}-dead-letter"
 s3_bucket: "raster-foundry-{{ lookup('env', 'USER') | regex_replace('^(.*\\\\\\)?(.*)$', '\\\\2') }}"
 logs_bucket: "raster-foundry-{{ lookup('env', 'USER') | regex_replace('^(.*\\\\\\)?(.*)$', '\\\\2') }}-logs"
-artifacts_bucket: "raster-foundry-{{ lookup('env', 'USER') | regex_replace('^(.*\\\\\\)?(.*)$', '\\\\2') }}-artifacts"
 tiles_bucket: "raster-foundry-{{ lookup('env', 'USER') | regex_replace('^(.*\\\\\\)?(.*)$', '\\\\2') }}-tiles"
 workspace_bucket: "raster-foundry-{{ lookup('env', 'USER') | regex_replace('^(.*\\\\\\)?(.*)$', '\\\\2') }}-workspace"
