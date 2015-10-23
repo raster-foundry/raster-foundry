@@ -81,7 +81,7 @@ def create_cluster(layer):
     ]
 
     response = client.run_job_flow(
-        Name='RF Tiler',
+        Name=settings.AWS_EMR_CLUSTER_NAME,
         LogUri=logs_uri,
         ReleaseLabel='emr-4.0.0',
 

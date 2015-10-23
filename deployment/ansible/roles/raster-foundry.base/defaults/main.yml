@@ -16,6 +16,7 @@ envdir_config:
   RF_TILES_BUCKET: "{{ tiles_bucket }}"
   RF_WORKSPACE_BUCKET: "{{ workspace_bucket }}"
   RF_EMR_INSTANCES: "{{ emr_instances }}"
+  RF_EMR_CLUSTER_NAME: "{{ emr_cluster_name }}"
   RF_TEMP_DIR: "{{ temp_dir }}"
 
 django_config:
