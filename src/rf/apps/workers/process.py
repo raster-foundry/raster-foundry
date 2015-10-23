@@ -192,8 +192,9 @@ class QueueProcessor(object):
             return False
 
         layer_images = LayerImage.objects.filter(layer_id=layer_id)
-        valid_images = LayerImage.objects.filter(layer_id=layer_id,
-                                                 status=enums.STATUS_VALID)
+        valid_images = LayerImage.objects.filter(
+            layer_id=layer_id,
+            status=enums.STATUS_THUMBNAILED)
         all_valid = len(layer_images) == len(valid_images)
         some_images = len(layer_images) > 0
         ready_to_process = some_images and all_valid
