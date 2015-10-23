@@ -4,7 +4,7 @@
 export PGHOST=$(cat /etc/rf.d/env/RF_DB_HOST)
 export PGDATABASE=$(cat /etc/rf.d/env/RF_DB_NAME)
 export PGUSER=$(cat /etc/rf.d/env/RF_DB_USER)
-export PGPASSWORD=$(cat /etc/mmw.d/env/RF_DB_PASSWORD)
+export PGPASSWORD=$(cat /etc/rf.d/env/RF_DB_PASSWORD)
 
 # Ensure that the PostGIS extension exists
 psql -c "CREATE EXTENSION IF NOT EXISTS postgis;"

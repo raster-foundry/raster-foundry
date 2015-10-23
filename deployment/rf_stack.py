@@ -4,7 +4,7 @@
 import argparse
 import os
 
-from cfn.stacks import build_stacks, get_config
+from cfn.stacks import build_stacks, destroy_stacks, get_config
 from ec2.amis import prune
 from packer.driver import run_packer
 
@@ -14,6 +14,10 @@ current_file_dir = os.path.dirname(os.path.realpath(__file__))
 
 def launch_stacks(rf_config, aws_profile, **kwargs):
     build_stacks(rf_config, aws_profile, **kwargs)
+
+
+def remove_stacks(rf_config, aws_profile, **kwargs):
+    destroy_stacks(rf_config, aws_profile, **kwargs)
 
 
 def create_ami(rf_config, aws_profile, machine_type, **kwargs):
@@ -45,7 +49,24 @@ def main():
     rf_stacks = subparsers.add_parser('launch-stacks',
                                       help='Launch Raster Foundry Stack',
                                       parents=[common_parser])
+    rf_stacks.add_argument('--stack-color', type=str,
+                           choices=['green', 'blue'],
+                           default=None,
+                           help='One of "green", "blue"')
+    rf_stacks.add_argument('--activate-dns', action='store_true',
+                           default=False,
+                           help='Activate DNS for current stack color')
     rf_stacks.set_defaults(func=launch_stacks)
+
+    rf_remove_stacks = subparsers.add_parser('remove-stacks',
+                                             help='Remove Raster Foundry '
+                                                  'Stack',
+                                             parents=[common_parser])
+    rf_remove_stacks.add_argument('--stack-color', type=str,
+                                  choices=['green', 'blue'],
+                                  required=True,
+                                  help='One of "green", "blue"')
+    rf_remove_stacks.set_defaults(func=remove_stacks)
 
     rf_ami = subparsers.add_parser('create-ami', help='Create AMI for Raster '
                                                       'Foundry',
