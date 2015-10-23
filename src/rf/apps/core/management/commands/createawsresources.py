@@ -74,6 +74,24 @@ class AwsResources(object):
             ]
         }
 
+    def readonly_policy(self, bucket_arn):
+        return {
+            'Version': '2012-10-17',
+            'Statement': [
+                {
+                    'Sid': 'AddPerm',
+                    'Effect': 'Allow',
+                    'Principal': '*',
+                    'Action': [
+                        's3:GetObject'
+                    ],
+                    'Resource': [
+                        bucket_arn
+                    ]
+                }
+            ]
+        }
+
     def create_main_queue(self, queue_name, dead_letter_queue, s3_bucket):
         main_queue = self.create_queue(queue_name)
 
@@ -111,6 +129,15 @@ class AwsResources(object):
             else:
                 raise e
         return bucket
+
+    def create_readonly_bucket(self, bucket_name):
+        self.create_bucket(bucket_name)
+        bucket_arn = 'arn:aws:s3:::{}/*'.format(bucket_name)
+        policy = self.readonly_policy(bucket_arn)
+        self.s3_client.put_bucket_policy(
+            Bucket=bucket_name,
+            Policy=json.dumps(policy)
+        )
 
     def create_s3_bucket(self, main_queue, s3_bucket):
         self.create_bucket(s3_bucket)
@@ -162,10 +189,15 @@ class Command(BaseCommand):
     help = 'Used to create AWS resources the Django web application depends on'
     can_import_settings = True
 
-    def handle(self, *args, **options):
+    def handle(self, *args, **kwargs):
         from django.conf import settings
 
         r = AwsResources(stdout=self.stdout)
         r.create_resources(settings.AWS_SQS_QUEUE,
                            settings.AWS_SQS_DEAD_LETTER_QUEUE,
                            settings.AWS_BUCKET_NAME)
+
+        r.create_bucket(settings.AWS_LOGS_BUCKET)
+        r.create_bucket(settings.AWS_ARTIFACTS_BUCKET)
+        r.create_readonly_bucket(settings.AWS_TILES_BUCKET)
+        r.create_readonly_bucket(settings.AWS_WORKSPACE_BUCKET)
