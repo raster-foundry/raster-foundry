@@ -18,3 +18,4 @@ postgresql_host: "database.service.rf.internal"
 sqs_queue: "raster-foundry"
 sqs_dead_letter_queue: "raster-foundry-dead-letter"
 s3_bucket: "raster-foundry"
+worker_instances: 10

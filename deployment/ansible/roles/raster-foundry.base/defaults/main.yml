@@ -11,6 +11,7 @@ envdir_config:
   RF_S3_BUCKET: "{{ s3_bucket }}"
   RF_SQS_QUEUE: "{{ sqs_queue }}"
   RF_SQS_DEAD_LETTER_QUEUE: "{{ sqs_dead_letter_queue }}"
+  RF_WORKER_INSTANCES: "{{ worker_instances }}"
   RF_TEMP_DIR: "{{ temp_dir }}"
 
 django_config:

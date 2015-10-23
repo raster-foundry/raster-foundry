@@ -281,6 +281,7 @@ AWS_BUCKET_NAME = environ.get('RF_S3_BUCKET', 'raster-foundry-test-uploads-67dc4
 AWS_SQS_QUEUE = environ.get('RF_SQS_QUEUE', 'TestQueue')
 AWS_SQS_DEAD_LETTER_QUEUE = environ.get('RF_SQS_DEAD_LETTER_QUEUE',
                                         'TestDeadLetterQueue')
+AWS_WORKER_INSTANCES = environ.get('RF_WORKER_INSTANCES')
 # END AWS CONFIGURATION
 
 
