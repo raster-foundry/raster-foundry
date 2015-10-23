@@ -191,9 +191,7 @@ class Layer(Model):
             'meta_url': self.get_meta_url(),
             'favorite_url': self.get_favorite_url(),
             'dismiss_url': self.get_dismiss_url(),
-
-            # TODO: Replace with actual tiles URL.
-            'tile_url': 'https://s3.amazonaws.com/raster-foundry-tiles/test_tiles/{z}/{x}/{y}.png',  # NOQA
+            'tile_url': self.get_tile_url(),
         }
 
     def get_absolute_url(self):
@@ -218,6 +216,10 @@ class Layer(Model):
 
     def get_dismiss_url(self):
         return reverse('layer_dismiss')
+
+    def get_tile_url(self):
+        url = 'https://s3.amazonaws.com/%s/%d/{z}/{x}/{y}.png'
+        return url % (settings.AWS_TILES_BUCKET, self.id)
 
     def __unicode__(self):
         return '{0} -> {1}'.format(self.user.username, self.name)
