@@ -90,14 +90,14 @@ class QueueProcessor(object):
 
         return False
 
-    def validate_image(self, data):
+    def validate_image(self, record):
         """
         Use Gdal to verify an image is properly formatted and can be further
         processed.
-        data -- attribute data from SQS.
+        record -- attribute data from SQS.
         """
         try:
-            key = data['s3']['object']['key']
+            key = record['s3']['object']['key']
         except KeyError:
             return False
 
@@ -144,13 +144,12 @@ class QueueProcessor(object):
                         'layer_id': layer_id
                     }
                     self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
-
             return updated
 
     def thumbnail(self, record):
         """
         Generate thumbnails for all images.
-        data -- attribute data from SQS.
+        record -- attribute data from SQS.
         """
         try:
             data = record['data']
@@ -178,11 +177,8 @@ class QueueProcessor(object):
     def emr_hand_off(self, record):
         """
         Passes layer imgages to EMR to begin creating custom rasters.
-        data -- attribute data from SQS.
+        record -- attribute data from SQS.
         """
-        # Send data to EMR for processing.
-        # return False if it fails to start.
-        # EMR posts directly to queue upon competion.
         try:
             data = record['data']
             layer_id = data['layer_id']
@@ -212,7 +208,7 @@ class QueueProcessor(object):
         """
         Check an EMR job to see if it has completed before the timeout has
         been reached.
-        data -- attribute data from SQS.
+        record -- attribute data from SQS.
         """
         try:
             data = record['data']
@@ -281,7 +277,7 @@ class QueueProcessor(object):
         """
         When an EMR job has completed updates the associated model in the
         database.
-        data -- attribute data from SQS.
+        record -- attribute data from SQS.
         """
         try:
             data = record['data']
