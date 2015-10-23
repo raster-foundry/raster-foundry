@@ -19,7 +19,7 @@ from apps.workers.copy_images import s3_copy
 
 log = logging.getLogger(__name__)
 
-TIMEOUT_SECONDS = (60 * 10)  # 10 Minutes.
+TIMEOUT_SECONDS = (60 * 60)  # 60 Minutes.
 
 JOB_COPY_IMAGE = 'copy_image'
 JOB_VALIDATE = [
