@@ -13,6 +13,7 @@ from apps.core.models import LayerImage, Layer
 from apps.workers.image_validator import ImageValidator
 from apps.workers.sqs_manager import SQSManager
 from apps.workers.thumbnail import make_thumbs_for_layer
+from apps.workers.emr import create_cluster
 import apps.core.enums as enums
 import apps.workers.status_updates as status_updates
 from apps.workers.copy_images import s3_copy
@@ -198,9 +199,11 @@ class QueueProcessor(object):
         ready_to_process = some_images and all_valid
 
         if ready_to_process:
-            return status_updates.update_layer_status(layer_id,
-                                                      enums.STATUS_PROCESSING)
-            # POST TO EMR HERE.
+            layer = Layer.objects.get(id=layer_id)
+            status_updates.update_layer_status(layer.id,
+                                               enums.STATUS_PROCESSING)
+            create_cluster(layer)
+            return True
         else:
             return some_images
 

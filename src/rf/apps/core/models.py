@@ -221,6 +221,9 @@ class Layer(Model):
         url = 'https://s3.amazonaws.com/%s/%d/{z}/{x}/{y}.png'
         return url % (settings.AWS_TILES_BUCKET, self.id)
 
+    def get_tile_bucket_path(self):
+        return 's3://{}/{}'.format(settings.AWS_TILES_BUCKET, self.id)
+
     def __unicode__(self):
         return '{0} -> {1}'.format(self.user.username, self.name)
 
@@ -306,6 +309,12 @@ class LayerImage(Model):
         return '%d-%s.%s' % (self.layer.user.id,
                              self.s3_uuid,
                              self.file_extension)
+
+    def get_s3_uri(self):
+        return 's3://{}/{}-{}.{}'.format(self.bucket_name,
+                                         self.layer.user_id,
+                                         self.s3_uuid,
+                                         self.file_extension)
 
     def to_json(self):
         return {
