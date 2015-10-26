@@ -136,7 +136,7 @@ class QueueProcessor(object):
                 if all_valid and some_images:
                     status_updates.update_layer_status(
                         layer_id,
-                        enums.STATUS_VALID)
+                        enums.STATUS_VALIDATED)
 
                     data = {'layer_id': layer_id}
                     self.queue.add_message(JOB_THUMBNAIL, data)
