@@ -17,7 +17,7 @@ postgresql_host: "database.service.rf.internal"
 
 sqs_queue: "raster-foundry"
 sqs_dead_letter_queue: "raster-foundry-dead-letter"
-s3_bucket: "raster-foundry"
+s3_bucket: "raster-foundry-uploads"
 logs_bucket: "raster-foundry-logs"
 tiles_bucket: "raster-foundry-tiles"
 workspace_bucket: "raster-foundry-workspace"
