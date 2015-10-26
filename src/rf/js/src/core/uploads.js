@@ -67,10 +67,7 @@ var invalidTypes = function(file) {
         fileName = file.name;
 
     switch (mimeType) {
-        case 'image/png':
-        case 'image/jpeg':
         case 'image/tiff':
-        case 'application/zip':
             return null;
 
         default:
@@ -84,5 +81,6 @@ var invalidTypes = function(file) {
 module.exports = {
     getExtension: getExtension,
     uploadFiles: uploadFiles,
-    S3UploadException: S3UploadException
+    S3UploadException: S3UploadException,
+    invalidTypes: invalidTypes
 };
