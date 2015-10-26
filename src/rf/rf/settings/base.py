@@ -284,20 +284,20 @@ WSGI_APPLICATION = '%s.wsgi.application' % SITE_NAME
 
 
 # AWS CONFIGURATION
-AWS_BUCKET_NAME = environ.get('RF_S3_BUCKET')
-AWS_SQS_QUEUE = environ.get('RF_SQS_QUEUE')
-AWS_SQS_DEAD_LETTER_QUEUE = environ.get('RF_SQS_DEAD_LETTER_QUEUE')
-AWS_LOGS_BUCKET = environ.get('RF_LOGS_BUCKET')
+AWS_BUCKET_NAME = get_env_setting('RF_S3_BUCKET')
+AWS_SQS_QUEUE = get_env_setting('RF_SQS_QUEUE')
+AWS_SQS_DEAD_LETTER_QUEUE = get_env_setting('RF_SQS_DEAD_LETTER_QUEUE')
+AWS_LOGS_BUCKET = get_env_setting('RF_LOGS_BUCKET')
 # S3 bucket for tiler artifacts (bootstrap.sh, mosaic.jar, chunk.py)
-AWS_ARTIFACTS_BUCKET = environ.get('RF_ARTIFACTS_BUCKET')
-AWS_TILES_BUCKET = environ.get('RF_TILES_BUCKET')
-AWS_WORKSPACE_BUCKET = environ.get('RF_WORKSPACE_BUCKET')
-AWS_EMR_INSTANCES = environ.get('RF_EMR_INSTANCES')
-AWS_EMR_CLUSTER_NAME = environ.get('RF_EMR_CLUSTER_NAME')
-AWS_EMR_DEBUG = is_truthy(environ.get('RF_EMR_DEBUG'))
+AWS_ARTIFACTS_BUCKET = get_env_setting('RF_ARTIFACTS_BUCKET')
+AWS_TILES_BUCKET = get_env_setting('RF_TILES_BUCKET')
+AWS_WORKSPACE_BUCKET = get_env_setting('RF_WORKSPACE_BUCKET')
+AWS_EMR_INSTANCES = get_env_setting('RF_EMR_INSTANCES')
+AWS_EMR_CLUSTER_NAME = get_env_setting('RF_EMR_CLUSTER_NAME')
+AWS_EMR_DEBUG = is_truthy(get_env_setting('RF_EMR_DEBUG'))
 # END AWS CONFIGURATION
 
 
 # TEMP DIR
-TEMP_DIR = environ.get('RF_TEMP_DIR', '/tmp')
+TEMP_DIR = get_env_setting('RF_TEMP_DIR')
 # END TEMP DIR
