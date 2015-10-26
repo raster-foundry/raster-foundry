@@ -277,10 +277,17 @@ WSGI_APPLICATION = '%s.wsgi.application' % SITE_NAME
 
 
 # AWS CONFIGURATION
-AWS_BUCKET_NAME = environ.get('RF_S3_BUCKET', 'raster-foundry-test-uploads-67dc48c70b3bcf89eab78dbf5cf7900')  # NOQA
-AWS_SQS_QUEUE = environ.get('RF_SQS_QUEUE', 'TestQueue')
-AWS_SQS_DEAD_LETTER_QUEUE = environ.get('RF_SQS_DEAD_LETTER_QUEUE',
-                                        'TestDeadLetterQueue')
+AWS_BUCKET_NAME = environ.get('RF_S3_BUCKET')
+AWS_SQS_QUEUE = environ.get('RF_SQS_QUEUE')
+AWS_SQS_DEAD_LETTER_QUEUE = environ.get('RF_SQS_DEAD_LETTER_QUEUE')
+AWS_LOGS_BUCKET = environ.get('RF_LOGS_BUCKET')
+# S3 bucket for tiler artifacts (bootstrap.sh, mosaic.jar, chunk.py)
+AWS_ARTIFACTS_BUCKET = environ.get('RF_ARTIFACTS_BUCKET')
+AWS_TILES_BUCKET = environ.get('RF_TILES_BUCKET')
+AWS_WORKSPACE_BUCKET = environ.get('RF_WORKSPACE_BUCKET')
+AWS_EMR_INSTANCES = environ.get('RF_EMR_INSTANCES')
+AWS_EMR_CLUSTER_NAME = environ.get('RF_EMR_CLUSTER_NAME')
+AWS_EMR_DEBUG = environ.get('RF_EMR_DEBUG')
 # END AWS CONFIGURATION
 
 

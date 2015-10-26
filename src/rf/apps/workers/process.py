@@ -13,13 +13,14 @@ from apps.core.models import LayerImage, Layer
 from apps.workers.image_validator import ImageValidator
 from apps.workers.sqs_manager import SQSManager
 from apps.workers.thumbnail import make_thumbs_for_layer
+from apps.workers.emr import create_cluster
 import apps.core.enums as enums
 import apps.workers.status_updates as status_updates
 from apps.workers.copy_images import s3_copy
 
 log = logging.getLogger(__name__)
 
-TIMEOUT_SECONDS = (60 * 10)  # 10 Minutes.
+TIMEOUT_SECONDS = (60 * 60)  # 60 Minutes.
 
 JOB_COPY_IMAGE = 'copy_image'
 JOB_VALIDATE = [
@@ -90,14 +91,14 @@ class QueueProcessor(object):
 
         return False
 
-    def validate_image(self, data):
+    def validate_image(self, record):
         """
         Use Gdal to verify an image is properly formatted and can be further
         processed.
-        data -- attribute data from SQS.
+        record -- attribute data from SQS.
         """
         try:
-            key = data['s3']['object']['key']
+            key = record['s3']['object']['key']
         except KeyError:
             return False
 
@@ -133,6 +134,10 @@ class QueueProcessor(object):
                 some_images = len(layer_images) > 0
 
                 if all_valid and some_images:
+                    status_updates.update_layer_status(
+                        layer_id,
+                        enums.STATUS_VALID)
+
                     data = {'layer_id': layer_id}
                     self.queue.add_message(JOB_THUMBNAIL, data)
 
@@ -142,13 +147,12 @@ class QueueProcessor(object):
                         'layer_id': layer_id
                     }
                     self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
-
             return updated
 
     def thumbnail(self, record):
         """
         Generate thumbnails for all images.
-        data -- attribute data from SQS.
+        record -- attribute data from SQS.
         """
         try:
             data = record['data']
@@ -176,11 +180,8 @@ class QueueProcessor(object):
     def emr_hand_off(self, record):
         """
         Passes layer imgages to EMR to begin creating custom rasters.
-        data -- attribute data from SQS.
+        record -- attribute data from SQS.
         """
-        # Send data to EMR for processing.
-        # return False if it fails to start.
-        # EMR posts directly to queue upon competion.
         try:
             data = record['data']
             layer_id = data['layer_id']
@@ -193,16 +194,19 @@ class QueueProcessor(object):
             return False
 
         layer_images = LayerImage.objects.filter(layer_id=layer_id)
-        valid_images = LayerImage.objects.filter(layer_id=layer_id,
-                                                 status=enums.STATUS_VALID)
+        valid_images = LayerImage.objects.filter(
+            layer_id=layer_id,
+            status=enums.STATUS_THUMBNAILED)
         all_valid = len(layer_images) == len(valid_images)
         some_images = len(layer_images) > 0
         ready_to_process = some_images and all_valid
 
         if ready_to_process:
-            return status_updates.update_layer_status(layer_id,
-                                                      enums.STATUS_PROCESSING)
-            # POST TO EMR HERE.
+            layer = Layer.objects.get(id=layer_id)
+            status_updates.update_layer_status(layer.id,
+                                               enums.STATUS_PROCESSING)
+            create_cluster(layer)
+            return True
         else:
             return some_images
 
@@ -210,7 +214,7 @@ class QueueProcessor(object):
         """
         Check an EMR job to see if it has completed before the timeout has
         been reached.
-        data -- attribute data from SQS.
+        record -- attribute data from SQS.
         """
         try:
             data = record['data']
@@ -267,7 +271,9 @@ class QueueProcessor(object):
 
         if image.source_s3_bucket_key:
             success = s3_copy(image.source_s3_bucket_key, image.get_s3_key())
-            if not success:
+            if success:
+                return True
+            else:
                 return status_updates.mark_image_invalid(
                     image.s3_uuid, ERROR_MESSAGE_IMAGE_TRANSFER)
         else:
@@ -277,7 +283,7 @@ class QueueProcessor(object):
         """
         When an EMR job has completed updates the associated model in the
         database.
-        data -- attribute data from SQS.
+        record -- attribute data from SQS.
         """
         try:
             data = record['data']
