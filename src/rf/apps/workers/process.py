@@ -20,7 +20,7 @@ from apps.workers.copy_images import s3_copy
 
 log = logging.getLogger(__name__)
 
-TIMEOUT_SECONDS = (60 * 60)  # 60 Minutes.
+TIMEOUT_SECONDS = (60 * 60 * 5)  # 5 Hours.
 
 JOB_COPY_IMAGE = 'copy_image'
 JOB_VALIDATE = [
@@ -35,7 +35,7 @@ JOB_TIMEOUT = 'timeout'
 JOB_HEARTBEAT = 'emr_heartbeat'
 
 MAX_WAIT = 20  # Seconds.
-TIMEOUT_DELAY = 60
+TIMEOUT_DELAY = 300
 
 # Error messages
 ERROR_MESSAGE_THUMBNAIL_FAILED = 'Thumbnail generation failed.'
