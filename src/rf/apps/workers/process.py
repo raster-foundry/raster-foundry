@@ -70,6 +70,9 @@ class QueueProcessor(object):
 
     def handle_message(self, record):
         # Parse record fields.
+        if self.is_test_event(record):
+            return True
+
         try:
             job_type = record['eventName']
             event_source = record['eventSource']
@@ -90,6 +93,9 @@ class QueueProcessor(object):
             return self.copy_image(record)
 
         return False
+
+    def is_test_event(self, record):
+        return 'Event' in record and record['Event'] == 's3:TestEvent'
 
     def validate_image(self, record):
         """
