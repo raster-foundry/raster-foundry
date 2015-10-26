@@ -147,14 +147,14 @@ class QueueProcessor(object):
                     status=enums.STATUS_VALID)
 
                 all_valid = len(layer_images) == len(valid_images)
-                some_images = len(layer_images) > 0
+                layer_has_images = len(layer_images) > 0
 
                 log.info('%d/%d images validated for layer %d',
                          len(valid_images),
                          len(layer_images),
                          layer_id)
 
-                if all_valid and some_images:
+                if all_valid and layer_has_images:
                     log.info('Layer %d is valid', layer_id)
                     status_updates.update_layer_status(
                         layer_id,
@@ -225,8 +225,8 @@ class QueueProcessor(object):
             layer_id=layer_id,
             status=enums.STATUS_THUMBNAILED)
         all_valid = len(layer_images) == len(valid_images)
-        some_images = len(layer_images) > 0
-        ready_to_process = some_images and all_valid
+        layer_has_images = len(layer_images) > 0
+        ready_to_process = layer_has_images and all_valid
 
         log.info('%d/%d images thumbnailed for layer %d',
                  len(valid_images),
