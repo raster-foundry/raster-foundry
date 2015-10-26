@@ -261,6 +261,7 @@ ACCOUNT_ACTIVATION_DAYS = 7  # One-week activation window.
 LOCAL_APPS = (
     'apps.core',
     'apps.home',
+    'apps.monitoring',
     'apps.uploads',
     'apps.workers'
 )
