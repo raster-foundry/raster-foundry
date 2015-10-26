@@ -137,6 +137,7 @@ class QueueProcessor(object):
                 log.info('Image validated %s', key)
                 layer_id = status_updates.get_layer_id_from_uuid(s3_uuid)
                 layer_images = LayerImage.objects.filter(layer_id=layer_id)
+                # TODO: Filter `layer_images` instead of extra query.
                 valid_images = LayerImage.objects.filter(
                     layer_id=layer_id,
                     status=enums.STATUS_VALID)
@@ -180,11 +181,10 @@ class QueueProcessor(object):
             return False
 
         try:
-            int(layer_id)
+            layer_id = int(layer_id)
         except ValueError:
             return False
 
-        layer_id = data['layer_id']
         log.info('Generating thumbnails for layer %d...', layer_id)
 
         if make_thumbs_for_layer(layer_id):
@@ -211,11 +211,12 @@ class QueueProcessor(object):
             return False
 
         try:
-            int(layer_id)
+            layer_id = int(layer_id)
         except ValueError:
             return False
 
         layer_images = LayerImage.objects.filter(layer_id=layer_id)
+        # TODO: Filter `layer_images` instead of extra query.
         valid_images = LayerImage.objects.filter(
             layer_id=layer_id,
             status=enums.STATUS_THUMBNAILED)
@@ -290,7 +291,7 @@ class QueueProcessor(object):
             return False
 
         try:
-            int(image_id)
+            image_id = int(image_id)
         except ValueError:
             return False
 
