@@ -41,7 +41,7 @@
 
 - name: Run Django collectstatic command
   django_manage: command=collectstatic app_path="{{ django_home }}"
-  environment: django_config
+  environment: "{{ envdir_config | combine(django_config) }}"
   sudo: False
 
 - name: Create JavaScript test harness
