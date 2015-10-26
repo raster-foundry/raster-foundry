@@ -102,7 +102,35 @@ def create_cluster(layer):
         Configurations=configurations,
         Steps=get_steps(layer, status_queue),
     )
-    log.info(response)
+    log.debug(response)
+    return response
+
+
+def check_cluster_status(cluster_id):
+    alive_instance_statuses = [
+        'PROVISIONING',
+        'BOOTSTRAPPING',
+        'RUNNING',
+        'RESIZING',
+    ]
+    alive_step_statuses = [
+        'PENDING',
+        'RUNNING',
+        'COMPLETED',
+    ]
+    client = boto3.client('emr')
+    response = client.list_instance_groups(ClusterId=cluster_id)
+    statuses = (instance['Status']['State']
+                for instance in response['InstanceGroups'])
+    instances_alive = all(s in alive_instance_statuses for s in statuses)
+
+    if instances_alive:
+        response = client.list_steps(ClusterId=cluster_id)
+        statuses = (step['Status']['State']
+                    for step in response['Steps'])
+        return all(s in alive_step_statuses for s in statuses)
+    else:
+        return False
 
 
 def add_steps(layer, status_queue, cluster_id):
@@ -115,7 +143,7 @@ def add_steps(layer, status_queue, cluster_id):
         JobFlowId=cluster_id,
         Steps=get_steps(layer, status_queue),
     )
-    log.info(response)
+    log.debug(response)
 
 
 def get_steps(layer, status_queue):
