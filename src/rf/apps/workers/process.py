@@ -70,12 +70,17 @@ class QueueProcessor(object):
 
     def handle_message(self, record):
         # Parse record fields.
+        if self.is_test_event(record):
+            return True
+
         try:
             job_type = record['eventName']
             event_source = record['eventSource']
         except KeyError:
             log.exception('Missing fields in message %s', record)
             return False
+
+        log.info('Executing job %s', job_type)
 
         if job_type == JOB_THUMBNAIL:
             return self.thumbnail(record)
@@ -90,6 +95,9 @@ class QueueProcessor(object):
             return self.copy_image(record)
 
         return False
+
+    def is_test_event(self, record):
+        return 'Event' in record and record['Event'] == 's3:TestEvent'
 
     def validate_image(self, record):
         """
@@ -116,16 +124,20 @@ class QueueProcessor(object):
         # Image verification.
         validator = ImageValidator(key, byte_range)
         if not validator.image_format_is_supported():
+            log.info('Image format not supported %s', key)
             return status_updates.mark_image_invalid(
                 s3_uuid, validator.get_error())
         elif not validator.image_has_min_bands(3):
+            log.info('Not enough bands %s', key)
             return status_updates.mark_image_invalid(
                 s3_uuid, validator.get_error())
         else:
             updated = status_updates.mark_image_valid(s3_uuid)
             if updated:
+                log.info('Image validated %s', key)
                 layer_id = status_updates.get_layer_id_from_uuid(s3_uuid)
                 layer_images = LayerImage.objects.filter(layer_id=layer_id)
+                # TODO: Filter `layer_images` instead of extra query.
                 valid_images = LayerImage.objects.filter(
                     layer_id=layer_id,
                     status=enums.STATUS_VALID)
@@ -133,12 +145,19 @@ class QueueProcessor(object):
                 all_valid = len(layer_images) == len(valid_images)
                 some_images = len(layer_images) > 0
 
+                log.info('%d/%d images validated for layer %d',
+                         len(valid_images),
+                         len(layer_images),
+                         layer_id)
+
                 if all_valid and some_images:
+                    log.info('Layer %d is valid', layer_id)
                     status_updates.update_layer_status(
                         layer_id,
                         enums.STATUS_VALID)
 
                     data = {'layer_id': layer_id}
+                    log.info('Queue thumbnail job')
                     self.queue.add_message(JOB_THUMBNAIL, data)
 
                     # Add a message to the queue to watch for timeouts.
@@ -146,6 +165,7 @@ class QueueProcessor(object):
                         'timeout': time.time() + TIMEOUT_SECONDS,
                         'layer_id': layer_id
                     }
+                    log.info('Queue timeout job')
                     self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
             return updated
 
@@ -161,17 +181,19 @@ class QueueProcessor(object):
             return False
 
         try:
-            int(layer_id)
+            layer_id = int(layer_id)
         except ValueError:
             return False
 
-        layer_id = data['layer_id']
+        log.info('Generating thumbnails for layer %d...', layer_id)
 
         if make_thumbs_for_layer(layer_id):
             data = {'layer_id': layer_id}
+            log.info('Queue handoff job')
             self.queue.add_message(JOB_HANDOFF, data)
             return True
         else:
+            log.info('Failed to thumbnail')
             status_updates.update_layer_status(layer_id,
                                                enums.STATUS_FAILED,
                                                ERROR_MESSAGE_THUMBNAIL_FAILED)
@@ -189,11 +211,12 @@ class QueueProcessor(object):
             return False
 
         try:
-            int(layer_id)
+            layer_id = int(layer_id)
         except ValueError:
             return False
 
         layer_images = LayerImage.objects.filter(layer_id=layer_id)
+        # TODO: Filter `layer_images` instead of extra query.
         valid_images = LayerImage.objects.filter(
             layer_id=layer_id,
             status=enums.STATUS_THUMBNAILED)
@@ -201,10 +224,16 @@ class QueueProcessor(object):
         some_images = len(layer_images) > 0
         ready_to_process = some_images and all_valid
 
+        log.info('%d/%d images thumbnailed for layer %d',
+                 len(valid_images),
+                 len(layer_images),
+                 layer_id)
+
         if ready_to_process:
             layer = Layer.objects.get(id=layer_id)
             status_updates.update_layer_status(layer.id,
                                                enums.STATUS_PROCESSING)
+            log.info('Launching EMR cluster...')
             create_cluster(layer)
             return True
         else:
@@ -253,6 +282,8 @@ class QueueProcessor(object):
         Copy an image into the S3 bucket from an external source.
         data -- attribute data from SQS.
         """
+        log.info('Copying S3 image...')
+
         try:
             data = record['data']
             image_id = data['image_id']
@@ -260,7 +291,7 @@ class QueueProcessor(object):
             return False
 
         try:
-            int(image_id)
+            image_id = int(image_id)
         except ValueError:
             return False
 
@@ -272,6 +303,7 @@ class QueueProcessor(object):
         if image.source_s3_bucket_key:
             success = s3_copy(image.source_s3_bucket_key, image.get_s3_key())
             if success:
+                log.info('Image copied successfully')
                 return True
             else:
                 return status_updates.mark_image_invalid(
