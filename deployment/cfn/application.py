@@ -266,7 +266,7 @@ class Application(StackNode):
                 )
             ],
             HealthCheck=elb.HealthCheck(
-                Target='HTTP:80/',
+                Target='HTTP:80/health-check/',
                 HealthyThreshold='3',
                 UnhealthyThreshold='2',
                 Interval='30',
