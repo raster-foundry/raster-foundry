@@ -26,6 +26,12 @@ def get_env_setting(setting):
         raise ImproperlyConfigured(error_msg)
 
 
+def is_truthy(value):
+    if not value:
+        return False
+    return value.upper() == 'TRUE'
+
+
 # PATH CONFIGURATION
 DJANGO_ROOT = dirname(dirname(abspath(__file__)))
 
@@ -288,7 +294,7 @@ AWS_TILES_BUCKET = environ.get('RF_TILES_BUCKET')
 AWS_WORKSPACE_BUCKET = environ.get('RF_WORKSPACE_BUCKET')
 AWS_EMR_INSTANCES = environ.get('RF_EMR_INSTANCES')
 AWS_EMR_CLUSTER_NAME = environ.get('RF_EMR_CLUSTER_NAME')
-AWS_EMR_DEBUG = environ.get('RF_EMR_DEBUG')
+AWS_EMR_DEBUG = is_truthy(environ.get('RF_EMR_DEBUG'))
 # END AWS CONFIGURATION
 
 
