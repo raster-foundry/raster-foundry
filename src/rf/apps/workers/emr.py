@@ -28,10 +28,6 @@ def create_cluster(layer):
     bootstrap_uri = 's3://{}/bootstrap.sh'.format(artifacts)
 
     instances = {
-        # For debugging only.
-        # 'Ec2KeyName': 'rf-emr',
-        # 'KeepJobFlowAliveWhenNoSteps': True,
-
         'InstanceGroups': [
             {
                 'Name': 'Master',
@@ -43,17 +39,15 @@ def create_cluster(layer):
                 'Name': 'Workers',
                 'InstanceRole': 'CORE',
                 'InstanceType': 'm3.xlarge',
-
-                # TODO: Move to ansible
-                # For debugging only.
-                # 'Market': 'SPOT',
-                # 'BidPrice': '0.15',
-
                 'Market': 'ON_DEMAND',
                 'InstanceCount': int(settings.AWS_EMR_INSTANCES),
             },
         ],
     }
+
+    if settings.AWS_EMR_DEBUG:
+        instances['Ec2KeyName'] = 'rf-emr'
+        instances['KeepJobFlowAliveWhenNoSteps'] = True
 
     config_env_vars = {
         'Classification': 'export',
@@ -142,12 +136,13 @@ def get_steps(layer, status_queue):
     images = LayerImage.objects.filter(layer_id=layer.id)
     images = [image.get_s3_uri() for image in images]
 
+    action_on_failure = 'CONTINUE' if settings.AWS_EMR_DEBUG \
+                        else 'TERMINATE_CLUSTER'
+
     return [
         {
             'Name': 'Chunk',
-            # For debugging only.
-            # 'ActionOnFailure': 'CONTINUE',
-            'ActionOnFailure': 'TERMINATE_CLUSTER',
+            'ActionOnFailure': action_on_failure,
             'HadoopJarStep': {
                 'Jar': 'command-runner.jar',
                 'Args': spark_submit + [
@@ -167,9 +162,7 @@ def get_steps(layer, status_queue):
         },
         {
             'Name': 'Mosaic',
-            # For debugging only.
-            # 'ActionOnFailure': 'CONTINUE',
-            'ActionOnFailure': 'TERMINATE_CLUSTER',
+            'ActionOnFailure': action_on_failure,
             'HadoopJarStep': {
                 'Jar': 'command-runner.jar',
                 'Args': spark_submit + [
