@@ -19,3 +19,4 @@ logs_bucket: "raster-foundry-{{ lookup('env', 'USER') | regex_replace('^(.*\\\\\
 tiles_bucket: "raster-foundry-{{ lookup('env', 'USER') | regex_replace('^(.*\\\\\\)?(.*)$', '\\\\2') }}-tiles"
 workspace_bucket: "raster-foundry-{{ lookup('env', 'USER') | regex_replace('^(.*\\\\\\)?(.*)$', '\\\\2') }}-workspace"
 emr_cluster_name: "RF Tiler ({{ lookup('env', 'USER') | regex_replace('^(.*\\\\\\)?(.*)$', '\\\\2') }})"
+emr_instances: 5
