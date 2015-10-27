@@ -1,6 +1,7 @@
 from troposphere import (
     Parameter,
     Ref,
+    Equals,
     Output,
     Tags,
     GetAtt,
@@ -32,6 +33,7 @@ class Application(StackNode):
         'Tags': ['global:Tags'],
         'Region': ['global:Region'],
         'StackType': ['global:StackType'],
+        'StackColor': ['global:StackColor'],
         'KeyName': ['global:KeyName'],
         'AvailabilityZones': ['global:AvailabilityZones',
                               'VPC:AvailabilityZones'],
@@ -53,6 +55,7 @@ class Application(StackNode):
         'Tags': {},
         'Region': 'us-east-1',
         'StackType': 'Staging',
+        'StackColor': 'Green',
         'KeyName': 'rf-stg',
         'AppServerInstanceType': 't2.micro',
         'AppServerInstanceProfile': 'AppServerInstanceProfile',
@@ -63,6 +66,7 @@ class Application(StackNode):
 
     ATTRIBUTES = {
         'StackType': 'StackType',
+        'StackColor': 'StackColor',
     }
 
     def set_up_stack(self):
@@ -77,6 +81,11 @@ class Application(StackNode):
         self.add_description('Application server stack for Raster Foundry')
 
         # Parameters
+        self.color = self.add_parameter(Parameter(
+            'StackColor', Type='String',
+            Description='Stack color', AllowedValues=['Blue', 'Green']
+        ), 'StackColor')
+
         self.keyname = self.add_parameter(Parameter(
             'KeyName', Type='String',
             Description='Name of an existing EC2 key pair'
@@ -278,25 +287,32 @@ class Application(StackNode):
 
     def create_auto_scaling_resources(self, app_server_security_group,
                                       app_server_lb):
-        app_server_launch_config = self.add_resource(
+        self.add_condition('BlueCondition', Equals('Blue', Ref(self.color)))
+        self.add_condition('GreenCondition', Equals('Green', Ref(self.color)))
+
+        blue_app_server_launch_config = self.add_resource(
             asg.LaunchConfiguration(
-                'lcAppServer',
+                'lcAppServerBlue',
+                Condition='BlueCondition',
                 ImageId=Ref(self.app_server_ami),
                 IamInstanceProfile=Ref(self.app_server_instance_profile),
                 InstanceType=Ref(self.app_server_instance_type),
                 KeyName=Ref(self.keyname),
                 SecurityGroups=[Ref(app_server_security_group)],
-                UserData=Base64(Join('', self.get_cloud_config()))))
+                UserData=Base64(
+                    Join('', self.get_cloud_config()))
+            ))
 
         self.add_resource(
             asg.AutoScalingGroup(
-                'asgAppServer',
+                'asgAppServerBlue',
                 AvailabilityZones=Ref(self.availability_zones),
+                Condition='BlueCondition',
                 Cooldown=300,
                 DesiredCapacity=Ref(self.app_server_auto_scaling_desired),
                 HealthCheckGracePeriod=600,
                 HealthCheckType='ELB',
-                LaunchConfigurationName=Ref(app_server_launch_config),
+                LaunchConfigurationName=Ref(blue_app_server_launch_config),
                 LoadBalancerNames=[Ref(app_server_lb)],
                 MaxSize=Ref(self.app_server_auto_scaling_max),
                 MinSize=Ref(self.app_server_auto_scaling_min),
@@ -312,7 +328,49 @@ class Application(StackNode):
                     )
                 ],
                 VPCZoneIdentifier=Ref(self.private_subnets),
-                Tags=[asg.Tag('Name', 'AppServer', True)]))
+                Tags=[asg.Tag('Name', 'AppServer', True)])
+        )
+
+        green_app_server_launch_config = self.add_resource(
+            asg.LaunchConfiguration(
+                'lcAppServerGreen',
+                Condition='GreenCondition',
+                ImageId=Ref(self.app_server_ami),
+                IamInstanceProfile=Ref(self.app_server_instance_profile),
+                InstanceType=Ref(self.app_server_instance_type),
+                KeyName=Ref(self.keyname),
+                SecurityGroups=[Ref(app_server_security_group)],
+                UserData=Base64(
+                    Join('', self.get_cloud_config()))
+            ))
+
+        self.add_resource(
+            asg.AutoScalingGroup(
+                'asgAppServerGreen',
+                AvailabilityZones=Ref(self.availability_zones),
+                Condition='GreenCondition',
+                Cooldown=300,
+                DesiredCapacity=Ref(self.app_server_auto_scaling_desired),
+                HealthCheckGracePeriod=600,
+                HealthCheckType='ELB',
+                LaunchConfigurationName=Ref(green_app_server_launch_config),
+                LoadBalancerNames=[Ref(app_server_lb)],
+                MaxSize=Ref(self.app_server_auto_scaling_max),
+                MinSize=Ref(self.app_server_auto_scaling_min),
+                NotificationConfigurations=[
+                    asg.NotificationConfigurations(
+                        TopicARN=Ref(self.notification_topic_arn),
+                        NotificationTypes=[
+                            asg.EC2_INSTANCE_LAUNCH,
+                            asg.EC2_INSTANCE_LAUNCH_ERROR,
+                            asg.EC2_INSTANCE_TERMINATE,
+                            asg.EC2_INSTANCE_TERMINATE_ERROR
+                        ]
+                    )
+                ],
+                VPCZoneIdentifier=Ref(self.private_subnets),
+                Tags=[asg.Tag('Name', 'AppServer', True)])
+        )
 
     def get_cloud_config(self):
         return ['#cloud-config\n',
@@ -321,6 +379,10 @@ class Application(StackNode):
                 '  - path: /etc/default/rf-app\n',
                 '    permissions: 0644\n',
                 '    content: PACKER_RUNNING=\n',
+                '  - path: /etc/rf.d/env/RF_STACK_COLOR\n',
+                '    permissions: 0750\n',
+                '    owner: root:rf\n',
+                '    content: ', Ref(self.color), '\n',
                 '  - path: /etc/rf.d/env/RF_DB_PASSWORD\n',
                 '    permissions: 0750\n',
                 '    owner: root:rf\n',

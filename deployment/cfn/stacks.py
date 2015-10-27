@@ -7,6 +7,8 @@ from application import Application
 from worker import Worker
 from public_hosted_zone import PublicHostedZone
 
+from boto import cloudformation as cfn
+
 import ConfigParser
 import sys
 
@@ -40,6 +42,9 @@ def build_graph(rf_config, aws_profile, **kwargs):
       rf_config (dict): dictionary representation of `default.yml`
       aws_profile (str): name of AWS profile to use for authentication
     """
+    if kwargs['stack_color'] is not None:
+        rf_config['StackColor'] = kwargs['stack_color'].capitalize()
+
     global_config = GlobalConfigNode(**rf_config)
     vpc = VPC(globalconfig=global_config, aws_profile=aws_profile)
     private_hosted_zone = PrivateHostedZone(globalconfig=global_config,
@@ -65,6 +70,22 @@ def build_stacks(rf_config, aws_profile, **kwargs):
                                                **kwargs)
 
     data_plane_graph.go()
-    application_graph.go()
-    worker_graph.go()
-    public_hosted_zone_graph.go()
+
+    if kwargs['stack_color'] is not None:
+        application_graph.go()
+        worker_graph.go()
+
+    if kwargs['activate_dns']:
+        public_hosted_zone_graph.go()
+
+
+def destroy_stacks(rf_config, aws_profile, **kwargs):
+    """Destroy stacks that are associated with stack_color"""
+    region = rf_config['Region']
+    stack_color = kwargs['stack_color']
+
+    cfn_conn = cfn.connect_to_region(region, profile_name=aws_profile)
+    color_tag = ('StackColor', stack_color.capitalize())
+
+    [stack.delete() for stack in cfn_conn.describe_stacks()
+        if color_tag in stack.tags.items()]

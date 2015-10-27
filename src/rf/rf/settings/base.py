@@ -61,6 +61,11 @@ DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 # END FILE STORAGE CONFIGURATION
 
 
+# STACK COLOR CONFIGURATION
+STACK_COLOR = environ.get('RF_STACK_COLOR', 'Black')
+# END STACK COLOR CONFIGURATION
+
+
 # CACHE CONFIGURATION
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#caches
 CACHES = {

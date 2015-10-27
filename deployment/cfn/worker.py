@@ -29,6 +29,7 @@ class Worker(StackNode):
         'Tags': ['global:Tags'],
         'Region': ['global:Region'],
         'StackType': ['global:StackType'],
+        'StackColor': ['global:StackColor'],
         'KeyName': ['global:KeyName'],
         'AvailabilityZones': ['global:AvailabilityZones',
                               'VPC:AvailabilityZones'],
@@ -49,6 +50,7 @@ class Worker(StackNode):
         'Tags': {},
         'Region': 'us-east-1',
         'StackType': 'Staging',
+        'StackColor': 'Green',
         'KeyName': 'rf-stg',
         'IPAccess': ALLOW_ALL_CIDR,
         'WorkerInstanceType': 't2.micro',
@@ -60,6 +62,7 @@ class Worker(StackNode):
 
     ATTRIBUTES = {
         'StackType': 'StackType',
+        'StackColor': 'StackColor',
     }
 
     def set_up_stack(self):
@@ -74,6 +77,11 @@ class Worker(StackNode):
         self.add_description('Worker stack for Raster Foundry')
 
         # Parameters
+        self.color = self.add_parameter(Parameter(
+            'StackColor', Type='String',
+            Description='Stack color', AllowedValues=['Blue', 'Green']
+        ), 'StackColor')
+
         self.keyname = self.add_parameter(Parameter(
             'KeyName', Type='String',
             Description='Name of an existing EC2 key pair'
@@ -240,6 +248,10 @@ class Worker(StackNode):
         return ['#cloud-config\n',
                 '\n',
                 'write_files:\n',
+                '  - path: /etc/rf.d/env/RF_STACK_COLOR\n',
+                '    permissions: 0750\n',
+                '    owner: root:rf\n',
+                '    content: ', Ref(self.color), '\n',
                 '  - path: /etc/rf.d/env/RF_DB_PASSWORD\n',
                 '    permissions: 0750\n',
                 '    owner: root:rf\n',
