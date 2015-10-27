@@ -158,7 +158,7 @@ class QueueProcessor(object):
                     log.info('Layer %d is valid', layer_id)
                     status_updates.update_layer_status(
                         layer_id,
-                        enums.STATUS_VALID)
+                        enums.STATUS_VALIDATED)
 
                     data = {'layer_id': layer_id}
                     log.info('Queue thumbnail job')
