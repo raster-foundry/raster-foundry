@@ -47,11 +47,21 @@ def make_thumb(image, thumb_width, thumb_height):
         crop_width = image.width
         crop_height = crop_width / thumb_ratio
 
-    crop_width = int(crop_width)
-    crop_height = int(crop_height)
+    # In order to avoid spurious boundaries on the the thumbnails
+    # of large tiff files, we crop out the central crop_proportion
+    # part of the image. I'm not sure why this works. I thought that
+    # maybe the cropping box was too big and was going off the edge
+    # of the image, but the crop_width and crop_height never exceed the
+    # dimension of the original image.
+    crop_proportion = 0.9
+    border_proportion = ((1.0 - crop_proportion) / 2)
 
     # box = (left, upper, right, lower)
-    box = (0, 0, crop_width, crop_height)
+    left = int(border_proportion * crop_width)
+    upper = int(border_proportion * crop_height)
+    right = int(left + (crop_proportion * crop_width))
+    lower = int(upper + (crop_proportion * crop_height))
+    box = (left, upper, right, lower)
     cropped = image.crop(box)
     thumb = cropped.resize((thumb_width, thumb_height), Image.ANTIALIAS)
 
