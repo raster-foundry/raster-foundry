@@ -133,6 +133,29 @@ class LayerTestCase(AbstractLayerTestCase):
         response = self.save_layer(layer, user)
         self.assertEqual(response.status_code, 403)
 
+        # no capture dates
+        layer = {
+            'name': 'n'
+        }
+        response = self.save_layer(layer, user)
+        self.assertEqual(response.status_code, 200)
+
+        # capture start but no end
+        layer = {
+            'name': 'n',
+            'capture_start': '2015-08-15',
+        }
+        response = self.save_layer(layer, user)
+        self.assertEqual(response.status_code, 403)
+
+        # capture end but no start
+        layer = {
+            'name': 'n',
+            'capture_start': '2015-08-15',
+        }
+        response = self.save_layer(layer, user)
+        self.assertEqual(response.status_code, 403)
+
     # Modify
     def test_modify_layer(self):
         orig_name = 'Test Modify Layer'

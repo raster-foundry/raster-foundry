@@ -38,16 +38,13 @@ var UploadModal = React.createBackboneClass({
             files: [],
             name: [],
             organization: [],
-            area: [],
-            description: [],
             capture_start: [],
             capture_end: []
         };
     },
 
     getInitialServerErrors: function() {
-        return {
-        };
+        return {};
     },
 
     pane1Valid: function(nextPaneErrors) {
@@ -57,13 +54,11 @@ var UploadModal = React.createBackboneClass({
     pane2Valid: function(nextPaneErrors, serverErrors) {
         return nextPaneErrors.name.length === 0 &&
             nextPaneErrors.organization.length === 0 &&
-            nextPaneErrors.area.length === 0 &&
+            nextPaneErrors.capture_start.length === 0 &&
+            nextPaneErrors.capture_end.length === 0 &&
             _.isEmpty(serverErrors.name) &&
             _.isEmpty(serverErrors.capture_start) &&
-            _.isEmpty(serverErrors.capture_end) &&
-            nextPaneErrors.description.length === 0 &&
-            nextPaneErrors.capture_start.length === 0 &&
-            nextPaneErrors.capture_end.length === 0;
+            _.isEmpty(serverErrors.capture_end);
     },
 
     getInitialState: function() {
@@ -310,20 +305,12 @@ var UploadModal = React.createBackboneClass({
             errors.name = ['Please enter a name < 256 characters.'];
         }
 
-        if (!layerData.organization) {
-            errors.organization = ['Please enter an organization.'];
-        } else if (layerData.organization.length > 255) {
-            errors.organization = ['Please enter an organization < 255 characters.'];
-        }
-
-        if (!layerData.description) {
-            errors.description = ['Please enter a description.'];
+        if (layerData.organization && layerData.organization.length > 255) {
+            errors.organization = ['Please enter an organization < 256 characters.'];
         }
 
         function setDateErrors(state, errors, fieldName) {
-            if (!state[fieldName]) {
-                errors[fieldName] = ['Please enter a valid date.'];
-            } else {
+            if (state[fieldName]) {
                 var date = moment(state[fieldName]);
                 // Django requires that years are < 10000
                 if (date.year() > 9999) {
@@ -343,8 +330,12 @@ var UploadModal = React.createBackboneClass({
             }
         }
 
-        if (!layerData.area) {
-            errors.area = ['Please enter an area.'];
+        if (layerData.capture_start && !layerData.capture_end) {
+            errors.capture_end.push('Please enter a date.');
+        }
+
+        if (layerData.capture_end && !layerData.capture_start) {
+            errors.capture_start.push('Please enter a date.');
         }
 
         return errors;
@@ -632,8 +623,7 @@ var UploadModal = React.createBackboneClass({
                                             <div className="form-group">
                                                 <label>Capture Start Date</label>
                                                 <input className="form-control" type="date" ref="capture_start" placeholder="mm/dd/yyyy" />
-                                                {this.renderErrors(this.state.showPane1NextPaneErrors, this.state.nextPaneErrors.capture_start)}
-                                                {this.renderErrors(this.state.showPane2NextPaneErrors, this.state.nextPaneErrors.capture_dates)}
+                                                {this.renderErrors(this.state.showPane2NextPaneErrors, this.state.nextPaneErrors.capture_start)}
                                                 {this.renderErrors(true, this.state.serverErrors.capture_start)}
                                             </div>
                                         </div>
