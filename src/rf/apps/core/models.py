@@ -56,14 +56,14 @@ class Layer(Model):
     )
 
     description = TextField(blank=True)
-    organization = CharField(max_length=255, blank=True, default='')
+    organization = CharField(max_length=255, blank=True, null=True)
 
     is_public = BooleanField(default=False)
 
-    capture_start = DateField()
-    capture_end = DateField()
+    capture_start = DateField(blank=True, null=True)
+    capture_end = DateField(blank=True, null=True)
 
-    area = FloatField(default=0)
+    area = FloatField(default=0, blank=True, null=True)
     area_unit = CharField(
         blank=True,
         max_length=18,
@@ -153,6 +153,11 @@ class Layer(Model):
         tags = [m.to_json() for m in self.layer_tags.all()]
         images = [m.to_json() for m in self.layer_images.all()]
 
+        capture_start = self.capture_start.isoformat() \
+            if self.capture_start else None
+        capture_end = self.capture_end.isoformat() \
+            if self.capture_end else None
+
         return {
             'id': self.id,
             'name': self.name,
@@ -161,8 +166,8 @@ class Layer(Model):
             'description': self.description,
             'organization': self.organization,
             'is_public': self.is_public,
-            'capture_start': self.capture_start.isoformat(),
-            'capture_end': self.capture_end.isoformat(),
+            'capture_start': capture_start,
+            'capture_end': capture_end,
             'area': self.area,
             'area_unit': self.area_unit,
             'projection': self.projection,
