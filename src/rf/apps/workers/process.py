@@ -235,31 +235,13 @@ class QueueProcessor(object):
         except ValueError:
             return False
 
-        layer_images = LayerImage.objects.filter(layer_id=layer_id)
-
-        # TODO: Filter `layer_images` instead of extra query.
-        valid_images = LayerImage.objects.filter(
-            layer_id=layer_id,
-            status=enums.STATUS_THUMBNAILED)
-        all_valid = len(layer_images) == len(valid_images)
-        layer_has_images = len(layer_images) > 0
-        ready_to_process = layer_has_images and all_valid
-
-        log.info('%d/%d images thumbnailed for layer %d',
-                 len(valid_images),
-                 len(layer_images),
-                 layer_id)
-
-        if ready_to_process:
-            layer = Layer.objects.get(id=layer_id)
-            status_updates.update_layer_status(layer.id,
-                                               enums.STATUS_THUMBNAILED)
-            log.info('Launching EMR cluster...')
-            emr_response = create_cluster(layer)
-            self.start_health_check(layer_id, emr_response)
-            return True
-        else:
-            return layer_has_images
+        layer = Layer.objects.get(id=layer_id)
+        status_updates.update_layer_status(layer.id,
+                                           enums.STATUS_PROCESSING)
+        log.info('Launching EMR cluster...')
+        emr_response = create_cluster(layer)
+        self.start_health_check(layer_id, emr_response)
+        return True
 
     def emr_heartbeat(self, record):
         try:
