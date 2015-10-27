@@ -220,11 +220,13 @@ class QueueProcessor(object):
         log.info('Generating thumbnails for layer %d...', layer_id)
 
         if make_thumbs_for_layer(layer_id):
+            status_updates.update_layer_status(layer_id,
+                                               enums.STATUS_THUMBNAILED)
             return True
         else:
             log.info('Failed to thumbnail layer %d', layer_id)
             status_updates.update_layer_status(layer_id,
-                                               enums.STATUS_FAILED,
+                                               enums.STATUS_THUMBNAILED,
                                                ERROR_MESSAGE_THUMBNAIL_FAILED)
             return False
 
@@ -282,8 +284,9 @@ class QueueProcessor(object):
                                                       enums.STATUS_FAILED,
                                                       ERROR_MESSAGE_EMR_DEAD)
 
-        elif layer.status != enums.STATUS_COMPLETED and \
-                layer.status != enums.STATUS_FAILED:
+        elif layer.status_completed is not None and \
+                layer.status_failed is not None:
+
             data = {'layer_id': layer_id, 'job_id': job_id}
             self.queue.add_message(JOB_HEARTBEAT, data, TIMEOUT_DELAY)
 
@@ -317,7 +320,7 @@ class QueueProcessor(object):
 
         log.debug('Timeout for layer %d', layer_id)
 
-        if layer.status in (enums.STATUS_COMPLETED, enums.STATUS_FAILED):
+        if layer.status_completed or layer.status_failed:
             log.debug('Ending timeout. Job is complete.')
             return True
 
@@ -328,6 +331,7 @@ class QueueProcessor(object):
                 enums.STATUS_FAILED,
                 ERROR_MESSAGE_JOB_TIMEOUT)
 
+        # Requeue the timeout message.
         self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
         return True
 
@@ -389,9 +393,9 @@ class QueueProcessor(object):
         log.info('%s layer %d %s', step_name, layer_id, status)
 
         if status == FAILED:
-            error = record.get('error', '')
+            error = record.get('error', 'Chunking failed.')
             return status_updates.update_layer_status(layer_id,
-                                                      enums.STATUS_FAILED,
+                                                      started_status,
                                                       error)
         elif status == STARTED:
             return status_updates.update_layer_status(layer_id,

@@ -25,11 +25,23 @@ class LayerMetaInline(admin.TabularInline):
 
 class LayerAdmin(admin.ModelAdmin):
     inlines = [LayerTagInline, LayerImageInline, LayerMetaInline]
-    readonly_fields = ('created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at', 'status_created')
     fieldsets = (
         (None, {
             'fields': (
-                'user', 'name', 'status', 'slug',
+                'user', 'name', 'slug',
+                ('status_created'),
+                ('status_upload_start', 'status_upload_end'),
+                ('status_validate_start', 'status_validate_end'),
+                ('status_thumbnail_start', 'status_thumbnail_end'),
+                ('status_create_cluster_start', 'status_create_cluster_end'),
+                ('status_chunk_start', 'status_chunk_end'),
+                ('status_mosaic_start', 'status_mosaic_end'),
+                ('status_failed', 'status_completed'),
+                ('status_upload_error', 'status_validate_error'),
+                ('status_thumbnail_error', 'status_create_cluster_error'),
+                ('status_chunk_error', 'status_mosaic_error'),
+                'status_failed_error',
                 'description', 'is_public',
                 ('capture_start', 'capture_end'),
                 ('area', 'area_unit'),

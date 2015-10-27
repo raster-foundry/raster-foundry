@@ -11,7 +11,6 @@ from django_filters import MethodFilter
 from django.db.models import Q
 
 from apps.core.models import Layer, LayerTag
-from apps.core import enums
 
 
 class LayerFilter(django_filters.FilterSet):
@@ -44,6 +43,6 @@ class LayerFilter(django_filters.FilterSet):
         value -- the time in milliseconds elapsed since 1/1/1970
         """
         refresh_time = datetime.fromtimestamp(float(value) / 1000.0)
-        return queryset.filter((~Q(status=enums.STATUS_COMPLETED) &
-                                ~Q(status=enums.STATUS_FAILED)) |
+        return queryset.filter((Q(status_completed__isnull=True) &
+                                Q(status_failed__isnull=True)) |
                                Q(status_updated_at__gt=refresh_time))

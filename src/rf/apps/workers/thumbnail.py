@@ -7,7 +7,6 @@ import os
 import uuid
 import warnings
 import logging
-from datetime import datetime
 
 import boto3
 from PIL import Image
@@ -143,9 +142,6 @@ def make_thumbs_for_layer(layer_id):
     except ImageCouldNotOpenError:
         return False
 
-    layer.status = enums.STATUS_THUMBNAILED
-    layer.status_updated_at = datetime.now()
-    layer.save()
     return True
 
 
