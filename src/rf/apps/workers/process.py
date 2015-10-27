@@ -176,6 +176,10 @@ class QueueProcessor(object):
                         enums.STATUS_VALIDATED)
 
                     data = {'layer_id': layer_id}
+
+                    log.info('Queue handoff job')
+                    self.queue.add_message(JOB_HANDOFF, data)
+
                     log.info('Queue thumbnail job')
                     self.queue.add_message(JOB_THUMBNAIL, data)
 
@@ -207,9 +211,6 @@ class QueueProcessor(object):
         log.info('Generating thumbnails for layer %d...', layer_id)
 
         if make_thumbs_for_layer(layer_id):
-            data = {'layer_id': layer_id}
-            log.info('Queue handoff job')
-            self.queue.add_message(JOB_HANDOFF, data)
             return True
         else:
             log.info('Failed to thumbnail')
