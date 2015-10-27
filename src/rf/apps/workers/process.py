@@ -13,14 +13,14 @@ from apps.core.models import LayerImage, Layer
 from apps.workers.image_validator import ImageValidator
 from apps.workers.sqs_manager import SQSManager
 from apps.workers.thumbnail import make_thumbs_for_layer
-from apps.workers.emr import create_cluster
+from apps.workers.emr import create_cluster, check_cluster_status
 import apps.core.enums as enums
 import apps.workers.status_updates as status_updates
 from apps.workers.copy_images import s3_copy
 
 log = logging.getLogger(__name__)
 
-TIMEOUT_SECONDS = (60 * 60)  # 60 Minutes.
+TIMEOUT_SECONDS = (60 * 60 * 5)  # 5 Hours.
 
 JOB_COPY_IMAGE = 'copy_image'
 JOB_VALIDATE = [
@@ -32,9 +32,10 @@ JOB_VALIDATE = [
 JOB_THUMBNAIL = 'thumbnail'
 JOB_HANDOFF = 'emr_handoff'
 JOB_TIMEOUT = 'timeout'
+JOB_HEARTBEAT = 'emr_heartbeat'
 
 MAX_WAIT = 20  # Seconds.
-TIMEOUT_DELAY = 60
+TIMEOUT_DELAY = 300
 
 # Error messages
 ERROR_MESSAGE_THUMBNAIL_FAILED = 'Thumbnail generation failed.'
@@ -42,6 +43,7 @@ ERROR_MESSAGE_IMAGE_TRANSFER = 'Transferring image failed.'
 ERROR_MESSAGE_JOB_TIMEOUT = 'Layer could not be processed. ' + \
                             'The job timed out after ' + \
                             str(math.ceil(TIMEOUT_SECONDS / 60)) + ' minutes.'
+ERROR_MESSAGE_EMR_DEAD = 'Processing failed.'
 
 
 class QueueProcessor(object):
@@ -86,6 +88,8 @@ class QueueProcessor(object):
             return self.thumbnail(record)
         elif job_type == JOB_HANDOFF:
             return self.emr_hand_off(record)
+        elif job_type == JOB_HEARTBEAT:
+            return self.emr_heartbeat(record)
         elif job_type == JOB_TIMEOUT:
             return self.check_timeout(record)
         elif job_type in JOB_VALIDATE:
@@ -143,14 +147,14 @@ class QueueProcessor(object):
                     status=enums.STATUS_VALID)
 
                 all_valid = len(layer_images) == len(valid_images)
-                some_images = len(layer_images) > 0
+                layer_has_images = len(layer_images) > 0
 
                 log.info('%d/%d images validated for layer %d',
                          len(valid_images),
                          len(layer_images),
                          layer_id)
 
-                if all_valid and some_images:
+                if all_valid and layer_has_images:
                     log.info('Layer %d is valid', layer_id)
                     status_updates.update_layer_status(
                         layer_id,
@@ -221,8 +225,8 @@ class QueueProcessor(object):
             layer_id=layer_id,
             status=enums.STATUS_THUMBNAILED)
         all_valid = len(layer_images) == len(valid_images)
-        some_images = len(layer_images) > 0
-        ready_to_process = some_images and all_valid
+        layer_has_images = len(layer_images) > 0
+        ready_to_process = layer_has_images and all_valid
 
         log.info('%d/%d images thumbnailed for layer %d',
                  len(valid_images),
@@ -234,10 +238,44 @@ class QueueProcessor(object):
             status_updates.update_layer_status(layer.id,
                                                enums.STATUS_PROCESSING)
             log.info('Launching EMR cluster...')
-            create_cluster(layer)
+            emr_response = create_cluster(layer)
+            self.start_health_check(layer_id, emr_response)
             return True
         else:
-            return some_images
+            return layer_has_images
+
+    def emr_heartbeat(self, record):
+        try:
+            data = record['data']
+            job_id = data['job_id']
+            layer_id = data['layer_id']
+        except KeyError:
+            return False
+
+        try:
+            int(layer_id)
+        except ValueError:
+            return False
+
+        try:
+            layer = Layer.objects.get(id=layer_id)
+        except Layer.DoesNotExist:
+            return False
+
+        log.info('Heartbeat for layer %d', layer_id)
+
+        if not check_cluster_status(job_id):
+            log.info('EMR job for layer %d has failed!', layer_id)
+            return status_updates.update_layer_status(layer_id,
+                                                      enums.STATUS_FAILED,
+                                                      ERROR_MESSAGE_EMR_DEAD)
+
+        elif layer.status != enums.STATUS_COMPLETED and \
+                layer.status != enums.STATUS_FAILED:
+            data = {'layer_id': layer_id, 'job_id': job_id}
+            self.queue.add_message(JOB_HEARTBEAT, data, TIMEOUT_DELAY)
+
+        return True
 
     def check_timeout(self, record):
         """
@@ -331,6 +369,15 @@ class QueueProcessor(object):
         # Nothing else needs to go in the queue. We're done.
         return status_updates.update_layer_status(data['layer_id'],
                                                   enums.STATUS_COMPLETED)
+
+    def start_health_check(self, layer_id, emr_response):
+        try:
+            job_id = emr_response['JobFlowId']
+        except KeyError:
+            return False
+
+        data = {'job_id': job_id, 'layer_id': layer_id}
+        self.queue.add_message(JOB_HEARTBEAT, data, TIMEOUT_DELAY)
 
 
 def extract_uuid_from_aws_key(key):
