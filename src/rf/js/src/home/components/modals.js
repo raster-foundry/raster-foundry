@@ -33,37 +33,32 @@ var UploadModal = React.createBackboneClass({
         $('.import-modal').off('show.bs.modal');
     },
 
-    getInitialClientErrors: function() {
+    getInitialNextPaneErrors: function() {
         return {
             files: [],
             name: [],
             organization: [],
-            area: [],
-            description: [],
             capture_start: [],
             capture_end: []
         };
     },
 
     getInitialServerErrors: function() {
-        return {
-        };
+        return {};
     },
 
-    pane1Valid: function(clientErrors) {
-        return clientErrors.files.length === 0;
+    pane1Valid: function(nextPaneErrors) {
+        return nextPaneErrors.files.length === 0;
     },
 
-    pane2Valid: function(clientErrors, serverErrors) {
-        return clientErrors.name.length === 0 &&
-            clientErrors.organization.length === 0 &&
-            clientErrors.area.length === 0 &&
+    pane2Valid: function(nextPaneErrors, serverErrors) {
+        return nextPaneErrors.name.length === 0 &&
+            nextPaneErrors.organization.length === 0 &&
+            nextPaneErrors.capture_start.length === 0 &&
+            nextPaneErrors.capture_end.length === 0 &&
             _.isEmpty(serverErrors.name) &&
             _.isEmpty(serverErrors.capture_start) &&
-            _.isEmpty(serverErrors.capture_end) &&
-            clientErrors.description.length === 0 &&
-            clientErrors.capture_start.length === 0 &&
-            clientErrors.capture_end.length === 0;
+            _.isEmpty(serverErrors.capture_end);
     },
 
     getInitialState: function() {
@@ -72,11 +67,18 @@ var UploadModal = React.createBackboneClass({
             fileDescriptions: [],
 
             activePane: 1,
-            s3BucketKeyError: false,
-            clientErrors: this.getInitialClientErrors(),
+
+            // nextPaneErrors contains the client-side error messages that are
+            // computed and shown when attempting to go to the
+            // next pane or submitting. Other client-side error messages
+            // are computed and shown at other times and are stored in separate
+            // variables.
+            nextPaneErrors: this.getInitialNextPaneErrors(),
+            s3ImportErrors: [],
+            fileImportErrors: [],
             serverErrors: this.getInitialServerErrors(),
-            showPane1ClientErrors: false,
-            showPane2ClientErrors: false,
+            showPane1NextPaneErrors: false,
+            showPane2NextPaneErrors: false,
             postInProgress: false
         };
     },
@@ -85,7 +87,7 @@ var UploadModal = React.createBackboneClass({
         this.setState(this.getInitialState());
         this.submittedLayerData = null;
 
-        React.findDOMNode(this.refs.s3BucketKey).value = '';
+        React.findDOMNode(this.refs.s3URI).value = '';
         React.findDOMNode(this.refs.name).value = '';
         React.findDOMNode(this.refs.organization).value = '';
         React.findDOMNode(this.refs.description).value = '';
@@ -122,31 +124,54 @@ var UploadModal = React.createBackboneClass({
         return fileNameParts[fileNameParts.length - 1];
     },
 
-    s3BucketKeyValid: function(s3BucketKey) {
-        // example valid s3BucketKey: ab-cd.ef/gh1/i-j.k
-        var re = /^([\w-.]+\/)+[\w-]+\.\w+$/;
-        return re.test(s3BucketKey);
+    isTiff: function(fileName) {
+        var extension = this.getFileExtension(fileName).toLowerCase();
+        return extension === 'tif' || extension === 'tiff';
+    },
+
+    parseS3URI: function(s3URI) {
+        // example valid s3URI:
+        // s3://bucket-name/path/to/tiff.tif
+        var re = /^s3\:\/\/(([\w-.]+\/)+([\w-]+\.\w+))/,
+            match = re.exec(s3URI);
+        if (match) {
+            return {
+                s3BucketKey: match[1],
+                fileName: match[3]
+            };
+        }
+        return null;
     },
 
     addS3BucketKey: function(e) {
         e.preventDefault();
-        var s3BucketKey = React.findDOMNode(this.refs.s3BucketKey).value;
+        var s3URI = React.findDOMNode(this.refs.s3URI).value,
+            parsedS3URI = this.parseS3URI(s3URI),
+            errors = [];
 
-        if (this.s3BucketKeyValid(s3BucketKey)) {
-            this.setState({s3BucketKeyError: false});
-            var fileName = this.getFileNameFromS3BucketKey(s3BucketKey),
-                extension = this.getFileExtension(fileName),
-                fileDescriptions = [{
+        if (parsedS3URI) {
+            var s3BucketKey = parsedS3URI.s3BucketKey,
+                fileName = parsedS3URI.fileName;
+
+            if (this.isTiff(fileName)) {
+                var fileDescriptions = [{
                     s3BucketKey: s3BucketKey,
                     isNew: true,
                     uuid: uuid.v4(),
                     fileName: fileName,
-                    extension: extension
+                    extension: this.getFileExtension(fileName)
                 }];
-            this.updateFileDescriptions(fileDescriptions);
+                this.updateFileDescriptions(fileDescriptions);
+            } else {
+                errors.push(fileName + ' is not a tiff file.');
+            }
         } else {
-            this.setState({s3BucketKeyError: true});
+            errors.push('Please enter a URI of the form s3://bucket-name/path/to/tiff.tif');
         }
+        this.setState({
+            s3ImportErrors: errors,
+            fileImportErrors: []
+        });
     },
 
     addFiles: function(files) {
@@ -160,16 +185,32 @@ var UploadModal = React.createBackboneClass({
                     fileName: file.name,
                     extension: self.getFileExtension(file.name)
                 };
-            });
-        this.updateFileDescriptions(fileDescriptions);
+            }),
+            validFileDescriptions = [],
+            errors = [];
+
+        _.each(fileDescriptions, function(fileDescription) {
+            if (uploads.invalidTypes(fileDescription.file)) {
+                errors.push(fileDescription.fileName + ' is not a tiff file.');
+            } else {
+                validFileDescriptions.push(fileDescription);
+            }
+        });
+
+        this.setState({
+            s3ImportErrors: [],
+            fileImportErrors: errors
+        });
+        this.updateFileDescriptions(validFileDescriptions);
     },
 
     updateFileDescriptions: function(fileDescriptions) {
         var oldFileDescriptions = _.forEach(this.state.fileDescriptions, function(fileDescription) {
                 fileDescription.isNew = false;
             });
+
         fileDescriptions = fileDescriptions.concat(oldFileDescriptions);
-        this.setState({'fileDescriptions': fileDescriptions});
+        this.setState({fileDescriptions: fileDescriptions});
 
         // Needed to handle the case of selecting a file, deleting the file from the list,
         // and the selecting the same file again. Without this line,
@@ -178,7 +219,11 @@ var UploadModal = React.createBackboneClass({
     },
 
     removeFileDescription: function(fileDescription) {
-        this.setState({'fileDescriptions': _.without(this.state.fileDescriptions, fileDescription)});
+        this.setState({
+            fileDescriptions: _.without(this.state.fileDescriptions, fileDescription),
+            fileImportErrors: [],
+            s3ImportErrors: []
+        });
     },
 
     onDragEnter: function(e) {
@@ -247,8 +292,8 @@ var UploadModal = React.createBackboneClass({
         return layerData;
     },
 
-    getClientErrors: function(layerData) {
-        var errors = this.getInitialClientErrors();
+    getNextPaneErrors: function(layerData) {
+        var errors = this.getInitialNextPaneErrors();
 
         if (layerData.fileDescriptions.length === 0) {
             errors.files = ['Please add at least one file.'];
@@ -260,20 +305,12 @@ var UploadModal = React.createBackboneClass({
             errors.name = ['Please enter a name < 256 characters.'];
         }
 
-        if (!layerData.organization) {
-            errors.organization = ['Please enter an organization.'];
-        } else if (layerData.organization.length > 255) {
-            errors.organization = ['Please enter an organization < 255 characters.'];
-        }
-
-        if (!layerData.description) {
-            errors.description = ['Please enter a description.'];
+        if (layerData.organization && layerData.organization.length > 255) {
+            errors.organization = ['Please enter an organization < 256 characters.'];
         }
 
         function setDateErrors(state, errors, fieldName) {
-            if (!state[fieldName]) {
-                errors[fieldName] = ['Please enter a valid date.'];
-            } else {
+            if (state[fieldName]) {
                 var date = moment(state[fieldName]);
                 // Django requires that years are < 10000
                 if (date.year() > 9999) {
@@ -293,8 +330,12 @@ var UploadModal = React.createBackboneClass({
             }
         }
 
-        if (!layerData.area) {
-            errors.area = ['Please enter an area.'];
+        if (layerData.capture_start && !layerData.capture_end) {
+            errors.capture_end.push('Please enter a date.');
+        }
+
+        if (layerData.capture_end && !layerData.capture_start) {
+            errors.capture_start.push('Please enter a date.');
         }
 
         return errors;
@@ -350,21 +391,25 @@ var UploadModal = React.createBackboneClass({
     attemptContinuePane1: function(e) {
         e.preventDefault();
         var layerData = this.getLayerData(),
-            clientErrors = this.getClientErrors(layerData),
+            nextPaneErrors = this.getNextPaneErrors(layerData),
             serverErrors = this.getUpdatedServerErrors(layerData);
 
-        if (this.pane1Valid(clientErrors)) {
+        if (this.pane1Valid(nextPaneErrors)) {
             this.goToPane(2);
             this.setState({
+                fileImportErrors: [],
+                s3ImportErrors: [],
                 serverErrors: serverErrors,
-                clientErrors: clientErrors,
-                showPane1ClientErrors: false
+                nextPaneErrors: nextPaneErrors,
+                showPane1NextPaneErrors: false
             });
         } else {
             this.setState({
+                fileImportErrors: [],
+                s3ImportErrors: [],
                 serverErrors: serverErrors,
-                clientErrors: clientErrors,
-                showPane1ClientErrors: true
+                nextPaneErrors: nextPaneErrors,
+                showPane1NextPaneErrors: true
             });
         }
     },
@@ -372,21 +417,21 @@ var UploadModal = React.createBackboneClass({
     attemptContinuePane2: function(e) {
         e.preventDefault();
         var layerData = this.getLayerData(),
-            clientErrors = this.getClientErrors(layerData),
+            nextPaneErrors = this.getNextPaneErrors(layerData),
             serverErrors = this.getUpdatedServerErrors(layerData);
 
-        if (this.pane2Valid(clientErrors, serverErrors)) {
+        if (this.pane2Valid(nextPaneErrors, serverErrors)) {
             this.goToPane(3);
             this.setState({
                 serverErrors: serverErrors,
-                clientErrors: clientErrors,
-                showPane2ClientErrors: false
+                nextPaneErrors: nextPaneErrors,
+                showPane2NextPaneErrors: false
             });
         } else {
             this.setState({
                 serverErrors: serverErrors,
-                clientErrors: clientErrors,
-                showPane2ClientErrors: true
+                nextPaneErrors: nextPaneErrors,
+                showPane2NextPaneErrors: true
             });
         }
     },
@@ -521,19 +566,20 @@ var UploadModal = React.createBackboneClass({
                                                 style={{'display':'none'}}
                                                 multiple onChange={this.handleFileInputChange} />
                                         </div>
-                                        {this.renderErrors(this.state.showPane1ClientErrors, this.state.clientErrors.files)}
+                                        {this.renderErrors(this.state.showPane1NextPaneErrors, this.state.nextPaneErrors.files)}
+                                        {this.renderErrors(this.state.fileImportErrors.length, this.state.fileImportErrors)}
                                     </div>
                                     <div className="vertical-align-child col-md-5 import-uri">
                                         <i className="rf-icon-link" />
                                         <h3 className="font-400">Upload from S3</h3>
-                                        <h4 className="font-300">Is your imagery hosted on S3? Enter the bucket/key to import.</h4>
+                                        <h4 className="font-300">Is your imagery hosted on S3? Add the URI to import.</h4>
                                         <form>
                                             <div className="form-group">
-                                                <label>bucket/key</label>
-                                                <input className="form-control" ref="s3BucketKey" placeholder="bucket/key"/>
+                                                <label>S3 URI</label>
+                                                <input className="form-control" type="url" ref="s3URI" placeholder="s3://bucket-name/path/to/tiff.tif"/>
                                                 <button className="btn btn-link text-muted"
                                                     onClick={this.addS3BucketKey}>Add</button>
-                                                {this.renderErrors(this.state.s3BucketKeyError, ['Please enter bucket/key'])}
+                                                {this.renderErrors(this.state.s3ImportErrors.length, this.state.s3ImportErrors)}
                                             </div>
                                             <div className="form-action text-right">
                                                 <button className="btn btn-secondary"
@@ -555,18 +601,18 @@ var UploadModal = React.createBackboneClass({
                                     <div className="form-group">
                                         <label>Name</label>
                                         <input className="form-control" type="text" ref="name" />
-                                        {this.renderErrors(this.state.showPane2ClientErrors, this.state.clientErrors.name)}
+                                        {this.renderErrors(this.state.showPane2NextPaneErrors, this.state.nextPaneErrors.name)}
                                         {this.renderErrors(true, this.state.serverErrors.name)}
                                     </div>
                                     <div className="form-group">
                                         <label>Organization</label>
                                         <input className="form-control" type="text" ref="organization" />
-                                        {this.renderErrors(this.state.showPane2ClientErrors, this.state.clientErrors.organization)}
+                                        {this.renderErrors(this.state.showPane2NextPaneErrors, this.state.nextPaneErrors.organization)}
                                     </div>
                                     <div className="form-group">
                                         <label>Description</label>
                                         <textarea className="form-control" rows={4} ref="description" />
-                                        {this.renderErrors(this.state.showPane2ClientErrors, this.state.clientErrors.description)}
+                                        {this.renderErrors(this.state.showPane2NextPaneErrors, this.state.nextPaneErrors.description)}
                                     </div>
                                     <div className="form-group">
                                         <label>Tags</label>
@@ -577,8 +623,7 @@ var UploadModal = React.createBackboneClass({
                                             <div className="form-group">
                                                 <label>Capture Start Date</label>
                                                 <input className="form-control" type="date" ref="capture_start" placeholder="mm/dd/yyyy" />
-                                                {this.renderErrors(this.state.showPane2ClientErrors, this.state.clientErrors.capture_start)}
-                                                {this.renderErrors(this.state.showPane2ClientErrors, this.state.clientErrors.capture_dates)}
+                                                {this.renderErrors(this.state.showPane2NextPaneErrors, this.state.nextPaneErrors.capture_start)}
                                                 {this.renderErrors(true, this.state.serverErrors.capture_start)}
                                             </div>
                                         </div>
@@ -586,7 +631,7 @@ var UploadModal = React.createBackboneClass({
                                             <div className="form-group">
                                                 <label>Capture End Date</label>
                                                 <input className="form-control" type="date" ref="capture_end" placeholder="mm/dd/yyyy"/>
-                                                {this.renderErrors(this.state.showPane2ClientErrors, this.state.clientErrors.capture_end)}
+                                                {this.renderErrors(this.state.showPane2NextPaneErrors, this.state.nextPaneErrors.capture_end)}
                                                 {this.renderErrors(true, this.state.serverErrors.capture_end)}
                                             </div>
                                         </div>
@@ -601,7 +646,7 @@ var UploadModal = React.createBackboneClass({
                                                         <option value="sq. mi">sq. mi</option>
                                                         <option value="sq. km">sq. km</option>
                                                     </select>
-                                                    {this.renderErrors(this.state.showPane2ClientErrors, this.state.clientErrors.area)}
+                                                    {this.renderErrors(this.state.showPane2NextPaneErrors, this.state.nextPaneErrors.area)}
                                                 </div>
                                             </div>
                                         </div>

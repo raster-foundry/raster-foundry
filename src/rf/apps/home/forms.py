@@ -48,24 +48,18 @@ class LayerForm(ModelForm):
         except:
             self.cleaned_data['images'] = []
 
-        try:
-            start = self.cleaned_data['capture_start']
-        except KeyError:
-            # Improperly formed date string.\
-            start = None
-            self.add_error('capture_start',
-                           'The date is not valid or is not a valid format.')
+        start = self.cleaned_data.get('capture_start', None)
+        end = self.cleaned_data.get('capture_end', None)
 
-        try:
-            end = self.cleaned_data['capture_end']
-        except KeyError:
-            # Improperly formed date strings.
-            end = None
+        if start and not end:
             self.add_error('capture_end',
-                           'The date is not valid or is not a valid format.')
+                           'The date needs to be provided.')
+        if end and not start:
+            self.add_error('capture_start',
+                           'The date needs to be provided.')
 
         if start is not None and \
            end is not None and \
-           (end - start).seconds < 0.0:
+           end < start:
             self.add_error('capture_end',
                            'capture_end is before capture_start')
