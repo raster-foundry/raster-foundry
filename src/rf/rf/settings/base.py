@@ -104,6 +104,7 @@ LOGGING = {
     'formatters': {
         'verbose': {
             'format': '[%(levelname)s] %(asctime)s %(module)s %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
         },
     },
     'handlers': {
