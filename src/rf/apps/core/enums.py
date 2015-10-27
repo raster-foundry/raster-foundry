@@ -3,40 +3,15 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
 
-STATUS_CREATED = 'created'
-STATUS_UPLOADED = 'uploaded'
-STATUS_VALIDATED = 'validated'
-STATUS_THUMBNAILED = 'thumbnailed'
-STATUS_PROCESSING = 'processing'
-STATUS_CHUNKED = 'chunked'
-STATUS_FAILED = 'failed'
+STATUS_CHUNK = 'chunk'
 STATUS_COMPLETED = 'completed'
-STATUS_VALID = 'valid'
-STATUS_INVALID = 'invalid'
-STATUS_CHUNKING = 'chunking'
-STATUS_CHUNKED = 'chunked'
-STATUS_MOSAICKING = 'mosaicking'
-
-LAYER_STATUS_CHOICES = (
-    (STATUS_CREATED, 'Created'),
-    (STATUS_UPLOADED, 'Uploaded'),
-    (STATUS_VALIDATED, 'Validated'),
-    (STATUS_THUMBNAILED, 'Thumbnailed'),
-    (STATUS_PROCESSING, 'Processing'),
-    (STATUS_CHUNKING, 'Chunking'),
-    (STATUS_CHUNKED, 'Chunked'),
-    (STATUS_MOSAICKING, 'Mosaicking'),
-    (STATUS_FAILED, 'Failed'),
-    (STATUS_COMPLETED, 'Completed'),
-)
-
-LAYER_IMAGE_STATUS_CHOICES = (
-    (STATUS_CREATED, 'Created'),
-    (STATUS_UPLOADED, 'Uploaded'),
-    (STATUS_VALID, 'Valid'),
-    (STATUS_INVALID, 'Invalid'),
-    (STATUS_THUMBNAILED, 'Thumbnailed'),
-)
+STATUS_CREATE = 'create'
+STATUS_CREATE_CLUSTER = 'cluster'
+STATUS_FAILED = 'failed'
+STATUS_MOSAIC = 'mosaic'
+STATUS_THUMBNAIL = 'thumbnail'
+STATUS_UPLOAD = 'upload'
+STATUS_VALIDATE = 'validate'
 
 SQ_MI = 'sq. mi'
 SQ_KM = 'sq. km'

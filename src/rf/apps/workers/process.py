@@ -14,7 +14,7 @@ from apps.core.models import LayerImage, Layer
 from apps.workers.image_validator import ImageValidator
 from apps.workers.sqs_manager import SQSManager
 from apps.workers.thumbnail import make_thumbs_for_layer
-from apps.workers.emr import create_cluster, check_cluster_status
+from apps.workers.emr import create_cluster, cluster_is_alive
 import apps.core.enums as enums
 import apps.workers.status_updates as status_updates
 from apps.workers.copy_images import s3_copy
@@ -143,6 +143,10 @@ class QueueProcessor(object):
         if not LayerImage.objects.filter(s3_uuid=s3_uuid).exists():
             return True
 
+        # Update Statuses
+        status_updates.mark_image_uploaded(s3_uuid)
+        status_updates.mark_image_status_start(s3_uuid, enums.STATUS_VALIDATE)
+
         # Image verification.
         validator = ImageValidator(settings.AWS_BUCKET_NAME, key)
         try:
@@ -167,8 +171,8 @@ class QueueProcessor(object):
             # TODO: Filter `layer_images` instead of extra query.
             valid_images = LayerImage.objects.filter(
                 layer_id=layer_id,
-                status=enums.STATUS_VALID)
-
+                status_validate_end__isnull=False,
+                status_validate_error__isnull=True)
             all_valid = len(layer_images) == len(valid_images)
             layer_has_images = len(layer_images) > 0
 
@@ -179,9 +183,9 @@ class QueueProcessor(object):
 
             if all_valid and layer_has_images:
                 log.info('Layer %d is valid', layer_id)
-                status_updates.update_layer_status(
+                status_updates.mark_layer_status_end(
                     layer_id,
-                    enums.STATUS_VALIDATED)
+                    enums.STATUS_VALIDATE)
 
                 data = {'layer_id': layer_id}
 
@@ -219,15 +223,20 @@ class QueueProcessor(object):
 
         log.info('Generating thumbnails for layer %d...', layer_id)
 
+        # Update start status.
+        status_updates.mark_layer_status_start(layer_id,
+                                               enums.STATUS_THUMBNAIL)
+
         if make_thumbs_for_layer(layer_id):
-            status_updates.update_layer_status(layer_id,
-                                               enums.STATUS_THUMBNAILED)
+            status_updates.mark_layer_status_end(layer_id,
+                                                 enums.STATUS_THUMBNAIL)
             return True
         else:
             log.info('Failed to thumbnail layer %d', layer_id)
-            status_updates.update_layer_status(layer_id,
-                                               enums.STATUS_THUMBNAILED,
-                                               ERROR_MESSAGE_THUMBNAIL_FAILED)
+            status_updates.mark_layer_status_end(
+                layer_id,
+                enums.STATUS_THUMBNAIL,
+                ERROR_MESSAGE_THUMBNAIL_FAILED)
             return False
 
     def emr_hand_off(self, record):
@@ -247,8 +256,8 @@ class QueueProcessor(object):
             return False
 
         layer = Layer.objects.get(id=layer_id)
-        status_updates.update_layer_status(layer.id,
-                                           enums.STATUS_PROCESSING)
+        status_updates.mark_layer_status_start(layer.id,
+                                               enums.STATUS_CREATE_CLUSTER)
         log.info('Launching EMR cluster for layer %d', layer_id)
         emr_response = create_cluster(layer)
         self.start_health_check(layer_id, emr_response)
@@ -278,15 +287,14 @@ class QueueProcessor(object):
             log.debug('Ending heartbeat. Job is complete.')
             return True
 
-        if not check_cluster_status(job_id):
+        if not cluster_is_alive(job_id):
             log.info('EMR job for layer %d has failed!', layer_id)
-            return status_updates.update_layer_status(layer_id,
-                                                      enums.STATUS_FAILED,
-                                                      ERROR_MESSAGE_EMR_DEAD)
+            return status_updates.mark_layer_status_end(layer_id,
+                                                        enums.STATUS_FAILED,
+                                                        ERROR_MESSAGE_EMR_DEAD)
 
-        elif layer.status_completed is not None and \
-                layer.status_failed is not None:
-
+        # If job is not failed or completed add another heartbeat message.
+        elif not (layer.status_completed or layer.status_failed):
             data = {'layer_id': layer_id, 'job_id': job_id}
             self.queue.add_message(JOB_HEARTBEAT, data, TIMEOUT_DELAY)
 
@@ -326,7 +334,7 @@ class QueueProcessor(object):
 
         if time.time() > timeout:
             log.info('Layer %d timed out!', layer_id)
-            return status_updates.update_layer_status(
+            return status_updates.mark_layer_status_end(
                 layer_id,
                 enums.STATUS_FAILED,
                 ERROR_MESSAGE_JOB_TIMEOUT)
@@ -360,24 +368,25 @@ class QueueProcessor(object):
                  image.source_s3_bucket_key,
                  image.get_s3_key())
 
+        # Note start of task.
+        status_updates.mark_image_transfer_start(image.s3_uuid)
+
         if image.source_s3_bucket_key:
             success = s3_copy(image.source_s3_bucket_key, image.get_s3_key())
             if success:
                 log.info('Image copied successfully')
-                return True
+                return status_updates.mark_image_uploaded(image.s3_uuid)
             else:
                 log.info('Could not copy image')
-                return status_updates.mark_image_invalid(
+                return status_updates.mark_image_transfer_failure(
                     image.s3_uuid, ERROR_MESSAGE_IMAGE_TRANSFER)
         else:
-            return False
+            return status_updates.mark_image_transfer_failure(
+                image.s3_uuid, ERROR_MESSAGE_IMAGE_TRANSFER)
 
-    def emr_event(self, record, step_name, started_status, finished_status):
+    def emr_event(self, record, step_name, emr_status):
         """
         Update status of layer based on EMR events.
-        record -- attribute data from SQS.
-        started_status -- status when job has started
-        finished_status -- status when job has finished
         """
         try:
             layer_id = record['jobId']
@@ -393,34 +402,42 @@ class QueueProcessor(object):
         log.info('%s layer %d %s', step_name, layer_id, status)
 
         if status == FAILED:
-            error = record.get('error', 'Chunking failed.')
-            return status_updates.update_layer_status(layer_id,
-                                                      started_status,
-                                                      error)
+            default_error = emr_status + ' job failed.'
+            error = record.get('error', default_error)
+            if error.strip() == '':
+                error = default_error
+            return status_updates.mark_layer_status_end(layer_id,
+                                                        emr_status,
+                                                        error)
         elif status == STARTED:
-            return status_updates.update_layer_status(layer_id,
-                                                      started_status)
+            # If chunking started then the cluster creation succeeded.
+            if emr_status == enums.STATUS_CHUNK:
+                status_updates.mark_layer_status_end(
+                    layer_id, enums.STATUS_CREATE_CLUSTER)
+
+            return status_updates.mark_layer_status_start(layer_id, emr_status)
+
         elif status == FINISHED:
-            return status_updates.update_layer_status(layer_id,
-                                                      finished_status)
+            if emr_status == enums.STATUS_MOSAIC:
+                status_updates.mark_layer_status_end(layer_id,
+                                                     enums.STATUS_COMPLETED)
+
+            return status_updates.mark_layer_status_end(layer_id, emr_status)
+
         else:
             return False
 
     def chunk(self, record):
         """
         Update status of layer based on chunk events.
-        record -- attribute data from SQS.
         """
-        return self.emr_event(record, 'Chunk',
-                              enums.STATUS_CHUNKING, enums.STATUS_CHUNKED)
+        return self.emr_event(record, 'Chunk', enums.STATUS_CHUNK)
 
     def mosaic(self, record):
         """
         Update status of layer based on mosaic events.
-        record -- attribute data from SQS.
         """
-        return self.emr_event(record, 'Mosaic',
-                              enums.STATUS_MOSAICKING, enums.STATUS_COMPLETED)
+        return self.emr_event(record, 'Mosaic', enums.STATUS_MOSAIC)
 
     def start_health_check(self, layer_id, emr_response):
         try:

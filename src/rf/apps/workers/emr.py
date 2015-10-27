@@ -106,7 +106,7 @@ def create_cluster(layer):
     return response
 
 
-def check_cluster_status(cluster_id):
+def cluster_is_alive(cluster_id):
     alive_instance_statuses = [
         'PROVISIONING',
         'BOOTSTRAPPING',
