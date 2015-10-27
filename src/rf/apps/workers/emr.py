@@ -118,18 +118,21 @@ def check_cluster_status(cluster_id):
         'RUNNING',
         'COMPLETED',
     ]
-    client = boto3.client('emr')
-    response = client.list_instance_groups(ClusterId=cluster_id)
-    statuses = (instance['Status']['State']
-                for instance in response['InstanceGroups'])
-    instances_alive = all(s in alive_instance_statuses for s in statuses)
+    try:
+        client = boto3.client('emr')
+        response = client.list_instance_groups(ClusterId=cluster_id)
+        statuses = (instance['Status']['State']
+                    for instance in response['InstanceGroups'])
+        instances_alive = all(s in alive_instance_statuses for s in statuses)
 
-    if instances_alive:
-        response = client.list_steps(ClusterId=cluster_id)
-        statuses = (step['Status']['State']
-                    for step in response['Steps'])
-        return all(s in alive_step_statuses for s in statuses)
-    else:
+        if instances_alive:
+            response = client.list_steps(ClusterId=cluster_id)
+            statuses = (step['Status']['State']
+                        for step in response['Steps'])
+            return all(s in alive_step_statuses for s in statuses)
+        else:
+            return False
+    except:
         return False
 
 
