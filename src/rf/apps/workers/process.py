@@ -213,7 +213,7 @@ class QueueProcessor(object):
         if make_thumbs_for_layer(layer_id):
             return True
         else:
-            log.info('Failed to thumbnail')
+            log.info('Failed to thumbnail layer %d', layer_id)
             status_updates.update_layer_status(layer_id,
                                                enums.STATUS_FAILED,
                                                ERROR_MESSAGE_THUMBNAIL_FAILED)
@@ -238,7 +238,7 @@ class QueueProcessor(object):
         layer = Layer.objects.get(id=layer_id)
         status_updates.update_layer_status(layer.id,
                                            enums.STATUS_PROCESSING)
-        log.info('Launching EMR cluster...')
+        log.info('Launching EMR cluster for layer %d', layer_id)
         emr_response = create_cluster(layer)
         self.start_health_check(layer_id, emr_response)
         return True
