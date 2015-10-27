@@ -33,6 +33,12 @@ JOB_THUMBNAIL = 'thumbnail'
 JOB_HANDOFF = 'emr_handoff'
 JOB_TIMEOUT = 'timeout'
 JOB_HEARTBEAT = 'emr_heartbeat'
+JOB_CHUNK = 'chunk'
+JOB_MOSAIC = 'mosaic'
+
+STARTED = 'STARTED'
+FINISHED = 'FINISHED'
+FAILED = 'FAILED'
 
 MAX_WAIT = 20  # Seconds.
 TIMEOUT_DELAY = 300
@@ -76,8 +82,13 @@ class QueueProcessor(object):
             return True
 
         try:
-            job_type = record['eventName']
-            event_source = record['eventSource']
+            if 'eventName' in record:
+                job_type = record['eventName']
+                event_source = record['eventSource']
+            elif 'stage' in record:
+                job_type = record['stage']
+            else:
+                raise KeyError('eventName and stage missing')
         except KeyError:
             log.exception('Missing fields in message %s', record)
             return False
@@ -97,6 +108,10 @@ class QueueProcessor(object):
                 return self.validate_image(record)
         elif job_type == JOB_COPY_IMAGE:
             return self.copy_image(record)
+        elif job_type == JOB_CHUNK:
+            return self.chunk(record)
+        elif job_type == JOB_MOSAIC:
+            return self.mosaic(record)
 
         return False
 
@@ -220,6 +235,7 @@ class QueueProcessor(object):
             return False
 
         layer_images = LayerImage.objects.filter(layer_id=layer_id)
+
         # TODO: Filter `layer_images` instead of extra query.
         valid_images = LayerImage.objects.filter(
             layer_id=layer_id,
@@ -236,7 +252,7 @@ class QueueProcessor(object):
         if ready_to_process:
             layer = Layer.objects.get(id=layer_id)
             status_updates.update_layer_status(layer.id,
-                                               enums.STATUS_PROCESSING)
+                                               enums.STATUS_THUMBNAILED)
             log.info('Launching EMR cluster...')
             emr_response = create_cluster(layer)
             self.start_health_check(layer_id, emr_response)
@@ -349,26 +365,53 @@ class QueueProcessor(object):
         else:
             return False
 
-    def save_result(self, record):
+    def emr_event(self, record, started_status, finished_status):
         """
-        When an EMR job has completed updates the associated model in the
-        database.
+        Update status of layer based on EMR events.
         record -- attribute data from SQS.
+        started_status -- status when job has started
+        finished_status -- status when job has finished
         """
         try:
-            data = record['data']
-            layer_id = data['layer_id']
+            layer_id = record['jobId']
+            status = record['status']
         except KeyError:
             return False
 
         try:
-            int(layer_id)
+            layer_id = int(layer_id)
         except ValueError:
             return False
 
-        # Nothing else needs to go in the queue. We're done.
-        return status_updates.update_layer_status(data['layer_id'],
-                                                  enums.STATUS_COMPLETED)
+        if status == FAILED:
+            error = record.get('error', '')
+            return status_updates.update_layer_status(layer_id,
+                                                      enums.STATUS_FAILED,
+                                                      error)
+        elif status == STARTED:
+            return status_updates.update_layer_status(layer_id,
+                                                      started_status)
+        elif status == FINISHED:
+            return status_updates.update_layer_status(layer_id,
+                                                      finished_status)
+        else:
+            return False
+
+    def chunk(self, record):
+        """
+        Update status of layer based on chunk events.
+        record -- attribute data from SQS.
+        """
+        return self.emr_event(record,
+                              enums.STATUS_CHUNKING, enums.STATUS_CHUNKED)
+
+    def mosaic(self, record):
+        """
+        Update status of layer based on mosaic events.
+        record -- attribute data from SQS.
+        """
+        return self.emr_event(record,
+                              enums.STATUS_MOSAICKING, enums.STATUS_COMPLETED)
 
     def start_health_check(self, layer_id, emr_response):
         try:
