@@ -20,10 +20,6 @@ var TabModel = Backbone.Model.extend({
     }
 });
 
-var STATUS_CREATED = 'created',
-    STATUS_COMPLETED = 'completed',
-    STATUS_FAILED = 'failed';
-
 var Layer = Backbone.Model.extend({
     defaults: {
         name: '',
@@ -34,13 +30,35 @@ var Layer = Backbone.Model.extend({
         capture_end: null,
         capture_start: null,
         srid: null,
-        status: null,
         images: [],
         tags: [],
         thumb_small: '',
         thumb_large: '',
         active_image: false,
-        url: null
+        url: null,
+        // Statuses
+        status_created: false,
+        status_upload_start: false,
+        status_upload_end: false,
+        status_validate_start: false,
+        status_validate_end: false,
+        status_thumbnail_start: false,
+        status_thumbnail_end: false,
+        status_create_cluster_start: false,
+        status_create_cluster_end: false,
+        status_chunk_start: false,
+        status_chunk_end: false,
+        status_mosaic_start: false,
+        status_mosaic_end: false,
+        status_failed: false,
+        status_completed: false,
+        status_upload_error : null,
+        status_validate_error: null,
+        status_thumbnail_error: null,
+        status_create_cluster_error: null,
+        status_chunk_error: null,
+        status_mosaic_error: null,
+        status_failed_error: null
     },
 
     initialize: function() {
@@ -61,15 +79,15 @@ var Layer = Backbone.Model.extend({
     },
 
     isPreValidated: function() {
-        return this.get('status') === STATUS_CREATED;
+        return this.get('status_created');
     },
 
     isCompleted: function() {
-        return this.get('status') === STATUS_COMPLETED;
+        return this.get('status_completed');
     },
 
     isFailed: function() {
-        return this.get('status') === STATUS_FAILED;
+        return this.get('status_failed');
     },
 
     isProcessing: function() {

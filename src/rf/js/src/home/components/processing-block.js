@@ -4,38 +4,52 @@ var _ = require('underscore'),
     React = require('react');
 
 var LayerStatusComponent = React.createBackboneClass({
+    successClass: 'rf-icon-check',
+    pendingClass: 'rf-icon-loader',
+    workingClass: 'rf-icon-loader animate-spin',
+    failedClass: 'rf-icon-attention rf-failed text-danger',
+
     render: function() {
-        var checkClass = 'rf-icon-check',
-            spinnerClass = 'rf-icon-loader animate-spin',
-            failedClass = 'rf-icon-attention rf-failed text-danger',
-            preValidatedClass = spinnerClass,
-            processingClass = spinnerClass,
+        var preValidatedClass = this.workingClass,
+            validateClass = this.pendingClass,
+            thumbnailClass = this.pendingClass,
+            createWorkerClass = this.pendingClass,
+            chunkClass = this.pendingClass,
+            mosaicClass = this.pendingClass,
+            completeClass = this.pendingClass,
             actionLink = (<a href="#" className="text-danger">Cancel</a>),
             preValidatedErrorsExist = false,
             layerError = false,
             layerErrorComponent = (
                 <li>
-                    {this.getModel().get('error') ? this.getModel().get('error') : 'An unknown error occured.'}
+                    {this.getModel().get('failed_error') ? this.getModel().get('failed_error') : 'Processing failed.'}
                     <i className="rf-icon-attention"></i>
                 </li>
             ),
             preValidatedLabel = this.getModel().hasCopiedImages() ?
                 'Transferring Images' : 'Uploading Images';
 
-        if (this.getModel().isProcessing() ||
-            this.getModel().isCompleted()) {
-            preValidatedClass = checkClass;
+        if (this.getModel().get('status_upload_end') &&
+            this.getModel().get('status_upload_error') === null)
+        {
+            preValidatedClass = this.successClass;
         } else if (this.getModel().isFailed()) {
             preValidatedErrorsExist = _.some(this.getModel().get('images'), function(image) {
-                return image.error && image.error !== '';
+                return image.status_upload_error && image.status_upload_error !== '';
             });
-            preValidatedClass = preValidatedErrorsExist ? failedClass : checkClass;
+            preValidatedClass = preValidatedErrorsExist ? this.failedClass : this.successClass;
         }
 
+        validateClass = this.updateStatusClass('validate');
+        thumbnailClass = this.updateStatusClass('thumbnail');
+        createWorkerClass = this.updateStatusClass('create_cluster');
+        chunkClass = this.updateStatusClass('chunk');
+        mosaicClass = this.updateStatusClass('mosaic');
+
         if (this.getModel().isCompleted()) {
-            processingClass = checkClass;
+            completeClass = this.successClass;
         } else if (this.getModel().isFailed()) {
-            processingClass = failedClass;
+            completeClass = this.failedClass;
             layerError = true;
         }
 
@@ -52,10 +66,10 @@ var LayerStatusComponent = React.createBackboneClass({
                             {preValidatedLabel} <i className={preValidatedClass} />
                             <ul className="notice">
                                 {_.map(this.getModel().get('images'), function(image) {
-                                    if (image.error && image.error !== '') {
+                                    if (image.status_upload_error && image.status_upload_error !== '') {
                                         return (
                                             <li key={image.s3_uuid}>
-                                                <strong>{image.file_name}</strong> {image.error}
+                                                <strong>{image.file_name}</strong> {image.status_upload_error}
                                                 <i className="rf-icon-attention"></i>
                                             </li>
                                         );
@@ -63,7 +77,83 @@ var LayerStatusComponent = React.createBackboneClass({
                                 })}
                             </ul>
                         </li>
-                        <li>Processing Tiles <i className={processingClass} />
+                        <li>
+                            Validating Images <i className={validateClass} />
+                            <ul className="notice">
+                                {_.map(this.getModel().get('images'), function(image) {
+                                    if (image.status_validate_error && image.status_validate_error !== '') {
+                                        return (
+                                            <li key={image.s3_uuid}>
+                                                <strong>{image.file_name}</strong> {image.status_validate_error}
+                                                <i className="rf-icon-attention"></i>
+                                            </li>
+                                        );
+                                    }
+                                })}
+                            </ul>
+                        </li>
+                        <li>
+                            Creating Thumbnails <i className={thumbnailClass} />
+                            <ul className="notice">
+                                {_.map(this.getModel().get('images'), function(image) {
+                                    if (image.error && image.error !== '') {
+                                        return (
+                                            <li key={image.s3_uuid}>
+                                                <strong>{image.file_name}</strong> {image.status_thumbnail_error}
+                                                <i className="rf-icon-attention"></i>
+                                            </li>
+                                        );
+                                    }
+                                })}
+                            </ul>
+                        </li>
+                        <li>
+                            Preparing Workers <i className={createWorkerClass} />
+                            <ul className="notice">
+                                {_.map(this.getModel().get('status_create_cluster_error'), function(error) {
+                                    if (error) {
+                                        return (
+                                            <li>
+                                                {error}
+                                                <i className="rf-icon-attention"></i>
+                                            </li>
+                                        );
+                                    }
+                                })}
+                            </ul>
+                        </li>
+                        <li>
+                            Chunking Tiles <i className={chunkClass} />
+                            <ul className="notice">
+                                {_.map(this.getModel().get('status_chunk_error'), function(error) {
+                                    if (error) {
+                                        return (
+                                            <li>
+                                                {error}
+                                                <i className="rf-icon-attention"></i>
+                                            </li>
+                                        );
+                                    }
+                                })}
+                            </ul>
+                        </li>
+                        <li>
+                            Merging Tiles <i className={mosaicClass} />
+                            <ul className="notice">
+                                {_.map(this.getModel().get('status_mosaic_error'), function(error) {
+                                    if (error) {
+                                        return (
+                                            <li>
+                                                {error}
+                                                <i className="rf-icon-attention"></i>
+                                            </li>
+                                        );
+                                    }
+                                })}
+                            </ul>
+                        </li>
+                        <li>
+                            Complete <i className={completeClass} />
                             <ul className="notice">
                                 {layerError ? layerErrorComponent : null}
                             </ul>
@@ -82,6 +172,23 @@ var LayerStatusComponent = React.createBackboneClass({
         var model = this.getModel();
         model.dismiss();
         this.props.removeItem(model);
+    },
+
+    updateStatusClass: function(status) {
+        var start = 'status_' + status + '_start',
+            end = 'status_' + status + '_end',
+            error = 'status_' + status + '_error',
+            className = this.pendingClass;
+
+        if (this.getModel().get(start)) {
+            className = this.workingClass;
+            if (this.getModel().get(error) !== null ) {
+                className = this.failedClass;
+            } else if (this.getModel().get(end)) {
+                className = this.successClass;
+            }
+        }
+        return className;
     }
 });
 
