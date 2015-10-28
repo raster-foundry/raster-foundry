@@ -156,6 +156,12 @@ def get_steps(layer, status_queue):
         'cluster',
         '--driver-memory',
         '2g',
+        '--executor-memory',
+        '2304m',
+        '--executor-cores',
+        '1',
+        '--num-executors',
+        str(4 * int(settings.AWS_EMR_INSTANCES)),
     ]
 
     workspace = 's3://{}'.format(settings.AWS_WORKSPACE_BUCKET)
