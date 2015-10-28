@@ -3,11 +3,12 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
 
-
 import math
 import time
 import uuid
 import logging
+
+from django.conf import settings
 
 from apps.core.models import LayerImage, Layer
 from apps.workers.image_validator import ImageValidator
@@ -50,6 +51,9 @@ ERROR_MESSAGE_JOB_TIMEOUT = 'Layer could not be processed. ' + \
                             'The job timed out after ' + \
                             str(math.ceil(TIMEOUT_SECONDS / 60)) + ' minutes.'
 ERROR_MESSAGE_EMR_DEAD = 'Processing failed.'
+ERROR_MESSAGE_UNSUPPORTED_MIME = 'Only GeoTiffs are supported.'
+ERROR_MESSAGE_IMAGE_NOT_VALID = 'Invalid GeoTiff file.'
+ERROR_MESSAGE_IMAGE_TOO_FEW_BANDS = 'Image does not have at least 3 bands.'
 
 
 class QueueProcessor(object):
@@ -139,58 +143,63 @@ class QueueProcessor(object):
         if not LayerImage.objects.filter(s3_uuid=s3_uuid).exists():
             return True
 
-        byte_range = '0-1000000'  # Get first Mb(ish) of bytes.
         # Image verification.
-        validator = ImageValidator(key, byte_range)
-        if not validator.image_format_is_supported():
-            log.info('Image format not supported %s', key)
+        validator = ImageValidator(settings.AWS_BUCKET_NAME, key)
+        try:
+            if not validator.image_format_is_supported():
+                log.info('Image format not supported %s', key)
+                return status_updates.mark_image_invalid(
+                    s3_uuid, ERROR_MESSAGE_UNSUPPORTED_MIME)
+            elif not validator.image_has_enough_bands():
+                log.info('Not enough bands %s', key)
+                return status_updates.mark_image_invalid(
+                    s3_uuid, ERROR_MESSAGE_IMAGE_TOO_FEW_BANDS)
+        except RuntimeError:
+            log.exception('GDAL was unable to open %s', key)
             return status_updates.mark_image_invalid(
-                s3_uuid, validator.get_error())
-        elif not validator.image_has_min_bands(3):
-            log.info('Not enough bands %s', key)
-            return status_updates.mark_image_invalid(
-                s3_uuid, validator.get_error())
-        else:
-            updated = status_updates.mark_image_valid(s3_uuid)
-            if updated:
-                log.info('Image validated %s', key)
-                layer_id = status_updates.get_layer_id_from_uuid(s3_uuid)
-                layer_images = LayerImage.objects.filter(layer_id=layer_id)
-                # TODO: Filter `layer_images` instead of extra query.
-                valid_images = LayerImage.objects.filter(
-                    layer_id=layer_id,
-                    status=enums.STATUS_VALID)
+                s3_uuid, ERROR_MESSAGE_IMAGE_NOT_VALID)
 
-                all_valid = len(layer_images) == len(valid_images)
-                layer_has_images = len(layer_images) > 0
+        updated = status_updates.mark_image_valid(s3_uuid)
+        if updated:
+            log.info('Image validated %s', key)
+            layer_id = status_updates.get_layer_id_from_uuid(s3_uuid)
+            layer_images = LayerImage.objects.filter(layer_id=layer_id)
+            # TODO: Filter `layer_images` instead of extra query.
+            valid_images = LayerImage.objects.filter(
+                layer_id=layer_id,
+                status=enums.STATUS_VALID)
 
-                log.info('%d/%d images validated for layer %d',
-                         len(valid_images),
-                         len(layer_images),
-                         layer_id)
+            all_valid = len(layer_images) == len(valid_images)
+            layer_has_images = len(layer_images) > 0
 
-                if all_valid and layer_has_images:
-                    log.info('Layer %d is valid', layer_id)
-                    status_updates.update_layer_status(
-                        layer_id,
-                        enums.STATUS_VALIDATED)
+            log.info('%d/%d images validated for layer %d',
+                     len(valid_images),
+                     len(layer_images),
+                     layer_id)
 
-                    data = {'layer_id': layer_id}
+            if all_valid and layer_has_images:
+                log.info('Layer %d is valid', layer_id)
+                status_updates.update_layer_status(
+                    layer_id,
+                    enums.STATUS_VALIDATED)
 
-                    log.info('Queue handoff job')
-                    self.queue.add_message(JOB_HANDOFF, data)
+                data = {'layer_id': layer_id}
 
-                    log.info('Queue thumbnail job')
-                    self.queue.add_message(JOB_THUMBNAIL, data)
+                log.info('Queue handoff job')
+                self.queue.add_message(JOB_HANDOFF, data)
 
-                    # Add a message to the queue to watch for timeouts.
-                    data = {
-                        'timeout': time.time() + TIMEOUT_SECONDS,
-                        'layer_id': layer_id
-                    }
-                    log.info('Queue timeout job')
-                    self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
-            return updated
+                log.info('Queue thumbnail job')
+                self.queue.add_message(JOB_THUMBNAIL, data)
+
+                # Add a message to the queue to watch for timeouts.
+                data = {
+                    'timeout': time.time() + TIMEOUT_SECONDS,
+                    'layer_id': layer_id
+                }
+                log.info('Queue timeout job')
+                self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
+                return True
+        return False
 
     def thumbnail(self, record):
         """
