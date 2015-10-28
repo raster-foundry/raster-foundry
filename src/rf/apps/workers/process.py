@@ -301,26 +301,27 @@ class QueueProcessor(object):
             return False
 
         try:
-            int(layer_id)
+            layer_id = int(layer_id)
             float(timeout)
         except ValueError:
             return False
 
+        try:
+            layer = Layer.objects.get(id=layer_id)
+        except Layer.DoesNotExist:
+            return True
+
+        if layer.status in (enums.STATUS_COMPLETED, enums.STATUS_FAILED):
+            return True
+
         if time.time() > timeout:
-            try:
-                layer = Layer.objects.get(id=layer_id)
-            except Layer.DoesNotExist:
-                return False
+            log.info('Layer %d timed out!', layer_id)
+            return status_updates.update_layer_status(
+                layer_id,
+                enums.STATUS_FAILED,
+                ERROR_MESSAGE_JOB_TIMEOUT)
 
-            if layer is not None and layer.status != enums.STATUS_COMPLETED:
-                return status_updates \
-                    .update_layer_status(layer_id,
-                                         enums.STATUS_FAILED,
-                                         ERROR_MESSAGE_JOB_TIMEOUT)
-        else:
-            # Requeue the timeout message.
-            self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
-
+        self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
         return True
 
     def copy_image(self, record):
