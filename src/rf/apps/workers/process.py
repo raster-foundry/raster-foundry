@@ -272,6 +272,9 @@ class QueueProcessor(object):
 
         log.info('Heartbeat for layer %d', layer_id)
 
+        if layer.status in (enums.STATUS_COMPLETED, enums.STATUS_FAILED):
+            return True
+
         if not check_cluster_status(job_id):
             log.info('EMR job for layer %d has failed!', layer_id)
             return status_updates.update_layer_status(layer_id,
