@@ -75,7 +75,7 @@ def s3_make_thumbs(image_key, user_id, thumb_dims, thumb_ext):
     thumb_dims -- a list containing (thumb_width, thumb_height) tuples
     Returns list of thumb keys of the form <user_id>-<uuid>.<thumb_ext>
     """
-    image_filepath = os.path.join(settings.TEMP_DIR, image_key)
+    image_filepath = os.path.join(settings.TEMP_DIR, str(uuid.uuid4()))
     s3_client = boto3.client('s3')
     s3_client.download_file(settings.AWS_BUCKET_NAME,
                             image_key,

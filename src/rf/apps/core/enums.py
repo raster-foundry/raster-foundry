@@ -7,6 +7,7 @@ STATUS_CREATED = 'created'
 STATUS_UPLOADED = 'uploaded'
 STATUS_VALIDATED = 'validated'
 STATUS_THUMBNAILED = 'thumbnailed'
+STATUS_PROCESSING = 'processing'
 STATUS_CHUNKED = 'chunked'
 STATUS_FAILED = 'failed'
 STATUS_COMPLETED = 'completed'
@@ -21,6 +22,7 @@ LAYER_STATUS_CHOICES = (
     (STATUS_UPLOADED, 'Uploaded'),
     (STATUS_VALIDATED, 'Validated'),
     (STATUS_THUMBNAILED, 'Thumbnailed'),
+    (STATUS_PROCESSING, 'Processing'),
     (STATUS_CHUNKING, 'Chunking'),
     (STATUS_CHUNKED, 'Chunked'),
     (STATUS_MOSAICKING, 'Mosaicking'),
