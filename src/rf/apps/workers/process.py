@@ -176,6 +176,10 @@ class QueueProcessor(object):
                         enums.STATUS_VALIDATED)
 
                     data = {'layer_id': layer_id}
+
+                    log.info('Queue handoff job')
+                    self.queue.add_message(JOB_HANDOFF, data)
+
                     log.info('Queue thumbnail job')
                     self.queue.add_message(JOB_THUMBNAIL, data)
 
@@ -207,12 +211,9 @@ class QueueProcessor(object):
         log.info('Generating thumbnails for layer %d...', layer_id)
 
         if make_thumbs_for_layer(layer_id):
-            data = {'layer_id': layer_id}
-            log.info('Queue handoff job')
-            self.queue.add_message(JOB_HANDOFF, data)
             return True
         else:
-            log.info('Failed to thumbnail')
+            log.info('Failed to thumbnail layer %d', layer_id)
             status_updates.update_layer_status(layer_id,
                                                enums.STATUS_FAILED,
                                                ERROR_MESSAGE_THUMBNAIL_FAILED)
@@ -234,31 +235,13 @@ class QueueProcessor(object):
         except ValueError:
             return False
 
-        layer_images = LayerImage.objects.filter(layer_id=layer_id)
-
-        # TODO: Filter `layer_images` instead of extra query.
-        valid_images = LayerImage.objects.filter(
-            layer_id=layer_id,
-            status=enums.STATUS_THUMBNAILED)
-        all_valid = len(layer_images) == len(valid_images)
-        layer_has_images = len(layer_images) > 0
-        ready_to_process = layer_has_images and all_valid
-
-        log.info('%d/%d images thumbnailed for layer %d',
-                 len(valid_images),
-                 len(layer_images),
-                 layer_id)
-
-        if ready_to_process:
-            layer = Layer.objects.get(id=layer_id)
-            status_updates.update_layer_status(layer.id,
-                                               enums.STATUS_THUMBNAILED)
-            log.info('Launching EMR cluster...')
-            emr_response = create_cluster(layer)
-            self.start_health_check(layer_id, emr_response)
-            return True
-        else:
-            return layer_has_images
+        layer = Layer.objects.get(id=layer_id)
+        status_updates.update_layer_status(layer.id,
+                                           enums.STATUS_PROCESSING)
+        log.info('Launching EMR cluster for layer %d', layer_id)
+        emr_response = create_cluster(layer)
+        self.start_health_check(layer_id, emr_response)
+        return True
 
     def emr_heartbeat(self, record):
         try:
