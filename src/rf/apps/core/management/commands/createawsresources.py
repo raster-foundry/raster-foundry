@@ -140,7 +140,7 @@ class AwsResources(object):
         )
 
     def create_s3_bucket(self, main_queue, s3_bucket):
-        self.create_bucket(s3_bucket)
+        self.create_readonly_bucket(s3_bucket)
 
         # Setup bucket to notify SQS on object creation.
         waiter = self.s3_client.get_waiter('bucket_exists')

@@ -40,7 +40,6 @@ var uploadFiles = function(fileDescriptions) {
             name: fileName,
             file: fileDescription.file,
             contentType: fileDescription.file.type,
-            xAmzHeadersAtInitiate: { 'x-amz-acl': 'public-read' },
             complete: function() {
                 console.log('File upload complete');
             },
