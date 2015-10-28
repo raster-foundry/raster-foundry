@@ -261,7 +261,7 @@ class QueueProcessor(object):
             return False
 
         try:
-            int(layer_id)
+            layer_id = int(layer_id)
         except ValueError:
             return False
 
@@ -270,9 +270,10 @@ class QueueProcessor(object):
         except Layer.DoesNotExist:
             return False
 
-        log.info('Heartbeat for layer %d', layer_id)
+        log.debug('Heartbeat for layer %d', layer_id)
 
         if layer.status in (enums.STATUS_COMPLETED, enums.STATUS_FAILED):
+            log.debug('Ending heartbeat. Job is complete.')
             return True
 
         if not check_cluster_status(job_id):
@@ -305,7 +306,7 @@ class QueueProcessor(object):
 
         try:
             layer_id = int(layer_id)
-            float(timeout)
+            timeout = float(timeout)
         except ValueError:
             return False
 
@@ -314,7 +315,10 @@ class QueueProcessor(object):
         except Layer.DoesNotExist:
             return True
 
+        log.debug('Timeout for layer %d', layer_id)
+
         if layer.status in (enums.STATUS_COMPLETED, enums.STATUS_FAILED):
+            log.debug('Ending timeout. Job is complete.')
             return True
 
         if time.time() > timeout:
@@ -361,7 +365,7 @@ class QueueProcessor(object):
         else:
             return False
 
-    def emr_event(self, record, started_status, finished_status):
+    def emr_event(self, record, step_name, started_status, finished_status):
         """
         Update status of layer based on EMR events.
         record -- attribute data from SQS.
@@ -378,6 +382,8 @@ class QueueProcessor(object):
             layer_id = int(layer_id)
         except ValueError:
             return False
+
+        log.info('%s layer %d %s', step_name, layer_id, status)
 
         if status == FAILED:
             error = record.get('error', '')
@@ -398,7 +404,7 @@ class QueueProcessor(object):
         Update status of layer based on chunk events.
         record -- attribute data from SQS.
         """
-        return self.emr_event(record,
+        return self.emr_event(record, 'Chunk',
                               enums.STATUS_CHUNKING, enums.STATUS_CHUNKED)
 
     def mosaic(self, record):
@@ -406,7 +412,7 @@ class QueueProcessor(object):
         Update status of layer based on mosaic events.
         record -- attribute data from SQS.
         """
-        return self.emr_event(record,
+        return self.emr_event(record, 'Mosaic',
                               enums.STATUS_MOSAICKING, enums.STATUS_COMPLETED)
 
     def start_health_check(self, layer_id, emr_response):
