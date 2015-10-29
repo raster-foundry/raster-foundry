@@ -243,12 +243,8 @@ var PublicLayers = BaseLayers.extend({
 });
 
 var PendingLayers = BaseLayers.extend({
-    initialize: function() {
-        this.created_at = new Date().getTime();
-    },
-
     url: function() {
-        return '/imports.json?page_size=0&pending=' + this.created_at;
+        return '/imports.json?page_size=0&pending=true';
     },
 
     existsUploading: function() {

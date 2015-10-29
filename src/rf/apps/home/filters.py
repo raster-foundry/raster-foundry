@@ -3,8 +3,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
 
-from datetime import datetime
-
 import django_filters
 
 from django_filters import MethodFilter
@@ -17,7 +15,6 @@ class LayerFilter(django_filters.FilterSet):
     tag = django_filters.CharFilter(name='layer_tags__name')
     username = django_filters.CharFilter(name='user__username')
     name_search = MethodFilter(action='name_tag_organization_filter')
-    pending = MethodFilter(action='pending_filter')
 
     class Meta:
         model = Layer
@@ -32,17 +29,3 @@ class LayerFilter(django_filters.FilterSet):
         return queryset.filter(Q(id__in=list(layer_values)) |
                                Q(name__icontains=value) |
                                Q(organization__icontains=value))
-
-    def pending_filter(self, queryset, value):
-        """
-        Gets layers that are uploading or processing, or that
-        have become complete or failed since the time of the last browser
-        refresh. This is so that layers that have become complete or failed
-        since the last refresh will be visible to users on the frontend.
-
-        value -- the time in milliseconds elapsed since 1/1/1970
-        """
-        refresh_time = datetime.fromtimestamp(float(value) / 1000.0)
-        return queryset.filter((Q(status_completed__isnull=True) &
-                                Q(status_failed__isnull=True)) |
-                               Q(status_updated_at__gt=refresh_time))

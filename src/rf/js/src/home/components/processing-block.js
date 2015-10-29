@@ -17,7 +17,7 @@ var LayerStatusComponent = React.createBackboneClass({
             chunkClass = this.pendingClass,
             mosaicClass = this.pendingClass,
             completeClass = this.pendingClass,
-            actionLink = (<a href="#" className="text-danger">Cancel</a>),
+            actionLink = (<a className="text-danger">Cancel</a>),
             uploadErrorsExist = false,
             layerError = false,
             layerErrorComponent = (
