@@ -13,7 +13,6 @@ from PIL import Image
 from django.conf import settings
 
 import apps.core.enums as enums
-import apps.workers.status_updates as status_updates
 from apps.core.models import LayerImage, Layer
 
 
@@ -125,18 +124,16 @@ def make_thumbs_for_layer(layer_id):
     for image in layer_images:
         thumb_dims = [IMAGE_THUMB_SMALL_DIMS, IMAGE_THUMB_LARGE_DIMS]
         try:
-            image = status_updates.update_layerimage_status_start(
-                image, enums.STATUS_THUMBNAIL)
+            image.update_status_start(enums.STATUS_THUMBNAIL)
             image.thumb_small_key, image.thumb_large_key = \
                 s3_make_thumbs(image.get_s3_key(), user_id,
                                thumb_dims, THUMB_EXT)
         except ImageCouldNotOpenError:
-            image = status_updates.update_layerimage_status_end(
-                image, enums.STATUS_THUMBNAIL, ERROR_MESSAGE_THUMBNAIL_FAILED)
+            image.update_status_end(enums.STATUS_THUMBNAIL,
+                                    ERROR_MESSAGE_THUMBNAIL_FAILED)
             return False
 
-        image = status_updates.update_layerimage_status_end(
-            image, enums.STATUS_THUMBNAIL)
+        image.update_status_end(enums.STATUS_THUMBNAIL)
         image.save()
 
     # Create thumbnails for the Layer as a whole

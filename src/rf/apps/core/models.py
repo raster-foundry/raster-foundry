@@ -264,6 +264,58 @@ class Layer(Model):
     def get_tile_bucket_path(self):
         return 's3://{}/{}'.format(settings.AWS_TILES_BUCKET, self.id)
 
+    def update_status_start(self, status):
+        value = datetime.now()
+        if status == enums.STATUS_UPLOAD:
+            self.status_upload_start = (value if self.status_upload_start
+                                        is None else self.status_upload_start)
+        elif status == enums.STATUS_VALIDATE:
+            self.status_validate_start = (value if self.status_validate_start
+                                          is None else
+                                          self.status_validate_start)
+        elif status == enums.STATUS_THUMBNAIL:
+            self.status_thumbnail_start = (value if self.status_thumbnail_start
+                                           is None else
+                                           self.status_thumbnail_start)
+        elif status == enums.STATUS_CREATE_CLUSTER:
+            self.status_create_cluster_start = \
+                (value if self.status_create_cluster_start is None else
+                 self.status_create_cluster_start)
+        elif status == enums.STATUS_CHUNK:
+            self.status_chunk_start = (value if self.status_chunk_start
+                                       is None else self.status_chunk_start)
+        elif status == enums.STATUS_MOSAIC:
+            self.status_mosaic_start = (value if self.status_mosaic_start
+                                        is None else self.status_mosaic_start)
+
+    def update_status_end(self, status, error_message=None):
+        value = datetime.now()
+        if status == enums.STATUS_UPLOAD:
+            self.status_upload_end = value
+            self.status_upload_error = error_message
+        elif status == enums.STATUS_VALIDATE:
+            self.status_validate_end = value
+            self.status_validate_error = error_message
+        elif status == enums.STATUS_THUMBNAIL:
+            self.status_thumbnail_end = value
+            self.status_thumbnail_error = error_message
+        elif status == enums.STATUS_CREATE_CLUSTER:
+            self.status_create_cluster_end = value
+            self.status_create_cluster_error = error_message
+        elif status == enums.STATUS_CHUNK:
+            self.status_chunk_end = value
+            self.status_chunk_error = error_message
+        elif status == enums.STATUS_MOSAIC:
+            self.status_mosaic_end = value
+            self.status_mosaic_error = error_message
+        elif status == enums.STATUS_COMPLETED:
+            self.status_completed = value
+        elif status == enums.STATUS_FAILED:
+            self.status_failed_error = error_message
+        # If we had any error message mark the generic failed field.
+        if error_message is not None:
+            self.status_failed = value
+
     def __unicode__(self):
         return '{0} -> {1}'.format(self.user.username, self.name)
 
@@ -377,6 +429,32 @@ class LayerImage(Model):
             'status_validate_error': self.status_validate_error,
             'status_thumbnail_error': self.status_thumbnail_error
         }
+
+    def update_status_start(self, status):
+        value = datetime.now()
+        if status == enums.STATUS_UPLOAD:
+            self.status_upload_start = (value if self.status_upload_start
+                                        is None else self.status_upload_start)
+        elif status == enums.STATUS_VALIDATE:
+            self.status_validate_start = (value if self.status_validate_start
+                                          is None else
+                                          self.status_validate_start)
+        elif status == enums.STATUS_THUMBNAIL:
+            self.status_thumbnail_start = (value if self.status_thumbnail_start
+                                           is None else
+                                           self.status_thumbnail_start)
+
+    def update_status_end(self, status, error_message=None):
+        value = datetime.now()
+        if status == enums.STATUS_UPLOAD:
+            self.status_upload_end = value
+            self.status_upload_error = error_message
+        elif status == enums.STATUS_VALIDATE:
+            self.status_validate_end = value
+            self.status_validate_error = error_message
+        elif status == enums.STATUS_THUMBNAIL:
+            self.status_thumbnail_end = value
+            self.status_thumbnail_error = error_message
 
 
 class LayerMeta(Model):
