@@ -7,7 +7,6 @@ import os
 import uuid
 import warnings
 import logging
-from datetime import datetime
 
 import boto3
 from PIL import Image
@@ -25,6 +24,8 @@ IMAGE_THUMB_LARGE_DIMS = (300, 300)
 LAYER_THUMB_LARGE_DIMS = (400, 150)
 THUMB_EXT = 'png'
 THUMB_CONTENT_TYPE = 'image/png'
+
+ERROR_MESSAGE_THUMBNAIL_FAILED = 'Thumbnail failed for image.'
 
 # Mute warnings about processing large files.
 warnings.simplefilter('ignore', Image.DecompressionBombWarning)
@@ -123,13 +124,16 @@ def make_thumbs_for_layer(layer_id):
     for image in layer_images:
         thumb_dims = [IMAGE_THUMB_SMALL_DIMS, IMAGE_THUMB_LARGE_DIMS]
         try:
+            image.update_status_start(enums.STATUS_THUMBNAIL)
             image.thumb_small_key, image.thumb_large_key = \
                 s3_make_thumbs(image.get_s3_key(), user_id,
                                thumb_dims, THUMB_EXT)
         except ImageCouldNotOpenError:
+            image.update_status_end(enums.STATUS_THUMBNAIL,
+                                    ERROR_MESSAGE_THUMBNAIL_FAILED)
             return False
 
-        image.status = enums.STATUS_THUMBNAILED
+        image.update_status_end(enums.STATUS_THUMBNAIL)
         image.save()
 
     # Create thumbnails for the Layer as a whole
@@ -143,9 +147,6 @@ def make_thumbs_for_layer(layer_id):
     except ImageCouldNotOpenError:
         return False
 
-    layer.status = enums.STATUS_THUMBNAILED
-    layer.status_updated_at = datetime.now()
-    layer.save()
     return True
 
 

@@ -5,13 +5,14 @@ from __future__ import division
 
 import json
 
+from datetime import datetime
+
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.test.client import Client
 from django.core.urlresolvers import reverse
 
 from apps.core.models import Layer, LayerMeta, UserFavoriteLayer
-from apps.core import enums
 
 
 class AbstractLayerTestCase(TestCase):
@@ -68,7 +69,7 @@ class AbstractLayerTestCase(TestCase):
         response = self.client.post(url,
                                     json.dumps(layer),
                                     content_type='application/json')
-        Layer.objects.all().update(status=enums.STATUS_COMPLETED)
+        Layer.objects.all().update(status_completed=datetime.now())
         return response
 
     def setup_models(self):
@@ -100,7 +101,7 @@ class AbstractLayerTestCase(TestCase):
                 layer = self.make_layer(layer_name, is_public=True)
                 self.save_layer(layer, user)
 
-        Layer.objects.all().update(status=enums.STATUS_COMPLETED)
+        Layer.objects.all().update(status_completed=datetime.now())
 
 
 class LayerTestCase(AbstractLayerTestCase):
