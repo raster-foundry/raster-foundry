@@ -328,8 +328,6 @@ class QueueProcessor(object):
         Copy an image into the S3 bucket from an external source.
         data -- attribute data from SQS.
         """
-        log.info('Copying S3 image...')
-
         try:
             data = record['data']
             image_id = data['image_id']
@@ -346,12 +344,17 @@ class QueueProcessor(object):
         except LayerImage.DoesNotExist:
             return False
 
+        log.info('Copying %s to %s...',
+                 image.source_s3_bucket_key,
+                 image.get_s3_key())
+
         if image.source_s3_bucket_key:
             success = s3_copy(image.source_s3_bucket_key, image.get_s3_key())
             if success:
                 log.info('Image copied successfully')
                 return True
             else:
+                log.info('Could not copy image')
                 return status_updates.mark_image_invalid(
                     image.s3_uuid, ERROR_MESSAGE_IMAGE_TRANSFER)
         else:
