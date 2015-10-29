@@ -110,7 +110,7 @@ var LayerStatusComponent = React.createBackboneClass({
                         <li>
                             Preparing Workers <i className={createWorkerClass} />
                             <ul className="notice">
-                                {_.map(this.getModel().get('status_create_cluster_error'), function(error) {
+                                {(function(error) {
                                     if (error) {
                                         return (
                                             <li>
@@ -119,13 +119,13 @@ var LayerStatusComponent = React.createBackboneClass({
                                             </li>
                                         );
                                     }
-                                })}
+                                })(this.getModel().get('status_create_cluster_error'))}
                             </ul>
                         </li>
                         <li>
                             Chunking Tiles <i className={chunkClass} />
                             <ul className="notice">
-                                {_.map(this.getModel().get('status_chunk_error'), function(error) {
+                                {(function(error) {
                                     if (error) {
                                         return (
                                             <li>
@@ -134,13 +134,13 @@ var LayerStatusComponent = React.createBackboneClass({
                                             </li>
                                         );
                                     }
-                                })}
+                                })(this.getModel().get('status_chunk_error'))}
                             </ul>
                         </li>
                         <li>
                             Merging Tiles <i className={mosaicClass} />
                             <ul className="notice">
-                                {_.map(this.getModel().get('status_mosaic_error'), function(error) {
+                                {(function(error) {
                                     if (error) {
                                         return (
                                             <li>
@@ -149,7 +149,7 @@ var LayerStatusComponent = React.createBackboneClass({
                                             </li>
                                         );
                                     }
-                                })}
+                                })(this.getModel().get('status_mosaic_error'))}
                             </ul>
                         </li>
                         <li>
