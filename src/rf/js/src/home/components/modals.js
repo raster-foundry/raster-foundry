@@ -599,7 +599,7 @@ var UploadModal = React.createBackboneClass({
                                             <div className="form-group">
                                                 <label>S3 URI</label>
                                                 <input className="form-control" type="url" ref="s3Uri" />
-                                                <p class="help-block">Example: https://s3.amazonaws.com/bucket/path/to/image.tif</p>
+                                                <p className="help-block">Example: https://s3.amazonaws.com/bucket/path/to/image.tif</p>
                                                 <button className="btn btn-primary"
                                                     onClick={this.addS3BucketKey}>Add</button>
                                                 {this.renderErrors(this.state.s3ImportErrors.length, this.state.s3ImportErrors)}
