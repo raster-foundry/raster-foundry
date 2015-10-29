@@ -87,7 +87,7 @@ var UploadModal = React.createBackboneClass({
         this.setState(this.getInitialState());
         this.submittedLayerData = null;
 
-        React.findDOMNode(this.refs.s3URI).value = '';
+        React.findDOMNode(this.refs.s3Uri).value = '';
         React.findDOMNode(this.refs.name).value = '';
         React.findDOMNode(this.refs.organization).value = '';
         React.findDOMNode(this.refs.description).value = '';
@@ -129,15 +129,37 @@ var UploadModal = React.createBackboneClass({
         return extension === 'tif' || extension === 'tiff';
     },
 
-    parseS3URI: function(s3URI) {
-        // example valid s3URI:
+    // Try to parse S3 URI.
+    parseS3Uri: function(s3Uri) {
+        var re, match;
+
+        s3Uri = s3Uri.trim();
+
         // s3://bucket-name/path/to/tiff.tif
-        var re = /^s3\:\/\/(([\w-.]+\/)+([\w-]+\.\w+))/,
-            match = re.exec(s3URI);
+        re = /^s3:\/\/([a-z0-9][a-z0-9-.]+)\/(.+)/i;
+        match = re.exec(s3Uri);
         if (match) {
             return {
-                s3BucketKey: match[1],
-                fileName: match[3]
+                s3BucketKey: match[1] + '/' + match[2],
+                fileName: match[2]
+            };
+        }
+        // https://s3.amazonaws.com/bucket/path/to/tiff.tif
+        re = /^https?:\/\/s3\.amazonaws\.com\/([a-z0-9][a-z0-9-.]+)\/(.+)/i;
+        match = re.exec(s3Uri);
+        if (match) {
+            return {
+                s3BucketKey: match[1] + '/' + match[2],
+                fileName: match[2]
+            };
+        }
+        // https://bucket.s3.amazonaws.com/path/to/tiff.tif
+        re = /^https?:\/\/([a-z0-9][a-z0-9-.]+)\.s3\.amazonaws\.com\/(.+)/i;
+        match = re.exec(s3Uri);
+        if (match) {
+            return {
+                s3BucketKey: match[1] + '/' + match[2],
+                fileName: match[2]
             };
         }
         return null;
@@ -145,13 +167,13 @@ var UploadModal = React.createBackboneClass({
 
     addS3BucketKey: function(e) {
         e.preventDefault();
-        var s3URI = React.findDOMNode(this.refs.s3URI).value,
-            parsedS3URI = this.parseS3URI(s3URI),
+        var s3Uri = React.findDOMNode(this.refs.s3Uri).value,
+            parsedS3Uri = this.parseS3Uri(s3Uri),
             errors = [];
 
-        if (parsedS3URI) {
-            var s3BucketKey = parsedS3URI.s3BucketKey,
-                fileName = parsedS3URI.fileName;
+        if (parsedS3Uri) {
+            var s3BucketKey = parsedS3Uri.s3BucketKey,
+                fileName = parsedS3Uri.fileName;
 
             if (this.isTiff(fileName)) {
                 var fileDescriptions = [{
@@ -166,7 +188,7 @@ var UploadModal = React.createBackboneClass({
                 errors.push(fileName + ' is not a tiff file.');
             }
         } else {
-            errors.push('Please enter a URI of the form s3://bucket-name/path/to/tiff.tif');
+            errors.push('Unable to parse S3 URI');
         }
         this.setState({
             s3ImportErrors: errors,
@@ -576,8 +598,9 @@ var UploadModal = React.createBackboneClass({
                                         <form>
                                             <div className="form-group">
                                                 <label>S3 URI</label>
-                                                <input className="form-control" type="url" ref="s3URI" placeholder="s3://bucket-name/path/to/tiff.tif"/>
-                                                <button className="btn btn-link text-muted"
+                                                <input className="form-control" type="url" ref="s3Uri" />
+                                                <p class="help-block">Example: https://s3.amazonaws.com/bucket/path/to/image.tif</p>
+                                                <button className="btn btn-primary"
                                                     onClick={this.addS3BucketKey}>Add</button>
                                                 {this.renderErrors(this.state.s3ImportErrors.length, this.state.s3ImportErrors)}
                                             </div>
