@@ -6,6 +6,7 @@ from __future__ import division
 import os
 import uuid
 import warnings
+import logging
 from datetime import datetime
 
 import boto3
@@ -14,6 +15,9 @@ from django.conf import settings
 
 import apps.core.enums as enums
 from apps.core.models import LayerImage, Layer
+
+
+log = logging.getLogger(__name__)
 
 IMAGE_THUMB_SMALL_DIMS = (80, 80)
 IMAGE_THUMB_LARGE_DIMS = (300, 300)
@@ -77,6 +81,7 @@ def s3_make_thumbs(image_key, user_id, thumb_dims, thumb_ext):
     """
     image_filepath = os.path.join(settings.TEMP_DIR, str(uuid.uuid4()))
     s3_client = boto3.client('s3')
+    log.debug('Downloading %s to %s', image_key, image_filepath)
     s3_client.download_file(settings.AWS_BUCKET_NAME,
                             image_key,
                             image_filepath)
@@ -84,8 +89,8 @@ def s3_make_thumbs(image_key, user_id, thumb_dims, thumb_ext):
     try:
         image = Image.open(image_filepath)
     except IOError:
-        raise ImageCouldNotOpenError(
-            'Image could not be read by thumbnail process.')
+        log.exception('Unable to open image')
+        raise ImageCouldNotOpenError()
 
     thumb_filenames = []
     for thumb_width, thumb_height in thumb_dims:
@@ -148,3 +153,4 @@ class ImageCouldNotOpenError(ValueError):
     """
     Raise when a ValueError occurs trying to open an image.
     """
+    pass
