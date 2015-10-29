@@ -10,7 +10,7 @@ var LayerStatusComponent = React.createBackboneClass({
     failedClass: 'rf-icon-attention rf-failed text-danger',
 
     render: function() {
-        var preValidatedClass = this.workingClass,
+        var uploadingClass = this.workingClass,
             validateClass = this.pendingClass,
             thumbnailClass = this.pendingClass,
             createWorkerClass = this.pendingClass,
@@ -18,7 +18,7 @@ var LayerStatusComponent = React.createBackboneClass({
             mosaicClass = this.pendingClass,
             completeClass = this.pendingClass,
             actionLink = (<a href="#" className="text-danger">Cancel</a>),
-            preValidatedErrorsExist = false,
+            uploadErrorsExist = false,
             layerError = false,
             layerErrorComponent = (
                 <li>
@@ -26,18 +26,18 @@ var LayerStatusComponent = React.createBackboneClass({
                     <i className="rf-icon-attention"></i>
                 </li>
             ),
-            preValidatedLabel = this.getModel().hasCopiedImages() ?
+            uploadLabel = this.getModel().hasCopiedImages() ?
                 'Transferring Images' : 'Uploading Images';
 
         if (this.getModel().get('status_upload_end') &&
             this.getModel().get('status_upload_error') === null)
         {
-            preValidatedClass = this.successClass;
+            uploadingClass = this.successClass;
         } else if (this.getModel().isFailed()) {
-            preValidatedErrorsExist = _.some(this.getModel().get('images'), function(image) {
+            uploadErrorsExist = _.some(this.getModel().get('images'), function(image) {
                 return image.status_upload_error && image.status_upload_error !== '';
             });
-            preValidatedClass = preValidatedErrorsExist ? this.failedClass : this.successClass;
+            uploadingClass = uploadErrorsExist ? this.failedClass : this.successClass;
         }
 
         validateClass = this.updateStatusClass('validate');
@@ -63,7 +63,7 @@ var LayerStatusComponent = React.createBackboneClass({
                     <h5>{this.getModel().get('name')}</h5>
                     <ol>
                         <li>
-                            {preValidatedLabel} <i className={preValidatedClass} />
+                            {uploadLabel} <i className={uploadingClass} />
                             <ul className="notice">
                                 {_.map(this.getModel().get('images'), function(image) {
                                     if (image.status_upload_error && image.status_upload_error !== '') {
