@@ -20,7 +20,7 @@ var MapView = Marionette.ItemView.extend({
     initialize: function() {
         var map = new L.Map(this.el);
 
-        var layer = new L.TileLayer('http://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
+        var layer = new L.TileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_nolabels/{z}/{x}/{y}.png', {
             attribution: 'Raster Foundry | Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
             maxZoom: 18
         });
