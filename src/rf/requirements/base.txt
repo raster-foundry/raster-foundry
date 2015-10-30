@@ -4,4 +4,5 @@ django-registration-redux==1.2
 django-filter==0.10.0
 boto==2.38.0
 boto3==1.1.4
-pillow==3.0.0
+# See also: https://github.com/azavea/raster-foundry/issues/278
+git+https://github.com/python-pillow/Pillow.git@ba626ef504
