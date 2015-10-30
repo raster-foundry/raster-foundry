@@ -283,18 +283,18 @@ class QueueProcessor(object):
 
         log.debug('Heartbeat for layer %d', layer_id)
 
-        if layer.status in (enums.STATUS_COMPLETED, enums.STATUS_FAILED):
+        if layer.status_completed or layer.status_failed:
             log.debug('Ending heartbeat. Job is complete.')
             return True
 
-        if not cluster_is_alive(job_id):
+        elif not cluster_is_alive(job_id):
             log.info('EMR job for layer %d has failed!', layer_id)
             return status_updates.mark_layer_status_end(layer_id,
                                                         enums.STATUS_FAILED,
                                                         ERROR_MESSAGE_EMR_DEAD)
 
         # If job is not failed or completed add another heartbeat message.
-        elif not (layer.status_completed or layer.status_failed):
+        else:
             data = {'layer_id': layer_id, 'job_id': job_id}
             self.queue.add_message(JOB_HEARTBEAT, data, TIMEOUT_DELAY)
 

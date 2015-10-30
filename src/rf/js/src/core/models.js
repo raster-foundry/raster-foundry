@@ -20,10 +20,6 @@ var TabModel = Backbone.Model.extend({
     }
 });
 
-var STATUS_CREATED = 'created',
-    STATUS_COMPLETED = 'completed',
-    STATUS_FAILED = 'failed';
-
 var Layer = Backbone.Model.extend({
     defaults: {
         name: '',
@@ -34,13 +30,35 @@ var Layer = Backbone.Model.extend({
         capture_end: null,
         capture_start: null,
         srid: null,
-        status: null,
         images: [],
         tags: [],
         thumb_small: '',
         thumb_large: '',
         active_image: false,
-        url: null
+        url: null,
+        // Statuses
+        status_created: false,
+        status_upload_start: false,
+        status_upload_end: false,
+        status_validate_start: false,
+        status_validate_end: false,
+        status_thumbnail_start: false,
+        status_thumbnail_end: false,
+        status_create_cluster_start: false,
+        status_create_cluster_end: false,
+        status_chunk_start: false,
+        status_chunk_end: false,
+        status_mosaic_start: false,
+        status_mosaic_end: false,
+        status_failed: false,
+        status_completed: false,
+        status_upload_error : null,
+        status_validate_error: null,
+        status_thumbnail_error: null,
+        status_create_cluster_error: null,
+        status_chunk_error: null,
+        status_mosaic_error: null,
+        status_failed_error: null
     },
 
     initialize: function() {
@@ -60,22 +78,24 @@ var Layer = Backbone.Model.extend({
         return _.findWhere(this.get('images'), {id: id});
     },
 
-    isPreValidated: function() {
-        return this.get('status') === STATUS_CREATED;
+    isUploading: function() {
+        return !this.get('status_upload_end');
+    },
+
+    isUploaded: function() {
+        return this.get('status_upload_end') && this.get('status_upload_error') === null;
     },
 
     isCompleted: function() {
-        return this.get('status') === STATUS_COMPLETED;
+        return this.get('status_completed');
     },
 
     isFailed: function() {
-        return this.get('status') === STATUS_FAILED;
+        return this.get('status_failed');
     },
 
     isProcessing: function() {
-        return !(this.isPreValidated() ||
-                 this.isCompleted() ||
-                 this.isFailed());
+        return !(this.isCompleted() || this.isFailed());
     },
 
     hasCopiedImages: function() {
@@ -86,6 +106,54 @@ var Layer = Backbone.Model.extend({
 
     isDoneWorking: function() {
         return this.isCompleted() || this.isFailed();
+    },
+
+    getStatusByName: function(status) {
+        var start = 'status_' + status + '_start',
+            end = 'status_' + status + '_end',
+            error = 'status_' + status + '_error';
+
+        if (!this.layerStatusIsKnown(status)) {
+            return {
+                'started': null,
+                'finished': null,
+                'failed': null
+            };
+        }
+
+        return {
+            'started': this.get(start),
+            'finished': this.get(end),
+            'failed': this.get(error) !== null
+        };
+    },
+
+    getErrorByName: function(status) {
+        var error = 'status_' + status + '_error';
+
+        if (!this.layerStatusIsKnown(status)) {
+            return null;
+        }
+        return this.get(error);
+    },
+
+    layerStatusIsKnown: function(status) {
+        var allowedStatuses = [
+            'chunk',
+            'create_cluster',
+            'completed',
+            'created',
+            'failed',
+            'mosaic',
+            'thumbnail',
+            'upload',
+            'validate'
+        ];
+        if (!_.contains(allowedStatuses, status)) {
+            console.error('Unknown layer status. "' + status + '" is not recognized.');
+            return false;
+        }
+        return true;
     },
 
     dismiss: function() {
@@ -185,14 +253,14 @@ var PendingLayers = BaseLayers.extend({
 
     existsUploading: function() {
         var uploading = this.find(function(layer) {
-            return layer.isPreValidated() && !layer.hasCopiedImages();
+            return layer.isUploading() && !layer.hasCopiedImages();
         });
         return uploading ? true : false;
     },
 
     existsTransferring: function() {
         var transferring = this.find(function(layer) {
-            return layer.isPreValidated() && layer.hasCopiedImages();
+            return layer.isUploading() && layer.hasCopiedImages();
         });
         return transferring ? true : false;
     },
