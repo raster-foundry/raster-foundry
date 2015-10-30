@@ -21,22 +21,7 @@ var TabModel = Backbone.Model.extend({
 });
 
 var Layer = Backbone.Model.extend({
-    defaults: {
-        name: '',
-        organization: '',
-        description: '',
-        area: 0,
-        area_unit: 0,
-        capture_end: null,
-        capture_start: null,
-        srid: null,
-        images: [],
-        tags: [],
-        thumb_small: '',
-        thumb_large: '',
-        active_image: false,
-        url: null,
-        // Statuses
+    defaultStatuses: {
         status_created: false,
         status_upload_start: false,
         status_upload_end: false,
@@ -61,8 +46,38 @@ var Layer = Backbone.Model.extend({
         status_failed_error: null
     },
 
+    defaults: function() {
+        return _.defaults({
+            name: '',
+            organization: '',
+            description: '',
+            area: 0,
+            area_unit: 0,
+            capture_end: null,
+            capture_start: null,
+            srid: null,
+            images: [],
+            tags: [],
+            thumb_small: '',
+            thumb_large: '',
+            active_image: false,
+            url: null
+        }, this.defaultStatuses);
+    },
+
     initialize: function() {
         this.getLeafletLayer = _.memoize(this.getLeafletLayer);
+    },
+
+    resetStatuses: function() {
+        var images = this.get('images');
+        this.set(this.defaultStatuses);
+        _.each(images, function(image) {
+            image.status_thumbnail_error = null;
+            image.status_upload_error = null;
+            image.status_validate_error = null;
+        });
+        this.set('images', images);
     },
 
     url: function() {
@@ -156,12 +171,39 @@ var Layer = Backbone.Model.extend({
         return true;
     },
 
+    retryPossible: function () {
+        return this.isFailed();
+    },
+
     dismiss: function() {
         $.ajax({
             url: this.get('dismiss_url'),
             method: 'POST',
             data: { layer_id: this.get('id') }
         });
+    },
+
+    retry: function() {
+        if (this.retryPossible()) {
+            $.ajax({
+                url: this.get('retry_url'),
+                method: 'POST',
+                data: { layer_id: this.get('id') }
+            });
+
+            // Set the model here so the user can get instant feedback that
+            // the retry is in progress. Also causes a fetch to occur at the next
+            // polling step by making the status non-failed.
+            this.resetStatuses();
+            this.set('status_created', true);
+            // If files were uploaded, then keep that status intact.
+            if (!this.hasCopiedImages()) {
+                this.set({
+                    status_upload_start: true,
+                    status_upload_end: true
+                });
+            }
+        }
     }
 });
 
