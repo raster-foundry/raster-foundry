@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from __future__ import division
 
 import json
-import boto
+from boto import provider
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -23,11 +23,11 @@ def page_context(request):
 
 
 def get_client_settings():
-    conn = boto.connect_s3()
-    aws_key = conn.aws_access_key_id
+    creds = provider.Provider('aws')
     client_settings = {
         'signerUrl': reverse('sign_request'),
-        'awsKey': aws_key,
+        'awsKey': creds.access_key,
+        'awsToken': creds.security_token,
         'awsBucket': settings.AWS_BUCKET_NAME,
     }
     return client_settings
