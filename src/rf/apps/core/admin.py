@@ -42,7 +42,7 @@ class LayerAdmin(admin.ModelAdmin):
                 ('status_thumbnail_error', 'status_create_cluster_error'),
                 ('status_chunk_error', 'status_mosaic_error'),
                 'status_failed_error',
-                'description', 'is_public',
+                'description', 'is_public', 'dismissed',
                 ('capture_start', 'capture_end'),
                 ('area', 'area_unit'),
                 'projection', 'srid',

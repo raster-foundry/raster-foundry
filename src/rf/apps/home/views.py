@@ -73,6 +73,10 @@ def layer_dismiss(request):
     layer = get_object_or_404(Layer, id=layer_id, user_id=user_id)
     if layer.status_failed:
         _delete_layer(request, layer, request.user.username)
+    else:
+        layer.dismissed = True
+        layer.save()
+
     # TODO: Consider returning something indicitive of the result:
     # return {'status': 'deleted'}
     return 'OK'
@@ -228,7 +232,9 @@ def _get_layer_models(request, crit=None):
     if crit:
         qs = qs.filter(crit)
 
-    if request.GET.get('pending') is None:
+    if request.GET.get('pending') == 'true':
+        qs = qs.filter(dismissed=False)
+    else:
         qs = qs.filter(status_completed__isnull=False)
 
     filtered_layers = LayerFilter(request.GET, queryset=qs)

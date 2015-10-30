@@ -134,6 +134,8 @@ class Layer(Model):
         help_text='Hexadecimal (Ex. #00FF00)',
     )
 
+    dismissed = BooleanField(blank=True, default=False)
+
     created_at = DateTimeField(auto_now_add=True)
     updated_at = DateTimeField(auto_now=True)
     deleted_at = DateTimeField(null=True, blank=True)
