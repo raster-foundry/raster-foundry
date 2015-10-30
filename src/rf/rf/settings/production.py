@@ -21,3 +21,5 @@ ALLOWED_HOSTS = [
 # the Host header.
 ALLOWED_HOSTS.append(instance_metadata['local-ipv4'])
 # END HOST CONFIGURATION
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
