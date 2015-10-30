@@ -22,20 +22,18 @@ var LayerStatusComponent = React.createBackboneClass({
             layerError = false,
             layerErrorComponent = (
                 <li>
-                    {this.getModel().get('failed_error') ? this.getModel().get('failed_error') : 'Processing failed.'}
+                    {this.getModel().getErrorByName('failed') ? this.getModel().getErrorByName('failed') : 'Processing failed.'}
                     <i className="rf-icon-attention"></i>
                 </li>
             ),
             uploadLabel = this.getModel().hasCopiedImages() ?
                 'Transferring Images' : 'Uploading Images';
 
-        if (this.getModel().get('status_upload_end') &&
-            this.getModel().get('status_upload_error') === null)
-        {
+        if (this.getModel().isUploaded()) {
             uploadingClass = this.successClass;
         } else if (this.getModel().isFailed()) {
             uploadErrorsExist = _.some(this.getModel().get('images'), function(image) {
-                return image.status_upload_error && image.status_upload_error !== '';
+                return !_.isEmpty(image.status_upload_error);
             });
             uploadingClass = uploadErrorsExist ? this.failedClass : this.successClass;
         }
@@ -119,7 +117,7 @@ var LayerStatusComponent = React.createBackboneClass({
                                             </li>
                                         );
                                     }
-                                })(this.getModel().get('status_create_cluster_error'))}
+                                })(this.getModel().getErrorByName('create_cluster'))}
                             </ul>
                         </li>
                         <li>
@@ -134,7 +132,7 @@ var LayerStatusComponent = React.createBackboneClass({
                                             </li>
                                         );
                                     }
-                                })(this.getModel().get('status_chunk_error'))}
+                                })(this.getModel().getErrorByName('chunk'))}
                             </ul>
                         </li>
                         <li>
@@ -149,7 +147,7 @@ var LayerStatusComponent = React.createBackboneClass({
                                             </li>
                                         );
                                     }
-                                })(this.getModel().get('status_mosaic_error'))}
+                                })(this.getModel().getErrorByName('mosaic'))}
                             </ul>
                         </li>
                         <li>
@@ -175,18 +173,16 @@ var LayerStatusComponent = React.createBackboneClass({
     },
 
     updateStatusClass: function(status) {
-        var start = 'status_' + status + '_start',
-            end = 'status_' + status + '_end',
-            error = 'status_' + status + '_error',
+        var modelStatus = this.getModel().getStatusByName(status),
             className = this.pendingClass;
 
-        if (this.getModel().get(start)) {
+        if (modelStatus.started) {
             className = this.workingClass;
-            if (this.getModel().get(error) !== null ) {
-                className = this.failedClass;
-            } else if (this.getModel().get(end)) {
-                className = this.successClass;
-            }
+        }
+        if (modelStatus.failed) {
+            className = this.failedClass;
+        } else if (modelStatus.finished) {
+            className = this.successClass;
         }
         return className;
     }

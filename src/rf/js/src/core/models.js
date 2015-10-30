@@ -82,6 +82,10 @@ var Layer = Backbone.Model.extend({
         return !this.get('status_upload_end');
     },
 
+    isUploaded: function() {
+        return this.get('status_upload_end') && this.get('status_upload_error') === null;
+    },
+
     isCompleted: function() {
         return this.get('status_completed');
     },
@@ -102,6 +106,54 @@ var Layer = Backbone.Model.extend({
 
     isDoneWorking: function() {
         return this.isCompleted() || this.isFailed();
+    },
+
+    getStatusByName: function(status) {
+        var start = 'status_' + status + '_start',
+            end = 'status_' + status + '_end',
+            error = 'status_' + status + '_error';
+
+        if (!this.layerStatusIsKnown(status)) {
+            return {
+                'started': null,
+                'finished': null,
+                'failed': null
+            };
+        }
+
+        return {
+            'started': this.get(start),
+            'finished': this.get(end),
+            'failed': this.get(error) !== null
+        };
+    },
+
+    getErrorByName: function(status) {
+        var error = 'status_' + status + '_error';
+
+        if (!this.layerStatusIsKnown(status)) {
+            return null;
+        }
+        return this.get(error);
+    },
+
+    layerStatusIsKnown: function(status) {
+        var allowedStatuses = [
+            'chunk',
+            'create_cluster',
+            'completed',
+            'created',
+            'failed',
+            'mosaic',
+            'thumbnail',
+            'upload',
+            'validate'
+        ];
+        if (!_.contains(allowedStatuses, status)) {
+            console.error('Unknown layer status. "' + status + '" is not recognized.');
+            return false;
+        }
+        return true;
     },
 
     dismiss: function() {
