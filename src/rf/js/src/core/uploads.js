@@ -23,6 +23,8 @@ var uploadFiles = function(fileDescriptions) {
         logging: false
     });
 
+    var aws_token = settings.get('awsToken');
+
     var files = _.pluck(fileDescriptions, 'file'),
         invalidMimes = _.without(_.map(files, invalidTypes), null);
 
@@ -34,12 +36,20 @@ var uploadFiles = function(fileDescriptions) {
     _.each(fileDescriptions, function(fileDescription) {
         var userId = settings.getUser().get('id'),
             fileName = userId + '-' +
-                fileDescription.uuid + '.' + fileDescription.extension;
+                fileDescription.uuid + '.' + fileDescription.extension,
+            headers = {};
+
+        if (aws_token) {
+            headers['x-amz-security-token'] = aws_token;
+        }
 
         evap.add({
             name: fileName,
             file: fileDescription.file,
             contentType: fileDescription.file.type,
+            xAmzHeadersAtInitiate: headers,
+            xAmzHeadersAtUpload: headers,
+            xAmzHeadersAtComplete: headers,
             complete: function() {
                 console.log('File upload complete');
             },
