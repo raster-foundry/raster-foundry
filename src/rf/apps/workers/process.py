@@ -228,6 +228,7 @@ class QueueProcessor(object):
                                                enums.STATUS_THUMBNAIL)
 
         if make_thumbs_for_layer(layer_id):
+            log.info('Done generating thumbnails')
             status_updates.mark_layer_status_end(layer_id,
                                                  enums.STATUS_THUMBNAIL)
             return True
