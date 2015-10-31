@@ -255,7 +255,13 @@ class Worker(StackNode):
                 '  - path: /etc/rf.d/env/RF_DB_PASSWORD\n',
                 '    permissions: 0750\n',
                 '    owner: root:rf\n',
-                '    content: ', Ref(self.rds_password)]
+                '    content: ', Ref(self.rds_password), '\n',
+                'mounts:\n',
+                '  - [ ephemeral0, null ]\n',
+                '  - [ ephemeral0, "/media/ephemeral0" ]\n',
+                'runcmd:\n',
+                '  - [ chown, rf, "/media/ephemeral0" ]\n',
+                '  - [ chgrp, rf, "/media/ephemeral0" ]']
 
     def create_cloud_watch_resources(self, worker_auto_scaling_group):
         self.add_resource(cw.Alarm(
