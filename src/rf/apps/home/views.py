@@ -71,14 +71,8 @@ def layer_dismiss(request):
     user_id = request.user.id
     layer_id = request.POST.get('layer_id')
     layer = get_object_or_404(Layer, id=layer_id, user_id=user_id)
-    if layer.status_failed:
-        _delete_layer(request, layer, request.user.username)
-    else:
-        layer.dismissed = True
-        layer.save()
-
-    # TODO: Consider returning something indicitive of the result:
-    # return {'status': 'deleted'}
+    layer.dismissed = True
+    layer.save()
     return 'OK'
 
 
