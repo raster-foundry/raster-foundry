@@ -324,18 +324,20 @@ class QueueProcessor(object):
         if layer.status_completed or layer.status_failed:
             log.debug('Ending heartbeat. Job is complete.')
             return True
-
         elif not cluster_is_alive(job_id):
-            log.info('EMR job for layer %d has failed!', layer_id)
-            return status_updates.mark_layer_status_end(layer_id,
-                                                        enums.STATUS_FAILED,
-                                                        ERROR_MESSAGE_EMR_DEAD)
+            if layer.status_heartbeat is not None:
+                log.info('Second failed EMR heartbeat for layer %d!', layer_id)
+                log.info('EMR job for layer %d has failed!', layer_id)
+                layer.process_failed_heartbeat()
+                return status_updates.mark_layer_status_end(
+                    layer_id, enums.STATUS_FAILED, ERROR_MESSAGE_EMR_DEAD)
+            else:
+                log.info('EMR Heartbeat failed for layer %d.', layer_id)
+                layer.process_failed_heartbeat()
 
         # If job is not failed or completed add another heartbeat message.
-        else:
-            data = {'layer_id': layer_id, 'job_id': job_id}
-            self.queue.add_message(JOB_HEARTBEAT, data, TIMEOUT_DELAY)
-
+        data = {'layer_id': layer_id, 'job_id': job_id}
+        self.queue.add_message(JOB_HEARTBEAT, data, TIMEOUT_DELAY)
         return True
 
     def check_timeout(self, record):

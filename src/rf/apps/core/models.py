@@ -311,6 +311,10 @@ class Layer(Model):
     def get_tile_bucket_path(self):
         return 's3://{}/{}'.format(settings.AWS_TILES_BUCKET, self.id)
 
+    def process_failed_heartbeat(self):
+        self.status_heartbeat = datetime.now()
+        self.save()
+
     def update_status_start(self, status):
         value = datetime.now()
         if status == enums.STATUS_UPLOAD:
