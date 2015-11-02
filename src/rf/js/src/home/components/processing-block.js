@@ -17,7 +17,7 @@ var LayerStatusComponent = React.createBackboneClass({
             chunkClass = this.pendingClass,
             mosaicClass = this.pendingClass,
             completeClass = this.pendingClass,
-            actionLinks = (<a className="text-danger">Cancel</a>),
+            actionLinks = (<a href="javascript:;" onClick={this.deleteLayer} className="text-danger">Cancel</a>),
             uploadErrorsExist = false,
 
             layerError = false,
@@ -171,6 +171,13 @@ var LayerStatusComponent = React.createBackboneClass({
                 </div>
             </div>
         );
+    },
+
+    deleteLayer: function(e) {
+        e.preventDefault();
+        if (window.confirm('Are you sure you would like to cancel processing this layer?')) {
+            this.getModel().destroy();
+        }
     },
 
     dismiss: function(e) {
