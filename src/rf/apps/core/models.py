@@ -62,6 +62,7 @@ class Layer(Model):
     status_mosaic_end = DateTimeField(null=True, blank=True)
     status_failed = DateTimeField(null=True, blank=True)
     status_completed = DateTimeField(null=True, blank=True)
+    status_heartbeat = DateTimeField(null=True, blank=True)
 
     status_upload_error = CharField(max_length=255, blank=True, null=True)
     status_validate_error = CharField(max_length=255, blank=True, null=True)
@@ -207,6 +208,7 @@ class Layer(Model):
             'status_mosaic_end': self.status_mosaic_end is not None,
             'status_failed': self.status_failed is not None,
             'status_completed': self.status_completed is not None,
+            'status_heartbeat': self.status_completed is not None,
 
             'status_upload_error': self.status_upload_error,
             'status_validate_error': self.status_validate_error,
@@ -309,6 +311,10 @@ class Layer(Model):
     def get_tile_bucket_path(self):
         return 's3://{}/{}'.format(settings.AWS_TILES_BUCKET, self.id)
 
+    def process_failed_heartbeat(self):
+        self.status_heartbeat = datetime.now()
+        self.save()
+
     def update_status_start(self, status):
         value = datetime.now()
         if status == enums.STATUS_UPLOAD:
@@ -354,11 +360,23 @@ class Layer(Model):
             self.status_mosaic_end = value
             self.status_mosaic_error = error_message
         elif status == enums.STATUS_COMPLETED:
+            if error_message is not None:
+                raise StatusMismatchError(
+                    'Completed status does not accept errors.')
             self.status_completed = value
+            # To be safe, unset the failed status and error.
+            self.status_failed = None
+            self.status_failed_error = None
         elif status == enums.STATUS_FAILED:
+            if self.status_completed is not None:
+                raise StatusMismatchError(
+                    'Cannot mark completed layer as failed.')
             self.status_failed_error = error_message
         # If we had any error message mark the generic failed field.
         if error_message is not None:
+            if self.status_completed is not None:
+                raise StatusMismatchError(
+                    'Cannot set errors on completed layer.')
             self.status_failed = value
 
     def __unicode__(self):
@@ -603,3 +621,10 @@ class UserFavoriteLayer(Model):
 
     def __unicode__(self):
         return '{0} -> {1}'.format(self.user.username, self.layer.name)
+
+
+class StatusMismatchError(ValueError):
+    """
+    Raised if statuses are incompatible.
+    """
+    pass
