@@ -5,6 +5,7 @@ var React = require('react'),
     _ = require('underscore'),
     uploads = require('../../core/uploads'),
     settings = require('../../settings'),
+    coreModels = require('../../core/models'),
     moment = require('moment'),
     uuid = require('node-uuid');
 
@@ -478,8 +479,16 @@ var UploadModal = React.createBackboneClass({
 
         this.setState({postInProgress: true});
         self.postLayer(fileDescriptions)
-            .done(function() {
+            .done(function(e) {
                 self.setState({postInProgress: false});
+
+                // Manually add the new layer to the front of
+                // pendingLayers (to maintain sorting), so the user
+                // can get immediate feedback that the
+                // layer is being processed.
+                var newLayer = new coreModels.Layer(e.responseJSON);
+                self.props.pendingLayers.push(newLayer, {at: 0});
+
                 // If the polling function is currently not fetching
                 // because there are no layers currently uploading or
                 // processing, we need to force a fetch so that the submitted
