@@ -17,8 +17,9 @@ var LayerStatusComponent = React.createBackboneClass({
             chunkClass = this.pendingClass,
             mosaicClass = this.pendingClass,
             completeClass = this.pendingClass,
-            actionLink = (<a className="text-danger">Cancel</a>),
+            actionLinks = (<a className="text-danger">Cancel</a>),
             uploadErrorsExist = false,
+
             layerError = false,
             layerErrorComponent = (
                 <li>
@@ -52,7 +53,14 @@ var LayerStatusComponent = React.createBackboneClass({
         }
 
         if (this.getModel().isDoneWorking()) {
-            actionLink = (<a onClick={this.dismiss}>Dismiss</a>);
+            actionLinks = (<a onClick={this.dismiss}>Dismiss</a>);
+            if (this.getModel().retryPossible()) {
+                actionLinks = (
+                    <span>
+                        {actionLinks}, <a onClick={this.retry}>Retry</a>
+                    </span>
+                );
+            }
         }
 
         return (
@@ -159,7 +167,7 @@ var LayerStatusComponent = React.createBackboneClass({
                     </ol>
                 </div>
                 <div className="list-group-tool">
-                    { actionLink }
+                    { actionLinks }
                 </div>
             </div>
         );
@@ -185,6 +193,11 @@ var LayerStatusComponent = React.createBackboneClass({
             className = this.successClass;
         }
         return className;
+    },
+
+    retry: function(e) {
+        e.preventDefault();
+        this.getModel().retry();
     }
 });
 

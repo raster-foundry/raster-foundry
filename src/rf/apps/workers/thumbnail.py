@@ -144,6 +144,7 @@ def make_thumbs_for_layer(layer_id):
         layer.thumb_large_key, = s3_make_thumbs(image.get_s3_key(),
                                                 user_id, thumb_dims,
                                                 THUMB_EXT)
+        layer.save()
     except ImageCouldNotOpenError:
         return False
 

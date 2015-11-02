@@ -30,6 +30,7 @@ urlpatterns = patterns(
         name='create_or_destroy_favorite'),
     url('^catalog.json$', views.all_layers, name='catalog'),
     url('^layer/dismiss', views.layer_dismiss, name='layer_dismiss'),
+    url('^layer/retry', views.layer_retry, name='layer_retry'),
 
     # These all route to the home page.
     url('^imports/?$', views.home_page),

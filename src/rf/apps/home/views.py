@@ -23,7 +23,7 @@ from apps.core.models import Layer, LayerImage, LayerTag, UserFavoriteLayer
 from apps.home.forms import LayerForm
 from apps.home.filters import LayerFilter
 from apps.workers.sqs_manager import SQSManager
-from apps.workers.process import JOB_COPY_IMAGE
+from apps.workers.process import JOB_COPY_IMAGE, JOB_VALIDATE
 
 RESULTS_PER_PAGE = 10
 MAX_RESULTS_PER_PAGE = 100
@@ -80,6 +80,43 @@ def layer_dismiss(request):
     # TODO: Consider returning something indicitive of the result:
     # return {'status': 'deleted'}
     return 'OK'
+
+
+@api_view
+@login_required
+@accepts('POST')
+def layer_retry(request):
+    user_id = request.user.id
+    layer_id = request.POST.get('layer_id')
+    layer = get_object_or_404(Layer, id=layer_id, user_id=user_id)
+
+    if layer.retry_possible():
+        _retry_layer(layer)
+        return 'OK'
+    else:
+        raise Forbidden(errors={
+            'layer_id': ['Layer needs to have failed to retry.']
+        })
+
+
+def _retry_layer(layer):
+    # Attempts to roll the layer back to an error-free state,
+    # and retry jobs starting at the step where errors could have possibly
+    # occurred. For images that were copied, this means starting at the copy
+    # job. For images that were uploaded, this means starting at the
+    # validation job.
+    sqs_manager = SQSManager()
+    layer.reset()
+
+    for image in layer.layer_images.all():
+        if image.has_copied_image():
+            job_type = JOB_COPY_IMAGE
+            data = {'image_id': image.id}
+            sqs_manager.add_message(job_type, data)
+        else:
+            job_type = JOB_VALIDATE
+            data = {'image_id': image.id}
+            sqs_manager.add_message(job_type, data)
 
 
 def _get_layer_or_404(request, **kwargs):

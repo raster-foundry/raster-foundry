@@ -148,7 +148,7 @@ class Layer(Model):
 
     def has_copied_images(self):
         for image in self.layer_images.all():
-            if image.source_s3_bucket_key:
+            if image.has_copied_image():
                 return True
         return False
 
@@ -233,8 +233,48 @@ class Layer(Model):
             'meta_url': self.get_meta_url(),
             'favorite_url': self.get_favorite_url(),
             'dismiss_url': self.get_dismiss_url(),
+            'retry_url': self.get_retry_url(),
             'tile_url': self.get_tile_url(),
         }
+
+    def retry_possible(self):
+        """
+        Returns true if it is possible to retry processing a layer.
+        """
+        return self.status_failed is not None
+
+    def reset(self):
+        """
+        Resets fields to prepare for a retry.
+        """
+        if self.has_copied_images():
+            self.status_upload_start = None
+            self.status_upload_end = None
+
+        self.status_validate_start = None
+        self.status_validate_end = None
+        self.status_thumbnail_start = None
+        self.status_thumbnail_end = None
+        self.status_create_cluster_start = None
+        self.status_create_cluster_end = None
+        self.status_chunk_start = None
+        self.status_chunk_end = None
+        self.status_mosaic_start = None
+        self.status_mosaic_end = None
+        self.status_failed = None
+        self.status_completed = None
+
+        self.status_upload_error = None
+        self.status_validate_error = None
+        self.status_thumbnail_error = None
+        self.status_create_cluster_error = None
+        self.status_chunk_error = None
+        self.status_mosaic_error = None
+        self.status_failed_error = None
+        self.save()
+
+        for image in self.layer_images.all():
+            image.reset()
 
     def get_absolute_url(self):
         kwargs = {
@@ -255,6 +295,9 @@ class Layer(Model):
             'layer_id': self.id,
         }
         return reverse('create_or_destroy_favorite', kwargs=kwargs)
+
+    def get_retry_url(self):
+        return reverse('layer_retry')
 
     def get_dismiss_url(self):
         return reverse('layer_dismiss')
@@ -398,6 +441,30 @@ class LayerImage(Model):
     status_validate_error = CharField(max_length=255, blank=True, null=True)
     status_thumbnail_error = CharField(max_length=255, blank=True, null=True)
 
+    def reset(self):
+        """
+        Resets fields to prepare for a retry.
+        """
+        # If there was an error in the copy stage, then we want to
+        # retry it.
+        if self.status_upload_error:
+            self.status_upload_start = None
+            self.status_upload_end = None
+
+        self.status_validate_start = None
+        self.status_validate_end = None
+        self.status_thumbnail_start = None
+        self.status_thumbnail_end = None
+
+        self.status_upload_error = None
+        self.status_validate_error = None
+        self.status_thumbnail_error = None
+
+        self.save()
+
+    def has_copied_image(self):
+        return self.source_s3_bucket_key is not None
+
     def get_s3_key(self):
         return '%d-%s.%s' % (self.layer.user.id,
                              self.s3_uuid,
@@ -429,7 +496,8 @@ class LayerImage(Model):
             'status_thumbnail_end': self.status_thumbnail_end is not None,
             'status_upload_error': self.status_upload_error,
             'status_validate_error': self.status_validate_error,
-            'status_thumbnail_error': self.status_thumbnail_error
+            'status_thumbnail_error': self.status_thumbnail_error,
+            'source_s3_bucket_key': self.source_s3_bucket_key
         }
 
     def update_status_start(self, status):

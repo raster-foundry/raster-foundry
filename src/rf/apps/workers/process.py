@@ -24,12 +24,13 @@ log = logging.getLogger(__name__)
 TIMEOUT_SECONDS = (60 * 60 * 5)  # 5 Hours.
 
 JOB_COPY_IMAGE = 'copy_image'
-JOB_VALIDATE = [
+JOB_IMAGE_ARRIVAL = [
     'ObjectCreated:CompleteMultipartUpload',
     'ObjectCreated:Put',
     'ObjectCreated:Post',
     'ObjectCreated:Copy'
 ]
+JOB_VALIDATE = 'validate'
 JOB_THUMBNAIL = 'thumbnail'
 JOB_HANDOFF = 'emr_handoff'
 JOB_TIMEOUT = 'timeout'
@@ -107,9 +108,11 @@ class QueueProcessor(object):
             return self.emr_heartbeat(record)
         elif job_type == JOB_TIMEOUT:
             return self.check_timeout(record)
-        elif job_type in JOB_VALIDATE:
+        elif job_type in JOB_IMAGE_ARRIVAL:
             if event_source == 'aws:s3':
-                return self.validate_image(record)
+                return self.image_arrival(record)
+        elif job_type == JOB_VALIDATE:
+            return self.validate_image(record)
         elif job_type == JOB_COPY_IMAGE:
             return self.copy_image(record)
         elif job_type == JOB_CHUNK:
@@ -122,10 +125,9 @@ class QueueProcessor(object):
     def is_test_event(self, record):
         return 'Event' in record and record['Event'] == 's3:TestEvent'
 
-    def validate_image(self, record):
+    def image_arrival(self, record):
         """
-        Use Gdal to verify an image is properly formatted and can be further
-        processed.
+        When an image arrives via post or copy, initiate a validation job.
         record -- attribute data from SQS.
         """
         try:
@@ -140,14 +142,49 @@ class QueueProcessor(object):
             return False
 
         # Ignore thumbnails.
-        if not LayerImage.objects.filter(s3_uuid=s3_uuid).exists():
+        try:
+            image = LayerImage.objects.get(s3_uuid=s3_uuid)
+        except LayerImage.DoesNotExist:
             return True
 
-        # Update Statuses
-        status_updates.mark_image_uploaded(s3_uuid)
-        status_updates.mark_image_status_start(s3_uuid, enums.STATUS_VALIDATE)
+        log.info('Image %d arrived', image.id)
 
-        # Image verification.
+        # This may have already been done by copy_image, but it's safe to
+        # do it again.
+        status_updates.mark_image_uploaded(s3_uuid)
+
+        data = {'image_id': image.id}
+        self.queue.add_message(JOB_VALIDATE, data)
+        return True
+
+    def validate_image(self, record):
+        """
+        Use Gdal to verify an image is properly formatted and can be further
+        processed for images that were just uploaded or copied to the S3
+        bucket.
+        record -- attribute data from SQS.
+        """
+        try:
+            data = record['data']
+            image_id = data['image_id']
+        except KeyError:
+            return False
+
+        try:
+            image_id = int(image_id)
+        except ValueError:
+            return False
+
+        try:
+            image = LayerImage.objects.get(id=image_id)
+        except LayerImage.DoesNotExist:
+            return False
+
+        s3_uuid = image.s3_uuid
+        key = image.get_s3_key()
+
+        # Validate image.
+        status_updates.mark_image_status_start(s3_uuid, enums.STATUS_VALIDATE)
         validator = ImageValidator(settings.AWS_BUCKET_NAME, key)
         try:
             if not validator.image_format_is_supported():
