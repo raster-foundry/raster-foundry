@@ -239,7 +239,7 @@ class QueueProcessor(object):
                 }
                 log.info('Queue timeout job')
                 self.queue.add_message(JOB_TIMEOUT, data, TIMEOUT_DELAY)
-                return True
+            return True
         return False
 
     def thumbnail(self, record):
