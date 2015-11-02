@@ -204,14 +204,20 @@ def _delete_layer(request, layer, username=None):
 @accepts('GET')
 def user_layers(request, username):
     get_object_or_404(User, username=username)
-    return _get_layers(request, Q(user__username=username))
+    crit = Q(user__username=username, status_completed__isnull=False)
+    return _get_layers(request, crit)
 
 
 @api_view
 @login_required
 @accepts('GET')
 def my_layers(request):
-    return _get_layers(request, Q(user=request.user))
+    crit = Q(user=request.user)
+    if request.GET.get('pending') == 'true':
+        crit &= Q(dismissed=False)
+    else:
+        crit &= Q(status_completed__isnull=False)
+    return _get_layers(request, crit)
 
 
 @api_view
@@ -249,7 +255,8 @@ def create_or_destroy_favorite(request, layer_id):
 @api_view
 @accepts('GET')
 def all_layers(request):
-    return _get_layers(request)
+    crit = Q(status_completed__isnull=False)
+    return _get_layers(request, crit)
 
 
 def _get_layer_models(request, crit=None):
@@ -268,11 +275,6 @@ def _get_layer_models(request, crit=None):
 
     if crit:
         qs = qs.filter(crit)
-
-    if request.GET.get('pending') == 'true':
-        qs = qs.filter(dismissed=False)
-    else:
-        qs = qs.filter(status_completed__isnull=False)
 
     filtered_layers = LayerFilter(request.GET, queryset=qs)
 
