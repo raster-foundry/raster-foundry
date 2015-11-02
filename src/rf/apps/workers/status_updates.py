@@ -39,6 +39,30 @@ def mark_image_uploaded(s3_uuid):
     return True
 
 
+def mark_layer_thumbnailed(layer_id):
+    """
+    If thumbnails are generated for the layer and associated
+    LayerImages, then update the status of layer to reflect that.
+    """
+    try:
+        layer = Layer.objects.get(id=layer_id)
+    except Layer.DoesNotExist:
+        return False
+
+    thumbnailed_images = LayerImage.objects.filter(
+        layer_id=layer_id,
+        status_thumbnail_end__isnull=False,
+        status_thumbnail_error__isnull=True)
+    layer_images = layer.layer_images.all()
+
+    all_images_thumbnailed = layer_images.count() == thumbnailed_images.count()
+    layer_thumbnailed = layer.thumb_small_key is not None
+    if all_images_thumbnailed and layer_thumbnailed:
+        return mark_layer_status_end(layer_id, enums.STATUS_THUMBNAIL)
+
+    return True
+
+
 def mark_image_status_start(s3_uuid, status):
     try:
         image = LayerImage.objects.get(s3_uuid=s3_uuid)

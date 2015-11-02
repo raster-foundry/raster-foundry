@@ -13,8 +13,9 @@ from django.conf import settings
 from apps.core.models import LayerImage, Layer
 from apps.workers.image_validator import ImageValidator
 from apps.workers.sqs_manager import SQSManager
-from apps.workers.thumbnail import make_thumbs_for_layer
 from apps.workers.emr import create_cluster, cluster_is_alive
+from apps.workers.thumbnail import (make_thumbs_for_layer,
+                                    make_thumbs_for_layer_image)
 import apps.core.enums as enums
 import apps.workers.status_updates as status_updates
 from apps.workers.copy_images import s3_copy
@@ -31,7 +32,8 @@ JOB_IMAGE_ARRIVAL = [
     'ObjectCreated:Copy'
 ]
 JOB_VALIDATE = 'validate'
-JOB_THUMBNAIL = 'thumbnail'
+JOB_THUMBNAIL_IMAGE = 'thumbnail_image'
+JOB_THUMBNAIL_LAYER = 'thumbnail_layer'
 JOB_HANDOFF = 'emr_handoff'
 JOB_TIMEOUT = 'timeout'
 JOB_HEARTBEAT = 'emr_heartbeat'
@@ -100,8 +102,10 @@ class QueueProcessor(object):
 
         log.info('Executing job %s', job_type)
 
-        if job_type == JOB_THUMBNAIL:
-            return self.thumbnail(record)
+        if job_type == JOB_THUMBNAIL_IMAGE:
+            return self.thumbnail_image(record)
+        elif job_type == JOB_THUMBNAIL_LAYER:
+            return self.thumbnail_layer(record)
         elif job_type == JOB_HANDOFF:
             return self.emr_hand_off(record)
         elif job_type == JOB_HEARTBEAT:
@@ -229,8 +233,12 @@ class QueueProcessor(object):
                 log.info('Queue handoff job')
                 self.queue.add_message(JOB_HANDOFF, data)
 
-                log.info('Queue thumbnail job')
-                self.queue.add_message(JOB_THUMBNAIL, data)
+                log.info('Queue thumbnail jobs')
+                for image in layer_images:
+                    data = {'image_id': image.id}
+                    self.queue.add_message(JOB_THUMBNAIL_IMAGE, data)
+                data = {'layer_id': layer_id}
+                self.queue.add_message(JOB_THUMBNAIL_LAYER, data)
 
                 # Add a message to the queue to watch for timeouts.
                 data = {
@@ -242,9 +250,44 @@ class QueueProcessor(object):
             return True
         return False
 
-    def thumbnail(self, record):
+    def thumbnail_image(self, record):
         """
-        Generate thumbnails for all images.
+        Generate thumbnails for an image.
+        record -- attribute data from SQS.
+        """
+        try:
+            data = record['data']
+            image_id = data['image_id']
+        except KeyError:
+            return False
+
+        try:
+            image_id = int(image_id)
+        except ValueError:
+            return False
+
+        image = LayerImage.objects.get(id=image_id)
+        layer_id = image.layer.id
+        log.info('Generating thumbnails for image %d...', image_id)
+        status_updates.mark_image_status_start(image.s3_uuid,
+                                               enums.STATUS_THUMBNAIL)
+
+        if make_thumbs_for_layer_image(image_id):
+            status_updates.mark_image_status_end(image.s3_uuid,
+                                                 enums.STATUS_THUMBNAIL)
+            log.info('Done generating thumbnails for image %d...', image_id)
+            status_updates.mark_layer_thumbnailed(layer_id)
+        else:
+            log.info('Failed to thumbnail image %d', image_id)
+            status_updates.mark_image_status_end(
+                image_id,
+                enums.STATUS_THUMBNAIL,
+                ERROR_MESSAGE_THUMBNAIL_FAILED)
+        return True
+
+    def thumbnail_layer(self, record):
+        """
+        Generate thumbnails for a layer.
         record -- attribute data from SQS.
         """
         try:
@@ -259,23 +302,19 @@ class QueueProcessor(object):
             return False
 
         log.info('Generating thumbnails for layer %d...', layer_id)
-
-        # Update start status.
         status_updates.mark_layer_status_start(layer_id,
                                                enums.STATUS_THUMBNAIL)
 
         if make_thumbs_for_layer(layer_id):
-            log.info('Done generating thumbnails')
-            status_updates.mark_layer_status_end(layer_id,
-                                                 enums.STATUS_THUMBNAIL)
-            return True
+            status_updates.mark_layer_thumbnailed(layer_id)
+            log.info('Done generating thumbnails for layer %d...', layer_id)
         else:
             log.info('Failed to thumbnail layer %d', layer_id)
             status_updates.mark_layer_status_end(
                 layer_id,
                 enums.STATUS_THUMBNAIL,
                 ERROR_MESSAGE_THUMBNAIL_FAILED)
-            return False
+        return True
 
     def emr_hand_off(self, record):
         """
@@ -297,6 +336,7 @@ class QueueProcessor(object):
         status_updates.mark_layer_status_start(layer.id,
                                                enums.STATUS_CREATE_CLUSTER)
         log.info('Launching EMR cluster for layer %d', layer_id)
+
         emr_response = create_cluster(layer)
         self.start_health_check(layer_id, emr_response)
         return True
@@ -456,14 +496,12 @@ class QueueProcessor(object):
                     layer_id, enums.STATUS_CREATE_CLUSTER)
 
             return status_updates.mark_layer_status_start(layer_id, emr_status)
-
         elif status == FINISHED:
             if emr_status == enums.STATUS_MOSAIC:
                 status_updates.mark_layer_status_end(layer_id,
                                                      enums.STATUS_COMPLETED)
 
             return status_updates.mark_layer_status_end(layer_id, emr_status)
-
         else:
             return False
 
