@@ -286,7 +286,7 @@ var PublicLayers = BaseLayers.extend({
 
 var PendingLayers = BaseLayers.extend({
     url: function() {
-        return '/imports.json?page_size=0&pending=true';
+        return '/imports.json?page_size=0&pending=true&o=-created_at';
     },
 
     existsUploading: function() {
