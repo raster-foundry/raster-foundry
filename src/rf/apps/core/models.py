@@ -62,6 +62,7 @@ class Layer(Model):
     status_mosaic_end = DateTimeField(null=True, blank=True)
     status_failed = DateTimeField(null=True, blank=True)
     status_completed = DateTimeField(null=True, blank=True)
+    status_heartbeat = DateTimeField(null=True, blank=True)
 
     status_upload_error = CharField(max_length=255, blank=True, null=True)
     status_validate_error = CharField(max_length=255, blank=True, null=True)
@@ -207,6 +208,7 @@ class Layer(Model):
             'status_mosaic_end': self.status_mosaic_end is not None,
             'status_failed': self.status_failed is not None,
             'status_completed': self.status_completed is not None,
+            'status_heartbeat': self.status_completed is not None,
 
             'status_upload_error': self.status_upload_error,
             'status_validate_error': self.status_validate_error,
