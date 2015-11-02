@@ -1,7 +1,8 @@
 'use strict';
 
 var _ = require('underscore'),
-    React = require('react');
+    React = require('react'),
+    $ = require('jquery');
 
 var LayerStatusComponent = React.createBackboneClass({
     successClass: 'rf-icon-check',
@@ -202,6 +203,15 @@ var LayerStatusComponent = React.createBackboneClass({
 });
 
 var ProcessingBlock = React.createBackboneClass({
+    componentDidMount: function() {
+        this.getCollection().on('add', function() {
+            var $blockTitle = $('.processing-block .block-title');
+            if ($blockTitle.hasClass('collapsed')) {
+                $blockTitle.trigger('click');
+            }
+        });
+    },
+
     render: function() {
         var self = this;
         if (this.getCollection().length === 0) {
