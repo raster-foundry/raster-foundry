@@ -332,7 +332,7 @@ var LayerItem = React.createBackboneClass({
                     data-cid={this.getModel().cid}
                     onClick={this.props.onLayerClicked}></a>
                 <div className="list-group-detail">
-                    <img src={this.getModel().get('thumb_small')  || 'http://placehold.it/80x80'} />
+                    <img src={this.getModel().get('thumb_small')  || 'https://placehold.it/80x80'} />
                 </div>
                 <div className="list-group-content">
                     <h5>{this.getModel().get('name')}</h5>
@@ -377,7 +377,7 @@ var ImageMetadataLink = React.createBackboneClass({
         return (
             <div className="list-group-item link">
                 <div className="list-group-detail">
-                    <img src={image.thumb_small || 'http://placehold.it/80x80'} />
+                    <img src={image.thumb_small || 'https://placehold.it/80x80'} />
                 </div>
                 <div className="list-group-content">
                     <h5>{image.file_name}</h5>
@@ -443,7 +443,7 @@ var LayerMetadata = React.createBackboneClass({
                     <div role="tabpanel" className="tab-pane active" id="layer-detail">
                         <div className="layer-detail-content">
                             <h4>{layer.get('name')}</h4>
-                            <img className="img-preview" src={layer.get('thumb_large') || 'http://placehold.it/400x150'} />
+                            <img className="img-preview" src={layer.get('thumb_large') || 'https://placehold.it/400x150'} />
                             <p>
                                 {layer.get('description')}
                             </p>
@@ -511,7 +511,7 @@ var ImageMetadata = React.createBackboneClass({
                     </div>
                 </div>
                 <div className="layer-detail-content">
-                    <img className="img-preview" src={image.thumb_large || 'http://placehold.it/300x300'} />
+                    <img className="img-preview" src={image.thumb_large || 'https://placehold.it/300x300'} />
                     <hr />
                     <dl>
                         <dt>Acquistion: </dt>
