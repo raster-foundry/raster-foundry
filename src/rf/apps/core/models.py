@@ -265,6 +265,7 @@ class Layer(Model):
         self.status_mosaic_end = None
         self.status_failed = None
         self.status_completed = None
+        self.status_heartbeat = None
 
         self.status_upload_error = None
         self.status_validate_error = None
