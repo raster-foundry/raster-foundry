@@ -481,6 +481,9 @@ class LayerImage(Model):
 
         self.save()
 
+    def has_been_validated(self):
+        return self.status_validate_end is not None
+
     def has_copied_image(self):
         return self.source_s3_bucket_key is not None
 

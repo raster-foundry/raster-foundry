@@ -183,6 +183,10 @@ class QueueProcessor(object):
         s3_uuid = image.s3_uuid
         key = image.get_s3_key()
 
+        if image.has_been_validated():
+            log.info('Image %d is already validated', image.id)
+            return True
+
         # Validate image.
         status_updates.mark_image_status_start(s3_uuid, enums.STATUS_VALIDATE)
         validator = ImageValidator(settings.AWS_BUCKET_NAME, key)
