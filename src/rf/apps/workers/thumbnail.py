@@ -12,7 +12,6 @@ import boto3
 from PIL import Image
 from django.conf import settings
 
-import apps.core.enums as enums
 from apps.core.models import LayerImage, Layer
 
 
@@ -20,7 +19,7 @@ log = logging.getLogger(__name__)
 
 IMAGE_THUMB_SMALL_DIMS = (80, 80)
 IMAGE_THUMB_LARGE_DIMS = (300, 300)
-# LAYER_THUMB_SMALL_DIMS = (80, 80)
+LAYER_THUMB_SMALL_DIMS = (80, 80)
 LAYER_THUMB_LARGE_DIMS = (400, 150)
 THUMB_EXT = 'png'
 THUMB_CONTENT_TYPE = 'image/png'
@@ -115,36 +114,40 @@ def s3_make_thumbs(image_key, user_id, thumb_dims, thumb_ext):
 
 def make_thumbs_for_layer(layer_id):
     """
-    Make thumbs for Layer with layer_id and associated LayerImages.
+    Make thumbs for Layer with layer_id. This does not include
+    making thumbnails for associated LayerImages.
     """
     layer = Layer.objects.get(id=layer_id)
-    layer_images = LayerImage.objects.filter(layer_id=layer_id)
+    image = layer.layer_images.first()
     user_id = layer.user.id
 
-    for image in layer_images:
-        thumb_dims = [IMAGE_THUMB_SMALL_DIMS, IMAGE_THUMB_LARGE_DIMS]
-        try:
-            image.update_status_start(enums.STATUS_THUMBNAIL)
-            image.thumb_small_key, image.thumb_large_key = \
-                s3_make_thumbs(image.get_s3_key(), user_id,
-                               thumb_dims, THUMB_EXT)
-        except ImageCouldNotOpenError:
-            image.update_status_end(enums.STATUS_THUMBNAIL,
-                                    ERROR_MESSAGE_THUMBNAIL_FAILED)
-            return False
-
-        image.update_status_end(enums.STATUS_THUMBNAIL)
-        image.save()
-
     # Create thumbnails for the Layer as a whole
-    # using thumbnails from the final image.
-    layer.thumb_small_key = image.thumb_small_key
-    thumb_dims = [LAYER_THUMB_LARGE_DIMS]
+    # using thumbnails created from the first image.
+    thumb_dims = [LAYER_THUMB_SMALL_DIMS, LAYER_THUMB_LARGE_DIMS]
     try:
-        layer.thumb_large_key, = s3_make_thumbs(image.get_s3_key(),
-                                                user_id, thumb_dims,
-                                                THUMB_EXT)
+        layer.thumb_small_key, layer.thumb_large_key = \
+            s3_make_thumbs(image.get_s3_key(), user_id,
+                           thumb_dims, THUMB_EXT)
         layer.save()
+    except ImageCouldNotOpenError:
+        return False
+
+    return True
+
+
+def make_thumbs_for_layer_image(image_id):
+    """
+    Make thumbs for LayerImage with image_id.
+    """
+    image = LayerImage.objects.get(id=image_id)
+    user_id = image.layer.user.id
+
+    thumb_dims = [IMAGE_THUMB_SMALL_DIMS, IMAGE_THUMB_LARGE_DIMS]
+    try:
+        image.thumb_small_key, image.thumb_large_key = \
+            s3_make_thumbs(image.get_s3_key(), user_id,
+                           thumb_dims, THUMB_EXT)
+        image.save()
     except ImageCouldNotOpenError:
         return False
 
