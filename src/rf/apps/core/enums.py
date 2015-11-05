@@ -10,7 +10,7 @@ STATUS_CREATE_CLUSTER = 'cluster'
 STATUS_FAILED = 'failed'
 STATUS_MOSAIC = 'mosaic'
 STATUS_THUMBNAIL = 'thumbnail'
-STATUS_UPLOAD = 'upload'
+STATUS_TRANSFER = 'transfer'
 STATUS_VALIDATE = 'validate'
 
 SQ_MI = 'sq. mi'
