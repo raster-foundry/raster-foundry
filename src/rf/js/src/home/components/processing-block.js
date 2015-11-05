@@ -11,51 +11,50 @@ var LayerStatusComponent = React.createBackboneClass({
     failedClass: 'rf-icon-attention rf-failed text-danger',
 
     render: function() {
-        var uploadingClass = this.workingClass,
-            validateClass = this.pendingClass,
-            thumbnailClass = this.pendingClass,
-            createWorkerClass = this.pendingClass,
-            chunkClass = this.pendingClass,
-            mosaicClass = this.pendingClass,
+        var layer = this.getModel(),
+            uploadClass = this.failedClass,
+            copyClass = this.workingClass,
             completeClass = this.pendingClass,
             actionLinks = (<a href="javascript:;" onClick={this.deleteLayer} className="text-danger">Cancel</a>),
-            uploadErrorsExist = false,
-
+            copyErrorsExist = false,
             layerError = false,
             layerErrorComponent = (
                 <li>
-                    {this.getModel().getErrorByName('failed') ? this.getModel().getErrorByName('failed') : 'Processing failed.'}
+                    {layer.getErrorByName('failed') ? layer.getErrorByName('failed') : 'Processing failed.'}
                     <i className="rf-icon-attention"></i>
                 </li>
             ),
-            uploadLabel = this.getModel().hasCopiedImages() ?
-                'Transferring Images' : 'Uploading Images';
+            validateClass = this.updateStatusClass('validate'),
+            thumbnailClass = this.updateStatusClass('thumbnail'),
+            createWorkerClass = this.updateStatusClass('create_cluster'),
+            chunkClass = this.updateStatusClass('chunk'),
+            mosaicClass = this.updateStatusClass('mosaic');
 
-        if (this.getModel().isUploaded()) {
-            uploadingClass = this.successClass;
-        } else if (this.getModel().isFailed()) {
-            uploadErrorsExist = _.some(this.getModel().get('images'), function(image) {
-                return !_.isEmpty(image.status_upload_error);
-            });
-            uploadingClass = uploadErrorsExist ? this.failedClass : this.successClass;
+        if (layer.isUploaded()) {
+            uploadClass = this.successClass;
+        } else if (layer.isUploading()) {
+            uploadClass = this.workingClass;
         }
 
-        validateClass = this.updateStatusClass('validate');
-        thumbnailClass = this.updateStatusClass('thumbnail');
-        createWorkerClass = this.updateStatusClass('create_cluster');
-        chunkClass = this.updateStatusClass('chunk');
-        mosaicClass = this.updateStatusClass('mosaic');
+        if (layer.isCopied()) {
+            copyClass = this.successClass;
+        } else if (layer.isFailed()) {
+            copyErrorsExist = _.some(layer.get('images'), function(image) {
+                return !_.isEmpty(image.status_transfer_error);
+            });
+            copyClass = copyErrorsExist ? this.failedClass : this.successClass;
+        }
 
-        if (this.getModel().isCompleted()) {
+        if (layer.isCompleted()) {
             completeClass = this.successClass;
-        } else if (this.getModel().isFailed()) {
+        } else if (layer.isFailed()) {
             completeClass = this.failedClass;
             layerError = true;
         }
 
-        if (this.getModel().isDoneWorking()) {
+        if (layer.isDoneWorking()) {
             actionLinks = (<a onClick={this.dismiss}>Dismiss</a>);
-            if (this.getModel().retryPossible()) {
+            if (layer.retryPossible()) {
                 actionLinks = (
                     <span>
                         {actionLinks}, <a onClick={this.retry}>Retry</a>
@@ -64,30 +63,50 @@ var LayerStatusComponent = React.createBackboneClass({
             }
         }
 
+        var uploadError = layer.getUploadError(),
+            uploadErrorComponent = (
+                <ul className="notice">
+                    <li>
+                        {uploadError}
+                        <i className="rf-icon-attention"></i>
+                    </li>
+                </ul>
+            ),
+            uploadComponent = (
+                <li>
+                    Uploading Images <i className={uploadClass} />
+                    {uploadError ? uploadErrorComponent : ''}
+                </li>
+            ),
+            copyComponent = (
+                <li>
+                    Copying Images <i className={copyClass} />
+                    <ul className="notice">
+                        {_.map(layer.get('images'), function(image) {
+                            if (image.status_transfer_error && image.status_transfer_error !== '') {
+                                return (
+                                    <li key={image.s3_uuid}>
+                                        <strong>{image.file_name}</strong> {image.status_transfer_error}
+                                        <i className="rf-icon-attention"></i>
+                                    </li>
+                                );
+                            }
+                        })}
+                    </ul>
+                </li>
+            );
+
         return (
             <div className="list-group-item">
                 <div className="list-group-content">
-                    <h5>{this.getModel().get('name')}</h5>
+                    <h5>{layer.get('name')}</h5>
                     <ol>
-                        <li>
-                            {uploadLabel} <i className={uploadingClass} />
-                            <ul className="notice">
-                                {_.map(this.getModel().get('images'), function(image) {
-                                    if (image.status_upload_error && image.status_upload_error !== '') {
-                                        return (
-                                            <li key={image.s3_uuid}>
-                                                <strong>{image.file_name}</strong> {image.status_upload_error}
-                                                <i className="rf-icon-attention"></i>
-                                            </li>
-                                        );
-                                    }
-                                })}
-                            </ul>
-                        </li>
+                        {layer.hasUploadImages() ? uploadComponent : ''}
+                        {layer.hasCopyImages() ? copyComponent : ''}
                         <li>
                             Validating Images <i className={validateClass} />
                             <ul className="notice">
-                                {_.map(this.getModel().get('images'), function(image) {
+                                {_.map(layer.get('images'), function(image) {
                                     if (image.status_validate_error && image.status_validate_error !== '') {
                                         return (
                                             <li key={image.s3_uuid}>
@@ -102,7 +121,7 @@ var LayerStatusComponent = React.createBackboneClass({
                         <li>
                             Creating Thumbnails <i className={thumbnailClass} />
                             <ul className="notice">
-                                {_.map(this.getModel().get('images'), function(image) {
+                                {_.map(layer.get('images'), function(image) {
                                     if (image.error && image.error !== '') {
                                         return (
                                             <li key={image.s3_uuid}>
@@ -126,7 +145,7 @@ var LayerStatusComponent = React.createBackboneClass({
                                             </li>
                                         );
                                     }
-                                })(this.getModel().getErrorByName('create_cluster'))}
+                                })(layer.getErrorByName('create_cluster'))}
                             </ul>
                         </li>
                         <li>
@@ -141,7 +160,7 @@ var LayerStatusComponent = React.createBackboneClass({
                                             </li>
                                         );
                                     }
-                                })(this.getModel().getErrorByName('chunk'))}
+                                })(layer.getErrorByName('chunk'))}
                             </ul>
                         </li>
                         <li>
@@ -156,7 +175,7 @@ var LayerStatusComponent = React.createBackboneClass({
                                             </li>
                                         );
                                     }
-                                })(this.getModel().getErrorByName('mosaic'))}
+                                })(layer.getErrorByName('mosaic'))}
                             </ul>
                         </li>
                         <li>
@@ -183,9 +202,9 @@ var LayerStatusComponent = React.createBackboneClass({
 
     dismiss: function(e) {
         e.preventDefault();
-        var model = this.getModel();
-        model.dismiss();
-        this.props.removeItem(model);
+        var layer = this.getModel();
+        layer.dismiss();
+        this.props.removeItem(layer);
     },
 
     updateStatusClass: function(status) {

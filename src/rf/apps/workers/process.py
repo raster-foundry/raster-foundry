@@ -155,7 +155,7 @@ class QueueProcessor(object):
 
         # This may have already been done by copy_image, but it's safe to
         # do it again.
-        status_updates.mark_image_uploaded(s3_uuid)
+        status_updates.mark_image_transfer_end(s3_uuid)
 
         data = {'image_id': image.id}
         self.queue.add_message(JOB_VALIDATE, data)
@@ -459,7 +459,7 @@ class QueueProcessor(object):
             success = s3_copy(image.source_s3_bucket_key, image.get_s3_key())
             if success:
                 log.info('Image copied successfully')
-                return status_updates.mark_image_uploaded(image.s3_uuid)
+                return status_updates.mark_image_transfer_end(image.s3_uuid)
             else:
                 log.info('Could not copy image')
                 return status_updates.mark_image_transfer_failure(

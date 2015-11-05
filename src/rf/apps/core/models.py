@@ -48,8 +48,6 @@ class Layer(Model):
     slug = SlugField(max_length=255, blank=True)
 
     status_created = DateTimeField(auto_now_add=True)
-    status_upload_start = DateTimeField(null=True, blank=True)
-    status_upload_end = DateTimeField(null=True, blank=True)
     status_validate_start = DateTimeField(null=True, blank=True)
     status_validate_end = DateTimeField(null=True, blank=True)
     status_thumbnail_start = DateTimeField(null=True, blank=True)
@@ -64,7 +62,6 @@ class Layer(Model):
     status_completed = DateTimeField(null=True, blank=True)
     status_heartbeat = DateTimeField(null=True, blank=True)
 
-    status_upload_error = CharField(max_length=255, blank=True, null=True)
     status_validate_error = CharField(max_length=255, blank=True, null=True)
     status_thumbnail_error = CharField(max_length=255, blank=True, null=True)
     status_create_cluster_error = CharField(max_length=255, blank=True,
@@ -147,9 +144,9 @@ class Layer(Model):
     thumb_large_key = CharField(max_length=255, blank=True, default='',
                                 help_text='S3 key for large thumbnail')
 
-    def has_copied_images(self):
+    def has_copy_images(self):
         for image in self.layer_images.all():
-            if image.has_copied_image():
+            if image.is_copy_image():
                 return True
         return False
 
@@ -192,8 +189,6 @@ class Layer(Model):
             'transparency': self.transparency,
 
             'status_created': self.status_created is not None,
-            'status_upload_start': self.status_upload_start is not None,
-            'status_upload_end': self.status_upload_end is not None,
             'status_validate_start': self.status_validate_start is not None,
             'status_validate_end': self.status_validate_end is not None,
             'status_thumbnail_start': self.status_thumbnail_start is not None,
@@ -210,7 +205,6 @@ class Layer(Model):
             'status_completed': self.status_completed is not None,
             'status_heartbeat': self.status_completed is not None,
 
-            'status_upload_error': self.status_upload_error,
             'status_validate_error': self.status_validate_error,
             'status_thumbnail_error': self.status_thumbnail_error,
             'status_create_cluster_error': self.status_create_cluster_error,
@@ -249,10 +243,6 @@ class Layer(Model):
         """
         Resets fields to prepare for a retry.
         """
-        if self.has_copied_images():
-            self.status_upload_start = None
-            self.status_upload_end = None
-
         self.status_validate_start = None
         self.status_validate_end = None
         self.status_thumbnail_start = None
@@ -267,7 +257,6 @@ class Layer(Model):
         self.status_completed = None
         self.status_heartbeat = None
 
-        self.status_upload_error = None
         self.status_validate_error = None
         self.status_thumbnail_error = None
         self.status_create_cluster_error = None
@@ -318,10 +307,7 @@ class Layer(Model):
 
     def update_status_start(self, status):
         value = datetime.now()
-        if status == enums.STATUS_UPLOAD:
-            self.status_upload_start = (value if self.status_upload_start
-                                        is None else self.status_upload_start)
-        elif status == enums.STATUS_VALIDATE:
+        if status == enums.STATUS_VALIDATE:
             self.status_validate_start = (value if self.status_validate_start
                                           is None else
                                           self.status_validate_start)
@@ -342,10 +328,7 @@ class Layer(Model):
 
     def update_status_end(self, status, error_message=None):
         value = datetime.now()
-        if status == enums.STATUS_UPLOAD:
-            self.status_upload_end = value
-            self.status_upload_error = error_message
-        elif status == enums.STATUS_VALIDATE:
+        if status == enums.STATUS_VALIDATE:
             self.status_validate_end = value
             self.status_validate_error = error_message
         elif status == enums.STATUS_THUMBNAIL:
@@ -379,6 +362,10 @@ class Layer(Model):
                 raise StatusMismatchError(
                     'Cannot set errors on completed layer.')
             self.status_failed = value
+
+    def mark_failed(self):
+        value = datetime.now()
+        self.status_failed = value
 
     def __unicode__(self):
         return '{0} -> {1}'.format(self.user.username, self.name)
@@ -449,14 +436,15 @@ class LayerImage(Model):
     )
 
     status_created = DateTimeField(auto_now_add=True)
-    status_upload_start = DateTimeField(null=True, blank=True)
-    status_upload_end = DateTimeField(null=True, blank=True)
+    status_transfer_start = DateTimeField(null=True, blank=True)
+    status_transfer_end = DateTimeField(null=True, blank=True)
     status_validate_start = DateTimeField(null=True, blank=True)
     status_validate_end = DateTimeField(null=True, blank=True)
     status_thumbnail_start = DateTimeField(null=True, blank=True)
     status_thumbnail_end = DateTimeField(null=True, blank=True)
 
     status_upload_error = CharField(max_length=255, blank=True, null=True)
+    status_transfer_error = CharField(max_length=255, blank=True, null=True)
     status_validate_error = CharField(max_length=255, blank=True, null=True)
     status_thumbnail_error = CharField(max_length=255, blank=True, null=True)
 
@@ -464,18 +452,15 @@ class LayerImage(Model):
         """
         Resets fields to prepare for a retry.
         """
-        # If there was an error in the copy stage, then we want to
-        # retry it.
-        if self.status_upload_error:
-            self.status_upload_start = None
-            self.status_upload_end = None
-
+        self.status_transfer_start = None
+        self.status_transfer_end = None
         self.status_validate_start = None
         self.status_validate_end = None
         self.status_thumbnail_start = None
         self.status_thumbnail_end = None
 
         self.status_upload_error = None
+        self.status_transfer_error = None
         self.status_validate_error = None
         self.status_thumbnail_error = None
 
@@ -484,7 +469,7 @@ class LayerImage(Model):
     def has_been_validated(self):
         return self.status_validate_end is not None
 
-    def has_copied_image(self):
+    def is_copy_image(self):
         return self.source_s3_bucket_key is not None
 
     def get_s3_key(self):
@@ -510,13 +495,14 @@ class LayerImage(Model):
             'bucket_name': self.bucket_name,
             'source_s3_bucket_key': self.source_s3_bucket_key,
             'status_created': self.status_created is not None,
-            'status_upload_start': self.status_upload_start is not None,
-            'status_upload_end': self.status_upload_end is not None,
+            'status_transfer_start': self.status_transfer_start is not None,
+            'status_transfer_end': self.status_transfer_end is not None,
             'status_validate_start': self.status_validate_start is not None,
             'status_validate_end': self.status_validate_end is not None,
             'status_thumbnail_start': self.status_thumbnail_start is not None,
             'status_thumbnail_end': self.status_thumbnail_end is not None,
             'status_upload_error': self.status_upload_error,
+            'status_transfer_error': self.status_transfer_error,
             'status_validate_error': self.status_validate_error,
             'status_thumbnail_error': self.status_thumbnail_error,
             'source_s3_bucket_key': self.source_s3_bucket_key
@@ -524,9 +510,10 @@ class LayerImage(Model):
 
     def update_status_start(self, status):
         value = datetime.now()
-        if status == enums.STATUS_UPLOAD:
-            self.status_upload_start = (value if self.status_upload_start
-                                        is None else self.status_upload_start)
+        if status == enums.STATUS_TRANSFER:
+            self.status_transfer_start = (value if self.status_transfer_start
+                                          is None else
+                                          self.status_transfer_start)
         elif status == enums.STATUS_VALIDATE:
             self.status_validate_start = (value if self.status_validate_start
                                           is None else
@@ -538,9 +525,9 @@ class LayerImage(Model):
 
     def update_status_end(self, status, error_message=None):
         value = datetime.now()
-        if status == enums.STATUS_UPLOAD:
-            self.status_upload_end = value
-            self.status_upload_error = error_message
+        if status == enums.STATUS_TRANSFER:
+            self.status_transfer_end = value
+            self.status_transfer_error = error_message
         elif status == enums.STATUS_VALIDATE:
             self.status_validate_end = value
             self.status_validate_error = error_message

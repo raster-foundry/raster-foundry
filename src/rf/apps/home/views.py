@@ -103,7 +103,7 @@ def _retry_layer(layer):
     layer.reset()
 
     for image in layer.layer_images.all():
-        if image.has_copied_image():
+        if image.is_copy_image():
             job_type = JOB_COPY_IMAGE
             data = {'image_id': image.id}
             sqs_manager.add_message(job_type, data)
@@ -177,12 +177,13 @@ def _save_layer(request, layer, username=None):
     ])
 
     # Create jobs to copy images into S3 bucket
-    if layer.has_copied_images():
+    if layer.has_copy_images():
         sqs_manager = SQSManager()
         for image in LayerImage.objects.filter(layer=layer):
-            job_type = JOB_COPY_IMAGE
-            data = {'image_id': image.id}
-            sqs_manager.add_message(job_type, data)
+            if image.is_copy_image():
+                job_type = JOB_COPY_IMAGE
+                data = {'image_id': image.id}
+                sqs_manager.add_message(job_type, data)
 
     return layer.to_json()
 
