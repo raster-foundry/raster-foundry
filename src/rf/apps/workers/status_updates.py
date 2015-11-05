@@ -11,34 +11,6 @@ ERROR_MESSAGE_LAYER_IMAGE_INVALID = 'Cannot process invalid images.'
 ERROR_MESSAGE_LAYER_IMAGE_TRANSFER = 'Processing aborted. Missing images.'
 
 
-def mark_image_uploaded(s3_uuid):
-    try:
-        image = LayerImage.objects.get(s3_uuid=s3_uuid)
-    except LayerImage.DoesNotExist:
-        return False
-
-    image.update_status_start(enums.STATUS_UPLOAD)
-    image.update_status_end(enums.STATUS_UPLOAD)
-    image.save()
-
-    # It is okay to repeat this. It will not overwrite existing timestamps.
-    if not mark_layer_status_start(image.layer_id, enums.STATUS_UPLOAD):
-        return False
-
-    layer_images = LayerImage.objects.filter(layer_id=image.layer_id)
-    uploaded_layer_images = LayerImage.objects.filter(
-        layer_id=image.layer_id,
-        status_upload_end__isnull=False,
-        status_upload_error__isnull=True)
-
-    # If all images are uploaded, then mark layer upload as complete.
-    if len(layer_images) == len(uploaded_layer_images) and \
-            len(layer_images) > 0:
-        return mark_layer_status_end(image.layer_id, enums.STATUS_UPLOAD)
-
-    return True
-
-
 def mark_layer_thumbnailed(layer_id):
     """
     If thumbnails are generated for the layer and associated
@@ -138,9 +110,22 @@ def mark_image_transfer_start(s3_uuid):
     except LayerImage.DoesNotExist:
         return False
 
-    image.update_status_start(enums.STATUS_UPLOAD)
+    image.update_status_start(enums.STATUS_TRANSFER)
     image.save()
-    return mark_layer_status_start(image.layer_id, enums.STATUS_UPLOAD)
+    return True
+
+
+def mark_image_transfer_end(s3_uuid):
+    try:
+        image = LayerImage.objects.get(s3_uuid=s3_uuid)
+    except LayerImage.DoesNotExist:
+        return False
+
+    image.update_status_start(enums.STATUS_TRANSFER)
+    image.update_status_end(enums.STATUS_TRANSFER)
+    image.save()
+
+    return True
 
 
 def mark_image_transfer_failure(s3_uuid, error_message):
@@ -149,11 +134,16 @@ def mark_image_transfer_failure(s3_uuid, error_message):
     except LayerImage.DoesNotExist:
         return False
 
-    image.update_status_end(enums.STATUS_UPLOAD, error_message)
+    try:
+        layer = Layer.objects.get(id=image.layer.id)
+    except Layer.DoesNotExist:
+        return False
+
+    image.update_status_end(enums.STATUS_TRANSFER, error_message)
     image.save()
-    return mark_layer_status_end(image.layer_id,
-                                 enums.STATUS_UPLOAD,
-                                 ERROR_MESSAGE_LAYER_IMAGE_TRANSFER)
+    layer.mark_failed()
+    layer.save()
+    return True
 
 
 def get_layer_id_from_uuid(s3_uuid):
