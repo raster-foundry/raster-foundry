@@ -15,7 +15,7 @@ function S3UploadException(message, mimeType, fileName) {
     };
 }
 
-var uploadFiles = function(fileDescriptions) {
+var uploadFiles = function(layer, fileDescriptions) {
     var evap = new Evaporate({
         signerUrl: settings.get('signerUrl'),
         aws_key: settings.get('awsKey'),
@@ -29,14 +29,17 @@ var uploadFiles = function(fileDescriptions) {
         invalidMimes = _.without(_.map(files, invalidTypes), null);
 
     if (invalidMimes.length > 0) {
-        throw new S3UploadException('Invalid file type.',
+        var invalidMimeError = 'Invalid file type.';
+        layer.setUploadError(invalidMimeError);
+        throw new S3UploadException(invalidMimeError,
             invalidMimes[0].mimeType, invalidMimes[0].fileName);
     }
 
+    layer.startUploading();
     _.each(fileDescriptions, function(fileDescription) {
         var userId = settings.getUser().get('id'),
             fileName = userId + '-' +
-                fileDescription.uuid + '.' + fileDescription.extension,
+                       fileDescription.uuid + '.' + fileDescription.extension,
             headers = {};
 
         if (aws_token) {
@@ -51,10 +54,14 @@ var uploadFiles = function(fileDescriptions) {
             xAmzHeadersAtUpload: headers,
             xAmzHeadersAtComplete: headers,
             complete: function() {
+                layer.incrementUploadsDone();
                 console.log('File upload complete');
             },
             progress: function(progress) {
                 console.log('PROGRESS: ' + progress);
+            },
+            error: function(error) {
+                layer.setUploadError(error);
             }
         });
     });

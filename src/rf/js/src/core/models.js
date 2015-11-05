@@ -23,8 +23,6 @@ var TabModel = Backbone.Model.extend({
 var Layer = Backbone.Model.extend({
     defaultStatuses: {
         status_created: false,
-        status_upload_start: false,
-        status_upload_end: false,
         status_validate_start: false,
         status_validate_end: false,
         status_thumbnail_start: false,
@@ -37,7 +35,6 @@ var Layer = Backbone.Model.extend({
         status_mosaic_end: false,
         status_failed: false,
         status_completed: false,
-        status_upload_error : null,
         status_validate_error: null,
         status_thumbnail_error: null,
         status_create_cluster_error: null,
@@ -61,12 +58,75 @@ var Layer = Backbone.Model.extend({
             thumb_small: '',
             thumb_large: '',
             active_image: false,
-            url: null
+            url: null,
+            // These fields are only on the client-side model.
+            client_status_upload_start: false,
+            client_status_upload_end: false,
+            client_status_upload_error: null
         }, this.defaultStatuses);
     },
 
     initialize: function() {
         this.getLeafletLayer = _.memoize(this.getLeafletLayer);
+        this.numUploadsDone = 0;
+    },
+
+    startUploading: function() {
+        this.set('client_status_upload_start', true);
+    },
+
+    getUploadImages: function() {
+        return _.filter(this.get('images'), function(image) {
+            return !image.source_s3_bucket_key;
+        });
+    },
+
+    hasUploadImages: function() {
+        return this.getUploadImages().length > 0;
+    },
+
+    incrementUploadsDone: function() {
+        this.numUploadsDone++;
+        if (this.numUploadsDone === this.getUploadImages().length) {
+            this.set('client_status_upload_end', true);
+        }
+    },
+
+    setUploadError: function(error) {
+        this.set({
+            client_status_upload_end: true,
+            client_status_upload_error: error
+        });
+    },
+
+    isUploading: function() {
+        // Use client status so that this works correctly after
+        // hitting refresh after an upload fails (or mid-upload).
+        return this.get('client_status_upload_start') &&
+               !this.get('client_status_upload_end');
+    },
+
+    isUploaded: function() {
+        var uploadImages = this.getUploadImages(),
+            allBackendUploaded = _.every(uploadImages, function(image) {
+                return image.status_transfer_end &&
+                       !image.status_transfer_error;
+            });
+
+        return this.get('client_status_upload_end') || allBackendUploaded;
+    },
+
+    getUploadError: function() {
+        // Indirectly infer if there was error so this works correctly
+        // when hitting refresh after an upload fails (or mid-upload).
+        var isError = !this.isUploading() && !this.isUploaded(),
+            defaultError = 'Upload failed.',
+            clientUploadError = this.get('client_status_upload_error');
+
+        if (isError) {
+            return clientUploadError ? clientUploadError : defaultError;
+        }
+        return null;
     },
 
     resetStatuses: function() {
@@ -74,7 +134,7 @@ var Layer = Backbone.Model.extend({
         this.set(this.defaultStatuses);
         _.each(images, function(image) {
             image.status_thumbnail_error = null;
-            image.status_upload_error = null;
+            image.status_transfer_error = null;
             image.status_validate_error = null;
         });
         this.set('images', images);
@@ -93,12 +153,37 @@ var Layer = Backbone.Model.extend({
         return _.findWhere(this.get('images'), {id: id});
     },
 
-    isUploading: function() {
-        return !this.get('status_upload_end');
+    getCopyImages: function() {
+        return _.filter(this.get('images'), function(image) {
+            return !!image.source_s3_bucket_key;
+        });
     },
 
-    isUploaded: function() {
-        return this.get('status_upload_end') && this.get('status_upload_error') === null;
+    hasCopyImages: function() {
+        return this.getCopyImages().length > 0;
+    },
+
+    isCopyErrors: function() {
+        var copyImages = this.getCopyImages();
+        return _.some(copyImages, function(image) {
+            return image.status_transfer_error;
+        });
+    },
+
+    isCopying: function() {
+        var copyImages = this.getCopyImages(),
+            someStarted = _.some(copyImages, function(image) {
+                return image.status_transfer_start;
+            });
+        return !this.isCopyErrors() && someStarted;
+    },
+
+    isCopied: function() {
+        var copyImages = this.getCopyImages();
+        return _.every(copyImages, function(image) {
+            return image.status_transfer_end &&
+                   !image.status_transfer_error;
+        });
     },
 
     isCompleted: function() {
@@ -111,12 +196,6 @@ var Layer = Backbone.Model.extend({
 
     isProcessing: function() {
         return !(this.isCompleted() || this.isFailed());
-    },
-
-    hasCopiedImages: function() {
-        return _.some(this.get('images'), function(image) {
-            return image.source_s3_bucket_key;
-        });
     },
 
     isDoneWorking: function() {
@@ -161,7 +240,7 @@ var Layer = Backbone.Model.extend({
             'failed',
             'mosaic',
             'thumbnail',
-            'upload',
+            'transfer',
             'validate'
         ];
         if (!_.contains(allowedStatuses, status)) {
@@ -196,11 +275,9 @@ var Layer = Backbone.Model.extend({
             // polling step by making the status non-failed.
             this.resetStatuses();
             this.set('status_created', true);
-            // If files were uploaded, then keep that status intact.
-            if (!this.hasCopiedImages()) {
+            if (this.hasCopyImages()) {
                 this.set({
-                    status_upload_start: true,
-                    status_upload_end: true
+                    status_transfer_start: true
                 });
             }
         }
@@ -291,23 +368,23 @@ var PendingLayers = BaseLayers.extend({
 
     existsUploading: function() {
         var uploading = this.find(function(layer) {
-            return layer.isUploading() && !layer.hasCopiedImages();
+            return layer.isUploading();
         });
-        return uploading ? true : false;
+        return !!uploading;
     },
 
-    existsTransferring: function() {
-        var transferring = this.find(function(layer) {
-            return layer.isUploading() && layer.hasCopiedImages();
+    existsCopying: function() {
+        var copying = this.find(function(layer) {
+            return layer.isCopying();
         });
-        return transferring ? true : false;
+        return !!copying;
     },
 
     existsProcessing: function() {
         var processing = this.find(function(layer) {
             return layer.isProcessing();
         });
-        return processing ? true : false;
+        return !!processing;
     }
 });
 

@@ -459,9 +459,9 @@ var UploadModal = React.createBackboneClass({
         }
     },
 
-    uploadFiles: function(fileDescriptions) {
+    uploadFiles: function(layer, fileDescriptions) {
         try {
-            uploads.uploadFiles(fileDescriptions);
+            uploads.uploadFiles(layer, fileDescriptions);
         } catch (excp) {
             if (excp instanceof uploads.S3UploadException) {
                 // TODO Show something useful to the user here.
@@ -479,14 +479,14 @@ var UploadModal = React.createBackboneClass({
 
         this.setState({postInProgress: true});
         self.postLayer(fileDescriptions)
-            .done(function(e) {
+            .done(function(response) {
                 self.setState({postInProgress: false});
 
                 // Manually add the new layer to the front of
                 // pendingLayers (to maintain sorting), so the user
                 // can get immediate feedback that the
                 // layer is being processed.
-                var newLayer = new coreModels.Layer(e.responseJSON);
+                var newLayer = new coreModels.Layer(response);
                 self.props.pendingLayers.push(newLayer, {at: 0});
 
                 // If the polling function is currently not fetching
@@ -494,7 +494,7 @@ var UploadModal = React.createBackboneClass({
                 // processing, we need to force a fetch so that the submitted
                 // layer will be added to pendingLayers.
                 self.props.pendingLayers.fetch();
-                self.uploadFiles(_.filter(fileDescriptions,
+                self.uploadFiles(newLayer, _.filter(fileDescriptions,
                     function(fileDescription) {
                         return fileDescription.file;
                     }));
