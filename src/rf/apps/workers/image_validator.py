@@ -41,3 +41,15 @@ class ImageValidator(object):
     def image_format_is_supported(self):
         data = self.open_image()
         return data.GetDriver().GetDescription().upper() == 'GTIFF'
+
+    def get_image_bounds(self):
+        data = self.open_image()
+        w = data.RasterXSize
+        h = data.RasterYSize
+
+        bound_info = data.GetGeoTransform()
+        min_x = bound_info[0]
+        min_y = bound_info[3] + (w * bound_info[4]) + (h * bound_info[5])
+        max_x = bound_info[0] + (w * bound_info[1]) + (h * bound_info[2])
+        max_y = bound_info[3]
+        return [min_x, max_x, min_y, max_y]

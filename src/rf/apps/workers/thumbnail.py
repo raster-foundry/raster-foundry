@@ -3,15 +3,17 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
 
+import json
+import logging
 import os
 import uuid
 import warnings
-import logging
 
 import boto3
 from PIL import Image
 from django.conf import settings
 
+from apps.workers.image_metadata import get_image_exif_data
 from apps.core.models import LayerImage, Layer
 
 
@@ -72,13 +74,14 @@ def make_thumb(image, thumb_width, thumb_height):
     return thumb
 
 
-def s3_make_thumbs(image_key, user_id, thumb_dims, thumb_ext):
+def s3_make_thumbs(image, user_id, thumb_dims, thumb_ext):
     """
     Creates thumbnails based on image_key and thumb_dims, and
     stores them on S3.
     thumb_dims -- a list containing (thumb_width, thumb_height) tuples
     Returns list of thumb keys of the form <user_id>-<uuid>.<thumb_ext>
     """
+    image_key = image.get_s3_key()
     image_filepath = os.path.join(settings.TEMP_DIR, str(uuid.uuid4()))
     s3_client = boto3.client('s3')
     log.debug('Downloading %s to %s', image_key, image_filepath)
@@ -87,7 +90,19 @@ def s3_make_thumbs(image_key, user_id, thumb_dims, thumb_ext):
                             image_filepath)
 
     try:
+        image_file = open(image_filepath)
+        exif = get_image_exif_data(image_file)
+    except IOError:
+        log.exception('Could not open image to get metadata.')
+
+    log.info('Getting metadata as JSON.')
+    image.meta_json = json.dumps(exif)
+    image.save()
+    image_file.close()
+
+    try:
         image = Image.open(image_filepath)
+
     except IOError:
         log.exception('Unable to open image')
         raise ImageCouldNotOpenError()
@@ -126,8 +141,7 @@ def make_thumbs_for_layer(layer_id):
     thumb_dims = [LAYER_THUMB_SMALL_DIMS, LAYER_THUMB_LARGE_DIMS]
     try:
         layer.thumb_small_key, layer.thumb_large_key = \
-            s3_make_thumbs(image.get_s3_key(), user_id,
-                           thumb_dims, THUMB_EXT)
+            s3_make_thumbs(image, user_id, thumb_dims, THUMB_EXT)
         layer.save()
     except ImageCouldNotOpenError:
         return False
@@ -145,8 +159,7 @@ def make_thumbs_for_layer_image(image_id):
     thumb_dims = [IMAGE_THUMB_SMALL_DIMS, IMAGE_THUMB_LARGE_DIMS]
     try:
         image.thumb_small_key, image.thumb_large_key = \
-            s3_make_thumbs(image.get_s3_key(), user_id,
-                           thumb_dims, THUMB_EXT)
+            s3_make_thumbs(image, user_id, thumb_dims, THUMB_EXT)
         image.save()
     except ImageCouldNotOpenError:
         return False

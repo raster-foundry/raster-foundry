@@ -12,6 +12,7 @@ from django.conf import settings
 
 from apps.core.models import LayerImage, Layer
 from apps.workers.image_validator import ImageValidator
+from apps.workers.image_metadata import calculate_and_save_layer_boundingbox
 from apps.workers.sqs_manager import SQSManager
 from apps.workers.emr import create_cluster, cluster_is_alive
 from apps.workers.thumbnail import (make_thumbs_for_layer,
@@ -211,6 +212,11 @@ class QueueProcessor(object):
         updated = status_updates.mark_image_valid(s3_uuid)
         if updated:
             log.info('Image validated %s', key)
+
+            log.info('Getting metadata from image %s', key)
+            bounds = validator.get_image_bounds()
+            image.set_bounds(bounds)
+
             layer_id = status_updates.get_layer_id_from_uuid(s3_uuid)
             layer_images = LayerImage.objects.filter(layer_id=layer_id)
             # TODO: Filter `layer_images` instead of extra query.
@@ -304,6 +310,9 @@ class QueueProcessor(object):
             layer_id = int(layer_id)
         except ValueError:
             return False
+
+        log.info('Processing bounds for layer %d...', layer_id)
+        calculate_and_save_layer_boundingbox(layer_id)
 
         log.info('Generating thumbnails for layer %d...', layer_id)
         status_updates.mark_layer_status_start(layer_id,
