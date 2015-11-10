@@ -25,5 +25,5 @@ def get_image_exif_data(file_descriptor):
     tags = exifread.process_file(file_descriptor, details=False)
     data = []
     for tag in tags.keys():
-        data.append({'key': tag, 'value': str(tags[tag])})
+        data.append({'label': tag, 'value': str(tags[tag])})
     return data
