@@ -94,6 +94,7 @@ def s3_make_thumbs(image, user_id, thumb_dims, thumb_ext):
         exif = get_image_exif_data(image_file)
     except IOError:
         log.exception('Could not open image to get metadata.')
+        exif = None
 
     log.info('Getting metadata as JSON.')
     image.meta_json = json.dumps(exif)
