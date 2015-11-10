@@ -1,6 +1,7 @@
 'use strict';
 
 var L = require('leaflet'),
+    $ = require('jquery'),
     _ = require('underscore'),
     Marionette = require('../../shim/backbone.marionette');
 
@@ -80,12 +81,53 @@ var MapView = Marionette.ItemView.extend({
         }, { silent: true });
     },
 
-    addLayer: function(layer) {
+    addLayer: function(layer, bounds) {
         this._tilesLayerGroup.addLayer(layer);
+        if (bounds) {
+            this._zoomToExtentControl = new ZoomToExtentControl({
+                bounds: bounds
+            });
+            this._leafletMap.addControl(this._zoomToExtentControl);
+        }
     },
 
     clearLayers: function() {
         this._tilesLayerGroup.clearLayers();
+        if (this._zoomToExtentControl) {
+            this._leafletMap.removeControl(this._zoomToExtentControl);
+            this._zoomToExtentControl = null;
+        }
+    },
+
+    fitBounds: function(bounds) {
+        if (bounds) {
+            this._leafletMap.fitBounds(bounds);
+        }
+    }
+});
+
+var ZoomToExtentControl = L.Control.extend({
+    options: {
+        position: 'bottomright'
+    },
+
+    onAdd: function(map) {
+        var self = this,
+            $el = $('<div class="leaflet-control leaflet-bar"><a href="#" title="Zoom to Extent"><i class="rf-icon-zoom-in"></i></a></div>'),
+            el = $el.get(0);
+
+        this.$el = $el;
+        L.DomEvent.disableClickPropagation(el);
+
+        $el.on('click', 'a', function() {
+            map.fitBounds(self.options.bounds);
+        });
+
+        return el;
+    },
+
+    onRemove: function() {
+        this.$el.remove();
     }
 });
 

@@ -148,6 +148,10 @@ var Layer = Backbone.Model.extend({
         return new L.TileLayer(this.get('tile_url'));
     },
 
+    getBounds: function() {
+        return this.get('bounds');
+    },
+
     getActiveImage: function() {
         var id = this.get('active_image');
         return _.findWhere(this.get('images'), {id: id});
