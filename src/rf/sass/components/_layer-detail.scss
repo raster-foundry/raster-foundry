@@ -18,7 +18,7 @@
 		border-bottom-color: $white;
 
 		&:hover {
-			background-color: $white; 
+			background-color: $white;
 		}
 	}
 
@@ -29,6 +29,7 @@
 }
 
 .layer-detail-content {
+    max-height: 720px;
 	padding: 20px 25px;
 	overflow: auto;
 

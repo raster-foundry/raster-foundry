@@ -381,7 +381,7 @@ var ImageMetadataLink = React.createBackboneClass({
                 </div>
                 <div className="list-group-content">
                     <h5>{image.file_name}</h5>
-                    <a href="#" className="view-metadata hidden" data-id={image.id}
+                    <a href="#" className="view-metadata" data-id={image.id}
                         onClick={this.props.onClick}>View Metadata</a>
                 </div>
             </div>
@@ -493,11 +493,15 @@ var ImageMetadata = React.createBackboneClass({
 
     render: function() {
         var layer = this.getActiveLayer(),
-            image = layer && layer.getActiveImage();
+            image = layer && layer.getActiveImage(),
+            metadata = null;
 
         if (!image) {
             return null;
         }
+
+        metadata = JSON.parse(image.meta_json);
+        metadata = _.sortBy(metadata, 'label');
 
         return (
             <div className={'image-metadata animated active ' + this.state.slide}>
@@ -513,44 +517,16 @@ var ImageMetadata = React.createBackboneClass({
                 <div className="layer-detail-content">
                     <img className="img-preview" src={image.thumb_large || 'https://placehold.it/300x300'} />
                     <hr />
-                    <dl>
-                        <dt>Acquistion: </dt>
-                        <dd>11-12-2015</dd>
-                        <dt>Local Time of Day: </dt>
-                        <dd>15:42</dd>
-                        <dt>Latitude: </dt>
-                        <dd>39.226º</dd>
-                        <dt>Longitude: </dt>
-                        <dd>-74.892º</dd>
-                        <dt>Image Quality: </dt>
-                        <dd>Standard</dd>
-                        <dt>SNR: </dt>
-                        <dd>75.30</dd>
-                        <dt>Sun Alittude: </dt>
-                        <dd>N/A</dd>
-                        <dt>Sun Longitude: </dt>
-                        <dd>N/A</dd>
-                        <dt>Satellite ID: </dt>
-                        <dd>N/A</dd>
-                    </dl>
-                    <dl>
-                        <dt>Camera Bit Depth: </dt>
-                        <dd>10</dd>
-                        <dt>Camera Color Mode:</dt>
-                        <dd>RGB</dd>
-                        <dt>Camera Exposure Time: </dt>
-                        <dd>1170μs</dd>
-                        <dt>Camera Gain: </dt>
-                        <dd>350</dd>
-                        <dt>Camera TDI Pulses: </dt>
-                        <dd>15</dd>
-                        <dt>Cloud Cover: </dt>
-                        <dd>0.26%</dd>
-                        <dt>File Size: </dt>
-                        <dd>58MB</dd>
-                        <dt>GSD: </dt>
-                        <dd>4.25 m</dd>
-                    </dl>
+                    <div className="scrollable">
+                        {_.map(metadata, function(data, i) {
+                            return (
+                                <dl key={i}>
+                                    <dt>{data.label}: </dt>
+                                    <dd>{data.value}</dd>
+                                </dl>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
         );
