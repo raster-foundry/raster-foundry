@@ -185,10 +185,7 @@ class Layer(Model):
             'capture_end': capture_end,
             'area': self.area,
             'area_unit': self.area_unit,
-            'min_x': self.min_x,
-            'max_x': self.max_x,
-            'min_y': self.min_y,
-            'max_y': self.max_y,
+            'bounds': self.get_bounds(),
             'projection': self.projection,
             'srid': self.srid,
             'tile_srid': self.tile_srid,
@@ -241,6 +238,14 @@ class Layer(Model):
             'retry_url': self.get_retry_url(),
             'tile_url': self.get_tile_url(),
         }
+
+    def get_bounds(self):
+        if all([self.min_x, self.min_y, self.max_x, self.max_y]):
+            return [
+                [self.min_y, self.min_x],
+                [self.max_y, self.max_x],
+            ]
+        return None
 
     def retry_possible(self):
         """
