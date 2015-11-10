@@ -1,12 +1,12 @@
 swagger: '2.0'
 info:
   title: Raster Foundry API
-  version: "0.1.0"
-host: localhost:8000
+  version: '0.2.0'
+host: rf.azavea.com
 schemes:
   - http
 consumes:
-  - application/x-www-form-urlencoded
+  - application/json
 produces:
   - application/json
 paths:
@@ -106,7 +106,7 @@ paths:
         in: path
         type: string
         required: true
-  /user/{username}/layers.json:
+  /user/{username}/imports.json:
     get:
       description: Return all layers for the specified user.
       responses:
@@ -169,35 +169,6 @@ paths:
       responses:
         200:
           description: Layer deleted
-        401:
-          description: Not authorized
-        403:
-          description: Validation error
-        404:
-          description: Not found
-        default:
-          description: Unexpected error
-    parameters:
-      - name: api_key
-        in: query
-        type: string
-      - name: username
-        in: path
-        type: string
-        required: true
-      - name: layer_id
-        in: path
-        type: integer
-        required: true
-  /user/{username}/layer/meta/{layer_id}.json:
-    get:
-      description: |
-          Return layer meta info.
-      responses:
-        200:
-          description: Layer meta object
-          schema:
-            $ref: '#/definitions/LayerMeta'
         401:
           description: Not authorized
         403:
@@ -314,25 +285,3 @@ definitions:
             type: string
           favorite_url:
             type: string
-  LayerMeta:
-    properties:
-      id:
-        type: string
-      state:
-        type: string
-      error:
-        type: string
-      thumb_small:
-        type: string
-      thumb_large:
-        type: string
-      created_at:
-        type: string
-      min_zoom:
-        type: string
-      max_zoom:
-        type: string
-      bounds:
-        type: string
-      center:
-        type: string

@@ -142,12 +142,13 @@ def handle_api_authentication(request):
     if request.user.is_authenticated():
         return
 
-    if 'api_key' not in request.REQUEST:
+    api_key = request.REQUEST.get('api_key')
+    if not api_key:
         return
 
     try:
-        api_key = int(request.REQUEST.get('api_key'))
-    except:
+        api_key = int(api_key)
+    except ValueError:
         raise Forbidden(errors={
             'api_key': ['Invalid API key format']
         })
