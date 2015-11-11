@@ -546,6 +546,6 @@ def extract_uuid_from_aws_key(key):
     AWS keys are a user id appended to a uuid with a file extension.
     EX: 10-1aa064aa-1086-4ff1-a90b-09d3420e0343.tif
     """
-    dot = key.find('.') if key.find('.') >= 0 else len(key)
+    dot = key.rfind('.') if key.rfind('.') >= 0 else len(key)
     first_dash = key.find('-')
-    return key[first_dash:dot]
+    return key[first_dash + 1:dot]
