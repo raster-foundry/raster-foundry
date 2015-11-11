@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from __future__ import division
 
 import boto3
-from osgeo import gdal
+from osgeo import gdal, osr
 
 
 MINIMUM_BAND_COUNT = 3
@@ -52,4 +52,24 @@ class ImageValidator(object):
         min_y = bound_info[3] + (w * bound_info[4]) + (h * bound_info[5])
         max_x = bound_info[0] + (w * bound_info[1]) + (h * bound_info[2])
         max_y = bound_info[3]
-        return [min_x, max_x, min_y, max_y]
+
+        # Convert coords to WGS84
+        old_cs = osr.SpatialReference()
+        old_cs.ImportFromWkt(data.GetProjectionRef())
+        wgs84_wkt = """
+        GEOGCS["WGS 84",
+            DATUM["WGS_1984",
+                SPHEROID["WGS 84",6378137,298.257223563,
+                    AUTHORITY["EPSG","7030"]],
+                AUTHORITY["EPSG","6326"]],
+            PRIMEM["Greenwich",0,
+                AUTHORITY["EPSG","8901"]],
+            UNIT["degree",0.01745329251994328,
+                AUTHORITY["EPSG","9122"]],
+            AUTHORITY["EPSG","4326"]]"""
+        new_cs = osr.SpatialReference()
+        new_cs.ImportFromWkt(wgs84_wkt)
+        transform = osr.CoordinateTransformation(old_cs, new_cs)
+        mins = transform.TransformPoint(min_x, min_y)
+        maxes = transform.TransformPoint(max_x, max_y)
+        return [mins[0], maxes[0], mins[1], maxes[1]]
