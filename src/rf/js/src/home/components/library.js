@@ -494,7 +494,8 @@ var ImageMetadata = React.createBackboneClass({
     render: function() {
         var layer = this.getActiveLayer(),
             image = layer && layer.getActiveImage(),
-            metadata = null;
+            metadata = null,
+            noMetadataMessage = null;
 
         if (!image) {
             return null;
@@ -502,6 +503,9 @@ var ImageMetadata = React.createBackboneClass({
 
         metadata = JSON.parse(image.meta_json);
         metadata = _.sortBy(metadata, 'label');
+        if (_.isEmpty(metadata)) {
+            noMetadataMessage = (<p>No image metadata found.</p>);
+        }
 
         return (
             <div className={'image-metadata animated active ' + this.state.slide}>
@@ -518,6 +522,7 @@ var ImageMetadata = React.createBackboneClass({
                     <img className="img-preview" src={image.thumb_large || 'https://placehold.it/300x300'} />
                     <hr />
                     <div className="scrollable">
+                        {noMetadataMessage}
                         {_.map(metadata, function(data, i) {
                             return (
                                 <dl key={i}>
