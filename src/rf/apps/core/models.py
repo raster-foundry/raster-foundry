@@ -78,6 +78,11 @@ class Layer(Model):
     capture_start = DateField(blank=True, null=True)
     capture_end = DateField(blank=True, null=True)
 
+    min_x = FloatField(default=None, blank=True, null=True)
+    max_x = FloatField(default=None, blank=True, null=True)
+    min_y = FloatField(default=None, blank=True, null=True)
+    max_y = FloatField(default=None, blank=True, null=True)
+
     area = FloatField(default=0, blank=True, null=True)
     area_unit = CharField(
         blank=True,
@@ -180,6 +185,10 @@ class Layer(Model):
             'capture_end': capture_end,
             'area': self.area,
             'area_unit': self.area_unit,
+            'min_x': self.min_x,
+            'max_x': self.max_x,
+            'min_y': self.min_y,
+            'max_y': self.max_y,
             'projection': self.projection,
             'srid': self.srid,
             'tile_srid': self.tile_srid,
@@ -367,6 +376,13 @@ class Layer(Model):
         value = datetime.now()
         self.status_failed = value
 
+    def set_bounds(self, bounds):
+        self.min_x = bounds[0]
+        self.max_x = bounds[1]
+        self.min_y = bounds[2]
+        self.max_y = bounds[3]
+        self.save(update_fields=['min_x', 'max_x', 'min_y', 'max_y'])
+
     def __unicode__(self):
         return '{0} -> {1}'.format(self.user.username, self.name)
 
@@ -406,6 +422,12 @@ class LayerImage(Model):
         blank=True,
         help_text='Serialized JSON of image metadata',
     )
+
+    min_x = FloatField(default=None, blank=True, null=True)
+    max_x = FloatField(default=None, blank=True, null=True)
+    min_y = FloatField(default=None, blank=True, null=True)
+    max_y = FloatField(default=None, blank=True, null=True)
+
     file_name = CharField(
         blank=False,
         default='',
@@ -489,6 +511,10 @@ class LayerImage(Model):
             'thumb_small': generate_thumb_url(self.thumb_small_key),
             'thumb_large': generate_thumb_url(self.thumb_large_key),
             'meta_json': self.meta_json,
+            'min_x': self.min_x,
+            'max_x': self.max_x,
+            'min_y': self.min_y,
+            'max_y': self.max_y,
             'file_name': self.file_name,
             's3_uuid': str(self.s3_uuid),
             'file_extension': self.file_extension,
@@ -534,6 +560,13 @@ class LayerImage(Model):
         elif status == enums.STATUS_THUMBNAIL:
             self.status_thumbnail_end = value
             self.status_thumbnail_error = error_message
+
+    def set_bounds(self, bounds):
+        self.min_x = bounds[0]
+        self.max_x = bounds[1]
+        self.min_y = bounds[2]
+        self.max_y = bounds[3]
+        self.save(update_fields=['min_x', 'max_x', 'min_y', 'max_y'])
 
 
 class LayerMeta(Model):

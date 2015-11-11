@@ -1,44 +1,45 @@
 .layer-detail {
-	display: none;
-	width: 100%;
-	position: absolute;
-	top: 70px;
-	bottom: 0;
-	background: $white;
-	overflow: auto;
-	box-shadow: 0 0 4px rgba(black, .2);
+    display: none;
+    width: 100%;
+    position: absolute;
+    top: 70px;
+    bottom: 0;
+    background: $white;
+    overflow: auto;
+    box-shadow: 0 0 4px rgba(black, .2);
 
-	&.active {
-		display: block;
-	}
+    &.active {
+        display: block;
+    }
 
-	.sidebar-utility-toolbar li a {
-		padding-top: 24px;
-		padding-bottom: 24px;
-		border-bottom-color: $white;
+    .sidebar-utility-toolbar li a {
+        padding-top: 24px;
+        padding-bottom: 24px;
+        border-bottom-color: $white;
 
-		&:hover {
-			background-color: $white; 
-		}
-	}
+        &:hover {
+            background-color: $white;
+        }
+    }
 
-	.close {
-		padding: 20px;
-		outline: none;
-	}
+    .close {
+        padding: 20px;
+        outline: none;
+    }
 }
 
 .layer-detail-content {
-	padding: 20px 25px;
-	overflow: auto;
+    max-height: 720px;
+    padding: 20px 25px;
+    overflow: auto;
 
-	.img-preview {
-		display: block;
-		margin: 25px auto 30px;
-		border-radius: 5px;
-	}
+    .img-preview {
+        display: block;
+        margin: 25px auto 30px;
+        border-radius: 5px;
+    }
 
-	hr {
+    hr {
     margin-left: -25px;
     margin-right: -25px;
   }
