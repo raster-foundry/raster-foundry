@@ -15,8 +15,7 @@ from apps.workers.image_validator import ImageValidator
 from apps.workers.image_metadata import calculate_and_save_layer_boundingbox
 from apps.workers.sqs_manager import SQSManager
 from apps.workers.emr import create_cluster, cluster_is_alive
-from apps.workers.thumbnail import (make_thumbs_for_layer,
-                                    make_thumbs_for_layer_image)
+from apps.workers.thumbnail import thumbnail_layer, thumbnail_image
 import apps.core.enums as enums
 import apps.workers.status_updates as status_updates
 from apps.workers.copy_images import s3_copy
@@ -282,13 +281,14 @@ class QueueProcessor(object):
         status_updates.mark_image_status_start(image.s3_uuid,
                                                enums.STATUS_THUMBNAIL)
 
-        if make_thumbs_for_layer_image(image_id):
+        try:
+            thumbnail_image(image_id)
             status_updates.mark_image_status_end(image.s3_uuid,
                                                  enums.STATUS_THUMBNAIL)
-            log.info('Done generating thumbnails for image %d...', image_id)
+            log.info('Done generating thumbnails for image %d', image_id)
             status_updates.mark_layer_thumbnailed(layer_id)
-        else:
-            log.info('Failed to thumbnail image %d', image_id)
+        except:
+            log.exception('Failed to thumbnail image %d', image_id)
             status_updates.mark_image_status_end(
                 image_id,
                 enums.STATUS_THUMBNAIL,
@@ -318,11 +318,12 @@ class QueueProcessor(object):
         status_updates.mark_layer_status_start(layer_id,
                                                enums.STATUS_THUMBNAIL)
 
-        if make_thumbs_for_layer(layer_id):
+        try:
+            thumbnail_layer(layer_id)
             status_updates.mark_layer_thumbnailed(layer_id)
-            log.info('Done generating thumbnails for layer %d...', layer_id)
-        else:
-            log.info('Failed to thumbnail layer %d', layer_id)
+            log.info('Done generating thumbnails for layer %d', layer_id)
+        except:
+            log.exception('Failed to thumbnail layer %d', layer_id)
             status_updates.mark_layer_status_end(
                 layer_id,
                 enums.STATUS_THUMBNAIL,
