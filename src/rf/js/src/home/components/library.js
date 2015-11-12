@@ -536,6 +536,20 @@ var ImageMetadata = React.createBackboneClass({
 
         metadata = JSON.parse(image.meta_json);
         metadata = _.sortBy(metadata, 'label');
+
+        // Format metadata exif tags for demo.
+        metadata = _.filter(metadata, function(item) {
+            // Remove entries that have scary and confusing values.
+            return item.value.indexOf('Unsigned') === -1;
+        });
+        metadata = _.map(metadata, function(item) {
+            // Remove extra "Image" prefix.
+            item.label = item.label.replace('Image ', '');
+            // Separate camel-case tag names with a space.
+            item.label = item.label.replace(/([A-Z][a-z])/g, ' $1').trim();
+            return item;
+        });
+
         if (_.isEmpty(metadata)) {
             noMetadataMessage = (<p>No image metadata found.</p>);
         }
