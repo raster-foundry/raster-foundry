@@ -5,7 +5,6 @@ from __future__ import division
 
 import math
 import time
-import uuid
 import logging
 
 from django.conf import settings
@@ -140,15 +139,11 @@ class QueueProcessor(object):
             return False
 
         s3_uuid = extract_uuid_from_aws_key(key)
-        try:
-            uuid.UUID(s3_uuid)
-        except ValueError:
-            return False
 
-        # Ignore thumbnails.
         try:
             image = LayerImage.objects.get(s3_uuid=s3_uuid)
-        except LayerImage.DoesNotExist:
+        except:
+            log.info('Ignoring thumbnail %s', s3_uuid)
             return True
 
         log.info('Image %d arrived', image.id)
