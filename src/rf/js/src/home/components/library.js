@@ -543,7 +543,7 @@ var ImageMetadata = React.createBackboneClass({
                 <div className="layer-detail-content">
                     <img className="img-preview" src={image.thumb_large || 'https://placehold.it/300x300'} />
                     <hr />
-                    <div className="scrollable">
+                    <div className="scrollable" style={{overflow: 'hidden'}}>
                         {noMetadataMessage}
                         {_.map(metadata, function(data, i) {
                             return (
