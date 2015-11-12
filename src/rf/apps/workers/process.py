@@ -5,7 +5,6 @@ from __future__ import division
 
 import math
 import time
-import uuid
 import logging
 
 from django.conf import settings
@@ -15,8 +14,7 @@ from apps.workers.image_validator import ImageValidator
 from apps.workers.image_metadata import calculate_and_save_layer_boundingbox
 from apps.workers.sqs_manager import SQSManager
 from apps.workers.emr import create_cluster, cluster_is_alive
-from apps.workers.thumbnail import (make_thumbs_for_layer,
-                                    make_thumbs_for_layer_image)
+from apps.workers.thumbnail import thumbnail_layer, thumbnail_image
 import apps.core.enums as enums
 import apps.workers.status_updates as status_updates
 from apps.workers.copy_images import s3_copy
@@ -141,15 +139,11 @@ class QueueProcessor(object):
             return False
 
         s3_uuid = extract_uuid_from_aws_key(key)
-        try:
-            uuid.UUID(s3_uuid)
-        except ValueError:
-            return False
 
-        # Ignore thumbnails.
         try:
             image = LayerImage.objects.get(s3_uuid=s3_uuid)
-        except LayerImage.DoesNotExist:
+        except:
+            log.info('Ignoring thumbnail %s', s3_uuid)
             return True
 
         log.info('Image %d arrived', image.id)
@@ -282,13 +276,14 @@ class QueueProcessor(object):
         status_updates.mark_image_status_start(image.s3_uuid,
                                                enums.STATUS_THUMBNAIL)
 
-        if make_thumbs_for_layer_image(image_id):
+        try:
+            thumbnail_image(image_id)
             status_updates.mark_image_status_end(image.s3_uuid,
                                                  enums.STATUS_THUMBNAIL)
-            log.info('Done generating thumbnails for image %d...', image_id)
+            log.info('Done generating thumbnails for image %d', image_id)
             status_updates.mark_layer_thumbnailed(layer_id)
-        else:
-            log.info('Failed to thumbnail image %d', image_id)
+        except:
+            log.exception('Failed to thumbnail image %d', image_id)
             status_updates.mark_image_status_end(
                 image_id,
                 enums.STATUS_THUMBNAIL,
@@ -318,11 +313,12 @@ class QueueProcessor(object):
         status_updates.mark_layer_status_start(layer_id,
                                                enums.STATUS_THUMBNAIL)
 
-        if make_thumbs_for_layer(layer_id):
+        try:
+            thumbnail_layer(layer_id)
             status_updates.mark_layer_thumbnailed(layer_id)
-            log.info('Done generating thumbnails for layer %d...', layer_id)
-        else:
-            log.info('Failed to thumbnail layer %d', layer_id)
+            log.info('Done generating thumbnails for layer %d', layer_id)
+        except:
+            log.exception('Failed to thumbnail layer %d', layer_id)
             status_updates.mark_layer_status_end(
                 layer_id,
                 enums.STATUS_THUMBNAIL,
@@ -546,6 +542,6 @@ def extract_uuid_from_aws_key(key):
     AWS keys are a user id appended to a uuid with a file extension.
     EX: 10-1aa064aa-1086-4ff1-a90b-09d3420e0343.tif
     """
-    dot = key.find('.') if key.find('.') >= 0 else len(key)
+    dot = key.rfind('.') if key.rfind('.') >= 0 else len(key)
     first_dash = key.find('-')
-    return key[first_dash:dot]
+    return key[first_dash + 1:dot]

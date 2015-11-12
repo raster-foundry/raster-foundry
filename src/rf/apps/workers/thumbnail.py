@@ -6,10 +6,15 @@ from __future__ import division
 import json
 import logging
 import os
+import os.path
+import subprocess
 import uuid
 import warnings
 
+from contextlib import contextmanager
+
 import boto3
+import PIL.ImageOps
 from PIL import Image
 from django.conf import settings
 
@@ -23,8 +28,6 @@ IMAGE_THUMB_SMALL_DIMS = (80, 80)
 IMAGE_THUMB_LARGE_DIMS = (300, 300)
 LAYER_THUMB_SMALL_DIMS = (80, 80)
 LAYER_THUMB_LARGE_DIMS = (400, 150)
-THUMB_EXT = 'png'
-THUMB_CONTENT_TYPE = 'image/png'
 
 ERROR_MESSAGE_THUMBNAIL_FAILED = 'Thumbnail failed for image.'
 
@@ -32,144 +35,115 @@ ERROR_MESSAGE_THUMBNAIL_FAILED = 'Thumbnail failed for image.'
 warnings.simplefilter('ignore', Image.DecompressionBombWarning)
 
 
-def make_thumb(image, thumb_width, thumb_height):
+def thumbnail(src_path, dst_path, width, height):
     """
-    Returns a thumbnail created from image that is thumb_width x thumb_height.
+    Generate a thumbnail image.
     """
-    # To make the thumbnail, crop the image so that it matches
-    # the aspect ratio of the thumbnail. Then, scale the cropped image
-    # so it has the desired dimensions.
-    image_ratio = float(image.width) / float(image.height)
-    thumb_ratio = float(thumb_width) / float(thumb_height)
-
-    # If thumbnail is more oblong than the original,
-    # use the full height of the original, and use a fraction of the width
-    # when cropping. Otherwise, use the full width of the original, and
-    # use a fraction of the height.
-    if image_ratio > thumb_ratio:
-        crop_height = image.height
-        crop_width = crop_height * thumb_ratio
-    else:
-        crop_width = image.width
-        crop_height = crop_width / thumb_ratio
-
-    # In order to avoid spurious boundaries on the the thumbnails
-    # of large tiff files, we crop out the central crop_proportion
-    # part of the image. I'm not sure why this works. I thought that
-    # maybe the cropping box was too big and was going off the edge
-    # of the image, but the crop_width and crop_height never exceed the
-    # dimension of the original image.
-    crop_proportion = 0.9
-    border_proportion = ((1.0 - crop_proportion) / 2)
-
-    # box = (left, upper, right, lower)
-    left = int(border_proportion * crop_width)
-    upper = int(border_proportion * crop_height)
-    right = int(left + (crop_proportion * crop_width))
-    lower = int(upper + (crop_proportion * crop_height))
-    box = (left, upper, right, lower)
-    cropped = image.crop(box)
-    thumb = cropped.resize((thumb_width, thumb_height), Image.ANTIALIAS)
-
-    return thumb
+    image = Image.open(src_path)
+    thumb = PIL.ImageOps.fit(
+        image, (width, height), method=PIL.Image.ANTIALIAS)
+    thumb.save(dst_path)
 
 
-def s3_make_thumbs(image, user_id, thumb_dims, thumb_ext):
+def to_png(src_path):
     """
-    Creates thumbnails based on image_key and thumb_dims, and
-    stores them on S3.
-    thumb_dims -- a list containing (thumb_width, thumb_height) tuples
-    Returns list of thumb keys of the form <user_id>-<uuid>.<thumb_ext>
+    Use `gdal_translate` to convert source image to PNG.
     """
+    dst_path = '{}.png'.format(src_path)
+    # Has the thumbnail been generated already?
+    if os.path.isfile(dst_path):
+        return
+    subprocess.call(['gdal_translate', src_path, dst_path, '-of', 'PNG'])
+    return dst_path
+
+
+def create_and_upload_thumbnail(image_key, image_path, dimensions):
+    """
+    Creates thumbnails and stores them on S3.
+    Return S3 key of generated thumbnail.
+    """
+    width, height = dimensions
+    thumb_filename = '{}_{}x{}.png'.format(image_key, width, height)
+    thumb_path = os.path.join(settings.TEMP_DIR, thumb_filename)
+
+    thumbnail(image_path, thumb_path, width, height)
+    upload(thumb_path, thumb_filename)
+    os.remove(thumb_path)
+
+    return thumb_filename
+
+
+@contextmanager
+def downloaded_file(s3_key):
+    """
+    Yield downloaded image from S3 and delete when finished.
+    """
+    client = boto3.client('s3')
+    dst_path = os.path.join(settings.TEMP_DIR, str(uuid.uuid4()))
+    log.debug('Downloading %s to %s...', s3_key, dst_path)
+    client.download_file(settings.AWS_BUCKET_NAME, s3_key, dst_path)
+    yield dst_path
+    os.remove(dst_path)
+
+
+def upload(src_path, s3_key):
+    """
+    Upload image to S3 (assumes PNG).
+    """
+    client = boto3.client('s3')
+    log.debug('Uploading %s to %s...', src_path, s3_key)
+    client.upload_file(src_path,
+                       settings.AWS_BUCKET_NAME,
+                       s3_key,
+                       ExtraArgs={'ContentType': 'image/png'})
+
+
+def thumbnail_layer(layer_id):
+    """
+    Generate layer thumbnails.
+    """
+    # Use first image to generate layer thumbnail (for now).
+    image = LayerImage.objects.filter(layer_id=layer_id).first()
     image_key = image.get_s3_key()
-    image_filepath = os.path.join(settings.TEMP_DIR, str(uuid.uuid4()))
-    s3_client = boto3.client('s3')
-    log.debug('Downloading %s to %s', image_key, image_filepath)
-    s3_client.download_file(settings.AWS_BUCKET_NAME,
-                            image_key,
-                            image_filepath)
 
-    try:
-        log.info('Getting metadata as JSON.')
-        image_file = open(image_filepath)
-        exif = get_image_exif_data(image_file)
-        image_file.close()
-    except IOError:
-        log.exception('Could not open image to get metadata.')
-        exif = None
+    with downloaded_file(image_key) as image_path:
+        png_path = to_png(image_path)
 
-    image.meta_json = json.dumps(exif)
-    image.save()
+        thumb_small_key = create_and_upload_thumbnail(
+            image_key, png_path, LAYER_THUMB_SMALL_DIMS)
+        thumb_large_key = create_and_upload_thumbnail(
+            image_key, png_path, LAYER_THUMB_LARGE_DIMS)
 
-    try:
-        image = Image.open(image_filepath)
-
-    except IOError:
-        log.exception('Unable to open image')
-        raise ImageCouldNotOpenError()
-
-    thumb_filenames = []
-    for thumb_width, thumb_height in thumb_dims:
-        thumb_uuid = str(uuid.uuid4())
-        thumb_filename = '%d-%s.%s' % \
-            (user_id, thumb_uuid, thumb_ext)
-        thumb_filenames.append(thumb_filename)
-        thumb_filepath = os.path.join(settings.TEMP_DIR, thumb_filename)
-
-        thumb = make_thumb(image, thumb_width, thumb_height)
-        thumb.save(thumb_filepath)
-        s3_client.upload_file(thumb_filepath,
-                              settings.AWS_BUCKET_NAME,
-                              thumb_filename,
-                              ExtraArgs={'ContentType': THUMB_CONTENT_TYPE})
-        os.remove(thumb_filepath)
-
-    os.remove(image_filepath)
-    return thumb_filenames
+        Layer.objects.filter(id=layer_id).update(
+            thumb_small_key=thumb_small_key,
+            thumb_large_key=thumb_large_key)
 
 
-def make_thumbs_for_layer(layer_id):
+def thumbnail_image(image_id):
     """
-    Make thumbs for Layer with layer_id. This does not include
-    making thumbnails for associated LayerImages.
-    """
-    layer = Layer.objects.get(id=layer_id)
-    image = layer.layer_images.first()
-    user_id = layer.user.id
-
-    # Create thumbnails for the Layer as a whole
-    # using thumbnails created from the first image.
-    thumb_dims = [LAYER_THUMB_SMALL_DIMS, LAYER_THUMB_LARGE_DIMS]
-    try:
-        layer.thumb_small_key, layer.thumb_large_key = \
-            s3_make_thumbs(image, user_id, thumb_dims, THUMB_EXT)
-        layer.save()
-    except ImageCouldNotOpenError:
-        return False
-
-    return True
-
-
-def make_thumbs_for_layer_image(image_id):
-    """
-    Make thumbs for LayerImage with image_id.
+    Generate image thumbnails.
     """
     image = LayerImage.objects.get(id=image_id)
-    user_id = image.layer.user.id
+    image_key = image.get_s3_key()
 
-    thumb_dims = [IMAGE_THUMB_SMALL_DIMS, IMAGE_THUMB_LARGE_DIMS]
-    try:
-        image.thumb_small_key, image.thumb_large_key = \
-            s3_make_thumbs(image, user_id, thumb_dims, THUMB_EXT)
-        image.save()
-    except ImageCouldNotOpenError:
-        return False
+    with downloaded_file(image_key) as image_path:
+        save_exif_data(image, image_path)
+        png_path = to_png(image_path)
 
-    return True
+        thumb_small_key = create_and_upload_thumbnail(
+            image_key, png_path, IMAGE_THUMB_SMALL_DIMS)
+        thumb_large_key = create_and_upload_thumbnail(
+            image_key, png_path, IMAGE_THUMB_LARGE_DIMS)
+
+        LayerImage.objects.filter(id=image_id).update(
+            thumb_small_key=thumb_small_key,
+            thumb_large_key=thumb_large_key)
 
 
-class ImageCouldNotOpenError(ValueError):
-    """
-    Raise when a ValueError occurs trying to open an image.
-    """
-    pass
+def save_exif_data(image, path):
+    log.debug('Saving EXIF data')
+    with open(path) as fp:
+        exif_data = get_image_exif_data(fp)
+        meta_json = json.dumps(exif_data)
+        LayerImage.objects.filter(id=image.id).update(
+            meta_json=meta_json)
