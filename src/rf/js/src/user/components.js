@@ -177,14 +177,6 @@ var LoginBox = React.createBackboneClass({
         return (
             <div>
                 {this.renderErrors()}
-                <div className="link-block">
-                    {/*<a href="/forgot/" data-url="/forgot/"
-                        className="text-muted small forgot">Forgot?</a>*/}
-                    {/*<a href="/send-activation/" data-url="/send-activation/"
-                        className="text-muted small send-activation">Send Activation Email</a>*/}
-                    <a href="/sign-up/" data-url="/sign-up/"
-                        className="text-muted small sign-up">Sign Up</a>
-                </div>
                 <form method="post" onSubmit={this.validate} >
                     <InputField name="username" displayName="Username"
                         ref="username"
@@ -194,6 +186,13 @@ var LoginBox = React.createBackboneClass({
                         value={this.getModel().get('password')}/>
                     <div className="form-action">
                         <input type="submit" className="btn btn-secondary btn-block" value="Log In" />
+                        <div className="link-block">
+                            {/*<a href="/forgot/" data-url="/forgot/"
+                                className="forgot">Forget Password?</a>*/}
+                            {/*<a href="/send-activation/" data-url="/send-activation/"
+                                className="send-activation">Send Activation Email</a>*/}
+                            <a href="/sign-up/" data-url="/sign-up/" className="secondary-link">No account? Sign Up</a>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -255,6 +254,9 @@ var SignUpBox = React.createBackboneClass({
                     {/*<InputField className="hidden" name="agreed" displayName="I agree to something" type="checkbox" ref="agreed" value={this.getModel().get('agreed')}/>*/}
                     <div className="form-action">
                         <input type="submit" className="btn btn-secondary btn-block" value="Sign Up" />
+                        <div className="link-block">
+                            <a href="/login/" data-url="/login/" className="secondary-link">Back to Login</a>
+                        </div>
                     </div>
                 </form>
             );

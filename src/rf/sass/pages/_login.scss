@@ -14,23 +14,15 @@
 		margin: 20px auto 50px;
 	}
 
+	.secondary-link {
+		color: $white;
+	}
+
 	.link-block {
-		margin-bottom: 20px;
 
-		.forgot {
-			position: relative;
-			left: 1rem;
-		}
-
-		.send-activation {
-			position: relative;
-			left: 5rem;
-		}
-
-		.sign-up {
-			position: relative;
-            // TODO change to 10rem when forgot and send-activation are visible
-			left: 12.5rem;
+		> a {
+			display: inline-block;
+			margin: 4px 8px 0;
 		}
 	}
 
@@ -40,6 +32,10 @@
 
 	.form-action {
 		text-align: center;
+		margin: 0 -20px -20px;
+	  background: rgba($gray-darker, .5);
+	  padding: 20px;
+	  border-top: 1px solid $gray-darker;
 	}
 
 	.form-control {
