@@ -420,17 +420,30 @@ var LayerMetadata = React.createBackboneClass({
     render: function() {
         var self = this,
             layer = this.getActiveLayer(),
-            tags = 'N/A',
+            noValue = <span className="text-muted">N/A</span>,
+            tags = noValue,
+            area = noValue,
             actions = '';
 
         if (!layer) {
             return null;
         }
 
+        function layerValue(propName) {
+            if (_.isEmpty(layer.get(propName))) {
+                return noValue;
+            }
+            return layer.get(propName);
+        }
+
         if (layer.get('tags').length > 0) {
             tags = layer.get('tags').reduce(function(left, right) {
                 return <span>{left}, {right}</span>;
             });
+        }
+
+        if (_.isNumber(layer.get('area')) && _.isString(layer.get('area_unit'))) {
+            area = <span>{layer.get('area')} {layer.get('area_unit')}</span>;
         }
 
         if (layer.getBounds()) {
@@ -474,21 +487,19 @@ var LayerMetadata = React.createBackboneClass({
                                 <dt>Name:</dt>
                                 <dd>{layer.get('name')}</dd>
                                 <dt>Organization:</dt>
-                                <dd>{layer.get('organization')}</dd>
+                                <dd>{layerValue('organization')}</dd>
                                 <dt>Capture Start Date:</dt>
-                                <dd>{layer.get('capture_start')}</dd>
+                                <dd>{layerValue('capture_start')}</dd>
                                 <dt>Capture End Date:</dt>
-                                <dd>{layer.get('capture_end')}</dd>
+                                <dd>{layerValue('capture_end')}</dd>
                                 <dt>Area:</dt>
-                                <dd>{layer.get('area')} {layer.get('area_unit')}</dd>
+                                <dd>{area}</dd>
                                 <dt>Source Data Projection: </dt>
-                                <dd>{layer.get('projection')}</dd>
+                                <dd>{layerValue('projection')}</dd>
                                 <dt>Total Images: </dt>
                                 <dd>{layer.get('images').length}</dd>
                                 <dt>Tags:</dt>
-                                <dd>
-                                    {tags}
-                                </dd>
+                                <dd>{tags}</dd>
                             </dl>
                         </div>
                     </div>
@@ -543,7 +554,7 @@ var ImageMetadata = React.createBackboneClass({
                 <div className="layer-detail-content">
                     <img className="img-preview" src={image.thumb_large || 'https://placehold.it/300x300'} />
                     <hr />
-                    <div className="scrollable">
+                    <div className="scrollable" style={{overflow: 'hidden'}}>
                         {noMetadataMessage}
                         {_.map(metadata, function(data, i) {
                             return (
