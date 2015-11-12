@@ -53,7 +53,7 @@ var Library = React.createBackboneClass({
                 <div className="sidebar">
                     <Sidebar {...this.props} />
                 </div>
-                <Map {...this.props} />
+                <Map model={this.props.mapModel} {...this.props} />
                 <ProcessingBlock collection={this.props.pendingLayers} />
             </div>
         );
@@ -405,10 +405,23 @@ var LayerMetadata = React.createBackboneClass({
         this.setActiveImage(id);
     },
 
+    zoomToExtent: function() {
+        var layer = this.getActiveLayer();
+        if (layer) {
+            // Updating the map model will trigger a Map component update.
+            // The name of the attribute doesn't matter, but the value must
+            // be unique. Otherwise, the "attribute changed" event will only
+            // fire the first time this action is executed and subsequent
+            // clicks will not update the component.
+            this.props.mapModel.set('redraw', Math.random());
+        }
+    },
+
     render: function() {
         var self = this,
             layer = this.getActiveLayer(),
-            tags = 'N/A';
+            tags = 'N/A',
+            actions = '';
 
         if (!layer) {
             return null;
@@ -418,6 +431,14 @@ var LayerMetadata = React.createBackboneClass({
             tags = layer.get('tags').reduce(function(left, right) {
                 return <span>{left}, {right}</span>;
             });
+        }
+
+        if (layer.getBounds()) {
+            actions = (
+                <div className="text-right">
+                    <a href="#" onClick={this.zoomToExtent}><i className="rf-icon-zoom-in"></i> Zoom to Exent</a>
+                </div>
+            );
         }
 
         var images = layer.get('images').map(function(image, i) {
@@ -444,6 +465,7 @@ var LayerMetadata = React.createBackboneClass({
                         <div className="layer-detail-content">
                             <h4>{layer.get('name')}</h4>
                             <img className="img-preview" src={layer.get('thumb_large') || 'https://placehold.it/400x150'} />
+                            {actions}
                             <p>
                                 {layer.get('description')}
                             </p>

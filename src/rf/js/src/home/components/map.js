@@ -23,7 +23,8 @@ var Map = React.createBackboneClass({
         var model = this.getActiveLayer();
         this.mapView.clearLayers();
         if (model) {
-            this.mapView.addLayer(model.getLeafletLayer());
+            this.mapView.addLayer(model.getLeafletLayer(), model.getBounds());
+            this.mapView.fitBounds(model.getBounds());
         }
     },
 

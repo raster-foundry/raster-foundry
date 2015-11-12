@@ -2,6 +2,7 @@
 
 var $ = require('jquery'),
     _ = require('underscore'),
+    Backbone = require('../../shim/backbone'),
     React = require('react'),
     router = require('../router').router,
     settings = require('../settings'),
@@ -12,6 +13,7 @@ var $ = require('jquery'),
 var getProps = _.memoize(function() {
     var props = {
         tabModel: new models.TabModel(),
+        mapModel: new Backbone.Model(),
         myLayers: new models.MyLayers(),
         favoriteLayers: new models.FavoriteLayers(),
         publicLayers: new models.PublicLayers(),

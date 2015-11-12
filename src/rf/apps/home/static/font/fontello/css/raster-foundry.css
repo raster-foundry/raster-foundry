@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'raster-foundry';
-  src: url('../font/raster-foundry.eot?60721717');
-  src: url('../font/raster-foundry.eot?60721717#iefix') format('embedded-opentype'),
-       url('../font/raster-foundry.woff?60721717') format('woff'),
-       url('../font/raster-foundry.ttf?60721717') format('truetype'),
-       url('../font/raster-foundry.svg?60721717#raster-foundry') format('svg');
+  src: url('../font/raster-foundry.eot?18295513');
+  src: url('../font/raster-foundry.eot?18295513#iefix') format('embedded-opentype'),
+       url('../font/raster-foundry.woff?18295513') format('woff'),
+       url('../font/raster-foundry.ttf?18295513') format('truetype'),
+       url('../font/raster-foundry.svg?18295513#raster-foundry') format('svg');
   font-weight: normal;
   font-style: normal;
 }
@@ -14,7 +14,7 @@
 @media screen and (-webkit-min-device-pixel-ratio:0) {
   @font-face {
     font-family: 'raster-foundry';
-    src: url('../font/raster-foundry.svg?60721717#raster-foundry') format('svg');
+    src: url('../font/raster-foundry.svg?18295513#raster-foundry') format('svg');
   }
 }
 */
@@ -89,3 +89,4 @@
 .rf-icon-upload:before { content: '\e820'; } /* '' */
 .rf-icon-loader:before { content: '\e821'; } /* '' */
 .rf-icon-attention:before { content: '\e822'; } /* '' */
+.rf-icon-zoom-in:before { content: '\e823'; } /* '' */
