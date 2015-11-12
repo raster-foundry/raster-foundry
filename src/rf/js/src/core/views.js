@@ -40,6 +40,15 @@ var MapView = Marionette.ItemView.extend({
         this.listenTo(map, 'moveend', this.updateMapModelPosition);
         this.listenTo(map, 'zoomend', this.updateMapModelZoom);
 
+        this._noDataLayer = new L.TileLayer.Canvas();
+        this._noDataLayer.drawTile = function(canvas, point) {
+            var ctx = canvas.getContext('2d'),
+                offsetX = point.y % 2 === 0 ? 128 : 0;
+            ctx.font = '10px sans-serif';
+            ctx.fillStyle = '#999999';
+            ctx.fillText('NO DATA', 10 + offsetX, 10);
+        };
+
         this._leafletMap = map;
     },
 
@@ -82,6 +91,7 @@ var MapView = Marionette.ItemView.extend({
     },
 
     addLayer: function(layer, bounds) {
+        this._tilesLayerGroup.addLayer(this._noDataLayer);
         this._tilesLayerGroup.addLayer(layer);
         if (bounds) {
             this._zoomToExtentControl = new ZoomToExtentControl({
