@@ -147,6 +147,7 @@ def add_steps(layer, status_queue, cluster_id):
         Steps=get_steps(layer, status_queue),
     )
     log.debug(response)
+    return response
 
 
 def get_steps(layer, status_queue):
