@@ -1,3 +1,0 @@
----
-- name: Restart pgweb
-  service: name=pgweb state=restarted

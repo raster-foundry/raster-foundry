@@ -1,3 +1,0 @@
----
-- name: Restart rf-worker
-  service: name=rf-worker state=restarted

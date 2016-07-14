@@ -1,3 +1,0 @@
----
-- name: Delete *.pyc files
-  shell: find {{ django_home }} -iname "*.pyc" -exec rm -f {} \;

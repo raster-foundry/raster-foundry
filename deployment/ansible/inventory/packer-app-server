@@ -1,8 +1,0 @@
-[rf-app]
-localhost ansible_ssh_user=ubuntu
-
-[app-servers]
-rf-app
-
-[packer:children]
-app-servers

@@ -1,5 +1,0 @@
----
-pgweb_port: 5433
-pgweb_log: /var/log/pgweb.log
-pgweb_log_rotate_count: 5
-pgweb_log_rotate_interval: daily

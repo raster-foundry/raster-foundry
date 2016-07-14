@@ -1,0 +1,3 @@
+Ansible role definitions go here.
+
+This file mainly exists to force Git to create this directory path until we have actual roles in place. It isn't expected that a README file will be needed in this folder and so this file can probably be safely deleted once at least one Ansible role has been created.

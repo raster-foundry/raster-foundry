@@ -1,6 +1,0 @@
----
-dependencies:
-  - { role: "azavea.ntp" }
-  - { role: "azavea.git" }
-  - { role: "azavea.daemontools" }
-  - { role: "azavea.postgresql-support" }
