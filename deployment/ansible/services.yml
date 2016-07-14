@@ -1,0 +1,11 @@
+---
+- hosts: services
+  sudo: True
+
+  pre_tasks:
+    - name: Update APT cache
+      apt: update_cache=yes cache_valid_time=3600
+
+  roles:
+    - { role: "raster-foundry.postgresql", when: "['development', 'test'] | some_are_in(group_names)" }
+    - { role: "raster-foundry.pgweb", when: "['development', 'test'] | some_are_in(group_names)" }

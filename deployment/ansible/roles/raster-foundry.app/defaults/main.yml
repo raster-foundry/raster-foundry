@@ -1,0 +1,13 @@
+---
+django_home: /opt/app
+
+log_path: /var/log/rf-app.log
+
+app_gunicorn_log: /var/log/rf-gunicorn.log
+app_gunicorn_log_rotate_count: 5
+app_gunicorn_log_rotate_internal: daily
+
+django_static_root: /var/www/rf/static/
+django_media_root: /var/www/rf/media/
+
+django_static_cache: /var/cache/rf/static/

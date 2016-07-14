@@ -1,0 +1,23 @@
+---
+django_settings_module: "rf.settings.production"
+
+postgresql_username: "rasterfoundry"
+postgresql_database: "rasterfoundry"
+
+aws_profile: ""
+
+ntp_servers:
+  - 0.amazon.pool.ntp.org
+  - 1.amazon.pool.ntp.org
+  - 2.amazon.pool.ntp.org
+  - 3.amazon.pool.ntp.org
+
+redis_host: "cache.service.rf.internal"
+postgresql_host: "database.service.rf.internal"
+
+sqs_queue: "raster-foundry"
+sqs_dead_letter_queue: "raster-foundry-dead-letter"
+s3_bucket: "raster-foundry-uploads"
+logs_bucket: "raster-foundry-logs"
+tiles_bucket: "raster-foundry-tiles"
+workspace_bucket: "raster-foundry-workspace"

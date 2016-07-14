@@ -1,0 +1,19 @@
+bind = "127.0.0.1:8000"
+
+{% if ['development', 'test'] | some_are_in(group_names) -%}
+accesslog = "-"
+errorlog = "-"
+loglevel = 'debug'
+preload_app = False
+reload = True
+timeout = 1800
+workers = 1
+{% else %}
+accesslog = None
+errorlog = "{{ app_gunicorn_log }}"
+loglevel = 'info'
+preload_app = True
+reload = False
+timeout = 60
+workers = 2
+{% endif %}

@@ -1,0 +1,13 @@
+azavea.build-essential,0.1.0
+azavea.daemontools,0.1.0
+azavea.git,0.1.0
+azavea.java,0.2.3
+azavea.nginx,0.2.1
+azavea.nodejs,0.3.0
+azavea.ntp,0.1.1
+azavea.pgweb,0.1.1
+azavea.phantomjs,0.1.0
+azavea.pip,0.1.1
+azavea.postgis,0.2.1
+azavea.postgresql,0.3.0
+azavea.postgresql-support,0.2.0

@@ -1,0 +1,3 @@
+---
+- name: Restart rf-mock-geoprocessing
+  service: name=rf-mock-geoprocessing state=restarted

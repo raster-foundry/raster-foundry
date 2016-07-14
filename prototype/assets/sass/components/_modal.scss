@@ -1,0 +1,221 @@
+.modal-backdrop {
+	background-color: $gray-dark;
+
+	&.in {
+		@include opacity(.9);
+	}
+}
+
+.modal-xl {
+	width: 90%;
+}
+
+.modal-content {
+	box-shadow: 0 0 20px 0 rgba(black, .1);
+}
+
+.modal {
+
+	.close {
+		@include font-size(30);
+		position: absolute;
+		right: -40px;
+		top: -5px;
+		color: $gray-lighter;
+		text-shadow: none;
+		@include opacity(1);
+	}
+
+	form {
+		margin: 20px;
+
+		.form-action {
+		  margin: 0 -35px -35px;
+		  padding: 20px 35px;
+		  background-color: $off-white;
+		  border-top: 1px solid $gray-lightest;
+		  border-radius: 0 0 5px 5px;
+			@extend .clearfix;
+
+			.btn {
+				margin-bottom: 0;
+			}
+
+			input[type="submit"] {
+				float: right;
+				width: 50%;
+				margin-bottom: 0;
+			}
+
+			.btn:only-child {
+				float: none;
+			}
+		}
+	}
+
+	.form-control {
+		border-color: $gray-lightest;
+	}
+}
+
+.modal-dialog {
+	@include respond-to('tablet-up') {
+		margin: 60px auto;
+	}
+}
+
+
+/// import Modal
+///
+.import-modal .modal-body {
+
+	.drag-to-area {
+		padding: 30px 10px;
+		border: 2px dashed transparent;
+		border-radius: $border-radius-base;
+		transition: .2s ease-in-out border;
+
+		&.active {
+			border-color: $brand-primary;
+		}
+	}
+
+	.import-browse, .import-uri {
+		text-align: center;
+		padding: 35px;
+		
+		i {
+			display: inline-block;
+			line-height: 1;
+		}
+		
+		h3 {
+			color: $brand-primary;
+		}
+		
+		h5 {
+			line-height: 1.4;
+		}
+
+		form {
+			margin: 40px 0 0;
+		}
+	}
+	
+	.import-browse {
+
+		i:not(.rf-icon-cancel) {
+			@include font-size(200);
+			color: $off-white;
+			margin-bottom: -20px;
+		}
+
+		.list-group {
+			height: 190px;
+			border: 1px solid $gray-lightest;
+			border-radius: $border-radius-base;
+			overflow: auto;
+			margin-top: -10px;
+
+			.list-group-item {
+				border-top: none;
+				border-left: none;
+				border-right: none;
+				border-radius: 0;
+				margin: 0;
+			}
+		}
+
+		@-webkit-keyframes new-import-fade {
+			from { background-color: rgba($brand-primary, .1); }
+			to { background-color: transparent; }
+			}
+		@-moz-keyframes new-import-fade {
+			from { background-color: rgba($brand-primary, .1); }
+			to { background-color: transparent; }
+		}
+		@-o-keyframes new-import-fade {
+			from { background-color: rgba($brand-primary, .1); }
+			to { background-color: transparent; }
+		}
+		@keyframes new-import-fade {
+			from { background-color: rgba($brand-primary, .1); }
+			to { background-color: transparent; }
+		}
+
+		.newest-import {
+			background-color: rgba($brand-primary, .1);
+			transition: background;
+			-webkit-animation: new-import-fade 1s 2s 1 ease forwards;
+			-moz-animation: new-import-fade 1s 2s 1 ease forwards;
+			-o-animation: new-import-fade 1s 2s 1 ease forwards;
+			animation: new-import-fade 1s 2s 1 ease forwards;
+		}
+	}
+
+	.import-uri {
+		background: $off-white;
+		border-radius: 0 5px 5px 0;
+		border-left: 1px solid $gray-lightest;
+
+		i {
+			@include font-size(90);
+			color: $gray-lightest;
+			margin-bottom: -20px;
+		}
+
+		&:before {
+		  content: 'OR';
+		  display: block;
+		  position: absolute;
+		  background: $base;
+		  color: $white;
+		  @include font-size(13);
+		  left: -18px;
+		  top: 44%;
+		  border-radius: 100%;
+		  line-height: 36px;
+		  width: 36px;
+		  height: 36px;
+
+			@include respond-to('tablet-down') {
+				left: 50%;
+				top: -15px;
+				transform: translate(-50%);
+			}
+		}
+	}
+}
+
+
+/// Add Imagery Layer Modal
+///
+.add-imagery-modal {
+
+	.modal-body {
+		padding: 0;
+	}
+	
+	.nav-tabs {
+		background: $off-white;
+	}
+
+	.tab-pane.active {
+		padding: 20px;
+	}
+
+	.imagery-layers {
+		max-width: 70%;
+		float: left;
+		max-height: 70vh;
+		overflow: auto;
+	}
+
+	.imagery-sidepanel {
+		max-width: 30%;
+		float: left;
+		border-left: 2px solid $gray-lightest;
+		height: 70vh;
+		overflow: auto;
+	}
+}

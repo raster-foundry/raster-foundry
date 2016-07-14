@@ -1,0 +1,19 @@
+---
+django_settings_module: "rf.settings.test"
+
+aws_profile: "{{ lookup('env', 'AWS_PROFILE') | default('rf-dev', true) }}"
+
+postgresql_listen_addresses: "*"
+postgresql_hba_mapping:
+  - { type: "host", database: "all", user: "all", address: "33.33.40.1/23", method: "md5" }
+
+services_ip: "{{ lookup('env', 'RF_SERVICES_IP') | default('33.33.40.80', true) }}"
+
+postgresql_host: "{{ services_ip }}"
+
+sqs_queue: "raster-foundry-jenkins"
+sqs_dead_letter_queue: "raster-foundry-jenkins-dead-letter"
+s3_bucket: "raster-foundry-jenkins"
+logs_bucket: "raster-foundry-jenkins-logs"
+tiles_bucket: "raster-foundry-jenkins-tiles"
+workspace_bucket: "raster-foundry-jenkins-workspace"

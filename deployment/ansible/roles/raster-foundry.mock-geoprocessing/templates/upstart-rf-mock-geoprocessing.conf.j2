@@ -1,0 +1,15 @@
+description "rf-mock-geoprocessing"
+
+{% if ['development', 'test'] | some_are_in(group_names) -%}
+start on (vagrant-mounted)
+{% else %}
+start on (local-filesystems and net-device-up IFACE!=lo)
+{% endif %}
+stop on shutdown
+
+respawn
+setuid rf
+chdir {{ mock_geoprocessing_home }}
+env HOME="/var/lib/rf"
+
+exec envdir /etc/rf.d/env node server.js

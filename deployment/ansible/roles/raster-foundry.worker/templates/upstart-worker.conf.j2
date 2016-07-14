@@ -1,0 +1,14 @@
+description "rf-worker"
+
+{% if ['development', 'test'] | some_are_in(group_names) -%}
+start on (vagrant-mounted)
+{% else %}
+start on (local-filesystems and net-device-up IFACE!=lo)
+{% endif %}
+stop on shutdown
+
+respawn
+setuid rf
+chdir {{ django_home }}
+
+exec envdir /etc/rf.d/env python ./manage.py poll >> {{ log_path }} 2>&1

@@ -1,0 +1,5 @@
+---
+dependencies:
+  - { role: "raster-foundry.base" }
+  - { role: "azavea.python", python_development: True }
+  - { role: "azavea.pip" }

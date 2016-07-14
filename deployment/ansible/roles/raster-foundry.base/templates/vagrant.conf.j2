@@ -1,0 +1,10 @@
+start on filesystem
+
+task
+
+script
+  until mountpoint -q /home/vagrant/.aws; do sleep 1; done
+  until mountpoint -q /opt/app; do sleep 1; done
+
+  /sbin/initctl emit vagrant-mounted
+end script

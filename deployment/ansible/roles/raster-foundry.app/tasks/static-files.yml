@@ -1,0 +1,51 @@
+---
+- name: Create folders for static files
+  file: path="{{ item }}"
+        state=directory
+        owner="{{ ansible_ssh_user }}"
+        group=rf
+        mode=0775
+  with_items:
+    - "{{ django_static_root }}"
+    - "{{ django_media_root }}"
+    - "{{ django_static_cache }}"
+
+- name: Install application JavaScript dependencies
+  command: "npm install --unsafe-perm"
+  args:
+    chdir: "{{ django_home }}"
+  sudo: False
+
+- name: Check for lint
+  command: "npm run lint"
+  args:
+    chdir: "{{ django_home }}"
+  sudo: False
+  ignore_errors: True
+
+- name: Create JS bundles (staging/production)
+  command: "./bundle.sh --vendor --tests"
+  args:
+    chdir: "{{ django_home }}"
+  environment: django_config
+  sudo: False
+  when: "['development'] | is_not_in(group_names)"
+
+- name: Create JS bundles (development)
+  command: "./bundle.sh --vendor --tests --debug"
+  args:
+    chdir: "{{ django_home }}"
+  environment: django_config
+  sudo: False
+  when: "['development'] | is_in(group_names)"
+
+- name: Run Django collectstatic command
+  django_manage: command=collectstatic app_path="{{ django_home }}"
+  environment: "{{ envdir_config | combine(django_config) }}"
+  sudo: False
+
+- name: Create JavaScript test harness
+  template: src=testem-harness.html.j2
+            dest="{{ django_static_root }}/test.html"
+  sudo: False
+  when: "['development', 'test'] | some_are_in(group_names)"

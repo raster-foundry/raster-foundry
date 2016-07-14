@@ -1,0 +1,106 @@
+.processing-block {
+	position: fixed;
+	right: 10px;
+	top: 10px;
+	background: $white;
+	width: 300px;
+	z-index: 2;
+	border: 1px solid $gray-lightest;
+
+
+	.block-title {
+		display: block;
+		padding: 14px 20px;
+		border-bottom: 1px solid $gray-lightest;
+
+		&:hover,
+		&:focus,
+		&:not(.collapsed) {
+			text-decoration: none;
+			background: $off-white;
+		}
+	}
+
+	.list-group {
+		margin: 0;
+		padding: 0 10px;
+		max-height: 400px;
+	  overflow: auto;
+	}
+
+	.list-group-item {
+		border-radius: 0;
+		border: none;
+		border-bottom: 1px solid $gray-lightest;
+		margin-bottom: 0;
+
+		&:last-of-type {
+			border-bottom: none;
+		}
+	}
+
+	.list-group-content {
+
+		> h5 {
+			margin-top: 5px;
+			color: $gray;
+			// padding needed for long named layers
+			padding-right: 55px;
+		}
+
+		> ol {
+			padding-left: 20px;
+			margin: 0;
+		}
+
+		li {
+			margin-bottom: 5px;
+		}
+
+	 i {
+			float: right;
+		}
+
+		.rf-failed:after {
+			content: 'Failed';
+			font-style: normal;
+		}
+
+		.rf-icon-check {
+			color: $brand-primary;
+		}
+
+		.notice {
+			padding-left: 0;
+			padding-right: 20px;
+			color: $brand-danger-dark;
+			margin: 0;
+			display: block;
+			position: relative;
+			line-height: 1.4;
+
+			li {
+				position: relative;
+			}
+
+			i {
+				position: absolute;
+				top: 0;
+				right: -20px;
+			}
+
+			> i {
+				right: 0;
+			}
+		}
+	}
+
+	.list-group-tool {
+		a {
+            cursor: pointer;
+		}
+		position: absolute;
+		top: 15px;
+		right: 10px;
+	}
+}

@@ -1,0 +1,6 @@
+---
+- name: Configure Vagrant service definition
+  template: src=vagrant.conf.j2
+            dest=/etc/init/vagrant.conf
+  notify:
+    - Restart Vagrant

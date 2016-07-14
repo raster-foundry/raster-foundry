@@ -1,8 +1,74 @@
-# OSX Ignored Files
-.DS_Store
-
 # Sass Cache
 .sass-cache
 
 # css map
 .css.map
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+
+# Ansible
+deployment/ansible/roles/azavea.*
+
+# Vagrant
+.vagrant
+
+# NodeJS / Browserify stuff
+node_modules/
+npm-debug.log
+
+# Emacs
+\#*#
+*~
+.#*
+
+# MacOS
+.DS_Store
+
+deployment/default.yml

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+	<title>Raster Foundry</title>
+	<link rel="stylesheet" href="/assets/css/main.css">
+	<link rel="stylesheet" href="/assets/font/fontello/css/raster-foundry.css">
+	<link rel="stylesheet" href="/assets/css/vendors/animate/animate.css">
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+
+	<script src="assets/js/vendor/multi-level-menu/modernizr.custom.js"></script>
+	<!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+	<!-- alerts -->
+	<div class="alert-block">
+		<div class="alert alert-warning">
+			<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			  <span aria-hidden="true">&times;</span>
+			</button>
+			You are currently uploading imagery. Do not close out of Raster Foundry until the upload is completed.
+		</div>
+	</div>
+	<!-- /alert-block -->
+
+	<!-- sidebar -->
+	<div class="navbar">
+		<!-- Sidebar Header-->
+		<div class="sidebar-header">
+			<a class="sidebar-brand" href="#">
+				<img src="/assets/img/logo-raster-foundry.png">
+			</a> <!-- /.sidebar-brand -->
+			<div id="dl-menu" class="dl-menuwrapper">
+				<button class="dl-trigger">
+					<span class="pull-right">
+						<span class="icon-bar"></span>
+		        <span class="icon-bar"></span>
+		        <span class="icon-bar"></span>
+					</span>
+					<i class="rf-icon-user"></i> Account 
+				</button>
+				<ul class="dl-menu">
+					<li class="dl-menu-group-title"><i class="rf-icon-map-alt"></i> Mosaic Projects</li>
+					<li class="dl-menu-group">
+						<a href="/project.html" class="new-project">New Mosaic Project</a>
+						<a href="/project-with-layers.html">Project Name 6</a>
+						<a href="/project-with-layers.html">Project Name 2</a>
+						<a href="/project-with-layers.html">Project Name 1</a>
+					</li>
+					<li class="dl-menu-group">
+						<a href="#" class="sub-menu-parent">More Mosaic Projects</a>
+						<ul class="dl-submenu">
+							<li><a href="/project.html" class="new-project">New Mosaic Project</a></li>
+							<li><a href="/project-with-layers.html">Project Name 1</a></li>
+							<li><a href="/project-with-layers.html">Project Name 2</a></li>
+							<li><a href="/project-with-layers.html">Project Name 3</a></li>
+							<li><a href="/project-with-layers.html">Project Name 4</a></li>
+							<li><a href="/project-with-layers.html">Project Name 5</a></li>
+							<li><a href="/project-with-layers.html">Project Name 6</a></li>
+						</ul>
+					</li>
+					<li class="divider"></li>
+					<li>
+						<a href="/library.html"><i class="rf-icon-book"></i> Library</a>
+					</li>
+					<li class="divider"></li>
+					<li>
+						<a href="/account.html"><i class="rf-icon-user"></i> Account</a>
+					</li>
+					<li>
+						<a href="/"><i class="rf-icon-logout"></i> Logout</a>
+					</li>
+				</ul>
+			</div><!-- /.dl-menuwrapper -->
+		</div>
+		<!-- /sidebar header -->
+		<div class="nav">
+			<a href="/account.html">Account</a>
+			<a href="/keys.html">Keys & Authentication</a>
+			<a class="active" href="/billing.html">Billing</a>
+		</div>
+		<!-- /nav -->
+		<div class="account-usage-block">
+			<div class="progress">
+				  <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
+				    <span class="sr-only">60% Complete</span>
+				  </div>
+				</div>
+			<span class="account-usage-label">4.8 GB of 10 GB used</span>
+		</div>
+		<!-- /account-usage-block -->
+	</div>
+	<!-- /sidebar -->
+
+	<div class="container">
+		<h3 class="text-center font-100">Billing & Plan</h3>
+		<div class="content-block">
+				
+		</div>
+	</div>
+
+	<!-- JS -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+	<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+	<script src="/assets/js/leaflet.js"></script>
+	<script src="/assets/js/app.js"></script>
+	<script>
+		/// Multi Level Menu Init
+		$(function() {
+		    $( '#dl-menu' ).dlmenu();
+		});
+	</script>
+	<script src="assets/js/vendor/multi-level-menu/jquery.dlmenu.js"></script>
+  <script src="assets/js/vendor/bootstrap/bootstrap.min.js"></script>
+</body>
+</html>
