@@ -1,3 +1,0 @@
----
-- name: Restart rf-app
-  service: name=rf-app state=restarted

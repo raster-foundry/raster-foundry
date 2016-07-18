@@ -1,8 +1,0 @@
----
-dependencies:
-  - { role: "raster-foundry.base" }
-  - { role: "azavea.python", python_development: True }
-  - { role: "azavea.pip" }
-  - { role: "azavea.nodejs" }
-  - { role: "azavea.phantomjs" }
-  - { role: "raster-foundry.nginx" }
