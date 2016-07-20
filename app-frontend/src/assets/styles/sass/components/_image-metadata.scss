@@ -1,0 +1,54 @@
+.image-metadata {
+  display: none;
+  width: 100%;
+  position: absolute;
+  top: 70px;
+  bottom: 0;
+  background: $white;
+  box-shadow: 0 0 4px rgba(black, .2);
+
+  &.active {
+    display: block;
+  }
+  
+  .close {
+    padding: 20px;
+    outline: none;
+  }
+
+  .sidebar-utility-toolbar {
+    border-bottom: none;
+    padding-top: 10px;
+    padding-left: 20px;
+  }
+
+  .img-preview {
+    margin: 15px auto 30px;
+    display: block;
+    border-radius: 5px;
+  }
+
+  hr {
+    margin-left: -25px;
+    margin-right: -25px;
+  }
+
+  dl {
+    margin: 0;
+    /* width: 50%;
+    float: left; */
+  }
+
+  dt {
+    font-weight: 400;
+    vertical-align: baseline;
+    display: block;
+  }
+
+  dd {
+    font-weight: 500;
+    display: block;
+    margin-bottom: 15px;
+    vertical-align: top;
+  }
+}

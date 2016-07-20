@@ -1,0 +1,29 @@
+<div>
+  <!-- Images (and assets) are parsed and loaded from within the public directory -->
+  <div class="block login-block">
+    <img ng-attr-src="{{::$ctrl.assetLogo}}">
+    <form>
+      <div class="form-group">
+        <label for="search">Username</label>
+        <input type="email" class="form-control" id="search">
+      </div>
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input type="password" class="form-control" id="login-password">
+      </div>
+      <div class="form-action">
+        <a ui-sref="library" class="btn btn-secondary btn-block">Log In</a>
+        <a href="#" class="text-muted small">Forgot Password?</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="video-background">
+    <img ng-attr-src="{{::$ctrl.ffcSpace}}" class="placeholder">
+    <video autoplay loop preload>
+      <source ng-attr-src="{{::$ctrl.videowebm}}" type="video/webm">
+      <source ng-attr-src="{{::$ctrl.videom4v}}" type="video/mp4">
+      <source ng-attr-src="{{::$ctrl.videoogg}}" type="video/ogg">
+    </video>
+  </div>
+</div>
