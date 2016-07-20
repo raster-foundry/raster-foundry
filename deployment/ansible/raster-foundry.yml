@@ -1,0 +1,15 @@
+---
+- hosts: all
+  connection: local
+  become: True
+
+  pre_tasks:
+    - name: Update APT cache
+      apt: update_cache=yes cache_valid_time=3600
+
+  roles:
+    - role: "raster-foundry.docker"
+
+  tasks:
+    - name: Change directory on login
+      lineinfile: dest=/home/vagrant/.bashrc regexp=^raster-foundry_PROFILE line="cd /opt/raster-foundry/"

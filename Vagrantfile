@@ -4,34 +4,12 @@
 Vagrant.require_version ">= 1.8"
 
 if ["up", "provision", "status"].include?(ARGV.first)
-  require_relative "helpers/ansible_galaxy_helper"
+  require_relative "deployment/vagrant/ansible_galaxy_helper"
 
   AnsibleGalaxyHelper.install_dependent_roles("deployment/ansible")
 end
 
-ANSIBLE_GROUPS = {
-  "template" => ["template"]
-}
-
-if !ENV["VAGRANT_ENV"].nil? && ENV["VAGRANT_ENV"] == "TEST"
-  ANSIBLE_ENV_GROUPS = {
-    "test:children" => [
-      # "app-servers", "services", "workers"
-    ]
-  }
-  VAGRANT_NETWORK_OPTIONS = { auto_correct: true }
-else
-  ANSIBLE_ENV_GROUPS = {
-    "development:children" => [
-      # "app-servers", "services", "workers"
-    ]
-  }
-  VAGRANT_NETWORK_OPTIONS = { auto_correct: false }
-end
-
-VAGRANTFILE_API_VERSION = "2"
-
-Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+Vagrant.configure(2) do |config|
   config.vm.box = "ubuntu/trusty64"
 
   # Wire up package caching:
@@ -39,27 +17,36 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.cache.scope = :machine
   end
 
-  config.vm.define "template" do |template|
-    template.vm.hostname = "template"
-    template.vm.network "private_network", ip: ENV.fetch("RF_TEMPLATE_IP", "97.97.50.50")
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+  config.vm.synced_folder ".", "/opt/raster-foundry"
+  config.vm.synced_folder "~/.aws", "/home/vagrant/.aws"
 
-    template.vm.synced_folder ".", "/vagrant", disabled: true
+  # application server
+  config.vm.network :forwarded_port, guest: 9000, host: Integer(ENV.fetch("RF_PORT_9000", 9000))
+  # database
+  config.vm.network :forwarded_port, guest: 5432, host: Integer(ENV.fetch("RF_PORT_5432", 5432))
 
-    # Service 1
-    template.vm.network "forwarded_port", {
-      guest: 1234,
-      host: 1234
-    }.merge(VAGRANT_NETWORK_OPTIONS)
+  config.vm.provider :virtualbox do |vb|
+    vb.memory = 4096
+    vb.cpus = 2
+  end
 
-    template.vm.provider "virtualbox" do |v|
-      v.memory = 1024
-    end
+  config.vm.provision "shell" do |s|
+    s.inline = <<-SHELL
+      if [ ! -x /usr/local/bin/ansible ]; then
+        sudo apt-get update -qq
+        sudo apt-get install python-pip python-dev -y
+        sudo pip install paramiko==1.16.0
+        sudo pip install ansible==2.0.2.0
+      fi
 
-    # Ansible (?)
-    template.vm.provision "ansible" do |ansible|
-      ansible.playbook = "deployment/ansible/template.yml"
-      ansible.groups = ANSIBLE_GROUPS.merge(ANSIBLE_ENV_GROUPS)
-      ansible.raw_arguments = ["--timeout=60"]
-    end
+      cd /opt/raster-foundry/deployment/ansible && \
+      ANSIBLE_FORCE_COLOR=1 PYTHONUNBUFFERED=1 ANSIBLE_CALLBACK_WHITELIST=profile_tasks \
+      ansible-playbook -u vagrant -i 'localhost,' --extra-vars "aws_profile=rasterfoundry" \
+          raster-foundry.yml
+      cd /opt/raster-foundry
+      su vagrant ./scripts/bootstrap
+      su vagrant ./scripts/setup
+    SHELL
   end
 end
