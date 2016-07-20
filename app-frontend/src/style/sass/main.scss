@@ -1,0 +1,67 @@
+//sass --watch assets/sass:assets/css --style compressed
+//
+
+/*
+ * Font import
+ */
+@import url(http://fonts.googleapis.com/css?family=Roboto:500,900,300,700,400,100);
+
+/*
+ * All sass tools, utilities and helpers
+ */
+@import
+  "utils/variables",
+  "utils/mixins",
+  "utils/placeholders";
+
+/*
+ * Vendor style importing
+ */
+            $icon-font-path: "~bootstrap-sass/assets/fonts/bootstrap/";
+@import "~bootstrap-sass/assets/stylesheets/bootstrap";
+
+/*
+ * Boilerplate styling
+ */
+@import
+  "base/base",
+  "base/typography",
+  "base/form";
+
+/*
+ * App layout and overall structure
+ */
+@import
+  "layout/nav",
+  "layout/sidebar",
+  "layout/content",
+  "layout/map";
+
+/*
+ * Smaller components more focused on elements we'll call widgets/modules
+ */
+@import
+  "components/buttons",
+  "components/alerts",
+  "components/dropdown-menu",
+  "components/burger-button",
+  "components/nav-tabs",
+  "components/modal",
+  "components/data-pane",
+  "components/list-group",
+  "components/block-content",
+  "components/map-utilities",
+  "components/sidebar-utilities",
+  "components/layer-detail",
+  "components/image-metadata",
+  "components/progress-bars",
+  "components/account-usage",
+  "components/processing-block",
+  "components/video-background";
+
+
+/*
+ * Page-specific styles.
+ */
+@import
+  "pages/login";

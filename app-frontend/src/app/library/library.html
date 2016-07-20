@@ -1,0 +1,901 @@
+<div class="processing-block">
+	<a class="block-title" role="button" data-toggle="collapse" href="#processing-content" aria-expanded="false" aria-controls="processing-content">
+		<h5>Processing Layers</h5>
+	</a>
+	<div class="collapse" id="processing-content">
+		<div class="list-group">
+			<div class="list-group-item">
+				<div class="list-group-content">
+					<h5>Imagery Layer Name</h5>
+					<ol>
+						<li>Uploading Images <i class="rf-icon-check"></i></li>
+						<li>Mosaicing Tiles <i class="rf-icon-loader animate-spin"></i></li>
+						<!-- There may be need for more steps. -->
+					</ol>
+				</div>
+				<div class="list-group-tool">
+					<a href="#" class="text-danger">Cancel</a>
+				</div>
+			</div>
+			<div class="list-group-item">
+				<div class="list-group-content">
+					<h5>Imagery Layer Name</h5>
+					<ol>
+						<li>Uploading Images <i class="rf-icon-check"></i></li>
+						<li>Mosaicing Tiles <i class="rf-icon-loader animate-spin"></i></li>
+					</ol>
+				</div>
+				<div class="list-group-tool">
+					<a href="#" class="text-danger">Cancel</a>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<!-- /alert-block -->
+
+<!-- sidebar -->
+<div class="sidebar">
+
+	<!-- Sidebar Header-->
+	<!-- contains navigationa and logo  -->
+	<div class="sidebar-header">
+		<a class="sidebar-brand" href="#">
+			<img src="/img/logo-raster-foundry.png">
+		</a> <!-- /.sidebar-brand -->
+		<div id="dl-menu" class="dl-menuwrapper">
+			<button class="dl-trigger">
+				<span class="pull-right">
+					<span class="icon-bar"></span>
+		      <span class="icon-bar"></span>
+		      <span class="icon-bar"></span>
+				</span>
+				<i class="rf-icon-book"></i> Library 
+			</button>
+			<ul class="dl-menu">
+				<li class="dl-menu-group-title"><i class="rf-icon-map-alt"></i> Mosaic Projects</li>
+				<li class="dl-menu-group">
+					<a href="/project.html" class="new-project">New Mosaic Project</a>
+					<a href="/project-with-layers.html">Project Name 6</a>
+					<a href="/project-with-layers.html">Project Name 2</a>
+					<a href="/project-with-layers.html">Project Name 1</a>
+				</li>
+				<li class="dl-menu-group">
+					<a href="#" class="sub-menu-parent">More Mosaic Projects</a>
+					<ul class="dl-submenu">
+						<li><a href="/project.html" class="new-project">New Mosaic Project</a></li>
+						<li><a href="/project-with-layers.html">Project Name 1</a></li>
+						<li><a href="/project-with-layers.html">Project Name 2</a></li>
+						<li><a href="/project-with-layers.html">Project Name 3</a></li>
+						<li><a href="/project-with-layers.html">Project Name 4</a></li>
+						<li><a href="/project-with-layers.html">Project Name 5</a></li>
+						<li><a href="/project-with-layers.html">Project Name 6</a></li>
+					</ul>
+				</li>
+				<li class="divider"></li>
+				<li>
+					<a href="/library.html" class="active"><i class="rf-icon-book"></i> Library</a>
+				</li>
+				<li class="divider"></li>
+				<li>
+					<a href="/account.html"><i class="rf-icon-user"></i> Account</a>
+				</li>
+				<li>
+					<a href="/"><i class="rf-icon-logout"></i> Logout</a>
+				</li>
+			</ul>
+		</div><!-- /.dl-menuwrapper -->
+	</div>
+	<!-- /sidebar header -->
+
+	<!-- sidebar utilities -->
+	<!-- Contains Tabs, Imagery Layers, Sorting and search, and most main actions -->
+  <div class="sidebar-utility" role="tabpanel">
+
+    <!-- Utility tab controller -->
+    <div class="sidebar-utility-header">
+			<!-- Nav tabs -->
+			<ul class="nav nav-tabs nav-tabs-dark" role="tablist">
+			  <li role="presentation" class="active"><a href="#imports" aria-controls="imports" role="tab" data-toggle="tab">My Imports</a></li>
+			  <li role="presentation"><a href="#catalog" aria-controls="catalog" role="tab" data-toggle="tab">Public Catalog</a></li>
+			  <li role="presentation"><a href="#favorites" aria-controls="favorites" role="tab" data-toggle="tab">Favorites</a></li>
+			</ul>
+    </div>
+    <!-- ./sidebar-utility-header -->
+
+		<!-- Tab content Parent Div -->
+    <div class="sidebar-utility-content">
+			
+			<div class="tab-content">
+				<!-- Imports Tab Pane -->
+			  <div role="tabpanel" class="tab-pane active animated fadeInLeft" id="imports">
+			    
+					<!-- Sorting, Search, Add to workspace -->
+			    <div class="sidebar-utility-toolbar">
+				    <div class="utility-tools col-2">
+				    	<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Import Imagery Layer">
+								<button class="btn btn-secondary" id="import-imagery" type="button" data-toggle="modal" data-target="#import-imagery-modal"><i class="rf-icon-upload"></i></button>
+				    	</span>
+				    	<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Search Imports">
+		    				<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#search-imagery" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-search"></i></button>
+							</span>
+							<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Sort Imports">
+		    				<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#sort-imagery" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-sort-alt-up"></i> </button>
+	    				</span>
+			      </div>
+
+			      <div class="utility-tools col-2 text-right utility-tools-secondary">
+							<button class="btn btn-danger btn-sm"><i class="rf-icon-trash-empty"></i> Delete</button>
+							<button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addto-imagery-modal"><i class="rf-icon-plus"></i> Add to</button>
+							<div class="checkbox toggle-all select-all">
+								<input type="checkbox">
+								<label></label>
+							</div>
+						</div>
+			    </div>
+
+			    <!-- Expandable Search and Filter blocks -->
+			    <div class="collapse" id="search-imagery">
+			    	<div class="panel panel-default">
+							<div class="panel-body">
+							  <form>
+					    		<fieldset>
+					    			<input type="text" class="form-control" placeholder="Search by name, organization or tag">
+					    		</fieldset>
+				    		</form>
+							</div>
+						</div>
+			    </div>
+
+			    <div class="collapse" id="sort-imagery">
+			    	<div class="panel panel-default">
+							<div class="panel-body">
+					    	<form>
+					    		<fieldset>
+					    			<select class="form-control">
+					    				<option selected disabled>Sort Imagery Layers</option>
+					    				<option>Area</option>
+					    				<option>Capture Start Date</option>
+					    				<option>Capture End Date</option>
+					    				<option>Source Data Projection</option>
+					    			</select>
+					    		</fieldset>
+				    		</form>
+			    		</div>
+		    		</div>
+			    </div>
+
+
+			    <!-- Imagery Layers -->
+					<div class="list-group">
+						<!-- List Group Item -->
+						<div class="list-group-item link">
+							<a class="list-group-link" href="#"></a>
+							<div class="list-group-detail">
+								<img src="http://placehold.it/200x200">
+							</div>
+							<div class="list-group-content">
+								<h5>Imagery Layer Name</h5>
+								<p>Organization Name</p>
+							</div>
+							<div class="list-group-tool">
+								<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
+									<i class="rf-icon-star control-active text-primary"></i> 
+									<i class="rf-icon-star-empty control-inactive"></i>
+								</button>
+								<div class="checkbox">
+									<input type="checkbox">
+									<label></label>
+								</div>
+							</div>
+							<div class="list-group-actions">
+								<div class="dropdown">
+									<button type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="btn btn-default">
+									  <i class="rf-icon-ellipsis"></i>
+									</button>
+									<ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dLabel">
+									  <li><a href="#">Edit Metadata</a></li>
+									  <li><a href="#">Import Options</a></li>
+									  <li class="divider"></li>
+									  <li><a href="#" class="text-danger">Delete</a></li>
+									</ul>
+								</div>
+							</div> <!-- /.list-group-actions -->
+						</div>
+						<!-- List Group Item -->
+						<div class="list-group-item link">
+							<a class="list-group-link" href="#"></a>
+							<div class="list-group-detail">
+								<img src="http://placehold.it/200x200">
+							</div>
+							<div class="list-group-content">
+								<h5>Imagery Layer Name</h5>
+								<p>Organization Name</p>
+							</div>
+							<div class="list-group-tool">
+								<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
+									<i class="rf-icon-star control-active text-primary"></i> 
+									<i class="rf-icon-star-empty control-inactive"></i>
+								</button>
+								<div class="checkbox">
+									<input type="checkbox">
+									<label></label>
+								</div>
+							</div>
+							<div class="list-group-actions">
+								<div class="dropdown">
+									<button type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="btn btn-default">
+									  <i class="rf-icon-ellipsis"></i>
+									</button>
+									<ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dLabel">
+									  <li><a href="#">Edit Metadata</a></li>
+									  <li><a href="#">Import Options</a></li>
+									  <li class="divider"></li>
+									  <li><a href="#" class="text-danger">Delete</a></li>
+									</ul>
+								</div>
+							</div> <!-- /.list-group-actions -->
+						</div>
+						<!-- List Group Item -->
+						<div class="list-group-item link">
+							<a class="list-group-link" href="#"></a>
+							<div class="list-group-detail">
+								<img src="http://placehold.it/200x200">
+							</div>
+							<div class="list-group-content">
+								<h5>Imagery Layer Name</h5>
+								<p>Organization Name</p>
+							</div>
+							<div class="list-group-tool">
+								<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
+									<i class="rf-icon-star control-active text-primary"></i> 
+									<i class="rf-icon-star-empty control-inactive"></i>
+								</button>
+								<div class="checkbox">
+									<input type="checkbox">
+									<label></label>
+								</div>
+							</div>
+							<div class="list-group-actions">
+								<div class="dropdown">
+									<button type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="btn btn-default">
+									  <i class="rf-icon-ellipsis"></i>
+									</button>
+									<ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dLabel">
+									  <li><a href="#">Edit Metadata</a></li>
+									  <li><a href="#">Import Options</a></li>
+									  <li class="divider"></li>
+									  <li><a href="#" class="text-danger">Delete</a></li>
+									</ul>
+								</div>
+							</div> <!-- /.list-group-actions -->
+						</div>
+						<!-- List Group Item -->
+						<div class="list-group-item link">
+							<a class="list-group-link" href="#"></a>
+							<div class="list-group-detail">
+								<img src="http://placehold.it/200x200">
+							</div>
+							<div class="list-group-content">
+								<h5>Imagery Layer Name</h5>
+								<p>Organization Name</p>
+							</div>
+							<div class="list-group-tool">
+								<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
+									<i class="rf-icon-star control-active text-primary"></i> 
+									<i class="rf-icon-star-empty control-inactive"></i>
+								</button>
+								<div class="checkbox">
+									<input type="checkbox">
+									<label></label>
+								</div>
+							</div>
+							<div class="list-group-actions">
+								<div class="dropdown">
+									<button type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="btn btn-default">
+									  <i class="rf-icon-ellipsis"></i>
+									</button>
+									<ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dLabel">
+									  <li><a href="#">Edit Metadata</a></li>
+									  <li><a href="#">Import Options</a></li>
+									  <li class="divider"></li>
+									  <li><a href="#" class="text-danger">Delete</a></li>
+									</ul>
+								</div>
+							</div> <!-- /.list-group-actions -->
+						</div>
+					</div>
+			  </div> <!-- /#imports.tab-pane -->
+
+			  <!-- Catalog Tab Pane -->
+			  <div role="tabpanel" class="tab-pane animated fadeInLeft" id="catalog">
+			    
+			    <!-- Sorting, Search, Add to workspace -->
+			    <div class="sidebar-utility-toolbar">
+				    <div class="utility-tools col-2">
+				    	<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Search Catalog">
+		    				<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#search-catalog" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-search"></i></button>
+							</span>
+							<span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Sort Catalog">
+		    				<button class="btn btn-default" type="button" data-toggle="collapse" data-target="#sort-catalog" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-sort-alt-up"></i> </button>
+	    				</span>
+			      </div>
+
+			      <div class="utility-tools col-2 text-right utility-tools-secondary">
+							<button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#addto-imagery-modal"><i class="rf-icon-plus"></i> Add to</button>
+							<div class="checkbox toggle-all select-all">
+								<input type="checkbox">
+								<label></label>
+							</div>
+						</div>
+			    </div>
+
+			    <!-- Imagery Layers -->
+					<div class="list-group">
+						<!-- List Group Item -->
+						<div class="list-group-item link">
+							<a class="list-group-link" href="#"></a>
+							<div class="list-group-detail">
+								<img src="http://placehold.it/200x200">
+							</div>
+							<div class="list-group-content">
+								<h5>Imagery Layer Name</h5>
+								<p>Organization Name</p>
+							</div>
+							<div class="list-group-tool">
+								<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
+									<i class="rf-icon-star control-active text-primary"></i> 
+									<i class="rf-icon-star-empty control-inactive"></i>
+								</button>
+								<div class="checkbox">
+									<input type="checkbox">
+									<label></label>
+								</div>
+							</div>
+						</div>
+						<!-- List Group Item -->
+						<div class="list-group-item link">
+							<a class="list-group-link" href="#"></a>
+							<div class="list-group-detail">
+								<img src="http://placehold.it/200x200">
+							</div>
+							<div class="list-group-content">
+								<h5>Imagery Layer Name</h5>
+								<p>Organization Name</p>
+							</div>
+							<div class="list-group-tool">
+								<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
+									<i class="rf-icon-star control-active text-primary"></i> 
+									<i class="rf-icon-star-empty control-inactive"></i>
+								</button>
+								<div class="checkbox">
+									<input type="checkbox">
+									<label></label>
+								</div>
+							</div>
+						</div>
+						<!-- List Group Item -->
+						<div class="list-group-item link">
+							<a class="list-group-link" href="#"></a>
+							<div class="list-group-detail">
+								<img src="http://placehold.it/200x200">
+							</div>
+							<div class="list-group-content">
+								<h5>Imagery Layer Name</h5>
+								<p>Organization Name</p>
+							</div>
+							<div class="list-group-tool">
+								<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
+									<i class="rf-icon-star control-active text-primary"></i> 
+									<i class="rf-icon-star-empty control-inactive"></i>
+								</button>
+								<div class="checkbox">
+									<input type="checkbox">
+									<label></label>
+								</div>
+							</div>
+						</div>
+						<!-- List Group Item -->
+						<div class="list-group-item link">
+							<a class="list-group-link" href="#"></a>
+							<div class="list-group-detail">
+								<img src="http://placehold.it/200x200">
+							</div>
+							<div class="list-group-content">
+								<h5>Imagery Layer Name</h5>
+								<p>Organization Name</p>
+							</div>
+							<div class="list-group-tool">
+								<button type="button" class="btn btn-toggle-control btn-favorite" data-toggle="button" aria-pressed="true" autocomplete="off">
+									<i class="rf-icon-star control-active text-primary"></i> 
+									<i class="rf-icon-star-empty control-inactive"></i>
+								</button>
+								<div class="checkbox">
+									<input type="checkbox">
+									<label></label>
+								</div>
+							</div>
+						</div>
+					</div>
+			  </div> <!-- /#catalog.tab-pane -->
+
+			  <!-- Favorites Tab Pane -->
+			  <div role="tabpanel" class="tab-pane animated fadeInLeft" id="favorites">
+			    <!-- Sorting, Search, Add to workspace -->
+			    <!-- The following commented out code will only show when a user has favorites -->
+			    <!-- <div class="sidebar-utility-toolbar">
+				    	 <div class="utility-tools col-2">
+				    	 <span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Search Catalog">
+		    			 <button class="btn btn-default" type="button" data-toggle="collapse" data-target="#search-catalog" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-search"></i></button>
+							 </span>
+							 <span class="tool-toggle" data-toggle="tooltip" data-placement="bottom" title="Sort Catalog">
+		    			 <button class="btn btn-default" type="button" data-toggle="collapse" data-target="#sort-catalog" aria-expanded="false" aria-controls="collapseExample"><i class="rf-icon-sort-alt-up"></i> </button>
+	    				 </span>
+			         </div>
+
+			         <div class="utility-tools col-2 text-right utility-tools-secondary">
+							 <button class="btn btn-warning btn-sm"><i class="rf-icon-star"></i> Remove From Favorites</button>
+							 <button class="btn btn-primary btn-sm"><i class="rf-icon-plus"></i> Add to</button>
+							 <div class="checkbox toggle-all select-all">
+							 <input type="checkbox">
+							 <label></label>
+							 </div>
+							 </div>
+			    	   </div> -->
+
+			    <!-- Imagery Layers -->
+					<div class="list-group">
+						<!-- List Group Item -->
+						<div class="list-group-item">
+							<p class="h5 text-muted">Your favorited imagery layers will show up here.</p>
+						</div>
+					</div>
+			  </div> <!-- /#favorites.tab-pane -->
+			</div> <!-- /.tab-content -->
+
+    </div>
+    <!-- ./sidebar-utility-content -->
+
+    <!-- Imagery Layer Metadata Panel -->
+		<div class="layer-detail animated slideInLeft">
+			<div class="sidebar-utility-toolbar">
+		    <div class="utility-tools col-2">
+    			<ul class="nav nav-tabs" role="tablist">
+					  <li role="presentation" class="active"><a href="#layer-detail" aria-controls="layer-detail" role="tab" data-toggle="tab">Metadata</a></li>
+					  <li role="presentation"><a href="#layer-images" aria-controls="layer-images" role="tab" data-toggle="tab">Images</a></li>
+					</ul>
+	      </div>
+
+	      <div class="utility-tools col-2 text-right">
+					<button type="button" class="close"><i class=" rf-icon-cancel"></i></button>
+				</div>
+	    </div>
+	    <div class="tab-content">
+	    	<div  role="tabpanel" class="tab-pane active" id="layer-detail">
+	    		<div class="layer-detail-content">
+						<h4>Imagery Layer Name 1</h4>
+						<img class="img-preview" src="http://placehold.it/400x150">
+						<p>These Landsat 7 composites are made from Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex. </p>
+						<p>Ea commodo consequat. Duis aute irure dolor in reprehend in voluptate velit esse cill.</p>
+						<hr>
+						<div class="form-group">
+							<label>TMS URL</label>
+							<input class="form-control" value="https://tiles.rasterfoundry.com/v1/rf.user.1dsaf3/page.html?a" readonly>
+						</div>
+						<hr>
+						<dl> 
+							<dt>Title:</dt>
+							<dd>Imagery Layer Name 1</dd>
+							
+							<dt>Provider:</dt>
+							<dd>Organization Name</dd>
+							
+							<dt>Capture Start Date:</dt>
+							<dd>March 15, 2015</dd>
+							
+							<dt>Capture End Date:</dt>
+							<dd>March 30, 2015</dd>
+							
+							<dt>Area:</dt>
+							<dd>120 sq. Miles</dd>
+							
+							<dt>Source Data Projection: </dt>
+							<dd>N/A</dd>
+							
+							<dt>Total Images: </dt>
+							<dd>162</dd>
+
+							<dt>Tags:</dt>
+							<dd>
+								<a href="#">earthquake</a>,
+								<a href="#">damage assessment </a>,
+								<a href="#">evi</a>,
+								<a href="#">Landsat</a>
+							</dd>
+						</dl>
+					</div>
+				</div>
+				<div  role="tabpanel" class="tab-pane" id="layer-images">
+					<div class="list-group">
+						<div class="list-group-item link">
+							<div class="list-group-detail">
+								<img src="http://placehold.it/200x200">
+							</div>
+							<div class="list-group-content">
+								<h5>P1020861.JPG</h5>
+								<a href="#" class="view-metadata">View Metadata</a>
+							</div>
+						</div>
+						<div class="list-group-item link">
+							<div class="list-group-detail">
+								<img src="http://placehold.it/200x200">
+							</div>
+							<div class="list-group-content">
+								<h5>P1020861.JPG</h5>
+								<a href="#" class="view-metadata">View Metadata</a>
+							</div>
+						</div>
+						<div class="list-group-item link">
+							<div class="list-group-detail">
+								<img src="http://placehold.it/200x200">
+							</div>
+							<div class="list-group-content">
+								<h5>P1020861.JPG</h5>
+								<a href="#" class="view-metadata">View Metadata</a>
+							</div>
+						</div>
+						<div class="list-group-item link">
+							<div class="list-group-detail">
+								<img src="http://placehold.it/200x200">
+							</div>
+							<div class="list-group-content">
+								<h5>P1020861.JPG</h5>
+								<a href="#" class="view-metadata">View Metadata</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- /.layer-Metadata -->
+		
+		<!-- Image Metadata Panel -->
+		<div class="image-metadata animated slideInLeft">
+		  <div class="sidebar-utility-toolbar">
+		    <div class="utility-tools col-2">
+    			<h5 class="font-300">Image Metadata: </h5>
+					<h4>P1020861.JPG</h4>
+	      </div>
+
+	      <div class="utility-tools col-2 text-right">
+					<button type="button" class="close"><i class=" rf-icon-cancel"></i></button>
+				</div>
+	    </div>
+	    <div class="layer-detail-content">
+				<img class="img-preview" src="http://placehold.it/300x300">
+				<hr>
+				<dl> 
+					<dt>Acquistion: </dt>
+					<dd>11-12-2015</dd>
+
+					<dt>Local Time of Day: </dt>
+					<dd>15:42</dd>
+
+					<dt>Latitude: </dt>
+					<dd>39.226º</dd>
+
+					<dt>Longitude: </dt>
+					<dd>-74.892º</dd>
+
+					<dt>Image Quality: </dt>
+					<dd>Standard</dd>
+
+					<dt>SNR: </dt>
+					<dd>75.30</dd>
+
+					<dt>Sun Alittude: </dt>
+					<dd>N/A</dd>
+
+					<dt>Sun Longitude: </dt>
+					<dd>N/A</dd>
+
+					<dt>Satellite ID: </dt>
+					<dd>N/A</dd>
+				</dl>
+
+				<dl>
+					<dt>Camera Bit Depth: </dt>
+					<dd>10</dd>
+
+					<dt>Camera Color Mode:</dt>
+					<dd>RGB</dd>
+
+					<dt>Camera Exposure Time: </dt>
+					<dd>1170μs</dd>
+
+					<dt>Camera Gain: </dt>
+					<dd>350</dd>
+
+					<dt>Camera TDI Pulses: </dt>
+					<dd>15</dd>
+
+					<dt>Cloud Cover: </dt>
+					<dd>0.26%</dd>
+
+					<dt>File Size: </dt>
+					<dd>58MB</dd>
+
+					<dt>GSD: </dt>
+					<dd>4.25 m</dd>
+				</dl>
+			</div>
+		</div>
+		<!-- /.image-metadata -->
+
+  </div>
+	<!-- /sidebar utilities -->
+</div>
+<!-- /sidebar -->
+
+<div class="account-usage-block">
+	<div class="progress">
+		<div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
+			<span class="sr-only">60% Complete</span>
+		</div>
+	</div>
+	<span class="account-usage-label">4.8 GB of 10 GB used</span>
+	<a href="#">Manage</a>
+</div>
+<!-- /account-usage-block -->
+
+<!-- map-container -->
+<rf-leaflet-map rf-map-id="libraryMap"></rf-leaflet-map>
+<!-- /map-container -->
+
+<!-- Import Files Modal -->
+<div class="modal import-modal fade" id="import-imagery-modal" tabindex="-1" role="dialog" aria-labelledby="import-imagery-modal" aria-hidden="true">
+	<div id="pane-1" class="pane animated fadeInDown active">
+		<div class="modal-dialog modal-lg">
+		  <div class="modal-content">
+	      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><i class="rf-icon-cancel"></i></button>
+		    <div class="modal-body no-padding">
+		      <div class="container-fluid">
+						<div class="row">
+				      <div class="col-md-7 import-browse">
+				      	<i class="rf-icon-upload-cloud-outline"></i>
+								<h3 class="font-400">Drag &amp; Drop</h3>
+								<h4 class="font-300">to store your imagery here, or <a href="#">browse</a>.</h4>
+								<em>zip files or single image files accepted</em>
+				      </div>
+				      <div class="col-md-5 import-uri">
+								<i class="rf-icon-link"></i>
+								<h3 class="font-400">Upload with a URI</h3>
+								<h4 class="font-300">Is your imagery hosted somewhere already? Enter the URI to import.</h4>
+								<em>Examples: S3, DropBox, FTP</em>
+								<form>
+									<div class="form-group">
+										<label>URI</label>
+										<input class="form-control" type="url">
+									</div>
+									<div class="form-action text-right">
+										<!-- <input type="submit" class="btn btn-primary" value="Continue"> -->
+										<button class="btn btn-secondary" data-toggle-pane data-pane-target="#pane-2">Continue</button>
+									</div>
+								</form>
+				      </div>
+			      </div>
+		      </div>
+		    </div> <!-- /.modal-body -->
+		  </div> <!-- /.modal-content -->
+		</div> <!-- /.modal-dialog -->
+	</div> <!-- /#pane-1 -->
+	
+	<div id="pane-2" class="pane animated fadeInDown">
+		<div class="modal-dialog">
+		  <div class="modal-content">
+	      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+		    <div class="modal-body">
+		      <form>
+						<div class="form-group">
+							<label>URI</label>
+							<input class="form-control" type="url">
+						</div>
+						<div class="form-group">
+							<label>Description</label>
+							<textarea class="form-control" rows="4"></textarea>
+						</div>
+						<div class="form-group">
+							<label>Tags</label>
+							<input class="form-control" type="url">
+						</div>
+						<div class="row">
+							<div class="col-md-6">
+								<div class="form-group">
+									<label>Capture Start Date</label>
+									<input class="form-control" type="date">
+								</div>
+							</div>
+							<div class="col-md-6">
+								<div class="form-group">
+									<label>Capture End Date</label>
+									<input class="form-control" type="date">
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-md-6">
+								<div class="form-group">
+									<label>Area</label>
+									<div class="select-group">
+										<input class="form-control" type="number">
+										<select class="form-control">
+											<option>sq. mi</option>
+											<option>sq. km</option>
+										</select>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-6">
+								<div class="form-group">
+									<label>Source Data Projection</label>
+									<select class="form-control">
+									</select>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-md-6">
+								<div class="form-group">
+									<label>Total Images</label>
+									<input class="form-control" type="number" readonly>
+								</div>
+							</div>
+						</div>
+						<ul class="list-group">
+							<li class="list-group-item">file_name.tiff <a href="#" class="pull-right"><i class="rf-icon-cancel text-danger"></i></a></li>
+							<li class="list-group-item">file_name_2.tiff <a href="#" class="pull-right"><i class="rf-icon-cancel text-danger"></i></a></li>
+							<li class="list-group-item">file_name_3.tiff <a href="#" class="pull-right"><i class="rf-icon-cancel text-danger"></i></a></li>
+						</ul>
+
+						<div class="form-action">
+							<!-- <input type="submit" class="btn btn-secondary pull-right" value="Submit"> -->
+							<button class="btn btn-secondary pull-right" data-toggle-pane data-pane-target="#pane-3">Submit</button>
+							<button class="btn btn-link text-muted">Cancel</button>
+						</div>
+		      </form>
+		    </div> <!-- /.modal-body -->
+		  </div> <!-- /.modal-content -->
+		</div> <!-- /.modal-dialog -->
+	</div> <!-- /#pane-2 -->
+
+	<div id="pane-3" class="pane animated fadeInDown">
+		<div class="modal-dialog">
+		  <div class="modal-content">
+	      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+		    <div class="modal-body">
+		      <form>
+		      	<div class="row">
+							<div class="col-md-8">
+								<div class="form-group">
+									<label>Source SRS</label>
+									<input class="form-control" type="text" value="UTM Zone 18" readonly>
+								</div>
+							</div>
+							<div class="col-md-4">
+								<label>&nbsp;</label>
+								<button class="btn btn-default-outline btn-block" value="Change SRS">Change SRS</button>
+							</div>
+						</div>
+						<div class="form-group">
+							<label>Tile SRS</label>
+							<select class="form-control">
+								<option value="">Web Mercator</option>
+								<option value="">UTM</option>
+								<option value="">WGS84 (EPSG: 4325)</option>
+								<option value="">EPSG/ESRI offline database</option>
+							</select>
+						</div>
+			      <hr>
+						<h4>Mosaic Options</h4>
+						<div class="form-group">
+							<label>Tile Format</label>
+							<select class="form-control">
+								<option>JPEG</option>
+								<option>Overlay PNG + optimisation (8 bit palette with alpha transparency)</option>
+								<option>Overlay PNG format (32 bit RGBA with alpha transparency)</option>
+								<option>Base map JPEG format (without transparency)</option>
+								<option>Base map PNG format + optimisation (8 bit palette with alpha transparency)</option>
+								<option>Base map PNG format (24 bit RGB without transparency)</option>
+							</select>
+						</div>
+						<div class="form-group">
+							<label>Resampling</label>
+							<select class="form-control">
+								<option value="">Bilinear</option>
+								<option value="">Cubic</option>
+								<option value="">Cubic B-Spline</option>
+								<option value="">Average</option>
+								<option value="">Mode</option>
+								<option value="">Nearest Neighbor</option>
+							</select>
+						</div>
+						<div class="form-group">
+							<label>Transparency Settings</label><br>
+							<div class="radio">
+								<input name="transparency-setting" type="radio" checked>
+								<label>Default</label>
+							</div>
+							<br>
+							<div class="radio">
+								<input name="transparency-setting" type="radio">
+								<label>Color to Alpha</label>
+							</div>
+							<input type="color">
+						</div>
+						<div class="form-group">
+							<label>Tiling Scheme</label><br>
+							<div class="radio">
+								<input name="tiling-scheme" type="radio" checked>
+								<label>OGC WMTS / OpenStreetMap / Google XYZ (top-left origin)</label>
+							</div>
+							<br>
+							<div class="radio">
+								<input name="tiling-scheme" type="radio">
+								<label>OSGEO TMS (bottom-left origin)</label>
+							</div>
+						</div>
+						<hr>
+						<div class="form-group">
+			      	<label>Image Upload Progress</label>
+				      <div class="progress">
+								<div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
+								  <span class="sr-only">60% Complete</span>
+								</div>
+							</div>
+							<em>Mosaic won't begin until upload has completed</em>
+						</div>
+						<div class="form-action">
+							<input type="submit" class="btn btn-secondary pull-right" value="Submit">
+							<button class="btn btn-link text-muted">Cancel</button>
+						</div>
+		      </form>
+		    </div> <!-- /.modal-body -->
+		  </div> <!-- /.modal-content -->
+		</div> <!-- /.modal-dialog -->
+	</div> <!-- /#pane-3 -->
+
+</div>
+<!-- /import modal -->
+
+<div class="modal fade" id="addto-imagery-modal" tabindex="-1" role="dialog" aria-labelledby="addto-imagery-modal" aria-hidden="true">
+	<div class="modal-dialog">
+	  <div class="modal-content">
+	    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><i class="rf-icon-cancel"></i></button>
+	    <div class="modal-body">
+	      <form>
+	        <div class="form-group">
+	        	<label>Add Imagery To:</label>
+	        	<select class="form-control">
+	        		<option>New Project</option>
+	        		<option>Project Name 1</option>
+	        		<option>Project Name 2</option>
+	        		<option>Project Name 3</option>
+	        	</select>
+	        </div>
+
+	        <div class="form-group">
+						<label>New Project Name</label>
+						<input type="text" class="form-control">
+	        </div>
+
+	        <div class="form-action">
+						<!-- <input type="submit" class="btn btn-secondary pull-right" value="Add to project"> -->
+						<a href="/project-with-layers.html" class="btn btn-secondary pull-right">Add to project</a>
+						<button class="btn btn-link text-muted">Cancel</button>
+					</div>
+        </form>
+	    </div>
+	  </div><!-- /.modal-content -->
+	</div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+<!-- /add layer to project modal -->
