@@ -1,0 +1,5 @@
+---
+# meta file for raster-foundry.docker
+dependencies:
+  - { role: azavea.pip }
+  - { role: azavea.docker }

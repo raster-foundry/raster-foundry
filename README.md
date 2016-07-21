@@ -1,67 +1,61 @@
 # Raster Foundry
 
-## Phase 1
+## Getting Started
 
-The final state of Phase 1 may be found by checking out the `0.0.1` tag.
+A virtual machine is used to encapsulate docker dependencies. `docker-compose` is used within the VM to manage running the application and developing against it.
 
-## Local Development
+### Requirements
+- Vagrant 1.8.0+
+- VirtualBox 5.0.14+
+- Ansible 1.8.0+ (on host)
 
-### Getting Started
+### Development
 
-Use the following command to bring up a local development environment:
-
+_tldr_
 ```bash
-$ vagrant up
+  vagrant up
+  vagrant ssh
+  cd /opt/raster-foundry/
+  ./scripts/server
 ```
 
-The application will now be running at
+Use `vagrant up` to provision a virtual machine. During provisioning `docker` and `docker-compose` will be installed on the guest machine. Additionally, docker images will be downloaded for the database and created for the `akka-http` application server.
 
-After pulling in new commits, you may need to run the following commands:
+Once the machine is provisioned you can start services or development by ssh-ing into the machine (`vagrant ssh`) and using the helper scripts in the `/opt/raster-foundry/scripts` directory.
 
-```bash
-# command here
-```
+Development workflow varies by developer, but a typical development experience might include the following:
+ - create a new feature branch
+ - start up the vagrant machine with `vagrant up --provision`
+ - get an `sbt` console open using `./scripts/console app-server ./sbt`
+ - make changes to scala code
+ - try compiling (`~compile`) or running the service to inspect it (`~run`)
 
-Watch the JavaScript and SASS files for changes:
+## Ports
 
-```bash
-# command here
-```
+The Vagrant configuration maps the following host ports to services running in the virtual machines. Ports can be overridden for individual developers using environment variables
 
-```bash
-$ vagrant provision <VM name>
-```
+| Service                   | Port                            | Environment Variable |
+|---------------------------|---------------------------------|----------------------|
+| Application Server (akka) | [`9000`](http://localhost:9000) | `RF_PORT_9000`       |
+| Database                  | `5432`                          | `RF_PORT_5432`       |
 
-After provisioning is complete, you can login to the application server and execute Django management commands:
 
-```bash
-# command here
-```
+## Scripts
 
-### Ports
+Helper and development scripts are located in the `./scripts` directory at the root of this project. These scripts are designed to encapsulate and perform commonly used actions such as starting a development server, accessing a development console, or running tests.
 
-The Vagrant configuration maps the following host ports to services running in the virtual machines.
+| Script Name | Purpose                                                      |
+|-------------|--------------------------------------------------------------|
+| `bootstrap` | Pulls/builds necessary containers                            |
+| `setup`     | Runs migrations, installs dependencies, etc                  |
+| `server`    | Starts a development server                                  |
+| `console`   | Gives access to a running container via `docker-compose run` |
+| `test`      | Runs tests and linters for project                           |
 
-Service                | Port | URL
----------------------- | -----| ------------------------------------------------
-                       | xxxx | [http://localhost:xxxx](http://localhost:xxxx)
-
-### Caching
-
-In order to speed up things up, you may want to consider leveraging the `vagrant-cachier` plugin. If installed, it is automatically used by Vagrant.
-
-### Test Mode
-
-In order to run the app in test mode, which simulates the production static asset bundle, reprovision with `VAGRANT_ENV=TEST vagrant provision`.
-
-### Testing
+## Testing
 
 Run all the tests:
 
 ```bash
-# command here
+  ./scripts/test
 ```
-
-#### Adding JS dependencies
-
-Add instructions here

@@ -12,18 +12,19 @@ module AnsibleGalaxyHelper
     end
   end
 
-  # Uses the contents of roles.txt to ensure that ansible-galaxy is run
+  # Uses the contents of roles.yml to ensure that ansible-galaxy is run
   # if any dependencies are missing
   def self.install_dependent_roles(ansible_directory)
-    ansible_roles_txt = File.join(ansible_directory, "roles.txt")
+    ansible_roles_spec = File.join(ansible_directory, "roles.yml")
 
-    File.foreach(ansible_roles_txt) do |line|
-      role_name, role_version = line.split(",")
+    YAML.load_file(ansible_roles_spec).each do |role|
+      role_name = role["src"]
+      role_version = role["version"]
       role_path = File.join(ansible_directory, "roles", role_name)
       galaxy_metadata = galaxy_install_info(role_path)
 
       if galaxy_metadata["version"] != role_version.strip
-        unless system("ansible-galaxy install -f -r #{ansible_roles_txt} -p #{File.dirname(role_path)}")
+        unless system("ansible-galaxy install -f -r #{ansible_roles_spec} -p #{File.dirname(role_path)}")
           $stderr.puts "\nERROR: An attempt to install Ansible role dependencies failed."
           exit(1)
         end

@@ -1,0 +1,26 @@
+#!/bin/bash
+set -eu
+
+DIR="$(dirname "$0")"
+
+
+function usage() {
+
+    echo -n \
+"Usage: $(basename "$0")
+
+Basic project setup
+"
+}
+
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]
+then
+    if [ "${1:-}" = "--help" ]
+    then
+        usage
+    else
+        docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-server sbt update
+    fi
+    exit
+fi
