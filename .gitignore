@@ -96,3 +96,4 @@ app-server/.ensime
 app-server/.ensime_cache/*
 /deployment/ansible/raster-foundry.retry
 /.ivy2/*
+.sbt/

@@ -1,0 +1,27 @@
+version: '2'
+services:
+  # Database
+  postgres:
+    image: quay.io/azavea/postgis:9.4.4
+    environment:
+      POSTGRES_USER: rasterfoundry
+      POSTGRES_PASSWORD: rasterfoundry
+      POSTGRES_DB: rasterfoundry
+    ports:
+      - "5432:5432"
+
+  app-server:
+    image: quay.io/azavea/scala:2.11.8
+    links:
+      - postgres:database.raster-foundry.internal
+    environment:
+      POSTGRES_USER: rasterfoundry
+      POSTGRES_PASSWORD: rasterfoundry
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./app-server/:/opt/raster-foundry/app-server/
+      - ./.ivy2:/root/.ivy2
+      - ./.sbt:/root/.sbt
+    working_dir: /opt/raster-foundry/app-server/
+    command: ./sbt run
