@@ -38,6 +38,7 @@ The Vagrant configuration maps the following host ports to services running in t
 |---------------------------|---------------------------------|----------------------|
 | Application Server (akka) | [`9000`](http://localhost:9000) | `RF_PORT_9000`       |
 | Database                  | `5432`                          | `RF_PORT_5432`       |
+| Swagger Editor            | [`8080`](http://localhost:8080) | `RF_PORT_8080`       |
 
 
 ## Scripts

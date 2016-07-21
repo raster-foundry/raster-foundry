@@ -25,3 +25,8 @@ services:
       - ./.sbt:/root/.sbt
     working_dir: /opt/raster-foundry/app-server/
     command: ./sbt run
+
+  swagger-editor:
+    image: swaggerapi/swagger-editor:latest
+    ports:
+      - "8080:8080"

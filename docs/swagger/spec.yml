@@ -1,0 +1,331 @@
+swagger: '2.0'
+info:
+  title: Raster Foundry
+  description: An application to work find and manipulate large-scale geospatial and raster data
+  version: "0.1.0"
+
+host: localhost:9000
+
+schemes:
+  - http
+  - https
+
+basePath: /api
+
+produces:
+  - application/json
+consumes:
+  - application/json
+
+tags:
+  - name: Users
+    description: Operations involving users and organizations
+
+paths:
+  /users/:
+    get:
+      summary: Get a list of user
+      description: |
+        The Users API endpoint enables searching and listing users.
+      tags:
+        - Users
+      parameters:
+        - $ref: '#/parameters/orderingBase'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/organization'
+        - name: status
+          in: query
+          description: Filter users by active/inactive status
+          required: false
+          type: string
+        - name: role
+          in: query
+          description: Role to filter users by (e.g. get all admin users)
+          required: false
+          type: string
+      responses:
+        200:
+          description: Paginated list of users
+          schema:
+            $ref: '#/definitions/UserPaginated'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create a user
+      description: |
+        Create a new user.
+      tags:
+        - Users
+      parameters:
+        - name: User
+          in: body
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        201:
+          description: User created
+          schema:
+            $ref: '#/definitions/User'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /users/{uuid}/:
+    get:
+      summary: Get a single user
+      tags:
+        - Users
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: User found
+          schema:
+            $ref: '#/definitions/User'
+        404:
+          description: User not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Update a user
+      tags:
+        - Users
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - name: User
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        204:
+          description: Update successful (No Content)
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /organizations/:
+    get:
+      summary: Retrieve list of organizations
+      tags:
+        - Organizations
+      parameters:
+        - $ref: '#/parameters/orderingBase'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+      responses:
+        200:
+          description: Paginated list of organizations
+          schema:
+            $ref: '#/definitions/OrganizationPaginated'
+    post:
+      summary: Create a new organization
+      tags:
+        - Organizations
+      parameters:
+        - name: organization
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Organization'
+      responses:
+        201:
+          description: Return newly created organization
+          schema:
+            $ref: '#/definitions/Organization'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /organizations/{organizationSlug}/:
+    get:
+      summary: Retrieve details for an organization
+      tags:
+        - Organizations
+      parameters:
+        - name: organizationSlug
+          in: path
+          required: true
+          type: string
+      responses:
+        200:
+          description: Returned organization
+          schema:
+            $ref: '#/definitions/Organization'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Update an organization
+      tags:
+        - Organizations
+      parameters:
+        - name: organization
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Organization'
+        - name: organizationSlug
+          in: path
+          required: true
+          type: string
+      responses:
+        204:
+          description: Update successful (No Content)
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+parameters:
+  orderingBase:
+    name: ordering
+    in: query
+    description: Field to order results by; meaning of label varies based on model
+    type: string
+    enum:
+      - createdAt
+      - modifiedAt
+  organization:
+    name: organization
+    in: query
+    description: Slug for organization to filter by
+    type: string
+  page:
+    name: page
+    in: query
+    description: Page of results to go to
+    type: number
+    format: int32
+  pageSize:
+    name: pageSize
+    in: query
+    description: Number of results per page in paginated response
+    type: number
+    format: int32
+  uuid:
+    name: uuid
+    in: path
+    required: true
+    type: string
+    format: uuid
+
+definitions:
+  BaseModel:
+    type: object
+    readOnly: true
+    properties:
+      uuid:
+        type: string
+        description: unique identifier for object
+        format: uuid
+      organization:
+        type: string
+        description: slug label for organization
+      createdAt:
+        type: string
+        description: timestamp of object creation
+        format: date-time
+      modifiedAt:
+        type: string
+        description: timestamp of object modificiation
+        format: date-time
+  User:
+    allOf:
+      - $ref: '#/definitions/BaseModel'
+    type: object
+    required:
+      - userID
+      - role
+    properties:
+      userID:
+        type: string
+        description: Unique identifier provided by Auth0
+      isActive:
+        type: boolean
+        description: Whether or not the user is active (login, password reset, etc.)
+      organization:
+        type: string
+        description: Slug label for organization.
+      role:
+        type: string
+        description: Level of access a user has (ADMIN, USER)
+  PaginatedResponse:
+    type: object
+    required:
+      - count
+      - next
+      - previous
+      - page
+      - pageSize
+    properties:
+      count:
+        type: integer
+        format: int32
+        readOnly: true
+        description: number of total objects matching query
+      next:
+        type: string
+        readOnly: true
+        description: Optional. If provided, link to next page of query results
+      previous:
+        type: string
+        readOnly: true
+        description: Optional. If provided, link to previous page of query results
+      page:
+        type: integer
+        readOnly: true
+        format: int32
+        description: Current page of paginated query results
+      pageSize:
+        type: integer
+        format: int32
+        description: Number of results per page
+        readOnly: true
+  UserPaginated:
+    allOf:
+      - $ref: '#/definitions/PaginatedResponse'
+    properties:
+      results:
+        type: array
+        items:
+          $ref: '#/definitions/User'
+  OrganizationPaginated:
+    allOf:
+      - $ref: '#/definitions/PaginatedResponse'
+    properties:
+      results:
+        type: array
+        items:
+          $ref: '#/definitions/Organization'
+  Organization:
+    type: object
+    allOf:
+      - $ref: '#/definitions/BaseModel'
+    required:
+      - name
+      - slugLabel
+    properties:
+      name:
+        type: string
+        description: Display name for organization
+      slugLabel:
+        type: string
+        description: URL safe version of name
+        readOnly: true
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
