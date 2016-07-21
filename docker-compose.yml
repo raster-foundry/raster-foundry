@@ -30,3 +30,7 @@ services:
     image: swaggerapi/swagger-editor:latest
     ports:
       - "8080:8080"
+  task-scheduler:
+    build: pipelines/scheduler
+    ports:
+      - "8082:8082"

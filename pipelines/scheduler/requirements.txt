@@ -1,0 +1,2 @@
+luigi==2.2.0
+sqlalchemy==1.1.0b2

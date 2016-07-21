@@ -15,7 +15,7 @@ _tldr_
 ```bash
   vagrant up
   vagrant ssh
-  cd /opt/raster-foundry/
+  cd /opt/raster-foundry/  # This should happen automatically on login
   ./scripts/server
 ```
 
@@ -39,6 +39,7 @@ The Vagrant configuration maps the following host ports to services running in t
 | Application Server (akka) | [`9000`](http://localhost:9000) | `RF_PORT_9000`       |
 | Database                  | `5432`                          | `RF_PORT_5432`       |
 | Swagger Editor            | [`8080`](http://localhost:8080) | `RF_PORT_8080`       |
+| Workflow server (luigi)   | [`8082`](http://localhost:8082) | `RF_PORT_8082`       |
 
 
 ## Scripts
