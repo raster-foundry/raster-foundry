@@ -44,7 +44,7 @@ Vagrant.configure(2) do |config|
 
       cd /opt/raster-foundry/deployment/ansible && \
       ANSIBLE_FORCE_COLOR=1 PYTHONUNBUFFERED=1 ANSIBLE_CALLBACK_WHITELIST=profile_tasks \
-      ansible-playbook -u vagrant -i 'localhost,' --extra-vars "aws_profile=rasterfoundry" \
+      ansible-playbook -u vagrant -i 'localhost,' --extra-vars "aws_profile=raster-foundry" \
           raster-foundry.yml
       cd /opt/raster-foundry
       su vagrant ./scripts/bootstrap

@@ -9,7 +9,12 @@
 
   roles:
     - role: "raster-foundry.docker"
+    - role: "raster-foundry.aws-cli"
 
   tasks:
     - name: Change directory on login
       lineinfile: dest=/home/vagrant/.bashrc regexp=^raster-foundry_PROFILE line="cd /opt/raster-foundry/"
+
+    - name: Set Environment variable for AWS profile
+      lineinfile: dest=/etc/environment regexp=^AWS_PROFILE line="AWS_PROFILE={{aws_profile}}"
+      when: aws_profile is defined
