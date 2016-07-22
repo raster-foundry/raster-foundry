@@ -22,10 +22,15 @@ function main() {
         -f "${DIR}/../docker-compose.yml" \
         pull
 
-    # Build luigi containers
+    # Build luigi scheduler image
     docker-compose \
         -f "${DIR}/../docker-compose.yml" \
         build
+
+    # Build luigi base image
+    docker-compose \
+        -f "${DIR}/../pipelines/tasks/docker-compose.yml" \
+        build task-worker
 }
 
 
