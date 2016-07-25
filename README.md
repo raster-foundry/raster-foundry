@@ -8,6 +8,13 @@ A virtual machine is used to encapsulate docker dependencies. `docker-compose` i
 - Vagrant 1.8.0+
 - VirtualBox 5.0.14+
 - Ansible 1.8.0+ (on host)
+- AWS CLI 1.10+
+
+On your host machine you need to set up a `raster-foundry` profile for the Raster Foundry AWS account using the following command:
+```
+aws configure --profile raster-foundry
+```
+You will be prompted for an access key and secret key.
 
 ### Development
 

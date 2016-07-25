@@ -1,0 +1,5 @@
+---
+# meta file for raster-foundry.aws-cli
+
+dependencies:
+  - { role: azavea.pip }

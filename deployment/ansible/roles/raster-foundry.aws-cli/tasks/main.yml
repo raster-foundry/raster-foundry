@@ -1,0 +1,8 @@
+---
+# tasks for raster-foundry.aws-cli
+
+- name: Install AWS Command Line Interface
+  pip: name=awscli version=1.10.16
+
+- name: Install boto3
+  pip: name=boto3 version=1.3.0

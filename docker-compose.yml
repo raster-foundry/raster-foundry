@@ -3,10 +3,7 @@ services:
   # Database
   postgres:
     image: quay.io/azavea/postgis:9.4.4
-    environment:
-      POSTGRES_USER: rasterfoundry
-      POSTGRES_PASSWORD: rasterfoundry
-      POSTGRES_DB: rasterfoundry
+    env_file: .env
     ports:
       - "5432:5432"
 
@@ -14,9 +11,7 @@ services:
     image: quay.io/azavea/scala:2.11.8
     links:
       - postgres:database.raster-foundry.internal
-    environment:
-      POSTGRES_USER: rasterfoundry
-      POSTGRES_PASSWORD: rasterfoundry
+    env_file: .env
     ports:
       - "9000:9000"
     volumes:
