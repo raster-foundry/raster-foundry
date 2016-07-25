@@ -68,6 +68,9 @@ npm-debug.log
 *~
 .#*
 
+# Vim
+.*.swp
+
 # MacOS
 .DS_Store
 

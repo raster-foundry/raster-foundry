@@ -1,0 +1,27 @@
+version: '2'
+services:
+  # TODO: This gets things working locally but should probably be on quay.io.
+  # Base task worker image
+  task-worker:
+    image: rf/task-base
+    build:
+      context: base
+    command: /bin/true
+
+  test-task:
+    image: rf/task-base
+    volumes:
+      - ./test_task/src:/opt/task/
+    working_dir: /opt/task
+    entrypoint: python task.py
+    networks:
+      - scheduler
+    environment: # Necessary for AWS tasks
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+
+
+networks:
+  scheduler:
+    external:
+      name: rasterfoundry_scheduler  # Link to scheduler run from top-level compose file.
