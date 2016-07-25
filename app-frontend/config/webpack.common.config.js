@@ -1,7 +1,7 @@
 // Modules
-var webpack = require('webpack'),
-    autoprefixer = require('autoprefixer'),
-    HtmlWebpackPlugin = require('html-webpack-plugin');
+var webpack = require('webpack');
+var autoprefixer = require('autoprefixer');
+var HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
     entry: {

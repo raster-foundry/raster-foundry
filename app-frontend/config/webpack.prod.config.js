@@ -1,8 +1,8 @@
-var webpack = require('webpack'),
-    ExtractTextPlugin = require('extract-text-webpack-plugin'),
-    CopyWebpackPlugin = require('copy-webpack-plugin'),
-    config = require('./webpack.common.config.js'),
-    host = process.env.WEBPACK_DEV_SERVER || 'http://localhost:8080';
+var webpack = require('webpack');
+var ExtractTextPlugin = require('extract-text-webpack-plugin');
+var CopyWebpackPlugin = require('copy-webpack-plugin');
+var config = require('./webpack.common.config.js');
+var host = process.env.WEBPACK_DEV_SERVER || 'http://localhost:8080';
 
 config.devtool = 'source-map';
 config.output.publicPath = '/';

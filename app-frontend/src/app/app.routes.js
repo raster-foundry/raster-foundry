@@ -6,9 +6,5 @@ export default function routing($urlRouterProvider, $locationProvider, $statePro
         .state('login', {
             url: '/login',
             template: '<rf-login></rf-login>'
-        })
-        .state('library', {
-            url: '/library',
-            template: '<rf-library></rf-library>'
         });
 }

@@ -1,6 +1,6 @@
-var webpack = require('webpack'),
-    config = require('./webpack.common.config.js'),
-    host = process.env.WEBPACK_DEV_SERVER || 'http://localhost:8080';
+var webpack = require('webpack');
+var config = require('./webpack.common.config.js');
+var host = process.env.WEBPACK_DEV_SERVER || 'http://localhost:8080';
 
 config.devtool = 'inline-source-map';
 config.module.loaders.push({

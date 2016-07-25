@@ -2,7 +2,6 @@ import angular from 'angular';
 import uirouter from 'angular-ui-router';
 
 import routing from './app.routes';
-import library from './library/library';
 import login from './login/login';
 
 require('../style/sass/main.scss');
@@ -27,8 +26,7 @@ angular.module(
     MODULE_NAME,
     [
         uirouter,
-        login,
-        library
+        login
     ]
 )
     .component('app', app)
