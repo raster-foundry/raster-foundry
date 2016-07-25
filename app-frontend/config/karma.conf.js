@@ -1,3 +1,4 @@
+var _ = require('lodash');
 // Reference: http://karma-runner.github.io/0.12/config/configuration-file.html
 module.exports = function karmaConfig (config) {
   config.set({
@@ -45,7 +46,7 @@ module.exports = function karmaConfig (config) {
       ]
     },
 
-    webpack: require('./webpack.test.config'),
+    webpack: require('../webpack.config'),
 
     // Hide webpack build information from output
     webpackMiddleware: {
