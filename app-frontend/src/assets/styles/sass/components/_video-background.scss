@@ -1,6 +1,6 @@
 %video-sizing {
-	position: absolute;
-	min-width: 100%;
+  position: absolute;
+  min-width: 100%;
   min-height: 100%;
   top: 0;
   left: 0;
@@ -10,26 +10,26 @@
 
 .video-background { 
   z-index: -1;
-	@extend %video-sizing;
+  @extend %video-sizing;
   overflow: hidden;
 
   &:after {
-  	content: '';
-		display: block;
-		background: rgba($gray-darker, .8);
-		@extend %video-sizing;
+    content: '';
+    display: block;
+    background: rgba($gray-darker, .8);
+    @extend %video-sizing;
   }
 
   img {
-  	display: block;
-	  margin: 0;
-	  padding: 0;
-  	z-index: -1;
-	  @extend %video-sizing;
+    display: block;
+    margin: 0;
+    padding: 0;
+    z-index: -1;
+    @extend %video-sizing;
   }
 
   video {
-  	display: block;
-	  @extend %video-sizing;
+    display: block;
+    @extend %video-sizing;
   }
 }

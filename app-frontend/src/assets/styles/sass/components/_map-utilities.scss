@@ -15,9 +15,9 @@
   z-index: map-get($z-index, utility);
 
   .map-utility.active & {
-		left: 0;
-		transition: .8s all ease-in-out;
-	}
+    left: 0;
+    transition: .8s all ease-in-out;
+  }
 }
 
 .utility-panel-secondary {

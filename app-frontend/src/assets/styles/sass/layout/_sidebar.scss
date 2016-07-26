@@ -4,22 +4,22 @@
   top: 10px;
   left: 10px;
   bottom: 10px;
-	z-index: map-get($z-index, sidebar);
+  z-index: map-get($z-index, sidebar);
 }
 
 .sidebar-header {
-	position: relative;
-	z-index: 1;
+  position: relative;
+  z-index: 1;
 }
 
 .sidebar-brand {
-	background-color: $gray-dark;
-	padding: 15px 25px 14px;
-	position: absolute;
-	z-index: 2;
-	display: inline-block;
+  background-color: $gray-dark;
+  padding: 15px 25px 14px;
+  position: absolute;
+  z-index: 2;
+  display: inline-block;
 }
 
 .sidebar-brand img {
-	max-width: 30px;
+  max-width: 30px;
 }

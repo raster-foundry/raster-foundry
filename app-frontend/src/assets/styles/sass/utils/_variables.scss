@@ -76,8 +76,8 @@ $breakpoints: (
 /// z-index
 /// Useage z-index: map-get($zindex, 9000);
 $z-index: (
-	sidebar: 100,
-	toolbar:  90,
-	utility:  80,
-	map:       1
+  sidebar: 100,
+  toolbar:  90,
+  utility:  80,
+  map:       1
 )

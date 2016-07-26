@@ -1,34 +1,34 @@
 .image-metadata {
-	display: none;
-	width: 100%;
-	position: absolute;
-	top: 70px;
-	bottom: 0;
-	background: $white;
-	box-shadow: 0 0 4px rgba(black, .2);
+  display: none;
+  width: 100%;
+  position: absolute;
+  top: 70px;
+  bottom: 0;
+  background: $white;
+  box-shadow: 0 0 4px rgba(black, .2);
 
-	&.active {
-		display: block;
-	}
-	
-	.close {
-		padding: 20px;
-		outline: none;
-	}
+  &.active {
+    display: block;
+  }
+  
+  .close {
+    padding: 20px;
+    outline: none;
+  }
 
-	.sidebar-utility-toolbar {
-		border-bottom: none;
-		padding-top: 10px;
-		padding-left: 20px;
-	}
+  .sidebar-utility-toolbar {
+    border-bottom: none;
+    padding-top: 10px;
+    padding-left: 20px;
+  }
 
-	.img-preview {
-		margin: 15px auto 30px;
-		display: block;
-		border-radius: 5px;
-	}
+  .img-preview {
+    margin: 15px auto 30px;
+    display: block;
+    border-radius: 5px;
+  }
 
-	hr {
+  hr {
     margin-left: -25px;
     margin-right: -25px;
   }

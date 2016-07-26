@@ -1,19 +1,19 @@
 .map-container {
-	display: block;
-	position: absolute;
-	right: 0;
-	left: 0;
-	height: 100%;
-	background-color: $white;
-	z-index: map-get($z-index, map);
+  display: block;
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 100%;
+  background-color: $white;
+  z-index: map-get($z-index, map);
 }
 
 #map {
-	width: 100%;
-	position: absolute;
-	top: 0;
-	bottom: 0;
-	transition-delay: .5s;
-	transition: .1s ease-in-out top, .1s ease-in-out left; 
-	z-index: map-get($z-index, map);
+  width: 100%;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  transition-delay: .5s;
+  transition: .1s ease-in-out top, .1s ease-in-out left; 
+  z-index: map-get($z-index, map);
 }

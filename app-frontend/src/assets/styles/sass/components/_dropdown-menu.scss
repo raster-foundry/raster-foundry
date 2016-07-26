@@ -1,26 +1,26 @@
 .dropdown-menu-dark {
-	background-color: $gray-dark;
-	border-color: $gray;
-	box-shadow: none;
+  background-color: $gray-dark;
+  border-color: $gray;
+  box-shadow: none;
 
-	li a {
-		color: $off-white;
-		padding: 9px 20px;
+  li a {
+    color: $off-white;
+    padding: 9px 20px;
 
-		&:hover {
-			background-color: $gray-darker;
-			color: $off-white;
-		}
-	}
+    &:hover {
+      background-color: $gray-darker;
+      color: $off-white;
+    }
+  }
 
-	li.divider {
-		background-color: $gray-darker;
-	}
+  li.divider {
+    background-color: $gray-darker;
+  }
 }
 
 .dropdown-menu {
-	
-	li.divider {
-		margin: 4px 0;
-	}
+  
+  li.divider {
+    margin: 4px 0;
+  }
 }

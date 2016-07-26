@@ -7,20 +7,20 @@
 /// Helper to clear inner floats
 /// Useage: @extend %clearfix;
 %clearfix {
-	&:before, &:after {
-		content: " ";
-		display: table;
-	}
-	&:after {
-		clear: both;
-	}
+  &:before, &:after {
+    content: " ";
+    display: table;
+  }
+  &:after {
+    clear: both;
+  }
 }
 
 
 /// Truncates an overflow of text to end with an ellipsis
 /// Useage: @extend %truncate;
 %truncate {
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
