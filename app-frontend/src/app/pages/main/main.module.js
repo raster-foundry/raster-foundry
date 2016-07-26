@@ -1,6 +1,3 @@
-'use strict';
-import angular from 'angular';
-
 import MainController from './main.controller.js';
 
 const MainPageModule = angular.module('pages.main', [

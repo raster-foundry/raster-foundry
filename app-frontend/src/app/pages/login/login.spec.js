@@ -1,4 +1,3 @@
-import angular from 'angular';
 import loginModule from './login.module';
 /* globals describe beforeEach it expect */
 /* eslint max-nested-callbacks: 0 */

@@ -1,7 +1,4 @@
-'use strict';
 /* global document */
-import angular from 'angular';
-
 
 // index.html page to dist folder
 import '!!file-loader?name=[name].[ext]!../favicon.ico';

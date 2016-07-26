@@ -41,6 +41,8 @@
     "plugin:jasmine/recommended"
   ],
   "globals": {
+    "angular": true,
+    "$": true,
     "L": true,
     "require": true
   },

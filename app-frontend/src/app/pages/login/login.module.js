@@ -1,5 +1,3 @@
-'use strict';
-import angular from 'angular';
 import './login.scss';
 
 import LoginController from './login.controller.js';
