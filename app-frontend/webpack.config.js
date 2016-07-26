@@ -1,28 +1,32 @@
 'use strict';
+/* globals __dirname process module console */
+/* eslint no-process-env: 0
+          no-console: 0
+ */
 
-var _ = require('lodash');
-var _configs = {
+let _ = require('lodash');
+let configs = {
 
-  // global section
-  global: require(__dirname + '/config/webpack/global'),
+    // global section
+    global: require(__dirname + '/config/webpack/global'),
 
-  // config by enviroments
-  production: require(__dirname + '/config/webpack/environments/production'),
-  development: require(__dirname + '/config/webpack/environments/development'),
-  test: require(__dirname + '/config/webpack/environments/test')
+    // config by enviroments
+    production: require(__dirname + '/config/webpack/environments/production'),
+    development: require(__dirname + '/config/webpack/environments/development'),
+    test: require(__dirname + '/config/webpack/environments/test')
 };
 
-var _load = function() {
-  var ENV = process.env.NODE_ENV
-    ? process.env.NODE_ENV
-    : 'production';
+let load = function () {
+    let ENV = process.env.NODE_ENV
+            ? process.env.NODE_ENV
+            : 'production';
 
-  console.log('Current Environment: ', ENV);
+    console.log('Current Environment: ', ENV);
 
-  // load config file by environment
-  return _configs && _.merge(
-    _configs.global(__dirname),
-    _configs[ENV](__dirname)
-  );
+    // load config file by environment
+    return configs && _.merge(
+        configs.global(__dirname),
+        configs[ENV](__dirname)
+    );
 };
-module.exports = _load();
+module.exports = load();

@@ -1,5 +1,10 @@
 'use strict';
-module.exports = function(_path) {
+/* globals module */
+/* eslint no-process-env: 0
+ no-console: 0
+ */
+
+module.exports = function (_path) {
     return {
         context: _path,
         debug: true,

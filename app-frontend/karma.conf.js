@@ -1,30 +1,33 @@
 'use strict';
+/* globals __dirname module console */
+/* eslint no-process-env: 0
+ no-console: 0
+ */
 
-var _ = require('lodash');
-var _configs = {
+let _ = require('lodash');
+let configs = {
     // global section
     global: require(__dirname + '/config/webpack/global'),
     // config by enviroments
     test: require(__dirname + '/config/webpack/environments/test')
 };
 
-var _load = function() {
-    var ENV = 'test';
+let load = function () {
+    let ENV = 'test';
 
     console.log('Current Environment: ', ENV);
 
     // load config file by environment
-    return _configs && _.merge(
-        _configs.global(__dirname),
-        _configs[ENV](__dirname)
+    return configs && _.merge(
+        configs.global(__dirname),
+        configs[ENV](__dirname)
     );
 };
 
-var webpackConfig = _load();
+let webpackConfig = load();
 
-module.exports = _load();
 // Reference: http://karma-runner.github.io/0.12/config/configuration-file.html
-module.exports = function karmaConfig (config) {
+module.exports = function karmaConfig(config) {
     config.set({
         frameworks: [
             // Reference: https://github.com/karma-runner/karma-jasmine
