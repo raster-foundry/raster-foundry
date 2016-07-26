@@ -1,9 +1,10 @@
 'use strict';
+import angular from 'angular';
 
 import route from './main.route';
 
-const mainPageModule = angular.module('main-module', [
-  'ui.router'
+const mainPageModule = angular.module('pages.main', [
+    'ui.router'
 ]);
 
 mainPageModule

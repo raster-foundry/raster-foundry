@@ -1,16 +1,15 @@
-function routeConfig($urlRouterProvider, $stateProvider, resolverProvider) {
+import angular from 'angular';
+
+import loginTpl from './pages/login/login.html';
+function routeConfig($urlRouterProvider, $stateProvider) {
     'ngInject';
 
     $stateProvider
         .state('login', {
             url: '/login',
-            templateUrl: require(
-                '!!file-loader?name=templates/[name].[ext]!./pages/login/login.html'),
-            controller: 'loginController',
-            controllerAs: '$ctrl',
-            resolve: {
-                asyncPreloading: resolverProvider.loginPagePrealoading
-            }
+            templateUrl: loginTpl,
+            controller: 'LoginController',
+            controllerAs: '$ctrl'
         });
     $urlRouterProvider.otherwise('/');
 }

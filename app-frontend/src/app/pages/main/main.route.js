@@ -3,16 +3,14 @@
 import mainTpl from './main.html';
 
 function routeConfig($stateProvider) {
-  'ngInject';
+    'ngInject';
 
-  $stateProvider
-    .state('main', {
-      url: '/',
-      templateUrl: mainTpl,
-      controller: require('./main.controller')
-      //controllerAs: 'main',
+    $stateProvider.state('main', {
+        url: '/',
+        templateUrl: mainTpl,
+        controller: require('./main.controller')
+        // controllerAs: 'main',
     });
-
 }
 
 export default routeConfig;

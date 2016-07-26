@@ -18,7 +18,7 @@
     "serve-static": "npm run build && serve --path dist --port 9001",
     "sort-packages": "sort-package-json",
     "start": "npm run dev",
-    "test": "karma start config/karma.conf.js",
+    "test": "karma start karma.conf.js",
     "test-watch": "karma start config/karma.conf.js --auto-watch --no-single-run"
   },
   "dependencies": {

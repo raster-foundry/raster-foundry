@@ -25,5 +25,4 @@ var _load = function() {
     _configs[ENV](__dirname)
   );
 };
-
 module.exports = _load();

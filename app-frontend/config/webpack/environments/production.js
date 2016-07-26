@@ -6,7 +6,7 @@ module.exports = function (_path) {
     return {
         context: _path,
         debug: false,
-        devtool: 'cheap-source-map',
+        devtool: 'source-map',
         output: {
             publicPath: '/',
             filename: '[name].[chunkhash].js'
@@ -17,6 +17,11 @@ module.exports = function (_path) {
                 root: _path,
                 verbose: true,
                 dry: false
+            }),
+            new webpack.optimize.UglifyJsPlugin({
+                minimize: true,
+                warnings: false,
+                sourceMap: true
             })
         ]
     };

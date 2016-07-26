@@ -1,12 +1,11 @@
 'use strict';
-
+import angular from 'angular';
 import './login.scss';
 
-import loginController from './login.controller.js';
-import loginComponent from './login.component.js';
+import LoginController from './login.controller.js';
 
-const loginModule = angular.module('login-module', []);
+const LoginModule = angular.module('pages.login', []);
 
-loginModule.controller('loginController', loginController);
+LoginModule.controller('LoginController', LoginController);
 
-export default loginModule;
+export default LoginModule;

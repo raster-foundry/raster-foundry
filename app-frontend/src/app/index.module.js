@@ -1,4 +1,6 @@
-import * as components from './index.components';
+import angular from 'angular';
+
+// import * as components from './index.components';
 import config from './index.config';
 import run from './index.run';
 
@@ -26,7 +28,8 @@ const App = angular.module(
         require('./index.routes').name,
 
         // pages
-        require('./pages/main/main.module').name
+        require('./pages/main/main.module').name,
+        require('./pages/login/login.module').name
     ]
 );
 

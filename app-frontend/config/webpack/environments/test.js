@@ -9,19 +9,17 @@ module.exports = function(_path) {
             preLoaders: [{
                 test: /\.js$/,
                 exclude: [
-                        /node_modules/,
-                        /\.spec\.js$/
+                    /node_modules/,
+                    /\.spec\.js$/
                 ],
                 loader: 'isparta-instrumenter'
             }],
             loaders: [
                 {
-                    test: /\.js$/,
-                    loaders: ['babel'],
-                    exclude: /node_modules/
-                },
-                {
                     test: /\.scss$/,
+                    loader: 'null'
+                }, {
+                    test: /\.html$/,
                     loader: 'null'
                 }
             ]

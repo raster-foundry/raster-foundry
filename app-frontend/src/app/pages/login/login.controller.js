@@ -15,6 +15,7 @@ class MainController {
         this.videowebm = videowebm;
         this.ffcSpace = ffcSpace;
         this.assetLogo = assetLogo;
+        this.testVal = 'this is a test';
     }
 }
 
