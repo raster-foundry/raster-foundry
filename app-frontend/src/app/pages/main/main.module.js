@@ -7,6 +7,6 @@ const mainPageModule = angular.module('pages.main', [
     'ui.router'
 ]);
 
-mainPageModule.controller(MainController);
+mainPageModule.controller('MainController', MainController);
 
 export default mainPageModule;
