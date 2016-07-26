@@ -19,7 +19,7 @@
     "sort-packages": "sort-package-json",
     "start": "npm run dev",
     "test": "karma start karma.conf.js",
-    "test-watch": "karma start config/karma.conf.js --auto-watch --no-single-run"
+    "test-watch": "karma start karma.conf.js --auto-watch --no-single-run"
   },
   "dependencies": {
     "angular": "^1.5.8",
