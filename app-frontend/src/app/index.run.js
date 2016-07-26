@@ -1,6 +1,7 @@
 function runBlock($log) {
     'ngInject';
-    $log.debug('Hello from run block!');
+
+    $log.debug('Run block executed');
 }
 
 export default runBlock;

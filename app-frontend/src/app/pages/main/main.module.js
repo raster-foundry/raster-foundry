@@ -3,10 +3,10 @@ import angular from 'angular';
 
 import MainController from './main.controller.js';
 
-const mainPageModule = angular.module('pages.main', [
+const MainPageModule = angular.module('pages.main', [
     'ui.router'
 ]);
 
-mainPageModule.controller('MainController', MainController);
+MainPageModule.controller('MainController', MainController);
 
-export default mainPageModule;
+export default MainPageModule;

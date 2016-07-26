@@ -1,10 +1,12 @@
 'use strict';
 
-function MainController($log, $state) {
-    'ngInject';
+class MainController {
+    constructor($log, $state) {
+        'ngInject';
 
-    $log.debug('Hello from main controller!');
-    $state.go('login');
+        $log.debug('Main controller initialized. Redirecting to /login.');
+        $state.go('login');
+    }
 }
 
 export default MainController;

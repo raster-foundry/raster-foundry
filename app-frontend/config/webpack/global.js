@@ -124,6 +124,11 @@ module.exports = function (_path) {
                     'expose?$',
                     'expose?jQuery'
                 ]
+            }, {
+                test: require.resolve('leaflet'),
+                loaders: [
+                    'expose?L'
+                ]
             }]
         },
 
