@@ -10,7 +10,7 @@ class LoginController {
     constructor($log) {
         'ngInject';
 
-        $log.debug('Lazy Loaded  login controller initialized');
+        $log.debug('Login controller initialized');
         this.videom4v = videom4v;
         this.videoogg = videoogg;
         this.videowebm = videowebm;

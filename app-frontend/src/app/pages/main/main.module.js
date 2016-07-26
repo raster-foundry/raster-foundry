@@ -1,13 +1,12 @@
 'use strict';
 import angular from 'angular';
 
-import route from './main.route';
+import MainController from './main.controller.js';
 
 const mainPageModule = angular.module('pages.main', [
     'ui.router'
 ]);
 
-mainPageModule
-    .config(route);
+mainPageModule.controller(MainController);
 
 export default mainPageModule;
