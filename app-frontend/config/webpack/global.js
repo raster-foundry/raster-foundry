@@ -1,22 +1,26 @@
 'use strict';
+/* globals process module */
+/* eslint no-process-env: 0
+ no-console: 0
+ */
 
 // Depends
-var path              = require('path');
-var webpack           = require('webpack');
-var autoprefixer      = require('autoprefixer-core');
-var Manifest          = require('manifest-revision-webpack-plugin');
-var ExtractTextPlugin = require("extract-text-webpack-plugin");
-var HtmlWebpackPlugin = require("html-webpack-plugin");
+let path = require('path');
+let webpack = require('webpack');
+let autoprefixer = require('autoprefixer-core');
+let Manifest = require('manifest-revision-webpack-plugin');
+let ExtractTextPlugin = require('extract-text-webpack-plugin');
+let HtmlWebpackPlugin = require('html-webpack-plugin');
 
-var NODE_ENV = process.env.NODE_ENV || "production";
-var DEVELOPMENT  = NODE_ENV === "production" ? false : true;
-var stylesLoader = 'css-loader?sourceMap!postcss-loader!sass-loader?outputStyle=expanded&sourceMap=true&sourceMapContents=true';
+let NODE_ENV = process.env.NODE_ENV || 'production';
+let DEVELOPMENT = NODE_ENV === 'production' ? false : true;
+let stylesLoader = 'css-loader?sourceMap!postcss-loader!sass-loader?' +
+        'outputStyle=expanded&sourceMap=true&sourceMapContents=true';
 
+module.exports = function (_path) {
+    let rootAssetPath = _path + 'src';
 
-module.exports = function(_path) {
-    var rootAssetPath = _path + 'src';
-
-    var webpackConfig = {
+    let webpackConfig = {
         // entry points
         entry: {
             vendor: _path + '/src/app/index.vendor.js',
@@ -36,10 +40,10 @@ module.exports = function(_path) {
             extensions: ['', '.js'],
             modulesDirectories: ['node_modules'],
             alias: {
-                _appRoot:     path.join(_path, 'src', 'app'),
-                _images:      path.join(_path, 'src', 'app', 'assets', 'images'),
+                _appRoot: path.join(_path, 'src', 'app'),
+                _images: path.join(_path, 'src', 'app', 'assets', 'images'),
                 _stylesheets: path.join(_path, 'src', 'app', 'assets', 'styles'),
-                _scripts:     path.join(_path, 'src', 'app', 'assets', 'js')
+                _scripts: path.join(_path, 'src', 'app', 'assets', 'js')
             }
         },
 
@@ -56,7 +60,7 @@ module.exports = function(_path) {
             loaders: [{
                 test: /\.html$/,
                 loaders: [
-                    'ngtemplate-loader?relativeTo='+ _path,
+                    'ngtemplate-loader?relativeTo=' + _path,
                     'html-loader?attrs[]=img:src&attrs[]=img:data-src&attrs[]=source:src'
                 ]
             }, {
@@ -67,7 +71,7 @@ module.exports = function(_path) {
             }, {
                 test: /\.js$/,
                 exclude: [
-                    path.resolve(_path, "node_modules")
+                    path.resolve(_path, 'node_modules')
                 ],
                 loaders: [
                     'ng-annotate-loader'
@@ -75,7 +79,7 @@ module.exports = function(_path) {
             }, {
                 test: /\.js$/,
                 exclude: [
-                    path.resolve(_path, "node_modules")
+                    path.resolve(_path, 'node_modules')
                 ],
                 loader: 'babel-loader',
                 query: {
@@ -92,11 +96,12 @@ module.exports = function(_path) {
                 ]
             }, {
                 test: /\.(scss|sass)$/,
-                loader: DEVELOPMENT ? ('style-loader!' + stylesLoader) : ExtractTextPlugin.extract('style-loader', stylesLoader)
+                loader: DEVELOPMENT ? 'style-loader!' + stylesLoader
+                    : ExtractTextPlugin.extract('style-loader', stylesLoader)
             }, {
                 test: /\.(woff2|woff|ttf|eot|svg)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
                 loaders: [
-                    "url-loader?name=assets/fonts/[name]_[hash].[ext]"
+                    'url-loader?name=assets/fonts/[name]_[hash].[ext]'
                 ]
             }, {
                 test: /\.(jpe?g|png|gif)$/i,
@@ -109,25 +114,25 @@ module.exports = function(_path) {
                     'url-loader?name=assets/video/[name]_[hash].[ext]&limit=10000'
                 ]
             }, {
-                test: require.resolve("angular"),
+                test: require.resolve('angular'),
                 loaders: [
-                    "expose?angular"
+                    'expose?angular'
                 ]
             }, {
-                test: require.resolve("jquery"),
+                test: require.resolve('jquery'),
                 loaders: [
-                    "expose?$",
-                    "expose?jQuery"
+                    'expose?$',
+                    'expose?jQuery'
                 ]
             }]
         },
 
         // post css
-        postcss: [autoprefixer({ browsers: ['last 5 versions'] })],
+        postcss: [autoprefixer({browsers: ['last 5 versions']})],
 
         imageWebpackLoader: {
             pngquant: {
-                quality: "66-90",
+                quality: '66-90',
                 speed: 4
             }
         },
@@ -138,14 +143,14 @@ module.exports = function(_path) {
 
         // load plugins
         plugins: [
-            //new webpack.ContextReplacementPlugin(/moment[\/\\]locale$/, /en|hu/),
+            // new webpack.ContextReplacementPlugin(/moment[\/\\]locale$/, /en|hu/),
             new webpack.ProvidePlugin({
                 $: 'jquery',
                 jQuery: 'jquery',
                 L: 'leaflet'
             }),
             new webpack.DefinePlugin({
-                'NODE_ENV': JSON.stringify(NODE_ENV)
+                NODE_ENV: JSON.stringify(NODE_ENV)
             }),
             new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
             new webpack.optimize.DedupePlugin(),
@@ -162,7 +167,11 @@ module.exports = function(_path) {
                 rootAssetPath: rootAssetPath,
                 ignorePaths: ['.DS_Store']
             }),
-            new ExtractTextPlugin('assets/styles/css/[name]' + (NODE_ENV === 'development' ? '' : '.[chunkhash]') + '.css', { allChunks: true }),
+            new ExtractTextPlugin(
+                'assets/styles/css/[name]' +
+                    (NODE_ENV === 'development' ? '' : '.[chunkhash]') +
+                    '.css', {allChunks: true}
+            ),
             new HtmlWebpackPlugin({
                 filename: 'index.html',
                 template: path.join(_path, 'src', 'tpl-index.html')
@@ -171,5 +180,4 @@ module.exports = function(_path) {
     };
 
     return webpackConfig;
-
 };
