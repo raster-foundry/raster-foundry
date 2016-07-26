@@ -6,9 +6,10 @@ import videom4v from '../../../assets/video/ffc-space.m4v';
 import videoogg from '../../../assets/video/ffc-space.ogg';
 import videowebm from '../../../assets/video/ffc-space.webm';
 
-class MainController {
+class LoginController {
     constructor($log) {
         'ngInject';
+
         $log.debug('Lazy Loaded  login controller initialized');
         this.videom4v = videom4v;
         this.videoogg = videoogg;
@@ -19,4 +20,4 @@ class MainController {
     }
 }
 
-export default MainController;
+export default LoginController;

@@ -1,16 +1,24 @@
-import login from './login.module';
+import angular from 'angular';
+import loginModule from './login.module';
+/* globals describe beforeEach it expect */
 
-describe('login', () => {
+describe('pages.login', () => {
 
     describe('LoginController', () => {
         let ctrl;
 
         beforeEach(() => {
-            angular.mock.module(login);
+            angular.mock.module(loginModule.name);
 
-            angular.mock.inject(($controller) => {
-                ctrl = $controller('LoginController', {});
-            });
+            angular.mock.inject(
+                ($controller) => {
+                    ctrl = $controller('LoginController', {});
+                }
+            );
+        });
+
+        it('should exist', () => {
+            expect(ctrl).toBeDefined();
         });
 
         it('should contain the test value', () => {
