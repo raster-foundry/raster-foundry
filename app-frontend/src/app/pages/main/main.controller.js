@@ -1,10 +1,9 @@
 'use strict';
 
 function MainController($log) {
-  'ngInject';
+    'ngInject';
 
-  $log.debug('Hello from main controller!');
-
+    $log.debug('Hello from main controller!');
 }
 
 export default MainController;
