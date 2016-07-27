@@ -1,5 +1,12 @@
 # Raster Foundry
 
+## Components
+
+The Raster Foundry application consists of the following components:
+ - Application server (`app-server`) that handles http requests
+ - Application frontend (`app-frontend`) UI for using Raster Foundry
+ - Application tasks (`app-tasks`) that are asynchronous tasks for processing imagery
+
 ## Getting Started
 
 A virtual machine is used to encapsulate docker dependencies. `docker-compose` is used within the VM to manage running the application and developing against it.
