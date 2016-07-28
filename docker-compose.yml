@@ -7,6 +7,21 @@ services:
     ports:
       - "5432:5432"
 
+  app-frontend:
+    image: node:4.4.7-wheezy
+    working_dir: /opt/raster-foundry/app-frontend/
+    volumes:
+      - ./app-frontend/.babelrc:/opt/raster-foundry/app-frontend/.babelrc
+      - ./app-frontend/config/:/opt/raster-foundry/app-frontend/config/
+      - ./nginx/srv/dist/:/opt/raster-foundry/app-frontend/dist/
+      - ./app-frontend/.eslintrc:/opt/raster-foundry/app-frontend/.eslintrc
+      - ./app-frontend/karma.conf.js:/opt/raster-foundry/app-frontend/karma.conf.js
+      - ./.node_modules:/opt/raster-foundry/app-frontend/node_modules
+      - ./app-frontend/package.json:/opt/raster-foundry/app-frontend/package.json
+      - ./app-frontend/src:/opt/raster-foundry/app-frontend/src
+      - ./app-frontend/webpack.config.js:/opt/raster-foundry/app-frontend/webpack.config.js
+    command: npm run build-watch
+
   app-server:
     image: quay.io/azavea/scala:2.11.8
     links:
@@ -25,3 +40,14 @@ services:
     image: swaggerapi/swagger-editor:latest
     ports:
       - "8080:8080"
+
+  nginx:
+    image: nginx
+    ports:
+      - "9100:443"
+    links:
+      - app-server
+    volumes:
+      - ./nginx/srv/dist/:/srv/dist/
+      - ./nginx/etc/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/etc/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf      
