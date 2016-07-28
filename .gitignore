@@ -1,3 +1,11 @@
+# Terraform
+.terraform
+*.tfplan
+*.tfvars
+*.tfstate
+*.tfstate.backup
+
+
 # Sass Cache
 .sass-cache
 
