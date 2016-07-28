@@ -63,6 +63,7 @@ coverage.xml
 
 # Ansible
 deployment/ansible/roles/azavea.*
+*.retry
 
 # Vagrant
 .vagrant
