@@ -18,3 +18,7 @@
     - name: Set Environment variable for AWS profile
       lineinfile: dest=/etc/environment regexp=^AWS_PROFILE line="AWS_PROFILE={{aws_profile}}"
       when: aws_profile is defined
+
+    - name: Set Environment variable for SWF Domain
+      lineinfile: dest=/etc/environment regexp=^AWS_SWF_DOMAIN line="AWS_SWF_DOMAIN={{swf_domain}}"
+      when: swf_domain is defined

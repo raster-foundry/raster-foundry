@@ -21,6 +21,34 @@ services:
     working_dir: /opt/raster-foundry/app-server/
     command: ./sbt run
 
+  app-tasks-decider:
+    image: rf-app-tasks
+    build:
+      context: ./app-tasks
+      dockerfile: Dockerfile
+    working_dir: /opt/raster-foundry/app-tasks/src/
+    environment:
+      - AWS_SWF_DOMAIN
+      - AWS_PROFILE
+    volumes:
+      - ./app-tasks/:/opt/raster-foundry/app-tasks/
+      - $HOME/.aws:/root/.aws:ro
+    command: python -m rf decider
+
+  app-tasks-worker:
+    image: rf-app-tasks
+    build:
+      context: ./app-tasks
+      dockerfile: Dockerfile
+    working_dir: /opt/raster-foundry/app-tasks/src/
+    environment:
+      - AWS_SWF_DOMAIN
+      - AWS_PROFILE      
+    volumes:
+      - ./app-tasks/:/opt/raster-foundry/app-tasks/
+      - $HOME/.aws:/root/.aws:ro
+    command: python -m rf worker
+
   swagger-editor:
     image: swaggerapi/swagger-editor:latest
     ports:

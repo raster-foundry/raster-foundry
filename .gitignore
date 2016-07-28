@@ -98,3 +98,4 @@ app-server/.ensime_cache/*
 /.ivy2/*
 .sbt/
 /.env
+.eggs/
