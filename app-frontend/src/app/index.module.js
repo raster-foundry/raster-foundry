@@ -1,4 +1,3 @@
-// import * as components from './index.components';
 import config from './index.config';
 import run from './index.run';
 
@@ -27,7 +26,12 @@ const App = angular.module(
 
         // pages
         require('./pages/main/main.module').name,
-        require('./pages/login/login.module').name
+        require('./pages/login/login.module').name,
+        require('./pages/library/library.module').name,
+        require('./pages/library/project/project.module').name,
+        require('./pages/account/account.module').name,
+        require('./pages/account/billing/billing.module').name,
+        require('./pages/account/keys/keys.module').name
     ]
 );
 

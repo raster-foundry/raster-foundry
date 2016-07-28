@@ -1,5 +1,3 @@
-'use strict';
-
 import assetLogo from '../../../assets/images/logo-raster-foundry.png';
 import ffcSpace from '../../../assets/images/ffc-space.png';
 import videom4v from '../../../assets/video/ffc-space.m4v';
@@ -10,7 +8,7 @@ class LoginController {
     constructor($log) {
         'ngInject';
 
-        $log.debug('Login controller initialized');
+        $log.debug('LoginController initialized');
         this.videom4v = videom4v;
         this.videoogg = videoogg;
         this.videowebm = videowebm;
