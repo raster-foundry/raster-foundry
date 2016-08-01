@@ -1,7 +1,7 @@
 swagger: '2.0'
 info:
   title: Raster Foundry
-  description: An application to work find and manipulate large-scale geospatial and raster data
+  description: An application to find and manipulate large-scale geospatial and raster data
   version: "0.1.0"
 
 host: localhost:9000
@@ -20,6 +20,8 @@ consumes:
 tags:
   - name: Users
     description: Operations involving users and organizations
+  - name: Layers
+    description: Interact with layers
 
 paths:
   /users/:
@@ -184,6 +186,259 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  /layers/:
+    get:
+      summary: Get list of layers the user is authorized to view
+      tags:
+        - Layers
+      parameters:
+        - $ref: '#/parameters/orderingBase'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+      responses:
+        200:
+          description: Paginated list of layers the user is authorized to view
+          schema:
+            $ref: '#/definitions/LayerPaginated'
+    post:
+      summary: Create a new layer
+      tags:
+        - Layers
+      parameters:
+        - name: layer
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Layer'
+      responses:
+        202:
+          description: Layer details; at this point import processes may be in-progress
+          schema:
+            $ref: '#/definitions/Layer'
+  /layers/{uuid}/:
+    get:
+      summary: Retrieve layer details
+      tags:
+        - Layers
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: Info about Layer
+          schema:
+            $ref: '#/definitions/Layer'
+        404:
+          description: UUID parameter does not refer to a layer or the user is not able to view the layer it refers to
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Update a layer
+      tags:
+        - Layers
+      parameters:
+        - name: layer
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Layer'
+        - $ref: '#/parameters/uuid'
+      responses:
+        202:
+          description: Layer update successful (further processing needed)
+          schema:
+            $ref: '#/definitions/LayerImage'
+        204:
+          description: Update successful (no further processing needed)
+        404:
+          description: The UUID parameter does not refer to a layer or the user does not have access to the layer it refers to
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Delete a layer
+      tags:
+        - Layers
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Deletion successful (no content)
+        404:
+          description: The UUID parameter does not refer to a layer or the user does not have access to the layer it refers to
+          schema:
+            $ref: '#/definitions/Error'
+  /layers/{uuid}/images/:
+    get:
+      summary: Get a list of LayerImages associated with this layer
+      tags:
+        - Layers
+      parameters:
+        - $ref: '#/parameters/orderingBase'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: Paginated list of images associated with this Layer
+          schema:
+            $ref: '#/definitions/LayerImagePaginated'
+    post:
+      summary: Create a new association between an image and this layer
+      tags:
+        - Layers
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - name: image
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/LayerImage'
+      responses:
+        202:
+          description: Layer image details; thumbnails and boundary may be in-progress
+          schema:
+            $ref: '#/definitions/LayerImage'
+        200:
+          description: Layer image details; the image already existed
+          schema:
+            $ref: '#/definitions/LayerImage'
+  /layer-images/:
+    get:
+      summary: Paginated list of layer images
+      tags:
+        - Layers
+      parameters:
+        - $ref: '#/parameters/orderingBase'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+      responses:
+        200:
+          description: Paginated list of images
+          schema:
+            $ref: '#/definitions/LayerImagePaginated'
+    post:
+      summary: Create a new image not associated with any Layer
+      tags:
+        - Layers
+      parameters:
+        - name: image
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/LayerImage'
+      responses:
+        202:
+          description: Layer image details; thumbnails and boundary in-progress
+          schema:
+            $ref: '#/definitions/LayerImage'
+  /layer-images/{uuid}:
+    get:
+      summary: Details of a LayerImage
+      tags:
+        - Layers
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: Image details (All task-populated fields have final values)
+          schema:
+            $ref: '#/definitions/LayerImage'
+        202:
+          description: Image details (some task-populated fields are in progress)
+          schema:
+            $ref: '#/definitions/LayerImage'
+        404:
+          description: Image UUID was not found
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Update a LayerImage
+      tags:
+        - Layers
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - name: image
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/LayerImage'
+      responses:
+        202:
+          description: Update successful, further processing required
+          schema:
+            $ref: '#/definitions/LayerImage'
+        200:
+          description: Update successful, no further processing required
+          schema:
+            $ref: '#/definitions/LayerImage'
+        404:
+          description: Image UUID was not found
+          schema:
+            $ref: '#/definitions/Error'
+  /thumbnails/:
+    get:
+      summary: Paginated list of thumbnails
+      tags:
+        - Layers
+      parameters:
+        - $ref: '#/parameters/orderingBase'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+      responses:
+        200:
+          description: Paginated list of thumbnail images
+          schema:
+            $ref: '#/definitions/ThumbnailPaginated'
+  /thumbnails/{uuid}/:
+    get:
+      summary: Thumbnail details
+      tags:
+        - Layers
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: Details on Thumbnail object
+          schema:
+            $ref: '#/definitions/Thumbnail'
+        404:
+          description: Thumbnail UUID was not found
+          schema:
+            $ref: '#/definitions/Error'
+
+  /boundaries/:
+    get:
+      summary: Paginated list of boundaries
+      tags:
+        - Layers
+      parameters:
+        - $ref: '#/parameters/orderingBase'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+      responses:
+        200:
+          description: Paginated list of boundaries
+          schema:
+            $ref: '#/definitions/BoundaryPaginated'
+  /boundaries/{uuid}/:
+    get:
+      summary: Boundary details
+      tags:
+        - Layers
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: Details of Boundary object
+          schema:
+            $ref: '#/definitions/Boundary'
+        404:
+          description: Boundary UUID was not found
+          schema:
+            $ref: '#/definitions/Error'
 
 parameters:
   orderingBase:
@@ -238,6 +493,18 @@ definitions:
         type: string
         description: timestamp of object modificiation
         format: date-time
+  UserTrackingMixin:
+    type: object
+    readOnly: true
+    properties:
+      createdBy:
+        type: string
+        format: uri
+        description: Link to User who created the Object
+      modifiedBy:
+        type: string
+        format: uri
+        description: Link to User who most recently modified the object
   User:
     allOf:
       - $ref: '#/definitions/BaseModel'
@@ -321,6 +588,112 @@ definitions:
         type: string
         description: URL safe version of name
         readOnly: true
+  Layer:
+    allOf:
+      - $ref: '#/definitions/BaseModel'
+      - $ref: '#/definitions/UserTrackingMixin'
+      - type: object
+        properties:
+          name:
+            type: string
+            description: The display name of the layer
+          slugLabel:
+            type: string
+            description: URL-safe version of name
+            readOnly: true
+          description:
+            type: string
+            description: Long-form description of the layer
+          tags:
+            type: array
+            items:
+              - type: string
+          images:
+            type: string
+            description: URI to layer's image information
+            format: uri
+          thumbnails:
+            type: object
+            description: The thumbnails associated with this layer
+            properties:  # Sizes inspired by Flickr
+              large:
+                $ref: '#/definitions/TaskPopulatedField'
+              small:
+                $ref: '#/definitions/TaskPopulatedField'
+              square:
+                $ref: '#/definitions/TaskPopulatedField'
+            readOnly: true
+          boundary:
+            allOf:
+              - $ref: '#/definitions/TaskPopulatedField'
+            readOnly: true
+  LayerImage:
+    allOf:
+      - $ref: '#/definitions/BaseModel'
+      - $ref: '#/definitions/UserTrackingMixin'
+      - type: object
+        properties:
+          fileName:
+              type: string
+              description: Name of the image file
+          sourceURI:
+            type: string
+            description: URI to raw source that will be used for this image
+          metadata:
+            type: object
+            description: Metadata about this image
+          thumbnails:
+            type: object
+            description: Thumbnails associated with this layer-image
+            properties:
+              large:
+                $ref: '#/definitions/TaskPopulatedField'
+              small:
+                $ref: '#/definitions/TaskPopulatedField'
+              square:
+                $ref: '#/definitions/TaskPopulatedField'
+            readOnly: true
+          boundary:
+            allOf:
+              - $ref: '#/definitions/TaskPopulatedField'
+            readOnly: true
+        required:
+          - fileName
+          - sourceURI
+          - thumbnails
+          - boundary
+  LayerPaginated:
+    allOf:
+      - $ref: '#/definitions/PaginatedResponse'
+    properties:
+      results:
+        type: array
+        items:
+          $ref: '#/definitions/Layer'
+  LayerImagePaginated:
+    allOf:
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/LayerImage'
+  TaskPopulatedField:
+    type: object
+    properties:
+      taskStatus:
+        type: string
+        description: The current status of the task
+        enum:
+          - PENDING
+          - PROCESSING
+          - COMPLETED
+          - FAILED
+      result:
+        type: string
+        format: uri
+        description: Link at which the results of this task can be found
   Error:
     type: object
     properties:
@@ -329,3 +702,46 @@ definitions:
         format: int32
       message:
         type: string
+  Thumbnail:
+    allOf:
+      - $ref: '#/definitions/BaseModel'
+      - type: object
+        properties:
+          widthPx:
+            type: integer
+            format: int32
+            description: The width of the thumbnail, in pixels
+          heightPx:
+            type: integer
+            format: int32
+            description: The height of the thumbnail, in pixels
+          url:
+            type: string
+            format: uri
+            description: A client-accessible URL pointing to the image file
+  ThumbnailPaginated:
+    allOf:
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/Thumbnail'
+  Boundary:
+    allOf:
+      - $ref: '#/definitions/BaseModel'
+      - type: object
+        properties:
+          geojson:
+            type: object
+            description: GeoJSON representing the boundary geometry
+  BoundaryPaginated:
+    allOf:
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/Boundary'
