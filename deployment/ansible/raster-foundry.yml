@@ -10,6 +10,7 @@
   roles:
     - role: "raster-foundry.docker"
     - role: "raster-foundry.aws-cli"
+    - role: "azavea.terraform"
 
   tasks:
     - name: Change directory on login

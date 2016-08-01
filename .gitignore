@@ -1,3 +1,11 @@
+# Terraform
+.terraform
+*.tfplan
+*.tfvars
+*.tfstate
+*.tfstate.backup
+
+
 # Sass Cache
 .sass-cache
 
@@ -55,6 +63,7 @@ coverage.xml
 
 # Ansible
 deployment/ansible/roles/azavea.*
+*.retry
 
 # Vagrant
 .vagrant
