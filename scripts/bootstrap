@@ -23,10 +23,12 @@ function main() {
     popd
 
     echo "Building/Pulling containers..."
-    # Pull images for postgres and scala
     docker-compose \
         -f "${DIR}/../docker-compose.yml" \
-        pull
+        build
+    docker-compose \
+        -f "${DIR}/../docker-compose.yml" \
+        pull nginx postgres swagger-editor redis
 }
 
 

@@ -1,0 +1,5 @@
+boto3==1.3.1
+airflow[async,celery,crypto,hive,password,postgres,s3,slack]==1.7.1.3
+redis==2.10.5
+pytest==2.9.2
+pytest-runner==2.9

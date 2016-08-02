@@ -7,6 +7,17 @@ services:
     ports:
       - "5432:5432"
 
+  nginx:
+    image: nginx
+    ports:
+      - "9100:443"
+    links:
+      - app-server
+    volumes:
+      - ./nginx/srv/dist/:/srv/dist/
+      - ./nginx/etc/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/etc/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
+
   app-frontend:
     image: node:4.4.7-wheezy
     working_dir: /opt/raster-foundry/app-frontend/
@@ -39,15 +50,85 @@ services:
   swagger-editor:
     image: swaggerapi/swagger-editor:latest
     ports:
-      - "8080:8080"
+      - "8888:8080"
 
-  nginx:
-    image: nginx
-    ports:
-      - "9100:443"
-    links:
-      - app-server
+  redis:
+    image: redis:3-alpine
+
+  airflow-webserver:
+    image: raster-foundry-airflow
     volumes:
-      - ./nginx/srv/dist/:/srv/dist/
-      - ./nginx/etc/nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/etc/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
+      - ./app-tasks/usr/local/airflow/:/usr/local/airflow/
+      - ./app-tasks/dags/:/opt/raster-foundry/app-tasks/dags/
+      - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
+      - ./app-tasks/rf/src/rf/:/usr/local/bin/rf/
+    build:
+      context: ./app-tasks
+      dockerfile: Dockerfile
+    env_file: .env
+    links:
+      - postgres:database.raster-foundry.internal
+      - redis:redis.raster-foundry.internal
+    environment:
+      - AIRFLOW_HOME=/usr/local/airflow
+    ports:
+      - "8080:8080"
+    command: airflow webserver
+
+  airflow-flower:
+    image: raster-foundry-airflow
+    volumes:
+      - ./app-tasks/usr/local/airflow/:/usr/local/airflow/
+    build:
+      context: ./app-tasks
+      dockerfile: Dockerfile
+    links:
+      - postgres:database.raster-foundry.internal
+      - redis:redis.raster-foundry.internal
+    env_file: .env
+    environment:
+      - AIRFLOW_HOME=/usr/local/airflow
+    ports:
+      - "5555:5555"
+    command: airflow flower
+
+  airflow-scheduler:
+    image: raster-foundry-airflow
+    volumes:
+      - ./app-tasks/usr/local/airflow/:/usr/local/airflow/
+      - ./app-tasks/dags/:/opt/raster-foundry/app-tasks/dags/
+      - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
+      - ./app-tasks/rf/src/rf/:/usr/local/bin/rf/
+      - $HOME/.aws:/root/.aws:ro
+    build:
+      context: ./app-tasks
+      dockerfile: Dockerfile
+    restart: always
+    links:
+      - postgres:database.raster-foundry.internal
+      - redis:redis.raster-foundry.internal
+    env_file: .env
+    environment:
+      - AIRFLOW_HOME=/usr/local/airflow
+      - PYTHONPATH=/opt/raster-foundry/app-tasks/rf/src/
+    command: airflow scheduler
+
+  airflow-worker:
+    image: raster-foundry-airflow
+    volumes:
+      - ./app-tasks/usr/local/airflow/:/usr/local/airflow/
+      - ./app-tasks/dags/:/opt/raster-foundry/app-tasks/dags/
+      - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
+      - ./app-tasks/rf/src/rf/:/usr/local/bin/rf/
+      - $HOME/.aws:/root/.aws:ro
+    build:
+      context: ./app-tasks
+      dockerfile: Dockerfile
+    links:
+      - postgres:database.raster-foundry.internal
+      - redis:redis.raster-foundry.internal
+    env_file: .env
+    environment:
+      - AIRFLOW_HOME=/usr/local/airflow
+      - C_FORCE_ROOT=True
+    command: airflow worker

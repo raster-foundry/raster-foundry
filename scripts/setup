@@ -26,6 +26,7 @@ then
         # app-frontend
         docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-frontend npm install
         docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-frontend npm run build
+        docker-compose -f "${DIR}/../docker-compose.yml" run --rm airflow-webserver airflow initdb
     fi
     exit
 fi

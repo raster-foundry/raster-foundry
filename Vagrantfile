@@ -26,9 +26,13 @@ Vagrant.configure(2) do |config|
   # database
   config.vm.network :forwarded_port, guest: 5432, host: Integer(ENV.fetch("RF_PORT_5432", 5432))
   # swagger editor
-  config.vm.network :forwarded_port, guest: 8080, host: Integer(ENV.fetch("RF_PORT_8080", 8080))
+  config.vm.network :forwarded_port, guest: 9090, host: Integer(ENV.fetch("RF_PORT_9090", 9090))
   # nginx
   config.vm.network :forwarded_port, guest: 9100, host: Integer(ENV.fetch("RF_PORT_9100", 9100))
+  # airflow webserver editor
+  config.vm.network :forwarded_port, guest: 8080, host: Integer(ENV.fetch("RF_PORT_8080", 8080))
+  # airflow flower editor
+  config.vm.network :forwarded_port, guest: 5555, host: Integer(ENV.fetch("RF_PORT_5555", 5555))
 
   config.vm.provider :virtualbox do |vb|
     vb.memory = 4096
