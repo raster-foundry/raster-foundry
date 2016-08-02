@@ -13,7 +13,7 @@ object Main extends App with Config {
   implicit val executionContext = system.dispatcher
   implicit val database = new Database(jdbcUrl, dbUser, dbPassword)
   val router = new Router()
-  
+
   Http().bindAndHandle(router.routes, httpHost, httpPort)
 
 }

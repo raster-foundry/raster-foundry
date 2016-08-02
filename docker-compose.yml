@@ -34,7 +34,7 @@ services:
       - ./.ivy2:/root/.ivy2
       - ./.sbt:/root/.sbt
     working_dir: /opt/raster-foundry/app-server/
-    command: ./sbt run
+    command: ./sbt app/run
 
   swagger-editor:
     image: swaggerapi/swagger-editor:latest
@@ -50,4 +50,4 @@ services:
     volumes:
       - ./nginx/srv/dist/:/srv/dist/
       - ./nginx/etc/nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/etc/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf      
+      - ./nginx/etc/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf

@@ -100,4 +100,3 @@ app-server/.ensime_cache/*
 
 /.env
 .node_modules
-
