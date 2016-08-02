@@ -1,4 +1,4 @@
-package com.azavea.rf.datamodel.latest.schema
+package com.azavea.rf.datamodel.v3.schema
 // AUTO-GENERATED Slick data model
 /** Stand-alone Slick data model for immediate use */
 object tables extends {
@@ -98,5 +98,5 @@ trait tables {
   lazy val Users = new TableQuery(tag => new Users(tag))
 }
 object Version{
-  def version = 4
+  def version = 3
 }
