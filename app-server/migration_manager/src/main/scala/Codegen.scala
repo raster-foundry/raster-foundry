@@ -7,5 +7,7 @@ trait RFCodegen extends SlickCodegen {
   override def pkgName(version: String) = "com.azavea.rf.datamodel." + version + ".schema"
 
   // Set the models requiring code generation here
-  override def tableNames = List()
+  override def tableNames = List(
+    "organizations"
+  )
 }
