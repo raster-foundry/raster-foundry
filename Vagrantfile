@@ -27,6 +27,8 @@ Vagrant.configure(2) do |config|
   config.vm.network :forwarded_port, guest: 5432, host: Integer(ENV.fetch("RF_PORT_5432", 5432))
   # swagger editor
   config.vm.network :forwarded_port, guest: 8080, host: Integer(ENV.fetch("RF_PORT_8080", 8080))
+  # nginx
+  config.vm.network :forwarded_port, guest: 9100, host: Integer(ENV.fetch("RF_PORT_9100", 9100))
 
   config.vm.provider :virtualbox do |vb|
     vb.memory = 4096

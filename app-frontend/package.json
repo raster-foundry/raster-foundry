@@ -13,8 +13,8 @@
   },
   "scripts": {
     "build": "npm run clean && cross-env NODE_ENV=production webpack -p --colors",
-    "clean": "rimraf dist",
-    "dev": "cross-env NODE_ENV=development webpack-dev-server --progress --history-apy-fallback --inline",
+    "clean": "rimraf dist/*",
+    "dev": "cross-env NODE_ENV=development webpack-dev-server",
     "serve-static": "npm run build && serve --path dist --port 9001",
     "sort-packages": "sort-package-json",
     "start": "npm run dev",

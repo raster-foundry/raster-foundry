@@ -37,12 +37,30 @@ Development workflow varies by developer, but a typical development experience m
  - make changes to scala code
  - try compiling (`~compile`) or running the service to inspect it (`~run`)
 
+#### Frontend Development
+
+To do frontend development you will want to install [`nvm`](https://github.com/creationix/nvm#install-script) and use a recent version of node (e.g. 4+). After following the directions above for starting the VM, start the API server and other backend services by running `./scripts/server`.
+
+Then _outside_ the VM, while the server is still running, run `npm start` while inside the `app-frontend/` directory. This will start a `webpack-dev-server` on port 9090 that will auto-reload after javascript and styling changes.
+
+There are three options to rebuild the static assets served by nginx:
+ - run `npm run build` outside the VM
+ - run `./scripts/console app-frontend "npm run build"`
+ - run `./scripts/setup` (will also rebuild application server)
+ 
+To run tests you can do one of the following (in order of speed):
+ - run `npm run test` outside the VM (or `npm run test-watch`)
+ - run `./scripts/console app-frontend "npm run test"` inside the VM
+ - run `./scripts/test` inside the VM (will also run additional project tests)
+
 ## Ports
 
 The Vagrant configuration maps the following host ports to services running in the virtual machines. Ports can be overridden for individual developers using environment variables
 
 | Service                   | Port                            | Environment Variable |
 |---------------------------|---------------------------------|----------------------|
+| Application Frontend      | [`9090`](http://localhost:9090) | `RF_PORT_9090`       |
+| Nginx                     | [`9100`](http://localhost:9100) | `RF_PORT_9100`       |
 | Application Server (akka) | [`9000`](http://localhost:9000) | `RF_PORT_9000`       |
 | Database                  | `5432`                          | `RF_PORT_5432`       |
 | Swagger Editor            | [`8080`](http://localhost:8080) | `RF_PORT_8080`       |
