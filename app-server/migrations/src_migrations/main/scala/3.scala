@@ -1,6 +1,9 @@
 import slick.driver.PostgresDriver.api._
 import com.liyaos.forklift.slick.SqlMigration
 
+/**
+  * Schema migration that adds the 'users' table.
+  */
 object M3 {
   RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(3)(List(
     sqlu"""
