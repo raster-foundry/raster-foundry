@@ -7,6 +7,7 @@ lazy val commonSettings = Seq(
   organization := "com.azavea",
   version := Version.rasterFoundry,
   scapegoatVersion := Version.scapegoat,
+  scapegoatIgnoredFiles := Seq(".*/generated_code/.*"),
   scalaVersion := Version.scala,
   scalacOptions := Seq(
     "-deprecation",
