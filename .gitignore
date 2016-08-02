@@ -98,8 +98,5 @@ app-server/.ensime_cache/*
 /.ivy2/*
 .sbt/
 
-# Local migration files
-app-server/migrations/src/main/scala/migrations/[0-9]*.scala
-
 /.env
 .node_modules
