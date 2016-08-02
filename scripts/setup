@@ -23,7 +23,7 @@ function check_database() {
     do
         echo "Checking if database is up yet (try ${counter})..."
         set +e
-        docker-compose -f "${DIR}/../docker-compose.yml" exec postgres gosu postgres psql -d rasterfoundry -c 'select 1' >/dev/null 2>/dev/null
+        docker-compose -f "${DIR}/../docker-compose.yml" exec -T postgres gosu postgres psql -d rasterfoundry -c 'select 1' >/dev/null 2>/dev/null
         status_check=$?
         if [ $status_check == 0 ]
         then
@@ -47,7 +47,7 @@ function create_airflow_database() {
     check_database
     set +e
     # Create database (have to ignore errors if database already exists)
-    docker-compose -f "${DIR}/../docker-compose.yml" exec postgres gosu postgres createdb airflow >/dev/null 2>/dev/null
+    docker-compose -f "${DIR}/../docker-compose.yml" exec -T postgres gosu postgres createdb airflow >/dev/null 2>/dev/null
     set -e
     docker-compose -f "${DIR}/../docker-compose.yml" run --rm airflow-webserver airflow initdb
     docker-compose -f "${DIR}/../docker-compose.yml" stop postgres
