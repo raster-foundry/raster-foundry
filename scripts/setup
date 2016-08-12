@@ -14,12 +14,55 @@ Basic project setup
 }
 
 
+function check_database() {
+    # Check if database is set up to continue
+
+    max=21 # 1 minute
+    counter=1
+    while true
+    do
+        echo "Checking if database is up yet (try ${counter})..."
+        set +e
+        docker-compose -f "${DIR}/../docker-compose.yml" exec -T postgres gosu postgres psql -d rasterfoundry -c 'select 1' >/dev/null 2>/dev/null
+        status_check=$?
+        if [ $status_check == 0 ]
+        then
+            echo "Connected to database successfully"
+            break
+        fi
+        set -e
+        if [[ ${counter} == "${max}" ]]
+        then
+            echo "Could not connect to database after some time"
+            exit 1
+        fi
+        sleep 3
+        (( counter++ ))
+    done
+}
+
+
+function create_airflow_database() {
+    docker-compose -f "${DIR}/../docker-compose.yml" up -d postgres
+    check_database
+    set +e
+    # Create database (have to ignore errors if database already exists)
+    docker-compose -f "${DIR}/../docker-compose.yml" exec -T postgres gosu postgres createdb airflow >/dev/null 2>/dev/null
+    set -e
+    docker-compose -f "${DIR}/../docker-compose.yml" run --rm airflow-webserver airflow initdb
+    docker-compose -f "${DIR}/../docker-compose.yml" stop postgres
+}
+
+
 if [ "${BASH_SOURCE[0]}" = "${0}" ]
 then
     if [ "${1:-}" = "--help" ]
     then
         usage
     else
+        # Create airflow database
+        create_airflow_database
+
         # app-server
         docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-server sbt update
 
