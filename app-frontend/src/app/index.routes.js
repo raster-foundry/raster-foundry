@@ -26,31 +26,46 @@ function routeConfig($urlRouterProvider, $stateProvider) {
             url: '/library',
             templateUrl: libraryTpl,
             controller: 'LibraryController',
-            controllerAs: '$ctrl'
+            controllerAs: '$ctrl',
+            data: {
+                requiresLogin: true
+            }
         })
         .state('project', {
             url: '/library/project',
             templateUrl: projectTpl,
             controller: 'ProjectController',
-            controllerAs: '$ctrl'
+            controllerAs: '$ctrl',
+            data: {
+                requiresLogin: true
+            }
         })
         .state('account', {
             url: '/account',
             templateUrl: accountTpl,
             controller: 'AccountController',
-            controllerAs: '$ctrl'
+            controllerAs: '$ctrl',
+            data: {
+                requiresLogin: true
+            }
         })
         .state('billing', {
             url: '/account/billing',
             templateUrl: billingTpl,
             controller: 'BillingController',
-            controllerAs: '$ctrl'
+            controllerAs: '$ctrl',
+            data: {
+                requiresLogin: true
+            }
         })
         .state('keys', {
             url: '/account/keys',
             templateUrl: keysTpl,
             controller: 'KeysController',
-            controllerAs: '$ctrl'
+            controllerAs: '$ctrl',
+            data: {
+                requiresLogin: true
+            }
         });
     $urlRouterProvider.otherwise('/');
 }
