@@ -1,0 +1,7 @@
+[tag_Name_Bastion]
+
+[bastion:children]
+tag_Name_Bastion
+
+[bastion:vars]
+ansible_user=ec2-user

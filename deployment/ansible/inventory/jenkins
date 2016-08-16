@@ -1,0 +1,7 @@
+[tag_Name_Jenkins]
+
+[jenkins:children]
+tag_Name_Jenkins
+
+[jenkins:vars]
+ansible_user=ubuntu
