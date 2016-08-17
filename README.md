@@ -75,7 +75,7 @@ The Vagrant configuration maps the following host ports to services running in t
 
 | Service                   | Port                            | Environment Variable |
 |---------------------------|---------------------------------|----------------------|
-| Application Frontend      | [`9090`](http://localhost:9090) | `RF_PORT_9090`       |
+| Application Frontend      | [`9090`](http://localhost:9091) | `RF_PORT_9091`       |
 | Nginx                     | [`9100`](http://localhost:9100) | `RF_PORT_9100`       |
 | Application Server (akka) | [`9000`](http://localhost:9000) | `RF_PORT_9000`       |
 | Database                  | `5432`                          | `RF_PORT_5432`       |

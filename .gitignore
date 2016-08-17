@@ -92,6 +92,7 @@ project/plugins/project/
 .scala_dependencies
 .worksheet
 .ensime/*
+.ensime
 app-server/.ensime
 app-server/.ensime_cache/*
 /deployment/ansible/raster-foundry.retry
