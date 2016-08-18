@@ -1,0 +1,6 @@
+---
+# tasks for raster-foundry.jenkins
+
+- name: Add new Nginx config
+  template: src=jenkins.conf.j2 dest=/etc/nginx/sites-enabled/jenkins.conf
+  notify: Restart Jenkins

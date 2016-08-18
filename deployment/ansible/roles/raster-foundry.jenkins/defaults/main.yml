@@ -1,0 +1,4 @@
+---
+# defaults for jenkins
+jenkins_server_name: jenkins.staging.rasterfoundry.com
+jenkins_http_port: "8080"
