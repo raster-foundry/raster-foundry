@@ -129,6 +129,16 @@ module.exports = function (_path) {
                 loaders: [
                     'expose?L'
                 ]
+            }, {
+                test: /node_modules[\\\/]auth0-lock[\\\/].*\.js$/,
+                loaders: ['transform-loader/cacheable?brfs',
+                          'transform-loader/cacheable?packageify']
+            }, {
+                test: /node_modules[\\\/]auth0-lock[\\\/].*\.ejs$/,
+                loader: 'transform-loader/cacheable?ejsify'
+            }, {
+                test: /\.json$/,
+                loader: 'json'
             }]
         },
 
@@ -154,7 +164,9 @@ module.exports = function (_path) {
                 L: 'leaflet'
             }),
             new webpack.DefinePlugin({
-                NODE_ENV: JSON.stringify(NODE_ENV)
+                'process.env.NODE_ENV': JSON.stringify(NODE_ENV),
+                'process.env.API_URL': 'http://localhost:9000/',
+                'process.env.CLIENT_ID': JSON.stringify('ZaCxyikiDLFLKBOfPB5R30tnc8r06nxU')
             }),
             new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
             new webpack.optimize.DedupePlugin(),

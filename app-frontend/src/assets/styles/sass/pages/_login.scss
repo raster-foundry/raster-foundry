@@ -34,3 +34,73 @@
     margin-bottom: 30px;
   }
 }
+
+body #a0-lock.a0-theme-default {
+  .a0-overlay.a0-active {
+    background: none;
+  }
+  .a0-panel {
+    .a0-top-header {
+      background: $gray-dark;
+      color: $white;
+      .a0-bg-gradient {
+        display: none;
+      }
+    }
+    .a0-email {
+      .a0-input-box {
+        border-color: $gray-darker;
+        background-color: $gray-dark;
+        .a0-icon-budicon-5 {
+          color: $white
+        }
+      }
+      input {
+        background-color: $gray-dark;
+        border-color: $gray-darker;
+        color: $white;
+
+        &:focus, &:hover {
+            background: $gray-darker;
+        }
+      }
+    }
+    .a0-password {
+      .a0-input-box {
+        border-color: $gray-darker;
+        background-color: $gray-dark;
+        .a0-icon-budicon {
+          color: $white
+        }
+      }
+      input {
+        background-color: $gray-dark;
+        border-color: $gray-darker;
+        color: $white;
+
+        &:focus, &:hover {
+            background: $gray-darker;
+        }
+      }
+    }
+    .a0-mode {
+      form {
+        .a0-body-content {
+          background: $gray-dark;
+          border-radius: 0 0 0 0;
+        }
+      }
+    }
+    .a0-instructions,
+    .a0-switch span,
+    .a0-forgot-pass,
+    .a0-separator,
+    .a0-all,
+    .a0-last-time {
+      color: $white
+    }
+    .a0-footer {
+      display: none;
+    }
+  }
+}

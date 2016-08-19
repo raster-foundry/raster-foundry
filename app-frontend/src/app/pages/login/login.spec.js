@@ -21,10 +21,6 @@ describe('pages.login', () => {
             expect(ctrl).toBeDefined();
         });
 
-        it('should contain the test value', () => {
-            expect(ctrl.testVal).toBe('this is a test');
-        });
-
         it('should import media assets', () => {
             expect(ctrl.videom4v).toBeDefined();
             expect(ctrl.videoogg).toBeDefined();

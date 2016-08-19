@@ -168,7 +168,7 @@
     "camelcase": 1, // require camel case names
     "comma-spacing": [1, {"before": false, "after": true}], // enforce spacing before and after comma
     "comma-style": [1, "last"], // enforce one true comma style (off by default)
-    "consistent-this": [1, "_this"], // enforces consistent naming when capturing the current execution context (off by default)
+    "consistent-this": [1, "self"], // enforces consistent naming when capturing the current execution context (off by default)
     "eol-last": 1, // enforce newline at the end of file, with no multiple empty lines
     "func-names": 0, // require function expressions to have a name (off by default)
     "func-style": 0, // enforces use of function declarations or expressions (off by default)

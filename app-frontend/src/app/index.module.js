@@ -6,6 +6,9 @@ const App = angular.module(
     'rasterFoundry', [
         // plugins
         require('angular-ui-router'),
+        'angular-storage',
+        'angular-jwt',
+        'auth0',
         'ngAnimate',
         'ngCookies',
         'ngTouch',

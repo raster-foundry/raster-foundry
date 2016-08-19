@@ -1,10 +1,21 @@
 import assetLogo from '../../../assets/images/logo-raster-foundry.png';
 
 class LibraryController {
-    constructor($log) {
+    constructor($log, auth) {
         'ngInject';
+        const self = this;
+        self.$log = $log;
+        self.auth = auth;
+
         $log.debug('LibraryController initialized');
-        this.assetLogo = assetLogo;
+        self.assetLogo = assetLogo;
+    }
+
+    logout() {
+        const self = this;
+
+        self.$log.log('signing out');
+        self.auth.signout();
     }
 }
 
