@@ -1,7 +1,4 @@
-[tag_Name_Jenkins]
+jenkins_master ansible_host=jenkins.staging.rasterfoundry.com ansible_user=ubuntu
 
-[jenkins:children]
-tag_Name_Jenkins
-
-[jenkins:vars]
-ansible_user=ubuntu
+[jenkins]
+jenkins_master

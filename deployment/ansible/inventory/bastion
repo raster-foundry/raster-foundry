@@ -1,7 +1,4 @@
-[tag_Name_Bastion]
+bastion_server ansible_host=bastion.rasterfoundry.com ansible_user=ec2-user
 
-[bastion:children]
-tag_Name_Bastion
-
-[bastion:vars]
-ansible_user=ec2-user
+[bastion]
+bastion_server
