@@ -1,0 +1,47 @@
+#!/bin/bash
+
+set -e
+
+if [[ -n "${RF_DEBUG}" ]]; then
+    set -x
+fi
+
+function usage() {
+    echo -n \
+"Usage: $(basename "$0")
+
+Publish container images to Elastic Container Registry (ECR).
+"
+}
+
+if [[ -n "${GIT_COMMIT}" ]]; then
+    GIT_COMMIT="${GIT_COMMIT:0:7}"
+else
+    GIT_COMMIT="$(git rev-parse --short HEAD)"
+fi
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    if [ "${1:-}" = "--help" ]; then
+        usage
+    else
+        if [[ -n "${AWS_ECR_ENDPOINT}" ]]; then
+            # Evaluate the return value of the get-login subcommand, which
+            # is a docker login command with temporarily ECR credentials.
+            eval "$(aws ecr get-login)"
+
+            docker tag "raster-foundry-nginx:${GIT_COMMIT}" \
+                   "${AWS_ECR_ENDPOINT}/raster-foundry-nginx:${GIT_COMMIT}"
+            docker tag "raster-foundry-app-server:${GIT_COMMIT}" \
+                   "${AWS_ECR_ENDPOINT}/raster-foundry-app-server:${GIT_COMMIT}"
+            docker tag "raster-foundry-airflow:${GIT_COMMIT}" \
+                   "${AWS_ECR_ENDPOINT}/raster-foundry-airflow:${GIT_COMMIT}"
+
+            docker push "${AWS_ECR_ENDPOINT}/raster-foundry-nginx:${GIT_COMMIT}"
+            docker push "${AWS_ECR_ENDPOINT}/raster-foundry-app-server:${GIT_COMMIT}"
+            docker push "${AWS_ECR_ENDPOINT}/raster-foundry-airflow:${GIT_COMMIT}"
+        else
+            echo "ERROR: No AWS_ECR_ENDPOINT variable defined."
+            exit 1
+        fi
+    fi
+fi
