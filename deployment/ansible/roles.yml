@@ -3,3 +3,9 @@
 
 - src: azavea.pip
   version: 0.1.1
+
+- src: azavea.jenkins
+  version: 1.0.1
+
+- src: azavea.nginx
+  version: 0.3.0

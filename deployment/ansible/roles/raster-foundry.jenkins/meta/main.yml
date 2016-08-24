@@ -1,0 +1,5 @@
+---
+# meta file for raster-foundry.jenkins
+dependencies:
+  - { role: azavea.nginx, nginx_delete_default_site: True }
+  - { role: azavea.jenkins }
