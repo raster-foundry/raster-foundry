@@ -16,7 +16,7 @@ import com.azavea.rf.utils.Database
   */
 trait UserRoutes {
   def userRoutes()(implicit db:Database, ec:ExecutionContext) = (
-    pathPrefix("users") {
+    pathPrefix("api" / "users") {
       pathEndOrSingleSlash {
         get {
           onSuccess(UserService.getUsers) { resp => complete(resp) }

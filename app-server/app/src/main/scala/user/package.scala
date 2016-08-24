@@ -5,6 +5,7 @@ import com.azavea.rf.datamodel.latest.schema.tables.UsersRow;
 
 import java.util.UUID;
 import java.sql.Timestamp;
+import java.time.Instant;
 
 import spray.json._
 
@@ -14,7 +15,7 @@ import spray.json._
 package object user extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit object UuidJsonFormat extends RootJsonFormat[UUID] {
-    def write(obj: UUID) = JsString(obj.toString) //Never execute this line
+    def write(obj: UUID) = JsString(obj.toString)
     def read(value: JsValue) = value match {
       case JsString(obj) => UUID.fromString(obj)
       case JsNull        => UUID.randomUUID()
@@ -23,10 +24,10 @@ package object user extends SprayJsonSupport with DefaultJsonProtocol {
   }
 
   implicit object TimestampJsonFormat extends RootJsonFormat[Timestamp] {
-    def write(obj: Timestamp) = JsNumber(obj.getTime)
+    def write(obj: Timestamp) = JsString(obj.toInstant().toString())
 
     def read(json: JsValue) = json match {
-      case JsNumber(time) => new Timestamp(time.toLong)
+      case JsString(time) => Timestamp.from(Instant.parse(time))
       case JsNull => {
         new Timestamp((new java.util.Date()).getTime())
       }
