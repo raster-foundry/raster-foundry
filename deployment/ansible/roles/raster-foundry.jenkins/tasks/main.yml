@@ -1,10 +1,8 @@
 ---
-# tasks for raster-foundry.jenkins
-
 - name: Add Jenkins Nginx config
   template: src=jenkins.conf.j2
             dest=/etc/nginx/sites-available/jenkins.conf
-  notify: 
+  notify:
     - Restart Nginx
 
 - name: Enable Jenkins Nginx config
@@ -13,3 +11,16 @@
         state=link
   notify:
     - Restart Nginx
+
+- name: Setup hourly docker-gc cron task
+  cron:
+    name: "docker-gc"
+    user: "{{ jenkins_name }}"
+    special_time: "hourly"
+    job: >
+      /usr/bin/docker run
+      --rm
+      -v /var/run/docker.sock:/var/run/docker.sock
+      -v /etc:/etc
+      spotify/docker-gc
+    state: "present"

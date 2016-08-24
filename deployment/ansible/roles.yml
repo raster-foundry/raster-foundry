@@ -1,5 +1,5 @@
 - src: azavea.docker
-  version: 2.0.0
+  version: 2.0.1
 
 - src: azavea.pip
   version: 0.1.1
@@ -9,3 +9,6 @@
 
 - src: azavea.nginx
   version: 0.3.0
+
+- src: azavea.ntp
+  version: 0.1.1
