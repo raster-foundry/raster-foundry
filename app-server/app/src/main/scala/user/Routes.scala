@@ -19,12 +19,16 @@ trait UserRoutes {
     pathPrefix("api" / "users") {
       pathEndOrSingleSlash {
         get {
-          onSuccess(UserService.getUsers) { resp => complete(resp) }
+          onSuccess(UserService.getUsers) {
+            resp => complete(resp)
+          }
         } ~
         post {
           entity(as[UsersRow]) {
             user =>
-            onSuccess(UserService.createUser(db, ec, user)) { resp => complete((StatusCodes.Created, user))}
+            onSuccess(UserService.createUser(db, ec, user)) {
+              resp => complete((StatusCodes.Created, user))
+            }
           }
         }
       } ~
@@ -38,7 +42,9 @@ trait UserRoutes {
               put {
                 entity(as[UsersRow]) {
                   user =>
-                  onSuccess(UserService.updateUser(db, ec, user)) { resp => complete((StatusCodes.NoContent)) }
+                  onSuccess(UserService.updateUser(db, ec, user)) {
+                    resp => complete((StatusCodes.NoContent))
+                  }
                 }
               }
           }
