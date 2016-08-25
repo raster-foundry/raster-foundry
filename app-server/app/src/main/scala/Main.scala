@@ -6,14 +6,13 @@ import akka.stream.ActorMaterializer
 
 import com.azavea.rf.utils.{Config, Database}
 
-object Main extends App with Config {
+object Main extends App with Config with Router {
 
   implicit val system = ActorSystem("rf-system")
   implicit val materializer = ActorMaterializer()
-  implicit val executionContext = system.dispatcher
+  implicit val ec = system.dispatcher
   implicit val database = new Database(jdbcUrl, dbUser, dbPassword)
-  val router = new Router()
 
-  Http().bindAndHandle(router.routes, httpHost, httpPort)
+  Http().bindAndHandle(routes, httpHost, httpPort)
 
 }

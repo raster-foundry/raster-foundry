@@ -3,6 +3,8 @@ resolvers ++= Seq(
   Opts.resolver.sonatypeReleases
 )
 
+resolvers += Resolver.bintrayRepo("choffmeister", "maven")
+
 resolvers += Classpaths.typesafeResolver
 
 addSbtPlugin("me.lessis" % "bintray-sbt" % "0.3.0")

@@ -12,4 +12,5 @@ object Version {
   val slf4j         = "1.6.4"
   val slick         = "3.1.1"
   val sprayjson     = "2.4.4"
+  val akkaAuth      = "0.2.0"
 }

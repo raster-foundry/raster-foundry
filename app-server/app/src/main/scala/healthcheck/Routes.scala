@@ -10,14 +10,17 @@ import StatusCodes._
 import org.postgresql.util.PSQLException
 
 import com.azavea.rf.utils.Database
-
+import com.azavea.rf.auth.Authentication
 
 /**
   * Routes for healthchecks -- additional routes for individual healthchecks
   * should be included here as well
   * 
   */
-trait HealthCheckRoutes {
+trait HealthCheckRoutes extends Authentication {
+
+  implicit val database: Database
+  implicit val ec: ExecutionContext
 
   val healthCheckExceptionHandler = ExceptionHandler {
     case e: PSQLException =>
@@ -28,17 +31,17 @@ trait HealthCheckRoutes {
       }
   }
 
-  def healthCheckRoutes()(implicit db:Database, ec:ExecutionContext) = (
-    handleExceptions(healthCheckExceptionHandler){
-      pathPrefix("healthcheck") {
-        pathEndOrSingleSlash {
-          onSuccess(HealthCheckService.healthCheck) { resp =>
-            complete(resp)
+  val healthCheckRoutes = (
+    handleExceptions(healthCheckExceptionHandler) {
+      authenticateAndAllowAnonymous { user =>
+        pathPrefix("healthcheck") {
+          pathEndOrSingleSlash {
+            onSuccess(HealthCheckService.healthCheck) { resp =>
+              complete(resp)
+            }
           }
         }
       }
     }
-
   )
-
 }
