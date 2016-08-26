@@ -1,3 +1,2 @@
 ---
-# defaults for raster-foundry
 docker_compose_version: "1.7.1"
