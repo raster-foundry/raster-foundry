@@ -65,7 +65,9 @@ lazy val appDependencies = dbDependencies ++ loggingDependencies ++ Seq(
   Dependencies.akkajson,
   Dependencies.akkastream,
   Dependencies.akkatestkit,
-  Dependencies.scalatest
+  Dependencies.scalatest,
+  Dependencies.authCommon,
+  Dependencies.authAkka
 )
 
 lazy val migrationManagerDependencies = dbDependencies ++ forkliftDependencies

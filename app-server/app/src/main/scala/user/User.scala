@@ -1,6 +1,6 @@
 package com.azavea.rf.user
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Future, ExecutionContext}
 
 import com.azavea.rf.datamodel.latest.schema.tables.Users
 import com.azavea.rf.datamodel.latest.schema.tables.UsersRow
@@ -15,7 +15,7 @@ object UserService {
     }
   }
 
-  def getUserById(implicit database:Database, ec:ExecutionContext, id: java.util.UUID) = {
+  def getUserById(id: java.util.UUID)(implicit database:Database, ec:ExecutionContext) = {
     import database.driver.api._
 
     database.db.run {
@@ -23,15 +23,29 @@ object UserService {
     }
   }
 
-  def createUser(implicit database:Database, ec:ExecutionContext, user:UsersRow ) = {
+  def createUser(user:UsersRow)(implicit database:Database, ec:ExecutionContext) = {
     import database.driver.api._
+
     database.db.run {
       Users.forceInsert(user)
     }
   }
 
-  def updateUser(implicit database:Database, ec:ExecutionContext, user:UsersRow ) = {
+  def getUserByEmail(email:String)(implicit database:Database, ec:ExecutionContext):Future[Option[UsersRow]] = {
     import database.driver.api._
+
+    database.db.run {
+      Users.filter(_.email === email)
+        .sortBy(_.createdAt)
+        .take(1)
+        .result
+        .headOption
+    }
+  }
+
+  def updateUser(user:UsersRow)(implicit database:Database, ec:ExecutionContext) = {
+    import database.driver.api._
+
     database.db.run {
       Users.filter(_.id === user.id).update(user)
     }

@@ -14,4 +14,6 @@ object Dependencies {
   val scalatest     = "org.scalatest"      %% "scalatest" % Version.scalaTest % "test"
   val slf4j         = "org.slf4j"           % "slf4j-simple" % Version.slf4j
   val slick         = "com.typesafe.slick" %% "slick" % Version.slick
+  val authCommon    = "de.choffmeister"    %% "auth-common" % Version.akkaAuth
+  val authAkka      = "de.choffmeister"    %% "auth-akka-http" % Version.akkaAuth
 }

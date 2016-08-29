@@ -14,9 +14,12 @@ import akka.http.scaladsl.server.Directives._
   * Actual routes should be written in the relevant feature as much as is feasible
   * 
   */
-class Router()(implicit db:Database, ec:ExecutionContext) extends HealthCheckRoutes with UserRoutes {
+trait Router extends HealthCheckRoutes with UserRoutes {
 
-  val routes = healthCheckRoutes() ~
-    userRoutes()
+  implicit val database: Database
+  implicit val ec: ExecutionContext
 
+  val routes =
+    healthCheckRoutes ~
+    userRoutes
 }
