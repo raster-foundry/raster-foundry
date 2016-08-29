@@ -26,12 +26,15 @@ trait Authentication extends Directives with Config {
   lazy val anonymousUser:Future[Option[UsersRow]] = UserService.getUserByEmail("info+raster.foundry@azavea.com")
 
   // HTTP Challenge to use for Authentication failures
-  lazy val challenge = HttpChallenge("Token", "https://rasterfoundry.com")
+  lazy val challenge = HttpChallenge("Bearer", "https://rasterfoundry.com")
 
   /**
     * Handle validating Json Web Token - optionally returns token
+    *
+    * @param bearerToken bearer token of the form Bearer <token>
     */
-  def validateJWT(token:String): Directive1[UsersRow] = {
+  def validateJWT(bearerToken:String): Directive1[UsersRow] = {
+    val token = bearerToken.split(" ").last
     val jwt = JsonWebToken.read(token, auth0Secret) match {
       case Right(token) => Some(token)
       case _ => None
