@@ -1,4 +1,4 @@
-# Raster Foundry
+# Raster Foundryy
 
 ## Getting Started
 
@@ -63,7 +63,7 @@ There are three options to rebuild the static assets served by nginx:
  - run `npm run build` outside the VM
  - run `./scripts/console app-frontend "npm run build"`
  - run `./scripts/setup` (will also rebuild application server)
- 
+
 To run tests you can do one of the following (in order of speed):
  - run `npm run test` outside the VM (or `npm run test-watch`)
  - run `./scripts/console app-frontend "npm run test"` inside the VM
@@ -95,6 +95,8 @@ Helper and development scripts are located in the `./scripts` directory at the r
 | `server`    | Starts a development server                                  |
 | `console`   | Gives access to a running container via `docker-compose run` |
 | `test`      | Runs tests and linters for project                           |
+| `cibuild`   | Invoked by CI server and makes use of `test`.                |
+| `cipublish` | Publish container images to container image repositories.    |
 
 ## Testing
 
