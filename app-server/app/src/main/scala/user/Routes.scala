@@ -38,7 +38,10 @@ trait UserRoutes extends Authentication {
           pathEndOrSingleSlash {
             get {
               onSuccess(UserService.getUserById(id)) {
-                resp => complete(resp)
+                resp => resp match {
+                  case Some(user) => complete(user)
+                  case _ => complete((StatusCodes.NotFound))
+                }
               }
             } ~
             put {
