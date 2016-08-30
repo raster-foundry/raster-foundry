@@ -7,6 +7,7 @@ import com.azavea.rf.datamodel.latest.schema.tables.Users
 import com.azavea.rf.datamodel.latest.schema.tables.UsersRow
 import com.azavea.rf.utils.Database
 
+
 case class UsersRowCreate(
   isActive: Option[Boolean] = Some(true), isStaff: Option[Boolean] = Some(false),
   email: String, firstName: String, lastName: String, organizationId: java.util.UUID
@@ -14,16 +15,16 @@ case class UsersRowCreate(
   def toUsersRow(): UsersRow = {
     val now = new Timestamp((new java.util.Date()).getTime())
     val newUUID = java.util.UUID.randomUUID
-    UsersRow.apply(
+    UsersRow(
       id=newUUID,
       createdAt=now,
       modifiedAt=now,
-      isActive=this.isActive,
-      isStaff=this.isStaff,
-      email=this.email,
-      firstName=this.firstName,
-      lastName=this.lastName,
-      organizationId=this.organizationId
+      isActive=isActive,
+      isStaff=isStaff,
+      email=email,
+      firstName=firstName,
+      lastName=lastName,
+      organizationId=organizationId
     )
   }
 }
