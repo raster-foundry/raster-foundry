@@ -2,13 +2,11 @@ package com.azavea.rf.user
 
 import scala.concurrent.ExecutionContext
 
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.PathMatchers.JavaUUID
 import akka.http.scaladsl.model.StatusCodes
 
-import com.azavea.rf.datamodel.latest.schema.tables.UsersRow
 import com.azavea.rf.utils.Database
 import com.azavea.rf.auth.Authentication
+import com.azavea.rf.datamodel.latest.schema.tables.UsersRow
 
 /**
   * Routes for users
@@ -28,10 +26,10 @@ trait UserRoutes extends Authentication {
             }
           } ~
           post {
-            entity(as[UsersRow]) {
-              user =>
-              onSuccess(UserService.createUser(user)) {
-                resp => complete(StatusCodes.Created, user)
+            entity(as[UsersRowCreate]) {
+              newUser =>
+              onSuccess(UserService.createUser(newUser)) {
+                resp => complete((StatusCodes.Created, resp))
               }
             }
           }
@@ -40,14 +38,20 @@ trait UserRoutes extends Authentication {
           pathEndOrSingleSlash {
             get {
               onSuccess(UserService.getUserById(id)) {
-                resp => complete(resp)
+                resp => resp match {
+                  case Some(user) => complete(user)
+                  case _ => complete((StatusCodes.NotFound))
+                }
               }
             } ~
             put {
               entity(as[UsersRow]) {
                 user =>
-                onSuccess(UserService.updateUser(user)) {
-                  resp => complete(StatusCodes.NoContent)
+                onSuccess(UserService.updateUser(user, id)) {
+                  resp => resp match {
+                    case 1 => complete((StatusCodes.NoContent))
+                    case 0 => complete((StatusCodes.NotFound))
+                  }
                 }
               }
             }
