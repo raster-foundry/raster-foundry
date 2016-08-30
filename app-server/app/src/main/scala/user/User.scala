@@ -10,78 +10,57 @@ import com.azavea.rf.utils.Database
 case class UsersRowCreate(
   isActive: Option[Boolean] = Some(true), isStaff: Option[Boolean] = Some(false),
   email: String, firstName: String, lastName: String, organizationId: java.util.UUID
-)
-
-case class UsersRowApi(
-  id: java.util.UUID, isActive: Option[Boolean] = Some(true),
-  isStaff: Option[Boolean] = Some(false), email: String, firstName: String,
-  lastName: String, organizationId: java.util.UUID
 ) {
-  def this(user: UsersRow) = this(
-    id=user.id,
-    isActive=user.isActive,
-    isStaff=user.isStaff,
-    email=user.email,
-    firstName=user.firstName,
-    lastName=user.lastName,
-    organizationId=user.organizationId
-  )
+  def toUsersRow(): UsersRow = {
+    val now = new Timestamp((new java.util.Date()).getTime())
+    val newUUID = java.util.UUID.randomUUID
+    UsersRow.apply(
+      id=newUUID,
+      createdAt=now,
+      modifiedAt=now,
+      isActive=this.isActive,
+      isStaff=this.isStaff,
+      email=this.email,
+      firstName=this.firstName,
+      lastName=this.lastName,
+      organizationId=this.organizationId
+    )
+  }
 }
 
 object UserService {
 
-  def getUsers()(implicit database:Database, ec:ExecutionContext) = {
+  def getUsers()(implicit database:Database, ec:ExecutionContext): Future[Seq[UsersRow]] = {
     import database.driver.api._
 
     database.db.run {
       Users.result
-    } map {
-      users => {
-        users.map(user => new UsersRowApi(user))
-      }
     }
   }
 
-  def getUserById(id: java.util.UUID)(implicit database:Database, ec:ExecutionContext) = {
+  def getUserById(id: java.util.UUID)
+                 (implicit database:Database, ec:ExecutionContext): Future[Option[UsersRow]] = {
     import database.driver.api._
 
     database.db.run {
       Users.filter(_.id === id).result.headOption
-    } map {
-      userOption => userOption match {
-        case Some(user) => new UsersRowApi(user)
-        case _ => {
-          // catch this to return 404
-          throw new Exception("404 Resource not found")
-        }
-      }
     }
   }
 
-  def createUser(user:UsersRowCreate)(implicit database:Database, ec:ExecutionContext) = {
+  def createUser(user:UsersRowCreate)
+                (implicit database:Database, ec:ExecutionContext): Future[UsersRow] = {
     import database.driver.api._
-    val now = new Timestamp((new java.util.Date()).getTime())
-    val newUUID = java.util.UUID.randomUUID
-    val userRow = UsersRow.apply(
-      id=newUUID,
-      createdAt=now,
-      modifiedAt=now,
-      isActive=user.isActive,
-      isStaff=user.isStaff,
-      email=user.email,
-      firstName=user.firstName,
-      lastName=user.lastName,
-      organizationId=user.organizationId
-    )
+    val userRow = user.toUsersRow()
 
     database.db.run {
       Users.forceInsert(userRow)
     } map {
-      x => new UsersRowApi(userRow)
+      x => userRow
     }
   }
 
-  def getUserByEmail(email:String)(implicit database:Database, ec:ExecutionContext):Future[Option[UsersRow]] = {
+  def getUserByEmail(email:String)
+                    (implicit database:Database, ec:ExecutionContext): Future[Option[UsersRow]] = {
     import database.driver.api._
 
     database.db.run {
@@ -93,7 +72,8 @@ object UserService {
     }
   }
 
-  def updateUser(user:UsersRowApi, id:java.util.UUID)(implicit database:Database, ec:ExecutionContext) = {
+  def updateUser(user:UsersRow, id:java.util.UUID)
+                (implicit database:Database, ec:ExecutionContext): Future[Int] = {
     import database.driver.api._
     val now = new Timestamp((new java.util.Date()).getTime())
 
@@ -103,6 +83,8 @@ object UserService {
       u.isActive, u.isStaff, u.email, u.firstName, u.lastName, u.organizationId,
       u.modifiedAt
     )
+    // TODO catch exception when uniqueness constraint on email fails
+    // should return 400 bad request : email is already in use
     database.db.run {
       query.update(
         (

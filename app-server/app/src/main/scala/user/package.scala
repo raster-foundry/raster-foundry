@@ -33,6 +33,4 @@ package object user extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val userFormat = jsonFormat9(UsersRow)
   implicit val userCreateFormat = jsonFormat6(UsersRowCreate)
-  implicit val userUpdateFormat = jsonFormat7(UsersRowApi)
-
 }

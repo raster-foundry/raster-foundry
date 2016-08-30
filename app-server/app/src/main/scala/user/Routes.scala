@@ -6,6 +6,7 @@ import akka.http.scaladsl.model.StatusCodes
 
 import com.azavea.rf.utils.Database
 import com.azavea.rf.auth.Authentication
+import com.azavea.rf.datamodel.latest.schema.tables.UsersRow
 
 /**
   * Routes for users
@@ -41,10 +42,13 @@ trait UserRoutes extends Authentication {
               }
             } ~
             put {
-              entity(as[UsersRowApi]) {
+              entity(as[UsersRow]) {
                 user =>
                 onSuccess(UserService.updateUser(user, id)) {
-                  resp => complete((StatusCodes.NoContent))
+                  resp => resp match {
+                    case 1 => complete((StatusCodes.NoContent))
+                    case 0 => complete((StatusCodes.NotFound))
+                  }
                 }
               }
             }
