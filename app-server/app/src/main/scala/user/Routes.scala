@@ -1,6 +1,7 @@
 package com.azavea.rf.user
 
 import scala.concurrent.ExecutionContext
+import scala.util.{Success, Failure}
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
@@ -34,8 +35,9 @@ trait UserRoutes extends Authentication with PaginationDirectives {
           } ~
           post {
             entity(as[UsersRowCreate]) { newUser =>
-              onSuccess(UserService.createUser(newUser)) { resp =>
-                complete((StatusCodes.Created, resp))
+              onSuccess(UserService.createUser(newUser)) {
+                case Success(user) => complete((StatusCodes.Created, user))
+                case Failure(_) => complete(StatusCodes.InternalServerError)
               }
             }
           }
@@ -54,8 +56,11 @@ trait UserRoutes extends Authentication with PaginationDirectives {
               entity(as[UsersRow]) { user =>
                 onSuccess(UserService.updateUser(user, id)) { resp =>
                   resp match {
-                    case 1 => complete((StatusCodes.NoContent))
-                    case 0 => complete((StatusCodes.NotFound))
+                    case Success(code) => code match {
+                      case 1 => complete((StatusCodes.NoContent))
+                      case 0 => complete((StatusCodes.NotFound))
+                    }
+                    case Failure(_) => complete(StatusCodes.InternalServerError)
                   }
                 }
               }

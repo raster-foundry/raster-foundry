@@ -1,12 +1,12 @@
 package com.azavea.rf.auth
 
 import scala.concurrent.{Future, ExecutionContext}
+import scala.util.{Success, Failure}
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.AuthenticationFailedRejection.CredentialsRejected
-import akka.http.scaladsl.server.directives.AuthenticationResult
 
 import de.choffmeister.auth.common.JsonWebToken
 
@@ -16,14 +16,11 @@ import com.azavea.rf.user.UserService
 
 
 trait Authentication extends Directives with Config {
-
   implicit val database: Database
   implicit val ec: ExecutionContext
 
-  import database.driver.api._
-
   // Default user returned when no credentials are provided
-  lazy val anonymousUser:Future[Option[UsersRow]] = UserService.getUserByEmail("info+raster.foundry@azavea.com")
+  lazy val anonymousUser:Future[Option[UsersRow]] = UserService.getUserByAuthId("default")
 
   // HTTP Challenge to use for Authentication failures
   lazy val challenge = HttpChallenge("Bearer", "https://rasterfoundry.com")
@@ -40,12 +37,15 @@ trait Authentication extends Directives with Config {
       case _ => None
     }
     jwt match {
-      case Some(valid) => {
-        valid.claimAsString("email") match {
-          case Right(email) => {
-            onSuccess(UserService.getUserByEmail(email)).flatMap {
+      case Some(validToken) => {
+        validToken.claimAsString("sub") match {
+          case Right(sub) => {
+            onSuccess(UserService.getUserByAuthId(sub)).flatMap {
               case Some(user) => provide(user)
-              case None => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
+              case None => onSuccess(UserService.createUserWithAuthId(sub)).flatMap {
+                case Success(user) => provide(user)
+                case Failure(_) => complete(StatusCodes.InternalServerError)
+              }
             }
           }
           case Left(_) => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))

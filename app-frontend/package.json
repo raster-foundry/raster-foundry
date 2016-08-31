@@ -43,7 +43,6 @@
   "devDependencies": {
     "angular-mocks": "^1.5.8",
     "assets-webpack-plugin": "^3.2.0",
-    "auth0-lock": "^10.1.0",
     "autoprefixer-core": "^5.2.1",
     "babel-core": "^6.7.6",
     "babel-loader": "^6.2.4",
