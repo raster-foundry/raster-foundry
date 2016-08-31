@@ -4,7 +4,7 @@ import com.typesafe.config.ConfigFactory
 
 
 trait Config {
-  private val config = ConfigFactory.load()
+  val config = ConfigFactory.load()
   private val httpConfig = config.getConfig("http")
   private val databaseConfig = config.getConfig("slick.db")
   private val auth0Config = config.getConfig("auth0")
