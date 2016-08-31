@@ -33,7 +33,7 @@ trait Authentication extends Directives with Config {
     *
     * @param bearerToken bearer token of the form Bearer <token>
     */
-  def validateJWT(bearerToken:String): Directive1[UsersRow] = {
+  def validateJWT(bearerToken: String): Directive1[UsersRow] = {
     val token = bearerToken.split(" ").last
     val jwt = JsonWebToken.read(token, auth0Secret) match {
       case Right(token) => Some(token)
@@ -41,10 +41,14 @@ trait Authentication extends Directives with Config {
     }
     jwt match {
       case Some(valid) => {
-        val email = valid.claimAsString("email").right.get
-        onSuccess(UserService.getUserByEmail(email)).flatMap {
-          case Some(user) => provide(user)
-          case None => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
+        valid.claimAsString("email") match {
+          case Right(email) => {
+            onSuccess(UserService.getUserByEmail(email)).flatMap {
+              case Some(user) => provide(user)
+              case None => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
+            }
+          }
+          case Left(_) => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
         }
       }
       case _ => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))

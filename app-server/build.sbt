@@ -36,6 +36,7 @@ lazy val appSettings = commonSettings ++ Seq(
   resolvers += "Open Source Geospatial Foundation Repo" at "http://download.osgeo.org/webdav/geotools/",
   resolvers += Resolver.bintrayRepo("azavea", "geotrellis"),
   resolvers += Resolver.bintrayRepo("azavea", "maven"),
+  resolvers += Resolver.bintrayRepo("lonelyplanet", "maven"),
   test in assembly := {}
 )
 
@@ -67,7 +68,8 @@ lazy val appDependencies = dbDependencies ++ loggingDependencies ++ Seq(
   Dependencies.akkatestkit,
   Dependencies.scalatest,
   Dependencies.authCommon,
-  Dependencies.authAkka
+  Dependencies.authAkka,
+  Dependencies.akkaHttpExtensions
 )
 
 lazy val migrationManagerDependencies = dbDependencies ++ forkliftDependencies

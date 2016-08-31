@@ -1,13 +1,18 @@
 package com.azavea.rf
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import com.azavea.rf.datamodel.latest.schema.tables.UsersRow
 
-import java.util.UUID;
-import java.sql.Timestamp;
-import java.time.Instant;
+
+import java.util.UUID
+import java.sql.Timestamp
+import java.time.Instant
+
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 
 import spray.json._
+
+import com.azavea.rf.datamodel.latest.schema.tables.UsersRow
+import com.azavea.rf.utils.PaginatedResponse
+
 
 /**
   * Json formats for user
@@ -33,4 +38,5 @@ package object user extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val userFormat = jsonFormat9(UsersRow)
   implicit val userCreateFormat = jsonFormat6(UsersRowCreate)
+  implicit val paginatedUserFormat = jsonFormat6(PaginatedResponse[UsersRow])
 }
