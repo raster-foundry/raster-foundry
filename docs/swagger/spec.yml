@@ -510,21 +510,19 @@ definitions:
       - $ref: '#/definitions/BaseModel'
     type: object
     required:
-      - userID
-      - role
+      - authId
+      - organizationId
     properties:
-      userID:
+      id:
+        type: string
+        description: Internal user id
+      authId:
         type: string
         description: Unique identifier provided by Auth0
-      isActive:
-        type: boolean
-        description: Whether or not the user is active (login, password reset, etc.)
-      organization:
+      organizationId:
         type: string
-        description: Slug label for organization.
-      role:
-        type: string
-        description: Level of access a user has (ADMIN, USER)
+        description: id for Organization
+
   PaginatedResponse:
     type: object
     required:

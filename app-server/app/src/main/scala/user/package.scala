@@ -36,7 +36,7 @@ package object user extends SprayJsonSupport with DefaultJsonProtocol {
     }
   }
 
-  implicit val userFormat = jsonFormat9(UsersRow)
-  implicit val userCreateFormat = jsonFormat6(UsersRowCreate)
+  implicit val userFormat = jsonFormat3(UsersRow)
+  implicit val userCreateFormat = jsonFormat2(UsersRowCreate)
   implicit val paginatedUserFormat = jsonFormat6(PaginatedResponse[UsersRow])
 }

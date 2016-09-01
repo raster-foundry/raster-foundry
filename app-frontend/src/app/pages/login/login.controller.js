@@ -45,6 +45,9 @@ class LoginController {
         };
 
         if (auth.isAuthenticated) {
+            store.set('profile', auth.profile);
+            store.set('token', auth.idToken);
+            store.set('accessToken', auth.accessToken);
             $state.go('library');
         } else {
             self.signin();
