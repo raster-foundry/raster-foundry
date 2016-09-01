@@ -53,6 +53,26 @@ function create_airflow_database() {
     docker-compose -f "${DIR}/../docker-compose.yml" stop postgres
 }
 
+function run_database_migrations() {
+    # Check if database migrations have already been initialized
+    set +e
+    docker-compose -f "${DIR}/../docker-compose.yml" exec -T postgres gosu postgres psql -d rasterfoundry -c 'select 1 from __migrations__' >/dev/null 2>/dev/null
+    status_check=$?
+    set -e
+    if [ $status_check == 0 ]
+    then
+        echo "Migrations already initialized"
+    else
+        # Initialize the database for migrations.
+        docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-server sbt "mg init"
+    fi
+
+    # Run database migrations. The way scala-forklift works requires this to be called twice:
+    # the first run figures out the migrations to run and the second run applies them.
+    docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-server sbt "mg migrate"
+    docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-server sbt "mg migrate"
+}
+
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]
 then
@@ -65,6 +85,9 @@ then
 
         # app-server
         docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-server sbt update
+
+        # Initialize database migrations if needed, and then migrate
+        run_database_migrations
 
         # app-frontend
         docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-frontend npm install --quiet
