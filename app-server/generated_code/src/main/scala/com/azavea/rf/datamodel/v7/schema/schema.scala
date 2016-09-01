@@ -1,4 +1,4 @@
-package com.azavea.rf.datamodel.latest.schema
+package com.azavea.rf.datamodel.v7.schema
 // AUTO-GENERATED Slick data model
 /** Stand-alone Slick data model for immediate use */
 object tables extends {
@@ -14,7 +14,7 @@ trait tables {
   import slick.jdbc.{GetResult => GR}
 
   /** DDL for all tables. Call .create to execute. */
-  lazy val schema: profile.SchemaDescription = Organizations.schema ++ Users.schema ++ UsersToOrganizations.schema
+  lazy val schema: profile.SchemaDescription = Organizations.schema ++ Roles.schema ++ Users.schema ++ UsersToOrganizations.schema
   @deprecated("Use .schema instead of .ddl", "3.0")
   def ddl = schema
 
@@ -46,6 +46,26 @@ trait tables {
   }
   /** Collection-like TableQuery object for table Organizations */
   lazy val Organizations = new TableQuery(tag => new Organizations(tag))
+
+  /** Entity class storing rows of table Roles
+   *  @param name Database column name SqlType(varchar), PrimaryKey, Length(255,true) */
+  case class RolesRow(name: String)
+  /** GetResult implicit for fetching RolesRow objects using plain SQL queries */
+  implicit def GetResultRolesRow(implicit e0: GR[String]): GR[RolesRow] = GR{
+    prs => import prs._
+    RolesRow(<<[String])
+  }
+  /** Table description of table roles. Objects of this class serve as prototypes for rows in queries. */
+  class Roles(_tableTag: Tag) extends Table[RolesRow](_tableTag, "roles") {
+    def * = name <> (RolesRow, RolesRow.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = Rep.Some(name).shaped.<>(r => r.map(_=> RolesRow(r.get)), (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+
+    /** Database column name SqlType(varchar), PrimaryKey, Length(255,true) */
+    val name: Rep[String] = column[String]("name", O.PrimaryKey, O.Length(255,varying=true))
+  }
+  /** Collection-like TableQuery object for table Roles */
+  lazy val Roles = new TableQuery(tag => new Roles(tag))
 
   /** Entity class storing rows of table Users
    *  @param id Database column id SqlType(varchar), PrimaryKey, Length(255,true) */
@@ -101,6 +121,8 @@ trait tables {
 
     /** Foreign key referencing Organizations (database name users_to_organizations_organization_id_fkey) */
     lazy val organizationsFk = foreignKey("users_to_organizations_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+    /** Foreign key referencing Roles (database name users_to_organizations_role_fkey) */
+    lazy val rolesFk = foreignKey("users_to_organizations_role_fkey", role, Roles)(r => r.name, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
     /** Foreign key referencing Users (database name users_to_organizations_user_id_fkey) */
     lazy val usersFk = foreignKey("users_to_organizations_user_id_fkey", userId, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   }
@@ -108,5 +130,5 @@ trait tables {
   lazy val UsersToOrganizations = new TableQuery(tag => new UsersToOrganizations(tag))
 }
 object Version{
-  def version = 8
+  def version = 7
 }
