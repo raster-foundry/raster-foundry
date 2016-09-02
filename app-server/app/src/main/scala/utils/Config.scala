@@ -12,7 +12,9 @@ trait Config {
   val httpHost = httpConfig.getString("interface")
   val httpPort = httpConfig.getInt("port")
 
-  val jdbcUrl = databaseConfig.getString("url")
+  val jdbcNoDBUrl = databaseConfig.getString("url")
+  val jdbcDBName = databaseConfig.getString("name")
+  val jdbcUrl = jdbcNoDBUrl + jdbcDBName
   val dbUser = databaseConfig.getString("user")
   val dbPassword = databaseConfig.getString("password")
 

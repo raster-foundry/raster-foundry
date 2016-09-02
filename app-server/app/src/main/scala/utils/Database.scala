@@ -12,11 +12,15 @@ import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 class Database(jdbcUrl: String, dbUser: String, dbPassword: String) {
 
   private val hikariConfig = new HikariConfig()
+  // This property is now being manually set because it seemed not
+  //  to get picked up automatically through the JDBC url. See the hikari documentation
+  //  under the jdbcUrl for more information
+  hikariConfig.setDriverClassName("org.postgresql.Driver")
   hikariConfig.setJdbcUrl(jdbcUrl)
   hikariConfig.setUsername(dbUser)
   hikariConfig.setPassword(dbPassword)
   hikariConfig.setConnectionTimeout(2000)
-  
+
   private val dataSource = new HikariDataSource(hikariConfig)
 
   val driver = slick.driver.PostgresDriver
@@ -24,3 +28,4 @@ class Database(jdbcUrl: String, dbUser: String, dbPassword: String) {
   val db = Database.forDataSource(dataSource)
   db.createSession()
 }
+

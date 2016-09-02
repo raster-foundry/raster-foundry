@@ -11,10 +11,15 @@ lazy val commonSettings = Seq(
   scalaVersion := Version.scala,
   scalacOptions := Seq(
     "-deprecation",
-    "-feature",
     "-unchecked",
-    "-encoding",
-    "utf8"
+    "-feature",
+    "-language:implicitConversions",
+    "-language:reflectiveCalls",
+    "-language:higherKinds",
+    "-language:postfixOps",
+    "-language:existentials",
+    "-language:experimental.macros",
+    "-feature"
   ),
   resolvers += Resolver.sonatypeRepo("snapshots")
 )
