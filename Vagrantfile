@@ -53,6 +53,7 @@ Vagrant.configure(2) do |config|
       ansible-playbook -u vagrant -i 'localhost,' --extra-vars "aws_profile=raster-foundry" \
           raster-foundry.yml
       cd /opt/raster-foundry
+      export AWS_PROFILE=raster-foundry
       su vagrant ./scripts/bootstrap
       su vagrant ./scripts/setup
     SHELL

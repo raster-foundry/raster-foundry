@@ -1,0 +1,4 @@
+---
+docker_users:
+  - "{{ ansible_user }}"
+  - "{{ jenkins_name }}"
