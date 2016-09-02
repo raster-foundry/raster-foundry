@@ -5,3 +5,6 @@ docker_version: "1.11.*"
 docker_compose_version: "1.7.1"
 
 shellcheck_version: "0.3.*"
+
+docker_users:
+  - "{{ ansible_user }}"
