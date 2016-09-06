@@ -1,7 +1,9 @@
 #!/bin/bash
 set -e
 
-DIR="$(dirname "$0")"
+if [[ -n "${RF_DEBUG}" ]]; then
+    set -x
+fi
 
 if [[ -n "${GIT_COMMIT}" ]]; then
     GIT_COMMIT="${GIT_COMMIT:0:7}"
@@ -9,9 +11,7 @@ else
     GIT_COMMIT="$(git rev-parse --short HEAD)"
 fi
 
-if [[ -n "${RF_DEBUG}" ]]; then
-    set -x
-fi
+DIR="$(dirname "$0")"
 
 function usage() {
     echo -n \
