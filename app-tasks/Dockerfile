@@ -14,7 +14,8 @@ RUN set -ex \
     libgdal-dev \
   ' \
   && apt-get update && apt-get install -y ${buildDeps} ${gdal} --no-install-recommends \
-  && pip install --no-cache-dir numpy==1.11.1 \
+  && pip install --no-cache-dir \
+         numpy==$(grep "numpy" /tmp/requirements.txt | cut -d= -f3) \
   && pip install --no-cache-dir -r /tmp/requirements.txt \
   && rm /tmp/requirements.txt \
   && apt-get purge -y --auto-remove ${buildDeps} \
