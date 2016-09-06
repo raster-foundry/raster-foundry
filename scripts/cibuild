@@ -1,7 +1,9 @@
 #!/bin/bash
 set -e
 
-DIR="$(dirname "$0")"
+if [[ -n "${RF_DEBUG}" ]]; then
+    set -x
+fi
 
 if [[ -n "${GIT_COMMIT}" ]]; then
     GIT_COMMIT="${GIT_COMMIT:0:7}"
@@ -9,9 +11,7 @@ else
     GIT_COMMIT="$(git rev-parse --short HEAD)"
 fi
 
-if [[ -n "${RF_DEBUG}" ]]; then
-    set -x
-fi
+DIR="$(dirname "$0")"
 
 function usage() {
     echo -n \
@@ -24,7 +24,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     if [ "${1:-}" = "--help" ]; then
         usage
     else
-        echo "Pulling down testing environment..."
+        echo "Pulling down configuration settings for test environment"
         pushd "${DIR}/.."
         # Download environment configuration from S3
         aws s3 cp "s3://rasterfoundry-testing-config-us-east-1/.env" ".env"
@@ -34,27 +34,30 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             -f "${DIR}/../docker-compose.yml" \
             run --rm app-server sbt update
 
-        echo "Building frontend..."
-        # app-frontend updates
+        echo "Building static asset build"
         docker-compose \
             -f "${DIR}/../docker-compose.yml" \
             run --rm --entrypoint "/bin/bash -c" \
             app-frontend "npm install --quiet && npm run build"
 
+        echo "Building container image for Airflow"
+        GIT_COMMIT="${GIT_COMMIT}" docker-compose \
+                  -f "${DIR}/../docker-compose.yml" \
+                  -f "${DIR}/../docker-compose.test.yml"\
+                  build airflow
+
         echo "Running tests"
-        ./scripts/test
+        GIT_COMMIT="${GIT_COMMIT}" ./scripts/test
         echo "All tests pass!"
 
-        # Build JAR file
-        echo "Building JAR file..."
+        echo "Building application JAR"
         GIT_COMMIT="${GIT_COMMIT}" docker-compose \
             run --no-deps --rm --entrypoint ./sbt app-server app/assembly
 
-        # Build app, airflow
-        echo "Building app, airflow..."
+        echo "Building container images for app and Nginx"
         GIT_COMMIT="${GIT_COMMIT}" docker-compose \
             -f "${DIR}/../docker-compose.yml" \
             -f "${DIR}/../docker-compose.test.yml"\
-            build nginx app-server airflow
+            build nginx app-server
     fi
 fi

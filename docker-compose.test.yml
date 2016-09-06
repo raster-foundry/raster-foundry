@@ -17,3 +17,5 @@ services:
     build:
       context: ./app-tasks
       dockerfile: Dockerfile
+    volumes:
+      - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
