@@ -4,7 +4,6 @@ import scala.concurrent.ExecutionContext
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server._
-import akka.http.scaladsl.server.Directives._
 import StatusCodes._
 
 import org.postgresql.util.PSQLException

@@ -9,19 +9,7 @@ import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 
 import com.azavea.rf.datamodel.latest.schema.tables.{Users, Organizations, UsersToOrganizations}
 import com.azavea.rf.datamodel.latest.schema.tables.{UsersRow, UsersToOrganizationsRow}
-import com.azavea.rf.utils.{Database,PaginatedResponse}
-
-
-class UserErrorException(message: String = null, cause: Throwable = null)
-    extends RuntimeException(UserErrorException.defaultMessage(message, cause), cause)
-
-
-object UserErrorException {
-  def defaultMessage(message: String, cause: Throwable) =
-    if (message != null) message
-    else if (cause != null) cause.toString()
-    else null
-}
+import com.azavea.rf.utils.{Database, PaginatedResponse, UserErrorException}
 
 
 /**
@@ -35,10 +23,10 @@ case class UsersRowCreate(id: String, organizationId: java.util.UUID, role: Opti
       id=id
     )
     val defaultedRole = role match {
-      case Some(Roles(role)) => role
+      case Some(UserRoles(role)) => role
       case Some(userOrgRoleJoins: String) =>
         throw new UserErrorException( "\"" + userOrgRoleJoins + "\" is not a valid user Role")
-      case None => Roles.User
+      case None => UserRoles.User
     }
 
     val userToOrg = UsersToOrganizationsRow(
@@ -83,8 +71,7 @@ object UserService {
     }
   }
 
-  def joinUsersRolesOrgs(query: Query[Users, UsersRow, Seq])
-                        (implicit database: Database, ec: ExecutionContext) = {
+  def joinUsersRolesOrgs(query: Query[Users, UsersRow, Seq])(implicit database: Database) = {
     import database.driver.api._
 
     val userOrgJoin = query join UsersToOrganizations join Organizations on {
@@ -130,12 +117,12 @@ object UserService {
       groupByUserId
     }
 
-    val totalUsersQuery = database.db.run {
+    val totalUsersResult = database.db.run {
       Users.length.result
     }
 
     for {
-      totalUsers <- totalUsersQuery
+      totalUsers <- totalUsersResult
       users <- usersQueryResult
     } yield {
       val hasNext = (page.offset + 1) * page.limit < totalUsers // 0 indexed page offset
