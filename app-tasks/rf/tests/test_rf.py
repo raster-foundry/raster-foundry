@@ -1,3 +1,4 @@
+"""Test that we can import the library"""
 
 import rf
 
