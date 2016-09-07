@@ -9,6 +9,7 @@ trait RFCodegen extends SlickCodegen {
   // Set the models requiring code generation here
   override def tableNames = List(
     "organizations",
-    "users"
+    "users",
+    "users_to_organizations"
   )
 }

@@ -20,7 +20,7 @@ trait Authentication extends Directives with Config {
   implicit val ec: ExecutionContext
 
   // Default user returned when no credentials are provided
-  lazy val anonymousUser:Future[Option[UsersRow]] = UserService.getUserByAuthId("default")
+  lazy val anonymousUser:Future[Option[UsersRow]] = UserService.getUserById("default")
 
   // HTTP Challenge to use for Authentication failures
   lazy val challenge = HttpChallenge("Bearer", "https://rasterfoundry.com")
@@ -40,7 +40,7 @@ trait Authentication extends Directives with Config {
       case Some(validToken) => {
         validToken.claimAsString("sub") match {
           case Right(sub) => {
-            onSuccess(UserService.getUserByAuthId(sub)).flatMap {
+            onSuccess(UserService.getUserById(sub)).flatMap {
               case Some(user) => provide(user)
               case None => onSuccess(UserService.createUserWithAuthId(sub)).flatMap {
                 case Success(user) => provide(user)
