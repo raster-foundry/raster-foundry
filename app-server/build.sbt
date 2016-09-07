@@ -65,7 +65,7 @@ lazy val forkliftDependencies = List(
 lazy val migrationsDependencies =
   dbDependencies ++ forkliftDependencies ++ loggingDependencies
 
-lazy val appDependencies = dbDependencies ++ loggingDependencies ++ Seq(
+lazy val appDependencies = dbDependencies ++ migrationsDependencies ++ Seq(
   Dependencies.akka,
   Dependencies.akkahttp,
   Dependencies.akkajson,
@@ -74,7 +74,8 @@ lazy val appDependencies = dbDependencies ++ loggingDependencies ++ Seq(
   Dependencies.scalatest,
   Dependencies.authCommon,
   Dependencies.authAkka,
-  Dependencies.akkaHttpExtensions
+  Dependencies.akkaHttpExtensions,
+  Dependencies.ammoniteOps
 )
 
 lazy val migrationManagerDependencies = dbDependencies ++ forkliftDependencies

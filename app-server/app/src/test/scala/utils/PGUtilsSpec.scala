@@ -1,4 +1,4 @@
-package com.azavea.rf
+package com.azavea.rf.utils
 
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 import scala.concurrent.Await
@@ -10,60 +10,47 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.scalatest.{Matchers, WordSpec}
 
 import com.azavea.rf.utils._
+import com.azavea.rf._
+
 
 /**
- * This set of tests ensures the basic functionality of the utilities
- *  within PGUtils and which are depended upon for all database-reliant tests
- */
+  * This set of tests ensures the basic functionality of the utilities
+  * within PGUtils and which are depended upon for all database-reliant tests
+  */
 class PGUtilsSpec extends WordSpec
-                     with Matchers
-                     with ScalatestRouteTest
-                     with Config
-                     with Router {
+    with Matchers
+    with ScalatestRouteTest
+    with Config
+    with Router
+    with DBSpec {
 
   implicit val ec = system.dispatcher
-  implicit val database = new Database(s"jdbc:postgresql://0.0.0.0/slick_tests", "postgres", "secret")
+  implicit val database = db
+
   val newdb = "test1"
+  val copydb = "copyDB"
 
   "Database utilities" should {
     "Freely create and drop databases" in {
-      // create
-      PGUtils.createDB("jdbc:postgresql://0.0.0.0/", newdb, "postgres", "secret")
-      // try to create again
+      // Drop newdb if it already exists, then create it
+      PGUtils.dropDB(jdbcNoDBUrl, newdb, dbUser, dbPassword)
+      PGUtils.createDB(jdbcNoDBUrl, newdb, dbUser, dbPassword)
+
+      // Drop copyDB if it already exists, and copy test1 to it
+      PGUtils.dropDB(jdbcNoDBUrl, copydb, dbUser, dbPassword)
+      PGUtils.copyDB(jdbcNoDBUrl, newdb, copydb, dbUser, dbPassword)
+
+      // Attempt to create newdb again (should fail)
       val caught = intercept[org.postgresql.util.PSQLException] {
-        PGUtils.createDB("jdbc:postgresql://0.0.0.0/", newdb, "postgres", "secret")
-      }
-      // drop that db
-      PGUtils.dropDB("jdbc:postgresql://0.0.0.0/", newdb, "postgres", "secret")
-
-      // create again to show that drop worked
-      PGUtils.createDB("jdbc:postgresql://0.0.0.0/", newdb, "postgres", "secret")
-
-      // drop to clean house
-      PGUtils.dropDB("jdbc:postgresql://0.0.0.0/", newdb, "postgres", "secret")
-
-      // Check error message
-      caught.getMessage shouldBe (s"""ERROR: database "${newdb}" already exists""")
-    }
-
-    "Copy databases" in {
-      // create
-      PGUtils.createDB("jdbc:postgresql://0.0.0.0/", newdb, "postgres", "secret")
-      // copy
-      PGUtils.copyDB("jdbc:postgresql://0.0.0.0/", newdb, "copyDB", "postgres", "secret")
-
-      // attempt to create in the copied namespace
-      val caught = intercept[org.postgresql.util.PSQLException] {
-        PGUtils.createDB("jdbc:postgresql://0.0.0.0/", "copyDB", "postgres", "secret")
+        PGUtils.createDB(jdbcNoDBUrl, "copyDB", dbUser, dbPassword)
       }
 
-      // clean house
-      PGUtils.dropDB("jdbc:postgresql://0.0.0.0/", "copyDB", "postgres", "secret")
-      PGUtils.dropDB("jdbc:postgresql://0.0.0.0/", newdb, "postgres", "secret")
+      // Clean up databases
+      PGUtils.dropDB(jdbcNoDBUrl, copydb, dbUser, dbPassword)
+      PGUtils.dropDB(jdbcNoDBUrl, newdb, dbUser, dbPassword)
 
       // Check error message
       caught.getMessage shouldBe (s"""ERROR: database "copydb" already exists""")
     }
   }
 }
-

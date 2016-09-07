@@ -14,4 +14,5 @@ object Version {
   val sprayjson          = "2.4.4"
   val akkaAuth           = "0.2.0"
   val akkaHttpExtensions = "0.4.8"
+  val ammoniteOps        = "0.7.0"
 }
