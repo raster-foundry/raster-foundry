@@ -16,7 +16,7 @@ import com.azavea.rf.user.UserService
 
 
 trait Authentication extends Directives with Config {
-  implicit val database: Database
+  implicit def database: Database
   implicit val ec: ExecutionContext
 
   // Default user returned when no credentials are provided
@@ -57,7 +57,7 @@ trait Authentication extends Directives with Config {
 
   /**
     * Authenticates requests and provides a User to requests
-    * 
+    *
     * - Rejects invalid credentials
     * - Allows anonymous users if credentials are provided
     * - If credentials are valid, but user does not exist, rejects

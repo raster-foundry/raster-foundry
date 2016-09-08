@@ -16,7 +16,7 @@ import akka.http.scaladsl.server.Directives._
   */
 trait Router extends HealthCheckRoutes with UserRoutes {
 
-  implicit val database: Database
+  implicit def database: Database
   implicit val ec: ExecutionContext
 
   val routes =

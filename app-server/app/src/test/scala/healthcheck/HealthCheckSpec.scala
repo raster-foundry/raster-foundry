@@ -4,13 +4,18 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.scalatest.{Matchers, WordSpec}
 
 import com.azavea.rf.utils.{Config, Database}
-import com.azavea.rf.Router
+import com.azavea.rf.{DBSpec, Router}
 
 
-class HealthCheckSpec extends WordSpec with Matchers with ScalatestRouteTest with Config with Router {
+class HealthCheckSpec extends WordSpec
+    with Matchers
+    with ScalatestRouteTest
+    with Config
+    with Router
+    with DBSpec {
 
   implicit val ec = system.dispatcher
-  implicit val database = new Database(jdbcUrl, dbUser, dbPassword)
+  implicit def database = db
 
   "The healthcheck service" should {
     "return an OK status" in {

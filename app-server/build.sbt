@@ -11,10 +11,15 @@ lazy val commonSettings = Seq(
   scalaVersion := Version.scala,
   scalacOptions := Seq(
     "-deprecation",
-    "-feature",
     "-unchecked",
-    "-encoding",
-    "utf8"
+    "-feature",
+    "-language:implicitConversions",
+    "-language:reflectiveCalls",
+    "-language:higherKinds",
+    "-language:postfixOps",
+    "-language:existentials",
+    "-language:experimental.macros",
+    "-feature"
   ),
   resolvers += Resolver.sonatypeRepo("snapshots")
 )
@@ -60,7 +65,7 @@ lazy val forkliftDependencies = List(
 lazy val migrationsDependencies =
   dbDependencies ++ forkliftDependencies ++ loggingDependencies
 
-lazy val appDependencies = dbDependencies ++ loggingDependencies ++ Seq(
+lazy val appDependencies = dbDependencies ++ migrationsDependencies ++ Seq(
   Dependencies.akka,
   Dependencies.akkahttp,
   Dependencies.akkajson,
@@ -69,7 +74,8 @@ lazy val appDependencies = dbDependencies ++ loggingDependencies ++ Seq(
   Dependencies.scalatest,
   Dependencies.authCommon,
   Dependencies.authAkka,
-  Dependencies.akkaHttpExtensions
+  Dependencies.akkaHttpExtensions,
+  Dependencies.ammoniteOps
 )
 
 lazy val migrationManagerDependencies = dbDependencies ++ forkliftDependencies

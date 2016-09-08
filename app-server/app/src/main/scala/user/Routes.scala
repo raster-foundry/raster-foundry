@@ -16,7 +16,7 @@ import com.azavea.rf.utils.Database
   */
 trait UserRoutes extends Authentication with PaginationDirectives {
 
-  implicit val database: Database
+  implicit def database: Database
   implicit val ec: ExecutionContext
 
   val userExceptionHandler = ExceptionHandler {
