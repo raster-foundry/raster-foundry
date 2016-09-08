@@ -20,13 +20,13 @@ consumes:
 tags:
   - name: Users
     description: Operations involving users and organizations
-  - name: Layers
-    description: Interact with layers
+  - name: Imagery
+    description: Interact with imagery
 
 paths:
   /users/:
     get:
-      summary: Get a list of user
+      summary: Get a list of users
       description: |
         The Users API endpoint enables searching and listing users.
       tags:
@@ -35,17 +35,6 @@ paths:
         - $ref: '#/parameters/orderingBase'
         - $ref: '#/parameters/pageSize'
         - $ref: '#/parameters/page'
-        - $ref: '#/parameters/organization'
-        - name: status
-          in: query
-          description: Filter users by active/inactive status
-          required: false
-          type: string
-        - name: role
-          in: query
-          description: Role to filter users by (e.g. get all admin users)
-          required: false
-          type: string
       responses:
         200:
           description: Paginated list of users
@@ -186,71 +175,85 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-  /layers/:
+  /scenes/:
     get:
-      summary: Get list of layers the user is authorized to view
+      summary: Lists paginated scenes that a user has access to
+      description: |
+        Scenes are groups of images that share metadata and would typically be viewed together on a map.
+        They are ingested into Raster RDDs by GeoTrellis and are able to be added to buckets, mosaiced,
+        and have other operations performed on them.
       tags:
-        - Layers
+        - Imagery
       parameters:
-        - $ref: '#/parameters/orderingBase'
+        - $ref: '#/parameters/orderingScene'
         - $ref: '#/parameters/pageSize'
         - $ref: '#/parameters/page'
+        - $ref: '#/parameters/organization'
+        - $ref: '#/parameters/maxCloudCover'
+        - $ref: '#/parameters/minCloudCover'
+        - $ref: '#/parameters/minAcquisitionDatetime'
+        - $ref: '#/parameters/maxAcquisitionDatetime'
+        - $ref: '#/parameters/minCreateDatetime'
+        - $ref: '#/parameters/maxCreateDatetime'
+        - $ref: '#/parameters/datasource'
+        - $ref: '#/parameters/month'
+        - $ref: '#/parameters/maxSunAzimuth'
+        - $ref: '#/parameters/minSunAzimuth'
+        - $ref: '#/parameters/maxSunElevation'
+        - $ref: '#/parameters/minSunElevation'
+        - $ref: '#/parameters/tags'
       responses:
         200:
-          description: Paginated list of layers the user is authorized to view
+          description: Paginated list of scenes
           schema:
-            $ref: '#/definitions/LayerPaginated'
+            $ref: '#/definitions/ScenePaginated'
     post:
-      summary: Create a new layer
+      summary: Create a new scene
       tags:
-        - Layers
-      parameters:
-        - name: layer
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/Layer'
+        - Imagery
       responses:
-        202:
-          description: Layer details; at this point import processes may be in-progress
+        201:
+          description: Successfully created a new scene
           schema:
-            $ref: '#/definitions/Layer'
-  /layers/{uuid}/:
+            $ref: '#/definitions/Scene'
+        400:
+          description: Client error creating a scene
+          schema:
+            $ref: '#/definitions/Error'
+  /scenes/{uuid}/:
     get:
-      summary: Retrieve layer details
+      summary: Retrieve scene details
       tags:
-        - Layers
+        - Imagery
       parameters:
         - $ref: '#/parameters/uuid'
       responses:
         200:
-          description: Info about Layer
+          description: Info about Scene
           schema:
-            $ref: '#/definitions/Layer'
+            $ref: '#/definitions/Scene'
         404:
-          description: UUID parameter does not refer to a layer or the user is not able to view the layer it refers to
+          description: |
+            UUID parameter does not refer to an scene or the user is not able to view the scene it refers to
           schema:
             $ref: '#/definitions/Error'
     put:
-      summary: Update a layer
+      summary: Update a scene
       tags:
-        - Layers
+        - Imagery
       parameters:
-        - name: layer
+        - name: scene
           in: body
           required: true
           schema:
-            $ref: '#/definitions/Layer'
+            $ref: '#/definitions/Scene'
         - $ref: '#/parameters/uuid'
       responses:
-        202:
-          description: Layer update successful (further processing needed)
-          schema:
-            $ref: '#/definitions/LayerImage'
         204:
           description: Update successful (no further processing needed)
         404:
-          description: The UUID parameter does not refer to a layer or the user does not have access to the layer it refers to
+          description: |
+            The UUID parameter does not refer to a scene or the user does not have access to the scene it refers to
           schema:
             $ref: '#/definitions/Error'
         default:
@@ -258,122 +261,236 @@ paths:
           schema:
             $ref: '#/definitions/Error'
     delete:
-      summary: Delete a layer
+      summary: Delete a scene (Warning will delete any associated imagery)
       tags:
-        - Layers
+        - Imagery
       parameters:
         - $ref: '#/parameters/uuid'
       responses:
         204:
           description: Deletion successful (no content)
         404:
-          description: The UUID parameter does not refer to a layer or the user does not have access to the layer it refers to
+          description: |
+            The UUID parameter does not refer to a scene or the user does not have access to the scene it refers to
           schema:
             $ref: '#/definitions/Error'
-  /layers/{uuid}/images/:
+  /buckets/:
     get:
-      summary: Get a list of LayerImages associated with this layer
+      summary: Get list of buckets the user is authorized to view
       tags:
-        - Layers
+        - Imagery
       parameters:
         - $ref: '#/parameters/orderingBase'
         - $ref: '#/parameters/pageSize'
         - $ref: '#/parameters/page'
-        - $ref: '#/parameters/uuid'
       responses:
         200:
-          description: Paginated list of images associated with this Layer
+          description: Paginated list of buckets the user is authorized to view
           schema:
-            $ref: '#/definitions/LayerImagePaginated'
+            $ref: '#/definitions/BucketPaginated'
     post:
-      summary: Create a new association between an image and this layer
+      summary: Create a new bucket
       tags:
-        - Layers
+        - Imagery
+      parameters:
+        - name: bucket
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Bucket'
+      responses:
+        202:
+          description: Bucket details; at this point scene processes may be in-progress
+          schema:
+            $ref: '#/definitions/Bucket'
+  /buckets/{uuid}/:
+    get:
+      summary: Retrieve bucket details
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/organization'
+        - $ref: '#/parameters/tags'
+      responses:
+        200:
+          description: Info about Bucket
+          schema:
+            $ref: '#/definitions/Bucket'
+        404:
+          description: |
+            UUID parameter does not refer to a bucket or the user is not able to view the bucket it refers to
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Update a bucket
+      tags:
+        - Imagery
+      parameters:
+        - name: bucket
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Bucket'
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Update successful (no further processing needed)
+        404:
+          description: |
+            The UUID parameter does not refer to a bucket or the user does not have access to the bucket it refers to
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Delete a bucket
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Deletion successful (no content)
+        404:
+          description: The UUID parameter does not refer to a bucket or the user does not have access to the bucket it refers to
+          schema:
+            $ref: '#/definitions/Error'
+  /buckets/{uuid}/scenes/:
+    get:
+      summary: Get a list of scenes associated with this bucket
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/orderingScene'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/organization'
+        - $ref: '#/parameters/maxCloudCover'
+        - $ref: '#/parameters/minCloudCover'
+        - $ref: '#/parameters/minAcquisitionDatetime'
+        - $ref: '#/parameters/maxAcquisitionDatetime'
+        - $ref: '#/parameters/minCreateDatetime'
+        - $ref: '#/parameters/maxCreateDatetime'
+        - $ref: '#/parameters/datasource'
+        - $ref: '#/parameters/month'
+        - $ref: '#/parameters/maxSunAzimuth'
+        - $ref: '#/parameters/minSunAzimuth'
+        - $ref: '#/parameters/maxSunElevation'
+        - $ref: '#/parameters/minSunElevation'
+        - $ref: '#/parameters/tags'          
+      responses:
+        200:
+          description: Paginated list of scenes associated with this bucket
+          schema:
+            $ref: '#/definitions/ScenePaginated'
+    post:
+      summary: Create a new association between a scene and this bucket
+      tags:
+        - Imagery
       parameters:
         - $ref: '#/parameters/uuid'
         - name: image
           in: body
           required: true
           schema:
-            $ref: '#/definitions/LayerImage'
+            $ref: '#/definitions/Scene'
       responses:
         202:
-          description: Layer image details; thumbnails and boundary may be in-progress
+          description: Bucket image details; thumbnails and boundary may be in-progress
           schema:
-            $ref: '#/definitions/LayerImage'
+            $ref: '#/definitions/Image'
         200:
-          description: Layer image details; the image already existed
+          description: Bucket image details; the image already existed
           schema:
-            $ref: '#/definitions/LayerImage'
-  /layer-images/:
-    get:
-      summary: Paginated list of layer images
+            $ref: '#/definitions/Image'
+  /buckets/{uuid}/scenes/{sceneUUID}:
+    delete:
+      summary: Remove a scene from a bucket
       tags:
-        - Layers
+        - Imagery
       parameters:
         - $ref: '#/parameters/orderingBase'
         - $ref: '#/parameters/pageSize'
         - $ref: '#/parameters/page'
+        - $ref: '#/parameters/uuid'
+        - name: sceneUUID
+          in: path
+          required: true
+          type: string
+          format: uuid
+      responses:
+        204:
+          description: Scene has been removed successfully
+  /images/:
+    get:
+      summary: Paginated list of bucket images
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/orderingBase'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/scene'
       responses:
         200:
           description: Paginated list of images
           schema:
-            $ref: '#/definitions/LayerImagePaginated'
+            $ref: '#/definitions/ImagePaginated'
     post:
-      summary: Create a new image not associated with any Layer
+      summary: Create a new image not associated with any Bucket
       tags:
-        - Layers
+        - Imagery
       parameters:
         - name: image
           in: body
           required: true
           schema:
-            $ref: '#/definitions/LayerImage'
+            $ref: '#/definitions/Image'
       responses:
         202:
-          description: Layer image details; thumbnails and boundary in-progress
+          description: Bucket image details; thumbnails and boundary in-progress
           schema:
-            $ref: '#/definitions/LayerImage'
-  /layer-images/{uuid}:
+            $ref: '#/definitions/Image'
+  /images/{uuid}:
     get:
-      summary: Details of a LayerImage
+      summary: Details of a Image
       tags:
-        - Layers
+        - Imagery
       parameters:
         - $ref: '#/parameters/uuid'
       responses:
         200:
-          description: Image details (All task-populated fields have final values)
+          description: Image details
           schema:
-            $ref: '#/definitions/LayerImage'
-        202:
-          description: Image details (some task-populated fields are in progress)
-          schema:
-            $ref: '#/definitions/LayerImage'
+            $ref: '#/definitions/Image'
         404:
           description: Image UUID was not found
           schema:
             $ref: '#/definitions/Error'
     put:
-      summary: Update a LayerImage
+      summary: Update a Image
       tags:
-        - Layers
+        - Imagery
       parameters:
         - $ref: '#/parameters/uuid'
         - name: image
           in: body
           required: true
           schema:
-            $ref: '#/definitions/LayerImage'
+            $ref: '#/definitions/Image'
       responses:
         202:
           description: Update successful, further processing required
           schema:
-            $ref: '#/definitions/LayerImage'
+            $ref: '#/definitions/Image'
         200:
           description: Update successful, no further processing required
           schema:
-            $ref: '#/definitions/LayerImage'
+            $ref: '#/definitions/Image'
         404:
           description: Image UUID was not found
           schema:
@@ -382,11 +499,12 @@ paths:
     get:
       summary: Paginated list of thumbnails
       tags:
-        - Layers
+        - Imagery
       parameters:
         - $ref: '#/parameters/orderingBase'
         - $ref: '#/parameters/pageSize'
         - $ref: '#/parameters/page'
+        - $ref: '#/parameters/scene'
       responses:
         200:
           description: Paginated list of thumbnail images
@@ -396,7 +514,7 @@ paths:
     get:
       summary: Thumbnail details
       tags:
-        - Layers
+        - Imagery
       parameters:
         - $ref: '#/parameters/uuid'
       responses:
@@ -408,16 +526,17 @@ paths:
           description: Thumbnail UUID was not found
           schema:
             $ref: '#/definitions/Error'
-
   /boundaries/:
     get:
       summary: Paginated list of boundaries
       tags:
-        - Layers
+        - Imagery
       parameters:
         - $ref: '#/parameters/orderingBase'
         - $ref: '#/parameters/pageSize'
         - $ref: '#/parameters/page'
+        - $ref: '#/parameters/scene'
+        - $ref: '#/parameters/organization'          
       responses:
         200:
           description: Paginated list of boundaries
@@ -427,7 +546,7 @@ paths:
     get:
       summary: Boundary details
       tags:
-        - Layers
+        - Imagery
       parameters:
         - $ref: '#/parameters/uuid'
       responses:
@@ -445,15 +564,27 @@ parameters:
     name: ordering
     in: query
     description: Field to order results by; meaning of label varies based on model
-    type: string
-    enum:
-      - createdAt
-      - modifiedAt
+    type: array
+    collectionFormat: pipes
+    items:
+      type: string
+      enum:
+        - createdAt,desc
+        - createdAt,asc
+        - modifiedAt,desc
+        - modifiedAt,asc
   organization:
     name: organization
     in: query
-    description: Slug for organization to filter by
+    description: UUID for organization to filter by
     type: string
+    format: uuid
+  scene:
+    name: scene
+    in: query
+    description: UUID for scene
+    type: string
+    format: uuid
   page:
     name: page
     in: query
@@ -472,6 +603,127 @@ parameters:
     required: true
     type: string
     format: uuid
+  minCloudCover:
+    name: minCloudCover
+    description: Only return results with cloud cover greater than this number
+    in: query
+    type: number
+    minimum: 0
+    maximum: 1.0
+    required: false
+  maxCloudCover:
+    name: maxCloudCover
+    description: Only return results with cloud cover less than this number
+    in: query
+    type: number
+    required: false
+  minAcquisitionDatetime:
+    name: minAcquisitionDatetime
+    description: Only return results acquired after this datetime
+    in: query
+    type: string
+    required: false
+    format: datetime
+  maxAcquisitionDatetime:
+    name: maxAcquisitionDatetime
+    description: Only return results acquired before this datetime
+    in: query
+    type: string
+    required: false
+    format: datetime
+  minCreateDatetime:
+    name: minCreateDatetime
+    description: Only return results created after this datetime
+    in: query
+    type: string
+    required: false
+    format: datetime
+  minSunElevation:
+    name: minSunElevation
+    description: Only return results with sun elevation greater than this value
+    in: query
+    type: number
+    required: false
+  maxSunElevation:
+    name: maxSunElevation
+    description: Only return results with sun elevation less than this value
+    in: query
+    type: number
+    required: false
+  minSunAzimuth:
+    name: minSunAzimuth
+    description: Only return results with sun elevation greater than this value
+    in: query
+    type: number
+    required: false
+  maxSunAzimuth:
+    name: maxSunAzimuth
+    description: Only return results with sun azium greater than this value
+    in: query
+    type: number
+    required: false
+  maxCreateDatetime:
+    name: maxCreateDatetime
+    description: Only return results created before this datetime
+    in: query
+    type: string
+    required: false
+    format: datetime
+  tags:
+    name: tags
+    description: Only return results that contain these tags
+    in: query
+    type: array
+    required: false
+    items:
+      type: string
+  datasource:
+    name: datasource
+    description: Only return results belonging to this datasource
+    in: query
+    type: array
+    required: false
+    items:
+      type: string
+      format: uuid
+  month:
+    name: month
+    description: Only return results from this month
+    required: false
+    in: query
+    type: array
+    items:
+      type: number
+      format: int
+      maximum: 12
+      minimum: 1
+  orderingScene:
+    name: ordering
+    in: query
+    description: Fields to sort scenes by
+    type: array
+    collectionFormat: pipes
+    items:
+      type: string
+      enum:
+        - createdAt,desc
+        - createdAt,asc
+        - modifiedAt,desc
+        - modifiedAt,asc
+        - organization,asc
+        - organization,desc
+        - datasource,asc
+        - datasource,desc
+        - month,asc
+        - month,desc
+        - createDatetime,asc
+        - createDatetime,desc
+        - acquisitionDatetime,asc
+        - acquisitionDatetime,desc
+        - sunAzimuth,asc
+        - sunAzimuth,desc
+        - cloudCover,asc
+        - cloudCover,desc
 
 definitions:
   BaseModel:
@@ -527,8 +779,8 @@ definitions:
     type: object
     required:
       - count
-      - next
-      - previous
+      - hasNext
+      - hasPrevious
       - page
       - pageSize
     properties:
@@ -537,14 +789,14 @@ definitions:
         format: int32
         readOnly: true
         description: number of total objects matching query
-      next:
-        type: string
+      hasNext:
+        type: boolean
         readOnly: true
-        description: Optional. If provided, link to next page of query results
-      previous:
-        type: string
+        description: True if more results can be fetched, otherwise false
+      hasPrevious:
+        type: boolean
         readOnly: true
-        description: Optional. If provided, link to previous page of query results
+        description: True if previous results can be fetched, otherwise false
       page:
         type: integer
         readOnly: true
@@ -563,6 +815,15 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/User'
+  ScenePaginated:
+    allOf:
+      - $ref: '#/definitions/PaginatedResponse'
+    properties:
+      results:
+        type: array
+        items:
+          $ref: '#/definitions/Scene'
+          
   OrganizationPaginated:
     allOf:
       - $ref: '#/definitions/PaginatedResponse'
@@ -586,7 +847,7 @@ definitions:
         type: string
         description: URL safe version of name
         readOnly: true
-  Layer:
+  Scene:
     allOf:
       - $ref: '#/definitions/BaseModel'
       - $ref: '#/definitions/UserTrackingMixin'
@@ -594,104 +855,170 @@ definitions:
         properties:
           name:
             type: string
-            description: The display name of the layer
+            description: The display name of the bucket
+          ingestSizeBytes:
+            type: integer
+            description: Size of ingested data in bytes.
+          accessType:
+            type: string
+            description: Level of restriction on viewing
+            enum:
+              - PUBLIC
+              - ORGANIZATION
+              - OWNERONLY
+          resolutionMeters:
+            type: number
+            description: Size of pixel in meters
+          tags:
+            type: array
+            description: Tags associated with image
+            items:
+              - type: string
+          thumbnails:
+            type: object
+            description: Thumbnails associated with this image
+            properties:
+              large:
+                type: string
+                format: uri
+              small:
+                type: string
+                format: uri
+              square:
+                type: string
+                format: uri
+            readOnly: true
+          dataSource:
+            type: string
+            format: uuid
+            description: Data source scene originated from
+          cloudCover:
+            type: number
+            format: float32
+            description: Proportion of cloud coverage for scene
+          acqusitionDate:
+            type: string
+            format: datetime
+            description: Date scene was acquired from instrument (e.g. satellite, drone)
+          boundary:
+            type: string
+            description: URI to boundary for this image
+            readOnly: true
+          metadata:
+            type: object
+            # TODO: once common/required elements of an scene are determined they should be lifted to actual columns so that the query planner can gather better statistics
+            description: Metadata about the scene -- some aspects we will eventually want to nail down that will be fairly common and/or required for scenes
+          thumbnailStatus:
+            type: string
+            description: status of thumbnail generation
+            enum:
+              - SUCCESS
+              - FAILURE
+              - PARTIALFAILURE
+              - QUEUED
+              - PROCESSING
+          boundaryStatus:
+            type: string
+            description: status of thumbnail generation
+            enum:
+              - SUCCESS
+              - FAILURE
+              - PARTIALFAILURE
+              - QUEUED
+              - PROCESSING
+          status:
+            type: string
+            description: overall status of scene
+            enum:
+              - UPLOADING
+              - SUCCESS
+              - FAILURE
+              - PARTIALFAILURE
+              - QUEUED
+              - PROCESSING
+  Bucket:
+    allOf:
+      - $ref: '#/definitions/BaseModel'
+      - $ref: '#/definitions/UserTrackingMixin'
+      - type: object
+        properties:
+          name:
+            type: string
+            description: The display name of the bucket
           slugLabel:
             type: string
             description: URL-safe version of name
             readOnly: true
           description:
             type: string
-            description: Long-form description of the layer
+            description: Long-form description of the bucket
+          accessType:
+            type: string
+            description: Level of restriction on viewing
+            enum:
+              - PUBLIC
+              - ORGANIZATION
+              - OWNERONLY
           tags:
             type: array
             items:
               - type: string
-          images:
-            type: string
-            description: URI to layer's image information
-            format: uri
-          thumbnails:
-            type: object
-            description: The thumbnails associated with this layer
-            properties:  # Sizes inspired by Flickr
-              large:
-                $ref: '#/definitions/TaskPopulatedField'
-              small:
-                $ref: '#/definitions/TaskPopulatedField'
-              square:
-                $ref: '#/definitions/TaskPopulatedField'
-            readOnly: true
-          boundary:
-            allOf:
-              - $ref: '#/definitions/TaskPopulatedField'
-            readOnly: true
-  LayerImage:
+  Image:
     allOf:
       - $ref: '#/definitions/BaseModel'
       - $ref: '#/definitions/UserTrackingMixin'
       - type: object
         properties:
+          name:
+            type: string
+            description: name of image, displayed in UI
+          accessType:
+            type: string
+            description: Level of restriction on viewing
+            enum:
+              - PUBLIC
+              - ORGANIZATION
+              - OWNERONLY
           fileName:
-              type: string
-              description: Name of the image file
+            type: string
+            description: Name of the image file
           sourceURI:
             type: string
-            description: URI to raw source that will be used for this image
+            description: URI to original source. This should include a protocol-like prefix to identify where it is located http://, s3://, etc.
+          rawDataBytes:
+            type: integer
+            description: Size of original uploaded imagery in bytes
+          bands:
+            type: array
+            description: list of band types for image; a single band denotes a single band image, multiple bands should be listed in order (e.g if it is an RGB tiff then bands should be [red, green blue])
+            items:
+              - type: string
+          scene:
+            type: string
+            format: uuid
+            description: Scene that image is associated with
           metadata:
             type: object
             description: Metadata about this image
-          thumbnails:
-            type: object
-            description: Thumbnails associated with this layer-image
-            properties:
-              large:
-                $ref: '#/definitions/TaskPopulatedField'
-              small:
-                $ref: '#/definitions/TaskPopulatedField'
-              square:
-                $ref: '#/definitions/TaskPopulatedField'
-            readOnly: true
-          boundary:
-            allOf:
-              - $ref: '#/definitions/TaskPopulatedField'
-            readOnly: true
         required:
           - fileName
           - sourceURI
-          - thumbnails
-          - boundary
-  LayerPaginated:
+  BucketPaginated:
     allOf:
       - $ref: '#/definitions/PaginatedResponse'
     properties:
       results:
         type: array
         items:
-          $ref: '#/definitions/Layer'
-  LayerImagePaginated:
+          $ref: '#/definitions/Bucket'
+  ImagePaginated:
     allOf:
       - $ref: '#/definitions/PaginatedResponse'
-      - type: object
-        properties:
-          results:
-            type: array
-            items:
-              $ref: '#/definitions/LayerImage'
-  TaskPopulatedField:
-    type: object
     properties:
-      taskStatus:
-        type: string
-        description: The current status of the task
-        enum:
-          - PENDING
-          - PROCESSING
-          - COMPLETED
-          - FAILED
-      result:
-        type: string
-        format: uri
-        description: Link at which the results of this task can be found
+      results:
+        type: array
+        items:
+          $ref: '#/definitions/Image'
   Error:
     type: object
     properties:
@@ -709,10 +1036,21 @@ definitions:
             type: integer
             format: int32
             description: The width of the thumbnail, in pixels
+          scene:
+            type: string
+            format: uuid
+            description: Scene that image is associated with
           heightPx:
             type: integer
             format: int32
             description: The height of the thumbnail, in pixels
+          size:
+            type: string
+            description: Summary of size
+            enum:
+              - small
+              - large
+              - square
           url:
             type: string
             format: uri
@@ -731,6 +1069,10 @@ definitions:
       - $ref: '#/definitions/BaseModel'
       - type: object
         properties:
+          scene:
+            type: string
+            format: uuid
+            description: Scene that image is associated with
           geojson:
             type: object
             description: GeoJSON representing the boundary geometry
@@ -743,3 +1085,4 @@ definitions:
             type: array
             items:
               $ref: '#/definitions/Boundary'
+
