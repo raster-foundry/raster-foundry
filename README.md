@@ -82,6 +82,7 @@ The Vagrant configuration maps the following host ports to services running in t
 | Airflow UI                | [`8080`](http://localhost:8080) | `RF_PORT_8080`       |
 | Airflow Flower            | [`5555`](http://localhost:5555) | `RF_PORT_5555`       |
 | Swagger Editor            | [`9090`](http://localhost:9090) | `RF_PORT_9090`       |
+| Swagger UI                | [`9999`](http://localhost:9999) | `RF_PORT_9999`       |
 
 
 ## Scripts

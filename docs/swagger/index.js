@@ -1,5 +1,5 @@
 $(function () {
-    var url = window.location.protocol + '//' + window.location.host + '/docs/swagger/spec.yml';
+    var url = window.location.protocol + '//' + window.location.host + '/spec.yml';
 
     // Pre load translate...
     if(window.SwaggerTranslator) {
