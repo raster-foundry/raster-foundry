@@ -26,7 +26,7 @@ tags:
 paths:
   /users/:
     get:
-      summary: Get a list of user
+      summary: Get a list of users
       description: |
         The Users API endpoint enables searching and listing users.
       tags:

@@ -7,14 +7,18 @@ services:
       - "5432:5432"
 
   nginx:
-    image: nginx:1.10
+    image: rf-nginx
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
     ports:
       - "9100:443"
     links:
       - app-server
     volumes:
-      - ./nginx/srv/dist/:/srv/dist/
+      - ./nginx/srv/dist/angular/:/srv/dist/angular/
       - ./nginx/etc/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./docs/swagger/:/srv/dist/docs/swagger/
       - ./nginx/etc/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
 
   app-frontend:
@@ -23,7 +27,7 @@ services:
     volumes:
       - ./app-frontend/.babelrc:/opt/raster-foundry/app-frontend/.babelrc
       - ./app-frontend/config/:/opt/raster-foundry/app-frontend/config/
-      - ./nginx/srv/dist/:/opt/raster-foundry/app-frontend/dist/
+      - ./nginx/srv/dist/angular/:/opt/raster-foundry/app-frontend/dist/
       - ./app-frontend/.eslintrc:/opt/raster-foundry/app-frontend/.eslintrc
       - ./app-frontend/karma.conf.js:/opt/raster-foundry/app-frontend/karma.conf.js
       - ./.node_modules:/opt/raster-foundry/app-frontend/node_modules
@@ -50,6 +54,13 @@ services:
     image: swaggerapi/swagger-editor:latest
     ports:
       - "8888:8080"
+
+  swagger-ui:
+    image: nginx:1.10.1-alpine
+    volumes:
+      - ./docs/swagger/:/usr/share/nginx/html:ro
+    ports:
+      - "9999:80"
 
   redis:
     image: redis:3-alpine

@@ -22,13 +22,18 @@ function main() {
     aws s3 cp "s3://config-development-raster-foundry/.env" ".env"
     popd
 
+    # Copy documentation
+    echo "Copying Documentation"
+    mkdir -p "${DIR}/../nginx/srv/dist/docs/"
+    cp -r "${DIR}/../docs/swagger/" "${DIR}/../nginx/srv/dist/docs/"
+
     echo "Building/Pulling containers..."
     docker-compose \
         -f "${DIR}/../docker-compose.yml" \
         build
     docker-compose \
         -f "${DIR}/../docker-compose.yml" \
-        pull nginx postgres swagger-editor redis
+        pull postgres swagger-editor redis
 }
 
 
