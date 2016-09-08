@@ -55,9 +55,6 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             run --no-deps --rm --entrypoint ./sbt app-server app/assembly
 
         # Build app, airflow
-        echo "Copying Documentation into nginx directory"
-        cp -r "${DIR}/../docs/swagger/" "${DIR}/../nginx/srv/dist/docs/"
-
         echo "Building app, airflow..."
         GIT_COMMIT="${GIT_COMMIT}" docker-compose \
             -f "${DIR}/../docker-compose.yml" \
