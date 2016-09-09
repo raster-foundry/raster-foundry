@@ -46,7 +46,8 @@ lazy val appSettings = commonSettings ++ Seq(
 )
 
 lazy val loggingDependencies = List(
-  Dependencies.slf4j
+  "com.typesafe.akka" % "akka-slf4j_2.11" % "2.4.10",
+  "ch.qos.logback" %  "logback-classic" % "1.1.7"
 )
 
 lazy val slickDependencies = List(
