@@ -1,11 +1,11 @@
 package com.azavea.rf.user
 
-object Roles extends Enumeration {
-  val User = Role("user")
-  val Viewer = Role("viewer")
-  val Admin = Role("admin")
+object UserRoles extends Enumeration {
+  val User = roleValue("user")
+  val Viewer = roleValue("viewer")
+  val Admin = roleValue("admin")
 
-  def Role(name: String): Value with Matching =
+  def roleValue(name: String): Value with Matching =
     new Val(nextId, name) with Matching
 
   def unapply(s: String): Option[Value] =

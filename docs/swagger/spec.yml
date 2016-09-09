@@ -135,13 +135,13 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-  /organizations/{organizationSlug}/:
+  /organizations/{organizationId}/:
     get:
       summary: Retrieve details for an organization
       tags:
         - Organizations
       parameters:
-        - name: organizationSlug
+        - name: organizationId
           in: path
           required: true
           type: string
@@ -164,13 +164,98 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/Organization'
-        - name: organizationSlug
+        - name: organizationId
           in: path
           required: true
           type: string
       responses:
         204:
           description: Update successful (No Content)
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /organizations/{organizationId}/users/:
+    get:
+      summary: Get a list of users and their roles for the specified organization
+      tags:
+        - Organizations
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          type: string
+      responses:
+        200:
+          description: Paginated list of user roles
+          schema:
+            $ref: '#/definitions/UserRolePaginated'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Add a user to an organization
+      tags:
+        - Organizations
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          type: string
+        - name: user
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/UserRoleCreate'
+      responses:
+        201:
+          description: Created user role
+          schema:
+            $ref: '#/definitions/UserRole'
+      
+  /organizations/{organizationId}/users/{userId}:
+    get:
+      summary: Get a list of users and their roles for the specified organization
+      tags:
+        - Organizations
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          type: string
+        - name: userId
+          in: path
+          required: true
+          type: string
+      responses:
+        200:
+          description: Returned user role
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Update a user\'s role
+      tags:
+        - Organizations
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          type: string
+        - name: userId
+          in: path
+          required: true
+          type: string
+        - name: user role
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/UserRole'
+      responses:
+        204:
+          description: Update Successful (No Content)
         default:
           description: Unexpected error
           schema:
@@ -838,15 +923,60 @@ definitions:
       - $ref: '#/definitions/BaseModel'
     required:
       - name
-      - slugLabel
+      - id
     properties:
       name:
         type: string
         description: Display name for organization
-      slugLabel:
+      id:
         type: string
-        description: URL safe version of name
+        description: UUID for the organization
         readOnly: true
+  UserRole:
+    type: object
+    properties:
+      id:
+        type: string
+        description: User id
+        readOnly: true
+      role:
+        type: string
+        description: User role in organization
+      createdAt:
+        type: string
+        description: timestamp of object creation
+        format: date-time
+        readOnly: true
+      modifiedAt:
+        type: string
+        description: timestamp of object modificiation
+        format: date-time
+        readOnly: true
+    required:
+      - id
+      - role
+      - createdAt
+      - modifiedAt
+  UserRolePaginated:
+    allOf:
+      - $ref: '#/definitions/PaginatedResponse'
+    properties:
+      results:
+        type: array
+        items:
+          $ref: '#/definitions/UserRole'
+  UserRoleCreate:
+    type: object
+    properties:
+      id:
+        type: string
+        description: User id
+      role:
+        type: string
+        description: User role in organization
+    required:
+      - id
+      - role
   Scene:
     allOf:
       - $ref: '#/definitions/BaseModel'

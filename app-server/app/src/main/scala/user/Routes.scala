@@ -3,26 +3,21 @@ package com.azavea.rf.user
 import scala.concurrent.ExecutionContext
 import scala.util.{Success, Failure}
 
-import akka.http.scaladsl.server.{Route, ExceptionHandler}
+import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 
 import com.azavea.rf.auth.Authentication
-import com.azavea.rf.utils.Database
+import com.azavea.rf.utils.{Database, UserErrorHandler}
 
 /**
   * Routes for users
   */
-trait UserRoutes extends Authentication with PaginationDirectives {
+trait UserRoutes extends Authentication with PaginationDirectives with UserErrorHandler {
 
   implicit def database: Database
   implicit val ec: ExecutionContext
-
-  val userExceptionHandler = ExceptionHandler {
-    case e: UserErrorException =>
-      complete(StatusCodes.ClientError(400)("", e.getMessage()))
-  }
 
   def userRoutes:Route = {
     handleExceptions(userExceptionHandler) {
@@ -56,11 +51,9 @@ trait UserRoutes extends Authentication with PaginationDirectives {
                 get {
                   onSuccess(
                     UserService.getUserWithOrgsById(authId)
-                  ) { resp =>
-                    resp match {
-                      case Some(user) => complete(user)
-                      case _ => complete((StatusCodes.NotFound))
-                    }
+                  ) {
+                    case Some(user) => complete(user)
+                    case _ => complete((StatusCodes.NotFound))
                   }
                 }
               }
