@@ -1,15 +1,9 @@
 package com.azavea.rf.utils
 
-import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
-import scala.concurrent.Await
-import scala.concurrent.duration._
-import org.postgresql.util.PSQLException
-import scala.util.Try
 
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.scalatest.{Matchers, WordSpec}
 
-import com.azavea.rf.utils._
 import com.azavea.rf._
 
 

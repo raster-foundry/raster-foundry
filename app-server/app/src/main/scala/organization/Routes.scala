@@ -44,8 +44,9 @@ trait OrganizationRoutes extends Authentication with PaginationDirectives with U
           pathPrefix(JavaUUID) { orgId =>
             pathEndOrSingleSlash {
               get {
-                onSuccess(OrganizationService.getOrganization(orgId)) { resp =>
-                  complete(resp)
+                onSuccess(OrganizationService.getOrganization(orgId)) { 
+                  case Some(org) => complete(org)
+                  case _ => complete(StatusCodes.NotFound)
                 }
               } ~
               put {
