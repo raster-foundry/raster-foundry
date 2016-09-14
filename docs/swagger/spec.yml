@@ -989,7 +989,7 @@ definitions:
           ingestSizeBytes:
             type: integer
             description: Size of ingested data in bytes.
-          accessType:
+          visibility:
             type: string
             description: Level of restriction on viewing
             enum:
@@ -1082,7 +1082,7 @@ definitions:
           description:
             type: string
             description: Long-form description of the bucket
-          accessType:
+          visibility:
             type: string
             description: Level of restriction on viewing
             enum:
@@ -1102,7 +1102,7 @@ definitions:
           name:
             type: string
             description: name of image, displayed in UI
-          accessType:
+          visibility:
             type: string
             description: Level of restriction on viewing
             enum:

@@ -1,6 +1,7 @@
 package com.azavea.rf.utils
 
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
+import com.azavea.rf.datamodel.driver.ExtendedPostgresDriver
 
 /**
   * PostGIS Database for Raster Foundry data
@@ -28,7 +29,8 @@ class Database(jdbcUrl: String, dbUser: String, dbPassword: String) {
     */
   def closeConnectionPool() = dataSource.close
 
-  val driver = slick.driver.PostgresDriver
+  // Custom driver to handle postgres column types
+  val driver = ExtendedPostgresDriver
   import driver.api._
   val db = Database.forDataSource(dataSource)
   db.createSession()

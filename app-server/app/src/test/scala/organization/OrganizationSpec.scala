@@ -14,6 +14,7 @@ import com.azavea.rf.datamodel.latest.schema.tables.OrganizationsRow
 import com.azavea.rf.utils.PaginatedResponse
 import com.azavea.rf.AuthUtils
 
+
 class OrganizationSpec extends WordSpec
     with Matchers
     with ScalatestRouteTest

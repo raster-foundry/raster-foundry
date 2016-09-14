@@ -4,8 +4,6 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.util.Try
 
-import org.postgresql.util.PSQLException
-import slick.driver.PostgresDriver
 import slick.driver.PostgresDriver.api._
 
 
