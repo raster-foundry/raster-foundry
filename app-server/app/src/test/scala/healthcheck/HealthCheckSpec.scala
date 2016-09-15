@@ -1,9 +1,11 @@
 package com.azavea.rf.healthcheck
 
-import akka.http.scaladsl.testkit.ScalatestRouteTest
+import akka.http.scaladsl.testkit.{ScalatestRouteTest, RouteTestTimeout}
 import org.scalatest.{Matchers, WordSpec}
+import akka.actor.ActorSystem
+import concurrent.duration._
 
-import com.azavea.rf.utils.{Config, Database}
+import com.azavea.rf.utils.Config
 import com.azavea.rf.{DBSpec, Router}
 
 
@@ -16,6 +18,7 @@ class HealthCheckSpec extends WordSpec
 
   implicit val ec = system.dispatcher
   implicit def database = db
+  implicit def default(implicit system: ActorSystem) = RouteTestTimeout(DurationInt(20).second)
 
   "The healthcheck service" should {
     "return an OK status" in {
