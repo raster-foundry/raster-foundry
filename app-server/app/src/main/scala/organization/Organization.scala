@@ -22,6 +22,7 @@ import com.azavea.rf.utils.{
   UserErrorException
 }
 import com.azavea.rf.user.UserRoles
+import com.azavea.rf.AkkaSystem
 
 
 case class UserWithRole(id: String, role: String, createdAt: Timestamp, modifiedAt: Timestamp)
@@ -44,7 +45,8 @@ case class OrganizationsRowCreate(name: String) {
 }
 
 
-object OrganizationService {
+object OrganizationService extends AkkaSystem.LoggerExecutor {
+
   def applyOrgSort(
     query: Query[Organizations, Organizations#TableElementType, Seq],
     sortMap: Map[String, Order]
@@ -55,23 +57,55 @@ object OrganizationService {
     sortMap.headOption match {
       case Some(("id", order)) =>
         order match {
-          case Order.Asc => applyOrgSort(query.sortBy(_.id.asc), sortMap.tail)
-          case Order.Desc => applyOrgSort(query.sortBy(_.id.desc), sortMap.tail)
+          case Order.Asc => {
+            val sortQuery = query.sortBy(_.id.asc)
+            log.debug(s"Org sort query to run: $sortQuery")
+            applyOrgSort(sortQuery, sortMap.tail)
+          }
+          case Order.Desc => {
+            val sortQuery = query.sortBy(_.id.desc)
+            log.debug(s"Org sort query to run: $sortQuery")
+            applyOrgSort(sortQuery, sortMap.tail)
+          }
         }
       case Some(("name", order)) =>
         order match {
-          case Order.Asc => applyOrgSort(query.sortBy(_.name.asc), sortMap.tail)
-          case Order.Desc => applyOrgSort(query.sortBy(_.name.desc), sortMap.tail)
+          case Order.Asc => {
+            val sortQuery = query.sortBy(_.name.asc)
+            log.debug(s"Org sort query to run: $sortQuery")
+            applyOrgSort(sortQuery, sortMap.tail)
+          }
+          case Order.Desc => {
+            val sortQuery = query.sortBy(_.name.desc)
+            log.debug(s"Org sort query to run: $sortQuery")
+            applyOrgSort(sortQuery, sortMap.tail)
+          }
         }
       case Some(("modified", order)) =>
         order match {
-          case Order.Asc => applyOrgSort(query.sortBy(_.modifiedAt.asc), sortMap.tail)
-          case Order.Desc => applyOrgSort(query.sortBy(_.modifiedAt.desc), sortMap.tail)
+          case Order.Asc => {
+            val sortQuery = query.sortBy(_.modifiedAt.asc)
+            log.debug(s"Org sort query to run: $sortQuery")
+            applyOrgSort(sortQuery, sortMap.tail)
+          }
+          case Order.Desc => {
+            val sortQuery = query.sortBy(_.modifiedAt.desc)
+            log.debug(s"Org sort query to run: $sortQuery")
+            applyOrgSort(sortQuery, sortMap.tail)
+          }
         }
       case Some(("created", order)) =>
         order match {
-          case Order.Asc => applyOrgSort(query.sortBy(_.createdAt.asc), sortMap.tail)
-          case Order.Desc => applyOrgSort(query.sortBy(_.createdAt.desc), sortMap.tail)
+          case Order.Asc => {
+            val sortQuery = query.sortBy(_.createdAt.asc)
+            log.debug(s"Org sort query to run: $sortQuery")
+            applyOrgSort(sortQuery, sortMap.tail)
+          }
+          case Order.Desc => {
+            val sortQuery = query.sortBy(_.createdAt.desc)
+            log.debug(s"Org sort query to run: $sortQuery")
+            applyOrgSort(sortQuery, sortMap.tail)
+          }
         }
       case Some((_, order)) => applyOrgSort(query, sortMap.tail)
       case _ => query
@@ -88,25 +122,60 @@ object OrganizationService {
     sortMap.headOption match {
       case Some(("id", order)) =>
         order match {
-          case Order.Asc => applyUserRoleSort(query.sortBy(_.userId.asc), sortMap.tail)
-          case Order.Desc => applyUserRoleSort(query.sortBy(_.userId.desc), sortMap.tail)
+          case Order.Asc => {
+            val sortQuery = query.sortBy(_.userId.asc)
+            log.debug(s"User role sort query: ${sortQuery.result.statements.headOption}")
+            applyUserRoleSort(sortQuery, sortMap.tail)
+          }
+          case Order.Desc => {
+            val sortQuery = query.sortBy(_.userId.desc)
+            log.debug(s"User role sort query: ${sortQuery.result.statements.headOption}")
+            applyUserRoleSort(query.sortBy(_.userId.desc), sortMap.tail)
+          }
         }
       case Some(("role", order)) =>
         order match {
-          case Order.Asc => applyUserRoleSort(query.sortBy(_.role.asc), sortMap.tail)
-          case Order.Desc => applyUserRoleSort(query.sortBy(_.role.desc), sortMap.tail)
+          case Order.Asc => {
+            val sortQuery = query.sortBy(_.role.asc)
+            log.debug(s"User role sort query: ${sortQuery.result.statements.headOption}")
+            applyUserRoleSort(sortQuery, sortMap.tail)
+          }
+          case Order.Desc => {
+            val sortQuery = query.sortBy(_.role.asc)
+            log.debug(s"User role sort query: ${sortQuery.result.statements.headOption}")
+            applyUserRoleSort(query.sortBy(_.role.desc), sortMap.tail)
+          }
         }
       case Some(("modified", order)) =>
         order match {
-          case Order.Asc => applyUserRoleSort(query.sortBy(_.modifiedAt.asc), sortMap.tail)
-          case Order.Desc => applyUserRoleSort(query.sortBy(_.modifiedAt.desc), sortMap.tail)
+          case Order.Asc => {
+            val sortQuery = query.sortBy(_.modifiedAt.asc)
+            log.debug(s"User role sort query: ${sortQuery.result.statements.headOption}")
+            applyUserRoleSort(sortQuery, sortMap.tail)
+          }
+          case Order.Desc => {
+            val sortQuery = query.sortBy(_.modifiedAt.desc)
+            log.debug(s"User role sort query: ${sortQuery.result.statements.headOption}")
+            applyUserRoleSort(sortQuery, sortMap.tail)
+          }
         }
       case Some(("created", order)) =>
         order match {
-          case Order.Asc => applyUserRoleSort(query.sortBy(_.createdAt.asc), sortMap.tail)
-          case Order.Desc => applyUserRoleSort(query.sortBy(_.createdAt.desc), sortMap.tail)
+          case Order.Asc => {
+            val sortQuery =  query.sortBy(_.createdAt.asc)
+            log.debug(s"User role sort query: ${sortQuery.result.statements.headOption}")
+            applyUserRoleSort(sortQuery, sortMap.tail)
+          }
+          case Order.Desc => {
+            val sortQuery = query.sortBy(_.createdAt.desc)
+            log.debug(s"User role sort query: ${sortQuery.result.statements.headOption}")
+            applyUserRoleSort(sortQuery, sortMap.tail)
+          }
         }
-      case Some((_, order)) => applyUserRoleSort(query, sortMap.tail)
+      case Some((_, order)) => {
+        log.debug(s"User role sort query: ${query.result.statements.headOption}")
+        applyUserRoleSort(query, sortMap.tail)
+      }
       case _ => query
     }
   }
@@ -140,8 +209,10 @@ object OrganizationService {
       Future[Option[OrganizationsRow]] = {
     import database.driver.api._
 
+    val action = Organizations.filter(_.id === id).result
+    log.debug(s"Query for org $id: ${action.statements.headOption}")
     database.db.run {
-      Organizations.filter(_.id === id).result.headOption
+      action.headOption
     }
   }
 
@@ -152,8 +223,10 @@ object OrganizationService {
 
     val rowInsert = org.toOrganizationsRow()
 
+    val action = Organizations.forceInsert(rowInsert)
+    log.debug(s"Inserting org with: ${action.statements.headOption}")
     database.db.run {
-      Organizations.forceInsert(rowInsert).asTry
+      action.asTry
     } map {
       case Success(res) => {
         res match {
@@ -187,8 +260,10 @@ object OrganizationService {
     } yield (
       updateorg.name, updateorg.modifiedAt
     )
+    val action = updateQuery.update((org.name, now))
+    log.debug(s"Updating org with: ${action.statements.headOption}")
     database.db.run {
-      updateQuery.update((org.name, now)).asTry
+      action.asTry
     } map {
       case Success(res) => {
         res match {
@@ -238,8 +313,10 @@ object OrganizationService {
         .filter(_.organizationId === orgId)
       user <- Users.filter(_.id === relationship.userId)
     } yield (user.id, relationship.role, relationship.createdAt, relationship.modifiedAt)
+    val action = getOrgUserQuery.result
+    log.debug(s"Getting org user with: ${action.statements.headOption}")
     database.db.run {
-      getOrgUserQuery.result.headOption
+      action.headOption
     } map {
       case Some(tuple) => Option(UserWithRole.tupled(tuple))
       case _ => None
@@ -257,8 +334,10 @@ object OrganizationService {
       userWithRole.id, orgId, userWithRole.role, userWithRole.createdAt, userWithRole.modifiedAt
     )
 
+    val action = UsersToOrganizations.forceInsert(insertRow)
+    log.debug(s"Inserting User to Org with: ${action.statements.headOption}")
     database.db.run {
-      UsersToOrganizations.forceInsert(insertRow).asTry
+      action.asTry
     } map {
       case Success(user) => Success(userWithRole)
       case Failure(_) => throw new UserErrorException("User is already in the organization")
@@ -269,10 +348,13 @@ object OrganizationService {
     userId: String, orgId: java.util.UUID
   )(implicit database: Database, ex: ExecutionContext): Future[Option[UserWithRole]] = {
     import database.driver.api._
+
+    val action = UsersToOrganizations.filter(
+      rel => rel.userId === userId && rel.organizationId === orgId
+    ).result
+    log.debug(s"Getting user org role with: ${action.statements.headOption}")
     database.db.run {
-      UsersToOrganizations.filter(
-        rel => rel.userId === userId && rel.organizationId === orgId
-      ).result.headOption
+      action.headOption
     } map {
       case Some(rel) => Some(UserWithRole(rel.userId, rel.role, rel.createdAt, rel.modifiedAt))
       case _ => None
@@ -283,10 +365,13 @@ object OrganizationService {
     userId: String, orgId: java.util.UUID
   )(implicit database: Database): Future[Int] = {
     import database.driver.api._
+
+    val action = UsersToOrganizations.filter(
+      rel => rel.userId === userId && rel.organizationId === orgId
+    ).delete
+    log.debug(s"Deleting User to Org with: ${action.statements.headOption}")
     database.db.run {
-      UsersToOrganizations.filter(
-        rel => rel.userId === userId && rel.organizationId === orgId
-      ).delete
+      action
     }
   }
 
@@ -307,10 +392,13 @@ object OrganizationService {
           relationship.modifiedAt, relationship.role
         )
 
+        val action = rowUpdate.update(
+          (now, userWithRole.role)
+        )
+        log.debug(s"Updating user with role with: ${action.statements.headOption}")
+
         database.db.run {
-          rowUpdate.update(
-            (now, userWithRole.role)
-          ).asTry
+          action.asTry
         }
       }
       case invalidRole: String => throw new UserErrorException(

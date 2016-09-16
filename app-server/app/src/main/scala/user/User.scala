@@ -10,6 +10,19 @@ import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 import com.azavea.rf.datamodel.latest.schema.tables.{Users, Organizations, UsersToOrganizations}
 import com.azavea.rf.datamodel.latest.schema.tables.{UsersRow, UsersToOrganizationsRow}
 import com.azavea.rf.utils.{Database, PaginatedResponse, UserErrorException}
+import com.azavea.rf.AkkaSystem
+
+
+class UserErrorException(message: String = null, cause: Throwable = null)
+    extends RuntimeException(UserErrorException.defaultMessage(message, cause), cause)
+
+
+object UserErrorException {
+  def defaultMessage(message: String, cause: Throwable) =
+    if (message != null) message
+    else if (cause != null) cause.toString()
+    else null
+}
 
 
 /**
@@ -50,7 +63,7 @@ case class UserRoleOrgJoin(userId: String, orgId: java.util.UUID, orgName: Strin
 case class UserWithOrgs(id: String, organizations: Seq[OrganizationWithRole])
 
 
-object UserService {
+object UserService extends AkkaSystem.LoggerExecutor {
 
   /**
     * Recursively applies a list of sort parameters from a page request
@@ -59,6 +72,8 @@ object UserService {
                (implicit database: Database, ec: ExecutionContext):
       Query[Users,Users#TableElementType,Seq] = {
     import database.driver.api._
+
+    log.debug(s"Returning users -- SQL: ${query.result.statements.headOption}")
 
     sortMap.headOption match {
       case Some(("id", order)) =>
@@ -73,6 +88,8 @@ object UserService {
 
   def joinUsersRolesOrgs(query: Query[Users, UsersRow, Seq])(implicit database: Database) = {
     import database.driver.api._
+
+    log.debug(s"Performing Users/Org roles join -- SQL: ${query.result.statements.headOption}")
 
     val userOrgJoin = query join UsersToOrganizations join Organizations on {
       case ((user, userToOrg), org) =>
@@ -105,20 +122,25 @@ object UserService {
       Future[PaginatedResponse[UserWithOrgs]] = {
     import database.driver.api._
 
-    val usersQueryResult = database.db.run {
-      joinUsersRolesOrgs(
+    val usersQueryAction = joinUsersRolesOrgs(
         applySort(Users, page.sort)
           .drop(page.offset * page.limit)
           .take(page.limit)
       ).result
+
+    log.debug(s"Fetching users -- SQL: ${usersQueryAction.statements.headOption}")
+    val usersQueryResult = database.db.run {
+      usersQueryAction
     } map {
       joinTuples => joinTuples.map(joinTuple => UserRoleOrgJoin.tupled(joinTuple))
     } map {
       groupByUserId
     }
 
+    val nUsersAction = Users.length.result
+    log.debug(s"Counting users -- SQL: ${nUsersAction.statements.headOption}")
     val totalUsersResult = database.db.run {
-      Users.length.result
+      nUsersAction
     }
 
     for {
@@ -136,12 +158,19 @@ object UserService {
     import database.driver.api._
     val(userRow, usersToOrganizationsRow) = user.toUsersOrgTuple()
 
+    val insertAction = Users.forceInsert(userRow)
+    val userToOrgAction = UsersToOrganizations.forceInsert(usersToOrganizationsRow)
     val userInsert = (
       for {
-        u <- Users.forceInsert(userRow)
-        userToOrg <- UsersToOrganizations.forceInsert(usersToOrganizationsRow)
+        u <- insertAction
+        userToOrg <- userToOrgAction
       } yield ()
     ).transactionally
+
+    log.debug(s"Inserting user -- User SQL: ${insertAction.statements.headOption}")
+    log.debug(
+      s"Inserting into User/Org join -- User/Org SQL: ${userToOrgAction.statements.headOption}"
+    )
 
     database.db.run {
       userInsert.asTry
@@ -170,8 +199,11 @@ object UserService {
   def getUserById(id: String)(implicit database: Database): Future[Option[UsersRow]] = {
     import database.driver.api._
 
+    val getUserAction = Users.filter(_.id === id).result
+    log.debug(s"Attempting to retrieve user $id -- SQL: ${getUserAction.statements.headOption})")
+
     database.db.run {
-      Users.filter(_.id === id).result.headOption
+      getUserAction.headOption
     }
   }
 
