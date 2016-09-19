@@ -7,7 +7,7 @@ lazy val commonSettings = Seq(
   organization := "com.azavea",
   version := Version.rasterFoundry,
   scapegoatVersion := Version.scapegoat,
-  scapegoatIgnoredFiles := Seq(".*/generated_code/.*"),
+  scapegoatIgnoredFiles := Seq(".*/datamodel/.*"),
   scalaVersion := Version.scala,
   scalacOptions := Seq(
     "-deprecation",
@@ -51,7 +51,9 @@ lazy val loggingDependencies = List(
 )
 
 lazy val slickDependencies = List(
-  Dependencies.slick
+  Dependencies.slick,
+  Dependencies.slickPG,
+  Dependencies.slickPGSpray
 )
 
 lazy val dbDependencies = List(
@@ -82,11 +84,11 @@ lazy val appDependencies = dbDependencies ++ migrationsDependencies ++ Seq(
 lazy val migrationManagerDependencies = dbDependencies ++ forkliftDependencies
 
 lazy val root = Project("root", file(".")).aggregate(
-  app, migrations, migrationManager, generatedCode).settings(
+  app, migrations, migrationManager, datamodel).settings(
   commonSettings:_*)
 
 lazy val app = Project("app",
-  file("app")).dependsOn(generatedCode).settings(
+  file("app")).dependsOn(datamodel).settings(
   appSettings:_*).settings {
   libraryDependencies ++= appDependencies
 }
@@ -99,12 +101,12 @@ lazy val migrationManager = Project("migration_manager",
 
 lazy val migrations = Project("migrations",
   file("migrations")).dependsOn(
-  generatedCode, migrationManager).settings(
+  datamodel, migrationManager).settings(
   commonSettings:_*).settings {
   libraryDependencies ++= migrationsDependencies
 }
 
-lazy val generatedCode = Project("generate_code",
-  file("generated_code")).settings(commonSettings:_*).settings {
+lazy val datamodel = Project("datamodel",
+  file("datamodel")).settings(commonSettings:_*).settings {
   libraryDependencies ++= slickDependencies
 }
