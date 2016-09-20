@@ -20,7 +20,8 @@ trait RFCodegen extends SlickCodegen {
     "users_to_organizations",
     "scenes",
     "buckets",
-    "scenes_to_buckets"
+    "scenes_to_buckets",
+    "thumbnails"
   )
 
   class RFSlickSourceCodeGenerator(m: Model, version: Int)

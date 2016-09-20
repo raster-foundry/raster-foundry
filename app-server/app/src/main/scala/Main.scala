@@ -12,7 +12,6 @@ object AkkaSystem {
   implicit val materializer = ActorMaterializer()
 
   trait LoggerExecutor {
-    protected implicit val executor = system.dispatcher
     protected implicit val log = Logging(system, "app")
   }
 }
