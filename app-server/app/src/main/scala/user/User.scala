@@ -9,7 +9,7 @@ import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 
 import com.azavea.rf.datamodel.latest.schema.tables.{Users, Organizations, UsersToOrganizations}
 import com.azavea.rf.datamodel.latest.schema.tables.{UsersRow, UsersToOrganizationsRow}
-import com.azavea.rf.utils.{Database, PaginatedResponse, UserErrorException}
+import com.azavea.rf.utils.{Database, PaginatedResponse}
 import com.azavea.rf.AkkaSystem
 
 

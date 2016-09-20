@@ -71,6 +71,7 @@ lazy val migrationsDependencies =
 lazy val appDependencies = dbDependencies ++ migrationsDependencies ++ Seq(
   Dependencies.akka,
   Dependencies.akkahttp,
+  Dependencies.akkaHttpCors,
   Dependencies.akkajson,
   Dependencies.akkastream,
   Dependencies.akkatestkit,
