@@ -20,6 +20,26 @@ trait RfJsonProtocols extends SprayJsonSupport with DefaultJsonProtocol {
     }
   }
 
+  /** Serialization for visibility enum */
+  implicit object VisibilityFormat extends RootJsonFormat[Visibility] {
+
+    def write(visibility: Visibility) = JsString(visibility.toString)
+    def read(value: JsValue) = value match {
+      case JsString(enum) => Visibility.fromString(enum)
+      case _ => throw new DeserializationException(s"Expected visibility value but got $value")
+    }
+  }
+
+  /** Serialization for JobStatus enum */
+  implicit object JobStatusFormat extends RootJsonFormat[JobStatus] {
+
+    def write(jobStatus: JobStatus) = JsString(jobStatus.toString)
+    def read(value: JsValue) = value match {
+      case JsString(enum) => JobStatus.fromString(enum)
+      case _ => throw new DeserializationException(s"Expected job status value but got $value")
+    }
+  }
+
   implicit object TimestampJsonFormat extends RootJsonFormat[Timestamp] {
     def write(time: Timestamp) = JsString(time.toInstant().toString())
 
