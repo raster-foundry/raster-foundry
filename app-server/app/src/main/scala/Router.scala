@@ -2,6 +2,9 @@ package com.azavea.rf
 
 import scala.concurrent.ExecutionContext
 
+import ch.megard.akka.http.cors.CorsDirectives._
+import ch.megard.akka.http.cors.CorsSettings
+
 import com.azavea.rf.healthcheck._
 import com.azavea.rf.user.UserRoutes
 import com.azavea.rf.organization.OrganizationRoutes
@@ -22,9 +25,12 @@ trait Router extends HealthCheckRoutes
   implicit def database: Database
   implicit val ec: ExecutionContext
 
-  val routes =
+  val corsSettings = CorsSettings.defaultSettings
+
+  val routes = cors() {
     healthCheckRoutes ~
     userRoutes ~
     organizationRoutes ~
     sceneRoutes
+  }
 }
