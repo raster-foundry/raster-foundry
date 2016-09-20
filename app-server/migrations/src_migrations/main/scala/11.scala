@@ -18,6 +18,5 @@ CREATE TABLE thumbnails (
   url VARCHAR(255) NOT NULL
 );
 """
-
   ))
 }
