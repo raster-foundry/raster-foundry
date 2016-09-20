@@ -9,8 +9,12 @@ import spray.json._
 
 import com.azavea.rf.datamodel.latest.schema.tables.UsersRow
 import com.azavea.rf.datamodel.latest.schema.tables.OrganizationsRow
+import com.azavea.rf.datamodel.enums._
+import com.azavea.rf.datamodel.driver.RFDatabaseJsonProtocol
 
-trait RfJsonProtocols extends SprayJsonSupport with DefaultJsonProtocol {
+trait RfJsonProtocols extends SprayJsonSupport
+    with DefaultJsonProtocol
+    with RFDatabaseJsonProtocol {
 
   implicit object UuidJsonFormat extends RootJsonFormat[UUID] {
     def write(uuid: UUID) = JsString(uuid.toString)
