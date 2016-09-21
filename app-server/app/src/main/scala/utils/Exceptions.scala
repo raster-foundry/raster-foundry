@@ -3,6 +3,7 @@ package com.azavea.rf.utils
 import akka.http.scaladsl.server.ExceptionHandler
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives
+import spray.json.DeserializationException
 
 // ignore warnings - can't adapt exceptions to not use nulls as possible args
 class UserErrorException(message: String, cause: Throwable)
@@ -25,5 +26,8 @@ trait UserErrorHandler extends Directives {
   val userExceptionHandler = ExceptionHandler {
     case e: UserErrorException =>
       complete(StatusCodes.ClientError(400)("", e.getMessage()))
+    case e: DeserializationException => {
+      complete(StatusCodes.ClientError(400)("", e.getMessage()))
+    }
   }
 }

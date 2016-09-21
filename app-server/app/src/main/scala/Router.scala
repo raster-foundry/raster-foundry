@@ -10,6 +10,7 @@ import com.azavea.rf.healthcheck._
 import com.azavea.rf.organization.OrganizationRoutes
 import com.azavea.rf.scene.SceneRoutes
 import com.azavea.rf.user.UserRoutes
+import com.azavea.rf.footprint.FootprintRoutes
 import com.azavea.rf.utils.Database
 
 
@@ -23,7 +24,8 @@ trait Router extends HealthCheckRoutes
     with UserRoutes
     with OrganizationRoutes
     with SceneRoutes
-    with BucketRoutes {
+    with BucketRoutes
+    with FootprintRoutes {
 
   implicit def database: Database
   implicit val ec: ExecutionContext
@@ -35,6 +37,7 @@ trait Router extends HealthCheckRoutes
     userRoutes ~
     organizationRoutes ~
     sceneRoutes ~
-    bucketRoutes
+    bucketRoutes ~
+    footprintRoutes
   }
 }

@@ -1,6 +1,7 @@
 package com.azavea.rf.datamodel.driver
 
 import com.azavea.rf.datamodel.enums._
+import geotrellis.slick.PostGisProjectionSupport
 import com.github.tminglei.slickpg._
 import spray.json._
 import scala.collection.immutable.Map
@@ -43,7 +44,8 @@ trait RFDatabaseJsonProtocol extends DefaultJsonProtocol {
 trait ExtendedPostgresDriver extends ExPostgresDriver
     with PgArraySupport
     with PgSprayJsonSupport
-    with PgEnumSupport {
+    with PgEnumSupport
+    with PostGisProjectionSupport {
 
   override val pgjson = "jsonb"
 
@@ -53,7 +55,9 @@ trait ExtendedPostgresDriver extends ExPostgresDriver
   object RFAPI extends API
       with ArrayImplicits
       with JsonImplicits
-      with RFDatabaseJsonProtocol {
+      with RFDatabaseJsonProtocol
+      with PostGISProjectionImplicits
+      with PostGISProjectionAssistants {
 
     implicit val metadataMapper = MappedJdbcType.base[Map[String, Any], JsValue](_.toJson,
       _.convertTo[Map[String, Any]])
