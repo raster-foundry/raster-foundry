@@ -5,11 +5,13 @@ import scala.concurrent.ExecutionContext
 import ch.megard.akka.http.cors.CorsDirectives._
 import ch.megard.akka.http.cors.CorsSettings
 
+import com.azavea.rf.bucket.BucketRoutes
 import com.azavea.rf.healthcheck._
-import com.azavea.rf.user.UserRoutes
 import com.azavea.rf.organization.OrganizationRoutes
 import com.azavea.rf.scene.SceneRoutes
+import com.azavea.rf.user.UserRoutes
 import com.azavea.rf.utils.Database
+
 
 /**
   * Contains all routes for Raster Foundry API/Healthcheck endpoints.
@@ -20,7 +22,8 @@ import com.azavea.rf.utils.Database
 trait Router extends HealthCheckRoutes
     with UserRoutes
     with OrganizationRoutes
-    with SceneRoutes {
+    with SceneRoutes
+    with BucketRoutes {
 
   implicit def database: Database
   implicit val ec: ExecutionContext
@@ -31,6 +34,7 @@ trait Router extends HealthCheckRoutes
     healthCheckRoutes ~
     userRoutes ~
     organizationRoutes ~
-    sceneRoutes
+    sceneRoutes ~
+    bucketRoutes
   }
 }
