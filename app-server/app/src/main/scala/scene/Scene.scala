@@ -95,4 +95,3 @@ trait Scene {
     }
   }
 }
-
