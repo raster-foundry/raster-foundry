@@ -37,7 +37,7 @@ $(function () {
     }
 
     function updateApiHost() {
-        var host = encodeURIComponent($('#input_apiHost')[0].value) || window.location.host;
+        var host = $('#input_apiHost')[0].value || window.location.host;
         window.swaggerUi.api.setHost(host);
     }
 
