@@ -30,12 +30,12 @@ case class CreateBucket(
   def toBucket(userId: String): BucketsRow = {
     val now = new Timestamp((new java.util.Date()).getTime())
     BucketsRow(
-      UUID.randomUUID,
-      now,
-      now,
+      UUID.randomUUID, // primary key
+      now, // createdAt
+      now, // modifiedAt
       organizationId,
-      userId,
-      userId,
+      userId, // createdBy
+      userId, // modifiedBy
       name,
       Slug(name),
       description,
