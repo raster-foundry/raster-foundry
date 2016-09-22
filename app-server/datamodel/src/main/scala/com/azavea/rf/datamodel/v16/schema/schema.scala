@@ -1,4 +1,4 @@
-package com.azavea.rf.datamodel.latest.schema
+package com.azavea.rf.datamodel.v16.schema
 // AUTO-GENERATED Slick data model
 /** Stand-alone Slick data model for immediate use */
 object tables extends {

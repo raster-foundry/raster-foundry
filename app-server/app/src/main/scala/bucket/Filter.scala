@@ -16,9 +16,12 @@ object BucketFilters {
   implicit class BucketDefault[M, U, C[_]](buckets: BucketsQuery) {
 
     def filterByOrganization(orgParams: OrgQueryParameters): BucketsQuery = {
-      buckets.filter{
-        bucket => orgParams.organization.map(bucket.organizationId === _)
-          .reduceLeftOption(_ || _).getOrElse(true: Rep[Boolean])
+      if (orgParams.organizations.size > 0) {
+        buckets.filter{ bucket =>
+          bucket.organizationId inSet orgParams.organizations.toSet
+        }
+      } else {
+        buckets
       }
     }
 
