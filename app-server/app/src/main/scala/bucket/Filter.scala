@@ -18,7 +18,7 @@ object BucketFilters {
     def filterByOrganization(orgParams: OrgQueryParameters): BucketsQuery = {
       buckets.filter{
         bucket => orgParams.organization.map(bucket.organizationId === _)
-          .reduceLeftOption(_ || _).getOrElse(true:Rep[Boolean])
+          .reduceLeftOption(_ || _).getOrElse(true: Rep[Boolean])
       }
     }
 
@@ -27,7 +27,7 @@ object BucketFilters {
         bucket => List(
           userParams.createdBy.map(bucket.createdBy === _),
           userParams.modifiedBy.map(bucket.modifiedBy === _)
-        ).collect({case Some(criteria)  => criteria}).reduceLeftOption(_ && _).getOrElse(true:Rep[Boolean])
+        ).collect({case Some(criteria)  => criteria}).reduceLeftOption(_ && _).getOrElse(true: Rep[Boolean])
       }
     }
 
@@ -38,7 +38,7 @@ object BucketFilters {
           timeParams.maxCreateDatetime.map(bucket.createdAt < _),
           timeParams.minModifiedDatetime.map(bucket.modifiedAt > _),
           timeParams.maxModifiedDatetime.map(bucket.modifiedAt < _)
-        ).collect({case Some(criteria)  => criteria}).reduceLeftOption(_ && _).getOrElse(true:Rep[Boolean])
+        ).collect({case Some(criteria)  => criteria}).reduceLeftOption(_ && _).getOrElse(true: Rep[Boolean])
       }
     }
 

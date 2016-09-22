@@ -20,7 +20,7 @@ object SceneFilters {
     def filterByOrganization(orgParams: OrgQueryParameters): ScenesQuery = {
       scenes.filter{
         scene => orgParams.organization.map(scene.organizationId === _)
-          .reduceLeftOption(_ || _).getOrElse(true:Rep[Boolean])
+          .reduceLeftOption(_ || _).getOrElse(true: Rep[Boolean])
       }
     }
 
@@ -29,7 +29,7 @@ object SceneFilters {
         scene => List(
           userParams.createdBy.map(scene.createdBy === _),
           userParams.modifiedBy.map(scene.modifiedBy === _)
-        ).collect({case Some(criteria)  => criteria}).reduceLeftOption(_ && _).getOrElse(true:Rep[Boolean])
+        ).collect({case Some(criteria)  => criteria}).reduceLeftOption(_ && _).getOrElse(true: Rep[Boolean])
       }
     }
 
@@ -44,13 +44,13 @@ object SceneFilters {
           sceneParams.maxSunAzimuth.map(scene.sunAzimuth < _),
           sceneParams.minSunElevation.map(scene.sunElevation > _),
           sceneParams.maxSunElevation.map(scene.sunElevation < _)
-        ).collect({case Some(criteria)  => criteria}).reduceLeftOption(_ && _).getOrElse(Some(true):Rep[Option[Boolean]])
+        ).collect({case Some(criteria)  => criteria}).reduceLeftOption(_ && _).getOrElse(Some(true): Rep[Option[Boolean]])
       }.filter { scene =>
         sceneParams.month.map(datePart("month", scene.acquisitionDate) === _)
-          .reduceLeftOption(_ || _).getOrElse(true:Rep[Boolean])
+          .reduceLeftOption(_ || _).getOrElse(true: Rep[Boolean])
       }.filter { scene =>
         sceneParams.datasource.map(scene.datasource === _)
-          .reduceLeftOption(_ || _).getOrElse(true:Rep[Boolean])
+          .reduceLeftOption(_ || _).getOrElse(true: Rep[Boolean])
       }
     }
 
@@ -61,7 +61,7 @@ object SceneFilters {
           timeParams.maxCreateDatetime.map(scene.createdAt < _),
           timeParams.minModifiedDatetime.map(scene.modifiedAt > _),
           timeParams.maxModifiedDatetime.map(scene.modifiedAt < _)
-        ).collect({case Some(criteria)  => criteria}).reduceLeftOption(_ && _).getOrElse(true:Rep[Boolean])
+        ).collect({case Some(criteria)  => criteria}).reduceLeftOption(_ && _).getOrElse(true: Rep[Boolean])
       }
     }
 
