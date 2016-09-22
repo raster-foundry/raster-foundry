@@ -4,43 +4,43 @@ node {
   currentBuild.result = 'SUCCESS'
 
   try {
-    stage 'checkout'
+    stage('checkout') {
+      checkout scm
+    }
 
-    checkout scm
-
-    stage 'cibuild'
-
-    wrap([$class: 'AnsiColorBuildWrapper']) {
-      sh 'scripts/cibuild'
+    stage('cibuild') {
+      wrap([$class: 'AnsiColorBuildWrapper']) {
+        sh 'scripts/cibuild'
+      }
     }
 
     if (env.BRANCH_NAME == 'develop' || env.BRANCH_NAME.startsWith('release/')) {
       env.AWS_DEFAULT_REGION = 'us-east-1'
       env.RF_SETTINGS_BUCKET = 'rasterfoundry-staging-config-us-east-1'
 
-      stage 'cipublish'
-
-      withCredentials([[$class: 'StringBinding',
-                        credentialsId: 'AWS_ECR_ENDPOINT',
-                        variable: 'AWS_ECR_ENDPOINT']]) {
-        wrap([$class: 'AnsiColorBuildWrapper']) {
-          sh './scripts/cipublish'
+      stage('cipublish') {
+        withCredentials([[$class: 'StringBinding',
+                          credentialsId: 'AWS_ECR_ENDPOINT',
+                          variable: 'AWS_ECR_ENDPOINT']]) {
+          wrap([$class: 'AnsiColorBuildWrapper']) {
+            sh './scripts/cipublish'
+          }
         }
       }
 
-      stage 'infra'
+      stage('infra') {
+        checkout scm: [$class: 'GitSCM',
+                       branches: [[name: 'develop']],
+                       extensions: [[$class: 'RelativeTargetDirectory',
+                                     relativeTargetDir: 'raster-foundry-deployment']],
+                       userRemoteConfigs: [[credentialsId: '3bc1e878-814a-43d1-864e-2e378ebddb0f',
+                                            url: 'https://github.com/azavea/raster-foundry-deployment.git']]]
 
-      checkout scm: [$class: 'GitSCM',
-                     branches: [[name: 'develop']],
-                     extensions: [[$class: 'RelativeTargetDirectory',
-                                   relativeTargetDir: 'raster-foundry-deployment']],
-                     userRemoteConfigs: [[credentialsId: '3bc1e878-814a-43d1-864e-2e378ebddb0f',
-                                          url: 'https://github.com/azavea/raster-foundry-deployment.git']]]
-
-      dir('raster-foundry-deployment') {
-        wrap([$class: 'AnsiColorBuildWrapper']) {
-          sh './scripts/infra plan'
-          sh './scripts/infra apply'
+        dir('raster-foundry-deployment') {
+          wrap([$class: 'AnsiColorBuildWrapper']) {
+            sh './scripts/infra plan'
+            sh './scripts/infra apply'
+          }
         }
       }
     }
