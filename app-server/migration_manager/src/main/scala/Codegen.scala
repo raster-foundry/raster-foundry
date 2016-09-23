@@ -21,7 +21,8 @@ trait RFCodegen extends SlickCodegen {
     "scenes",
     "buckets",
     "scenes_to_buckets",
-    "thumbnails"
+    "thumbnails",
+    "footprints"
   )
 
   class RFSlickSourceCodeGenerator(m: Model, version: Int)
@@ -44,6 +45,7 @@ trait RFCodegen extends SlickCodegen {
             case "boundary_status" => "JobStatus"
             case "status" => "JobStatus"
             case "visibility" => "Visibility"
+            case "multipolygon" => "Projected[Geometry]"
             case _ => super.rawType
           }
         }
@@ -71,6 +73,8 @@ import com.azavea.rf.datamodel.enums._
 /** Slick data model trait for extension, choice of backend or usage in the cake pattern. (Make sure to initialize this late.) */
 trait ${container}${parentType.map(t => s" extends $t").getOrElse("")} {
   val profile: com.azavea.rf.datamodel.driver.ExtendedPostgresDriver
+  import geotrellis.vector.Geometry
+  import geotrellis.slick.Projected
   import profile.api._
   ${indent(code)}
 }

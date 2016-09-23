@@ -53,7 +53,8 @@ lazy val loggingDependencies = List(
 lazy val slickDependencies = List(
   Dependencies.slick,
   Dependencies.slickPG,
-  Dependencies.slickPGSpray
+  Dependencies.slickPGSpray,
+  Dependencies.geotrellisSlick
 )
 
 lazy val dbDependencies = List(
@@ -79,7 +80,8 @@ lazy val appDependencies = dbDependencies ++ migrationsDependencies ++ Seq(
   Dependencies.authCommon,
   Dependencies.authAkka,
   Dependencies.akkaHttpExtensions,
-  Dependencies.ammoniteOps
+  Dependencies.ammoniteOps,
+  Dependencies.geotrellisSlick
 )
 
 lazy val migrationManagerDependencies = dbDependencies ++ forkliftDependencies

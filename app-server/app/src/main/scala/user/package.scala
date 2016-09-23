@@ -1,6 +1,8 @@
 package com.azavea.rf
 
 import com.azavea.rf.utils.PaginatedResponse
+
+
 /**
   * Json formats for user
   */
