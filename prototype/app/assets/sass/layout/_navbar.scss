@@ -1,0 +1,80 @@
+.navbar {
+  @extend %clearfix;
+  background: $shade-normal;
+  position: relative;
+  z-index: 1030;
+  padding: 1rem;
+  flex: none;
+
+  nav {
+    display: inline-block;
+    vertical-align: middle;
+    
+    a {
+      color: $shade-light;
+      display: inline-block;
+      padding: 2rem 2.5rem;
+
+      &:hover {
+        color: #fff;
+      }
+
+      &.active {
+        color: #fff;
+      }
+    }
+
+    a.icon-link {
+      color: $brand-primary;
+      padding: 1.5rem 2rem;
+      font-size: 1.6rem;
+    }
+
+    .dropdown {
+      display: inline-block;
+    }
+  }
+
+  .dropdown-my-account > a {
+    padding-top: 1.9rem;
+    padding-bottom: 1.9rem;
+
+    img {
+      width: 20px;
+    }
+
+    i {
+      vertical-align: middle;
+    }
+  }
+}
+
+.navbar-left {
+  float: left;
+}
+
+.navbar-right {
+  float: left;
+
+  @media (min-width: 985px) {
+    float: right;
+  }
+}
+
+.brand {
+  display: inline-block;
+  padding: 1rem 3rem;
+  vertical-align: middle;
+
+  > img {
+    max-width: 2.5rem;
+  }
+}
+
+.navbar-vertical-divider {
+  display: inline-block;
+  width: 1px;
+  height: 48px;
+  background-color: $shade-dark;
+  vertical-align: middle;
+}

@@ -1,0 +1,106 @@
+// Row
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+
+  &.nowrap {
+    flex-wrap: nowrap;
+    overflow: auto;
+  }
+}
+
+// Alignment on a row
+.align-right {
+  justify-content: flex-end;
+}
+
+.align-center {
+  justify-content: center;
+}
+
+.align-justify {
+  justify-content: space-between;
+}
+
+.align-spaced {
+  justify-content: space-around;
+}
+
+// Row's column vertical aligment
+.columns-top {
+  align-items: flex-start;
+}
+
+.columns-center {
+  align-items: center;
+}
+
+.columns-bottom {
+  align-items: flex-end;
+}
+
+.columns-stretch {
+  align-items: stretch;
+}
+
+// Columns
+// $column-count in variables
+.column {
+  flex: 1;
+  padding: $column-padding;
+}
+
+@for $i from 1 through $column-count {
+  .column-#{$i} {
+    flex: none;
+    padding: $column-padding;
+    width: ($i/$column-count) * 100%;
+  }
+}
+
+// Individual column vertical aligment
+.column-top {
+  align-self: flex-start;
+}
+
+.column-center {
+  align-self: center;
+}
+
+.column-bottom {
+  align-self: flex-end;
+}
+
+.column-stretch {
+  align-self: stretch;
+}
+
+
+// Column Stacking
+@include respond-to(md-down) {
+  .stack-md {
+    flex-direction: column;
+    > [class^=column-]  {
+      width: 100%;
+    }
+  }
+}
+
+@include respond-to(sm-down) {
+  .stack-sm {
+    flex-direction: column;
+    > [class^=column-]  {
+      width: 100%;
+    }
+  }
+}
+
+@include respond-to(xs) {
+  .stack-xs {
+    flex-direction: column;
+    > [class^=column-]  {
+      width: 100%;
+    }
+  }
+}

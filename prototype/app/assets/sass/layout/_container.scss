@@ -1,0 +1,18 @@
+.map-app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  .container {
+    max-width: initial;
+    flex: 1;
+    position: relative;
+  }
+}
+
+.container {
+	width: 100%;
+	max-width: 1160px;
+	margin: auto;
+  display: flex;
+}

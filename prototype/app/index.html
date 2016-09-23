@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>RF - Prototypes</title>
+
+		<!-- CSS -->
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.0-rc.3/dist/leaflet.css" />
+		<link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700|Titillium+Web:700" rel="stylesheet">
+		<link href="assets/fonts/fontello/css/fontello.css" rel="stylesheet">
+		<link rel="stylesheet" href="assets/css/app.css">
+	</head>
+	<body>
+
+	<div class="map-app">
+		<div class="navbar primary-navbar">
+	    <!-- Nav Left -->
+	    <div class="navbar-left">
+	      <a href="#" class="brand">
+	        <img src="assets/img/rf-icon.png" alt="">
+	      </a>
+	      <span class="navbar-vertical-divider"></span>
+	      <nav>
+	        <a href="/" class="active">Browse data</a>
+	        <a href="#">Model market</a>
+	        <a href="#">Model lab</a>
+	      </nav>
+	      <span class="navbar-vertical-divider"></span>
+	    </div>
+
+	    <!-- Nav Right -->
+	    <div class="navbar-right">
+	      <nav>
+	        <a href="#" class="icon-link" data-toggle="tooltip" title="Help" data-placement="bottom">
+	          <i class="icon-help"></i>
+	        </a>
+	        <a href="#" class="icon-link" data-toggle="tooltip" title="Processing" data-placement="bottom">
+	          <i class="icon-processing"></i>
+	        </a>
+	      </nav>
+	      <span class="navbar-vertical-divider"></span>
+	      <nav>
+	        <div class="dropdown dropdown-my-account">
+	          <a data-toggle-hide data-target="#" href="#" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+	            <img class="avatar" src="http://placehold.it/25x25">
+	            <i class="icon-caret-down"></i>
+	          </a>
+	          <ul class="dropdown-menu" aria-labelledby="dLabel">
+	            <li><a href="/imports.html">My library</a></li>
+	            <li><a href="/profile.html">Settings</a></li>
+	            <li role="separator" class="divider"></li>
+	            <li><a href="#">Sign out</a></li>
+	          </ul>
+	        </div>
+	      </nav>
+	    </div>
+	  </div>
+	  <!-- /Navbar -->
+
+		<!-- App Container -->
+		<div class="container column-stretch">
+
+			<!-- Sidebar -->
+			<div class="sidebar">
+				<div class="sidebar-static">
+					<h5 class="sidebar-title">23 Results Found</h5>
+					<div class="sidebar-actions">
+						<button class="btn btn-default btn-square" data-toggle-hide data-target="#scene-filters"><i class="icon-filter"></i></button>
+					</div>
+				</div>
+				<div class="sidebar-scrollable">
+					<div class="list-group">
+						<div class="list-group-item">
+							<a class="list-group-link" href="#" data-toggle-hide data-target="#scene-details"></a>
+							<img src="http://placehold.it/75x75" class="rounded-img">
+							<div class="list-group-overflow">
+								<strong class="color-dark">LC80190382015353LGN00LC80190382015353LGN00</strong><br>
+								Landsat 7 / USGS
+							</div>
+							<div class="list-group-right">
+								<button class="btn btn-square"><i class="icon-plus"></i></button>
+							</div>
+						</div>
+						<div class="list-group-item">
+							<a class="list-group-link" href="#" data-toggle-hide data-target="#scene-details"></a>
+							<img src="http://placehold.it/75x75" class="rounded-img">
+							<div class="list-group-overflow">
+								<strong class="color-dark">LC80190382015353LGN00</strong><br>
+								Landsat 7 / USGS
+							</div>
+							<div class="list-group-right">
+								<button class="btn btn-square"><i class="icon-plus"></i></button>
+							</div>
+						</div>
+						<div class="list-group-item">
+							<a class="list-group-link" href="#" data-toggle-hide data-target="#scene-details"></a>
+							<img src="http://placehold.it/75x75" class="rounded-img">
+							<div class="list-group-overflow">
+								<strong class="color-dark">LC80190382015353LGN00</strong><br>
+								Landsat 7 / USGS
+							</div>
+							<div class="list-group-right">
+								<button class="btn btn-square"><i class="icon-plus"></i></button>
+							</div>
+						</div>
+						<div class="list-group-item">
+							<a class="list-group-link" href="#" data-toggle-hide data-target="#scene-details"></a>
+							<img src="http://placehold.it/75x75" class="rounded-img">
+							<div class="list-group-overflow">
+								<strong class="color-dark">LC80190382015353LGN00</strong><br>
+								Landsat 7 / USGS
+							</div>
+							<div class="list-group-right">
+								<button class="btn btn-square"><i class="icon-plus"></i></button>
+							</div>
+						</div>
+						<div class="list-group-item">
+							<a class="list-group-link" href="#" data-toggle-hide data-target="#scene-details"></a>
+							<img src="http://placehold.it/75x75" class="rounded-img">
+							<div class="list-group-overflow">
+								<strong class="color-dark">LC80190382015353LGN00</strong><br>
+								Landsat 7 / USGS
+							</div>
+							<div class="list-group-right">
+								<button class="btn btn-square"><i class="icon-plus"></i></button>
+							</div>
+						</div>
+						<div class="list-group-item">
+							<a class="list-group-link" href="#" data-toggle-hide data-target="#scene-details"></a>
+							<img src="http://placehold.it/75x75" class="rounded-img">
+							<div class="list-group-overflow">
+								<strong class="color-dark">LC80190382015353LGN00</strong><br>
+								Landsat 7 / USGS
+							</div>
+							<div class="list-group-right">
+								<button class="btn btn-square"><i class="icon-plus"></i></button>
+							</div>
+						</div>
+						<div class="list-group-item">
+							<a class="list-group-link" href="#" data-toggle-hide data-target="#scene-details"></a>
+							<img src="http://placehold.it/75x75" class="rounded-img">
+							<div class="list-group-overflow">
+								<strong class="color-dark">LC80190382015353LGN00</strong><br>
+								Landsat 7 / USGS
+							</div>
+							<div class="list-group-right">
+								<button class="btn btn-square"><i class="icon-plus"></i></button>
+							</div>
+						</div>
+						<div class="list-group-item">
+							<a class="list-group-link" href="#" data-toggle-hide data-target="#scene-details"></a>
+							<img src="http://placehold.it/75x75" class="rounded-img">
+							<div class="list-group-overflow">
+								<strong class="color-dark">LC80190382015353LGN00</strong><br>
+								Landsat 7 / USGS
+							</div>
+							<div class="list-group-right">
+								<button class="btn btn-square"><i class="icon-plus"></i></button>
+							</div>
+						</div>
+						<div class="list-group-item">
+							<a class="list-group-link" href="#" data-toggle-hide data-target="#scene-details"></a>
+							<img src="http://placehold.it/75x75" class="rounded-img">
+							<div class="list-group-overflow">
+								<strong class="color-dark">LC80190382015353LGN00</strong><br>
+								Landsat 7 / USGS
+							</div>
+							<div class="list-group-right">
+								<button class="btn btn-square"><i class="icon-plus"></i></button>
+							</div>
+						</div>
+						<div class="list-group-item">
+							<a class="list-group-link" href="#" data-toggle-hide data-target="#scene-details"></a>
+							<img src="http://placehold.it/75x75" class="rounded-img">
+							<div class="list-group-overflow">
+								<strong class="color-dark">LC80190382015353LGN00</strong><br>
+								Landsat 7 / USGS
+							</div>
+							<div class="list-group-right">
+								<button class="btn btn-square"><i class="icon-plus"></i></button>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="sidebar-static">
+					<h5>Selected: none</h5>
+					<div class="sidebar-actions">
+						<a href="#">Select All</a>
+						<button type="button" class="btn btn-default btn-square">Checkout</button>
+					</div>
+				</div>
+			</div>
+
+			<div class="sidebar sidebar-extended hide" id="scene-details">
+				<div class="sidebar-static">
+					<p>
+						<strong class="color-dark">LC80190382015353LGN00</strong><br>
+						Landsat 7 / USGS
+					</p>
+					<div class="sidebar-actions">
+						<button class="btn btn-square" data-toggle-hide data-target="#scene-details"><i class="icon-cross"></i></button>
+					</div>
+				</div>
+				<div class="sidebar-scrollable">
+					<div class="content">
+						<img src="http://placehold.it/275x275" class="center-img rounded-img">
+						<h5 class="color-dark">Image metadata</h5>
+						<dl>
+							<dt>Acquistion:</dt>
+							<dd>11-12-2015</dd>
+							<dt>Local Time of Day:</dt>
+							<dd>15:42</dd>
+							<dt>Latitude:</dt>
+							<dd>39.226º</dd>
+							<dt>Longitude:</dt>
+							<dd>-74.892º</dd>
+							<dt>Image Quality:</dt>
+							<dd>Standard</dd>
+							<dt>SNR:</dt>
+							<dd>75.30</dd>
+							<dt>Sun Alittude:</dt>
+							<dd>N/A</dd>
+							<dt>Sun Longitude:</dt>
+							<dd>N/A</dd>
+							<dt>Satellite ID:</dt>
+							<dd>N/A</dd>
+							<dt>Camera Bit Depth:</dt>
+							<dd>10</dd>
+							<dt>Camera Color Mode:</dt>
+							<dd>RGB</dd>
+							<dt>Camera Exposure Time:</dt>
+							<dd>1170μs</dd>
+							<dt>Camera Gain:</dt>
+							<dd>350</dd>
+							<dt>Camera TDI Pulses:</dt>
+							<dd>15</dd>
+							<dt>Cloud Cover:</dt>
+							<dd>0.26%</dd>
+							<dt>File Size:</dt>
+							<dd>58MB</dd>
+							<dt>GSD:</dt>
+							<dd>4.25 m</dd>
+						</dl>
+					</div>
+				</div>
+				<div class="sidebar-static">
+					<div class="sidebar-actions">
+						<button class="btn btn-square"><i class="icon-plus"></i> Add to cart</button>
+					</div>
+				</div>
+			</div>
+
+			<div class="sidebar sidebar-extended map-filters hide" id="scene-filters">
+				<div class="sidebar-static">
+					<h5>Filter imagery</h5>
+					<div class="sidebar-actions">
+						<a href="#">Clear all filters</a>
+					</div>
+				</div>
+				<div class="sidebar-scrollable">
+					<div class="content">
+						<div class="filter">
+							<label>Year</label>
+							<div class="filter-item slider-filter">
+								<div id="year_slider"></div>
+							</div>
+						</div>
+						<div class="filter">
+							<label>Month</label>
+							<div class="filter-item month-filter">
+								<button type="button" class="btn btn-toggle btn-small active" data-toggle="button" aria-pressed="false" autocomplete="off">Jan</button>
+								<button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Feb</button>
+								<button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Mar</button>
+								<button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Apr</button>
+								<button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">May</button>
+								<button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Jun</button>
+								<button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Jul</button>
+								<button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Aug</button>
+								<button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Sep</button>
+								<button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Oct</button>
+								<button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Nov</button>
+								<button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Dec</button>
+							</div>
+						</div>
+						<div class="filter">
+							<label>Cloud cover</label>
+							<div class="filter-item slider-filter">
+								<div id="cloud_slider"></div>
+							</div>
+						</div>
+						<div class="filter">
+							<label>Sun elevation</label>
+							<div class="filter-item slider-filter">
+								<div id="sun_slider"></div>
+							</div>
+						</div>
+						<div class="filter">
+							<label>Imagery sources</label>
+							<div class="filter-item tag-filter">
+								<button type="button" class="btn btn-toggle btn-small active" data-toggle="button" aria-pressed="false" autocomplete="off">My Imports</button>
+								<button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Raster Foundry Users</button>
+								<button type="button" class="btn btn-toggle btn-small active" data-toggle="button" aria-pressed="false" autocomplete="off">NASA</button>
+								<button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Planet Labs</button>
+								<button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">satimagingcorp</button>
+								<button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">USGS</button>
+							</div>
+						</div>
+						<div class="filter">
+							<label>Broadband</label>
+							<div class="filter-item tag-filter">
+								<button type="button" class="btn btn-toggle btn-small active" data-toggle="button" aria-pressed="false" autocomplete="off">Visible</button>
+								<button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">SWIR</button>
+								<button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">LWIR</button>
+							</div>
+						</div>
+						<div class="filter">
+							<label>Wavelength</label>
+							<div class="filter-item tag-filter">
+								<!-- Based on http://www.markelowitz.com/Hyperspectral.html -->
+								<button type="button" class="btn btn-toggle btn-small active" data-toggle="button" aria-pressed="false" autocomplete="off">.45-.52nm</button>
+								<button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">.52-.60nm</button>
+								<button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">.63-.69nm</button>
+								<button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">.79-.90nm</button>
+								<button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">1.55-1.75nm</button>
+								<button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">2.08-2.35nm</button>
+								<button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">10.4-12.4nm</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="main">
+				<div id="map" class="map"></div>
+			</div>
+		</div>
+
+	</div>
+
+		<!-- Scripts -->
+		<script src="//code.jquery.com/jquery.js"></script>
+		<script src="assets/js/bootstrap-custom/bootstrap.min.js"></script>
+		<script src="https://unpkg.com/leaflet@1.0.0-rc.3/dist/leaflet.js"></script>
+		<script src="assets/js/nouislider.min.js"></script>
+		<script src="assets/js/map.js"></script>
+		<script src="assets/js/main.js"></script>
+	</body>
+</html>

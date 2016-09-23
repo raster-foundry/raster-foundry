@@ -1,0 +1,27 @@
+//
+// Close icons
+// --------------------------------------------------
+.close {
+  float: right;
+  font-weight: 600;
+  line-height: 1;
+  color: $shade-dark;
+  font-size: 2.2rem;
+  opacity: 1;
+
+  &:hover,
+  &:focus {
+    color: $shade-dark;
+    text-decoration: none;
+    cursor: pointer;
+    opacity: .8;
+  }
+}
+
+button.close {
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  -webkit-appearance: none;
+}

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RF - Prototypes</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.0-rc.3/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700|Titillium+Web:700" rel="stylesheet">
+    <link href="assets/fonts/fontello/css/fontello.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/app.css">
+  </head>
+  <body>
+  <div class="navbar primary-navbar">
+    <!-- Nav Left -->
+    <div class="navbar-left">
+      <a href="#" class="brand">
+        <img src="assets/img/rf-icon.png" alt="">
+      </a>
+      <span class="navbar-vertical-divider"></span>
+      <nav>
+        <a href="/">Browse data</a>
+        <a href="#">Model market</a>
+        <a href="#">Model lab</a>
+      </nav>
+      <span class="navbar-vertical-divider"></span>
+    </div>
+
+    <!-- Nav Right -->
+    <div class="navbar-right">
+      <nav>
+        <a href="#" class="icon-link" data-toggle="tooltip" title="Help" data-placement="bottom">
+          <i class="icon-help"></i>
+        </a>
+        <a href="#" class="icon-link" data-toggle="tooltip" title="Processing" data-placement="bottom">
+          <i class="icon-processing"></i>
+        </a>
+      </nav>
+      <span class="navbar-vertical-divider"></span>
+      <nav>
+        <div class="dropdown dropdown-my-account">
+          <a data-target="#" href="#" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+            <img class="avatar" src="http://placehold.it/25x25">
+            <i class="icon-caret-down"></i>
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="dLabel">
+            <li><a href="/imports.html">My library</a></li>
+            <li><a href="/profile.html">Settings</a></li>
+            <li role="separator" class="divider"></li>
+            <li><a href="#">Sign out</a></li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+  </div>
+  <!-- /Navbar -->
+
+  <div class="container column-stretch">
+    <div class="sidebar">
+      <div class="sidebar-scrollable">
+        <nav>
+          <a href="/profile.html" class="active">Profile</a>
+          <a href="/account.html">Account</a>
+          <a href="/tokens.html">API tokens</a>
+          <a href="/notifications.html">Notifications</a>
+          <a href="/billing.html">Billing</a>
+          <a href="/organizations.html">Organizations</a>
+        </nav>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="row content stack-sm">
+        <div class="column">
+          <h1 class="h3 page-title">Profile</h1>
+          <form action="">
+            <div class="form-group">
+              <label for="upload-profile-picture">Profile picture</label><br>
+              <img class="avatar" src="http://placehold.it/100x100">
+              <div class="avatar-upload">
+                <label for="upload-profile-picture" class="btn">
+                  Upload new picture
+                  <input id="upload-profile-picture" type="file" class="manual-file-chooser">
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="name">Name</label>
+              <input id="name" type="text" class="form-control" placeholder="Name">
+            </div>
+            <div class="form-group">
+              <label for="username">Username</label>
+              <input id="username" type="text" class="form-control" placeholder="Email" disabled value="myusername">
+              <p class="help-block">Contact support to change your username</p>
+            </div>
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input id="email" type="text" class="form-control" placeholder="Email">
+            </div>
+            <div class="form-group">
+              <label for="location">Location</label>
+              <input id="location" type="text" class="form-control" placeholder="Location">
+            </div>
+            <button type="submit" class="btn btn-primary btn-large">Update Profile</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="//code.jquery.com/jquery.js"></script>
+  <script src="assets/js/bootstrap-custom/bootstrap.min.js"></script>
+  <script src="assets/js/main.js"></script>
+  </body>
+</html>

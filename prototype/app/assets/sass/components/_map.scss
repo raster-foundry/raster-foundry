@@ -1,0 +1,61 @@
+.map {
+  height: 100%;
+  z-index: 1;
+}
+
+.leaflet-right .map-control-panel {
+  margin: 0;
+  background: $shade-dark;
+  padding: 1rem;
+  min-width: 13rem;
+
+  .leaflet-control-zoom {
+    margin: 0 0 1rem;
+    float: right;
+    display: inline-block;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .leaflet-control-zoom-in,
+  .leaflet-control-zoom-out,
+  .btn {
+    display: inline-block;
+    background: $shade-normal;
+    border: 1px solid $shade-dark !important;
+    color: $shade-light;
+    border-radius: 2px !important;
+    vertical-align: middle;
+    line-height: 1.1;
+    height: 25px;
+    width: 25px;
+    padding: 0;
+
+    &:hover {
+      display: inline-block;
+      background: $shade-normal;
+      border: 1px solid $shade-dark !important;
+      color: #fff;
+      border-radius: 2px !important;
+      vertical-align: middle;
+      line-height: 1.1;
+      height: 25px;
+      width: 25px;
+    }
+  }
+
+  .btn-block {
+    display: block !important;
+    width: 100%;
+
+    &:hover {
+      width: 100%;
+    }
+  }
+
+  hr {
+    border-top-color: $shade-normal;
+    margin-left: -1rem;
+    margin-right: -1rem;
+  }
+}

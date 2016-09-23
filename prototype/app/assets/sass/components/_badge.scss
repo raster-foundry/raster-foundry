@@ -1,0 +1,10 @@
+.badge {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 2px;
+  display: inline-block;
+
+  >[class^=icon-] {
+    font-size: 1.8rem;
+  }
+}

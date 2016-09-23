@@ -1,0 +1,16 @@
+.panel {
+  border: 1px solid #ddd;
+  border-radius: 2px;
+
+  .panel-body {
+    padding: 2rem;
+  }
+}
+
+.panel-warning {
+  border-color: $warning;
+}
+
+.panel-danger {
+  border-color: $danger;
+}
