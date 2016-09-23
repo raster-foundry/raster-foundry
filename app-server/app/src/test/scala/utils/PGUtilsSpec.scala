@@ -11,7 +11,7 @@ import com.azavea.rf._
   * This set of tests ensures the basic functionality of the utilities
   * within PGUtils and which are depended upon for all database-reliant tests
   */
-class PGUtilsSpec extends WordSpec
+final class PGUtilsSpec extends WordSpec
     with Matchers
     with ScalatestRouteTest
     with Config

@@ -1,20 +1,35 @@
 package com.azavea.rf.thumbnail
 
+import org.scalatest.{Matchers, WordSpec}
+import akka.http.scaladsl.testkit.{ScalatestRouteTest, RouteTestTimeout}
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.{HttpEntity, ContentTypes}
 import akka.actor.ActorSystem
-import com.azavea.rf._
-import com.azavea.rf.datamodel.latest.schema.tables._
-import com.azavea.rf.thumbnail._
-import com.azavea.rf.utils._
-import java.sql._
+import concurrent.duration._
+import spray.json._
 import java.util.UUID
 
-import org.scalatest._
-
-import scala.concurrent.Future
+import com.azavea.rf.utils.Config
+import com.azavea.rf.{DBSpec, Router}
+import com.azavea.rf.datamodel.latest.schema.tables._
+import com.azavea.rf.datamodel.enums._
+import com.azavea.rf.utils.PaginatedResponse
+import com.azavea.rf.AuthUtils
 import scala.util.{Success, Failure, Try}
 import slick.lifted.TableQuery
 
-class ThumbnailSpec extends PGUtilsSpec with Thumbnail {
+import java.sql.Timestamp
+
+class ThumbnailSpec extends WordSpec
+    with Matchers
+    with ScalatestRouteTest
+    with Config
+    with DBSpec
+    with Thumbnail {
+
+  implicit val ec = system.dispatcher
+
+  implicit val database = db
 
   val thumbnails = TableQuery[Thumbnails]
   val uuid = new UUID(123456789, 123456789)
