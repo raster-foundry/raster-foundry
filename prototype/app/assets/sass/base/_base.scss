@@ -1,0 +1,34 @@
+*, *:after, *:before {
+	box-sizing: border-box;
+}
+
+html { 
+	font-size: 62.5%; 
+	font-family: 'Open Sans', sans-serif;
+  height: 100%;
+}
+
+body {
+	font-size: 14px; 
+	font-size: 1.4rem;
+	color: $text-base;
+  height: 100%;
+}
+
+a {
+	text-decoration: none;
+	font-weight: 800;
+	color: $shade-light;
+
+  &:hover {
+    color: $brand-primary;
+  }
+}
+
+hr {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  border: 0;
+  border-top: 1px solid #ddd;
+  clear: both;
+}

@@ -1,0 +1,61 @@
+.list-group {
+  position: relative;
+}
+
+.list-group-item {
+  padding: 1.5rem;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  position: relative;
+  
+  > * {
+    margin: 0 5px;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  span {
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  .list-group-right {
+    margin-left: auto;
+    position: relative;
+    z-index: 1;
+    text-align: right;
+
+    > * {
+      margin-left: 5px;
+      vertical-align: middle;
+    }
+  }
+
+  .list-group-link {
+    flex: none;
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+}
+
+.list-group-overflow {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  padding-right: 1rem;
+
+  p, span {
+    display: inline;
+  }
+
+  @include respond-to('sm-up') {
+    //max-width: 275px;
+  }
+}

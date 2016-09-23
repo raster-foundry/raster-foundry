@@ -1,0 +1,16 @@
+.page-title {
+  @extend .h3;
+  margin-bottom: 2rem;
+  display: inline-block;
+
+  a {
+    @extend .font-base;
+    color: $shade-light;
+    font-size: 1.4rem;
+  }
+
+  ~ .btn {
+    vertical-align: text-bottom;
+    margin-left: 1rem;
+  }
+}
