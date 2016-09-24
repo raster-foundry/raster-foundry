@@ -74,13 +74,13 @@ class SceneSpec extends WordSpec
       publicOrgId, 0, PUBLIC, 20.2f, List("Test", "Public", "Low Resolution"), "TEST_ORG",
       Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any], None,
       Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
-      PROCESSING, PROCESSING, PROCESSING, None, None
+      PROCESSING, PROCESSING, PROCESSING, None, None, "test scene datasource 1"
     )
 
     val newSceneDatasource2 = CreateScene(
       publicOrgId, 0, PUBLIC, 20.2f, List("Test", "Public", "Low Resolution"),
       "TEST_ORG-OTHER", Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any],
-      None, None, PROCESSING, PROCESSING, PROCESSING, None, None
+      None, None, PROCESSING, PROCESSING, PROCESSING, None, None, "test scene datasource 2"
     )
 
     "require authentication for creation" in {

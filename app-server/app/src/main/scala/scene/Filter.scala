@@ -18,24 +18,30 @@ object SceneFilters {
 
   implicit class SceneDefault[M, U, C[_]](scenes: ScenesQuery) {
     def filterByOrganization(orgParams: OrgQueryParameters): ScenesQuery = {
-      scenes.filter{
-        scene => orgParams.organization.map(scene.organizationId === _)
-          .reduceLeftOption(_ || _).getOrElse(true: Rep[Boolean])
+      scenes.filter{ scene =>
+        orgParams
+          .organization.map(scene.organizationId === _)
+          .reduceLeftOption(_ || _)
+          .getOrElse(true: Rep[Boolean])
       }
     }
 
     def filterByUser(userParams: UserQueryParameters): ScenesQuery = {
-      scenes.filter{
-        scene => List(
+      scenes.filter{ scene =>
+        val userFilterConditions = List(
           userParams.createdBy.map(scene.createdBy === _),
           userParams.modifiedBy.map(scene.modifiedBy === _)
-        ).collect({case Some(criteria)  => criteria}).reduceLeftOption(_ && _).getOrElse(true: Rep[Boolean])
+        )
+        userFilterConditions
+          .collect({case Some(criteria)  => criteria})
+          .reduceLeftOption(_ && _)
+          .getOrElse(true: Rep[Boolean])
       }
     }
 
     def filterBySceneParams(sceneParams: SceneQueryParameters): ScenesQuery = {
       scenes.filter{ scene =>
-        List(
+        val sceneFilterConditions = List(
           sceneParams.maxAcquisitionDatetime.map(scene.acquisitionDate < _),
           sceneParams.minAcquisitionDatetime.map(scene.acquisitionDate > _),
           sceneParams.maxCloudCover.map(scene.cloudCover < _),
@@ -44,24 +50,36 @@ object SceneFilters {
           sceneParams.maxSunAzimuth.map(scene.sunAzimuth < _),
           sceneParams.minSunElevation.map(scene.sunElevation > _),
           sceneParams.maxSunElevation.map(scene.sunElevation < _)
-        ).collect({case Some(criteria)  => criteria}).reduceLeftOption(_ && _).getOrElse(Some(true): Rep[Option[Boolean]])
+        )
+        sceneFilterConditions
+          .collect({case Some(criteria)  => criteria})
+          .reduceLeftOption(_ && _)
+          .getOrElse(Some(true): Rep[Option[Boolean]])
       }.filter { scene =>
-        sceneParams.month.map(datePart("month", scene.acquisitionDate) === _)
-          .reduceLeftOption(_ || _).getOrElse(true: Rep[Boolean])
+        sceneParams.month
+          .map(datePart("month", scene.acquisitionDate) === _)
+          .reduceLeftOption(_ || _)
+          .getOrElse(true: Rep[Boolean])
       }.filter { scene =>
-        sceneParams.datasource.map(scene.datasource === _)
-          .reduceLeftOption(_ || _).getOrElse(true: Rep[Boolean])
+        sceneParams.datasource
+          .map(scene.datasource === _)
+          .reduceLeftOption(_ || _)
+          .getOrElse(true: Rep[Boolean])
       }
     }
 
     def filterByTimestamp(timeParams: TimestampQueryParameters): ScenesQuery = {
       scenes.filter{ scene =>
-        List(
+        val timestampFilters = List(
           timeParams.minCreateDatetime.map(scene.createdAt > _),
           timeParams.maxCreateDatetime.map(scene.createdAt < _),
           timeParams.minModifiedDatetime.map(scene.modifiedAt > _),
           timeParams.maxModifiedDatetime.map(scene.modifiedAt < _)
-        ).collect({case Some(criteria)  => criteria}).reduceLeftOption(_ && _).getOrElse(true: Rep[Boolean])
+        )
+        timestampFilters
+          .collect({case Some(criteria)  => criteria})
+          .reduceLeftOption(_ && _)
+          .getOrElse(true: Rep[Boolean])
       }
     }
 
