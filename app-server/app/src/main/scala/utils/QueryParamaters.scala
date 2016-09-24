@@ -50,10 +50,10 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
     'organization.as(deserializerUUID).*
   ).as(OrgQueryParameters)
 
-  val userQueryParameters = parameters(
+  val userQueryParameters = parameters((
     'createdBy.as[String].?,
     'modifiedBy.as[String].?
-  ).as(UserQueryParameters)
+  )).as(UserQueryParameters)
 
   val timestampQueryParameters = parameters(
     'minCreateDatetime.as(deserializerTimestamp).?,

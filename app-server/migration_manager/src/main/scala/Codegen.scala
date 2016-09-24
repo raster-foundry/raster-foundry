@@ -22,7 +22,8 @@ trait RFCodegen extends SlickCodegen {
     "buckets",
     "scenes_to_buckets",
     "thumbnails",
-    "footprints"
+    "footprints",
+    "images"
   )
 
   class RFSlickSourceCodeGenerator(m: Model, version: Int)
@@ -40,7 +41,9 @@ trait RFCodegen extends SlickCodegen {
         override def rawType = {
           model.name match {
             case "tags" => "List[String]"
+            case "bands" => "List[String]"
             case "scene_metadata" => "Map[String, Any]"
+            case "image_metadata" => "Map[String, Any]"
             case "thumbnail_status" => "JobStatus"
             case "boundary_status" => "JobStatus"
             case "status" => "JobStatus"
