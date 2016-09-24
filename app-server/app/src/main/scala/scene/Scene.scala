@@ -6,7 +6,7 @@ import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
-import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
+import com.lonelyplanet.akka.http.extensions.PageRequest
 import slick.lifted._
 
 import com.azavea.rf.AkkaSystem

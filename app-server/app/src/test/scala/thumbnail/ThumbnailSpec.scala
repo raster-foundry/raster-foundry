@@ -1,24 +1,18 @@
 package com.azavea.rf.thumbnail
 
-import org.scalatest.{Matchers, WordSpec}
-import akka.http.scaladsl.testkit.{ScalatestRouteTest, RouteTestTimeout}
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.model.{HttpEntity, ContentTypes}
-import akka.actor.ActorSystem
-import concurrent.duration._
-import spray.json._
+import java.sql.Timestamp
 import java.util.UUID
 
-import com.azavea.rf.utils.Config
-import com.azavea.rf.{DBSpec, Router}
-import com.azavea.rf.datamodel.latest.schema.tables._
-import com.azavea.rf.datamodel.enums._
-import com.azavea.rf.utils.PaginatedResponse
-import com.azavea.rf.AuthUtils
-import scala.util.{Success, Failure, Try}
+import scala.util.{Success, Failure}
+
+import akka.http.scaladsl.testkit.ScalatestRouteTest
+import org.scalatest.{Matchers, WordSpec}
 import slick.lifted.TableQuery
 
-import java.sql.Timestamp
+import com.azavea.rf.utils.Config
+import com.azavea.rf.DBSpec
+import com.azavea.rf.datamodel.latest.schema.tables._
+
 
 class ThumbnailSpec extends WordSpec
     with Matchers

@@ -7,17 +7,11 @@ import akka.http.scaladsl.model.{HttpEntity, ContentTypes}
 import akka.actor.ActorSystem
 import concurrent.duration._
 import spray.json._
-import java.util.UUID
 
 import com.azavea.rf.utils.Config
 import com.azavea.rf.{DBSpec, Router}
 import com.azavea.rf.datamodel.latest.schema.tables._
-import com.azavea.rf.datamodel.enums._
 import com.azavea.rf.utils.PaginatedResponse
-import com.azavea.rf.AuthUtils
-import com.azavea.rf.scene._
-import java.sql.Timestamp
-import java.time.Instant
 
 
 class BucketSpec extends WordSpec
