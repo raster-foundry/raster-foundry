@@ -30,3 +30,18 @@ def create_s3_obj(url):
         bucket = parts[0]
         key = '/'.join(parts[1:])
         return s3.Object(bucket, key)
+
+
+class JobStatus(object):
+    QUEUED = 'QUEUED'
+    PROCESSING = 'PROCESSING'
+    FAILURE = 'FAILURE'
+    SUCCESS = 'SUCCESS'
+    UPLOADING = 'UPLOADING'
+    PARTIALFAILURE = 'PARTIALFAILURE'
+
+
+class Visibility(object):
+    PUBLIC = 'PUBLIC'
+    ORGANIZATION = 'ORGANIZATION'
+    PRIVATE = 'PRIVATE'
