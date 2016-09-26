@@ -1,4 +1,4 @@
-package com.azavea.rf.datamodel.latest.schema
+package com.azavea.rf.datamodel.v14.schema
 // AUTO-GENERATED Slick data model
 /** Stand-alone Slick data model for immediate use */
 object tables extends {
@@ -227,19 +227,18 @@ trait tables {
    *  @param boundaryStatus Database column boundary_status SqlType(job_status)
    *  @param status Database column status SqlType(job_status)
    *  @param sunAzimuth Database column sun_azimuth SqlType(float4), Default(None)
-   *  @param sunElevation Database column sun_elevation SqlType(float4), Default(None)
-   *  @param name Database column name SqlType(varchar), Length(255,true) */
-  case class ScenesRow(id: java.util.UUID, createdAt: java.sql.Timestamp, modifiedAt: java.sql.Timestamp, organizationId: java.util.UUID, createdBy: String, modifiedBy: String, ingestSizeBytes: Int, visibility: Visibility, resolutionMeters: Float, tags: List[String], datasource: String, sceneMetadata: Map[String, Any], cloudCover: Option[Float] = None, acquisitionDate: Option[java.sql.Timestamp] = None, thumbnailStatus: JobStatus, boundaryStatus: JobStatus, status: JobStatus, sunAzimuth: Option[Float] = None, sunElevation: Option[Float] = None, name: String)
+   *  @param sunElevation Database column sun_elevation SqlType(float4), Default(None) */
+  case class ScenesRow(id: java.util.UUID, createdAt: java.sql.Timestamp, modifiedAt: java.sql.Timestamp, organizationId: java.util.UUID, createdBy: String, modifiedBy: String, ingestSizeBytes: Int, visibility: Visibility, resolutionMeters: Float, tags: List[String], datasource: String, sceneMetadata: Map[String, Any], cloudCover: Option[Float] = None, acquisitionDate: Option[java.sql.Timestamp] = None, thumbnailStatus: JobStatus, boundaryStatus: JobStatus, status: JobStatus, sunAzimuth: Option[Float] = None, sunElevation: Option[Float] = None)
   /** GetResult implicit for fetching ScenesRow objects using plain SQL queries */
   implicit def GetResultScenesRow(implicit e0: GR[java.util.UUID], e1: GR[java.sql.Timestamp], e2: GR[String], e3: GR[Int], e4: GR[Visibility], e5: GR[Float], e6: GR[List[String]], e7: GR[Map[String, Any]], e8: GR[Option[Float]], e9: GR[Option[java.sql.Timestamp]], e10: GR[JobStatus]): GR[ScenesRow] = GR{
     prs => import prs._
-    ScenesRow.tupled((<<[java.util.UUID], <<[java.sql.Timestamp], <<[java.sql.Timestamp], <<[java.util.UUID], <<[String], <<[String], <<[Int], <<[Visibility], <<[Float], <<[List[String]], <<[String], <<[Map[String, Any]], <<?[Float], <<?[java.sql.Timestamp], <<[JobStatus], <<[JobStatus], <<[JobStatus], <<?[Float], <<?[Float], <<[String]))
+    ScenesRow.tupled((<<[java.util.UUID], <<[java.sql.Timestamp], <<[java.sql.Timestamp], <<[java.util.UUID], <<[String], <<[String], <<[Int], <<[Visibility], <<[Float], <<[List[String]], <<[String], <<[Map[String, Any]], <<?[Float], <<?[java.sql.Timestamp], <<[JobStatus], <<[JobStatus], <<[JobStatus], <<?[Float], <<?[Float]))
   }
   /** Table description of table scenes. Objects of this class serve as prototypes for rows in queries. */
   class Scenes(_tableTag: Tag) extends Table[ScenesRow](_tableTag, "scenes") {
-    def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, ingestSizeBytes, visibility, resolutionMeters, tags, datasource, sceneMetadata, cloudCover, acquisitionDate, thumbnailStatus, boundaryStatus, status, sunAzimuth, sunElevation, name) <> (ScenesRow.tupled, ScenesRow.unapply)
+    def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, ingestSizeBytes, visibility, resolutionMeters, tags, datasource, sceneMetadata, cloudCover, acquisitionDate, thumbnailStatus, boundaryStatus, status, sunAzimuth, sunElevation) <> (ScenesRow.tupled, ScenesRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(createdAt), Rep.Some(modifiedAt), Rep.Some(organizationId), Rep.Some(createdBy), Rep.Some(modifiedBy), Rep.Some(ingestSizeBytes), Rep.Some(visibility), Rep.Some(resolutionMeters), Rep.Some(tags), Rep.Some(datasource), Rep.Some(sceneMetadata), cloudCover, acquisitionDate, Rep.Some(thumbnailStatus), Rep.Some(boundaryStatus), Rep.Some(status), sunAzimuth, sunElevation, Rep.Some(name)).shaped.<>({r=>import r._; _1.map(_=> ScenesRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get, _8.get, _9.get, _10.get, _11.get, _12.get, _13, _14, _15.get, _16.get, _17.get, _18, _19, _20.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(createdAt), Rep.Some(modifiedAt), Rep.Some(organizationId), Rep.Some(createdBy), Rep.Some(modifiedBy), Rep.Some(ingestSizeBytes), Rep.Some(visibility), Rep.Some(resolutionMeters), Rep.Some(tags), Rep.Some(datasource), Rep.Some(sceneMetadata), cloudCover, acquisitionDate, Rep.Some(thumbnailStatus), Rep.Some(boundaryStatus), Rep.Some(status), sunAzimuth, sunElevation).shaped.<>({r=>import r._; _1.map(_=> ScenesRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get, _8.get, _9.get, _10.get, _11.get, _12.get, _13, _14, _15.get, _16.get, _17.get, _18, _19)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(uuid), PrimaryKey */
     val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
@@ -279,8 +278,6 @@ trait tables {
     val sunAzimuth: Rep[Option[Float]] = column[Option[Float]]("sun_azimuth", O.Default(None))
     /** Database column sun_elevation SqlType(float4), Default(None) */
     val sunElevation: Rep[Option[Float]] = column[Option[Float]]("sun_elevation", O.Default(None))
-    /** Database column name SqlType(varchar), Length(255,true) */
-    val name: Rep[String] = column[String]("name", O.Length(255,varying=true))
 
     /** Foreign key referencing Organizations (database name scenes_organization_id_fkey) */
     lazy val organizationsFk = foreignKey("scenes_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
@@ -288,9 +285,6 @@ trait tables {
     lazy val usersFk2 = foreignKey("scenes_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
     /** Foreign key referencing Users (database name scenes_modified_by_fkey) */
     lazy val usersFk3 = foreignKey("scenes_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
-
-    /** Uniqueness Index over (name,organizationId,datasource) (database name scene_name_org_datasource) */
-    val index1 = index("scene_name_org_datasource", (name, organizationId, datasource), unique=true)
   }
   /** Collection-like TableQuery object for table Scenes */
   lazy val Scenes = new TableQuery(tag => new Scenes(tag))
@@ -437,5 +431,5 @@ trait tables {
 }
 
 object Version{
-  def version = 15
+  def version = 14
 }

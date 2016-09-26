@@ -1099,9 +1099,6 @@ definitions:
       - $ref: '#/definitions/UserTrackingMixin'
       - type: object
         properties:
-          name:
-            type: string
-            description: name of image, displayed in UI
           visibility:
             type: string
             description: Level of restriction on viewing
@@ -1127,7 +1124,7 @@ definitions:
             type: string
             format: uuid
             description: Scene that image is associated with
-          metadata:
+          image_metadata:
             type: object
             description: Metadata about this image
         required:

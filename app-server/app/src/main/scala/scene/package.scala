@@ -9,7 +9,7 @@ import com.azavea.rf.datamodel.latest.schema.tables.{ScenesRow}
   */
 package object scene extends RfJsonProtocols {
 
-  implicit val scenesRowWithOrgsFormat = jsonFormat19(ScenesRow)
-  implicit val createSceneFormat =  jsonFormat14(CreateScene)
+  implicit val scenesRowWithOrgsFormat = jsonFormat20(ScenesRow)
+  implicit val createSceneFormat =  jsonFormat15(CreateScene)
   implicit val paginatedScenesFormat = jsonFormat6(PaginatedResponse[ScenesRow])
 }

@@ -6,7 +6,7 @@ import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
-import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
+import com.lonelyplanet.akka.http.extensions.PageRequest
 import slick.lifted._
 
 import com.azavea.rf.AkkaSystem
@@ -30,7 +30,8 @@ case class CreateScene(
   boundaryStatus: JobStatus,
   status: JobStatus,
   sunAzimuth: Option[Float],
-  sunElevation: Option[Float]
+  sunElevation: Option[Float],
+  name: String
 ) {
   def toScene(userId: String): ScenesRow = {
     val now = new Timestamp((new java.util.Date()).getTime())
@@ -53,7 +54,8 @@ case class CreateScene(
       boundaryStatus,
       status,
       sunAzimuth,
-      sunElevation
+      sunElevation,
+      name
     )
   }
 }
@@ -164,13 +166,13 @@ object SceneService extends AkkaSystem.LoggerExecutor {
       updateScene.modifiedAt, updateScene.modifiedBy, updateScene.ingestSizeBytes,
       updateScene.resolutionMeters, updateScene.datasource, updateScene.cloudCover,
       updateScene.acquisitionDate, updateScene.tags, updateScene.sceneMetadata,
-      updateScene.thumbnailStatus, updateScene.boundaryStatus, updateScene.status
+      updateScene.thumbnailStatus, updateScene.boundaryStatus, updateScene.status, updateScene.name
     )
     database.db.run {
       updateSceneQuery.update((
         updateTime, user.id, scene.ingestSizeBytes, scene.resolutionMeters,
         scene.datasource, scene.cloudCover, scene.acquisitionDate, scene.tags, scene.sceneMetadata,
-        scene.thumbnailStatus, scene.boundaryStatus, scene.status
+        scene.thumbnailStatus, scene.boundaryStatus, scene.status, scene.name
       )).asTry
     } map {
       case Success(result) => {
