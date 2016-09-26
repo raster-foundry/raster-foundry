@@ -64,13 +64,13 @@ function run_database_migrations() {
         echo "Migrations already initialized"
     else
         # Initialize the database for migrations.
-        docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-server sbt "mg init"
+        docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-backend sbt "mg init"
     fi
 
     # Run database migrations. The way scala-forklift works requires this to be called twice:
     # the first run figures out the migrations to run and the second run applies them.
-    docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-server sbt "mg migrate"
-    docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-server sbt "mg migrate"
+    docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-backend sbt "mg migrate"
+    docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-backend sbt "mg migrate"
 }
 
 
@@ -83,8 +83,8 @@ then
         # Create airflow database
         create_airflow_database
 
-        # app-server
-        docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-server sbt update
+        # app-backend
+        docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-backend sbt update
 
         # Initialize database migrations if needed, and then migrate
         run_database_migrations

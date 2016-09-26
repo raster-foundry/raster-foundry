@@ -32,7 +32,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 
         docker-compose \
             -f "${DIR}/../docker-compose.yml" \
-            run --rm app-server sbt update
+            run --rm app-backend sbt update
 
         echo "Building static asset build"
         docker-compose \
@@ -52,13 +52,13 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 
         echo "Building application JAR"
         GIT_COMMIT="${GIT_COMMIT}" docker-compose \
-            run --no-deps --rm --entrypoint ./sbt app-server app/assembly
+            run --no-deps --rm --entrypoint ./sbt app-backend app/assembly
 
         # Build app, airflow
         echo "Building app, airflow..."
         GIT_COMMIT="${GIT_COMMIT}" docker-compose \
             -f "${DIR}/../docker-compose.yml" \
             -f "${DIR}/../docker-compose.test.yml"\
-            build nginx app-server
+            build nginx app-backend
     fi
 fi

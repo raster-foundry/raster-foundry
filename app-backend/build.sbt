@@ -1,4 +1,4 @@
-name := "rf-server"
+name := "rf-backend"
 
 addCommandAlias("mg", "migrations/run")
 addCommandAlias("mgm", "migration_manager/run")
@@ -30,7 +30,7 @@ lazy val appSettings = commonSettings ++ Seq(
   fork in run := true,
   connectInput in run := true,
   cancelable in Global := true,
-  assemblyJarName in assembly := "rf-server.jar",
+  assemblyJarName in assembly := "rf-backend.jar",
   assemblyMergeStrategy in assembly := {
     case "reference.conf" => MergeStrategy.concat
     case "application.conf" => MergeStrategy.concat

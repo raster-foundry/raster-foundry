@@ -29,6 +29,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             # is a docker login command with temporarily ECR credentials.
             eval "$(aws ecr get-login)"
 
+            # TODO: consider changing app-server repositories to app-backend
             docker tag "raster-foundry-nginx:${GIT_COMMIT}" \
                    "${AWS_ECR_ENDPOINT}/raster-foundry-nginx:${GIT_COMMIT}"
             docker tag "raster-foundry-app-server:${GIT_COMMIT}" \
