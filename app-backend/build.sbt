@@ -24,6 +24,8 @@ lazy val commonSettings = Seq(
   resolvers += Resolver.sonatypeRepo("snapshots")
 )
 
+shellPrompt := { s => Project.extract(s).currentProject.id + " > " }
+
 lazy val appSettings = commonSettings ++ Seq(
   fork in run := true,
   connectInput in run := true,
@@ -86,30 +88,44 @@ lazy val appDependencies = dbDependencies ++ migrationsDependencies ++ Seq(
 
 lazy val migrationManagerDependencies = dbDependencies ++ forkliftDependencies
 
-lazy val root = Project("root", file(".")).aggregate(
-  app, migrations, migrationManager, datamodel).settings(
-  commonSettings:_*)
+lazy val root = Project("root", file("."))
+  .aggregate(app, migrations, migrationManager, datamodel, ingest)
+  .settings(commonSettings:_*)
 
-lazy val app = Project("app",
-  file("app")).dependsOn(datamodel).settings(
-  appSettings:_*).settings {
-  libraryDependencies ++= appDependencies
-}
+lazy val app = Project("app", file("app"))
+  .dependsOn(datamodel)
+  .settings(appSettings:_*)
+  .settings({
+    libraryDependencies ++= appDependencies
+  })
 
-lazy val migrationManager = Project("migration_manager",
-  file("migration_manager")).settings(
-  commonSettings:_*).settings {
-  libraryDependencies ++= migrationManagerDependencies
-}
+lazy val migrationManager = Project("migration_manager", file("migration_manager"))
+  .settings(commonSettings:_*)
+  .settings({
+    libraryDependencies ++= migrationManagerDependencies
+  })
 
-lazy val migrations = Project("migrations",
-  file("migrations")).dependsOn(
-  datamodel, migrationManager).settings(
-  commonSettings:_*).settings {
-  libraryDependencies ++= migrationsDependencies
-}
+lazy val migrations = Project("migrations", file("migrations"))
+  .dependsOn(datamodel, migrationManager)
+  .settings(commonSettings:_*)
+  .settings({
+    libraryDependencies ++= migrationsDependencies
+  })
 
-lazy val datamodel = Project("datamodel",
-  file("datamodel")).settings(commonSettings:_*).settings {
-  libraryDependencies ++= slickDependencies
-}
+lazy val datamodel = Project("datamodel", file("datamodel"))
+  .settings(commonSettings:_*).settings({
+    libraryDependencies ++= slickDependencies
+  })
+
+lazy val ingest = Project("ingest", file("ingest"))
+  .settings(commonSettings:_*)
+  .settings({
+    libraryDependencies ++= slickDependencies ++ Seq(
+      Dependencies.geotrellisRaster,
+      Dependencies.geotrellisVector,
+      Dependencies.geotrellisSparkEtl,
+      Dependencies.geotrellisS3,
+      Dependencies.akkajson,
+      Dependencies.spark
+    )
+  })
