@@ -71,6 +71,7 @@ services:
       - ./app-tasks/dags/:/opt/raster-foundry/app-tasks/dags/
       - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
       - ./app-tasks/rf/src/rf/:/usr/local/bin/rf/
+      - $HOME/.aws:/root/.aws:ro
     build:
       context: ./app-tasks
       dockerfile: Dockerfile
@@ -80,6 +81,7 @@ services:
       - redis:redis.raster-foundry.internal
     environment:
       - AIRFLOW_HOME=/usr/local/airflow
+      - RF_HOST=http://rasterfoundry.com:9000
     ports:
       - "8080:8080"
     command: airflow webserver
@@ -97,6 +99,7 @@ services:
     env_file: .env
     environment:
       - AIRFLOW_HOME=/usr/local/airflow
+      - RF_HOST=http://rasterfoundry.com:9000
     ports:
       - "5555:5555"
     command: airflow flower
@@ -120,6 +123,7 @@ services:
     environment:
       - AIRFLOW_HOME=/usr/local/airflow
       - PYTHONPATH=/opt/raster-foundry/app-tasks/rf/src/
+      - RF_HOST=http://rasterfoundry.com:9000
     command: airflow scheduler
 
   airflow-worker:
@@ -136,8 +140,10 @@ services:
     links:
       - postgres:database.raster-foundry.internal
       - redis:redis.raster-foundry.internal
+      - app-server:rasterfoundry.com
     env_file: .env
     environment:
       - AIRFLOW_HOME=/usr/local/airflow
+      - RF_HOST=http://rasterfoundry.com:9000
       - C_FORCE_ROOT=True
     command: airflow worker

@@ -70,11 +70,10 @@ class Scene(BaseModel):
 
     @classmethod
     def from_dict(cls, d):
-        cloudCover = d.get('cloudCover') or d.get('cloudyPixelPercentage')
         return cls(
             d.get('organizationId'), d.get('ingestSizeBytes'), d.get('visibility'), d.get('resolutionMeters'),
             d.get('tags'), d.get('datasource'), d.get('sceneMetadata'), d.get('name'), d.get('thumbnailStatus'),
-            d.get('boundaryStatus'), d.get('status'), d.get('sunAzimuth'), d.get('sunElevation'), cloudCover,
+            d.get('boundaryStatus'), d.get('status'), d.get('sunAzimuth'), d.get('sunElevation'), d.get('cloudCover'),
             d.get('acquisitionDate'), d.get('id'), d.get('createdBy'), d.get('modifiedBy'), d.get('createdAt'),
             d.get('modifiedAt')
         )
@@ -88,7 +87,7 @@ class Scene(BaseModel):
             scene_dict['sunAzimuth'] = self.sunAzimuth
         if self.sunElevation:
             scene_dict['sunElevation'] = self.sunElevation
-        if self.cloudCover:
+        if self.cloudCover is not None:
             scene_dict['cloudCover'] = self.cloudCover
         if self.acquisitionDate:
             scene_dict['acquisitionDate'] = self.acquisitionDate

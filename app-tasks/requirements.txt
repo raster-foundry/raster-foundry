@@ -7,3 +7,4 @@ pytest-runner==2.9
 rasterio==0.36.0
 pyproj==1.9.5
 ipython==5.1.0
+pyjwt==1.4.2
