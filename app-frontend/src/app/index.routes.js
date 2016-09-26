@@ -1,25 +1,20 @@
-import mainTpl from './pages/main/main.html';
-import loginTpl from './pages/login/login.html';
+import browseTpl from './pages/browse/browse.html';
 import libraryTpl from './pages/library/library.html';
-import projectTpl from './pages/library/project/project.html';
-import accountTpl from './pages/account/account.html';
-import billingTpl from './pages/account/billing/billing.html';
-import keysTpl from './pages/account/keys/keys.html';
+import scenesTpl from './pages/library/scenes/scenes.html';
+import bucketsTpl from './pages/library/buckets/buckets.html';
+import settingsTpl from './pages/settings/settings.html';
+import profileTpl from './pages/settings/profile/profile.html';
+import accountTpl from './pages/settings/account/account.html';
+
 
 function routeConfig($urlRouterProvider, $stateProvider) {
     'ngInject';
 
     $stateProvider
-        .state('main', {
+        .state('browse', {
             url: '/',
-            templateUrl: mainTpl,
-            controller: 'MainController',
-            controllerAs: '$ctrl'
-        })
-        .state('login', {
-            url: '/login',
-            templateUrl: loginTpl,
-            controller: 'LoginController',
+            templateUrl: browseTpl,
+            controller: 'BrowseController',
             controllerAs: '$ctrl'
         })
         .state('library', {
@@ -27,45 +22,39 @@ function routeConfig($urlRouterProvider, $stateProvider) {
             templateUrl: libraryTpl,
             controller: 'LibraryController',
             controllerAs: '$ctrl',
-            data: {
-                requiresLogin: true
-            }
+            abstract: true
         })
-        .state('project', {
-            url: '/library/project',
-            templateUrl: projectTpl,
-            controller: 'ProjectController',
+        .state('library.scenes', {
+            url: '/scenes',
+            templateUrl: scenesTpl,
+            controller: 'ScenesController',
+            controllerAs: '$ctrl'
+        })
+        .state('library.buckets', {
+            url: '/buckets',
+            templateUrl: bucketsTpl,
+            controller: 'BucketsController',
+            controllerAs: '$ctrl'
+        })
+        .state('settings', {
+            url: '/settings',
+            templateUrl: settingsTpl,
+            controller: 'SettingsController',
             controllerAs: '$ctrl',
-            data: {
-                requiresLogin: true
-            }
+            abstract: true
+
         })
-        .state('account', {
+        .state('settings.profile', {
+            url: '/profile',
+            templateUrl: profileTpl,
+            controller: 'ProfileController',
+            controllerAs: '$ctrl'
+        })
+        .state('settings.account', {
             url: '/account',
             templateUrl: accountTpl,
             controller: 'AccountController',
-            controllerAs: '$ctrl',
-            data: {
-                requiresLogin: true
-            }
-        })
-        .state('billing', {
-            url: '/account/billing',
-            templateUrl: billingTpl,
-            controller: 'BillingController',
-            controllerAs: '$ctrl',
-            data: {
-                requiresLogin: true
-            }
-        })
-        .state('keys', {
-            url: '/account/keys',
-            templateUrl: keysTpl,
-            controller: 'KeysController',
-            controllerAs: '$ctrl',
-            data: {
-                requiresLogin: true
-            }
+            controllerAs: '$ctrl'
         });
     $urlRouterProvider.otherwise('/');
 }

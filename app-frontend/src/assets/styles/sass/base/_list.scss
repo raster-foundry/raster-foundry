@@ -1,0 +1,18 @@
+dl {
+  @extend %clearfix;
+}
+
+dl > dt {
+  clear: both;
+}
+
+dl > dt, dl > dd {
+  width: 50%;
+  float: left;
+  margin: 5px 0;
+}
+
+dl > dd {
+  font-weight: 600;
+  padding-left: 2rem;
+}

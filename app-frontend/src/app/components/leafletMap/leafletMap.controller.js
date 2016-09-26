@@ -3,29 +3,35 @@ export default class LeafletMapController {
     constructor($log, $timeout, $element) {
         'ngInject';
 
-        $log.log('Leaflet Map component initializing');
         const map = L.map($element[0].children[0], {zoomControl: false})
-            .setView([39.9500, -75.1667], 13);
-        L.tileLayer(
-            'http://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
-            {
-                attribution:
-                'Raster Foundry | Map data &copy;' +
-                    ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap' +
-                    '</a> contributors, &copy;' +
-                    ' <a href="http://cartodb.com/attributions">CartoDB</a>',
-                maxZoom: 18
-            }).addTo(map);
-        L.control.zoom({
-            position: 'bottomright'
-        }).addTo(map);
-        // when loading for the first time, map can get initialized
-        // before the parent component sets the size correctly.
+              .setView([26.8625, -87.8467], 3);
+
+        let cartoPositron = L.tileLayer(
+            'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">' +
+                    'OpenStreetMap</a> &copy;<a href="http://cartodb.com/attributions">CartoDB</a>',
+                maxZoom: 19
+            }
+        );
+        let commandCenter = L.control({position: 'topright'});
+        commandCenter.onAdd = function () {
+            let div = L.DomUtil.create('div', 'map-control-panel');
+
+            div.innerHTML =
+                '<button class="btn btn-default"><i class="icon-resize-full"></i></button>' +
+                '<hr>' +
+                '<button class="btn btn-default btn-block"><i class="icon-search">' +
+                '</i> Find places</button>';
+            return div;
+        };
+        let zoom = L.control.zoom({position: 'topright'});
+        cartoPositron.addTo(map);
+        commandCenter.addTo(map);
+        zoom.addTo(map);
+
         $timeout(function () {
             map.invalidateSize();
         }, 400);
-
-        $log.log('Leaflet Map component initialized.');
     }
 }
 

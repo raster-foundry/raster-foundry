@@ -1,0 +1,48 @@
+<div class="navbar primary-navbar">
+	<!-- Nav Left -->
+	<div class="navbar-left">
+	  <a href="#" class="brand">
+			<img ng-attr-src="{{$ctrl.assetLogo}}">
+	  </a>
+	  <span class="navbar-vertical-divider"></span>
+	  <nav>
+	    <a href ui-sref="browse" ui-sref-active="active">Browse data</a>
+	    <a href ui-sref-active="active">Model market</a>
+	    <a href ui-sref-active="active">Model lab</a>
+	  </nav>
+	  <span class="navbar-vertical-divider"></span>
+	</div>
+
+	<!-- Nav Right -->
+	<div class="navbar-right">
+	  <nav>
+	    <a href="#" class="icon-link" data-toggle="tooltip" title="Help" data-placement="bottom">
+	      <i class="icon-help"></i>
+	    </a>
+	    <a href="#" class="icon-link" data-toggle="tooltip" title="Processing" data-placement="bottom">
+	      <i class="icon-processing"></i>
+	    </a>
+	  </nav>
+	  <span class="navbar-vertical-divider"></span>
+	  <nav>
+      <div ng-if="!$ctrl.isLoggedIn">
+        <a href ng-click="$ctrl.signin()">
+          Sign In
+        </a>
+      </div>
+      <div ng-if="$ctrl.isLoggedIn" uib-dropdown class="dropdown-my-account" on-toggle="toggled($ctrl.optionsOpen)">
+        <a href uib-dropdown-toggle>
+          <img ng-if="$ctrl.profile.picture" class="avatar" ng-src="{{$ctrl.profile.picture}}">
+	        <img ng-if="! $ctrl.profile.picture" class="avatar" src="http://placehold.it/25x25">
+	        <i class="icon-caret-down"></i>
+        </a>
+	      <ul class="dropdown-menu" aria-labelledby="dLabel">
+	        <li><a href ui-sref="library.scenes">My library</a></li>
+	        <li><a href ui-sref="settings.profile">Settings</a></li>
+	        <li role="separator" class="divider"></li>
+	        <li><a href ng-click="$ctrl.logout()">Sign out</a></li>
+	      </ul>
+      </div>
+	  </nav>
+	</div>
+</div>

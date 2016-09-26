@@ -1,0 +1,37 @@
+<div class="row content stack-sm">
+  <div class="column">
+    <h1 class="h3 page-title">Profile</h1>
+    <form action="">
+      <div class="form-group">
+        <label for="upload-profile-picture">Profile picture</label><br>
+        <img ng-if="$ctrl.profile.picture" class="avatar md" ng-src="{{$ctrl.profile.picture}}">
+        <img ng-if="! $ctrl.profile.picture" class="avatar md" src="http://placehold.it/100x100">
+        <div class="avatar-upload">
+          <label for="upload-profile-picture" class="btn">
+            Upload new picture
+            <input id="upload-profile-picture" type="file" class="manual-file-chooser">
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="name">Name</label>
+        <input id="name" type="text" class="form-control" placeholder="Name">
+      </div>
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input id="username" type="text" class="form-control" placeholder="Email" disabled value="myusername">
+        <p class="help-block">Contact support to change your username</p>
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input id="email" type="text" class="form-control" placeholder="Email">
+      </div>
+      <div class="form-group">
+        <label for="location">Location</label>
+        <input id="location" type="text" class="form-control" placeholder="Location">
+      </div>
+      <button type="submit" class="btn btn-primary btn-large">Update Profile</button>
+    </form>
+  </div>
+</div>

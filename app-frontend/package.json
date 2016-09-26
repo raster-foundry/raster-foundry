@@ -32,6 +32,7 @@
     "angular-sanitize": "^1.5.8",
     "angular-storage": "0.0.15",
     "angular-touch": "^1.5.8",
+    "angular-ui-bootstrap": "^2.1.4",
     "angular-ui-router": "^0.3.1",
     "auth0-angular": "^4.2.3",
     "auth0-lock": "^9.2.2",

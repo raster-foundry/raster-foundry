@@ -1,6 +1,5 @@
 function runBlock($rootScope, auth, store, jwtHelper) {
     'ngInject';
-
     $rootScope.$on('$locationChangeStart', function () {
         let token = store.get('token');
         if (token) {

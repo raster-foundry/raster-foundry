@@ -1,0 +1,64 @@
+%clearfix {
+  &:before,
+  &:after {
+    content: '';
+    display: table;
+  }
+  &:after {
+    clear: both;
+  }
+}
+
+.clearfix {
+  @extend %clearfix;
+}
+
+.pull-right {
+  float: right;
+}
+
+.pull-left {
+  float: left;
+}
+
+// Color helpers
+.color-primary {
+  color: $brand-primary;
+}
+
+.color-secondary {
+  color: $brand-secondary;
+}
+
+.color-warning {
+  color: $warning;
+}
+
+.color-danger {
+  color: $danger;
+}
+
+.color-dark {
+  color: $shade-dark;
+}
+
+// background helpers
+.bg-primary {
+  background-color: $brand-primary;
+}
+
+.bg-secondary {
+  background-color: $brand-secondary;
+}
+
+.bg-warning {
+  background-color: $warning;
+}
+
+.bg-danger {
+  background-color: $danger;
+}
+
+.hide {
+  display: none !important;
+}

@@ -21,7 +21,7 @@ function config(
         store.remove('profile');
         store.remove('token');
         store.remove('accessToken');
-        $state.go('login');
+        $state.go('browse');
     });
 
     jwtInterceptorProvider.tokenGetter = function (auth) {

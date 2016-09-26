@@ -1,83 +1,60 @@
-/// Color variables
-///
-$white: #fff;
-$off-white: #f3f3f3;
+/* 
+ * LMC Variables
+ * If overridng bootstrap please place inside _bs-variables.scss
+ */
 
-$base: #8c8da3;
+// Brand Colors:
+$brand-primary: #738FFC;   // purple
+$brand-secondary: #2FC1D0; // green
 
-$brand-primary: #08ADBB;
-$brand-primary-dark: darken($brand-primary, 5%); //#0796a3
-$brand-secondary: #695baa;
-$brand-secondary-dark: darken($brand-secondary, 5%); //#5e509b
-$brand-warning: #e2aa00;
-$brand-warning-dark: darken($brand-warning, 5%); //#c99700
-$brand-danger: #ff957c;
-$brand-danger-dark: darken($brand-danger, 5%); //#ff8062
+// Base Colors:
+$text-base: #7B8391;
+$shade-light: #959CAC;  // slightly lighter then $text-base
+$shade-normal: #465076; // deep purple
+$shade-dark: #353C58;   // deepdeep purple
 
+// Login modal colors:
 $gray: #38394f;
 $gray-light: lighten($gray, 10%); //#4d4f6d
 $gray-lighter: lighten($gray, 35%); //#8c8dad
 $gray-lightest: #ddd;
 $gray-dark: darken($gray, 2%); //#343549
 $gray-darker: #1b1c31;
-
 $link-color: $brand-secondary;
+$white: #fff;
 
-/// Padding variables
-///
-$padding-base-vertical: 10px;
-$padding-base-horizontal: 12px;
+// Action Colors:
+$warning: #FEC67C; // orange
+$danger: #F98094;  // red
 
-$padding-large-vertical: 12px;
-$padding-large-horizontal: 16px;
-
-$padding-small-vertical: 5px;
-$padding-small-horizontal: 10px;
-
-$padding-xs-vertical: 1px;
-$padding-xs-horizontal: 5px;
+// Border Radius
+$border-radius-base: 2px;
 
 
-/// Base font-family declaration
-///
-$font-base: 'Roboto', sans-serif;;
-
-
-/// Border Radius
-///
-$border-radius-base: 5px;
-
-/// Tooltips
-///
-$tooltip-max-width: 100px;
-$tooltip-bg: $gray;
-
-/// Input Groups
-///
-$input-group-addon-bg: $white;
-
-/// Screen Sizes
-/// Used in _mixins.scss > @mixin respond-to($breakpoint)
+/* * * *
+ * Screen Sizes
+ * Used in _mixins.scss > @mixin respond-to($breakpoint)
+ * * * */
 $breakpoints: (
-  'phone': (max-width: 767px),
-  
-  'tablet': (min-width: 768px) and (max-width: 991px),
-  'tablet-up': (min-width: 768px),
-  'tablet-down': (max-width: 991px),
 
-  'laptop': (min-width: 992px) and (max-width: 1200px),
-  'laptop-up': (min-width: 992px),
-  'laptop-down': (max-width: 1200px),
+  'xxs': (max-width: 480px),
 
-  'desktop': (min-width: 1201px),
+  'xs': (max-width: 767px),
+
+  'sm': "(min-width: 768px) and (max-width: 991px)",
+  'sm-up': (min-width: 768px),
+  'sm-down': (max-width: 991px),
+
+  'md': "(min-width: 992px) and (max-width: 1200px)",
+  'md-up': (min-width: 992px),
+  'md-down': (max-width: 1200px),
+
+  'lg': (min-width: 1201px),
 );
 
 
-/// z-index
-/// Useage z-index: map-get($zindex, 9000);
-$z-index: (
-  sidebar: 100,
-  toolbar:  90,
-  utility:  80,
-  map:       1
-)
+/* * * *
+ * Columns
+ * * * */
+$column-count: 12;
+$column-padding: 1rem;
