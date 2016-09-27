@@ -53,6 +53,15 @@ trait RfJsonProtocols extends SprayJsonSupport
     }
   }
 
+  /** Serialization for ThumbnailSize enum */
+  implicit object ThumbnailSizeFormat extends RootJsonFormat[ThumbnailSize] {
+    def write(thumbnailSize: ThumbnailSize) = JsString(thumbnailSize.toString)
+    def read(value: JsValue) = value match {
+      case JsString(enum) => ThumbnailSize.fromString(enum)
+      case _ => throw new DeserializationException(s"Expected thumbnail size value but got $value")
+    }
+  }
+
   implicit val userFormat = jsonFormat1(UsersRow)
   implicit val organizationFormat = jsonFormat4(OrganizationsRow)
 }

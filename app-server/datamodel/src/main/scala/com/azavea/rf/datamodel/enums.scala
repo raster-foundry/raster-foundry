@@ -40,3 +40,20 @@ object JobStatus {
 
   def values = Seq(UPLOADING, SUCCESS, PARTIALFAILURE, QUEUED, PROCESSING)
 }
+
+
+sealed abstract class ThumbnailSize(val repr: String)
+case object SMALL extends ThumbnailSize("SMALL")
+case object LARGE extends ThumbnailSize("LARGE")
+case object SQUARE extends ThumbnailSize("SQUARE")
+
+
+object ThumbnailSize {
+  def fromString(s: String): ThumbnailSize = s match {
+    case "SMALL" => SMALL
+    case "LARGE" => LARGE
+    case "SQUARE" => SQUARE
+  }
+
+  def values = Seq(SMALL, LARGE, SQUARE)
+}

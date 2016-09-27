@@ -10,19 +10,17 @@ import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 
 import com.azavea.rf.auth.Authentication
 import com.azavea.rf.datamodel.latest.schema.tables._
-import com.azavea.rf.utils.{Database, UserErrorHandler}
+import com.azavea.rf.utils.{Database, UserErrorHandler, RouterHelper}
 
 
 trait ImageRoutes extends Authentication
     with ImageQueryParametersDirective
     with PaginationDirectives
-    with UserErrorHandler {
+    with UserErrorHandler
+    with RouterHelper {
 
   implicit def database: Database
   implicit val ec: ExecutionContext
-
-  val anonWithSlash = pathEndOrSingleSlash & authenticateAndAllowAnonymous
-  val anonWithPage = anonWithSlash & withPagination
 
   def imageRoutes: Route = handleExceptions(userExceptionHandler) {
     pathPrefix("api" / "images") {

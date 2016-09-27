@@ -333,20 +333,20 @@ trait tables {
    *  @param organizationId Database column organization_id SqlType(uuid)
    *  @param widthPx Database column width_px SqlType(int4)
    *  @param heightPx Database column height_px SqlType(int4)
-   *  @param size Database column size SqlType(thumbnailsize)
+   *  @param thumbnailSize Database column thumbnail_size SqlType(thumbnailsize)
    *  @param scene Database column scene SqlType(uuid)
    *  @param url Database column url SqlType(varchar), Length(255,true) */
-  case class ThumbnailsRow(id: java.util.UUID, createdAt: java.sql.Timestamp, modifiedAt: java.sql.Timestamp, organizationId: java.util.UUID, widthPx: Int, heightPx: Int, size: String, scene: java.util.UUID, url: String)
+  case class ThumbnailsRow(id: java.util.UUID, createdAt: java.sql.Timestamp, modifiedAt: java.sql.Timestamp, organizationId: java.util.UUID, widthPx: Int, heightPx: Int, thumbnailSize: ThumbnailSize, scene: java.util.UUID, url: String)
   /** GetResult implicit for fetching ThumbnailsRow objects using plain SQL queries */
-  implicit def GetResultThumbnailsRow(implicit e0: GR[java.util.UUID], e1: GR[java.sql.Timestamp], e2: GR[Int], e3: GR[String]): GR[ThumbnailsRow] = GR{
+  implicit def GetResultThumbnailsRow(implicit e0: GR[java.util.UUID], e1: GR[java.sql.Timestamp], e2: GR[Int], e3: GR[ThumbnailSize], e4: GR[String]): GR[ThumbnailsRow] = GR{
     prs => import prs._
-    ThumbnailsRow.tupled((<<[java.util.UUID], <<[java.sql.Timestamp], <<[java.sql.Timestamp], <<[java.util.UUID], <<[Int], <<[Int], <<[String], <<[java.util.UUID], <<[String]))
+    ThumbnailsRow.tupled((<<[java.util.UUID], <<[java.sql.Timestamp], <<[java.sql.Timestamp], <<[java.util.UUID], <<[Int], <<[Int], <<[ThumbnailSize], <<[java.util.UUID], <<[String]))
   }
   /** Table description of table thumbnails. Objects of this class serve as prototypes for rows in queries. */
   class Thumbnails(_tableTag: Tag) extends Table[ThumbnailsRow](_tableTag, "thumbnails") {
-    def * = (id, createdAt, modifiedAt, organizationId, widthPx, heightPx, size, scene, url) <> (ThumbnailsRow.tupled, ThumbnailsRow.unapply)
+    def * = (id, createdAt, modifiedAt, organizationId, widthPx, heightPx, thumbnailSize, scene, url) <> (ThumbnailsRow.tupled, ThumbnailsRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(createdAt), Rep.Some(modifiedAt), Rep.Some(organizationId), Rep.Some(widthPx), Rep.Some(heightPx), Rep.Some(size), Rep.Some(scene), Rep.Some(url)).shaped.<>({r=>import r._; _1.map(_=> ThumbnailsRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get, _8.get, _9.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(createdAt), Rep.Some(modifiedAt), Rep.Some(organizationId), Rep.Some(widthPx), Rep.Some(heightPx), Rep.Some(thumbnailSize), Rep.Some(scene), Rep.Some(url)).shaped.<>({r=>import r._; _1.map(_=> ThumbnailsRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get, _8.get, _9.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(uuid), PrimaryKey */
     val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
@@ -360,8 +360,8 @@ trait tables {
     val widthPx: Rep[Int] = column[Int]("width_px")
     /** Database column height_px SqlType(int4) */
     val heightPx: Rep[Int] = column[Int]("height_px")
-    /** Database column size SqlType(thumbnailsize) */
-    val size: Rep[String] = column[String]("size")
+    /** Database column thumbnail_size SqlType(thumbnailsize) */
+    val thumbnailSize: Rep[ThumbnailSize] = column[ThumbnailSize]("thumbnail_size")
     /** Database column scene SqlType(uuid) */
     val scene: Rep[java.util.UUID] = column[java.util.UUID]("scene")
     /** Database column url SqlType(varchar), Length(255,true) */

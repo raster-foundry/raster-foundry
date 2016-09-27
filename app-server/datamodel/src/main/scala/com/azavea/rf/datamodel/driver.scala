@@ -80,6 +80,15 @@ trait ExtendedPostgresDriver extends ExPostgresDriver
       createEnumColumnExtensionMethodsBuilder[Visibility]
     implicit val visibilityOptionColumnExtensionMethodsBuilder =
       createEnumOptionColumnExtensionMethodsBuilder[Visibility]
+
+    implicit val thumbnailsizeTypeMapper = createEnumJdbcType[ThumbnailSize]("ThumbnailSize", _.repr,
+      ThumbnailSize.fromString, quoteName = false)
+    implicit val thumbnailsizeTypeListMapper = createEnumListJdbcType[ThumbnailSize]("ThumbnailSize", _.repr,
+      ThumbnailSize.fromString, quoteName = false)
+    implicit val thumbnailsizeColumnExtensionMethodsBuilder =
+      createEnumColumnExtensionMethodsBuilder[ThumbnailSize]
+    implicit val thumbnailsizeOptionColumnExtensionMethodsBuilder =
+      createEnumOptionColumnExtensionMethodsBuilder[ThumbnailSize]
   }
 }
 
