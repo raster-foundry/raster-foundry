@@ -32,11 +32,12 @@ object ImageFilters {
     }
 
     def filterByOrganization(orgParams: OrgQueryParameters): ImagesQuery = {
-      images.filter{ image =>
-        orgParams
-          .organization.map(image.organizationId === _)
-          .reduceLeftOption(_ || _)
-          .getOrElse(true: Rep[Boolean])
+      if (orgParams.organizations.size > 0) {
+        images.filter{ image =>
+          image.organizationId inSet orgParams.organizations.toSet
+        }
+      } else {
+        images
       }
     }
 

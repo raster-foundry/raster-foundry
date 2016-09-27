@@ -22,9 +22,9 @@ trait QueryParameterDeserializers {
 
 }
 
-/** Common query parameters for models that hvae organization attributes */
+/** Common query parameters for models that have organization attributes */
 case class OrgQueryParameters(
-  organization: Iterable[UUID]
+  organizations: Iterable[UUID]
 )
 
 
@@ -56,10 +56,12 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
   )).as(UserQueryParameters)
 
   val timestampQueryParameters = parameters(
-    'minCreateDatetime.as(deserializerTimestamp).?,
-    'maxCreateDatetime.as(deserializerTimestamp).?,
-    'minModifiedDatetime.as(deserializerTimestamp).?,
-    'maxModifiedDatetime.as(deserializerTimestamp).?
+    (
+      'minCreateDatetime.as(deserializerTimestamp).?,
+      'maxCreateDatetime.as(deserializerTimestamp).?,
+      'minModifiedDatetime.as(deserializerTimestamp).?,
+      'maxModifiedDatetime.as(deserializerTimestamp).?
+    )
   ).as(TimestampQueryParameters)
 
 

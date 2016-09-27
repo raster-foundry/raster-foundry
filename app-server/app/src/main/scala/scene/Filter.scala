@@ -18,11 +18,12 @@ object SceneFilters {
 
   implicit class SceneDefault[M, U, C[_]](scenes: ScenesQuery) {
     def filterByOrganization(orgParams: OrgQueryParameters): ScenesQuery = {
-      scenes.filter{ scene =>
-        orgParams
-          .organization.map(scene.organizationId === _)
-          .reduceLeftOption(_ || _)
-          .getOrElse(true: Rep[Boolean])
+      if (orgParams.organizations.size > 0) {
+        scenes.filter{ fp =>
+          fp.organizationId inSet orgParams.organizations.toSet
+        }
+      } else {
+        scenes
       }
     }
 

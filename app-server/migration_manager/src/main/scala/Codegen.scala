@@ -3,8 +3,6 @@ package com.azavea.rf.migration.manager
 import slick.model.Model
 import com.liyaos.forklift.slick.SlickCodegen
 
-import slick.model.Model
-
 
 trait RFCodegen extends SlickCodegen {
   // Override the package name
