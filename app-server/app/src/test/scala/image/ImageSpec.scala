@@ -40,7 +40,8 @@ class ImageSpec extends WordSpec
     publicOrgId, 0, PUBLIC, 20.2f, List("Test", "Public", "Low Resolution"), "TEST_ORG",
     Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any], None,
     Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
-    PROCESSING, PROCESSING, PROCESSING, None, None, "test scene image spec 1"
+    PROCESSING, PROCESSING, PROCESSING, None, None, "test scene image spec 1",
+    List(): List[SceneImage], None, List(): List[SceneThumbnail]
   )
 
 
@@ -87,7 +88,7 @@ class ImageSpec extends WordSpec
           newSceneDatasource1.toJson(createSceneFormat).toString()
         )
       ) ~> sceneRoutes ~> check {
-        val sceneId = responseAs[ScenesRow].id
+        val sceneId = responseAs[SceneWithRelated].id
 
         val newImageDatasource1 = CreateImage(
           publicOrgId, 1024, PUBLIC, "test-image.png", "s3://public/s3/test-image.png",
@@ -136,7 +137,7 @@ class ImageSpec extends WordSpec
 
     "filter by scene correctly" in {
       Get("/api/scenes/") ~> sceneRoutes ~> check {
-        val scenes = responseAs[PaginatedResponse[ScenesRow]]
+        val scenes = responseAs[PaginatedResponse[SceneWithRelated]]
         val sceneId = scenes.results.head.id
 
         val url = s"$baseImagePath?scene=$sceneId"

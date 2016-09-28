@@ -39,7 +39,7 @@ trait SceneRoutes extends Authentication
           authenticate { user =>
             post {
               entity(as[CreateScene]) { newScene =>
-                onSuccess(SceneService.insertScene(newScene.toScene(user.id))) {
+                onSuccess(SceneService.insertScene(newScene, user)) {
                   case Success(scene) => complete(scene)
                   case Failure(_) => complete(StatusCodes.InternalServerError)
                 }

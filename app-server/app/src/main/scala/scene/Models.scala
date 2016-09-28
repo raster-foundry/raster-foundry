@@ -23,12 +23,12 @@ import geotrellis.slick.Projected
 
 /** Scene with related information to organize response */
 case class SceneWithRelated(
+  id: UUID,
   createdBy: String,
   modifiedBy: String,
   createdAt: Timestamp,
   modifiedAt: Timestamp,
   organizationId: UUID,
-  ingestSizeBytes: Int,
   visibility: Visibility,
   resolutionMeters: Float,
   tags: List[String],
@@ -59,12 +59,12 @@ object SceneWithRelated {
     thumbnails: Seq[ThumbnailsRow]
   ): SceneWithRelated = {
     SceneWithRelated(
+      scene.id,
       scene.createdBy,
       scene.modifiedBy,
       scene.createdAt,
       scene.modifiedAt,
       scene.organizationId,
-      scene.ingestSizeBytes,
       scene.visibility,
       scene.resolutionMeters,
       scene.tags,

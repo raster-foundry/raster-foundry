@@ -102,7 +102,7 @@ object ImageService extends AkkaSystem.LoggerExecutor {
 
     val imagesQueryResult = database.db.run {
       val action = images.page(pageRequest).result
-      println(s"Query for images -- SQL: ${action.statements.headOption}")
+      log.debug(s"Query for images -- SQL: ${action.statements.headOption}")
       action
     }
     val totalImagesQuery = database.db.run {

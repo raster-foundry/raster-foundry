@@ -107,7 +107,6 @@ trait BucketRoutes extends Authentication
           } ~
           authenticate { user =>
             pathPrefix(JavaUUID) { sceneId =>
-              println(s"UUID: $sceneId")
               pathEndOrSingleSlash {
                 post {
                   onSuccess(BucketService.addSceneToBucket(sceneId, bucketId)) { resp =>

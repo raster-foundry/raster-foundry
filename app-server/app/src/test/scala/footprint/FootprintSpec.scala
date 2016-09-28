@@ -56,7 +56,8 @@ class FootprintSpec extends WordSpec
         publicOrgId, 0, PUBLIC, 20.2f, List("Test", "Public", "Low Resolution"), "TEST_ORG",
         Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any], None,
         Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
-        PROCESSING, PROCESSING, PROCESSING, None, None, "test scene datasource"
+        PROCESSING, PROCESSING, PROCESSING, None, None, "test scene datasource",
+        List(): List[SceneImage], None, List(): List[SceneThumbnail]
       )
       Post("/api/scenes/").withHeadersAndEntity(
         List(authorization),
@@ -65,7 +66,7 @@ class FootprintSpec extends WordSpec
           newSceneDatasource.toJson(createSceneFormat).toString()
         )
       ) ~> sceneRoutes ~> check {
-        val scene = responseAs[ScenesRow]
+        val scene = responseAs[SceneWithRelated]
         val poly = Projected(
           MultiPolygon(Polygon(Seq(Point(100,100), Point(110,100), Point(110,110),
                                    Point(100,110), Point(100,100)))), 3857)
@@ -113,7 +114,7 @@ class FootprintSpec extends WordSpec
     }
     "filter footprints by scene" in {
       Get(s"/api/scenes/?organization=$publicOrgId") ~> sceneRoutes ~> check {
-        val res = responseAs[PaginatedResponse[ScenesRow]]
+        val res = responseAs[PaginatedResponse[SceneWithRelated]]
         Get(s"/api/footprints/?scene=${res.results(0).id}") ~> footprintRoutes ~> check {
           val res = responseAs[PaginatedResponse[FootprintWithGeojson]]
           res.count === 1

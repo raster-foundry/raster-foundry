@@ -5,7 +5,6 @@ import com.azavea.rf.datamodel.latest.schema.tables.{ImagesRow}
 
 package object image extends RfJsonProtocols {
 
-  implicit val imagesRowFormat = jsonFormat13(ImagesRow)
   implicit val paginatedImagesFormat = jsonFormat6(PaginatedResponse[ImagesRow])
   implicit val createImageFormat = jsonFormat8(CreateImage)
 

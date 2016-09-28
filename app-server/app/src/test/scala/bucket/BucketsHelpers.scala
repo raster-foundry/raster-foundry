@@ -1,7 +1,7 @@
 package com.azavea.rf.bucket
 
 import java.util.UUID
-import com.azavea.rf.scene.CreateScene
+import com.azavea.rf.scene.{CreateScene, SceneImage, SceneThumbnail}
 import com.azavea.rf.datamodel.enums._
 import com.azavea.rf.AuthUtils
 import java.sql.Timestamp
@@ -26,7 +26,8 @@ trait BucketSpecHelper {
     publicOrgId, 0, PUBLIC, 20.2f, List("Test", "Public", "Low Resolution"), "TEST_ORG",
     Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any], None,
     Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
-    PROCESSING, PROCESSING, PROCESSING, None, None, "test scene bucket"
+    PROCESSING, PROCESSING, PROCESSING, None, None, "test scene bucket",
+    List(): List[SceneImage], None, List(): List[SceneThumbnail]
   )
 
 }

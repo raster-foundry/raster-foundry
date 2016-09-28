@@ -7,8 +7,7 @@ import java.time.Instant
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import spray.json._
 
-import com.azavea.rf.datamodel.latest.schema.tables.UsersRow
-import com.azavea.rf.datamodel.latest.schema.tables.OrganizationsRow
+import com.azavea.rf.datamodel.latest.schema.tables._
 import com.azavea.rf.datamodel.enums._
 import com.azavea.rf.datamodel.driver.RFDatabaseJsonProtocol
 
@@ -64,4 +63,6 @@ trait RfJsonProtocols extends SprayJsonSupport
 
   implicit val userFormat = jsonFormat1(UsersRow)
   implicit val organizationFormat = jsonFormat4(OrganizationsRow)
+  implicit val imagesRowFormat = jsonFormat13(ImagesRow)
+  implicit val thumbnailsRowFormat = jsonFormat9(ThumbnailsRow)
 }
