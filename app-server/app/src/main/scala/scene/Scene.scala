@@ -16,51 +16,6 @@ import com.azavea.rf.utils.{Database => DB, PaginatedResponse}
 import com.azavea.rf.datamodel.driver.ExtendedPostgresDriver
 
 
-case class CreateScene(
-  organizationId: UUID,
-  ingestSizeBytes: Int,
-  visibility: Visibility,
-  resolutionMeters: Float,
-  tags: List[String],
-  datasource: String,
-  sceneMetadata: Map[String, Any],
-  cloudCover: Option[Float],
-  acquisitionDate: Option[java.sql.Timestamp],
-  thumbnailStatus: JobStatus,
-  boundaryStatus: JobStatus,
-  status: JobStatus,
-  sunAzimuth: Option[Float],
-  sunElevation: Option[Float],
-  name: String
-) {
-  def toScene(userId: String): ScenesRow = {
-    val now = new Timestamp((new java.util.Date()).getTime())
-    ScenesRow(
-      UUID.randomUUID, // primary key
-      now, // createdAt
-      now, // modifiedAt
-      organizationId,
-      userId, // createdBy
-      userId, // modifiedBy
-      ingestSizeBytes,
-      visibility,
-      resolutionMeters,
-      tags,
-      datasource,
-      sceneMetadata,
-      cloudCover,
-      acquisitionDate,
-      thumbnailStatus,
-      boundaryStatus,
-      status,
-      sunAzimuth,
-      sunElevation,
-      name
-    )
-  }
-}
-
-
 /** Handles interaction between scenes and database */
 object SceneService extends AkkaSystem.LoggerExecutor {
 
