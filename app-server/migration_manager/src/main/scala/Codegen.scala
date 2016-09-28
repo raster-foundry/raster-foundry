@@ -43,6 +43,7 @@ trait RFCodegen extends SlickCodegen {
             case "scene_metadata" => "Map[String, Any]"
             case "image_metadata" => "Map[String, Any]"
             case "thumbnail_status" => "JobStatus"
+            case "thumbnail_size" => "ThumbnailSize"
             case "boundary_status" => "JobStatus"
             case "status" => "JobStatus"
             case "visibility" => "Visibility"
