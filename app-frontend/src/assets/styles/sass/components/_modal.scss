@@ -1,221 +1,149 @@
-.modal-backdrop {
-  background-color: $gray-dark;
+//
+// Modals
+// --------------------------------------------------
 
-  &.in {
-    @include opacity(.9);
-  }
+// .modal-open      - body class for killing the scroll
+// .modal           - container to scroll within
+// .modal-dialog    - positioning shell for the actual modal
+// .modal-content   - actual modal w/ bg and corners and shit
+
+// Kill the scroll on the body
+.modal-open {
+  overflow: hidden;
 }
 
-.modal-xl {
-  width: 90%;
-}
-
-.modal-content {
-  box-shadow: 0 0 20px 0 rgba(black, .1);
-}
-
+// Container that the modal scrolls within
 .modal {
+  display: none;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1050;
+  -webkit-overflow-scrolling: touch;
 
-  .close {
-    @include font-size(30);
-    position: absolute;
-    right: -40px;
-    top: -5px;
-    color: $gray-lighter;
-    text-shadow: none;
-    @include opacity(1);
+  // Prevent Chrome on Windows from adding a focus outline. For details, see
+  // https://github.com/twbs/bootstrap/pull/10951.
+  outline: 0;
+
+  // When fading in the modal, animate it to slide down
+  &.fade .modal-dialog {
+    transform: translate(0, -25%);
+    transition: transform 0.3s ease-out;
   }
-
-  form {
-    margin: 20px;
-
-    .form-action {
-      margin: 0 -35px -35px;
-      padding: 20px 35px;
-      background-color: $off-white;
-      border-top: 1px solid $gray-lightest;
-      border-radius: 0 0 5px 5px;
-      @extend .clearfix;
-
-      .btn {
-        margin-bottom: 0;
-      }
-
-      input[type="submit"] {
-        float: right;
-        width: 50%;
-        margin-bottom: 0;
-      }
-
-      .btn:only-child {
-        float: none;
-      }
-    }
-  }
-
-  .form-control {
-    border-color: $gray-lightest;
-  }
+  &.in .modal-dialog { transform: translate(0, 0); }
+}
+.modal-open .modal {
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
+// Shell div to position the modal with bottom padding
 .modal-dialog {
-  @include respond-to('tablet-up') {
-    margin: 60px auto;
+  position: relative;
+  width: auto;
+  margin: 10px;
+}
+
+// Actual modal
+.modal-content {
+  position: relative;
+  background-color: #fff;
+  border: 1px solid rgba(0,0,0,.2);
+  border-radius: 2px;
+  box-shadow: 0 3px 9px rgba(0,0,0,.5);
+  background-clip: padding-box;
+  // Remove focus outline from opened modal
+  outline: 0;
+}
+
+// Modal background
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1040;
+  background-color: #000;
+  // Fade for backdrop
+  &.fade { opacity: 0; }
+  &.in { opacity: .5; }
+}
+
+// Modal header
+// Top section of the modal w/ title and dismiss
+.modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e5e5;
+  @extend .clearfix;
+}
+// Close icon
+.modal-header .close {
+  margin-top: -2px;
+}
+
+// Title text within header
+.modal-title {
+  margin: 0;
+  line-height: 1.8;
+}
+
+// Modal body
+// Where all modal content resides (sibling of .modal-header and .modal-footer)
+.modal-body {
+  position: relative;
+  padding: 1.5rem;
+}
+
+// Footer (for actions)
+.modal-footer {
+  padding: 1.5rem;
+  text-align: right; // right align buttons
+  border-top: 1px solid #e5e5e5;
+  @extend .clearfix; // clear it in case folks use .pull-* classes on buttons
+
+  // Properly space out buttons
+  .btn + .btn {
+    margin-left: 5px;
+    margin-bottom: 0; // account for input[type="submit"] which gets the bottom margin like all other inputs
+  }
+  // but override that for button groups
+  .btn-group .btn + .btn {
+    margin-left: -1px;
+  }
+  // and override it for block buttons as well
+  .btn-block + .btn-block {
+    margin-left: 0;
   }
 }
 
-
-/// import Modal
-///
-.import-modal .modal-body {
-
-  .drag-to-area {
-    padding: 30px 10px;
-    border: 2px dashed transparent;
-    border-radius: $border-radius-base;
-    transition: .2s ease-in-out border;
-
-    &.active {
-      border-color: $brand-primary;
-    }
-  }
-
-  .import-browse, .import-uri {
-    text-align: center;
-    padding: 35px;
-    
-    i {
-      display: inline-block;
-      line-height: 1;
-    }
-    
-    h3 {
-      color: $brand-primary;
-    }
-    
-    h5 {
-      line-height: 1.4;
-    }
-
-    form {
-      margin: 40px 0 0;
-    }
-  }
-  
-  .import-browse {
-
-    i:not(.rf-icon-cancel) {
-      @include font-size(200);
-      color: $off-white;
-      margin-bottom: -20px;
-    }
-
-    .list-group {
-      height: 190px;
-      border: 1px solid $gray-lightest;
-      border-radius: $border-radius-base;
-      overflow: auto;
-      margin-top: -10px;
-
-      .list-group-item {
-        border-top: none;
-        border-left: none;
-        border-right: none;
-        border-radius: 0;
-        margin: 0;
-      }
-    }
-
-    @-webkit-keyframes new-import-fade {
-      from { background-color: rgba($brand-primary, .1); }
-      to { background-color: transparent; }
-      }
-    @-moz-keyframes new-import-fade {
-      from { background-color: rgba($brand-primary, .1); }
-      to { background-color: transparent; }
-    }
-    @-o-keyframes new-import-fade {
-      from { background-color: rgba($brand-primary, .1); }
-      to { background-color: transparent; }
-    }
-    @keyframes new-import-fade {
-      from { background-color: rgba($brand-primary, .1); }
-      to { background-color: transparent; }
-    }
-
-    .newest-import {
-      background-color: rgba($brand-primary, .1);
-      transition: background;
-      -webkit-animation: new-import-fade 1s 2s 1 ease forwards;
-      -moz-animation: new-import-fade 1s 2s 1 ease forwards;
-      -o-animation: new-import-fade 1s 2s 1 ease forwards;
-      animation: new-import-fade 1s 2s 1 ease forwards;
-    }
-  }
-
-  .import-uri {
-    background: $off-white;
-    border-radius: 0 5px 5px 0;
-    border-left: 1px solid $gray-lightest;
-
-    i {
-      @include font-size(90);
-      color: $gray-lightest;
-      margin-bottom: -20px;
-    }
-
-    &:before {
-      content: 'OR';
-      display: block;
-      position: absolute;
-      background: $base;
-      color: $white;
-      @include font-size(13);
-      left: -18px;
-      top: 44%;
-      border-radius: 100%;
-      line-height: 36px;
-      width: 36px;
-      height: 36px;
-
-      @include respond-to('tablet-down') {
-        left: 50%;
-        top: -15px;
-        transform: translate(-50%);
-      }
-    }
-  }
+// Measure scrollbar width for padding body during modal show/hide
+.modal-scrollbar-measure {
+  position: absolute;
+  top: -9999px;
+  width: 50px;
+  height: 50px;
+  overflow: scroll;
 }
 
-
-/// Add Imagery Layer Modal
-///
-.add-imagery-modal {
-
-  .modal-body {
-    padding: 0;
+// Scale up the modal
+@include respond-to(sm-up) {
+  // Automatically set modal's width for larger viewports
+  .modal-dialog {
+    width: 600px;
+    margin: 30px auto;
   }
-  
-  .nav-tabs {
-    background: $off-white;
+  .modal-content {
+    box-shadow: 0 5px 15px rgba(0,0,0,.5);
   }
 
-  .tab-pane.active {
-    padding: 20px;
-  }
+  // Modal sizes
+  .modal-sm { width: 30rem; }
+}
 
-  .imagery-layers {
-    max-width: 70%;
-    float: left;
-    max-height: 70vh;
-    overflow: auto;
-  }
-
-  .imagery-sidepanel {
-    max-width: 30%;
-    float: left;
-    border-left: 2px solid $gray-lightest;
-    height: 70vh;
-    overflow: auto;
-  }
+@include respond-to(md-up) {
+  .modal-lg { width: 900px; }
 }

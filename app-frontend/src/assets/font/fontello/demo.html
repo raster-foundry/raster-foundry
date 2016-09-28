@@ -228,12 +228,12 @@ body {
   display: none;
 }
 @font-face {
-      font-family: 'raster-foundry';
-      src: url('./font/raster-foundry.eot?84935453');
-      src: url('./font/raster-foundry.eot?84935453#iefix') format('embedded-opentype'),
-           url('./font/raster-foundry.woff?84935453') format('woff'),
-           url('./font/raster-foundry.ttf?84935453') format('truetype'),
-           url('./font/raster-foundry.svg?84935453#raster-foundry') format('svg');
+      font-family: 'fontello';
+      src: url('./font/fontello.eot?97120735');
+      src: url('./font/fontello.eot?97120735#iefix') format('embedded-opentype'),
+           url('./font/fontello.woff?97120735') format('woff'),
+           url('./font/fontello.ttf?97120735') format('truetype'),
+           url('./font/fontello.svg?97120735#fontello') format('svg');
       font-weight: normal;
       font-style: normal;
     }
@@ -241,7 +241,7 @@ body {
      
     .demo-icon
     {
-      font-family: "raster-foundry";
+      font-family: "fontello";
       font-style: normal;
       font-weight: normal;
       speak: none;
@@ -275,11 +275,11 @@ body {
       /* text-shadow: 1px 1px 1px rgba(127, 127, 127, 0.3); */
     }
      </style>
-    <link rel="stylesheet" href="css/animation.css"><!--[if IE 7]><link rel="stylesheet" href="css/raster-foundry-ie7.css"><![endif]-->
+    <link rel="stylesheet" href="css/animation.css"><!--[if IE 7]><link rel="stylesheet" href="css/fontello-ie7.css"><![endif]-->
     <script>
       function toggleCodes(on) {
         var obj = document.getElementById('icons');
-        
+      
         if (on) {
           obj.className += ' codesOn';
         } else {
@@ -292,7 +292,7 @@ body {
   <body>
     <div class="container header">
       <h1>
-        raster-foundry
+        fontello
          <small>font demo</small>
       </h1>
       <label class="switch">
@@ -301,56 +301,40 @@ body {
     </div>
     <div id="icons" class="container">
       <div class="row">
-        <div title="Code: 0xe800" class="the-icons span3"><i class="demo-icon rf-icon-docs">&#xe800;</i> <span class="i-name">rf-icon-docs</span><span class="i-code">0xe800</span></div>
-        <div title="Code: 0xe801" class="the-icons span3"><i class="demo-icon rf-icon-upload-cloud-outline">&#xe801;</i> <span class="i-name">rf-icon-upload-cloud-outline</span><span class="i-code">0xe801</span></div>
-        <div title="Code: 0xe802" class="the-icons span3"><i class="demo-icon rf-icon-list">&#xe802;</i> <span class="i-name">rf-icon-list</span><span class="i-code">0xe802</span></div>
-        <div title="Code: 0xe803" class="the-icons span3"><i class="demo-icon rf-icon-book">&#xe803;</i> <span class="i-name">rf-icon-book</span><span class="i-code">0xe803</span></div>
+        <div title="Code: 0xe800" class="the-icons span3"><i class="demo-icon icon-search">&#xe800;</i> <span class="i-name">icon-search</span><span class="i-code">0xe800</span></div>
+        <div title="Code: 0xe801" class="the-icons span3"><i class="demo-icon icon-trash">&#xe801;</i> <span class="i-name">icon-trash</span><span class="i-code">0xe801</span></div>
+        <div title="Code: 0xe802" class="the-icons span3"><i class="demo-icon icon-bucket">&#xe802;</i> <span class="i-name">icon-bucket</span><span class="i-code">0xe802</span></div>
+        <div title="Code: 0xe803" class="the-icons span3"><i class="demo-icon icon-check">&#xe803;</i> <span class="i-name">icon-check</span><span class="i-code">0xe803</span></div>
       </div>
       <div class="row">
-        <div title="Code: 0xe804" class="the-icons span3"><i class="demo-icon rf-icon-map">&#xe804;</i> <span class="i-name">rf-icon-map</span><span class="i-code">0xe804</span></div>
-        <div title="Code: 0xe805" class="the-icons span3"><i class="demo-icon rf-icon-map-alt">&#xe805;</i> <span class="i-name">rf-icon-map-alt</span><span class="i-code">0xe805</span></div>
-        <div title="Code: 0xe806" class="the-icons span3"><i class="demo-icon rf-icon-layers">&#xe806;</i> <span class="i-name">rf-icon-layers</span><span class="i-code">0xe806</span></div>
-        <div title="Code: 0xe807" class="the-icons span3"><i class="demo-icon rf-icon-gears">&#xe807;</i> <span class="i-name">rf-icon-gears</span><span class="i-code">0xe807</span></div>
+        <div title="Code: 0xe804" class="the-icons span3"><i class="demo-icon icon-cross">&#xe804;</i> <span class="i-name">icon-cross</span><span class="i-code">0xe804</span></div>
+        <div title="Code: 0xe805" class="the-icons span3"><i class="demo-icon icon-database">&#xe805;</i> <span class="i-name">icon-database</span><span class="i-code">0xe805</span></div>
+        <div title="Code: 0xe806" class="the-icons span3"><i class="demo-icon icon-caret-down">&#xe806;</i> <span class="i-name">icon-caret-down</span><span class="i-code">0xe806</span></div>
+        <div title="Code: 0xe807" class="the-icons span3"><i class="demo-icon icon-caret-up">&#xe807;</i> <span class="i-name">icon-caret-up</span><span class="i-code">0xe807</span></div>
       </div>
       <div class="row">
-        <div title="Code: 0xe808" class="the-icons span3"><i class="demo-icon rf-icon-down-open">&#xe808;</i> <span class="i-name">rf-icon-down-open</span><span class="i-code">0xe808</span></div>
-        <div title="Code: 0xe809" class="the-icons span3"><i class="demo-icon rf-icon-left-open">&#xe809;</i> <span class="i-name">rf-icon-left-open</span><span class="i-code">0xe809</span></div>
-        <div title="Code: 0xe80a" class="the-icons span3"><i class="demo-icon rf-icon-right-open">&#xe80a;</i> <span class="i-name">rf-icon-right-open</span><span class="i-code">0xe80a</span></div>
-        <div title="Code: 0xe80b" class="the-icons span3"><i class="demo-icon rf-icon-up-open">&#xe80b;</i> <span class="i-name">rf-icon-up-open</span><span class="i-code">0xe80b</span></div>
+        <div title="Code: 0xe808" class="the-icons span3"><i class="demo-icon icon-model">&#xe808;</i> <span class="i-name">icon-model</span><span class="i-code">0xe808</span></div>
+        <div title="Code: 0xe809" class="the-icons span3"><i class="demo-icon icon-imports">&#xe809;</i> <span class="i-name">icon-imports</span><span class="i-code">0xe809</span></div>
+        <div title="Code: 0xe80a" class="the-icons span3"><i class="demo-icon icon-mosaic">&#xe80a;</i> <span class="i-name">icon-mosaic</span><span class="i-code">0xe80a</span></div>
+        <div title="Code: 0xe80b" class="the-icons span3"><i class="demo-icon icon-pencil">&#xe80b;</i> <span class="i-name">icon-pencil</span><span class="i-code">0xe80b</span></div>
       </div>
       <div class="row">
-        <div title="Code: 0xe80c" class="the-icons span3"><i class="demo-icon rf-icon-down-small">&#xe80c;</i> <span class="i-name">rf-icon-down-small</span><span class="i-code">0xe80c</span></div>
-        <div title="Code: 0xe80d" class="the-icons span3"><i class="demo-icon rf-icon-left-small">&#xe80d;</i> <span class="i-name">rf-icon-left-small</span><span class="i-code">0xe80d</span></div>
-        <div title="Code: 0xe80e" class="the-icons span3"><i class="demo-icon rf-icon-right-small">&#xe80e;</i> <span class="i-name">rf-icon-right-small</span><span class="i-code">0xe80e</span></div>
-        <div title="Code: 0xe80f" class="the-icons span3"><i class="demo-icon rf-icon-up-small">&#xe80f;</i> <span class="i-name">rf-icon-up-small</span><span class="i-code">0xe80f</span></div>
+        <div title="Code: 0xe80c" class="the-icons span3"><i class="demo-icon icon-resize-full">&#xe80c;</i> <span class="i-name">icon-resize-full</span><span class="i-code">0xe80c</span></div>
+        <div title="Code: 0xe80d" class="the-icons span3"><i class="demo-icon icon-plus">&#xe80d;</i> <span class="i-name">icon-plus</span><span class="i-code">0xe80d</span></div>
+        <div title="Code: 0xe80e" class="the-icons span3"><i class="demo-icon icon-cloud">&#xe80e;</i> <span class="i-name">icon-cloud</span><span class="i-code">0xe80e</span></div>
+        <div title="Code: 0xe80f" class="the-icons span3"><i class="demo-icon icon-sun">&#xe80f;</i> <span class="i-name">icon-sun</span><span class="i-code">0xe80f</span></div>
       </div>
       <div class="row">
-        <div title="Code: 0xe810" class="the-icons span3"><i class="demo-icon rf-icon-check">&#xe810;</i> <span class="i-name">rf-icon-check</span><span class="i-code">0xe810</span></div>
-        <div title="Code: 0xe811" class="the-icons span3"><i class="demo-icon rf-icon-user">&#xe811;</i> <span class="i-name">rf-icon-user</span><span class="i-code">0xe811</span></div>
-        <div title="Code: 0xe812" class="the-icons span3"><i class="demo-icon rf-icon-ellipsis">&#xe812;</i> <span class="i-name">rf-icon-ellipsis</span><span class="i-code">0xe812</span></div>
-        <div title="Code: 0xe813" class="the-icons span3"><i class="demo-icon rf-icon-eye">&#xe813;</i> <span class="i-name">rf-icon-eye</span><span class="i-code">0xe813</span></div>
+        <div title="Code: 0xe810" class="the-icons span3"><i class="demo-icon icon-download">&#xe810;</i> <span class="i-name">icon-download</span><span class="i-code">0xe810</span></div>
+        <div title="Code: 0xe811" class="the-icons span3"><i class="demo-icon icon-locked">&#xe811;</i> <span class="i-name">icon-locked</span><span class="i-code">0xe811</span></div>
+        <div title="Code: 0xe812" class="the-icons span3"><i class="demo-icon icon-unlocked">&#xe812;</i> <span class="i-name">icon-unlocked</span><span class="i-code">0xe812</span></div>
+        <div title="Code: 0xe813" class="the-icons span3"><i class="demo-icon icon-processing">&#xe813;</i> <span class="i-name">icon-processing</span><span class="i-code">0xe813</span></div>
       </div>
       <div class="row">
-        <div title="Code: 0xe814" class="the-icons span3"><i class="demo-icon rf-icon-eye-off">&#xe814;</i> <span class="i-name">rf-icon-eye-off</span><span class="i-code">0xe814</span></div>
-        <div title="Code: 0xe815" class="the-icons span3"><i class="demo-icon rf-icon-link">&#xe815;</i> <span class="i-name">rf-icon-link</span><span class="i-code">0xe815</span></div>
-        <div title="Code: 0xe816" class="the-icons span3"><i class="demo-icon rf-icon-search">&#xe816;</i> <span class="i-name">rf-icon-search</span><span class="i-code">0xe816</span></div>
-        <div title="Code: 0xe817" class="the-icons span3"><i class="demo-icon rf-icon-sort-alt-up">&#xe817;</i> <span class="i-name">rf-icon-sort-alt-up</span><span class="i-code">0xe817</span></div>
-      </div>
-      <div class="row">
-        <div title="Code: 0xe818" class="the-icons span3"><i class="demo-icon rf-icon-cancel">&#xe818;</i> <span class="i-name">rf-icon-cancel</span><span class="i-code">0xe818</span></div>
-        <div title="Code: 0xe819" class="the-icons span3"><i class="demo-icon rf-icon-cog">&#xe819;</i> <span class="i-name">rf-icon-cog</span><span class="i-code">0xe819</span></div>
-        <div title="Code: 0xe81a" class="the-icons span3"><i class="demo-icon rf-icon-logout">&#xe81a;</i> <span class="i-name">rf-icon-logout</span><span class="i-code">0xe81a</span></div>
-        <div title="Code: 0xe81b" class="the-icons span3"><i class="demo-icon rf-icon-trash-empty">&#xe81b;</i> <span class="i-name">rf-icon-trash-empty</span><span class="i-code">0xe81b</span></div>
-      </div>
-      <div class="row">
-        <div title="Code: 0xe81c" class="the-icons span3"><i class="demo-icon rf-icon-arrow-combo">&#xe81c;</i> <span class="i-name">rf-icon-arrow-combo</span><span class="i-code">0xe81c</span></div>
-        <div title="Code: 0xe81d" class="the-icons span3"><i class="demo-icon rf-icon-star-empty">&#xe81d;</i> <span class="i-name">rf-icon-star-empty</span><span class="i-code">0xe81d</span></div>
-        <div title="Code: 0xe81e" class="the-icons span3"><i class="demo-icon rf-icon-star">&#xe81e;</i> <span class="i-name">rf-icon-star</span><span class="i-code">0xe81e</span></div>
-        <div title="Code: 0xe81f" class="the-icons span3"><i class="demo-icon rf-icon-plus">&#xe81f;</i> <span class="i-name">rf-icon-plus</span><span class="i-code">0xe81f</span></div>
-      </div>
-      <div class="row">
-        <div title="Code: 0xe820" class="the-icons span3"><i class="demo-icon rf-icon-upload">&#xe820;</i> <span class="i-name">rf-icon-upload</span><span class="i-code">0xe820</span></div>
-        <div title="Code: 0xe821" class="the-icons span3"><i class="demo-icon rf-icon-loader animate-spin">&#xe821;</i> <span class="i-name">rf-icon-loader</span><span class="i-code">0xe821</span></div>
+        <div title="Code: 0xe814" class="the-icons span3"><i class="demo-icon icon-help">&#xe814;</i> <span class="i-name">icon-help</span><span class="i-code">0xe814</span></div>
+        <div title="Code: 0xe838" class="the-icons span3"><i class="demo-icon icon-load animate-spin">&#xe838;</i> <span class="i-name">icon-load</span><span class="i-code">0xe838</span></div>
+        <div title="Code: 0xf0b0" class="the-icons span3"><i class="demo-icon icon-filter">&#xf0b0;</i> <span class="i-name">icon-filter</span><span class="i-code">0xf0b0</span></div>
+        <div title="Code: 0xf330" class="the-icons span3"><i class="demo-icon icon-dropbox">&#xf330;</i> <span class="i-name">icon-dropbox</span><span class="i-code">0xf330</span></div>
       </div>
     </div>
     <div class="container footer">Generated by <a href="http://fontello.com">fontello.com</a></div>

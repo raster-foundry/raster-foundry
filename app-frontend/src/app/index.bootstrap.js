@@ -6,7 +6,7 @@ import '!!file-loader?name=[name].[ext]!../favicon.ico';
 // main App module
 import './index.module';
 
-import '../assets/styles/sass/main.scss';
+import '../assets/styles/sass/app.scss';
 
 angular.element(document).ready(function () {
     angular.bootstrap(document, ['rasterFoundry'], {

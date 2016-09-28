@@ -1,21 +1,13 @@
-import assetLogo from '../../../assets/images/logo-raster-foundry.png';
-
 class LibraryController {
-    constructor($log, auth) {
+    constructor($log, auth, $state) {
         'ngInject';
         const self = this;
         self.$log = $log;
         self.auth = auth;
 
         $log.debug('LibraryController initialized');
-        self.assetLogo = assetLogo;
-    }
-
-    logout() {
-        const self = this;
-
-        self.$log.log('signing out');
-        self.auth.signout();
+        // container view, so right panel contains nothing unless it's in a sub-route
+        $state.go('library.scenes');
     }
 }
 

@@ -1,7 +1,6 @@
 import config from './index.config';
 import run from './index.run';
 
-
 const App = angular.module(
     'rasterFoundry', [
         // plugins
@@ -28,13 +27,14 @@ const App = angular.module(
         require('./index.routes').name,
 
         // pages
-        require('./pages/main/main.module').name,
-        require('./pages/login/login.module').name,
-        require('./pages/library/library.module').name,
-        require('./pages/library/project/project.module').name,
-        require('./pages/account/account.module').name,
-        require('./pages/account/billing/billing.module').name,
-        require('./pages/account/keys/keys.module').name
+        require('./pages/browse/browse.module.js').name,
+        require('./pages/library/library.module.js').name,
+        require('./pages/library/scenes/scenes.module.js').name,
+        require('./pages/library/buckets/buckets.module.js').name,
+        require('./pages/settings/settings.module.js').name,
+        require('./pages/settings/profile/profile.module.js').name,
+        require('./pages/settings/account/account.module.js').name
+
     ]
 );
 
