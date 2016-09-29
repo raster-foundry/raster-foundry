@@ -4,6 +4,7 @@ import assetLogo from '../../../assets/images/logo-raster-foundry.png';
 export default class NavBarController {
     constructor($log, $state, store, auth, $scope) {
         'ngInject';
+
         this.$log = $log;
         this.$state = $state;
         this.store = store;
@@ -15,10 +16,6 @@ export default class NavBarController {
         this.assetLogo = assetLogo;
 
         $log.debug('Navbar controller initialized');
-
-        this.signin = this.signin.bind(this);
-        this.logout = this.logout.bind(this);
-
 
         $scope.$watch(function () {
             return auth.isAuthenticated;

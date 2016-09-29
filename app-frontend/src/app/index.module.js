@@ -14,6 +14,7 @@ const App = angular.module(
         'ngSanitize',
         'ngMessages',
         'ngAria',
+        'infinite-scroll',
         'ngResource',
         'oc.lazyLoad',
 
@@ -30,6 +31,8 @@ const App = angular.module(
         require('./pages/browse/browse.module.js').name,
         require('./pages/library/library.module.js').name,
         require('./pages/library/scenes/scenes.module.js').name,
+        require('./pages/library/scenes/list/list.module.js').name,
+        require('./pages/library/scenes/detail/detail.module.js').name,
         require('./pages/library/buckets/buckets.module.js').name,
         require('./pages/settings/settings.module.js').name,
         require('./pages/settings/profile/profile.module.js').name,

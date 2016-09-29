@@ -1,8 +1,9 @@
 import angular from 'angular';
 import dropdown from 'angular-ui-bootstrap/src/dropdown';
+require('../../../assets/font/fontello/css/fontello.css');
+
 import NavBarComponent from './navBar.component.js';
 import NavBarController from './navBar.controller.js';
-require('../../../assets/font/fontello/css/fontello.css');
 
 const NavBarModule = angular.module('components.navBar', [dropdown]);
 

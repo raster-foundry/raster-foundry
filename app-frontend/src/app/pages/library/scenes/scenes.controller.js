@@ -1,12 +1,7 @@
-class BucketsController {
-    constructor($log, auth) {
+class ScenesController {
+    constructor() {
         'ngInject';
-        const self = this;
-        self.$log = $log;
-        self.auth = auth;
-
-        $log.debug('BucketsController initialized');
     }
 }
 
-export default BucketsController;
+export default ScenesController;

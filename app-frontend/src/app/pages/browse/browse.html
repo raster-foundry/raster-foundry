@@ -1,153 +1,109 @@
 <!-- App Container -->
 <div class="container column-stretch">
-
   <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-static">
-      <h5 class="sidebar-title">23 Results Found</h5>
+
+      <h5 class="sidebar-title">{{$ctrl.lastSceneResult.count | number}} Results Found</h5>
       <div class="sidebar-actions">
-        <button class="btn btn-default btn-square" data-toggle-hide data-target="#scene-filters"><i class="icon-filter"></i></button>
+        <button class="btn btn-default btn-square" ng-click="$ctrl.populateInitialSceneList()">
+          <i class="icon-arrows-cw"></i>
+        </button>
+        <button class="btn btn-default btn-square" ng-click="$ctrl.toggleFilterPane()">
+          <i class="icon-filter"></i>
+        </button>
       </div>
     </div>
-    <div class="sidebar-scrollable">
-      <div class="list-group">
-        <div class="list-group-item">
-          <a class="list-group-link" href="#" data-toggle-hide data-target="#scene-details"></a>
-          <img src="http://placehold.it/75x75" class="rounded-img">
-          <div class="list-group-overflow">
-            <strong class="color-dark">LC80190382015353LGN00LC80190382015353LGN00</strong><br>
-            Landsat 7 / USGS
-          </div>
-          <div class="list-group-right">
-            <button class="btn btn-square"><i class="icon-plus"></i></button>
-          </div>
-        </div>
-        <div class="list-group-item">
-          <a class="list-group-link" href="#" data-toggle-hide data-target="#scene-details"></a>
-          <img src="http://placehold.it/75x75" class="rounded-img">
-          <div class="list-group-overflow">
-            <strong class="color-dark">LC80190382015353LGN00</strong><br>
-            Landsat 7 / USGS
-          </div>
-          <div class="list-group-right">
-            <button class="btn btn-square"><i class="icon-plus"></i></button>
-          </div>
-        </div>
-        <div class="list-group-item">
-          <a class="list-group-link" href="#" data-toggle-hide data-target="#scene-details"></a>
-          <img src="http://placehold.it/75x75" class="rounded-img">
-          <div class="list-group-overflow">
-            <strong class="color-dark">LC80190382015353LGN00</strong><br>
-            Landsat 7 / USGS
-          </div>
-          <div class="list-group-right">
-            <button class="btn btn-square"><i class="icon-plus"></i></button>
-          </div>
-        </div>
-        <div class="list-group-item">
-          <a class="list-group-link" href="#" data-toggle-hide data-target="#scene-details"></a>
-          <img src="http://placehold.it/75x75" class="rounded-img">
-          <div class="list-group-overflow">
-            <strong class="color-dark">LC80190382015353LGN00</strong><br>
-            Landsat 7 / USGS
-          </div>
-          <div class="list-group-right">
-            <button class="btn btn-square"><i class="icon-plus"></i></button>
-          </div>
-        </div>
-        <div class="list-group-item">
-          <a class="list-group-link" href="#" data-toggle-hide data-target="#scene-details"></a>
-          <img src="http://placehold.it/75x75" class="rounded-img">
-          <div class="list-group-overflow">
-            <strong class="color-dark">LC80190382015353LGN00</strong><br>
-            Landsat 7 / USGS
-          </div>
-          <div class="list-group-right">
-            <button class="btn btn-square"><i class="icon-plus"></i></button>
-          </div>
-        </div>
-        <div class="list-group-item">
-          <a class="list-group-link" href="#" data-toggle-hide data-target="#scene-details"></a>
-          <img src="http://placehold.it/75x75" class="rounded-img">
-          <div class="list-group-overflow">
-            <strong class="color-dark">LC80190382015353LGN00</strong><br>
-            Landsat 7 / USGS
-          </div>
-          <div class="list-group-right">
-            <button class="btn btn-square"><i class="icon-plus"></i></button>
-          </div>
-        </div>
+
+    <!-- scene listing -->
+    <div class="sidebar-scrollable" id="infscroll">
+      <div
+          infinite-scroll="$ctrl.getMoreScenes()" infinite-scroll-distance=".5"
+          infinite-scroll-disabled="$ctrl.loading || ($ctrl.lastSceneResult && !$ctrl.lastSceneResult.hasNext) || $ctrl.errorMsg"
+          infinite-scroll-container="'#infscroll'"
+          class="list-group">
+        <rf-scene-item
+            ng-click="$ctrl.openDetailPane(item)"
+            scene="item.scene" selected="item.selected"
+            ng-repeat="item in $ctrl.sceneList track by item.scene.id">
+        </rf-scene-item>
+      </div>
+      <div class="list-group" ng-show="$ctrl.loading">
+        <span class="list-placeholder">
+          <i class="icon-load"></i>
+        </span>
+      </div>
+      <div class="list-group" ng-show="!$ctrl.loading && $ctrl.lastSceneResult && !$ctrl.lastSceneResult.hasNext">
+        <span class="list-placeholder">
+          No more scenes to load
+        </span>
+      </div>
+      <div class="list-group" ng-show="$ctrl.errorMsg">
+        <span class="list-placeholder">
+          {{$ctrl.errorMsg}}
+        </span>
+      </div>
+      <div class="list-group load-message" ng-show="!$ctrl.loading && $ctrl.lastSceneResult && $ctrl.lastSceneResult.hasNext">
+        <a href ng-click="$ctrl.getMoreScenes()">Load More...</a>
       </div>
     </div>
+
     <div class="sidebar-static">
-      <h5>Selected: none</h5>
+      <h5>Selected: {{$ctrl.numSelected}}</h5>
       <div class="sidebar-actions">
-        <a href="#">Select All</a>
-        <button type="button" class="btn btn-default btn-square">Checkout</button>
+        <a href ng-click="$ctrl.selectAllScenes()">Select All</a>
+        <button type="button"
+                class="btn btn-default btn-square"
+                ng-click="$ctrl.selectNoScenes()">
+          <i class="icon-plus"></i>
+          Add to Bucket
+        </button>
       </div>
     </div>
   </div>
 
-  <div class="sidebar sidebar-extended hide" id="scene-details">
+  <!-- Scene detail view -->
+  <div class="sidebar sidebar-extended" ng-if="$ctrl.activeScene">
     <div class="sidebar-static">
       <p>
-        <strong class="color-dark">LC80190382015353LGN00</strong><br>
-        Landsat 7 / USGS
+        <strong class="color-dark">{{$ctrl.activeScene.scene.name}}</strong><br>
+        {{$ctrl.activeScene.scene.datasource}}
       </p>
       <div class="sidebar-actions">
-        <button class="btn btn-square" data-toggle-hide data-target="#scene-details"><i class="icon-cross"></i></button>
+        <button class="btn btn-square" ng-click="$ctrl.closeDetailPane()">
+          <i class="icon-cross"></i>
+        </button>
       </div>
     </div>
-    <div class="sidebar-scrollable">
-      <div class="content">
-        <img src="http://placehold.it/275x275" class="center-img rounded-img">
-        <h5 class="color-dark">Image metadata</h5>
-        <dl>
-          <dt>Acquistion:</dt>
-          <dd>11-12-2015</dd>
-          <dt>Local Time of Day:</dt>
-          <dd>15:42</dd>
-          <dt>Latitude:</dt>
-          <dd>39.226º</dd>
-          <dt>Longitude:</dt>
-          <dd>-74.892º</dd>
-          <dt>Image Quality:</dt>
-          <dd>Standard</dd>
-          <dt>SNR:</dt>
-          <dd>75.30</dd>
-          <dt>Sun Alittude:</dt>
-          <dd>N/A</dd>
-          <dt>Sun Longitude:</dt>
-          <dd>N/A</dd>
-          <dt>Satellite ID:</dt>
-          <dd>N/A</dd>
-          <dt>Camera Bit Depth:</dt>
-          <dd>10</dd>
-          <dt>Camera Color Mode:</dt>
-          <dd>RGB</dd>
-          <dt>Camera Exposure Time:</dt>
-          <dd>1170μs</dd>
-          <dt>Camera Gain:</dt>
-          <dd>350</dd>
-          <dt>Camera TDI Pulses:</dt>
-          <dd>15</dd>
-          <dt>Cloud Cover:</dt>
-          <dd>0.26%</dd>
-          <dt>File Size:</dt>
-          <dd>58MB</dd>
-          <dt>GSD:</dt>
-          <dd>4.25 m</dd>
-        </dl>
-      </div>
-    </div>
+    <img ng-if="$ctrl.activeScene.scene.thumbnails[0]"
+         ng-attr-src="{{$ctrl.activeScene.scene.thumbnails[0].url}}"
+         class="rounded-img detail-img">
+    <img ng-if="!$ctrl.activeScene.scene.thumbnails.length"
+         src="http://placehold.it/275x275"
+         class="rounded-img detail-img">
+    <rf-scene-detail class="sidebar-scrollable"
+                     scene="$ctrl.activeScene.scene"></rf-scene-detail>
     <div class="sidebar-static">
       <div class="sidebar-actions">
-        <button class="btn btn-square"><i class="icon-plus"></i> Add to cart</button>
+        <button class="btn btn-square btn-default"
+                ng-click="$ctrl.toggleSelectAndClosePane()">
+          <span ng-if="!$ctrl.activeScene.selected">
+            <i class="icon-plus"></i>
+            Select Scene
+          </span>
+          <span ng-if="$ctrl.activeScene.selected">
+            <i class="icon-cross"></i>
+            Deselect
+          </span>
+        </button>
       </div>
     </div>
   </div>
 
-  <div class="sidebar sidebar-extended map-filters hide" id="scene-filters">
+  <!-- Scene filters -->
+
+  <div class="sidebar sidebar-extended map-filters"
+       ng-show="$ctrl.showFilterPane">
     <div class="sidebar-static">
       <h5>Filter imagery</h5>
       <div class="sidebar-actions">
@@ -226,6 +182,7 @@
       </div>
     </div>
   </div>
+
   <div class="main">
     <rf-leaflet-map class="map-container"></rf-leaflet-map>
   </div>

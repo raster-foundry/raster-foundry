@@ -1,6 +1,8 @@
 import browseTpl from './pages/browse/browse.html';
 import libraryTpl from './pages/library/library.html';
 import scenesTpl from './pages/library/scenes/scenes.html';
+import scenesListTpl from './pages/library/scenes/list/list.html';
+import sceneDetailTpl from './pages/library/scenes/detail/detail.html';
 import bucketsTpl from './pages/library/buckets/buckets.html';
 import settingsTpl from './pages/settings/settings.html';
 import profileTpl from './pages/settings/profile/profile.html';
@@ -12,7 +14,7 @@ function routeConfig($urlRouterProvider, $stateProvider) {
 
     $stateProvider
         .state('browse', {
-            url: '/',
+            url: '/browse/:id',
             templateUrl: browseTpl,
             controller: 'BrowseController',
             controllerAs: '$ctrl'
@@ -28,6 +30,20 @@ function routeConfig($urlRouterProvider, $stateProvider) {
             url: '/scenes',
             templateUrl: scenesTpl,
             controller: 'ScenesController',
+            controllerAs: '$ctrl',
+            abstract: true
+        })
+        .state('library.scenes.detail', {
+            url: '/detail/:id',
+            templateUrl: sceneDetailTpl,
+            params: {scene: null},
+            controller: 'SceneDetailController',
+            controllerAs: '$ctrl'
+        })
+        .state('library.scenes.list', {
+            url: '/list?:page',
+            templateUrl: scenesListTpl,
+            controller: 'ScenesListController',
             controllerAs: '$ctrl'
         })
         .state('library.buckets', {
@@ -56,7 +72,7 @@ function routeConfig($urlRouterProvider, $stateProvider) {
             controller: 'AccountController',
             controllerAs: '$ctrl'
         });
-    $urlRouterProvider.otherwise('/');
+    $urlRouterProvider.otherwise('/browse/');
 }
 
 export default angular

@@ -4,10 +4,9 @@ class LibraryController {
         const self = this;
         self.$log = $log;
         self.auth = auth;
+        self.$state = $state;
 
-        $log.debug('LibraryController initialized');
         // container view, so right panel contains nothing unless it's in a sub-route
-        $state.go('library.scenes');
     }
 }
 
