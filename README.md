@@ -89,15 +89,16 @@ The Vagrant configuration maps the following host ports to services running in t
 
 Helper and development scripts are located in the `./scripts` directory at the root of this project. These scripts are designed to encapsulate and perform commonly used actions such as starting a development server, accessing a development console, or running tests.
 
-| Script Name | Purpose                                                      |
-|-------------|--------------------------------------------------------------|
-| `bootstrap` | Pulls/builds necessary containers                            |
-| `setup`     | Runs migrations, installs dependencies, etc                  |
-| `server`    | Starts a development server                                  |
-| `console`   | Gives access to a running container via `docker-compose run` |
-| `test`      | Runs tests and linters for project                           |
-| `cibuild`   | Invoked by CI server and makes use of `test`.                |
-| `cipublish` | Publish container images to container image repositories.    |
+| Script Name             | Purpose                                                      |
+|-------------------------|--------------------------------------------------------------|
+| `bootstrap`             | Pulls/builds necessary containers                            |
+| `setup`                 | Runs migrations, installs dependencies, etc                  |
+| `server`                | Starts a development server                                  |
+| `console`               | Gives access to a running container via `docker-compose run` |
+| `test`                  | Runs tests and linters for project                           |
+| `cibuild`               | Invoked by CI server and makes use of `test`.                |
+| `cipublish`             | Publish container images to container image repositories.    |
+| `load_development_data` | Load data for development purposes                           |
 
 ## Testing
 
