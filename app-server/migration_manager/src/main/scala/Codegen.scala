@@ -20,7 +20,6 @@ trait RFCodegen extends SlickCodegen {
     "buckets",
     "scenes_to_buckets",
     "thumbnails",
-    "footprints",
     "images"
   )
 

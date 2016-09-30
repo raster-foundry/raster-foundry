@@ -15,7 +15,6 @@ import com.azavea.rf.datamodel.latest.schema.tables._
 import com.azavea.rf.datamodel.enums._
 import com.azavea.rf.utils.{Database => DB, PaginatedResponse}
 import com.azavea.rf.datamodel.driver.ExtendedPostgresDriver
-import com.azavea.rf.footprint._
 import geotrellis.vector.io._
 import geotrellis.vector.Geometry
 import geotrellis.slick.Projected

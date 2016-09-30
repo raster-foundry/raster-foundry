@@ -11,7 +11,6 @@ import com.azavea.rf.organization.OrganizationRoutes
 import com.azavea.rf.scene.SceneRoutes
 import com.azavea.rf.thumbnail.ThumbnailRoutes
 import com.azavea.rf.user.UserRoutes
-import com.azavea.rf.footprint.FootprintRoutes
 import com.azavea.rf.image.ImageRoutes
 import com.azavea.rf.utils.Database
 
@@ -27,7 +26,6 @@ trait Router extends HealthCheckRoutes
     with OrganizationRoutes
     with SceneRoutes
     with BucketRoutes
-    with FootprintRoutes
     with ImageRoutes
     with ThumbnailRoutes {
 
@@ -42,7 +40,6 @@ trait Router extends HealthCheckRoutes
     organizationRoutes ~
     sceneRoutes ~
     bucketRoutes ~
-    footprintRoutes ~
     imageRoutes ~
     thumbnailRoutes
   }
