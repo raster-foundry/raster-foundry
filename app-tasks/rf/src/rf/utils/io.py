@@ -2,6 +2,7 @@ import os
 from urlparse import urlparse
 
 import boto3
+import requests
 
 
 def delete_file(fname):
@@ -30,6 +31,16 @@ def create_s3_obj(url):
         bucket = parts[0]
         key = '/'.join(parts[1:])
         return s3.Object(bucket, key)
+
+
+def s3_obj_exists(url):
+    """Helper function to determine whether an s3 object exists
+
+    Args:
+        url (str): https URL for a public object stored in s3
+    """
+    resp = requests.head(url)
+    return resp.status_code != 404
 
 
 class JobStatus(object):
