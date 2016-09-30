@@ -4,9 +4,13 @@ import java.sql.Timestamp
 
 import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 
+import geotrellis.slick.Projected
+import geotrellis.vector.{Point, Polygon}
+
 import com.azavea.rf.datamodel.latest.schema.tables._
 import com.azavea.rf.datamodel.driver.ExtendedPostgresDriver
 import com.azavea.rf.utils.queryparams._
+import com.azavea.rf.utils.UserErrorException
 
 
 object SceneFilters {
@@ -16,7 +20,7 @@ object SceneFilters {
 
   val datePart = SimpleFunction.binary[String, Option[Timestamp], Int]("date_part")
 
-  type SceneJoinQuery = Query[(Scenes, Rep[Option[Footprints]], Rep[Option[Images]], Rep[Option[Thumbnails]]),(ScenesRow, Option[FootprintsRow], Option[ImagesRow], Option[ThumbnailsRow]), Seq]
+  type SceneJoinQuery = Query[(Scenes, Rep[Option[Images]], Rep[Option[Thumbnails]]),(ScenesRow, Option[ImagesRow], Option[ThumbnailsRow]), Seq]
 
   implicit class SceneJoin[M, U, C[_]](sceneJoin: SceneJoinQuery) {
 
@@ -138,7 +142,32 @@ object SceneFilters {
           sceneParams.minSunAzimuth.map(scene.sunAzimuth > _),
           sceneParams.maxSunAzimuth.map(scene.sunAzimuth < _),
           sceneParams.minSunElevation.map(scene.sunElevation > _),
-          sceneParams.maxSunElevation.map(scene.sunElevation < _)
+          sceneParams.maxSunElevation.map(scene.sunElevation < _),
+          sceneParams.bbox.map { bboxString =>
+            val (xmin, ymin, xmax, ymax) = bboxString.split(",") match {
+              case Array(xmin, ymin, xmax, ymax) =>
+                (xmin.toDouble, ymin.toDouble, xmax.toDouble, ymax.toDouble)
+              case _ => throw new UserErrorException(
+                "Four comma separated coordinates must be given"
+              )
+
+            }
+            val p1 = Point(xmin, ymin)
+            val p2 = Point(xmax, ymin)
+            val p3 = Point(xmax, ymax)
+            val p4 = Point(xmin, ymax)
+            val bbox = Projected(Polygon(Seq(p1,p2,p3,p4,p1)), 3857)
+            scene.footprint.intersects(bbox)
+          },
+          sceneParams.point.map { pointString =>
+            val pt = pointString.split(",") match {
+              case Array(x, y) => Projected(Point(x.toDouble, y.toDouble), 3857)
+              case _ => throw new UserErrorException(
+                "Both coordinate parameters (x, y) must be specified"
+              )
+            }
+            scene.footprint.intersects(pt)
+          }
         )
         sceneFilterConditions
           .collect({case Some(criteria)  => criteria})
@@ -180,12 +209,11 @@ object SceneFilters {
     */
     def joinWithRelated = {
       for {
-        (((scene, footprint), image), thumbnail) <-
+        ((scene, image), thumbnail) <-
         (scenes
-          joinLeft Footprints on (_.id === _.sceneId)
-          joinLeft Images on (_._1.id === _.scene)
-          joinLeft Thumbnails on (_._1._1.id === _.scene))
-      } yield( scene, footprint, image, thumbnail )
+          joinLeft Images on (_.id === _.scene)
+          joinLeft Thumbnails on (_._1.id === _.scene))
+      } yield( scene, image, thumbnail )
     }
 
     def sort(sortMap: Map[String, Order]): ScenesQuery = {

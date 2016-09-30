@@ -19,6 +19,10 @@ import com.azavea.rf.AuthUtils
 import java.sql.Timestamp
 import java.time.Instant
 
+import geotrellis.vector.io._
+import geotrellis.vector.{MultiPolygon, Polygon, Point, Geometry}
+import geotrellis.slick.Projected
+
 
 class SceneSpec extends WordSpec
     with Matchers
@@ -69,13 +73,16 @@ class SceneSpec extends WordSpec
         responseAs[PaginatedResponse[SceneWithRelated]]
       }
     }
+    val mpoly = Some(Projected(
+      MultiPolygon(Polygon(Seq(Point(100,100), Point(110,100), Point(110,110),
+        Point(100,110), Point(100,100)))), 3857))
 
     val newSceneDatasource1 = CreateScene(
       publicOrgId, 0, PUBLIC, 20.2f, List("Test", "Public", "Low Resolution"), "TEST_ORG",
       Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any], None,
       Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
       PROCESSING, PROCESSING, PROCESSING, None, None, "test scene datasource 1",
-      List(): List[SceneImage], None, List(): List[SceneThumbnail]
+      List(): List[SceneImage], mpoly, List(): List[SceneThumbnail]
     )
 
     val newSceneDatasource2 = CreateScene(
@@ -167,6 +174,28 @@ class SceneSpec extends WordSpec
       val url = s"$baseScene?datasource=TEST_ORG&datasource=TEST_ORG-OTHER"
       Get(url) ~> sceneRoutes ~> check {
         responseAs[PaginatedResponse[SceneWithRelated]].count shouldEqual 2
+      }
+    }
+
+    "filter scenes by bounding box" in {
+      Get("/api/scenes/?bbox=0,0,1,1") ~> sceneRoutes ~> check {
+        val res = responseAs[PaginatedResponse[SceneWithRelated]]
+        res.count shouldEqual 0
+      }
+      Get("/api/scenes/?bbox=0,0,1000,1000") ~> sceneRoutes ~> check {
+        val res = responseAs[PaginatedResponse[SceneWithRelated]]
+        res.count shouldEqual 1
+      }
+    }
+
+    "filter scenes by point" in {
+      Get("/api/scenes/?point=101,101") ~> sceneRoutes ~> check {
+        val res = responseAs[PaginatedResponse[SceneWithRelated]]
+        res.count shouldEqual 1
+      }
+      Get("/api/scenes/?point=1,1") ~> sceneRoutes ~> check {
+        val res = responseAs[PaginatedResponse[SceneWithRelated]]
+        res.count shouldEqual 0
       }
     }
 

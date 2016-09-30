@@ -48,6 +48,7 @@ trait RFCodegen extends SlickCodegen {
             case "status" => "JobStatus"
             case "visibility" => "Visibility"
             case "multipolygon" => "Projected[Geometry]"
+            case "footprint" => "Projected[Geometry]"
             case _ => super.rawType
           }
         }
