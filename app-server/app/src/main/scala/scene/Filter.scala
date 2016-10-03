@@ -16,6 +16,94 @@ object SceneFilters {
 
   val datePart = SimpleFunction.binary[String, Option[Timestamp], Int]("date_part")
 
+  type SceneJoinQuery = Query[(Scenes, Rep[Option[Footprints]], Rep[Option[Images]], Rep[Option[Thumbnails]]),(ScenesRow, Option[FootprintsRow], Option[ImagesRow], Option[ThumbnailsRow]), Seq]
+
+  implicit class SceneJoin[M, U, C[_]](sceneJoin: SceneJoinQuery) {
+
+    /** Handle pagination with inner join on filtered scenes
+      *
+      * Pagination must be handled with an inner join here because the results
+      * have duplicate scenes since there are many thumbnails + images per scene
+      * potentially that have to be grouped server side.
+      *
+      * Filtering has to happen here because we need to filter the paginated results
+      * and then do the inner join on those results
+      */
+    def page(combinedParams: CombinedSceneQueryParams, pageRequest: PageRequest): SceneJoinQuery = {
+      val pagedScenes = Scenes
+        .filterByOrganization(combinedParams.orgParams)
+        .filterByUser(combinedParams.userParams)
+        .filterByTimestamp(combinedParams.timestampParams)
+        .filterBySceneParams(combinedParams.sceneParams)
+        .sort(pageRequest.sort)
+        .drop(pageRequest.offset * pageRequest.limit)
+        .take(pageRequest.limit)
+      val joinedResults = for {
+        (pagedScene, join) <- pagedScenes join sceneJoin on (_.id === _._1.id)
+      } yield (join)
+
+      // Need to sort after the join because the join removes the sort order
+      joinedResults.sort(pageRequest.sort)
+    }
+
+    def sort(sortMap: Map[String, Order]): SceneJoinQuery = {
+      def applySort(query: SceneJoinQuery, sortMap: Map[String, Order]): SceneJoinQuery = {
+        sortMap.headOption match {
+          case Some(("createdAt", Order.Asc)) => applySort(query.sortBy(_._1.createdAt.asc),
+            sortMap.tail)
+          case Some(("createdAt", Order.Desc)) => applySort(query.sortBy(_._1.createdAt.desc),
+            sortMap.tail)
+
+          case Some(("modifiedAt", Order.Asc)) => applySort(query.sortBy(_._1.modifiedAt.asc),
+            sortMap.tail)
+          case Some(("modifiedAt", Order.Desc)) => applySort(query.sortBy(_._1.modifiedAt.desc),
+            sortMap.tail)
+
+          case Some(("organization", Order.Asc)) => applySort(query.sortBy(_._1.organizationId.asc),
+            sortMap.tail)
+          case Some(("organization", Order.Desc)) => applySort(query.sortBy(_._1.organizationId.desc),
+            sortMap.tail)
+
+          case Some(("datasource", Order.Asc)) => applySort(query.sortBy(_._1.datasource.asc),
+            sortMap.tail)
+          case Some(("datasource", Order.Desc)) => applySort(query.sortBy(_._1.datasource.desc),
+            sortMap.tail)
+
+          case Some(("month", Order.Asc)) => applySort(query.sortBy { join =>
+            datePart("month", join._1.acquisitionDate).asc
+          }, sortMap.tail)
+          case Some(("month", Order.Desc)) => applySort(query.sortBy { join =>
+            datePart("month", join._1.acquisitionDate).desc
+          }, sortMap.tail)
+
+          case Some(("acquisitionDatetime", Order.Asc)) => applySort(
+            query.sortBy(_._1.acquisitionDate.asc), sortMap.tail)
+          case Some(("acquisitionDatetime", Order.Desc)) => applySort(
+            query.sortBy(_._1.acquisitionDate.desc), sortMap.tail)
+
+          case Some(("sunAzimuth", Order.Asc)) => applySort(query.sortBy(_._1.sunAzimuth.asc),
+            sortMap.tail)
+          case Some(("sunAzimuth", Order.Desc)) => applySort(query.sortBy(_._1.sunAzimuth.desc),
+            sortMap.tail)
+
+          case Some(("sunElevation", Order.Asc)) => applySort(query.sortBy(_._1.sunElevation.asc),
+            sortMap.tail)
+          case Some(("sunElevation", Order.Desc)) => applySort(query.sortBy(_._1.sunElevation.desc),
+            sortMap.tail)
+
+          case Some(("cloudCover", Order.Asc)) => applySort(query.sortBy(_._1.cloudCover.asc),
+            sortMap.tail)
+          case Some(("cloudCover", Order.Desc)) => applySort(query.sortBy(_._1.cloudCover.desc),
+            sortMap.tail)
+
+          case Some(_) => applySort(sceneJoin, sortMap.tail)
+          case _ => query
+        }
+      }
+      applySort(sceneJoin, sortMap)
+    }
+  }
+
   implicit class SceneDefault[M, U, C[_]](scenes: ScenesQuery) {
     def filterByOrganization(orgParams: OrgQueryParameters): ScenesQuery = {
       if (orgParams.organizations.size > 0) {
@@ -84,7 +172,21 @@ object SceneFilters {
       }
     }
 
-    val datePart = SimpleFunction.binary[String, Option[Timestamp], Int]("date_part")
+
+
+  /** Return a join query for scenes
+    *
+    * @sceneQuery ScenesQuery base scenes query
+    */
+    def joinWithRelated = {
+      for {
+        (((scene, footprint), image), thumbnail) <-
+        (scenes
+          joinLeft Footprints on (_.id === _.sceneId)
+          joinLeft Images on (_._1.id === _.scene)
+          joinLeft Thumbnails on (_._1._1.id === _.scene))
+      } yield( scene, footprint, image, thumbnail )
+    }
 
     def sort(sortMap: Map[String, Order]): ScenesQuery = {
       def applySort(query: ScenesQuery, sortMap: Map[String, Order]): ScenesQuery = {
@@ -109,11 +211,11 @@ object SceneFilters {
           case Some(("datasource", Order.Desc)) => applySort(query.sortBy(_.datasource.desc),
             sortMap.tail)
 
-          case Some(("month", Order.Asc)) => applySort(query.sortBy { scene =>
-            datePart("month", scene.acquisitionDate).asc
+          case Some(("month", Order.Asc)) => applySort(query.sortBy { join =>
+            datePart("month", join.acquisitionDate).asc
           }, sortMap.tail)
-          case Some(("month", Order.Desc)) => applySort(query.sortBy { scene =>
-            datePart("month", scene.acquisitionDate).desc
+          case Some(("month", Order.Desc)) => applySort(query.sortBy { join =>
+            datePart("month", join.acquisitionDate).desc
           }, sortMap.tail)
 
           case Some(("acquisitionDatetime", Order.Asc)) => applySort(
@@ -143,10 +245,5 @@ object SceneFilters {
       applySort(scenes, sortMap)
     }
 
-
-    def page(pageRequest: PageRequest): ScenesQuery = {
-      val sorted = scenes.sort(pageRequest.sort)
-      sorted.drop(pageRequest.offset * pageRequest.limit).take(pageRequest.limit)
-    }
   }
 }

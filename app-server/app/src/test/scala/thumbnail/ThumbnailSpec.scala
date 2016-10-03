@@ -126,7 +126,7 @@ class ThumbnailSpec extends WordSpec
           newScene.toJson(createSceneFormat).toString()
         )
       ) ~> sceneRoutes ~> check {
-        responseAs[ScenesRow]
+        responseAs[SceneWithRelated]
       }
     }
 
@@ -139,7 +139,7 @@ class ThumbnailSpec extends WordSpec
 
     "create thumbnails only with authentication" in {
       Get("/api/scenes/") ~> sceneRoutes ~> check {
-        val scenes = responseAs[PaginatedResponse[ScenesRow]]
+        val scenes = responseAs[PaginatedResponse[SceneWithRelated]]
         val sceneId = scenes.results.head.id
         val thumbnailToPost1 = newThumbnail(SMALL, sceneId)
         val thumbnailToPost2 = newThumbnail(SQUARE, sceneId)
@@ -177,7 +177,7 @@ class ThumbnailSpec extends WordSpec
 
     "filter by one scene correctly" in {
       Get("/api/scenes/") ~> sceneRoutes ~> check {
-        val scenes = responseAs[PaginatedResponse[ScenesRow]]
+        val scenes = responseAs[PaginatedResponse[SceneWithRelated]]
         val sceneId = scenes.results.head.id
         Get(s"/api/thumbnails/?sceneId=$sceneId") ~> thumbnailRoutes ~> check {
           responseAs[PaginatedResponse[ThumbnailsRow]].count shouldEqual 2

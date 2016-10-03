@@ -13,7 +13,7 @@ import com.azavea.rf.AkkaSystem
 import com.azavea.rf.datamodel.latest.schema.tables._
 import com.azavea.rf.utils.{Database => DB, PaginatedResponse}
 import com.azavea.rf.datamodel.driver.ExtendedPostgresDriver
-import com.azavea.rf.scene.SceneFilters
+import com.azavea.rf.scene._
 import com.azavea.rf.scene.CombinedSceneQueryParams
 import com.azavea.rf.utils.Slug
 import com.azavea.rf.datamodel.enums.Visibility
@@ -74,30 +74,43 @@ object BucketService extends AkkaSystem.LoggerExecutor {
     * @param bucketId UUID bucket to request scenes for
     */
   def getBucketScenes(bucketId: UUID, pageRequest: PageRequest, combinedParams: CombinedSceneQueryParams)
-    (implicit database: DB, ec: ExecutionContext): Future[PaginatedResponse[ScenesRow]] = {
+    (implicit database: DB, ec: ExecutionContext): Future[PaginatedResponse[SceneWithRelated]] = {
 
     val bucketSceneQuery = for {
       bucketToScene <- ScenesToBuckets if bucketToScene.bucketId === bucketId
       scene <- Scenes if scene.id === bucketToScene.sceneId
     } yield (scene)
 
-    val filteredScenes = bucketSceneQuery
-      .filterBySceneParams(combinedParams.sceneParams)
-      .filterByOrganization(combinedParams.orgParams)
-      .filterByUser(combinedParams.userParams)
-      .filterByTimestamp(combinedParams.timestampParams)
+    val pagedScenes = bucketSceneQuery
+      .joinWithRelated
+      .page(combinedParams, pageRequest)
 
-    val paginatedScenesQuery = database.db.run { filteredScenes.page(pageRequest).result }
-    val totalScenesQuery = database.db.run { filteredScenes.length.result }
-    for {
-      totalScenes <- totalScenesQuery
-      scenes <- paginatedScenesQuery
-    } yield {
-      val hasNext = (pageRequest.offset + 1) * pageRequest.limit < totalScenes
-      val hasPrevious = pageRequest.offset > 0
-      PaginatedResponse[ScenesRow](totalScenes, hasPrevious, hasNext,
-        pageRequest.offset, pageRequest.limit, scenes)
+    val scenesQueryResult = database.db.run {
+      val action = pagedScenes.result
+      log.debug(s"Total Query for scenes -- SQL: ${action.statements.headOption}")
+      action
+    } map(SceneService.createScenesWithRelated)
+
+    val totalScenesQueryResult = database.db.run {
+      val action = bucketSceneQuery
+        .filterBySceneParams(combinedParams.sceneParams)
+        .filterByOrganization(combinedParams.orgParams)
+        .filterByUser(combinedParams.userParams)
+        .filterByTimestamp(combinedParams.timestampParams).length.result
+      log.debug(s"Total Query for scenes -- SQL: ${action.statements.headOption}")
+      action
     }
+
+    for {
+      totalScenes <- totalScenesQueryResult
+      scenes <- scenesQueryResult
+    } yield {
+      val hasNext = (pageRequest.offset + 1) * pageRequest.limit < totalScenes // 0 indexed page offset
+      val hasPrevious = pageRequest.offset > 0
+      PaginatedResponse(totalScenes, hasPrevious, hasNext,
+        pageRequest.offset, pageRequest.limit, scenes.toSeq)
+    }
+
   }
 
   /** Get bucket given a bucketId

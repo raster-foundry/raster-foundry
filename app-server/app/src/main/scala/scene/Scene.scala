@@ -16,51 +16,6 @@ import com.azavea.rf.utils.{Database => DB, PaginatedResponse}
 import com.azavea.rf.datamodel.driver.ExtendedPostgresDriver
 
 
-case class CreateScene(
-  organizationId: UUID,
-  ingestSizeBytes: Int,
-  visibility: Visibility,
-  resolutionMeters: Float,
-  tags: List[String],
-  datasource: String,
-  sceneMetadata: Map[String, Any],
-  cloudCover: Option[Float],
-  acquisitionDate: Option[java.sql.Timestamp],
-  thumbnailStatus: JobStatus,
-  boundaryStatus: JobStatus,
-  status: JobStatus,
-  sunAzimuth: Option[Float],
-  sunElevation: Option[Float],
-  name: String
-) {
-  def toScene(userId: String): ScenesRow = {
-    val now = new Timestamp((new java.util.Date()).getTime())
-    ScenesRow(
-      UUID.randomUUID, // primary key
-      now, // createdAt
-      now, // modifiedAt
-      organizationId,
-      userId, // createdBy
-      userId, // modifiedBy
-      ingestSizeBytes,
-      visibility,
-      resolutionMeters,
-      tags,
-      datasource,
-      sceneMetadata,
-      cloudCover,
-      acquisitionDate,
-      thumbnailStatus,
-      boundaryStatus,
-      status,
-      sunAzimuth,
-      sunElevation,
-      name
-    )
-  }
-}
-
-
 /** Handles interaction between scenes and database */
 object SceneService extends AkkaSystem.LoggerExecutor {
 
@@ -74,16 +29,70 @@ object SceneService extends AkkaSystem.LoggerExecutor {
 
   /** Insert a scene into the database
     *
-    * @param scene ScenesRow
+    * @param scene CreateScene scene to create
+    * @param user UsersRow user creating scene
+    *
+    * This implementation allows a user to post a scene with thumbnails, footprint, and
+    * images which are all created in a single transaction
     */
-  def insertScene(scene: ScenesRow)
-    (implicit database: DB, ec: ExecutionContext): Future[Try[ScenesRow]] = {
+  def insertScene(createScene: CreateScene, user: UsersRow)
+    (implicit database: DB, ec: ExecutionContext): Future[Try[SceneWithRelated]] = {
+
+    val scene = createScene.toScene(user.id)
+    val scenesRowInsert = Scenes.forceInsert(scene)
+
+    val thumbnails = createScene.thumbnails.map(_.toThumbnailsRow(user.id, scene))
+    val thumbnailsInsert = DBIO.seq(thumbnails.map(Thumbnails.forceInsert): _*)
+
+    val images = createScene.images.map(_.toImagesRow(user.id, scene))
+    val imagesInsert = DBIO.seq(images.map(Images.forceInsert): _*)
+
+    val footprint = createScene.footprint.map(_.toFootprintsRow(user.id, scene))
+    val footprintInsert = footprint
+      .map(Footprints.forceInsert)
+      .fold(DBIO.successful(Option.empty[Int]): DBIOAction[Option[Int], NoStream, Effect.Write])(_.map(Some(_)))
+
+    val sceneInsert = (for {
+      _ <- scenesRowInsert
+      _ <- thumbnailsInsert
+      _ <- footprintInsert
+      _ <- imagesInsert
+    } yield ()).transactionally
 
     database.db.run {
-      Scenes.forceInsert(scene).asTry
+      sceneInsert.asTry
     } map {
-      case Success(_) => Success(scene)
-      case Failure(e) => Failure(e)
+      case Success(_) => Success(
+        SceneWithRelated.fromComponents(scene, footprint, images, thumbnails)
+      )
+      case Failure(e) => {
+        log.error(e.toString)
+        Failure(e)
+      }
+    }
+  }
+
+  /** Helper function to create Iterable[SceneWithRelated] from join
+    *
+    * It is necessary to map over the distinct scenes because that is the only way to
+    * ensure that the sort order of the query result remains ordered after grouping
+    *
+    * @param joinResult result of join query to return scene with related
+    * information
+    */
+  def createScenesWithRelated(joinResult: Seq[(ScenesRow, Option[FootprintsRow], Option[ImagesRow],
+    Option[ThumbnailsRow])]): Iterable[SceneWithRelated] = {
+
+    val distinctScenes = joinResult.map(_._1).distinct
+    val grouped = joinResult.groupBy(_._1)
+    distinctScenes.map{scene =>
+      // This should be relatively safe since scene is the key grouped by
+      val (seqFootprint, seqImages, seqThumbnails) = grouped(scene)
+        .map{ case (sr, fp, im, th) => (fp, im, th)}
+        .unzip3
+      SceneWithRelated.fromComponents(
+        scene, seqFootprint.flatten.headOption, seqImages.flatten, seqThumbnails.flatten.distinct
+      )
     }
   }
 
@@ -92,10 +101,18 @@ object SceneService extends AkkaSystem.LoggerExecutor {
     * @param sceneId java.util.UUID ID of scene to query with
     */
   def getScene(sceneId: java.util.UUID)
-    (implicit database: DB, ec: ExecutionContext): Future[Option[ScenesRow]] = {
+    (implicit database: DB, ec: ExecutionContext): Future[Option[SceneWithRelated]] = {
+    val sceneJoinQuery = Scenes
+      .filter(_.id === sceneId)
+      .joinWithRelated
 
     database.db.run {
-      Scenes.filter(_.id === sceneId).result.headOption
+      val action = sceneJoinQuery.result
+      log.debug(s"Total Query for scenes -- SQL: ${action.statements.headOption}")
+      action
+    } map { join =>
+      val scenesWithRelated = createScenesWithRelated(join)
+      scenesWithRelated.headOption
     }
   }
 
@@ -105,32 +122,38 @@ object SceneService extends AkkaSystem.LoggerExecutor {
     * @param sceneParams SceneParams parameters used for filtering
     */
   def getScenes(pageRequest: PageRequest, combinedParams: CombinedSceneQueryParams)
-    (implicit database: DB, ec: ExecutionContext): Future[PaginatedResponse[ScenesRow]] = {
+    (implicit database: DB, ec: ExecutionContext): Future[PaginatedResponse[SceneWithRelated]] = {
 
-    val scenes = Scenes.filterByOrganization(combinedParams.orgParams)
-      .filterByUser(combinedParams.userParams)
-      .filterByTimestamp(combinedParams.timestampParams)
-      .filterBySceneParams(combinedParams.sceneParams)
+    val pagedScenes = Scenes
+      .joinWithRelated
+      .page(combinedParams, pageRequest)
 
     val scenesQueryResult = database.db.run {
-      val action = scenes.page(pageRequest).result
-      log.debug(s"Query for scenes -- SQL: ${action.statements.headOption}")
+      val action = pagedScenes.result
+      log.debug(s"Paginated Query for scenes -- SQL: ${action.statements.headOption}")
       action
-    }
-    val totalScenesQuery = database.db.run {
-      val action = scenes.length.result
+    } map(join => createScenesWithRelated(join))
+
+    val totalScenesQueryResult = database.db.run {
+      val action = Scenes
+        .filterByOrganization(combinedParams.orgParams)
+        .filterByUser(combinedParams.userParams)
+        .filterByTimestamp(combinedParams.timestampParams)
+        .filterBySceneParams(combinedParams.sceneParams)
+        .length
+        .result
       log.debug(s"Total Query for scenes -- SQL: ${action.statements.headOption}")
       action
     }
 
     for {
-      totalScenes <- totalScenesQuery
+      totalScenes <- totalScenesQueryResult
       scenes <- scenesQueryResult
     } yield {
       val hasNext = (pageRequest.offset + 1) * pageRequest.limit < totalScenes // 0 indexed page offset
       val hasPrevious = pageRequest.offset > 0
       PaginatedResponse(totalScenes, hasPrevious, hasNext,
-        pageRequest.offset, pageRequest.limit, scenes)
+        pageRequest.offset, pageRequest.limit, scenes.toSeq)
     }
   }
 

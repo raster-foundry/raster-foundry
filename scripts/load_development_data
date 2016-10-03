@@ -1,0 +1,45 @@
+#!/bin/bash
+set -eu
+
+
+
+DIR="$(dirname "$0")"
+
+source "$DIR/setup"
+
+function usage() {
+
+    echo -n \
+"Usage: $(basename "$0")
+
+Load a database dump from S3
+"
+}
+
+function load_database_backup() {
+
+    check_database
+    pushd "${DIR}/.."
+    aws s3 cp "s3://config-development-raster-foundry/database.pgdump" "data/database.pgdump"
+    popd
+    echo "Dropping raster foundry database"
+    docker-compose -f "${DIR}/../docker-compose.yml" exec -T postgres gosu postgres dropdb rasterfoundry
+    echo "Creating raster foundry database"
+    docker-compose -f "${DIR}/../docker-compose.yml" exec -T postgres gosu postgres createdb rasterfoundry
+    echo "Restoring Database from backup"
+    docker-compose -f "${DIR}/../docker-compose.yml" exec -T postgres gosu postgres pg_restore -Fc -d rasterfoundry /tmp/data/database.pgdump > /dev/null
+
+}
+
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]
+then
+    if [ "${1:-}" = "--help" ]
+    then
+        usage
+    else
+        docker-compose -f "${DIR}/../docker-compose.yml" up -d postgres
+        load_database_backup
+    fi
+    exit
+fi
