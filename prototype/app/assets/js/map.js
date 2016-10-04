@@ -18,7 +18,7 @@ $(function() {
         div.innerHTML = 
           '<button class="btn btn-default"><i class="icon-resize-full"></i></button>' +
           '<hr>' +
-          '<button class="btn btn-default btn-block"><i class="icon-search"></i> Find places</button>'; 
+          '<button type="button" class="btn btn-default btn-block" data-dismiss="modal" data-toggle="modal" data-target="#searchModal"><i class="icon-search"></i> Find places</button>'; 
         return div;
       };
 

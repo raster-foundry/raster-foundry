@@ -1,6 +1,6 @@
-//
-// Modals
-// --------------------------------------------------
+/* 
+ * Modals
+ */
 
 // .modal-open      - body class for killing the scroll
 // .modal           - container to scroll within
@@ -23,9 +23,6 @@
   left: 0;
   z-index: 1050;
   -webkit-overflow-scrolling: touch;
-
-  // Prevent Chrome on Windows from adding a focus outline. For details, see
-  // https://github.com/twbs/bootstrap/pull/10951.
   outline: 0;
 
   // When fading in the modal, animate it to slide down
@@ -33,8 +30,12 @@
     transform: translate(0, -25%);
     transition: transform 0.3s ease-out;
   }
-  &.in .modal-dialog { transform: translate(0, 0); }
+
+  &.in .modal-dialog { 
+    transform: translate(0, 0); 
+  }
 }
+
 .modal-open .modal {
   overflow-x: hidden;
   overflow-y: auto;
@@ -50,12 +51,9 @@
 // Actual modal
 .modal-content {
   position: relative;
-  background-color: #fff;
-  border: 1px solid rgba(0,0,0,.2);
+  background-color: #F9F9F9;
   border-radius: 2px;
-  box-shadow: 0 3px 9px rgba(0,0,0,.5);
   background-clip: padding-box;
-  // Remove focus outline from opened modal
   outline: 0;
 }
 
@@ -67,22 +65,38 @@
   bottom: 0;
   left: 0;
   z-index: 1040;
-  background-color: #000;
+  background-color: #353b59;
   // Fade for backdrop
   &.fade { opacity: 0; }
-  &.in { opacity: .5; }
+  &.in { opacity: .7; }
 }
 
 // Modal header
 // Top section of the modal w/ title and dismiss
 .modal-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e5e5;
   @extend .clearfix;
-}
-// Close icon
-.modal-header .close {
-  margin-top: -2px;
+  text-align: center;
+  padding: 2.5rem;
+  border-bottom: 1px solid #ddd;
+  background-color: #fff;
+  border-radius: 2px 2px 0 0;
+
+  p {
+    margin: 0;
+  }
+
+  form {
+    margin-top: 1rem;
+    margin-bottom: 0;
+  }
+  
+  //close icon
+  .close {
+    position: absolute;
+    right: 1.5rem;
+    top: 1.5rem;
+    margin: 0;
+  }
 }
 
 // Title text within header
@@ -100,10 +114,10 @@
 
 // Footer (for actions)
 .modal-footer {
+  @extend .clearfix;
   padding: 1.5rem;
-  text-align: right; // right align buttons
+  text-align: right;
   border-top: 1px solid #e5e5e5;
-  @extend .clearfix; // clear it in case folks use .pull-* classes on buttons
 
   // Properly space out buttons
   .btn + .btn {
@@ -130,14 +144,11 @@
 }
 
 // Scale up the modal
-@include respond-to(sm-up) {
+@include respond-to(md-up) {
   // Automatically set modal's width for larger viewports
   .modal-dialog {
-    width: 600px;
-    margin: 30px auto;
-  }
-  .modal-content {
-    box-shadow: 0 5px 15px rgba(0,0,0,.5);
+    width: 87.5rem;
+    margin: 4rem auto;
   }
 
   // Modal sizes
@@ -146,4 +157,57 @@
 
 @include respond-to(md-up) {
   .modal-lg { width: 900px; }
+}
+
+
+/* 
+ * Modal Dark
+ */
+.modal-dark {
+  color: #fff;
+
+  @include heading-tags {
+    color: #fff;
+  }
+
+  .modal-content {
+    background-color: $shade-normal;
+  }
+
+  .modal-header {
+    border-bottom-color: $shade-dark;
+    background-color: $shade-dark;
+    color: #fff;
+  }
+
+  .modal-footer {
+    border-top-color: $shade-dark;
+  }
+
+  .close {
+    color: #fff;
+
+    &:hover {
+      color: #fff;
+    }
+  }
+
+  .btn-default {
+    border-color: $shade-dark;
+  }
+
+  .form-group.all-in-one {
+    border-color: $shade-dark;
+    background-color: $shade-dark;
+    margin: 2rem;
+  }
+
+  label {
+    color: #fff;
+  }
+
+  .form-control {
+    background-color: $shade-dark;
+    border-color: $shade-dark;
+  }
 }

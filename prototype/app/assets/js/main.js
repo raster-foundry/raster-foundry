@@ -17,6 +17,12 @@ $(function() {
   });
 
 
+  $('[data-item-select]').click(function(){
+    var $newClass = $(this).attr('data-newClass');
+    $(this).toggleClass($newClass);
+  });
+
+
   /* 
    * Filters
    * http://refreshless.com/nouislider/ 
