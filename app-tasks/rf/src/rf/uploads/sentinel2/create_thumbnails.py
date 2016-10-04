@@ -4,10 +4,9 @@ At this point raster foundry reuses the preview
 thumbnail in the tile directory
 """
 
-import requests
-
 from .settings import base_http_path, organization
 from rf.models import Thumbnail
+from rf.utils.io import s3_obj_exists
 
 
 def create_thumbnails(tile_path):
@@ -22,8 +21,7 @@ def create_thumbnails(tile_path):
     key_path = '{tile_path}/preview.jpg'.format(tile_path=tile_path)
     thumbnail_url = base_http_path.format(key_path=key_path)
 
-    response = requests.head(thumbnail_url)
-    if response.status_code == 404:
+    if not s3_obj_exists(thumbnail_url):
         return []
     else:
         return [Thumbnail(

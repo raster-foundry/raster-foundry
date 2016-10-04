@@ -2,6 +2,7 @@
 
 from .base import BaseModel
 
+
 class Scene(BaseModel):
 
     URL_PATH = '/api/scenes/'
@@ -79,7 +80,7 @@ class Scene(BaseModel):
         )
 
     def to_dict(self):
-        scene_dict =  dict(
+        scene_dict = dict(
             organizationId=self.organizationId, ingestSizeBytes=self.ingestSizeBytes, visibility=self.visibility,
             resolutionMeters=self.resolutionMeters, tags=self.tags, datasource=self.datasource, sceneMetadata=self.sceneMetadata,
             name=self.name, thumbnailStatus=self.thumbnailStatus, boundaryStatus=self.boundaryStatus, status=self.status)

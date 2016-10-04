@@ -64,7 +64,7 @@ def create_sentinel2_scenes(tile_path):
         tags,
         datasource,
         scene_metadata,
-        'S2 {} {}'.format(tile_path, '10m'), # name
+        'S2 {} {}'.format(tile_path, '10m'),  # name
         JobStatus.SUCCESS if thumbnails else JobStatus.FAILURE,
         JobStatus.SUCCESS if footprint else JobStatus.FAILURE,
         JobStatus.QUEUED,
@@ -83,7 +83,7 @@ def create_sentinel2_scenes(tile_path):
         tags,
         datasource,
         scene_metadata,
-        'S2 {} {}'.format(tile_path, '20m'), # name
+        'S2 {} {}'.format(tile_path, '20m'),  # name
         JobStatus.SUCCESS if thumbnails else JobStatus.FAILURE,
         JobStatus.SUCCESS if footprint else JobStatus.FAILURE,
         JobStatus.QUEUED,
@@ -102,7 +102,7 @@ def create_sentinel2_scenes(tile_path):
         tags,
         datasource,
         scene_metadata,
-        'S2 {} {}'.format(tile_path, '60m'), # name
+        'S2 {} {}'.format(tile_path, '60m'),  # name
         JobStatus.SUCCESS if thumbnails else JobStatus.FAILURE,
         JobStatus.SUCCESS if footprint else JobStatus.FAILURE,
         JobStatus.QUEUED,

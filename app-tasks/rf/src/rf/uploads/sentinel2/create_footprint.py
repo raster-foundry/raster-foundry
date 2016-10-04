@@ -10,6 +10,7 @@ from .settings import organization
 # target projection for footprints
 target_proj = Proj(init='epsg:3857')
 
+
 def get_src_proj(crs_string):
     """Helper function to return pyproj CRS from tileinfo CRS
 
