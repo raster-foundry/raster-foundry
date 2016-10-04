@@ -1,19 +1,25 @@
-h1, h2, h3,
-.h1, .h2, .h3 {
-  margin-top: 2rem;
+@mixin heading-tags {
+  h1, h2, h3, h4, h5, h6,
+  .h1, .h2, .h3, .h4, .h5, .h6 {
+    @content;
+  }
+}
+
+@include heading-tags {
   margin-bottom: 1rem;
   line-height: 1.1;
   font-family: 'Titillium Web', sans-serif;
   color: $shade-dark;
 }
 
+h1, h2, h3,
+.h1, .h2, .h3 {
+  margin-top: 2rem;
+}
+
 h4, h5, h6,
 .h4, .h5, .h6 {
 	margin-top: 1.3rem;
-  margin-bottom: 1rem;
-  line-height: 1.1;
-  font-family: 'Titillium Web', sans-serif;
-  color: $shade-dark;
 }
 
 h1, .h1 {

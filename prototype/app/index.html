@@ -23,7 +23,7 @@
 	      </a>
 	      <span class="navbar-vertical-divider"></span>
 	      <nav>
-	        <a href="/" class="active">Browse data</a>
+	        <a href="/" class="active">Scene browser</a>
 	        <a href="#">Model market</a>
 	        <a href="#">Model lab</a>
 	      </nav>
@@ -80,7 +80,7 @@
 								Landsat 7 / USGS
 							</div>
 							<div class="list-group-right">
-								<button class="btn btn-square"><i class="icon-plus"></i></button>
+								<button class="btn btn-square" data-newClass="btn-secondary" data-item-select><i class="icon-plus"></i></button>
 							</div>
 						</div>
 						<div class="list-group-item">
@@ -91,7 +91,7 @@
 								Landsat 7 / USGS
 							</div>
 							<div class="list-group-right">
-								<button class="btn btn-square"><i class="icon-plus"></i></button>
+								<button class="btn btn-square" data-newClass="btn-secondary" data-item-select><i class="icon-plus"></i></button>
 							</div>
 						</div>
 						<div class="list-group-item">
@@ -102,7 +102,7 @@
 								Landsat 7 / USGS
 							</div>
 							<div class="list-group-right">
-								<button class="btn btn-square"><i class="icon-plus"></i></button>
+								<button class="btn btn-square" data-newClass="btn-secondary" data-item-select><i class="icon-plus"></i></button>
 							</div>
 						</div>
 						<div class="list-group-item">
@@ -113,7 +113,7 @@
 								Landsat 7 / USGS
 							</div>
 							<div class="list-group-right">
-								<button class="btn btn-square"><i class="icon-plus"></i></button>
+								<button class="btn btn-square" data-newClass="btn-secondary" data-item-select><i class="icon-plus"></i></button>
 							</div>
 						</div>
 						<div class="list-group-item">
@@ -124,7 +124,7 @@
 								Landsat 7 / USGS
 							</div>
 							<div class="list-group-right">
-								<button class="btn btn-square"><i class="icon-plus"></i></button>
+								<button class="btn btn-square" data-newClass="btn-secondary" data-item-select><i class="icon-plus"></i></button>
 							</div>
 						</div>
 						<div class="list-group-item">
@@ -135,7 +135,7 @@
 								Landsat 7 / USGS
 							</div>
 							<div class="list-group-right">
-								<button class="btn btn-square"><i class="icon-plus"></i></button>
+								<button class="btn btn-square" data-newClass="btn-secondary" data-item-select><i class="icon-plus"></i></button>
 							</div>
 						</div>
 						<div class="list-group-item">
@@ -146,7 +146,7 @@
 								Landsat 7 / USGS
 							</div>
 							<div class="list-group-right">
-								<button class="btn btn-square"><i class="icon-plus"></i></button>
+								<button class="btn btn-square" data-newClass="btn-secondary" data-item-select><i class="icon-plus"></i></button>
 							</div>
 						</div>
 						<div class="list-group-item">
@@ -157,7 +157,7 @@
 								Landsat 7 / USGS
 							</div>
 							<div class="list-group-right">
-								<button class="btn btn-square"><i class="icon-plus"></i></button>
+								<button class="btn btn-square" data-newClass="btn-secondary" data-item-select><i class="icon-plus"></i></button>
 							</div>
 						</div>
 						<div class="list-group-item">
@@ -168,7 +168,7 @@
 								Landsat 7 / USGS
 							</div>
 							<div class="list-group-right">
-								<button class="btn btn-square"><i class="icon-plus"></i></button>
+								<button class="btn btn-square" data-newClass="btn-secondary" data-item-select><i class="icon-plus"></i></button>
 							</div>
 						</div>
 						<div class="list-group-item">
@@ -179,16 +179,16 @@
 								Landsat 7 / USGS
 							</div>
 							<div class="list-group-right">
-								<button class="btn btn-square"><i class="icon-plus"></i></button>
+								<button class="btn btn-square" data-newClass="btn-secondary" data-item-select><i class="icon-plus"></i></button>
 							</div>
 						</div>
 					</div>
 				</div>
 				<div class="sidebar-static">
-					<h5>Selected: none</h5>
+					<h5><a href="#" class="color-primary" data-toggle="modal" data-target="#selectionModal">Selected: 3</a></h5>
 					<div class="sidebar-actions">
-						<a href="#">Select All</a>
-						<button type="button" class="btn btn-default btn-square">Checkout</button>
+						<button type="button" class="btn btn- btn-square" data-dismiss="modal" data-toggle="modal" data-target="#bucketModal"><i class="icon-bucket"></i> Add to Bucket</button>
+		        <button type="button" class="btn btn- btn-square"><i class="icon-mosaic"></i> Editor</button>
 					</div>
 				</div>
 			</div>
@@ -206,7 +206,7 @@
 				<div class="sidebar-scrollable">
 					<div class="content">
 						<img src="http://placehold.it/275x275" class="center-img rounded-img">
-						<h5 class="color-dark">Image metadata</h5>
+						<h5 class="color-dark">Scene metadata</h5>
 						<dl>
 							<dt>Acquistion:</dt>
 							<dd>11-12-2015</dd>
@@ -247,7 +247,7 @@
 				</div>
 				<div class="sidebar-static">
 					<div class="sidebar-actions">
-						<button class="btn btn-square"><i class="icon-plus"></i> Add to cart</button>
+						<button class="btn btn-square"><i class="icon-plus"></i> Select Scene</button>
 					</div>
 				</div>
 			</div>
@@ -337,6 +337,182 @@
 		</div>
 
 	</div>
+	
+
+	<!-- Selection Modal -->
+	<div class="modal fade" id="selectionModal" tabindex="-1" role="dialog" aria-labelledby="selectionModal">
+	  <div class="modal-dialog" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+	        <h4 class="modal-title">You have 3 scenes selected</h4>
+	        <p>Review your selections, add them to buckets or open them editor.</p>
+	      </div>
+	      <div class="modal-body">
+	        <div class="list-group">
+	        	<div class="list-group-item">
+							<a class="list-group-link" href="#" data-toggle-hide data-target="#scene-details" data-dismiss="modal"></a>
+							<img src="http://placehold.it/75x75" class="rounded-img">
+							<div class="list-group-overflow">
+								<strong class="color-dark">LC80190382015353LGN00LC80190382015353LGN00</strong><br>
+								Landsat 7 / USGS
+							</div>
+							<div class="list-group-right">
+								<button class="btn btn-square btn-secondary" data-newClass="btn-secondary" data-item-select><i class="icon-plus"></i></button>
+							</div>
+						</div>
+						<div class="list-group-item">
+							<a class="list-group-link" href="#" data-toggle-hide data-target="#scene-details" data-dismiss="modal"></a>
+							<img src="http://placehold.it/75x75" class="rounded-img">
+							<div class="list-group-overflow">
+								<strong class="color-dark">LC80190382015353LGN00LC80190382015353LGN00</strong><br>
+								Landsat 7 / USGS
+							</div>
+							<div class="list-group-right">
+								<button class="btn btn-square btn-secondary" data-newClass="btn-secondary" data-item-select><i class="icon-plus"></i></button>
+							</div>
+						</div>
+						<div class="list-group-item">
+							<a class="list-group-link" href="#" data-toggle-hide data-target="#scene-details" data-dismiss="modal"></a>
+							<img src="http://placehold.it/75x75" class="rounded-img">
+							<div class="list-group-overflow">
+								<strong class="color-dark">LC80190382015353LGN00LC80190382015353LGN00</strong><br>
+								Landsat 7 / USGS
+							</div>
+							<div class="list-group-right">
+								<button class="btn btn-square btn-secondary" data-newClass="btn-secondary" data-item-select><i class="icon-plus"></i></button>
+							</div>
+						</div>
+	        </div>
+	      </div>
+	      <div class="modal-footer">
+	      	<div class="pull-left">
+	        <button type="button" class="btn btn-secondary" data-dismiss="modal" data-toggle="modal" data-target="#bucketModal"><i class="icon-bucket"></i> Add to Bucket</button>
+	        <span>&nbsp;or&nbsp;</span>
+	        <button type="button" class="btn btn-primary"><i class="icon-mosaic"></i> Editor</button>
+	      		
+	      	</div>
+	        <button type="button" class="btn btn-default" data-dismiss="modal"><i class="icon-cross"></i> Deselect All</button>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	<!-- Selection Modal -->
+
+	<!-- Bucket Modal -->
+	<div class="modal fade" id="bucketModal" tabindex="-1" role="dialog" aria-labelledby="bucketModal">
+	  <div class="modal-dialog" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+	        <span class="badge"><i class="icon-bucket"></i></span>
+	        <h4 class="modal-title">Add 3 scenes to a bucket</h4>
+	        <p>Add your selections to a bucket or create a new bucket based on your selections.</p>
+	        <form action="">
+            <div class="form-group all-in-one">
+              <label for="name"><i class="icon-bucket"></i></label>
+              <input id="name" type="text" class="form-control" placeholder="New bucket name">
+              <button class="btn btn-link">Create</button>
+            </div>
+          </form>
+	      </div>
+	      <div class="modal-body">
+	        <div class="list-group">
+	        	<div class="list-group-item">
+							<span class="badge"><i class="icon-bucket"></i></span>
+							<div class="list-group-overflow">
+								<strong class="color-dark">Bucket Name</strong><br>
+                Modified on July 26, 2015
+							</div>
+							<div class="list-group-right">
+								<span class="font-size-small">
+                  22 Scenes<br>
+                  200GB
+                </span>
+								<button class="btn btn-square" data-newClass="btn-secondary" data-item-select><i class="icon-plus"></i></button>
+							</div>
+						</div>
+						<div class="list-group-item">
+							<span class="badge"><i class="icon-bucket"></i></span>
+							<div class="list-group-overflow">
+								<strong class="color-dark">Bucket Name</strong><br>
+                Modified on July 26, 2015
+							</div>
+							<div class="list-group-right">
+								<span class="font-size-small">
+                  22 Scenes<br>
+                  200GB
+                </span>
+								<button class="btn btn-square" data-newClass="btn-secondary" data-item-select><i class="icon-plus"></i></button>
+							</div>
+						</div>
+						<div class="list-group-item">
+							<span class="badge"><i class="icon-bucket"></i></span>
+							<div class="list-group-overflow">
+								<strong class="color-dark">Bucket Name</strong><br>
+                Modified on July 26, 2015
+							</div>
+							<div class="list-group-right">
+								<span class="font-size-small">
+                  22 Scenes<br>
+                  200GB
+                </span>
+								<button class="btn btn-square" data-newClass="btn-secondary" data-item-select><i class="icon-plus"></i></button>
+							</div>
+						</div>
+	        </div>
+	      </div>
+	      <div class="modal-footer">
+	      	<div class="pull-left">
+		        <button type="button" class="btn btn-default" data-dismiss="modal" data-toggle="modal" data-target="#selectionModal">Back</button>
+	      	</div>
+	        <button type="button" class="btn btn-primary" data-dismiss="modal" data-toggle="modal" data-target="#successModal">Submit</button>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	<!-- Bucket Modal -->
+
+	<!-- Success Modal -->
+	<div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModal">
+	  <div class="modal-dialog" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+	        <span class="badge"><i class="icon-bucket"></i></span>
+	        <h4 class="modal-title">Success!</h4>
+	        <p>Your selections have been added.</p>
+	      </div>
+	      <div class="modal-body">
+		      <div class="text-center">
+		      	<p>Continue to browse the data or go to My library</p>
+		        <a href="/index.html" class="btn btn-default">Scene browser</a>
+		        <a href="/buckets.html" class="btn btn-primary">My Library</a>
+		      </div>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	<!-- Success Modal -->
+
+	<!-- Search Modal -->
+	<div class="modal modal-dark fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModal">
+	  <div class="modal-dialog" role="document">
+	    <div class="modal-content">
+	      <div class="modal-body">
+		      <form action="">
+            <div class="form-group all-in-one">
+              <label for="name"><i class="icon-search"></i></label>
+              <input id="name" type="text" class="form-control" placeholder="Search">
+              <button type="button" class="btn btn-link" data-dismiss="modal" aria-label="Close"><span aria-hidden="true" class="close">&times;</span></button>
+            </div>
+          </form>
+          <h5 class="text-center">Search for places in the world</h5>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	<!-- Search Modal -->
 
 		<!-- Scripts -->
 		<script src="//code.jquery.com/jquery.js"></script>
