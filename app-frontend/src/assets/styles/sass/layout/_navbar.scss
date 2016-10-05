@@ -36,12 +36,15 @@
   }
 
   .dropdown-my-account > a {
-    padding-top: 1.9rem;
-    padding-bottom: 1.9rem;
+    padding-top: 1.65rem;
+    padding-bottom: 1.65rem;
 
     i {
       vertical-align: middle;
     }
+  }
+  .username {
+    padding-left: .5em;
   }
 }
 

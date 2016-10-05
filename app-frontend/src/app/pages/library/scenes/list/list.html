@@ -1,0 +1,52 @@
+<div class="row content stack-sm">
+  <div class="column">
+    <h1 class="h3">Scenes</h1>
+    <div class="embedded-scrollable">
+      <div class="list-group">
+        <rf-scene-item
+            ng-click="$ctrl.viewSceneDetail(item.scene)"
+            scene="item.scene" selected="item.selected"
+            ng-repeat="item in $ctrl.sceneList track by item.scene.id">
+        </rf-scene-item>
+      </div>
+      <div class="list-group" ng-show="$ctrl.loading">
+        <span class="list-placeholder">
+          <i class="icon-load"></i>
+        </span>
+      </div>
+      <div class="list-group text-center"
+           ng-show="!$ctrl.loading && $ctrl.lastSceneResult && $ctrl.lastSceneResult.count !== 0 && !$ctrl.errorMsg">
+        <ul uib-pagination
+            items-per-page="$ctrl.lastSceneResult.pageSize"
+            total-items="$ctrl.lastSceneResult.count"
+            ng-model="$ctrl.currentPage"
+            max-size="4"
+            rotate="true"
+            boundary-link-numbers="true"
+            force-ellipses="true"
+            ng-change="$ctrl.populateSceneList($ctrl.currentPage)">
+        </ul>
+      </div>
+      <div ng-if="!$ctrl.loading && $ctrl.lastSceneResult && $ctrl.lastSceneResult.count === 0"
+           class="list-group">
+        <span class="list-placeholder">You haven't uploaded any scenes. Click the Import Data button to get started!</span>
+      </div>
+      <div class="list-group" ng-show="$ctrl.errorMsg">
+        <span class="list-placeholder">
+          {{$ctrl.errorMsg}}
+          <a href ng-click="$ctrl.populateSceneList(0)">Try again</a>
+        </span>
+      </div>
+    </div>
+  </div>
+  <div class="column-4">
+    <div class="content">
+      <h5>What can be imported?</h5>
+      <p class="font-size-small">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Iusto assumenda magnam pariatur facere perferendis temporibus doloremque quam delectus, veniam vel iure optio quibusdam tempore non minima est voluptatum provident, quidem.</p>
+      <h5>Are my imports public?</h5>
+      <p class="font-size-small">Your imports a private by default but you may make them available to the public. If public, they will be discoverable.</p>
+      <h5>What can be done to imports:</h5>
+      <p class="font-size-small">You can simply use Raster Foundry as a storage point or mosaic your imports and run advanced models against them.</p>
+    </div>
+  </div>
+</div>

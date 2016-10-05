@@ -15,7 +15,7 @@
 @media screen and (-webkit-min-device-pixel-ratio:0) {
   @font-face {
     font-family: 'fontello';
-    src: url('../font/fontello.svg?47071317#fontello') format('svg');
+    src: url('../font/fontello.svg?28376591#fontello') format('svg');
   }
 }
 */
@@ -76,6 +76,7 @@
 .icon-unlocked:before { content: '\e812'; } /* '' */
 .icon-processing:before { content: '\e813'; } /* '' */
 .icon-help:before { content: '\e814'; } /* '' */
+.icon-arrows-cw:before { content: '\e815'; } /* '' */
 .icon-load:before { content: '\e838'; } /* '' */
 .icon-filter:before { content: '\f0b0'; } /* '' */
 .icon-dropbox:before { content: '\f330'; } /* '' */

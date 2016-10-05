@@ -1,0 +1,26 @@
+<div class="list-group-item">
+  <img ng-if="$ctrl.scene.thumbnails[0]"
+       ng-attr-src="{{$ctrl.scene.thumbnails[0].url}}"
+       class="rounded-img item-img">
+  <img ng-if="!$ctrl.scene.thumbnails.length"
+       src="http://placehold.it/75x75"
+       class="rounded-img item-img">
+  <div class="list-group-overflow">
+    <span title="{{$ctrl.scene.name}}">
+      <strong class="color-dark">{{$ctrl.scene.name}}</strong>
+    </span>
+    <br>
+    <span title="{{$ctrl.scene.datasource}}">{{$ctrl.scene.datasource}}</span>
+  </div>
+  <div class="list-group-right">
+    <button class="btn btn-square"
+            ng-click="$ctrl.toggleSelected($event)"
+            ng-class="{'btn-secondary': $ctrl.selected}">
+      <i ng-class="{
+                   'icon-plus': !$ctrl.selected,
+                   'icon-check': $ctrl.selected
+                   }">
+      </i>
+    </button>
+  </div>
+</div>

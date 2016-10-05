@@ -6,6 +6,7 @@ import 'angular';
 import 'angular-ui-router';
 import 'angular-ui-bootstrap';
 import 'angular-storage';
+import 'ng-infinite-scroll';
 import 'angular-jwt';
 import 'angular-resource';
 import 'auth0-angular';

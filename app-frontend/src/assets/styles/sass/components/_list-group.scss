@@ -1,5 +1,26 @@
 .list-group {
   position: relative;
+  &.load-message {
+    text-align: center;
+    font-size: 1.25em;
+    padding: .5em 0 .5em 0;
+  }
+}
+
+.list-placeholder {
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  font-size: 1.5em;
+  justify-content: center;
+  span {
+    vertical-align: center;
+  }
+  .icon-load {
+    animation: 2s linear 0s normal none infinite spin;
+  }
 }
 
 .list-group-item {
@@ -8,7 +29,7 @@
   display: flex;
   align-items: center;
   position: relative;
-  
+  cursor: pointer;
   > * {
     margin: 0 5px;
   }
@@ -43,6 +64,7 @@
     right: 0;
     bottom: 0;
   }
+
 }
 
 .list-group-overflow {

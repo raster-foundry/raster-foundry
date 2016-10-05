@@ -1,0 +1,26 @@
+<div class="column-12">
+  <h5 class="color-dark">Scene properties</h5>
+  <dl class="meta-list">
+    <dt ng-if-start="$ctrl.scene.cloudCover">Cloud Cover</dt>
+    <dd ng-if-end>{{$ctrl.scene.cloudCover | number}} %</dd>
+    <dt ng-if-start="$ctrl.scene.acquisitionDate">Aquisition Date</dt>
+    <dd ng-if-end>{{$ctrl.scene.acquisitionDate | date}}</dd>
+    <dt ng-if-start="$ctrl.scene.createdAt">Created Date</dt>
+    <dd ng-if-end>{{$ctrl.scene.createdAt | date}}</dd>
+    <dt ng-if-start="$ctrl.scene.modifiedAt">Modified Date</dt>
+    <dd ng-if-end>{{$ctrl.scene.modifiedAt | date}}</dd>
+    <dt ng-if-start="$ctrl.scene.datasource">Datasource</dt>
+    <dd ng-if-end>{{$ctrl.scene.datasource}}</dd>
+    <dt ng-if-start="$ctrl.scene.resolutionMeters">Resolution</dt>
+    <dd ng-if-end>{{$ctrl.scene.resolutionMeters}} meters</dd>
+    <dt>Visiblity</dt>
+    <dd>{{$ctrl.scene.visibility}}</dd>
+  </dl>
+  <h5 class="color-dark">Scene metadata</h5>
+  <dl class="meta-list">
+    <dt ng-repeat-start="(metaKey, metaVal) in $ctrl.scene.sceneMetadata">
+      {{metaKey}}
+    </dt>
+    <dd ng-repeat-end>{{metaVal}}</dd>
+  </dl>
+</div>

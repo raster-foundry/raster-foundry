@@ -31,13 +31,14 @@
         </a>
       </div>
       <div ng-if="$ctrl.isLoggedIn" uib-dropdown class="dropdown-my-account" on-toggle="toggled($ctrl.optionsOpen)">
+	      <a href ui-sref="library.scenes.list">My library</a>
         <a href uib-dropdown-toggle>
           <img ng-if="$ctrl.profile.picture" class="avatar" ng-src="{{$ctrl.profile.picture}}">
 	        <img ng-if="! $ctrl.profile.picture" class="avatar" src="http://placehold.it/25x25">
+          <span class="username">{{$ctrl.profile.nickname}}</span>
 	        <i class="icon-caret-down"></i>
         </a>
 	      <ul class="dropdown-menu" aria-labelledby="dLabel">
-	        <li><a href ui-sref="library.scenes">My library</a></li>
 	        <li><a href ui-sref="settings.profile">Settings</a></li>
 	        <li role="separator" class="divider"></li>
 	        <li><a href ng-click="$ctrl.logout()">Sign out</a></li>

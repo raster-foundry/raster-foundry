@@ -19,6 +19,10 @@
   @include respond-to('xs') {
     display: none;
   }
+
+  .sub-category {
+    padding-left: 2em;
+  }
 }
 
 .sidebar-static {
@@ -88,3 +92,11 @@
     }
   }
 }
+
+.hidden {
+  display: none;
+  &.active {
+    display: block;
+  }
+}
+

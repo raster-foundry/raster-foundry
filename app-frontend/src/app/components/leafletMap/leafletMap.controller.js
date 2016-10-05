@@ -29,6 +29,10 @@ export default class LeafletMapController {
         commandCenter.addTo(map);
         zoom.addTo(map);
 
+        let $zoom = $('.leaflet-control-zoom');
+        let $mpc = $('.map-control-panel');
+        $($mpc).prepend($zoom);
+
         $timeout(function () {
             map.invalidateSize();
         }, 400);
