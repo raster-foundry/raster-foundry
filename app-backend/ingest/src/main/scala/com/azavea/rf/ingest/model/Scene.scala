@@ -1,4 +1,4 @@
-package com.azavea.rf.ingest
+package com.azavea.rf.ingest.model
 
 import spray.json._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport

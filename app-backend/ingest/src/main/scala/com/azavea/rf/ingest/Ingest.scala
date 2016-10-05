@@ -4,6 +4,8 @@ import spray.json._
 import org.apache.spark._
 import org.apache.spark.rdd._
 
+import model._
+
 object Ingest {
   def main(args: Array[String]): Unit = {
 

@@ -1,10 +1,10 @@
-package com.azavea.rf
+package com.azavea.rf.ingest
 
 import spray.json._
 
 import geotrellis.vector.Extent
 
-package object ingest {
+package object model {
   implicit object RFExtentJsonFormat extends RootJsonFormat[Extent] {
     def write(extent: Extent): JsValue =
       JsArray(
