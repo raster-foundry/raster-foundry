@@ -21,10 +21,10 @@ lazy val commonSettings = Seq(
     "-language:experimental.macros",
     "-feature"
   ),
+  shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
   resolvers += Resolver.sonatypeRepo("snapshots")
 )
 
-shellPrompt := { s => Project.extract(s).currentProject.id + " > " }
 
 lazy val appSettings = commonSettings ++ Seq(
   fork in run := true,

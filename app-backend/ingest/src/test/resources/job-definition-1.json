@@ -1,0 +1,22 @@
+{
+   "name":"EXAMPLE JSON FORMAT 1",
+   "id":"fcde3f23-2d8a-4ec5-8fb0-f9e8d30134d1",
+   "scenes":[
+      {
+         "output":"s3://raster-foundry/user-bucket/pyramid-prefix",
+         "sources":[
+            {
+               "urls":[
+                  "s3://user-bucket/scene-prefix"
+               ],
+               "extent":[
+                  0,
+                  0,
+                  10,
+                  10
+               ]
+            }
+         ]
+      }
+   ]
+}

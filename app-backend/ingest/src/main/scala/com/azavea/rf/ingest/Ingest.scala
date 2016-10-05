@@ -1,4 +1,4 @@
-package com.azavea.rf
+package com.azavea.rf.ingest
 
 import spray.json._
 import org.apache.spark._
