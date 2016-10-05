@@ -1,4 +1,4 @@
-package com.azavea.rf.datamodel.latest.schema
+package com.azavea.rf.datamodel.v18.schema
 // AUTO-GENERATED Slick data model
 /** Stand-alone Slick data model for immediate use */
 object tables extends {
@@ -18,7 +18,7 @@ trait tables {
   import slick.jdbc.{GetResult => GR}
 
   /** DDL for all tables. Call .create to execute. */
-  lazy val schema: profile.SchemaDescription = Array(Buckets.schema, Images.schema, Organizations.schema, Scenes.schema, ScenesToBuckets.schema, Thumbnails.schema, Users.schema, UsersToOrganizations.schema).reduceLeft(_ ++ _)
+  lazy val schema: profile.SchemaDescription = Array(Buckets.schema, Footprints.schema, Images.schema, Organizations.schema, Scenes.schema, ScenesToBuckets.schema, Thumbnails.schema, Users.schema, UsersToOrganizations.schema).reduceLeft(_ ++ _)
   @deprecated("Use .schema instead of .ddl", "3.0")
   def ddl = schema
 
@@ -78,6 +78,46 @@ trait tables {
   }
   /** Collection-like TableQuery object for table Buckets */
   lazy val Buckets = new TableQuery(tag => new Buckets(tag))
+
+  /** Entity class storing rows of table Footprints
+   *  @param id Database column id SqlType(uuid), PrimaryKey
+   *  @param organizationId Database column organization_id SqlType(uuid)
+   *  @param createdAt Database column created_at SqlType(timestamp)
+   *  @param modifiedAt Database column modified_at SqlType(timestamp)
+   *  @param multipolygon Database column multipolygon SqlType(geometry), Length(2147483647,false)
+   *  @param sceneId Database column scene_id SqlType(uuid) */
+  case class FootprintsRow(id: java.util.UUID, organizationId: java.util.UUID, createdAt: java.sql.Timestamp, modifiedAt: java.sql.Timestamp, multipolygon: Projected[Geometry], sceneId: java.util.UUID)
+  /** GetResult implicit for fetching FootprintsRow objects using plain SQL queries */
+  implicit def GetResultFootprintsRow(implicit e0: GR[java.util.UUID], e1: GR[java.sql.Timestamp], e2: GR[Projected[Geometry]]): GR[FootprintsRow] = GR{
+    prs => import prs._
+    FootprintsRow.tupled((<<[java.util.UUID], <<[java.util.UUID], <<[java.sql.Timestamp], <<[java.sql.Timestamp], <<[Projected[Geometry]], <<[java.util.UUID]))
+  }
+  /** Table description of table footprints. Objects of this class serve as prototypes for rows in queries. */
+  class Footprints(_tableTag: Tag) extends Table[FootprintsRow](_tableTag, "footprints") {
+    def * = (id, organizationId, createdAt, modifiedAt, multipolygon, sceneId) <> (FootprintsRow.tupled, FootprintsRow.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = (Rep.Some(id), Rep.Some(organizationId), Rep.Some(createdAt), Rep.Some(modifiedAt), Rep.Some(multipolygon), Rep.Some(sceneId)).shaped.<>({r=>import r._; _1.map(_=> FootprintsRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+
+    /** Database column id SqlType(uuid), PrimaryKey */
+    val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
+    /** Database column organization_id SqlType(uuid) */
+    val organizationId: Rep[java.util.UUID] = column[java.util.UUID]("organization_id")
+    /** Database column created_at SqlType(timestamp) */
+    val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")
+    /** Database column modified_at SqlType(timestamp) */
+    val modifiedAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("modified_at")
+    /** Database column multipolygon SqlType(geometry), Length(2147483647,false) */
+    val multipolygon: Rep[Projected[Geometry]] = column[Projected[Geometry]]("multipolygon", O.Length(2147483647,varying=false))
+    /** Database column scene_id SqlType(uuid) */
+    val sceneId: Rep[java.util.UUID] = column[java.util.UUID]("scene_id")
+
+    /** Foreign key referencing Organizations (database name footprints_organization_id_fkey) */
+    lazy val organizationsFk = foreignKey("footprints_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+    /** Foreign key referencing Scenes (database name footprints_scene_id_fkey) */
+    lazy val scenesFk = foreignKey("footprints_scene_id_fkey", sceneId, Scenes)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  }
+  /** Collection-like TableQuery object for table Footprints */
+  lazy val Footprints = new TableQuery(tag => new Footprints(tag))
 
   /** Entity class storing rows of table Images
    *  @param id Database column id SqlType(uuid), PrimaryKey
@@ -405,5 +445,5 @@ trait tables {
 }
 
 object Version{
-  def version = 19
+  def version = 18
 }

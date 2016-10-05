@@ -47,15 +47,9 @@ object SceneService extends AkkaSystem.LoggerExecutor {
     val images = createScene.images.map(_.toImagesRow(user.id, scene))
     val imagesInsert = DBIO.seq(images.map(Images.forceInsert): _*)
 
-    val footprint = createScene.footprint.map(_.toFootprintsRow(user.id, scene))
-    val footprintInsert = footprint
-      .map(Footprints.forceInsert)
-      .fold(DBIO.successful(Option.empty[Int]): DBIOAction[Option[Int], NoStream, Effect.Write])(_.map(Some(_)))
-
     val sceneInsert = (for {
       _ <- scenesRowInsert
       _ <- thumbnailsInsert
-      _ <- footprintInsert
       _ <- imagesInsert
     } yield ()).transactionally
 
@@ -63,7 +57,7 @@ object SceneService extends AkkaSystem.LoggerExecutor {
       sceneInsert.asTry
     } map {
       case Success(_) => Success(
-        SceneWithRelated.fromComponents(scene, footprint, images, thumbnails)
+        SceneWithRelated.fromComponents(scene, images, thumbnails)
       )
       case Failure(e) => {
         log.error(e.toString)
@@ -80,18 +74,18 @@ object SceneService extends AkkaSystem.LoggerExecutor {
     * @param joinResult result of join query to return scene with related
     * information
     */
-  def createScenesWithRelated(joinResult: Seq[(ScenesRow, Option[FootprintsRow], Option[ImagesRow],
+  def createScenesWithRelated(joinResult: Seq[(ScenesRow, Option[ImagesRow],
     Option[ThumbnailsRow])]): Iterable[SceneWithRelated] = {
 
     val distinctScenes = joinResult.map(_._1).distinct
     val grouped = joinResult.groupBy(_._1)
     distinctScenes.map{scene =>
       // This should be relatively safe since scene is the key grouped by
-      val (seqFootprint, seqImages, seqThumbnails) = grouped(scene)
-        .map{ case (sr, fp, im, th) => (fp, im, th)}
-        .unzip3
+      val (seqImages, seqThumbnails) = grouped(scene)
+        .map{ case (sr, im, th) => (im, th)}
+        .unzip
       SceneWithRelated.fromComponents(
-        scene, seqFootprint.flatten.headOption, seqImages.flatten, seqThumbnails.flatten.distinct
+        scene, seqImages.flatten, seqThumbnails.flatten.distinct
       )
     }
   }
@@ -189,13 +183,14 @@ object SceneService extends AkkaSystem.LoggerExecutor {
       updateScene.modifiedAt, updateScene.modifiedBy, updateScene.ingestSizeBytes,
       updateScene.resolutionMeters, updateScene.datasource, updateScene.cloudCover,
       updateScene.acquisitionDate, updateScene.tags, updateScene.sceneMetadata,
-      updateScene.thumbnailStatus, updateScene.boundaryStatus, updateScene.status, updateScene.name
+      updateScene.thumbnailStatus, updateScene.boundaryStatus, updateScene.status,
+      updateScene.name, updateScene.footprint
     )
     database.db.run {
       updateSceneQuery.update((
         updateTime, user.id, scene.ingestSizeBytes, scene.resolutionMeters,
         scene.datasource, scene.cloudCover, scene.acquisitionDate, scene.tags, scene.sceneMetadata,
-        scene.thumbnailStatus, scene.boundaryStatus, scene.status, scene.name
+        scene.thumbnailStatus, scene.boundaryStatus, scene.status, scene.name, scene.footprint
       )).asTry
     } map {
       case Success(result) => {

@@ -20,7 +20,6 @@ trait RFCodegen extends SlickCodegen {
     "buckets",
     "scenes_to_buckets",
     "thumbnails",
-    "footprints",
     "images"
   )
 
@@ -48,6 +47,7 @@ trait RFCodegen extends SlickCodegen {
             case "status" => "JobStatus"
             case "visibility" => "Visibility"
             case "multipolygon" => "Projected[Geometry]"
+            case "footprint" => "Projected[Geometry]"
             case _ => super.rawType
           }
         }

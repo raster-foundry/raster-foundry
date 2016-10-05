@@ -15,7 +15,6 @@ import com.azavea.rf.datamodel.latest.schema.tables._
 import com.azavea.rf.datamodel.enums._
 import com.azavea.rf.utils.{Database => DB, PaginatedResponse}
 import com.azavea.rf.datamodel.driver.ExtendedPostgresDriver
-import com.azavea.rf.footprint._
 import geotrellis.vector.io._
 import geotrellis.vector.Geometry
 import geotrellis.slick.Projected
@@ -43,10 +42,9 @@ case class SceneWithRelated(
   sunElevation: Option[Float],
   name: String,
   images: Seq[ImagesRow],
-  footprint: Option[FootprintWithGeojson],
+  footprint: Option[Projected[Geometry]],
   thumbnails: Seq[ThumbnailsRow]
 )
-
 
 /** Helper object to create SceneWithRelated from case classes */
 object SceneWithRelated {
@@ -54,7 +52,6 @@ object SceneWithRelated {
   /** Helper constructor to create SceneWithRelated from case classes */
   def fromComponents(
     scene: ScenesRow,
-    footprint: Option[FootprintsRow],
     images: Seq[ImagesRow],
     thumbnails: Seq[ThumbnailsRow]
   ): SceneWithRelated = {
@@ -79,7 +76,7 @@ object SceneWithRelated {
       scene.sunElevation,
       scene.name,
       images,
-      footprint.map(FootprintWithGeojson(_)),
+      scene.footprint,
       thumbnails
     )
   }
@@ -106,22 +103,6 @@ case class SceneThumbnail(
       scene.id,
       url,
       thumbnailSize
-    )
-  }
-}
-
-
-/** Footprint class when posted with a scene */
-case class SceneFootprint(multipolygon: JsValue) {
-  def toFootprintsRow(userId: String, scene: ScenesRow): FootprintsRow = {
-    val now = new Timestamp((new java.util.Date()).getTime())
-    FootprintsRow(
-      UUID.randomUUID,
-      scene.organizationId,
-      now,
-      now,
-      Projected(multipolygon.convertTo[Geometry], 3857),
-      scene.id
     )
   }
 }
@@ -176,7 +157,7 @@ case class CreateScene(
   sunElevation: Option[Float],
   name: String,
   images: List[SceneImage],
-  footprint: Option[SceneFootprint],
+  footprint: Option[Projected[Geometry]],
   thumbnails: List[SceneThumbnail]
 ) {
   def toScene(userId: String): ScenesRow = {
@@ -201,7 +182,8 @@ case class CreateScene(
       status,
       sunAzimuth,
       sunElevation,
-      name
+      name,
+      footprint
     )
   }
 }
