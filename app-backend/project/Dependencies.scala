@@ -24,6 +24,7 @@ object Dependencies {
   val geotrellisSparkEtl = "com.azavea.geotrellis" %% "geotrellis-spark-etl" % Version.geotrellis
   val geotrellisS3       = "com.azavea.geotrellis" %% "geotrellis-s3" % Version.geotrellis
   val geotrellisRaster   = "com.azavea.geotrellis" %% "geotrellis-raster" % Version.geotrellis
+  val geotrellisSlick    = "com.azavea.geotrellis" %% "geotrellis-slick" % Version.geotrellis
   val geotrellisVector   = "com.azavea.geotrellis" %% "geotrellis-vector" % Version.geotrellis
   val awsS3              = "com.amazonaws"          % "aws-java-sdk-s3"   % Version.aws
   val spark              = "org.apache.spark"      %% "spark-core"        % Version.spark % "provided"
