@@ -10,7 +10,7 @@ from rf.utils.io import JobStatus, Visibility, s3_obj_exists
 
 from .create_thumbnails import create_thumbnails
 from .create_footprint import create_footprint
-from .settings import organization
+from .settings import organization, aws_landsat_base
 from .io import get_landsat_path
 
 
@@ -45,8 +45,12 @@ def create_landsat8_scenes(csv_row):
 
     scene_id = csv_row.pop('sceneID')
     landsat_path = get_landsat_path(scene_id)
-    if not s3_obj_exists(landsat_path):
-        return []
+    if not s3_obj_exists(aws_landsat_base + landsat_path + 'index.html'):
+        logger.error(
+            'AWS and USGS are not always in sync. Try again in several hours.\n'
+            'If you believe this message is in error, check %s manually.',
+            aws_landsat_base + landsat_path
+        )
     timestamp = csv_row.pop('acquisitionDate') + 'T00:00:00.000Z'
     cloud_cover = float(csv_row.pop('cloudCoverFull'))
     sun_elevation = float(csv_row.pop('sunElevation'))
