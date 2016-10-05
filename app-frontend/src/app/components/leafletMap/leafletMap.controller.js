@@ -1,10 +1,46 @@
 // LeafletMap controller class
 export default class LeafletMapController {
-    constructor($log, $timeout, $element) {
+    constructor($log, $timeout, $element, $scope) {
         'ngInject';
 
-        const map = L.map($element[0].children[0], {zoomControl: false})
-              .setView([26.8625, -87.8467], 3);
+        this.$element = $element;
+        this.$timeout = $timeout;
+        this.$scope = $scope;
+
+        this.initMap();
+        this.initLayers();
+
+        $scope.$watch(() => this.footprint, (newVal) => {
+            if (newVal) {
+                let geojsonFeature = {
+                    type: 'Feature',
+                    properties: {
+                        name: 'Scene Footprint'
+                    },
+                    geometry: newVal
+                };
+                this.geojsonLayer.clearLayers();
+                this.geojsonLayer.addData(geojsonFeature);
+                this.map.fitBounds(this.geojsonLayer.getBounds());
+            }
+        });
+    }
+
+    initLayers() {
+        this.geojsonLayer = L.geoJSON().addTo(this.map);
+    }
+
+    initMap() {
+        this.map = L.map(this.$element[0].children[0], {
+            zoomControl: false,
+            scrollWheelZoom: !this.static,
+            doubleClickZoom: !this.static,
+            dragging: !this.static,
+            touchZoom: !this.static,
+            boxZoom: !this.static,
+            keyboard: !this.static,
+            tap: !this.static
+        }).setView([26.8625, -87.8467], 3);
 
         let cartoPositron = L.tileLayer(
             'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
@@ -24,17 +60,21 @@ export default class LeafletMapController {
                 '</i> Find places</button>';
             return div;
         };
-        let zoom = L.control.zoom({position: 'topright'});
-        cartoPositron.addTo(map);
-        commandCenter.addTo(map);
-        zoom.addTo(map);
 
-        let $zoom = $('.leaflet-control-zoom');
-        let $mpc = $('.map-control-panel');
-        $($mpc).prepend($zoom);
+        cartoPositron.addTo(this.map);
 
-        $timeout(function () {
-            map.invalidateSize();
+        if (!this.static) {
+            let zoom = L.control.zoom({position: 'topright'});
+            commandCenter.addTo(this.map);
+            zoom.addTo(this.map);
+
+            let $zoom = this.$element.find('.leaflet-control-zoom');
+            let $mpc = this.$element.find('.map-control-panel');
+            $mpc.prepend($zoom);
+        }
+
+        this.$timeout(() => {
+            this.map.invalidateSize();
         }, 400);
     }
 }

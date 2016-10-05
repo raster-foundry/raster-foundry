@@ -1,6 +1,7 @@
 class ScenesController {
     constructor() {
         'ngInject';
+        this.selectedScenes = [];
     }
 }
 

@@ -20,22 +20,11 @@ class BrowseController {
         if ($state.params.id) {
             this.sceneService.query({id: $state.params.id}).then(
                 function (scene) {
-                    let item = {scene: scene, selected: false};
-                    this.openDetailPane(item);
+                    this.openDetailPane(scene);
                 }.bind(this), function () {
                     this.$state.go('.', {id: null}, {notify: false});
                 }.bind(this));
         }
-
-        // $scope
-        $scope.$watch(
-            function () {
-                return this.getNumSelected();
-            }.bind(this)
-            , function (newVal) {
-                this.numSelected = newVal;
-            }.bind(this)
-        );
     }
 
     populateInitialSceneList() {
@@ -47,10 +36,6 @@ class BrowseController {
         this.loading = true;
         this.infScrollPage = 0;
         // save off selected scenes so you don't lose them during the refresh
-        let sceneChanges = this.getSelectedSceneChanges();
-        this.selectedScenes = this.updateSelectedScenes(
-            this.selectedScenes, sceneChanges
-        );
         this.sceneList = [];
         this.sceneService.query(
             {
@@ -59,14 +44,7 @@ class BrowseController {
             }
         ).then(function (sceneResult) {
             this.lastSceneResult = sceneResult;
-            this.sceneList = this.lastSceneResult.results.map(function (scene) {
-                return {
-                    scene: scene,
-                    selected: this.selectedScenes.filter(function (selected) {
-                        return selected.id === scene.id;
-                    }).length
-                };
-            }.bind(this));
+            this.sceneList = sceneResult.results;
             this.loading = false;
         }.bind(this), function (error) {
             if (error.status === -1 || error.status === 500) {
@@ -92,14 +70,7 @@ class BrowseController {
             }
         ).then(function (sceneResult) {
             this.lastSceneResult = sceneResult;
-            let newScenes = sceneResult.results.map(function (scene) {
-                return {
-                    scene: scene,
-                    selected: this.selectedScenes.filter(function (selected) {
-                        return selected.id === scene.id;
-                    }).length
-                };
-            }.bind(this));
+            let newScenes = sceneResult.results;
             this.sceneList = [...this.sceneList, ...newScenes];
             this.loading = false;
         }.bind(this), function (error) {
@@ -110,37 +81,10 @@ class BrowseController {
         }.bind(this));
     }
 
-    getSelectedSceneChanges() {
-        return this.sceneList.filter(function (item) {
-            return this.selectedScenes.filter(function (scene) {
-                return scene.id === item.scene.id && scene.selected !== item.selected;
-            });
-        }.bind(this));
-    }
-
-    updateSelectedScenes(selectedScenes, sceneChanges) {
-        let added = sceneChanges.filter(function (item) {
-            return item.selected;
-        }).map(function (item) {
-            return item.scene;
-        });
-        let removedIds = sceneChanges.filter(function (item) {
-            return !item.selected;
-        }).map(function (item) {
-            return item.scene.id;
-        });
-        return [
-            ...selectedScenes.filter(function (scene) {
-                return !removedIds.includes(scene.id);
-            }),
-            ...added
-        ];
-    }
-
     openDetailPane(scene) {
         this.hideFilterPane();
         this.activeScene = scene;
-        this.$state.go('.', {id: scene.scene.id}, {notify: false, location: true});
+        this.$state.go('.', {id: scene.id}, {notify: false, location: true});
         this.$log.log(this.$state.params);
     }
 
@@ -158,33 +102,33 @@ class BrowseController {
     }
 
     selectAllScenes() {
-        this.sceneList = this.sceneList.map(function (item) {
-            item.selected = true;
-            return item;
-        });
+        if (this.selectedScenes.length < this.sceneList.length) {
+            this.sceneList.forEach((scene) => this.setSelected(scene, true));
+        } else {
+            this.selectNoScenes();
+        }
     }
 
     selectNoScenes() {
         this.selectedScenes = [];
-        this.sceneList = this.sceneList.map(function (item) {
-            item.selected = false;
-            return item;
-        });
     }
 
     toggleSelectAndClosePane() {
-        this.activeScene.selected = !this.activeScene.selected;
+        this.setSelected(this.activeScene, !this.isSelected(this.activeScene));
         this.closeDetailPane();
     }
 
-    getNumSelected() {
-        let count;
-        if (this.sceneList) {
-            count = this.sceneList.reduce(function (total, item) {
-                return item.selected ? total + 1 : total;
-            }, 0);
+    isSelected(scene) {
+        return this.selectedScenes.indexOf(scene.id) !== -1;
+    }
+
+    setSelected(scene, selected) {
+        if (!selected) {
+            let index = this.selectedScenes.indexOf(scene.id);
+            this.selectedScenes.splice(index, 1);
+        } else if (!this.isSelected(scene)) {
+            this.selectedScenes.push(scene.id);
         }
-        return count || 'None';
     }
 
 }
