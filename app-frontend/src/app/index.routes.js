@@ -38,13 +38,15 @@ function routeConfig($urlRouterProvider, $stateProvider) {
             templateUrl: sceneDetailTpl,
             params: {scene: null},
             controller: 'SceneDetailController',
-            controllerAs: '$ctrl'
+            controllerAs: '$ctrl',
+            parent: 'library.scenes'
         })
         .state('library.scenes.list', {
             url: '/list?:page',
             templateUrl: scenesListTpl,
             controller: 'ScenesListController',
-            controllerAs: '$ctrl'
+            controllerAs: '$ctrl',
+            parent: 'library.scenes'
         })
         .state('library.buckets', {
             url: '/buckets',

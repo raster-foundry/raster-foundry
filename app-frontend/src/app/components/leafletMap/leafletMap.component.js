@@ -3,7 +3,11 @@
 
 const leafletMap = {
     template: '<div></div>',
-    controller: 'LeafletMapController'
+    controller: 'LeafletMapController',
+    bindings: {
+        static: '<?',
+        footprint: '<?'
+    }
 };
 
 export default leafletMap;

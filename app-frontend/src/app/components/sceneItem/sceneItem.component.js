@@ -6,7 +6,8 @@ const rfSceneItem = {
     controller: 'SceneItemController',
     bindings: {
         scene: '<',
-        selected: '=?'
+        selected: '&',
+        onSelect: '&'
     }
 };
 

@@ -15,10 +15,10 @@
   <div class="list-group-right">
     <button class="btn btn-square"
             ng-click="$ctrl.toggleSelected($event)"
-            ng-class="{'btn-secondary': $ctrl.selected}">
+            ng-class="{'btn-secondary': $ctrl.selectedStatus}">
       <i ng-class="{
-                   'icon-plus': !$ctrl.selected,
-                   'icon-check': $ctrl.selected
+                   'icon-plus': !$ctrl.selectedStatus,
+                   'icon-check': $ctrl.selectedStatus
                    }">
       </i>
     </button>

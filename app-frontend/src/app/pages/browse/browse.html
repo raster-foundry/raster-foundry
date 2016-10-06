@@ -23,9 +23,11 @@
           infinite-scroll-container="'#infscroll'"
           class="list-group">
         <rf-scene-item
-            ng-click="$ctrl.openDetailPane(item)"
-            scene="item.scene" selected="item.selected"
-            ng-repeat="item in $ctrl.sceneList track by item.scene.id">
+            ng-click="$ctrl.openDetailPane(scene)"
+            scene="scene"
+            selected="$ctrl.isSelected(scene)"
+            on-select="$ctrl.setSelected(scene, selected)";
+            ng-repeat="scene in $ctrl.sceneList track by scene.id">
         </rf-scene-item>
       </div>
       <div class="list-group" ng-show="$ctrl.loading">
@@ -49,7 +51,7 @@
     </div>
 
     <div class="sidebar-static">
-      <h5>Selected: {{$ctrl.numSelected}}</h5>
+      <h5>Selected: {{$ctrl.selectedScenes.length || 'None'}}</h5>
       <div class="sidebar-actions">
         <a href ng-click="$ctrl.selectAllScenes()">Select All</a>
         <button type="button"
@@ -66,8 +68,8 @@
   <div class="sidebar sidebar-extended" ng-if="$ctrl.activeScene">
     <div class="sidebar-static">
       <p>
-        <strong class="color-dark">{{$ctrl.activeScene.scene.name}}</strong><br>
-        {{$ctrl.activeScene.scene.datasource}}
+        <strong class="color-dark">{{$ctrl.activeScene.name}}</strong><br>
+        {{$ctrl.activeScene.datasource}}
       </p>
       <div class="sidebar-actions">
         <button class="btn btn-square" ng-click="$ctrl.closeDetailPane()">
@@ -75,23 +77,23 @@
         </button>
       </div>
     </div>
-    <img ng-if="$ctrl.activeScene.scene.thumbnails[0]"
-         ng-attr-src="{{$ctrl.activeScene.scene.thumbnails[0].url}}"
+    <img ng-if="$ctrl.activeScene.thumbnails[0]"
+         ng-attr-src="{{$ctrl.activeScene.thumbnails[0].url}}"
          class="rounded-img detail-img">
-    <img ng-if="!$ctrl.activeScene.scene.thumbnails.length"
+    <img ng-if="!$ctrl.activeScene.thumbnails.length"
          src="http://placehold.it/275x275"
          class="rounded-img detail-img">
     <rf-scene-detail class="sidebar-scrollable"
-                     scene="$ctrl.activeScene.scene"></rf-scene-detail>
+                     scene="$ctrl.activeScene"></rf-scene-detail>
     <div class="sidebar-static">
       <div class="sidebar-actions">
         <button class="btn btn-square btn-default"
                 ng-click="$ctrl.toggleSelectAndClosePane()">
-          <span ng-if="!$ctrl.activeScene.selected">
+          <span ng-if="!$ctrl.isSelected($ctrl.activeScene)">
             <i class="icon-plus"></i>
             Select Scene
           </span>
-          <span ng-if="$ctrl.activeScene.selected">
+          <span ng-if="$ctrl.isSelected($ctrl.activeScene)">
             <i class="icon-cross"></i>
             Deselect
           </span>

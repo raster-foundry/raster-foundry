@@ -1,16 +1,21 @@
 <div class="row content stack-sm">
-  <div class="column-8" ng-show="!$ctrl.loading">
+  <div class="column-8" ng-if="!$ctrl.loading">
     <div class="embedded-scrollable">
       <h1 class="h3 page-title">
-        <a ui-sref="library.scenes.list">{{$ctrl.scene.id}}</a>
+        <a ui-sref="library.scenes.list">Scenes</a>
         <br>
         {{$ctrl.scene.name}}
       </h1>
+      <rf-leaflet-map
+          class="map-container"
+          static="true",
+          footprint="$ctrl.scene.footprint"
+      ></rf-leaflet-map>
       <rf-scene-detail class="sidebar-scrollable"
                        scene="$ctrl.scene"></rf-scene-detail>
     </div>
   </div>
-  <div class="column" ng-show="$ctrl.loading">
+  <div class="column-8" ng-if="$ctrl.loading">
     <div class="list-group">
       <div class="list-placeholder">
           <i class="icon-load"></i>
@@ -20,8 +25,11 @@
   <div class="column-4">
     <div class="content">
       <nav>
-        <a href="#"><i class="icon-trash"></i> Remove from bucket</a>
-        <a href="#"><i class="icon-download"></i> Download</a>
+        <a href><i class="icon-bucket"></i> Add to bucket</a>
+        <a href><i class="icon-download"></i> Download</a>
+        <a href><i class="icon-unlocked"></i> Make public</a>
+
+        <a href><i class="icon-trash"></i> Delete</a>
       </nav>
     </div>
   </div>

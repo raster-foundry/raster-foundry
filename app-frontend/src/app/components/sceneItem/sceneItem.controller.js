@@ -1,10 +1,16 @@
 export default class SceneItemController {
-    constructor() {
+    constructor($scope) {
         'ngInject';
+        $scope.$watch(
+            () => this.selected({scene: this.scene}),
+            (selected) => {
+                this.selectedStatus = selected;
+            }
+        );
     }
 
     toggleSelected(event) {
-        this.selected = !this.selected;
+        this.onSelect({scene: this.scene, selected: !this.selectedStatus});
         event.stopPropagation();
     }
 }

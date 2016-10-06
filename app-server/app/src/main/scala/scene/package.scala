@@ -8,6 +8,7 @@ import spray.json._
 import geotrellis.vector.io._
 import geotrellis.vector.Geometry
 import geotrellis.slick.Projected
+import geotrellis.proj4._
 
 import com.azavea.rf.datamodel.enums._
 
@@ -19,7 +20,8 @@ package object scene extends RfJsonProtocols {
 
   implicit object FootprintFormat extends RootJsonFormat[Projected[Geometry]] {
     def write(multipolygon: Projected[Geometry]) = {
-      multipolygon.geom.toGeoJson.parseJson.asJsObject
+      val latlngProjected = multipolygon.reproject(WebMercator, LatLng)(4236)
+      latlngProjected.geom.toGeoJson.parseJson.asJsObject
     }
 
     def read(value: JsValue) =

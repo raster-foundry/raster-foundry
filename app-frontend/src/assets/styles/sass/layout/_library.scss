@@ -1,0 +1,21 @@
+.library-header {
+  padding-left: 2rem;
+  margin-bottom: 0;
+
+  .highlight {
+    color: $brand-secondary;
+    display: inline-flex;
+    flex: 2;
+  }
+
+  .button-group {
+    display: inline-flex;
+    flex: 1;
+    margin-left: auto;
+
+    a {
+      padding: 0 0.5em 0 0.5em;
+      font-weight: 700;
+    }
+  }
+}
