@@ -2,7 +2,8 @@ package com.azavea.rf.ingest.model
 
 import spray.json._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-
+import org.apache.spark.rdd._
+import org.apache.spark._
 import geotrellis.vector.Extent
 import geotrellis.vector.io._
 
@@ -14,7 +15,11 @@ case class JobDefinition(
   name: String,
   id: UUID,
   scenes: Array[Scene]
-)
+) {
+  def parallelize(implicit sc: SparkContext) = {
+    ???
+  }
+}
 
 object JobDefinition extends DefaultJsonProtocol {
   implicit object JobDefinitionJsonFormat extends RootJsonFormat[JobDefinition] {

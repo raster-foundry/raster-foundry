@@ -41,5 +41,16 @@ class JobDefinitionSpec extends WordSpec with Matchers {
 
       jobDefinition1.toJson shouldEqual jobDefinition2.toJson
     }
+
+    "print all urls" in {
+      val json = Resource("job-definition-2.json").parseJson
+      val jobDefinition = json.convertTo[JobDefinition]
+
+      val scene = jobDefinition.scenes.head
+      println(scene.zipped.head._1, scene.zipped.head._2)
+
+      val imgSrc = scene.sources.head
+      imgSrc.getHttpUrls.head._3.foreach(println(_))
+    }
   }
 }

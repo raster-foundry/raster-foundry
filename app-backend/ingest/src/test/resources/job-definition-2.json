@@ -7,7 +7,7 @@
          "sources":[
             {
                "urls":[
-                  "s3://user-bucket/scene-prefix"
+                  "s3://geotrellis-test/nlcd-geotiff/"
                ],
                "extent":[
                   0,

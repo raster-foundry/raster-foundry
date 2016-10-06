@@ -12,7 +12,9 @@ import java.net.URL
 case class Scene(
   output: String,
   sources: Array[ImageSource]
-)
+) {
+  def zipped = (Stream.continually(output) zip Stream.continually(sources).flatten take sources.length)toArray
+}
 
 object Scene extends DefaultJsonProtocol {
   implicit val SceneJsonFormat = jsonFormat2(Scene.apply)
