@@ -1,0 +1,27 @@
+{
+   "name":"EXAMPLE JSON FORMAT 2",
+   "id":"09cec44a-66c2-42c5-97e8-401717929717",
+   "scenes":[
+      {
+         "output":"s3://raster-foundry/user-bucket/pyramid-prefix",
+         "sources":[
+            {
+               "urls":[
+                  "s3://geotrellis-test/nlcd-geotiff/"
+               ],
+               "extent":[
+                  0,
+                  0,
+                  10,
+                  10
+               ],
+               "bands":[
+                  2,
+                  1,
+                  6
+               ]
+            }
+         ]
+      }
+   ]
+}

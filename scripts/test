@@ -27,19 +27,19 @@ then
             find ./scripts -not -name "*.py*" -type f -exec shellcheck {} +
         fi
 
-        # Run linter/inspector to identify issues with app-server
+        # Run linter/inspector to identify issues with app-backend
         docker-compose \
             -f "${DIR}/../docker-compose.yml" run \
             --rm \
             --entrypoint "/bin/bash -c" \
-            app-server "./sbt scapegoat"
+            app-backend "./sbt scapegoat"
 
-        # Run scala tests for app-server
+        # Run scala tests for app-backend
        docker-compose \
            -f "${DIR}/../docker-compose.yml" run \
            --rm \
            --entrypoint "/bin/bash -c" \
-           app-server "./sbt test"
+           app-backend "./sbt test"
 
         # TODO: uncomment once https://github.com/azavea/raster-foundry/issues/435
         # is resolved

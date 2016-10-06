@@ -17,4 +17,6 @@ object Version {
   val akkaHttpExtensions = "0.4.8"
   val akkaHttpCors       = "0.1.6"
   val ammoniteOps        = "0.7.0"
+  val spark              = "2.0.0"
+  val aws                = "1.9.34"
 }

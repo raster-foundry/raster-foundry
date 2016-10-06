@@ -1,0 +1,35 @@
+{
+   "name": "EXAMPLE JSON FORMAT 4",
+   "id": "5ecbabbe-c6a3-420d-b674-4ca39636877d",
+   "scenes":[
+      {
+         "output":"s3://raster-foundry/user-bucket/pyramid-prefix",
+         "sources":[
+            {
+               "urls": [
+                  "s3://user-bucket/scene-prefix/LC8_B3.tif"
+               ],
+               "extent": [
+                  0,
+                  0,
+                  10,
+                  10
+               ],
+               "band": 1
+            },
+            {
+               "urls":[
+                  "s3://user-bucket/scene-prefix/LC8_B2.tif"
+               ],
+               "extent":[
+                  0,
+                  0,
+                  10,
+                  10
+               ],
+               "band": 1
+            }
+         ]
+      }
+   ]
+}
