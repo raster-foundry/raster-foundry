@@ -1,1 +1,1 @@
-/opt/raster-foundry/app-server/./migrations/src_migrations/main/scala/4.scala
+../../../../src_migrations/main/scala/4.scala

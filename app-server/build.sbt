@@ -1,7 +1,6 @@
 name := "rf-server"
 
 addCommandAlias("mg", "migrations/run")
-addCommandAlias("mgm", "migration_manager/run")
 
 lazy val commonSettings = Seq(
   organization := "com.azavea",
@@ -21,7 +20,8 @@ lazy val commonSettings = Seq(
     "-language:experimental.macros",
     "-feature"
   ),
-  resolvers += Resolver.sonatypeRepo("snapshots")
+  resolvers += Resolver.sonatypeRepo("snapshots"),
+  resolvers += Resolver.bintrayRepo("lonelyplanet", "maven")
 )
 
 lazy val appSettings = commonSettings ++ Seq(
@@ -42,9 +42,8 @@ lazy val appSettings = commonSettings ++ Seq(
   resolvers += Resolver.bintrayRepo("lonelyplanet", "maven"),
   test in assembly := {}
 )
-
 lazy val loggingDependencies = List(
-  "com.typesafe.akka" % "akka-slf4j_2.11" % "2.4.10",
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
   "ch.qos.logback" %  "logback-classic" % "1.1.7"
 )
 
@@ -74,6 +73,7 @@ lazy val appDependencies = dbDependencies ++ migrationsDependencies ++ Seq(
   Dependencies.akkajson,
   Dependencies.akkastream,
   Dependencies.akkatestkit,
+  Dependencies.akkaSlf4j,
   Dependencies.scalatest,
   Dependencies.authCommon,
   Dependencies.authAkka,
@@ -82,32 +82,35 @@ lazy val appDependencies = dbDependencies ++ migrationsDependencies ++ Seq(
   Dependencies.geotrellisSlick
 )
 
-lazy val migrationManagerDependencies = dbDependencies ++ forkliftDependencies
-
 lazy val root = Project("root", file(".")).aggregate(
-  app, migrations, migrationManager, datamodel).settings(
+  app, migrations, datamodel).settings(
   commonSettings:_*)
 
 lazy val app = Project("app",
-  file("app")).dependsOn(datamodel).settings(
+  file("app")).dependsOn(database, datamodel).settings(
   appSettings:_*).settings {
   libraryDependencies ++= appDependencies
 }
 
-lazy val migrationManager = Project("migration_manager",
-  file("migration_manager")).settings(
-  commonSettings:_*).settings {
-  libraryDependencies ++= migrationManagerDependencies
-}
-
 lazy val migrations = Project("migrations",
   file("migrations")).dependsOn(
-  datamodel, migrationManager).settings(
+  datamodel).settings(
   commonSettings:_*).settings {
   libraryDependencies ++= migrationsDependencies
 }
 
 lazy val datamodel = Project("datamodel",
   file("datamodel")).settings(commonSettings:_*).settings {
-  libraryDependencies ++= slickDependencies
+  libraryDependencies ++= loggingDependencies ++ Seq(
+    Dependencies.geotrellisSlick % "provided"
+  )
 }
+
+lazy val database = Project("database", file("database"))
+  .dependsOn(datamodel)
+  .settings(commonSettings:_*)
+  .settings {
+    libraryDependencies ++= slickDependencies ++ dbDependencies ++ loggingDependencies ++ Seq(
+      Dependencies.akkaHttpExtensions
+    )
+  }

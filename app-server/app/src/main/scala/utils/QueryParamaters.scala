@@ -7,6 +7,7 @@ import java.time.Instant
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.ParameterDirectives.parameters
 import akka.http.scaladsl.unmarshalling._
+import com.azavea.rf.database.query._
 
 
 /** Unmarshalls query parameters to correct type */
@@ -22,40 +23,23 @@ trait QueryParameterDeserializers {
 
 }
 
-/** Common query parameters for models that have organization attributes */
-case class OrgQueryParameters(
-  organizations: Iterable[UUID]
-)
-
-
-/** Query parameters to filter by users */
-case class UserQueryParameters(
-  createdBy: Option[String],
-  modifiedBy: Option[String]
-)
-
-
-/** Query parameters to filter by modified/created times */
-case class TimestampQueryParameters(
-  minCreateDatetime: Option[Timestamp],
-  maxCreateDatetime: Option[Timestamp],
-  minModifiedDatetime: Option[Timestamp],
-  maxModifiedDatetime: Option[Timestamp]
-)
-
-
 trait QueryParametersCommon extends QueryParameterDeserializers {
+  def bucketQueryParameters = (
+    orgQueryParams & userQueryParameters & timestampQueryParameters
+  ).as(BucketQueryParameters)
 
-  val orgQueryParams = parameters(
+  def orgQueryParams = parameters(
     'organization.as(deserializerUUID).*
   ).as(OrgQueryParameters)
 
-  val userQueryParameters = parameters((
+  def userQueryParameters = parameters(
+    (
     'createdBy.as[String].?,
     'modifiedBy.as[String].?
-  )).as(UserQueryParameters)
+    )
+  ).as(UserQueryParameters)
 
-  val timestampQueryParameters = parameters(
+  def timestampQueryParameters = parameters(
     (
       'minCreateDatetime.as(deserializerTimestamp).?,
       'maxCreateDatetime.as(deserializerTimestamp).?,
@@ -63,6 +47,4 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
       'maxModifiedDatetime.as(deserializerTimestamp).?
     )
   ).as(TimestampQueryParameters)
-
-
 }

@@ -1,11 +1,9 @@
 package com.azavea.rf.healthcheck
 
-import scala.concurrent.ExecutionContext
-
-import com.azavea.rf.datamodel.latest.schema.tables.Users
-import com.azavea.rf.utils.Database
+import com.azavea.rf.database.tables.Users
+import com.azavea.rf.database.Database
 import com.azavea.rf.AkkaSystem
-
+import scala.concurrent.ExecutionContext
 
 /**
   * Available healthcheck values

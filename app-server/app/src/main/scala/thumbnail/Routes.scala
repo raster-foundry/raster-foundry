@@ -1,18 +1,21 @@
 package com.azavea.rf.thumbnail
 
 import java.util.UUID
+import com.azavea.rf.datamodel.Thumbnail
+
 import scala.concurrent.ExecutionContext
 import scala.util.{Success, Failure}
 
 import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.unmarshalling._
 import akka.http.scaladsl.model.StatusCodes
 
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 
 import com.azavea.rf.auth.Authentication
-import com.azavea.rf.datamodel.latest.schema.tables._
-import com.azavea.rf.utils.{Database, UserErrorHandler, RouterHelper}
+import com.azavea.rf.datamodel._
+import com.azavea.rf.database.tables._
+import com.azavea.rf.database.Database
+import com.azavea.rf.utils.{UserErrorHandler, RouterHelper}
 
 
 trait ThumbnailRoutes extends Authentication
@@ -37,7 +40,7 @@ trait ThumbnailRoutes extends Authentication
   def listThumbnails: Route = anonWithPage { (user, page) =>
     get {
       thumbnailSpecificQueryParameters { thumbnailSpecificQueryParameters =>
-        onSuccess(ThumbnailService.getThumbnails(page, thumbnailSpecificQueryParameters)) { thumbs =>
+        onSuccess(Thumbnails.getThumbnails(page, thumbnailSpecificQueryParameters)) { thumbs =>
           complete(thumbs)
         }
       }
@@ -47,7 +50,7 @@ trait ThumbnailRoutes extends Authentication
   def getThumbnail: Route = pathPrefix(JavaUUID) { thumbnailId =>
     anonWithPage { (user, page) =>
       get {
-        onSuccess(ThumbnailService.getThumbnail(thumbnailId)) {
+        onSuccess(Thumbnails.getThumbnail(thumbnailId)) {
           case Some(thumbnail) => complete(thumbnail)
           case _ => complete(StatusCodes.NotFound)
         }
@@ -58,7 +61,7 @@ trait ThumbnailRoutes extends Authentication
   def createThumbnail: Route = authenticate { user =>
     post {
       entity(as[CreateThumbnail]) { newThumbnail =>
-        onSuccess(ThumbnailService.insertThumbnail(newThumbnail.toThumbnail)) {
+        onSuccess(Thumbnails.insertThumbnail(newThumbnail.toThumbnail)) {
           case Success(thumbnail) => complete(thumbnail)
           case Failure(_) => complete(StatusCodes.InternalServerError)
         }
@@ -69,7 +72,7 @@ trait ThumbnailRoutes extends Authentication
   def deleteThumbnail: Route = pathPrefix(JavaUUID) {thumbnailId =>
     authenticate { user =>
       delete {
-        onSuccess(ThumbnailService.deleteThumbnail(thumbnailId)) {
+        onSuccess(Thumbnails.deleteThumbnail(thumbnailId)) {
           case Success(1) => complete(StatusCodes.NoContent)
           case Success(0) => complete(StatusCodes.NotFound)
           case _ => complete(StatusCodes.InternalServerError)
@@ -81,8 +84,8 @@ trait ThumbnailRoutes extends Authentication
   def updateThumbnail: Route =  pathPrefix(JavaUUID) {thumbnailId =>
     authenticate { user =>
       put {
-        entity(as[ThumbnailsRow]) { updatedThumbnail =>
-          onSuccess(ThumbnailService.updateThumbnail(updatedThumbnail, thumbnailId)) {
+        entity(as[Thumbnail]) { updatedThumbnail =>
+          onSuccess(Thumbnails.updateThumbnail(updatedThumbnail, thumbnailId)) {
             case Success(result) => {
               result match {
                 case 1 => complete(StatusCodes.NoContent)

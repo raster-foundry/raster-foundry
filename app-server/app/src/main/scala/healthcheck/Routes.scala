@@ -8,7 +8,7 @@ import StatusCodes._
 
 import org.postgresql.util.PSQLException
 
-import com.azavea.rf.utils.Database
+import com.azavea.rf.database.Database
 import com.azavea.rf.auth.Authentication
 
 /**

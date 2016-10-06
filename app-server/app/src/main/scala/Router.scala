@@ -1,5 +1,6 @@
 package com.azavea.rf
 
+
 import scala.concurrent.ExecutionContext
 
 import ch.megard.akka.http.cors.CorsDirectives._
@@ -13,7 +14,7 @@ import com.azavea.rf.thumbnail.ThumbnailRoutes
 import com.azavea.rf.user.UserRoutes
 import com.azavea.rf.image.ImageRoutes
 import com.azavea.rf.config.ConfigRoutes
-import com.azavea.rf.utils.Database
+import com.azavea.rf.database.Database
 
 
 /**

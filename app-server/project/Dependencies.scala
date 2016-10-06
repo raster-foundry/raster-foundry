@@ -8,6 +8,7 @@ object Dependencies {
   val akkajson           = "com.typesafe.akka"     %% "akka-http-spray-json-experimental" % Version.akka
   val akkastream         = "com.typesafe.akka"     %% "akka-stream" % Version.akka
   val akkatestkit        = "com.typesafe.akka"     %% "akka-http-testkit" % Version.akka
+  val akkaSlf4j          = "com.typesafe.akka"     %% "akka-slf4j" % Version.akkaSlf4j
   val geotrellisSlick    = "com.azavea.geotrellis" %% "geotrellis-slick" % Version.geotrellis
   val hikariCP           = "com.typesafe.slick"    %% "slick-hikaricp" % Version.hikariCP
   val postgres           = "org.postgresql"         % "postgresql" % Version.postgres

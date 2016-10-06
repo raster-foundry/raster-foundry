@@ -5,9 +5,9 @@ import akka.http.scaladsl.testkit.{ScalatestRouteTest, RouteTestTimeout}
 import akka.actor.ActorSystem
 import concurrent.duration._
 
+import com.azavea.rf.datamodel._
 import com.azavea.rf.utils.Config
 import com.azavea.rf.{DBSpec, Router}
-import com.azavea.rf.utils.PaginatedResponse
 import com.azavea.rf.AuthUtils
 
 class UserSpec extends WordSpec

@@ -1,9 +1,7 @@
 package com.azavea.rf
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-
 import spray.json._
-
 
 /**
   * Json formats for healthcheck case classes

@@ -8,10 +8,9 @@ import akka.actor.ActorSystem
 import concurrent.duration._
 import spray.json._
 
+import com.azavea.rf.datamodel._
 import com.azavea.rf.utils.Config
 import com.azavea.rf.{DBSpec, Router}
-import com.azavea.rf.datamodel.latest.schema.tables.OrganizationsRow
-import com.azavea.rf.utils.PaginatedResponse
 import com.azavea.rf.AuthUtils
 
 
@@ -36,20 +35,20 @@ class OrganizationSpec extends WordSpec
     "return a paginated list of organizations" in {
       Get("/api/organizations")
         .addHeader(authorization) ~> organizationRoutes ~> check {
-        responseAs[PaginatedResponse[OrganizationsRow]]
+        responseAs[PaginatedResponse[Organization]]
       }
     }
     "allow creation of new organizations" in {
-      val newOrg = OrganizationsRowCreate("Test Organization")
+      val newOrg = OrganizationCreate("Test Organization")
       Post("/api/organizations")
         .withHeadersAndEntity(
         List(authorization),
         HttpEntity(
           ContentTypes.`application/json`,
-          newOrg.toJson(organizationsRowCreateFormat).toString()
+          newOrg.toJson(organizationCreateFormat).toString()
         )
       ) ~> organizationRoutes ~> check {
-        responseAs[OrganizationsRow]
+        responseAs[Organization]
       }
     }
   }
@@ -58,12 +57,12 @@ class OrganizationSpec extends WordSpec
     "return an organization" in {
       Get("/api/organizations")
         .addHeader(authorization) ~> organizationRoutes ~> check {
-        val orgs = responseAs[PaginatedResponse[OrganizationsRow]]
+        val orgs = responseAs[PaginatedResponse[Organization]]
         val orgId = orgs.results.head.id
 
         Get(s"/api/organizations/$orgId")
           .addHeader(authorization) ~> organizationRoutes ~> check {
-          responseAs[OrganizationsRow]
+          responseAs[Organization]
         }
       }
     }
@@ -80,7 +79,7 @@ class OrganizationSpec extends WordSpec
     "return a list of user roles for the organization" in {
       Get("/api/organizations")
         .addHeader(authorization) ~> organizationRoutes ~> check {
-        val orgs = responseAs[PaginatedResponse[OrganizationsRow]]
+        val orgs = responseAs[PaginatedResponse[Organization]]
         val orgId = orgs.results.head.id
         Get(s"/api/organizations/$orgId/users")
           .addHeader(authorization) ~> organizationRoutes ~> check {
@@ -91,7 +90,7 @@ class OrganizationSpec extends WordSpec
     "add a user to an organization" in {
       Get("/api/organizations")
         .addHeader(authorization) ~> organizationRoutes ~> check {
-        val orgs = responseAs[PaginatedResponse[OrganizationsRow]]
+        val orgs = responseAs[PaginatedResponse[Organization]]
         val orgId = orgs.results.head.id
         val newUserWithRole = UserWithRoleCreate("Default", "viewer")
         Post(s"/api/organizations/$orgId/users")
@@ -115,7 +114,7 @@ class OrganizationSpec extends WordSpec
     "return a user's role in the organization" in {
       Get("/api/organizations")
         .addHeader(authorization) ~> organizationRoutes ~> check {
-        val orgs = responseAs[PaginatedResponse[OrganizationsRow]]
+        val orgs = responseAs[PaginatedResponse[Organization]]
         val orgId = orgs.results.head.id
         val newUserWithRole = UserWithRoleCreate("Default", "viewer")
         Post(s"/api/organizations/$orgId/users")
@@ -136,7 +135,7 @@ class OrganizationSpec extends WordSpec
     "edit a user's role in the organization" in {
       Get("/api/organizations")
         .addHeader(authorization) ~> organizationRoutes ~> check {
-        val orgs = responseAs[PaginatedResponse[OrganizationsRow]]
+        val orgs = responseAs[PaginatedResponse[Organization]]
         val orgId = orgs.results.head.id
         Get(s"/api/organizations/$orgId/users/Default")
         .addHeader(authorization) ~> organizationRoutes ~> check {

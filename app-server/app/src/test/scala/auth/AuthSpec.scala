@@ -1,5 +1,6 @@
 package com.azavea.rf.auth
 
+import com.azavea.rf.datamodel.UserWithOrgs
 import org.scalatest.{Matchers, WordSpec}
 import akka.http.scaladsl.testkit.{ScalatestRouteTest, RouteTestTimeout}
 import akka.http.scaladsl.model.StatusCodes
@@ -7,9 +8,9 @@ import akka.actor.ActorSystem
 import concurrent.duration._
 import akka.http.scaladsl.server.Route
 
+import com.azavea.rf.user._
 import com.azavea.rf.utils.Config
 import com.azavea.rf.{DBSpec, Router, AuthUtils}
-import com.azavea.rf.user.UserWithOrgs
 
 class AuthSpec extends WordSpec
     with Matchers

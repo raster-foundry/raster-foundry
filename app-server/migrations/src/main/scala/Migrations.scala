@@ -4,7 +4,7 @@ object RFMigrations extends App
     with SlickMigrationCommandLineTool
     with SlickMigrationCommands
     with SlickMigrationManager
-    with Codegen {
+    with SlickCodegen {
   MigrationSummary
   execCommands(args.toList)
 }

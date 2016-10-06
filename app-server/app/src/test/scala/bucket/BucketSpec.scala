@@ -8,10 +8,9 @@ import akka.actor.ActorSystem
 import concurrent.duration._
 import spray.json._
 
+import com.azavea.rf.datamodel._
 import com.azavea.rf.utils.Config
 import com.azavea.rf.{DBSpec, Router}
-import com.azavea.rf.datamodel.latest.schema.tables._
-import com.azavea.rf.utils.PaginatedResponse
 
 
 class BucketSpec extends WordSpec
@@ -37,7 +36,7 @@ class BucketSpec extends WordSpec
     "return a bucket" ignore {
       val bucketId = ""
       Get(s"${baseBucket}${bucketId}/") ~> bucketRoutes ~> check {
-        responseAs[BucketsRow]
+        responseAs[Bucket]
       }
     }
 
@@ -56,7 +55,7 @@ class BucketSpec extends WordSpec
   "/api/buckets/" should {
     "not require authentication" in {
       Get("/api/buckets/") ~> bucketRoutes ~> check {
-        responseAs[PaginatedResponse[BucketsRow]]
+        responseAs[PaginatedResponse[Bucket]]
       }
     }
 
@@ -79,7 +78,7 @@ class BucketSpec extends WordSpec
           newBucket1.toJson(createBucketFormat).toString()
         )
       ) ~> bucketRoutes ~> check {
-        responseAs[BucketsRow]
+        responseAs[Bucket]
       }
 
       Post("/api/buckets/").withHeadersAndEntity(
@@ -89,57 +88,57 @@ class BucketSpec extends WordSpec
           newBucket2.toJson(createBucketFormat).toString()
         )
       ) ~> bucketRoutes ~> check {
-        responseAs[BucketsRow]
+        responseAs[Bucket]
       }
     }
 
     "filter by one organization correctly" in {
       Get(s"/api/buckets/?organization=${publicOrgId}") ~> bucketRoutes ~> check {
-        responseAs[PaginatedResponse[BucketsRow]].count shouldEqual 2
+        responseAs[PaginatedResponse[Bucket]].count shouldEqual 2
       }
     }
 
     "filter by two organizations correctly" in {
       val url = s"/api/buckets/?organization=${publicOrgId}&organization=${fakeOrgId}"
       Get(url) ~> bucketRoutes ~> check {
-        responseAs[PaginatedResponse[BucketsRow]].count shouldEqual 2
+        responseAs[PaginatedResponse[Bucket]].count shouldEqual 2
       }
     }
 
     "filter by one (non-existent) organizations correctly" in {
       val url = s"/api/buckets/?organization=${fakeOrgId}"
       Get(url) ~> bucketRoutes ~> check {
-        responseAs[PaginatedResponse[BucketsRow]].count shouldEqual 0
+        responseAs[PaginatedResponse[Bucket]].count shouldEqual 0
       }
     }
 
     "filter by created by real user correctly" in {
       val url = s"/api/buckets/?createdBy=Default"
       Get(url) ~> bucketRoutes ~> check {
-        responseAs[PaginatedResponse[BucketsRow]].count shouldEqual 2
+        responseAs[PaginatedResponse[Bucket]].count shouldEqual 2
       }
     }
 
     "filter by created by fake user correctly" in {
       val url = s"/api/buckets/?createdBy=IsNotReal"
       Get(url) ~> bucketRoutes ~> check {
-        responseAs[PaginatedResponse[BucketsRow]].count shouldEqual 0
+        responseAs[PaginatedResponse[Bucket]].count shouldEqual 0
       }
     }
 
     "sort by one field correctly" in {
       val url = s"/api/buckets/?sort=name,desc"
       Get(url) ~> bucketRoutes ~> check {
-        responseAs[PaginatedResponse[BucketsRow]].count shouldEqual 2
-        responseAs[PaginatedResponse[BucketsRow]].results.head.name shouldEqual "Test Two"
+        responseAs[PaginatedResponse[Bucket]].count shouldEqual 2
+        responseAs[PaginatedResponse[Bucket]].results.head.name shouldEqual "Test Two"
       }
     }
 
     "sort by two fields correctly" in {
       val url = s"/api/buckets/?sort=visibility,asc;name,desc"
       Get(url) ~> bucketRoutes ~> check {
-        responseAs[PaginatedResponse[BucketsRow]].count shouldEqual 2
-        responseAs[PaginatedResponse[BucketsRow]].results.head.name shouldEqual "Test Two"
+        responseAs[PaginatedResponse[Bucket]].count shouldEqual 2
+        responseAs[PaginatedResponse[Bucket]].results.head.name shouldEqual "Test Two"
       }
     }
   }

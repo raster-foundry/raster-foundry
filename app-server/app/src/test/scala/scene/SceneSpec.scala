@@ -12,14 +12,11 @@ import spray.json._
 
 import com.azavea.rf.utils.Config
 import com.azavea.rf.{DBSpec, Router}
-import com.azavea.rf.datamodel.latest.schema.tables._
-import com.azavea.rf.datamodel.enums._
-import com.azavea.rf.utils.PaginatedResponse
+import com.azavea.rf.datamodel._
 import com.azavea.rf.AuthUtils
 import java.sql.Timestamp
 import java.time.Instant
 
-import geotrellis.vector.io._
 import geotrellis.vector.{MultiPolygon, Polygon, Point, Geometry}
 import geotrellis.slick.Projected
 
@@ -75,20 +72,20 @@ class SceneSpec extends WordSpec
     }
     val mpoly = Some(Projected(
       MultiPolygon(Polygon(Seq(Point(100,100), Point(110,100), Point(110,110),
-        Point(100,110), Point(100,100)))), 3857))
+        Point(100,110), Point(100,100)))), 4326))
 
     val newSceneDatasource1 = CreateScene(
-      publicOrgId, 0, PUBLIC, 20.2f, List("Test", "Public", "Low Resolution"), "TEST_ORG",
+      publicOrgId, 0, Visibility.PUBLIC, 20.2f, List("Test", "Public", "Low Resolution"), "TEST_ORG",
       Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any], None,
       Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
-      PROCESSING, PROCESSING, PROCESSING, None, None, "test scene datasource 1",
+      JobStatus.PROCESSING, JobStatus.PROCESSING, JobStatus.PROCESSING, None, None, "test scene datasource 1",
       List(): List[SceneImage], mpoly, List(): List[SceneThumbnail]
     )
 
     val newSceneDatasource2 = CreateScene(
-      publicOrgId, 0, PUBLIC, 20.2f, List("Test", "Public", "Low Resolution"),
+      publicOrgId, 0, Visibility.PUBLIC, 20.2f, List("Test", "Public", "Low Resolution"),
       "TEST_ORG-OTHER", Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any],
-      None, None, PROCESSING, PROCESSING, PROCESSING, None, None, "test scene datasource 2",
+      None, None, JobStatus.PROCESSING, JobStatus.PROCESSING, JobStatus.PROCESSING, None, None, "test scene datasource 2",
       List(): List[SceneImage], None, List(): List[SceneThumbnail]
     )
 

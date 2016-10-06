@@ -1,5 +1,7 @@
 package com.azavea.rf.image
 
+import com.azavea.rf.datamodel.{Image, CreateImage}
+
 import scala.concurrent.ExecutionContext
 import scala.util.{Success, Failure}
 
@@ -9,8 +11,9 @@ import akka.http.scaladsl.model.StatusCodes
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 
 import com.azavea.rf.auth.Authentication
-import com.azavea.rf.datamodel.latest.schema.tables._
-import com.azavea.rf.utils.{Database, UserErrorHandler, RouterHelper}
+import com.azavea.rf.database.tables._
+import com.azavea.rf.database.Database
+import com.azavea.rf.utils.{UserErrorHandler, RouterHelper}
 
 
 trait ImageRoutes extends Authentication
@@ -36,7 +39,7 @@ trait ImageRoutes extends Authentication
   def listImages: Route = anonWithPage { (user, page) =>
     get {
       imageQueryParameters { imageParams =>
-        onSuccess(ImageService.listImages(page, imageParams)) { images =>
+        onSuccess(Images.listImages(page, imageParams)) { images =>
           complete(images)
         }
       }
@@ -46,7 +49,7 @@ trait ImageRoutes extends Authentication
   def createImages: Route = authenticate { user =>
     post {
       entity(as[CreateImage]) { newImage =>
-        onSuccess(ImageService.insertImage(newImage.toImage(user.id))) {
+        onSuccess(Images.insertImage(newImage.toImage(user.id))) {
           case Success(image) => complete(image)
           case Failure(_) => complete(StatusCodes.InternalServerError)
         }
@@ -57,7 +60,7 @@ trait ImageRoutes extends Authentication
   def getImage: Route = pathPrefix(JavaUUID) {imageId =>
     anonWithSlash { user =>
       get {
-        onSuccess(ImageService.getImage(imageId)) {
+        onSuccess(Images.getImage(imageId)) {
           case Some(image) => complete(image)
           case _ => complete(StatusCodes.NotFound)
         }
@@ -68,8 +71,8 @@ trait ImageRoutes extends Authentication
   def updateImage: Route = pathPrefix(JavaUUID) {imageId =>
     authenticate { user =>
       put {
-        entity(as[ImagesRow]) { updatedImage =>
-          onSuccess(ImageService.updateImage(updatedImage, imageId, user)) {
+        entity(as[Image]) { updatedImage =>
+          onSuccess(Images.updateImage(updatedImage, imageId, user)) {
             case Success(result) => {
               result match {
                 case 1 => complete(StatusCodes.NoContent)
@@ -88,7 +91,7 @@ trait ImageRoutes extends Authentication
   def deleteImage: Route = pathPrefix(JavaUUID) {imageId =>
     authenticate { user =>
       delete {
-        onSuccess(ImageService.deleteImage(imageId)) {
+        onSuccess(Images.deleteImage(imageId)) {
           case 1 => complete(StatusCodes.NoContent)
           case 0 => complete(StatusCodes.NotFound)
           case _ => complete(StatusCodes.InternalServerError)

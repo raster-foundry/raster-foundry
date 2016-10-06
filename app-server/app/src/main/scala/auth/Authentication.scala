@@ -9,10 +9,10 @@ import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.AuthenticationFailedRejection.CredentialsRejected
 
 import de.choffmeister.auth.common.JsonWebToken
-
-import com.azavea.rf.datamodel.latest.schema.tables._
-import com.azavea.rf.utils.{Config, Database}
-import com.azavea.rf.user.UserService
+import com.azavea.rf.datamodel.User
+import com.azavea.rf.database.tables._
+import com.azavea.rf.database.Database
+import com.azavea.rf.utils.Config
 
 
 trait Authentication extends Directives with Config {
@@ -20,7 +20,7 @@ trait Authentication extends Directives with Config {
   implicit val ec: ExecutionContext
 
   // Default user returned when no credentials are provided
-  lazy val anonymousUser:Future[Option[UsersRow]] = UserService.getUserById("default")
+  lazy val anonymousUser:Future[Option[User]] = Users.getUserById("default")
 
   // HTTP Challenge to use for Authentication failures
   lazy val challenge = HttpChallenge("Bearer", "https://rasterfoundry.com")
@@ -30,7 +30,7 @@ trait Authentication extends Directives with Config {
     *
     * @param bearerToken bearer token of the form Bearer <token>
     */
-  def validateJWT(bearerToken: String): Directive1[UsersRow] = {
+  def validateJWT(bearerToken: String): Directive1[User] = {
     val token = bearerToken.split(" ").last
     val jwt = JsonWebToken.read(token, auth0Secret) match {
       case Right(token) => Some(token)
@@ -40,9 +40,9 @@ trait Authentication extends Directives with Config {
       case Some(validToken) => {
         validToken.claimAsString("sub") match {
           case Right(sub) => {
-            onSuccess(UserService.getUserById(sub)).flatMap {
+            onSuccess(Users.getUserById(sub)).flatMap {
               case Some(user) => provide(user)
-              case None => onSuccess(UserService.createUserWithAuthId(sub)).flatMap {
+              case None => onSuccess(Users.createUserWithAuthId(sub)).flatMap {
                 case Success(user) => provide(user)
                 case Failure(_) => complete(StatusCodes.InternalServerError)
               }
@@ -62,7 +62,7 @@ trait Authentication extends Directives with Config {
     * - Allows anonymous users if credentials are provided
     * - If credentials are valid, but user does not exist, rejects
     */
-  def authenticateAndAllowAnonymous: Directive1[UsersRow] = {
+  def authenticateAndAllowAnonymous: Directive1[User] = {
     optionalHeaderValueByName("Authorization").flatMap {
       case Some(token) => validateJWT(token)
       // No credentials = anonymous user, if can't get that then an error occurred
@@ -77,7 +77,7 @@ trait Authentication extends Directives with Config {
     * Authenticates requests and requires a valid user
     *
     */
-  def authenticate: Directive1[UsersRow] = {
+  def authenticate: Directive1[User] = {
     optionalHeaderValueByName("Authorization").flatMap {
       case Some(token) => validateJWT(token)
       case _ => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))

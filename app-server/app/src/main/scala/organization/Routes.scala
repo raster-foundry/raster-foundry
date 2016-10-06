@@ -9,8 +9,11 @@ import akka.http.scaladsl.model.StatusCodes
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 
 import com.azavea.rf.auth.Authentication
-import com.azavea.rf.utils.{Database, UserErrorHandler}
-import com.azavea.rf.datamodel.latest.schema.tables.OrganizationsRow
+import com.azavea.rf.database.Database
+import com.azavea.rf.database.tables._
+import com.azavea.rf.datamodel._
+import com.azavea.rf.utils.UserErrorHandler
+import com.azavea.rf.datamodel.Organization
 
 /**
   * Routes for Organizations
@@ -27,13 +30,13 @@ trait OrganizationRoutes extends Authentication with PaginationDirectives with U
           pathEndOrSingleSlash {
             withPagination { page =>
               get {
-                onSuccess(OrganizationService.getOrganizationList(page)) { resp =>
+                onSuccess(Organizations.getOrganizationList(page)) { resp =>
                   complete(resp)
                 }
               } ~
               post {
-                entity(as[OrganizationsRowCreate]) { orgCreate =>
-                  onSuccess(OrganizationService.createOrganization(orgCreate)) {
+                entity(as[OrganizationCreate]) { orgCreate =>
+                  onSuccess(Organizations.createOrganization(orgCreate)) {
                     case Success(newOrg) => complete(newOrg)
                     case Failure(e) => throw e
                   }
@@ -44,14 +47,14 @@ trait OrganizationRoutes extends Authentication with PaginationDirectives with U
           pathPrefix(JavaUUID) { orgId =>
             pathEndOrSingleSlash {
               get {
-                onSuccess(OrganizationService.getOrganization(orgId)) { 
+                onSuccess(Organizations.getOrganization(orgId)) {
                   case Some(org) => complete(org)
                   case _ => complete(StatusCodes.NotFound)
                 }
               } ~
               put {
-                entity(as[OrganizationsRow]) { orgUpdate =>
-                  onSuccess(OrganizationService.updateOrganization(orgUpdate, orgId)) {
+                entity(as[Organization]) { orgUpdate =>
+                  onSuccess(Organizations.updateOrganization(orgUpdate, orgId)) {
                     case Success(res) => {
                       res match {
                         case 1 => complete(StatusCodes.NoContent)
@@ -69,14 +72,14 @@ trait OrganizationRoutes extends Authentication with PaginationDirectives with U
               pathEndOrSingleSlash {
                 withPagination { page =>
                   get {
-                    onSuccess(OrganizationService.getOrganizationUsers(page, orgId)) { resp =>
+                    onSuccess(Organizations.getOrganizationUsers(page, orgId)) { resp =>
                       complete(resp)
                     }
                   }
                 } ~
                 post {
                   entity(as[UserWithRoleCreate]) { userWithRole =>
-                    onSuccess(OrganizationService.addUserToOrganization(userWithRole, orgId)) {
+                    onSuccess(Organizations.addUserToOrganization(userWithRole, orgId)) {
                       case Success(userRole) => complete(userRole)
                       case Failure(e) => throw e
                     }
@@ -85,7 +88,7 @@ trait OrganizationRoutes extends Authentication with PaginationDirectives with U
               } ~
               pathPrefix(Segment) { userId =>
                 get {
-                  onSuccess(OrganizationService.getUserOrgRole(userId, orgId)) {
+                  onSuccess(Organizations.getUserOrgRole(userId, orgId)) {
                     case Some(userRole) => complete(userRole)
                     case _ => complete(StatusCodes.NotFound)
                   }
@@ -93,7 +96,7 @@ trait OrganizationRoutes extends Authentication with PaginationDirectives with U
                 put {
                   entity(as[UserWithRole]) { userWithRole =>
                     onSuccess(
-                      OrganizationService.updateUserOrgRole(userWithRole, orgId, userId)
+                      Organizations.updateUserOrgRole(userWithRole, orgId, userId)
                     ) {
                       case Success(res) => {
                         res match {
@@ -106,7 +109,7 @@ trait OrganizationRoutes extends Authentication with PaginationDirectives with U
                   }
                 } ~
                 delete {
-                  onSuccess(OrganizationService.deleteUserOrgRole(userId, orgId)) {
+                  onSuccess(Organizations.deleteUserOrgRole(userId, orgId)) {
                     case 1 => complete(StatusCodes.NoContent)
                     case 0 => complete(StatusCodes.NotFound)
                     case _ => complete(StatusCodes.InternalServerError)

@@ -1,11 +1,10 @@
 package com.azavea.rf
 
-import com.azavea.rf.utils.PaginatedResponse
-import com.azavea.rf.datamodel.latest.schema.tables.{ThumbnailsRow}
+import com.azavea.rf.datamodel._
 
 package object thumbnail extends RfJsonProtocols {
 
-  implicit val createThumbnailFormat = jsonFormat6(CreateThumbnail)
-  implicit val paginatedThumbnailFormat = jsonFormat6(PaginatedResponse[ThumbnailsRow])
+  implicit val createThumbnailFormat = jsonFormat6(CreateThumbnail.apply)
+  implicit val paginatedThumbnailFormat = jsonFormat6(PaginatedResponse[Thumbnail])
 
 }

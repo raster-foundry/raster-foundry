@@ -69,8 +69,8 @@ function run_database_migrations() {
 
     # Run database migrations. The way scala-forklift works requires this to be called twice:
     # the first run figures out the migrations to run and the second run applies them.
-    docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-server sbt "mg migrate"
-    docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-server sbt "mg migrate"
+    docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-server sbt "mg update"
+    docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-server sbt "mg apply"
 }
 
 

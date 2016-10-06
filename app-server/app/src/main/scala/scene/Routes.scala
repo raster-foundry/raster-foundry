@@ -1,5 +1,7 @@
 package com.azavea.rf.scene
 
+import java.sql.Timestamp
+
 import scala.concurrent.ExecutionContext
 import scala.util.{Success, Failure}
 
@@ -7,11 +9,13 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-
 import com.azavea.rf.auth.Authentication
-import com.azavea.rf.datamodel.latest.schema.tables._
-import com.azavea.rf.utils.{Database, UserErrorHandler}
-
+import com.azavea.rf.datamodel._
+import com.azavea.rf.database.tables._
+import com.azavea.rf.database.Database
+import com.azavea.rf.utils.{UnmarshallWithExtraJson, UserErrorHandler}
+import spray.json._
+import java.util.UUID
 
 trait SceneRoutes extends Authentication
     with SceneQueryParameterDirective
@@ -29,7 +33,7 @@ trait SceneRoutes extends Authentication
             withPagination { page =>
               get {
                 sceneQueryParameters { sceneParams =>
-                  onSuccess(SceneService.getScenes(page, sceneParams)) { scenes =>
+                  onSuccess(Scenes.getScenes(page, sceneParams)) { scenes =>
                     complete(scenes)
                   }
                 }
@@ -39,7 +43,7 @@ trait SceneRoutes extends Authentication
           authenticate { user =>
             post {
               entity(as[CreateScene]) { newScene =>
-                onSuccess(SceneService.insertScene(newScene, user)) {
+                onSuccess(Scenes.insertScene(newScene, user)) {
                   case Success(scene) => complete(scene)
                   case Failure(_) => complete(StatusCodes.InternalServerError)
                 }
@@ -51,7 +55,7 @@ trait SceneRoutes extends Authentication
           pathEndOrSingleSlash {
             authenticateAndAllowAnonymous { user =>
               get {
-                onSuccess(SceneService.getScene(sceneId)) {
+                onSuccess(Scenes.getScene(sceneId)) {
                   case Some(scene) => complete(scene)
                   case _ => complete(StatusCodes.NotFound)
                 }
@@ -59,8 +63,8 @@ trait SceneRoutes extends Authentication
             } ~
             authenticate { user =>
               put {
-                entity(as[ScenesRow]) { updatedScene =>
-                  onSuccess(SceneService.updateScene(updatedScene, sceneId, user)) {
+                entity(as[Scene]) { updatedScene =>
+                  onSuccess(Scenes.updateScene(updatedScene, sceneId, user)) {
                     case Success(result) => {
                       result match {
                         case 1 => complete(StatusCodes.NoContent)
@@ -74,7 +78,7 @@ trait SceneRoutes extends Authentication
                 }
               } ~
               delete {
-                onSuccess(SceneService.deleteScene(sceneId)) {
+                onSuccess(Scenes.deleteScene(sceneId)) {
                   case 1 => complete(StatusCodes.NoContent)
                   case 0 => complete(StatusCodes.NotFound)
                   case _ => complete(StatusCodes.InternalServerError)

@@ -1,25 +1,18 @@
 package com.azavea.rf.thumbnail
 
 import java.sql.Timestamp
-import java.time.Instant
 import java.util.UUID
 
-import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.{HttpEntity, ContentTypes}
-import akka.http.scaladsl.testkit.{ScalatestRouteTest, RouteTestTimeout}
-import concurrent.duration._
+import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.scalatest.{Matchers, WordSpec}
 import spray.json._
 
-import slick.lifted._
-
-import com.azavea.rf.AuthUtils
-import com.azavea.rf.datamodel.enums._
-import com.azavea.rf.datamodel.latest.schema.tables._
+import com.azavea.rf.database.tables._
+import com.azavea.rf.datamodel._
 import com.azavea.rf.scene._
 import com.azavea.rf.utils.Config
-import com.azavea.rf.utils.PaginatedResponse
 import com.azavea.rf.{DBSpec, Router}
 
 import scala.util.{Success, Failure, Try}
@@ -36,7 +29,7 @@ class ThumbnailSpec extends WordSpec
   implicit def database = db
 
   val uuid = new UUID(123456789, 123456789)
-  val baseThumbnailRow = ThumbnailsRow(
+  val baseThumbnailRow = Thumbnail(
     uuid,
     new Timestamp(1234687268),
     new Timestamp(1234687268),
@@ -45,25 +38,25 @@ class ThumbnailSpec extends WordSpec
     128,
     uuid,
     "https://website.com",
-    LARGE
+    ThumbnailSize.LARGE
   )
 
   "Creating a row" should {
     "add a row to the table" ignore {
-      val result = ThumbnailService.insertThumbnail(baseThumbnailRow)
+      val result = Thumbnails.insertThumbnail(baseThumbnailRow)
       assert(result === Success)
     }
   }
 
   "Getting a row" should {
     "return the expected row" ignore {
-      assert(ThumbnailService.getThumbnail(uuid) === baseThumbnailRow)
+      assert(Thumbnails.getThumbnail(uuid) === baseThumbnailRow)
     }
   }
 
   "Updating a row" should {
     "change the expected values" ignore {
-      val newThumbnailsRow = ThumbnailsRow(
+      val newThumbnailsRow = Thumbnail(
         uuid,
         new Timestamp(1234687268),
         new Timestamp(1234687268),
@@ -72,11 +65,11 @@ class ThumbnailSpec extends WordSpec
         128,
         uuid,
         "https://website.com",
-        LARGE
+        ThumbnailSize.LARGE
       )
-      val result = ThumbnailService.updateThumbnail(newThumbnailsRow, uuid)
+      val result = Thumbnails.updateThumbnail(newThumbnailsRow, uuid)
       assert(result === 1)
-      ThumbnailService.getThumbnail(uuid) map {
+      Thumbnails.getThumbnail(uuid) map {
         case Some(resp) => assert(resp.widthPx === 256)
         case _ => Failure(new Exception("Field not updated successfully"))
       }
@@ -85,7 +78,7 @@ class ThumbnailSpec extends WordSpec
 
   "Deleting a row" should {
     "remove a row from the table" ignore {
-      val result = ThumbnailService.deleteThumbnail(uuid)
+      val result = Thumbnails.deleteThumbnail(uuid)
       assert(result === 1)
     }
   }
@@ -101,7 +94,7 @@ class ThumbnailSpec extends WordSpec
     "return a thumbnail" ignore {
       val thumbnailId = ""
       Get(s"${baseThumbnail}${thumbnailId}/") ~> thumbnailRoutes ~> check {
-        responseAs[ThumbnailsRow]
+        responseAs[Thumbnail]
       }
     }
 
@@ -132,7 +125,7 @@ class ThumbnailSpec extends WordSpec
 
     "not require authentication for list" in {
       Get("/api/thumbnails/") ~> thumbnailRoutes ~> check {
-        responseAs[PaginatedResponse[ThumbnailsRow]]
+        responseAs[PaginatedResponse[Thumbnail]]
       }
     }
 
@@ -141,8 +134,8 @@ class ThumbnailSpec extends WordSpec
       Get("/api/scenes/") ~> sceneRoutes ~> check {
         val scenes = responseAs[PaginatedResponse[SceneWithRelated]]
         val sceneId = scenes.results.head.id
-        val thumbnailToPost1 = newThumbnail(SMALL, sceneId)
-        val thumbnailToPost2 = newThumbnail(SQUARE, sceneId)
+        val thumbnailToPost1 = newThumbnail(ThumbnailSize.SMALL, sceneId)
+        val thumbnailToPost2 = newThumbnail(ThumbnailSize.SQUARE, sceneId)
 
         Post("/api/thumbnails/").withEntity(
           HttpEntity(
@@ -160,7 +153,7 @@ class ThumbnailSpec extends WordSpec
             thumbnailToPost1.toJson(createThumbnailFormat).toString()
           )
         ) ~> thumbnailRoutes ~> check {
-          responseAs[ThumbnailsRow]
+          responseAs[Thumbnail]
         }
 
         Post("/api/thumbnails/").withHeadersAndEntity(
@@ -170,7 +163,7 @@ class ThumbnailSpec extends WordSpec
             thumbnailToPost2.toJson(createThumbnailFormat).toString()
           )
         ) ~> thumbnailRoutes ~> check {
-          responseAs[ThumbnailsRow]
+          responseAs[Thumbnail]
         }
       }
     }
@@ -180,7 +173,7 @@ class ThumbnailSpec extends WordSpec
         val scenes = responseAs[PaginatedResponse[SceneWithRelated]]
         val sceneId = scenes.results.head.id
         Get(s"/api/thumbnails/?sceneId=$sceneId") ~> thumbnailRoutes ~> check {
-          responseAs[PaginatedResponse[ThumbnailsRow]].count shouldEqual 2
+          responseAs[PaginatedResponse[Thumbnail]].count shouldEqual 2
         }
       }
     }
@@ -188,7 +181,7 @@ class ThumbnailSpec extends WordSpec
     "filter by one (non-existent) scene correctly" in {
       val url = s"/api/thumbnails/?sceneId=${UUID.randomUUID}"
       Get(url) ~> thumbnailRoutes ~> check {
-        responseAs[PaginatedResponse[ThumbnailsRow]].count shouldEqual 0
+        responseAs[PaginatedResponse[Thumbnail]].count shouldEqual 0
       }
     }
 
@@ -196,7 +189,7 @@ class ThumbnailSpec extends WordSpec
       val url = s"/api/thumbnails/?sort=..."
       Get(url) ~> thumbnailRoutes ~> check {
         /** Sorting behavior isn't described in the spec currently but might be someday */
-        responseAs[PaginatedResponse[ThumbnailsRow]]
+        responseAs[PaginatedResponse[Thumbnail]]
       }
     }
   }

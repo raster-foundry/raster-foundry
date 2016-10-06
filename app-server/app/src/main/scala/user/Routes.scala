@@ -9,7 +9,10 @@ import akka.http.scaladsl.model.StatusCodes
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 
 import com.azavea.rf.auth.Authentication
-import com.azavea.rf.utils.{Database, UserErrorHandler}
+import com.azavea.rf.database.Database
+import com.azavea.rf.database.tables.Users
+import com.azavea.rf.utils.UserErrorHandler
+import com.azavea.rf.datamodel._
 
 /**
   * Routes for users
@@ -26,7 +29,7 @@ trait UserRoutes extends Authentication with PaginationDirectives with UserError
           pathEndOrSingleSlash {
             withPagination { page =>
               get {
-                onSuccess(UserService.getPaginatedUsers(page)) { resp =>
+                onSuccess(Users.getPaginatedUsers(page)) { resp =>
                   complete(resp)
                 }
               }
@@ -34,9 +37,9 @@ trait UserRoutes extends Authentication with PaginationDirectives with UserError
               post {
                 //TODO: This should only be accessible by users with the correct permission
                 //      (IE admin in the "Public" org)
-                entity(as[UsersRowCreate]) { newUser =>
-                  onSuccess(UserService.createUser(newUser)) {
-                    case Success(user) => onSuccess(UserService.getUserWithOrgsById(user.id)) {
+                entity(as[UserCreate]) { newUser =>
+                  onSuccess(Users.createUser(newUser)) {
+                    case Success(user) => onSuccess(Users.getUserWithOrgsById(user.id)) {
                       case Some(user) => complete((StatusCodes.Created, user))
                       case None => complete(StatusCodes.InternalServerError)
                     }
@@ -50,7 +53,7 @@ trait UserRoutes extends Authentication with PaginationDirectives with UserError
               pathEndOrSingleSlash {
                 get {
                   onSuccess(
-                    UserService.getUserWithOrgsById(authId)
+                    Users.getUserWithOrgsById(authId)
                   ) {
                     case Some(user) => complete(user)
                     case _ => complete((StatusCodes.NotFound))

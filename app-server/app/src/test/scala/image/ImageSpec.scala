@@ -12,10 +12,8 @@ import spray.json._
 
 import com.azavea.rf.utils.Config
 import com.azavea.rf.{DBSpec, Router}
-import com.azavea.rf.datamodel.latest.schema.tables._
 import com.azavea.rf.scene._
-import com.azavea.rf.datamodel.enums._
-import com.azavea.rf.utils.PaginatedResponse
+import com.azavea.rf.datamodel._
 import com.azavea.rf.AuthUtils
 import java.sql.Timestamp
 import java.time.Instant
@@ -37,10 +35,10 @@ class ImageSpec extends WordSpec
   val publicOrgId = UUID.fromString("dfac6307-b5ef-43f7-beda-b9f208bb7726")
 
   val newSceneDatasource1 = CreateScene(
-    publicOrgId, 0, PUBLIC, 20.2f, List("Test", "Public", "Low Resolution"), "TEST_ORG",
+    publicOrgId, 0, Visibility.PUBLIC, 20.2f, List("Test", "Public", "Low Resolution"), "TEST_ORG",
     Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any], None,
     Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
-    PROCESSING, PROCESSING, PROCESSING, None, None, "test scene image spec 1",
+    JobStatus.PROCESSING, JobStatus.PROCESSING, JobStatus.PROCESSING, None, None, "test scene image spec 1",
     List(): List[SceneImage], None, List(): List[SceneThumbnail]
   )
 
@@ -56,7 +54,7 @@ class ImageSpec extends WordSpec
     "return a image" ignore {
       val imageId = ""
       Get(s"${baseImagePath}${imageId}/") ~> imageRoutes ~> check {
-        responseAs[ImagesRow]
+        responseAs[Image]
       }
     }
 
@@ -75,7 +73,7 @@ class ImageSpec extends WordSpec
   "/api/images/" should {
     "not require authentication" in {
       Get("/api/images/") ~> imageRoutes ~> check {
-        responseAs[PaginatedResponse[ImagesRow]]
+        responseAs[PaginatedResponse[Image]]
       }
     }
 
@@ -91,7 +89,7 @@ class ImageSpec extends WordSpec
         val sceneId = responseAs[SceneWithRelated].id
 
         val newImageDatasource1 = CreateImage(
-          publicOrgId, 1024, PUBLIC, "test-image.png", "s3://public/s3/test-image.png",
+          publicOrgId, 1024, Visibility.PUBLIC, "test-image.png", "s3://public/s3/test-image.png",
           sceneId, List("red, green, blue"),
           Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any]
         )
@@ -103,35 +101,35 @@ class ImageSpec extends WordSpec
             newImageDatasource1.toJson(createImageFormat).toString()
           )
         ) ~> imageRoutes ~> check {
-          responseAs[ImagesRow]
+          responseAs[Image]
         }
       }
     }
 
     "filter by one organization correctly" in {
       Get(s"$baseImagePath?organization=${publicOrgId}") ~> imageRoutes ~> check {
-        responseAs[PaginatedResponse[ImagesRow]].count shouldEqual 1
+        responseAs[PaginatedResponse[Image]].count shouldEqual 1
       }
     }
 
     "filter by two organizations correctly" in {
       val url = s"$baseImagePath?organization=${publicOrgId}&organization=dfac6307-b5ef-43f7-beda-b9f208bb7725"
       Get(url) ~> imageRoutes ~> check {
-        responseAs[PaginatedResponse[ImagesRow]].count shouldEqual 1
+        responseAs[PaginatedResponse[Image]].count shouldEqual 1
       }
     }
 
     "filter by one (non-existent) organizations correctly" in {
       val url = s"$baseImagePath?organization=dfac6307-b5ef-43f7-beda-b9f208bb7725"
       Get(url) ~> imageRoutes ~> check {
-        responseAs[PaginatedResponse[ImagesRow]].count shouldEqual 0
+        responseAs[PaginatedResponse[Image]].count shouldEqual 0
       }
     }
 
     "filter by min bytes correctly" in {
       val url = s"$baseImagePath?minRawDataBytes=10"
       Get(url) ~> imageRoutes ~> check {
-        responseAs[PaginatedResponse[ImagesRow]].count shouldEqual 1
+        responseAs[PaginatedResponse[Image]].count shouldEqual 1
       }
     }
 
@@ -142,7 +140,7 @@ class ImageSpec extends WordSpec
 
         val url = s"$baseImagePath?scene=$sceneId"
         Get(url) ~> imageRoutes ~> check {
-          responseAs[PaginatedResponse[ImagesRow]].count shouldEqual 1
+          responseAs[PaginatedResponse[Image]].count shouldEqual 1
         }
       }
     }

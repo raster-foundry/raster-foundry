@@ -1,6 +1,7 @@
 package com.azavea.rf
 
 import ammonite.ops._
+import com.azavea.rf.database.Database
 import org.scalatest._
 
 import com.azavea.rf.utils._
@@ -63,7 +64,6 @@ object InitializeDB extends Config {
   }}
 
   // Run migrations -- scala-forklift requires that they be run twice
-  0.to(1).foreach( _ =>
-    %sbt("mg migrate", POSTGRES_URL=s"${jdbcNoDBUrl}testing_template")
-  )
+  %sbt("mg update", POSTGRES_URL=s"${jdbcNoDBUrl}testing_template")
+  %sbt("mg apply", POSTGRES_URL=s"${jdbcNoDBUrl}testing_template")
 }

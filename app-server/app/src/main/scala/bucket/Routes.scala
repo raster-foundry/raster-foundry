@@ -10,16 +10,17 @@ import akka.http.scaladsl.model.StatusCodes
 
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 
-import com.azavea.rf.auth.Authentication
-import com.azavea.rf.datamodel.latest.schema.tables._
-import com.azavea.rf.utils.Database
-
 import com.azavea.rf.scene._
+import com.azavea.rf.auth.Authentication
+import com.azavea.rf.datamodel._
+import com.azavea.rf.database.tables._
+import com.azavea.rf.database.Database
+import com.azavea.rf.utils.queryparams.QueryParametersCommon
 import com.azavea.rf.scene.SceneQueryParameterDirective
 
 
 trait BucketRoutes extends Authentication
-    with BucketQueryParameterDirective
+    with QueryParametersCommon
     with SceneQueryParameterDirective
     with PaginationDirectives {
 
@@ -38,7 +39,7 @@ trait BucketRoutes extends Authentication
           withPagination { page =>
             get {
               bucketQueryParameters { bucketQueryParameters =>
-                onSuccess(BucketService.getBuckets(page, bucketQueryParameters)) { scenes =>
+                onSuccess(Buckets.getBuckets(page, bucketQueryParameters)) { scenes =>
                   complete(scenes)
                 }
               }
@@ -48,7 +49,7 @@ trait BucketRoutes extends Authentication
         authenticate { user =>
           post {
             entity(as[CreateBucket]) { newBucket =>
-              onSuccess(BucketService.insertBucket(newBucket.toBucket(user.id))) {
+              onSuccess(Buckets.insertBucket(newBucket.toBucket(user.id))) {
                 case Success(bucket) => complete(bucket)
                 case Failure(_) => complete(StatusCodes.InternalServerError)
               }
@@ -60,7 +61,7 @@ trait BucketRoutes extends Authentication
         pathEndOrSingleSlash {
           authenticateAndAllowAnonymous { user =>
             get {
-              onSuccess(BucketService.getBucket(bucketId)) {
+              onSuccess(Buckets.getBucket(bucketId)) {
                 case Some(bucket) => complete(bucket)
                 case _ => complete(StatusCodes.NotFound)
               }
@@ -68,8 +69,8 @@ trait BucketRoutes extends Authentication
           } ~
           authenticate { user =>
             put {
-              entity(as[BucketsRow]) { updatedBucket =>
-                onSuccess(BucketService.updateBucket(updatedBucket, bucketId, user)) {
+              entity(as[Bucket]) { updatedBucket =>
+                onSuccess(Buckets.updateBucket(updatedBucket, bucketId, user)) {
                   case Success(result) => {
                     result match {
                       case 1 => complete(StatusCodes.NoContent)
@@ -83,7 +84,7 @@ trait BucketRoutes extends Authentication
               }
             } ~
             delete {
-              onSuccess(BucketService.deleteBucket(bucketId)) {
+              onSuccess(Buckets.deleteBucket(bucketId)) {
                 case 1 => complete(StatusCodes.NoContent)
                 case 0 => complete(StatusCodes.NotFound)
                 case _ => complete(StatusCodes.InternalServerError)
@@ -97,7 +98,7 @@ trait BucketRoutes extends Authentication
               withPagination { page =>
                 get {
                   sceneQueryParameters { sceneParams =>
-                    onSuccess(BucketService.getBucketScenes(bucketId, page, sceneParams)) { scenes =>
+                    onSuccess(Buckets.getBucketScenes(bucketId, page, sceneParams)) { scenes =>
                       complete(scenes)
                     }
                   }
@@ -109,12 +110,12 @@ trait BucketRoutes extends Authentication
             pathPrefix(JavaUUID) { sceneId =>
               pathEndOrSingleSlash {
                 post {
-                  onSuccess(BucketService.addSceneToBucket(sceneId, bucketId)) { resp =>
+                  onSuccess(Buckets.addSceneToBucket(sceneId, bucketId)) { resp =>
                     complete(StatusCodes.Created)
                   }
                 } ~
                 delete {
-                  onSuccess(BucketService.deleteSceneFromBucket(sceneId, bucketId)) {
+                  onSuccess(Buckets.deleteSceneFromBucket(sceneId, bucketId)) {
                     case 1 => complete(StatusCodes.NoContent)
                     case 0 => complete(StatusCodes.NotFound)
                     case _ => complete(StatusCodes.InternalServerError)
@@ -127,4 +128,8 @@ trait BucketRoutes extends Authentication
       }
     }
   }
+}
+
+object BucketRoutes {
+
 }

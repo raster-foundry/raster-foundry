@@ -13,7 +13,6 @@ class UserErrorException(message: String, cause: Throwable)
   }
 }
 
-
 object UserErrorException {
   def defaultMessage(message: String, cause: Throwable) =
     if (message != null) message

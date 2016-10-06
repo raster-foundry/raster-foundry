@@ -4,7 +4,7 @@ import akka.http.scaladsl.server.Route
 import scala.concurrent.ExecutionContext
 
 import com.azavea.rf.auth.Authentication
-import com.azavea.rf.utils.Database
+import com.azavea.rf.database.Database
 
 trait ConfigRoutes extends Authentication {
   implicit def database: Database

@@ -5,7 +5,8 @@ import akka.event.Logging
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 
-import com.azavea.rf.utils.{Config, Database}
+import com.azavea.rf.utils.Config
+import com.azavea.rf.database.Database
 
 object AkkaSystem {
   implicit val system = ActorSystem("rf-system")
