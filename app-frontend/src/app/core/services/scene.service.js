@@ -1,10 +1,10 @@
-export default function (app) {
+export default (app) => {
     class SceneService {
         constructor($resource) {
             'ngInject';
 
             this.Scene = $resource(
-                'http://localhost:9000/api/scenes/:id/', {
+                '/api/scenes/:id/', {
                     id: '@properties.id'
                 }, {
                     query: {
@@ -25,4 +25,4 @@ export default function (app) {
     }
 
     app.service('sceneService', SceneService);
-}
+};

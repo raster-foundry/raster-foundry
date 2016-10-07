@@ -1,7 +1,10 @@
+/* globals process */
+
 'use strict';
 
-function config(
-    $logProvider, $compileProvider, authProvider, jwtInterceptorProvider, $httpProvider
+function config( // eslint-disable-line max-params
+    $logProvider, $compileProvider, authProvider, jwtInterceptorProvider,
+    $httpProvider, configProvider, APP_CONFIG
 ) {
     'ngInject';
 
@@ -9,26 +12,31 @@ function config(
     $logProvider.debugEnabled(true);
     $compileProvider.debugInfoEnabled(false);
 
-    authProvider.init({
-        domain: 'raster-foundry.auth0.com',
-        clientID: process.env.CLIENT_ID,
-        loginState: 'login',
-        sso: false
-    }, require('auth0-lock'));
+    if (!APP_CONFIG.error) {
+        authProvider.init({
+            domain: 'raster-foundry.auth0.com',
+            clientID: APP_CONFIG.clientId,
+            loginState: 'login',
+            sso: false
+        }, require('auth0-lock'));
 
-    authProvider.on('logout', function (store, $state) {
-        'ngInject';
-        store.remove('profile');
-        store.remove('token');
-        store.remove('accessToken');
-        $state.go('browse');
-    });
+        authProvider.on('logout', function (store, $state) {
+            'ngInject';
+            store.remove('profile');
+            store.remove('token');
+            store.remove('accessToken');
+            $state.go('browse');
+        });
 
-    jwtInterceptorProvider.tokenGetter = function (auth) {
-        'ngInject';
-        return auth.idToken;
-    };
+        jwtInterceptorProvider.tokenGetter = function (auth) {
+            'ngInject';
+            return auth.idToken;
+        };
+    }
+
     $httpProvider.interceptors.push('jwtInterceptor');
+
+    configProvider.init(process.env);
 }
 
 export default config;

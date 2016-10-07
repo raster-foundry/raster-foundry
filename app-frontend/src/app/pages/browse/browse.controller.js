@@ -1,7 +1,9 @@
 import assetLogo from '../../../assets/images/logo-raster-foundry.png';
 
 class BrowseController {
-    constructor($log, auth, $scope, sceneService, $state) {
+    constructor( // eslint-disable-line max-params
+        $log, auth, $scope, sceneService, $state
+    ) {
         'ngInject';
         this.$log = $log;
         this.auth = auth;

@@ -27,6 +27,11 @@ module.exports = function (_path) {
                 minimize: true,
                 warnings: false,
                 sourceMap: true
+            }),
+            new webpack.DefinePlugin({
+                'process.env': {
+                    NODE_ENV: JSON.stringify('production')
+                }
             })
         ]
     };

@@ -114,6 +114,11 @@ module.exports = function (_path) {
                     'url-loader?name=assets/video/[name]_[hash].[ext]&limit=10000'
                 ]
             }, {
+                test: require.resolve('angular-deferred-bootstrap'),
+                loaders: [
+                    'expose?deferredBootstrapper'
+                ]
+            }, {
                 test: require.resolve('angular'),
                 loaders: [
                     'expose?angular'
@@ -162,11 +167,6 @@ module.exports = function (_path) {
                 $: 'jquery',
                 jQuery: 'jquery',
                 L: 'leaflet'
-            }),
-            new webpack.DefinePlugin({
-                'process.env.NODE_ENV': JSON.stringify(NODE_ENV),
-                'process.env.API_URL': 'http://localhost:9000/',
-                'process.env.CLIENT_ID': JSON.stringify('ZaCxyikiDLFLKBOfPB5R30tnc8r06nxU')
             }),
             new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
             new webpack.optimize.DedupePlugin(),

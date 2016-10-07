@@ -2,13 +2,20 @@ import assetLogo from '../../../assets/images/logo-raster-foundry.png';
 
 // rfNavBar controller class
 export default class NavBarController {
-    constructor($log, $state, store, auth, $scope) {
+    constructor( // eslint-disable-line max-params
+        $log, $state, store, auth, $scope, APP_CONFIG
+    ) {
         'ngInject';
 
         this.$log = $log;
         this.$state = $state;
         this.store = store;
         this.auth = auth;
+
+        if (APP_CONFIG.error) {
+            this.loadError = true;
+        }
+
         this.optionsOpen = false;
         this.isLoggedIn = auth.isAuthenticated;
         this.profile = {};
@@ -19,7 +26,7 @@ export default class NavBarController {
 
         $scope.$watch(function () {
             return auth.isAuthenticated;
-        }, function (isAuthenticated) {
+        }, (isAuthenticated) => {
             if (isAuthenticated) {
                 store.set('profile', this.auth.profile);
                 this.profile = this.auth.profile;
@@ -27,7 +34,7 @@ export default class NavBarController {
                 store.set('accessToken', this.auth.accessToken);
                 this.isLoggedIn = true;
             }
-        }.bind(this));
+        });
     }
 
     signin() {
@@ -40,7 +47,7 @@ export default class NavBarController {
             primaryColor: '#5e509b',
             icon: assetLogo,
             closable: true
-        }, function () {});
+        }, () => {});
     }
 
     logout() {
