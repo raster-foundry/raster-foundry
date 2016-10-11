@@ -12,6 +12,11 @@
   notify:
     - Restart Nginx
 
+- name: Download Jenkins CLI jar
+  get_url:
+    url=http://localhost:{{ jenkins_http_port}}/jnlpJars/jenkins-cli.jar
+    dest={{ jenkins_jar_path }}
+
 - name: Setup hourly docker-gc cron task
   cron:
     name: "docker-gc"
@@ -24,3 +29,14 @@
       -v /etc:/etc
       spotify/docker-gc
     state: "present"
+
+- name: Restart Jenkins every 3 hours
+  cron:
+    name: "jenkins-restart"
+    user: "{{ jenkins_name }}"
+    hour: "*/3"
+    minute: "0"
+    job: >
+      /usr/bin/java -jar {{ jenkins_jar_path }}
+      -s http://localhost:{{ jenkins_http_port }}
+      restart
