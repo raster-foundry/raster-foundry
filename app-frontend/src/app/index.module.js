@@ -36,7 +36,8 @@ const App = angular.module(
         require('./pages/library/buckets/buckets.module.js').name,
         require('./pages/settings/settings.module.js').name,
         require('./pages/settings/profile/profile.module.js').name,
-        require('./pages/settings/account/account.module.js').name
+        require('./pages/settings/account/account.module.js').name,
+        require('./pages/error/error.module.js').name
 
     ]
 );

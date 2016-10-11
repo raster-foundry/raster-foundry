@@ -6,6 +6,7 @@
 
 let webpack = require('webpack');
 let port = process.env.RF_PORT_9091 || 9091;
+let serverport = process.env.RF_SERVER_PORT || 9100;
 
 module.exports = function (_path) {
     return {
@@ -21,11 +22,16 @@ module.exports = function (_path) {
             'history-api-fallback': true,
             port: port,
             proxy: {
-                '*': 'http://localhost:9100'
+                '*': 'http://localhost:' + serverport
             }
         },
         plugins: [
-            new webpack.HotModuleReplacementPlugin()
+            new webpack.HotModuleReplacementPlugin(),
+            new webpack.DefinePlugin({
+                'process.env': {
+                    NODE_ENV: JSON.stringify(process.env.NODE_ENV)
+                }
+            })
         ]
     };
 };

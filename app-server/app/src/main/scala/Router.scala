@@ -12,6 +12,7 @@ import com.azavea.rf.scene.SceneRoutes
 import com.azavea.rf.thumbnail.ThumbnailRoutes
 import com.azavea.rf.user.UserRoutes
 import com.azavea.rf.image.ImageRoutes
+import com.azavea.rf.config.ConfigRoutes
 import com.azavea.rf.utils.Database
 
 
@@ -27,7 +28,8 @@ trait Router extends HealthCheckRoutes
     with SceneRoutes
     with BucketRoutes
     with ImageRoutes
-    with ThumbnailRoutes {
+    with ThumbnailRoutes
+    with ConfigRoutes {
 
   implicit def database: Database
   implicit val ec: ExecutionContext
@@ -41,6 +43,7 @@ trait Router extends HealthCheckRoutes
     sceneRoutes ~
     bucketRoutes ~
     imageRoutes ~
-    thumbnailRoutes
+    thumbnailRoutes ~
+    configRoutes
   }
 }

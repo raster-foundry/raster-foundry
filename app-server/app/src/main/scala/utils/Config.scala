@@ -19,4 +19,5 @@ trait Config {
   val dbPassword = databaseConfig.getString("password")
 
   val auth0Secret = java.util.Base64.getUrlDecoder.decode(auth0Config.getString("secret"))
+  val auth0ClientId = auth0Config.getString("clientId")
 }

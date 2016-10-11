@@ -7,6 +7,7 @@ import bucketsTpl from './pages/library/buckets/buckets.html';
 import settingsTpl from './pages/settings/settings.html';
 import profileTpl from './pages/settings/profile/profile.html';
 import accountTpl from './pages/settings/account/account.html';
+import errorTpl from './pages/error/error.html';
 
 
 function routeConfig($urlRouterProvider, $stateProvider) {
@@ -72,6 +73,12 @@ function routeConfig($urlRouterProvider, $stateProvider) {
             url: '/account',
             templateUrl: accountTpl,
             controller: 'AccountController',
+            controllerAs: '$ctrl'
+        })
+        .state('error', {
+            url: '/error',
+            templateUrl: errorTpl,
+            controller: 'ErrorController',
             controllerAs: '$ctrl'
         });
     $urlRouterProvider.otherwise('/browse/');
