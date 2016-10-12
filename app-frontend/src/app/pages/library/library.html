@@ -1,15 +1,20 @@
 <div class="container column-stretch dashboard">
   <div class="sidebar">
     <div class="sidebar-scrollable">
-      <a href="#" class="btn btn-primary">Import Data</a>
+      <button class="btn btn-primary" type="button">Import Scenes</button>
       <nav>
         <a ui-sref="library.scenes.list"
            ng-class="{
                      'active': $ctrl.$state.$current.name.includes('library.scenes')
                      }">
-          Scenes
+          My Scenes
         </a>
-        <a ui-sref="library.buckets" ui-sref-active="active">Buckets</a>
+        <a ui-sref="library.buckets.list"
+        ng-class="{
+                  'active': $ctrl.$state.$current.name.includes('library.buckets')
+                  }">
+          Buckets
+        </a>
         <a ui-sref="library.mosaics" ui-sref-active="active">Mosaics</a>
         <a ui-sref="library.models" ui-sref-active="active">Models</a>
         <a ui-sref="library.modeloutputs" ui-sref-active="active">Model Outputs</a>

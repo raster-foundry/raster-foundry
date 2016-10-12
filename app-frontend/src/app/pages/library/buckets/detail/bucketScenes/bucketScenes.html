@@ -1,0 +1,81 @@
+<div class="row content stack-sm" >
+  <div class="column" ng-if="!$ctrl.loading">
+    <div class="library-header">
+      <h1 class="h3 page-title"
+          ng-show="!$ctrl.$parent.selectedScenes.size">
+        <a ui-sref="^.^.list">Buckets</a><br>
+        {{$ctrl.bucket.name}}
+      </h1>
+      <button class="btn btn-tiny" ng-show="!$ctrl.$parent.selectedScenes.size">
+        <i class="icon-pencil"></i>
+      </button>
+      <div ng-show="$ctrl.$parent.selectedScenes.size">
+        <h1 class="h3 highlight">
+          <ng-pluralize count="$ctrl.$parent.selectedScenes.size"
+                        when="{'one': '1 scene selected.',
+                              'other': '{} scenes selected.'}">
+          </ng-pluralize>
+        </h1>
+        <div class="button-group">
+          <a href ng-click="$ctrl.selectNone()">Deselect All</a>
+          <a href ng-click="$ctrl.removeScenes()">Remove from Bucket</a>
+        </div>
+      </div>
+    </div>
+    <div class="list-group">
+      <rf-scene-item
+          ng-click="$ctrl.viewSceneDetail(scene)"
+          scene="scene"
+          selectable
+          selected="$ctrl.isSelected(scene)"
+          on-select="$ctrl.setSelected(scene, selected)"
+          class="selectable"
+          ng-repeat="scene in $ctrl.sceneList track by scene.id">
+      </rf-scene-item>
+    </div>
+    <div class="list-group text-center"
+         ng-show="!$ctrl.loading && $ctrl.lastSceneResult && $ctrl.lastSceneResult.count !== 0 && !$ctrl.errorMsg">
+      <ul uib-pagination
+          items-per-page="$ctrl.lastSceneResult.pageSize"
+          total-items="$ctrl.lastSceneResult.count"
+          ng-model="$ctrl.currentPage"
+          max-size="4"
+          rotate="true"
+          boundary-link-numbers="true"
+          force-ellipses="true"
+          ng-change="$ctrl.populateSceneList($ctrl.currentPage)">
+      </ul>
+    </div>
+    <div ng-if="!$ctrl.loading && $ctrl.lastSceneResult && $ctrl.lastSceneResult.count === 0"
+         class="list-group">
+      <span class="list-placeholder">You haven't added any scenes to this Bucket.</span>
+    </div>
+    <div class="list-group" ng-show="$ctrl.errorMsg">
+      <span class="list-placeholder">
+        {{$ctrl.errorMsg}}
+        <a href ng-click="$ctrl.populateSceneList(0)">Try again</a>
+      </span>
+    </div>
+  </div>
+  <div class="column-8" ng-if="$ctrl.loading">
+    <div class="list-group">
+      <div class="list-placeholder">
+          <i class="icon-load"></i>
+      </div>
+    </div>
+  </div>
+  <div class="column-4">
+    <div class="content">
+      <nav>
+        <a href="#"><i class="icon-mosaic"></i> Editor</a>
+        <a href="#"><i class="icon-download"></i> Download</a>
+        <hr>
+        <a href class="color-danger"
+           ng-click="$ctrl.deleteBucket()">
+          <i class="icon-trash"></i>
+          Delete Bucket
+        </a>
+      </nav>
+    </div>
+  </div>
+</div>

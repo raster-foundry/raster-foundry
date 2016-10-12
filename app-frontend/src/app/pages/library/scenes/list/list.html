@@ -1,18 +1,17 @@
 <div class="content">
   <div class="row stack-sm library-header">
-    <h1 ng-show="!$ctrl.$parent.selectedScenes.length"
+    <h1 ng-show="!$ctrl.$parent.selectedScenes.size"
         class="h3">Scenes</h1>
-    <div ng-show="$ctrl.$parent.selectedScenes.length">
+    <div ng-show="$ctrl.$parent.selectedScenes.size">
       <h1 class="h3 highlight">
-        <ng-pluralize count="$ctrl.$parent.selectedScenes.length"
+        <ng-pluralize count="$ctrl.$parent.selectedScenes.size"
                       when="{'one': '1 scene selected.',
                             'other': '{} scenes selected.'}">
         </ng-pluralize>
       </h1>
       <div class="button-group">
-        <a href ng-click="$ctrl.selectAll()">Select All</a>
-        <a href ng-click="$ctrl.selectNone()">Deselect All</a>
-        <a href>Add to Bucket...</a>
+        <a href ng-click="$ctrl.sceneModal()">Selected Scenes...</a>
+        <a href ng-click="$ctrl.bucketModal()">Add to Bucket...</a>
         <a href>Delete...</a>
       </div>
     </div>
@@ -23,8 +22,11 @@
         <div class="list-group">
           <rf-scene-item
               ng-click="$ctrl.viewSceneDetail(scene)"
-              scene="scene" selected="$ctrl.isSelected(scene)"
+              scene="scene"
+              selectable
+              selected="$ctrl.isSelected(scene)"
               on-select="$ctrl.setSelected(scene, selected)"
+              class="selectable"
               ng-repeat="scene in $ctrl.sceneList track by scene.id">
           </rf-scene-item>
         </div>

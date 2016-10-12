@@ -38,6 +38,7 @@
     "auth0-angular": "^4.2.3",
     "auth0-lock": "^9.2.2",
     "bootstrap-sass": "^3.3.6",
+    "es6-map": "^0.1.4",
     "jquery": "^2.1.4",
     "leaflet": "^1.0.0",
     "lodash": "~4.5.0",

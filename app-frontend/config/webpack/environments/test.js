@@ -4,7 +4,7 @@
  no-console: 0
  */
 
-let webpack = require('webpack');
+const webpack = require('webpack');
 
 module.exports = function (_path) {
     return {

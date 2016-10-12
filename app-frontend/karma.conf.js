@@ -4,8 +4,8 @@
  no-console: 0
  */
 
-let _ = require('lodash');
-let configs = {
+const _ = require('lodash');
+const configs = {
     // global section
     global: require(__dirname + '/config/webpack/global'),
     // config by enviroments

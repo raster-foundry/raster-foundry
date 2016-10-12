@@ -4,9 +4,9 @@
  */
 
 
-let webpack = require('webpack');
-let port = process.env.RF_PORT_9091 || 9091;
-let serverport = process.env.RF_SERVER_PORT || 9100;
+const webpack = require('webpack');
+const port = process.env.RF_PORT_9091 || 9091;
+const serverport = process.env.RF_SERVER_PORT || 9100;
 
 module.exports = function (_path) {
     return {

@@ -1,7 +1,8 @@
+import Map from 'es6-map';
 class ScenesController {
     constructor() {
         'ngInject';
-        this.selectedScenes = [];
+        this.selectedScenes = new Map();
     }
 }
 
