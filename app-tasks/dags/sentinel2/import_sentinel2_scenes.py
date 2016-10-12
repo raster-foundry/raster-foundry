@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 seven_days_ago = datetime.combine(
-        datetime.today() - timedelta(7), datetime.min.time())
+    datetime.today() - timedelta(7), datetime.min.time())
 
 
 args = {
@@ -34,7 +34,7 @@ dag = DAG(
 
 
 def import_sentinel2(*args, **kwargs):
-    """Creates new sentinel 2 scenes with associated images, thumbnails, and footprint"""
+    """Creates new Sentinel-2 scenes with associated images, thumbnails, and footprint"""
     logger.info('KWARGS: %s', kwargs)
     conf = kwargs['dag_run'].conf
     tilepaths = conf.get('tilepaths')
