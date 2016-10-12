@@ -37,13 +37,13 @@ def import_landsat8_scenes(*args, **kwargs):
     Uses the execution date from the Airflow context to determine what day
     to check for imports.
     """
-    logging.info("Finding Landsat 8 scenes...")
     execution_date = kwargs['execution_date']
+    logging.info('Finding Landsat 8 scenes for date: %s', execution_date)
 
     csv_rows = find_landsat8_scenes(execution_date.year, execution_date.month,
                                     execution_date.day)
     if not csv_rows:
-        raise ValueError('Need some rows bruh')
+        raise ValueError('No rows found to import for %s' % execution_date)
     logger.info('Importing %d csv rows...', len(csv_rows))
     for row in csv_rows:
         scene_id = row['sceneID']
@@ -55,7 +55,7 @@ def import_landsat8_scenes(*args, **kwargs):
 
 
 landsat8_finder = PythonOperator(
-    task_id='import_new_landsat8_scenes_{year}_{month}_{day}'.format(
+    task_id='import_new_landsat8_scenes'.format(
         year=start_date.year, month=start_date.month, day=start_date.day
     ),
     provide_context=True,
