@@ -2,4 +2,4 @@
 # defaults for jenkins
 jenkins_server_name: jenkins.staging.rasterfoundry.com
 jenkins_http_port: "8080"
-jenkins_jar_path: /var/lib/jenkins/jenkins-cli.jar
+jenkins_cli_jar_path: /var/cache/jenkins/war/WEB-INF/jenkins-cli.jar
