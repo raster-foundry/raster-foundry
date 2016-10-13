@@ -8,6 +8,7 @@ from rf.models import Scene
 from rf.utils.io import JobStatus, Visibility, s3_obj_exists
 
 
+from .create_images import create_images
 from .create_thumbnails import create_thumbnails
 from .create_footprint import create_footprint
 from .settings import organization, aws_landsat_base
@@ -82,7 +83,7 @@ def create_landsat8_scenes(csv_row):
         sunElevation=sun_elevation,
         footprint=create_footprint(csv_row),
         thumbnails=create_thumbnails(scene_id),
-        images=[]
+        images=create_images(scene_id, '15m')
     )
 
     scene30m = Scene(
@@ -103,7 +104,7 @@ def create_landsat8_scenes(csv_row):
         sunElevation=sun_elevation,
         footprint=create_footprint(csv_row),
         thumbnails=create_thumbnails(scene_id),
-        images=[]
+        images=create_images(scene_id, '30m')
     )
 
     return [scene15m, scene30m]
