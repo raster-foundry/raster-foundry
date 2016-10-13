@@ -1,4 +1,11 @@
 ---
+- name: Disable authentication for login
+  copy:
+    src=files/config.xml
+    dest=/var/lib/jenkins/config.xml
+  notify:
+    - Restart Jenkins
+
 - name: Add Jenkins Nginx config
   template: src=jenkins.conf.j2
             dest=/etc/nginx/sites-available/jenkins.conf
