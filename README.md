@@ -41,16 +41,15 @@ Development workflow varies by developer, but a typical development experience m
 
 Database migrations are managed using [scala-forklift](https://github.com/lastland/scala-forklift). The `scala-forklift` [example project](https://github.com/lastland/scala-forklift/tree/develop/example) provides a good overview and walkthrough of how the various components fit together, and how to manage migrations.
 
-To initialize migrations on a database for the first time, run `mg init` within an `sbt console`. This creates a `__migrations__` table in the database to track which migrations have been applied. After the database has been initialized, all unapplied migrations may be applied by running `~mg migrate`. Please note the tilde: the `mg migrate` command runs only a single step in the migration process, and needs the tilde in order to run all subsequent migrations.
+To initialize migrations on a database for the first time, run `mg init` within an `sbt console`. This creates a `__migrations__` table in the database to track which migrations have been applied. After the database has been initialized, all unapplied migrations may be applied by running `mg update` and then `mg apply`. Please note: the `mg migrate` command should be avoided because it invokes the code generation feature of forklift. This feature is not used in the `raster-foundry` project.
 
 The workflow for creating a new migration is:
  - open an `sbt` console using `./scripts/console app-server ./sbt`
- - run `mg new s` for a `SQL` migration, or `mg new d` for a `Slick` migration
+ - run `mg new s` for a `SQL` migration
    - the migration file is output to `migrations/src_migrations/main/scala/{VERSION_NUM}.scala`
  - edit this file to perform the desired migration logic
-   - if a new table is being added, append it to the `tableNames` list in `migration_manager/src/main/scala/CodeGen.scala`
- - run `~mg migrate`
-   - this executes the migration and outputs generated datamodel access code to the `generated_code` directory
+ - run `mg update` followed by `mg apply`
+   - this executes the migration
    - press `ENTER` once the migration command has completed
 
 #### Frontend Development
