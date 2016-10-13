@@ -34,3 +34,5 @@ molecule:
 
 verifier:
   name: testinfra
+  options:
+    sudo: True
