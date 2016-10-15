@@ -34,7 +34,7 @@ class BucketSceneSpec extends WordSpec
         List(authorization),
         HttpEntity(
           ContentTypes.`application/json`,
-          newBucket1.toJson(createBucketFormat).toString()
+          newBucket1.toJson.toString()
         )
       ) ~> bucketRoutes ~> check {
         responseAs[Bucket]
@@ -44,10 +44,10 @@ class BucketSceneSpec extends WordSpec
         List(authorization),
         HttpEntity(
           ContentTypes.`application/json`,
-          newScene.toJson(createSceneFormat).toString()
+          newScene.toJson.toString()
         )
       ) ~> sceneRoutes ~> check {
-        responseAs[SceneWithRelated]
+        responseAs[Scene.WithRelated]
       }
     }
 
@@ -56,7 +56,7 @@ class BucketSceneSpec extends WordSpec
         val buckets = responseAs[PaginatedResponse[Bucket]]
         val bucketId = buckets.results.head.id
         Get(s"/api/buckets/${bucketId}/scenes/") ~> bucketRoutes ~> check {
-          responseAs[PaginatedResponse[SceneWithRelated]].count shouldEqual 0
+          responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 0
         }
       }
     }
@@ -69,7 +69,7 @@ class BucketSceneSpec extends WordSpec
 
         // Get scenes to get ID
         Get("/api/scenes/") ~> sceneRoutes ~> check {
-          val scenes = responseAs[PaginatedResponse[SceneWithRelated]]
+          val scenes = responseAs[PaginatedResponse[Scene.WithRelated]]
           val sceneId = scenes.results.head.id
 
           Post(s"/api/buckets/${bucketId}/scenes/${sceneId}/").withHeaders(
@@ -86,7 +86,7 @@ class BucketSceneSpec extends WordSpec
         val buckets = responseAs[PaginatedResponse[Bucket]]
         val bucketId = buckets.results.head.id
         Get(s"/api/buckets/${bucketId}/scenes/") ~> bucketRoutes ~> check {
-          responseAs[PaginatedResponse[SceneWithRelated]].count shouldEqual 1
+          responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 1
         }
       }
     }
@@ -96,7 +96,7 @@ class BucketSceneSpec extends WordSpec
         val buckets = responseAs[PaginatedResponse[Bucket]]
         val bucketId = buckets.results.head.id
         Get(s"/api/buckets/${bucketId}/scenes/?datasource=DoesNotExist") ~> bucketRoutes ~> check {
-          responseAs[PaginatedResponse[SceneWithRelated]].count shouldEqual 0
+          responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 0
         }
       }
     }
@@ -108,7 +108,7 @@ class BucketSceneSpec extends WordSpec
 
         // Get scenes to get ID
         Get("/api/scenes/") ~> sceneRoutes ~> check {
-          val scenes = responseAs[PaginatedResponse[SceneWithRelated]]
+          val scenes = responseAs[PaginatedResponse[Scene.WithRelated]]
           val sceneId = scenes.results.head.id
 
           Delete(s"/api/buckets/${bucketId}/scenes/${sceneId}/").withHeaders(
@@ -125,7 +125,7 @@ class BucketSceneSpec extends WordSpec
         val buckets = responseAs[PaginatedResponse[Bucket]]
         val bucketId = buckets.results.head.id
         Get(s"/api/buckets/${bucketId}/scenes/") ~> bucketRoutes ~> check {
-          responseAs[PaginatedResponse[SceneWithRelated]].count shouldEqual 0
+          responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 0
         }
       }
     }

@@ -63,7 +63,7 @@ class BucketSpec extends WordSpec
       Post("/api/buckets/").withEntity(
         HttpEntity(
           ContentTypes.`application/json`,
-          newBucket1.toJson(createBucketFormat).toString()
+          newBucket1.toJson.toString()
         )
       ) ~> bucketRoutes ~> check {
         reject
@@ -75,7 +75,7 @@ class BucketSpec extends WordSpec
         List(authorization),
         HttpEntity(
           ContentTypes.`application/json`,
-          newBucket1.toJson(createBucketFormat).toString()
+          newBucket1.toJson.toString()
         )
       ) ~> bucketRoutes ~> check {
         responseAs[Bucket]
@@ -85,7 +85,7 @@ class BucketSpec extends WordSpec
         List(authorization),
         HttpEntity(
           ContentTypes.`application/json`,
-          newBucket2.toJson(createBucketFormat).toString()
+          newBucket2.toJson.toString()
         )
       ) ~> bucketRoutes ~> check {
         responseAs[Bucket]

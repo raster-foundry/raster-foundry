@@ -26,7 +26,7 @@ class UserSpec extends WordSpec
     "return a paginated list of users" in {
       Get("/api/users")
         .addHeader(authorization) ~> userRoutes ~> check {
-        responseAs[PaginatedResponse[UserWithOrgs]]
+        responseAs[PaginatedResponse[User.WithOrgs]]
       }
     }
 
@@ -41,7 +41,7 @@ class UserSpec extends WordSpec
     "return a single user" in {
       Get("/api/users/Default")
         .addHeader(authorization)~> userRoutes ~> check {
-        responseAs[UserWithOrgs]
+        responseAs[User.WithOrgs]
       }
     }
   }

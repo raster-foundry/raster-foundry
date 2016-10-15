@@ -1,6 +1,6 @@
 package com.azavea.rf.auth
 
-import com.azavea.rf.datamodel.UserWithOrgs
+import com.azavea.rf.datamodel.User
 import org.scalatest.{Matchers, WordSpec}
 import akka.http.scaladsl.testkit.{ScalatestRouteTest, RouteTestTimeout}
 import akka.http.scaladsl.model.StatusCodes
@@ -46,7 +46,7 @@ class AuthSpec extends WordSpec
       Get("/").addHeader(authorization) ~> authenticateDirectiveTestRoute ~> check {
         Get(s"/api/users/$newUserId")
           .addHeader(authorization) ~> userRoutes ~> check {
-          responseAs[UserWithOrgs]
+          responseAs[User.WithOrgs]
         }
       }
     }

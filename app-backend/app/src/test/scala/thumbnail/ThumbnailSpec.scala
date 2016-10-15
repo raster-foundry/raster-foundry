@@ -38,7 +38,7 @@ class ThumbnailSpec extends WordSpec
     128,
     uuid,
     "https://website.com",
-    ThumbnailSize.LARGE
+    ThumbnailSize.Large
   )
 
   "Creating a row" should {
@@ -65,7 +65,7 @@ class ThumbnailSpec extends WordSpec
         128,
         uuid,
         "https://website.com",
-        ThumbnailSize.LARGE
+        ThumbnailSize.Large
       )
       val result = Thumbnails.updateThumbnail(newThumbnailsRow, uuid)
       assert(result === 1)
@@ -116,10 +116,10 @@ class ThumbnailSpec extends WordSpec
         List(authorization),
         HttpEntity(
           ContentTypes.`application/json`,
-          newScene.toJson(createSceneFormat).toString()
+          newScene.toJson.toString()
         )
       ) ~> sceneRoutes ~> check {
-        responseAs[SceneWithRelated]
+        responseAs[Scene.WithRelated]
       }
     }
 
@@ -132,15 +132,15 @@ class ThumbnailSpec extends WordSpec
 
     "create thumbnails only with authentication" in {
       Get("/api/scenes/") ~> sceneRoutes ~> check {
-        val scenes = responseAs[PaginatedResponse[SceneWithRelated]]
+        val scenes = responseAs[PaginatedResponse[Scene.WithRelated]]
         val sceneId = scenes.results.head.id
-        val thumbnailToPost1 = newThumbnail(ThumbnailSize.SMALL, sceneId)
-        val thumbnailToPost2 = newThumbnail(ThumbnailSize.SQUARE, sceneId)
+        val thumbnailToPost1 = newThumbnail(ThumbnailSize.Small, sceneId)
+        val thumbnailToPost2 = newThumbnail(ThumbnailSize.Square, sceneId)
 
         Post("/api/thumbnails/").withEntity(
           HttpEntity(
             ContentTypes.`application/json`,
-            thumbnailToPost1.toJson(createThumbnailFormat).toString()
+            thumbnailToPost1.toJson.toString()
           )
         ) ~> thumbnailRoutes ~> check {
           reject
@@ -150,7 +150,7 @@ class ThumbnailSpec extends WordSpec
           List(authorization),
           HttpEntity(
             ContentTypes.`application/json`,
-            thumbnailToPost1.toJson(createThumbnailFormat).toString()
+            thumbnailToPost1.toJson.toString()
           )
         ) ~> thumbnailRoutes ~> check {
           responseAs[Thumbnail]
@@ -160,7 +160,7 @@ class ThumbnailSpec extends WordSpec
           List(authorization),
           HttpEntity(
             ContentTypes.`application/json`,
-            thumbnailToPost2.toJson(createThumbnailFormat).toString()
+            thumbnailToPost2.toJson.toString()
           )
         ) ~> thumbnailRoutes ~> check {
           responseAs[Thumbnail]
@@ -170,7 +170,7 @@ class ThumbnailSpec extends WordSpec
 
     "filter by one scene correctly" in {
       Get("/api/scenes/") ~> sceneRoutes ~> check {
-        val scenes = responseAs[PaginatedResponse[SceneWithRelated]]
+        val scenes = responseAs[PaginatedResponse[Scene.WithRelated]]
         val sceneId = scenes.results.head.id
         Get(s"/api/thumbnails/?sceneId=$sceneId") ~> thumbnailRoutes ~> check {
           responseAs[PaginatedResponse[Thumbnail]].count shouldEqual 2

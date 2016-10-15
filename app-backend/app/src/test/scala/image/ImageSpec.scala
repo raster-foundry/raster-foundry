@@ -34,12 +34,12 @@ class ImageSpec extends WordSpec
   val baseImagePath = "/api/images/"
   val publicOrgId = UUID.fromString("dfac6307-b5ef-43f7-beda-b9f208bb7726")
 
-  val newSceneDatasource1 = CreateScene(
-    publicOrgId, 0, Visibility.PUBLIC, 20.2f, List("Test", "Public", "Low Resolution"), "TEST_ORG",
+  val newSceneDatasource1 = Scene.Create(
+    publicOrgId, 0, Visibility.Public, 20.2f, List("Test", "Public", "Low Resolution"), "TEST_ORG",
     Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any], None,
     Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
-    JobStatus.PROCESSING, JobStatus.PROCESSING, JobStatus.PROCESSING, None, None, "test scene image spec 1",
-    List(): List[SceneImage], None, List(): List[SceneThumbnail]
+    JobStatus.Processing, JobStatus.Processing, JobStatus.Processing, None, None, "test scene image spec 1",
+    List.empty[Image.Identified], None, List.empty[Thumbnail.Identified]
   )
 
 
@@ -83,13 +83,13 @@ class ImageSpec extends WordSpec
         List(authorization),
         HttpEntity(
           ContentTypes.`application/json`,
-          newSceneDatasource1.toJson(createSceneFormat).toString()
+          newSceneDatasource1.toJson.toString()
         )
       ) ~> sceneRoutes ~> check {
-        val sceneId = responseAs[SceneWithRelated].id
+        val sceneId = responseAs[Scene.WithRelated].id
 
-        val newImageDatasource1 = CreateImage(
-          publicOrgId, 1024, Visibility.PUBLIC, "test-image.png", "s3://public/s3/test-image.png",
+        val newImageDatasource1 = Image.Create(
+          publicOrgId, 1024, Visibility.Public, "test-image.png", "s3://public/s3/test-image.png",
           sceneId, List("red, green, blue"),
           Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any]
         )
@@ -98,7 +98,7 @@ class ImageSpec extends WordSpec
           List(authorization),
           HttpEntity(
             ContentTypes.`application/json`,
-            newImageDatasource1.toJson(createImageFormat).toString()
+            newImageDatasource1.toJson.toString()
           )
         ) ~> imageRoutes ~> check {
           responseAs[Image]
@@ -135,7 +135,7 @@ class ImageSpec extends WordSpec
 
     "filter by scene correctly" in {
       Get("/api/scenes/") ~> sceneRoutes ~> check {
-        val scenes = responseAs[PaginatedResponse[SceneWithRelated]]
+        val scenes = responseAs[PaginatedResponse[Scene.WithRelated]]
         val sceneId = scenes.results.head.id
 
         val url = s"$baseImagePath?scene=$sceneId"

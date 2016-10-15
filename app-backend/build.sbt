@@ -84,7 +84,7 @@ lazy val appDependencies = dbDependencies ++ migrationsDependencies ++ Seq(
 )
 
 lazy val root = Project("root", file("."))
-  .aggregate(app, migrations, datamodel, database, ingest)
+  .aggregate(app, migrations, datamodel, database)
   .settings(commonSettings:_*)
 
 lazy val app = Project("app", file("app"))
@@ -117,4 +117,3 @@ lazy val database = Project("database", file("database"))
   .settings({
    libraryDependencies ++= slickDependencies ++ dbDependencies ++ loggingDependencies ++ Seq(Dependencies.akkaHttpExtensions)
   })
-
