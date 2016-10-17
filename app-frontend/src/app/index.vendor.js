@@ -5,6 +5,7 @@ import 'jquery';
 import 'angular';
 import 'angular-ui-router';
 import 'angular-ui-bootstrap';
+import 'angular-deferred-bootstrap';
 import 'angular-storage';
 import 'ng-infinite-scroll';
 import 'angular-jwt';
