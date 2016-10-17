@@ -9,9 +9,11 @@ import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 import org.postgresql.util.PSQLException
-import scala.concurrent.{Future, ExecutionContext}
-import scala.util.{Try, Success, Failure}
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 import com.typesafe.scalalogging.LazyLogging
+
+import scala.util.{Success, Failure}
 
 /** Table description of table organizations. Objects of this class serve as prototypes for rows in queries. */
 class Organizations(_tableTag: Tag) extends Table[Organization](_tableTag, "organizations")
@@ -60,10 +62,7 @@ object Organizations extends TableQuery(tag => new Organizations(tag)) with Lazy
     }
   }
 
-  def getOrganization(id: java.util.UUID)(implicit database: DB):
-      Future[Option[Organization]] = {
-    import database.driver.api._
-
+  def getOrganization(id: java.util.UUID)(implicit database: DB): Future[Option[Organization]] = {
     val action = Organizations.filter(_.id === id).result
     logger.debug(s"Query for org $id: ${action.statements.headOption}")
     database.db.run {
@@ -71,11 +70,7 @@ object Organizations extends TableQuery(tag => new Organizations(tag)) with Lazy
     }
   }
 
-  def createOrganization(
-    org: Organization.Create
-  )(implicit database: DB, ec: ExecutionContext): Future[Try[Organization]] = {
-    import database.driver.api._
-
+  def createOrganization(org: Organization.Create)(implicit database: DB): Future[Organization] = {
     val rowInsert = org.toOrganization()
 
     val action = Organizations.forceInsert(rowInsert)
@@ -83,33 +78,25 @@ object Organizations extends TableQuery(tag => new Organizations(tag)) with Lazy
     database.db.run {
       action.asTry
     } map {
-      case Success(res) => {
+      case Success(res) =>
         res match {
-          case 1 => Success(rowInsert)
-          case _ => Failure(
-            new Exception(
+          case 1 => rowInsert
+          case _ =>
+            throw new Exception(
               s"Unexpected result from database when inserting organization: $res"
             )
-          )
         }
-      }
-      case Failure(e) => {
+      case Failure(e) =>
         e match {
-          case e: PSQLException => {
-            Failure(new IllegalStateException("Organization already exists"))
-          }
-          case _ => Failure(e)
+          case e: PSQLException =>
+            throw new IllegalStateException("Organization already exists")
+          case _ => throw e
         }
-      }
     }
   }
 
-  def updateOrganization(
-    org: Organization, id: java.util.UUID
-  )(implicit database: DB, ec: ExecutionContext): Future[Try[Int]] = {
-    import database.driver.api._
-
-    val now = new Timestamp((new java.util.Date()).getTime())
+  def updateOrganization(org: Organization, id: UUID)(implicit database: DB): Future[Int] = {
+    val now = new Timestamp((new java.util.Date).getTime)
     val updateQuery = for {
       updateorg <- Organizations.filter(_.id === id)
     } yield (
@@ -118,23 +105,16 @@ object Organizations extends TableQuery(tag => new Organizations(tag)) with Lazy
     val action = updateQuery.update((org.name, now))
     logger.debug(s"Updating org with: ${action.statements.headOption}")
     database.db.run {
-      action.asTry
-    } map {
-      case Success(res) => {
-        res match {
-          case 1 => Success(1)
-          case _ => Failure(new Exception("Error while updating organization: Unexpected result"))
-        }
+      action.map {
+        case 1 => 1
+        case _ => throw new IllegalStateException("Error while updating organization: Unexpected result")
       }
-      case Failure(e) => Failure(e)
     }
   }
 
   def getOrganizationUsers(
     page: PageRequest, id: java.util.UUID
-  )(implicit database: DB, ec: ExecutionContext): Future[PaginatedResponse[User.WithRole]] = {
-    import database.driver.api._
-
+  )(implicit database: DB): Future[PaginatedResponse[User.WithRole]] = {
     val getOrgUsersResult = database.db.run {
       UsersToOrganizations.filter(_.organizationId === id)
         .drop(page.offset * page.limit)
@@ -159,11 +139,7 @@ object Organizations extends TableQuery(tag => new Organizations(tag)) with Lazy
     }
   }
 
-  def getOrganizationUser(
-    orgId: java.util.UUID, userId: String
-  )(implicit database: DB, ex: ExecutionContext): Future[Option[User.WithRole]] = {
-    import database.driver.api._
-
+  def getOrganizationUser(orgId: UUID, userId: String)(implicit database: DB): Future[Option[User.WithRole]] = {
     val getOrgUserQuery = for {
       relationship <- UsersToOrganizations.filter(_.userId === userId)
         .filter(_.organizationId === orgId)
@@ -179,11 +155,8 @@ object Organizations extends TableQuery(tag => new Organizations(tag)) with Lazy
     }
   }
 
-  def addUserToOrganization(
-    userWithRoleCreate: User.WithRoleCreate, orgId: java.util.UUID
-  )(implicit database: DB, ex: ExecutionContext): Future[Try[User.WithRole]] = {
-    import database.driver.api._
-
+  def addUserToOrganization(userWithRoleCreate: User.WithRoleCreate, orgId: UUID)
+    (implicit database: DB): Future[User.WithRole] = {
     val userWithRole = userWithRoleCreate.toUserWithRole()
 
     val insertRow =
@@ -194,33 +167,26 @@ object Organizations extends TableQuery(tag => new Organizations(tag)) with Lazy
     database.db.run {
       action.asTry
     } map {
-      case Success(user) => Success(userWithRole)
+      case Success(user) => userWithRole
       case Failure(_) => throw new IllegalStateException("User is already in the organization")
     }
   }
 
-  def getUserOrgRole(
-    userId: String, orgId: java.util.UUID
-  )(implicit database: DB, ex: ExecutionContext): Future[Option[User.WithRole]] = {
-    import database.driver.api._
-
+  def getUserOrgRole(userId: String, orgId: UUID)
+    (implicit database: DB): Future[Option[User.WithRole]] = {
     val action = UsersToOrganizations.filter(
       rel => rel.userId === userId && rel.organizationId === orgId
     ).result
     logger.debug(s"Getting user org role with: ${action.statements.headOption}")
     database.db.run {
-      action.headOption
-    } map {
-      case Some(rel) => Some(User.WithRole(rel.userId, rel.role, rel.createdAt, rel.modifiedAt))
-      case _ => None
+      action.headOption.map {
+        case Some(rel) => Some(User.WithRole(rel.userId, rel.role, rel.createdAt, rel.modifiedAt))
+        case _ => None
+      }
     }
   }
 
-  def deleteUserOrgRole(
-    userId: String, orgId: java.util.UUID
-  )(implicit database: DB): Future[Int] = {
-    import database.driver.api._
-
+  def deleteUserOrgRole(userId: String, orgId: UUID)(implicit database: DB): Future[Int] = {
     val action = UsersToOrganizations.filter(
       rel => rel.userId === userId && rel.organizationId === orgId
     ).delete
@@ -230,10 +196,8 @@ object Organizations extends TableQuery(tag => new Organizations(tag)) with Lazy
     }
   }
 
-  def updateUserOrgRole(userWithRole: User.WithRole, orgId: java.util.UUID, userId: String)(implicit database: DB): Future[Try[Int]] = {
-    import database.driver.api._
-
-    val now = new Timestamp((new java.util.Date()).getTime())
+  def updateUserOrgRole(userWithRole: User.WithRole, orgId: UUID, userId: String)(implicit database: DB): Future[Int] = {
+    val now = new Timestamp((new java.util.Date).getTime)
 
     val rowUpdate = for {
       relationship <- UsersToOrganizations.filter(
@@ -249,7 +213,7 @@ object Organizations extends TableQuery(tag => new Organizations(tag)) with Lazy
     logger.debug(s"Updating user with role with: ${action.statements.headOption}")
 
     database.db.run {
-      action.asTry
+      action
     }
   }
 }

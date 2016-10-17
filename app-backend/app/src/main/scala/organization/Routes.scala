@@ -37,8 +37,7 @@ trait OrganizationRoutes extends Authentication with PaginationDirectives with U
               post {
                 entity(as[Organization.Create]) { orgCreate =>
                   onSuccess(Organizations.createOrganization(orgCreate)) {
-                    case Success(newOrg) => complete(newOrg)
-                    case Failure(e) => throw e
+                    newOrg => complete(newOrg)
                   }
                 }
               }
@@ -55,15 +54,10 @@ trait OrganizationRoutes extends Authentication with PaginationDirectives with U
               put {
                 entity(as[Organization]) { orgUpdate =>
                   onSuccess(Organizations.updateOrganization(orgUpdate, orgId)) {
-                    case Success(res) => {
-                      res match {
-                        case 1 => complete(StatusCodes.NoContent)
-                        case count: Int => throw new Exception(
-                          s"Error updating organization: update result expected to be: 1, was $count"
-                        )
-                      }
-                    }
-                    case Failure(e) => throw e
+                    case 1 => complete(StatusCodes.NoContent)
+                    case count: Int => throw new Exception(
+                      s"Error updating organization: update result expected to be: 1, was $count"
+                    )
                   }
                 }
               }
@@ -80,8 +74,7 @@ trait OrganizationRoutes extends Authentication with PaginationDirectives with U
                 post {
                   entity(as[User.WithRoleCreate]) { userWithRole =>
                     onSuccess(Organizations.addUserToOrganization(userWithRole, orgId)) {
-                      case Success(userRole) => complete(userRole)
-                      case Failure(e) => throw e
+                      userRole => complete(userRole)
                     }
                   }
                 }
@@ -98,13 +91,8 @@ trait OrganizationRoutes extends Authentication with PaginationDirectives with U
                     onSuccess(
                       Organizations.updateUserOrgRole(userWithRole, orgId, userId)
                     ) {
-                      case Success(res) => {
-                        res match {
-                          case 1 => complete(StatusCodes.NoContent)
-                          case _ => complete(StatusCodes.InternalServerError)
-                        }
-                      }
-                      case Failure(e) => throw e
+                      case 1 => complete(StatusCodes.NoContent)
+                      case _ => complete(StatusCodes.InternalServerError)
                     }
                   }
                 } ~
