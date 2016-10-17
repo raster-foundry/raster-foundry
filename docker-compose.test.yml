@@ -6,10 +6,10 @@ services:
       context: ./nginx
       dockerfile: Dockerfile
 
-  app-server:
-    image: raster-foundry-app-server:${GIT_COMMIT}
+  app-backend:
+    image: raster-foundry-app-backend:${GIT_COMMIT}
     build:
-      context: ./app-server/app
+      context: ./app-backend/app
       dockerfile: Dockerfile
 
   airflow:

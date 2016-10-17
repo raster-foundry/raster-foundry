@@ -1,1 +1,0 @@
-name := "rf-migration-manager"

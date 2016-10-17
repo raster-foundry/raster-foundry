@@ -9,7 +9,7 @@ function usage() {
 
 Use docker compose to run a command for a service or drop into a console
 
-Example: ./scripts/console app-server \"./sbt\"
+Example: ./scripts/console app-backend \"./sbt\"
 "
 }
 
