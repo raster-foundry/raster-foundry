@@ -1,5 +1,6 @@
 package com.azavea.rf.database.tables
 
+import com.azavea.rf.database.fields._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.{Database => DB}
@@ -15,9 +16,11 @@ import com.typesafe.scalalogging.LazyLogging
 
 /** Table description of table buckets. Objects of this class serve as prototypes for rows in queries. */
 class Buckets(_tableTag: Tag) extends Table[Bucket](_tableTag, "buckets")
-                                      with HasOrganizationFK
-                                      with HasUserFK
-                                      with HasTimestamp
+                                      with BucketFields
+                                      with OrganizationFkFields
+                                      with UserFkFields
+                                      with TimestampFields
+                                      with VisibilityField
 {
   def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, name, slugLabel, description, visibility, tags) <> (Bucket.tupled, Bucket.unapply)
   /** Maps whole row to an option. Useful for outer joins. */

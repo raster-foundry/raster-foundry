@@ -1,5 +1,6 @@
 package com.azavea.rf.database.tables
 
+import com.azavea.rf.database.fields._
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
@@ -13,9 +14,11 @@ import scala.util.{Try, Success, Failure}
 import com.typesafe.scalalogging.LazyLogging
 
 class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
-                                     with HasOrganizationFK
-                                     with HasUserFK
-                                     with HasTimestamp
+                                     with ImageFields
+                                     with OrganizationFkFields
+                                     with UserFkFields
+                                     with TimestampFields
+                                     with VisibilityField
 {
   def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, rawDataBytes, visibility, filename, sourceuri, scene, bands, imageMetadata) <> (Image.tupled, Image.unapply)
   /** Maps whole row to an option. Useful for outer joins. */

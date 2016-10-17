@@ -1,15 +1,15 @@
-package com.azavea.rf.database.tables
+package com.azavea.rf.database.fields
 
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.query.TimestampQueryParameters
 
-trait HasTimestamp  { self: Table[_] =>
+trait TimestampFields  { self: Table[_] =>
   def createdAt: Rep[java.sql.Timestamp]
   def modifiedAt: Rep[java.sql.Timestamp]
 }
 
-object HasTimestamp {
-  implicit class DefaultQuery[M <: HasTimestamp, U, C[_]](that: Query[M, U, Seq]) {
+object TimestampFields {
+  implicit class DefaultQuery[M <: TimestampFields, U, C[_]](that: Query[M, U, Seq]) {
     def filterByTimestamp(timeParams: TimestampQueryParameters) = {
       that.filter{ rec =>
         List(

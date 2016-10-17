@@ -2,6 +2,7 @@ package com.azavea.rf.database.tables
 
 import java.util.UUID
 import java.sql.Timestamp
+import com.azavea.rf.database.fields.TimestampFields
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
@@ -13,7 +14,7 @@ import com.typesafe.scalalogging.LazyLogging
 
 /** Table description of table organizations. Objects of this class serve as prototypes for rows in queries. */
 class Organizations(_tableTag: Tag) extends Table[Organization](_tableTag, "organizations")
-                                            with HasTimestamp
+                                            with TimestampFields
 {
   def * = (id, createdAt, modifiedAt, name) <> (Organization.tupled, Organization.unapply)
   /** Maps whole row to an option. Useful for outer joins. */

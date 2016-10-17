@@ -1,11 +1,12 @@
-package com.azavea.rf.database.tables
+package com.azavea.rf.database.fields
 
+import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.query.UserQueryParameters
+import com.azavea.rf.database.tables.Users
 import com.azavea.rf.datamodel.User
 import slick.lifted.ForeignKeyQuery
-import com.azavea.rf.database.ExtendedPostgresDriver.api._
 
-trait HasUserFK  { self: Table[_] =>
+trait UserFkFields  { self: Table[_] =>
   def createdBy: Rep[String]
   def modifiedBy: Rep[String]
 
@@ -13,8 +14,8 @@ trait HasUserFK  { self: Table[_] =>
   def modifiedByUserFK: ForeignKeyQuery[Users, User]
 }
 
-object HasUserFK {
-  implicit class DefaultQuery[M <: HasUserFK, U, C[_]](that: Query[M, U, Seq]) {
+object UserFkFields {
+  implicit class DefaultQuery[M <: UserFkFields, U, C[_]](that: Query[M, U, Seq]) {
     def filterByUser(userParams: UserQueryParameters) = {
       that.filter{ rec =>
         List(

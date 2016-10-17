@@ -1,5 +1,6 @@
 package com.azavea.rf.database.tables
 
+import com.azavea.rf.database.fields.{OrganizationFkFields, TimestampFields}
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
@@ -13,8 +14,8 @@ import scala.util.{Try, Success, Failure}
 
 /** Table description of table thumbnails. Objects of this class serve as prototypes for rows in queries. */
 class Thumbnails(_tableTag: Tag) extends Table[Thumbnail](_tableTag, "thumbnails")
-                                         with HasOrganizationFK
-                                         with HasTimestamp
+                                         with OrganizationFkFields
+                                         with TimestampFields
 {
   def * = (id, createdAt, modifiedAt, organizationId, widthPx, heightPx, scene, url, thumbnailSize) <> (Thumbnail.tupled, Thumbnail.unapply _)
   /** Maps whole row to an option. Useful for outer joins. */
