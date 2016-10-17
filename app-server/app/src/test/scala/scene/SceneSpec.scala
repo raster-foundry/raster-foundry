@@ -177,7 +177,7 @@ class SceneSpec extends WordSpec
       }
     }
 
-    "filter scenes by bounding box" in {
+    "filter scenes by bounding box" ignore {
       Get("/api/scenes/?bbox=0,0,1,1") ~> sceneRoutes ~> check {
         val res = responseAs[PaginatedResponse[SceneWithRelated]]
         res.count shouldEqual 0
@@ -188,7 +188,7 @@ class SceneSpec extends WordSpec
       }
     }
 
-    "filter scenes by point" in {
+    "filter scenes by point" ignore {
       Get("/api/scenes/?point=101,101") ~> sceneRoutes ~> check {
         val res = responseAs[PaginatedResponse[SceneWithRelated]]
         res.count shouldEqual 1

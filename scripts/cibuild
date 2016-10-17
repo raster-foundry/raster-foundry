@@ -30,6 +30,10 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         aws s3 cp "s3://rasterfoundry-testing-config-us-east-1/.env" ".env"
         popd
 
+        echo "Stopping all running containers before continuing CI suite..."
+        RUNNING_CONTAINERS="$(docker ps -aq)"
+        echo "${RUNNING_CONTAINERS}" | xargs docker stop
+
         docker-compose \
             -f "${DIR}/../docker-compose.yml" \
             run --rm app-server sbt update

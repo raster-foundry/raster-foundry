@@ -23,7 +23,7 @@ services:
       - ./nginx/etc/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
 
   app-frontend:
-    image: node:4.4.7-wheezy
+    image: node:6.8-wheezy
     working_dir: /opt/raster-foundry/app-frontend/
     volumes:
       - ./app-frontend/.babelrc:/opt/raster-foundry/app-frontend/.babelrc
