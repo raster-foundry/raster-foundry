@@ -32,7 +32,9 @@ class Database(jdbcUrl: String, dbUser: String, dbPassword: String) {
   // Custom driver to handle postgres column types
   val driver = ExtendedPostgresDriver
   import driver.api._
-  val db = Database.forDataSource(dataSource)
-  db.createSession()
 
+  val db = {
+    val executor = AsyncExecutor("slick", numThreads=64, queueSize=1000)
+    Database.forDataSource(dataSource, executor)
+  }
 }
