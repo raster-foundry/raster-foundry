@@ -33,7 +33,7 @@ Once the machine is provisioned you can start services or development by ssh-ing
 Development workflow varies by developer, but a typical development experience might include the following:
  - create a new feature branch
  - start up the vagrant machine with `vagrant up --provision`
- - get an `sbt` console open using `./scripts/console app-server ./sbt`
+ - get an `sbt` console open using `./scripts/console app-backend ./sbt`
  - make changes to scala code
  - try compiling (`~compile`) or running the service to inspect it (`~app/run`)
 
@@ -44,7 +44,7 @@ Database migrations are managed using [scala-forklift](https://github.com/lastla
 To initialize migrations on a database for the first time, run `mg init` within an `sbt console`. This creates a `__migrations__` table in the database to track which migrations have been applied. After the database has been initialized, all unapplied migrations may be applied by running `mg update` and then `mg apply`. Please note: the `mg migrate` command should be avoided because it invokes the code generation feature of forklift. This feature is not used in the `raster-foundry` project.
 
 The workflow for creating a new migration is:
- - open an `sbt` console using `./scripts/console app-server ./sbt`
+ - open an `sbt` console using `./scripts/console app-backend ./sbt`
  - run `mg new s` for a `SQL` migration
    - the migration file is output to `migrations/src_migrations/main/scala/{VERSION_NUM}.scala`
  - edit this file to perform the desired migration logic
