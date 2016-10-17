@@ -16,7 +16,7 @@ case class Bucket(
   slugLabel: String,
   description: String,
   visibility: Visibility,
-  tags: List[String] = List.empty // TODO: List.empty == None, this should be a naked List
+  tags: List[String] = List.empty
 )
 
 /** Case class for bucket creation */
