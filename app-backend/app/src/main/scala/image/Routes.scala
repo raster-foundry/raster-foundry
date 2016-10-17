@@ -49,7 +49,7 @@ trait ImageRoutes extends Authentication
   def createImages: Route = authenticate { user =>
     post {
       entity(as[Image.Create]) { newImage =>
-        onSuccess(Images.insertImage(newImage.toImage(user.id))) {
+        onComplete(Images.insertImage(newImage.toImage(user.id))) {
           case Success(image) => complete(image)
           case Failure(_) => complete(StatusCodes.InternalServerError)
         }
@@ -72,16 +72,8 @@ trait ImageRoutes extends Authentication
     authenticate { user =>
       put {
         entity(as[Image]) { updatedImage =>
-          onSuccess(Images.updateImage(updatedImage, imageId, user)) {
-            case Success(result) => {
-              result match {
-                case 1 => complete(StatusCodes.NoContent)
-                case count: Int => throw new Exception(
-                  s"Error updating image: update result expected to be 1, was $count"
-                )
-              }
-            }
-            case Failure(e) => throw e
+          onSuccess(Images.updateImage(updatedImage, imageId, user)) { count =>
+            complete(StatusCodes.NoContent)
           }
         }
       }

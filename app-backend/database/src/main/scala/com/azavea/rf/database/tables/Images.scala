@@ -3,15 +3,15 @@ package com.azavea.rf.database.tables
 import com.azavea.rf.database.fields._
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.sort._
-import com.azavea.rf.database.{Database => DB, _}
+import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.datamodel._
 import slick.model.ForeignKeyAction
 import java.util.UUID
 import java.sql.Timestamp
-import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
-import scala.concurrent.{Future, ExecutionContext}
-import scala.util.{Try, Success, Failure}
+import com.lonelyplanet.akka.http.extensions.PageRequest
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 import com.typesafe.scalalogging.LazyLogging
 
 class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
@@ -68,21 +68,20 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
     * @param image Image case class for image to insert into database
     */
   def insertImage(image: Image)
-    (implicit database: DB, ec: ExecutionContext): Future[Try[Image]] = {
+    (implicit database: DB): Future[Image] = {
     database.db.run {
-      Images.forceInsert(image).asTry
-    } map {
-      case Success(_) => Success(image)
-      case Failure(e) => Failure(e)
+      Images.forceInsert(image)
+    } map { _ =>
+      image
     }
   }
 
   /** Get an image given an ID
     *
-    * @param imageID UUID ID of image to get from database
+    * @param imageId UUID ID of image to get from database
     */
   def getImage(imageId: UUID)
-    (implicit database: DB, ec: ExecutionContext): Future[Option[Image]] = {
+    (implicit database: DB): Future[Option[Image]] = {
 
     database.db.run {
       Images.filter(_.id === imageId).result.headOption
@@ -95,7 +94,7 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
     * @param combinedParams CombinedImagequeryparams query parameters that can be applied to images
     */
   def listImages(pageRequest: PageRequest, combinedParams: CombinedImageQueryParams)
-    (implicit database: DB, ec: ExecutionContext): Future[PaginatedResponse[Image]] = {
+    (implicit database: DB): Future[PaginatedResponse[Image]] = {
 
     val images = Images.filterByOrganization(combinedParams.orgParams)
       .filterByTimestamp(combinedParams.timestampParams)
@@ -127,7 +126,7 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
     *
     * @param imageId UUID id of image to delete from database
     */
-  def deleteImage(imageId: UUID)(implicit database: DB, ec: ExecutionContext): Future[Int] = {
+  def deleteImage(imageId: UUID)(implicit database: DB): Future[Int] = {
     database.db.run {
       Images.filter(_.id === imageId).delete
     }
@@ -149,9 +148,9 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
     *  - imageMetadata
     */
   def updateImage(image: Image, imageId: UUID, user: User)
-    (implicit database: DB, ec: ExecutionContext): Future[Try[Int]] = {
+    (implicit database: DB): Future[Int] = {
 
-    val updateTime = new Timestamp((new java.util.Date()).getTime())
+    val updateTime = new Timestamp((new java.util.Date).getTime)
 
     val updateImageQuery = for {
       updateImage <- Images.filter(_.id === imageId)
@@ -165,15 +164,10 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
       updateImageQuery.update((
         updateTime, user.id, image.rawDataBytes, image.visibility,
         image.filename, image.sourceUri, image.scene, image.bands, image.imageMetadata
-      )).asTry
+      ))
     } map {
-      case Success(result) => {
-        result match {
-          case 1 => Success(1)
-          case _ => Failure(new Exception("Error while updating image"))
-        }
-      }
-      case Failure(e) => Failure(e)
+      case 1 => 1
+      case c => throw new IllegalStateException(s"Error updating image: update result expected to be 1, was $c")
     }
   }
 }
