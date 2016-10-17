@@ -64,6 +64,5 @@ object InitializeDB extends Config {
   }}
 
   // Run migrations -- scala-forklift requires that they be run twice
-  %sbt("mg update", POSTGRES_URL=s"${jdbcNoDBUrl}testing_template")
-  %sbt("mg apply", POSTGRES_URL=s"${jdbcNoDBUrl}testing_template")
+  %sbt(";mg update ;mg apply", POSTGRES_URL=s"${jdbcNoDBUrl}testing_template")
 }
