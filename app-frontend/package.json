@@ -12,7 +12,7 @@
     "url": "https://github.com/azavea/raster-foundry.git"
   },
   "scripts": {
-    "build": "npm run clean && cross-env NODE_ENV=production webpack -p --colors",
+    "build": "npm run clean && cross-env NODE_ENV=production webpack --progress --colors",
     "clean": "rimraf dist/*",
     "dev": "cross-env NODE_ENV=development webpack-dev-server",
     "serve-static": "npm run build && serve --path dist --port 9001",
