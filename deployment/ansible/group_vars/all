@@ -9,4 +9,4 @@ shellcheck_version: "0.3.*"
 docker_users:
   - "{{ ansible_user }}"
 
-terraform_version: "0.7.4"
+terraform_version: "0.7.6"
