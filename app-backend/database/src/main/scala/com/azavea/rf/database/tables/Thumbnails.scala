@@ -9,9 +9,9 @@ import com.azavea.rf.datamodel._
 import java.util.UUID
 import java.sql.Timestamp
 import com.typesafe.scalalogging.LazyLogging
-import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
-import scala.concurrent.{Future, ExecutionContext}
-import scala.util.{Try, Success, Failure}
+import com.lonelyplanet.akka.http.extensions.PageRequest
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /** Table description of table thumbnails. Objects of this class serve as prototypes for rows in queries. */
 class Thumbnails(_tableTag: Tag) extends Table[Thumbnail](_tableTag, "thumbnails")
@@ -55,15 +55,12 @@ object Thumbnails extends TableQuery(tag => new Thumbnails(tag)) with LazyLoggin
     * @param thumbnail Thumbnail
     */
   def insertThumbnail(thumbnail: Thumbnail)
-    (implicit database: DB, ec: ExecutionContext): Future[Try[Thumbnail]] = {
+    (implicit database: DB): Future[Thumbnail] = {
 
     val action = Thumbnails.forceInsert(thumbnail)
     logger.debug(s"Inserting thumbnail with: ${action.statements.headOption}")
     database.db.run {
-      action.asTry
-    } map {
-      case Success(_) => Success(thumbnail)
-      case Failure(e) => throw e
+      action.map( _ => thumbnail)
     }
   }
 
@@ -72,7 +69,7 @@ object Thumbnails extends TableQuery(tag => new Thumbnails(tag)) with LazyLoggin
     * @param thumbnailId UUID ID Of thumbnail to query with
     */
   def getThumbnail(thumbnailId: UUID)
-    (implicit database: DB, ec: ExecutionContext): Future[Option[Thumbnail]] = {
+    (implicit database: DB): Future[Option[Thumbnail]] = {
 
     val action = Thumbnails.filter(_.id === thumbnailId).result
     logger.debug(s"Retrieving thumbnail with: ${action.statements.headOption}")
@@ -82,7 +79,7 @@ object Thumbnails extends TableQuery(tag => new Thumbnails(tag)) with LazyLoggin
   }
 
   def getThumbnails(pageRequest: PageRequest, queryParams: ThumbnailQueryParameters)
-    (implicit database: DB, ec: ExecutionContext): Future[PaginatedResponse[Thumbnail]] = {
+    (implicit database: DB): Future[PaginatedResponse[Thumbnail]] = {
 
     val thumbnails = Thumbnails.filterBySceneParams(queryParams)
 
@@ -110,21 +107,16 @@ object Thumbnails extends TableQuery(tag => new Thumbnails(tag)) with LazyLoggin
     * @param thumbnailId UUID ID of scene to delete
     */
   def deleteThumbnail(thumbnailId: UUID)
-    (implicit database: DB, ec: ExecutionContext): Future[Try[Int]] = {
+    (implicit database: DB): Future[Int] = {
 
     val action = Thumbnails.filter(_.id === thumbnailId).delete
     logger.debug(s"Deleting thumbnail with: ${action.statements.headOption}")
     database.db.run {
-      action.asTry
-    } map {
-      case Success(result) => {
-        result match {
-          case 1 => Success(1)
-          case 0 => Success(0)
-          case _ => Failure(new Exception("Error while updating thumbnail"))
-        }
+      action.map {
+        case 1 => 1
+        case 0 => 0
+        case c => throw new IllegalStateException(s"Error deleting thumbnail: update result expected to be 1, was $c")
       }
-      case Failure(e) => Failure(e)
     }
   }
 
@@ -135,12 +127,11 @@ object Thumbnails extends TableQuery(tag => new Thumbnails(tag)) with LazyLoggin
     *
     * @param thumbnail Thumbnail scene to use to update the database
     * @param thumbnailId UUID ID of scene to update
-    * @param user User user performing the update
     */
   def updateThumbnail(thumbnail: Thumbnail, thumbnailId: UUID)
-    (implicit database: DB, ec: ExecutionContext): Future[Try[Int]] = {
+    (implicit database: DB): Future[Int] = {
 
-    val updateTime = new Timestamp((new java.util.Date()).getTime())
+    val updateTime = new Timestamp((new java.util.Date).getTime)
 
     val updateThumbnailQuery = for {
       updateThumbnail <- Thumbnails.filter(_.id === thumbnailId)
@@ -152,15 +143,10 @@ object Thumbnails extends TableQuery(tag => new Thumbnails(tag)) with LazyLoggin
       updateThumbnailQuery.update((
         updateTime, thumbnail.widthPx, thumbnail.heightPx,
         thumbnail.thumbnailSize, thumbnail.sceneId, thumbnail.url
-      )).asTry
-    } map {
-      case Success(result) => {
-        result match {
-          case 1 => Success(1)
-          case _ => Failure(new Exception("Error while updating thumbnail"))
-        }
+      )).map {
+        case 1 => 1
+        case c => throw new IllegalStateException(s"Error updating thumbnail: update result expected to be 1, was $c")
       }
-      case Failure(e) => Failure(e)
     }
   }
 }

@@ -61,7 +61,7 @@ trait ThumbnailRoutes extends Authentication
   def createThumbnail: Route = authenticate { user =>
     post {
       entity(as[Thumbnail.Create]) { newThumbnail =>
-        onSuccess(Thumbnails.insertThumbnail(newThumbnail.toThumbnail)) {
+        onComplete(Thumbnails.insertThumbnail(newThumbnail.toThumbnail)) {
           case Success(thumbnail) => complete(thumbnail)
           case Failure(_) => complete(StatusCodes.InternalServerError)
         }
@@ -72,7 +72,7 @@ trait ThumbnailRoutes extends Authentication
   def deleteThumbnail: Route = pathPrefix(JavaUUID) {thumbnailId =>
     authenticate { user =>
       delete {
-        onSuccess(Thumbnails.deleteThumbnail(thumbnailId)) {
+        onComplete(Thumbnails.deleteThumbnail(thumbnailId)) {
           case Success(1) => complete(StatusCodes.NoContent)
           case Success(0) => complete(StatusCodes.NotFound)
           case _ => complete(StatusCodes.InternalServerError)
@@ -86,15 +86,7 @@ trait ThumbnailRoutes extends Authentication
       put {
         entity(as[Thumbnail]) { updatedThumbnail =>
           onSuccess(Thumbnails.updateThumbnail(updatedThumbnail, thumbnailId)) {
-            case Success(result) => {
-              result match {
-                case 1 => complete(StatusCodes.NoContent)
-                case count: Int => throw new Exception(
-                  s"Error updating thumbnail: update result expected to be 1, was $count"
-                )
-              }
-            }
-            case Failure(e) => throw e
+            case 1 => complete(StatusCodes.NoContent)
           }
         }
       }
