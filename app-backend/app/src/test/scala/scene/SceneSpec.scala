@@ -72,7 +72,7 @@ class SceneSpec extends WordSpec
     }
     val mpoly = Some(Projected(
       MultiPolygon(Polygon(Seq(Point(100,100), Point(110,100), Point(110,110),
-        Point(100,110), Point(100,100)))), 4326))
+        Point(100,110), Point(100,100)))), 3857))
 
     val newSceneDatasource1 = Scene.Create(
       publicOrgId, 0, Visibility.Public, 20.2f, List("Test", "Public", "Low Resolution"), "TEST_ORG",
@@ -174,7 +174,7 @@ class SceneSpec extends WordSpec
       }
     }
 
-    "filter scenes by bounding box" ignore {
+    "filter scenes by bounding box" in {
       Get("/api/scenes/?bbox=0,0,1,1") ~> sceneRoutes ~> check {
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]
         res.count shouldEqual 0
@@ -185,7 +185,7 @@ class SceneSpec extends WordSpec
       }
     }
 
-    "filter scenes by point" ignore {
+    "filter scenes by point" in {
       Get("/api/scenes/?point=101,101") ~> sceneRoutes ~> check {
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]
         res.count shouldEqual 1

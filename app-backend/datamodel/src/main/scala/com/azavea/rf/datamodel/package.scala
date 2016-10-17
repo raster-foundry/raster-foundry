@@ -72,6 +72,7 @@ package object datamodel {
       case x => deserializationError("Do not understand how to deserialize " + x)
     }
   }
+
   // This format will/should only be used for route Geometry serialization
   implicit object ProjectedGeometryFormat extends RootJsonFormat[Projected[Geometry]] {
     // on write we convert the database geometry to LatLng
@@ -87,8 +88,9 @@ package object datamodel {
         }
       }
     }.toJson
+
     // on read we assume all geometries are in LatLng
     def read(value: JsValue) =
-      Projected(value.convertTo[Geometry], 4326)
+      Projected(value.convertTo[Geometry].reproject(LatLng, WebMercator), 3857)
   }
 }
