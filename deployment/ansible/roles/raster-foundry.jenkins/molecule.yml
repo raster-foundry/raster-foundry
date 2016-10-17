@@ -1,0 +1,38 @@
+---
+ansible:
+  config_file: molecule.cfg
+  requirements_file: molecule-requirements.yml
+  playbook: molecule-playbook.yml
+  verbose:
+  sudo: True
+
+vagrant:
+  platforms:
+    - name: trusty64
+      box: ubuntu/trusty64
+
+    - name: xenial64
+      box: ubuntu/xenial64
+
+  providers:
+    - name: virtualbox
+      type: virtualbox
+      options:
+        memory: 1024
+
+  instances:
+    - name: raster-foundry-jenkins
+
+molecule:
+  test:
+    sequence:
+      - syntax
+      - create
+      - converge
+      - idempotence
+      - verify
+
+verifier:
+  name: testinfra
+  options:
+    sudo: True

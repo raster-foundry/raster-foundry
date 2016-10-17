@@ -89,6 +89,10 @@ src_managed/
 project/boot/
 project/plugins/project/
 
+# Molecule
+.molecule/
+*__pycache__*
+
 # Scala-IDE specific
 .scala_dependencies
 .worksheet
