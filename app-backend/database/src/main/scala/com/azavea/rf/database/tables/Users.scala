@@ -10,8 +10,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class Users(_tableTag: Tag) extends Table[User](_tableTag, "users") {
   def * = id <> (User.apply, User.unapply)
-  /** Maps whole row to an option. Useful for outer joins. */
-  def ? = Rep.Some(id).shaped.<>(r => r.map(_=> User(r.get)), (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
   val id: Rep[String] = column[String]("id", O.PrimaryKey, O.Length(255,varying=true))
 }

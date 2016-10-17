@@ -7,8 +7,6 @@ import com.azavea.rf.datamodel._
 /** Table description of table scenes_to_buckets. Objects of this class serve as prototypes for rows in queries. */
 class ScenesToBuckets(_tableTag: Tag) extends Table[SceneToBucket](_tableTag, "scenes_to_buckets") {
   def * = (sceneId, bucketId) <> (SceneToBucket.tupled, SceneToBucket.unapply)
-  /** Maps whole row to an option. Useful for outer joins. */
-  def ? = (Rep.Some(sceneId), Rep.Some(bucketId)).shaped.<>({r=>import r._; _1.map(_=> SceneToBucket.tupled((_1.get, _2.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
   val sceneId: Rep[java.util.UUID] = column[java.util.UUID]("scene_id")
   val bucketId: Rep[java.util.UUID] = column[java.util.UUID]("bucket_id")

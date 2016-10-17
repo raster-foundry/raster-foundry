@@ -21,8 +21,6 @@ class Organizations(_tableTag: Tag) extends Table[Organization](_tableTag, "orga
                                             with TimestampFields
 {
   def * = (id, createdAt, modifiedAt, name) <> (Organization.tupled, Organization.unapply)
-  /** Maps whole row to an option. Useful for outer joins. */
-  def ? = (Rep.Some(id), Rep.Some(createdAt), Rep.Some(modifiedAt), Rep.Some(name)).shaped.<>({r=>import r._; _1.map(_=> Organization.tupled((_1.get, _2.get, _3.get, _4.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
   val id: Rep[UUID] = column[UUID]("id", O.PrimaryKey)
   val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")

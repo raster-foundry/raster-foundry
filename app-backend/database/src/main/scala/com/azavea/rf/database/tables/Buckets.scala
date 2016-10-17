@@ -25,8 +25,6 @@ class Buckets(_tableTag: Tag) extends Table[Bucket](_tableTag, "buckets")
                                       with VisibilityField
 {
   def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, name, slugLabel, description, visibility, tags) <> (Bucket.tupled, Bucket.unapply)
-  /** Maps whole row to an option. Useful for outer joins. */
-  def ? = (Rep.Some(id), Rep.Some(createdAt), Rep.Some(modifiedAt), Rep.Some(organizationId), Rep.Some(createdBy), Rep.Some(modifiedBy), Rep.Some(name), Rep.Some(slugLabel), Rep.Some(description), Rep.Some(visibility), tags).shaped.<>({r=>import r._; _1.map(_=> Bucket.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get, _8.get, _9.get, _10.get, _11)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
   val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")

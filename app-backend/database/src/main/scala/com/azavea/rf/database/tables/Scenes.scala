@@ -26,12 +26,6 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
   def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, organizationId, ingestSizeBytes, visibility,
     resolutionMeters, tags, datasource, sceneMetadata, cloudCover, acquisitionDate, thumbnailStatus, boundaryStatus,
     status, sunAzimuth, sunElevation, name, footprint) <> (Scene.tupled, Scene.unapply)
-  /** Maps whole row to an option. Useful for outer joins. */
-  def ? = (Rep.Some(id), Rep.Some(createdAt), Rep.Some(createdBy), Rep.Some(modifiedAt), Rep.Some(modifiedBy),
-    Rep.Some(organizationId), Rep.Some(ingestSizeBytes), Rep.Some(visibility), Rep.Some(resolutionMeters),
-    Rep.Some(tags), Rep.Some(datasource), Rep.Some(sceneMetadata), cloudCover, acquisitionDate,
-    Rep.Some(thumbnailStatus), Rep.Some(boundaryStatus), Rep.Some(status), sunAzimuth, sunElevation, Rep.Some(name),
-    footprint).shaped.<>({r=> import r._;_1.map(_=> Scene.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get, _8.get, _9.get, _10.get, _11.get, _12.get, _13, _14, _15.get, _16.get, _17.get, _18, _19, _20.get, _21)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
   val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")

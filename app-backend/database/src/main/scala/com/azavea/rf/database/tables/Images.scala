@@ -22,8 +22,6 @@ class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
                                      with VisibilityField
 {
   def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, rawDataBytes, visibility, filename, sourceuri, scene, bands, imageMetadata) <> (Image.tupled, Image.unapply)
-  /** Maps whole row to an option. Useful for outer joins. */
-  def ? = (Rep.Some(id), Rep.Some(createdAt), Rep.Some(modifiedAt), Rep.Some(organizationId), Rep.Some(createdBy), Rep.Some(modifiedBy), Rep.Some(rawDataBytes), Rep.Some(visibility), Rep.Some(filename), Rep.Some(sourceuri), Rep.Some(scene), Rep.Some(bands), Rep.Some(imageMetadata)).shaped.<>({r=>import r._; _1.map(_=> Image.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get, _8.get, _9.get, _10.get, _11.get, _12.get, _13.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
   val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")

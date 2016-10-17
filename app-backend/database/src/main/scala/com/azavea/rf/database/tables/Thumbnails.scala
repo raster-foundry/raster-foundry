@@ -19,8 +19,6 @@ class Thumbnails(_tableTag: Tag) extends Table[Thumbnail](_tableTag, "thumbnails
                                          with TimestampFields
 {
   def * = (id, createdAt, modifiedAt, organizationId, widthPx, heightPx, scene, url, thumbnailSize) <> (Thumbnail.tupled, Thumbnail.unapply _)
-  /** Maps whole row to an option. Useful for outer joins. */
-  def ? = (Rep.Some(id), Rep.Some(createdAt), Rep.Some(modifiedAt), Rep.Some(organizationId), Rep.Some(widthPx), Rep.Some(heightPx), Rep.Some(scene), Rep.Some(url), Rep.Some(thumbnailSize)).shaped.<>({r=>import r._; _1.map(_=> Thumbnail.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get, _8.get, _9.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
   val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")

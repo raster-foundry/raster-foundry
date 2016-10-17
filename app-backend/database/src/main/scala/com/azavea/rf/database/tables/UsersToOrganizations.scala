@@ -11,10 +11,6 @@ class UsersToOrganizations(_tableTag: Tag) extends Table[User.ToOrganization](_t
                                                    with OrganizationFkFields
 {
   def * = (userId, organizationId, role, createdAt, modifiedAt) <> (User.ToOrganization.tupled, User.ToOrganization.unapply)
-  /** Maps whole row to an option. Useful for outer joins. */
-  def ? = (Rep.Some(userId), Rep.Some(organizationId), Rep.Some(role), Rep.Some(createdAt), Rep.Some(modifiedAt)).shaped.<>(
-    {r=>import r._; _1.map(_=> User.ToOrganization.tupled((_1.get, _2.get, _3.get, _4.get, _5.get)))},
-    (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
   val userId: Rep[String] = column[String]("user_id", O.Length(255,varying=true))
   val organizationId: Rep[java.util.UUID] = column[java.util.UUID]("organization_id")
