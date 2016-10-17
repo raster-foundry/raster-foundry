@@ -1,12 +1,15 @@
 package com.azavea.rf.database.tables
 
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
+import com.azavea.rf.database.fields.{UserToOrganizationFields, OrganizationFkFields, TimestampFields}
+import com.azavea.rf.database.sort._
 import com.azavea.rf.datamodel._
-import java.sql.Timestamp
-import java.util.UUID
-import com.typesafe.scalalogging.LazyLogging
 
-class UsersToOrganizations(_tableTag: Tag) extends Table[User.ToOrganization](_tableTag, "users_to_organizations") {
+class UsersToOrganizations(_tableTag: Tag) extends Table[User.ToOrganization](_tableTag, "users_to_organizations")
+                                                   with UserToOrganizationFields
+                                                   with TimestampFields
+                                                   with OrganizationFkFields
+{
   def * = (userId, organizationId, role, createdAt, modifiedAt) <> (User.ToOrganization.tupled, User.ToOrganization.unapply)
   /** Maps whole row to an option. Useful for outer joins. */
   def ? = (Rep.Some(userId), Rep.Some(organizationId), Rep.Some(role), Rep.Some(createdAt), Rep.Some(modifiedAt)).shaped.<>(
@@ -19,17 +22,18 @@ class UsersToOrganizations(_tableTag: Tag) extends Table[User.ToOrganization](_t
   val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")
   val modifiedAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("modified_at")
 
-  /** Primary key of UsersToOrganizations (database name users_to_organizations_pkey) */
   val pk = primaryKey("users_to_organizations_pkey", (userId, organizationId))
 
-  /** Foreign key referencing Organizations (database name users_to_organizations_organization_id_fkey) */
   lazy val organizationsFk = foreignKey("users_to_organizations_organization_id_fkey", organizationId, Organizations)(r =>
     r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
-  /** Foreign key referencing Users (database name users_to_organizations_user_id_fkey) */
   lazy val usersFk = foreignKey("users_to_organizations_user_id_fkey", userId, Users)(r =>
     r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 }
 
 object UsersToOrganizations extends TableQuery(tag => new UsersToOrganizations(tag)) {
-
+  implicit val sorter =
+    new QuerySorter[UsersToOrganizations](
+      new UserToOrganizationSort(identity[UsersToOrganizations]),
+      new TimestampSort(identity[UsersToOrganizations]),
+      new OrganizationFkSort(identity[UsersToOrganizations]))
 }

@@ -2,7 +2,8 @@ package com.azavea.rf.database.tables
 
 import java.util.UUID
 import java.sql.Timestamp
-import com.azavea.rf.database.fields.TimestampFields
+import com.azavea.rf.database.fields.{NameField, TimestampFields}
+import com.azavea.rf.database.sort._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
@@ -14,6 +15,7 @@ import com.typesafe.scalalogging.LazyLogging
 
 /** Table description of table organizations. Objects of this class serve as prototypes for rows in queries. */
 class Organizations(_tableTag: Tag) extends Table[Organization](_tableTag, "organizations")
+                                            with NameField
                                             with TimestampFields
 {
   def * = (id, createdAt, modifiedAt, name) <> (Organization.tupled, Organization.unapply)
@@ -29,144 +31,18 @@ class Organizations(_tableTag: Tag) extends Table[Organization](_tableTag, "orga
 object Organizations extends TableQuery(tag => new Organizations(tag)) with LazyLogging {
   type TableQuery = Query[Organizations, Organizations#TableElementType, Seq]
 
-  def applyOrgSort(query: Organizations.TableQuery, sortMap: Map[String, Order])
-                  (implicit database: DB, ec: ExecutionContext): Organizations.TableQuery = {
-    import database.driver.api._
+  implicit val sorter =
+    new QuerySorter[Organizations](
+      new NameFieldSort(identity[Organizations]),
+      new TimestampSort(identity[Organizations]))
 
-    sortMap.headOption match {
-      case Some(("id", order)) =>
-        order match {
-          case Order.Asc => {
-            val sortQuery = query.sortBy(_.id.asc)
-            logger.debug(s"Org sort query to run: $sortQuery")
-            applyOrgSort(sortQuery, sortMap.tail)
-          }
-          case Order.Desc => {
-            val sortQuery = query.sortBy(_.id.desc)
-            logger.debug(s"Org sort query to run: $sortQuery")
-            applyOrgSort(sortQuery, sortMap.tail)
-          }
-        }
-      case Some(("name", order)) =>
-        order match {
-          case Order.Asc => {
-            val sortQuery = query.sortBy(_.name.asc)
-            logger.debug(s"Org sort query to run: $sortQuery")
-            applyOrgSort(sortQuery, sortMap.tail)
-          }
-          case Order.Desc => {
-            val sortQuery = query.sortBy(_.name.desc)
-            logger.debug(s"Org sort query to run: $sortQuery")
-            applyOrgSort(sortQuery, sortMap.tail)
-          }
-        }
-      case Some(("modified", order)) =>
-        order match {
-          case Order.Asc => {
-            val sortQuery = query.sortBy(_.modifiedAt.asc)
-            logger.debug(s"Org sort query to run: $sortQuery")
-            applyOrgSort(sortQuery, sortMap.tail)
-          }
-          case Order.Desc => {
-            val sortQuery = query.sortBy(_.modifiedAt.desc)
-            logger.debug(s"Org sort query to run: $sortQuery")
-            applyOrgSort(sortQuery, sortMap.tail)
-          }
-        }
-      case Some(("created", order)) =>
-        order match {
-          case Order.Asc => {
-            val sortQuery = query.sortBy(_.createdAt.asc)
-            logger.debug(s"Org sort query to run: $sortQuery")
-            applyOrgSort(sortQuery, sortMap.tail)
-          }
-          case Order.Desc => {
-            val sortQuery = query.sortBy(_.createdAt.desc)
-            logger.debug(s"Org sort query to run: $sortQuery")
-            applyOrgSort(sortQuery, sortMap.tail)
-          }
-        }
-      case Some((_, order)) => applyOrgSort(query, sortMap.tail)
-      case _ => query
-    }
-  }
-
-  def applyUserRoleSort(
-    query: Query[UsersToOrganizations, UsersToOrganizations#TableElementType, Seq],
-    sortMap: Map[String, Order]
-  )(implicit database: DB, ec: ExecutionContext):
-      Query[UsersToOrganizations, UsersToOrganizations#TableElementType, Seq] = {
-    import database.driver.api._
-
-    sortMap.headOption match {
-      case Some(("id", order)) =>
-        order match {
-          case Order.Asc => {
-            val sortQuery = query.sortBy(_.userId.asc)
-            logger.debug(s"User role sort query: ${sortQuery.result.statements.headOption}")
-            applyUserRoleSort(sortQuery, sortMap.tail)
-          }
-          case Order.Desc => {
-            val sortQuery = query.sortBy(_.userId.desc)
-            logger.debug(s"User role sort query: ${sortQuery.result.statements.headOption}")
-            applyUserRoleSort(query.sortBy(_.userId.desc), sortMap.tail)
-          }
-        }
-      case Some(("role", order)) =>
-        order match {
-          case Order.Asc => {
-            val sortQuery = query.sortBy(_.role.asc)
-            logger.debug(s"User role sort query: ${sortQuery.result.statements.headOption}")
-            applyUserRoleSort(sortQuery, sortMap.tail)
-          }
-          case Order.Desc => {
-            val sortQuery = query.sortBy(_.role.asc)
-            logger.debug(s"User role sort query: ${sortQuery.result.statements.headOption}")
-            applyUserRoleSort(query.sortBy(_.role.desc), sortMap.tail)
-          }
-        }
-      case Some(("modified", order)) =>
-        order match {
-          case Order.Asc => {
-            val sortQuery = query.sortBy(_.modifiedAt.asc)
-            logger.debug(s"User role sort query: ${sortQuery.result.statements.headOption}")
-            applyUserRoleSort(sortQuery, sortMap.tail)
-          }
-          case Order.Desc => {
-            val sortQuery = query.sortBy(_.modifiedAt.desc)
-            logger.debug(s"User role sort query: ${sortQuery.result.statements.headOption}")
-            applyUserRoleSort(sortQuery, sortMap.tail)
-          }
-        }
-      case Some(("created", order)) =>
-        order match {
-          case Order.Asc => {
-            val sortQuery =  query.sortBy(_.createdAt.asc)
-            logger.debug(s"User role sort query: ${sortQuery.result.statements.headOption}")
-            applyUserRoleSort(sortQuery, sortMap.tail)
-          }
-          case Order.Desc => {
-            val sortQuery = query.sortBy(_.createdAt.desc)
-            logger.debug(s"User role sort query: ${sortQuery.result.statements.headOption}")
-            applyUserRoleSort(sortQuery, sortMap.tail)
-          }
-        }
-      case Some((_, order)) => {
-        logger.debug(s"User role sort query: ${query.result.statements.headOption}")
-        applyUserRoleSort(query, sortMap.tail)
-      }
-      case _ => query
-    }
-  }
-
-  def getOrganizationList(page: PageRequest)(implicit database: DB, ec: ExecutionContext):
-      Future[PaginatedResponse[Organization]] = {
-    import database.driver.api._
+  def getOrganizationList(page: PageRequest)(implicit database: DB): Future[PaginatedResponse[Organization]] = {
 
     val organizationsQueryResult = database.db.run {
-      applyOrgSort(Organizations, page.sort)
+      Organizations
         .drop(page.offset * page.limit)
         .take(page.limit)
+        .sort(page.sort)
         .result
     }
     val totalOrganizationsQuery = database.db.run {
@@ -260,9 +136,10 @@ object Organizations extends TableQuery(tag => new Organizations(tag)) with Lazy
     import database.driver.api._
 
     val getOrgUsersResult = database.db.run {
-      applyUserRoleSort(UsersToOrganizations.filter(_.organizationId === id), page.sort)
+      UsersToOrganizations.filter(_.organizationId === id)
         .drop(page.offset * page.limit)
         .take(page.limit)
+        .sort(page.sort)
         .result
     } map {
       rels => rels.map(rel => User.WithRole(rel.userId, rel.role, rel.createdAt, rel.modifiedAt))
