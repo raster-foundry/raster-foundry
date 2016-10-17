@@ -1,14 +1,11 @@
 package com.azavea.rf.token
 
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.Uri.{Path, Query}
 import akka.http.scaladsl.model.headers.{Authorization, GenericHttpCredentials}
 import akka.http.scaladsl.unmarshalling.Unmarshal
-
-import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -21,17 +18,8 @@ case class RefreshToken(refresh_token: String)
 case class DeviceCredential(id: String, device_name: String)
 case class AuthorizedToken(id_token: String, expires_in: Int, token_type: String)
 
-object TokenJsonProtocol extends SprayJsonSupport
-  with DefaultJsonProtocol {
-
-  implicit val refreshTokenJson = jsonFormat1(RefreshToken)
-  implicit val deviceCredentialJson = jsonFormat2(DeviceCredential)
-  implicit val authorizedTokenJson = jsonFormat3(AuthorizedToken)
-}
-
 object TokenService extends Config {
 
-  import TokenJsonProtocol._
   import com.azavea.rf.AkkaSystem._
 
   val uri = Uri(s"https://$auth0Domain/api/v2/device-credentials")

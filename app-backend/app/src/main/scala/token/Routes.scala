@@ -9,8 +9,6 @@ import com.azavea.rf.auth.Authentication
   */
 trait TokenRoutes extends Authentication {
 
-  import TokenJsonProtocol._
-
   def tokenRoutes: Route = pathPrefix("api" / "tokens") {
     listRefreshTokens ~
     getAuthorizedToken ~
