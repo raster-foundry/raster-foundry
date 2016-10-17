@@ -15,6 +15,7 @@ import com.azavea.rf.user.UserRoutes
 import com.azavea.rf.image.ImageRoutes
 import com.azavea.rf.config.ConfigRoutes
 import com.azavea.rf.database.Database
+import com.azavea.rf.token.TokenRoutes
 
 
 /**
@@ -29,6 +30,7 @@ trait Router extends HealthCheckRoutes
     with SceneRoutes
     with BucketRoutes
     with ImageRoutes
+    with TokenRoutes
     with ThumbnailRoutes
     with ConfigRoutes {
 
@@ -43,6 +45,7 @@ trait Router extends HealthCheckRoutes
     sceneRoutes ~
     bucketRoutes ~
     imageRoutes ~
+    tokenRoutes ~
     thumbnailRoutes ~
     configRoutes
   }

@@ -18,6 +18,8 @@ trait Config {
   val dbUser = databaseConfig.getString("user")
   val dbPassword = databaseConfig.getString("password")
 
+  val auth0Domain = auth0Config.getString("domain")
+  val auth0Bearer = auth0Config.getString("bearer")
   val auth0Secret = java.util.Base64.getUrlDecoder.decode(auth0Config.getString("secret"))
   val auth0ClientId = auth0Config.getString("clientId")
 }
