@@ -4,6 +4,9 @@ import java.util.UUID
 import java.sql.Timestamp
 import java.time.Instant
 
+import geotrellis.slick.Projected
+import geotrellis.vector.{Point, Polygon, Extent}
+
 /** Case class representing all /thumbnail query parameters */
 case class ThumbnailQueryParameters(
   sceneId: Option[UUID]
@@ -38,7 +41,29 @@ case class SceneQueryParameters(
   minSunElevation: Option[Float],
   bbox: Option[String],
   point: Option[String]
-)
+) {
+  val bboxPolygon: Option[Projected[Polygon]] = try {
+    bbox
+      .map(Extent.fromString)
+      .map(_.toPolygon)
+      .map(Projected(_, 3857))
+  } catch {
+    case e: Exception => throw new IllegalArgumentException(
+      "Four comma separated coordinates must be given for bbox"
+    ).initCause(e)
+  }
+
+  val pointGeom: Option[Projected[Point]] = try {
+    point.map { s =>
+      val Array(x, y) = s.split(",")
+      Projected(Point(x.toDouble, y.toDouble), 3857)
+    }
+  } catch {
+    case e: Exception => throw new IllegalArgumentException(
+      "Both coordinate parameters of point (x, y) must be specified"
+    ).initCause(e)
+  }
+}
 
 /** Combined all query parameters */
 case class CombinedSceneQueryParams(

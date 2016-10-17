@@ -10,10 +10,11 @@ import java.util.UUID
 import java.sql.Timestamp
 import geotrellis.slick.Projected
 import geotrellis.vector.{Point, Polygon, Geometry}
-import scala.concurrent.{Future, ExecutionContext}
-import scala.util.{Try, Success, Failure}
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 import com.typesafe.scalalogging.LazyLogging
 import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
+
 
 /** Table description of table scenes. Objects of this class serve as prototypes for rows in queries. */
 class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
@@ -22,9 +23,15 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
                                      with UserFkFields
                                      with TimestampFields
 {
-  def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, organizationId, ingestSizeBytes, visibility, resolutionMeters, tags, datasource, sceneMetadata, cloudCover, acquisitionDate, thumbnailStatus, boundaryStatus, status, sunAzimuth, sunElevation, name, footprint) <> (Scene.tupled, Scene.unapply)
+  def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, organizationId, ingestSizeBytes, visibility,
+    resolutionMeters, tags, datasource, sceneMetadata, cloudCover, acquisitionDate, thumbnailStatus, boundaryStatus,
+    status, sunAzimuth, sunElevation, name, footprint) <> (Scene.tupled, Scene.unapply)
   /** Maps whole row to an option. Useful for outer joins. */
-  def ? = (Rep.Some(id), Rep.Some(createdAt), Rep.Some(createdBy), Rep.Some(modifiedAt), Rep.Some(modifiedBy), Rep.Some(organizationId), Rep.Some(ingestSizeBytes), Rep.Some(visibility), Rep.Some(resolutionMeters), Rep.Some(tags), Rep.Some(datasource), Rep.Some(sceneMetadata), cloudCover, acquisitionDate, Rep.Some(thumbnailStatus), Rep.Some(boundaryStatus), Rep.Some(status), sunAzimuth, sunElevation, Rep.Some(name), footprint).shaped.<>({r=>import r._; _1.map(_=> Scene.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get, _8.get, _9.get, _10.get, _11.get, _12.get, _13, _14, _15.get, _16.get, _17.get, _18, _19, _20.get, _21)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+  def ? = (Rep.Some(id), Rep.Some(createdAt), Rep.Some(createdBy), Rep.Some(modifiedAt), Rep.Some(modifiedBy),
+    Rep.Some(organizationId), Rep.Some(ingestSizeBytes), Rep.Some(visibility), Rep.Some(resolutionMeters),
+    Rep.Some(tags), Rep.Some(datasource), Rep.Some(sceneMetadata), cloudCover, acquisitionDate,
+    Rep.Some(thumbnailStatus), Rep.Some(boundaryStatus), Rep.Some(status), sunAzimuth, sunElevation, Rep.Some(name),
+    footprint).shaped.<>({r=> import r._;_1.map(_=> Scene.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get, _8.get, _9.get, _10.get, _11.get, _12.get, _13, _14, _15.get, _16.get, _17.get, _18, _19, _20.get, _21)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
   val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")
@@ -86,97 +93,62 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
 
   /** Insert a scene into the database
     *
-    * @param scene CreateScene scene to create
+    * @param sceneCreate scene to create
     * @param user User user creating scene
     *
     * This implementation allows a user to post a scene with thumbnails, footprint, and
     * images which are all created in a single transaction
     */
-  def insertScene(ss: Scene.Create, user: User)
-    (implicit database: DB, ec: ExecutionContext): Future[Try[Scene.WithRelated]] = {
+  def insertScene(sceneCreate: Scene.Create, user: User)
+    (implicit database: DB): Future[Scene.WithRelated] = {
 
-    val scene = ss.toScene(user.id)
-    val scenesRowInsert = Scenes.forceInsert(scene)
+    val scene = sceneCreate.toScene(user.id)
+    val thumbnails = sceneCreate.thumbnails.map(_.toThumbnail(user.id, scene))
+    val images = sceneCreate.images.map(_.toImage(user.id, scene))
 
-    val thumbnails = ss.thumbnails.map(_.toThumbnail(user.id, scene))
-    val thumbnailsInsert = DBIO.seq(thumbnails.map(Thumbnails.forceInsert): _*)
-
-    val images = ss.images.map(_.toImage(user.id, scene))
-    val imagesInsert = DBIO.seq(images.map(Images.forceInsert): _*)
-
-    val sceneInsert = (for {
-      _ <- scenesRowInsert
-      _ <- thumbnailsInsert
-      _ <- imagesInsert
-    } yield ()).transactionally
+    val actions = Scenes.forceInsert(scene)
+      .andThen(DBIO.seq(thumbnails.map(Thumbnails.forceInsert): _*))
+      .andThen(DBIO.seq(images.map(Images.forceInsert): _*))
 
     database.db.run {
-      sceneInsert.asTry
-    } map {
-      case Success(_) => Success(
-        scene.withRelatedFromComponents(images, thumbnails)
-      )
-      case Failure(e) => {
-        logger.error(e.toString)
-        Failure(e)
-      }
+      actions.transactionally
+    } map { x =>
+      scene.withRelatedFromComponents(images, thumbnails)
     }
   }
 
-  /** Helper function to create Iterable[Scene.WithRelated] from join
-    *
-    * It is necessary to map over the distinct scenes because that is the only way to
-    * ensure that the sort order of the query result remains ordered after grouping
-    *
-    * @param joinResult result of join query to return scene with related
-    * information
-    */
-  def createScenesWithRelated(joinResult: Seq[(Scene, Option[Image], Option[Thumbnail])]): Iterable[Scene.WithRelated] = {
-
-    val distinctScenes = joinResult.map(_._1).distinct
-    val grouped = joinResult.groupBy(_._1)
-    distinctScenes.map{scene =>
-      // This should be relatively safe since scene is the key grouped by
-      val (seqImages, seqThumbnails) = grouped(scene)
-        .map{ case (sr, im, th) => (im, th)}
-        .unzip
-      scene.withRelatedFromComponents(seqImages.flatten, seqThumbnails.flatten.distinct)
-    }
-  }
 
   /** Retrieve a single scene from the database
     *
     * @param sceneId java.util.UUID ID of scene to query with
     */
-  def getScene(sceneId: java.util.UUID)
-    (implicit database: DB, ec: ExecutionContext): Future[Option[Scene.WithRelated]] = {
-    val sceneJoinQuery = Scenes
-      .filter(_.id === sceneId)
-      .joinWithRelated
+  def getScene(sceneId: UUID)
+    (implicit database: DB): Future[Option[Scene.WithRelated]] = {
 
     database.db.run {
-      val action = sceneJoinQuery.result
+      val action = Scenes
+        .filter(_.id === sceneId)
+        .joinWithRelated
+        .result
       logger.debug(s"Total Query for scenes -- SQL: ${action.statements.headOption}")
       action
-    } map { join =>
-      val scenesWithRelated = createScenesWithRelated(join)
-      scenesWithRelated.headOption
+    } map { joinQuery =>
+      Scene.WithRelated.fromRecords(joinQuery).headOption
     }
   }
 
   /** Get scenes given a page request and query parameters */
   def getScenes(pageRequest: PageRequest, combinedParams: CombinedSceneQueryParams)
-    (implicit database: DB, ec: ExecutionContext): Future[PaginatedResponse[Scene.WithRelated]] = {
-
-    val pagedScenes = Scenes
-      .joinWithRelated
-      .page(combinedParams, pageRequest)
+    (implicit database: DB): Future[PaginatedResponse[Scene.WithRelated]] = {
 
     val scenesQueryResult = database.db.run {
-      val action = pagedScenes.result
+      val action = Scenes
+          .joinWithRelated
+          .page(combinedParams, pageRequest)
+          .result
       logger.debug(s"Paginated Query for scenes -- SQL: ${action.statements.headOption}")
       action
-    } map(join => createScenesWithRelated(join))
+    } map { Scene.WithRelated.fromRecords }
 
     val totalScenesQueryResult = database.db.run {
       val action = Scenes
@@ -206,7 +178,7 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     *
     * @param sceneId java.util.UUID ID of scene to delete
     */
-  def deleteScene(sceneId: UUID)(implicit database: DB, ec: ExecutionContext): Future[Int] = {
+  def deleteScene(sceneId: UUID)(implicit database: DB): Future[Int] = {
     database.db.run {
       Scenes.filter(_.id === sceneId).delete
     }
@@ -222,9 +194,9 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     * @param user User user performing the update
     */
   def updateScene(scene: Scene, sceneId: UUID, user: User)
-    (implicit database: DB, ec: ExecutionContext): Future[Try[Int]] = {
+    (implicit database: DB): Future[Int] = {
 
-    val updateTime = new Timestamp((new java.util.Date()).getTime())
+    val updateTime = new Timestamp((new java.util.Date).getTime)
 
     val updateSceneQuery = for {
       updateScene <- Scenes.filter(_.id === sceneId)
@@ -239,15 +211,10 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
         updateTime, user.id, scene.ingestSizeBytes, scene.resolutionMeters,
         scene.datasource, scene.cloudCover, scene.acquisitionDate, scene.tags, scene.sceneMetadata,
         scene.thumbnailStatus, scene.boundaryStatus, scene.status, scene.name, scene.footprint
-      )).asTry
+      ))
     } map {
-      case Success(result) => {
-        result match {
-          case 1 => Success(1)
-          case _ => Failure(new Exception("Error while updating scene"))
-        }
-      }
-      case Failure(e) => Failure(e)
+      case 1 => 1
+      case _ => throw new IllegalStateException("Error while updating scene")
     }
   }
 }
@@ -267,31 +234,8 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) {
         sceneParams.maxSunAzimuth.map(scene.sunAzimuth < _),
         sceneParams.minSunElevation.map(scene.sunElevation > _),
         sceneParams.maxSunElevation.map(scene.sunElevation < _),
-        sceneParams.bbox.map { bboxString =>
-          val (xmin, ymin, xmax, ymax) = bboxString.split(",") match {
-            case Array(xmin, ymin, xmax, ymax) =>
-              (xmin.toDouble, ymin.toDouble, xmax.toDouble, ymax.toDouble)
-            case _ => throw new IllegalArgumentException(
-              "Four comma separated coordinates must be given"
-            )
-
-          }
-          val p1 = Point(xmin, ymin)
-          val p2 = Point(xmax, ymin)
-          val p3 = Point(xmax, ymax)
-          val p4 = Point(xmin, ymax)
-          val bbox = Projected(Polygon(Seq(p1,p2,p3,p4,p1)), 3857)
-          scene.footprint.intersects(bbox)
-        },
-        sceneParams.point.map { pointString =>
-          val pt = pointString.split(",") match {
-            case Array(x, y) => Projected(Point(x.toDouble, y.toDouble), 3857)
-            case _ => throw new IllegalArgumentException(
-              "Both coordinate parameters (x, y) must be specified"
-            )
-          }
-          scene.footprint.intersects(pt)
-        }
+        sceneParams.bboxPolygon.map(scene.footprint.intersects(_)),
+        sceneParams.pointGeom.map(scene.footprint.intersects(_))
       )
       sceneFilterConditions
         .collect({case Some(criteria)  => criteria})
@@ -310,24 +254,18 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) {
     }
   }
 
-  /** Return a join query for scenes
-   *
-   * @sceneQuery ScenesQuery base scenes query
-   */
-  def joinWithRelated = {
+  /** Return a join query for scenes */
+  def joinWithRelated: Scenes.JoinQuery = {
     for {
       ((scene, image), thumbnail) <-
       (scenes
          joinLeft Images on (_.id === _.scene)
          joinLeft Thumbnails on (_._1.id === _.scene))
-    } yield( scene, image, thumbnail )
-  }
+    } yield (scene, image, thumbnail)
   }
 }
 
 class ScenesJoinQuery[M, U, C[_]](sceneJoin: Scenes.JoinQuery) {
-  import Scenes.datePart
-
   /** Handle pagination with inner join on filtered scenes
    *
    * Pagination must be handled with an inner join here because the results

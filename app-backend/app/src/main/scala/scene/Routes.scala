@@ -43,7 +43,7 @@ trait SceneRoutes extends Authentication
           authenticate { user =>
             post {
               entity(as[Scene.Create]) { newScene =>
-                onSuccess(Scenes.insertScene(newScene, user)) {
+                onComplete(Scenes.insertScene(newScene, user)) {
                   case Success(scene) => complete(scene)
                   case Failure(_) => complete(StatusCodes.InternalServerError)
                 }
@@ -64,7 +64,7 @@ trait SceneRoutes extends Authentication
             authenticate { user =>
               put {
                 entity(as[Scene]) { updatedScene =>
-                  onSuccess(Scenes.updateScene(updatedScene, sceneId, user)) {
+                  onComplete(Scenes.updateScene(updatedScene, sceneId, user)) {
                     case Success(result) => {
                       result match {
                         case 1 => complete(StatusCodes.NoContent)

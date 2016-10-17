@@ -154,5 +154,25 @@ object Scene extends GeoJsonSupport {
 
   object WithRelated {
     implicit val defaultThumbnailWithRelatedFormat = jsonFormat22(WithRelated.apply)
+
+    /** Helper function to create Iterable[Scene.WithRelated] from join
+      *
+      * It is necessary to map over the distinct scenes because that is the only way to
+      * ensure that the sort order of the query result remains ordered after grouping
+      *
+      * @param records result of join query to return scene with related
+      * information
+      */
+    def fromRecords(records: Seq[(Scene, Option[Image], Option[Thumbnail])]): Iterable[Scene.WithRelated] = {
+      val distinctScenes = records.map(_._1).distinct
+      val grouped = records.groupBy(_._1)
+      distinctScenes.map{ scene =>
+        // This should be relatively safe since scene is the key grouped by
+        val (seqImages, seqThumbnails) = grouped(scene)
+          .map { case (sr, im, th) => (im, th) }
+          .unzip
+        scene.withRelatedFromComponents(seqImages.flatten, seqThumbnails.flatten.distinct)
+      }
+    }
   }
 }
