@@ -19,7 +19,6 @@ import com.azavea.rf.auth.Authentication
 trait HealthCheckRoutes extends Authentication {
 
   implicit def database: Database
-  implicit val ec: ExecutionContext
 
   val healthCheckExceptionHandler = ExceptionHandler {
     case e: PSQLException =>

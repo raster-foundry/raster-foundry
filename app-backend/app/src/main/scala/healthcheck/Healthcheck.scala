@@ -3,7 +3,7 @@ package com.azavea.rf.healthcheck
 import com.azavea.rf.database.tables.Users
 import com.azavea.rf.database.Database
 import com.azavea.rf.AkkaSystem
-import scala.concurrent.ExecutionContext
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Available healthcheck values
@@ -48,7 +48,7 @@ object HealthCheckService extends AkkaSystem.LoggerExecutor {
     *   - database is up and users can be queried
     *
     */
-  def healthCheck()(implicit database:Database, ec:ExecutionContext) = {
+  def healthCheck()(implicit database:Database) = {
 
     log.debug("Healthcheck requested")
 

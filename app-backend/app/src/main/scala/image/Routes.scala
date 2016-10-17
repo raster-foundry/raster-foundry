@@ -23,7 +23,6 @@ trait ImageRoutes extends Authentication
     with RouterHelper {
 
   implicit def database: Database
-  implicit val ec: ExecutionContext
 
   def imageRoutes: Route = handleExceptions(userExceptionHandler) {
     pathPrefix("api" / "images") {

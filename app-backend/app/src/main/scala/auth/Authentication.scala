@@ -17,7 +17,6 @@ import com.azavea.rf.utils.Config
 
 trait Authentication extends Directives with Config {
   implicit def database: Database
-  implicit val ec: ExecutionContext
 
   // Default user returned when no credentials are provided
   lazy val anonymousUser:Future[Option[User]] = Users.getUserById("default")

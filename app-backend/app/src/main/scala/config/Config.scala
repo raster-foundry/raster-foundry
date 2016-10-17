@@ -8,7 +8,7 @@ import com.azavea.rf.AkkaSystem
 case class AngularConfig(clientId: String)
 
 object AngularConfigService extends AkkaSystem.LoggerExecutor with Config {
-  def getConfig()(implicit database: Database, ec: ExecutionContext):
+  def getConfig():
       AngularConfig = {
     return AngularConfig(auth0ClientId)
   }

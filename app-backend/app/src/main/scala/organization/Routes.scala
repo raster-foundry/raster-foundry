@@ -21,7 +21,6 @@ import com.azavea.rf.datamodel.Organization
 trait OrganizationRoutes extends Authentication with PaginationDirectives with UserErrorHandler {
 
   implicit def database: Database
-  implicit val ec: ExecutionContext
 
   def organizationRoutes: Route = {
     handleExceptions(userExceptionHandler) {

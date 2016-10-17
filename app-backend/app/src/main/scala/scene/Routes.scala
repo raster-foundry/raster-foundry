@@ -23,7 +23,6 @@ trait SceneRoutes extends Authentication
     with UserErrorHandler {
 
   implicit def database: Database
-  implicit val ec: ExecutionContext
 
   def sceneRoutes: Route = {
     handleExceptions(userExceptionHandler) {

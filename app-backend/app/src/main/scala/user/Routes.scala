@@ -20,7 +20,6 @@ import com.azavea.rf.datamodel._
 trait UserRoutes extends Authentication with PaginationDirectives with UserErrorHandler {
 
   implicit def database: Database
-  implicit val ec: ExecutionContext
 
   def userRoutes:Route = {
     handleExceptions(userExceptionHandler) {

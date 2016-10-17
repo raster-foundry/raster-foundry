@@ -25,7 +25,6 @@ trait ThumbnailRoutes extends Authentication
     with RouterHelper {
 
   implicit def database: Database
-  implicit val ec: ExecutionContext
 
   def thumbnailRoutes: Route = handleExceptions(userExceptionHandler) {
     pathPrefix("api" / "thumbnails") {

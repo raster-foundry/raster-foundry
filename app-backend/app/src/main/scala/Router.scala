@@ -33,7 +33,6 @@ trait Router extends HealthCheckRoutes
     with ConfigRoutes {
 
   implicit def database: Database
-  implicit val ec: ExecutionContext
 
   val corsSettings = CorsSettings.defaultSettings
 

@@ -25,7 +25,6 @@ trait BucketRoutes extends Authentication
     with PaginationDirectives {
 
   implicit def database: Database
-  implicit val ec: ExecutionContext
 
   implicit val rawIntFromEntityUnmarshaller: FromEntityUnmarshaller[UUID] =
     PredefinedFromEntityUnmarshallers.stringUnmarshaller.map{ s =>
