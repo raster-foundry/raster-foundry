@@ -13,7 +13,8 @@ trait TokenRoutes extends Authentication {
 
   def tokenRoutes: Route = pathPrefix("api" / "tokens") {
     listRefreshTokens ~
-    getAuthorizedToken
+    getAuthorizedToken ~
+    revokeRefreshToken
   }
 
   def listRefreshTokens: Route = pathEndOrSingleSlash {
@@ -31,6 +32,16 @@ trait TokenRoutes extends Authentication {
       entity(as[RefreshToken]) { refreshToken =>
         onSuccess(TokenService.getAuthorizedToken(refreshToken)) { token =>
           complete(token)
+        }
+      }
+    }
+  }
+
+  def revokeRefreshToken: Route = pathPrefix(Segment) { deviceId =>
+    delete {
+      authenticate { user =>
+        onSuccess(TokenService.revokeRefreshToken(user, deviceId)) { response =>
+          complete(response)
         }
       }
     }

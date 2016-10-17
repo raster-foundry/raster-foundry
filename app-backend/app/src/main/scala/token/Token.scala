@@ -84,4 +84,26 @@ object TokenService extends Config {
           throw new Exception(s"Error communicating with Auth0: $errCode")
       }
   }
+
+  def revokeRefreshToken(user: User, deviceId: String): Future[StatusCode] = {
+
+    listRefreshTokens(user).flatMap { deviceCredentials =>
+      deviceCredentials.count(dc => dc.id == deviceId) > 0 match {
+        case true =>
+          Http()
+            .singleRequest(HttpRequest(
+              method = DELETE,
+              uri = s"$uri/$deviceId",
+              headers = auth0BearerHeader
+            ))
+            .map {
+              case HttpResponse(StatusCodes.NoContent, _, _, _) =>
+                StatusCodes.NoContent
+              case HttpResponse(errCode, _, _, _) =>
+                throw new Exception(s"Error revoking refresh token: $errCode")
+            }
+        case _ => Future(StatusCodes.NotFound)
+      }
+    }
+  }
 }
