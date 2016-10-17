@@ -49,7 +49,7 @@ trait BucketRoutes extends Authentication
         authenticate { user =>
           post {
             entity(as[Bucket.Create]) { newBucket =>
-              onSuccess(Buckets.insertBucket(newBucket.toBucket(user.id))) {
+              onComplete(Buckets.insertBucket(newBucket.toBucket(user.id))) {
                 case Success(bucket) => complete(bucket)
                 case Failure(_) => complete(StatusCodes.InternalServerError)
               }
@@ -71,15 +71,7 @@ trait BucketRoutes extends Authentication
             put {
               entity(as[Bucket]) { updatedBucket =>
                 onSuccess(Buckets.updateBucket(updatedBucket, bucketId, user)) {
-                  case Success(result) => {
-                    result match {
-                      case 1 => complete(StatusCodes.NoContent)
-                      case count: Int => throw new Exception(
-                        s"Error updating bucket: update result expected to be 1, was $count"
-                      )
-                    }
-                  }
-                  case Failure(e) => throw e
+                  case 1 => complete(StatusCodes.NoContent)
                 }
               }
             } ~
