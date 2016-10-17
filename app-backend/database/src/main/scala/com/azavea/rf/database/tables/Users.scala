@@ -5,8 +5,8 @@ import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.datamodel._
 import com.typesafe.scalalogging.LazyLogging
 import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
-import scala.concurrent.{Future, ExecutionContext}
-import scala.util.{Try, Success, Failure}
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class Users(_tableTag: Tag) extends Table[User](_tableTag, "users") {
   def * = id <> (User.apply, User.unapply)
@@ -23,7 +23,7 @@ object Users extends TableQuery(tag => new Users(tag)) with LazyLogging {
     * Recursively applies a list of sort parameters from a page request
     */
   def applySort(query: Users.TableQuery, sortMap: Map[String, Order])
-               (implicit database: DB, ec: ExecutionContext): Users.TableQuery = {
+               (implicit database: DB): Users.TableQuery = {
 
     logger.debug(s"Returning users -- SQL: ${query.result.statements.headOption}")
 
@@ -62,7 +62,7 @@ object Users extends TableQuery(tag => new Users(tag)) with LazyLogging {
     *
     * @param page page request that has limit, offset, and sort parameters
     */
-  def getPaginatedUsers(page: PageRequest)(implicit database: DB, ec: ExecutionContext):
+  def getPaginatedUsers(page: PageRequest)(implicit database: DB):
       Future[PaginatedResponse[User.WithOrgs]] = {
 
     val usersQueryAction = joinUsersRolesOrgs(
@@ -96,8 +96,7 @@ object Users extends TableQuery(tag => new Users(tag)) with LazyLogging {
     }
   }
 
-  def createUser(user: User.Create)(implicit database: DB, ec: ExecutionContext):
-      Future[Try[User]] = {
+  def createUser(user: User.Create)(implicit database: DB):  Future[User] = {
     val(userRow, usersToOrganizationsRow) = user.toUsersOrgTuple()
 
     val insertAction = Users.forceInsert(userRow)
@@ -115,30 +114,23 @@ object Users extends TableQuery(tag => new Users(tag)) with LazyLogging {
     )
 
     database.db.run {
-      userInsert.asTry
-    } map {
-      case Success(_) => Success(userRow)
-      case Failure(e) => Failure(e)
+      userInsert.map(_ => userRow)
     }
   }
 
-  def createUserWithAuthId(sub: String)(implicit database: DB, ec: ExecutionContext):
-      Future[Try[User]] = {
+  def createUserWithAuthId(sub: String)(implicit database: DB): Future[User] = {
 
-    val newUUID = java.util.UUID.randomUUID
     database.db.run {
       Organizations.filter(_.name === "Public").result.headOption
     } flatMap {
-      case Some(org) => {
-        val userCreate = User.Create(sub, org.id)
-        createUser(userCreate)
-      }
-      case _ => Future(Failure(new Exception("No public org found in database")))
+      case Some(org) =>
+        createUser(User.Create(sub, org.id))
+      case _ =>
+        throw new Exception("No public org found in database")
     }
   }
 
   def getUserById(id: String)(implicit database: DB): Future[Option[User]] = {
-
     val getUserAction = Users.filter(_.id === id).result
     logger.debug(s"Attempting to retrieve user $id -- SQL: ${getUserAction.statements.headOption})")
 
@@ -147,11 +139,9 @@ object Users extends TableQuery(tag => new Users(tag)) with LazyLogging {
     }
   }
 
-  def getUserWithOrgsById(id: String)(implicit database: DB, ec: ExecutionContext):
-      Future[Option[User.WithOrgs]] = {
-
+  def getUserWithOrgsById(userId: String)(implicit database: DB): Future[Option[User.WithOrgs]] = {
     database.db.run {
-      joinUsersRolesOrgs(Users.filter(_.id === id)).result
+      joinUsersRolesOrgs(Users.filter(_.id === userId)).result
     } map {
       joinTuples => joinTuples.map(joinTuple => User.RoleOrgJoin.tupled(joinTuple))
     } map {

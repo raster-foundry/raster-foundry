@@ -38,7 +38,7 @@ trait UserRoutes extends Authentication with PaginationDirectives with UserError
               //TODO: This should only be accessible by users with the correct permission
               //      (IE admin in the "Public" org)
               entity(as[User.Create]) { newUser =>
-                onSuccess(Users.createUser(newUser)) {
+                onComplete(Users.createUser(newUser)) {
                   case Success(user) => onSuccess(Users.getUserWithOrgsById(user.id)) {
                     case Some(user) => complete(StatusCodes.Created, user)
                     case None => complete(StatusCodes.InternalServerError)

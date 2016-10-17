@@ -37,20 +37,17 @@ trait Authentication extends Directives with Config {
       case _ => None
     }
     jwt match {
-      case Some(validToken) => {
+      case Some(validToken) =>
         validToken.claimAsString("sub") match {
-          case Right(sub) => {
+          case Right(sub) =>
             onSuccess(Users.getUserById(sub)).flatMap {
               case Some(user) => provide(user)
               case None => onSuccess(Users.createUserWithAuthId(sub)).flatMap {
-                case Success(user) => provide(user)
-                case Failure(_) => complete(StatusCodes.InternalServerError)
+                user => provide(user)
               }
             }
-          }
           case Left(_) => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
         }
-      }
       case _ => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
     }
   }
