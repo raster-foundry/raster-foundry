@@ -2,6 +2,7 @@ package com.azavea.rf.database.tables
 
 import com.azavea.rf.database.fields.{OrganizationFkFields, TimestampFields}
 import com.azavea.rf.database.query._
+import com.azavea.rf.database.sort._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.datamodel._
@@ -39,7 +40,12 @@ class Thumbnails(_tableTag: Tag) extends Table[Thumbnail](_tableTag, "thumbnails
 
 /** Collection-like TableQuery object for table Thumbnails */
 object Thumbnails extends TableQuery(tag => new Thumbnails(tag)) with LazyLogging {
-  type TableQuery = Query[Thumbnails, Thumbnails#TableElementType, Seq]
+  type TableQuery = Query[Thumbnails, Thumbnail, Seq]
+
+  implicit val bucketsSorter: QuerySorter[Thumbnails] =
+    new QuerySorter(
+      new OrganizationFkSort(identity[Thumbnails]),
+      new TimestampSort(identity[Thumbnails]))
 
   implicit class withThumbnailsQuery[M, U, C[_]](thumbnails: Thumbnails.TableQuery) extends
       ThumbnailDefaultQuery[M, U, C](thumbnails)
@@ -163,31 +169,6 @@ class ThumbnailDefaultQuery[M, U, C[_]](thumbnails: Thumbnails.TableQuery) {
 
   def filterBySceneParams(sceneParams: ThumbnailQueryParameters): Thumbnails.TableQuery = {
     thumbnails.filter(_.scene === sceneParams.sceneId)
-  }
-
-  def sort(sortMap: Map[String, Order]): Thumbnails.TableQuery = {
-    def applySort(query: Thumbnails.TableQuery, sortMap: Map[String, Order]): Thumbnails.TableQuery = {
-      sortMap.headOption match {
-        case Some(("createdAt", Order.Asc)) => applySort(query.sortBy(_.createdAt.asc),
-          sortMap.tail)
-        case Some(("createdAt", Order.Desc)) => applySort(query.sortBy(_.createdAt.desc),
-          sortMap.tail)
-
-        case Some(("modifiedAt", Order.Asc)) => applySort(query.sortBy(_.modifiedAt.asc),
-          sortMap.tail)
-        case Some(("modifiedAt", Order.Desc)) => applySort(query.sortBy(_.modifiedAt.desc),
-          sortMap.tail)
-
-        case Some(("organization", Order.Asc)) => applySort(query.sortBy(_.organizationId.asc),
-          sortMap.tail)
-        case Some(("organization", Order.Desc)) => applySort(query.sortBy(_.organizationId.desc),
-          sortMap.tail)
-
-        case Some(_) => applySort(query, sortMap.tail)
-        case _ => query
-      }
-    }
-    applySort(thumbnails, sortMap)
   }
 
   def page(pageRequest: PageRequest): Thumbnails.TableQuery = {

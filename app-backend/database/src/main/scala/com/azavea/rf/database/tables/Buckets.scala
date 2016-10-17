@@ -1,9 +1,10 @@
 package com.azavea.rf.database.tables
 
 import com.azavea.rf.database.fields._
+import com.azavea.rf.database.sort._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.query._
-import com.azavea.rf.database.{Database => DB}
+import com.azavea.rf.database.{Database => DB, _}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import slick.model.ForeignKeyAction
 import java.util.UUID
@@ -44,7 +45,14 @@ class Buckets(_tableTag: Tag) extends Table[Bucket](_tableTag, "buckets")
 }
 
 object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
-  type TableQuery = Query[Buckets, Buckets#TableElementType, Seq]
+  type TableQuery = Query[Buckets, Bucket, Seq]
+
+  implicit val bucketsSorter: QuerySorter[Buckets] =
+    new QuerySorter(
+      new BucketFieldsSort(identity[Buckets]),
+      new OrganizationFkSort(identity[Buckets]),
+      new VisibilitySort(identity[Buckets]),
+      new TimestampSort(identity[Buckets]))
 
   implicit class withBucketsTableQuery[M, U, C[_]](buckets: Buckets.TableQuery) extends
       BucketsTableQuery[M, U, C](buckets)
@@ -238,43 +246,7 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
   }
 }
 
-
 class BucketsTableQuery[M, U, C[_]](buckets: Buckets.TableQuery) {
-  def sort(sortMap: Map[String, Order]): Buckets.TableQuery = {
-    def applySort(query: Buckets.TableQuery, sortMap: Map[String, Order]): Buckets.TableQuery = {
-      sortMap.headOption match {
-        case Some(("createdAt", Order.Asc)) => applySort(query.sortBy(_.createdAt.asc),
-                                                         sortMap.tail)
-        case Some(("createdAt", Order.Desc)) => applySort(query.sortBy(_.createdAt.desc),
-                                                          sortMap.tail)
-
-        case Some(("modifiedAt", Order.Asc)) => applySort(query.sortBy(_.modifiedAt.asc),
-                                                          sortMap.tail)
-        case Some(("modifiedAt", Order.Desc)) => applySort(query.sortBy(_.modifiedAt.desc),
-                                                           sortMap.tail)
-
-        case Some(("organization", Order.Asc)) => applySort(query.sortBy(_.organizationId.asc),
-                                                            sortMap.tail)
-        case Some(("organization", Order.Desc)) => applySort(query.sortBy(_.organizationId.desc),
-                                                             sortMap.tail)
-
-        case Some(("name", Order.Asc)) => applySort(query.sortBy(_.name.asc),
-                                                    sortMap.tail)
-        case Some(("name", Order.Desc)) => applySort(query.sortBy(_.name.desc),
-                                                     sortMap.tail)
-
-        case Some(("visibility", Order.Asc)) => applySort(query.sortBy(_.visibility.asc),
-                                                          sortMap.tail)
-        case Some(("visibility", Order.Desc)) => applySort(query.sortBy(_.visibility.desc),
-                                                           sortMap.tail)
-
-        case Some(_) => applySort(query, sortMap.tail)
-        case _ => query
-      }
-    }
-    applySort(buckets, sortMap)
-  }
-
   def page(pageRequest: PageRequest): Buckets.TableQuery = {
     val sorted = buckets.sort(pageRequest.sort)
     sorted.drop(pageRequest.offset * pageRequest.limit).take(pageRequest.limit)

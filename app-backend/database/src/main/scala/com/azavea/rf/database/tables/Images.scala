@@ -2,7 +2,8 @@ package com.azavea.rf.database.tables
 
 import com.azavea.rf.database.fields._
 import com.azavea.rf.database.query._
-import com.azavea.rf.database.{Database => DB}
+import com.azavea.rf.database.sort._
+import com.azavea.rf.database.{Database => DB, _}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.datamodel._
 import slick.model.ForeignKeyAction
@@ -51,6 +52,13 @@ class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
 
 object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
   type TableQuery = Query[Images, Images#TableElementType, Seq]
+
+  implicit val imagesSorter: QuerySorter[Images] =
+    new QuerySorter(
+      new ImageFieldsSort(identity[Images]),
+      new OrganizationFkSort(identity[Images]),
+      new VisibilitySort(identity[Images]),
+      new TimestampSort(identity[Images]))
 
   implicit class withImagesDefaultQuery[M, U, C[_]](images: Images.TableQuery) extends
       ImagesDefaultQuery[M, U, C](images)
@@ -186,41 +194,6 @@ class ImagesDefaultQuery[M, U, C[_]](images: Images.TableQuery) {
         .reduceLeftOption(_ || _)
         .getOrElse(true: Rep[Boolean])
     }
-  }
-
-  def sort(sortMap: Map[String, Order]): Images.TableQuery = {
-    def applySort(query: Images.TableQuery, sortMap: Map[String, Order]): Images.TableQuery = {
-      sortMap.headOption match {
-        case Some(("createdAt", Order.Asc)) => applySort(query.sortBy(_.createdAt.asc),
-                                                         sortMap.tail)
-        case Some(("createdAt", Order.Desc)) => applySort(query.sortBy(_.createdAt.desc),
-                                                          sortMap.tail)
-
-        case Some(("modifiedAt", Order.Asc)) => applySort(query.sortBy(_.modifiedAt.asc),
-                                                          sortMap.tail)
-        case Some(("modifiedAt", Order.Desc)) => applySort(query.sortBy(_.modifiedAt.desc),
-                                                           sortMap.tail)
-
-        case Some(("organization", Order.Asc)) => applySort(query.sortBy(_.organizationId.asc),
-                                                            sortMap.tail)
-        case Some(("organization", Order.Desc)) => applySort(query.sortBy(_.organizationId.desc),
-                                                             sortMap.tail)
-
-        case Some(("visibility", Order.Asc)) => applySort(query.sortBy(_.visibility.asc),
-                                                          sortMap.tail)
-        case Some(("visibility", Order.Desc)) => applySort(query.sortBy(_.visibility.desc),
-                                                           sortMap.tail)
-
-        case Some(("rawDataBytes", Order.Asc)) => applySort(query.sortBy(_.rawDataBytes.asc),
-                                                            sortMap.tail)
-        case Some(("rawDataBytes", Order.Desc)) => applySort(query.sortBy(_.rawDataBytes.desc),
-                                                             sortMap.tail)
-
-        case Some(_) => applySort(query, sortMap.tail)
-        case _ => query
-      }
-    }
-    applySort(images, sortMap)
   }
 
   def page(pageRequest: PageRequest): Images.TableQuery = {

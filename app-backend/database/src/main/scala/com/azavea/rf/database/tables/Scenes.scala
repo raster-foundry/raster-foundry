@@ -2,7 +2,8 @@ package com.azavea.rf.database.tables
 
 import com.azavea.rf.database.fields.{SceneFields, OrganizationFkFields, UserFkFields, TimestampFields}
 import com.azavea.rf.database.query._
-import com.azavea.rf.database.{Database => DB}
+import com.azavea.rf.database.sort._
+import com.azavea.rf.database.{Database => DB, _}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.datamodel._
 import java.util.UUID
@@ -58,9 +59,22 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
 
 /** Collection-like TableQuery object for table Scenes */
 object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
+  type TableQuery = Query[Scenes, Scene, Seq]
+  type JoinQuery = Query[ScenesWithRelatedFields, (Scene, Option[Image], Option[Thumbnail]), Seq]
+  type ScenesWithRelatedFields = (Scenes, Rep[Option[Images]], Rep[Option[Thumbnails]])
 
-  type TableQuery = Query[Scenes, Scenes#TableElementType, Seq]
-  type JoinQuery = Query[(Scenes, Rep[Option[Images]], Rep[Option[Thumbnails]]),(Scene, Option[Image], Option[Thumbnail]), Seq]
+  implicit val scenesSorter: QuerySorter[Scenes] =
+    new QuerySorter(
+      new SceneFieldsSort(identity[Scenes]),
+      new OrganizationFkSort(identity[Scenes]),
+      new TimestampSort(identity[Scenes]))
+
+  implicit val scenesWithRelatedSorter: QuerySorter[ScenesWithRelatedFields] =
+    new QuerySorter(
+      new SceneFieldsSort(_._1),
+      new OrganizationFkSort(_._1),
+      new TimestampSort(_._1))
+
 
   implicit class withScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) extends
       ScenesTableQuery[M, U, C](scenes)
@@ -308,62 +322,6 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) {
          joinLeft Thumbnails on (_._1.id === _.scene))
     } yield( scene, image, thumbnail )
   }
-
-  def sort(sortMap: Map[String, Order]): Scenes.TableQuery = {
-    def applySort(query: Scenes.TableQuery, sortMap: Map[String, Order]): Scenes.TableQuery = {
-      sortMap.headOption match {
-        case Some(("createdAt", Order.Asc)) => applySort(query.sortBy(_.createdAt.asc),
-                                                         sortMap.tail)
-        case Some(("createdAt", Order.Desc)) => applySort(query.sortBy(_.createdAt.desc),
-                                                          sortMap.tail)
-
-        case Some(("modifiedAt", Order.Asc)) => applySort(query.sortBy(_.modifiedAt.asc),
-                                                          sortMap.tail)
-        case Some(("modifiedAt", Order.Desc)) => applySort(query.sortBy(_.modifiedAt.desc),
-                                                           sortMap.tail)
-
-        case Some(("organization", Order.Asc)) => applySort(query.sortBy(_.organizationId.asc),
-                                                            sortMap.tail)
-        case Some(("organization", Order.Desc)) => applySort(query.sortBy(_.organizationId.desc),
-                                                             sortMap.tail)
-
-        case Some(("datasource", Order.Asc)) => applySort(query.sortBy(_.datasource.asc),
-                                                          sortMap.tail)
-        case Some(("datasource", Order.Desc)) => applySort(query.sortBy(_.datasource.desc),
-                                                           sortMap.tail)
-
-        case Some(("month", Order.Asc)) => applySort(query.sortBy { join =>
-                                                       datePart("month", join.acquisitionDate).asc
-                                                     }, sortMap.tail)
-        case Some(("month", Order.Desc)) => applySort(query.sortBy { join =>
-                                                        datePart("month", join.acquisitionDate).desc
-                                                      }, sortMap.tail)
-
-        case Some(("acquisitionDatetime", Order.Asc)) => applySort(
-          query.sortBy(_.acquisitionDate.asc), sortMap.tail)
-        case Some(("acquisitionDatetime", Order.Desc)) => applySort(
-          query.sortBy(_.acquisitionDate.desc), sortMap.tail)
-
-        case Some(("sunAzimuth", Order.Asc)) => applySort(query.sortBy(_.sunAzimuth.asc),
-                                                          sortMap.tail)
-        case Some(("sunAzimuth", Order.Desc)) => applySort(query.sortBy(_.sunAzimuth.desc),
-                                                           sortMap.tail)
-
-        case Some(("sunElevation", Order.Asc)) => applySort(query.sortBy(_.sunElevation.asc),
-                                                            sortMap.tail)
-        case Some(("sunElevation", Order.Desc)) => applySort(query.sortBy(_.sunElevation.desc),
-                                                             sortMap.tail)
-
-        case Some(("cloudCover", Order.Asc)) => applySort(query.sortBy(_.cloudCover.asc),
-                                                          sortMap.tail)
-        case Some(("cloudCover", Order.Desc)) => applySort(query.sortBy(_.cloudCover.desc),
-                                                           sortMap.tail)
-
-        case Some(_) => applySort(query, sortMap.tail)
-        case _ => query
-      }
-    }
-    applySort(scenes, sortMap)
   }
 }
 
@@ -394,62 +352,5 @@ class ScenesJoinQuery[M, U, C[_]](sceneJoin: Scenes.JoinQuery) {
 
     // Need to sort after the join because the join removes the sort order
     joinedResults.sort(pageRequest.sort)
-  }
-
-  def sort(sortMap: Map[String, Order]): Scenes.JoinQuery = {
-    def applySort(query: Scenes.JoinQuery, sortMap: Map[String, Order]): Scenes.JoinQuery = {
-      sortMap.headOption match {
-        case Some(("createdAt", Order.Asc)) => applySort(query.sortBy(_._1.createdAt.asc),
-                                                         sortMap.tail)
-        case Some(("createdAt", Order.Desc)) => applySort(query.sortBy(_._1.createdAt.desc),
-                                                          sortMap.tail)
-
-        case Some(("modifiedAt", Order.Asc)) => applySort(query.sortBy(_._1.modifiedAt.asc),
-                                                          sortMap.tail)
-        case Some(("modifiedAt", Order.Desc)) => applySort(query.sortBy(_._1.modifiedAt.desc),
-                                                           sortMap.tail)
-
-        case Some(("organization", Order.Asc)) => applySort(query.sortBy(_._1.organizationId.asc),
-                                                            sortMap.tail)
-        case Some(("organization", Order.Desc)) => applySort(query.sortBy(_._1.organizationId.desc),
-                                                             sortMap.tail)
-
-        case Some(("datasource", Order.Asc)) => applySort(query.sortBy(_._1.datasource.asc),
-                                                          sortMap.tail)
-        case Some(("datasource", Order.Desc)) => applySort(query.sortBy(_._1.datasource.desc),
-                                                           sortMap.tail)
-
-        case Some(("month", Order.Asc)) => applySort(query.sortBy { join =>
-                                                       datePart("month", join._1.acquisitionDate).asc
-                                                     }, sortMap.tail)
-        case Some(("month", Order.Desc)) => applySort(query.sortBy { join =>
-                                                        datePart("month", join._1.acquisitionDate).desc
-                                                      }, sortMap.tail)
-
-        case Some(("acquisitionDatetime", Order.Asc)) => applySort(
-          query.sortBy(_._1.acquisitionDate.asc), sortMap.tail)
-        case Some(("acquisitionDatetime", Order.Desc)) => applySort(
-          query.sortBy(_._1.acquisitionDate.desc), sortMap.tail)
-
-        case Some(("sunAzimuth", Order.Asc)) => applySort(query.sortBy(_._1.sunAzimuth.asc),
-                                                          sortMap.tail)
-        case Some(("sunAzimuth", Order.Desc)) => applySort(query.sortBy(_._1.sunAzimuth.desc),
-                                                           sortMap.tail)
-
-        case Some(("sunElevation", Order.Asc)) => applySort(query.sortBy(_._1.sunElevation.asc),
-                                                            sortMap.tail)
-        case Some(("sunElevation", Order.Desc)) => applySort(query.sortBy(_._1.sunElevation.desc),
-                                                             sortMap.tail)
-
-        case Some(("cloudCover", Order.Asc)) => applySort(query.sortBy(_._1.cloudCover.asc),
-                                                          sortMap.tail)
-        case Some(("cloudCover", Order.Desc)) => applySort(query.sortBy(_._1.cloudCover.desc),
-                                                           sortMap.tail)
-
-        case Some(_) => applySort(sceneJoin, sortMap.tail)
-        case _ => query
-      }
-    }
-    applySort(sceneJoin, sortMap)
   }
 }
