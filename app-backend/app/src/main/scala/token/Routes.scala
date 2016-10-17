@@ -12,7 +12,8 @@ trait TokenRoutes extends Authentication {
   import TokenJsonProtocol._
 
   def tokenRoutes: Route = pathPrefix("api" / "tokens") {
-    listRefreshTokens
+    listRefreshTokens ~
+    getAuthorizedToken
   }
 
   def listRefreshTokens: Route = pathEndOrSingleSlash {
@@ -20,6 +21,16 @@ trait TokenRoutes extends Authentication {
       authenticate { user =>
         onSuccess(TokenService.listRefreshTokens(user)) { tokens =>
           complete(tokens)
+        }
+      }
+    }
+  }
+
+  def getAuthorizedToken: Route = pathEndOrSingleSlash {
+    post {
+      entity(as[RefreshToken]) { refreshToken =>
+        onSuccess(TokenService.getAuthorizedToken(refreshToken)) { token =>
+          complete(token)
         }
       }
     }
