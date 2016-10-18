@@ -43,8 +43,8 @@ object TokenService extends Config {
       .flatMap {
         case HttpResponse(StatusCodes.OK, _, entity, _) =>
           Unmarshal(entity).to[List[DeviceCredential]]
-        case HttpResponse(errCode, _, _, _) =>
-          throw new Exception(s"Error communicating with Auth0: $errCode")
+        case HttpResponse(errCode, _, error, _) =>
+          throw new Auth0Exception(errCode, error.toString)
       }
   }
 
@@ -68,8 +68,8 @@ object TokenService extends Config {
       .flatMap {
         case HttpResponse(StatusCodes.OK, _, entity, _) =>
           Unmarshal(entity).to[AuthorizedToken]
-        case HttpResponse(errCode, _, _, _) =>
-          throw new Exception(s"Error communicating with Auth0: $errCode")
+        case HttpResponse(errCode, _, error, _) =>
+          throw new Auth0Exception(errCode, error.toString)
       }
   }
 
@@ -87,8 +87,8 @@ object TokenService extends Config {
             .map {
               case HttpResponse(StatusCodes.NoContent, _, _, _) =>
                 StatusCodes.NoContent
-              case HttpResponse(errCode, _, _, _) =>
-                throw new Exception(s"Error revoking refresh token: $errCode")
+              case HttpResponse(errCode, _, error, _) =>
+                throw new Auth0Exception(errCode, error.toString)
             }
         case _ => Future(StatusCodes.NotFound)
       }

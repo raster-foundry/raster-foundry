@@ -1,18 +1,22 @@
 package com.azavea.rf.token
 
 import akka.http.scaladsl.server.Route
+
 import com.azavea.rf.auth.Authentication
 
 
 /**
   * Routes for tokens
   */
-trait TokenRoutes extends Authentication {
+trait TokenRoutes extends Authentication
+  with Auth0ErrorHandler {
 
   def tokenRoutes: Route = pathPrefix("api" / "tokens") {
-    listRefreshTokens ~
-    getAuthorizedToken ~
-    revokeRefreshToken
+    handleExceptions(auth0ExceptionHandler) {
+      listRefreshTokens ~
+      getAuthorizedToken ~
+      revokeRefreshToken
+    }
   }
 
   def listRefreshTokens: Route = pathEndOrSingleSlash {
