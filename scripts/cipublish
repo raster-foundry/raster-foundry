@@ -35,10 +35,13 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                    "${AWS_ECR_ENDPOINT}/raster-foundry-app-backend:${GIT_COMMIT}"
             docker tag "raster-foundry-airflow:${GIT_COMMIT}" \
                    "${AWS_ECR_ENDPOINT}/raster-foundry-airflow:${GIT_COMMIT}"
+            docker tag "raster-foundry-app-migrations:${GIT_COMMIT}" \
+                   "${AWS_ECR_ENDPOINT}/raster-foundry-migrations:${GIT_COMMIT}"
 
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-nginx:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-app-backend:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-airflow:${GIT_COMMIT}"
+            docker push "${AWS_ECR_ENDPOINT}/raster-foundry-migrations:${GIT_COMMIT}"
         else
             echo "ERROR: No AWS_ECR_ENDPOINT variable defined."
             exit 1

@@ -50,6 +50,11 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                   -f "${DIR}/../docker-compose.test.yml"\
                   build airflow
 
+        echo "Building SBT container for migrations..."
+        GIT_COMMIT="${GIT_COMMIT}" docker-compose \
+                  -f "${DIR}/../docker-compose.test.yml"\
+                  build app-migrations
+
         echo "Running tests"
         GIT_COMMIT="${GIT_COMMIT}" ./scripts/test
         echo "All tests pass!"
