@@ -6,9 +6,6 @@
 
       <h5 class="sidebar-title">{{$ctrl.lastSceneResult.count | number}} Results Found</h5>
       <div class="sidebar-actions">
-        <button class="btn btn-default btn-square" ng-click="$ctrl.populateInitialSceneList()">
-          <i class="icon-arrows-cw"></i>
-        </button>
         <button class="btn btn-default btn-square" ng-click="$ctrl.toggleFilterPane()">
           <i class="icon-filter"></i>
         </button>
@@ -37,7 +34,8 @@
           <i class="icon-load"></i>
         </span>
       </div>
-      <div class="list-group" ng-show="!$ctrl.loading && $ctrl.lastSceneResult && !$ctrl.lastSceneResult.hasNext">
+      <div class="list-group"
+           ng-show="!$ctrl.loading && $ctrl.lastSceneResult && !$ctrl.lastSceneResult.hasNext">
         <span class="list-placeholder">
           No more scenes to load
         </span>
@@ -47,7 +45,8 @@
           {{$ctrl.errorMsg}}
         </span>
       </div>
-      <div class="list-group load-message" ng-show="!$ctrl.loading && $ctrl.lastSceneResult && $ctrl.lastSceneResult.hasNext">
+      <div class="list-group load-message"
+           ng-show="!$ctrl.loading && $ctrl.lastSceneResult && $ctrl.lastSceneResult.hasNext">
         <a href ng-click="$ctrl.getMoreScenes()">Load More...</a>
       </div>
     </div>
@@ -113,83 +112,7 @@
 
   <div class="sidebar sidebar-extended map-filters"
        ng-show="$ctrl.showFilterPane && !$ctrl.activeScene">
-    <div class="sidebar-static">
-      <h5>Filter imagery</h5>
-      <div class="sidebar-actions">
-        <a href="#">Clear all filters</a>
-      </div>
-    </div>
-    <div class="sidebar-scrollable">
-      <div class="content">
-        <div class="filter">
-          <label>Year</label>
-          <div class="filter-item slider-filter">
-            <div id="year_slider"></div>
-          </div>
-        </div>
-        <div class="filter">
-          <label>Month</label>
-          <div class="filter-item month-filter">
-            <button type="button" class="btn btn-toggle btn-small active" data-toggle="button" aria-pressed="false" autocomplete="off">Jan</button>
-            <button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Feb</button>
-            <button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Mar</button>
-            <button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Apr</button>
-            <button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">May</button>
-            <button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Jun</button>
-            <button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Jul</button>
-            <button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Aug</button>
-            <button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Sep</button>
-            <button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Oct</button>
-            <button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Nov</button>
-            <button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Dec</button>
-          </div>
-        </div>
-        <div class="filter">
-          <label>Cloud cover</label>
-          <div class="filter-item slider-filter">
-            <div id="cloud_slider"></div>
-          </div>
-        </div>
-        <div class="filter">
-          <label>Sun elevation</label>
-          <div class="filter-item slider-filter">
-            <div id="sun_slider"></div>
-          </div>
-        </div>
-        <div class="filter">
-          <label>Imagery sources</label>
-          <div class="filter-item tag-filter">
-            <button type="button" class="btn btn-toggle btn-small active" data-toggle="button" aria-pressed="false" autocomplete="off">My Imports</button>
-            <button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Raster Foundry Users</button>
-            <button type="button" class="btn btn-toggle btn-small active" data-toggle="button" aria-pressed="false" autocomplete="off">NASA</button>
-            <button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">Planet Labs</button>
-            <button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">satimagingcorp</button>
-            <button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">USGS</button>
-          </div>
-        </div>
-        <div class="filter">
-          <label>Broadband</label>
-          <div class="filter-item tag-filter">
-            <button type="button" class="btn btn-toggle btn-small active" data-toggle="button" aria-pressed="false" autocomplete="off">Visible</button>
-            <button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">SWIR</button>
-            <button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">LWIR</button>
-          </div>
-        </div>
-        <div class="filter">
-          <label>Wavelength</label>
-          <div class="filter-item tag-filter">
-            <!-- Based on http://www.markelowitz.com/Hyperspectral.html -->
-            <button type="button" class="btn btn-toggle btn-small active" data-toggle="button" aria-pressed="false" autocomplete="off">.45-.52nm</button>
-            <button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">.52-.60nm</button>
-            <button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">.63-.69nm</button>
-            <button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">.79-.90nm</button>
-            <button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">1.55-1.75nm</button>
-            <button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">2.08-2.35nm</button>
-            <button type="button" class="btn btn-toggle btn-small" data-toggle="button" aria-pressed="false" autocomplete="off">10.4-12.4nm</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <rf-filter-pane filters="$ctrl.filters"></rf-filter-pane>
   </div>
 
   <div class="main">

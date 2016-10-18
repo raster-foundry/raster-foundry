@@ -1,5 +1,6 @@
 import assetLogo from '../../../assets/images/logo-raster-foundry.png';
 const Map = require('es6-map');
+const _ = require('lodash');
 
 export default class BrowseController {
     constructor( // eslint-disable-line max-params
@@ -20,43 +21,82 @@ export default class BrowseController {
         this.selectedScenes = new Map();
         this.sceneList = [];
         // initial data
-        this.populateInitialSceneList();
+
+        this.queryParams = _.mapValues($state.params, (val) => {
+            if (val === '' || typeof val === 'undefined') {
+                return null;
+            }
+            return val;
+        });
+
         if ($state.params.id) {
             this.sceneService.query({id: $state.params.id}).then(
                 (scene) => {
                     this.openDetailPane(scene);
                 },
                 () => {
-                    this.$state.go('.', {id: null}, {notify: false});
+                    this.queryParams.id = null;
+                    this.$state.go('.', this.queryParams, {notify: false});
                 }
             );
         }
 
-        // $scope
-        $scope.$on(
-            '$stateChangeStart',
-            (event, toState, toParams, fromState) => {
-                if (toState.name === fromState.name) {
-                    event.preventDefault();
-                    if (toParams.id === '') {
-                        this.closeDetailPane();
-                    } else {
-                        this.sceneService.query({id: toParams.id}).then(
-                            (scene) => {
-                                this.openDetailPane(scene);
-                            },
-                            () => {
-                                this.$state.go('.', {id: null}, {notify: false});
-                            }
+        this.filters = Object.assign({}, this.queryParams);
+        delete this.filters.id;
+
+        // watchers
+        $scope.$on('$stateChangeStart', this.onStateChangeStart.bind(this));
+        $scope.$watchCollection('$ctrl.filters', this.onFilterChange.bind(this));
+
+        this.populateInitialSceneList();
+    }
+
+    onStateChangeStart(event, toState, toParams, fromState) {
+        if (toState.name === fromState.name) {
+            event.preventDefault();
+            if (toParams.id === '') {
+                this.closeDetailPane();
+            } else {
+                this.sceneService.query({id: toParams.id}).then(
+                    (scene) => {
+                        this.openDetailPane(scene);
+                    },
+                    () => {
+                        this.queryParams.id = null;
+                        this.$state.go(
+                            '.',
+                            this.queryParams,
+                            {notify: false, location: 'replace'}
                         );
                     }
-                }
+                );
             }
-        );
+        }
+    }
+
+    onFilterChange(newFilters) {
+        this.queryParams = Object.assign({
+            id: this.queryParams.id,
+            maxCloudCover: null,
+            minCloudCover: null,
+            minAcquisitionDatetime: null,
+            maxAcquisitionDatetime: null,
+            datasource: null,
+            month: null,
+            maxSunAzimuth: null,
+            minSunAzimuth: null,
+            maxSunElevation: null,
+            minSunElevation: null,
+            bbox: null,
+            point: null
+        }, newFilters);
+        this.$state.go('.', this.queryParams, {notify: false, location: 'replace'});
+        this.populateInitialSceneList();
     }
 
     populateInitialSceneList() {
         if (this.loading) {
+            this.reloadScenes = true;
             return;
         }
 
@@ -65,16 +105,22 @@ export default class BrowseController {
         this.infScrollPage = 0;
         // save off selected scenes so you don't lose them during the refresh
         this.sceneList = [];
+        let params = Object.assign({}, this.queryParams);
+        delete params.id;
         this.sceneService.query(
-            {
+            Object.assign({
                 sort: 'createdAt,desc',
                 pageSize: '20'
-            }
+            }, params)
         ).then(
             (sceneResult) => {
                 this.lastSceneResult = sceneResult;
                 this.sceneList = sceneResult.results;
                 this.loading = false;
+                if (this.reloadScenes) {
+                    this.reloadScenes = false;
+                    this.populateInitialSceneList();
+                }
             },
             () => {
                 this.errorMsg = 'Error loading scenes.';
@@ -90,12 +136,14 @@ export default class BrowseController {
         delete this.errorMsg;
         this.loading = true;
         this.infScrollPage = this.infScrollPage + 1;
+        let params = Object.assign({}, this.queryParams);
+        delete params.id;
         this.sceneService.query(
-            {
+            Object.assign({
                 sort: 'createdAt,desc',
                 pageSize: '20',
                 page: this.infScrollPage
-            }
+            }, params)
         ).then(
             (sceneResult) => {
                 this.lastSceneResult = sceneResult;
@@ -112,12 +160,14 @@ export default class BrowseController {
 
     openDetailPane(scene) {
         this.activeScene = scene;
-        this.$state.go('.', {id: scene.id}, {notify: false, location: true});
+        this.queryParams.id = scene.id;
+        this.$state.go('.', this.queryParams, {notify: false, location: true});
     }
 
     closeDetailPane() {
         delete this.activeScene;
-        this.$state.go('.', {id: null}, {notify: false});
+        this.queryParams.id = null;
+        this.$state.go('.', this.queryParams, {notify: false});
     }
 
     toggleFilterPane() {

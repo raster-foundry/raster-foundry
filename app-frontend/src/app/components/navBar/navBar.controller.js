@@ -24,9 +24,7 @@ export default class NavBarController {
 
         $log.debug('Navbar controller initialized');
 
-        $scope.$watch(function () {
-            return auth.isAuthenticated;
-        }, (isAuthenticated) => {
+        $scope.$watch('$ctrl.auth.isAuthenticated', (isAuthenticated) => {
             if (isAuthenticated) {
                 store.set('profile', this.auth.profile);
                 this.profile = this.auth.profile;
