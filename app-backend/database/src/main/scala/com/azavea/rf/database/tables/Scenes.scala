@@ -9,6 +9,7 @@ import com.azavea.rf.datamodel._
 import java.util.UUID
 import java.sql.Timestamp
 import geotrellis.slick.Projected
+
 import geotrellis.vector.{Point, Polygon, Geometry}
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -46,7 +47,7 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
   val sunAzimuth: Rep[Option[Float]] = column[Option[Float]]("sun_azimuth", O.Default(None))
   val sunElevation: Rep[Option[Float]] = column[Option[Float]]("sun_elevation", O.Default(None))
   val name: Rep[String] = column[String]("name", O.Length(255,varying=true))
-  val footprint: Rep[Option[Projected[Geometry]]] = column[Option[Projected[Geometry]]]("footprint", O.Length(2147483647,varying=false), O.Default(None))
+  val footprint: Rep[Option[Projected[Geometry]]] = column[Option[Projected[Geometry]]]("footprint", O.Length(Int.MaxValue,varying=false), O.Default(None))
 
   /** Foreign key referencing Organizations (database name scenes_organization_id_fkey) */
   lazy val organizationsFk = foreignKey("scenes_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)

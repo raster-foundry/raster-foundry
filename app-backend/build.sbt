@@ -28,20 +28,7 @@ lazy val commonSettings = Seq(
 lazy val appSettings = commonSettings ++ Seq(
   fork in run := true,
   connectInput in run := true,
-  cancelable in Global := true,
-  assemblyJarName in assembly := "rf-server.jar",
-  assemblyMergeStrategy in assembly := {
-    case "reference.conf" => MergeStrategy.concat
-    case "application.conf" => MergeStrategy.concat
-    case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") => MergeStrategy.discard
-    case "META-INF/MANIFEST.MF" => MergeStrategy.discard
-    case _ => MergeStrategy.first
-  },
-  resolvers += "Open Source Geospatial Foundation Repo" at "http://download.osgeo.org/webdav/geotools/",
-  resolvers += Resolver.bintrayRepo("azavea", "geotrellis"),
-  resolvers += Resolver.bintrayRepo("azavea", "maven"),
-  resolvers += Resolver.bintrayRepo("lonelyplanet", "maven"),
-  test in assembly := {}
+  cancelable in Global := true
 )
 lazy val loggingDependencies = List(
   "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
@@ -116,4 +103,18 @@ lazy val database = Project("database", file("database"))
   .settings(commonSettings:_*)
   .settings({
    libraryDependencies ++= slickDependencies ++ dbDependencies ++ loggingDependencies ++ Seq(Dependencies.akkaHttpExtensions)
+  })
+
+lazy val ingest = Project("ingest", file("ingest"))
+  .dependsOn(datamodel)
+  .settings(commonSettings:_*)
+  .settings({
+    libraryDependencies ++= slickDependencies ++ Seq(
+      Dependencies.geotrellisRaster,
+      Dependencies.geotrellisVector,
+      Dependencies.geotrellisSparkEtl,
+      Dependencies.geotrellisS3,
+      Dependencies.akkajson,
+      Dependencies.spark
+    )
   })

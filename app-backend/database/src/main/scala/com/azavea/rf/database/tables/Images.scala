@@ -10,6 +10,9 @@ import slick.model.ForeignKeyAction
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import com.typesafe.scalalogging.LazyLogging
 
+import geotrellis.vector.Geometry
+import geotrellis.slick.Projected
+
 import java.util.UUID
 import java.sql.Timestamp
 import java.net.URI
@@ -23,7 +26,7 @@ class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
                                      with TimestampFields
                                      with VisibilityField
 {
-  def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, rawDataBytes, visibility, sourceUri, scene, bands, imageMetadata) <> (Image.tupled, Image.unapply)
+  def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, rawDataBytes, visibility, sourceUri, scene, bands, imageMetadata, extent) <> (Image.tupled, Image.unapply)
 
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
   val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")
@@ -35,8 +38,9 @@ class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
   val sourceUri: Rep[URI] = column[URI]("source_uri")
   val scene: Rep[java.util.UUID] = column[java.util.UUID]("scene")
-  val bands: Rep[List[Int]] = column[List[Int]]("bands", O.Length(2147483647,varying=false))
-  val imageMetadata: Rep[Map[String, Any]] = column[Map[String, Any]]("image_metadata", O.Length(2147483647,varying=false))
+  val bands: Rep[List[Int]] = column[List[Int]]("bands", O.Length(Int.MaxValue,varying=false))
+  val imageMetadata: Rep[Map[String, Any]] = column[Map[String, Any]]("image_metadata", O.Length(Int.MaxValue,varying=false))
+  val extent: Rep[Option[Projected[Geometry]]] = column[Option[Projected[Geometry]]]("extent")
 
   /** Foreign key referencing Organizations (database name images_organization_id_fkey) */
   lazy val organizationsFk = foreignKey("images_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)

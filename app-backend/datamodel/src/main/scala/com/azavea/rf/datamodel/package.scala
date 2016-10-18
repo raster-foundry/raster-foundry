@@ -42,14 +42,15 @@ package object datamodel {
   }
 
   implicit object RFExtentJsonFormat extends RootJsonFormat[Extent] {
-    def write(extent: Extent): JsValue =
+    def write(extent: Extent): JsValue = {
       JsArray(
         JsNumber(extent.xmin),
         JsNumber(extent.ymin),
         JsNumber(extent.xmax),
         JsNumber(extent.ymax)
       )
-    def read(value: JsValue): Extent = value match {
+    }
+		def read(value: JsValue): Extent = value match {
       case JsArray(extent) =>
         assert(extent.size == 4)
         val parsedExtent = extent.map({

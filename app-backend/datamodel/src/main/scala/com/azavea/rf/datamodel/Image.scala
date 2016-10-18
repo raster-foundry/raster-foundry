@@ -2,6 +2,9 @@ package com.azavea.rf.datamodel
 
 import spray.json._
 import spray.json.DefaultJsonProtocol._
+import geotrellis.vector.Geometry
+import geotrellis.slick.Projected
+
 import java.util.UUID
 import java.sql.Timestamp
 import java.net.URI
@@ -18,7 +21,8 @@ case class Image(
   sourceUri: URI,
   scene: UUID,
   bands: List[Int],
-  imageMetadata: Map[String, Any]
+  imageMetadata: Map[String, Any],
+  extent: Option[Projected[Geometry]] = None
 )
 
 object Image {
@@ -27,7 +31,7 @@ object Image {
 
   def tupled = (Image.apply _).tupled
 
-  implicit val defaultImageFormat = jsonFormat12(Image.apply _)
+  implicit val defaultImageFormat = jsonFormat13(Image.apply _)
 
   case class Create(
     organizationId: UUID,
@@ -36,7 +40,8 @@ object Image {
     sourceUri: URI,
     scene: UUID,
     bands: List[Int],
-    imageMetadata: Map[String, Any]
+    imageMetadata: Map[String, Any],
+    extent: Option[Projected[Geometry]] = None
   ) {
     def toImage(userId: String): Image = {
       val now = new Timestamp((new java.util.Date).getTime)
@@ -53,13 +58,14 @@ object Image {
         sourceUri,
         scene,
         bands,
-        imageMetadata
+        imageMetadata,
+        extent
       )
     }
   }
 
   object Create {
-    implicit val defaultImageCreateFormat = jsonFormat7(Create.apply _)
+    implicit val defaultImageCreateFormat = jsonFormat8(Create.apply _)
   }
 
   /** Image class when posted with an ID */
@@ -69,7 +75,8 @@ object Image {
     visibility: Visibility,
     sourceUri: URI,
     bands: List[Int],
-    imageMetadata: Map[String, Any]
+    imageMetadata: Map[String, Any],
+    extent: Option[Projected[Geometry]] = None
   ) {
     def toImage(userId: String, scene: Scene): Image = {
       val now = new Timestamp((new java.util.Date()).getTime())
@@ -85,12 +92,13 @@ object Image {
         sourceUri,
         scene.id,
         bands,
-        imageMetadata
+        imageMetadata,
+        extent
       )
     }
   }
 
   object Identified {
-    implicit val defaultIdentifiedImageFormat = jsonFormat6(Identified.apply _)
+    implicit val defaultIdentifiedImageFormat = jsonFormat7(Identified.apply _)
   }
 }
