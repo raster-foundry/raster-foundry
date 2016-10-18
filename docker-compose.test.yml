@@ -6,8 +6,8 @@ services:
       context: ./nginx
       dockerfile: Dockerfile
 
-  app-backend:
-    image: raster-foundry-app-backend:${GIT_COMMIT}
+  app-server:
+    image: raster-foundry-app-server:${GIT_COMMIT}
     build:
       context: ./app-backend/app
       dockerfile: Dockerfile

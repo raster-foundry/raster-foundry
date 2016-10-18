@@ -16,7 +16,7 @@ services:
     ports:
       - "9100:443"
     links:
-      - app-backend
+      - app-server
     volumes:
       - ./nginx/srv/dist/:/srv/dist/
       - ./nginx/etc/nginx/nginx.conf:/etc/nginx/nginx.conf
@@ -37,7 +37,7 @@ services:
       - ./app-frontend/webpack.config.js:/opt/raster-foundry/app-frontend/webpack.config.js
     command: npm run build-watch
 
-  app-backend:
+  app-server:
     image: quay.io/azavea/scala:2.11.8
     links:
       - postgres:database.raster-foundry.internal
@@ -142,7 +142,7 @@ services:
     links:
       - postgres:database.raster-foundry.internal
       - redis:redis.raster-foundry.internal
-      - app-backend:rasterfoundry.com
+      - app-server:rasterfoundry.com
     env_file: .env
     environment:
       - AIRFLOW_HOME=/usr/local/airflow
