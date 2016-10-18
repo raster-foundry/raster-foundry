@@ -15,14 +15,14 @@ object User {
   implicit val defaultUserFormat = jsonFormat1(User.apply _)
 
   sealed abstract class Role(val repr: String) extends Product with Serializable
+  case object UserRole extends Role("USER")
   case object Viewer extends Role("VIEWER")
-  case object Owner extends Role("OWNER")
   case object Admin extends Role("ADMIN")
 
   object Role {
     def fromString(s: String) = s.toUpperCase match {
+      case "USER" => UserRole
       case "VIEWER" => Viewer
-      case "OWNER" => Owner
       case "ADMIN" => Admin
       case _ => throw new Exception(s"Unsupported user role string: $s")
     }
