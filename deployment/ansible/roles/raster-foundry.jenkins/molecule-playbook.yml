@@ -30,5 +30,10 @@
     - name: Gather facts
       setup:
 
-  roles:
-     - { role: "../raster-foundry.jenkins" }
+    - name: Include raster-foundry group_vars
+      include_vars: "{{ item }}"
+      with_items:
+        - "../../group_vars/all"
+        - "../../group_vars/jenkins"
+
+- include: ../../raster-foundry-jenkins.yml

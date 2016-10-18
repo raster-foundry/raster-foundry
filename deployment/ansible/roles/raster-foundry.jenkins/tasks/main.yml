@@ -1,10 +1,30 @@
 ---
-- name: Disable authentication for login
-  copy:
-    src=files/config.xml
+- name: Disable security for login, set number of executors
+  lineinfile:
     dest=/var/lib/jenkins/config.xml
+    state={{ item.state }}
+    regexp={{ item.regexp }}
+    line={{ item.line }}
+    backrefs={{ item.backrefs }}
   notify:
     - Restart Jenkins
+  with_items:
+    - { regexp: '(.*<useSecurity>).*(</useSecurity>.*)',
+        line: '\1false\2',
+        state: present,
+        backrefs: yes }
+    - { regexp: '(.*<numExecutors>)\d+(</numExecutors>.*)',
+        line: '\1 1\2',
+        state: present,
+        backrefs: yes }
+
+- name: Remove Authorization and Security XML from config.
+  replace: dest=/var/lib/jenkins/config.xml regexp={{ item }}
+  notify:
+    - Restart Jenkins
+  with_items:
+    - '\s*<authorizationStrategy.*>(?:\n.*)*</authorizationStrategy>'
+    - '\s*<securityRealm.*>(?:\n.*)*</securityRealm>'
 
 - name: Add Jenkins Nginx config
   template: src=jenkins.conf.j2
@@ -19,6 +39,17 @@
   notify:
     - Restart Nginx
 
+- name: Add jenkins user to docker, sudo and adm groups
+  user: name="{{ jenkins_name }}"
+        groups="{{ item }}"
+        append=yes
+  with_items:
+    - "docker"
+    - "adm"
+    - "sudo"
+  notify:
+    - Restart Jenkins
+
 - name: Setup hourly docker-gc cron task
   cron:
     name: "docker-gc"
@@ -31,16 +62,4 @@
       -v /etc:/etc
       spotify/docker-gc
     state: "present"
-  changed_when: False
-
-- name: Restart Jenkins every 3 hours
-  cron:
-    name: "jenkins-restart"
-    user: "{{ jenkins_name }}"
-    hour: "*/3"
-    minute: "0"
-    job: >
-      /usr/bin/java -jar {{ jenkins_cli_jar_path }}
-      -s http://localhost:{{ jenkins_http_port }}
-      restart
   changed_when: False

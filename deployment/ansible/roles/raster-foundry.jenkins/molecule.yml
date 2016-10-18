@@ -11,9 +11,6 @@ vagrant:
     - name: trusty64
       box: ubuntu/trusty64
 
-    - name: xenial64
-      box: ubuntu/xenial64
-
   providers:
     - name: virtualbox
       type: virtualbox
@@ -21,7 +18,7 @@ vagrant:
         memory: 1024
 
   instances:
-    - name: raster-foundry-jenkins
+    - name: jenkins
 
 molecule:
   test:
