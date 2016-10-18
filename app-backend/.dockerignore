@@ -1,0 +1,6 @@
+app/target/*
+database/target/*
+datamodel/target/*
+migrations/target/*
+target/*
+project/target/*
