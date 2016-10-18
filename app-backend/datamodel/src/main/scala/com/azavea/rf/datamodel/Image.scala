@@ -15,7 +15,6 @@ case class Image(
   modifiedBy: String,
   rawDataBytes: Int,
   visibility: Visibility,
-  filename: String,
   sourceUri: URI,
   scene: UUID,
   bands: List[Int],
@@ -28,13 +27,12 @@ object Image {
 
   def tupled = (Image.apply _).tupled
 
-  implicit val defaultImageFormat = jsonFormat13(Image.apply _)
+  implicit val defaultImageFormat = jsonFormat12(Image.apply _)
 
   case class Create(
     organizationId: UUID,
     rawDataBytes: Int,
     visibility: Visibility,
-    filename: String,
     sourceUri: URI,
     scene: UUID,
     bands: List[Int],
@@ -52,7 +50,6 @@ object Image {
         userId, // modifiedBy: String,
         rawDataBytes,
         visibility,
-        filename,
         sourceUri,
         scene,
         bands,
@@ -62,7 +59,7 @@ object Image {
   }
 
   object Create {
-    implicit val defaultImageCreateFormat = jsonFormat8(Create.apply _)
+    implicit val defaultImageCreateFormat = jsonFormat7(Create.apply _)
   }
 
   /** Image class when posted with an ID */
@@ -70,8 +67,7 @@ object Image {
     id: Option[UUID],
     rawDataBytes: Int,
     visibility: Visibility,
-    filename: String,
-    sourceuri: URI,
+    sourceUri: URI,
     bands: List[Int],
     imageMetadata: Map[String, Any]
   ) {
@@ -86,8 +82,7 @@ object Image {
         userId, // modifiedBy: String,
         rawDataBytes,
         visibility,
-        filename,
-        sourceuri,
+        sourceUri,
         scene.id,
         bands,
         imageMetadata
@@ -96,6 +91,6 @@ object Image {
   }
 
   object Identified {
-    implicit val defaultIdentifiedImageFormat = jsonFormat7(Identified.apply _)
+    implicit val defaultIdentifiedImageFormat = jsonFormat6(Identified.apply _)
   }
 }

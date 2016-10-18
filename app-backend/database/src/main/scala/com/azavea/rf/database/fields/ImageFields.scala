@@ -6,6 +6,5 @@ import java.net.URI
 
 trait ImageFields  { self: Table[_] =>
   def rawDataBytes: Rep[Int]
-  def filename: Rep[String]
-  def sourceuri: Rep[URI]
+  def sourceUri: Rep[URI]
 }
