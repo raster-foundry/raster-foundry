@@ -6,7 +6,7 @@ import com.azavea.rf.database.ExtendedPostgresDriver.api._
 
 /**
   * Class to be used for implicit method extension of slick Query object.
-  * Implicit instance  of this class can be found in [[com.azavea.rf.database.sort]] package object.
+  * An implicit instance of this class can be found in [[com.azavea.rf.database.sort]] package object.
   */
 class QuerySortMethods[E, U, C[_]](query: Query[E, U, C]) {
   /**

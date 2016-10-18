@@ -24,7 +24,7 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
                                      with TimestampFields
 {
   def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, organizationId, ingestSizeBytes, visibility,
-    resolutionMeters, tags, datasource, sceneMetadata, cloudCover, acquisitionDate, thumbnailStatus, boundaryStatus,
+    resolutionMeters, tags, sceneMetadata, cloudCover, acquisitionDate, thumbnailStatus, boundaryStatus,
     status, sunAzimuth, sunElevation, name, footprint) <> (Scene.tupled, Scene.unapply)
 
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
@@ -37,7 +37,6 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
   val resolutionMeters: Rep[Float] = column[Float]("resolution_meters")
   val tags: Rep[List[String]] = column[List[String]]("tags", O.Length(2147483647,varying=false))
-  val datasource: Rep[String] = column[String]("datasource", O.Length(255,varying=true))
   val sceneMetadata: Rep[Map[String, Any]] = column[Map[String, Any]]("scene_metadata", O.Length(2147483647,varying=false))
   val cloudCover: Rep[Option[Float]] = column[Option[Float]]("cloud_cover", O.Default(None))
   val acquisitionDate: Rep[Option[java.sql.Timestamp]] = column[Option[java.sql.Timestamp]]("acquisition_date", O.Default(None))
@@ -54,8 +53,8 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
   lazy val createdByUserFK = foreignKey("scenes_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val modifiedByUserFK = foreignKey("scenes_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 
-  /** Uniqueness Index over (name,organizationId,datasource) (database name scene_name_org_datasource) */
-  val index1 = index("scene_name_org_datasource", (name, organizationId, datasource), unique=true)
+  /** Uniqueness Index over (name,organizationId) (database name scene_name_org_datasource) */
+  val index1 = index("scene_name_org", (name, organizationId), unique=true)
 }
 
 /** Collection-like TableQuery object for table Scenes */
@@ -196,14 +195,14 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
       updateScene <- Scenes.filter(_.id === sceneId)
     } yield (
       updateScene.modifiedAt, updateScene.modifiedBy, updateScene.ingestSizeBytes,
-      updateScene.resolutionMeters, updateScene.datasource, updateScene.cloudCover,
+      updateScene.resolutionMeters, updateScene.cloudCover,
       updateScene.acquisitionDate, updateScene.tags, updateScene.sceneMetadata,
       updateScene.thumbnailStatus, updateScene.boundaryStatus, updateScene.status, updateScene.name, updateScene.footprint
     )
     database.db.run {
       updateSceneQuery.update((
         updateTime, user.id, scene.ingestSizeBytes, scene.resolutionMeters,
-        scene.datasource, scene.cloudCover, scene.acquisitionDate, scene.tags, scene.sceneMetadata,
+        scene.cloudCover, scene.acquisitionDate, scene.tags, scene.sceneMetadata,
         scene.thumbnailStatus, scene.boundaryStatus, scene.status, scene.name, scene.footprint
       ))
     } map {
@@ -238,11 +237,6 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) {
     }.filter { scene =>
       sceneParams.month
         .map(datePart("month", scene.acquisitionDate) === _)
-        .reduceLeftOption(_ || _)
-        .getOrElse(true: Rep[Boolean])
-    }.filter { scene =>
-      sceneParams.datasource
-        .map(scene.datasource === _)
         .reduceLeftOption(_ || _)
         .getOrElse(true: Rep[Boolean])
     }

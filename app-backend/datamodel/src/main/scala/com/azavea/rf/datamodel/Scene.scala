@@ -4,6 +4,7 @@ import spray.json._
 import spray.json.DefaultJsonProtocol._
 import java.sql.Timestamp
 import java.util.UUID
+import java.net.URI
 
 import geotrellis.vector.io.json.GeoJsonSupport
 import geotrellis.vector.Geometry
@@ -20,7 +21,6 @@ case class Scene(
   visibility: Visibility,
   resolutionMeters: Float,
   tags: List[String],
-  datasource: String,
   sceneMetadata: Map[String, Any],
   cloudCover: Option[Float] = None,
   acquisitionDate: Option[java.sql.Timestamp] = None,
@@ -47,7 +47,6 @@ case class Scene(
     this.visibility,
     this.resolutionMeters,
     this.tags,
-    this.datasource,
     this.sceneMetadata,
     this.cloudCover,
     this.acquisitionDate,
@@ -72,7 +71,7 @@ object Scene extends GeoJsonSupport {
 
   def withRelated = WithRelated.apply _
 
-  implicit val defaultThumbnailFormat = jsonFormat21(Scene.apply)
+  implicit val defaultThumbnailFormat = jsonFormat20(Scene.apply)
 
   /** Case class extracted from a POST request */
   case class Create(
@@ -81,7 +80,6 @@ object Scene extends GeoJsonSupport {
     visibility: Visibility,
     resolutionMeters: Float,
     tags: List[String],
-    datasource: String,
     sceneMetadata: Map[String, Any],
     cloudCover: Option[Float],
     acquisitionDate: Option[java.sql.Timestamp],
@@ -108,7 +106,6 @@ object Scene extends GeoJsonSupport {
         visibility,
         resolutionMeters,
         tags,
-        datasource,
         sceneMetadata,
         cloudCover,
         acquisitionDate,
@@ -124,7 +121,7 @@ object Scene extends GeoJsonSupport {
   }
 
   object Create {
-    implicit val defaultThumbnailWithRelatedFormat = jsonFormat18(Create.apply)
+    implicit val defaultThumbnailWithRelatedFormat = jsonFormat17(Create.apply)
   }
 
   case class WithRelated(
@@ -137,7 +134,6 @@ object Scene extends GeoJsonSupport {
     visibility: Visibility,
     resolutionMeters: Float,
     tags: List[String],
-    datasource: String,
     sceneMetadata: Map[String, Any],
     cloudCover: Option[Float],
     acquisitionDate: Option[java.sql.Timestamp],
@@ -153,7 +149,7 @@ object Scene extends GeoJsonSupport {
   )
 
   object WithRelated {
-    implicit val defaultThumbnailWithRelatedFormat = jsonFormat22(WithRelated.apply)
+    implicit val defaultThumbnailWithRelatedFormat = jsonFormat21(WithRelated.apply)
 
     /** Helper function to create Iterable[Scene.WithRelated] from join
       *

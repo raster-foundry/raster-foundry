@@ -4,6 +4,7 @@ import spray.json._
 import spray.json.DefaultJsonProtocol._
 import java.util.UUID
 import java.sql.Timestamp
+import java.net.URI
 
 case class Image(
   id: UUID,
@@ -15,9 +16,9 @@ case class Image(
   rawDataBytes: Int,
   visibility: Visibility,
   filename: String,
-  sourceUri: String,
+  sourceUri: URI,
   scene: UUID,
-  bands: List[String],
+  bands: List[Int],
   imageMetadata: Map[String, Any]
 )
 
@@ -34,9 +35,9 @@ object Image {
     rawDataBytes: Int,
     visibility: Visibility,
     filename: String,
-    sourceUri: String,
+    sourceUri: URI,
     scene: UUID,
-    bands: List[String],
+    bands: List[Int],
     imageMetadata: Map[String, Any]
   ) {
     def toImage(userId: String): Image = {
@@ -70,8 +71,8 @@ object Image {
     rawDataBytes: Int,
     visibility: Visibility,
     filename: String,
-    sourceuri: String,
-    bands: List[String],
+    sourceuri: URI,
+    bands: List[Int],
     imageMetadata: Map[String, Any]
   ) {
     def toImage(userId: String, scene: Scene): Image = {

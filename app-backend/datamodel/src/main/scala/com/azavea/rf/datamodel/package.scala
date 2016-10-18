@@ -5,6 +5,7 @@ import DefaultJsonProtocol._
 import java.util.UUID
 import java.sql.Timestamp
 import java.time.Instant
+import java.net.URI
 
 import geotrellis.vector._
 import geotrellis.vector.io._
@@ -18,14 +19,23 @@ package object datamodel {
     def read(js: JsValue): UUID = js match {
       case JsString(uuid) => UUID.fromString(uuid)
       case _ =>
-        deserializationError("Failed to parse UUID string ${js} to java UUID")
+        deserializationError("Expected java UUID got ${js}")
+    }
+  }
+
+  implicit object URIJsonFormat extends RootJsonFormat[URI] {
+    def write(uri: URI): JsValue = JsString(uri.toString)
+
+    def read(json: JsValue): URI = json match {
+      case JsString(uri) => new URI(uri)
+      case _ => throw new DeserializationException(s"Expected URI got $json")
     }
   }
 
   implicit object TimeStampJsonFormat extends RootJsonFormat[Timestamp] {
-    def write(time: Timestamp) = JsString(time.toInstant().toString())
+    def write(time: Timestamp): JsValue = JsString(time.toInstant().toString())
 
-    def read(json: JsValue) = json match {
+    def read(json: JsValue): Timestamp = json match {
       case JsString(time) => Timestamp.from(Instant.parse(time))
       case _ => throw new DeserializationException(s"Expected ISO 8601 Date but got $json")
     }

@@ -33,7 +33,6 @@ case class SceneQueryParameters(
   minCloudCover: Option[Float],
   minAcquisitionDatetime: Option[Timestamp],
   maxAcquisitionDatetime: Option[Timestamp],
-  datasource: Iterable[String],
   month: Iterable[Int],
   maxSunAzimuth: Option[Float],
   minSunAzimuth: Option[Float],

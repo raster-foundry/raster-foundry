@@ -7,12 +7,14 @@ import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.datamodel._
 import slick.model.ForeignKeyAction
+import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.typesafe.scalalogging.LazyLogging
+
 import java.util.UUID
 import java.sql.Timestamp
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import java.net.URI
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-import com.typesafe.scalalogging.LazyLogging
 
 class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
                                      with ImageFields
@@ -32,9 +34,9 @@ class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
   val rawDataBytes: Rep[Int] = column[Int]("raw_data_bytes")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
   val filename: Rep[String] = column[String]("filename")
-  val sourceuri: Rep[String] = column[String]("sourceuri")
+  val sourceuri: Rep[URI] = column[URI]("sourceuri")
   val scene: Rep[java.util.UUID] = column[java.util.UUID]("scene")
-  val bands: Rep[List[String]] = column[List[String]]("bands", O.Length(2147483647,varying=false))
+  val bands: Rep[List[Int]] = column[List[Int]]("bands", O.Length(2147483647,varying=false))
   val imageMetadata: Rep[Map[String, Any]] = column[Map[String, Any]]("image_metadata", O.Length(2147483647,varying=false))
 
   /** Foreign key referencing Organizations (database name images_organization_id_fkey) */
