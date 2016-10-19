@@ -5,16 +5,16 @@
  */
 
 // Depends
-let path = require('path');
-let webpack = require('webpack');
-let autoprefixer = require('autoprefixer-core');
-let Manifest = require('manifest-revision-webpack-plugin');
-let ExtractTextPlugin = require('extract-text-webpack-plugin');
-let HtmlWebpackPlugin = require('html-webpack-plugin');
+const path = require('path');
+const webpack = require('webpack');
+const autoprefixer = require('autoprefixer-core');
+const Manifest = require('manifest-revision-webpack-plugin');
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
-let NODE_ENV = process.env.NODE_ENV || 'production';
-let DEVELOPMENT = NODE_ENV === 'production' ? false : true;
-let stylesLoader = 'css-loader?sourceMap!postcss-loader!sass-loader?' +
+const NODE_ENV = process.env.NODE_ENV || 'production';
+const DEVELOPMENT = NODE_ENV === 'production' ? false : true;
+const stylesLoader = 'css-loader?sourceMap!postcss-loader!sass-loader?' +
         'outputStyle=expanded&sourceMap=true&sourceMapContents=true';
 
 module.exports = function (_path) {

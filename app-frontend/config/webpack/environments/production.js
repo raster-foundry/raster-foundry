@@ -4,8 +4,8 @@
  no-console: 0
  */
 
-let webpack = require('webpack');
-let CleanWebpackPlugin = require('clean-webpack-plugin');
+const webpack = require('webpack');
+const CleanWebpackPlugin = require('clean-webpack-plugin');
 
 module.exports = function (_path) {
     return {

@@ -1,48 +1,54 @@
-h1, h2, h3,
-.h1, .h2, .h3 {
-  margin-top: 2rem;
+@mixin heading-tags {
+  h1, h2, h3, h4, h5, h6,
+  .h1, .h2, .h3, .h4, .h5, .h6 {
+    @content;
+  }
+}
+
+@include heading-tags {
   margin-bottom: 1rem;
   line-height: 1.1;
   font-family: 'Titillium Web', sans-serif;
   color: $shade-dark;
+}
+
+h1, h2, h3,
+.h1, .h2, .h3 {
+  margin-top: 2rem;
 }
 
 h4, h5, h6,
 .h4, .h5, .h6 {
-	margin-top: 1.3rem;
-  margin-bottom: 1rem;
-  line-height: 1.1;
-  font-family: 'Titillium Web', sans-serif;
-  color: $shade-dark;
+  margin-top: 1.3rem;
 }
 
 h1, .h1 {
-	font-size: 3.9rem;
+  font-size: 3.9rem;
 }
 
 h2, .h2 {
-	font-size: 3.1rem;
+  font-size: 3.1rem;
 }
 
 h3, .h3 {
-	font-size: 2.5rem;
+  font-size: 2.5rem;
 }
 
 h4, .h4 {
-	font-size: 2rem;
+  font-size: 2rem;
 }
 
 h5, .h5 {
-	font-size: 1.6rem;
+  font-size: 1.6rem;
 }
 
 h6, .h6 {
-	font-size: 1.3rem;
+  font-size: 1.3rem;
 }
 
 p, .p {
-	font-size: 1.4rem;
-	line-height: 1.8;
+  font-size: 1.4rem;
+  line-height: 1.8;
   margin-top: 1rem;
   margin-bottom: 1rem;
 }
@@ -56,29 +62,29 @@ p, .p {
 }
 
 .font-alt {
-	font-family: 'Titillium Web', sans-serif;
+  font-family: 'Titillium Web', sans-serif;
 }
 
 .text-uppercase {
-	text-transform: uppercase;
+  text-transform: uppercase;
 }
 
 .text-capitalize {
-	text-transform: capitalize;
+  text-transform: capitalize;
 }
 
 .text-lowercase {
-	text-transform: lowercase;
+  text-transform: lowercase;
 }
 
 .text-center {
-	text-align: center;
+  text-align: center;
 }
 
 .text-right {
-	text-align: right;
+  text-align: right;
 }
 
 .text-left {
-	text-align: left;
+  text-align: left;
 }

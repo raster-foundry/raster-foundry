@@ -6,7 +6,7 @@
 	  </a>
 	  <span class="navbar-vertical-divider"></span>
 	  <nav>
-	    <a href ui-sref="browse" ui-sref-active="active">Browse data</a>
+	    <a href ui-sref="browse" ui-sref-active="active">Scene browser</a>
 	    <a href ui-sref-active="active">Model market</a>
 	    <a href ui-sref-active="active">Model lab</a>
 	  </nav>
@@ -16,10 +16,10 @@
 	<!-- Nav Right -->
 	<div class="navbar-right">
 	  <nav>
-	    <a href="#" class="icon-link" data-toggle="tooltip" title="Help" data-placement="bottom">
+	    <a href class="icon-link" title="Help">
 	      <i class="icon-help"></i>
 	    </a>
-	    <a href="#" class="icon-link" data-toggle="tooltip" title="Processing" data-placement="bottom">
+	    <a href class="icon-link" title="Processing">
 	      <i class="icon-processing"></i>
 	    </a>
 	  </nav>
@@ -31,7 +31,6 @@
         </a>
       </div>
       <div ng-if="$ctrl.isLoggedIn" uib-dropdown class="dropdown-my-account" on-toggle="toggled($ctrl.optionsOpen)">
-	      <a href ui-sref="library.scenes.list">My library</a>
         <a href uib-dropdown-toggle>
           <img ng-if="$ctrl.profile.picture" class="avatar" ng-src="{{$ctrl.profile.picture}}">
 	        <img ng-if="! $ctrl.profile.picture" class="avatar" src="http://placehold.it/25x25">
@@ -39,6 +38,7 @@
 	        <i class="icon-caret-down"></i>
         </a>
 	      <ul class="dropdown-menu" aria-labelledby="dLabel">
+          <li><a href ui-sref="library.scenes.list">My library</a></li>
 	        <li><a href ui-sref="settings.profile">Settings</a></li>
 	        <li role="separator" class="divider"></li>
 	        <li><a href ng-click="$ctrl.logout()">Sign out</a></li>

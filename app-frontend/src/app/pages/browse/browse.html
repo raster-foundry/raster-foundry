@@ -25,8 +25,10 @@
         <rf-scene-item
             ng-click="$ctrl.openDetailPane(scene)"
             scene="scene"
+            selectable
             selected="$ctrl.isSelected(scene)"
-            on-select="$ctrl.setSelected(scene, selected)";
+            on-select="$ctrl.setSelected(scene, selected)"
+            class="selectable"
             ng-repeat="scene in $ctrl.sceneList track by scene.id">
         </rf-scene-item>
       </div>
@@ -51,12 +53,17 @@
     </div>
 
     <div class="sidebar-static">
-      <h5>Selected: {{$ctrl.selectedScenes.length || 'None'}}</h5>
+      <h5>
+        <a href class="color-primary"
+           ng-click="$ctrl.sceneModal()">
+          Selected: {{$ctrl.selectedScenes.size || 'None'}}
+        </a>
+      </h5>
       <div class="sidebar-actions">
-        <a href ng-click="$ctrl.selectAllScenes()">Select All</a>
         <button type="button"
-                class="btn btn-default btn-square"
-                ng-click="$ctrl.selectNoScenes()">
+                class="btn btn- btn-square"
+                ng-disabled="!$ctrl.selectedScenes || $ctrl.selectedScenes.size === 0"
+                ng-click="$ctrl.bucketModal()">
           <i class="icon-plus"></i>
           Add to Bucket
         </button>
@@ -105,7 +112,7 @@
   <!-- Scene filters -->
 
   <div class="sidebar sidebar-extended map-filters"
-       ng-show="$ctrl.showFilterPane">
+       ng-show="$ctrl.showFilterPane && !$ctrl.activeScene">
     <div class="sidebar-static">
       <h5>Filter imagery</h5>
       <div class="sidebar-actions">

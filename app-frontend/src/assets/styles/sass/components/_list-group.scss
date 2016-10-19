@@ -23,13 +23,17 @@
   }
 }
 
+.selectable {
+  .list-group-item {
+    cursor: pointer;
+  }
+}
 .list-group-item {
   padding: 1.5rem;
   border-bottom: 1px solid #ddd;
   display: flex;
   align-items: center;
   position: relative;
-  cursor: pointer;
   > * {
     margin: 0 5px;
   }

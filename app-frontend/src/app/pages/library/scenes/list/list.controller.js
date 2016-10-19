@@ -1,5 +1,7 @@
 class ScenesListController {
-    constructor($log, auth, sceneService, $state, $scope) {
+    constructor( // eslint-disable-line max-params
+        $log, auth, sceneService, $state, $scope, $uibModal
+    ) {
         'ngInject';
 
         this.$log = $log;
@@ -8,6 +10,7 @@ class ScenesListController {
         this.$state = $state;
         this.$scope = $scope;
         this.$parent = $scope.$parent.$ctrl;
+        this.$uibModal = $uibModal;
 
         this.sceneList = [];
         this.populateSceneList($state.params.page || 1);
@@ -27,29 +30,28 @@ class ScenesListController {
                 pageSize: '10',
                 page: page - 1
             }
-        ).then(function (sceneResult) {
+        ).then((sceneResult) => {
             this.lastSceneResult = sceneResult;
             this.numPaginationButtons = 6 - sceneResult.page % 10;
             if (this.numPaginationButtons < 3) {
                 this.numPaginationButtons = 3;
             }
             this.currentPage = sceneResult.page + 1;
+            let replace = !this.$state.params.page;
             this.$state.transitionTo(
                 this.$state.$current.name,
                 {page: this.currentPage},
                 {
-                    location: true,
+                    location: replace ? 'replace' : true,
                     notify: false
                 }
             );
             this.sceneList = this.lastSceneResult.results;
             this.loading = false;
-        }.bind(this), function (error) {
-            if (error.status === -1 || error.status === 500) {
-                this.errorMsg = 'Server error.';
-            }
+        }, () => {
+            this.errorMsg = 'Server error.';
             this.loading = false;
-        }.bind(this));
+        });
     }
 
     viewSceneDetail(scene) {
@@ -69,20 +71,72 @@ class ScenesListController {
     }
 
     selectNone() {
-        this.$parent.selectedScenes = [];
+        this.$parent.selectedScenes.clear();
     }
 
     isSelected(scene) {
-        return this.$parent.selectedScenes.indexOf(scene.id) !== -1;
+        return this.$parent.selectedScenes.has(scene.id);
     }
 
     setSelected(scene, selected) {
-        if (!selected) {
-            let index = this.$parent.selectedScenes.indexOf(scene.id);
-            this.$parent.selectedScenes.splice(index, 1);
-        } else if (!this.isSelected(scene)) {
-            this.$parent.selectedScenes.push(scene.id);
+        if (selected) {
+            this.$parent.selectedScenes.set(scene.id, scene);
+        } else {
+            this.$parent.selectedScenes.delete(scene.id);
         }
+    }
+
+    bucketModal() {
+        if (!this.$parent.selectedScenes || this.$parent.selectedScenes.size === 0) {
+            return;
+        }
+
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+        this.activeModal = this.$uibModal.open({
+            component: 'rfBucketAddModal',
+            resolve: {
+                scenes: () => this.$parent.selectedScenes
+            }
+        });
+
+        this.activeModal.result.then((result) => {
+            if (result && result === 'scenes') {
+                this.sceneModal();
+            }
+            delete this.activeModal;
+        }, () => {
+            delete this.activeModal;
+        });
+    }
+
+    sceneModal() {
+        if (!this.$parent.selectedScenes || this.$parent.selectedScenes.size === 0) {
+            return;
+        }
+
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        this.activeModal = this.$uibModal.open({
+            component: 'rfSelectedScenesModal',
+            resolve: {
+                scenes: () => this.$parent.selectedScenes
+            }
+        });
+
+        this.activeModal.result.then((result) => {
+            if (result === 'bucket') {
+                this.bucketModal();
+            } else {
+                this.$log.debug('modal result: ', result, ' is not implemented yet');
+            }
+            delete this.activeModal;
+        }, () => {
+            delete this.activeModal;
+        });
     }
 }
 

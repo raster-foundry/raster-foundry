@@ -1,7 +1,7 @@
 // Component code
 import sceneDetailTpl from './sceneDetail.html';
 
-const rfSceneItem = {
+const rfSceneDetail = {
     templateUrl: sceneDetailTpl,
     bindings: {
         scene: '<'
@@ -9,4 +9,4 @@ const rfSceneItem = {
     replace: true
 };
 
-export default rfSceneItem;
+export default rfSceneDetail;

@@ -10,14 +10,15 @@ class SceneDetailController {
         if (!this.scene) {
             if (this.sceneId) {
                 this.loading = true;
-                sceneService.query({id: this.sceneId}).then(function (scene) {
-                    this.scene = scene;
-                    this.loading = false;
-                }.bind(this), function (error) {
-                    this.error = error;
-                    this.$log.log(error);
-                    this.$state.go('^.list');
-                }.bind(this));
+                sceneService.query({id: this.sceneId}).then(
+                    (scene) => {
+                        this.scene = scene;
+                        this.loading = false;
+                    },
+                    () => {
+                        this.$state.go('^.list');
+                    }
+                );
             } else {
                 this.$state.go('^.list');
             }

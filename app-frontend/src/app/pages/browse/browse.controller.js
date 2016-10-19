@@ -1,32 +1,58 @@
 import assetLogo from '../../../assets/images/logo-raster-foundry.png';
+const Map = require('es6-map');
 
-class BrowseController {
+export default class BrowseController {
     constructor( // eslint-disable-line max-params
-        $log, auth, $scope, sceneService, $state
+        $log, auth, $scope, sceneService, $state, $uibModal
     ) {
         'ngInject';
         this.$log = $log;
         this.auth = auth;
         this.sceneService = sceneService;
         this.$state = $state;
+        this.$uibModal = $uibModal;
 
         this.assetLogo = assetLogo;
         this.scenes = {
             count: 0,
             results: []
         };
-        this.selectedScenes = [];
+        this.selectedScenes = new Map();
         this.sceneList = [];
         // initial data
         this.populateInitialSceneList();
         if ($state.params.id) {
             this.sceneService.query({id: $state.params.id}).then(
-                function (scene) {
+                (scene) => {
                     this.openDetailPane(scene);
-                }.bind(this), function () {
+                },
+                () => {
                     this.$state.go('.', {id: null}, {notify: false});
-                }.bind(this));
+                }
+            );
         }
+
+        // $scope
+        $scope.$on(
+            '$stateChangeStart',
+            (event, toState, toParams, fromState) => {
+                if (toState.name === fromState.name) {
+                    event.preventDefault();
+                    if (toParams.id === '') {
+                        this.closeDetailPane();
+                    } else {
+                        this.sceneService.query({id: toParams.id}).then(
+                            (scene) => {
+                                this.openDetailPane(scene);
+                            },
+                            () => {
+                                this.$state.go('.', {id: null}, {notify: false});
+                            }
+                        );
+                    }
+                }
+            }
+        );
     }
 
     populateInitialSceneList() {
@@ -44,16 +70,16 @@ class BrowseController {
                 sort: 'createdAt,desc',
                 pageSize: '20'
             }
-        ).then(function (sceneResult) {
-            this.lastSceneResult = sceneResult;
-            this.sceneList = sceneResult.results;
-            this.loading = false;
-        }.bind(this), function (error) {
-            if (error.status === -1 || error.status === 500) {
-                this.errorMsg = 'Server error.';
-            }
-            this.loading = false;
-        }.bind(this));
+        ).then(
+            (sceneResult) => {
+                this.lastSceneResult = sceneResult;
+                this.sceneList = sceneResult.results;
+                this.loading = false;
+            },
+            () => {
+                this.errorMsg = 'Error loading scenes.';
+                this.loading = false;
+            });
     }
 
     getMoreScenes() {
@@ -70,24 +96,23 @@ class BrowseController {
                 pageSize: '20',
                 page: this.infScrollPage
             }
-        ).then(function (sceneResult) {
-            this.lastSceneResult = sceneResult;
-            let newScenes = sceneResult.results;
-            this.sceneList = [...this.sceneList, ...newScenes];
-            this.loading = false;
-        }.bind(this), function (error) {
-            if (error.status === -1 || error.status === 500) {
-                this.errorMsg = 'Server error.';
+        ).then(
+            (sceneResult) => {
+                this.lastSceneResult = sceneResult;
+                let newScenes = sceneResult.results;
+                this.sceneList = [...this.sceneList, ...newScenes];
+                this.loading = false;
+            },
+            () => {
+                this.errorMsg = 'Error loading scenes.';
+                this.loading = false;
             }
-            this.loading = false;
-        }.bind(this));
+        );
     }
 
     openDetailPane(scene) {
-        this.hideFilterPane();
         this.activeScene = scene;
         this.$state.go('.', {id: scene.id}, {notify: false, location: true});
-        this.$log.log(this.$state.params);
     }
 
     closeDetailPane() {
@@ -99,20 +124,8 @@ class BrowseController {
         this.showFilterPane = !this.showFilterPane;
     }
 
-    hideFilterPane() {
-        this.showFilterPane = false;
-    }
-
-    selectAllScenes() {
-        if (this.selectedScenes.length < this.sceneList.length) {
-            this.sceneList.forEach((scene) => this.setSelected(scene, true));
-        } else {
-            this.selectNoScenes();
-        }
-    }
-
     selectNoScenes() {
-        this.selectedScenes = [];
+        this.selectedScenes.clear();
     }
 
     toggleSelectAndClosePane() {
@@ -121,18 +134,68 @@ class BrowseController {
     }
 
     isSelected(scene) {
-        return this.selectedScenes.indexOf(scene.id) !== -1;
+        return this.selectedScenes.has(scene.id);
     }
 
     setSelected(scene, selected) {
-        if (!selected) {
-            let index = this.selectedScenes.indexOf(scene.id);
-            this.selectedScenes.splice(index, 1);
-        } else if (!this.isSelected(scene)) {
-            this.selectedScenes.push(scene.id);
+        if (selected) {
+            this.selectedScenes.set(scene.id, scene);
+        } else {
+            this.selectedScenes.delete(scene.id);
         }
     }
 
-}
+    bucketModal() {
+        if (!this.selectedScenes || this.selectedScenes.size === 0) {
+            return;
+        }
 
-export default BrowseController;
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+        this.activeModal = this.$uibModal.open({
+            component: 'rfBucketAddModal',
+            resolve: {
+                scenes: () => this.selectedScenes
+            }
+        });
+
+        this.activeModal.result.then((result) => {
+            if (result && result === 'scenes') {
+                this.sceneModal();
+            }
+            delete this.activeModal;
+        }, () => {
+            delete this.activeModal;
+        });
+    }
+
+    sceneModal() {
+        if (!this.selectedScenes || this.selectedScenes.size === 0) {
+            return;
+        }
+
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        this.activeModal = this.$uibModal.open({
+            component: 'rfSelectedScenesModal',
+            resolve: {
+                scenes: () => this.selectedScenes
+            }
+        });
+
+        this.activeModal.result.then((result) => {
+            if (result === 'bucket') {
+                this.bucketModal();
+            } else {
+                this.$log.debug('modal result: ', result, ' is not implemented yet');
+            }
+            delete this.activeModal;
+        }, () => {
+            delete this.activeModal;
+        });
+    }
+
+}
