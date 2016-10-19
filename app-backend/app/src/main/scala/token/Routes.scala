@@ -3,16 +3,18 @@ package com.azavea.rf.token
 import akka.http.scaladsl.server.Route
 
 import com.azavea.rf.auth.Authentication
+import com.azavea.rf.utils.UserErrorHandler
 
 
 /**
   * Routes for tokens
   */
 trait TokenRoutes extends Authentication
+  with UserErrorHandler
   with Auth0ErrorHandler {
 
   def tokenRoutes: Route = pathPrefix("api" / "tokens") {
-    handleExceptions(auth0ExceptionHandler) {
+    (handleExceptions(auth0ExceptionHandler) & handleExceptions(userExceptionHandler)) {
       listRefreshTokens ~
       getAuthorizedToken ~
       revokeRefreshToken
