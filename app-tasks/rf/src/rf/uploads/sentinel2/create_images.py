@@ -2,10 +2,10 @@
 
 import logging
 
-from rf.utils.io import Visibility
+from rf.utils.io import Visibility, s3
 from rf.models import Image
 
-from .settings import s3, organization, base_http_path, bucket
+from .settings import organization, base_http_path, bucket
 
 logger = logging.getLogger(__name__)
 

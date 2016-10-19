@@ -5,6 +5,9 @@ import boto3
 import requests
 
 
+s3 = boto3.resource('s3', region_name='eu-central-1')
+
+
 def delete_file(fname):
     """Helper function to delete a file without raising an error if it exists"""
 

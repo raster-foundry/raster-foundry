@@ -38,23 +38,23 @@ dag = DAG(
 DagArgs = namedtuple('DagArgs', 'dag_id, conf, run_id')
 
 
-def chunkify(lst,n):
+def chunkify(lst, n):
     """Helper function to split a list into roughly n chunks
 
     Args:
         lst (List): list of things to split
         n (Int): number of chunks to split into
     """
-    return [ lst[i::n] for i in xrange(n) ]
+    return [lst[i::n] for i in xrange(n)]
 
 
 def find_new_sentinel2_scenes(*args, **kwargs):
-    """Fine new Sentinel 2 scenes and kick off imports
+    """Find new Sentinel 2 scenes and kick off imports
 
     Uses the execution date to determine what day to check for imports
     """
 
-    logging.info("Finding Scenes...")
+    logging.info("Finding Sentinel-2 scenes...")
     execution_date = kwargs['execution_date']
     tilepaths = find_sentinel2_scenes(
         execution_date.year, execution_date.month, execution_date.day
@@ -72,11 +72,11 @@ def find_new_sentinel2_scenes(*args, **kwargs):
             year=execution_date.year, month=execution_date.month, day=execution_date.day,
             idx=idx, slug=slug_path
         )
-        logger.info('Kicking of new scene import: %s', run_id)
+        logger.info('Kicking off new scene import: %s', run_id)
         conf = json.dumps({'tilepaths': path_group})
         dag_args = DagArgs(dag_id=dag_id, conf=conf, run_id=run_id)
         trigger_dag(dag_args)
-    return "Finished kicking off new dags"
+    return "Finished kicking off new Sentinel-2 dags"
 
 
 PythonOperator(
