@@ -14,6 +14,8 @@ RUN set -ex \
     libgdal-dev \
   ' \
   && apt-get update && apt-get install -y ${buildDeps} ${gdal} --no-install-recommends \
+  && pip install --no-cache-dir --no-binary \
+         pycparser \
   && pip install --no-cache-dir \
          numpy==$(grep "numpy" /tmp/requirements.txt | cut -d= -f3) \
   && pip install --no-cache-dir -r /tmp/requirements.txt \
