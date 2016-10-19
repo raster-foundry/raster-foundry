@@ -1,0 +1,66 @@
+version: '2'
+services:
+  spark-master:
+    image: raster-foundry-spark
+    build:
+      context: ./worker-tasks
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "7077:7077"
+      - "8888:8888"
+    environment:
+      SPARK_LOCAL_DIRS: "/tmp"
+      SPARK_PUBLIC_DNS: "localhost"
+      SPARK_MASTER_WEBUI_PORT: "8888"
+      SPARK_DAEMON_MEMORY: "256m"
+      SPARK_DAEMON_JAVA_OPTS: "-Dspark.deploy.recoveryMode=FILESYSTEM -Dspark.deploy.recoveryDirectory=/spark-state"
+    volumes:
+      # Spark cluster state
+      - /spark-state
+      # Spark scratch space
+      - /tmp
+    entrypoint: spark-class
+    command: org.apache.spark.deploy.master.Master
+
+  spark-worker:
+    image: raster-foundry-spark
+    build:
+      context: ./worker-tasks
+      dockerfile: Dockerfile
+    links:
+      - spark-master:spark.services.rf.internal
+    environment:
+      SPARK_LOCAL_DIRS: "/tmp"
+      SPARK_PUBLIC_DNS: "localhost"
+      SPARK_WORKER_WEBUI_PORT: "8889"
+      SPARK_WORKER_MEMORY: "512m"
+      SPARK_DAEMON_MEMORY: "512m"
+    volumes:
+      # Spark scratch space
+      - /tmp
+    entrypoint: spark-class
+    command:
+      - "org.apache.spark.deploy.worker.Worker"
+      - "spark://spark.services.rf.internal:7077"
+
+  spark-driver:
+    image: raster-foundry-spark
+    build:
+      context: ./worker-tasks
+      dockerfile: Dockerfile
+    links:
+      - spark-master:spark.services.rf.internal
+    environment:
+      SPARK_LOCAL_DIRS: "/tmp"
+      SPARK_PUBLIC_DNS: "localhost"
+      SPARK_DRIVER_MEMORY: "512m"
+      SPARK_EXECUTOR_MEMORY: "512m"
+    volumes:
+      - ./worker-tasks/:/opt/raster-foundry/worker-tasks/
+      - ./.ivy2:/root/.ivy2
+      - ./.sbt:/root/.sbt
+      # Spark scratch space
+      - /tmp
+    working_dir: /opt/raster-foundry/worker-tasks
+    entrypoint: spark-submit
