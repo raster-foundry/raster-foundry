@@ -124,7 +124,7 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     * @param bucketId UUID primary key of the bucket to limit results to
     * @param sceneIds Seq[UUID] primary key of scenes to retrieve
     */
-  def getBucketScenes(bucketId: UUID, sceneIds: Seq[UUID])
+  def listBucketScenes(bucketId: UUID, sceneIds: Seq[UUID])
     (implicit database: DB): Future[Iterable[Scene.WithRelated]] = {
 
     val scenes = for {
@@ -267,7 +267,7 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
       }
     }
 
-    getBucketScenes(bucketId, sceneIds)
+    listBucketScenes(bucketId, sceneIds)
   }
 
   /** Removes scene from bucket
@@ -326,6 +326,6 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
       actions.transactionally
     }
 
-    getBucketScenes(bucketId, sceneIds)
+    listBucketScenes(bucketId, sceneIds)
   }
 }
