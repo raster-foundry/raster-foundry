@@ -43,7 +43,7 @@ export default class LeafletMapController {
         }).setView([26.8625, -87.8467], 3);
 
         let cartoPositron = L.tileLayer(
-            'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+            'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">' +
                     'OpenStreetMap</a> &copy;<a href="http://cartodb.com/attributions">CartoDB</a>',
                 maxZoom: 19
@@ -78,4 +78,3 @@ export default class LeafletMapController {
         }, 400);
     }
 }
-
