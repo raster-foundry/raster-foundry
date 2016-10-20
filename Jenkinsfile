@@ -71,5 +71,9 @@ node {
     // Re-raise the exception so that the failure is propagated to
     // Jenkins.
     throw err
+  } finally {
+    // Pass or fail, ensure that the services and networks
+    // created by Docker Compose are torn down.
+    sh 'docker-compose down -v'
   }
 }
