@@ -9,6 +9,7 @@ import com.azavea.rf.datamodel._
 import java.util.UUID
 import java.sql.Timestamp
 import geotrellis.slick.Projected
+
 import geotrellis.vector.{Point, Polygon, Geometry}
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -24,7 +25,7 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
                                      with TimestampFields
 {
   def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, organizationId, ingestSizeBytes, visibility,
-    resolutionMeters, tags, datasource, sceneMetadata, cloudCover, acquisitionDate, thumbnailStatus, boundaryStatus,
+    resolutionMeters, tags, sceneMetadata, cloudCover, acquisitionDate, thumbnailStatus, boundaryStatus,
     status, sunAzimuth, sunElevation, name, footprint) <> (Scene.tupled, Scene.unapply)
 
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
@@ -37,7 +38,6 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
   val resolutionMeters: Rep[Float] = column[Float]("resolution_meters")
   val tags: Rep[List[String]] = column[List[String]]("tags", O.Length(2147483647,varying=false))
-  val datasource: Rep[String] = column[String]("datasource", O.Length(255,varying=true))
   val sceneMetadata: Rep[Map[String, Any]] = column[Map[String, Any]]("scene_metadata", O.Length(2147483647,varying=false))
   val cloudCover: Rep[Option[Float]] = column[Option[Float]]("cloud_cover", O.Default(None))
   val acquisitionDate: Rep[Option[java.sql.Timestamp]] = column[Option[java.sql.Timestamp]]("acquisition_date", O.Default(None))
@@ -47,15 +47,15 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
   val sunAzimuth: Rep[Option[Float]] = column[Option[Float]]("sun_azimuth", O.Default(None))
   val sunElevation: Rep[Option[Float]] = column[Option[Float]]("sun_elevation", O.Default(None))
   val name: Rep[String] = column[String]("name", O.Length(255,varying=true))
-  val footprint: Rep[Option[Projected[Geometry]]] = column[Option[Projected[Geometry]]]("footprint", O.Length(2147483647,varying=false), O.Default(None))
+  val footprint: Rep[Option[Projected[Geometry]]] = column[Option[Projected[Geometry]]]("footprint", O.Length(Int.MaxValue,varying=false), O.Default(None))
 
   /** Foreign key referencing Organizations (database name scenes_organization_id_fkey) */
   lazy val organizationsFk = foreignKey("scenes_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val createdByUserFK = foreignKey("scenes_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val modifiedByUserFK = foreignKey("scenes_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 
-  /** Uniqueness Index over (name,organizationId,datasource) (database name scene_name_org_datasource) */
-  val index1 = index("scene_name_org_datasource", (name, organizationId, datasource), unique=true)
+  /** Uniqueness Index over (name,organizationId) (database name scene_name_org_datasource) */
+  val index1 = index("scene_name_org", (name, organizationId), unique=true)
 }
 
 /** Collection-like TableQuery object for table Scenes */
@@ -196,14 +196,14 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
       updateScene <- Scenes.filter(_.id === sceneId)
     } yield (
       updateScene.modifiedAt, updateScene.modifiedBy, updateScene.ingestSizeBytes,
-      updateScene.resolutionMeters, updateScene.datasource, updateScene.cloudCover,
+      updateScene.resolutionMeters, updateScene.cloudCover,
       updateScene.acquisitionDate, updateScene.tags, updateScene.sceneMetadata,
       updateScene.thumbnailStatus, updateScene.boundaryStatus, updateScene.status, updateScene.name, updateScene.footprint
     )
     database.db.run {
       updateSceneQuery.update((
         updateTime, user.id, scene.ingestSizeBytes, scene.resolutionMeters,
-        scene.datasource, scene.cloudCover, scene.acquisitionDate, scene.tags, scene.sceneMetadata,
+        scene.cloudCover, scene.acquisitionDate, scene.tags, scene.sceneMetadata,
         scene.thumbnailStatus, scene.boundaryStatus, scene.status, scene.name, scene.footprint
       ))
     } map {
@@ -238,11 +238,6 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) {
     }.filter { scene =>
       sceneParams.month
         .map(datePart("month", scene.acquisitionDate) === _)
-        .reduceLeftOption(_ || _)
-        .getOrElse(true: Rep[Boolean])
-    }.filter { scene =>
-      sceneParams.datasource
-        .map(scene.datasource === _)
         .reduceLeftOption(_ || _)
         .getOrElse(true: Rep[Boolean])
     }

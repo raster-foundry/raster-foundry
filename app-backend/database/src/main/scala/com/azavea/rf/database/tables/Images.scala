@@ -7,12 +7,17 @@ import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.datamodel._
 import slick.model.ForeignKeyAction
+import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.typesafe.scalalogging.LazyLogging
+
+import geotrellis.vector.Geometry
+import geotrellis.slick.Projected
+
 import java.util.UUID
 import java.sql.Timestamp
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import java.net.URI
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-import com.typesafe.scalalogging.LazyLogging
 
 class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
                                      with ImageFields
@@ -21,7 +26,7 @@ class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
                                      with TimestampFields
                                      with VisibilityField
 {
-  def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, rawDataBytes, visibility, filename, sourceuri, scene, bands, imageMetadata) <> (Image.tupled, Image.unapply)
+  def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, rawDataBytes, visibility, sourceUri, scene, bands, imageMetadata, extent) <> (Image.tupled, Image.unapply)
 
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
   val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")
@@ -31,11 +36,11 @@ class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
   val modifiedBy: Rep[String] = column[String]("modified_by", O.Length(255,varying=true))
   val rawDataBytes: Rep[Int] = column[Int]("raw_data_bytes")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
-  val filename: Rep[String] = column[String]("filename")
-  val sourceuri: Rep[String] = column[String]("sourceuri")
+  val sourceUri: Rep[URI] = column[URI]("source_uri")
   val scene: Rep[java.util.UUID] = column[java.util.UUID]("scene")
-  val bands: Rep[List[String]] = column[List[String]]("bands", O.Length(2147483647,varying=false))
-  val imageMetadata: Rep[Map[String, Any]] = column[Map[String, Any]]("image_metadata", O.Length(2147483647,varying=false))
+  val bands: Rep[List[Int]] = column[List[Int]]("bands", O.Length(Int.MaxValue,varying=false))
+  val imageMetadata: Rep[Map[String, Any]] = column[Map[String, Any]]("image_metadata", O.Length(Int.MaxValue,varying=false))
+  val extent: Rep[Option[Projected[Geometry]]] = column[Option[Projected[Geometry]]]("extent")
 
   /** Foreign key referencing Organizations (database name images_organization_id_fkey) */
   lazy val organizationsFk = foreignKey("images_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
@@ -139,8 +144,7 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
     * The following fields can be updated -- others will be ignored
     *  - rawDataBytes
     *  - visibility
-    *  - filename
-    *  - sourceuri
+    *  - sourceUri
     *  - scene
     *  - bands
     *  - imageMetadata
@@ -154,14 +158,14 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
       updateImage <- Images.filter(_.id === imageId)
     } yield (
       updateImage.modifiedAt, updateImage.modifiedBy, updateImage.rawDataBytes,
-      updateImage.visibility, updateImage.filename, updateImage.sourceuri,
+      updateImage.visibility, updateImage.sourceUri,
       updateImage.scene, updateImage.bands, updateImage.imageMetadata
     )
 
     database.db.run {
       updateImageQuery.update((
         updateTime, user.id, image.rawDataBytes, image.visibility,
-        image.filename, image.sourceUri, image.scene, image.bands, image.imageMetadata
+        image.sourceUri, image.scene, image.bands, image.imageMetadata
       ))
     } map {
       case 1 => 1

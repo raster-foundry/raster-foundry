@@ -19,4 +19,5 @@ object Version {
   val akkaSlf4j          = "2.4.11"
   val ammoniteOps        = "0.7.0"
   val spark              = "2.0.0"
+  val aws                = "1.9.34"
 }

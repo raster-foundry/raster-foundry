@@ -28,4 +28,5 @@ object Dependencies {
   val akkaHttpExtensions = "com.lonelyplanet"      %% "akka-http-extensions"              % Version.akkaHttpExtensions
   val akkaHttpCors       = "ch.megard"             %% "akka-http-cors"                    % Version.akkaHttpCors
   val ammoniteOps        = "com.lihaoyi"           %% "ammonite-ops"                      % Version.ammoniteOps
+  val awsS3              = "com.amazonaws"          % "aws-java-sdk-s3"                   % Version.aws
 }

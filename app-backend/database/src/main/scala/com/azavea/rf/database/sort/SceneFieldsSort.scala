@@ -14,8 +14,6 @@ class SceneFieldsSort[E, D <: SceneFields](f: E => D) extends QuerySort[E] {
     ord: Order
   ): Query[E, U, C] = {
     field match {
-      case "datasource" =>
-        query.sortBy(f(_).datasource.byOrder(ord))
       case "month" =>
         query.sortBy(q => datePart("month", f(q).acquisitionDate).byOrder(ord))
       case "acquisitionDatetime" =>

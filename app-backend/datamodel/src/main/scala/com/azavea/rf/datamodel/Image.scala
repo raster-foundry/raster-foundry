@@ -2,8 +2,12 @@ package com.azavea.rf.datamodel
 
 import spray.json._
 import spray.json.DefaultJsonProtocol._
+import geotrellis.vector.Geometry
+import geotrellis.slick.Projected
+
 import java.util.UUID
 import java.sql.Timestamp
+import java.net.URI
 
 case class Image(
   id: UUID,
@@ -14,11 +18,11 @@ case class Image(
   modifiedBy: String,
   rawDataBytes: Int,
   visibility: Visibility,
-  filename: String,
-  sourceUri: String,
+  sourceUri: URI,
   scene: UUID,
-  bands: List[String],
-  imageMetadata: Map[String, Any]
+  bands: List[Int],
+  imageMetadata: Map[String, Any],
+  extent: Option[Projected[Geometry]] = None
 )
 
 object Image {
@@ -33,11 +37,11 @@ object Image {
     organizationId: UUID,
     rawDataBytes: Int,
     visibility: Visibility,
-    filename: String,
-    sourceUri: String,
+    sourceUri: URI,
     scene: UUID,
-    bands: List[String],
-    imageMetadata: Map[String, Any]
+    bands: List[Int],
+    imageMetadata: Map[String, Any],
+    extent: Option[Projected[Geometry]] = None
   ) {
     def toImage(userId: String): Image = {
       val now = new Timestamp((new java.util.Date).getTime)
@@ -51,11 +55,11 @@ object Image {
         userId, // modifiedBy: String,
         rawDataBytes,
         visibility,
-        filename,
         sourceUri,
         scene,
         bands,
-        imageMetadata
+        imageMetadata,
+        extent
       )
     }
   }
@@ -69,10 +73,10 @@ object Image {
     id: Option[UUID],
     rawDataBytes: Int,
     visibility: Visibility,
-    filename: String,
-    sourceuri: String,
-    bands: List[String],
-    imageMetadata: Map[String, Any]
+    sourceUri: URI,
+    bands: List[Int],
+    imageMetadata: Map[String, Any],
+    extent: Option[Projected[Geometry]] = None
   ) {
     def toImage(userId: String, scene: Scene): Image = {
       val now = new Timestamp((new java.util.Date()).getTime())
@@ -85,11 +89,11 @@ object Image {
         userId, // modifiedBy: String,
         rawDataBytes,
         visibility,
-        filename,
-        sourceuri,
+        sourceUri,
         scene.id,
         bands,
-        imageMetadata
+        imageMetadata,
+        extent
       )
     }
   }
