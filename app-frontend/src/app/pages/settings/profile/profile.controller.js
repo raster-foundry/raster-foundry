@@ -1,9 +1,8 @@
 class ProfileController {
-    constructor($log, auth, store) {
+    constructor($log, store) {
         'ngInject';
         const self = this;
         self.$log = $log;
-        self.auth = auth;
 
         $log.debug('ProfileController initialized');
         this.profile = store.get('profile');

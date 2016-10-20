@@ -2,12 +2,11 @@ import Map from 'es6-map';
 
 export default class BucketScenesController {
     constructor( // eslint-disable-line max-params
-        $log, auth, $state, bucketService, $scope, $uibModal
+        $log, $state, bucketService, $scope, $uibModal
     ) {
         'ngInject';
 
         this.$log = $log;
-        this.auth = auth;
         this.$state = $state;
         this.bucketService = bucketService;
         this.$parent = $scope.$parent.$ctrl;

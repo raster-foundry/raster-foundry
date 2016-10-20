@@ -1,9 +1,8 @@
 export default (app) => {
     class UserService {
-        constructor($resource, auth) {
+        constructor($resource, authService) {
             'ngInject';
-            this.auth = auth;
-
+            this.authService = authService;
             this.User = $resource('/api/users/:id', {
                 id: '@id'
             }, {
@@ -19,7 +18,7 @@ export default (app) => {
         }
 
         getCurrentUser() {
-            let id = this.auth.profile.user_id;
+            let id = this.authService.profile().user_id;
             return this.User.get({id: id}).$promise;
         }
     }

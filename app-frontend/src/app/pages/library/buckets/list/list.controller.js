@@ -1,10 +1,9 @@
 class BucketsListController {
     constructor( // eslint-disable-line max-params
-        $log, auth, $state, $scope, bucketService, userService
+        $log, $state, $scope, bucketService, userService
     ) {
         'ngInject';
         this.$log = $log;
-        this.auth = auth;
         this.$state = $state;
         this.bucketService = bucketService;
         this.userService = userService;

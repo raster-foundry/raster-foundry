@@ -1,8 +1,7 @@
 class BucketSceneController {
-    constructor($log, auth, $state, sceneService, bucketService) {
+    constructor($log, $state, sceneService, bucketService) {
         'ngInject';
         this.$log = $log;
-        this.auth = auth;
         this.$state = $state;
         this.bucketService = bucketService;
         this.sceneService = sceneService;

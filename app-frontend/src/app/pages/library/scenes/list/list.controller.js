@@ -1,11 +1,10 @@
 class ScenesListController {
     constructor( // eslint-disable-line max-params
-        $log, auth, sceneService, $state, $scope, $uibModal
+        $log, sceneService, $state, $scope, $uibModal
     ) {
         'ngInject';
 
         this.$log = $log;
-        this.auth = auth;
         this.sceneService = sceneService;
         this.$state = $state;
         this.$scope = $scope;

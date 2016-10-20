@@ -1,5 +1,11 @@
+/* globals window */
 import config from './index.config';
 import run from './index.run';
+(() => {
+    'use strict';
+    window.Auth0Lock = require('auth0-lock').default;
+})();
+
 
 const App = angular.module(
     'rasterFoundry', [
@@ -7,7 +13,7 @@ const App = angular.module(
         require('angular-ui-router'),
         'angular-storage',
         'angular-jwt',
-        'auth0',
+        'auth0.lock',
         'ngAnimate',
         'ngCookies',
         'ngTouch',
