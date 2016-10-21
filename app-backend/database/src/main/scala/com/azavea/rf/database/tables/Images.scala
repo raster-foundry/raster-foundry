@@ -15,14 +15,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import com.typesafe.scalalogging.LazyLogging
 
 class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
-                                     with ImageFields
-                                     with OrganizationFkFields
-                                     with UserFkFields
-                                     with TimestampFields
-                                     with VisibilityField
+    with ImageFields
+    with OrganizationFkFields
+    with UserFkFields
+    with TimestampFields
+    with VisibilityField
 {
   def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy,
-    rawDataBytes, visibility, filename, sourceuri, scene, bands, imageMetadata,
+    rawDataBytes, visibility, filename, sourceuri, scene, imageMetadata,
     resolutionMeters, metadataFiles) <> (Image.tupled, Image.unapply)
 
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
@@ -36,7 +36,6 @@ class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
   val filename: Rep[String] = column[String]("filename")
   val sourceuri: Rep[String] = column[String]("sourceuri")
   val scene: Rep[java.util.UUID] = column[java.util.UUID]("scene")
-  val bands: Rep[List[String]] = column[List[String]]("bands", O.Length(2147483647,varying=false))
   val imageMetadata: Rep[Map[String, Any]] = column[Map[String, Any]]("image_metadata", O.Length(2147483647,varying=false))
   val resolutionMeters: Rep[Float] = column[Float]("resolution_meters")
   val metadataFiles: Rep[List[String]] = column[List[String]]("metadata_files", O.Length(2147483647,varying=false), O.Default(List.empty))
@@ -65,16 +64,24 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
   implicit class withImagesDefaultQuery[M, U, C[_]](images: Images.TableQuery) extends
       ImagesDefaultQuery[M, U, C](images)
 
-  /** Insert one image into the database
+  /** Insert one image into the database with its bands
     *
-    * @param image Image case class for image to insert into database
+    * @param imageBanded Image case class for image to insert into database
+    * @param user User object inserting the image
     */
-  def insertImage(image: Image)
-    (implicit database: DB): Future[Image] = {
+  def insertImage(imageBanded: Image.Banded, user: User)
+                 (implicit database: DB): Future[Image.WithRelated] = {
+    val image = imageBanded.toImage(user.id)
+    val bands = imageBanded.bands map { _.toBand(image.id) }
+    val insertAction = (
+      for {
+        imageInsert <- (Images returning Images).forceInsert(image)
+        bandsInsert <- (Bands returning Bands).forceInsertAll(bands)
+      } yield (imageInsert, bandsInsert)).transactionally
     database.db.run {
-      Images.forceInsert(image)
-    } map { _ =>
-      image
+      insertAction
+    } map {
+      case (im: Image, bs: Seq[Band]) => im.withRelatedFromComponents(bs)
     }
   }
 
@@ -83,30 +90,46 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
     * @param imageId UUID ID of image to get from database
     */
   def getImage(imageId: UUID)
-    (implicit database: DB): Future[Option[Image]] = {
+              (implicit database: DB): Future[Option[Image.WithRelated]] = {
 
+    val fetchAction = for {
+      imageFetch <- Images.filter(_.id === imageId).result.headOption
+      bandsFetch <- Bands.filter(_.imageId === imageId).result
+    } yield (imageFetch, bandsFetch) 
     database.db.run {
-      Images.filter(_.id === imageId).result.headOption
+      fetchAction
+    } map {
+      case (Some(im), bs) => Some(im.withRelatedFromComponents(bs))
+      case _ => None
     }
   }
 
-  /** Retrieve a list of images from database given a page request and query parameters
+  /** Retrieve a list of images with bands from database given a
+    * page request and query parameters
     *
     * @param pageRequest PageRequest pagination class to return paginated results
     * @param combinedParams CombinedImagequeryparams query parameters that can be applied to images
     */
   def listImages(pageRequest: PageRequest, combinedParams: CombinedImageQueryParams)
-    (implicit database: DB): Future[PaginatedResponse[Image]] = {
+                (implicit database: DB): Future[PaginatedResponse[Image.WithRelated]] = {
 
     val images = Images.filterByOrganization(combinedParams.orgParams)
       .filterByTimestamp(combinedParams.timestampParams)
       .filterByImageParams(combinedParams.imageParams)
 
+    val imageBandsJoin = for {
+      imageList <- images.page(pageRequest)
+      bands <- Bands if imageList.id === bands.imageId
+    } yield (imageList, bands)
+
     val imagesQueryResult = database.db.run {
-      val action = images.page(pageRequest).result
+      val action = imageBandsJoin.result
       logger.debug(s"Query for images -- SQL: ${action.statements.headOption}")
       action
+    } map { records =>
+      Image.WithRelated.fromRecords(records)
     }
+
     val totalImagesQuery = database.db.run {
       val action = images.length.result
       logger.debug(s"Total Query for images -- SQL: ${action.statements.headOption}")
@@ -120,7 +143,7 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
       val hasNext = (pageRequest.offset + 1) * pageRequest.limit < totalImages // 0 indexed page offset
       val hasPrevious = pageRequest.offset > 0
       PaginatedResponse(totalImages, hasPrevious, hasNext,
-        pageRequest.offset, pageRequest.limit, images)
+                        pageRequest.offset, pageRequest.limit, images.toSeq)
     }
   }
 
@@ -146,32 +169,44 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
     *  - filename
     *  - sourceuri
     *  - scene
-    *  - bands
     *  - imageMetadata
     */
-  def updateImage(image: Image, imageId: UUID, user: User)
-    (implicit database: DB): Future[Int] = {
+  def updateImage(image: Image.WithRelated, imageId: UUID, user: User)
+                 (implicit database: DB): Future[Int] = {
 
     val updateTime = new Timestamp((new java.util.Date).getTime)
+    val bands = image.bands
 
     val updateImageQuery = for {
       updateImage <- Images.filter(_.id === imageId)
     } yield (
       updateImage.modifiedAt, updateImage.modifiedBy, updateImage.rawDataBytes,
       updateImage.visibility, updateImage.filename, updateImage.sourceuri,
-      updateImage.scene, updateImage.bands, updateImage.imageMetadata,
+      updateImage.scene, updateImage.imageMetadata,
       updateImage.resolutionMeters, updateImage.metadataFiles
     )
 
+    val updateImageAction = updateImageQuery.update(
+      (updateTime, user.id, image.rawDataBytes,
+       image.visibility, image.filename, image.sourceUri,
+       image.scene, image.imageMetadata,
+       image.resolutionMeters, image.metadataFiles)
+    )
+
+    val deleteOldBandsAction = Bands.filter(_.imageId === image.id).delete
+
+    val createNewBandsAction = Bands.forceInsertAll(bands)
+
+    val updateAction = (for {
+      updateIm <- updateImageAction
+      deleteBands <- deleteOldBandsAction
+      newBands <- createNewBandsAction
+    } yield (updateIm, deleteBands, newBands)) .transactionally
+
     database.db.run {
-      updateImageQuery.update((
-        updateTime, user.id, image.rawDataBytes,
-        image.visibility, image.filename, image.sourceUri,
-        image.scene, image.bands, image.imageMetadata,
-        image.resolutionMeters, image.metadataFiles
-      ))
+      updateAction
     } map {
-      case 1 => 1
+      case (1, _, _) => 1
       case c => throw new IllegalStateException(s"Error updating image: update result expected to be 1, was $c")
     }
   }

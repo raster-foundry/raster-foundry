@@ -53,7 +53,7 @@ object Thumbnails extends TableQuery(tag => new Thumbnails(tag)) with LazyLoggin
     * @param thumbnail Thumbnail
     */
   def insertThumbnail(thumbnail: Thumbnail)
-    (implicit database: DB): Future[Thumbnail] = {
+                     (implicit database: DB): Future[Thumbnail] = {
 
     val action = Thumbnails.forceInsert(thumbnail)
     logger.debug(s"Inserting thumbnail with: ${action.statements.headOption}")
@@ -67,7 +67,7 @@ object Thumbnails extends TableQuery(tag => new Thumbnails(tag)) with LazyLoggin
     * @param thumbnailId UUID ID Of thumbnail to query with
     */
   def getThumbnail(thumbnailId: UUID)
-    (implicit database: DB): Future[Option[Thumbnail]] = {
+                  (implicit database: DB): Future[Option[Thumbnail]] = {
 
     val action = Thumbnails.filter(_.id === thumbnailId).result
     logger.debug(s"Retrieving thumbnail with: ${action.statements.headOption}")
@@ -77,7 +77,7 @@ object Thumbnails extends TableQuery(tag => new Thumbnails(tag)) with LazyLoggin
   }
 
   def listThumbnails(pageRequest: PageRequest, queryParams: ThumbnailQueryParameters)
-    (implicit database: DB): Future[PaginatedResponse[Thumbnail]] = {
+                    (implicit database: DB): Future[PaginatedResponse[Thumbnail]] = {
 
     val thumbnails = Thumbnails.filterBySceneParams(queryParams)
 
@@ -105,7 +105,7 @@ object Thumbnails extends TableQuery(tag => new Thumbnails(tag)) with LazyLoggin
     * @param thumbnailId UUID ID of scene to delete
     */
   def deleteThumbnail(thumbnailId: UUID)
-    (implicit database: DB): Future[Int] = {
+                     (implicit database: DB): Future[Int] = {
 
     val action = Thumbnails.filter(_.id === thumbnailId).delete
     logger.debug(s"Deleting thumbnail with: ${action.statements.headOption}")
@@ -127,7 +127,7 @@ object Thumbnails extends TableQuery(tag => new Thumbnails(tag)) with LazyLoggin
     * @param thumbnailId UUID ID of scene to update
     */
   def updateThumbnail(thumbnail: Thumbnail, thumbnailId: UUID)
-    (implicit database: DB): Future[Int] = {
+                     (implicit database: DB): Future[Int] = {
 
     val updateTime = new Timestamp((new java.util.Date).getTime)
 

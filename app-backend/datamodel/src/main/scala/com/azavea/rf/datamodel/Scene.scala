@@ -74,6 +74,7 @@ object Scene extends GeoJsonSupport {
 
   implicit val defaultThumbnailFormat = jsonFormat21(Scene.apply)
 
+
   /** Case class extracted from a POST request */
   case class Create(
     organizationId: UUID,

@@ -77,11 +77,11 @@ class ImageSpec extends WordSpec
   "/api/images/" should {
     "not require authentication" in {
       Get("/api/images/") ~> baseRoutes ~> check {
-        responseAs[PaginatedResponse[Image]]
+        responseAs[PaginatedResponse[Image.WithRelated]]
       }
     }
 
-    "create a image successfully once authenticated" in {
+    "create an image successfully once authenticated" in {
       // Create scene first via API because we need the ID
       Post("/api/scenes/").withHeadersAndEntity(
         List(authorization),
@@ -92,11 +92,11 @@ class ImageSpec extends WordSpec
       ) ~> baseRoutes ~> check {
         val sceneId = responseAs[Scene.WithRelated].id
 
-        val newImageDatasource1 = Image.Create(
+        val newImageDatasource1 = Image.Banded(
           publicOrgId, 1024, Visibility.Public, "test-image.png", "s3://public/s3/test-image.png",
-          sceneId, List("red, green, blue"),
+          sceneId,
           Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any],
-          20.2f, List.empty[String]
+          20.2f, List.empty[String], List[Band.Create](Band.Create("name", 3, List(100, 250)))
         )
 
         Post("/api/images/").withHeadersAndEntity(
@@ -106,35 +106,35 @@ class ImageSpec extends WordSpec
             newImageDatasource1.toJson.toString()
           )
         ) ~> baseRoutes ~> check {
-          responseAs[Image]
+          responseAs[Image.WithRelated]
         }
       }
     }
 
     "filter by one organization correctly" in {
       Get(s"$baseImagePath?organization=${publicOrgId}") ~> baseRoutes ~> check {
-        responseAs[PaginatedResponse[Image]].count shouldEqual 1
+        responseAs[PaginatedResponse[Image.WithRelated]].count shouldEqual 1
       }
     }
 
     "filter by two organizations correctly" in {
       val url = s"$baseImagePath?organization=${publicOrgId}&organization=dfac6307-b5ef-43f7-beda-b9f208bb7725"
       Get(url) ~> baseRoutes ~> check {
-        responseAs[PaginatedResponse[Image]].count shouldEqual 1
+        responseAs[PaginatedResponse[Image.WithRelated]].count shouldEqual 1
       }
     }
 
     "filter by one (non-existent) organizations correctly" in {
       val url = s"$baseImagePath?organization=dfac6307-b5ef-43f7-beda-b9f208bb7725"
       Get(url) ~> baseRoutes ~> check {
-        responseAs[PaginatedResponse[Image]].count shouldEqual 0
+        responseAs[PaginatedResponse[Image.WithRelated]].count shouldEqual 0
       }
     }
 
     "filter by min bytes correctly" in {
       val url = s"$baseImagePath?minRawDataBytes=10"
       Get(url) ~> baseRoutes ~> check {
-        responseAs[PaginatedResponse[Image]].count shouldEqual 1
+        responseAs[PaginatedResponse[Image.WithRelated]].count shouldEqual 1
       }
     }
 
@@ -145,7 +145,7 @@ class ImageSpec extends WordSpec
 
         val url = s"$baseImagePath?scene=$sceneId"
         Get(url) ~> baseRoutes ~> check {
-          responseAs[PaginatedResponse[Image]].count shouldEqual 1
+          responseAs[PaginatedResponse[Image.WithRelated]].count shouldEqual 1
         }
       }
     }

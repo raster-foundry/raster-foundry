@@ -16,6 +16,7 @@ import spray.json._
   */
 trait ExtendedPostgresDriver extends ExPostgresDriver
     with PgArraySupport
+    with PgRangeSupport
     with PgSprayJsonSupport
     with PgEnumSupport
     with PostGisProjectionSupport {
@@ -27,6 +28,7 @@ trait ExtendedPostgresDriver extends ExPostgresDriver
   // Implicit conversions to/from column types
   object RFAPI extends API
       with ArrayImplicits
+      with RangeImplicits
       with JsonImplicits
       with RFDatabaseJsonProtocol
       with PostGISProjectionImplicits

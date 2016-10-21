@@ -3,17 +3,17 @@ package com.azavea.rf.database.tables
 import com.azavea.rf.database.fields.{SceneFields, OrganizationFkFields, UserFkFields, TimestampFields}
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.sort._
-import com.azavea.rf.database.{Database => DB, _}
+import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.datamodel._
 import java.util.UUID
 import java.sql.Timestamp
 import geotrellis.slick.Projected
-import geotrellis.vector.{Point, Polygon, Geometry}
+import geotrellis.vector.Geometry
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import com.typesafe.scalalogging.LazyLogging
-import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
+import com.lonelyplanet.akka.http.extensions.PageRequest
 
 
 /** Table description of table scenes. Objects of this class serve as prototypes for rows in queries. */
@@ -94,7 +94,7 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     * images which are all created in a single transaction
     */
   def insertScene(sceneCreate: Scene.Create, user: User)
-    (implicit database: DB): Future[Scene.WithRelated] = {
+                 (implicit database: DB): Future[Scene.WithRelated] = {
 
     val scene = sceneCreate.toScene(user.id)
     val thumbnails = sceneCreate.thumbnails.map(_.toThumbnail(user.id, scene))
@@ -117,7 +117,7 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     * @param sceneId java.util.UUID ID of scene to query with
     */
   def getScene(sceneId: UUID)
-    (implicit database: DB): Future[Option[Scene.WithRelated]] = {
+              (implicit database: DB): Future[Option[Scene.WithRelated]] = {
 
     database.db.run {
       val action = Scenes
@@ -133,7 +133,7 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
 
   /** Get scenes given a page request and query parameters */
   def listScenes(pageRequest: PageRequest, combinedParams: CombinedSceneQueryParams)
-    (implicit database: DB): Future[PaginatedResponse[Scene.WithRelated]] = {
+                (implicit database: DB): Future[PaginatedResponse[Scene.WithRelated]] = {
 
     val scenesQueryResult = database.db.run {
       val action = Scenes
@@ -188,7 +188,7 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     * @param user User user performing the update
     */
   def updateScene(scene: Scene, sceneId: UUID, user: User)
-    (implicit database: DB): Future[Int] = {
+                 (implicit database: DB): Future[Int] = {
 
     val updateTime = new Timestamp((new java.util.Date).getTime)
 
