@@ -10,7 +10,7 @@ export default class LeafletMapController {
         this.initMap();
         this.initLayers();
 
-        $scope.$watch(() => this.footprint, (newVal) => {
+        $scope.$watch('$ctrl.footprint', (newVal) => {
             if (newVal) {
                 let geojsonFeature = {
                     type: 'Feature',

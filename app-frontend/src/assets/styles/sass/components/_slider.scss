@@ -1,0 +1,31 @@
+$slider-base: #353c58;
+$slider-selected: #728ffc;
+
+.rzslider .rz-pointer {
+  width: 24px;
+  height: 24px;
+  left: -12px;
+  top: -10px;
+  border-radius: 2px;
+  background: $slider-selected;
+  cursor: default;
+  &:after {
+    display: none;
+  }
+}
+
+.rzslider .rz-bar {
+  height: 12px;
+  top: 12px;
+  background: $slider-base;
+  &.rz-selection {
+    background: $slider-selected;
+  }
+}
+
+.rzslider .rz-ticks .rz-tick{
+  background: none;
+  &.rz-selected {
+    background: none;
+  }
+}

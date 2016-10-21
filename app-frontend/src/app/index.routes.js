@@ -13,8 +13,8 @@ import profileTpl from './pages/settings/profile/profile.html';
 import accountTpl from './pages/settings/account/account.html';
 import errorTpl from './pages/error/error.html';
 
-function librarySceneStates(provider) {
-    provider
+function librarySceneStates($stateProvider) {
+    $stateProvider
         .state('library.scenes', {
             url: '/scenes',
             templateUrl: scenesTpl,
@@ -37,8 +37,8 @@ function librarySceneStates(provider) {
         });
 }
 
-function libraryBucketStates(provider) {
-    provider
+function libraryBucketStates($stateProvider) {
+    $stateProvider
         .state('library', {
             url: '/library',
             templateUrl: libraryTpl,
@@ -83,8 +83,8 @@ function libraryBucketStates(provider) {
         });
 }
 
-function settingsStates(provider) {
-    provider
+function settingsStates($stateProvider) {
+    $stateProvider
         .state('settings', {
             url: '/settings',
             templateUrl: settingsTpl,
@@ -113,17 +113,35 @@ function settingsStates(provider) {
         });
 }
 
-function routeConfig($urlRouterProvider, $stateProvider) {
-    'ngInject';
+function browseStates($stateProvider) {
+    let queryParams = [
+        'maxCloudCover',
+        'minCloudCover',
+        'minAcquisitionDatetime',
+        'maxAcquisitionDatetime',
+        'datasource',
+        'month',
+        'maxSunAzimuth',
+        'minSunAzimuth',
+        'maxSunElevation',
+        'minSunElevation',
+        'bbox',
+        'point'
+    ].join('&');
 
     $stateProvider
         .state('browse', {
-            url: '/browse/:id',
+            url: '/browse/:id?' + queryParams,
             templateUrl: browseTpl,
             controller: 'BrowseController',
             controllerAs: '$ctrl'
         });
+}
 
+function routeConfig($urlRouterProvider, $stateProvider) {
+    'ngInject';
+
+    browseStates($stateProvider);
     librarySceneStates($stateProvider);
     libraryBucketStates($stateProvider);
     settingsStates($stateProvider);

@@ -1,0 +1,75 @@
+<div class="sidebar-static" >
+  <h5>Filters</h5>
+  <div class="sidebar-actions">
+    <a href ng-click="$ctrl.resetAllFilters()">Clear all filters</a>
+  </div>
+</div>
+<div class="sidebar-scrollable" >
+  <div class="content">
+    <div class="filter">
+      <label>Year</label>
+      <div class="filter-item slider-filter">
+        <div id="year_slider"></div>
+      </div>
+      <rzslider rz-slider-model="$ctrl.yearFilters.minModel"
+                rz-slider-high="$ctrl.yearFilters.maxModel"
+                rz-slider-options="$ctrl.yearFilters.options"
+      ></rzslider>
+    </div>
+    <div class="filter"
+         ng-mouseup="$ctrl.toggleDrag.toggle = false"
+         ng-mouseleave="$ctrl.toggleDrag.toggle = false">
+      <label>Month</label>
+      <div class="filter-item month-filter">
+        <button type="button"
+                class="btn btn-toggle btn-small"
+                autocomplete="off"
+                ng-class="{'active': monthAttrs.enabled,
+                           'disabled': !$ctrl.filters.month}"
+                ng-mousedown="$ctrl.onMonthFilterMousedown(month, monthAttrs)"
+                ng-mouseover="$ctrl.onMonthFilterMouseover(month)"
+                ng-repeat="(month, monthAttrs) in $ctrl.monthFilters track by month">
+          {{monthAttrs.label}}
+        </button>
+      </div>
+    </div>
+    <div class="filter">
+      <label>Cloud cover</label>
+      <rzslider rz-slider-model="$ctrl.cloudCoverFilters.minModel"
+                rz-slider-high="$ctrl.cloudCoverFilters.maxModel"
+                rz-slider-options="$ctrl.cloudCoverFilters.options"></rzslider>
+    </div>
+    <div class="filter">
+      <label>Sun elevation</label>
+      <rzslider rz-slider-model="$ctrl.sunElevationFilters.minModel"
+                rz-slider-high="$ctrl.sunElevationFilters.maxModel"
+                rz-slider-options="$ctrl.sunElevationFilters.options"></rzslider>
+    </div>
+    <div class="filter">
+      <label>Sun azimuth</label>
+      <div class="filter-item slider-filter">
+        <div id="sun_slider"></div>
+      </div>
+      <rzslider rz-slider-model="$ctrl.sunAzimuthFilters.minModel"
+                rz-slider-high="$ctrl.sunAzimuthFilters.maxModel"
+                rz-slider-options="$ctrl.sunAzimuthFilters.options"></rzslider>
+    </div>
+    <div class="filter"
+         ng-mouseleave="$ctrl.toggleDrag.toggle = false"
+         ng-mouseup="$ctrl.toggleDrag.toggle = false">
+      <label>Imagery sources</label>
+      <div class="filter-item tag-filter">
+        <button type="button"
+                class="btn btn-toggle btn-small"
+                autocomplete="off"
+                ng-mousedown="$ctrl.onSourceFilterMousedown(filter, filterAttrs)"
+                ng-mouseover="$ctrl.onSourceFilterMouseover(filter)"
+                ng-class="{'active': filterAttrs.enabled,
+                          'disabled': !$ctrl.filters.datasource}"
+                ng-repeat="(filter, filterAttrs) in $ctrl.sourceFilters track by filter">
+          {{filterAttrs.label}}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
