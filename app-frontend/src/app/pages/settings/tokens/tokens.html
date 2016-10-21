@@ -1,0 +1,34 @@
+<div class="row content stack-sm">
+  <div class="column">
+    <h1 class="h3 page-title">Api Tokens</h1>
+    <div class="list-group">
+      <div class=""ng-repeat="token in $ctrl.tokens track by token.id">
+        <span>{{token.device_name}}</span>
+        <button class="btn" ng-click="$ctrl.deleteToken(token.id)">
+          <i class="icon-trash"></i>
+        </button>
+      </div>
+    </div>
+    <div class="list-group"
+         ng-if="(!$ctrl.tokens || !$ctrl.tokens.length) && !$ctrl.loading">
+      You have not generated any tokens.
+    </div>
+    <div class="list-group" ng-show="$ctrl.loading">
+      <span class="list-placeholder">
+        <i class="icon-load"></i>
+      </span>
+    </div>
+
+
+    <form action="">
+      <div class="form-group">
+        <label for="new-token">Create token</label>
+        <input id="new-token" type="text" ng-model="$ctrl.newTokenName" class="form-control">
+        <button type="button" class="btn btn-default" ng-click="$ctrl.createToken($ctrl.newTokenName)">
+          <i class="icon-plus"></i>
+          Create
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

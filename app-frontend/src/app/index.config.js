@@ -23,8 +23,7 @@ function config( // eslint-disable-line max-params
                 closable: false,
                 auth: {
                     redirect: false,
-                    sso: true,
-                    scope: 'openid name email'
+                    sso: true
                 },
                 theme: {
                     logo: assetLogo,
