@@ -8,9 +8,11 @@ import com.azavea.rf.database.Database
 
 trait ConfigRoutes extends Authentication {
   def configRoutes: Route = {
-    pathPrefix("config") {
+    pathEndOrSingleSlash {
       get {
-        complete(AngularConfigService.getConfig())
+        complete {
+          AngularConfigService.getConfig()
+        }
       }
     }
   }

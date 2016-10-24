@@ -49,6 +49,8 @@ trait Router extends HealthCheckRoutes
     imageRoutes ~
     tokenRoutes ~
     thumbnailRoutes ~
-    configRoutes
+    pathPrefix("config") {
+      configRoutes
+    }
   }
 }
