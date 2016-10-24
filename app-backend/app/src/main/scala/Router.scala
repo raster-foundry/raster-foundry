@@ -39,7 +39,9 @@ trait Router extends HealthCheckRoutes
   val corsSettings = CorsSettings.defaultSettings
 
   val routes = cors() {
-    healthCheckRoutes ~
+    pathPrefix("healthcheck") {
+      healthCheckRoutes
+    } ~
     userRoutes ~
     organizationRoutes ~
     sceneRoutes ~

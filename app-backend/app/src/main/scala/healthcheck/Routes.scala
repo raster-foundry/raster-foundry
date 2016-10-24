@@ -29,17 +29,13 @@ trait HealthCheckRoutes extends Authentication {
       }
   }
 
-  val healthCheckRoutes = (
-    handleExceptions(healthCheckExceptionHandler) {
-      authenticateAndAllowAnonymous { user =>
-        pathPrefix("healthcheck") {
-          pathEndOrSingleSlash {
-            onSuccess(HealthCheckService.healthCheck) { resp =>
-              complete(resp)
-            }
-          }
+  val healthCheckRoutes = handleExceptions(healthCheckExceptionHandler) {
+    pathEndOrSingleSlash {
+      get {
+        complete {
+          HealthCheckService.healthCheck
         }
       }
     }
-  )
+  }
 }
