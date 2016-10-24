@@ -1,5 +1,7 @@
 package com.azavea.rf.image
 
+import java.util.UUID
+
 import com.azavea.rf.datamodel.Image
 
 import scala.concurrent.ExecutionContext
@@ -24,70 +26,60 @@ trait ImageRoutes extends Authentication
 
   implicit def database: Database
 
-  def imageRoutes: Route = handleExceptions(userExceptionHandler) {
-    pathPrefix("api" / "images") {
-      listImages ~
-      createImages ~
-      getImage ~
-      updateImage ~
-      deleteImage
+  val imageRoutes: Route = handleExceptions(userExceptionHandler) {
+    pathEndOrSingleSlash {
+      get { listImages } ~
+      post { createImage }
+    } ~
+    pathPrefix(JavaUUID) { imageId =>
+      get { getImage(imageId) } ~
+      put { updateImage(imageId) } ~
+      delete { deleteImage(imageId) }
     }
   }
 
 
-  def listImages: Route = anonWithPage { (user, page) =>
+  def listImages: Route = authenticateAndAllowAnonymous { user =>
+    (withPagination & imageQueryParameters) { (page, imageParams) =>
+      complete {
+        Images.listImages(page, imageParams)
+      }
+    }
+  }
+
+  def createImage: Route = authenticate { user =>
+    entity(as[Image.Create]) { newImage =>
+      onSuccess(Images.insertImage(newImage.toImage(user.id))) { image =>
+        complete(StatusCodes.Created, image)
+      }
+    }
+  }
+
+  def getImage(imageId: UUID): Route = authenticateAndAllowAnonymous { user =>
     get {
-      imageQueryParameters { imageParams =>
-        onSuccess(Images.listImages(page, imageParams)) { images =>
-          complete(images)
+      rejectEmptyResponse {
+        complete {
+          Images.getImage(imageId)
         }
       }
     }
   }
 
-  def createImages: Route = authenticate { user =>
-    post {
-      entity(as[Image.Create]) { newImage =>
-        onComplete(Images.insertImage(newImage.toImage(user.id))) {
-          case Success(image) => complete(image)
-          case Failure(_) => complete(StatusCodes.InternalServerError)
-        }
+  def updateImage(imageId: UUID): Route = authenticate { user =>
+    entity(as[Image]) { updatedImage =>
+      onSuccess(Images.updateImage(updatedImage, imageId, user)) { count =>
+        complete(StatusCodes.NoContent)
       }
     }
   }
 
-  def getImage: Route = pathPrefix(JavaUUID) {imageId =>
-    anonWithSlash { user =>
-      get {
-        onSuccess(Images.getImage(imageId)) {
-          case Some(image) => complete(image)
-          case _ => complete(StatusCodes.NotFound)
-        }
-      }
-    }
-  }
-
-  def updateImage: Route = pathPrefix(JavaUUID) {imageId =>
-    authenticate { user =>
-      put {
-        entity(as[Image]) { updatedImage =>
-          onSuccess(Images.updateImage(updatedImage, imageId, user)) { count =>
-            complete(StatusCodes.NoContent)
-          }
-        }
-      }
-    }
-  }
-
-  def deleteImage: Route = pathPrefix(JavaUUID) {imageId =>
-    authenticate { user =>
-      delete {
-        onSuccess(Images.deleteImage(imageId)) {
-          case 1 => complete(StatusCodes.NoContent)
-          case 0 => complete(StatusCodes.NotFound)
-          case _ => complete(StatusCodes.InternalServerError)
-        }
-      }
+  def deleteImage(imageId: UUID): Route = authenticate { user =>
+    onSuccess(Images.deleteImage(imageId)) {
+      case 1 => complete(StatusCodes.NoContent)
+      case 0 => complete(StatusCodes.NotFound)
+      case count => throw new IllegalStateException(
+        s"Error deleting image: delete result expected to be 1, was $count"
+      )
     }
   }
 }

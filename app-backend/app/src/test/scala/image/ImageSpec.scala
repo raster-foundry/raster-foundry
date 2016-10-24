@@ -6,6 +6,7 @@ import org.scalatest.{Matchers, WordSpec}
 import akka.http.scaladsl.testkit.{ScalatestRouteTest, RouteTestTimeout}
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.{HttpEntity, ContentTypes}
+import akka.http.scaladsl.server.Route
 import akka.actor.ActorSystem
 import concurrent.duration._
 import spray.json._
@@ -49,14 +50,14 @@ class ImageSpec extends WordSpec
   "/api/images/{uuid}" should {
 
     "return a 404 for non-existent image" in {
-      Get(s"${baseImagePath}${publicOrgId}") ~> imageRoutes ~> check {
+      Get(s"${baseImagePath}${publicOrgId}") ~> Route.seal(baseRoutes) ~> check {
         status shouldEqual StatusCodes.NotFound
       }
     }
 
     "return a image" ignore {
       val imageId = ""
-      Get(s"${baseImagePath}${imageId}/") ~> imageRoutes ~> check {
+      Get(s"${baseImagePath}${imageId}/") ~> baseRoutes ~> check {
         responseAs[Image]
       }
     }
@@ -67,7 +68,7 @@ class ImageSpec extends WordSpec
 
     "delete a image" ignore {
       val imageId = ""
-      Delete(s"${baseImagePath}${imageId}/") ~> imageRoutes ~> check {
+      Delete(s"${baseImagePath}${imageId}/") ~> baseRoutes ~> check {
         status shouldEqual StatusCodes.NoContent
       }
     }
@@ -75,7 +76,7 @@ class ImageSpec extends WordSpec
 
   "/api/images/" should {
     "not require authentication" in {
-      Get("/api/images/") ~> imageRoutes ~> check {
+      Get("/api/images/") ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Image]]
       }
     }
@@ -104,35 +105,35 @@ class ImageSpec extends WordSpec
             ContentTypes.`application/json`,
             newImageDatasource1.toJson.toString()
           )
-        ) ~> imageRoutes ~> check {
+        ) ~> baseRoutes ~> check {
           responseAs[Image]
         }
       }
     }
 
     "filter by one organization correctly" in {
-      Get(s"$baseImagePath?organization=${publicOrgId}") ~> imageRoutes ~> check {
+      Get(s"$baseImagePath?organization=${publicOrgId}") ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Image]].count shouldEqual 1
       }
     }
 
     "filter by two organizations correctly" in {
       val url = s"$baseImagePath?organization=${publicOrgId}&organization=dfac6307-b5ef-43f7-beda-b9f208bb7725"
-      Get(url) ~> imageRoutes ~> check {
+      Get(url) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Image]].count shouldEqual 1
       }
     }
 
     "filter by one (non-existent) organizations correctly" in {
       val url = s"$baseImagePath?organization=dfac6307-b5ef-43f7-beda-b9f208bb7725"
-      Get(url) ~> imageRoutes ~> check {
+      Get(url) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Image]].count shouldEqual 0
       }
     }
 
     "filter by min bytes correctly" in {
       val url = s"$baseImagePath?minRawDataBytes=10"
-      Get(url) ~> imageRoutes ~> check {
+      Get(url) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Image]].count shouldEqual 1
       }
     }
@@ -143,7 +144,7 @@ class ImageSpec extends WordSpec
         val sceneId = scenes.results.head.id
 
         val url = s"$baseImagePath?scene=$sceneId"
-        Get(url) ~> imageRoutes ~> check {
+        Get(url) ~> baseRoutes ~> check {
           responseAs[PaginatedResponse[Image]].count shouldEqual 1
         }
       }
