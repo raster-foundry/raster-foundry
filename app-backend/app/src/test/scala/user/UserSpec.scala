@@ -22,16 +22,19 @@ class UserSpec extends WordSpec
 
   val authorization = AuthUtils.generateAuthHeader("Default")
 
+  // Alias to baseRoutes to be explicit
+  val baseRoutes = routes
+
   "/api/users" should {
     "return a paginated list of users" in {
       Get("/api/users")
-        .addHeader(authorization) ~> userRoutes ~> check {
+        .addHeader(authorization) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[User.WithOrgs]]
       }
     }
 
     "require authentication" in {
-      Get("/api/users") ~> userRoutes ~> check {
+      Get("/api/users") ~> baseRoutes ~> check {
         rejection
       }
     }
@@ -40,7 +43,7 @@ class UserSpec extends WordSpec
   "/api/users/{UUID}" should {
     "return a single user" in {
       Get("/api/users/Default")
-        .addHeader(authorization)~> userRoutes ~> check {
+        .addHeader(authorization)~> baseRoutes ~> check {
         responseAs[User.WithOrgs]
       }
     }
