@@ -1,7 +1,5 @@
 package com.azavea.rf.user
 
-import scala.concurrent.ExecutionContext
-import scala.util.{Success, Failure}
 import java.net.URLDecoder
 
 import akka.http.scaladsl.server.Route
@@ -12,8 +10,9 @@ import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import com.azavea.rf.auth.Authentication
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.Users
-import com.azavea.rf.utils.UserErrorHandler
 import com.azavea.rf.datamodel._
+import com.azavea.rf.utils.UserErrorHandler
+
 
 /**
   * Routes for users

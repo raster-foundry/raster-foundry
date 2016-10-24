@@ -1,8 +1,6 @@
 package com.azavea.rf.bucket
 
 import java.util.UUID
-import scala.concurrent.ExecutionContext
-import scala.util.{Success, Failure}
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling._
@@ -10,13 +8,12 @@ import akka.http.scaladsl.model.StatusCodes
 
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 
-import com.azavea.rf.scene._
 import com.azavea.rf.auth.Authentication
-import com.azavea.rf.datamodel._
-import com.azavea.rf.database.tables._
+import com.azavea.rf.database.tables.Buckets
 import com.azavea.rf.database.Database
+import com.azavea.rf.datamodel._
+import com.azavea.rf.scene._
 import com.azavea.rf.utils.queryparams.QueryParametersCommon
-import com.azavea.rf.scene.SceneQueryParameterDirective
 import com.azavea.rf.utils.UserErrorHandler
 
 
@@ -167,8 +164,4 @@ trait BucketRoutes extends Authentication
       }
     }
   }
-}
-
-object BucketRoutes {
-
 }

@@ -1,7 +1,5 @@
 package com.azavea.rf.organization
 
-import scala.concurrent.ExecutionContext
-import scala.util.{Success, Failure}
 import java.util.UUID
 
 import akka.http.scaladsl.server.Route
@@ -11,10 +9,10 @@ import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 
 import com.azavea.rf.auth.Authentication
 import com.azavea.rf.database.Database
-import com.azavea.rf.database.tables._
+import com.azavea.rf.database.tables.Organizations
 import com.azavea.rf.datamodel._
 import com.azavea.rf.utils.UserErrorHandler
-import com.azavea.rf.datamodel.Organization
+
 
 /**
   * Routes for Organizations
