@@ -41,6 +41,9 @@ class ThumbnailSpec extends WordSpec
     ThumbnailSize.Large
   )
 
+  // Alias to baseRoutes to be explicit
+  val baseRoutes = routes
+
   "Creating a row" should {
     "add a row to the table" ignore {
       val result = Thumbnails.insertThumbnail(baseThumbnailRow)
@@ -118,7 +121,7 @@ class ThumbnailSpec extends WordSpec
           ContentTypes.`application/json`,
           newScene.toJson.toString()
         )
-      ) ~> sceneRoutes ~> check {
+      ) ~> baseRoutes ~> check {
         responseAs[Scene.WithRelated]
       }
     }
@@ -131,7 +134,7 @@ class ThumbnailSpec extends WordSpec
 
 
     "create thumbnails only with authentication" in {
-      Get("/api/scenes/") ~> sceneRoutes ~> check {
+      Get("/api/scenes/") ~> baseRoutes ~> check {
         val scenes = responseAs[PaginatedResponse[Scene.WithRelated]]
         val sceneId = scenes.results.head.id
         val thumbnailToPost1 = newThumbnail(ThumbnailSize.Small, sceneId)
@@ -169,7 +172,7 @@ class ThumbnailSpec extends WordSpec
     }
 
     "filter by one scene correctly" in {
-      Get("/api/scenes/") ~> sceneRoutes ~> check {
+      Get("/api/scenes/") ~> baseRoutes ~> check {
         val scenes = responseAs[PaginatedResponse[Scene.WithRelated]]
         val sceneId = scenes.results.head.id
         Get(s"/api/thumbnails/?sceneId=$sceneId") ~> thumbnailRoutes ~> check {

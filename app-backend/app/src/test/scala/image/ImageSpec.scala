@@ -42,6 +42,9 @@ class ImageSpec extends WordSpec
     List.empty[Image.Identified], None, List.empty[Thumbnail.Identified]
   )
 
+  // Alias to baseRoutes to be explicit
+  val baseRoutes = routes
+
 
   "/api/images/{uuid}" should {
 
@@ -85,7 +88,7 @@ class ImageSpec extends WordSpec
           ContentTypes.`application/json`,
           newSceneDatasource1.toJson.toString()
         )
-      ) ~> sceneRoutes ~> check {
+      ) ~> baseRoutes ~> check {
         val sceneId = responseAs[Scene.WithRelated].id
 
         val newImageDatasource1 = Image.Create(
@@ -135,7 +138,7 @@ class ImageSpec extends WordSpec
     }
 
     "filter by scene correctly" in {
-      Get("/api/scenes/") ~> sceneRoutes ~> check {
+      Get("/api/scenes/") ~> baseRoutes ~> check {
         val scenes = responseAs[PaginatedResponse[Scene.WithRelated]]
         val sceneId = scenes.results.head.id
 

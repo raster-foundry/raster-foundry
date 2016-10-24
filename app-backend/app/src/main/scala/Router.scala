@@ -43,12 +43,12 @@ trait Router extends HealthCheckRoutes
       healthCheckRoutes
     } ~
     organizationRoutes ~
-    sceneRoutes ~
     bucketRoutes ~
     imageRoutes ~
     tokenRoutes ~
     thumbnailRoutes ~
     pathPrefix("api") {
+      pathPrefix("scenes") { sceneRoutes } ~
       pathPrefix("users") { userRoutes }
     } ~
     pathPrefix("config") {

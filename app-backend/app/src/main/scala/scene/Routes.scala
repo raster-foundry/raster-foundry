@@ -24,68 +24,67 @@ trait SceneRoutes extends Authentication
 
   implicit def database: Database
 
-  def sceneRoutes: Route = {
-    handleExceptions(userExceptionHandler) {
-      pathPrefix("api" / "scenes") {
-        pathEndOrSingleSlash {
-          authenticateAndAllowAnonymous { user =>
-            withPagination { page =>
-              get {
-                sceneQueryParameters { sceneParams =>
-                  onSuccess(Scenes.getScenes(page, sceneParams)) { scenes =>
-                    complete(scenes)
-                  }
-                }
-              }
-            }
-          } ~
-          authenticate { user =>
-            post {
-              entity(as[Scene.Create]) { newScene =>
-                onSuccess(Scenes.insertScene(newScene, user)) {
-                  scene => complete(scene)
-                }
-              }
-            }
-          }
-        } ~
-        pathPrefix(JavaUUID) {sceneId =>
-          pathEndOrSingleSlash {
-            authenticateAndAllowAnonymous { user =>
-              get {
-                onSuccess(Scenes.getScene(sceneId)) {
-                  case Some(scene) => complete(scene)
-                  case _ => complete(StatusCodes.NotFound)
-                }
-              }
-            } ~
-            authenticate { user =>
-              put {
-                entity(as[Scene]) { updatedScene =>
-                  onComplete(Scenes.updateScene(updatedScene, sceneId, user)) {
-                    case Success(result) => {
-                      result match {
-                        case 1 => complete(StatusCodes.NoContent)
-                        case count: Int => throw new Exception(
-                          s"Error updating scene: update result expected to be 1, was $count"
-                        )
-                      }
-                    }
-                    case Failure(e) => throw e
-                  }
-                }
-              } ~
-              delete {
-                onSuccess(Scenes.deleteScene(sceneId)) {
-                  case 1 => complete(StatusCodes.NoContent)
-                  case 0 => complete(StatusCodes.NotFound)
-                  case _ => complete(StatusCodes.InternalServerError)
-                }
-              }
-            }
+  val sceneRoutes: Route = handleExceptions(userExceptionHandler) {
+    pathEndOrSingleSlash {
+      get { listScenes } ~
+      post { createScene }
+    } ~
+    pathPrefix(JavaUUID) { sceneId =>
+      pathEndOrSingleSlash {
+        get { getScene(sceneId) } ~
+        put { updateScene(sceneId) } ~
+        delete { deleteScene(sceneId) }
+      }
+    }
+  }
+
+  def listScenes: Route = authenticateAndAllowAnonymous { user =>
+    (withPagination & sceneQueryParameters) { (page, sceneParams) =>
+      complete {
+        Scenes.listScenes(page, sceneParams)
+      }
+    }
+  }
+
+  def createScene: Route = authenticate { user =>
+    entity(as[Scene.Create]) { newScene =>
+      onSuccess(Scenes.insertScene(newScene, user)) { scene =>
+        complete(StatusCodes.Created, scene)
+      }
+    }
+  }
+
+  def getScene(sceneId: UUID): Route = authenticateAndAllowAnonymous { user =>
+    rejectEmptyResponse {
+      complete {
+        Scenes.getScene(sceneId)
+      }
+    }
+  }
+
+  def updateScene(sceneId: UUID): Route = authenticate { user =>
+    entity(as[Scene]) { updatedScene =>
+      onComplete(Scenes.updateScene(updatedScene, sceneId, user)) {
+        case Success(result) => {
+          result match {
+            case 1 => complete(StatusCodes.NoContent)
+            case count => throw new IllegalStateException(
+              s"Error updating scene: update result expected to be 1, was $count"
+            )
           }
         }
+        case Failure(e) => throw e
       }
+    }
+  }
+
+  def deleteScene(sceneId: UUID): Route = authenticate { user =>
+    onSuccess(Scenes.deleteScene(sceneId)) {
+      case 1 => complete(StatusCodes.NoContent)
+      case 0 => complete(StatusCodes.NotFound)
+      case count => throw new IllegalStateException(
+        s"Error deleting scene: delete result expected to be 1, was $count"
+      )
     }
   }
 }

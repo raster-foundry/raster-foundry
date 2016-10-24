@@ -27,6 +27,9 @@ class BucketSceneSpec extends WordSpec
   implicit def database = db
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(DurationInt(20).second)
 
+  // Alias to baseRoutes to be explicit
+  val baseRoutes = routes
+
 
   "/api/buckets/{bucket}/scenes/" should {
     "allow creating buckets and scenes" in {
@@ -46,7 +49,7 @@ class BucketSceneSpec extends WordSpec
           ContentTypes.`application/json`,
           newScene.toJson.toString()
         )
-      ) ~> sceneRoutes ~> check {
+      ) ~> baseRoutes ~> check {
         responseAs[Scene.WithRelated]
       }
     }
@@ -68,7 +71,7 @@ class BucketSceneSpec extends WordSpec
         val bucketId = buckets.results.head.id
 
         // Get scenes to get ID
-        Get("/api/scenes/") ~> sceneRoutes ~> check {
+        Get("/api/scenes/") ~> baseRoutes ~> check {
           val scenes = responseAs[PaginatedResponse[Scene.WithRelated]]
           val sceneId = scenes.results.head.id
 
@@ -107,7 +110,7 @@ class BucketSceneSpec extends WordSpec
         val bucketId = buckets.results.head.id
 
         // Get scenes to get ID
-        Get("/api/scenes/") ~> sceneRoutes ~> check {
+        Get("/api/scenes/") ~> baseRoutes ~> check {
           val scenes = responseAs[PaginatedResponse[Scene.WithRelated]]
           val sceneId = scenes.results.head.id
 
