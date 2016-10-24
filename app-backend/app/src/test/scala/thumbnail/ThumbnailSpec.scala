@@ -6,6 +6,7 @@ import java.util.UUID
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.{HttpEntity, ContentTypes}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
+import akka.http.scaladsl.server.Route
 import org.scalatest.{Matchers, WordSpec}
 import spray.json._
 
@@ -89,14 +90,14 @@ class ThumbnailSpec extends WordSpec
 
   "/api/thumbnails/{uuid}" should {
     "return a 404 for non-existent thumbnail" ignore {
-      Get(s"${baseThumbnail}${publicOrgId}") ~> thumbnailRoutes ~> check {
+      Get(s"${baseThumbnail}${publicOrgId}") ~> Route.seal(baseRoutes) ~> check {
         status shouldEqual StatusCodes.NotFound
       }
     }
 
     "return a thumbnail" ignore {
       val thumbnailId = ""
-      Get(s"${baseThumbnail}${thumbnailId}/") ~> thumbnailRoutes ~> check {
+      Get(s"${baseThumbnail}${thumbnailId}/") ~> baseRoutes ~> check {
         responseAs[Thumbnail]
       }
     }
@@ -107,7 +108,7 @@ class ThumbnailSpec extends WordSpec
 
     "delete a thumbnail" ignore {
       val thumbnailId = ""
-      Delete(s"${baseThumbnail}${thumbnailId}/") ~> thumbnailRoutes ~> check {
+      Delete(s"${baseThumbnail}${thumbnailId}/") ~> baseRoutes ~> check {
         status shouldEqual StatusCodes.NoContent
       }
     }
@@ -127,7 +128,7 @@ class ThumbnailSpec extends WordSpec
     }
 
     "not require authentication for list" in {
-      Get("/api/thumbnails/") ~> thumbnailRoutes ~> check {
+      Get("/api/thumbnails/") ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Thumbnail]]
       }
     }
@@ -145,7 +146,7 @@ class ThumbnailSpec extends WordSpec
             ContentTypes.`application/json`,
             thumbnailToPost1.toJson.toString()
           )
-        ) ~> thumbnailRoutes ~> check {
+        ) ~> baseRoutes ~> check {
           reject
         }
 
@@ -155,7 +156,7 @@ class ThumbnailSpec extends WordSpec
             ContentTypes.`application/json`,
             thumbnailToPost1.toJson.toString()
           )
-        ) ~> thumbnailRoutes ~> check {
+        ) ~> baseRoutes ~> check {
           responseAs[Thumbnail]
         }
 
@@ -165,7 +166,7 @@ class ThumbnailSpec extends WordSpec
             ContentTypes.`application/json`,
             thumbnailToPost2.toJson.toString()
           )
-        ) ~> thumbnailRoutes ~> check {
+        ) ~> baseRoutes ~> check {
           responseAs[Thumbnail]
         }
       }
@@ -175,7 +176,7 @@ class ThumbnailSpec extends WordSpec
       Get("/api/scenes/") ~> baseRoutes ~> check {
         val scenes = responseAs[PaginatedResponse[Scene.WithRelated]]
         val sceneId = scenes.results.head.id
-        Get(s"/api/thumbnails/?sceneId=$sceneId") ~> thumbnailRoutes ~> check {
+        Get(s"/api/thumbnails/?sceneId=$sceneId") ~> baseRoutes ~> check {
           responseAs[PaginatedResponse[Thumbnail]].count shouldEqual 2
         }
       }
@@ -183,14 +184,14 @@ class ThumbnailSpec extends WordSpec
 
     "filter by one (non-existent) scene correctly" in {
       val url = s"/api/thumbnails/?sceneId=${UUID.randomUUID}"
-      Get(url) ~> thumbnailRoutes ~> check {
+      Get(url) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Thumbnail]].count shouldEqual 0
       }
     }
 
     "sort by one field correctly" ignore {
       val url = s"/api/thumbnails/?sort=..."
-      Get(url) ~> thumbnailRoutes ~> check {
+      Get(url) ~> baseRoutes ~> check {
         /** Sorting behavior isn't described in the spec currently but might be someday */
         responseAs[PaginatedResponse[Thumbnail]]
       }
