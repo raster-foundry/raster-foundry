@@ -2,6 +2,7 @@ package com.azavea.rf.organization
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Success, Failure}
+import java.util.UUID
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
@@ -22,91 +23,106 @@ trait OrganizationRoutes extends Authentication with PaginationDirectives with U
 
   implicit def database: Database
 
-  def organizationRoutes: Route = {
-    handleExceptions(userExceptionHandler) {
-      authenticate { user =>
-        pathPrefix("api" / "organizations") {
-          pathEndOrSingleSlash {
-            withPagination { page =>
-              get {
-                onSuccess(Organizations.getOrganizationList(page)) { resp =>
-                  complete(resp)
-                }
-              } ~
-              post {
-                entity(as[Organization.Create]) { orgCreate =>
-                  onSuccess(Organizations.createOrganization(orgCreate)) {
-                    newOrg => complete(newOrg)
-                  }
-                }
-              }
-            }
-          } ~
-          pathPrefix(JavaUUID) { orgId =>
-            pathEndOrSingleSlash {
-              get {
-                onSuccess(Organizations.getOrganization(orgId)) {
-                  case Some(org) => complete(org)
-                  case _ => complete(StatusCodes.NotFound)
-                }
-              } ~
-              put {
-                entity(as[Organization]) { orgUpdate =>
-                  onSuccess(Organizations.updateOrganization(orgUpdate, orgId)) {
-                    case 1 => complete(StatusCodes.NoContent)
-                    case count: Int => throw new Exception(
-                      s"Error updating organization: update result expected to be: 1, was $count"
-                    )
-                  }
-                }
-              }
-            } ~
-            pathPrefix("users") {
-              pathEndOrSingleSlash {
-                withPagination { page =>
-                  get {
-                    onSuccess(Organizations.getOrganizationUsers(page, orgId)) { resp =>
-                      complete(resp)
-                    }
-                  }
-                } ~
-                post {
-                  entity(as[User.WithRoleCreate]) { userWithRole =>
-                    onSuccess(Organizations.addUserToOrganization(userWithRole, orgId)) {
-                      userRole => complete(userRole)
-                    }
-                  }
-                }
-              } ~
-              pathPrefix(Segment) { userId =>
-                get {
-                  onSuccess(Organizations.getUserOrgRole(userId, orgId)) {
-                    case Some(userRole) => complete(userRole)
-                    case _ => complete(StatusCodes.NotFound)
-                  }
-                } ~
-                put {
-                  entity(as[User.WithRole]) { userWithRole =>
-                    onSuccess(
-                      Organizations.updateUserOrgRole(userWithRole, orgId, userId)
-                    ) {
-                      case 1 => complete(StatusCodes.NoContent)
-                      case _ => complete(StatusCodes.InternalServerError)
-                    }
-                  }
-                } ~
-                delete {
-                  onSuccess(Organizations.deleteUserOrgRole(userId, orgId)) {
-                    case 1 => complete(StatusCodes.NoContent)
-                    case 0 => complete(StatusCodes.NotFound)
-                    case _ => complete(StatusCodes.InternalServerError)
-                  }
-                }
-              }
-            }
-          }
+  val organizationRoutes: Route = handleExceptions(userExceptionHandler) {
+    pathEndOrSingleSlash {
+      get { listOrganizations } ~
+      post { createOrganization }
+    } ~
+    pathPrefix(JavaUUID) { orgId =>
+      pathEndOrSingleSlash {
+        get { getOrganization(orgId) } ~
+        put { updateOrganization(orgId) }
+      } ~
+      pathPrefix("users") {
+        pathEndOrSingleSlash {
+          get { listOrganizationUsers(orgId) } ~
+          post { addUserToOrganization(orgId) }
+        } ~
+        pathPrefix(Segment) { userId =>
+          get { getOrganizationUser(orgId, userId) } ~
+          put { updateOrganizationUser(orgId, userId) } ~
+          delete { deleteOrganizationUser(orgId, userId) }
         }
       }
+    }
+  }
+
+  def listOrganizations: Route = authenticate { user =>
+    withPagination { page =>
+      complete {
+        Organizations.listOrganizations(page)
+      }
+    }
+  }
+
+  def createOrganization: Route = authenticate { user =>
+    entity(as[Organization.Create]) { newOrg =>
+      onSuccess(Organizations.createOrganization(newOrg)) { org =>
+        complete(StatusCodes.Created, org)
+      }
+    }
+  }
+
+  def getOrganization(orgId: UUID): Route = authenticate { user =>
+    rejectEmptyResponse {
+      complete {
+        Organizations.getOrganization(orgId)
+      }
+    }
+  }
+
+  def updateOrganization(orgId: UUID): Route = authenticate { user =>
+    entity(as[Organization]) { updatedOrg =>
+      onSuccess(Organizations.updateOrganization(updatedOrg, orgId)) {
+        case 1 => complete(StatusCodes.NoContent)
+        case count => throw new IllegalStateException(
+          s"Error updating organization: update result expected to be: 1, was $count"
+        )
+      }
+    }
+  }
+
+  def listOrganizationUsers(orgId: UUID): Route = authenticate { user =>
+    withPagination { page =>
+      complete {
+        Organizations.listOrganizationUsers(page, orgId)
+      }
+    }
+  }
+
+  def addUserToOrganization(orgId: UUID): Route = authenticate { user =>
+    entity(as[User.WithRoleCreate]) { userWithRole =>
+      complete { Organizations.addUserToOrganization(userWithRole, orgId) }
+    }
+  }
+
+  def getOrganizationUser(orgId: UUID, userId: String): Route = authenticate { user =>
+    rejectEmptyResponse {
+      complete {
+        Organizations.getUserOrgRole(userId, orgId)
+      }
+    }
+  }
+
+  def updateOrganizationUser(orgId: UUID, userId: String): Route = authenticate { user =>
+    entity(as[User.WithRole]) { userWithRole =>
+      onSuccess(Organizations.updateUserOrgRole(userWithRole, orgId, userId)) {
+        case 1 => complete(StatusCodes.NoContent)
+        case 0 => complete(StatusCodes.NotFound)
+        case count => throw new IllegalStateException(
+          s"Error updating organization users: update result expected to be: 1, was $count"
+        )
+      }
+    }
+  }
+
+  def deleteOrganizationUser(orgId: UUID, userId: String): Route = authenticate { user =>
+    onSuccess(Organizations.deleteUserOrgRole(userId, orgId)) {
+      case 1 => complete(StatusCodes.NoContent)
+      case 0 => complete(StatusCodes.NotFound)
+      case count => throw new IllegalStateException(
+        s"Error deleting organization users: delete result expected to be: 1, was $count"
+      )
     }
   }
 }
