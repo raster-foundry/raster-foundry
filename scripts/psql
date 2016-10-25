@@ -1,0 +1,9 @@
+#!/bin/bash
+set -eu
+
+DIR="$(dirname "$0")"
+
+# this does nothing if the service is already up
+docker-compose up -d postgres
+
+docker-compose -f "${DIR}/../docker-compose.yml" exec postgres bash -c "psql -U rasterfoundry -d rasterfoundry"
