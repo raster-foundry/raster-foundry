@@ -11,6 +11,7 @@ import bucketScenesTpl from './pages/library/buckets/detail/bucketScenes/bucketS
 import settingsTpl from './pages/settings/settings.html';
 import profileTpl from './pages/settings/profile/profile.html';
 import accountTpl from './pages/settings/account/account.html';
+import tokensTpl from './pages/settings/tokens/tokens.html';
 import errorTpl from './pages/error/error.html';
 
 function librarySceneStates($stateProvider) {
@@ -105,10 +106,10 @@ function settingsStates($stateProvider) {
             controller: 'AccountController',
             controllerAs: '$ctrl'
         })
-        .state('error', {
-            url: '/error',
-            templateUrl: errorTpl,
-            controller: 'ErrorController',
+        .state('settings.tokens', {
+            url: '/tokens',
+            templateUrl: tokensTpl,
+            controller: 'TokensController',
             controllerAs: '$ctrl'
         });
 }
@@ -145,6 +146,14 @@ function routeConfig($urlRouterProvider, $stateProvider) {
     librarySceneStates($stateProvider);
     libraryBucketStates($stateProvider);
     settingsStates($stateProvider);
+
+    $stateProvider
+        .state('error', {
+            url: '/error',
+            templateUrl: errorTpl,
+            controller: 'ErrorController',
+            controllerAs: '$ctrl'
+        });
 
     $urlRouterProvider.otherwise('/browse/');
 }

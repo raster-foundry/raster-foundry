@@ -1,11 +1,13 @@
 export default (app) => {
     class AuthService {
-        constructor(lock, store, jwtHelper) {
+        constructor(lock, store, jwtHelper, $q) {
             this.lock = lock;
             this.store = store;
             this.jwtHelper = jwtHelper;
+            this.$q = $q;
 
             lock.on('authenticated', this.onLogin.bind(this));
+            lock.on('authorization_error', this.onLoginFail.bind(this));
         }
 
         login(token) {
@@ -15,6 +17,7 @@ export default (app) => {
                 this.onLogin({idToken: token});
             } else {
                 this.store.remove('item_token');
+                this.lock.show();
             }
         }
 
@@ -27,9 +30,19 @@ export default (app) => {
                 }
                 this.store.set('profile', profile);
             });
-
             this.isLoggedIn = true;
             this.lock.hide();
+            if (authResult.refreshToken) {
+                this.promise.resolve(authResult);
+                delete this.promise;
+            }
+        }
+
+        onLoginFail(error) {
+            if (this.promise) {
+                this.promise.reject(error);
+                delete this.promise;
+            }
         }
 
         profile() {
@@ -45,6 +58,23 @@ export default (app) => {
             this.store.remove('profile');
             this.isLoggedIn = false;
             this.login();
+        }
+
+        createRefreshToken(name) {
+            this.promise = this.$q.defer();
+            this.lastTokenName = name;
+            this.lock.show({
+                allowSignUp: false,
+                allowForgotPassword: false,
+                rememberLastLogin: false,
+                auth: {
+                    params: {
+                        scope: 'openid offline_access',
+                        device: name
+                    }
+                }
+            });
+            return this.promise.promise;
         }
     }
 

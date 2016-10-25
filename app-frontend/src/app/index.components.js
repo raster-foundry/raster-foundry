@@ -7,5 +7,6 @@ export default angular.module('index.components', [
     require('./components/bucketItem/bucketItem.module.js').name,
     require('./components/selectedScenesModal/selectedScenesModal.module.js').name,
     require('./components/confirmationModal/confirmationModal.module.js').name,
-    require('./components/bucketAddModal/bucketAddModal.module.js').name
+    require('./components/bucketAddModal/bucketAddModal.module.js').name,
+    require('./components/refreshTokenModal/refreshTokenModal.module.js').name
 ]);
