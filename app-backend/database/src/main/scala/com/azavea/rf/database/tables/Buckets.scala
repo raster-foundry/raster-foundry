@@ -118,6 +118,25 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     }
   }
 
+  /** Get specific scenes from a bucket. Returns any scenes from the list of
+    * specified ids that are associated to the given bucket.
+    *
+    * @param bucketId UUID primary key of the bucket to limit results to
+    * @param sceneIds Seq[UUID] primary key of scenes to retrieve
+    */
+  def listBucketScenes(bucketId: UUID, sceneIds: Seq[UUID])
+    (implicit database: DB): Future[Iterable[Scene.WithRelated]] = {
+
+    val scenes = for {
+      sceneToBucket <- ScenesToBuckets if sceneToBucket.bucketId === bucketId && sceneToBucket.sceneId.inSet(sceneIds)
+      scene <- Scenes if scene.id === sceneToBucket.sceneId
+    } yield scene
+
+    database.db.run {
+      scenes.joinWithRelated.result
+    } map Scene.WithRelated.fromRecords
+  }
+
   /** Get bucket given a bucketId
     *
     * @param bucketId UUID primary key of bucket to retrieve
@@ -223,6 +242,34 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     }
   }
 
+  /** Adds a list of scenes to a bucket
+    *
+    * @param sceneIds Seq[UUID] list of primary keys of scens to add to bucket
+    * @param bucketId UUID primary key of back to add scenes to
+    */
+  def addScenesToBucket(sceneIds: Seq[UUID], bucketId: UUID)
+    (implicit database: DB): Future[Iterable[Scene.WithRelated]] = {
+
+    val sceneBucketJoinQuery = for {
+      s <- ScenesToBuckets if s.sceneId.inSet(sceneIds) && s.bucketId === bucketId
+    } yield s
+
+    database.db.run {
+      sceneBucketJoinQuery.result
+    } map { alreadyAdded =>
+      val newScenes = sceneIds.filterNot(alreadyAdded.toSet)
+      val newScenesToBuckets = newScenes.map { sceneId =>
+        SceneToBucket(sceneId, bucketId)
+      }
+
+      database.db.run {
+        ScenesToBuckets.forceInsertAll(newScenesToBuckets)
+      }
+    }
+
+    listBucketScenes(bucketId, sceneIds)
+  }
+
   /** Removes scene from bucket
     *
     * @param sceneId UUID primary key of scene to remove from bucket
@@ -238,5 +285,47 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     database.db.run {
       sceneBucketJoinQuery.delete
     }
+  }
+
+  /** Removes scenes from bucket
+    *
+    * @param sceneIds Seq[UUID] primary key of scenes to remove from bucket
+    * @param bucketId UUID primary key of bucket these scenes will be removed from
+    */
+  def deleteScenesFromBucket(sceneIds: Seq[UUID], bucketId: UUID)
+    (implicit database: DB): Future[Int] = {
+
+    val sceneBucketJoinQuery = for {
+      s <- ScenesToBuckets if s.sceneId.inSet(sceneIds) && s.bucketId === bucketId
+    } yield s
+
+    database.db.run {
+      sceneBucketJoinQuery.delete
+    }
+  }
+
+  /** Removes all scenes from bucket, then adds all specified scenes to it
+    *
+    * @param sceneIds Seq[UUID] primary key of scenes to add to bucket
+    * @param bucketId UUID primary key of bucket to remove all scenes from and add specified scenes to
+    * @return Scenes that were added
+    */
+  def replaceScenesInBucket(sceneIds: Seq[UUID], bucketId: UUID)
+    (implicit database: DB): Future[Iterable[Scene.WithRelated]] = {
+
+    val scenesToBuckets = sceneIds.map { sceneId =>
+      SceneToBucket(sceneId, bucketId)
+    }
+
+    val actions = DBIO.seq(
+      ScenesToBuckets.filter(_.bucketId === bucketId).delete,
+      ScenesToBuckets.forceInsertAll(scenesToBuckets)
+    )
+
+    database.db.run {
+      actions.transactionally
+    }
+
+    listBucketScenes(bucketId, sceneIds)
   }
 }

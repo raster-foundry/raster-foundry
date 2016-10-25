@@ -31,6 +31,8 @@ trait BucketRoutes extends Authentication
       UUID.fromString(s)
     }
 
+  val BULK_OPERATION_MAX_LIMIT = 100
+
   def bucketRoutes: Route = {
     pathPrefix("api" / "buckets") {
       pathEndOrSingleSlash {
@@ -93,6 +95,39 @@ trait BucketRoutes extends Authentication
                       complete(scenes)
                     }
                   }
+                }
+              }
+            } ~
+            post {
+              (authenticate & entity(as[Seq[UUID]])) { (user, sceneIds) =>
+                if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
+                  complete(StatusCodes.RequestEntityTooLarge)
+                }
+
+                complete {
+                  Buckets.addScenesToBucket(sceneIds, bucketId)
+                }
+              }
+            } ~
+            put {
+              (authenticate & entity(as[Seq[UUID]])) { (user, sceneIds) =>
+                if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
+                  complete(StatusCodes.RequestEntityTooLarge)
+                }
+
+                complete {
+                  Buckets.replaceScenesInBucket(sceneIds, bucketId)
+                }
+              }
+            } ~
+            delete {
+              (authenticate & entity(as[Seq[UUID]])) { (user, sceneIds) =>
+                if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
+                  complete(StatusCodes.RequestEntityTooLarge)
+                }
+
+                onSuccess(Buckets.deleteScenesFromBucket(sceneIds, bucketId)) {
+                  _ => complete(StatusCodes.NoContent)
                 }
               }
             }
