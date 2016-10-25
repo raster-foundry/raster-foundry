@@ -43,6 +43,10 @@ node {
       // cycle in the newest version of the application into Amazon
       // ECS.
       stage('infra') {
+        // Use `git` to get the primary repository's current commmit SHA and
+        // set it as the value of the `GIT_COMMIT` environment variable.
+        env.GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+
         checkout scm: [$class: 'GitSCM',
                        branches: [[name: 'develop']],
                        extensions: [[$class: 'RelativeTargetDirectory',
