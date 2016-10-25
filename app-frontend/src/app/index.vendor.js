@@ -11,7 +11,6 @@ import 'angular-lock';
 import 'ng-infinite-scroll';
 import 'angular-jwt';
 import 'angular-resource';
-import 'auth0-angular';
 import 'oclazyload';
 import 'angular-animate';
 import 'angular-cookies';
