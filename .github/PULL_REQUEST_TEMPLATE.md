@@ -2,6 +2,10 @@
 
 Brief description of what this PR does, and why it is needed.
 
+### Checklist
+
+- [ ] Styleguide updated, if necessary
+
 ### Demo
 
 Optional. Screenshots, `curl` examples, etc.
