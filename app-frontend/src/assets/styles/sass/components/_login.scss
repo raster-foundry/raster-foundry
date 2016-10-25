@@ -35,15 +35,29 @@
   }
 }
 
-body #a0-lock.a0-theme-default {
-  .a0-overlay.a0-active {
-    background: none;
+body #auth0-lock-container-1 {
+  .auth0-lock-widget {
+    box-shadow: 0 0 40px -5px #111118;
   }
-  .a0-panel {
-    .a0-top-header {
+  .auth0-lock.auth0-lock {
+    .auth0-lock-name {
+      display: none;
+    }
+    .auth0-lock-overlay {
+      .auth0-lock-badge-bottom {
+        display: none;
+      }
+    }
+    .auth0-lock-header {
+      height: 85px;
+    }
+  }
+  .auth0-lock-widget-container {
+    .auth0-lock-header-bg {
       background: $gray-dark;
       color: $white;
-      .a0-bg-gradient {
+      height: 85px;
+      .auth0-lock-header-bg-blur {
         display: none;
       }
     }

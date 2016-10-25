@@ -4,11 +4,10 @@ const _ = require('lodash');
 
 export default class BrowseController {
     constructor( // eslint-disable-line max-params
-        $log, auth, $scope, sceneService, $state, $uibModal
+        $log, $scope, sceneService, $state, $uibModal
     ) {
         'ngInject';
         this.$log = $log;
-        this.auth = auth;
         this.sceneService = sceneService;
         this.$state = $state;
         this.$uibModal = $uibModal;

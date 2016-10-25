@@ -1,10 +1,13 @@
 /* globals process */
 
-'use strict';
+import assetLogo from '../assets/images/logo-raster-foundry.png';
+
 
 function config( // eslint-disable-line max-params
-    $logProvider, $compileProvider, authProvider, jwtInterceptorProvider,
-    $httpProvider, configProvider, APP_CONFIG
+    $logProvider, $compileProvider,
+    jwtInterceptorProvider,
+    $httpProvider, configProvider, APP_CONFIG,
+    lockProvider
 ) {
     'ngInject';
 
@@ -13,24 +16,39 @@ function config( // eslint-disable-line max-params
     $compileProvider.debugInfoEnabled(false);
 
     if (!APP_CONFIG.error) {
-        authProvider.init({
-            domain: 'raster-foundry.auth0.com',
+        lockProvider.init({
             clientID: APP_CONFIG.clientId,
-            loginState: 'login',
-            sso: false
-        }, require('auth0-lock'));
-
-        authProvider.on('logout', function (store, $state) {
-            'ngInject';
-            store.remove('profile');
-            store.remove('token');
-            store.remove('accessToken');
-            $state.go('browse');
+            domain: APP_CONFIG.auth0Domain,
+            options: {
+                closable: false,
+                auth: {
+                    redirect: false,
+                    sso: true,
+                    scope: 'openid name email'
+                },
+                theme: {
+                    logo: assetLogo,
+                    primaryColor: '#5e509b'
+                },
+                additionalSignUpFields: [{
+                    name: 'companyName',
+                    placeholder: 'Company name'
+                }, {
+                    name: 'companySize',
+                    placeholder: 'How large is your company?'
+                }, {
+                    name: 'reference',
+                    placeholder: 'How\'d you find out about us?'
+                }, {
+                    name: 'phoneNumber',
+                    placeholder: 'Phone Number'
+                }]
+            }
         });
 
-        jwtInterceptorProvider.tokenGetter = function (auth) {
+        jwtInterceptorProvider.tokenGetter = function (authService) {
             'ngInject';
-            return auth.idToken;
+            return authService.token();
         };
     }
 

@@ -25,16 +25,16 @@
 	  </nav>
 	  <span class="navbar-vertical-divider"></span>
 	  <nav>
-      <div ng-if="!$ctrl.isLoggedIn">
+      <div ng-if="!$ctrl.authService.isLoggedIn">
         <a href ng-click="$ctrl.signin()">
           Sign In
         </a>
       </div>
-      <div ng-if="$ctrl.isLoggedIn" uib-dropdown class="dropdown-my-account" on-toggle="toggled($ctrl.optionsOpen)">
+      <div ng-if="$ctrl.authService.isLoggedIn" uib-dropdown class="dropdown-my-account" on-toggle="toggled($ctrl.optionsOpen)">
         <a href uib-dropdown-toggle>
-          <img ng-if="$ctrl.profile.picture" class="avatar" ng-src="{{$ctrl.profile.picture}}">
-	        <img ng-if="! $ctrl.profile.picture" class="avatar" src="https://placehold.it/25x25">
-          <span class="username">{{$ctrl.profile.nickname}}</span>
+          <img ng-if="$ctrl.authService.profile().picture" class="avatar" ng-src="{{$ctrl.authService.profile().picture}}">
+	        <img ng-if="! $ctrl.authService.profile().picture" class="avatar" src="https://placehold.it/25x25">
+          <span class="username">{{$ctrl.authService.profile().nickname}}</span>
 	        <i class="icon-caret-down"></i>
         </a>
 	      <ul class="dropdown-menu" aria-labelledby="dLabel">
