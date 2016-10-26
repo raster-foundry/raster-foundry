@@ -24,7 +24,7 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
                                      with TimestampFields
 {
   def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, organizationId, ingestSizeBytes, visibility,
-    resolutionMeters, tags, datasource, sceneMetadata, cloudCover, acquisitionDate, thumbnailStatus, boundaryStatus,
+    tags, datasource, sceneMetadata, cloudCover, acquisitionDate, thumbnailStatus, boundaryStatus,
     status, sunAzimuth, sunElevation, name, footprint) <> (Scene.tupled, Scene.unapply)
 
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
@@ -35,7 +35,6 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
   val organizationId: Rep[java.util.UUID] = column[java.util.UUID]("organization_id")
   val ingestSizeBytes: Rep[Int] = column[Int]("ingest_size_bytes")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
-  val resolutionMeters: Rep[Float] = column[Float]("resolution_meters")
   val tags: Rep[List[String]] = column[List[String]]("tags", O.Length(2147483647,varying=false))
   val datasource: Rep[String] = column[String]("datasource", O.Length(255,varying=true))
   val sceneMetadata: Rep[Map[String, Any]] = column[Map[String, Any]]("scene_metadata", O.Length(2147483647,varying=false))
@@ -196,15 +195,18 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
       updateScene <- Scenes.filter(_.id === sceneId)
     } yield (
       updateScene.modifiedAt, updateScene.modifiedBy, updateScene.ingestSizeBytes,
-      updateScene.resolutionMeters, updateScene.datasource, updateScene.cloudCover,
-      updateScene.acquisitionDate, updateScene.tags, updateScene.sceneMetadata,
-      updateScene.thumbnailStatus, updateScene.boundaryStatus, updateScene.status, updateScene.name, updateScene.footprint
+      updateScene.datasource, updateScene.cloudCover,  updateScene.acquisitionDate,
+      updateScene.tags, updateScene.sceneMetadata, updateScene.thumbnailStatus,
+      updateScene.boundaryStatus, updateScene.status, updateScene.name,
+      updateScene.footprint
     )
     database.db.run {
       updateSceneQuery.update((
-        updateTime, user.id, scene.ingestSizeBytes, scene.resolutionMeters,
-        scene.datasource, scene.cloudCover, scene.acquisitionDate, scene.tags, scene.sceneMetadata,
-        scene.thumbnailStatus, scene.boundaryStatus, scene.status, scene.name, scene.footprint
+        updateTime, user.id, scene.ingestSizeBytes,
+        scene.datasource, scene.cloudCover, scene.acquisitionDate,
+        scene.tags, scene.sceneMetadata, scene.thumbnailStatus,
+        scene.boundaryStatus, scene.status, scene.name,
+        scene.footprint
       ))
     } map {
       case 1 => 1

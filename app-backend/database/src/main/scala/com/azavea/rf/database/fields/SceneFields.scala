@@ -7,7 +7,6 @@ import geotrellis.vector.Geometry
 
 trait SceneFields  { self: Table[_] =>
   def name: Rep[String]
-  def resolutionMeters: Rep[Float]
   def datasource: Rep[String]
   def sceneMetadata: Rep[Map[String, Any]]
   def cloudCover: Rep[Option[Float]]

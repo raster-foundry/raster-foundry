@@ -21,7 +21,9 @@ class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
                                      with TimestampFields
                                      with VisibilityField
 {
-  def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, rawDataBytes, visibility, filename, sourceuri, scene, bands, imageMetadata) <> (Image.tupled, Image.unapply)
+  def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy,
+    rawDataBytes, visibility, filename, sourceuri, scene, bands, imageMetadata,
+    resolutionMeters) <> (Image.tupled, Image.unapply)
 
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
   val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")
@@ -36,6 +38,7 @@ class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
   val scene: Rep[java.util.UUID] = column[java.util.UUID]("scene")
   val bands: Rep[List[String]] = column[List[String]]("bands", O.Length(2147483647,varying=false))
   val imageMetadata: Rep[Map[String, Any]] = column[Map[String, Any]]("image_metadata", O.Length(2147483647,varying=false))
+  val resolutionMeters: Rep[Float] = column[Float]("resolution_meters")
 
   /** Foreign key referencing Organizations (database name images_organization_id_fkey) */
   lazy val organizationsFk = foreignKey("images_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
@@ -155,13 +158,16 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
     } yield (
       updateImage.modifiedAt, updateImage.modifiedBy, updateImage.rawDataBytes,
       updateImage.visibility, updateImage.filename, updateImage.sourceuri,
-      updateImage.scene, updateImage.bands, updateImage.imageMetadata
+      updateImage.scene, updateImage.bands, updateImage.imageMetadata,
+      updateImage.resolutionMeters
     )
 
     database.db.run {
       updateImageQuery.update((
-        updateTime, user.id, image.rawDataBytes, image.visibility,
-        image.filename, image.sourceUri, image.scene, image.bands, image.imageMetadata
+        updateTime, user.id, image.rawDataBytes,
+        image.visibility, image.filename, image.sourceUri,
+        image.scene, image.bands, image.imageMetadata,
+        image.resolutionMeters
       ))
     } map {
       case 1 => 1
