@@ -82,14 +82,14 @@ class SceneSpec extends WordSpec
       Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any], None,
       Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
       JobStatus.Processing, JobStatus.Processing, JobStatus.Processing, None, None, "test scene datasource 1",
-      List.empty[Image.Identified], mpoly, List.empty[Thumbnail.Identified]
+      mpoly, List.empty[String], List.empty[Image.Identified], List.empty[Thumbnail.Identified]
     )
 
     val newSceneDatasource2 = Scene.Create(
       publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"),
       "TEST_ORG-OTHER", Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any],
       None, None, JobStatus.Processing, JobStatus.Processing, JobStatus.Processing, None, None, "test scene datasource 2",
-      List.empty[Image.Identified], None, List.empty[Thumbnail.Identified]
+      None, List.empty[String], List.empty[Image.Identified], List.empty[Thumbnail.Identified]
     )
 
     "require authentication for creation" in {

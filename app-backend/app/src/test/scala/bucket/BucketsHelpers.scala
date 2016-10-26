@@ -26,7 +26,7 @@ trait BucketSpecHelper {
     Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any], None,
     Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
     JobStatus.Processing, JobStatus.Processing, JobStatus.Processing, None, None, "test scene bucket",
-    List.empty[Image.Identified], None, List.empty[Thumbnail.Identified]
+    None, List.empty[String], List.empty[Image.Identified], List.empty[Thumbnail.Identified]
   )
 
 }
