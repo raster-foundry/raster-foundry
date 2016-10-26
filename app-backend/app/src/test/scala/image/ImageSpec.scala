@@ -35,7 +35,7 @@ class ImageSpec extends WordSpec
   val publicOrgId = UUID.fromString("dfac6307-b5ef-43f7-beda-b9f208bb7726")
 
   val newSceneDatasource1 = Scene.Create(
-    publicOrgId, 0, Visibility.Public, 20.2f, List("Test", "Public", "Low Resolution"), "TEST_ORG",
+    publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), "TEST_ORG",
     Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any], None,
     Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
     JobStatus.Processing, JobStatus.Processing, JobStatus.Processing, None, None, "test scene image spec 1",
@@ -91,7 +91,8 @@ class ImageSpec extends WordSpec
         val newImageDatasource1 = Image.Create(
           publicOrgId, 1024, Visibility.Public, "test-image.png", "s3://public/s3/test-image.png",
           sceneId, List("red, green, blue"),
-          Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any]
+          Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any],
+          20.2f
         )
 
         Post("/api/images/").withHeadersAndEntity(

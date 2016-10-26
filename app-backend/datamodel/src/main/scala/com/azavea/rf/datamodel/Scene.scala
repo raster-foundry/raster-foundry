@@ -18,7 +18,6 @@ case class Scene(
   organizationId: UUID,
   ingestSizeBytes: Int,
   visibility: Visibility,
-  resolutionMeters: Float,
   tags: List[String],
   datasource: String,
   sceneMetadata: Map[String, Any],
@@ -45,7 +44,6 @@ case class Scene(
     this.modifiedBy,
     this.organizationId,
     this.visibility,
-    this.resolutionMeters,
     this.tags,
     this.datasource,
     this.sceneMetadata,
@@ -72,14 +70,13 @@ object Scene extends GeoJsonSupport {
 
   def withRelated = WithRelated.apply _
 
-  implicit val defaultThumbnailFormat = jsonFormat21(Scene.apply)
+  implicit val defaultThumbnailFormat = jsonFormat20(Scene.apply)
 
   /** Case class extracted from a POST request */
   case class Create(
     organizationId: UUID,
     ingestSizeBytes: Int,
     visibility: Visibility,
-    resolutionMeters: Float,
     tags: List[String],
     datasource: String,
     sceneMetadata: Map[String, Any],
@@ -106,7 +103,6 @@ object Scene extends GeoJsonSupport {
         organizationId,
         ingestSizeBytes,
         visibility,
-        resolutionMeters,
         tags,
         datasource,
         sceneMetadata,
@@ -124,7 +120,7 @@ object Scene extends GeoJsonSupport {
   }
 
   object Create {
-    implicit val defaultThumbnailWithRelatedFormat = jsonFormat18(Create.apply)
+    implicit val defaultThumbnailWithRelatedFormat = jsonFormat17(Create.apply)
   }
 
   case class WithRelated(
@@ -135,7 +131,6 @@ object Scene extends GeoJsonSupport {
     modifiedBy: String,
     organizationId: UUID,
     visibility: Visibility,
-    resolutionMeters: Float,
     tags: List[String],
     datasource: String,
     sceneMetadata: Map[String, Any],
@@ -153,7 +148,7 @@ object Scene extends GeoJsonSupport {
   )
 
   object WithRelated {
-    implicit val defaultThumbnailWithRelatedFormat = jsonFormat22(WithRelated.apply)
+    implicit val defaultThumbnailWithRelatedFormat = jsonFormat21(WithRelated.apply)
 
     /** Helper function to create Iterable[Scene.WithRelated] from join
       *

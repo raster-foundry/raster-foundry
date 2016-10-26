@@ -18,7 +18,8 @@ case class Image(
   sourceUri: String,
   scene: UUID,
   bands: List[String],
-  imageMetadata: Map[String, Any]
+  imageMetadata: Map[String, Any],
+  resolutionMeters: Float
 )
 
 object Image {
@@ -27,7 +28,7 @@ object Image {
 
   def tupled = (Image.apply _).tupled
 
-  implicit val defaultImageFormat = jsonFormat13(Image.apply _)
+  implicit val defaultImageFormat = jsonFormat14(Image.apply _)
 
   case class Create(
     organizationId: UUID,
@@ -37,7 +38,8 @@ object Image {
     sourceUri: String,
     scene: UUID,
     bands: List[String],
-    imageMetadata: Map[String, Any]
+    imageMetadata: Map[String, Any],
+    resolutionMeters: Float
   ) {
     def toImage(userId: String): Image = {
       val now = new Timestamp((new java.util.Date).getTime)
@@ -55,13 +57,14 @@ object Image {
         sourceUri,
         scene,
         bands,
-        imageMetadata
+        imageMetadata,
+        resolutionMeters
       )
     }
   }
 
   object Create {
-    implicit val defaultImageCreateFormat = jsonFormat8(Create.apply _)
+    implicit val defaultImageCreateFormat = jsonFormat9(Create.apply _)
   }
 
   /** Image class when posted with an ID */
@@ -72,7 +75,8 @@ object Image {
     filename: String,
     sourceuri: String,
     bands: List[String],
-    imageMetadata: Map[String, Any]
+    imageMetadata: Map[String, Any],
+    resolutionMeters: Float
   ) {
     def toImage(userId: String, scene: Scene): Image = {
       val now = new Timestamp((new java.util.Date()).getTime())
@@ -89,12 +93,13 @@ object Image {
         sourceuri,
         scene.id,
         bands,
-        imageMetadata
+        imageMetadata,
+        resolutionMeters
       )
     }
   }
 
   object Identified {
-    implicit val defaultIdentifiedImageFormat = jsonFormat7(Identified.apply _)
+    implicit val defaultIdentifiedImageFormat = jsonFormat8(Identified.apply _)
   }
 }
