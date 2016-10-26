@@ -195,15 +195,18 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
       updateScene <- Scenes.filter(_.id === sceneId)
     } yield (
       updateScene.modifiedAt, updateScene.modifiedBy, updateScene.ingestSizeBytes,
-      updateScene.datasource, updateScene.cloudCover,
-      updateScene.acquisitionDate, updateScene.tags, updateScene.sceneMetadata,
-      updateScene.thumbnailStatus, updateScene.boundaryStatus, updateScene.status, updateScene.name, updateScene.footprint
+      updateScene.datasource, updateScene.cloudCover,  updateScene.acquisitionDate,
+      updateScene.tags, updateScene.sceneMetadata, updateScene.thumbnailStatus,
+      updateScene.boundaryStatus, updateScene.status, updateScene.name,
+      updateScene.footprint
     )
     database.db.run {
       updateSceneQuery.update((
         updateTime, user.id, scene.ingestSizeBytes,
-        scene.datasource, scene.cloudCover, scene.acquisitionDate, scene.tags, scene.sceneMetadata,
-        scene.thumbnailStatus, scene.boundaryStatus, scene.status, scene.name, scene.footprint
+        scene.datasource, scene.cloudCover, scene.acquisitionDate,
+        scene.tags, scene.sceneMetadata, scene.thumbnailStatus,
+        scene.boundaryStatus, scene.status, scene.name,
+        scene.footprint
       ))
     } map {
       case 1 => 1

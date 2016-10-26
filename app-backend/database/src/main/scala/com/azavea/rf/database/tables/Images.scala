@@ -21,7 +21,9 @@ class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
                                      with TimestampFields
                                      with VisibilityField
 {
-  def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, rawDataBytes, visibility, filename, sourceuri, scene, bands, imageMetadata, resolutionMeters) <> (Image.tupled, Image.unapply)
+  def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy,
+    rawDataBytes, visibility, filename, sourceuri, scene, bands, imageMetadata,
+    resolutionMeters) <> (Image.tupled, Image.unapply)
 
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
   val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")
@@ -162,8 +164,9 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
 
     database.db.run {
       updateImageQuery.update((
-        updateTime, user.id, image.rawDataBytes, image.visibility,
-        image.filename, image.sourceUri, image.scene, image.bands, image.imageMetadata,
+        updateTime, user.id, image.rawDataBytes,
+        image.visibility, image.filename, image.sourceUri,
+        image.scene, image.bands, image.imageMetadata,
         image.resolutionMeters
       ))
     } map {
