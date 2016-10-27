@@ -68,6 +68,12 @@ object TokenService extends Config {
       .flatMap {
         case HttpResponse(StatusCodes.OK, _, entity, _) =>
           Unmarshal(entity).to[AuthorizedToken]
+        case HttpResponse(StatusCodes.Unauthorized, _, error, _) =>
+          if (error.toString.contains("invalid_refresh_token")) {
+            throw new IllegalArgumentException("Refresh token not recognized")
+          } else {
+            throw new Auth0Exception(StatusCodes.Unauthorized, error.toString)
+          }
         case HttpResponse(errCode, _, error, _) =>
           throw new Auth0Exception(errCode, error.toString)
       }
