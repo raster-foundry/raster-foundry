@@ -131,7 +131,7 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
   }
 
   /** Get scenes given a page request and query parameters */
-  def getScenes(pageRequest: PageRequest, combinedParams: CombinedSceneQueryParams)
+  def listScenes(pageRequest: PageRequest, combinedParams: CombinedSceneQueryParams)
     (implicit database: DB): Future[PaginatedResponse[Scene.WithRelated]] = {
 
     val scenesQueryResult = database.db.run {

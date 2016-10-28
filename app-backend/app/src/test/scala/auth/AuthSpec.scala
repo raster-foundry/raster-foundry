@@ -24,6 +24,9 @@ class AuthSpec extends WordSpec
   val newUserId = "NewUser"
   val authorization = AuthUtils.generateAuthHeader(newUserId)
 
+  // Alias to baseRoutes to be explicit
+  val baseRoutes = routes
+
   /** Route for testing the authenticate directive.
     *
     * If authenticate provides a user, a get request to "/" will return a 202 Accepted
@@ -45,7 +48,7 @@ class AuthSpec extends WordSpec
     "create a new user then authenticate using it if a user which matches the JWT token doesn't exist" in {
       Get("/").addHeader(authorization) ~> authenticateDirectiveTestRoute ~> check {
         Get(s"/api/users/$newUserId")
-          .addHeader(authorization) ~> userRoutes ~> check {
+          .addHeader(authorization) ~> baseRoutes ~> check {
           responseAs[User.WithOrgs]
         }
       }

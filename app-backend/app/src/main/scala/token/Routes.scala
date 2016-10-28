@@ -13,41 +13,35 @@ trait TokenRoutes extends Authentication
   with UserErrorHandler
   with Auth0ErrorHandler {
 
-  def tokenRoutes: Route = pathPrefix("api" / "tokens") {
-    (handleExceptions(auth0ExceptionHandler) & handleExceptions(userExceptionHandler)) {
-      listRefreshTokens ~
-      getAuthorizedToken ~
-      revokeRefreshToken
-    }
-  }
-
-  def listRefreshTokens: Route = pathEndOrSingleSlash {
-    get {
-      authenticate { user =>
-        onSuccess(TokenService.listRefreshTokens(user)) { tokens =>
-          complete(tokens)
-        }
+  val tokenRoutes: Route = (handleExceptions(auth0ExceptionHandler) & handleExceptions(userExceptionHandler)) {
+    pathEndOrSingleSlash {
+      get { listRefreshTokens } ~
+      post { getAuthorizedToken }
+    } ~
+    pathPrefix(Segment) { deviceId =>
+      pathEndOrSingleSlash {
+        delete { revokeRefreshToken(deviceId) }
       }
     }
   }
 
-  def getAuthorizedToken: Route = pathEndOrSingleSlash {
-    post {
-      entity(as[RefreshToken]) { refreshToken =>
-        onSuccess(TokenService.getAuthorizedToken(refreshToken)) { token =>
-          complete(token)
-        }
+  def listRefreshTokens: Route = authenticate { user =>
+    complete {
+      TokenService.listRefreshTokens(user)
+    }
+  }
+
+  def getAuthorizedToken: Route = {
+    entity(as[RefreshToken]) { refreshToken =>
+      complete {
+        TokenService.getAuthorizedToken(refreshToken)
       }
     }
   }
 
-  def revokeRefreshToken: Route = pathPrefix(Segment) { deviceId =>
-    delete {
-      authenticate { user =>
-        onSuccess(TokenService.revokeRefreshToken(user, deviceId)) { response =>
-          complete(response)
-        }
-      }
+  def revokeRefreshToken(deviceId: String): Route = authenticate { user =>
+    complete {
+      TokenService.revokeRefreshToken(user, deviceId)
     }
   }
 }

@@ -20,12 +20,14 @@ class HealthCheckSpec extends WordSpec
   implicit def database = db
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(DurationInt(20).second)
 
+  // Alias to baseRoutes to be explicit
+  val baseRoutes = routes
+
   "The healthcheck service" should {
     "return an OK status" in {
       val dbCheck = ServiceCheck("database", HealthCheckStatus.OK)
       val healthCheck = HealthCheck(HealthCheckStatus.OK, Seq(dbCheck))
-      val routes = healthCheckRoutes
-      Get("/healthcheck") ~> routes ~> check {
+      Get("/healthcheck") ~> baseRoutes ~> check {
         responseAs[HealthCheck] shouldEqual healthCheck
       }
     }

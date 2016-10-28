@@ -79,7 +79,7 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     *
     * @param bucketId UUID bucket to request scenes for
     */
-  def getBucketScenes(bucketId: UUID, pageRequest: PageRequest, combinedParams: CombinedSceneQueryParams)
+  def listBucketScenes(bucketId: UUID, pageRequest: PageRequest, combinedParams: CombinedSceneQueryParams)
     (implicit database: DB): Future[PaginatedResponse[Scene.WithRelated]] = {
 
     val bucketSceneQuery = for {
@@ -154,7 +154,7 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     * @param pageRequest PageRequest pagination parameters
     * @param queryParams BucketQueryParams query parameters relevant for buckets
     */
-  def getBuckets(pageRequest: PageRequest, queryParams: BucketQueryParameters)
+  def listBuckets(pageRequest: PageRequest, queryParams: BucketQueryParameters)
     (implicit database: DB): Future[PaginatedResponse[Bucket]] = {
 
     val buckets = Buckets.filterByOrganization(queryParams.orgParams)

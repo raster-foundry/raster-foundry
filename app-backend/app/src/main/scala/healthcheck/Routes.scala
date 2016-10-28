@@ -1,15 +1,13 @@
 package com.azavea.rf.healthcheck
 
-import scala.concurrent.ExecutionContext
-
-import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server._
-import StatusCodes._
 
 import org.postgresql.util.PSQLException
 
-import com.azavea.rf.database.Database
 import com.azavea.rf.auth.Authentication
+import com.azavea.rf.database.Database
+
 
 /**
   * Routes for healthchecks -- additional routes for individual healthchecks
@@ -29,17 +27,13 @@ trait HealthCheckRoutes extends Authentication {
       }
   }
 
-  val healthCheckRoutes = (
-    handleExceptions(healthCheckExceptionHandler) {
-      authenticateAndAllowAnonymous { user =>
-        pathPrefix("healthcheck") {
-          pathEndOrSingleSlash {
-            onSuccess(HealthCheckService.healthCheck) { resp =>
-              complete(resp)
-            }
-          }
+  val healthCheckRoutes = handleExceptions(healthCheckExceptionHandler) {
+    pathEndOrSingleSlash {
+      get {
+        complete {
+          HealthCheckService.healthCheck
         }
       }
     }
-  )
+  }
 }

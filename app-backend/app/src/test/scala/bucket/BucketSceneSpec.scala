@@ -27,6 +27,9 @@ class BucketSceneSpec extends WordSpec
   implicit def database = db
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(DurationInt(20).second)
 
+  // Alias to baseRoutes to be explicit
+  val baseRoutes = routes
+
 
   "/api/buckets/{bucket}/scenes/" should {
     "allow creating buckets and scenes" in {
@@ -36,7 +39,7 @@ class BucketSceneSpec extends WordSpec
           ContentTypes.`application/json`,
           newBucket1.toJson.toString()
         )
-      ) ~> bucketRoutes ~> check {
+      ) ~> baseRoutes ~> check {
         responseAs[Bucket]
       }
 
@@ -46,16 +49,16 @@ class BucketSceneSpec extends WordSpec
           ContentTypes.`application/json`,
           newScene.toJson.toString()
         )
-      ) ~> sceneRoutes ~> check {
+      ) ~> baseRoutes ~> check {
         responseAs[Scene.WithRelated]
       }
     }
 
     "not have any scenes attached to initial bucket" in {
-      Get("/api/buckets/") ~> bucketRoutes ~> check {
+      Get("/api/buckets/") ~> baseRoutes ~> check {
         val buckets = responseAs[PaginatedResponse[Bucket]]
         val bucketId = buckets.results.head.id
-        Get(s"/api/buckets/${bucketId}/scenes/") ~> bucketRoutes ~> check {
+        Get(s"/api/buckets/${bucketId}/scenes/") ~> baseRoutes ~> check {
           responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 0
         }
       }
@@ -63,18 +66,18 @@ class BucketSceneSpec extends WordSpec
 
     "should be able to attach scene to bucket via post" in {
       // Get buckets to get ID
-      Get("/api/buckets/") ~> bucketRoutes ~> check {
+      Get("/api/buckets/") ~> baseRoutes ~> check {
         val buckets = responseAs[PaginatedResponse[Bucket]]
         val bucketId = buckets.results.head.id
 
         // Get scenes to get ID
-        Get("/api/scenes/") ~> sceneRoutes ~> check {
+        Get("/api/scenes/") ~> baseRoutes ~> check {
           val scenes = responseAs[PaginatedResponse[Scene.WithRelated]]
           val sceneId = scenes.results.head.id
 
           Post(s"/api/buckets/${bucketId}/scenes/${sceneId}/").withHeaders(
             List(authorization)
-          ) ~> bucketRoutes ~> check {
+          ) ~> baseRoutes ~> check {
             status shouldEqual StatusCodes.Created
           }
         }
@@ -82,38 +85,38 @@ class BucketSceneSpec extends WordSpec
     }
 
     "should have one scene attached to bucket" in {
-      Get("/api/buckets/") ~> bucketRoutes ~> check {
+      Get("/api/buckets/") ~> baseRoutes ~> check {
         val buckets = responseAs[PaginatedResponse[Bucket]]
         val bucketId = buckets.results.head.id
-        Get(s"/api/buckets/${bucketId}/scenes/") ~> bucketRoutes ~> check {
+        Get(s"/api/buckets/${bucketId}/scenes/") ~> baseRoutes ~> check {
           responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 1
         }
       }
     }
 
     "should be able to apply filters for scenes on bucket" in {
-      Get("/api/buckets/") ~> bucketRoutes ~> check {
+      Get("/api/buckets/") ~> baseRoutes ~> check {
         val buckets = responseAs[PaginatedResponse[Bucket]]
         val bucketId = buckets.results.head.id
-        Get(s"/api/buckets/${bucketId}/scenes/?datasource=DoesNotExist") ~> bucketRoutes ~> check {
+        Get(s"/api/buckets/${bucketId}/scenes/?datasource=DoesNotExist") ~> baseRoutes ~> check {
           responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 0
         }
       }
     }
 
     "should be able to remove scene from bucket via delete" in {
-      Get("/api/buckets/") ~> bucketRoutes ~> check {
+      Get("/api/buckets/") ~> baseRoutes ~> check {
         val buckets = responseAs[PaginatedResponse[Bucket]]
         val bucketId = buckets.results.head.id
 
         // Get scenes to get ID
-        Get("/api/scenes/") ~> sceneRoutes ~> check {
+        Get("/api/scenes/") ~> baseRoutes ~> check {
           val scenes = responseAs[PaginatedResponse[Scene.WithRelated]]
           val sceneId = scenes.results.head.id
 
           Delete(s"/api/buckets/${bucketId}/scenes/${sceneId}/").withHeaders(
             List(authorization)
-          ) ~> bucketRoutes ~> check {
+          ) ~> baseRoutes ~> check {
             status shouldEqual StatusCodes.NoContent
           }
         }
@@ -121,10 +124,10 @@ class BucketSceneSpec extends WordSpec
     }
 
     "should not have a scene attached to bucket after delete" in {
-      Get("/api/buckets/") ~> bucketRoutes ~> check {
+      Get("/api/buckets/") ~> baseRoutes ~> check {
         val buckets = responseAs[PaginatedResponse[Bucket]]
         val bucketId = buckets.results.head.id
-        Get(s"/api/buckets/${bucketId}/scenes/") ~> bucketRoutes ~> check {
+        Get(s"/api/buckets/${bucketId}/scenes/") ~> baseRoutes ~> check {
           responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 0
         }
       }

@@ -36,7 +36,7 @@ object Organizations extends TableQuery(tag => new Organizations(tag)) with Lazy
       new NameFieldSort(identity[Organizations]),
       new TimestampSort(identity[Organizations]))
 
-  def getOrganizationList(page: PageRequest)(implicit database: DB): Future[PaginatedResponse[Organization]] = {
+  def listOrganizations(page: PageRequest)(implicit database: DB): Future[PaginatedResponse[Organization]] = {
 
     val organizationsQueryResult = database.db.run {
       Organizations
@@ -110,7 +110,7 @@ object Organizations extends TableQuery(tag => new Organizations(tag)) with Lazy
     }
   }
 
-  def getOrganizationUsers(
+  def listOrganizationUsers(
     page: PageRequest, id: java.util.UUID
   )(implicit database: DB): Future[PaginatedResponse[User.WithRole]] = {
     val getOrgUsersResult = database.db.run {

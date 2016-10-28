@@ -76,7 +76,7 @@ object Thumbnails extends TableQuery(tag => new Thumbnails(tag)) with LazyLoggin
     }
   }
 
-  def getThumbnails(pageRequest: PageRequest, queryParams: ThumbnailQueryParameters)
+  def listThumbnails(pageRequest: PageRequest, queryParams: ThumbnailQueryParameters)
     (implicit database: DB): Future[PaginatedResponse[Thumbnail]] = {
 
     val thumbnails = Thumbnails.filterBySceneParams(queryParams)
