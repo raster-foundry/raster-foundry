@@ -14,6 +14,8 @@ trait ImageQueryParametersDirective extends QueryParametersCommon {
   val imageSpecificQueryParams = parameters(
     'minRawDataBytes.as[Int].?,
     'maxRawDataBytes.as[Int].?,
+    'minResolution.as[Float].?,
+    'maxResolution.as[Float].?,
     'scene.as[UUID].*
   ).as(ImageQueryParameters)
 
