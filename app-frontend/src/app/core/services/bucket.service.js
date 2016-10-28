@@ -1,8 +1,9 @@
 export default (app) => {
     class BucketService {
-        constructor($resource, userService) {
+        constructor($resource, userService, $http) {
             'ngInject';
             this.userService = userService;
+            this.$http = $http;
 
             this.Bucket = $resource(
                 '/api/buckets/:id/', {
@@ -22,12 +23,13 @@ export default (app) => {
                     delete: {
                         method: 'DELETE'
                     },
-                    addScene: {
+                    addScenes: {
                         method: 'POST',
-                        url: '/api/buckets/:bucketId/scenes/:sceneId',
+                        url: '/api/buckets/:bucketId/scenes/',
                         params: {
-                            bucketId: '@bucketId', sceneId: '@sceneId'
-                        }
+                            bucketId: '@bucketId'
+                        },
+                        isArray: true
                     },
                     bucketScenes: {
                         method: 'GET',
@@ -37,12 +39,11 @@ export default (app) => {
                             bucketId: '@bucketId'
                         }
                     },
-                    removeScene: {
+                    removeScenes: {
                         method: 'DELETE',
-                        url: '/api/buckets/:bucketId/scenes/:sceneId',
+                        url: '/api/buckets/:bucketId/scenes/',
                         params: {
-                            bucketId: '@bucketId',
-                            sceneId: '@sceneId'
+                            bucketId: '@bucketId'
                         }
                     }
                 }
@@ -70,10 +71,10 @@ export default (app) => {
             );
         }
 
-        addScene(bucketId, sceneId) {
-            return this.Bucket.addScene(
-                {bucketId: bucketId, sceneId: sceneId},
-                {}
+        addScenes(bucketId, sceneIds) {
+            return this.Bucket.addScenes(
+                {bucketId: bucketId},
+                sceneIds
             ).$promise;
         }
 
@@ -85,8 +86,13 @@ export default (app) => {
             return this.Bucket.bucketScenes({bucketId: bucketId, limit: 1}).$promise;
         }
 
-        removeSceneFromBucket(params) {
-            return this.Bucket.removeScene(params).$promise;
+        removeScenesFromBucket(bucketId, scenes) {
+            return this.$http({
+                method: 'DELETE',
+                url: `/api/buckets/${bucketId}/scenes/`,
+                data: scenes,
+                headers: {'Content-Type': 'application/json;charset=utf-8'}
+            });
         }
 
         deleteBucket(bucketId) {

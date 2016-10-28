@@ -1,5 +1,3 @@
-import Map from 'es6-map';
-
 export default class BucketScenesController {
     constructor( // eslint-disable-line max-params
         $log, $state, bucketService, $scope, $uibModal
@@ -145,40 +143,17 @@ export default class BucketScenesController {
     }
 
     removeScenes() {
-        let scenesInProgress = new Map();
-        this.$parent.selectedScenes.forEach((scene) => {
-            scenesInProgress.set(scene.id, true);
-            this.bucketService.removeSceneFromBucket({
-                bucketId: this.bucketId,
-                sceneId: scene.id
-            }).then(
-                () => {
-                    scenesInProgress.set(scene.id, true);
-                    let allFinished = true;
-                    scenesInProgress.forEach((finished) => {
-                        if (!finished) {
-                            allFinished = false;
-                        }
-                    });
-                    if (allFinished) {
-                        this.populateSceneList(this.currentPage);
-                        this.$parent.selectedScenes.clear();
-                    }
-                },
-                (err) => {
-                    this.$log.debug('Error removing scene from bucket', err);
-                    let allFinished = true;
-                    scenesInProgress.forEach((finished) => {
-                        if (!finished) {
-                            allFinished = false;
-                        }
-                    });
-                    if (allFinished) {
-                        this.populateSceneList(this.currentPage);
-                        this.selectedScenes.clear();
-                    }
-                }
-            );
-        });
+        let sceneIds = Array.from(this.$parent.selectedScenes.keys());
+        this.bucketService.removeScenesFromBucket(this.bucketId, sceneIds).then(
+            () => {
+                this.populateSceneList(this.currentPage);
+                this.$parent.selectedScenes.clear();
+            },
+            (err) => {
+                // later on, use toasts or something instead of a debug message
+                this.$log.debug('Error removing scenes from bucket.', err);
+                this.populateSceneList(this.currentPage);
+            }
+        );
     }
 }
