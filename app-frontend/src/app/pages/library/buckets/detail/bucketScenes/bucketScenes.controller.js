@@ -129,6 +129,36 @@ export default class BucketScenesController {
             });
     }
 
+    downloadModal() {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+        let downloadSets = Array.from(this.$parent.selectedScenes)
+            .map(([, val]) => {
+                let images = val.images.map((image) => {
+                    return {
+                        filename: image.filename,
+                        uri: image.sourceUri,
+                        metadata: image.metadataFiles || []
+                    };
+                });
+
+                return {
+                    label: val.name,
+                    images: images,
+                    metadata: val.metadataFiles || []
+                };
+            });
+        if (downloadSets.length > 0) {
+            this.activeModal = this.$uibModal.open({
+                component: 'rfDownloadModal',
+                resolve: {
+                    downloads: () => downloadSets
+                }
+            });
+        }
+    }
+
     shouldShowPagination() {
         return !this.loading &&
             this.lastSceneResult &&
