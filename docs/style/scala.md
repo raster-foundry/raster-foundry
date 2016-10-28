@@ -110,7 +110,7 @@ prevents the problem discussed in [issue #562](https://github.com/azavea/raster-
 Methods should return results of explicitly defined functions, e.g.:
 
 ```scala
-def userToInt(u: User): Int = ??? 
+def userToInt(u: User): Int = ???
 
 post {
   entity(as[User]) {
@@ -198,6 +198,28 @@ will:
 - ensure style consistency for all sequences of actions, related or not
 - ensure atomic success or failure with the presence of `.transactionally`
 - yield futures that we can then use instead of yielding `Unit`
+
+Migrations
+---------
+
+#### Array columns should not be nullable, default to empty list
+
+Both in Scala and SQL, array columns should be `NOT NULL` and be initialized to
+an empty list:
+
+```scala
+val metadataFiles: Rep[List[String]] =
+  column[List[String]](
+    "metadata_files",
+    O.Length(2147483647,varying=false),
+    O.Default(List.empty)
+  )
+```
+
+```sql
+ALTER TABLE scenes
+  ADD COLUMN metadata_files text[] DEFAULT '{}' NOT NULL;
+```
 
 General Rules
 ---------
