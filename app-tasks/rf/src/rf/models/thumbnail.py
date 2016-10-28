@@ -2,12 +2,12 @@
 
 from .base import BaseModel
 
+
 class Thumbnail(BaseModel):
 
     URL_PATH = '/api/thumbnails/'
 
-    def __init__(self, organizationId, widthPx, heightPx, thumbnailSize, url, id=None, sceneId=None,
-                 createdAt=None, modifiedAt=None):
+    def __init__(self, organizationId, widthPx, heightPx, thumbnailSize, url, id=None, sceneId=None):
         """Creates a new Thumbnail
 
         Args:
@@ -27,8 +27,6 @@ class Thumbnail(BaseModel):
 
         self.id = id
         self.sceneId = sceneId
-        self.createdAt = createdAt
-        self.modifiedAt = modifiedAt
 
     def __repr__(self):
         return '<Thumbnail: size-{} loc-{}>'.format(self.thumbnailSize, self.url)
@@ -37,7 +35,7 @@ class Thumbnail(BaseModel):
     def from_dict(cls, d):
         return cls(
             d.get('organizationId'), d.get('widthPx'), d.get('heightPx'), d.get('thumbnailSize'), d.get('url'),
-            d.get('id'), d.get('sceneId'), d.get('createdAt'), d.get('modifiedAt')
+            d.get('id'), d.get('sceneId')
         )
 
     def to_dict(self):
@@ -53,10 +51,6 @@ class Thumbnail(BaseModel):
             thumbnail_dict['id'] = self.id
         if self.sceneId:
             thumbnail_dict['sceneId'] = self.sceneId
-        if self.createdAt:
-            thumbnail_dict['createdAt'] = self.createdAt
-        if self.modifiedAt:
-            thumbnail_dict['modifiedAt'] = self.modifiedAt
         return thumbnail_dict
 
     def create(self):

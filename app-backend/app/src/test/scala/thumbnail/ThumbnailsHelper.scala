@@ -14,11 +14,11 @@ trait ThumbnailSpecHelper {
   val fakeOrgId = UUID.fromString("dfac6307-b5ef-43f7-beda-b9f208bb7725")
 
   val newScene = Scene.Create(
-    publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), "TEST_ORG",
+    None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), "TEST_ORG",
     Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any], None,
     Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
     JobStatus.Processing, JobStatus.Processing, JobStatus.Processing, None, None, "test scene bucket",
-    None, List.empty[String], List.empty[Image.Identified], List.empty[Thumbnail.Identified]
+    None, List.empty[String], List.empty[Image.Banded], List.empty[Thumbnail.Identified]
   )
 
   def newThumbnail(size: ThumbnailSize, sceneId: UUID): Thumbnail.Create = {

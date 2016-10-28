@@ -215,6 +215,24 @@ will:
 - ensure atomic success or failure with the presence of `.transactionally`
 - yield futures that we can then use instead of yielding `Unit`
 
+#### Complicated joins
+
+If you're chaining several join operations, use pattern matching to make code explicit:
+
+```scala
+// good
+for {
+  (((scene, image), band), thumbnail) <-
+  (scenes
+    joinLeft Images on { case (s, i) => s.id === i.scene }
+    joinLeft Bands on { case ((s, i), b) => i.id === b.imageId})
+    joinLeft Thumbnails on { case (((s, i), b), t) => s.id === t.scene})
+}
+```
+
+This is much more readable than relying on future readers to grasp quickly what each
+underscore refers to.
+
 Migrations
 ---------
 

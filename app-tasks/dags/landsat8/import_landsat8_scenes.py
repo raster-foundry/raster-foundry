@@ -2,6 +2,7 @@
 
 from datetime import datetime
 import logging
+import os
 
 from airflow.operators.python_operator import PythonOperator
 from airflow.models import DAG
@@ -45,6 +46,7 @@ def import_landsat8_scenes(*args, **kwargs):
     if not csv_rows:
         raise ValueError('No rows found to import for %s' % execution_date)
     logger.info('Importing %d csv rows...', len(csv_rows))
+    logger.info('Host: %s', os.getenv('RF_HOST'))
     for row in csv_rows:
         scene_id = row['sceneID']
         logger.info('Importing scenes from row %s...', scene_id)
@@ -55,9 +57,7 @@ def import_landsat8_scenes(*args, **kwargs):
 
 
 landsat8_finder = PythonOperator(
-    task_id='import_new_landsat8_scenes'.format(
-        year=start_date.year, month=start_date.month, day=start_date.day
-    ),
+    task_id='import_new_landsat8_scenes',
     provide_context=True,
     python_callable=import_landsat8_scenes,
     dag=dag

@@ -19,9 +19,20 @@ organization = 'dfac6307-b5ef-43f7-beda-b9f208bb7726'
 # 11: Themral infrared (TIRS 2) (resampled to 30m from 100m in product)
 #
 # Source: http://landsat.usgs.gov/band_designations_landsat_satellites.php
-resolution_band_lookup = {
-    '15m': [8],
-    '30m': [1, 2, 3, 4, 5, 6, 7, 9, 10, 11]
+band_lookup = {
+    '15m': [{'name': 'panchromatic - 8', 'number': 0, 'wavelength': [500, 680]}],
+    '30m': [
+        {'name': 'coastal aerosol - 1', 'number': 0, 'wavelength': [430, 450]},
+        {'name': 'blue - 2', 'number': 0, 'wavelength': [450, 510]},
+        {'name': 'green - 3', 'number': 0, 'wavelength': [530, 590]},
+        {'name': 'red - 4', 'number': 0, 'wavelength': [640, 670]},
+        {'name': 'near infrared - 5', 'number': 0, 'wavelength': [850, 880]},
+        {'name': 'swir - 6', 'number': 0, 'wavelength': [1570, 1650]},
+        {'name': 'swir - 7', 'number': 0, 'wavelength': [2110, 2290]},
+        {'name': 'cirrus - 9', 'number': 0, 'wavelength': [1360, 1380]},
+        {'name': 'thermal infrared - 10', 'number': 0, 'wavelength': [10600, 11190]},
+        {'name': 'thermal infrared - 11', 'number': 0, 'wavelength': [11500, 12510]}
+    ]
 }
 
 usgs_landsat_url = (

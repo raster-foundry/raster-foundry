@@ -2,12 +2,12 @@
 
 
 import logging
-
+import uuid
 
 from rf.models import Scene
 from rf.utils.io import JobStatus, Visibility, s3_obj_exists
 
-
+from .create_bands import create_bands
 from .create_images import create_images
 from .create_thumbnails import create_thumbnails
 from .create_footprint import create_footprint
@@ -44,8 +44,9 @@ def create_landsat8_scenes(csv_row):
         List[Scene]
     """
 
-    scene_id = csv_row.pop('sceneID')
-    landsat_path = get_landsat_path(scene_id)
+    scene_id = str(uuid.uuid4())
+    landsat_id = csv_row.pop('sceneID')
+    landsat_path = get_landsat_path(landsat_id)
     if not s3_obj_exists(aws_landsat_base + landsat_path + 'index.html'):
         logger.error(
             'AWS and USGS are not always in sync. Try again in several hours.\n'
@@ -56,6 +57,8 @@ def create_landsat8_scenes(csv_row):
     cloud_cover = float(csv_row.pop('cloudCoverFull'))
     sun_elevation = float(csv_row.pop('sunElevation'))
     sun_azimuth = float(csv_row.pop('sunAzimuth'))
+    bands_15m = create_bands('15m')
+    bands_30m = create_bands('30m')
 
     datasource = 'Landsat 8'
     tags = ['Landsat 8', 'GeoTIFF']
@@ -65,46 +68,29 @@ def create_landsat8_scenes(csv_row):
     # Landsat 8 provides a panchromatic band at 15m resolution and all
     # other bands at 30m resolution
 
-    scene15m = Scene(
+    scene = Scene(
         organization,
         0,
         Visibility.PUBLIC,
-        15,
         tags,
         datasource,
         scene_metadata,
-        'L8 {} {}'.format(landsat_path, '15m'),  # name
+        'L8 {}'.format(landsat_path),  # name
         JobStatus.SUCCESS,
         JobStatus.SUCCESS,
         JobStatus.QUEUED,
+        id=scene_id,
         acquisitionDate=timestamp,
         cloudCover=cloud_cover,
         sunAzimuth=sun_azimuth,
         sunElevation=sun_elevation,
         footprint=create_footprint(csv_row),
-        thumbnails=create_thumbnails(scene_id),
-        images=create_images(scene_id, '15m')
+        metadataFiles=[aws_landsat_base + landsat_path + landsat_id + '_MTL.txt'],
+        thumbnails=create_thumbnails(scene_id, landsat_id),
+        images=(
+            create_images(scene_id, landsat_id, 15, bands_15m) +
+            create_images(scene_id, landsat_id, 30, bands_30m)
+        )
     )
 
-    scene30m = Scene(
-        organization,
-        0,
-        Visibility.PUBLIC,
-        30,
-        tags,
-        datasource,
-        scene_metadata,
-        'L8 {} {}'.format(landsat_path, '30m'),  # name
-        JobStatus.SUCCESS,
-        JobStatus.SUCCESS,
-        JobStatus.QUEUED,
-        acquisitionDate=timestamp,
-        cloudCover=cloud_cover,
-        sunAzimuth=sun_azimuth,
-        sunElevation=sun_elevation,
-        footprint=create_footprint(csv_row),
-        thumbnails=create_thumbnails(scene_id),
-        images=create_images(scene_id, '30m')
-    )
-
-    return [scene15m, scene30m]
+    return [scene]

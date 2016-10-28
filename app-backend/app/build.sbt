@@ -13,6 +13,8 @@ initialCommands in console := """
   |import scala.concurrent.{Future,Await}
   |import scala.concurrent.duration._
   |val publicOrgId = UUID.fromString("dfac6307-b5ef-43f7-beda-b9f208bb7726")
+  |import geotrellis.vector.{MultiPolygon, Polygon, Point, Geometry}
+  |import geotrellis.slick.Projected
   |object Main extends Config { implicit val database = new Database(jdbcUrl, dbUser, dbPassword)}
   |import Main._
 """.trim.stripMargin

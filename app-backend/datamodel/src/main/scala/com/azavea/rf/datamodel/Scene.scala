@@ -35,7 +35,7 @@ case class Scene(
   def toScene = this
 
   def withRelatedFromComponents(
-    images: Seq[Image],
+    images: Seq[Image.WithRelated],
     thumbnails: Seq[Thumbnail]
   ): Scene.WithRelated = Scene.withRelated(
     this.id,
@@ -72,11 +72,12 @@ object Scene extends GeoJsonSupport {
 
   def withRelated = WithRelated.apply _
 
-  implicit val defaultThumbnailFormat = jsonFormat21(Scene.apply)
+  implicit val defaultSceneFormat = jsonFormat21(Scene.apply)
 
 
   /** Case class extracted from a POST request */
   case class Create(
+    id: Option[UUID],
     organizationId: UUID,
     ingestSizeBytes: Int,
     visibility: Visibility,
@@ -93,13 +94,13 @@ object Scene extends GeoJsonSupport {
     name: String,
     footprint: Option[Projected[Geometry]],
     metadataFiles: List[String],
-    images: List[Image.Identified],
+    images: List[Image.Banded],
     thumbnails: List[Thumbnail.Identified]
   ) {
     def toScene(userId: String): Scene = {
       val now = new Timestamp((new java.util.Date()).getTime())
       Scene(
-        UUID.randomUUID, // primary key
+        id.getOrElse(UUID.randomUUID),
         now, // createdAt
         userId, // createdBy
         now, // modifiedAt
@@ -125,7 +126,7 @@ object Scene extends GeoJsonSupport {
   }
 
   object Create {
-    implicit val defaultThumbnailWithRelatedFormat = jsonFormat18(Create.apply)
+    implicit val defaultThumbnailWithRelatedFormat = jsonFormat19(Create.apply)
   }
 
   case class WithRelated(
@@ -149,7 +150,7 @@ object Scene extends GeoJsonSupport {
     name: String,
     footprint: Option[Projected[Geometry]],
     metadataFiles: List[String],
-    images: Seq[Image],
+    images: Seq[Image.WithRelated],
     thumbnails: Seq[Thumbnail]
   )
 
@@ -164,15 +165,27 @@ object Scene extends GeoJsonSupport {
       * @param records result of join query to return scene with related
       * information
       */
-    def fromRecords(records: Seq[(Scene, Option[Image], Option[Thumbnail])]): Iterable[Scene.WithRelated] = {
+    def fromRecords(records: Seq[(Scene, Option[Image], Option[Band], Option[Thumbnail])]): Iterable[Scene.WithRelated] = {
       val distinctScenes = records.map(_._1).distinct
-      val grouped = records.groupBy(_._1)
-      distinctScenes.map{ scene =>
-        // This should be relatively safe since scene is the key grouped by
-        val (seqImages, seqThumbnails) = grouped(scene)
-          .map { case (sr, im, th) => (im, th) }
-          .unzip
-        scene.withRelatedFromComponents(seqImages.flatten, seqThumbnails.flatten.distinct)
+      val groupedThumbs = records.map(_._4).flatten.groupBy(_.sceneId)
+      val groupedImages = Image.WithRelated.fromRecords {
+        val images = records.map(_._2).flatten
+        val bands = records.map(_._3).flatten
+        for {
+          im <- images
+          bd <- bands
+        } yield (im, bd)
+      }.groupBy(_.scene)
+      distinctScenes.map { scene =>
+        val seqImages = groupedImages.get(scene.id) match {
+          case Some(result) => result.asInstanceOf[Seq[Image.WithRelated]]
+          case _ => List.empty[Image.WithRelated]
+        }
+        val seqThumbnails = groupedThumbs.get(scene.id) match {
+          case Some(result) => result.asInstanceOf[Seq[Thumbnail]]
+          case _ => List.empty[Thumbnail]
+        }
+        scene.withRelatedFromComponents(seqImages, seqThumbnails.distinct)
       }
     }
   }

@@ -64,7 +64,7 @@ class BucketSceneSpec extends WordSpec
       }
     }
 
-    "should be able to attach scene to bucket via post" in {
+    "be able to attach scene to bucket via post" in {
       // Get buckets to get ID
       Get("/api/buckets/") ~> baseRoutes ~> check {
         val buckets = responseAs[PaginatedResponse[Bucket]]
@@ -88,7 +88,7 @@ class BucketSceneSpec extends WordSpec
       }
     }
 
-    "should have one scene attached to bucket" in {
+    "have one scene attached to bucket" in {
       Get("/api/buckets/") ~> baseRoutes ~> check {
         val buckets = responseAs[PaginatedResponse[Bucket]]
         val bucketId = buckets.results.head.id
@@ -98,7 +98,7 @@ class BucketSceneSpec extends WordSpec
       }
     }
 
-    "should be able to apply filters for scenes on bucket" in {
+    "be able to apply filters for scenes on bucket" in {
       Get("/api/buckets/") ~> baseRoutes ~> check {
         val buckets = responseAs[PaginatedResponse[Bucket]]
         val bucketId = buckets.results.head.id
@@ -108,7 +108,7 @@ class BucketSceneSpec extends WordSpec
       }
     }
 
-    "should be able to remove scene from bucket via delete" in {
+    "be able to remove scene from bucket via delete" in {
       Get("/api/buckets/") ~> baseRoutes ~> check {
         val buckets = responseAs[PaginatedResponse[Bucket]]
         val bucketId = buckets.results.head.id
@@ -131,7 +131,7 @@ class BucketSceneSpec extends WordSpec
       }
     }
 
-    "should not have a scene attached to bucket after delete" in {
+    "not have a scene attached to bucket after delete" in {
       Get("/api/buckets/") ~> baseRoutes ~> check {
         val buckets = responseAs[PaginatedResponse[Bucket]]
         val bucketId = buckets.results.head.id

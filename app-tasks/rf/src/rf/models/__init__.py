@@ -1,3 +1,4 @@
+from .band import Band
 from .thumbnail import Thumbnail
 from .footprint import Footprint
 from .image import Image
