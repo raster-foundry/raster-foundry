@@ -12,7 +12,7 @@ import slick.driver.PostgresDriver.api._
   */
 object PGUtils {
 
-  private val actionTimeout = 10 second
+  private val actionTimeout = 30 second
   private val driver = "org.postgresql.Driver"
 
 
