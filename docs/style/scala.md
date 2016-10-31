@@ -46,6 +46,22 @@ This is _different_ from Scaladoc's style, but it's how we've done things, and i
 more consistent with autoindentation in IntelliJ's IDEA and the spacemacs scala
 layer.
 
+Functions
+---------
+
+#### Multiple parameter lists
+
+Follow [Scaladoc's suggestion](http://docs.scala-lang.org/style/declarations.html#multiple-parameter-lists):
+line up multiple parameter lists that span more than one line on the opening parenthesis of each list.
+
+```scala
+protected def forResource(resourceInfo: Any)
+                         (f: (JsonNode) => Any) 
+                         (implicit urlCreator: URLCreator, configurer: OAuthConfiguration): Any = {
+  ???
+}
+```
+
 Class Declarations
 ---------
 

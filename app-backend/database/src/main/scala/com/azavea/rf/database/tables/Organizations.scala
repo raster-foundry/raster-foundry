@@ -110,9 +110,8 @@ object Organizations extends TableQuery(tag => new Organizations(tag)) with Lazy
     }
   }
 
-  def listOrganizationUsers(
-    page: PageRequest, id: java.util.UUID
-  )(implicit database: DB): Future[PaginatedResponse[User.WithRole]] = {
+  def listOrganizationUsers(page: PageRequest, id: java.util.UUID)
+                           (implicit database: DB): Future[PaginatedResponse[User.WithRole]] = {
     val getOrgUsersResult = database.db.run {
       UsersToOrganizations.filter(_.organizationId === id)
         .drop(page.offset * page.limit)
@@ -154,7 +153,7 @@ object Organizations extends TableQuery(tag => new Organizations(tag)) with Lazy
   }
 
   def addUserToOrganization(userWithRoleCreate: User.WithRoleCreate, orgId: UUID)
-    (implicit database: DB): Future[User.WithRole] = {
+                           (implicit database: DB): Future[User.WithRole] = {
     val userWithRole = userWithRoleCreate.toUserWithRole()
 
     val insertRow =
@@ -171,7 +170,7 @@ object Organizations extends TableQuery(tag => new Organizations(tag)) with Lazy
   }
 
   def getUserOrgRole(userId: String, orgId: UUID)
-    (implicit database: DB): Future[Option[User.WithRole]] = {
+                    (implicit database: DB): Future[Option[User.WithRole]] = {
     val action = UsersToOrganizations.filter(
       rel => rel.userId === userId && rel.organizationId === orgId
     ).result

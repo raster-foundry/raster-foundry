@@ -4,16 +4,15 @@ import com.azavea.rf.database.fields._
 import com.azavea.rf.database.sort._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.query._
-import com.azavea.rf.database.{Database => DB, _}
+import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import slick.model.ForeignKeyAction
 import java.util.UUID
 import java.util.Date
 import java.sql.Timestamp
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.{Try, Success, Failure}
-import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
+import com.lonelyplanet.akka.http.extensions.PageRequest
 import com.typesafe.scalalogging.LazyLogging
 
 /** Table description of table buckets. Objects of this class serve as prototypes for rows in queries. */
@@ -66,7 +65,7 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     * @param bucket Bucket bucket to add to database
     */
   def insertBucket(bucket: Bucket)
-    (implicit database: DB): Future[Bucket] = {
+                  (implicit database: DB): Future[Bucket] = {
 
     database.db.run {
       Buckets.forceInsert(bucket)
@@ -80,7 +79,7 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     * @param bucketId UUID bucket to request scenes for
     */
   def listBucketScenes(bucketId: UUID, pageRequest: PageRequest, combinedParams: CombinedSceneQueryParams)
-    (implicit database: DB): Future[PaginatedResponse[Scene.WithRelated]] = {
+                      (implicit database: DB): Future[PaginatedResponse[Scene.WithRelated]] = {
 
     val bucketSceneQuery = for {
       bucketToScene <- ScenesToBuckets if bucketToScene.bucketId === bucketId
@@ -125,7 +124,7 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     * @param sceneIds Seq[UUID] primary key of scenes to retrieve
     */
   def listBucketScenes(bucketId: UUID, sceneIds: Seq[UUID])
-    (implicit database: DB): Future[Iterable[Scene.WithRelated]] = {
+                      (implicit database: DB): Future[Iterable[Scene.WithRelated]] = {
 
     val scenes = for {
       sceneToBucket <- ScenesToBuckets if sceneToBucket.bucketId === bucketId && sceneToBucket.sceneId.inSet(sceneIds)
@@ -142,7 +141,7 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     * @param bucketId UUID primary key of bucket to retrieve
     */
   def getBucket(bucketId: UUID)
-    (implicit database: DB): Future[Option[Bucket]] = {
+               (implicit database: DB): Future[Option[Bucket]] = {
 
     database.db.run {
       Buckets.filter(_.id === bucketId).result.headOption
@@ -155,7 +154,7 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     * @param queryParams BucketQueryParams query parameters relevant for buckets
     */
   def listBuckets(pageRequest: PageRequest, queryParams: BucketQueryParameters)
-    (implicit database: DB): Future[PaginatedResponse[Bucket]] = {
+                 (implicit database: DB): Future[PaginatedResponse[Bucket]] = {
 
     val buckets = Buckets.filterByOrganization(queryParams.orgParams)
       .filterByUser(queryParams.userParams)
@@ -206,7 +205,7 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     * @param user User user updating bucket values
     */
   def updateBucket(bucket: Bucket, bucketId: UUID, user: User)
-    (implicit database: DB): Future[Int] = {
+                  (implicit database: DB): Future[Int] = {
 
     val updateTime = new Timestamp((new Date).getTime)
 
@@ -232,7 +231,7 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     * @param bucketId UUID primary key of bucket to add scene to
     */
   def addSceneToBucket(sceneId: UUID, bucketId: UUID)
-    (implicit database: DB): Future[SceneToBucket] =  {
+                      (implicit database: DB): Future[SceneToBucket] =  {
 
     val sceneToBucket = SceneToBucket(sceneId, bucketId)
     database.db.run {
@@ -248,7 +247,7 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     * @param bucketId UUID primary key of back to add scenes to
     */
   def addScenesToBucket(sceneIds: Seq[UUID], bucketId: UUID)
-    (implicit database: DB): Future[Iterable[Scene.WithRelated]] = {
+                       (implicit database: DB): Future[Iterable[Scene.WithRelated]] = {
 
     val sceneBucketJoinQuery = for {
       s <- ScenesToBuckets if s.sceneId.inSet(sceneIds) && s.bucketId === bucketId
@@ -276,7 +275,7 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     * @param bucketId UUID primary key of bucket that scene will be removed from
     */
   def deleteSceneFromBucket(sceneId: UUID, bucketId: UUID)
-    (implicit database: DB): Future[Int] = {
+                           (implicit database: DB): Future[Int] = {
 
     val sceneBucketJoinQuery = for {
       s <- ScenesToBuckets if s.sceneId === sceneId && s.bucketId === bucketId
@@ -293,7 +292,7 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     * @param bucketId UUID primary key of bucket these scenes will be removed from
     */
   def deleteScenesFromBucket(sceneIds: Seq[UUID], bucketId: UUID)
-    (implicit database: DB): Future[Int] = {
+                            (implicit database: DB): Future[Int] = {
 
     val sceneBucketJoinQuery = for {
       s <- ScenesToBuckets if s.sceneId.inSet(sceneIds) && s.bucketId === bucketId
@@ -311,7 +310,7 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     * @return Scenes that were added
     */
   def replaceScenesInBucket(sceneIds: Seq[UUID], bucketId: UUID)
-    (implicit database: DB): Future[Iterable[Scene.WithRelated]] = {
+                           (implicit database: DB): Future[Iterable[Scene.WithRelated]] = {
 
     val scenesToBuckets = sceneIds.map { sceneId =>
       SceneToBucket(sceneId, bucketId)

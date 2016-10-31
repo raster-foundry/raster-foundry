@@ -44,9 +44,9 @@ trait ImageRoutes extends Authentication
   }
 
   def createImage: Route = authenticate { user =>
-    entity(as[Image.Create]) { newImage =>
-      onSuccess(Images.insertImage(newImage.toImage(user.id))) { image =>
-        complete(StatusCodes.Created, image)
+    entity(as[Image.Banded]) { newImage =>
+      onSuccess(Images.insertImage(newImage, user)) { image =>
+        complete(image)
       }
     }
   }
@@ -62,7 +62,7 @@ trait ImageRoutes extends Authentication
   }
 
   def updateImage(imageId: UUID): Route = authenticate { user =>
-    entity(as[Image]) { updatedImage =>
+    entity(as[Image.WithRelated]) { updatedImage =>
       onSuccess(Images.updateImage(updatedImage, imageId, user)) { count =>
         complete(StatusCodes.NoContent)
       }
