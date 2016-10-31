@@ -72,7 +72,8 @@ case class CombinedSceneQueryParams(
   orgParams: OrgQueryParameters,
   userParams: UserQueryParameters,
   timestampParams: TimestampQueryParameters,
-  sceneParams: SceneQueryParameters
+  sceneParams: SceneQueryParameters,
+  imageQueryParameters: ImageQueryParameters
 )
 
 

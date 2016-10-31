@@ -150,6 +150,7 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
         .filterByUser(combinedParams.userParams)
         .filterByTimestamp(combinedParams.timestampParams)
         .filterBySceneParams(combinedParams.sceneParams)
+        .filterByImageParams(combinedParams.imageQueryParameters)
         .length
         .result
       logger.debug(s"Total Query for scenes -- SQL: ${action.statements.headOption}")
@@ -251,6 +252,15 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) {
     }
   }
 
+  def filterByImageParams(imageParams: ImageQueryParameters): Scenes.TableQuery = {
+    imageParams match {
+      case ImageQueryParameters(None, None, None, None, _) => scenes
+      case _ => scenes.filter { scene =>
+        scene.id in Images.filterByImageParams(imageParams).map(_.scene)
+      }
+    }
+  }
+
   /** Return a join query for scenes */
   def joinWithRelated: Scenes.JoinQuery = {
     for {
@@ -278,6 +288,7 @@ class ScenesJoinQuery[M, U, C[_]](sceneJoin: Scenes.JoinQuery) {
       .filterByUser(combinedParams.userParams)
       .filterByTimestamp(combinedParams.timestampParams)
       .filterBySceneParams(combinedParams.sceneParams)
+      .filterByImageParams(combinedParams.imageQueryParameters)
       .sort(pageRequest.sort)
       .drop(pageRequest.offset * pageRequest.limit)
       .take(pageRequest.limit)
