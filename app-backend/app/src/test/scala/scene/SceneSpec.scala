@@ -77,12 +77,17 @@ class SceneSpec extends WordSpec
       MultiPolygon(Polygon(Seq(Point(100,100), Point(110,100), Point(110,110),
         Point(100,110), Point(100,100)))), 3857))
 
+    val newSceneDatasource1Image = Image.Identified(
+      None, 0, Visibility.Public, "newSceneDatasource1Image", "",
+      Map.empty[String, Any], 20f, List.empty[String]
+    )
+
     val newSceneDatasource1 = Scene.Create(
       publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), "TEST_ORG",
       Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any], None,
       Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
       JobStatus.Processing, JobStatus.Processing, JobStatus.Processing, None, None, "test scene datasource 1",
-      mpoly, List.empty[String], List.empty[Image.Identified], List.empty[Thumbnail.Identified]
+      mpoly, List.empty[String], List(newSceneDatasource1Image), List.empty[Thumbnail.Identified]
     )
 
     val newSceneDatasource2 = Scene.Create(
@@ -194,6 +199,18 @@ class SceneSpec extends WordSpec
         res.count shouldEqual 1
       }
       Get("/api/scenes/?point=1,1") ~> baseRoutes ~> check {
+        val res = responseAs[PaginatedResponse[Scene.WithRelated]]
+        res.count shouldEqual 0
+      }
+    }
+
+    "filter scenes by image resolution" in {
+      Get("/api/scenes/?minResolution=15.0") ~> baseRoutes ~> check {
+        val res = responseAs[PaginatedResponse[Scene.WithRelated]]
+        res.count shouldEqual 1
+      }
+
+      Get("/api/scenes/?maxResolution=15.0") ~> baseRoutes ~> check {
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]
         res.count shouldEqual 0
       }
