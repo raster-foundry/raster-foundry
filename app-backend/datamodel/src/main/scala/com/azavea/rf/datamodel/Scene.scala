@@ -29,7 +29,8 @@ case class Scene(
   sunAzimuth: Option[Float] = None,
   sunElevation: Option[Float] = None,
   name: String,
-  footprint: Option[Projected[Geometry]] = None
+  footprint: Option[Projected[Geometry]] = None,
+  metadataFiles: List[String]
 ) {
   def toScene = this
 
@@ -55,8 +56,9 @@ case class Scene(
     this.sunAzimuth,
     this.sunElevation,
     this.name,
-    images,
     this.footprint,
+    this.metadataFiles,
+    images,
     thumbnails
   )
 }
@@ -70,7 +72,7 @@ object Scene extends GeoJsonSupport {
 
   def withRelated = WithRelated.apply _
 
-  implicit val defaultThumbnailFormat = jsonFormat20(Scene.apply)
+  implicit val defaultThumbnailFormat = jsonFormat21(Scene.apply)
 
   /** Case class extracted from a POST request */
   case class Create(
@@ -88,8 +90,9 @@ object Scene extends GeoJsonSupport {
     sunAzimuth: Option[Float],
     sunElevation: Option[Float],
     name: String,
-    images: List[Image.Identified],
     footprint: Option[Projected[Geometry]],
+    metadataFiles: List[String],
+    images: List[Image.Identified],
     thumbnails: List[Thumbnail.Identified]
   ) {
     def toScene(userId: String): Scene = {
@@ -114,13 +117,14 @@ object Scene extends GeoJsonSupport {
         sunAzimuth,
         sunElevation,
         name,
-        footprint
+        footprint,
+        metadataFiles
       )
     }
   }
 
   object Create {
-    implicit val defaultThumbnailWithRelatedFormat = jsonFormat17(Create.apply)
+    implicit val defaultThumbnailWithRelatedFormat = jsonFormat18(Create.apply)
   }
 
   case class WithRelated(
@@ -142,13 +146,14 @@ object Scene extends GeoJsonSupport {
     sunAzimuth: Option[Float],
     sunElevation: Option[Float],
     name: String,
-    images: Seq[Image],
     footprint: Option[Projected[Geometry]],
+    metadataFiles: List[String],
+    images: Seq[Image],
     thumbnails: Seq[Thumbnail]
   )
 
   object WithRelated {
-    implicit val defaultThumbnailWithRelatedFormat = jsonFormat21(WithRelated.apply)
+    implicit val defaultThumbnailWithRelatedFormat = jsonFormat22(WithRelated.apply)
 
     /** Helper function to create Iterable[Scene.WithRelated] from join
       *
