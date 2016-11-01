@@ -75,10 +75,14 @@ class BucketSceneSpec extends WordSpec
           val scenes = responseAs[PaginatedResponse[Scene.WithRelated]]
           val sceneId = scenes.results.head.id
 
-          Post(s"/api/buckets/${bucketId}/scenes/${sceneId}/").withHeaders(
-            List(authorization)
+          Post(s"/api/buckets/${bucketId}/scenes/").withHeadersAndEntity(
+            List(authorization),
+            HttpEntity(
+              ContentTypes.`application/json`,
+              List(sceneId).toJson.toString()
+            )
           ) ~> baseRoutes ~> check {
-            status shouldEqual StatusCodes.Created
+            status shouldEqual StatusCodes.OK
           }
         }
       }
@@ -114,8 +118,12 @@ class BucketSceneSpec extends WordSpec
           val scenes = responseAs[PaginatedResponse[Scene.WithRelated]]
           val sceneId = scenes.results.head.id
 
-          Delete(s"/api/buckets/${bucketId}/scenes/${sceneId}/").withHeaders(
-            List(authorization)
+          Delete(s"/api/buckets/${bucketId}/scenes/").withHeadersAndEntity(
+            List(authorization),
+            HttpEntity(
+              ContentTypes.`application/json`,
+              List(sceneId).toJson.toString()
+            )
           ) ~> baseRoutes ~> check {
             status shouldEqual StatusCodes.NoContent
           }

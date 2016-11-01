@@ -225,22 +225,6 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     }
   }
 
-  /** Adds a scene to a bucket
-    *
-    * @param sceneId UUID primary key of scene to add to bucket
-    * @param bucketId UUID primary key of bucket to add scene to
-    */
-  def addSceneToBucket(sceneId: UUID, bucketId: UUID)
-                      (implicit database: DB): Future[SceneToBucket] =  {
-
-    val sceneToBucket = SceneToBucket(sceneId, bucketId)
-    database.db.run {
-      ScenesToBuckets.forceInsert(sceneToBucket)
-    } map { _ =>
-      sceneToBucket
-    }
-  }
-
   /** Adds a list of scenes to a bucket
     *
     * @param sceneIds Seq[UUID] list of primary keys of scens to add to bucket
@@ -267,23 +251,6 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     }
 
     listBucketScenes(bucketId, sceneIds)
-  }
-
-  /** Removes scene from bucket
-    *
-    * @param sceneId UUID primary key of scene to remove from bucket
-    * @param bucketId UUID primary key of bucket that scene will be removed from
-    */
-  def deleteSceneFromBucket(sceneId: UUID, bucketId: UUID)
-                           (implicit database: DB): Future[Int] = {
-
-    val sceneBucketJoinQuery = for {
-      s <- ScenesToBuckets if s.sceneId === sceneId && s.bucketId === bucketId
-    } yield s
-
-    database.db.run {
-      sceneBucketJoinQuery.delete
-    }
   }
 
   /** Removes scenes from bucket
