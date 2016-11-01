@@ -217,7 +217,9 @@ class ImagesDefaultQuery[M, U, C[_]](images: Images.TableQuery) {
     images.filter{ image =>
       val imageFilterConditions = List(
         imageParams.minRawDataBytes.map(image.rawDataBytes > _),
-        imageParams.maxRawDataBytes.map(image.rawDataBytes < _)
+        imageParams.maxRawDataBytes.map(image.rawDataBytes < _),
+        imageParams.minResolution.map(image.resolutionMeters > _),
+        imageParams.maxResolution.map(image.resolutionMeters < _)
       )
       imageFilterConditions
         .collect({case Some(criteria)  => criteria})

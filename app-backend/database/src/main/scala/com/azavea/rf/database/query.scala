@@ -23,6 +23,8 @@ case class CombinedImageQueryParams(
 case class ImageQueryParameters(
   minRawDataBytes: Option[Int],
   maxRawDataBytes: Option[Int],
+  minResolution: Option[Float],
+  maxResolution: Option[Float],
   scene: Iterable[UUID]
 )
 
@@ -70,7 +72,8 @@ case class CombinedSceneQueryParams(
   orgParams: OrgQueryParameters,
   userParams: UserQueryParameters,
   timestampParams: TimestampQueryParameters,
-  sceneParams: SceneQueryParameters
+  sceneParams: SceneQueryParameters,
+  imageQueryParameters: ImageQueryParameters
 )
 
 
