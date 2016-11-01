@@ -64,25 +64,24 @@ export default class BucketAddModalController {
     }
 
     addScenesToBuckets() {
-        this.requests = new Map();
+        let sceneIds = Array.from(this.resolve.scenes.keys());
         this.selectedBuckets.forEach((bucket, bucketId) => {
-            this.requests.set(bucketId, new Map());
-            this.resolve.scenes.forEach((scene, sceneId) => {
-                this.requests.get(bucketId).set(sceneId, false);
-                this.bucketService.addScene(bucketId, sceneId).then(
-                    () => {
-                        this.requests.get(bucketId).set(sceneId, true);
-                        if (this.allScenesAdded()) {
-                            this.resolve.scenes.clear();
-                            this.close();
-                        }
-                    },
-                    (err) => {
-                        this.$log.debug('error adding scene to bucket', err);
+            this.bucketService.addScenes(bucketId, sceneIds).then(
+                () => {
+                    this.selectedBuckets.delete(bucketId);
+                    if (this.selectedBuckets.size === 0) {
+                        this.resolve.scenes.clear();
                         this.close();
                     }
-                );
-            });
+                },
+                (err) => {
+                    // TODO: Show toast or error message instead of debug message
+                    this.$log.debug(
+                        'Error while adding scenes to bucket',
+                        bucketId, err
+                    );
+                }
+            );
         });
     }
 

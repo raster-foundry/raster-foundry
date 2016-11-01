@@ -49,12 +49,6 @@ trait BucketRoutes extends Authentication
           post { addBucketScenes(bucketId) } ~
           put { updateBucketScenes(bucketId) } ~
           delete { deleteBucketScenes(bucketId) }
-        } ~
-        pathPrefix(JavaUUID) { sceneId =>
-          pathEndOrSingleSlash {
-            post { addBucketScene(bucketId, sceneId) } ~
-            delete { deleteBucketScene(bucketId, sceneId) }
-          }
         }
       }
     }
@@ -113,12 +107,6 @@ trait BucketRoutes extends Authentication
     }
   }
 
-  def addBucketScene(bucketId: UUID, sceneId: UUID): Route = authenticate { user =>
-    onSuccess(Buckets.addSceneToBucket(sceneId, bucketId)) { _ =>
-      complete(StatusCodes.Created)
-    }
-  }
-
   def addBucketScenes(bucketId: UUID): Route = authenticate { user =>
     entity(as[Seq[UUID]]) { sceneIds =>
       if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
@@ -140,16 +128,6 @@ trait BucketRoutes extends Authentication
       complete {
         Buckets.replaceScenesInBucket(sceneIds, bucketId)
       }
-    }
-  }
-
-  def deleteBucketScene(bucketId: UUID, sceneId: UUID): Route = authenticate { user =>
-    onSuccess(Buckets.deleteSceneFromBucket(sceneId, bucketId)) {
-      case 1 => complete(StatusCodes.NoContent)
-      case 0 => complete(StatusCodes.NotFound)
-      case count => throw new IllegalStateException(
-        s"Error deleting scene from bucket: delete result expected to be 1, was $count"
-      )
     }
   }
 
