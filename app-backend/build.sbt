@@ -2,9 +2,12 @@ name := "rf-backend"
 
 addCommandAlias("mg", "migrations/run")
 
+
+
 lazy val commonSettings = Seq(
   organization := "com.azavea",
   version := Version.rasterFoundry,
+  cancelable in Global := true,
   scapegoatVersion := Version.scapegoat,
   scapegoatIgnoredFiles := Seq(".*/datamodel/.*"),
   scalaVersion := Version.scala,
@@ -84,7 +87,7 @@ lazy val appDependencies = dbDependencies ++ migrationsDependencies ++ Seq(
 )
 
 lazy val root = Project("root", file("."))
-  .aggregate(app, migrations, datamodel, database)
+  .aggregate(app, migrations, datamodel, database, ingest)
   .settings(commonSettings:_*)
 
 lazy val app = Project("app", file("app"))
@@ -101,7 +104,6 @@ lazy val migrations = Project("migrations", file("migrations"))
     libraryDependencies ++= migrationsDependencies
   })
 
-
 lazy val datamodel = Project("datamodel", file("datamodel"))
   .settings(commonSettings:_*)
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
@@ -116,7 +118,21 @@ lazy val database = Project("database", file("database"))
   .dependsOn(datamodel)
   .settings(commonSettings:_*)
   .settings({
-   libraryDependencies ++= slickDependencies ++ dbDependencies ++ loggingDependencies ++ Seq(Dependencies.akkaHttpExtensions)
+     libraryDependencies ++= slickDependencies ++ dbDependencies ++ loggingDependencies ++ Seq(Dependencies.akkaHttpExtensions)
+  })
+
+lazy val ingest = Project("ingest", file("ingest"))
+  .settings(commonSettings:_*)
+  .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
+  .settings({
+    libraryDependencies ++= Seq(
+      Dependencies.geotrellisSpark,
+      Dependencies.geotrellisS3,
+      Dependencies.geotrellisUtil,
+      Dependencies.akkajson,
+      Dependencies.spark,
+      Dependencies.scopt
+    )
   })
 
 lazy val tile = Project("tile", file("tile"))
@@ -126,10 +142,11 @@ lazy val tile = Project("tile", file("tile"))
   .settings({
     libraryDependencies ++= loggingDependencies ++ Seq(
       Dependencies.commonsIO,
-      Dependencies.spark % "provided",
+      Dependencies.spark,
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisS3,
       Dependencies.scaffeine,
       Dependencies.akkajson
     )
   })
+

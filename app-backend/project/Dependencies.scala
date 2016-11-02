@@ -15,7 +15,8 @@ object Dependencies {
   val geotrellisRaster   = "com.azavea.geotrellis" %% "geotrellis-raster"                 % Version.geotrellis
   val geotrellisSlick    = "com.azavea.geotrellis" %% "geotrellis-slick"                  % Version.geotrellis
   val geotrellisVector   = "com.azavea.geotrellis" %% "geotrellis-vector"                 % Version.geotrellis
-  val spark              = "org.apache.spark"      %% "spark-core"                        % Version.spark
+  val spark              = "org.apache.spark"      %% "spark-core"                        % Version.spark % "provided"
+  val geotrellisUtil     = "com.azavea.geotrellis" %% "geotrellis-util"                   % Version.geotrellis
   val hikariCP           = "com.typesafe.slick"    %% "slick-hikaricp"                    % Version.hikariCP
   val postgres           = "org.postgresql"         % "postgresql"                        % Version.postgres
   val scalaforklift      = "com.liyaos"            %% "scala-forklift-slick"              % Version.scalaForklift
@@ -31,4 +32,5 @@ object Dependencies {
   val ammoniteOps        = "com.lihaoyi"           %% "ammonite-ops"                      % Version.ammoniteOps
   val scaffeine          = "com.github.blemale"    %% "scaffeine"                         % Version.scaffeine
   val commonsIO          = "commons-io"             % "commons-io"                        % Version.commonsIO
+  val scopt              = "com.github.scopt"      %% "scopt"                             % Version.scopt
 }

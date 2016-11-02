@@ -1,0 +1,31 @@
+{
+    "id": "dda6080f-f7ad-455d-b409-764dd8c57039",
+    "layers": [{
+        "id": "8436f7e9-b7f7-4d4f-bda8-76b32c356dff",
+        "output": {
+            "uri": "s3://rasterfoundry-staging-catalogs-us-east-1/test",
+            "crs": "epsg:3857",
+            "cellType": "uint16raw",
+            "cellSize": {"width": 37.151447651062888, "height": -37.151447651062888},
+            "pyramid": true,
+            "native": true
+        },
+        "sources": [{
+            "uri": "http://landsat-pds.s3.amazonaws.com/L8/107/035/LC81070352015218LGN00/LC81070352015218LGN00_B4.TIF",
+            "extent": [138.8339238,  34.9569460, 141.4502449,  37.1094577],
+            "bandMaps": [{"source": 1, "target": 1}]
+        }, {
+            "uri": "http://landsat-pds.s3.amazonaws.com/L8/107/035/LC81070352015218LGN00/LC81070352015218LGN00_B3.TIF",
+            "extent": [138.8339238,  34.9569460, 141.4502449,  37.1094577],
+            "bandMaps": [{"source": 1, "target": 2}]
+        }, {
+            "uri": "http://landsat-pds.s3.amazonaws.com/L8/107/035/LC81070352015218LGN00/LC81070352015218LGN00_B2.TIF",
+            "extent": [138.8339238,  34.9569460, 141.4502449,  37.1094577],
+            "bandMaps": [{"source": 1, "target": 3}]
+        }, {
+            "uri": "http://landsat-pds.s3.amazonaws.com/L8/107/035/LC81070352015218LGN00/LC81070352015218LGN00_B5.TIF",
+            "extent": [138.8339238,  34.9569460, 141.4502449,  37.1094577],
+            "bandMaps": [{"source": 1, "target": 4}]
+        }]
+    }]
+}

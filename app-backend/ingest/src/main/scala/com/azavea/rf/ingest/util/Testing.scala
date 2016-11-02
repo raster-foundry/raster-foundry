@@ -1,0 +1,53 @@
+package com.azavea.rf.ingest.util
+
+import geotrellis.raster.histogram.Histogram
+import geotrellis.raster.io._
+import geotrellis.raster.resample.NearestNeighbor
+import geotrellis.spark._
+import geotrellis.spark.io._
+import geotrellis.spark.io.file._
+import geotrellis.spark.io.index.ZCurveKeyIndexMethod
+import geotrellis.spark.io.s3._
+import geotrellis.spark.pyramid.Pyramid
+import geotrellis.vector.ProjectedExtent
+import geotrellis.raster._
+import geotrellis.raster.io.geotiff.MultibandGeoTiff
+import geotrellis.spark.tiling._
+import geotrellis.proj4.LatLng
+import spray.json._
+import DefaultJsonProtocol._
+
+import java.net.URI
+import java.util.UUID
+
+import com.azavea.rf.ingest.model._
+
+object Testing {
+
+  def validateS3CatalogEntry(catalogURI: URI, layerID: UUID): Unit = {
+    val (s3Bucket, s3Key) = S3.parse(catalogURI)
+    val attributeStore = S3AttributeStore(s3Bucket, s3Key)
+    val gtLayerID = LayerId(layerID.toString, 0)
+    if (! attributeStore.read[Boolean](gtLayerID, "ingestComplete"))
+      throw new Exception("Something went wrong during ingest...")
+  }
+
+  def validateFileCatalogEntry(catalogURI: URI, layerID: UUID): Unit = {
+    val attributeStore = FileAttributeStore(catalogURI.getPath)
+    val gtLayerID = LayerId(layerID.toString, 0)
+    if (! attributeStore.read[Boolean](gtLayerID, "ingestComplete"))
+      throw new Exception("Something went wrong during ingest...")
+  }
+
+  def validateCatalogEntry(layer: IngestLayer): Unit =
+    validateCatalogEntry(layer.output.uri, layer.id)
+
+  def validateCatalogEntry(catalogURI: URI, layerID: UUID): Unit = catalogURI.getScheme match {
+    case "s3" | "s3a" | "s3n" =>
+      validateS3CatalogEntry(catalogURI, layerID)
+    case "file" =>
+      validateFileCatalogEntry(catalogURI, layerID)
+  }
+
+}
+
