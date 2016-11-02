@@ -34,12 +34,20 @@ then
             --entrypoint ./sbt \
             app-server scapegoat
 
-        # Run scala tests for app-server
+       # Run scala tests for app-server
        docker-compose \
            -f "${DIR}/../docker-compose.yml" run \
            --rm \
            --entrypoint ./sbt \
            app-server test
+
+        # Run ingest tests
+        docker-compose \
+            -f "${DIR}/../docker-compose.spark.yml" run \
+            --rm \
+            --entrypoint "/bin/bash -c" \
+            spark-master \
+            "spark-submit --master \"local[*]\" --driver-memory 4G --executor-memory 4G /opt/rf/rf-ingest.jar -t -j file:///opt/rf/test-resources/localJob.json"
 
         # TODO: uncomment once https://github.com/azavea/raster-foundry/issues/435
         # is resolved

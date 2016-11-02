@@ -43,7 +43,7 @@ Vagrant.configure(2) do |config|
   config.vm.network :forwarded_port, guest: 4040, host: Integer(ENV.fetch("RF_PORT_4040", 4040))
 
   config.vm.provider :virtualbox do |vb|
-    vb.memory = 4096
+    vb.memory = 8096
     vb.cpus = 2
   end
 
