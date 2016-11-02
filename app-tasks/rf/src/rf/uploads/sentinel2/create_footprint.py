@@ -8,7 +8,7 @@ from .settings import organization
 
 
 # target projection for footprints
-target_proj = Proj(init='epsg:3857')
+target_proj = Proj(init='epsg:4326')
 
 
 def get_src_proj(crs_string):
