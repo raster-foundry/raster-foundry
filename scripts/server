@@ -23,6 +23,7 @@ then
                        app-server \
                        nginx \
                        swagger-editor \
+                       swagger-ui \
                        postgres \
                        airflow-worker \
                        airflow-webserver \
