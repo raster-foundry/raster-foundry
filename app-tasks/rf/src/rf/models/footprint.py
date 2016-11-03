@@ -37,19 +37,7 @@ class Footprint(BaseModel):
         )
 
     def to_dict(self):
-        footprint_dict = dict(
-            organizationId=self.organizationId,
-            multipolygon=self.multipolygon
-        )
-        if self.id:
-            footprint_dict['id'] = self.id
-        if self.sceneId:
-            footprint_dict['sceneId'] = self.sceneId
-        if self.createdAt:
-            footprint_dict['createdAt'] = self.createdAt
-        if self.modifiedAt:
-            footprint_dict['modifiedAt'] = self.modifiedAt
-        return footprint_dict
+        return self.multipolygon
 
     def create(self):
         assert self.sceneId, 'Scene ID is required to create a Footprint'

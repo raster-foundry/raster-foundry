@@ -7,7 +7,7 @@ from rf.models import Footprint
 from .settings import organization
 
 # target projection for footprints
-target_proj = Proj(init='epsg:3857')
+target_proj = Proj(init='epsg:4326')
 
 
 def create_footprint(csv_row):
