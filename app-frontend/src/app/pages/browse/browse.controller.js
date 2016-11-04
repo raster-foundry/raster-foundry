@@ -42,9 +42,20 @@ export default class BrowseController {
 
         this.filters = Object.assign({}, this.queryParams);
         delete this.filters.id;
+        delete this.filters.bbox;
+
+        // Default bounds; we can set these to something more meaningful later, e.g. the user's
+        // most recent bucket's bounding box, or an IP-based geolocation. If a bbox is set in
+        // the query params, always use that.
+        if (this.queryParams.bbox) {
+            this.bounds = this.parseBBoxString(this.queryParams.bbox);
+        } else {
+            this.bounds = [[-30, -90], [50, 0]];
+        }
 
         // watchers
         $scope.$on('$stateChangeStart', this.onStateChangeStart.bind(this));
+        // TODO: Switch to one-way &-binding from child component
         $scope.$watchCollection('$ctrl.filters', this.onFilterChange.bind(this));
 
         this.populateInitialSceneList();
@@ -73,24 +84,27 @@ export default class BrowseController {
         }
     }
 
+    onQueryParamsChange() {
+        this.$state.go('.', this.queryParams, {notify: false, inherit: false, location: 'replace'});
+        this.populateInitialSceneList();
+    }
+
+    // TODO: This should be refactored to use a one-way binding from the filter controller
+    // rather than a scope watch.
     onFilterChange(newFilters) {
         this.queryParams = Object.assign({
             id: this.queryParams.id,
-            maxCloudCover: null,
-            minCloudCover: null,
-            minAcquisitionDatetime: null,
-            maxAcquisitionDatetime: null,
-            datasource: null,
-            month: null,
-            maxSunAzimuth: null,
-            minSunAzimuth: null,
-            maxSunElevation: null,
-            minSunElevation: null,
-            bbox: null,
-            point: null
+            bbox: this.queryParams.bbox
         }, newFilters);
-        this.$state.go('.', this.queryParams, {notify: false, location: 'replace'});
-        this.populateInitialSceneList();
+        this.onQueryParamsChange();
+    }
+
+    onBoundsChange(newBounds) {
+        let bboxCoords = newBounds.toBBoxString();
+        this.queryParams = Object.assign({
+            id: this.queryParams.id
+        }, this.filters, {bbox: bboxCoords});
+        this.onQueryParamsChange();
     }
 
     populateInitialSceneList() {
@@ -247,4 +261,18 @@ export default class BrowseController {
         });
     }
 
+    /**
+      * Convert a string in Leaflet bbox coordinate format ("swlng,swlat,nelng,nelat") to array
+      * @param {string} bboxString The bbox coordinate string to parse
+      * @return {array} lat/lon coordinates specifying bounding box corners ([[0,0], [1.0, 1.0]])
+      */
+    parseBBoxString(bboxString) {
+        let coordsStrings = bboxString.split(',');
+        let coords = _.map(coordsStrings, str => parseFloat(str));
+        // Leaflet expects nested coordinate arrays
+        return [
+            [coords[1], coords[0]],
+            [coords[3], coords[2]]
+        ];
+    }
 }

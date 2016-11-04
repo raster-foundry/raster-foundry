@@ -6,7 +6,9 @@ const leafletMap = {
     controller: 'LeafletMapController',
     bindings: {
         static: '<?',
-        footprint: '<?'
+        footprint: '<?',
+        proposedBounds: '<?',
+        onBoundsChange: '&'
     }
 };
 

@@ -6,24 +6,37 @@ export default class LeafletMapController {
         this.$element = $element;
         this.$timeout = $timeout;
         this.$scope = $scope;
+        this.$log = $log;
 
         this.initMap();
         this.initLayers();
+    }
 
-        $scope.$watch('$ctrl.footprint', (newVal) => {
-            if (newVal) {
-                let geojsonFeature = {
-                    type: 'Feature',
-                    properties: {
-                        name: 'Scene Footprint'
-                    },
-                    geometry: newVal
-                };
-                this.geojsonLayer.clearLayers();
-                this.geojsonLayer.addData(geojsonFeature);
-                this.map.fitBounds(this.geojsonLayer.getBounds());
-            }
-        });
+    $onInit() {
+        if (this.proposedBounds) {
+            this.map.fitBounds(this.proposedBounds);
+            this.onBoundsChange({newBounds: this.map.getBounds()});
+        }
+        this.map.on('moveend', () => this.boundsChangeListener());
+        this.map.on('zoomend', () => this.boundsChangeListener());
+    }
+
+    $onChanges(changes) {
+        if (changes.footprint) {
+            let geojsonFeature = {
+                type: 'Feature',
+                properties: {
+                    name: 'Scene Footprint'
+                },
+                geometry: changes.footprint.currentValue
+            };
+            this.geojsonLayer.clearLayers();
+            this.geojsonLayer.addData(geojsonFeature);
+            this.map.fitBounds(this.geojsonLayer.getBounds());
+        }
+        if (changes.proposedBounds) {
+            this.map.fitBounds(changes.proposedBounds.currentValue);
+        }
     }
 
     initLayers() {
@@ -40,7 +53,8 @@ export default class LeafletMapController {
             boxZoom: !this.static,
             keyboard: !this.static,
             tap: !this.static
-        }).setView([26.8625, -87.8467], 3);
+        // fitBounds won't work without calling setView first.
+        }).setView([0, 0], 2);
 
         let cartoPositron = L.tileLayer(
             'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
@@ -76,5 +90,9 @@ export default class LeafletMapController {
         this.$timeout(() => {
             this.map.invalidateSize();
         }, 400);
+    }
+
+    boundsChangeListener() {
+        this.onBoundsChange({newBounds: this.map.getBounds()});
     }
 }

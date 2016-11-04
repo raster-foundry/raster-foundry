@@ -116,6 +116,6 @@
   </div>
 
   <div class="main">
-    <rf-leaflet-map class="map-container"></rf-leaflet-map>
+    <rf-leaflet-map proposed-bounds="$ctrl.bounds" on-bounds-change="$ctrl.onBoundsChange(newBounds)" class="map-container"></rf-leaflet-map>
   </div>
 </div>
