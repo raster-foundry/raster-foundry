@@ -5,6 +5,7 @@ Brief description of what this PR does, and why it is needed.
 ### Checklist
 
 - [ ] Styleguide updated, if necessary
+- [ ] Swagger specification updated, if necessary
 
 ### Demo
 
