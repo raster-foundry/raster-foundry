@@ -104,7 +104,7 @@ spark-worker_1  | 16/08/22 19:28:03 INFO Worker: Running Spark version 1.6.2
 spark-worker_1  | 16/08/22 19:28:03 INFO Worker: Spark home: /usr/lib/spark
 spark-worker_1  | 16/08/22 19:28:03 INFO Utils: Successfully started service 'WorkerUI' on port 8081.
 spark-worker_1  | 16/08/22 19:28:03 INFO WorkerWebUI: Started WorkerWebUI at http://172.18.0.5:8081
-spark-worker_1  | 16/08/22 19:28:03 INFO Worker: Connecting to master spark.services.rf.internal:7077...
+spark-worker_1  | 16/08/22 19:28:03 INFO Worker: Connecting to master spark.services.rasterfoundry.internal:7077...
 spark-worker_1  | 16/08/22 19:28:03 INFO Worker: Successfully registered with master spark://172.18.0.4:7077
 ```
 
@@ -115,7 +115,7 @@ $ docker-compose \
     -f docker-compose.spark.yml run --rm -p 4040:4040 \
     spark-driver \
         --class "com.rasterfoundry.worker.SparkPi" \
-        --master spark://spark.services.rf.internal:7077 \
+        --master spark://spark.services.rasterfoundry.internal:7077 \
         target/scala-2.11/rf-worker_2.11-0.1.0.jar 1000
 ```
 
