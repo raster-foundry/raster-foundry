@@ -7,7 +7,6 @@ class TokensController {
         this.$uibModal = $uibModal;
         this.loading = true;
 
-        $log.debug('TokensController initialized');
         this.fetchTokens();
     }
 

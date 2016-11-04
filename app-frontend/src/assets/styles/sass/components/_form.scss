@@ -5,6 +5,24 @@ form {
 
 .form-group {
   margin-bottom: 2rem;
+
+  &.input-dark {
+    border-color: $shade-dark;
+    background-color: $shade-dark;
+
+    &:focus {
+      border-color: $shade-normal;
+      outline: 0;
+      box-shadow: 0 0 8px rgba($shade-normal, .5);
+    }
+
+    .close {
+      color: $shade-light;
+    }
+    .btn:focus {
+      box-shadow: 0 0 8px rgba($brand-primary, .5);
+    }
+  }
 }
 
 label {
@@ -34,6 +52,16 @@ label {
     box-shadow: 0 0 8px rgba($brand-primary, .5);
   }
 
+  &.input-dark {
+    border-color: $shade-dark;
+    background-color: $shade-dark;
+
+    &:focus {
+      border-color: $shade-normal;
+      outline: 0;
+      box-shadow: 0 0 8px rgba($shade-normal, .5);
+    }
+  }
   // Placeholders
   &::-moz-placeholder {
     color: $shade-light;
@@ -62,6 +90,7 @@ label {
   &[disabled] {
     cursor: not-allowed;
   }
+
 }
 
 textarea.form-control {
@@ -114,5 +143,9 @@ input[type=radio] {
   .form-control {
     border: none;
     border-radius: 0;
+  }
+  &.input-dark {
+    border-color: $shade-dark;
+    background-color: $shade-dark;
   }
 }

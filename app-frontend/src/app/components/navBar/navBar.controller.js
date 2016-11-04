@@ -18,8 +18,6 @@ export default class NavBarController {
 
         this.optionsOpen = false;
         this.assetLogo = assetLogo;
-
-        $log.debug('Navbar controller initialized');
     }
 
     signin() {

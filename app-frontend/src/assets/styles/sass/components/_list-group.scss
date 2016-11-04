@@ -29,6 +29,20 @@
   }
 }
 
+
+.list-item-header {
+  color: $shade-dark;
+  font-weight: bold;
+}
+
+.list-item-description {
+}
+
+.list-item-attribution {
+  color: $shade-light;
+  font-weight: bold;
+}
+
 .list-group-subitem {
   padding: 1.5rem 1.5rem 1.5rem 1.5rem;
   margin: 0 0 0 3rem;
@@ -55,6 +69,7 @@
     margin: 0 0 0 6em;
   }
 }
+
 .list-group-item {
   padding: 1.5rem;
   border-bottom: 1px solid #ddd;
@@ -94,6 +109,10 @@
     left: 0;
     right: 0;
     bottom: 0;
+  }
+
+  &.wrap {
+    align-items: flex-start;
   }
 
   &.selectable {

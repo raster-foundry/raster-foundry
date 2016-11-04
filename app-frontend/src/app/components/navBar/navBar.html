@@ -7,8 +7,11 @@
 	  <span class="navbar-vertical-divider"></span>
 	  <nav>
 	    <a href ui-sref="browse" ui-sref-active="active">Scene browser</a>
-	    <a href ui-sref-active="active">Model market</a>
-	    <a href ui-sref-active="active">Model lab</a>
+	    <a href ui-sref="market.search"
+         ng-class="{
+                   active: $ctrl.$state.$current.name.includes('market')
+                   }">Model market</a>
+	    <a href ui-sref="lab" ui-sref-active="active">Model lab</a>
 	  </nav>
 	  <span class="navbar-vertical-divider"></span>
 	</div>

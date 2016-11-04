@@ -1,0 +1,29 @@
+<div class="navbar secondary-navbar">
+  <div class="navbar-left">
+    <nav ng-show="$ctrl.$state.$current.name === 'market.model'">
+      <a href ui-sref="market.search" class="active"> < Back to search results</a>
+    </nav>
+    <nav ng-show="$ctrl.$state.$current.name === 'market.search'">
+      <ng-submit ng-submit="$ctrl.onSearchAction($ctrl.searchText)">
+        <div class="form-group all-in-one input-dark">
+          <label for="search-input">
+            <i class="icon-search"></i>
+          </label>
+          <input type="text"
+                 id="search-input"
+                 class="form-control input-dark"
+                 placeholder="Search for models"
+                 ng-model="$ctrl.searchText"/>
+          <button type="button" class="btn btn-link">
+            <span class="close">x</span>
+          </button>
+        </div>
+      </ng-submit>
+    </nav>
+  </div>
+  <div class="navbar-right">
+    <nav>
+      <a href ui-sref="lab/list">My Models</a>
+    </nav>
+  </div>
+</div>

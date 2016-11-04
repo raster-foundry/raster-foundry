@@ -1,0 +1,96 @@
+<div class="container column-stretch dashboard-filter wide">
+  <div class="sidebar">
+    <div class="sidebar-scrollable">
+      <div class="sidebar-category">
+        <div class="sidebar-category-title">
+          Search Terms
+        </div>
+        <div class="sidebar-category-contents">
+          <button class="btn btn-tag"
+                  ng-repeat="searchTerm in $ctrl.searchTerms"
+                  ng-click="$ctrl.removeSearchTerm($index)">
+            {{searchTerm}}
+            <i class="icon-cross" ></i>
+          </button>
+        </div>
+        <div class="sidebar-category-actions">
+          <a href ng-click="$ctrl.clearSearch()">Clear All</a>
+        </div>
+      </div>
+      <div class="sidebar-separator"></div>
+      <div class="sidebar-category">
+        <div class="sidebar-category-title">
+          Tags
+        </div>
+        <div class="sidebar-category-contents">
+          <div class="sidebar-selection"
+               ng-repeat="tag in $ctrl.tags"
+               ng-click="$ctrl.toggleTag($index)">
+            <i ng-class="{'icon-check': tag.selected,
+                          'icon-cross': !tag.selected
+                         }"></i>
+            {{tag.label}}
+          </div>
+        </div>
+        <div class="sidebar-category-actions">
+          <a href ng-click="$ctrl.viewMoreTags()">View More</a>
+        </div>
+      </div>
+      <div class="sidebar-separator"></div>
+      <div class="sidebar-category">
+        <div class="sidebar-category-title">
+          Category
+        </div>
+        <div class="sidebar-category-contents">
+          <div class="sidebar-selection"
+               ng-repeat="category in $ctrl.categories"
+               ng-click="$ctrl.toggleCategory($index)">
+            <i class="icon-check"
+             ng-class="{'icon-check': category.selected,
+                        'icon-cross': !category.selected
+                       }"></i>
+            {{category.label}}
+          </div>
+        </div>
+        <div class="sidebar-category-actions">
+          <a href ng-click="$ctrl.viewMoreCategories()">View More</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="main">
+    <div class="content">
+      <div class="row stack-sm">
+        <h1 class="h3 page-title">
+          <a>Showing 1-10 of {{$ctrl.queryResult.count}} results</a>
+        </h1>
+      </div>
+      <div class="row stack-sm">
+        <div class="column">
+          <div class="embedded-scrollable">
+            <div class="list-group">
+              <rf-model-item
+                  ng-repeat="modelData in $ctrl.queryResult.results"
+                  model-data="modelData"
+                  ng-click="$ctrl.navModel(modelData)"
+              ></rf-model-item>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="list-group text-center"
+           ng-show="!$ctrl.loading && $ctrl.queryResult && $ctrl.queryResult.count !== 0 && !$ctrl.errorMsg">
+        <ul uib-pagination
+            items-per-page="$ctrl.queryResult.pageSize"
+            total-items="$ctrl.queryResult.count"
+            ng-model="$ctrl.currentPage"
+            max-size="4"
+            rotate="true"
+            boundary-link-numbers="true"
+            force-ellipses="true"
+            ng-change="$ctrl.populateModelList($ctrl.currentPage)">
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

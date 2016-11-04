@@ -19,3 +19,25 @@
     }
   }
 }
+
+.horizontal-separator {
+  margin-top: 1em;
+  border-bottom: 1px solid #ddd;
+}
+
+.upload-info {
+  tr {
+    th {
+      font-weight: 700;
+      padding-right: 10em;
+      color: $shade-dark;
+    }
+  }
+  a {
+    cursor: pointer;
+    color: $brand-primary;
+    &:hover {
+      color: $brand-secondary;
+    }
+  }
+}

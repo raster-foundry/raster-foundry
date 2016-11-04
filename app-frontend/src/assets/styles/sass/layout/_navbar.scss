@@ -2,7 +2,6 @@
   @extend %clearfix;
   background: $shade-normal;
   position: relative;
-  z-index: 1030;
   padding: 1rem;
   flex: none;
 
@@ -45,6 +44,11 @@
   }
   .username {
     padding-left: .5em;
+  }
+
+  &.secondary-navbar {
+    border-top: 1px solid $shade-dark;
+    padding: 0;
   }
 }
 
