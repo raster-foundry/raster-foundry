@@ -18,7 +18,7 @@
   position: absolute;
   top: 100%;
   left: 0;
-  z-index: 1000;
+  z-index: 1050;
   display: none; // none by default, but block on "open" of the menu
   float: left;
   min-width: 130px;
@@ -129,7 +129,7 @@
   right: 0;
   bottom: 0;
   top: 0;
-  z-index: 990;
+  z-index: 1049;
 }
 
 // Right aligned dropdowns

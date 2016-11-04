@@ -12,6 +12,12 @@
     width: 22rem;
   }
 
+  .dashboard-filter & {
+    border-right: 1px solid #ddd;
+    padding: 2rem;
+    width: 25rem;
+  }
+
   .btn ~ nav {
     margin: 2rem 0;
   }
@@ -67,6 +73,40 @@
 .sidebar-scrollable {
   overflow: auto;
   flex: 1;
+}
+
+.sidebar-category {
+  * {
+    margin: 0.2em;
+  }
+}
+
+.sidebar-category-title {
+  font-weight: 700;
+}
+
+.sidebar-category-contents {
+
+}
+.sidebar-selection {
+  cursor: pointer;
+  &:hover {
+    color: $brand-primary;
+  }
+}
+
+.sidebar-category-actions {
+  * {
+    color: $brand-primary;
+    &:hover {
+      color: $shade-light;
+    }
+  }
+}
+
+.sidebar-separator {
+  height: 1em;
+  border-bottom: 1px solid #ddd;
 }
 
 .sidebar-extended {

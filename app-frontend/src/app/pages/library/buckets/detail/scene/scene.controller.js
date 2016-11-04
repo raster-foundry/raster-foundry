@@ -27,8 +27,6 @@ class BucketSceneController {
                 this.$state.go('^.scenes');
             }
         }
-
-        $log.debug('BucketSceneController initialized');
     }
 
     downloadModal() {

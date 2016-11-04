@@ -120,6 +120,29 @@
   @include button-states($danger);
 }
 
+.btn-tag {
+  background-color: $brand-primary;
+  color: #fff;
+  font-weight: 700;
+  padding: 0.5rem;
+  border-radius: 1px;
+}
+
+
+.btn-flat {
+  border-color: transparent;
+  color: $brand-primary;
+  background-color: transparent;
+  font-weight: 700;
+
+  &:hover, &.hover,
+  &:active, &.active, {
+    background-color: transparent;
+    border-color: transparent;
+    color: $brand-secondary;
+  }
+}
+
 /* 
  * Button Sizes
  */
@@ -145,6 +168,7 @@
   display: block;
   width: 100%;
 }
+
 
 /* 
  * Button actions

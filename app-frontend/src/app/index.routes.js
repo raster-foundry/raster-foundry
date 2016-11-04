@@ -1,4 +1,7 @@
 import browseTpl from './pages/browse/browse.html';
+import marketTpl from './pages/market/market.html';
+import marketSearchTpl from './pages/market/search/search.html';
+import marketModelTpl from './pages/market/model/model.html';
 import libraryTpl from './pages/library/library.html';
 import scenesTpl from './pages/library/scenes/scenes.html';
 import scenesListTpl from './pages/library/scenes/list/list.html';
@@ -139,10 +142,37 @@ function browseStates($stateProvider) {
         });
 }
 
+function marketStates($stateProvider) {
+    $stateProvider
+        .state('market', {
+            url: '/market',
+            templateUrl: marketTpl,
+            controller: 'MarketController',
+            controllerAs: '$ctrl',
+            abstract: true
+        })
+        .state('market.search', {
+            url: '/search?:query',
+            templateUrl: marketSearchTpl,
+            controller: 'MarketSearchController',
+            controllerAs: '$ctrl'
+        })
+        .state('market.model', {
+            url: '/model/:id',
+            params: {
+                modelData: null
+            },
+            templateUrl: marketModelTpl,
+            controller: 'MarketModelController',
+            controllerAs: '$ctrl'
+        });
+}
+
 function routeConfig($urlRouterProvider, $stateProvider) {
     'ngInject';
 
     browseStates($stateProvider);
+    marketStates($stateProvider);
     librarySceneStates($stateProvider);
     libraryBucketStates($stateProvider);
     settingsStates($stateProvider);

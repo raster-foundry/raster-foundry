@@ -19,6 +19,14 @@
 	    max-width: 1160px;
       flex: 1;
     }
+    &.dashboard-filter {
+      width: 100%;
+      max-width: 1160px;
+      flex: 1;
+      &.wide {
+        max-width: initial;
+      }
+    }
   }
 }
 
