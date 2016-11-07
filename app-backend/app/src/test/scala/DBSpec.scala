@@ -54,15 +54,11 @@ object InitializeDB extends Config {
   // Working directory, needed for running %sbt commands
   implicit val wd = cwd
 
-  // Check if the testing template DB exist. Create DB and initialize migrations if needed.
-  PGUtils.runIfNoDB(jdbcNoDBUrl, dbUser, dbPassword) { () => {
-    // Create the testing template DB
-    PGUtils.createDB(jdbcNoDBUrl, "testing_template", dbUser, dbPassword)
+  // Recreate the test database
+  PGUtils.dropDB(jdbcNoDBUrl, "testing_template", dbUser, dbPassword)
+  PGUtils.createDB(jdbcNoDBUrl, "testing_template", dbUser, dbPassword)
 
-    //Initialize migrations. POSTGRES_URL is passed as an env variable to target the correct DB.
-    %sbt("mg init", POSTGRES_URL=s"${jdbcNoDBUrl}testing_template")
-  }}
-
-  // Run migrations -- scala-forklift requires that they be run twice
+  // Run migrations
+  %sbt("mg init", POSTGRES_URL=s"${jdbcNoDBUrl}testing_template")
   %sbt(";mg update ;mg apply", POSTGRES_URL=s"${jdbcNoDBUrl}testing_template")
 }

@@ -64,27 +64,6 @@ object PGUtils {
   }
 
   /**
-    * Runs a function only if the database does not exist
-    *
-    * @param jdbcNoDBurl url of the database server (with no db component)
-    * @param user user name for the database
-    * @param pwd password for the database
-    * @param fnIfNoDB function to run if the database does not exist
-    */
-  def runIfNoDB(jdbcNoDBUrl: String, user: String, pwd: String)
-    (fnIfNoDB: () => Unit): Unit = {
-    using(Database.forURL(jdbcNoDBUrl, user = user, password = pwd, driver = driver)) { conn =>
-      Await.result(
-        conn.run(sql"SELECT 1 FROM pg_database WHERE datname='testing_template'".as[Int].headOption),
-        actionTimeout
-      ) match {
-        case None => fnIfNoDB()
-        case _ => // Do nothing. Only run the function when the DB doesn't exist (result is None)
-      }
-    }
-  }
-
-  /**
     * Automatically closes a resource with method 'close'
     */
   private def using[A <: {def close() : Unit}, B](resource: A)(f: A => B): B =
