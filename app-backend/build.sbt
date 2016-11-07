@@ -104,6 +104,7 @@ lazy val migrations = Project("migrations", file("migrations"))
 
 lazy val datamodel = Project("datamodel", file("datamodel"))
   .settings(commonSettings:_*)
+  .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({
     libraryDependencies ++= loggingDependencies ++ Seq(
       Dependencies.geotrellisSlick % "provided",
@@ -116,4 +117,19 @@ lazy val database = Project("database", file("database"))
   .settings(commonSettings:_*)
   .settings({
    libraryDependencies ++= slickDependencies ++ dbDependencies ++ loggingDependencies ++ Seq(Dependencies.akkaHttpExtensions)
+  })
+
+lazy val tile = Project("tile", file("tile"))
+  .settings(commonSettings:_*)
+  .settings(assemblyJarName in assembly := "rf-tile-server.jar")
+  .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
+  .settings({
+    libraryDependencies ++= loggingDependencies ++ Seq(
+      Dependencies.commonsIO,
+      Dependencies.spark % "provided",
+      Dependencies.geotrellisSpark,
+      Dependencies.geotrellisS3,
+      Dependencies.scaffeine,
+      Dependencies.akkajson
+    )
   })
