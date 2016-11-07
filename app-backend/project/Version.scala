@@ -2,7 +2,7 @@ object Version {
   val rasterFoundry      = "0.1"
 
   val akka               = "2.4.3"
-  val geotrellis         = "0.10.2"
+  val geotrellis         = "1.0.0-720612f"
   val hikariCP           = "3.1.1"
   val postgres           = "9.4-1201-jdbc41"
   val scala              = "2.11.8"
@@ -19,4 +19,6 @@ object Version {
   val akkaSlf4j          = "2.4.11"
   val ammoniteOps        = "0.7.0"
   val spark              = "2.0.0"
+  val scaffeine          = "1.3.0"
+  val commonsIO          = "2.5"
 }
