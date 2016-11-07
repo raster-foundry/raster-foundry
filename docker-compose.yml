@@ -83,6 +83,7 @@ services:
       - redis:cache.service.rasterfoundry.internal
     environment:
       - AIRFLOW_HOME=/usr/local/airflow
+      - AIRFLOW_BASE_URL=http://localhost:8080
       - RF_HOST=http://rasterfoundry.com:9000
     ports:
       - "8080:8080"
@@ -101,6 +102,7 @@ services:
     env_file: .env
     environment:
       - AIRFLOW_HOME=/usr/local/airflow
+      - AIRFLOW_BASE_URL=http://localhost:8080
       - RF_HOST=http://rasterfoundry.com:9000
     ports:
       - "5555:5555"
@@ -124,6 +126,7 @@ services:
     env_file: .env
     environment:
       - AIRFLOW_HOME=/usr/local/airflow
+      - AIRFLOW_BASE_URL=http://localhost:8080
       - PYTHONPATH=/opt/raster-foundry/app-tasks/rf/src/
       - RF_HOST=http://rasterfoundry.com:9000
     command: airflow scheduler
@@ -146,6 +149,7 @@ services:
     env_file: .env
     environment:
       - AIRFLOW_HOME=/usr/local/airflow
+      - AIRFLOW_BASE_URL=http://localhost:8080
       - RF_HOST=http://rasterfoundry.com:9000
       - C_FORCE_ROOT=True
     command: airflow worker
