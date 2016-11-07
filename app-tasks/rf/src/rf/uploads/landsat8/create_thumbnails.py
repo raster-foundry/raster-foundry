@@ -10,7 +10,7 @@ from .settings import organization
 from rf.models import Thumbnail
 
 
-def create_thumbnails(scene_id):
+def create_thumbnails(scene_id, landsat_id):
     """Creates thumbnails based on scene_id
 
     Args:
@@ -20,12 +20,12 @@ def create_thumbnails(scene_id):
         List[Thumbnail]
     """
 
-    path = get_landsat_url(scene_id)
+    path = get_landsat_url(landsat_id)
 
-    small_url = path + '_'.join([scene_id, 'thumb', 'small']) + '.jpg'
-    large_url = path + '_'.join([scene_id, 'thumb', 'large']) + '.jpg'
+    small_url = path + '_'.join([landsat_id, 'thumb', 'small']) + '.jpg'
+    large_url = path + '_'.join([landsat_id, 'thumb', 'large']) + '.jpg'
 
     return [
-        Thumbnail(organization, 228, 233, 'SMALL', small_url),
-        Thumbnail(organization, 1143, 1168, 'LARGE', large_url)
+        Thumbnail(organization, 228, 233, 'SMALL', small_url, sceneId=scene_id),
+        Thumbnail(organization, 1143, 1168, 'LARGE', large_url, sceneId=scene_id)
     ]

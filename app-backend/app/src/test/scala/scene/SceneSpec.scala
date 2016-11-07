@@ -77,24 +77,19 @@ class SceneSpec extends WordSpec
       MultiPolygon(Polygon(Seq(Point(100,100), Point(110,100), Point(110,110),
         Point(100,110), Point(100,100)))), 3857))
 
-    val newSceneDatasource1Image = Image.Identified(
-      None, 0, Visibility.Public, "newSceneDatasource1Image", "",
-      Map.empty[String, Any], 20f, List.empty[String]
-    )
-
     val newSceneDatasource1 = Scene.Create(
-      publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), "TEST_ORG",
+      None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), "TEST_ORG",
       Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any], None,
       Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
       JobStatus.Processing, JobStatus.Processing, JobStatus.Processing, None, None, "test scene datasource 1",
-      mpoly, List.empty[String], List(newSceneDatasource1Image), List.empty[Thumbnail.Identified]
+      mpoly, List.empty[String], List.empty[Image.Banded], List.empty[Thumbnail.Identified]
     )
 
     val newSceneDatasource2 = Scene.Create(
-      publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"),
+      None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"),
       "TEST_ORG-OTHER", Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any],
       None, None, JobStatus.Processing, JobStatus.Processing, JobStatus.Processing, None, None, "test scene datasource 2",
-      None, List.empty[String], List.empty[Image.Identified], List.empty[Thumbnail.Identified]
+      None, List.empty[String], List.empty[Image.Banded], List.empty[Thumbnail.Identified]
     )
 
     "require authentication for creation" in {
@@ -116,7 +111,21 @@ class SceneSpec extends WordSpec
           newSceneDatasource1.toJson.toString()
         )
       ) ~> baseRoutes ~> check {
-        responseAs[Scene.WithRelated]
+        val sceneWithRelated = responseAs[Scene.WithRelated]
+        val newSceneDatasource1Image = Image.Banded(
+          publicOrgId, 0, Visibility.Public, "filename", "uri",
+          sceneWithRelated.id, Map():Map[String, Any], 20.2f, List.empty[String],
+          List[Band.Create](Band.Create("i'm a band", 4, List[Int](550, 600)))
+        )
+        Post("/api/images/").withHeadersAndEntity(
+          List(authorization),
+          HttpEntity(
+            ContentTypes.`application/json`,
+            newSceneDatasource1Image.toJson.toString()
+          )
+        ) ~> baseRoutes ~> check {
+          responseAs[Image.WithRelated]
+        }
       }
 
       Post("/api/scenes/").withHeadersAndEntity(
@@ -127,6 +136,12 @@ class SceneSpec extends WordSpec
         )
       ) ~> baseRoutes ~> check {
         responseAs[Scene.WithRelated]
+      }
+    }
+
+    "list scenes" in {
+      Get(s"${baseScene}?organization=${publicOrgId}") ~> baseRoutes ~> check {
+        responseAs[PaginatedResponse[Scene.WithRelated]]
       }
     }
 

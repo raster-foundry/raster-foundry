@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from rf.uploads.sentinel2 import create_sentinel2_scenes
 
+import os
 import logging
 
 rf_logger = logging.getLogger('rf')
@@ -36,6 +37,7 @@ dag = DAG(
 def import_sentinel2(*args, **kwargs):
     """Creates new Sentinel-2 scenes with associated images, thumbnails, and footprint"""
     logger.info('KWARGS: %s', kwargs)
+    logger.info('Host: %s', os.getenv('RF_HOST'))
     conf = kwargs['dag_run'].conf
     tilepaths = conf.get('tilepaths')
     logger.info("Importing %s tilepaths", len(tilepaths))

@@ -117,42 +117,6 @@ object Image {
     implicit val defaultImageBandedFormat = jsonFormat10(Banded.apply _)
   }
 
-  /** Image class when posted with an ID */
-  case class Identified(
-    id: Option[UUID],
-    rawDataBytes: Int,
-    visibility: Visibility,
-    filename: String,
-    sourceuri: String,
-    imageMetadata: Map[String, Any],
-    resolutionMeters: Float,
-    metadataFiles: List[String]
-  ) {
-    def toImage(userId: String, scene: Scene): Image = {
-      val now = new Timestamp((new java.util.Date()).getTime())
-      Image(
-        UUID.randomUUID, // primary key
-        now, // createdAt
-        now, // modifiedAt
-        scene.organizationId,
-        userId, // createdBy: String,
-        userId, // modifiedBy: String,
-        rawDataBytes,
-        visibility,
-        filename,
-        sourceuri,
-        scene.id,
-        imageMetadata,
-        resolutionMeters,
-        metadataFiles
-      )
-    }
-  }
-
-  object Identified {
-    implicit val defaultIdentifiedImageFormat = jsonFormat8(Identified.apply _)
-  }
-
   case class WithRelated(
     id: UUID,
     createdAt: Timestamp,
@@ -197,7 +161,7 @@ object Image {
       * @param records result of join query to return image with related information
       */
     def fromRecords(records: Seq[(Image, Band)]): Iterable[Image.WithRelated] = {
-      val distinctImages = records.map(_._1).distinct
+      val distinctImages = records.map(_._1)
       val bands = records.map(_._2)
       distinctImages map { image =>
         image.withRelatedFromComponents(bands.filter(_.image == image.id))

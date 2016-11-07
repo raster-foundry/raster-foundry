@@ -2,6 +2,7 @@
 
 import json
 import logging
+import uuid
 
 from rf.models import Scene
 from rf.utils.io import JobStatus, Visibility
@@ -23,9 +24,8 @@ def get_tileinfo(path):
     Returns:
         dict
     """
-    tileinfo_path = '{path}/tileInfo.json'.format(path=path)
-    logger.info('Getting tileinfo: %s', tileinfo_path)
-    return json.loads(s3.Object(bucket.name, tileinfo_path).get()['Body'].read())
+    logger.info('Getting tileinfo: %s', path)
+    return json.loads(s3.Object(bucket.name, path).get()['Body'].read())
 
 
 def create_sentinel2_scenes(tile_path):
@@ -37,10 +37,15 @@ def create_sentinel2_scenes(tile_path):
     Returns:
         List[Scene]
     """
+    scene_id = str(uuid.uuid4())
     logger.info('Starting scene creation for sentinel 2 scene: %s', tile_path)
-    tileinfo = get_tileinfo(tile_path)
+    metadata_file = '{path}/tileInfo.json'.format(path=tile_path)
+    tileinfo = get_tileinfo(metadata_file)
+    images = (create_images(scene_id, tileinfo, 10) +
+              create_images(scene_id, tileinfo, 20) +
+              create_images(scene_id, tileinfo, 60))
     footprint = create_footprint(tileinfo)
-    thumbnails = create_thumbnails(tile_path)
+    thumbnails = create_thumbnails(scene_id, tile_path)
     tags = ['Sentinel-2', 'JPEG2000']
     datasource = 'Sentinel-2'
 
@@ -56,61 +61,24 @@ def create_sentinel2_scenes(tile_path):
         productPath=tileinfo['productPath']
     )
 
-    scene_10m = Scene(
+    scene = Scene(
         organization,
         0,
         Visibility.PUBLIC,
-        10,
         tags,
         datasource,
         scene_metadata,
-        'S2 {} {}'.format(tile_path, '10m'),  # name
+        'S2 {}'.format(tile_path),  # name
         JobStatus.SUCCESS if thumbnails else JobStatus.FAILURE,
         JobStatus.SUCCESS if footprint else JobStatus.FAILURE,
         JobStatus.QUEUED,
+        id=scene_id,
         acquisitionDate=tileinfo['timestamp'],
         cloudCover=tileinfo['cloudyPixelPercentage'],
         footprint=footprint,
+        metadataFiles=[metadata_file],
         thumbnails=thumbnails,
-        images=create_images(tileinfo, 10)
+        images=images
     )
 
-    scene_20m = Scene(
-        organization,
-        0,
-        Visibility.PUBLIC,
-        20,
-        tags,
-        datasource,
-        scene_metadata,
-        'S2 {} {}'.format(tile_path, '20m'),  # name
-        JobStatus.SUCCESS if thumbnails else JobStatus.FAILURE,
-        JobStatus.SUCCESS if footprint else JobStatus.FAILURE,
-        JobStatus.QUEUED,
-        acquisitionDate=tileinfo['timestamp'],
-        cloudCover=tileinfo['cloudyPixelPercentage'],
-        footprint=footprint,
-        thumbnails=thumbnails,
-        images=create_images(tileinfo, 20)
-    )
-
-    scene_60m = Scene(
-        organization,
-        0,
-        Visibility.PUBLIC,
-        60,
-        tags,
-        datasource,
-        scene_metadata,
-        'S2 {} {}'.format(tile_path, '60m'),  # name
-        JobStatus.SUCCESS if thumbnails else JobStatus.FAILURE,
-        JobStatus.SUCCESS if footprint else JobStatus.FAILURE,
-        JobStatus.QUEUED,
-        acquisitionDate=tileinfo['timestamp'],
-        cloudCover=tileinfo['cloudyPixelPercentage'],
-        footprint=footprint,
-        thumbnails=thumbnails,
-        images=create_images(tileinfo, 60)
-    )
-
-    return [scene_10m, scene_20m, scene_60m]
+    return [scene]

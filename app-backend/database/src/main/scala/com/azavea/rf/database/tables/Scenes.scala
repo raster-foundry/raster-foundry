@@ -61,8 +61,8 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
 /** Collection-like TableQuery object for table Scenes */
 object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
   type TableQuery = Query[Scenes, Scene, Seq]
-  type JoinQuery = Query[ScenesWithRelatedFields, (Scene, Option[Image], Option[Thumbnail]), Seq]
-  type ScenesWithRelatedFields = (Scenes, Rep[Option[Images]], Rep[Option[Thumbnails]])
+  type JoinQuery = Query[ScenesWithRelatedFields, (Scene, Option[Image], Option[Band], Option[Thumbnail]), Seq]
+  type ScenesWithRelatedFields = (Scenes, Rep[Option[Images]], Rep[Option[Bands]], Rep[Option[Thumbnails]])
 
   implicit val scenesSorter: QuerySorter[Scenes] =
     new QuerySorter(
@@ -97,17 +97,33 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
                  (implicit database: DB): Future[Scene.WithRelated] = {
 
     val scene = sceneCreate.toScene(user.id)
-    val thumbnails = sceneCreate.thumbnails.map(_.toThumbnail(user.id, scene))
-    val images = sceneCreate.images.map(_.toImage(user.id, scene))
+    val thumbnails = sceneCreate.thumbnails.map(_.toThumbnail(user.id))
+    val imageSeq = (sceneCreate.images map { im: Image.Banded => im.toImage(user.id) }).zipWithIndex
+    val bandsSeq = imageSeq map { case (im: Image, ind: Int) =>
+      sceneCreate.images(ind).bands map { bd => bd.toBand(im.id) }
+    }
 
-    val actions = Scenes.forceInsert(scene)
-      .andThen(DBIO.seq(thumbnails.map(Thumbnails.forceInsert): _*))
-      .andThen(DBIO.seq(images.map(Images.forceInsert): _*))
+    val imageBandInsert = DBIO.sequence(
+      imageSeq.zip(bandsSeq) map { case ((im: Image, _: Int), bs: Seq[Band]) =>
+        // == because we're filtering a sequence, not a table
+        for {
+          imageInsert <- (Images returning Images).forceInsert(im)
+          bandInserts <- (Bands returning Bands).forceInsertAll(bs)
+        } yield (imageInsert, bandInserts)
+      }
+    )
+
+    val actions = for {
+      scenesInsert <- Scenes.forceInsert(scene)
+      thumbnailsInsert <- Thumbnails.forceInsertAll(thumbnails)
+      imageInsert <- imageBandInsert
+    } yield (scenesInsert, thumbnailsInsert, imageInsert)
 
     database.db.run {
       actions.transactionally
-    } map { x =>
-      scene.withRelatedFromComponents(images, thumbnails)
+    } map { case (_, _, imSeq: Seq[Tuple2[Image, Seq[Band]]]) =>
+        val imagesWithRelated = imSeq.map({case (im: Image, bs: Seq[Band]) => im.withRelatedFromComponents(bs)})
+      scene.withRelatedFromComponents(imagesWithRelated, thumbnails)
     }
   }
 
@@ -126,8 +142,8 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
         .result
       logger.debug(s"Total Query for scenes -- SQL: ${action.statements.headOption}")
       action
-    } map { joinQuery =>
-      Scene.WithRelated.fromRecords(joinQuery).headOption
+    } map { result =>
+      Scene.WithRelated.fromRecords(result).headOption
     }
   }
 
@@ -261,14 +277,14 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) {
     }
   }
 
-  /** Return a join query for scenes */
   def joinWithRelated: Scenes.JoinQuery = {
     for {
-      ((scene, image), thumbnail) <-
+      (((scene, image), band), thumbnail) <-
       (scenes
-         joinLeft Images on (_.id === _.scene)
-         joinLeft Thumbnails on (_._1.id === _.scene))
-    } yield (scene, image, thumbnail)
+         joinLeft Images on { case (s, i) => s.id === i.scene }
+         joinLeft Bands on { case((x, i), b) => i.map(_.id) === b.imageId }
+         joinLeft Thumbnails on { case(((s, i), b), t) => s.id === t.scene })
+    } yield (scene, image, band, thumbnail)
   }
 }
 

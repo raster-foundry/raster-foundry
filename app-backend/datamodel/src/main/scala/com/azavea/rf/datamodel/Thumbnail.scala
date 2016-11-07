@@ -62,21 +62,23 @@ object Thumbnail {
   /** Thumbnail class when posted with an ID */
   case class Identified(
     id: Option[UUID],
+    organizationId: UUID,
     thumbnailSize: ThumbnailSize,
     widthPx: Int,
     heightPx: Int,
+    sceneId: UUID,
     url: String
   ) {
-    def toThumbnail(userId: String, scene: Scene): Thumbnail = {
+    def toThumbnail(userId: String): Thumbnail = {
       val now = new Timestamp((new java.util.Date()).getTime())
       Thumbnail(
-        UUID.randomUUID, // primary key
+        this.id.getOrElse(UUID.randomUUID), // primary key
         now, // createdAt
         now, // modifiedAt
-        scene.organizationId,
+        this.organizationId,
         this.widthPx,
         this.heightPx,
-        scene.id,
+        this.sceneId,
         this.url,
         this.thumbnailSize
       )
@@ -84,6 +86,6 @@ object Thumbnail {
   }
 
   object Identified {
-    implicit val defaultIdentifiedFormat = jsonFormat5(Identified.apply)
+    implicit val defaultIdentifiedFormat = jsonFormat7(Identified.apply)
   }
 }

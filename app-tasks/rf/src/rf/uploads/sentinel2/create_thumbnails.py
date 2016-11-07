@@ -9,7 +9,7 @@ from rf.models import Thumbnail
 from rf.utils.io import s3_obj_exists
 
 
-def create_thumbnails(tile_path):
+def create_thumbnails(scene_id, tile_path):
     """Creates thumbnail based on tile_path
 
     Args:
@@ -28,5 +28,6 @@ def create_thumbnails(tile_path):
             organization,
             343, 343,
             'SQUARE',
-            thumbnail_url
+            thumbnail_url,
+            sceneId=scene_id
         )]
