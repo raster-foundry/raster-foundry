@@ -40,7 +40,7 @@ services:
   app-server:
     image: quay.io/azavea/scala:2.11.8
     links:
-      - postgres:database.raster-foundry.internal
+      - postgres:database.service.rasterfoundry.internal
     env_file: .env
     ports:
       - "9000:9000"
@@ -79,8 +79,8 @@ services:
       dockerfile: Dockerfile
     env_file: .env
     links:
-      - postgres:database.raster-foundry.internal
-      - redis:redis.raster-foundry.internal
+      - postgres:database.service.rasterfoundry.internal
+      - redis:cache.service.rasterfoundry.internal
     environment:
       - AIRFLOW_HOME=/usr/local/airflow
       - RF_HOST=http://rasterfoundry.com:9000
@@ -96,8 +96,8 @@ services:
       context: ./app-tasks
       dockerfile: Dockerfile
     links:
-      - postgres:database.raster-foundry.internal
-      - redis:redis.raster-foundry.internal
+      - postgres:database.service.rasterfoundry.internal
+      - redis:cache.service.rasterfoundry.internal
     env_file: .env
     environment:
       - AIRFLOW_HOME=/usr/local/airflow
@@ -119,8 +119,8 @@ services:
       dockerfile: Dockerfile
     restart: always
     links:
-      - postgres:database.raster-foundry.internal
-      - redis:redis.raster-foundry.internal
+      - postgres:database.service.rasterfoundry.internal
+      - redis:cache.service.rasterfoundry.internal
     env_file: .env
     environment:
       - AIRFLOW_HOME=/usr/local/airflow
@@ -140,8 +140,8 @@ services:
       context: ./app-tasks
       dockerfile: Dockerfile
     links:
-      - postgres:database.raster-foundry.internal
-      - redis:redis.raster-foundry.internal
+      - postgres:database.service.rasterfoundry.internal
+      - redis:cache.service.rasterfoundry.internal
       - app-server:rasterfoundry.com
     env_file: .env
     environment:

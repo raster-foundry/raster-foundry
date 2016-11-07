@@ -29,7 +29,7 @@ services:
       context: ./worker-tasks
       dockerfile: Dockerfile
     links:
-      - spark-master:spark.services.rf.internal
+      - spark-master:spark.services.rasterfoundry.internal
     environment:
       SPARK_LOCAL_DIRS: "/tmp"
       SPARK_PUBLIC_DNS: "localhost"
@@ -42,7 +42,7 @@ services:
     entrypoint: spark-class
     command:
       - "org.apache.spark.deploy.worker.Worker"
-      - "spark://spark.services.rf.internal:7077"
+      - "spark://spark.services.rasterfoundry.internal:7077"
 
   spark-driver:
     image: raster-foundry-spark
@@ -50,7 +50,7 @@ services:
       context: ./worker-tasks
       dockerfile: Dockerfile
     links:
-      - spark-master:spark.services.rf.internal
+      - spark-master:spark.services.rasterfoundry.internal
     environment:
       SPARK_LOCAL_DIRS: "/tmp"
       SPARK_PUBLIC_DNS: "localhost"
