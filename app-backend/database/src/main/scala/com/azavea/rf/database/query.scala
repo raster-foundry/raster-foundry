@@ -4,6 +4,7 @@ import java.util.UUID
 import java.sql.Timestamp
 import java.time.Instant
 
+import geotrellis.proj4._
 import geotrellis.slick.Projected
 import geotrellis.vector.{Point, Polygon, Extent}
 
@@ -48,7 +49,8 @@ case class SceneQueryParameters(
     bbox
       .map(Extent.fromString)
       .map(_.toPolygon)
-      .map(Projected(_, 3857))
+      .map(Projected(_, 4326))
+      .map(_.reproject(LatLng, WebMercator)(3857))
   } catch {
     case e: Exception => throw new IllegalArgumentException(
       "Four comma separated coordinates must be given for bbox"
@@ -58,7 +60,7 @@ case class SceneQueryParameters(
   val pointGeom: Option[Projected[Point]] = try {
     point.map { s =>
       val Array(x, y) = s.split(",")
-      Projected(Point(x.toDouble, y.toDouble), 3857)
+      Projected(Point(x.toDouble, y.toDouble), 4326).reproject(LatLng, WebMercator)(3857)
     }
   } catch {
     case e: Exception => throw new IllegalArgumentException(

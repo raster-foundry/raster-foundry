@@ -198,22 +198,22 @@ class SceneSpec extends WordSpec
     }
 
     "filter scenes by bounding box" in {
-      Get("/api/scenes/?bbox=0,0,1,1") ~> baseRoutes ~> check {
+      Get("/api/scenes/?bbox=0,0,0.00001,0.00001") ~> baseRoutes ~> check {
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]
         res.count shouldEqual 0
       }
-      Get("/api/scenes/?bbox=0,0,1000,1000") ~> baseRoutes ~> check {
+      Get("/api/scenes/?bbox=0,0,0.001,0.001") ~> baseRoutes ~> check {
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]
         res.count shouldEqual 1
       }
     }
 
     "filter scenes by point" in {
-      Get("/api/scenes/?point=101,101") ~> baseRoutes ~> check {
+      Get("/api/scenes/?point=0.0009,0.0009") ~> baseRoutes ~> check {
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]
         res.count shouldEqual 1
       }
-      Get("/api/scenes/?point=1,1") ~> baseRoutes ~> check {
+      Get("/api/scenes/?point=1.0,1.0") ~> baseRoutes ~> check {
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]
         res.count shouldEqual 0
       }
