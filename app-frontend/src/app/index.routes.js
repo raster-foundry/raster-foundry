@@ -2,6 +2,7 @@ import browseTpl from './pages/browse/browse.html';
 import marketTpl from './pages/market/market.html';
 import marketSearchTpl from './pages/market/search/search.html';
 import marketModelTpl from './pages/market/model/model.html';
+import editorTpl from './pages/editor/editor.html';
 import libraryTpl from './pages/library/library.html';
 import scenesTpl from './pages/library/scenes/scenes.html';
 import scenesListTpl from './pages/library/scenes/list/list.html';
@@ -11,6 +12,7 @@ import bucketsListTpl from './pages/library/buckets/list/list.html';
 import bucketsDetailTpl from './pages/library/buckets/detail/detail.html';
 import bucketSceneTpl from './pages/library/buckets/detail/scene/scene.html';
 import bucketScenesTpl from './pages/library/buckets/detail/bucketScenes/bucketScenes.html';
+import bucketEditTpl from './pages/editor/bucket/bucketedit.html';
 import settingsTpl from './pages/settings/settings.html';
 import profileTpl from './pages/settings/profile/profile.html';
 import accountTpl from './pages/settings/account/account.html';
@@ -37,6 +39,24 @@ function librarySceneStates($stateProvider) {
             url: '/list?:page',
             templateUrl: scenesListTpl,
             controller: 'ScenesListController',
+            controllerAs: '$ctrl'
+        });
+}
+
+function editorStates($stateProvider) {
+    $stateProvider
+        .state('editor', {
+            url: '/editor',
+            templateUrl: editorTpl,
+            controller: 'EditorController',
+            controllerAs: '$ctrl',
+            abstract: true
+        })
+        .state('editor.bucket', {
+            url: '/bucket/:bucketid',
+            params: {bucket: null},
+            templateUrl: bucketEditTpl,
+            controller: 'BucketEditController',
             controllerAs: '$ctrl'
         });
 }
@@ -173,6 +193,7 @@ function routeConfig($urlRouterProvider, $stateProvider) {
 
     browseStates($stateProvider);
     marketStates($stateProvider);
+    editorStates($stateProvider);
     librarySceneStates($stateProvider);
     libraryBucketStates($stateProvider);
     settingsStates($stateProvider);
@@ -192,4 +213,3 @@ function routeConfig($urlRouterProvider, $stateProvider) {
 export default angular
     .module('index.routes', [])
     .config(routeConfig);
-

@@ -34,7 +34,7 @@ export default class LeafletMapController {
             this.geojsonLayer.addData(geojsonFeature);
             this.map.fitBounds(this.geojsonLayer.getBounds());
         }
-        if (changes.proposedBounds) {
+        if (changes.proposedBounds && changes.proposedBounds.currentValue) {
             this.map.fitBounds(changes.proposedBounds.currentValue);
         }
     }

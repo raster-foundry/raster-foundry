@@ -30,6 +30,7 @@
     "angular-jwt": "0.0.9",
     "angular-lock": "^1.0.5",
     "angular-messages": "^1.5.8",
+    "angular-nvd3": "^1.0.8",
     "angular-resource": "^1.5.8",
     "angular-sanitize": "^1.5.8",
     "angular-storage": "0.0.15",
@@ -39,11 +40,14 @@
     "angularjs-slider": "^5.7.0",
     "auth0-lock": "^10.4.1",
     "bootstrap-sass": "^3.3.6",
+    "d3": "^4.3.0",
     "es6-map": "^0.1.4",
     "jquery": "^2.1.4",
     "leaflet": "^1.0.0",
     "lodash": "~4.5.0",
-    "ng-infinite-scroll": "^1.3.0"
+    "ng-infinite-scroll": "^1.3.0",
+    "d3": "^3.4.4",
+    "nvd3": "^1.8.4"
   },
   "devDependencies": {
     "angular-mocks": "^1.5.8",

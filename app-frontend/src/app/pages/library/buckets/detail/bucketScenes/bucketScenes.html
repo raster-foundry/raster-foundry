@@ -67,7 +67,7 @@
   <div class="column-4">
     <div class="content">
       <nav>
-        <a href><i class="icon-mosaic"></i> Editor</a>
+        <a href ng-click="$ctrl.$state.go('editor.bucket', {bucketid: $ctrl.bucketId})"><i class="icon-mosaic"></i> Editor</a>
         <a href ng-click="$ctrl.downloadModal()"><i class="icon-download"></i> Download</a>
         <hr>
         <a href class="color-danger"

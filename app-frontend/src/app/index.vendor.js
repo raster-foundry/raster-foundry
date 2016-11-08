@@ -3,6 +3,9 @@
 // node_modules
 import 'jquery';
 import 'angular';
+import 'd3';
+import 'nvd3';
+import 'angular-nvd3';
 import 'angular-ui-router';
 import 'angular-ui-bootstrap';
 import 'angular-deferred-bootstrap';
