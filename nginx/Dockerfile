@@ -7,4 +7,5 @@ COPY srv/dist /srv/dist/
 RUN chown nginx:nginx -R /srv/dist/
 
 COPY etc/nginx/nginx.conf /etc/nginx/nginx.conf
-COPY etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
+COPY etc/nginx/conf.d/app.conf /etc/nginx/conf.d/app.conf
+COPY etc/nginx/conf.d/airflow.conf /etc/nginx/conf.d/airflow.conf
