@@ -48,11 +48,12 @@ def create_landsat8_scenes(csv_row):
     landsat_id = csv_row.pop('sceneID')
     landsat_path = get_landsat_path(landsat_id)
     if not s3_obj_exists(aws_landsat_base + landsat_path + 'index.html'):
-        logger.error(
+        logger.warn(
             'AWS and USGS are not always in sync. Try again in several hours.\n'
             'If you believe this message is in error, check %s manually.',
             aws_landsat_base + landsat_path
         )
+        return []
     timestamp = csv_row.pop('acquisitionDate') + 'T00:00:00.000Z'
     cloud_cover = float(csv_row.pop('cloudCoverFull'))
     sun_elevation = float(csv_row.pop('sunElevation'))

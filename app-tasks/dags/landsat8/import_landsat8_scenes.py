@@ -18,7 +18,7 @@ rf_logger.addHandler(ch)
 
 logger = logging.getLogger(__name__)
 
-start_date = datetime(2016, 9, 25)
+start_date = datetime(2016, 11, 6)
 
 args = {
     'owner': 'raster-foundry',
@@ -28,7 +28,8 @@ args = {
 dag = DAG(
     dag_id='find_landsat8_scenes',
     default_args=args,
-    schedule_interval=None
+    schedule_interval='@daily',
+    concurrency=int(os.getenv('AIRFLOW_DAG_CONCURRENCY', 24))
 )
 
 
