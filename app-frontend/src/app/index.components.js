@@ -4,6 +4,8 @@ export default angular.module('index.components', [
     require('./components/modelSearch/modelSearch.module.js').name,
     require('./components/modelItem/modelItem.module.js').name,
     require('./components/filterPane/filterPane.module.js').name,
+    require('./components/colorCorrectPane/colorCorrectPane.module.js').name,
+    require('./components/channelHistogram/channelHistogram.module.js').name,
     require('./components/sceneItem/sceneItem.module.js').name,
     require('./components/sceneDetail/sceneDetail.module.js').name,
     require('./components/bucketItem/bucketItem.module.js').name,

@@ -1,0 +1,88 @@
+<div class="container column-stretch">
+  <!-- Sidebar (container is in parent view) -->
+  <div class="sidebar">
+    <!-- Color correction -->
+    <div class="color-correct-pane" ng-if="$ctrl.showColorCorrect">
+      <div class="sidebar-static histogram">
+        <channel-histogram data="$ctrl.data"></channel-histogram>
+        <div>
+          <a ng-click="">Make source histogram</a>
+        </div>
+      </div>
+      <div class="sidebar-scrollable">
+        <color-correct-pane
+          desired-correction="$ctrl.correction"
+          on-correction-change="$ctrl.onCorrectionChange(newCorrection)"
+          reset="$ctrl.resetToggle"
+          class="color-correct-panel">
+        </color-correct-pane>
+      </div>
+      <div class="sidebar-static">
+        <a href ng-click="$ctrl.hideColorCorrect()">Back</h5>
+        <div class="sidebar-actions">
+          <a href ng-click="$ctrl.resetColors()">Reset</a>
+          <a href ng-click="$ctrl.applyColors()">Apply changes</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- scene listing -->
+    <div class="scene-list-pane" ng-if="$ctrl.showLayerList">
+      <div class="sidebar-static">
+        Selected scenes: {{ $ctrl.selectedScenes.size }}
+        <div class="sidebar-actions">
+          <select>
+            <option selected>Action</option>
+            <option><i class="icon-load"></i> Sync histogram</option>
+            <option><i class="icon-ccw"></i> Reset changes</option>
+            <option><i class="icon-trash"></i> Delete</option>
+          </select>
+          <input type="checkbox" ng-model="$ctrl.selectAllToggle"
+            ng-change="$ctrl.onToggleSelection()">
+        </div>
+      </div>
+      <div class="sidebar-scrollable" id="infscroll">
+        <div
+            infinite-scroll="$ctrl.getMoreScenes()" infinite-scroll-distance=".5"
+            infinite-scroll-disabled="$ctrl.loading || ($ctrl.lastSceneResult && !$ctrl.lastSceneResult.hasNext) || $ctrl.errorMsg"
+            infinite-scroll-container="'#infscroll'"
+            class="list-group">
+          <rf-scene-item
+              ng-click="$ctrl.openColorCorrect()"
+              scene="scene"
+              selectable
+              selected="$ctrl.isSelected(scene)"
+              on-select="$ctrl.setSelected(scene, selected)"
+              class="selectable"
+              ng-repeat="scene in $ctrl.sceneList track by scene.id">
+          </rf-scene-item>
+        </div>
+        <div class="list-group" ng-show="$ctrl.loading">
+          <span class="list-placeholder">
+            <i class="icon-load"></i>
+          </span>
+        </div>
+        <div class="list-group"
+             ng-show="!$ctrl.loading && $ctrl.lastSceneResult && !$ctrl.lastSceneResult.hasNext">
+          <span class="list-placeholder">
+            No more scenes to load
+          </span>
+        </div>
+        <div class="list-group" ng-show="$ctrl.errorMsg">
+          <span class="list-placeholder">
+            {{$ctrl.errorMsg}}
+          </span>
+        </div>
+        <div class="list-group load-message"
+             ng-show="!$ctrl.loading && $ctrl.lastSceneResult && $ctrl.lastSceneResult.hasNext">
+          <a href ng-click="$ctrl.getMoreScenes()">Load More...</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Map -->
+  <div class="main">
+    <rf-leaflet-map class="map-container"></rf-leaflet-map>
+  </div>
+</div>

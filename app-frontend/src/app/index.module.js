@@ -11,6 +11,7 @@ const App = angular.module(
     'rasterFoundry', [
         // plugins
         require('angular-ui-router'),
+        require('angular-nvd3'),
         'angular-storage',
         'angular-jwt',
         'auth0.lock',
@@ -38,6 +39,8 @@ const App = angular.module(
         require('./pages/market/market.module.js').name,
         require('./pages/market/search/search.module.js').name,
         require('./pages/market/model/model.module.js').name,
+        require('./pages/editor/editor.module.js').name,
+        require('./pages/editor/bucket/bucketedit.module.js').name,
         require('./pages/library/library.module.js').name,
         require('./pages/library/scenes/scenes.module.js').name,
         require('./pages/library/scenes/list/list.module.js').name,
