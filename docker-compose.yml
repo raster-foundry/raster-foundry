@@ -18,6 +18,7 @@ services:
     links:
       - app-server
       - airflow-webserver
+      - airflow-flower
     volumes:
       - ./nginx/srv/dist/:/srv/dist/
       - ./nginx/etc/nginx/nginx.conf:/etc/nginx/nginx.conf
