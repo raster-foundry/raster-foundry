@@ -26,6 +26,8 @@ tags:
     description: Interact with imagery
   - name: Model Lab
     description: Geospatial processing discovery and endpoints
+  - name: Statistics
+    description: Statistical metadata about geospatial data
 
 paths:
   /users/:
@@ -295,6 +297,7 @@ paths:
         - $ref: '#/parameters/minResolution'
         - $ref: '#/parameters/maxResolution'
         - $ref: '#/parameters/tags'
+        - $ref: '#/parameters/bbox'
       responses:
         200:
           description: Paginated list of scenes
@@ -365,6 +368,39 @@ paths:
         404:
           description: |
             The UUID parameter does not refer to a scene or the user does not have access to the scene it refers to
+          schema:
+            $ref: '#/definitions/Error'
+  /scene-grids/{bboxCoordinates}/{zoom}:
+    get:
+      summary: Scene statistics. Geojson FeatureCollection grid which lines up with map tiles and gives scene intersection count
+      tags:
+        - Statistics
+      parameters:
+        - $ref: '#/parameters/bboxCoordinates'
+        - $ref: '#/parameters/zoom'
+        - $ref: '#/parameters/organization'
+        - $ref: '#/parameters/maxCloudCover'
+        - $ref: '#/parameters/minCloudCover'
+        - $ref: '#/parameters/minAcquisitionDatetime'
+        - $ref: '#/parameters/maxAcquisitionDatetime'
+        - $ref: '#/parameters/minCreateDatetime'
+        - $ref: '#/parameters/maxCreateDatetime'
+        - $ref: '#/parameters/datasource'
+        - $ref: '#/parameters/month'
+        - $ref: '#/parameters/maxSunAzimuth'
+        - $ref: '#/parameters/minSunAzimuth'
+        - $ref: '#/parameters/maxSunElevation'
+        - $ref: '#/parameters/minSunElevation'
+        - $ref: '#/parameters/minResolution'
+        - $ref: '#/parameters/maxResolution'
+        - $ref: '#/parameters/tags'
+      responses:
+        200:
+          description: Statistics for the given bounding box
+          schema:
+            $ref: '#/definitions/SceneGrid'
+        400:
+          description: Invalid Parameters
           schema:
             $ref: '#/definitions/Error'
   /buckets/:
@@ -1102,10 +1138,28 @@ parameters:
     type: number
     required: false
   maxResolution:
-    name: maxResolutiono
+    name: maxResolution
     description: Only return objects that have elements with a resolution less than this amount
     in: query
     type: number
+    required: false
+  bboxCoordinates:
+    name: bboxCoordinates
+    description: Bounding box as a path parameter. eg "/southwest_lng,southwest_lat,northeast_lng,northeast_lat/"
+    in: path
+    type: string
+    required: true
+  zoom:
+    name: zoom
+    description: The zoom level used to split the bbox into a grid
+    in: path
+    type: number
+    required: true
+  bbox:
+    name: bbox
+    description: Bounding box. eg "bbox=southwest_lng,southwest_lat,northeast_lng,northeast_lat"
+    in: query
+    type: string
     required: false
 definitions:
   BaseModel:
@@ -1414,6 +1468,49 @@ definitions:
               - PARTIALFAILURE
               - QUEUED
               - PROCESSING
+  SceneGrid:
+    allOf:
+      - type: object
+        description: Geojson object
+        properties:
+          type:
+            type: string
+            description: Type of geojson feature. Expect 'FeatureCollection'
+          polygons:
+            type: array
+            description: Geojson polygon for each grid cell
+            items:
+              type: object
+              properties:
+                type:
+                  type: string
+                  description: Geojson Feature
+                geometry:
+                  type: object
+                  description: Geojson polygon
+                  properties:
+                    type:
+                      type: string
+                      description: Polygon 
+                    coordinates:
+                      type: array
+                      description: list of polygon coordinate rings
+                      items:
+                        type: array
+                        description: polygon coordinate ring
+                        items:
+                          type: array
+                          description: coordinate pairs
+                          items:
+                            type: number
+                            description: coordinate
+                properties:
+                  type: object
+                  description: Geojson grid object properties
+                  properties:
+                    sceneCount:
+                      type: number
+                      description: Number of scenes which intersect the grid object
   Bucket:
     allOf:
       - $ref: '#/definitions/BaseModel'
