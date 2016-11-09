@@ -165,27 +165,20 @@ object Scene extends GeoJsonSupport {
       * @param records result of join query to return scene with related
       * information
       */
-    def fromRecords(records: Seq[(Scene, Option[Image], Option[Band], Option[Thumbnail])]): Iterable[Scene.WithRelated] = {
+    def fromRecords(records: Seq[(Scene, Option[Image], Option[Band], Option[Thumbnail])])
+      : Iterable[Scene.WithRelated] = {
       val distinctScenes = records.map(_._1).distinct
-      val groupedThumbs = records.map(_._4).flatten.groupBy(_.sceneId)
-      val groupedImages = Image.WithRelated.fromRecords {
-        val images = records.map(_._2).flatten
-        val bands = records.map(_._3).flatten
-        for {
-          im <- images
-          bd <- bands
-        } yield (im, bd)
-      }.groupBy(_.scene)
+      val groupedScenes = records.groupBy(_._1)
+      val groupedBands = records.flatMap(_._3).distinct.groupBy(_.image)
+
       distinctScenes.map { scene =>
-        val seqImages = groupedImages.get(scene.id) match {
-          case Some(result) => result.asInstanceOf[Seq[Image.WithRelated]]
-          case _ => List.empty[Image.WithRelated]
+        val (seqImages, seqThumbnails) = groupedScenes(scene).map {
+          case (_, image, _, thumbnail) => (image, thumbnail)
+        }.unzip
+        val imagesWithComponents: Seq[Image.WithRelated] = seqImages.flatten.map {
+          case (image) => image.withRelatedFromComponents(groupedBands(image.id))
         }
-        val seqThumbnails = groupedThumbs.get(scene.id) match {
-          case Some(result) => result.asInstanceOf[Seq[Thumbnail]]
-          case _ => List.empty[Thumbnail]
-        }
-        scene.withRelatedFromComponents(seqImages, seqThumbnails.distinct)
+        scene.withRelatedFromComponents(imagesWithComponents, seqThumbnails.flatten.distinct)
       }
     }
   }
