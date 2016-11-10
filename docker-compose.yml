@@ -86,12 +86,12 @@ services:
       - redis:cache.service.rasterfoundry.internal
     environment:
       - AIRFLOW_HOME=/usr/local/airflow
-      - AIRFLOW_PARALLELISM=32
+      - AIRFLOW_PARALLELISM=2
       - AIRFLOW_FERNET_KEY=secret
       - AIRFLOW_BASE_URL=http://localhost:8080
       - AIRFLOW_WEBSERVER_WORKERS=1
       - AIRFLOW_SECRET_KEY=secret
-      - AIRFLOW_CELERY_CONCURRENCY=16
+      - AIRFLOW_CELERY_CONCURRENCY=4
       - RF_HOST=http://rasterfoundry.com:9000
     ports:
       - "8080:8080"
@@ -110,12 +110,12 @@ services:
     env_file: .env
     environment:
       - AIRFLOW_HOME=/usr/local/airflow
-      - AIRFLOW_PARALLELISM=32
+      - AIRFLOW_PARALLELISM=2
       - AIRFLOW_FERNET_KEY=secret
       - AIRFLOW_BASE_URL=http://localhost:8080
       - AIRFLOW_WEBSERVER_WORKERS=1
       - AIRFLOW_SECRET_KEY=secret
-      - AIRFLOW_CELERY_CONCURRENCY=16
+      - AIRFLOW_CELERY_CONCURRENCY=4
       - RF_HOST=http://rasterfoundry.com:9000
     ports:
       - "5555:5555"
