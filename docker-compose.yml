@@ -110,6 +110,8 @@ services:
     env_file: .env
     environment:
       - AIRFLOW_HOME=/usr/local/airflow
+      - AIRFLOW_REMOTE_LOG_FOLDER=
+      - AIRFLOW_REMOTE_LOG_CONN_ID=
       - AIRFLOW_PARALLELISM=2
       - AIRFLOW_FERNET_KEY=secret
       - AIRFLOW_BASE_URL=http://localhost:8080
@@ -139,6 +141,8 @@ services:
     env_file: .env
     environment:
       - AIRFLOW_HOME=/usr/local/airflow
+      - AIRFLOW_REMOTE_LOG_FOLDER=
+      - AIRFLOW_REMOTE_LOG_CONN_ID=
       - AIRFLOW_PARALLELISM=32
       - AIRFLOW_FERNET_KEY=secret
       - AIRFLOW_BASE_URL=http://localhost:8080
@@ -167,6 +171,8 @@ services:
     env_file: .env
     environment:
       - AIRFLOW_HOME=/usr/local/airflow
+      - AIRFLOW_REMOTE_LOG_FOLDER=
+      - AIRFLOW_REMOTE_LOG_CONN_ID=
       - AIRFLOW_PARALLELISM=32
       - AIRFLOW_FERNET_KEY=secret
       - AIRFLOW_BASE_URL=http://localhost:8080
