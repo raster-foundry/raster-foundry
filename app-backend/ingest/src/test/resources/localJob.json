@@ -6,6 +6,7 @@
             "uri": "file:///tmp/landsat-rgb",
             "crs": "epsg:3857",
             "cellType": "uint16raw",
+            "histogramBuckets": 256,
             "cellSize": {"width": 37.151447651062888, "height": -37.151447651062888},
             "pyramid": true,
             "native": true

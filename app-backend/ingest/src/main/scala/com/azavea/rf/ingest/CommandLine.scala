@@ -7,7 +7,8 @@ import scala.collection.JavaConversions._
 
 object CommandLine {
 
-  implicit val weekDaysRead: scopt.Read[URI] =
+  // Used for reading text in as URI
+  implicit val uriRead: scopt.Read[URI] =
     scopt.Read.reads(new URI(_))
 
   val parser = new scopt.OptionParser[Ingest.Params]("raster-foundry-ingest") {

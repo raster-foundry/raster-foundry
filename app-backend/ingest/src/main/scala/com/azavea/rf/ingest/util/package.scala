@@ -13,6 +13,7 @@ import java.util._
 
 package object util {
 
+  /** Convert URIs into input streams, branching based on URI type */
   def getStream(uri: URI): InputStream = uri.getScheme match {
     case "file" =>
       new FileInputStream(new File(uri))
@@ -28,6 +29,7 @@ package object util {
       throw new IllegalArgumentException(s"Resource at $uri is not valid")
   }
 
+  /** Use a provided URI to get an array of bytes */
   def readBytes(fileUri: URI): Array[Byte] = {
     val is = getStream(fileUri)
     try {
@@ -37,6 +39,7 @@ package object util {
     }
   }
 
+  /** Use a provided URI to get a string */
   def readString(fileUri: URI): String = {
     val is = getStream(fileUri)
     try {

@@ -14,11 +14,11 @@ services:
       SPARK_LOCAL_DIRS: "/tmp"
       SPARK_PUBLIC_DNS: "localhost"
       SPARK_MASTER_WEBUI_PORT: "8888"
-      SPARK_DAEMON_MEMORY: "256m"
+      SPARK_DAEMON_MEMORY: "2G"
       SPARK_DAEMON_JAVA_OPTS: "-Dspark.deploy.recoveryMode=FILESYSTEM -Dspark.deploy.recoveryDirectory=/spark-state"
     volumes:
       - ./app-backend/ingest/src/test/resources:/opt/rf/test-resources
-      - ./app-backend/ingest/target/scala-2.11/rf-ingest.jar:/opt/rf/rf-ingest.jar
+      - ./app-backend/ingest/target/scala-2.11/rf-ingest.jar:/opt/rf/jars/rf-ingest.jar
       - $HOME/.aws:/var/lib/spark/.aws:ro
       # Spark cluster state
       - /spark-state
@@ -39,9 +39,10 @@ services:
       SPARK_LOCAL_DIRS: "/tmp"
       SPARK_PUBLIC_DNS: "localhost"
       SPARK_WORKER_WEBUI_PORT: "8889"
-      SPARK_WORKER_MEMORY: "4G"
-      SPARK_DAEMON_MEMORY: "4G"
+      SPARK_WORKER_MEMORY: "2G"
+      SPARK_DAEMON_MEMORY: "2G"
     volumes:
+      - ./app-backend/ingest/src/test/resources:/opt/rf/test-resources
       - $HOME/.aws:/var/lib/spark/.aws:ro
       # Spark scratch space
       - /tmp
@@ -61,9 +62,11 @@ services:
       AWS_PROFILE: "raster-foundry"
       SPARK_LOCAL_DIRS: "/tmp"
       SPARK_PUBLIC_DNS: "localhost"
-      SPARK_DRIVER_MEMORY: "512m"
-      SPARK_EXECUTOR_MEMORY: "512m"
+      SPARK_DRIVER_MEMORY: "2G"
+      SPARK_EXECUTOR_MEMORY: "2G"
     volumes:
+      - ./app-backend/ingest/src/test/resources:/opt/rf/test-resources
+      - ./app-backend/ingest/target/scala-2.11/rf-ingest.jar:/opt/rf/jars/rf-ingest.jar
       - ./worker-tasks/:/opt/raster-foundry/worker-tasks/
       - ./.ivy2:/root/.ivy2
       - ./.sbt:/root/.sbt

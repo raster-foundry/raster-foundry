@@ -31,6 +31,10 @@ object Ingest extends SparkJob {
   case class Params(jobDefinition: URI = new URI(""), testRun: Boolean = false)
   type RfLayerWriter = Writer[LayerId, RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]]]
 
+  /** Get a layerwriter and an attribute store for the catalog located at the provided URI
+    *
+    * @param baseUri A URI which describes a GeoTrellis catalog location
+    */
   def getRfLayerWriter(baseUri: URI): (RfLayerWriter, AttributeStore) = baseUri.getScheme match {
     case "s3" | "s3a" | "s3n" =>
       val (bucket, prefix) = S3.parse(baseUri)
@@ -43,6 +47,11 @@ object Ingest extends SparkJob {
       (writer, fileWriter.attributeStore)
   }
 
+  /** Produce metadata for an IngestLayer
+    *
+    *  @param layer A specification for ingesting a layer
+    *  @param scheme A scheme used to construct the tiling grid
+    */
   def calculateTileLayerMetadata(layer: IngestLayer, scheme: LayoutScheme): (Int, TileLayerMetadata[SpatialKey]) = {
     // We need to build TileLayerMetadata that we expect to start pyramid from
     val overallExtent = layer.sources
@@ -70,17 +79,25 @@ object Ingest extends SparkJob {
     )
   }
 
-  def multibandHistogram(rdd: RDD[(SpatialKey, MultibandTile)], numBuckets: Int): Vector[Histogram[Double]] = {
-    rdd.map { case (key, mbt) =>
+  /** Produce a multiband histogram
+    *
+    * @param rdd An RDD of Tiles to construct a histogram over
+    * @param numBuckets The number of histogram 'buckets' in which to bin values
+    */
+  def multibandHistogram(rdd: RDD[(SpatialKey, MultibandTile)], numBuckets: Int): Vector[Histogram[Double]] =
+    rdd.map({ case (key, mbt) =>
       mbt.bands.map { tile =>
         tile.histogramDouble(numBuckets)
       }
-    }
-    .reduce { (hs1, hs2) =>
+    }).reduce({ (hs1, hs2) =>
       hs1.zip(hs2).map { case (a, b) => a merge b }
-    }
-  }
+    })
 
+  /** We need to supress this warning because there's a perfectly safe `head` call being
+    *  made here. The compiler just isn't smart enough to figure that out
+    *
+    *  @param layer An ingest layer specification
+    */
   @SuppressWarnings(Array("TraversableHead"))
   def ingestLayer(layer: IngestLayer)(implicit sc: SparkContext) = {
     val tileSize = 256
@@ -136,13 +153,14 @@ object Ingest extends SparkJob {
 
         if (zoom == math.max(maxZoom / 2, 1)) {
           import spray.json.DefaultJsonProtocol._
-          attributeStore.write(sharedId, "histogram", multibandHistogram(rdd, numBuckets = 10))
+          attributeStore.write(sharedId, "histogram", multibandHistogram(rdd, numBuckets = 256))
         }
 
         if (zoom == 1) {
           attributeStore.write(sharedId, "extent", rdd.metadata.extent)
           attributeStore.write(sharedId, "crs", rdd.metadata.crs)(crsJsonFormat) // avoid using default JF
         }
+        // Write an attribute for verification of completed ingest
         attributeStore.write(sharedId, "ingestComplete", true)
       } catch {
         case e: Throwable =>
@@ -151,9 +169,9 @@ object Ingest extends SparkJob {
     }
   }
 
-  /**
-    * This can be tested from sbt console with:
-    * test:runMain com.azavea.rf.ingest.Ingest -j file:/Users/eugene/proj/raster-foundry/app-backend/ingest/sampleJob.json
+  /** Sample ingest definitions can be found in the accompanying test/resources
+    *
+    * @param args Arguments to be parsed by the tooling defined in [[CommandLine]]
     */
   def main(args: Array[String]): Unit = {
     val params = CommandLine.parser.parse(args, Ingest.Params()) match {

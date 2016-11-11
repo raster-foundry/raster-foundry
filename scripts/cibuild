@@ -63,10 +63,6 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         GIT_COMMIT="${GIT_COMMIT}" docker-compose \
             run --no-deps --entrypoint ./sbt --rm tile-server tile/assembly
 
-        echo "Building ingest JAR"
-        GIT_COMMIT="${GIT_COMMIT}" docker-compose \
-            run --no-deps --rm --entrypoint ./sbt app-server ingest/assembly
-
         # Build app, airflow
         echo "Building app, airflow..."
         GIT_COMMIT="${GIT_COMMIT}" docker-compose \

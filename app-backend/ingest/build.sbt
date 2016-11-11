@@ -4,7 +4,7 @@ assemblyJarName in assembly := "rf-ingest.jar"
 
 mainClass in (Compile, assembly) := Some("com.azavea.rf.ingest.Ingest")
 
-javaOptions += "-Xmx8G"
+javaOptions += "-Xmx2G"
 
 fork in run := true
 
