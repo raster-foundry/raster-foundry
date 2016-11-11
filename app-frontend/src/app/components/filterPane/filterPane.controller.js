@@ -199,7 +199,7 @@ export default class FilterPaneController {
             self: {label: 'My Imports', enabled: false},
             users: {label: 'Raster Foundry Users', enabled: false},
             'Sentinel-2': {label: 'Sentinel-2', enabled: false},
-            'Landsat-8': {label: 'Landsat-8', enabled: false}
+            'Landsat 8': {label: 'Landsat 8', enabled: false}
         };
         if (this.filters.datasource) {
             if (
