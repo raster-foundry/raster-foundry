@@ -182,12 +182,17 @@ export default class BucketEditController {
 
     onToggleSelection() {
         // This fires pre-change, so if the box is checked then we need to deselect
-        if (this.selectAllToggle) {
+        if (this.shouldSelectAll()) {
             this.selectAllScenes();
         } else {
             this.selectNoScenes();
         }
     }
+
+    shouldSelectAll() {
+        return !this.lastSceneResult || this.selectedScenes.size < this.lastSceneResult.count;
+    }
+
 
     selectNoScenes() {
         this.selectedScenes.clear();
