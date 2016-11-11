@@ -24,6 +24,7 @@ import com.azavea.rf.ingest.model._
 
 object Testing {
 
+  /** Check that an ingested layer has a valid s3-based catalog entry for an ingest definition */
   def validateS3CatalogEntry(catalogURI: URI, layerID: UUID): Unit = {
     val (s3Bucket, s3Key) = S3.parse(catalogURI)
     val attributeStore = S3AttributeStore(s3Bucket, s3Key)
@@ -32,6 +33,7 @@ object Testing {
       throw new Exception("Something went wrong during ingest...")
   }
 
+  /** Check that an ingested layer has a valid file-based catalog entry for an ingest definition */
   def validateFileCatalogEntry(catalogURI: URI, layerID: UUID): Unit = {
     val attributeStore = FileAttributeStore(catalogURI.getPath)
     val gtLayerID = LayerId(layerID.toString, 0)
@@ -39,9 +41,11 @@ object Testing {
       throw new Exception("Something went wrong during ingest...")
   }
 
+  /** Check that an ingested layer has a valid catalog entry for an ingest definition */
   def validateCatalogEntry(layer: IngestLayer): Unit =
     validateCatalogEntry(layer.output.uri, layer.id)
 
+  /** Check that an ingested layer has a valid catalog entry for an ingest definition */
   def validateCatalogEntry(catalogURI: URI, layerID: UUID): Unit = catalogURI.getScheme match {
     case "s3" | "s3a" | "s3n" =>
       validateS3CatalogEntry(catalogURI, layerID)

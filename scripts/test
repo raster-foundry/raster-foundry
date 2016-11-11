@@ -47,7 +47,7 @@ then
             --rm \
             --entrypoint "/bin/bash -c" \
             spark-master \
-            "spark-submit --master \"local[*]\" --driver-memory 4G --executor-memory 4G /opt/rf/rf-ingest.jar -t -j file:///opt/rf/test-resources/localJob.json"
+            "spark-submit --master \"local[*]\" --driver-memory 2G --executor-memory 2G /opt/rf/jars/rf-ingest.jar -t -j file:///opt/rf/test-resources/localJob.json"
 
         # TODO: uncomment once https://github.com/azavea/raster-foundry/issues/435
         # is resolved

@@ -27,11 +27,13 @@ object S3 {
   private val slug = "[a-zA-Z0-9-]+"
   val S3UrlRx = new Regex(s"""s3[an]?://(?:($idRx):($keyRx)@)?($slug)/{0,1}(.*)""", "aws_id", "aws_key", "bucket", "prefix")
 
+  /** List the keys to files found within a given bucket */
   def listKeys(url: String, ext: String, recursive: Boolean): Array[URI] = {
     val S3UrlRx(_, _, bucket, prefix) = url
     listKeys(bucket, prefix, ext, recursive)
   }
 
+  /** List the keys to files found within a given bucket */
   def listKeys(s3bucket: String, s3prefix: String, ext: String, recursive: Boolean = false): Array[URI] = {
     val objectRequest = (new ListObjectsRequest)
       .withBucketName(s3bucket)
@@ -45,7 +47,9 @@ object S3 {
       .collect { case key if key.endsWith(ext) => new URI(s"s3://${s3bucket}/${key}") }.toArray
   }
 
-  // Copied from GeoTrellis codebase
+  /** List the keys to files found within a given bucket.
+    *  (copied from GeoTrellis codebase)
+    */
   def listKeys(listObjectsRequest: ListObjectsRequest): Seq[String] = {
     var listing: ObjectListing = null
     val result = mutable.ListBuffer[String]()
@@ -59,6 +63,7 @@ object S3 {
     result.toSeq
   }
 
+  /** Parse an S3 URI unto its bucket and prefix portions */
   def parse(uri: URI): (String, String) = {
     val S3UrlRx(_, _, bucket, prefix) = uri.toString
     (bucket, prefix)

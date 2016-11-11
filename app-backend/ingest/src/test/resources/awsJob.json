@@ -6,6 +6,7 @@
             "uri": "s3://rasterfoundry-staging-catalogs-us-east-1/test",
             "crs": "epsg:3857",
             "cellType": "uint16raw",
+            "histogramBuckets": 512,
             "cellSize": {"width": 37.151447651062888, "height": -37.151447651062888},
             "pyramid": true,
             "native": true
