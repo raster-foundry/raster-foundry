@@ -54,6 +54,18 @@ services:
     working_dir: /opt/raster-foundry/app-backend/
     command: ./sbt app/run
 
+  tile-server:
+    image: quay.io/azavea/scala:2.11.8
+    env_file: .env
+    ports:
+      - "9900:9900"
+    volumes:
+      - ./app-backend/:/opt/raster-foundry/app-backend/
+      - ./.ivy2:/root/.ivy2
+      - ./.sbt:/root/.sbt
+    working_dir: /opt/raster-foundry/app-backend/
+    command: ./sbt tile/run
+
   swagger-editor:
     image: swaggerapi/swagger-editor:latest
     ports:

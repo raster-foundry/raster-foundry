@@ -57,13 +57,17 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 
         echo "Building application JAR"
         GIT_COMMIT="${GIT_COMMIT}" docker-compose \
-            run --no-deps --rm --entrypoint ./sbt app-server app/assembly
+            run --no-deps --entrypoint ./sbt --rm app-server app/assembly
+
+        echo "Building tile server JAR"
+        GIT_COMMIT="${GIT_COMMIT}" docker-compose \
+            run --no-deps --entrypoint ./sbt --rm tile-server tile/assembly
 
         # Build app, airflow
         echo "Building app, airflow..."
         GIT_COMMIT="${GIT_COMMIT}" docker-compose \
             -f "${DIR}/../docker-compose.yml" \
             -f "${DIR}/../docker-compose.test.yml"\
-            build nginx app-server
+            build nginx app-server tile-server
     fi
 fi
