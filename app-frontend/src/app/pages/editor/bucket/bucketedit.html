@@ -3,30 +3,35 @@
   <div class="sidebar scene-list-pane" ng-if="$ctrl.showLayerList" >
     <!-- scene listing -->
     <div class="sidebar-static">
-      <h5 class="sidebar-title">
-        Selected scenes: {{ $ctrl.selectedScenes.size }}
-      </h5>
-      <div class="sidebar-actions">
-        <select>
-          <option selected>Action</option>
-          <option><i class="icon-load"></i> Sync histogram</option>
-          <option><i class="icon-ccw"></i> Reset changes</option>
-          <option><i class="icon-trash"></i> Delete</option>
-        </select>
+        <div class="btn-group" uib-dropdown dropdown-append-to-body>
+          <a href uib-dropdown-toggle>
+            Color mode <i class="icon-caret-down"></i>
+          </a>
+          <ul class="dropdown-menu" uib-dropdown-menu role="menu">
+            <li role="menuitem">Natural color</li>
+            <li role="menuitem">Shortwave infrared</li>
+            <li role="menuitem">False color (agriculture)</li>
+          </ul>
+        </div>
+        <div class="btn-group" uib-dropdown dropdown-append-to-body>
+          <a href uib-dropdown-toggle>
+            Action <i class="icon-caret-down"></i>
+          </a>
+          <ul class="dropdown-menu" uib-dropdown-menu role="menu">
+            <li role="menuitem"><i class="icon-load"></i> Sync histogram</li>
+            <li role="menuitem"><i class="icon-arrows-cw"></i> Reset changes</li>
+            <li role="menuitem"><i class="icon-trash"></i> Delete</li>
+          </ul>
+        </div>
         <button class="btn btn-square"
                 ng-class="{'btn-secondary': !$ctrl.shouldSelectAll()}"
                 ng-click="$ctrl.onToggleSelection()">
           <i ng-class="{'icon-plus': $ctrl.shouldSelectAll(),
                         'icon-cross': !$ctrl.shouldSelectAll()}"></i>
         </button>
-      </div>
     </div>
     <div class="sidebar-scrollable" id="infscroll">
-      <div
-          infinite-scroll="$ctrl.getMoreScenes()" infinite-scroll-distance=".5"
-          infinite-scroll-disabled="$ctrl.loading || ($ctrl.lastSceneResult && !$ctrl.lastSceneResult.hasNext) || $ctrl.errorMsg"
-          infinite-scroll-container="'#infscroll'"
-          class="list-group">
+      <div class="list-group">
         <rf-scene-item
             ng-click="$ctrl.openColorCorrect()"
             scene="scene"
@@ -42,20 +47,10 @@
           <i class="icon-load"></i>
         </span>
       </div>
-      <div class="list-group"
-           ng-show="!$ctrl.loading && $ctrl.lastSceneResult && !$ctrl.lastSceneResult.hasNext">
-        <span class="list-placeholder">
-          No more scenes to load
-        </span>
-      </div>
       <div class="list-group" ng-show="$ctrl.errorMsg">
         <span class="list-placeholder">
           {{$ctrl.errorMsg}}
         </span>
-      </div>
-      <div class="list-group load-message"
-           ng-show="!$ctrl.loading && $ctrl.lastSceneResult && $ctrl.lastSceneResult.hasNext">
-        <a href ng-click="$ctrl.getMoreScenes()">Load More...</a>
       </div>
     </div>
   </div>
@@ -63,18 +58,18 @@
        ng-if="$ctrl.showColorCorrect">
     <!-- Color correction -->
     <div class="sidebar-static histogram">
-      <channel-histogram data="$ctrl.data"></channel-histogram>
+      <rf-channel-histogram data="$ctrl.data"></rf-channel-histogram>
       <div>
         <a ng-click="">Make source histogram</a>
       </div>
     </div>
     <div class="sidebar-scrollable">
-      <color-correct-pane
+      <rf-color-correct-pane
           desired-correction="$ctrl.correction"
           on-correction-change="$ctrl.onCorrectionChange(newCorrection)"
           reset="$ctrl.resetToggle"
           class="color-correct-panel">
-      </color-correct-pane>
+      </rf-color-correct-pane>
     </div>
     <div class="sidebar-static">
       <a href ng-click="$ctrl.hideColorCorrect()">Back</a>

@@ -5,7 +5,7 @@ import ChannelHistogramController from './channelHistogram.controller.js';
 
 const ChannelHistogramModule = angular.module('components.channelHistogram', []);
 
-ChannelHistogramModule.component('channelHistogram', ChannelHistogram);
+ChannelHistogramModule.component('rfChannelHistogram', ChannelHistogram);
 ChannelHistogramModule.controller('ChannelHistogramController', ChannelHistogramController);
 
 export default ChannelHistogramModule;

@@ -6,7 +6,7 @@ import ColorCorrectController from './colorCorrectPane.controller.js';
 
 const ColorCorrectModule = angular.module('components.colorCorrectPane', [slider]);
 
-ColorCorrectModule.component('colorCorrectPane', ColorCorrectPane);
+ColorCorrectModule.component('rfColorCorrectPane', ColorCorrectPane);
 ColorCorrectModule.controller('ColorCorrectController', ColorCorrectController);
 
 export default ColorCorrectModule;

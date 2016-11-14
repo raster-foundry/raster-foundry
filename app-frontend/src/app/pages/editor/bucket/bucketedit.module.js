@@ -1,11 +1,10 @@
 import angular from 'angular';
-import ngInfiniteScroll from 'ng-infinite-scroll';
+import dropdown from 'angular-ui-bootstrap/src/dropdown';
 import modal from 'angular-ui-bootstrap/src/modal';
 import BucketEditController from './bucketedit.controller.js';
 
 const BucketEditModule = angular.module('pages.editor.bucket', [
-    'components.leafletMap', ngInfiniteScroll, modal,
-    'components.colorCorrectPane', 'components.channelHistogram'
+    'components.leafletMap', modal, dropdown
 ]);
 
 BucketEditModule.controller('BucketEditController', BucketEditController);

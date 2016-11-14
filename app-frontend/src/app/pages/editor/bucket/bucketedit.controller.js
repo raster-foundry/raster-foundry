@@ -3,10 +3,11 @@ const _ = require('lodash');
 
 export default class BucketEditController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, bucketService, $state
+        $log, $scope, $q, bucketService, $state
     ) {
         'ngInject';
         this.$log = $log;
+        this.$q = $q;
         this.bucketService = bucketService;
         this.$state = $state;
 
@@ -17,7 +18,7 @@ export default class BucketEditController {
         this.bucketId = this.$state.params.bucketid;
 
         this.selectedScenes = new Map();
-        this.foo = 5;
+        this.sceneList = [];
 
         // Populate bucket scenes
         if (!this.bucket) {
@@ -27,17 +28,17 @@ export default class BucketEditController {
                     (bucket) => {
                         this.bucket = bucket;
                         this.loading = false;
-                        this.populateSceneList($state.params.page || 1);
+                        this.populateSceneList();
                     },
                     () => {
-                        this.$state.go('^.^.list');
+                        this.$state.go('library.buckets.list');
                     }
                 );
             } else {
-                this.$state.go('^.^.list');
+                this.$state.go('library.buckets.list');
             }
         } else {
-            this.populateSceneList($state.params.page || 1);
+            this.populateSceneList();
         }
 
         // Fake data for our histogram; this will get replaced by a service call later.
@@ -116,68 +117,49 @@ export default class BucketEditController {
 
     populateSceneList() {
         if (this.loading) {
-            this.reloadScenes = true;
             return;
         }
 
         delete this.errorMsg;
         this.loading = true;
-        this.infScrollPage = 0;
         // save off selected scenes so you don't lose them during the refresh
         this.sceneList = [];
         let params = Object.assign({}, this.queryParams);
         delete params.id;
-        this.bucketService.getBucketScenes(
-            {
-                sort: 'createdAt,desc',
-                pageSize: '10',
-                bucketId: this.bucket.id
-            }
-        ).then(
-            (sceneResult) => {
-                this.lastSceneResult = sceneResult;
-                this.sceneList = sceneResult.results;
-                this.loading = false;
-                if (this.reloadScenes) {
-                    this.reloadScenes = false;
-                    this.populateInitialSceneList();
+        // Figure out how many scenes there are
+        this.bucketService.getBucketScenes({
+            bucketId: this.bucket.id,
+            pageSize: '1'
+        }).then((sceneCount) => {
+            let self = this;
+            // We're going to use this in a moment to create the requests for API pages
+            let requestMaker = function *(totalResults, pageSize) {
+                let pageNum = 0;
+                while (pageNum * pageSize <= totalResults) {
+                    yield self.bucketService.getBucketScenes({
+                        bucketId: self.bucket.id,
+                        pageSize: pageSize,
+                        page: pageNum,
+                        sort: 'createdAt,desc'
+                    });
+                    pageNum = pageNum + 1;
                 }
+            };
+            let numScenes = sceneCount.count;
+            // The default API pagesize is 30 so we'll use that.
+            let pageSize = 30;
+            // Generate requests for all pages
+            let requests = Array.from(requestMaker(numScenes, pageSize));
+            // Unpack responses into a single scene list.
+            // The structure to unpack is:
+            // [{ results: [{},{},...] }, { results: [{},{},...]},...]
+            this.$q.all(requests).then((allResponses) => {
+                this.sceneList = [].concat(...Array.from(allResponses, (resp) => resp.results));
             },
             () => {
                 this.errorMsg = 'Error loading scenes.';
-                this.loading = false;
-            }
-        );
-    }
-
-    getMoreScenes() {
-        if (this.loading || !this.lastSceneResult) {
-            return;
-        }
-
-        delete this.errorMsg;
-        this.loading = true;
-        this.infScrollPage = this.infScrollPage + 1;
-        let params = Object.assign({}, this.queryParams);
-        delete params.id;
-        this.sceneService.query(
-            Object.assign({
-                sort: 'createdAt,desc',
-                pageSize: '20',
-                page: this.infScrollPage
-            }, params)
-        ).then(
-            (sceneResult) => {
-                this.lastSceneResult = sceneResult;
-                let newScenes = sceneResult.results;
-                this.sceneList = [...this.sceneList, ...newScenes];
-                this.loading = false;
-            },
-            () => {
-                this.errorMsg = 'Error loading scenes.';
-                this.loading = false;
-            }
-        );
+            }).finally(() => this.loading = false); // eslint-disable-line no-return-assign
+        });
     }
 
     onToggleSelection() {
@@ -190,7 +172,7 @@ export default class BucketEditController {
     }
 
     shouldSelectAll() {
-        return !this.lastSceneResult || this.selectedScenes.size < this.lastSceneResult.count;
+        return this.selectedScenes.size === 0 || this.selectedScenes.size < this.sceneList.size;
     }
 
 
@@ -199,7 +181,7 @@ export default class BucketEditController {
     }
 
     selectAllScenes() {
-        _.each(this.sceneList, (scene) => this.selectedScenes.set(scene.id, scene));
+        this.sceneList.map((scene) => this.selectedScenes.set(scene.id, scene));
     }
 
     isSelected(scene) {
