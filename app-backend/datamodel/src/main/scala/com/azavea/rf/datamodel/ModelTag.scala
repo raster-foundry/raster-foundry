@@ -32,6 +32,11 @@ object ModelTag {
 
   implicit val defaultModelTagFormat = jsonFormat7(ModelTag.apply _)
 
+  /** Case class to handle creating a new model tag
+    *
+    * @param organizationId UUID organization to create tag for
+    * @param tag String user supplied string to use for tag
+    */
   case class Create(
       organizationId: UUID,
       tag: String

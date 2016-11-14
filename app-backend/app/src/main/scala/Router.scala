@@ -2,10 +2,8 @@ package com.azavea.rf
 
 
 import scala.concurrent.ExecutionContext
-
 import ch.megard.akka.http.cors.CorsDirectives._
 import ch.megard.akka.http.cors.CorsSettings
-
 import com.azavea.rf.bucket.BucketRoutes
 import com.azavea.rf.healthcheck._
 import com.azavea.rf.organization.OrganizationRoutes
@@ -15,6 +13,7 @@ import com.azavea.rf.user.UserRoutes
 import com.azavea.rf.image.ImageRoutes
 import com.azavea.rf.config.ConfigRoutes
 import com.azavea.rf.database.Database
+import com.azavea.rf.modeltag.ModelTagRoutes
 import com.azavea.rf.token.TokenRoutes
 
 
@@ -32,6 +31,7 @@ trait Router extends HealthCheckRoutes
     with ImageRoutes
     with TokenRoutes
     with ThumbnailRoutes
+    with ModelTagRoutes
     with ConfigRoutes {
 
   implicit def database: Database
@@ -49,7 +49,8 @@ trait Router extends HealthCheckRoutes
       pathPrefix("scenes") { sceneRoutes } ~
       pathPrefix("thumbnails") { thumbnailRoutes } ~
       pathPrefix("tokens") { tokenRoutes } ~
-      pathPrefix("users") { userRoutes }
+      pathPrefix("users") { userRoutes } ~
+      pathPrefix("model-tags") { modelTagRoutes }
     } ~
     pathPrefix("config") {
       configRoutes
