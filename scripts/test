@@ -31,15 +31,15 @@ then
         docker-compose \
             -f "${DIR}/../docker-compose.yml" run \
             --rm \
-            --entrypoint "/bin/bash -c" \
-            app-server "./sbt scapegoat"
+            --entrypoint ./sbt \
+            app-server scapegoat
 
         # Run scala tests for app-server
        docker-compose \
            -f "${DIR}/../docker-compose.yml" run \
            --rm \
-           --entrypoint "/bin/bash -c" \
-           app-server "./sbt test"
+           --entrypoint ./sbt \
+           app-server test
 
         # TODO: uncomment once https://github.com/azavea/raster-foundry/issues/435
         # is resolved
@@ -53,9 +53,12 @@ then
         # Run tests for app tasks library
         GIT_COMMIT="${GIT_COMMIT}" docker-compose \
             -f "${DIR}/../docker-compose.yml" \
-            -f "${DIR}/../docker-compose.test.yml" \
-            run --rm --entrypoint "/bin/bash -c" airflow \
-            "cd /opt/raster-foundry/app-tasks/rf && python setup.py test"
+            -f "${DIR}/../docker-compose.test.yml" run \
+            --rm \
+            --entrypoint python \
+            --user root \
+            --workdir /opt/raster-foundry/app-tasks/rf \
+            airflow setup.py test
     fi
     exit
 fi

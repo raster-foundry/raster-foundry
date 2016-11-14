@@ -88,7 +88,7 @@ services:
       - ./app-tasks/dags/:/opt/raster-foundry/app-tasks/dags/
       - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
       - ./app-tasks/rf/src/rf/:/usr/local/bin/rf/
-      - $HOME/.aws:/root/.aws:ro
+      - $HOME/.aws:/usr/local/airflow/.aws:ro
     build:
       context: ./app-tasks
       dockerfile: Dockerfile
@@ -142,7 +142,7 @@ services:
       - ./app-tasks/dags/:/opt/raster-foundry/app-tasks/dags/
       - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
       - ./app-tasks/rf/src/rf/:/usr/local/bin/rf/
-      - $HOME/.aws:/root/.aws:ro
+      - $HOME/.aws:/usr/local/airflow/.aws:ro
     build:
       context: ./app-tasks
       dockerfile: Dockerfile
@@ -172,7 +172,7 @@ services:
       - ./app-tasks/dags/:/opt/raster-foundry/app-tasks/dags/
       - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
       - ./app-tasks/rf/src/rf/:/usr/local/bin/rf/
-      - $HOME/.aws:/root/.aws:ro
+      - $HOME/.aws:/usr/local/airflow/.aws:ro
     build:
       context: ./app-tasks
       dockerfile: Dockerfile
