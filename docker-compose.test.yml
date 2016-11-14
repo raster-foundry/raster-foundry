@@ -12,6 +12,12 @@ services:
       context: ./app-backend/app
       dockerfile: Dockerfile
 
+  tile-server:
+    image: raster-foundry-tile-server:${GIT_COMMIT}
+    build:
+      context: ./app-backend/tile
+      dockerfile: Dockerfile
+
   app-migrations:
     image: raster-foundry-app-migrations:${GIT_COMMIT}
     build:
