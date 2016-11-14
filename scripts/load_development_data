@@ -20,7 +20,7 @@ function load_database_backup() {
 
     check_database
     pushd "${DIR}/.."
-    aws s3 cp "s3://config-development-raster-foundry/database.pgdump" "data/database.pgdump"
+    aws s3 cp "s3://rasterfoundry-development-config-us-east-1/database.pgdump" "data/database.pgdump"
     popd
     echo "Dropping raster foundry database"
     docker-compose -f "${DIR}/../docker-compose.yml" exec -T postgres gosu postgres dropdb rasterfoundry
