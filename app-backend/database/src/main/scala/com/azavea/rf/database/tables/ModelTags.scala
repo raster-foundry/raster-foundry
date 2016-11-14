@@ -7,6 +7,7 @@ import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.fields.{OrganizationFkFields, TimestampFields, UserFkFields}
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.datamodel._
+import com.lonelyplanet.akka.http.extensions.PageRequest
 import com.typesafe.scalalogging.LazyLogging
 import slick.model.ForeignKeyAction
 
@@ -54,7 +55,43 @@ class ModelTags(_tableTag: Tag)
 }
 
 object ModelTags extends TableQuery(tag => new ModelTags(tag)) with LazyLogging {
+
   type TableQuery = Query[ModelTags, ModelTags#TableElementType, Seq]
+
+  implicit class withModelTagsJoinQuery[M, U, C[_]](modelTags: ModelTags.TableQuery)
+      extends ModelTagsTableQuery[M, U, C](modelTags)
+
+  /** List model tags given a page request
+    *
+    * @param pageRequest PageRequest information about sorting and page size
+    */
+  def listModelTags(pageRequest: PageRequest)
+                   (implicit database: DB): Future[PaginatedResponse[ModelTag]] = {
+    val modelTagQueryResult = database.db.run {
+      val action = ModelTags.page(pageRequest).result
+      logger.debug(s"Paginated Query for model tags -- SQL: ${action.statements.headOption}")
+      action
+    }
+    val totalModelTagsQueryResult = database.db.run {
+      val action = ModelTags.length.result
+      logger.debug(s"Total Query for model tags -- SQL: ${action.statements.headOption}")
+      action
+    }
+
+    for {
+      totalTags <- totalModelTagsQueryResult
+      tags <- modelTagQueryResult
+    } yield {
+      val hasNext = (pageRequest.offset + 1) * pageRequest.limit < totalTags // 0 indexed page offset
+      val hasPrevious = pageRequest.offset > 0
+      PaginatedResponse(totalTags,
+        hasPrevious,
+        hasNext,
+        pageRequest.offset,
+        pageRequest.limit,
+        tags)
+    }
+  }
 
   /** Insert a model tag given a create case class with a user
     *
@@ -85,5 +122,48 @@ object ModelTags extends TableQuery(tag => new ModelTags(tag)) with LazyLogging 
     database.db.run {
       fetchAction
     }
+  }
+
+  /** Delete a given model tag
+    *
+    * @param modelTagId UUID ID of model tag to delete
+    */
+  def deleteModelTag(modelTagId: UUID)(implicit database: DB): Future[Int] = {
+    database.db.run {
+      ModelTags.filter(_.id === modelTagId).delete
+    }
+  }
+
+  /** Update a model tag's tag
+    *
+    * Note: Only updates the tag, while automatically setting the modification
+    * time and who modified the tag
+    *
+    * @param modelTag ModelTag model tag to use for update
+    * @param modelTagId UUID ID of tag to perform update with
+    * @param user User user performing update
+    */
+  def updateModelTag(modelTag: ModelTag, modelTagId: UUID, user: User)(
+      implicit database: DB): Future[Int] = {
+    val updateTime = new Timestamp((new java.util.Date).getTime)
+
+    val updateModelTagQuery = for {
+      updateModelTag <- ModelTags.filter(_.id === modelTagId)
+    } yield (updateModelTag.modifiedAt, updateModelTag.modifiedBy, updateModelTag.tag)
+
+    database.db.run {
+      updateModelTagQuery.update((updateTime, user.id, modelTag.tag))
+    } map {
+      case 1 => 1
+      case _ => throw new IllegalStateException("Error while updating model tag")
+    }
+  }
+}
+
+class ModelTagsTableQuery[M, U, C[_]](modelTags: ModelTags.TableQuery) {
+  def page(pageRequest: PageRequest): ModelTags.TableQuery = {
+    ModelTags
+      .drop(pageRequest.offset * pageRequest.limit)
+      .take(pageRequest.limit)
   }
 }
