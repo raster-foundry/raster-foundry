@@ -176,7 +176,7 @@ object Scene extends GeoJsonSupport {
           case (_, image, _, thumbnail) => (image, thumbnail)
         }.unzip
         val imagesWithComponents: Seq[Image.WithRelated] = seqImages.flatten.map {
-          case (image) => image.withRelatedFromComponents(groupedBands(image.id))
+          image => image.withRelatedFromComponents(groupedBands.getOrElse(image.id, Seq[Band]()))
         }
         scene.withRelatedFromComponents(imagesWithComponents, seqThumbnails.flatten.distinct)
       }
