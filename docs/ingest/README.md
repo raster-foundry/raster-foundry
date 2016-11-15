@@ -56,21 +56,14 @@ docker-compose -f docker-compose.spark.yml up spark-master spark-worker
 ```
 
 At this point, a Spark driver (spark-master) and a Spark executor
-(spark-worker) should be running in their respective containers. The
-next step is to get the Spark master URL from this cluster so that we can
-submit jobs to it. Head over to [port 8888 on
-localhost](http://localhost:8888). There, you should be able to find the
-master spark address needed to proceed.  
-
-![Spark Master URL](./spark-master-url.png "Spark Master URL")  
-
-With the spark-master URL in hand and with the Spark cluster running,
-carrying out a real (serialization and all) Spark-based is as simple as
-running the following command:
+(spark-worker) should be running in their respective containers.
+Finally, we kick off an ingest. Note that we specify the master
+address - we can do this because docker's virtual network willuprovide
+name resolution according to the config in `docker-compose.spark.yml`.
 
 ```bash
 docker-compose -f docker-compose.spark.yml run spark-driver \
-               --master <SPARK-MASTER-URL> \
+               --master spark://spark.services.rasterfoundry.internal:7077 \
                --driver-memory 2G \
                --executor-memory 2G \
                /opt/rf/jars/rf-ingest.jar -t -j file:///opt/rf/test-resources/localJob.json
