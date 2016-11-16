@@ -194,3 +194,33 @@ services:
       - RF_HOST=http://rasterfoundry.com:9000
       - C_FORCE_ROOT=True
     command: airflow worker
+
+  airflow-worker-spark:
+    image: raster-foundry-airflow
+    volumes:
+      - ./app-tasks/usr/local/airflow/:/usr/local/airflow/
+      - ./app-tasks/dags/:/opt/raster-foundry/app-tasks/dags/
+      - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
+      - ./app-tasks/rf/src/rf/:/usr/local/bin/rf/
+      - $HOME/.aws:/usr/local/airflow/.aws:ro
+    build:
+      context: ./app-tasks
+      dockerfile: Dockerfile
+    links:
+      - postgres:database.service.rasterfoundry.internal
+      - redis:cache.service.rasterfoundry.internal
+      - app-server:rasterfoundry.com
+    env_file: .env
+    environment:
+      - AIRFLOW_HOME=/usr/local/airflow
+      - AIRFLOW_REMOTE_LOG_FOLDER=
+      - AIRFLOW_REMOTE_LOG_CONN_ID=
+      - AIRFLOW_PARALLELISM=32
+      - AIRFLOW_FERNET_KEY=secret
+      - AIRFLOW_BASE_URL=http://localhost:8080
+      - AIRFLOW_WEBSERVER_WORKERS=1
+      - AIRFLOW_SECRET_KEY=secret
+      - AIRFLOW_CELERY_CONCURRENCY=4
+      - RF_HOST=http://rasterfoundry.com:9000
+      - C_FORCE_ROOT=True
+    command: airflow worker -q spark

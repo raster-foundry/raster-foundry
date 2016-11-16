@@ -26,7 +26,7 @@ RUN set -ex \
        libgdal-dev \
     ' \
     && echo "deb http://ftp.debian.org/debian jessie-backports main" > /etc/apt/sources.list.d/backports.list \
-    && apt-get update && apt-get install -y --no-install-recommends ${buildDeps} ${gdal} ${sparkDeps}\
+    && apt-get update && apt-get install -y --no-install-recommends ${buildDeps} ${gdal} ${sparkDeps} \
     && pip install --no-cache-dir \
            numpy==$(grep "numpy" /tmp/requirements.txt | cut -d= -f3) \
     && pip install --no-cache-dir -r /tmp/requirements.txt \
