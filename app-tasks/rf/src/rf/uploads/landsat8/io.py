@@ -128,7 +128,7 @@ def get_landsat_url(scene):
         str
     """
 
-    root_url = 'http://landsat-pds.s3.amazonaws.com/' + get_landsat_path(scene)
+    root_url = 'https://landsat-pds.s3.amazonaws.com/' + get_landsat_path(scene)
     logger.debug('Constructed Root URL: %s', root_url)
     return root_url
 

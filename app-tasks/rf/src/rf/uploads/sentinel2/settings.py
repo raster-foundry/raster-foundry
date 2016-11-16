@@ -43,7 +43,7 @@ band_lookup = {
 }
 
 # Base http path for constructing resource URLs for Sentinel 2 assets
-base_http_path = 'http://sentinel-s2-l1c.s3-website.eu-central-1.amazonaws.com/{key_path}'
+base_http_path = 'https://sentinel-s2-l1c.s3.amazonaws.com/{key_path}'
 
 # S3/AWS settings and objects
 bucket_name = 'sentinel-s2-l1c'
