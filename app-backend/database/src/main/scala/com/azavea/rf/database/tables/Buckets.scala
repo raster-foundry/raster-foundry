@@ -76,45 +76,16 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
 
   /** Get scenes that belong to a bucket
     *
-    * @param bucketId UUID bucket to request scenes for
+   * @param bucketId UUID bucket to request scenes for
     */
   def listBucketScenes(bucketId: UUID, pageRequest: PageRequest, combinedParams: CombinedSceneQueryParams)
                       (implicit database: DB): Future[PaginatedResponse[Scene.WithRelated]] = {
 
-    val bucketSceneQuery = for {
-      bucketToScene <- ScenesToBuckets if bucketToScene.bucketId === bucketId
-      scene <- Scenes if scene.id === bucketToScene.sceneId
-    } yield scene
+    val injectedParams = combinedParams.copy(
+      sceneParams=combinedParams.sceneParams.copy(bucket=Some(bucketId))
+    )
 
-    val pagedScenes = bucketSceneQuery
-      .joinWithRelated
-      .page(combinedParams, pageRequest)
-
-    val scenesQueryResult = database.db.run {
-      val action = pagedScenes.result
-      logger.debug(s"Total Query for scenes -- SQL: ${action.statements.headOption}")
-      action
-    } map Scene.WithRelated.fromRecords
-
-    val totalScenesQueryResult = database.db.run {
-      val action = bucketSceneQuery
-        .filterBySceneParams(combinedParams.sceneParams)
-        .filterByOrganization(combinedParams.orgParams)
-        .filterByUser(combinedParams.userParams)
-        .filterByTimestamp(combinedParams.timestampParams).length.result
-      logger.debug(s"Total Query for scenes -- SQL: ${action.statements.headOption}")
-      action
-    }
-
-    for {
-      totalScenes <- totalScenesQueryResult
-      scenes <- scenesQueryResult
-    } yield {
-      val hasNext = (pageRequest.offset + 1) * pageRequest.limit < totalScenes // 0 indexed page offset
-      val hasPrevious = pageRequest.offset > 0
-      PaginatedResponse(totalScenes, hasPrevious, hasNext,
-        pageRequest.offset, pageRequest.limit, scenes.toSeq)
-    }
+    Scenes.listScenes(pageRequest, injectedParams)
   }
 
   /** Get specific scenes from a bucket. Returns any scenes from the list of
@@ -123,7 +94,7 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     * @param bucketId UUID primary key of the bucket to limit results to
     * @param sceneIds Seq[UUID] primary key of scenes to retrieve
     */
-  def listBucketScenes(bucketId: UUID, sceneIds: Seq[UUID])
+  def listSelectBucketScenes(bucketId: UUID, sceneIds: Seq[UUID])
                       (implicit database: DB): Future[Iterable[Scene.WithRelated]] = {
 
     val scenes = for {
@@ -250,7 +221,7 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
       }
     }
 
-    listBucketScenes(bucketId, sceneIds)
+    listSelectBucketScenes(bucketId, sceneIds)
   }
 
   /** Removes scenes from bucket
@@ -292,6 +263,6 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
       actions.transactionally
     }
 
-    listBucketScenes(bucketId, sceneIds)
+    listSelectBucketScenes(bucketId, sceneIds)
   }
 }

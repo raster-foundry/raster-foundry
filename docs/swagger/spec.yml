@@ -298,6 +298,7 @@ paths:
         - $ref: '#/parameters/maxResolution'
         - $ref: '#/parameters/tags'
         - $ref: '#/parameters/bbox'
+        - $ref: '#/parameters/bucket'
       responses:
         200:
           description: Paginated list of scenes
@@ -1160,6 +1161,13 @@ parameters:
     description: Bounding box. eg "bbox=southwest_lng,southwest_lat,northeast_lng,northeast_lat"
     in: query
     type: string
+    required: false
+  bucket:
+    name: bucket
+    description: Bucket uuid to filter only
+    in: query
+    type: string
+    format: uuid
     required: false
 definitions:
   BaseModel:

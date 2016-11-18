@@ -1,5 +1,7 @@
 package com.azavea.rf.scene
 
+import java.util.UUID
+
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.ParameterDirectives.parameters
 
@@ -23,7 +25,8 @@ trait SceneQueryParameterDirective extends QueryParametersCommon
     'maxSunElevation.as[Float].?,
     'minSunElevation.as[Float].?,
     'bbox.as[String].?,
-    'point.as[String].?
+    'point.as[String].?,
+    'bucket.as[UUID].?
   )).as(SceneQueryParameters)
 
   val sceneQueryParameters = (orgQueryParams &

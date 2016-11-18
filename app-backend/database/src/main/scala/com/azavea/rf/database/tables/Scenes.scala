@@ -237,8 +237,9 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
 class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) {
   import Scenes.datePart
 
+
   def filterBySceneParams(sceneParams: SceneQueryParameters): Scenes.TableQuery = {
-    scenes.filter{ scene =>
+    val filteredScenes = scenes.filter{ scene =>
       val sceneFilterConditions = List(
         sceneParams.maxAcquisitionDatetime.map(scene.acquisitionDate < _),
         sceneParams.minAcquisitionDatetime.map(scene.acquisitionDate > _),
@@ -265,6 +266,17 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) {
         .map(scene.datasource === _)
         .reduceLeftOption(_ || _)
         .getOrElse(true: Rep[Boolean])
+    }
+
+    sceneParams.bucket match {
+      case Some(bucketId) => {
+        filteredScenes.filter { scene =>
+          scene.id in ScenesToBuckets.filter(_.bucketId === bucketId).map(_.sceneId)
+        }
+      }
+      case _ => {
+        filteredScenes
+      }
     }
   }
 

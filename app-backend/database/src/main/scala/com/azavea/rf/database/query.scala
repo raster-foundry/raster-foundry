@@ -43,7 +43,8 @@ case class SceneQueryParameters(
   maxSunElevation: Option[Float],
   minSunElevation: Option[Float],
   bbox: Option[String],
-  point: Option[String]
+  point: Option[String],
+  bucket: Option[UUID]
 ) {
   val bboxPolygon: Option[Projected[Polygon]] = try {
     bbox
