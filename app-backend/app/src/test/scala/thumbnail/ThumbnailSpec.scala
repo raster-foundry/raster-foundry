@@ -10,6 +10,7 @@ import akka.http.scaladsl.server.Route
 import org.scalatest.{Matchers, WordSpec}
 import spray.json._
 
+import com.azavea.rf.AuthUtils
 import com.azavea.rf.database.tables._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.scene._
@@ -41,6 +42,7 @@ class ThumbnailSpec extends WordSpec
     "https://website.com",
     ThumbnailSize.Large
   )
+  val authHeader = AuthUtils.generateAuthHeader("Default")
 
   // Alias to baseRoutes to be explicit
   val baseRoutes = routes
@@ -117,7 +119,7 @@ class ThumbnailSpec extends WordSpec
   "/api/thumbnails/" should {
     "have a scene to work with" in {
       Post("/api/scenes/").withHeadersAndEntity(
-        List(authorization),
+        List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
           newScene.toJson.toString()
@@ -127,15 +129,20 @@ class ThumbnailSpec extends WordSpec
       }
     }
 
-    "not require authentication for list" in {
+    "require authentication for list" in {
       Get("/api/thumbnails/") ~> baseRoutes ~> check {
+        reject
+      }
+      Get("/api/thumbnails/").withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Thumbnail]]
       }
     }
 
 
     "create thumbnails only with authentication" in {
-      Get("/api/scenes/") ~> baseRoutes ~> check {
+      Get("/api/scenes/").withHeaders(List(authHeader)) ~> baseRoutes ~> check {
         val scenes = responseAs[PaginatedResponse[Scene.WithRelated]]
         val sceneId = scenes.results.head.id
         val thumbnailToPost1 = newThumbnail(ThumbnailSize.Small, sceneId)
@@ -151,7 +158,7 @@ class ThumbnailSpec extends WordSpec
         }
 
         Post("/api/thumbnails/").withHeadersAndEntity(
-          List(authorization),
+          List(authHeader),
           HttpEntity(
             ContentTypes.`application/json`,
             thumbnailToPost1.toJson.toString()
@@ -161,7 +168,7 @@ class ThumbnailSpec extends WordSpec
         }
 
         Post("/api/thumbnails/").withHeadersAndEntity(
-          List(authorization),
+          List(authHeader),
           HttpEntity(
             ContentTypes.`application/json`,
             thumbnailToPost2.toJson.toString()
@@ -173,10 +180,12 @@ class ThumbnailSpec extends WordSpec
     }
 
     "filter by one scene correctly" in {
-      Get("/api/scenes/") ~> baseRoutes ~> check {
+      Get("/api/scenes/").withHeaders(List(authHeader)) ~> baseRoutes ~> check {
         val scenes = responseAs[PaginatedResponse[Scene.WithRelated]]
         val sceneId = scenes.results.head.id
-        Get(s"/api/thumbnails/?sceneId=$sceneId") ~> baseRoutes ~> check {
+        Get(s"/api/thumbnails/?sceneId=$sceneId").withHeaders(
+          List(authHeader)
+        ) ~> baseRoutes ~> check {
           responseAs[PaginatedResponse[Thumbnail]].count shouldEqual 2
         }
       }
@@ -184,14 +193,14 @@ class ThumbnailSpec extends WordSpec
 
     "filter by one (non-existent) scene correctly" in {
       val url = s"/api/thumbnails/?sceneId=${UUID.randomUUID}"
-      Get(url) ~> baseRoutes ~> check {
+      Get(url).withHeaders(List(authHeader)) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Thumbnail]].count shouldEqual 0
       }
     }
 
     "sort by one field correctly" ignore {
       val url = s"/api/thumbnails/?sort=..."
-      Get(url) ~> baseRoutes ~> check {
+      Get(url).withHeaders(List(authHeader)) ~> baseRoutes ~> check {
         /** Sorting behavior isn't described in the spec currently but might be someday */
         responseAs[PaginatedResponse[Thumbnail]]
       }

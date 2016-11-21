@@ -28,7 +28,7 @@ class OrganizationSpec extends WordSpec
   // Alias to baseRoutes to be explicit
   val baseRoutes = routes
 
-  val authorization = AuthUtils.generateAuthHeader("Default")
+  val authHeader = AuthUtils.generateAuthHeader("Default")
   "/api/organizations" should {
     "require authentication" in {
       Get("/api/organizations") ~> baseRoutes ~> check {
@@ -38,7 +38,7 @@ class OrganizationSpec extends WordSpec
 
     "return a paginated list of organizations" in {
       Get("/api/organizations")
-        .addHeader(authorization) ~> baseRoutes ~> check {
+        .addHeader(authHeader) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Organization]]
       }
     }
@@ -46,7 +46,7 @@ class OrganizationSpec extends WordSpec
       val newOrg = Organization.Create("Test Organization")
       Post("/api/organizations")
         .withHeadersAndEntity(
-        List(authorization),
+        List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
           newOrg.toJson.toString()
@@ -60,12 +60,12 @@ class OrganizationSpec extends WordSpec
   "/api/organizations/{uuid}" should {
     "return an organization" in {
       Get("/api/organizations")
-        .addHeader(authorization) ~> baseRoutes ~> check {
+        .addHeader(authHeader) ~> baseRoutes ~> check {
         val orgs = responseAs[PaginatedResponse[Organization]]
         val orgId = orgs.results.head.id
 
         Get(s"/api/organizations/$orgId")
-          .addHeader(authorization) ~> baseRoutes ~> check {
+          .addHeader(authHeader) ~> baseRoutes ~> check {
           responseAs[Organization]
         }
       }
@@ -74,7 +74,7 @@ class OrganizationSpec extends WordSpec
     "return a 404 for non-existent organizations" in {
       val orgUUID = java.util.UUID.randomUUID()
       Get(s"/api/organizations/$orgUUID")
-        .addHeader(authorization) ~> Route.seal(baseRoutes) ~> check {
+        .addHeader(authHeader) ~> Route.seal(baseRoutes) ~> check {
         status shouldEqual StatusCodes.NotFound
       }
     }
@@ -82,24 +82,24 @@ class OrganizationSpec extends WordSpec
   "/api/organizations/{uuid}/users" should {
     "return a list of user roles for the organization" in {
       Get("/api/organizations")
-        .addHeader(authorization) ~> baseRoutes ~> check {
+        .addHeader(authHeader) ~> baseRoutes ~> check {
         val orgs = responseAs[PaginatedResponse[Organization]]
         val orgId = orgs.results.head.id
         Get(s"/api/organizations/$orgId/users")
-          .addHeader(authorization) ~> baseRoutes ~> check {
+          .addHeader(authHeader) ~> baseRoutes ~> check {
           responseAs[PaginatedResponse[User.WithRole]]
         }
       }
     }
     "add a user to an organization" in {
       Get("/api/organizations")
-        .addHeader(authorization) ~> baseRoutes ~> check {
+        .addHeader(authHeader) ~> baseRoutes ~> check {
         val orgs = responseAs[PaginatedResponse[Organization]]
         val orgId = orgs.results.head.id
         val newUserWithRole = User.WithRoleCreate("Default", User.Viewer)
         Post(s"/api/organizations/$orgId/users")
           .withHeadersAndEntity(
-          List(authorization),
+          List(authHeader),
           HttpEntity(
             ContentTypes.`application/json`,
             newUserWithRole.toJson.toString()
@@ -107,7 +107,7 @@ class OrganizationSpec extends WordSpec
         ) ~> baseRoutes ~> check {
           val createdUser = responseAs[User.WithRole]
           Get(s"/api/organizations/$orgId/users/Default")
-            .addHeader(authorization) ~> baseRoutes ~> check {
+            .addHeader(authHeader) ~> baseRoutes ~> check {
             responseAs[User.WithRole] shouldEqual createdUser
           }
         }
@@ -117,20 +117,20 @@ class OrganizationSpec extends WordSpec
   "/api/organizations/{uuid}/users/{userId}" should {
     "return a user's role in the organization" in {
       Get("/api/organizations")
-        .addHeader(authorization) ~> baseRoutes ~> check {
+        .addHeader(authHeader) ~> baseRoutes ~> check {
         val orgs = responseAs[PaginatedResponse[Organization]]
         val orgId = orgs.results.head.id
         val newUserWithRole = User.WithRoleCreate("Default", User.Viewer)
         Post(s"/api/organizations/$orgId/users")
           .withHeadersAndEntity(
-          List(authorization),
+          List(authHeader),
           HttpEntity(
             ContentTypes.`application/json`,
             newUserWithRole.toJson.toString()
           )
         ) ~> baseRoutes ~> check {
           Get(s"/api/organizations/$orgId/users/Default")
-            .addHeader(authorization) ~> baseRoutes ~> check {
+            .addHeader(authHeader) ~> baseRoutes ~> check {
             responseAs[User.WithRole]
           }
         }
@@ -138,18 +138,18 @@ class OrganizationSpec extends WordSpec
     }
     "edit a user's role in the organization" in {
       Get("/api/organizations")
-        .addHeader(authorization) ~> baseRoutes ~> check {
+        .addHeader(authHeader) ~> baseRoutes ~> check {
         val orgs = responseAs[PaginatedResponse[Organization]]
         val orgId = orgs.results.head.id
         Get(s"/api/organizations/$orgId/users/Default")
-        .addHeader(authorization) ~> baseRoutes ~> check {
+        .addHeader(authHeader) ~> baseRoutes ~> check {
           responseAs[User.WithRole]
         }
       }
     }
     "delete a user's role in the organization" in {
       Get("/api/organizations")
-        .addHeader(authorization) ~> baseRoutes ~> check {
+        .addHeader(authHeader) ~> baseRoutes ~> check {
         //TODO
       }
     }

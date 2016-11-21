@@ -21,7 +21,7 @@ class ModelTagSpec extends WordSpec
   implicit val ec = system.dispatcher
   implicit def database = db
 
-  val authorization = AuthUtils.generateAuthHeader("Default")
+  val authHeader = AuthUtils.generateAuthHeader("Default")
   val publicOrgId = UUID.fromString("dfac6307-b5ef-43f7-beda-b9f208bb7726")
   val baseModelTag = "/model-tags/"
   val newModelTag = ModelTag.Create(
@@ -64,9 +64,9 @@ class ModelTagSpec extends WordSpec
       }
     }
 
-    "create a model tag with authorization" in {
+    "create a model tag with authHeader" in {
       Post("/api/model-tags/").withHeadersAndEntity(
-        List(authorization),
+        List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
           newModelTag.toJson.toString()

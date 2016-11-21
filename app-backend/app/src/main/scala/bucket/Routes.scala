@@ -54,7 +54,7 @@ trait BucketRoutes extends Authentication
     }
   }
 
-  def listBuckets: Route = authenticateAndAllowAnonymous { user =>
+  def listBuckets: Route = authenticate { user =>
     (withPagination & bucketQueryParameters) { (page, bucketQueryParameters) =>
       complete {
         Buckets.listBuckets(page, bucketQueryParameters)
@@ -70,7 +70,7 @@ trait BucketRoutes extends Authentication
     }
   }
 
-  def getBucket(bucketId: UUID): Route = authenticateAndAllowAnonymous { user =>
+  def getBucket(bucketId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
         Buckets.getBucket(bucketId)
@@ -99,7 +99,7 @@ trait BucketRoutes extends Authentication
     }
   }
 
-  def listBucketScenes(bucketId: UUID): Route = authenticateAndAllowAnonymous { user =>
+  def listBucketScenes(bucketId: UUID): Route = authenticate { user =>
     (withPagination & sceneQueryParameters) { (page, sceneParams) =>
       complete {
         Buckets.listBucketScenes(bucketId, page, sceneParams)
