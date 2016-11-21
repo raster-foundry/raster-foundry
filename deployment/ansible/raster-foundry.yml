@@ -18,3 +18,7 @@
     - name: Set Environment variable for AWS profile
       lineinfile: dest=/etc/environment regexp=^AWS_PROFILE line="AWS_PROFILE={{aws_profile}}"
       when: aws_profile is defined
+
+    - name: Set Environment variable for host user (used to namespace jars and other artifacts in development)
+      lineinfile: dest=/etc/environment regexp=^RF_HOST_USER line="RF_HOST_USER={{host_user}}"
+      when: host_user is defined
