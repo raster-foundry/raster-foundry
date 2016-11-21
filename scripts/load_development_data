@@ -27,6 +27,8 @@ function load_database_backup() {
     echo "Creating raster foundry database"
     docker-compose -f "${DIR}/../docker-compose.yml" exec -T postgres gosu postgres createdb rasterfoundry
     echo "Restoring Database from backup"
+    # Command to create database backup
+    # gosu postgres pg_dump -Fc rasterfoundry > database.pgdump
     docker-compose -f "${DIR}/../docker-compose.yml" exec -T postgres gosu postgres pg_restore -Fc -d rasterfoundry /tmp/data/database.pgdump > /dev/null
 
 }
