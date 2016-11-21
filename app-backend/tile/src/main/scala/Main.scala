@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
+import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._
 
@@ -19,7 +20,17 @@ object AkkaSystem {
 object Main extends App with Config with AkkaSystem.LoggerExecutor {
   import AkkaSystem._
 
-  def rootRoute = pathPrefix("tiles") { Routes.singleLayer }
+  def rootRoute = pathPrefix("tiles") {
+    Routes.singleLayer ~ pathPrefix("healthcheck") {
+      pathEndOrSingleSlash {
+        get {
+          complete {
+            HttpResponse(StatusCodes.OK)
+          }
+        }
+      }
+    }
+  }
 
   Http().bindAndHandle(rootRoute, httpHost, httpPort)
 }
