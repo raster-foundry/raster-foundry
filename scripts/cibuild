@@ -11,6 +11,12 @@ else
     GIT_COMMIT="$(git rev-parse --short HEAD)"
 fi
 
+if [ -d "./scripts/cibuild.d" ]; then
+    for file in ./scripts/cibuild.d/*.sh; do
+        source "${file}"
+    done
+fi
+
 DIR="$(dirname "$0")"
 
 function usage() {
@@ -55,17 +61,10 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         GIT_COMMIT="${GIT_COMMIT}" ./scripts/test
         echo "All tests pass!"
 
-        echo "Building application JAR"
-        GIT_COMMIT="${GIT_COMMIT}" docker-compose \
-            run --no-deps --entrypoint ./sbt --rm app-server app/assembly
-
-        echo "Building tile server JAR"
-        GIT_COMMIT="${GIT_COMMIT}" docker-compose \
-            run --no-deps --entrypoint ./sbt --rm tile-server tile/assembly
-
-        echo "Building ingest JAR"
-        GIT_COMMIT="${GIT_COMMIT}" docker-compose \
-            run --no-deps --rm --entrypoint ./sbt app-server ingest/assembly
+        # Build jars that are either published or included in other containers
+        build_application_jar
+        build_tile_server_jar
+        build_ingest_jar
 
         # Build app, airflow
         echo "Building app, airflow..."

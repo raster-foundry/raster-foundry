@@ -17,7 +17,7 @@ class Landsat8IOTestCase(unittest.TestCase):
         scene = 'LC81390452014295LGN00'
         url = get_landsat_url(scene)
 
-        test_url = 'http://landsat-pds.s3.amazonaws.com/L8/139/045/LC81390452014295LGN00/'
+        test_url = 'https://landsat-pds.s3.amazonaws.com/L8/139/045/LC81390452014295LGN00/'
         self.assertEqual(
             url, test_url, 'URL should have been {}, instead got {}'.format(test_url, url)
         )

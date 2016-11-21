@@ -99,6 +99,7 @@ Helper and development scripts are located in the `./scripts` directory at the r
 | `cibuild`               | Invoked by CI server and makes use of `test`.                |
 | `cipublish`             | Publish container images to container image repositories.    |
 | `load_development_data` | Load data for development purposes                           |
+| `publish-jars`          | Publish java jar artifacts to s3                             |
 
 ## Testing
 
