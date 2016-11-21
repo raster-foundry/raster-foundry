@@ -198,7 +198,7 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
 
   /** Adds a list of scenes to a bucket
     *
-    * @param sceneIds Seq[UUID] list of primary keys of scens to add to bucket
+    * @param sceneIds Seq[UUID] list of primary keys of scenes to add to bucket
     * @param bucketId UUID primary key of back to add scenes to
     */
   def addScenesToBucket(sceneIds: Seq[UUID], bucketId: UUID)
@@ -206,7 +206,7 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
 
     val sceneBucketJoinQuery = for {
       s <- ScenesToBuckets if s.sceneId.inSet(sceneIds) && s.bucketId === bucketId
-    } yield s
+    } yield s.sceneId
 
     database.db.run {
       sceneBucketJoinQuery.result
