@@ -11,7 +11,7 @@ import spray.json._
 
 import com.azavea.rf.datamodel._
 import com.azavea.rf.utils.Config
-import com.azavea.rf.{DBSpec, Router}
+import com.azavea.rf.{DBSpec, Router, AuthUtils}
 
 
 class BucketSpec extends WordSpec
@@ -28,18 +28,23 @@ class BucketSpec extends WordSpec
 
   // Alias to baseRoutes to be explicit
   val baseRoutes = routes
+  val authHeader = AuthUtils.generateAuthHeader("Default")
 
   "/api/buckets/{uuid}" should {
 
     "return a 404 for non-existent bucket" in {
-      Get(s"${baseBucket}${publicOrgId}") ~> Route.seal(baseRoutes) ~> check {
+      Get(s"${baseBucket}${publicOrgId}").withHeaders(
+        List(authHeader)
+      ) ~> Route.seal(baseRoutes) ~> check {
         status shouldEqual StatusCodes.NotFound
       }
     }
 
     "return a bucket" ignore {
       val bucketId = ""
-      Get(s"${baseBucket}${bucketId}/") ~> baseRoutes ~> check {
+      Get(s"${baseBucket}${bucketId}/").withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
         responseAs[Bucket]
       }
     }
@@ -48,17 +53,27 @@ class BucketSpec extends WordSpec
       // Add change to bucket here
     }
 
-    "delete a bucket" ignore {
+    "delete a bucket with authentication" ignore {
       val bucketId = ""
       Delete(s"${baseBucket}${bucketId}/") ~> baseRoutes ~> check {
+        reject
+      }
+      Delete(s"${baseBucket}${bucketId}/").withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
         status shouldEqual StatusCodes.NoContent
       }
     }
   }
 
   "/api/buckets/" should {
-    "not require authentication" in {
+    "require authentication" in {
       Get("/api/buckets/") ~> baseRoutes ~> check {
+        reject
+      }
+      Get("/api/buckets/").withHeaders(
+        List(authHeader)
+      )  ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Bucket]]
       }
     }
@@ -76,7 +91,7 @@ class BucketSpec extends WordSpec
 
     "create a bucket successfully once authenticated" in {
       Post("/api/buckets/").withHeadersAndEntity(
-        List(authorization),
+        List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
           newBucket1.toJson.toString()
@@ -86,7 +101,7 @@ class BucketSpec extends WordSpec
       }
 
       Post("/api/buckets/").withHeadersAndEntity(
-        List(authorization),
+        List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
           newBucket2.toJson.toString()
@@ -97,42 +112,54 @@ class BucketSpec extends WordSpec
     }
 
     "filter by one organization correctly" in {
-      Get(s"/api/buckets/?organization=${publicOrgId}") ~> baseRoutes ~> check {
+      Get(s"/api/buckets/?organization=${publicOrgId}").withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Bucket]].count shouldEqual 2
       }
     }
 
     "filter by two organizations correctly" in {
       val url = s"/api/buckets/?organization=${publicOrgId}&organization=${fakeOrgId}"
-      Get(url) ~> baseRoutes ~> check {
+      Get(url).withHeaders(
+        List(authHeader)
+      )  ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Bucket]].count shouldEqual 2
       }
     }
 
     "filter by one (non-existent) organizations correctly" in {
       val url = s"/api/buckets/?organization=${fakeOrgId}"
-      Get(url) ~> baseRoutes ~> check {
+      Get(url).withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Bucket]].count shouldEqual 0
       }
     }
 
     "filter by created by real user correctly" in {
       val url = s"/api/buckets/?createdBy=Default"
-      Get(url) ~> baseRoutes ~> check {
+      Get(url).withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Bucket]].count shouldEqual 2
       }
     }
 
     "filter by created by fake user correctly" in {
       val url = s"/api/buckets/?createdBy=IsNotReal"
-      Get(url) ~> baseRoutes ~> check {
+      Get(url).withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Bucket]].count shouldEqual 0
       }
     }
 
     "sort by one field correctly" in {
       val url = s"/api/buckets/?sort=name,desc"
-      Get(url) ~> baseRoutes ~> check {
+      Get(url).withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Bucket]].count shouldEqual 2
         responseAs[PaginatedResponse[Bucket]].results.head.name shouldEqual "Test Two"
       }
@@ -140,7 +167,9 @@ class BucketSpec extends WordSpec
 
     "sort by two fields correctly" in {
       val url = s"/api/buckets/?sort=visibility,asc;name,desc"
-      Get(url) ~> baseRoutes ~> check {
+      Get(url).withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Bucket]].count shouldEqual 2
         responseAs[PaginatedResponse[Bucket]].results.head.name shouldEqual "Test Two"
       }

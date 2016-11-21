@@ -35,7 +35,7 @@ trait ImageRoutes extends Authentication
   }
 
 
-  def listImages: Route = authenticateAndAllowAnonymous { user =>
+  def listImages: Route = authenticate { user =>
     (withPagination & imageQueryParameters) { (page, imageParams) =>
       complete {
         Images.listImages(page, imageParams)
@@ -51,7 +51,7 @@ trait ImageRoutes extends Authentication
     }
   }
 
-  def getImage(imageId: UUID): Route = authenticateAndAllowAnonymous { user =>
+  def getImage(imageId: UUID): Route = authenticate { user =>
     get {
       rejectEmptyResponse {
         complete {

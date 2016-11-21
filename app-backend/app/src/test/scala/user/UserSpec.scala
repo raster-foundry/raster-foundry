@@ -20,15 +20,14 @@ class UserSpec extends WordSpec
   implicit def database = db
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(DurationInt(20).second)
 
-  val authorization = AuthUtils.generateAuthHeader("Default")
+  val authHeader = AuthUtils.generateAuthHeader("Default")
 
   // Alias to baseRoutes to be explicit
   val baseRoutes = routes
 
   "/api/users" should {
     "return a paginated list of users" in {
-      Get("/api/users")
-        .addHeader(authorization) ~> baseRoutes ~> check {
+      Get("/api/users").withHeaders(List(authHeader)) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[User.WithOrgs]]
       }
     }
@@ -43,7 +42,7 @@ class UserSpec extends WordSpec
   "/api/users/{UUID}" should {
     "return a single user" in {
       Get("/api/users/Default")
-        .addHeader(authorization)~> baseRoutes ~> check {
+        .addHeader(authHeader)~> baseRoutes ~> check {
         responseAs[User.WithOrgs]
       }
     }

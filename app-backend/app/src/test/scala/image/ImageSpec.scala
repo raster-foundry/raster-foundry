@@ -12,10 +12,9 @@ import concurrent.duration._
 import spray.json._
 
 import com.azavea.rf.utils.Config
-import com.azavea.rf.{DBSpec, Router}
+import com.azavea.rf.{DBSpec, Router, AuthUtils}
 import com.azavea.rf.scene._
 import com.azavea.rf.datamodel._
-import com.azavea.rf.AuthUtils
 import java.sql.Timestamp
 import java.time.Instant
 
@@ -31,7 +30,7 @@ class ImageSpec extends WordSpec
   implicit def database = db
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(DurationInt(20).second)
 
-  val authorization = AuthUtils.generateAuthHeader("Default")
+  val authHeader = AuthUtils.generateAuthHeader("Default")
   val baseImagePath = "/api/images/"
   val publicOrgId = UUID.fromString("dfac6307-b5ef-43f7-beda-b9f208bb7726")
 
@@ -50,14 +49,18 @@ class ImageSpec extends WordSpec
   "/api/images/{uuid}" should {
 
     "return a 404 for non-existent image" in {
-      Get(s"${baseImagePath}${publicOrgId}") ~> Route.seal(baseRoutes) ~> check {
+      Get(s"${baseImagePath}${publicOrgId}").withHeaders(
+        List(authHeader)
+      ) ~> Route.seal(baseRoutes) ~> check {
         status shouldEqual StatusCodes.NotFound
       }
     }
 
     "return a image" ignore {
       val imageId = ""
-      Get(s"${baseImagePath}${imageId}/") ~> baseRoutes ~> check {
+      Get(s"${baseImagePath}${imageId}/").withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
         responseAs[Image]
       }
     }
@@ -75,8 +78,13 @@ class ImageSpec extends WordSpec
   }
 
   "/api/images/" should {
-    "not require authentication" in {
+    "require authentication" in {
       Get("/api/images/") ~> baseRoutes ~> check {
+        reject
+      }
+      Get("/api/images/").withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Image.WithRelated]]
       }
     }
@@ -84,7 +92,7 @@ class ImageSpec extends WordSpec
     "create an image successfully once authenticated" in {
       // Create scene first via API because we need the ID
       Post("/api/scenes/").withHeadersAndEntity(
-        List(authorization),
+        List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
           newSceneDatasource1.toJson.toString()
@@ -100,7 +108,7 @@ class ImageSpec extends WordSpec
         )
 
         Post("/api/images/").withHeadersAndEntity(
-          List(authorization),
+          List(authHeader),
           HttpEntity(
             ContentTypes.`application/json`,
             newImageDatasource1.toJson.toString()
@@ -112,39 +120,51 @@ class ImageSpec extends WordSpec
     }
 
     "filter by one organization correctly" in {
-      Get(s"$baseImagePath?organization=${publicOrgId}") ~> baseRoutes ~> check {
+      Get(s"$baseImagePath?organization=${publicOrgId}").withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Image.WithRelated]].count shouldEqual 1
       }
     }
 
     "filter by two organizations correctly" in {
       val url = s"$baseImagePath?organization=${publicOrgId}&organization=dfac6307-b5ef-43f7-beda-b9f208bb7725"
-      Get(url) ~> baseRoutes ~> check {
+      Get(url).withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Image.WithRelated]].count shouldEqual 1
       }
     }
 
     "filter by one (non-existent) organizations correctly" in {
       val url = s"$baseImagePath?organization=dfac6307-b5ef-43f7-beda-b9f208bb7725"
-      Get(url) ~> baseRoutes ~> check {
+      Get(url).withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Image.WithRelated]].count shouldEqual 0
       }
     }
 
     "filter by min bytes correctly" in {
       val url = s"$baseImagePath?minRawDataBytes=10"
-      Get(url) ~> baseRoutes ~> check {
+      Get(url).withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Image.WithRelated]].count shouldEqual 1
       }
     }
 
     "filter by scene correctly" in {
-      Get("/api/scenes/") ~> baseRoutes ~> check {
+      Get("/api/scenes/").withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
         val scenes = responseAs[PaginatedResponse[Scene.WithRelated]]
         val sceneId = scenes.results.head.id
 
         val url = s"$baseImagePath?scene=$sceneId"
-        Get(url) ~> baseRoutes ~> check {
+        Get(url).withHeaders(
+          List(authHeader)
+        ) ~> baseRoutes ~> check {
           responseAs[PaginatedResponse[Image.WithRelated]].count shouldEqual 1
         }
       }

@@ -37,7 +37,7 @@ trait SceneRoutes extends Authentication
     }
   }
 
-  def listScenes: Route = authenticateAndAllowAnonymous { user =>
+  def listScenes: Route = authenticate { user =>
     (withPagination & sceneQueryParameters) { (page, sceneParams) =>
       complete {
         Scenes.listScenes(page, sceneParams)
@@ -53,7 +53,7 @@ trait SceneRoutes extends Authentication
     }
   }
 
-  def getScene(sceneId: UUID): Route = authenticateAndAllowAnonymous { user =>
+  def getScene(sceneId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
         Scenes.getScene(sceneId)

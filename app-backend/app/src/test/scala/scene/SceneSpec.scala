@@ -12,9 +12,8 @@ import concurrent.duration._
 import spray.json._
 
 import com.azavea.rf.utils.Config
-import com.azavea.rf.{DBSpec, Router}
+import com.azavea.rf.{DBSpec, Router, AuthUtils}
 import com.azavea.rf.datamodel._
-import com.azavea.rf.AuthUtils
 import java.sql.Timestamp
 import java.time.Instant
 
@@ -33,7 +32,7 @@ class SceneSpec extends WordSpec
   implicit def database = db
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(DurationInt(20).second)
 
-  val authorization = AuthUtils.generateAuthHeader("Default")
+  val authHeader = AuthUtils.generateAuthHeader("Default")
   val baseScene = "/api/scenes/"
   val publicOrgId = UUID.fromString("dfac6307-b5ef-43f7-beda-b9f208bb7726")
 
@@ -43,7 +42,9 @@ class SceneSpec extends WordSpec
   "/api/scenes/{uuid}" should {
 
     "return a 404 for non-existent organizations" in {
-      Get(s"${baseScene}${publicOrgId}") ~> Route.seal(baseRoutes) ~> check {
+      Get(s"${baseScene}${publicOrgId}").withHeaders(
+        List(authHeader)
+      )  ~> Route.seal(baseRoutes) ~> check {
         status shouldEqual StatusCodes.NotFound
       }
     }
@@ -68,8 +69,11 @@ class SceneSpec extends WordSpec
   }
 
   "/api/scenes/" should {
-    "not require authentication" in {
+    "require authentication" in {
       Get("/api/scenes/") ~> baseRoutes ~> check {
+        reject
+      }
+      Get("/api/scenes/").withHeaders(List(authHeader)) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Scene.WithRelated]]
       }
     }
@@ -105,7 +109,7 @@ class SceneSpec extends WordSpec
 
     "create a scene successfully once authenticated" in {
       Post("/api/scenes/").withHeadersAndEntity(
-        List(authorization),
+        List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
           newSceneDatasource1.toJson.toString()
@@ -118,7 +122,7 @@ class SceneSpec extends WordSpec
           List[Band.Create](Band.Create("i'm a band", 4, List[Int](550, 600)))
         )
         Post("/api/images/").withHeadersAndEntity(
-          List(authorization),
+          List(authHeader),
           HttpEntity(
             ContentTypes.`application/json`,
             newSceneDatasource1Image.toJson.toString()
@@ -129,7 +133,7 @@ class SceneSpec extends WordSpec
       }
 
       Post("/api/scenes/").withHeadersAndEntity(
-        List(authorization),
+        List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
           newSceneDatasource2.toJson.toString()
@@ -140,92 +144,108 @@ class SceneSpec extends WordSpec
     }
 
     "list scenes" in {
-      Get(s"${baseScene}?organization=${publicOrgId}") ~> baseRoutes ~> check {
+      Get(s"${baseScene}?organization=${publicOrgId}").withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Scene.WithRelated]]
       }
     }
 
     "filter by one organization correctly" in {
-      Get(s"$baseScene?organization=${publicOrgId}") ~> baseRoutes ~> check {
+      Get(s"$baseScene?organization=${publicOrgId}").withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 2
       }
     }
 
     "filter by two organizations correctly" in {
       val url = s"$baseScene?organization=${publicOrgId}&organization=dfac6307-b5ef-43f7-beda-b9f208bb7725"
-      Get(url) ~> baseRoutes ~> check {
+      Get(url).withHeaders(List(authHeader)) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 2
       }
     }
 
     "filter by one (non-existent) organizations correctly" in {
       val url = s"$baseScene?organization=dfac6307-b5ef-43f7-beda-b9f208bb7725"
-      Get(url) ~> baseRoutes ~> check {
+      Get(url).withHeaders(List(authHeader)) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 0
       }
     }
 
     "filter by acquisition date correctly (no nulls returned)" in {
       val url = s"$baseScene?minAcquisitionDatetime=2016-09-18T14:41:58.408544z"
-      Get(url) ~> baseRoutes ~> check {
+      Get(url).withHeaders(List(authHeader)) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 1
       }
     }
 
     "filter by months correctly" in {
       val urlCorrectMonth = s"$baseScene?month=9"
-      Get(urlCorrectMonth) ~> baseRoutes ~> check {
+      Get(urlCorrectMonth).withHeaders(List(authHeader)) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 1
       }
       val urlMissingMonth = s"$baseScene?month=10"
-      Get(urlMissingMonth) ~> baseRoutes ~> check {
+      Get(urlMissingMonth).withHeaders(List(authHeader)) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 0
       }
     }
 
     "filter by one datasource correctly" in {
       val url = s"$baseScene?datasource=TEST_ORG"
-      Get(url) ~> baseRoutes ~> check {
+      Get(url).withHeaders(List(authHeader)) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 1
       }
     }
 
     "filter by multiple datasources correctly" in {
       val url = s"$baseScene?datasource=TEST_ORG&datasource=TEST_ORG-OTHER"
-      Get(url) ~> baseRoutes ~> check {
+      Get(url).withHeaders(List(authHeader)) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 2
       }
     }
 
     "filter scenes by bounding box" in {
-      Get("/api/scenes/?bbox=0,0,0.00001,0.00001") ~> baseRoutes ~> check {
+      Get("/api/scenes/?bbox=0,0,0.00001,0.00001").withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]
         res.count shouldEqual 0
       }
-      Get("/api/scenes/?bbox=0,0,0.001,0.001") ~> baseRoutes ~> check {
+      Get("/api/scenes/?bbox=0,0,0.001,0.001").withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]
         res.count shouldEqual 1
       }
     }
 
     "filter scenes by point" in {
-      Get("/api/scenes/?point=0.0009,0.0009") ~> baseRoutes ~> check {
+      Get("/api/scenes/?point=0.0009,0.0009").withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]
         res.count shouldEqual 1
       }
-      Get("/api/scenes/?point=1.0,1.0") ~> baseRoutes ~> check {
+      Get("/api/scenes/?point=1.0,1.0").withHeaders(
+        List(authHeader)
+      )  ~> baseRoutes ~> check {
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]
         res.count shouldEqual 0
       }
     }
 
     "filter scenes by image resolution" in {
-      Get("/api/scenes/?minResolution=15.0") ~> baseRoutes ~> check {
+      Get("/api/scenes/?minResolution=15.0").withHeaders(
+        List(authHeader)
+      )  ~> baseRoutes ~> check {
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]
         res.count shouldEqual 1
       }
 
-      Get("/api/scenes/?maxResolution=15.0") ~> baseRoutes ~> check {
+      Get("/api/scenes/?maxResolution=15.0").withHeaders(
+        List(authHeader)
+      )  ~> baseRoutes ~> check {
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]
         res.count shouldEqual 0
       }
@@ -233,7 +253,9 @@ class SceneSpec extends WordSpec
 
     "sort by one field correctly" in {
       val url = s"$baseScene?sort=datasource,desc"
-      Get(url) ~> baseRoutes ~> check {
+      Get(url).withHeaders(
+        List(authHeader)
+      )  ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 2
         responseAs[PaginatedResponse[Scene.WithRelated]].results.head.datasource shouldEqual "TEST_ORG-OTHER"
       }
@@ -241,7 +263,9 @@ class SceneSpec extends WordSpec
 
     "sort by two fields correctly" in {
       val url = s"$baseScene?sort=cloudCover,asc;datasource,desc"
-      Get(url) ~> baseRoutes ~> check {
+      Get(url).withHeaders(
+        List(authHeader)
+      )  ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 2
         responseAs[PaginatedResponse[Scene.WithRelated]].results.head.datasource shouldEqual "TEST_ORG-OTHER"
       }

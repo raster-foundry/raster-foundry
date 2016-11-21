@@ -38,7 +38,7 @@ trait ThumbnailRoutes extends Authentication
     }
   }
 
-  def listThumbnails: Route = authenticateAndAllowAnonymous { user =>
+  def listThumbnails: Route = authenticate { user =>
     (withPagination & thumbnailSpecificQueryParameters) { (page, thumbnailParams) =>
       complete {
         Thumbnails.listThumbnails(page, thumbnailParams)
@@ -54,7 +54,7 @@ trait ThumbnailRoutes extends Authentication
     }
   }
 
-  def getThumbnail(thumbnailId: UUID): Route = authenticateAndAllowAnonymous { user =>
+  def getThumbnail(thumbnailId: UUID): Route = authenticate { user =>
     withPagination { page =>
       rejectEmptyResponse {
         complete {
