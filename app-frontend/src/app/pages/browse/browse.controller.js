@@ -4,11 +4,12 @@ const _ = require('lodash');
 
 export default class BrowseController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, sceneService, $state, $uibModal
+        $log, $scope, sceneService, authService, $state, $uibModal
     ) {
         'ngInject';
         this.$log = $log;
         this.sceneService = sceneService;
+        this.authService = authService;
         this.$state = $state;
         this.$uibModal = $uibModal;
 
@@ -58,7 +59,12 @@ export default class BrowseController {
         // TODO: Switch to one-way &-binding from child component
         $scope.$watchCollection('$ctrl.filters', this.onFilterChange.bind(this));
 
-        this.populateInitialSceneList();
+        $scope.$watch(
+            function () {
+                return authService.isLoggedIn;
+            },
+            this.onLoggedInChange.bind(this)
+        );
     }
 
     onStateChangeStart(event, toState, toParams, fromState) {
@@ -107,7 +113,17 @@ export default class BrowseController {
         this.onQueryParamsChange();
     }
 
+    onLoggedInChange(newValue) {
+        if (newValue) {
+            this.populateInitialSceneList();
+        }
+    }
+
     populateInitialSceneList() {
+        if (!this.authService.isLoggedIn) {
+            return;
+        }
+
         if (this.loading) {
             this.reloadScenes = true;
             return;
