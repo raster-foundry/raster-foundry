@@ -6,7 +6,7 @@ import com.azavea.rf.database.tables.Users
 import com.azavea.rf.datamodel.User
 import slick.lifted.ForeignKeyQuery
 
-trait UserFkFields  { self: Table[_] =>
+trait UserFkFields { self: Table[_] =>
   def createdBy: Rep[String]
   def modifiedBy: Rep[String]
 
@@ -26,6 +26,10 @@ object UserFkFields {
           .reduceLeftOption(_ && _)
           .getOrElse(true: Rep[Boolean])
       }
+    }
+
+    def filterToOwner(user: User) = {
+      that.filter(_.createdBy === user.id)
     }
   }
 }

@@ -1,6 +1,6 @@
 package com.azavea.rf.database.tables
 
-import com.azavea.rf.database.fields.{OrganizationFkFields, TimestampFields}
+import com.azavea.rf.database.fields.{OrganizationFkFields, TimestampFields, VisibilityField}
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.sort._
 import com.azavea.rf.database.{Database => DB}
@@ -8,8 +8,10 @@ import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.datamodel._
 import java.util.UUID
 import java.sql.Timestamp
+
 import com.typesafe.scalalogging.LazyLogging
 import com.lonelyplanet.akka.http.extensions.PageRequest
+
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -17,6 +19,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class Thumbnails(_tableTag: Tag) extends Table[Thumbnail](_tableTag, "thumbnails")
                                          with OrganizationFkFields
                                          with TimestampFields
+                                         with VisibilityField
 {
   def * = (id, createdAt, modifiedAt, organizationId, widthPx, heightPx, scene, url, thumbnailSize) <> (Thumbnail.tupled, Thumbnail.unapply _)
 
@@ -24,6 +27,7 @@ class Thumbnails(_tableTag: Tag) extends Table[Thumbnail](_tableTag, "thumbnails
   val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")
   val modifiedAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("modified_at")
   val organizationId: Rep[java.util.UUID] = column[java.util.UUID]("organization_id")
+  val visibility: Rep[Visibility] = column[Visibility]("visibility")
   val widthPx: Rep[Int] = column[Int]("width_px")
   val heightPx: Rep[Int] = column[Int]("height_px")
   val scene: Rep[java.util.UUID] = column[java.util.UUID]("scene")

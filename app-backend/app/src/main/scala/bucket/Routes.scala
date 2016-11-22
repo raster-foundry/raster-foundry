@@ -57,7 +57,7 @@ trait BucketRoutes extends Authentication
   def listBuckets: Route = authenticate { user =>
     (withPagination & bucketQueryParameters) { (page, bucketQueryParameters) =>
       complete {
-        Buckets.listBuckets(page, bucketQueryParameters)
+        Buckets.listBuckets(page, bucketQueryParameters, user)
       }
     }
   }
@@ -102,7 +102,7 @@ trait BucketRoutes extends Authentication
   def listBucketScenes(bucketId: UUID): Route = authenticate { user =>
     (withPagination & sceneQueryParameters) { (page, sceneParams) =>
       complete {
-        Buckets.listBucketScenes(bucketId, page, sceneParams)
+        Buckets.listBucketScenes(bucketId, page, sceneParams, user)
       }
     }
   }

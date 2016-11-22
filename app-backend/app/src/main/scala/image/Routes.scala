@@ -38,7 +38,7 @@ trait ImageRoutes extends Authentication
   def listImages: Route = authenticate { user =>
     (withPagination & imageQueryParameters) { (page, imageParams) =>
       complete {
-        Images.listImages(page, imageParams)
+        Images.listImages(page, imageParams, user)
       }
     }
   }
