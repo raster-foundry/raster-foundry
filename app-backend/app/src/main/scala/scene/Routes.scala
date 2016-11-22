@@ -40,7 +40,7 @@ trait SceneRoutes extends Authentication
   def listScenes: Route = authenticate { user =>
     (withPagination & sceneQueryParameters) { (page, sceneParams) =>
       complete {
-        Scenes.listScenes(page, sceneParams)
+        Scenes.listScenes(page, sceneParams, user)
       }
     }
   }

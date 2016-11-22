@@ -111,7 +111,8 @@ class BucketSpec extends WordSpec
       }
     }
 
-    "filter by one organization correctly" in {
+    // TODO: https://github.com/azavea/raster-foundry/issues/712
+    "filter by one organization correctly" ignore {
       Get(s"/api/buckets/?organization=${publicOrgId}").withHeaders(
         List(authHeader)
       ) ~> baseRoutes ~> check {
@@ -119,7 +120,8 @@ class BucketSpec extends WordSpec
       }
     }
 
-    "filter by two organizations correctly" in {
+    // TODO: https://github.com/azavea/raster-foundry/issues/712
+    "filter by two organizations correctly" ignore {
       val url = s"/api/buckets/?organization=${publicOrgId}&organization=${fakeOrgId}"
       Get(url).withHeaders(
         List(authHeader)
@@ -137,7 +139,9 @@ class BucketSpec extends WordSpec
       }
     }
 
-    "filter by created by real user correctly" in {
+
+    // TODO: https://github.com/azavea/raster-foundry/issues/712
+    "filter by created by real user correctly" ignore {
       val url = s"/api/buckets/?createdBy=Default"
       Get(url).withHeaders(
         List(authHeader)

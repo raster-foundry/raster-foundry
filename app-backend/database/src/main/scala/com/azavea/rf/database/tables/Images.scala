@@ -64,6 +64,17 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
   implicit class withImagesDefaultQuery[M, U, C[_]](images: Images.TableQuery) extends
       ImagesDefaultQuery[M, U, C](images)
 
+  /** Limit Images to those viewable by the user (owned and public)
+    *
+    * @param user User making the query
+    * @return TableQuery containing the images the user can view
+    */
+  def viewableBy(user: User)(implicit database: DB): TableQuery = {
+    val publicImages = Images.filterToPublic()
+    val ownedImages = Images.filterToOwner(user)
+    ownedImages union publicImages
+  }
+
   /** Insert one image into the database with its bands
     *
     * @param imageBanded Image case class for image to insert into database
@@ -110,10 +121,11 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
     * @param pageRequest PageRequest pagination class to return paginated results
     * @param combinedParams CombinedImagequeryparams query parameters that can be applied to images
     */
-  def listImages(pageRequest: PageRequest, combinedParams: CombinedImageQueryParams)
+  def listImages(pageRequest: PageRequest, combinedParams: CombinedImageQueryParams, user: User)
                 (implicit database: DB): Future[PaginatedResponse[Image.WithRelated]] = {
 
-    val images = Images.filterByOrganization(combinedParams.orgParams)
+    val images = Images.viewableBy(user)
+      .filterByOrganization(combinedParams.orgParams)
       .filterByTimestamp(combinedParams.timestampParams)
       .filterByImageParams(combinedParams.imageParams)
 

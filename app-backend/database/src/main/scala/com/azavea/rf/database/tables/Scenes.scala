@@ -1,6 +1,6 @@
 package com.azavea.rf.database.tables
 
-import com.azavea.rf.database.fields.{SceneFields, OrganizationFkFields, UserFkFields, TimestampFields}
+import com.azavea.rf.database.fields._
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.sort._
 import com.azavea.rf.database.{Database => DB}
@@ -8,8 +8,10 @@ import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.datamodel._
 import java.util.UUID
 import java.sql.Timestamp
+
 import geotrellis.slick.Projected
 import geotrellis.vector.Geometry
+
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import com.typesafe.scalalogging.LazyLogging
@@ -22,6 +24,7 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
                                      with OrganizationFkFields
                                      with UserFkFields
                                      with TimestampFields
+                                     with VisibilityField
 {
   def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, organizationId, ingestSizeBytes, visibility,
     tags, datasource, sceneMetadata, cloudCover, acquisitionDate, thumbnailStatus, boundaryStatus,
@@ -84,6 +87,18 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
       ScenesJoinQuery[M, U, C](scenes)
 
   val datePart = SimpleFunction.binary[String, Option[Timestamp], Int]("date_part")
+
+  /** Filter scenes down to those which a user is authorized to see (that is, those they own and those that are public)
+    *
+    * @param user User who is viewing the scene(s)
+    * @return A Query of Scenes which the user is authorized to view.
+    */
+  def viewableBy(user: User)
+                (implicit database: DB): TableQuery = {
+    val publicScenes = Scenes.filterToPublic()
+    val ownedScenes = Scenes.filterToOwner(user)
+    ownedScenes union publicScenes
+  }
 
   /** Insert a scene into the database
     *
@@ -148,11 +163,11 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
   }
 
   /** Get scenes given a page request and query parameters */
-  def listScenes(pageRequest: PageRequest, combinedParams: CombinedSceneQueryParams)
+  def listScenes(pageRequest: PageRequest, combinedParams: CombinedSceneQueryParams, user: User)
                 (implicit database: DB): Future[PaginatedResponse[Scene.WithRelated]] = {
 
     val scenesQueryResult = database.db.run {
-      val action = Scenes
+      val action = Scenes.viewableBy(user)
           .joinWithRelated
           .page(combinedParams, pageRequest)
           .result
@@ -210,7 +225,7 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     val updateTime = new Timestamp((new java.util.Date).getTime)
 
     val updateSceneQuery = for {
-      updateScene <- Scenes.filter(_.id === sceneId)
+      updateScene <- Scenes.filterToOwner(user).filter(_.id === sceneId)
     } yield (
       updateScene.modifiedAt, updateScene.modifiedBy, updateScene.ingestSizeBytes,
       updateScene.datasource, updateScene.cloudCover,  updateScene.acquisitionDate,

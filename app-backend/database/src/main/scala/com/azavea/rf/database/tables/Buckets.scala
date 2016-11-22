@@ -60,6 +60,17 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     }
   }
 
+  /** Limit buckets to those viewable by the user (owned and public)
+    *
+    * @param user User making the query
+    * @return TableQuery containing the buckets the user can view
+    */
+  def viewableBy(user: User)(implicit database: DB): TableQuery = {
+    val publicBuckets = Buckets.filterToPublic()
+    val ownedBuckets = Buckets.filterToOwner(user)
+    ownedBuckets union publicBuckets
+  }
+
   /** Add bucket to database
     *
     * @param bucket Bucket bucket to add to database
@@ -74,18 +85,21 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     }
   }
 
-  /** Get scenes that belong to a bucket
+  /** Get scenes belonging to a bucket
     *
-   * @param bucketId UUID bucket to request scenes for
+    * @param bucketId Bucket for which associated Scenes should be returned
+    * @param pageRequest PageRequest denoting the page of results
+    * @param combinedParams CombinedSceneQueryParams filtering the request
+    * @param user User making the request
     */
-  def listBucketScenes(bucketId: UUID, pageRequest: PageRequest, combinedParams: CombinedSceneQueryParams)
+  def listBucketScenes(bucketId: UUID, pageRequest: PageRequest, combinedParams: CombinedSceneQueryParams, user: User)
                       (implicit database: DB): Future[PaginatedResponse[Scene.WithRelated]] = {
 
     val injectedParams = combinedParams.copy(
       sceneParams=combinedParams.sceneParams.copy(bucket=Some(bucketId))
     )
 
-    Scenes.listScenes(pageRequest, injectedParams)
+    Scenes.listScenes(pageRequest, injectedParams, user)
   }
 
   /** Get specific scenes from a bucket. Returns any scenes from the list of
@@ -123,11 +137,13 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     *
     * @param pageRequest PageRequest pagination parameters
     * @param queryParams BucketQueryParams query parameters relevant for buckets
+    * @param user User making the request
     */
-  def listBuckets(pageRequest: PageRequest, queryParams: BucketQueryParameters)
+  def listBuckets(pageRequest: PageRequest, queryParams: BucketQueryParameters, user: User)
                  (implicit database: DB): Future[PaginatedResponse[Bucket]] = {
 
-    val buckets = Buckets.filterByOrganization(queryParams.orgParams)
+    val buckets = Buckets.viewableBy(user)
+      .filterByOrganization(queryParams.orgParams)
       .filterByUser(queryParams.userParams)
       .filterByTimestamp(queryParams.timestampParams)
 
