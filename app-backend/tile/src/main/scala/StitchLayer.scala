@@ -11,13 +11,13 @@ import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.typesafe.scalalogging.LazyLogging
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
-import scala.util.Try
+import scala.util.{Try, Success, Failure}
 
 object StitchLayer extends LazyLogging with Config {
   /** Determining which zoom level is appropriate, fetching tiles and stitching
     * should be cached before rendering the thumbnail.
     */
-  val tileCache: AsyncLoadingCache[(RfLayerId, Int), MultibandTile] =
+  val maybeTileCache: AsyncLoadingCache[(RfLayerId, Int), Option[MultibandTile]] =
     Scaffeine()
     .recordStats()
     .expireAfterWrite(cacheExpiration)
@@ -38,10 +38,10 @@ object StitchLayer extends LazyLogging with Config {
     * Because this is an expensive operation the stitched tile is cached.
     * For non-cached version use [[stitch]] function.
     */
-  def apply(id: RfLayerId, size: Int): Future[MultibandTile] =
-    tileCache.get((id, size))
+  def apply(id: RfLayerId, size: Int): Future[Option[MultibandTile]] =
+    maybeTileCache.get((id, size))
 
-  def stitch(store: AttributeStore, layerName: String, size: Int): MultibandTile = {
+  def stitch(store: AttributeStore, layerName: String, size: Int): Option[MultibandTile] = {
     require(size < 4096, s"$size is too large to stitch")
     minZoomLevel(store, layerName, size).map { case (layerId, re) =>
       logger.debug(s"Stitching from $layerId, ${re.extent.reproject(WebMercator, LatLng).toGeoJson}")
@@ -51,7 +51,10 @@ object StitchLayer extends LazyLogging with Config {
         .result
         .stitch
         .crop(re.extent)
-    }.get
+    } match {
+      case Success(tile) => Some(tile)
+      case Failure(_) => None
+    }
   }
 
   /** Find the minimum zoom level with enough pixels covering the data region of the layer */
