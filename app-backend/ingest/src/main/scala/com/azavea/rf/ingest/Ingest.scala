@@ -16,7 +16,7 @@ import geotrellis.vector.ProjectedExtent
 import geotrellis.raster._
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
 import geotrellis.spark.tiling._
-import geotrellis.proj4.LatLng
+import geotrellis.proj4._
 
 import org.apache.spark.rdd._
 import org.apache.spark._
@@ -33,17 +33,17 @@ object Ingest extends SparkJob {
 
   /** Get a layerwriter and an attribute store for the catalog located at the provided URI
     *
-    * @param baseUri A URI which describes a GeoTrellis catalog location
+    * @param outputDef The ingest job's output definition
     */
-  def getRfLayerWriter(baseUri: URI): (RfLayerWriter, AttributeStore) = baseUri.getScheme match {
+  def getRfLayerWriter(outputDef: OutputDefinition): (RfLayerWriter, AttributeStore) = outputDef.uri.getScheme match {
     case "s3" | "s3a" | "s3n" =>
-      val (bucket, prefix) = S3.parse(baseUri)
+      val (bucket, prefix) = S3.parse(outputDef.uri)
       val s3Writer = S3LayerWriter(bucket, prefix)
-      val writer = s3Writer.writer[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](ZCurveKeyIndexMethod)
+      val writer = s3Writer.writer[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](outputDef.keyIndexMethod)
       (writer, s3Writer.attributeStore)
     case "file" =>
-      val fileWriter = FileLayerWriter(baseUri.getPath)
-      val writer = fileWriter.writer[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](ZCurveKeyIndexMethod)
+      val fileWriter = FileLayerWriter(outputDef.uri.getPath)
+      val writer = fileWriter.writer[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](outputDef.keyIndexMethod)
       (writer, fileWriter.attributeStore)
   }
 
@@ -55,9 +55,8 @@ object Ingest extends SparkJob {
   def calculateTileLayerMetadata(layer: IngestLayer, scheme: LayoutScheme): (Int, TileLayerMetadata[SpatialKey]) = {
     // We need to build TileLayerMetadata that we expect to start pyramid from
     val overallExtent = layer.sources
-      .map(src => src.extent)
+      .map({ src => src.extent.reproject(src.getCRSExtent, layer.output.crs) })
       .reduce(_ combine _)
-      .reproject(LatLng, layer.output.crs)
 
     // Infer the base level of the TMS pyramid based on overall extent and cellSize
     val LayoutLevel(maxZoom, baseLayoutDefinition) =
@@ -100,11 +99,11 @@ object Ingest extends SparkJob {
     */
   @SuppressWarnings(Array("TraversableHead"))
   def ingestLayer(layer: IngestLayer)(implicit sc: SparkContext) = {
-    val tileSize = 256
-    val resampleMethod = NearestNeighbor
+    val resampleMethod = layer.output.resampleMethod
+    val tileSize = layer.output.tileSize
     val destCRS = layer.output.crs
     val bandCount: Int = layer.sources.map(_.bandMaps.map(_.target).max).max
-    val layoutScheme = ZoomedLayoutScheme(layer.output.crs, tileSize)
+    val layoutScheme = ZoomedLayoutScheme(destCRS, tileSize)
 
     // Read source tiles and reproject them to desired CRS
     val sourceTiles: RDD[((ProjectedExtent, Int), Tile)] =
@@ -141,32 +140,43 @@ object Ingest extends SparkJob {
       }
 
     val layerRdd = ContextRDD(multibandTiledRdd, tileLayerMetadata)
-    val (writer, attributeStore) = getRfLayerWriter(layer.output.uri)
+    val (writer, attributeStore) = getRfLayerWriter(layer.output)
     val sharedId = LayerId(layer.id.toString, 0)
 
-    Pyramid.upLevels(layerRdd, layoutScheme, maxZoom, 1, resampleMethod) { (rdd, zoom) =>
-      // attributes that apply to all layers are placed at zoom 0
-      val layerId = LayerId(layer.id.toString, zoom)
+    if (layer.output.pyramid) { // If pyramiding
+      Pyramid.upLevels(layerRdd, layoutScheme, maxZoom, 1, resampleMethod) { (rdd, zoom) =>
+        // attributes that apply to all layers are placed at zoom 0
+        val layerId = LayerId(layer.id.toString, zoom)
 
+        try {
+          writer.write(layerId, rdd)
+
+          if (zoom == math.max(maxZoom / 2, 1)) {
+            import spray.json.DefaultJsonProtocol._
+            attributeStore.write(sharedId, "histogram", multibandHistogram(rdd, numBuckets = 256))
+          }
+
+          if (zoom == 1) {
+            attributeStore.write(sharedId, "extent", rdd.metadata.extent)(ExtentJsonFormat) // avoid using default JF
+            attributeStore.write(sharedId, "crs", rdd.metadata.crs)(CRSJsonFormat) // avoid using default JF
+          }
+          // Write an attribute for verification of completed ingest
+          attributeStore.write(sharedId, "ingestComplete", true)
+        } catch {
+          case e: Throwable =>
+            attributeStore.write(sharedId, "ingestComplete", false)
+        }
+      }
+    } else { // If not pyramiding. TODO: figure out exactly what we want to store here
       try {
-        writer.write(layerId, rdd)
-
-        if (zoom == math.max(maxZoom / 2, 1)) {
-          import spray.json.DefaultJsonProtocol._
-          attributeStore.write(sharedId, "histogram", multibandHistogram(rdd, numBuckets = 256))
-        }
-
-        if (zoom == 1) {
-          attributeStore.write(sharedId, "extent", rdd.metadata.extent)
-          attributeStore.write(sharedId, "crs", rdd.metadata.crs)(crsJsonFormat) // avoid using default JF
-        }
-        // Write an attribute for verification of completed ingest
+        writer.write(sharedId, layerRdd)
         attributeStore.write(sharedId, "ingestComplete", true)
       } catch {
         case e: Throwable =>
           attributeStore.write(sharedId, "ingestComplete", false)
       }
     }
+
   }
 
   /** Sample ingest definitions can be found in the accompanying test/resources

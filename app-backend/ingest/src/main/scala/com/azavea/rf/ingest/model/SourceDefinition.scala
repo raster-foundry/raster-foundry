@@ -10,16 +10,24 @@ import geotrellis.proj4.CRS
 
 /** This class provides all information required to read from a source
   *
-  * @param uri     The URI of the source imagery
-  * @param extent  The Extent of a source tile
+  * @param uri      The URI of the source imagery
+  * @param extent   The Extent of a source tile
+  * @param crs      The CRS of the projection to target in tiling
   * @param bandMaps A list of mappings from source to destination tile
   */
 case class SourceDefinition(
   uri: URI,
   extent: Extent,
+  crsExtent: Option[CRS],
+  crs: CRS,
   bandMaps: Array[BandMapping]
-)
+) {
+  def getCRSExtent: CRS = crsExtent match {
+    case Some(crs) => crs
+    case None => this.crs
+  }
+}
 
 object SourceDefinition {
-  implicit val jsonFormat = jsonFormat3(SourceDefinition.apply _)
+  implicit val jsonFormat = jsonFormat5(SourceDefinition.apply _)
 }
