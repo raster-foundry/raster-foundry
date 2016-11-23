@@ -17,6 +17,7 @@ import com.azavea.rf.tool.ToolRoutes
 import com.azavea.rf.tooltag.ToolTagRoutes
 import com.azavea.rf.token.TokenRoutes
 import com.azavea.rf.toolcategory.ToolCategoryRoutes
+import com.azavea.rf.grid.GridRoutes
 
 
 /**
@@ -36,7 +37,8 @@ trait Router extends HealthCheckRoutes
     with ToolRoutes
     with ToolTagRoutes
     with ConfigRoutes
-    with ToolCategoryRoutes {
+    with ToolCategoryRoutes
+    with GridRoutes {
 
   implicit def database: Database
 
@@ -56,7 +58,8 @@ trait Router extends HealthCheckRoutes
       pathPrefix("users") { userRoutes } ~
       pathPrefix("tools") { toolRoutes } ~
       pathPrefix("tool-tags") { toolTagRoutes } ~
-      pathPrefix("tool-categories") { toolCategoryRoutes }
+      pathPrefix("tool-categories") { toolCategoryRoutes }~
+      pathPrefix("scene-grid") { gridRoutes }
     } ~
     pathPrefix("config") {
       configRoutes
