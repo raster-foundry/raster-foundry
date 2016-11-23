@@ -192,7 +192,6 @@ services:
       - AIRFLOW_SECRET_KEY=secret
       - AIRFLOW_CELERY_CONCURRENCY=4
       - RF_HOST=http://rasterfoundry.com:9000
-      - C_FORCE_ROOT=True
     command: airflow worker
 
   airflow-worker-spark:
@@ -222,5 +221,4 @@ services:
       - AIRFLOW_SECRET_KEY=secret
       - AIRFLOW_CELERY_CONCURRENCY=4
       - RF_HOST=http://rasterfoundry.com:9000
-      - C_FORCE_ROOT=True
     command: airflow worker -q spark
