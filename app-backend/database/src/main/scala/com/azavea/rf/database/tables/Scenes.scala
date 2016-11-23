@@ -10,8 +10,7 @@ import java.util.UUID
 import java.sql.Timestamp
 
 import geotrellis.slick.Projected
-import geotrellis.vector.Geometry
-
+import geotrellis.vector.{Geometry, Point, Polygon, Extent}
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import com.typesafe.scalalogging.LazyLogging
@@ -66,6 +65,7 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
 object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
   type TableQuery = Query[Scenes, Scene, Seq]
   type JoinQuery = Query[ScenesWithRelatedFields, (Scene, Option[Image], Option[Band], Option[Thumbnail]), Seq]
+  type GridAggregationFields = (ConstColumn[ConstColumn[Projected[Polygon]]], Rep[Int])
   type ScenesWithRelatedFields = (Scenes, Rep[Option[Images]], Rep[Option[Bands]], Rep[Option[Thumbnails]])
 
   implicit val scenesSorter: QuerySorter[Scenes] =
@@ -200,6 +200,45 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     }
   }
 
+  def aggregateScenes(combinedParams: CombinedGridQueryParams, bbox: Projected[Polygon], grid: Seq[Projected[Polygon]])
+                     (implicit database: DB)
+      : Future[List[(Projected[Polygon], Int)]] = {
+    val filteredScenes = Scenes
+      .filterByOrganization(combinedParams.orgParams)
+      .filterByUser(combinedParams.userParams)
+      .filterByTimestamp(combinedParams.timestampParams)
+      .filterByImageParams(combinedParams.imageParams)
+      .filterByGridParams(combinedParams.gridParams)
+
+
+    val bboxFilteredScenes = filteredScenes.filter { scene =>
+      scene.dataFootprint.intersects(bbox)
+    }
+
+    val gridWithIndex = grid.zipWithIndex
+    val action = gridWithIndex.map { case (cell, idx) =>
+      bboxFilteredScenes.filter {
+        scene => scene.dataFootprint.intersects(cell)
+      } map {
+        (idx, _)
+      }
+    }.reduce(_ union _).result
+    logger.debug(s"Aggregated Query for scenes -- SQL: ${action.statements.headOption}")
+
+    database.db.run {
+      action
+    } map {
+      res: Seq[(Int, Scene)] => res.map(_._1)
+    } map {
+      res =>
+      res.groupBy(identity(_)).map {
+        case (idx, list) =>
+          val gridmap = gridWithIndex.map{case (x, y) => (y, x)}.toMap
+          (gridmap(idx), list.length)
+      }.toList
+    }
+  }
+
 
   /** Delete a scene from the database
     *
@@ -250,7 +289,7 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
 }
 
 
-class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) {
+class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) extends LazyLogging {
   import Scenes.datePart
 
 
@@ -294,6 +333,36 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) {
         filteredScenes
       }
     }
+  }
+
+  def filterByGridParams(gridParams: GridQueryParameters): Scenes.TableQuery = {
+    val filteredScenes = scenes.filter{ scene =>
+      val sceneFilterConditions = List(
+        gridParams.maxAcquisitionDatetime.map(scene.acquisitionDate < _),
+        gridParams.minAcquisitionDatetime.map(scene.acquisitionDate > _),
+        gridParams.maxCloudCover.map(scene.cloudCover < _),
+        gridParams.minCloudCover.map(scene.cloudCover > _),
+        gridParams.minSunAzimuth.map(scene.sunAzimuth > _),
+        gridParams.maxSunAzimuth.map(scene.sunAzimuth < _),
+        gridParams.minSunElevation.map(scene.sunElevation > _),
+        gridParams.maxSunElevation.map(scene.sunElevation < _)
+      )
+      sceneFilterConditions
+        .collect({case Some(criteria)  => criteria})
+        .reduceLeftOption(_ && _)
+        .getOrElse(Some(true): Rep[Option[Boolean]])
+    }.filter { scene =>
+      gridParams.month
+        .map(datePart("month", scene.acquisitionDate) === _)
+        .reduceLeftOption(_ || _)
+        .getOrElse(true: Rep[Boolean])
+    }.filter { scene =>
+      gridParams.datasource
+        .map(scene.datasource === _)
+        .reduceLeftOption(_ || _)
+        .getOrElse(true: Rep[Boolean])
+    }
+    return filteredScenes
   }
 
   def filterByImageParams(imageParams: ImageQueryParameters): Scenes.TableQuery = {

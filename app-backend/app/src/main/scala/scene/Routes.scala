@@ -48,7 +48,7 @@ trait SceneRoutes extends Authentication
   def createScene: Route = authenticate { user =>
     entity(as[Scene.Create]) { newScene =>
       onSuccess(Scenes.insertScene(newScene, user)) { scene =>
-        complete(StatusCodes.Created, scene)
+        complete((StatusCodes.Created, scene))
       }
     }
   }

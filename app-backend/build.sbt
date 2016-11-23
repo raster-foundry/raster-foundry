@@ -41,7 +41,7 @@ lazy val appSettings = commonSettings ++ Seq(
     case _ => MergeStrategy.first
   },
   resolvers += "Open Source Geospatial Foundation Repo" at "http://download.osgeo.org/webdav/geotools/",
-  resolvers += Resolver.bintrayRepo("azavea", "geotrellis"),
+  resolvers += "LocationTech GeoTrellis Releases" at "https://repo.locationtech.org/content/repositories/geotrellis-releases",
   resolvers += Resolver.bintrayRepo("azavea", "maven"),
   resolvers += Resolver.bintrayRepo("lonelyplanet", "maven"),
   test in assembly := {}

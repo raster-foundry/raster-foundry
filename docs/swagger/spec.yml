@@ -371,7 +371,7 @@ paths:
             The UUID parameter does not refer to a scene or the user does not have access to the scene it refers to
           schema:
             $ref: '#/definitions/Error'
-  /scene-grids/{bboxCoordinates}/{zoom}:
+  /scene-grid/{bboxCoordinates}/{zoom}:
     get:
       summary: Scene statistics. Geojson FeatureCollection grid which lines up with map tiles and gives scene intersection count
       tags:

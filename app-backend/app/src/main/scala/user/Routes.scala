@@ -46,7 +46,7 @@ trait UserRoutes extends Authentication with PaginationDirectives with UserError
     entity(as[User.Create]) { newUser =>
       onSuccess(Users.createUser(newUser)) { createdUser =>
         onSuccess(Users.getUserWithOrgsById(createdUser.id)) {
-          case Some(user) => complete(StatusCodes.Created, user)
+          case Some(user) => complete((StatusCodes.Created, user))
           case None => throw new IllegalStateException("Unable to create user")
         }
       }

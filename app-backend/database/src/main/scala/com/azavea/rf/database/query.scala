@@ -70,6 +70,20 @@ case class SceneQueryParameters(
   }
 }
 
+/** Case class for Grid query parameters */
+case class GridQueryParameters(
+  maxCloudCover: Option[Float],
+  minCloudCover: Option[Float],
+  minAcquisitionDatetime: Option[Timestamp],
+  maxAcquisitionDatetime: Option[Timestamp],
+  datasource: Iterable[String],
+  month: Iterable[Int],
+  maxSunAzimuth: Option[Float],
+  minSunAzimuth: Option[Float],
+  maxSunElevation: Option[Float],
+  minSunElevation: Option[Float]
+)
+
 /** Combined all query parameters */
 case class CombinedSceneQueryParams(
   orgParams: OrgQueryParameters,
@@ -77,6 +91,15 @@ case class CombinedSceneQueryParams(
   timestampParams: TimestampQueryParameters,
   sceneParams: SceneQueryParameters,
   imageQueryParameters: ImageQueryParameters
+)
+
+/** Combined all query parameters for grids */
+case class CombinedGridQueryParams(
+  orgParams: OrgQueryParameters,
+  userParams: UserQueryParameters,
+  timestampParams: TimestampQueryParameters,
+  gridParams: GridQueryParameters,
+  imageParams: ImageQueryParameters
 )
 
 
