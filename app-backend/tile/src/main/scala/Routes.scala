@@ -15,24 +15,26 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import com.typesafe.scalalogging.LazyLogging
-
 import spray.json._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
+import java.util.UUID
 
 trait Routes extends LazyLogging {
+
   def layerTile(layer: RfLayerId) =
-    pathPrefix(IntNumber / IntNumber / IntNumber).tmap[Future[MultibandTile]] {
+    pathPrefix(IntNumber / IntNumber / IntNumber).tmap[Future[Option[MultibandTile]]] {
       case (zoom: Int, x: Int, y: Int) =>
-        LayerCache.tile(layer, zoom, SpatialKey(x, y))
+        LayerCache.maybeTile(layer, zoom, SpatialKey(x, y))
     }
 
   def layerTileAndHistogram(id: RfLayerId) =
-    pathPrefix(IntNumber / IntNumber / IntNumber).tmap[(Future[MultibandTile], Future[Array[Histogram[Double]]])] {
+    pathPrefix(IntNumber / IntNumber / IntNumber).tmap[(Future[Option[MultibandTile]], Future[Array[Histogram[Double]]])] {
       case (zoom: Int, x: Int, y: Int) =>
-        val futureTile = LayerCache.tile(id, zoom, SpatialKey(x, y))
+        val futureMaybeTile = LayerCache.maybeTile(id, zoom, SpatialKey(x, y))
         val futureHistogram = LayerCache.bandHistogram(id, zoom)
-        (futureTile, futureHistogram)
+        (futureMaybeTile, futureHistogram)
     }
 
   def pngAsHttpResponse(png: Png): HttpResponse =
@@ -41,28 +43,34 @@ trait Routes extends LazyLogging {
   def singleLayer: Route =
     pathPrefix(JavaUUID / Segment / JavaUUID).as(RfLayerId) { id =>
       pathPrefix("rgb") {
-        layerTileAndHistogram(id) { (futureTile, futureHist) =>
-          imageRoute(futureTile, futureHist)
+        layerTileAndHistogram(id) { (futureMaybeTile, futureHist) =>
+          imageRoute(futureMaybeTile, futureHist)
         } ~
         pathPrefix("thumbnail") {
           pathEndOrSingleSlash {
-            get { imageThumbnailRoute(id) }
+            rejectEmptyResponse {
+              get { imageThumbnailRoute(id) }
+            }
           }
         } ~
         pathPrefix("histogram") {
           pathEndOrSingleSlash {
-            get { imageHistogramRoute(id) }
+            rejectEmptyResponse {
+              get { imageHistogramRoute(id) }
+            }
           }
         }
       } ~
-      (pathPrefix("ndvi") & layerTile(id)){ futureTile =>
-        get { toolRoute(futureTile, NDVI, Some(NDVI.colorRamp), Some(NDVI.breaks)) }
-      } ~
-      (pathPrefix("ndwi") & layerTile(id)){ futureTile =>
-        get { toolRoute(futureTile, NDWI, Some(NDWI.colorRamp), Some(NDWI.breaks)) }
-      } ~
-      (pathPrefix("grey") & layerTile(id)){ futureTile =>
-        get { toolRoute(futureTile, _.band(0), Some(ColorRamp(Array(0x000000, 0xFFFFFF)))) }
+      rejectEmptyResponse {
+        (pathPrefix("ndvi") & layerTile(id)){ futureMaybeTile =>
+          get { toolRoute(futureMaybeTile, NDVI, Some(NDVI.colorRamp), Some(NDVI.breaks)) }
+        } ~
+        (pathPrefix("ndwi") & layerTile(id)){ futureMaybeTile =>
+          get { toolRoute(futureMaybeTile, NDWI, Some(NDWI.colorRamp), Some(NDWI.breaks)) }
+        } ~
+        (pathPrefix("grey") & layerTile(id)){ futureMaybeTile =>
+          get { toolRoute(futureMaybeTile, _.band(0), Some(ColorRamp(Array(0x000000, 0xFFFFFF)))) }
+        }
       }
     }
 
@@ -71,14 +79,16 @@ trait Routes extends LazyLogging {
       parameters('size.as[Int].?(256)) { size =>
       complete {
         val futureHist = LayerCache.bandHistogram(id, 0)
-        val futureTile = StitchLayer(id, size)
+        val futureMaybeTile = StitchLayer(id, size)
 
         for {
-          tile <- futureTile
+          maybeTile <- futureMaybeTile
           layerHist <- futureHist
         } yield {
-          val (rgbTile, rgbHist) = params.reorderBands(tile, layerHist)
-          pngAsHttpResponse(ColorCorrect(rgbTile, rgbHist, params).renderPng)
+          maybeTile.map { tile =>
+            val (rgbTile, rgbHist) = params.reorderBands(tile, layerHist)
+            pngAsHttpResponse(ColorCorrect(rgbTile, rgbHist, params).renderPng)
+          }
         }
       }
     }
@@ -89,46 +99,68 @@ trait Routes extends LazyLogging {
       parameters('size.as[Int].?(64)) { size =>
       import DefaultJsonProtocol._
       complete {
-        val futureTile = StitchLayer(id, size)
+        val futureMaybeTile = StitchLayer(id, size)
         val futureHist = LayerCache.bandHistogram(id, 0)
         for {
-          tile <- futureTile
+          maybeTile <- futureMaybeTile
           layerHist <- futureHist
         } yield {
-          val (rgbTile, rgbHist) = params.reorderBands(tile, layerHist)
-          ColorCorrect(rgbTile, rgbHist, params).bands.map(_.histogram).toArray
+          maybeTile.map { tile =>
+            val (rgbTile, rgbHist) = params.reorderBands(tile, layerHist)
+            ColorCorrect(rgbTile, rgbHist, params).bands.map(_.histogram).toArray
+          }
         }
       }
     }
   }
 
-  def imageRoute(futureTile: Future[MultibandTile], futureHist: Future[Array[Histogram[Double]]]): Route =
+  def imageRoute(futureMaybeTile: Future[Option[MultibandTile]], futureHist: Future[Array[Histogram[Double]]]): Route =
     colorCorrectParams { params =>
       complete {
         for {
-          tile <- futureTile
+          maybeTile <- futureMaybeTile
           layerHist <- futureHist
         } yield {
-          val (rgbTile, rgbHist) = params.reorderBands(tile, layerHist)
-          pngAsHttpResponse(ColorCorrect(rgbTile, rgbHist, params).renderPng)
+          maybeTile.map { tile =>
+            val (rgbTile, rgbHist) = params.reorderBands(tile, layerHist)
+            pngAsHttpResponse(ColorCorrect(rgbTile, rgbHist, params).renderPng)
+          }
         }
       }
     }
 
   def toolRoute(
-    futureTile: Future[MultibandTile],
+    futureMaybeTile: Future[Option[MultibandTile]],
     index: MultibandTile => Tile,
     defaultColorRamp: Option[ColorRamp] = None,
     defaultBreaks: Option[Array[Double]] = None
   ): Route = {
     toolParams(defaultColorRamp, defaultBreaks) { params =>
-        complete {
-          for {
-            tile <- futureTile
-          } yield {
+      complete {
+        for {
+          maybeTile <- futureMaybeTile
+        } yield {
+          maybeTile.map { tile =>
             val subsetTile = tile.subsetBands(params.bands)
             val colorMap = ColorMap(params.breaks, params.ramp)
             pngAsHttpResponse(index(subsetTile).renderPng(colorMap))
+          }
+        }
+      }
+    }
+  }
+
+  def mosaicLayer: Route =
+    pathPrefix(JavaUUID / Segment / "mosaic" / IntNumber / IntNumber / IntNumber) { (orgId, userId, zoom, x, y) =>
+      colorCorrectParams { params =>
+        parameters('scene.*) { scenes =>
+          get {
+            complete {
+              val ids = scenes.map(id => RfLayerId(orgId, userId, UUID.fromString(id)))
+              Mosaic(params, ids, zoom, x, y).map { maybeTile =>
+                maybeTile.map { tile => pngAsHttpResponse(tile.renderPng())}
+              }
+            }
           }
         }
       }

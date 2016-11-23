@@ -12,6 +12,5 @@ import geotrellis.spark.LayerId
 case class RfLayerId(org: UUID, user: String, scene: UUID) {
   def prefix: String = s"${org.toString}/$user"
   def catalogId(zoom: Int) = LayerId(scene.toString, zoom)
+  def layerName: String = scene.toString
 }
-
-
