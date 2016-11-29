@@ -23,10 +23,10 @@
 	"base/normalize",
   "base/animation",
   "base/base",
-  "base/helpers",
   "base/typography",
-	"base/list",
-	"base/grid";
+  "base/list",
+  "base/grid",
+  "base/helpers";
 
 /**
  * Layout
@@ -37,9 +37,7 @@
   "layout/navbar",
   "layout/header",
   "layout/sidebar",
-  "layout/footer",
-  "layout/embedded",
-  "layout/library";
+  "layout/footer";
 
 /**
  * Components
@@ -61,15 +59,16 @@
   "components/badge",
   "components/map",
   "components/login",
-  "components/item-detail",
   "components/pagination",
+  "components/content",
   "components/slider";
 
 /**
  * Pages
 **/
 @import
-  "pages/default";
+  "pages/default",
+  "pages/library";
 
 
 /**

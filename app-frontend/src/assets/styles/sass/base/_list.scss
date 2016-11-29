@@ -3,16 +3,12 @@ dl {
 }
 
 dl > dt {
+  font-weight: 600;
   clear: both;
-}
-
-dl > dt, dl > dd {
-  width: 50%;
-  float: left;
   margin: 5px 0;
 }
 
 dl > dd {
-  font-weight: 600;
-  padding-left: 2rem;
+  margin-bottom: 10px;
+  margin-left: 0;
 }

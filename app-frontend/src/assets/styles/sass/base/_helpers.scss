@@ -59,6 +59,41 @@
   background-color: $danger;
 }
 
+// link helpers
+.link-primary {
+  color: $brand-primary;
+  &:hover {
+    color: darken($brand-primary, 5%);
+  }
+}
+
+.link-secondary {
+  color: $brand-secondary;
+  &:hover {
+    color: darken($brand-secondary, 5%);
+  }
+}
+
+.link-warning {
+  color: $warning;
+  &:hover {
+    color: darken($warning, 5%);
+  }
+}
+
+.link-danger {
+  color: $danger;
+  &:hover {
+    color: darken($danger, 5%);
+  }
+}
+
 .hide {
   display: none !important;
+}
+
+.invisible {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }

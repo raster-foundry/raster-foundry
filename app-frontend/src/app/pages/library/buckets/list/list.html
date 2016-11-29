@@ -1,18 +1,20 @@
 <div class="row content stack-sm">
-  <div class="column">
-    <h1 class="h3">Buckets</h1>
+  <div class="column-8">
+    <div class="library-header">
+      <h1 class="h3">Projects</h1>
+    </div>
     <form>
-      <div class="form-group all-in-one">
-        <label for="name"><i class="icon-bucket"></i></label>
-        <input id="name" type="text" class="form-control"
-               placeholder="New bucket name" ng-model="$ctrl.newBucketName">
-        <button class="btn btn-link"
-                type="button"
-                ng-click="$ctrl.createNewBucket($ctrl.newBucketName)">
-          Create
-        </button>
-      </div>
-    </form>
+        <div class="form-group all-in-one">
+          <label for="name"><i class="icon-bucket"></i></label>
+          <input id="name" type="text" class="form-control"
+                 placeholder="New project name" ng-model="$ctrl.newBucketName">
+          <button class="btn btn-link"
+                  type="button"
+                  ng-click="$ctrl.createNewBucket($ctrl.newBucketName)">
+            Create
+          </button>
+        </div>
+      </form>
     <div class="list-group">
       <rf-bucket-item
           ng-click="$ctrl.viewBucketDetail(bucket)"
@@ -29,7 +31,7 @@
     <div ng-if="!$ctrl.loading && $ctrl.lastBucketResult && $ctrl.lastBucketResult.count === 0"
          class="list-group">
       <span class="list-placeholder">
-        You have not created any Buckets.
+        You have not created any Projects.
       </span>
     </div>
     <div class="list-group text-center"
@@ -48,17 +50,16 @@
   </div>
   <div class="column-4">
     <div class="content">
-      <h5>What is a bucket?</h5>
+      <h5>What is a project?</h5>
       <p class="font-size-small">
-        A bucket is a personal collection of scenes from many different sources.
-        Think of it as a bookmark folder of images.
+        A project is a collection of scenes from many different sources where you can then run color corrections and mosaic into a basemap.
       </p>
-      <h5>Are my buckets public?</h5>
-      <p class="font-size-small">Your buckets can only be seen by you.</p>
-      <h5>How many buckets can I have?</h5>
-      <p class="font-size-small">You have an unlimited number of buckets.</p>
-      <h5>Do buckets have size limits?</h5>
-      <p class="font-size-small">Nope. You can bookmark as many scenes as you need.</p>
+      <h5>Are my projects public?</h5>
+      <p class="font-size-small">Your projects can only be seen by you.</p>
+      <h5>How many projects can I have?</h5>
+      <p class="font-size-small">You have an unlimited number of projects.</p>
+      <h5>Do projects have scene size limits?</h5>
+      <p class="font-size-small">Nope. You can have as scenes as you need.</p>
     </div>
   </div>
 </div>

@@ -103,6 +103,7 @@ input[type=radio] {
   align-items: stretch;
   border-radius: 2px;
   border: 1px solid #ddd;
+  background-color: #fff;
 
   label {
     position: relative;
@@ -115,4 +116,8 @@ input[type=radio] {
     border: none;
     border-radius: 0;
   }
+}
+
+.form-group.all-in-one.stacked {
+  flex-direction: column;
 }

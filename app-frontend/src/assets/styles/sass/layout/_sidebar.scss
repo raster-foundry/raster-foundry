@@ -4,21 +4,23 @@
   background: #fff;
   width: 40rem;
   padding: 0;
-  border-right-width: 2px;
+  border-right: 2px solid #ddd;
+  word-wrap: break-word;
 
   .dashboard & {
-    border-right: 1px solid #ddd;
-    padding: 4rem;
+    border-right-width: 1px;
+    padding: 4rem 0 0 3rem;
     width: 22rem;
   }
 
   .btn ~ nav {
     margin: 2rem 0;
   }
-
-  @include respond-to('xs') {
+  
+  /* Will handle mobile responsive at a later date */
+  /* @include respond-to('xs') {
     display: none;
-  }
+  } */
 
   .sub-category {
     padding-left: 2em;

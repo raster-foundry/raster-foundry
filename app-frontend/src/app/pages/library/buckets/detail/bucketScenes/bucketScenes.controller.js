@@ -108,11 +108,16 @@ export default class BucketScenesController {
         this.activeModal = this.$uibModal.open({
             component: 'rfConfirmationModal',
             resolve: {
-                title: () => 'Delete bucket?',
+                title: () => 'Delete Project?',
+                subtitle: () =>
+                    'The project will be permanently deleted,'
+                    + ' but scenes will be unaffected.',
                 content: () =>
-                    'The bucket will be permanently deleted,'
-                    + 'but scenes will be unaffected.',
-                confirmText: () => 'Delete Bucket',
+                    '<div class="text-center color-danger">'
+                    + 'You are about to delete the project. This action is not reversible.'
+                    + ' Are you sure you wish to continue?'
+                    + '</div>',
+                confirmText: () => 'Delete Project',
                 cancelText: () => 'Cancel'
             }
         });
