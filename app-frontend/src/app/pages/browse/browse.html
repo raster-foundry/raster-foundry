@@ -1,5 +1,5 @@
 <!-- App Container -->
-<div class="container column-stretch">
+<div class="container column-stretch container-not-scrollable">
   <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-static">
@@ -52,20 +52,13 @@
     </div>
 
     <div class="sidebar-static">
-      <h5>
-        <a href class="color-primary"
-           ng-click="$ctrl.sceneModal()">
-          Selected: {{$ctrl.selectedScenes.size || 'None'}}
-        </a>
-      </h5>
       <div class="sidebar-actions">
-        <button type="button"
-                class="btn btn- btn-square"
-                ng-disabled="!$ctrl.selectedScenes || $ctrl.selectedScenes.size === 0"
-                ng-click="$ctrl.projectModal()">
-          <i class="icon-plus"></i>
-          Add to Project
-        </button>
+        <a href class="btn"
+           ng-class="$ctrl.selectedScenes.size === 0 ? 'disabled' : 'btn-primary'"
+           ng-disabled="!$ctrl.selectedScenes || $ctrl.selectedScenes.size === 0"
+           ng-click="$ctrl.sceneModal()">
+          {{$ctrl.selectedScenes.size || 'No'}} scenes selected
+        </a>
       </div>
     </div>
   </div>
@@ -83,12 +76,6 @@
         </button>
       </div>
     </div>
-    <img ng-if="$ctrl.activeScene.thumbnails[0]"
-         ng-attr-src="{{$ctrl.activeScene.thumbnails[0].url}}"
-         class="rounded-img detail-img">
-    <img ng-if="!$ctrl.activeScene.thumbnails.length"
-         src="https://placehold.it/275x275"
-         class="rounded-img detail-img">
     <rf-scene-detail class="sidebar-scrollable"
                      scene="$ctrl.activeScene"></rf-scene-detail>
     <div class="sidebar-static">

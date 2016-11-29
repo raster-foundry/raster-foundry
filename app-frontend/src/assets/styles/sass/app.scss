@@ -23,10 +23,10 @@
 	"base/normalize",
   "base/animation",
   "base/base",
-  "base/helpers",
   "base/typography",
-	"base/list",
-	"base/grid";
+  "base/list",
+  "base/grid",
+  "base/helpers";
 
 /**
  * Layout
@@ -37,13 +37,12 @@
   "layout/navbar",
   "layout/header",
   "layout/sidebar",
-  "layout/footer",
-  "layout/embedded",
-  "layout/library";
+  "layout/footer";
 
 /**
  * Components
 **/
+// TODO: Matt Look at color-correct, carousel
 @import
   "components/spacing",
   "components/button",
@@ -62,16 +61,17 @@
   "components/badge",
   "components/map",
   "components/login",
-  "components/item-detail",
   "components/pagination",
-  "components/slider",
-  "components/carousel";
+  "components/carousel",
+  "components/content",
+  "components/slider";
 
 /**
  * Pages
 **/
 @import
-  "pages/default";
+  "pages/default",
+  "pages/library";
 
 
 /**

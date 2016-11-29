@@ -24,34 +24,39 @@ $cursor-disabled: default;
 .pagination {
   display: inline-block;
   padding-left: 0;
-  margin: $pagination-line-height-computed 0;
-  border-radius: $pagination-border-radius-base;
+  margin: 2rem 0;
+  border-radius: 2px;
 
   > li {
     display: inline; // Remove list-style and block-level defaults
+    
     > a,
     > span {
       position: relative;
       float: left; // Collapse white-space
-      padding: $pagination-padding-base-vertical $pagination-padding-base-horizontal;
-      line-height: $pagination-line-height-base;
+      padding: .75rem 1.5rem;
+      line-height: 1;
       text-decoration: none;
-      color: $pagination-color;
-      background-color: $pagination-bg;
-      border: 1px solid $pagination-border;
+      color: $shade-light;
+      background-color: #fff;
+      border: 1px solid $shade-light;
       margin-left: -1px;
+      font-weight: 500;
     }
+
     &:first-child {
       > a,
       > span {
         margin-left: 0;
-        @include border-left-radius($pagination-border-radius-base);
+        border-top-left-radius: 2px;
+        border-bottom-left-radius: 2px
       }
     }
     &:last-child {
       > a,
       > span {
-        @include border-right-radius($pagination-border-radius-base);
+        border-top-right-radius: 2px;
+        border-bottom-right-radius: 2px
       }
     }
   }
@@ -61,9 +66,8 @@ $cursor-disabled: default;
     &:hover,
     &:focus {
       z-index: 2;
-      color: $pagination-hover-color;
-      background-color: $pagination-hover-bg;
-      border-color: $pagination-hover-border;
+      color: $brand-primary;
+      border-color: $brand-primary;
     }
   }
 
@@ -73,9 +77,9 @@ $cursor-disabled: default;
     &:hover,
     &:focus {
       z-index: 3;
-      color: $pagination-active-color;
-      background-color: $pagination-active-bg;
-      border-color: $pagination-active-border;
+      color: #fff;
+      background-color: $shade-light;;
+      border-color: $shade-light;;
       cursor: default;
     }
   }
@@ -87,10 +91,9 @@ $cursor-disabled: default;
     > a,
     > a:hover,
     > a:focus {
-      color: $pagination-disabled-color;
-      background-color: $pagination-disabled-bg;
-      border-color: $pagination-disabled-border;
-      cursor: $cursor-disabled;
+      opacity: .5;
+      cursor: default;
+      outline: none;
     }
   }
 }
