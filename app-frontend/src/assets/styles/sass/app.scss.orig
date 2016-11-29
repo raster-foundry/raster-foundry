@@ -42,7 +42,6 @@
 /**
  * Components
 **/
-// TODO: Matt Look at color-correct, carousel
 @import
   "components/spacing",
   "components/button",
@@ -62,9 +61,13 @@
   "components/map",
   "components/login",
   "components/pagination",
-  "components/carousel",
+<<<<<<< HEAD
+  "components/slider",
+  "components/carousel";
+=======
   "components/content",
   "components/slider";
+>>>>>>> 10d9c73... first pass at app cleanup
 
 /**
  * Pages

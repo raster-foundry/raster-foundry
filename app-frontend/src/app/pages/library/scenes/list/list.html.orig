@@ -1,3 +1,64 @@
+<<<<<<< HEAD
+<div class="content">
+  <div class="row stack-sm library-header">
+    <h1 ng-show="!$ctrl.$parent.selectedScenes.size"
+        class="h3">Scenes</h1>
+    <div ng-show="$ctrl.$parent.selectedScenes.size">
+      <h1 class="h3 highlight">
+        <ng-pluralize count="$ctrl.$parent.selectedScenes.size"
+                      when="{'one': '1 scene selected.',
+                            'other': '{} scenes selected.'}">
+        </ng-pluralize>
+      </h1>
+      <div class="button-group">
+        <a href ng-click="$ctrl.sceneModal()">Selected Scenes...</a>
+        <a href ng-click="$ctrl.projectModal()">Add to Project...</a>
+        <a href>Delete...</a>
+      </div>
+    </div>
+  </div>
+  <div class="row stack-sm">
+    <div class="column">
+      <div class="embedded-scrollable">
+        <div class="list-group">
+          <rf-scene-item
+              ng-click="$ctrl.viewSceneDetail(scene)"
+              scene="scene"
+              selectable
+              selected="$ctrl.isSelected(scene)"
+              on-select="$ctrl.setSelected(scene, selected)"
+              class="selectable"
+              ng-repeat="scene in $ctrl.sceneList track by scene.id">
+          </rf-scene-item>
+        </div>
+        <div class="list-group" ng-show="$ctrl.loading">
+          <span class="list-placeholder">
+            <i class="icon-load"></i>
+          </span>
+        </div>
+        <div class="list-group text-center"
+             ng-show="!$ctrl.loading && $ctrl.lastSceneResult && $ctrl.lastSceneResult.count !== 0 && !$ctrl.errorMsg">
+          <ul uib-pagination
+              items-per-page="$ctrl.lastSceneResult.pageSize"
+              total-items="$ctrl.lastSceneResult.count"
+              ng-model="$ctrl.currentPage"
+              max-size="4"
+              rotate="true"
+              boundary-link-numbers="true"
+              force-ellipses="true"
+              ng-change="$ctrl.populateSceneList($ctrl.currentPage)">
+          </ul>
+        </div>
+        <div ng-if="!$ctrl.loading && $ctrl.lastSceneResult && $ctrl.lastSceneResult.count === 0"
+             class="list-group">
+          <span class="list-placeholder">You haven't uploaded any scenes. Click the Import Data button to get started!</span>
+        </div>
+        <div class="list-group" ng-show="$ctrl.errorMsg">
+          <span class="list-placeholder">
+            {{$ctrl.errorMsg}}
+            <a href ng-click="$ctrl.populateSceneList(0)">Try again</a>
+          </span>
+=======
 <div class="row content stack-sm">
   <div class="column-8">
     <div class="library-header">
@@ -13,8 +74,9 @@
         </h1>
         <div class="library-header-actions">
           <a href class="" ng-click="$ctrl.sceneModal()">Selected Scenes...</a>
-          <a href class="" ng-click="$ctrl.projectModal()">Add to Project...</a>
+          <a href class="" ng-click="$ctrl.bucketModal()">Add to Bucket...</a>
           <a href class="link-danger">Delete...</a>
+>>>>>>> 10d9c73... first pass at app cleanup
         </div>
       </div>
     </div>

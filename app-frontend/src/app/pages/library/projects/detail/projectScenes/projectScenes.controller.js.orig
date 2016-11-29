@@ -108,6 +108,12 @@ export default class ProjectScenesController {
         this.activeModal = this.$uibModal.open({
             component: 'rfConfirmationModal',
             resolve: {
+<<<<<<< HEAD:app-frontend/src/app/pages/library/projects/detail/projectScenes/projectScenes.controller.js
+                title: () => 'Delete project?',
+                content: () =>
+                    'The project will be permanently deleted,'
+                    + 'but scenes will be unaffected.',
+=======
                 title: () => 'Delete Project?',
                 subtitle: () =>
                     'The project will be permanently deleted,'
@@ -117,6 +123,7 @@ export default class ProjectScenesController {
                     + 'You are about to delete the project. This action is not reversible.'
                     + ' Are you sure you wish to continue?'
                     + '</div>',
+>>>>>>> 10d9c73... first pass at app cleanup:app-frontend/src/app/pages/library/buckets/detail/bucketScenes/bucketScenes.controller.js
                 confirmText: () => 'Delete Project',
                 cancelText: () => 'Cancel'
             }

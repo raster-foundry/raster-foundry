@@ -14,6 +14,7 @@
                           }">
       </ng-pluralize>
       to
+<<<<<<< HEAD:app-frontend/src/app/components/projectAddModal/projectAddModal.html
       <ng-pluralize count="$ctrl.selectedProjects.size"
                     when="{'0': 'no Projects',
                           'one': '1 Project',
@@ -21,7 +22,17 @@
                           }">
       </ng-pluralize>
     </h4>
+	  <p>
+=======
+      <ng-pluralize count="$ctrl.selectedBuckets.size"
+                    when="{'0': 'no projects',
+                          'one': '1 project',
+                          'other': '{} projects'
+                          }">
+      </ng-pluralize>
+    </h4>
     <p>
+>>>>>>> 10d9c73... first pass at app cleanup:app-frontend/src/app/components/bucketAddModal/bucketAddModal.html
       Add your selections to a project or create a new project
       based on your selections.
     </p>
@@ -29,13 +40,18 @@
       <div class="form-group all-in-one">
         <label for="name"><i class="icon-bucket"></i></label>
         <input id="name" type="text" class="form-control"
+<<<<<<< HEAD:app-frontend/src/app/components/projectAddModal/projectAddModal.html
                placeholder="New project name" ng-model="$ctrl.newProjectName">
+=======
+               placeholder="New project name" ng-model="$ctrl.newBucketName">
+>>>>>>> 10d9c73... first pass at app cleanup:app-frontend/src/app/components/bucketAddModal/bucketAddModal.html
         <button class="btn btn-link" type="submit"
                 ng-click="$ctrl.createNewProject($ctrl.newProjectName)">
           Create
         </button>
       </div>
     </form>
+<<<<<<< HEAD:app-frontend/src/app/components/projectAddModal/projectAddModal.html
 	</div>
 	<div class="modal-body">
 	  <div class="list-group">
@@ -47,6 +63,19 @@
           ng-repeat="project in $ctrl.projectList track by project.id">
       </rf-project-item>
 	  </div>
+=======
+  </div>
+  <div class="modal-body">
+    <div class="list-group">
+      <rf-bucket-item
+          bucket="bucket"
+          selectable
+          selected="$ctrl.isSelected(bucket)"
+          on-select="$ctrl.setSelected(bucket, selected)"
+          ng-repeat="bucket in $ctrl.bucketList track by bucket.id">
+      </rf-bucket-item>
+    </div>
+>>>>>>> 10d9c73... first pass at app cleanup:app-frontend/src/app/components/bucketAddModal/bucketAddModal.html
     <div class="list-group" ng-show="$ctrl.loading">
       <span class="list-placeholder">
         <i class="icon-load"></i>
@@ -78,10 +107,17 @@
               ng-click="$ctrl.close({$value: 'scenes'})">
         View selected Scenes
       </button>
+<<<<<<< HEAD:app-frontend/src/app/components/projectAddModal/projectAddModal.html
 	  </div>
 	  <button type="button" class="btn btn-primary"
             ng-disabled="$ctrl.selectedProjects.size === 0"
             ng-click="$ctrl.addScenesToProjects()">
+=======
+    </div>
+    <button type="button" class="btn btn-primary"
+            ng-disabled="$ctrl.selectedBuckets.size === 0"
+            ng-click="$ctrl.addScenesToBuckets()">
+>>>>>>> 10d9c73... first pass at app cleanup:app-frontend/src/app/components/bucketAddModal/bucketAddModal.html
       Add Scenes
     </button>
   </div>

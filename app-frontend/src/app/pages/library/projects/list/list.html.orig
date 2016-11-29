@@ -1,8 +1,7 @@
 <div class="row content stack-sm">
-  <div class="column-8">
-    <div class="library-header">
-      <h1 class="h3">Projects</h1>
-    </div>
+<<<<<<< HEAD:app-frontend/src/app/pages/library/projects/list/list.html
+  <div class="column">
+    <h1 class="h3">Projects</h1>
     <form>
       <div class="form-group all-in-one">
         <label for="name"><i class="icon-bucket"></i></label>
@@ -15,6 +14,24 @@
         </button>
       </div>
     </form>
+=======
+  <div class="column-8">
+    <div class="library-header">
+      <h1 class="h3">Projects</h1>
+    </div>
+    <form>
+        <div class="form-group all-in-one">
+          <label for="name"><i class="icon-bucket"></i></label>
+          <input id="name" type="text" class="form-control"
+                 placeholder="New project name" ng-model="$ctrl.newBucketName">
+          <button class="btn btn-link"
+                  type="button"
+                  ng-click="$ctrl.createNewBucket($ctrl.newBucketName)">
+            Create
+          </button>
+        </div>
+      </form>
+>>>>>>> 10d9c73... first pass at app cleanup:app-frontend/src/app/pages/library/buckets/list/list.html
     <div class="list-group">
       <rf-project-item
           ng-click="$ctrl.viewProjectDetail(project)"
@@ -52,14 +69,24 @@
     <div class="content">
       <h5>What is a project?</h5>
       <p class="font-size-small">
+<<<<<<< HEAD:app-frontend/src/app/pages/library/projects/list/list.html
+        A project is a personal collection of scenes from many different sources.
+        Think of it as a bookmark folder of images.
+=======
         A project is a collection of scenes from many different sources where you can then run color corrections and mosaic into a basemap.
+>>>>>>> 10d9c73... first pass at app cleanup:app-frontend/src/app/pages/library/buckets/list/list.html
       </p>
       <h5>Are my projects public?</h5>
       <p class="font-size-small">Your projects can only be seen by you.</p>
       <h5>How many projects can I have?</h5>
       <p class="font-size-small">You have an unlimited number of projects.</p>
+<<<<<<< HEAD:app-frontend/src/app/pages/library/projects/list/list.html
+      <h5>Do projects have size limits?</h5>
+      <p class="font-size-small">Nope. You can bookmark as many scenes as you need.</p>
+=======
       <h5>Do projects have scene size limits?</h5>
-      <p class="font-size-small">Nope. Your projects can have as many scenes as you need.</p>
+      <p class="font-size-small">Nope. You can have as scenes as you need.</p>
+>>>>>>> 10d9c73... first pass at app cleanup:app-frontend/src/app/pages/library/buckets/list/list.html
     </div>
   </div>
 </div>
