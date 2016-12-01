@@ -44,7 +44,7 @@ class Thumbnails(_tableTag: Tag) extends Table[Thumbnail](_tableTag, "thumbnails
 object Thumbnails extends TableQuery(tag => new Thumbnails(tag)) with LazyLogging {
   type TableQuery = Query[Thumbnails, Thumbnail, Seq]
 
-  implicit val bucketsSorter: QuerySorter[Thumbnails] =
+  implicit val projectsSorter: QuerySorter[Thumbnails] =
     new QuerySorter(
       new OrganizationFkSort(identity[Thumbnails]),
       new TimestampSort(identity[Thumbnails]))

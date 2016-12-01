@@ -273,7 +273,7 @@ paths:
       summary: Lists paginated scenes that a user has access to
       description: |
         Scenes are groups of images that share metadata and would typically be viewed together on a map.
-        They are ingested into Raster RDDs by GeoTrellis and are able to be added to buckets, mosaiced,
+        They are ingested into Raster RDDs by GeoTrellis and are able to be added to projects, mosaiced,
         and have other operations performed on them.
       tags:
         - Imagery
@@ -298,7 +298,7 @@ paths:
         - $ref: '#/parameters/maxResolution'
         - $ref: '#/parameters/tags'
         - $ref: '#/parameters/bbox'
-        - $ref: '#/parameters/bucket'
+        - $ref: '#/parameters/project'
       responses:
         200:
           description: Paginated list of scenes
@@ -404,9 +404,9 @@ paths:
           description: Invalid Parameters
           schema:
             $ref: '#/definitions/Error'
-  /buckets/:
+  /projects/:
     get:
-      summary: Get list of buckets the user is authorized to view
+      summary: Get list of projects the user is authorized to view
       tags:
         - Imagery
       parameters:
@@ -417,58 +417,58 @@ paths:
         - $ref: '#/parameters/tags'
       responses:
         200:
-          description: Paginated list of buckets the user is authorized to view
+          description: Paginated list of projects the user is authorized to view
           schema:
-            $ref: '#/definitions/BucketPaginated'
+            $ref: '#/definitions/ProjectPaginated'
     post:
-      summary: Create a new bucket
+      summary: Create a new project
       tags:
         - Imagery
       parameters:
-        - name: bucket
+        - name: project
           in: body
           required: true
           schema:
-            $ref: '#/definitions/Bucket'
+            $ref: '#/definitions/Project'
       responses:
         202:
-          description: Bucket details; at this point scene processes may be in-progress
+          description: Project details; at this point scene processes may be in-progress
           schema:
-            $ref: '#/definitions/Bucket'
-  /buckets/{uuid}/:
+            $ref: '#/definitions/Project'
+  /projects/{uuid}/:
     get:
-      summary: Retrieve bucket details
+      summary: Retrieve project details
       tags:
         - Imagery
       parameters:
         - $ref: '#/parameters/uuid'
       responses:
         200:
-          description: Info about Bucket
+          description: Info about Project
           schema:
-            $ref: '#/definitions/Bucket'
+            $ref: '#/definitions/Project'
         404:
           description: |
-            UUID parameter does not refer to a bucket or the user is not able to view the bucket it refers to
+            UUID parameter does not refer to a project or the user is not able to view the project it refers to
           schema:
             $ref: '#/definitions/Error'
     put:
-      summary: Update a bucket
+      summary: Update a project
       tags:
         - Imagery
       parameters:
-        - name: bucket
+        - name: project
           in: body
           required: true
           schema:
-            $ref: '#/definitions/Bucket'
+            $ref: '#/definitions/Project'
         - $ref: '#/parameters/uuid'
       responses:
         204:
           description: Update successful (no further processing needed)
         404:
           description: |
-            The UUID parameter does not refer to a bucket or the user does not have access to the bucket it refers to
+            The UUID parameter does not refer to a project or the user does not have access to the project it refers to
           schema:
             $ref: '#/definitions/Error'
         default:
@@ -476,7 +476,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
     delete:
-      summary: Delete a bucket
+      summary: Delete a project
       tags:
         - Imagery
       parameters:
@@ -485,12 +485,12 @@ paths:
         204:
           description: Deletion successful (no content)
         404:
-          description: The UUID parameter does not refer to a bucket or the user does not have access to the bucket it refers to
+          description: The UUID parameter does not refer to a project or the user does not have access to the project it refers to
           schema:
             $ref: '#/definitions/Error'
-  /buckets/{uuid}/scenes/:
+  /projects/{uuid}/scenes/:
     get:
-      summary: Get a list of scenes associated with this bucket
+      summary: Get a list of scenes associated with this project
       tags:
         - Imagery
       parameters:
@@ -516,11 +516,11 @@ paths:
         - $ref: '#/parameters/tags'
       responses:
         200:
-          description: Paginated list of scenes associated with this bucket
+          description: Paginated list of scenes associated with this project
           schema:
             $ref: '#/definitions/ScenePaginated'
     post:
-      summary: Create a new association between a set of scenes and this bucket
+      summary: Create a new association between a set of scenes and this project
       tags:
         - Imagery
       parameters:
@@ -528,7 +528,7 @@ paths:
         - name: scenes
           in: body
           required: true
-          description: UUIDs of scenes to place in bucket
+          description: UUIDs of scenes to place in project
           schema:
             type: array
             items:
@@ -536,13 +536,13 @@ paths:
               format: uuid
       responses:
         201:
-          description: List of scenes added to bucket
+          description: List of scenes added to project
           schema:
             type: array
             items:
               $ref: '#/definitions/Scene'
     put:
-      summary: Replace the set of scenes in a bucket
+      summary: Replace the set of scenes in a project
       tags:
         - Imagery
       parameters:
@@ -550,7 +550,7 @@ paths:
         - name: scenes
           in: body
           required: true
-          description: UUIDs of scenes to replace in bucket
+          description: UUIDs of scenes to replace in project
           schema:
             type: array
             items:
@@ -560,7 +560,7 @@ paths:
         204:
           description: No content, update successful
     delete:
-      summary: Delete a set of scenes from a bucket
+      summary: Delete a set of scenes from a project
       tags:
         - Imagery
       parameters:
@@ -568,7 +568,7 @@ paths:
         - name: scenes
           in: body
           required: true
-          description: UUIDs of scenes to delete in bucket
+          description: UUIDs of scenes to delete in project
           schema:
             type: array
             items:
@@ -579,7 +579,7 @@ paths:
           description: No content, delete successful
   /images/:
     get:
-      summary: Paginated list of bucket images
+      summary: Paginated list of project images
       tags:
         - Imagery
       parameters:
@@ -597,7 +597,7 @@ paths:
           schema:
             $ref: '#/definitions/ImagePaginated'
     post:
-      summary: Create a new image not associated with any Bucket
+      summary: Create a new image not associated with any Project
       tags:
         - Imagery
       parameters:
@@ -608,7 +608,7 @@ paths:
             $ref: '#/definitions/Image'
       responses:
         202:
-          description: Bucket image details; thumbnails and boundary in-progress
+          description: Project image details; thumbnails and boundary in-progress
           schema:
             $ref: '#/definitions/Image'
   /images/{uuid}:
@@ -1162,9 +1162,9 @@ parameters:
     in: query
     type: string
     required: false
-  bucket:
-    name: bucket
-    description: Bucket uuid to filter only
+  project:
+    name: project
+    description: Project uuid to filter only
     in: query
     type: string
     format: uuid
@@ -1393,7 +1393,7 @@ definitions:
         properties:
           name:
             type: string
-            description: The display name of the bucket
+            description: The display name of the project
           ingestSizeBytes:
             type: integer
             description: Size of ingested data in bytes.
@@ -1519,7 +1519,7 @@ definitions:
                     sceneCount:
                       type: number
                       description: Number of scenes which intersect the grid object
-  Bucket:
+  Project:
     allOf:
       - $ref: '#/definitions/BaseModel'
       - $ref: '#/definitions/UserTrackingMixin'
@@ -1527,14 +1527,14 @@ definitions:
         properties:
           name:
             type: string
-            description: The display name of the bucket
+            description: The display name of the project
           slugLabel:
             type: string
             description: URL-safe version of name
             readOnly: true
           description:
             type: string
-            description: Long-form description of the bucket
+            description: Long-form description of the project
           visibility:
             type: string
             description: Level of restriction on viewing
@@ -1583,14 +1583,14 @@ definitions:
         required:
           - fileName
           - sourceURI
-  BucketPaginated:
+  ProjectPaginated:
     allOf:
       - $ref: '#/definitions/PaginatedResponse'
     properties:
       results:
         type: array
         items:
-          $ref: '#/definitions/Bucket'
+          $ref: '#/definitions/Project'
   ImagePaginated:
     allOf:
       - $ref: '#/definitions/PaginatedResponse'

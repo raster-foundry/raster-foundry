@@ -12,7 +12,7 @@ import java.net.URI
   * @param crs              The CRS of the projection to target in tiling
   * @param cellType         A GeoTrellis CellType to be used in storing a tile layer
   * @param cellSize         The expected 'native resolution' size of each cell
-  * @param histogramBuckets The number of bins with which to construct histograms used in coloring
+  * @param histogramProjects The number of bins with which to construct histograms used in coloring
   * @param pyramid          Whether or not to pyramid multiple zoom levels on ingest
   * @param native           Whether or not to keep around a copy of the 'native resolution' images
   */
@@ -21,7 +21,7 @@ case class OutputDefinition(
   crs: CRS,
   cellType: CellType,
   cellSize: CellSize,
-  histogramBuckets: Int = 256,
+  histogramProjects: Int = 256,
   pyramid: Boolean,
   native: Boolean
 )

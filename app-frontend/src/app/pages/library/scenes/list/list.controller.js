@@ -85,7 +85,7 @@ class ScenesListController {
         }
     }
 
-    bucketModal() {
+    projectModal() {
         if (!this.$parent.selectedScenes || this.$parent.selectedScenes.size === 0) {
             return;
         }
@@ -94,7 +94,7 @@ class ScenesListController {
             this.activeModal.dismiss();
         }
         this.activeModal = this.$uibModal.open({
-            component: 'rfBucketAddModal',
+            component: 'rfProjectAddModal',
             resolve: {
                 scenes: () => this.$parent.selectedScenes
             }
@@ -127,8 +127,8 @@ class ScenesListController {
         });
 
         this.activeModal.result.then((result) => {
-            if (result === 'bucket') {
-                this.bucketModal();
+            if (result === 'project') {
+                this.projectModal();
             } else {
                 this.$log.debug('modal result: ', result, ' is not implemented yet');
             }

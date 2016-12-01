@@ -7,12 +7,12 @@ import libraryTpl from './pages/library/library.html';
 import scenesTpl from './pages/library/scenes/scenes.html';
 import scenesListTpl from './pages/library/scenes/list/list.html';
 import sceneDetailTpl from './pages/library/scenes/detail/detail.html';
-import bucketsTpl from './pages/library/buckets/buckets.html';
-import bucketsListTpl from './pages/library/buckets/list/list.html';
-import bucketsDetailTpl from './pages/library/buckets/detail/detail.html';
-import bucketSceneTpl from './pages/library/buckets/detail/scene/scene.html';
-import bucketScenesTpl from './pages/library/buckets/detail/bucketScenes/bucketScenes.html';
-import bucketEditTpl from './pages/editor/bucket/bucketedit.html';
+import projectsTpl from './pages/library/projects/projects.html';
+import projectsListTpl from './pages/library/projects/list/list.html';
+import projectsDetailTpl from './pages/library/projects/detail/detail.html';
+import projectSceneTpl from './pages/library/projects/detail/scene/scene.html';
+import projectScenesTpl from './pages/library/projects/detail/projectScenes/projectScenes.html';
+import projectEditTpl from './pages/editor/project/projectEdit.html';
 import settingsTpl from './pages/settings/settings.html';
 import profileTpl from './pages/settings/profile/profile.html';
 import accountTpl from './pages/settings/account/account.html';
@@ -52,16 +52,16 @@ function editorStates($stateProvider) {
             controllerAs: '$ctrl',
             abstract: true
         })
-        .state('editor.bucket', {
-            url: '/bucket/:bucketid',
-            params: {bucket: null},
-            templateUrl: bucketEditTpl,
-            controller: 'BucketEditController',
+        .state('editor.project', {
+            url: '/project/:projectid',
+            params: {project: null},
+            templateUrl: projectEditTpl,
+            controller: 'ProjectEditController',
             controllerAs: '$ctrl'
         });
 }
 
-function libraryBucketStates($stateProvider) {
+function libraryProjectStates($stateProvider) {
     $stateProvider
         .state('library', {
             url: '/library',
@@ -70,39 +70,39 @@ function libraryBucketStates($stateProvider) {
             controllerAs: '$ctrl',
             abstract: true
         })
-        .state('library.buckets', {
-            url: '/buckets',
-            templateUrl: bucketsTpl,
-            controller: 'BucketsController',
+        .state('library.projects', {
+            url: '/projects',
+            templateUrl: projectsTpl,
+            controller: 'ProjectsController',
             controllerAs: '$ctrl',
             abstract: true
         })
-        .state('library.buckets.list', {
+        .state('library.projects.list', {
             url: '/list?:page',
-            templateUrl: bucketsListTpl,
-            controller: 'BucketsListController',
+            templateUrl: projectsListTpl,
+            controller: 'ProjectsListController',
             controllerAs: '$ctrl'
         })
-        .state('library.buckets.detail', {
-            url: '/detail/:bucketid',
-            params: {bucket: null},
-            templateUrl: bucketsDetailTpl,
-            controller: 'BucketsDetailController',
+        .state('library.projects.detail', {
+            url: '/detail/:projectid',
+            params: {project: null},
+            templateUrl: projectsDetailTpl,
+            controller: 'ProjectsDetailController',
             controllerAs: '$ctrl',
             abstract: true
         })
-        .state('library.buckets.detail.scenes', {
+        .state('library.projects.detail.scenes', {
             url: '/list?:page',
-            templateUrl: bucketScenesTpl,
-            params: {bucket: null},
-            controller: 'BucketScenesController',
+            templateUrl: projectScenesTpl,
+            params: {project: null},
+            controller: 'ProjectScenesController',
             controllerAs: '$ctrl'
         })
-        .state('library.buckets.detail.scene', {
+        .state('library.projects.detail.scene', {
             url: '/scenes/:sceneid',
-            templateUrl: bucketSceneTpl,
+            templateUrl: projectSceneTpl,
             params: {scene: null},
-            controller: 'BucketSceneController',
+            controller: 'ProjectSceneController',
             controllerAs: '$ctrl'
         });
 }
@@ -195,7 +195,7 @@ function routeConfig($urlRouterProvider, $stateProvider) {
     marketStates($stateProvider);
     editorStates($stateProvider);
     librarySceneStates($stateProvider);
-    libraryBucketStates($stateProvider);
+    libraryProjectStates($stateProvider);
     settingsStates($stateProvider);
 
     $stateProvider

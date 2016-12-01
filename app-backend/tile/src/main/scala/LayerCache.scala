@@ -27,50 +27,50 @@ object LayerCache extends Config {
     .recordStats()
     .expireAfterWrite(cacheExpiration)
     .maximumSize(cacheSize)
-    .buildAsyncFuture { case (bucket: String, prefix: String, id: UUID, zoom: Int) =>
+    .buildAsyncFuture { case (project: String, prefix: String, id: UUID, zoom: Int) =>
       val layerId = LayerId(id.toString, zoom)
-      Future { S3ValueReader(bucket, prefix).reader[SpatialKey, MultibandTile](layerId) }
+      Future { S3ValueReader(project, prefix).reader[SpatialKey, MultibandTile](layerId) }
     }
 
   /**
     * Fetch cached tile reader
     *
-    * @param bucket S3 bucket
-    * @param prefix Key Prefix inside the S3 bucket
+    * @param project S3 project
+    * @param prefix Key Prefix inside the S3 project
     * @param layerId LayerId in catalog stored in prefix
     * @param zoom    Pyramid zoom level
     */
-  def tileReader(bucket: String, prefix: String, layerId: UUID, zoom: Int): Future[Reader[SpatialKey, MultibandTile]] =
-    cacheReaders.get((bucket, prefix, layerId, zoom))
+  def tileReader(project: String, prefix: String, layerId: UUID, zoom: Int): Future[Reader[SpatialKey, MultibandTile]] =
+    cacheReaders.get((project, prefix, layerId, zoom))
 
-  def tile(bucket: String, prefix: String, layerId: UUID, zoom: Int, key: SpatialKey): Future[MultibandTile] =
-    for ( reader <- tileReader(bucket, prefix, layerId, zoom))
+  def tile(project: String, prefix: String, layerId: UUID, zoom: Int, key: SpatialKey): Future[MultibandTile] =
+    for ( reader <- tileReader(project, prefix, layerId, zoom))
       yield reader.read(key)
 
   def tile(prefix: String, layerId: UUID, zoom: Int, key: SpatialKey): Future[MultibandTile] =
-    tile(defaultBucket, prefix, layerId, zoom, key)
+    tile(defaultProject, prefix, layerId, zoom, key)
 
   val cacheHistogram: AsyncLoadingCache[(String, String, UUID, Int), Array[Histogram[Double]]] =
     Scaffeine()
       .recordStats()
       .expireAfterWrite(cacheExpiration)
       .maximumSize(cacheSize)
-      .buildAsyncFuture { case (bucket: String, prefix: String, id: UUID, zoom: Int) =>
+      .buildAsyncFuture { case (project: String, prefix: String, id: UUID, zoom: Int) =>
         val layerId = LayerId(id.toString, 0) // use the same histogram for all zoom levels
-        Future { S3AttributeStore(bucket, prefix).read[Array[Histogram[Double]]](layerId, "histogram") }
+        Future { S3AttributeStore(project, prefix).read[Array[Histogram[Double]]](layerId, "histogram") }
       }
 
   /**
     * Fetch cached layer attribute, Histogram
     *
-    * @param bucket S3 bucket
-    * @param prefix Key Prefix inside the S3 bucket
+    * @param project S3 project
+    * @param prefix Key Prefix inside the S3 project
     * @param layerId LayerId in catalog stored in prefix
     * @param zoom    Pyramid zoom level
     */
-  def bandHistogram(bucket: String, prefix: String, layerId: UUID, zoom: Int): Future[Array[Histogram[Double]]] =
-    cacheHistogram.get((bucket, prefix, layerId, zoom))
+  def bandHistogram(project: String, prefix: String, layerId: UUID, zoom: Int): Future[Array[Histogram[Double]]] =
+    cacheHistogram.get((project, prefix, layerId, zoom))
 
   def bandHistogram(prefix: String, layerId: UUID, zoom: Int): Future[Array[Histogram[Double]]] =
-    bandHistogram(defaultBucket, prefix, layerId, zoom)
+    bandHistogram(defaultProject, prefix, layerId, zoom)
 }
