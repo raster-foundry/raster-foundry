@@ -81,6 +81,12 @@ function editorStates($stateProvider) {
         .state('editor.project.mosaic', {
             url: '/mosaic',
             resolve: {},
+            template: '<ui-view></ui-view>',
+            abstract: true
+        })
+        .state('editor.bucket.mosaic.scenes', {
+            url: '/scenes',
+            resolve: {},
             template: '<rf-mosaic-scenes></rf-mosaic-scenes>'
         })
         .state('editor.project.mosaic.params', {

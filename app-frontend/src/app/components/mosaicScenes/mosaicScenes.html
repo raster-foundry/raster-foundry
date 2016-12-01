@@ -1,0 +1,29 @@
+<div class="scene-list-pane">
+  <!-- scene listing -->
+  <div class="sidebar-static">
+    <h5>Scene z-index order</h5>
+    <button class="btn"
+            ng-click="$ctrl.$state.go('^.params')">
+      <i class="icon-model"></i> Parameters
+    </button>
+  </div>
+  <div class="sidebar-scrollable">
+    <div ui-tree class="list-group">
+      <div ui-tree-nodes="" ng-model="$ctrl.sceneList">
+        <div ng-repeat="scene in $ctrl.sceneList track by scene.id" ui-tree-node>
+          <rf-scene-item scene="scene" draggable></rf-scene-item>
+        </div>
+      </div>
+    </div>
+    <div class="list-group" ng-show="$ctrl.loading">
+      <span class="list-placeholder">
+        <i class="icon-load"></i>
+      </span>
+    </div>
+    <div class="list-group" ng-show="$ctrl.errorMsg">
+      <span class="list-placeholder">
+        {{$ctrl.errorMsg}}
+      </span>
+    </div>
+  </div>
+</div>

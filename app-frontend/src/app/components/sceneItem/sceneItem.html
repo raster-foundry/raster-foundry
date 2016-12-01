@@ -1,4 +1,7 @@
 <div class="list-group-item">
+  <div ng-if="$ctrl.isDraggable" ui-tree-handle>
+    <i class="icon-mosaic"></i>
+  </div>
   <img ng-if="$ctrl.scene.thumbnails[0]"
        ng-attr-src="{{$ctrl.scene.thumbnails[0].url}}"
        class="rounded-img item-img">
@@ -20,8 +23,7 @@
       <i ng-class="{
                    'icon-plus': !$ctrl.selectedStatus,
                    'icon-cross': $ctrl.selectedStatus
-                   }">
-      </i>
+                   }"></i>
     </button>
   </div>
 </div>

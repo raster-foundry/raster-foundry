@@ -2,6 +2,7 @@ export default class SceneItemController {
     constructor($scope, $attrs) {
         'ngInject';
         this.isSelectable = $attrs.hasOwnProperty('selectable');
+        this.isDraggable = $attrs.hasOwnProperty('draggable');
         $scope.$watch(
             () => this.selected({scene: this.scene}),
             (selected) => {
