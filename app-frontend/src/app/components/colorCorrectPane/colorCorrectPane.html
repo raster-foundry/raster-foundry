@@ -1,33 +1,39 @@
-<div class="content">
-  <div class="color-filters-container">
-    <h6>Gamma Correction</h6>
-    <div class="filter">
-      <label>Red</label>
-      <div class="filter-item slider-filter">
-        <div id="red_slider"></div>
-      </div>
-      <rzslider rz-slider-model="$ctrl.correction.red"
-                rz-slider-options="$ctrl.redGammaOptions"
-      ></rzslider>
+<div class="color-correct-pane">
+  <div class="sidebar-static histogram">
+    <rf-channel-histogram data="$ctrl.data"></rf-channel-histogram>
+    <div>
+      <a ng-click="">Make source histogram</a>
     </div>
-    <div class="filter">
-      <label>Green</label>
-      <div class="filter-item slider-filter">
-        <div id="green_slider"></div>
-      </div>
-      <rzslider rz-slider-model="$ctrl.correction.green"
-                rz-slider-options="$ctrl.greenGammaOptions"
-      ></rzslider>
+  </div>
+  <!-- Color correction -->
+  <h6>Gamma Correction</h6>
+  <div class="filter">
+    <label>Red</label>
+    <div class="filter-item slider-filter">
+      <div id="red_slider"></div>
     </div>
-    <div class="filter">
-      <label>Blue</label>
-      <div class="filter-item slider-filter">
-        <div id="blue_slider"></div>
-      </div>
-      <rzslider rz-slider-model="$ctrl.correction.blue"
-                rz-slider-options="$ctrl.blueGammaOptions"
-      ></rzslider>
+    <rzslider rz-slider-model="$ctrl.correction.red"
+              rz-slider-options="$ctrl.redGammaOptions"
+    ></rzslider>
+  </div>
+  <div class="filter">
+    <label>Green</label>
+    <div class="filter-item slider-filter">
+      <div id="green_slider"></div>
     </div>
+    <rzslider rz-slider-model="$ctrl.correction.green"
+              rz-slider-options="$ctrl.greenGammaOptions"
+    ></rzslider>
+  </div>
+  <div class="filter">
+    <label>Blue</label>
+    <div class="filter-item slider-filter">
+      <div id="blue_slider"></div>
+    </div>
+    <rzslider rz-slider-model="$ctrl.correction.blue"
+              rz-slider-options="$ctrl.blueGammaOptions"
+    ></rzslider>
+  </div>
 
     <!--TODO: Add Sigmoidal Back When Fixed ISSUE: 761-->
     <!--<h6>Sigmoidal Correction</h6>-->
@@ -50,7 +56,6 @@
       <!--&gt;</rzslider>-->
     <!--</div>-->
 
-  </div>
   <div class="bc-filters-container">
     <h6>Brightness/Contrast</h6>
     <div class="filter">
@@ -77,5 +82,20 @@
       ></rzslider>
     </div>
   </div>
-</div>
 
+  <div class="sidebar-scrollable">
+    <rf-color-correct-adjust
+        desired-correction="$ctrl.correction"
+        on-correction-change="$ctrl.onCorrectionChange(newCorrection)"
+        reset="$ctrl.resetToggle"
+        class="color-correct-panel">
+    </rf-color-correct-adjust>
+  </div>
+  <div class="sidebar-static">
+    <a href ng-click="$ctrl.$state.go('^.scenes')">Back</a>
+    <div class="sidebar-actions">
+      <a href ng-click="$ctrl.resetColors()">Reset</a>
+      <a href ng-click="$ctrl.applyColors()">Apply changes</a>
+    </div>
+  </div>
+</div>

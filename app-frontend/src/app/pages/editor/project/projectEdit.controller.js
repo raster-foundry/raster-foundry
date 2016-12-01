@@ -1,6 +1,3 @@
-const Map = require('es6-map');
-const _ = require('lodash');
-
 export default class ProjectEditController {
     constructor( // eslint-disable-line max-params
         $log, $scope, $q, projectService, layerService, $state

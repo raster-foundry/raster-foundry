@@ -1,0 +1,49 @@
+<div class="content">
+  <div class="color-filters-container">
+    <h6>Gamma</h6>
+    <div class="filter">
+      <label>Red</label>
+      <div class="filter-item slider-filter">
+        <div id="red_slider"></div>
+      </div>
+      <rzslider rz-slider-model="$ctrl.correction.red"
+                rz-slider-options="$ctrl.redOpts"
+      ></rzslider>
+    </div>
+    <div class="filter">
+      <label>Green</label>
+      <div class="filter-item slider-filter">
+        <div id="green_slider"></div>
+      </div>
+      <rzslider rz-slider-model="$ctrl.correction.green"
+                rz-slider-options="$ctrl.greenOpts"
+      ></rzslider>
+    </div>
+    <div class="filter">
+      <label>Blue</label>
+      <div class="filter-item slider-filter">
+        <div id="blue_slider"></div>
+      </div>
+      <rzslider rz-slider-model="$ctrl.correction.blue"
+                rz-slider-options="$ctrl.blueOpts"
+      ></rzslider>
+    </div>
+  </div>
+  <div class="bc-filters-container">
+    <h6>Brightness/Contrast</h6>
+    <div class="filter">
+      <label>Brightness</label>
+      <rzslider rz-slider-model="$ctrl.correction.brightness"
+                rz-slider-options="$ctrl.brightOpts"></rzslider>
+    </div>
+    <div class="filter">
+      <label>Contrast</label>
+      <div class="filter-item slider-filter">
+        <div id="contrast"></div>
+      </div>
+      <rzslider rz-slider-model="$ctrl.correction.contrast"
+                rz-slider-options="$ctrl.ctrstOpts"></rzslider>
+    </div>
+  </div>
+</div>
+</div>

@@ -1,10 +1,10 @@
-import colorCorrectTpl from './colorCorrectPane.html';
+import colorCorrectPaneTpl from './colorCorrectPane.html';
 
 const colorCorrectPane = {
-    templateUrl: colorCorrectTpl,
-    controller: 'ColorCorrectController',
+    templateUrl: colorCorrectPaneTpl,
+    controller: 'ColorCorrectPaneController',
     bindings: {
-        desiredCorrection: '<?',
+        sceneList: '<?',
         // Pass in a boolean to toggle to reset filters
         reset: '<?',
         onCorrectionChange: '&',

@@ -1,4 +1,13 @@
-export default class ColorCorrectController {
+export default class ColorCorrectPaneController {
+    constructor( // eslint-disable-line max-params
+        $log, $scope, $q, projectService, $state
+    ) {
+        'ngInject';
+        this.bucketService = projectService;
+        this.$state = $state;
+        this.$q = $q;
+    }
+
 
     $onInit() {
         let baseGammaOptions = {
