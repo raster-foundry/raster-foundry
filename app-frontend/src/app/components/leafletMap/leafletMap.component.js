@@ -7,6 +7,7 @@ const leafletMap = {
     bindings: {
         static: '<?',
         footprint: '<?',
+        bypassFitBounds: '<?',
         proposedBounds: '<?',
         onBoundsChange: '&',
         layers: '<?'
