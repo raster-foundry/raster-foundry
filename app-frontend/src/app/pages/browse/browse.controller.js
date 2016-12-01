@@ -46,7 +46,7 @@ export default class BrowseController {
         delete this.filters.bbox;
 
         // Default bounds; we can set these to something more meaningful later, e.g. the user's
-        // most recent bucket's bounding box, or an IP-based geolocation. If a bbox is set in
+        // most recent project's bounding box, or an IP-based geolocation. If a bbox is set in
         // the query params, always use that.
         if (this.queryParams.bbox) {
             this.bounds = this.parseBBoxString(this.queryParams.bbox);
@@ -224,7 +224,7 @@ export default class BrowseController {
         }
     }
 
-    bucketModal() {
+    projectModal() {
         if (!this.selectedScenes || this.selectedScenes.size === 0) {
             return;
         }
@@ -233,7 +233,7 @@ export default class BrowseController {
             this.activeModal.dismiss();
         }
         this.activeModal = this.$uibModal.open({
-            component: 'rfBucketAddModal',
+            component: 'rfProjectAddModal',
             resolve: {
                 scenes: () => this.selectedScenes
             }
@@ -266,8 +266,8 @@ export default class BrowseController {
         });
 
         this.activeModal.result.then((result) => {
-            if (result === 'bucket') {
-                this.bucketModal();
+            if (result === 'project') {
+                this.projectModal();
             } else {
                 this.$log.debug('modal result: ', result, ' is not implemented yet');
             }

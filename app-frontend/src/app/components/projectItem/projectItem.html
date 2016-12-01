@@ -1,0 +1,30 @@
+<div class="list-group-item">
+  <span class="badge"><i class="icon-bucket"></i></span>
+  <div class="list-group-overflow">
+    <strong class="color-dark">{{$ctrl.project.name}}</strong><br>
+    Modified on {{$ctrl.project.modifiedAt | date}}
+  </div>
+  <div class="list-group-right">
+    <span class="font-size-small" ng-show="$ctrl.project.scenes">
+      <ng-pluralize count="$ctrl.project.scenes"
+                    when="{'one': '1 Scene',
+                          'other': '{} Scenes'}">
+      </ng-pluralize>
+    </span>
+    <button class="btn btn-square"
+            ng-click="$ctrl.toggleSelected($event)"
+            ng-if="$ctrl.isSelectable"
+            ng-class="{'btn-secondary': $ctrl.selectedStatus}">
+      <i ng-class="{
+                   'icon-plus': !$ctrl.selectedStatus,
+                   'icon-cross': $ctrl.selectedStatus,
+                   'icon-check': $ctrl.selectedStatus === 'added'
+                   }">
+      </i>
+    </button>
+    <button class="btn btn-square"
+            ng-if="!$ctrl.isSelectable">
+      View
+    </button>
+  </div>
+</div>

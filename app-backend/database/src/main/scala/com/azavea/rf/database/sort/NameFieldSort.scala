@@ -1,6 +1,6 @@
 package com.azavea.rf.database.sort
 
-import com.azavea.rf.database.fields.{NameField, BucketFields}
+import com.azavea.rf.database.fields.{NameField, ProjectFields}
 import com.lonelyplanet.akka.http.extensions.Order
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 

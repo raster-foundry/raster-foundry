@@ -44,7 +44,7 @@ case class SceneQueryParameters(
   minSunElevation: Option[Float],
   bbox: Option[String],
   point: Option[String],
-  bucket: Option[UUID]
+  project: Option[UUID]
 ) {
   val bboxPolygon: Option[Projected[Polygon]] = try {
     bbox
@@ -80,8 +80,8 @@ case class CombinedSceneQueryParams(
 )
 
 
-/** Case class for bucket query parameters */
-case class BucketQueryParameters(
+/** Case class for project query parameters */
+case class ProjectQueryParameters(
   orgParams: OrgQueryParameters,
   userParams: UserQueryParameters,
   timestampParams: TimestampQueryParameters

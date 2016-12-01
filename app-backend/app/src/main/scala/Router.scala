@@ -4,7 +4,7 @@ package com.azavea.rf
 import scala.concurrent.ExecutionContext
 import ch.megard.akka.http.cors.CorsDirectives._
 import ch.megard.akka.http.cors.CorsSettings
-import com.azavea.rf.bucket.BucketRoutes
+import com.azavea.rf.project.ProjectRoutes
 import com.azavea.rf.healthcheck._
 import com.azavea.rf.organization.OrganizationRoutes
 import com.azavea.rf.scene.SceneRoutes
@@ -27,7 +27,7 @@ trait Router extends HealthCheckRoutes
     with UserRoutes
     with OrganizationRoutes
     with SceneRoutes
-    with BucketRoutes
+    with ProjectRoutes
     with ImageRoutes
     with TokenRoutes
     with ThumbnailRoutes
@@ -43,7 +43,7 @@ trait Router extends HealthCheckRoutes
       healthCheckRoutes
     } ~
     pathPrefix("api") {
-      pathPrefix("buckets") { bucketRoutes } ~
+      pathPrefix("projects") { projectRoutes } ~
       pathPrefix("images") { imageRoutes } ~
       pathPrefix("organizations") { organizationRoutes } ~
       pathPrefix("scenes") { sceneRoutes } ~

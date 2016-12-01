@@ -8,10 +8,10 @@ export default angular.module('index.components', [
     require('./components/channelHistogram/channelHistogram.module.js').name,
     require('./components/sceneItem/sceneItem.module.js').name,
     require('./components/sceneDetail/sceneDetail.module.js').name,
-    require('./components/bucketItem/bucketItem.module.js').name,
+    require('./components/projectItem/projectItem.module.js').name,
     require('./components/selectedScenesModal/selectedScenesModal.module.js').name,
     require('./components/confirmationModal/confirmationModal.module.js').name,
-    require('./components/bucketAddModal/bucketAddModal.module.js').name,
+    require('./components/projectAddModal/projectAddModal.module.js').name,
     require('./components/refreshTokenModal/refreshTokenModal.module.js').name,
     require('./components/downloadModal/downloadModal.module.js').name
 ]);

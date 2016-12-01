@@ -24,9 +24,9 @@ trait QueryParameterDeserializers {
 }
 
 trait QueryParametersCommon extends QueryParameterDeserializers {
-  def bucketQueryParameters = (
+  def projectQueryParameters = (
     orgQueryParams & userQueryParameters & timestampQueryParameters
-  ).as(BucketQueryParameters)
+  ).as(ProjectQueryParameters)
 
   def orgQueryParams = parameters(
     'organization.as(deserializerUUID).*

@@ -13,7 +13,7 @@
     </ng-pluralize>
     selected
   </h4>
-	<p>Review your selections, add them to buckets, or open them in the editor.</p>
+	<p>Review your selections, add them to projects, or open them in the editor.</p>
 </div>
 <div class="modal-body">
 	<div class="list-group">
@@ -32,9 +32,9 @@
 	  <button type="button"
             class="btn btn-secondary"
             ng-disabled="!$ctrl.selectedScenes || $ctrl.selectedScenes.size === 0"
-            ng-click="$ctrl.close({$value: 'bucket'})">
+            ng-click="$ctrl.close({$value: 'project'})">
       <i class="icon-bucket"></i>
-      Add to Bucket
+      Add to Project
     </button>
 	  <span>&nbsp;or&nbsp;</span>
 	  <button type="button"

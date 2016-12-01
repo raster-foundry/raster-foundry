@@ -283,10 +283,10 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) {
         .getOrElse(true: Rep[Boolean])
     }
 
-    sceneParams.bucket match {
-      case Some(bucketId) => {
+    sceneParams.project match {
+      case Some(projectId) => {
         filteredScenes.filter { scene =>
-          scene.id in ScenesToBuckets.filter(_.bucketId === bucketId).map(_.sceneId)
+          scene.id in ScenesToProjects.filter(_.projectId === projectId).map(_.sceneId)
         }
       }
       case _ => {
