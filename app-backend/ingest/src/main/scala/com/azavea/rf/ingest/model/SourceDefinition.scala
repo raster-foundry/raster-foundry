@@ -20,6 +20,7 @@ case class SourceDefinition(
   extent: Extent,
   crsExtent: Option[CRS],
   crs: CRS,
+  cellSize: CellSize,
   bandMaps: Array[BandMapping]
 ) {
   def getCRSExtent: CRS = crsExtent match {
@@ -29,5 +30,5 @@ case class SourceDefinition(
 }
 
 object SourceDefinition {
-  implicit val jsonFormat = jsonFormat5(SourceDefinition.apply _)
+  implicit val jsonFormat = jsonFormat6(SourceDefinition.apply _)
 }

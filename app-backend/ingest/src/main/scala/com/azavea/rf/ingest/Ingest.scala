@@ -59,8 +59,11 @@ object Ingest extends SparkJob {
       .reduce(_ combine _)
 
     // Infer the base level of the TMS pyramid based on overall extent and cellSize
+    // We should use the LayoutLevel with the greatest resolution - hence maxBy here
     val LayoutLevel(maxZoom, baseLayoutDefinition) =
-      scheme.levelFor(overallExtent, layer.output.cellSize)
+      layer.sources.map({ source =>
+        scheme.levelFor(overallExtent, source.cellSize)
+      }).maxBy(_.zoom)
 
     maxZoom -> TileLayerMetadata(
       cellType = layer.output.cellType,

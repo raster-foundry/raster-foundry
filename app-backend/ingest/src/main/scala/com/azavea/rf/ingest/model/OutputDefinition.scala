@@ -27,7 +27,6 @@ case class OutputDefinition(
   uri: URI,
   crs: CRS,
   cellType: CellType,
-  cellSize: CellSize,
   histogramBuckets: Int = 256,
   tileSize: Int = 256,
   pyramid: Boolean = true,
@@ -37,5 +36,5 @@ case class OutputDefinition(
 )
 
 object OutputDefinition {
-  implicit val jsonFormat = jsonFormat10(OutputDefinition.apply _)
+  implicit val jsonFormat = jsonFormat9(OutputDefinition.apply _)
 }

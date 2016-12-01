@@ -104,11 +104,6 @@ the ingest subproject](../../app-backend/ingest/src/test/resources/awsJob.json):
               */
             "uri": "s3://rasterfoundry-staging-catalogs-us-east-1/test",
             /**
-              * Output Layer CRS (projection identification)
-              * @type String
-              */
-            "crs": "epsg:3857",
-            /**
               * Output Layer CellType
               * @type String
               */
@@ -118,26 +113,30 @@ the ingest subproject](../../app-backend/ingest/src/test/resources/awsJob.json):
               * @type Number
               */
             "histogramBuckets": 512,
-            /** Output Layer Cell Size */
-            "cellSize": {
-                /**
-                  * Cell Size Width
-                  * @type Number
-                  */
-                "width": 37.151447651062888,
-                /**
-                  * Cell Size Height
-                  * @type Number
-                  */
-                "height": -37.151447651062888
-            },
+            /**
+              * Size of output tiles
+              * @type Number
+              */
+            "tileSize": 256,
+            /**
+              * GeoTrellis resample method to be used
+              * @type String
+              */
+            "resampleMethod": "NearestNeighbor",
+            /**
+              * GeoTrellis method for indexing keys
+              * @type String
+              */
+            "keyIndexMethod": "ZCurveKeyIndexMethod",
             /**
               * Whether or not to pyramid
               * @type Boolean
               */
             "pyramid": true,
             /**
-              * Output Layer Cell Size
+              * Whether or not to save the native resolution
+              *  (not yet implemented)
+              *
               * @type Boolean
               */
             "native": true
@@ -154,6 +153,29 @@ the ingest subproject](../../app-backend/ingest/src/test/resources/awsJob.json):
               * @type Array of Numbers
               */
             "extent": [138.8339238,  34.9569460, 141.4502449,  37.1094577],
+            /**
+              * Source extent CRS (projection identification)
+              * @type String
+              */
+            "crsExtent": "epsg:32654",
+            /**
+              * Source CRS (projection identification)
+              * @type String
+              */
+            "crs": "epsg:3857",
+            /** Source Cell Size */
+            "cellSize": {
+                /**
+                  * Cell Size Width
+                  * @type Number
+                  */
+                "width": 37.151447651062888,
+                /**
+                  * Cell Size Height
+                  * @type Number
+                  */
+                "height": -37.151447651062888
+            },
             /** Mapping from source image to target image band */
             "bandMaps": [
                 {
