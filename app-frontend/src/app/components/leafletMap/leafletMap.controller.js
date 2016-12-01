@@ -18,16 +18,22 @@ export default class LeafletMapController {
 
     $onChanges(changes) {
         if (changes.footprint) {
-            let geojsonFeature = {
-                type: 'Feature',
-                properties: {
-                    name: 'Scene Footprint'
-                },
-                geometry: changes.footprint.currentValue
-            };
-            this.geojsonLayer.clearLayers();
-            this.geojsonLayer.addData(geojsonFeature);
-            this.map.fitBounds(this.geojsonLayer.getBounds());
+            if (changes.footprint.currentValue) {
+                let geojsonFeature = {
+                    type: 'Feature',
+                    properties: {
+                        name: 'Scene Footprint'
+                    },
+                    geometry: changes.footprint.currentValue
+                };
+                this.geojsonLayer.clearLayers();
+                this.geojsonLayer.addData(geojsonFeature);
+                if (!this.bypassFitBounds) {
+                    this.map.fitBounds(this.geojsonLayer.getBounds());
+                }
+            } else {
+                this.geojsonLayer.clearLayers();
+            }
         }
         if (changes.proposedBounds && changes.proposedBounds.currentValue) {
             this.map.fitBounds(changes.proposedBounds.currentValue);

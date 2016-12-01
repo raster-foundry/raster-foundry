@@ -228,6 +228,14 @@ export default class BrowseController {
         }
     }
 
+    setHoveredScene(scene) {
+        this.hoveredScene = scene;
+    }
+
+    removeHoveredScene() {
+        this.hoveredScene = null;
+    }
+
     projectModal() {
         if (!this.selectedScenes || this.selectedScenes.size === 0) {
             return;

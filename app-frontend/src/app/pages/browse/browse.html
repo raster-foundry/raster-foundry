@@ -27,7 +27,10 @@
             selected="$ctrl.isSelected(scene)"
             on-select="$ctrl.setSelected(scene, selected)"
             class="selectable"
-            ng-repeat="scene in $ctrl.sceneList track by scene.id">
+            ng-repeat="scene in $ctrl.sceneList track by scene.id"
+            ng-mouseover="$ctrl.setHoveredScene(scene)"
+            ng-mouseleave="$ctrl.removeHoveredScene()"
+            >
         </rf-scene-item>
       </div>
       <div class="list-group" ng-show="$ctrl.loading">
@@ -117,6 +120,6 @@
   </div>
 
   <div class="main">
-    <rf-leaflet-map proposed-bounds="$ctrl.bounds" on-bounds-change="$ctrl.onBoundsChange(newBounds)" class="map-container"></rf-leaflet-map>
+    <rf-leaflet-map footprint="$ctrl.hoveredScene.dataFootprint" bypass-fit-bounds="true" proposed-bounds="$ctrl.bounds" on-bounds-change="$ctrl.onBoundsChange(newBounds)" class="map-container"></rf-leaflet-map>
   </div>
 </div>
