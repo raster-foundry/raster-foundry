@@ -1,0 +1,54 @@
+<div class="scene-list-pane">
+  <!-- scene listing -->
+  <div class="sidebar-static">
+      <div class="btn-group" uib-dropdown dropdown-append-to-body>
+        <a href uib-dropdown-toggle>
+          Color mode <i class="icon-caret-down"></i>
+        </a>
+        <ul class="dropdown-menu" uib-dropdown-menu role="menu">
+          <li role="menuitem">Natural color</li>
+          <li role="menuitem">Shortwave infrared</li>
+          <li role="menuitem">False color (agriculture)</li>
+        </ul>
+      </div>
+      <div class="btn-group" uib-dropdown dropdown-append-to-body>
+        <a href uib-dropdown-toggle>
+          Action <i class="icon-caret-down"></i>
+        </a>
+        <ul class="dropdown-menu" uib-dropdown-menu role="menu">
+          <li role="menuitem"><i class="icon-load"></i> Sync histogram</li>
+          <li role="menuitem"><i class="icon-arrows-cw"></i> Reset changes</li>
+          <li role="menuitem"><i class="icon-trash"></i> Delete</li>
+        </ul>
+      </div>
+      <button class="btn btn-square"
+              ng-class="{'btn-secondary': !$ctrl.shouldSelectAll()}"
+              ng-click="$ctrl.onToggleSelection()">
+        <i ng-class="{'icon-plus': $ctrl.shouldSelectAll(),
+                      'icon-cross': !$ctrl.shouldSelectAll()}"></i>
+      </button>
+  </div>
+  <div class="sidebar-scrollable">
+    <div class="list-group">
+      <rf-scene-item
+          ng-click="$ctrl.$state.go('editor.bucket.color.adjust', {scenes: $ctrl.selectedScenes})"
+          scene="scene"
+          selectable
+          selected="$ctrl.isSelected(scene)"
+          on-select="$ctrl.setSelected(scene, selected)"
+          class="selectable"
+          ng-repeat="scene in $ctrl.sceneList track by scene.id">
+      </rf-scene-item>
+    </div>
+    <div class="list-group" ng-show="$ctrl.loading">
+      <span class="list-placeholder">
+        <i class="icon-load"></i>
+      </span>
+    </div>
+    <div class="list-group" ng-show="$ctrl.errorMsg">
+      <span class="list-placeholder">
+        {{$ctrl.errorMsg}}
+      </span>
+    </div>
+  </div>
+</div>

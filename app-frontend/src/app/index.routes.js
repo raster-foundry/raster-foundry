@@ -54,10 +54,39 @@ function editorStates($stateProvider) {
         })
         .state('editor.project', {
             url: '/project/:projectid',
-            params: {project: null},
-            templateUrl: projectEditTpl,
-            controller: 'ProjectEditController',
-            controllerAs: '$ctrl'
+            resolve: {
+                project: () => null
+            },
+            template: '<rf-project-editor></rf-project-editor>',
+            abstract: true
+        })
+        .state('editor.project.color', {
+            url: '/color-correct',
+            resolve: {},
+            template: '<ui-view></ui-view>',
+            abstract: true
+        })
+        .state('editor.project.color.scenes', {
+            url: '/scenes',
+            resolve: {},
+            template: '<rf-color-correct-scenes></rf-color-correct-scenes>'
+        })
+        .state('editor.project.color.adjust', {
+            url: '/adjust',
+            resolve: {
+                scenes: () => []
+            },
+            template: '<rf-color-correct-pane></rf-color-correct-pane>'
+        })
+        .state('editor.project.mosaic', {
+            url: '/mosaic',
+            resolve: {},
+            template: '<rf-mosaic-scenes></rf-mosaic-scenes>'
+        })
+        .state('editor.project.mosaic.params', {
+            url: '/params',
+            resolve: {},
+            template: '<rf-mosaic-params></rf-mosaic-params>'
         });
 }
 

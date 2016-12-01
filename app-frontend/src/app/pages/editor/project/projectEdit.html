@@ -1,3 +1,10 @@
+<div class="navbar secondary-navbar">
+  <nav>
+    <a href>Color Correction</a>
+    <a href><i class="icon-mosaic"></i> Mosaic</a>
+  </nav>
+  <span class="navbar-vertical-divider"></span>
+</div>
 <div class="container column-stretch">
   <!-- Sidebar (container is in parent view) -->
   <div class="sidebar scene-list-pane" ng-if="$ctrl.showLayerList" >
@@ -89,6 +96,7 @@
     </div>
   </div>
 
+  <ui-view class="sidebar"></ui-view>
   <!-- Map -->
   <div class="main">
     <rf-leaflet-map class="map-container"
