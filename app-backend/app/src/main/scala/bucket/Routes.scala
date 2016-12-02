@@ -9,7 +9,7 @@ import akka.http.scaladsl.model.StatusCodes
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 
 import com.azavea.rf.auth.Authentication
-import com.azavea.rf.database.tables.Buckets
+import com.azavea.rf.database.tables.{Buckets, ScenesToBuckets}
 import com.azavea.rf.database.Database
 import com.azavea.rf.datamodel._
 import com.azavea.rf.scene._
@@ -49,6 +49,10 @@ trait BucketRoutes extends Authentication
           post { addBucketScenes(bucketId) } ~
           put { updateBucketScenes(bucketId) } ~
           delete { deleteBucketScenes(bucketId) }
+        } ~
+        pathPrefix("ordered") {
+          get { listBucketScenesOrdered(bucketId) } ~
+          post { setBucketSceneOrder(bucketId) }
         }
       }
     }
@@ -103,6 +107,29 @@ trait BucketRoutes extends Authentication
     (withPagination & sceneQueryParameters) { (page, sceneParams) =>
       complete {
         Buckets.listBucketScenes(bucketId, page, sceneParams)
+      }
+    }
+  }
+
+  def listBucketScenesOrdered(bucketId: UUID) = authenticate { user =>
+    (withPagination & sceneQueryParameters) { (page, sceneParams) =>
+      parameters('orderingMethod ? "defined") { orderingMethod =>
+        complete {
+          if (orderingMethod == "defined") Buckets.listBucketScenesOrdered(bucketId, page, sceneParams)
+          else Buckets.listBucketScenesOrdered(bucketId, page, sceneParams)
+        }
+      }
+    }
+  }
+
+  def setBucketSceneOrder(bucketId: UUID) = authenticate { user =>
+    entity(as[Seq[UUID]]) { orderedSceneIds =>
+      if (orderedSceneIds.length > BULK_OPERATION_MAX_LIMIT) {
+        complete(StatusCodes.RequestEntityTooLarge)
+      }
+
+      complete {
+        ScenesToBuckets.setSceneOrder(bucketId, orderedSceneIds)
       }
     }
   }

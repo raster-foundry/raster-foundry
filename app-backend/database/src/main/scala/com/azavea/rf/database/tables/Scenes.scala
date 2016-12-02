@@ -147,35 +147,35 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     }
   }
 
+  def filterScenes(combinedParams: CombinedSceneQueryParams) =
+    Scenes
+      .filterByOrganization(combinedParams.orgParams)
+      .filterByUser(combinedParams.userParams)
+      .filterByTimestamp(combinedParams.timestampParams)
+      .filterBySceneParams(combinedParams.sceneParams)
+      .filterByImageParams(combinedParams.imageQueryParameters)
+
+
   /** Get scenes given a page request and query parameters */
   def listScenes(pageRequest: PageRequest, combinedParams: CombinedSceneQueryParams)
                 (implicit database: DB): Future[PaginatedResponse[Scene.WithRelated]] = {
 
-    val scenesQueryResult = database.db.run {
-      val action = Scenes
-          .joinWithRelated
-          .page(combinedParams, pageRequest)
-          .result
-      logger.debug(s"Paginated Query for scenes -- SQL: ${action.statements.headOption}")
-      action
-    } map { Scene.WithRelated.fromRecords }
+    val sceneQuery = filterScenes(combinedParams)
+      .joinWithRelated
+      .page(combinedParams, pageRequest)
 
-    val totalScenesQueryResult = database.db.run {
-      val action = Scenes
-        .filterByOrganization(combinedParams.orgParams)
-        .filterByUser(combinedParams.userParams)
-        .filterByTimestamp(combinedParams.timestampParams)
-        .filterBySceneParams(combinedParams.sceneParams)
-        .filterByImageParams(combinedParams.imageQueryParameters)
-        .length
-        .result
-      logger.debug(s"Total Query for scenes -- SQL: ${action.statements.headOption}")
-      action
+    val sceneQueryCount = sceneQuery.length.result
+    val sceneQueryResult = sceneQuery.result.map { Scene.WithRelated.fromRecords }
+
+    val transaction = database.db.run {
+      (for {
+        totalScenes <- sceneQueryCount
+        scenes <- sceneQueryResult
+      } yield (totalScenes, scenes)).transactionally
     }
 
     for {
-      totalScenes <- totalScenesQueryResult
-      scenes <- scenesQueryResult
+      (totalScenes, scenes) <- transaction
     } yield {
       val hasNext = (pageRequest.offset + 1) * pageRequest.limit < totalScenes // 0 indexed page offset
       val hasPrevious = pageRequest.offset > 0
@@ -184,6 +184,42 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     }
   }
 
+  /** Get scenes (ordered as specified by the user) given a page request and query parameters */
+  def listScenesOrdered(pageRequest: PageRequest, combinedParams: CombinedSceneQueryParams)
+                       (implicit database: DB): Future[PaginatedResponse[Scene.WithRelated]] = {
+    val filteredScenes = filterScenes(combinedParams)
+    val s2b = ScenesToBuckets.filter(_.bucketId === combinedParams.sceneParams.bucket.get)
+
+    val join = for {
+      (scene, s2b) <- filteredScenes join s2b on (_.id === _.sceneId)
+    } yield (scene, s2b.sceneOrder)
+
+    val sceneQueryCount = filteredScenes.length.result
+
+    val sceneQueryResult = join
+      .sortBy { _._2.asc.nullsLast }
+      .map { _._1 }
+      .joinWithRelated
+      .page(combinedParams, pageRequest)
+      .result
+      .map { Scene.WithRelated.fromRecords }
+
+    val transaction = database.db.run {
+      (for {
+        totalScenes <- sceneQueryCount
+        scenes <- sceneQueryResult
+      } yield (totalScenes, scenes)).transactionally
+    }
+
+    for {
+      (totalScenes, scenes) <- transaction
+    } yield {
+      val hasNext = (pageRequest.offset + 1) * pageRequest.limit < totalScenes // 0 indexed page offset
+      val hasPrevious = pageRequest.offset > 0
+      PaginatedResponse(totalScenes, hasPrevious, hasNext,
+        pageRequest.offset, pageRequest.limit, scenes.toSeq)
+    }
+  }
 
   /** Delete a scene from the database
     *
@@ -311,12 +347,7 @@ class ScenesJoinQuery[M, U, C[_]](sceneJoin: Scenes.JoinQuery) {
    * and then do the inner join on those results
    */
   def page(combinedParams: CombinedSceneQueryParams, pageRequest: PageRequest): Scenes.JoinQuery = {
-    val pagedScenes = Scenes
-      .filterByOrganization(combinedParams.orgParams)
-      .filterByUser(combinedParams.userParams)
-      .filterByTimestamp(combinedParams.timestampParams)
-      .filterBySceneParams(combinedParams.sceneParams)
-      .filterByImageParams(combinedParams.imageQueryParameters)
+    val pagedScenes = Scenes.filterScenes(combinedParams)
       .sort(pageRequest.sort)
       .drop(pageRequest.offset * pageRequest.limit)
       .take(pageRequest.limit)

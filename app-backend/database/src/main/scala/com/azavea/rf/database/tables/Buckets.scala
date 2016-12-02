@@ -7,13 +7,14 @@ import com.azavea.rf.database.query._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import slick.model.ForeignKeyAction
+import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.typesafe.scalalogging.LazyLogging
+
 import java.util.UUID
 import java.util.Date
 import java.sql.Timestamp
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-import com.lonelyplanet.akka.http.extensions.PageRequest
-import com.typesafe.scalalogging.LazyLogging
 
 /** Table description of table buckets. Objects of this class serve as prototypes for rows in queries. */
 class Buckets(_tableTag: Tag) extends Table[Bucket](_tableTag, "buckets")
@@ -76,7 +77,7 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
 
   /** Get scenes that belong to a bucket
     *
-   * @param bucketId UUID bucket to request scenes for
+    * @param bucketId UUID bucket to request scenes for
     */
   def listBucketScenes(bucketId: UUID, pageRequest: PageRequest, combinedParams: CombinedSceneQueryParams)
                       (implicit database: DB): Future[PaginatedResponse[Scene.WithRelated]] = {
@@ -86,6 +87,20 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
     )
 
     Scenes.listScenes(pageRequest, injectedParams)
+  }
+
+  /** Get scenes that belong to a bucket as ordered by user decision (order stored on join table)
+    *
+    * @param bucketId UUID bucket to request scenes for
+    */
+  def listBucketScenesOrdered(bucketId: UUID, pageRequest: PageRequest, combinedParams: CombinedSceneQueryParams)
+                      (implicit database: DB): Future[PaginatedResponse[Scene.WithRelated]] = {
+
+    val injectedParams = combinedParams.copy(
+      sceneParams=combinedParams.sceneParams.copy(bucket=Some(bucketId))
+    )
+
+    Scenes.listScenesOrdered(pageRequest, injectedParams)
   }
 
   /** Get specific scenes from a bucket. Returns any scenes from the list of
@@ -127,21 +142,28 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
   def listBuckets(pageRequest: PageRequest, queryParams: BucketQueryParameters)
                  (implicit database: DB): Future[PaginatedResponse[Bucket]] = {
 
-    val buckets = Buckets.filterByOrganization(queryParams.orgParams)
+    val buckets = Buckets
+      .filterByOrganization(queryParams.orgParams)
       .filterByUser(queryParams.userParams)
       .filterByTimestamp(queryParams.timestampParams)
 
-    val paginatedBuckets = database.db.run {
+    val paginatedBucketsAction = {
       val action = buckets.page(pageRequest).result
       logger.debug(s"Query for buckets -- SQL ${action.statements.headOption}")
       action
     }
 
-    val totalBucketsQuery = database.db.run { buckets.length.result }
+    val totalBucketsAction = buckets.length.result
+
+    val transaction = database.db.run {
+      (for {
+        bucketsResult <- paginatedBucketsAction
+        totalBucketsResult <- totalBucketsAction
+      } yield (bucketsResult, totalBucketsResult)).transactionally
+    }
 
     for {
-      totalBuckets <- totalBucketsQuery
-      buckets <- paginatedBuckets
+      (buckets, totalBuckets) <- transaction
     } yield {
       val hasNext = (pageRequest.offset + 1) * pageRequest.limit < totalBuckets
       val hasPrevious = pageRequest.offset > 0
@@ -265,4 +287,5 @@ object Buckets extends TableQuery(tag => new Buckets(tag)) with LazyLogging {
 
     listSelectBucketScenes(bucketId, sceneIds)
   }
+
 }
