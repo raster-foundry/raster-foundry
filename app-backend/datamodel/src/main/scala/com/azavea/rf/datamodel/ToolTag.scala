@@ -4,9 +4,9 @@ import spray.json.DefaultJsonProtocol._
 import java.util.UUID
 import java.sql.Timestamp
 
-/** A user generate tag to track model's in model lab
+/** A user generate tag to track tools in model lab
   *
-  * @param id UUID Unique identifier for Model Tag
+  * @param id UUID Unique identifier for Tool Tag
   * @param createdAt Timestamp Creation time for tag
   * @param modifiedAt Timestamp Modification time for tag
   * @param organizationId Timestamp Organization that owns tag
@@ -14,7 +14,7 @@ import java.sql.Timestamp
   * @param modifiedBy String User ID that last modified tag
   * @param tag String Tag that is displayed to user
   */
-case class ModelTag(
+case class ToolTag(
     id: UUID,
     createdAt: Timestamp,
     modifiedAt: Timestamp,
@@ -24,15 +24,15 @@ case class ModelTag(
     tag: String
 )
 
-object ModelTag {
+object ToolTag {
 
   def create = Create.apply _
 
-  def tupled = (ModelTag.apply _).tupled
+  def tupled = (ToolTag.apply _).tupled
 
-  implicit val defaultModelTagFormat = jsonFormat7(ModelTag.apply _)
+  implicit val defaultToolTagFormat = jsonFormat7(ToolTag.apply _)
 
-  /** Case class to handle creating a new model tag
+  /** Case class to handle creating a new tool tag
     *
     * @param organizationId UUID organization to create tag for
     * @param tag String user supplied string to use for tag
@@ -42,9 +42,9 @@ object ModelTag {
       tag: String
   ) {
 
-    def toModelTag(userId: String): ModelTag = {
+    def toToolTag(userId: String): ToolTag = {
       val now = new Timestamp((new java.util.Date()).getTime())
-      ModelTag(
+      ToolTag(
         UUID.randomUUID,
         now,
         now,
@@ -57,6 +57,6 @@ object ModelTag {
   }
 
   object Create {
-    implicit val defaultModelTagCreateFormat = jsonFormat2(Create.apply _)
+    implicit val defaultToolTagCreateFormat = jsonFormat2(Create.apply _)
   }
 }

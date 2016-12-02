@@ -1,4 +1,4 @@
-package com.azavea.rf.tile.model
+package com.azavea.rf.tile.tool
 
 import geotrellis.raster._
 import geotrellis.raster.render.{ColorRamp, ColorMap}

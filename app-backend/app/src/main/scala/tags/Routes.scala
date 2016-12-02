@@ -1,4 +1,4 @@
-package com.azavea.rf.modeltag
+package com.azavea.rf.tooltag
 
 import java.util.UUID
 
@@ -7,58 +7,58 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import com.azavea.rf.auth.Authentication
 import com.azavea.rf.database.Database
-import com.azavea.rf.database.tables.ModelTags
+import com.azavea.rf.database.tables.ToolTags
 import com.azavea.rf.datamodel._
 import com.azavea.rf.utils.UserErrorHandler
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 
-trait ModelTagRoutes extends Authentication with PaginationDirectives with UserErrorHandler {
+trait ToolTagRoutes extends Authentication with PaginationDirectives with UserErrorHandler {
   implicit def database: Database
 
-  val modelTagRoutes: Route = handleExceptions(userExceptionHandler) {
+  val toolTagRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
-      get { listModelTags } ~
-      post { createModelTag }
+      get { listToolTags } ~
+      post { createToolTag }
     } ~
-    pathPrefix(JavaUUID) { modelTagId =>
+    pathPrefix(JavaUUID) { toolTagId =>
       pathEndOrSingleSlash {
-        get { getModelTag(modelTagId) } ~
-        put { updateModelTag(modelTagId) } ~
-        delete { deleteModelTag(modelTagId) }
+        get { getToolTag(toolTagId) } ~
+        put { updateToolTag(toolTagId) } ~
+        delete { deleteToolTag(toolTagId) }
       }
     }
   }
 
-  def listModelTags: Route = authenticate { user =>
+  def listToolTags: Route = authenticate { user =>
     (withPagination) { (page) =>
       complete {
-        ModelTags.listModelTags(page)
+        ToolTags.listToolTags(page)
       }
     }
   }
 
-  def createModelTag: Route = authenticate { user =>
-    entity(as[ModelTag.Create]) { newModelTag =>
-      onSuccess(ModelTags.insertModelTag(newModelTag, user.id)) { modelTag =>
-        complete(StatusCodes.Created, modelTag)
+  def createToolTag: Route = authenticate { user =>
+    entity(as[ToolTag.Create]) { newToolTag =>
+      onSuccess(ToolTags.insertToolTag(newToolTag, user.id)) { toolTag =>
+        complete(StatusCodes.Created, toolTag)
       }
     }
   }
 
-  def getModelTag(modelTagId: UUID): Route = authenticate { user =>
+  def getToolTag(toolTagId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
-      complete(ModelTags.getModelTag(modelTagId))
+      complete(ToolTags.getToolTag(toolTagId))
     }
   }
 
-  def updateModelTag(modelTagId: UUID): Route = authenticate { user =>
-    entity(as[ModelTag]) { updatedModelTag =>
-      onComplete(ModelTags.updateModelTag(updatedModelTag, modelTagId, user)) {
+  def updateToolTag(toolTagId: UUID): Route = authenticate { user =>
+    entity(as[ToolTag]) { updatedToolTag =>
+      onComplete(ToolTags.updateToolTag(updatedToolTag, toolTagId, user)) {
         case Success(result) => {
           result match {
             case 1 => complete(StatusCodes.NoContent)
             case count => throw new IllegalStateException(
-              s"Error updating model tag: update result expected to be 1, was $count"
+              s"Error updating tool tag: update result expected to be 1, was $count"
             )
           }
         }
@@ -67,8 +67,8 @@ trait ModelTagRoutes extends Authentication with PaginationDirectives with UserE
     }
   }
 
-  def deleteModelTag(modelTagId: UUID): Route = authenticate { user =>
-    onSuccess(ModelTags.deleteModelTag(modelTagId)) {
+  def deleteToolTag(toolTagId: UUID): Route = authenticate { user =>
+    onSuccess(ToolTags.deleteToolTag(toolTagId)) {
       case 1 => complete(StatusCodes.NoContent)
       case 0 => complete(StatusCodes.NotFound)
       case count => throw new IllegalStateException(

@@ -4,8 +4,14 @@ export default class MarketSearchController {
     ) {
         'ngInject';
         this.$state = $state;
+        this.$log = $log;
 
         this.populatePlaceholderData();
+        this.populateToolList();
+    }
+
+    populateToolList() {
+        this.$log.log('Using placeholder data in Market search controller');
     }
 
     populatePlaceholderData() {
@@ -125,7 +131,7 @@ export default class MarketSearchController {
         this.categories[index].selected = !this.categories[index].selected;
     }
 
-    navModel(model) {
-        this.$state.go('market.model', {id: model.id, modelData: model});
+    navTool(tool) {
+        this.$state.go('market.tool', {id: tool.id, toolData: tool});
     }
 }

@@ -1,5 +1,5 @@
-// rfModelSearch controller class
-export default class ModelSearchController {
+// rfToolSearch controller class
+export default class ToolSearchController {
     constructor( // eslint-disable-line max-params
         $log, $state
     ) {

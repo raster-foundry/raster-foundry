@@ -12,7 +12,7 @@ import DefaultJsonProtocol._
 import java.util.UUID
 import java.net.URI
 
-package object model {
+package object tool {
 
   implicit object KeyIndexMethodJsonFormat extends RootJsonFormat[KeyIndexMethod[SpatialKey]] {
     def write(kim: KeyIndexMethod[SpatialKey]): JsValue =

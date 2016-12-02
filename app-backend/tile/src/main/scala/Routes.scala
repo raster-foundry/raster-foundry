@@ -2,8 +2,8 @@ package com.azavea.rf.tile
 
 import com.azavea.rf.tile.image._
 import com.azavea.rf.tile.image.ColorCorrectParams._
-import com.azavea.rf.tile.model._
-import com.azavea.rf.tile.model.ModelParams._
+import com.azavea.rf.tile.tool._
+import com.azavea.rf.tile.tool.ToolParams._
 
 import geotrellis.raster._
 import geotrellis.raster.io._
@@ -56,13 +56,13 @@ trait Routes extends LazyLogging {
         }
       } ~
       (pathPrefix("ndvi") & layerTile(id)){ futureTile =>
-        get { modelRoute(futureTile, NDVI, Some(NDVI.colorRamp), Some(NDVI.breaks)) }
+        get { toolRoute(futureTile, NDVI, Some(NDVI.colorRamp), Some(NDVI.breaks)) }
       } ~
       (pathPrefix("ndwi") & layerTile(id)){ futureTile =>
-        get { modelRoute(futureTile, NDWI, Some(NDWI.colorRamp), Some(NDWI.breaks)) }
+        get { toolRoute(futureTile, NDWI, Some(NDWI.colorRamp), Some(NDWI.breaks)) }
       } ~
       (pathPrefix("grey") & layerTile(id)){ futureTile =>
-        get { modelRoute(futureTile, _.band(0), Some(ColorRamp(Array(0x000000, 0xFFFFFF)))) }
+        get { toolRoute(futureTile, _.band(0), Some(ColorRamp(Array(0x000000, 0xFFFFFF)))) }
       }
     }
 
@@ -115,13 +115,13 @@ trait Routes extends LazyLogging {
       }
     }
 
-  def modelRoute(
+  def toolRoute(
     futureTile: Future[MultibandTile],
     index: MultibandTile => Tile,
     defaultColorRamp: Option[ColorRamp] = None,
     defaultBreaks: Option[Array[Double]] = None
   ): Route = {
-    modelParams(defaultColorRamp, defaultBreaks) { params =>
+    toolParams(defaultColorRamp, defaultBreaks) { params =>
         complete {
           for {
             tile <- futureTile

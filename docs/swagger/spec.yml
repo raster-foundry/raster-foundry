@@ -736,9 +736,9 @@ paths:
       responses:
         204:
           description: Revocation successful, No Content
-  /models/:
+  /tools/:
     get:
-      summary: Lists models that perform a set of geoprocessing/map algebra functions
+      summary: Lists tools that perform a set of geoprocessing/map algebra functions
       tags:
         - Model Lab
       parameters:
@@ -747,45 +747,45 @@ paths:
         - $ref: '#/parameters/page'
         - $ref: '#/parameters/minRating'
         - $ref: '#/parameters/maxRating'
-        - $ref: '#/parameters/modelCategory'
-        - $ref: '#/parameters/modelTag'
+        - $ref: '#/parameters/toolCategory'
+        - $ref: '#/parameters/toolTag'
         - $ref: '#/parameters/search'
       responses:
         200:
-          description: Returns a paginated list of models
+          description: Returns a paginated list of tools
           schema:
-            $ref: '#/definitions/ModelPaginated'
+            $ref: '#/definitions/ToolPaginated'
         404:
           description: Error message if insufficient permissions or objects not present
         default:
           description: Error message if insufficient permissions
     post:
-      summary: Create a new geoprocessing model
+      summary: Create a new geoprocessing tool
       tags:
         - Model Lab
       responses:
         201:
-          description: Create a new geoprocessing model
+          description: Create a new geoprocessing tool
           schema:
-            $ref: '#/definitions/Model'
+            $ref: '#/definitions/Tool'
         default:
-          description: Error message if insufficient permissions to create a new model
-  /models/{uuid}/:
+          description: Error message if insufficient permissions to create a new tool
+  /tools/{uuid}/:
     get:
-      summary: Retrieve details for a single geoprocessing model
+      summary: Retrieve details for a single geoprocessing tool
       tags:
         - Model Lab
       parameters:
         - $ref: '#/parameters/uuid'
       responses:
         200:
-          description: Geoprocessing model record
+          description: Geoprocessing tool record
           schema:
-            $ref: '#/definitions/Model'
+            $ref: '#/definitions/Tool'
         404:
-          description: Error message returned if insufficent permissions or model does not exist
+          description: Error message returned if insufficent permissions or tool does not exist
     delete:
-      summary: Delete a model
+      summary: Delete a tool
       tags:
         - Model Lab
       parameters:
@@ -796,53 +796,53 @@ paths:
         default:
           description: Delete unsuccessful, either object did not exist or insufficient permissions
     put:
-      summary: Update a geoprocessing model
+      summary: Update a geoprocessing tool
       tags:
         - Model Lab
       parameters:
         - $ref: '#/parameters/uuid'
       responses:
         204:
-          description: Update an existing geoprocessing model
+          description: Update an existing geoprocessing tool
         404:
-          description: Error message if insufficient permissions to update a model
-  /model-tags/:
+          description: Error message if insufficient permissions to update a tool
+  /tool-tags/:
     get:
-      summary: List model tags
+      summary: List tool tags
       tags:
         - Model Lab
       parameters:
         - $ref: '#/parameters/search'
       responses:
         200:
-          description: Retrieve a paginated list of model tags
+          description: Retrieve a paginated list of tool tags
           schema:
-            $ref: '#/definitions/ModelTagPaginated'
+            $ref: '#/definitions/ToolTagPaginated'
         404:
-          description: Error message if insufficent permissions or no models exist
+          description: Error message if insufficent permissions or no tools exist
     post:
-      summary: Create a model tag
+      summary: Create a tool tag
       tags:
         - Model Lab
       responses:
         201:
-          description: Successfully created a new tag for models
+          description: Successfully created a new tag for tools
           schema:
-            $ref: '#/definitions/ModelTag'
+            $ref: '#/definitions/ToolTag'
         default:
-          description: Error message if insufficient permissions to create a model
-  /model-tags/{uuid}/:
+          description: Error message if insufficient permissions to create a tool
+  /tool-tags/{uuid}/:
     get:
-      summary: Get detail of a model tag
+      summary: Get detail of a tool tag
       tags:
         - Model Lab
       parameters:
         - $ref: '#/parameters/uuid'
       responses:
         200:
-          description: Successfully retrieved a model
+          description: Successfully retrieved a tool
           schema:
-            $ref: '#/definitions/ModelTag'
+            $ref: '#/definitions/ToolTag'
         404:
           description: Error message if insufficient permissions or tag does not exist
     delete:
@@ -857,7 +857,7 @@ paths:
         default:
           description: Error message if insufficient permissions to delete a tag
     put:
-      summary: Update a given model tag
+      summary: Update a given tool tag
       tags:
         - Model Lab
       parameters:
@@ -867,63 +867,63 @@ paths:
           description: Successfully updated tag
         default:
           description: Unable to delete tag due to insufficient permissions or tag does not exist
-  /model-categories/:
+  /tool-categories/:
     get:
-      summary: Retrieve list of model categories
+      summary: Retrieve list of tool categories
       parameters:
         - $ref: '#/parameters/search'
       tags:
         - Model Lab
       responses:
         200:
-          description: Paginated list of model categories
+          description: Paginated list of tool categories
           schema:
-            $ref: '#/definitions/ModelCategoryPaginated'
+            $ref: '#/definitions/ToolCategoryPaginated'
     post:
-      summary: Create a new model category
+      summary: Create a new tool category
       tags:
         - Model Lab
       responses:
         201:
-          description: Successfully created a new model category
+          description: Successfully created a new tool category
           schema:
-            $ref: '#/definitions/ModelCategory'
-  /model-categories/{uuid}/:
+            $ref: '#/definitions/ToolCategory'
+  /tool-categories/{uuid}/:
     get:
-      summary: Retrieve details of a model category
+      summary: Retrieve details of a tool category
       tags:
         - Model Lab
       parameters:
         - $ref: '#/parameters/uuid'
       responses:
         200:
-          description: Retrieved a single model category
+          description: Retrieved a single tool category
           schema:
-            $ref: '#/definitions/ModelCategory'
+            $ref: '#/definitions/ToolCategory'
     put:
-      summary: Update a model category
+      summary: Update a tool category
       tags:
         - Model Lab
       responses:
         204:
-          description: Successfully updated a model category
+          description: Successfully updated a tool category
       parameters:
         - $ref: '#/parameters/uuid'
     delete:
-      summary: Delete a model category
+      summary: Delete a tool category
       tags:
         - Model Lab
       parameters:
         - $ref: '#/parameters/uuid'
       responses:
         204:
-          description: Successfully deleted a model category
+          description: Successfully deleted a tool category
 
 parameters:
   orderingBase:
     name: ordering
     in: query
-    description: Field to order results by; meaning of label varies based on model
+    description: Field to order results by; meaning of label varies based on tool
     type: array
     collectionFormat: pipes
     items:
@@ -1084,17 +1084,17 @@ parameters:
         - sunAzimuth,desc
         - cloudCover,asc
         - cloudCover,desc
-  modelTag:
-    name: modelTag
-    description: Only return results that contain these model tags
+  toolTag:
+    name: toolTag
+    description: Only return results that contain these tool tags
     in: query
     type: array
     required: false
     items:
       type: string
       format: uuid
-  modelCategory:
-    name: modelCategory
+  toolCategory:
+    name: toolCategory
     description: Only return results that satisfy this category
     in: query
     type: array
@@ -1652,7 +1652,7 @@ definitions:
           type: array
           items:
             $ref: '#/definitions/Thumbnail'
-  Model:
+  Tool:
     allOf:
     - $ref: '#/definitions/BaseModel'
     - $ref: '#/definitions/UserTrackingMixin'
@@ -1660,36 +1660,36 @@ definitions:
       properties:
         title:
           type: string
-          description: Title of model displayed to users
+          description: Title of tool displayed to users
         description:
           type: string
           description: |
-            A long description of the model, including is use-cases,
+            A long description of the tool, including is use-cases,
             purpose, and any potential references
         requirements:
           type: string
           description: A brief description of requirements, including any relevant band requirements
         tags:
           type: array
-          description: Model tags associated with a model
+          description: Tool tags associated with a tool
           items:
             type: string
         categories:
           type: array
-          description: Category of geoprocessing model
+          description: Category of geoprocessing tool
           items:
             type: string
         license:
           type: string
-          description: Usage license of model
+          description: Usage license of tool
         compatibleDatasources:
           type: array
-          description: Datasources that can be used with this geoprocessing model
+          description: Datasources that can be used with this geoprocessing tool
           items:
             type: string
         stars:
           type: number
-          description: User rating of geoprocessing model
+          description: User rating of geoprocessing tool
         visibility:
           type: string
           description: Level of restriction on viewing
@@ -1697,7 +1697,7 @@ definitions:
             - PUBLIC
             - ORGANIZATION
             - OWNERONLY
-  ModelPaginated:
+  ToolPaginated:
     allOf:
     - $ref: '#/definitions/PaginatedResponse'
     - type: object
@@ -1705,8 +1705,8 @@ definitions:
         results:
           type: array
           items:
-            $ref: '#/definitions/Model'
-  ModelTag:
+            $ref: '#/definitions/Tool'
+  ToolTag:
     allOf:
     - $ref: '#/definitions/BaseModel'
     - $ref: '#/definitions/UserTrackingMixin'
@@ -1715,7 +1715,7 @@ definitions:
         label:
           type: string
           description: User displayed label
-  ModelTagPaginated:
+  ToolTagPaginated:
     allOf:
     - $ref: '#/definitions/PaginatedResponse'
     - type: object
@@ -1723,8 +1723,8 @@ definitions:
         results:
           type: array
           items:
-            $ref: '#/definitions/ModelTag'
-  ModelCategory:
+            $ref: '#/definitions/ToolTag'
+  ToolCategory:
     allOf:
     - $ref: '#/definitions/BaseModel'
     - type: object
@@ -1732,7 +1732,7 @@ definitions:
         label:
           type: string
           description: User displayed label for category
-  ModelCategoryPaginated:
+  ToolCategoryPaginated:
       allOf:
       - $ref: '#/definitions/PaginatedResponse'
       - type: object
@@ -1740,7 +1740,7 @@ definitions:
           results:
             type: array
             items:
-              $ref: '#/definitions/ModelCategory'
+              $ref: '#/definitions/ToolCategory'
   Error:
     type: object
     properties:

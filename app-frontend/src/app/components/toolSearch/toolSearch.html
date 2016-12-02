@@ -1,6 +1,6 @@
 <div class="navbar secondary-navbar">
   <div class="navbar-left">
-    <nav ng-show="$ctrl.$state.$current.name === 'market.model'">
+    <nav ng-show="$ctrl.$state.$current.name === 'market.tool'">
       <a href ui-sref="market.search" class="active"> < Back to search results</a>
     </nav>
     <nav ng-show="$ctrl.$state.$current.name === 'market.search'">
@@ -12,7 +12,7 @@
           <input type="text"
                  id="search-input"
                  class="form-control input-dark"
-                 placeholder="Search for models"
+                 placeholder="Search for tools"
                  ng-model="$ctrl.searchText"/>
           <button type="button" class="btn btn-link">
             <span class="close">x</span>
@@ -23,7 +23,7 @@
   </div>
   <div class="navbar-right">
     <nav>
-      <a href ui-sref="lab/list">My Models</a>
+      <a href ui-sref="lab/list">My Tools</a>
     </nav>
   </div>
 </div>

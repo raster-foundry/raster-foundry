@@ -13,7 +13,7 @@ import com.azavea.rf.user.UserRoutes
 import com.azavea.rf.image.ImageRoutes
 import com.azavea.rf.config.ConfigRoutes
 import com.azavea.rf.database.Database
-import com.azavea.rf.modeltag.ModelTagRoutes
+import com.azavea.rf.tooltag.ToolTagRoutes
 import com.azavea.rf.token.TokenRoutes
 
 
@@ -31,7 +31,7 @@ trait Router extends HealthCheckRoutes
     with ImageRoutes
     with TokenRoutes
     with ThumbnailRoutes
-    with ModelTagRoutes
+    with ToolTagRoutes
     with ConfigRoutes {
 
   implicit def database: Database
@@ -50,7 +50,7 @@ trait Router extends HealthCheckRoutes
       pathPrefix("thumbnails") { thumbnailRoutes } ~
       pathPrefix("tokens") { tokenRoutes } ~
       pathPrefix("users") { userRoutes } ~
-      pathPrefix("model-tags") { modelTagRoutes }
+      pathPrefix("tool-tags") { toolTagRoutes }
     } ~
     pathPrefix("config") {
       configRoutes

@@ -39,7 +39,7 @@ object LayerCache extends Config {
       .expireAfterWrite(cacheExpiration)
       .maximumSize(cacheSize)
       .buildAsyncFuture { case (id, zoom: Int) =>
-        Future { S3AttributeStore(defaultProject, id.prefix).read[Array[Histogram[Double]]](id.catalogId(zoom), "histogram") }
+        Future { S3AttributeStore(defaultBucket, id.prefix).read[Array[Histogram[Double]]](id.catalogId(zoom), "histogram") }
       }
 
   val cacheReaders: LoadingCache[(RfLayerId, Int), Reader[SpatialKey, MultibandTile]] =
@@ -47,7 +47,7 @@ object LayerCache extends Config {
       .expireAfterWrite(cacheExpiration)
       .maximumSize(cacheSize)
       .build { case (id, zoom) =>
-        new S3ValueReader(attributeStore(defaultProject, id.prefix)).reader[SpatialKey, MultibandTile](id.catalogId(zoom))
+        new S3ValueReader(attributeStore(defaultBucket, id.prefix)).reader[SpatialKey, MultibandTile](id.catalogId(zoom))
       }
 
   val cacheTiles: AsyncLoadingCache[(RfLayerId, Int, SpatialKey), MultibandTile] =
@@ -63,7 +63,7 @@ object LayerCache extends Config {
     cacheAttributeStore.get((bucket, prefix))
 
   def attributeStore(prefix: String): S3AttributeStore =
-    attributeStore(defaultProject, prefix)
+    attributeStore(defaultBucket, prefix)
 
   def tile(id: RfLayerId, zoom: Int, key: SpatialKey): Future[MultibandTile] =
     cacheTiles.get((id, zoom, key))

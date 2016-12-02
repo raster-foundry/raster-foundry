@@ -1,4 +1,4 @@
-export default class ModelItemController {
+export default class ToolItemController {
     constructor() {
         'ngInject';
     }
