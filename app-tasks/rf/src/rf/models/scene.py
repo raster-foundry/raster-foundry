@@ -69,8 +69,9 @@ class Scene(BaseModel):
         return cls(
             d.get('organizationId'), d.get('ingestSizeBytes'), d.get('visibility'),
             d.get('tags'), d.get('datasource'), d.get('sceneMetadata'), d.get('name'), d.get('thumbnailStatus'),
-            d.get('boundaryStatus'), d.get('status'), d.get('sunAzimuth'), d.get('sunElevation'),
-            d.get('cloudCover'), d.get('acquisitionDate'), d.get('id')
+            d.get('boundaryStatus'), d.get('status'), d.get('metadataFiles'), d.get('sunAzimuth'), d.get('sunElevation'),
+            d.get('cloudCover'), d.get('acquisitionDate'), d.get('id'), d.get('thumbnails'), d.get('tileFootprint'), d.get('dataFootprint'),
+            d.get('images')
         )
 
     def to_dict(self):
