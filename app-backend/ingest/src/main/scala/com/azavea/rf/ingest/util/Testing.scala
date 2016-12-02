@@ -20,7 +20,7 @@ import DefaultJsonProtocol._
 import java.net.URI
 import java.util.UUID
 
-import com.azavea.rf.ingest.model._
+import com.azavea.rf.ingest.tool._
 
 object Testing {
 

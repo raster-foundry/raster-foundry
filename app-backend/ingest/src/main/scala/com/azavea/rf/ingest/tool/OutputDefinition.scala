@@ -1,4 +1,4 @@
-package com.azavea.rf.ingest.model
+package com.azavea.rf.ingest.tool
 
 import geotrellis.proj4.CRS
 import geotrellis.raster._

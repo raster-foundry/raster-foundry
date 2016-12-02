@@ -1,7 +1,7 @@
 import browseTpl from './pages/browse/browse.html';
 import marketTpl from './pages/market/market.html';
 import marketSearchTpl from './pages/market/search/search.html';
-import marketModelTpl from './pages/market/model/model.html';
+import marketToolTpl from './pages/market/tool/tool.html';
 import editorTpl from './pages/editor/editor.html';
 import libraryTpl from './pages/library/library.html';
 import scenesTpl from './pages/library/scenes/scenes.html';
@@ -177,13 +177,13 @@ function marketStates($stateProvider) {
             controller: 'MarketSearchController',
             controllerAs: '$ctrl'
         })
-        .state('market.model', {
-            url: '/model/:id',
+        .state('market.tool', {
+            url: '/tool/:id',
             params: {
                 modelData: null
             },
-            templateUrl: marketModelTpl,
-            controller: 'MarketModelController',
+            templateUrl: marketToolTpl,
+            controller: 'MarketToolController',
             controllerAs: '$ctrl'
         });
 }

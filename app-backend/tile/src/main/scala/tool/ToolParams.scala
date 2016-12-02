@@ -1,4 +1,4 @@
-package com.azavea.rf.tile.model
+package com.azavea.rf.tile.tool
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
@@ -6,15 +6,15 @@ import geotrellis.raster.render.{ColorRamps, ColorRamp}
 
 import scala.util.Try
 
-case class ModelParams(
+case class ToolParams(
   bands: Array[Int],
   breaks: Array[Double],
   ramp: ColorRamp
 )
 
-object ModelParams {
-  def modelParams(defaultColorRamp: Option[ColorRamp] = None, defaultBreaks: Option[Array[Double]] = None): Directive1[ModelParams] =
-    (bandsParam('bands) &  colorBreaksParam('breaks, defaultBreaks) & colorRampParam('ramp, defaultColorRamp)).as(ModelParams.apply _)
+object ToolParams {
+  def toolParams(defaultColorRamp: Option[ColorRamp] = None, defaultBreaks: Option[Array[Double]] = None): Directive1[ToolParams] =
+    (bandsParam('bands) &  colorBreaksParam('breaks, defaultBreaks) & colorRampParam('ramp, defaultColorRamp)).as(ToolParams.apply _)
 
   def subsetBands: Directive1[Option[Array[Int]]] =
     parameters('bands.?).as { bands: Option[String] =>

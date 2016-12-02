@@ -1,4 +1,4 @@
-export default class MarketModelController {
+export default class MarketToolController {
     constructor( // eslint-disable-line max-params
         $log, $state
     ) {
@@ -6,8 +6,8 @@ export default class MarketModelController {
         this.$log = $log;
         this.$state = $state;
 
-        this.modelData = this.$state.params.modelData;
-        this.modelId = this.$state.params.id;
+        this.toolData = this.$state.params.toolData;
+        this.toolId = this.$state.params.id;
         this.activeSlide = 0;
         this.populateTestData();
     }

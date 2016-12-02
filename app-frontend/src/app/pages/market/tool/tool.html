@@ -4,34 +4,34 @@
       <div class="column">
         <div>
           <h1 class="h3 page-title">
-            {{$ctrl.modelData.name || 'Placeholder name'}}
+            {{$ctrl.toolData.name || 'Placeholder name'}}
           </h1>
         </div>
         <div>
           <div uib-carousel
                active="$ctrl.activeSlide"
                template-url="carousel.html"
-               ng-if="$ctrl.modelData && $ctrl.modelData.screenshots.length"
+               ng-if="$ctrl.toolData && $ctrl.toolData.screenshots.length"
           >
             <div uib-slide
                  index="$index"
-                 ng-repeat="screenshot in $ctrl.modelData.screenshots track by screenshot.id">
+                 ng-repeat="screenshot in $ctrl.toolData.screenshots track by screenshot.id">
               <img ng-src="{{screenshot.url}}" >
             </div>
           </div>
         </div>
         <div class="horizontal-separator"></div>
-        <div class="model-detail-section">
-          <div class="model-detail-header">
+        <div class="tool-detail-section">
+          <div class="tool-detail-header">
             <h5>Description</h5>
           </div>
           <div>
             <p>
-              {{$ctrl.modelData.description}}
+              {{$ctrl.toolData.description}}
             </p>
           </div>
         </div>
-        <div class="model-detail-section">
+        <div class="tool-detail-section">
           <table class="upload-info">
             <tr>
               <th>
@@ -46,88 +46,88 @@
             </tr>
             <tr>
               <td>
-                <a>{{$ctrl.modelData.uploader}}</a>
+                <a>{{$ctrl.toolData.uploader}}</a>
               </td>
               <td>
-                {{$ctrl.modelData.createdAt | date}}
+                {{$ctrl.toolData.createdAt | date}}
               </td>
               <td>
-                {{$ctrl.modelData.modifiedAt | date}}
+                {{$ctrl.toolData.modifiedAt | date}}
               </td>
             </tr>
             </tbody>
           </table>
         </div>
-        <div class="model-detail-section">
-          <div class="model-detail-header">
+        <div class="tool-detail-section">
+          <div class="tool-detail-header">
             <h5>Requirements for use</h5>
           </div>
           <div>
             <p>
-              {{$ctrl.modelData.requirements}}
+              {{$ctrl.toolData.requirements}}
             </p>
           </div>
         </div>
-        <div class="model-detail-section">
-          <div class="model-detail-header">
+        <div class="tool-detail-section">
+          <div class="tool-detail-header">
             <h5>Tags</h5>
           </div>
           <div class="sidebar-category">
             <button class="btn btn-tag"
-                    ng-repeat="tag in $ctrl.modelData.tags">
+                    ng-repeat="tag in $ctrl.toolData.tags">
               {{tag}}
             </button>
           </div>
         </div>
-        <div class="model-detail-section">
-          <div class="model-detail-header">
+        <div class="tool-detail-section">
+          <div class="tool-detail-header">
             <h5>Categories</h5>
           </div>
           <div class="sidebar-category">
             <button class="btn btn-tag"
-                    ng-repeat="category in $ctrl.modelData.categories">
+                    ng-repeat="category in $ctrl.toolData.categories">
               {{category}}
             </button>
           </div>
         </div>
-        <div class="model-detail-section">
-          <div class="model-detail-header">
+        <div class="tool-detail-section">
+          <div class="tool-detail-header">
             <h5>Usage License</h5>
             <p>
               No license information was provided. If this work was prepared by
-              Raster Foundry as part of the official Model marketplace, it is
+              Raster Foundry as part of the official Tool marketplace, it is
               considered a Raster Foundry work and usage should follow the general
               <a>terms of use</a>
             </p>
           </div>
         </div>
         <div class="horizontal-separator"></div>
-        <div class="model-detail-section">
-          <div class="model-detail-header">
+        <div class="tool-detail-section">
+          <div class="tool-detail-header">
             <h3>Compatible Data Sources</h3>
           </div>
           <div>
           </div>
         </div>
-        <div class="model-detail-section">
-          <div class="model-detail-header">
-            <h3>Similar Models</h3>
+        <div class="tool-detail-section">
+          <div class="tool-detail-header">
+            <h3>Similar Tools</h3>
           </div>
           <div class="list-group">
-            <rf-model-item
-                ng-repeat="modelData in $ctrl.similarQueryResult.results"
-                model-data="modelData"
-            ></rf-model-item>
+            <rf-tool-item
+                ng-repeat="toolData in $ctrl.similarQueryResult.results"
+                tool-data="toolData"
+            ></rf-tool-item>
           </div>
         </div>
       </div>
       <div class="column-3">
         <div class="content">
-          <button class="btn btn-flat" style="width: 100%;">Save to My models</button>
+          <button class="btn btn-flat" style="width: 100%;">Save to My tools</button>
           <div class="panel">
             <div class="panel-body centered">
               <h5>Free to use</h5>
-              <button class="btn btn-primary">Execute Model</button>
+              <button class="btn btn-primary">Execute Tool</button>
             </div>
           </div>
           <div class="reference-list">

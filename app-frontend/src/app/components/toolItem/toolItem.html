@@ -1,19 +1,19 @@
 <div class="list-group-item selectable wrap">
-  <img ng-if="$ctrl.modelData.screenshots[0]"
-       ng-src="{{$ctrl.modelData.screenshots[0].url}}"
+  <img ng-if="$ctrl.toolData.screenshots[0]"
+       ng-src="{{$ctrl.toolData.screenshots[0].url}}"
        class="rounded-img item-img">
-  <img ng-if="!$ctrl.modelData.screenshots.length"
+  <img ng-if="!$ctrl.toolData.screenshots.length"
        src="https://placehold.it/75x75/"
        class="rounded-img item-img">
   <div>
     <div class="list-item-header">
-      {{$ctrl.modelData.name}}
+      {{$ctrl.toolData.name}}
     </div>
     <div class="list-item-description">
-      {{$ctrl.modelData.description}}
+      {{$ctrl.toolData.description}}
     </div>
     <div class="list-item-attribution">
-      Uploaded by: {{$ctrl.modelData.uploader}}
+      Uploaded by: {{$ctrl.toolData.uploader}}
     </div>
   </div>
 </div>

@@ -3,7 +3,7 @@
 ## Context
 
 Some actions and features of Raster Foundry require a way to manage asynchronous tasks and workflows. 
-For instance, user uploads of imagery or models may start workflows in an ad hoc manner, while in
+For instance, user uploads of imagery or tools may start workflows in an ad hoc manner, while in
 contrast imports of imagery from NASA or partners may need to happen on a schedule. The nature of
 these tasks could vary from bash scripts and python functions to spark jobs and ECS tasks.
 

@@ -4,7 +4,7 @@
 Raster Foundry needs to support the following requirements regarding user authentication and registration:
  - Ability to support oAuth2, SSO, and other options for authentication beyond simple username/password
  - Basic user management is necessary (resetting passwords, deactivating users, grouping users into organizations)
- - Objects (layers, models, users, etc.) may be limited in scope to users, organizations, roles within organizations.
+ - Objects (layers, tools, users, etc.) may be limited in scope to users, organizations, roles within organizations.
  - Users should be able to generate client tokens to use for programmatic access that can be revoked
 
 In the past the entire user management workflow was handled via the web framework we were using, `Django`. Extension of user registration was usually done on an ad-hoc basis, utilizing and extending third-party add-ons where we could. While we executed successfully in these cases, there were a few issues. First, some of the third-party add-ons we needed to rely on for additional integrations like SAML are underdeveloped and required either significant extensions or diving into the code because of a lack of documentation. Second, each new application required starting from almost scratch and the inclusion of additional services for basic functionality. For instance, user registration and password-management both required setting up email servers/services, asynchronous workers to send emails, and a broker to manage the asynchronous workers. A third problem we’ve experienced in the past is mixing authentication techniques provided by Django (e.g. using both sessions and tokens) which can create unintended difficulties in isolating authentication problems.

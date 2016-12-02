@@ -1,7 +1,7 @@
 package com.azavea.rf.ingest
 
 import com.azavea.rf.ingest.util._
-import com.azavea.rf.ingest.model._
+import com.azavea.rf.ingest.tool._
 
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io._

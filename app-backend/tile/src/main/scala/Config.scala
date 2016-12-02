@@ -23,6 +23,6 @@ trait Config {
   lazy val cacheSize: Int =
     if (cacheConfig.hasPath("size")) cacheConfig.getInt("size") else 512
 
-  lazy val defaultProject:String =
-    tileserverConfig.getString("project")
+  lazy val defaultBucket:String =
+    tileserverConfig.getString("bucket")
 }

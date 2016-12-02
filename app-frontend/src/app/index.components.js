@@ -1,8 +1,8 @@
 export default angular.module('index.components', [
     require('./components/leafletMap/leafletMap.module.js').name,
     require('./components/navBar/navBar.module.js').name,
-    require('./components/modelSearch/modelSearch.module.js').name,
-    require('./components/modelItem/modelItem.module.js').name,
+    require('./components/toolSearch/toolSearch.module.js').name,
+    require('./components/toolItem/toolItem.module.js').name,
     require('./components/filterPane/filterPane.module.js').name,
     require('./components/colorCorrectPane/colorCorrectPane.module.js').name,
     require('./components/channelHistogram/channelHistogram.module.js').name,

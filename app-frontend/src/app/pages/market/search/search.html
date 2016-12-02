@@ -69,11 +69,11 @@
         <div class="column">
           <div class="embedded-scrollable">
             <div class="list-group">
-              <rf-model-item
-                  ng-repeat="modelData in $ctrl.queryResult.results"
-                  model-data="modelData"
-                  ng-click="$ctrl.navModel(modelData)"
-              ></rf-model-item>
+              <rf-tool-item
+                  ng-repeat="toolData in $ctrl.queryResult.results"
+                  tool-data="toolData"
+                  ng-click="$ctrl.navTool(toolData)"
+              ></rf-tool-item>
             </div>
           </div>
         </div>
@@ -88,7 +88,7 @@
             rotate="true"
             boundary-link-numbers="true"
             force-ellipses="true"
-            ng-change="$ctrl.populateModelList($ctrl.currentPage)">
+            ng-change="$ctrl.populateToolList($ctrl.currentPage)">
         </ul>
       </div>
     </div>

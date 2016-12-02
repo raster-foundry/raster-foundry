@@ -1,4 +1,4 @@
-package com.azavea.rf.modeltag
+package com.azavea.rf.tooltag
 
 import java.util.UUID
 
@@ -11,7 +11,7 @@ import com.azavea.rf.{AuthUtils, DBSpec, Router}
 import org.scalatest.{Matchers, WordSpec}
 import spray.json._
 
-class ModelTagSpec extends WordSpec
+class ToolTagSpec extends WordSpec
     with Matchers
     with ScalatestRouteTest
     with Config
@@ -23,8 +23,8 @@ class ModelTagSpec extends WordSpec
 
   val authHeader = AuthUtils.generateAuthHeader("Default")
   val publicOrgId = UUID.fromString("dfac6307-b5ef-43f7-beda-b9f208bb7726")
-  val baseModelTag = "/model-tags/"
-  val newModelTag = ModelTag.Create(
+  val baseToolTag = "/tool-tags/"
+  val newToolTag = ToolTag.Create(
     publicOrgId,
     "test tag"
   )
@@ -32,52 +32,52 @@ class ModelTagSpec extends WordSpec
   // Alias to baseRoutes to be explicit
   val baseRoutes = routes
 
-  "/api/model-tags/{uuid}" should {
-    "return a 404 for non-existent model tag" ignore {
-      Get(s"${baseModelTag}${publicOrgId}") ~> Route.seal(baseRoutes) ~> check {
+  "/api/tool-tags/{uuid}" should {
+    "return a 404 for non-existent tool tag" ignore {
+      Get(s"${baseToolTag}${publicOrgId}") ~> Route.seal(baseRoutes) ~> check {
         status shouldEqual StatusCodes.NotFound
       }
     }
 
-    "update a model tag" ignore {
-      // TODO: Add model update when DB interaction is fixed
+    "update a tool tag" ignore {
+      // TODO: Add tool update when DB interaction is fixed
     }
 
-    "delete a model tag" ignore {
-      val modelTagId = ""
-      Delete(s"${baseModelTag}${modelTagId}/") ~> baseRoutes ~> check {
+    "delete a tool tag" ignore {
+      val toolTagId = ""
+      Delete(s"${baseToolTag}${toolTagId}/") ~> baseRoutes ~> check {
         status shouldEqual StatusCodes.NoContent
       }
     }
   }
 
-  "/api/model-tags/" should {
+  "/api/tool-tags/" should {
 
-    "reject creating model tags without authentication" in {
-      Post("/api/model-tags/").withEntity(
+    "reject creating tool tags without authentication" in {
+      Post("/api/tool-tags/").withEntity(
         HttpEntity(
           ContentTypes.`application/json`,
-          newModelTag.toJson.toString()
+          newToolTag.toJson.toString()
         )
       ) ~> baseRoutes ~> check {
         reject
       }
     }
 
-    "create a model tag with authHeader" in {
-      Post("/api/model-tags/").withHeadersAndEntity(
+    "create a tool tag with authHeader" in {
+      Post("/api/tool-tags/").withHeadersAndEntity(
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          newModelTag.toJson.toString()
+          newToolTag.toJson.toString()
         )
       ) ~> baseRoutes ~> check {
-        responseAs[ModelTag]
+        responseAs[ToolTag]
       }
     }
 
     "require authentication for list" in {
-      Get("/api/model-tags/") ~> baseRoutes ~> check {
+      Get("/api/tool-tags/") ~> baseRoutes ~> check {
         reject
       }
     }
