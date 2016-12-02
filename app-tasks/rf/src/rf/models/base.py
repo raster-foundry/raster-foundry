@@ -36,10 +36,11 @@ class BaseModel(object):
 
     @classmethod
     def from_id(cls, id):
-        url = '{HOST}/{URL_PATH}/{id}'.format(HOST=cls.HOST, URL_PATH=cls.URL_PATH, id=id)
+        url = '{HOST}{URL_PATH}{id}'.format(HOST=cls.HOST, URL_PATH=cls.URL_PATH, id=id)
         session = get_session()
         response = session.get(url)
         response.raise_for_status()
+
         return cls.from_json(response.json())
 
     @classmethod
@@ -54,8 +55,7 @@ class BaseModel(object):
 
     @classmethod
     def from_json(cls, json_string):
-        d = json.loads(json_string)
-        return cls.from_dict(d)
+        return cls.from_dict(json_string)
 
     def create(self):
         url = '{HOST}{URL_PATH}'.format(HOST=self.HOST, URL_PATH=self.URL_PATH)
