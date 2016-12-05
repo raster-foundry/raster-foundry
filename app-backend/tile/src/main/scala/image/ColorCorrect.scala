@@ -3,13 +3,22 @@ package com.azavea.rf.tile.image
 import geotrellis.raster._
 import geotrellis.raster.equalization.HistogramEqualization
 import geotrellis.raster.histogram.Histogram
-import geotrellis.raster.render.Png
 import geotrellis.raster.sigmoidal.SigmoidalContrast
 
-object Render {
+object ColorCorrect {
+  case class Params(
+    redBand: Int, greenBand: Int, blueBand: Int,
+    redGamma: Option[Double], greenGamma: Option[Double], blueGamma: Option[Double],
+    contrast: Option[Double], brightness: Option[Int],
+    alpha: Option[Double], beta: Option[Double],
+    min: Option[Int], max: Option[Int],
+    equalize: Boolean
+  ) {
+    def reorderBands(tile: MultibandTile, hist: Seq[Histogram[Double]]): (MultibandTile, Array[Histogram[Double]]) =
+      (tile.subsetBands(redBand, greenBand, blueBand), Array(hist(redBand), hist(greenBand), hist(blueBand)))
+  }
 
-  def apply(rgbTile: MultibandTile, rgbHist: Array[Histogram[Double]], params: ImageParams): Png = {
-
+  def apply(rgbTile: MultibandTile, rgbHist: Array[Histogram[Double]], params: Params): MultibandTile = {
     val maybeEqualize =
       if (params.equalize) Some(HistogramEqualization(_: MultibandTile, rgbHist)) else None
 
@@ -62,9 +71,7 @@ object Render {
     ).flatten
 
     // Apply tile transformations in order from left to right
-    transformations
-      .foldLeft(rgbTile){ (t, f) => f(t) }
-      .renderPng()
+    transformations.foldLeft(rgbTile){ (t, f) => f(t) }
   }
 
   @inline def clampColor(z: Int): Int = {

@@ -115,3 +115,4 @@ app-tasks/usr/local/airflow/logs/
 /app-tasks/usr/local/airflow/airflow-webserver.pid
 /app-tasks/usr/local/airflow/unittests.cfg
 .idea
+.ensime_cache
