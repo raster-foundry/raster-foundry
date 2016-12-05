@@ -23,6 +23,13 @@ export default (app) => {
                     delete: {
                         method: 'DELETE'
                     },
+                    updateProject: {
+                        method: 'PUT',
+                        url: '/api/projects/:id',
+                        params: {
+                            id: '@id'
+                        }
+                    },
                     addScenes: {
                         method: 'POST',
                         url: '/api/projects/:projectId/scenes/',
@@ -97,6 +104,10 @@ export default (app) => {
 
         deleteProject(projectId) {
             return this.Project.delete({id: projectId}).$promise;
+        }
+
+        updateProject(params) {
+            return this.Project.updateProject(params).$promise;
         }
     }
 
