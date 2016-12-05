@@ -130,6 +130,7 @@ export default class BrowseController {
         }
 
         delete this.errorMsg;
+        this.sceneLoadingTime = new Date().toISOString();
         this.loading = true;
         this.infScrollPage = 0;
         // save off selected scenes so you don't lose them during the refresh
@@ -139,7 +140,8 @@ export default class BrowseController {
         this.sceneService.query(
             Object.assign({
                 sort: 'createdAt,desc',
-                pageSize: '20'
+                pageSize: '20',
+                maxCreateDatetime: this.sceneLoadingTime
             }, params)
         ).then(
             (sceneResult) => {
@@ -171,7 +173,8 @@ export default class BrowseController {
             Object.assign({
                 sort: 'createdAt,desc',
                 pageSize: '20',
-                page: this.infScrollPage
+                page: this.infScrollPage,
+                maxCreateDatetime: this.sceneLoadingTime
             }, params)
         ).then(
             (sceneResult) => {
