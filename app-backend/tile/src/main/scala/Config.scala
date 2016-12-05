@@ -26,4 +26,3 @@ trait Config {
   lazy val defaultProject:String =
     tileserverConfig.getString("project")
 }
-
