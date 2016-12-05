@@ -6,9 +6,28 @@
         <a ui-sref="^.^.list">Projects</a><br>
         {{$ctrl.project.name}}
       </h1>
-      <button class="btn btn-tiny" ng-show="!$ctrl.$parent.selectedScenes.size">
+      <button class="btn btn-tiny" ng-click="$ctrl.toggleProjectNameEdit()" ng-show="!$ctrl.$parent.selectedScenes.size">
         <i class="icon-pencil"></i>
       </button>
+      <div ng-show="$ctrl.isEditingProjectName">
+        <form class="ng-pristine ng-valid">
+          <div class="form-group all-in-one">
+            <label for="name"><i class="icon-bucket"></i></label>
+            <input id="name" type="text" class="form-control"
+                  placeholder="Edit project name" ng-model="$ctrl.editedProjectName">
+            <button class="btn btn-link" type="submit"
+                    ng-click="$ctrl.saveProjectNameEdit()"
+                    ng-disabled="$ctrl.isSavingProjectNameEdit">
+              <i class="icon-check"></i>
+            </button>
+            <button class="btn btn-link" type="submit"
+                    ng-click="$ctrl.cancelProjectNameEdit()"
+                    ng-disabled="$ctrl.isSavingProjectNameEdit">
+              <i class="icon-cross"></i>
+            </button>
+          </div>
+        </form>
+      </div>
       <div ng-show="$ctrl.$parent.selectedScenes.size">
         <h1 class="h3 highlight">
           <ng-pluralize count="$ctrl.$parent.selectedScenes.size"

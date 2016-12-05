@@ -13,6 +13,9 @@ export default class ProjectScenesController {
         this.project = this.$state.params.project;
         this.projectId = this.$state.params.projectid;
 
+        this.isEditingProjectName = false;
+        this.isSavingProjectNameEdit = false;
+
         if (!this.project) {
             if (this.projectId) {
                 this.loading = true;
@@ -186,4 +189,37 @@ export default class ProjectScenesController {
             }
         );
     }
-}
+
+    toggleProjectNameEdit() {
+        if (this.isEditingProjectName) {
+            this.cancelProjectNameEdit();
+        } else {
+            this.startProjectNameEdit();
+        }
+    }
+
+    startProjectNameEdit() {
+        this.editedProjectName = this.project.name;
+        this.isEditingProjectName = true;
+    }
+
+    saveProjectNameEdit() {
+        this.isSavingProjectNameEdit = true;
+        this.isEditingProjectName = false;
+        this.project.name = this.editedProjectName;
+        this.projectService.updateProject(this.project).then(
+            () => {
+                this.isSavingProjectNameEdit = false;
+            },
+            (err) => {
+                this.$log.error('Error renaming project:', err);
+                this.isSavingProjectNameEdit = false;
+            }
+        );
+    }
+
+    cancelProjectNameEdit() {
+        this.isEditingProjectName = false;
+        this.editedProjectName = this.project.name;
+    }
+ }
