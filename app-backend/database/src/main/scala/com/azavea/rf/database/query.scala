@@ -87,6 +87,23 @@ case class ProjectQueryParameters(
   timestampParams: TimestampQueryParameters
 )
 
+/** Query parameters specific to tools */
+case class ToolQueryParameters(
+  minRating: Option[Double],
+  maxRating: Option[Double],
+  toolCategory: Iterable[String],
+  toolTag: Iterable[String],
+  search: Option[String]
+)
+
+/** Combined tool query parameters */
+case class CombinedToolQueryParameters(
+  orgParams: OrgQueryParameters,
+  userParams: UserQueryParameters,
+  timestampParams: TimestampQueryParameters,
+  toolParams: ToolQueryParameters
+)
+
 case class FootprintQueryParameters(
   x: Option[Double],
   y: Option[Double],
