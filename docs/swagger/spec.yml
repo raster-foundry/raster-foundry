@@ -888,13 +888,13 @@ paths:
           description: Successfully created a new tool category
           schema:
             $ref: '#/definitions/ToolCategory'
-  /tool-categories/{uuid}/:
+  /tool-categories/{slugLabel}/:
     get:
       summary: Retrieve details of a tool category
       tags:
         - Model Lab
       parameters:
-        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/slugLabel'
       responses:
         200:
           description: Retrieved a single tool category
@@ -908,13 +908,13 @@ paths:
         204:
           description: Successfully updated a tool category
       parameters:
-        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/slugLabel'
     delete:
       summary: Delete a tool category
       tags:
         - Model Lab
       parameters:
-        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/slugLabel'
       responses:
         204:
           description: Successfully deleted a tool category
@@ -963,6 +963,12 @@ parameters:
     required: true
     type: string
     format: uuid
+  slugLabel:
+    name: slugLabel
+    description: A url-safe slug label
+    in: path
+    required: true
+    type: string
   minCloudCover:
     name: minCloudCover
     description: Only return results with cloud cover greater than this number
@@ -1101,7 +1107,6 @@ parameters:
     required: false
     items:
       type: string
-      format: uuid
   minRating:
     name: minRating
     description: Only return results greater than this rating
@@ -1726,12 +1731,21 @@ definitions:
             $ref: '#/definitions/ToolTag'
   ToolCategory:
     allOf:
-    - $ref: '#/definitions/BaseModel'
-    - type: object
-      properties:
-        label:
-          type: string
-          description: User displayed label for category
+      - $ref: '#/definitions/BaseModel'
+      - type: object
+        properties:
+          category:
+            type: string
+            description: User displayed label for category
+          slugLabel:
+            type: string
+            description: Slug label for use in urls
+  ToolCategoryCreate:
+    type: object
+    properties:
+      category:
+        type: string
+        description: User displayed label for category
   ToolCategoryPaginated:
       allOf:
       - $ref: '#/definitions/PaginatedResponse'

@@ -7,17 +7,17 @@ import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.datamodel._
 
 class ToolCategoriesToTools(_tableTag: Tag) extends Table[ToolCategoryToTool](_tableTag, "tool_categories_to_tools") {
-  def * = (toolCategoryId, toolId) <> (ToolCategoryToTool.tupled, ToolCategoryToTool.unapply)
+  def * = (toolCategorySlug, toolId) <> (ToolCategoryToTool.tupled, ToolCategoryToTool.unapply)
 
-  val toolCategoryId: Rep[UUID] = column[UUID]("tool_category_id")
+  val toolCategorySlug: Rep[String] = column[String]("tool_category_slug")
   val toolId: Rep[UUID] = column[UUID]("tool_id")
 
-  val pk = primaryKey("tool_categories_to_tools_pkey", (toolCategoryId, toolId))
+  val pk = primaryKey("tool_categories_to_tools_pkey", (toolCategorySlug, toolId))
 
   lazy val toolsFk = foreignKey("tool_categories_to_tools_tool_id_fkey", toolId, Tools)(r =>
     r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
-  lazy val toolCategoriesFk = foreignKey("tool_categories_to_tools_tool_category_id_fkey", toolCategoryId, ToolCategories)(r =>
-    r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
+  lazy val toolCategoriesFk = foreignKey("tool_categories_to_tools_tool_category_slug_fkey", toolCategorySlug, ToolCategories)(r =>
+    r.slugLabel, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
 }
 
 object ToolCategoriesToTools extends TableQuery(tag => new ToolCategoriesToTools(tag))
