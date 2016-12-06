@@ -20,7 +20,7 @@ case class Tool(
   compatibleDataSources: List[String] = List.empty,
   stars: Float = 0.0f
 ) {
-  def withRelatedFromComponents(toolTagIds: Seq[UUID], toolCategoryIds: Seq[UUID]):
+  def withRelatedFromComponents(toolTagIds: Seq[UUID], toolCategorySlugs: Seq[String]):
       Tool.WithRelated = Tool.WithRelated(
     this.id,
     this.createdAt,
@@ -36,7 +36,7 @@ case class Tool(
     this.compatibleDataSources,
     this.stars,
     toolTagIds,
-    toolCategoryIds
+    toolCategorySlugs
   )
 }
 
@@ -59,7 +59,7 @@ object Tool {
     compatibleDataSources: List[String],
     stars: Float,
     tags: Seq[UUID],
-    categories: Seq[UUID]
+    categories: Seq[String]
   ) {
     def toToolWithRelatedTuple(userId: String): (Tool, Seq[ToolTagToTool], Seq[ToolCategoryToTool]) = {
       val now = new Timestamp((new java.util.Date()).getTime())
@@ -81,8 +81,8 @@ object Tool {
       )
 
       val toolTagToTools = tags.map(tagId => ToolTagToTool(tagId, toolId))
-      val toolCategoryToTools = categories.map(categoryId =>
-        ToolCategoryToTool(categoryId, toolId))
+      val toolCategoryToTools = categories.map(categorySlug =>
+        ToolCategoryToTool(categorySlug, toolId))
 
       (tool, toolTagToTools, toolCategoryToTools)
     }
@@ -93,7 +93,7 @@ object Tool {
   }
 
   // join of tool/tag/category
-  case class TagCategoryJoin(tool: Tool, toolTagId: Option[UUID], toolCategoryId: Option[UUID])
+  case class TagCategoryJoin(tool: Tool, toolTagId: Option[UUID], toolCategorySlug: Option[String])
   object TagCategoryJoin {
     def tupled = (TagCategoryJoin.apply _).tupled
     implicit val defaultTagCategoryJoinFormat = jsonFormat3(TagCategoryJoin.apply _)
@@ -115,7 +115,7 @@ object Tool {
     compatibleDataSources: List[String] = List.empty,
     stars: Float = 0.0f,
     tags: Seq[UUID],
-    categories: Seq[UUID]
+    categories: Seq[String]
   )
 
   object WithRelated {

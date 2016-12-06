@@ -86,7 +86,7 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
     } yield (
       tool,
       toolTagToTool.map(_.toolTagId),
-      toolCategoryToTool.map(_.toolCategoryId)
+      toolCategoryToTool.map(_.toolCategorySlug)
     )
   }
 
@@ -107,7 +107,7 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
         tool.compatibleDataSources,
         tool.stars,
         tagCategoryJoins.flatMap(_.toolTagId).distinct,
-        tagCategoryJoins.flatMap(_.toolCategoryId).distinct
+        tagCategoryJoins.flatMap(_.toolCategorySlug).distinct
       )
     }.toSeq
 
@@ -204,7 +204,7 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
       insertAction
     } map { _ =>
       tool.withRelatedFromComponents(toolTagToTools.map(_.toolTagId),
-        toolCategoryToTools.map(_.toolCategoryId))
+        toolCategoryToTools.map(_.toolCategorySlug))
     }
   }
 

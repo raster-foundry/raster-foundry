@@ -136,3 +136,12 @@ case class TimestampQueryParameters(
   minModifiedDatetime: Option[Timestamp],
   maxModifiedDatetime: Option[Timestamp]
 )
+
+case class ToolCategoryQueryParameters(
+  search: Option[String]
+)
+
+case class CombinedToolCategoryQueryParams(
+  timestampParams: TimestampQueryParameters,
+  toolCategoryParams: ToolCategoryQueryParameters
+)
