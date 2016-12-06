@@ -19,11 +19,11 @@
     flex: 1;
     position: relative;
 
-	// TODO: Matt look at dashboard-filter
     &.dashboard {
       width: 100%;
 	    max-width: 1160px;
       min-height: 100vh;
+<<<<<<< HEAD
     }
     &.dashboard-filter {
       width: 100%;
@@ -32,6 +32,8 @@
       &.wide {
         max-width: initial;
       }
+=======
+>>>>>>> 10d9c73cfef7a2228da1c390b511debd11f3ff4f
     }
   }
 }

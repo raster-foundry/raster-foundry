@@ -1,0 +1,86 @@
+<div class="row content stack-sm" >
+  <div class="column-8" ng-if="!$ctrl.loading">
+    <div class="library-header">
+      <h1 class="h3 page-title"
+          ng-class="{'invisible': $ctrl.$parent.selectedScenes.size}">
+        <a ui-sref="^.^.list">Projects</a><br>
+<<<<<<< HEAD:app-frontend/src/app/pages/library/projects/detail/projectScenes/projectScenes.html
+        {{$ctrl.project.name}}
+=======
+        {{$ctrl.bucket.name}}
+>>>>>>> 10d9c73cfef7a2228da1c390b511debd11f3ff4f:app-frontend/src/app/pages/library/buckets/detail/bucketScenes/bucketScenes.html
+      </h1>
+      <button class="btn btn-tiny" ng-show="!$ctrl.$parent.selectedScenes.size">
+        <i class="icon-pencil"></i>
+      </button>
+      <div class="library-header-reveal"
+           ng-show="$ctrl.$parent.selectedScenes.size">
+        <h1 class="h4">
+          <ng-pluralize count="$ctrl.$parent.selectedScenes.size"
+                        when="{'one': '1 scene selected.',
+                              'other': '{} scenes selected.'}">
+          </ng-pluralize>
+        </h1>
+        <div class="library-header-actions">
+          <a href ng-click="$ctrl.selectNone()">Deselect All</a>
+          <a href class="link-danger" ng-click="$ctrl.removeScenes()">Remove from Project</a>
+        </div>
+      </div>
+    </div>
+    <div class="list-group">
+      <rf-scene-item
+          ng-click="$ctrl.viewSceneDetail(scene)"
+          scene="scene"
+          selectable
+          selected="$ctrl.isSelected(scene)"
+          on-select="$ctrl.setSelected(scene, selected)"
+          class="selectable"
+          ng-repeat="scene in $ctrl.sceneList track by scene.id">
+      </rf-scene-item>
+    </div>
+    <div class="list-group text-center"
+         ng-show="!$ctrl.loading && $ctrl.lastSceneResult && $ctrl.lastSceneResult.count !== 0 && !$ctrl.errorMsg">
+      <ul uib-pagination
+          items-per-page="$ctrl.lastSceneResult.pageSize"
+          total-items="$ctrl.lastSceneResult.count"
+          ng-model="$ctrl.currentPage"
+          max-size="4"
+          rotate="true"
+          boundary-link-numbers="true"
+          force-ellipses="true"
+          ng-change="$ctrl.populateSceneList($ctrl.currentPage)">
+      </ul>
+    </div>
+    <div ng-if="!$ctrl.loading && $ctrl.lastSceneResult && $ctrl.lastSceneResult.count === 0"
+         class="list-group">
+      <span class="list-placeholder">You haven't added any scenes to this Project.</span>
+    </div>
+    <div class="list-group" ng-show="$ctrl.errorMsg">
+      <span class="list-placeholder">
+        {{$ctrl.errorMsg}}
+        <a href ng-click="$ctrl.populateSceneList(0)">Try again</a>
+      </span>
+    </div>
+  </div>
+  <div class="column-8" ng-if="$ctrl.loading">
+    <div class="list-group">
+      <div class="list-placeholder">
+          <i class="icon-load"></i>
+      </div>
+    </div>
+  </div>
+  <div class="column-4">
+    <div class="content">
+      <nav>
+        <a href ng-click="$ctrl.$state.go('editor.project', {projectid: $ctrl.projectId})"><i class="icon-mosaic"></i> Editor</a>
+        <a href ng-click="$ctrl.downloadModal()"><i class="icon-download"></i> Download</a>
+        <hr>
+        <a href class="color-danger"
+           ng-click="$ctrl.deleteProject()">
+          <i class="icon-trash"></i>
+          Delete Project
+        </a>
+      </nav>
+    </div>
+  </div>
+</div>

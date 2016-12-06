@@ -1,0 +1,92 @@
+<div class="row content stack-sm">
+<<<<<<< HEAD:app-frontend/src/app/pages/library/projects/list/list.html
+  <div class="column">
+    <h1 class="h3">Projects</h1>
+    <form>
+      <div class="form-group all-in-one">
+        <label for="name"><i class="icon-bucket"></i></label>
+        <input id="name" type="text" class="form-control"
+               placeholder="New project name" ng-model="$ctrl.newProjectName">
+        <button class="btn btn-link"
+                type="button"
+                ng-click="$ctrl.createNewProject($ctrl.newProjectName)">
+          Create
+        </button>
+      </div>
+    </form>
+=======
+  <div class="column-8">
+    <div class="library-header">
+      <h1 class="h3">Projects</h1>
+    </div>
+    <form>
+        <div class="form-group all-in-one">
+          <label for="name"><i class="icon-bucket"></i></label>
+          <input id="name" type="text" class="form-control"
+                 placeholder="New project name" ng-model="$ctrl.newBucketName">
+          <button class="btn btn-link"
+                  type="button"
+                  ng-click="$ctrl.createNewBucket($ctrl.newBucketName)">
+            Create
+          </button>
+        </div>
+      </form>
+>>>>>>> 10d9c73... first pass at app cleanup:app-frontend/src/app/pages/library/buckets/list/list.html
+    <div class="list-group">
+      <rf-project-item
+          ng-click="$ctrl.viewProjectDetail(project)"
+          project="project"
+          class="selectable"
+          ng-repeat="project in $ctrl.projectList track by project.id">
+      </rf-project-item>
+    </div>
+    <div class="list-group" ng-show="$ctrl.loading">
+      <span class="list-placeholder">
+        <i class="icon-load"></i>
+      </span>
+    </div>
+    <div ng-if="!$ctrl.loading && $ctrl.lastProjectResult && $ctrl.lastProjectResult.count === 0"
+         class="list-group">
+      <span class="list-placeholder">
+        You have not created any Projects.
+      </span>
+    </div>
+    <div class="list-group text-center"
+         ng-show="!$ctrl.loading && $ctrl.lastProjectResult && $ctrl.lastProjectResult.count !== 0 && !$ctrl.errorMsg">
+      <ul uib-pagination
+          items-per-page="$ctrl.lastProjectResult.pageSize"
+          total-items="$ctrl.lastProjectResult.count"
+          ng-model="$ctrl.currentPage"
+          max-size="4"
+          rotate="true"
+          boundary-link-numbers="true"
+          force-ellipses="true"
+          ng-change="$ctrl.populateProjectList($ctrl.currentPage)">
+      </ul>
+    </div>
+  </div>
+  <div class="column-4">
+    <div class="content">
+      <h5>What is a project?</h5>
+      <p class="font-size-small">
+<<<<<<< HEAD:app-frontend/src/app/pages/library/projects/list/list.html
+        A project is a personal collection of scenes from many different sources.
+        Think of it as a bookmark folder of images.
+=======
+        A project is a collection of scenes from many different sources where you can then run color corrections and mosaic into a basemap.
+>>>>>>> 10d9c73... first pass at app cleanup:app-frontend/src/app/pages/library/buckets/list/list.html
+      </p>
+      <h5>Are my projects public?</h5>
+      <p class="font-size-small">Your projects can only be seen by you.</p>
+      <h5>How many projects can I have?</h5>
+      <p class="font-size-small">You have an unlimited number of projects.</p>
+<<<<<<< HEAD:app-frontend/src/app/pages/library/projects/list/list.html
+      <h5>Do projects have size limits?</h5>
+      <p class="font-size-small">Nope. You can bookmark as many scenes as you need.</p>
+=======
+      <h5>Do projects have scene size limits?</h5>
+      <p class="font-size-small">Nope. You can have as scenes as you need.</p>
+>>>>>>> 10d9c73... first pass at app cleanup:app-frontend/src/app/pages/library/buckets/list/list.html
+    </div>
+  </div>
+</div>
