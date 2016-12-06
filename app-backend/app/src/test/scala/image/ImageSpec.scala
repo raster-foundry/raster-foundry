@@ -39,7 +39,7 @@ class ImageSpec extends WordSpec
     Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any], None,
     Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
     JobStatus.Processing, JobStatus.Processing, JobStatus.Processing, None, None, "test scene image spec 1",
-    None, List.empty[String], List.empty[Image.Banded], List.empty[Thumbnail.Identified]
+    None, None, List.empty[String], List.empty[Image.Banded], List.empty[Thumbnail.Identified]
   )
 
   // Alias to baseRoutes to be explicit

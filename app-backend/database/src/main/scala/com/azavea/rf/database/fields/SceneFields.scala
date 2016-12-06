@@ -16,5 +16,6 @@ trait SceneFields  { self: Table[_] =>
   def status: Rep[JobStatus]
   def sunAzimuth: Rep[Option[Float]]
   def sunElevation: Rep[Option[Float]]
-  def footprint: Rep[Option[Projected[Geometry]]]
+  def tileFootprint: Rep[Option[Projected[Geometry]]]
+  def dataFootprint: Rep[Option[Projected[Geometry]]]
 }

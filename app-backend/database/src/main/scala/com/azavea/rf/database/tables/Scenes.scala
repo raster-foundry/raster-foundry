@@ -28,7 +28,7 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
 {
   def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, organizationId, ingestSizeBytes, visibility,
     tags, datasource, sceneMetadata, cloudCover, acquisitionDate, thumbnailStatus, boundaryStatus,
-    status, sunAzimuth, sunElevation, name, footprint, metadataFiles) <> (Scene.tupled, Scene.unapply)
+    status, sunAzimuth, sunElevation, name, tileFootprint, dataFootprint, metadataFiles) <> (Scene.tupled, Scene.unapply)
 
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
   val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")
@@ -49,7 +49,8 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
   val sunAzimuth: Rep[Option[Float]] = column[Option[Float]]("sun_azimuth", O.Default(None))
   val sunElevation: Rep[Option[Float]] = column[Option[Float]]("sun_elevation", O.Default(None))
   val name: Rep[String] = column[String]("name", O.Length(255,varying=true))
-  val footprint: Rep[Option[Projected[Geometry]]] = column[Option[Projected[Geometry]]]("footprint", O.Length(2147483647,varying=false), O.Default(None))
+  val tileFootprint: Rep[Option[Projected[Geometry]]] = column[Option[Projected[Geometry]]]("tile_footprint", O.Length(2147483647,varying=false), O.Default(None))
+  val dataFootprint: Rep[Option[Projected[Geometry]]] = column [Option[Projected[Geometry]]]("data_footprint", O.Length(2147483647,varying=false), O.Default(None))
   val metadataFiles: Rep[List[String]] = column[List[String]]("metadata_files", O.Length(2147483647,varying=false), O.Default(List.empty))
 
   /** Foreign key referencing Organizations (database name scenes_organization_id_fkey) */
@@ -105,7 +106,7 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     * @param sceneCreate scene to create
     * @param user User user creating scene
     *
-    * This implementation allows a user to post a scene with thumbnails, footprint, and
+    * This implementation allows a user to post a scene with thumbnails, and
     * images which are all created in a single transaction
     */
   def insertScene(sceneCreate: Scene.Create, user: User)
@@ -231,7 +232,7 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
       updateScene.datasource, updateScene.cloudCover,  updateScene.acquisitionDate,
       updateScene.tags, updateScene.sceneMetadata, updateScene.thumbnailStatus,
       updateScene.boundaryStatus, updateScene.status, updateScene.name,
-      updateScene.footprint, updateScene.metadataFiles
+      updateScene.tileFootprint, updateScene.dataFootprint, updateScene.metadataFiles
     )
     database.db.run {
       updateSceneQuery.update((
@@ -239,7 +240,7 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
         scene.datasource, scene.cloudCover, scene.acquisitionDate,
         scene.tags, scene.sceneMetadata, scene.thumbnailStatus,
         scene.boundaryStatus, scene.status, scene.name,
-        scene.footprint, scene.metadataFiles
+        scene.tileFootprint, scene.dataFootprint, scene.metadataFiles
       ))
     } map {
       case 1 => 1
@@ -264,8 +265,8 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) {
         sceneParams.maxSunAzimuth.map(scene.sunAzimuth < _),
         sceneParams.minSunElevation.map(scene.sunElevation > _),
         sceneParams.maxSunElevation.map(scene.sunElevation < _),
-        sceneParams.bboxPolygon.map(scene.footprint.intersects(_)),
-        sceneParams.pointGeom.map(scene.footprint.intersects(_))
+        sceneParams.bboxPolygon.map(scene.dataFootprint.intersects(_)),
+        sceneParams.pointGeom.map(scene.dataFootprint.intersects(_))
       )
       sceneFilterConditions
         .collect({case Some(criteria)  => criteria})

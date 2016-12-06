@@ -65,7 +65,6 @@ object M29 {
           FOREIGN KEY (tool_category_id)
           REFERENCES tool_categories(id)
           ON DELETE CASCADE;
-
 """
   ))
 }
