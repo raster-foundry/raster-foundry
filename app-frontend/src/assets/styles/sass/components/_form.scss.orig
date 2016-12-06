@@ -1,3 +1,5 @@
+// TODO: Matt look at all .input-dark
+
 form {
   margin-bottom: 1rem;
   position: relative;
@@ -150,11 +152,14 @@ input[type=radio] {
     border-color: $shade-dark;
     background-color: $shade-dark;
   }
-}
 =======
+>>>>>>> 10d9c73cfef7a2228da1c390b511debd11f3ff4f
 }
 
 .form-group.all-in-one.stacked {
   flex-direction: column;
+<<<<<<< HEAD
 }
->>>>>>> 10d9c73... first pass at app cleanup
+=======
+}
+>>>>>>> 10d9c73cfef7a2228da1c390b511debd11f3ff4f

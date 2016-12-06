@@ -92,11 +92,14 @@
   display: none !important;
 }
 
+.invisible {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 <<<<<<< HEAD
-// Only display content to screen readers
-//
-// See: http://a11yproject.com/posts/how-to-hide-content
+}}
 
+// Only display content to screen readers
 .sr-only {
   position: absolute;
   width: 1px;
@@ -108,9 +111,5 @@
   border: 0;
 }
 =======
-.invisible {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
 }
->>>>>>> 10d9c73... first pass at app cleanup
+>>>>>>> 10d9c73cfef7a2228da1c390b511debd11f3ff4f
