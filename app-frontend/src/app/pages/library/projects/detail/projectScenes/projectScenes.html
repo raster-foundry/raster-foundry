@@ -2,17 +2,19 @@
   <div class="column" ng-if="!$ctrl.loading">
     <div class="library-header">
       <h1 class="h3 page-title"
-          ng-show="!$ctrl.$parent.selectedScenes.size">
+          ng-show="!$ctrl.$parent.selectedScenes.size && !$ctrl.isEditingProjectName">
         <a ui-sref="^.^.list">Projects</a><br>
         {{$ctrl.project.name}}
       </h1>
-      <button class="btn btn-tiny" ng-click="$ctrl.toggleProjectNameEdit()" ng-show="!$ctrl.$parent.selectedScenes.size">
+      <button class="btn btn-tiny" ng-click="$ctrl.toggleProjectNameEdit()" ng-show="!$ctrl.$parent.selectedScenes.size && !$ctrl.isEditingProjectName">
         <i class="icon-pencil"></i>
       </button>
       <div ng-show="$ctrl.isEditingProjectName">
+        <div class="page-title">
+          <a ui-sref="^.^.list">Projects</a>
+        </div>
         <form class="ng-pristine ng-valid">
           <div class="form-group all-in-one">
-            <label for="name"><i class="icon-bucket"></i></label>
             <input id="name" type="text" class="form-control"
                   placeholder="Edit project name" ng-model="$ctrl.editedProjectName">
             <button class="btn btn-link" type="submit"
