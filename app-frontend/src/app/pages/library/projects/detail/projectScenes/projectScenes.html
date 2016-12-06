@@ -5,10 +5,14 @@
           ng-show="!$ctrl.$parent.selectedScenes.size && !$ctrl.isEditingProjectName">
         <a ui-sref="^.^.list">Projects</a><br>
         {{$ctrl.project.name}}
+        <i class="icon-load" ng-show="$ctrl.isSavingProjectNameEdit"></i>
       </h1>
-      <button class="btn btn-tiny" ng-click="$ctrl.toggleProjectNameEdit()" ng-show="!$ctrl.$parent.selectedScenes.size && !$ctrl.isEditingProjectName">
+      <button class="btn btn-tiny"
+              ng-click="$ctrl.toggleProjectNameEdit()"
+              ng-show="!$ctrl.$parent.selectedScenes.size && !$ctrl.isEditingProjectName && !$ctrl.isSavingProjectNameEdit">
         <i class="icon-pencil"></i>
       </button>
+      
       <div ng-show="$ctrl.isEditingProjectName">
         <div class="page-title">
           <a ui-sref="^.^.list">Projects</a>
@@ -19,12 +23,12 @@
                   placeholder="Edit project name" ng-model="$ctrl.editedProjectName">
             <button class="btn btn-link" type="submit"
                     ng-click="$ctrl.saveProjectNameEdit()"
-                    ng-disabled="$ctrl.isSavingProjectNameEdit">
+                    ng-show="!$ctrl.isSavingProjectNameEdit">
               <i class="icon-check"></i>
             </button>
             <button class="btn btn-link" type="submit"
                     ng-click="$ctrl.cancelProjectNameEdit()"
-                    ng-disabled="$ctrl.isSavingProjectNameEdit">
+                    ng-show="!$ctrl.isSavingProjectNameEdit">
               <i class="icon-cross"></i>
             </button>
           </div>

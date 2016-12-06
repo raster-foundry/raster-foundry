@@ -204,15 +204,17 @@ export default class ProjectScenesController {
     }
 
     saveProjectNameEdit() {
+        const cachedProjectName = this.project.name;
         this.isSavingProjectNameEdit = true;
-        this.isEditingProjectName = false;
         this.project.name = this.editedProjectName;
+        this.isEditingProjectName = false;
         this.projectService.updateProject(this.project).then(
             () => {
                 this.isSavingProjectNameEdit = false;
             },
             (err) => {
                 this.$log.error('Error renaming project:', err);
+                this.project.name = cachedProjectName;
                 this.isSavingProjectNameEdit = false;
             }
         );
