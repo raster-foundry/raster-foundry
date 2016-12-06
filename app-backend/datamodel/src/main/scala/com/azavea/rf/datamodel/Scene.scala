@@ -9,6 +9,7 @@ import geotrellis.vector.io.json.GeoJsonSupport
 import geotrellis.vector.Geometry
 import geotrellis.slick.Projected
 
+
 case class Scene(
   id: UUID,
   createdAt: java.sql.Timestamp,
@@ -29,7 +30,8 @@ case class Scene(
   sunAzimuth: Option[Float] = None,
   sunElevation: Option[Float] = None,
   name: String,
-  footprint: Option[Projected[Geometry]] = None,
+  tileFootprint: Option[Projected[Geometry]] = None,
+  dataFootprint: Option[Projected[Geometry]] = None,
   metadataFiles: List[String]
 ) {
   def toScene = this
@@ -37,13 +39,14 @@ case class Scene(
   def withRelatedFromComponents(
     images: Seq[Image.WithRelated],
     thumbnails: Seq[Thumbnail]
-  ): Scene.WithRelated = Scene.withRelated(
+  ): Scene.WithRelated = Scene.WithRelated(
     this.id,
     this.createdAt,
     this.createdBy,
     this.modifiedAt,
     this.modifiedBy,
     this.organizationId,
+    this.ingestSizeBytes,
     this.visibility,
     this.tags,
     this.datasource,
@@ -56,7 +59,8 @@ case class Scene(
     this.sunAzimuth,
     this.sunElevation,
     this.name,
-    this.footprint,
+    this.tileFootprint,
+    this.dataFootprint,
     this.metadataFiles,
     images,
     thumbnails
@@ -70,9 +74,7 @@ object Scene extends GeoJsonSupport {
 
   def create = Create.apply _
 
-  def withRelated = WithRelated.apply _
-
-  implicit val defaultSceneFormat = jsonFormat21(Scene.apply)
+  implicit val defaultSceneFormat = jsonFormat22(Scene.apply)
 
 
   /** Case class extracted from a POST request */
@@ -92,7 +94,8 @@ object Scene extends GeoJsonSupport {
     sunAzimuth: Option[Float],
     sunElevation: Option[Float],
     name: String,
-    footprint: Option[Projected[Geometry]],
+    tileFootprint: Option[Projected[Geometry]],
+    dataFootprint: Option[Projected[Geometry]],
     metadataFiles: List[String],
     images: List[Image.Banded],
     thumbnails: List[Thumbnail.Identified]
@@ -119,14 +122,15 @@ object Scene extends GeoJsonSupport {
         sunAzimuth,
         sunElevation,
         name,
-        footprint,
+        tileFootprint,
+        dataFootprint,
         metadataFiles
       )
     }
   }
 
   object Create {
-    implicit val defaultThumbnailWithRelatedFormat = jsonFormat19(Create.apply)
+    implicit val defaultThumbnailWithRelatedFormat = jsonFormat20(Create.apply)
   }
 
   case class WithRelated(
@@ -136,6 +140,7 @@ object Scene extends GeoJsonSupport {
     modifiedAt: Timestamp,
     modifiedBy: String,
     organizationId: UUID,
+    ingestSizeBytes: Int,
     visibility: Visibility,
     tags: List[String],
     datasource: String,
@@ -148,14 +153,15 @@ object Scene extends GeoJsonSupport {
     sunAzimuth: Option[Float],
     sunElevation: Option[Float],
     name: String,
-    footprint: Option[Projected[Geometry]],
+    tileFootprint: Option[Projected[Geometry]],
+    dataFootprint: Option[Projected[Geometry]],
     metadataFiles: List[String],
     images: Seq[Image.WithRelated],
     thumbnails: Seq[Thumbnail]
   )
 
   object WithRelated {
-    implicit val defaultThumbnailWithRelatedFormat = jsonFormat22(WithRelated.apply)
+    implicit val defaultSceneWithRelatedFormat = ScenesJsonProtocol.SceneWithRelatedFormat
 
     /** Helper function to create Iterable[Scene.WithRelated] from join
       *
