@@ -12,7 +12,13 @@
               ng-show="!$ctrl.$parent.selectedScenes.size && !$ctrl.isEditingProjectName && !$ctrl.isSavingProjectNameEdit">
         <i class="icon-pencil"></i>
       </button>
-      
+      <div class="color-danger" ng-show="$ctrl.showError">
+        There was an error renaming the project.
+        <button class="btn btn-tiny" type="submit"
+                ng-click="$ctrl.dismissErrorMessage()">
+          <i class="icon-cross color-danger"></i>
+        </button>         
+      </div>
       <div ng-show="$ctrl.isEditingProjectName">
         <div class="page-title">
           <a ui-sref="^.^.list">Projects</a>

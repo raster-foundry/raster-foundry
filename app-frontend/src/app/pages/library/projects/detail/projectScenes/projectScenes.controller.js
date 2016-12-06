@@ -15,6 +15,7 @@ export default class ProjectScenesController {
 
         this.isEditingProjectName = false;
         this.isSavingProjectNameEdit = false;
+        this.showError = false;
 
         if (!this.project) {
             if (this.projectId) {
@@ -213,6 +214,7 @@ export default class ProjectScenesController {
                 this.isSavingProjectNameEdit = false;
             },
             (err) => {
+                this.showError = true;
                 this.$log.error('Error renaming project:', err);
                 this.project.name = cachedProjectName;
                 this.isSavingProjectNameEdit = false;
@@ -223,5 +225,9 @@ export default class ProjectScenesController {
     cancelProjectNameEdit() {
         this.isEditingProjectName = false;
         this.editedProjectName = this.project.name;
+    }
+
+    dismissErrorMessage() {
+        this.showError = false;
     }
  }
