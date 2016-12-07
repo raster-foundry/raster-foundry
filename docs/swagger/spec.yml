@@ -1432,9 +1432,13 @@ definitions:
             type: string
             format: datetime
             description: Date scene was acquired from instrument (e.g. satellite, drone)
-          footprint:
-            type: object
-            description: URI to boundary for this image
+          dataFootprint:
+            type: geojson
+            description: polygon for which this scene has data
+            readOnly: true
+          tileFootprint:
+            type: geojson
+            description: polygon enclosing this scene
             readOnly: true
           sceneMetadata:
             type: object
@@ -1459,7 +1463,7 @@ definitions:
               - PROCESSING
           footprintStatus:
             type: string
-            description: status of thumbnail generation
+            description: status of footprint generation
             enum:
               - SUCCESS
               - FAILURE

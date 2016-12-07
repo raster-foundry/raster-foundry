@@ -2,13 +2,14 @@
 
 import json
 import logging
+import os
 import uuid
 
 from rf.models import Scene
 from rf.utils.io import JobStatus, Visibility
 
 from .settings import bucket, s3, organization
-from .create_footprint import create_footprint
+from .create_footprint import create_footprints
 from .create_thumbnails import create_thumbnails
 from .create_images import create_images
 
@@ -44,10 +45,16 @@ def create_sentinel2_scenes(tile_path):
     images = (create_images(scene_id, tileinfo, 10) +
               create_images(scene_id, tileinfo, 20) +
               create_images(scene_id, tileinfo, 60))
-    footprint = create_footprint(tileinfo)
+    tileFootprint, dataFootprint = create_footprints(tileinfo)
     thumbnails = create_thumbnails(scene_id, tile_path)
     tags = ['Sentinel-2', 'JPEG2000']
     datasource = 'Sentinel-2'
+    aws_base = bucket.name + '.s3.amazonaws.com'
+    metadataFiles = [
+        os.path.join(aws_base, tile_path, 'tileInfo.json'),
+        os.path.join(aws_base, tile_path, 'metadata.xml'),
+        os.path.join(aws_base, tile_path, 'productInfo.json')
+    ]
 
     scene_metadata = dict(
         path=tileinfo['path'],
@@ -70,13 +77,14 @@ def create_sentinel2_scenes(tile_path):
         scene_metadata,
         'S2 {}'.format(tile_path),  # name
         JobStatus.SUCCESS if thumbnails else JobStatus.FAILURE,
-        JobStatus.SUCCESS if footprint else JobStatus.FAILURE,
+        JobStatus.SUCCESS if dataFootprint else JobStatus.FAILURE,
         JobStatus.QUEUED,
         id=scene_id,
         acquisitionDate=tileinfo['timestamp'],
         cloudCover=tileinfo['cloudyPixelPercentage'],
-        footprint=footprint,
-        metadataFiles=[metadata_file],
+        tileFootprint=tileFootprint,
+        dataFootprint=dataFootprint,
+        metadataFiles=metadataFiles,
         thumbnails=thumbnails,
         images=images
     )

@@ -13,7 +13,7 @@ class Scene(BaseModel):
     def __init__(self, organizationId, ingestSizeBytes, visibility, tags,
                  datasource, sceneMetadata, name, thumbnailStatus, boundaryStatus,
                  status, metadataFiles, sunAzimuth=None, sunElevation=None, cloudCover=None, acquisitionDate=None,
-                 id=None, thumbnails=None, footprint=None, images=None):
+                 id=None, thumbnails=None, tileFootprint=None, dataFootprint=None, images=None):
         """Create a new Scene
 
         Args:
@@ -33,7 +33,8 @@ class Scene(BaseModel):
             acquisitionDate (datetime): date when scene was acquired
             id (str): UUID primary key for scene
             thumbnails (List[Thumbnail]): list of thumbnails associated with scene
-            footprint (Footprint): footprint associated with scene
+            tileFootprint (Footprint): footprint of the tile associated with scene
+            dataFootprint (Footprint): footprint of this scene's data
             images (List[Image]): list of images associated with scene
         """
 
@@ -56,7 +57,8 @@ class Scene(BaseModel):
         self.acquisitionDate = acquisitionDate
         self.id = id or str(uuid.uuid4())
         self.thumbnails = thumbnails
-        self.footprint = footprint
+        self.tileFootprint = tileFootprint
+        self.dataFootprint = dataFootprint
         self.images = images
 
     def __repr__(self):
@@ -98,7 +100,9 @@ class Scene(BaseModel):
         else:
             scene_dict['images'] = []
 
-        if self.footprint:
-            scene_dict['footprint'] = self.footprint.to_dict()
+        if self.tileFootprint:
+            scene_dict['tileFootprint'] = self.tileFootprint.to_dict()
+        if self.dataFootprint:
+            scene_dict['dataFootprint'] = self.dataFootprint.to_dict()
 
         return scene_dict
