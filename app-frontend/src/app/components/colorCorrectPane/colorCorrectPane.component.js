@@ -7,7 +7,8 @@ const colorCorrectPane = {
         desiredCorrection: '<?',
         // Pass in a boolean to toggle to reset filters
         reset: '<?',
-        onCorrectionChange: '&'
+        onCorrectionChange: '&',
+        selectedLayers: '<?'
     }
 };
 

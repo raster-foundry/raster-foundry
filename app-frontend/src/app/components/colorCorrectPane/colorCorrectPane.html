@@ -1,13 +1,13 @@
 <div class="content">
   <div class="color-filters-container">
-    <h6>Gamma</h6>
+    <h6>Gamma Correction</h6>
     <div class="filter">
       <label>Red</label>
       <div class="filter-item slider-filter">
         <div id="red_slider"></div>
       </div>
       <rzslider rz-slider-model="$ctrl.correction.red"
-                rz-slider-options="$ctrl.redOpts"
+                rz-slider-options="$ctrl.redGammaOptions"
       ></rzslider>
     </div>
     <div class="filter">
@@ -16,7 +16,7 @@
         <div id="green_slider"></div>
       </div>
       <rzslider rz-slider-model="$ctrl.correction.green"
-                rz-slider-options="$ctrl.greenOpts"
+                rz-slider-options="$ctrl.greenGammaOptions"
       ></rzslider>
     </div>
     <div class="filter">
@@ -25,16 +25,38 @@
         <div id="blue_slider"></div>
       </div>
       <rzslider rz-slider-model="$ctrl.correction.blue"
-                rz-slider-options="$ctrl.blueOpts"
+                rz-slider-options="$ctrl.blueGammaOptions"
       ></rzslider>
     </div>
+
+    <!--TODO: Add Sigmoidal Back When Fixed ISSUE: 761-->
+    <!--<h6>Sigmoidal Correction</h6>-->
+    <!--<div class="filter">-->
+      <!--<label>Alpha</label>-->
+      <!--<div class="filter-item slider-filter">-->
+        <!--<div id="alpha_slider"></div>-->
+      <!--</div>-->
+      <!--<rzslider rz-slider-model="$ctrl.correction.alpha"-->
+                <!--rz-slider-options="$ctrl.alphaOptions"-->
+      <!--&gt;</rzslider>-->
+    <!--</div>-->
+    <!--<div class="filter">-->
+      <!--<label>Beta</label>-->
+      <!--<div class="filter-item slider-filter">-->
+        <!--<div id="beta_slider"></div>-->
+      <!--</div>-->
+      <!--<rzslider rz-slider-model="$ctrl.correction.beta"-->
+                <!--rz-slider-options="$ctrl.betaOptions"-->
+      <!--&gt;</rzslider>-->
+    <!--</div>-->
+
   </div>
   <div class="bc-filters-container">
     <h6>Brightness/Contrast</h6>
     <div class="filter">
       <label>Brightness</label>
       <rzslider rz-slider-model="$ctrl.correction.brightness"
-                rz-slider-options="$ctrl.brightOpts"></rzslider>
+                rz-slider-options="$ctrl.brightnessOptions"></rzslider>
     </div>
     <div class="filter">
       <label>Contrast</label>
@@ -42,8 +64,18 @@
         <div id="contrast"></div>
       </div>
       <rzslider rz-slider-model="$ctrl.correction.contrast"
-                rz-slider-options="$ctrl.ctrstOpts"></rzslider>
+                rz-slider-options="$ctrl.contrastOptions"></rzslider>
+    </div>
+    <div class="filter">
+      <label>Min/Max Clipping</label>
+      <div class="filter-item slider-filter">
+        <div id="minmax"></div>
+      </div>
+      <rzslider rz-slider-model="$ctrl.correction.min"
+                rz-slider-high="$ctrl.correction.max"
+                rz-slider-options="$ctrl.minMaxOptions"
+      ></rzslider>
     </div>
   </div>
 </div>
-</div>
+
