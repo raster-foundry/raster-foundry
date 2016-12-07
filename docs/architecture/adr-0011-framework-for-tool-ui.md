@@ -30,6 +30,16 @@ There are several key features of JointJS that make it a viable option:
 - Event driven
 - Touch enabled
 
+The fully evented nature of JointJS makes it ideal for integration. For example, JointJS emits unique events for the following interactions with any element (elements are connected by links):
+
+- position change (including z-axis)
+- angle change
+- size change
+- attribute change
+- embedding of another element
+- embedding into another element
+- transition start/end
+
 As was the case when the initial recommendation was made, JointJS does not provide automatic layouts; elements must be explicitly positioned.
 
 Development of JointJS has continued with a regular pace. JointJS also has a commerical extension, [Rappid](http://jointjs.com/), which ensures some level of commitment to the library.
@@ -39,6 +49,27 @@ The commercial offering adds features that aren't necessary for Raster Foundry s
 #### Integration
 
 Integration of JointJS into Raster Foundry would be done in a manner similar to that of Leaflet. A component could be created to handle the encapsulation of the library and management of the necessary bindings.
+
+Initial diagram data (JSON) could be passed into the component via a one-way binding, while any changes to the diagram would trigger an `updateWorkflow` function that could parse the data and persist the resulting workflow.
+
+```
+<rf-workflow-diagram
+	initial-diagram="$ctrl.currentWorkflowJson"
+	on-diagram-change="$ctrl.updateWorkflow(diagramJson)">
+</rf-workflow-diagram>
+```
+
+For more complex interactions, a `workflowService` (singleton) could be utilized to manage the processing workflows, their states, and handle communication between the various workflow construction UI components, such as the list of tools the user has access to, and the current diagram. JointJS emits events for essentially any interaction, therefore wrapping it with a service-centric angular component should be straightforward.
+
+```
+<rf-workflow-diagram
+	initial-diagram="$ctrl.currentWorkflowJson"
+	workflow-service="$ctrl.workflowService">
+</rf-workflow-diagram>
+```
+
+During initialization, the component would create the necessary event listeners that would send any relevant event data to the `workflowService`.
+
 
 ### jsplumb
 [jsplumb](https://github.com/jsplumb/jsPlumb), like JointJS, is well-maintained and has a commercial wrapper. It is also lightweight and has few dependencies. It uses all HTML rather than SVG elements. 
