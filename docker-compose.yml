@@ -52,6 +52,7 @@ services:
       - ./app-backend/:/opt/raster-foundry/app-backend/
       - ./.ivy2:/root/.ivy2
       - ./.sbt:/root/.sbt
+      - $HOME/.aws:/root/.aws:ro
     working_dir: /opt/raster-foundry/app-backend/
     command: ./sbt app/run
 
@@ -64,6 +65,7 @@ services:
       - ./app-backend/:/opt/raster-foundry/app-backend/
       - ./.ivy2:/root/.ivy2
       - ./.sbt:/root/.sbt
+      - $HOME/.aws:/root/.aws:ro
     working_dir: /opt/raster-foundry/app-backend/
     command: ./sbt tile/run
 
