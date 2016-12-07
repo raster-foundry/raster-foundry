@@ -4,11 +4,7 @@ from pyproj import Proj, transform
 
 from rf.models import Footprint
 
-from .settings import organization
-
-
-# target projection for footprints
-target_proj = Proj(init='epsg:4326')
+from .settings import organization, target_proj
 
 
 def get_src_proj(crs_string):
@@ -23,7 +19,16 @@ def get_src_proj(crs_string):
     return Proj(init='epsg:{}'.format(crs_string.split(':')[-1]))
 
 
-def create_footprint(tileinfo):
+def footprint_from_key(tileinfo, key):
+    geom = tileinfo[key]
+    coords = geom['coordinates'][0]
+    src_proj = get_src_proj(geom['crs']['properties']['name'])
+    transformed_coords = [[[transform(src_proj, target_proj, coord[0], coord[1]) for coord in coords]]]
+    geojson = {"type": "MultiPolygon", "coordinates": transformed_coords}
+    return Footprint(organization, geojson)
+
+
+def create_footprints(tileinfo):
     """Extracts footprint from a tileinfo dictionary
 
     Args:
@@ -32,9 +37,7 @@ def create_footprint(tileinfo):
     Returns:
         Footprint
     """
-    geom = tileinfo['tileDataGeometry']
-    coords = geom['coordinates'][0]
-    src_proj = get_src_proj(geom['crs']['properties']['name'])
-    transformed_coords = [[[transform(src_proj, target_proj, coord[0], coord[1]) for coord in coords]]]
-    geojson = {"type": "MultiPolygon", "coordinates": transformed_coords}
-    return Footprint(organization, geojson)
+    return (
+        footprint_from_key(tileinfo, 'tileGeometry'),  # tileFootprint
+        footprint_from_key(tileinfo, 'tileDataGeometry')  # dataFootprint
+    )

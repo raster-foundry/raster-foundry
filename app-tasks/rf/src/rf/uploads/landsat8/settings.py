@@ -36,7 +36,7 @@ band_lookup = {
 }
 
 usgs_landsat_url = (
-    'http://landsat.usgs.gov/metadata_service/bulk_metadata_files/LANDSAT_8.csv'
+    'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_8.csv'
 )
 
 aws_landsat_base = 'http://landsat-pds.s3.amazonaws.com/'

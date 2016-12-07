@@ -10,7 +10,7 @@ from rf.utils.io import JobStatus, Visibility, s3_obj_exists
 from .create_bands import create_bands
 from .create_images import create_images
 from .create_thumbnails import create_thumbnails
-from .create_footprint import create_footprint
+from .create_footprint import create_footprints
 from .settings import organization, aws_landsat_base
 from .io import get_landsat_path
 
@@ -46,6 +46,7 @@ def create_landsat8_scenes(csv_row):
 
     scene_id = str(uuid.uuid4())
     landsat_id = csv_row.pop('sceneID')
+    tileFootprint, dataFootprint = create_footprints(csv_row)
     landsat_path = get_landsat_path(landsat_id)
     if not s3_obj_exists(aws_landsat_base + landsat_path + 'index.html'):
         logger.warn(
@@ -85,7 +86,8 @@ def create_landsat8_scenes(csv_row):
         cloudCover=cloud_cover,
         sunAzimuth=sun_azimuth,
         sunElevation=sun_elevation,
-        footprint=create_footprint(csv_row),
+        tileFootprint=tileFootprint,
+        dataFootprint=dataFootprint,
         metadataFiles=[aws_landsat_base + landsat_path + landsat_id + '_MTL.txt'],
         thumbnails=create_thumbnails(scene_id, landsat_id),
         images=(

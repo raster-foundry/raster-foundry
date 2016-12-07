@@ -1,5 +1,7 @@
 """Settings shared by functions for indexing Sentinel 2 data"""
 
+from pyproj import Proj
+
 from rf.utils.io import s3
 
 # Public Organization UUID in Raster Foundry
@@ -48,3 +50,7 @@ base_http_path = 'https://sentinel-s2-l1c.s3.amazonaws.com/{key_path}'
 # S3/AWS settings and objects
 bucket_name = 'sentinel-s2-l1c'
 bucket = s3.Bucket(bucket_name)
+
+# target projection for footprints
+target_proj = Proj(init='epsg:4326')
+
