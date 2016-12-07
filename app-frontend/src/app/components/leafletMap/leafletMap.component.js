@@ -8,7 +8,8 @@ const leafletMap = {
         static: '<?',
         footprint: '<?',
         proposedBounds: '<?',
-        onBoundsChange: '&'
+        onBoundsChange: '&',
+        layers: '<?'
     }
 };
 

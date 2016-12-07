@@ -3,12 +3,13 @@ const _ = require('lodash');
 
 export default class ProjectEditController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, $q, projectService, $state
+        $log, $scope, $q, projectService, layerService, $state
     ) {
         'ngInject';
         this.$log = $log;
         this.$q = $q;
         this.projectService = projectService;
+        this.layerService = layerService;
         this.$state = $state;
 
         this.showLayerList = true;
@@ -19,6 +20,8 @@ export default class ProjectEditController {
 
         this.selectedScenes = new Map();
         this.sceneList = [];
+        this.sceneLayers = new Map();
+        this.selectedLayers = new Map();
 
         // Populate project scenes
         if (!this.project) {
@@ -83,6 +86,33 @@ export default class ProjectEditController {
         this.resetColors();
     }
 
+    /**
+     * Set RGB bands for layers
+     *
+     * TODO: Only works for Landsat8 -- needs to be adjusted based on datasource
+     *
+     * @param {string} bandName name of band selected
+     *
+     * @returns {null} null
+     */
+    setBands(bandName) {
+        let bands = {
+            natural: {red: 3, green: 2, blue: 1},
+            cir: {red: 4, green: 3, blue: 2},
+            urban: {red: 6, green: 5, blue: 4},
+            water: {red: 4, green: 5, blue: 3},
+            atmosphere: {red: 6, green: 4, blue: 2},
+            agriculture: {red: 5, green: 4, blue: 1},
+            forestfire: {red: 6, green: 4, blue: 1},
+            bareearth: {red: 5, green: 2, blue: 1},
+            vegwater: {red: 4, green: 6, blue: 0}
+        };
+
+        this.sceneLayers.forEach(function (layer) {
+            layer.updateBands(bands[bandName]);
+        });
+    }
+
     onCorrectionChange(newCorrection) {
         // Fake a data update; what we'll really want to do is push to the API
         // and store the result into this.data.
@@ -112,7 +142,9 @@ export default class ProjectEditController {
     }
 
     resetColors() {
-        this.resetToggle = !this.resetToggle;
+        this.selectedLayers.forEach(function (layer) {
+            layer.resetTiles();
+        });
     }
 
     populateSceneList() {
@@ -155,6 +187,12 @@ export default class ProjectEditController {
             // [{ results: [{},{},...] }, { results: [{},{},...]},...]
             this.$q.all(requests).then((allResponses) => {
                 this.sceneList = [].concat(...Array.from(allResponses, (resp) => resp.results));
+                // Create scene layers to use for color correction
+                for (const scene of this.sceneList) {
+                    let sceneLayer = this.layerService.layerFromScene(scene);
+                    this.sceneLayers.set(scene.id, sceneLayer);
+                }
+                this.layers = this.sceneLayers.values();
             },
             () => {
                 this.errorMsg = 'Error loading scenes.';
@@ -178,10 +216,14 @@ export default class ProjectEditController {
 
     selectNoScenes() {
         this.selectedScenes.clear();
+        this.selectedLayers.clear();
     }
 
     selectAllScenes() {
-        this.sceneList.map((scene) => this.selectedScenes.set(scene.id, scene));
+        this.sceneList.map((scene) => {
+            this.selectedScenes.set(scene.id, scene);
+            this.selectedLayers.set(scene.id, this.sceneLayers.get(scene.id));
+        });
     }
 
     isSelected(scene) {
@@ -191,13 +233,18 @@ export default class ProjectEditController {
     setSelected(scene, selected) {
         if (selected) {
             this.selectedScenes.set(scene.id, scene);
+            this.selectedLayers.set(scene.id, this.sceneLayers.get(scene.id));
         } else {
             this.selectedScenes.delete(scene.id);
+            this.selectedLayers.delete(scene.id);
         }
     }
 
     // TODO Potentially transition to UI-Router for these once we can route to components
-    openColorCorrect() {
+    openColorCorrect(scene) {
+        if (scene) {
+            this.setSelected(scene, true);
+        }
         this.showColorCorrect = true;
         this.showLayerList = false;
     }

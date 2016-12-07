@@ -37,6 +37,13 @@ export default class LeafletMapController {
         if (changes.proposedBounds && changes.proposedBounds.currentValue) {
             this.map.fitBounds(changes.proposedBounds.currentValue);
         }
+
+        // Add layers to map when a change is detected
+        if (changes.layers && changes.layers.currentValue) {
+            for (const layer of this.layers) {
+                layer.tiles.addTo(this.map);
+            }
+        }
     }
 
     initLayers() {
