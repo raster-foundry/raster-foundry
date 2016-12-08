@@ -29,7 +29,7 @@ object ColorCorrect {
           oldMax = params.max.getOrElse(maxCellValue(tile.cellType)),
           newMin = 0,
           newMax = 255
-        ).convert(UByteCellType)
+        ).convert(UByteConstantNoDataCellType)
       }
 
     val maybeAdjustBrightness =
