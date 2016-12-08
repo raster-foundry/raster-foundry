@@ -38,17 +38,34 @@ export default class LeafletMapController {
         if (changes.proposedBounds && changes.proposedBounds.currentValue) {
             this.map.fitBounds(changes.proposedBounds.currentValue);
         }
-
         // Add layers to map when a change is detected
         if (changes.layers && changes.layers.currentValue) {
             for (const layer of this.layers) {
                 layer.tiles.addTo(this.map);
             }
         }
+
+        if (changes.grid && changes.grid.currentValue) {
+            this.gridLayer.clearLayers();
+            this.gridLayer.addData(changes.grid.currentValue);
+        }
     }
 
     initLayers() {
         this.geojsonLayer = L.geoJSON().addTo(this.map);
+        this.gridLayer = L.geoJson(null, {
+            style: () => {
+                return {
+                    fillOpacity: 0,
+                    color: '#465076',
+                    weight: 0.5
+                };
+            },
+            onEachFeature: (feature, layer) => {
+                let count = feature.properties.count;
+                layer.bindTooltip(`${count}`);
+            }
+        }).addTo(this.map);
     }
 
     initMap() {
@@ -101,6 +118,6 @@ export default class LeafletMapController {
     }
 
     boundsChangeListener() {
-        this.onBoundsChange({newBounds: this.map.getBounds()});
+        this.onViewChange({newBounds: this.map.getBounds(), zoom: this.map.getZoom()});
     }
 }
