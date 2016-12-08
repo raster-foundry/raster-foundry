@@ -13,12 +13,7 @@ export default class LeafletMapController {
     }
 
     $onInit() {
-        if (this.proposedBounds) {
-            this.map.fitBounds(this.proposedBounds);
-            this.onBoundsChange({newBounds: this.map.getBounds()});
-        }
         this.map.on('moveend', () => this.boundsChangeListener());
-        this.map.on('zoomend', () => this.boundsChangeListener());
     }
 
     $onChanges(changes) {

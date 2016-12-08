@@ -106,7 +106,7 @@ export default class BrowseController {
     }
 
     onBoundsChange(newBounds) {
-        let bboxCoords = newBounds.toBBoxString();
+        const bboxCoords = newBounds.toBBoxString();
         this.queryParams = Object.assign({
             id: this.queryParams.id
         }, this.filters, {bbox: bboxCoords});
@@ -120,12 +120,12 @@ export default class BrowseController {
     }
 
     populateInitialSceneList() {
-        if (!this.authService.isLoggedIn) {
+        if (!this.queryParams.bbox ||
+            !this.authService.isLoggedIn ||
+            this.loading && _.isEqual(this.lastQueryParams, this.queryParams)) {
             return;
-        }
-
-        if (this.loading) {
-            this.reloadScenes = true;
+        } else if (this.loading) {
+            this.pendingSceneRequest = true;
             return;
         }
 
@@ -133,6 +133,7 @@ export default class BrowseController {
         this.sceneLoadingTime = new Date().toISOString();
         this.loading = true;
         this.infScrollPage = 0;
+        this.lastQueryParams = this.queryParams;
         // save off selected scenes so you don't lose them during the refresh
         this.sceneList = [];
         let params = Object.assign({}, this.queryParams);
@@ -148,8 +149,8 @@ export default class BrowseController {
                 this.lastSceneResult = sceneResult;
                 this.sceneList = sceneResult.results;
                 this.loading = false;
-                if (this.reloadScenes) {
-                    this.reloadScenes = false;
+                if (this.pendingSceneRequest) {
+                    this.pendingSceneRequest = false;
                     this.populateInitialSceneList();
                 }
             },
