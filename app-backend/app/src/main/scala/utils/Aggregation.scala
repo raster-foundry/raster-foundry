@@ -31,8 +31,8 @@ object Aggregation {
     val seTile = this.getTileAtLatLng(se, zoom)
     val nwTile = this.getTileAtLatLng(nw, zoom)
     val tiles = for(
-      x <- seTile.x until nwTile.x;
-      y <- nwTile.y until seTile.y
+      x <- seTile.x until (nwTile.x + 1);
+      y <- nwTile.y until (seTile.y + 1)
     ) yield (TileCoordinates(z=zoom, x=x, y=y))
     tiles.map(
       tileCoords => {

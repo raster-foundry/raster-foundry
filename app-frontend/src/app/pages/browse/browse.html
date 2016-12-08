@@ -16,7 +16,7 @@
     <div class="sidebar-scrollable" id="infscroll">
       <div
           infinite-scroll="$ctrl.getMoreScenes()" infinite-scroll-distance="0.5"
-          infinite-scroll-disabled="$ctrl.loading || ($ctrl.lastSceneResult && !$ctrl.lastSceneResult.hasNext) || $ctrl.errorMsg"
+          infinite-scroll-disabled="$ctrl.loadingScenes || ($ctrl.lastSceneResult && !$ctrl.lastSceneResult.hasNext) || $ctrl.errorMsg"
           infinite-scroll-container="'#infscroll'"
           infinite-scroll-immediate-check=false
           class="list-group">
@@ -33,13 +33,13 @@
             >
         </rf-scene-item>
       </div>
-      <div class="list-group" ng-show="$ctrl.loading">
+      <div class="list-group" ng-show="$ctrl.loadingScenes">
         <span class="list-placeholder">
           <i class="icon-load"></i>
         </span>
       </div>
       <div class="list-group"
-           ng-show="!$ctrl.loading && $ctrl.lastSceneResult && !$ctrl.lastSceneResult.hasNext">
+           ng-show="!$ctrl.loadingScenes && $ctrl.lastSceneResult && !$ctrl.lastSceneResult.hasNext">
         <span class="list-placeholder">
           No more scenes to load
         </span>
@@ -50,7 +50,7 @@
         </span>
       </div>
       <div class="list-group load-message"
-           ng-show="!$ctrl.loading && $ctrl.lastSceneResult && $ctrl.lastSceneResult.hasNext">
+           ng-show="!$ctrl.loadingScenes && $ctrl.lastSceneResult && $ctrl.lastSceneResult.hasNext">
         <a href ng-click="$ctrl.getMoreScenes()">Load More...</a>
       </div>
     </div>
@@ -120,6 +120,12 @@
   </div>
 
   <div class="main">
-    <rf-leaflet-map footprint="$ctrl.hoveredScene.dataFootprint" bypass-fit-bounds="true" proposed-bounds="$ctrl.bounds" on-bounds-change="$ctrl.onBoundsChange(newBounds)" class="map-container"></rf-leaflet-map>
+    <rf-leaflet-map
+        footprint="$ctrl.hoveredScene.dataFootprint"
+        bypass-fit-bounds="true"
+        proposed-bounds="$ctrl.bounds"
+        grid="$ctrl.lastGridResult"
+        on-view-change="$ctrl.onViewChange(newBounds, zoom)"
+        class="map-container"></rf-leaflet-map>
   </div>
 </div>

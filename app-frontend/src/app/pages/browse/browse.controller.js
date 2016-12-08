@@ -4,7 +4,7 @@ const _ = require('lodash');
 
 export default class BrowseController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, sceneService, authService, $state, $uibModal
+        $log, $scope, sceneService, gridService, authService, $state, $uibModal
     ) {
         'ngInject';
         this.$log = $log;
@@ -12,6 +12,7 @@ export default class BrowseController {
         this.authService = authService;
         this.$state = $state;
         this.$uibModal = $uibModal;
+        this.gridService = gridService;
 
         this.assetLogo = assetLogo;
         this.scenes = {
@@ -92,7 +93,7 @@ export default class BrowseController {
 
     onQueryParamsChange() {
         this.$state.go('.', this.queryParams, {notify: false, inherit: false, location: 'replace'});
-        this.populateInitialSceneList();
+        this.requestNewSceneList();
     }
 
     // TODO: This should be refactored to use a one-way binding from the filter controller
@@ -105,33 +106,34 @@ export default class BrowseController {
         this.onQueryParamsChange();
     }
 
-    onBoundsChange(newBounds) {
+    onViewChange(newBounds, zoom) {
         const bboxCoords = newBounds.toBBoxString();
         this.queryParams = Object.assign({
             id: this.queryParams.id
         }, this.filters, {bbox: bboxCoords});
         this.onQueryParamsChange();
+        this.loadGrid(bboxCoords, zoom);
     }
 
     onLoggedInChange(newValue) {
         if (newValue) {
-            this.populateInitialSceneList();
+            this.requestNewSceneList();
         }
     }
 
-    populateInitialSceneList() {
+    requestNewSceneList() {
         if (!this.queryParams.bbox ||
             !this.authService.isLoggedIn ||
-            this.loading && _.isEqual(this.lastQueryParams, this.queryParams)) {
+            this.loadingScenes && _.isEqual(this.lastQueryParams, this.queryParams)) {
             return;
-        } else if (this.loading) {
+        } else if (this.loadingScenes) {
             this.pendingSceneRequest = true;
             return;
         }
 
         delete this.errorMsg;
         this.sceneLoadingTime = new Date().toISOString();
-        this.loading = true;
+        this.loadingScenes = true;
         this.infScrollPage = 0;
         this.lastQueryParams = this.queryParams;
         // save off selected scenes so you don't lose them during the refresh
@@ -148,25 +150,60 @@ export default class BrowseController {
             (sceneResult) => {
                 this.lastSceneResult = sceneResult;
                 this.sceneList = sceneResult.results;
-                this.loading = false;
+                this.loadingScenes = false;
                 if (this.pendingSceneRequest) {
                     this.pendingSceneRequest = false;
-                    this.populateInitialSceneList();
+                    this.requestNewSceneList();
                 }
             },
             () => {
-                this.errorMsg = 'Error loading scenes.';
-                this.loading = false;
+                this.errorMsg = 'Error loadingScenes scenes.';
+                this.loadingScenes = false;
             });
     }
 
+    loadGrid(bbox, zoom) {
+        if (!zoom) {
+            return;
+        }
+        if (this.loadingGrid) {
+            this.pendingGridRequest = true;
+            this.zoom = zoom;
+            return;
+        }
+        this.loadingGrid = true;
+        let params = Object.assign({zoom: zoom}, this.queryParams);
+        delete params.id;
+        this.$log.log('Querying grid with params:', params);
+        this.gridService.query(
+            params
+        ).then(
+            (gridResult) => {
+                this.lastGridResult = gridResult;
+                this.loadingGrid = false;
+                if (this.pendingGridRequest) {
+                    this.pendingGridRequest = false;
+                    this.loadGrid(this.queryParams.bbox, this.zoom);
+                }
+            },
+            (err) => {
+                this.loadingGrid = false;
+                this.$log.debug('Error loading grid:', err);
+                if (this.pendingGridRequest) {
+                    this.pendingGridRequest = false;
+                    this.loadGrid(this.queryParams.bbox, this.zoom);
+                }
+            }
+        );
+    }
+
     getMoreScenes() {
-        if (this.loading || !this.lastSceneResult) {
+        if (this.loadingScenes || !this.lastSceneResult) {
             return;
         }
 
         delete this.errorMsg;
-        this.loading = true;
+        this.loadingScenes = true;
         this.infScrollPage = this.infScrollPage + 1;
         let params = Object.assign({}, this.queryParams);
         delete params.id;
@@ -182,11 +219,11 @@ export default class BrowseController {
                 this.lastSceneResult = sceneResult;
                 let newScenes = sceneResult.results;
                 this.sceneList = [...this.sceneList, ...newScenes];
-                this.loading = false;
+                this.loadingScenes = false;
             },
             () => {
-                this.errorMsg = 'Error loading scenes.';
-                this.loading = false;
+                this.errorMsg = 'Error loadingScenes scenes.';
+                this.loadingScenes = false;
             }
         );
     }

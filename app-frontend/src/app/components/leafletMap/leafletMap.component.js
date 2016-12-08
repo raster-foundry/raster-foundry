@@ -8,8 +8,9 @@ const leafletMap = {
         static: '<?',
         footprint: '<?',
         bypassFitBounds: '<?',
+        grid: '<?',
         proposedBounds: '<?',
-        onBoundsChange: '&',
+        onViewChange: '&',
         layers: '<?'
     }
 };
