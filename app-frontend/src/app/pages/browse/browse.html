@@ -15,9 +15,10 @@
     <!-- scene listing -->
     <div class="sidebar-scrollable" id="infscroll">
       <div
-          infinite-scroll="$ctrl.getMoreScenes()" infinite-scroll-distance=".5"
+          infinite-scroll="$ctrl.getMoreScenes()" infinite-scroll-distance="0.5"
           infinite-scroll-disabled="$ctrl.loading || ($ctrl.lastSceneResult && !$ctrl.lastSceneResult.hasNext) || $ctrl.errorMsg"
           infinite-scroll-container="'#infscroll'"
+          infinite-scroll-immediate-check=false
           class="list-group">
         <rf-scene-item
             ng-click="$ctrl.openDetailPane(scene)"
