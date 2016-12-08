@@ -55,6 +55,8 @@
   border-radius: 2px;
   background-clip: padding-box;
   outline: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 // Modal background
@@ -77,9 +79,8 @@
   @extend .clearfix;
   text-align: center;
   padding: 2.5rem;
-  border-bottom: 1px solid #ddd;
   background-color: #fff;
-  border-radius: 2px 2px 0 0;
+  border-bottom: 1px solid #ddd;
 
   p {
     margin: 0;
@@ -118,6 +119,7 @@
   padding: 1.5rem;
   text-align: right;
   border-top: 1px solid #e5e5e5;
+  background-color: #fff;
 
   // Properly space out buttons
   .btn + .btn {
@@ -211,3 +213,58 @@
     border-color: $shade-dark;
   }
 }
+
+
+/*
+ Modal with a scrollable body
+ */
+.modal-scrollable-body {
+  display: flex;
+  flex-direction: column;
+  @include respond-to('md-up') {
+    max-height: calc(100vh - 100px);
+  }
+  @media (max-height: 550px) {
+    max-height: initial;
+  }
+
+  .modal-header,
+  .modal-footer {
+    flex: none;
+  }
+
+  .modal-body {
+    flex: 1;
+    overflow: auto;
+  }
+  
+  /* 
+    Modal with a sidebar instead up top header
+   */
+  @include respond-to('md-up') {
+    &.modal-sidebar-header {
+      .modal-header {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 250px;
+        bottom: 0;
+        border-right: 1px solid #ddd;
+        text-align: left;
+        z-index: 1;
+      }
+
+      .modal-body {
+        padding-left: 270px; //width of modal-header and default left padding of modal-body
+        height: calc(100vh - 100px);
+      }
+
+      .modal-footer {
+        z-index: 10;
+        background: #fff;
+        z-index: 2;
+      }
+    }
+  }
+}
+
