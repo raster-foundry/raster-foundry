@@ -1,4 +1,10 @@
-<div class="column-12">
+<div class="content">
+  <img ng-if="$ctrl.scene.thumbnails[0]"
+         ng-attr-src="{{$ctrl.scene.thumbnails[0].url}}"
+         class="center-img rounded-img detail-img">
+  <img ng-if="!$ctrl.scene.thumbnails.length"
+       src="https://placehold.it/275x275"
+       class="center-img rounded-img detail-img">
   <h5 class="color-dark">Scene properties</h5>
   <dl class="meta-list">
     <dt ng-if-start="$ctrl.scene.cloudCover">Cloud Cover</dt>

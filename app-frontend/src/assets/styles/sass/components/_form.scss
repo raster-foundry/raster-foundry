@@ -1,3 +1,5 @@
+// TODO: Matt look at all .input-dark
+
 form {
   margin-bottom: 1rem;
   position: relative;
@@ -97,7 +99,7 @@ textarea.form-control {
   height: auto;
 }
 
-input[type=checkbox], 
+input[type=checkbox],
 input[type=radio] {
   margin-right: 10px;
 }
@@ -123,7 +125,7 @@ input[type=radio] {
 }
 
 /**
- * Special form group with an icon label, .form-control, 
+ * Special form group with an icon label, .form-control,
  * and submit button all on one line
 **/
 .form-group.all-in-one {
@@ -132,6 +134,7 @@ input[type=radio] {
   align-items: stretch;
   border-radius: 2px;
   border: 1px solid #ddd;
+  background-color: #fff;
 
   label {
     position: relative;
@@ -148,4 +151,8 @@ input[type=radio] {
     border-color: $shade-dark;
     background-color: $shade-dark;
   }
+}
+
+.form-group.all-in-one.stacked {
+  flex-direction: column;
 }

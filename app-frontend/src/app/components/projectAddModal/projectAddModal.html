@@ -1,11 +1,11 @@
-<div class="modal-content">
-	<div class="modal-header">
-	  <button type="button" class="close" aria-label="Close"
+<div class="modal-scrollable-body">
+  <div class="modal-header">
+    <button type="button" class="close" aria-label="Close"
             ng-click="$ctrl.dismiss()">
       <span aria-hidden="true">&times;</span>
     </button>
-	  <span class="badge"><i class="icon-bucket"></i></span>
-	  <h4 class="modal-title">
+    <span class="badge"><i class="icon-bucket"></i></span>
+    <h4 class="modal-title">
       Add
       <ng-pluralize count="$ctrl.resolve.scenes.size"
                     when="{'0': 'No Scenes',
@@ -21,11 +21,11 @@
                           }">
       </ng-pluralize>
     </h4>
-	  <p>
+    <p>
       Add your selections to a project or create a new project
       based on your selections.
     </p>
-	  <form>
+    <form>
       <div class="form-group all-in-one">
         <label for="name"><i class="icon-bucket"></i></label>
         <input id="name" type="text" class="form-control"
@@ -71,10 +71,10 @@
           ng-change="$ctrl.populateProjectList($ctrl.currentPage)">
       </ul>
     </div>
-	</div>
-	<div class="modal-footer">
-	  <div class="pull-left">
-		  <button type="button" class="btn btn-default"
+  </div>
+  <div class="modal-footer">
+    <div class="pull-left">
+  	  <button type="button" class="btn"
               ng-click="$ctrl.close({$value: 'scenes'})">
         View selected Scenes
       </button>
@@ -84,5 +84,5 @@
             ng-click="$ctrl.addScenesToProjects()">
       Add Scenes
     </button>
-	</div>
+  </div>
 </div>

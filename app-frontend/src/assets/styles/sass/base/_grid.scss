@@ -81,7 +81,7 @@
 @include respond-to(md-down) {
   .stack-md {
     flex-direction: column;
-    > [class^=column-]  {
+    > [class*=column-]  {
       width: 100%;
     }
   }
@@ -90,7 +90,7 @@
 @include respond-to(sm-down) {
   .stack-sm {
     flex-direction: column;
-    > [class^=column-]  {
+    > [class*=column-]  {
       width: 100%;
     }
   }
@@ -99,7 +99,7 @@
 @include respond-to(xs) {
   .stack-xs {
     flex-direction: column;
-    > [class^=column-]  {
+    > [class*=column-]  {
       width: 100%;
     }
   }

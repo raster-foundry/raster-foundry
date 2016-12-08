@@ -9,21 +9,17 @@
 	<p>{{$ctrl.resolve.subtitle}}</p>
 </div>
 <div class="modal-body">
-	<div class="list-group">
-    {{$ctrl.resolve.content}}
-	</div>
+  <div ng-bind-html="$ctrl.resolve.content"></div>
 </div>
 <div class="modal-footer">
 	<div class="pull-left">
-	</div>
-	<button type="button" class="btn btn-default"
+  <button type="button" class="btn"
           ng-click="$ctrl.dismiss()">
-    <i class="icon-cross"></i>
     {{$ctrl.resolve.cancelText}}
   </button>
-  <button type="button"  class="btn btn-default"
-          ng-click="$ctrl.close()">
-    <i class="icon-check"></i>
-    {{$ctrl.resolve.confirmText}}
-  </button>
+  </div>
+    <button type="button"  class="btn btn-primary"
+            ng-click="$ctrl.close()">
+      {{$ctrl.resolve.confirmText}}
+    </button>
 </div>

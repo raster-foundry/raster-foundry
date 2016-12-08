@@ -1,8 +1,8 @@
 <div class="row content stack-sm" >
-  <div class="column" ng-if="!$ctrl.loading">
+  <div class="column-8" ng-if="!$ctrl.loading">
     <div class="library-header">
       <h1 class="h3 page-title"
-          ng-show="!$ctrl.$parent.selectedScenes.size && !$ctrl.isEditingProjectName">
+          ng-class="{'invisible': $ctrl.$parent.selectedScenes.size}">
         <a ui-sref="^.^.list">Projects</a><br>
         {{$ctrl.project.name}}
         <i class="icon-load" ng-show="$ctrl.isSavingProjectNameEdit"></i>
@@ -47,9 +47,9 @@
                               'other': '{} scenes selected.'}">
           </ng-pluralize>
         </h1>
-        <div class="button-group">
+        <div class="library-header-actions">
           <a href ng-click="$ctrl.selectNone()">Deselect All</a>
-          <a href ng-click="$ctrl.removeScenes()">Remove from Project</a>
+          <a href class="link-danger" ng-click="$ctrl.removeScenes()">Remove from Project</a>
         </div>
       </div>
     </div>

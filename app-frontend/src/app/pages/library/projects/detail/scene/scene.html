@@ -1,19 +1,17 @@
 <div class="row content stack-sm">
   <div class="column-8" ng-if="!$ctrl.loading">
-    <div class="embedded-scrollable">
+    <div class="library-header">
       <h1 class="h3 page-title">
         <a ui-sref="^.scenes">Project Scenes</a>
         <br>
         {{$ctrl.scene.name}}
       </h1>
-      <rf-leaflet-map
-          class="map-container"
-          static="true",
-          footprint="$ctrl.scene.footprint"
-      ></rf-leaflet-map>
-      <rf-scene-detail class="sidebar-scrollable"
-                       scene="$ctrl.scene"></rf-scene-detail>
     </div>
+    <rf-leaflet-map
+        class="map-preview-container"
+        static="true",
+        footprint="$ctrl.scene.footprint"></rf-leaflet-map>
+    <rf-scene-detail scene="$ctrl.scene"></rf-scene-detail>
   </div>
   <div class="column-8" ng-if="$ctrl.loading">
     <div class="list-group">
@@ -25,8 +23,11 @@
   <div class="column-4">
     <div class="content">
       <nav>
-        <a href ng-click="$ctrl.removeScene()"><i class="icon-trash"></i> Remove from project</a>
         <a href ng-click="$ctrl.downloadModal()"><i class="icon-download"></i> Download</a>
+        <hr>
+        <a href
+           class="link-danger"
+           ng-click="$ctrl.removeScene()"><i class="icon-trash"></i> Remove from Project</a>
       </nav>
     </div>
   </div>
