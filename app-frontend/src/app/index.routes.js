@@ -3,6 +3,10 @@ import marketTpl from './pages/market/market.html';
 import marketSearchTpl from './pages/market/search/search.html';
 import marketToolTpl from './pages/market/tool/tool.html';
 import editorTpl from './pages/editor/editor.html';
+import colorCorrectScenesStateTpl from
+    './components/colorCorrectScenes/colorCorrectScenes.state.html';
+import colorCorrectPaneStateTpl from './components/colorCorrectPane/colorCorrectPane.state.html';
+import mosaicScenesStateTpl from './components/mosaicScenes/mosaicScenes.state.html';
 import libraryTpl from './pages/library/library.html';
 import scenesTpl from './pages/library/scenes/scenes.html';
 import scenesListTpl from './pages/library/scenes/list/list.html';
@@ -12,7 +16,6 @@ import projectsListTpl from './pages/library/projects/list/list.html';
 import projectsDetailTpl from './pages/library/projects/detail/detail.html';
 import projectSceneTpl from './pages/library/projects/detail/scene/scene.html';
 import projectScenesTpl from './pages/library/projects/detail/projectScenes/projectScenes.html';
-import projectEditTpl from './pages/editor/project/projectEdit.html';
 import settingsTpl from './pages/settings/settings.html';
 import profileTpl from './pages/settings/profile/profile.html';
 import accountTpl from './pages/settings/account/account.html';
@@ -62,36 +65,31 @@ function editorStates($stateProvider) {
         })
         .state('editor.project.color', {
             url: '/color-correct',
-            resolve: {},
             template: '<ui-view></ui-view>',
             abstract: true
         })
         .state('editor.project.color.scenes', {
             url: '/scenes',
-            resolve: {},
-            template: '<rf-color-correct-scenes></rf-color-correct-scenes>'
+            templateUrl: colorCorrectScenesStateTpl
         })
         .state('editor.project.color.adjust', {
             url: '/adjust',
-            resolve: {
-                scenes: () => []
+            params: {
+                layers: null
             },
-            template: '<rf-color-correct-pane></rf-color-correct-pane>'
+            templateUrl: colorCorrectPaneStateTpl
         })
         .state('editor.project.mosaic', {
             url: '/mosaic',
-            resolve: {},
             template: '<ui-view></ui-view>',
             abstract: true
         })
-        .state('editor.bucket.mosaic.scenes', {
+        .state('editor.project.mosaic.scenes', {
             url: '/scenes',
-            resolve: {},
-            template: '<rf-mosaic-scenes></rf-mosaic-scenes>'
+            templateUrl: mosaicScenesStateTpl
         })
         .state('editor.project.mosaic.params', {
             url: '/params',
-            resolve: {},
             template: '<rf-mosaic-params></rf-mosaic-params>'
         });
 }

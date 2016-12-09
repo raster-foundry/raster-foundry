@@ -4,7 +4,7 @@ const colorCorrectAdjust = {
     templateUrl: colorCorrectAdjustTpl,
     controller: 'ColorCorrectAdjustController',
     bindings: {
-        desiredCorrection: '<?',
+        correction: '<?',
         // Pass in a boolean to toggle to reset filters
         reset: '<?',
         onCorrectionChange: '&'
