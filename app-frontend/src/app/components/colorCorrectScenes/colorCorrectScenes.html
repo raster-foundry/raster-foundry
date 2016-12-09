@@ -6,9 +6,15 @@
           Color mode <i class="icon-caret-down"></i>
         </a>
         <ul class="dropdown-menu" uib-dropdown-menu role="menu">
-          <li role="menuitem">Natural color</li>
-          <li role="menuitem">Shortwave infrared</li>
-          <li role="menuitem">False color (agriculture)</li>
+          <li role="menuitem" ng-click="$ctrl.setBands('natural')">Natural color</li>
+          <li role="menuitem" ng-click="$ctrl.setBands('cir')">Color Infrared</li>
+          <li role="menuitem" ng-click="$ctrl.setBands('urban')">Urban</li>
+          <li role="menuitem" ng-click="$ctrl.setBands('water')">Water</li>
+          <li role="menuitem" ng-click="$ctrl.setBands('atmosphere')">Atmosphere Penetration</li>
+          <li role="menuitem" ng-click="$ctrl.setBands('agriculture')">Agriculture</li>
+          <li role="menuitem" ng-click="$ctrl.setBands('forestfire')">Forest Fire</li>
+          <li role="menuitem" ng-click="$ctrl.setBands('bareearth')">Bare Earth Change Detection</li>
+          <li role="menuitem" ng-click="$ctrl.setBands('vegwater')">Vegetation & Water</li>
         </ul>
       </div>
       <div class="btn-group" uib-dropdown dropdown-append-to-body>
@@ -20,6 +26,7 @@
           <li role="menuitem"><i class="icon-arrows-cw"></i> Reset changes</li>
           <li role="menuitem"><i class="icon-trash"></i> Delete</li>
         </ul>
+        <button ng-disabled="$ctrl.selectedScenes.size === 0" ng-click="$ctrl.$state.go('editor.project.color.adjust')" class="btn">Color Correct</button>
       </div>
       <button class="btn btn-square"
               ng-class="{'btn-secondary': !$ctrl.shouldSelectAll()}"
@@ -31,7 +38,7 @@
   <div class="sidebar-scrollable">
     <div class="list-group">
       <rf-scene-item
-          ng-click="$ctrl.$state.go('editor.bucket.color.adjust', {scenes: $ctrl.selectedScenes})"
+          ng-click="$ctrl.$state.go('editor.project.color.adjust')"
           scene="scene"
           selectable
           selected="$ctrl.isSelected(scene)"

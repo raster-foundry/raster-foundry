@@ -2,45 +2,50 @@ const Map = require('es6-map');
 
 export default class MosaicScenesController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, $q, bucketService, $state
+        $log, $scope, $q, $state, projectService, layerService
     ) {
         'ngInject';
-        this.bucketService = bucketService;
+        this.projectService = projectService;
+        this.layerService = layerService;
         this.$state = $state;
         this.$q = $q;
     }
 
     $onInit() {
-        this.bucket = this.$state.params.bucket;
-        this.bucketId = this.$state.params.bucketid;
+        this.project = this.$state.params.project;
+        this.projectId = this.$state.params.projectid;
 
         this.selectedScenes = new Map();
         this.sceneList = [];
 
-        // Populate bucket scenes
-        if (!this.bucket) {
-            if (this.bucketId) {
+        // Populate project scenes
+        if (!this.project) {
+            if (this.projectId) {
                 this.loading = true;
-                this.bucketService.query({id: this.bucketId}).then(
-                    (bucket) => {
-                        this.bucket = bucket;
+                this.projectService.query({id: this.projectId}).then(
+                    (project) => {
+                        this.project = project;
                         this.loading = false;
                         this.populateSceneList();
                     },
                     () => {
-                        this.$state.go('library.buckets.list');
+                        this.$state.go('library.projects.list');
                     }
                 );
             } else {
-                this.$state.go('library.buckets.list');
+                this.$state.go('library.projects.list');
             }
         } else {
             this.populateSceneList();
         }
     }
 
+    // TODO: This and the ColorCorrectScenesController have nearly identical logic
+    // here but the display logic is different; can we refactor to a general
+    // scene list component with configurable display?
     populateSceneList() {
-        if (this.loading) {
+        if (this.loading || this.sceneList.length > 0) {
+            this.layersFromScenes();
             return;
         }
 
@@ -51,8 +56,8 @@ export default class MosaicScenesController {
         let params = Object.assign({}, this.queryParams);
         delete params.id;
         // Figure out how many scenes there are
-        this.bucketService.getBucketScenes({
-            bucketId: this.bucket.id,
+        this.projectService.getProjectScenes({
+            projectId: this.project.id,
             pageSize: '1'
         }).then((sceneCount) => {
             let self = this;
@@ -60,8 +65,8 @@ export default class MosaicScenesController {
             let requestMaker = function *(totalResults, pageSize) {
                 let pageNum = 0;
                 while (pageNum * pageSize <= totalResults) {
-                    yield self.bucketService.getBucketScenes({
-                        bucketId: self.bucket.id,
+                    yield self.projectService.getProjectScenes({
+                        projectId: self.project.id,
                         pageSize: pageSize,
                         page: pageNum,
                         sort: 'createdAt,desc'
@@ -79,44 +84,17 @@ export default class MosaicScenesController {
             // [{ results: [{},{},...] }, { results: [{},{},...]},...]
             this.$q.all(requests).then((allResponses) => {
                 this.sceneList = [].concat(...Array.from(allResponses, (resp) => resp.results));
+                this.layersFromScenes();
             },
             () => {
                 this.errorMsg = 'Error loading scenes.';
-            }).finally(() => this.loading = false); // eslint-disable-line no-return-assign
+            }).finally(() => {
+                this.loading = false;
+            });
         });
     }
 
-    onToggleSelection() {
-        // This fires pre-change, so if the box is checked then we need to deselect
-        if (this.shouldSelectAll()) {
-            this.selectAllScenes();
-        } else {
-            this.selectNoScenes();
-        }
-    }
-
-    shouldSelectAll() {
-        return this.selectedScenes.size === 0 || this.selectedScenes.size < this.sceneList.size;
-    }
-
-
-    selectNoScenes() {
-        this.selectedScenes.clear();
-    }
-
-    selectAllScenes() {
-        this.sceneList.map((scene) => this.selectedScenes.set(scene.id, scene));
-    }
-
-    isSelected(scene) {
-        return this.selectedScenes.has(scene.id);
-    }
-
-    setSelected(scene, selected) {
-        if (selected) {
-            this.selectedScenes.set(scene.id, scene);
-        } else {
-            this.selectedScenes.delete(scene.id);
-        }
+    layersFromScenes() {
+        this.layers = this.sceneList.map((scene) => this.layerService.layerFromScene(scene));
     }
 }

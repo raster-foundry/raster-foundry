@@ -1,38 +1,34 @@
-const Map = require('es6-map');
-
 export default class ColorCorrectScenesController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, $q, bucketService, $state
+        $log, $scope, $q, projectService, layerService, $state
     ) {
         'ngInject';
-        this.bucketService = bucketService;
+        this.projectService = projectService;
+        this.layerService = layerService;
         this.$state = $state;
         this.$q = $q;
     }
 
     $onInit() {
-        this.bucket = this.$state.params.bucket;
-        this.bucketId = this.$state.params.bucketid;
+        this.project = this.$state.params.project;
+        this.projectId = this.$state.params.projectid;
 
-        this.selectedScenes = new Map();
-        this.sceneList = [];
-
-        // Populate bucket scenes
-        if (!this.bucket) {
-            if (this.bucketId) {
+        // Populate project scenes
+        if (!this.project) {
+            if (this.projectId) {
                 this.loading = true;
-                this.bucketService.query({id: this.bucketId}).then(
-                    (bucket) => {
-                        this.bucket = bucket;
+                this.projectService.query({id: this.projectId}).then(
+                    (project) => {
+                        this.project = project;
                         this.loading = false;
                         this.populateSceneList();
                     },
                     () => {
-                        this.$state.go('library.buckets.list');
+                        this.$state.go('library.projects.list');
                     }
                 );
             } else {
-                this.$state.go('library.buckets.list');
+                this.$state.go('library.projects.list');
             }
         } else {
             this.populateSceneList();
@@ -40,7 +36,11 @@ export default class ColorCorrectScenesController {
     }
 
     populateSceneList() {
-        if (this.loading) {
+        // If we are returning from a different state that might preserve the
+        // sceneList, like the color correction adjustments, then we don't need
+        // to re-request scenes.
+        if (this.loading || this.sceneList.length > 0) {
+            this.layersFromScenes();
             return;
         }
 
@@ -51,38 +51,74 @@ export default class ColorCorrectScenesController {
         let params = Object.assign({}, this.queryParams);
         delete params.id;
         // Figure out how many scenes there are
-        this.bucketService.getBucketScenes({
-            bucketId: this.bucket.id,
-            pageSize: '1'
-        }).then((sceneCount) => {
-            let self = this;
-            // We're going to use this in a moment to create the requests for API pages
-            let requestMaker = function *(totalResults, pageSize) {
-                let pageNum = 0;
-                while (pageNum * pageSize <= totalResults) {
-                    yield self.bucketService.getBucketScenes({
-                        bucketId: self.bucket.id,
-                        pageSize: pageSize,
-                        page: pageNum,
-                        sort: 'createdAt,desc'
-                    });
-                    pageNum = pageNum + 1;
-                }
-            };
-            let numScenes = sceneCount.count;
-            // The default API pagesize is 30 so we'll use that.
-            let pageSize = 30;
-            // Generate requests for all pages
-            let requests = Array.from(requestMaker(numScenes, pageSize));
-            // Unpack responses into a single scene list.
-            // The structure to unpack is:
-            // [{ results: [{},{},...] }, { results: [{},{},...]},...]
-            this.$q.all(requests).then((allResponses) => {
-                this.sceneList = [].concat(...Array.from(allResponses, (resp) => resp.results));
-            },
-            () => {
-                this.errorMsg = 'Error loading scenes.';
-            }).finally(() => this.loading = false); // eslint-disable-line no-return-assign
+        this.projectService.getProjectSceneCount(this.project.id).then(
+            (sceneCount) => {
+                let self = this;
+                // We're going to use this in a moment to create the requests for API pages
+                let requestMaker = function *(totalResults, pageSize) {
+                    let pageNum = 0;
+                    while (pageNum * pageSize <= totalResults) {
+                        yield self.projectService.getProjectScenes({
+                            projectId: self.project.id,
+                            pageSize: pageSize,
+                            page: pageNum,
+                            sort: 'createdAt,desc'
+                        });
+                        pageNum = pageNum + 1;
+                    }
+                };
+                let numScenes = sceneCount.count;
+                // The default API pagesize is 30 so we'll use that.
+                let pageSize = 30;
+                // Generate requests for all pages
+                let requests = Array.from(requestMaker(numScenes, pageSize));
+                // Unpack responses into a single scene list.
+                // The structure to unpack is:
+                // [{ results: [{},{},...] }, { results: [{},{},...]},...]
+                this.$q.all(requests).then((allResponses) => {
+                    this.sceneList = [].concat(...Array.from(allResponses, (resp) => resp.results));
+                    this.layersFromScenes();
+                },
+                () => {
+                    this.errorMsg = 'Error loading scenes.';
+                }).finally(() => this.loading = false); // eslint-disable-line no-return-assign
+            }
+        );
+    }
+
+    layersFromScenes() {
+        // Create scene layers to use for color correction
+        for (const scene of this.sceneList) {
+            let sceneLayer = this.layerService.layerFromScene(scene);
+            this.sceneLayers.set(scene.id, sceneLayer);
+        }
+        this.layers = this.sceneLayers.values();
+    }
+
+    /**
+     * Set RGB bands for layers
+     *
+     * TODO: Only works for Landsat8 -- needs to be adjusted based on datasource
+     *
+     * @param {string} bandName name of band selected
+     *
+     * @returns {null} null
+     */
+    setBands(bandName) {
+        let bands = {
+            natural: {red: 3, green: 2, blue: 1},
+            cir: {red: 4, green: 3, blue: 2},
+            urban: {red: 6, green: 5, blue: 4},
+            water: {red: 4, green: 5, blue: 3},
+            atmosphere: {red: 6, green: 4, blue: 2},
+            agriculture: {red: 5, green: 4, blue: 1},
+            forestfire: {red: 6, green: 4, blue: 1},
+            bareearth: {red: 5, green: 2, blue: 1},
+            vegwater: {red: 4, green: 6, blue: 0}
+        };
+
+        this.sceneLayers.forEach(function (layer) {
+            layer.updateBands(bands[bandName]);
         });
     }
 
@@ -102,10 +138,14 @@ export default class ColorCorrectScenesController {
 
     selectNoScenes() {
         this.selectedScenes.clear();
+        this.selectedLayers.clear();
     }
 
     selectAllScenes() {
-        this.sceneList.map((scene) => this.selectedScenes.set(scene.id, scene));
+        this.sceneList.map((scene) => {
+            this.selectedScenes.set(scene.id, scene);
+            this.selectedLayers.set(scene.id, this.sceneLayers.get(scene.id));
+        });
     }
 
     isSelected(scene) {
@@ -115,8 +155,10 @@ export default class ColorCorrectScenesController {
     setSelected(scene, selected) {
         if (selected) {
             this.selectedScenes.set(scene.id, scene);
+            this.selectedLayers.set(scene.id, this.sceneLayers.get(scene.id));
         } else {
             this.selectedScenes.delete(scene.id);
+            this.selectedLayers.delete(scene.id);
         }
     }
 }
