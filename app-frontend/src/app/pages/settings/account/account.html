@@ -16,7 +16,7 @@
       </div>
       <button type="submit" class="btn btn-primary btn-large">Update Profile</button>
     </form>
-
+    <rf-feature-flag-overrides ng-if="$ctrl.env === 'development'"></rf-feature-flag-overrides>
   </div>
   <div class="column-4">
     <div class="content">

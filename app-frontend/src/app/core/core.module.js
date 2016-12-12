@@ -8,4 +8,8 @@ require('./services/auth.service')(shared);
 require('./services/token.service')(shared);
 require('./services/layer.service')(shared);
 
+require('./services/featureFlagOverrides.service')(shared);
+require('./services/featureFlags.provider')(shared);
+require('./services/featureFlag.directive')(shared);
+
 export default shared;

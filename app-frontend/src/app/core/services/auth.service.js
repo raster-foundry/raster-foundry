@@ -1,10 +1,14 @@
 export default (app) => {
     class AuthService {
-        constructor(lock, store, jwtHelper, $q) {
+        constructor( // eslint-disable-line max-params
+            lock, store, jwtHelper, $q, featureFlagOverrides, featureFlags
+        ) {
             this.lock = lock;
             this.store = store;
             this.jwtHelper = jwtHelper;
             this.$q = $q;
+            this.featureFlags = featureFlags;
+            this.featureFlagOverrides = featureFlagOverrides;
 
             lock.on('authenticated', this.onLogin.bind(this));
             lock.on('authorization_error', this.onLoginFail.bind(this));
@@ -28,7 +32,18 @@ export default (app) => {
                 if (error) {
                     return;
                 }
+
                 this.store.set('profile', profile);
+                this.featureFlagOverrides.setUser(profile.user_id);
+                let userFlags = profile.user_metadata && profile.user_metadata.featureFlags ?
+                    profile.user_metadata.featureFlags : [];
+                // Not using a set because performance considerations are negligible,
+                // and it would require an additional import
+                let configFlags = this.featureFlags.get().map((flag) => flag.key);
+                let flagOverrides = userFlags.filter((flag) => {
+                    return configFlags.includes(flag.key);
+                });
+                this.featureFlags.set(flagOverrides);
             });
             this.isLoggedIn = true;
             this.lock.hide();

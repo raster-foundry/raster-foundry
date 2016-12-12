@@ -13,5 +13,6 @@ export default angular.module('index.components', [
     require('./components/confirmationModal/confirmationModal.module.js').name,
     require('./components/projectAddModal/projectAddModal.module.js').name,
     require('./components/refreshTokenModal/refreshTokenModal.module.js').name,
-    require('./components/downloadModal/downloadModal.module.js').name
+    require('./components/downloadModal/downloadModal.module.js').name,
+    require('./components/featureFlagOverrides/featureFlagOverrides.module.js').name
 ]);
