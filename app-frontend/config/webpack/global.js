@@ -85,7 +85,7 @@ module.exports = function (_path) {
                 query: {
                     cacheDirectory: true,
                     plugins: ['transform-runtime', 'add-module-exports'],
-                    presets: ['angular', 'es2017']
+                    presets: ['angular', 'latest']
                 }
             }, {
                 test: /\.css$/,

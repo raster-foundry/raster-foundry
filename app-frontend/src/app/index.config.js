@@ -7,7 +7,7 @@ function config( // eslint-disable-line max-params
     $logProvider, $compileProvider,
     jwtInterceptorProvider,
     $httpProvider, configProvider, APP_CONFIG,
-    lockProvider
+    lockProvider, featureFlagsProvider
 ) {
     'ngInject';
 
@@ -54,6 +54,8 @@ function config( // eslint-disable-line max-params
     $httpProvider.interceptors.push('jwtInterceptor');
 
     configProvider.init(process.env);
+
+    featureFlagsProvider.setInitialFlags(APP_CONFIG.featureFlags);
 }
 
 export default config;
