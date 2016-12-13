@@ -41,7 +41,7 @@
     "angular-ui-tree": "^2.22.1",
     "auth0-lock": "^10.4.1",
     "bootstrap-sass": "^3.3.6",
-    "d3": "^4.3.0",
+    "d3": "^3.4.4",
     "es6-map": "^0.1.4",
     "jquery": "^2.1.4",
     "leaflet": "^1.0.0",
