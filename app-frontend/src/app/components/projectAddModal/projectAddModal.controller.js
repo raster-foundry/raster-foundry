@@ -1,11 +1,12 @@
 const Map = require('es6-map');
 
 export default class ProjectAddModalController {
-    constructor(projectService, $log) {
+    constructor(projectService, $log, $state) {
         'ngInject';
 
         this.projectService = projectService;
         this.$log = $log;
+        this.$state = $state;
 
         this.projectList = [];
         this.populateProjectList(1);
@@ -65,13 +66,23 @@ export default class ProjectAddModalController {
 
     addScenesToProjects() {
         let sceneIds = Array.from(this.resolve.scenes.keys());
+        let numProjects = this.selectedProjects.size;
         this.selectedProjects.forEach((project, projectId) => {
             this.projectService.addScenes(projectId, sceneIds).then(
                 () => {
                     this.selectedProjects.delete(projectId);
                     if (this.selectedProjects.size === 0) {
                         this.resolve.scenes.clear();
-                        this.close();
+                        if (numProjects > 1) {
+                            this.$state.go('library.projects.list');
+                            this.close();
+                        } else {
+                            this.$state.go(
+                                'library.projects.detail.scenes',
+                                {projectid: projectId}
+                            );
+                            this.close();
+                        }
                     }
                 },
                 (err) => {
