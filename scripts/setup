@@ -49,7 +49,8 @@ function create_airflow_database() {
     # Create database (have to ignore errors if database already exists)
     docker-compose -f "${DIR}/../docker-compose.yml" exec -T postgres gosu postgres createdb airflow >/dev/null 2>/dev/null
     set -e
-    docker-compose -f "${DIR}/../docker-compose.yml" run --rm airflow-webserver airflow initdb
+    docker-compose -f "${DIR}/../docker-compose.airflow.yml" \
+                   -f "${DIR}/../docker-compose.yml" run --rm airflow-webserver airflow initdb
     docker-compose -f "${DIR}/../docker-compose.yml" stop postgres
 }
 
