@@ -8,7 +8,9 @@ const colorCorrectScenes = {
         selectedLayers: '=',
         sceneList: '=',
         sceneLayers: '=',
-        layers: '='
+        layers: '=',
+        onSceneMouseover: '&',
+        onSceneMouseleave: '&'
     }
 };
 

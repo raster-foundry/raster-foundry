@@ -161,4 +161,12 @@ export default class ColorCorrectScenesController {
             this.selectedLayers.delete(scene.id);
         }
     }
+
+    setHoveredScene(scene) {
+        this.onSceneMouseover({scene: scene});
+    }
+
+    removeHoveredScene() {
+        this.onSceneMouseleave();
+    }
 }
