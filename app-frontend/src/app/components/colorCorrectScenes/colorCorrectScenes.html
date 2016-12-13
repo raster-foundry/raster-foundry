@@ -44,6 +44,8 @@
           selected="$ctrl.isSelected(scene)"
           on-select="$ctrl.setSelected(scene, selected)"
           class="selectable"
+          ng-mouseover="$ctrl.setHoveredScene(scene)"
+          ng-mouseleave="$ctrl.removeHoveredScene()"
           ng-repeat="scene in $ctrl.sceneList track by scene.id">
       </rf-scene-item>
     </div>

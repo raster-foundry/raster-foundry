@@ -11,6 +11,8 @@
   <!-- Map -->
   <div class="main">
     <rf-leaflet-map class="map-container"
+                    footprint="$ctrl.hoveredScene.dataFootprint"
+                    bypass-fit-bounds="true"
                     layers="$ctrl.layers"></rf-leaflet-map>
   </div>
 </div>

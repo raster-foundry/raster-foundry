@@ -9,4 +9,12 @@ export default class ProjectEditController {
         this.sceneLayers = new Map();
         this.layers = [];
     }
+
+    setHoveredScene(scene) {
+        this.hoveredScene = scene;
+    }
+
+    removeHoveredScene() {
+        this.hoveredScene = null;
+    }
 }

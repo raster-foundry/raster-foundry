@@ -4,6 +4,8 @@
   scene-list="$ctrl.sceneList"
   scene-layers="$ctrl.sceneLayers"
   layers="$ctrl.layers"
-  on-layer-change="$ctrl.updateLayers({layers: layers})">
+  on-layer-change="$ctrl.updateLayers({layers: layers})"
+  on-scene-mouseover="$ctrl.setHoveredScene(scene)"
+  on-scene-mouseleave="$ctrl.removeHoveredScene()">
 </rf-color-correct-scenes>
 
