@@ -3,6 +3,7 @@ export default class ColorCorrectPaneController {
         $log, $scope, $q, projectService, $state
     ) {
         'ngInject';
+        this.$parent = $scope.$parent.$ctrl;
         this.bucketService = projectService;
         this.$state = $state;
         this.$q = $q;
@@ -15,10 +16,16 @@ export default class ColorCorrectPaneController {
             this.$state.go('^.scenes');
             return;
         }
+        this.$parent.fitSelectedScenes();
+        this.$parent.bringSelectedScenesToFront();
         // Initialize correction to first selected layer (if there are multiple)
         this.firstLayer = this.selectedLayers.values().next().value;
         this.correction = this.firstLayer.baseColorCorrection();
         this.updateHistogram();
+    }
+
+    $onDestroy() {
+        this.$parent.fitAllScenes();
     }
 
     resetCorrection() {
