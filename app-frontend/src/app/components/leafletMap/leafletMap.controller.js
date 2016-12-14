@@ -14,6 +14,7 @@ export default class LeafletMapController {
 
     $onInit() {
         this.map.on('moveend', () => this.boundsChangeListener());
+        this.map.on('click', (ev) => this.mapClickListener(ev));
     }
 
     $onChanges(changes) {
@@ -49,6 +50,16 @@ export default class LeafletMapController {
             this.gridLayer.clearLayers();
             this.gridLayer.addData(changes.grid.currentValue);
         }
+
+        // Add a highlight to the map
+        if (changes.highlight) {
+            if (changes.highlight.previousValue && !changes.highlight.isFirstChange()) {
+                changes.highlight.previousValue.removeFrom(this.map);
+            }
+            if (changes.highlight.currentValue) {
+                changes.highlight.currentValue.addTo(this.map);
+            }
+        }
     }
 
     initLayers() {
@@ -66,6 +77,7 @@ export default class LeafletMapController {
                 layer.bindTooltip(`${count}`);
             }
         }).addTo(this.map);
+        this.highlightLayer = L.geoJSON().addTo(this.map);
     }
 
     initMap() {
@@ -117,7 +129,12 @@ export default class LeafletMapController {
         }, 400);
     }
 
+    // Listeners to provide interaction hooks to enclosing components
     boundsChangeListener() {
         this.onViewChange({newBounds: this.map.getBounds(), zoom: this.map.getZoom()});
+    }
+
+    mapClickListener(clickEvent) {
+        this.onMapClick({event: clickEvent});
     }
 }

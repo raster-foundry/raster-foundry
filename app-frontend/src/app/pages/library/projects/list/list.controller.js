@@ -56,7 +56,7 @@ class ProjectsListController {
     }
 
     getProjectScenesCount(project) {
-        this.projectService.getProjectSceneCount(project.id).then(
+        this.projectService.getProjectSceneCount({projectId: project.id}).then(
             (sceneResult) => {
                 let bupdate = this.projectList.find((b) => b.id === project.id);
                 bupdate.scenes = sceneResult.count;

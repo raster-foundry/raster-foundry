@@ -53,45 +53,17 @@ export default class MosaicScenesController {
         this.loading = true;
         // save off selected scenes so you don't lose them during the refresh
         this.sceneList = [];
-        let params = Object.assign({}, this.queryParams);
-        delete params.id;
-        // Figure out how many scenes there are
-        this.projectService.getProjectScenes({
-            projectId: this.project.id,
-            pageSize: '1'
-        }).then((sceneCount) => {
-            let self = this;
-            // We're going to use this in a moment to create the requests for API pages
-            let requestMaker = function *(totalResults, pageSize) {
-                let pageNum = 0;
-                while (pageNum * pageSize <= totalResults) {
-                    yield self.projectService.getProjectScenes({
-                        projectId: self.project.id,
-                        pageSize: pageSize,
-                        page: pageNum,
-                        sort: 'createdAt,desc'
-                    });
-                    pageNum = pageNum + 1;
-                }
-            };
-            let numScenes = sceneCount.count;
-            // The default API pagesize is 30 so we'll use that.
-            let pageSize = 30;
-            // Generate requests for all pages
-            let requests = Array.from(requestMaker(numScenes, pageSize));
-            // Unpack responses into a single scene list.
-            // The structure to unpack is:
-            // [{ results: [{},{},...] }, { results: [{},{},...]},...]
-            this.$q.all(requests).then((allResponses) => {
-                this.sceneList = [].concat(...Array.from(allResponses, (resp) => resp.results));
+        this.projectService.getAllProjectScenes({projectId: this.project.id}).then(
+            (allScenes) => {
+                this.sceneList = allScenes;
                 this.layersFromScenes();
             },
             () => {
                 this.errorMsg = 'Error loading scenes.';
             }).finally(() => {
                 this.loading = false;
-            });
-        });
+            }
+        );
     }
 
     layersFromScenes() {

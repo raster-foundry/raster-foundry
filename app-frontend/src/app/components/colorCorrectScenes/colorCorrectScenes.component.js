@@ -4,13 +4,16 @@ const colorCorrectScenes = {
     templateUrl: colorCorrectScenesTpl,
     controller: 'ColorCorrectScenesController',
     bindings: {
+        clickEvent: '<?',
+        mapZoom: '<?',
         selectedScenes: '=',
         selectedLayers: '=',
         sceneList: '=',
         sceneLayers: '=',
         layers: '=',
         onSceneMouseover: '&',
-        onSceneMouseleave: '&'
+        onSceneMouseleave: '&',
+        newGridSelection: '&'
     }
 };
 
