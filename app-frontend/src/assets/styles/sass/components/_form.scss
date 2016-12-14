@@ -147,9 +147,20 @@ input[type=radio] {
     border: none;
     border-radius: 0;
   }
+
+  .btn {
+    border: none;
+    border-left: 1px solid #ddd;
+    border-radius: 0;
+  }
+
   &.input-dark {
     border-color: $shade-dark;
     background-color: $shade-dark;
+
+    .btn {
+      border-left-color: $shade-dark;
+    }
   }
 }
 
