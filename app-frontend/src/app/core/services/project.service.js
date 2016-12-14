@@ -1,9 +1,10 @@
 export default (app) => {
     class ProjectService {
-        constructor($resource, userService, $http) {
+        constructor($resource, userService, $http, $q) {
             'ngInject';
             this.userService = userService;
             this.$http = $http;
+            this.$q = $q;
 
             this.Project = $resource(
                 '/api/projects/:id/', {
@@ -89,8 +90,51 @@ export default (app) => {
             return this.Project.projectScenes(params).$promise;
         }
 
-        getProjectSceneCount(projectId) {
-            return this.Project.projectScenes({projectId: projectId, limit: 1}).$promise;
+        /** Return all scenes in a single collection, making multiple requests if necessary
+         *
+         * @param {object} params to pass as query params
+         * @return {Promise} promise that will resolve when all scenes are available
+         */
+        getAllProjectScenes(params) {
+            let deferred = this.$q.defer();
+            // Figure out how many scenes there are
+            this.getProjectSceneCount(params).then((sceneCount) => {
+                let self = this;
+                // We're going to use this in a moment to create the requests for API pages
+                let requestMaker = function *(totalResults, pageSize) {
+                    let pageNum = 0;
+                    while (pageNum * pageSize <= totalResults) {
+                        let pageParams = Object.assign({}, params, {
+                            pageSize: pageSize,
+                            page: pageNum,
+                            sort: 'createdAt,desc'
+                        });
+                        yield self.getProjectScenes(pageParams);
+                        pageNum = pageNum + 1;
+                    }
+                };
+                let numScenes = sceneCount.count;
+                // The default API pagesize is 30 so we'll use that.
+                let pageSize = 30;
+                // Generate requests for all pages
+                let requests = Array.from(requestMaker(numScenes, pageSize));
+                // Unpack responses into a single scene list.
+                // The structure to unpack is:
+                // [{ results: [{},{},...] }, { results: [{},{},...]},...]
+                this.$q.all(requests).then((allResponses) => {
+                    deferred.resolve([].concat(...Array.from(allResponses,
+                                                             (resp) => resp.results)));
+                },
+                () => {
+                    deferred.reject('Error loading scenes.');
+                });
+            });
+            return deferred.promise;
+        }
+
+        getProjectSceneCount(params) {
+            let countParams = Object.assign({}, params, {pageSize: 1, page: 0});
+            return this.Project.projectScenes(countParams).$promise;
         }
 
         removeScenesFromProject(projectId, scenes) {

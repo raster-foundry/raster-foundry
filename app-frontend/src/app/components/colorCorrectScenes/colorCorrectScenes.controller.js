@@ -12,6 +12,11 @@ export default class ColorCorrectScenesController {
     $onInit() {
         this.project = this.$state.params.project;
         this.projectId = this.$state.params.projectid;
+        // Internal bookkeeping to handle grid selection functionality.
+        this.selectedTileX = null;
+        this.selectedTileY = null;
+        this.gridHighlight = null;
+        this.selectingScenes = false;
 
         // Populate project scenes
         if (!this.project) {
@@ -35,6 +40,12 @@ export default class ColorCorrectScenesController {
         }
     }
 
+    $onChanges(changesObj) {
+        if (changesObj.clickEvent && changesObj.clickEvent.currentValue && this.mapZoom) {
+            this.selectGridCellScenes(changesObj.clickEvent.currentValue);
+        }
+    }
+
     populateSceneList() {
         // If we are returning from a different state that might preserve the
         // sceneList, like the color correction adjustments, then we don't need
@@ -48,40 +59,15 @@ export default class ColorCorrectScenesController {
         this.loading = true;
         // save off selected scenes so you don't lose them during the refresh
         this.sceneList = [];
-        let params = Object.assign({}, this.queryParams);
-        delete params.id;
-        // Figure out how many scenes there are
-        this.projectService.getProjectSceneCount(this.project.id).then(
-            (sceneCount) => {
-                let self = this;
-                // We're going to use this in a moment to create the requests for API pages
-                let requestMaker = function *(totalResults, pageSize) {
-                    let pageNum = 0;
-                    while (pageNum * pageSize <= totalResults) {
-                        yield self.projectService.getProjectScenes({
-                            projectId: self.project.id,
-                            pageSize: pageSize,
-                            page: pageNum,
-                            sort: 'createdAt,desc'
-                        });
-                        pageNum = pageNum + 1;
-                    }
-                };
-                let numScenes = sceneCount.count;
-                // The default API pagesize is 30 so we'll use that.
-                let pageSize = 30;
-                // Generate requests for all pages
-                let requests = Array.from(requestMaker(numScenes, pageSize));
-                // Unpack responses into a single scene list.
-                // The structure to unpack is:
-                // [{ results: [{},{},...] }, { results: [{},{},...]},...]
-                this.$q.all(requests).then((allResponses) => {
-                    this.sceneList = [].concat(...Array.from(allResponses, (resp) => resp.results));
-                    this.layersFromScenes();
-                },
-                () => {
-                    this.errorMsg = 'Error loading scenes.';
-                }).finally(() => this.loading = false); // eslint-disable-line no-return-assign
+        this.projectService.getAllProjectScenes({projectId: this.project.id}).then(
+            (allScenes) => {
+                this.sceneList = allScenes;
+                this.layersFromScenes();
+            },
+            () => {
+                this.errorMsg = 'Error loading scenes.';
+            }).finally(() => {
+                this.loading = false;
             }
         );
     }
@@ -93,6 +79,75 @@ export default class ColorCorrectScenesController {
             this.sceneLayers.set(scene.id, sceneLayer);
         }
         this.layers = this.sceneLayers.values();
+    }
+
+    /**
+     * Select the scenes that fall within the clicked grid cell
+     *
+     * @param {object} clickEvent from the map
+     * @returns {undefined}
+     */
+    selectGridCellScenes(clickEvent) {
+        // Helper functions for converting between click Lat/Lng and tile numbers
+        // From http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+        function lng2Tile(lng, zoom) {
+            return Math.floor((lng + 180) / 360 * Math.pow(2, zoom));
+        }
+
+        function lat2Tile(lat, zoom) {
+            return Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) +
+                                            1 / Math.cos(lat * Math.PI / 180))
+                                   / Math.PI) / 2 * Math.pow(2, zoom));
+        }
+
+        function tile2Lng(x, zoom) {
+            return x / Math.pow(2, zoom) * 360 - 180;
+        }
+
+        function tile2Lat(y, zoom) {
+            let n = Math.PI - 2 * Math.PI * y / Math.pow(2, zoom);
+            return 180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+        }
+
+        if (this.selectingScenes || this.loading) {
+            return;
+        }
+        let zoom = this.mapZoom;
+        // The conversion functions above return the upper-left (northwest) corner of the tile,
+        // so to get the lower left and upper right corners to make a bounding box, we need to
+        // get the upper-left corners of the tiles directly below and to the right of this one.
+        let tileX = lng2Tile(clickEvent.latlng.lng, zoom);
+        let tileY = lat2Tile(clickEvent.latlng.lat, zoom);
+        if (tileX !== this.selectedTileX || tileY !== this.selectedTileY) {
+            this.selectedTileX = tileX;
+            this.selectedTileY = tileY;
+
+            let llLat = tile2Lat(tileY + 1, zoom);
+            let llLng = tile2Lng(tileX, zoom);
+            let urLat = tile2Lat(tileY, zoom);
+            let urLng = tile2Lng(tileX + 1, zoom);
+            let bboxString = `${llLng},${llLat},${urLng},${urLat}`;
+            this.selectingScenes = true;
+            this.projectService.getAllProjectScenes({
+                projectId: this.project.id,
+                bbox: bboxString
+            }).then((selectedScenes) => {
+                this.selectNoScenes();
+                selectedScenes.map((scene) => this.setSelected(scene, true));
+                this.selectingScenes = false;
+            });
+
+            // While the scene selection is in progress, put a highlight on the map so the user can
+            // see where they've clicked.
+            this.updateGridSelection(
+                L.latLng({lat: llLat, lng: llLng}),
+                L.latLng({lat: urLat, lng: urLng})
+            );
+        } else {
+            // We've clicked on the same square that was already selected; toggle
+            this.selectNoScenes();
+            this.clearGridHighlight();
+        }
     }
 
     /**
@@ -141,6 +196,13 @@ export default class ColorCorrectScenesController {
         this.selectedLayers.clear();
     }
 
+    clearGridHighlight() {
+        this.selectedTileX = null;
+        this.selectedTileY = null;
+        this.gridHighlight = null;
+        this.newGridSelection({highlight: this.gridHighlight});
+    }
+
     selectAllScenes() {
         this.sceneList.map((scene) => {
             this.selectedScenes.set(scene.id, scene);
@@ -168,5 +230,11 @@ export default class ColorCorrectScenesController {
 
     removeHoveredScene() {
         this.onSceneMouseleave();
+    }
+
+    updateGridSelection(swPoint, nePoint) {
+        let newGridHighlight = L.rectangle([swPoint, nePoint]);
+        this.gridHighlight = newGridHighlight;
+        this.newGridSelection({highlight: this.gridHighlight});
     }
 }

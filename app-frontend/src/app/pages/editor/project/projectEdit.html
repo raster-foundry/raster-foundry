@@ -13,6 +13,9 @@
     <rf-leaflet-map class="map-container"
                     footprint="$ctrl.hoveredScene.dataFootprint"
                     bypass-fit-bounds="true"
-                    layers="$ctrl.layers"></rf-leaflet-map>
+                    layers="$ctrl.layers"
+                    highlight="$ctrl.highlight"
+                    on-map-click="$ctrl.onMapClick(event)"
+                    on-view-change="$ctrl.onViewChange(newBounds, zoom)"></rf-leaflet-map>
   </div>
 </div>

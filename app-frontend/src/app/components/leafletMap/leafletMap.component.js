@@ -7,10 +7,12 @@ const leafletMap = {
     bindings: {
         static: '<?',
         footprint: '<?',
+        highlight: '<?',
         bypassFitBounds: '<?',
         grid: '<?',
         proposedBounds: '<?',
         onViewChange: '&',
+        onMapClick: '&',
         layers: '<?'
     }
 };

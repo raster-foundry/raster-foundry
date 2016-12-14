@@ -6,6 +6,9 @@
   layers="$ctrl.layers"
   on-layer-change="$ctrl.updateLayers({layers: layers})"
   on-scene-mouseover="$ctrl.setHoveredScene(scene)"
-  on-scene-mouseleave="$ctrl.removeHoveredScene()">
+  on-scene-mouseleave="$ctrl.removeHoveredScene()"
+  map-zoom="$ctrl.mapZoom"
+  click-event="$ctrl.clickEvent"
+  new-grid-selection="$ctrl.setHighlight(highlight)">
 </rf-color-correct-scenes>
 
