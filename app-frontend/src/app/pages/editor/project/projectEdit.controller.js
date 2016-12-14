@@ -35,9 +35,8 @@ export default class ProjectEditController {
 
     onViewChange(newBounds, zoom) {
         this.mapZoom = zoom;
-        this.$scope.$apply();
+        this.$scope.$evalAsync();
     }
-
     setHoveredScene(scene) {
         this.hoveredScene = scene;
     }
@@ -48,5 +47,37 @@ export default class ProjectEditController {
 
     setHighlight(highlight) {
         this.highlight = highlight;
+    }
+
+    applyCachedZOrder() {
+        if (this.cachedZIndices) {
+            for (const [id, l] of this.selectedLayers) {
+                l.tiles.setZIndex(this.cachedZIndices.get(id));
+            }
+        }
+    }
+
+    fitSelectedScenes() {
+        this.fitScenes(Array.from(this.selectedScenes.values()));
+    }
+
+    bringSelectedScenesToFront() {
+        this.cachedZIndices = new Map();
+        for (const [id, l] of this.selectedLayers) {
+            this.cachedZIndices.set(id, l.tiles.options.zIndex);
+            l.tiles.bringToFront();
+        }
+    }
+
+    fitAllScenes() {
+        if (this.sceneList.length) {
+            this.fitScenes(this.sceneList);
+        }
+    }
+
+    fitScenes(scenes) {
+        this.proposedBounds =
+            L.featureGroup(scenes.map(v => L.geoJSON(v.dataFootprint)))
+                .getBounds();
     }
 }
