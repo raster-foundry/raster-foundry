@@ -11,7 +11,12 @@
     <div ui-tree class="list-group">
       <div ui-tree-nodes="" ng-model="$ctrl.sceneList">
         <div ng-repeat="scene in $ctrl.sceneList track by scene.id" ui-tree-node>
-          <rf-scene-item scene="scene" draggable></rf-scene-item>
+          <rf-scene-item scene="scene"
+                         action-icon="'icon-pencil'"
+                         ng-mouseover="$ctrl.setHoveredScene(scene)"
+                         ng-mouseleave="$ctrl.removeHoveredScene()"
+                         ng-click="$ctrl.onSceneClick($event, scene)"
+                         draggable></rf-scene-item>
         </div>
       </div>
     </div>

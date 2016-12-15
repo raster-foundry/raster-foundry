@@ -7,6 +7,7 @@ import colorCorrectScenesStateTpl from
     './components/colorCorrectScenes/colorCorrectScenes.state.html';
 import colorCorrectPaneStateTpl from './components/colorCorrectPane/colorCorrectPane.state.html';
 import mosaicScenesStateTpl from './components/mosaicScenes/mosaicScenes.state.html';
+import mosaicMaskStateTpl from './components/mosaicMask/mosaicMask.state.html';
 import libraryTpl from './pages/library/library.html';
 import scenesTpl from './pages/library/scenes/scenes.html';
 import scenesListTpl from './pages/library/scenes/list/list.html';
@@ -60,7 +61,7 @@ function editorStates($stateProvider) {
             resolve: {
                 project: () => null
             },
-            template: '<rf-project-editor></rf-project-editor>',
+            template: '<rf-project-editor class="app-content"></rf-project-editor>',
             abstract: true
         })
         .state('editor.project.color', {
@@ -91,6 +92,13 @@ function editorStates($stateProvider) {
         .state('editor.project.mosaic.params', {
             url: '/params',
             template: '<rf-mosaic-params></rf-mosaic-params>'
+        })
+        .state('editor.project.mosaic.mask', {
+            url: '/mask/:sceneid',
+            params: {
+                scene: null
+            },
+            templateUrl: mosaicMaskStateTpl
         });
 }
 

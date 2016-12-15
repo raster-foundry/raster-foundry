@@ -1,5 +1,8 @@
-<rf-mosaic-scenes 
+<rf-mosaic-scenes
   class="flex-column"
-  scene-list="$ctrl.sceneList"
-  layers="$ctrl.layers">
+    scene-list="$ctrl.sceneList"
+    on-scene-select="$ctrl.onSceneMask(scene)"
+    layers="$ctrl.layers"
+    on-scene-mouseover="$ctrl.setHoveredScene(scene)"
+    on-scene-mouseleave="$ctrl.removeHoveredScene()">
 </rf-mosaic-scenes>

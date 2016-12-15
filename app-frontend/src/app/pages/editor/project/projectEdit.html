@@ -5,7 +5,7 @@
   </nav>
   <span class="navbar-vertical-divider"></span>
 </div>
-<div class="container column-stretch container-not-scrollable">
+<div class="container column-stretch container-not-scrollable with-header">
   <!-- Sidebar (container is in parent view) -->
   <div class="sidebar" ui-view></div>
   <!-- Map -->
@@ -16,6 +16,10 @@
                     layers="$ctrl.layers"
                     highlight="$ctrl.highlight"
                     on-map-click="$ctrl.onMapClick(event)"
-                    on-view-change="$ctrl.onViewChange(newBounds, zoom)"></rf-leaflet-map>
+                    allow-drawing="$ctrl.allowDrawing"
+                    drawn-polygons="$ctrl.drawnPolygons"
+                    map-extent="$ctrl.mapExtent"
+                    on-view-change="$ctrl.onViewChange(newBounds, zoom)">
+    </rf-leaflet-map>
   </div>
 </div>

@@ -9,6 +9,7 @@ export default class MosaicScenesController {
         this.layerService = layerService;
         this.$state = $state;
         this.$q = $q;
+        this.$log = $log;
     }
 
     $onInit() {
@@ -38,6 +39,8 @@ export default class MosaicScenesController {
         } else {
             this.populateSceneList();
         }
+
+        this.onSceneMouseleave();
     }
 
     // TODO: This and the ColorCorrectScenesController have nearly identical logic
@@ -68,5 +71,18 @@ export default class MosaicScenesController {
 
     layersFromScenes() {
         this.layers = this.sceneList.map((scene) => this.layerService.layerFromScene(scene));
+    }
+
+    onSceneClick($event, scene) {
+        $event.preventDefault();
+        this.$state.go('editor.project.mosaic.mask', {scene: scene, sceneid: scene.id});
+    }
+
+    setHoveredScene(scene) {
+        this.onSceneMouseover({scene: scene});
+    }
+
+    removeHoveredScene() {
+        this.onSceneMouseleave();
     }
 }

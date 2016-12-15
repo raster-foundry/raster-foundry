@@ -13,7 +13,10 @@ const leafletMap = {
         proposedBounds: '<?',
         onViewChange: '&',
         onMapClick: '&',
-        layers: '<?'
+        layers: '<?',
+        drawnPolygons: '=?',
+        allowDrawing: '<?',
+        mapExtent: '<?'
     }
 };
 

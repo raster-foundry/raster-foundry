@@ -15,4 +15,9 @@ export default class SceneItemController {
         this.onSelect({scene: this.scene, selected: !this.selectedStatus});
         event.stopPropagation();
     }
+
+    onAction(event) {
+        this.onAction({scene: this.scene});
+        event.stopPropagation();
+    }
 }

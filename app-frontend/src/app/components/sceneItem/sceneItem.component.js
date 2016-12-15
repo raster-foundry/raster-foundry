@@ -7,7 +7,9 @@ const rfSceneItem = {
     bindings: {
         scene: '<',
         selected: '&',
-        onSelect: '&'
+        onSelect: '&',
+        onAction: '&',
+        actionIcon: '<'
     }
 };
 

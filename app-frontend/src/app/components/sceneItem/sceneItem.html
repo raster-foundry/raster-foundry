@@ -25,5 +25,10 @@
                    'icon-cross': $ctrl.selectedStatus
                    }"></i>
     </button>
+    <button class="btn btn-square"
+            ng-click="$ctrl.onAction($event)"
+            ng-if="$ctrl.actionIcon">
+      <i ng-class="$ctrl.actionIcon"></i>
+    </button>
   </div>
 </div>

@@ -174,7 +174,6 @@ export default class BrowseController {
         this.loadingGrid = true;
         let params = Object.assign({zoom: zoom}, this.queryParams);
         delete params.id;
-        this.$log.debug('Querying grid with params:', params);
         this.gridService.query(
             params
         ).then(

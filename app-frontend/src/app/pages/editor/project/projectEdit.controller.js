@@ -1,7 +1,8 @@
 const Map = require('es6-map');
 
 export default class ProjectEditController {
-    constructor($scope // eslint-disable-line max-params
+    constructor( // eslint-disable-line max-params
+            $scope, $rootScope
     ) {
         'ngInject';
         this.selectedScenes = new Map();
@@ -15,6 +16,16 @@ export default class ProjectEditController {
         // we know what the map zoom initial zoom will be, which is fragile. This should be
         // replaced when we refactor the map.
         this.mapZoom = 2;
+
+        this.allowDrawing = false;
+        this.drawnPolygons = [];
+
+        $rootScope.$on('$stateChangeStart', (event, toState, toParams, fromState) => {
+            if (fromState.name === 'editor.project.mosaic.mask') {
+                this.allowDrawing = false;
+                this.drawnPolygons = [];
+            }
+        });
     }
 
     onMapClick(event) {
