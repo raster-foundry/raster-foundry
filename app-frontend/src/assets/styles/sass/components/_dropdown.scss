@@ -69,6 +69,37 @@
   }
 }
 
+// The dropdown menu (ul) light color theme
+.dropdown-menu.dropdown-menu-light {
+  background-color: white;
+  border: 1px solid $shade-light;
+
+  // Dividers (basically an hr) within the dropdown
+  .divider {
+    background-color: $shade-light;
+  }
+}
+
+// Hover/Focus state
+.dropdown-menu.dropdown-menu-light > li > a {
+  &:hover,
+  &:focus {
+    text-decoration: none;
+    color: $brand-primary;
+  }
+}
+
+// Active state
+.dropdown-menu.dropdown-menu-light > .active > a {
+  &,
+  &:hover,
+  &:focus {
+    color: $brand-primary;
+    text-decoration: none;
+    outline: 0;
+  }
+}
+
 // Disabled state
 //
 // Gray out text and ensure the hover/focus state remains gray
@@ -151,6 +182,33 @@
     // Will remove come v4 in all likelihood.
     .dropdown-menu-left {
       left: 0; right: auto;
+    }
+  }
+}
+
+/* 
+ * sidebar-dropdown which is generally seen in color correction UI
+ */
+.sidebar-dropdown {
+  .dropdown-toggle {
+    min-width: 100px;
+    text-align: left;
+
+    i {
+      float: right;
+    }
+  }
+
+  .dropdown-menu {
+    margin: -1px 0;
+    border-radius: 0 0 $border-radius-base $border-radius-base;
+    padding: 5px 0;
+
+    li a {
+      margin: 0;
+      padding: 5px 10px;
+      font-size: 13px;
+      font-weight: 400;
     }
   }
 }

@@ -36,7 +36,6 @@
 .sidebar-static {
   flex: none;
   position: relative;
-  overflow: hidden;
   border-bottom: 2px solid #ddd;
   padding: 1rem 1.5rem;
   display: flex;
@@ -58,7 +57,7 @@
   .sidebar-actions {
     margin-left: auto;
 
-    * {
+    > * {
       display: inline-block;
     }
 
@@ -119,7 +118,8 @@
   z-index: 1000;
 }
 
-.map-filters {
+.map-filters,
+.sidebar-dark {
   left: 40rem;
   margin-left: -2px;
   background: $shade-normal;
@@ -127,11 +127,12 @@
 
   .sidebar-static {
     background: $shade-dark;
-    border: none;
+    border-color: $shade-normal;
+  }
 
-    h5, p {
-      color: #fff;
-    }
+  h5, .h5,
+  p {
+    color: #fff;
   }
 }
 

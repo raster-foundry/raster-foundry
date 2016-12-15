@@ -23,68 +23,68 @@
 
 // Color helpers
 .color-primary {
-  color: $brand-primary;
+  color: $brand-primary !important;
 }
 
 .color-secondary {
-  color: $brand-secondary;
+  color: $brand-secondary !important;
 }
 
 .color-warning {
-  color: $warning;
+  color: $warning !important;
 }
 
 .color-danger {
-  color: $danger;
+  color: $danger !important;
 }
 
 .color-dark {
-  color: $shade-dark;
+  color: $shade-dark !important;
 }
 
 // background helpers
 .bg-primary {
-  background-color: $brand-primary;
+  background-color: $brand-primary !important;
 }
 
 .bg-secondary {
-  background-color: $brand-secondary;
+  background-color: $brand-secondary !important;
 }
 
 .bg-warning {
-  background-color: $warning;
+  background-color: $warning !important;
 }
 
 .bg-danger {
-  background-color: $danger;
+  background-color: $danger !important;
 }
 
 // link helpers
 .link-primary {
-  color: $brand-primary;
+  color: $brand-primary !important;
   &:hover {
-    color: darken($brand-primary, 5%);
+    color: darken($brand-primary, 5%) !important;
   }
 }
 
 .link-secondary {
-  color: $brand-secondary;
+  color: $brand-secondary !important;
   &:hover {
-    color: darken($brand-secondary, 5%);
+    color: darken($brand-secondary, 5%) !important;
   }
 }
 
 .link-warning {
-  color: $warning;
+  color: $warning !important;
   &:hover {
-    color: darken($warning, 5%);
+    color: darken($warning, 5%) !important;
   }
 }
 
 .link-danger {
-  color: $danger;
+  color: $danger !important;
   &:hover {
-    color: darken($danger, 5%);
+    color: darken($danger, 5%) !important;
   }
 }
 
@@ -108,4 +108,10 @@
   overflow: hidden;
   clip: rect(0,0,0,0);
   border: 0;
+}
+
+// Flexbox helpers
+.flex-column {
+  display: flex;
+  flex-direction: column;
 }

@@ -1,0 +1,34 @@
+/* 
+ * Color Correction image list sidebar
+ */
+
+// Adjust the dropdown menu of the color corrections 
+// action so it is flush right with the .btn-group
+.cc-actions .dropdown-menu {
+  right: 0;
+}
+
+/* 
+ * Color Correction filter sidebar
+ */
+.color-correct-pane {
+
+  .content {
+    padding-top: 1rem;
+  }
+
+  .filter {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+}
+
+/* 
+ * Histogram
+ * for color correction
+ */
+.histogram {
+  position: relative;
+  display: block;
+  padding: 1rem 2rem 0;
+}
