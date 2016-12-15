@@ -35,7 +35,7 @@
       </span>
     </div>
     <div class="list-group text-center"
-         ng-show="!$ctrl.loading && $ctrl.lastSceneResult && $ctrl.lastSceneResult.count !== 0 && !$ctrl.errorMsg">
+         ng-show="!$ctrl.loading && $ctrl.lastSceneResult && $ctrl.lastSceneResult.count > $ctrl.lastSceneResult.pageSize && !$ctrl.errorMsg">
       <ul uib-pagination
           items-per-page="$ctrl.lastSceneResult.pageSize"
           total-items="$ctrl.lastSceneResult.count"
