@@ -10,6 +10,7 @@ export default class ChannelHistogramController {
                 showLegend: false,
                 showXAxis: false,
                 showYAxis: false,
+                interactive: false,
                 margin: {
                     top: 0,
                     right: 0,
