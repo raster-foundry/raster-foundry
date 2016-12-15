@@ -5,7 +5,9 @@ const mosaicScenes = {
     controller: 'MosaicScenesController',
     bindings: {
         sceneList: '=',
-        layers: '='
+        layers: '=',
+        onSceneMouseover: '&',
+        onSceneMouseleave: '&'
     }
 };
 

@@ -1,4 +1,7 @@
 // LeafletMap controller class
+function calculateArea(layer) {
+    return L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]) / 1000000;
+}
 export default class LeafletMapController {
     constructor($log, $timeout, $element, $scope) {
         'ngInject';
@@ -10,6 +13,13 @@ export default class LeafletMapController {
 
         this.initMap();
         this.initLayers();
+
+        this.$scope.$watchCollection('$ctrl.drawnPolygons', this.onDrawnPolygonsChange.bind(this));
+        this.$scope.$watchCollection('$ctrl.mapExtent', (mapExtent) => {
+            if (mapExtent) {
+                this.map.fitBounds(mapExtent);
+            }
+        });
     }
 
     $onInit() {
@@ -60,6 +70,27 @@ export default class LeafletMapController {
                 changes.highlight.currentValue.addTo(this.map);
             }
         }
+        if (changes.allowDrawing && typeof changes.allowDrawing.currentValue !== 'undefined') {
+            if (changes.allowDrawing.currentValue) {
+                this.drawControl.addTo(this.map);
+            } else {
+                this.drawControl.remove();
+                // this.drawLayer.clearLayers();
+            }
+        }
+
+        if (changes.mapExtent && changes.mapExtent.currentValue) {
+            this.map.fitBounds(changes.mapExtent.currentValue);
+        }
+    }
+
+    onDrawnPolygonsChange(polygons) {
+        this.drawLayer.clearLayers();
+        if (polygons && polygons.length) {
+            for (const polygon of polygons) {
+                this.drawLayer.addData(polygon);
+            }
+        }
     }
 
     initLayers() {
@@ -78,11 +109,99 @@ export default class LeafletMapController {
             }
         }).addTo(this.map);
         this.highlightLayer = L.geoJSON().addTo(this.map);
+        this.drawLayer = L.geoJSON(null, {
+            style: () => {
+                return {
+                    dashArray: '10, 10',
+                    weight: 2,
+                    fillOpacity: 0.2
+                };
+            }
+        }).addTo(this.map);
+
+        let drawCtlOptions = {
+            position: 'topleft',
+            draw: {
+                polyline: false,
+                marker: false,
+                circle: false,
+                rectangle: {
+                    shapeOptions: {
+                        dashArray: '10, 10',
+                        weight: 2,
+                        fillOpacity: 0.2
+                    }
+                },
+                polygon: {
+                    finish: false,
+                    allowIntersection: false,
+                    drawError: {
+                        color: '#e1e100',
+                        message: 'Invalid mask polygon'
+                    },
+                    shapeOptions: {
+                        dashArray: '10, 10',
+                        weight: 2,
+                        fillOpacity: 0.2
+                    }
+                }
+            },
+            edit: {
+                featureGroup: this.drawLayer,
+                remove: true
+            }
+        };
+        this.drawControl = new L.Control.Draw(drawCtlOptions);
+        if (this.allowDrawing) {
+            this.map.addControl(this.drawControl);
+        }
+        this.map.on(L.Draw.Event.CREATED, (e) => {
+            let geoJson = e.layer.toGeoJSON();
+            geoJson.properties.area = calculateArea(e.layer);
+            // TODO : remove this later - It's just to uniquely identify polygons for now
+            // We will want to use the UUID for the polygon we get from our endpoint request
+            geoJson.properties.createdAt = new Date();
+            this.drawnPolygons.push(geoJson);
+            this.onDrawnPolygonsChange(this.drawnPolygons);
+            this.$scope.$apply();
+        });
+
+        this.map.on(L.Draw.Event.EDITED, (e) => {
+            Object.values(
+                e.layers._layers // eslint-disable-line no-underscore-dangle
+            ).forEach((layer) => {
+                let newPolygon = layer.toGeoJSON();
+                let oldPolygonIndex = this.drawnPolygons.findIndex(
+                    (polygon) => polygon.properties.area === newPolygon.properties.area
+                );
+                newPolygon.properties.area = calculateArea(layer);
+                this.drawnPolygons.splice(oldPolygonIndex, 1);
+                this.drawnPolygons.push(newPolygon);
+            });
+            this.onDrawnPolygonsChange(this.drawnPolygons);
+            this.$scope.$apply();
+        });
+
+        this.map.on(L.Draw.Event.DELETED, (e) => {
+            Object.values(
+                e.layers._layers // eslint-disable-line no-underscore-dangle
+            ).forEach((layer) => {
+                let area = layer.feature.properties.area;
+                let polygonIndex = this.drawnPolygons.findIndex(
+                    (polygon) => polygon.properties.area === area
+                );
+                this.drawnPolygons.splice(polygonIndex, 1);
+            });
+            this.onDrawnPolygonsChange(this.drawnPolygons);
+            this.$scope.$apply();
+        });
     }
 
     initMap() {
         this.map = L.map(this.$element[0].children[0], {
             zoomControl: false,
+            worldCopyJump: true,
+            minZoom: 2,
             scrollWheelZoom: !this.static,
             doubleClickZoom: !this.static,
             dragging: !this.static,
