@@ -11,7 +11,7 @@ import com.azavea.rf.auth.Authentication
 import com.azavea.rf.database.tables.Scenes
 import com.azavea.rf.database.Database
 import com.azavea.rf.database._
-import com.azavea.rf.utils.{UserErrorHandler, Aggregation}
+import com.azavea.rf.utils.UserErrorHandler
 import com.typesafe.scalalogging.LazyLogging
 
 trait GridRoutes extends Authentication

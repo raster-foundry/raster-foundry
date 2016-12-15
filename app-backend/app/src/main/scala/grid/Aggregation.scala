@@ -1,4 +1,4 @@
-package com.azavea.rf.utils
+package com.azavea.rf.grid
 
 import geotrellis.proj4._
 import geotrellis.slick.{Projected}

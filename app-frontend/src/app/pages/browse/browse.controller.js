@@ -163,10 +163,10 @@ export default class BrowseController {
     }
 
     loadGrid(bbox, zoom) {
-        if (!zoom) {
+        if (!zoom || !bbox || !this.authService.isLoggedIn) {
             return;
         }
-        if (this.loadingGrid) {
+        if (this.loadingGrid && !_.isEqual(this.lastQueryParams, this.queryParams)) {
             this.pendingGridRequest = true;
             this.zoom = zoom;
             return;
@@ -174,7 +174,7 @@ export default class BrowseController {
         this.loadingGrid = true;
         let params = Object.assign({zoom: zoom}, this.queryParams);
         delete params.id;
-        this.$log.log('Querying grid with params:', params);
+        this.$log.debug('Querying grid with params:', params);
         this.gridService.query(
             params
         ).then(
