@@ -17,6 +17,7 @@ export default class ChannelHistogramController {
                     bottom: 0,
                     left: 0
                 },
+                height: 100,
                 xAxis: {
                     showLabel: false
                 },

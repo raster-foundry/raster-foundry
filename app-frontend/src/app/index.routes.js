@@ -65,7 +65,7 @@ function editorStates($stateProvider) {
         })
         .state('editor.project.color', {
             url: '/color-correct',
-            template: '<ui-view></ui-view>',
+            template: '<ui-view class="flex-column"></ui-view>',
             abstract: true
         })
         .state('editor.project.color.scenes', {
@@ -81,7 +81,7 @@ function editorStates($stateProvider) {
         })
         .state('editor.project.mosaic', {
             url: '/mosaic',
-            template: '<ui-view></ui-view>',
+            template: '<ui-view class="flex-column"></ui-view>',
             abstract: true
         })
         .state('editor.project.mosaic.scenes', {

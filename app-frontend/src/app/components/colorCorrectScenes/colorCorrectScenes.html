@@ -1,39 +1,41 @@
-<div class="scene-list-pane">
+<div class="flex-column">
   <!-- scene listing -->
   <div class="sidebar-static">
-      <div class="btn-group" uib-dropdown dropdown-append-to-body>
-        <a href uib-dropdown-toggle>
+      <div class="btn-group sidebar-dropdown" uib-dropdown>
+        <a href class="btn btn-small" uib-dropdown-toggle>
           Color mode <i class="icon-caret-down"></i>
         </a>
-        <ul class="dropdown-menu" uib-dropdown-menu role="menu">
-          <li role="menuitem" ng-click="$ctrl.setBands('natural')">Natural color</li>
-          <li role="menuitem" ng-click="$ctrl.setBands('cir')">Color Infrared</li>
-          <li role="menuitem" ng-click="$ctrl.setBands('urban')">Urban</li>
-          <li role="menuitem" ng-click="$ctrl.setBands('water')">Water</li>
-          <li role="menuitem" ng-click="$ctrl.setBands('atmosphere')">Atmosphere Penetration</li>
-          <li role="menuitem" ng-click="$ctrl.setBands('agriculture')">Agriculture</li>
-          <li role="menuitem" ng-click="$ctrl.setBands('forestfire')">Forest Fire</li>
-          <li role="menuitem" ng-click="$ctrl.setBands('bareearth')">Bare Earth Change Detection</li>
-          <li role="menuitem" ng-click="$ctrl.setBands('vegwater')">Vegetation & Water</li>
+        <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+          <li role="menuitem"><a href ng-click="$ctrl.setBands('natural')">Natural color</a></li>
+          <li role="menuitem"><a href ng-click="$ctrl.setBands('cir')">Color infrared</a></li>
+          <li role="menuitem"><a href ng-click="$ctrl.setBands('urban')">Urban</a></li>
+          <li role="menuitem"><a href ng-click="$ctrl.setBands('water')">Water</a></li>
+          <li role="menuitem"><a href ng-click="$ctrl.setBands('atmosphere')">Atmosphere penetration</a></li>
+          <li role="menuitem"><a href ng-click="$ctrl.setBands('agriculture')">Agriculture</a></li>
+          <li role="menuitem"><a href ng-click="$ctrl.setBands('forestfire')">Forest fire</a></li>
+          <li role="menuitem"><a href ng-click="$ctrl.setBands('bareearth')">Bare Earth change detection</a></li>
+          <li role="menuitem"><a href ng-click="$ctrl.setBands('vegwater')">Vegetation & water</a></li>
         </ul>
       </div>
-      <div class="btn-group" uib-dropdown dropdown-append-to-body>
-        <a href uib-dropdown-toggle>
-          Action <i class="icon-caret-down"></i>
-        </a>
-        <ul class="dropdown-menu" uib-dropdown-menu role="menu">
-          <li role="menuitem"><i class="icon-load"></i> Sync histogram</li>
-          <li role="menuitem"><i class="icon-arrows-cw"></i> Reset changes</li>
-          <li role="menuitem"><i class="icon-trash"></i> Delete</li>
-        </ul>
-        <button ng-disabled="$ctrl.selectedScenes.size === 0" ng-click="$ctrl.$state.go('editor.project.color.adjust')" class="btn">Color Correct</button>
+      <div class="sidebar-actions">
+        <div class="btn-group sidebar-dropdown cc-actions" uib-dropdown>
+          <a href class="btn btn-small" uib-dropdown-toggle>
+            Action <i class="icon-caret-down"></i>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+            <li role="menuitem"><a ng-disabled="$ctrl.selectedScenes.size === 0" ng-click="$ctrl.$state.go('editor.project.color.adjust')">Color correct</a></li>
+            <li role="menuitem"><a href="#"><i class="icon-load"></i> Sync histogram</a></li>
+            <li role="menuitem"><a href="#"><i class="icon-arrows-cw"></i> Reset changes</a></li>
+            <li role="menuitem"><a href="#" class="color-danger"><i class="icon-trash"></i> Delete</a></li>
+          </ul>
+          <button class="btn btn-small"
+                  ng-class="{'btn-secondary': !$ctrl.shouldSelectAll()}"
+                  ng-click="$ctrl.onToggleSelection()">
+            <i ng-class="{'icon-plus': $ctrl.shouldSelectAll(),
+                          'icon-cross': !$ctrl.shouldSelectAll()}"></i>
+          </button>
+        </div>
       </div>
-      <button class="btn btn-square"
-              ng-class="{'btn-secondary': !$ctrl.shouldSelectAll()}"
-              ng-click="$ctrl.onToggleSelection()">
-        <i ng-class="{'icon-plus': $ctrl.shouldSelectAll(),
-                      'icon-cross': !$ctrl.shouldSelectAll()}"></i>
-      </button>
   </div>
   <div class="sidebar-scrollable">
     <div class="list-group">

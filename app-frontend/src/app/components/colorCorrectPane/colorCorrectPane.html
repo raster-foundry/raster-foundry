@@ -1,6 +1,13 @@
 <div class="color-correct-pane">
+  <div class="sidebar-static">
+    <a href ng-click="$ctrl.resetCorrection()" class="link-histogram-reset">Reset Changes</a>
+    <div class="sidebar-actions">
+      <a href class="btn btn-default btn-small" ng-click="$ctrl.$state.go('^.scenes')">Back</a>
+    </div>
+  </div>
   <div ng-show="!$ctrl.errorLoadingHistogram" class="sidebar-static histogram">
     <rf-channel-histogram data="$ctrl.data"></rf-channel-histogram>
+    <a ng-click="" class="btn btn-link btn-block">Make source histogram</a>
   </div>
   <div ng-show="$ctrl.errorLoadingHistogram" class="sidebar-static">
     Error loading histogram
@@ -12,12 +19,5 @@
         reset="$ctrl.resetToggle"
         class="color-correct-panel">
     </rf-color-correct-adjust>
-  </div>
-  <div class="sidebar-static">
-    <a href ng-click="$ctrl.$state.go('^.scenes')">Back</a>
-    <div class="sidebar-actions">
-      <a href ng-click="$ctrl.resetCorrection()">Reset</a>
-      <a href ng-click="$ctrl.applyColors()">Apply changes</a>
-    </div>
   </div>
 </div>

@@ -43,7 +43,12 @@
 }
 
 $navbar-height: 8rem;
+$navbar-secondary-height: 6rem;
 
 .container-not-scrollable {
   height: calc(100vh - #{$navbar-height});
+
+  .secondary-navbar ~ & {
+    height: calc(100vh - #{$navbar-height + $navbar-secondary-height});    
+  }
 }

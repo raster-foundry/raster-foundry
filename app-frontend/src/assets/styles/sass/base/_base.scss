@@ -22,6 +22,16 @@ a {
 
   &:hover {
     color: $brand-primary;
+    cursor: pointer;
+  }
+
+  &:disabled, &.disabled, &[disabled] {
+    opacity: .5;
+    cursor: not-allowed;
+
+    &:hover {
+      color: $shade-light;
+    }
   }
 }
 

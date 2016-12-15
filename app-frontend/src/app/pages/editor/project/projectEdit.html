@@ -5,9 +5,9 @@
   </nav>
   <span class="navbar-vertical-divider"></span>
 </div>
-<div class="container column-stretch">
+<div class="container column-stretch container-not-scrollable">
   <!-- Sidebar (container is in parent view) -->
-  <ui-view class="sidebar"></ui-view>
+  <div class="sidebar" ui-view></div>
   <!-- Map -->
   <div class="main">
     <rf-leaflet-map class="map-container"
