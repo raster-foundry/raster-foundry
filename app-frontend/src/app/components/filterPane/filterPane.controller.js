@@ -1,9 +1,11 @@
 import _ from 'lodash';
+
 export default class FilterPaneController {
     constructor() {
         'ngInject';
 
         this.toggleDrag = {toggle: false, enabled: false};
+        this.filters = {};
         this.initFilters();
     }
 
