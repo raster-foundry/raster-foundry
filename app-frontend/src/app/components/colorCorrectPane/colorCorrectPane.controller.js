@@ -1,9 +1,8 @@
 export default class ColorCorrectPaneController {
     constructor( // eslint-disable-line max-params
-        $http, $log, $scope, $q, projectService, $state
+        $log, $scope, $q, projectService, $state
     ) {
         'ngInject';
-        this.$http = $http;
         this.bucketService = projectService;
         this.$state = $state;
         this.$q = $q;
@@ -19,7 +18,7 @@ export default class ColorCorrectPaneController {
         // Initialize correction to first selected layer (if there are multiple)
         this.firstLayer = this.selectedLayers.values().next().value;
         this.correction = this.firstLayer.baseColorCorrection();
-        this.fetchHistogramData();
+        this.updateHistogram();
     }
 
     resetCorrection() {
@@ -43,12 +42,12 @@ export default class ColorCorrectPaneController {
             for (let layer of this.selectedLayers.values()) {
                 layer.colorCorrect(this.correction);
             }
-            this.fetchHistogramData();
+            this.updateHistogram();
         }
     }
 
-    fetchHistogramData() {
-        this.$http.get(this.firstLayer.getHistogramURL()).then(
+    updateHistogram() {
+        this.firstLayer.fetchHistogramData().then(
             (resp) => {
                 this.errorLoadingHistogram = false;
                 this.data = this.generateHistogramData(resp.data);

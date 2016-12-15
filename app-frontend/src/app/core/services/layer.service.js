@@ -21,16 +21,18 @@ export default (app) => {
 
         /**
          * Creates a layer from a scene -- this may need to be expanded
+         * @param {object} $http injected angular $http service
          * @param {object} scene response from the API
          * @param {boolean} gammaCorrect flag to enable gamma correction
          * @param {boolean} sigmoidCorrect flag to enable sigmoidal correction
          * @param {boolean} colorClipCorrect flag to enable color clipping
          * @param {object} bands keys = band type, values = band number
          */
-        constructor(
-            scene, gammaCorrect = true, sigmoidCorrect = false,
+        constructor( // eslint-disable-line max-params
+            $http, scene, gammaCorrect = true, sigmoidCorrect = false,
             colorClipCorrect = true, bands = {red: 3, green: 2, blue: 1}
         ) {
+            this.$http = $http;
             this.scene = scene;
             this.gammaCorrect = gammaCorrect;
             this.sigmoidCorrect = sigmoidCorrect;
@@ -67,7 +69,7 @@ export default (app) => {
         }
 
         /**
-         * Helper function to return histogram data for a tile layer
+         * Helper function to return histogram endpoint url for a tile layer
          * @returns {string} URL for the histogram
          */
         getHistogramURL() {
@@ -76,6 +78,14 @@ export default (app) => {
             let userId = this.scene.createdBy.replace('|', '_');
             return `/tiles/${organizationId}/` +
                 `${userId}/${this.scene.id}/rgb/histogram/?${this.formatColorParams()}`;
+        }
+
+        /**
+         * Helper function to fetch histogram data for a tile layer
+         * @returns {Promise} which should be resolved with an array
+         */
+        fetchHistogramData() {
+            return this.$http.get(this.getHistogramURL());
         }
 
         /**
@@ -147,14 +157,17 @@ export default (app) => {
     }
 
     class LayerService {
-
+        constructor($http) {
+            'ngInject';
+            this.$http = $http;
+        }
         /**
          * Constructor for layer via a service
          * @param {object} scene resource returned via API
          * @returns {Layer} layer created
          */
         layerFromScene(scene) {
-            return new Layer(scene);
+            return new Layer(this.$http, scene);
         }
     }
 
