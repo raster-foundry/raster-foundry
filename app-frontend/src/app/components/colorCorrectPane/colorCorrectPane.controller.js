@@ -1,8 +1,9 @@
 export default class ColorCorrectPaneController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, $q, projectService, $state
+        $http, $log, $scope, $q, projectService, $state
     ) {
         'ngInject';
+        this.$http = $http;
         this.bucketService = projectService;
         this.$state = $state;
         this.$q = $q;
@@ -16,37 +17,9 @@ export default class ColorCorrectPaneController {
             return;
         }
         // Initialize correction to first selected layer (if there are multiple)
-        this.correction = this.selectedLayers.values().next().value.baseColorCorrection();
-
-        // Fake data for our histogram; this will get replaced by a service call later.
-        this.red = [];
-        this.green = [];
-        this.blue = [];
-        for (let i of [0, 100, 200, 300, 400]) {
-            this.red.push({x: i, y: i});
-            this.green.push({x: i, y: 400 - i});
-            this.blue.push({x: i, y: i / 2.0});
-        }
-        this.data = [
-            {
-                values: this.red,
-                key: 'Red channel',
-                color: '#bb0000',
-                area: true
-            },
-            {
-                values: this.green,
-                key: 'Green channel',
-                color: '#00bb00',
-                area: true
-            },
-            {
-                values: this.blue,
-                key: 'Blue channel',
-                color: '#0000dd',
-                area: true
-            }
-        ];
+        this.firstLayer = this.selectedLayers.values().next().value;
+        this.correction = this.firstLayer.baseColorCorrection();
+        this.fetchHistogramData();
     }
 
     resetCorrection() {
@@ -65,9 +38,46 @@ export default class ColorCorrectPaneController {
      * @returns {null} null
      */
     onCorrectionChange(newCorrection) {
-        this.correction = newCorrection;
-        for (let layer of this.selectedLayers.values()) {
-            layer.colorCorrect(this.correction);
+        if (newCorrection) {
+            this.correction = newCorrection;
+            for (let layer of this.selectedLayers.values()) {
+                layer.colorCorrect(this.correction);
+            }
+            this.fetchHistogramData();
         }
+    }
+
+    fetchHistogramData() {
+        this.$http.get(this.firstLayer.getHistogramURL()).then(
+            (resp) => {
+                this.errorLoadingHistogram = false;
+                this.data = this.generateHistogramData(resp.data);
+            }
+        ).catch(() => {
+            this.errorLoadingHistogram = true;
+        });
+    }
+
+    generateHistogramData(data) {
+        return [
+            {
+                values: data[0].map(([x, y]) => ({x, y})),
+                key: 'Red channel',
+                color: '#bb0000',
+                area: true
+            },
+            {
+                values: data[1].map(([x, y]) => ({x, y})),
+                key: 'Green channel',
+                color: '#00bb00',
+                area: true
+            },
+            {
+                values: data[2].map(([x, y]) => ({x, y})),
+                key: 'Blue channel',
+                color: '#0000dd',
+                area: true
+            }
+        ];
     }
 }
