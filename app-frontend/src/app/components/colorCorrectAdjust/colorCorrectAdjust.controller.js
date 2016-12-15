@@ -56,7 +56,7 @@ export default class ColorCorrectAdjustController {
     }
 
     $onChanges(changesObj) {
-        if ('correction' in changesObj) {
+        if ('correction' in changesObj && 'currentValue' in changesObj.correction) {
             this.myCorrection = Object.assign({}, changesObj.correction.currentValue);
         }
     }

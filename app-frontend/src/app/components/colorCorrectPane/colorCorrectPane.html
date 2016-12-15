@@ -1,9 +1,9 @@
 <div class="color-correct-pane">
-  <div class="sidebar-static histogram">
+  <div ng-show="!$ctrl.errorLoadingHistogram" class="sidebar-static histogram">
     <rf-channel-histogram data="$ctrl.data"></rf-channel-histogram>
-    <div>
-      <a ng-click="">Make source histogram</a>
-    </div>
+  </div>
+  <div ng-show="$ctrl.errorLoadingHistogram" class="sidebar-static">
+    Error loading histogram
   </div>
   <div class="sidebar-scrollable">
     <rf-color-correct-adjust

@@ -31,7 +31,7 @@ export default class ChannelHistogramController {
     }
 
     $onChanges(changesObj) {
-        if ('data' in changesObj) {
+        if ('data' in changesObj && 'currentValue' in changesObj.data) {
             this.histData = Array.from(changesObj.data.currentValue);
         }
     }

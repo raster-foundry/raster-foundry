@@ -67,6 +67,18 @@ export default (app) => {
         }
 
         /**
+         * Helper function to return histogram data for a tile layer
+         * @returns {string} URL for the histogram
+         */
+        getHistogramURL() {
+            let organizationId = this.scene.organizationId;
+            // TODO: replace this once user IDs are URL safe ISSUE: 766
+            let userId = this.scene.createdBy.replace('|', '_');
+            return `/tiles/${organizationId}/` +
+                `${userId}/${this.scene.id}/rgb/histogram/?${this.formatColorParams()}`;
+        }
+
+        /**
          * Helper function to add bands to query string for tile layer
          * @returns {string} formatted query string for bands in tile layer
          */
@@ -96,26 +108,27 @@ export default (app) => {
 
         formatColorParams() {
             let colorCorrectParams = '';
-
-            if (this.gammaCorrect) {
+            if (this.colorCorrection) {
+                if (this.gammaCorrect) {
+                    colorCorrectParams = `${colorCorrectParams}` +
+                        `&redGamma=${this.colorCorrection.red}` +
+                        `&greenGamma=${this.colorCorrection.green}` +
+                        `&blueGamma=${this.colorCorrection.blue}`;
+                }
+                if (this.sigmoidCorrect) {
+                    colorCorrectParams = `${colorCorrectParams}` +
+                        `&alpha=${this.colorCorrection.alpha}` +
+                        `&beta=${this.colorCorrection.beta}`;
+                }
+                if (this.colorClipCorrect) {
+                    colorCorrectParams = `${colorCorrectParams}`
+                        + `&min=${this.colorCorrection.min}`
+                        + `&max=${this.colorCorrection.max}`;
+                }
                 colorCorrectParams = `${colorCorrectParams}` +
-                    `&redGamma=${this.colorCorrection.red}` +
-                    `&greenGamma=${this.colorCorrection.green}` +
-                    `&blueGamma=${this.colorCorrection.blue}`;
+                    `&brightness=${this.colorCorrection.brightness}` +
+                    `&contrast=${this.colorCorrection.contrast}`;
             }
-            if (this.sigmoidCorrect) {
-                colorCorrectParams = `${colorCorrectParams}` +
-                    `&alpha=${this.colorCorrection.alpha}` +
-                    `&beta=${this.colorCorrection.beta}`;
-            }
-            if (this.colorClipCorrect) {
-                colorCorrectParams = `${colorCorrectParams}`
-                    + `&min=${this.colorCorrection.min}`
-                    + `&max=${this.colorCorrection.max}`;
-            }
-            colorCorrectParams = `${colorCorrectParams}` +
-                `&brightness=${this.colorCorrection.brightness}` +
-                `&contrast=${this.colorCorrection.contrast}`;
             return colorCorrectParams;
         }
 
