@@ -34,9 +34,13 @@ trait ExtendedPostgresDriver extends ExPostgresDriver
       with PostGISProjectionImplicits
       with PostGISProjectionAssistants {
 
+    implicit def strListTypeMapper = new SimpleArrayJdbcType[String]("text").to(_.toList)
+
     implicit val metadataMapper = MappedJdbcType.base[Map[String, Any], JsValue](_.toJson,
       _.convertTo[Map[String, Any]])
-    implicit def strListTypeMapper = new SimpleArrayJdbcType[String]("text").to(_.toList)
+
+    implicit val mosaicDefinitionMapper = MappedJdbcType.base[MosaicDefinition, JsValue](_.toJson,
+      _.convertTo[MosaicDefinition])
 
     implicit val userRoleTypeMapper = createEnumJdbcType[User.Role]("UserRole", _.repr,
       User.Role.fromString, quoteName = false)

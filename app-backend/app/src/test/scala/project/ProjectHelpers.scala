@@ -21,11 +21,11 @@ trait ProjectSpecHelper {
     publicOrgId, "Test Two", "This is the second test project", Visibility.Public, List("testing")
   )
 
-  val newScene = Scene.Create(
+  def newScene(name: String) = Scene.Create(
     None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), "TEST_ORG",
     Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any], None,
     Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
-    JobStatus.Processing, JobStatus.Processing, JobStatus.Processing, None, None, "test scene project",
+    JobStatus.Processing, JobStatus.Processing, JobStatus.Processing, None, None, name,
     None, None, List.empty[String], List.empty[Image.Banded], List.empty[Thumbnail.Identified]
   )
 

@@ -48,7 +48,17 @@ class ProjectSceneSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          newScene.toJson.toString()
+          newScene("first test scene").toJson.toString()
+        )
+      ) ~> baseRoutes ~> check {
+        responseAs[Scene.WithRelated]
+      }
+
+      Post("/api/scenes/").withHeadersAndEntity(
+        List(authHeader),
+        HttpEntity(
+          ContentTypes.`application/json`,
+          newScene("second test scene").toJson.toString()
         )
       ) ~> baseRoutes ~> check {
         responseAs[Scene.WithRelated]
@@ -82,7 +92,7 @@ class ProjectSceneSpec extends WordSpec
           List(authHeader)
         ) ~> baseRoutes ~> check {
           val scenes = responseAs[PaginatedResponse[Scene.WithRelated]]
-          val sceneId = scenes.results.head.id
+          val sceneId = scenes.results(0).id
 
           Post(s"/api/projects/${projectId}/scenes/").withHeadersAndEntity(
             List(authHeader),
@@ -111,6 +121,48 @@ class ProjectSceneSpec extends WordSpec
       }
     }
 
+    "be able to attach a second scene to project via post" in {
+      // Get projects to get ID
+      Get("/api/projects/").withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
+        val projects = responseAs[PaginatedResponse[Project]]
+        val projectId = projects.results.head.id
+
+        // Get scenes to get ID
+        Get("/api/scenes/").withHeaders(
+          List(authHeader)
+        ) ~> baseRoutes ~> check {
+          val scenes = responseAs[PaginatedResponse[Scene.WithRelated]]
+          val sceneId = scenes.results(1).id
+
+          Post(s"/api/projects/${projectId}/scenes/").withHeadersAndEntity(
+            List(authHeader),
+            HttpEntity(
+              ContentTypes.`application/json`,
+              List(sceneId).toJson.toString()
+            )
+          ) ~> baseRoutes ~> check {
+            status shouldEqual StatusCodes.OK
+          }
+        }
+      }
+    }
+
+    "have two scenes attached to project" in {
+      Get("/api/projects/").withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
+        val projects = responseAs[PaginatedResponse[Project]]
+        val projectId = projects.results.head.id
+        Get(s"/api/projects/${projectId}/scenes/").withHeaders(
+          List(authHeader)
+        ) ~> baseRoutes ~> check {
+          responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 2
+        }
+      }
+    }
+
     "be able to apply filters for scenes on project" in {
       Get("/api/projects/").withHeaders(
         List(authHeader)
@@ -121,6 +173,43 @@ class ProjectSceneSpec extends WordSpec
           List(authHeader)
         ) ~> baseRoutes ~> check {
           responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 0
+        }
+      }
+    }
+
+    "be able apply a user defined ordering for scenes on project" in {
+      // Get projects to get ID
+      Get("/api/projects/").withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
+        val projects = responseAs[PaginatedResponse[Project]]
+        val projectId = projects.results.head.id
+
+        // Get scenes to get ID
+        Get(s"/api/projects/${projectId}/scenes/ordered/").withHeaders(
+          List(authHeader)
+        ) ~> baseRoutes ~> check {
+          val sceneIds1 = responseAs[Seq[java.util.UUID]]
+
+          Post(s"/api/projects/${projectId}/scenes/ordered").withHeadersAndEntity(
+            List(authHeader),
+            HttpEntity(
+              ContentTypes.`application/json`,
+              sceneIds1.reverse.toJson.toString()
+            )
+          ) ~> baseRoutes ~> check {
+            status shouldEqual StatusCodes.OK
+
+            Get(s"/api/projects/${projectId}/scenes/ordered/").withHeaders(
+              List(authHeader)
+            ) ~> baseRoutes ~> check {
+              val sceneIds2 = responseAs[Seq[java.util.UUID]]
+              println(s"IDs here: $sceneIds1, $sceneIds2")
+
+              sceneIds1(0) shouldEqual sceneIds2(1)
+              sceneIds1(1) shouldEqual sceneIds2(0)
+            }
+          }
         }
       }
     }
@@ -152,7 +241,7 @@ class ProjectSceneSpec extends WordSpec
       }
     }
 
-    "not have a scene attached to project after delete" in {
+    "not have two scenes attached to project after deleting one" in {
       Get("/api/projects/").withHeaders(
         List(authHeader)
       ) ~> baseRoutes ~> check {
@@ -161,7 +250,7 @@ class ProjectSceneSpec extends WordSpec
         Get(s"/api/projects/${projectId}/scenes/").withHeaders(
           List(authHeader)
         ) ~> baseRoutes ~> check {
-          responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 0
+          responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 1
         }
       }
     }

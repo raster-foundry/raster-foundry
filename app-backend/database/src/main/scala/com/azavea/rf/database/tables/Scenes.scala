@@ -6,15 +6,16 @@ import com.azavea.rf.database.sort._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.datamodel._
-import java.util.UUID
-import java.sql.Timestamp
 
 import geotrellis.slick.Projected
 import geotrellis.vector.{Geometry, Point, Polygon, Extent}
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 import com.typesafe.scalalogging.LazyLogging
 import com.lonelyplanet.akka.http.extensions.PageRequest
+
+import java.util.UUID
+import java.sql.Timestamp
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 
 /** Table description of table scenes. Objects of this class serve as prototypes for rows in queries. */

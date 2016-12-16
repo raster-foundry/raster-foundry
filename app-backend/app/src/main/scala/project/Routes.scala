@@ -9,7 +9,7 @@ import akka.http.scaladsl.model.StatusCodes
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 
 import com.azavea.rf.auth.Authentication
-import com.azavea.rf.database.tables.Projects
+import com.azavea.rf.database.tables._
 import com.azavea.rf.database.Database
 import com.azavea.rf.datamodel._
 import com.azavea.rf.scene._
@@ -49,6 +49,12 @@ trait ProjectRoutes extends Authentication
           post { addProjectScenes(projectId) } ~
           put { updateProjectScenes(projectId) } ~
           delete { deleteProjectScenes(projectId) }
+        } ~
+        pathPrefix("ordered") {
+          pathEndOrSingleSlash {
+            post { setProjectScenesOrder(projectId) } ~
+            get { listProjectScenesOrdered(projectId) }
+          }
         }
       }
     }
@@ -103,6 +109,26 @@ trait ProjectRoutes extends Authentication
     (withPagination & sceneQueryParameters) { (page, sceneParams) =>
       complete {
         Projects.listProjectScenes(projectId, page, sceneParams, user)
+      }
+    }
+  }
+
+  def listProjectScenesOrdered(projectId: UUID): Route = authenticate { user =>
+    (withPagination & sceneQueryParameters) { (page, sceneParams) =>
+      complete {
+        ScenesToProjects.listS2POrder(projectId)
+      }
+    }
+  }
+
+  def setProjectScenesOrder(projectId: UUID): Route = authenticate { user =>
+    entity(as[Seq[UUID]]) { sceneIds =>
+      if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
+        complete(StatusCodes.RequestEntityTooLarge)
+      }
+
+      complete {
+        ScenesToProjects.setS2POrder(projectId, sceneIds)
       }
     }
   }
