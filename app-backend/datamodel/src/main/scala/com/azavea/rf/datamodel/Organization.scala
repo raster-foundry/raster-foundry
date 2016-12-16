@@ -5,6 +5,7 @@ import DefaultJsonProtocol._
 import java.util.UUID
 import java.sql.Timestamp
 
+
 case class Organization(
   id: UUID,
   createdAt: Timestamp,

@@ -1,9 +1,10 @@
 package com.azavea.rf.tile
 
 import com.azavea.rf.tile.image._
-import com.azavea.rf.tile.image.ColorCorrectParams._
 import com.azavea.rf.tile.tool._
 import com.azavea.rf.tile.tool.ToolParams._
+import com.azavea.rf.datamodel.ColorCorrect
+import ColorCorrect.Params.colorCorrectParams
 
 import geotrellis.raster._
 import geotrellis.raster.io._
