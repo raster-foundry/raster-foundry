@@ -1,5 +1,7 @@
 package com.azavea.rf.tile.image
 
+import com.azavea.rf.datamodel.ColorCorrect
+
 import geotrellis.raster._
 import geotrellis.spark._
 import geotrellis.spark.io._

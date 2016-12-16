@@ -1,21 +1,21 @@
 package com.azavea.rf.project
 
-import java.util.UUID
-
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling._
 import akka.http.scaladsl.model.StatusCodes
-
-import com.lonelyplanet.akka.http.extensions.PaginationDirectives
+import spray.json._
+import DefaultJsonProtocol._
+import com.lonelyplanet.akka.http.extensions.{PaginationDirectives, Order}
 
 import com.azavea.rf.auth.Authentication
-import com.azavea.rf.database.tables.Projects
+import com.azavea.rf.database.tables._
 import com.azavea.rf.database.Database
 import com.azavea.rf.datamodel._
 import com.azavea.rf.scene._
 import com.azavea.rf.utils.queryparams.QueryParametersCommon
 import com.azavea.rf.utils.UserErrorHandler
 
+import java.util.UUID
 
 trait ProjectRoutes extends Authentication
     with QueryParametersCommon
@@ -49,6 +49,21 @@ trait ProjectRoutes extends Authentication
           post { addProjectScenes(projectId) } ~
           put { updateProjectScenes(projectId) } ~
           delete { deleteProjectScenes(projectId) }
+        }
+      } ~
+      pathPrefix("mosaic") {
+        pathEndOrSingleSlash {
+          get { getProjectMosaicDefinition(projectId) }
+        } ~
+        pathPrefix(JavaUUID) { sceneId =>
+          get { getProjectSceneColorCorrectParams(projectId, sceneId) } ~
+          post { setProjectSceneColorCorrectParams(projectId, sceneId) }
+        }
+      } ~
+      pathPrefix("order") {
+        pathEndOrSingleSlash {
+          get { listProjectSceneOrder(projectId) } ~
+          post { setProjectSceneOrder(projectId) }
         }
       }
     }
@@ -103,6 +118,56 @@ trait ProjectRoutes extends Authentication
     (withPagination & sceneQueryParameters) { (page, sceneParams) =>
       complete {
         Projects.listProjectScenes(projectId, page, sceneParams, user)
+      }
+    }
+  }
+
+  /** List a project's scenes according to their manually defined ordering */
+  def listProjectSceneOrder(projectId: UUID): Route = authenticate { user =>
+    withPagination { page =>
+      complete {
+        Projects.listProjectSceneOrder(projectId, page, user)
+      }
+    }
+  }
+
+  /** Set the manually defined z-ordering for scenes within a given project */
+  def setProjectSceneOrder(projectId: UUID): Route = authenticate { user =>
+    entity(as[Seq[UUID]]) { sceneIds =>
+      if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
+        complete(StatusCodes.RequestEntityTooLarge)
+      }
+
+      complete {
+        ScenesToProjects.setManualOrder(projectId, sceneIds)
+      }
+    }
+  }
+
+  /** Get the color correction paramters for a project/scene pairing */
+  def getProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) = authenticate { user =>
+    complete {
+      ScenesToProjects.getColorCorrectParams(projectId, sceneId)
+    }
+  }
+
+  /** Set color correction parameters for a project/scene pairing */
+  def setProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) = authenticate { user =>
+    entity(as[ColorCorrect.Params]) { ccParams =>
+      onSuccess(ScenesToProjects.setColorCorrectParams(projectId, sceneId, ccParams)) {
+        case 1 => complete(StatusCodes.NoContent)
+        case count => throw new IllegalStateException(
+          s"Error updating scene's color correction: update result expected to be 1, was $count"
+        )
+      }
+    }
+  }
+
+  /** Get the information which defines mosaicing behavior for each scene in a given project */
+  def getProjectMosaicDefinition(projectId: UUID) = authenticate { user =>
+    rejectEmptyResponse {
+      complete {
+        ScenesToProjects.getMosaicDefinition(projectId)
       }
     }
   }

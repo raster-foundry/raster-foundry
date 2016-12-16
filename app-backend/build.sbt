@@ -109,7 +109,8 @@ lazy val datamodel = Project("datamodel", file("datamodel"))
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({
     libraryDependencies ++= loggingDependencies ++ Seq(
-      Dependencies.geotrellisSlick % "provided",
+      Dependencies.geotrellisSlick,
+      Dependencies.geotrellisRaster,
       Dependencies.akkajson
     )
   })
@@ -136,6 +137,7 @@ lazy val ingest = Project("ingest", file("ingest"))
   })
 
 lazy val tile = Project("tile", file("tile"))
+  .dependsOn(datamodel)
   .settings(commonSettings:_*)
   .settings(assemblyJarName in assembly := "rf-tile-server.jar")
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))

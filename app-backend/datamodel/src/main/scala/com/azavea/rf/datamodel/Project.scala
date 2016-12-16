@@ -16,7 +16,8 @@ case class Project(
   slugLabel: String,
   description: String,
   visibility: Visibility,
-  tags: List[String] = List.empty
+  tags: List[String] = List.empty,
+  manualOrder: Boolean = true
 )
 
 /** Case class for project creation */
@@ -26,7 +27,7 @@ object Project {
 
   def create = Create.apply _
 
-  implicit val defaultProjectFormat = jsonFormat11(Project.apply _)
+  implicit val defaultProjectFormat = jsonFormat12(Project.apply _)
 
   def slugify(input: String): String = {
     import java.text.Normalizer
@@ -66,5 +67,4 @@ object Project {
   object Create {
     implicit val defaultProjectFormat = jsonFormat5(Create.apply _)
   }
-
 }
