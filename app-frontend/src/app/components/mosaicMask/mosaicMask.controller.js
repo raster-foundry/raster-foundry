@@ -100,39 +100,10 @@ export default class MosaicMaskController {
         let params = Object.assign({}, this.queryParams);
         delete params.id;
         // Figure out how many scenes there are
-        this.projectService.getProjectSceneCount(this.project.id).then(
-            (sceneCount) => {
-                let self = this;
-                // We're going to use this in a moment to create the requests for API pages
-                let requestMaker = function *(totalResults, pageSize) {
-                    let pageNum = 0;
-                    while (pageNum * pageSize <= totalResults) {
-                        yield self.projectService.getProjectScenes({
-                            projectid: self.project.id,
-                            pageSize: pageSize,
-                            page: pageNum,
-                            sort: 'createdAt,desc'
-                        });
-                        pageNum = pageNum + 1;
-                    }
-                };
-                let numScenes = sceneCount.count;
-                // The default API pagesize is 30 so we'll use that.
-                let pageSize = 30;
-                // Generate requests for all pages
-                let requests = Array.from(requestMaker(numScenes, pageSize));
-                // Unpack responses into a single scene list.
-                // The structure to unpack is:
-                // [{ results: [{},{},...] }, { results: [{},{},...]},...]
-                this.$q.all(requests).then((allResponses) => {
-                    this.sceneList = [].concat(...Array.from(allResponses, (resp) => resp.results));
-                    this.layersFromScenes();
-                },
-                () => {
-                    this.errorMsg = 'Error loading scenes.';
-                }).finally(() => this.loading = false); // eslint-disable-line no-return-assign
-            }
-        );
+        this.projectService.getAllProjectScenes(params).then((sceneList) => {
+            this.sceneList = sceneList;
+            this.layersFromScenes();
+        });
     }
 
     layersFromScenes() {

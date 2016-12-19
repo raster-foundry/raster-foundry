@@ -15,11 +15,6 @@ export default class LeafletMapController {
         this.initLayers();
 
         this.$scope.$watchCollection('$ctrl.drawnPolygons', this.onDrawnPolygonsChange.bind(this));
-        this.$scope.$watchCollection('$ctrl.mapExtent', (mapExtent) => {
-            if (mapExtent) {
-                this.map.fitBounds(mapExtent);
-            }
-        });
     }
 
     $onInit() {
@@ -75,15 +70,12 @@ export default class LeafletMapController {
                 this.drawControl.addTo(this.map);
             } else {
                 this.drawControl.remove();
-                // this.drawLayer.clearLayers();
             }
-        }
-
-        if (changes.mapExtent && changes.mapExtent.currentValue) {
-            this.map.fitBounds(changes.mapExtent.currentValue);
         }
     }
 
+    // TODO: on refactor, track layers by id so that they don't need to all be deleted / added
+    //       every time there's an update.
     onDrawnPolygonsChange(polygons) {
         this.drawLayer.clearLayers();
         if (polygons && polygons.length) {
@@ -166,6 +158,7 @@ export default class LeafletMapController {
             this.$scope.$apply();
         });
 
+        // TODO: During the refactor, use e.layers.eachLayer if it makes more sense.
         this.map.on(L.Draw.Event.EDITED, (e) => {
             Object.values(
                 e.layers._layers // eslint-disable-line no-underscore-dangle
@@ -176,12 +169,17 @@ export default class LeafletMapController {
                 );
                 newPolygon.properties.area = calculateArea(layer);
                 this.drawnPolygons.splice(oldPolygonIndex, 1);
+                // TODO: drawn polygons should probably be a Map to make adding/removing/updating
+                //       more conceptually simple.
+                //       eg: this.drawnPolygons.delete(..); this.drawnPolygons.set(...)
+                //       instead of the weirdly named array equivalents.
                 this.drawnPolygons.push(newPolygon);
             });
             this.onDrawnPolygonsChange(this.drawnPolygons);
             this.$scope.$apply();
         });
 
+        // TODO: Same as with above
         this.map.on(L.Draw.Event.DELETED, (e) => {
             Object.values(
                 e.layers._layers // eslint-disable-line no-underscore-dangle

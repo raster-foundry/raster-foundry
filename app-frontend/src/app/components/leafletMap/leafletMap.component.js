@@ -15,8 +15,7 @@ const leafletMap = {
         onMapClick: '&',
         layers: '<?',
         drawnPolygons: '=?',
-        allowDrawing: '<?',
-        mapExtent: '<?'
+        allowDrawing: '<?'
     }
 };
 
