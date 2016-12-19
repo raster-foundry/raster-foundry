@@ -70,7 +70,7 @@
 
 .btn-default {
   background: $shade-normal;
-  border-color: $shade-normal;
+  border-color: darken($shade-normal, 5%);
   color: #fff;
 
   @include button-states($shade-normal);
@@ -78,7 +78,7 @@
 
 .btn-primary {
   background: $brand-primary;
-  border-color: $brand-primary;
+  border-color: darken($brand-primary, 5%);
   color: #fff;
 
   @include button-states($brand-primary);
@@ -86,7 +86,7 @@
 
 .btn-secondary {
   background: $brand-secondary;
-  border-color: $brand-secondary;
+  border-color: darken($brand-secondary, 5%);
   color: #fff;
 
   @include button-states($brand-secondary);
@@ -108,7 +108,7 @@
 
 .btn-warning {
   background: $warning;
-  border-color: $warning;
+  border-color: darken($warning, 5%);
   color: #fff;
 
   @include button-states($warning);
@@ -116,7 +116,7 @@
 
 .btn-danger {
 	background: $danger;
-  border-color: $danger;
+  border-color: darken($danger, 5%);
   color: #fff;
 
   @include button-states($danger);
@@ -177,7 +177,7 @@
  */
 .btn-toggle {
   background : $shade-dark;
-  border-color: $shade-dark;
+  border-color: darken($shade-dark, 5%);
   color: $text-base;
 
   &:hover, &.hover,
@@ -206,7 +206,7 @@
 
   &.active {
     background: $brand-primary;
-    border-color: $brand-primary;
+    border-color: darken($brand-primary, 5%);
     color: #fff;
     box-shadow: none;
 
