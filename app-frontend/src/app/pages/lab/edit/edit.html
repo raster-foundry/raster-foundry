@@ -1,0 +1,75 @@
+<!-- Workflow container -->
+<rf-diagram-container class="main"
+                      on-cell-click="$ctrl.showParams()"
+                      on-paper-click="$ctrl.hideParams()">
+</rf-diagram-container>
+<div class="sidebar sidebar-extended sidebar-scrollable" ng-show="$ctrl.isShowingParams">
+  <div class="sidebar-content flex-row with-padding with-border">
+    <h5 class="sidebar-title">
+        Function Name
+    </h5>
+    <div class="sidebar-actions">
+      <button class="btn btn-primary">
+        <i class="icon-parameters"></i> Parameters
+      </button>
+    </div>
+  </div>
+  <div class="sidebar-content with-padding with-border">
+    <h5 class="sidebar-title">
+        <div class="btn btn-square really-square">1</div><span>Input</span>
+    </h5>
+    <form class="inset">
+      <div class="form-group">
+        <label for="formGroupExampleInput">Example label</label>
+        <input type="text" class="form-control" id="formGroupExampleInput" placeholder="Example input">
+      </div>
+      <div class="form-group">
+        <label for="formGroupExampleInput">Example label</label>
+        <input type="text" class="form-control" id="formGroupExampleInput" placeholder="Example input">
+      </div>
+      <div class="form-group">
+        <label for="formGroupExampleInput">Example label</label>
+        <input type="text" class="form-control" id="formGroupExampleInput" placeholder="Example input">
+      </div>
+      <div class="form-group">
+        <label for="formGroupExampleInput">Example label</label>
+        <input type="text" class="form-control" id="formGroupExampleInput" placeholder="Example input">
+      </div>
+    </form>
+  </div>
+  <div class="sidebar-content with-padding with-border">
+    <h5 class="sidebar-title">
+        <div class="btn btn-square really-square">2</div><span>Input</span>
+    </h5>
+    <form class="inset">
+      <div class="form-group">
+        <label for="formGroupExampleInput">Example label</label>
+        <input type="text" class="form-control" id="formGroupExampleInput" placeholder="Example input">
+      </div>
+      <div class="form-group">
+        <label for="formGroupExampleInput">Example label</label>
+        <input type="text" class="form-control" id="formGroupExampleInput" placeholder="Example input">
+      </div>
+      <div class="form-group">
+        <label for="formGroupExampleInput">Example label</label>
+        <input type="text" class="form-control" id="formGroupExampleInput" placeholder="Example input">
+      </div>
+      <div class="form-group">
+        <label for="formGroupExampleInput">Example label</label>
+        <input type="text" class="form-control" id="formGroupExampleInput" placeholder="Example input">
+      </div>
+    </form>
+  </div>
+  <div class="sidebar-content flex-row with-padding with-border">
+    <div class="form-btn-row">
+      <div class="btn-group">
+        <button class="btn">
+          Cancel
+        </button>
+        <button class="btn btn-primary">
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

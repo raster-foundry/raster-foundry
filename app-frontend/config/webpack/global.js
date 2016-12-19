@@ -135,6 +135,11 @@ module.exports = function (_path) {
                     'expose?L'
                 ]
             }, {
+                test: require.resolve('jointjs'),
+                loaders: [
+                    'expose?joint'
+                ]
+            },{
                 test: /node_modules[\\\/]auth0-lock[\\\/].*\.js$/,
                 loaders: ['transform-loader/cacheable?brfs',
                           'transform-loader/cacheable?packageify']

@@ -36,6 +36,9 @@ const App = angular.module(
 
         // pages
         require('./pages/browse/browse.module.js').name,
+        require('./pages/lab/lab.module.js').name,
+        require('./pages/lab/edit/edit.module.js').name,
+        require('./pages/lab/run/run.module.js').name,
         require('./pages/market/market.module.js').name,
         require('./pages/market/search/search.module.js').name,
         require('./pages/market/tool/tool.module.js').name,
