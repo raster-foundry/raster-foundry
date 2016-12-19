@@ -7,7 +7,8 @@
       <h5 class="sidebar-title">{{$ctrl.lastSceneResult.count | number}} Results Found</h5>
       <div class="sidebar-actions">
         <button class="btn btn-default btn-square" ng-click="$ctrl.toggleFilterPane()">
-          <i class="icon-filter"></i>
+          <i ng-class="{'icon-filter': !$ctrl.showFilterPane,
+                        'icon-cross': $ctrl.showFilterPane}"></i>
         </button>
       </div>
     </div>
@@ -57,12 +58,22 @@
 
     <div class="sidebar-static">
       <div class="sidebar-actions">
-        <a href class="btn"
-           ng-class="$ctrl.selectedScenes.size === 0 ? 'disabled' : 'btn-primary'"
-           ng-disabled="!$ctrl.selectedScenes || $ctrl.selectedScenes.size === 0"
-           ng-click="$ctrl.sceneModal()">
-          {{$ctrl.selectedScenes.size || 'No'}} scenes selected
-        </a>
+        <div class="btn-group">
+          <button class="btn"
+             ng-class="$ctrl.selectedScenes.size === 0 ? 'disabled' : 'btn-primary'"
+             ng-disabled="!$ctrl.selectedScenes || $ctrl.selectedScenes.size === 0"
+             ng-click="$ctrl.sceneModal()">
+            {{$ctrl.selectedScenes.size || 'No'}} scenes selected
+          </button>
+
+          <!-- TODO : Developers need to make this function please. -->
+          <button class="btn btn-small"
+                  ng-class="{'btn-primary': $ctrl.selectAllScenes()}"
+                  ng-click="$ctrl.selectAllScenes()">
+            <i ng-class="{'icon-plus': !$ctrl.selectAllScenes(),
+                          'icon-cross': $ctrl.selectAllScenes()}"></i>
+          </button>
+        </div>
       </div>
     </div>
   </div>
