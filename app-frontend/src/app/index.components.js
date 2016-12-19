@@ -1,5 +1,6 @@
 export default angular.module('index.components', [
     require('./components/mapContainer/mapContainer.module.js').name,
+    require('./components/diagramContainer/diagramContainer.module.js').name,
     require('./components/navBar/navBar.module.js').name,
     require('./components/toolSearch/toolSearch.module.js').name,
     require('./components/toolItem/toolItem.module.js').name,

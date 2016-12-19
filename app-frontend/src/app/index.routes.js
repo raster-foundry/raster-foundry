@@ -1,4 +1,7 @@
 import browseTpl from './pages/browse/browse.html';
+import labTpl from './pages/lab/lab.html';
+import labEditTpl from './pages/lab/edit/edit.html';
+import labRunTpl from './pages/lab/run/run.html';
 import marketTpl from './pages/market/market.html';
 import marketSearchTpl from './pages/market/search/search.html';
 import marketToolTpl from './pages/market/tool/tool.html';
@@ -226,6 +229,29 @@ function marketStates($stateProvider) {
         });
 }
 
+function labStates($stateProvider) {
+    $stateProvider
+        .state('lab', {
+            url: '/lab',
+            templateUrl: labTpl,
+            controller: 'LabController',
+            controllerAs: '$ctrl',
+            abstract: true
+        })
+        .state('lab.edit', {
+            url: '/edit',
+            templateUrl: labEditTpl,
+            controller: 'LabEditController',
+            controllerAs: '$ctrl'
+        })
+        .state('lab.run', {
+            url: '/run',
+            templateUrl: labRunTpl,
+            controller: 'LabRunController',
+            controllerAs: '$ctrl'
+        });
+}
+
 function routeConfig($urlRouterProvider, $stateProvider) {
     'ngInject';
 
@@ -235,6 +261,7 @@ function routeConfig($urlRouterProvider, $stateProvider) {
     librarySceneStates($stateProvider);
     libraryProjectStates($stateProvider);
     settingsStates($stateProvider);
+    labStates($stateProvider);
 
     $stateProvider
         .state('error', {

@@ -1,33 +1,36 @@
 <div class="navbar primary-navbar" ng-show="!$ctrl.loadError">
-	<!-- Nav Left -->
-	<div class="navbar-left">
-	  <a href="#" class="brand">
-			<img ng-attr-src="{{$ctrl.assetLogo}}">
-	  </a>
-	  <span class="navbar-vertical-divider"></span>
-	  <nav>
-	    <a href ui-sref="browse" ui-sref-active="active">Scene browser</a>
-	    <a href ui-sref="market.search"
+  <!-- Nav Left -->
+  <div class="navbar-left">
+    <a href="#" class="brand">
+      <img ng-attr-src="{{$ctrl.assetLogo}}">
+    </a>
+    <span class="navbar-vertical-divider"></span>
+    <nav>
+      <a href ui-sref="browse" ui-sref-active="active">Scene browser</a>
+      <a href ui-sref="market.search"
          ng-class="{
                    active: $ctrl.$state.$current.name.includes('market')
                    }">Model market</a>
-	    <a href ui-sref="lab" ui-sref-active="active">Model lab</a>
-	  </nav>
-	  <span class="navbar-vertical-divider"></span>
-	</div>
+      <a href ui-sref="lab.edit"
+         ng-class="{
+                   active: $ctrl.$state.$current.name.includes('lab')
+                   }">Model lab</a>
+    </nav>
+    <span class="navbar-vertical-divider"></span>
+  </div>
 
-	<!-- Nav Right -->
-	<div class="navbar-right">
-	  <nav>
-	    <a href class="icon-link" title="Help">
-	      <i class="icon-help"></i>
-	    </a>
-	    <a href class="icon-link" title="Processing">
-	      <i class="icon-processing"></i>
-	    </a>
-	  </nav>
-	  <span class="navbar-vertical-divider"></span>
-	  <nav>
+  <!-- Nav Right -->
+  <div class="navbar-right">
+    <nav>
+      <a href class="icon-link" title="Help">
+        <i class="icon-help"></i>
+      </a>
+      <a href class="icon-link" title="Processing">
+        <i class="icon-processing"></i>
+      </a>
+    </nav>
+    <span class="navbar-vertical-divider"></span>
+    <nav>
       <div ng-if="!$ctrl.authService.isLoggedIn">
         <a href ng-click="$ctrl.signin()">
           Sign In
@@ -36,17 +39,17 @@
       <div ng-if="$ctrl.authService.isLoggedIn" uib-dropdown class="dropdown-my-account" on-toggle="toggled($ctrl.optionsOpen)">
         <a href uib-dropdown-toggle>
           <img ng-if="$ctrl.authService.profile().picture" class="avatar" ng-src="{{$ctrl.authService.profile().picture}}">
-	        <img ng-if="! $ctrl.authService.profile().picture" class="avatar" src="https://placehold.it/25x25">
+          <img ng-if="! $ctrl.authService.profile().picture" class="avatar" src="https://placehold.it/25x25">
           <span class="username">{{$ctrl.authService.profile().nickname}}</span>
-	        <i class="icon-caret-down"></i>
+          <i class="icon-caret-down"></i>
         </a>
-	      <ul class="dropdown-menu" aria-labelledby="dLabel">
+        <ul class="dropdown-menu" aria-labelledby="dLabel">
           <li><a href ui-sref="library.scenes.list">My library</a></li>
-	        <li><a href ui-sref="settings.profile">Settings</a></li>
-	        <li role="separator" class="divider"></li>
-	        <li><a href ng-click="$ctrl.logout()">Sign out</a></li>
-	      </ul>
+          <li><a href ui-sref="settings.profile">Settings</a></li>
+          <li role="separator" class="divider"></li>
+          <li><a href ng-click="$ctrl.logout()">Sign out</a></li>
+        </ul>
       </div>
-	  </nav>
-	</div>
+    </nav>
+  </div>
 </div>

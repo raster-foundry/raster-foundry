@@ -43,6 +43,7 @@
     "bootstrap-sass": "~3.3.6",
     "d3": "~3.4.4",
     "es6-map": "~0.1.4",
+    "jointjs": "~1.0.3",
     "jquery": "~2.1.4",
     "leaflet": "~1.0.0",
     "leaflet-draw": "~0.4.7",
