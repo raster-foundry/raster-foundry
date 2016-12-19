@@ -8,7 +8,6 @@ const rfMosaicMask = {
         sceneList: '=',
         allowDrawing: '=',
         drawnPolygons: '=',
-        mapExtent: '=',
         layers: '='
     }
 };
