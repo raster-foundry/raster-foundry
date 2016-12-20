@@ -3,13 +3,18 @@ package com.azavea.rf.datamodel
 import spray.json._
 import spray.json.DefaultJsonProtocol._
 
-case class MosaicDefinition(
-  val i: Int = 1,
-  val d: Double = 1.0
-)
+import java.util.UUID
+
+case class MosaicDefinition(definition: Seq[(UUID, Option[ColorCorrect.Params])])
 
 object MosaicDefinition {
-  def tupled = (MosaicDefinition.apply _).tupled
+  implicit val defaultMosaicDefinitionFormat = jsonFormat1(MosaicDefinition.apply _)
 
-  implicit val defaultMosaicDefinitionFormat = jsonFormat2(MosaicDefinition.apply _)
+  def fromScenesToProjects(scenesToProjects: Seq[SceneToProject]): MosaicDefinition =
+    MosaicDefinition(
+      scenesToProjects.map { case SceneToProject(sceneId, projectId, sceneOrder, colorCorrection) =>
+        sceneId -> colorCorrection
+      }
+    )
 }
+

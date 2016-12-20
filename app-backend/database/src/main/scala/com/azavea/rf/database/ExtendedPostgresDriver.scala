@@ -39,8 +39,8 @@ trait ExtendedPostgresDriver extends ExPostgresDriver
     implicit val metadataMapper = MappedJdbcType.base[Map[String, Any], JsValue](_.toJson,
       _.convertTo[Map[String, Any]])
 
-    implicit val mosaicDefinitionMapper = MappedJdbcType.base[MosaicDefinition, JsValue](_.toJson,
-      _.convertTo[MosaicDefinition])
+    implicit val colorCorrectParamsMapper = MappedJdbcType.base[ColorCorrect.Params, JsValue](_.toJson,
+      _.convertTo[ColorCorrect.Params])
 
     implicit val userRoleTypeMapper = createEnumJdbcType[User.Role]("UserRole", _.repr,
       User.Role.fromString, quoteName = false)

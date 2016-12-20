@@ -1,9 +1,15 @@
-package com.azavea.rf.tile.image
+package com.azavea.rf.datamodel
 
 import geotrellis.raster._
 import geotrellis.raster.equalization.HistogramEqualization
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.sigmoidal.SigmoidalContrast
+
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server._
+import spray.json._
+import DefaultJsonProtocol._
+
 
 object ColorCorrect {
   case class Params(
@@ -16,6 +22,20 @@ object ColorCorrect {
   ) {
     def reorderBands(tile: MultibandTile, hist: Seq[Histogram[Double]]): (MultibandTile, Array[Histogram[Double]]) =
       (tile.subsetBands(redBand, greenBand, blueBand), Array(hist(redBand), hist(greenBand), hist(blueBand)))
+  }
+
+  object Params {
+    implicit val defaultColorCorrectParamsFormat = jsonFormat13(Params.apply _)
+
+    def colorCorrectParams: Directive1[Params] =
+      parameters(
+        'redBand.as[Int].?(0), 'greenBand.as[Int].?(1), 'blueBand.as[Int].?(2),
+        "redGamma".as[Double].?, "greenGamma".as[Double].?, "blueGamma".as[Double].?,
+        "contrast".as[Double].?, "brightness".as[Int].?,
+        'alpha.as[Double].?, 'beta.as[Double].?,
+        "min".as[Int].?, "max".as[Int].?,
+        'equalize.as[Boolean].?(false)
+      ).as(ColorCorrect.Params.apply _)
   }
 
   def apply(rgbTile: MultibandTile, rgbHist: Array[Histogram[Double]], params: Params): MultibandTile = {

@@ -149,7 +149,7 @@ class ProjectSceneSpec extends WordSpec
       }
     }
 
-    "have two scenes attached to project" in {
+    "attach a second scene with a project" in {
       Get("/api/projects/").withHeaders(
         List(authHeader)
       ) ~> baseRoutes ~> check {
@@ -204,10 +204,63 @@ class ProjectSceneSpec extends WordSpec
               List(authHeader)
             ) ~> baseRoutes ~> check {
               val sceneIds2 = responseAs[Seq[java.util.UUID]]
-              println(s"IDs here: $sceneIds1, $sceneIds2")
 
               sceneIds1(0) shouldEqual sceneIds2(1)
               sceneIds1(1) shouldEqual sceneIds2(0)
+            }
+          }
+        }
+      }
+    }
+
+    "associate color correction parameters with a scene/project pairing and get that project's mosaic definition" in {
+      val colorCorrectParams = ColorCorrect.Params(
+        1, 2, 3,                           // Band Order (R, G, B)
+        Some(0.53), Some(0.8), Some(0.32), // Gamma levels
+        Some(10), Some(20),                // Contrast, Brightness
+        None, None,                        // Alpha, Beta
+        None, None,                        // Min, Max
+        false                              // Equalize?
+      )
+
+      Get("/api/projects/").withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
+        val projects = responseAs[PaginatedResponse[Project]]
+        val projectId = projects.results.head.id
+
+        // Get scenes to get an ID
+        Get(s"/api/projects/${projectId}/scenes/ordered").withHeaders(
+          List(authHeader)
+        ) ~> baseRoutes ~> check {
+          val sceneId = responseAs[Seq[java.util.UUID]].head
+
+          Post(s"/api/projects/${projectId}/scenes/${sceneId}/color-correction").withHeadersAndEntity(
+            List(authHeader),
+            HttpEntity(
+              ContentTypes.`application/json`,
+              colorCorrectParams.toJson.toString()
+            )
+          ) ~> baseRoutes ~> check {
+            status shouldEqual StatusCodes.NoContent
+
+            Get(s"/api/projects/${projectId}/scenes/${sceneId}/color-correction").withHeaders(
+              List(authHeader)
+            ) ~> baseRoutes ~> check {
+              val responseColorCorrectParams = responseAs[ColorCorrect.Params]
+
+              responseColorCorrectParams shouldEqual colorCorrectParams
+            }
+
+            Get(s"/api/projects/${projectId}/mosaic-definition").withHeaders(
+              List(authHeader)
+            ) ~> baseRoutes ~> check {
+              val mosaicDef = responseAs[MosaicDefinition]
+
+              // We attached the color correction params to the first record (according to sort).
+              //  The head of the mosaic definition's list should have our color correction params
+              mosaicDef.definition(0)._2 shouldEqual Some(colorCorrectParams)
+              mosaicDef.definition(1)._2 shouldEqual None
             }
           }
         }

@@ -43,6 +43,11 @@ trait ProjectRoutes extends Authentication
         put { updateProject(projectId) } ~
         delete { deleteProject(projectId) }
       } ~
+      pathPrefix("mosaic-definition") {
+        pathEndOrSingleSlash {
+          get { getProjectMosaicDefinition(projectId) }
+        }
+      } ~
       pathPrefix("scenes") {
         pathEndOrSingleSlash {
           get { listProjectScenes(projectId) } ~
@@ -50,10 +55,14 @@ trait ProjectRoutes extends Authentication
           put { updateProjectScenes(projectId) } ~
           delete { deleteProjectScenes(projectId) }
         } ~
+        pathPrefix(JavaUUID / "color-correction") { sceneId =>
+          get { getProjectSceneColorCorrectParams(projectId, sceneId) } ~
+          post { setProjectSceneColorCorrectParams(projectId, sceneId) }
+        } ~
         pathPrefix("ordered") {
           pathEndOrSingleSlash {
-            post { setProjectScenesOrder(projectId) } ~
-            get { listProjectScenesOrdered(projectId) }
+            get { listProjectScenesOrdered(projectId) } ~
+            post { setProjectScenesOrder(projectId) }
           }
         }
       }
@@ -116,7 +125,7 @@ trait ProjectRoutes extends Authentication
   def listProjectScenesOrdered(projectId: UUID): Route = authenticate { user =>
     (withPagination & sceneQueryParameters) { (page, sceneParams) =>
       complete {
-        ScenesToProjects.listS2POrder(projectId)
+        ScenesToProjects.listOrder(projectId)
       }
     }
   }
@@ -128,7 +137,32 @@ trait ProjectRoutes extends Authentication
       }
 
       complete {
-        ScenesToProjects.setS2POrder(projectId, sceneIds)
+        ScenesToProjects.setOrder(projectId, sceneIds)
+      }
+    }
+  }
+
+  def getProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) = authenticate { user =>
+    complete {
+      ScenesToProjects.getColorCorrectParams(projectId, sceneId)
+    }
+  }
+
+  def setProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) = authenticate { user =>
+    entity(as[ColorCorrect.Params]) { ccParams =>
+      onSuccess(ScenesToProjects.setColorCorrectParams(projectId, sceneId, ccParams)) {
+        case 1 => complete(StatusCodes.NoContent)
+        case count => throw new IllegalStateException(
+          s"Error updating scene's color correction: update result expected to be 1, was $count"
+        )
+      }
+    }
+  }
+
+  def getProjectMosaicDefinition(projectId: UUID) = authenticate { user =>
+    rejectEmptyResponse {
+      complete {
+        ScenesToProjects.getMosaicDefinition(projectId)
       }
     }
   }

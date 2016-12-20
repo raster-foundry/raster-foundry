@@ -7,5 +7,5 @@ case class SceneToProject(
   sceneId: UUID,
   projectId: UUID,
   sceneOrder: Option[Int] = None,
-  mosaicDef: MosaicDefinition = MosaicDefinition()
+  colorCorrectParams: Option[ColorCorrect.Params] = None
 )

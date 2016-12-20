@@ -17,12 +17,12 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 /** Table description of table scenes_to_project. Objects of this class serve as prototypes for rows in queries. */
 class ScenesToProjects(_tableTag: Tag) extends Table[SceneToProject](_tableTag, "scenes_to_projects") {
-  def * = (sceneId, projectId, sceneOrder, mosaicDefinition) <> (SceneToProject.tupled, SceneToProject.unapply)
+  def * = (sceneId, projectId, sceneOrder, colorCorrectParams) <> (SceneToProject.tupled, SceneToProject.unapply)
 
   val sceneId: Rep[java.util.UUID] = column[java.util.UUID]("scene_id")
   val projectId: Rep[java.util.UUID] = column[java.util.UUID]("project_id")
   val sceneOrder: Rep[Option[Int]] = column[Option[Int]]("scene_order")
-  val mosaicDefinition: Rep[MosaicDefinition] = column[MosaicDefinition]("mosaic_definition")
+  val colorCorrectParams: Rep[Option[ColorCorrect.Params]] = column[Option[ColorCorrect.Params]]("mosaic_definition")
 
   val pk = primaryKey("scenes_to_projects_pkey", (sceneId, projectId))
 
@@ -34,7 +34,7 @@ class ScenesToProjects(_tableTag: Tag) extends Table[SceneToProject](_tableTag, 
 object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) with LazyLogging {
 
   /** Update a scene's location in a given project's ordering */
-  def setS2POrder(projectId: UUID, ordering: Seq[UUID])(implicit database: DB) = {
+  def setOrder(projectId: UUID, ordering: Seq[UUID])(implicit database: DB) = {
     val toOrderS2P =
       for {
         s2p <- ScenesToProjects
@@ -58,37 +58,44 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
     }
   }
 
-  def listS2POrder(projectId: UUID)(implicit database: DB) = database.db.run {
-    ScenesToProjects
-      .filter(_.projectId === projectId)
-      .sortBy(_.sceneOrder.asc.nullsLast)
-      .map(_.sceneId)
-      .result
+  def listOrder(projectId: UUID)(implicit database: DB) =
+    database.db.run {
+      ScenesToProjects
+        .filter(_.projectId === projectId)
+        .sortBy(_.sceneOrder.asc.nullsLast)
+        .map(_.sceneId)
+        .result
+    }
+
+  def setColorCorrectParams(projectId: UUID, sceneId: UUID, colorCorrectParams: ColorCorrect.Params)(implicit database: DB) =
+    database.db.run {
+      ScenesToProjects
+        .filter({ s2p => s2p.projectId === projectId && s2p.sceneId === sceneId })
+        .map(_.colorCorrectParams)
+        .update(Some(colorCorrectParams))
+    }
+
+  def getColorCorrectParams(projectId: UUID, sceneId: UUID)(implicit database: DB) = {
+    database.db.run {
+      ScenesToProjects
+        .filter({ s2p => s2p.projectId === projectId && s2p.sceneId === sceneId })
+        .map(_.colorCorrectParams)
+        .result
+    }.map(_.headOption)
   }
 
+  def getMosaicDefinition(projectId: UUID)(implicit database: DB) = {
+    database.db.run {
+      ScenesToProjects
+        .filter(_.projectId === projectId)
+        .sortBy(_.sceneOrder.asc.nullsLast)
+        .result
+    }.map({ s2p =>
+      if (s2p.length > 0)
+        Some(MosaicDefinition.fromScenesToProjects(s2p))
+      else
+        None
+    })
+  }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
