@@ -22,6 +22,8 @@ package object datamodel {
     }
   }
 
+  implicit val defaultPaginatedUUIDFormat = jsonFormat6(PaginatedResponse[UUID])
+
   implicit object TimeStampJsonFormat extends RootJsonFormat[Timestamp] {
     def write(time: Timestamp) = JsString(time.toInstant().toString())
 

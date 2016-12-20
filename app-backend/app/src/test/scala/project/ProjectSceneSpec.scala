@@ -13,6 +13,7 @@ import com.azavea.rf.scene._
 import com.azavea.rf.utils.Config
 import com.azavea.rf.{AuthUtils, DBSpec, Router}
 
+import java.util.UUID
 
 /** Tests to exercise adding/deleting scenes to/from a project */
 class ProjectSceneSpec extends WordSpec
@@ -189,7 +190,7 @@ class ProjectSceneSpec extends WordSpec
         Get(s"/api/projects/${projectId}/scenes/ordered/").withHeaders(
           List(authHeader)
         ) ~> baseRoutes ~> check {
-          val sceneIds1 = responseAs[Seq[java.util.UUID]]
+          val sceneIds1 = responseAs[PaginatedResponse[UUID]].results
 
           Post(s"/api/projects/${projectId}/scenes/ordered").withHeadersAndEntity(
             List(authHeader),
@@ -203,7 +204,7 @@ class ProjectSceneSpec extends WordSpec
             Get(s"/api/projects/${projectId}/scenes/ordered/").withHeaders(
               List(authHeader)
             ) ~> baseRoutes ~> check {
-              val sceneIds2 = responseAs[Seq[java.util.UUID]]
+              val sceneIds2 = responseAs[PaginatedResponse[UUID]].results
 
               sceneIds1(0) shouldEqual sceneIds2(1)
               sceneIds1(1) shouldEqual sceneIds2(0)
@@ -233,7 +234,7 @@ class ProjectSceneSpec extends WordSpec
         Get(s"/api/projects/${projectId}/scenes/ordered").withHeaders(
           List(authHeader)
         ) ~> baseRoutes ~> check {
-          val sceneId = responseAs[Seq[java.util.UUID]].head
+          val sceneId = responseAs[PaginatedResponse[UUID]].results.head
 
           Post(s"/api/projects/${projectId}/scenes/${sceneId}/color-correction").withHeadersAndEntity(
             List(authHeader),

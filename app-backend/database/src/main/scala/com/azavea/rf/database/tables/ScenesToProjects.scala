@@ -34,7 +34,7 @@ class ScenesToProjects(_tableTag: Tag) extends Table[SceneToProject](_tableTag, 
 object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) with LazyLogging {
 
   /** Update a scene's location in a given project's ordering */
-  def setOrder(projectId: UUID, ordering: Seq[UUID])(implicit database: DB) = {
+  def setManualOrder(projectId: UUID, ordering: Seq[UUID])(implicit database: DB) = {
     val toOrderS2P =
       for {
         s2p <- ScenesToProjects
@@ -58,15 +58,43 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
     }
   }
 
-  def listOrder(projectId: UUID)(implicit database: DB) =
-    database.db.run {
-      ScenesToProjects
-        .filter(_.projectId === projectId)
-        .sortBy(_.sceneOrder.asc.nullsLast)
-        .map(_.sceneId)
-        .result
-    }
+  /** List the scenes as they are ordered for a given project */
+  def listManualOrder(projectId: UUID, pageRequest: PageRequest)(implicit database: DB) = {
+    val lengthQuery = ScenesToProjects
+      .filter(_.projectId === projectId)
+      .length
+      .result
 
+    val s2pQuery = ScenesToProjects
+      .filter(_.projectId === projectId)
+      .sortBy(_.sceneOrder.asc.nullsLast)
+      .map(_.sceneId)
+      .drop(pageRequest.offset * pageRequest.limit)
+      .take(pageRequest.limit)
+      .result
+
+    val transaction = (for {
+      length <- lengthQuery
+      s2p <- s2pQuery
+    } yield (s2p, length)).transactionally
+
+    database.db.run {
+      transaction
+    }.map { case (s2p, length) =>
+      val hasNext = (pageRequest.offset + 1) * pageRequest.limit < length
+      val hasPrevious = pageRequest.offset > 0
+      PaginatedResponse[UUID](
+        length,
+        hasPrevious,
+        hasNext,
+        pageRequest.offset,
+        pageRequest.limit,
+        s2p
+      )
+    }
+  }
+
+  /** Attach color correction parameters to a project/scene pairing */
   def setColorCorrectParams(projectId: UUID, sceneId: UUID, colorCorrectParams: ColorCorrect.Params)(implicit database: DB) =
     database.db.run {
       ScenesToProjects
@@ -75,6 +103,7 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
         .update(Some(colorCorrectParams))
     }
 
+  /** Get color correction parameters from a project/scene pairing */
   def getColorCorrectParams(projectId: UUID, sceneId: UUID)(implicit database: DB) = {
     database.db.run {
       ScenesToProjects
@@ -84,6 +113,7 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
     }.map(_.headOption)
   }
 
+  /** Get the complete mosaic definition for a giving project */
   def getMosaicDefinition(projectId: UUID)(implicit database: DB) = {
     database.db.run {
       ScenesToProjects

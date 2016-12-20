@@ -201,6 +201,15 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     }
   }
 
+  def listScenesAutoOrder(projectId: UUID)(implicit database: DB) = database.db.run {
+    Scenes
+      .filter { scene =>
+        scene.id in ScenesToProjects.filter(_.projectId === projectId).map(_.sceneId)
+      }.sortBy { scene =>
+        (scene.acquisitionDate.desc.nullsLast, scene.cloudCover.desc.nullsLast)
+      }.result
+  }
+
   def aggregateScenes(combinedParams: CombinedGridQueryParams, bbox: Projected[Polygon], grid: Seq[Projected[Polygon]])
                      (implicit database: DB)
       : Future[List[(Projected[Polygon], Int)]] = {

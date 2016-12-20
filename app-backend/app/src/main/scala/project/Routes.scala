@@ -1,12 +1,11 @@
 package com.azavea.rf.project
 
-import java.util.UUID
-
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling._
 import akka.http.scaladsl.model.StatusCodes
-
-import com.lonelyplanet.akka.http.extensions.PaginationDirectives
+import spray.json._
+import DefaultJsonProtocol._
+import com.lonelyplanet.akka.http.extensions.{PaginationDirectives, Order}
 
 import com.azavea.rf.auth.Authentication
 import com.azavea.rf.database.tables._
@@ -16,6 +15,7 @@ import com.azavea.rf.scene._
 import com.azavea.rf.utils.queryparams.QueryParametersCommon
 import com.azavea.rf.utils.UserErrorHandler
 
+import java.util.UUID
 
 trait ProjectRoutes extends Authentication
     with QueryParametersCommon
@@ -61,8 +61,8 @@ trait ProjectRoutes extends Authentication
         } ~
         pathPrefix("ordered") {
           pathEndOrSingleSlash {
-            get { listProjectScenesOrdered(projectId) } ~
-            post { setProjectScenesOrder(projectId) }
+            get { listProjectScenesManualOrder(projectId) } ~
+            post { setProjectScenesManualOrder(projectId) }
           }
         }
       }
@@ -122,32 +122,46 @@ trait ProjectRoutes extends Authentication
     }
   }
 
-  def listProjectScenesOrdered(projectId: UUID): Route = authenticate { user =>
-    (withPagination & sceneQueryParameters) { (page, sceneParams) =>
+  /** List a project's scenes according to automatic ordering rules (date acquired and cloud cover) */
+  def listProjectScenesAutoOrder(projectId: UUID): Route = authenticate { user =>
+    (withPagination & sceneQueryParameters) { (pageRequest, combinedParams) =>
+      val page = pageRequest.copy(sort = Map("acquisitionDate" -> Order.Desc, "cloudCover" -> Order.Asc))
       complete {
-        ScenesToProjects.listOrder(projectId)
+        Projects.listProjectScenes(projectId, page, combinedParams, user)
       }
     }
   }
 
-  def setProjectScenesOrder(projectId: UUID): Route = authenticate { user =>
+  /** List a project's scenes according to their manually defined ordering */
+  def listProjectScenesManualOrder(projectId: UUID): Route = authenticate { user =>
+    withPagination { page =>
+      complete {
+        ScenesToProjects.listManualOrder(projectId, page)
+      }
+    }
+  }
+
+  /** Set the manually defined z-ordering for scenes within a given project */
+  def setProjectScenesManualOrder(projectId: UUID): Route = authenticate { user =>
     entity(as[Seq[UUID]]) { sceneIds =>
       if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
         complete(StatusCodes.RequestEntityTooLarge)
       }
 
       complete {
-        ScenesToProjects.setOrder(projectId, sceneIds)
+        ScenesToProjects.setManualOrder(projectId, sceneIds)
       }
     }
   }
 
+  /** Get the color correction paramters for a project/scene pairing */
   def getProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) = authenticate { user =>
     complete {
       ScenesToProjects.getColorCorrectParams(projectId, sceneId)
     }
   }
 
+  /** Set color correction parameters for a project/scene pairing */
   def setProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) = authenticate { user =>
     entity(as[ColorCorrect.Params]) { ccParams =>
       onSuccess(ScenesToProjects.setColorCorrectParams(projectId, sceneId, ccParams)) {
@@ -159,6 +173,7 @@ trait ProjectRoutes extends Authentication
     }
   }
 
+  /** Get the information which defines mosaicing behavior for each scene in a given project */
   def getProjectMosaicDefinition(projectId: UUID) = authenticate { user =>
     rejectEmptyResponse {
       complete {
