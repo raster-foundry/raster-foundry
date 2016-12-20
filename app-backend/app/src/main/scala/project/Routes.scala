@@ -64,6 +64,11 @@ trait ProjectRoutes extends Authentication
             get { listProjectScenesManualOrder(projectId) } ~
             post { setProjectScenesManualOrder(projectId) }
           }
+        } ~
+        pathPrefix("auto-ordered") {
+          pathEndOrSingleSlash {
+            get { listProjectScenesAutoOrder(projectId) }
+          }
         }
       }
     }
