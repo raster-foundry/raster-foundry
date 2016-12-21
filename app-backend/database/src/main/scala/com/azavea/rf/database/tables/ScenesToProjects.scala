@@ -54,7 +54,10 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
     })
 
     database.db.run {
-      setUnorderedS2P andThen setOrderedS2P
+      (for {
+        _ <- setUnorderedS2P
+        set <- setOrderedS2P
+      } yield set).transactionally
     }
   }
 
