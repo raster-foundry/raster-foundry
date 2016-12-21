@@ -6,7 +6,7 @@ import modal from 'angular-ui-bootstrap/src/modal';
 import BrowseController from './browse.controller.js';
 
 const BrowseModule = angular.module('pages.browse', [
-    'components.leafletMap', ngInfiniteScroll, modal
+    'components.mapContainer', ngInfiniteScroll, modal
 ]);
 
 BrowseModule.controller('BrowseController', BrowseController);

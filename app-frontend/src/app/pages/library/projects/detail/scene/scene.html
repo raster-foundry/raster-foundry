@@ -7,10 +7,9 @@
         {{$ctrl.scene.name}}
       </h1>
     </div>
-    <rf-leaflet-map
-        class="map-preview-container"
-        static="true",
-        footprint="$ctrl.scene.footprint"></rf-leaflet-map>
+    <rf-map-container class="map-preview-container"
+                      map-id="scene"
+                      options="$ctrl.mapOptions"></rf-map-container>
     <rf-scene-detail scene="$ctrl.scene"></rf-scene-detail>
   </div>
   <div class="column-8" ng-if="$ctrl.loading">

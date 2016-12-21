@@ -121,13 +121,18 @@ export default (app) => {
                 // Unpack responses into a single scene list.
                 // The structure to unpack is:
                 // [{ results: [{},{},...] }, { results: [{},{},...]},...]
-                this.$q.all(requests).then((allResponses) => {
-                    deferred.resolve([].concat(...Array.from(allResponses,
-                                                             (resp) => resp.results)));
-                },
-                () => {
-                    deferred.reject('Error loading scenes.');
-                });
+                this.$q.all(requests).then(
+                    (allResponses) => {
+                        deferred.resolve(
+                            allResponses.reduce((res, resp) => res.concat(resp.results), [])
+                        );
+                    },
+                    () => {
+                        deferred.reject('Error loading scenes.');
+                    }
+                );
+            }, () => {
+                deferred.reject('Error loading scenes.');
             });
             return deferred.promise;
         }

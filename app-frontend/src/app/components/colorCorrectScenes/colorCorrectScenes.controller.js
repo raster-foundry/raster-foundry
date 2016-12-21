@@ -1,93 +1,46 @@
 export default class ColorCorrectScenesController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, $q, projectService, layerService, $state
+        $log, $scope, $q, projectService, layerService, $state, mapService
     ) {
         'ngInject';
         this.projectService = projectService;
         this.layerService = layerService;
         this.$state = $state;
         this.$q = $q;
+        this.getMap = () => mapService.getMap('project');
     }
 
     $onInit() {
-        this.project = this.$state.params.project;
-        this.projectId = this.$state.params.projectid;
         // Internal bookkeeping to handle grid selection functionality.
         this.selectedTileX = null;
         this.selectedTileY = null;
-        this.gridHighlight = null;
         this.selectingScenes = false;
+        this.projectid = this.$state.params.projectid;
 
-        // Populate project scenes
-        if (!this.project) {
-            if (this.projectId) {
-                this.loading = true;
-                this.projectService.query({id: this.projectId}).then(
-                    (project) => {
-                        this.project = project;
-                        this.loading = false;
-                        this.populateSceneList();
-                    },
-                    () => {
-                        this.$state.go('library.projects.list');
-                    }
-                );
-            } else {
-                this.$state.go('library.projects.list');
-            }
-        } else {
-            this.populateSceneList();
-        }
+        this.getMap().then((map) => {
+            this.listeners = [
+                map.on('click', this.selectGridCellScenes.bind(this))
+            ];
+        });
     }
 
-    $onChanges(changesObj) {
-        if (changesObj.clickEvent && changesObj.clickEvent.currentValue && this.mapZoom) {
-            this.selectGridCellScenes(changesObj.clickEvent.currentValue);
-        }
-    }
-
-    populateSceneList() {
-        // If we are returning from a different state that might preserve the
-        // sceneList, like the color correction adjustments, then we don't need
-        // to re-request scenes.
-        if (this.loading || this.sceneList.length > 0) {
-            this.layersFromScenes();
-            return;
-        }
-
-        delete this.errorMsg;
-        this.loading = true;
-        // save off selected scenes so you don't lose them during the refresh
-        this.sceneList = [];
-        this.projectService.getAllProjectScenes({projectId: this.project.id}).then(
-            (allScenes) => {
-                this.sceneList = allScenes;
-                this.layersFromScenes();
-            },
-            () => {
-                this.errorMsg = 'Error loading scenes.';
-            }).finally(() => {
-                this.loading = false;
-            }
-        );
-    }
-
-    layersFromScenes() {
-        // Create scene layers to use for color correction
-        for (const scene of this.sceneList) {
-            let sceneLayer = this.layerService.layerFromScene(scene);
-            this.sceneLayers.set(scene.id, sceneLayer);
-        }
-        this.layers = this.sceneLayers.values();
+    $onDestroy() {
+        this.getMap().then((map) => {
+            this.listeners.forEach((listener) => {
+                map.off(listener);
+            });
+            map.deleteLayers('highlight');
+        });
     }
 
     /**
      * Select the scenes that fall within the clicked grid cell
      *
-     * @param {object} clickEvent from the map
+     * @param {object} $event from the map
+     * @param {MapWrapper} source event source
      * @returns {undefined}
      */
-    selectGridCellScenes(clickEvent) {
+    selectGridCellScenes($event, source) {
         // Helper functions for converting between click Lat/Lng and tile numbers
         // From http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
         function lng2Tile(lng, zoom) {
@@ -112,15 +65,18 @@ export default class ColorCorrectScenesController {
         if (this.selectingScenes || this.loading) {
             return;
         }
-        let zoom = this.mapZoom;
+
+        let zoom = source.map.getZoom();
         // The conversion functions above return the upper-left (northwest) corner of the tile,
         // so to get the lower left and upper right corners to make a bounding box, we need to
         // get the upper-left corners of the tiles directly below and to the right of this one.
-        let tileX = lng2Tile(clickEvent.latlng.lng, zoom);
-        let tileY = lat2Tile(clickEvent.latlng.lat, zoom);
-        if (tileX !== this.selectedTileX || tileY !== this.selectedTileY) {
+        let tileX = lng2Tile($event.latlng.lng, zoom);
+        let tileY = lat2Tile($event.latlng.lat, zoom);
+        if (tileX !== this.selectedTileX || tileY !== this.selectedTileY ||
+            zoom !== this.selectedTileZ) {
             this.selectedTileX = tileX;
             this.selectedTileY = tileY;
+            this.selectedTileZ = zoom;
 
             let llLat = tile2Lat(tileY + 1, zoom);
             let llLng = tile2Lng(tileX, zoom);
@@ -129,7 +85,7 @@ export default class ColorCorrectScenesController {
             let bboxString = `${llLng},${llLat},${urLng},${urLat}`;
             this.selectingScenes = true;
             this.projectService.getAllProjectScenes({
-                projectId: this.project.id,
+                projectId: this.projectid,
                 bbox: bboxString
             }).then((selectedScenes) => {
                 this.selectNoScenes();
@@ -190,17 +146,12 @@ export default class ColorCorrectScenesController {
         return this.selectedScenes.size === 0 || this.selectedScenes.size < this.sceneList.size;
     }
 
-
-    selectNoScenes() {
-        this.selectedScenes.clear();
-        this.selectedLayers.clear();
-    }
-
     clearGridHighlight() {
         this.selectedTileX = null;
         this.selectedTileY = null;
-        this.gridHighlight = null;
-        this.newGridSelection({highlight: this.gridHighlight});
+        this.getMap().then((map) => {
+            map.deleteLayers('highlight');
+        });
     }
 
     selectAllScenes() {
@@ -208,6 +159,11 @@ export default class ColorCorrectScenesController {
             this.selectedScenes.set(scene.id, scene);
             this.selectedLayers.set(scene.id, this.sceneLayers.get(scene.id));
         });
+    }
+
+    selectNoScenes() {
+        this.selectedScenes.clear();
+        this.selectedLayers.clear();
     }
 
     isSelected(scene) {
@@ -234,7 +190,8 @@ export default class ColorCorrectScenesController {
 
     updateGridSelection(swPoint, nePoint) {
         let newGridHighlight = L.rectangle([swPoint, nePoint]);
-        this.gridHighlight = newGridHighlight;
-        this.newGridSelection({highlight: this.gridHighlight});
+        this.getMap().then((map) => {
+            map.setLayer('highlight', newGridHighlight);
+        });
     }
 }

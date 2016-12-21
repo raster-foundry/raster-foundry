@@ -8,6 +8,7 @@ require('./services/config.provider')(shared);
 require('./services/auth.service')(shared);
 require('./services/token.service')(shared);
 require('./services/layer.service')(shared);
+require('./services/map.service')(shared);
 
 require('./services/featureFlagOverrides.service')(shared);
 require('./services/featureFlags.provider')(shared);

@@ -1,10 +1,16 @@
 class SceneDetailController {
-    constructor($log, $state, sceneService, $uibModal) {
+    constructor($log, $state, sceneService, $uibModal, mapService) {
         'ngInject';
 
         this.$state = $state;
         this.$uibModal = $uibModal;
         this.$log = $log;
+        this.getMap = () => mapService.getMap('scene');
+
+        this.mapOptions = {
+            static: true,
+            fitToGeojson: true
+        };
 
         this.scene = this.$state.params.scene;
         this.sceneId = this.$state.params.id;
@@ -15,6 +21,9 @@ class SceneDetailController {
                     (scene) => {
                         this.scene = scene;
                         this.loading = false;
+                        this.getMap().then((map)=> {
+                            map.addGeojson('footprint', this.scene.dataFootprint);
+                        });
                     },
                     () => {
                         this.$state.go('^.list');
@@ -23,6 +32,10 @@ class SceneDetailController {
             } else {
                 this.$state.go('^.list');
             }
+        } else {
+            this.getMap().then((map) => {
+                map.addGeojson('footprint', this.scene.dataFootprint);
+            });
         }
     }
 

@@ -4,7 +4,7 @@ const _ = require('lodash');
 
 export default class BrowseController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, sceneService, gridService, authService, $state, $uibModal
+        $log, $scope, sceneService, gridService, authService, $state, $uibModal, mapService
     ) {
         'ngInject';
         this.$log = $log;
@@ -13,6 +13,7 @@ export default class BrowseController {
         this.$state = $state;
         this.$uibModal = $uibModal;
         this.gridService = gridService;
+        this.getMap = () => mapService.getMap('browse');
 
         this.assetLogo = assetLogo;
         this.scenes = {
@@ -66,6 +67,13 @@ export default class BrowseController {
             },
             this.onLoggedInChange.bind(this)
         );
+
+        this.getMap().then((browseMap) => {
+            browseMap.map.fitBounds(this.bounds);
+            browseMap.on('moveend', ($event, mapWrapper) => {
+                this.onViewChange(mapWrapper.map.getBounds(), mapWrapper.map.getZoom());
+            });
+        });
     }
 
     onStateChangeStart(event, toState, toParams, fromState) {
@@ -104,15 +112,17 @@ export default class BrowseController {
             bbox: this.queryParams.bbox
         }, newFilters);
         this.onQueryParamsChange();
+        this.loadGrid(this.bboxCoords, this.zoom);
     }
 
     onViewChange(newBounds, zoom) {
-        const bboxCoords = newBounds.toBBoxString();
+        this.bboxCoords = newBounds.toBBoxString();
+        this.zoom = zoom;
         this.queryParams = Object.assign({
             id: this.queryParams.id
-        }, this.filters, {bbox: bboxCoords});
+        }, this.filters, {bbox: this.bboxCoords});
         this.onQueryParamsChange();
-        this.loadGrid(bboxCoords, zoom);
+        this.loadGrid(this.bboxCoords, this.zoom);
     }
 
     onLoggedInChange(newValue) {
@@ -178,7 +188,22 @@ export default class BrowseController {
             params
         ).then(
             (gridResult) => {
-                this.lastGridResult = gridResult;
+                this.lastGridResult = Object.assign({}, gridResult, {
+                    properties: {
+                        options: {
+                            fillOpacity: 0,
+                            color: '#465076',
+                            weight: 0.5,
+                            onEachFeature: (feature, layer) => {
+                                let count = feature.properties.count;
+                                layer.bindTooltip(`${count}`);
+                            }
+                        }
+                    }
+                });
+                this.getMap().then((map) => {
+                    map.setGeojson('grid', this.lastGridResult);
+                });
                 this.loadingGrid = false;
                 if (this.pendingGridRequest) {
                     this.pendingGridRequest = false;
@@ -265,11 +290,15 @@ export default class BrowseController {
     }
 
     setHoveredScene(scene) {
-        this.hoveredScene = scene;
+        this.getMap().then((map) => {
+            map.setGeojson('hovered', scene.dataFootprint);
+        });
     }
 
     removeHoveredScene() {
-        this.hoveredScene = null;
+        this.getMap().then((map) => {
+            map.deleteGeojson('hovered');
+        });
     }
 
     projectModal() {
