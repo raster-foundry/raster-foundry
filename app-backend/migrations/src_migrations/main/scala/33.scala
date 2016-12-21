@@ -34,7 +34,7 @@ object M33 {
           '1 scene with NIR-1 and red band information.',
           'This tool has a license',
           'PUBLIC',
-          '{"Sentinel-2", "Landsat 8"}'
+          '{"Sentinel-2", "Landsat 8"}',
           '4.8'
         ), (
           'a115269a-69b4-49c6-bbcf-289f765be969',
