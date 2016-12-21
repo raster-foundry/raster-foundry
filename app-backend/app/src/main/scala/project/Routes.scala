@@ -43,32 +43,27 @@ trait ProjectRoutes extends Authentication
         put { updateProject(projectId) } ~
         delete { deleteProject(projectId) }
       } ~
-      pathPrefix("mosaic-definition") {
-        pathEndOrSingleSlash {
-          get { getProjectMosaicDefinition(projectId) }
-        }
-      } ~
       pathPrefix("scenes") {
         pathEndOrSingleSlash {
           get { listProjectScenes(projectId) } ~
           post { addProjectScenes(projectId) } ~
           put { updateProjectScenes(projectId) } ~
           delete { deleteProjectScenes(projectId) }
+        }
+      } ~
+      pathPrefix("mosaic") {
+        pathEndOrSingleSlash {
+          get { getProjectMosaicDefinition(projectId) }
         } ~
-        pathPrefix(JavaUUID / "color-correction") { sceneId =>
+        pathPrefix(JavaUUID) { sceneId =>
           get { getProjectSceneColorCorrectParams(projectId, sceneId) } ~
           post { setProjectSceneColorCorrectParams(projectId, sceneId) }
-        } ~
-        pathPrefix("ordered") {
-          pathEndOrSingleSlash {
-            get { listProjectScenesManualOrder(projectId) } ~
-            post { setProjectScenesManualOrder(projectId) }
-          }
-        } ~
-        pathPrefix("auto-ordered") {
-          pathEndOrSingleSlash {
-            get { listProjectScenesAutoOrder(projectId) }
-          }
+        }
+      } ~
+      pathPrefix("order") {
+        pathEndOrSingleSlash {
+          get { listProjectSceneOrder(projectId) } ~
+          post { setProjectSceneOrder(projectId) }
         }
       }
     }
@@ -127,27 +122,17 @@ trait ProjectRoutes extends Authentication
     }
   }
 
-  /** List a project's scenes according to automatic ordering rules (date acquired and cloud cover) */
-  def listProjectScenesAutoOrder(projectId: UUID): Route = authenticate { user =>
-    (withPagination & sceneQueryParameters) { (pageRequest, combinedParams) =>
-      val page = pageRequest.copy(sort = Map("acquisitionDate" -> Order.Desc, "cloudCover" -> Order.Asc))
-      complete {
-        Projects.listProjectScenes(projectId, page, combinedParams, user)
-      }
-    }
-  }
-
   /** List a project's scenes according to their manually defined ordering */
-  def listProjectScenesManualOrder(projectId: UUID): Route = authenticate { user =>
+  def listProjectSceneOrder(projectId: UUID): Route = authenticate { user =>
     withPagination { page =>
       complete {
-        ScenesToProjects.listManualOrder(projectId, page)
+        Projects.listProjectSceneOrder(projectId, page, user)
       }
     }
   }
 
   /** Set the manually defined z-ordering for scenes within a given project */
-  def setProjectScenesManualOrder(projectId: UUID): Route = authenticate { user =>
+  def setProjectSceneOrder(projectId: UUID): Route = authenticate { user =>
     entity(as[Seq[UUID]]) { sceneIds =>
       if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
         complete(StatusCodes.RequestEntityTooLarge)

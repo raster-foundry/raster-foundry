@@ -187,12 +187,12 @@ class ProjectSceneSpec extends WordSpec
         val projectId = projects.results.head.id
 
         // Get scenes to get ID
-        Get(s"/api/projects/${projectId}/scenes/ordered/").withHeaders(
+        Get(s"/api/projects/${projectId}/order/").withHeaders(
           List(authHeader)
         ) ~> baseRoutes ~> check {
           val sceneIds1 = responseAs[PaginatedResponse[UUID]].results
 
-          Post(s"/api/projects/${projectId}/scenes/ordered").withHeadersAndEntity(
+          Post(s"/api/projects/${projectId}/order/").withHeadersAndEntity(
             List(authHeader),
             HttpEntity(
               ContentTypes.`application/json`,
@@ -201,7 +201,7 @@ class ProjectSceneSpec extends WordSpec
           ) ~> baseRoutes ~> check {
             status shouldEqual StatusCodes.OK
 
-            Get(s"/api/projects/${projectId}/scenes/ordered/").withHeaders(
+            Get(s"/api/projects/${projectId}/order/").withHeaders(
               List(authHeader)
             ) ~> baseRoutes ~> check {
               val sceneIds2 = responseAs[PaginatedResponse[UUID]].results
@@ -231,12 +231,12 @@ class ProjectSceneSpec extends WordSpec
         val projectId = projects.results.head.id
 
         // Get scenes to get an ID
-        Get(s"/api/projects/${projectId}/scenes/ordered").withHeaders(
+        Get(s"/api/projects/${projectId}/order/").withHeaders(
           List(authHeader)
         ) ~> baseRoutes ~> check {
           val sceneId = responseAs[PaginatedResponse[UUID]].results.head
 
-          Post(s"/api/projects/${projectId}/scenes/${sceneId}/color-correction").withHeadersAndEntity(
+          Post(s"/api/projects/${projectId}/mosaic/${sceneId}/").withHeadersAndEntity(
             List(authHeader),
             HttpEntity(
               ContentTypes.`application/json`,
@@ -245,7 +245,7 @@ class ProjectSceneSpec extends WordSpec
           ) ~> baseRoutes ~> check {
             status shouldEqual StatusCodes.NoContent
 
-            Get(s"/api/projects/${projectId}/scenes/${sceneId}/color-correction").withHeaders(
+            Get(s"/api/projects/${projectId}/mosaic/${sceneId}/").withHeaders(
               List(authHeader)
             ) ~> baseRoutes ~> check {
               val responseColorCorrectParams = responseAs[ColorCorrect.Params]
@@ -253,7 +253,7 @@ class ProjectSceneSpec extends WordSpec
               responseColorCorrectParams shouldEqual colorCorrectParams
             }
 
-            Get(s"/api/projects/${projectId}/mosaic-definition").withHeaders(
+            Get(s"/api/projects/${projectId}/mosaic/").withHeaders(
               List(authHeader)
             ) ~> baseRoutes ~> check {
               val mosaicDef = responseAs[MosaicDefinition]
