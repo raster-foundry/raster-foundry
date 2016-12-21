@@ -4,7 +4,7 @@ export default class ColorCorrectPaneController {
     ) {
         'ngInject';
         this.$parent = $scope.$parent.$ctrl;
-        this.bucketService = projectService;
+        this.projectService = projectService;
         this.$state = $state;
         this.$q = $q;
     }

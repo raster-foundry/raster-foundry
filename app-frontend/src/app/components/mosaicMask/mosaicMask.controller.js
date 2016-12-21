@@ -1,21 +1,22 @@
 export default class MosaicMaskController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, $q, projectService, layerService, $state, $stateParams
+        $log, $scope, $q, projectService, layerService, $state, $stateParams, mapService
     ) {
         'ngInject';
         this.projectService = projectService;
-        this.layerService = layerService;
         this.$state = $state;
         this.$q = $q;
         this.$log = $log;
         this.$scope = $scope;
         this.$stateParams = $stateParams;
+        this.getMap = () => mapService.getMap('project');
     }
 
     $onInit() {
         this.project = this.$state.params.project;
         this.projectid = this.$state.params.projectid;
-        this.maskList = [];
+        this.maskLayers = [];
+        this.listeners = [];
 
         this.scene = this.$stateParams.scene;
         if (!this.scene) {
@@ -35,37 +36,16 @@ export default class MosaicMaskController {
             }
         };
 
-        // fetch scene masks
+        this.addDrawControl();
+    }
 
-        // fetch project / scene list. probably not necessary, remove later if so.
-        if (!this.project) {
-            if (this.projectid) {
-                this.loading = true;
-                this.projectService.query({id: this.projectid}).then(
-                    (project) => {
-                        this.project = project;
-                        this.loading = false;
-                        this.populateSceneList();
-                    },
-                    () => {
-                        this.$state.go('library.projects.list');
-                    });
-            } else {
-                this.$state.go('library.projects.list');
-            }
-        } else {
-            this.populateSceneList();
-        }
-
-        this.$scope.$watchCollection('$ctrl.drawnPolygons', (polygons) => {
-            this.maskList = polygons.map((polygon) => {
-                return {
-                    area: polygon.properties.area,
-                    createdAt: polygon.properties.createdAt,
-                    numPoints: polygon.geometry.coordinates[0].length - 1
-                };
+    $onDestroy() {
+        this.getMap().then((map) => {
+            this.listeners.forEach((listener) => {
+                map.off(listener);
             });
         });
+        this.removeDrawControl();
     }
 
     closePanel() {
@@ -79,41 +59,100 @@ export default class MosaicMaskController {
         );
     }
 
-    enableDrawToolbar() {
-        this.allowDrawing = !this.allowDrawing;
-    }
-
-    populateSceneList() {
-        // If we are returning from a different state that might preserve the
-        // sceneList, like the color correction adjustments, then we don't need
-        // to re-request scenes.
-        if (this.loading || this.sceneList && this.sceneList.length > 0) {
-            this.layersFromScenes();
-            return;
-        }
-
-        delete this.errorMsg;
-        this.loading = true;
-
-        // save off selected scenes so you don't lose them during the refresh
-        this.sceneList = [];
-        let params = Object.assign({}, this.queryParams);
-        delete params.id;
-        // Figure out how many scenes there are
-        this.projectService.getAllProjectScenes(params).then((sceneList) => {
-            this.sceneList = sceneList;
-            this.layersFromScenes();
+    addDrawControl() {
+        this.getMap().then((map) => {
+            let drawLayer = L.geoJSON(null, {
+                style: () => {
+                    return {
+                        dashArray: '10, 10',
+                        weight: 2,
+                        fillOpacity: 0.2
+                    };
+                }
+            });
+            map.addLayer('draw', drawLayer);
+            let drawCtlOptions = {
+                position: 'topleft',
+                draw: {
+                    polyline: false,
+                    marker: false,
+                    circle: false,
+                    rectangle: {
+                        shapeOptions: {
+                            dashArray: '10, 10',
+                            weight: 2,
+                            fillOpacity: 0.2
+                        }
+                    },
+                    polygon: {
+                        finish: false,
+                        allowIntersection: false,
+                        drawError: {
+                            color: '#e1e100',
+                            message: 'Invalid mask polygon'
+                        },
+                        shapeOptions: {
+                            dashArray: '10, 10',
+                            weight: 2,
+                            fillOpacity: 0.2
+                        }
+                    }
+                },
+                edit: {
+                    // featureGroup: this.drawLayer,
+                    featureGroup: drawLayer,
+                    remove: true
+                }
+            };
+            this.drawControl = new L.Control.Draw(drawCtlOptions);
+            map.map.addControl(this.drawControl);
+            this.listeners = [
+                map.on(L.Draw.Event.CREATED, this.addMask.bind(this)),
+                map.on(L.Draw.Event.EDITED, this.editMask.bind(this)),
+                map.on(L.Draw.Event.DELETED, this.deleteMask.bind(this))
+            ];
         });
     }
 
-    layersFromScenes() {
-        this.layers = this.sceneList.map((scene) => this.layerService.layerFromScene(scene));
+    removeDrawControl() {
+        this.getMap().then((map) => {
+            this.drawControl.remove();
+            map.deleteLayers('draw');
+        });
     }
 
-    onDeleteMask(mask) {
-        let polygonIndex = this.drawnPolygons.findIndex(
-            (polygon) => polygon.properties.area === mask.area
-        );
-        this.drawnPolygons.splice(polygonIndex, 1);
+    addMask($event) {
+        let layer = $event.layer;
+        layer.properties = {
+            area: this.calculateArea(layer),
+            id: new Date()
+        };
+        this.getMap().then((map) => {
+            let drawLayer = map.getLayers('draw')[0];
+            drawLayer.addLayer(layer);
+            this.maskLayers.push(layer);
+            // this.makeHttpUpdateToProjectSceneMasks();
+            this.$scope.$evalAsync();
+        });
+    }
+
+    editMask($event) {
+        // this.makeHttpUpdateToProjectSceneMasks();
+        Object.values(
+            $event.layers._layers  // eslint-disable-line no-underscore-dangle
+        ).forEach((layer) => {
+            layer.properties.area = this.calculateArea(layer);
+        });
+        this.$scope.$evalAsync();
+    }
+
+    deleteMask($event) {
+        // this.makeHttpUpdateToProjectSceneMasks();
+        this.maskLayers.splice(this.maskLayers.indexOf($event.layer), 1);
+        this.$scope.$evalAsync();
+    }
+
+    calculateArea(layer) {
+        return L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]) / 1000000;
     }
 }

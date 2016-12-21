@@ -8,7 +8,8 @@
     </button>
   </div>
   <div class="sidebar-scrollable">
-    <div ui-tree class="list-group">
+    <div ui-tree class="list-group"
+         ng-show="$ctrl.sceneRequestState && !$ctrl.sceneRequestState.loading && !ctrl.sceneRequestState.errorMsg">
       <div ui-tree-nodes="" ng-model="$ctrl.sceneList">
         <div ng-repeat="scene in $ctrl.sceneList track by scene.id" ui-tree-node>
           <rf-scene-item scene="scene"
@@ -20,14 +21,14 @@
         </div>
       </div>
     </div>
-    <div class="list-group" ng-show="$ctrl.loading">
+    <div class="list-group" ng-show="$ctrl.sceneRequestState && $ctrl.sceneRequestState.loading">
       <span class="list-placeholder">
         <i class="icon-load"></i>
       </span>
     </div>
-    <div class="list-group" ng-show="$ctrl.errorMsg">
+    <div class="list-group" ng-show="$ctrl.sceneRequestState && $ctrl.sceneRequestState.errorMsg">
       <span class="list-placeholder">
-        {{$ctrl.errorMsg}}
+        {{$ctrl.sceneRequestState.errorMsg}}
       </span>
     </div>
   </div>

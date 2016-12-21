@@ -6,7 +6,7 @@ import ProjectEditController from './projectEdit.controller.js';
 import ProjectEditComponent from './projectEdit.component.js';
 
 const ProjectEditModule = angular.module('pages.editor.project', [
-    'components.leafletMap', modal, dropdown
+    'components.mapContainer', modal, dropdown
 ]);
 
 ProjectEditModule.component('rfProjectEditor', ProjectEditComponent);

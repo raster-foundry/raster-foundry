@@ -4,11 +4,7 @@ const rfMosaicMask = {
     templateUrl: mosaicMaskTpl,
     controller: 'MosaicMaskController',
     bindings: {
-        scene: '<',
-        sceneList: '=',
-        allowDrawing: '=',
-        drawnPolygons: '=',
-        layers: '='
+        scene: '<'
     }
 };
 

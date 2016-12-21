@@ -24,9 +24,9 @@
           </a>
           <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
             <li role="menuitem"><a ng-disabled="$ctrl.selectedScenes.size === 0" ng-click="$ctrl.$state.go('editor.project.color.adjust')">Color correct</a></li>
-            <li role="menuitem"><a href="#"><i class="icon-load"></i> Sync histogram</a></li>
-            <li role="menuitem"><a href="#"><i class="icon-arrows-cw"></i> Reset changes</a></li>
-            <li role="menuitem"><a href="#" class="color-danger"><i class="icon-trash"></i> Delete</a></li>
+            <li role="menuitem"><a href><i class="icon-load"></i> Sync histogram</a></li>
+            <li role="menuitem"><a href><i class="icon-arrows-cw"></i> Reset changes</a></li>
+            <li role="menuitem"><a href class="color-danger"><i class="icon-trash"></i> Delete</a></li>
           </ul>
           <button class="btn btn-small"
                   ng-class="{'btn-secondary': !$ctrl.shouldSelectAll()}"
@@ -51,14 +51,14 @@
           ng-repeat="scene in $ctrl.sceneList track by scene.id">
       </rf-scene-item>
     </div>
-    <div class="list-group" ng-show="$ctrl.loading">
+    <div class="list-group" ng-show="$ctrl.sceneRequestState && $ctrl.sceneRequestState.loading">
       <span class="list-placeholder">
         <i class="icon-load"></i>
       </span>
     </div>
-    <div class="list-group" ng-show="$ctrl.errorMsg">
+    <div class="list-group" ng-show="$ctrl.sceneRequestState && $ctrl.sceneRequestState.errorMsg">
       <span class="list-placeholder">
-        {{$ctrl.errorMsg}}
+        {{$ctrl.sceneRequestState.errorMsg}}
       </span>
     </div>
   </div>

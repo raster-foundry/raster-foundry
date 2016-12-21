@@ -9,13 +9,15 @@ export default class ColorCorrectAdjustController {
             ceil: 2,
             step: 0.1,
             precision: 1,
+            showTicks: 0.25,
             onEnd: (id, val) => this.onFilterChange(id, val)
         };
 
         let baseFilterOptions = {
-            floor: 0,
+            floor: -60,
             ceil: 60,
             step: 1,
+            showTicks: 10,
             onEnd: (id, val) => this.onFilterChange(id, val)
         };
 
@@ -25,6 +27,7 @@ export default class ColorCorrectAdjustController {
             ceil: 1,
             step: 0.1,
             precision: 2,
+            showTicks: 0.2,
             onEnd: (id, val) => this.onFilterChange(id, val)
         };
 
@@ -33,6 +36,7 @@ export default class ColorCorrectAdjustController {
             disabled: true,
             ceil: 50,
             step: 1,
+            showTicks: 10,
             onEnd: (id, val) => this.onFilterChange(id, val)
         };
 

@@ -107,12 +107,6 @@
   </div>
 
   <div class="main">
-    <rf-leaflet-map
-        footprint="$ctrl.hoveredScene.dataFootprint"
-        bypass-fit-bounds="true"
-        proposed-bounds="$ctrl.bounds"
-        grid="$ctrl.lastGridResult"
-        on-view-change="$ctrl.onViewChange(newBounds, zoom)"
-        class="map-container"></rf-leaflet-map>
+    <rf-map-container map-id="browse"></rf-map-container>
   </div>
 </div>

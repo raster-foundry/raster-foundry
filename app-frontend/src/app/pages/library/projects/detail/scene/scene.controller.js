@@ -1,11 +1,19 @@
 class ProjectSceneController {
-    constructor($log, $state, sceneService, projectService, $uibModal) {
+    constructor( // eslint-disable-line max-params
+        $log, $state, sceneService, projectService, $uibModal, mapService
+    ) {
         'ngInject';
         this.$log = $log;
         this.$state = $state;
         this.projectService = projectService;
         this.sceneService = sceneService;
         this.$uibModal = $uibModal;
+        this.getMap = () => mapService.getMap('scene');
+
+        this.mapOptions = {
+            static: true,
+            fitToGeojson: true
+        };
 
         this.scene = this.$state.params.scene;
         this.projectId = this.$state.params.projectid;
@@ -18,6 +26,9 @@ class ProjectSceneController {
                     (scene) => {
                         this.scene = scene;
                         this.loading = false;
+                        this.getMap().then((map)=> {
+                            map.addGeojson('footprint', this.scene.dataFootprint);
+                        });
                     },
                     () => {
                         this.$state.go('^.scenes');
@@ -26,6 +37,10 @@ class ProjectSceneController {
             } else {
                 this.$state.go('^.scenes');
             }
+        } else {
+            this.getMap().then((map) => {
+                map.addGeojson('footprint', this.scene.dataFootprint);
+            });
         }
     }
 

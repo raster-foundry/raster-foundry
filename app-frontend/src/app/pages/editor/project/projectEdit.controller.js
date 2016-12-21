@@ -2,51 +2,60 @@ const Map = require('es6-map');
 
 export default class ProjectEditController {
     constructor( // eslint-disable-line max-params
-            $scope, $rootScope
+        $scope, $rootScope, $state, mapService, projectService, layerService
     ) {
         'ngInject';
+        this.$state = $state;
+        this.$scope = $scope;
+        this.$rootScope = $rootScope;
+        this.projectService = projectService;
+        this.layerService = layerService;
+        this.getMap = () => mapService.getMap('project');
+
+        this.mapOptions = {
+            static: false,
+            fitToGeojson: false
+        };
+    }
+
+    $onInit() {
+        this.project = this.$state.params.project;
+        this.projectId = this.$state.params.projectid;
+
         this.selectedScenes = new Map();
         this.selectedLayers = new Map();
         this.sceneList = [];
         this.sceneLayers = new Map();
         this.layers = [];
-        this.highlight = null;
-        this.$scope = $scope;
-        // FIXME: Right now initialization doesn't work very well; this is just a hack that assumes
-        // we know what the map zoom initial zoom will be, which is fragile. This should be
-        // replaced when we refactor the map.
-        this.mapZoom = 2;
 
-        this.allowDrawing = false;
-        this.drawnPolygons = [];
+        this.$scope.$watch('$ctrl.sceneList', this.fitAllScenes.bind(this));
 
-        $rootScope.$on('$stateChangeStart', (event, toState, toParams, fromState) => {
-            if (fromState.name === 'editor.project.mosaic.mask') {
-                this.allowDrawing = false;
-                this.drawnPolygons = [];
+        this.getSceneList();
+    }
+
+    setHoveredScene(scene) {
+        let styledGeojson = Object.assign({}, scene.dataFootprint, {
+            properties: {
+                options: {
+                    style: () => {
+                        return {
+                            dashArray: '10, 10',
+                            weight: 2,
+                            fillOpacity: 0.2
+                        };
+                    }
+                }
             }
+        });
+        this.getMap().then((map) => {
+            map.setGeojson('footprint', styledGeojson);
         });
     }
 
-    onMapClick(event) {
-        this.clickEvent = event;
-        this.$scope.$apply();
-    }
-
-    onViewChange(newBounds, zoom) {
-        this.mapZoom = zoom;
-        this.$scope.$evalAsync();
-    }
-    setHoveredScene(scene) {
-        this.hoveredScene = scene;
-    }
-
     removeHoveredScene() {
-        this.hoveredScene = null;
-    }
-
-    setHighlight(highlight) {
-        this.highlight = highlight;
+        this.getMap().then((map) => {
+            map.deleteGeojson('footprint');
+        });
     }
 
     applyCachedZOrder() {
@@ -76,8 +85,41 @@ export default class ProjectEditController {
     }
 
     fitScenes(scenes) {
-        this.proposedBounds =
-            L.featureGroup(scenes.map(v => L.geoJSON(v.dataFootprint)))
-                .getBounds();
+        this.getMap().then((map) =>{
+            let sceneFootprints = scenes.map((scene) => scene.dataFootprint);
+            map.map.fitBounds(L.geoJSON(sceneFootprints).getBounds());
+        });
+    }
+
+    getSceneList() {
+        this.sceneRequestState = {loading: true};
+        this.projectService.getAllProjectScenes(
+            {projectId: this.projectId}
+        ).then(
+            (allScenes) => {
+                this.sceneList = allScenes;
+                this.layersFromScenes();
+            },
+            (error) => {
+                this.sceneRequestState.errorMsg = error;
+            }
+        ).finally(() => {
+            this.sceneRequestState.loading = false;
+        });
+    }
+
+    layersFromScenes() {
+        // Create scene layers to use for color correction
+        for (const scene of this.sceneList) {
+            let sceneLayer = this.layerService.layerFromScene(scene);
+            this.sceneLayers.set(scene.id, sceneLayer);
+        }
+        this.layers = this.sceneLayers.values();
+        this.getMap().then((map) => {
+            map.deleteLayers('scenes');
+            for (let layer of this.layers) {
+                map.addLayer('scenes', layer.tiles);
+            }
+        });
     }
 }

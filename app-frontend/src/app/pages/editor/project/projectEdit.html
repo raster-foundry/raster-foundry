@@ -10,16 +10,7 @@
   <div class="sidebar" ui-view></div>
   <!-- Map -->
   <div class="main">
-    <rf-leaflet-map class="map-container"
-                    footprint="$ctrl.hoveredScene.dataFootprint"
-                    bypass-fit-bounds="true"
-                    layers="$ctrl.layers"
-                    highlight="$ctrl.highlight"
-                    on-map-click="$ctrl.onMapClick(event)"
-                    allow-drawing="$ctrl.allowDrawing"
-                    drawn-polygons="$ctrl.drawnPolygons"
-                    on-view-change="$ctrl.onViewChange(newBounds, zoom)"
-                    proposed-bounds="$ctrl.proposedBounds">
-    </rf-leaflet-map>
+    <rf-map-container map-id="project" options="$ctrl.mapOptions">
+    </rf-map-container>
   </div>
 </div>
