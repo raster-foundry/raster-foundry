@@ -25,4 +25,5 @@ object Version {
   val scalacache         = "0.9.3"
   val elasticacheClient  = "1.1.1"
   val caffeine           = "2.3.5"
+  val shapeless          = "2.2.5"
 }

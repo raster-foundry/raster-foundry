@@ -36,4 +36,5 @@ object Dependencies {
   val scalacacheMemcache = "com.github.cb372"            %% "scalacache-memcached"              % Version.scalacache
   val scalacacheCaffeine = "com.github.cb372"            %% "scalacache-caffeine"               % Version.scalacache
   val elasticacheClient  = "com.amazonaws"                % "elasticache-java-cluster-client"   % Version.elasticacheClient
+  val shapeless          = "com.chuusai"                 %% "shapeless"                         % Version.shapeless
 }
