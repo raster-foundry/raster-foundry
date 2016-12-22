@@ -20,4 +20,14 @@ object NDVI extends (MultibandTile => Tile) {
   def apply(tile: MultibandTile): Tile = {
     tile.interpretAs(DoubleCellType).combineDouble(0, 1) { (r, nir) => (nir - r) / (nir + r) }
   }
+
+  def tool(bands: Map[Symbol, Op]): Map[Symbol, Op] =
+    for {
+      red <- bands.get('red)
+      nir <- bands.get('nir)
+    } yield {
+      val num = red.combineDouble(nir)(_ - _)
+      val den = red.combineDouble(nir)(_ + _)
+      Map('ndvi -> num.combineDouble(den)(_ / _))
+    }
 }
