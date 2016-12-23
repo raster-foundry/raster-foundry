@@ -9,7 +9,11 @@ export default class ToolSearchController {
         this.$state = $state;
     }
 
-    onSearchAction(searchText) {
-        this.onSearch({text: searchText});
+    onSearchAction() {
+        this.onSearch({text: this.searchText});
+    }
+
+    clearSearch() {
+        this.searchText = '';
     }
 }
