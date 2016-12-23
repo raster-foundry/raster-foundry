@@ -1,126 +1,155 @@
+/* global _ */
+
 export default class MarketSearchController {
     constructor( // eslint-disable-line max-params
-        $log, $state
+        $log, $state, toolService, toolTagService, toolCategoryService
     ) {
         'ngInject';
+        this.toolService = toolService;
+        this.toolTagService = toolTagService;
+        this.toolCategoryService = toolCategoryService;
         this.$state = $state;
         this.$log = $log;
 
-        this.populatePlaceholderData();
-        this.populateToolList();
+        this.initController();
     }
 
-    populateToolList() {
-        this.$log.log('Using placeholder data in Market search controller');
+    initController() {
+        this.initFilters();
+        this.initSearchTerms();
+        this.fetchToolList();
+        this.fetchToolTags();
+        this.fetchToolCategories();
+    }
+    initFilters() {
+        this.queryParams = _.mapValues(this.$state.params, v => {
+            return v || null;
+        });
+        this.filters = Object.assign({}, this.queryParams);
     }
 
-    populatePlaceholderData() {
-        this.searchTerms = ['NDVI', 'TERM', 'Vegetation', 'Azavea'];
-        this.tags = [
-            {
-                label: 'Vegetation Index',
-                selected: true
-            },
-            {
-                label: 'Image Classification',
-                selected: true
+    initSearchTerms() {
+        this.searchTerms = [];
+        if (this.queryParams.query) {
+            this.searchTerms = this.queryParams.query.trim().split(' ');
+        }
+    }
+
+    initSelectedToolTags() {
+        this.selectedToolTags = [];
+        if (this.queryParams.tooltag) {
+            this.selectedToolTags = this.queryParams.tooltag.split(' ');
+        }
+    }
+
+    initSelectedToolCategories() {
+        this.selectedToolCategories = [];
+        if (this.queryParams.toolcategory) {
+            this.selectedToolCategories =
+                this.queryParams.toolcategory.split(' ');
+        }
+    }
+
+    fetchToolList() {
+        this.loadingTools = true;
+        this.toolService.query(
+            this.queryParams
+        ).then(d => {
+            this.updatePagination(d);
+            this.lastToolResponse = d;
+            this.toolList = d.results;
+            this.loadingTools = false;
+        });
+    }
+
+    fetchToolTags() {
+        this.loadingToolTags = true;
+        this.toolTagService.query().then(d => {
+            this.lastToolTagResponse = d;
+            this.processToolTags(d);
+            this.loadingToolTags = false;
+        });
+    }
+
+    processToolTags(data) {
+        this.initSelectedToolTags();
+        this.toolTagList = data.results.map(t => {
+            t.selected = false;
+            if (this.selectedToolTags.indexOf(t.id) >= 0) {
+                t.selected = true;
             }
-        ];
-        this.categories = [
-            {
-                label: 'Agriculture',
-                selected: true
-            },
-            {
-                label: 'Aggregates',
-                selected: true
+            return t;
+        });
+    }
+
+    fetchToolCategories() {
+        this.loadingToolCategories = true;
+        this.toolCategoryService.query().then(d => {
+            this.lastToolCategoryResponse = d;
+            this.processToolCategories(d);
+            this.loadingToolCategories = false;
+        });
+    }
+
+    processToolCategories(data) {
+        this.initSelectedToolCategories();
+        this.toolCategoryList = data.results.map(c => {
+            c.selected = false;
+            if (this.selectedToolCategories.indexOf(c.slugLabel) >= 0) {
+                c.selected = true;
             }
-        ];
-        this.queryResult = {
-            count: 25,
-            hasNext: true,
-            hasPrevious: false,
-            pageSize: 10,
-            page: 1,
-            results: [{
-                name: 'Normalized Difference Vegetation Index - NDVI',
-                description: 'Analyze remote sensing measurements, ' +
-                    'and assess whether the target being observed contains' +
-                    'live green vegetation or not.',
-                uploader: 'Raster Foundry',
-                id: 'uuid1',
-                screenshots: [
-                    {id: 1, url: 'https://placehold.it/800x480'},
-                    {id: 2, url: 'https://placehold.it/800x480'},
-                    {id: 3, url: 'https://placehold.it/800x480'}
-                ],
-                tags: [
-                    'Image Classification', 'Tagged'
-                ],
-                categories: [
-                    'Climate', 'Ecosystems', 'Forestry', 'Farming', 'Plant Growth',
-                    'Prevention'
-                ],
-                requirements: '1 scene with NIR-1 and red band information',
-                createdAt: (new Date()).toISOString(),
-                modifiedAt: (new Date()).toISOString()
-            }, {
-                name: 'Direction of Surface Change',
-                description: 'Measures to 2-dimensional rate of surface change.' +
-                    'Output will be an integer layer with values 0-360',
-                uploader: 'Raster Foundry',
-                id: 'uuid2',
-                screenshots: [
-                    {id: 1, url: 'https://placehold.it/800x480'},
-                    {id: 2, url: 'https://placehold.it/800x480'},
-                    {id: 3, url: 'https://placehold.it/800x480'}
-                ],
-                tags: [
-                    'Image Classification', 'Tagged'
-                ],
-                categories: [
-                    'Climate', 'Ecosystems', 'Forestry', 'Farming', 'Plant Growth',
-                    'Prevention'
-                ],
-                requirements: '1 scene with NIR-1 and red band information',
-                createdAt: (new Date()).toISOString(),
-                modifiedAt: (new Date()).toISOString()
-            }, {
-                name: 'Topographic Position Index (TPI)',
-                description: 'The Topographic Position index (TPI) is a relative' +
-                    'measure of a location\'s elevation with respect to its ' +
-                    'surroundings.  It is calculated by subtracting the mean ' +
-                    'elevation of the 8 cells surrounding the cell from the ' +
-                    'cell\'s elevation. Given that TPI is calculated by comparing ' +
-                    'a central point to the surrounding elevation, there is the ' +
-                    'possibility of both positive and negative values.',
-                uploader: 'Raster Foundry',
-                id: 'uuid3',
-                screenshots: [
-                    {id: 1, url: 'https://placehold.it/800x480'},
-                    {id: 2, url: 'https://placehold.it/800x480'},
-                    {id: 3, url: 'https://placehold.it/800x480'}
-                ],
-                tags: [
-                    'Image Classification', 'Tagged'
-                ],
-                categories: [
-                    'Climate', 'Ecosystems', 'Forestry', 'Farming', 'Plant Growth',
-                    'Prevention'
-                ],
-                requirements: '1 scene with NIR-1 and red band information',
-                createdAt: (new Date()).toISOString(),
-                modifiedAt: (new Date()).toISOString()
-            }]
+            return c;
+        });
+    }
+
+    handleTagChange(tag) {
+        const tagIndex = this.selectedToolTags.indexOf(tag.id);
+        if (tagIndex >= 0) {
+            this.selectedToolTags.splice(tagIndex, 1);
+        } else {
+            this.selectedToolTags.push(tag.id);
+        }
+        this.search();
+    }
+
+    handleCategoryChange(category) {
+        const categoryIndex = this.selectedToolCategories.indexOf(category.slugLabel);
+        if (categoryIndex >= 0) {
+            this.selectedToolCategories.splice(categoryIndex, 1);
+        } else {
+            this.selectedToolCategories.push(category.slugLabel);
+        }
+        this.search();
+    }
+
+    updatePagination(data) {
+        this.pagination = {
+            show: data.count > data.pageSize,
+            count: data.count,
+            currentPage: data.page + 1,
+            startingItem: data.page * data.pageSize + 1,
+            endingItem: Math.min((data.page + 1) * data.pageSize, data.count),
+            hasNext: data.hasNext,
+            hasPrevious: data.hasPrevious
         };
     }
 
     removeSearchTerm(index) {
         this.searchTerms.splice(index, 1);
+        this.search();
     }
 
     clearSearch() {
         this.searchTerms = [];
+        this.search();
+    }
+
+    search() {
+        this.$state.go('market.search', {
+            query: this.searchTerms.join(' '),
+            toolcategory: this.selectedToolCategories.join(' '),
+            tooltag: this.selectedToolTags.join(' ')
+        });
     }
 
     toggleTag(index) {

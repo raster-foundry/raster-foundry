@@ -7,7 +7,7 @@ export default class MarketController {
         this.$state = $state;
     }
 
-    onSearch(text) {
+    search(text) {
         this.$log.log('searched for:', text);
         this.$state.go('market.search', {query: text});
     }

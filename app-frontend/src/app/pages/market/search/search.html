@@ -1,7 +1,7 @@
 <div class="container column-stretch dashboard-filter wide">
   <div class="sidebar">
     <div class="sidebar-scrollable">
-      <div class="sidebar-category">
+      <div feature-flag="market-search" class="sidebar-category">
         <div class="sidebar-category-title">
           Search Terms
         </div>
@@ -17,19 +17,16 @@
           <a href ng-click="$ctrl.clearSearch()">Clear All</a>
         </div>
       </div>
-      <div class="sidebar-separator"></div>
+      <div feature-flag="market-search" class="sidebar-separator"></div>
       <div class="sidebar-category">
         <div class="sidebar-category-title">
           Tags
         </div>
         <div class="sidebar-category-contents">
           <div class="sidebar-selection"
-               ng-repeat="tag in $ctrl.tags"
-               ng-click="$ctrl.toggleTag($index)">
-            <i ng-class="{'icon-check': tag.selected,
-                          'icon-cross': !tag.selected
-                         }"></i>
-            {{tag.label}}
+               ng-repeat="tag in $ctrl.toolTagList">
+            <input id="search-tag-{{$id}}" type="checkbox" ng-change="$ctrl.handleTagChange(tag)" ng-checked="tag.selected" ng-model="tag.selected"/>
+            <label for="search-tag-{{$id}}">{{tag.tag}}</label>
           </div>
         </div>
         <div class="sidebar-category-actions">
@@ -43,13 +40,9 @@
         </div>
         <div class="sidebar-category-contents">
           <div class="sidebar-selection"
-               ng-repeat="category in $ctrl.categories"
-               ng-click="$ctrl.toggleCategory($index)">
-            <i class="icon-check"
-             ng-class="{'icon-check': category.selected,
-                        'icon-cross': !category.selected
-                       }"></i>
-            {{category.label}}
+               ng-repeat="category in $ctrl.toolCategoryList">
+            <input id="search-category-{{$id}}" type="checkbox" ng-change="$ctrl.handleCategoryChange(category)" ng-checked="category.selected" ng-model="category.selected">
+            <label for="search-category-{{$id}}">{{category.category}}</label>
           </div>
         </div>
         <div class="sidebar-category-actions">
@@ -62,7 +55,7 @@
     <div class="content">
       <div class="row stack-sm">
         <h1 class="h3 page-title">
-          <a>Showing 1-10 of {{$ctrl.queryResult.count}} results</a>
+          <a>Showing {{$ctrl.pagination.startingItem}} - {{$ctrl.pagination.endingItem}} of {{$ctrl.pagination.count}} results</a>
         </h1>
       </div>
       <div class="row stack-sm">
@@ -70,7 +63,7 @@
           <div class="embedded-scrollable">
             <div class="list-group">
               <rf-tool-item
-                  ng-repeat="toolData in $ctrl.queryResult.results"
+                  ng-repeat="toolData in $ctrl.toolList"
                   tool-data="toolData"
                   ng-click="$ctrl.navTool(toolData)"
               ></rf-tool-item>
@@ -79,7 +72,7 @@
         </div>
       </div>
       <div class="list-group text-center"
-           ng-show="!$ctrl.loading && $ctrl.queryResult && $ctrl.queryResult.count !== 0 && !$ctrl.errorMsg">
+           ng-show="!$ctrl.loading && $ctrl.queryResult && $ctrl.pagination.show && !$ctrl.errorMsg">
         <ul uib-pagination
             items-per-page="$ctrl.queryResult.pageSize"
             total-items="$ctrl.queryResult.count"

@@ -1,18 +1,35 @@
 export default class MarketToolController {
     constructor( // eslint-disable-line max-params
-        $log, $state
+        $log, $state, toolService
     ) {
         'ngInject';
         this.$log = $log;
         this.$state = $state;
 
+        this.toolService = toolService;
         this.toolData = this.$state.params.toolData;
         this.toolId = this.$state.params.id;
         this.activeSlide = 0;
+        this.fetchTool();
         this.populateTestData();
     }
 
+    fetchTool() {
+        this.loadingTool = true;
+        this.toolService.get(this.toolId).then(d => {
+            this.tool = d;
+            this.tool.createdAtFormatted = new Date(d.createdAt).toLocaleDateString();
+            this.tool.modifiedAtFormatted = new Date(d.modifiedAt).toLocaleDateString();
+            this.loadingTools = false;
+        });
+    }
+
     populateTestData() {
+        this.testScreenshots = [
+            {id: 1, url: 'https://placehold.it/1000x480'},
+            {id: 2, url: 'https://placehold.it/1000x480'},
+            {id: 3, url: 'https://placehold.it/1000x480'}
+        ];
         this.similarQueryResult = {
             count: 25,
             hasNext: true,
@@ -27,9 +44,9 @@ export default class MarketToolController {
                 uploader: 'Raster Foundry',
                 id: 'uuid1',
                 screenshots: [
-                    {id: 1, url: 'http://lorempixel.com/1000/480/'},
-                    {id: 2, url: 'http://lorempixel.com/1000/480/'},
-                    {id: 3, url: 'http://lorempixel.com/1000/480/'}
+                    {id: 1, url: 'https://placehold.it/1000x480'},
+                    {id: 2, url: 'https://placehold.it/1000x480'},
+                    {id: 3, url: 'https://placehold.it/1000x480'}
                 ],
                 tags: [
                     'Image Classification', 'Tagged'
@@ -48,9 +65,9 @@ export default class MarketToolController {
                 uploader: 'Raster Foundry',
                 id: 'uuid2',
                 screenshots: [
-                    {id: 1, url: 'http://lorempixel.com/1000/480/'},
-                    {id: 2, url: 'http://lorempixel.com/1000/480/'},
-                    {id: 3, url: 'http://lorempixel.com/1000/480/'}
+                    {id: 1, url: 'https://placehold.it/1000x480'},
+                    {id: 2, url: 'https://placehold.it/1000x480'},
+                    {id: 3, url: 'https://placehold.it/1000x480'}
                 ],
                 tags: [
                     'Image Classification', 'Tagged'
@@ -74,9 +91,9 @@ export default class MarketToolController {
                 uploader: 'Raster Foundry',
                 id: 'uuid3',
                 screenshots: [
-                    {id: 1, url: 'http://lorempixel.com/1000/480/'},
-                    {id: 2, url: 'http://lorempixel.com/1000/480/'},
-                    {id: 3, url: 'http://lorempixel.com/1000/480/'}
+                    {id: 1, url: 'https://placehold.it/1000x480'},
+                    {id: 2, url: 'https://placehold.it/1000x480'},
+                    {id: 3, url: 'https://placehold.it/1000x480'}
                 ],
                 tags: [
                     'Image Classification', 'Tagged'
