@@ -22,6 +22,12 @@ export default (app) => {
         query(params = {}) {
             return this.Scene.query(params).$promise;
         }
+
+        getSceneBounds(scene) {
+            let boundsGeoJson = L.geoJSON();
+            boundsGeoJson.addData(scene.dataFootprint);
+            return boundsGeoJson.getBounds();
+        }
     }
 
     app.service('sceneService', SceneService);
