@@ -3,7 +3,7 @@
     <i class="icon-mosaic"></i>
   </div>
   <img ng-if="$ctrl.scene.thumbnails[0]"
-       ng-attr-src="{{$ctrl.scene.thumbnails[0].url}}"
+       ng-attr-src="{{$ctrl.thumbnailService.getBestFit($ctrl.scene.thumbnails, 75).url}}"
        class="rounded-img item-img">
   <img ng-if="!$ctrl.scene.thumbnails.length"
        src="https://placehold.it/75x75"

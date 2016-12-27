@@ -289,7 +289,9 @@ class MapWrapper {
             boundsGeoJson.addData(scene.tileFootprint);
             let imageBounds = boundsGeoJson.getBounds();
             let overlay = L.imageOverlay(thumbUrl, imageBounds, {
-                opacity: 1
+                opacity: 1,
+                attribution: `©${scene.datasource}` +
+                    ' | Previews are not representative of actual scene quality.'
             });
             this.setLayer('thumbnail', overlay);
             this.setGeojson(
