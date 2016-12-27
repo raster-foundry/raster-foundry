@@ -12,6 +12,7 @@ export default angular.module('index.components', [
     require('./components/mosaicScenes/mosaicScenes.module.js').name,
     require('./components/mosaicMask/mosaicMask.module.js').name,
     require('./components/maskItem/maskItem.module.js').name,
+    require('./components/mosaicParameters/mosaicScenesParameters.module.js').name,
     require('./components/sceneItem/sceneItem.module.js').name,
     require('./components/sceneDetail/sceneDetail.module.js').name,
     require('./components/projectItem/projectItem.module.js').name,
