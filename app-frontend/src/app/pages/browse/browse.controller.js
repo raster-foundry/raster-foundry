@@ -256,12 +256,18 @@ export default class BrowseController {
         this.activeScene = scene;
         this.queryParams.id = scene.id;
         this.$state.go('.', this.queryParams, {notify: false, location: true});
+        this.getMap().then((map) => {
+            map.setThumbnail(scene);
+        });
     }
 
     closeDetailPane() {
         delete this.activeScene;
         this.queryParams.id = null;
         this.$state.go('.', this.queryParams, {notify: false});
+        this.getMap().then((map) => {
+            map.deleteThumbnail();
+        });
     }
 
     toggleFilterPane() {
@@ -291,14 +297,16 @@ export default class BrowseController {
 
     setHoveredScene(scene) {
         this.getMap().then((map) => {
-            map.setGeojson('hovered', scene.dataFootprint);
+            map.setThumbnail(scene);
         });
     }
 
     removeHoveredScene() {
-        this.getMap().then((map) => {
-            map.deleteGeojson('hovered');
-        });
+        if (!this.activeScene) {
+            this.getMap().then((map) => {
+                map.deleteThumbnail();
+            });
+        }
     }
 
     projectModal() {

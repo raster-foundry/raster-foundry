@@ -4,7 +4,8 @@ import sceneDetailTpl from './sceneDetail.html';
 const rfSceneDetail = {
     templateUrl: sceneDetailTpl,
     bindings: {
-        scene: '<'
+        scene: '<',
+        showThumbnail: '<'
     },
     replace: true
 };

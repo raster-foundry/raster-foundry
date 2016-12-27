@@ -37,13 +37,8 @@ export default class ProjectEditController {
         let styledGeojson = Object.assign({}, scene.dataFootprint, {
             properties: {
                 options: {
-                    style: () => {
-                        return {
-                            dashArray: '10, 10',
-                            weight: 2,
-                            fillOpacity: 0.2
-                        };
-                    }
+                    weight: 2,
+                    fillOpacity: 0
                 }
             }
         });

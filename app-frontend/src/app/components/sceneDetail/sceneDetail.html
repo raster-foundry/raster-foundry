@@ -1,8 +1,8 @@
 <div class="content">
-  <img ng-if="$ctrl.scene.thumbnails[0]"
+  <img ng-if="$ctrl.scene.thumbnails[0] && $ctrl.showThumbnail"
          ng-attr-src="{{$ctrl.scene.thumbnails[0].url}}"
          class="center-img rounded-img detail-img">
-  <img ng-if="!$ctrl.scene.thumbnails.length"
+  <img ng-if="!$ctrl.scene.thumbnails.length && $ctrl.showThumbnail"
        src="https://placehold.it/275x275"
        class="center-img rounded-img detail-img">
   <h5 class="color-dark">Scene properties</h5>

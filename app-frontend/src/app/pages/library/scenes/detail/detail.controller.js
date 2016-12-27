@@ -21,9 +21,7 @@ class SceneDetailController {
                     (scene) => {
                         this.scene = scene;
                         this.loading = false;
-                        this.getMap().then((map)=> {
-                            map.addGeojson('footprint', this.scene.dataFootprint);
-                        });
+                        this.addThumbnailToMap();
                     },
                     () => {
                         this.$state.go('^.list');
@@ -33,10 +31,16 @@ class SceneDetailController {
                 this.$state.go('^.list');
             }
         } else {
-            this.getMap().then((map) => {
-                map.addGeojson('footprint', this.scene.dataFootprint);
-            });
+            this.addThumbnailToMap();
         }
+    }
+
+    addThumbnailToMap() {
+        this.getMap().then(
+            (map)=> {
+                map.setThumbnail(this.scene, true);
+            }
+        );
     }
 
     downloadModal() {
