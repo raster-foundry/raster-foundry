@@ -6,14 +6,17 @@ import com.azavea.rf.datamodel._
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
+
+import com.lonelyplanet.akka.http.extensions._
+import com.typesafe.scalalogging.LazyLogging
 import slick.model.ForeignKeyAction
+
 import java.util.UUID
 import java.util.Date
 import java.sql.Timestamp
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-import com.lonelyplanet.akka.http.extensions.PageRequest
-import com.typesafe.scalalogging.LazyLogging
+
 
 /** Table description of table projects. Objects of this class serve as prototypes for rows in queries. */
 class Projects(_tableTag: Tag) extends Table[Project](_tableTag, "projects")
@@ -23,7 +26,7 @@ class Projects(_tableTag: Tag) extends Table[Project](_tableTag, "projects")
                                       with TimestampFields
                                       with VisibilityField
 {
-  def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, name, slugLabel, description, visibility, tags) <> (Project.tupled, Project.unapply)
+  def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, name, slugLabel, description, visibility, tags, manualOrder) <> (Project.tupled, Project.unapply)
 
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
   val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")
@@ -36,6 +39,7 @@ class Projects(_tableTag: Tag) extends Table[Project](_tableTag, "projects")
   val description: Rep[String] = column[String]("description")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
   val tags: Rep[List[String]] = column[List[String]]("tags", O.Length(2147483647,varying=false), O.Default(List.empty))
+  val manualOrder: Rep[Boolean] = column[Boolean]("manual_order", O.Default(true))
 
   lazy val organizationsFk = foreignKey("projects_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val createdByUserFK = foreignKey("projects_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
@@ -93,7 +97,7 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     * @param user User making the request
     */
   def listProjectScenes(projectId: UUID, pageRequest: PageRequest, combinedParams: CombinedSceneQueryParams, user: User)
-                      (implicit database: DB): Future[PaginatedResponse[Scene.WithRelated]] = {
+    (implicit database: DB): Future[PaginatedResponse[Scene.WithRelated]] = {
 
     val injectedParams = combinedParams.copy(
       sceneParams=combinedParams.sceneParams.copy(project=Some(projectId))
@@ -102,6 +106,29 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     Scenes.listScenes(pageRequest, injectedParams, user)
   }
 
+  def listProjectSceneOrder(projectId: UUID, pageRequest: PageRequest, user: User)
+    (implicit database: DB): Future[PaginatedResponse[UUID]] =
+      database.db.run {
+        Projects
+          .viewableBy(user)
+          .filter(_.id === projectId)
+          .map(_.manualOrder)
+          .result
+      }.flatMap { p =>
+        p.headOption match {
+          case Some(true) =>
+            ScenesToProjects.listManualOrder(projectId, pageRequest)
+          case _ =>
+            val pageReq = pageRequest.copy(sort = Map("acquisitionDate" -> Order.Desc, "cloudCover" -> Order.Asc))
+            Projects
+              .listProjectScenes(projectId, pageReq, CombinedSceneQueryParams(), user)
+              .map { page =>
+                page.copy(results = page.results.map(_.id))
+              }
+        }
+      }
+
+
   /** Get specific scenes from a project. Returns any scenes from the list of
     * specified ids that are associated to the given project.
     *
@@ -109,7 +136,7 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     * @param sceneIds Seq[UUID] primary key of scenes to retrieve
     */
   def listSelectProjectScenes(projectId: UUID, sceneIds: Seq[UUID])
-                      (implicit database: DB): Future[Iterable[Scene.WithRelated]] = {
+    (implicit database: DB): Future[Iterable[Scene.WithRelated]] = {
 
     val scenes = for {
       sceneToProject <- ScenesToProjects if sceneToProject.projectId === projectId && sceneToProject.sceneId.inSet(sceneIds)
@@ -118,7 +145,7 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
 
     database.db.run {
       scenes.joinWithRelated.result
-    } map Scene.WithRelated.fromRecords
+    }.map(Scene.WithRelated.fromRecords)
   }
 
   /** Get project given a projectId

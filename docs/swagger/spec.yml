@@ -577,6 +577,35 @@ paths:
       responses:
         204:
           description: No content, delete successful
+  /projects/{uuid}/mosaic/:
+    get:
+      summary: List of a project's scene IDs and their associated color correction parameters to be used in mosaicing
+      tags:
+        - Imagery
+      responses:
+        200:
+          description: An ordered list of scene IDs and corresponding color correction parameters
+  /projects/{uuid}/mosaic/{uuid}:
+    get:
+      summary: A project/scene pairing's persisted color correction parameters
+      tags:
+        - Imagery
+      responses:
+        200:
+          description: Color correction parameters
+    post:
+      summary: Associate posted color correction parameters with a project/scene pairing
+      tags:
+        -Imagery
+  /projects/{uuid}/order:
+    get:
+      summary: An ordered list of scene IDs belonging to the specified project
+      tags:
+        - Imagery
+    post:
+      summary: Create/update an ordering among scenes within the specified project
+      tags:
+        - Imagery
   /images/:
     get:
       summary: Paginated list of project images
