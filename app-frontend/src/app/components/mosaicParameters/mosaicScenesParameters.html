@@ -1,0 +1,55 @@
+<div class="mosaic-parameters-pane">
+  <div class="sidebar-static">
+    <h5>Parameters</h5>
+    <button class="btn"
+            ng-click="$ctrl.$state.go('^.scenes')">
+      Close
+    </button>
+  </div>
+  <div class="sidebar-scrollable">
+    <div class="mosaic-scene-order">
+      <h3>Scene Order</h3>
+      <h4>Ordering Method</h4>
+      <div class="btn-group" uib-dropdown dropdown-append-to-body>
+        <button id="btn-append-to-body" type="button" class="btn btn-primary" uib-dropdown-toggle>
+          {{ $ctrl.mosaicType }} &#9661;<span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu" uib-dropdown-menu role="menu">
+          <li role="menuitem"
+              ng-click="$ctrl.selectMosaicType('Manual')">
+            Manual
+          </li>
+          <li role="menuitem"
+              ng-click="$ctrl.selectMosaicType('Automatic')">
+            Automatic
+          </li>
+        </ul>
+      </div>
+      <div class="mosaic-scene-prioritization">
+        <!--TODO: design - disable mouse pointer events when disable class (or other) is applied-->
+        <h4>Scene Prioritization</h4>
+        <div ui-tree class="list-group"
+             ng-class="{'disabled': $ctrl.mosaicType === 'Manual'}">
+          <div ui-tree-nodes="" ng-model="$ctrl.mosaicOptions">
+            <div class="mosaic-priority-option" ui-tree-node ng-repeat="option in $ctrl.mosaicOptions"
+                 draggable>{{ option.name }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mosaic-extent-selection">
+      <h3>Mosaic Extent</h3>
+      <h4>Extent Option</h4>
+      <div class="btn-group">
+        <label class="btn btn-primary"
+               ng-click="$ctrl.removeDrawControl()"
+               ng-model="$ctrl.extentType"
+               uib-btn-radio="'sceneExtent'">Extent of Scenes</label>
+        <label class="btn btn-primary"
+               ng-model="$ctrl.extentType"
+               ng-click="$ctrl.addDrawControl()"
+               uib-btn-radio="'customExtent'">Draw Extent</label>
+      </div>
+    </div>
+  </div>
+</div>
