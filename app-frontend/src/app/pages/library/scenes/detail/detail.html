@@ -10,7 +10,9 @@
     <rf-map-container class="map-preview-container"
                       map-id="scene"
                       options="$ctrl.mapOptions"></rf-map-container>
-    <rf-scene-detail scene="$ctrl.scene"></rf-scene-detail>
+    <rf-scene-detail scene="$ctrl.scene"
+                     show-thumbnail="false"
+    ></rf-scene-detail>
   </div>
   <div class="column-8" ng-if="$ctrl.loading">
     <div class="list-group">

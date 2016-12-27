@@ -26,9 +26,7 @@ class ProjectSceneController {
                     (scene) => {
                         this.scene = scene;
                         this.loading = false;
-                        this.getMap().then((map)=> {
-                            map.addGeojson('footprint', this.scene.dataFootprint);
-                        });
+                        this.addThumbnailToMap();
                     },
                     () => {
                         this.$state.go('^.scenes');
@@ -38,10 +36,14 @@ class ProjectSceneController {
                 this.$state.go('^.scenes');
             }
         } else {
-            this.getMap().then((map) => {
-                map.addGeojson('footprint', this.scene.dataFootprint);
-            });
+            this.addThumbnailToMap();
         }
+    }
+
+    addThumbnailToMap() {
+        this.getMap().then((map) => {
+            map.setThumbnail(this.scene, true);
+        });
     }
 
     downloadModal() {

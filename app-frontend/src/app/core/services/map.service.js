@@ -65,7 +65,9 @@ class MapWrapper {
             let resetBounds = () => {
                 let bounds = this._geoJsonLayerGroup.getBounds();
                 if (bounds.isValid()) {
-                    this.map.fitBounds(bounds);
+                    this.map.fitBounds(bounds, {
+                        padding: [35, 35]
+                    });
                 }
             };
             resetBounds();
@@ -255,6 +257,61 @@ class MapWrapper {
             }
             this._layerMap.delete(id);
         }
+        return this;
+    }
+
+    /** Display a thumbnail of the scene
+     * @param {object} scene Scene with footprint to display on the map
+     * @param {boolean?} useSmall Use the smallest thumbnail
+     * @returns {this} this
+     */
+    setThumbnail(scene, useSmall) {
+        let footprintGeojson = Object.assign({
+            properties: {
+                options: {
+                    fillOpacity: 0,
+                    weight: 0,
+                    interactive: false
+                }
+            }
+        }, scene.dataFootprint);
+        if (scene.tileFootprint && scene.thumbnails && scene.thumbnails.length) {
+            // get smallest thumbnail - it's a small map
+            let thumbnail = scene.thumbnails.reduce((lastThumbnail, currentThumbnail) => {
+                if (useSmall && lastThumbnail.widthPx < currentThumbnail.widthPx ||
+                    !useSmall && lastThumbnail.widthPx > currentThumbnail.widthPx) {
+                    return lastThumbnail;
+                }
+                return currentThumbnail;
+            });
+            let thumbUrl = thumbnail.url;
+            let boundsGeoJson = L.geoJSON();
+            boundsGeoJson.addData(scene.tileFootprint);
+            let imageBounds = boundsGeoJson.getBounds();
+            let overlay = L.imageOverlay(thumbUrl, imageBounds, {
+                opacity: 1
+            });
+            this.setLayer('thumbnail', overlay);
+            this.setGeojson(
+                'thumbnail',
+                footprintGeojson
+            );
+        } else if (scene.dataFootprint) {
+            this.deleteLayers('thumbnail');
+            this.setGeojson(
+                'thumbnail',
+                footprintGeojson
+            );
+        }
+        return this;
+    }
+
+    /** Delete any thumbnails from the map
+     * @returns {this} this
+     */
+    deleteThumbnail() {
+        this.deleteLayers('thumbnail');
+        this.deleteGeojson('thumbnail');
         return this;
     }
 }
