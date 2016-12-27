@@ -13,7 +13,8 @@ export default class BrowseController {
         this.$state = $state;
         this.$uibModal = $uibModal;
         this.gridService = gridService;
-        this.getMap = () => mapService.getMap('browse');
+        this.getBrowseMap = () => mapService.getMap('browse');
+        this.getDetailMap = () => mapService.getMap('detail');
 
         this.assetLogo = assetLogo;
         this.scenes = {
@@ -68,10 +69,14 @@ export default class BrowseController {
             this.onLoggedInChange.bind(this)
         );
 
-        this.getMap().then((browseMap) => {
+        this.getBrowseMap().then((browseMap) => {
             browseMap.map.fitBounds(this.bounds);
             browseMap.on('moveend', ($event, mapWrapper) => {
-                this.onViewChange(mapWrapper.map.getBounds(), mapWrapper.map.getZoom());
+                this.onViewChange(
+                    mapWrapper.map.getBounds(),
+                    mapWrapper.map.getCenter(),
+                    mapWrapper.map.getZoom()
+                );
             });
         });
     }
@@ -115,9 +120,10 @@ export default class BrowseController {
         this.loadGrid(this.bboxCoords, this.zoom);
     }
 
-    onViewChange(newBounds, zoom) {
+    onViewChange(newBounds, newCenter, zoom) {
         this.bboxCoords = newBounds.toBBoxString();
         this.zoom = zoom;
+        this.center = newCenter;
         this.queryParams = Object.assign({
             id: this.queryParams.id
         }, this.filters, {bbox: this.bboxCoords});
@@ -201,7 +207,7 @@ export default class BrowseController {
                         }
                     }
                 });
-                this.getMap().then((map) => {
+                this.getBrowseMap().then((map) => {
                     map.setGeojson('grid', this.lastGridResult);
                 });
                 this.loadingGrid = false;
@@ -256,8 +262,13 @@ export default class BrowseController {
         this.activeScene = scene;
         this.queryParams.id = scene.id;
         this.$state.go('.', this.queryParams, {notify: false, location: true});
-        this.getMap().then((map) => {
+        this.getDetailMap().then((map) => {
             map.setThumbnail(scene);
+            let sceneBounds = this.sceneService.getSceneBounds(scene);
+            map.map.fitBounds(sceneBounds, {
+                padding: [75, 75],
+                animate: true
+            });
         });
     }
 
@@ -265,7 +276,7 @@ export default class BrowseController {
         delete this.activeScene;
         this.queryParams.id = null;
         this.$state.go('.', this.queryParams, {notify: false});
-        this.getMap().then((map) => {
+        this.getDetailMap().then((map) => {
             map.deleteThumbnail();
         });
     }
@@ -296,14 +307,14 @@ export default class BrowseController {
     }
 
     setHoveredScene(scene) {
-        this.getMap().then((map) => {
+        this.getBrowseMap().then((map) => {
             map.setThumbnail(scene);
         });
     }
 
     removeHoveredScene() {
         if (!this.activeScene) {
-            this.getMap().then((map) => {
+            this.getBrowseMap().then((map) => {
                 map.deleteThumbnail();
             });
         }

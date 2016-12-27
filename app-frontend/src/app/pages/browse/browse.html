@@ -68,35 +68,45 @@
   </div>
 
   <!-- Scene detail view -->
-  <div class="sidebar sidebar-extended" ng-if="$ctrl.activeScene">
-    <div class="sidebar-static">
-      <p>
-        <strong class="color-dark">{{$ctrl.activeScene.name}}</strong><br>
-        {{$ctrl.activeScene.datasource}}
-      </p>
-      <div class="sidebar-actions">
-        <button class="btn btn-square" ng-click="$ctrl.closeDetailPane()">
-          <i class="icon-cross"></i>
-        </button>
+  <div class="scene-detail-map" ng-if="$ctrl.activeScene">
+    <div class="container column-stretch container-not-scrollable">
+      <div class="sidebar">
+        <div class="sidebar-static">
+          <p>
+            <strong class="color-dark">{{$ctrl.activeScene.name}}</strong><br>
+            {{$ctrl.activeScene.datasource}}
+          </p>
+          <div class="sidebar-actions">
+            <button class="btn btn-square" ng-click="$ctrl.closeDetailPane()">
+              <i class="icon-cross"></i>
+            </button>
+          </div>
+        </div>
+        <rf-scene-detail class="sidebar-scrollable"
+                         scene="$ctrl.activeScene"
+                         show-thumbnail="true"
+        ></rf-scene-detail>
+        <div class="sidebar-static">
+          <div class="sidebar-actions">
+            <button class="btn btn-square btn-default"
+                    ng-click="$ctrl.toggleSelectAndClosePane()">
+              <span ng-if="!$ctrl.isSelected($ctrl.activeScene)">
+                <i class="icon-plus"></i>
+                Select Scene
+              </span>
+              <span ng-if="$ctrl.isSelected($ctrl.activeScene)">
+                <i class="icon-cross"></i>
+                Deselect
+              </span>
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
-    <rf-scene-detail class="sidebar-scrollable"
-                     scene="$ctrl.activeScene"
-                     show-thumbnail="true"
-    ></rf-scene-detail>
-    <div class="sidebar-static">
-      <div class="sidebar-actions">
-        <button class="btn btn-square btn-default"
-                ng-click="$ctrl.toggleSelectAndClosePane()">
-          <span ng-if="!$ctrl.isSelected($ctrl.activeScene)">
-            <i class="icon-plus"></i>
-            Select Scene
-          </span>
-          <span ng-if="$ctrl.isSelected($ctrl.activeScene)">
-            <i class="icon-cross"></i>
-            Deselect
-          </span>
-        </button>
+      <div class="main">
+        <rf-map-container map-id="detail"
+                          initial-center="$ctrl.center"
+                          initial-zoom="$ctrl.zoom"
+        ></rf-map-container>
       </div>
     </div>
   </div>

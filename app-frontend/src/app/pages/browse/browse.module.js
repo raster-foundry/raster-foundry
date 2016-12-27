@@ -1,5 +1,6 @@
 require('./../../../assets/font/fontello/css/fontello.css');
 require('./../../../assets/font/fontello/css/animation.css');
+require('./browse.scss');
 import angular from 'angular';
 import ngInfiniteScroll from 'ng-infinite-scroll';
 import modal from 'angular-ui-bootstrap/src/modal';

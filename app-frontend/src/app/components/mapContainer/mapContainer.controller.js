@@ -37,7 +37,10 @@ export default class MapContainerController {
             boxZoom: !this.options.static,
             keyboard: !this.options.static,
             tap: !this.options.static
-        }).setView([0, 0], 2);
+        }).setView(
+            this.initialCenter ? this.initialCenter : [0, 0],
+            this.initialZoom ? this.initialZoom : 2
+        );
 
 
         let cartoPositron = L.tileLayer(

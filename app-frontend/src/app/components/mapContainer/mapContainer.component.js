@@ -4,7 +4,9 @@ const mapContainer = {
     controller: 'MapContainerController',
     bindings: {
         mapId: '@',
-        options: '<?'
+        options: '<?',
+        initialCenter: '<',
+        initialZoom: '<'
     }
 };
 
