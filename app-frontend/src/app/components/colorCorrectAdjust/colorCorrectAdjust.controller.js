@@ -44,7 +44,10 @@ export default class ColorCorrectAdjustController {
             floor: 0,
             ceil: 20000,
             step: 10,
-            onEnd: (id, val) => this.onFilterChange(id, val)
+            onEnd: (id, low, high) => {
+                this.onFilterChange('min', low);
+                this.onFilterChange('max', high);
+            }
         };
 
         this.redGammaOptions = Object.assign({}, baseGammaOptions, {id: 'red'});
