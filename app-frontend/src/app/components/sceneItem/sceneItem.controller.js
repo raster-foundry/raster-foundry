@@ -1,6 +1,7 @@
 export default class SceneItemController {
-    constructor($scope, $attrs) {
+    constructor($scope, $attrs, thumbnailService) {
         'ngInject';
+        this.thumbnailService = thumbnailService;
         this.isSelectable = $attrs.hasOwnProperty('selectable');
         this.isDraggable = $attrs.hasOwnProperty('draggable');
         $scope.$watch(
