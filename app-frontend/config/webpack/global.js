@@ -89,11 +89,9 @@ module.exports = function (_path) {
                 }
             }, {
                 test: /\.css$/,
-                loaders: [
-                    'style-loader',
-                    'css-loader?sourceMap',
-                    'postcss-loader'
-                ]
+                loader: DEVELOPMENT ? 'style-loader!css-loader?sourceMap!postcss-loader'
+                    : ExtractTextPlugin.extract('style-loader',
+                                                'css-loader!postcss-loader')
             }, {
                 test: /\.(scss|sass)$/,
                 loader: DEVELOPMENT ? 'style-loader!' + stylesLoader
