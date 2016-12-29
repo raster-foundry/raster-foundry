@@ -59,7 +59,7 @@
       </span>
     </div>
     <div class="list-group text-center"
-         ng-show="!$ctrl.loading && $ctrl.lastProjectResult && $ctrl.lastProjectResult.count !== 0 && !$ctrl.errorMsg">
+         ng-show="!$ctrl.loading && $ctrl.lastProjectResult && $ctrl.lastProjectResult.count > $ctrl.lastProjectResult.pageSize && !$ctrl.errorMsg">
       <ul uib-pagination
           items-per-page="$ctrl.lastProjectResult.pageSize"
           total-items="$ctrl.lastProjectResult.count"
