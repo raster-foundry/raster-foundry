@@ -39,8 +39,14 @@ trait SceneRoutes extends Authentication
 
   def listScenes: Route = authenticate { user =>
     (withPagination & sceneQueryParameters) { (page, sceneParams) =>
-      complete {
-        Scenes.listScenes(page, sceneParams, user)
+      if (page.offset > -1) {
+        complete(Scenes.listScenes(page, sceneParams, user))
+      } else {
+        complete {
+          throw new IllegalStateException(
+            s"Error fetching scene list: page parameter is invalid or not present"
+          )
+        }
       }
     }
   }

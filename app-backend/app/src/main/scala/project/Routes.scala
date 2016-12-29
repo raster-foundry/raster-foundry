@@ -116,8 +116,16 @@ trait ProjectRoutes extends Authentication
 
   def listProjectScenes(projectId: UUID): Route = authenticate { user =>
     (withPagination & sceneQueryParameters) { (page, sceneParams) =>
-      complete {
-        Projects.listProjectScenes(projectId, page, sceneParams, user)
+      if (page.offset > -1) {
+        complete {
+          Projects.listProjectScenes(projectId, page, sceneParams, user)
+        }
+      } else {
+        complete {
+          throw new IllegalStateException(
+            s"Error fetching scene list: page parameter is invalid or not present"
+          )
+        }
       }
     }
   }
