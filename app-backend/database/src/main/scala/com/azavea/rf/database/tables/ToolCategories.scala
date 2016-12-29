@@ -17,7 +17,7 @@ import scala.concurrent.Future
 
 import com.lonelyplanet.akka.http.extensions.PageRequest
 
-/** Table that represents categories for tools in model lab
+/** Table that represents categories for tools in the lab
   *
   * These are user generated categories for tools to help users
   * track and search for them. For instance, users may decide to

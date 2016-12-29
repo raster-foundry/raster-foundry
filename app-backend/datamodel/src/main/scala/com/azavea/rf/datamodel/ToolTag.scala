@@ -4,7 +4,7 @@ import spray.json.DefaultJsonProtocol._
 import java.util.UUID
 import java.sql.Timestamp
 
-/** A user generate tag to track tools in model lab
+/** A user generate tag to track tools in the Raster Foundry lab
   *
   * @param id UUID Unique identifier for Tool Tag
   * @param createdAt Timestamp Creation time for tag
