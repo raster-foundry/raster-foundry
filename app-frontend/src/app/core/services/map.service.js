@@ -316,6 +316,15 @@ class MapWrapper {
         this.deleteGeojson('thumbnail');
         return this;
     }
+
+    /** Hold the state of the map in case it's needed later
+      * @param {state} state to hold, e.g. specifying latlng center and zoom
+      * @returns {this} this
+      */
+    holdState(state) {
+        this.heldState = state;
+        return this;
+    }
 }
 
 export default (app) => {

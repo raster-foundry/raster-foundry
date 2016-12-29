@@ -1,6 +1,7 @@
 export default class MosaicMaskController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, $q, projectService, layerService, $state, $stateParams, mapService
+        $log, $scope, $q, projectService, layerService, $state, $stateParams,
+        mapService, sceneService
     ) {
         'ngInject';
         this.projectService = projectService;
@@ -9,7 +10,9 @@ export default class MosaicMaskController {
         this.$log = $log;
         this.$scope = $scope;
         this.$stateParams = $stateParams;
+        this.mapService = mapService;
         this.getMap = () => mapService.getMap('project');
+        this.sceneService = sceneService;
     }
 
     $onInit() {
@@ -24,6 +27,20 @@ export default class MosaicMaskController {
             this.$state.go('editor.project.mosaic.scenes');
             // fetch scene info
         }
+
+        this.getMap().then(function (map) {
+            map.holdState(
+                {
+                    center: map.map.getCenter(),
+                    zoom: map.map.getZoom()
+                }
+            );
+            let sceneBounds = this.sceneService.getSceneBounds(this.scene);
+            map.map.fitBounds(sceneBounds, {
+                padding: [75, 75],
+                animate: true
+            });
+        }.bind(this));
 
         this.opacity = {
             model: 100,
@@ -41,9 +58,13 @@ export default class MosaicMaskController {
 
     $onDestroy() {
         this.getMap().then((map) => {
+            let priorState = map.heldState;
+            let center = priorState.center;
+            let zoom = priorState.zoom;
             this.listeners.forEach((listener) => {
                 map.off(listener);
             });
+            map.map.setView(center, zoom);
         });
         this.removeDrawControl();
     }
