@@ -40,7 +40,7 @@
   <div class="sidebar-scrollable">
     <div class="list-group">
       <rf-scene-item
-          ng-click="$ctrl.setSelected(scene, !$ctrl.isSelected(scene))"
+          ng-click="$ctrl.$state.go('editor.project.color.adjust')"
           scene="scene"
           selectable
           selected="$ctrl.isSelected(scene)"
