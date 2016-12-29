@@ -15,7 +15,7 @@ services:
       context: ./app-tasks
       dockerfile: Dockerfile
     env_file: .env
-    links:
+    external_links:
       - postgres:database.service.rasterfoundry.internal
       - redis:cache.service.rasterfoundry.internal
     environment:
@@ -38,7 +38,7 @@ services:
     build:
       context: ./app-tasks
       dockerfile: Dockerfile
-    links:
+    external_links:
       - postgres:database.service.rasterfoundry.internal
       - redis:cache.service.rasterfoundry.internal
     env_file: .env
@@ -69,7 +69,7 @@ services:
       context: ./app-tasks
       dockerfile: Dockerfile
     restart: always
-    links:
+    external_links:
       - postgres:database.service.rasterfoundry.internal
       - redis:cache.service.rasterfoundry.internal
     env_file: .env
@@ -98,7 +98,7 @@ services:
     build:
       context: ./app-tasks
       dockerfile: Dockerfile
-    links:
+    external_links:
       - postgres:database.service.rasterfoundry.internal
       - redis:cache.service.rasterfoundry.internal
       - app-server:rasterfoundry.com
@@ -127,7 +127,7 @@ services:
     build:
       context: ./app-tasks
       dockerfile: Dockerfile
-    links:
+    external_links:
       - postgres:database.service.rasterfoundry.internal
       - redis:cache.service.rasterfoundry.internal
       - app-server:rasterfoundry.com
