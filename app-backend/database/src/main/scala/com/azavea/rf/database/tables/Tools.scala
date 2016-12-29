@@ -16,7 +16,7 @@ import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 import com.typesafe.scalalogging.LazyLogging
 import scala.concurrent.Future
 
-/** Table that represents tools in model lab
+/** Table that represents tools in the Raster Foundry lab
   *
   * These are user generated tools that will eventually
   * contain a set of operations to be applied.
