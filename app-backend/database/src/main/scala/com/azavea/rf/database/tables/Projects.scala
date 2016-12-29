@@ -16,7 +16,8 @@ import java.util.Date
 import java.sql.Timestamp
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-
+import com.azavea.rf.datamodel.PageRequest
+import com.typesafe.scalalogging.LazyLogging
 
 /** Table description of table projects. Objects of this class serve as prototypes for rows in queries. */
 class Projects(_tableTag: Tag) extends Table[Project](_tableTag, "projects")

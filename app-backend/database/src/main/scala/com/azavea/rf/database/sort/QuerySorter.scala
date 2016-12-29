@@ -1,6 +1,6 @@
 package com.azavea.rf.database.sort
 
-import com.lonelyplanet.akka.http.extensions.Order
+import com.azavea.rf.datamodel.Order
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 
 

@@ -7,7 +7,7 @@ import com.azavea.rf.database.sort._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
-import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
+import com.azavea.rf.datamodel.{PageRequest, Order}
 import org.postgresql.util.PSQLException
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global

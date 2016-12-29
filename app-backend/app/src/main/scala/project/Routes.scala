@@ -5,8 +5,8 @@ import akka.http.scaladsl.unmarshalling._
 import akka.http.scaladsl.model.StatusCodes
 import spray.json._
 import DefaultJsonProtocol._
-import com.lonelyplanet.akka.http.extensions.{PaginationDirectives, Order}
 
+import com.azavea.rf.utils.RfPaginationDirectives
 import com.azavea.rf.auth.Authentication
 import com.azavea.rf.database.tables._
 import com.azavea.rf.database.Database
@@ -20,7 +20,7 @@ import java.util.UUID
 trait ProjectRoutes extends Authentication
     with QueryParametersCommon
     with SceneQueryParameterDirective
-    with PaginationDirectives
+    with RfPaginationDirectives
     with UserErrorHandler {
 
   implicit def database: Database
@@ -116,17 +116,7 @@ trait ProjectRoutes extends Authentication
 
   def listProjectScenes(projectId: UUID): Route = authenticate { user =>
     (withPagination & sceneQueryParameters) { (page, sceneParams) =>
-      if (page.offset > -1) {
-        complete {
-          Projects.listProjectScenes(projectId, page, sceneParams, user)
-        }
-      } else {
-        complete {
-          throw new IllegalStateException(
-            s"Error fetching scene list: page parameter is invalid or not present"
-          )
-        }
-      }
+      complete(Projects.listProjectScenes(projectId, page, sceneParams, user))
     }
   }
 

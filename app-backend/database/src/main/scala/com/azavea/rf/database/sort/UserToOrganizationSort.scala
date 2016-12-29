@@ -2,7 +2,7 @@ package com.azavea.rf.database.sort
 
 import com.azavea.rf.database.fields.UserToOrganizationFields
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
-import com.lonelyplanet.akka.http.extensions.Order
+import com.azavea.rf.datamodel.Order
 
 class UserToOrganizationSort[E, D <: UserToOrganizationFields](f: E => D) extends QuerySort[E] {
   def apply[U, C[_]](

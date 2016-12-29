@@ -10,7 +10,7 @@ import java.util.UUID
 import java.sql.Timestamp
 
 import com.typesafe.scalalogging.LazyLogging
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.azavea.rf.datamodel.PageRequest
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global

@@ -2,7 +2,7 @@ package com.azavea.rf.database.sort
 
 import com.azavea.rf.database.fields.SceneFields
 import com.azavea.rf.database.tables.Scenes
-import com.lonelyplanet.akka.http.extensions.Order
+import com.azavea.rf.datamodel.Order
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 
 class SceneFieldsSort[E, D <: SceneFields](f: E => D) extends QuerySort[E] {

@@ -7,7 +7,7 @@ import scala.util.{Success, Failure}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 
-import com.lonelyplanet.akka.http.extensions.PaginationDirectives
+import com.azavea.rf.utils.RfPaginationDirectives
 
 import com.azavea.rf.auth.Authentication
 import com.azavea.rf.database.tables.Thumbnails
@@ -18,7 +18,7 @@ import com.azavea.rf.utils.{UserErrorHandler, RouterHelper}
 
 trait ThumbnailRoutes extends Authentication
     with ThumbnailQueryParameterDirective
-    with PaginationDirectives
+    with RfPaginationDirectives
     with UserErrorHandler
     with RouterHelper {
 

@@ -7,18 +7,18 @@ import scala.util.{Success, Failure}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 
-import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-
 import com.azavea.rf.auth.Authentication
 import com.azavea.rf.database.tables.Scenes
 import com.azavea.rf.database.Database
 import com.azavea.rf.datamodel._
 import com.azavea.rf.utils.UserErrorHandler
+import com.azavea.rf.utils.RfPagination
+import com.azavea.rf.utils.RfPaginationDirectives
 
 
 trait SceneRoutes extends Authentication
     with SceneQueryParameterDirective
-    with PaginationDirectives
+    with RfPaginationDirectives
     with UserErrorHandler {
 
   implicit def database: Database
@@ -39,15 +39,7 @@ trait SceneRoutes extends Authentication
 
   def listScenes: Route = authenticate { user =>
     (withPagination & sceneQueryParameters) { (page, sceneParams) =>
-      if (page.offset > -1) {
-        complete(Scenes.listScenes(page, sceneParams, user))
-      } else {
-        complete {
-          throw new IllegalStateException(
-            s"Error fetching scene list: page parameter is invalid or not present"
-          )
-        }
-      }
+      complete(Scenes.listScenes(page, sceneParams, user))
     }
   }
 

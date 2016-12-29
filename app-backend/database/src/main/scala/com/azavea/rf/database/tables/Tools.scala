@@ -12,7 +12,7 @@ import java.util.Date
 import java.sql.Timestamp
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
+import com.azavea.rf.datamodel.{PageRequest, Order}
 import com.typesafe.scalalogging.LazyLogging
 import scala.concurrent.Future
 

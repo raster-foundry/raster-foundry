@@ -27,7 +27,6 @@ object Dependencies {
   val slickPGSpray       = "com.github.tminglei"         %% "slick-pg_spray-json"               % Version.slickPG
   val authCommon         = "de.choffmeister"             %% "auth-common"                       % Version.akkaAuth
   val authAkka           = "de.choffmeister"             %% "auth-akka-http"                    % Version.akkaAuth
-  val akkaHttpExtensions = "com.lonelyplanet"            %% "akka-http-extensions"              % Version.akkaHttpExtensions
   val akkaHttpCors       = "ch.megard"                   %% "akka-http-cors"                    % Version.akkaHttpCors
   val ammoniteOps        = "com.lihaoyi"                 %% "ammonite-ops"                      % Version.ammoniteOps
   val scaffeine          = "com.github.blemale"          %% "scaffeine"                         % Version.scaffeine
