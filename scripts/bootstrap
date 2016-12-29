@@ -30,7 +30,7 @@ function main() {
     docker-compose \
         -f "${DIR}/../docker-compose.yml" \
         -f "${DIR}/../docker-compose.airflow.yml" \
-        pull postgres swagger-editor redis
+        pull postgres swagger-editor redis memcached
 }
 
 

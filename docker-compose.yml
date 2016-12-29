@@ -8,6 +8,9 @@ services:
     expose:
       - "5432"
 
+  memcached:
+    image: memcached:1.4-alpine
+
   nginx:
     image: raster-foundry-nginx
     build:
@@ -59,6 +62,8 @@ services:
 
   tile-server:
     image: quay.io/azavea/scala:2.11.8
+    links:
+      - memcached:tile-cache.service.rasterfoundry.internal
     env_file: .env
     ports:
       - "9900:9900"
