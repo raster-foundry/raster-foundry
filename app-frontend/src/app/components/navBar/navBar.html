@@ -7,14 +7,18 @@
     <span class="navbar-vertical-divider"></span>
     <nav>
       <a href ui-sref="browse" ui-sref-active="active">Scene browser</a>
+      <a href ui-sref="editor"
+         ng-class="{
+                   active: $ctrl.$state.$current.name.includes('editor')
+                   }">Editor</a>
       <a href ui-sref="market.search"
          ng-class="{
                    active: $ctrl.$state.$current.name.includes('market')
-                   }">Model market</a>
+                   }">Tool Catalog</a>
       <a href ui-sref="lab.edit"
          ng-class="{
                    active: $ctrl.$state.$current.name.includes('lab')
-                   }">Model lab</a>
+                   }">Lab</a>
     </nav>
     <span class="navbar-vertical-divider"></span>
   </div>
