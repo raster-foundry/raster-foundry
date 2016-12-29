@@ -7,7 +7,7 @@
   </div>
   <div ng-show="!$ctrl.errorLoadingHistogram" class="sidebar-static histogram">
     <rf-channel-histogram data="$ctrl.data"></rf-channel-histogram>
-    <a ng-click="" class="btn btn-link btn-block">Make source histogram</a>
+    <a feature-flag="make-source-histogram" ng-click="" class="btn btn-link btn-block">Make source histogram</a>
   </div>
   <div ng-show="$ctrl.errorLoadingHistogram" class="sidebar-static">
     Error loading histogram
