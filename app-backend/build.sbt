@@ -109,7 +109,7 @@ lazy val datamodel = Project("datamodel", file("datamodel"))
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({
     libraryDependencies ++= loggingDependencies ++ Seq(
-      Dependencies.geotrellisSlick,
+      Dependencies.geotrellisSlick % "provided",
       Dependencies.geotrellisRaster,
       Dependencies.akkajson
     )
@@ -151,4 +151,3 @@ lazy val tile = Project("tile", file("tile"))
       Dependencies.akkajson
     )
   })
-
