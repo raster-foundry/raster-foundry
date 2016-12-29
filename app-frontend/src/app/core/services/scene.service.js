@@ -20,7 +20,11 @@ export default (app) => {
         }
 
         query(params = {}) {
-            return this.Scene.query(params).$promise;
+            let validParams = Object.assign(
+                params,
+                {minCloudCover: params.minCloudCover ? params.minCloudCover : 0}
+            );
+            return this.Scene.query(validParams).$promise;
         }
 
         getSceneBounds(scene) {
