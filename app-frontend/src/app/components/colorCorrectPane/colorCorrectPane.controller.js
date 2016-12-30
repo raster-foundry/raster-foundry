@@ -54,10 +54,10 @@ export default class ColorCorrectPaneController {
     }
 
     updateHistogram() {
+        this.errorLoadingHistogram = false;
         this.loadingHistogram = true;
         this.firstLayer.fetchHistogramData().then(
             (resp) => {
-                this.errorLoadingHistogram = false;
                 this.loadingHistogram = false;
                 this.data = this.generateHistogramData(resp.data);
             }
