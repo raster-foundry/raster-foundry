@@ -55,15 +55,28 @@ export default class ColorCorrectPaneController {
 
     updateHistogram() {
         this.errorLoadingHistogram = false;
+        if (this.loadingHistogram) {
+            this.queuedHistogramRequest = true;
+            return;
+        }
         this.loadingHistogram = true;
         this.firstLayer.fetchHistogramData().then(
             (resp) => {
                 this.loadingHistogram = false;
+                this.errorLoadingHistogram = false;
                 this.data = this.generateHistogramData(resp.data);
+                if (this.queuedHistogramRequest) {
+                    this.queuedHistogramRequest = false;
+                    this.updateHistogram();
+                }
             }
         ).catch(() => {
             this.errorLoadingHistogram = true;
             this.loadingHistogram = false;
+            if (this.queuedHistogramRequest) {
+                this.queuedHistogramRequest = false;
+                this.updateHistogram();
+            }
         });
     }
 
