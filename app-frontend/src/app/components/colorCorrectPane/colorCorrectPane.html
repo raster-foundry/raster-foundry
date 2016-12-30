@@ -5,16 +5,21 @@
       <a href class="btn btn-default btn-small" ng-click="$ctrl.$state.go('^.scenes')">Back</a>
     </div>
   </div>
-  <div ng-show="!$ctrl.errorLoadingHistogram" class="sidebar-static histogram">
-    <div class="histogram-loading-indicator" ng-show="$ctrl.loadingHistogram">
-      <i class="icon-load"></i>
+
+  <div class="sidebar-static histogram">
+    <div class="histogram-loading-indicator" ng-show="$ctrl.errorLoadingHistogram || $ctrl.loadingHistogram">
+      <!--Histogram is loading-->
+      <i ng-show="$ctrl.loadingHistogram" class="icon-load animated"></i>
+      <!--Histogram failed to load-->
+      <span ng-show="$ctrl.errorLoadingHistogram && !$ctrl.loadingHistogram">Error loading histogram</span>
     </div>
-    <rf-channel-histogram ng-show="!$ctrl.loadingHistogram" data="$ctrl.data"></rf-channel-histogram>
+
+    <!--Histogram loaded successfully-->
+    <rf-channel-histogram ng-show="!$ctrl.loadingHistogram && !$ctrl.errorLoadingHistogram" data="$ctrl.data"></rf-channel-histogram>
+
     <a feature-flag="make-source-histogram" ng-click="" class="btn btn-link btn-block">Make source histogram</a>
   </div>
-  <div ng-show="$ctrl.errorLoadingHistogram" class="sidebar-static">
-    Error loading histogram
-  </div>
+
   <div class="sidebar-scrollable">
     <rf-color-correct-adjust
         correction="$ctrl.correction"
