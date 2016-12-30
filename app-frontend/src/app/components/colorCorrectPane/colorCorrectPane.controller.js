@@ -18,10 +18,11 @@ export default class ColorCorrectPaneController {
         }
         this.$parent.fitSelectedScenes();
         this.$parent.bringSelectedScenesToFront();
+        this.smoothHistograms = true;
         // Initialize correction to first selected layer (if there are multiple)
         this.firstLayer = this.selectedLayers.values().next().value;
         this.correction = this.firstLayer.baseColorCorrection();
-        this.updateHistogram();
+        this.fetchHistograms();
     }
 
     $onDestroy() {
@@ -49,35 +50,50 @@ export default class ColorCorrectPaneController {
             for (let layer of this.selectedLayers.values()) {
                 layer.colorCorrect(this.correction);
             }
-            this.updateHistogram();
+            this.fetchHistograms();
         }
     }
 
-    updateHistogram() {
-        this.errorLoadingHistogram = false;
-        if (this.loadingHistogram) {
-            this.queuedHistogramRequest = true;
-            return;
-        }
-        this.loadingHistogram = true;
-        this.firstLayer.fetchHistogramData().then(
-            (resp) => {
-                this.loadingHistogram = false;
-                this.errorLoadingHistogram = false;
-                this.data = this.generateHistogramData(resp.data);
-                if (this.queuedHistogramRequest) {
-                    this.queuedHistogramRequest = false;
-                    this.updateHistogram();
-                }
-            }
-        ).catch(() => {
-            this.errorLoadingHistogram = true;
-            this.loadingHistogram = false;
-            if (this.queuedHistogramRequest) {
-                this.queuedHistogramRequest = false;
-                this.updateHistogram();
+    addDataToHistogram(data) {
+        data.forEach((channel, channelIndex) => {
+            for (let bin of channel) {
+                // eslint-disable-next-line operator-assignment
+                this.histogramRawData[channelIndex][bin[0] - 1][1] += bin[1];
             }
         });
+        this.updateHistogram();
+    }
+
+    fetchHistograms() {
+        this.histogramRawData = this.generateBaseHistogramData();
+        this.selectedLayers.forEach(l => {
+            l.fetchHistogramData().then(
+                (resp) => {
+                    this.addDataToHistogram(resp.data);
+                    this.updateHistogram();
+                }
+            ).catch(() => {
+                this.errorLoadingHistogram = true;
+            });
+        });
+    }
+
+    updateHistogram() {
+        let data = this.histogramRawData;
+        if (this.smoothHistograms) {
+            data = this.histogramRawData.map((c) => {
+                return c.filter(b => b[1] > 0);
+            });
+        }
+        this.data = this.generateHistogramData(data);
+    }
+
+    generateBaseHistogramData() {
+        return [
+            new Array(255).fill().map((x, i) => [i, 0]),
+            new Array(255).fill().map((x, i) => [i, 0]),
+            new Array(255).fill().map((x, i) => [i, 0])
+        ];
     }
 
     generateHistogramData(data) {
