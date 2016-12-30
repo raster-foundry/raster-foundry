@@ -18,6 +18,7 @@ class MapWrapper {
         this._geoJsonLayerGroup = L.geoJSON().addTo(this.map);
         this._layerMap = new Map();
         this._layerGroup = L.layerGroup().addTo(this.map);
+        this.persistedThumbnails = new Map();
 
         this._controls = L.control({position: 'topright'});
         this._controls.onAdd = function () {
@@ -263,9 +264,13 @@ class MapWrapper {
     /** Display a thumbnail of the scene
      * @param {object} scene Scene with footprint to display on the map
      * @param {boolean?} useSmall Use the smallest thumbnail
+     * @param {boolean?} persist Whether to persist this thumbnail on the map
      * @returns {this} this
      */
-    setThumbnail(scene, useSmall) {
+    setThumbnail(scene, useSmall, persist) {
+        if (!persist && scene.id in this.persistedThumbnails) {
+            return this;
+        }
         let footprintGeojson = Object.assign({
             properties: {
                 options: {
@@ -293,7 +298,12 @@ class MapWrapper {
                 attribution: `©${scene.datasource}` +
                     ' | Previews are not representative of actual scene quality.'
             });
-            this.setLayer('thumbnail', overlay);
+            if (!persist) {
+                this.setLayer('thumbnail', overlay);
+            } else {
+                overlay.addTo(this.map);
+                this.persistedThumbnails.set(scene.id, overlay);
+            }
             this.setGeojson(
                 'thumbnail',
                 footprintGeojson
@@ -309,11 +319,17 @@ class MapWrapper {
     }
 
     /** Delete any thumbnails from the map
+     * @param {str} scene id of the scene to remove thumbnail for
      * @returns {this} this
      */
-    deleteThumbnail() {
-        this.deleteLayers('thumbnail');
-        this.deleteGeojson('thumbnail');
+    deleteThumbnail(scene) {
+        if (!scene) {
+            this.deleteLayers('thumbnail');
+            this.deleteGeojson('thumbnail');
+        } else {
+            this.map.removeLayer(this.persistedThumbnails.get(scene.id));
+            this.persistedThumbnails.delete(scene.id);
+        }
         return this;
     }
 }
