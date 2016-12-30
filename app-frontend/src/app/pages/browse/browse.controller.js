@@ -262,8 +262,14 @@ export default class BrowseController {
     setSelected(scene, selected) {
         if (selected) {
             this.selectedScenes.set(scene.id, scene);
+            this.getBrowseMap().then((map) => {
+                map.setThumbnail(scene, false, true);
+            });
         } else {
             this.selectedScenes.delete(scene.id);
+            this.getBrowseMap().then((map) => {
+                map.deleteThumbnail(scene);
+            });
         }
     }
 
