@@ -19,6 +19,7 @@ class MapWrapper {
         this._layerMap = new Map();
         this._layerGroup = L.layerGroup().addTo(this.map);
         this.persistedThumbnails = new Map();
+        this.disableFootprints = false;
 
         this._controls = L.control({position: 'topright'});
         this._controls.onAdd = function () {
