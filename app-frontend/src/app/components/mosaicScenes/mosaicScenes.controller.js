@@ -2,7 +2,7 @@ const Map = require('es6-map');
 
 export default class MosaicScenesController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, $q, $state, projectService, layerService
+        $log, $scope, $q, $state, projectService, layerService, mapService
     ) {
         'ngInject';
         this.projectService = projectService;
@@ -10,6 +10,7 @@ export default class MosaicScenesController {
         this.$state = $state;
         this.$q = $q;
         this.$log = $log;
+        this.mapService = mapService;
     }
 
     $onInit() {
@@ -31,7 +32,8 @@ export default class MosaicScenesController {
     }
 
     setHoveredScene(scene) {
-        this.onSceneMouseover({scene: scene});
+        let toHover = this.mapService.disableFootprints ? null : scene;
+        this.onSceneMouseover({scene: toHover});
     }
 
     removeHoveredScene() {

@@ -34,6 +34,9 @@ export default class ProjectEditController {
     }
 
     setHoveredScene(scene) {
+        if (!scene) {
+            return;
+        }
         let styledGeojson = Object.assign({}, scene.dataFootprint, {
             properties: {
                 options: {

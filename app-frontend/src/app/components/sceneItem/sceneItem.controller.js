@@ -1,5 +1,5 @@
 export default class SceneItemController {
-    constructor($scope, $attrs, thumbnailService) {
+    constructor($scope, $attrs, thumbnailService, mapService) {
         'ngInject';
         this.thumbnailService = thumbnailService;
         this.isSelectable = $attrs.hasOwnProperty('selectable');
@@ -10,6 +10,17 @@ export default class SceneItemController {
                 this.selectedStatus = selected;
             }
         );
+
+        if (this.isDraggable) {
+            Object.assign($scope.$parent.$treeScope.$callbacks, {
+                dragStart: function () {
+                    mapService.disableFootprints = true;
+                },
+                dragStop: function () {
+                    mapService.disableFootprints = false;
+                }
+            });
+        }
     }
 
     toggleSelected(event) {
