@@ -1,8 +1,8 @@
 package com.azavea.rf.grid
 
 import geotrellis.proj4._
-import geotrellis.slick.{Projected}
-import geotrellis.vector.{Point, Polygon, Feature, Extent}
+import geotrellis.slick.Projected
+import geotrellis.vector.{Extent, Feature, Point, Polygon}
 import geotrellis.vector.io.json._
 import spray.json.DefaultJsonProtocol._
 
@@ -10,7 +10,20 @@ import spray.json.DefaultJsonProtocol._
 object Aggregation {
   private val tileSize = 256.0
 
-  case class TileCoordinates(z: Int, x: Int, y: Int)
+  case class TileCoordinates(z: Int, x: Int, y: Int) {
+    lazy val children: Seq[TileCoordinates] =
+      Seq(
+        TileCoordinates(z + 1, x * 2, y * 2),
+        TileCoordinates(z + 1, x * 2 + 1, y * 2),
+        TileCoordinates(z + 1, x * 2 + 1, y * 2 + 1),
+        TileCoordinates(z + 1, x * 2, y * 2 + 1)
+      )
+
+    lazy val childrenTileBounds: Seq[Projected[Polygon]] = {
+      children.map(getTileBounds)
+    }
+  }
+
   case class GridData(count: Int)
   implicit val gridDataFormat = jsonFormat1(GridData)
 
@@ -92,17 +105,5 @@ object Aggregation {
     val x = ((tile.x % scale) + scale) % scale
     val y = ((tile.y % scale) + scale) % scale
     TileCoordinates(x=x.toInt, y=y.toInt, z=tile.z)
-  }
-
-
-  // create geojson from result of aggregated query
-  def constructGeojson(gridResult: Seq[(Projected[Polygon], Int)]) = {
-    val features = gridResult.map{
-      case (polygon, count) => {
-        val latLngPoly = polygon.reproject(WebMercator, LatLng)(4326)
-        Feature(latLngPoly.geom, GridData(count))
-      }
-    }
-    JsonFeatureCollection(features)
   }
 }

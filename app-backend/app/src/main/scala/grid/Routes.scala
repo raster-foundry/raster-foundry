@@ -1,6 +1,7 @@
 package com.azavea.rf.grid
 
-import scala.util.{Success, Failure}
+import scala.util.{Failure, Success}
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import akka.http.scaladsl.server.Route
@@ -21,21 +22,17 @@ trait GridRoutes extends Authentication
   implicit def database: Database
 
   val gridRoutes: Route = handleExceptions(userExceptionHandler) {
-    pathPrefix(Segment / IntNumber) { (bbox, zoom) =>
-      get { getSceneGrid(bbox, zoom.toInt) }
+    pathPrefix(IntNumber / IntNumber / IntNumber) { (z, x, y) =>
+      get { getGrid(z, x, y) }
     }
   }
 
-  def getSceneGrid(bbox: String, zoom: Int): Route = authenticate { user =>
-    (gridQueryParameters) { (gridParams) =>
+  def getGrid(z: Int, x: Int, y: Int): Route = authenticate { _ =>
+    gridQueryParameters { gridParams =>
       complete {
-        Scenes.aggregateScenes(
-          gridParams,
-          Aggregation.latLngBboxFromString(bbox),
-          Aggregation.bboxToGrid(bbox, zoom)
-        ).map( aggregation =>
-          Aggregation.constructGeojson(aggregation)
-        )
+        val tileBounds = Aggregation.TileCoordinates(z, x, y).childrenTileBounds
+        Future.sequence(Scenes.sceneGrid(gridParams, tileBounds))
+
       }
     }
   }
