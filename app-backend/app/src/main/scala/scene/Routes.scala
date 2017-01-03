@@ -12,7 +12,6 @@ import com.azavea.rf.database.tables.Scenes
 import com.azavea.rf.database.Database
 import com.azavea.rf.datamodel._
 import com.azavea.rf.utils.UserErrorHandler
-import com.azavea.rf.utils.RfPagination
 import com.azavea.rf.utils.RfPaginationDirectives
 
 
