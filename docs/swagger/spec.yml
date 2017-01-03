@@ -371,13 +371,14 @@ paths:
             The UUID parameter does not refer to a scene or the user does not have access to the scene it refers to
           schema:
             $ref: '#/definitions/Error'
-  /scene-grid/{bboxCoordinates}/{zoom}:
+  /scene-grid/{zoom}/{column}/{row}/:
     get:
-      summary: Scene statistics. Geojson FeatureCollection grid which lines up with map tiles and gives scene intersection count
+      summary: Scene statistics for a tile
       tags:
         - Statistics
       parameters:
-        - $ref: '#/parameters/bboxCoordinates'
+        - $ref: '#/parameters/column'
+        - $ref: '#/parameters/row'
         - $ref: '#/parameters/zoom'
         - $ref: '#/parameters/organization'
         - $ref: '#/parameters/maxCloudCover'
@@ -1190,6 +1191,18 @@ parameters:
     in: path
     type: number
     required: true
+  column:
+    name: column
+    description: column of tile requested
+    in: path
+    type: number
+    required: true
+  row:
+    name: row
+    description: row of tile requested
+    in: path
+    type: number
+    required: true
   bbox:
     name: bbox
     description: Bounding box. eg "bbox=southwest_lng,southwest_lat,northeast_lng,northeast_lat"
@@ -1515,48 +1528,12 @@ definitions:
               - QUEUED
               - PROCESSING
   SceneGrid:
-    allOf:
-      - type: object
-        description: Geojson object
-        properties:
-          type:
-            type: string
-            description: Type of geojson feature. Expect 'FeatureCollection'
-          polygons:
-            type: array
-            description: Geojson polygon for each grid cell
-            items:
-              type: object
-              properties:
-                type:
-                  type: string
-                  description: Geojson Feature
-                geometry:
-                  type: object
-                  description: Geojson polygon
-                  properties:
-                    type:
-                      type: string
-                      description: Polygon
-                    coordinates:
-                      type: array
-                      description: list of polygon coordinate rings
-                      items:
-                        type: array
-                        description: polygon coordinate ring
-                        items:
-                          type: array
-                          description: coordinate pairs
-                          items:
-                            type: number
-                            description: coordinate
-                properties:
-                  type: object
-                  description: Geojson grid object properties
-                  properties:
-                    sceneCount:
-                      type: number
-                      description: Number of scenes which intersect the grid object
+    type: array
+    items:
+      - type: number
+        format: integer
+    readOnly: true
+
   Project:
     allOf:
       - $ref: '#/definitions/BaseModel'
