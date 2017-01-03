@@ -66,12 +66,11 @@
             {{$ctrl.selectedScenes.size || 'No'}} scenes selected
           </button>
 
-          <!-- TODO : Developers need to make this function please. -->
           <button class="btn btn-small"
-                  ng-class="{'btn-primary': $ctrl.selectAllScenes()}"
+                  ng-class="{'btn-primary': $ctrl.allSelected}"
                   ng-click="$ctrl.selectAllScenes()">
-            <i ng-class="{'icon-plus': !$ctrl.selectAllScenes(),
-                          'icon-cross': $ctrl.selectAllScenes()}"></i>
+            <i ng-class="{'icon-plus': !$ctrl.allSelected,
+                          'icon-cross': $ctrl.allSelected}"></i>
           </button>
         </div>
       </div>
