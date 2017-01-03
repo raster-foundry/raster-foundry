@@ -19,6 +19,7 @@ export default class BrowseController {
             count: 0,
             results: []
         };
+        this.allSelected = false;
         this.selectedScenes = new Map();
         this.sceneList = [];
         // initial data
@@ -150,6 +151,7 @@ export default class BrowseController {
             (sceneResult) => {
                 this.lastSceneResult = sceneResult;
                 this.sceneList = sceneResult.results;
+                this.allSelected = this.sceneList.every((scene) => scene.isSelected);
                 this.loadingScenes = false;
                 if (this.pendingSceneRequest) {
                     this.pendingSceneRequest = false;
@@ -202,6 +204,7 @@ export default class BrowseController {
             return;
         }
 
+        this.allSelected = false;
         delete this.errorMsg;
         this.loadingScenes = true;
         this.infScrollPage = this.infScrollPage + 1;
@@ -263,6 +266,15 @@ export default class BrowseController {
         } else {
             this.selectedScenes.delete(scene.id);
         }
+    }
+
+    selectAllScenes() {
+        if (this.allSelected && this.sceneList.length) {
+            this.sceneList.map((scene) => this.setSelected(scene, false));
+        } else if (this.sceneList.length) {
+            this.sceneList.map((scene) => this.setSelected(scene, true));
+        }
+        this.allSelected = !this.allSelected;
     }
 
     setHoveredScene(scene) {
