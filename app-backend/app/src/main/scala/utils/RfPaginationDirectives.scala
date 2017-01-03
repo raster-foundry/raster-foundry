@@ -7,7 +7,7 @@ import scala.collection.immutable.Seq
 
 trait RfPaginationDirectives {
 
-  lazy val OffsetParam = "offset"
+  lazy val OffsetParam = "page"
   lazy val LimitParam = "limit"
   lazy val SortParam = "sort"
 
