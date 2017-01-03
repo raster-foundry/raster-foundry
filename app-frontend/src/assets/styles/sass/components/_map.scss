@@ -3,6 +3,15 @@
   z-index: 1;
 }
 
+// @TODO: Determine if this breaks something
+.leaflet-tile-container {
+  pointer-events: auto;
+}
+
+.leaflet-tile{
+    pointer-events: auto;
+}
+
 .leaflet-top.leaflet-right .map-control-panel {
   margin: 0;
   background: $shade-dark;

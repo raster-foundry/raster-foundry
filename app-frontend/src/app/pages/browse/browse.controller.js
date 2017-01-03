@@ -4,7 +4,8 @@ const _ = require('lodash');
 
 export default class BrowseController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, sceneService, gridService, authService, $state, $uibModal, mapService
+        $log, $scope, sceneService, gridService, gridLayerService,
+        authService, $state, $uibModal, mapService
     ) {
         'ngInject';
         this.$log = $log;
@@ -32,6 +33,9 @@ export default class BrowseController {
             }
             return val;
         });
+
+        this.gridLayer = gridLayerService.createNewGridLayer(this.queryParams);
+
 
         if ($state.params.id) {
             this.sceneService.query({id: $state.params.id}).then(
@@ -71,6 +75,7 @@ export default class BrowseController {
         );
 
         this.getBrowseMap().then((browseMap) => {
+            browseMap.addLayer('canvasGrid', this.gridLayer);
             browseMap.map.fitBounds(this.bounds);
             browseMap.on('moveend', ($event, mapWrapper) => {
                 this.onViewChange(
@@ -110,6 +115,10 @@ export default class BrowseController {
         this.requestNewSceneList();
     }
 
+    updateSceneGrid() {
+        this.gridLayer.updateParams(this.queryParams);
+    }
+
     // TODO: This should be refactored to use a one-way binding from the filter controller
     // rather than a scope watch.
     onFilterChange(newFilters) {
@@ -118,7 +127,7 @@ export default class BrowseController {
             bbox: this.queryParams.bbox
         }, newFilters);
         this.onQueryParamsChange();
-        this.loadGrid(this.bboxCoords, this.zoom);
+        this.updateSceneGrid();
     }
 
     onViewChange(newBounds, newCenter, zoom) {
@@ -129,7 +138,6 @@ export default class BrowseController {
             id: this.queryParams.id
         }, this.filters, {bbox: this.bboxCoords});
         this.onQueryParamsChange();
-        this.loadGrid(this.bboxCoords, this.zoom);
     }
 
     onLoggedInChange(newValue) {

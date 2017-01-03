@@ -210,6 +210,26 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
       }.result
   }
 
+  def sceneGrid(params: CombinedGridQueryParams, bboxes: Seq[Projected[Polygon]])(implicit database: DB) = {
+    val filteredScenes = Scenes
+      .filterByOrganization(params.orgParams)
+      .filterByUser(params.userParams)
+      .filterByTimestamp(params.timestampParams)
+      .filterByImageParams(params.imageParams)
+      .filterByGridParams(params.gridParams)
+
+    val actions = for {
+      bbox <- bboxes
+    } yield {
+      database.db.run {
+        filteredScenes.filter { scene =>
+          scene.dataFootprint.intersects(bbox)
+        }.length.result
+      }
+    }
+    actions
+  }
+
   def aggregateScenes(combinedParams: CombinedGridQueryParams, bbox: Projected[Polygon], grid: Seq[Projected[Polygon]])
                      (implicit database: DB)
       : Future[List[(Projected[Polygon], Int)]] = {
