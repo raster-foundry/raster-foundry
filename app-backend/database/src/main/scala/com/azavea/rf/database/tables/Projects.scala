@@ -7,7 +7,6 @@ import com.azavea.rf.database.query._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 
-import com.lonelyplanet.akka.http.extensions._
 import com.typesafe.scalalogging.LazyLogging
 import slick.model.ForeignKeyAction
 
