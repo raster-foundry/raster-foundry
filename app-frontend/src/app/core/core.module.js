@@ -1,7 +1,6 @@
 const shared = angular.module('core.shared', []);
 
 require('./services/scene.service')(shared);
-require('./services/grid.service')(shared);
 require('./services/gridLayer.service')(shared);
 require('./services/project.service')(shared);
 require('./services/user.service')(shared);

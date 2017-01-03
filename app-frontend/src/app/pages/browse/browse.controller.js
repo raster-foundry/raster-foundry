@@ -4,7 +4,7 @@ const _ = require('lodash');
 
 export default class BrowseController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, sceneService, gridService, gridLayerService,
+        $log, $scope, sceneService, gridLayerService,
         authService, $state, $uibModal, mapService
     ) {
         'ngInject';
@@ -13,7 +13,6 @@ export default class BrowseController {
         this.authService = authService;
         this.$state = $state;
         this.$uibModal = $uibModal;
-        this.gridService = gridService;
         this.getBrowseMap = () => mapService.getMap('browse');
         this.getDetailMap = () => mapService.getMap('detail');
 
@@ -184,55 +183,6 @@ export default class BrowseController {
                 this.errorMsg = 'Error loadingScenes scenes.';
                 this.loadingScenes = false;
             });
-    }
-
-    loadGrid(bbox, zoom) {
-        if (!zoom || !bbox || !this.authService.isLoggedIn) {
-            return;
-        }
-        if (this.loadingGrid && !_.isEqual(this.lastQueryParams, this.queryParams)) {
-            this.pendingGridRequest = true;
-            this.zoom = zoom;
-            return;
-        }
-        this.loadingGrid = true;
-        let params = Object.assign({zoom: zoom}, this.queryParams);
-        delete params.id;
-        this.gridService.query(
-            params
-        ).then(
-            (gridResult) => {
-                this.lastGridResult = Object.assign({}, gridResult, {
-                    properties: {
-                        options: {
-                            fillOpacity: 0,
-                            color: '#465076',
-                            weight: 0.5,
-                            onEachFeature: (feature, layer) => {
-                                let count = feature.properties.count;
-                                layer.bindTooltip(`${count}`);
-                            }
-                        }
-                    }
-                });
-                this.getBrowseMap().then((map) => {
-                    map.setGeojson('grid', this.lastGridResult);
-                });
-                this.loadingGrid = false;
-                if (this.pendingGridRequest) {
-                    this.pendingGridRequest = false;
-                    this.loadGrid(this.queryParams.bbox, this.zoom);
-                }
-            },
-            (err) => {
-                this.loadingGrid = false;
-                this.$log.debug('Error loading grid:', err);
-                if (this.pendingGridRequest) {
-                    this.pendingGridRequest = false;
-                    this.loadGrid(this.queryParams.bbox, this.zoom);
-                }
-            }
-        );
     }
 
     getMoreScenes() {
