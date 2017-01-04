@@ -218,6 +218,12 @@ class SceneSpec extends WordSpec
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]
         res.count shouldEqual 1
       }
+      Get("/api/scenes/?bbox=0,0,0.00001,0.00001;0,0,0.001,0.001").withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
+        val res = responseAs[PaginatedResponse[Scene.WithRelated]]
+        res.count shouldEqual 1
+      }
     }
 
     "filter scenes by point" in {

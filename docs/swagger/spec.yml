@@ -1205,7 +1205,7 @@ parameters:
     required: true
   bbox:
     name: bbox
-    description: Bounding box. eg "bbox=southwest_lng,southwest_lat,northeast_lng,northeast_lat"
+    description: Bounding box. eg "bbox=southwest_lng,southwest_lat,northeast_lng,northeast_lat". Delimit multiple with semicolon.
     in: query
     type: string
     required: false
