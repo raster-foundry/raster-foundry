@@ -46,12 +46,17 @@ case class SceneQueryParameters(
   point: Option[String] = None,
   project: Option[UUID] = None
 ) {
-  val bboxPolygon: Option[Projected[Polygon]] = try {
-    bbox
-      .map(Extent.fromString)
-      .map(_.toPolygon)
-      .map(Projected(_, 4326))
-      .map(_.reproject(LatLng, WebMercator)(3857))
+  val bboxPolygon: Option[Seq[Projected[Polygon]]] = try {
+    bbox match {
+      case Some(b) => Option[Seq[Projected[Polygon]]](
+        b.split(";")
+        .map(Extent.fromString)
+        .map(_.toPolygon)
+        .map(Projected(_, 4326))
+        .map(_.reproject(LatLng, WebMercator)(3857))
+      )
+      case _ => None
+    }
   } catch {
     case e: Exception => throw new IllegalArgumentException(
       "Four comma separated coordinates must be given for bbox"

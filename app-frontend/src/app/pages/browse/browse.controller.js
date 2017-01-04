@@ -5,7 +5,7 @@ const _ = require('lodash');
 export default class BrowseController {
     constructor( // eslint-disable-line max-params
         $log, $scope, sceneService, gridLayerService,
-        authService, $state, $uibModal, mapService
+        authService, $state, $uibModal, $timeout, mapService
     ) {
         'ngInject';
         this.$log = $log;
@@ -24,6 +24,7 @@ export default class BrowseController {
         this.allSelected = false;
         this.selectedScenes = new Map();
         this.sceneList = [];
+        this.gridFilterActive = false;
         // initial data
 
         this.queryParams = _.mapValues($state.params, (val) => {
@@ -36,6 +37,10 @@ export default class BrowseController {
         this.gridLayer = gridLayerService.createNewGridLayer(this.queryParams);
         // 100 is just a placeholder "big" number to leave plenty of space for basemaps
         this.gridLayer.setZIndex(100);
+
+        this.gridLayer.onClick = (e, b) => {
+            this.onGridClick(e, b);
+        };
 
         if ($state.params.id) {
             this.sceneService.query({id: $state.params.id}).then(
@@ -77,7 +82,18 @@ export default class BrowseController {
         this.getBrowseMap().then((browseMap) => {
             browseMap.addLayer('canvasGrid', this.gridLayer);
             browseMap.map.fitBounds(this.bounds);
+            browseMap.on('contextmenu', ($event) => {
+                $event.originalEvent.preventDefault();
+                return false;
+            });
+            browseMap.on('movestart', () => {
+                this.registerClick = false;
+                return false;
+            });
             browseMap.on('moveend', ($event, mapWrapper) => {
+                $timeout(() => {
+                    this.registerClick = true;
+                }, 125);
                 this.onViewChange(
                     mapWrapper.map.getBounds(),
                     mapWrapper.map.getCenter(),
@@ -146,10 +162,59 @@ export default class BrowseController {
         }
     }
 
+    onGridClick(e, bbox) {
+        if (!this.registerClick) {
+            return;
+        }
+        let multi = e.evt.ctrlKey;
+        if (!this.filterBboxList || !this.filterBboxList.length) {
+            this.filterBboxList = [];
+        }
+
+        let filteredList = this.filterBboxList.filter(b => {
+            return !b.equals(bbox) && !b.contains(bbox) && !bbox.contains(b);
+        });
+
+        if (filteredList.length === this.filterBboxList.length) {
+            // If the clicked bounding box has not been selected
+            if (!multi) {
+                this.filterBboxList = [];
+            }
+            this.filterBboxList.push(bbox);
+        } else if (!multi) {
+            // If the clicked bounding box is already selected
+            this.filterBboxList = [];
+        } else {
+            this.filterBboxList = filteredList;
+        }
+
+        if (!this.filterBboxLayer) {
+            this.filterBboxLayer = new L.FeatureGroup();
+            this.getBrowseMap().then((map) => {
+                map.addLayer('filterBboxLayer', this.filterBboxLayer);
+            });
+        }
+        this.filterBboxLayer.clearLayers();
+        this.filterBboxList.forEach(b => {
+            let bboxRect = L.rectangle(b, {
+                fill: false
+            });
+            this.filterBboxLayer.addLayer(bboxRect);
+        });
+        this.gridFilterActive = Boolean(this.filterBboxList.length);
+        this.requestNewSceneList();
+    }
+
+    getGridBboxFilterString() {
+        return this.filterBboxList.map(b => b.toBBoxString()).join(';');
+    }
+
     requestNewSceneList() {
-        if (!this.queryParams.bbox ||
+        if (!this.queryParams.bbox && !this.gridFilterActive ||
             !this.authService.isLoggedIn ||
-            this.loadingScenes && _.isEqual(this.lastQueryParams, this.queryParams)) {
+            this.loadingScenes &&
+            // eslint-disable-next-line max-len
+            _.isEqual(this.lastQueryParams, this.queryParams) && !this.gridFilterActive) {
             return;
         } else if (this.loadingScenes) {
             this.pendingSceneRequest = true;
@@ -164,6 +229,10 @@ export default class BrowseController {
         // save off selected scenes so you don't lose them during the refresh
         this.sceneList = [];
         let params = Object.assign({}, this.queryParams);
+        // manually set bbox parameter to selected filter bboxes
+        if (this.gridFilterActive) {
+            params.bbox = this.getGridBboxFilterString();
+        }
         delete params.id;
         this.sceneService.query(
             Object.assign({
@@ -198,6 +267,10 @@ export default class BrowseController {
         this.loadingScenes = true;
         this.infScrollPage = this.infScrollPage + 1;
         let params = Object.assign({}, this.queryParams);
+        // manually set bbox parameter to selected filter bboxes
+        if (this.gridFilterActive) {
+            params.bbox = this.getGridBboxFilterString();
+        }
         delete params.id;
         this.sceneService.query(
             Object.assign({

@@ -1,7 +1,6 @@
 import Konva from 'konva';
-
+/* eslint no-underscore-dangle: "off" */
 export default (app) => {
-
     /** Service to create a Leaflet grid layer for scenes
      */
     class GridLayerService {
@@ -67,6 +66,46 @@ export default (app) => {
                         return 'rgba(53,60,88,.60)';
                     }
                     return 'rgba(53,60,88,.70)';
+                },
+
+                /** Function to retrieve bounds of a specific sub-tile of a tile
+                 *
+                 * @param {L.Point} coords xyz coords of parent tile
+                 * @param {number} rectIndex integer subtile index
+                 * @returns {L.LatLngBounds} Bounds of specified sub-tile
+                 */
+                getRectBounds: function (coords, rectIndex) {
+                    // eslint-disable-next-line no-underscore-dangle
+                    switch (rectIndex) {
+                    case 0:
+                        let subCoords0 = new L.Point(coords.x * 2, coords.y * 2);
+                        subCoords0.z = coords.z + 1;
+                        return this._tileCoordsToBounds(subCoords0);
+                    case 1:
+                        let subCoords1 = new L.Point(coords.x * 2 + 1, coords.y * 2);
+                        subCoords1.z = coords.z + 1;
+                        return this._tileCoordsToBounds(subCoords1);
+                    case 2:
+                        let subCoords2 = new L.Point(coords.x * 2 + 1, coords.y * 2 + 1);
+                        subCoords2.z = coords.z + 1;
+                        return this._tileCoordsToBounds(subCoords2);
+                    case 3:
+                        let subCoords3 = new L.Point(coords.x * 2, coords.y * 2 + 1);
+                        subCoords3.z = coords.z + 1;
+                        return this._tileCoordsToBounds(subCoords3);
+                    default:
+                        return null;
+                    }
+                },
+
+                /** Callback function that will return bounds of a clicked sub-tile
+                 *  Intended to be re-implmented by consumer
+                 *
+                 * @param {L.LatLngBounds} bounds bounds passed in by click sub-tile
+                 * @return {L.LatLngBounds} passed bounds
+                 */
+                onClick: function (bounds) {
+                    return bounds;
                 },
 
                 /** Function used to create tile for custom grid layer
@@ -139,6 +178,10 @@ export default (app) => {
 
                     this.requestGrid(coords, this.params).then((result) => {
                         let data = result.data;
+                        topLeft.on('click', (e) => {
+                            const bounds = this.getRectBounds(coords, 0);
+                            this.onClick(e, bounds);
+                        });
                         topLeft.on('mouseover', function () {
                             writeMessage(data[0], 64, 64);
                         });
@@ -147,6 +190,10 @@ export default (app) => {
                         });
                         topLeft.fill(this.getColor(data[0]));
 
+                        topRight.on('click', (e) => {
+                            const bounds = this.getRectBounds(coords, 1);
+                            this.onClick(e, bounds);
+                        });
                         topRight.on('mouseover', function () {
                             writeMessage(data[1], 192, 64);
                         });
@@ -155,6 +202,10 @@ export default (app) => {
                         });
                         topRight.fill(this.getColor(data[1]));
 
+                        bottomLeft.on('click', (e) => {
+                            const bounds = this.getRectBounds(coords, 3);
+                            this.onClick(e, bounds);
+                        });
                         bottomLeft.on('mouseover', function () {
                             writeMessage(data[3], 64, 192);
                         });
@@ -163,6 +214,10 @@ export default (app) => {
                         });
                         bottomLeft.fill(this.getColor(data[3]));
 
+                        bottomRight.on('click', (e) => {
+                            const bounds = this.getRectBounds(coords, 2);
+                            this.onClick(e, bounds);
+                        });
                         bottomRight.on('mouseover', function () {
                             writeMessage(data[2], 192, 192);
                         });
