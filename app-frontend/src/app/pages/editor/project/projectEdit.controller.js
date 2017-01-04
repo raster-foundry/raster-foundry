@@ -2,7 +2,7 @@ const Map = require('es6-map');
 
 export default class ProjectEditController {
     constructor( // eslint-disable-line max-params
-        $scope, $rootScope, $state, mapService, projectService, layerService
+        $scope, $rootScope, $state, mapService, projectService, layerService, $uibModal
     ) {
         'ngInject';
         this.$state = $state;
@@ -10,7 +10,9 @@ export default class ProjectEditController {
         this.$rootScope = $rootScope;
         this.projectService = projectService;
         this.layerService = layerService;
+        this.$uibModal = $uibModal;
         this.getMap = () => mapService.getMap('project');
+
 
         this.mapOptions = {
             static: false,
@@ -19,14 +21,28 @@ export default class ProjectEditController {
     }
 
     $onInit() {
-        this.project = this.$state.params.project;
         this.projectId = this.$state.params.projectid;
-
         this.selectedScenes = new Map();
         this.selectedLayers = new Map();
         this.sceneList = [];
         this.sceneLayers = new Map();
         this.layers = [];
+
+        if (!this.project) {
+            if (this.projectId) {
+                this.loadingProject = true;
+                this.projectService.query({id: this.projectId}).then(
+                    (project) => {
+                        this.project = project;
+                        this.loadingProject = false;
+                    },
+                    () => {
+                        this.loadingProject = false;
+                        // @TODO: handle displaying an error message
+                    }
+                );
+            }
+        }
 
         this.$scope.$watch('$ctrl.sceneList', this.fitAllScenes.bind(this));
 
@@ -114,6 +130,19 @@ export default class ProjectEditController {
             map.deleteLayers('scenes');
             for (let layer of this.layers) {
                 map.addLayer('scenes', layer.tiles);
+            }
+        });
+    }
+
+    publishModal() {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        this.activeModal = this.$uibModal.open({
+            component: 'rfPublishModal',
+            resolve: {
+                project: () => this.project
             }
         });
     }

@@ -168,6 +168,19 @@ export default class ProjectScenesController {
         }
     }
 
+    publishModal() {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        this.activeModal = this.$uibModal.open({
+            component: 'rfPublishModal',
+            resolve: {
+                project: () => this.project
+            }
+        });
+    }
+
     shouldShowPagination() {
         return !this.loading &&
             this.lastSceneResult &&
