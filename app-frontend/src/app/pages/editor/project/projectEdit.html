@@ -4,6 +4,12 @@
     <a href ui-sref=".mosaic.scenes" ui-sref-active="active"><i class="icon-mosaic"></i> Mosaic</a>
   </nav>
   <span class="navbar-vertical-divider"></span>
+  <div class="navbar-right">
+      <nav>
+        <button class="btn">Save</button>
+        <button class="btn btn-primary" ng-click="$ctrl.publishModal()" ng-disabled="$ctrl.loadingProject || !$ctrl.project">Publish</button>
+      </nav>
+    </div>
 </div>
 <div class="container column-stretch container-not-scrollable with-header">
   <!-- Sidebar (container is in parent view) -->
