@@ -34,7 +34,8 @@ export default class BrowseController {
         });
 
         this.gridLayer = gridLayerService.createNewGridLayer(this.queryParams);
-
+        // 100 is just a placeholder "big" number to leave plenty of space for basemaps
+        this.gridLayer.setZIndex(100);
 
         if ($state.params.id) {
             this.sceneService.query({id: $state.params.id}).then(
