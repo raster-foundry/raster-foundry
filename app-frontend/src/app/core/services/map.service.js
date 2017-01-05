@@ -35,6 +35,16 @@ class MapWrapper {
         this.changeOptions(options);
     }
 
+    getBaseMapLayer(layerName) {
+        let url = `https://cartodb-basemaps-{s}.global.ssl.fastly.net/${layerName}/{z}/{x}/{y}.png`;
+        let properties = {
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">' +
+                'OpenStreetMap</a> &copy;<a href="http://cartodb.com/attributions">CartoDB</a>',
+            maxZoom: 19
+        };
+        return L.tileLayer(url, properties);
+    }
+
     changeOptions(options) {
         let mapInteractionOptions = [
             this.map.scrollWheelZoom,
@@ -54,9 +64,14 @@ class MapWrapper {
                 option.enable();
             });
 
-            let zoom = L.control.zoom({position: 'topright'});
+            let zoomControl = L.control.zoom({position: 'topright'});
             this._controls.addTo(this.map);
-            zoom.addTo(this.map);
+            let baseMapControl = L.control.layers({
+                Light: this.getBaseMapLayer('light_all'),
+                Dark: this.getBaseMapLayer('dark_all')
+            }, {});
+            baseMapControl.addTo(this.map);
+            zoomControl.addTo(this.map);
             let mapContainer = $(this.map._container); // eslint-disable-line no-underscore-dangle
             let $zoom = mapContainer.find('.leaflet-control-zoom');
             let $mpc = mapContainer.find('.map-control-panel');
