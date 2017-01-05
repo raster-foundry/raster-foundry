@@ -19,8 +19,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class ScenesToProjects(_tableTag: Tag) extends Table[SceneToProject](_tableTag, "scenes_to_projects") {
   def * = (sceneId, projectId, sceneOrder, colorCorrectParams) <> (SceneToProject.tupled, SceneToProject.unapply)
 
-  val sceneId: Rep[java.util.UUID] = column[java.util.UUID]("scene_id")
-  val projectId: Rep[java.util.UUID] = column[java.util.UUID]("project_id")
+  val sceneId: Rep[java.util.UUID] = column[java.util.UUID]("scene_id", O.PrimaryKey)
+  val projectId: Rep[java.util.UUID] = column[java.util.UUID]("project_id", O.PrimaryKey)
   val sceneOrder: Rep[Option[Int]] = column[Option[Int]]("scene_order")
   val colorCorrectParams: Rep[Option[ColorCorrect.Params]] = column[Option[ColorCorrect.Params]]("mosaic_definition")
 
@@ -100,10 +100,9 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
   /** Attach color correction parameters to a project/scene pairing */
   def setColorCorrectParams(projectId: UUID, sceneId: UUID, colorCorrectParams: ColorCorrect.Params)(implicit database: DB) =
     database.db.run {
-      ScenesToProjects
-        .filter({ s2p => s2p.projectId === projectId && s2p.sceneId === sceneId })
-        .map(_.colorCorrectParams)
-        .update(Some(colorCorrectParams))
+      ScenesToProjects.insertOrUpdate(
+        SceneToProject(sceneId, projectId, None, Some(colorCorrectParams))
+      )
     }
 
   /** Get color correction parameters from a project/scene pairing */
@@ -131,4 +130,3 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
     })
   }
 }
-
