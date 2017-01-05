@@ -63,6 +63,7 @@ services:
   tile-server:
     image: quay.io/azavea/scala:2.11.8
     links:
+      - postgres:database.service.rasterfoundry.internal
       - memcached:tile-cache.service.rasterfoundry.internal
     env_file: .env
     ports:

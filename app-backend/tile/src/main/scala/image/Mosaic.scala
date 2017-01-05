@@ -1,15 +1,18 @@
 package com.azavea.rf.tile.image
 
-import com.azavea.rf.datamodel.ColorCorrect
+import com.azavea.rf.database.Database
+import com.azavea.rf.database.tables.ScenesToProjects
+import com.azavea.rf.datamodel.{ ColorCorrect, MosaicDefinition }
 
 import geotrellis.raster._
 import geotrellis.spark._
 import geotrellis.spark.io._
 import com.azavea.rf.tile._
 import scala.concurrent.ExecutionContext.Implicits.global
-import com.github.blemale.scaffeine.{ AsyncLoadingCache, Scaffeine }
+import com.github.blemale.scaffeine.{Cache, AsyncLoadingCache, Scaffeine}
 import scala.concurrent._
 import scala.concurrent.duration._
+import java.util.UUID
 
 object Mosaic {
   /** Cache the result of metadata queries that may have required walking up the pyramid to find suitable layers */
@@ -27,6 +30,25 @@ object Mosaic {
           }
         Future { readMetadata(zoom) }
       }
+
+  /** Cache the result of mosaic definition, use tag to control cache rollover */
+  val cacheTaggedMosaicDefinition: AsyncLoadingCache[(Database, UUID, String), Option[MosaicDefinition]] =
+    Scaffeine()
+      .expireAfterWrite(5.minutes)
+      .maximumSize(1024)
+      .buildAsyncFuture { case (db, projectId, _) =>
+        ScenesToProjects.getMosaicDefinition(projectId)(db)
+      }
+
+  /** Cache the result of mosaic definition, quick expiry just enough for a single map render */
+  val cacheMosaicDefinition: AsyncLoadingCache[(Database, UUID), Option[MosaicDefinition]] =
+    Scaffeine()
+      .expireAfterWrite(5.seconds)
+      .maximumSize(1024)
+      .buildAsyncFuture { case (db, projectId) =>
+        ScenesToProjects.getMosaicDefinition(projectId)(db)
+      }
+
 
   /** Fetch the tile for given resolution. If it is not present, use a tile from a lower zoom level */
   def fetch(id: RfLayerId, zoom: Int, col: Int, row: Int): Future[Option[MultibandTile]] = {
@@ -57,33 +79,57 @@ object Mosaic {
   }
 
   /** Mosaic tiles from TMS pyramids given that they are in the same projection.
-    * If a layer does not go up to requested zoom it will be up-sampled.
-    * Missing layers will be excluded from the mosaic.
-    */
+   * If a layer does not go up to requested zoom it will be up-sampled.
+   * Layers missing color correction in the mosaic definition will be excluded.
+   */
   def apply(
-    params: ColorCorrect.Params,
-    ids: Traversable[RfLayerId],
-    zoom: Int, col: Int, row: Int
+    orgId: UUID,
+    userId: String,
+    projectId: UUID,
+    zoom: Int, col: Int, row: Int,
+    tag: Option[String] = None
+  )(
+    implicit db: Database
   ): Future[Option[MultibandTile]] = {
-    val futureMaybeTiles =
-      for (id <- ids) yield {
-        for {
-          maybeTile <- Mosaic.fetch(id, zoom, col, row)
-          hist <- LayerCache.bandHistogram(id, zoom)
-        } yield {
-          maybeTile.map { tile =>
-            val (rgbTile, rgbHist) = params.reorderBands(tile, hist)
-            ColorCorrect(rgbTile, rgbHist, params)
-          }
-        }
-      }
 
-    Future.sequence(futureMaybeTiles).map { maybeTiles =>
-      val tiles = maybeTiles.flatten
-      if (tiles.nonEmpty)
-        Some(tiles.reduce(_ merge _))
-      else
-        None
+    // Lookup project definition
+    val mayhapMosaic: Future[Option[MosaicDefinition]] = tag match {
+      case Some(t) =>
+        // tag present, include in lookup to re-use cache
+        cacheTaggedMosaicDefinition.get((db, projectId, t))
+      case None =>
+        // no tag to control cache rollover, quick expiry
+        cacheMosaicDefinition.get((db, projectId))
+    }
+
+    mayhapMosaic.flatMap {
+      case None => // can't merge a project without mosaic definition
+        Future.successful(Option.empty[MultibandTile])
+
+      case Some(mosaic) =>
+        val mayhapTiles =
+          for ((sceneId, colorCorrectParams) <- mosaic.definition) yield {
+            colorCorrectParams match {
+              case None => // can't use a scene without color correction params
+                Future.successful(Option.empty[MultibandTile])
+
+              case Some(params) =>
+                val id = RfLayerId(orgId, userId, sceneId)
+                for {
+                  maybeTile <- Mosaic.fetch(id, zoom, col, row)
+                  hist <- LayerCache.bandHistogram(id, zoom)
+                } yield
+                  for (tile <- maybeTile) yield params.colorCorrect(tile, hist)
+            }
+          }
+
+        Future.sequence(mayhapTiles).map { maybeTiles =>
+          val tiles = maybeTiles.flatten
+          if (tiles.nonEmpty)
+            Option(tiles.reduce(_ merge _))
+          else
+            Option.empty[MultibandTile]
+      }
     }
   }
 }
