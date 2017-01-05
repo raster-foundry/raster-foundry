@@ -21,7 +21,9 @@ export default class ColorCorrectPaneController {
         this.smoothHistograms = true;
         // Initialize correction to first selected layer (if there are multiple)
         this.firstLayer = this.selectedLayers.values().next().value;
-        this.correction = this.firstLayer.baseColorCorrection();
+        this.firstLayer.getColorCorrection().then((correction) => {
+            this.correction = correction;
+        });
         this.fetchHistograms();
     }
 
@@ -33,7 +35,9 @@ export default class ColorCorrectPaneController {
         for (let layer of this.selectedLayers.values()) {
             layer.resetTiles();
         }
-        this.correction = this.selectedLayers.values().next().value.baseColorCorrection();
+        this.firstLayer.getColorCorrection().then((correction) => {
+            this.correction = correction;
+        });
     }
 
     /**
@@ -46,9 +50,8 @@ export default class ColorCorrectPaneController {
      */
     onCorrectionChange(newCorrection) {
         if (newCorrection) {
-            this.correction = newCorrection;
             for (let layer of this.selectedLayers.values()) {
-                layer.colorCorrect(this.correction);
+                layer.updateColorCorrection(newCorrection);
             }
             this.fetchHistograms();
         }
