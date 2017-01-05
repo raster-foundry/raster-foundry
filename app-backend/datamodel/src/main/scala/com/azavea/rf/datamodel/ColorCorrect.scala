@@ -22,6 +22,11 @@ object ColorCorrect {
   ) {
     def reorderBands(tile: MultibandTile, hist: Seq[Histogram[Double]]): (MultibandTile, Array[Histogram[Double]]) =
       (tile.subsetBands(redBand, greenBand, blueBand), Array(hist(redBand), hist(greenBand), hist(blueBand)))
+
+    def colorCorrect(tile: MultibandTile, hist: Seq[Histogram[Double]]): MultibandTile = {
+      val (rgbTile, rgbHist) = reorderBands(tile, hist)
+      ColorCorrect(rgbTile, rgbHist, this)
+    }
   }
 
   object Params {

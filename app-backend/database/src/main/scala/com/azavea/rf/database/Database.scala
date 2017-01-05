@@ -27,7 +27,7 @@ class Database(jdbcUrl: String, dbUser: String, dbPassword: String) {
   /**
     * Utility function for closing the underlying DB connection pool
     */
-  def closeConnectionPool() = dataSource.close
+  def closeConnectionPool() = dataSource.close()
 
   // Custom driver to handle postgres column types
   val driver = ExtendedPostgresDriver
@@ -35,6 +35,10 @@ class Database(jdbcUrl: String, dbUser: String, dbPassword: String) {
 
   val db = {
     val executor = AsyncExecutor("slick", numThreads=64, queueSize=1000)
-    Database.forDataSource(dataSource, executor)
+    driver.api.Database.forDataSource(dataSource, executor)
   }
+}
+
+object Database extends Config {
+  def DEFAULT = new Database(jdbcUrl, dbUser, dbPassword)
 }

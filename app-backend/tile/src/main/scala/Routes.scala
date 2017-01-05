@@ -1,5 +1,6 @@
 package com.azavea.rf.tile
 
+import com.azavea.rf.database.Database
 import com.azavea.rf.tile.image._
 import com.azavea.rf.tile.tool._
 import com.azavea.rf.tile.tool.ToolParams._
@@ -151,16 +152,13 @@ trait Routes extends LazyLogging {
     }
   }
 
-  def mosaicLayer: Route =
-    pathPrefix(JavaUUID / Segment / "mosaic" / IntNumber / IntNumber / IntNumber) { (orgId, userId, zoom, x, y) =>
-      colorCorrectParams { params =>
-        parameters('scene.*) { scenes =>
-          get {
-            complete {
-              val ids = scenes.map(id => RfLayerId(orgId, userId, UUID.fromString(id)))
-              Mosaic(params, ids, zoom, x, y).map { maybeTile =>
-                maybeTile.map { tile => pngAsHttpResponse(tile.renderPng())}
-              }
+  def mosaicProject(implicit db: Database): Route =
+    pathPrefix(JavaUUID / Segment / "project" / JavaUUID/ IntNumber / IntNumber / IntNumber) { (orgId, userId, projectId, zoom, x, y) =>
+      parameter("tag".?) { tag =>
+        get {
+          complete {
+            Mosaic(orgId, userId, projectId, zoom, x, y, tag).map { maybeTile =>
+              maybeTile.map { tile => pngAsHttpResponse(tile.renderPng()) }
             }
           }
         }

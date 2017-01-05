@@ -21,7 +21,7 @@ object Main extends App with Config with Router with AkkaSystem.LoggerExecutor {
 
   import AkkaSystem._
 
-  implicit val database = new Database(jdbcUrl, dbUser, dbPassword)
+  implicit val database = Database.DEFAULT
 
   Http().bindAndHandle(routes, httpHost, httpPort)
 

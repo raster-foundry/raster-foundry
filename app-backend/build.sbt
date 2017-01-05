@@ -138,6 +138,7 @@ lazy val ingest = Project("ingest", file("ingest"))
 
 lazy val tile = Project("tile", file("tile"))
   .dependsOn(datamodel)
+  .dependsOn(database)
   .settings(commonSettings:_*)
   .settings(assemblyJarName in assembly := "rf-tile-server.jar")
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
