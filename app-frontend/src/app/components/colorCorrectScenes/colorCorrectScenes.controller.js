@@ -117,15 +117,15 @@ export default class ColorCorrectScenesController {
      */
     setBands(bandName) {
         let bands = {
-            natural: {red: 3, green: 2, blue: 1},
-            cir: {red: 4, green: 3, blue: 2},
-            urban: {red: 6, green: 5, blue: 4},
-            water: {red: 4, green: 5, blue: 3},
-            atmosphere: {red: 6, green: 4, blue: 2},
-            agriculture: {red: 5, green: 4, blue: 1},
-            forestfire: {red: 6, green: 4, blue: 1},
-            bareearth: {red: 5, green: 2, blue: 1},
-            vegwater: {red: 4, green: 6, blue: 0}
+            natural: {redBand: 3, greenBand: 2, blueBand: 1},
+            cir: {redBand: 4, greenBand: 3, blueBand: 2},
+            urban: {redBand: 6, greenBand: 5, blueBand: 4},
+            water: {redBand: 4, greenBand: 5, blueBand: 3},
+            atmosphere: {redBand: 6, greenBand: 4, blueBand: 2},
+            agriculture: {redBand: 5, greenBand: 4, blueBand: 1},
+            forestfire: {redBand: 6, greenBand: 4, blueBand: 1},
+            bareearth: {redBand: 5, greenBand: 2, blueBand: 1},
+            vegwater: {redBand: 4, greenBand: 6, blueBand: 0}
         };
 
         this.sceneLayers.forEach(function (layer) {

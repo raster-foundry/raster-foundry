@@ -5,42 +5,34 @@ export default (app) => {
      */
     class Layer {
 
-        baseColorCorrection() {
-            return {
-                red: 0,
-                green: 0,
-                blue: 0,
-                brightness: 0,
-                contrast: 0,
-                alpha: 0,
-                beta: 0,
-                min: 0,
-                max: 20000
-            };
-        }
-
         /**
          * Creates a layer from a scene -- this may need to be expanded
          * @param {object} $http injected angular $http service
+         * @param {object} $q promise service
+         * @param {object} colorCorrectService color correction service
          * @param {object} scene response from the API
+         * @param {object} projectId project that layer is in
          * @param {boolean} gammaCorrect flag to enable gamma correction
          * @param {boolean} sigmoidCorrect flag to enable sigmoidal correction
          * @param {boolean} colorClipCorrect flag to enable color clipping
          * @param {object} bands keys = band type, values = band number
          */
         constructor( // eslint-disable-line max-params
-            $http, scene, gammaCorrect = true, sigmoidCorrect = false,
-            colorClipCorrect = true, bands = {red: 3, green: 2, blue: 1}
+            $http, $q, colorCorrectService, scene, projectId, gammaCorrect = true,
+            sigmoidCorrect = true, colorClipCorrect = true, bands = {red: 3, green: 2, blue: 1}
         ) {
             this.$http = $http;
+            this.$q = $q;
             this.scene = scene;
             this.gammaCorrect = gammaCorrect;
             this.sigmoidCorrect = sigmoidCorrect;
             this.colorClipCorrect = colorClipCorrect;
+            this.colorCorrectService = colorCorrectService;
             this.bands = bands;
-
-            // Initial Color Correction Values
-            let bounds = L.latLngBounds(
+            this.projectId = projectId;
+            this._tiles = null; // eslint-disable-line no-underscore-dangle
+            this._correction = null; // eslint-disable-line no-underscore-dangle
+            this.bounds = L.latLngBounds(
                 L.latLng(
                     scene.sceneMetadata.lowerLeftCornerLatitude,
                     scene.sceneMetadata.lowerLeftCornerLongitude
@@ -50,10 +42,24 @@ export default (app) => {
                     scene.sceneMetadata.upperRightCornerLongitude
                 )
             );
-            this.tiles = L.tileLayer(
-                this.getLayerURL(),
-                {bounds: bounds, attribution: 'Raster Foundry'}
-            );
+        }
+
+        /** Function to return a promise that resolves into a leaflet tile layer
+         *
+         * @return {$promise} promise for leaflet tile layer
+         */
+        getTileLayer() {
+            if (this._tiles) { // eslint-disable-line no-underscore-dangle
+                return this.$q((resolve) => {
+                    resolve(this._tiles); // eslint-disable-line no-underscore-dangle
+                });
+            }
+            return this.getLayerURL().then((url) => {
+                this._tiles = L.tileLayer(url, // eslint-disable-line no-underscore-dangle
+                    {bounds: this.bounds, attribution: 'Raster Foundry'}
+                );
+                return this._tiles; // eslint-disable-line no-underscore-dangle
+            });
         }
 
         /**
@@ -64,8 +70,10 @@ export default (app) => {
             let organizationId = this.scene.organizationId;
             // TODO: replace this once user IDs are URL safe ISSUE: 766
             let userId = this.scene.createdBy.replace('|', '_');
-            return `/tiles/${organizationId}/` +
-                `${userId}/${this.scene.id}/rgb/{z}/{x}/{y}/?${this.bandsToQueryString()}`;
+            return this.formatColorParams().then((formattedParams) => {
+                return `/tiles/${organizationId}/` +
+                    `${userId}/${this.scene.id}/rgb/{z}/{x}/{y}/?${formattedParams}`;
+            });
         }
 
         /**
@@ -75,9 +83,12 @@ export default (app) => {
         getHistogramURL() {
             let organizationId = this.scene.organizationId;
             // TODO: replace this once user IDs are URL safe ISSUE: 766
+
             let userId = this.scene.createdBy.replace('|', '_');
-            return `/tiles/${organizationId}/` +
-                `${userId}/${this.scene.id}/rgb/histogram/?${this.formatColorParams()}`;
+            return this.formatColorParams().then((formattedParams) => {
+                return `/tiles/${organizationId}/` +
+                    `${userId}/${this.scene.id}/rgb/histogram/?${formattedParams}`;
+            });
         }
 
         /**
@@ -85,17 +96,9 @@ export default (app) => {
          * @returns {Promise} which should be resolved with an array
          */
         fetchHistogramData() {
-            return this.$http.get(this.getHistogramURL());
-        }
-
-        /**
-         * Helper function to add bands to query string for tile layer
-         * @returns {string} formatted query string for bands in tile layer
-         */
-        bandsToQueryString() {
-            return `redBand=${this.bands.red}&` +
-                `greenBand=${this.bands.green}&` +
-                `blueBand=${this.bands.blue}`;
+            return this.getHistogramURL().then((url) => {
+                return this.$http.get(url);
+            });
         }
 
         /**
@@ -103,43 +106,75 @@ export default (app) => {
          * @param {object} bands bands to update layer with
          * @returns {null} null
          */
-        updateBands(bands = {red: 3, green: 2, blue: 1}) {
-            this.bands = bands;
-            this.resetTiles();
+        updateBands(bands = {redBand: 3, greenBand: 2, blueBand: 1}) {
+            this.getColorCorrection().then((correction) => {
+                this.updateColorCorrection(Object.assign(correction, bands));
+            });
         }
 
         /**
-         * Reset tile layer without any color corrections
+         * Reset tile layer with default color corrections
          * @returns {null} null
          */
         resetTiles() {
-            this.tiles.setUrl(this.getLayerURL());
+            this._correction = this.colorCorrectService // eslint-disable-line no-underscore-dangle
+                .getDefaultColorCorrection();
+            this.colorCorrectService.reset(this.scene.id, this.projectId)
+                .then(() => this.colorCorrect());
         }
 
         formatColorParams() {
-            let colorCorrectParams = '';
-            if (this.colorCorrection) {
+            return this.getColorCorrection().then((colorCorrection) => {
+                let colorCorrectParams = `redBand=${colorCorrection.redBand}&` +
+                    `greenBand=${colorCorrection.greenBand}&` +
+                    `blueBand=${colorCorrection.blueBand}`;
+
                 if (this.gammaCorrect) {
                     colorCorrectParams = `${colorCorrectParams}` +
-                        `&redGamma=${this.colorCorrection.red}` +
-                        `&greenGamma=${this.colorCorrection.green}` +
-                        `&blueGamma=${this.colorCorrection.blue}`;
+                        `&redGamma=${colorCorrection.redGamma}` +
+                        `&greenGamma=${colorCorrection.greenGamma}` +
+                        `&blueGamma=${colorCorrection.blueGamma}`;
                 }
+
                 if (this.sigmoidCorrect) {
                     colorCorrectParams = `${colorCorrectParams}` +
-                        `&alpha=${this.colorCorrection.alpha}` +
-                        `&beta=${this.colorCorrection.beta}`;
+                        `&alpha=${colorCorrection.alpha}` +
+                        `&beta=${colorCorrection.beta}`;
                 }
+
                 if (this.colorClipCorrect) {
                     colorCorrectParams = `${colorCorrectParams}`
-                        + `&min=${this.colorCorrection.min}`
-                        + `&max=${this.colorCorrection.max}`;
+                        + `&min=${colorCorrection.min}`
+                        + `&max=${colorCorrection.max}`;
                 }
+
                 colorCorrectParams = `${colorCorrectParams}` +
-                    `&brightness=${this.colorCorrection.brightness}` +
-                    `&contrast=${this.colorCorrection.contrast}`;
+                    `&brightness=${colorCorrection.brightness}` +
+                    `&contrast=${colorCorrection.contrast}`;
+
+                return colorCorrectParams;
+            });
+        }
+
+        getColorCorrection() {
+            if (this._correction) { // eslint-disable-line no-underscore-dangle
+                return this.$q((resolve) => {
+                    resolve(this._correction); // eslint-disable-line no-underscore-dangle
+                });
             }
-            return colorCorrectParams;
+            return this.colorCorrectService.get(
+                this.scene.id, this.projectId
+            ).then((data) => {
+                this._correction = data; // eslint-disable-line no-underscore-dangle
+                return this._correction; // eslint-disable-line no-underscore-dangle
+            });
+        }
+
+        updateColorCorrection(corrections) {
+            this._correction = corrections; // eslint-disable-line no-underscore-dangle
+            this.colorCorrectService.updateOrCreate(
+                this.scene.id, this.projectId, corrections
+            ).then(() => this.colorCorrect());
         }
 
         /**
@@ -147,27 +182,31 @@ export default (app) => {
          * @param {object} corrections object with various parameters color correcting
          * @returns {null} null
          */
-        colorCorrect(corrections) {
-            this.colorCorrection = corrections;
-
-            let formattedParams = this.formatColorParams();
-            this.tiles.setUrl(`${this.getLayerURL()}&${formattedParams}`);
+        colorCorrect() {
+            this.getTileLayer().then((tiles) => {
+                this.getLayerURL().then((url) => {
+                    return tiles.setUrl(url);
+                });
+            });
         }
-
     }
 
     class LayerService {
-        constructor($http) {
+        constructor($http, $q, colorCorrectService) {
             'ngInject';
             this.$http = $http;
+            this.$q = $q;
+            this.colorCorrectService = colorCorrectService;
         }
+
         /**
          * Constructor for layer via a service
          * @param {object} scene resource returned via API
+         * @param {string} projectId id for project scene belongs to
          * @returns {Layer} layer created
          */
-        layerFromScene(scene) {
-            return new Layer(this.$http, scene);
+        layerFromScene(scene, projectId) {
+            return new Layer(this.$http, this.$q, this.colorCorrectService, scene, projectId);
         }
     }
 

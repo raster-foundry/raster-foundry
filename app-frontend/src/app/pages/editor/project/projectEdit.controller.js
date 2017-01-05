@@ -72,7 +72,9 @@ export default class ProjectEditController {
     applyCachedZOrder() {
         if (this.cachedZIndices) {
             for (const [id, l] of this.selectedLayers) {
-                l.tiles.setZIndex(this.cachedZIndices.get(id));
+                l.getTileLayer().then((tiles) => {
+                    tiles.setZIndex(this.cachedZIndices.get(id));
+                });
             }
         }
     }
@@ -84,8 +86,10 @@ export default class ProjectEditController {
     bringSelectedScenesToFront() {
         this.cachedZIndices = new Map();
         for (const [id, l] of this.selectedLayers) {
-            this.cachedZIndices.set(id, l.tiles.options.zIndex);
-            l.tiles.bringToFront();
+            l.getTileLayer().then((tiles) => {
+                this.cachedZIndices.set(id, tiles.options.zIndex);
+                tiles.bringToFront();
+            });
         }
     }
 
@@ -122,14 +126,17 @@ export default class ProjectEditController {
     layersFromScenes() {
         // Create scene layers to use for color correction
         for (const scene of this.sceneList) {
-            let sceneLayer = this.layerService.layerFromScene(scene);
+            let sceneLayer = this.layerService.layerFromScene(scene, this.projectId);
             this.sceneLayers.set(scene.id, sceneLayer);
         }
+
         this.layers = this.sceneLayers.values();
         this.getMap().then((map) => {
             map.deleteLayers('scenes');
             for (let layer of this.layers) {
-                map.addLayer('scenes', layer.tiles);
+                layer.getTileLayer().then((tiles) => {
+                    map.addLayer('scenes', tiles);
+                });
             }
         });
     }

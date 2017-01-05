@@ -5,6 +5,7 @@ export default class ColorCorrectAdjustController {
 
     $onInit() {
         let baseGammaOptions = {
+            value: 1,
             floor: 0,
             ceil: 2,
             step: 0.1,
@@ -22,8 +23,8 @@ export default class ColorCorrectAdjustController {
         };
 
         let alphaOptions = {
+            value: 0.6,
             floor: 0,
-            disabled: true,
             ceil: 1,
             step: 0.1,
             precision: 2,
@@ -32,8 +33,8 @@ export default class ColorCorrectAdjustController {
         };
 
         let betaOptions = {
+            value: 10,
             floor: 0,
-            disabled: true,
             ceil: 50,
             step: 1,
             showTicks: 10,
@@ -62,12 +63,6 @@ export default class ColorCorrectAdjustController {
         this.minMaxOptions = Object.assign({}, minMaxOptions, {id: 'minmax'});
     }
 
-    $onChanges(changesObj) {
-        if ('correction' in changesObj && 'currentValue' in changesObj.correction) {
-            this.myCorrection = Object.assign({}, changesObj.correction.currentValue);
-        }
-    }
-
     /**
      * Makes color correction changes available as a component output
      *
@@ -76,7 +71,7 @@ export default class ColorCorrectAdjustController {
      * @returns {null} null
      */
     onFilterChange(id, val) {
-        this.myCorrection[id] = val;
-        this.onCorrectionChange({newCorrection: Object.assign({}, this.myCorrection)});
+        this.correction[id] = val;
+        this.onCorrectionChange({newCorrection: Object.assign({}, this.correction)});
     }
 }

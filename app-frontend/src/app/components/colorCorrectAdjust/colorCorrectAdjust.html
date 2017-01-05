@@ -7,7 +7,7 @@
       <div class="filter-item slider-filter">
         <div id="red_slider"></div>
       </div>
-      <rzslider rz-slider-model="$ctrl.myCorrection.red"
+      <rzslider rz-slider-model="$ctrl.correction.redGamma"
                 rz-slider-options="$ctrl.redGammaOptions"
       ></rzslider>
     </div>
@@ -16,7 +16,7 @@
       <div class="filter-item slider-filter">
         <div id="green_slider"></div>
       </div>
-      <rzslider rz-slider-model="$ctrl.myCorrection.green"
+      <rzslider rz-slider-model="$ctrl.correction.greenGamma"
                 rz-slider-options="$ctrl.greenGammaOptions"
       ></rzslider>
     </div>
@@ -25,31 +25,31 @@
       <div class="filter-item slider-filter">
         <div id="blue_slider"></div>
       </div>
-      <rzslider rz-slider-model="$ctrl.myCorrection.blue"
+      <rzslider rz-slider-model="$ctrl.correction.blueGamma"
                 rz-slider-options="$ctrl.blueGammaOptions"
       ></rzslider>
     </div>
 
     <!--TODO: Add Sigmoidal Back When Fixed ISSUE: 761-->
-    <!--<p class="h5">Sigmoidal Correction</p>-->
-    <!--<div class="filter">-->
-      <!--<label>Alpha</label>-->
-      <!--<div class="filter-item slider-filter">-->
-        <!--<div id="alpha_slider"></div>-->
-      <!--</div>-->
-      <!--<rzslider rz-slider-model="$ctrl.correction.alpha"-->
-                <!--rz-slider-options="$ctrl.alphaOptions"-->
-      <!--&gt;</rzslider>-->
-    <!--</div>-->
-    <!--<div class="filter">-->
-      <!--<label>Beta</label>-->
-      <!--<div class="filter-item slider-filter">-->
-        <!--<div id="beta_slider"></div>-->
-      <!--</div>-->
-      <!--<rzslider rz-slider-model="$ctrl.correction.beta"-->
-                <!--rz-slider-options="$ctrl.betaOptions"-->
-      <!--&gt;</rzslider>-->
-    <!--</div>-->
+    <p class="h5">Sigmoidal Correction</p>
+    <div class="filter">
+      <label>Alpha</label>
+      <div class="filter-item slider-filter">
+        <div id="alpha_slider"></div>
+      </div>
+      <rzslider rz-slider-model="$ctrl.correction.alpha"
+                rz-slider-options="$ctrl.alphaOptions"
+      ></rzslider>
+    </div>
+    <div class="filter">
+      <label>Beta</label>
+      <div class="filter-item slider-filter">
+        <div id="beta_slider"></div>
+      </div>
+      <rzslider rz-slider-model="$ctrl.correction.beta"
+                rz-slider-options="$ctrl.betaOptions"
+      ></rzslider>
+    </div>
   </div>
   <div class="bc-filters-container">
     <p class="h5">Brightness/Contrast</p>
