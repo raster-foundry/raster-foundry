@@ -56,6 +56,7 @@ lazy val slickDependencies = List(
   Dependencies.slickPG,
   Dependencies.slickPGSpray,
   Dependencies.geotrellisSlick
+    .exclude("postgresql", "postgresql")
 )
 
 lazy val dbDependencies = List(
