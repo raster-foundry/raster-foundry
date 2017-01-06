@@ -33,16 +33,39 @@ class MapWrapper {
             return div;
         };
         this.changeOptions(options);
+
+        // Subscribe to baselayerchange event to change labels layer when baselayer changes
+        this.map.on('baselayerchange', this.changeLabels.bind(this));
     }
 
-    getBaseMapLayer(layerName) {
+    getBaseMapLayer(layerName, extras = {}) {
         let url = `https://cartodb-basemaps-{s}.global.ssl.fastly.net/${layerName}/{z}/{x}/{y}.png`;
         let properties = {
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">' +
                 'OpenStreetMap</a> &copy;<a href="http://cartodb.com/attributions">CartoDB</a>',
             maxZoom: 19
         };
+        if (extras) {
+            properties = Object.assign(properties, extras);
+        }
         return L.tileLayer(url, properties);
+    }
+
+    changeLabels(event) {
+        let extras = {pane: this.map.getPane('markerPane')};
+        let labelLayers = {
+            light: this.getBaseMapLayer('light_only_labels', extras),
+            dark: this.getBaseMapLayer('dark_only_labels', extras)
+        };
+        let labelGroup = L.layerGroup();
+        labelGroup.addLayer(labelLayers.dark);
+        labelGroup.addLayer(labelLayers.light);
+        let layerName = event.name;
+        if (layerName in labelLayers) {
+            labelGroup.clearLayers();
+            let labels = labelLayers[layerName];
+            labels.addTo(this.map);
+        }
     }
 
     changeOptions(options) {
@@ -67,13 +90,15 @@ class MapWrapper {
             // Add zoom control to map's controls
             let zoomControl = L.control.zoom({position: 'topright'});
             this._controls.addTo(this.map);
-            // Add basemap controls to map's controls
+            // Add basemap controls to map's controls and initial basemap
             let baseMaps = {
-                Light: this.getBaseMapLayer('light_all'),
-                Dark: this.getBaseMapLayer('dark_all')
+                light: this.getBaseMapLayer('light_nolabels'),
+                dark: this.getBaseMapLayer('dark_nolabels')
             };
-            baseMaps.Light.addTo(this.map);
+            baseMaps.light.addTo(this.map);
             let baseMapControl = L.control.layers(baseMaps, {});
+            // Add initial labels to map
+            this.changeLabels({name: 'light'}, null, {pane: this.map.getPane('markerPane')});
             baseMapControl.addTo(this.map);
             zoomControl.addTo(this.map);
 
