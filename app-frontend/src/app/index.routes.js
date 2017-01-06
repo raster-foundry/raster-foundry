@@ -60,7 +60,7 @@ function editorStates($stateProvider) {
             abstract: true
         })
         .state('editor.project', {
-            url: '/project/:projectid',
+            url: '/project/:projectid?',
             template: '<rf-project-editor class="app-content"></rf-project-editor>',
             abstract: true
         })

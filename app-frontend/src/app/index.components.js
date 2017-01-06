@@ -22,5 +22,6 @@ export default angular.module('index.components', [
     require('./components/projectAddModal/projectAddModal.module.js').name,
     require('./components/refreshTokenModal/refreshTokenModal.module.js').name,
     require('./components/downloadModal/downloadModal.module.js').name,
-    require('./components/featureFlagOverrides/featureFlagOverrides.module.js').name
+    require('./components/featureFlagOverrides/featureFlagOverrides.module.js').name,
+    require('./components/selectProjectModal/selectProjectModal.module.js').name
 ]);
