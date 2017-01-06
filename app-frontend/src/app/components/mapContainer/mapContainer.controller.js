@@ -43,15 +43,6 @@ export default class MapContainerController {
         );
 
 
-        let cartoPositron = L.tileLayer(
-            'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">' +
-                    'OpenStreetMap</a> &copy;<a href="http://cartodb.com/attributions">CartoDB</a>',
-                maxZoom: 19
-            }
-        );
-        cartoPositron.addTo(this.map);
-
         this.$timeout(() => {
             this.map.invalidateSize();
             this.mapService.registerMap(this.map, this.mapId, this.options);
