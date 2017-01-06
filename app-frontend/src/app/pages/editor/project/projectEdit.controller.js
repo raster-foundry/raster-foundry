@@ -41,12 +41,19 @@ export default class ProjectEditController {
                         // @TODO: handle displaying an error message
                     }
                 );
+                this.getSceneList();
+            } else {
+                this.selectProjectModal();
             }
         }
 
         this.$scope.$watch('$ctrl.sceneList', this.fitAllScenes.bind(this));
 
-        this.getSceneList();
+        this.$scope.$on('$destroy', () => {
+            if (this.activeModal) {
+                this.activeModal.dismiss();
+            }
+        });
     }
 
     setHoveredScene(scene) {
@@ -144,6 +151,20 @@ export default class ProjectEditController {
         });
     }
 
+    selectProjectModal() {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        this.activeModal = this.$uibModal.open({
+            component: 'rfSelectProjectModal',
+            backdrop: 'static',
+            keyboard: false,
+            resolve: {
+            }
+        });
+    }
+
     publishModal() {
         if (this.activeModal) {
             this.activeModal.dismiss();
@@ -151,6 +172,8 @@ export default class ProjectEditController {
 
         this.activeModal = this.$uibModal.open({
             component: 'rfPublishModal',
+            backdrop: 'static',
+            keyboard: false,
             resolve: {
                 project: () => this.project
             }
