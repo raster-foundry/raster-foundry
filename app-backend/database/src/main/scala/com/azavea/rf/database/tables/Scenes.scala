@@ -22,9 +22,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
                                      with SceneFields
                                      with OrganizationFkFields
-                                     with UserFkFields
+                                     with UserFkVisibileFields
                                      with TimestampFields
-                                     with VisibilityField
 {
   def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, organizationId, ingestSizeBytes, visibility,
     tags, datasource, sceneMetadata, cloudCover, acquisitionDate, thumbnailStatus, boundaryStatus,
@@ -90,17 +89,6 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
 
   val datePart = SimpleFunction.binary[String, Option[Timestamp], Int]("date_part")
 
-  /** Filter scenes down to those which a user is authorized to see (that is, those they own and those that are public)
-    *
-    * @param user User who is viewing the scene(s)
-    * @return A Query of Scenes which the user is authorized to view.
-    */
-  def viewableBy(user: User)
-                (implicit database: DB): TableQuery = {
-    val publicScenes = Scenes.filterToPublic()
-    val ownedScenes = Scenes.filterToOwner(user)
-    ownedScenes union publicScenes
-  }
 
   /** Insert a scene into the database
     *
@@ -169,7 +157,7 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
                 (implicit database: DB): Future[PaginatedResponse[Scene.WithRelated]] = {
 
     val scenesQueryResult = database.db.run {
-      val action = Scenes.viewableBy(user)
+      val action = Scenes.filterUserVisibility(user)
           .joinWithRelated
           .page(combinedParams, pageRequest)
           .result

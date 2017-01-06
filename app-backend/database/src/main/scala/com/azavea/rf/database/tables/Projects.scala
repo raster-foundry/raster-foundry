@@ -22,9 +22,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class Projects(_tableTag: Tag) extends Table[Project](_tableTag, "projects")
                                       with ProjectFields
                                       with OrganizationFkFields
-                                      with UserFkFields
+                                      with UserFkVisibileFields
                                       with TimestampFields
-                                      with VisibilityField
 {
   def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, name, slugLabel, description, visibility, tags, manualOrder) <> (Project.tupled, Project.unapply)
 
@@ -64,17 +63,6 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     }
   }
 
-  /** Limit projects to those viewable by the user (owned and public)
-    *
-    * @param user User making the query
-    * @return TableQuery containing the projects the user can view
-    */
-  def viewableBy(user: User)(implicit database: DB): TableQuery = {
-    val publicProjects = Projects.filterToPublic()
-    val ownedProjects = Projects.filterToOwner(user)
-    ownedProjects union publicProjects
-  }
-
   /** Add project to database
     *
     * @param project Project project to add to database
@@ -110,7 +98,7 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     (implicit database: DB): Future[PaginatedResponse[UUID]] =
       database.db.run {
         Projects
-          .viewableBy(user)
+          .filterUserVisibility(user)
           .filter(_.id === projectId)
           .map(_.manualOrder)
           .result
@@ -169,7 +157,7 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
   def listProjects(pageRequest: PageRequest, queryParams: ProjectQueryParameters, user: User)
                  (implicit database: DB): Future[PaginatedResponse[Project]] = {
 
-    val projects = Projects.viewableBy(user)
+    val projects = Projects.filterUserVisibility(user)
       .filterByOrganization(queryParams.orgParams)
       .filterByUser(queryParams.userParams)
       .filterByTimestamp(queryParams.timestampParams)

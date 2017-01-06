@@ -17,9 +17,8 @@ import com.typesafe.scalalogging.LazyLogging
 class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
     with ImageFields
     with OrganizationFkFields
-    with UserFkFields
+    with UserFkVisibileFields
     with TimestampFields
-    with VisibilityField
 {
   def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy,
     rawDataBytes, visibility, filename, sourceuri, scene, imageMetadata,
@@ -63,17 +62,6 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
 
   implicit class withImagesDefaultQuery[M, U, C[_]](images: Images.TableQuery) extends
       ImagesDefaultQuery[M, U, C](images)
-
-  /** Limit Images to those viewable by the user (owned and public)
-    *
-    * @param user User making the query
-    * @return TableQuery containing the images the user can view
-    */
-  def viewableBy(user: User)(implicit database: DB): TableQuery = {
-    val publicImages = Images.filterToPublic()
-    val ownedImages = Images.filterToOwner(user)
-    ownedImages union publicImages
-  }
 
   /** Insert one image into the database with its bands
     *
@@ -124,7 +112,7 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
   def listImages(pageRequest: PageRequest, combinedParams: CombinedImageQueryParams, user: User)
                 (implicit database: DB): Future[PaginatedResponse[Image.WithRelated]] = {
 
-    val images = Images.viewableBy(user)
+    val images = Images.filterUserVisibility(user)
       .filterByOrganization(combinedParams.orgParams)
       .filterByTimestamp(combinedParams.timestampParams)
       .filterByImageParams(combinedParams.imageParams)
