@@ -224,7 +224,7 @@ class SceneSpec extends WordSpec
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]
         res.count shouldEqual 1
       }
-      Get("/api/scenes/?bbox=0,0,0.001,0.001;1000.001,1000.001,1000,1000").withHeaders(
+      Get("/api/scenes/?bbox=0,0,0.001,0.001;1,1,1.001,1.001").withHeaders(
         List(authHeader)
       ) ~> baseRoutes ~> check {
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]
