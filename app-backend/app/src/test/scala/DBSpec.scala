@@ -1,7 +1,7 @@
 package com.azavea.rf
 
 import ammonite.ops._
-import com.azavea.rf.database.Database
+import com.azavea.rf.database.{ Database, Config => DatabaseConfig }
 import org.scalatest._
 
 import com.azavea.rf.utils._
@@ -13,7 +13,7 @@ import com.azavea.rf.utils._
   * Extend each Spec class that accesses the database with this trait in
   * order to make use of this behavior.
   */
-trait DBSpec extends Suite with BeforeAndAfterAll with Config {
+trait DBSpec extends Suite with BeforeAndAfterAll with DatabaseConfig {
   // This triggers the one-time-only DB setup task for initializing the the test template DB
   InitializeDB
   private val driver = "org.postgresql.Driver"
@@ -50,7 +50,7 @@ trait DBSpec extends Suite with BeforeAndAfterAll with Config {
   * This object is referenced at the head of `DBSpec` - its purpose is to carry out
   *  any one-time-only setup required for DBSpec tests.
   */
-object InitializeDB extends Config {
+object InitializeDB extends DatabaseConfig {
   // Working directory, needed for running %sbt commands
   implicit val wd = cwd
 

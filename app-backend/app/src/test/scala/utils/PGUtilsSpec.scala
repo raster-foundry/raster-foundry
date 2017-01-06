@@ -14,7 +14,6 @@ import com.azavea.rf._
 final class PGUtilsSpec extends WordSpec
     with Matchers
     with ScalatestRouteTest
-    with Config
     with Router
     with DBSpec {
 
