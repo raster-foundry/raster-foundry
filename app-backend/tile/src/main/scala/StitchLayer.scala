@@ -7,24 +7,14 @@ import geotrellis.vector.io._
 import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.s3._
-import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.typesafe.scalalogging.LazyLogging
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.util.{Try, Success, Failure}
+import scalacache._
 
 object StitchLayer extends LazyLogging with Config {
-  /** Determining which zoom level is appropriate, fetching tiles and stitching
-    * should be cached before rendering the thumbnail.
-    */
-  val maybeTileCache: AsyncLoadingCache[(RfLayerId, Int), Option[MultibandTile]] =
-    Scaffeine()
-    .recordStats()
-    .expireAfterWrite(cacheExpiration)
-    .maximumSize(cacheSize)
-    .buildAsyncFuture { case (id, size: Int) =>
-      Future { stitch(LayerCache.attributeStore(id.prefix), id.scene.toString, size) }
-    }
+  implicit val cache = LayerCache.memcached
 
   /** This function will iterate through zoom levels a layer, starting with 1, until it finds the level
     * at which the data pixels stored in the layer cover at least size pixels in columns or rows.
@@ -39,7 +29,10 @@ object StitchLayer extends LazyLogging with Config {
     * For non-cached version use [[stitch]] function.
     */
   def apply(id: RfLayerId, size: Int): Future[Option[MultibandTile]] =
-    maybeTileCache.get((id, size))
+    caching(s"stitch-{$size}") {
+      for (store <- LayerCache.attributeStore(id.prefix))
+      yield stitch(store, id.scene.toString, size)
+    }
 
   def stitch(store: AttributeStore, layerName: String, size: Int): Option[MultibandTile] = {
     require(size < 4096, s"$size is too large to stitch")

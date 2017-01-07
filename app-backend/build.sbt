@@ -149,7 +149,10 @@ lazy val tile = Project("tile", file("tile"))
       Dependencies.spark,
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisS3,
-      Dependencies.scaffeine,
+      Dependencies.caffeine,
+      Dependencies.elasticacheClient,
+      Dependencies.scalacacheCaffeine,
+      Dependencies.scalacacheMemcache,
       Dependencies.akkajson
     )
   })

@@ -2,57 +2,45 @@ package com.azavea.rf.tile.image
 
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.ScenesToProjects
-import com.azavea.rf.datamodel.{ ColorCorrect, MosaicDefinition }
+import com.azavea.rf.datamodel.MosaicDefinition
 
 import geotrellis.raster._
 import geotrellis.spark._
 import geotrellis.spark.io._
 import com.azavea.rf.tile._
 import scala.concurrent.ExecutionContext.Implicits.global
-import com.github.blemale.scaffeine.{Cache, AsyncLoadingCache, Scaffeine}
 import scala.concurrent._
 import scala.concurrent.duration._
 import java.util.UUID
 
+import scalacache._
+
 object Mosaic {
+  implicit val cache = LayerCache.memoryCache
+
   /** Cache the result of metadata queries that may have required walking up the pyramid to find suitable layers */
-  val cacheTileLayerMetadata: AsyncLoadingCache[(RfLayerId, Int), Option[(Int, TileLayerMetadata[SpatialKey])]] =
-    Scaffeine()
-      .expireAfterWrite(10.minutes)
-      .maximumSize(1024)
-      .buildAsyncFuture { case (id, zoom) =>
-        val store = LayerCache.attributeStore(id.prefix)
-        def readMetadata(tryZoom: Int): Option[(Int, TileLayerMetadata[SpatialKey])] =
-          try {
-            Some(tryZoom -> store.readMetadata[TileLayerMetadata[SpatialKey]](id.catalogId(tryZoom)))
-          } catch {
-            case e: AttributeNotFoundError if (tryZoom > 0) => readMetadata(tryZoom - 1)
-          }
-        Future { readMetadata(zoom) }
+  def tileLayerMetadata(id: RfLayerId, zoom: Int) = caching(s"mosaic-tlm-$id-$zoom") {
+    def readMetadata(store: AttributeStore, tryZoom: Int): Option[(Int, TileLayerMetadata[SpatialKey])] =
+      try {
+        Some(tryZoom -> store.readMetadata[TileLayerMetadata[SpatialKey]](id.catalogId(tryZoom)))
+      } catch {
+        case e: AttributeNotFoundError if tryZoom > 0 => readMetadata(store, tryZoom - 1)
       }
+
+    for (store <- LayerCache.attributeStore(id.prefix)) yield {
+      readMetadata(store, zoom)
+    }
+  }
 
   /** Cache the result of mosaic definition, use tag to control cache rollover */
-  val cacheTaggedMosaicDefinition: AsyncLoadingCache[(Database, UUID, String), Option[MosaicDefinition]] =
-    Scaffeine()
-      .expireAfterWrite(5.minutes)
-      .maximumSize(1024)
-      .buildAsyncFuture { case (db, projectId, _) =>
-        ScenesToProjects.getMosaicDefinition(projectId)(db)
-      }
-
-  /** Cache the result of mosaic definition, quick expiry just enough for a single map render */
-  val cacheMosaicDefinition: AsyncLoadingCache[(Database, UUID), Option[MosaicDefinition]] =
-    Scaffeine()
-      .expireAfterWrite(5.seconds)
-      .maximumSize(1024)
-      .buildAsyncFuture { case (db, projectId) =>
-        ScenesToProjects.getMosaicDefinition(projectId)(db)
-      }
-
+  def mosaicDefinition(projectId: UUID, ttl: Duration)(implicit db: Database) =
+    cachingWithTTL(s"mosaic-definition-$projectId")(ttl) {
+      ScenesToProjects.getMosaicDefinition(projectId)
+    }
 
   /** Fetch the tile for given resolution. If it is not present, use a tile from a lower zoom level */
   def fetch(id: RfLayerId, zoom: Int, col: Int, row: Int): Future[Option[MultibandTile]] = {
-    cacheTileLayerMetadata.get(id -> zoom).flatMap {
+    tileLayerMetadata(id, zoom).flatMap {
       case Some((sourceZoom, tlm)) =>
         val zdiff = zoom - sourceZoom
         val pdiff = 1<<zdiff
@@ -96,10 +84,10 @@ object Mosaic {
     val mayhapMosaic: Future[Option[MosaicDefinition]] = tag match {
       case Some(t) =>
         // tag present, include in lookup to re-use cache
-        cacheTaggedMosaicDefinition.get((db, projectId, t))
+        mosaicDefinition(projectId, ttl = 60.seconds)
       case None =>
         // no tag to control cache rollover, quick expiry
-        cacheMosaicDefinition.get((db, projectId))
+        mosaicDefinition(projectId, ttl = 5.seconds)
     }
 
     mayhapMosaic.flatMap {

@@ -22,4 +22,7 @@ object Version {
   val scaffeine          = "1.3.0"
   val commonsIO          = "2.5"
   val scopt              = "3.5.0"
+  val scalacache         = "0.9.3"
+  val elasticacheClient  = "1.1.1"
+  val caffeine           = "2.3.5"
 }

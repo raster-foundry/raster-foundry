@@ -30,7 +30,10 @@ object Dependencies {
   val akkaHttpExtensions = "com.lonelyplanet"            %% "akka-http-extensions"              % Version.akkaHttpExtensions
   val akkaHttpCors       = "ch.megard"                   %% "akka-http-cors"                    % Version.akkaHttpCors
   val ammoniteOps        = "com.lihaoyi"                 %% "ammonite-ops"                      % Version.ammoniteOps
-  val scaffeine          = "com.github.blemale"          %% "scaffeine"                         % Version.scaffeine
   val commonsIO          = "commons-io"                   % "commons-io"                        % Version.commonsIO
   val scopt              = "com.github.scopt"            %% "scopt"                             % Version.scopt
+  val caffeine           = "com.github.ben-manes.caffeine" % "caffeine"                         % Version.caffeine
+  val scalacacheMemcache = "com.github.cb372"            %% "scalacache-memcached"              % Version.scalacache
+  val scalacacheCaffeine = "com.github.cb372"            %% "scalacache-caffeine"               % Version.scalacache
+  val elasticacheClient  = "com.amazonaws"                % "elasticache-java-cluster-client"   % Version.elasticacheClient
 }
