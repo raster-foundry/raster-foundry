@@ -3,7 +3,16 @@ export default class LabEditController {
         'ngInject';
         this.$scope = $scope;
         this.$element = $element;
+        this.$parent = $scope.$parent.$ctrl;
         this.isShowingParams = false;
+    }
+
+    $onInit() {
+        if (this.$parent.toolRequest) {
+            this.$parent.toolRequest.then(t => {
+                this.cellLabel = t.title;
+            });
+        }
     }
 
     showParams() {

@@ -3,6 +3,7 @@ export default {
     controller: 'DiagramContainerController',
     bindings: {
         shapes: '<?',
+        cellLabel: '<?',
         onCellClick: '&',
         onPaperClick: '&'
     }

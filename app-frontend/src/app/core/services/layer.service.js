@@ -62,6 +62,19 @@ export default (app) => {
             });
         }
 
+        getNDVILayer(bands = [5, 4]) {
+            if (this._tiles) { // eslint-disable-line no-underscore-dangle
+                return this.$q((resolve) => {
+                    resolve(this._tiles); // eslint-disable-line no-underscore-dangle
+                });
+            }
+            // eslint-disable-next-line no-underscore-dangle
+            this._tiles = L.tileLayer(this.getNDVIURL(bands),
+                {bounds: this.bounds, attribution: 'Raster Foundry'}
+            );
+            return this._tiles; // eslint-disable-line no-underscore-dangle
+        }
+
         /**
          * Helper function to return string for a tile layer
          * @returns {string} URL for this tile layer
@@ -74,6 +87,14 @@ export default (app) => {
                 return `/tiles/${organizationId}/` +
                     `${userId}/${this.scene.id}/rgb/{z}/{x}/{y}/?${formattedParams}`;
             });
+        }
+
+        getNDVIURL(bands) {
+            let organizationId = this.scene.organizationId;
+            // TODO: replace this once user IDs are URL safe ISSUE: 766
+            let userId = this.scene.createdBy.replace('|', '_');
+            return `/tiles/${organizationId}/` +
+                `${userId}/${this.scene.id}/ndvi/{z}/{x}/{y}/?bands=${bands[0]},${bands[1]}`;
         }
 
         /**
