@@ -152,7 +152,7 @@ lazy val tile = Project("tile", file("tile"))
       Dependencies.caffeine,
       Dependencies.elasticacheClient,
       Dependencies.scalacacheCaffeine,
-      Dependencies.scalacacheMemcache,
+      Dependencies.scalacacheMemcache.exclude("net.spy", "spymemcached"),
       Dependencies.akkajson
     )
   })
