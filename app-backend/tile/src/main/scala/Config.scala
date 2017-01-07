@@ -25,4 +25,8 @@ trait Config {
 
   lazy val defaultBucket:String =
     tileserverConfig.getString("bucket")
+
+  private lazy val memcached = config.getConfig("memcached")
+  lazy val memcachedHost: String = memcached.getString("host")
+  lazy val memcachedPort: Int = memcached.getInt("port")
 }
