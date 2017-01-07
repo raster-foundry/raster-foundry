@@ -13,9 +13,10 @@ export default class DiagramContainerController {
     }
 
     $onChanges(changes) {
-        if (this.graph && changes.shapes) {
+        if (this.graph && (changes.shapes || changes.cellLabel)) {
             this.graph.clear();
-            changes.shapes.forEach(s => this.graph.addCell(s));
+            this.initShapes();
+            this.shapes.forEach(s => this.graph.addCell(s));
         }
     }
 
@@ -27,14 +28,18 @@ export default class DiagramContainerController {
                 y: ($(this.workspaceElement).height() - 75) / 2
             },
             size: {
-                width: 225,
+                width: 350,
                 height: 75
             },
             attrs: {
                 rect: {
                     rx: 4,
                     ry: 7,
-                    fill: '#cfcfcf'
+                    fill: '#dfdfdf'
+                },
+                text: {
+                    fill: '#333333',
+                    text: this.cellLabel
                 }
             },
             ports: {

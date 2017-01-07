@@ -232,7 +232,7 @@ function marketStates($stateProvider) {
 function labStates($stateProvider) {
     $stateProvider
         .state('lab', {
-            url: '/lab',
+            url: '/lab/:toolid',
             templateUrl: labTpl,
             controller: 'LabController',
             controllerAs: '$ctrl',
@@ -245,7 +245,7 @@ function labStates($stateProvider) {
             controllerAs: '$ctrl'
         })
         .state('lab.run', {
-            url: '/run',
+            url: '/run/:projectid?',
             templateUrl: labRunTpl,
             controller: 'LabRunController',
             controllerAs: '$ctrl'

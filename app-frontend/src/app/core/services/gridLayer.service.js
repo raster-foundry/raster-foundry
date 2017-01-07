@@ -255,7 +255,6 @@ export default (app) => {
 
             return new GridLayer();
         }
-
     }
 
     app.service('gridLayerService', GridLayerService);

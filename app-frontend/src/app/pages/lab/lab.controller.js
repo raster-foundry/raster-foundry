@@ -1,8 +1,51 @@
 class labController {
-    constructor() {
+    constructor($log, $state, $uibModal, toolService) {
         'ngInject';
+        this.$log = $log;
+        this.$state = $state;
+        this.$uibModal = $uibModal;
+        this.toolService = toolService;
+    }
 
-        // This is an abstract view so it's just a container for its children
+    $onInit() {
+        this.toolData = this.$state.params.toolData;
+        this.toolId = this.$state.params.toolid;
+        if (!this.tool) {
+            if (this.toolId) {
+                this.fetchTool();
+            } else {
+                this.selectToolModal();
+            }
+        }
+    }
+
+    fetchTool() {
+        this.loadingTool = true;
+        this.toolRequest = this.toolService.get(this.toolId);
+        this.toolRequest.then(d => {
+            this.tool = d;
+            this.tool.createdAtFormatted = new Date(d.createdAt).toLocaleDateString();
+            this.tool.modifiedAtFormatted = new Date(d.modifiedAt).toLocaleDateString();
+            this.loadingTools = false;
+        });
+    }
+
+    selectToolModal() {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        this.activeModal = this.$uibModal.open({
+            component: 'rfSelectToolModal',
+            backdrop: 'static',
+            keyboard: false,
+            resolve: {
+            }
+        }).result.then((t) => {
+            this.$state.go(this.$state.current, {toolid: t.id});
+        });
+
+        return this.activeModal;
     }
 }
 
