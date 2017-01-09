@@ -1,10 +1,9 @@
-<div class="modal-scrollable-body">
+<div class="modal-scrollable-body  modal-sidebar-header">
   <div class="modal-header">
     <button type="button" class="close" aria-label="Close"
             ng-click="$ctrl.dismiss()">
       <span aria-hidden="true">&times;</span>
     </button>
-    <span class="badge"><i class="icon-bucket"></i></span>
     <h4 class="modal-title">
       Add
       <ng-pluralize count="$ctrl.resolve.scenes.size"
@@ -14,29 +13,31 @@
                           }">
       </ng-pluralize>
       to
+      <div>
       <ng-pluralize count="$ctrl.selectedProjects.size"
                     when="{'0': 'no Projects',
                           'one': '1 Project',
                           'other': '{} Projects'
                           }">
       </ng-pluralize>
+      </div>
     </h4>
     <p>
       Add your selections to a project or create a new project
       based on your selections.
     </p>
-    <form>
-      <div class="form-group all-in-one">
-        <label for="name"><i class="icon-bucket"></i></label>
-        <input id="name" type="text" class="form-control"
-               placeholder="New project name" ng-model="$ctrl.newProjectName">
-        <button class="btn btn-link" type="submit"
-                ng-click="$ctrl.createNewProject($ctrl.newProjectName)">
-          Create
-        </button>
-      </div>
-    </form>
 	</div>
+  <form class="modal-form">
+    <div class="form-group all-in-one">
+      <label for="name"><i class="icon-bucket"></i></label>
+      <input id="name" type="text" class="form-control"
+             placeholder="New project name" ng-model="$ctrl.newProjectName">
+      <button class="btn btn-link" type="submit"
+              ng-click="$ctrl.createNewProject($ctrl.newProjectName)">
+        Create
+      </button>
+    </div>
+  </form>
 	<div class="modal-body">
 	  <div class="list-group">
       <rf-project-item

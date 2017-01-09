@@ -136,7 +136,7 @@ input[type=radio] {
   border: 1px solid #ddd;
   background-color: #fff;
 
-  label {
+  label:not(.sr-only) {
     position: relative;
     margin: 0;
     line-height: 4.8rem;;
