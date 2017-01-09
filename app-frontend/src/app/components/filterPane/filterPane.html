@@ -1,11 +1,16 @@
 <div class="sidebar-static" >
   <h5>Filters</h5>
   <div class="sidebar-actions">
-    <a href ng-click="$ctrl.resetAllFilters()">Clear all filters</a>
+    <button class="btn btn-default btn-small" ng-click="$ctrl.closeFilterPane()">
+      Close
+    </button>
   </div>
 </div>
 <div class="sidebar-scrollable" >
   <div class="content">
+    <div class="filter">
+      <a href ng-click="$ctrl.resetAllFilters()" class="btn btn-toggle btn-small btn-block">Clear all filters</a>
+    </div>
     <div class="filter">
       <label>Year</label>
       <div class="filter-item">

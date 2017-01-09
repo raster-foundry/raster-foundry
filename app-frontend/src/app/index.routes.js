@@ -91,7 +91,7 @@ function editorStates($stateProvider) {
         })
         .state('editor.project.mosaic.params', {
             url: '/params',
-            template: '<rf-mosaic-params></rf-mosaic-params>'
+            template: '<rf-mosaic-params class="flex-column sidebar-dark"></rf-mosaic-params>'
         })
         .state('editor.project.mosaic.mask', {
             url: '/mask/:sceneid',

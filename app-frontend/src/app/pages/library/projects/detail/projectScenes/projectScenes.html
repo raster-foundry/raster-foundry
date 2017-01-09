@@ -101,9 +101,9 @@
   <div class="column-4">
     <div class="content">
       <nav>
-        <a href ng-click="$ctrl.$state.go('editor.project.color.scenes', {projectid: $ctrl.projectId})"><i class="icon-mosaic"></i> Editor</a>
-        <a href ng-click="$ctrl.publishModal()"><i class="icon-dropbox"></i> Publish</a>
+        <a href ng-click="$ctrl.$state.go('editor.project.color.scenes', {projectid: $ctrl.projectId})" class="btn btn-secondary btn-small btn-block"><i class="icon-mosaic"></i> Editor</a>
         <hr>
+        <a href ng-click="$ctrl.publishModal()"><i class="icon-dropbox"></i> Publish</a>
         <a href class="color-danger"
            ng-click="$ctrl.deleteProject()">
           <i class="icon-trash"></i>

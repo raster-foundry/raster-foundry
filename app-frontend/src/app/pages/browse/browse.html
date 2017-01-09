@@ -6,9 +6,11 @@
 
       <h5 class="sidebar-title">{{$ctrl.lastSceneResult.count | number}} Results Found</h5>
       <div class="sidebar-actions">
-        <button class="btn btn-default btn-square" ng-click="$ctrl.toggleFilterPane()">
-          <i ng-class="{'icon-filter': !$ctrl.showFilterPane,
-                        'icon-cross': $ctrl.showFilterPane}"></i>
+        <button class="btn btn-default btn-square"
+                ng-class="{'': !$ctrl.showFilterPane,
+                          'active': $ctrl.showFilterPane}"
+                ng-click="$ctrl.toggleFilterPane()">
+          <i class="icon-filter"></i>
         </button>
       </div>
     </div>
@@ -60,14 +62,14 @@
       <div class="sidebar-actions">
         <div class="btn-group">
           <button class="btn"
-             ng-class="$ctrl.selectedScenes.size === 0 ? 'disabled' : 'btn-primary'"
+             ng-class="$ctrl.selectedScenes.size === 0 ? 'disabled' : 'btn-secondary'"
              ng-disabled="!$ctrl.selectedScenes || $ctrl.selectedScenes.size === 0"
              ng-click="$ctrl.sceneModal()">
             {{$ctrl.selectedScenes.size || 'No'}} scenes selected
           </button>
 
           <button class="btn btn-small"
-                  ng-class="{'btn-primary': $ctrl.allSelected}"
+                  ng-class="{'btn-secondary': $ctrl.allSelected}"
                   ng-click="$ctrl.selectAllScenes()">
             <i ng-class="{'icon-plus': !$ctrl.allSelected,
                           'icon-cross': $ctrl.allSelected}"></i>
@@ -98,14 +100,13 @@
         ></rf-scene-detail>
         <div class="sidebar-static">
           <div class="sidebar-actions">
-            <button class="btn btn-square btn-default"
+            <button class="btn btn-square"
+                    ng-class="$ctrl.isSelected($ctrl.activeScene) ? 'btn-secondary' : ''"
                     ng-click="$ctrl.toggleSelectAndClosePane()">
               <span ng-if="!$ctrl.isSelected($ctrl.activeScene)">
-                <i class="icon-plus"></i>
                 Select Scene
               </span>
               <span ng-if="$ctrl.isSelected($ctrl.activeScene)">
-                <i class="icon-cross"></i>
                 Deselect
               </span>
             </button>

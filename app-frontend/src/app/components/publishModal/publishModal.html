@@ -1,40 +1,42 @@
-<div class="modal-header">
-  <button type="button" class="close" aria-label="Close" ng-click="$ctrl.dismiss()">
-    <span aria-hidden="true">&times;</span>
-  </button>
-  <span class="badge"><i class="icon-download"></i></span>
-  <h4 class="modal-title">
-    Publish Project - {{$ctrl.resolve.project.name}}
-  </h4>
-</div>
-<div class="modal-body">
-  <div class="centered-text">
-    Get the XYZ resource link for use in other products
+<div class="modal-scrollable-body modal-sidebar-header">
+  <div class="modal-header">
+    <button type="button" class="close" aria-label="Close" ng-click="$ctrl.dismiss()">
+      <span aria-hidden="true">&times;</span>
+    </button>
+    <h4 class="modal-title">
+      Publish Project - {{$ctrl.resolve.project.name}}
+    </h4>
+    <p>Get the XYZ resource link for use in other products</p>
   </div>
-  <div class="form-group all-in-one">
-    <label for="tile-link"><i class="icon-bucket"></i></label>
-    <input id="tile-link" type="text" class="form-control"
-            value="/tiles/projects/{{$ctrl.resolve.project.id}}" readonly>
-     <!--
-       @TODO: the copy button is intended to copy the url for the user which
-       is not currently implemented
-     -->
-    <button class="btn btn-link">
-      Copy
+  <div class="modal-body">
+    <div class="content">
+      <label>XYZ resource link</label>
+      <div class="form-group all-in-one">
+        <label for="tile-link" class="sr-only">URI Link</label>
+        <input id="tile-link" type="text" class="form-control"
+                value="/tiles/projects/{{$ctrl.resolve.project.id}}" readonly>
+         <!--
+           @TODO: the copy button is intended to copy the url for the user which
+           is not currently implemented
+         -->
+        <button class="btn btn-link">
+          Copy
+        </button>
+      </div>
+      <div class="form-group">
+        <label>Or download an image of your project</label>
+        <div>
+          <a class="btn btn-primary" href="">
+            Download .png
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn"
+            ng-click="$ctrl.dismiss()">
+      Done
     </button>
   </div>
-  <div class="centered-text">
-    Or download an image of your project
-  </div>
-  <div class="form-group centered">
-    <a class="btn btn-primary" href="">
-      Download .png
-    </a>
-  </div>
-</div>
-<div class="modal-footer">
-<button type="button" class="btn"
-        ng-click="$ctrl.dismiss()">
-  Done
-</button>
 </div>

@@ -1,17 +1,26 @@
-<div class="mosaic-parameters-pane">
+<div class="mosaic-parameters-pane flex-column">
   <div class="sidebar-static">
     <h5>Parameters</h5>
-    <button class="btn"
-            ng-click="$ctrl.$state.go('^.scenes')">
-      Close
-    </button>
+    <div class="sidebar-actions">
+      <button class="btn btn-default btn-small"
+              ng-click="$ctrl.$state.go('^.scenes')">
+        Close
+      </button>
+    </div>
   </div>
   <div class="sidebar-scrollable">
-    <div class="mosaic-scene-order">
-      <h3>Scene Order</h3>
-      <h4>Ordering Method</h4>
-      <div class="btn-group" uib-dropdown dropdown-append-to-body>
-        <button id="btn-append-to-body" type="button" class="btn btn-primary" uib-dropdown-toggle>
+    <div class="mosaic-scene-order content">
+      <p class="h5">Scene Order</p>
+      <div class="filter">
+        <div class="form-group">
+          <label for="mosaicType">Ordering Method</label>
+          <select name="" id="mosaicType" class="form-control input-dark">
+            <option value="Manual">Manual</option>
+            <option value="Automatic">Automatic</option>
+          </select>
+        </div>
+        <!-- <div class="btn-group btn-block" uib-dropdown dropdown-append-to-body>
+        <button id="btn-append-to-body" type="button" class="btn btn-default " uib-dropdown-toggle>
           {{ $ctrl.mosaicType }} &#9661;<span class="caret"></span>
         </button>
         <ul class="dropdown-menu" uib-dropdown-menu role="menu">
@@ -24,31 +33,37 @@
             Automatic
           </li>
         </ul>
+      </div> -->
       </div>
       <div class="mosaic-scene-prioritization">
         <!--TODO: design - disable mouse pointer events when disable class (or other) is applied-->
-        <h4>Scene Prioritization</h4>
-        <div ui-tree class="list-group"
-             ng-class="{'disabled': $ctrl.mosaicType === 'Manual'}">
-          <div ui-tree-nodes="" ng-model="$ctrl.mosaicOptions">
-            <div class="mosaic-priority-option" ui-tree-node ng-repeat="option in $ctrl.mosaicOptions"
-                 draggable>{{ option.name }}</div>
+        <div class="filter">
+          <label>Scene Prioritization</label>
+          <div ui-tree
+               ng-class="{'disabled': $ctrl.mosaicType === 'Manual'}">
+            <div ui-tree-nodes="" ng-model="$ctrl.mosaicOptions">
+              <div class="mosaic-priority-option" ui-tree-node ng-repeat="option in $ctrl.mosaicOptions"
+                   draggable>{{ option.name }}</div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <div class="mosaic-extent-selection">
-      <h3>Mosaic Extent</h3>
-      <h4>Extent Option</h4>
-      <div class="btn-group">
-        <label class="btn btn-primary"
-               ng-click="$ctrl.removeDrawControl()"
-               ng-model="$ctrl.extentType"
-               uib-btn-radio="'sceneExtent'">Extent of Scenes</label>
-        <label class="btn btn-primary"
-               ng-model="$ctrl.extentType"
-               ng-click="$ctrl.addDrawControl()"
-               uib-btn-radio="'customExtent'">Draw Extent</label>
+
+      <div class="mosaic-extent-selection">
+        <p class="h5">Mosaic Extent</p>
+        <div class="filter">
+          <label>Extent Option</label>
+          <div class="btn-group">
+            <label class="btn btn-toggle"
+                   ng-click="$ctrl.removeDrawControl()"
+                   ng-model="$ctrl.extentType"
+                   uib-btn-radio="'sceneExtent'">Extent of Scenes</label>
+            <label class="btn btn-toggle"
+                   ng-model="$ctrl.extentType"
+                   ng-click="$ctrl.addDrawControl()"
+                   uib-btn-radio="'customExtent'">Draw Extent</label>
+          </div>
+        </div>
       </div>
     </div>
   </div>

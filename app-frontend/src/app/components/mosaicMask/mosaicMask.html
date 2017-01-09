@@ -1,4 +1,4 @@
-<div class="scene-list-pane">
+<div class="scene-list-pane flex-column">
   <div class="sidebar-static">
     <h5 class="sidebar-title">
       Mask
@@ -31,7 +31,7 @@
   </div>
 </div>
 <div class="opacity-slider">
-  <h3 class="h5">Opacity : {{$ctrl.opacity.model | number}} %</h3>
+  <h3 class="h5">Scene opacity : {{$ctrl.opacity.model | number}} %</h3>
   <rzslider rz-slider-model="$ctrl.opacity.model"
             rz-slider-options="$ctrl.opacity.options"
   ></rzslider>

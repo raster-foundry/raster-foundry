@@ -2,10 +2,12 @@
   <!-- scene listing -->
   <div class="sidebar-static">
     <h5>Scene z-index order</h5>
-    <button class="btn"
-            ng-click="$ctrl.$state.go('^.params')">
-      <i class="icon-model"></i> Parameters
-    </button>
+    <div class="sidebar-actions">
+      <button class="btn btn-small"
+              ng-click="$ctrl.$state.go('^.params')">
+        <i class="icon-model"></i> Parameters
+      </button>
+    </div>
   </div>
   <div class="sidebar-scrollable">
     <div ui-tree class="list-group"

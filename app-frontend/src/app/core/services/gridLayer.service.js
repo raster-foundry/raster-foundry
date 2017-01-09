@@ -57,15 +57,15 @@ export default (app) => {
                  */
                 getColor: (number) => {
                     if (number === 0) {
-                        return 'rgba(53,60,88,0)';
+                        return 'rgba(53,60,88,.05)';
                     } else if (number > 0 && number < 5) {
-                        return 'rgba(53,60,88,.15)';
+                        return 'rgba(53,60,88,.1)';
                     } else if (number >= 5 && number < 30) {
-                        return 'rgba(53,60,88,.35)';
+                        return 'rgba(53,60,88,.2)';
                     } else if (number >= 30 && number < 60) {
-                        return 'rgba(53,60,88,.60)';
+                        return 'rgba(53,60,88,.3)';
                     }
-                    return 'rgba(53,60,88,.70)';
+                    return 'rgba(53,60,88,.4)';
                 },
 
                 /** Function to retrieve bounds of a specific sub-tile of a tile
@@ -131,15 +131,34 @@ export default (app) => {
                         strokeHitEnabled: false,
                         fontSize: 12,
                         text: '',
-                        fill: 'black'
+                        fill: '#fff',
+                        padding: 2,
+                        visible: false,
+                        listening: false
+                    });
+
+                    let textRect = new Konva.Rect({
+                        x: 0,
+                        y: 0,
+                        fill: '#738FFC',
+                        width: text.getWidth(),
+                        height: text.getHeight(),
+                        cornerRadius: 2,
+                        visible: false,
+                        listening: false
                     });
 
                     let layer = new Konva.Layer();
 
-                    function writeMessage(number, x, y) {
+                    function writeMessage(number, x, y, show) {
                         text.setText(number);
                         text.setAttrs({x: x - text.getWidth() / 2,
-                                       y: y - text.getHeight() / 2});
+                                       y: y - text.getHeight() / 2,
+                                       visible: show});
+                        textRect.setAttrs({x: x - text.getWidth() / 2,
+                                           y: y - text.getHeight() / 2,
+                                           width: text.getWidth(),
+                                           visible: show});
                         layer.draw();
                     }
 
@@ -174,6 +193,7 @@ export default (app) => {
                     layer.add(bottomLeft);
                     layer.add(topRight);
                     layer.add(bottomRight);
+                    layer.add(textRect);
                     layer.add(text);
 
                     this.requestGrid(coords, this.params).then((result) => {
@@ -183,10 +203,10 @@ export default (app) => {
                             this.onClick(e, bounds);
                         });
                         topLeft.on('mouseover', function () {
-                            writeMessage(data[0], 64, 64);
+                            writeMessage(data[0].toString(), 64, 64, true);
                         });
                         topLeft.on('mouseout', function () {
-                            writeMessage('', 64, 64);
+                            writeMessage('', 64, 64, false);
                         });
                         topLeft.fill(this.getColor(data[0]));
 
@@ -195,10 +215,10 @@ export default (app) => {
                             this.onClick(e, bounds);
                         });
                         topRight.on('mouseover', function () {
-                            writeMessage(data[1], 192, 64);
+                            writeMessage(data[1].toString(), 192, 64, true);
                         });
                         topRight.on('mouseout', function () {
-                            writeMessage('', 192, 64);
+                            writeMessage('', 192, 64, false);
                         });
                         topRight.fill(this.getColor(data[1]));
 
@@ -207,10 +227,10 @@ export default (app) => {
                             this.onClick(e, bounds);
                         });
                         bottomLeft.on('mouseover', function () {
-                            writeMessage(data[3], 64, 192);
+                            writeMessage(data[3].toString(), 64, 192, true);
                         });
                         bottomLeft.on('mouseout', function () {
-                            writeMessage('', 64, 192);
+                            writeMessage('', 64, 192, false);
                         });
                         bottomLeft.fill(this.getColor(data[3]));
 
@@ -219,10 +239,10 @@ export default (app) => {
                             this.onClick(e, bounds);
                         });
                         bottomRight.on('mouseover', function () {
-                            writeMessage(data[2], 192, 192);
+                            writeMessage(data[2].toString(), 192, 192, true);
                         });
                         bottomRight.on('mouseout', function () {
-                            writeMessage('', 192, 192);
+                            writeMessage('', 192, 192, false);
                         });
                         bottomRight.fill(this.getColor(data[2]));
 
