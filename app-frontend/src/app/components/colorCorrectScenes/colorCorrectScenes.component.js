@@ -4,6 +4,7 @@ const colorCorrectScenes = {
     templateUrl: colorCorrectScenesTpl,
     controller: 'ColorCorrectScenesController',
     bindings: {
+        mosaicLayer: '=',
         selectedScenes: '=',
         selectedLayers: '=',
         sceneList: '<',

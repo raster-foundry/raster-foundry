@@ -4,7 +4,8 @@ const colorCorrectPane = {
     templateUrl: colorCorrectPaneTpl,
     controller: 'ColorCorrectPaneController',
     bindings: {
-        selectedLayers: '<'
+        selectedLayers: '<',
+        mosaicLayer: '='
     }
 };
 

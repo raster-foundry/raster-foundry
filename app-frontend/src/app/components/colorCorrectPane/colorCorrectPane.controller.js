@@ -25,7 +25,7 @@ export default class ColorCorrectPaneController {
         this.firstLayer.getColorCorrection().then((correction) => {
             this.correction = correction;
         });
-
+        this.mosaic = this.$parent.mosaicLayer.values().next().value;
         if (this.featureFlags.isOn('display-histogram')) {
             this.fetchHistograms();
         }
@@ -36,11 +36,13 @@ export default class ColorCorrectPaneController {
     }
 
     resetCorrection() {
+        let promises = [];
         for (let layer of this.selectedLayers.values()) {
-            layer.resetTiles();
+            promises.push(layer.resetTiles());
         }
         this.firstLayer.getColorCorrection().then((correction) => {
             this.correction = correction;
+            this.redrawMosaic(promises, correction);
         });
     }
 
@@ -53,15 +55,31 @@ export default class ColorCorrectPaneController {
      * @returns {null} null
      */
     onCorrectionChange(newCorrection) {
+        let promises = [];
         if (newCorrection) {
             for (let layer of this.selectedLayers.values()) {
-                layer.updateColorCorrection(newCorrection);
+                promises.push(layer.updateColorCorrection(newCorrection));
             }
 
             if (this.featureFlags.isOn('display-histogram')) {
                 this.fetchHistograms();
             }
+            this.redrawMosaic(promises, newCorrection);
         }
+    }
+
+    redrawMosaic(promises, newCorrection) {
+        if (!promises.length) {
+            return;
+        }
+        this.$q.all(promises).then(() => {
+            this.mosaic.getMosaicTileLayer().then((tiles) => {
+                let newParams = this.mosaic.paramsFromObject(newCorrection);
+                this.mosaic.getMosaicLayerURL(newParams).then((url) => {
+                    tiles.setUrl(url);
+                });
+            });
+        });
     }
 
     addDataToHistogram(data) {
