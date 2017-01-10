@@ -1,3 +1,50 @@
+/**
+* From a lng coordinate and a zoom level, determine the x-coordinate of
+* the tile in falls within
+* @param {numeric} lng lng coordinate
+*
+* @returns {numeric} x-coordinate of tile
+*/
+let lng2Tile = function (lng, zoom) {
+    return Math.floor((lng + 180) / 360 * Math.pow(2, zoom + 2));
+};
+
+/**
+* From a lat coordinate and a zoom level, determine the y-coordinate of
+* the tile in falls within
+* @param {numeric} lat lat coordinate
+*
+* @returns {numeric} y-coordinate of tile
+*/
+let lat2Tile = function (lat, zoom) {
+    return Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) +
+                                    1 / Math.cos(lat * Math.PI / 180))
+                            / Math.PI) / 2 * Math.pow(2, zoom + 2));
+};
+
+/**
+* From a tile coordinate and zoom level, determine the lng coordinate of
+* the corresponding tile's NE corner
+* @param {numeric} x x-coordinate of tile
+*
+* @returns {numeric} lng point of tile NE corner
+*/
+let tile2Lng = function (x, zoom) {
+    return x / Math.pow(2, zoom + 2) * 360 - 180;
+};
+
+/**
+* From a tile coordinate and zoom level, determine the lat coordinate of
+* the corresponding tile's NE corner
+* @param {numeric} y y-coordinate of tile
+*
+* @returns {numeric} lat point of tile NE corner
+*/
+let tile2Lat = function (y, zoom) {
+    let n = Math.PI - 2 * Math.PI * y / Math.pow(2, zoom + 2);
+    return 180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+};
+
 export default class ColorCorrectScenesController {
     constructor( // eslint-disable-line max-params
         $log, $scope, $q, projectService, layerService, $state, mapService
@@ -6,6 +53,7 @@ export default class ColorCorrectScenesController {
         this.projectService = projectService;
         this.layerService = layerService;
         this.$state = $state;
+        this.$scope = $scope;
         this.$q = $q;
         this.getMap = () => mapService.getMap('project');
     }
@@ -14,13 +62,25 @@ export default class ColorCorrectScenesController {
         // Internal bookkeeping to handle grid selection functionality.
         this.selectedTileX = null;
         this.selectedTileY = null;
-        this.selectingScenes = false;
         this.projectid = this.$state.params.projectid;
+        this.gridLayer = L.gridLayer({
+            tileSize: 64,
+            className: 'grid-select'
+        });
+        this.gridLayer.setZIndex(100);
 
         this.getMap().then((map) => {
             this.listeners = [
-                map.on('click', this.selectGridCellScenes.bind(this))
+                map.on('click', this.selectGridCellScenes.bind(this)),
+                map.on('contextmenu', (evt, src) => {
+                    evt.originalEvent.preventDefault();
+                    if (evt.originalEvent.ctrlKey) {
+                        this.selectGridCellScenes(evt, src);
+                    }
+                    return false;
+                })
             ];
+            map.addLayer('grid-selection-layer', this.gridLayer);
         });
     }
 
@@ -29,7 +89,8 @@ export default class ColorCorrectScenesController {
             this.listeners.forEach((listener) => {
                 map.off(listener);
             });
-            map.deleteLayers('highlight');
+            map.deleteLayers('grid-select');
+            map.deleteLayers('grid-selection-layer');
         });
     }
 
@@ -41,68 +102,62 @@ export default class ColorCorrectScenesController {
      * @returns {undefined}
      */
     selectGridCellScenes($event, source) {
-        // Helper functions for converting between click Lat/Lng and tile numbers
-        // From http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
-        function lng2Tile(lng, zoom) {
-            return Math.floor((lng + 180) / 360 * Math.pow(2, zoom));
+        let multi = $event.originalEvent.ctrlKey;
+        // Cache current request kickoff time for identifying request
+        let requestTime = new Date();
+
+        // this.lastRequest will always hold the latest kickoff time
+        this.lastRequest = requestTime;
+
+        if (!this.filterBboxList || !this.filterBboxList.length) {
+            this.filterBboxList = [];
         }
 
-        function lat2Tile(lat, zoom) {
-            return Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) +
-                                            1 / Math.cos(lat * Math.PI / 180))
-                                   / Math.PI) / 2 * Math.pow(2, zoom));
-        }
 
-        function tile2Lng(x, zoom) {
-            return x / Math.pow(2, zoom) * 360 - 180;
-        }
+        let z = source.map.getZoom();
 
-        function tile2Lat(y, zoom) {
-            let n = Math.PI - 2 * Math.PI * y / Math.pow(2, zoom);
-            return 180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
-        }
-
-        if (this.selectingScenes || this.loading) {
-            return;
-        }
-
-        let zoom = source.map.getZoom();
         // The conversion functions above return the upper-left (northwest) corner of the tile,
         // so to get the lower left and upper right corners to make a bounding box, we need to
         // get the upper-left corners of the tiles directly below and to the right of this one.
-        let tileX = lng2Tile($event.latlng.lng, zoom);
-        let tileY = lat2Tile($event.latlng.lat, zoom);
-        if (tileX !== this.selectedTileX || tileY !== this.selectedTileY ||
-            zoom !== this.selectedTileZ) {
-            this.selectedTileX = tileX;
-            this.selectedTileY = tileY;
-            this.selectedTileZ = zoom;
+        let tx = lng2Tile($event.latlng.lng, z);
+        let ty = lat2Tile($event.latlng.lat, z);
 
-            let llLat = tile2Lat(tileY + 1, zoom);
-            let llLng = tile2Lng(tileX, zoom);
-            let urLat = tile2Lat(tileY, zoom);
-            let urLng = tile2Lng(tileX + 1, zoom);
-            let bboxString = `${llLng},${llLat},${urLng},${urLat}`;
-            this.selectingScenes = true;
+        let bounds = L.latLngBounds([
+            [tile2Lat(ty, z), tile2Lng(tx + 1, z)],
+            [tile2Lat(ty + 1, z), tile2Lng(tx, z)]
+        ]);
+
+        let filteredList = this.filterBboxList.filter(b => {
+            return !b.equals(bounds) && !b.contains(bounds) && !bounds.contains(b);
+        });
+
+        if (filteredList.length === this.filterBboxList.length) {
+            // If the clicked bounding box has not been selected
+            if (!multi) {
+                this.filterBboxList = [];
+            }
+            this.filterBboxList.push(bounds);
+        } else if (!multi) {
+            // If the clicked bounding box is already selected
+            this.filterBboxList = [];
+        } else {
+            this.filterBboxList = filteredList;
+        }
+
+        this.updateGridSelection();
+
+        if (this.filterBboxList.length) {
             this.projectService.getAllProjectScenes({
                 projectId: this.projectid,
-                bbox: bboxString
+                bbox: this.filterBboxList.map(r => r.toBBoxString()).join(';')
             }).then((selectedScenes) => {
-                this.selectNoScenes();
-                selectedScenes.map((scene) => this.setSelected(scene, true));
-                this.selectingScenes = false;
+                if (this.lastRequest === requestTime) {
+                    this.selectNoScenes();
+                    selectedScenes.map((scene) => this.setSelected(scene, true));
+                }
             });
-
-            // While the scene selection is in progress, put a highlight on the map so the user can
-            // see where they've clicked.
-            this.updateGridSelection(
-                L.latLng({lat: llLat, lng: llLng}),
-                L.latLng({lat: urLat, lng: urLng})
-            );
         } else {
-            // We've clicked on the same square that was already selected; toggle
             this.selectNoScenes();
-            this.clearGridHighlight();
         }
     }
 
@@ -146,14 +201,6 @@ export default class ColorCorrectScenesController {
         return this.selectedScenes.size === 0 || this.selectedScenes.size < this.sceneList.size;
     }
 
-    clearGridHighlight() {
-        this.selectedTileX = null;
-        this.selectedTileY = null;
-        this.getMap().then((map) => {
-            map.deleteLayers('highlight');
-        });
-    }
-
     selectAllScenes() {
         this.sceneList.map((scene) => {
             this.selectedScenes.set(scene.id, scene);
@@ -164,6 +211,7 @@ export default class ColorCorrectScenesController {
     selectNoScenes() {
         this.selectedScenes.clear();
         this.selectedLayers.clear();
+        this.$scope.$evalAsync();
     }
 
     isSelected(scene) {
@@ -188,10 +236,23 @@ export default class ColorCorrectScenesController {
         this.onSceneMouseleave();
     }
 
-    updateGridSelection(swPoint, nePoint) {
-        let newGridHighlight = L.rectangle([swPoint, nePoint]);
+    updateGridSelection() {
+        if (!this.gridSelectionLayer) {
+            this.gridSelectionLayer = L.featureGroup();
+            this.getMap().then((map) => {
+                map.addLayer('grid-selection-layer', this.gridSelectionLayer);
+            });
+        } else {
+            this.gridSelectionLayer.clearLayers();
+        }
+        this.filterBboxList.forEach(b => L.rectangle(b).addTo(this.gridSelectionLayer));
+    }
+
+    goColorCorrect() {
         this.getMap().then((map) => {
-            map.setLayer('highlight', newGridHighlight);
+            map.deleteLayers('grid-selection-layer');
         });
+        this.gridSelectionLayer = null;
+        this.$state.go('editor.project.color.adjust');
     }
 }
