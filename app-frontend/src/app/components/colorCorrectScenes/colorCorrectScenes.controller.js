@@ -58,6 +58,7 @@ export default class ColorCorrectScenesController {
         this.layerService = layerService;
         this.$state = $state;
         this.$scope = $scope;
+        this.$parent = $scope.$parent.$ctrl;
         this.$q = $q;
         this.getMap = () => mapService.getMap('project');
     }
@@ -187,8 +188,37 @@ export default class ColorCorrectScenesController {
             vegwater: {redBand: 4, greenBand: 6, blueBand: 0}
         };
 
+        this.mosaic = this.$parent.mosaicLayer.values().next().value;
+        let promises = [];
         this.sceneLayers.forEach(function (layer) {
-            layer.updateBands(bands[bandName]);
+            promises.push(layer.updateBands(bands[bandName]));
+        });
+        this.redrawMosaic(promises, bands[bandName]);
+    }
+
+    /**
+     * Trigger the redraw of the mosaic layer with new bands
+     *
+     * @param {promise[]} promises array of scene color correction promises
+     * @param {object} newBands new mapping of band numbers
+     * @returns {null} null
+     */
+    redrawMosaic(promises, newBands) {
+        if (!promises.length) {
+            return;
+        }
+        this.mosaic.getColorCorrection().then((lastCorrection) => {
+            let ccParams = this.mosaic.paramsFromObject(lastCorrection);
+            return Object.assign(ccParams, newBands);
+        }).then((newCorrection) => {
+            this.$q.all(promises).then(() => {
+                this.mosaic.getMosaicTileLayer().then((tiles) => {
+                // eslint-disable-next-line max-nested-callbacks
+                    this.mosaic.getMosaicLayerURL(newCorrection).then((url) => {
+                        tiles.setUrl(url);
+                    });
+                });
+            });
         });
     }
 

@@ -25,6 +25,7 @@ export default class ProjectEditController {
         this.projectId = this.$state.params.projectid;
         this.selectedScenes = new Map();
         this.selectedLayers = new Map();
+        this.mosaicLayer = new Map();
         this.sceneList = [];
         this.sceneLayers = new Map();
         this.layers = [];
@@ -97,7 +98,7 @@ export default class ProjectEditController {
     bringSelectedScenesToFront() {
         this.cachedZIndices = new Map();
         for (const [id, l] of this.selectedLayers) {
-            l.getTileLayer().then((tiles) => {
+            l.getSceneTileLayer().then((tiles) => {
                 this.cachedZIndices.set(id, tiles.options.zIndex);
                 tiles.bringToFront();
             });
@@ -124,7 +125,11 @@ export default class ProjectEditController {
         ).then(
             (allScenes) => {
                 this.sceneList = allScenes;
-                this.layersFromScenes();
+                for (const scene of this.sceneList) {
+                    let scenelayer = this.layerService.layerFromScene(scene, this.projectId);
+                    this.sceneLayers.set(scene.id, scenelayer);
+                }
+                this.layerFromProject();
             },
             (error) => {
                 this.sceneRequestState.errorMsg = error;
@@ -134,21 +139,13 @@ export default class ProjectEditController {
         });
     }
 
-    layersFromScenes() {
-        // Create scene layers to use for color correction
-        for (const scene of this.sceneList) {
-            let sceneLayer = this.layerService.layerFromScene(scene, this.projectId);
-            this.sceneLayers.set(scene.id, sceneLayer);
-        }
-
-        this.layers = this.sceneLayers.values();
+    layerFromProject() {
         this.getMap().then((map) => {
-            map.deleteLayers('scenes');
-            for (let layer of this.layers) {
-                layer.getTileLayer().then((tiles) => {
-                    map.addLayer('scenes', tiles);
-                });
-            }
+            let layer = this.layerService.layerFromScene(this.sceneList, this.projectId, true);
+            this.mosaicLayer.set(this.projectId, layer);
+            layer.getMosaicTileLayer().then((tiles) => {
+                map.addLayer('project', tiles);
+            });
         });
     }
 

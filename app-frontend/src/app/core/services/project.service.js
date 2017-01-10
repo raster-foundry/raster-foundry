@@ -90,6 +90,37 @@ export default (app) => {
             return this.Project.projectScenes(params).$promise;
         }
 
+        getProjectCorners(projectId) {
+            return this.getAllProjectScenes({projectId: projectId}).then((scenes) => {
+                let corners = {
+                    lowerLeftLon: null,
+                    lowerLeftLat: null,
+                    upperRightLon: null,
+                    upperRightLat: null
+                };
+                scenes.forEach(scene => {
+                    let metadata = scene.sceneMetadata;
+                    if (metadata.lowerLeftCornerLatitude < corners.lowerLeftLat ||
+                        corners.lowerLeftLat === null) {
+                        corners.lowerLeftLat = metadata.lowerLeftCornerLatitude;
+                    }
+                    if (metadata.lowerLeftCornerLongitude < corners.lowerLeftLon ||
+                        corners.lowerLeftLon === null) {
+                        corners.lowerLeftLon = metadata.lowerLeftCornerLongitude;
+                    }
+                    if (metadata.upperRightCornerLatitude < corners.upperRightLat ||
+                        corners.upperRightLat === null) {
+                        corners.upperRightLat = metadata.upperRightCornerLatitude;
+                    }
+                    if (metadata.upperRightCornerLongitude < corners.upperRightLon ||
+                        corners.upperRightLon === null) {
+                        corners.upperRightLon = metadata.upperRightCornerLongitude;
+                    }
+                });
+                return corners;
+            });
+        }
+
         /** Return all scenes in a single collection, making multiple requests if necessary
          *
          * @param {object} params to pass as query params
