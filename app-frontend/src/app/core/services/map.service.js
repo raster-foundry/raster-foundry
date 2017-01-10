@@ -65,22 +65,26 @@ class MapWrapper {
             });
 
             // Add zoom control to map's controls
-            let zoomControl = L.control.zoom({position: 'topright'});
-            this._controls.addTo(this.map);
-            // Add basemap controls to map's controls
-            let baseMaps = {
-                Light: this.getBaseMapLayer('light_all'),
-                Dark: this.getBaseMapLayer('dark_all')
-            };
-            baseMaps.Light.addTo(this.map);
-            let baseMapControl = L.control.layers(baseMaps, {});
-            baseMapControl.addTo(this.map);
-            zoomControl.addTo(this.map);
+            if (!this.controlsAdded) {
+                this.controlsAdded = true;
+                let zoomControl = L.control.zoom({position: 'topright'});
+                this._controls.addTo(this.map);
+                // Add basemap controls to map's controls
+                let baseMaps = {
+                    Light: this.getBaseMapLayer('light_all'),
+                    Dark: this.getBaseMapLayer('dark_all')
+                };
+                baseMaps.Light.addTo(this.map);
+                let baseMapControl = L.control.layers(baseMaps, {});
+                baseMapControl.addTo(this.map);
+                zoomControl.addTo(this.map);
 
-            let mapContainer = $(this.map._container); // eslint-disable-line no-underscore-dangle
-            let $zoom = mapContainer.find('.leaflet-control-zoom');
-            let $mpc = mapContainer.find('.map-control-panel');
-            $mpc.prepend($zoom);
+                // eslint-disable-next-line no-underscore-dangle
+                let mapContainer = $(this.map._container);
+                let $zoom = mapContainer.find('.leaflet-control-zoom');
+                let $mpc = mapContainer.find('.map-control-panel');
+                $mpc.prepend($zoom);
+            }
         }
 
         if (options && options.fitToGeojson) {
