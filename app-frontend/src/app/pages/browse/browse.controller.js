@@ -34,7 +34,7 @@ export default class BrowseController {
             return val;
         });
 
-        this.gridLayer = gridLayerService.createNewGridLayer(this.queryParams);
+        this.gridLayer = gridLayerService.createNewGridLayer(Object.assign({}, this.queryParams));
         // 100 is just a placeholder "big" number to leave plenty of space for basemaps
         this.gridLayer.setZIndex(100);
 

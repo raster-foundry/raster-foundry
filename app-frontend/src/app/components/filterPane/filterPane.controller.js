@@ -7,6 +7,10 @@ export default class FilterPaneController {
         this.initFilters();
     }
 
+    close() {
+        this.onCloseClick();
+    }
+
     onYearFiltersChange(id, minModel, maxModel) {
         if (minModel === this.yearRange.min) {
             delete this.filters.minAcquisitionDatetime;
