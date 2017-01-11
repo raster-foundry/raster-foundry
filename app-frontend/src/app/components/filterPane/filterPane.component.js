@@ -4,7 +4,8 @@ const rfFilterPane = {
     templateUrl: filterTpl,
     controller: 'FilterPaneController',
     bindings: {
-        filters: '='
+        filters: '=',
+        onCloseClick: '&'
     }
 };
 
