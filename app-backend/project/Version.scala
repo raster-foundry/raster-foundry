@@ -14,7 +14,6 @@ object Version {
   val slickPG            = "0.14.3"
   val sprayjson          = "2.4.4"
   val akkaAuth           = "0.2.0"
-  val akkaHttpExtensions = "0.4.8"
   val akkaHttpCors       = "0.1.6"
   val akkaSlf4j          = "2.4.11"
   val ammoniteOps        = "0.7.0"

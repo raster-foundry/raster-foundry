@@ -4,7 +4,7 @@ import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.datamodel._
 import com.typesafe.scalalogging.LazyLogging
-import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
+import com.azavea.rf.datamodel.{PageRequest, Order}
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 

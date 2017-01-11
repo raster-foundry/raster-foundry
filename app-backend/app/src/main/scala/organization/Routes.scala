@@ -5,19 +5,18 @@ import java.util.UUID
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 
-import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-
 import com.azavea.rf.auth.Authentication
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.Organizations
 import com.azavea.rf.datamodel._
+import com.azavea.rf.utils.RfPaginationDirectives
 import com.azavea.rf.utils.UserErrorHandler
 
 
 /**
   * Routes for Organizations
   */
-trait OrganizationRoutes extends Authentication with PaginationDirectives with UserErrorHandler {
+trait OrganizationRoutes extends Authentication with RfPaginationDirectives with UserErrorHandler {
 
   implicit def database: Database
 

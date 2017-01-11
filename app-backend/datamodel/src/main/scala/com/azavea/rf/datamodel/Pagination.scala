@@ -21,3 +21,15 @@ case class PaginatedResponse[A](
   pageSize: Int,
   results: Seq[A]
 )
+
+case class PageRequest(offset: Int, limit: Int, sort: Map[String, Order])
+
+sealed trait Order
+
+object Order {
+
+  case object Asc extends Order
+
+  case object Desc extends Order
+
+}

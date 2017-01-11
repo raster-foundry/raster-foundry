@@ -8,10 +8,10 @@ import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.ToolCategories
 import com.azavea.rf.datamodel._
 import com.azavea.rf.utils.UserErrorHandler
-import com.lonelyplanet.akka.http.extensions.PaginationDirectives
+import com.azavea.rf.utils.RfPaginationDirectives
 
 trait ToolCategoryRoutes extends Authentication
-    with PaginationDirectives
+    with RfPaginationDirectives
     with ToolCategoryQueryParametersDirective
     with UserErrorHandler {
   implicit def database: Database

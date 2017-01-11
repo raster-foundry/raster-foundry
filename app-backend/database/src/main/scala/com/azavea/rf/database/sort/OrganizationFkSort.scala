@@ -1,7 +1,7 @@
 package com.azavea.rf.database.sort
 
 import com.azavea.rf.database.fields.OrganizationFkFields
-import com.lonelyplanet.akka.http.extensions.Order
+import com.azavea.rf.datamodel.Order
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 
 class OrganizationFkSort[E, D <: OrganizationFkFields](f: E => D) extends QuerySort[E] {

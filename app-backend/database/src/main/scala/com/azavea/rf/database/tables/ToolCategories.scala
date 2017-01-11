@@ -15,7 +15,7 @@ import slick.model.ForeignKeyAction
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.azavea.rf.datamodel.PageRequest
 
 /** Table that represents categories for tools in the Raster Foundry lab
   *

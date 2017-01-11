@@ -9,7 +9,7 @@ import com.azavea.rf.datamodel._
 import slick.model.ForeignKeyAction
 import java.util.UUID
 import java.sql.Timestamp
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.azavea.rf.datamodel.PageRequest
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import com.typesafe.scalalogging.LazyLogging
@@ -94,7 +94,7 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
     val fetchAction = for {
       imageFetch <- Images.filter(_.id === imageId).result.headOption
       bandsFetch <- Bands.filter(_.imageId === imageId).result
-    } yield (imageFetch, bandsFetch) 
+    } yield (imageFetch, bandsFetch)
     database.db.run {
       fetchAction
     } map {

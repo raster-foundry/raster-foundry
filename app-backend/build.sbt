@@ -82,7 +82,6 @@ lazy val appDependencies = dbDependencies ++ migrationsDependencies ++ Seq(
   Dependencies.scalatest,
   Dependencies.authCommon,
   Dependencies.authAkka,
-  Dependencies.akkaHttpExtensions,
   Dependencies.ammoniteOps,
   Dependencies.geotrellisSlick
 )
@@ -120,7 +119,7 @@ lazy val database = Project("database", file("database"))
   .dependsOn(datamodel)
   .settings(commonSettings:_*)
   .settings({
-     libraryDependencies ++= slickDependencies ++ dbDependencies ++ loggingDependencies ++ Seq(Dependencies.akkaHttpExtensions)
+     libraryDependencies ++= slickDependencies ++ dbDependencies ++ loggingDependencies
   })
 
 lazy val ingest = Project("ingest", file("ingest"))

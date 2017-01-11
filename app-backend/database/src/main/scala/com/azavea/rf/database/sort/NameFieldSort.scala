@@ -1,7 +1,7 @@
 package com.azavea.rf.database.sort
 
 import com.azavea.rf.database.fields.{NameField, ProjectFields}
-import com.lonelyplanet.akka.http.extensions.Order
+import com.azavea.rf.datamodel.Order
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 
 class NameFieldSort[E, D <: NameField](f: E => D) extends QuerySort[E] {

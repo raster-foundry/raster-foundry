@@ -8,7 +8,6 @@ import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.datamodel._
 
 import com.typesafe.scalalogging.LazyLogging
-import com.lonelyplanet.akka.http.extensions.PageRequest
 import spray.json._
 
 import java.util.UUID

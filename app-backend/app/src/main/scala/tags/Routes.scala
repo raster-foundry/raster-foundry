@@ -10,9 +10,9 @@ import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.ToolTags
 import com.azavea.rf.datamodel._
 import com.azavea.rf.utils.UserErrorHandler
-import com.lonelyplanet.akka.http.extensions.PaginationDirectives
+import com.azavea.rf.utils.RfPaginationDirectives
 
-trait ToolTagRoutes extends Authentication with PaginationDirectives with UserErrorHandler {
+trait ToolTagRoutes extends Authentication with RfPaginationDirectives with UserErrorHandler {
   implicit def database: Database
 
   val toolTagRoutes: Route = handleExceptions(userExceptionHandler) {
