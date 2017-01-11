@@ -4,11 +4,12 @@ import Map from 'es6-map';
 /* eslint spaced-comment: 0 */
 
 class MapWrapper {
-    constructor(leafletMap, mapId, options) {
+    constructor(leafletMap, mapId, imageOverlayService, options) {
         this.map = leafletMap;
         this.mapId = mapId;
         // counter is not global - each map has its own.
         // So don't combine lists of listeners across maps
+        this.imageOverlayService = imageOverlayService;
         this._callbackCounter = 0;
         this._callbacks = new Map();
         // internal id -> geojson layer map
@@ -314,8 +315,10 @@ class MapWrapper {
             let boundsGeoJson = L.geoJSON();
             boundsGeoJson.addData(scene.tileFootprint);
             let imageBounds = boundsGeoJson.getBounds();
-            let overlay = L.imageOverlay(thumbUrl, imageBounds, {
+            let overlay = this.imageOverlayService.createNewImageOverlay(thumbUrl, imageBounds, {
                 opacity: 1,
+                dataMask: scene.dataFootprint,
+                thumbnail: thumbnail,
                 attribution: `©${scene.datasource}` +
                     ' | Previews are not representative of actual scene quality.'
             });
@@ -366,16 +369,17 @@ class MapWrapper {
 
 export default (app) => {
     class MapService {
-        constructor($q) {
+        constructor($q, imageOverlayService) {
             'ngInject';
             this.maps = new Map();
             this._mapPromises = new Map();
             this.$q = $q;
+            this.imageOverlayService = imageOverlayService;
         }
 
         // Leaflet components should self-register using this method.
         registerMap(map, id, options) {
-            let mapWrapper = new MapWrapper(map, id, options);
+            let mapWrapper = new MapWrapper(map, id, this.imageOverlayService, options);
             this.maps.set(id, mapWrapper);
             // if any promises , resolve them
             if (this._mapPromises.has(id)) {
