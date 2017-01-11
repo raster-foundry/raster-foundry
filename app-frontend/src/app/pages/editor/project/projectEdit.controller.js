@@ -162,8 +162,15 @@ export default class ProjectEditController {
             backdrop: 'static',
             keyboard: false,
             resolve: {
+                requireSelection: () => true
             }
         });
+
+        this.activeModal.results.then(p => {
+            this.$state.go(this.$state.current, {projectid: p.id});
+        });
+
+        return this.activeModal;
     }
 
     publishModal() {

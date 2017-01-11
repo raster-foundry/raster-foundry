@@ -7,7 +7,7 @@
     <span class="navbar-vertical-divider"></span>
     <nav>
       <a href ui-sref="browse" ui-sref-active="active">Scene browser</a>
-      <a href ui-sref="editor.project.color.scenes"
+      <a href ng-click="$ctrl.gotoEditor()"
          ng-class="{
                    active: $ctrl.$state.$current.name.includes('editor')
                    }">Editor</a>
@@ -15,7 +15,7 @@
          ng-class="{
                    active: $ctrl.$state.$current.name.includes('market')
                    }">Tool Catalog</a>
-      <a href ui-sref="lab.edit"
+      <a href ng-click="$ctrl.gotoLab()"
          ng-class="{
                    active: $ctrl.$state.$current.name.includes('lab')
                    }">Lab</a>

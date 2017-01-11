@@ -7,12 +7,12 @@ export default class SelectToolModalController {
     }
 
     fetchToolList() {
-        this.loadingTools = true;
+        this.loading = true;
         this.toolService.query().then(d => {
             this.updatePagination(d);
             this.lastToolResponse = d;
             this.toolList = d.results;
-            this.loadingTools = false;
+            this.loading = false;
         });
     }
 

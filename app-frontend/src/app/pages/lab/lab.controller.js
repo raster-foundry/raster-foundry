@@ -40,6 +40,7 @@ class labController {
             backdrop: 'static',
             keyboard: false,
             resolve: {
+                requireSelection: () => true
             }
         }).result.then((t) => {
             this.$state.go(this.$state.current, {toolid: t.id});
