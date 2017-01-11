@@ -42,7 +42,7 @@ object LayerCache extends Config {
     ScalaCache(CaffeineCache(underlyingCaffeineCache))
   }
 
-  // TODO: Make a scalacache Codec using on Kryo
+  // TODO: Make a scalacache Codec using Kryo
   implicit val memcached: ScalaCache[Array[Byte]] = {
     import net.spy.memcached._
     import java.net.InetSocketAddress
@@ -53,12 +53,7 @@ object LayerCache extends Config {
   def attributeStore(bucket: String, prefix: String): Future[S3AttributeStore] =
     caching[S3AttributeStore, InMemoryRepr](s"store-$bucket-$prefix"){
       Future.successful(new S3AttributeStore(bucket, prefix) with MemcachedAttributeStore {
-        implicit val cache: ScalaCache[Array[Byte]] = {
-          import net.spy.memcached._
-          import java.net.InetSocketAddress
-          val client = new MemcachedClient(new InetSocketAddress(memcachedHost, memcachedPort))
-          ScalaCache(MemcachedCache(client))
-        }
+        implicit val cache: ScalaCache[Array[Byte]] = memcached
       })
     }
 
