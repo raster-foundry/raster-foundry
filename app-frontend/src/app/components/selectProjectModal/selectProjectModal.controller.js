@@ -34,7 +34,6 @@ export default class SelectProjectModalController {
     }
 
     setSelected(project) {
-        this.dismiss();
-        this.$state.go(this.$state.current, {projectid: project.id});
+        this.close({$value: project});
     }
 }
