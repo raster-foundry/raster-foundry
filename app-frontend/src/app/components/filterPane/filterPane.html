@@ -29,8 +29,7 @@
         <button type="button"
                 class="btn btn-toggle btn-small"
                 autocomplete="off"
-                ng-class="{'active': monthAttrs.enabled,
-                           'disabled': !$ctrl.filters.month}"
+                ng-class="{'active': monthAttrs.enabled}"
                 ng-mousedown="$ctrl.onMonthFilterMousedown(month, monthAttrs)"
                 ng-mouseover="$ctrl.onMonthFilterMouseover(month)"
                 ng-repeat="(month, monthAttrs) in $ctrl.monthFilters track by month">
@@ -69,8 +68,7 @@
                 autocomplete="off"
                 ng-mousedown="$ctrl.onSourceFilterMousedown(filter, filterAttrs)"
                 ng-mouseover="$ctrl.onSourceFilterMouseover(filter)"
-                ng-class="{'active': filterAttrs.enabled,
-                          'disabled': !$ctrl.filters.datasource}"
+                ng-class="{'active': filterAttrs.enabled}"
                 ng-repeat="(filter, filterAttrs) in $ctrl.sourceFilters track by filter">
           {{filterAttrs.label}}
         </button>
