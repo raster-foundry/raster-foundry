@@ -293,7 +293,7 @@ class MapWrapper {
      * @returns {this} this
      */
     setThumbnail(scene, useSmall, persist) {
-        if (!persist && scene.id in this.persistedThumbnails) {
+        if (this.persistedThumbnails.has(scene.id)) {
             return this;
         }
         let footprintGeojson = Object.assign({
@@ -351,7 +351,7 @@ class MapWrapper {
         if (!scene) {
             this.deleteLayers('thumbnail');
             this.deleteGeojson('thumbnail');
-        } else {
+        } else if (this.persistedThumbnails.has(scene.id)) {
             this.map.removeLayer(this.persistedThumbnails.get(scene.id));
             this.persistedThumbnails.delete(scene.id);
         }

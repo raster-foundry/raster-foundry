@@ -22,7 +22,7 @@
           ng-click="$ctrl.viewSceneDetail(scene)"
           scene="scene" selected="$ctrl.isSelected(scene)"
           selectable="true"
-          on-select="$ctrl.setSelected(scene, selected)"
+          on-select="$ctrl.resolve.selectScene(scene, selected)"
           class="selectable"
           ng-repeat="scene in $ctrl.scenes track by scene.id">
       </rf-scene-item>
@@ -47,7 +47,7 @@
       </button>
   	</div>
   	<button type="button" class="btn" data-dismiss="modal"
-            ng-click="$ctrl.selectedScenes.clear()">
+            ng-click="$ctrl.resolve.selectNoScenes()">
       <i class="icon-cross"></i>
       Deselect All
     </button>
