@@ -322,6 +322,7 @@ export default class BrowseController {
 
     selectNoScenes() {
         this.selectedScenes.clear();
+        this.sceneList.forEach(s => this.setSelected(s, false));
     }
 
     toggleSelectAndClosePane() {
@@ -407,7 +408,9 @@ export default class BrowseController {
         this.activeModal = this.$uibModal.open({
             component: 'rfSelectedScenesModal',
             resolve: {
-                scenes: () => this.selectedScenes
+                scenes: () => this.selectedScenes,
+                selectScene: () => this.setSelected.bind(this),
+                selectNoScenes: () => this.selectNoScenes.bind(this)
             }
         });
 
