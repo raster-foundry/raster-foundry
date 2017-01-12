@@ -1,10 +1,11 @@
 export default class ColorCorrectPaneController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, $q, projectService, $state
+        $log, $scope, $q, projectService, $state, featureFlags
     ) {
         'ngInject';
         this.$parent = $scope.$parent.$ctrl;
         this.projectService = projectService;
+        this.featureFlags = featureFlags;
         this.$state = $state;
         this.$q = $q;
     }
@@ -24,7 +25,10 @@ export default class ColorCorrectPaneController {
         this.firstLayer.getColorCorrection().then((correction) => {
             this.correction = correction;
         });
-        this.fetchHistograms();
+
+        if (this.featureFlags.isOn('display-histogram')) {
+            this.fetchHistograms();
+        }
     }
 
     $onDestroy() {
@@ -53,7 +57,10 @@ export default class ColorCorrectPaneController {
             for (let layer of this.selectedLayers.values()) {
                 layer.updateColorCorrection(newCorrection);
             }
-            this.fetchHistograms();
+
+            if (this.featureFlags.isOn('display-histogram')) {
+                this.fetchHistograms();
+            }
         }
     }
 
