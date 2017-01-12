@@ -1,16 +1,23 @@
-/* global joint */
+const Map = require('es6-map');
+/* global joint, $ */
 
 export default class DiagramContainerController {
-    constructor($element) {
+    constructor($element, $scope, $state, $timeout) {
         'ngInject';
         this.$element = $element;
+        this.$scope = $scope;
+        this.$state = $state;
+        this.$timeout = $timeout;
     }
 
     $onInit() {
         this.workspaceElement = this.$element[0].children[0];
+        this.contextMenuElement = this.$element[0].children[1];
+        this.contextMenuMeasureElement = this.$element[0].children[2];
         this.cellSize = [300, 75];
         this.paddingFactor = 0.8;
         this.nodeSeparationFactor = 0.25;
+        this.initContextMenus();
         this.initShapes();
         this.initDiagram();
     }
@@ -32,6 +39,18 @@ export default class DiagramContainerController {
             inputs: ['Red', 'NIR'],
             outputs: ['Output']
         });
+
+        this.contextMenus.set('NDVI 1', [{
+            label: 'Compare NDVI-1 to...',
+            callback: () => {
+                // @TODO: add compare tool
+            }
+        }, {
+            label: 'View output',
+            callback: () => {
+                // @TODO: show map with actively selected cell
+            }
+        }]);
 
         this.createRectangle('Reclassify 1', {
             label: 'Reclassify',
@@ -86,14 +105,11 @@ export default class DiagramContainerController {
                 thickness: 1
             });
             this.paper.on('blank:pointerclick', () => {
-                if (this.onPaperClick) {
-                    this.onPaperClick();
-                }
+                this.hideContextMenu();
+                this.unselectCellView();
             });
-            this.paper.on('cell:pointerclick', () => {
-                if (this.onCellClick) {
-                    this.onCellClick();
-                }
+            this.paper.on('cell:pointerclick', (cv, evt) => {
+                this.selectCellView(cv, evt);
             });
         }
 
@@ -112,6 +128,72 @@ export default class DiagramContainerController {
         }
     }
 
+    initContextMenus() {
+        this.contextMenus = new Map();
+        this.defaultContextMenu = [{
+            label: 'Compare to...',
+            callback: () => {
+                // @TODO: add compare tool
+            }
+        }, {
+            label: 'View output',
+            callback: () => {
+                // @TODO: show map with actively selected cell
+            }
+        }];
+    }
+
+    showContextMenu(cv, evt) {
+        let bounds = cv.getBBox();
+
+        this.$scope.$evalAsync(() => {
+            if (this.contextMenus.has(cv.model.id)) {
+                this.currentContextMenu = this.contextMenus.get(cv.model.id);
+            } else {
+                this.currentContextMenu = this.defaultContextMenu;
+            }
+        });
+
+        this.$timeout(() => {
+            $(this.contextMenuElement).css({
+                top: bounds.y - $(this.contextMenuMeasureElement).height() - 10,
+                left:
+                    bounds.x +
+                    Math.abs($(this.contextMenuMeasureElement).width() - bounds.width) / 2
+            });
+            this.isShowingContextMenu = true;
+        });
+    }
+
+    hideContextMenu() {
+        this.isShowingContextMenu = false;
+        this.$scope.$evalAsync();
+    }
+
+    selectCellView(cellView, evt) {
+        this.unselectCellView();
+        this.selectedCellView = cellView;
+        cellView.model.attr({
+            rect: {
+                stroke: '#465076',
+                'stroke-width': '2'
+            }
+        });
+        this.showContextMenu(cellView, evt);
+    }
+
+    unselectCellView() {
+        if (this.selectedCellView) {
+            this.selectedCellView.model.attr({
+                rect: {
+                    stroke: '#999999',
+                    'stroke-width': 1
+                }
+            });
+            this.selectedCellView = null;
+        }
+    }
+
     createRectangle(id, config) {
         let label = joint.util.breakText(config.label || id, {
             width: this.cellSize[0] * this.paddingFactor,
@@ -126,7 +208,9 @@ export default class DiagramContainerController {
             },
             attrs: {
                 rect: {
-                    fill: '#f8f9fa'
+                    fill: '#f8f9fa',
+                    stroke: '#999999',
+                    'stroke-width': 1
                 },
                 text: {
                     fill: '#333333',
