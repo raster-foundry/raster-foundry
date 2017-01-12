@@ -1,5 +1,7 @@
+import diagramContainerTpl from './diagramContainer.html';
+
 export default {
-    template: '<div class="main lab-workspace"></div>',
+    templateUrl: diagramContainerTpl,
     controller: 'DiagramContainerController',
     bindings: {
         shapes: '<?',

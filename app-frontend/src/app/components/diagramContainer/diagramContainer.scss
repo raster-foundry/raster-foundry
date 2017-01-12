@@ -1,0 +1,47 @@
+// @TODO: incorporate dropdown styles into app styles
+
+.lab-contextmenu {
+  position: absolute;
+  background: #465076;
+  &.measuring {
+    top: -10000px;
+    left: -10000px;
+  }
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 1px solid darken(#465076, 15%);
+    li {
+      display: inline-block;
+      padding: 12px;
+      color: #fff;
+      border-right: 1px solid rgba(#000, 0.5);
+      transition: all 0.25s;
+      cursor: pointer;
+      &:last-child {
+        border-right: none;
+      }
+      &:hover {
+        background: #738FFC;
+      }
+    }
+  }
+}
+
+.lab-contextmenu div:after {
+	top: 100%;
+	left: 50%;
+	border: solid transparent;
+	content: " ";
+	height: 0;
+	width: 0;
+	position: absolute;
+	pointer-events: none;
+	border-color: rgba(136, 183, 213, 0);
+	border-top-color: darken(#465076, 15%);
+	border-width: 8px;
+	margin-left: -8px;
+}
+
+// @TODO: add rotated sqare div to make pointer;
