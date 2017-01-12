@@ -1,11 +1,12 @@
 export default class ProjectScenesController {
     constructor( // eslint-disable-line max-params
-        $log, $state, projectService, $scope, $uibModal
+        $log, $state, $location, projectService, $scope, $uibModal
     ) {
         'ngInject';
 
         this.$log = $log;
         this.$state = $state;
+        this.$location = $location;
         this.projectService = projectService;
         this.$parent = $scope.$parent.$ctrl;
         this.$uibModal = $uibModal;
@@ -176,7 +177,20 @@ export default class ProjectScenesController {
         this.activeModal = this.$uibModal.open({
             component: 'rfPublishModal',
             resolve: {
-                project: () => this.project
+                project: () => this.project,
+                tileTemplateUrl: () => {
+                    let host = this.$location.host();
+                    let protocol = this.$location.protocol();
+
+                    let port = this.$location.port();
+                    let formattedPort = port !== 80 || port !== 443 ? ':' + port : '';
+                    let tag = (new Date()).getTime();
+                    return `${protocol}://${host}${formattedPort}` +
+                        `/tiles/${this.project.organizationId}` +
+                        '/rf_airflow-user' +
+                        `/project/${this.project.id}/{z}/{x}/{y}/` +
+                        `?tag=${tag}`;
+                }
             }
         });
     }
