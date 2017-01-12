@@ -2,11 +2,12 @@ const Map = require('es6-map');
 
 export default class ProjectEditController {
     constructor( // eslint-disable-line max-params
-        $scope, $rootScope, $state, mapService, projectService, layerService, $uibModal
+        $scope, $rootScope, $location, $state, mapService, projectService, layerService, $uibModal
     ) {
         'ngInject';
         this.$state = $state;
         this.$scope = $scope;
+        this.$location = $location;
         this.$rootScope = $rootScope;
         this.projectService = projectService;
         this.layerService = layerService;
@@ -175,7 +176,20 @@ export default class ProjectEditController {
             backdrop: 'static',
             keyboard: false,
             resolve: {
-                project: () => this.project
+                project: () => this.project,
+                tileTemplateUrl: () => {
+                    let host = this.$location.host();
+                    let protocol = this.$location.protocol();
+
+                    let port = this.$location.port();
+                    let formattedPort = port !== 80 || port !== 443 ? ':' + port : '';
+                    let tag = (new Date()).getTime();
+                    return `${protocol}://${host}${formattedPort}` +
+                        `/tiles/${this.project.organizationId}` +
+                        '/rf_airflow-user' +
+                        `/project/${this.project.id}/{z}/{x}/{y}/` +
+                        `?tag=${tag}`;
+                }
             }
         });
     }
