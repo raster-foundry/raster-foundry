@@ -1,27 +1,44 @@
 export default class LabEditController {
-    constructor($scope, $element) {
+    constructor($scope, $element, $uibModal) {
         'ngInject';
         this.$scope = $scope;
         this.$element = $element;
-        this.$parent = $scope.$parent.$ctrl;
-        this.isShowingParams = false;
+        this.$uibModal = $uibModal;
     }
 
     $onInit() {
-        if (this.$parent.toolRequest) {
-            this.$parent.toolRequest.then(t => {
-                this.cellLabel = t.title;
-            });
+        this.inputs = [false, false];
+        this.inputParameters = [{
+            bands: {
+                nir: '5',
+                red: '4'
+            }
+        }, {
+            bands: {
+                nir: '5',
+                red: '4'
+            }
+        }];
+    }
+
+    selectProjectModal(src) {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
         }
-    }
 
-    showParams() {
-        this.isShowingParams = true;
-        this.$scope.$evalAsync();
-    }
+        this.activeModal = this.$uibModal.open({
+            component: 'rfSelectProjectModal',
+            resolve: {
+                project: () => this.inputs[src],
+                content: () => ({
+                    title: 'Select a project'
+                })
+            }
+        });
 
-    hideParams() {
-        this.isShowingParams = false;
-        this.$scope.$evalAsync();
+        this.activeModal.result.then(p => {
+            this.inputs[src] = p;
+            this.$scope.$evalAsync();
+        });
     }
 }

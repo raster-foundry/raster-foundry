@@ -98,7 +98,8 @@ export default class DiagramContainerController {
                 width: $(this.workspaceElement).width(),
                 gridSize: 25,
                 drawGrid: true,
-                model: this.graph
+                model: this.graph,
+                clickThreshold: 4
             });
             this.paper.drawGrid({
                 color: '#aaa',
@@ -108,8 +109,8 @@ export default class DiagramContainerController {
                 this.hideContextMenu();
                 this.unselectCellView();
             });
-            this.paper.on('cell:pointerclick', (cv, evt) => {
-                this.selectCellView(cv, evt);
+            this.paper.on('cell:pointerclick', (cv) => {
+                this.selectCellView(cv);
             });
         }
 
@@ -124,7 +125,9 @@ export default class DiagramContainerController {
                 marginX: padding,
                 marginY: padding
             });
-            // @TODO: figure out centering
+            this.paper.scaleContentToFit({
+                padding: padding
+            });
         }
     }
 
@@ -143,7 +146,7 @@ export default class DiagramContainerController {
         }];
     }
 
-    showContextMenu(cv, evt) {
+    showContextMenu(cv) {
         let bounds = cv.getBBox();
 
         this.$scope.$evalAsync(() => {
@@ -170,7 +173,7 @@ export default class DiagramContainerController {
         this.$scope.$evalAsync();
     }
 
-    selectCellView(cellView, evt) {
+    selectCellView(cellView) {
         this.unselectCellView();
         this.selectedCellView = cellView;
         cellView.model.attr({
@@ -179,7 +182,7 @@ export default class DiagramContainerController {
                 'stroke-width': '2'
             }
         });
-        this.showContextMenu(cellView, evt);
+        this.showContextMenu(cellView);
     }
 
     unselectCellView() {

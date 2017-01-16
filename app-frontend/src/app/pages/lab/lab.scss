@@ -29,7 +29,9 @@ nav .btn-group {
     .sidebar-content.with-border:last-child {
         border-bottom: none;
     }
-
+.sidebar-content.with-borders {
+    border-top: 1px solid #ddd;
+}
 .lab-workspace {
     background: #aaa;
     height: 100%;
