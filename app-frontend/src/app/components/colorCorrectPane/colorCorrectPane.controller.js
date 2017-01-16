@@ -1,13 +1,15 @@
 export default class ColorCorrectPaneController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, $q, projectService, $state, featureFlags
+        $log, $scope, $q, projectService, $state, featureFlags, sceneService, mapService
     ) {
         'ngInject';
         this.$parent = $scope.$parent.$ctrl;
         this.projectService = projectService;
+        this.sceneService = sceneService;
         this.featureFlags = featureFlags;
         this.$state = $state;
         this.$q = $q;
+        this.getMap = () => mapService.getMap('project');
     }
 
     $onInit() {
@@ -29,10 +31,18 @@ export default class ColorCorrectPaneController {
         if (this.featureFlags.isOn('display-histogram')) {
             this.fetchHistograms();
         }
+        this.getMap().then((map) => {
+            this.selectedScenes.forEach((scene) => {
+                map.setGeojson(scene.id, this.sceneService.getStyledFootprint(scene));
+            });
+        });
     }
 
     $onDestroy() {
         this.$parent.fitAllScenes();
+        this.getMap().then((map) => {
+            this.selectedScenes.forEach((scene) => map.deleteGeojson(scene.id));
+        });
     }
 
     resetCorrection() {

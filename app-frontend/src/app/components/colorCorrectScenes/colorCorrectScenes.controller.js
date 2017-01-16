@@ -51,11 +51,12 @@ let tile2Lat = function (y, zoom) {
 
 export default class ColorCorrectScenesController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, $q, projectService, layerService, $state, mapService
+        $log, $scope, $q, projectService, layerService, sceneService, $state, mapService
     ) {
         'ngInject';
         this.projectService = projectService;
         this.layerService = layerService;
+        this.sceneService = sceneService;
         this.$state = $state;
         this.$scope = $scope;
         this.$parent = $scope.$parent.$ctrl;
@@ -86,6 +87,9 @@ export default class ColorCorrectScenesController {
                 })
             ];
             map.addLayer('grid-selection-layer', this.gridLayer);
+            this.selectedScenes.forEach((scene) => {
+                map.setGeojson(scene.id, this.sceneService.getStyledFootprint(scene));
+            });
         });
     }
 
@@ -96,6 +100,7 @@ export default class ColorCorrectScenesController {
             });
             map.deleteLayers('grid-select');
             map.deleteLayers('grid-selection-layer');
+            this.selectedScenes.forEach((scene) => map.deleteGeojson(scene.id));
         });
     }
 
@@ -236,15 +241,11 @@ export default class ColorCorrectScenesController {
     }
 
     selectAllScenes() {
-        this.sceneList.map((scene) => {
-            this.selectedScenes.set(scene.id, scene);
-            this.selectedLayers.set(scene.id, this.sceneLayers.get(scene.id));
-        });
+        this.sceneList.map((scene) => this.setSelected(scene, true));
     }
 
     selectNoScenes() {
-        this.selectedScenes.clear();
-        this.selectedLayers.clear();
+        this.selectedScenes.forEach((scene) => this.setSelected(scene, false));
         this.$scope.$evalAsync();
     }
 
@@ -256,9 +257,15 @@ export default class ColorCorrectScenesController {
         if (selected) {
             this.selectedScenes.set(scene.id, scene);
             this.selectedLayers.set(scene.id, this.sceneLayers.get(scene.id));
+            this.getMap().then((map) => {
+                map.setGeojson(scene.id, this.sceneService.getStyledFootprint(scene));
+            });
         } else {
             this.selectedScenes.delete(scene.id);
             this.selectedLayers.delete(scene.id);
+            this.getMap().then((map) => {
+                map.deleteGeojson(scene.id);
+            });
         }
     }
 

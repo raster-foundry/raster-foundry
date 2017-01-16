@@ -5,6 +5,7 @@ const colorCorrectPane = {
     controller: 'ColorCorrectPaneController',
     bindings: {
         selectedLayers: '<',
+        selectedScenes: '<',
         mosaicLayer: '='
     }
 };
