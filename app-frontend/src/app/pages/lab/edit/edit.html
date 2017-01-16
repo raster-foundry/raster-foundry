@@ -142,5 +142,27 @@
       </div>
     </div>
   </div>
-  <rf-diagram-container class="main with-position">
-  </rf-diagram-container>
+  <div class="main with-position">
+    <rf-diagram-container class="with-position"
+                          on-preview="$ctrl.showPreview(data)">
+    </rf-diagram-container>
+    <div style="position: absolute; top:0; bottom: 0; left: 0; right: 0;" ng-show="$ctrl.isShowingPreview">
+      <rf-map-container map-id="lab-run-preview"></rf-map-container>
+      <div class="preview-control-bar">
+          <button class="btn btn-primary" ng-click="$ctrl.closePreview()">{{$ctrl.exitText}}</button>
+      </div>
+      <div class="preview-info-bar" ng-show="$ctrl.isComparing">
+        <div class="split-container">
+          <button class="btn">{{$ctrl.previewData[0].name}}</button>
+        </div>
+        <div class="split-container">
+          <button class="btn">{{$ctrl.previewData[1].name}}</button>
+        </div>
+      </div>
+      <div class="preview-info-bar" ng-show="!$ctrl.isComparing">
+        <div class="split-container">
+          <button class="btn">{{$ctrl.previewData.name}}</button>
+        </div>
+      </div>
+    </div>
+  </div>

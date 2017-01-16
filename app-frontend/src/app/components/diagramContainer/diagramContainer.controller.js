@@ -2,24 +2,36 @@ const Map = require('es6-map');
 /* global joint, $ */
 
 export default class DiagramContainerController {
-    constructor($element, $scope, $state, $timeout) {
+    constructor($element, $scope, $state, $timeout, $compile, mousetipService) {
         'ngInject';
         this.$element = $element;
         this.$scope = $scope;
         this.$state = $state;
         this.$timeout = $timeout;
+        this.$compile = $compile;
+        this.mousetipService = mousetipService;
     }
 
     $onInit() {
         this.workspaceElement = this.$element[0].children[0];
-        this.contextMenuElement = this.$element[0].children[1];
-        this.contextMenuMeasureElement = this.$element[0].children[2];
+        this.comparison = [false, false];
         this.cellSize = [300, 75];
         this.paddingFactor = 0.8;
         this.nodeSeparationFactor = 0.25;
         this.initContextMenus();
         this.initShapes();
         this.initDiagram();
+        this.contextMenuTpl =
+            `<div class="lab-contextmenu" ng-show="isShowingContextMenu">
+                <div>
+                    <ul>
+                        <li ng-repeat="item in currentContextMenu"
+                            ng-click="item.callback()">
+                            {{item.label}}
+                        </li>
+                    </ul>
+                </div>
+            </div>`;
     }
 
     $onChanges(changes) {
@@ -32,56 +44,71 @@ export default class DiagramContainerController {
     }
 
     initShapes() {
+        // @TODO: this process is not very elegant, could be better handled
         this.shapes = [];
+        this.nodes = new Map();
 
-        this.createRectangle('NDVI 1', {
+        let ndviBefore = this.createRectangle({
             label: 'NDVI - Before',
             inputs: ['Red', 'NIR'],
             outputs: ['Output']
         });
 
-        this.contextMenus.set('NDVI 1', [{
-            label: 'Compare NDVI-1 to...',
-            callback: () => {
-                // @TODO: add compare tool
-            }
-        }, {
-            label: 'View output',
-            callback: () => {
-                // @TODO: show map with actively selected cell
-            }
-        }]);
+        this.nodes.set(ndviBefore, {
+            input: 0,
+            name: 'NDVI - Before'
+        });
 
-        this.createRectangle('Reclassify 1', {
-            label: 'Reclassify',
+        let reclassifyBefore = this.createRectangle({
+            label: 'Reclassify - Before',
             inputs: ['Input'],
             outputs: ['Output']
         });
 
-        this.createLink(['NDVI 1', 'Output'], ['Reclassify 1', 'Input']);
+        this.nodes.set(reclassifyBefore, {
+            input: 0,
+            name: 'Reclassify - Before'
+        });
 
-        this.createRectangle('NDVI 2', {
+        this.createLink([ndviBefore, 'Output'], [reclassifyBefore, 'Input']);
+
+        let ndviAfter = this.createRectangle({
             label: 'NDVI - After',
             inputs: ['Red', 'NIR'],
             outputs: ['Output']
         });
 
-        this.createRectangle('Reclassify 2', {
-            label: 'Reclassify',
+        this.nodes.set(ndviAfter, {
+            input: 1,
+            name: 'NDVI - After'
+        });
+
+        let reclassifyAfter = this.createRectangle({
+            label: 'Reclassify - After',
             inputs: ['Input'],
             outputs: ['Output']
         });
 
-        this.createLink(['NDVI 2', 'Output'], ['Reclassify 2', 'Input']);
+        this.nodes.set(reclassifyAfter, {
+            input: 1,
+            name: 'Reclassify - After'
+        });
 
-        this.createRectangle('Subtract', {
+        this.createLink([ndviAfter, 'Output'], [reclassifyAfter, 'Input']);
+
+        let subtract = this.createRectangle({
             label: 'Subtract',
             inputs: ['First', 'Second'],
             outputs: ['Output']
         });
 
-        this.createLink(['Reclassify 1', 'Output'], ['Subtract', 'First']);
-        this.createLink(['Reclassify 2', 'Output'], ['Subtract', 'Second']);
+        this.nodes.set(subtract, {
+            input: 1,
+            name: 'Subtract'
+        });
+
+        this.createLink([reclassifyBefore, 'Output'], [subtract, 'First']);
+        this.createLink([reclassifyAfter, 'Output'], [subtract, 'Second']);
     }
 
     initDiagram() {
@@ -105,13 +132,8 @@ export default class DiagramContainerController {
                 color: '#aaa',
                 thickness: 1
             });
-            this.paper.on('blank:pointerclick', () => {
-                this.hideContextMenu();
-                this.unselectCellView();
-            });
-            this.paper.on('cell:pointerclick', (cv) => {
-                this.selectCellView(cv);
-            });
+            this.paper.on('blank:pointerclick', this.onPaperClick.bind(this));
+            this.paper.on('cell:pointerclick', this.onCellClick.bind(this));
         }
 
         if (this.shapes) {
@@ -136,41 +158,90 @@ export default class DiagramContainerController {
         this.defaultContextMenu = [{
             label: 'Compare to...',
             callback: () => {
-                // @TODO: add compare tool
+                this.startComparison();
             }
         }, {
             label: 'View output',
             callback: () => {
-                // @TODO: show map with actively selected cell
+                this.onPreview({data: this.nodes.get(this.selectedCellView.model.id)});
+            }
+        }];
+        this.cancelComparisonMenu = [{
+            label: 'Cancel',
+            callback: () => {
+                this.cancelComparison();
             }
         }];
     }
 
-    showContextMenu(cv) {
-        let bounds = cv.getBBox();
-
+    onPaperClick(evt) {
         this.$scope.$evalAsync(() => {
-            if (this.contextMenus.has(cv.model.id)) {
-                this.currentContextMenu = this.contextMenus.get(cv.model.id);
+            if (this.isComparing) {
+                this.cancelComparison();
             } else {
-                this.currentContextMenu = this.defaultContextMenu;
+                this.hideContextMenu();
+                this.unselectCellView();
             }
         });
+    }
 
-        this.$timeout(() => {
-            $(this.contextMenuElement).css({
-                top: bounds.y - $(this.contextMenuMeasureElement).height() - 10,
-                left:
-                    bounds.x +
-                    Math.abs($(this.contextMenuMeasureElement).width() - bounds.width) / 2
-            });
-            this.isShowingContextMenu = true;
+    onCellClick(cv, evt) {
+        this.$scope.$evalAsync(() => {
+            if (this.isComparing) {
+                this.continueComparison(cv);
+            } else {
+                this.selectCellView(cv, evt);
+            }
+        });
+    }
+
+    startComparison() {
+        this.mousetipService.set('Select a node to compare');
+        this.isComparing = true;
+        this.comparison[0] = this.nodes.get(this.selectedCellView.model.id);
+        this.showContextMenu(this.selectedCellView, this.cancelComparisonMenu);
+    }
+
+    continueComparison(cv) {
+        this.mousetipService.remove();
+        this.hideContextMenu();
+        this.isComparing = false;
+        this.comparison[1] = this.nodes.get(cv.model.id);
+        this.onPreview({data: this.comparison});
+    }
+
+    cancelComparison() {
+        this.hideContextMenu();
+        this.isComparing = false;
+        this.mousetipService.remove();
+    }
+
+    showContextMenu(cv, contextMenu) {
+        this.hideContextMenu();
+
+        let bounds = cv.getBBox() || this.selectedCellView.getBBox || false;
+        let menuScope = this.$scope.$new();
+        menuScope.currentContextMenu = contextMenu ||
+                                       this.contextMenus.get(cv.model.id) ||
+                                       this.defaultContextMenu;
+
+        this.contextMenuEl = this.$compile(this.contextMenuTpl)(menuScope)[0];
+        this.$element[0].append(this.contextMenuEl);
+        this.contextMenuEl = $(this.contextMenuEl).css({
+            top: bounds.y,
+            left: bounds.x + bounds.width / 2
+        });
+
+        menuScope.$evalAsync(() => {
+            menuScope.isShowingContextMenu = true;
         });
     }
 
     hideContextMenu() {
         this.isShowingContextMenu = false;
-        this.$scope.$evalAsync();
+        if (this.contextMenuEl) {
+            this.contextMenuEl.remove();
+        }
     }
 
     selectCellView(cellView) {
@@ -197,7 +268,10 @@ export default class DiagramContainerController {
         }
     }
 
-    createRectangle(id, config) {
+    createRectangle(config) {
+        // We're manually creating node ids, which will be dictated by order in `shapes`
+        let id = `node-${this.shapes.length}`;
+
         let label = joint.util.breakText(config.label || id, {
             width: this.cellSize[0] * this.paddingFactor,
             height: this.cellSize[1] * this.paddingFactor
@@ -238,7 +312,7 @@ export default class DiagramContainerController {
         });
 
         this.shapes.push(shape);
-        return shape;
+        return id;
     }
 
     createPorts(inputs, outputs) {

@@ -11,6 +11,7 @@ require('./services/auth.service')(shared);
 require('./services/token.service')(shared);
 require('./services/layer.service')(shared);
 require('./services/map.service')(shared);
+require('./services/mousetip.service')(shared);
 require('./services/thumbnail.service')(shared);
 require('./services/tool.service')(shared);
 require('./services/toolTag.service')(shared);
