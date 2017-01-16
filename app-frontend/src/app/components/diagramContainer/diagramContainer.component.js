@@ -4,9 +4,6 @@ export default {
     templateUrl: diagramContainerTpl,
     controller: 'DiagramContainerController',
     bindings: {
-        shapes: '<?',
-        cellLabel: '<?',
-        onCellClick: '&',
-        onPaperClick: '&'
+        onPreview: '&'
     }
 };
