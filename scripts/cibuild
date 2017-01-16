@@ -44,7 +44,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         docker-compose \
             -f "${DIR}/../docker-compose.yml" \
             run --rm --entrypoint "/bin/bash -c" \
-            app-frontend "npm install --quiet && npm run build"
+            app-frontend "yarn install && yarn run build"
 
         echo "Building container image for Airflow"
         GIT_COMMIT="${GIT_COMMIT}" docker-compose \

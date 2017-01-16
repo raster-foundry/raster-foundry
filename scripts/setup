@@ -91,8 +91,8 @@ then
         run_database_migrations
 
         # app-frontend
-        docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-frontend npm install --quiet
-        docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-frontend npm run build
+        docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-frontend yarn install
+        docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-frontend yarn run build
     fi
     exit
 fi
