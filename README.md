@@ -56,7 +56,7 @@ The workflow for creating a new migration is:
 
 To do frontend development you will want to install [`nvm`](https://github.com/creationix/nvm#install-script) and use at least version 6.8.1. Once using `nvm`, install [yarn](https://yarnpkg.com/) with `npm install -g yarn`. After following the directions above for starting the VM, start the API server and other backend services by running `./scripts/server`.
 
-Then _outside_ the VM, while the server is still running, run `yarn run start` while inside the `app-frontend/` directory. This will start a `webpack-dev-server` on port 9090 that will auto-reload after javascript and styling changes.
+Then _outside_ the VM, while the server is still running, run `yarn run start` while inside the `app-frontend/` directory. This will start a `webpack-dev-server` on port 9091 that will auto-reload after javascript and styling changes.
 
 There are three options to rebuild the static assets served by nginx:
  - run `yarn run build` outside the VM
