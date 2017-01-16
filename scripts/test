@@ -48,7 +48,7 @@ then
 #           -f "${DIR}/../docker-compose.yml" run \
 #            --rm \
 #            --entrypoint "/bin/bash -c" \
-#            app-frontend "npm run test"
+#            app-frontend "yarn run test"
 
         # Run tests for app tasks library
         GIT_COMMIT="${GIT_COMMIT}" docker-compose \

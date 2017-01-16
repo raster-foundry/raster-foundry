@@ -54,18 +54,18 @@ The workflow for creating a new migration is:
 
 #### Frontend Development
 
-To do frontend development you will want to install [`nvm`](https://github.com/creationix/nvm#install-script) and use at least version 6.x. After following the directions above for starting the VM, start the API server and other backend services by running `./scripts/server`.
+To do frontend development you will want to install [`nvm`](https://github.com/creationix/nvm#install-script) and use at least version 6.8.1. Once using `nvm`, install [yarn](https://yarnpkg.com/) with `npm install -g yarn`. After following the directions above for starting the VM, start the API server and other backend services by running `./scripts/server`.
 
-Then _outside_ the VM, while the server is still running, run `npm start` while inside the `app-frontend/` directory. This will start a `webpack-dev-server` on port 9090 that will auto-reload after javascript and styling changes.
+Then _outside_ the VM, while the server is still running, run `yarn run start` while inside the `app-frontend/` directory. This will start a `webpack-dev-server` on port 9090 that will auto-reload after javascript and styling changes.
 
 There are three options to rebuild the static assets served by nginx:
- - run `npm run build` outside the VM
- - run `./scripts/console app-frontend "npm run build"`
+ - run `yarn run build` outside the VM
+ - run `./scripts/console app-frontend "yarn run build"`
  - run `./scripts/setup` (will also rebuild application server)
 
 To run tests you can do one of the following (in order of speed):
- - run `npm run test` outside the VM (or `npm run test-watch`)
- - run `./scripts/console app-frontend "npm run test"` inside the VM
+ - run `yarn run test` outside the VM (or `yarn run test-watch`)
+ - run `./scripts/console app-frontend "yarn run test"` inside the VM
  - run `./scripts/test` inside the VM (will also run additional project tests)
 
 ## Ports
