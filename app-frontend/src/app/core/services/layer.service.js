@@ -9,6 +9,7 @@ export default (app) => {
          * Creates a layer from a scene -- this may need to be expanded
          * @param {object} $http injected angular $http service
          * @param {object} $q promise service
+         * @param {object} authService service for auth, used to get token for layers
          * @param {object} colorCorrectService color correction service
          * @param {object} projectService project service
          * @param {object} scene response from the API, optional
@@ -20,12 +21,13 @@ export default (app) => {
          * @param {object} bands keys = band type, values = band number
          */
         constructor( // eslint-disable-line max-params
-            $http, $q, colorCorrectService, projectService, scene, projectId,
+            $http, $q, authService, colorCorrectService, projectService, scene, projectId,
             projectMosaic = true, gammaCorrect = true, sigmoidCorrect = true,
             colorClipCorrect = true, bands = {red: 3, green: 2, blue: 1}
         ) {
             this.$http = $http;
             this.$q = $q;
+            this.authService = authService;
             this.scene = scene;
             this.projectMosaic = projectMosaic;
             this.gammaCorrect = gammaCorrect;
@@ -136,10 +138,11 @@ export default (app) => {
             });
         }
 
-        getMosaicLayerURL(params) {
+        getMosaicLayerURL(params = {}) {
             let userParams = this.userParamsFromScene(this.scene);
             let organizationId = userParams.organizationId;
             let userId = userParams.userId;
+            params.token = this.authService.token();
             let formattedParams = L.Util.getParamString(params);
             return this.$q((resolve) => {
                 resolve(`/tiles/${organizationId}/` +
@@ -203,34 +206,9 @@ export default (app) => {
 
         formatColorParams() {
             return this.getColorCorrection().then((colorCorrection) => {
-                let colorCorrectParams = `redBand=${colorCorrection.redBand}&` +
-                    `greenBand=${colorCorrection.greenBand}&` +
-                    `blueBand=${colorCorrection.blueBand}`;
-
-                if (this.gammaCorrect) {
-                    colorCorrectParams = `${colorCorrectParams}` +
-                        `&redGamma=${colorCorrection.redGamma}` +
-                        `&greenGamma=${colorCorrection.greenGamma}` +
-                        `&blueGamma=${colorCorrection.blueGamma}`;
-                }
-
-                if (this.sigmoidCorrect) {
-                    colorCorrectParams = `${colorCorrectParams}` +
-                        `&alpha=${colorCorrection.alpha}` +
-                        `&beta=${colorCorrection.beta}`;
-                }
-
-                if (this.colorClipCorrect) {
-                    colorCorrectParams = `${colorCorrectParams}`
-                        + `&min=${colorCorrection.min}`
-                        + `&max=${colorCorrection.max}`;
-                }
-
-                colorCorrectParams = `${colorCorrectParams}` +
-                    `&brightness=${colorCorrection.brightness}` +
-                    `&contrast=${colorCorrection.contrast}`;
-
-                return colorCorrectParams;
+                colorCorrection.token = this.authService.token();
+                let formattedParams = L.Util.getParamString(colorCorrection);
+                return formattedParams;
             });
         }
 
@@ -309,10 +287,11 @@ export default (app) => {
     }
 
     class LayerService {
-        constructor($http, $q, colorCorrectService, projectService) {
+        constructor($http, $q, authService, colorCorrectService, projectService) {
             'ngInject';
             this.$http = $http;
             this.$q = $q;
+            this.authService = authService;
             this.colorCorrectService = colorCorrectService;
             this.projectService = projectService;
         }
@@ -325,8 +304,9 @@ export default (app) => {
          * @returns {Layer} layer created
          */
         layerFromScene(scene, projectId, projectMosaic = false) {
-            return new Layer(this.$http, this.$q, this.colorCorrectService, this.projectService,
-                             scene, projectId, projectMosaic);
+            return new Layer(this.$http, this.$q, this.authService,
+                this.colorCorrectService, this.projectService,
+                scene, projectId, projectMosaic);
         }
     }
 
