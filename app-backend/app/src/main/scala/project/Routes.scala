@@ -7,7 +7,7 @@ import spray.json._
 import DefaultJsonProtocol._
 import com.lonelyplanet.akka.http.extensions.{PaginationDirectives, Order}
 
-import com.azavea.rf.auth.Authentication
+import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.database.tables._
 import com.azavea.rf.database.Database
 import com.azavea.rf.datamodel._

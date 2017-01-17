@@ -81,7 +81,6 @@ lazy val appDependencies = dbDependencies ++ migrationsDependencies ++ Seq(
   Dependencies.akkaSlf4j,
   Dependencies.scalatest,
   Dependencies.authCommon,
-  Dependencies.authAkka,
   Dependencies.akkaHttpExtensions,
   Dependencies.ammoniteOps,
   Dependencies.geotrellisSlick
@@ -92,11 +91,20 @@ lazy val root = Project("root", file("."))
   .settings(commonSettings:_*)
 
 lazy val app = Project("app", file("app"))
-  .dependsOn(database, datamodel)
+  .dependsOn(database, datamodel, authentication)
   .settings(appSettings:_*)
   .settings({
     libraryDependencies ++= appDependencies
   })
+
+lazy val authentication = Project("authentication", file("authentication"))
+  .dependsOn(database, datamodel)
+  .settings(appSettings:_*)
+  .settings({libraryDependencies ++= Seq(
+    Dependencies.authAkka,
+    Dependencies.akka,
+    Dependencies.akkahttp
+  )})
 
 lazy val migrations = Project("migrations", file("migrations"))
   .dependsOn(datamodel)
@@ -140,7 +148,15 @@ lazy val ingest = Project("ingest", file("ingest"))
 lazy val tile = Project("tile", file("tile"))
   .dependsOn(datamodel)
   .dependsOn(database)
+  .dependsOn(authentication)
   .settings(commonSettings:_*)
+  .settings(assemblyMergeStrategy in assembly := {
+    case "reference.conf" => MergeStrategy.concat
+    case "application.conf" => MergeStrategy.concat
+    case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") => MergeStrategy.discard
+    case "META-INF/MANIFEST.MF" => MergeStrategy.discard
+    case _ => MergeStrategy.first
+  })
   .settings(assemblyJarName in assembly := "rf-tile-server.jar")
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({

@@ -20,10 +20,15 @@ object AkkaSystem {
   }
 }
 
-object Main extends App with Config with AkkaSystem.LoggerExecutor {
+object Main extends App
+  with TileRoutes
+  with TileAuthentication
+  with Config
+  with AkkaSystem.LoggerExecutor {
+
   import AkkaSystem._
 
-  val database = Database.DEFAULT
+  implicit lazy val database = Database.DEFAULT
 
   def exceptionHandler =
     ExceptionHandler {
@@ -37,7 +42,7 @@ object Main extends App with Config with AkkaSystem.LoggerExecutor {
 
   def rootRoute = handleExceptions(exceptionHandler) {
     pathPrefix("tiles") {
-      Routes.singleLayer ~ pathPrefix("healthcheck") {
+      pathPrefix("healthcheck") {
         pathEndOrSingleSlash {
           get {
             complete {
@@ -46,8 +51,10 @@ object Main extends App with Config with AkkaSystem.LoggerExecutor {
           }
         }
       } ~
-      Routes.singleLayer ~
-      Routes.mosaicProject(database)
+      tileAuthenticateOption { _ =>
+        singleLayer ~
+        mosaicProject
+      }
     }
   }
 

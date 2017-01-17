@@ -8,7 +8,7 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 import geotrellis.vector.io.json._
 
-import com.azavea.rf.auth.Authentication
+import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.database.tables.Scenes
 import com.azavea.rf.database.Database
 import com.azavea.rf.database._

@@ -7,7 +7,7 @@ import akka.http.scaladsl.model.StatusCodes
 
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 
-import com.azavea.rf.auth.Authentication
+import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.Organizations
 import com.azavea.rf.datamodel._
