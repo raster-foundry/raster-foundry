@@ -9,18 +9,17 @@ import akka.http.scaladsl.model.StatusCodes
 
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 
-import com.azavea.rf.auth.Authentication
+import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.database.tables.Thumbnails
 import com.azavea.rf.database.Database
 import com.azavea.rf.datamodel._
-import com.azavea.rf.utils.{UserErrorHandler, RouterHelper}
+import com.azavea.rf.utils.UserErrorHandler
 
 
 trait ThumbnailRoutes extends Authentication
     with ThumbnailQueryParameterDirective
     with PaginationDirectives
-    with UserErrorHandler
-    with RouterHelper {
+    with UserErrorHandler {
 
   implicit def database: Database
 

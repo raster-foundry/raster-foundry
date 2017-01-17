@@ -23,7 +23,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import java.util.UUID
 
-trait Routes extends LazyLogging {
+trait TileRoutes extends LazyLogging with TileAuthentication {
+
+  implicit def database: Database
 
   def layerTile(layer: RfLayerId) =
     pathPrefix(IntNumber / IntNumber / IntNumber).tmap[Future[Option[MultibandTile]]] {
@@ -152,7 +154,7 @@ trait Routes extends LazyLogging {
     }
   }
 
-  def mosaicProject(implicit db: Database): Route =
+  def mosaicProject: Route =
     pathPrefix(JavaUUID / Segment / "project" / JavaUUID/ IntNumber / IntNumber / IntNumber) { (orgId, userId, projectId, zoom, x, y) =>
       parameter("tag".?) { tag =>
         get {
@@ -165,5 +167,3 @@ trait Routes extends LazyLogging {
       }
     }
 }
-
-object Routes extends Routes

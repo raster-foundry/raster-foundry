@@ -1,7 +1,6 @@
 package com.azavea.rf
 
 
-import scala.concurrent.ExecutionContext
 import ch.megard.akka.http.cors.CorsDirectives._
 import ch.megard.akka.http.cors.CorsSettings
 import com.azavea.rf.project.ProjectRoutes
@@ -12,13 +11,12 @@ import com.azavea.rf.thumbnail.ThumbnailRoutes
 import com.azavea.rf.user.UserRoutes
 import com.azavea.rf.image.ImageRoutes
 import com.azavea.rf.config.ConfigRoutes
-import com.azavea.rf.database.Database
 import com.azavea.rf.tool.ToolRoutes
 import com.azavea.rf.tooltag.ToolTagRoutes
 import com.azavea.rf.token.TokenRoutes
 import com.azavea.rf.toolcategory.ToolCategoryRoutes
 import com.azavea.rf.grid.GridRoutes
-
+import com.azavea.rf.utils.Config
 
 /**
   * Contains all routes for Raster Foundry API/Healthcheck endpoints.
@@ -38,9 +36,8 @@ trait Router extends HealthCheckRoutes
     with ToolTagRoutes
     with ConfigRoutes
     with ToolCategoryRoutes
-    with GridRoutes {
-
-  implicit def database: Database
+    with GridRoutes
+    with Config {
 
   val corsSettings = CorsSettings.defaultSettings
 
