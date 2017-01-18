@@ -20,6 +20,8 @@ trait GridQueryParameterDirective extends QueryParametersCommon
     'maxAcquisitionDatetime.as(deserializerTimestamp).?,
     'datasource.as[String].*,
     'month.as[Int].*,
+    'minDayOfMonth.as[Int].?,
+    'maxDayOfMonth.as[Int].?,
     'maxSunAzimuth.as[Float].?,
     'minSunAzimuth.as[Float].?,
     'maxSunElevation.as[Float].?,

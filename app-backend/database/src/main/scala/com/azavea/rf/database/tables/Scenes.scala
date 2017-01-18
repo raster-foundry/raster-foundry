@@ -334,6 +334,16 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) extends LazyLoggin
         .reduceLeftOption(_ || _)
         .getOrElse(true: Rep[Boolean])
     }.filter { scene =>
+      sceneParams.minDayOfMonth
+        .map(datePart("day", scene.acquisitionDate) >= _)
+        .reduceLeftOption(_ || _)
+        .getOrElse(true: Rep[Boolean])
+    }.filter { scene =>
+      sceneParams.maxDayOfMonth
+        .map(datePart("day", scene.acquisitionDate) <= _)
+        .reduceLeftOption(_ || _)
+        .getOrElse(true: Rep[Boolean])
+    }.filter { scene =>
       sceneParams.datasource
         .map(scene.datasource === _)
         .reduceLeftOption(_ || _)
