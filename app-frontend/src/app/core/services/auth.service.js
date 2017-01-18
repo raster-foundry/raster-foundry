@@ -33,6 +33,12 @@ export default (app) => {
                     return;
                 }
 
+                /* eslint-disable no-undef */
+                if (typeof heap !== 'undefined' && typeof heap.identify === 'function') {
+                    heap.identify(profile.email);
+                }
+                /* eslint-enable no-undef */
+
                 this.store.set('profile', profile);
                 this.featureFlagOverrides.setUser(profile.user_id);
                 let userFlags = profile.user_metadata && profile.user_metadata.featureFlags ?
