@@ -48,7 +48,7 @@ export default class NavBarController {
             });
 
             this.activeModal.result.then(t => {
-                this.$state.go('lab.edit', {toolid: t.id});
+                this.$state.go('lab.run', {toolid: t.id});
             });
         }
 

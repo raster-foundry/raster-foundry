@@ -6,17 +6,14 @@
       </nav>
       <span class="navbar-vertical-divider"></span>
       <nav>
-        <a>Properties</a>
+        <a href ui-sref="lab.run" ui-sref-active="active">Run</a>
+        <a href ui-sref="lab.edit" ui-sref-active="active">Build</a>
       </nav>
     </div>
     <div class="navbar-right">
-      <nav>
-        <a href ui-sref="lab.run" ui-sref-active="active">Run</a>
-        <a href ui-sref="lab.edit" ui-sref-active="active">Build</a>
-        <div class="btn-group">
-          <button class="btn btn-primary">Clone Model</button>
-          <button class="btn btn-primary">Publish</button>
-        </div>
+      <nav class="nav-right">
+        <button class="btn">Clone</button>
+        <button class="btn btn-primary">Publish</button>
       </nav>
     </div>
   </div>

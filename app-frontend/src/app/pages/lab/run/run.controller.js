@@ -1,207 +1,80 @@
-const Map = require('es6-map');
+/* global L */
 
 export default class LabRunController {
-    constructor( // eslint-disable-line max-params
-        $scope, $state, $uibModal, mapService, layerService, projectService) {
+    constructor($scope, $timeout, $element, $uibModal, mapService, projectService, layerService) {
         'ngInject';
         this.$scope = $scope;
-        this.$parent = $scope.$parent.$ctrl;
-        this.$state = $state;
+        this.$timeout = $timeout;
+        this.$element = $element;
         this.$uibModal = $uibModal;
-        this.mapService = mapService;
-        this.layerService = layerService;
-        this.projectService = projectService;
-        this.inputs = {
+        this.getMap = () => mapService.getMap('lab-run-preview');
+    }
+
+    $onInit() {
+        this.inputs = [false, false];
+        this.inputParameters = [{
             bands: {
                 nir: '5',
                 red: '4'
             }
-        };
-    }
-
-    $onInit() {
-        this.setTestingTools();
-        this.getMap = () => this.mapService.getMap('lab-run');
-        this.projectId = this.$state.params.projectid;
-        this.sceneLayers = new Map();
-
-        if (this.$parent.toolId && !this.project) {
-            this.ensureProjectSelected();
-        }
-    }
-
-    ensureProjectSelected() {
-        if (this.projectId) {
-            this.loadingProject = true;
-            this.projectService.query({id: this.projectId}).then(
-                (project) => {
-                    this.project = project;
-                    this.loadingProject = false;
-                    this.getSceneList();
-                },
-                () => {
-                    this.loadingProject = false;
-                    // @TODO: handle displaying an error message
-                }
-            );
-        } else {
-            this.selectProjectModal();
-        }
-    }
-
-    fitAllScenes() {
-        if (this.sceneList.length) {
-            this.fitScenes(this.sceneList);
-        }
-    }
-
-    fitScenes(scenes) {
-        this.getMap().then((map) =>{
-            let sceneFootprints = scenes.map((scene) => scene.dataFootprint);
-            map.map.fitBounds(L.geoJSON(sceneFootprints).getBounds());
-        });
-    }
-
-    getSceneList() {
-        this.sceneRequestState = {loading: true};
-        this.projectService.getAllProjectScenes(
-            {projectId: this.projectId}
-        ).then(
-            (allScenes) => {
-                this.sceneList = allScenes;
-                this.fitAllScenes();
-                this.layersFromScenes();
-            },
-            (error) => {
-                this.sceneRequestState.errorMsg = error;
+        }, {
+            bands: {
+                nir: '5',
+                red: '4'
             }
-        ).finally(() => {
-            this.sceneRequestState.loading = false;
-        });
+        }];
     }
 
-    layersFromScenes() {
-        // Create scene layers to use for color correction
-        for (const scene of this.sceneList) {
-            let sceneLayer = this.layerService.layerFromScene(scene, this.projectId);
-            this.sceneLayers.set(scene.id, sceneLayer);
+    showPreview(data) {
+        this.isShowingPreview = true;
+        this.isComparing = false;
+        this.exitText = 'Close Preview';
+        this.previewData = data;
+
+        if (data.constructor === Array) {
+            // An array was passed, we assume a comparison
+            this.isComparing = true;
+            this.comparison = data;
+            this.exitTest = 'Close Comparison';
+            // @TODO: when endpoints are functioning, this will be handled accordingly
+            // for now, we are just passing in empty layers to display the control
+            this.sideBySideControl = L.control.sideBySide(L.featureGroup(), L.featureGroup());
         }
 
-        this.layers = this.sceneLayers.values();
-        this.getMap().then((map) => {
-            map.deleteLayers('scenes');
-            for (let layer of this.layers) {
-                let tiles = layer.getNDVILayer([this.inputs.bands.nir, this.inputs.bands.red]);
-                map.addLayer('scenes', tiles);
+        this.getMap().then(m => {
+            if (this.isComparing && !this.sideBySideAdded) {
+                this.sideBySideControl.addTo(m.map);
+                this.sideBySideAdded = true;
+            } else if (!this.isComparing && this.sideBySideAdded){
+                this.sideBySideControl.remove();
+                this.sideBySideAdded = false;
             }
+            this.$timeout(() => m.map.invalidateSize());
         });
     }
 
-    updateInputs() {
-        this.layersFromScenes();
+    closePreview() {
+        this.isShowingPreview = false;
     }
 
-    selectToolModal() {
+    selectProjectModal(src) {
         if (this.activeModal) {
             this.activeModal.dismiss();
         }
 
-        const backdrop = this.project ? true : 'static';
-        const keyboard = Boolean(this.project);
-
         this.activeModal = this.$uibModal.open({
             component: 'rfSelectProjectModal',
-            backdrop: backdrop,
-            keyboard: keyboard,
             resolve: {
-                project: () => this.project,
+                project: () => this.inputs[src],
                 content: () => ({
                     title: 'Select a project'
                 })
             }
         });
-    }
 
-    selectProjectModal() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        const backdrop = this.project ? true : 'static';
-        const keyboard = Boolean(this.project);
-
-        this.activeModal = this.$uibModal.open({
-            component: 'rfSelectProjectModal',
-            backdrop: backdrop,
-            keyboard: keyboard,
-            resolve: {
-                project: () => this.project,
-                content: () => ({
-                    title: 'Select a project'
-                })
-            }
+        this.activeModal.result.then(p => {
+            this.inputs[src] = p;
+            this.$scope.$evalAsync();
         });
-    }
-
-    setTestingTools() {
-        this.tools = [
-            {
-                definition: 'ndvi',
-                params: ['red', 'nir'],
-                result: {
-                    apply: '/',
-                    args: [
-                        {
-                            apply: '-',
-                            args: ['red', 'nir']
-                        }, {
-                            apply: '+',
-                            args: ['red', 'nir']
-                        }
-                    ]
-                }
-            }, {
-                definition: 'multiband_ndvi',
-                params: ['LC8'],
-                result: {
-                    apply: '/',
-                    args: [
-                        {
-                            apply: '-',
-                            args: ['LC8[4]', 'LC8[5]']
-                        }, {
-                            apply: '+',
-                            args: ['LC8[4]', 'LC8[5]']
-                        }
-                    ]
-                }
-            }, {
-                definition: 'LC8_ndvi',
-                params: ['LC8'],
-                include: [
-                    {
-                        definition: 'ndvi',
-                        params: ['red', 'nir'],
-                        result: {
-                            apply: '/',
-                            args: [
-                                {
-                                    apply: '-',
-                                    args: ['red', 'nir']
-                                }, {
-                                    apply: '+',
-                                    args: ['red', 'nir']
-                                }
-                            ]
-                        }
-                    }
-                ],
-                result: {
-                    apply: 'ndvi',
-                    args: ['LC8[4]', 'LC8[5]']
-                }
-            }
-        ];
-        this.selectedTool = this.tools[0];
     }
 }
