@@ -38,6 +38,12 @@
       </div>
     </div>
     <div class="filter">
+      <label>Day of Month</label>
+      <rzslider rz-slider-model="$ctrl.dayOfMonthFilters.minModel"
+                rz-slider-high="$ctrl.dayOfMonthFilters.maxModel"
+                rz-slider-options="$ctrl.dayOfMonthFilters.options"></rzslider>
+    </div>
+    <div class="filter">
       <label>Cloud cover</label>
       <rzslider rz-slider-model="$ctrl.cloudCoverFilters.minModel"
                 rz-slider-high="$ctrl.cloudCoverFilters.maxModel"
