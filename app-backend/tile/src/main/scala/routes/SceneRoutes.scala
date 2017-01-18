@@ -1,11 +1,10 @@
-package com.azavea.rf.tile
+package com.azavea.rf.tile.routes
 
-import com.azavea.rf.database.Database
-import com.azavea.rf.tile.image._
+import com.azavea.rf.tile._
+import com.azavea.rf.datamodel.ColorCorrect
+import com.azavea.rf.datamodel.ColorCorrect.Params.colorCorrectParams
 import com.azavea.rf.tile.tool._
 import com.azavea.rf.tile.tool.ToolParams._
-import com.azavea.rf.datamodel.ColorCorrect
-import ColorCorrect.Params.colorCorrectParams
 
 import geotrellis.raster._
 import geotrellis.raster.io._
@@ -16,35 +15,16 @@ import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import com.typesafe.scalalogging.LazyLogging
 import spray.json._
+import com.typesafe.scalalogging.LazyLogging
+
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
-import java.util.UUID
 
-trait TileRoutes extends LazyLogging with TileAuthentication {
+object SceneRoutes extends LazyLogging {
 
-  implicit def database: Database
-
-  def layerTile(layer: RfLayerId) =
-    pathPrefix(IntNumber / IntNumber / IntNumber).tmap[Future[Option[MultibandTile]]] {
-      case (zoom: Int, x: Int, y: Int) =>
-        LayerCache.maybeTile(layer, zoom, SpatialKey(x, y))
-    }
-
-  def layerTileAndHistogram(id: RfLayerId) =
-    pathPrefix(IntNumber / IntNumber / IntNumber).tmap[(Future[Option[MultibandTile]], Future[Array[Histogram[Double]]])] {
-      case (zoom: Int, x: Int, y: Int) =>
-        val futureMaybeTile = LayerCache.maybeTile(id, zoom, SpatialKey(x, y))
-        val futureHistogram = LayerCache.bandHistogram(id, zoom)
-        (futureMaybeTile, futureHistogram)
-    }
-
-  def pngAsHttpResponse(png: Png): HttpResponse =
-    HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/png`), png.bytes))
-
-  def singleLayer: Route =
+  def root: Route =
     pathPrefix(JavaUUID / Segment / JavaUUID).as(RfLayerId) { id =>
       pathPrefix("rgb") {
         layerTileAndHistogram(id) { (futureMaybeTile, futureHist) =>
@@ -77,6 +57,23 @@ trait TileRoutes extends LazyLogging with TileAuthentication {
         }
       }
     }
+
+  def layerTile(layer: RfLayerId) =
+    pathPrefix(IntNumber / IntNumber / IntNumber).tmap[Future[Option[MultibandTile]]] {
+      case (zoom: Int, x: Int, y: Int) =>
+        LayerCache.maybeTile(layer, zoom, SpatialKey(x, y))
+    }
+
+  def layerTileAndHistogram(id: RfLayerId) =
+    pathPrefix(IntNumber / IntNumber / IntNumber).tmap[(Future[Option[MultibandTile]], Future[Array[Histogram[Double]]])] {
+      case (zoom: Int, x: Int, y: Int) =>
+        val futureMaybeTile = LayerCache.maybeTile(id, zoom, SpatialKey(x, y))
+        val futureHistogram = LayerCache.bandHistogram(id, zoom)
+        (futureMaybeTile, futureHistogram)
+    }
+
+  def pngAsHttpResponse(png: Png): HttpResponse =
+    HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/png`), png.bytes))
 
   def imageThumbnailRoute(id: RfLayerId) =
     colorCorrectParams { params =>
@@ -153,17 +150,5 @@ trait TileRoutes extends LazyLogging with TileAuthentication {
       }
     }
   }
-
-  def mosaicProject: Route =
-    pathPrefix(JavaUUID / Segment / "project" / JavaUUID/ IntNumber / IntNumber / IntNumber) { (orgId, userId, projectId, zoom, x, y) =>
-      parameter("tag".?) { tag =>
-        get {
-          complete {
-            Mosaic(orgId, userId, projectId, zoom, x, y, tag).map { maybeTile =>
-              maybeTile.map { tile => pngAsHttpResponse(tile.renderPng()) }
-            }
-          }
-        }
-      }
-    }
 }
+
