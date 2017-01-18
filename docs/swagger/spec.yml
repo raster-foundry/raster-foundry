@@ -290,6 +290,8 @@ paths:
         - $ref: '#/parameters/maxCreateDatetime'
         - $ref: '#/parameters/datasource'
         - $ref: '#/parameters/month'
+        - $ref: '#/parameters/minDayOfMonth'
+        - $ref: '#/parameters/maxDayOfMonth'
         - $ref: '#/parameters/maxSunAzimuth'
         - $ref: '#/parameters/minSunAzimuth'
         - $ref: '#/parameters/maxSunElevation'
@@ -389,6 +391,8 @@ paths:
         - $ref: '#/parameters/maxCreateDatetime'
         - $ref: '#/parameters/datasource'
         - $ref: '#/parameters/month'
+        - $ref: '#/parameters/minDayOfMonth'
+        - $ref: '#/parameters/maxDayOfMonth'
         - $ref: '#/parameters/maxSunAzimuth'
         - $ref: '#/parameters/minSunAzimuth'
         - $ref: '#/parameters/maxSunElevation'
@@ -508,6 +512,8 @@ paths:
         - $ref: '#/parameters/maxCreateDatetime'
         - $ref: '#/parameters/datasource'
         - $ref: '#/parameters/month'
+        - $ref: '#/parameters/minDayOfMonth'
+        - $ref: '#/parameters/maxDayOfMonth'
         - $ref: '#/parameters/maxSunAzimuth'
         - $ref: '#/parameters/minSunAzimuth'
         - $ref: '#/parameters/maxSunElevation'
@@ -1093,6 +1099,16 @@ parameters:
       format: int
       maximum: 12
       minimum: 1
+  minDayOfMonth:
+    name: minDayOfMonth
+    description: Only return results with acquisition day-of-month greater-than or equal-to this day
+    in: query
+    type: number
+  maxDayOfMonth:
+    name: maxDayOfMonth
+    description: Only return results with acquisition day-of-month less-than than or equal-to this day
+    in: query
+    type: number
   orderingScene:
     name: ordering
     in: query

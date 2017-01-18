@@ -191,6 +191,25 @@ class SceneSpec extends WordSpec
       }
     }
 
+    "filter by day-of-month correctly" in {
+      val urlMinNoScenes = s"$baseScene?minDayOfMonth=20"
+      Get(urlMinNoScenes).withHeaders(List(authHeader)) ~> baseRoutes ~> check {
+        responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 0
+      }
+      val urlMinWithScene = s"$baseScene?minDayOfMonth=18"
+      Get(urlMinWithScene).withHeaders(List(authHeader)) ~> baseRoutes ~> check {
+        responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 1
+      }
+      val urlMaxNoScenes = s"$baseScene?maxDayOfMonth=18"
+      Get(urlMaxNoScenes).withHeaders(List(authHeader)) ~> baseRoutes ~> check {
+        responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 0
+      }
+      val urlMaxWithScene = s"$baseScene?maxDayOfMonth=20"
+      Get(urlMaxWithScene).withHeaders(List(authHeader)) ~> baseRoutes ~> check {
+        responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 1
+      }
+    }
+
     "filter by one datasource correctly" in {
       val url = s"$baseScene?datasource=TEST_ORG"
       Get(url).withHeaders(List(authHeader)) ~> baseRoutes ~> check {
