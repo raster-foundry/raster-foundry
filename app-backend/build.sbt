@@ -149,6 +149,7 @@ lazy val tile = Project("tile", file("tile"))
   .dependsOn(datamodel)
   .dependsOn(database)
   .dependsOn(authentication)
+  .dependsOn(tool)
   .settings(commonSettings:_*)
   .settings(assemblyMergeStrategy in assembly := {
     case "reference.conf" => MergeStrategy.concat
