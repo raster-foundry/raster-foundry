@@ -1,168 +1,75 @@
-<!-- Workflow container -->
-<!-- @TODO: figure out how to style this to get desired functionality;
-  doesn't work right without this style rule
--->
-  <div class="sidebar sidebar-scrollable" style="flex: 0 0 auto;">
+<div class="main">
+  <div class="sidebar sidebar-extended sidebar-dark not-offset" ng-show="$ctrl.isShowingParams">
+      Params Sidebar
+  </div>
+  <!-- Workflow container -->
+  <div class="sidebar sidebar-extended sidebar-scrollable">
     <div class="sidebar-content flex-row with-padding with-border">
       <h5 class="sidebar-title">
           Inputs
       </h5>
       <div class="sidebar-actions">
-        <button class="btn btn-secondary">
-          <i class="icon-parameters"></i> Parameters
+        <button class="btn btn-primary">Raster Settings</button>
+      </div>
+    </div>
+    <div class="sidebar-content flex-row with-padding"
+         ng-show="$ctrl.project">
+      <div class="run-project-name">
+          {{$ctrl.project.name || "No project selected"}}
+      </div>
+      <div class="sidebar-actions">
+        <button class="btn btn-small btn-square"
+                ng-click="$ctrl.selectProjectModal(true)">
+          Change Project
         </button>
       </div>
     </div>
-    <div class="sidebar-scrollable">
-      <div class="sidebar-content with-padding with-border">
-        <h5 class="sidebar-title">
-            <div class="btn btn-square really-square">1</div><span>NDVI - Before</span>
-        </h5>
-        <div class="instructions-container" ng-show="!$ctrl.inputs[0]">
-          <p>
-            The NDVI tool requires a source with NIR and Red bands
-          </p>
-          <button class="btn btn-primary"
-                  ng-click="$ctrl.selectProjectModal(0)">
-            Select A Source
-          </button>
+    <div class="sidebar-content with-padding"
+         ng-show="$ctrl.project">
+      <form>
+        <div class="form-group">
+          <label for="formGroupExampleInput">Red Band</label>
+          <select class="form-control" id="red-band-map"  ng-model="$ctrl.inputs.bands.red">
+            <option value="1">Band 1</option>
+            <option value="2">Band 2</option>
+            <option value="3">Band 3</option>
+            <option value="4">Band 4</option>
+            <option value="5">Band 5</option>
+            <option value="6">Band 6</option>
+            <option value="7">Band 7</option>
+            <option value="8">Band 8</option>
+            <option value="9">Band 9</option>
+            <option value="10">Band 10</option>
+            <option value="11">Band 11</option>
+          </select>
         </div>
-        <form class="inset form-horizontal">
-          <div class="form-group" ng-show="$ctrl.inputs[0]">
-            <label for="formGroupExampleInput">Input Source</label>
-            <div class="form-group all-in-one">
-              <input type="text" class="form-control" id="input-0" placeholder="Example input" readonly ng-value="$ctrl.inputs[0].name">
-              <button class="btn btn-link" ng-click="$ctrl.selectProjectModal(0)">
-                Change
-              </button>
-            </div>
-          </div>
-          <div class="form-group" ng-show="$ctrl.inputs[0]">
-            <label for="formGroupExampleInput">Red Band</label>
-            <select class="form-control" id="red-band-map"  ng-model="$ctrl.inputParameters[0].bands.red">
-              <option value="1">Band 1</option>
-              <option value="2">Band 2</option>
-              <option value="3">Band 3</option>
-              <option value="4">Band 4</option>
-              <option value="5">Band 5</option>
-              <option value="6">Band 6</option>
-              <option value="7">Band 7</option>
-              <option value="8">Band 8</option>
-              <option value="9">Band 9</option>
-              <option value="10">Band 10</option>
-              <option value="11">Band 11</option>
-            </select>
-          </div>
-          <div class="form-group" ng-show="$ctrl.inputs[0]">
-            <label for="formGroupExampleInput">NIR Band</label>
-            <select class="form-control" id="nir-band-map" ng-model="$ctrl.inputParameters[0].bands.nir">
-              <option value="1">Band 1</option>
-              <option value="2">Band 2</option>
-              <option value="3">Band 3</option>
-              <option value="4">Band 4</option>
-              <option value="5">Band 5</option>
-              <option value="6">Band 6</option>
-              <option value="7">Band 7</option>
-              <option value="8">Band 8</option>
-              <option value="9">Band 9</option>
-              <option value="10">Band 10</option>
-              <option value="11">Band 11</option>
-            </select>
-          </div>
-        </form>
-      </div>
-      <div class="sidebar-content with-padding with-border">
-        <h5 class="sidebar-title">
-            <div class="btn btn-square really-square">2</div><span>NDVI - After</span>
-        </h5>
-        <div class="instructions-container" ng-show="!$ctrl.inputs[1]">
-          <p>
-            The NDVI tool requires a source with NIR and Red bands
-          </p>
-          <button class="btn btn-primary"
-                  ng-click="$ctrl.selectProjectModal(1)">
-            Select A Source
-          </button>
+        <div class="form-group">
+          <label for="formGroupExampleInput">NIR Band</label>
+          <select class="form-control" id="nir-band-map" ng-model="$ctrl.inputs.bands.nir">
+            <option value="1">Band 1</option>
+            <option value="2">Band 2</option>
+            <option value="3">Band 3</option>
+            <option value="4">Band 4</option>
+            <option value="5">Band 5</option>
+            <option value="6">Band 6</option>
+            <option value="7">Band 7</option>
+            <option value="8">Band 8</option>
+            <option value="9">Band 9</option>
+            <option value="10">Band 10</option>
+            <option value="11">Band 11</option>
+          </select>
         </div>
-        <form class="inset">
-          <div class="form-group" ng-show="$ctrl.inputs[1]">
-            <label for="formGroupExampleInput">Input Source</label>
-            <div class="form-group all-in-one">
-              <input type="text" class="form-control" id="input-1" placeholder="Example input" readonly ng-value="$ctrl.inputs[1].name">
-              <button class="btn btn-link" ng-click="$ctrl.selectProjectModal(1)">
-                Change
-              </button>
-            </div>
-          </div>
-          <div class="form-group" ng-show="$ctrl.inputs[1]">
-            <label for="formGroupExampleInput">Red Band</label>
-            <select class="form-control" id="red-band-map"  ng-model="$ctrl.inputParameters[1].bands.red">
-              <option value="1">Band 1</option>
-              <option value="2">Band 2</option>
-              <option value="3">Band 3</option>
-              <option value="4">Band 4</option>
-              <option value="5">Band 5</option>
-              <option value="6">Band 6</option>
-              <option value="7">Band 7</option>
-              <option value="8">Band 8</option>
-              <option value="9">Band 9</option>
-              <option value="10">Band 10</option>
-              <option value="11">Band 11</option>
-            </select>
-          </div>
-          <div class="form-group" ng-show="$ctrl.inputs[1]">
-            <label for="formGroupExampleInput">NIR Band</label>
-            <select class="form-control" id="nir-band-map" ng-model="$ctrl.inputParameters[1].bands.nir">
-              <option value="1">Band 1</option>
-              <option value="2">Band 2</option>
-              <option value="3">Band 3</option>
-              <option value="4">Band 4</option>
-              <option value="5">Band 5</option>
-              <option value="6">Band 6</option>
-              <option value="7">Band 7</option>
-              <option value="8">Band 8</option>
-              <option value="9">Band 9</option>
-              <option value="10">Band 10</option>
-              <option value="11">Band 11</option>
-            </select>
-          </div>
-        </form>
-      </div>
+      </form>
     </div>
-    <div class="sidebar-content flex-row with-padding with-borders">
+    <div class="sidebar-content flex-row with-padding">
       <div class="form-btn-row">
         <div class="btn-group">
-          <button class="btn">
-            Cancel
-          </button>
-          <button class="btn btn-primary">
-            Save
+          <button class="btn btn-primary" ng-click="$ctrl.updateInputs()">
+            Apply
           </button>
         </div>
       </div>
     </div>
   </div>
-  <div class="main with-position">
-    <rf-diagram-container class="with-position"
-                          on-preview="$ctrl.showPreview(data)">
-    </rf-diagram-container>
-    <div style="position: absolute; top:0; bottom: 0; left: 0; right: 0;" ng-show="$ctrl.isShowingPreview">
-      <rf-map-container map-id="lab-run-preview"></rf-map-container>
-      <div class="preview-control-bar">
-          <button class="btn btn-primary" ng-click="$ctrl.closePreview()">{{$ctrl.exitText}}</button>
-      </div>
-      <div class="preview-info-bar" ng-show="$ctrl.isComparing">
-        <div class="split-container">
-          <button class="btn">{{$ctrl.previewData[0].name}}</button>
-        </div>
-        <div class="split-container">
-          <button class="btn">{{$ctrl.previewData[1].name}}</button>
-        </div>
-      </div>
-      <div class="preview-info-bar" ng-show="!$ctrl.isComparing">
-        <div class="split-container">
-          <button class="btn">{{$ctrl.previewData.name}}</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <rf-map-container map-id="lab-run"></rf-map-container>
+</div>
