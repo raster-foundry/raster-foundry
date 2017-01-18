@@ -29,6 +29,20 @@ export default class FilterPaneController {
         }
     }
 
+    onDayOfMonthFiltersChange(id, minModel, maxModel) {
+        if (minModel === this.dayOfMonthRange.min) {
+            delete this.filters.minDayOfMonth;
+        } else {
+            this.filters.minDayOfMonth = minModel;
+        }
+
+        if (maxModel === this.dayOfMonthRange.max) {
+            delete this.filters.maxDayOfMonth;
+        } else {
+            this.filters.maxDayOfMonth = maxModel;
+        }
+    }
+
     onCloudCoverFiltersChange(id, minModel, maxModel) {
         if (minModel === this.cloudCoverRange.min) {
             delete this.filters.minCloudCover;
@@ -95,6 +109,27 @@ export default class FilterPaneController {
         };
 
         this.initMonthFilters();
+
+        this.dayOfMonthRange = {min: 1, max: 31};
+        let minDayOfMonth = this.filters.minDayOfMonth ||
+            this.dayOfMonthRange.min;
+        let maxDayOfMonth = this.filters.maxDayOfMonth ||
+            this.dayOfMonthRange.max;
+        this.dayOfMonthFilters = {
+            minModel: minDayOfMonth,
+            maxModel: maxDayOfMonth,
+            options: {
+                floor: this.dayOfMonthRange.min,
+                ceil: this.dayOfMonthRange.max,
+                minRange: 1,
+                showTicks: 2,
+                step: 1,
+                showTicksValues: true,
+                pushRange: true,
+                draggableRange: true,
+                onEnd: this.onDayOfMonthFiltersChange.bind(this)
+            }
+        };
 
         this.cloudCoverRange = {min: 0, max: 100};
         let minCloudCover = parseInt(this.filters.minCloudCover, 10) ||

@@ -186,6 +186,8 @@ function browseStates($stateProvider) {
         'maxAcquisitionDatetime',
         'datasource',
         'month',
+        'minDayOfMonth',
+        'maxDayOfMonth',
         'maxSunAzimuth',
         'minSunAzimuth',
         'maxSunElevation',
