@@ -20,25 +20,25 @@ trait Op extends TileLike with Grid {
   def get(col: Int, row: Int): Int
   def getDouble(col: Int, row: Int): Double
 
-  def map(f: Int => Int): Op =
+  def map(f: Int => Int): Op.Unary =
     Op.MapInt(this, f)
 
-  def mapDouble(f: Double => Double): Op =
+  def mapDouble(f: Double => Double): Op.Unary =
     Op.MapDouble(this, f)
 
-  def combine(other: Op)(f: (Int, Int) => Int): Op =
+  def combine(other: Op)(f: (Int, Int) => Int): Op.Binary =
     Op.CombineInt(this, other, f)
 
-  def combineDouble(other: Op)(f: (Double, Double) => Double): Op =
+  def combineDouble(other: Op)(f: (Double, Double) => Double): Op.Binary =
     Op.CombineDouble(this, other, f)
 
-  def dualCombine(other: Op)(f: (Int, Int) => Int)(g: (Double, Double) => Double): Op =
+  def dualCombine(other: Op)(f: (Int, Int) => Int)(g: (Double, Double) => Double): Op.Binary =
     Op.DualCombine(this, other, f, g)
 
-  def mapIntMapper(mapper: IntTileMapper) =
+  def mapIntMapper(mapper: IntTileMapper): Op.Unary =
     Op.IntMapper(this, mapper)
 
-  def mapDoubleMapper(mapper: DoubleTileMapper) =
+  def mapDoubleMapper(mapper: DoubleTileMapper): Op.Unary =
     Op.DoubleMapper(this, mapper)
 
   def vars: OpVars = new OpVars(this, Map.empty)
