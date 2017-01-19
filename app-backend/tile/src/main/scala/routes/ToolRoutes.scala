@@ -22,21 +22,24 @@ import java.util.UUID
 object ToolRoutes extends LazyLogging {
   val userId: String = "rf_airflow-user"
 
-  val ndviDiff: Op.Binary = {
+  def ndviDiff: Op.Tree = {
     val red = Op('red)
     val nir = Op('nir)
     val ndvi = (nir - red) / (nir + red)
 
     val params0 = Map(
-      Op.Var('red) -> Op("LC8_1[1]"),
-      Op.Var('nir) -> Op("LC8_1[2]")
+      Op.Var('red) -> Op("LC8_1[3]"),
+      Op.Var('nir) -> Op("LC8_1[4]")
     )
 
     val params1 = Map(
-      Op.Var('red) -> Op("LC8_0[1]"),
-      Op.Var('nir) -> Op("LC8_0[2]")
+      Op.Var('red) -> Op("LC8_0[3]"),
+      Op.Var('nir) -> Op("LC8_0[4]")
     )
-    ndvi.bind(params0) - ndvi.bind(params1)
+
+    val maskThreshold = 0.01
+    val mask: Double => Double = { d: Double => if (d > maskThreshold) 1.0 else 0.0 }
+    Op.MapDouble(ndvi.bind(params0) - ndvi.bind(params1), mask)
   }
 
   type TMS = (Int, Int, Int) => Future[Option[MultibandTile]]
@@ -45,60 +48,19 @@ object ToolRoutes extends LazyLogging {
     parameters('LC8_0, 'LC8_1).as { (p0: String, p1: String) =>
       Map(
         'LC8_0 -> { (z: Int, x: Int, y: Int) =>
-          Mosaic(orgId, userId, UUID.fromString(p0), z, x, y)},
+          Mosaic(orgId, userId, UUID.fromString(p0), z, x, y, None, false)},
         'LC8_1 -> { (z: Int, x: Int, y: Int) =>
-          Mosaic(orgId, userId, UUID.fromString(p1), z, x, y)})
+          Mosaic(orgId, userId, UUID.fromString(p1), z, x, y, None, false)})
     }
 
-  def root(implicit db: Database) =
-    pathPrefix(Segment / "ndvi-diff-tool"){ organizationId =>
-      (pathEndOrSingleSlash & get) {
-        complete("model JSON")
-      } ~
-      pathPrefix(IntNumber / IntNumber / IntNumber){ (z, x, y) =>
-        (varParams(UUID.fromString(organizationId)) & parameter('part.?)) { (varMap, partId) =>
-          complete {
-            val model: Op = lookupModel(partId)
-            println(s"PRE-MODEL: $model")
-            // TODO: Inspect what variables are actually required, only fetch those tiles
-            val futureTiles = varMap.map { case (sym, tms) =>
-              tms(z, x, y).map { maybeTile => sym -> maybeTile }
-            }
-
-            Future.sequence(futureTiles).map { tiles =>
-              println(s"tiles $tiles")
-              val params = tiles.flatMap { case (name, maybeTile) =>
-                if (maybeTile.isDefined) {
-                  val tile = maybeTile.get
-                  for (
-                    i <- 0 until tile.bandCount
-                  ) yield Op.Var(name, i) -> Op(tile.bands(i))
-                } else {
-                  Seq()
-                }
-              }.toMap
-
-              val assignedModel = model.bind(params)
-              println(s"POST-MODEL: $assignedModel")
-
-              val tile = assignedModel.toTile(FloatCellType)
-
-              val png = tile.renderPng(lookupColorMap(partId))
-              pngAsHttpResponse(png)
-            }
-          }
-        }
-      }
-    }
-
-  // REFACTOR: there should an awesome way to navigate this op tree without having to match
+  // TODO: refactor; there should an awesome way to navigate the op tree without having to match
   def lookupModel: PartialFunction[Option[String], Op] = {
     case None =>
       ndviDiff
-    case Some("ndvi1") =>
-      ndviDiff.left
     case Some("ndvi0") =>
-      ndviDiff.right
+      ndviDiff.left.left
+    case Some("ndvi1") =>
+      ndviDiff.left.right
   }
 
   def lookupColorMap: PartialFunction[Option[String], ColorMap] = {
@@ -110,4 +72,42 @@ object ToolRoutes extends LazyLogging {
 
   def pngAsHttpResponse(png: Png): HttpResponse =
     HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/png`), png.bytes))
+
+  def root(implicit db: Database) =
+    pathPrefix(Segment / "ndvi-diff-tool"){ organizationId =>
+      (pathEndOrSingleSlash & get & rejectEmptyResponse) {
+        complete("model JSON")
+      } ~
+      pathPrefix(IntNumber / IntNumber / IntNumber){ (z, x, y) =>
+        (varParams(UUID.fromString(organizationId)) & parameter('part.?)) { (varMap, partId) =>
+          complete {
+            val model: Op = lookupModel(partId)
+            logger.debug(s"model prior to param binding: $model")
+            // TODO: Inspect what variables are actually required, only fetch those tiles
+            val futureTiles = varMap.map { case (sym, tms) =>
+              tms(z, x, y).map { maybeTile => sym -> maybeTile }
+            }
+
+            Future.sequence(futureTiles).map { tiles =>
+              // construct a list of parameters to bind to the NDVI-diff model
+              val params = tiles.map { case (name, maybeTile) =>
+                Op.Var(name) -> Op.Unbound(maybeTile)
+              }.toMap
+              logger.debug(s"Params to bind to model: $params")
+
+              val assignedModel = model.bind(params)
+              logger.debug(s"model after param binding: $assignedModel")
+              assert(assignedModel.fullyBound) // Verification that binding completed
+
+              val calculation = assignedModel.toTile(FloatCellType)
+
+              calculation.map { tile =>
+                val png = tile.renderPng(lookupColorMap(partId))
+                pngAsHttpResponse(png)
+              }
+            }
+          }
+        }
+      }
+    }
 }
