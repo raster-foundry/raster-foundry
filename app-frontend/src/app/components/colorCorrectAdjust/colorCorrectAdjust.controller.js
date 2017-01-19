@@ -55,12 +55,16 @@ export default class ColorCorrectAdjustController {
         this.greenGammaOptions = Object.assign({}, baseGammaOptions, {id: 'green'});
         this.blueGammaOptions = Object.assign({}, baseGammaOptions, {id: 'blue'});
 
-        this.brightnessOptions = Object.assign({}, baseFilterOptions, {id: 'brightness'});
-        this.contrastOptions = Object.assign({}, baseFilterOptions, {id: 'contrast'});
-
         this.alphaOptions = Object.assign({}, alphaOptions, {id: 'alpha'});
         this.betaOptions = Object.assign({}, betaOptions, {id: 'beta'});
+
+        this.brightnessOptions = Object.assign({}, baseFilterOptions, {id: 'brightness'});
+        this.contrastOptions = Object.assign({}, baseFilterOptions, {id: 'contrast'});
         this.minMaxOptions = Object.assign({}, minMaxOptions, {id: 'minmax'});
+
+        this.gammaToggle = {value: true};
+        this.sigToggle = {value: true};
+        this.bcToggle = {value: true};
     }
 
     /**
@@ -71,7 +75,38 @@ export default class ColorCorrectAdjustController {
      * @returns {null} null
      */
     onFilterChange(id, val) {
-        this.correction[id] = val;
+        if (id) {
+            this.correction[id] = val;
+        }
         this.onCorrectionChange({newCorrection: Object.assign({}, this.correction)});
+    }
+
+    gammaToggled(value) {
+        this.redGammaOptions.disabled = !value;
+        this.greenGammaOptions.disabled = !value;
+        this.blueGammaOptions.disabled = !value;
+        ['red', 'green', 'blue'].forEach((id) => {
+            this.correction[id] = null;
+        });
+        this.onFilterChange();
+    }
+
+    sigToggled(value) {
+        this.alphaOptions.disabled = !value;
+        this.betaOptions.disabled = !value;
+        ['alpha', 'beta'].forEach((id) => {
+            this.correction[id] = null;
+        });
+        this.onFilterChange();
+    }
+
+    bcToggled(value) {
+        this.brightnessOptions.disabled = !value;
+        this.contrastOptions.disabled = !value;
+        this.minMaxOptions.disabled = !value;
+        ['brightness', 'contrast', 'min', 'max'].forEach((id) => {
+            this.correction[id] = null;
+        });
+        this.onFilterChange();
     }
 }
