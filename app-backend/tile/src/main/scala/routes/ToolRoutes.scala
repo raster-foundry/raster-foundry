@@ -26,15 +26,17 @@ object ToolRoutes extends LazyLogging {
     val red = Op('red)
     val nir = Op('nir)
     val ndvi = (nir - red) / (nir + red)
-    val ndvi_1 = ndvi.vars
-      .set('red, Op("LC8_1[5]"))
-      .set('nir, Op("LC8_1[6]"))
-      .result
-    val ndvi_0 = ndvi.vars
-      .set('red, Op("LC8_0[5]"))
-      .set('nir, Op("LC8_0[6]"))
-      .result
-    ndvi_1 - ndvi_0
+
+    val params0 = Map(
+      Op.Var('red) -> Op("LC8_1[1]"),
+      Op.Var('nir) -> Op("LC8_1[2]")
+    )
+
+    val params1 = Map(
+      Op.Var('red) -> Op("LC8_0[1]"),
+      Op.Var('nir) -> Op("LC8_0[2]")
+    )
+    ndvi.bind(params0) - ndvi.bind(params1)
   }
 
   type TMS = (Int, Int, Int) => Future[Option[MultibandTile]]
@@ -64,13 +66,23 @@ object ToolRoutes extends LazyLogging {
             }
 
             Future.sequence(futureTiles).map { tiles =>
-              val vars = model.vars
-              tiles.foreach { case (s, maybeTile) =>
-                if (maybeTile.isDefined) vars.set(s, maybeTile.get)
-              }
-              val assignedModel = vars.result
+              println(s"tiles $tiles")
+              val params = tiles.flatMap { case (name, maybeTile) =>
+                if (maybeTile.isDefined) {
+                  val tile = maybeTile.get
+                  for (
+                    i <- 0 until tile.bandCount
+                  ) yield Op.Var(name, i) -> Op(tile.bands(i))
+                } else {
+                  Seq()
+                }
+              }.toMap
+
+              val assignedModel = model.bind(params)
               println(s"POST-MODEL: $assignedModel")
+
               val tile = assignedModel.toTile(FloatCellType)
+
               val png = tile.renderPng(lookupColorMap(partId))
               pngAsHttpResponse(png)
             }
