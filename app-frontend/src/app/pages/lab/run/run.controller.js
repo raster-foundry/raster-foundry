@@ -1,7 +1,8 @@
 /* global L */
 
 export default class LabRunController {
-    constructor($scope, $timeout, $element, $uibModal, mapService, projectService, layerService) {
+    constructor( // eslint-disable-line max-params
+        $scope, $timeout, $element, $uibModal, mapService) {
         'ngInject';
         this.$scope = $scope;
         this.$timeout = $timeout;
@@ -23,6 +24,25 @@ export default class LabRunController {
                 red: '4'
             }
         }];
+        this.initControls();
+    }
+
+    initControls() {
+        this.reclassifyThreshold = {
+            options: {
+                floor: -1,
+                ceil: 1,
+                step: 0.1,
+                precision: 1,
+                onChange: this.onReclassifyThresholdChange.bind(this)
+            }
+        };
+        this.reclassifyBeforeThresholdValue = 0;
+        this.reclassifyAfterThresholdValue = 0;
+    }
+
+    onReclassifyThresholdChange() {
+        // Placeholder
     }
 
     showPreview(data) {
@@ -45,7 +65,7 @@ export default class LabRunController {
             if (this.isComparing && !this.sideBySideAdded) {
                 this.sideBySideControl.addTo(m.map);
                 this.sideBySideAdded = true;
-            } else if (!this.isComparing && this.sideBySideAdded){
+            } else if (!this.isComparing && this.sideBySideAdded) {
                 this.sideBySideControl.remove();
                 this.sideBySideAdded = false;
             }
