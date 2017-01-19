@@ -41,8 +41,6 @@ trait Op extends TileLike with Grid {
   def mapDoubleMapper(mapper: DoubleTileMapper): Op.Unary =
     Op.DoubleMapper(this, mapper)
 
-  def vars: OpVars = new OpVars(this, Map.empty)
-
   def bind(args: Map[Op.Var, Op]): Op
 
   def toTile(ct: CellType): Tile = {
@@ -110,6 +108,7 @@ object Op {
     def get(col: Int, row: Int): Int = ???
     def getDouble(col: Int, row: Int): Double = ???
     def bind(args: Map[Var, Op]): Op = {
+      assert(args.keys.map(_.name).toSeq.contains(this.name))
       args.get(this) match {
         case Some(replacement) =>
           replacement
