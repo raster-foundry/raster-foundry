@@ -2,7 +2,8 @@ const Map = require('es6-map');
 /* global joint, $ */
 
 export default class DiagramContainerController {
-    constructor($element, $scope, $state, $timeout, $compile, mousetipService) {
+    constructor( // eslint-disable-line max-params
+        $element, $scope, $state, $timeout, $compile, mousetipService) {
         'ngInject';
         this.$element = $element;
         this.$scope = $scope;
@@ -174,7 +175,7 @@ export default class DiagramContainerController {
         }];
     }
 
-    onPaperClick(evt) {
+    onPaperClick() {
         this.$scope.$evalAsync(() => {
             if (this.isComparing) {
                 this.cancelComparison();

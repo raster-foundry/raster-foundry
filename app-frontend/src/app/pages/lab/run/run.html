@@ -16,7 +16,7 @@
     <div class="sidebar-scrollable">
       <div class="sidebar-content with-padding with-border">
         <h5 class="sidebar-title">
-            <div class="btn btn-square really-square">1</div><span>NDVI - Before</span>
+            NDVI - Before
         </h5>
         <div class="instructions-container" ng-show="!$ctrl.inputs[0]">
           <p>
@@ -71,9 +71,10 @@
           </div>
         </form>
       </div>
+
       <div class="sidebar-content with-padding with-border">
         <h5 class="sidebar-title">
-            <div class="btn btn-square really-square">2</div><span>NDVI - After</span>
+            NDVI - After
         </h5>
         <div class="instructions-container" ng-show="!$ctrl.inputs[1]">
           <p>
@@ -125,6 +126,42 @@
               <option value="10">Band 10</option>
               <option value="11">Band 11</option>
             </select>
+          </div>
+        </form>
+      </div>
+      <div class="sidebar-content with-padding with-border">
+        <h5 class="sidebar-title">
+            Reclassify - Before
+        </h5>
+        <form class="inset form-horizontal">
+          <div class="form-group">
+            <label for="formGroupExampleInput">Threshold</label>
+            <div>
+              <rzslider id="reclassify-before-threshold-value"
+                        class="light"
+                        rz-slider-model="$ctrl.reclassifyBeforeThresholdValue"
+                        rz-slider-options="$ctrl.reclassifyThreshold.options"
+                        on-change="$ctrl.onReclassifyBeforeThresholdChange()">
+              </rzslider>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="sidebar-content with-padding with-border">
+        <h5 class="sidebar-title">
+            Reclassify - After
+        </h5>
+        <form class="inset form-horizontal">
+          <div class="form-group">
+            <label for="formGroupExampleInput">Threshold</label>
+            <div>
+              <rzslider id="reclassify-after-threshold-value"
+                        class="light"
+                        rz-slider-model="$ctrl.reclassifyAfterThresholdValue"
+                        rz-slider-options="$ctrl.reclassifyThreshold.options"
+                        on-change="$ctrl.onReclassifyAfterThresholdChange()">
+              </rzslider>
+            </div>
           </div>
         </form>
       </div>

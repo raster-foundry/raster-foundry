@@ -31,3 +31,15 @@
     text-align: center;
   }
 }
+
+.rzslider.light {
+  .rz-bar {
+    background: #d8e0f3;
+  }
+  .rz-bubble {
+    padding: 0px;
+    bottom: 0px;
+    margin-top: 24px;
+    display: block;
+  }
+}
