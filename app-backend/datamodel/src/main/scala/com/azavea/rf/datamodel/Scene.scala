@@ -26,13 +26,13 @@ case class Scene(
   acquisitionDate: Option[java.sql.Timestamp] = None,
   thumbnailStatus: JobStatus,
   boundaryStatus: JobStatus,
-  status: JobStatus,
   sunAzimuth: Option[Float] = None,
   sunElevation: Option[Float] = None,
   name: String,
   tileFootprint: Option[Projected[Geometry]] = None,
   dataFootprint: Option[Projected[Geometry]] = None,
-  metadataFiles: List[String]
+  metadataFiles: List[String],
+  ingestLocation: Option[String] = None
 ) {
   def toScene = this
 
@@ -55,7 +55,6 @@ case class Scene(
     this.acquisitionDate,
     this.thumbnailStatus,
     this.boundaryStatus,
-    this.status,
     this.sunAzimuth,
     this.sunElevation,
     this.name,
@@ -63,7 +62,8 @@ case class Scene(
     this.dataFootprint,
     this.metadataFiles,
     images,
-    thumbnails
+    thumbnails,
+    this.ingestLocation
   )
 }
 
@@ -90,7 +90,6 @@ object Scene extends GeoJsonSupport {
     acquisitionDate: Option[java.sql.Timestamp],
     thumbnailStatus: JobStatus,
     boundaryStatus: JobStatus,
-    status: JobStatus,
     sunAzimuth: Option[Float],
     sunElevation: Option[Float],
     name: String,
@@ -98,7 +97,8 @@ object Scene extends GeoJsonSupport {
     dataFootprint: Option[Projected[Geometry]],
     metadataFiles: List[String],
     images: List[Image.Banded],
-    thumbnails: List[Thumbnail.Identified]
+    thumbnails: List[Thumbnail.Identified],
+    ingestLocation: Option[String]
   ) {
     def toScene(userId: String): Scene = {
       val now = new Timestamp((new java.util.Date()).getTime())
@@ -118,13 +118,13 @@ object Scene extends GeoJsonSupport {
         acquisitionDate,
         thumbnailStatus,
         boundaryStatus,
-        status,
         sunAzimuth,
         sunElevation,
         name,
         tileFootprint,
         dataFootprint,
-        metadataFiles
+        metadataFiles,
+        ingestLocation
       )
     }
   }
@@ -149,7 +149,6 @@ object Scene extends GeoJsonSupport {
     acquisitionDate: Option[java.sql.Timestamp],
     thumbnailStatus: JobStatus,
     boundaryStatus: JobStatus,
-    status: JobStatus,
     sunAzimuth: Option[Float],
     sunElevation: Option[Float],
     name: String,
@@ -157,7 +156,8 @@ object Scene extends GeoJsonSupport {
     dataFootprint: Option[Projected[Geometry]],
     metadataFiles: List[String],
     images: Seq[Image.WithRelated],
-    thumbnails: Seq[Thumbnail]
+    thumbnails: Seq[Thumbnail],
+    ingestLocation: Option[String]
   )
 
   object WithRelated {

@@ -47,7 +47,6 @@ object ScenesJsonProtocol extends DefaultJsonProtocol {
       "acquisitionDate" -> scene.acquisitionDate.toJson,
       "thumbnailStatus" -> scene.thumbnailStatus.toJson,
       "boundaryStatus" -> scene.boundaryStatus.toJson,
-      "status" -> scene.status.toJson,
       "sunAzimuth" -> scene.sunAzimuth.toJson,
       "sunElevation" -> scene.sunElevation.toJson,
       "name" -> scene.name.toJson,
@@ -55,7 +54,8 @@ object ScenesJsonProtocol extends DefaultJsonProtocol {
       "dataFootprint" -> scene.dataFootprint.toJson,
       "metadataFiles" -> scene.metadataFiles.toJson,
       "images" -> scene.images.toJson,
-      "thumbnails" -> scene.thumbnails.toJson
+      "thumbnails" -> scene.thumbnails.toJson,
+      "ingestLocation" -> scene.ingestLocation.toJson
     )
 
     def read(value: JsValue): Scene.WithRelated = {
@@ -76,15 +76,15 @@ object ScenesJsonProtocol extends DefaultJsonProtocol {
         "acquisitionDate", // 12
         "thumbnailStatus", // 13
         "boundaryStatus", // 14
-        "status", // 15
-        "sunAzimuth", // 16
-        "sunElevation", // 17
-        "name", // 18
-        "tileFootprint", // 19
-        "dataFootprint", // 20
-        "metadataFiles", // 21
-        "images", // 22
-        "thumbnails" // 23
+        "sunAzimuth", // 15
+        "sunElevation", // 16
+        "name", // 17
+        "tileFootprint", // 18
+        "dataFootprint", // 19
+        "metadataFiles", // 20
+        "images", // 21
+        "thumbnails", // 22
+        "ingestLocation" //23
       )
 
       // we can't match { case(id, createdAt... ) => ??? } because that would require Tuple24
@@ -104,15 +104,15 @@ object ScenesJsonProtocol extends DefaultJsonProtocol {
         jsOptionToVal[Timestamp](fields(12)), //acquisitionDate
         JobStatus.fromString(StringJsonFormat.read(fields(13))), // thumbnailStatus
         JobStatus.fromString(StringJsonFormat.read(fields(14))), // boundaryStatus
-        JobStatus.fromString(StringJsonFormat.read(fields(15))), // status
-        jsOptionToVal[Float](fields(16)),
-        jsOptionToVal[Float](fields(17)), // sunElevation
-        StringJsonFormat.read(fields(18)), // name
-        jsOptionToVal[Projected[Geometry]](fields(19)), // tileFootprint
-        jsOptionToVal[Projected[Geometry]](fields(20)), // dataFootprint
-        jsArrayToList[String](fields(21)), // metadataFiles
-        jsArrayToList[Image.WithRelated](fields(22)), // images
-        jsArrayToList[Thumbnail](fields(23)) // thumbnails
+        jsOptionToVal[Float](fields(15)), //sunAzimuth
+        jsOptionToVal[Float](fields(16)), // sunElevation
+        StringJsonFormat.read(fields(17)), // name
+        jsOptionToVal[Projected[Geometry]](fields(18)), // tileFootprint
+        jsOptionToVal[Projected[Geometry]](fields(19)), // dataFootprint
+        jsArrayToList[String](fields(20)), // metadataFiles
+        jsArrayToList[Image.WithRelated](fields(21)), // images
+        jsArrayToList[Thumbnail](fields(22)), // thumbnails
+        jsOptionToVal[String](fields(23)) // ingestLocation
       )
     }
   }

@@ -46,7 +46,8 @@ case class SceneQueryParameters(
   minSunElevation: Option[Float] = None,
   bbox: Option[String] = None,
   point: Option[String] = None,
-  project: Option[UUID] = None
+  project: Option[UUID] = None,
+  ingested: Option[Boolean] = None
 ) {
   val bboxPolygon: Option[Seq[Projected[Polygon]]] = try {
     bbox match {
@@ -90,7 +91,8 @@ case class GridQueryParameters(
   maxSunAzimuth: Option[Float] = None,
   minSunAzimuth: Option[Float] = None,
   maxSunElevation: Option[Float] = None,
-  minSunElevation: Option[Float] = None
+  minSunElevation: Option[Float] = None,
+  ingested: Option[Boolean] = None
 )
 
 /** Combined all query parameters */
