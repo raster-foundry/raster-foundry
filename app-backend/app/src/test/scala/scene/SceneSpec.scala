@@ -85,15 +85,15 @@ class SceneSpec extends WordSpec
       None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), "TEST_ORG",
       Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any], None,
       Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
-      JobStatus.Processing, JobStatus.Processing, JobStatus.Processing, None, None, "test scene datasource 1",
-      mpoly, mpoly, List.empty[String], List.empty[Image.Banded], List.empty[Thumbnail.Identified]
+      JobStatus.Processing, JobStatus.Processing, None, None, "test scene datasource 1",
+      mpoly, mpoly, List.empty[String], List.empty[Image.Banded], List.empty[Thumbnail.Identified], None
     )
 
     val newSceneDatasource2 = Scene.Create(
       None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"),
       "TEST_ORG-OTHER", Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any],
-      None, None, JobStatus.Processing, JobStatus.Processing, JobStatus.Processing, None, None, "test scene datasource 2",
-      None, None, List.empty[String], List.empty[Image.Banded], List.empty[Thumbnail.Identified]
+      None, None, JobStatus.Processing, JobStatus.Processing, None, None, "test scene datasource 2",
+      None, None, List.empty[String], List.empty[Image.Banded], List.empty[Thumbnail.Identified], Some("an_s3_bucket_location")
     )
 
     "require authentication for creation" in {
@@ -299,6 +299,27 @@ class SceneSpec extends WordSpec
       )  ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 2
         responseAs[PaginatedResponse[Scene.WithRelated]].results.head.datasource shouldEqual "TEST_ORG-OTHER"
+      }
+    }
+
+    "filter by ingest status correctly" in {
+      val urlIngested = s"$baseScene?ingested=true"
+      Get(urlIngested).withHeaders(
+        List(authHeader)
+      )  ~> baseRoutes ~> check {
+        responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 1
+      }
+      val urlNotIngested = s"$baseScene?ingested=false"
+      Get(urlNotIngested).withHeaders(
+        List(authHeader)
+      )  ~> baseRoutes ~> check {
+        responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 1
+      }
+      val urlIgnoreIngested = s"$baseScene"
+      Get(urlIgnoreIngested).withHeaders(
+        List(authHeader)
+      )  ~> baseRoutes ~> check {
+        responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 2
       }
     }
   }

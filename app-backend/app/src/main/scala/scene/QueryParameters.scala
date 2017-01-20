@@ -28,7 +28,8 @@ trait SceneQueryParameterDirective extends QueryParametersCommon
     'minSunElevation.as[Float].?,
     'bbox.as[String].?,
     'point.as[String].?,
-    'project.as[UUID].?
+    'project.as[UUID].?,
+    'ingested.as[Boolean].?
   )).as(SceneQueryParameters)
 
   val sceneQueryParameters = (orgQueryParams &

@@ -27,7 +27,7 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
 {
   def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, organizationId, ingestSizeBytes, visibility,
     tags, datasource, sceneMetadata, cloudCover, acquisitionDate, thumbnailStatus, boundaryStatus,
-    status, sunAzimuth, sunElevation, name, tileFootprint, dataFootprint, metadataFiles) <> (Scene.tupled, Scene.unapply)
+    sunAzimuth, sunElevation, name, tileFootprint, dataFootprint, metadataFiles, ingestLocation) <> (Scene.tupled, Scene.unapply)
 
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
   val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")
@@ -44,13 +44,13 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
   val acquisitionDate: Rep[Option[java.sql.Timestamp]] = column[Option[java.sql.Timestamp]]("acquisition_date", O.Default(None))
   val thumbnailStatus: Rep[JobStatus] = column[JobStatus]("thumbnail_status")
   val boundaryStatus: Rep[JobStatus] = column[JobStatus]("boundary_status")
-  val status: Rep[JobStatus] = column[JobStatus]("status")
   val sunAzimuth: Rep[Option[Float]] = column[Option[Float]]("sun_azimuth", O.Default(None))
   val sunElevation: Rep[Option[Float]] = column[Option[Float]]("sun_elevation", O.Default(None))
   val name: Rep[String] = column[String]("name", O.Length(255,varying=true))
   val tileFootprint: Rep[Option[Projected[Geometry]]] = column[Option[Projected[Geometry]]]("tile_footprint", O.Length(2147483647,varying=false), O.Default(None))
   val dataFootprint: Rep[Option[Projected[Geometry]]] = column [Option[Projected[Geometry]]]("data_footprint", O.Length(2147483647,varying=false), O.Default(None))
   val metadataFiles: Rep[List[String]] = column[List[String]]("metadata_files", O.Length(2147483647,varying=false), O.Default(List.empty))
+  val ingestLocation: Rep[Option[String]] = column[Option[String]]("ingest_location", O.Default(None))
 
   /** Foreign key referencing Organizations (database name scenes_organization_id_fkey) */
   lazy val organizationsFk = foreignKey("scenes_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
@@ -288,16 +288,16 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
       updateScene.modifiedAt, updateScene.modifiedBy, updateScene.ingestSizeBytes,
       updateScene.datasource, updateScene.cloudCover,  updateScene.acquisitionDate,
       updateScene.tags, updateScene.sceneMetadata, updateScene.thumbnailStatus,
-      updateScene.boundaryStatus, updateScene.status, updateScene.name,
-      updateScene.tileFootprint, updateScene.dataFootprint, updateScene.metadataFiles
+      updateScene.boundaryStatus, updateScene.name, updateScene.tileFootprint,
+      updateScene.dataFootprint, updateScene.metadataFiles, updateScene.ingestLocation
     )
     database.db.run {
       updateSceneQuery.update((
         updateTime, user.id, scene.ingestSizeBytes,
         scene.datasource, scene.cloudCover, scene.acquisitionDate,
         scene.tags, scene.sceneMetadata, scene.thumbnailStatus,
-        scene.boundaryStatus, scene.status, scene.name,
-        scene.tileFootprint, scene.dataFootprint, scene.metadataFiles
+        scene.boundaryStatus, scene.name, scene.tileFootprint,
+        scene.dataFootprint, scene.metadataFiles, scene.ingestLocation
       ))
     } map {
       case 1 => 1
@@ -355,6 +355,11 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) extends LazyLoggin
           .getOrElse(Some(true): Rep[Option[Boolean]])
         case _ => Some(true): Rep[Option[Boolean]]
       }
+    }.filter { scene =>
+      sceneParams.ingested
+        .map(scene.ingestLocation.isDefined === _)
+        .reduceLeftOption(_ || _)
+        .getOrElse(true: Rep[Boolean])
     }
 
     sceneParams.project match {
@@ -391,8 +396,23 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) extends LazyLoggin
         .reduceLeftOption(_ || _)
         .getOrElse(true: Rep[Boolean])
     }.filter { scene =>
+      gridParams.minDayOfMonth
+        .map(datePart("day", scene.acquisitionDate) >= _)
+        .reduceLeftOption(_ || _)
+        .getOrElse(true: Rep[Boolean])
+    }.filter { scene =>
+      gridParams.maxDayOfMonth
+        .map(datePart("day", scene.acquisitionDate) <= _)
+        .reduceLeftOption(_ || _)
+        .getOrElse(true: Rep[Boolean])
+    }.filter { scene =>
       gridParams.datasource
         .map(scene.datasource === _)
+        .reduceLeftOption(_ || _)
+        .getOrElse(true: Rep[Boolean])
+    }.filter { scene =>
+      gridParams.ingested
+        .map(scene.ingestLocation.isDefined === _)
         .reduceLeftOption(_ || _)
         .getOrElse(true: Rep[Boolean])
     }

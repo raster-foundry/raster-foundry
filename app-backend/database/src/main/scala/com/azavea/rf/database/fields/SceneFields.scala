@@ -13,9 +13,9 @@ trait SceneFields  { self: Table[_] =>
   def acquisitionDate: Rep[Option[java.sql.Timestamp]]
   def thumbnailStatus: Rep[JobStatus]
   def boundaryStatus: Rep[JobStatus]
-  def status: Rep[JobStatus]
   def sunAzimuth: Rep[Option[Float]]
   def sunElevation: Rep[Option[Float]]
   def tileFootprint: Rep[Option[Projected[Geometry]]]
   def dataFootprint: Rep[Option[Projected[Geometry]]]
+  def ingestLocation: Rep[Option[String]]
 }

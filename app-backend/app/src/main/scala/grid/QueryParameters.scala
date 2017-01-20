@@ -25,7 +25,8 @@ trait GridQueryParameterDirective extends QueryParametersCommon
     'maxSunAzimuth.as[Float].?,
     'minSunAzimuth.as[Float].?,
     'maxSunElevation.as[Float].?,
-    'minSunElevation.as[Float].?
+    'minSunElevation.as[Float].?,
+    'ingested.as[Boolean].?
   )).as(GridQueryParameters)
 
   val gridQueryParameters = (orgQueryParams &
