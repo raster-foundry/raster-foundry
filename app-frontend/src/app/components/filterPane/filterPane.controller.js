@@ -159,7 +159,20 @@ export default class FilterPaneController {
             }
         };
 
+        this.initIngestFilter();
+
         this.initSourceFilters();
+    }
+
+    initIngestFilter() {
+        this.ingestFilter = 'any';
+        if (this.filters.hasOwnProperty('ingest')) {
+            if (this.filters.ingest) {
+                this.ingestFilter = 'ingested';
+            } else {
+                this.ingestFilter = 'uningested';
+            }
+        }
     }
 
     initMonthFilters() {
@@ -255,6 +268,10 @@ export default class FilterPaneController {
             val.enabled = false;
             return val;
         });
+
+        this.ingestFilter = 'any';
+        delete this.filters.ingested;
+
         delete this.filters.datasource;
     }
 
@@ -278,6 +295,21 @@ export default class FilterPaneController {
             enabledMonths.forEach((monthAttr) => {
                 this.filters.month.push(Object.keys(monthAttr)[0]);
             });
+        }
+    }
+
+    setIngestFilter(mode) {
+        this.ingestFilter = mode;
+        this.onIngestFilterChange();
+    }
+
+    onIngestFilterChange() {
+        if (this.ingestFilter === 'any') {
+            delete this.filters.ingested;
+        } else if (this.ingestFilter === 'uningested') {
+            this.filters.ingested = false;
+        } else {
+            this.filters.ingested = true;
         }
     }
 

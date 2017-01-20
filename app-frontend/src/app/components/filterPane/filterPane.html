@@ -61,6 +61,33 @@
     <div class="filter"
          ng-mouseleave="$ctrl.toggleDrag.toggle = false"
          ng-mouseup="$ctrl.toggleDrag.toggle = false">
+      <label>Ingest Status</label>
+      <div class="filter-item tag-filter">
+        <div class="btn-group">
+          <button type="button"
+                  class="btn btn-toggle btn-small"
+                  ng-class="{'active': $ctrl.ingestFilter === 'any'}"
+                  ng-click="$ctrl.setIngestFilter('any')">
+            Show All
+          </button>
+          <button type="button"
+                  class="btn btn-toggle btn-small"
+                  ng-class="{'active': $ctrl.ingestFilter === 'uningested'}"
+                  ng-click="$ctrl.setIngestFilter('uningested')">
+            Uningested Only
+          </button>
+          <button type="button"
+                  class="btn btn-toggle btn-small"
+                  ng-class="{'active': $ctrl.ingestFilter === 'ingested'}"
+                  ng-click="$ctrl.setIngestFilter('ingested')">
+            Ingested Only
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="filter"
+         ng-mouseleave="$ctrl.toggleDrag.toggle = false"
+         ng-mouseup="$ctrl.toggleDrag.toggle = false">
       <label>Imagery sources</label>
       <div class="filter-item tag-filter">
         <button type="button"

@@ -191,7 +191,8 @@ function browseStates($stateProvider) {
         'maxSunElevation',
         'minSunElevation',
         'bbox',
-        'point'
+        'point',
+        'ingested'
     ].join('&');
 
     $stateProvider
