@@ -301,6 +301,7 @@ paths:
         - $ref: '#/parameters/tags'
         - $ref: '#/parameters/bbox'
         - $ref: '#/parameters/project'
+        - $ref: '#/parameters/ingested'
       responses:
         200:
           description: Paginated list of scenes
@@ -400,6 +401,7 @@ paths:
         - $ref: '#/parameters/minResolution'
         - $ref: '#/parameters/maxResolution'
         - $ref: '#/parameters/tags'
+        - $ref: '#/parameters/ingested'
       responses:
         200:
           description: Statistics for the given bounding box
@@ -521,6 +523,7 @@ paths:
         - $ref: '#/parameters/minResolution'
         - $ref: '#/parameters/maxResolution'
         - $ref: '#/parameters/tags'
+        - $ref: '#/parameters/ingested'
       responses:
         200:
           description: Paginated list of scenes associated with this project
@@ -1231,6 +1234,12 @@ parameters:
     in: query
     type: string
     format: uuid
+    required: false
+  ingested:
+    name: ingested
+    description: Filter by ingest status
+    in: query
+    type: boolean
     required: false
 definitions:
   BaseModel:
