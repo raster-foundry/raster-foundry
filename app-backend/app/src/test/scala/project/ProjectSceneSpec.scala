@@ -170,7 +170,8 @@ class ProjectSceneSpec extends WordSpec
       ) ~> baseRoutes ~> check {
         val projects = responseAs[PaginatedResponse[Project]]
         val projectId = projects.results.head.id
-        Get(s"/api/projects/${projectId}/scenes/?datasource=DoesNotExist").withHeaders(
+        val wrongUUID = UUID.fromString("3bf183cd-cf47-4e4c-9f13-78728cbca519")
+        Get(s"/api/projects/${projectId}/scenes/?datasource=$wrongUUID").withHeaders(
           List(authHeader)
         ) ~> baseRoutes ~> check {
           responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 0
