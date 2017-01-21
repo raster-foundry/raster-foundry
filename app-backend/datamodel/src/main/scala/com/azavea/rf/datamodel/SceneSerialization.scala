@@ -98,7 +98,7 @@ object ScenesJsonProtocol extends DefaultJsonProtocol {
         IntJsonFormat.read(fields(6)), // ingestSizeBytes
         Visibility.fromString(StringJsonFormat.read(fields(7))), // visibility
         jsArrayToList[String](fields(8)), // tags
-        StringJsonFormat.read(fields(9)), // datasource
+        UUID.fromString(StringJsonFormat.read(fields(9))), // datasource
         fields(10).convertTo[Map[String, Any]], // sceneMetadata
         jsOptionToVal[Float](fields(11)), // cloudCover
         jsOptionToVal[Timestamp](fields(12)), //acquisitionDate

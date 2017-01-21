@@ -1,5 +1,7 @@
 package com.azavea.rf.database.fields
 
+import java.util.UUID
+
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.datamodel.JobStatus
 import geotrellis.slick.Projected
@@ -7,7 +9,7 @@ import geotrellis.vector.Geometry
 
 trait SceneFields  { self: Table[_] =>
   def name: Rep[String]
-  def datasource: Rep[String]
+  def datasource: Rep[UUID]
   def sceneMetadata: Rep[Map[String, Any]]
   def cloudCover: Rep[Option[Float]]
   def acquisitionDate: Rep[Option[java.sql.Timestamp]]

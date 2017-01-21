@@ -21,8 +21,10 @@ trait ProjectSpecHelper {
     publicOrgId, "Test Two", "This is the second test project", Visibility.Public, List("testing")
   )
 
+  val landsatId = UUID.fromString("697a0b91-b7a8-446e-842c-97cda155554d")
+
   def newScene(name: String, cloudCover: Option[Float] = None) = Scene.Create(
-    None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), "TEST_ORG",
+    None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), landsatId,
     Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any], cloudCover,
     Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
     JobStatus.Processing, JobStatus.Processing, None, None, name,

@@ -35,6 +35,8 @@ class SceneSpec extends WordSpec
   val authHeader = AuthUtils.generateAuthHeader("Default")
   val baseScene = "/api/scenes/"
   val publicOrgId = UUID.fromString("dfac6307-b5ef-43f7-beda-b9f208bb7726")
+  val landsatId = UUID.fromString("697a0b91-b7a8-446e-842c-97cda155554d")
+  val sentinelId = UUID.fromString("4a50cb75-815d-4fe5-8bc1-144729ce5b42")
 
   // Alias to baseRoutes to be explicit
   val baseRoutes = routes
@@ -82,7 +84,7 @@ class SceneSpec extends WordSpec
         Point(100,110), Point(100,100)))), 3857))
 
     val newSceneDatasource1 = Scene.Create(
-      None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), "TEST_ORG",
+      None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), landsatId,
       Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any], None,
       Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
       JobStatus.Processing, JobStatus.Processing, None, None, "test scene datasource 1",
@@ -90,8 +92,8 @@ class SceneSpec extends WordSpec
     )
 
     val newSceneDatasource2 = Scene.Create(
-      None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"),
-      "TEST_ORG-OTHER", Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any],
+      None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), sentinelId,
+      Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any],
       None, None, JobStatus.Processing, JobStatus.Processing, None, None, "test scene datasource 2",
       None, None, List.empty[String], List.empty[Image.Banded], List.empty[Thumbnail.Identified], Some("an_s3_bucket_location")
     )
@@ -211,14 +213,14 @@ class SceneSpec extends WordSpec
     }
 
     "filter by one datasource correctly" in {
-      val url = s"$baseScene?datasource=TEST_ORG"
+      val url = s"$baseScene?datasource=$landsatId"
       Get(url).withHeaders(List(authHeader)) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 1
       }
     }
 
     "filter by multiple datasources correctly" in {
-      val url = s"$baseScene?datasource=TEST_ORG&datasource=TEST_ORG-OTHER"
+      val url = s"$baseScene?datasource=$landsatId&datasource=$sentinelId"
       Get(url).withHeaders(List(authHeader)) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 2
       }
@@ -288,7 +290,8 @@ class SceneSpec extends WordSpec
         List(authHeader)
       )  ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 2
-        responseAs[PaginatedResponse[Scene.WithRelated]].results.head.datasource shouldEqual "TEST_ORG-OTHER"
+        responseAs[PaginatedResponse[Scene.WithRelated]].results.head.datasource shouldEqual
+          UUID.fromString("697a0b91-b7a8-446e-842c-97cda155554d")
       }
     }
 
@@ -298,7 +301,8 @@ class SceneSpec extends WordSpec
         List(authHeader)
       )  ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 2
-        responseAs[PaginatedResponse[Scene.WithRelated]].results.head.datasource shouldEqual "TEST_ORG-OTHER"
+        responseAs[PaginatedResponse[Scene.WithRelated]].results.head.datasource shouldEqual
+          UUID.fromString("697a0b91-b7a8-446e-842c-97cda155554d")
       }
     }
 

@@ -18,7 +18,7 @@ trait SceneQueryParameterDirective extends QueryParametersCommon
     'minCloudCover.as[Float].?,
     'minAcquisitionDatetime.as(deserializerTimestamp).?,
     'maxAcquisitionDatetime.as(deserializerTimestamp).?,
-    'datasource.as[String].*,
+    'datasource.as[UUID].*,
     'month.as[Int].*,
     'minDayOfMonth.as[Int].?,
     'maxDayOfMonth.as[Int].?,
