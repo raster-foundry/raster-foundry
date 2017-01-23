@@ -8,6 +8,5 @@ case class Reclassify(left: Op, breakMap: BreakMap[Double, Double]) extends Op.T
   def get(col: Int, row: Int): Int = d2i(breakMap(left.getDouble(col, row)))
   def getDouble(col: Int, row: Int): Double = breakMap(left.getDouble(col, row))
   def bind(args: Map[Op.Var, Op]): Op = Reclassify(left.bind(args), breakMap)
-  def bind(f: PartialFunction[Op, Op]): Op = ???
   def right = Op.Nil
 }

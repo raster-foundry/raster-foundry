@@ -8,7 +8,10 @@ import geotrellis.raster.render._
 import geotrellis.raster.io._
 import geotrellis.raster.op._
 import geotrellis.raster.render.{Png, ColorRamp, ColorMap}
+import geotrellis.raster.io.geotiff._
+import geotrellis.vector.Extent
 import geotrellis.spark._
+import geotrellis.proj4.CRS
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes}
@@ -57,12 +60,14 @@ object ToolRoutes extends LazyLogging {
 
   def lookupColorMap(str: Option[String]): ColorMap = {
     str match {
-      case Some(s) if str.contains(':') =>
-        ColorMap.fromString(s).get
+      case Some(s) if s.contains(':') =>
+        ColorMap.fromStringDouble(s).get
       case None =>
-        val colorRamp = ColorRamp(Array[Int](0xffffe5aa, 0xf7fcb9ff, 0xd9f0a3ff, 0xaddd8eff, 0x78c679ff, 0x41ab5dff, 0x238443ff, 0x006837ff, 0x004529ff))
+        val colorRamp = ColorRamp(Vector(0xD51D26FF, 0xF8F2B2FF, 0x349E4BFF))
         val breaks = Array[Double](0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 1.0)
         ColorMap(breaks, colorRamp)
+      case Some(_) =>
+        throw new Exception("color map string is all messed up")
     }
   }
 
@@ -85,11 +90,12 @@ object ToolRoutes extends LazyLogging {
         parameter(
           'part.?,
           'LC8_0, 'LC8_1,
-          'class0.?("-1:0;0.01:1.0"),
-          'class1.?("-1:0;0.01:1.0"),
+          'class0.?("0.1:0;99999999:1.0"), // Make this big so that all values are caught
+          'class1.?("0.1:0;99999999:1.0"),
+          'geotiff.?(false),
           'cm.?
         )
-        { (partId, p0, p1, class0, class1, colorMap) =>
+        { (partId, p0, p1, class0, class1, geotiffOutput, colorMap) =>
           complete {
             val orgId = UUID.fromString(organizationId)
             val varMap = Map(
@@ -120,7 +126,6 @@ object ToolRoutes extends LazyLogging {
               }.toMap
 
               logger.debug(s"Params to bind to model: $params")
-
               val assignedModel = model.bind(params)
               logger.debug(s"model after param binding: $assignedModel")
               assert(assignedModel.fullyBound) // Verification that binding completed
@@ -128,8 +133,14 @@ object ToolRoutes extends LazyLogging {
               val calculation = assignedModel.toTile(FloatCellType)
 
               calculation.map { tile =>
-                val png = tile.renderPng(lookupColorMap(colorMap))
-                pngAsHttpResponse(png)
+                if (geotiffOutput) {
+                  // Largely for debugging, the Extent and CRS are *NOT* meaningful
+                  val geotiff = SinglebandGeoTiff(tile, Extent(0, 0, 0, 0), CRS.fromEpsgCode(3857))
+                  HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/tiff`), geotiff.toByteArray))
+                } else {
+                  val png = tile.renderPng(lookupColorMap(colorMap))
+                  pngAsHttpResponse(png)
+                }
               }
             }
           }
