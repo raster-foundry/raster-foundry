@@ -1,6 +1,7 @@
 package com.azavea.rf.tile
 
 import com.azavea.rf.database.Database
+import com.azavea.rf.tile.routes.SceneRoutes
 
 import akka.actor.ActorSystem
 import akka.event.Logging
@@ -10,6 +11,7 @@ import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 import geotrellis.spark.io._
+
 
 object AkkaSystem {
   implicit val system = ActorSystem("rf-tiler-system")
@@ -21,7 +23,6 @@ object AkkaSystem {
 }
 
 object Main extends App
-  with TileRoutes
   with TileAuthentication
   with Config
   with AkkaSystem.LoggerExecutor {
@@ -29,34 +30,7 @@ object Main extends App
   import AkkaSystem._
 
   implicit lazy val database = Database.DEFAULT
+  val router = new Router(database)
 
-  def exceptionHandler =
-    ExceptionHandler {
-      case e: TileNotFoundError =>
-        complete(StatusCodes.NotFound)
-      case e: IllegalArgumentException =>
-        complete(StatusCodes.ClientError(400)("Bad Argument", e.getMessage))
-      case e: IllegalStateException =>
-        complete(StatusCodes.ClientError(400)("Bad Request", e.getMessage))
-    }
-
-  def rootRoute = handleExceptions(exceptionHandler) {
-    pathPrefix("tiles") {
-      pathPrefix("healthcheck") {
-        pathEndOrSingleSlash {
-          get {
-            complete {
-              HttpResponse(StatusCodes.OK)
-            }
-          }
-        }
-      } ~
-      tileAuthenticateOption { _ =>
-        singleLayer ~
-        mosaicProject
-      }
-    }
-  }
-
-  Http().bindAndHandle(rootRoute, httpHost, httpPort)
+  Http().bindAndHandle(router.root, httpHost, httpPort)
 }
