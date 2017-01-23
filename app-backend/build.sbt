@@ -149,6 +149,7 @@ lazy val tile = Project("tile", file("tile"))
   .dependsOn(datamodel)
   .dependsOn(database)
   .dependsOn(authentication)
+  .dependsOn(tool)
   .settings(commonSettings:_*)
   .settings(assemblyMergeStrategy in assembly := {
     case "reference.conf" => MergeStrategy.concat
@@ -170,5 +171,16 @@ lazy val tile = Project("tile", file("tile"))
       Dependencies.scalacacheCaffeine,
       Dependencies.scalacacheMemcache.exclude("net.spy", "spymemcached"),
       Dependencies.akkajson
+    )
+  })
+
+lazy val tool = Project("tool", file("tool"))
+  .settings(commonSettings:_*)
+  .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
+  .settings({
+    libraryDependencies ++= loggingDependencies ++ Seq(
+      Dependencies.geotrellisRaster,
+      Dependencies.shapeless,
+      Dependencies.scalatest
     )
   })

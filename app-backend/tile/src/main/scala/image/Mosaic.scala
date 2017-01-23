@@ -62,26 +62,67 @@ object Mosaic {
           }
         else
           Future.successful(None)
-      case None => Future.successful(None)
+      case None =>
+        Future.successful(None)
+    }
+  }
+
+  def raw(
+    orgId: UUID,
+    userId: String,
+    projectId: UUID,
+    zoom: Int, col: Int, row: Int
+  )(implicit db: Database): Future[Option[MultibandTile]] = {
+
+    // Lookup project definition
+    val mayhapMosaic: Future[Option[MosaicDefinition]] = mosaicDefinition(projectId, ttl = 5.seconds)
+
+    mayhapMosaic.flatMap {
+      case None => // can't merge a project without mosaic definition
+        Future.successful(Option.empty[MultibandTile])
+
+      case Some(mosaic) =>
+        val mayhapTiles =
+          for (
+            (sceneId, colorCorrectParams) <- mosaic.definition
+          ) yield {
+            val id = RfLayerId(orgId, userId, sceneId)
+            for {
+              maybeTile <- Mosaic.fetch(id, zoom, col, row)
+            } yield
+              for (tile <- maybeTile) yield tile
+          }
+
+        Future.sequence(mayhapTiles).map { maybeTiles =>
+          val tiles = maybeTiles.flatten
+          if (tiles.nonEmpty)
+            Option(tiles.reduce(_ merge _))
+          else
+            Option.empty[MultibandTile]
+        }
     }
   }
 
   /** Mosaic tiles from TMS pyramids given that they are in the same projection.
-   * If a layer does not go up to requested zoom it will be up-sampled.
-   * Layers missing color correction in the mosaic definition will be excluded.
-   */
+    *   If a layer does not go up to requested zoom it will be up-sampled.
+    *   Layers missing color correction in the mosaic definition will be excluded.
+    *
+    *   @param rgbOnly  This parameter determines whether or not the mosaic should return an RGB
+    *                    MultibandTile or all available bands, regardless of their semantics.
+    */
   def apply(
     orgId: UUID,
     userId: String,
     projectId: UUID,
     zoom: Int, col: Int, row: Int,
-    tag: Option[String] = None
+    tag: Option[String] = None,
+    rgbOnly: Boolean = true
   )(
     implicit db: Database
   ): Future[Option[MultibandTile]] = {
 
     // Lookup project definition
-    val mayhapMosaic: Future[Option[MosaicDefinition]] = tag match {
+    val maybeMosaic: Future[Option[MosaicDefinition]] = tag match {
       case Some(t) =>
         // tag present, include in lookup to re-use cache
         mosaicDefinition(projectId, ttl = 60.seconds)
@@ -90,28 +131,33 @@ object Mosaic {
         mosaicDefinition(projectId, ttl = 5.seconds)
     }
 
-    mayhapMosaic.flatMap {
+    maybeMosaic.flatMap {
       case None => // can't merge a project without mosaic definition
         Future.successful(Option.empty[MultibandTile])
 
       case Some(mosaic) =>
-        val mayhapTiles =
+        val maybeTiles =
           for ((sceneId, colorCorrectParams) <- mosaic.definition) yield {
-            colorCorrectParams match {
-              case None => // can't use a scene without color correction params
-                Future.successful(Option.empty[MultibandTile])
-
-              case Some(params) =>
-                val id = RfLayerId(orgId, userId, sceneId)
-                for {
-                  maybeTile <- Mosaic.fetch(id, zoom, col, row)
-                  hist <- LayerCache.bandHistogram(id, zoom)
-                } yield
-                  for (tile <- maybeTile) yield params.colorCorrect(tile, hist)
+            val id = RfLayerId(orgId, userId, sceneId)
+            if (rgbOnly) {
+              colorCorrectParams match {
+                case None =>
+                  Future.successful(Option.empty[MultibandTile])
+                case Some(params) =>
+                  for {
+                    maybeTile <- Mosaic.fetch(id, zoom, col, row)
+                    hist <- LayerCache.bandHistogram(id, zoom)
+                  } yield
+                    for (tile <- maybeTile) yield params.colorCorrect(tile, hist)
+              }
+            } else { // Return all bands
+              for {
+                maybeTile <- Mosaic.fetch(id, zoom, col, row)
+              } yield maybeTile
             }
           }
 
-        Future.sequence(mayhapTiles).map { maybeTiles =>
+        Future.sequence(maybeTiles).map { maybeTiles =>
           val tiles = maybeTiles.flatten
           if (tiles.nonEmpty)
             Option(tiles.reduce(_ merge _))
