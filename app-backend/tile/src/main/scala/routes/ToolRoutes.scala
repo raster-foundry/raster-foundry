@@ -94,9 +94,9 @@ object ToolRoutes extends LazyLogging {
             val orgId = UUID.fromString(organizationId)
             val varMap = Map(
               'LC8_0 -> { (z: Int, x: Int, y: Int) =>
-                Mosaic(orgId, userId, UUID.fromString(p0), z, x, y, None, false)},
+                Mosaic.raw(orgId, userId, UUID.fromString(p0), z, x, y)},
               'LC8_1 -> { (z: Int, x: Int, y: Int) =>
-                Mosaic(orgId, userId, UUID.fromString(p1), z, x, y, None, false)})
+                Mosaic.raw(orgId, userId, UUID.fromString(p1), z, x, y)})
 
             val model: Op = partId match {
               case Some("ndvi0") => ndvi0

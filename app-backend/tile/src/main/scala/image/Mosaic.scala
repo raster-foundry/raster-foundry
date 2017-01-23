@@ -67,6 +67,42 @@ object Mosaic {
     }
   }
 
+  def raw(
+    orgId: UUID,
+    userId: String,
+    projectId: UUID,
+    zoom: Int, col: Int, row: Int
+  )(implicit db: Database): Future[Option[MultibandTile]] = {
+
+    // Lookup project definition
+    val mayhapMosaic: Future[Option[MosaicDefinition]] = mosaicDefinition(projectId, ttl = 5.seconds)
+
+    mayhapMosaic.flatMap {
+      case None => // can't merge a project without mosaic definition
+        Future.successful(Option.empty[MultibandTile])
+
+      case Some(mosaic) =>
+        val mayhapTiles =
+          for (
+            (sceneId, colorCorrectParams) <- mosaic.definition
+          ) yield {
+            val id = RfLayerId(orgId, userId, sceneId)
+            for {
+              maybeTile <- Mosaic.fetch(id, zoom, col, row)
+            } yield
+              for (tile <- maybeTile) yield tile
+          }
+
+        Future.sequence(mayhapTiles).map { maybeTiles =>
+          val tiles = maybeTiles.flatten
+          if (tiles.nonEmpty)
+            Option(tiles.reduce(_ merge _))
+          else
+            Option.empty[MultibandTile]
+        }
+    }
+  }
+
   /** Mosaic tiles from TMS pyramids given that they are in the same projection.
     *   If a layer does not go up to requested zoom it will be up-sampled.
     *   Layers missing color correction in the mosaic definition will be excluded.
