@@ -35,8 +35,7 @@ object Mosaic {
   }
 
   /** Cache the result of mosaic definition, use tag to control cache rollover */
-  def mosaicDefinition(projectId: UUID, tagttl: Option[TagWithTTL])
-                      (implicit db: Database) = {
+  def mosaicDefinition(projectId: UUID, tagttl: Option[TagWithTTL])(implicit db: Database) = {
     tagttl match {
       case Some(t) =>
         cachingWithTTL(s"mosaic-definition-$projectId-${t.tag}")(t.ttl) {
