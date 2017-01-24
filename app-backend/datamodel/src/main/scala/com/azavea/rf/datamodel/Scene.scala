@@ -181,7 +181,7 @@ object Scene extends GeoJsonSupport {
         val (seqImages, seqThumbnails) = groupedScenes(scene).map {
           case (_, image, _, thumbnail) => (image, thumbnail)
         }.unzip
-        val imagesWithComponents: Seq[Image.WithRelated] = seqImages.flatten.map {
+        val imagesWithComponents: Seq[Image.WithRelated] = seqImages.flatten.distinct.map {
           image => image.withRelatedFromComponents(groupedBands.getOrElse(image.id, Seq[Band]()))
         }
         scene.withRelatedFromComponents(imagesWithComponents, seqThumbnails.flatten.distinct)
