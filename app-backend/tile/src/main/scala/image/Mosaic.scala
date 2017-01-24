@@ -15,6 +15,8 @@ import java.util.UUID
 
 import scalacache._
 
+case class TagWithTTL(tag: String, ttl: Duration)
+
 object Mosaic {
   implicit val cache = LayerCache.memoryCache
 
@@ -33,10 +35,17 @@ object Mosaic {
   }
 
   /** Cache the result of mosaic definition, use tag to control cache rollover */
-  def mosaicDefinition(projectId: UUID, ttl: Duration)(implicit db: Database) =
-    cachingWithTTL(s"mosaic-definition-$projectId")(ttl) {
-      ScenesToProjects.getMosaicDefinition(projectId)
+  def mosaicDefinition(projectId: UUID, tagttl: Option[TagWithTTL])
+                      (implicit db: Database) = {
+    tagttl match {
+      case Some(t) =>
+        cachingWithTTL(s"mosaic-definition-$projectId-${t.tag}")(t.ttl) {
+          ScenesToProjects.getMosaicDefinition(projectId)
+        }
+      case None =>
+        ScenesToProjects.getMosaicDefinition(projectId)
     }
+  }
 
   /** Fetch the tile for given resolution. If it is not present, use a tile from a lower zoom level */
   def fetch(id: RfLayerId, zoom: Int, col: Int, row: Int): Future[Option[MultibandTile]] = {
@@ -75,7 +84,8 @@ object Mosaic {
   )(implicit db: Database): Future[Option[MultibandTile]] = {
 
     // Lookup project definition
-    val mayhapMosaic: Future[Option[MosaicDefinition]] = mosaicDefinition(projectId, ttl = 5.seconds)
+    // NOTE: raw does NOT cache the mosaicDefinition
+    val mayhapMosaic: Future[Option[MosaicDefinition]] = mosaicDefinition(projectId, None)
 
     mayhapMosaic.flatMap {
       case None => // can't merge a project without mosaic definition
@@ -125,10 +135,10 @@ object Mosaic {
     val maybeMosaic: Future[Option[MosaicDefinition]] = tag match {
       case Some(t) =>
         // tag present, include in lookup to re-use cache
-        mosaicDefinition(projectId, ttl = 60.seconds)
+        mosaicDefinition(projectId, Option(TagWithTTL(tag=t, ttl=60.seconds)))
       case None =>
-        // no tag to control cache rollover, quick expiry
-        mosaicDefinition(projectId, ttl = 5.seconds)
+        // no tag to control cache rollover, so don't cache
+        mosaicDefinition(projectId, None)
     }
 
     maybeMosaic.flatMap {
