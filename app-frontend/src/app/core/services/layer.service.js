@@ -236,7 +236,8 @@ export default (app) => {
                 alpha: object.alpha,
                 beta: object.beta,
                 min: object.min,
-                max: object.max
+                max: object.max,
+                tag: object.tag ? object.tag : (new Date()).getTime()
             };
         }
 
