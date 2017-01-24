@@ -35,6 +35,8 @@ band_lookup = {
     ]
 }
 
+datasource_id = '697a0b91-b7a8-446e-842c-97cda155554d'
+
 usgs_landsat_url = (
     'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_8.csv'
 )

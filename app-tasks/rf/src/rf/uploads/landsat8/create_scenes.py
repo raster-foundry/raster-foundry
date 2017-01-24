@@ -11,7 +11,7 @@ from .create_bands import create_bands
 from .create_images import create_images
 from .create_thumbnails import create_thumbnails
 from .create_footprint import create_footprints
-from .settings import organization, aws_landsat_base
+from .settings import organization, aws_landsat_base, datasource_id
 from .io import get_landsat_path
 
 
@@ -62,7 +62,6 @@ def create_landsat8_scenes(csv_row):
     bands_15m = create_bands('15m')
     bands_30m = create_bands('30m')
 
-    datasource = 'Landsat 8'
     tags = ['Landsat 8', 'GeoTIFF']
 
     scene_metadata = filter_empty_keys(csv_row)
@@ -75,7 +74,7 @@ def create_landsat8_scenes(csv_row):
         0,
         Visibility.PUBLIC,
         tags,
-        datasource,
+        datasource_id,
         scene_metadata,
         'L8 {}'.format(landsat_path),  # name
         JobStatus.SUCCESS,

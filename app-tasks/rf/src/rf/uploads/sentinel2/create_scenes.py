@@ -8,7 +8,7 @@ import uuid
 from rf.models import Scene
 from rf.utils.io import JobStatus, Visibility
 
-from .settings import bucket, s3, organization
+from .settings import bucket, s3, organization, datasource_id
 from .create_footprint import create_footprints
 from .create_thumbnails import create_thumbnails
 from .create_images import create_images
@@ -48,7 +48,6 @@ def create_sentinel2_scenes(tile_path):
     tileFootprint, dataFootprint = create_footprints(tileinfo)
     thumbnails = create_thumbnails(scene_id, tile_path)
     tags = ['Sentinel-2', 'JPEG2000']
-    datasource = 'Sentinel-2'
     aws_base = bucket.name + '.s3.amazonaws.com'
     metadataFiles = [
         os.path.join(aws_base, tile_path, 'tileInfo.json'),
@@ -73,7 +72,7 @@ def create_sentinel2_scenes(tile_path):
         0,
         Visibility.PUBLIC,
         tags,
-        datasource,
+        datasource_id,
         scene_metadata,
         'S2 {}'.format(tile_path),  # name
         JobStatus.SUCCESS if thumbnails else JobStatus.FAILURE,

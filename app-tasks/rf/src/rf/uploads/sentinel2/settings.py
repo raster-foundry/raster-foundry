@@ -44,6 +44,8 @@ band_lookup = {
     'B10': {'name': 'cirrus - 10', 'number': 0, 'wavelength': [1365, 1395]}
 }
 
+datasource_id = '4a50cb75-815d-4fe5-8bc1-144729ce5b42'
+
 # Base http path for constructing resource URLs for Sentinel 2 assets
 base_http_path = 'https://sentinel-s2-l1c.s3.amazonaws.com/{key_path}'
 
