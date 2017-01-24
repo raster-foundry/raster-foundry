@@ -139,9 +139,8 @@
             <div>
               <rzslider id="reclassify-before-threshold-value"
                         class="light"
-                        rz-slider-model="$ctrl.reclassifyBeforeThresholdValue"
-                        rz-slider-options="$ctrl.reclassifyThreshold.options"
-                        on-change="$ctrl.onReclassifyBeforeThresholdChange()">
+                        rz-slider-model="$ctrl.thresholds.before"
+                        rz-slider-options="$ctrl.reclassifyBeforeThreshold.options">
               </rzslider>
             </div>
           </div>
@@ -157,9 +156,8 @@
             <div>
               <rzslider id="reclassify-after-threshold-value"
                         class="light"
-                        rz-slider-model="$ctrl.reclassifyAfterThresholdValue"
-                        rz-slider-options="$ctrl.reclassifyThreshold.options"
-                        on-change="$ctrl.onReclassifyAfterThresholdChange()">
+                        rz-slider-model="$ctrl.thresholds.after"
+                        rz-slider-options="$ctrl.reclassifyAfterThreshold.options">
               </rzslider>
             </div>
           </div>
@@ -186,9 +184,10 @@
     <div style="position: absolute; top:0; bottom: 0; left: 0; right: 0;" ng-show="$ctrl.isShowingPreview">
       <rf-map-container map-id="lab-run-preview"></rf-map-container>
       <div class="preview-control-bar">
-          <button class="btn btn-primary" ng-click="$ctrl.closePreview()">{{$ctrl.exitText}}</button>
+          <button ng-if="$ctrl.previewLayers.length > 1" class="btn btn-primary" ng-click="$ctrl.closePreview()">Exit Node Comparison</button>
+          <button ng-if="$ctrl.previewLayers.length == 1" class="btn btn-primary" ng-click="$ctrl.closePreview()">Exit Node Preview</button>
       </div>
-      <div class="preview-info-bar" ng-show="$ctrl.isComparing">
+      <div class="preview-info-bar" ng-show="$ctrl.previewLayers.length > 1">
         <div class="split-container">
           <button class="btn">{{$ctrl.previewData[0].name}}</button>
         </div>
@@ -196,7 +195,7 @@
           <button class="btn">{{$ctrl.previewData[1].name}}</button>
         </div>
       </div>
-      <div class="preview-info-bar" ng-show="!$ctrl.isComparing">
+      <div class="preview-info-bar" ng-show="$ctrl.previewLayers.length == 1">
         <div class="split-container">
           <button class="btn">{{$ctrl.previewData.name}}</button>
         </div>
