@@ -57,7 +57,8 @@ export default class DiagramContainerController {
 
         this.nodes.set(ndviBefore, {
             input: 0,
-            name: 'NDVI - Before'
+            name: 'NDVI - Before',
+            part: 'ndvi0'
         });
 
         let reclassifyBefore = this.createRectangle({
@@ -68,7 +69,8 @@ export default class DiagramContainerController {
 
         this.nodes.set(reclassifyBefore, {
             input: 0,
-            name: 'Reclassify - Before'
+            name: 'Reclassify - Before',
+            part: 'class0'
         });
 
         this.createLink([ndviBefore, 'Output'], [reclassifyBefore, 'Input']);
@@ -81,7 +83,8 @@ export default class DiagramContainerController {
 
         this.nodes.set(ndviAfter, {
             input: 1,
-            name: 'NDVI - After'
+            name: 'NDVI - After',
+            part: 'ndvi1'
         });
 
         let reclassifyAfter = this.createRectangle({
@@ -92,7 +95,8 @@ export default class DiagramContainerController {
 
         this.nodes.set(reclassifyAfter, {
             input: 1,
-            name: 'Reclassify - After'
+            name: 'Reclassify - After',
+            part: 'class1'
         });
 
         this.createLink([ndviAfter, 'Output'], [reclassifyAfter, 'Input']);
@@ -105,7 +109,8 @@ export default class DiagramContainerController {
 
         this.nodes.set(subtract, {
             input: 1,
-            name: 'Subtract'
+            name: 'Subtract',
+            part: 'final'
         });
 
         this.createLink([reclassifyBefore, 'Output'], [subtract, 'First']);
@@ -227,7 +232,7 @@ export default class DiagramContainerController {
                                        this.defaultContextMenu;
 
         this.contextMenuEl = this.$compile(this.contextMenuTpl)(menuScope)[0];
-        this.$element[0].append(this.contextMenuEl);
+        this.$element[0].appendChild(this.contextMenuEl);
         this.contextMenuEl = $(this.contextMenuEl).css({
             top: bounds.y,
             left: bounds.x + bounds.width / 2
