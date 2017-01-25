@@ -6,15 +6,14 @@
           Color mode <i class="icon-caret-down"></i>
         </a>
         <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
-          <li role="menuitem"><a href ng-click="$ctrl.setBands('natural')">Natural color</a></li>
-          <li role="menuitem"><a href ng-click="$ctrl.setBands('cir')">Color infrared</a></li>
-          <li role="menuitem"><a href ng-click="$ctrl.setBands('urban')">Urban</a></li>
-          <li role="menuitem"><a href ng-click="$ctrl.setBands('water')">Water</a></li>
-          <li role="menuitem"><a href ng-click="$ctrl.setBands('atmosphere')">Atmosphere penetration</a></li>
-          <li role="menuitem"><a href ng-click="$ctrl.setBands('agriculture')">Agriculture</a></li>
-          <li role="menuitem"><a href ng-click="$ctrl.setBands('forestfire')">Forest fire</a></li>
-          <li role="menuitem"><a href ng-click="$ctrl.setBands('bareearth')">Bare Earth change detection</a></li>
-          <li role="menuitem"><a href ng-click="$ctrl.setBands('vegwater')">Vegetation & water</a></li>
+          <li role="menuitem">
+            <a href
+               ng-class="{'active': $ctrl.isActiveColorMode(key)}"
+               ng-click="$ctrl.setBands(key)"
+               ng-repeat="(key, band) in $ctrl.bands track by $index">
+              {{band.label}}
+            </a>
+          </li>
         </ul>
       </div>
       <div class="sidebar-actions">

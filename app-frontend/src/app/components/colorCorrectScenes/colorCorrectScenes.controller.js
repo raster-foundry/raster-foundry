@@ -61,6 +61,7 @@ export default class ColorCorrectScenesController {
         this.$scope = $scope;
         this.$parent = $scope.$parent.$ctrl;
         this.$q = $q;
+        this.$log = $log;
         this.getMap = () => mapService.getMap('project');
     }
 
@@ -91,6 +92,45 @@ export default class ColorCorrectScenesController {
                 map.setGeojson(scene.id, this.sceneService.getStyledFootprint(scene));
             });
         });
+
+        this.bands = {
+            natural: {
+                label: 'Natural Color',
+                value: {redBand: 3, greenBand: 2, blueBand: 1}
+            },
+            cir: {
+                label: 'Color infrared',
+                value: {redBand: 4, greenBand: 3, blueBand: 2}
+            },
+            urban: {
+                label: 'Urban',
+                value: {redBand: 6, greenBand: 5, blueBand: 4}
+            },
+            water: {
+                label: 'Water',
+                value: {redBand: 4, greenBand: 5, blueBand: 3}
+            },
+            atmosphere: {
+                label: 'Atmosphere penetration',
+                value: {redBand: 6, greenBand: 4, blueBand: 2}
+            },
+            agriculture: {
+                label: 'Agriculture',
+                value: {redBand: 5, greenBand: 4, blueBand: 1}
+            },
+            forestfire: {
+                label: 'Forest Fire',
+                value: {redBand: 6, greenBand: 4, blueBand: 1}
+            },
+            bareearth: {
+                label: 'Bare Earth change detection',
+                value: {redBand: 5, greenBand: 2, blueBand: 1}
+            },
+            vegwater: {
+                label: 'Vegetation & water',
+                value: {redBand: 4, greenBand: 6, blueBand: 0}
+            }
+        };
     }
 
     $onDestroy() {
@@ -181,24 +221,12 @@ export default class ColorCorrectScenesController {
      * @returns {null} null
      */
     setBands(bandName) {
-        let bands = {
-            natural: {redBand: 3, greenBand: 2, blueBand: 1},
-            cir: {redBand: 4, greenBand: 3, blueBand: 2},
-            urban: {redBand: 6, greenBand: 5, blueBand: 4},
-            water: {redBand: 4, greenBand: 5, blueBand: 3},
-            atmosphere: {redBand: 6, greenBand: 4, blueBand: 2},
-            agriculture: {redBand: 5, greenBand: 4, blueBand: 1},
-            forestfire: {redBand: 6, greenBand: 4, blueBand: 1},
-            bareearth: {redBand: 5, greenBand: 2, blueBand: 1},
-            vegwater: {redBand: 4, greenBand: 6, blueBand: 0}
-        };
-
         this.mosaic = this.$parent.mosaicLayer.values().next().value;
         let promises = [];
-        this.sceneLayers.forEach(function (layer) {
-            promises.push(layer.updateBands(bands[bandName]));
+        this.sceneLayers.forEach((layer) => {
+            promises.push(layer.updateBands(this.bands[bandName].value));
         });
-        this.redrawMosaic(promises, bands[bandName]);
+        this.redrawMosaic(promises, this.bands[bandName].value);
     }
 
     /**
@@ -295,5 +323,20 @@ export default class ColorCorrectScenesController {
         });
         this.gridSelectionLayer = null;
         this.$state.go('editor.project.color.adjust');
+    }
+
+    isActiveColorMode(key) {
+        let layer = this.sceneLayers.values().next();
+        let currentBands = {};
+        if (layer && layer.value) {
+            currentBands = layer.value.getCachedColorCorrection();
+        }
+        let keyBands = this.bands[key].value;
+
+        let isActive = currentBands &&
+            keyBands.redBand === currentBands.redBand &&
+            keyBands.greenBand === currentBands.greenBand &&
+            keyBands.blueBand === currentBands.blueBand;
+        return isActive;
     }
 }

@@ -250,6 +250,10 @@ export default (app) => {
             });
         }
 
+        getCachedColorCorrection() {
+            return this._correction; // eslint-disable-line no-underscore-dangle
+        }
+
         updateColorCorrection(corrections) {
             this._correction = corrections; // eslint-disable-line no-underscore-dangle
             return this.colorCorrectService.updateOrCreate(
