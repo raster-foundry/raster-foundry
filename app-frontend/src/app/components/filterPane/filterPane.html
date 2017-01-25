@@ -16,10 +16,30 @@
       <div class="filter-item">
         <div id="year_slider"></div>
       </div>
-      <rzslider rz-slider-model="$ctrl.yearFilters.minModel"
-                rz-slider-high="$ctrl.yearFilters.maxModel"
-                rz-slider-options="$ctrl.yearFilters.options"
-      ></rzslider>
+      <div class="btn-group">
+        <button type="button"
+                class="btn btn-toggle btn-small"
+                ng-class="{'active': $ctrl.yearFilterMode === 'range'}"
+                ng-click="$ctrl.setYearFilterMode('range')">
+          Year Range
+        </button>
+        <button type="button"
+                class="btn btn-toggle btn-small"
+                ng-class="{'active': $ctrl.yearFilterMode === 'single'}"
+                ng-click="$ctrl.setYearFilterMode('single')">
+          Single year
+        </button>
+      </div>
+      <br/>
+        <rzslider rz-slider-model="$ctrl.yearRangeFilters.minModel"
+                  rz-slider-high="$ctrl.yearRangeFilters.maxModel"
+                  rz-slider-options="$ctrl.yearRangeFilters.options"
+                  ng-show="$ctrl.yearFilterMode === 'range'"
+        ></rzslider>
+        <rzslider rz-slider-model="$ctrl.singleYearFilter.value"
+                  rz-slider-options="$ctrl.singleYearFilter.options"
+                  ng-show="$ctrl.yearFilterMode === 'single'"
+        ></rzslider>
     </div>
     <div class="filter"
          ng-mouseup="$ctrl.toggleDrag.toggle = false"

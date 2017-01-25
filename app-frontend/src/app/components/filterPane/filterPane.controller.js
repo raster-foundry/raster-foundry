@@ -12,20 +12,27 @@ export default class FilterPaneController {
     }
 
     onYearFiltersChange(id, minModel, maxModel) {
-        if (minModel === this.yearRange.min) {
-            delete this.filters.minAcquisitionDatetime;
-        } else {
-            this.filters.minAcquisitionDatetime =
-                (new Date(minModel, 0, 1))
-                .toISOString();
-        }
+        if (minModel && maxModel) {
+            if (minModel === this.yearRange.min) {
+                delete this.filters.minAcquisitionDatetime;
+            } else {
+                this.filters.minAcquisitionDatetime =
+                    (new Date(minModel, 0, 1))
+                    .toISOString();
+            }
 
-        if (maxModel === this.yearRange.max) {
-            delete this.filters.maxAcquisitionDatetime;
-        } else {
+            if (maxModel === this.yearRange.max) {
+                delete this.filters.maxAcquisitionDatetime;
+            } else {
+                this.filters.maxAcquisitionDatetime =
+                    (new Date(maxModel, 11, 31))
+                    .toISOString();
+            }
+        } else if (minModel) {
+            this.filters.minAcquisitionDatetime =
+                (new Date(minModel, 0, 1)).toISOString();
             this.filters.maxAcquisitionDatetime =
-                (new Date(maxModel, 11, 31))
-                .toISOString();
+                (new Date(minModel, 11, 31)).toISOString();
         }
     }
 
@@ -86,29 +93,37 @@ export default class FilterPaneController {
     }
 
     initFilters() {
-        this.yearRange = {min: 2010, max: 2016};
-        let minAcquisitionDatetime =
-            (new Date(this.filters.minAcquisitionDatetime || NaN)).getFullYear() ||
-            this.yearRange.min;
-        let maxAcquisitionDatetime =
-            (new Date(this.filters.maxAcquisitionDatetime || NaN)).getFullYear() ||
-            this.yearRange.max;
-        this.yearFilters = {
-            minModel: minAcquisitionDatetime,
-            maxModel: maxAcquisitionDatetime,
-            options: {
-                floor: this.yearRange.min,
-                ceil: this.yearRange.max,
-                minRange: 1,
-                showTicks: 1,
-                showTicksValues: true,
-                pushRange: true,
-                draggableRange: true,
-                onEnd: this.onYearFiltersChange.bind(this)
-            }
-        };
+        this.cachedFilters = {};
 
-        this.initMonthFilters();
+        let thisMonth = new Date().getMonth();
+        let thisYear = new Date().getFullYear();
+
+        // Changing from a 0-based to a 1-based indexing of months
+        let monthValues = [thisMonth + 1, thisMonth, thisMonth - 1].map(m => {
+            return m <= 0 ? 12 + m : m;
+        });
+
+        this.initMonthFilters({
+            defaults: {
+                values: monthValues
+            }
+        });
+
+        if (thisMonth > 1) {
+            this.initYearFilters({
+                defaults: {
+                    min: thisYear,
+                    max: thisYear
+                }
+            });
+        } else {
+            this.initYearFilters({
+                defaults: {
+                    min: thisYear - 1,
+                    max: thisYear
+                }
+            });
+        }
 
         this.dayOfMonthRange = {min: 1, max: 31};
         let minDayOfMonth = this.filters.minDayOfMonth ||
@@ -134,8 +149,7 @@ export default class FilterPaneController {
         this.cloudCoverRange = {min: 0, max: 100};
         let minCloudCover = parseInt(this.filters.minCloudCover, 10) ||
             this.cloudCoverRange.min;
-        let maxCloudCover = parseInt(this.filters.maxCloudCover, 10) ||
-            this.cloudCoverRange.max;
+        let maxCloudCover = parseInt(this.filters.maxCloudCover, 10) || 10;
         this.cloudCoverFilters = {
             minModel: minCloudCover,
             maxModel: maxCloudCover,
@@ -210,7 +224,62 @@ export default class FilterPaneController {
         }
     }
 
-    initMonthFilters() {
+    initYearFilters(options) {
+        let defaults = options.defaults || {};
+
+        this.yearRange = {min: 2010, max: new Date().getFullYear()};
+
+        let minAcquisitionYear =
+            (new Date(this.filters.minAcquisitionDatetime || NaN)).getFullYear() ||
+            defaults.min ||
+            this.yearRange.min;
+
+        let maxAcquisitionYear =
+            (new Date(this.filters.maxAcquisitionDatetime || NaN)).getFullYear() ||
+            defaults.max ||
+            this.yearRange.max;
+
+        this.filters.minAcquisitionDatetime =
+            this.filters.minAcquisitionDatetime ||
+            this.yearToYearStart(minAcquisitionYear).toISOString();
+
+        this.filters.maxAcquisitionDatetime =
+            this.filters.maxAcquisitionDatetime ||
+            this.yearToYearEnd(maxAcquisitionYear).toISOString();
+
+        this.yearFilterMode =
+            minAcquisitionYear === maxAcquisitionYear ? 'single' : 'range';
+
+        this.singleYearFilter = {
+            value: maxAcquisitionYear,
+            options: {
+                floor: this.yearRange.min,
+                ceil: this.yearRange.max,
+                showTicks: 1,
+                showTicksValues: true,
+                onEnd: this.onYearFiltersChange.bind(this)
+            }
+        };
+
+        this.yearRangeFilters = {
+            minModel: minAcquisitionYear,
+            maxModel: maxAcquisitionYear,
+            options: {
+                floor: this.yearRange.min,
+                ceil: this.yearRange.max,
+                minRange: 1,
+                showTicks: 1,
+                showTicksValues: true,
+                pushRange: true,
+                draggableRange: true,
+                onEnd: this.onYearFiltersChange.bind(this)
+            }
+        };
+    }
+
+    initMonthFilters(options) {
+        let defaults = options.defaults || {};
+
         this.monthFilters = {
             1: {label: 'Jan', enabled: false},
             2: {label: 'Feb', enabled: false},
@@ -243,6 +312,11 @@ export default class FilterPaneController {
             } else {
                 this.filters.month = null;
             }
+        } else if (defaults.values) {
+            this.filters.month = defaults.values;
+            defaults.values.forEach(v => {
+                this.monthFilters[v].enabled = true;
+            });
         }
     }
 
@@ -272,10 +346,11 @@ export default class FilterPaneController {
     }
 
     resetAllFilters() {
-        this.yearFilters.minModel = this.yearRange.min;
-        this.yearFilters.maxModel = this.yearRange.max;
+        this.yearRangeFilters.minModel = this.yearRange.min;
+        this.yearRangeFilters.maxModel = this.yearRange.max;
         delete this.filters.minAcquisitionDatetime;
         delete this.filters.maxAcquisitionDatetime;
+        this.yearFilterMode = 'range';
 
         this.monthFilters = _.mapValues(this.monthFilters, (val) => {
             val.enabled = false;
@@ -346,6 +421,87 @@ export default class FilterPaneController {
         } else {
             this.filters.ingested = true;
         }
+    }
+
+    setYearFilterMode(mode) {
+        if (mode !== this.yearFilterMode) {
+            this.yearFilterMode = mode;
+            if (mode === 'single') {
+                this.cacheYearFilters();
+                // if we move from range to single, we use the range's max
+                let tmpDate;
+
+                if (this.filters.maxAcquisitionDatetime) {
+                    tmpDate = new Date(this.filters.maxAcquisitionDatetime);
+                    this.filters.maxAcquisitionDatetime = this.dateToYearEnd(tmpDate).toISOString();
+                } else {
+                    tmpDate = this.dateToYearEnd();
+                    this.filters.maxAcquisitionDatetime = tmpDate.toISOString();
+                }
+
+                this.filters.minAcquisitionDatetime = this.dateToYearStart(tmpDate).toISOString();
+                this.singleYearFilter.value = tmpDate.getFullYear();
+            } else {
+                // if moving from single to range
+
+                let cmin = new Date(this.cachedFilters.minAcquisitionDatetime).getFullYear();
+                let actual = new Date(this.filters.minAcquisitionDatetime).getFullYear();
+
+                if (cmin && cmin < actual) {
+                    this.filters.minAcquisitionDatetime = this.cachedFilters.minAcquisitionDatetime;
+                } else {
+                    let c = cmin || actual;
+                    if (c > this.yearRange.min) {
+                        this.filters.minAcquisitionDatetime =
+                            this.yearToYearStart(actual - 1).toISOString();
+                    } else {
+                        this.filters.minAcquisitionDatetime =
+                            this.yearToYearStart(this.yearRange.min).toISOString();
+
+                        this.filters.maxAcquisitionDatetime =
+                            this.yearToYearEnd(this.yearRange.min + 1).toISOString();
+                    }
+                }
+                this.yearRangeFilters.minModel =
+                    new Date(this.filters.minAcquisitionDatetime).getFullYear();
+
+                this.yearRangeFilters.maxModel =
+                    new Date(this.filters.maxAcquisitionDatetime).getFullYear();
+            }
+        }
+    }
+
+    cacheYearFilters() {
+        this.cachedFilters.minAcquisitionDatetime = this.filters.minAcquisitionDatetime;
+        this.cachedFilters.maxAcquisitionDatetime = this.filters.maxAcquisitionDatetime;
+    }
+
+    yearToYearEnd(fullYear) {
+        let d = new Date();
+        d.setFullYear(fullYear);
+        return this.dateToYearEnd(d);
+    }
+
+    yearToYearStart(fullYear) {
+        let d = new Date();
+        d.setFullYear(fullYear);
+        return this.dateToYearStart(d);
+    }
+
+    dateToYearEnd(dateObject) {
+        let d = dateObject || new Date();
+        let newDate = new Date(d.getTime());
+        newDate.setMonth(11);
+        newDate.setDate(31);
+        return newDate;
+    }
+
+    dateToYearStart(dateObject) {
+        let d = dateObject || new Date();
+        let newDate = new Date(d.getTime());
+        newDate.setMonth(0);
+        newDate.setDate(1);
+        return newDate;
     }
 
     setMonthFilter(month, enabled) {
