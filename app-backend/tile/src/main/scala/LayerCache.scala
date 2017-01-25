@@ -66,7 +66,7 @@ object LayerCache extends Config {
         Try(reader.read(key)) match {
           // Only cache failures through failed query
           case Success(tile) => Some(tile)
-          case Failure(e: TileNotFoundError) => None
+          case Failure(e: ValueNotFoundError) => None
           case Failure(e) => throw e
         }
       }

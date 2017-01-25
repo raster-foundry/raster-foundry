@@ -159,7 +159,6 @@ lazy val tile = Project("tile", file("tile"))
     case _ => MergeStrategy.first
   })
   .settings(assemblyJarName in assembly := "rf-tile-server.jar")
-  .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({
     libraryDependencies ++= loggingDependencies ++ Seq(
       Dependencies.commonsIO,
@@ -176,7 +175,6 @@ lazy val tile = Project("tile", file("tile"))
 
 lazy val tool = Project("tool", file("tool"))
   .settings(commonSettings:_*)
-  .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({
     libraryDependencies ++= loggingDependencies ++ Seq(
       Dependencies.geotrellisRaster,
