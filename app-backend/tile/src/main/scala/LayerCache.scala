@@ -44,6 +44,11 @@ object LayerCache extends Config {
   val memcachedClient =
     new MemcachedClient(new InetSocketAddress(memcachedHost, memcachedPort))
 
+  // TODO: Make a scalacache Codec using Kryo
+  implicit val memcached: ScalaCache[Array[Byte]] = {
+    ScalaCache(MemcachedCache(memcachedClient))
+  }
+
   implicit val memoryCache: ScalaCache[InMemoryRepr] = {
     val underlyingCaffeineCache =
       Caffeine.newBuilder()
@@ -51,12 +56,6 @@ object LayerCache extends Config {
         .expireAfterAccess(cacheExpiration.toMillis, TimeUnit.MILLISECONDS)
         .build[String, Object]
     ScalaCache(CaffeineCache(underlyingCaffeineCache))
-  }
-
-  // TODO: Make a scalacache Codec using Kryo
-  implicit val memcached: ScalaCache[Array[Byte]] = {
-    val client = new MemcachedClient(new InetSocketAddress(memcachedHost, memcachedPort))
-    ScalaCache(MemcachedCache(client))
   }
 
   def attributeStore(bucket: String, prefix: Option[String]): Future[S3AttributeStore] =
@@ -74,7 +73,7 @@ object LayerCache extends Config {
   val futureTiles: ScaffCache[String, Future[Option[MultibandTile]]] =
     Scaffeine()
       .recordStats()
-      .expireAfterWrite(20.minute)
+      .expireAfterWrite(30.second)
       .maximumSize(500)
       .build[String, Future[Option[MultibandTile]]]()
 
@@ -95,7 +94,7 @@ object LayerCache extends Config {
         }
       }
 
-    def fetchTile(cKey: String) = {
+    def fetchRemote(cKey: String) = {
       memcachedClient
         .asyncGet(cKey)
         .asFuture[MultibandTile]
@@ -108,14 +107,14 @@ object LayerCache extends Config {
               for {
                 mbTile <- futureMaybeTile
                 tile <- mbTile
-              } { memcachedClient.set(cKey, 10000, tile) }
+              } { memcachedClient.set(cKey, 30, tile) }
               futureMaybeTile
           }
         })
     }
 
     val cacheKey = s"tile-$id-$zoom-$key"
-    val futureMaybeTile = futureTiles.get(cacheKey, fetchTile)
+    val futureMaybeTile = futureTiles.get(cacheKey, fetchRemote)
     futureTiles.put(cacheKey, futureMaybeTile)
     futureMaybeTile
   }
@@ -124,13 +123,13 @@ object LayerCache extends Config {
   val futureHistograms: ScaffCache[String, Future[Array[Histogram[Double]]]] =
     Scaffeine()
       .recordStats()
-      .expireAfterWrite(20.minute)
+      .expireAfterWrite(30.second)
       .maximumSize(500)
       .build[String, Future[Array[Histogram[Double]]]]()
 
 
   def bandHistogram(id: RfLayerId, zoom: Int): Future[Array[Histogram[Double]]] = {
-    def fetchHistograms(cKey: String) = {
+    def fetchRemote(cKey: String) = {
       memcachedClient
         .asyncGet(cKey)
         .asFuture[Array[Histogram[Double]]]
@@ -145,14 +144,14 @@ object LayerCache extends Config {
               } yield store.read[Array[Histogram[Double]]](id.catalogId(0), "histogram")
               for (
                 histograms <- futureHistograms
-              ) { memcachedClient.set(cKey, 10000, histograms) }
+              ) { memcachedClient.set(cKey, 30, histograms) }
               futureHistograms
           }
         })
     }
 
     val cacheKey = s"histogram-$id-$zoom"
-    val futHistograms = futureHistograms.get(cacheKey, fetchHistograms)
+    val futHistograms = futureHistograms.get(cacheKey, fetchRemote)
     futureHistograms.put(cacheKey, futHistograms)
     futHistograms
   }

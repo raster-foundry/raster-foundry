@@ -47,13 +47,13 @@ object Mosaic {
   val futureMosaicDefinitions: ScaffCache[String, Future[Option[MosaicDefinition]]] =
     Scaffeine()
       .recordStats()
-      .expireAfterWrite(20.minute)
+      .expireAfterWrite(30.second)
       .maximumSize(500)
       .build[String, Future[Option[MosaicDefinition]]]()
 
   def mosaicDefinition(projectId: UUID, tagttl: Option[TagWithTTL])(implicit db: Database) = {
 
-    def fetch(cKey: String): Future[Option[MosaicDefinition]] = {
+    def remoteFetch(cKey: String): Future[Option[MosaicDefinition]] = {
       memcachedClient
         .asyncGet(cKey)
         .asFuture[MosaicDefinition]
@@ -77,7 +77,7 @@ object Mosaic {
     tagttl match {
       case Some(t) =>
         val cacheKey = s"mosaic-definition-$projectId-${t.tag}"
-        val futureMosaicDefinition = futureMosaicDefinitions.get(cacheKey, fetch)
+        val futureMosaicDefinition = futureMosaicDefinitions.get(cacheKey, remoteFetch)
         futureMosaicDefinitions.put(cacheKey, futureMosaicDefinition)
         futureMosaicDefinition
       case None =>
