@@ -183,7 +183,7 @@ export default class ProjectScenesController {
                     let protocol = this.$location.protocol();
 
                     let port = this.$location.port();
-                    let formattedPort = port !== 80 || port !== 443 ? ':' + port : '';
+                    let formattedPort = port !== 80 && port !== 443 ? ':' + port : '';
                     let tag = (new Date()).getTime();
                     return `${protocol}://${host}${formattedPort}` +
                         `/tiles/${this.project.organizationId}` +

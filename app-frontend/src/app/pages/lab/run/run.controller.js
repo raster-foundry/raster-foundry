@@ -78,6 +78,13 @@ export default class LabRunController {
 
     getNodeUrl(node) {
         if (this.inputs.length === 2 && this.inputs[0].id && this.inputs[1].id) {
+            if (node.part === 'input') {
+                let tag = new Date().getTime();
+                return `/tiles/${this.inputs[node.input].organizationId}` +
+                       '/rf_airflow-user' +
+                       `/project/${this.inputs[node.input].id}/{z}/{x}/{y}/` +
+                       `?tag=${tag}`;
+            }
             let base =
                 '/tiles/tools/dfac6307-b5ef-43f7-beda-b9f208bb7726/ndvi-diff-tool/{z}/{x}/{y}';
             let lc80 = `LC8_0=${this.inputs[0].id}`;
