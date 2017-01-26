@@ -150,6 +150,15 @@ export default class FilterPaneController {
         let minCloudCover = parseInt(this.filters.minCloudCover, 10) ||
             this.cloudCoverRange.min;
         let maxCloudCover = parseInt(this.filters.maxCloudCover, 10) || 10;
+
+        if (!this.filters.minCloudCover && minCloudCover !== this.cloudCoverRange.min) {
+            this.filters.minCloudCover = minCloudCover;
+        }
+
+        if (!this.filters.maxCloudCover && maxCloudCover !== this.cloudCoverRange.max) {
+            this.filters.maxCloudCover = maxCloudCover;
+        }
+
         this.cloudCoverFilters = {
             minModel: minCloudCover,
             maxModel: maxCloudCover,

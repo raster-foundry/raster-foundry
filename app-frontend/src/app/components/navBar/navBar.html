@@ -1,4 +1,4 @@
-<div class="navbar primary-navbar" ng-show="!$ctrl.loadError">
+<div class="navbar primary-navbar" ng-show="!$ctrl.loadError"  ng-if="!$ctrl.$state.$current.name.includes('share')">
   <!-- Nav Left -->
   <div class="navbar-left">
     <a href="#" class="brand">

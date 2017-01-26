@@ -179,24 +179,13 @@ export default class ProjectEditController {
 
         this.activeModal = this.$uibModal.open({
             component: 'rfPublishModal',
-            backdrop: 'static',
-            keyboard: false,
             resolve: {
                 project: () => this.project,
-                tileTemplateUrl: () => {
-                    let host = this.$location.host();
-                    let protocol = this.$location.protocol();
-
-                    let port = this.$location.port();
-                    let formattedPort = port !== 80 && port !== 443 ? ':' + port : '';
-                    let tag = (new Date()).getTime();
-                    return `${protocol}://${host}${formattedPort}` +
-                        `/tiles/${this.project.organizationId}` +
-                        '/rf_airflow-user' +
-                        `/project/${this.project.id}/{z}/{x}/{y}/` +
-                        `?tag=${tag}`;
-                }
+                tileUrl: () => this.projectService.getProjectLayerURL(this.project),
+                shareUrl: () => this.projectService.getProjectShareURL(this.project)
             }
         });
+
+        return this.activeModal;
     }
 }

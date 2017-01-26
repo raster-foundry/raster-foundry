@@ -6,25 +6,53 @@
     <h4 class="modal-title">
       Publish Project - {{$ctrl.resolve.project.name}}
     </h4>
-    <p>Get the XYZ resource link for use in other products</p>
+    <p>Publish or export your project</p>
   </div>
   <div class="modal-body">
     <div class="content">
-      <label>XYZ resource link</label>
-      <div class="form-group all-in-one">
-        <label for="tile-link" class="sr-only">URI Link</label>
-        <input id="tile-link" type="text" class="form-control"
-                value="{{$ctrl.resolve.tileTemplateUrl}}" readonly>
-         <!--
-           @TODO: the copy button is intended to copy the url for the user which
-           is not currently implemented
-         -->
-        <button class="btn btn-link">
-          Copy
-        </button>
+      <h4>Publishing</h4>
+      <div class="form-group">
+        <div>
+          <a class="btn btn-primary" ui-sref="share({projectid: $ctrl.resolve.project.id})">
+            Preview Your Published Project
+          </a>
+        </div>
       </div>
       <div class="form-group">
-        <label>Or download an image of your project</label>
+        <label>Published page URL</label>
+        <div class="form-group all-in-one">
+          <label for="tile-link" class="sr-only">URL</label>
+          <input id="tile-link" type="text" class="form-control"
+                  value="{{$ctrl.resolve.shareUrl}}" readonly>
+          <!--
+            @TODO: the copy button is intended to copy the url for the user which
+            is not currently implemented
+          -->
+          <button class="btn btn-link">
+            Copy
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="content">
+      <h4>Exporting</h4>
+      <div class="form-group">
+        <label>XYZ resource link</label>
+        <div class="form-group all-in-one">
+          <label for="tile-link" class="sr-only">URI Link</label>
+          <input id="tile-link" type="text" class="form-control"
+                  value="{{$ctrl.resolve.tileUrl}}" readonly>
+          <!--
+            @TODO: the copy button is intended to copy the url for the user which
+            is not currently implemented
+          -->
+          <button class="btn btn-link">
+            Copy
+          </button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Download an image of your project</label>
         <div>
           <a class="btn btn-primary" href="">
             Download .png

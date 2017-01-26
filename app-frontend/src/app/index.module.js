@@ -54,6 +54,7 @@ const App = angular.module(
         require('./pages/library/projects/detail/scene/scene.module.js').name,
         require('./pages/library/projects/detail/projectScenes/projectScenes.module.js').name,
         require('./pages/settings/settings.module.js').name,
+        require('./pages/share/share.module.js').name,
         require('./pages/settings/profile/profile.module.js').name,
         require('./pages/settings/account/account.module.js').name,
         require('./pages/settings/tokens/tokens.module.js').name,

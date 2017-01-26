@@ -10,7 +10,10 @@ export default class ProjectScenesController {
         this.projectService = projectService;
         this.$parent = $scope.$parent.$ctrl;
         this.$uibModal = $uibModal;
+        this.$scope = $scope;
+    }
 
+    $onInit() {
         this.project = this.$state.params.project;
         this.projectId = this.$state.params.projectid;
 
@@ -25,7 +28,7 @@ export default class ProjectScenesController {
                     (project) => {
                         this.project = project;
                         this.loading = false;
-                        this.populateSceneList($state.params.page || 1);
+                        this.populateSceneList(this.$state.params.page || 1);
                     },
                     () => {
                         this.$state.go('^.^.list');
@@ -35,8 +38,14 @@ export default class ProjectScenesController {
                 this.$state.go('^.^.list');
             }
         } else {
-            this.populateSceneList($state.params.page || 1);
+            this.populateSceneList(this.$state.params.page || 1);
         }
+
+        this.$scope.$on('$destroy', () => {
+            if (this.activeModal) {
+                this.activeModal.dismiss();
+            }
+        });
     }
 
     populateSceneList(page) {
@@ -178,21 +187,12 @@ export default class ProjectScenesController {
             component: 'rfPublishModal',
             resolve: {
                 project: () => this.project,
-                tileTemplateUrl: () => {
-                    let host = this.$location.host();
-                    let protocol = this.$location.protocol();
-
-                    let port = this.$location.port();
-                    let formattedPort = port !== 80 && port !== 443 ? ':' + port : '';
-                    let tag = (new Date()).getTime();
-                    return `${protocol}://${host}${formattedPort}` +
-                        `/tiles/${this.project.organizationId}` +
-                        '/rf_airflow-user' +
-                        `/project/${this.project.id}/{z}/{x}/{y}/` +
-                        `?tag=${tag}`;
-                }
+                tileUrl: () => this.projectService.getProjectLayerURL(this.project),
+                shareUrl: () => this.projectService.getProjectShareURL(this.project)
             }
         });
+
+        return this.activeModal;
     }
 
     shouldShowPagination() {
