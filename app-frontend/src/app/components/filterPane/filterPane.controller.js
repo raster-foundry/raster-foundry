@@ -424,50 +424,53 @@ export default class FilterPaneController {
     }
 
     setYearFilterMode(mode) {
-        if (mode !== this.yearFilterMode) {
-            this.yearFilterMode = mode;
-            if (mode === 'single') {
-                this.cacheYearFilters();
-                // if we move from range to single, we use the range's max
-                let tmpDate;
+        if (mode === this.yearFilterMode) {
+            return;
+        }
 
-                if (this.filters.maxAcquisitionDatetime) {
-                    tmpDate = new Date(this.filters.maxAcquisitionDatetime);
-                    this.filters.maxAcquisitionDatetime = this.dateToYearEnd(tmpDate).toISOString();
-                } else {
-                    tmpDate = this.dateToYearEnd();
-                    this.filters.maxAcquisitionDatetime = tmpDate.toISOString();
-                }
+        this.yearFilterMode = mode;
 
-                this.filters.minAcquisitionDatetime = this.dateToYearStart(tmpDate).toISOString();
-                this.singleYearFilter.value = tmpDate.getFullYear();
+        if (mode === 'single') {
+            this.cacheYearFilters();
+            // if we move from range to single, we use the range's max
+            let tmpDate;
+
+            if (this.filters.maxAcquisitionDatetime) {
+                tmpDate = new Date(this.filters.maxAcquisitionDatetime);
+                this.filters.maxAcquisitionDatetime = this.dateToYearEnd(tmpDate).toISOString();
             } else {
-                // if moving from single to range
-
-                let cmin = new Date(this.cachedFilters.minAcquisitionDatetime).getFullYear();
-                let actual = new Date(this.filters.minAcquisitionDatetime).getFullYear();
-
-                if (cmin && cmin < actual) {
-                    this.filters.minAcquisitionDatetime = this.cachedFilters.minAcquisitionDatetime;
-                } else {
-                    let c = cmin || actual;
-                    if (c > this.yearRange.min) {
-                        this.filters.minAcquisitionDatetime =
-                            this.yearToYearStart(actual - 1).toISOString();
-                    } else {
-                        this.filters.minAcquisitionDatetime =
-                            this.yearToYearStart(this.yearRange.min).toISOString();
-
-                        this.filters.maxAcquisitionDatetime =
-                            this.yearToYearEnd(this.yearRange.min + 1).toISOString();
-                    }
-                }
-                this.yearRangeFilters.minModel =
-                    new Date(this.filters.minAcquisitionDatetime).getFullYear();
-
-                this.yearRangeFilters.maxModel =
-                    new Date(this.filters.maxAcquisitionDatetime).getFullYear();
+                tmpDate = this.dateToYearEnd();
+                this.filters.maxAcquisitionDatetime = tmpDate.toISOString();
             }
+
+            this.filters.minAcquisitionDatetime = this.dateToYearStart(tmpDate).toISOString();
+            this.singleYearFilter.value = tmpDate.getFullYear();
+        } else {
+            // if moving from single to range
+
+            let cmin = new Date(this.cachedFilters.minAcquisitionDatetime).getFullYear();
+            let actual = new Date(this.filters.minAcquisitionDatetime).getFullYear();
+
+            if (cmin && cmin < actual) {
+                this.filters.minAcquisitionDatetime = this.cachedFilters.minAcquisitionDatetime;
+            } else {
+                let c = cmin || actual;
+                if (c > this.yearRange.min) {
+                    this.filters.minAcquisitionDatetime =
+                        this.yearToYearStart(actual - 1).toISOString();
+                } else {
+                    this.filters.minAcquisitionDatetime =
+                        this.yearToYearStart(this.yearRange.min).toISOString();
+
+                    this.filters.maxAcquisitionDatetime =
+                        this.yearToYearEnd(this.yearRange.min + 1).toISOString();
+                }
+            }
+            this.yearRangeFilters.minModel =
+                new Date(this.filters.minAcquisitionDatetime).getFullYear();
+
+            this.yearRangeFilters.maxModel =
+                new Date(this.filters.maxAcquisitionDatetime).getFullYear();
         }
     }
 
