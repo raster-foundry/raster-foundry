@@ -1,0 +1,48 @@
+<div class="navbar primary-navbar">
+  <div class="navbar-left">
+    <a href="#" class="brand">
+      <img ng-attr-src="{{$ctrl.logoAsset}}">
+    </a>
+    <nav>
+      <a class="active">{{$ctrl.project.name}}</a>
+    </nav>
+  </div>
+
+  <div class="navbar-right">
+    <nav ng-if="!$ctrl.testNoAuth">
+      <a href class="icon-link" title="Help">
+        <i class="icon-help"></i>
+      </a>
+      <a href class="icon-link" title="Processing">
+        <i class="icon-processing"></i>
+      </a>
+    </nav>
+    <span class="navbar-vertical-divider" ng-if="!$ctrl.testNoAuth"></span>
+    <nav>
+      <div ng-if="!$ctrl.authService.isLoggedIn || $ctrl.testNoAuth">
+        <button class="btn btn-primary">
+          Sign Up or Sign In
+        </button>
+      </div>
+      <div ng-if="$ctrl.authService.isLoggedIn && !$ctrl.testNoAuth" uib-dropdown class="dropdown-my-account" on-toggle="toggled($ctrl.optionsOpen)">
+        <a href uib-dropdown-toggle>
+          <img ng-if="$ctrl.authService.profile().picture" class="avatar" ng-src="{{$ctrl.authService.profile().picture}}">
+          <img ng-if="! $ctrl.authService.profile().picture" class="avatar" src="https://placehold.it/25x25">
+          <span class="username">{{$ctrl.authService.profile().nickname}}</span>
+          <i class="icon-caret-down"></i>
+        </a>
+        <ul class="dropdown-menu" aria-labelledby="dLabel">
+          <li><a href ui-sref="library.scenes.list">My library</a></li>
+          <li><a href ui-sref="settings.profile">Settings</a></li>
+          <li role="separator" class="divider"></li>
+          <li><a href ng-click="$ctrl.logout()">Sign out</a></li>
+        </ul>
+      </div>
+    </nav>
+  </div>
+</div>
+<div class="container column-stretch container-not-scrollable">
+  <div class="main">
+    <rf-map-container map-id="share-map"></rf-map-container>
+  </div>
+</div>

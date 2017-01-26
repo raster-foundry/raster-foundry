@@ -1,9 +1,12 @@
+/* global L */
+
 export default (app) => {
     class ProjectService {
-        constructor($resource, userService, $http, $q) {
+        constructor($resource, $location, userService, $http, $q) {
             'ngInject';
             this.userService = userService;
             this.$http = $http;
+            this.$location = $location;
             this.$q = $q;
 
             this.Project = $resource(
@@ -188,6 +191,36 @@ export default (app) => {
 
         updateProject(params) {
             return this.Project.updateProject(params).$promise;
+        }
+
+        getBaseURL() {
+            let host = this.$location.host();
+            let protocol = this.$location.protocol();
+            let port = this.$location.port();
+            let formattedPort = port !== 80 && port !== 443 ? ':' + port : '';
+            return `${protocol}://${host}${formattedPort}`;
+        }
+
+        getProjectLayerURL(project, token) {
+            let userId = 'rf_airflow-user';
+
+            let params = {
+                tag: new Date().getTime()
+            };
+
+            if (token) {
+                params.token = token;
+            }
+
+            let formattedParams = L.Util.getParamString(params);
+
+            return this.getBaseURL() +
+                `/tiles/${project.organizationId}/${userId}` +
+                `/project/${project.id}/{z}/{x}/{y}/${formattedParams}`;
+        }
+
+        getProjectShareURL(project) {
+            return `${this.getBaseURL()}/#/share/${project.id}`;
         }
     }
 

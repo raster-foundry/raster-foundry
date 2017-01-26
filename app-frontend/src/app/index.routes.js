@@ -25,6 +25,7 @@ import profileTpl from './pages/settings/profile/profile.html';
 import accountTpl from './pages/settings/account/account.html';
 import tokensTpl from './pages/settings/tokens/tokens.html';
 import errorTpl from './pages/error/error.html';
+import shareTpl from './pages/share/share.html';
 
 function librarySceneStates($stateProvider) {
     $stateProvider
@@ -255,6 +256,16 @@ function labStates($stateProvider) {
         });
 }
 
+function shareStates($stateProvider) {
+    $stateProvider
+        .state('share', {
+            url: '/share/:projectid',
+            templateUrl: shareTpl,
+            controller: 'ShareController',
+            controllerAs: '$ctrl'
+        });
+}
+
 function routeConfig($urlRouterProvider, $stateProvider) {
     'ngInject';
 
@@ -265,6 +276,7 @@ function routeConfig($urlRouterProvider, $stateProvider) {
     libraryProjectStates($stateProvider);
     settingsStates($stateProvider);
     labStates($stateProvider);
+    shareStates($stateProvider);
 
     $stateProvider
         .state('error', {
