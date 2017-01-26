@@ -1,3 +1,3 @@
 from .create_thumbnail import create_thumbnail
-from .extract_metadata import extract_metadata
-from .extract_footprint import extract_footprint
+from .create_scenes import create_geotiff_scene, GeoTiffS3SceneFactory
+from .create_images import create_geotiff_image
