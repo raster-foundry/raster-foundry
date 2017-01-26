@@ -23,6 +23,6 @@ INSERT INTO tools (
   '{"Sentinel-2", "Landsat 8"}',
   '5.0'
 )
-    """ // your sql code goes here
+    """
   ))
 }

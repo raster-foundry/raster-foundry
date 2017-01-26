@@ -9,6 +9,46 @@ import geotrellis.vector.io.json.GeoJsonSupport
 import geotrellis.vector.Geometry
 import geotrellis.slick.Projected
 
+import slick.collection.heterogeneous.{HList, HNil}
+import slick.collection.heterogeneous.syntax._
+
+case class SceneFilterFields(
+  cloudCover: Option[Float] = None,
+  acquisitionDate: Option[java.sql.Timestamp] = None,
+  sunAzimuth: Option[Float] = None,
+  sunElevation: Option[Float] = None
+)
+
+object SceneFilterFields {
+  implicit val defaultSceneFilterFieldsJsonFormat = jsonFormat4(SceneFilterFields.apply)
+
+  def tupled = (SceneFilterFields.apply _).tupled
+
+  type TupleType = (
+    Option[Float],
+    Option[java.sql.Timestamp],
+    Option[Float],
+    Option[Float]
+  )
+}
+
+case class SceneStatusFields(
+  thumbnailStatus: JobStatus,
+  boundaryStatus: JobStatus,
+  ingestStatus: IngestStatus
+)
+
+object SceneStatusFields {
+  implicit val defaultSceneStatusFieldsJsonFormat = jsonFormat3(SceneStatusFields.apply)
+
+  def tupled = (SceneStatusFields.apply _).tupled
+
+  type TupleType = (
+    JobStatus,
+    JobStatus,
+    IngestStatus
+  )
+}
 
 case class Scene(
   id: UUID,
@@ -22,19 +62,17 @@ case class Scene(
   tags: List[String],
   datasource: UUID,
   sceneMetadata: Map[String, Any],
-  cloudCover: Option[Float] = None,
-  acquisitionDate: Option[java.sql.Timestamp] = None,
-  thumbnailStatus: JobStatus,
-  boundaryStatus: JobStatus,
-  sunAzimuth: Option[Float] = None,
-  sunElevation: Option[Float] = None,
   name: String,
   tileFootprint: Option[Projected[Geometry]] = None,
   dataFootprint: Option[Projected[Geometry]] = None,
   metadataFiles: List[String],
-  ingestLocation: Option[String] = None
+  ingestLocation: Option[String] = None,
+  filterFields: SceneFilterFields = new SceneFilterFields(),
+  statusFields: SceneStatusFields
 ) {
   def toScene = this
+
+
 
   def withRelatedFromComponents(
     images: Seq[Image.WithRelated],
@@ -51,31 +89,22 @@ case class Scene(
     this.tags,
     this.datasource,
     this.sceneMetadata,
-    this.cloudCover,
-    this.acquisitionDate,
-    this.thumbnailStatus,
-    this.boundaryStatus,
-    this.sunAzimuth,
-    this.sunElevation,
     this.name,
     this.tileFootprint,
     this.dataFootprint,
     this.metadataFiles,
     images,
     thumbnails,
-    this.ingestLocation
+    this.ingestLocation,
+    this.filterFields,
+    this.statusFields
   )
 }
 
 
 object Scene extends GeoJsonSupport {
 
-  def tupled = (Scene.apply _).tupled
-
-  def create = Create.apply _
-
-  implicit val defaultSceneFormat = jsonFormat22(Scene.apply)
-
+  implicit val defaultSceneFormat = jsonFormat18(Scene.apply)
 
   /** Case class extracted from a POST request */
   case class Create(
@@ -86,19 +115,15 @@ object Scene extends GeoJsonSupport {
     tags: List[String],
     datasource: UUID,
     sceneMetadata: Map[String, Any],
-    cloudCover: Option[Float],
-    acquisitionDate: Option[java.sql.Timestamp],
-    thumbnailStatus: JobStatus,
-    boundaryStatus: JobStatus,
-    sunAzimuth: Option[Float],
-    sunElevation: Option[Float],
     name: String,
     tileFootprint: Option[Projected[Geometry]],
     dataFootprint: Option[Projected[Geometry]],
     metadataFiles: List[String],
     images: List[Image.Banded],
     thumbnails: List[Thumbnail.Identified],
-    ingestLocation: Option[String]
+    ingestLocation: Option[String],
+    filterFields: SceneFilterFields = new SceneFilterFields(),
+    statusFields: SceneStatusFields
   ) {
     def toScene(userId: String): Scene = {
       val now = new Timestamp((new java.util.Date()).getTime())
@@ -114,23 +139,19 @@ object Scene extends GeoJsonSupport {
         tags,
         datasource,
         sceneMetadata,
-        cloudCover,
-        acquisitionDate,
-        thumbnailStatus,
-        boundaryStatus,
-        sunAzimuth,
-        sunElevation,
         name,
         tileFootprint,
         dataFootprint,
         metadataFiles,
-        ingestLocation
+        ingestLocation,
+        filterFields,
+        statusFields
       )
     }
   }
 
   object Create {
-    implicit val defaultThumbnailWithRelatedFormat = jsonFormat20(Create.apply)
+    implicit val defaultThumbnailWithRelatedFormat = jsonFormat16(Create.apply)
   }
 
   case class WithRelated(
@@ -145,19 +166,15 @@ object Scene extends GeoJsonSupport {
     tags: List[String],
     datasource: UUID,
     sceneMetadata: Map[String, Any],
-    cloudCover: Option[Float],
-    acquisitionDate: Option[java.sql.Timestamp],
-    thumbnailStatus: JobStatus,
-    boundaryStatus: JobStatus,
-    sunAzimuth: Option[Float],
-    sunElevation: Option[Float],
     name: String,
     tileFootprint: Option[Projected[Geometry]],
     dataFootprint: Option[Projected[Geometry]],
     metadataFiles: List[String],
     images: Seq[Image.WithRelated],
     thumbnails: Seq[Thumbnail],
-    ingestLocation: Option[String]
+    ingestLocation: Option[String],
+    filterFields: SceneFilterFields = new SceneFilterFields(),
+    statusFields: SceneStatusFields
   )
 
   object WithRelated {
