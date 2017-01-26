@@ -9,6 +9,7 @@ import spray.json._
 /** Custom Postgres driver that adds custom column types and implicit conversions
   *
   * Adds support for the following column types
+  *  - IngestStatus
   *  - JSONB
   *  - JobStatus (enum)
   *  - Visibility (enum)
@@ -50,6 +51,19 @@ trait ExtendedPostgresDriver extends ExPostgresDriver
       createEnumColumnExtensionMethodsBuilder[User.Role]
     implicit val userRoleOptionColumnExtensionMethodsBuilder =
       createEnumOptionColumnExtensionMethodsBuilder[User.Role]
+ 
+    implicit val ingestStatusTypeMapper = createEnumJdbcType[IngestStatus](
+      "IngestStatus", _.repr,
+      IngestStatus.fromString, quoteName = false
+    )
+    implicit val ingestStatusTypeListMapper = createEnumListJdbcType[IngestStatus](
+      "IngestStatus",
+      _.repr, IngestStatus.fromString, quoteName = false
+    )
+    implicit val ingestStatusColumnExtensionMethodsBuilder =
+      createEnumColumnExtensionMethodsBuilder[IngestStatus]
+    implicit val ingestStatusOptionColumnExtensionMethodsBuilder =
+      createEnumOptionColumnExtensionMethodsBuilder[IngestStatus]
 
     implicit val jobStatusTypeMapper = createEnumJdbcType[JobStatus]("JobStatus", _.repr,
       JobStatus.fromString, quoteName = false)

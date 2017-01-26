@@ -12,6 +12,9 @@ import geotrellis.vector.{Geometry, Point, Polygon, Extent}
 import com.typesafe.scalalogging.LazyLogging
 import com.lonelyplanet.akka.http.extensions.PageRequest
 
+import slick.collection.heterogeneous.HNil
+import slick.collection.heterogeneous.syntax._
+
 import java.util.UUID
 import java.sql.Timestamp
 import scala.concurrent.Future
@@ -25,10 +28,6 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
                                      with UserFkVisibileFields
                                      with TimestampFields
 {
-  def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, organizationId, ingestSizeBytes, visibility,
-    tags, datasource, sceneMetadata, cloudCover, acquisitionDate, thumbnailStatus, boundaryStatus,
-    sunAzimuth, sunElevation, name, tileFootprint, dataFootprint, metadataFiles, ingestLocation) <> (Scene.tupled, Scene.unapply)
-
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
   val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")
   val createdBy: Rep[String] = column[String]("created_by", O.Length(255,varying=true))
@@ -38,7 +37,7 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
   val ingestSizeBytes: Rep[Int] = column[Int]("ingest_size_bytes")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
   val tags: Rep[List[String]] = column[List[String]]("tags", O.Length(2147483647,varying=false))
-  val datasource: Rep[UUID] = column[UUID]("datasource", O.Length(255,varying=true))
+  val datasource: Rep[UUID] = column[UUID]("datasource")
   val sceneMetadata: Rep[Map[String, Any]] = column[Map[String, Any]]("scene_metadata", O.Length(2147483647,varying=false))
   val cloudCover: Rep[Option[Float]] = column[Option[Float]]("cloud_cover", O.Default(None))
   val acquisitionDate: Rep[Option[java.sql.Timestamp]] = column[Option[java.sql.Timestamp]]("acquisition_date", O.Default(None))
@@ -51,6 +50,7 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
   val dataFootprint: Rep[Option[Projected[Geometry]]] = column [Option[Projected[Geometry]]]("data_footprint", O.Length(2147483647,varying=false), O.Default(None))
   val metadataFiles: Rep[List[String]] = column[List[String]]("metadata_files", O.Length(2147483647,varying=false), O.Default(List.empty))
   val ingestLocation: Rep[Option[String]] = column[Option[String]]("ingest_location", O.Default(None))
+  val ingestStatus: Rep[IngestStatus] = column[IngestStatus]("ingest_status")
 
   /** Foreign key referencing Organizations (database name scenes_organization_id_fkey) */
   lazy val organizationsFk = foreignKey("scenes_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
@@ -60,6 +60,99 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
 
   /** Uniqueness Index over (name,organizationId,datasource) (database name scene_name_org_datasource) */
   val index1 = index("scene_name_org_datasource", (name, organizationId, datasource), unique=true)
+
+  type SceneTupleType = (
+    UUID,
+    java.sql.Timestamp,
+    String,
+    java.sql.Timestamp,
+    String,
+    UUID,
+    Int,
+    Visibility,
+    List[String],
+    UUID,
+    Map[String, Any],
+    String,
+    Option[Projected[Geometry]],
+    Option[Projected[Geometry]],
+    List[String],
+    Option[String],
+    SceneFilterFields.TupleType,
+    SceneStatusFields.TupleType
+  )
+
+  def toModel: SceneTupleType => Scene = { sceneTuple =>
+    Scene(
+      sceneTuple._1, // id
+      sceneTuple._2, // createdAt
+      sceneTuple._3, // createdBy
+      sceneTuple._4, // modifiedAt
+      sceneTuple._5, // modifiedBy
+      sceneTuple._6, // organizationId
+      sceneTuple._7, // ingestSizeBytes
+      sceneTuple._8, // visibility
+      sceneTuple._9, // tags
+      sceneTuple._10, // datasource
+      sceneTuple._11, // sceneMetadata
+      sceneTuple._12, // name
+      sceneTuple._13, // tileFootprint
+      sceneTuple._14, // dataFootprint
+      sceneTuple._15, // metadataFiles
+      sceneTuple._16, // ingestLocation
+      SceneFilterFields.tupled.apply(sceneTuple._17), // filterFields
+      SceneStatusFields.tupled.apply(sceneTuple._18) // statusFields
+    )
+  }
+
+  def toTuple: Scene => Option[SceneTupleType] = { scene =>
+    Some {
+      (
+        scene.id,
+        scene.createdAt,
+        scene.createdBy,
+        scene.modifiedAt,
+        scene.modifiedBy,
+        scene.organizationId,
+        scene.ingestSizeBytes,
+        scene.visibility,
+        scene.tags,
+        scene.datasource,
+        scene.sceneMetadata,
+        scene.name,
+        scene.tileFootprint,
+        scene.dataFootprint,
+        scene.metadataFiles,
+        scene.ingestLocation,
+        SceneFilterFields.unapply(scene.filterFields).get,
+        SceneStatusFields.unapply(scene.statusFields).get
+      )
+    }
+  }
+
+  val sceneShapedValue = (
+    id,
+    createdAt,
+    createdBy,
+    modifiedAt,
+    modifiedBy,
+    organizationId,
+    ingestSizeBytes,
+    visibility,
+    tags,
+    datasource,
+    sceneMetadata,
+    name,
+    tileFootprint,
+    dataFootprint,
+    metadataFiles,
+    ingestLocation,
+    (cloudCover, acquisitionDate, sunAzimuth, sunElevation),
+    (thumbnailStatus, boundaryStatus, ingestStatus)
+  ).shaped[SceneTupleType]
+
+  def * = sceneShapedValue <> (toModel, toTuple)
+
 }
 
 /** Collection-like TableQuery object for table Scenes */
@@ -295,9 +388,9 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     database.db.run {
       updateSceneQuery.update((
         updateTime, user.id, scene.ingestSizeBytes,
-        scene.datasource, scene.cloudCover, scene.acquisitionDate,
-        scene.tags, scene.sceneMetadata, scene.thumbnailStatus,
-        scene.boundaryStatus, scene.name, scene.tileFootprint,
+        scene.datasource, scene.filterFields.cloudCover, scene.filterFields.acquisitionDate,
+        scene.tags, scene.sceneMetadata, scene.statusFields.thumbnailStatus,
+        scene.statusFields.boundaryStatus, scene.name, scene.tileFootprint,
         scene.dataFootprint, scene.metadataFiles, scene.ingestLocation
       ))
     } map {
