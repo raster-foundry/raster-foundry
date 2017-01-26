@@ -49,9 +49,22 @@ export default class DiagramContainerController {
         this.shapes = [];
         this.nodes = new Map();
 
+        let ndviBeforeInput = this.createRectangle({
+            label: 'NDVI - Before: Input',
+            inputs: [],
+            outputs: ['Output']
+        });
+
+        this.nodes.set(ndviBeforeInput, {
+            input: 0,
+            name: 'NDVI - Before: Input',
+            part: 'input'
+        });
+
+
         let ndviBefore = this.createRectangle({
             label: 'NDVI - Before',
-            inputs: ['Red', 'NIR'],
+            inputs: ['Input'],
             outputs: ['Output']
         });
 
@@ -60,6 +73,8 @@ export default class DiagramContainerController {
             name: 'NDVI - Before',
             part: 'ndvi0'
         });
+
+        this.createLink([ndviBeforeInput, 'Output'], [ndviBefore, 'Input']);
 
         let reclassifyBefore = this.createRectangle({
             label: 'Reclassify - Before',
@@ -75,9 +90,21 @@ export default class DiagramContainerController {
 
         this.createLink([ndviBefore, 'Output'], [reclassifyBefore, 'Input']);
 
+        let ndviAfterInput = this.createRectangle({
+            label: 'NDVI - After: Input',
+            inputs: [],
+            outputs: ['Output']
+        });
+
+        this.nodes.set(ndviAfterInput, {
+            input: 1,
+            name: 'NDVI - After: Input',
+            part: 'input'
+        });
+
         let ndviAfter = this.createRectangle({
             label: 'NDVI - After',
-            inputs: ['Red', 'NIR'],
+            inputs: ['Input'],
             outputs: ['Output']
         });
 
@@ -86,6 +113,8 @@ export default class DiagramContainerController {
             name: 'NDVI - After',
             part: 'ndvi1'
         });
+
+        this.createLink([ndviAfterInput, 'Output'], [ndviAfter, 'Input']);
 
         let reclassifyAfter = this.createRectangle({
             label: 'Reclassify - After',
