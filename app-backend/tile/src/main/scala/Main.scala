@@ -23,14 +23,13 @@ object AkkaSystem {
 }
 
 object Main extends App
-  with TileAuthentication
   with Config
   with AkkaSystem.LoggerExecutor {
 
   import AkkaSystem._
 
   implicit lazy val database = Database.DEFAULT
-  val router = new Router(database)
+  val router = new Router()
 
   Http().bindAndHandle(router.root, httpHost, httpPort)
 }

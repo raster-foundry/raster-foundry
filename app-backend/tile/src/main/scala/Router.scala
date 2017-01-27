@@ -24,7 +24,8 @@ import spray.json._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 
-class Router(db: Database) extends LazyLogging {
+class Router extends LazyLogging with TileAuthentication {
+  implicit lazy val database = Database.DEFAULT
   def exceptionHandler =
     ExceptionHandler {
       case e: ValueNotFoundError =>
@@ -46,10 +47,12 @@ class Router(db: Database) extends LazyLogging {
           }
         }
       } ~
-      SceneRoutes.root ~
-      MosaicRoutes.mosaicProject(db) ~
-      pathPrefix("tools") {
-        ToolRoutes.root(db)
+      tileAuthenticateOption { _ =>
+        SceneRoutes.root ~
+        MosaicRoutes.mosaicProject(database) ~
+        pathPrefix("tools") {
+          ToolRoutes.root(database)
+        }
       }
     }
   }
