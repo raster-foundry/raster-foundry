@@ -71,15 +71,19 @@ lazy val forkliftDependencies = List(
 lazy val migrationsDependencies =
   dbDependencies ++ forkliftDependencies ++ loggingDependencies
 
-lazy val appDependencies = dbDependencies ++ migrationsDependencies ++ Seq(
+lazy val testDependencies = List(
+    Dependencies.scalatest,
+    Dependencies.akkatestkit
+)
+
+lazy val appDependencies = dbDependencies ++ migrationsDependencies ++
+    testDependencies ++ Seq(
   Dependencies.akka,
   Dependencies.akkahttp,
   Dependencies.akkaHttpCors,
   Dependencies.akkajson,
   Dependencies.akkastream,
-  Dependencies.akkatestkit,
   Dependencies.akkaSlf4j,
-  Dependencies.scalatest,
   Dependencies.authCommon,
   Dependencies.akkaHttpExtensions,
   Dependencies.ammoniteOps,
@@ -151,6 +155,9 @@ lazy val tile = Project("tile", file("tile"))
   .dependsOn(authentication)
   .dependsOn(tool)
   .settings(commonSettings:_*)
+  .settings({
+    libraryDependencies ++= testDependencies
+  })
   .settings(assemblyMergeStrategy in assembly := {
     case "reference.conf" => MergeStrategy.concat
     case "application.conf" => MergeStrategy.concat
