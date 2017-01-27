@@ -11,7 +11,6 @@ import scala.concurrent._
 import java.util.concurrent.{Executors, TimeUnit}
 
 import scala.util._
-import scala.concurrent.ExecutionContext.Implicits.global
 import spray.json.DefaultJsonProtocol._
 import scalacache._
 
@@ -31,7 +30,7 @@ import scalacache.serialization.InMemoryRepr
   * things that require time to generate, usually a network fetch, use AsyncLoadingCache
   */
 object LayerCache extends Config {
-  val blockingExecutionContext =
+  implicit val blockingExecutionContext =
     ExecutionContext.fromExecutor(Executors.newFixedThreadPool(64))
 
   implicit val memoryCache: ScalaCache[InMemoryRepr] = {
@@ -53,7 +52,14 @@ object LayerCache extends Config {
 
   def attributeStore(bucket: String, prefix: String): Future[S3AttributeStore] =
     caching[S3AttributeStore, InMemoryRepr](s"store-$bucket-$prefix"){
-      Future.successful(S3AttributeStore(bucket, prefix))
+      Future.successful(new S3AttributeStore(bucket, prefix) with MemcachedAttributeStore {
+        implicit val cache: ScalaCache[Array[Byte]] = {
+          import net.spy.memcached._
+          import java.net.InetSocketAddress
+          val client = new MemcachedClient(new InetSocketAddress(memcachedHost, memcachedPort))
+          ScalaCache(MemcachedCache(client))
+        }
+      })
     }
 
   def attributeStore(prefix: String): Future[S3AttributeStore] =
