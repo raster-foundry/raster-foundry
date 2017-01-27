@@ -17,7 +17,7 @@ import com.typesafe.scalalogging.LazyLogging
 class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
     with ImageFields
     with OrganizationFkFields
-    with UserFkVisibileFields
+    with UserFkVisibleFields
     with TimestampFields
 {
   def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy,

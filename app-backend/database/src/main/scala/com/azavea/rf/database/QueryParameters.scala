@@ -180,3 +180,7 @@ case class CombinedToolCategoryQueryParams(
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
   toolCategoryParams: ToolCategoryQueryParameters = ToolCategoryQueryParameters()
 )
+
+case class DatasourceQueryParameters(
+  name: Option[String] = None
+)

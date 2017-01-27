@@ -26,7 +26,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
                                      with SceneFields
                                      with OrganizationFkFields
-                                     with UserFkVisibileFields
+                                     with UserFkVisibleFields
                                      with TimestampFields
 {
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
