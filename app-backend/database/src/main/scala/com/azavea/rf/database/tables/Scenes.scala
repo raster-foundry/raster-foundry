@@ -22,7 +22,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
                                      with SceneFields
                                      with OrganizationFkFields
-                                     with UserFkVisibileFields
+                                     with UserFkVisibleFields
                                      with TimestampFields
 {
   def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, organizationId, ingestSizeBytes, visibility,

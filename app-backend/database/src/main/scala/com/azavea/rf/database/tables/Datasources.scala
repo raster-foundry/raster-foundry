@@ -4,8 +4,9 @@ import java.sql.Timestamp
 import java.util.UUID
 
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
-import com.azavea.rf.database.fields.{OrganizationFkFields, TimestampFields, UserFkFields, NameField}
+import com.azavea.rf.database.fields.{OrgFkVisibleFields, TimestampFields, UserFkFields, NameField}
 import com.azavea.rf.database.{Database => DB}
+import com.azavea.rf.database.query.{DatasourceQueryParameters, ListQueryResult}
 import com.azavea.rf.datamodel._
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import com.typesafe.scalalogging.LazyLogging
@@ -23,6 +24,7 @@ import scala.concurrent.Future
 class Datasources(_tableTag: Tag) extends Table[Datasource](_tableTag, "datasources")
     with NameField
     with TimestampFields
+    with OrgFkVisibleFields
 {
   def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, organizationId, name,
            visibility, colorCorrection, extras) <> (Datasource.tupled, Datasource.unapply)
@@ -44,7 +46,10 @@ class Datasources(_tableTag: Tag) extends Table[Datasource](_tableTag, "datasour
 }
 
 object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogging {
+
+  val tq = TableQuery[Datasources]
   type TableQuery = Query[Datasources, Datasource, Seq]
+
 
   implicit class withDatasourcesTableQuery[M, U, C[_]](datasources: Datasources.TableQuery) extends
     DatasourceTableQuery[M, U, C](datasources)
@@ -53,30 +58,22 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
     *
     * @param pageRequest PageRequest information about sorting and page size
     */
-  def listDatasources(pageRequest: PageRequest)(implicit database: DB): Future[PaginatedResponse[Datasource]] = {
-    val datasourcePageAction = Datasources.page(pageRequest).result
+  def listDatasources(offset: Int, limit: Int, datasourceParams: DatasourceQueryParameters)
+                     (implicit database: DB) = {
 
-    val datasourcePageQueryResult = database.db.run {
-      datasourcePageAction
+    val dropRecords = limit * offset
+    val datasourceFilterQuery = datasourceParams.name match {
+      case Some(n) => Datasources.filter(_.name === n)
+      case _ => Datasources
     }
 
-    val datasourceTotalQueryResult = database.db.run {
-      Datasources.length.result
-    }
-
-    for {
-      totalDatasources <- datasourceTotalQueryResult
-      datasources <- datasourcePageQueryResult
-    } yield {
-      val hasNext = (pageRequest.offset + 1) * pageRequest.limit < totalDatasources
-      val hasPrevious = pageRequest.offset > 0
-      PaginatedResponse(totalDatasources,
-        hasPrevious,
-        hasNext,
-        pageRequest.offset,
-        pageRequest.limit,
-        datasources)
-    }
+    ListQueryResult[Datasource](
+      (datasourceFilterQuery
+         .drop(dropRecords)
+         .take(limit)
+         .result):DBIO[Seq[Datasource]],
+      datasourceFilterQuery.length.result
+    )
   }
 
   /** Insert a datasource given a create case class with a user
@@ -84,15 +81,9 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
     * @param datasourceToCreate Datasource.Create object to use to create full datasource
     * @param user               User to create a new datasource with
     */
-  def insertDatasource(datasourceToCreate: Datasource.Create, user: User)
-                      (implicit database: DB): Future[Datasource] = {
-
+  def insertDatasource(datasourceToCreate: Datasource.Create, user: User) = {
     val datasource = datasourceToCreate.toDatasource(user.id)
-    val insertAction = Datasources.forceInsert(datasource)
-
-    database.db.run {
-      insertAction
-    } map { _ =>  datasource }
+    (Datasources returning Datasources).forceInsert(datasource)
   }
 
 
@@ -100,32 +91,21 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
     *
     * @param datasourceId UUID ID of datasource to get from database
     */
-  def getDatasource(datasourceId: UUID)(implicit database: DB): Future[Option[Datasource]] = {
-    val fetchAction = Datasources.filter(_.id === datasourceId).result.headOption
-
-    database.db.run {
-      fetchAction
-    }
-  }
+  def getDatasource(datasourceId: UUID) =
+    Datasources.filter(_.id === datasourceId).result.headOption
 
   /** Given a datasource ID, attempt to remove it from the database
     *
     * @param datasourceId UUID ID of datasource to remove
     */
-  def deleteDatasource(datasourceId: UUID)(implicit database: DB): Future[Int] = {
-    val deleteAction = Datasources.filter(_.id === datasourceId).delete
+  def deleteDatasource(datasourceId: UUID) = 
+    Datasources.filter(_.id === datasourceId).delete
 
-    database.db.run {
-      deleteAction
-    }
-  }
-
-  /** Update a datasource
-    * @param datasource Datasource to use for update
+/** Update a datasource @param datasource Datasource to use for update
     * @param datasourceId UUID of datasource to update
     * @param user User to use to update datasource
     */
-  def updateDatasource(datasource: Datasource, datasourceId: UUID, user: User)(implicit database: DB): Future[Int] = {
+  def updateDatasource(datasource: Datasource, datasourceId: UUID, user: User) = {
     val updateTime = new Timestamp((new java.util.Date).getTime)
 
     val updateDatasourceQuery = for {
@@ -140,20 +120,15 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
       updateDatasource.extras
     )
 
-    database.db.run {
-      updateDatasourceQuery.update((
-        updateTime,
-        user.id,
-        datasource.organizationId,
-        datasource.name,
-        datasource.visibility,
-        datasource.colorCorrection,
-        datasource.extras
-      ))
-    } map {
-      case 1 => 1
-      case _ => throw new IllegalStateException("Error while updating datasource")
-    }
+    updateDatasourceQuery.update(
+      updateTime,
+      user.id,
+      datasource.organizationId,
+      datasource.name,
+      datasource.visibility,
+      datasource.colorCorrection,
+      datasource.extras
+    )
   }
 }
 

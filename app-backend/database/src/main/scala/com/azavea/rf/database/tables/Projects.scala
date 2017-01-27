@@ -22,7 +22,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class Projects(_tableTag: Tag) extends Table[Project](_tableTag, "projects")
                                       with ProjectFields
                                       with OrganizationFkFields
-                                      with UserFkVisibileFields
+                                      with UserFkVisibleFields
                                       with TimestampFields
 {
   def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, name, slugLabel, description, visibility, tags, manualOrder) <> (Project.tupled, Project.unapply)
