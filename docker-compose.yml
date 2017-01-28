@@ -76,15 +76,3 @@ services:
       - $HOME/.aws:/root/.aws:ro
     working_dir: /opt/raster-foundry/app-backend/
     command: ./sbt tile/run
-
-  swagger-editor:
-    image: swaggerapi/swagger-editor:latest
-    ports:
-      - "8888:8080"
-
-  swagger-ui:
-    image: nginx:1.10.1-alpine
-    volumes:
-      - ./docs/swagger/:/usr/share/nginx/html:ro
-    ports:
-      - "9999:80"
