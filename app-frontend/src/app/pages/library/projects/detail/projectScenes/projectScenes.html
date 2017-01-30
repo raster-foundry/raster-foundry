@@ -3,7 +3,7 @@
     <div class="library-header">
       <div ng-class="{'invisible': $ctrl.$parent.selectedScenes.size}">
         <h1 class="h3 page-title">
-          <a ui-sref="^.^.list">Projects</a><br>
+          <a ui-sref="^.^.list"><i class="icon-caret-left"></i> Projects</a><br>
           <span ng-hide="$ctrl.isEditingProjectName">
             {{$ctrl.project.name}}
             <i class="icon-load" ng-show="$ctrl.isSavingProjectNameEdit"></i>
@@ -103,7 +103,7 @@
       <nav>
         <a href ng-click="$ctrl.$state.go('editor.project.color.scenes', {projectid: $ctrl.projectId})" class="btn btn-secondary btn-small btn-block"><i class="icon-mosaic"></i> Editor</a>
         <hr>
-        <a href ng-click="$ctrl.publishModal()"><i class="icon-dropbox"></i> Publish</a>
+        <a href ng-click="$ctrl.publishModal()"><i class="icon-share"></i> Share</a>
         <a href class="color-danger"
            ng-click="$ctrl.deleteProject()">
           <i class="icon-trash"></i>

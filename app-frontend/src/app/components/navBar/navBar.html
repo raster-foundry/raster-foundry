@@ -40,6 +40,7 @@
           Sign In
         </a>
       </div>
+      <a ng-if="$ctrl.authService.isLoggedIn" href ui-sref="library.scenes.list">My library</a>
       <div ng-if="$ctrl.authService.isLoggedIn" uib-dropdown class="dropdown-my-account" on-toggle="toggled($ctrl.optionsOpen)">
         <a href uib-dropdown-toggle>
           <img ng-if="$ctrl.authService.profile().picture" class="avatar" ng-src="{{$ctrl.authService.profile().picture}}">
@@ -48,7 +49,6 @@
           <i class="icon-caret-down"></i>
         </a>
         <ul class="dropdown-menu" aria-labelledby="dLabel">
-          <li><a href ui-sref="library.scenes.list">My library</a></li>
           <li><a href ui-sref="settings.profile">Settings</a></li>
           <li role="separator" class="divider"></li>
           <li><a href ng-click="$ctrl.logout()">Sign out</a></li>

@@ -18,15 +18,7 @@
       </div>
       <div class="sidebar-actions">
         <div class="btn-group sidebar-dropdown cc-actions" uib-dropdown>
-          <a href class="btn btn-small" uib-dropdown-toggle>
-            Action <i class="icon-caret-down"></i>
-          </a>
-          <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
-            <li role="menuitem"><a ng-disabled="$ctrl.selectedScenes.size === 0" ng-click="$ctrl.goColorCorrect()">Color correct</a></li>
-            <li role="menuitem"><a href><i class="icon-load"></i> Sync histogram</a></li>
-            <li role="menuitem"><a href><i class="icon-arrows-cw"></i> Reset changes</a></li>
-            <li role="menuitem"><a href class="color-danger"><i class="icon-trash"></i> Delete</a></li>
-          </ul>
+          <a ng-disabled="$ctrl.selectedScenes.size === 0" ng-click="$ctrl.goColorCorrect()" class="btn btn-small">Color correct</a>
           <button class="btn btn-small"
                   ng-class="{'btn-secondary': !$ctrl.shouldSelectAll()}"
                   ng-click="$ctrl.onToggleSelection()">

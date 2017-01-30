@@ -1,45 +1,54 @@
-<div class="modal-header">
-  <button type="button" class="close" aria-label="Close"
-          ng-click="$ctrl.dismiss()" ng-show="!$ctrl.resolve.requireSelection">
-    <span aria-hidden="true">&times;</span>
-  </button>
-  <span class="badge"><i class="icon-project"></i></span>
-  <h4 class="modal-title">
-    {{$ctrl.resolve.content.title || 'Select Project'}}
-  </h4>
-</div>
-<div class="modal-body">
-  <div class="list-group">
-    <rf-project-item
-        project="project"
-        selectable
-        selected="$ctrl.resolve.project.id === project.id"
-        on-select="$ctrl.setSelected(project)"
-        ng-repeat="project in $ctrl.projectList track by project.id">
-    </rf-project-item>
+<div class="modal-scrollable-body modal-sidebar-header">
+  <div class="modal-header">
+    <button type="button" class="close" aria-label="Close"
+            ng-click="$ctrl.dismiss()" ng-show="!$ctrl.resolve.requireSelection">
+      <span aria-hidden="true">&times;</span>
+    </button>
+    <span class="badge"><i class="icon-project"></i></span>
+    <h4 class="modal-title">
+      {{$ctrl.resolve.content.title || 'Edit a project'}}
+    </h4>
+    <p>Select a project to color correct and mosaic within the editor.</p>
   </div>
-  <div class="list-group" ng-show="$ctrl.loading">
-    <span class="list-placeholder">
-      <i class="icon-load"></i>
-    </span>
+  <div class="modal-body">
+    <div class="list-group">
+      <rf-project-item
+          project="project"
+          selectable
+          selected="$ctrl.resolve.project.id === project.id"
+          on-select="$ctrl.setSelected(project)"
+          ng-repeat="project in $ctrl.projectList track by project.id">
+      </rf-project-item>
+    </div>
+    <div class="list-group" ng-show="$ctrl.loading">
+      <span class="list-placeholder">
+        <i class="icon-load"></i>
+      </span>
+    </div>
+    <div ng-if="!$ctrl.loading && $ctrl.lastProjectResult && $ctrl.lastProjectResult.count === 0"
+          class="list-group">
+      <span class="list-placeholder">
+        You have not created any Projects.
+      </span>
+    </div>
+    <div class="list-group text-center"
+          ng-show="!$ctrl.loading && $ctrl.lastProjectResult && $ctrl.lastProjectResult.count > $ctrl.lastProjectResult.pageSize && !$ctrl.errorMsg">
+      <ul uib-pagination
+          items-per-page="$ctrl.lastProjectResult.pageSize"
+          total-items="$ctrl.lastProjectResult.count"
+          ng-model="$ctrl.currentPage"
+          max-size="4"
+          rotate="true"
+          boundary-link-numbers="true"
+          force-ellipses="true"
+          ng-change="$ctrl.populateProjectList($ctrl.currentPage)">
+      </ul>
+    </div>
   </div>
-  <div ng-if="!$ctrl.loading && $ctrl.lastProjectResult && $ctrl.lastProjectResult.count === 0"
-        class="list-group">
-    <span class="list-placeholder">
-      You have not created any Projects.
-    </span>
-  </div>
-  <div class="list-group text-center"
-        ng-show="!$ctrl.loading && $ctrl.lastProjectResult && $ctrl.lastProjectResult.count > $ctrl.lastProjectResult.pageSize && !$ctrl.errorMsg">
-    <ul uib-pagination
-        items-per-page="$ctrl.lastProjectResult.pageSize"
-        total-items="$ctrl.lastProjectResult.count"
-        ng-model="$ctrl.currentPage"
-        max-size="4"
-        rotate="true"
-        boundary-link-numbers="true"
-        force-ellipses="true"
-        ng-change="$ctrl.populateProjectList($ctrl.currentPage)">
-    </ul>
+  <div class="modal-footer">
+    <button type="button" class="btn"
+            ng-click="$ctrl.dismiss()">
+      Done
+    </button>
   </div>
 </div>

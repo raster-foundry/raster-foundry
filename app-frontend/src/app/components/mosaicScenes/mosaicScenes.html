@@ -5,7 +5,7 @@
     <div class="sidebar-actions">
       <button class="btn btn-small"
               ng-click="$ctrl.$state.go('^.params')">
-        <i class="icon-model"></i> Parameters
+        <i class="icon-settings"></i> Parameters
       </button>
     </div>
   </div>
@@ -15,10 +15,10 @@
       <div ui-tree-nodes="" ng-model="$ctrl.sceneList">
         <div ng-repeat="scene in $ctrl.sceneList track by scene.id" ui-tree-node>
           <rf-scene-item scene="scene"
-                         action-icon="'icon-pencil'"
                          ng-mouseover="$ctrl.setHoveredScene(scene)"
                          ng-mouseleave="$ctrl.removeHoveredScene()"
                          ng-click="$ctrl.onSceneClick($event, scene)"
+                         class="selectable"
                          draggable></rf-scene-item>
         </div>
       </div>

@@ -30,7 +30,9 @@ class MapWrapper {
                 '<button class="btn btn-default"><i class="icon-resize-full"></i></button>' +
                 '<hr>' +
                 '<button class="btn btn-default btn-block"><i class="icon-search">' +
-                '</i> Find places</button>';
+                '</i> Find places</button>' +
+                '<button class="btn btn-default btn-block">Basemap</button>' +
+                '<div class="map-control-popout layer-picker"></div>';
             return div;
         };
         this.changeOptions(options);
@@ -83,8 +85,10 @@ class MapWrapper {
                 // eslint-disable-next-line no-underscore-dangle
                 let mapContainer = $(this.map._container);
                 let $zoom = mapContainer.find('.leaflet-control-zoom');
+                let $lpicker = mapContainer.find('.leaflet-control-layers');
                 let $mpc = mapContainer.find('.map-control-panel');
                 $mpc.prepend($zoom);
+                $mpc.append($lpicker);
             }
         }
 

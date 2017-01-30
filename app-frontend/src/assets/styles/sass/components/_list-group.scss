@@ -116,6 +116,18 @@
   }
 }
 
+// List group item with stacked children
+// Child elements will list out into rows instead of columns
+.list-group-item.list-group-item-stacked {
+  flex-direction: column;
+  align-items: flex-start;
+
+  > * {
+    margin: 5px 0;
+    width: 100%;
+  }
+}
+
 .list-group-overflow {
   text-overflow: ellipsis;
   overflow: hidden;
