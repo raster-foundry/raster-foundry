@@ -85,17 +85,23 @@ class SceneSpec extends WordSpec
 
     val newSceneDatasource1 = Scene.Create(
       None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), landsatId,
-      Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any], None,
-      Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
-      JobStatus.Processing, JobStatus.Processing, None, None, "test scene datasource 1",
-      mpoly, mpoly, List.empty[String], List.empty[Image.Banded], List.empty[Thumbnail.Identified], None
+      Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any],
+      "test scene datasource 1",
+      mpoly, mpoly, List.empty[String], List.empty[Image.Banded], List.empty[Thumbnail.Identified], None,
+      SceneFilterFields(None,
+                        Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
+                        None,
+                        None),
+      SceneStatusFields(JobStatus.Processing, JobStatus.Processing, IngestStatus.NotIngested)
     )
 
     val newSceneDatasource2 = Scene.Create(
       None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), sentinelId,
       Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any],
-      None, None, JobStatus.Processing, JobStatus.Processing, None, None, "test scene datasource 2",
-      None, None, List.empty[String], List.empty[Image.Banded], List.empty[Thumbnail.Identified], Some("an_s3_bucket_location")
+      "test scene datasource 2", None, None, List.empty[String], List.empty[Image.Banded],
+      List.empty[Thumbnail.Identified], Some("an_s3_bucket_location"),
+      SceneFilterFields(None, None, None, None),
+      SceneStatusFields(JobStatus.Processing, JobStatus.Processing, IngestStatus.Ingested)
     )
 
     "require authentication for creation" in {
