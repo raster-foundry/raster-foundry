@@ -20,6 +20,7 @@ class Database(jdbcUrl: String, dbUser: String, dbPassword: String) {
   hikariConfig.setJdbcUrl(jdbcUrl)
   hikariConfig.setUsername(dbUser)
   hikariConfig.setPassword(dbPassword)
+  hikariConfig.setLeakDetectionThreshold(3000L)
 
   private val dataSource = new HikariDataSource(hikariConfig)
 
