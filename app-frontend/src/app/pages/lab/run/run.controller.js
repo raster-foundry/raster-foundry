@@ -2,12 +2,13 @@
 
 export default class LabRunController {
     constructor( // eslint-disable-line max-params
-        $scope, $timeout, $element, $uibModal, mapService, projectService) {
+        $scope, $timeout, $element, authService, $uibModal, mapService, projectService) {
         'ngInject';
         this.$scope = $scope;
         this.$timeout = $timeout;
         this.$element = $element;
         this.$uibModal = $uibModal;
+        this.authService = authService;
         this.projectService = projectService;
         this.getMap = () => mapService.getMap('lab-run-preview');
     }
@@ -77,13 +78,14 @@ export default class LabRunController {
     }
 
     getNodeUrl(node) {
+        let token = this.authService.token();
         if (this.inputs.length === 2 && this.inputs[0].id && this.inputs[1].id) {
             if (node.part === 'input') {
                 let tag = new Date().getTime();
                 return `/tiles/${this.inputs[node.input].organizationId}` +
                        '/rf_airflow-user' +
                        `/project/${this.inputs[node.input].id}/{z}/{x}/{y}/` +
-                       `?tag=${tag}`;
+                       `?tag=${tag}&token=${token}`;
             }
             let base =
                 '/tiles/tools/dfac6307-b5ef-43f7-beda-b9f208bb7726/ndvi-diff-tool/{z}/{x}/{y}';
@@ -95,7 +97,7 @@ export default class LabRunController {
             let cm =
                 node.part === 'final' ? 'cm=-0.01:-16777216;0.01:0;1000000000:16711680' : '';
             let params = `${lc80}&${lc81}&${part}&${cm}&${class0}&${class1}`;
-            return `${base}?${params}`;
+            return `${base}?${params}&token=${token}`;
         }
         return false;
     }
