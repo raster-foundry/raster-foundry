@@ -24,13 +24,12 @@ export default class DiagramContainerController {
         this.initDiagram();
         this.contextMenuTpl =
             `<div class="lab-contextmenu" ng-show="isShowingContextMenu">
-                <div>
-                    <ul>
-                        <li ng-repeat="item in currentContextMenu"
-                            ng-click="item.callback()">
-                            {{item.label}}
-                        </li>
-                    </ul>
+                <div class="btn-group">
+                    <button ng-repeat="item in currentContextMenu"
+                        ng-click="item.callback()"
+                        class="btn btn-default">
+                        {{item.label}}
+                    </button>
                 </div>
             </div>`;
     }
@@ -50,95 +49,95 @@ export default class DiagramContainerController {
         this.nodes = new Map();
 
         let ndviBeforeInput = this.createRectangle({
-            label: 'NDVI - Before: Input',
+            label: 'Area of interest (Before)',
             inputs: [],
             outputs: ['Output']
         });
 
         this.nodes.set(ndviBeforeInput, {
             input: 0,
-            name: 'NDVI - Before: Input',
+            name: 'Area of interest (Before)',
             part: 'input'
         });
 
 
         let ndviBefore = this.createRectangle({
-            label: 'NDVI - Before',
+            label: 'Vegetation index',
             inputs: ['Input'],
             outputs: ['Output']
         });
 
         this.nodes.set(ndviBefore, {
             input: 0,
-            name: 'NDVI - Before',
+            name: 'Vegetation index',
             part: 'ndvi0'
         });
 
         this.createLink([ndviBeforeInput, 'Output'], [ndviBefore, 'Input']);
 
         let reclassifyBefore = this.createRectangle({
-            label: 'Reclassify - Before',
+            label: 'Detect vegetation',
             inputs: ['Input'],
             outputs: ['Output']
         });
 
         this.nodes.set(reclassifyBefore, {
             input: 0,
-            name: 'Reclassify - Before',
+            name: 'Detect vegetation',
             part: 'class0'
         });
 
         this.createLink([ndviBefore, 'Output'], [reclassifyBefore, 'Input']);
 
         let ndviAfterInput = this.createRectangle({
-            label: 'NDVI - After: Input',
+            label: 'Area of interest (After)',
             inputs: [],
             outputs: ['Output']
         });
 
         this.nodes.set(ndviAfterInput, {
             input: 1,
-            name: 'NDVI - After: Input',
+            name: 'Area of interest (After)',
             part: 'input'
         });
 
         let ndviAfter = this.createRectangle({
-            label: 'NDVI - After',
+            label: 'Vegeation index',
             inputs: ['Input'],
             outputs: ['Output']
         });
 
         this.nodes.set(ndviAfter, {
             input: 1,
-            name: 'NDVI - After',
+            name: 'Vegeation index',
             part: 'ndvi1'
         });
 
         this.createLink([ndviAfterInput, 'Output'], [ndviAfter, 'Input']);
 
         let reclassifyAfter = this.createRectangle({
-            label: 'Reclassify - After',
+            label: 'Detect vegetation',
             inputs: ['Input'],
             outputs: ['Output']
         });
 
         this.nodes.set(reclassifyAfter, {
             input: 1,
-            name: 'Reclassify - After',
+            name: 'Detect vegetation',
             part: 'class1'
         });
 
         this.createLink([ndviAfter, 'Output'], [reclassifyAfter, 'Input']);
 
         let subtract = this.createRectangle({
-            label: 'Subtract',
+            label: 'Vegetation change detection',
             inputs: ['First', 'Second'],
             outputs: ['Output']
         });
 
         this.nodes.set(subtract, {
             input: 1,
-            name: 'Subtract',
+            name: 'Vegetation change detection',
             part: 'final'
         });
 
@@ -284,8 +283,8 @@ export default class DiagramContainerController {
         this.selectedCellView = cellView;
         cellView.model.attr({
             rect: {
-                stroke: '#465076',
-                'stroke-width': '2'
+                stroke: '#353b59',
+                'stroke-width': '1'
             }
         });
         this.showContextMenu(cellView);
@@ -295,8 +294,8 @@ export default class DiagramContainerController {
         if (this.selectedCellView) {
             this.selectedCellView.model.attr({
                 rect: {
-                    stroke: '#999999',
-                    'stroke-width': 1
+                    stroke: '#959cad',
+                    'stroke-width': 0.5
                 }
             });
             this.selectedCellView = null;
@@ -320,12 +319,14 @@ export default class DiagramContainerController {
             },
             attrs: {
                 rect: {
-                    fill: '#f8f9fa',
-                    stroke: '#999999',
-                    'stroke-width': 1
+                    fill: '#fff',
+                    stroke: '#959cad',
+                    'stroke-width': 0.5,
+                    rx: 2,
+                    ry: 4
                 },
                 text: {
-                    fill: '#333333',
+                    fill: '#353b59',
                     text: label
                 }
             },

@@ -21,13 +21,13 @@
   z-index: 1050;
   display: none; // none by default, but block on "open" of the menu
   float: left;
-  min-width: 130px;
+  min-width: calc(100% - 2rem);
   padding: 10px;
-  margin: 2px 0 0; // override default ul
+  margin: 0; // override default ul
   list-style: none;
   text-align: left; // Ensures proper alignment if parent has it changed (e.g., modal footer)
   background-color: $shade-dark;
-  border-radius: $border-radius-base;
+  border-radius: 0 0 2px 2px;
   box-shadow: 0 6px 12px rgba(0, 0, 0, .1);
   background-clip: padding-box;
 
@@ -42,7 +42,7 @@
   // Links within the dropdown menu
   > li > a {
     display: block;
-    padding: 5px 20px;
+    padding: .5rem 1rem;
     clear: both;
     color: $shade-light;
     white-space: nowrap; // prevent links from randomly breaking onto new lines
@@ -176,12 +176,18 @@
 @media (min-width: 768px) {
   .navbar-right {
     .dropdown-menu {
-      right: 0; left: auto;
+      right: 1rem; left: auto;
     }
     // Necessary for overrides of the default right aligned menu.
     // Will remove come v4 in all likelihood.
     .dropdown-menu-left {
       left: 0; right: auto;
+    }
+  }
+
+  .navbar-left {
+    .dropdown-menu {
+      right: auto; left: 1rem;
     }
   }
 }

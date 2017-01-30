@@ -32,11 +32,23 @@
     .dropdown {
       display: inline-block;
     }
+
+    .open .dropdown-toggle {
+      background: $shade-dark;
+      border-radius: 2px 2px 0 0;
+    }
   }
 
-  .dropdown-my-account > a {
-    padding-top: 1.65rem;
-    padding-bottom: 1.65rem;
+  .navbar-text {
+    display: inline-block;
+    vertical-align: middle;
+    padding: 2rem 2.5rem;
+    margin: 0;
+  }
+
+  .dropdown > a {
+    padding: 1rem 1.5rem;
+    margin: 0 1rem;
 
     i {
       vertical-align: middle;

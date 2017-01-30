@@ -43,7 +43,10 @@
                ng-class="{'disabled': $ctrl.mosaicType === 'Manual'}">
             <div ui-tree-nodes="" ng-model="$ctrl.mosaicOptions">
               <div class="mosaic-priority-option" ui-tree-node ng-repeat="option in $ctrl.mosaicOptions"
-                   draggable>{{ option.name }}</div>
+                   draggable>
+                   {{ option.name }}
+                   <i class="icon-gripper pull-right"></i>
+              </div>
             </div>
           </div>
         </div>

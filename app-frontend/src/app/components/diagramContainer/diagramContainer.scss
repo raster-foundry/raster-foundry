@@ -5,46 +5,21 @@
 
 .lab-contextmenu {
   position: absolute;
-  background: #465076;
   transform: translateX(-50%) translateY(-100%);
   // Compensates for pointer
   margin-top: -8px;
-  ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    border: 1px solid darken(#465076, 15%);
-    white-space: nowrap;
-    li {
-      display: inline-block;
-      padding: 12px;
-      color: #fff;
-      border-right: 1px solid rgba(#000, 0.5);
-      transition: all 0.25s;
-      cursor: pointer;
-      &:last-child {
-        border-right: none;
-      }
-      &:hover {
-        background: #738FFC;
-      }
-    }
-  }
-}
 
-.lab-contextmenu div:after {
-	top: 100%;
-	left: 50%;
-	border: solid transparent;
-	content: " ";
-	height: 0;
-	width: 0;
-	position: absolute;
-	pointer-events: none;
-	border-color: rgba(136, 183, 213, 0);
-	border-top-color: darken(#465076, 15%);
-	border-width: 8px;
-	margin-left: -8px;
+  &:after {
+    content: '';
+    top: 100%;
+    left: 50%;
+    border: 5px solid transparent;
+    position: absolute;
+    pointer-events: none;
+    border-color: transparent;
+    border-top-color: darken(#464f77, 15%);
+    margin-left: -5px;
+  }
 }
 
 .mousetip {
@@ -53,7 +28,7 @@
   left: -10000px;
   z-index: 10000;
   margin-left: 18px;
-  background: #465076;
+  background: #464f77;
   color: #fff;
   padding: 8px 12px;
   border-radius: 4px;

@@ -1,178 +1,160 @@
 <!-- Workflow container -->
-<!-- @TODO: figure out how to style this to get desired functionality;
-  doesn't work right without this style rule
--->
-  <div class="sidebar sidebar-scrollable" style="flex: 0 0 auto;">
-    <div class="sidebar-content flex-row with-padding with-border">
+  <div class="sidebar">
+    <div class="sidebar-static">
       <h5 class="sidebar-title">
           Inputs
       </h5>
-      <div class="sidebar-actions">
-        <button class="btn btn-secondary">
-          <i class="icon-parameters"></i> Parameters
-        </button>
-      </div>
     </div>
     <div class="sidebar-scrollable">
-      <div class="sidebar-content with-padding with-border">
-        <h5 class="sidebar-title">
-            NDVI - Before
-        </h5>
-        <div class="instructions-container" ng-show="!$ctrl.inputs[0]">
-          <p>
-            The NDVI tool requires a source with NIR and Red bands
-          </p>
-          <button class="btn btn-primary"
-                  ng-click="$ctrl.selectProjectModal(0)">
-            Select A Source
-          </button>
-        </div>
-        <form class="inset form-horizontal">
-          <div class="form-group" ng-show="$ctrl.inputs[0]">
-            <label for="formGroupExampleInput">Input Source</label>
-            <div class="form-group all-in-one">
-              <input type="text" class="form-control" id="input-0" placeholder="Example input" readonly ng-value="$ctrl.inputs[0].name">
-              <button class="btn btn-link" ng-click="$ctrl.selectProjectModal(0)">
-                Change
-              </button>
+      <div class="list-group">
+        <div class="list-group-item list-group-item-stacked">
+          <h5 class="sidebar-title">
+              Area of interest (Before)
+          </h5>
+          <div class="instructions-container" ng-show="!$ctrl.inputs[0]">
+            <p>
+              The <b>vegetation change detection</b> tool requires a source with NIR and Red bands
+            </p>
+            <button class="btn btn-primary"
+                    ng-click="$ctrl.selectProjectModal(0)">
+              Select A Source
+            </button>
+          </div>
+          <form class="form">
+            <div class="form-group" ng-show="$ctrl.inputs[0]">
+              <label for="formGroupExampleInput">Input Source</label>
+              <div class="form-group all-in-one">
+                <input type="text" class="form-control" id="input-0" placeholder="Example input" readonly ng-value="$ctrl.inputs[0].name">
+                <button class="btn btn-link" ng-click="$ctrl.selectProjectModal(0)">
+                  Change
+                </button>
+              </div>
             </div>
-          </div>
-          <div class="form-group" ng-show="$ctrl.inputs[0]">
-            <label for="formGroupExampleInput">Red Band</label>
-            <select class="form-control" id="red-band-map"  ng-model="$ctrl.inputParameters[0].bands.red">
-              <option value="1">Band 1</option>
-              <option value="2">Band 2</option>
-              <option value="3">Band 3</option>
-              <option value="4">Band 4</option>
-              <option value="5">Band 5</option>
-              <option value="6">Band 6</option>
-              <option value="7">Band 7</option>
-              <option value="8">Band 8</option>
-              <option value="9">Band 9</option>
-              <option value="10">Band 10</option>
-              <option value="11">Band 11</option>
-            </select>
-          </div>
-          <div class="form-group" ng-show="$ctrl.inputs[0]">
-            <label for="formGroupExampleInput">NIR Band</label>
-            <select class="form-control" id="nir-band-map" ng-model="$ctrl.inputParameters[0].bands.nir">
-              <option value="1">Band 1</option>
-              <option value="2">Band 2</option>
-              <option value="3">Band 3</option>
-              <option value="4">Band 4</option>
-              <option value="5">Band 5</option>
-              <option value="6">Band 6</option>
-              <option value="7">Band 7</option>
-              <option value="8">Band 8</option>
-              <option value="9">Band 9</option>
-              <option value="10">Band 10</option>
-              <option value="11">Band 11</option>
-            </select>
-          </div>
-        </form>
-      </div>
+            <div class="form-group" ng-show="$ctrl.inputs[0]">
+              <label for="red-band-map-1">Red Band</label>
+              <select class="form-control" id="red-band-map-1"  ng-model="$ctrl.inputParameters[0].bands.red">
+                <option value="1">Band 1</option>
+                <option value="2">Band 2</option>
+                <option value="3">Band 3</option>
+                <option value="4">Band 4</option>
+                <option value="5">Band 5</option>
+                <option value="6">Band 6</option>
+                <option value="7">Band 7</option>
+                <option value="8">Band 8</option>
+                <option value="9">Band 9</option>
+                <option value="10">Band 10</option>
+                <option value="11">Band 11</option>
+              </select>
+            </div>
+            <div class="form-group" ng-show="$ctrl.inputs[0]">
+              <label for="nir-band-map-1">NIR Band</label>
+              <select class="form-control" id="nir-band-map-1" ng-model="$ctrl.inputParameters[0].bands.nir">
+                <option value="1">Band 1</option>
+                <option value="2">Band 2</option>
+                <option value="3">Band 3</option>
+                <option value="4">Band 4</option>
+                <option value="5">Band 5</option>
+                <option value="6">Band 6</option>
+                <option value="7">Band 7</option>
+                <option value="8">Band 8</option>
+                <option value="9">Band 9</option>
+                <option value="10">Band 10</option>
+                <option value="11">Band 11</option>
+              </select>
+            </div>
+          </form>
+        </div>
 
-      <div class="sidebar-content with-padding with-border">
-        <h5 class="sidebar-title">
-            NDVI - After
-        </h5>
-        <div class="instructions-container" ng-show="!$ctrl.inputs[1]">
-          <p>
-            The NDVI tool requires a source with NIR and Red bands
-          </p>
-          <button class="btn btn-primary"
-                  ng-click="$ctrl.selectProjectModal(1)">
-            Select A Source
-          </button>
+        <div class="list-group-item list-group-item-stacked">
+          <h5 class="sidebar-title">
+              Area of interest (After)
+          </h5>
+          <div class="instructions-container" ng-show="!$ctrl.inputs[1]">
+            <p>
+              The <b>vegetation change detection</b> tool requires a source with NIR and Red bands
+            </p>
+            <button class="btn btn-primary"
+                    ng-click="$ctrl.selectProjectModal(1)">
+              Select A Source
+            </button>
+          </div>
+          <form class="form">
+            <div class="form-group" ng-show="$ctrl.inputs[1]">
+              <label for="formGroupExampleInput">Input Source</label>
+              <div class="form-group all-in-one">
+                <input type="text" class="form-control" id="input-1" placeholder="Example input" readonly ng-value="$ctrl.inputs[1].name">
+                <button class="btn btn-link" ng-click="$ctrl.selectProjectModal(1)">
+                  Change
+                </button>
+              </div>
+            </div>
+            <div class="form-group" ng-show="$ctrl.inputs[1]">
+              <label for="red-band-map-2">Red Band</label>
+              <select class="form-control" id="red-band-map-2"  ng-model="$ctrl.inputParameters[1].bands.red">
+                <option value="1">Band 1</option>
+                <option value="2">Band 2</option>
+                <option value="3">Band 3</option>
+                <option value="4">Band 4</option>
+                <option value="5">Band 5</option>
+                <option value="6">Band 6</option>
+                <option value="7">Band 7</option>
+                <option value="8">Band 8</option>
+                <option value="9">Band 9</option>
+                <option value="10">Band 10</option>
+                <option value="11">Band 11</option>
+              </select>
+            </div>
+            <div class="form-group" ng-show="$ctrl.inputs[1]">
+              <label for="nir-band-map-2">NIR Band</label>
+              <select class="form-control" id="nir-band-map-2" ng-model="$ctrl.inputParameters[1].bands.nir">
+                <option value="1">Band 1</option>
+                <option value="2">Band 2</option>
+                <option value="3">Band 3</option>
+                <option value="4">Band 4</option>
+                <option value="5">Band 5</option>
+                <option value="6">Band 6</option>
+                <option value="7">Band 7</option>
+                <option value="8">Band 8</option>
+                <option value="9">Band 9</option>
+                <option value="10">Band 10</option>
+                <option value="11">Band 11</option>
+              </select>
+            </div>
+          </form>
         </div>
-        <form class="inset">
-          <div class="form-group" ng-show="$ctrl.inputs[1]">
-            <label for="formGroupExampleInput">Input Source</label>
-            <div class="form-group all-in-one">
-              <input type="text" class="form-control" id="input-1" placeholder="Example input" readonly ng-value="$ctrl.inputs[1].name">
-              <button class="btn btn-link" ng-click="$ctrl.selectProjectModal(1)">
-                Change
-              </button>
+        <div class="list-group-item list-group-item-stacked">
+          <h5 class="sidebar-title">
+              Vegetation index
+          </h5>
+          <form class="form">
+            <div class="form-group">
+              <label for="formGroupExampleInput">Threshold</label>
+              <div>
+                <rzslider id="reclassify-before-threshold-value"
+                          class="light"
+                          rz-slider-model="$ctrl.thresholds.before"
+                          rz-slider-options="$ctrl.reclassifyBeforeThreshold.options">
+                </rzslider>
+              </div>
             </div>
-          </div>
-          <div class="form-group" ng-show="$ctrl.inputs[1]">
-            <label for="formGroupExampleInput">Red Band</label>
-            <select class="form-control" id="red-band-map"  ng-model="$ctrl.inputParameters[1].bands.red">
-              <option value="1">Band 1</option>
-              <option value="2">Band 2</option>
-              <option value="3">Band 3</option>
-              <option value="4">Band 4</option>
-              <option value="5">Band 5</option>
-              <option value="6">Band 6</option>
-              <option value="7">Band 7</option>
-              <option value="8">Band 8</option>
-              <option value="9">Band 9</option>
-              <option value="10">Band 10</option>
-              <option value="11">Band 11</option>
-            </select>
-          </div>
-          <div class="form-group" ng-show="$ctrl.inputs[1]">
-            <label for="formGroupExampleInput">NIR Band</label>
-            <select class="form-control" id="nir-band-map" ng-model="$ctrl.inputParameters[1].bands.nir">
-              <option value="1">Band 1</option>
-              <option value="2">Band 2</option>
-              <option value="3">Band 3</option>
-              <option value="4">Band 4</option>
-              <option value="5">Band 5</option>
-              <option value="6">Band 6</option>
-              <option value="7">Band 7</option>
-              <option value="8">Band 8</option>
-              <option value="9">Band 9</option>
-              <option value="10">Band 10</option>
-              <option value="11">Band 11</option>
-            </select>
-          </div>
-        </form>
-      </div>
-      <div class="sidebar-content with-padding with-border">
-        <h5 class="sidebar-title">
-            Reclassify - Before
-        </h5>
-        <form class="inset form-horizontal">
-          <div class="form-group">
-            <label for="formGroupExampleInput">Threshold</label>
-            <div>
-              <rzslider id="reclassify-before-threshold-value"
-                        class="light"
-                        rz-slider-model="$ctrl.thresholds.before"
-                        rz-slider-options="$ctrl.reclassifyBeforeThreshold.options">
-              </rzslider>
+          </form>
+        </div>
+        <div class="list-group-item list-group-item-stacked">
+          <h5 class="sidebar-title">
+              Vegetation index
+          </h5>
+          <form class="form">
+            <div class="form-group">
+              <label for="formGroupExampleInput">Threshold</label>
+              <div>
+                <rzslider id="reclassify-after-threshold-value"
+                          class="light"
+                          rz-slider-model="$ctrl.thresholds.after"
+                          rz-slider-options="$ctrl.reclassifyAfterThreshold.options">
+                </rzslider>
+              </div>
             </div>
-          </div>
-        </form>
-      </div>
-      <div class="sidebar-content with-padding with-border">
-        <h5 class="sidebar-title">
-            Reclassify - After
-        </h5>
-        <form class="inset form-horizontal">
-          <div class="form-group">
-            <label for="formGroupExampleInput">Threshold</label>
-            <div>
-              <rzslider id="reclassify-after-threshold-value"
-                        class="light"
-                        rz-slider-model="$ctrl.thresholds.after"
-                        rz-slider-options="$ctrl.reclassifyAfterThreshold.options">
-              </rzslider>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
-    <div class="sidebar-content flex-row with-padding with-borders">
-      <div class="form-btn-row">
-        <div class="btn-group">
-          <button class="btn">
-            Cancel
-          </button>
-          <button class="btn btn-primary">
-            Save
-          </button>
+          </form>
         </div>
       </div>
     </div>
@@ -184,8 +166,8 @@
     <div style="position: absolute; top:0; bottom: 0; left: 0; right: 0;" ng-show="$ctrl.isShowingPreview">
       <rf-map-container map-id="lab-run-preview"></rf-map-container>
       <div class="preview-control-bar">
-          <button ng-if="$ctrl.previewLayers.length > 1" class="btn btn-primary" ng-click="$ctrl.closePreview()">Exit Node Comparison</button>
-          <button ng-if="$ctrl.previewLayers.length == 1" class="btn btn-primary" ng-click="$ctrl.closePreview()">Exit Node Preview</button>
+          <button ng-if="$ctrl.previewLayers.length > 1" class="btn btn-default" ng-click="$ctrl.closePreview()">Exit Node Comparison</button>
+          <button ng-if="$ctrl.previewLayers.length == 1" class="btn btn-default" ng-click="$ctrl.closePreview()">Exit Node Preview</button>
       </div>
       <div class="preview-info-bar" ng-show="$ctrl.previewLayers.length > 1">
         <div class="split-container">

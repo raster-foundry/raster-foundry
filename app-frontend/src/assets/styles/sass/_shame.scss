@@ -6,6 +6,10 @@
   margin: 0;
 }
 
+.leaflet-control-layers.leaflet-control {
+  display: none !important;
+}
+
 .leaflet-top.leaflet-right .map-control-panel .leaflet-control-zoom-in, 
 .leaflet-top.leaflet-right .map-control-panel .leaflet-control-zoom-out {
   font-size: 18px;
@@ -96,10 +100,15 @@ rf-project-editor .leaflet-tile {
 }
 
 .navbar .btn {
-  margin: 12px 0 12px 15px;
+  margin: 12px 0 12px;
   border: none;
 
-  + .btn {
+  + .btn,
+  &:last-of-type {
+    margin-left: 20px;
+  }
+
+  &:last-of-type {
     margin-right: 20px;
   }
 }
