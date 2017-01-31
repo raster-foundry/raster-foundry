@@ -15,6 +15,7 @@ import com.lonelyplanet.akka.http.extensions.PageRequest
 import slick.collection.heterogeneous.HNil
 import slick.collection.heterogeneous.syntax._
 
+import java.lang.SuppressWarnings
 import java.util.UUID
 import java.sql.Timestamp
 import scala.concurrent.Future
@@ -105,6 +106,7 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
     )
   }
 
+  @SuppressWarnings(Array("OptionGet"))
   def toTuple: Scene => Option[SceneTupleType] = { scene =>
     Some {
       (
@@ -124,8 +126,10 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
         scene.dataFootprint,
         scene.metadataFiles,
         scene.ingestLocation,
+        // scalastyle:off
         SceneFilterFields.unapply(scene.filterFields).get,
         SceneStatusFields.unapply(scene.statusFields).get
+        // scalastyle:on
       )
     }
   }
