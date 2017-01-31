@@ -1,4 +1,4 @@
-package com.azavea.rf.utils
+package com.azavea.rf.common
 
 import scala.concurrent._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -6,14 +6,15 @@ import scala.util.{Success, Failure}
 
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
+import akka.actor.ActorSystem
+import akka.stream.Materializer
 import spray.json._
 import DefaultJsonProtocol._
 
-import com.azavea.rf.AkkaSystem
-
 trait RollbarNotifier {
 
-  import AkkaSystem.{system, materializer}
+  implicit val system: ActorSystem
+  implicit val materializer: Materializer
 
   val rollbarApiToken = sys.env.get("ROLLBAR_API_TOKEN") match {
     case Some(t) => t

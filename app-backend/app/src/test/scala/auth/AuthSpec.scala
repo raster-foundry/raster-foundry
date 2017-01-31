@@ -8,7 +8,7 @@ import akka.actor.ActorSystem
 
 import concurrent.duration._
 import akka.http.scaladsl.server.Route
-import com.azavea.rf.authentication.Authentication
+import com.azavea.rf.common.Authentication
 import com.azavea.rf.user._
 import com.azavea.rf.utils.Config
 import com.azavea.rf.{AuthUtils, DBSpec, Router}

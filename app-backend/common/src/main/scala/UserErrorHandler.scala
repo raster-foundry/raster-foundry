@@ -1,9 +1,10 @@
-package com.azavea.rf.utils
+package com.azavea.rf.common
 
 import akka.http.scaladsl.server.{Route, ExceptionHandler, Directives}
 import akka.http.scaladsl.model.StatusCodes
 import com.typesafe.scalalogging.LazyLogging
 import spray.json.{SerializationException, DeserializationException}
+import com.typesafe.scalalogging.LazyLogging
 
 trait UserErrorHandler extends Directives
     with RollbarNotifier

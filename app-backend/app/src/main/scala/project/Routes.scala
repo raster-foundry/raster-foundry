@@ -7,13 +7,12 @@ import spray.json._
 import DefaultJsonProtocol._
 import com.lonelyplanet.akka.http.extensions.{PaginationDirectives, Order}
 
-import com.azavea.rf.authentication.Authentication
+import com.azavea.rf.common.{Authentication, UserErrorHandler}
 import com.azavea.rf.database.tables._
 import com.azavea.rf.database.Database
 import com.azavea.rf.datamodel._
 import com.azavea.rf.scene._
 import com.azavea.rf.utils.queryparams.QueryParametersCommon
-import com.azavea.rf.utils.UserErrorHandler
 
 import java.util.UUID
 

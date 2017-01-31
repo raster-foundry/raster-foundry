@@ -5,9 +5,8 @@ import akka.http.scaladsl.server._
 
 import org.postgresql.util.PSQLException
 
-import com.azavea.rf.authentication.Authentication
+import com.azavea.rf.common.{Authentication, RollbarNotifier}
 import com.azavea.rf.database.Database
-import com.azavea.rf.utils.RollbarNotifier
 
 
 /**
