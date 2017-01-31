@@ -21,7 +21,7 @@ object CommandLine {
       conf.copy(testRun = true) ).text("Run this job as a test - verify output")
 
     opt[Unit]("overwrite").action( (_, conf) =>
-      conf.copy(testRun = true) ).text("Overwrite conflicting layers")
+      conf.copy(overwrite = true) ).text("Overwrite conflicting layers")
 
     opt[URI]('j',"jobDefinition")
       .action( (jd, conf) => conf.copy(jobDefinition = jd) )

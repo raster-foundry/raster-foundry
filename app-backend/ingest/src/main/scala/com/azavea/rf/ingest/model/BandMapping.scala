@@ -1,4 +1,4 @@
-package com.azavea.rf.ingest.tool
+package com.azavea.rf.ingest.model
 
 import spray.json._
 import DefaultJsonProtocol._

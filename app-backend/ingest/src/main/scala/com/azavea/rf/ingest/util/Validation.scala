@@ -21,9 +21,9 @@ import DefaultJsonProtocol._
 import java.net.URI
 import java.util.UUID
 
-import com.azavea.rf.ingest.tool._
+import com.azavea.rf.ingest.model._
 
-object Testing extends LazyLogging {
+object Validation extends LazyLogging {
 
   /** Check that an ingested layer has a valid s3-based catalog entry for an ingest definition */
   def validateS3CatalogEntry(catalogURI: URI, layerID: UUID): Unit = {
@@ -39,6 +39,7 @@ object Testing extends LazyLogging {
   def validateFileCatalogEntry(catalogURI: URI, layerID: UUID): Unit = {
     val attributeStore = FileAttributeStore(catalogURI.getPath)
     val gtLayerID = LayerId(layerID.toString, 0)
+
     if (! attributeStore.read[Boolean](gtLayerID, "ingestComplete"))
       throw new Exception("Something went wrong during ingest...")
     else logger.info("Ingest completed successfully")

@@ -15,8 +15,8 @@ object Dependencies {
   val geotrellisRaster   = "org.locationtech.geotrellis" %% "geotrellis-raster"                 % Version.geotrellis
   val geotrellisSlick    = "org.locationtech.geotrellis" %% "geotrellis-slick"                  % Version.geotrellis
   val geotrellisVector   = "org.locationtech.geotrellis" %% "geotrellis-vector"                 % Version.geotrellis
-  val spark              = "org.apache.spark"            %% "spark-core"                        % Version.spark % "provided"
   val geotrellisUtil     = "org.locationtech.geotrellis" %% "geotrellis-util"                   % Version.geotrellis
+  val spark              = "org.apache.spark"            %% "spark-core"                        % Version.spark % "provided"
   val hikariCP           = "com.typesafe.slick"          %% "slick-hikaricp"                    % Version.hikariCP
   val postgres           = "org.postgresql"               % "postgresql"                        % Version.postgres
   val scalaforklift      = "com.liyaos"                  %% "scala-forklift-slick"              % Version.scalaForklift

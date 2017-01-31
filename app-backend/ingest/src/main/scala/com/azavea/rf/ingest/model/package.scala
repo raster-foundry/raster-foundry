@@ -12,7 +12,11 @@ import DefaultJsonProtocol._
 import java.util.UUID
 import java.net.URI
 
-package object tool {
+package object model {
+
+  implicit class HasCellSize[A <: { def rows: Int; def cols: Int; def extent: Extent }](obj: A) {
+    def cellSize: CellSize = CellSize(obj.extent.width / obj.cols, obj.extent.height / obj.rows)
+  }
 
   implicit object KeyIndexMethodJsonFormat extends RootJsonFormat[KeyIndexMethod[SpatialKey]] {
     def write(kim: KeyIndexMethod[SpatialKey]): JsValue =
