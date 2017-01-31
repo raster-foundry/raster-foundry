@@ -7,6 +7,8 @@ import com.azavea.rf.tile.tool.ToolParams._
 import com.azavea.rf.datamodel.ColorCorrect
 import ColorCorrect.Params.colorCorrectParams
 import com.azavea.rf.tile.routes._
+import com.azavea.rf.common.UserErrorHandler
+
 
 import geotrellis.raster._
 import geotrellis.raster.io._
@@ -24,19 +26,15 @@ import spray.json._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 
-class Router extends LazyLogging with TileAuthentication {
-  implicit lazy val database = Database.DEFAULT
-  def exceptionHandler =
-    ExceptionHandler {
-      case e: ValueNotFoundError =>
-        complete(StatusCodes.NotFound)
-      case e: IllegalArgumentException =>
-        complete(StatusCodes.ClientError(400)("Bad Argument", e.getMessage))
-      case e: IllegalStateException =>
-        complete(StatusCodes.ClientError(400)("Bad Request", e.getMessage))
-    }
+class Router extends LazyLogging
+    with TileAuthentication
+    with UserErrorHandler {
 
-  def root = handleExceptions(exceptionHandler) {
+  implicit lazy val database = Database.DEFAULT
+  implicit val system = AkkaSystem.system
+  implicit val materializer = AkkaSystem.materializer
+
+  def root = handleExceptions(userExceptionHandler) {
     pathPrefix("tiles") {
       pathPrefix("healthcheck") {
         pathEndOrSingleSlash {

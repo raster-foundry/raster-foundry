@@ -2,8 +2,7 @@ package com.azavea.rf.token
 
 import akka.http.scaladsl.server.Route
 
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.utils.UserErrorHandler
+import com.azavea.rf.common.{Authentication, UserErrorHandler}
 
 
 /**

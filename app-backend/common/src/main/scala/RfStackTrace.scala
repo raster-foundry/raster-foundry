@@ -1,4 +1,4 @@
-package com.azavea.rf.utils
+package com.azavea.rf.common
 
 import java.io.{PrintWriter, StringWriter}
 

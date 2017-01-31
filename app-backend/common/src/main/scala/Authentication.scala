@@ -1,4 +1,4 @@
-package com.azavea.rf.authentication
+package com.azavea.rf.common
 
 import scala.concurrent.Future
 import akka.http.scaladsl.model.headers.{HttpChallenge, _}

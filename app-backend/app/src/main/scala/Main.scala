@@ -18,10 +18,9 @@ object AkkaSystem {
 }
 
 object Main extends App with Config with Router with AkkaSystem.LoggerExecutor {
-
-  import AkkaSystem._
-
   implicit lazy val database = Database.DEFAULT
+  implicit val system = AkkaSystem.system
+  implicit val materializer = AkkaSystem.materializer
 
   Http().bindAndHandle(routes, httpHost, httpPort)
 

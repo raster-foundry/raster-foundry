@@ -95,13 +95,13 @@ lazy val root = Project("root", file("."))
   .settings(commonSettings:_*)
 
 lazy val app = Project("app", file("app"))
-  .dependsOn(database, datamodel, authentication)
+  .dependsOn(database, datamodel, common)
   .settings(appSettings:_*)
   .settings({
     libraryDependencies ++= appDependencies
   })
 
-lazy val authentication = Project("authentication", file("authentication"))
+lazy val common = Project("common", file("common"))
   .dependsOn(database, datamodel)
   .settings(appSettings:_*)
   .settings({libraryDependencies ++= Seq(
@@ -152,7 +152,7 @@ lazy val ingest = Project("ingest", file("ingest"))
 lazy val tile = Project("tile", file("tile"))
   .dependsOn(datamodel)
   .dependsOn(database)
-  .dependsOn(authentication)
+  .dependsOn(common)
   .dependsOn(tool)
   .settings(commonSettings:_*)
   .settings({

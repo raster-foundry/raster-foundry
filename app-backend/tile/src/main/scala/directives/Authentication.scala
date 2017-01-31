@@ -1,7 +1,7 @@
 package com.azavea.rf.tile
 
 import akka.http.scaladsl.server.{Directive1, Directives}
-import com.azavea.rf.authentication.Authentication
+import com.azavea.rf.common.Authentication
 
 import scala.util.Try
 

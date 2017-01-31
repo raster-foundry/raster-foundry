@@ -3,11 +3,10 @@ package com.azavea.rf.toolcategory
 import scala.util.{Success, Failure}
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
-import com.azavea.rf.authentication.Authentication
+import com.azavea.rf.common.{Authentication, UserErrorHandler}
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.ToolCategories
 import com.azavea.rf.datamodel._
-import com.azavea.rf.utils.UserErrorHandler
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 
 trait ToolCategoryRoutes extends Authentication
