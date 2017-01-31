@@ -60,6 +60,9 @@ trait Router extends HealthCheckRoutes
     } ~
     pathPrefix("config") {
       configRoutes
+    } ~
+    pathPrefix("thumbnails") {
+      thumbnailImageRoutes
     }
   }
 }

@@ -7,6 +7,7 @@ trait Config {
   private val httpConfig = config.getConfig("http")
   private val auth0Config = config.getConfig("auth0")
   private val featureFlagConfig = config.getConfig("featureFlags")
+  private val s3Config = config.getConfig("s3")
 
   val httpHost = httpConfig.getString("interface")
   val httpPort = httpConfig.getInt("port")
@@ -17,4 +18,6 @@ trait Config {
   val auth0ClientId = auth0Config.getString("clientId")
 
   val featureFlags = featureFlagConfig.getConfigList("features")
+
+  val thumbnailBucket = s3Config.getString("thumbnailBucket")
 }
