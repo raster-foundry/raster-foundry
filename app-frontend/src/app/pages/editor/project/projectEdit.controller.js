@@ -156,16 +156,19 @@ export default class ProjectEditController {
             this.activeModal.dismiss();
         }
 
+        const backdrop = this.project ? true : 'static';
+
         this.activeModal = this.$uibModal.open({
             component: 'rfSelectProjectModal',
-            backdrop: 'static',
-            keyboard: false,
+            backdrop: backdrop,
+            keyboard: Boolean(this.project),
             resolve: {
-                requireSelection: () => true
+                project: () => this.project,
+                requireSelection: () => !Boolean(this.project)
             }
         });
 
-        this.activeModal.results.then(p => {
+        this.activeModal.result.then(p => {
             this.$state.go(this.$state.current, {projectid: p.id});
         });
 
