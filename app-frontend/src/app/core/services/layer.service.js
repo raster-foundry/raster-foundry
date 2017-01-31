@@ -129,33 +129,21 @@ export default (app) => {
          * @returns {string} URL for this tile layer
          */
         getSceneLayerURL() {
-            let userParams = this.userParamsFromScene(this.scene);
-            let organizationId = userParams.organizationId;
-            let userId = userParams.userId;
             return this.formatColorParams().then((formattedParams) => {
-                return `/tiles/${organizationId}/` +
-                    `${userId}/${this.scene.id}/rgb/{z}/{x}/{y}/?${formattedParams}`;
+                return `/tiles/${this.scene.id}/rgb/{z}/{x}/{y}/?${formattedParams}`;
             });
         }
 
         getMosaicLayerURL(params = {}) {
-            let userParams = this.userParamsFromScene(this.scene);
-            let organizationId = userParams.organizationId;
-            let userId = userParams.userId;
             params.token = this.authService.token();
             let formattedParams = L.Util.getParamString(params);
             return this.$q((resolve) => {
-                resolve(`/tiles/${organizationId}/` +
-                        `${userId}/project/${this.projectId}/{z}/{x}/{y}/${formattedParams}`);
+                resolve(`/tiles/${this.projectId}/{z}/{x}/{y}/${formattedParams}`);
             });
         }
 
         getNDVIURL(bands) {
-            let organizationId = this.scene.organizationId;
-            // TODO: replace this once user IDs are URL safe ISSUE: 766
-            let userId = this.scene.createdBy.replace('|', '_');
-            return `/tiles/${organizationId}/` +
-                `${userId}/${this.scene.id}/ndvi/{z}/{x}/{y}/?bands=${bands[0]},${bands[1]}`;
+            return `/tiles/${this.scene.id}/ndvi/{z}/{x}/{y}/?bands=${bands[0]},${bands[1]}`;
         }
 
         /**
@@ -163,12 +151,8 @@ export default (app) => {
          * @returns {string} URL for the histogram
          */
         getHistogramURL() {
-            let userParams = this.userParamsFromScene(this.scene);
-            let organizationId = userParams.organizationId;
-            let userId = userParams.userId;
             return this.formatColorParams().then((formattedParams) => {
-                return `/tiles/${organizationId}/` +
-                    `${userId}/${this.scene.id}/rgb/histogram/?${formattedParams}`;
+                return `/tiles/${this.scene.id}/rgb/histogram/?${formattedParams}`;
             });
         }
 

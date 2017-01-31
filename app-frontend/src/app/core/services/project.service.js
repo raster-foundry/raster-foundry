@@ -202,8 +202,6 @@ export default (app) => {
         }
 
         getProjectLayerURL(project, token) {
-            let userId = 'rf_airflow-user';
-
             let params = {
                 tag: new Date().getTime()
             };
@@ -215,8 +213,7 @@ export default (app) => {
             let formattedParams = L.Util.getParamString(params);
 
             return this.getBaseURL() +
-                `/tiles/${project.organizationId}/${userId}` +
-                `/project/${project.id}/{z}/{x}/{y}/${formattedParams}`;
+                `/tiles/${project.id}/{z}/{x}/{y}/${formattedParams}`;
         }
 
         getProjectShareURL(project) {

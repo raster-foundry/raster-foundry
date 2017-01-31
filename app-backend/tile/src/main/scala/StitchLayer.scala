@@ -1,5 +1,7 @@
 package com.azavea.rf.tile
 
+import com.azavea.rf.database.Database
+
 import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.vector._
@@ -15,6 +17,7 @@ import scalacache._
 
 object StitchLayer extends LazyLogging with Config {
   implicit val cache = LayerCache.memcached
+  implicit val database = Database.DEFAULT
 
   /** This function will iterate through zoom levels a layer, starting with 1, until it finds the level
     * at which the data pixels stored in the layer cover at least size pixels in columns or rows.
@@ -30,8 +33,11 @@ object StitchLayer extends LazyLogging with Config {
     */
   def apply(id: RfLayerId, size: Int): Future[Option[MultibandTile]] =
     caching(s"stitch-{$size}") {
-      for (store <- LayerCache.attributeStore(id.prefix))
-      yield stitch(store, id.scene.toString, size)
+      for {
+        prefix <- id.prefix
+        store <- LayerCache.attributeStore(prefix)
+      }
+      yield stitch(store, id.sceneId.toString, size)
     }
 
   def stitch(store: AttributeStore, layerName: String, size: Int): Option[MultibandTile] = {
