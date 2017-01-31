@@ -21,11 +21,11 @@ object MosaicRoutes extends LazyLogging {
     HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/png`), png.bytes))
 
   def mosaicProject(implicit db: Database): Route =
-    pathPrefix(JavaUUID / Segment / "project" / JavaUUID/ IntNumber / IntNumber / IntNumber) { (orgId, userId, projectId, zoom, x, y) =>
+    pathPrefix(JavaUUID / IntNumber / IntNumber / IntNumber) { (projectId, zoom, x, y) =>
       parameter("tag".?) { tag =>
         get {
           complete {
-            Mosaic(orgId, userId, projectId, zoom, x, y, tag).map { maybeTile =>
+            Mosaic(projectId, zoom, x, y, tag).map { maybeTile =>
               maybeTile.map { tile => pngAsHttpResponse(tile.renderPng()) }
             }
           }

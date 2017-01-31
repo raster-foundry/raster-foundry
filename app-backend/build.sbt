@@ -154,6 +154,7 @@ lazy val tile = Project("tile", file("tile"))
   .dependsOn(database)
   .dependsOn(common)
   .dependsOn(tool)
+  .dependsOn(ingest)
   .settings(commonSettings:_*)
   .settings({
     libraryDependencies ++= testDependencies

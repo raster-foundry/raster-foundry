@@ -1,5 +1,7 @@
 package com.azavea.rf.tile
 
+import com.azavea.rf.database.Database
+
 import com.github.benmanes.caffeine.cache.Caffeine
 import geotrellis.raster._
 import geotrellis.raster.histogram.Histogram
@@ -31,6 +33,7 @@ import scalacache.serialization.InMemoryRepr
   * things that require time to generate, usually a network fetch, use AsyncLoadingCache
   */
 object LayerCache extends Config {
+  implicit lazy val database = Database.DEFAULT
   val blockingExecutionContext =
     ExecutionContext.fromExecutor(Executors.newFixedThreadPool(64))
 
@@ -51,17 +54,23 @@ object LayerCache extends Config {
     ScalaCache(MemcachedCache(client))
   }
 
-  def attributeStore(bucket: String, prefix: String): Future[S3AttributeStore] =
+  def attributeStore(bucket: String, prefix: Option[String]): Future[S3AttributeStore] =
     caching[S3AttributeStore, InMemoryRepr](s"store-$bucket-$prefix"){
-      Future.successful(S3AttributeStore(bucket, prefix))
+      prefix match {
+        case Some(prefixStr) => Future.successful(S3AttributeStore(bucket, prefixStr))
+        case None => Future.failed(new LayerIOError("Scene has no ingest location"))
+      }
     }
 
-  def attributeStore(prefix: String): Future[S3AttributeStore] =
+  def attributeStore(prefix: Option[String]): Future[S3AttributeStore] =
     attributeStore(defaultBucket, prefix)
 
   def maybeTile(id: RfLayerId, zoom: Int, key: SpatialKey): Future[Option[MultibandTile]] =
     caching[Option[MultibandTile], Array[Byte]](s"tile-$id-$zoom-$key") {
-      for (store <- attributeStore(defaultBucket, id.prefix)) yield {
+      for {
+        prefix <- id.prefix
+        store <- attributeStore(defaultBucket, prefix)
+      } yield {
         val reader = new S3ValueReader(store).reader[SpatialKey, MultibandTile](id.catalogId(zoom))
         Try(reader.read(key)) match {
           // Only cache failures through failed query
@@ -74,7 +83,10 @@ object LayerCache extends Config {
 
   def bandHistogram(id: RfLayerId, zoom: Int): Future[Array[Histogram[Double]]] =
     caching[Array[Histogram[Double]], Array[Byte]]("histogram", id, zoom) {
-      for (store <- attributeStore(defaultBucket, id.prefix)) yield
+      for {
+        prefix <- id.prefix
+        store <- attributeStore(defaultBucket, prefix)
+      } yield
         store.read[Array[Histogram[Double]]](id.catalogId(0), "histogram")
     }
 }

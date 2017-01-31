@@ -28,13 +28,13 @@ import scala.concurrent._
 
 class Router extends LazyLogging
     with TileAuthentication
-    with UserErrorHandler {
+    with TileErrorHandler {
 
   implicit lazy val database = Database.DEFAULT
   implicit val system = AkkaSystem.system
   implicit val materializer = AkkaSystem.materializer
 
-  def root = handleExceptions(userExceptionHandler) {
+  def root = handleExceptions(tileExceptionHandler) {
     pathPrefix("tiles") {
       pathPrefix("healthcheck") {
         pathEndOrSingleSlash {

@@ -25,7 +25,7 @@ import scala.concurrent._
 object SceneRoutes extends LazyLogging {
 
   def root: Route =
-    pathPrefix(JavaUUID / Segment / JavaUUID).as(RfLayerId) { id =>
+    pathPrefix(JavaUUID).as(RfLayerId) { id =>
       pathPrefix("rgb") {
         layerTileAndHistogram(id) { (futureMaybeTile, futureHist) =>
           imageRoute(futureMaybeTile, futureHist)

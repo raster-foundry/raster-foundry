@@ -20,8 +20,10 @@ case class TagWithTTL(tag: String, ttl: Duration)
 object Mosaic {
   implicit val cache = LayerCache.memoryCache
 
+
   /** Cache the result of metadata queries that may have required walking up the pyramid to find suitable layers */
-  def tileLayerMetadata(id: RfLayerId, zoom: Int) = caching(s"mosaic-tlm-$id-$zoom") {
+  def tileLayerMetadata(id: RfLayerId, zoom: Int)(implicit database: Database) =
+      caching(s"mosaic-tlm-$id-$zoom") {
     def readMetadata(store: AttributeStore, tryZoom: Int): Option[(Int, TileLayerMetadata[SpatialKey])] =
       try {
         Some(tryZoom -> store.readMetadata[TileLayerMetadata[SpatialKey]](id.catalogId(tryZoom)))
@@ -29,7 +31,10 @@ object Mosaic {
         case e: AttributeNotFoundError if tryZoom > 0 => readMetadata(store, tryZoom - 1)
       }
 
-    for (store <- LayerCache.attributeStore(id.prefix)) yield {
+    for {
+      prefix <- id.prefix
+      store <- LayerCache.attributeStore(prefix)
+    } yield {
       readMetadata(store, zoom)
     }
   }
@@ -47,7 +52,8 @@ object Mosaic {
   }
 
   /** Fetch the tile for given resolution. If it is not present, use a tile from a lower zoom level */
-  def fetch(id: RfLayerId, zoom: Int, col: Int, row: Int): Future[Option[MultibandTile]] = {
+  def fetch(id: RfLayerId, zoom: Int, col: Int, row: Int)(implicit database: Database):
+      Future[Option[MultibandTile]] = {
     tileLayerMetadata(id, zoom).flatMap {
       case Some((sourceZoom, tlm)) =>
         val zdiff = zoom - sourceZoom
@@ -76,8 +82,6 @@ object Mosaic {
   }
 
   def raw(
-    orgId: UUID,
-    userId: String,
     projectId: UUID,
     zoom: Int, col: Int, row: Int
   )(implicit db: Database): Future[Option[MultibandTile]] = {
@@ -95,7 +99,7 @@ object Mosaic {
           for (
             (sceneId, colorCorrectParams) <- mosaic.definition
           ) yield {
-            val id = RfLayerId(orgId, userId, sceneId)
+            val id = RfLayerId(sceneId)
             for {
               maybeTile <- Mosaic.fetch(id, zoom, col, row)
             } yield
@@ -120,8 +124,6 @@ object Mosaic {
     *                    MultibandTile or all available bands, regardless of their semantics.
     */
   def apply(
-    orgId: UUID,
-    userId: String,
     projectId: UUID,
     zoom: Int, col: Int, row: Int,
     tag: Option[String] = None,
@@ -147,7 +149,7 @@ object Mosaic {
       case Some(mosaic) =>
         val maybeTiles =
           for ((sceneId, colorCorrectParams) <- mosaic.definition) yield {
-            val id = RfLayerId(orgId, userId, sceneId)
+            val id = RfLayerId(sceneId)
             if (rgbOnly) {
               colorCorrectParams match {
                 case None =>
