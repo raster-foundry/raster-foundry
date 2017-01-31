@@ -1,3 +1,5 @@
+const Map = require('es6-map');
+
 class SceneDetailController {
     constructor($log, $state, sceneService, $uibModal, mapService) {
         'ngInject';
@@ -67,6 +69,27 @@ class SceneDetailController {
             resolve: {
                 downloads: () => downloadSets
             }
+        });
+    }
+
+    projectModal() {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+        let sceneMap = new Map();
+        sceneMap.set(this.scene.id, this.scene);
+
+        this.activeModal = this.$uibModal.open({
+            component: 'rfProjectAddModal',
+            resolve: {
+                scenes: () => sceneMap
+            }
+        });
+
+        this.activeModal.result.then(() => {
+            delete this.activeModal;
+        }, () => {
+            delete this.activeModal;
         });
     }
 }
