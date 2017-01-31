@@ -1,6 +1,5 @@
 object Version {
   val rasterFoundry      = "0.1"
-
   val akka               = "2.4.3"
   val geotrellis         = "1.0.0"
   val hikariCP           = "3.1.1"

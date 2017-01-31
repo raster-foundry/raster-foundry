@@ -1,7 +1,7 @@
 package com.azavea.rf.ingest
 
 import com.azavea.rf.ingest.util._
-import com.azavea.rf.ingest.tool._
+import com.azavea.rf.ingest.model._
 
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io._
@@ -18,15 +18,18 @@ import geotrellis.raster.io.geotiff.MultibandGeoTiff
 import geotrellis.spark.tiling._
 import geotrellis.proj4._
 
+import com.typesafe.scalalogging.LazyLogging
 import org.apache.spark.rdd._
 import org.apache.spark._
 import spray.json._
 import DefaultJsonProtocol._
+
 import java.net.URI
+import scala.collection.JavaConverters._
 
 case class BandTile(band: Int, tile: Tile)
 
-object Ingest extends SparkJob {
+object Ingest extends SparkJob with LazyLogging {
 
   case class Params(
     jobDefinition: URI = new URI(""),
@@ -36,7 +39,7 @@ object Ingest extends SparkJob {
   type RfLayerWriter = Writer[LayerId, RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]]]
   type RfLayerDeleter = LayerDeleter[LayerId]
 
-  /** Get a layerwriter and an attribute store for the catalog located at the provided URI
+  /** Get a LayerWriter and an attribute store for the catalog located at the provided URI
     *
     * @param outputDef The ingest job's output definition
     */
@@ -54,6 +57,17 @@ object Ingest extends SparkJob {
       (writer, deleter, fileWriter.attributeStore)
   }
 
+  def deleteLayer(deleter: RfLayerDeleter, attStore: AttributeStore)(layerId: LayerId): Unit = {
+    try {
+      deleter.delete(layerId)
+    } catch {
+      case e: LayerNotFoundError =>
+        logger.debug(s"Overwritten layer $layerId not found. Proceeding...")
+      case e: com.amazonaws.services.s3.model.AmazonS3Exception =>
+        logger.error(s"Unable to delete layer ${layerId}; check ingest configuration")
+    }
+  }
+
   /** Produce metadata for an IngestLayer
     *
     *  @param layer A specification for ingesting a layer
@@ -62,7 +76,7 @@ object Ingest extends SparkJob {
   def calculateTileLayerMetadata(layer: IngestLayer, scheme: LayoutScheme): (Int, TileLayerMetadata[SpatialKey]) = {
     // We need to build TileLayerMetadata that we expect to start pyramid from
     val overallExtent = layer.sources
-      .map({ src => src.extent.reproject(src.getCRSExtent, layer.output.crs) })
+      .map({ src => src.extent.reproject(src.extentCrs, layer.output.crs) })
       .reduce(_ combine _)
 
     // Infer the base level of the TMS pyramid based on overall extent and cellSize
@@ -102,7 +116,7 @@ object Ingest extends SparkJob {
       hs1.zip(hs2).map { case (a, b) => a merge b }
     })
 
-  /** We need to supress this warning because there's a perfectly safe `head` call being
+  /** We need to suppress this warning because there's a perfectly safe `head` call being
     *  made here. The compiler just isn't smart enough to figure that out
     *
     *  @param layer An ingest layer specification
@@ -151,24 +165,19 @@ object Ingest extends SparkJob {
 
     val layerRdd = ContextRDD(multibandTiledRdd, tileLayerMetadata)
     val (writer, deleter, attributeStore) = getRfLayerManagement(layer.output)
+
     val sharedId = LayerId(layer.id.toString, 0)
+    val failsafeDeleteLayer = deleteLayer(deleter, attributeStore)(_)
 
-    if (overwriteLayer) {
-      try {
-        deleter.delete(sharedId)
-        attributeStore.delete(sharedId)
-      } catch {
-        case e: Throwable => throw e
-      }
-    }
-
+    if (overwriteLayer && attributeStore.layerExists(sharedId)) { failsafeDeleteLayer(sharedId) }
     if (layer.output.pyramid) { // If pyramiding
       Pyramid.upLevels(layerRdd, layoutScheme, maxZoom, 1, resampleMethod) { (rdd, zoom) =>
+        logger.info(s"Writing zoom level $zoom in ${layer.id.toString}")
         // attributes that apply to all layers are placed at zoom 0
         val layerId = LayerId(layer.id.toString, zoom)
+        if (overwriteLayer && attributeStore.layerExists(layerId)) { failsafeDeleteLayer(layerId) }
 
         try {
-          if (overwriteLayer) { deleter.delete(layerId) }
           writer.write(layerId, rdd)
 
           if (zoom == math.max(maxZoom / 2, 1)) {
@@ -185,16 +194,18 @@ object Ingest extends SparkJob {
         } catch {
           case e: Throwable =>
             attributeStore.write(sharedId, "ingestComplete", false)
+            throw e
         }
       }
     } else { // If not pyramiding. TODO: figure out exactly what we want to store here
       try {
-        if (overwriteLayer) { deleter.delete(sharedId) }
+        logger.info(s"Writing (no pyramid) layer ${layer.id.toString}")
         writer.write(sharedId, layerRdd)
         attributeStore.write(sharedId, "ingestComplete", true)
       } catch {
         case e: Throwable =>
           attributeStore.write(sharedId, "ingestComplete", false)
+          throw e
       }
     }
 
@@ -218,7 +229,7 @@ object Ingest extends SparkJob {
 
     try {
       ingestDefinition.layers.foreach(ingestLayer(params.overwrite))
-      if (params.testRun) ingestDefinition.layers.foreach(Testing.validateCatalogEntry)
+      if (params.testRun) ingestDefinition.layers.foreach(Validation.validateCatalogEntry)
     } finally {
       sc.stop
     }
