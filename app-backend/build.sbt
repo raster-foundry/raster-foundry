@@ -86,8 +86,10 @@ lazy val appDependencies = dbDependencies ++ migrationsDependencies ++
   Dependencies.akkaSlf4j,
   Dependencies.authCommon,
   Dependencies.akkaHttpExtensions,
+  Dependencies.commonsIO,
   Dependencies.ammoniteOps,
-  Dependencies.geotrellisSlick
+  Dependencies.geotrellisSlick,
+  Dependencies.geotrellisS3
 )
 
 lazy val root = Project("root", file("."))
@@ -107,7 +109,9 @@ lazy val common = Project("common", file("common"))
   .settings({libraryDependencies ++= Seq(
     Dependencies.authAkka,
     Dependencies.akka,
-    Dependencies.akkahttp
+    Dependencies.akkahttp,
+    Dependencies.commonsIO,
+    Dependencies.geotrellisS3
   )})
 
 lazy val migrations = Project("migrations", file("migrations"))
