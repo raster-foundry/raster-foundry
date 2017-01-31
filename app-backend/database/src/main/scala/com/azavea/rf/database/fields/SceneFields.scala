@@ -3,7 +3,7 @@ package com.azavea.rf.database.fields
 import java.util.UUID
 
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
-import com.azavea.rf.datamodel.JobStatus
+import com.azavea.rf.datamodel.{JobStatus, IngestStatus}
 import geotrellis.slick.Projected
 import geotrellis.vector.Geometry
 
@@ -20,4 +20,5 @@ trait SceneFields  { self: Table[_] =>
   def tileFootprint: Rep[Option[Projected[Geometry]]]
   def dataFootprint: Rep[Option[Projected[Geometry]]]
   def ingestLocation: Rep[Option[String]]
+  def ingestStatus: Rep[IngestStatus]
 }

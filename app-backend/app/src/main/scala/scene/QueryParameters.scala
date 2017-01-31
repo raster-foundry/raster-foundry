@@ -29,7 +29,9 @@ trait SceneQueryParameterDirective extends QueryParametersCommon
     'bbox.as[String].?,
     'point.as[String].?,
     'project.as[UUID].?,
-    'ingested.as[Boolean].?
+    'ingested.as[Boolean].?,
+    'minIngestStatus.as[Int].?,
+    'maxIngestStatus.as[Int].?
   )).as(SceneQueryParameters)
 
   val sceneQueryParameters = (orgQueryParams &
