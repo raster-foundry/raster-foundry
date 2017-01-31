@@ -405,6 +405,10 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) extends LazyLoggin
   import Scenes.datePart
 
 
+  /** TODO: it isn't currently clear how to implement enum type ordering. 
+    *
+    * IngestStatus has a toInt method to facilitate, but Slick is complaining
+    */
   def filterBySceneParams(sceneParams: SceneQueryParameters): Scenes.TableQuery = {
     val filteredScenes = scenes.filter{ scene =>
       val sceneFilterConditions = List(

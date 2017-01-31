@@ -47,7 +47,9 @@ case class SceneQueryParameters(
   bbox: Option[String] = None,
   point: Option[String] = None,
   project: Option[UUID] = None,
-  ingested: Option[Boolean] = None
+  ingested: Option[Boolean] = None,
+  minIngestStatus: Option[Int] = None,
+  maxIngestStatus: Option[Int] = None
 ) {
   val bboxPolygon: Option[Seq[Projected[Polygon]]] = try {
     bbox match {
