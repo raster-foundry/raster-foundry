@@ -181,6 +181,19 @@ val routes = cors() {
 Slick
 ---------
 
+#### Wide Tables
+
+Any table with > 22 fields cannot use the handy
+
+```scala
+def * = (...) <> (T.tupled, T.apply)
+```
+
+default projection that we make use of in so many places because the number of fields
+is too many for `TupledXX`. For tables like these, the best solution so far is using
+nested case classes to group related fields. See the `Scenes` table for an example
+or this [StackOverflow question and answer](http://stackoverflow.com/questions/28305023/custom-mapping-to-nested-case-class-structure-in-slick-more-than-22-columns).
+
 #### Queries with several actions
 
 Slick gives us several options for combining DBIO actions. Use for-comprehensions anywhere
