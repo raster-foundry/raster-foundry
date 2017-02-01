@@ -24,9 +24,7 @@ export default class ColorCorrectPaneController {
         this.smoothHistograms = true;
         // Initialize correction to first selected layer (if there are multiple)
         this.firstLayer = this.selectedLayers.values().next().value;
-        this.firstLayer.getColorCorrection().then((correction) => {
-            this.correction = correction;
-        });
+        this.firstLayer.getColorCorrection().then(this.setCorrection.bind(this));
         this.mosaic = this.$parent.mosaicLayer.values().next().value;
         if (this.featureFlags.isOn('display-histogram')) {
             this.fetchHistograms();
@@ -51,9 +49,13 @@ export default class ColorCorrectPaneController {
             promises.push(layer.resetTiles());
         }
         this.firstLayer.getColorCorrection().then((correction) => {
-            this.correction = correction;
+            this.setCorrection(correction);
             this.redrawMosaic(promises, correction);
         });
+    }
+
+    setCorrection(correction) {
+        this.correction = correction;
     }
 
     /**
