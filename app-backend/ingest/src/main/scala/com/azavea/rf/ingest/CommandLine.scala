@@ -18,7 +18,7 @@ object CommandLine {
     head("raster-foundry-ingest", "0.1")
 
     opt[Unit]('t', "test").action( (_, conf) =>
-      conf.copy(testRun = true) ).text("Run this job as a test - delete output after run")
+      conf.copy(testRun = true) ).text("Run this job as a test - verify output")
 
     opt[Unit]("overwrite").action( (_, conf) =>
       conf.copy(testRun = true) ).text("Overwrite conflicting layers")
