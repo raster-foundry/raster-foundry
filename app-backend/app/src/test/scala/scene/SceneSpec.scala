@@ -232,6 +232,20 @@ class SceneSpec extends WordSpec
       }
     }
 
+    "filter by ingested status correctly" in {
+      val url = s"$baseScene?ingestStatus=INGESTED"
+      Get(url).withHeaders(List(authHeader)) ~> baseRoutes ~> check {
+        responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 1
+      }
+    }
+
+    "filter by multiple ingested status correctly" in {
+      val url = s"$baseScene?ingestStatus=INGESTED&ingestStatus=NOTINGESTED"
+      Get(url).withHeaders(List(authHeader)) ~> baseRoutes ~> check {
+        responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 2
+      }
+    }
+
     "filter scenes by bounding box" in {
       Get("/api/scenes/?bbox=0,0,0.00001,0.00001").withHeaders(
         List(authHeader)
