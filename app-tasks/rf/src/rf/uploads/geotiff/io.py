@@ -55,3 +55,16 @@ def get_geotiff_size_bytes(tif_path):
 
 def s3_url(bucket, key):
     return 's3://{bucket}/{key}'.format(bucket=bucket, key=key)
+
+
+def get_geotiff_dimensions(tif_path):
+    """Reads image dimensions in pixels from GeoTIFF at tif_path
+
+    Args:
+        tif_path (str): Path to local GeoTIFF file
+
+    Returns:
+        Size of the GeoTIFF file in pixels (width, height)
+    """
+    with rasterio.open(tif_path) as src:
+        return (src.width, src.height)
