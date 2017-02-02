@@ -17,6 +17,7 @@ services:
     env_file: .env
     external_links:
       - postgres:database.service.rasterfoundry.internal
+    links:
       - redis:cache.service.rasterfoundry.internal
     environment:
       - AIRFLOW_HOME=/usr/local/airflow
@@ -40,6 +41,7 @@ services:
       dockerfile: Dockerfile
     external_links:
       - postgres:database.service.rasterfoundry.internal
+    links:
       - redis:cache.service.rasterfoundry.internal
     env_file: .env
     environment:
@@ -71,6 +73,7 @@ services:
     restart: always
     external_links:
       - postgres:database.service.rasterfoundry.internal
+    links:
       - redis:cache.service.rasterfoundry.internal
     env_file: .env
     environment:
@@ -100,8 +103,9 @@ services:
       dockerfile: Dockerfile
     external_links:
       - postgres:database.service.rasterfoundry.internal
-      - redis:cache.service.rasterfoundry.internal
       - app-server:rasterfoundry.com
+    links:
+      - redis:cache.service.rasterfoundry.internal
     env_file: .env
     environment:
       - AIRFLOW_HOME=/usr/local/airflow
@@ -129,8 +133,9 @@ services:
       dockerfile: Dockerfile
     external_links:
       - postgres:database.service.rasterfoundry.internal
-      - redis:cache.service.rasterfoundry.internal
       - app-server:rasterfoundry.com
+    links:
+      - redis:cache.service.rasterfoundry.internal
     env_file: .env
     environment:
       - AIRFLOW_HOME=/usr/local/airflow
