@@ -33,6 +33,7 @@ object Dependencies {
   val commonsIO          = "commons-io"                   % "commons-io"                        % Version.commonsIO
   val scopt              = "com.github.scopt"            %% "scopt"                             % Version.scopt
   val caffeine           = "com.github.ben-manes.caffeine" % "caffeine"                         % Version.caffeine
+  val scaffeine          = "com.github.blemale"          %% "scaffeine"                         % "2.0.0"
   val scalacacheMemcache = "com.github.cb372"            %% "scalacache-memcached"              % Version.scalacache
   val scalacacheCaffeine = "com.github.cb372"            %% "scalacache-caffeine"               % Version.scalacache
   val elasticacheClient  = "com.amazonaws"                % "elasticache-java-cluster-client"   % Version.elasticacheClient
