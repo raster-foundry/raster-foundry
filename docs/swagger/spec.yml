@@ -268,6 +268,16 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  /datasources/:
+    get:
+      summary: Lists paginated datasources that a user has access to
+      description: |
+        Datasources are sensors that share common metadata, like default color corrections. Scenes from
+        a given datasource can be mosaiced and color corrected together.
+      tags:
+        - Datasources
+      parameters:
+        - $ref: '#/parameters/name'
   /scenes/:
     get:
       summary: Lists paginated scenes that a user has access to
@@ -974,6 +984,11 @@ parameters:
         - createdAt,asc
         - modifiedAt,desc
         - modifiedAt,asc
+  name:
+    name: name
+    in: query
+    description: name of a datasource to filter to
+    type: string
   organization:
     name: organization
     in: query
