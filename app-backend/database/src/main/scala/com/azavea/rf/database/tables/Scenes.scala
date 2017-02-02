@@ -462,6 +462,11 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) extends LazyLoggin
         .map(scene.ingestLocation.isDefined === _)
         .reduceLeftOption(_ || _)
         .getOrElse(true: Rep[Boolean])
+    }.filter { scene =>
+      sceneParams.ingestStatus.map(IngestStatus.fromString(_))
+        .map(scene.ingestStatus === _)
+        .reduceLeftOption(_ || _)
+        .getOrElse(true: Rep[Boolean])
     }
 
     sceneParams.project match {
