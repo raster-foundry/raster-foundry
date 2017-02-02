@@ -63,7 +63,7 @@ object ToolRoutes extends LazyLogging {
       case Some(s) if s.contains(':') =>
         ColorMap.fromStringDouble(s).get
       case None =>
-        val colorRamp = ColorRamp(Vector(0xD51D26FF, 0xF8F2B2FF, 0x349E4BFF))
+        val colorRamp = ColorRamp(Vector(0xD51D26FF, 0xDD5249FF, 0xE6876CFF, 0xEFBC8FFF, 0xF8F2B2FF, 0xC7DD98FF, 0x96C87EFF, 0x65B364FF, 0x349E4BFF))
         val breaks = Array[Double](0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 1.0)
         ColorMap(breaks, colorRamp)
       case Some(_) =>

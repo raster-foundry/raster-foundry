@@ -3,25 +3,29 @@ package com.azavea.rf.tile
 import com.azavea.rf.database.Database
 
 import com.github.benmanes.caffeine.cache.Caffeine
+
 import geotrellis.raster._
 import geotrellis.raster.histogram.Histogram
 import geotrellis.spark._
 import geotrellis.raster.io._
 import geotrellis.spark.io._
 import geotrellis.spark.io.s3.{S3AttributeStore, S3ValueReader}
-import scala.concurrent._
-import java.util.concurrent.{Executors, TimeUnit}
-
-import scala.util._
-import scala.concurrent.ExecutionContext.Implicits.global
-import spray.json.DefaultJsonProtocol._
-import scalacache._
-
+import com.github.blemale.scaffeine.{ Cache => ScaffCache, Scaffeine }
 import scalacache.caffeine.CaffeineCache
 import scalacache.memcached.MemcachedCache
 import com.github.benmanes.caffeine.cache._
-
+import com.github.benmanes.caffeine.cache.Caffeine
 import scalacache.serialization.InMemoryRepr
+import scalacache._
+import spray.json.DefaultJsonProtocol._
+import net.spy.memcached._
+import java.net.InetSocketAddress
+
+import scala.concurrent._
+import scala.concurrent.duration._
+import scala.util._
+import scala.concurrent.ExecutionContext.Implicits.global
+import java.util.concurrent.{Executors, TimeUnit}
 
 /**
   * ValueReaders need to read layer metadata in order to know how to decode (x/y) queries into resource reads.
@@ -37,6 +41,9 @@ object LayerCache extends Config {
   val blockingExecutionContext =
     ExecutionContext.fromExecutor(Executors.newFixedThreadPool(64))
 
+  val memcachedClient =
+    new MemcachedClient(new InetSocketAddress(memcachedHost, memcachedPort))
+
   implicit val memoryCache: ScalaCache[InMemoryRepr] = {
     val underlyingCaffeineCache =
       Caffeine.newBuilder()
@@ -46,10 +53,8 @@ object LayerCache extends Config {
     ScalaCache(CaffeineCache(underlyingCaffeineCache))
   }
 
-  // TODO: Make a scalacache Codec using on Kryo
+  // TODO: Make a scalacache Codec using Kryo
   implicit val memcached: ScalaCache[Array[Byte]] = {
-    import net.spy.memcached._
-    import java.net.InetSocketAddress
     val client = new MemcachedClient(new InetSocketAddress(memcachedHost, memcachedPort))
     ScalaCache(MemcachedCache(client))
   }
@@ -65,8 +70,18 @@ object LayerCache extends Config {
   def attributeStore(prefix: Option[String]): Future[S3AttributeStore] =
     attributeStore(defaultBucket, prefix)
 
-  def maybeTile(id: RfLayerId, zoom: Int, key: SpatialKey): Future[Option[MultibandTile]] =
-    caching[Option[MultibandTile], Array[Byte]](s"tile-$id-$zoom-$key") {
+  // This cache allows us to make (on a single machine) atomic calls out to memcached
+  val futureTiles: ScaffCache[String, Future[Option[MultibandTile]]] =
+    Scaffeine()
+      .recordStats()
+      .expireAfterWrite(20.minute)
+      .maximumSize(500)
+      .build[String, Future[Option[MultibandTile]]]()
+
+
+  def maybeTile(id: RfLayerId, zoom: Int, key: SpatialKey): Future[Option[MultibandTile]] = {
+
+    def fetchTileExpensive: Future[Option[MultibandTile]] =
       for {
         prefix <- id.prefix
         store <- attributeStore(defaultBucket, prefix)
@@ -79,14 +94,66 @@ object LayerCache extends Config {
           case Failure(e) => throw e
         }
       }
+
+    def fetchTile(cKey: String) = {
+      memcachedClient
+        .asyncGet(cKey)
+        .asFuture[MultibandTile]
+        .flatMap({ maybeTile =>
+          Option(maybeTile) match {
+            case Some(fmtile) => // cache hit
+              Future { Some(fmtile) }
+            case None =>         // cache miss
+              val futureMaybeTile = fetchTileExpensive
+              for {
+                mbTile <- futureMaybeTile
+                tile <- mbTile
+              } { memcachedClient.set(cKey, 10000, tile) }
+              futureMaybeTile
+          }
+        })
     }
 
-  def bandHistogram(id: RfLayerId, zoom: Int): Future[Array[Histogram[Double]]] =
-    caching[Array[Histogram[Double]], Array[Byte]]("histogram", id, zoom) {
-      for {
-        prefix <- id.prefix
-        store <- attributeStore(defaultBucket, prefix)
-      } yield
-        store.read[Array[Histogram[Double]]](id.catalogId(0), "histogram")
+    val cacheKey = s"tile-$id-$zoom-$key"
+    val futureMaybeTile = futureTiles.get(cacheKey, fetchTile)
+    futureTiles.put(cacheKey, futureMaybeTile)
+    futureMaybeTile
+  }
+
+  // This cache allows us to make (on a single machine) atomic calls out to memcached
+  val futureHistograms: ScaffCache[String, Future[Array[Histogram[Double]]]] =
+    Scaffeine()
+      .recordStats()
+      .expireAfterWrite(20.minute)
+      .maximumSize(500)
+      .build[String, Future[Array[Histogram[Double]]]]()
+
+
+  def bandHistogram(id: RfLayerId, zoom: Int): Future[Array[Histogram[Double]]] = {
+    def fetchHistograms(cKey: String) = {
+      memcachedClient
+        .asyncGet(cKey)
+        .asFuture[Array[Histogram[Double]]]
+        .flatMap({ hists =>
+          Option(hists) match {
+            case Some(hists) =>
+              Future { hists }
+            case None =>
+              val futureHistograms  = for {
+                prefix <- id.prefix
+                store <- attributeStore(defaultBucket, prefix)
+              } yield store.read[Array[Histogram[Double]]](id.catalogId(0), "histogram")
+              for (
+                histograms <- futureHistograms
+              ) { memcachedClient.set(cKey, 10000, histograms) }
+              futureHistograms
+          }
+        })
     }
+
+    val cacheKey = s"histogram-$id-$zoom"
+    val futHistograms = futureHistograms.get(cacheKey, fetchHistograms)
+    futureHistograms.put(cacheKey, futHistograms)
+    futHistograms
+  }
 }

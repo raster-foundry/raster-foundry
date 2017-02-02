@@ -116,7 +116,7 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
   }
 
   /** Get the complete mosaic definition for a giving project */
-  def getMosaicDefinition(projectId: UUID)(implicit database: DB) = {
+  def getMosaicDefinition(projectId: UUID)(implicit database: DB): Future[Option[MosaicDefinition]] = {
     database.db.run {
       ScenesToProjects
         .filter(_.projectId === projectId)
