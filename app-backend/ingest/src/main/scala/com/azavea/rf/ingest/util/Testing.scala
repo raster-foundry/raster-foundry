@@ -14,6 +14,7 @@ import geotrellis.raster._
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
 import geotrellis.spark.tiling._
 import geotrellis.proj4.LatLng
+import com.typesafe.scalalogging.LazyLogging
 import spray.json._
 import DefaultJsonProtocol._
 
@@ -22,7 +23,7 @@ import java.util.UUID
 
 import com.azavea.rf.ingest.tool._
 
-object Testing {
+object Testing extends LazyLogging {
 
   /** Check that an ingested layer has a valid s3-based catalog entry for an ingest definition */
   def validateS3CatalogEntry(catalogURI: URI, layerID: UUID): Unit = {
@@ -31,6 +32,7 @@ object Testing {
     val gtLayerID = LayerId(layerID.toString, 0)
     if (! attributeStore.read[Boolean](gtLayerID, "ingestComplete"))
       throw new Exception("Something went wrong during ingest...")
+    else logger.info("Ingest completed successfully")
   }
 
   /** Check that an ingested layer has a valid file-based catalog entry for an ingest definition */
@@ -39,6 +41,7 @@ object Testing {
     val gtLayerID = LayerId(layerID.toString, 0)
     if (! attributeStore.read[Boolean](gtLayerID, "ingestComplete"))
       throw new Exception("Something went wrong during ingest...")
+    else logger.info("Ingest completed successfully")
   }
 
   /** Check that an ingested layer has a valid catalog entry for an ingest definition */
