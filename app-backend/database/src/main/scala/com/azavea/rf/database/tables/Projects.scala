@@ -252,6 +252,15 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
       }
     }
 
+    val scenesNotIngestedQuery = for {
+      s <- Scenes if s.id.inSet(sceneIds) && s.ingestStatus.inSet(
+        Set(IngestStatus.NotIngested, IngestStatus.Failed))
+    } yield (s.ingestStatus)
+
+    database.db.run {
+      scenesNotIngestedQuery.update((IngestStatus.ToBeIngested))
+    }
+
     listSelectProjectScenes(projectId, sceneIds)
   }
 
