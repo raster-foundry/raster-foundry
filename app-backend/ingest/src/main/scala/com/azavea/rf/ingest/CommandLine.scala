@@ -20,9 +20,13 @@ object CommandLine {
     opt[Unit]('t', "test").action( (_, conf) =>
       conf.copy(testRun = true) ).text("Run this job as a test - delete output after run")
 
+    opt[Unit]("overwrite").action( (_, conf) =>
+      conf.copy(testRun = true) ).text("Overwrite conflicting layers")
+
     opt[URI]('j',"jobDefinition")
       .action( (jd, conf) => conf.copy(jobDefinition = jd) )
       .text("The location of the json which defines an ingest job")
       .required
+
   }
 }

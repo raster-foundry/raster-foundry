@@ -28,23 +28,30 @@ case class BandTile(band: Int, tile: Tile)
 
 object Ingest extends SparkJob {
 
-  case class Params(jobDefinition: URI = new URI(""), testRun: Boolean = false)
+  case class Params(
+    jobDefinition: URI = new URI(""),
+    testRun: Boolean = false,
+    overwrite: Boolean = false
+  )
   type RfLayerWriter = Writer[LayerId, RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]]]
+  type RfLayerDeleter = LayerDeleter[LayerId]
 
   /** Get a layerwriter and an attribute store for the catalog located at the provided URI
     *
     * @param outputDef The ingest job's output definition
     */
-  def getRfLayerWriter(outputDef: OutputDefinition): (RfLayerWriter, AttributeStore) = outputDef.uri.getScheme match {
+  def getRfLayerManagement(outputDef: OutputDefinition): (RfLayerWriter, RfLayerDeleter, AttributeStore) = outputDef.uri.getScheme match {
     case "s3" | "s3a" | "s3n" =>
       val (bucket, prefix) = S3.parse(outputDef.uri)
       val s3Writer = S3LayerWriter(bucket, prefix)
       val writer = s3Writer.writer[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](outputDef.keyIndexMethod)
-      (writer, s3Writer.attributeStore)
+      val deleter = S3LayerDeleter(s3Writer.attributeStore)
+      (writer, deleter, s3Writer.attributeStore)
     case "file" =>
       val fileWriter = FileLayerWriter(outputDef.uri.getPath)
       val writer = fileWriter.writer[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](outputDef.keyIndexMethod)
-      (writer, fileWriter.attributeStore)
+      val deleter = FileLayerDeleter(outputDef.uri.getPath)
+      (writer, deleter, fileWriter.attributeStore)
   }
 
   /** Produce metadata for an IngestLayer
@@ -101,7 +108,7 @@ object Ingest extends SparkJob {
     *  @param layer An ingest layer specification
     */
   @SuppressWarnings(Array("TraversableHead"))
-  def ingestLayer(layer: IngestLayer)(implicit sc: SparkContext) = {
+  def ingestLayer(overwriteLayer: Boolean)(layer: IngestLayer)(implicit sc: SparkContext) = {
     val resampleMethod = layer.output.resampleMethod
     val tileSize = layer.output.tileSize
     val destCRS = layer.output.crs
@@ -143,8 +150,17 @@ object Ingest extends SparkJob {
       }
 
     val layerRdd = ContextRDD(multibandTiledRdd, tileLayerMetadata)
-    val (writer, attributeStore) = getRfLayerWriter(layer.output)
+    val (writer, deleter, attributeStore) = getRfLayerManagement(layer.output)
     val sharedId = LayerId(layer.id.toString, 0)
+
+    if (overwriteLayer) {
+      try {
+        deleter.delete(sharedId)
+        attributeStore.delete(sharedId)
+      } catch {
+        case e: Throwable => throw e
+      }
+    }
 
     if (layer.output.pyramid) { // If pyramiding
       Pyramid.upLevels(layerRdd, layoutScheme, maxZoom, 1, resampleMethod) { (rdd, zoom) =>
@@ -152,6 +168,7 @@ object Ingest extends SparkJob {
         val layerId = LayerId(layer.id.toString, zoom)
 
         try {
+          if (overwriteLayer) { deleter.delete(layerId) }
           writer.write(layerId, rdd)
 
           if (zoom == math.max(maxZoom / 2, 1)) {
@@ -172,6 +189,7 @@ object Ingest extends SparkJob {
       }
     } else { // If not pyramiding. TODO: figure out exactly what we want to store here
       try {
+        if (overwriteLayer) { deleter.delete(sharedId) }
         writer.write(sharedId, layerRdd)
         attributeStore.write(sharedId, "ingestComplete", true)
       } catch {
@@ -199,7 +217,7 @@ object Ingest extends SparkJob {
     implicit val sc = new SparkContext(conf)
 
     try {
-      ingestDefinition.layers.foreach(ingestLayer)
+      ingestDefinition.layers.foreach(ingestLayer(params.overwrite))
       if (params.testRun) ingestDefinition.layers.foreach(Testing.validateCatalogEntry)
     } finally {
       sc.stop
