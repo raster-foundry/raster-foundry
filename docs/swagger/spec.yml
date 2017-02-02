@@ -302,6 +302,7 @@ paths:
         - $ref: '#/parameters/bbox'
         - $ref: '#/parameters/project'
         - $ref: '#/parameters/ingested'
+        - $ref: '#/parameters/ingestStatus'
       responses:
         200:
           description: Paginated list of scenes
@@ -524,6 +525,7 @@ paths:
         - $ref: '#/parameters/maxResolution'
         - $ref: '#/parameters/tags'
         - $ref: '#/parameters/ingested'
+        - $ref: '#/parameters/ingestStatus'
       responses:
         200:
           description: Paginated list of scenes associated with this project
@@ -1241,6 +1243,12 @@ parameters:
     in: query
     type: boolean
     required: false
+  ingestStatus:
+    name: ingestStatus
+    description: Filter by specific ingest status
+    in: query
+    type: string
+    required: false
 definitions:
   BaseModel:
     type: object
@@ -1476,9 +1484,6 @@ definitions:
               - PUBLIC
               - ORGANIZATION
               - OWNERONLY
-          resolutionMeters:
-            type: number
-            description: Size of pixel in meters
           tags:
             type: array
             description: Tags associated with image
@@ -1496,14 +1501,6 @@ definitions:
             type: string
             format: uuid
             description: Data source scene originated from
-          cloudCover:
-            type: number
-            format: float32
-            description: Proportion of cloud coverage for scene
-          acqusitionDate:
-            type: string
-            format: datetime
-            description: Date scene was acquired from instrument (e.g. satellite, drone)
           dataFootprint:
             type: geojson
             description: polygon for which this scene has data
@@ -1524,34 +1521,64 @@ definitions:
               images in a scene (e.g. relevant .mtl files or .xml)
             items:
               - type: string
-          thumbnailStatus:
-            type: string
-            description: status of thumbnail generation
-            enum:
-              - SUCCESS
-              - FAILURE
-              - PARTIALFAILURE
-              - QUEUED
-              - PROCESSING
-          footprintStatus:
-            type: string
-            description: status of footprint generation
-            enum:
-              - SUCCESS
-              - FAILURE
-              - PARTIALFAILURE
-              - QUEUED
-              - PROCESSING
-          status:
-            type: string
-            description: overall status of scene
-            enum:
-              - UPLOADING
-              - SUCCESS
-              - FAILURE
-              - PARTIALFAILURE
-              - QUEUED
-              - PROCESSING
+          filterFields:
+            type: object
+            $ref: '#/definitions/FilterFields'
+          statusFields:
+            type: object
+            $ref: '#/definitions/StatusFields'
+
+  FilterFields:
+    type: object
+    properties:
+      cloudCover:
+        type: number
+        format: float32
+        description: Proportion of cloud coverage for scene
+      acquisitionDate:
+        type: string
+        format: datetime
+        description: Date scene was acquired from instrument (e.g. satellite, drone)
+      sunAzimuth:
+        type: number
+        format: float32
+        description: Azimuth of the sun
+      sunElevation:
+        type: number
+        format: float32
+        description: Elevation of the sun
+      
+  StatusFields:
+    type: object
+    properties:
+      thumbnailStatus:
+        type: string
+        description: status of thumbnail generation
+        enum:
+          - SUCCESS
+          - FAILURE
+          - PARTIALFAILURE
+          - QUEUED
+          - PROCESSING
+      footprintStatus:
+        type: string
+        description: status of footprint generation
+        enum:
+          - SUCCESS
+          - FAILURE
+          - PARTIALFAILURE
+          - QUEUED
+          - PROCESSING
+      ingestStatus:
+        type: string
+        description: status of ingest
+        enum:
+          - NOTINGESTED
+          - TOBEINGESTED
+          - INGESTING
+          - INGESTED
+          - FAILED
+
   SceneGrid:
     type: array
     items:
@@ -1602,6 +1629,9 @@ definitions:
           fileName:
             type: string
             description: Name of the image file
+          resolutionMeters:
+            type: number
+            description: Size of pixel in meters
           sourceURI:
             type: string
             description: URI to original source. This should include a protocol-like prefix to identify where it is located http://, s3://, etc.
@@ -1620,6 +1650,11 @@ definitions:
           image_metadata:
             type: object
             description: Metadata about this image
+          metadataFiles:
+            type: array
+            description: |
+              Metadata files that should be present for processing all
+              images in a scene (e.g. relevant .mtl files or .xml)
         required:
           - fileName
           - sourceURI
