@@ -8,6 +8,7 @@ from rf.models import Scene
 from rf.utils.io import Visibility, JobStatus
 
 from .create_images import create_geotiff_image
+from .create_thumbnails import create_thumbnails
 from .io import get_geotiff_metadata, get_geotiff_name, s3_url
 
 logger = logging.getLogger(__name__)
@@ -72,8 +73,9 @@ class GeoTiffS3SceneFactory(object):
                 scene = self.create_geotiff_scene(local_tif.name, os.path.splitext(filename)[0])
                 image = self.create_geotiff_image(local_tif.name, s3_url(bucket.name, s3_tif.key),
                                                   scene, filename)
-                # TODO: May want to create thumbnails, footprints here while we have the image
-                # downloaded locally.
+
+
+                scene.thumbnails = create_thumbnails(local_tif.name, scene.id, self.organizationId)
                 scene.images = [image]
             finally:
                 os.remove(local_tif.name)
