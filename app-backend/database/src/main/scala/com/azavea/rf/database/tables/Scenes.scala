@@ -463,8 +463,17 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) extends LazyLoggin
         .reduceLeftOption(_ || _)
         .getOrElse(true: Rep[Boolean])
     }.filter { scene =>
-      sceneParams.ingestStatus.map(IngestStatus.fromString(_))
-        .map(scene.ingestStatus === _)
+      sceneParams.ingestStatus
+        .map( status =>
+          try {
+            scene.ingestStatus === IngestStatus.fromString(status)
+          } catch {
+            case e : Exception =>
+              throw new IllegalArgumentException(
+                s"Invalid Ingest Status: $status"
+              )
+          }
+        )
         .reduceLeftOption(_ || _)
         .getOrElse(true: Rep[Boolean])
     }
