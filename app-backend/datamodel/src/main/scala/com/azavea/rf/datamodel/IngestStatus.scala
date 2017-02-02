@@ -35,7 +35,7 @@ object IngestStatus {
     case "INGESTING" => Ingesting
     case "INGESTED" => Ingested
     case "FAILED" => Failed
-    case _ => throw new Exception(s"Invalid string: $s")
+    case _ => throw new DeserializationException(s"Invalid IngestStatus: $s")
   }
 
   implicit object DefaultIngestStatusJsonFormat extends RootJsonFormat[IngestStatus] {
