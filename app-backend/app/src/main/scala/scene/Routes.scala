@@ -2,6 +2,7 @@ package com.azavea.rf.scene
 
 import java.util.UUID
 
+import scala.concurrent.Future
 import scala.util.{Success, Failure}
 
 import akka.http.scaladsl.server.Route
@@ -11,14 +12,15 @@ import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 
 import com.azavea.rf.common.{Authentication, UserErrorHandler}
 import com.azavea.rf.database.tables.Scenes
-import com.azavea.rf.database.Database
+import com.azavea.rf.database.{Database, ActionRunner}
 import com.azavea.rf.datamodel._
 
 
 trait SceneRoutes extends Authentication
     with SceneQueryParameterDirective
     with PaginationDirectives
-    with UserErrorHandler {
+    with UserErrorHandler
+    with ActionRunner {
 
   implicit def database: Database
 
@@ -46,7 +48,9 @@ trait SceneRoutes extends Authentication
 
   def createScene: Route = authenticate { user =>
     entity(as[Scene.Create]) { newScene =>
-      onSuccess(Scenes.insertScene(newScene, user)) { scene =>
+      onSuccess(
+        withRelatedSingle3(Scenes.insertScene(newScene, user)): Future[Scene.WithRelated]
+      ) { scene =>
         complete((StatusCodes.Created, scene))
       }
     }
@@ -55,7 +59,7 @@ trait SceneRoutes extends Authentication
   def getScene(sceneId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        Scenes.getScene(sceneId)
+        withRelatedOption4(Scenes.getScene(sceneId)): Future[Option[Scene.WithRelated]]
       }
     }
   }

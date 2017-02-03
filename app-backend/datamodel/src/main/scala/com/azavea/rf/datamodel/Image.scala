@@ -21,7 +21,9 @@ case class Image(
   resolutionMeters: Float,
   metadataFiles: List[String]
 ) {
-  def withRelatedFromComponents(bands: Seq[Band]): Image.WithRelated = Image.WithRelated(
+  type RelatedType = Band
+  type RelatedResultType = Image.WithRelated
+  def withRelatedFromComponents(bands: Seq[RelatedType]): RelatedResultType = Image.WithRelated(
     this.id,
     this.createdAt,
     this.modifiedAt,

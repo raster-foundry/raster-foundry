@@ -12,9 +12,6 @@ import java.sql.Timestamp
 import com.typesafe.scalalogging.LazyLogging
 import com.lonelyplanet.akka.http.extensions.PageRequest
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
-
 /** Table description of table thumbnails. Objects of this class serve as prototypes for rows in queries. */
 class Thumbnails(_tableTag: Tag) extends Table[Thumbnail](_tableTag, "thumbnails")
                                          with OrganizationFkFields
@@ -56,71 +53,38 @@ object Thumbnails extends TableQuery(tag => new Thumbnails(tag)) with LazyLoggin
     *
     * @param thumbnail Thumbnail
     */
-  def insertThumbnail(thumbnail: Thumbnail)
-                     (implicit database: DB): Future[Thumbnail] = {
-
-    val action = Thumbnails.forceInsert(thumbnail)
-    logger.debug(s"Inserting thumbnail with: ${action.statements.headOption}")
-    database.db.run {
-      action.map( _ => thumbnail)
-    }
-  }
+  def insertThumbnail(thumbnail: Thumbnail): DBIO[Thumbnail] =
+    (Thumbnails returning Thumbnails).forceInsert(thumbnail)
 
   /** Retrieve a single thumbnail from the database
     *
     * @param thumbnailId UUID ID Of thumbnail to query with
     */
-  def getThumbnail(thumbnailId: UUID)
-                  (implicit database: DB): Future[Option[Thumbnail]] = {
-
-    val action = Thumbnails.filter(_.id === thumbnailId).result
-    logger.debug(s"Retrieving thumbnail with: ${action.statements.headOption}")
-    database.db.run {
-      action.headOption
-    }
-  }
+  def getThumbnail(thumbnailId: UUID): DBIO[Option[Thumbnail]] =
+    Thumbnails.filter(_.id === thumbnailId).result.headOption
 
   def listThumbnails(pageRequest: PageRequest, queryParams: ThumbnailQueryParameters)
-                    (implicit database: DB): Future[PaginatedResponse[Thumbnail]] = {
+                    (implicit database: DB): ListQueryResult[Thumbnail] = {
 
+    val dropRecords = pageRequest.limit * pageRequest.offset
     val thumbnails = Thumbnails.filterBySceneParams(queryParams)
-
-    val paginatedThumbnails = database.db.run {
-      val action = thumbnails.page(pageRequest).result
-      logger.debug(s"Query for thumbnails -- SQL ${action.statements.headOption}")
-      action
-    }
-
-    val totalThumbnailsQuery = database.db.run { thumbnails.length.result }
-
-    for {
-      totalThumbnails <- totalThumbnailsQuery
-      thumbnails <- paginatedThumbnails
-    } yield {
-      val hasNext = (pageRequest.offset + 1) * pageRequest.limit < totalThumbnails
-      val hasPrevious = pageRequest.offset > 0
-      PaginatedResponse[Thumbnail](totalThumbnails, hasPrevious, hasNext,
-        pageRequest.offset, pageRequest.limit, thumbnails)
-    }
+      .drop(dropRecords)
+      .take(pageRequest.limit)
+    ListQueryResult[Thumbnail](
+      (thumbnails
+         .drop(dropRecords)
+         .take(pageRequest.limit)
+         .result):DBIO[Seq[Thumbnail]],
+      thumbnails.length.result
+    )
   }
 
   /** Delete a scene from the database
     *
     * @param thumbnailId UUID ID of scene to delete
     */
-  def deleteThumbnail(thumbnailId: UUID)
-                     (implicit database: DB): Future[Int] = {
-
-    val action = Thumbnails.filter(_.id === thumbnailId).delete
-    logger.debug(s"Deleting thumbnail with: ${action.statements.headOption}")
-    database.db.run {
-      action.map {
-        case 1 => 1
-        case 0 => 0
-        case c => throw new IllegalStateException(s"Error deleting thumbnail: update result expected to be 1, was $c")
-      }
-    }
-  }
+  def deleteThumbnail(thumbnailId: UUID) =
+    Thumbnails.filter(_.id === thumbnailId).delete
 
   /** Update a thumbnail in the database
     *
@@ -130,26 +94,22 @@ object Thumbnails extends TableQuery(tag => new Thumbnails(tag)) with LazyLoggin
     * @param thumbnail Thumbnail scene to use to update the database
     * @param thumbnailId UUID ID of scene to update
     */
-  def updateThumbnail(thumbnail: Thumbnail, thumbnailId: UUID)
-                     (implicit database: DB): Future[Int] = {
+  def updateThumbnail(thumbnail: Thumbnail, thumbnailId: UUID) = {
 
     val updateTime = new Timestamp((new java.util.Date).getTime)
 
-    val updateThumbnailQuery = for {
+    val updateThumbnailsQuery = for {
       updateThumbnail <- Thumbnails.filter(_.id === thumbnailId)
     } yield (
       updateThumbnail.modifiedAt, updateThumbnail.widthPx, updateThumbnail.heightPx,
       updateThumbnail.thumbnailSize, updateThumbnail.scene, updateThumbnail.url
     )
-    database.db.run {
-      updateThumbnailQuery.update((
+    updateThumbnailsQuery.update(
+      (
         updateTime, thumbnail.widthPx, thumbnail.heightPx,
         thumbnail.thumbnailSize, thumbnail.sceneId, thumbnail.url
-      )).map {
-        case 1 => 1
-        case c => throw new IllegalStateException(s"Error updating thumbnail: update result expected to be 1, was $c")
-      }
-    }
+      )
+    )
   }
 }
 

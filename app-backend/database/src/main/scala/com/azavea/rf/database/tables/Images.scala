@@ -68,39 +68,24 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
     * @param imageBanded Image case class for image to insert into database
     * @param user User object inserting the image
     */
-  def insertImage(imageBanded: Image.Banded, user: User)
-                 (implicit database: DB): Future[Image.WithRelated] = {
+  def insertImage(imageBanded: Image.Banded, user: User): DBIO[(Image, Seq[Band])] = {
     val image = imageBanded.toImage(user.id)
     val bands = imageBanded.bands map { _.toBand(image.id)}
-    val insertAction = (
-      for {
-        imageInsert <- (Images returning Images).forceInsert(image)
-        bandsInsert <- (Bands returning Bands).forceInsertAll(bands)
-      } yield (imageInsert, bandsInsert)).transactionally
-    database.db.run {
-      insertAction
-    } map {
-      case (im: Image, bs: Seq[Band]) => im.withRelatedFromComponents(bs)
-    }
+    (for {
+       imageInsert <- (Images returning Images).forceInsert(image)
+       bandsInsert <- (Bands returning Bands).forceInsertAll(bands)
+     } yield (imageInsert, bandsInsert)) transactionally
   }
 
   /** Get an image given an ID
     *
     * @param imageId UUID ID of image to get from database
     */
-  def getImage(imageId: UUID)
-              (implicit database: DB): Future[Option[Image.WithRelated]] = {
-
-    val fetchAction = for {
+  def getImage(imageId: UUID): DBIO[(Option[Image], Seq[Band])] = {
+    for {
       imageFetch <- Images.filter(_.id === imageId).result.headOption
       bandsFetch <- Bands.filter(_.imageId === imageId).result
     } yield (imageFetch, bandsFetch) 
-    database.db.run {
-      fetchAction
-    } map {
-      case (Some(im), bs) => Some(im.withRelatedFromComponents(bs))
-      case _ => None
-    }
   }
 
   /** Retrieve a list of images with bands from database given a
@@ -109,8 +94,8 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
     * @param pageRequest PageRequest pagination class to return paginated results
     * @param combinedParams CombinedImagequeryparams query parameters that can be applied to images
     */
-  def listImages(pageRequest: PageRequest, combinedParams: CombinedImageQueryParams, user: User)
-                (implicit database: DB): Future[PaginatedResponse[Image.WithRelated]] = {
+  def listImages(pageRequest: PageRequest, combinedParams: CombinedImageQueryParams, user: User):
+      ListQueryResult[(Image, Band)] = {
 
     val images = Images.filterUserVisibility(user)
       .filterByOrganization(combinedParams.orgParams)
@@ -122,39 +107,21 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
       bands <- Bands if imageList.id === bands.imageId
     } yield (imageList, bands)
 
-    val imagesQueryResult = database.db.run {
-      val action = imageBandsJoin.result
-      logger.debug(s"Query for images -- SQL: ${action.statements.headOption}")
-      action
-    } map { records =>
-      Image.WithRelated.fromRecords(records)
-    }
+    val totalImagesAction = images.length.result
 
-    val totalImagesQuery = database.db.run {
-      val action = images.length.result
-      logger.debug(s"Total Query for images -- SQL: ${action.statements.headOption}")
-      action
-    }
+    ListQueryResult(
+      imageBandsJoin.result,
+      totalImagesAction
+    )
 
-    for {
-      totalImages <- totalImagesQuery
-      images <- imagesQueryResult
-    } yield {
-      val hasNext = (pageRequest.offset + 1) * pageRequest.limit < totalImages // 0 indexed page offset
-      val hasPrevious = pageRequest.offset > 0
-      PaginatedResponse(totalImages, hasPrevious, hasNext,
-                        pageRequest.offset, pageRequest.limit, images.toSeq)
-    }
   }
 
   /** Delete an image from the database
     *
     * @param imageId UUID id of image to delete from database
     */
-  def deleteImage(imageId: UUID)(implicit database: DB): Future[Int] = {
-    database.db.run {
+  def deleteImage(imageId: UUID)(implicit database: DB): DBIO[Int] = {
       Images.filter(_.id === imageId).delete
-    }
   }
 
   /** Update an image in the database
@@ -171,8 +138,7 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
     *  - scene
     *  - imageMetadata
     */
-  def updateImage(image: Image.WithRelated, imageId: UUID, user: User)
-                 (implicit database: DB): Future[Int] = {
+  def updateImage(image: Image.WithRelated, imageId: UUID, user: User): DBIO[Int] = {
 
     val updateTime = new Timestamp((new java.util.Date).getTime)
     val bands = image.bands
@@ -197,18 +163,11 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
 
     val createNewBandsAction = Bands.forceInsertAll(bands)
 
-    val updateAction = (for {
+    (for {
       updateIm <- updateImageAction
       deleteBands <- deleteOldBandsAction
       newBands <- createNewBandsAction
-    } yield (updateIm, deleteBands, newBands)) .transactionally
-
-    database.db.run {
-      updateAction
-    } map {
-      case (1, _, _) => 1
-      case c => throw new IllegalStateException(s"Error updating image: update result expected to be 1, was $c")
-    }
+    } yield updateIm) .transactionally
   }
 }
 
