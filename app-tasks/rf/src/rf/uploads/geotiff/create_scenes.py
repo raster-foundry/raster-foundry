@@ -5,11 +5,12 @@ import tempfile
 import uuid
 
 from rf.models import Scene
-from rf.utils.io import Visibility, JobStatus
+from rf.utils.io import IngestStatus, JobStatus, Visibility
 
 from .create_images import create_geotiff_image
 from .create_thumbnails import create_thumbnails
 from .io import get_geotiff_metadata, get_geotiff_name, s3_url
+from .create_footprints import extract_footprints
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +101,7 @@ class GeoTiffS3SceneFactory(object):
 def create_geotiff_scene(tif_path, organizationId, datasource,
                          ingestSizeBytes=0, visibility=Visibility.PRIVATE, tags=[],
                          sceneMetadata=None, name=None, thumbnailStatus=JobStatus.QUEUED,
-                         boundaryStatus=JobStatus.QUEUED, status=JobStatus.QUEUED,
+                         boundaryStatus=JobStatus.QUEUED, ingestStatus=IngestStatus.NOTINGESTED,
                          metadataFiles=[],
                          **kwargs):
     """Returns scenes that can be created via API given a local path to a geotiff.
@@ -131,6 +132,10 @@ def create_geotiff_scene(tif_path, organizationId, datasource,
     sceneMetadata = sceneMetadata if sceneMetadata else get_geotiff_metadata(tif_path)
     name = name if name else get_geotiff_name(tif_path)
 
+    tile_footprint, data_footprint = extract_footprints(
+        organizationId, tif_path
+    )
+
     sceneKwargs = {
         'sunAzimuth': None,  # TODO: Calculate from acquisitionDate and tif center.
         'sunElevation': None,  # TODO: Same
@@ -138,8 +143,8 @@ def create_geotiff_scene(tif_path, organizationId, datasource,
         'acquisitionDate': None,
         'id': str(uuid.uuid4()),
         'thumbnails': None,
-        'tileFootprint': None,
-        'dataFootprint': None
+        'tileFootprint': tile_footprint,
+        'dataFootprint': data_footprint
     }
     # Override defaults with kwargs
     sceneKwargs.update(kwargs)
@@ -155,7 +160,7 @@ def create_geotiff_scene(tif_path, organizationId, datasource,
         name,
         thumbnailStatus,
         boundaryStatus,
-        status,
+        ingestStatus,
         metadataFiles,
         **sceneKwargs
     )

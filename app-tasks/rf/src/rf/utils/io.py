@@ -54,6 +54,12 @@ class JobStatus(object):
     UPLOADING = 'UPLOADING'
     PARTIALFAILURE = 'PARTIALFAILURE'
 
+class IngestStatus(object):
+    NOTINGESTED = 'NOTINGESTED'
+    TOBEINGESTED = 'TOBEINGESTED'
+    INGESTING = 'INGESTING'
+    INGESTED = 'INGESTED'
+    FAILED = 'FAILED'
 
 class Visibility(object):
     PUBLIC = 'PUBLIC'
