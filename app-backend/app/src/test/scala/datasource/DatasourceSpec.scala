@@ -150,7 +150,7 @@ class DatasourceSpec extends WordSpec
     Get(url3).withHeaders(
       List(authHeader)
     ) ~> baseRoutes ~> check {
-      responseAs[PaginatedResponse[Datasource]].count shouldEqual 0
+      responseAs[PaginatedResponse[Datasource]].count shouldEqual 1
     }
   }
 }
