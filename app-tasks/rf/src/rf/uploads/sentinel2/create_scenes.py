@@ -6,7 +6,13 @@ import os
 import uuid
 
 from rf.models import Scene
-from rf.utils.io import JobStatus, Visibility
+from rf.utils.io import (
+    IngestStatus,
+    JobStatus,
+    Visibility,
+    s3_obj_exists
+)
+
 
 from .settings import bucket, s3, organization, datasource_id
 from .create_footprint import create_footprints
@@ -77,7 +83,7 @@ def create_sentinel2_scenes(tile_path):
         'S2 {}'.format(tile_path),  # name
         JobStatus.SUCCESS if thumbnails else JobStatus.FAILURE,
         JobStatus.SUCCESS if dataFootprint else JobStatus.FAILURE,
-        JobStatus.QUEUED,
+        IngestStatus.NOTINGESTED,
         id=scene_id,
         acquisitionDate=tileinfo['timestamp'],
         cloudCover=tileinfo['cloudyPixelPercentage'],

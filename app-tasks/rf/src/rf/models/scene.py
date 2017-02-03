@@ -12,8 +12,9 @@ class Scene(BaseModel):
 
     def __init__(self, organizationId, ingestSizeBytes, visibility, tags,
                  datasource, sceneMetadata, name, thumbnailStatus, boundaryStatus,
-                 status, metadataFiles, sunAzimuth=None, sunElevation=None, cloudCover=None, acquisitionDate=None,
-                 id=None, thumbnails=None, tileFootprint=None, dataFootprint=None, images=None):
+                 ingestStatus, metadataFiles, sunAzimuth=None, sunElevation=None,
+                 cloudCover=None, acquisitionDate=None, id=None, thumbnails=None,
+                 tileFootprint=None, dataFootprint=None, images=None):
         """Create a new Scene
 
         Args:
@@ -26,7 +27,7 @@ class Scene(BaseModel):
             name (str): name of scene (displayed to users)
             thumbnailStatus (str): status of thumbnail creation
             boundaryStatus (str): status of creating boundaries
-            status (str): overall status of scene creation
+            ingestStatus (str): overall status of scene creation
             sunAzimuth (float): azimuth of sun when scene was created from satellite/uav
             sunElevation (float): elevation of sun when scene was created
             cloudCover (float): percent of scene covered by clouds
@@ -75,19 +76,22 @@ class Scene(BaseModel):
         )
 
     def to_dict(self):
+        filterFields = {}
+        statusFields = dict(thumbnailStatus=self.thumbnailStatus,
+                            boundaryStatus=self.boundaryStatus,
+                            ingestStatus=self.ingestStatus)
         scene_dict = dict(
             organizationId=self.organizationId, ingestSizeBytes=self.ingestSizeBytes, visibility=self.visibility,
-            tags=self.tags, datasource=self.datasource, sceneMetadata=self.sceneMetadata,
-            name=self.name, thumbnailStatus=self.thumbnailStatus, boundaryStatus=self.boundaryStatus,
-            status=self.status, metadataFiles=self.metadataFiles)
+            tags=self.tags, datasource=self.datasource, sceneMetadata=self.sceneMetadata, filterFields=filterFields,
+            name=self.name, statusFields=statusFields, metadataFiles=self.metadataFiles)
         if self.sunAzimuth:
-            scene_dict['sunAzimuth'] = self.sunAzimuth
+            filterFields['sunAzimuth'] = self.sunAzimuth
         if self.sunElevation:
-            scene_dict['sunElevation'] = self.sunElevation
+            filterFields['sunElevation'] = self.sunElevation
         if self.cloudCover is not None:
-            scene_dict['cloudCover'] = self.cloudCover
+            filterFields['cloudCover'] = self.cloudCover
         if self.acquisitionDate:
-            scene_dict['acquisitionDate'] = self.acquisitionDate
+            filterFields['acquisitionDate'] = self.acquisitionDate
         if self.id:
             scene_dict['id'] = self.id
 

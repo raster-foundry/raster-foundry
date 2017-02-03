@@ -5,7 +5,12 @@ import logging
 import uuid
 
 from rf.models import Scene
-from rf.utils.io import JobStatus, Visibility, s3_obj_exists
+from rf.utils.io import (
+    IngestStatus,
+    JobStatus,
+    Visibility,
+    s3_obj_exists
+)
 
 from .create_bands import create_bands
 from .create_images import create_images
@@ -79,7 +84,7 @@ def create_landsat8_scenes(csv_row):
         'L8 {}'.format(landsat_path),  # name
         JobStatus.SUCCESS,
         JobStatus.SUCCESS,
-        JobStatus.QUEUED,
+        IngestStatus.NOTINGESTED,
         id=scene_id,
         acquisitionDate=timestamp,
         cloudCover=cloud_cover,
