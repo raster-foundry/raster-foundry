@@ -164,7 +164,7 @@ export default class ProjectEditController {
             keyboard: Boolean(this.project),
             resolve: {
                 project: () => this.project,
-                requireSelection: () => !Boolean(this.project)
+                requireSelection: () => !this.project
             }
         });
 
