@@ -1,10 +1,23 @@
 export default class SceneItemController {
-    constructor($scope, $attrs, thumbnailService, mapService) {
+    constructor($scope, $attrs, thumbnailService, mapService, datasourceService) {
         'ngInject';
         this.thumbnailService = thumbnailService;
+        this.mapService = mapService;
         this.isSelectable = $attrs.hasOwnProperty('selectable');
         this.isDraggable = $attrs.hasOwnProperty('draggable');
-        $scope.$watch(
+        this.datasourceService = datasourceService;
+        this.$scope = $scope;
+    }
+
+    $onInit() {
+        this.datasourceLoaded = false;
+
+        this.datasourceService.get(this.scene.datasource).then(d => {
+            this.datasourceLoaded = true;
+            this.datasource = d;
+        });
+
+        this.$scope.$watch(
             () => this.selected({scene: this.scene}),
             (selected) => {
                 this.selectedStatus = selected;
@@ -12,12 +25,12 @@ export default class SceneItemController {
         );
 
         if (this.isDraggable) {
-            Object.assign($scope.$parent.$treeScope.$callbacks, {
+            Object.assign(this.$scope.$parent.$treeScope.$callbacks, {
                 dragStart: function () {
-                    mapService.disableFootprints = true;
+                    this.mapService.disableFootprints = true;
                 },
                 dragStop: function () {
-                    mapService.disableFootprints = false;
+                    this.mapService.disableFootprints = false;
                 }
             });
         }
