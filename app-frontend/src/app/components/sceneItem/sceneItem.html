@@ -13,7 +13,7 @@
       <strong class="color-dark">{{$ctrl.scene.name}}</strong>
     </span>
     <br>
-    <span title="{{$ctrl.scene.datasource}}">{{$ctrl.scene.datasource}}</span>
+    <span title="{{$ctrl.datasource.name}}">{{$ctrl.datasourceLoaded ? $ctrl.datasource.name : 'Loading datasource'}}</span>
   </div>
   <div class="list-group-right">
     <button class="btn btn-square"

@@ -1,8 +1,11 @@
 import _ from 'lodash';
 export default class FilterPaneController {
-    constructor() {
+    constructor(datasourceService) {
         'ngInject';
+        this.datasourceService = datasourceService;
+    }
 
+    $onInit() {
         this.toggleDrag = {toggle: false, enabled: false};
         this.initFilters();
     }
@@ -330,26 +333,55 @@ export default class FilterPaneController {
     }
 
     initSourceFilters() {
-        this.sourceFilters = {
-            self: {label: 'My Imports', enabled: false},
-            users: {label: 'Raster Foundry Users', enabled: false},
-            'Sentinel-2': {label: 'Sentinel-2', enabled: false},
-            'Landsat 8': {label: 'Landsat 8', enabled: false}
+        this.datasourceService.query().then(d => {
+            this.datasources = d.results;
+            this.dynamicSourceFilters = {};
+            d.results.forEach(ds => {
+                this.dynamicSourceFilters[ds.id] = {
+                    datasource: ds,
+                    enabled: false
+                };
+            });
+            if (this.filters.datasource) {
+                if (Array.isArray(this.filters.datasource)) {
+                    this.filters.datasource.forEach(dsf => {
+                        if (this.dynamicSourceFilters[dsf]) {
+                            this.dynamicSourceFilters[dsf].enabled = true;
+                        }
+                    });
+                } else if (this.dynamicSourceFilters[this.filters.datasource]) {
+                    this.dynamicSourceFilters[this.filters.datasource].enabled = true;
+                }
+            }
+        });
+
+        // Define static source filters
+        this.staticSourceFilters = {
+            mine: {
+                datasource: {
+                    id: 'mine',
+                    name: 'My Imports'
+                },
+                enabled: false
+            },
+            users: {
+                datasource: {
+                    id: 'users',
+                    name: 'Raster Foundry Users'
+                },
+                enabled: false
+            }
         };
+
         if (this.filters.datasource) {
-            if (
-                Object.prototype.toString.call(this.filters.datasource)
-                    === '[object Array]'
-            ) {
-                this.sourceFilters = _.mapValues(
-                    this.sourceFilters,
-                    (val, key) => {
-                        val.enabled = this.filters.datasource.indexOf(key) !== -1;
-                        return val;
+            if (Array.isArray(this.filters.datasource)) {
+                this.filters.datasource.forEach(dsf => {
+                    if (this.staticSourceFilters[dsf]) {
+                        this.staticSourceFilters[dsf].enabled = true;
                     }
-                );
-            } else {
-                this.sourceFilters[this.filters.datasource].enabled = true;
+                });
+            } else if (this.staticSourceFilters[this.filters.datasource]) {
+                this.staticSourceFilters[this.filters.datasource].enabled = true;
             }
         }
     }
@@ -533,43 +565,26 @@ export default class FilterPaneController {
         }
     }
 
-    onSourceFilterChange(newVal) {
-        if (!newVal || !this.filters) {
-            return;
-        }
+    onSourceFilterChange() {
+        this.filters.datasource = [];
 
-        let enabledSources = Object.keys(newVal).filter((key) => {
-            return newVal[key].enabled;
-        }).map((key) => {
-            let source = {};
-            source[key] = newVal[key];
-            return source;
-        });
+        Object.values(this.dynamicSourceFilters)
+            .filter(ds => ds.enabled)
+            .forEach(ds => this.filters.datasource.push(ds.datasource.id));
 
-        if (enabledSources.length === 0) {
-            delete this.filters.datasource;
-        } else {
-            this.filters.datasource = [];
-            enabledSources.forEach((sourceAttrs) => {
-                this.filters.datasource.push(Object.keys(sourceAttrs)[0]);
-            });
-        }
+        Object.values(this.staticSourceFilters)
+            .filter(ds => ds.enabled)
+            .forEach(ds => this.filters.datasource.push(ds.datasource.id));
     }
 
-    setSourceFilter(source, enabled) {
-        this.sourceFilters[source].enabled = enabled;
-        this.onSourceFilterChange(this.sourceFilters);
-    }
-
-    onSourceFilterMousedown(filter, filterAttrs) {
-        this.toggleDrag.toggle = true;
-        this.toggleDrag.enabled = !filterAttrs.enabled;
-        this.setSourceFilter(filter, this.toggleDrag.enabled);
-    }
-
-    onSourceFilterMouseover(filter) {
-        if (this.toggleDrag.toggle) {
-            this.setSourceFilter(filter, this.toggleDrag.enabled);
+    toggleSourceFilter(sourceId) {
+        if (this.dynamicSourceFilters[sourceId]) {
+            this.dynamicSourceFilters[sourceId].enabled =
+                !this.dynamicSourceFilters[sourceId].enabled;
+        } else if (this.staticSourceFilters[sourceId]) {
+            this.staticSourceFilters[sourceId].enabled =
+                !this.staticSourceFilters[sourceId].enabled;
         }
+        this.onSourceFilterChange();
     }
 }

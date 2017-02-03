@@ -116,14 +116,18 @@
          ng-mouseup="$ctrl.toggleDrag.toggle = false">
       <label>Imagery sources</label>
       <div class="filter-item tag-filter">
-        <button type="button"
-                class="btn btn-toggle btn-small"
-                autocomplete="off"
-                ng-mousedown="$ctrl.onSourceFilterMousedown(filter, filterAttrs)"
-                ng-mouseover="$ctrl.onSourceFilterMouseover(filter)"
-                ng-class="{'active': filterAttrs.enabled}"
-                ng-repeat="(filter, filterAttrs) in $ctrl.sourceFilters track by filter">
-          {{filterAttrs.label}}
+        <button class="btn btn-toggle btn-small"
+                ng-click="$ctrl.toggleSourceFilter(id)"
+                ng-class="{'active': filter.enabled}"
+                ng-repeat="(id, filter) in $ctrl.staticSourceFilters track by id"
+                disabled>
+          {{filter.datasource.name}}
+        </button>
+        <button class="btn btn-toggle btn-small"
+                ng-click="$ctrl.toggleSourceFilter(id)"
+                ng-class="{'active': filter.enabled}"
+                ng-repeat="(id, filter) in $ctrl.dynamicSourceFilters track by id">
+          {{filter.datasource.name}}
         </button>
       </div>
     </div>

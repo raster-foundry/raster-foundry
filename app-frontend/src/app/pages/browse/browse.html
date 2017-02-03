@@ -25,16 +25,16 @@
           infinite-scroll-immediate-check=false
           class="list-group">
         <rf-scene-item
-            ng-click="$ctrl.openDetailPane(scene)"
-            scene="scene"
-            selectable
-            selected="$ctrl.isSelected(scene)"
-            on-select="$ctrl.setSelected(scene, selected)"
-            class="selectable"
-            ng-repeat="scene in $ctrl.sceneList track by scene.id"
-            ng-mouseover="$ctrl.setHoveredScene(scene)"
-            ng-mouseleave="$ctrl.removeHoveredScene()"
-            >
+          ng-click="$ctrl.openDetailPane(scene)"
+          scene="scene"
+          selectable
+          selected="$ctrl.isSelected(scene)"
+          on-select="$ctrl.setSelected(scene, selected)"
+          class="selectable"
+          ng-repeat="scene in $ctrl.sceneList track by scene.id"
+          ng-mouseover="$ctrl.setHoveredScene(scene)"
+          ng-mouseleave="$ctrl.removeHoveredScene()"
+        >
         </rf-scene-item>
       </div>
       <div class="list-group" ng-show="$ctrl.loadingScenes">
@@ -83,37 +83,13 @@
   <!-- Scene detail view -->
   <div class="scene-detail-map" ng-if="$ctrl.activeScene">
     <div class="container column-stretch container-not-scrollable">
-      <div class="sidebar">
-        <div class="sidebar-static">
-          <p>
-            <strong class="color-dark">{{$ctrl.activeScene.name}}</strong><br>
-            {{$ctrl.activeScene.datasource}}
-          </p>
-          <div class="sidebar-actions">
-            <button class="btn btn-square" ng-click="$ctrl.closeDetailPane()">
-              <i class="icon-cross"></i>
-            </button>
-          </div>
-        </div>
-        <rf-scene-detail class="sidebar-scrollable"
-                         scene="$ctrl.activeScene"
-                         show-thumbnail="true"
-        ></rf-scene-detail>
-        <div class="sidebar-static">
-          <div class="sidebar-actions">
-            <button class="btn btn-square"
-                    ng-class="$ctrl.isSelected($ctrl.activeScene) ? 'btn-secondary' : ''"
-                    ng-click="$ctrl.toggleSelectAndClosePane()">
-              <span ng-if="!$ctrl.isSelected($ctrl.activeScene)">
-                Select Scene
-              </span>
-              <span ng-if="$ctrl.isSelected($ctrl.activeScene)">
-                Deselect
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
+      <rf-scene-detail class="sidebar"
+                       scene="$ctrl.activeScene"
+                       show-thumbnail="true"
+                       on-close-click="$ctrl.closeDetailPane()"
+                       on-select-click="$ctrl.toggleSelectAndClosePane()"
+                       is-selected="$ctrl.isSelected($ctrl.activeScene)"
+      ></rf-scene-detail>
       <div class="main">
         <rf-map-container map-id="detail"
                           initial-center="$ctrl.center"

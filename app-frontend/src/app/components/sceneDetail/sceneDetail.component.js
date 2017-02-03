@@ -4,7 +4,10 @@ const rfSceneDetail = {
     templateUrl: sceneDetailTpl,
     bindings: {
         scene: '<',
-        showThumbnail: '<'
+        showThumbnail: '<',
+        isSelected: '<',
+        onCloseClick: '&',
+        onSelectClick: '&'
     },
     replace: true,
     controller: 'SceneDetailComponentController'

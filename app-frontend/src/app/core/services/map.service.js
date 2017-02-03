@@ -4,12 +4,13 @@ import Map from 'es6-map';
 /* eslint spaced-comment: 0 */
 
 class MapWrapper {
-    constructor(leafletMap, mapId, imageOverlayService, options) {
+    constructor(leafletMap, mapId, imageOverlayService, datasourceService, options) {
         this.map = leafletMap;
         this.mapId = mapId;
         // counter is not global - each map has its own.
         // So don't combine lists of listeners across maps
         this.imageOverlayService = imageOverlayService;
+        this.datasourceService = datasourceService;
         this._callbackCounter = 0;
         this._callbacks = new Map();
         // internal id -> geojson layer map
@@ -323,23 +324,28 @@ class MapWrapper {
             let boundsGeoJson = L.geoJSON();
             boundsGeoJson.addData(scene.tileFootprint);
             let imageBounds = boundsGeoJson.getBounds();
-            let overlay = this.imageOverlayService.createNewImageOverlay(thumbUrl, imageBounds, {
-                opacity: 1,
-                dataMask: scene.dataFootprint,
-                thumbnail: thumbnail,
-                attribution: `©${scene.datasource}` +
-                    ' | Previews are not representative of actual scene quality.'
+            this.datasourceService.get(scene.datasource).then(d => {
+                let overlay = this.imageOverlayService.createNewImageOverlay(
+                    thumbUrl,
+                    imageBounds, {
+                        opacity: 1,
+                        dataMask: scene.dataFootprint,
+                        thumbnail: thumbnail,
+                        attribution: `©${d.name}` +
+                            ' | Previews are not representative of actual scene quality.'
+                    }
+                );
+                if (!persist) {
+                    this.setLayer('thumbnail', overlay);
+                } else {
+                    overlay.addTo(this.map);
+                    this.persistedThumbnails.set(scene.id, overlay);
+                }
+                this.setGeojson(
+                    'thumbnail',
+                    footprintGeojson
+                );
             });
-            if (!persist) {
-                this.setLayer('thumbnail', overlay);
-            } else {
-                overlay.addTo(this.map);
-                this.persistedThumbnails.set(scene.id, overlay);
-            }
-            this.setGeojson(
-                'thumbnail',
-                footprintGeojson
-            );
         } else if (scene.dataFootprint) {
             this.deleteLayers('thumbnail');
             this.setGeojson(
@@ -377,17 +383,19 @@ class MapWrapper {
 
 export default (app) => {
     class MapService {
-        constructor($q, imageOverlayService) {
+        constructor($q, imageOverlayService, datasourceService) {
             'ngInject';
             this.maps = new Map();
             this._mapPromises = new Map();
             this.$q = $q;
             this.imageOverlayService = imageOverlayService;
+            this.datasourceService = datasourceService;
         }
 
         // Leaflet components should self-register using this method.
         registerMap(map, id, options) {
-            let mapWrapper = new MapWrapper(map, id, this.imageOverlayService, options);
+            let mapWrapper =
+                new MapWrapper(map, id, this.imageOverlayService, this.datasourceService, options);
             this.maps.set(id, mapWrapper);
             // if any promises , resolve them
             if (this._mapPromises.has(id)) {
