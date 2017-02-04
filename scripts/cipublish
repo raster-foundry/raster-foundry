@@ -6,6 +6,8 @@ if [[ -n "${RF_DEBUG}" ]]; then
     set -x
 fi
 
+DIR="$(dirname "$0")"
+
 function usage() {
     echo -n \
 "Usage: $(basename "$0")
@@ -21,17 +23,34 @@ else
     GIT_COMMIT="$(git rev-parse --short HEAD)"
 fi
 
-if [ -d "./scripts/cipublish.d" ]; then
-    for file in ./scripts/cipublish.d/*.sh; do
-        source "${file}"
-    done
-fi
-
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     if [ "${1:-}" = "--help" ]; then
         usage
     else
         if [[ -n "${AWS_ECR_ENDPOINT}" ]]; then
+            echo "Building sbt container for migrations"
+            GIT_COMMIT="${GIT_COMMIT}" docker-compose \
+                      -f "${DIR}/../docker-compose.test.yml"\
+                      build app-migrations
+
+            echo "Building ingest JAR"
+            docker-compose \
+                run --rm --no-deps app-server ingest/assembly
+
+            echo "Building application JAR"
+            docker-compose \
+                run --rm --no-deps app-server app/assembly
+
+            echo "Building tile server JAR"
+            docker-compose \
+                run --rm --no-deps tile-server tile/assembly
+
+            echo "Building container images"
+            GIT_COMMIT="${GIT_COMMIT}" docker-compose \
+                      -f "${DIR}/../docker-compose.yml" \
+                      -f "${DIR}/../docker-compose.test.yml"\
+                      build nginx app-server tile-server
+
             # Evaluate the return value of the get-login subcommand, which
             # is a docker login command with temporarily ECR credentials.
             eval "$(aws ecr get-login)"
@@ -52,10 +71,14 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-tile-server:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-airflow:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-migrations:${GIT_COMMIT}"
+
+            echo "Uploading Spark Ingest JAR to S3"
+            aws s3 cp \
+                "${DIR}/../app-backend/ingest/target/scala-2.11/rf-ingest.jar" \
+                "s3://rasterfoundry-global-artifacts-us-east-1/ingest/rf-ingest-${GIT_COMMIT}.jar"
         else
             echo "ERROR: No AWS_ECR_ENDPOINT variable defined."
             exit 1
         fi
-        upload_ingest_jar "${GIT_COMMIT}"
     fi
 fi

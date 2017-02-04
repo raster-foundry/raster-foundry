@@ -11,8 +11,7 @@ DIR="$(dirname "$0")"
 function usage() {
     echo -n \
 "Usage: $(basename "$0")
-
-Run tests
+Run various test suites.
 "
 }
 
@@ -22,35 +21,29 @@ then
     then
         usage
     else
-        # Lint Bash scripts
-        if which shellcheck; then
-            find ./scripts -not -name "*.py*" -type f -exec shellcheck {} +
+        if which shellcheck &>/dev/null; then
+            echo "Linting STRTA scripts"
+            find ./scripts -type f -print0 | xargs -0 -r shellcheck
         fi
 
-        # Run linter/inspector to identify issues with app-server
+        echo "Updating Scala dependencies"
         docker-compose \
-            -f "${DIR}/../docker-compose.yml" run \
-            --rm \
-            --entrypoint ./sbt \
-            app-server scapegoat
+            run --rm --no-deps app-server update
 
-       # Run scala tests for app-server
-       docker-compose \
-           -f "${DIR}/../docker-compose.yml" run \
-           --rm \
-           --entrypoint ./sbt \
-           app-server test
+        echo "Linting Scala source code"
+        docker-compose \
+            run --rm --no-deps app-server scapegoat
 
-        # TODO: uncomment once https://github.com/azavea/raster-foundry/issues/435
-        # is resolved
-        # Run js tests for app-frontend
-#       docker-compose \
-#           -f "${DIR}/../docker-compose.yml" run \
-#            --rm \
-#            --entrypoint "/bin/bash -c" \
-#            app-frontend "yarn run test"
+        echo "Executing Scala test suite"
+        docker-compose \
+            run --rm app-server test
 
-        # Run tests for app tasks library
+        # TODO: https://github.com/azavea/raster-foundry/issues/435
+        # echo "Executing JavaScript test suite"
+        # docker-compose \
+        #     run --rm --no-deps app-frontend run test
+
+        echo "Executing Airflow task test suite"
         GIT_COMMIT="${GIT_COMMIT}" docker-compose \
             -f "${DIR}/../docker-compose.yml" \
             -f "${DIR}/../docker-compose.test.yml" run \

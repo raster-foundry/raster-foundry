@@ -44,10 +44,11 @@ services:
       - ./app-frontend/package.json:/opt/raster-foundry/app-frontend/package.json
       - ./app-frontend/src:/opt/raster-foundry/app-frontend/src
       - ./app-frontend/webpack.config.js:/opt/raster-foundry/app-frontend/webpack.config.js
-    command: yarn run start
+    entrypoint: yarn
+    command: run start
 
   app-server:
-    image: quay.io/azavea/scala:2.11.8
+    image: openjdk:8-jre
     links:
       - postgres:database.service.rasterfoundry.internal
     env_file: .env
@@ -55,14 +56,14 @@ services:
       - "9000:9000"
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/
-      - ./.ivy2:/root/.ivy2
       - ./.sbt:/root/.sbt
       - $HOME/.aws:/root/.aws:ro
     working_dir: /opt/raster-foundry/app-backend/
-    command: ./sbt app/run
+    entrypoint: ./sbt
+    command: app/run
 
   tile-server:
-    image: quay.io/azavea/scala:2.11.8
+    image: openjdk:8-jre
     links:
       - postgres:database.service.rasterfoundry.internal
       - memcached:tile-cache.service.rasterfoundry.internal
@@ -71,8 +72,8 @@ services:
       - "9900:9900"
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/
-      - ./.ivy2:/root/.ivy2
       - ./.sbt:/root/.sbt
       - $HOME/.aws:/root/.aws:ro
     working_dir: /opt/raster-foundry/app-backend/
-    command: ./sbt tile/run
+    entrypoint: ./sbt
+    command: tile/run

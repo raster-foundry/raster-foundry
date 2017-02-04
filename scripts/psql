@@ -1,9 +1,22 @@
 #!/bin/bash
 set -eu
 
-DIR="$(dirname "$0")"
+function usage() {
+    echo -n \
+"Usage: $(basename "$0")
+Use Docker Compose to drop into a psql console.
+"
+}
 
-# this does nothing if the service is already up
-docker-compose up -d postgres
-
-docker-compose -f "${DIR}/../docker-compose.yml" exec postgres bash -c "psql -U rasterfoundry -d rasterfoundry"
+if [ "${BASH_SOURCE[0]}" = "${0}" ]
+then
+    if [ "${1:-}" = "--help" ]
+    then
+        usage
+    else
+        docker-compose up -d postgres
+        docker-compose \
+            exec postgres bash -c "psql -U rasterfoundry -d rasterfoundry"
+    fi
+    exit
+fi
