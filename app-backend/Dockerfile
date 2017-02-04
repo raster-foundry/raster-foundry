@@ -1,4 +1,4 @@
-FROM quay.io/azavea/scala:2.11.8
+FROM openjdk:8-jre
 
 COPY ./ /opt/raster-foundry
 WORKDIR /opt/raster-foundry

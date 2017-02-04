@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -e
 
 if [[ -n "${RF_DEBUG}" ]]; then
@@ -11,18 +12,12 @@ else
     GIT_COMMIT="$(git rev-parse --short HEAD)"
 fi
 
-if [ -d "./scripts/cibuild.d" ]; then
-    for file in ./scripts/cibuild.d/*.sh; do
-        source "${file}"
-    done
-fi
-
 DIR="$(dirname "$0")"
 
 function usage() {
     echo -n \
-         "Usage: $(basename "$0")
-Build application for staging or a release.
+"Usage: $(basename "$0")
+Build application for staging or release.
 "
 }
 
@@ -32,46 +27,24 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     else
         echo "Pulling down configuration settings for test environment"
         pushd "${DIR}/.."
-        # Download environment configuration from S3
         aws s3 cp "s3://rasterfoundry-testing-config-us-east-1/.env" ".env"
         popd
 
+        echo "Building static asset bundle"
         docker-compose \
-            -f "${DIR}/../docker-compose.yml" \
-            run --rm app-server sbt update
-
-        echo "Building static asset build"
+            run --rm --no-deps app-frontend install
         docker-compose \
-            -f "${DIR}/../docker-compose.yml" \
-            run --rm --entrypoint "/bin/bash -c" \
-            app-frontend "yarn install && yarn run build"
+            run --rm --no-deps app-frontend run build
 
-        echo "Building container image for Airflow"
+        echo "Building Airflow container image"
         GIT_COMMIT="${GIT_COMMIT}" docker-compose \
                   -f "${DIR}/../docker-compose.yml" \
                   -f "${DIR}/../docker-compose.airflow.yml" \
                   -f "${DIR}/../docker-compose.test.yml"\
                   build airflow
 
-        echo "Building SBT container for migrations..."
-        GIT_COMMIT="${GIT_COMMIT}" docker-compose \
-                  -f "${DIR}/../docker-compose.test.yml"\
-                  build app-migrations
-
         echo "Running tests"
         GIT_COMMIT="${GIT_COMMIT}" ./scripts/test
         echo "All tests pass!"
-
-        # Build jars that are either published or included in other containers
-        build_application_jar
-        build_tile_server_jar
-        build_ingest_jar
-
-        # Build app, airflow
-        echo "Building app, airflow..."
-        GIT_COMMIT="${GIT_COMMIT}" docker-compose \
-            -f "${DIR}/../docker-compose.yml" \
-            -f "${DIR}/../docker-compose.test.yml"\
-            build nginx app-server tile-server
     fi
 fi

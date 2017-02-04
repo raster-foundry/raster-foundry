@@ -1,5 +1,9 @@
 #!/bin/bash
-set -eu
+set -e
+
+if [[ -n "${RF_DEBUG}" ]]; then
+    set -x
+fi
 
 DIR="$(dirname "$0")"
 
@@ -8,8 +12,7 @@ function usage() {
 
     echo -n \
 "Usage: $(basename "$0")
-
-Basic project setup
+Setup external project dependencies.
 "
 }
 
@@ -23,7 +26,8 @@ function check_database() {
     do
         echo "Checking if database is up yet (try ${counter})..."
         set +e
-        docker-compose -f "${DIR}/../docker-compose.yml" exec -T postgres gosu postgres psql -d rasterfoundry -c 'select 1' >/dev/null 2>/dev/null
+        docker-compose \
+            exec -T postgres gosu postgres psql -d rasterfoundry -c 'select 1' &>/dev/null
         status_check=$?
         if [ $status_check == 0 ]
         then
@@ -43,21 +47,27 @@ function check_database() {
 
 
 function create_airflow_database() {
-    docker-compose -f "${DIR}/../docker-compose.yml" up -d postgres
+    docker-compose up -d postgres
     check_database
+
     set +e
     # Create database (have to ignore errors if database already exists)
-    docker-compose -f "${DIR}/../docker-compose.yml" exec -T postgres gosu postgres createdb airflow >/dev/null 2>/dev/null
+    docker-compose \
+        exec -T postgres gosu postgres createdb airflow
     set -e
-    docker-compose -f "${DIR}/../docker-compose.airflow.yml" \
-                   -f "${DIR}/../docker-compose.yml" run --rm airflow-webserver airflow initdb
-    docker-compose -f "${DIR}/../docker-compose.yml" stop postgres
+
+    docker-compose \
+        -f "${DIR}/../docker-compose.airflow.yml" \
+        -f "${DIR}/../docker-compose.yml" \
+        run --rm airflow-webserver airflow initdb
 }
 
 function run_database_migrations() {
     # Check if database migrations have already been initialized
+    docker-compose up -d postgres
     set +e
-    docker-compose -f "${DIR}/../docker-compose.yml" exec -T postgres gosu postgres psql -d rasterfoundry -c 'select 1 from __migrations__' >/dev/null 2>/dev/null
+    docker-compose \
+        exec -T postgres gosu postgres psql -d rasterfoundry -c 'select 1 from __migrations__' &>/dev/null
     status_check=$?
     set -e
     if [ $status_check == 0 ]
@@ -65,13 +75,16 @@ function run_database_migrations() {
         echo "Migrations already initialized"
     else
         # Initialize the database for migrations.
-        docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-server sbt "mg init"
+        docker-compose \
+            run --rm app-server "mg init"
     fi
 
     # Run database migrations. The way scala-forklift works requires this to be called twice:
     # the first run figures out the migrations to run and the second run applies them.
-    docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-server sbt "mg update"
-    docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-server sbt "mg apply"
+    docker-compose \
+        run --rm app-server "mg update"
+    docker-compose \
+        run --rm app-server "mg apply"
 }
 
 
@@ -81,18 +94,21 @@ then
     then
         usage
     else
-        # Create airflow database
+        echo "Attempt to create Airflow database"
         create_airflow_database
 
-        # app-server
-        docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-server sbt update
+        echo "Updating Scala dependencies"
+        docker-compose \
+            run --rm --no-deps app-server update
 
-        # Initialize database migrations if needed, and then migrate
+        echo "Running application database migrations"
         run_database_migrations
 
-        # app-frontend
-        docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-frontend yarn install
-        docker-compose -f "${DIR}/../docker-compose.yml" run --rm app-frontend yarn run build
+        echo "Building static asset bundle"
+        docker-compose \
+            run --rm --no-deps app-frontend install
+        docker-compose \
+            run --rm --no-deps app-frontend run build
     fi
     exit
 fi

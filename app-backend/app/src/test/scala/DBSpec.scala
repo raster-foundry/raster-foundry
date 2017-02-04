@@ -59,6 +59,6 @@ object InitializeDB extends DatabaseConfig {
   PGUtils.createDB(jdbcNoDBUrl, "testing_template", dbUser, dbPassword)
 
   // Run migrations
-  %sbt("mg init", POSTGRES_URL=s"${jdbcNoDBUrl}testing_template")
-  %sbt(";mg update ;mg apply", POSTGRES_URL=s"${jdbcNoDBUrl}testing_template")
+  %`./sbt`("mg init", POSTGRES_URL=s"${jdbcNoDBUrl}testing_template")
+  %`./sbt`(";mg update ;mg apply", POSTGRES_URL=s"${jdbcNoDBUrl}testing_template")
 }

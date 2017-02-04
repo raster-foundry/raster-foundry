@@ -26,7 +26,7 @@ then
         docker-compose -f "${DIR}/../docker-compose.yml" \
                        -f "${DIR}/../docker-compose.swagger.yml" up
     else
-        docker-compose -f "${DIR}/../docker-compose.yml" up
+        docker-compose up --remove-orphans
     fi
     exit
 fi
