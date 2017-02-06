@@ -5,10 +5,13 @@ import java.util.UUID
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.{HttpEntity, ContentTypes}
-import akka.http.scaladsl.testkit.ScalatestRouteTest
+import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import akka.http.scaladsl.server.Route
+import akka.actor.ActorSystem
 import org.scalatest.{Matchers, WordSpec}
 import spray.json._
+
+import concurrent.duration._
 
 import com.azavea.rf.AuthUtils
 import com.azavea.rf.database.tables._
@@ -29,6 +32,7 @@ class ThumbnailSpec extends WordSpec
 
   implicit val ec = system.dispatcher
   implicit def database = db
+  implicit def default(implicit system: ActorSystem) = RouteTestTimeout(DurationInt(3).second)
 
   val uuid = new UUID(123456789, 123456789)
   val baseThumbnailRow = Thumbnail(

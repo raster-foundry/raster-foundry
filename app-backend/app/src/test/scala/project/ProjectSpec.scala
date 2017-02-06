@@ -24,7 +24,7 @@ class ProjectSpec extends WordSpec
   implicit val ec = system.dispatcher
 
   implicit def database = db
-  implicit def default(implicit system: ActorSystem) = RouteTestTimeout(DurationInt(20).second)
+  implicit def default(implicit system: ActorSystem) = RouteTestTimeout(DurationInt(3).second)
 
   // Alias to baseRoutes to be explicit
   val baseRoutes = routes
