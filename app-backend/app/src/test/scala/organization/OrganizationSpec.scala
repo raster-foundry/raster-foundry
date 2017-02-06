@@ -23,7 +23,7 @@ class OrganizationSpec extends WordSpec
     with DBSpec {
   implicit val ec = system.dispatcher
   implicit def database = db
-  implicit def default(implicit system: ActorSystem) = RouteTestTimeout(DurationInt(3).second)
+  implicit def default(implicit system: ActorSystem) = RouteTestTimeout(DurationInt(5).second)
 
   // Alias to baseRoutes to be explicit
   val baseRoutes = routes
