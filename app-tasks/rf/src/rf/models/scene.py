@@ -48,7 +48,7 @@ class Scene(BaseModel):
         self.name = name
         self.thumbnailStatus = thumbnailStatus
         self.boundaryStatus = boundaryStatus
-        self.status = status
+        self.ingestStatus = ingestStatus
         self.metadataFiles = metadataFiles
 
         # Optional - can be None
