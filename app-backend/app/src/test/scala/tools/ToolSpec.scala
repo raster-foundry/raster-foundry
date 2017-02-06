@@ -22,7 +22,7 @@ class ToolSpec extends WordSpec
 
   implicit val ec = system.dispatcher
   implicit def database = db
-  implicit def default(implicit system: ActorSystem) = RouteTestTimeout(DurationInt(3).second)
+  implicit def default(implicit system: ActorSystem) = RouteTestTimeout(DurationInt(5).second)
 
   val authorization = AuthUtils.generateAuthHeader("Default")
   val publicOrgId = UUID.fromString("dfac6307-b5ef-43f7-beda-b9f208bb7726")
