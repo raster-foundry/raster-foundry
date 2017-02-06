@@ -8,7 +8,7 @@ COPY rf/ /tmp/rf
 RUN set -ex \
     addgroup --system airflow \
     && adduser --disabled-password --system --group \
-               --uid 1000 --home ${AIRFLOW_HOME} \
+               --uid 1000 --home /var/lib/airflow \
                --shell /usr/sbin/nologin \
                airflow \
     && buildDeps=' \
