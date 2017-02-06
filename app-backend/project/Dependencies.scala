@@ -13,6 +13,7 @@ object Dependencies {
   val geotrellisSpark    = "org.locationtech.geotrellis" %% "geotrellis-spark"                  % Version.geotrellis
   val geotrellisS3       = "org.locationtech.geotrellis" %% "geotrellis-s3"                     % Version.geotrellis
   val geotrellisRaster   = "org.locationtech.geotrellis" %% "geotrellis-raster"                 % Version.geotrellis
+  val geotrellisRasterTestkit = "org.locationtech.geotrellis" %% "geotrellis-raster-testkit"  % Version.geotrellis
   val geotrellisSlick    = "org.locationtech.geotrellis" %% "geotrellis-slick"                  % Version.geotrellis
   val geotrellisVector   = "org.locationtech.geotrellis" %% "geotrellis-vector"                 % Version.geotrellis
   val geotrellisUtil     = "org.locationtech.geotrellis" %% "geotrellis-util"                   % Version.geotrellis
