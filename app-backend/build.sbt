@@ -73,6 +73,7 @@ lazy val migrationsDependencies =
 
 lazy val testDependencies = List(
     Dependencies.scalatest,
+    Dependencies.geotrellisRasterTestkit,
     Dependencies.akkatestkit
 )
 

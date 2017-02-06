@@ -31,10 +31,54 @@ case class OutputDefinition(
   tileSize: Int = 256,
   pyramid: Boolean = true,
   native: Boolean = false,
+  ndPattern: OutputDefinition.NoDataPattern = OutputDefinition.NoDataPattern(),
   resampleMethod: ResampleMethod = NearestNeighbor,
   keyIndexMethod: KeyIndexMethod[SpatialKey] = ZCurveKeyIndexMethod // TODO: read, no write
 )
 
 object OutputDefinition {
-  implicit val jsonFormat = jsonFormat9(OutputDefinition.apply _)
+  case class NoDataPattern(value: Map[Int, Double] = Map()) {
+    def createMask(mbtile: MultibandTile): Tile = {
+      // Ensure that we have enough bands for this definition
+      try {
+        assert(mbtile.bands.length >= value.toList.length)
+      } catch {
+        case e: java.lang.AssertionError =>
+          throw new java.lang.IllegalStateException(s"Not enough bands for provided NoData pattern application (found ${mbtile.bands.length}; needed ${this.value.toList.length})")
+      }
+
+      val bandsOfInterest = value.keys.toList.sorted
+
+      if (mbtile.cellType.isFloatingPoint) {
+        val expectedValues = bandsOfInterest.map(value(_).toDouble)
+        val combiner =
+          { values: Seq[Double] =>
+            if (values == expectedValues) {
+              1.0
+            } else {
+              0.0
+            }
+          }
+        mbtile.combineDouble(bandsOfInterest)(combiner)
+      } else {
+        val expectedValues = bandsOfInterest.map(value(_).toInt)
+        val combiner =
+          { values: Seq[Int] =>
+            if (values == expectedValues) {
+              1
+            } else {
+              0
+            }
+          }
+        mbtile.combine(bandsOfInterest)(combiner)
+      }
+    }
+  }
+
+  object NoDataPattern {
+    implicit val jsonFormat = jsonFormat1(NoDataPattern.apply _)
+  }
+
+
+  implicit val jsonFormat = jsonFormat10(OutputDefinition.apply _)
 }
