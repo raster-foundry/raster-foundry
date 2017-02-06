@@ -4,12 +4,16 @@ import java.util.UUID
 
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
 import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.testkit.ScalatestRouteTest
+import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
+import akka.actor.ActorSystem
+import org.scalatest.{Matchers, WordSpec}
+import spray.json._
+
+import concurrent.duration._
+
 import com.azavea.rf.datamodel._
 import com.azavea.rf.utils.Config
 import com.azavea.rf.{AuthUtils, DBSpec, Router}
-import org.scalatest.{Matchers, WordSpec}
-import spray.json._
 
 class ToolTagSpec extends WordSpec
     with Matchers
@@ -20,6 +24,7 @@ class ToolTagSpec extends WordSpec
 
   implicit val ec = system.dispatcher
   implicit def database = db
+  implicit def default(implicit system: ActorSystem) = RouteTestTimeout(DurationInt(3).second)
 
   val authHeader = AuthUtils.generateAuthHeader("Default")
   val publicOrgId = UUID.fromString("dfac6307-b5ef-43f7-beda-b9f208bb7726")

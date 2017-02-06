@@ -30,7 +30,7 @@ class SceneSpec extends WordSpec
   implicit val ec = system.dispatcher
 
   implicit def database = db
-  implicit def default(implicit system: ActorSystem) = RouteTestTimeout(DurationInt(20).second)
+  implicit def default(implicit system: ActorSystem) = RouteTestTimeout(DurationInt(3).second)
 
   val authHeader = AuthUtils.generateAuthHeader("Default")
   val baseScene = "/api/scenes/"
