@@ -27,6 +27,11 @@ class ToolRuns(_TableTag: Tag) extends Table[ToolRun](_TableTag, "tool_runs")
   val toolId: Rep[UUID] = column[UUID]("tool")
   val execution_parameters: Rep[Map[String, Any]] = column[Map[String, Any]]("execution_parameters")
 
+  lazy val createdByUserFK = foreignKey("tool_runs_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val modifiedByUserFK = foreignKey("tool_runs_modified_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val projectFK = foreignKey("tool_runs_project_fkey", createdBy, Projects)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val toolFK = foreignKey("tool_runs_tool_fkey", createdBy, Tools)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+
 }
 
 object ToolRuns extends TableQuery(tag => new ToolRuns(tag)) with LazyLogging {
