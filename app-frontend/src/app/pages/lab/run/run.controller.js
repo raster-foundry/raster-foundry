@@ -155,7 +155,6 @@ export default class LabRunController {
         if (!this.sideBySideAdded) {
             this.sideBySideAdded = true;
             this.getMap().then((m) => {
-                debugger;
                 this.sideBySideControl.addTo(m.map);
             });
         }
@@ -176,8 +175,8 @@ export default class LabRunController {
                         this.sideBySideControl.remove();
                         this.sideBySideAdded = false;
                     }
-                    if (!this.alreadyFitted) {
-                        this.alreadyFitted = true;
+                    if (!this.alreadyPreviewed) {
+                        this.alreadyPreviewed = true;
                         this.$timeout(() => {
                             this.fitSceneList(this.inputs[0].id);
                         });
