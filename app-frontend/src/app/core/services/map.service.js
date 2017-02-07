@@ -4,13 +4,17 @@ import Map from 'es6-map';
 /* eslint spaced-comment: 0 */
 
 class MapWrapper {
-    constructor(leafletMap, mapId, imageOverlayService, datasourceService, options) {
+    constructor( // eslint-disable-line max-params
+        leafletMap, mapId, imageOverlayService, datasourceService, options, thumbnailService
+    ) {
+        this.thumbnailService = thumbnailService;
         this.map = leafletMap;
         this.mapId = mapId;
-        // counter is not global - each map has its own.
-        // So don't combine lists of listeners across maps
         this.imageOverlayService = imageOverlayService;
         this.datasourceService = datasourceService;
+        this.options = options;
+        // counter is not global - each map has its own.
+        // So don't combine lists of listeners across maps
         this._callbackCounter = 0;
         this._callbacks = new Map();
         // internal id -> geojson layer map
@@ -36,7 +40,7 @@ class MapWrapper {
                 '<div class="map-control-popout layer-picker"></div>';
             return div;
         };
-        this.changeOptions(options);
+        this.changeOptions(this.options);
     }
 
     getBaseMapLayer(layerName) {
@@ -313,14 +317,10 @@ class MapWrapper {
         }, scene.dataFootprint);
         if (scene.tileFootprint && scene.thumbnails && scene.thumbnails.length) {
             // get smallest thumbnail - it's a small map
-            let thumbnail = scene.thumbnails.reduce((lastThumbnail, currentThumbnail) => {
-                if (useSmall && lastThumbnail.widthPx < currentThumbnail.widthPx ||
-                    !useSmall && lastThumbnail.widthPx > currentThumbnail.widthPx) {
-                    return lastThumbnail;
-                }
-                return currentThumbnail;
-            });
-            let thumbUrl = thumbnail.url;
+            let thumbUrl = this.thumbnailService.getBestFitUrl(
+                scene.thumbnails, useSmall ? 100 : 1000
+            );
+
             let boundsGeoJson = L.geoJSON();
             boundsGeoJson.addData(scene.tileFootprint);
             let imageBounds = boundsGeoJson.getBounds();
@@ -330,7 +330,7 @@ class MapWrapper {
                     imageBounds, {
                         opacity: 1,
                         dataMask: scene.dataFootprint,
-                        thumbnail: thumbnail,
+                        thumbnail: thumbUrl,
                         attribution: `©${d.name}` +
                             ' | Previews are not representative of actual scene quality.'
                     }
@@ -383,19 +383,22 @@ class MapWrapper {
 
 export default (app) => {
     class MapService {
-        constructor($q, imageOverlayService, datasourceService) {
+        constructor($q, imageOverlayService, datasourceService, thumbnailService) {
             'ngInject';
             this.maps = new Map();
             this._mapPromises = new Map();
             this.$q = $q;
             this.imageOverlayService = imageOverlayService;
             this.datasourceService = datasourceService;
+            this.thumbnailService = thumbnailService;
         }
 
         // Leaflet components should self-register using this method.
         registerMap(map, id, options) {
             let mapWrapper =
-                new MapWrapper(map, id, this.imageOverlayService, this.datasourceService, options);
+                new MapWrapper(
+                    map, id, this.imageOverlayService, this.datasourceService,
+                    options, this.thumbnailService);
             this.maps.set(id, mapWrapper);
             // if any promises , resolve them
             if (this._mapPromises.has(id)) {

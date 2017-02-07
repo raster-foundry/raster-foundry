@@ -66,7 +66,7 @@ export default (app) => {
                     let layer = this.layer = new Konva.Layer();
 
                     let img = this.img = L.DomUtil.create('img');
-                    img.src = this.options.thumbnail.url;
+                    img.src = this.options.thumbnail;
 
                     let lineConfig = {
                         points: points,
