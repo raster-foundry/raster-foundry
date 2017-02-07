@@ -20,6 +20,7 @@ import java.net.URI
   * @param histogramBuckets The number of bins with which to construct histograms used in coloring
   * @param pyramid          Whether or not to pyramid multiple zoom levels on ingest
   * @param native           Whether or not to keep around a copy of the 'native resolution' images
+  * @param ndPattern        The pattern for determining which cells should be treated as ND
   * @param resampleMethod   The type of GeoTrellis resample method to use for cell value estimation
   * @param keyIndexMethod   The GeoTrellis KeyIndexMethod to use when writing output indices
   */
@@ -37,40 +38,42 @@ case class OutputDefinition(
 )
 
 object OutputDefinition {
-  case class NoDataPattern(value: Map[Int, Double] = Map()) {
-    def createMask(mbtile: MultibandTile): Tile = {
+  case class NoDataPattern(pattern: Map[Int, Double] = Map()) {
+    /** This function creates the masking tile for setting NODATA values
+      *  It is separated out to make testing easier
+      */
+    def createMask(mbTile: MultibandTile): Tile = {
       // Ensure that we have enough bands for this definition
       try {
-        assert(mbtile.bands.length >= value.toList.length)
+        assert(mbTile.bands.length >= pattern.toList.length)
       } catch {
         case e: java.lang.AssertionError =>
-          throw new java.lang.IllegalStateException(s"Not enough bands for provided NoData pattern application (found ${mbtile.bands.length}; needed ${this.value.toList.length})")
+          throw new java.lang.IllegalStateException(s"Not enough bands for provided NoData pattern application (found ${mbTile.bands.length}; needed ${pattern.toList.length})")
       }
 
-      val bandsOfInterest = value.keys.toList.sorted
+      val bandsOfInterest = pattern.keys.toList.sorted
 
-      if (mbtile.cellType.isFloatingPoint) {
-        val expectedValues = bandsOfInterest.map(value(_).toDouble)
-        val combiner =
-          { values: Seq[Double] =>
-            if (values == expectedValues) {
-              1.0
-            } else {
-              0.0
-            }
-          }
-        mbtile.combineDouble(bandsOfInterest)(combiner)
+      if (mbTile.cellType.isFloatingPoint) {
+        val expectedValues = bandsOfInterest.map(pattern(_).toDouble)
+        val combiner = { values: Seq[Double] => if (values == expectedValues) NODATA else 1.0 }
+        mbTile.combineDouble(bandsOfInterest)(combiner)
       } else {
-        val expectedValues = bandsOfInterest.map(value(_).toInt)
-        val combiner =
-          { values: Seq[Int] =>
-            if (values == expectedValues) {
-              1
-            } else {
-              0
-            }
-          }
-        mbtile.combine(bandsOfInterest)(combiner)
+        val expectedValues = bandsOfInterest.map(pattern(_).toInt)
+        val combiner = { values: Seq[Int] => if (values == expectedValues) NODATA else 1 }
+        mbTile.combine(bandsOfInterest)(combiner)
+      }
+    }
+
+    /** Apply an instance of this pattern to set NoData values */
+    def apply(mbTile: MultibandTile): MultibandTile = {
+      if (pattern.isEmpty) {
+        mbTile
+      } else {
+        val mask = createMask(mbTile)
+        val intFunc = { (i: Int, j: Int) => if (isNoData(j)) NODATA else i }
+        val doubleFunc = { (i: Double, j: Double) => if (isNoData(j)) NODATA else i }
+
+        MultibandTile(mbTile.bands.map { tile => tile.dualCombine(mask)(intFunc)(doubleFunc) })
       }
     }
   }
@@ -78,7 +81,6 @@ object OutputDefinition {
   object NoDataPattern {
     implicit val jsonFormat = jsonFormat1(NoDataPattern.apply _)
   }
-
 
   implicit val jsonFormat = jsonFormat10(OutputDefinition.apply _)
 }
