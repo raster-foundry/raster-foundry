@@ -416,14 +416,14 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) extends LazyLoggin
   def filterBySceneParams(sceneParams: SceneQueryParameters): Scenes.TableQuery = {
     val filteredScenes = scenes.filter{ scene =>
       val sceneFilterConditions = List(
-        sceneParams.maxAcquisitionDatetime.map(scene.acquisitionDate < _),
-        sceneParams.minAcquisitionDatetime.map(scene.acquisitionDate > _),
-        sceneParams.maxCloudCover.map(scene.cloudCover < _),
-        sceneParams.minCloudCover.map(scene.cloudCover > _),
-        sceneParams.minSunAzimuth.map(scene.sunAzimuth > _),
-        sceneParams.maxSunAzimuth.map(scene.sunAzimuth < _),
-        sceneParams.minSunElevation.map(scene.sunElevation > _),
-        sceneParams.maxSunElevation.map(scene.sunElevation < _),
+        sceneParams.maxAcquisitionDatetime.map(scene.acquisitionDate <= _),
+        sceneParams.minAcquisitionDatetime.map(scene.acquisitionDate >= _),
+        sceneParams.maxCloudCover.map(scene.cloudCover <= _),
+        sceneParams.minCloudCover.map(scene.cloudCover >= _),
+        sceneParams.minSunAzimuth.map(scene.sunAzimuth >= _),
+        sceneParams.maxSunAzimuth.map(scene.sunAzimuth <= _),
+        sceneParams.minSunElevation.map(scene.sunElevation >= _),
+        sceneParams.maxSunElevation.map(scene.sunElevation <= _),
         sceneParams.pointGeom.map(scene.dataFootprint.intersects(_))
       )
       sceneFilterConditions
@@ -493,14 +493,14 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) extends LazyLoggin
   def filterByGridParams(gridParams: GridQueryParameters): Scenes.TableQuery = {
     val filteredScenes = scenes.filter{ scene =>
       val sceneFilterConditions = List(
-        gridParams.maxAcquisitionDatetime.map(scene.acquisitionDate < _),
-        gridParams.minAcquisitionDatetime.map(scene.acquisitionDate > _),
-        gridParams.maxCloudCover.map(scene.cloudCover < _),
-        gridParams.minCloudCover.map(scene.cloudCover > _),
-        gridParams.minSunAzimuth.map(scene.sunAzimuth > _),
-        gridParams.maxSunAzimuth.map(scene.sunAzimuth < _),
-        gridParams.minSunElevation.map(scene.sunElevation > _),
-        gridParams.maxSunElevation.map(scene.sunElevation < _)
+        gridParams.maxAcquisitionDatetime.map(scene.acquisitionDate <= _),
+        gridParams.minAcquisitionDatetime.map(scene.acquisitionDate >= _),
+        gridParams.maxCloudCover.map(scene.cloudCover <= _),
+        gridParams.minCloudCover.map(scene.cloudCover >= _),
+        gridParams.minSunAzimuth.map(scene.sunAzimuth >= _),
+        gridParams.maxSunAzimuth.map(scene.sunAzimuth <= _),
+        gridParams.minSunElevation.map(scene.sunElevation >= _),
+        gridParams.maxSunElevation.map(scene.sunElevation <= _)
       )
       sceneFilterConditions
         .collect({case Some(criteria)  => criteria})
