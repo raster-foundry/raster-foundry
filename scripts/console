@@ -20,6 +20,7 @@ then
         usage
     else
         docker-compose -f "${DIR}/../docker-compose.yml" \
+                       -f "${DIR}/../docker-compose.test.yml" \
                        -f "${DIR}/../docker-compose.swagger.yml" \
                        -f "${DIR}/../docker-compose.airflow.yml" \
                        run --rm --service-ports --entrypoint \

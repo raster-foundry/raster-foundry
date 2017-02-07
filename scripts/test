@@ -41,7 +41,9 @@ then
         # TODO: https://github.com/azavea/raster-foundry/issues/435
         # echo "Executing JavaScript test suite"
         # docker-compose \
-        #     run --rm --no-deps app-frontend run test
+        #     -f "${DIR}/../docker-compose.yml" \
+        #     -f "${DIR}/../docker-compose.test.yml" \
+        #     run --rm app-frontend run test
 
         echo "Executing Airflow task test suite"
         GIT_COMMIT="${GIT_COMMIT}" docker-compose \

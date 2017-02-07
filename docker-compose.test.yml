@@ -1,31 +1,48 @@
-version: '2'
+version: '2.1'
 services:
   nginx:
-    image: raster-foundry-nginx:${GIT_COMMIT}
+    image: raster-foundry-nginx:${GIT_COMMIT:-latest}
     build:
       context: ./nginx
       dockerfile: Dockerfile
 
+  app-frontend:
+    image: kkarczmarczyk/node-yarn:6.9-wheezy
+    working_dir: /opt/raster-foundry/app-frontend/
+    volumes:
+      - ./app-frontend/.babelrc:/opt/raster-foundry/app-frontend/.babelrc
+      - ./app-frontend/config/:/opt/raster-foundry/app-frontend/config/
+      - ./nginx/srv/dist/:/opt/raster-foundry/app-frontend/dist/
+      - ./app-frontend/yarn.lock:/opt/raster-foundry/app-frontend/yarn.lock
+      - ./app-frontend/.eslintrc:/opt/raster-foundry/app-frontend/.eslintrc
+      - ./app-frontend/karma.conf.js:/opt/raster-foundry/app-frontend/karma.conf.js
+      - ./.node_modules:/opt/raster-foundry/app-frontend/node_modules
+      - ./app-frontend/package.json:/opt/raster-foundry/app-frontend/package.json
+      - ./app-frontend/src:/opt/raster-foundry/app-frontend/src
+      - ./app-frontend/webpack.config.js:/opt/raster-foundry/app-frontend/webpack.config.js
+    entrypoint: yarn
+    command: run build
+
   app-server:
-    image: raster-foundry-app-server:${GIT_COMMIT}
+    image: raster-foundry-app-server:${GIT_COMMIT:-latest}
     build:
       context: ./app-backend/app
       dockerfile: Dockerfile
 
   tile-server:
-    image: raster-foundry-tile-server:${GIT_COMMIT}
+    image: raster-foundry-tile-server:${GIT_COMMIT:-latest}
     build:
       context: ./app-backend/tile
       dockerfile: Dockerfile
 
   app-migrations:
-    image: raster-foundry-app-migrations:${GIT_COMMIT}
+    image: raster-foundry-app-migrations:${GIT_COMMIT:-latest}
     build:
       context: ./app-backend
       dockerfile: Dockerfile
 
   airflow:
-    image: raster-foundry-airflow:${GIT_COMMIT}
+    image: raster-foundry-airflow:${GIT_COMMIT:-latest}
     build:
       context: ./app-tasks
       dockerfile: Dockerfile
