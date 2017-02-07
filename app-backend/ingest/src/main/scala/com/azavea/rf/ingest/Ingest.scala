@@ -126,6 +126,7 @@ object Ingest extends SparkJob with LazyLogging {
     val resampleMethod = layer.output.resampleMethod
     val tileSize = layer.output.tileSize
     val destCRS = layer.output.crs
+    val ndPattern = layer.output.ndPattern
     val bandCount: Int = layer.sources.map(_.bandMaps.map(_.target).max).max
     val layoutScheme = ZoomedLayoutScheme(destCRS, tileSize)
 
@@ -133,7 +134,9 @@ object Ingest extends SparkJob with LazyLogging {
     val sourceTiles: RDD[((ProjectedExtent, Int), Tile)] =
       sc.parallelize(layer.sources, layer.sources.length).flatMap { source =>
         val tiffBytes = readBytes(source.uri)
-        val MultibandGeoTiff(mbTile, srcExtent, srcCRS, _, _) = MultibandGeoTiff(tiffBytes)
+        val MultibandGeoTiff(mbTileIn, srcExtent, srcCRS, _, _) = MultibandGeoTiff(tiffBytes)
+        // Set NoData values
+        val mbTile = ndPattern(mbTileIn)
 
         source.bandMaps.map { bm: BandMapping =>
           // GeoTrellis multi-band tiles are 0 indexed
