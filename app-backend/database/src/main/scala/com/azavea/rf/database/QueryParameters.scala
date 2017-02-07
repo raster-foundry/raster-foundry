@@ -176,6 +176,17 @@ case class ToolCategoryQueryParameters(
   search: Option[String] = None
 )
 
+case class ToolRunQueryParameters(
+  createdBy: Option[String] = None,
+  projectId: Option[UUID] = None,
+  toolId: Option[UUID] = None
+)
+
+case class CombinedToolRunQueryParameters(
+  toolRunParams: ToolRunQueryParameters = ToolRunQueryParameters(),
+  timestampParams: TimestampQueryParameters = TimestampQueryParameters()
+)
+
 case class CombinedToolCategoryQueryParams(
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
   toolCategoryParams: ToolCategoryQueryParameters = ToolCategoryQueryParameters()
