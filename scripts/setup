@@ -106,9 +106,13 @@ then
 
         echo "Building static asset bundle"
         docker-compose \
-            run --rm --no-deps app-frontend install
+            -f "${DIR}/../docker-compose.yml" \
+            -f "${DIR}/../docker-compose.test.yml" \
+            run --rm app-frontend install
         docker-compose \
-            run --rm --no-deps app-frontend run build
+            -f "${DIR}/../docker-compose.yml" \
+            -f "${DIR}/../docker-compose.test.yml" \
+            run --rm app-frontend run build
     fi
     exit
 fi

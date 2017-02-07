@@ -1,4 +1,4 @@
-version: '2'
+version: '2.1'
 services:
   swagger-editor:
     image: swaggerapi/swagger-editor:latest
