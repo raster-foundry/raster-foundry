@@ -5,7 +5,6 @@ import java.util.UUID
 
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.fields.{OrgFkVisibleFields, TimestampFields, UserFkFields, NameField}
-import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.query.{DatasourceQueryParameters, ListQueryResult}
 import com.azavea.rf.datamodel._
 import com.lonelyplanet.akka.http.extensions.PageRequest
@@ -58,8 +57,7 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
     *
     * @param pageRequest PageRequest information about sorting and page size
     */
-  def listDatasources(offset: Int, limit: Int, datasourceParams: DatasourceQueryParameters)
-                     (implicit database: DB) = {
+  def listDatasources(offset: Int, limit: Int, datasourceParams: DatasourceQueryParameters) = {
 
     val dropRecords = limit * offset
     val datasourceFilterQuery = datasourceParams.name match {
