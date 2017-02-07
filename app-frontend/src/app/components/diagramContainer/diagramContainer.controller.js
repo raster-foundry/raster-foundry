@@ -102,7 +102,7 @@ export default class DiagramContainerController {
         });
 
         let ndviAfter = this.createRectangle({
-            label: 'Vegeation index',
+            label: 'Vegetation index',
             inputs: ['Input'],
             outputs: ['Output']
         });
