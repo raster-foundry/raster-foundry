@@ -167,7 +167,7 @@
       <rf-map-container map-id="lab-run-preview"></rf-map-container>
       <div class="preview-control-bar">
           <button ng-if="$ctrl.previewLayers.length > 1" class="btn btn-default" ng-click="$ctrl.closePreview()">Exit Node Comparison</button>
-          <button ng-if="$ctrl.previewLayers.length == 1" class="btn btn-default" ng-click="$ctrl.closePreview()">Exit Node Preview</button>
+          <button ng-if="!$ctrl.previewLayers || $ctrl.previewLayers.length === 1" class="btn btn-default" ng-click="$ctrl.closePreview()">Exit Node Preview</button>
       </div>
       <div class="preview-info-bar" ng-show="$ctrl.previewLayers.length > 1">
         <div class="split-container">

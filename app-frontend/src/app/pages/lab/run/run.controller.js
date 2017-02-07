@@ -11,6 +11,14 @@ export default class LabRunController {
         this.authService = authService;
         this.projectService = projectService;
         this.getMap = () => mapService.getMap('lab-run-preview');
+
+        $scope.$watch('$ctrl.isShowingPreview', () => {
+            this.getMap().then((mapWrapper) => {
+                $timeout(() => {
+                    mapWrapper.map.invalidateSize();
+                }, 50);
+            });
+        });
     }
 
     $onInit() {
@@ -146,7 +154,10 @@ export default class LabRunController {
 
         if (!this.sideBySideAdded) {
             this.sideBySideAdded = true;
-            this.getMap().then(m => this.sideBySideControl.addTo(m.map));
+            this.getMap().then((m) => {
+                debugger;
+                this.sideBySideControl.addTo(m.map);
+            });
         }
     }
 
@@ -165,10 +176,12 @@ export default class LabRunController {
                         this.sideBySideControl.remove();
                         this.sideBySideAdded = false;
                     }
-                    this.$timeout(() => {
-                        m.map.invalidateSize();
-                        this.fitSceneList(this.inputs[0].id);
-                    });
+                    if (!this.alreadyFitted) {
+                        this.alreadyFitted = true;
+                        this.$timeout(() => {
+                            this.fitSceneList(this.inputs[0].id);
+                        });
+                    }
                 });
             }
         }
