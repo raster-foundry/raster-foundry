@@ -168,7 +168,7 @@ export default class FilterPaneController {
             options: {
                 floor: this.cloudCoverRange.min,
                 ceil: this.cloudCoverRange.max,
-                minRange: 10,
+                minRange: 0,
                 showTicks: 10,
                 showTicksValues: true,
                 step: 10,
@@ -189,7 +189,7 @@ export default class FilterPaneController {
             options: {
                 floor: this.sunElevationRange.min,
                 ceil: this.sunElevationRange.max,
-                minRange: 10,
+                minRange: 0,
                 showTicks: 30,
                 showTicksValues: true,
                 step: 10,
@@ -210,7 +210,7 @@ export default class FilterPaneController {
             options: {
                 floor: this.sunAzimuthRange.min,
                 ceil: this.sunAzimuthRange.max,
-                minRange: 10,
+                minRange: 0,
                 showTicks: 60,
                 showTicksValues: true,
                 step: 10,
