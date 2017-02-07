@@ -12,8 +12,8 @@
 <div class="sidebar-scrollable">
   <div class="content">
     <img ng-if="$ctrl.scene.thumbnails.length && $ctrl.showThumbnail"
-         ng-attr-src="{{$ctrl.thumbnailService.getBestFit($ctrl.scene.thumbnails, 275).url}}"
-         class="center-img rounded-img detail-img">
+        ng-attr-src="{{$ctrl.thumbnailService.getBestFitUrl($ctrl.scene.thumbnails, 275)}}"
+        class="center-img rounded-img detail-img">
     <img ng-if="!$ctrl.scene.thumbnails.length && $ctrl.showThumbnail"
          src="https://placehold.it/275x275"
          class="center-img rounded-img detail-img">
