@@ -1,6 +1,9 @@
 const Map = require('es6-map');
 /* global joint, $ */
 
+import { coreTools, compressedTool } from './toolJson.js';
+
+
 export default class DiagramContainerController {
     constructor( // eslint-disable-line max-params
         $element, $scope, $state, $timeout, $compile, mousetipService) {
@@ -20,8 +23,6 @@ export default class DiagramContainerController {
         this.paddingFactor = 0.8;
         this.nodeSeparationFactor = 0.25;
         this.initContextMenus();
-        this.initShapes();
-        this.initDiagram();
         this.contextMenuTpl =
             `<div class="lab-contextmenu" ng-show="isShowingContextMenu">
                 <div class="btn-group">
@@ -32,6 +33,18 @@ export default class DiagramContainerController {
                     </button>
                 </div>
             </div>`;
+
+        this.toolJson = compressedTool;
+        this.coreToolsJson = coreTools;
+        this.extractInputs();
+        this.extractShapes();
+        this.initDiagram();
+    }
+
+    getToolLabel(json) {
+        return json.label ||
+            (this.coreToolsJson[json.apply] ?
+            this.coreToolsJson[json.apply].label : json.apply);
     }
 
     $onChanges(changes) {
@@ -41,108 +54,6 @@ export default class DiagramContainerController {
             this.shapes.forEach(s => this.graph.addCell(s));
             this.initDiagram();
         }
-    }
-
-    initShapes() {
-        // @TODO: this process is not very elegant, could be better handled
-        this.shapes = [];
-        this.nodes = new Map();
-
-        let ndviBeforeInput = this.createRectangle({
-            label: 'Area of interest (Before)',
-            inputs: [],
-            outputs: ['Output']
-        });
-
-        this.nodes.set(ndviBeforeInput, {
-            input: 0,
-            name: 'Area of interest (Before)',
-            part: 'input'
-        });
-
-
-        let ndviBefore = this.createRectangle({
-            label: 'Vegetation index',
-            inputs: ['Input'],
-            outputs: ['Output']
-        });
-
-        this.nodes.set(ndviBefore, {
-            input: 0,
-            name: 'Vegetation index',
-            part: 'ndvi0'
-        });
-
-        this.createLink([ndviBeforeInput, 'Output'], [ndviBefore, 'Input']);
-
-        let reclassifyBefore = this.createRectangle({
-            label: 'Detect vegetation',
-            inputs: ['Input'],
-            outputs: ['Output']
-        });
-
-        this.nodes.set(reclassifyBefore, {
-            input: 0,
-            name: 'Detect vegetation',
-            part: 'class0'
-        });
-
-        this.createLink([ndviBefore, 'Output'], [reclassifyBefore, 'Input']);
-
-        let ndviAfterInput = this.createRectangle({
-            label: 'Area of interest (After)',
-            inputs: [],
-            outputs: ['Output']
-        });
-
-        this.nodes.set(ndviAfterInput, {
-            input: 1,
-            name: 'Area of interest (After)',
-            part: 'input'
-        });
-
-        let ndviAfter = this.createRectangle({
-            label: 'Vegetation index',
-            inputs: ['Input'],
-            outputs: ['Output']
-        });
-
-        this.nodes.set(ndviAfter, {
-            input: 1,
-            name: 'Vegeation index',
-            part: 'ndvi1'
-        });
-
-        this.createLink([ndviAfterInput, 'Output'], [ndviAfter, 'Input']);
-
-        let reclassifyAfter = this.createRectangle({
-            label: 'Detect vegetation',
-            inputs: ['Input'],
-            outputs: ['Output']
-        });
-
-        this.nodes.set(reclassifyAfter, {
-            input: 1,
-            name: 'Detect vegetation',
-            part: 'class1'
-        });
-
-        this.createLink([ndviAfter, 'Output'], [reclassifyAfter, 'Input']);
-
-        let subtract = this.createRectangle({
-            label: 'Vegetation change detection',
-            inputs: ['First', 'Second'],
-            outputs: ['Output']
-        });
-
-        this.nodes.set(subtract, {
-            input: 1,
-            name: 'Vegetation change detection',
-            part: 'final'
-        });
-
-        this.createLink([reclassifyBefore, 'Output'], [subtract, 'First']);
-        this.createLink([reclassifyAfter, 'Output'], [subtract, 'Second']);
     }
 
     initDiagram() {
@@ -229,6 +140,60 @@ export default class DiagramContainerController {
         });
     }
 
+    extractInputs() {
+        this.inputsJson = [];
+        this.doExtractInput(this.toolJson);
+    }
+
+    doExtractInput(json, parentTool) {
+        if (json.hasOwnProperty('args')) {
+            let args = json.args;
+            let tool = this.getToolLabel(json);
+            if (!Array.isArray(args)) {
+                args = Object.values(args);
+            }
+            args.forEach(j => this.doExtractInput(j, tool));
+        } else {
+            this.inputsJson.push(Object.assign(json, {parent: parentTool}));
+        }
+    }
+
+    extractShapes() {
+        this.shapes = [];
+        this.nodes = new Map();
+        this.doExtractShapes(this.toolJson);
+    }
+
+    doExtractShapes(json) {
+        const isLeaf = !json.hasOwnProperty('args');
+        let children = false;
+        let args = [];
+
+        if (!isLeaf) {
+            args = json.args;
+            if (!Array.isArray(args)) {
+                args = Object.values(args);
+            }
+            children = args
+                .map(j => this.doExtractShapes(j))
+                .filter(c => Boolean(c));
+        }
+
+        if (isLeaf && json.type === 'layer' || !isLeaf) {
+            let inputCount = args
+                .filter(a => a.type === 'layer' || a.apply)
+                .length;
+            return this.createRectangle({
+                label: this.getToolLabel(json),
+                inputs: inputCount,
+                outputs: ['Output'],
+                tag: json.tag,
+                children: children
+            });
+        }
+        return false;
+    }
+
     startComparison() {
         this.mousetipService.set('Select a node to compare');
         this.isComparing = true;
@@ -311,6 +276,8 @@ export default class DiagramContainerController {
             height: this.cellSize[1] * this.paddingFactor
         });
 
+        let inputs = this.createPorts(config.inputs, config.outputs);
+
         let shape = new joint.shapes.basic.Rect({
             id: id,
             size: {
@@ -343,28 +310,41 @@ export default class DiagramContainerController {
                         }
                     }
                 },
-                items: this.createPorts(config.inputs, config.outputs)
+                items: inputs
             }
         });
 
         this.shapes.push(shape);
-        return id;
+        this.nodes.set(id, config);
+
+        if (config.children) {
+            let inputPorts = inputs.filter(i => i.group === 'inputs');
+            config.children.forEach((c, idx) => {
+                this.createLink([c.id, 'Output'], [shape.id, inputPorts[idx].id]);
+            });
+        }
+        return shape;
     }
 
     createPorts(inputs, outputs) {
         let ports = [];
-        inputs.forEach(i => {
-            ports.push({
-                id: i,
+        let inputList = Array.isArray(inputs) ?
+            inputs : Array(inputs).fill();
+
+        ports = inputList.map((_, idx) => {
+            return {
+                id: `input-${idx}`,
+                label: `input-${idx}`,
                 group: 'inputs'
-            });
+            };
         });
-        outputs.forEach(o => {
-            ports.push({
+
+        ports = ports.concat(outputs.map(o => {
+            return {
                 id: o,
                 group: 'outputs'
-            });
-        });
+            };
+        }));
 
         return ports;
     }
