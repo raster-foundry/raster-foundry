@@ -1,6 +1,6 @@
 class ScenesListController {
     constructor( // eslint-disable-line max-params
-        $log, sceneService, $state, $scope, $uibModal
+        $log, sceneService, $state, $scope, $uibModal, authService
     ) {
         'ngInject';
 
@@ -10,6 +10,7 @@ class ScenesListController {
         this.$scope = $scope;
         this.$parent = $scope.$parent.$ctrl;
         this.$uibModal = $uibModal;
+        this.authService = authService;
 
         this.sceneList = [];
         this.populateSceneList($state.params.page || 1);
@@ -27,7 +28,8 @@ class ScenesListController {
             {
                 sort: 'createdAt,desc',
                 pageSize: '10',
-                page: page - 1
+                page: page - 1,
+                createdBy: this.authService.profile().user_id
             }
         ).then((sceneResult) => {
             this.lastSceneResult = sceneResult;
