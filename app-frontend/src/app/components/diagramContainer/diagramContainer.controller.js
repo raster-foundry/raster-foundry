@@ -47,15 +47,6 @@ export default class DiagramContainerController {
             this.coreToolsJson[json.apply].label : json.apply);
     }
 
-    $onChanges(changes) {
-        if (this.graph && (changes.shapes || changes.cellLabel)) {
-            this.graph.clear();
-            this.initShapes();
-            this.shapes.forEach(s => this.graph.addCell(s));
-            this.initDiagram();
-        }
-    }
-
     initDiagram() {
         if (!this.graph) {
             this.graph = new joint.dia.Graph();
@@ -92,6 +83,7 @@ export default class DiagramContainerController {
                 marginX: padding,
                 marginY: padding
             });
+
             this.paper.scaleContentToFit({
                 padding: padding
             });
@@ -142,56 +134,140 @@ export default class DiagramContainerController {
 
     extractInputs() {
         this.inputsJson = [];
-        this.doExtractInput(this.toolJson);
-    }
 
-    doExtractInput(json, parentTool) {
-        if (json.hasOwnProperty('args')) {
-            let args = json.args;
-            let tool = this.getToolLabel(json);
-            if (!Array.isArray(args)) {
-                args = Object.values(args);
+        let json = Object.assign({}, this.toolJson);
+        let inputs = [json];
+        while (inputs.length) {
+            let input = inputs.pop();
+            let args = input.args;
+            if (args) {
+                let tool = this.getToolLabel(input);
+                if (!Array.isArray(args)) {
+                    args = Object.values(args);
+                }
+                inputs = inputs.concat(args.map((a) => {
+                    return Object.assign({parent: tool}, a);
+                }));
+            } else {
+                this.inputsJson.push(input);
             }
-            args.forEach(j => this.doExtractInput(j, tool));
-        } else {
-            this.inputsJson.push(Object.assign(json, {parent: parentTool}));
         }
     }
 
     extractShapes() {
-        this.shapes = [];
-        this.nodes = new Map();
-        this.doExtractShapes(this.toolJson);
+        let nextId = 0;
+        let nodes = new Map();
+        let shapes = [];
+        let json = Object.assign({}, this.toolJson);
+        let inputs = [json];
+
+        while (inputs.length) {
+            let input = inputs.pop();
+            let rectangle;
+            let args;
+
+            // Args can be array or object, if object, convert to array
+            if (input.args) {
+                args = Array.isArray(input.args) ? input.args : Object.values(input.args);
+            } else {
+                args = [];
+            }
+
+            // Input nodes not of the layer type are not made into rectangles
+            if (!input.type || input.type === 'layer') {
+                let rectInputs = args.filter(a => a.type === 'layer' || a.apply).length;
+                let rectOutputs = ['Output'];
+                let ports = this.createPorts(rectInputs, rectOutputs);
+                let currentId = nextId.toString();
+                let rectAttrs = {
+                    id: currentId,
+                    label: this.getToolLabel(input),
+                    inputs: rectInputs,
+                    outputs: rectOutputs,
+                    tag: input.tag,
+                    ports: ports
+                };
+
+                rectangle = this.constructRect(rectAttrs);
+
+                nodes.set(currentId, rectAttrs);
+
+                shapes.push(rectangle);
+
+                if (input.parent) {
+                    let firstPort = input.parent.portData.ports.filter(i => {
+                        return i.group === 'inputs' && !i.isConnected;
+                    })[0];
+
+                    firstPort.isConnected = true;
+
+                    let link = new joint.dia.Link({
+                        source: {id: rectangle.id, port: 'Output'},
+                        target: {id: input.parent.id, port: firstPort.id},
+                        attrs: {
+                            '.marker-target': {
+                                d: 'M 4 0 L 0 2 L 4 4 z'
+                            }
+                        }
+                    });
+
+                    shapes.push(link);
+                }
+                if (args) {
+                    inputs = inputs.concat(args.map((a) => {
+                        return Object.assign({
+                            parent: rectangle
+                        }, a);
+                    }));
+                }
+                nextId += 1;
+            }
+        }
+        this.shapes = shapes;
+        this.nodes = nodes;
     }
 
-    doExtractShapes(json) {
-        const isLeaf = !json.hasOwnProperty('args');
-        let children = false;
-        let args = [];
+    constructRect(config) {
+        let label = joint.util.breakText(config.label || config.id.toString(), {
+            width: this.cellSize[0] * this.paddingFactor,
+            height: this.cellSize[1] * this.paddingFactor
+        });
 
-        if (!isLeaf) {
-            args = json.args;
-            if (!Array.isArray(args)) {
-                args = Object.values(args);
+        return new joint.shapes.basic.Rect({
+            id: config.id,
+            size: {
+                width: this.cellSize[0],
+                height: this.cellSize[1]
+            },
+            attrs: {
+                rect: {
+                    fill: '#fff',
+                    stroke: '#959cad',
+                    'stroke-width': 0.5,
+                    rx: 2,
+                    ry: 4
+                },
+                text: {
+                    fill: '#353b59',
+                    text: label
+                }
+            },
+            ports: {
+                groups: {
+                    inputs: {
+                        position: {
+                            name: 'left'
+                        }
+                    },
+                    outputs: {
+                        position: {
+                            name: 'right'
+                        }
+                    }
+                },
+                items: config.ports
             }
-            children = args
-                .map(j => this.doExtractShapes(j))
-                .filter(c => Boolean(c));
-        }
-
-        if (isLeaf && json.type === 'layer' || !isLeaf) {
-            let inputCount = args
-                .filter(a => a.type === 'layer' || a.apply)
-                .length;
-            return this.createRectangle({
-                label: this.getToolLabel(json),
-                inputs: inputCount,
-                outputs: ['Output'],
-                tag: json.tag,
-                children: children
-            });
-        }
-        return false;
+        });
     }
 
     startComparison() {
@@ -267,64 +343,6 @@ export default class DiagramContainerController {
         }
     }
 
-    createRectangle(config) {
-        // We're manually creating node ids, which will be dictated by order in `shapes`
-        let id = `node-${this.shapes.length}`;
-
-        let label = joint.util.breakText(config.label || id, {
-            width: this.cellSize[0] * this.paddingFactor,
-            height: this.cellSize[1] * this.paddingFactor
-        });
-
-        let inputs = this.createPorts(config.inputs, config.outputs);
-
-        let shape = new joint.shapes.basic.Rect({
-            id: id,
-            size: {
-                width: this.cellSize[0],
-                height: this.cellSize[1]
-            },
-            attrs: {
-                rect: {
-                    fill: '#fff',
-                    stroke: '#959cad',
-                    'stroke-width': 0.5,
-                    rx: 2,
-                    ry: 4
-                },
-                text: {
-                    fill: '#353b59',
-                    text: label
-                }
-            },
-            ports: {
-                groups: {
-                    inputs: {
-                        position: {
-                            name: 'left'
-                        }
-                    },
-                    outputs: {
-                        position: {
-                            name: 'right'
-                        }
-                    }
-                },
-                items: inputs
-            }
-        });
-
-        this.shapes.push(shape);
-        this.nodes.set(id, config);
-
-        if (config.children) {
-            let inputPorts = inputs.filter(i => i.group === 'inputs');
-            config.children.forEach((c, idx) => {
-                this.createLink([c.id, 'Output'], [shape.id, inputPorts[idx].id]);
-            });
-        }
-        return shape;
-    }
 
     createPorts(inputs, outputs) {
         let ports = [];
@@ -359,7 +377,6 @@ export default class DiagramContainerController {
                 }
             }
         });
-        this.shapes.push(link);
         return link;
     }
 }
