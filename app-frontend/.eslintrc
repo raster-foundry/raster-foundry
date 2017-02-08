@@ -199,8 +199,6 @@
     "keyword-spacing": [1, {"before": true, "after": true}], // require a space after certain keywords (off by default)
     "space-before-blocks": [1, "always"], // require or disallow space before blocks (off by default)
     "space-before-function-paren": [1, {"anonymous": "always", "named": "never"}], // require or disallow space before function opening parenthesis (off by default)
-    "object-curly-spacing": [1, "never"], // require or disallow spaces inside brackets (off by default)
-    "array-bracket-spacing": [1, "never"], // require or disallow spaces inside brackets (off by default)
     "computed-property-spacing": [1, "never"], // require or disallow spaces inside brackets (off by default)
     "space-in-parens": [1, "never"], // require or disallow spaces inside parentheses (off by default)
     "space-infix-ops": [1, {"int32Hint": false}], // require spaces around operators
