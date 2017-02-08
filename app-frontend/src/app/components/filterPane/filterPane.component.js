@@ -5,7 +5,7 @@ const rfFilterPane = {
     controller: 'FilterPaneController',
     bindings: {
         filters: '=',
-        onCloseClick: '&'
+        opened: '='
     }
 };
 
