@@ -6,6 +6,7 @@ Brief description of what this PR does, and why it is needed.
 
 - [ ] Styleguide updated, if necessary
 - [ ] Swagger specification updated, if necessary
+- [ ] Symlinks from new migrations present or corrected for any new migrations
 
 ### Demo
 
