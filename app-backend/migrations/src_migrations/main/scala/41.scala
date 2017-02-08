@@ -10,6 +10,8 @@ CREATE TABLE tool_runs (
   created_by VARCHAR(255) REFERENCES users(id) NOT NULL,
   modified_at TIMESTAMP NOT NULL,
   modified_by VARCHAR(255) REFERENCES users(id) NOT NULL,
+  visibility visibility NOT NULL,
+  organization UUID REFERENCES organizations(id) NOT NULL,
   project UUID REFERENCES projects(id) NOT NULL,
   tool UUID REFERENCES tools(id) NOT NULL,
   execution_parameters JSONB NOT NULL DEFAULT '{}'

@@ -15,20 +15,23 @@ import com.azavea.rf.database.query._
 
 class ToolRuns(_TableTag: Tag) extends Table[ToolRun](_TableTag, "tool_runs")
     with TimestampFields {
-  def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, projectId, toolId, execution_parameters) <>
-    (ToolRun.tupled, ToolRun.unapply _)
+  def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, visibility,
+           organizationId, projectId, toolId, execution_parameters) <> (ToolRun.tupled, ToolRun.unapply _)
 
   val id: Rep[UUID]  = column[UUID]("id", O.PrimaryKey)
   val createdAt: Rep[Timestamp] = column[Timestamp]("created_at")
   val createdBy: Rep[String] = column[String]("created_by")
   val modifiedAt: Rep[Timestamp] = column[Timestamp]("modified_at")
   val modifiedBy: Rep[String] = column[String]("modified_by")
+  val visibility: Rep[Visibility] = column[Visibility]("visibility")
+  val organizationId: Rep[UUID] = column[UUID]("organization")
   val projectId: Rep[UUID] = column[UUID]("project")
   val toolId: Rep[UUID] = column[UUID]("tool")
   val execution_parameters: Rep[Map[String, Any]] = column[Map[String, Any]]("execution_parameters")
 
   lazy val createdByUserFK = foreignKey("tool_runs_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val modifiedByUserFK = foreignKey("tool_runs_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val organizationFK = foreignKey("tool_runs_organization_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val projectFK = foreignKey("tool_runs_project_fkey", projectId, Projects)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val toolFK = foreignKey("tool_runs_tool_fkey", toolId, Tools)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 
