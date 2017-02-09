@@ -1,3 +1,8 @@
 .main {
   flex: 1;
+  display: flex;
+}
+
+.dashboard .main {
+  display: block;
 }

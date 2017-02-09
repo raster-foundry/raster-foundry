@@ -77,3 +77,18 @@
   margin-top: 1rem;
   margin-bottom: 2rem;
 }
+
+/* 
+ * safari fix for map not displaying
+ */
+.main > rf-map-container {
+  display: flex;
+  flex: 1;
+
+  .leaflet-container {
+    display: flex;
+    flex: 1;
+    height: auto;
+    min-height: 100%;
+  }
+}

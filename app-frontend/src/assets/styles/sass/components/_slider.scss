@@ -65,7 +65,9 @@
   }
 
   .rz-ticks.rz-ticks-values-under .rz-tick-value {
-    bottom: -35px;
+    top: inherit;
+    bottom: inherit;
+    transform: translate(-50%, 12px); // IE is ignoring bottom so we transform-y instead
   }
   
   .rz-ticks .rz-tick{

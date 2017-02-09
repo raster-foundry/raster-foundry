@@ -146,4 +146,5 @@
 rf-filter-pane {
   display: flex;
   flex-flow: column;
+  height: 100%; // firefox overflowing fix
 }

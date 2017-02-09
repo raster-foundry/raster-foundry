@@ -34,7 +34,8 @@ nav .btn-group {
 }
 .lab-workspace {
     background-color: #f3f3f3 !important;
-    height: 100%;
+    display: flex;
+    flex: 1;
 }
 
 .btn-square.really-square {
@@ -71,4 +72,9 @@ form.inset {
 
 .sidebar-content .form-group:last-of-type {
     margin-bottom: 0;
+}
+
+rf-diagram-container {
+    display: flex;
+    flex: 1;
 }
