@@ -13,6 +13,7 @@ import 'angular-storage';
 import 'angular-lock';
 import 'ng-infinite-scroll';
 import 'angular-jwt';
+import 'angular-clipboard';
 import 'angular-resource';
 import 'oclazyload';
 import 'angular-animate';
