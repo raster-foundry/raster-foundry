@@ -14,6 +14,7 @@ const App = angular.module(
         require('angular-nvd3'),
         'angular-storage',
         'angular-jwt',
+        'angular-clipboard',
         'auth0.lock',
         'ngAnimate',
         'ngCookies',
