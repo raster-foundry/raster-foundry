@@ -185,6 +185,13 @@ export default class LabRunController {
         }
     }
 
+    shareNode(data) {
+        if (data) {
+            let tileUrl = this.getNodeUrl(data);
+            this.publishModal(tileUrl);
+        }
+    }
+
     fitSceneList(projectId) {
         this.sceneRequestState = {loading: true};
         this.projectService.getAllProjectScenes(
@@ -233,5 +240,22 @@ export default class LabRunController {
             this.onParameterChange();
             this.$scope.$evalAsync();
         });
+    }
+
+    publishModal(tileUrl) {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        if (tileUrl) {
+            this.activeModal = this.$uibModal.open({
+                component: 'rfPublishModal',
+                resolve: {
+                    tileUrl: () => tileUrl,
+                    noDownload: () => true
+                }
+            });
+        }
+        return this.activeModal;
     }
 }
