@@ -11,6 +11,8 @@ RUN set -ex \
                --uid 1000 --home /var/lib/airflow \
                --shell /usr/sbin/nologin \
                airflow \
+    && mkdir -p ${AIRFLOW_HOME} \
+    && chown airflow:airflow -R ${AIRFLOW_HOME} \
     && buildDeps=' \
        python-dev \
     ' \
