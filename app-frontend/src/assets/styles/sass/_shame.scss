@@ -206,6 +206,7 @@ rf-project-editor .leaflet-tile {
   padding-left: 250px;
   border-bottom: 1px solid #ddd;
   margin: 0;
+  flex: none; // fix for safari
 
   .form-group {
     margin: 1rem;

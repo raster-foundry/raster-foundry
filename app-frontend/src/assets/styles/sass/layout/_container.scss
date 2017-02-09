@@ -15,7 +15,7 @@
   flex: 1;
 
   .container {
-    max-width: initial;
+    max-width: 100%; // inherit does not work in IE so we use 100%
     flex: 1;
     position: relative;
 
@@ -47,8 +47,12 @@ $navbar-secondary-height: 6rem;
 
 .container-not-scrollable {
   height: calc(100vh - #{$navbar-height});
+  max-height: calc(100vh - #{$navbar-height}); // Fixes flex + height issue in some browsers
+  min-height: calc(100vh - #{$navbar-height}); // Fixes flex + height issue in some browsers
 
   .secondary-navbar ~ & {
-    height: calc(100vh - #{$navbar-height + $navbar-secondary-height});    
+    height: calc(100vh - #{$navbar-height + $navbar-secondary-height});
+    max-height: calc(100vh - #{$navbar-height + $navbar-secondary-height}); // Fixes flex + height issue in some browsers
+    min-height: calc(100vh - #{$navbar-height + $navbar-secondary-height}); // Fixes flex + height issue in some browsers
   }
 }

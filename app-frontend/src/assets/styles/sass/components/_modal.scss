@@ -256,13 +256,14 @@
 
       .modal-body {
         padding-left: 270px; //width of modal-header and default left padding of modal-body
-        height: calc(100vh - 100px);
+        min-height: 450px;
       }
 
       .modal-footer {
         z-index: 10;
         background: #fff;
         z-index: 2;
+        position: relative; // fix for ie10 so z-index works
       }
     }
   }
