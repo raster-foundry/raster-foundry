@@ -9,6 +9,7 @@ const PublishModalModule = angular.module('components.publishModal', []);
 PublishModalModule.controller(
     'PublishModalController', PublishModalController
 );
+
 PublishModalModule.component(
     'rfPublishModal', PublishModalComponent
 );

@@ -7,7 +7,8 @@ const rfPublishModal = {
         dismiss: '&',
         modalInstance: '<',
         resolve: '<'
-    }
+    },
+    controller: 'PublishModalController'
 };
 
 export default rfPublishModal;
