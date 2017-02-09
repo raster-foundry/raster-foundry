@@ -53,6 +53,7 @@ class DatasourceSpec extends WordSpec
     "Datasource1",
     Visibility.Public,
     exColorCorrect,
+    Map(),
     Map()
   )
 
@@ -61,6 +62,7 @@ class DatasourceSpec extends WordSpec
     "Datasource2",
     Visibility.Public,
     exColorCorrect,
+    Map(),
     Map()
   )
 
@@ -70,6 +72,7 @@ class DatasourceSpec extends WordSpec
     "Datasource3",
     Visibility.Private,
     exColorCorrect,
+    Map(),
     Map()
   )
 
