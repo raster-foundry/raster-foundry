@@ -199,6 +199,11 @@ export default class DiagramContainerController {
             callback: () => {
                 this.onPreview({data: this.nodes.get(this.selectedCellView.model.id)});
             }
+        }, {
+            label: 'Share',
+            callback: () => {
+                this.onShare({data: this.nodes.get(this.selectedCellView.model.id)});
+            }
         }];
         this.cancelComparisonMenu = [{
             label: 'Cancel',

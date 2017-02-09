@@ -161,7 +161,8 @@
   </div>
   <div class="main with-position">
     <rf-diagram-container class="with-position"
-                          on-preview="$ctrl.showPreview(data)">
+                          on-preview="$ctrl.showPreview(data)"
+                          on-share="$ctrl.shareNode(data)">
     </rf-diagram-container>
     <div style="position: absolute; top:0; bottom: 0; left: 0; right: 0;" ng-show="$ctrl.isShowingPreview">
       <rf-map-container map-id="lab-run-preview"></rf-map-container>
