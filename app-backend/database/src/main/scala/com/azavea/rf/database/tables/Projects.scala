@@ -227,6 +227,27 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     }
   }
 
+  def getCompositeBands(composite: Map[String, Any]): (Int, Int, Int) = {
+    val bands = composite.get("value") match {
+      case Some(b) => b.asInstanceOf[Map[String, Any]]
+      case _ => Map.empty[String, Any]
+    }
+    val redBand = bands.get("redBand") match {
+      case Some(b) => b.asInstanceOf[Int]
+      case _ => 1
+    }
+    val greenBand = bands.get("greenBand") match {
+      case Some(b) => b.asInstanceOf[Int]
+      case _ => 2
+    }
+    val blueBand = bands.get("blueBand") match {
+      case Some(b) => b.asInstanceOf[Int]
+      case _ => 3
+    }
+
+    (redBand, greenBand, blueBand)
+  }
+
   /** Adds a list of scenes to a project
     *
     * @param sceneIds Seq[UUID] list of primary keys of scenes to add to project
@@ -241,14 +262,51 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
 
     database.db.run {
       sceneProjectJoinQuery.result
-    } map { alreadyAdded =>
+    } flatMap { alreadyAdded =>
       val newScenes = sceneIds.filterNot(alreadyAdded.toSet)
-      val newScenesToProjects = newScenes.map { sceneId =>
-        SceneToProject(sceneId, projectId)
-      }
+      val sceneCompositesQuery = for {
+        s <- Scenes if s.id.inSet(newScenes)
+        d <- Datasources if d.id === s.datasource
+      } yield (s.id, d.composites)
 
       database.db.run {
-        ScenesToProjects.forceInsertAll(newScenesToProjects)
+        sceneCompositesQuery.result
+      } flatMap { sceneComposites =>
+        val sceneToProjects = sceneComposites.map {
+          case (sceneId, composites) => {
+            val composite: Map[String, Any] = composites.get("natural") match {
+              case Some(c: Map[String, Any]) => c
+              case _ => composites.headOption match {
+                case Some((key: String, value: Any)) => value match {
+                  case Some(c: Map[String, Any]) => c
+                  case _ => Map.empty[String, Any]
+                }
+                case _ => Map.empty[String, Any]
+              }
+            }
+
+            val (redBand, greenBand, blueBand) = getCompositeBands(
+              composite.asInstanceOf[Map[String, Any]]
+            )
+
+            SceneToProject(
+              sceneId, projectId, None, Some(
+                ColorCorrect.Params(
+                  redBand, greenBand, blueBand, // Bands
+                  None, None, None,             // Gamma
+                  None, None,                   // Contrast, Brightness
+                  None, None,                   // Alpha, Beta
+                  None, None,                   // Min, Max
+                  false                         // Equalize
+                )
+              )
+            )
+          }
+        }
+
+        database.db.run {
+          ScenesToProjects.forceInsertAll(sceneToProjects)
+        }
       }
     }
 
