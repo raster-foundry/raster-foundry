@@ -18,7 +18,11 @@ export default (app) => {
          */
         requestGrid(coords, params) {
             let url = `/api/scene-grid/${coords.z}/${coords.x}/${coords.y}/`;
-            return this.$http.get(url, {params: params});
+            let validParams = Object.assign(
+                params,
+                {minCloudCover: params.minCloudCover ? params.minCloudCover : 0}
+            );
+            return this.$http.get(url, {params: validParams});
         }
 
         /** Create grid layer given a set of filter parameters
