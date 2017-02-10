@@ -24,7 +24,7 @@ def create_footprints(csv_row):
     lr = (csv_row['lowerRightCornerLongitude'], csv_row['lowerRightCornerLatitude'])
     ul = (csv_row['upperLeftCornerLongitude'], csv_row['upperLeftCornerLatitude'])
     ur = (csv_row['upperRightCornerLongitude'], csv_row['upperRightCornerLatitude'])
-    src_coords = [ll, lr, ur, ul]
+    src_coords = [(float(c[0]), float(c[1])) for c in [ll, lr, ur, ul]]
 
     min_x = min([coord[0] for coord in src_coords])
     min_y = min([coord[1] for coord in src_coords])
