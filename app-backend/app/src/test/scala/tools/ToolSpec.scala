@@ -36,6 +36,7 @@ class ToolSpec extends WordSpec
     Visibility.Public,
     List("Test tool datasource"),
     2.5f,
+    Map(),
     List(),
     List()
 )

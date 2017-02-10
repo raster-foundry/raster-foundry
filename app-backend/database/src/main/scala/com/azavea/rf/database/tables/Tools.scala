@@ -31,7 +31,7 @@ class Tools(_tableTag: Tag) extends Table[Tool](_tableTag, "tools")
 {
   def * = (id, createdAt, modifiedAt, createdBy, modifiedBy, organizationId,
     title, description, requirements, license, visibility, compatibleDataSources,
-    stars) <> (Tool.tupled, Tool.unapply)
+    stars, definition) <> (Tool.tupled, Tool.unapply)
 
   val id: Rep[UUID] = column[UUID]("id", O.PrimaryKey)
   val createdAt: Rep[Timestamp] = column[Timestamp]("created_at")
@@ -47,6 +47,7 @@ class Tools(_tableTag: Tag) extends Table[Tool](_tableTag, "tools")
   val compatibleDataSources: Rep[List[String]] = column[List[String]]("compatible_data_sources",
     O.Length(Int.MaxValue, varying = false), O.Default(List.empty))
   val stars: Rep[Float] = column[Float]("stars", O.Default(0.0f))
+  val definition: Rep[Map[String, Any]] = column[Map[String, Any]]("definition", O.Length(2147483647,varying=false))
 
   lazy val organizationsFk =
     foreignKey("tools_organization_id_fkey", organizationId, Organizations)(
@@ -106,6 +107,7 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
         tool.visibility,
         tool.compatibleDataSources,
         tool.stars,
+        tool.definition,
         tagCategoryJoins.flatMap(_.toolTagId).distinct,
         tagCategoryJoins.flatMap(_.toolCategorySlug).distinct
       )

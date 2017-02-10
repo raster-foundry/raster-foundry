@@ -4,6 +4,7 @@ import com.liyaos.forklift.slick.SqlMigration
 object M42 {
   RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(42)(List(
     sqlu"""
+<<<<<<< HEAD
 ALTER TABLE datasources
 ADD COLUMN composites JSONB default '{}';
 
@@ -15,5 +16,60 @@ UPDATE datasources set (composites) = (
 '{"invalid":{"label":"Invalid Bands","value":{"redBand":0,"greenBand":0,"blueBand":0}}}'
 ) where datasources.id = '4a50cb75-815d-4fe5-8bc1-144729ce5b42';
 """
+=======
+ALTER TABLE tools ADD COLUMN definition JSONB NOT NULL DEFAULT '{}';
+
+UPDATE tools
+SET definition = '{
+    "apply": "-",
+    "tag": "final",
+    "label": "Vegetation Change",
+    "args": [
+        {
+            "label": "Detect Vegetation - Before",
+            "tag": "class0",
+            "apply": "reclassify",
+            "args": {
+                "breaks": {
+                    "type": "class-breaks"
+                },
+                "layer": {
+                    "label": "Vegetation Index - Before",
+                    "tag": "ndvi0",
+                    "apply": "ndvi",
+                    "args": [{
+                        "type": "layer",
+                        "label": "Area of Interest - Before",
+                        "tag": "input_0"
+                    }]
+                }
+            }
+        },
+        {
+            "apply": "reclassify",
+            "label": "Detect Vegetation - After",
+            "tag": "class1",
+            "args": {
+                "breaks": {
+                    "type": "class-breaks"
+                },
+                "layer": {
+                    "label": "Vegetation Index - After",
+                    "tag": "ndvi1",
+                    "apply": "ndvi",
+                    "args": [{
+                        "type": "layer",
+                        "label": "Area of Interest - After",
+                        "tag": "input_1"
+                    }]
+                }
+            }
+        }
+    ]
+}'
+
+WHERE id = 'b237a825-203e-44bc-9cfa-81cff9f28641';
+    """
+>>>>>>> Add json definition to tool model
   ))
 }
