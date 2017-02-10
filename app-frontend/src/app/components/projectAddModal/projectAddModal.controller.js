@@ -41,15 +41,25 @@ export default class ProjectAddModalController {
     }
 
     createNewProject(name) {
-        delete this.newProjectName;
-        this.projectService.createProject(name).then(
-            () => {
-                this.populateProjectList(this.currentPage);
-            },
-            (err) => {
-                this.$log.error('Error creating project:', err);
-            }
-        );
+        this.showProjectCreateError = false;
+        if (name) {
+            delete this.newProjectName;
+            this.projectService.createProject(name).then(
+                () => {
+                    this.populateProjectList(this.currentPage);
+                },
+                (err) => {
+                    this.projectCreateErrorText =
+                        'There was an error creating the project';
+                    this.showProjectCreateError = true;
+                    this.$log.error('Error creating project:', err);
+                }
+            );
+        } else {
+            this.projectCreateErrorText =
+                'A name is needed to create a new project';
+            this.showProjectCreateError = true;
+        }
     }
 
     isSelected(project) {
