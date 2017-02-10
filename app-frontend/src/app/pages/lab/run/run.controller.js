@@ -252,7 +252,7 @@ export default class LabRunController {
             this.activeModal = this.$uibModal.open({
                 component: 'rfPublishModal',
                 resolve: {
-                    tileUrl: () => tileUrl,
+                    tileUrl: () => this.projectService.getBaseURL() + tileUrl,
                     noDownload: () => true
                 }
             });
