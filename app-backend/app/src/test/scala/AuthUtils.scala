@@ -1,15 +1,14 @@
 package com.azavea.rf
 
-import spray.json._
-import de.choffmeister.auth.common.JsonWebToken
-import akka.http.scaladsl.model.headers.{Authorization, OAuth2BearerToken}
-
 import com.azavea.rf.utils.Config
 
+import akka.http.scaladsl.model.headers.{Authorization, OAuth2BearerToken}
+import pdi.jwt.{Jwt, JwtJson4s, JwtAlgorithm, JwtClaim}
+import spray.json._
 
 /** Utility functions for testing endpoints that require authentication / authorization
   */
-object AuthUtils extends Config{
+object AuthUtils extends Config {
   /** Generate a JWT token string
     *
     * @param sub the user's identifier (auth0 id, google oauth, etc)
@@ -37,11 +36,8 @@ object AuthUtils extends Config{
       }
       case _ => expires
     }
-    val claims = Map(
-      "sub" -> JsString(sub)
-    )
-    val token = JsonWebToken(claims, createdAt.toInstant(), expiresAt.toInstant())
-    val encodedToken = JsonWebToken.write(token: JsonWebToken, auth0Secret)
+    val claims = JwtClaim().about(sub).issuedAt(createdAt.getTime).expiresAt(expiresAt.getTime)
+    val encodedToken = JwtJson4s.encode(claims, auth0Secret, JwtAlgorithm.HS256)
     val authorization = Authorization(OAuth2BearerToken(encodedToken))
     encodedToken
   }

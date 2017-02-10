@@ -84,7 +84,6 @@ lazy val appDependencies = dbDependencies ++ migrationsDependencies ++
   Dependencies.akkajson,
   Dependencies.akkastream,
   Dependencies.akkaSlf4j,
-  Dependencies.authCommon,
   Dependencies.akkaHttpExtensions,
   Dependencies.commonsIO,
   Dependencies.ammoniteOps,
@@ -107,7 +106,9 @@ lazy val common = Project("common", file("common"))
   .dependsOn(database, datamodel)
   .settings(appSettings:_*)
   .settings({libraryDependencies ++= Seq(
-    Dependencies.authAkka,
+    Dependencies.jwtCore,
+    Dependencies.json4s,
+    Dependencies.jwtJson,
     Dependencies.akka,
     Dependencies.akkahttp,
     Dependencies.commonsIO,

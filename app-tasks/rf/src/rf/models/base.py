@@ -1,4 +1,3 @@
-import base64
 from datetime import datetime, timedelta
 import requests
 import jwt
@@ -9,7 +8,7 @@ import os
 def get_session():
     """Helper method to create a requests Session"""
 
-    jwt_secret = base64.urlsafe_b64decode(os.getenv('AUTH0_CLIENT_SECRET'))
+    jwt_secret = os.getenv('AUTH0_CLIENT_SECRET')
     claims = {
         'sub': 'rf|airflow-user',
         'iat': datetime.utcnow(),
