@@ -36,8 +36,6 @@ export default class BrowseController {
             return val;
         });
 
-
-
         if ($state.params.id) {
             this.sceneService.query({id: $state.params.id}).then(
                 (scene) => {
