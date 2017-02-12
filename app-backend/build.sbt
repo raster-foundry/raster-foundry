@@ -2,7 +2,7 @@ name := "rf-backend"
 
 addCommandAlias("mg", "migrations/run")
 
-
+scalaVersion := Version.scala
 
 lazy val commonSettings = Seq(
   organization := "com.azavea",
@@ -14,7 +14,7 @@ lazy val commonSettings = Seq(
   scalacOptions := Seq(
     "-deprecation",
     "-unchecked",
-    "-feature",
+    "-feature", 
     "-language:implicitConversions",
     "-language:reflectiveCalls",
     "-language:higherKinds",
