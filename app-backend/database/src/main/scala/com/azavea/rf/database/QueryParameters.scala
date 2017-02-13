@@ -29,7 +29,6 @@ case class ImageQueryParameters(
   scene: Iterable[UUID] = Seq[UUID]()
 )
 
-
 /** Case class representing all possible query parameters */
 case class SceneQueryParameters(
   maxCloudCover: Option[Float] = None,
@@ -156,13 +155,11 @@ case class OrgQueryParameters(
   organizations: Iterable[UUID] = Seq[UUID]()
 )
 
-
 /** Query parameters to filter by users */
 case class UserQueryParameters(
   createdBy: Option[String] = None,
   modifiedBy: Option[String] = None
 )
-
 
 /** Query parameters to filter by modified/created times */
 case class TimestampQueryParameters(

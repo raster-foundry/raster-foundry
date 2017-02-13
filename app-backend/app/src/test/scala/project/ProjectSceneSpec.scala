@@ -5,6 +5,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.{HttpEntity, ContentTypes}
 import akka.http.scaladsl.testkit.{ScalatestRouteTest, RouteTestTimeout}
 import com.azavea.rf.datamodel._
+import com.azavea.rf.database.query._
 import concurrent.duration._
 import org.scalatest.{Matchers, WordSpec}
 import spray.json._
@@ -31,7 +32,6 @@ class ProjectSceneSpec extends WordSpec
   // Alias to baseRoutes to be explicit
   val baseRoutes = routes
   val authHeader = AuthUtils.generateAuthHeader("Default")
-
 
   "/api/projects/{project}/scenes/" should {
     "allow creating projects and scenes" in {
@@ -305,6 +305,93 @@ class ProjectSceneSpec extends WordSpec
         ) ~> baseRoutes ~> check {
           responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 1
         }
+      }
+    }
+  }
+
+  "/api/projects/{project}/scenes/fromQuery/" should {
+    val scene1 = newScene("fs1", Some(150.toFloat))
+    val scene2 = newScene("fs2", Some(150.toFloat))
+    val scene3 = newScene("fs3", Some(0.toFloat))
+    val queryParams = CombinedSceneQueryParams(
+      sceneParams = SceneQueryParameters(
+        minCloudCover = Some(101.toFloat)
+      )
+    )
+
+    "create a scene" in {
+      Post("/api/scenes/").withHeadersAndEntity(
+        List(authHeader),
+        HttpEntity(
+          ContentTypes.`application/json`,
+          scene1.toJson.toString
+        )
+      ) ~> baseRoutes ~> check {
+        responseAs[Scene.WithRelated]
+      }
+    }
+
+    "attach a scene to a project from query params" in {
+      val project = Post("/api/projects/").withHeadersAndEntity(
+        List(authHeader),
+        HttpEntity(
+          ContentTypes.`application/json`,
+          newProject3.toJson.toString()
+        )
+      ) ~> baseRoutes ~> check {
+        responseAs[Project]
+      }
+
+      Post(s"/api/projects/${project.id}/scenes/fromQuery/").withHeadersAndEntity(
+        List(authHeader),
+        HttpEntity(
+          ContentTypes.`application/json`,
+          queryParams.toJson.toString
+        )
+      ) ~> baseRoutes ~> check {
+        responseAs[Iterable[Scene.WithRelated]]
+      }
+
+      Get(s"/api/projects/${project.id}/scenes/").withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
+        responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 1
+      }
+
+      Post("/api/scenes/").withHeadersAndEntity(
+        List(authHeader),
+        HttpEntity(
+          ContentTypes.`application/json`,
+          scene2.toJson.toString()
+        )
+      ) ~> baseRoutes ~> check {
+        responseAs[Scene.WithRelated]
+      }
+
+      Post("/api/scenes/").withHeadersAndEntity(
+        List(authHeader),
+        HttpEntity(
+          ContentTypes.`application/json`,
+          scene3.toJson.toString()
+        )
+      ) ~> baseRoutes ~> check {
+        responseAs[Scene.WithRelated]
+      }
+
+      Post(s"/api/projects/${project.id}/scenes/fromQuery/").withHeadersAndEntity(
+        List(authHeader),
+        HttpEntity(
+          ContentTypes.`application/json`,
+          queryParams.toJson.toString()
+        )
+      ) ~> baseRoutes ~> check {
+        responseAs[Iterable[Scene.WithRelated]]
+      }
+
+      Get(s"/api/projects/${project.id}/scenes/").withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
+        responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 2
       }
     }
   }
