@@ -40,6 +40,7 @@ object SourceDefinition extends LazyLogging {
     cellSize: Option[CellSize],
     bandMaps: Array[BandMapping]
   ) {
+    @SuppressWarnings(Array("OptionGet"))
     def toSourceDefinition: SourceDefinition = {
       if (extent.isDefined && crs.isDefined && cellSize.isDefined) {
         SourceDefinition(
