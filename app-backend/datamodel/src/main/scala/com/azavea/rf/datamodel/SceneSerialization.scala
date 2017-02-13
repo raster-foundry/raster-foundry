@@ -7,28 +7,8 @@ import spray.json._
 import geotrellis.vector.Geometry
 import geotrellis.slick.Projected
 
-object ScenesJsonProtocol extends DefaultJsonProtocol {
-
-  def jsArrayToList[T](jsArr: JsValue): List[T] = {
-    jsArr match {
-      case arr: JsArray => arr.elements.map(_.asInstanceOf[T]).to[List]
-      case _ => List.empty[T]
-    }
-  }
-
-  // Reimplements OptionFormat.read because OptionFormat is mysteriously not in scope
-  def jsOptionToVal[T](jsOpt: JsValue): Option[T] = {
-    jsOpt match {
-      case JsNull => None
-      case v: Any => Some(v.asInstanceOf[T])
-    }
-  }
-
-  def formatTs(ts: String): Timestamp = {
-    Timestamp.valueOf(
-      ts.replace("Z", "").replace("T", " ")
-    )
-  }
+object ScenesJsonProtocol extends DefaultJsonProtocol
+    with SerializationUtils {
 
   implicit object SceneWithRelatedFormat extends RootJsonFormat[Scene.WithRelated] {
     def write(scene: Scene.WithRelated): JsObject = JsObject(

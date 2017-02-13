@@ -9,6 +9,7 @@ import com.lonelyplanet.akka.http.extensions.{PaginationDirectives, Order}
 
 import com.azavea.rf.common.{Authentication, UserErrorHandler}
 import com.azavea.rf.database.tables._
+import com.azavea.rf.database.query._
 import com.azavea.rf.database.Database
 import com.azavea.rf.datamodel._
 import com.azavea.rf.scene._
@@ -18,6 +19,7 @@ import java.util.UUID
 
 trait ProjectRoutes extends Authentication
     with QueryParametersCommon
+    with QueryParameterJsonFormat
     with SceneQueryParameterDirective
     with PaginationDirectives
     with UserErrorHandler {
@@ -27,6 +29,18 @@ trait ProjectRoutes extends Authentication
   implicit val rawIntFromEntityUnmarshaller: FromEntityUnmarshaller[UUID] =
     PredefinedFromEntityUnmarshallers.stringUnmarshaller.map{ s =>
       UUID.fromString(s)
+    }
+
+  /** This seems like it almost definitely shouldn't be necessary, but scala refuses
+    * to use the jsonFormats implicitly available from QueryParameterJsonFormat,
+    * and this implicit makes it stop complaining.
+    *
+    * Writing unmarshallers seems more manual and superfluous than writing json formats,
+    * but here we are.
+    */
+  implicit val combinedSceneQueryParamsUnmarshaller: FromEntityUnmarshaller[CombinedSceneQueryParams] =
+    PredefinedFromEntityUnmarshallers.stringUnmarshaller.map{ s =>
+      CombinedSceneQueryParamsReader.read(s.parseJson)
     }
 
   val BULK_OPERATION_MAX_LIMIT = 100
@@ -48,7 +62,12 @@ trait ProjectRoutes extends Authentication
           post { addProjectScenes(projectId) } ~
           put { updateProjectScenes(projectId) } ~
           delete { deleteProjectScenes(projectId) }
-        }
+        } ~
+          pathPrefix("fromQuery") {
+            pathEndOrSingleSlash {
+              post { addProjectScenesFromQueryParams(projectId) }
+            }
+          }
       } ~
       pathPrefix("mosaic") {
         pathEndOrSingleSlash {
@@ -179,6 +198,14 @@ trait ProjectRoutes extends Authentication
 
       complete {
         Projects.addScenesToProject(sceneIds, projectId)
+      }
+    }
+  }
+
+  def addProjectScenesFromQueryParams(projectId: UUID): Route = authenticate { user =>
+    entity(as[CombinedSceneQueryParams]) { combinedSceneQueryParams =>
+      onSuccess(Projects.addScenesToProjectFromQuery(combinedSceneQueryParams, projectId, user)) {
+        scenesAdded => complete((StatusCodes.Created, scenesAdded))
       }
     }
   }

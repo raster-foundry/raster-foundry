@@ -322,6 +322,17 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     listSelectProjectScenes(projectId, sceneIds)
   }
 
+  def addScenesToProjectFromQuery(combinedParams: CombinedSceneQueryParams, projectId: UUID, user: User)
+                                 (implicit database: DB): Future[Iterable[Scene.WithRelated]] = {
+    val sceneAction = Scenes.filterScenes(combinedParams)
+      .filterUserVisibility(user)
+      .map(_.id)
+      .result
+    database.db.run(sceneAction) flatMap { ids =>
+      Projects.addScenesToProject(ids, projectId)
+    }
+  }
+
   /** Removes scenes from project
     *
     * @param sceneIds Seq[UUID] primary key of scenes to remove from project

@@ -250,6 +250,18 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     }
   }
 
+  /** Filter scenes based on scene query parameters
+    *
+    * For reuse in other tables that need to filter scenes, e.g., projects
+    */
+  def filterScenes(combinedParams: CombinedSceneQueryParams) = {
+    Scenes.filterByOrganization(combinedParams.orgParams)
+      .filterByUser(combinedParams.userParams)
+      .filterByTimestamp(combinedParams.timestampParams)
+      .filterBySceneParams(combinedParams.sceneParams)
+      .filterByImageParams(combinedParams.imageQueryParameters)
+  }
+
   /** Get scenes given a page request and query parameters */
   def listScenes(pageRequest: PageRequest, combinedParams: CombinedSceneQueryParams, user: User)
                 (implicit database: DB): Future[PaginatedResponse[Scene.WithRelated]] = {
@@ -264,12 +276,8 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     } map { Scene.WithRelated.fromRecords }
 
     val totalScenesQueryResult = database.db.run {
-      val action = Scenes
-        .filterByOrganization(combinedParams.orgParams)
-        .filterByUser(combinedParams.userParams)
-        .filterByTimestamp(combinedParams.timestampParams)
-        .filterBySceneParams(combinedParams.sceneParams)
-        .filterByImageParams(combinedParams.imageQueryParameters)
+      val action = Scenes.filterScenes(combinedParams)
+        .filterUserVisibility(user)
         .length
         .result
       logger.debug(s"Total Query for scenes -- SQL: ${action.statements.headOption}")
@@ -285,15 +293,6 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
       PaginatedResponse(totalScenes, hasPrevious, hasNext,
         pageRequest.offset, pageRequest.limit, scenes.toSeq)
     }
-  }
-
-  def listScenesAutoOrder(projectId: UUID)(implicit database: DB) = database.db.run {
-    Scenes
-      .filter { scene =>
-        scene.id in ScenesToProjects.filter(_.projectId === projectId).map(_.sceneId)
-      }.sortBy { scene =>
-        (scene.acquisitionDate.desc.nullsLast, scene.cloudCover.desc.nullsLast)
-      }.result
   }
 
   def sceneGrid(params: CombinedGridQueryParams, bboxes: Seq[Projected[Polygon]])(implicit database: DB) = {
