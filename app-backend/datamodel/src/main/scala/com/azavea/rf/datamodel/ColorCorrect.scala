@@ -112,16 +112,23 @@ object ColorCorrect {
       case _: DoubleCells =>
         Double.MaxValue.toInt
       case _: BitCells | _: UByteCells | _: UShortCells =>
-        (1<< ct.bits) - 1
+        (1 << ct.bits) - 1
       case _: ByteCells | _: ShortCells | _: IntCells =>
-        ((1<<ct.bits) - 1) - (1<<(ct.bits-1))
+        ((1 << ct.bits) - 1) - (1 << (ct.bits - 1))
     }
 
   def normalizeAndClamp(tile: Tile, oldMin: Int, oldMax: Int, newMin: Int, newMax: Int): Tile = {
     val dNew = newMax - newMin
     val dOld = oldMax - oldMin
-    tile.mapIfSet { z =>
+
+    // When dOld is nothing (normalization is meaningless in this context), we still need to clamp
+    if (dOld == 0) tile.mapIfSet { z =>
+      if (z > newMax) newMax
+      else if (z < newMin) newMin
+      else z
+    } else tile.mapIfSet { z =>
       val scaled = (((z - oldMin) * dNew) / dOld) + newMin
+
       if (scaled > newMax) newMax
       else if (scaled < newMin) newMin
       else scaled
