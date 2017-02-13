@@ -234,15 +234,15 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     }
     val redBand = bands.get("redBand") match {
       case Some(b) => b.asInstanceOf[Int]
-      case _ => 1
+      case _ => 0
     }
     val greenBand = bands.get("greenBand") match {
       case Some(b) => b.asInstanceOf[Int]
-      case _ => 2
+      case _ => 1
     }
     val blueBand = bands.get("blueBand") match {
       case Some(b) => b.asInstanceOf[Int]
-      case _ => 3
+      case _ => 2
     }
 
     (redBand, greenBand, blueBand)
