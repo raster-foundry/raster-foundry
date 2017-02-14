@@ -1,24 +1,8 @@
-from datetime import datetime, timedelta
-import requests
-import jwt
+
 import json
 import os
 
-
-def get_session():
-    """Helper method to create a requests Session"""
-
-    jwt_secret = os.getenv('AUTH0_CLIENT_SECRET')
-    claims = {
-        'sub': 'rf|airflow-user',
-        'iat': datetime.utcnow(),
-        'exp': datetime.utcnow() + timedelta(hours=3)
-    }
-    encoded_jwt = jwt.encode(claims, jwt_secret, algorithm='HS256')
-    session = requests.Session()
-
-    session.headers.update({'Authorization': 'Bearer {}'.format(encoded_jwt)})
-    return session
+from rf.utils.io import get_session
 
 
 class BaseModel(object):

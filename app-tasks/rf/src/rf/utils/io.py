@@ -1,8 +1,10 @@
+from datetime import datetime, timedelta
 import os
 from urlparse import urlparse
 
 import boto3
 import requests
+import jwt
 
 
 s3 = boto3.resource('s3', region_name='eu-central-1')
@@ -46,6 +48,30 @@ def s3_obj_exists(url):
     return resp.status_code != 404
 
 
+def get_jwt():
+    """Construct JSON web token for auth purposes"""
+
+    jwt_secret = os.getenv('AUTH0_CLIENT_SECRET')
+    claims = {
+        'sub': 'rf|airflow-user',
+        'iat': datetime.utcnow(),
+        'exp': datetime.utcnow() + timedelta(hours=3)
+    }
+    encoded_jwt = jwt.encode(claims, jwt_secret, algorithm='HS256')
+    return encoded_jwt
+
+
+def get_session():
+    """Helper method to create a requests Session"""
+
+    encoded_jwt = get_jwt()
+    session = requests.Session()
+
+    session.headers.update({'Authorization': 'Bearer {}'.format(encoded_jwt)})
+    return session
+
+
+
 class JobStatus(object):
     QUEUED = 'QUEUED'
     PROCESSING = 'PROCESSING'
@@ -54,12 +80,14 @@ class JobStatus(object):
     UPLOADING = 'UPLOADING'
     PARTIALFAILURE = 'PARTIALFAILURE'
 
+
 class IngestStatus(object):
     NOTINGESTED = 'NOTINGESTED'
     TOBEINGESTED = 'TOBEINGESTED'
     INGESTING = 'INGESTING'
     INGESTED = 'INGESTED'
     FAILED = 'FAILED'
+
 
 class Visibility(object):
     PUBLIC = 'PUBLIC'
