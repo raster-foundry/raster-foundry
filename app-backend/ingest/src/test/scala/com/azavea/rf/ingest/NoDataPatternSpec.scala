@@ -1,6 +1,6 @@
 package com.azavea.rf.ingest
 
-import com.azavea.rf.ingest.tool._
+import com.azavea.rf.ingest.model._
 
 import java.util.UUID
 

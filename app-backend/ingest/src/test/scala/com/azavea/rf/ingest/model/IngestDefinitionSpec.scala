@@ -129,6 +129,7 @@ class IngestDefinitionSpec extends FunSpec with Matchers {
       |    {
       |      "id": "8436f7e9-b7f7-4d4f-bda8-76b32c356dff",
       |      "output": {
+      |        "ndPattern": { "pattern": { "1": 3.0, "20": 52.3 } },
       |        "uri": "s3://rasterfoundry-staging-catalogs-us-east-1/test",
       |        "crs": "epsg:3857",
       |        "cellType": "uint16raw",
@@ -238,6 +239,7 @@ class IngestDefinitionSpec extends FunSpec with Matchers {
       |    {
       |      "id": "8436f7e9-b7f7-4d4f-bda8-76b32c356dff",
       |      "output": {
+      |        "ndPattern": { "pattern": { "1": 3.0, "20": 52.3 } },
       |        "uri": "s3://geotrellis-test/rf-eac-test",
       |        "crs": "epsg:3857",
       |        "cellType": "uint16raw",
@@ -307,10 +309,8 @@ class IngestDefinitionSpec extends FunSpec with Matchers {
   }
 
   it("parses the sample, aws definition with no overrides") {
-    noException should be thrownBy {
       awsJsonNoOverrides
         .parseJson
         .convertTo[IngestDefinition]
-    }
   }
 }
