@@ -135,8 +135,12 @@ object Ingest extends SparkJob with LazyLogging {
       sc.parallelize(layer.sources, layer.sources.length).flatMap { source =>
         val tiffBytes = readBytes(source.uri)
         val MultibandGeoTiff(mbTileIn, srcExtent, srcCRS, _, _) = MultibandGeoTiff(tiffBytes)
-        // Set NoData values
-        val mbTile = ndPattern(mbTileIn)
+
+        // Set NoData values if a pattern has been specified
+        val mbTile = ndPattern match {
+          case Some(pattern) => pattern(mbTileIn)
+          case None => mbTileIn
+        }
 
         source.bandMaps.map { bm: BandMapping =>
           // GeoTrellis multi-band tiles are 0 indexed

@@ -32,7 +32,7 @@ case class OutputDefinition(
   tileSize: Int = 256,
   pyramid: Boolean = true,
   native: Boolean = false,
-  ndPattern: OutputDefinition.NoDataPattern = OutputDefinition.NoDataPattern(),
+  ndPattern: Option[OutputDefinition.NoDataPattern] = None,
   resampleMethod: ResampleMethod = NearestNeighbor,
   keyIndexMethod: KeyIndexMethod[SpatialKey] = ZCurveKeyIndexMethod // TODO: read, no write
 )
@@ -79,7 +79,24 @@ object OutputDefinition {
   }
 
   object NoDataPattern {
-    implicit val jsonFormat = jsonFormat1(NoDataPattern.apply _)
+    implicit object NoDataPatternJsonFormat extends JsonFormat[NoDataPattern] {
+      def write(ndPattern: NoDataPattern) = JsObject(
+        "pattern" -> ndPattern.pattern.toJson
+      )
+
+      def read(js: JsValue): NoDataPattern = js.asJsObject.getFields("pattern") match {
+        case Seq(patternObject) =>
+          try {
+            val pattern = patternObject.asJsObject.fields.map({ case (k: String, v: JsValue) =>
+              k.toInt -> v.convertTo[Double]
+            })
+            NoDataPattern(pattern)
+          } catch {
+            case e: java.lang.NumberFormatException =>
+              deserializationError(s"Unable to parse all keys as integers in: $patternObject")
+          }
+      }
+    }
   }
 
   implicit val jsonFormat = jsonFormat10(OutputDefinition.apply _)
