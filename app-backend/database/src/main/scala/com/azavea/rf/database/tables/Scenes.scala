@@ -402,14 +402,22 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
       case _ => throw new IllegalStateException("Error while updating scene")
     }
   }
+
+  def getScenesFootprints(sceneIds: Seq[UUID]):DBIO[Seq[Option[Projected[Geometry]]]] = {
+    Scenes
+      .filter(scene => scene.id inSet sceneIds)
+      .map(_.dataFootprint)
+      .result
+  }
 }
+
 
 
 class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) extends LazyLogging {
   import Scenes.datePart
 
 
-  /** TODO: it isn't currently clear how to implement enum type ordering. 
+  /** TODO: it isn't currently clear how to implement enum type ordering.
     *
     * IngestStatus has a toInt method to facilitate, but Slick is complaining
     */

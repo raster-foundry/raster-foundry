@@ -7,6 +7,8 @@ import com.azavea.rf.database.query._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 
+import geotrellis.slick.Projected
+import geotrellis.vector.{Geometry, Extent}
 import com.lonelyplanet.akka.http.extensions._
 import com.typesafe.scalalogging.LazyLogging
 import slick.model.ForeignKeyAction
@@ -25,7 +27,8 @@ class Projects(_tableTag: Tag) extends Table[Project](_tableTag, "projects")
                                       with UserFkVisibleFields
                                       with TimestampFields
 {
-  def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, name, slugLabel, description, visibility, tags, manualOrder) <> (Project.tupled, Project.unapply)
+  def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, name,
+           slugLabel, description, visibility, tags, extent, manualOrder) <> (Project.tupled, Project.unapply)
 
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
   val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")
@@ -38,6 +41,7 @@ class Projects(_tableTag: Tag) extends Table[Project](_tableTag, "projects")
   val description: Rep[String] = column[String]("description")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
   val tags: Rep[List[String]] = column[List[String]]("tags", O.Length(2147483647,varying=false), O.Default(List.empty))
+  val extent: Rep[Option[Projected[Geometry]]] = column[Option[Projected[Geometry]]]("extent", O.Length(2147483647,varying=false), O.Default(None))
   val manualOrder: Rep[Boolean] = column[Boolean]("manual_order", O.Default(true))
 
   lazy val organizationsFk = foreignKey("projects_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
@@ -263,9 +267,48 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     database.db.run {
       sceneProjectJoinQuery.result
     } flatMap { alreadyAdded =>
-      val newScenes = sceneIds.filterNot(alreadyAdded.toSet)
+      val newSceneIds = sceneIds.filterNot(alreadyAdded.toSet)
+      val newScenesFootprints = Scenes.getScenesFootprints(sceneIds)
+      val projectAction = Projects.filter(_.id === projectId).result.headOption
+
+      database.db.run(
+        for {
+          footprints <- newScenesFootprints
+          projectOption <- projectAction
+        } yield (footprints, projectOption)
+      ) map { p: (Seq[Option[Projected[Geometry]]], Option[Project]) =>
+        (p._1, p._2) match {
+          case (footprints, Some(project)) => {
+            val newScenesExtent = getFootprintsExtent(footprints)
+
+            val newProjectExtent:Option[Extent] = (project.extent, newScenesExtent) match {
+              case (Some(projectExtent), Some(scenesExtent)) => Some(projectExtent.envelope.combine(scenesExtent))
+              case (Some(projectExtent), _) => Some(projectExtent.geom.envelope)
+              case (_, Some(scenesExtent)) => Some(scenesExtent)
+              case _ => None
+            }
+
+            val newProjectExtentGeometry = newProjectExtent match {
+              case Some(ext) => Some(new Projected(ext.toPolygon(), 3857))
+              case _ => None
+            }
+
+            val updateProjectExtentQuery = for {
+              updateProject <- Projects.filter(_.id === projectId)
+            } yield (
+              updateProject.extent
+            )
+
+            database.db.run {
+              updateProjectExtentQuery.update(newProjectExtentGeometry)
+            }
+          }
+          case _ => throw new IllegalStateException("Error updating project: no project matching id found")
+        }
+      }
+
       val sceneCompositesQuery = for {
-        s <- Scenes if s.id.inSet(newScenes)
+        s <- Scenes if s.id.inSet(newSceneIds)
         d <- Datasources if d.id === s.datasource
       } yield (s.id, d.composites)
 
@@ -329,13 +372,38 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     */
   def deleteScenesFromProject(sceneIds: Seq[UUID], projectId: UUID)
                             (implicit database: DB): Future[Int] = {
-
-    val sceneProjectJoinQuery = for {
-      s <- ScenesToProjects if s.sceneId.inSet(sceneIds) && s.projectId === projectId
-    } yield s
+    val remainingScenesFootprintsQuery = Scenes
+      .filter { scene =>
+        scene.id in ScenesToProjects.filter(_.projectId === projectId).filterNot(_.sceneId inSet sceneIds).map(_.sceneId)
+      }
+      .map(_.dataFootprint)
 
     database.db.run {
-      sceneProjectJoinQuery.delete
+      remainingScenesFootprintsQuery.result
+    } flatMap { remainingScenesFootprints =>
+      val extent = getFootprintsExtent(remainingScenesFootprints)
+
+      val extentPolygon = extent match {
+        case Some(ext) => Some(new Projected(ext.toPolygon(), 3857))
+        case _ => None
+      }
+
+      val updateProjectExtentQuery = for {
+        updateProject <- Projects.filter(_.id === projectId)
+      } yield (
+        updateProject.extent
+      )
+
+      val sceneProjectJoinQuery = ScenesToProjects.filter(_.sceneId.inSet(sceneIds)).filter(_.projectId === projectId)
+
+      val actions = for {
+        project <- updateProjectExtentQuery.update(extentPolygon)
+        s <- sceneProjectJoinQuery.delete
+      } yield s
+
+      database.db.run {
+        actions
+      }
     }
   }
 
@@ -362,5 +430,13 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     }
 
     listSelectProjectScenes(projectId, sceneIds)
+  }
+
+  def getFootprintsExtent(footprints: Seq[Option[Projected[Geometry]]]):Option[Extent] = {
+    val footprintEnvelopes = footprints.flatten map { _.geom.envelope }
+    footprintEnvelopes.length match {
+      case 0 => None
+      case _ => Some(footprintEnvelopes reduce { _ combine _ })
+    }
   }
 }
