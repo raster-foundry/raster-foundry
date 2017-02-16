@@ -1,5 +1,9 @@
 package com.azavea.rf.datamodel
 
+import geotrellis.vector.io.json.GeoJsonSupport
+import geotrellis.vector.{Geometry, Point}
+import geotrellis.slick.Projected
+
 import spray.json._
 import spray.json.DefaultJsonProtocol._
 import java.util.UUID
@@ -17,17 +21,18 @@ case class Project(
   description: String,
   visibility: Visibility,
   tags: List[String] = List.empty,
+  extent: Option[Projected[Geometry]] = None,
   manualOrder: Boolean = true
 )
 
 /** Case class for project creation */
-object Project {
+object Project extends GeoJsonSupport {
 
   def tupled = (Project.apply _).tupled
 
   def create = Create.apply _
 
-  implicit val defaultProjectFormat = jsonFormat12(Project.apply _)
+  implicit val defaultProjectFormat = jsonFormat13(Project.apply _)
 
   def slugify(input: String): String = {
     import java.text.Normalizer
