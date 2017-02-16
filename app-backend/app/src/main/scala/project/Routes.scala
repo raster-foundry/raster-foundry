@@ -63,7 +63,7 @@ trait ProjectRoutes extends Authentication
           put { updateProjectScenes(projectId) } ~
           delete { deleteProjectScenes(projectId) }
         } ~
-          pathPrefix("fromQuery") {
+          pathPrefix("bulk-add-from-query") {
             pathEndOrSingleSlash {
               post { addProjectScenesFromQueryParams(projectId) }
             }

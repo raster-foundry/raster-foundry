@@ -309,7 +309,7 @@ class ProjectSceneSpec extends WordSpec
     }
   }
 
-  "/api/projects/{project}/scenes/fromQuery/" should {
+  "/api/projects/{project}/scenes/bulk-add-from-query/" should {
     val scene1 = newScene("fs1", Some(150.toFloat))
     val scene2 = newScene("fs2", Some(150.toFloat))
     val scene3 = newScene("fs3", Some(0.toFloat))
@@ -342,7 +342,7 @@ class ProjectSceneSpec extends WordSpec
         responseAs[Project]
       }
 
-      Post(s"/api/projects/${project.id}/scenes/fromQuery/").withHeadersAndEntity(
+      Post(s"/api/projects/${project.id}/scenes/bulk-add-from-query/").withHeadersAndEntity(
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
@@ -378,7 +378,7 @@ class ProjectSceneSpec extends WordSpec
         responseAs[Scene.WithRelated]
       }
 
-      Post(s"/api/projects/${project.id}/scenes/fromQuery/").withHeadersAndEntity(
+      Post(s"/api/projects/${project.id}/scenes/bulk-add-from-query/").withHeadersAndEntity(
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,

@@ -594,11 +594,73 @@ paths:
           schema:
             type: array
             items:
-              type: string
-              format: uuid
+              - $ref: '#/parameters/uuid'
       responses:
         204:
           description: No content, delete successful
+  /projects/{uuid}/scenes/bulk-add-from-query/:
+    post:
+      summary: Create a new association between a set of scenes and this project
+      tags:
+        - Imagery
+      parameters:
+        - name: orgParams
+          in: body
+          type: object
+          properties:
+            organizations:
+              type: array
+              description: List of organizations to filter scenes to
+              items:
+                $ref: '#/definitions/UserOrg'
+        - name: userParams
+          in: body
+          allOf:
+            - $ref: '#/definitions/UserTrackingMixin'
+        - name: timestampParams
+          in: body
+          properties:
+            $ref: '#/parameters/minAcquisitionDatetime'
+            $ref: '#/parameters/maxAcquisitionDatetime'
+            $ref: '#/parameters/minCreateDatetime'
+            $ref: '#/parameters/maxCreateDatetime'
+        - name: sceneParams
+          in: body
+          type: object
+          properties:
+            $ref: '#/parameters/maxCloudCover'
+            $ref: '#/parameters/minCloudCover'
+            $ref: '#/parameters/minAcquisitionDatetime'
+            $ref: '#/parameters/maxAcquisitionDatetime'
+            $ref: '#/parameters/datasource'
+            $ref: '#/parameters/month'
+            $ref: '#/parameters/minDayOfMonth'
+            $ref: '#/parameters/maxDayOfMonth'
+            $ref: '#/parameters/maxSunAzimuth'
+            $ref: '#/parameters/minSunAzimuth'
+            $ref: '#/parameters/maxSunElevation'
+            $ref: '#/parameters/minSunElevation'
+            $ref: '#/parameters/bbox'
+            $ref: '#/parameters/point'
+            $ref: '#/parameters/project'
+            $ref: '#/parameters/ingested'
+            $ref: '#/parameters/ingestStatus'
+        - name: imageQueryParameters
+          in: body
+          type: object
+          properties:
+            $ref: '#/parameters/sceneId'
+            $ref: '#/parameters/minRawDataBytes'
+            $ref: '#/parameters/maxRawDataBytes'
+            $ref: '#/parameters/minResolution'
+            $ref: '#/parameters/maxResolution'
+      responses:
+        201:
+          description: List of scenes added to project
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Scene'
   /projects/{uuid}/mosaic/:
     get:
       summary: List of a project's scene IDs and their associated color correction parameters to be used in mosaicing
