@@ -1,0 +1,34 @@
+<div class="list-group-item">
+  <div ng-if="$ctrl.isDraggable" ui-tree-handle>
+    <i class="icon-gripper"></i>
+  </div>
+  <img ng-if="$ctrl.scene.thumbnails[0]"
+       ng-attr-src="{{$ctrl.thumbnailService.getBestFitUrl($ctrl.scene.thumbnails, 75)}}"
+       class="rounded-img item-img">
+  <img ng-if="!$ctrl.scene.thumbnails.length"
+       src="https://placehold.it/75x75"
+       class="rounded-img item-img">
+  <div class="list-group-overflow">
+    <span title="{{$ctrl.scene.name}}">
+      <strong class="color-dark">{{$ctrl.scene.name}}</strong>
+    </span>
+    <br>
+    <span title="{{$ctrl.datasource.name}}">{{$ctrl.datasourceLoaded ? $ctrl.datasource.name : 'Loading datasource'}}</span>
+  </div>
+  <div class="list-group-right">
+    <button class="btn btn-square"
+            ng-click="$ctrl.toggleSelected($event)"
+            ng-if="$ctrl.isSelectable"
+            ng-class="{'btn-secondary': $ctrl.selectedStatus}">
+      <i ng-class="{
+                   'icon-plus': !$ctrl.selectedStatus,
+                   'icon-cross': $ctrl.selectedStatus
+                   }"></i>
+    </button>
+    <button class="btn btn-square"
+            ng-click="$ctrl.onAction($event)"
+            ng-if="$ctrl.actionIcon">
+      <i ng-class="$ctrl.actionIcon"></i>
+    </button>
+  </div>
+</div>

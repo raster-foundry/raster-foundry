@@ -1,168 +1,116 @@
 # Raster Foundry
 
-## Local Development
+## Getting Started
 
-A combination of Vagrant 1.6+ and Ansible 1.8+ is used to setup the development environment for this project. The project consists of the following virtual machines:
+A virtual machine is used to encapsulate Docker dependencies. `docker-compose` is used within the VM to manage running the application and developing against it.
 
-- `app`
-- `services`
+### Requirements
 
-The `app` virtual machine contains an instance of the Django application, `services` contains:
+- Vagrant 1.8+
+- VirtualBox 5.0+
+- Ansible 1.8+ (on host)
+- AWS CLI 1.10+
 
-- PostgreSQL
-- Pgweb
-- Logstash
-- Kibana
-- Graphite
-- Statsite
+On your host machine you need to set up a `raster-foundry` profile for the Raster Foundry AWS account using the following command:
 
-### Getting Started
+```
+$ aws configure --profile raster-foundry
+```
 
-Use the following command to bring up a local development environment:
+You will be prompted for an access key and secret key.
 
+### Development
+
+_tldr_
 ```bash
 $ vagrant up
+$ vagrant ssh
+$ ./scripts/server
 ```
 
-The application will now be running at [http://localhost:8000](http://localhost:8000).
+Use `vagrant up` to provision a virtual machine. During provisioning `docker` and `docker-compose` will be installed on the guest machine. Additionally, docker images will be downloaded for the database and created for the `akka-http` application server.
 
-After pulling in new commits, you may need to run the following two commands:
+Once the machine is provisioned you can start services or development by ssh-ing into the machine (`vagrant ssh`) and using the helper scripts in the `/opt/raster-foundry/scripts` directory.
 
-```bash
-$ ./scripts/manage.sh migrate
-$ ./scripts/bundle.sh
-```
+Development workflow varies by developer, but a typical development experience might include the following:
 
-See debug messages from the web app server:
+ - Create a new feature branch
+ - Start up the vagrant machine with `vagrant up --provision`
+ - Get an `sbt` console open using `./scripts/console app-server ./sbt`
+ - Make changes to Scala code
+ - Try compiling (`~compile`) or running the service to inspect it (`~app/run`)
 
-```bash
-$ ./scripts/debugserver.sh
-```
+### Migrations
 
-Watch the JavaScript and SASS files for changes:
+Database migrations are managed using [scala-forklift](https://github.com/lastland/scala-forklift). The `scala-forklift` [example project](https://github.com/lastland/scala-forklift/tree/develop/example) provides a good overview and walkthrough of how the various components fit together, and how to manage migrations.
 
-```bash
-$ ./scripts/bundle.sh --debug --watch
-```
+To initialize migrations on a database for the first time, run `mg init` within an `sbt console`. This creates a `__migrations__` table in the database to track which migrations have been applied. After the database has been initialized, all unapplied migrations may be applied by running `mg update` and then `mg apply`. Please note: the `mg migrate` command should be avoided because it invokes the code generation feature of forklift. This feature is not used in the `raster-foundry` project.
 
-When creating new JavaScript or SASS files, you may need to stop and restart the bundle script.
+The workflow for creating a new migration is:
 
-If you add a JS dependency and want it to be included in the `vendor.js` bundle, you will need to update the `JS_DEPS` array in `bundle.sh` accordingly.
+ - Open an `sbt` console using `./scripts/console app-server ./sbt`
+ - Run `mg new s` for a `SQL` migration
+   - The migration file is output to `migrations/src_migrations/main/scala/{VERSION_NUM}.scala`
+ - Edit this file to perform the desired migration logic
+ - Run `mg update` followed by `mg apply`
+   - This executes the migration
+   - Press `ENTER` once the migration command has completed
 
-If changes were made to the one of the VM's configuration or requirements since the last time you provisioned, you'll need to reprovision.
+#### Frontend Development
 
-```bash
-$ vagrant provision <VM name>
-```
+To do frontend development you will want to install [`nvm`](https://github.com/creationix/nvm#install-script) and use at least version 6.9+ (`lts/boron`). Once using `nvm`, install [yarn](https://yarnpkg.com/) with `npm install -g yarn`. After following the directions above for starting the VM, start the API server and other backend services by running `./scripts/server`.
 
-After provisioning is complete, you can login to the application server and execute Django management commands:
+Then _outside_ the VM, while the server is still running, run `yarn run start` while inside the `app-frontend/` directory. This will start a `webpack-dev-server` on port 9091 that will auto-reload after javascript and styling changes.
 
-```bash
-$ vagrant ssh app
-vagrant@app:~$ envdir /etc/rf.d/env /opt/app/manage.py test
-```
+There are three options to rebuild the static assets served by Nginx:
 
-### Ports
+ - Run `yarn run build` outside the VM
+ - Run `./scripts/console app-frontend "yarn run build"`
+ - Run `./scripts/setup` (will also rebuild application server)
 
-The Vagrant configuration maps the following host ports to services running in the virtual machines.
+To run tests you can do one of the following (in order of speed):
 
-Service                | Port | URL
----------------------- | -----| ------------------------------------------------
-Django Web Application | 8000 | [http://localhost:8000](http://localhost:8000)
-Graphite Dashboard     | 8080 | [http://localhost:8080](http://localhost:8080)
-Kibana Dashboard       | 5601 | [http://localhost:5601](http://localhost:5601)
-PostgreSQL             | 5432 | `psql -h localhost`
-pgweb                  | 5433 | [http://localhost:5433](http://localhost:5433)
-Testem                 | 7357 | [http://localhost:7357](http://localhost:7357)
+ - Run `yarn run test` outside the VM (or `yarn run test-watch`)
+ - Run `./scripts/console app-frontend "yarn run test"` inside the VM
+ - Run `./scripts/test` inside the VM (will also run additional project tests)
 
-### Caching
+## Ports
 
-In order to speed up things up, you may want to consider leveraging the `vagrant-cachier` plugin. If installed, it is automatically used by Vagrant.
+The Vagrant configuration maps the following host ports to services running in the virtual machines. Ports can be overridden for individual developers using environment variables
 
-### Test Mode
+| Service                   | Port                            | Environment Variable |
+|---------------------------|---------------------------------|----------------------|
+| Application Frontend      | [`9091`](http://localhost:9091) | `RF_PORT_9091`       |
+| Nginx                     | [`9100`](http://localhost:9100) | `RF_PORT_9100`       |
+| Application Server (akka) | [`9000`](http://localhost:9000) | `RF_PORT_9000`       |
+| Tile Server (akka)        | [`9900`](http://localhost:9900) | `RF_PORT_9900`       |
+| Airflow UI                | [`8080`](http://localhost:8080) | `RF_PORT_8080`       |
+| Airflow Flower            | [`5555`](http://localhost:5555) | `RF_PORT_5555`       |
+| Swagger Editor            | [`9090`](http://localhost:9090) | `RF_PORT_9090`       |
+| Swagger UI                | [`9999`](http://localhost:9999) | `RF_PORT_9999`       |
 
-In order to run the app in test mode, which simulates the production static asset bundle, reprovision with `VAGRANT_ENV=TEST vagrant provision`.
 
-### Testing
+## Scripts
+
+Helper and development scripts are located in the `./scripts` directory at the root of this project. These scripts are designed to encapsulate and perform commonly used actions such as starting a development server, accessing a development console, or running tests.
+
+| Script Name             | Purpose                                                      |
+|-------------------------|--------------------------------------------------------------|
+| `bootstrap`             | Pulls/builds necessary containers                            |
+| `setup`                 | Runs migrations, installs dependencies, etc.                 |
+| `server`                | Starts a development server                                  |
+| `console`               | Gives access to a running container via `docker-compose run` |
+| `psql`                  | Drops you into a `psql` console.                             |
+| `test`                  | Runs tests and linters for project                           |
+| `cibuild`               | Invoked by CI server and makes use of `test`.                |
+| `cipublish`             | Publish container images to container image repositories.    |
+| `load_development_data` | Load data for development purposes                           |
+| `publish-jars`          | Publish JAR artifacts to S3                                  |
+
+## Testing
 
 Run all the tests:
 
 ```bash
-$ ./scripts/test.sh
+$ ./scripts/test
 ```
-
-##### Python
-
-To run all the tests on the Django app:
-
-```bash
-$ ./scripts/manage.sh test
-```
-
-Or just for a specific app:
-
-```bash
-$ ./scripts/manage.sh test apps.app_name.tests
-```
-
-More info [here](https://docs.djangoproject.com/en/1.8/topics/testing/).
-
-##### JavaScript
-
-When creating new tests or debugging old tests, it may be easier to open the testem page, which polls for changes to the test bundle and updates the test state dynamically.
-
-First, start the testem process.
-
-```bash
-$ ./scripts/testem.sh
-```
-Then view the test runner page at [http://localhost:7357](http://localhost:7357).
-
-To enable livereload, [download the browser extension](http://livereload.com/extensions/)
-and start the livereload server with the following command:
-
-```bash
-$ ./scripts/npm.sh run livereload
-```
-
-#### Bundling static assets
-
-The `bundle.sh` script runs browserify, node-sass, and othe pre-processing
-tasks to generate static assets.
-
-The vendor bundle is not created until you run this command with the
-`--vendor` flag. This bundle will be very large if combined with `--debug`.
-
-Test bundles are not created unless the `--tests` flag is used.
-
-In general, you should be able to combine `--vendor`, `--tests`, `--debug`,
-and `--watch` and have it behave as you would expect.
-
-You can also minify bundles by using the `--minify` flag. This operation is
-not fast, and also disables source maps.
-
-The `--list` flag displays module dependencies and does not actually generate
-any bundles. It doesn't make sense to combine this with `--watch`.
-This flag is for troubleshooting purposes only.
-
-```bash
-bundle.sh [OPTION]...
-
-Bundle JS and CSS static assets.
-
- Options:
-  --watch      Listen for file changes
-  --debug      Generate source maps
-  --minify     Minify bundles (**SLOW**); Disables source maps
-  --tests      Generate test bundles
-  --list       List browserify dependencies
-  --vendor     Generate vendor bundle and copy assets
-  -h, --help   Display this help text
-```
-
-#### Adding JS dependencies
-
-To add a new JS depenency, update the `JS_DEPS` array in `bundle.sh`, and `package.json` accordingly.
-Because our dependencies are shrinkwrapped, follow the [instructions](https://docs.npmjs.com/cli/shrinkwrap#building-shrinkwrapped-packages) for adding a dependency to a shrinkwrapped package.
-Rebuild the vendor bundle using `./scripts/bundle.sh --vendor`.
-`npm` commands can be run using `./scripts/npm.sh`.

@@ -1,39 +1,15 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-Vagrant.require_version ">= 1.6"
+Vagrant.require_version ">= 1.8"
 
 if ["up", "provision", "status"].include?(ARGV.first)
-  require_relative "helpers/ansible_galaxy_helper"
+  require_relative "deployment/vagrant/ansible_galaxy_helper"
 
   AnsibleGalaxyHelper.install_dependent_roles("deployment/ansible")
 end
 
-ANSIBLE_GROUPS = {
-  "app-servers" => [ "app" ],
-  "services" => [ "services" ],
-  "workers" => [ "worker" ]
-}
-
-if !ENV["VAGRANT_ENV"].nil? && ENV["VAGRANT_ENV"] == "TEST"
-  ANSIBLE_ENV_GROUPS = {
-    "test:children" => [
-      "app-servers", "services", "workers"
-    ]
-  }
-  VAGRANT_NETWORK_OPTIONS = { auto_correct: true }
-else
-  ANSIBLE_ENV_GROUPS = {
-    "development:children" => [
-      "app-servers", "services", "workers"
-    ]
-  }
-  VAGRANT_NETWORK_OPTIONS = { auto_correct: false }
-end
-
-VAGRANTFILE_API_VERSION = "2"
-
-Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+Vagrant.configure(2) do |config|
   config.vm.box = "ubuntu/trusty64"
 
   # Wire up package caching:
@@ -41,106 +17,54 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.cache.scope = :machine
   end
 
-  config.vm.define "services" do |services|
-    services.vm.hostname = "services"
-    services.vm.network "private_network", ip: ENV.fetch("RF_SERVICES_IP", "33.33.40.80")
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+  config.vm.synced_folder ".", "/opt/raster-foundry"
+  config.vm.synced_folder "~/.aws", "/home/vagrant/.aws"
 
-    services.vm.synced_folder ".", "/vagrant", disabled: true
+  # application server
+  config.vm.network :forwarded_port, guest: 9000, host: Integer(ENV.fetch("RF_PORT_9000", 9000))
+  # tileserver
+  config.vm.network :forwarded_port, guest: 9900, host: Integer(ENV.fetch("RF_PORT_9900", 9900))
+  # swagger editor
+  config.vm.network :forwarded_port, guest: 8888, host: Integer(ENV.fetch("RF_PORT_9090", 9090))
+  # swagger docs
+  config.vm.network :forwarded_port, guest: 9999, host: Integer(ENV.fetch("RF_PORT_9999", 9999))
+  # nginx
+  config.vm.network :forwarded_port, guest: 9100, host: Integer(ENV.fetch("RF_PORT_9100", 9100))
+  # airflow webserver editor
+  config.vm.network :forwarded_port, guest: 8080, host: Integer(ENV.fetch("RF_PORT_8080", 8080))
+  # airflow flower editor
+  config.vm.network :forwarded_port, guest: 5555, host: Integer(ENV.fetch("RF_PORT_5555", 5555))
+  # spark master
+  config.vm.network :forwarded_port, guest: 8888, host: Integer(ENV.fetch("RF_PORT_8888", 8888))
+  # spark worker
+  config.vm.network :forwarded_port, guest: 8889, host: Integer(ENV.fetch("RF_PORT_8888", 8889))
+  # spark driver
+  config.vm.network :forwarded_port, guest: 4040, host: Integer(ENV.fetch("RF_PORT_4040", 4040))
 
-    # PostgreSQL
-    services.vm.network "forwarded_port", {
-      guest: 5432,
-      host: 5432
-    }.merge(VAGRANT_NETWORK_OPTIONS)
-    # Pgweb
-    services.vm.network "forwarded_port", {
-      guest: 5433,
-      host: 5433
-    }.merge(VAGRANT_NETWORK_OPTIONS)
-
-    services.vm.provider "virtualbox" do |v|
-      v.memory = 1024
-    end
-
-    services.vm.provision "ansible" do |ansible|
-      ansible.playbook = "deployment/ansible/services.yml"
-      ansible.groups = ANSIBLE_GROUPS.merge(ANSIBLE_ENV_GROUPS)
-      ansible.raw_arguments = ["--timeout=60"]
-    end
+  config.vm.provider :virtualbox do |vb|
+    vb.memory = 8096
+    vb.cpus = 2
   end
 
-  config.vm.define "app" do |app|
-    app.vm.hostname = "app"
-    app.vm.network "private_network", ip: ENV.fetch("RF_APP_IP", "33.33.40.81")
+  config.vm.provision "shell" do |s|
+    s.inline = <<-SHELL
+      if [ ! -x /usr/local/bin/ansible ]; then
+        sudo apt-get update -qq
+        sudo apt-get install python-pip python-dev -y
+        sudo pip install paramiko==1.16.0
+        sudo pip install ansible==2.0.2.0
+      fi
 
-    app.vm.synced_folder ".", "/vagrant", disabled: true
-
-    app.vm.synced_folder "src/rf", "/opt/app/"
-    app.vm.synced_folder "src/mock-geoprocessing", "/opt/mock-geoprocessing/"
-
-    if File.directory?("#{ENV['HOME']}/.aws")
-      app.vm.synced_folder "#{ENV['HOME']}/.aws", "/home/vagrant/.aws/"
-    else
-      $stderr.puts "An AWS config profile is needed for the application to function."
-      $stderr.puts "Run `aws configure --profile rf-dev` to get started."
-
-      exit(1)
-    end
-
-    # Django via Nginx/Gunicorn
-    app.vm.network "forwarded_port", {
-      guest: 80,
-      host: 8000
-    }.merge(VAGRANT_NETWORK_OPTIONS)
-    # Livereload server
-    app.vm.network "forwarded_port", {
-      guest: 35729,
-      host: 35729,
-    }.merge(VAGRANT_NETWORK_OPTIONS)
-    # Testem server
-    app.vm.network "forwarded_port", {
-      guest: 7357,
-      host: 7357
-    }.merge(VAGRANT_NETWORK_OPTIONS)
-
-    app.ssh.forward_x11 = true
-
-    app.vm.provider "virtualbox" do |v|
-      v.memory = 1024
-    end
-
-    app.vm.provision "ansible" do |ansible|
-      ansible.playbook = "deployment/ansible/app-servers.yml"
-      ansible.groups = ANSIBLE_GROUPS.merge(ANSIBLE_ENV_GROUPS)
-      ansible.raw_arguments = ["--timeout=60"]
-    end
-  end
-
-  config.vm.define "worker" do |worker|
-    worker.vm.hostname = "worker"
-    worker.vm.network "private_network", ip: ENV.fetch("RF_SERVICES_IP", "33.33.40.82")
-
-    worker.vm.synced_folder ".", "/vagrant", disabled: true
-
-    worker.vm.synced_folder "src/rf", "/opt/app/"
-
-    if File.directory?("#{ENV['HOME']}/.aws")
-      worker.vm.synced_folder "#{ENV['HOME']}/.aws", "/home/vagrant/.aws/"
-    else
-      $stderr.puts "An AWS config profile is needed for the application to function."
-      $stderr.puts "Run `aws configure --profile rf-dev` to get started."
-
-      exit(1)
-    end
-
-    worker.vm.provider "virtualbox" do |v|
-      v.memory = 2048
-    end
-
-    worker.vm.provision "ansible" do |ansible|
-      ansible.playbook = "deployment/ansible/workers.yml"
-      ansible.groups = ANSIBLE_GROUPS.merge(ANSIBLE_ENV_GROUPS)
-      ansible.raw_arguments = ["--timeout=60"]
-    end
+      cd /opt/raster-foundry/deployment/ansible && \
+      ANSIBLE_FORCE_COLOR=1 PYTHONUNBUFFERED=1 ANSIBLE_CALLBACK_WHITELIST=profile_tasks \
+      ansible-playbook -u vagrant -i 'localhost,' \
+          --extra-vars "host_user=#{ENV.fetch("USER", "vagrant")} aws_profile=raster-foundry" \
+          raster-foundry.yml
+      cd /opt/raster-foundry
+      export AWS_PROFILE=raster-foundry
+      su vagrant ./scripts/bootstrap
+      su vagrant ./scripts/setup
+    SHELL
   end
 end

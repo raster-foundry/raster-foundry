@@ -1,0 +1,36 @@
+// @TODO: incorporate dropdown styles into app styles
+.main.with-position {
+  position: relative;
+}
+
+.lab-contextmenu {
+  position: absolute;
+  transform: translateX(-50%) translateY(-100%);
+  // Compensates for pointer
+  margin-top: -8px;
+
+  &:after {
+    content: '';
+    top: 100%;
+    left: 50%;
+    border: 5px solid transparent;
+    position: absolute;
+    pointer-events: none;
+    border-color: transparent;
+    border-top-color: darken(#464f77, 15%);
+    margin-left: -5px;
+  }
+}
+
+.mousetip {
+  position: absolute;
+  top: -10000px;
+  left: -10000px;
+  z-index: 10000;
+  margin-left: 18px;
+  background: #464f77;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  box-shadow: 4px 4px 4px rgba(0,0,0,0.25);
+}

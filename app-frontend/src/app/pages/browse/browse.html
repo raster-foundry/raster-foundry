@@ -1,0 +1,112 @@
+<!-- App Container -->
+<div class="container column-stretch container-not-scrollable">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-static">
+
+      <h5 class="sidebar-title">{{$ctrl.lastSceneResult.count | number}} Results Found</h5>
+      <div class="sidebar-actions">
+        <button class="btn btn-default btn-square"
+                ng-class="{'': !$ctrl.showFilterPane,
+                          'active': $ctrl.showFilterPane}"
+                ng-click="$ctrl.toggleFilterPane()">
+          <i class="icon-filter"></i>
+          Filter
+        </button>
+      </div>
+    </div>
+
+    <!-- scene listing -->
+    <div class="sidebar-scrollable" id="infscroll">
+      <div
+          infinite-scroll="$ctrl.getMoreScenes()" infinite-scroll-distance="0.5"
+          infinite-scroll-disabled="$ctrl.loadingScenes || ($ctrl.lastSceneResult && !$ctrl.lastSceneResult.hasNext) || $ctrl.errorMsg"
+          infinite-scroll-container="'#infscroll'"
+          infinite-scroll-immediate-check=false
+          class="list-group">
+        <rf-scene-item
+          ng-click="$ctrl.openDetailPane(scene)"
+          scene="scene"
+          selectable
+          selected="$ctrl.isSelected(scene)"
+          on-select="$ctrl.setSelected(scene, selected)"
+          class="selectable"
+          ng-repeat="scene in $ctrl.sceneList track by scene.id"
+          ng-mouseover="$ctrl.setHoveredScene(scene)"
+          ng-mouseleave="$ctrl.removeHoveredScene()"
+        >
+        </rf-scene-item>
+      </div>
+      <div class="list-group" ng-show="$ctrl.loadingScenes">
+        <span class="list-placeholder">
+          <i class="icon-load"></i>
+        </span>
+      </div>
+      <div class="list-group"
+           ng-show="!$ctrl.loadingScenes && $ctrl.lastSceneResult && !$ctrl.lastSceneResult.hasNext">
+        <span class="list-placeholder">
+          No more scenes to load
+        </span>
+      </div>
+      <div class="list-group" ng-show="$ctrl.errorMsg">
+        <span class="list-placeholder">
+          {{$ctrl.errorMsg}}
+        </span>
+      </div>
+      <div class="list-group load-message"
+           ng-show="!$ctrl.loadingScenes && $ctrl.lastSceneResult && $ctrl.lastSceneResult.hasNext">
+        <a href ng-click="$ctrl.getMoreScenes()">Load More...</a>
+      </div>
+    </div>
+
+    <div class="sidebar-static">
+      <div class="sidebar-actions">
+        <div class="btn-group">
+          <button class="btn"
+             ng-class="$ctrl.selectedScenes.size === 0 ? 'disabled' : 'btn-secondary'"
+             ng-disabled="!$ctrl.selectedScenes || $ctrl.selectedScenes.size === 0"
+             ng-click="$ctrl.sceneModal()">
+            {{$ctrl.selectedScenes.size || 'No'}} scenes selected
+          </button>
+
+          <button class="btn btn-small"
+                  ng-class="{'btn-secondary': $ctrl.allSelected}"
+                  ng-click="$ctrl.selectAllScenes()">
+            <i ng-class="{'icon-plus': !$ctrl.allSelected,
+                          'icon-cross': $ctrl.allSelected}"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scene detail view -->
+  <div class="scene-detail-map" ng-if="$ctrl.activeScene">
+    <div class="container column-stretch container-not-scrollable">
+      <rf-scene-detail class="sidebar"
+                       scene="$ctrl.activeScene"
+                       show-thumbnail="true"
+                       on-close-click="$ctrl.closeDetailPane()"
+                       on-select-click="$ctrl.toggleSelectAndClosePane()"
+                       is-selected="$ctrl.isSelected($ctrl.activeScene)"
+      ></rf-scene-detail>
+      <div class="main">
+        <rf-map-container map-id="detail"
+                          initial-center="$ctrl.center"
+                          initial-zoom="$ctrl.zoom"
+        ></rf-map-container>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scene filters -->
+
+  <div class="sidebar sidebar-extended map-filters"
+       ng-show="$ctrl.showFilterPane && !$ctrl.activeScene">
+    <rf-filter-pane on-close-click="$ctrl.toggleFilterPane()" filters="$ctrl.filters"></rf-filter-pane>
+  </div>
+
+  <div class="main">
+    <rf-map-container map-id="browse"></rf-map-container>
+  </div>
+</div>

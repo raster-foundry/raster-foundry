@@ -1,0 +1,1 @@
+../../../../src_migrations/main/scala/24.scala

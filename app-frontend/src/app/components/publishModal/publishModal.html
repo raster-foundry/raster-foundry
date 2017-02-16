@@ -1,0 +1,70 @@
+<div class="modal-scrollable-body modal-sidebar-header">
+  <div class="modal-header">
+    <button type="button" class="close" aria-label="Close" ng-click="$ctrl.dismiss()">
+      <span aria-hidden="true">&times;</span>
+    </button>
+    <h4 class="modal-title">
+      Publish Project - {{$ctrl.resolve.project.name}}
+    </h4>
+    <p>Publish or export your project</p>
+  </div>
+  <div class="modal-body">
+    <div class="content">
+      <h4>Publishing</h4>
+      <div class="form-group">
+        <div>
+          <a class="btn btn-primary" ui-sref="share({projectid: $ctrl.resolve.project.id})">
+            Preview Your Published Project
+          </a>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Published page URL</label>
+        <div class="form-group all-in-one">
+          <label for="tile-link" class="sr-only">URL</label>
+          <input id="tile-link" type="text" class="form-control"
+                  value="{{$ctrl.resolve.shareUrl}}" readonly>
+          <!--
+            @TODO: the copy button is intended to copy the url for the user which
+            is not currently implemented
+          -->
+          <button class="btn btn-link">
+            Copy
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="content">
+      <h4>Exporting</h4>
+      <div class="form-group">
+        <label>XYZ resource link</label>
+        <div class="form-group all-in-one">
+          <label for="tile-link" class="sr-only">URI Link</label>
+          <input id="tile-link" type="text" class="form-control"
+                  value="{{$ctrl.resolve.tileUrl}}" readonly>
+          <!--
+            @TODO: the copy button is intended to copy the url for the user which
+            is not currently implemented
+          -->
+          <button class="btn btn-link">
+            Copy
+          </button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Download an image of your project</label>
+        <div>
+          <a class="btn btn-primary" href="">
+            Download .png
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn"
+            ng-click="$ctrl.dismiss()">
+      Done
+    </button>
+  </div>
+</div>

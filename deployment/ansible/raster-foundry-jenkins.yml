@@ -1,0 +1,16 @@
+---
+- hosts: jenkins
+  connection: ssh
+  become: True
+
+  pre_tasks:
+    - name: Update APT cache
+      apt: update_cache=yes cache_valid_time=3600
+
+  roles:
+    - { role: azavea.ntp }
+    - { role: azavea.terraform }
+    - { role: raster-foundry.aws-cli }
+    - { role: raster-foundry.docker }
+    - { role: raster-foundry.shellcheck }
+    - { role: raster-foundry.jenkins }

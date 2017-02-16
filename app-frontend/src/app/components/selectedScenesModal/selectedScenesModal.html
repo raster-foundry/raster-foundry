@@ -1,0 +1,55 @@
+<div class="modal-scrollable-body modal-sidebar-header">
+  <div class="modal-header">
+  	<button type="button" class="close" aria-label="Close"
+            ng-click="$ctrl.dismiss()">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  	<h4 class="modal-title">
+      You have
+      <ng-pluralize count="$ctrl.resolve.scenes.size"
+                    when="{'0': 'no Scenes',
+                          'one': '1 Scene',
+                          'other': '{} Scenes'
+                          }">
+      </ng-pluralize>
+      selected
+    </h4>
+  	<p>Review your selections, add them to projects, or open them in the editor.</p>
+  </div>
+  <div class="modal-body">
+  	<div class="list-group">
+      <rf-scene-item
+          ng-click="$ctrl.viewSceneDetail(scene)"
+          scene="scene" selected="$ctrl.isSelected(scene)"
+          selectable="true"
+          on-select="$ctrl.resolve.selectScene(scene, selected)"
+          class="selectable"
+          ng-repeat="scene in $ctrl.scenes track by scene.id">
+      </rf-scene-item>
+  	</div>
+  </div>
+  <div class="modal-footer">
+  	<div class="pull-left">
+  	  <button type="button"
+              class="btn btn-secondary"
+              ng-disabled="!$ctrl.selectedScenes || $ctrl.selectedScenes.size === 0"
+              ng-click="$ctrl.close({$value: 'project'})">
+        <i class="icon-bucket"></i>
+        Add to a Project
+      </button>
+  	  <span>&nbsp;or&nbsp;</span>
+  	  <button type="button"
+              class="btn btn-primary"
+              ng-disabled="!$ctrl.selectedScenes || $ctrl.selectedScenes.size === 0"
+              ng-click="$ctrl.close({$value: 'editor'})">
+        <i class="icon-mosaic"></i>
+        Editor
+      </button>
+  	</div>
+  	<button type="button" class="btn" data-dismiss="modal"
+            ng-click="$ctrl.resolve.selectNoScenes()">
+      <i class="icon-cross"></i>
+      Deselect All
+    </button>
+  </div>
+</div>

@@ -1,0 +1,25 @@
+<div class="modal-header">
+	<button type="button" class="close" aria-label="Close"
+          ng-click="$ctrl.dismiss()">
+    <span aria-hidden="true">&times;</span>
+  </button>
+	<h4 class="modal-title">
+    {{$ctrl.resolve.title}}
+  </h4>
+	<p>{{$ctrl.resolve.subtitle}}</p>
+</div>
+<div class="modal-body">
+  <div ng-bind-html="$ctrl.resolve.content"></div>
+</div>
+<div class="modal-footer">
+	<div class="pull-left">
+  <button type="button" class="btn"
+          ng-click="$ctrl.dismiss()">
+    {{$ctrl.resolve.cancelText}}
+  </button>
+  </div>
+    <button type="button"  class="btn btn-primary"
+            ng-click="$ctrl.close()">
+      {{$ctrl.resolve.confirmText}}
+    </button>
+</div>

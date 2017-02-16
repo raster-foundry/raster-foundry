@@ -1,0 +1,186 @@
+<!-- Workflow container -->
+  <div class="sidebar">
+    <div class="sidebar-static">
+      <h5 class="sidebar-title">
+          Inputs
+      </h5>
+    </div>
+    <div class="sidebar-scrollable">
+      <div class="list-group">
+        <div class="list-group-item list-group-item-stacked">
+          <h5 class="sidebar-title">
+              Area of interest (Before)
+          </h5>
+          <div class="instructions-container" ng-show="!$ctrl.inputs[0]">
+            <p>
+              The <b>vegetation change detection</b> tool requires a source with NIR and Red bands
+            </p>
+            <button class="btn btn-primary"
+                    ng-click="$ctrl.selectProjectModal(0)">
+              Select A Source
+            </button>
+          </div>
+          <form class="form">
+            <div class="form-group" ng-show="$ctrl.inputs[0]">
+              <label for="formGroupExampleInput">Input Source</label>
+              <div class="form-group all-in-one">
+                <input type="text" class="form-control" id="input-0" placeholder="Example input" readonly ng-value="$ctrl.inputs[0].name">
+                <button class="btn btn-link" ng-click="$ctrl.selectProjectModal(0)">
+                  Change
+                </button>
+              </div>
+            </div>
+            <div class="form-group" ng-show="$ctrl.inputs[0]">
+              <label for="red-band-map-1">Red Band</label>
+              <select class="form-control" id="red-band-map-1"  ng-model="$ctrl.inputParameters[0].bands.red">
+                <option value="1">Band 1</option>
+                <option value="2">Band 2</option>
+                <option value="3">Band 3</option>
+                <option value="4">Band 4</option>
+                <option value="5">Band 5</option>
+                <option value="6">Band 6</option>
+                <option value="7">Band 7</option>
+                <option value="8">Band 8</option>
+                <option value="9">Band 9</option>
+                <option value="10">Band 10</option>
+                <option value="11">Band 11</option>
+              </select>
+            </div>
+            <div class="form-group" ng-show="$ctrl.inputs[0]">
+              <label for="nir-band-map-1">NIR Band</label>
+              <select class="form-control" id="nir-band-map-1" ng-model="$ctrl.inputParameters[0].bands.nir">
+                <option value="1">Band 1</option>
+                <option value="2">Band 2</option>
+                <option value="3">Band 3</option>
+                <option value="4">Band 4</option>
+                <option value="5">Band 5</option>
+                <option value="6">Band 6</option>
+                <option value="7">Band 7</option>
+                <option value="8">Band 8</option>
+                <option value="9">Band 9</option>
+                <option value="10">Band 10</option>
+                <option value="11">Band 11</option>
+              </select>
+            </div>
+          </form>
+        </div>
+
+        <div class="list-group-item list-group-item-stacked">
+          <h5 class="sidebar-title">
+              Area of interest (After)
+          </h5>
+          <div class="instructions-container" ng-show="!$ctrl.inputs[1]">
+            <p>
+              The <b>vegetation change detection</b> tool requires a source with NIR and Red bands
+            </p>
+            <button class="btn btn-primary"
+                    ng-click="$ctrl.selectProjectModal(1)">
+              Select A Source
+            </button>
+          </div>
+          <form class="form">
+            <div class="form-group" ng-show="$ctrl.inputs[1]">
+              <label for="formGroupExampleInput">Input Source</label>
+              <div class="form-group all-in-one">
+                <input type="text" class="form-control" id="input-1" placeholder="Example input" readonly ng-value="$ctrl.inputs[1].name">
+                <button class="btn btn-link" ng-click="$ctrl.selectProjectModal(1)">
+                  Change
+                </button>
+              </div>
+            </div>
+            <div class="form-group" ng-show="$ctrl.inputs[1]">
+              <label for="red-band-map-2">Red Band</label>
+              <select class="form-control" id="red-band-map-2"  ng-model="$ctrl.inputParameters[1].bands.red">
+                <option value="1">Band 1</option>
+                <option value="2">Band 2</option>
+                <option value="3">Band 3</option>
+                <option value="4">Band 4</option>
+                <option value="5">Band 5</option>
+                <option value="6">Band 6</option>
+                <option value="7">Band 7</option>
+                <option value="8">Band 8</option>
+                <option value="9">Band 9</option>
+                <option value="10">Band 10</option>
+                <option value="11">Band 11</option>
+              </select>
+            </div>
+            <div class="form-group" ng-show="$ctrl.inputs[1]">
+              <label for="nir-band-map-2">NIR Band</label>
+              <select class="form-control" id="nir-band-map-2" ng-model="$ctrl.inputParameters[1].bands.nir">
+                <option value="1">Band 1</option>
+                <option value="2">Band 2</option>
+                <option value="3">Band 3</option>
+                <option value="4">Band 4</option>
+                <option value="5">Band 5</option>
+                <option value="6">Band 6</option>
+                <option value="7">Band 7</option>
+                <option value="8">Band 8</option>
+                <option value="9">Band 9</option>
+                <option value="10">Band 10</option>
+                <option value="11">Band 11</option>
+              </select>
+            </div>
+          </form>
+        </div>
+        <div class="list-group-item list-group-item-stacked">
+          <h5 class="sidebar-title">
+              Vegetation index
+          </h5>
+          <form class="form">
+            <div class="form-group">
+              <label for="formGroupExampleInput">Threshold</label>
+              <div>
+                <rzslider id="reclassify-before-threshold-value"
+                          class="light"
+                          rz-slider-model="$ctrl.thresholds.before"
+                          rz-slider-options="$ctrl.reclassifyBeforeThreshold.options">
+                </rzslider>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="list-group-item list-group-item-stacked">
+          <h5 class="sidebar-title">
+              Vegetation index
+          </h5>
+          <form class="form">
+            <div class="form-group">
+              <label for="formGroupExampleInput">Threshold</label>
+              <div>
+                <rzslider id="reclassify-after-threshold-value"
+                          class="light"
+                          rz-slider-model="$ctrl.thresholds.after"
+                          rz-slider-options="$ctrl.reclassifyAfterThreshold.options">
+                </rzslider>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="main with-position">
+    <rf-diagram-container class="with-position"
+                          on-preview="$ctrl.showPreview(data)">
+    </rf-diagram-container>
+    <div style="position: absolute; top:0; bottom: 0; left: 0; right: 0;" ng-show="$ctrl.isShowingPreview">
+      <rf-map-container map-id="lab-run-preview"></rf-map-container>
+      <div class="preview-control-bar">
+          <button ng-if="$ctrl.previewLayers.length > 1" class="btn btn-default" ng-click="$ctrl.closePreview()">Exit Node Comparison</button>
+          <button ng-if="!$ctrl.previewLayers || $ctrl.previewLayers.length === 1" class="btn btn-default" ng-click="$ctrl.closePreview()">Exit Node Preview</button>
+      </div>
+      <div class="preview-info-bar" ng-show="$ctrl.previewLayers.length > 1">
+        <div class="split-container">
+          <button class="btn">{{$ctrl.previewData[0].name}}</button>
+        </div>
+        <div class="split-container">
+          <button class="btn">{{$ctrl.previewData[1].name}}</button>
+        </div>
+      </div>
+      <div class="preview-info-bar" ng-show="$ctrl.previewLayers.length == 1">
+        <div class="split-container">
+          <button class="btn">{{$ctrl.previewData.name}}</button>
+        </div>
+      </div>
+    </div>
+  </div>

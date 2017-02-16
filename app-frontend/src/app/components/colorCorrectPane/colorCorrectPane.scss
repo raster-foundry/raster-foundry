@@ -1,0 +1,14 @@
+// @TODO: add class to enforce min-height and minimize UI jank
+
+.histogram-loading-indicator {
+    min-height: 100px;
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.icon-load.animated {
+    animation: 2s linear 0s normal none infinite spin;
+}

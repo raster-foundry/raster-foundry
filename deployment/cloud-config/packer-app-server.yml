@@ -1,7 +1,0 @@
-#cloud-config
-
-write_files:
-  - path: /etc/default/rf-app
-    permissions: 0644
-    content: |
-      PACKER_RUNNING=1

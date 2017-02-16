@@ -1,3 +1,0 @@
-GDAL==1.10.0
-numpy==1.10.1
-exifread==2.1.2

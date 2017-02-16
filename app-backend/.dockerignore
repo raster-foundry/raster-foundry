@@ -1,0 +1,9 @@
+app/target/*
+database/target/*
+datamodel/target/*
+ingest/target/*
+migrations/target/*
+project/target/*
+target/*
+tile/target/*
+.idea/*

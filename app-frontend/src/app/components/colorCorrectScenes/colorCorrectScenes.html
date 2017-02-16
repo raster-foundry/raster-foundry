@@ -1,0 +1,56 @@
+<div class="flex-column">
+  <!-- scene listing -->
+  <div class="sidebar-static">
+      <div class="btn-group sidebar-dropdown" uib-dropdown>
+        <a href class="btn btn-small" uib-dropdown-toggle>
+          Color mode <i class="icon-caret-down"></i>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+          <li role="menuitem">
+            <a href
+               ng-class="{'active': $ctrl.isActiveColorMode(key)}"
+               ng-click="$ctrl.setBands(key)"
+               ng-repeat="(key, band) in $ctrl.bands track by $index">
+              {{band.label}}
+            </a>
+          </li>
+        </ul>
+      </div>
+      <div class="sidebar-actions">
+        <div class="btn-group sidebar-dropdown cc-actions" uib-dropdown>
+          <a ng-disabled="$ctrl.selectedScenes.size === 0" ng-click="$ctrl.goColorCorrect()" class="btn btn-small">Color correct</a>
+          <button class="btn btn-small"
+                  ng-class="{'btn-secondary': !$ctrl.shouldSelectAll()}"
+                  ng-click="$ctrl.onToggleSelection()">
+            <i ng-class="{'icon-plus': $ctrl.shouldSelectAll(),
+                          'icon-cross': !$ctrl.shouldSelectAll()}"></i>
+          </button>
+        </div>
+      </div>
+  </div>
+  <div class="sidebar-scrollable">
+    <div class="list-group">
+      <rf-scene-item
+          ng-click="$ctrl.$state.go('editor.project.color.adjust')"
+          scene="scene"
+          selectable
+          selected="$ctrl.isSelected(scene)"
+          on-select="$ctrl.setSelected(scene, selected)"
+          class="selectable"
+          ng-mouseover="$ctrl.setHoveredScene(scene)"
+          ng-mouseleave="$ctrl.removeHoveredScene()"
+          ng-repeat="scene in $ctrl.sceneList track by scene.id">
+      </rf-scene-item>
+    </div>
+    <div class="list-group" ng-show="$ctrl.sceneRequestState && $ctrl.sceneRequestState.loading">
+      <span class="list-placeholder">
+        <i class="icon-load"></i>
+      </span>
+    </div>
+    <div class="list-group" ng-show="$ctrl.sceneRequestState && $ctrl.sceneRequestState.errorMsg">
+      <span class="list-placeholder">
+        {{$ctrl.sceneRequestState.errorMsg}}
+      </span>
+    </div>
+  </div>
+</div>

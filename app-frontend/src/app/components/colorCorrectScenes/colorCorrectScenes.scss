@@ -1,0 +1,7 @@
+// @TODO: these styles ensure the selection grid is visible
+// and need to be incorporated into the app styles
+
+rf-project-editor .grid-select .leaflet-tile {
+  border-bottom: 1px solid rgba(#999, 0.5);
+  border-right: 1px solid rgba(#999, 0.5);
+}

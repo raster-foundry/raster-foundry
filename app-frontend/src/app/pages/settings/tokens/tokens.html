@@ -1,0 +1,37 @@
+<div class="row content stack-sm">
+  <div class="column-8">
+    <div class="library-header">
+      <h1 class="h3 page-title">API Tokens</h1>
+    </div>
+    <form action="">
+      <label for="new-token">Create token</label>
+      <div class="form-group all-in-one">
+        <input id="new-token" type="text" ng-model="$ctrl.newTokenName" class="form-control" placeholder="token name for your reference">
+        <button type="button" class="btn btn-link" ng-click="$ctrl.createToken($ctrl.newTokenName)" style="width: 150px;">
+          <i class="icon-plus"></i>Create
+        </button>
+      </div>
+    </form>
+    <div class="list-group">
+      <div class="list-group-item" ng-repeat="token in $ctrl.tokens track by token.id">
+        <div class="list-group-overflow">
+          <strong class="color-dark">{{token.device_name}}</strong>
+        </div>
+        <div class="list-group-right">
+          <button class="btn" ng-click="$ctrl.deleteToken(token.id)">
+            <i class="icon-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="list-group"
+         ng-if="(!$ctrl.tokens || !$ctrl.tokens.length) && !$ctrl.loading">
+      You have not generated any tokens.
+    </div>
+    <div class="list-group" ng-show="$ctrl.loading">
+      <span class="list-placeholder">
+        <i class="icon-load"></i>
+      </span>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,144 @@
+.list-group {
+  position: relative;
+  &.load-message {
+    text-align: center;
+    font-size: 1.25em;
+    padding: .5em 0 .5em 0;
+  }
+}
+
+.list-placeholder {
+  padding: 1.5rem;
+  display: flex;
+  position: relative;
+  justify-content: center;
+  opacity: .5;
+
+  .icon-load {
+    animation: 2s linear 0s normal none infinite spin;
+  }
+}
+
+.selectable {
+  .list-group-item {
+    cursor: pointer;
+  }
+}
+
+
+.list-item-header {
+  color: $shade-dark;
+  font-weight: bold;
+}
+
+.list-item-description {
+}
+
+.list-item-attribution {
+  color: $shade-light;
+  font-weight: bold;
+}
+
+.list-group-subitem {
+  padding: 1.5rem;
+  margin: 0 0 0 3rem;
+  display: flex;
+  align-items: center;
+  position: relative;
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  > * {
+    margin: 0 5px;
+  }
+  p {
+    margin: 0;
+  }
+  span {
+    display: inline-block;
+    vertical-align: middle;
+  }
+  &.selectable {
+    cursor: pointer;
+  }
+  &.download {
+    margin: 0 0 0 6em;
+  }
+}
+
+.list-group-item {
+  padding: 1.5rem;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  position: relative;
+  > * {
+    margin: 0 5px;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  span {
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  .list-group-right {
+    margin-left: auto;
+    position: relative;
+    z-index: 1;
+    text-align: right;
+
+    > * {
+      margin-left: 5px;
+      vertical-align: middle;
+    }
+  }
+
+  .list-group-link {
+    flex: none;
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+
+  &.wrap {
+    align-items: flex-start;
+  }
+
+  &.selectable {
+    cursor: pointer;
+  }
+}
+
+// List group item with stacked children
+// Child elements will list out into rows instead of columns
+.list-group-item.list-group-item-stacked {
+  flex-direction: column;
+  align-items: flex-start;
+
+  > * {
+    margin: 5px 0;
+    width: 100%;
+  }
+}
+
+.list-group-overflow {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  padding-right: 1rem;
+
+  p, span {
+    display: inline;
+  }
+
+  @include respond-to('sm-up') {
+    //max-width: 275px;
+  }
+}

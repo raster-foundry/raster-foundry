@@ -1,0 +1,9 @@
+---
+# meta file for raster-foundry.jenkins
+dependencies:
+  - { role: azavea.nginx, nginx_delete_default_site: True }
+  - { role: azavea.jenkins,
+      jenkins_java_opts:
+        ['-Djava.awt.headless=true',
+        '-Djava.net.preferIPv4Stack=true',
+        '-Djenkins.install.runSetupWizard=false' ] }

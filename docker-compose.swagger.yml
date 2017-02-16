@@ -1,0 +1,13 @@
+version: '2.1'
+services:
+  swagger-editor:
+    image: swaggerapi/swagger-editor:latest
+    ports:
+      - "8888:8080"
+
+  swagger-ui:
+    image: nginx:1.10
+    volumes:
+      - ./docs/swagger/:/usr/share/nginx/html:ro
+    ports:
+      - "9999:80"

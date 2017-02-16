@@ -1,0 +1,221 @@
+/* 
+ * /browse/
+ */
+.leaflet-top.leaflet-right .map-control-panel .leaflet-control-zoom {
+  border: none;
+  margin: 0;
+}
+
+.leaflet-control-layers.leaflet-control {
+  display: none !important;
+}
+
+.leaflet-top.leaflet-right .map-control-panel .leaflet-control-zoom-in, 
+.leaflet-top.leaflet-right .map-control-panel .leaflet-control-zoom-out {
+  font-size: 18px;
+  line-height: 1;
+  padding: 2px;
+  height: 25px;
+
+  &:hover {
+    line-height: 1;
+  }
+}
+
+.leaflet-control-attribution.leaflet-control {
+  background: #353C58;
+  color: #959CAC;
+  margin: 2px;
+  border-radius: 2px;
+  padding: 4px 7px;
+  opacity: .9;
+  transition: .1s ease-in-out opacity;
+  font-family: 'Open Sans', sans-serif;
+  max-width: 400px;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  a {
+    color: #959CAC;
+    text-decoration: underline;
+    font-weight: 400;
+  }
+}
+
+dl.meta-list > dt {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+dl.meta-list > dd {
+  margin-bottom: 15px;
+}
+
+.map-filters {
+  z-index: 1001; //puts it above map controls
+}
+//
+
+
+/* 
+ * /library/ All library pages
+ */
+
+// Where breadcrumbs exist add back arrow icon
+
+
+/* 
+ * /library/scenes/detail/
+ */
+
+// Change add to bucket link to add to project, change icon
+//
+
+
+/* 
+ * /library/projects/detail/
+ */
+
+// Update Publish link icon
+// Make editor link into button
+//
+
+
+/* 
+ * /editor/project/
+ */
+
+// Action dropdown: remove sync histogram, add icon to color correct
+// add icon to color correction in navbar
+// make single click on scene open color correct panel
+// fix scrolling in color correct mode by adding class `flex-column` to `color-correct-pane`
+// wrap secondary navbar navs in `navbar-left/right`
+// put `navbar-vertical-divider` inside of `navbar-right`
+// Make Scene opacity slider label say "Scene opacity 100%"
+
+rf-project-editor .leaflet-tile {
+  border: none;
+}
+
+.navbar .btn {
+  margin: 12px 0 12px;
+  border: none;
+
+  + .btn,
+  &:last-of-type {
+    margin-left: 20px;
+  }
+
+  &:last-of-type {
+    margin-right: 20px;
+  }
+}
+
+.opacity-slider {
+  left: calc(35% + 400px);
+  transform: translate(-50%);
+  padding: 10px;
+  margin: 2px 0;
+  border-radius: 2px;
+  width: 310px;
+  height: auto;
+
+  h3 {
+    font-size: 1.3rem;
+    margin: 0 0 10px;
+    text-align: center;
+    color: white;
+  }
+
+  .rzslider {
+    height: 20px;
+  }
+
+  .rzslider .rz-ticks .rz-tick .rz-tick-value {
+    display: none;
+  }
+}
+
+.mask-item {
+  padding: 1rem 2rem;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.mask-actions {
+  margin-left: auto;
+  position: relative;
+  z-index: 1;
+  text-align: right;
+}
+
+.mosaic-scene-order.content {
+  padding-top: 1rem;
+}
+
+.mosaic-scene-order .filter {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.mosaic-scene-order {
+  
+  &.content {
+    padding-top: 1rem;
+  }
+
+  .filter {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  select.input-dark {
+    color: #fff;
+    height: 4.1rem;
+  }
+}
+
+.mosaic-priority-option {
+  background: $shade-dark;
+  padding: 10px;
+  border-radius: 2px;
+  margin-bottom: 4px;
+  color: white;
+  font-weight: 600;
+  font-size: 1.3rem;
+}
+
+.flex-column {
+  flex-grow: 1;
+}
+
+.btn-group .btn {
+  flex-grow: 1;
+}
+//
+
+
+/* 
+ * project modal
+ */
+.modal-form {
+  padding-left: 250px;
+  border-bottom: 1px solid #ddd;
+  margin: 0;
+
+  .form-group {
+    margin: 1rem;
+  }
+}
+
+
+/* 
+ * Publish modal
+ */
+.form-group.all-in-one [readonly] {
+  background: none;
+}

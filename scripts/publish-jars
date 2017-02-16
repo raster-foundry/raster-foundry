@@ -1,0 +1,36 @@
+#!/bin/bash
+
+set -e
+
+if [[ -n "${RF_DEBUG}" ]]; then
+    set -x
+fi
+
+function usage() {
+    echo -n \
+"Usage: $(basename "$0" JAR_NAME)
+
+Publish jars to S3 for easy access
+"
+}
+
+
+if [ -d "./scripts/cibuild.d" ]; then
+    for file in ./scripts/cibuild.d/*.sh; do
+        source "${file}"
+    done
+fi
+
+if [ -d "./scripts/cipublish.d" ]; then
+    for file in ./scripts/cipublish.d/*.sh; do
+        source "${file}"
+    done
+fi
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    if [ "${1:-}" = "--help" ]; then
+        usage
+    fi
+    build_ingest_jar
+    upload_ingest_jar "${RF_HOST_USER}"
+fi

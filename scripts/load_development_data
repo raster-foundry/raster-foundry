@@ -1,0 +1,53 @@
+#!/bin/bash
+set -e
+
+if [[ -n "${RF_DEBUG}" ]]; then
+    set -x
+fi
+
+source "scripts/setup"
+
+DIR="$(dirname "$0")"
+
+function usage() {
+
+    echo -n \
+"Usage: $(basename "$0")
+
+Load a database dump from S3
+"
+}
+
+function load_database_backup() {
+    check_database
+
+    pushd "${DIR}/.."
+    aws s3 cp "s3://rasterfoundry-development-config-us-east-1/database.pgdump" "data/database.pgdump"
+    popd
+
+    echo "Drop rasterfoundry database"
+    docker-compose \
+        exec -T postgres gosu postgres dropdb rasterfoundry
+
+    echo "Create rasterfoundry database"
+    docker-compose \
+        exec -T postgres gosu postgres createdb rasterfoundry
+
+    echo "Restore database from backup"
+    # Command to create database backup
+    # gosu postgres pg_dump -Fc rasterfoundry > database.pgdump
+    docker-compose \
+        exec -T postgres gosu postgres pg_restore -Fc -d rasterfoundry /tmp/data/database.pgdump &>/dev/null
+}
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]
+then
+    if [ "${1:-}" = "--help" ]
+    then
+        usage
+    else
+        docker-compose up -d postgres
+        load_database_backup
+    fi
+    exit
+fi

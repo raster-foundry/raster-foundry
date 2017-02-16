@@ -1,0 +1,77 @@
+version: '2.1'
+services:
+  spark-master:
+    image: raster-foundry-spark
+    build:
+      context: ./worker-tasks
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "7077:7077"
+      - "8888:8888"
+    environment:
+      AWS_PROFILE: "raster-foundry"
+      SPARK_LOCAL_DIRS: "/tmp"
+      SPARK_PUBLIC_DNS: "localhost"
+      SPARK_MASTER_WEBUI_PORT: "8888"
+      SPARK_DAEMON_MEMORY: "2G"
+      SPARK_DAEMON_JAVA_OPTS: "-Dspark.deploy.recoveryMode=FILESYSTEM -Dspark.deploy.recoveryDirectory=/spark-state"
+    volumes:
+      - ./app-backend/ingest/src/test/resources:/opt/rf/test-resources
+      - ./app-backend/ingest/target/scala-2.11/rf-ingest.jar:/opt/rf/jars/rf-ingest.jar
+      - $HOME/.aws:/var/lib/spark/.aws:ro
+      # Spark cluster state
+      - /spark-state
+      # Spark scratch space
+      - /tmp
+    entrypoint: spark-class
+    command: org.apache.spark.deploy.master.Master
+
+  spark-worker:
+    image: raster-foundry-spark
+    build:
+      context: ./worker-tasks
+      dockerfile: Dockerfile
+    links:
+      - spark-master:spark.services.rasterfoundry.internal
+    environment:
+      AWS_PROFILE: "raster-foundry"
+      SPARK_LOCAL_DIRS: "/tmp"
+      SPARK_PUBLIC_DNS: "localhost"
+      SPARK_WORKER_WEBUI_PORT: "8889"
+      SPARK_WORKER_MEMORY: "2G"
+      SPARK_DAEMON_MEMORY: "2G"
+    volumes:
+      - ./app-backend/ingest/src/test/resources:/opt/rf/test-resources
+      - $HOME/.aws:/var/lib/spark/.aws:ro
+      # Spark scratch space
+      - /tmp
+    entrypoint: spark-class
+    command:
+      - "org.apache.spark.deploy.worker.Worker"
+      - "spark://spark.services.rasterfoundry.internal:7077"
+
+  spark-driver:
+    image: raster-foundry-spark
+    build:
+      context: ./worker-tasks
+      dockerfile: Dockerfile
+    links:
+      - spark-master:spark.services.rasterfoundry.internal
+    environment:
+      AWS_PROFILE: "raster-foundry"
+      SPARK_LOCAL_DIRS: "/tmp"
+      SPARK_PUBLIC_DNS: "localhost"
+      SPARK_DRIVER_MEMORY: "2G"
+      SPARK_EXECUTOR_MEMORY: "2G"
+    volumes:
+      - ./app-backend/ingest/src/test/resources:/opt/rf/test-resources
+      - ./app-backend/ingest/target/scala-2.11/rf-ingest.jar:/opt/rf/jars/rf-ingest.jar
+      - ./worker-tasks/:/opt/raster-foundry/worker-tasks/
+      - ./.ivy2:/root/.ivy2
+      - ./.sbt:/root/.sbt
+      - $HOME/.aws:/var/lib/spark/.aws:ro
+      # Spark scratch space
+      - /tmp
+    working_dir: /opt/raster-foundry/worker-tasks
+    entrypoint: spark-submit

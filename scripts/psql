@@ -1,0 +1,22 @@
+#!/bin/bash
+set -eu
+
+function usage() {
+    echo -n \
+"Usage: $(basename "$0")
+Use Docker Compose to drop into a psql console.
+"
+}
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]
+then
+    if [ "${1:-}" = "--help" ]
+    then
+        usage
+    else
+        docker-compose up -d postgres
+        docker-compose \
+            exec postgres bash -c "psql -U rasterfoundry -d rasterfoundry"
+    fi
+    exit
+fi

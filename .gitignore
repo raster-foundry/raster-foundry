@@ -55,6 +55,7 @@ coverage.xml
 
 # Ansible
 deployment/ansible/roles/azavea.*
+*.retry
 
 # Vagrant
 .vagrant
@@ -68,7 +69,53 @@ npm-debug.log
 *~
 .#*
 
+# Vim
+.*.swp
+
 # MacOS
 .DS_Store
 
 deployment/default.yml
+
+# Scala
+*.class
+*.log
+
+# sbt specific
+.cache
+.history
+.lib/
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+/app-backend/project/.sbtboot
+/app-backend/project/.boot/
+/app-backend/project/.ivy/
+
+# Molecule
+.molecule/
+*__pycache__*
+
+# Scala-IDE specific
+.scala_dependencies
+.worksheet
+.ensime/*
+.ensime
+app-server/.ensime
+app-server/.ensime_cache/*
+/deployment/ansible/raster-foundry.retry
+/.ivy2/*
+.sbt/
+
+/.env
+
+.node_modules
+
+app-tasks/usr/local/airflow/logs/
+/app-tasks/usr/local/airflow/airflow-webserver.pid
+/app-tasks/usr/local/airflow/unittests.cfg
+.idea
+.ensime_cache

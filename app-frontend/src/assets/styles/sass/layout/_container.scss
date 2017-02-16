@@ -1,0 +1,54 @@
+/*
+ Fix this.
+ the wrapper is preventing the library pages from working correctly. Columns arent stretching.
+ If this is removed than map pages become broken. its fucked as is.
+ */
+.app-wrapper {
+  //height: 100%;
+  //display: flex;
+  //flex-direction: column;
+}
+
+.app-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+
+  .container {
+    max-width: initial;
+    flex: 1;
+    position: relative;
+
+    &.dashboard {
+      width: 100%;
+	    max-width: 1160px;
+      min-height: 100vh;
+    }
+    &.dashboard-filter {
+      width: 100%;
+      max-width: 1160px;
+      flex: 1;
+      &.wide {
+        max-width: initial;
+      }
+    }
+  }
+}
+
+.container {
+	width: 100%;
+	max-width: 1160px;
+	margin: auto;
+  display: flex;
+}
+
+$navbar-height: 8rem;
+$navbar-secondary-height: 6rem;
+
+.container-not-scrollable {
+  height: calc(100vh - #{$navbar-height});
+
+  .secondary-navbar ~ & {
+    height: calc(100vh - #{$navbar-height + $navbar-secondary-height});    
+  }
+}

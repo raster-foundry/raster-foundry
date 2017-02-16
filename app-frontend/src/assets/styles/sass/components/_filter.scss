@@ -1,0 +1,36 @@
+.filter {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid $shade-dark;
+
+  &:first-child {
+    padding-top: 0;
+  }
+
+  label {
+    color: $shade-light;
+    display: block;
+    margin-bottom: 1.2rem;
+  }
+}
+
+.filter-item {
+  display: block;
+}
+
+.month-filter {
+  display: flex;
+  flex-wrap: wrap;
+  
+  .btn {
+    flex-basis: 24%;
+    margin: .5%;
+  }
+}
+
+.tag-filter {
+
+  .btn {
+    margin: .5%;
+  }
+}

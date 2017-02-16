@@ -1,0 +1,31 @@
+<div class="color-correct-pane flex-column">
+  <div class="sidebar-static">
+    <a href ng-click="$ctrl.resetCorrection()" class="link-histogram-reset">Reset Changes</a>
+    <div class="sidebar-actions">
+      <a href class="btn btn-default btn-small" ng-click="$ctrl.$state.go('^.scenes')">Back</a>
+    </div>
+  </div>
+
+  <div feature-flag="display-histogram" class="sidebar-static histogram">
+    <div class="histogram-loading-indicator" ng-show="$ctrl.errorLoadingHistogram || $ctrl.loadingHistogram">
+      <!--Histogram is loading-->
+      <i ng-show="$ctrl.loadingHistogram && !$ctrl.errorLoadingHistogram" class="icon-load animated"></i>
+      <!--Histogram failed to load-->
+      <span ng-show="!$ctrl.loadingHistogram && $ctrl.errorLoadingHistogram">Error loading histogram</span>
+    </div>
+
+    <!--Histogram loaded successfully-->
+    <rf-channel-histogram ng-show="!$ctrl.loadingHistogram && !$ctrl.errorLoadingHistogram" data="$ctrl.data"></rf-channel-histogram>
+
+    <a feature-flag="make-source-histogram" ng-click="" class="btn btn-link btn-block">Make source histogram</a>
+  </div>
+
+  <div class="sidebar-scrollable">
+    <rf-color-correct-adjust
+        correction="$ctrl.correction"
+        on-correction-change="$ctrl.onCorrectionChange(newCorrection)"
+        reset="$ctrl.resetToggle"
+        class="color-correct-panel">
+    </rf-color-correct-adjust>
+  </div>
+</div>

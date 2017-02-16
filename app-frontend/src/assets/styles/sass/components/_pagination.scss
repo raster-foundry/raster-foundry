@@ -1,0 +1,99 @@
+$pagination-font-size:          14px !default;
+$pagination-line-height-base:        1.428571429 !default; // 20/14
+$pagination-line-height-computed:    floor(($pagination-font-size * $pagination-line-height-base)) !default; // ~20px
+
+$pagination-border-radius-base:        4px !default;
+
+$pagination-padding-base-vertical:     6px !default;
+$pagination-padding-base-horizontal:   12px !default;
+
+$pagination-bg: $white;
+$pagination-hover-bg: $white;
+$pagination-color: $gray-lighter;
+$pagination-hover-color: $brand-secondary;
+$pagination-border: $gray-lighter;
+$pagination-hover-border: $brand-secondary;
+$pagination-active-color: $white;
+$pagination-active-bg: $brand-secondary;
+$pagination-active-border: $brand-secondary;
+$pagination-disabled-color: $gray-lightest;
+$pagination-disabled-bg: $white;
+$pagination-disabled-border: $gray-lightest;
+$cursor-disabled: default;
+
+.pagination {
+  display: inline-block;
+  padding-left: 0;
+  margin: 2rem 0;
+  border-radius: 2px;
+
+  > li {
+    display: inline; // Remove list-style and block-level defaults
+    
+    > a,
+    > span {
+      position: relative;
+      float: left; // Collapse white-space
+      padding: .75rem 1.5rem;
+      line-height: 1;
+      text-decoration: none;
+      color: $shade-light;
+      background-color: #fff;
+      border: 1px solid $shade-light;
+      margin-left: -1px;
+      font-weight: 500;
+    }
+
+    &:first-child {
+      > a,
+      > span {
+        margin-left: 0;
+        border-top-left-radius: 2px;
+        border-bottom-left-radius: 2px
+      }
+    }
+    &:last-child {
+      > a,
+      > span {
+        border-top-right-radius: 2px;
+        border-bottom-right-radius: 2px
+      }
+    }
+  }
+
+  > li > a,
+  > li > span {
+    &:hover,
+    &:focus {
+      z-index: 2;
+      color: $brand-primary;
+      border-color: $brand-primary;
+    }
+  }
+
+  > .active > a,
+  > .active > span {
+    &,
+    &:hover,
+    &:focus {
+      z-index: 3;
+      color: #fff;
+      background-color: $shade-light;;
+      border-color: $shade-light;;
+      cursor: default;
+    }
+  }
+
+  > .disabled {
+    > span,
+    > span:hover,
+    > span:focus,
+    > a,
+    > a:hover,
+    > a:focus {
+      opacity: .5;
+      cursor: default;
+      outline: none;
+    }
+  }
+}

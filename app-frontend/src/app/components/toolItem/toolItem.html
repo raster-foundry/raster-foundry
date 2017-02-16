@@ -1,0 +1,20 @@
+<div class="list-group-item selectable wrap">
+  <img ng-if="$ctrl.toolData.screenshots[0]"
+       ng-src="{{$ctrl.toolData.screenshots[0].url}}"
+       class="rounded-img item-img">
+  <img ng-if="!$ctrl.toolData.screenshots.length"
+       src="https://placehold.it/75x75/"
+       class="rounded-img item-img">
+  <div>
+    <div class="list-item-header">
+      {{$ctrl.toolData.title}}
+    </div>
+    <div class="list-item-description">
+      {{$ctrl.toolData.description}}
+    </div>
+    <!-- @TODO: This username will need to be dynamic once other users can create tools -->
+    <div class="list-item-attribution">
+      Uploaded by: Raster Foundry
+    </div>
+  </div>
+</div>

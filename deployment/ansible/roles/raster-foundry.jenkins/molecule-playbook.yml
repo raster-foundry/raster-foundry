@@ -1,0 +1,39 @@
+---
+- hosts: all
+  gather_facts: False
+  become: True
+  pre_tasks:
+
+    # Check Ubuntu release version to determine if we need to install python 2,
+    # an Ansible dependency that isn't included by default in Ubuntu 16.04 and
+    # up.
+
+    - name: Check Ubuntu release
+      raw: cat /etc/lsb-release | grep DISTRIB_RELEASE | cut -d "=" -f2
+      register: ubuntu_release
+      changed_when: False
+
+    - debug: msg="Running Ubuntu version {{ ubuntu_release.stdout|float }}"
+
+    # Update apt cache and install python 2 for Ubuntu versions greater than
+    # 16.04
+
+    - name: Update APT cache
+      raw: apt-get update
+      changed_when: False
+
+    - name: Install python
+      raw: apt-get install -yq python
+      when: "{{ ubuntu_release.stdout| version_compare('16.04', '>=') }}"
+
+    # Gather facts once ansible dependencies are installed
+    - name: Gather facts
+      setup:
+
+    - name: Include raster-foundry group_vars
+      include_vars: "{{ item }}"
+      with_items:
+        - "../../group_vars/all"
+        - "../../group_vars/jenkins"
+
+- include: ../../raster-foundry-jenkins.yml

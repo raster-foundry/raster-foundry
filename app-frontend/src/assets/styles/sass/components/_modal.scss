@@ -1,0 +1,270 @@
+/*
+ * Modals
+ */
+
+// .modal-open      - body class for killing the scroll
+// .modal           - container to scroll within
+// .modal-dialog    - positioning shell for the actual modal
+// .modal-content   - actual modal w/ bg and corners and shit
+
+// Kill the scroll on the body
+.modal-open {
+  overflow: hidden;
+}
+
+// Container that the modal scrolls within
+.modal {
+  display: none;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1050;
+  -webkit-overflow-scrolling: touch;
+  outline: 0;
+
+  // When fading in the modal, animate it to slide down
+  &.fade .modal-dialog {
+    transform: translate(0, -25%);
+    transition: transform 0.3s ease-out;
+  }
+
+  &.in .modal-dialog {
+    transform: translate(0, 0);
+  }
+}
+
+.modal-open .modal {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+// Shell div to position the modal with bottom padding
+.modal-dialog {
+  position: relative;
+  width: auto;
+  margin: 10px;
+}
+
+// Actual modal
+.modal-content {
+  position: relative;
+  background-color: #F9F9F9;
+  border-radius: 2px;
+  background-clip: padding-box;
+  outline: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+// Modal background
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1040;
+  background-color: #353b59;
+  // Fade for backdrop
+  &.fade { opacity: 0; }
+  &.in { opacity: .7; }
+}
+
+// Modal header
+// Top section of the modal w/ title and dismiss
+.modal-header {
+  @extend .clearfix;
+  text-align: center;
+  padding: 2.5rem;
+  background-color: #fff;
+  border-bottom: 1px solid #ddd;
+
+  p {
+    margin: 0;
+  }
+
+  form {
+    margin-top: 1rem;
+    margin-bottom: 0;
+  }
+
+  //close icon
+  .close {
+    position: absolute;
+    right: 1.5rem;
+    top: 1.5rem;
+    margin: 0;
+  }
+}
+
+// Title text within header
+.modal-title {
+  margin: 0;
+  line-height: 1.8;
+}
+
+// Modal body
+// Where all modal content resides (sibling of .modal-header and .modal-footer)
+.modal-body {
+  position: relative;
+  padding: 1.5rem;
+}
+
+// Footer (for actions)
+.modal-footer {
+  @extend .clearfix;
+  padding: 1.5rem;
+  text-align: right;
+  border-top: 1px solid #e5e5e5;
+  background-color: #fff;
+
+  // Properly space out buttons
+  .btn + .btn {
+    margin-left: 5px;
+    margin-bottom: 0; // account for input[type="submit"] which gets the bottom margin like all other inputs
+  }
+  // but override that for button groups
+  .btn-group .btn + .btn {
+    margin-left: -1px;
+  }
+  // and override it for block buttons as well
+  .btn-block + .btn-block {
+    margin-left: 0;
+  }
+}
+
+// Measure scrollbar width for padding body during modal show/hide
+.modal-scrollbar-measure {
+  position: absolute;
+  top: -9999px;
+  width: 50px;
+  height: 50px;
+  overflow: scroll;
+}
+
+// Scale up the modal
+@include respond-to(md-up) {
+  // Automatically set modal's width for larger viewports
+  .modal-dialog {
+    width: 87.5rem;
+    margin: 4rem auto;
+  }
+
+  // Modal sizes
+  .modal-sm { width: 30rem; }
+}
+
+@include respond-to(md-up) {
+  .modal-lg { width: 900px; }
+}
+
+
+/*
+ * Modal Dark
+ */
+.modal-dark {
+  color: #fff;
+
+  @include heading-tags {
+    color: #fff;
+  }
+
+  .modal-content {
+    background-color: $shade-normal;
+  }
+
+  .modal-header {
+    border-bottom-color: $shade-dark;
+    background-color: $shade-dark;
+    color: #fff;
+  }
+
+  .modal-footer {
+    border-top-color: $shade-dark;
+  }
+
+  .close {
+    color: #fff;
+
+    &:hover {
+      color: #fff;
+    }
+  }
+
+  .btn-default {
+    border-color: $shade-dark;
+  }
+
+  .form-group.all-in-one {
+    border-color: $shade-dark;
+    background-color: $shade-dark;
+    margin: 2rem;
+  }
+
+  label {
+    color: #fff;
+  }
+
+  .form-control {
+    background-color: $shade-dark;
+    border-color: $shade-dark;
+  }
+}
+
+
+/*
+ Modal with a scrollable body
+ */
+.modal-scrollable-body {
+  display: flex;
+  flex-direction: column;
+  @include respond-to('md-up') {
+    max-height: calc(100vh - 100px);
+  }
+  @media (max-height: 550px) {
+    max-height: initial;
+  }
+
+  .modal-header,
+  .modal-footer {
+    flex: none;
+  }
+
+  .modal-body {
+    flex: 1;
+    overflow: auto;
+  }
+  
+  /* 
+    Modal with a sidebar instead up top header
+   */
+  @include respond-to('md-up') {
+    &.modal-sidebar-header {
+      .modal-header {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 250px;
+        bottom: 0;
+        border-right: 1px solid #ddd;
+        text-align: left;
+        z-index: 1;
+      }
+
+      .modal-body {
+        padding-left: 270px; //width of modal-header and default left padding of modal-body
+        height: calc(100vh - 100px);
+      }
+
+      .modal-footer {
+        z-index: 10;
+        background: #fff;
+        z-index: 2;
+      }
+    }
+  }
+}
+

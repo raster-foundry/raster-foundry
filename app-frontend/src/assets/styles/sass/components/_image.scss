@@ -1,0 +1,30 @@
+img {
+  max-width: 100%;
+}
+
+.center-img {
+  display: block;
+  margin: auto;
+  max-width: 100%;
+  height: auto;
+}
+
+.rounded-img {
+  border-radius: 2px;
+}
+
+.circle-img {
+  border-radius: 50%;
+}
+
+.detail-img {
+  height: 275px;
+  width: 275px;
+  border: 1px solid #ddd;
+}
+
+.item-img {
+  height: 75px;
+  width: 75px;
+  border: 1px solid #ddd;
+}

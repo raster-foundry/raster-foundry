@@ -1,0 +1,65 @@
+---
+- name: Disable security for login, set number of executors
+  lineinfile:
+    dest=/var/lib/jenkins/config.xml
+    state={{ item.state }}
+    regexp={{ item.regexp }}
+    line={{ item.line }}
+    backrefs={{ item.backrefs }}
+  notify:
+    - Restart Jenkins
+  with_items:
+    - { regexp: '(.*<useSecurity>).*(</useSecurity>.*)',
+        line: '\1false\2',
+        state: present,
+        backrefs: yes }
+    - { regexp: '(.*<numExecutors>)\d+(</numExecutors>.*)',
+        line: '\g<1>1\g<2>',
+        state: present,
+        backrefs: yes }
+
+- name: Remove Authorization and Security XML from config.
+  replace: dest=/var/lib/jenkins/config.xml regexp={{ item }}
+  notify:
+    - Restart Jenkins
+  with_items:
+    - '\s*<authorizationStrategy.*>(?:\n.*)*</authorizationStrategy>'
+    - '\s*<securityRealm.*>(?:\n.*)*</securityRealm>'
+
+- name: Add Jenkins Nginx config
+  template: src=jenkins.conf.j2
+            dest=/etc/nginx/sites-available/jenkins.conf
+  notify:
+    - Restart Nginx
+
+- name: Enable Jenkins Nginx config
+  file: src=/etc/nginx/sites-available/jenkins.conf
+        dest=/etc/nginx/sites-enabled/jenkins
+        state=link
+  notify:
+    - Restart Nginx
+
+- name: Add jenkins user to docker, sudo and adm groups
+  user: name="{{ jenkins_name }}"
+        groups="{{ item }}"
+        append=yes
+  with_items:
+    - "docker"
+    - "adm"
+    - "sudo"
+  notify:
+    - Restart Jenkins
+
+- name: Setup hourly docker-gc cron task
+  cron:
+    name: "docker-gc"
+    user: "{{ jenkins_name }}"
+    special_time: "hourly"
+    job: >
+      /usr/bin/docker run
+      --rm
+      -v /var/run/docker.sock:/var/run/docker.sock
+      -v /etc:/etc
+      spotify/docker-gc
+    state: "present"
+  changed_when: False

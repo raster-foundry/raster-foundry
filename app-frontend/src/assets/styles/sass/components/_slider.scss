@@ -1,0 +1,77 @@
+.rzslider {
+  display: block;
+  height: 40px;
+  margin: 0;
+
+  .rz-bar-wrapper {
+    height: auto;
+    margin-top: 0;
+    padding: 0;
+
+    &.rz-draggable {
+      transition: 100ms ease-in-out width, 
+                  100ms ease-in-out left;
+    }
+  }
+
+  .rz-bar {
+    border-radius: 2px;
+    height: 12px;
+    background: $shade-dark;
+    display: block;
+
+    &.rz-selection {
+      background: $brand-primary;
+    }
+  }
+
+  .rz-pointer {
+    width: 24px;
+    height: 24px;
+    left: -12px;
+    top: -6px;
+    border-radius: 2px;
+    background: lighten($brand-primary, 5%);
+    transition: 100ms ease-in-out left;
+
+    &:after {
+      display: none;
+    }
+  }
+
+  .rz-bubble {
+    display: none;
+  }
+
+  .rz-ticks {
+    top: 0;
+    padding: 0;
+
+    .rz-tick {
+      top: 4px;
+      width: 3px;
+      height: 3px;
+      background: $brand-primary;
+      vertical-align: middle;
+      margin-top: 0;
+      display: inline-block;
+
+      .rz-tick-value {
+        font-weight: 600;
+        font-size: 1.3rem;
+        color: $shade-light;
+      }
+    }
+  }
+
+  .rz-ticks.rz-ticks-values-under .rz-tick-value {
+    bottom: -35px;
+  }
+  
+  .rz-ticks .rz-tick{
+
+    &.rz-selected {
+      background: none;
+    }
+  }
+}

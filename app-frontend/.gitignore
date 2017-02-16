@@ -1,0 +1,7 @@
+node_modules/
+dist/
+coverage/
+.sass-cache/
+.idea/
+.tmp/
+config/manifest.json

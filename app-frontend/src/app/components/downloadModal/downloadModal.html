@@ -1,0 +1,77 @@
+<div class="modal-header">
+	<button type="button" class="close" aria-label="Close"
+          ng-click="$ctrl.dismiss()">
+    <span aria-hidden="true">&times;</span>
+  </button>
+  <span class="badge"><i class="icon-download"></i></span>
+  <h4 class="modal-title">
+    Download scenes
+  </h4>
+</div>
+<div class="modal-body">
+  <div class="list-group" ng-repeat=" downloadSet in $ctrl.resolve.downloads">
+    <div class="list-group-item">
+      <div class="list-group-overflow">
+        <strong class="color-dark">{{downloadSet.label}}</strong>
+      </div>
+    </div>
+    <div ng-init="show = false">
+      <div class="list-group-item selectable"
+           ng-click="show = !show">
+        <span class="badge color-dark selectable"><i class="icon-plus"></i></span>
+        <strong class="color-dark">Images</strong>
+        <ng-pluralize count="downloadSet.images.length"
+                      when="{'0': 'No images',
+                            'one': 'One image',
+                            'other': '{} images'}">
+        </ng-pluralize>
+        available
+      </div>
+      <div ng-show="show"
+           class="list-group-subitem"
+           ng-repeat-start="image in downloadSet.images"
+           ng-init="showImageDownloads = false">
+        <a class="color-dark" ng-attr-href="{{image.uri}}" download>
+          <span class="badge"><i class="icon-download"></i></span>
+        </a>
+        <div class="list-group-overflow">
+          <a ng-attr-href="{{image.uri}}" download>{{image.filename}}</a>
+        </div>
+      </div>
+      <div ng-repeat-end
+           ng-show="show"
+           class="list-group-subitem download"
+           ng-repeat="file in image.metadata">
+        <a class="color-dark" ng-attr-href="{{file}}" download>
+          <span class="badge"><i class="icon-download"></i></span>
+        </a>
+        <a class="color-dark" ng-attr-href="{{file}}" download>
+          {{file}}
+        </a>
+      </div>
+    </div>
+    <div ng-init="show = false" ng-if="downloadSet.metadata.length">
+      <div class="list-group-item selectable"
+           ng-click="show = !show">
+        <span class="badge color-dark selectable"><i class="icon-plus"></i></span>
+        <strong class="color-dark">Metadata</strong>
+        <ng-pluralize count="downloadSet.metadata.length"
+                      when="{'0': 'No metadata files',
+                            'one': 'One metadata file',
+                            'other': '{} metadata files'}">
+        </ng-pluralize>
+        available
+      </div>
+      <div ng-show="show"
+           class="list-group-subitem"
+           ng-repeat="download in downloadSet.metadata">
+        <a class="color-dark" ng-attr-href="{{download}}" download>
+          <span class="badge"><i class="icon-download"></i></span>
+        </a>
+        <div class="list-group-overflow">
+          <a ng-attr-href="{{download}}" download>{{download}}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
