@@ -108,6 +108,7 @@ the ingest subproject](../../app-backend/ingest/src/test/resources/awsJob.json):
                   * @type Map[Number, Number] (the key is serialized as a string by JSON convention)
                   */
                 "pattern": { "1": 3.3, "2": 5.3 }
+            },
             /**
               * Output Layer URI
               * @type String
