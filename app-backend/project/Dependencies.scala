@@ -4,10 +4,10 @@ import sbt._
 
 object Dependencies {
   val akka                    = "com.typesafe.akka"           %% "akka-actor"                        % Version.akka
-  val akkahttp                = "com.typesafe.akka"           %% "akka-http"                         % Version.akkaHttp
-  val akkajson                = "com.typesafe.akka"           %% "akka-http-spray-json"              % Version.akkaHttp
+  val akkahttp                = "com.typesafe.akka"           %% "akka-http-experimental"            % Version.akka
+  val akkajson                = "com.typesafe.akka"           %% "akka-http-spray-json-experimental" % Version.akka
   val akkastream              = "com.typesafe.akka"           %% "akka-stream"                       % Version.akka
-  val akkatestkit             = "com.typesafe.akka"           %% "akka-http-testkit"                 % Version.akkaHttp
+  val akkatestkit             = "com.typesafe.akka"           %% "akka-http-testkit"                 % Version.akka
   val akkaSlf4j               = "com.typesafe.akka"           %% "akka-slf4j"                        % Version.akkaSlf4j
   val geotrellisSparkEtl      = "org.locationtech.geotrellis" %% "geotrellis-spark-etl"              % Version.geotrellis
   val geotrellisSpark         = "org.locationtech.geotrellis" %% "geotrellis-spark"                  % Version.geotrellis
@@ -40,4 +40,5 @@ object Dependencies {
   val scalacacheCaffeine      = "com.github.cb372"            %% "scalacache-caffeine"               % Version.scalacache
   val elasticacheClient       = "com.amazonaws"                % "elasticache-java-cluster-client"   % Version.elasticacheClient
   val shapeless               = "com.chuusai"                 %% "shapeless"                         % Version.shapeless
+  val findbugAnnotations      = "com.google.code.findbugs"     % "annotations"                       % Version.findbugAnnotations % "compile"
 }
