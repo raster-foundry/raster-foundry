@@ -28,4 +28,5 @@ object Version {
   val elasticacheClient  = "1.1.1"
   val caffeine           = "2.3.5"
   val shapeless          = "2.2.5"
+  val findbugAnnotations = "3.0.1u2"
 }

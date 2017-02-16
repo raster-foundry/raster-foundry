@@ -1,6 +1,7 @@
 package com.azavea.rf.tile
 
 import com.azavea.rf.database.Database
+import com.azavea.rf.common.cache._
 
 import com.github.benmanes.caffeine.cache.Caffeine
 
@@ -12,12 +13,8 @@ import geotrellis.spark.io._
 import geotrellis.spark.io.s3.{S3AttributeStore, S3ValueReader, S3CollectionLayerReader}
 import geotrellis.vector.Extent
 import com.github.blemale.scaffeine.{ Cache => ScaffCache, Scaffeine }
-import scalacache.caffeine.CaffeineCache
-import scalacache.memcached.MemcachedCache
 import com.github.benmanes.caffeine.cache._
 import com.github.benmanes.caffeine.cache.Caffeine
-import scalacache.serialization.InMemoryRepr
-import scalacache._
 import spray.json.DefaultJsonProtocol._
 import net.spy.memcached._
 import java.net.InetSocketAddress
@@ -45,22 +42,9 @@ object LayerCache extends Config {
   val memcachedClient =
     new MemcachedClient(new InetSocketAddress(memcachedHost, memcachedPort))
 
-  // TODO: Make a scalacache Codec using Kryo
-  implicit val memcached: ScalaCache[Array[Byte]] = {
-    ScalaCache(MemcachedCache(memcachedClient))
-  }
-
-  implicit val memoryCache: ScalaCache[InMemoryRepr] = {
-    val underlyingCaffeineCache =
-      Caffeine.newBuilder()
-        .maximumSize(cacheSize)
-        .expireAfterAccess(cacheExpiration.toMillis, TimeUnit.MILLISECONDS)
-        .build[String, Object]
-    ScalaCache(CaffeineCache(underlyingCaffeineCache))
-  }
-
+  val attributeStoreCache = HeapBackedMemcachedClient[S3AttributeStore](memcachedClient)
   def attributeStore(bucket: String, prefix: Option[String]): Future[S3AttributeStore] =
-    caching[S3AttributeStore, InMemoryRepr](s"store-$bucket-$prefix"){
+    attributeStoreCache.caching(s"store-$bucket-$prefix") { cacheKey =>
       prefix match {
         case Some(prefixStr) => Future.successful(S3AttributeStore(bucket, prefixStr))
         case None => Future.failed(new LayerIOError("Scene has no ingest location"))
@@ -70,38 +54,30 @@ object LayerCache extends Config {
   def attributeStore(prefix: Option[String]): Future[S3AttributeStore] =
     attributeStore(defaultBucket, prefix)
 
-  // This cache allows us to make (on a single machine) atomic calls out to memcached
-  val futureTiles: ScaffCache[String, Future[Option[MultibandTile]]] =
-    Scaffeine()
-      .recordStats()
-      .expireAfterWrite(30.second)
-      .maximumSize(500)
-      .build[String, Future[Option[MultibandTile]]]()
-
-  def maybeRender(id: RfLayerId, zoom: Int, extent: Extent): Future[Option[MultibandTile]] = {
-
-    for {
-      prefix <- id.prefix
-      store <- attributeStore(defaultBucket, prefix)
-    } yield {
-      val reader = new S3ValueReader(store).reader[SpatialKey, MultibandTile](id.catalogId(zoom))
-      val query = S3CollectionLayerReader(store)
-        .query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](id.catalogId(zoom))
-      val tile = query.where(Intersects(extent))
-        .result
-        .stitch
-        .crop(extent)
-        .tile
-      tile match {
-        case tile: MultibandTile => Some(tile)
-        case _ => None
+  val tileCache = HeapBackedMemcachedClient[Option[MultibandTile]](memcachedClient)
+  def maybeRenderExtent(id: RfLayerId, zoom: Int, extent: Extent): Future[Option[MultibandTile]] =
+    tileCache.caching(s"rendered-extent-$id-$zoom-$extent") { holdUp =>
+      for {
+        prefix <- id.prefix
+        store <- attributeStore(defaultBucket, prefix)
+      } yield {
+        val reader = new S3ValueReader(store).reader[SpatialKey, MultibandTile](id.catalogId(zoom))
+        val query = S3CollectionLayerReader(store)
+          .query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](id.catalogId(zoom))
+        val tile = query.where(Intersects(extent))
+          .result
+          .stitch
+          .crop(extent)
+          .tile
+        tile match {
+          case tile: MultibandTile => Some(tile)
+          case _ => None
+        }
       }
     }
-  }
 
-  def maybeTile(id: RfLayerId, zoom: Int, key: SpatialKey): Future[Option[MultibandTile]] = {
-
-    def fetchTileExpensive: Future[Option[MultibandTile]] =
+  def maybeTile(id: RfLayerId, zoom: Int, key: SpatialKey): Future[Option[MultibandTile]] =
+    tileCache.caching(s"tile-$id-$zoom-$key") { cacheKey =>
       for {
         prefix <- id.prefix
         store <- attributeStore(defaultBucket, prefix)
@@ -114,66 +90,15 @@ object LayerCache extends Config {
           case Failure(e) => throw e
         }
       }
-
-    def fetchRemote(cKey: String) = {
-      memcachedClient
-        .asyncGet(cKey)
-        .asFuture[MultibandTile]
-        .flatMap({ maybeTile =>
-          Option(maybeTile) match {
-            case Some(fmtile) => // cache hit
-              Future { Some(fmtile) }
-            case None =>         // cache miss
-              val futureMaybeTile = fetchTileExpensive
-              for {
-                mbTile <- futureMaybeTile
-                tile <- mbTile
-              } { memcachedClient.set(cKey, 30, tile) }
-              futureMaybeTile
-          }
-        })
     }
 
-    val cacheKey = s"tile-$id-$zoom-$key"
-    val futureMaybeTile = futureTiles.get(cacheKey, fetchRemote)
-    futureTiles.put(cacheKey, futureMaybeTile)
-    futureMaybeTile
-  }
 
-  // This cache allows us to make (on a single machine) atomic calls out to memcached
-  val futureHistograms: ScaffCache[String, Future[Array[Histogram[Double]]]] =
-    Scaffeine()
-      .recordStats()
-      .expireAfterWrite(30.second)
-      .maximumSize(500)
-      .build[String, Future[Array[Histogram[Double]]]]()
-
-
-  def bandHistogram(id: RfLayerId, zoom: Int): Future[Array[Histogram[Double]]] = {
-    def fetchRemote(cKey: String) = {
-      memcachedClient
-        .asyncGet(cKey)
-        .asFuture[Array[Histogram[Double]]]
-        .flatMap({ hists =>
-          Option(hists) match {
-            case Some(hists) =>
-              Future { hists }
-            case None =>
-              val futureHistograms  = for {
-                prefix <- id.prefix
-                store <- attributeStore(defaultBucket, prefix)
-              } yield store.read[Array[Histogram[Double]]](id.catalogId(0), "histogram")
-              for (
-                histograms <- futureHistograms
-              ) { memcachedClient.set(cKey, 30, histograms) }
-              futureHistograms
-          }
-        })
+  val histogramCache = HeapBackedMemcachedClient[Array[Histogram[Double]]](memcachedClient)
+  def bandHistogram(id: RfLayerId, zoom: Int): Future[Array[Histogram[Double]]] =
+    histogramCache.caching(s"histogram-$id-$zoom") { cacheKey =>
+      for {
+        prefix <- id.prefix
+        store <- attributeStore(defaultBucket, prefix)
+      } yield store.read[Array[Histogram[Double]]](id.catalogId(0), "histogram")
     }
-
-    val cacheKey = s"histogram-$id-$zoom"
-    val futHistograms = futureHistograms.get(cacheKey, fetchRemote)
-    futureHistograms.put(cacheKey, futHistograms)
-    futHistograms
-  }
 }

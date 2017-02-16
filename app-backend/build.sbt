@@ -106,14 +106,18 @@ lazy val app = Project("app", file("app"))
 lazy val common = Project("common", file("common"))
   .dependsOn(database, datamodel)
   .settings(appSettings:_*)
-  .settings({libraryDependencies ++= Seq(
+  .settings({libraryDependencies ++= testDependencies ++ Seq(
     Dependencies.jwtCore,
     Dependencies.json4s,
     Dependencies.jwtJson,
     Dependencies.akka,
     Dependencies.akkahttp,
     Dependencies.commonsIO,
-    Dependencies.geotrellisS3
+    Dependencies.caffeine,
+    Dependencies.scaffeine,
+    Dependencies.elasticacheClient,
+    Dependencies.geotrellisS3,
+    Dependencies.findbugAnnotations
   )})
 
 lazy val migrations = Project("migrations", file("migrations"))
@@ -164,7 +168,16 @@ lazy val tile = Project("tile", file("tile"))
   .dependsOn(ingest)
   .settings(commonSettings:_*)
   .settings({
-    libraryDependencies ++= testDependencies
+    libraryDependencies ++= loggingDependencies ++ testDependencies ++ Seq(
+      Dependencies.commonsIO,
+      Dependencies.spark,
+      Dependencies.geotrellisSpark,
+      Dependencies.geotrellisS3,
+      Dependencies.caffeine,
+      Dependencies.scaffeine,
+      Dependencies.elasticacheClient,
+      Dependencies.akkajson
+    )
   })
   .settings(assemblyMergeStrategy in assembly := {
     case "reference.conf" => MergeStrategy.concat
@@ -174,20 +187,6 @@ lazy val tile = Project("tile", file("tile"))
     case _ => MergeStrategy.first
   })
   .settings(assemblyJarName in assembly := "rf-tile-server.jar")
-  .settings({
-    libraryDependencies ++= loggingDependencies ++ Seq(
-      Dependencies.commonsIO,
-      Dependencies.spark,
-      Dependencies.geotrellisSpark,
-      Dependencies.geotrellisS3,
-      Dependencies.caffeine,
-      Dependencies.scaffeine,
-      Dependencies.elasticacheClient,
-      Dependencies.scalacacheCaffeine,
-      Dependencies.scalacacheMemcache.exclude("net.spy", "spymemcached"),
-      Dependencies.akkajson
-    )
-  })
 
 lazy val tool = Project("tool", file("tool"))
   .settings(commonSettings:_*)

@@ -3,11 +3,10 @@ package com.azavea.rf.tile.image
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.ScenesToProjects
 import com.azavea.rf.datamodel.MosaicDefinition
+import com.azavea.rf.common.cache._
 
 import com.github.blemale.scaffeine.{ Cache => ScaffCache, Scaffeine }
-import scalacache.caffeine.CaffeineCache
 import com.azavea.rf.tile._
-import scalacache._
 import geotrellis.raster._
 import geotrellis.spark._
 import geotrellis.spark.io._
@@ -25,27 +24,27 @@ import java.util.UUID
 case class TagWithTTL(tag: String, ttl: Duration)
 
 object Mosaic {
-  implicit val cache = LayerCache.memoryCache
-
   val memcachedClient = LayerCache.memcachedClient
 
   /** Cache the result of metadata queries that may have required walking up the pyramid to find suitable layers */
-  def tileLayerMetadata(id: RfLayerId, zoom: Int)(implicit database: Database) =
-      caching(s"mosaic-tlm-$id-$zoom") {
-    def readMetadata(store: AttributeStore, tryZoom: Int): Option[(Int, TileLayerMetadata[SpatialKey])] =
-      try {
-        Some(tryZoom -> store.readMetadata[TileLayerMetadata[SpatialKey]](id.catalogId(tryZoom)))
-      } catch {
-        case e: AttributeNotFoundError if tryZoom > 0 => readMetadata(store, tryZoom - 1)
-      }
 
-    for {
-      prefix <- id.prefix
-      store <- LayerCache.attributeStore(prefix)
-    } yield {
-      readMetadata(store, zoom)
+  val metadataCache = HeapBackedMemcachedClient[Option[(Int, TileLayerMetadata[SpatialKey])]](memcachedClient)
+  def tileLayerMetadata(id: RfLayerId, zoom: Int)(implicit database: Database) =
+    metadataCache.caching(s"mosaic-tlm-$id-$zoom") { cacheKey =>
+      def readMetadata(store: AttributeStore, tryZoom: Int): Option[(Int, TileLayerMetadata[SpatialKey])] =
+        try {
+          Some(tryZoom -> store.readMetadata[TileLayerMetadata[SpatialKey]](id.catalogId(tryZoom)))
+        } catch {
+          case e: AttributeNotFoundError if tryZoom > 0 => readMetadata(store, tryZoom - 1)
+        }
+
+      for {
+        prefix <- id.prefix
+        store <- LayerCache.attributeStore(prefix)
+      } yield {
+        readMetadata(store, zoom)
+      }
     }
-  }
 
   // This cache of futures will allow for atomic calls to memcached (on one machine)
   val futureMosaicDefinitions: ScaffCache[String, Future[Option[MosaicDefinition]]] =
@@ -95,7 +94,7 @@ object Mosaic {
     tileLayerMetadata(id, zoom).flatMap {
       case Some((sourceZoom, tlm)) =>
         val zdiff = zoom - sourceZoom
-        val pdiff = 1<<zdiff
+        val pdiff = 1 << zdiff
         val sourceKey = SpatialKey(col / pdiff, row / pdiff)
         if (tlm.bounds includes sourceKey)
           for ( maybeTile <- LayerCache.maybeTile(id, sourceZoom, sourceKey) ) yield {
@@ -119,16 +118,15 @@ object Mosaic {
     }
   }
 
-  /**
-    Fetch the rendered tile for the given zoom level and bbox
-    If no bbox is specified, it will use the project tileLayerMetadata layoutExtent
+  /** Fetch the rendered tile for the given zoom level and bbox
+    * If no bbox is specified, it will use the project tileLayerMetadata layoutExtent
     */
-  def fetchRender(id: RfLayerId, zoom: Int, bbox: Option[Projected[Polygon]])(implicit database: Database):
+  def fetchRenderedExtent(id: RfLayerId, zoom: Int, bbox: Option[Projected[Polygon]])(implicit database: Database):
       Future[Option[MultibandTile]] = {
     tileLayerMetadata(id, zoom).flatMap {
       case Some((sourceZoom, tlm)) =>
         val zdiff = zoom - sourceZoom
-        val pdiff = 1<<zdiff
+        val pdiff = 1 << zdiff
 
         val extent = bbox match {
           case Some(bbox) => bbox.envelope
@@ -137,14 +135,15 @@ object Mosaic {
         }
         val gridBounds = tlm.layout.mapTransform(extent)
 
-        for ( maybeRender <- LayerCache.maybeRender(id, sourceZoom, extent)) yield {
-          maybeRender
-        }
+        for (
+          maybeRenderedExtent <- LayerCache.maybeRenderExtent(id, sourceZoom, extent)
+        ) yield maybeRenderedExtent
       case None =>
         Future.successful(None)
     }
   }
 
+  /** Fetch all bands of a [[MultibandTile]] and return them without assuming anything of their semantics */
   def raw(
     projectId: UUID,
     zoom: Int, col: Int, row: Int
@@ -194,24 +193,18 @@ object Mosaic {
     *   @param zoomOption  the zoom level to use
     *   @param bboxOption the bounding box for the image
     */
-  def render(projectId: UUID, zoomOption: Option[Int], bboxOption: Option[String])(implicit database: Database):
-      Future[Option[MultibandTile]] = {
-    val bboxPolygon: Option[Projected[Polygon]] = bboxOption match {
-      case Some(bbox) => try {
-        Some(Projected(Extent.fromString(bbox).toPolygon(), 4326)
-               .reproject(LatLng, WebMercator)(3858))
+  def render(projectId: UUID, zoomOption: Option[Int], bboxOption: Option[String])(implicit database: Database): Future[Option[MultibandTile]] = {
+    val bboxPolygon: Option[Projected[Polygon]] =
+      try {
+        bboxOption map { bbox =>
+          Projected(Extent.fromString(bbox).toPolygon(), 4326).reproject(LatLng, WebMercator)(3858)
+        }
       } catch {
-        case e: Exception => throw new IllegalArgumentException(
-          "Four comma separated coordinates must be given for bbox"
-        ).initCause(e)
+        case e: Exception =>
+          throw new IllegalArgumentException("Four comma separated coordinates must be given for bbox").initCause(e)
       }
-      case _ => None
-    }
 
-    val zoom: Int = zoomOption match {
-      case Some(zoom) => zoom
-      case None => 8
-    }
+    val zoom: Int = zoomOption.getOrElse(8)
 
     val maybeMosaic: Future[Option[MosaicDefinition]] = mosaicDefinition(projectId, None)
 
@@ -228,7 +221,7 @@ object Mosaic {
                   Future.successful(Option.empty[MultibandTile])
                 case Some(params) =>
                   for {
-                    maybeTile <- Mosaic.fetchRender(id, zoom, bboxPolygon)
+                    maybeTile <- Mosaic.fetchRenderedExtent(id, zoom, bboxPolygon)
                     hist <- LayerCache.bandHistogram(id, zoom)
                   } yield
                     for (tile <- maybeTile) yield params.colorCorrect(tile, hist)
