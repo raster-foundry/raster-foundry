@@ -151,6 +151,18 @@ class SceneSpec extends WordSpec
       }
     }
 
+    "get a 409 when trying to create a scene that already exists" in {
+      Post("/api/scenes/").withHeadersAndEntity(
+        List(authHeader),
+        HttpEntity(
+          ContentTypes.`application/json`,
+          newSceneDatasource1.toJson.toString()
+        )
+      ) ~> baseRoutes ~> check {
+        status shouldEqual StatusCodes.ClientError(409)("Duplicate Key", "")
+      }
+    }
+
     "list scenes" in {
       Get(s"${baseScene}?organization=${publicOrgId}").withHeaders(
         List(authHeader)
