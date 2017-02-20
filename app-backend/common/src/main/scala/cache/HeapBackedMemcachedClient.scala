@@ -4,6 +4,8 @@ import com.github.blemale.scaffeine.{ Cache => ScaffeineCache, Scaffeine }
 import net.spy.memcached._
 
 import scala.concurrent._
+import scala.concurrent.ExecutionContext
+import java.util.concurrent.Executors
 import scala.concurrent.duration._
 import scala.util.matching._
 
@@ -18,6 +20,7 @@ import scala.util.matching._
 class HeapBackedMemcachedClient[CachedType](
   client: MemcachedClient,
   options: HeapBackedMemcachedClient.Options = HeapBackedMemcachedClient.Options()) {
+  implicit val ec = options.ec
 
   /** The caffeine cache (on heap) which prevents race conditions */
   val onHeapCache: ScaffeineCache[String, Future[CachedType]] =
@@ -31,17 +34,20 @@ class HeapBackedMemcachedClient[CachedType](
     * The primary means of interaction with this class: pass as key and
     *  the costly option caching prevents duplication of.
     */
-  def caching(cacheKey: String)(expensiveOperation: String => Future[CachedType])(implicit ec: ExecutionContext): Future[CachedType] = {
+  def caching(cacheKey: String)(expensiveOperation: => Future[CachedType])(implicit ec: ExecutionContext): Future[CachedType] = {
     val sanitizedKey = HeapBackedMemcachedClient.sanitizeKey(cacheKey)
     val futureCached: Future[CachedType] =
-      onHeapCache.get(sanitizedKey, { cKey: String => client.getOrElseUpdate[CachedType](cKey, expensiveOperation, options.ttl) })
+      onHeapCache.get(sanitizedKey, { cacheKey: String => client.getOrElseUpdate[CachedType](cacheKey, expensiveOperation, options.ttl) })
     onHeapCache.put(sanitizedKey, futureCached)
     futureCached
   }
 }
 
 object HeapBackedMemcachedClient {
-  case class Options(ttl: FiniteDuration = 2.seconds, maxSize: Int = 500)
+  /** The ExecutionContext to be used in almost all cases for this cache wrapper */
+  private[cache] val defaultExecutionContext =
+    ExecutionContext.fromExecutor(Executors.newFixedThreadPool(10))
+  case class Options(ec: ExecutionContext = defaultExecutionContext, ttl: FiniteDuration = 2.seconds, maxSize: Int = 500)
 
   def apply[CachedType](client: MemcachedClient, options: Options = Options()) =
     new HeapBackedMemcachedClient[CachedType](client, options)

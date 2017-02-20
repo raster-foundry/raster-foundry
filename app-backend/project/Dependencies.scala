@@ -36,8 +36,6 @@ object Dependencies {
   val scopt                   = "com.github.scopt"            %% "scopt"                             % Version.scopt
   val caffeine                = "com.github.ben-manes.caffeine" % "caffeine"                         % Version.caffeine
   val scaffeine               = "com.github.blemale"          %% "scaffeine"                         % Version.scaffeine
-  val scalacacheMemcache      = "com.github.cb372"            %% "scalacache-memcached"              % Version.scalacache
-  val scalacacheCaffeine      = "com.github.cb372"            %% "scalacache-caffeine"               % Version.scalacache
   val elasticacheClient       = "com.amazonaws"                % "elasticache-java-cluster-client"   % Version.elasticacheClient
   val shapeless               = "com.chuusai"                 %% "shapeless"                         % Version.shapeless
   val findbugAnnotations      = "com.google.code.findbugs"     % "annotations"                       % Version.findbugAnnotations % "compile"

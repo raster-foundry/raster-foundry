@@ -5,8 +5,6 @@
         </encoder>
     </appender>
 
-    <logger name="scalacache" level="${APP_SERVER_LOG_LEVEL:-info}" />
-
     <root level="${APP_SERVER_LOG_LEVEL:-info}">
         <appender-ref ref="stdout"/>
     </root>

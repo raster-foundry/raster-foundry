@@ -5,7 +5,7 @@ import com.azavea.rf.database.tables.ScenesToProjects
 import com.azavea.rf.datamodel.MosaicDefinition
 import com.azavea.rf.common.cache._
 
-import com.github.blemale.scaffeine.{ Cache => ScaffCache, Scaffeine }
+import com.github.blemale.scaffeine.{ Cache => ScaffeineCache, Scaffeine }
 import com.azavea.rf.tile._
 import geotrellis.raster._
 import geotrellis.spark._
@@ -28,69 +28,46 @@ object Mosaic {
 
   /** Cache the result of metadata queries that may have required walking up the pyramid to find suitable layers */
 
-  val metadataCache = HeapBackedMemcachedClient[Option[(Int, TileLayerMetadata[SpatialKey])]](memcachedClient)
-  def tileLayerMetadata(id: RfLayerId, zoom: Int)(implicit database: Database) =
-    metadataCache.caching(s"mosaic-tlm-$id-$zoom") { cacheKey =>
-      def readMetadata(store: AttributeStore, tryZoom: Int): Option[(Int, TileLayerMetadata[SpatialKey])] =
-        try {
-          Some(tryZoom -> store.readMetadata[TileLayerMetadata[SpatialKey]](id.catalogId(tryZoom)))
-        } catch {
-          case e: AttributeNotFoundError if tryZoom > 0 => readMetadata(store, tryZoom - 1)
-        }
+  /** The caffeine cache to use for tile layer metadata */
+  val tileLayerMetadataCache: ScaffeineCache[String, Future[Option[(Int, TileLayerMetadata[SpatialKey])]]] =
+    Scaffeine()
+      .recordStats()
+      .expireAfterAccess(5.minutes)
+      .maximumSize(500)
+      .build[String, Future[Option[(Int, TileLayerMetadata[SpatialKey])]]]()
 
+  def tileLayerMetadata(id: RfLayerId, zoom: Int)(implicit database: Database) = {
+    def readMetadata(store: AttributeStore, tryZoom: Int): Option[(Int, TileLayerMetadata[SpatialKey])] =
+      try {
+        Some(tryZoom -> store.readMetadata[TileLayerMetadata[SpatialKey]](id.catalogId(tryZoom)))
+      } catch {
+        case e: AttributeNotFoundError if tryZoom > 0 => readMetadata(store, tryZoom - 1)
+      }
+
+    tileLayerMetadataCache.get(s"mosaic-tlm-$id-$zoom", { cKey =>
       for {
         prefix <- id.prefix
         store <- LayerCache.attributeStore(prefix)
       } yield {
         readMetadata(store, zoom)
       }
-    }
+    })
+  }
 
-  // This cache of futures will allow for atomic calls to memcached (on one machine)
-  val futureMosaicDefinitions: ScaffCache[String, Future[Option[MosaicDefinition]]] =
-    Scaffeine()
-      .recordStats()
-      .expireAfterWrite(30.second)
-      .maximumSize(500)
-      .build[String, Future[Option[MosaicDefinition]]]()
 
+  val mosaicDefinitionCache = HeapBackedMemcachedClient[Option[MosaicDefinition]](memcachedClient)
   def mosaicDefinition(projectId: UUID, tagttl: Option[TagWithTTL])(implicit db: Database) = {
-
-    def remoteFetch(cKey: String): Future[Option[MosaicDefinition]] = {
-      memcachedClient
-        .asyncGet(cKey)
-        .asFuture[MosaicDefinition]
-        .flatMap({ maybeMosaicDefinition =>
-          Option(maybeMosaicDefinition) match {
-            case Some(mosaicDefinition) => // cache hit
-              Future {
-                Option(mosaicDefinition)
-              }
-            case None =>         // cache miss
-              val futureMaybeDefinition = ScenesToProjects.getMosaicDefinition(projectId)
-              for {
-                maybeDef <- futureMaybeDefinition
-                definition <- maybeDef
-              } memcachedClient.set(cKey, tagttl.get.ttl.toSeconds.toInt, definition)
-              futureMaybeDefinition
-          }
-        })
+    val cacheKey = tagttl match {
+      case Some(t) => s"mosaic-definition-$projectId-${t.tag}"
+      case None => s"mosaic-definition-$projectId"
     }
-
-    tagttl match {
-      case Some(t) =>
-        val cacheKey = s"mosaic-definition-$projectId-${t.tag}"
-        val futureMosaicDefinition = futureMosaicDefinitions.get(cacheKey, remoteFetch)
-        futureMosaicDefinitions.put(cacheKey, futureMosaicDefinition)
-        futureMosaicDefinition
-      case None =>
-        ScenesToProjects.getMosaicDefinition(projectId)
+    mosaicDefinitionCache.caching(cacheKey) {
+      ScenesToProjects.getMosaicDefinition(projectId)
     }
   }
 
   /** Fetch the tile for given resolution. If it is not present, use a tile from a lower zoom level */
-  def fetch(id: RfLayerId, zoom: Int, col: Int, row: Int)(implicit database: Database):
-      Future[Option[MultibandTile]] = {
+  def fetch(id: RfLayerId, zoom: Int, col: Int, row: Int)(implicit database: Database): Future[Option[MultibandTile]] =
     tileLayerMetadata(id, zoom).flatMap {
       case Some((sourceZoom, tlm)) =>
         val zdiff = zoom - sourceZoom
@@ -116,7 +93,6 @@ object Mosaic {
       case None =>
         Future.successful(None)
     }
-  }
 
   /** Fetch the rendered tile for the given zoom level and bbox
     * If no bbox is specified, it will use the project tileLayerMetadata layoutExtent
