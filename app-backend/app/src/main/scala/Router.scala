@@ -15,6 +15,7 @@ import com.azavea.rf.tool.ToolRoutes
 import com.azavea.rf.tooltag.ToolTagRoutes
 import com.azavea.rf.token.TokenRoutes
 import com.azavea.rf.toolcategory.ToolCategoryRoutes
+import com.azavea.rf.toolrun.ToolRunRoutes
 import com.azavea.rf.grid.GridRoutes
 import com.azavea.rf.datasource.DatasourceRoutes
 import com.azavea.rf.utils.Config
@@ -37,6 +38,7 @@ trait Router extends HealthCheckRoutes
     with ToolTagRoutes
     with ConfigRoutes
     with ToolCategoryRoutes
+    with ToolRunRoutes
     with GridRoutes
     with DatasourceRoutes
     with Config {
@@ -58,6 +60,7 @@ trait Router extends HealthCheckRoutes
       pathPrefix("tools") { toolRoutes } ~
       pathPrefix("tool-tags") { toolTagRoutes } ~
       pathPrefix("tool-categories") { toolCategoryRoutes } ~
+      pathPrefix("tool-runs") { toolRunRoutes } ~
       pathPrefix("scene-grid") { gridRoutes } ~
       pathPrefix("datasources") { datasourceRoutes }
     } ~
