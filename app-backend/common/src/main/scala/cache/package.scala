@@ -11,13 +11,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 package object cache {
   implicit class MemcachedClientMethods(client: MemcachedClient) {
-    def getOrElseUpdate[CachedType](cacheKey: String, expensiveOperation: String => Future[CachedType], ttl: Duration)(implicit ec: ExecutionContext): Future[CachedType] = {
+    def getOrElseUpdate[CachedType](cacheKey: String, expensiveOperation: => Future[CachedType], ttl: Duration)(implicit ec: ExecutionContext): Future[CachedType] = {
       val futureCached = Future { client.asyncGet(cacheKey).get() }
       futureCached.flatMap({ value =>
         if (value != null) { // cache hit
-          Future { value.asInstanceOf[CachedType] }
+          Future.successful(value.asInstanceOf[CachedType])
         } else { // cache miss
-          val futureCached: Future[CachedType] = expensiveOperation(cacheKey)
+          val futureCached: Future[CachedType] = expensiveOperation
           futureCached.foreach({ cachedValue => client.set(cacheKey, ttl.toSeconds.toInt, cachedValue) })
           futureCached
         }

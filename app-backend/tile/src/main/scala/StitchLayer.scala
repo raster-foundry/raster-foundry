@@ -34,7 +34,7 @@ object StitchLayer extends LazyLogging with Config {
     */
   val stitchCache = HeapBackedMemcachedClient[Option[MultibandTile]](memcachedClient)
   def apply(id: RfLayerId, size: Int): Future[Option[MultibandTile]] =
-    stitchCache.caching(s"stitch-{$size}") { cacheKey =>
+    stitchCache.caching(s"stitch-{$size}") {
       for {
         prefix <- id.prefix
         store <- LayerCache.attributeStore(prefix)
