@@ -9,7 +9,8 @@ import geotrellis.raster.histogram.Histogram
 import geotrellis.spark._
 import geotrellis.raster.io._
 import geotrellis.spark.io._
-import geotrellis.spark.io.s3.{S3AttributeStore, S3ValueReader}
+import geotrellis.spark.io.s3.{S3AttributeStore, S3ValueReader, S3CollectionLayerReader}
+import geotrellis.vector.Extent
 import com.github.blemale.scaffeine.{ Cache => ScaffCache, Scaffeine }
 import scalacache.caffeine.CaffeineCache
 import scalacache.memcached.MemcachedCache
@@ -77,6 +78,26 @@ object LayerCache extends Config {
       .maximumSize(500)
       .build[String, Future[Option[MultibandTile]]]()
 
+  def maybeRender(id: RfLayerId, zoom: Int, extent: Extent): Future[Option[MultibandTile]] = {
+
+    for {
+      prefix <- id.prefix
+      store <- attributeStore(defaultBucket, prefix)
+    } yield {
+      val reader = new S3ValueReader(store).reader[SpatialKey, MultibandTile](id.catalogId(zoom))
+      val query = S3CollectionLayerReader(store)
+        .query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](id.catalogId(zoom))
+      val tile = query.where(Intersects(extent))
+        .result
+        .stitch
+        .crop(extent)
+        .tile
+      tile match {
+        case tile: MultibandTile => Some(tile)
+        case _ => None
+      }
+    }
+  }
 
   def maybeTile(id: RfLayerId, zoom: Int, key: SpatialKey): Future[Option[MultibandTile]] = {
 
