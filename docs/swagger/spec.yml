@@ -969,6 +969,66 @@ paths:
       responses:
         204:
           description: Successfully deleted a tool category
+  /tool-runs/:
+    get:
+      summary: Retrieve a list of tool runs
+      tags:
+        - Lab
+      parameters:
+        - $ref: '#/parameters/project'
+        - $ref: '#/parameters/tool'
+        - $ref: '#/parameters/createdBy'
+      responses:
+        200:
+          description: Paginated list of tool runs
+          schema:
+            $ref: '#/definitions/ToolRunPaginated'
+    post:
+      summary: Create a new tool run
+      tags:
+        - Lab
+      responses:
+        201:
+          description: Successfully created tool run
+          schema:
+            $ref: '#/definitions/ToolRun'
+        400:
+          description: Incorrect values for creating tool run
+  /tool-runs/{uuid}/:
+    get:
+      summary: Retrieve details about a tool run
+      tags:
+        - Lab
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: Details about object
+          schema:
+            $ref: '#/definitions/ToolRun'
+        404:
+          description: Error if insufficient permissions or run not found
+    put:
+      summary: Update a tool run
+      tags:
+        - Lab
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Successfully updated tool run
+        400:
+          description: Bad parameters for updating tool run
+    delete:
+      summary: Delete a tool run
+      tags:
+        - Lab
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Successfully deleted a tool run
+
 
 parameters:
   orderingBase:
@@ -1261,6 +1321,19 @@ parameters:
   ingestStatus:
     name: ingestStatus
     description: Filter by specific ingest status
+    in: query
+    type: string
+    required: false
+  tool:
+    name: toolId
+    description: Filter by tool's slug label
+    in: query
+    type: string
+    format: uuid
+    required: false
+  createdBy:
+    name: createdBy
+    description: Filter by creator's slug label
     in: query
     type: string
     required: false
@@ -1562,7 +1635,7 @@ definitions:
         type: number
         format: float32
         description: Elevation of the sun
-      
+
   StatusFields:
     type: object
     properties:
@@ -1840,6 +1913,33 @@ definitions:
             type: array
             items:
               $ref: '#/definitions/ToolCategory'
+  ToolRun:
+    allOf:
+      - $ref: '#/definitions/BaseModel'
+      - $ref: '#/definitions/UserTrackingMixin'
+      - type: object
+        properties:
+          execution_parameters:
+            type: object
+            description: Parameters for running the tool
+          project:
+            type: string
+            format: uuid
+            description: Project with which this run is associated
+          tool:
+            type: string
+            format: uuid
+            description: Tool being run
+  ToolRunPaginated:
+    allOf:
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/ToolRun'
+
   Error:
     type: object
     properties:
