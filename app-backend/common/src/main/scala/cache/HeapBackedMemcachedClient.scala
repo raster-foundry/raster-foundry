@@ -45,8 +45,16 @@ class HeapBackedMemcachedClient[CachedType](
 
 object HeapBackedMemcachedClient {
   /** The ExecutionContext to be used in almost all cases for this cache wrapper */
-  private[cache] val defaultExecutionContext =
-    ExecutionContext.fromExecutor(Executors.newFixedThreadPool(10))
+  private[cache] val defaultExecutionContext = {
+    /** In lieu of a specified configuration, we'll base this off the number of processors
+      *  and the assumption that the cache will be more I/O than CPU bound (thus requiring
+      *  extra threads).
+      */
+    val processors = Runtime.getRuntime().availableProcessors
+    val threads = processors * 10
+    ExecutionContext.fromExecutor(Executors.newFixedThreadPool(threads))
+  }
+
   case class Options(ec: ExecutionContext = defaultExecutionContext, ttl: FiniteDuration = 2.seconds, maxSize: Int = 500)
 
   def apply[CachedType](client: MemcachedClient, options: Options = Options()) =
