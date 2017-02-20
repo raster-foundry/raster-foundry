@@ -2,9 +2,8 @@ package com.azavea.rf.tile
 
 import com.azavea.rf.database.Database
 import com.azavea.rf.common.cache._
-
+import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 import com.github.benmanes.caffeine.cache.Caffeine
-
 import geotrellis.raster._
 import geotrellis.raster.histogram.Histogram
 import geotrellis.spark._
@@ -20,10 +19,12 @@ import net.spy.memcached._
 import java.net.InetSocketAddress
 
 import scala.concurrent._
+import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.util._
 import scala.concurrent.ExecutionContext.Implicits.global
 import java.util.concurrent.{Executors, TimeUnit}
+
 
 /**
   * ValueReaders need to read layer metadata in order to know how to decode (x/y) queries into resource reads.
@@ -36,11 +37,9 @@ import java.util.concurrent.{Executors, TimeUnit}
   */
 object LayerCache extends Config {
   implicit lazy val database = Database.DEFAULT
-  val blockingExecutionContext =
-    ExecutionContext.fromExecutor(Executors.newFixedThreadPool(64))
 
   val memcachedClient =
-    new MemcachedClient(new InetSocketAddress(memcachedHost, memcachedPort))
+    KryoMemcachedClient(new InetSocketAddress(memcachedHost, memcachedPort))
 
   /** The caffeine cache to use for attribute stores */
   val attributeStoreCache: ScaffeineCache[String, Future[S3AttributeStore]] =
@@ -69,7 +68,7 @@ object LayerCache extends Config {
 
   val tileCache = HeapBackedMemcachedClient[Option[MultibandTile]](memcachedClient)
   def maybeRenderExtent(id: RfLayerId, zoom: Int, extent: Extent): Future[Option[MultibandTile]] =
-    tileCache.caching(s"rendered-extent-$id-$zoom-$extent") { holdUp =>
+    tileCache.caching(s"rendered-extent-$id-$zoom-$extent") {
       for {
         prefix <- id.prefix
         store <- attributeStore(defaultBucket, prefix)
