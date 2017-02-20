@@ -11,6 +11,10 @@ import scalacache._
 import geotrellis.raster._
 import geotrellis.spark._
 import geotrellis.spark.io._
+import geotrellis.raster.GridBounds
+import geotrellis.proj4._
+import geotrellis.slick.Projected
+import geotrellis.vector.{Polygon, Extent}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
@@ -115,6 +119,32 @@ object Mosaic {
     }
   }
 
+  /**
+    Fetch the rendered tile for the given zoom level and bbox
+    If no bbox is specified, it will use the project tileLayerMetadata layoutExtent
+    */
+  def fetchRender(id: RfLayerId, zoom: Int, bbox: Option[Projected[Polygon]])(implicit database: Database):
+      Future[Option[MultibandTile]] = {
+    tileLayerMetadata(id, zoom).flatMap {
+      case Some((sourceZoom, tlm)) =>
+        val zdiff = zoom - sourceZoom
+        val pdiff = 1<<zdiff
+
+        val extent = bbox match {
+          case Some(bbox) => bbox.envelope
+          case None =>
+            tlm.layoutExtent
+        }
+        val gridBounds = tlm.layout.mapTransform(extent)
+
+        for ( maybeRender <- LayerCache.maybeRender(id, sourceZoom, extent)) yield {
+          maybeRender
+        }
+      case None =>
+        Future.successful(None)
+    }
+  }
+
   def raw(
     projectId: UUID,
     zoom: Int, col: Int, row: Int
@@ -147,6 +177,71 @@ object Mosaic {
           else
             Option.empty[MultibandTile]
         }
+    }
+  }
+
+  /**   Render a png from TMS pyramids given that they are in the same projection.
+    *   If a layer does not go up to requested zoom it will be up-sampled.
+    *   Layers missing color correction in the mosaic definition will be excluded.
+    *   The size of the image will depend on the selected zoom and bbox.
+    *
+    *   Note:
+    *   Currently, if the render takes too long, it will time out. Given enough requests, this
+    *   could cause us to essentially ddos ourselves, so we probably want to change
+    *   this from a simple endpoint to an airflow operation: IE the request kicks off
+    *   a render job then returns the job id
+    *
+    *   @param zoomOption  the zoom level to use
+    *   @param bboxOption the bounding box for the image
+    */
+  def render(projectId: UUID, zoomOption: Option[Int], bboxOption: Option[String])(implicit database: Database):
+      Future[Option[MultibandTile]] = {
+    val bboxPolygon: Option[Projected[Polygon]] = bboxOption match {
+      case Some(bbox) => try {
+        Some(Projected(Extent.fromString(bbox).toPolygon(), 4326)
+               .reproject(LatLng, WebMercator)(3858))
+      } catch {
+        case e: Exception => throw new IllegalArgumentException(
+          "Four comma separated coordinates must be given for bbox"
+        ).initCause(e)
+      }
+      case _ => None
+    }
+
+    val zoom: Int = zoomOption match {
+      case Some(zoom) => zoom
+      case None => 8
+    }
+
+    val maybeMosaic: Future[Option[MosaicDefinition]] = mosaicDefinition(projectId, None)
+
+    maybeMosaic.flatMap {
+      case None => // can't merge a project without mosaic definition
+        Future.successful(Option.empty[MultibandTile])
+
+      case Some(mosaic) =>
+        val maybeTiles =
+          for ((sceneId, colorCorrectParams) <- mosaic.definition) yield {
+            val id = RfLayerId(sceneId)
+              colorCorrectParams match {
+                case None =>
+                  Future.successful(Option.empty[MultibandTile])
+                case Some(params) =>
+                  for {
+                    maybeTile <- Mosaic.fetchRender(id, zoom, bboxPolygon)
+                    hist <- LayerCache.bandHistogram(id, zoom)
+                  } yield
+                    for (tile <- maybeTile) yield params.colorCorrect(tile, hist)
+              }
+          }
+
+        Future.sequence(maybeTiles).map { maybeTiles =>
+          val tiles = maybeTiles.flatten
+          if (tiles.nonEmpty)
+            Option(tiles.reduce(_ merge _))
+          else
+            Option.empty[MultibandTile]
+      }
     }
   }
 
