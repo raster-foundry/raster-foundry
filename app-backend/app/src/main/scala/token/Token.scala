@@ -6,8 +6,10 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.Uri.{Path, Query}
 import akka.http.scaladsl.model.headers.{Authorization, GenericHttpCredentials}
 import akka.http.scaladsl.unmarshalling.Unmarshal
+import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 import scala.concurrent.Future
 
 import com.azavea.rf.datamodel.User
@@ -17,6 +19,7 @@ import com.azavea.rf.utils.Config
 case class RefreshToken(refresh_token: String)
 case class DeviceCredential(id: String, device_name: String)
 case class AuthorizedToken(id_token: String, expires_in: Int, token_type: String)
+case class ManagementBearerToken(access_token: String, expires_in: Int, token_type: String, scope: String)
 
 object TokenService extends Config {
 
@@ -27,8 +30,44 @@ object TokenService extends Config {
     Authorization(GenericHttpCredentials("Bearer", auth0Bearer))
   )
 
-  def listRefreshTokens(user: User): Future[List[DeviceCredential]] = {
+  val authBearerTokenCache: AsyncLoadingCache[Int, ManagementBearerToken] =
+    Scaffeine()
+      .expireAfterWrite(1.hour)
+      .maximumSize(1)
+      .buildAsyncFuture((i: Int) => getManagementBearerToken())
 
+  def getManagementBearerToken(): Future[ManagementBearerToken] = {
+    val bearerTokenUri = Uri(s"https://$auth0Domain/oauth/token")
+
+    val params = FormData(
+      "client_id" -> auth0ManagementClientId,
+      "client_secret" -> auth0ManagementSecret,
+      "audience" -> s"https://$auth0Domain/api/v2/",
+      "grant_type" -> "client_credentials"
+    ).toEntity
+
+    Http()
+      .singleRequest(HttpRequest(
+        method = POST,
+        uri = bearerTokenUri,
+        entity = params
+      ))
+      .flatMap {
+        case HttpResponse(StatusCodes.OK, _, entity, _) =>
+          Unmarshal(entity).to[ManagementBearerToken]
+        case HttpResponse(errCode, _, error, _) =>
+          throw new Auth0Exception(errCode, error.toString)
+      }
+  }
+
+  def listRefreshTokens(user: User): Future[List[DeviceCredential]] = {
+    for {
+      bearerToken <- authBearerTokenCache.get(1)
+      deviceCredentialsList <- requestDeviceTokens(user, bearerToken)
+    } yield deviceCredentialsList
+  }
+
+  def requestDeviceTokens(user: User, bearerToken: ManagementBearerToken):Future[List[DeviceCredential]] = {
     val params = Query(
       "type" -> "refresh_token",
       "user_id" -> user.id
@@ -38,7 +77,9 @@ object TokenService extends Config {
       .singleRequest(HttpRequest(
         method = GET,
         uri = uri.withQuery(params),
-        headers = auth0BearerHeader
+        headers = List(
+          Authorization(GenericHttpCredentials("Bearer", bearerToken.access_token))
+        )
       ))
       .flatMap {
         case HttpResponse(StatusCodes.OK, _, entity, _) =>
