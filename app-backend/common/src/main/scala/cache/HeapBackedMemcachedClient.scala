@@ -34,10 +34,12 @@ class HeapBackedMemcachedClient[CachedType](
     * The primary means of interaction with this class: pass as key and
     *  the costly option caching prevents duplication of.
     */
-  def caching(cacheKey: String)(expensiveOperation: => Future[CachedType])(implicit ec: ExecutionContext): Future[CachedType] = {
+  def caching(cacheKey: String)(expensiveOperation: ExecutionContext => Future[CachedType]): Future[CachedType] = {
     val sanitizedKey = HeapBackedMemcachedClient.sanitizeKey(cacheKey)
     val futureCached: Future[CachedType] =
-      onHeapCache.get(sanitizedKey, { cacheKey: String => client.getOrElseUpdate[CachedType](cacheKey, expensiveOperation, options.ttl) })
+      onHeapCache.get(sanitizedKey, { cacheKey: String =>
+        client.getOrElseUpdate[CachedType](cacheKey, expensiveOperation(ec), options.ttl)(ec)
+      })
     onHeapCache.put(sanitizedKey, futureCached)
     futureCached
   }
@@ -45,7 +47,7 @@ class HeapBackedMemcachedClient[CachedType](
 
 object HeapBackedMemcachedClient {
   /** The ExecutionContext to be used in almost all cases for this cache wrapper */
-  private[cache] val defaultExecutionContext = {
+ val defaultExecutionContext = {
     /** In lieu of a specified configuration, we'll base this off the number of processors
       *  and the assumption that the cache will be more I/O than CPU bound (thus requiring
       *  extra threads).

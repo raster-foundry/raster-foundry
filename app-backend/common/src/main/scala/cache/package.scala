@@ -11,7 +11,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 package object cache {
   implicit class MemcachedClientMethods(client: MemcachedClient) {
-    def getOrElseUpdate[CachedType](cacheKey: String, expensiveOperation: => Future[CachedType], ttl: Duration)(implicit ec: ExecutionContext): Future[CachedType] = {
+    def getOrElseUpdate[CachedType](cacheKey: String, expensiveOperation: Future[CachedType], ttl: Duration)(implicit ec: ExecutionContext): Future[CachedType] = {
       val futureCached = Future { client.asyncGet(cacheKey).get() }
       futureCached.flatMap({ value =>
         if (value != null) { // cache hit
