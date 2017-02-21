@@ -1,8 +1,11 @@
 
+import logging
 import json
 import os
 
 from rf.utils.io import get_session
+
+logger = logging.getLogger(__name__)
 
 
 class BaseModel(object):

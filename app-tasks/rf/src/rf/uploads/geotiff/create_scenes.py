@@ -101,7 +101,7 @@ class GeoTiffS3SceneFactory(object):
 def create_geotiff_scene(tif_path, organizationId, datasource,
                          ingestSizeBytes=0, visibility=Visibility.PRIVATE, tags=[],
                          sceneMetadata=None, name=None, thumbnailStatus=JobStatus.QUEUED,
-                         boundaryStatus=JobStatus.QUEUED, ingestStatus=IngestStatus.NOTINGESTED,
+                         boundaryStatus=JobStatus.QUEUED, ingestStatus=IngestStatus.TOBEINGESTED,
                          metadataFiles=[],
                          **kwargs):
     """Returns scenes that can be created via API given a local path to a geotiff.
