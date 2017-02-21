@@ -1,9 +1,12 @@
 """Python class representation of a Raster Foundry Scene"""
 
 import uuid
-
+from requests.exceptions import HTTPError
+import logging
 
 from .base import BaseModel
+
+logger = logging.getLogger(__name__)
 
 
 class Scene(BaseModel):
@@ -111,3 +114,13 @@ class Scene(BaseModel):
             scene_dict['dataFootprint'] = self.dataFootprint.to_dict()
 
         return scene_dict
+
+    def create(self):
+        try:
+            return super(Scene, self).create()
+        except HTTPError as exc:
+            if exc.response.status_code != 409:
+                raise
+            else:
+                logger.info('Tried to create duplicate object: %s', self)
+                return None

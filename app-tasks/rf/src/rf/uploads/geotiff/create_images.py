@@ -8,7 +8,7 @@ from .create_bands import create_geotiff_bands
 
 
 def create_geotiff_image(organizationId, tif_path, sourceuri, filename=None,
-                         visibility=Visibility.PRIVATE, imageMetadata=None, scene=None):
+                         visibility=Visibility.PRIVATE, imageMetadata={}, scene=None):
     """Create an Image object from a GeoTIFF.
 
     Args:
