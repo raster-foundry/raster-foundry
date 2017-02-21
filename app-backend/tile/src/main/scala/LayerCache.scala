@@ -67,7 +67,7 @@ object LayerCache extends Config {
 
   val tileCache = HeapBackedMemcachedClient[Option[MultibandTile]](memcachedClient)
   def maybeRenderExtent(id: RfLayerId, zoom: Int, extent: Extent): Future[Option[MultibandTile]] =
-    tileCache.caching(s"rendered-extent-$id-$zoom-$extent") {
+    tileCache.caching(s"rendered-extent-$id-$zoom-$extent") { implicit ec =>
       for {
         prefix <- id.prefix
         store <- attributeStore(defaultBucket, prefix)
