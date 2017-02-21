@@ -22,7 +22,6 @@ import scala.concurrent._
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.util._
-import scala.concurrent.ExecutionContext.Implicits.global
 import java.util.concurrent.{Executors, TimeUnit}
 
 
@@ -36,7 +35,7 @@ import java.util.concurrent.{Executors, TimeUnit}
   * things that require time to generate, usually a network fetch, use AsyncLoadingCache
   */
 object LayerCache extends Config {
-  implicit lazy val database = Database.DEFAULT
+  implicit val database = Database.DEFAULT
 
   val memcachedClient =
     KryoMemcachedClient(new InetSocketAddress(memcachedHost, memcachedPort))
@@ -89,7 +88,7 @@ object LayerCache extends Config {
     }
 
   def maybeTile(id: RfLayerId, zoom: Int, key: SpatialKey): Future[Option[MultibandTile]] =
-    tileCache.caching(s"tile-$id-$zoom-$key") {
+    tileCache.caching(s"tile-$id-$zoom-$key") { implicit ec =>
       for {
         prefix <- id.prefix
         store <- attributeStore(defaultBucket, prefix)
@@ -107,7 +106,7 @@ object LayerCache extends Config {
 
   val histogramCache = HeapBackedMemcachedClient[Array[Histogram[Double]]](memcachedClient)
   def bandHistogram(id: RfLayerId, zoom: Int): Future[Array[Histogram[Double]]] =
-    histogramCache.caching(s"histogram-$id-$zoom") {
+    histogramCache.caching(s"histogram-$id-$zoom") { implicit ec =>
       for {
         prefix <- id.prefix
         store <- attributeStore(defaultBucket, prefix)

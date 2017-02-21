@@ -61,7 +61,7 @@ object Mosaic {
       case Some(t) => s"mosaic-definition-$projectId-${t.tag}"
       case None => s"mosaic-definition-$projectId"
     }
-    mosaicDefinitionCache.caching(cacheKey) {
+    mosaicDefinitionCache.caching(cacheKey) { implicit ec =>
       ScenesToProjects.getMosaicDefinition(projectId)
     }
   }
