@@ -14,7 +14,7 @@ lazy val commonSettings = Seq(
   scalacOptions := Seq(
     "-deprecation",
     "-unchecked",
-    "-feature", 
+    "-feature",
     "-language:implicitConversions",
     "-language:reflectiveCalls",
     "-language:higherKinds",
@@ -89,7 +89,10 @@ lazy val appDependencies = dbDependencies ++ migrationsDependencies ++
   Dependencies.commonsIO,
   Dependencies.ammoniteOps,
   Dependencies.geotrellisSlick,
-  Dependencies.geotrellisS3
+  Dependencies.geotrellisS3,
+  Dependencies.caffeine,
+  Dependencies.scaffeine,
+  Dependencies.findbugAnnotations
 )
 
 lazy val root = Project("root", file("."))
