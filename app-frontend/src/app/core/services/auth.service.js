@@ -1,8 +1,10 @@
+/* globals Auth0Lock */
+import assetLogo from '../../../assets/images/logo-raster-foundry.png';
 export default (app) => {
     class AuthService {
         constructor( // eslint-disable-line max-params
             lock, jwtHelper, $q, featureFlagOverrides, featureFlags,
-            $state, localStorage
+            $state, APP_CONFIG, localStorage
         ) {
             this.lock = lock;
             this.localStorage = localStorage;
@@ -11,6 +13,24 @@ export default (app) => {
             this.$state = $state;
             this.featureFlags = featureFlags;
             this.featureFlagOverrides = featureFlagOverrides;
+
+            let options = {
+                initialScreen: 'forgotPassword',
+                prefill: {
+                    email: this.profile() && this.profile().email
+                },
+                allowLogin: false,
+                closable: true,
+                auth: {
+                    redirect: false,
+                    sso: true
+                },
+                theme: {
+                    logo: assetLogo,
+                    primaryColor: '#5e509b'
+                }
+            };
+            this.resetLock = new Auth0Lock(APP_CONFIG.clientId, APP_CONFIG.auth0Domain, options);
 
             lock.on('authenticated', this.onLogin.bind(this));
             lock.on('authorization_error', this.onLoginFail.bind(this));
@@ -27,6 +47,10 @@ export default (app) => {
             } else {
                 this.lock.show();
             }
+        }
+
+        changePassword() {
+            this.resetLock.show();
         }
 
         onLogin(authResult) {

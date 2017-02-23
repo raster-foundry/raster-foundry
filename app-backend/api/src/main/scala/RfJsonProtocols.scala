@@ -8,6 +8,7 @@ import spray.json._
 
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.RFDatabaseJsonProtocol
+import com.azavea.rf.api.utils.ManagementBearerToken
 
 
 trait RfJsonProtocols extends SprayJsonSupport
@@ -22,4 +23,6 @@ trait RfJsonProtocols extends SprayJsonSupport
       case _ => throw new DeserializationException(s"Expected ISO 8601 Date but got $json")
     }
   }
+
+  implicit val managementBearerTokenJson = jsonFormat4(ManagementBearerToken)
 }

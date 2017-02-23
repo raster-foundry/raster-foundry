@@ -1,4 +1,4 @@
-package com.azavea.rf.api.token
+package com.azavea.rf.api.utils
 
 import akka.http.scaladsl.model.StatusCode
 

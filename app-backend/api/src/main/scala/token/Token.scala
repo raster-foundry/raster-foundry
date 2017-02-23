@@ -14,12 +14,12 @@ import scala.concurrent.Future
 
 import com.azavea.rf.datamodel.User
 import com.azavea.rf.api.utils.Config
+import com.azavea.rf.api.utils.{Auth0Exception, ManagementBearerToken}
 
 
 case class RefreshToken(refresh_token: String)
 case class DeviceCredential(id: String, device_name: String)
 case class AuthorizedToken(id_token: String, expires_in: Int, token_type: String)
-case class ManagementBearerToken(access_token: String, expires_in: Int, token_type: String, scope: String)
 
 object TokenService extends Config {
 
