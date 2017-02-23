@@ -170,13 +170,9 @@ lazy val tile = Project("tile", file("tile"))
   .settings(commonSettings:_*)
   .settings({
     libraryDependencies ++= loggingDependencies ++ testDependencies ++ Seq(
-      Dependencies.commonsIO,
       Dependencies.spark,
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisS3,
-      Dependencies.caffeine,
-      Dependencies.scaffeine,
-      Dependencies.elasticacheClient,
       Dependencies.akkajson
     )
   })

@@ -37,8 +37,7 @@ import java.util.concurrent.{Executors, TimeUnit}
 object LayerCache extends Config {
   implicit val database = Database.DEFAULT
 
-  val memcachedClient =
-    KryoMemcachedClient(new InetSocketAddress(memcachedHost, memcachedPort))
+  val memcachedClient = KryoMemcachedClient.DEFAULT
 
   /** The caffeine cache to use for attribute stores */
   val attributeStoreCache: ScaffeineCache[String, Future[S3AttributeStore]] =
