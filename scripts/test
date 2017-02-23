@@ -26,6 +26,12 @@ then
             find ./scripts -type f -print0 | xargs -0 -r shellcheck
         fi
 
+        echo "Validating swagger specification"
+        docker-compose \
+            -f docker-compose.test.yml \
+            run --rm app-frontend \
+            swagger validate /opt/swagger/spec.yml
+
         echo "Updating Scala dependencies"
         docker-compose \
             run --rm --no-deps app-server update
