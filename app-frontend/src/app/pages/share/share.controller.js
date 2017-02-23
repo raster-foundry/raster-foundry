@@ -24,6 +24,7 @@ export default class ShareController {
             this.projectService.query({id: this.projectId}).then(
                 p => {
                     this.project = p;
+                    this.fitProjectExtent();
                     this.loadingProject = false;
                     this.addProjectLayer();
                 },
@@ -32,7 +33,6 @@ export default class ShareController {
                     // @TODO: handle displaying an error message
                 }
             );
-            this.fitSceneList();
         }
     }
 
@@ -48,27 +48,9 @@ export default class ShareController {
         });
     }
 
-    fitSceneList() {
-        this.sceneRequestState = {loading: true};
-        this.projectService.getAllProjectScenes(
-            {projectId: this.projectId}
-        ).then(
-            (allScenes) => {
-                this.sceneList = allScenes;
-                this.fitScenes(this.sceneList);
-            },
-            (error) => {
-                this.sceneRequestState.errorMsg = error;
-            }
-        ).finally(() => {
-            this.sceneRequestState.loading = false;
-        });
-    }
-
-    fitScenes(scenes) {
-        this.getMap().then((map) =>{
-            let sceneFootprints = scenes.map((scene) => scene.dataFootprint);
-            map.map.fitBounds(L.geoJSON(sceneFootprints).getBounds());
+    fitProjectExtent() {
+        this.getMap().then(m => {
+            m.fitProjectExtent(this.project);
         });
     }
 }

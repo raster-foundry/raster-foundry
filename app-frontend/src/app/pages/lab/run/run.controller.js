@@ -11,14 +11,6 @@ export default class LabRunController {
         this.authService = authService;
         this.projectService = projectService;
         this.getMap = () => mapService.getMap('lab-run-preview');
-
-        $scope.$watch('$ctrl.isShowingPreview', () => {
-            this.getMap().then((mapWrapper) => {
-                $timeout(() => {
-                    mapWrapper.map.invalidateSize();
-                }, 50);
-            });
-        });
     }
 
     $onInit() {
@@ -177,7 +169,7 @@ export default class LabRunController {
                     if (!this.alreadyPreviewed) {
                         this.alreadyPreviewed = true;
                         this.$timeout(() => {
-                            this.fitSceneList(this.inputs[0].id);
+                            this.fitProjectExtent(this.inputs[1]);
                         });
                     }
                 });
@@ -192,27 +184,10 @@ export default class LabRunController {
         }
     }
 
-    fitSceneList(projectId) {
-        this.sceneRequestState = {loading: true};
-        this.projectService.getAllProjectScenes(
-            {projectId: projectId}
-        ).then(
-            (allScenes) => {
-                this.sceneList = allScenes;
-                this.fitScenes(this.sceneList);
-            },
-            (error) => {
-                this.sceneRequestState.errorMsg = error;
-            }
-        ).finally(() => {
-            this.sceneRequestState.loading = false;
-        });
-    }
-
-    fitScenes(scenes) {
-        this.getMap().then((map) =>{
-            let sceneFootprints = scenes.map((scene) => scene.dataFootprint);
-            map.map.fitBounds(L.geoJSON(sceneFootprints).getBounds());
+    fitProjectExtent(project) {
+        this.getMap().then(m => {
+            m.map.invalidateSize();
+            m.fitProjectExtent(project);
         });
     }
 
