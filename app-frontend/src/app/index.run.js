@@ -7,7 +7,11 @@ function runBlock( // eslint-disable-line max-params
         if (APP_CONFIG.error && toState.name !== 'error') {
             e.preventDefault();
             $state.go('error');
+        } else if (toState.name !== 'login' && !authService.isLoggedIn) {
+            e.preventDefault();
+            $state.go('login');
         }
+
     });
 
     $rootScope.$on('$locationChangeStart', function () {
@@ -16,8 +20,6 @@ function runBlock( // eslint-disable-line max-params
             if (!authService.isLoggedIn) {
                 authService.login(token);
             }
-        } else {
-            authService.login();
         }
     });
 }
