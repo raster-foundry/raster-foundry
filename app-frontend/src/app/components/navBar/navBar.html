@@ -35,16 +35,11 @@
     </nav>
     <span class="navbar-vertical-divider"></span>
     <nav>
-      <div ng-if="!$ctrl.authService.isLoggedIn">
-        <a href ng-click="$ctrl.signin()">
-          Sign In
-        </a>
-      </div>
-      <a ng-if="$ctrl.authService.isLoggedIn" href ui-sref="library.scenes.list">My library</a>
+      <a href ui-sref="library.scenes.list">My library</a>
       <div ng-if="$ctrl.authService.isLoggedIn" uib-dropdown class="dropdown-my-account" on-toggle="toggled($ctrl.optionsOpen)">
         <a href uib-dropdown-toggle>
           <img ng-if="$ctrl.authService.profile().picture" class="avatar" ng-src="{{$ctrl.authService.profile().picture}}">
-          <div class="avatar image-placeholder" ng-if="!$ctrl.authService.profile().picture"></div>
+          <div class="avatar image-placeholder" ng-if="$ctrl.authService.profile() && !$ctrl.authService.profile().picture"></div>
           <span class="username">{{$ctrl.authService.profile().nickname}}</span>
           <i class="icon-caret-down"></i>
         </a>

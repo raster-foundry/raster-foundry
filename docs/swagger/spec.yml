@@ -70,6 +70,38 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  /users/me/:
+    get:
+      summary: Get logged in user profile
+      tags:
+        - Users
+      responses:
+        200:
+          description: Profile found
+          schema:
+            $ref: '#/definitions/Auth0User'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    patch:
+      summary: Update user profile
+      parameters:
+        - name: Profile
+          in: body
+          schema:
+            $ref: '#/definitions/Auth0UserProfile'
+      tags:
+        - Users
+      responses:
+        200:
+          description: Profile updated
+          schema:
+            $ref: '#/definitions/Auth0User'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
   /users/{uuid}/:
     get:
       summary: Get a single user
@@ -1442,6 +1474,50 @@ definitions:
         description: List of organization\'s a user belongs to and their level of membership
         items:
           $ref: '#/definitions/UserOrg'
+  Auth0User:
+    type: object
+    properties:
+      email:
+        type: string
+      email_verified:
+        type: boolean
+      username:
+        type: string
+      phone_number:
+        type: string
+      phone_verified:
+        type: boolean
+      user_id:
+        type: string
+      created_at:
+        type: string
+      updated_at:
+        type: string
+      identities:
+        type: array
+      user_metadata:
+        type: object
+      picture:
+        type: string
+      name:
+        type: string
+      nickname:
+        type: string
+      given_name:
+        type: string
+      family_name:
+        type: string
+  Auth0UserProfile:
+    type: object
+    properties:
+      email:
+        type: string
+      phone_number:
+        type: string
+      user_metadata:
+        type: object
+      username:
+        type: string
   RefreshToken:
     type: object
     properties:

@@ -25,6 +25,14 @@ trait UserRoutes extends Authentication with PaginationDirectives with UserError
       get { listUsers } ~
       post { createUser }
     } ~
+    pathPrefix("me") {
+      get {
+        getAuth0User
+      } ~
+      patch {
+        updateAuth0User
+      }
+    } ~
     pathPrefix(Segment) { authIdEncoded =>
       pathEndOrSingleSlash {
         get { getUserByEncodedAuthId(authIdEncoded) }
@@ -48,6 +56,20 @@ trait UserRoutes extends Authentication with PaginationDirectives with UserError
           case Some(user) => complete((StatusCodes.Created, user))
           case None => throw new IllegalStateException("Unable to create user")
         }
+      }
+    }
+  }
+
+  def getAuth0User: Route = authenticate { user =>
+    complete {
+      Auth0UserService.getAuth0User(user)
+    }
+  }
+  def updateAuth0User: Route = authenticate {
+    user =>
+    entity(as[Auth0UserUpdate]) { userUpdate =>
+      complete {
+        Auth0UserService.updateAuth0User(user, userUpdate)
       }
     }
   }
