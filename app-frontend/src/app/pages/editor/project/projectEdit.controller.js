@@ -36,6 +36,7 @@ export default class ProjectEditController {
                 this.projectService.query({id: this.projectId}).then(
                     (project) => {
                         this.project = project;
+                        this.fitProjectExtent();
                         this.loadingProject = false;
                     },
                     () => {
@@ -48,8 +49,6 @@ export default class ProjectEditController {
                 this.selectProjectModal();
             }
         }
-
-        this.$scope.$watch('$ctrl.sceneList', this.fitAllScenes.bind(this));
 
         this.$scope.$on('$destroy', () => {
             if (this.activeModal) {
@@ -91,10 +90,6 @@ export default class ProjectEditController {
         }
     }
 
-    fitSelectedScenes() {
-        this.fitScenes(Array.from(this.selectedScenes.values()));
-    }
-
     bringSelectedScenesToFront() {
         this.cachedZIndices = new Map();
         for (const [id, l] of this.selectedLayers) {
@@ -105,16 +100,9 @@ export default class ProjectEditController {
         }
     }
 
-    fitAllScenes() {
-        if (this.sceneList.length) {
-            this.fitScenes(this.sceneList);
-        }
-    }
-
-    fitScenes(scenes) {
-        this.getMap().then((map) =>{
-            let sceneFootprints = scenes.map((scene) => scene.dataFootprint);
-            map.map.fitBounds(L.geoJSON(sceneFootprints).getBounds());
+    fitProjectExtent() {
+        this.getMap().then(m => {
+            m.fitProjectExtent(this.project);
         });
     }
 
