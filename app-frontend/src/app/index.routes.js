@@ -1,3 +1,5 @@
+import rootTpl from './pages/root/root.html';
+import loginTpl from './pages/login/login.html';
 import browseTpl from './pages/browse/browse.html';
 import labTpl from './pages/lab/lab.html';
 import labEditTpl from './pages/lab/edit/edit.html';
@@ -51,9 +53,63 @@ function librarySceneStates($stateProvider) {
         });
 }
 
+function libraryProjectStates($stateProvider) {
+    $stateProvider
+        .state('library.projects', {
+            url: '/projects',
+            templateUrl: projectsTpl,
+            controller: 'ProjectsController',
+            controllerAs: '$ctrl',
+            abstract: true
+        })
+        .state('library.projects.list', {
+            url: '/list?:page',
+            templateUrl: projectsListTpl,
+            controller: 'ProjectsListController',
+            controllerAs: '$ctrl'
+        })
+        .state('library.projects.detail', {
+            url: '/detail/:projectid',
+            params: {project: null},
+            templateUrl: projectsDetailTpl,
+            controller: 'ProjectsDetailController',
+            controllerAs: '$ctrl',
+            abstract: true
+        })
+        .state('library.projects.detail.scenes', {
+            url: '/list?:page',
+            templateUrl: projectScenesTpl,
+            params: {project: null},
+            controller: 'ProjectScenesController',
+            controllerAs: '$ctrl'
+        })
+        .state('library.projects.detail.scene', {
+            url: '/scenes/:sceneid',
+            templateUrl: projectSceneTpl,
+            params: {scene: null},
+            controller: 'ProjectSceneController',
+            controllerAs: '$ctrl'
+        });
+}
+
+function libraryStates($stateProvider) {
+    $stateProvider
+        .state('library', {
+            parent: 'root',
+            url: '/library',
+            templateUrl: libraryTpl,
+            controller: 'LibraryController',
+            controllerAs: '$ctrl',
+            abstract: true
+        });
+    librarySceneStates($stateProvider);
+    libraryProjectStates($stateProvider);
+}
+
 function editorStates($stateProvider) {
     $stateProvider
         .state('editor', {
+            parent: 'root',
             url: '/editor',
             templateUrl: editorTpl,
             controller: 'EditorController',
@@ -103,55 +159,10 @@ function editorStates($stateProvider) {
         });
 }
 
-function libraryProjectStates($stateProvider) {
-    $stateProvider
-        .state('library', {
-            url: '/library',
-            templateUrl: libraryTpl,
-            controller: 'LibraryController',
-            controllerAs: '$ctrl',
-            abstract: true
-        })
-        .state('library.projects', {
-            url: '/projects',
-            templateUrl: projectsTpl,
-            controller: 'ProjectsController',
-            controllerAs: '$ctrl',
-            abstract: true
-        })
-        .state('library.projects.list', {
-            url: '/list?:page',
-            templateUrl: projectsListTpl,
-            controller: 'ProjectsListController',
-            controllerAs: '$ctrl'
-        })
-        .state('library.projects.detail', {
-            url: '/detail/:projectid',
-            params: {project: null},
-            templateUrl: projectsDetailTpl,
-            controller: 'ProjectsDetailController',
-            controllerAs: '$ctrl',
-            abstract: true
-        })
-        .state('library.projects.detail.scenes', {
-            url: '/list?:page',
-            templateUrl: projectScenesTpl,
-            params: {project: null},
-            controller: 'ProjectScenesController',
-            controllerAs: '$ctrl'
-        })
-        .state('library.projects.detail.scene', {
-            url: '/scenes/:sceneid',
-            templateUrl: projectSceneTpl,
-            params: {scene: null},
-            controller: 'ProjectSceneController',
-            controllerAs: '$ctrl'
-        });
-}
-
 function settingsStates($stateProvider) {
     $stateProvider
         .state('settings', {
+            parent: 'root',
             url: '/settings',
             templateUrl: settingsTpl,
             controller: 'SettingsController',
@@ -200,6 +211,7 @@ function browseStates($stateProvider) {
 
     $stateProvider
         .state('browse', {
+            parent: 'root',
             url: '/browse/:id?' + queryParams,
             templateUrl: browseTpl,
             controller: 'BrowseController',
@@ -210,6 +222,7 @@ function browseStates($stateProvider) {
 function marketStates($stateProvider) {
     $stateProvider
         .state('market', {
+            parent: 'root',
             url: '/market',
             templateUrl: marketTpl,
             controller: 'MarketController',
@@ -236,6 +249,7 @@ function marketStates($stateProvider) {
 function labStates($stateProvider) {
     $stateProvider
         .state('lab', {
+            parent: 'root',
             url: '/lab/:toolid',
             templateUrl: labTpl,
             controller: 'LabController',
@@ -266,14 +280,28 @@ function shareStates($stateProvider) {
         });
 }
 
+function loginStates($stateProvider) {
+    $stateProvider
+        .state('login', {
+            url: '/login',
+            templateUrl: loginTpl,
+            controller: 'LoginController',
+            controllerAs: '$ctrl'
+        });
+}
+
 function routeConfig($urlRouterProvider, $stateProvider) {
     'ngInject';
 
+    $stateProvider.state('root', {
+        templateUrl: rootTpl
+    });
+
+    loginStates($stateProvider);
     browseStates($stateProvider);
     marketStates($stateProvider);
     editorStates($stateProvider);
-    librarySceneStates($stateProvider);
-    libraryProjectStates($stateProvider);
+    libraryStates($stateProvider);
     settingsStates($stateProvider);
     labStates($stateProvider);
     shareStates($stateProvider);

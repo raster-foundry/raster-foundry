@@ -1,12 +1,14 @@
 export default (app) => {
     class AuthService {
         constructor( // eslint-disable-line max-params
-            lock, store, jwtHelper, $q, featureFlagOverrides, featureFlags
+            lock, store, jwtHelper, $q, featureFlagOverrides, featureFlags,
+            $state
         ) {
             this.lock = lock;
             this.store = store;
             this.jwtHelper = jwtHelper;
             this.$q = $q;
+            this.$state = $state;
             this.featureFlags = featureFlags;
             this.featureFlagOverrides = featureFlagOverrides;
 
@@ -19,8 +21,10 @@ export default (app) => {
                 this.lock.show();
             } else if (!this.jwtHelper.isTokenExpired(token)) {
                 this.onLogin({idToken: token});
-            } else {
+            } else if (this.jwtHelper.isTokenExpired(token)) {
                 this.store.remove('item_token');
+                this.$state.go('login');
+            } else {
                 this.lock.show();
             }
         }
@@ -57,6 +61,7 @@ export default (app) => {
                 this.promise.resolve(authResult);
                 delete this.promise;
             }
+            this.$state.go('browse');
         }
 
         onLoginFail(error) {
@@ -78,7 +83,7 @@ export default (app) => {
             this.store.remove('id_token');
             this.store.remove('profile');
             this.isLoggedIn = false;
-            this.login();
+            this.$state.go('login');
         }
 
         createRefreshToken(name) {
