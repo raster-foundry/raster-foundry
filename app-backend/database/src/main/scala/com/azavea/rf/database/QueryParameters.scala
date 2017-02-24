@@ -101,7 +101,7 @@ case class CombinedSceneQueryParams(
   userParams: UserQueryParameters = UserQueryParameters(),
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
   sceneParams: SceneQueryParameters = SceneQueryParameters(),
-  imageQueryParameters: ImageQueryParameters = ImageQueryParameters()
+  imageParams: ImageQueryParameters = ImageQueryParameters()
 )
 
 /** Combined all query parameters for grids */

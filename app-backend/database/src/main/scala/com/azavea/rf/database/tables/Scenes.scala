@@ -259,7 +259,7 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
       .filterByUser(combinedParams.userParams)
       .filterByTimestamp(combinedParams.timestampParams)
       .filterBySceneParams(combinedParams.sceneParams)
-      .filterByImageParams(combinedParams.imageQueryParameters)
+      .filterByImageParams(combinedParams.imageParams)
   }
 
   /** Get scenes given a page request and query parameters */
@@ -578,7 +578,7 @@ class ScenesJoinQuery[M, U, C[_]](sceneJoin: Scenes.JoinQuery) {
       .filterByUser(combinedParams.userParams)
       .filterByTimestamp(combinedParams.timestampParams)
       .filterBySceneParams(combinedParams.sceneParams)
-      .filterByImageParams(combinedParams.imageQueryParameters)
+      .filterByImageParams(combinedParams.imageParams)
       .sort(pageRequest.sort)
       .drop(pageRequest.offset * pageRequest.limit)
       .take(pageRequest.limit)
