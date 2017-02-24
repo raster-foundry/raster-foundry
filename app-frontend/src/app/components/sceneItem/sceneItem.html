@@ -5,9 +5,8 @@
   <img ng-if="$ctrl.scene.thumbnails[0]"
        ng-attr-src="{{$ctrl.thumbnailService.getBestFitUrl($ctrl.scene.thumbnails, 75)}}"
        class="rounded-img item-img">
-  <img ng-if="!$ctrl.scene.thumbnails.length"
-       src="https://placehold.it/75x75"
-       class="rounded-img item-img">
+  <div ng-if="!$ctrl.scene.thumbnails.length"
+       class="rounded-img item-img image-placeholder"></div>
   <div class="list-group-overflow">
     <span title="{{$ctrl.scene.name}}">
       <strong class="color-dark">{{$ctrl.scene.name}}</strong>
