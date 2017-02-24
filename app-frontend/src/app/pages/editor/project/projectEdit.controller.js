@@ -110,9 +110,10 @@ export default class ProjectEditController {
 
     getSceneList() {
         this.sceneRequestState = {loading: true};
-        this.projectService.getAllProjectScenes(
+        this.sceneListQuery = this.projectService.getAllProjectScenes(
             {projectId: this.projectId}
-        ).then(
+        );
+        this.sceneListQuery.then(
             (allScenes) => {
                 this.sceneList = allScenes;
                 for (const scene of this.sceneList) {

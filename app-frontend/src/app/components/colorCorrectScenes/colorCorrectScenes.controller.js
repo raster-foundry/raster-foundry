@@ -51,12 +51,14 @@ let tile2Lat = function (y, zoom) {
 
 export default class ColorCorrectScenesController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, $q, projectService, layerService, sceneService, $state, mapService
+        $log, $scope, $q, projectService, layerService, sceneService, $state, mapService,
+        datasourceService
     ) {
         'ngInject';
         this.projectService = projectService;
         this.layerService = layerService;
         this.sceneService = sceneService;
+        this.datasourceService = datasourceService;
         this.$state = $state;
         this.$scope = $scope;
         this.$parent = $scope.$parent.$ctrl;
@@ -75,6 +77,8 @@ export default class ColorCorrectScenesController {
             className: 'grid-select'
         });
         this.gridLayer.setZIndex(100);
+
+        this.initColorComposites();
 
         this.getMap().then((map) => {
             this.listeners = [
@@ -142,6 +146,27 @@ export default class ColorCorrectScenesController {
             map.deleteLayers('grid-selection-layer');
             this.selectedScenes.forEach((scene) => map.deleteGeojson(scene.id));
         });
+    }
+
+    initColorComposites() {
+        this.$parent.sceneListQuery.then(sl => {
+            this.$q.all(sl.map(s => this.datasourceService.get(s.datasource))).then(dsl => {
+                this.datasources = dsl;
+                this.unifiedComposites = this.unifyComposites(dsl);
+            });
+        });
+    }
+
+    unifyComposites(datasources) {
+        let composites = datasources.map(d => d.composites);
+        return composites.reduce((union, comp) => {
+            return Object.keys(comp).reduce((ao, ck) => {
+                if (ck in union) {
+                    ao[ck] = union[ck];
+                }
+                return ao;
+            }, {});
+        }, composites[0]);
     }
 
     /**
@@ -224,9 +249,9 @@ export default class ColorCorrectScenesController {
         this.mosaic = this.$parent.mosaicLayer.values().next().value;
         let promises = [];
         this.sceneLayers.forEach((layer) => {
-            promises.push(layer.updateBands(this.bands[bandName].value));
+            promises.push(layer.updateBands(this.unifiedComposites[bandName].value));
         });
-        this.redrawMosaic(promises, this.bands[bandName].value);
+        this.redrawMosaic(promises, this.unifiedComposites[bandName].value);
     }
 
     /**
