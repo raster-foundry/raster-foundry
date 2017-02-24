@@ -12,7 +12,6 @@ const App = angular.module(
         // plugins
         require('angular-ui-router'),
         require('angular-nvd3'),
-        'angular-storage',
         'angular-jwt',
         'angular-clipboard',
         'auth0.lock',

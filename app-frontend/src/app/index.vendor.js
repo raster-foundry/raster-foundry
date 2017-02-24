@@ -9,7 +9,6 @@ import 'angular-nvd3';
 import 'angular-ui-router';
 import 'angular-ui-bootstrap';
 import 'angular-deferred-bootstrap';
-import 'angular-storage';
 import 'angular-lock';
 import 'ng-infinite-scroll';
 import 'angular-jwt';

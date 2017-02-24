@@ -17,6 +17,7 @@ require('./services/tool.service')(shared);
 require('./services/toolCategory.service')(shared);
 require('./services/toolTag.service')(shared);
 require('./services/user.service')(shared);
+require('./services/storage.service')(shared);
 
 require('./services/featureFlagOverrides.service')(shared);
 require('./services/featureFlags.provider')(shared);

@@ -13,9 +13,9 @@
  */
 export default app => {
     class FeatureFlagOverrides {
-        constructor($rootElement, store, $log) {
+        constructor($rootElement, $log, localStorage) {
             'ngInject';
-            this.store = store;
+            this.localStorage = localStorage;
             this.$log = $log;
 
             let keyPrefix = 'featureFlags.';
@@ -36,7 +36,7 @@ export default app => {
             if (!this.prefixedKeyFor) {
                 return false;
             }
-            let val = this.store.get(this.prefixedKeyFor(key));
+            let val = this.localStorage.get(this.prefixedKeyFor(key));
             return typeof val !== 'undefined' && val !== null;
         }
 
@@ -45,7 +45,7 @@ export default app => {
                 this.$log.error('featureFlagOverrides.get called before setting a user.');
                 return false;
             }
-            return this.store.get(this.prefixedKeyFor(flagName));
+            return this.localStorage.get(this.prefixedKeyFor(flagName));
         }
 
         set(flag, value) {
@@ -54,7 +54,7 @@ export default app => {
                 return;
             }
             let setFlag = (val, flagName) => {
-                this.store.set(this.prefixedKeyFor(flagName), val);
+                this.localStorage.set(this.prefixedKeyFor(flagName), val);
             };
             if (angular.isObject(flag)) {
                 angular.forEach(flag, setFlag);
@@ -68,7 +68,7 @@ export default app => {
                 this.$log.error('featureFlagOverrides.remove called before setting a user.');
                 return;
             }
-            this.store.remove(this.prefixedKeyFor(flagName));
+            this.localStorage.remove(this.prefixedKeyFor(flagName));
         }
     }
 

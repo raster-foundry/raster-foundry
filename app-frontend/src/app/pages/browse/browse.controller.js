@@ -5,15 +5,18 @@ const _ = require('lodash');
 export default class BrowseController {
     constructor( // eslint-disable-line max-params
         $log, $scope, sceneService, gridLayerService,
-        authService, $state, $uibModal, $timeout, mapService
+        authService, $state, $uibModal, $timeout, mapService,
+        sessionStorage
     ) {
         'ngInject';
+
         this.$log = $log;
         this.sceneService = sceneService;
         this.authService = authService;
         this.$state = $state;
         this.$uibModal = $uibModal;
         this.gridLayerService = gridLayerService;
+        this.sessionStorage = sessionStorage;
 
         this.getBrowseMap = () => mapService.getMap('browse');
         this.getDetailMap = () => mapService.getMap('detail');
@@ -29,12 +32,15 @@ export default class BrowseController {
         this.gridFilterActive = false;
         // initial data
 
-        this.queryParams = _.mapValues($state.params, (val) => {
-            if (val === '' || typeof val === 'undefined') {
-                return null;
-            }
-            return val;
-        });
+        this.queryParams = Object.assign(
+            _.mapValues($state.params, (val) => {
+                if (val === '' || typeof val === 'undefined') {
+                    return null;
+                }
+                return val;
+            }),
+            this.sessionStorage.get('filters') || {}
+        );
 
         if ($state.params.id) {
             this.sceneService.query({id: $state.params.id}).then(
@@ -120,6 +126,7 @@ export default class BrowseController {
     }
 
     onQueryParamsChange() {
+        this.sessionStorage.set('filters', this.queryParams);
         this.$state.go('.', this.queryParams, {notify: false, inherit: false, location: 'replace'});
         this.requestNewSceneList();
     }
