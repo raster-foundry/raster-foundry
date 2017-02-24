@@ -1,11 +1,11 @@
 export default (app) => {
     class AuthService {
         constructor( // eslint-disable-line max-params
-            lock, store, jwtHelper, $q, featureFlagOverrides, featureFlags,
-            $state
+            lock, jwtHelper, $q, featureFlagOverrides, featureFlags,
+            $state, localStorage
         ) {
             this.lock = lock;
-            this.store = store;
+            this.localStorage = localStorage;
             this.jwtHelper = jwtHelper;
             this.$q = $q;
             this.$state = $state;
@@ -22,7 +22,7 @@ export default (app) => {
             } else if (!this.jwtHelper.isTokenExpired(token)) {
                 this.onLogin({idToken: token});
             } else if (this.jwtHelper.isTokenExpired(token)) {
-                this.store.remove('item_token');
+                this.localStorage.remove('item_token');
                 this.$state.go('login');
             } else {
                 this.lock.show();
@@ -30,7 +30,7 @@ export default (app) => {
         }
 
         onLogin(authResult) {
-            this.store.set('id_token', authResult.idToken);
+            this.localStorage.set('id_token', authResult.idToken);
 
             this.lock.getProfile(authResult.idToken, (error, profile) => {
                 if (error) {
@@ -43,7 +43,7 @@ export default (app) => {
                 }
                 /* eslint-enable no-undef */
 
-                this.store.set('profile', profile);
+                this.localStorage.set('profile', profile);
                 this.featureFlagOverrides.setUser(profile.user_id);
                 let userFlags = profile.user_metadata && profile.user_metadata.featureFlags ?
                     profile.user_metadata.featureFlags : [];
@@ -72,16 +72,16 @@ export default (app) => {
         }
 
         profile() {
-            return this.store.get('profile');
+            return this.localStorage.get('profile');
         }
 
         token() {
-            return this.store.get('id_token', this.token);
+            return this.localStorage.get('id_token', this.token);
         }
 
         logout() {
-            this.store.remove('id_token');
-            this.store.remove('profile');
+            this.localStorage.remove('id_token');
+            this.localStorage.remove('profile');
             this.isLoggedIn = false;
             this.$state.go('login');
         }
