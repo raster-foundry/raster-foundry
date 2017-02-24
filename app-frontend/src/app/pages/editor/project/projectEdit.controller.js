@@ -2,7 +2,8 @@ const Map = require('es6-map');
 
 export default class ProjectEditController {
     constructor( // eslint-disable-line max-params
-        $scope, $rootScope, $location, $state, mapService, projectService, layerService, $uibModal
+        $scope, $rootScope, $location, $state, mapService, projectService, layerService, $uibModal,
+        mapUtilsService
     ) {
         'ngInject';
         this.$state = $state;
@@ -11,6 +12,7 @@ export default class ProjectEditController {
         this.$rootScope = $rootScope;
         this.projectService = projectService;
         this.layerService = layerService;
+        this.mapUtilsService = mapUtilsService;
         this.$uibModal = $uibModal;
         this.getMap = () => mapService.getMap('project');
 
@@ -102,7 +104,7 @@ export default class ProjectEditController {
 
     fitProjectExtent() {
         this.getMap().then(m => {
-            m.fitProjectExtent(this.project);
+            this.mapUtilsService.fitMapToProject(m, this.project);
         });
     }
 

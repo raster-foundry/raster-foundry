@@ -2,7 +2,8 @@
 
 export default class LabRunController {
     constructor( // eslint-disable-line max-params
-        $scope, $timeout, $element, authService, $uibModal, mapService, projectService) {
+        $scope, $timeout, $element, authService, $uibModal, mapService, projectService,
+        mapUtilsService) {
         'ngInject';
         this.$scope = $scope;
         this.$timeout = $timeout;
@@ -10,6 +11,7 @@ export default class LabRunController {
         this.$uibModal = $uibModal;
         this.authService = authService;
         this.projectService = projectService;
+        this.mapUtilsService = mapUtilsService;
         this.getMap = () => mapService.getMap('lab-run-preview');
     }
 
@@ -187,7 +189,7 @@ export default class LabRunController {
     fitProjectExtent(project) {
         this.getMap().then(m => {
             m.map.invalidateSize();
-            m.fitProjectExtent(project);
+            this.mapUtilsService.fitMapToProject(m, project);
         });
     }
 
