@@ -244,7 +244,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
     put:
-      summary: Update a user's role
+      summary: Update a user\'s role
       tags:
         - Users
       parameters:
@@ -278,6 +278,10 @@ paths:
         - Datasources
       parameters:
         - $ref: '#/parameters/name'
+      # TODO: fill in all possible responses
+      responses:
+        200:
+          description: SUCCESS
   /scenes/:
     get:
       summary: Lists paginated scenes that a user has access to
@@ -586,7 +590,6 @@ paths:
       tags:
         - Imagery
       parameters:
-        - $ref: '#/parameters/uuid'
         - name: scenes
           in: body
           required: true
@@ -594,7 +597,9 @@ paths:
           schema:
             type: array
             items:
-              - $ref: '#/parameters/uuid'
+              type: string
+              format: uuid
+        - $ref: '#/parameters/uuid'
       responses:
         204:
           description: No content, delete successful
@@ -604,56 +609,12 @@ paths:
       tags:
         - Imagery
       parameters:
-        - name: orgParams
+        - $ref: '#/parameters/uuid'
+        - name: combinedSceneQueryParameters
+          description: combined query parameters for finding scenes to add to this project
           in: body
-          type: object
-          properties:
-            organizations:
-              type: array
-              description: List of organizations to filter scenes to
-              items:
-                $ref: '#/definitions/UserOrg'
-        - name: userParams
-          in: body
-          allOf:
-            - $ref: '#/definitions/UserTrackingMixin'
-        - name: timestampParams
-          in: body
-          properties:
-            $ref: '#/parameters/minAcquisitionDatetime'
-            $ref: '#/parameters/maxAcquisitionDatetime'
-            $ref: '#/parameters/minCreateDatetime'
-            $ref: '#/parameters/maxCreateDatetime'
-        - name: sceneParams
-          in: body
-          type: object
-          properties:
-            $ref: '#/parameters/maxCloudCover'
-            $ref: '#/parameters/minCloudCover'
-            $ref: '#/parameters/minAcquisitionDatetime'
-            $ref: '#/parameters/maxAcquisitionDatetime'
-            $ref: '#/parameters/datasource'
-            $ref: '#/parameters/month'
-            $ref: '#/parameters/minDayOfMonth'
-            $ref: '#/parameters/maxDayOfMonth'
-            $ref: '#/parameters/maxSunAzimuth'
-            $ref: '#/parameters/minSunAzimuth'
-            $ref: '#/parameters/maxSunElevation'
-            $ref: '#/parameters/minSunElevation'
-            $ref: '#/parameters/bbox'
-            $ref: '#/parameters/point'
-            $ref: '#/parameters/project'
-            $ref: '#/parameters/ingested'
-            $ref: '#/parameters/ingestStatus'
-        - name: imageQueryParameters
-          in: body
-          type: object
-          properties:
-            $ref: '#/parameters/sceneId'
-            $ref: '#/parameters/minRawDataBytes'
-            $ref: '#/parameters/maxRawDataBytes'
-            $ref: '#/parameters/minResolution'
-            $ref: '#/parameters/maxResolution'
+          schema:
+            $ref: '#/definitions/CombinedSceneQueryParams'
       responses:
         201:
           description: List of scenes added to project
@@ -661,35 +622,60 @@ paths:
             type: array
             items:
               $ref: '#/definitions/Scene'
+
   /projects/{uuid}/mosaic/:
     get:
-      summary: List of a project's scene IDs and their associated color correction parameters to be used in mosaicing
+      summary: List of a project\'s scene IDs and their associated color correction parameters to be used in mosaicing
       tags:
         - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
       responses:
         200:
           description: An ordered list of scene IDs and corresponding color correction parameters
-  /projects/{uuid}/mosaic/{uuid}:
+  /projects/{uuid}/mosaic/{uuid2}:
     get:
-      summary: A project/scene pairing's persisted color correction parameters
+      summary: A project/scene pairing\'s persisted color correction parameters
       tags:
         - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/uuid2'
       responses:
         200:
           description: Color correction parameters
     post:
       summary: Associate posted color correction parameters with a project/scene pairing
       tags:
-        -Imagery
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/uuid2'
+      # TODO: fill in all possible responses
+      responses:
+        200:
+          description: SUCCESS
   /projects/{uuid}/order:
     get:
       summary: An ordered list of scene IDs belonging to the specified project
       tags:
         - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      # TODO: fill in all possible responses
+      responses:
+        200:
+          description: SUCCESS
     post:
       summary: Create/update an ordering among scenes within the specified project
       tags:
         - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      # TODO: fill in all possible responses
+      responses:
+        200:
+          description: SUCCESS
   /images/:
     get:
       summary: Paginated list of project images
@@ -1141,6 +1127,12 @@ parameters:
     required: true
     type: string
     format: uuid
+  uuid2:
+    name: uuid2
+    in: path
+    required: true
+    type: string
+    format: uuid
   slugLabel:
     name: slugLabel
     description: A url-safe slug label
@@ -1388,17 +1380,18 @@ parameters:
     required: false
   tool:
     name: toolId
-    description: Filter by tool's slug label
+    description: Filter by tool\'s slug label
     in: query
     type: string
     format: uuid
     required: false
   createdBy:
     name: createdBy
-    description: Filter by creator's slug label
+    description: Filter by creator\'s slug label
     in: query
     type: string
     required: false
+
 definitions:
   BaseModel:
     type: object
@@ -1446,7 +1439,7 @@ definitions:
         description: User ID for Raster Foundry
       organizations:
         type: array
-        description: List of organization's a user belongs to and their level of membership
+        description: List of organization\'s a user belongs to and their level of membership
         items:
           $ref: '#/definitions/UserOrg'
   RefreshToken:
@@ -1651,12 +1644,13 @@ definitions:
             type: string
             format: uuid
             description: Data source scene originated from
+          # TODO: make work with geometry objects
           dataFootprint:
-            type: geojson
             description: polygon for which this scene has data
             readOnly: true
+          # TODO: make work with geometry objects
           tileFootprint:
-            type: geojson
+            type: object
             description: polygon enclosing this scene
             readOnly: true
           sceneMetadata:
@@ -2010,3 +2004,272 @@ definitions:
         format: int32
       message:
         type: string
+
+  OrgParams:
+    type: object
+    description: Organization parameters to filter scenes
+    properties:
+      organizations:
+        type: array
+        items:
+          type: string
+          format: uuid
+
+  UserParams:
+    type: object
+    description: User parameters to filter scenes
+    properties:
+      createdBy:
+        type: string
+      modifiedBy:
+        type: string
+
+  TimestampParams:
+    type: object
+    description: Timestamp parameters to filter scenes
+    properties:
+      minCreateDatetime:
+        type: string
+        format: datetime
+      maxCreateDateTime:
+        type: string
+        format: datetime
+      minModifiedDatetime:
+        type: string
+        format: datetime
+      maxModifiedDatetime:
+        type: string
+        format: datetime
+
+  SceneParams:
+    type: object
+    description: scene params
+    properties:
+      maxCloudCover:
+        type: number
+        format: float32
+      minCloudCover:
+        type: number
+        format: float32
+      minAcquisitionDatetime:
+        type: string
+        format: datetime
+      maxAcquisitionDatetime:
+        type: string
+        format: datetime
+      datasource:
+        type: array
+        items:
+          type: string
+          format: uuid
+      month:
+        type: array
+        items:
+          type: number
+          format: int
+      minDayOfMonth:
+        type: number
+        format: int
+      maxDayOfMonth:
+        type: number
+        format: int
+      maxSunAzimuth:
+        type: number
+        format: float32
+      minSunAzimuth:
+        type: number
+        format: float32
+      maxSunElevation:
+        type: number
+        format: float32
+      minSunElevation:
+        type: number
+        format: float32
+      bbox:
+        type: string
+      point:
+        type: string
+      project:
+        type: string
+        format: uuid
+      ingested:
+        type: boolean
+      ingestStatus:
+        type: string
+        enum:
+          - NOTINGESTED
+          - TOBEINGESTED
+          - INGESTING
+          - INGESTED
+          - FAILED
+
+  ImageParams:
+    type: object
+    description: image params
+    properties:
+      minRawDataBytes:
+        type: number
+        format: int
+      maxRawDataBytes:
+        type: number
+        format: int
+      minResolution:
+        type: number
+        format: float32
+      maxResolution:
+        type: number
+        format: float32
+      scene:
+        type: array
+        items:
+          type: string
+          format: uuid
+
+  CombinedSceneQueryParams:
+    type: object
+    description: Combined query parameters for filtering scenes
+    discriminator: type
+    properties:
+      orgParams:
+        $ref: '#/definitions/OrgParams'
+      userParams:
+        $ref: '#/definitions/UserParams'
+      timestampParams:
+        $ref: '#/definitions/TimestampParams'
+      sceneParams:
+        $ref: '#/definitions/SceneParams'
+      imageParams:
+        $ref: '#/definitions/ImageParams'
+
+  # geometry types all lifted from:
+  # https://gist.github.com/idkw/fc35bb78c4bf08e47708f57b060996fe
+  # GPS License v3
+  Geometry:
+    type: object
+    description: GeoJSon geometry
+    discriminator: type
+    required:
+      - type
+    externalDocs:
+      url: http://geojson.org/geojson-spec.html#geometry-objects
+    properties:
+      type:
+        type: string
+        enum:
+        - Point
+        - LineString
+        - Polygon
+        - MultiPoint
+        - MultiLineString
+        - MultiPolygon
+        description: the geometry type
+  
+  Point2D:
+    type: array
+    maxItems: 2
+    minItems: 2
+    items:
+      type: number
+  
+  Point:
+    type: object
+    description: GeoJSon geometry
+    externalDocs:
+      url: http://geojson.org/geojson-spec.html#id2
+    allOf:
+      - $ref: "#/definitions/Geometry"
+      - properties:
+          coordinates:
+            $ref: '#/definitions/Point2D'
+    
+  LineString:
+    type: object
+    description: GeoJSon geometry
+    externalDocs:
+      url: http://geojson.org/geojson-spec.html#id3
+    allOf:
+      - $ref: "#/definitions/Geometry"
+      - properties:
+          coordinates:
+            type: array
+            items:
+              $ref: '#/definitions/Point2D'
+
+  Polygon:
+    type: object
+    description: GeoJSon geometry
+    externalDocs:
+      url: http://geojson.org/geojson-spec.html#id4
+    allOf:
+      - $ref: "#/definitions/Geometry"
+      - properties:
+          coordinates:
+            type: array
+            items:
+              type: array
+              items:
+                $ref: '#/definitions/Point2D'
+      
+  MultiPoint:
+    type: object
+    description: GeoJSon geometry
+    externalDocs:
+      url: http://geojson.org/geojson-spec.html#id5
+    allOf:
+      - $ref: "#/definitions/Geometry"
+      - properties:
+          coordinates:
+            type: array
+            items:
+              $ref: '#/definitions/Point2D'
+            
+  MultiLineString:
+    type: object
+    description: GeoJSon geometry
+    externalDocs:
+      url: http://geojson.org/geojson-spec.html#id6
+    allOf:
+      - $ref: "#/definitions/Geometry"   
+      - properties:
+          coordinates:
+            type: array
+            items:
+              type: array
+              items:
+                $ref: '#/definitions/Point2D'
+      
+      
+  MultiPolygon:
+    type: object
+    description: GeoJSon geometry
+    externalDocs:
+      url: http://geojson.org/geojson-spec.html#id6
+    allOf:
+      - $ref: "#/definitions/Geometry"
+      - properties:
+          coordinates:
+            type: array
+            items:
+              type: array
+              items:
+                type: array
+                items:
+                  $ref: '#/definitions/Point2D'
+      
+  GeometryCollection:
+    type: object
+    description: GeoJSon geometry collection
+    required:
+     - type
+     - geometries
+    externalDocs:
+      url: http://geojson.org/geojson-spec.html#geometrycollection
+    properties:
+      type:
+        type: string
+        enum:
+        - GeometryCollection
+      geometries:
+        type: array
+        items:
+          $ref: '#/definitions/Geometry'
