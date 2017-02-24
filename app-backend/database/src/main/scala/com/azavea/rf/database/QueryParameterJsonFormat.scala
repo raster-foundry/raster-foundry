@@ -179,7 +179,7 @@ trait QueryParameterJsonFormat extends AdditionalFormats with
         "userParams",
         "timestampParams",
         "sceneParams",
-        "imageQueryParameters"
+        "imageParams"
       )
 
       CombinedSceneQueryParams(
@@ -198,7 +198,7 @@ trait QueryParameterJsonFormat extends AdditionalFormats with
       "userParams" -> params.userParams.toJson,
       "timestampParams" -> params.timestampParams.toJson,
       "sceneParams" -> params.sceneParams.toJson,
-      "imageQueryParameters" -> params.imageQueryParameters.toJson
+      "imageParams" -> params.imageParams.toJson
     )
   }
 
