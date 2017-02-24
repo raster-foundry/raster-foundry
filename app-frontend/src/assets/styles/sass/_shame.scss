@@ -1,4 +1,24 @@
-/* 
+/*
+ * app-wide
+ */
+
+div.image-placeholder {
+  background: #ddd;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-content: center;
+  justify-content: center;
+  flex-shrink: 0;
+  &.block-placeholder {
+    display: flex;
+  }
+  div {
+    align-self: center;
+  }
+}
+
+
+/*
  * /browse/
  */
 .leaflet-top.leaflet-right .map-control-panel .leaflet-control-zoom {
@@ -10,7 +30,7 @@
   display: none !important;
 }
 
-.leaflet-top.leaflet-right .map-control-panel .leaflet-control-zoom-in, 
+.leaflet-top.leaflet-right .map-control-panel .leaflet-control-zoom-in,
 .leaflet-top.leaflet-right .map-control-panel .leaflet-control-zoom-out {
   font-size: 18px;
   line-height: 1;
@@ -59,14 +79,14 @@ dl.meta-list > dd {
 //
 
 
-/* 
+/*
  * /library/ All library pages
  */
 
 // Where breadcrumbs exist add back arrow icon
 
 
-/* 
+/*
  * /library/scenes/detail/
  */
 
@@ -74,7 +94,7 @@ dl.meta-list > dd {
 //
 
 
-/* 
+/*
  * /library/projects/detail/
  */
 
@@ -83,7 +103,7 @@ dl.meta-list > dd {
 //
 
 
-/* 
+/*
  * /editor/project/
  */
 
@@ -163,7 +183,7 @@ rf-project-editor .leaflet-tile {
 }
 
 .mosaic-scene-order {
-  
+
   &.content {
     padding-top: 1rem;
   }
@@ -199,7 +219,7 @@ rf-project-editor .leaflet-tile {
 //
 
 
-/* 
+/*
  * project modal
  */
 .modal-form {
@@ -214,7 +234,7 @@ rf-project-editor .leaflet-tile {
 }
 
 
-/* 
+/*
  * Publish modal
  */
 .form-group.all-in-one [readonly] {
