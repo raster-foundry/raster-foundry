@@ -27,7 +27,9 @@
       <div ng-if="$ctrl.authService.isLoggedIn && !$ctrl.testNoAuth" uib-dropdown class="dropdown-my-account" on-toggle="toggled($ctrl.optionsOpen)">
         <a href uib-dropdown-toggle>
           <img ng-if="$ctrl.authService.profile().picture" class="avatar" ng-src="{{$ctrl.authService.profile().picture}}">
-          <img ng-if="! $ctrl.authService.profile().picture" class="avatar" src="https://placehold.it/25x25">
+          <div ng-if="!$ctrl.authService.profile().picture"
+             class="avatar image-placeholder">
+          </div>
           <span class="username">{{$ctrl.authService.profile().nickname}}</span>
           <i class="icon-caret-down"></i>
         </a>

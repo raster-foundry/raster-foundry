@@ -16,8 +16,12 @@
             <div uib-slide
                  index="$index"
                  ng-repeat="screenshot in $ctrl.testScreenshots track by screenshot.id">
-              <img ng-src="{{screenshot.url}}" >
+              <img ng-src="{{screenshot.url}}">
             </div>
+          </div>
+          <div ng-if="$ctrl.tool && $ctrl.testScreenshots.length === 0"
+               class="image-placeholder" style="height: 480px; width: 800px;">
+               <div>No tool preview is available</div>
           </div>
         </div>
         <div class="horizontal-separator"></div>

@@ -2,9 +2,10 @@
   <img ng-if="$ctrl.toolData.screenshots[0]"
        ng-src="{{$ctrl.toolData.screenshots[0].url}}"
        class="rounded-img item-img">
-  <img ng-if="!$ctrl.toolData.screenshots.length"
-       src="https://placehold.it/75x75/"
-       class="rounded-img item-img">
+  <div ng-if="!$ctrl.toolData.screenshots.length"
+       class="rounded-img item-img image-placeholder"
+       style="height: 75px; width: 75px;">
+  </div>
   <div>
     <div class="list-item-header">
       {{$ctrl.toolData.title}}
