@@ -379,16 +379,6 @@ class MapWrapper {
         this.heldState = state;
         return this;
     }
-
-    /** Get the extent from a project (if it exists) and fit the map to it
-      * @param {Project} project to hold, e.g. specifying latlng center and zoom
-      * @returns {this} this
-      */
-    fitProjectExtent(project) {
-        if (project.extent) {
-            this.map.fitBounds(L.geoJSON(project.extent).getBounds());
-        }
-    }
 }
 
 export default (app) => {

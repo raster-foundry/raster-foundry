@@ -2,7 +2,7 @@ const Map = require('es6-map');
 
 export default class LabEditController {
     constructor( // eslint-disable-line max-params
-        $scope, $state, $uibModal, mapService, layerService, projectService) {
+        $scope, $state, $uibModal, mapService, layerService, projectService, mapUtilsService) {
         'ngInject';
         this.$scope = $scope;
         this.$parent = $scope.$parent.$ctrl;
@@ -11,6 +11,7 @@ export default class LabEditController {
         this.mapService = mapService;
         this.layerService = layerService;
         this.projectService = projectService;
+        this.mapUtilsService = mapUtilsService;
         this.inputs = {
             bands: {
                 nir: '5',
@@ -53,7 +54,7 @@ export default class LabEditController {
 
     fitProjectExtent() {
         this.getMap().then(m => {
-            m.fitProjectExtent(this.project);
+            this.mapUtilsService.fitMapToProject(m, this.project);
         });
     }
 

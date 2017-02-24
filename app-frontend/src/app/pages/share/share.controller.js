@@ -2,8 +2,8 @@ import logoAsset from '../../../assets/images/logo-raster-foundry.png';
 /* global L */
 
 export default class ShareController {
-    constructor(
-        $log, $state, authService, projectService, mapService
+    constructor( // eslint-disable-line max-params
+        $log, $state, authService, projectService, mapService, mapUtilsService
     ) {
         'ngInject';
         this.$log = $log;
@@ -11,6 +11,7 @@ export default class ShareController {
         this.logoAsset = logoAsset;
         this.authService = authService;
         this.projectService = projectService;
+        this.mapUtilsService = mapUtilsService;
         this.getMap = () => mapService.getMap('share-map');
     }
 
@@ -49,8 +50,9 @@ export default class ShareController {
     }
 
     fitProjectExtent() {
-        this.getMap().then(m => {
-            m.fitProjectExtent(this.project);
+        this.getMap().then(mapWrapper => {
+            mapWrapper.map.invalidateSize();
+            this.mapUtilsService.fitMapToProject(mapWrapper, this.project);
         });
     }
 }
