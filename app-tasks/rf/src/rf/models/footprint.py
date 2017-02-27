@@ -32,12 +32,12 @@ class Footprint(BaseModel):
     @classmethod
     def from_dict(cls, d):
         return cls(
-            d.get('organizationId'), d.get('multipolygon'), d.get('id'), d.get('sceneId'),
+            d.get('organizationId'), d.get('coordinates'), d.get('id'), d.get('sceneId'),
             d.get('createdAt'), d.get('modifiedAt')
         )
 
     def to_dict(self):
-        return self.multipolygon
+        return {'type': 'MultiPolygon', 'coordinates': self.multipolygon}
 
     def create(self):
         assert self.sceneId, 'Scene ID is required to create a Footprint'
