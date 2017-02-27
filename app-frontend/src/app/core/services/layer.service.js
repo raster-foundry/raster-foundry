@@ -40,7 +40,6 @@ export default (app) => {
             this._sceneTiles = null; // eslint-disable-line no-underscore-dangle
             this._mosaicTiles = null; // eslint-disable-line no-underscore-dangle
             this._correction = null; // eslint-disable-line no-underscore-dangle
-            this.getBounds();
         }
 
         /** Function to return bounds from either the project or the scene

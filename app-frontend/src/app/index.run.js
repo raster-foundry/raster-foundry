@@ -11,7 +11,6 @@ function runBlock( // eslint-disable-line max-params
             e.preventDefault();
             $state.go('login');
         }
-
     });
 
     $rootScope.$on('$locationChangeStart', function () {

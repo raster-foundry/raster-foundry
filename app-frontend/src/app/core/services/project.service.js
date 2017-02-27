@@ -131,30 +131,38 @@ export default (app) => {
          */
         getAllProjectScenes(params) {
             let deferred = this.$q.defer();
-            // Figure out how many scenes there are
-            this.getProjectSceneCount(params).then((sceneCount) => {
+            let pageSize = 30;
+            let firstPageParams = Object.assign({}, params, {
+                pageSize: pageSize,
+                page: 0,
+                sort: 'createdAt,desc'
+            });
+            let firstRequest = this.getProjectScenes(firstPageParams);
+
+            firstRequest.then((page) => {
                 let self = this;
-                // We're going to use this in a moment to create the requests for API pages
-                let requestMaker = function *(totalResults, pageSize) {
-                    let pageNum = 0;
-                    while (pageNum * pageSize <= totalResults) {
-                        let pageParams = Object.assign({}, params, {
-                            pageSize: pageSize,
-                            page: pageNum,
-                            sort: 'createdAt,desc'
-                        });
-                        yield self.getProjectScenes(pageParams);
-                        pageNum = pageNum + 1;
-                    }
-                };
-                let numScenes = sceneCount.count;
-                // The default API pagesize is 30 so we'll use that.
-                let pageSize = 30;
-                // Generate requests for all pages
-                let requests = Array.from(requestMaker(numScenes, pageSize));
-                // Unpack responses into a single scene list.
-                // The structure to unpack is:
-                // [{ results: [{},{},...] }, { results: [{},{},...]},...]
+                let numScenes = page.count;
+                let requests = [firstRequest];
+                if (page.count > pageSize) {
+                    let requestMaker = function *(totalResults) {
+                        let pageNum = 1;
+                        while (pageNum * pageSize <= totalResults) {
+                            let pageParams = Object.assign({}, params, {
+                                pageSize: pageSize,
+                                page: pageNum,
+                                sort: 'createdAt,desc'
+                            });
+                            yield self.getProjectScenes(pageParams);
+                            pageNum = pageNum + 1;
+                        }
+                    };
+
+                    requests = requests.concat(Array.from(requestMaker(numScenes)));
+                    // Unpack responses into a single scene list.
+                    // The structure to unpack is:
+                    // [{ results: [{},{},...] }, { results: [{},{},...]},...]
+                }
+
                 this.$q.all(requests).then(
                     (allResponses) => {
                         deferred.resolve(
@@ -168,6 +176,7 @@ export default (app) => {
             }, () => {
                 deferred.reject('Error loading scenes.');
             });
+
             return deferred.promise;
         }
 
