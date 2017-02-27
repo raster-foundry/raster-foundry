@@ -36,7 +36,7 @@ Development workflow varies by developer, but a typical development experience m
 
  - Create a new feature branch
  - Start up the vagrant machine with `vagrant up --provision`
- - Get an `sbt` console open using `./scripts/console app-server ./sbt`
+ - Get an `sbt` console open using `./scripts/console api-server ./sbt`
  - Make changes to Scala code
  - Try compiling (`~compile`) or running the service to inspect it (`~app/run`)
 
@@ -48,7 +48,7 @@ To initialize migrations on a database for the first time, run `mg init` within 
 
 The workflow for creating a new migration is:
 
- - Open an `sbt` console using `./scripts/console app-server ./sbt`
+ - Open an `sbt` console using `./scripts/console api-server ./sbt`
  - Run `mg new s` for a `SQL` migration
    - The migration file is output to `migrations/src_migrations/main/scala/{VERSION_NUM}.scala`
  - Edit this file to perform the desired migration logic

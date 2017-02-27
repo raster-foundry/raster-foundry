@@ -103,7 +103,7 @@ services:
       dockerfile: Dockerfile
     external_links:
       - postgres:database.service.rasterfoundry.internal
-      - app-server:rasterfoundry.com
+      - api-server:rasterfoundry.com
     links:
       - redis:cache.service.rasterfoundry.internal
     env_file: .env
@@ -133,7 +133,7 @@ services:
       dockerfile: Dockerfile
     external_links:
       - postgres:database.service.rasterfoundry.internal
-      - app-server:rasterfoundry.com
+      - api-server:rasterfoundry.com
     links:
       - redis:cache.service.rasterfoundry.internal
     env_file: .env

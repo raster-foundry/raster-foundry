@@ -8,7 +8,7 @@ function usage() {
 "Usage: $(basename "$0") SERVICE COMMAND[S]
 Use Docker Compose to run a command for a service, or drop into a console.
 
-Example: ./scripts/console app-server \"./sbt\"
+Example: ./scripts/console api-server \"./sbt\"
 "
 }
 

@@ -34,15 +34,15 @@ then
 
         echo "Updating Scala dependencies"
         docker-compose \
-            run --rm --no-deps app-server update
+            run --rm --no-deps api-server update
 
         echo "Linting Scala source code"
         docker-compose \
-            run --rm --no-deps app-server scapegoat
+            run --rm --no-deps api-server scapegoat
 
         echo "Executing Scala test suite"
         docker-compose \
-            run --rm app-server test
+            run --rm api-server test
 
         # TODO: https://github.com/azavea/raster-foundry/issues/435
         # echo "Executing JavaScript test suite"
