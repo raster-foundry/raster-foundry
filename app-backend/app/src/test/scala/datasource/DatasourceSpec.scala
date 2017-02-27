@@ -27,7 +27,7 @@ class DatasourceSpec extends WordSpec
   implicit val ec = system.dispatcher
 
   implicit def database = db
-  implicit def default(implicit system: ActorSystem) = RouteTestTimeout(DurationInt(5).second)
+  implicit def default(implicit system: ActorSystem) = RouteTestTimeout(DurationInt(20).second)
 
   val authHeader = AuthUtils.generateAuthHeader("Default")
   val baseDatasourcePath = "/api/datasources/"

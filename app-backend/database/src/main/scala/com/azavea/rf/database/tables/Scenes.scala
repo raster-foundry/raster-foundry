@@ -196,38 +196,22 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     * This implementation allows a user to post a scene with thumbnails, and
     * images which are all created in a single transaction
     */
-  def insertScene(sceneCreate: Scene.Create, user: User)
-                 (implicit database: DB): Future[Scene.WithRelated] = {
-
+  def insertScene(sceneCreate: Scene.Create, user: User):
+      DBIO[(Scene, Seq[Thumbnail], Seq[(Image, Seq[Band])])] = {
     val scene = sceneCreate.toScene(user.id)
     val thumbnails = sceneCreate.thumbnails.map(_.toThumbnail(user.id))
-    val imageSeq = (sceneCreate.images map { im: Image.Banded => im.toImage(user.id) }).zipWithIndex
-    val bandsSeq = imageSeq map { case (im: Image, ind: Int) =>
-      sceneCreate.images(ind).bands map { bd => bd.toBand(im.id) }
-    }
-
-    val imageBandInsert = DBIO.sequence(
-      imageSeq.zip(bandsSeq) map { case ((im: Image, _: Int), bs: Seq[Band]) =>
-        // == because we're filtering a sequence, not a table
-        for {
-          imageInsert <- (Images returning Images).forceInsert(im)
-          bandInserts <- (Bands returning Bands).forceInsertAll(bs)
-        } yield (imageInsert, bandInserts)
+    val imageSeq = sceneCreate.images
+    val imInsert = DBIO.sequence(
+      imageSeq map {
+        im => Images.insertImage(im, user)
       }
     )
 
-    val actions = for {
-      scenesInsert <- Scenes.forceInsert(scene)
-      thumbnailsInsert <- Thumbnails.forceInsertAll(thumbnails)
-      imageInsert <- imageBandInsert
+    for {
+      scenesInsert <- (Scenes returning Scenes).forceInsert(scene)
+      thumbnailsInsert <- (Thumbnails returning Thumbnails).forceInsertAll(thumbnails)
+      imageInsert <- imInsert
     } yield (scenesInsert, thumbnailsInsert, imageInsert)
-
-    database.db.run {
-      actions.transactionally
-    } map { case (_, _, imSeq: Seq[Tuple2[Image, Seq[Band]]]) =>
-        val imagesWithRelated = imSeq.map({case (im: Image, bs: Seq[Band]) => im.withRelatedFromComponents(bs)})
-      scene.withRelatedFromComponents(imagesWithRelated, thumbnails)
-    }
   }
 
 
@@ -235,19 +219,11 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     *
     * @param sceneId java.util.UUID ID of scene to query with
     */
-  def getScene(sceneId: UUID)
-              (implicit database: DB): Future[Option[Scene.WithRelated]] = {
-
-    database.db.run {
-      val action = Scenes
-        .filter(_.id === sceneId)
+  def getScene(sceneId: UUID):
+              DBIO[Seq[(Scene, Option[Image], Option[Band], Option[Thumbnail])]] = {
+      Scenes.filter(_.id === sceneId)
         .joinWithRelated
         .result
-      logger.debug(s"Total Query for scenes -- SQL: ${action.statements.headOption}")
-      action
-    } map { result =>
-      Scene.WithRelated.fromRecords(result).headOption
-    }
   }
 
   /** Filter scenes based on scene query parameters

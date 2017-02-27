@@ -2,6 +2,8 @@ package com.azavea.rf.image
 
 import java.util.UUID
 
+import scala.concurrent.Future
+
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 
@@ -9,14 +11,15 @@ import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 
 import com.azavea.rf.common.{Authentication, UserErrorHandler}
 import com.azavea.rf.database.tables.Images
-import com.azavea.rf.database.Database
+import com.azavea.rf.database.{Database, ActionRunner}
 import com.azavea.rf.datamodel._
 
 
 trait ImageRoutes extends Authentication
     with ImageQueryParametersDirective
     with PaginationDirectives
-    with UserErrorHandler {
+    with UserErrorHandler
+    with ActionRunner {
 
   implicit def database: Database
 
@@ -36,15 +39,17 @@ trait ImageRoutes extends Authentication
   def listImages: Route = authenticate { user =>
     (withPagination & imageQueryParameters) { (page, imageParams) =>
       complete {
-        Images.listImages(page, imageParams, user)
+        withRelatedSeq1(Images.listImages(page, imageParams, user),
+                        page.offset, page.limit):
+            Future[PaginatedResponse[Image.WithRelated]]
       }
     }
   }
 
   def createImage: Route = authenticate { user =>
     entity(as[Image.Banded]) { newImage =>
-      onSuccess(Images.insertImage(newImage, user)) { image =>
-        complete(image)
+      onSuccess(withRelatedSingle1(Images.insertImage(newImage, user)): Future[Image.WithRelated]) {
+        image: Image.WithRelated => complete(image)
       }
     }
   }
@@ -53,7 +58,8 @@ trait ImageRoutes extends Authentication
     get {
       rejectEmptyResponse {
         complete {
-          Images.getImage(imageId)
+          withRelatedOption1(Images.getImage(imageId)):
+              Future[Option[Image.WithRelated]]
         }
       }
     }
@@ -61,14 +67,14 @@ trait ImageRoutes extends Authentication
 
   def updateImage(imageId: UUID): Route = authenticate { user =>
     entity(as[Image.WithRelated]) { updatedImage =>
-      onSuccess(Images.updateImage(updatedImage, imageId, user)) { count =>
+      onSuccess(update(Images.updateImage(updatedImage, imageId, user))) { count =>
         complete(StatusCodes.NoContent)
       }
     }
   }
 
   def deleteImage(imageId: UUID): Route = authenticate { user =>
-    onSuccess(Images.deleteImage(imageId)) {
+    onSuccess(drop(Images.deleteImage(imageId))) {
       case 1 => complete(StatusCodes.NoContent)
       case 0 => complete(StatusCodes.NotFound)
       case count => throw new IllegalStateException(
