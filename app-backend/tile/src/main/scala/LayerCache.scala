@@ -117,7 +117,9 @@ object LayerCache extends Config {
 
   val layerPrefixCache = HeapBackedMemcachedClient[Option[String]](memcachedClient)
   def prefixFromLayerId(layerId: UUID): Future[Option[String]] =
-    layerPrefixCache.caching(s"") { implicit ec =>
+    layerPrefixCache.caching(s"rflayer-prefix-${layerId.toString}") { _ =>
+      // The default threadpool can be used for this cache because work is handed off to hikari
+      import scala.concurrent.ExecutionContext.Implicits.global
       val sceneQuery = Scenes.getScene(layerId)
       sceneQuery.map { sceneOption =>
         for {
