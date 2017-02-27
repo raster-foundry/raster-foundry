@@ -1,6 +1,5 @@
-
-import logging
 import json
+import logging
 import os
 
 from rf.utils.io import get_session
@@ -27,7 +26,7 @@ class BaseModel(object):
         response = session.get(url)
         response.raise_for_status()
 
-        return cls.from_json(response.json())
+        return cls.from_dict(response.json())
 
     @classmethod
     def from_dict(cls, d):
@@ -49,3 +48,14 @@ class BaseModel(object):
         response = session.post(url, json=self.to_dict())
         response.raise_for_status()
         return self.from_dict(response.json())
+
+    def update(self):
+        url = '{HOST}{URL_PATH}{id}'.format(HOST=self.HOST, URL_PATH=self.URL_PATH, id=self.id)
+        session = get_session()
+        response = session.put(url, json=self.to_dict())
+        try:
+            response.raise_for_status()
+        except:
+            logger.exception('Unable to update scene: %s', response.text)
+            raise
+        return response
