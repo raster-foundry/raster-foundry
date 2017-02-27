@@ -22,9 +22,8 @@ def get_tempdir():
     temp_dir = tempfile.mkdtemp()
     try:
         yield temp_dir
-    except:
+    finally:
         shutil.rmtree(temp_dir)
-        raise
 
 
 def get_rf_image(rf_image_id):
