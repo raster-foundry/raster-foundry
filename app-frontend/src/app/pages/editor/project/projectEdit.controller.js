@@ -108,6 +108,17 @@ export default class ProjectEditController {
         });
     }
 
+    fitSelectedScenes() {
+        this.fitScenes(Array.from(this.selectedScenes.values()));
+    }
+
+    fitScenes(scenes) {
+        this.getMap().then((map) =>{
+            let sceneFootprints = scenes.map((scene) => scene.dataFootprint);
+            map.map.fitBounds(L.geoJSON(sceneFootprints).getBounds());
+        });
+    }
+
     getSceneList() {
         this.sceneRequestState = {loading: true};
         this.sceneListQuery = this.projectService.getAllProjectScenes(

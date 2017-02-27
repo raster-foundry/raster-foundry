@@ -65,7 +65,7 @@ export default class LabEditController {
         ).then(
             (allScenes) => {
                 this.sceneList = allScenes;
-                this.fitAllScenes();
+                this.fitProjectExtent();
                 this.layersFromScenes();
             },
             (error) => {
