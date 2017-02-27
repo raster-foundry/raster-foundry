@@ -45,7 +45,7 @@ object MosaicRoutes extends LazyLogging {
       }
     }
 
-// TODO: re-eable this, needed for project color correction endpoint
+// TODO: re-enable this, needed for project color correction endpoint
 //   def mosaicScenes: Route =
 //     pathPrefix(JavaUUID / Segment / "mosaic" / IntNumber / IntNumber / IntNumber) { (orgId, userId, zoom, x, y) =>
 //       colorCorrectParams { params =>

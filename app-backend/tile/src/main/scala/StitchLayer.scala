@@ -11,6 +11,8 @@ import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.s3._
 import com.typesafe.scalalogging.LazyLogging
+
+import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.util.{Try, Success, Failure}
@@ -33,13 +35,13 @@ object StitchLayer extends LazyLogging with Config {
     * For non-cached version use [[stitch]] function.
     */
   val stitchCache = HeapBackedMemcachedClient[Option[MultibandTile]](memcachedClient)
-  def apply(id: RfLayerId, size: Int): Future[Option[MultibandTile]] =
+  def apply(id: UUID, size: Int): Future[Option[MultibandTile]] =
     stitchCache.caching(s"stitch-{$size}") { implicit ec =>
       for {
-        prefix <- id.prefix
+        prefix <- LayerCache.prefixFromLayerId(id)
         store <- LayerCache.attributeStore(prefix)
       }
-      yield stitch(store, id.sceneId.toString, size)
+      yield stitch(store, id.toString, size)
     }
 
   def stitch(store: AttributeStore, layerName: String, size: Int): Option[MultibandTile] = {
