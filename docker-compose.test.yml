@@ -24,10 +24,10 @@ services:
     entrypoint: yarn
     command: run build
 
-  app-server:
+  api-server:
     image: raster-foundry-app-server:${GIT_COMMIT:-latest}
     build:
-      context: ./app-backend/app
+      context: ./app-backend/api
       dockerfile: Dockerfile
 
   tile-server:

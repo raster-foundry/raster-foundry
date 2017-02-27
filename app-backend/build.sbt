@@ -28,7 +28,7 @@ lazy val commonSettings = Seq(
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " }
 )
 
-lazy val appSettings = commonSettings ++ Seq(
+lazy val apiSettings = commonSettings ++ Seq(
   fork in run := true,
   connectInput in run := true,
   cancelable in Global := true,
@@ -77,7 +77,7 @@ lazy val testDependencies = List(
     Dependencies.akkatestkit
 )
 
-lazy val appDependencies = dbDependencies ++ migrationsDependencies ++
+lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
     testDependencies ++ Seq(
   Dependencies.akka,
   Dependencies.akkahttp,
@@ -96,19 +96,19 @@ lazy val appDependencies = dbDependencies ++ migrationsDependencies ++
 )
 
 lazy val root = Project("root", file("."))
-  .aggregate(app, migrations, datamodel, database, ingest)
+  .aggregate(api, migrations, datamodel, database, ingest)
   .settings(commonSettings:_*)
 
-lazy val app = Project("app", file("app"))
+lazy val api = Project("api", file("api"))
   .dependsOn(database, datamodel, common)
-  .settings(appSettings:_*)
+  .settings(apiSettings:_*)
   .settings({
-    libraryDependencies ++= appDependencies
+    libraryDependencies ++= apiDependencies
   })
 
 lazy val common = Project("common", file("common"))
   .dependsOn(database, datamodel)
-  .settings(appSettings:_*)
+  .settings(apiSettings:_*)
   .settings({libraryDependencies ++= testDependencies ++ Seq(
     Dependencies.jwtCore,
     Dependencies.json4s,

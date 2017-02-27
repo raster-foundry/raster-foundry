@@ -1,4 +1,4 @@
-app/target/*
+api/target/*
 database/target/*
 datamodel/target/*
 ingest/target/*
