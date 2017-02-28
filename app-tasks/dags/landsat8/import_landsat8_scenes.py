@@ -8,6 +8,7 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.models import DAG
 
 from rf.uploads.landsat8 import find_landsat8_scenes, create_landsat8_scenes
+from rf.utils.exception_reporting import wrap_rollbar
 
 rf_logger = logging.getLogger('rf')
 ch = logging.StreamHandler()
@@ -33,6 +34,7 @@ dag = DAG(
 )
 
 
+@wrap_rollbar
 def import_landsat8_scenes(*args, **kwargs):
     """Find new Landsat 8 scenes and kick off imports
 

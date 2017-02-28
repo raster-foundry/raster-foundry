@@ -12,6 +12,8 @@ from rf.uploads.geotiff import GeoTiffS3SceneFactory
 from rf.uploads.geotiff.io import s3_url
 from rf.uploads.geotiff.create_thumbnails import create_thumbnails
 from rf.utils.io import Visibility
+from rf.utils.exception_reporting import wrap_rollbar
+
 
 rf_logger = logging.getLogger('rf')
 ch = logging.StreamHandler()
@@ -34,9 +36,9 @@ dag = DAG(
 )
 
 
+@wrap_rollbar
 def import_geotiffs(*args, **kwargs):
-    """Find geotiffs which match the bucket and prefix and kick off imports
-    """
+    """Find geotiffs which match the bucket and prefix and kick off imports"""
 
     logging.info("Finding geotiff scenes...")
     conf = kwargs['dag_run'].conf

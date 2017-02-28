@@ -1,11 +1,12 @@
+import os
+import logging
+
 from airflow.operators.python_operator import PythonOperator
 from airflow.models import DAG
 from datetime import datetime, timedelta
 
 from rf.uploads.sentinel2 import create_sentinel2_scenes
-
-import os
-import logging
+from rf.utils.exception_reporting import wrap_rollbar
 
 rf_logger = logging.getLogger('rf')
 ch = logging.StreamHandler()
@@ -35,6 +36,7 @@ dag = DAG(
 )
 
 
+@wrap_rollbar
 def import_sentinel2(*args, **kwargs):
     """Creates new Sentinel-2 scenes with associated images, thumbnails, and footprint"""
     logger.info('KWARGS: %s', kwargs)

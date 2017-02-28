@@ -4,6 +4,7 @@ import os
 import time
 
 from airflow.operators.python_operator import PythonOperator
+from airflow.exceptions import AirflowException
 from airflow.models import DAG
 import boto3
 
@@ -11,7 +12,7 @@ from rf.utils.io import IngestStatus
 from rf.models import Scene
 from rf.ingest import create_landsat8_ingest
 from rf.uploads.landsat8.settings import datasource_id
-
+from rf.utils.exception_reporting import wrap_rollbar
 
 rf_logger = logging.getLogger('rf')
 ch = logging.StreamHandler()
@@ -45,6 +46,7 @@ batch_job_queue = os.getenv('BATCH_INGEST_JOB_QUEUE', 'rasterfoundry-staging-ing
 # Utility functions            #
 ################################
 
+@wrap_rollbar
 def get_latest_batch_job_revision():
     """Get latest batch job definition ARN
 
@@ -55,6 +57,7 @@ def get_latest_batch_job_revision():
     return latest_definition['jobDefinitionArn']
 
 
+@wrap_rollbar
 def execute_ingest_batch_job(ingest_s3_uri, ingest_def_id):
     """Kick off ingest in AWS Batch
 
@@ -77,6 +80,7 @@ def execute_ingest_batch_job(ingest_s3_uri, ingest_def_id):
     return response
 
 
+@wrap_rollbar
 def wait_for_success(response):
     """Wait for batch success/failure given an initial batch response
 
@@ -104,16 +108,17 @@ def wait_for_success(response):
     is_success = (current_status == 'SUCCEEDED')
     if is_success:
         logger.info('Successfully completed ingest for %s', job_name)
-        return is_success
+        return True
     else:
         logger.error('Something went wrong with %s. Current Status: %s', job_name, current_status)
-        return is_success
+        raise AirflowException('Ingest failed for {}'.format(job_name))
 
 
 ################################
 # Callables for PythonOperators#
 ################################
 
+@wrap_rollbar
 def create_ingest_definition_op(*args, **kwargs):
     """Create ingest definition and upload to S3"""
 
@@ -146,6 +151,7 @@ def create_ingest_definition_op(*args, **kwargs):
     xcom_client.xcom_push(key='ingest_scene_id', value=scene_dict['id'])
 
 
+@wrap_rollbar
 def launch_spark_ingest_job_op(*args, **kwargs):
     """Launch ingest job and wait for success/failure"""
     xcom_client = kwargs['task_instance']
@@ -156,17 +162,15 @@ def launch_spark_ingest_job_op(*args, **kwargs):
     batch_response = execute_ingest_batch_job(ingest_def_uri, ingest_def_id)
     logger.info('Finished launching Spark ingest job. Waiting for status changes.')
     is_success = wait_for_success(batch_response)
-    if is_success:
-        return 'Successfully Executed Ingest'
-    else:
-        raise Exception('Something went wrong')
+    return is_success
 
 
+@wrap_rollbar
 def set_ingest_status_success_op(*args, **kwargs):
     """Set scene ingest status on success"""
     xcom_client = kwargs['task_instance']
-    logger.info("Setting scene (%s) ingested status to success", )
     scene_id = xcom_client.xcom_pull(key='ingest_scene_id', task_ids=None)
+    logger.info("Setting scene (%s) ingested status to success", scene_id)
     scene = Scene.from_id(scene_id)
     scene.ingestStatus = IngestStatus.INGESTED
 
@@ -180,11 +184,12 @@ def set_ingest_status_success_op(*args, **kwargs):
     logger.info("Finished setting scene (%s) ingest status (%s)", scene_id, IngestStatus.INGESTED)
 
 
+@wrap_rollbar
 def set_ingest_status_failure_op(*args, **kwargs):
     """Set ingest status on failure"""
     xcom_client = kwargs['task_instance']
-    logger.info("Setting scene (%s) ingested status to failed", )
     scene_id = xcom_client.xcom_pull(key='ingest_scene_id', task_ids=None)
+    logger.info("Setting scene (%s) ingested status to failed", scene_id)
     scene = Scene.from_id(scene_id)
     scene.ingestStatus = IngestStatus.FAILED
     scene.update()
