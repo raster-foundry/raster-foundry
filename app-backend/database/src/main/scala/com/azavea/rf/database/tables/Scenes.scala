@@ -385,7 +385,7 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
       updateScene.modifiedAt, updateScene.modifiedBy, updateScene.ingestSizeBytes,
       updateScene.datasource, updateScene.cloudCover,  updateScene.acquisitionDate,
       updateScene.tags, updateScene.sceneMetadata, updateScene.thumbnailStatus,
-      updateScene.boundaryStatus, updateScene.name, updateScene.tileFootprint,
+      updateScene.boundaryStatus, updateScene.ingestStatus, updateScene.name, updateScene.tileFootprint,
       updateScene.dataFootprint, updateScene.metadataFiles, updateScene.ingestLocation
     )
     database.db.run {
@@ -393,7 +393,7 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
         updateTime, user.id, scene.ingestSizeBytes,
         scene.datasource, scene.filterFields.cloudCover, scene.filterFields.acquisitionDate,
         scene.tags, scene.sceneMetadata, scene.statusFields.thumbnailStatus,
-        scene.statusFields.boundaryStatus, scene.name, scene.tileFootprint,
+        scene.statusFields.boundaryStatus, scene.statusFields.ingestStatus, scene.name, scene.tileFootprint,
         scene.dataFootprint, scene.metadataFiles, scene.ingestLocation
       ))
     } map {
