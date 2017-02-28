@@ -1,0 +1,463 @@
+{
+  "modifiedAt": "2017-01-01T16:36:01.946Z",
+  "name": "L8 L8/008/068/LC80080682016359LGN00/",
+  "filterFields": {
+    "cloudCover": 6.630000114440918,
+    "acquisitionDate": "2016-12-24T00:00:00Z",
+    "sunAzimuth": 117.43434143066406,
+    "sunElevation": 60.446475982666016
+  },
+  "dataFootprint": {
+    "type": "MultiPolygon",
+    "coordinates": [
+      [
+        [
+          [
+            -78.91337999999999,
+            -12.25582
+          ],
+          [
+            -77.20025,
+            -12.620750000000017
+          ],
+          [
+            -76.82601,
+            -10.880060000000018
+          ],
+          [
+            -78.52844,
+            -10.519079999999995
+          ],
+          [
+            -78.91337999999999,
+            -12.25582
+          ]
+        ]
+      ]
+    ]
+  },
+  "tags": [
+    "Landsat 8",
+    "GeoTIFF"
+  ],
+  "ingestSizeBytes": 0,
+  "statusFields": {
+    "thumbnailStatus": "SUCCESS",
+    "boundaryStatus": "SUCCESS",
+    "ingestStatus": "NOTINGESTED"
+  },
+  "id": "cd2bdc60-cd41-46d9-9284-dea280d61484",
+  "sceneMetadata": {
+    "GEOMETRIC_RMSE_MODEL_Y": "7.762",
+    "receivingStation": "LGN",
+    "BPF_NAME_OLI": "LO8BPF20161224145736_20161224153952.01",
+    "PROCESSING_SOFTWARE_VERSION": "LPGS_2.6.2",
+    "upperRightCornerLatitude": "-10.88006",
+    "GROUND_CONTROL_POINTS_MODEL": "157",
+    "sceneStopTime": "2016:359:15:17:38.0515070",
+    "path": "8",
+    "upperLeftCornerLongitude": "-78.52844",
+    "CPF_NAME": "L8CPF20161001_20161231.02",
+    "upperLeftCornerLatitude": "-10.51908",
+    "browseAvailable": "Y",
+    "lowerRightCornerLatitude": "-12.62075",
+    "sceneStartTime": "2016:359:15:17:06.2815100",
+    "TIRS_SSM_MODEL": "PRELIMINARY",
+    "cloudCover": "0",
+    "imageQuality1": "9",
+    "DATA_TYPE_L1": "L1T",
+    "cartURL": "http://earthexplorer.usgs.gov/order/process?dataset_name=LANDSAT_8&ordered=LC80080682016359LGN00",
+    "row": "68",
+    "ROLL_ANGLE": "-.001",
+    "sceneCenterLongitude": "-77.86671",
+    "sensor": "OLI_TIRS",
+    "lowerLeftCornerLongitude": "-78.91338",
+    "RLUT_FILE_NAME": "L8RLUT20150303_20431231v11.h5",
+    "DATE_L1_GENERATED": "2016-12-24 12:09:51",
+    "sceneCenterLatitude": "-11.56755",
+    "browseURL": "http://earthexplorer.usgs.gov/browse/landsat_8/2016/008/068/LC80080682016359LGN00.jpg",
+    "BPF_NAME_TIRS": "LT8BPF20161214083706_20161214105756.01",
+    "lowerLeftCornerLatitude": "-12.25582",
+    "upperRightCornerLongitude": "-76.82601",
+    "FULL_PARTIAL_SCENE": "FULL",
+    "GROUND_CONTROL_POINTS_VERSION": "4",
+    "dateUpdated": "2016-12-24",
+    "GEOMETRIC_RMSE_MODEL_X": "6.165",
+    "lowerRightCornerLongitude": "-77.20025",
+    "NADIR_OFFNADIR": "NADIR",
+    "dayOrNight": "DAY"
+  },
+  "tileFootprint": {
+    "type": "MultiPolygon",
+    "coordinates": [
+      [
+        [
+          [
+            -76.82601,
+            -10.519079999999995
+          ],
+          [
+            -78.91337999999999,
+            -10.519079999999995
+          ],
+          [
+            -78.91337999999999,
+            -12.620750000000017
+          ],
+          [
+            -76.82601,
+            -12.620750000000017
+          ],
+          [
+            -76.82601,
+            -10.519079999999995
+          ]
+        ]
+      ]
+    ]
+  },
+  "createdAt": "2017-01-01T16:36:01.946Z",
+  "createdBy": "rf|airflow-user",
+  "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
+  "metadataFiles": [
+    "http://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_MTL.txt"
+  ],
+  "ingestLocation": null,
+  "images": [
+    {
+      "modifiedAt": "2017-01-01T16:36:01.946Z",
+      "resolutionMeters": 15,
+      "id": "9f0c3435-bb43-4aec-b648-fe5fb79d7c47",
+      "scene": "cd2bdc60-cd41-46d9-9284-dea280d61484",
+      "filename": "LC80080682016359LGN00_B8.TIF",
+      "sourceUri": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_B8.TIF",
+      "createdAt": "2017-01-01T16:36:01.946Z",
+      "createdBy": "rf|airflow-user",
+      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
+      "metadataFiles": [],
+      "bands": [
+        {
+          "number": 0,
+          "name": "panchromatic - 8",
+          "image": "9f0c3435-bb43-4aec-b648-fe5fb79d7c47",
+          "id": "266ec606-2f23-4f1b-ab1c-3305461dcbda",
+          "wavelength": [
+            500,
+            680
+          ]
+        }
+      ],
+      "imageMetadata": {},
+      "modifiedBy": "rf|airflow-user",
+      "visibility": "PUBLIC",
+      "rawDataBytes": 239737884
+    },
+    {
+      "modifiedAt": "2017-01-01T16:36:01.946Z",
+      "resolutionMeters": 30,
+      "id": "6603c235-48b3-4670-ad7a-6acd65cf1e79",
+      "scene": "cd2bdc60-cd41-46d9-9284-dea280d61484",
+      "filename": "LC80080682016359LGN00_B1.TIF",
+      "sourceUri": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_B1.TIF",
+      "createdAt": "2017-01-01T16:36:01.946Z",
+      "createdBy": "rf|airflow-user",
+      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
+      "metadataFiles": [],
+      "bands": [
+        {
+          "number": 0,
+          "name": "coastal aerosol - 1",
+          "image": "6603c235-48b3-4670-ad7a-6acd65cf1e79",
+          "id": "28ad6b3a-83cb-4898-b18e-4e5f554d3dd3",
+          "wavelength": [
+            430,
+            450
+          ]
+        }
+      ],
+      "imageMetadata": {},
+      "modifiedBy": "rf|airflow-user",
+      "visibility": "PUBLIC",
+      "rawDataBytes": 57411591
+    },
+    {
+      "modifiedAt": "2017-01-01T16:36:01.946Z",
+      "resolutionMeters": 30,
+      "id": "6e4b3f57-ccc3-4a4c-bf5f-1e75ee1c1440",
+      "scene": "cd2bdc60-cd41-46d9-9284-dea280d61484",
+      "filename": "LC80080682016359LGN00_B2.TIF",
+      "sourceUri": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_B2.TIF",
+      "createdAt": "2017-01-01T16:36:01.946Z",
+      "createdBy": "rf|airflow-user",
+      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
+      "metadataFiles": [],
+      "bands": [
+        {
+          "number": 0,
+          "name": "blue - 2",
+          "image": "6e4b3f57-ccc3-4a4c-bf5f-1e75ee1c1440",
+          "id": "8864f82c-3135-4f7f-9309-d9d309d731b5",
+          "wavelength": [
+            450,
+            510
+          ]
+        }
+      ],
+      "imageMetadata": {},
+      "modifiedBy": "rf|airflow-user",
+      "visibility": "PUBLIC",
+      "rawDataBytes": 57950735
+    },
+    {
+      "modifiedAt": "2017-01-01T16:36:01.946Z",
+      "resolutionMeters": 30,
+      "id": "08cd7fa6-025f-4e9b-898f-d85d10d3101c",
+      "scene": "cd2bdc60-cd41-46d9-9284-dea280d61484",
+      "filename": "LC80080682016359LGN00_B3.TIF",
+      "sourceUri": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_B3.TIF",
+      "createdAt": "2017-01-01T16:36:01.946Z",
+      "createdBy": "rf|airflow-user",
+      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
+      "metadataFiles": [],
+      "bands": [
+        {
+          "number": 0,
+          "name": "green - 3",
+          "image": "08cd7fa6-025f-4e9b-898f-d85d10d3101c",
+          "id": "d69d0798-5f42-4958-84d9-c0aa859edef0",
+          "wavelength": [
+            530,
+            590
+          ]
+        }
+      ],
+      "imageMetadata": {},
+      "modifiedBy": "rf|airflow-user",
+      "visibility": "PUBLIC",
+      "rawDataBytes": 59053647
+    },
+    {
+      "modifiedAt": "2017-01-01T16:36:01.946Z",
+      "resolutionMeters": 30,
+      "id": "4aef3c55-166f-44a2-ba74-79dac4c39403",
+      "scene": "cd2bdc60-cd41-46d9-9284-dea280d61484",
+      "filename": "LC80080682016359LGN00_B4.TIF",
+      "sourceUri": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_B4.TIF",
+      "createdAt": "2017-01-01T16:36:01.946Z",
+      "createdBy": "rf|airflow-user",
+      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
+      "metadataFiles": [],
+      "bands": [
+        {
+          "number": 0,
+          "name": "red - 4",
+          "image": "4aef3c55-166f-44a2-ba74-79dac4c39403",
+          "id": "8eba5ae3-298c-4632-b1ad-31a7acce699b",
+          "wavelength": [
+            640,
+            670
+          ]
+        }
+      ],
+      "imageMetadata": {},
+      "modifiedBy": "rf|airflow-user",
+      "visibility": "PUBLIC",
+      "rawDataBytes": 60028437
+    },
+    {
+      "modifiedAt": "2017-01-01T16:36:01.946Z",
+      "resolutionMeters": 30,
+      "id": "a9f8fc6f-9bf9-4abd-a05d-6ceba7f41168",
+      "scene": "cd2bdc60-cd41-46d9-9284-dea280d61484",
+      "filename": "LC80080682016359LGN00_B5.TIF",
+      "sourceUri": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_B5.TIF",
+      "createdAt": "2017-01-01T16:36:01.946Z",
+      "createdBy": "rf|airflow-user",
+      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
+      "metadataFiles": [],
+      "bands": [
+        {
+          "number": 0,
+          "name": "near infrared - 5",
+          "image": "a9f8fc6f-9bf9-4abd-a05d-6ceba7f41168",
+          "id": "276ac36f-17e5-431b-85fc-190c435a586d",
+          "wavelength": [
+            850,
+            880
+          ]
+        }
+      ],
+      "imageMetadata": {},
+      "modifiedBy": "rf|airflow-user",
+      "visibility": "PUBLIC",
+      "rawDataBytes": 61154509
+    },
+    {
+      "modifiedAt": "2017-01-01T16:36:01.946Z",
+      "resolutionMeters": 30,
+      "id": "d18a6b96-170b-4d6d-baad-0f2b76c49f28",
+      "scene": "cd2bdc60-cd41-46d9-9284-dea280d61484",
+      "filename": "LC80080682016359LGN00_B6.TIF",
+      "sourceUri": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_B6.TIF",
+      "createdAt": "2017-01-01T16:36:01.946Z",
+      "createdBy": "rf|airflow-user",
+      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
+      "metadataFiles": [],
+      "bands": [
+        {
+          "number": 0,
+          "name": "swir - 6",
+          "image": "d18a6b96-170b-4d6d-baad-0f2b76c49f28",
+          "id": "6c64fbd7-1b95-4bfe-b8d2-b12b85f59cac",
+          "wavelength": [
+            1570,
+            1650
+          ]
+        }
+      ],
+      "imageMetadata": {},
+      "modifiedBy": "rf|airflow-user",
+      "visibility": "PUBLIC",
+      "rawDataBytes": 60898403
+    },
+    {
+      "modifiedAt": "2017-01-01T16:36:01.946Z",
+      "resolutionMeters": 30,
+      "id": "c981c786-1d1c-4633-ba94-de93472e0f37",
+      "scene": "cd2bdc60-cd41-46d9-9284-dea280d61484",
+      "filename": "LC80080682016359LGN00_B7.TIF",
+      "sourceUri": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_B7.TIF",
+      "createdAt": "2017-01-01T16:36:01.946Z",
+      "createdBy": "rf|airflow-user",
+      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
+      "metadataFiles": [],
+      "bands": [
+        {
+          "number": 0,
+          "name": "swir - 7",
+          "image": "c981c786-1d1c-4633-ba94-de93472e0f37",
+          "id": "a21f4bea-a9cd-4946-b63b-394454716bcc",
+          "wavelength": [
+            2110,
+            2290
+          ]
+        }
+      ],
+      "imageMetadata": {},
+      "modifiedBy": "rf|airflow-user",
+      "visibility": "PUBLIC",
+      "rawDataBytes": 59398875
+    },
+    {
+      "modifiedAt": "2017-01-01T16:36:01.946Z",
+      "resolutionMeters": 30,
+      "id": "b448f704-8a76-4101-babe-a5e8e564e52c",
+      "scene": "cd2bdc60-cd41-46d9-9284-dea280d61484",
+      "filename": "LC80080682016359LGN00_B9.TIF",
+      "sourceUri": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_B9.TIF",
+      "createdAt": "2017-01-01T16:36:01.946Z",
+      "createdBy": "rf|airflow-user",
+      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
+      "metadataFiles": [],
+      "bands": [
+        {
+          "number": 0,
+          "name": "cirrus - 9",
+          "image": "b448f704-8a76-4101-babe-a5e8e564e52c",
+          "id": "45c355fd-ceb3-47a9-b802-c4dd4aad12f6",
+          "wavelength": [
+            1360,
+            1380
+          ]
+        }
+      ],
+      "imageMetadata": {},
+      "modifiedBy": "rf|airflow-user",
+      "visibility": "PUBLIC",
+      "rawDataBytes": 38734973
+    },
+    {
+      "modifiedAt": "2017-01-01T16:36:01.946Z",
+      "resolutionMeters": 30,
+      "id": "3d892b7d-0a39-4884-b611-39d1d4b38450",
+      "scene": "cd2bdc60-cd41-46d9-9284-dea280d61484",
+      "filename": "LC80080682016359LGN00_B10.TIF",
+      "sourceUri": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_B10.TIF",
+      "createdAt": "2017-01-01T16:36:01.946Z",
+      "createdBy": "rf|airflow-user",
+      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
+      "metadataFiles": [],
+      "bands": [
+        {
+          "number": 0,
+          "name": "thermal infrared - 10",
+          "image": "3d892b7d-0a39-4884-b611-39d1d4b38450",
+          "id": "f8317848-e55f-4fe2-aed6-a63dd9291dbd",
+          "wavelength": [
+            10600,
+            11190
+          ]
+        }
+      ],
+      "imageMetadata": {},
+      "modifiedBy": "rf|airflow-user",
+      "visibility": "PUBLIC",
+      "rawDataBytes": 41723032
+    },
+    {
+      "modifiedAt": "2017-01-01T16:36:01.946Z",
+      "resolutionMeters": 30,
+      "id": "fca5bc48-26cd-4f65-918e-39c6287793b2",
+      "scene": "cd2bdc60-cd41-46d9-9284-dea280d61484",
+      "filename": "LC80080682016359LGN00_B11.TIF",
+      "sourceUri": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_B11.TIF",
+      "createdAt": "2017-01-01T16:36:01.946Z",
+      "createdBy": "rf|airflow-user",
+      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
+      "metadataFiles": [],
+      "bands": [
+        {
+          "number": 0,
+          "name": "thermal infrared - 11",
+          "image": "fca5bc48-26cd-4f65-918e-39c6287793b2",
+          "id": "d8bc7771-241e-45ae-b299-f232e98ebafb",
+          "wavelength": [
+            11500,
+            12510
+          ]
+        }
+      ],
+      "imageMetadata": {},
+      "modifiedBy": "rf|airflow-user",
+      "visibility": "PUBLIC",
+      "rawDataBytes": 40622939
+    }
+  ],
+  "modifiedBy": "rf|airflow-user",
+  "visibility": "PUBLIC",
+  "datasource": "697a0b91-b7a8-446e-842c-97cda155554d",
+  "thumbnails": [
+    {
+      "modifiedAt": "2017-01-01T16:36:01.946Z",
+      "widthPx": 228,
+      "url": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_thumb_small.jpg",
+      "thumbnailSize": "SMALL",
+      "id": "a6b0726d-813d-47a9-8b54-d09b7726b6d1",
+      "createdAt": "2017-01-01T16:36:01.946Z",
+      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
+      "sceneId": "cd2bdc60-cd41-46d9-9284-dea280d61484",
+      "heightPx": 233
+    },
+    {
+      "modifiedAt": "2017-01-01T16:36:01.946Z",
+      "widthPx": 1143,
+      "url": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_thumb_large.jpg",
+      "thumbnailSize": "LARGE",
+      "id": "92269ab3-197a-43c7-8f71-cad9b08cf3b3",
+      "createdAt": "2017-01-01T16:36:01.946Z",
+      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
+      "sceneId": "cd2bdc60-cd41-46d9-9284-dea280d61484",
+      "heightPx": 1168
+    }
+  ]
+}
