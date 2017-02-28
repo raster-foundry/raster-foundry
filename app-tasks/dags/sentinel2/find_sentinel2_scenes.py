@@ -9,6 +9,7 @@ from airflow.models import DAG
 from datetime import datetime
 
 from rf.uploads.sentinel2 import find_sentinel2_scenes
+from rf.utils.exception_reporting import wrap_rollbar
 
 rf_logger = logging.getLogger('rf')
 ch = logging.StreamHandler()
@@ -50,6 +51,7 @@ def chunkify(lst, n):
     return [lst[i::n] for i in xrange(n)]
 
 
+@wrap_rollbar
 def find_new_sentinel2_scenes(*args, **kwargs):
     """Find new Sentinel 2 scenes and kick off imports
 

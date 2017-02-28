@@ -9,6 +9,7 @@ from airflow.models import DAG
 from airflow.bin.cli import trigger_dag
 from airflow.operators.python_operator import PythonOperator
 
+from rf.utils.exception_reporting import wrap_rollbar
 
 rf_logger = logging.getLogger('rf')
 ch = logging.StreamHandler()
@@ -43,6 +44,7 @@ def chunkify(lst, n):
     return [lst[i::n] for i in xrange(n)]
 
 
+@wrap_rollbar
 def find_geotiffs(*args, **kwargs):
     """Find geotiffs which match the bucket and prefix and kick off imports
     """
@@ -87,6 +89,7 @@ def find_geotiffs(*args, **kwargs):
     logger.info('Finished kicking off new Geotiff scene dags')
 
 
+@wrap_rollbar
 def find_geotiff_scenes(bucket_name, files_prefix):
     s3 = boto3.resource('s3')
     bucket = s3.Bucket(bucket_name)

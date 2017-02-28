@@ -16,6 +16,7 @@ from airflow.models import DAG
 from airflow.bin.cli import trigger_dag
 
 from rf.utils.io import get_jwt, get_session, IngestStatus
+from rf.utils.exception_reporting import wrap_rollbar
 
 rf_logger = logging.getLogger('rf')
 ch = logging.StreamHandler()
@@ -41,6 +42,7 @@ host = os.getenv('RF_HOST')
 DagArgs = namedtuple('DagArgs', 'dag_id, conf, run_id')
 
 
+@wrap_rollbar
 def get_uningested_scenes():
     """Requests uningested scenes from API and returns list
 
@@ -64,6 +66,7 @@ def get_uningested_scenes():
     return scenes
 
 
+@wrap_rollbar
 def check_for_scenes_to_ingest():
     """Requests uningested scenes, kicks off ingest DAG for each scene
 
