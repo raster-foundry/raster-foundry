@@ -5,7 +5,16 @@
         </encoder>
     </appender>
 
-    <root level="${APP_SERVER_LOG_LEVEL:-info}">
+    <logger name="com.azavea.rf.common"
+            level="${COMMON_LOG_LEVEL:-INFO}"/>
+    <logger name="com.azavea.rf.app"
+            level="${APP_LOG_LEVEL:-INFO}"/>
+    <logger name="com.azavea.rf.database"
+            level="${DATABASE_LOG_LEVEL:-INFO}"/>
+    <logger name="com.azavea.rf.tile"
+            level="${TILER_LOG_LEVEL:-INFO}"/>
+
+    <root level="INFO">
         <appender-ref ref="stdout"/>
     </root>
 </configuration>
