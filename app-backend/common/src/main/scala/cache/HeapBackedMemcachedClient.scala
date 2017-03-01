@@ -28,7 +28,7 @@ class HeapBackedMemcachedClient[CachedType](
     */
   private val onHeapCache: ScaffeineCache[String, Future[CachedType]] =
     Scaffeine()
-      .expireAfterAccess(options.ttl)
+      .expireAfterAccess(options.heapTTL)
       .maximumSize(options.maxSize)
       .build[String, Future[CachedType]]()
 
@@ -55,7 +55,7 @@ class HeapBackedMemcachedClient[CachedType](
   def caching(cacheKey: String)(mappingFunction: ExecutionContext => Future[CachedType]): Future[CachedType] = {
     val sanitizedKey = HeapBackedMemcachedClient.sanitizeKey(cacheKey)
     onHeapCache.get(sanitizedKey, { key: String =>
-      client.getOrElseUpdate[CachedType](key, mappingFunction(options.ec), options.ttl)(options.ec)
+      client.getOrElseUpdate[CachedType](key, mappingFunction(options.ec), options.memcachedTTL)(options.ec)
     })
   }
 }
@@ -75,7 +75,8 @@ object HeapBackedMemcachedClient {
 
   case class Options(
     ec: ExecutionContext = defaultExecutionContext,
-    ttl: FiniteDuration = Config.memcached.heapEntryTTL,
+    heapTTL: FiniteDuration = Config.memcached.heapEntryTTL,
+    memcachedTTL: FiniteDuration = 12.minutes,
     maxSize: Int = Config.memcached.heapMaxEntries
   )
 
