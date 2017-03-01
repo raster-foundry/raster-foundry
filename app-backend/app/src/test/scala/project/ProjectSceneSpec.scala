@@ -32,6 +32,7 @@ class ProjectSceneSpec extends WordSpec
   // Alias to baseRoutes to be explicit
   val baseRoutes = routes
   val authHeader = AuthUtils.generateAuthHeader("Default")
+  val alternateAuthHeader = AuthUtils.generateAuthHeader("Other")
 
   "/api/projects/{project}/scenes/" should {
     "allow creating projects and scenes" in {
@@ -103,6 +104,68 @@ class ProjectSceneSpec extends WordSpec
             )
           ) ~> baseRoutes ~> check {
             status shouldEqual StatusCodes.OK
+          }
+        }
+      }
+    }
+
+    "not be able to attach a scene to an un-owned project via post" in {
+      // Get projects to get ID
+      Post("/api/projects/").withHeadersAndEntity(
+        List(alternateAuthHeader),
+        HttpEntity(
+          ContentTypes.`application/json`,
+          newProject4.toJson.toString()
+        )
+      ) ~> baseRoutes ~> check {
+        val unauthedProject = responseAs[Project]
+
+        // Get scenes to get ID
+        Get("/api/scenes/").withHeaders(
+          List(authHeader)
+        ) ~> baseRoutes ~> check {
+          val scenes = responseAs[PaginatedResponse[Scene.WithRelated]]
+          val sceneId = scenes.results(0).id
+
+          Post(s"/api/projects/${unauthedProject.id}/scenes/").withHeadersAndEntity(
+            List(authHeader),
+            HttpEntity(
+              ContentTypes.`application/json`,
+              List(sceneId).toJson.toString()
+            )
+          ) ~> baseRoutes ~> check {
+            reject
+          }
+        }
+      }
+    }
+
+    "not be able to attach a private and unowned scene to a project via post" in {
+      // Get projects to get ID
+      Get("/api/projects/").withHeaders(
+        List(authHeader)
+      ) ~> baseRoutes ~> check {
+        val projects = responseAs[PaginatedResponse[Project]]
+        val projectId = projects.results.head.id
+
+        // Get scenes to get ID
+        Post("/api/scenes/").withHeadersAndEntity(
+          List(alternateAuthHeader),
+          HttpEntity(
+            ContentTypes.`application/json`,
+            newPrivateScene("third test scene - private, unowned").toJson.toString()
+          )
+        ) ~> baseRoutes ~> check {
+          val privateScene = responseAs[Scene.WithRelated]
+
+          Post(s"/api/projects/${projectId}/scenes/").withHeadersAndEntity(
+            List(authHeader),
+            HttpEntity(
+              ContentTypes.`application/json`,
+              List(privateScene.id).toJson.toString()
+            )
+          ) ~> baseRoutes ~> check {
+            reject
           }
         }
       }
