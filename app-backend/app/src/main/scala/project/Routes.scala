@@ -197,7 +197,7 @@ trait ProjectRoutes extends Authentication
       }
 
       complete {
-        Projects.addScenesToProject(sceneIds, projectId)
+        Projects.addScenesToProject(sceneIds, projectId, user)
       }
     }
   }
