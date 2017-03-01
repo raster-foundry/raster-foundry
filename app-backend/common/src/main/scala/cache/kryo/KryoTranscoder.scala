@@ -1,37 +1,25 @@
 package com.azavea.rf.common.cache.kryo
 
-import com.esotericsoftware.kryo.Kryo
-import com.esotericsoftware.kryo.io.{Input, Output}
 import net.spy.memcached.CachedData
 import net.spy.memcached.transcoders.Transcoder
-
+import com.twitter.chill.ScalaKryoInstantiator
 
 /** The KryoTranscoder provides conversion between (kryo serialized) byte arrays and jvm objects */
 class KryoTranscoder extends Transcoder[AnyRef] {
-  import KryoTranscoder._
+  val kryo = ScalaKryoInstantiator.defaultPool
 
   def asyncDecode(d: CachedData): Boolean = true
 
   def getMaxSize: Int = CachedData.MAX_SIZE
 
-  def encode(o: AnyRef): CachedData = {
-    val output = new Output(4096)
-    kryo.writeObject(output, o)
-    output.flush()
-    val bytes = output.toBytes
-    val cd = new CachedData(0, bytes, CachedData.MAX_SIZE)
-    output.close()
-    cd
+  def encode(obj: AnyRef): CachedData = {
+    kryo.toBytesWithClass()
+    val bytes = kryo.toBytesWithClass(obj)
+    new CachedData(0, bytes, CachedData.MAX_SIZE)
   }
 
   def decode(d: CachedData): AnyRef = {
-    val input = new Input(d.getData)
-    val obj = kryo.readClassAndObject(input)
-    input.close()
-    obj
+    kryo.fromBytes(d.getData)
   }
 }
 
-object KryoTranscoder {
-  val kryo = new Kryo()
-}
