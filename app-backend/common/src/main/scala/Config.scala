@@ -19,8 +19,11 @@ object Config {
     lazy val threads: Int =
       memcachedConfig.getInt("threads")
 
+    lazy val ttl: FiniteDuration =
+      FiniteDuration(memcachedConfig.getDuration("ttl").toNanos, TimeUnit.NANOSECONDS)
+
     lazy val heapEntryTTL: FiniteDuration =
-      FiniteDuration(memcachedConfig.getDuration("heap.entry-ttl").toNanos, TimeUnit.NANOSECONDS)
+      FiniteDuration(memcachedConfig.getDuration("heap.ttl").toNanos, TimeUnit.NANOSECONDS)
 
     lazy val heapMaxEntries: Int =
       memcachedConfig.getInt("heap.max-entries")
