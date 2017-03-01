@@ -3,19 +3,19 @@ package com.azavea.rf.ingest
 import com.azavea.rf.ingest.util._
 import com.azavea.rf.ingest.model._
 
-import geotrellis.raster.histogram.Histogram
+import geotrellis.raster._
 import geotrellis.raster.io._
+import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.resample.NearestNeighbor
+import geotrellis.raster.io.geotiff.MultibandGeoTiff
 import geotrellis.spark._
 import geotrellis.spark.io._
+import geotrellis.spark.io.s3._
+import geotrellis.spark.tiling._
 import geotrellis.spark.io.file._
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod
-import geotrellis.spark.io.s3._
 import geotrellis.spark.pyramid.Pyramid
 import geotrellis.vector.ProjectedExtent
-import geotrellis.raster._
-import geotrellis.raster.io.geotiff.MultibandGeoTiff
-import geotrellis.spark.tiling._
 import geotrellis.proj4._
 
 import com.typesafe.scalalogging.LazyLogging
@@ -23,11 +23,11 @@ import org.apache.spark.rdd._
 import org.apache.spark._
 import spray.json._
 import DefaultJsonProtocol._
+import com.amazonaws.services.s3.model.DeleteObjectsRequest.KeyVersion
 
-import java.net.URI
 import scala.collection.JavaConverters._
+import java.net.URI
 
-case class BandTile(band: Int, tile: Tile)
 
 object Ingest extends SparkJob with LazyLogging {
 
@@ -57,14 +57,32 @@ object Ingest extends SparkJob with LazyLogging {
       (writer, deleter, fileWriter.attributeStore)
   }
 
-  def deleteLayer(deleter: RfLayerDeleter, attStore: AttributeStore)(layerId: LayerId): Unit = {
+  def deleteLayer(deleter: RfLayerDeleter)(layerId: LayerId): Unit = {
     try {
       deleter.delete(layerId)
-    } catch {
-      case e: LayerNotFoundError =>
-        logger.debug(s"Overwritten layer $layerId not found. Proceeding...")
-      case e: com.amazonaws.services.s3.model.AmazonS3Exception =>
-        logger.error(s"Unable to delete layer ${layerId}; check ingest configuration")
+    } catch { case _: Throwable =>
+      // TODO: Bump GT version and use overwrite/clobber logic when the changes in
+      //       https://github.com/locationtech/geotrellis/pull/2039 are released.
+      //       This fix should be available in GT ver. 1.0.1.
+      //       This is *NOT* a permanent fix and will NOT resolve similar issues encountered
+      //       locally (this should be fine as S3 ingests are the focus in the near term).
+      deleter match { case del: S3LayerDeleter => // This is always the case (we just need type refinement)
+        del.attributeStore match {
+          case attStore: S3AttributeStore =>
+            logger.info(s"Overwritten layer metadata $layerId not found. Proceeding with attribute deletion...")
+            val s3Client = S3Client.DEFAULT
+            val listing = s3Client
+              .listObjectsIterator(attStore.bucket, attStore.path(attStore.prefix, "_attributes"))
+              .map { _.getKey }
+              .filter { _.contains(s"${S3AttributeStore.SEP}${layerId.name}${S3AttributeStore.SEP}${layerId.zoom}.json") }
+              .map { key => new KeyVersion(key) }
+              .toList
+
+              s3Client.deleteObjects(attStore.bucket, listing)
+          case _ =>
+            logger.error("This branch should be unreachable from GT LayerDeleter instances")
+        }
+      }
     }
   }
 
@@ -174,48 +192,36 @@ object Ingest extends SparkJob with LazyLogging {
     val (writer, deleter, attributeStore) = getRfLayerManagement(layer.output)
 
     val sharedId = LayerId(layer.id.toString, 0)
-    val failsafeDeleteLayer = deleteLayer(deleter, attributeStore)(_)
+    val failsafeDeleteLayer = deleteLayer(deleter)(_)
 
     if (overwriteLayer && attributeStore.layerExists(sharedId)) { failsafeDeleteLayer(sharedId) }
+
+    logger.info("Writing layers")
+    attributeStore.write(sharedId, "ingestComplete", false)
     if (layer.output.pyramid) { // If pyramiding
       Pyramid.upLevels(layerRdd, layoutScheme, maxZoom, 1, resampleMethod) { (rdd, zoom) =>
         logger.info(s"Writing zoom level $zoom in ${layer.id.toString}")
-        // attributes that apply to all layers are placed at zoom 0
         val layerId = LayerId(layer.id.toString, zoom)
         if (overwriteLayer && attributeStore.layerExists(layerId)) { failsafeDeleteLayer(layerId) }
+        attributeStore.write(layerId, "layerComplete", false)
+        writer.write(layerId, rdd)
 
-        try {
-          writer.write(layerId, rdd)
-
-          if (zoom == math.max(maxZoom / 2, 1)) {
-            import spray.json.DefaultJsonProtocol._
-            attributeStore.write(sharedId, "histogram", multibandHistogram(rdd, numBuckets = 256))
-          }
-
-          if (zoom == 1) {
-            attributeStore.write(sharedId, "extent", rdd.metadata.extent)(ExtentJsonFormat) // avoid using default JF
-            attributeStore.write(sharedId, "crs", rdd.metadata.crs)(CRSJsonFormat) // avoid using default JF
-          }
-          // Write an attribute for verification of completed ingest
-          attributeStore.write(sharedId, "ingestComplete", true)
-        } catch {
-          case e: Throwable =>
-            attributeStore.write(sharedId, "ingestComplete", false)
-            throw e
+        if (zoom == math.max(maxZoom / 2, 1)) {
+          attributeStore.write(sharedId, "histogram", multibandHistogram(rdd, numBuckets = 256))
         }
+
+        if (zoom == 1) {
+          attributeStore.write(sharedId, "extent", rdd.metadata.extent)(ExtentJsonFormat) // avoid using default JF
+          attributeStore.write(sharedId, "crs", rdd.metadata.crs)(CRSJsonFormat) // avoid using default JF
+        }
+        attributeStore.write(layerId, "layerComplete", true)
       }
     } else { // If not pyramiding. TODO: figure out exactly what we want to store here
-      try {
-        logger.info(s"Writing (no pyramid) layer ${layer.id.toString}")
-        writer.write(sharedId, layerRdd)
-        attributeStore.write(sharedId, "ingestComplete", true)
-      } catch {
-        case e: Throwable =>
-          attributeStore.write(sharedId, "ingestComplete", false)
-          throw e
-      }
+      logger.info(s"Writing (no pyramid) layer ${layer.id.toString}")
+      writer.write(sharedId, layerRdd)
     }
-
+    attributeStore.write(sharedId, "ingestComplete", true)
+    logger.info("Ingest complete")
   }
 
   /** Sample ingest definitions can be found in the accompanying test/resources
@@ -236,7 +242,7 @@ object Ingest extends SparkJob with LazyLogging {
 
     try {
       ingestDefinition.layers.foreach(ingestLayer(params.overwrite))
-      if (params.testRun) ingestDefinition.layers.foreach(Validation.validateCatalogEntry)
+      if (params.testRun) { ingestDefinition.layers.foreach(Validation.validateCatalogEntry) }
     } finally {
       sc.stop
     }

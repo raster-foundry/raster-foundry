@@ -20,6 +20,7 @@ import DefaultJsonProtocol._
 
 import java.net.URI
 import java.util.UUID
+import java.security.InvalidParameterException
 
 import com.azavea.rf.ingest.model._
 
@@ -55,6 +56,8 @@ object Validation extends LazyLogging {
       validateS3CatalogEntry(catalogURI, layerID)
     case "file" =>
       validateFileCatalogEntry(catalogURI, layerID)
+    case scheme =>
+      throw new InvalidParameterException(s"Unable to validate catalog for scheme: $scheme")
   }
 
 }
