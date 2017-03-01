@@ -1,11 +1,8 @@
 package com.azavea.rf.common.cache.kryo
 
-import net.spy.memcached.transcoders.Transcoder
 import net.spy.memcached._
 import java.net.InetSocketAddress
-
 import com.azavea.rf.common.Config
-
 import scala.collection.JavaConverters._
 
 /** Extends the standard [net.spy.MemcachedClient] to syntactically sweeten client creation */
@@ -19,3 +16,4 @@ object KryoMemcachedClient {
   def DEFAULT: KryoMemcachedClient =
     KryoMemcachedClient(new InetSocketAddress(Config.memcached.host, Config.memcached.port))
 }
+
