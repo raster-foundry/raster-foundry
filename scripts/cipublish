@@ -35,13 +35,19 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 
             echo "Building ingest JAR"
             docker-compose \
+                run --rm --no-deps app-server ingest/clean
+            docker-compose \
                 run --rm --no-deps app-server ingest/assembly
 
             echo "Building application JAR"
             docker-compose \
+                run --rm --no-deps app-server app/clean
+            docker-compose \
                 run --rm --no-deps app-server app/assembly
 
             echo "Building tile server JAR"
+            docker-compose \
+                run --rm --no-deps app-server tile/clean
             docker-compose \
                 run --rm --no-deps tile-server tile/assembly
 
