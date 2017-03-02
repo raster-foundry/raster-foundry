@@ -21,9 +21,8 @@ rf_logger.addHandler(ch)
 logger = logging.getLogger(__name__)
 
 
+schedule = None if os.getenv('ENVIRONMENT', 'development') == 'development' else '@daily'
 start_date = datetime(2016, 11, 6)
-
-
 args = {
     'owner': 'raster-foundry',
     'start_date': start_date
@@ -33,7 +32,7 @@ args = {
 dag = DAG(
     dag_id='find_sentinel2_scenes',
     default_args=args,
-    schedule_interval='@daily',
+    schedule_interval=schedule,
     concurrency=int(os.getenv('AIRFLOW_DAG_CONCURRENCY', 24))
 )
 
