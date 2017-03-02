@@ -24,8 +24,7 @@ def footprint_from_key(tileinfo, key):
     coords = geom['coordinates'][0]
     src_proj = get_src_proj(geom['crs']['properties']['name'])
     transformed_coords = [[[transform(src_proj, target_proj, coord[0], coord[1]) for coord in coords]]]
-    geojson = {"type": "MultiPolygon", "coordinates": transformed_coords}
-    return Footprint(organization, geojson)
+    return Footprint(organization, transformed_coords)
 
 
 def create_footprints(tileinfo):
