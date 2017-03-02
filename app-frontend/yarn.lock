@@ -6992,6 +6992,10 @@ webpack-dev-server@1.16.2:
     supports-color "^3.1.1"
     webpack-dev-middleware "^1.4.0"
 
+webpack-fail-plugin@^1.0.6:
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/webpack-fail-plugin/-/webpack-fail-plugin-1.0.6.tgz#a135ee070a258548837f921d452004c695889ee7"
+
 webpack@~1.12.12:
   version "1.12.15"
   resolved "https://registry.yarnpkg.com/webpack/-/webpack-1.12.15.tgz#d4611335a5d455269850aeb9b4ae74cc35192286"
