@@ -46,7 +46,11 @@ class BaseModel(object):
         url = '{HOST}{URL_PATH}'.format(HOST=self.HOST, URL_PATH=self.URL_PATH)
         session = get_session()
         response = session.post(url, json=self.to_dict())
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except:
+            logger.exception('Unable to create object via API: %s', response.text)
+            raise
         return self.from_dict(response.json())
 
     def update(self):
