@@ -123,8 +123,10 @@ def create_ingest_definition_op(*args, **kwargs):
     """Create ingest definition and upload to S3"""
 
     logger.info('Beginning to create ingest definition...')
+    xcom_client = kwargs['task_instance']
     conf = kwargs['dag_run'].conf
     scene_dict = conf.get('scene')
+    xcom_client.xcom_push(key='ingest_scene_id', value=scene_dict['id'])
     scene = Scene.from_id(scene_dict['id'])
 
     if scene.ingestStatus != IngestStatus.TOBEINGESTED:
@@ -145,10 +147,8 @@ def create_ingest_definition_op(*args, **kwargs):
     logger.info('Successfully created and pushed ingest definition')
 
     # Store values for later tasks
-    xcom_client = kwargs['task_instance']
     xcom_client.xcom_push(key='ingest_def_uri', value=ingest_definition.s3_uri)
     xcom_client.xcom_push(key='ingest_def_id', value=ingest_definition.id)
-    xcom_client.xcom_push(key='ingest_scene_id', value=scene_dict['id'])
 
 
 @wrap_rollbar
