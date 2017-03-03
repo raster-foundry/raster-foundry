@@ -47,7 +47,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 
             echo "Building tile server JAR"
             docker-compose \
-                run --rm --no-deps app-server tile/clean
+                run --rm --no-deps tile-server tile/clean
             docker-compose \
                 run --rm --no-deps tile-server tile/assembly
 
