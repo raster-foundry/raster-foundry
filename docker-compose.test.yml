@@ -24,8 +24,8 @@ services:
     entrypoint: yarn
     command: run build
 
-  raster-foundry-api-server:
-    image: raster-foundry-app-server:${GIT_COMMIT:-latest}
+  api-server:
+    image: raster-foundry-api-server:${GIT_COMMIT:-latest}
     build:
       context: ./app-backend/api
       dockerfile: Dockerfile
