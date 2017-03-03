@@ -46,8 +46,8 @@ object SourceDefinition extends LazyLogging {
         SourceDefinition(
           uri,
           extent.get,
-          crs.get,
           extentCrs.getOrElse(LatLng),
+          crs.get,
           cellSize.get,
           bandMaps
         )
@@ -57,8 +57,8 @@ object SourceDefinition extends LazyLogging {
         SourceDefinition(
           uri,
           extent.getOrElse(tt.extent),
-          crs.getOrElse(tt.crs),
           extentCrs.getOrElse(tt.crs),
+          crs.getOrElse(tt.crs),
           cellSize.getOrElse(tt.cellSize),
           bandMaps
         )
