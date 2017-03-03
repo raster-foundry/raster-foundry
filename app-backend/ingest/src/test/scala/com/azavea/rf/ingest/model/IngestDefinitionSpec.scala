@@ -40,12 +40,12 @@ class IngestDefinitionSpec extends FunSpec with Matchers {
       |            141.4502449,
       |            37.1094577
       |          ],
-      |          "extentCrs": "epsg:32654",
+      |          "extentCrs": "epsg:4326",
       |          "cellSize": {
       |            "width": 37.15144765106289,
       |            "height": -37.15144765106289
       |          },
-      |          "crs": "epsg:32654",
+      |          "crs": "epsg:32619",
       |          "bandMaps": [
       |            {
       |              "source": 1,
@@ -61,12 +61,12 @@ class IngestDefinitionSpec extends FunSpec with Matchers {
       |            141.4502449,
       |            37.1094577
       |          ],
-      |          "extentCrs": "epsg:32654",
+      |          "extentCrs": "epsg:4326",
       |          "cellSize": {
       |            "width": 37.15144765106289,
       |            "height": -37.15144765106289
       |          },
-      |          "crs": "epsg:32654",
+      |          "crs": "epsg:32619",
       |          "bandMaps": [
       |            {
       |              "source": 1,
@@ -82,12 +82,12 @@ class IngestDefinitionSpec extends FunSpec with Matchers {
       |            141.4502449,
       |            37.1094577
       |          ],
-      |          "extentCrs": "epsg:32654",
+      |          "extentCrs": "epsg:4326",
       |          "cellSize": {
       |            "width": 37.15144765106289,
       |            "height": -37.15144765106289
       |          },
-      |          "crs": "epsg:32654",
+      |          "crs": "epsg:32619",
       |          "bandMaps": [
       |            {
       |              "source": 1,
@@ -103,12 +103,12 @@ class IngestDefinitionSpec extends FunSpec with Matchers {
       |            141.4502449,
       |            37.1094577
       |          ],
-      |          "extentCrs": "epsg:32654",
+      |          "extentCrs": "epsg:4326",
       |          "cellSize": {
       |            "width": 37.15144765106289,
       |            "height": -37.15144765106289
       |          },
-      |          "crs": "epsg:32654",
+      |          "crs": "epsg:32619",
       |          "bandMaps": [
       |            {
       |              "source": 1,
@@ -153,8 +153,8 @@ class IngestDefinitionSpec extends FunSpec with Matchers {
       |            "width": 37.15144765106289,
       |            "height": -37.15144765106289
       |          },
-      |          "extentCrs": "epsg:32654",
-      |          "crs": "epsg:32654",
+      |          "extentCrs": "epsg:4326",
+      |          "crs": "epsg:32619",
       |          "bandMaps": [
       |            {
       |              "source": 1,
@@ -174,8 +174,8 @@ class IngestDefinitionSpec extends FunSpec with Matchers {
       |            "width": 37.15144765106289,
       |            "height": -37.15144765106289
       |          },
-      |          "extentCrs": "epsg:32654",
-      |          "crs": "epsg:32654",
+      |          "extentCrs": "epsg:4326",
+      |          "crs": "epsg:32619",
       |          "bandMaps": [
       |            {
       |              "source": 1,
@@ -195,8 +195,8 @@ class IngestDefinitionSpec extends FunSpec with Matchers {
       |            "width": 37.15144765106289,
       |            "height": -37.15144765106289
       |          },
-      |          "extentCrs": "epsg:32654",
-      |          "crs": "epsg:32654",
+      |          "extentCrs": "epsg:4326",
+      |          "crs": "epsg:32619",
       |          "bandMaps": [
       |            {
       |              "source": 1,
@@ -216,8 +216,8 @@ class IngestDefinitionSpec extends FunSpec with Matchers {
       |            "width": 37.15144765106289,
       |            "height": -37.15144765106289
       |          },
-      |          "extentCrs": "epsg:32654",
-      |          "crs": "epsg:32654",
+      |          "extentCrs": "epsg:4326",
+      |          "crs": "epsg:32619",
       |          "bandMaps": [
       |            {
       |              "source": 1,
@@ -298,6 +298,28 @@ class IngestDefinitionSpec extends FunSpec with Matchers {
         .parseJson
         .convertTo[IngestDefinition]
     }
+  }
+
+  it("preserves ingest definition source crs") {
+    val ingestDef =
+      localJson
+        .parseJson
+        .convertTo[IngestDefinition]
+
+    val srcCrs = ingestDef.layers.head.sources.head.crs.epsgCode
+
+    srcCrs shouldEqual Some(32619)
+  }
+
+  it("preserves ingest definition extent crs") {
+    val ingestDef =
+      localJson
+        .parseJson
+        .convertTo[IngestDefinition]
+
+    val extentCrs = ingestDef.layers.head.sources.head.extentCrs.epsgCode
+
+    extentCrs shouldEqual Some(4326)
   }
 
   it("parses the sample, aws definition") {
