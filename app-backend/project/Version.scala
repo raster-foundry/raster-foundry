@@ -26,7 +26,8 @@ object Version {
   val scaffeine          = "2.0.0"
   val elasticacheClient  = "1.1.1"
   val caffeine           = "2.3.5"
-  val shapeless          = "2.2.5"
+  val shapeless          = "2.3.2"
   val findbugAnnotations = "3.0.1u2"
   val chill              = "0.9.2"
+  val circe              = "0.7.0"
 }

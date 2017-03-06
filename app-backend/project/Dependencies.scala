@@ -40,4 +40,8 @@ object Dependencies {
   val shapeless               = "com.chuusai"                 %% "shapeless"                         % Version.shapeless
   val findbugAnnotations      = "com.google.code.findbugs"     % "annotations"                       % Version.findbugAnnotations % "compile"
   val chill                   = "com.twitter"                 %% "chill"                             % Version.chill
+  val circeCore               = "io.circe"                    %% "circe-core"                        % Version.circe
+  val circeGeneric            = "io.circe"                    %% "circe-generic"                     % Version.circe
+  val circeParser             = "io.circe"                    %% "circe-parser"                      % Version.circe
+  val circeOptics             = "io.circe"                    %% "circe-optics"                      % Version.circe
 }
