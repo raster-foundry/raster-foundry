@@ -7,7 +7,7 @@ import java.util.UUID
 import java.security.InvalidParameterException
 
 
-sealed abstract class RFMLRaster(`type`: String) {
+sealed abstract class RFMLRaster(val `type`: String) {
   def id: UUID
 }
 case class SceneRaster(id: UUID, band: Option[Int]) extends RFMLRaster("scene")
