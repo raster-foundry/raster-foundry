@@ -75,9 +75,7 @@ export default class MapContainerController {
                 this.setLoading(layerId, false);
             });
             layer.on('tileerror', () => {
-                // @TODO: when tiles outside the extent of projects are
-                // properly returned, we should uncomment the following line
-                // this.setLoadingError(layerId, true);
+                this.setLoadingError(layerId, true);
             });
         }
     }
