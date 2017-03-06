@@ -21,8 +21,28 @@ case class Tool(
   stars: Float = 0.0f,
   definition: Map[String, Any]
 ) {
-  def withRelatedFromComponents(toolTagIds: Seq[UUID], toolCategorySlugs: Seq[String]):
+  def withRelatedFromComponents(toolTags: Seq[ToolTag], toolCategories: Seq[ToolCategory]):
       Tool.WithRelated = Tool.WithRelated(
+    this.id,
+    this.createdAt,
+    this.modifiedAt,
+    this.createdBy,
+    this.modifiedBy,
+    this.organizationId,
+    this.title,
+    this.description,
+    this.requirements,
+    this.license,
+    this.visibility,
+    this.compatibleDataSources,
+    this.stars,
+    this.definition,
+    toolTags,
+    toolCategories
+  )
+
+  def withRelatedFromComponentUUIDs(toolTagIds: Seq[UUID], toolCategorySlugs: Seq[String]):
+    Tool.WithRelatedUUIDs = Tool.WithRelatedUUIDs(
     this.id,
     this.createdAt,
     this.modifiedAt,
@@ -97,7 +117,7 @@ object Tool {
   }
 
   // join of tool/tag/category
-  case class TagCategoryJoin(tool: Tool, toolTagId: Option[UUID], toolCategorySlug: Option[String])
+  case class TagCategoryJoin(tool: Tool, toolTag: Option[ToolTag], toolCategory: Option[ToolCategory])
   object TagCategoryJoin {
     def tupled = (TagCategoryJoin.apply _).tupled
     implicit val defaultTagCategoryJoinFormat = jsonFormat3(TagCategoryJoin.apply _)
@@ -119,11 +139,51 @@ object Tool {
     compatibleDataSources: List[String] = List.empty,
     stars: Float = 0.0f,
     definition: Map[String, Any],
-    tags: Seq[UUID],
-    categories: Seq[String]
+    tags: Seq[ToolTag],
+    categories: Seq[ToolCategory]
   )
 
   object WithRelated {
     implicit val defaultToolWithRelatedFormat = jsonFormat16(WithRelated.apply)
+
+    def fromRecords(records: Seq[(Tool, Option[ToolTag], Option[ToolCategory])]): Iterable[Tool.WithRelated] = {
+      val distinctTools = records.map(_._1).distinct
+      val groupedTools = records.groupBy(_._1)
+      val tags = records.map(_._2)
+
+      distinctTools map { tool =>
+        val (seqTags, seqCategories) = groupedTools(tool).map {
+          case (_, tag, category) => (tag, category)
+        }.unzip
+
+        tool.withRelatedFromComponents(
+          seqTags.flatten,
+          seqCategories.flatten
+        )
+      }
+    }
+  }
+
+  case class WithRelatedUUIDs(
+    id: UUID,
+    createdAt: Timestamp,
+    modifiedAt: Timestamp,
+    createdBy: String,
+    modifiedBy: String,
+    organizationId: UUID,
+    title: String,
+    description: String,
+    requirements: String,
+    license: String,
+    visibility: Visibility,
+    compatibleDataSources: List[String] = List.empty,
+    stars: Float = 0.0f,
+    definition: Map[String, Any],
+    tags: Seq[UUID],
+    categories: Seq[String]
+  )
+
+  object WithRelatedUUIDs {
+    implicit val defaultToolWithRelatedFormat = jsonFormat16(WithRelatedUUIDs.apply)
   }
 }
