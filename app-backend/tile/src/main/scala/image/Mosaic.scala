@@ -267,10 +267,8 @@ object Mosaic {
           val tiles = maybeTiles.flatten
           if (tiles.nonEmpty)
             Option(tiles.reduce(_ merge _))
-          else {
-            val cellType = IntUserDefinedNoDataCellType(0)
-            Option(ArrayMultibandTile.empty(cellType, 3, 256, 256))
-          }
+          else
+            None
       }
     }
   }
