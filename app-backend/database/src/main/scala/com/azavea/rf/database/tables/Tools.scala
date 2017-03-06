@@ -79,15 +79,17 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
 
     val toolRelatedJoin = (query
       joinLeft ToolTagsToTools on { case (m, t) =>  m.id === t.toolId }
-      joinLeft ToolCategoriesToTools on { case ((m, t), c) =>  m.id === c.toolId }
+      joinLeft ToolTags on { case ((m, t), tt) => t.map(_.toolTagId) === tt.id }
+      joinLeft ToolCategoriesToTools on { case (((m, t), tt), c) =>  m.id === c.toolId }
+      joinLeft ToolCategories on { case ((((m, t), tt), c), cc) => c.map(_.toolCategorySlug) === cc.slugLabel }
     )
 
     for {
-      ((tool, toolTagToTool), toolCategoryToTool) <- toolRelatedJoin
+      ((((tool, toolTagToTool), toolTag), toolCategoryToTool), toolCategory) <- toolRelatedJoin
     } yield (
       tool,
-      toolTagToTool.map(_.toolTagId),
-      toolCategoryToTool.map(_.toolCategorySlug)
+      toolTag,
+      toolCategory
     )
   }
 
@@ -108,8 +110,8 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
         tool.compatibleDataSources,
         tool.stars,
         tool.definition,
-        tagCategoryJoins.flatMap(_.toolTagId).distinct,
-        tagCategoryJoins.flatMap(_.toolCategorySlug).distinct
+        tagCategoryJoins.flatMap(_.toolTag).distinct,
+        tagCategoryJoins.flatMap(_.toolCategory).distinct
       )
     }.toSeq
 
@@ -180,7 +182,7 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
     * @param userId String user/owner to create a new tool with
     */
   def insertTool(tooltoCreate: Tool.Create, userId: String)(
-                  implicit database: DB): Future[Tool.WithRelated] = {
+                  implicit database: DB): Future[Tool.WithRelatedUUIDs] = {
 
     val (tool, toolTagToTools, toolCategoryToTools) = tooltoCreate
       .toToolWithRelatedTuple(userId)
@@ -205,7 +207,7 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
     database.db.run {
       insertAction
     } map { _ =>
-      tool.withRelatedFromComponents(toolTagToTools.map(_.toolTagId),
+      tool.withRelatedFromComponentUUIDs(toolTagToTools.map(_.toolTagId),
         toolCategoryToTools.map(_.toolCategorySlug))
     }
   }
