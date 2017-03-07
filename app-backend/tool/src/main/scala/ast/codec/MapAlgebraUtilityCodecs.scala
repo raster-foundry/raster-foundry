@@ -1,16 +1,21 @@
-package com.azavea.rf.tool.ast
+package com.azavea.rf.tool.ast.codec
+
+import com.azavea.rf.tool.ast._
 
 import geotrellis.raster.render._
 import io.circe._
 import io.circe.optics.JsonPath._
-import io.circe._
+import io.circe.syntax._
 import io.circe.generic.auto._
 
 import scala.util.Try
 import java.security.InvalidParameterException
 
-package object codec {
-  // Codec necessary for interpreting JSON keys as Double
+
+trait MapAlgebraUtilityCodecs {
+  implicit def mapAlgebraDecoder: Decoder[MapAlgebraAST]
+  implicit def mapAlgebraEncoder: Encoder[MapAlgebraAST]
+
   implicit val decodeKeyDouble: KeyDecoder[Double] = new KeyDecoder[Double] {
     final def apply(key: String): Option[Double] = Try(key.toDouble).toOption
   }
@@ -37,6 +42,9 @@ package object codec {
         case Exact => "exact"
         case GreaterThanOrEqualTo => "greaterThanOrEqualTo"
         case GreaterThan => "greaterThan"
+        case unrecognized =>
+          throw new InvalidParameterException(s"'$unrecognized' is not a recognized ClassBoundaryType")
       }
     })
 }
+

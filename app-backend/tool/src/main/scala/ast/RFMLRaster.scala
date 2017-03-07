@@ -1,6 +1,7 @@
 package com.azavea.rf.tool.ast
 
 import io.circe._
+import io.circe.syntax._
 import io.circe.generic.auto._
 
 import java.util.UUID
@@ -28,4 +29,25 @@ object RFMLRaster {
         throw new InvalidParameterException(s"Required 'type' property not found on map algebra raster source")
     }
   }
+
+  implicit lazy val encodeRFMLRaster = new Encoder[RFMLRaster] {
+    def apply(rasterDefinition: RFMLRaster): Json = rasterDefinition match {
+      case scene: SceneRaster => scene.asJson
+      case project: ProjectRaster => project.asJson
+      case mltool: MLToolRaster => mltool.asJson
+      case reference: RasterReference => reference.asJson
+    }
+  }
+
+  implicit lazy val encodeSceneRaster: Encoder[SceneRaster] =
+    Encoder.forProduct3("id", "band", "type")(rfml => (rfml.id, rfml.band, rfml.`type`))
+
+  implicit lazy val encodeProjectRaster: Encoder[ProjectRaster] =
+    Encoder.forProduct3("id", "band", "type")(rfml => (rfml.id, rfml.band, rfml.`type`))
+
+  implicit lazy val encodeMLToolRaster: Encoder[MLToolRaster] =
+    Encoder.forProduct3("id", "node", "type")(rfml => (rfml.id, rfml.node, rfml.`type`))
+
+  implicit lazy val encodeRasterReference: Encoder[RasterReference] =
+    Encoder.forProduct2("id", "type")(rfml => (rfml.id, rfml.`type`))
 }

@@ -1,17 +1,23 @@
 package com.azavea.rf.api.tool
 
-import java.util.UUID
-
-import scala.util.{Success, Failure}
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Route
 import com.azavea.rf.common.{Authentication, UserErrorHandler}
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.Tools
 import com.azavea.rf.datamodel._
-import com.lonelyplanet.akka.http.extensions.PaginationDirectives
+import com.azavea.rf.tool.ast._
 
-trait ToolRoutes extends Authentication with PaginationDirectives with UserErrorHandler {
+import com.lonelyplanet.akka.http.extensions.PaginationDirectives
+import de.heikoseeberger.akkahttpcirce.CirceSupport
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Route
+import io.circe._
+import io.circe.generic.auto._
+
+import scala.util.{Success, Failure}
+import java.util.UUID
+
+
+trait ToolRoutes extends Authentication with PaginationDirectives with UserErrorHandler with CirceSupport {
   implicit def database: Database
 
   val toolRoutes: Route = handleExceptions(userExceptionHandler) {

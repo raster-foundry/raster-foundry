@@ -1,17 +1,22 @@
 package com.azavea.rf.api.tool
 
-import java.util.UUID
+import com.azavea.rf.datamodel._
+import com.azavea.rf.api.utils.Config
+import com.azavea.rf.api.{AuthUtils, DBSpec, Router}
+import com.azavea.rf.tool.ast._
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
-import com.azavea.rf.datamodel._
-import com.azavea.rf.api.utils.Config
-import com.azavea.rf.api.{AuthUtils, DBSpec, Router}
-import concurrent.duration._
 import org.scalatest.{Matchers, WordSpec}
 import spray.json._
+import io.circe._
+import io.circe.syntax._
+import io.circe.generic.auto._
+
+import java.util.UUID
+import scala.concurrent.duration._
 
 class ToolSpec extends WordSpec
     with Matchers
@@ -36,7 +41,7 @@ class ToolSpec extends WordSpec
     Visibility.Public,
     List("Test tool datasource"),
     2.5f,
-    Map(),
+    MapAlgebraAST.RFMLRasterSource.empty + MapAlgebraAST.RFMLRasterSource.empty,
     List(),
     List()
 )
@@ -45,7 +50,7 @@ class ToolSpec extends WordSpec
   val baseRoutes = routes
 
   "/api/tools/{uuid}" should {
-    "return a 404 for non-existent tool" ignore {
+    "return a 404 for non-existent tool" in {
       Get(s"${baseTool}${publicOrgId}") ~> Route.seal(baseRoutes) ~> check {
         status shouldEqual StatusCodes.NotFound
       }
@@ -69,7 +74,7 @@ class ToolSpec extends WordSpec
       Post("/api/tools/").withEntity(
         HttpEntity(
           ContentTypes.`application/json`,
-          newTool.toJson.toString()
+          newTool.asJson.toString()
         )
       ) ~> baseRoutes ~> check {
         reject
@@ -81,7 +86,7 @@ class ToolSpec extends WordSpec
         List(authorization),
         HttpEntity(
           ContentTypes.`application/json`,
-          newTool.toJson.toString()
+          newTool.asJson.toString()
         )
       ) ~> baseRoutes ~> check {
         responseAs[Tool]

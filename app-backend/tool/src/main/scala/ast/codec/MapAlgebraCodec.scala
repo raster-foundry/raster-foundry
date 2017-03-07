@@ -11,9 +11,13 @@ import io.circe.generic.auto._
 import scala.util.Try
 import java.security.InvalidParameterException
 
-object MapAlgebraCodec
-    extends MapAlgebraOperationCodecs {
 
+trait MapAlgebraCodec
+    extends MapAlgebraSourceCodecs
+       with MapAlgebraOperationCodecs
+       with MapAlgebraUtilityCodecs {
+
+  /** TODO: Add codec paths besides `raster source` and `operation` when supported */
   implicit def mapAlgebraDecoder = Decoder.instance[MapAlgebraAST] { ma =>
     ma._type match {
       case Some("raster") =>
@@ -22,13 +26,6 @@ object MapAlgebraCodec
         throw new InvalidParameterException(s"'$unrecognized' is not a recognized map algebra data type")
       case None =>
         ma.as[MapAlgebraAST.Operation]
-      // TODO: Add these codecs when supported
-      //case Some("vector") =>
-      //  ma.as[MapAlgebraAST.VectorSource]
-      //case Some("double") =>
-      //  ma.as[MapAlgebraAST.DecimalSource]
-      //case Some("int") =>
-      //  ma.as[MapAlgebraAST.IntegralSource]
     }
   }
 

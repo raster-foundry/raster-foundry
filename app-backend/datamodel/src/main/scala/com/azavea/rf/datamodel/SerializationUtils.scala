@@ -1,9 +1,10 @@
 package com.azavea.rf.datamodel
 
-import java.sql.Timestamp
-import java.util.UUID
 import spray.json._
 import spray.json.DefaultJsonProtocol._
+
+import java.sql.Timestamp
+import java.util.UUID
 
 trait SerializationUtils {
   def jsArrayToList[T](jsArr: JsValue): List[T] = {

@@ -1,10 +1,15 @@
 package com.azavea.rf.database
 
 import com.azavea.rf.datamodel._
+import com.azavea.rf.tool.ast._
+
 import geotrellis.slick.PostGisProjectionSupport
 import com.github.tminglei.slickpg._
-import scala.collection.immutable.Map
 import spray.json._
+import io.circe._
+import io.circe.syntax._
+
+import scala.collection.immutable.Map
 
 /** Custom Postgres driver that adds custom column types and implicit conversions
   *
@@ -18,6 +23,7 @@ import spray.json._
 trait ExtendedPostgresDriver extends ExPostgresDriver
     with PgArraySupport
     with PgRangeSupport
+    with PgCirceJsonSupport
     with PgSprayJsonSupport
     with PgEnumSupport
     with PostGisProjectionSupport {
@@ -30,7 +36,8 @@ trait ExtendedPostgresDriver extends ExPostgresDriver
   object RFAPI extends API
       with ArrayImplicits
       with RangeImplicits
-      with JsonImplicits
+      with SprayJsonImplicits
+      with CirceImplicits
       with RFDatabaseJsonProtocol
       with PostGISProjectionImplicits
       with PostGISProjectionAssistants {
@@ -43,6 +50,14 @@ trait ExtendedPostgresDriver extends ExPostgresDriver
     implicit val colorCorrectParamsMapper = MappedJdbcType.base[ColorCorrect.Params, JsValue](_.toJson,
       _.convertTo[ColorCorrect.Params])
 
+    // This is a Circe mapping rather than SprayJson, hence PgCirceJsonSupport above
+    implicit val mapAlgebraASTTypeMapper = MappedJdbcType.base[MapAlgebraAST, Json](_.asJson,
+      _.as[MapAlgebraAST] match {
+        case Right(ast) => ast
+        case Left(e) => throw e
+      }
+    )
+
     implicit val userRoleTypeMapper = createEnumJdbcType[User.Role]("UserRole", _.repr,
       User.Role.fromString, quoteName = false)
     implicit val userRoleTypeListMapper = createEnumListJdbcType[User.Role]("UserRole",
@@ -51,7 +66,7 @@ trait ExtendedPostgresDriver extends ExPostgresDriver
       createEnumColumnExtensionMethodsBuilder[User.Role]
     implicit val userRoleOptionColumnExtensionMethodsBuilder =
       createEnumOptionColumnExtensionMethodsBuilder[User.Role]
- 
+
     implicit val ingestStatusTypeMapper = createEnumJdbcType[IngestStatus](
       "IngestStatus", _.repr,
       IngestStatus.fromString, quoteName = false

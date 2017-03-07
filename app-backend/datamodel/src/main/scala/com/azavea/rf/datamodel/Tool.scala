@@ -1,10 +1,14 @@
 package com.azavea.rf.datamodel
 
-import spray.json._
-import spray.json.DefaultJsonProtocol._
+import com.azavea.rf.tool.ast._
+
 import java.util.UUID
 import java.sql.Timestamp
 
+/** Model Lab Tool
+  *
+  * @note Does not define Spray Json codecs because [[MapAlgebraAST]] is serialized via circe
+  */
 case class Tool(
   id: UUID,
   createdAt: Timestamp,
@@ -19,7 +23,7 @@ case class Tool(
   visibility: Visibility,
   compatibleDataSources: List[String] = List.empty,
   stars: Float = 0.0f,
-  definition: Map[String, Any]
+  definition: MapAlgebraAST
 ) {
   def withRelatedFromComponents(toolTags: Seq[ToolTag], toolCategories: Seq[ToolCategory], organization: Option[Organization]):
       Tool.WithRelated = Tool.WithRelated(
@@ -69,8 +73,6 @@ object Tool {
 
   def tupled = (Tool.apply _).tupled
 
-  implicit val defaultToolFormat = jsonFormat14(Tool.apply _)
-
   case class Create(
     organizationId: UUID,
     title: String,
@@ -80,7 +82,7 @@ object Tool {
     visibility: Visibility,
     compatibleDataSources: List[String],
     stars: Float,
-    definition: Map[String, Any],
+    definition: MapAlgebraAST,
     tags: Seq[UUID],
     categories: Seq[String]
   ) {
@@ -112,15 +114,11 @@ object Tool {
     }
   }
 
-  object Create {
-    implicit val defaultToolFormat = jsonFormat11(Create.apply _)
-  }
-
   // join of tool/tag/category
   case class ToolRelationshipJoin(tool: Tool, toolTag: Option[ToolTag], toolCategory: Option[ToolCategory], organization: Option[Organization])
+
   object ToolRelationshipJoin {
     def tupled = (ToolRelationshipJoin.apply _).tupled
-    implicit val defaultToolRelationshipJoinFormat = jsonFormat4(ToolRelationshipJoin.apply _)
   }
 
   /** Tool class when posted with category and tag ids */
@@ -138,13 +136,12 @@ object Tool {
     visibility: Visibility,
     compatibleDataSources: List[String] = List.empty,
     stars: Float = 0.0f,
-    definition: Map[String, Any],
+    definition: MapAlgebraAST,
     tags: Seq[ToolTag],
     categories: Seq[ToolCategory]
   )
 
   object WithRelated {
-    implicit val defaultToolWithRelatedFormat = jsonFormat16(WithRelated.apply)
 
     def fromRecords(records: Seq[(Tool, Option[ToolTag], Option[ToolCategory], Option[Organization])]): Iterable[Tool.WithRelated] = {
       val distinctTools = records.map(_._1).distinct
@@ -178,12 +175,9 @@ object Tool {
     visibility: Visibility,
     compatibleDataSources: List[String] = List.empty,
     stars: Float = 0.0f,
-    definition: Map[String, Any],
+    definition: MapAlgebraAST,
     tags: Seq[UUID],
     categories: Seq[String]
   )
-
-  object WithRelatedUUIDs {
-    implicit val defaultToolWithRelatedFormat = jsonFormat16(WithRelatedUUIDs.apply)
-  }
 }
+

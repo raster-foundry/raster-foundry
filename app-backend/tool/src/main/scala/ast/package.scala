@@ -1,5 +1,6 @@
 package com.azavea.rf.tool
 
+import com.azavea.rf.tool.ast.codec.MapAlgebraCodec
 import io.circe._
 import io.circe.optics.JsonPath._
 
@@ -7,7 +8,7 @@ import scala.util.Try
 import java.util.UUID
 import java.security.InvalidParameterException
 
-package object ast {
+package object ast extends MapAlgebraCodec {
 
   implicit class CirceMapAlgebraJsonMethods(val self: Json) {
     def _id: Option[UUID] = root.id.string.getOption(self).map(UUID.fromString(_))
@@ -27,4 +28,20 @@ package object ast {
     def _fields: Option[Seq[String]] = self.value._fields
   }
 
+  implicit class MapAlgebraASTHelperMethods(val self: MapAlgebraAST) {
+    def reclassify(breaks: ClassBreaks) =
+      MapAlgebraAST.Reclassification(List(self), UUID.randomUUID(), Some(s"reclassify(${self.label.getOrElse(self.id)})"), breaks)
+
+    def +(other: MapAlgebraAST): MapAlgebraAST.Operation =
+      MapAlgebraAST.Addition(List(self, other), UUID.randomUUID(), Some(s"${self.label.getOrElse(self.id)}_+_${other.label.getOrElse(other.id)}"))
+
+    def -(other: MapAlgebraAST): MapAlgebraAST.Operation =
+      MapAlgebraAST.Subtraction(List(self, other), UUID.randomUUID(), Some(s"${self.label.getOrElse(self.id)}_-_${other.label.getOrElse(other.id)}"))
+
+    def *(other: MapAlgebraAST): MapAlgebraAST.Operation =
+      MapAlgebraAST.Multiplication(List(self, other), UUID.randomUUID(), Some(s"${self.label.getOrElse(self.id)}_*_${other.label.getOrElse(other.id)}"))
+
+    def /(other: MapAlgebraAST): MapAlgebraAST.Operation =
+      MapAlgebraAST.Division(List(self, other), UUID.randomUUID(), Some(s"${self.label.getOrElse(self.id)}_/_${other.label.getOrElse(other.id)}"))
+  }
 }

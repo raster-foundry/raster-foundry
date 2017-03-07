@@ -1,18 +1,17 @@
 package com.azavea.rf.api.toolrun
 
-import java.util.UUID
-
-import scala.util.{Success, Failure}
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Route
-
 import com.azavea.rf.common.{Authentication, UserErrorHandler}
 import com.azavea.rf.database.{ActionRunner, Database}
 import com.azavea.rf.database.tables.ToolRuns
 import com.azavea.rf.datamodel.{PaginatedResponse, ToolRun}
+
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Route
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Success, Failure}
+import java.util.UUID
 
 trait ToolRunRoutes extends Authentication
     with PaginationDirectives
