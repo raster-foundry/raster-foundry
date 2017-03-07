@@ -5,9 +5,7 @@ import requests
 from .models import Ingest, Source, Layer
 
 
-layer_s3_bucket = os.getenv(
-    'TILE_SERVER_BUCKET', 'rasterfoundry-staging-catalogs-us-east-1'
-)
+layer_s3_bucket = os.getenv('TILE_SERVER_BUCKET')
 
 
 def parse_mtl(mtl_file_str):

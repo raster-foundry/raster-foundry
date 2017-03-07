@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class Ingest(object):
 
-    DATA_BUCKET = os.getenv('DATA_BUCKET', 'rasterfoundry-staging-data-us-east-1')
+    DATA_BUCKET = os.getenv('DATA_BUCKET')
 
     def __init__(self, id, layers):
 
