@@ -75,13 +75,13 @@ trait ProjectRoutes extends Authentication
         } ~
         pathPrefix(JavaUUID) { sceneId =>
           get { getProjectSceneColorCorrectParams(projectId, sceneId) } ~
-          post { setProjectSceneColorCorrectParams(projectId, sceneId) }
+          put { setProjectSceneColorCorrectParams(projectId, sceneId) }
         }
       } ~
       pathPrefix("order") {
         pathEndOrSingleSlash {
           get { listProjectSceneOrder(projectId) } ~
-          post { setProjectSceneOrder(projectId) }
+          put { setProjectSceneOrder(projectId) }
         }
       }
     }
@@ -156,8 +156,8 @@ trait ProjectRoutes extends Authentication
         complete(StatusCodes.RequestEntityTooLarge)
       }
 
-      complete {
-        ScenesToProjects.setManualOrder(projectId, sceneIds)
+      onSuccess(ScenesToProjects.setManualOrder(projectId, sceneIds)) { updatedOrder =>
+        complete(StatusCodes.NoContent)
       }
     }
   }
@@ -172,11 +172,8 @@ trait ProjectRoutes extends Authentication
   /** Set color correction parameters for a project/scene pairing */
   def setProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) = authenticate { user =>
     entity(as[ColorCorrect.Params]) { ccParams =>
-      onSuccess(ScenesToProjects.setColorCorrectParams(projectId, sceneId, ccParams)) {
-        case 1 => complete(StatusCodes.NoContent)
-        case count => throw new IllegalStateException(
-          s"Error updating scene's color correction: update result expected to be 1, was $count"
-        )
+      onSuccess(ScenesToProjects.setColorCorrectParams(projectId, sceneId, ccParams)) { sceneToProject =>
+        complete(StatusCodes.NoContent)
       }
     }
   }

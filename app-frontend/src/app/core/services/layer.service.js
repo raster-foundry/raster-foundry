@@ -80,16 +80,12 @@ export default (app) => {
          */
         getSceneTileLayer() {
             if (this._sceneTiles) { // eslint-disable-line no-underscore-dangle
-                return this.$q((resolve) => {
-                    resolve(this._sceneTiles); // eslint-disable-line no-underscore-dangle
-                });
-            }
-            return this.getSceneLayerURL().then((url) => {
-                this._sceneTiles = L.tileLayer(url, // eslint-disable-line no-underscore-dangle
-                    {bounds: this.bounds, attribution: 'Raster Foundry'}
-                );
                 return this._sceneTiles; // eslint-disable-line no-underscore-dangle
-            });
+            }
+            this._sceneTiles = L.tileLayer(this.getSceneLayerURL(),
+                {bounds: this.bounds, attribution: 'Raster Foundry'}
+            );
+            return this._sceneTiles; // eslint-disable-line no-underscore-dangle
         }
 
         /** Function to return a promise that resolves into a leaflet tile layer for mosaic
@@ -128,9 +124,7 @@ export default (app) => {
          * @returns {string} URL for this tile layer
          */
         getSceneLayerURL() {
-            return this.formatColorParams().then((formattedParams) => {
-                return `/tiles/${this.scene.id}/rgb/{z}/{x}/{y}/?${formattedParams}`;
-            });
+            return `/tiles/${this.scene.id}/rgb/{z}/{x}/{y}/?${this.formatColorParams()}`;
         }
 
         getMosaicLayerURL(params = {}) {
@@ -150,9 +144,7 @@ export default (app) => {
          * @returns {string} URL for the histogram
          */
         getHistogramURL() {
-            return this.formatColorParams().then((formattedParams) => {
-                return `/tiles/${this.scene.id}/rgb/histogram/?${formattedParams}`;
-            });
+            return `/tiles/${this.scene.id}/rgb/histogram/?${this.formatColorParams()}`;
         }
 
         /**
@@ -188,11 +180,9 @@ export default (app) => {
         }
 
         formatColorParams() {
-            return this.getColorCorrection().then((colorCorrection) => {
-                colorCorrection.token = this.authService.token();
-                let formattedParams = L.Util.getParamString(colorCorrection);
-                return formattedParams;
-            });
+            this._correction.token = this.authService.token();
+            let formattedParams = L.Util.getParamString(this._correction);
+            return formattedParams;
         }
 
         /**
@@ -239,7 +229,7 @@ export default (app) => {
 
         updateColorCorrection(corrections) {
             this._correction = corrections; // eslint-disable-line no-underscore-dangle
-            return this.colorCorrectService.updateOrCreate(
+            return this.colorCorrectService.update(
                 this.scene.id, this.projectId, corrections
             ).then(() => this.colorCorrect());
         }
@@ -250,12 +240,10 @@ export default (app) => {
          * @returns {null} null
          */
         colorCorrect() {
-            this.getSceneTileLayer().then((tiles) => {
-                this.getSceneLayerURL().then((url) => {
-                    return tiles.setUrl(url);
-                });
-            });
+            let tiles = this.getSceneTileLayer();
+            return tiles.setUrl(this.getSceneLayerURL());
         }
+
 
         /**
          * Helper function to get user params from scene or list of scenes

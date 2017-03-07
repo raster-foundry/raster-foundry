@@ -256,14 +256,14 @@ class ProjectSceneSpec extends WordSpec
         ) ~> baseRoutes ~> check {
           val sceneIds1 = responseAs[PaginatedResponse[UUID]].results
 
-          Post(s"/api/projects/${projectId}/order/").withHeadersAndEntity(
+          Put(s"/api/projects/${projectId}/order/").withHeadersAndEntity(
             List(authHeader),
             HttpEntity(
               ContentTypes.`application/json`,
               sceneIds1.reverse.toJson.toString()
             )
           ) ~> baseRoutes ~> check {
-            status shouldEqual StatusCodes.OK
+            status shouldEqual StatusCodes.NoContent
 
             Get(s"/api/projects/${projectId}/order/").withHeaders(
               List(authHeader)
@@ -300,7 +300,7 @@ class ProjectSceneSpec extends WordSpec
         ) ~> baseRoutes ~> check {
           val sceneId = responseAs[PaginatedResponse[UUID]].results.head
 
-          Post(s"/api/projects/${projectId}/mosaic/${sceneId}/").withHeadersAndEntity(
+          Put(s"/api/projects/${projectId}/mosaic/${sceneId}/").withHeadersAndEntity(
             List(authHeader),
             HttpEntity(
               ContentTypes.`application/json`,
@@ -320,7 +320,7 @@ class ProjectSceneSpec extends WordSpec
             Get(s"/api/projects/${projectId}/mosaic/").withHeaders(
               List(authHeader)
             ) ~> baseRoutes ~> check {
-              val mosaicDef = responseAs[MosaicDefinition]
+              val mosaicDef = responseAs[Seq[MosaicDefinition]]
               status shouldEqual StatusCodes.OK
 
               // TODO: Add additional tests once #880 is resolved

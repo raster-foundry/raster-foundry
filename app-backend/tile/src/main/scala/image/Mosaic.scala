@@ -55,7 +55,7 @@ object Mosaic {
   }
 
 
-  val mosaicDefinitionCache = HeapBackedMemcachedClient[Option[MosaicDefinition]](memcachedClient)
+  val mosaicDefinitionCache = HeapBackedMemcachedClient[Option[Seq[MosaicDefinition]]](memcachedClient)
   def mosaicDefinition(projectId: UUID, tagttl: Option[TagWithTTL])(implicit db: Database) = {
     val cacheKey = tagttl match {
       case Some(t) => s"mosaic-definition-$projectId-${t.tag}"
@@ -127,19 +127,19 @@ object Mosaic {
 
     // Lookup project definition
     // NOTE: raw does NOT cache the mosaicDefinition
-    val mayhapMosaic: Future[Option[MosaicDefinition]] = mosaicDefinition(projectId, None)
+    val mayhapMosaic: Future[Option[Seq[MosaicDefinition]]] = mosaicDefinition(projectId, None)
 
     mayhapMosaic.flatMap {
       case None => // can't merge a project without mosaic definition
         Future.successful(Option.empty[MultibandTile])
 
-      case Some(mosaic) =>
+      case Some(mosaicDefinition) =>
         val mayhapTiles =
           for (
-            (sceneId, colorCorrectParams) <- mosaic.definition
+             mosaic <- mosaicDefinition
           ) yield {
             for {
-              maybeTile <- Mosaic.fetch(sceneId, zoom, col, row)
+              maybeTile <- Mosaic.fetch(mosaic.sceneId, zoom, col, row)
             } yield
               for (tile <- maybeTile) yield tile
           }
@@ -181,7 +181,7 @@ object Mosaic {
 
     val zoom: Int = zoomOption.getOrElse(8)
 
-    val maybeMosaic: Future[Option[MosaicDefinition]] = mosaicDefinition(projectId, None)
+    val maybeMosaic: Future[Option[Seq[MosaicDefinition]]] = mosaicDefinition(projectId, None)
 
     maybeMosaic.flatMap {
       case None => // can't merge a project without mosaic definition
@@ -189,14 +189,14 @@ object Mosaic {
 
       case Some(mosaic) =>
         val maybeTiles =
-          for ((sceneId, colorCorrectParams) <- mosaic.definition) yield {
-              colorCorrectParams match {
+          for (mosaicDefinition <- mosaic) yield {
+              mosaicDefinition.colorCorrections match {
                 case None =>
                   Future.successful(Option.empty[MultibandTile])
                 case Some(params) =>
                   for {
-                    maybeTile <- Mosaic.fetchRenderedExtent(sceneId, zoom, bboxPolygon)
-                    hist <- LayerCache.bandHistogram(sceneId, zoom)
+                    maybeTile <- Mosaic.fetchRenderedExtent(mosaicDefinition.sceneId, zoom, bboxPolygon)
+                    hist <- LayerCache.bandHistogram(mosaicDefinition.sceneId, zoom)
                   } yield
                     for (tile <- maybeTile) yield params.colorCorrect(tile, hist)
               }
@@ -229,7 +229,7 @@ object Mosaic {
   ): Future[Option[MultibandTile]] = {
 
     // Lookup project definition
-    val maybeMosaic: Future[Option[MosaicDefinition]] = tag match {
+    val maybeMosaic: Future[Option[Seq[MosaicDefinition]]] = tag match {
       case Some(t) =>
         // tag present, include in lookup to re-use cache
         mosaicDefinition(projectId, Option(TagWithTTL(tag=t, ttl=60.seconds)))
@@ -244,21 +244,21 @@ object Mosaic {
 
       case Some(mosaic) =>
         val maybeTiles =
-          for ((sceneId, colorCorrectParams) <- mosaic.definition) yield {
+          for (mosaicDefinition <- mosaic) yield {
             if (rgbOnly) {
-              colorCorrectParams match {
+              mosaicDefinition.colorCorrections match {
                 case None =>
                   Future.successful(Option.empty[MultibandTile])
                 case Some(params) =>
                   for {
-                    maybeTile <- Mosaic.fetch(sceneId, zoom, col, row)
-                    hist <- LayerCache.bandHistogram(sceneId, zoom)
+                    maybeTile <- Mosaic.fetch(mosaicDefinition.sceneId, zoom, col, row)
+                    hist <- LayerCache.bandHistogram(mosaicDefinition.sceneId, zoom)
                   } yield
                     for (tile <- maybeTile) yield params.colorCorrect(tile, hist)
               }
             } else { // Return all bands
               for {
-                maybeTile <- Mosaic.fetch(sceneId, zoom, col, row)
+                maybeTile <- Mosaic.fetch(mosaicDefinition.sceneId, zoom, col, row)
               } yield maybeTile
             }
           }

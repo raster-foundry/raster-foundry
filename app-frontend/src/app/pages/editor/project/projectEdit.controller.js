@@ -95,10 +95,9 @@ export default class ProjectEditController {
     bringSelectedScenesToFront() {
         this.cachedZIndices = new Map();
         for (const [id, l] of this.selectedLayers) {
-            l.getSceneTileLayer().then((tiles) => {
-                this.cachedZIndices.set(id, tiles.options.zIndex);
-                tiles.bringToFront();
-            });
+            let tiles = l.getSceneTileLayer();
+            this.cachedZIndices.set(id, tiles.options.zIndex);
+            tiles.bringToFront();
         }
     }
 
