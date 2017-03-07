@@ -1361,12 +1361,6 @@ parameters:
     in: query
     type: number
     required: false
-  bboxCoordinates:
-    name: bboxCoordinates
-    description: Bounding box as a path parameter. eg "/southwest_lng,southwest_lat,northeast_lng,northeast_lat/"
-    in: path
-    type: string
-    required: true
   zoom:
     name: zoom
     description: The zoom level used to split the bbox into a grid
@@ -1495,6 +1489,8 @@ definitions:
         type: string
       identities:
         type: array
+        items:
+          type: object
       user_metadata:
         type: object
       picture:
@@ -1630,15 +1626,17 @@ definitions:
   Organization:
     type: object
     allOf:
-      - $ref: '#/definitions/BaseModel'
       - $ref: '#/definitions/TimeModelMixin'
-    required:
-      - name
-      - id
     properties:
+      id:
+        type: string
+        description: Organization
       name:
         type: string
         description: Display name for organization
+    required:
+      - name
+      - id
   UserRole:
     type: object
     properties:
@@ -1723,6 +1721,7 @@ definitions:
           # TODO: make work with geometry objects
           dataFootprint:
             description: polygon for which this scene has data
+            type: object
             readOnly: true
           # TODO: make work with geometry objects
           tileFootprint:
@@ -1742,10 +1741,8 @@ definitions:
             items:
               - type: string
           filterFields:
-            type: object
             $ref: '#/definitions/FilterFields'
           statusFields:
-            type: object
             $ref: '#/definitions/StatusFields'
 
   FilterFields:
@@ -1833,6 +1830,12 @@ definitions:
             type: array
             items:
               - type: string
+          extent:
+            type: object
+            description: GeoJSON Geometry of project extent
+          manualOrder:
+            type: boolean
+            description: Is true if project scenes are manually ordered
   Image:
     allOf:
       - $ref: '#/definitions/BaseModel'
@@ -1846,13 +1849,13 @@ definitions:
               - PUBLIC
               - ORGANIZATION
               - OWNERONLY
-          fileName:
+          filename:
             type: string
             description: Name of the image file
           resolutionMeters:
             type: number
             description: Size of pixel in meters
-          sourceURI:
+          sourceUri:
             type: string
             description: URI to original source. This should include a protocol-like prefix to identify where it is located http://, s3://, etc.
           rawDataBytes:
@@ -1872,12 +1875,14 @@ definitions:
             description: Metadata about this image
           metadataFiles:
             type: array
+            items:
+              type: object
             description: |
               Metadata files that should be present for processing all
               images in a scene (e.g. relevant .mtl files or .xml)
         required:
-          - fileName
-          - sourceURI
+          - filename
+          - sourceUri
   ProjectPaginated:
     allOf:
       - $ref: '#/definitions/PaginatedResponse'
@@ -1897,7 +1902,7 @@ definitions:
   Band:
     type: object
     properties:
-      imageId:
+      image:
         type: string
         format: UUID
       name:
@@ -1919,7 +1924,7 @@ definitions:
             type: integer
             format: int32
             description: The width of the thumbnail, in pixels
-          scene:
+          sceneId:
             type: string
             format: uuid
             description: Scene that image is associated with
@@ -1927,13 +1932,13 @@ definitions:
             type: integer
             format: int32
             description: The height of the thumbnail, in pixels
-          size:
+          thumbnailSize:
             type: string
             description: Summary of size
             enum:
-              - small
-              - large
-              - square
+              - SMALL
+              - LARGE
+              - SQUARE
           url:
             type: string
             format: uri
@@ -1961,6 +1966,10 @@ definitions:
           description: |
             A long description of the tool, including is use-cases,
             purpose, and any potential references
+        organization:
+          description: The owning organization of the Tool
+          items:
+            $ref: '#/definitions/Organization'
         requirements:
           type: string
           description: A brief description of requirements, including any relevant band requirements
@@ -1991,7 +2000,7 @@ definitions:
           enum:
             - PUBLIC
             - ORGANIZATION
-            - OWNERONLY
+            - PRIVATE
   ToolPaginated:
     allOf:
     - $ref: '#/definitions/PaginatedResponse'
@@ -2030,12 +2039,6 @@ definitions:
           slugLabel:
             type: string
             description: Slug label for use in urls
-  ToolCategoryCreate:
-    type: object
-    properties:
-      category:
-        type: string
-        description: User displayed label for category
   ToolCategoryPaginated:
       allOf:
       - $ref: '#/definitions/PaginatedResponse'
@@ -2062,6 +2065,14 @@ definitions:
             type: string
             format: uuid
             description: Tool being run
+          visibility:
+            type: string
+            description: Level of restriction on viewing
+            enum:
+              - PUBLIC
+              - ORGANIZATION
+              - PRIVATE
+
   ToolRunPaginated:
     allOf:
     - $ref: '#/definitions/PaginatedResponse'
@@ -2239,37 +2250,13 @@ definitions:
         - MultiLineString
         - MultiPolygon
         description: the geometry type
-  
+
   Point2D:
     type: array
     maxItems: 2
     minItems: 2
     items:
       type: number
-  
-  Point:
-    type: object
-    description: GeoJSon geometry
-    externalDocs:
-      url: http://geojson.org/geojson-spec.html#id2
-    allOf:
-      - $ref: "#/definitions/Geometry"
-      - properties:
-          coordinates:
-            $ref: '#/definitions/Point2D'
-    
-  LineString:
-    type: object
-    description: GeoJSon geometry
-    externalDocs:
-      url: http://geojson.org/geojson-spec.html#id3
-    allOf:
-      - $ref: "#/definitions/Geometry"
-      - properties:
-          coordinates:
-            type: array
-            items:
-              $ref: '#/definitions/Point2D'
 
   Polygon:
     type: object
@@ -2285,67 +2272,3 @@ definitions:
               type: array
               items:
                 $ref: '#/definitions/Point2D'
-      
-  MultiPoint:
-    type: object
-    description: GeoJSon geometry
-    externalDocs:
-      url: http://geojson.org/geojson-spec.html#id5
-    allOf:
-      - $ref: "#/definitions/Geometry"
-      - properties:
-          coordinates:
-            type: array
-            items:
-              $ref: '#/definitions/Point2D'
-            
-  MultiLineString:
-    type: object
-    description: GeoJSon geometry
-    externalDocs:
-      url: http://geojson.org/geojson-spec.html#id6
-    allOf:
-      - $ref: "#/definitions/Geometry"   
-      - properties:
-          coordinates:
-            type: array
-            items:
-              type: array
-              items:
-                $ref: '#/definitions/Point2D'
-      
-      
-  MultiPolygon:
-    type: object
-    description: GeoJSon geometry
-    externalDocs:
-      url: http://geojson.org/geojson-spec.html#id6
-    allOf:
-      - $ref: "#/definitions/Geometry"
-      - properties:
-          coordinates:
-            type: array
-            items:
-              type: array
-              items:
-                type: array
-                items:
-                  $ref: '#/definitions/Point2D'
-      
-  GeometryCollection:
-    type: object
-    description: GeoJSon geometry collection
-    required:
-     - type
-     - geometries
-    externalDocs:
-      url: http://geojson.org/geojson-spec.html#geometrycollection
-    properties:
-      type:
-        type: string
-        enum:
-        - GeometryCollection
-      geometries:
-        type: array
-        items:
-          $ref: '#/definitions/Geometry'
