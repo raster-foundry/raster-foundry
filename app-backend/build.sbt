@@ -82,7 +82,8 @@ lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
   Dependencies.akka,
   Dependencies.akkahttp,
   Dependencies.akkaHttpCors,
-  Dependencies.akkajson,
+  Dependencies.akkaSprayJson,
+  Dependencies.akkaCirceJson,
   Dependencies.akkastream,
   Dependencies.akkaSlf4j,
   Dependencies.akkaHttpExtensions,
@@ -132,13 +133,14 @@ lazy val migrations = Project("migrations", file("migrations"))
   })
 
 lazy val datamodel = Project("datamodel", file("datamodel"))
+  .dependsOn(tool)
   .settings(commonSettings:_*)
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({
     libraryDependencies ++= loggingDependencies ++ Seq(
       Dependencies.geotrellisSlick % "provided",
       Dependencies.geotrellisRaster,
-      Dependencies.akkajson
+      Dependencies.akkaSprayJson
     )
   })
 
@@ -146,7 +148,10 @@ lazy val database = Project("database", file("database"))
   .dependsOn(datamodel)
   .settings(commonSettings:_*)
   .settings({
-     libraryDependencies ++= slickDependencies ++ dbDependencies ++ loggingDependencies ++ Seq(Dependencies.akkaHttpExtensions)
+     libraryDependencies ++= slickDependencies ++ dbDependencies ++ loggingDependencies ++ Seq(
+       Dependencies.akkaHttpExtensions,
+       Dependencies.slickPGCirce
+     )
   })
 
 lazy val ingest = Project("ingest", file("ingest"))
@@ -158,7 +163,7 @@ lazy val ingest = Project("ingest", file("ingest"))
       Dependencies.geotrellisS3,
       Dependencies.geotrellisUtil,
       Dependencies.geotrellisRaster,
-      Dependencies.akkajson,
+      Dependencies.akkaSprayJson,
       Dependencies.spark,
       Dependencies.scopt
     )
@@ -176,7 +181,7 @@ lazy val tile = Project("tile", file("tile"))
       Dependencies.spark,
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisS3,
-      Dependencies.akkajson
+      Dependencies.akkaSprayJson
     )
   })
   .settings(assemblyMergeStrategy in assembly := {
@@ -193,7 +198,6 @@ lazy val tool = Project("tool", file("tool"))
   .settings({
     libraryDependencies ++= loggingDependencies ++ Seq(
       Dependencies.geotrellisRaster,
-      Dependencies.geotrellisSpark,
       Dependencies.shapeless,
       Dependencies.scalatest,
       Dependencies.circeCore,

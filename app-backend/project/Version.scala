@@ -11,8 +11,7 @@ object Version {
   val scapegoat          = "1.2.0"
   val slf4j              = "1.6.4"
   val slick              = "3.1.1"
-  val slickPG            = "0.14.3"
-  val sprayjson          = "2.4.4"
+  val slickPG            = "0.14.6"
   val json4s             = "3.5.0"
   val jwtCore            = "0.10.0"
   val jwtJson            = "0.10.0"
@@ -30,4 +29,5 @@ object Version {
   val findbugAnnotations = "3.0.1u2"
   val chill              = "0.9.2"
   val circe              = "0.7.0"
+  val akkaCirceJson      = "1.12.0"
 }

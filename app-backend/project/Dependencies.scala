@@ -5,7 +5,7 @@ import sbt._
 object Dependencies {
   val akka                    = "com.typesafe.akka"           %% "akka-actor"                        % Version.akka
   val akkahttp                = "com.typesafe.akka"           %% "akka-http"                         % Version.akkaHttp
-  val akkajson                = "com.typesafe.akka"           %% "akka-http-spray-json"              % Version.akkaHttp
+  val akkaSprayJson           = "com.typesafe.akka"           %% "akka-http-spray-json"              % Version.akkaHttp
   val akkatestkit             = "com.typesafe.akka"           %% "akka-http-testkit"                 % Version.akkaHttp
   val akkastream              = "com.typesafe.akka"           %% "akka-stream"                       % Version.akka
   val akkaSlf4j               = "com.typesafe.akka"           %% "akka-slf4j"                        % Version.akkaSlf4j
@@ -26,6 +26,7 @@ object Dependencies {
   val slick                   = "com.typesafe.slick"          %% "slick"                             % Version.slick
   val slickPG                 = "com.github.tminglei"         %% "slick-pg"                          % Version.slickPG
   val slickPGSpray            = "com.github.tminglei"         %% "slick-pg_spray-json"               % Version.slickPG
+  val slickPGCirce            = "com.github.tminglei"         %% "slick-pg_circe-json"               % Version.slickPG
   val json4s                  = "org.json4s"                  %% "json4s-jackson"                    % Version.json4s
   val jwtCore                 = "com.pauldijou"               %% "jwt-core"                          % Version.jwtCore
   val jwtJson                 = "com.pauldijou"               %% "jwt-json4s-jackson"                % Version.jwtJson
@@ -44,4 +45,5 @@ object Dependencies {
   val circeGeneric            = "io.circe"                    %% "circe-generic"                     % Version.circe
   val circeParser             = "io.circe"                    %% "circe-parser"                      % Version.circe
   val circeOptics             = "io.circe"                    %% "circe-optics"                      % Version.circe
+  val akkaCirceJson           = "de.heikoseeberger"           %% "akka-http-circe"                   % Version.akkaCirceJson
 }

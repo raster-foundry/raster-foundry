@@ -1,28 +1,25 @@
 package com.azavea.rf.tool.ast
 
-import geotrellis.raster.Tile
-import geotrellis.raster.render._
-import geotrellis.vector.Polygon
-import geotrellis.vector.io._
-
-import spray.json._
-
 import java.util.UUID
 
+
+/** The ur-type for a recursive representation of MapAlgebra operations */
 sealed trait MapAlgebraAST extends Product with Serializable {
+  def id: UUID
   def args: List[MapAlgebraAST]
+  def label: Option[String]
   def evaluable: Boolean
   def unbound: List[MapAlgebraAST]
 }
 
 object MapAlgebraAST {
-  // Map Algebra operations (node)
+  /** Map Algebra operations (nodes in this tree) */
   abstract class Operation(val symbol: String) extends MapAlgebraAST {
     def evaluable: Boolean = (args.length >= 1) && (args.foldLeft(true)(_ && _.evaluable))
     def unbound: List[MapAlgebraAST] =
       args.foldLeft(List[MapAlgebraAST]())({ case (list, mapAlgebra) =>
-        mapAlgebra.unbound ++ list
-      })
+        list ++ mapAlgebra.unbound
+      }).distinct
   }
 
   case class Addition(args: List[MapAlgebraAST], id: UUID, label: Option[String])
@@ -44,8 +41,8 @@ object MapAlgebraAST {
       extends Operation("reclassify")
 
 
-  // Map Algebra sources (leaf)
-  sealed trait Source[T] extends MapAlgebraAST {
+  /** Map Algebra sources (leaves) */
+  sealed abstract class Source[T](val `type`: String) extends MapAlgebraAST {
     def value: Option[T]
     def args: List[MapAlgebraAST] = List.empty
     def evaluable = value.isDefined
@@ -53,13 +50,13 @@ object MapAlgebraAST {
   }
 
   case class RFMLRasterSource(id: UUID, label: Option[String], value: Option[RFMLRaster])
-      extends Source[RFMLRaster]
-  // TODO: Add other source types (or treat of them as hyperparameters - e.g. ClassBreaks, above)
-  //case class VectorSource(id: UUID, label: Option[String], value: Option[Polygon])
-  //    extends Source[Polygon]
-  //case class DecimalSource(id: UUID, label: Option[String], value: Option[Double])
-  //    extends Source[Double]
-  //case class IntegralSource(id: UUID, label: Option[String], value: Option[Int])
-  //    extends Source[Int]
+      extends Source[RFMLRaster]("raster")
+
+  object RFMLRasterSource {
+    def empty: RFMLRasterSource = RFMLRasterSource(UUID.randomUUID(), None, None)
+  }
+
+  /** TODO: Add other source types (or treat of them as hyperparameters - e.g. ClassBreaks, above) */
+
 }
 

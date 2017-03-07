@@ -26,6 +26,16 @@ object Visibility {
         deserializationError("Failed to parse thumbnail size string representation (${js}) to ThumbnailSize")
     }
   }
+
+  import io.circe._
+  import cats.syntax.either._
+  implicit val visibilityEncoder: Encoder[Visibility] =
+    Encoder.encodeString.contramap[Visibility](_.toString)
+
+  implicit val visibilityDecoder: Decoder[Visibility] =
+    Decoder.decodeString.emap { str =>
+      Either.catchNonFatal(fromString(str)).leftMap(t => "Visibility")
+    }
 }
 
 

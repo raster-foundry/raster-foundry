@@ -6,15 +6,18 @@ import com.azavea.rf.datamodel._
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
+import com.azavea.rf.tool.ast._
+
+import io.circe._
 import slick.model.ForeignKeyAction
+import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
+import com.typesafe.scalalogging.LazyLogging
+
 import java.util.UUID
 import java.util.Date
 import java.sql.Timestamp
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
-import com.typesafe.scalalogging.LazyLogging
-import scala.concurrent.Future
 
 /** Table that represents tools in the Raster Foundry lab
   *
@@ -47,7 +50,7 @@ class Tools(_tableTag: Tag) extends Table[Tool](_tableTag, "tools")
   val compatibleDataSources: Rep[List[String]] = column[List[String]]("compatible_data_sources",
     O.Length(Int.MaxValue, varying = false), O.Default(List.empty))
   val stars: Rep[Float] = column[Float]("stars", O.Default(0.0f))
-  val definition: Rep[Map[String, Any]] = column[Map[String, Any]]("definition", O.Length(2147483647,varying=false))
+  val definition: Rep[MapAlgebraAST] = column[MapAlgebraAST]("definition", O.Length(2147483647,varying=false))
 
   lazy val organizationsFk =
     foreignKey("tools_organization_id_fkey", organizationId, Organizations)(
