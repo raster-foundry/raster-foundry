@@ -38,8 +38,8 @@ dag = DAG(
 
 
 batch = boto3.client('batch')
-batch_job_definition = os.getenv('BATCH_INGEST_JOB_NAME', 'rasterfoundry-staging-spark-ingest')
-batch_job_queue = os.getenv('BATCH_INGEST_JOB_QUEUE', 'rasterfoundry-staging-ingest-queue')
+batch_job_definition = os.getenv('BATCH_INGEST_JOB_NAME')
+batch_job_queue = os.getenv('BATCH_INGEST_JOB_QUEUE')
 
 
 ################################
@@ -174,9 +174,7 @@ def set_ingest_status_success_op(*args, **kwargs):
     scene = Scene.from_id(scene_id)
     scene.ingestStatus = IngestStatus.INGESTED
 
-    layer_s3_bucket = os.getenv(
-        'TILE_SERVER_BUCKET', 'rasterfoundry-staging-catalogs-us-east-1'
-    )
+    layer_s3_bucket = os.getenv('TILE_SERVER_BUCKET')
 
     s3_output_location = 's3://{}/layers'.format(layer_s3_bucket)
     scene.ingestLocation = s3_output_location

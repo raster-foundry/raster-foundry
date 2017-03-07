@@ -21,7 +21,7 @@ rf_logger.addHandler(ch)
 logger = logging.getLogger(__name__)
 
 
-schedule = None if os.getenv('ENVIRONMENT', 'development') == 'development' else '@daily'
+schedule = None if os.getenv('ENVIRONMENT') == 'development' else '@daily'
 start_date = datetime(2016, 11, 6)
 args = {
     'owner': 'raster-foundry',
