@@ -2035,12 +2035,12 @@ definitions:
           type: array
           description: Tool tags associated with a tool
           items:
-            type: string
+            $ref: '#/definitions/ToolTag'
         categories:
           type: array
           description: Category of geoprocessing tool
           items:
-            type: string
+            $ref: '#/definitions/ToolCategory'
         license:
           type: string
           description: Usage license of tool

@@ -21,14 +21,14 @@ case class Tool(
   stars: Float = 0.0f,
   definition: Map[String, Any]
 ) {
-  def withRelatedFromComponents(toolTags: Seq[ToolTag], toolCategories: Seq[ToolCategory]):
+  def withRelatedFromComponents(toolTags: Seq[ToolTag], toolCategories: Seq[ToolCategory], organization: Option[Organization]):
       Tool.WithRelated = Tool.WithRelated(
     this.id,
     this.createdAt,
     this.modifiedAt,
     this.createdBy,
     this.modifiedBy,
-    this.organizationId,
+    organization,
     this.title,
     this.description,
     this.requirements,
@@ -117,10 +117,10 @@ object Tool {
   }
 
   // join of tool/tag/category
-  case class TagCategoryJoin(tool: Tool, toolTag: Option[ToolTag], toolCategory: Option[ToolCategory])
-  object TagCategoryJoin {
-    def tupled = (TagCategoryJoin.apply _).tupled
-    implicit val defaultTagCategoryJoinFormat = jsonFormat3(TagCategoryJoin.apply _)
+  case class ToolRelationshipJoin(tool: Tool, toolTag: Option[ToolTag], toolCategory: Option[ToolCategory], organization: Option[Organization])
+  object ToolRelationshipJoin {
+    def tupled = (ToolRelationshipJoin.apply _).tupled
+    implicit val defaultToolRelationshipJoinFormat = jsonFormat4(ToolRelationshipJoin.apply _)
   }
 
   /** Tool class when posted with category and tag ids */
@@ -130,7 +130,7 @@ object Tool {
     modifiedAt: Timestamp,
     createdBy: String,
     modifiedBy: String,
-    organizationId: UUID,
+    organization: Option[Organization],
     title: String,
     description: String,
     requirements: String,
@@ -146,19 +146,19 @@ object Tool {
   object WithRelated {
     implicit val defaultToolWithRelatedFormat = jsonFormat16(WithRelated.apply)
 
-    def fromRecords(records: Seq[(Tool, Option[ToolTag], Option[ToolCategory])]): Iterable[Tool.WithRelated] = {
+    def fromRecords(records: Seq[(Tool, Option[ToolTag], Option[ToolCategory], Option[Organization])]): Iterable[Tool.WithRelated] = {
       val distinctTools = records.map(_._1).distinct
       val groupedTools = records.groupBy(_._1)
-      val tags = records.map(_._2)
 
       distinctTools map { tool =>
-        val (seqTags, seqCategories) = groupedTools(tool).map {
-          case (_, tag, category) => (tag, category)
-        }.unzip
+        val (seqTags, seqCategories, seqOrganizations) = groupedTools(tool).map {
+          case (_, tag, category, organization) => (tag, category, organization)
+        }.unzip3
 
         tool.withRelatedFromComponents(
           seqTags.flatten,
-          seqCategories.flatten
+          seqCategories.flatten,
+          seqOrganizations.flatten.headOption
         )
       }
     }
