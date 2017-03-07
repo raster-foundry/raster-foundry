@@ -57,7 +57,7 @@ export default (app) => {
          * @return {null} null
          */
         reset(sceneId, projectId) {
-            return this.updateOrCreate(sceneId, projectId, this.getDefaultColorCorrection());
+            return this.update(sceneId, projectId, this.getDefaultColorCorrection());
         }
 
         /** Function to obtain a scene's color correction for a given project
@@ -74,15 +74,13 @@ export default (app) => {
 
         /** Function to update or create color correction for scene/project
          *
-         * @TODO: Refactor once #880 is fixed and API is better
-         *
          * @param {string} sceneId id for scene to update/create color correction
          * @param {string} projectId id for project the scene's color correction belongs to
          * @param {object} data json data to send as payload
          * @return {Promise} response with data
          */
-        updateOrCreate(sceneId, projectId, data) {
-            return this.colorCorrect.create(
+        update(sceneId, projectId, data) {
+            return this.colorCorrect.update(
                 {sceneId: sceneId, projectId: projectId}, data
             ).$promise.then(() => {
                 return data;

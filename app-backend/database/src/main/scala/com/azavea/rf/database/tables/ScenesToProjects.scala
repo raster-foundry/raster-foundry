@@ -98,12 +98,21 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
   }
 
   /** Attach color correction parameters to a project/scene pairing */
-  def setColorCorrectParams(projectId: UUID, sceneId: UUID, colorCorrectParams: ColorCorrect.Params)(implicit database: DB) =
+  def setColorCorrectParams(projectId: UUID, sceneId: UUID, colorCorrectParams: ColorCorrect.Params)(implicit database: DB) = {
+    val sceneToProject = SceneToProject(sceneId, projectId, None, Some(colorCorrectParams))
     database.db.run {
       ScenesToProjects.insertOrUpdate(
-        SceneToProject(sceneId, projectId, None, Some(colorCorrectParams))
+        sceneToProject
+      )
+    }.map {
+      case 1 => sceneToProject
+      case count => throw new IllegalStateException(
+        s"Error updating scene's color correction: update result expected to be 1, was $count"
       )
     }
+  }
+
+
 
   /** Get color correction parameters from a project/scene pairing */
   def getColorCorrectParams(projectId: UUID, sceneId: UUID)(implicit database: DB) = {
@@ -116,7 +125,7 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
   }
 
   /** Get the complete mosaic definition for a giving project */
-  def getMosaicDefinition(projectId: UUID)(implicit database: DB): Future[Option[MosaicDefinition]] = {
+  def getMosaicDefinition(projectId: UUID)(implicit database: DB): Future[Option[Seq[MosaicDefinition]]] = {
     database.db.run {
       ScenesToProjects
         .filter(_.projectId === projectId)
@@ -124,7 +133,9 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
         .result
     }.map({ s2p =>
       if (s2p.length > 0)
-        Some(MosaicDefinition.fromScenesToProjects(s2p))
+        Some(s2p.map { sceneToProject =>
+          MosaicDefinition(sceneToProject.sceneId, sceneToProject.colorCorrectParams)
+        })
       else
         None
     })
