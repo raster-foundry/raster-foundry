@@ -665,6 +665,8 @@ paths:
       responses:
         200:
           description: An ordered list of scene IDs and corresponding color correction parameters
+          schema:
+            $ref: '#/definitions/MosaicDefinition'
   /projects/{uuid}/mosaic/{uuid2}:
     get:
       summary: A project/scene pairing\'s persisted color correction parameters
@@ -676,17 +678,23 @@ paths:
       responses:
         200:
           description: Color correction parameters
-    post:
+          schema:
+            $ref: '#/definitions/ColorCorrection'
+    put:
       summary: Associate posted color correction parameters with a project/scene pairing
       tags:
         - Imagery
       parameters:
         - $ref: '#/parameters/uuid'
         - $ref: '#/parameters/uuid2'
-      # TODO: fill in all possible responses
+        - name: updatedColorCorrection
+          description: Updated color corrections
+          in: body
+          schema:
+            $ref: '#/definitions/ColorCorrection'
       responses:
-        200:
-          description: SUCCESS
+        204:
+          description: Successfully updated color correction parameters
   /projects/{uuid}/order:
     get:
       summary: An ordered list of scene IDs belonging to the specified project
@@ -697,8 +705,8 @@ paths:
       # TODO: fill in all possible responses
       responses:
         200:
-          description: SUCCESS
-    post:
+          description: Order of scenes in project for mosaic purposes
+    put:
       summary: Create/update an ordering among scenes within the specified project
       tags:
         - Imagery
@@ -706,8 +714,8 @@ paths:
         - $ref: '#/parameters/uuid'
       # TODO: fill in all possible responses
       responses:
-        200:
-          description: SUCCESS
+        204:
+          description: Successfully updated order of scenes in project
   /images/:
     get:
       summary: Paginated list of project images
@@ -1430,6 +1438,56 @@ definitions:
       organizationId:
         type: string
         description: uuid for organization
+  MosaicDefinition:
+    type: object
+    properties:
+      sceneId:
+        type: string
+        format: uuid
+      colorCorrection:
+        $ref: '#/definitions/ColorCorrection'
+  ColorCorrection:
+    type: object
+    properties:
+      alpha:
+        type: number
+        format: float
+      beta:
+        type: number
+        format: float
+      redBand:
+        type: number
+        format: integer
+      greenBand:
+        type: number
+        format: integer
+      blueBand:
+        type: number
+        format: integer
+      redGamma:
+        type: number
+        format: float
+      greenGamma:
+        type: number
+        format: float
+      blueGamma:
+        type: number
+        format: float
+      brightness:
+        type: number
+        format: float
+      min:
+        type: number
+        format: float
+      max:
+        type: number
+        format: float
+      equalize:
+        type: boolean
+      contrast:
+        type: number
+        format: float
+
   TimeModelMixin:
     type: object
     readOnly: true
@@ -1490,7 +1548,7 @@ definitions:
       identities:
         type: array
         items:
-          type: object
+          type: string
       user_metadata:
         type: object
       picture:
@@ -1876,7 +1934,7 @@ definitions:
           metadataFiles:
             type: array
             items:
-              type: object
+              type: string
             description: |
               Metadata files that should be present for processing all
               images in a scene (e.g. relevant .mtl files or .xml)
@@ -2227,48 +2285,3 @@ definitions:
         $ref: '#/definitions/SceneParams'
       imageParams:
         $ref: '#/definitions/ImageParams'
-
-  # geometry types all lifted from:
-  # https://gist.github.com/idkw/fc35bb78c4bf08e47708f57b060996fe
-  # GPS License v3
-  Geometry:
-    type: object
-    description: GeoJSon geometry
-    discriminator: type
-    required:
-      - type
-    externalDocs:
-      url: http://geojson.org/geojson-spec.html#geometry-objects
-    properties:
-      type:
-        type: string
-        enum:
-        - Point
-        - LineString
-        - Polygon
-        - MultiPoint
-        - MultiLineString
-        - MultiPolygon
-        description: the geometry type
-
-  Point2D:
-    type: array
-    maxItems: 2
-    minItems: 2
-    items:
-      type: number
-
-  Polygon:
-    type: object
-    description: GeoJSon geometry
-    externalDocs:
-      url: http://geojson.org/geojson-spec.html#id4
-    allOf:
-      - $ref: "#/definitions/Geometry"
-      - properties:
-          coordinates:
-            type: array
-            items:
-              type: array
-              items:
-                $ref: '#/definitions/Point2D'
