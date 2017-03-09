@@ -28,7 +28,7 @@ class Projects(_tableTag: Tag) extends Table[Project](_tableTag, "projects")
                                       with TimestampFields
 {
   def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, name,
-           slugLabel, description, visibility, tags, extent, manualOrder) <> (Project.tupled, Project.unapply)
+           slugLabel, description, visibility, tileVisibility, tags, extent, manualOrder) <> (Project.tupled, Project.unapply)
 
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
   val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")
@@ -40,6 +40,7 @@ class Projects(_tableTag: Tag) extends Table[Project](_tableTag, "projects")
   val slugLabel: Rep[String] = column[String]("slug_label", O.Length(255,varying=true))
   val description: Rep[String] = column[String]("description")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
+  val tileVisibility: Rep[Visibility] = column[Visibility]("tile_visibility")
   val tags: Rep[List[String]] = column[List[String]]("tags", O.Length(2147483647,varying=false), O.Default(List.empty))
   val extent: Rep[Option[Projected[Geometry]]] = column[Option[Projected[Geometry]]]("extent", O.Length(2147483647,varying=false), O.Default(None))
   val manualOrder: Rep[Boolean] = column[Boolean]("manual_order", O.Default(true))
@@ -219,11 +220,11 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
       updateProject <- Projects.filter(_.id === projectId)
     } yield (
       updateProject.modifiedAt, updateProject.modifiedBy, updateProject.name, updateProject.description,
-      updateProject.visibility, updateProject.tags
+      updateProject.visibility, updateProject.tileVisibility, updateProject.tags
     )
     database.db.run {
       updateProjectQuery.update((
-        updateTime, user.id, project.name, project.description, project.visibility, project.tags
+        updateTime, user.id, project.name, project.description, project.visibility, project.tileVisibility, project.tags
       ))
     } map {
       case 1 => 1

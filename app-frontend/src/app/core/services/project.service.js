@@ -73,7 +73,7 @@ export default (app) => {
                     )[0];
                     return this.Project.create({
                         organizationId: publicOrg.id, name: name, description: '',
-                        visibility: 'PRIVATE', tags: []
+                        visibility: 'PRIVATE', tileVisibility: 'PRIVATE', tags: []
                     }).$promise;
                 },
                 (error) => {
