@@ -36,8 +36,8 @@ node {
       }
 
       // Plan and apply the current state of the instracture as
-      // outlined by the `develop` branch of the `raster-foundry-deployment`
-      // repository.
+      // outlined by the `env.BRANCH_NAME` branch of the
+      // `raster-foundry-deployment` repository.
       //
       // Also, use the container image revision referenced above to
       // cycle in the newest version of the application into Amazon
@@ -48,11 +48,21 @@ node {
         env.GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
 
         checkout scm: [$class: 'GitSCM',
-                       branches: [[name: 'develop']],
+                       branches: [[name: env.BRANCH_NAME]],
                        extensions: [[$class: 'RelativeTargetDirectory',
                                      relativeTargetDir: 'raster-foundry-deployment']],
                        userRemoteConfigs: [[credentialsId: '3bc1e878-814a-43d1-864e-2e378ebddb0f',
                                             url: 'https://github.com/azavea/raster-foundry-deployment.git']]]
+
+        // When a release branch is used, override `env.RF_SETTINGS_BUCKET`
+        // so that it uses the production infrastructure configuration
+        // settings.
+        if (env.BRANCH_NAME.startsWith('release/')) {
+          env.RF_SETTINGS_BUCKET = 'rasterfoundry-production-config-us-east-1'
+
+          def slackMessage = ":rasterfoundry: production deployment in-progress... <${env.BUILD_URL}|View Build>"
+          slackSend color: 'warning', message: slackMessage
+        }
 
         dir('raster-foundry-deployment') {
           wrap([$class: 'AnsiColorBuildWrapper']) {
