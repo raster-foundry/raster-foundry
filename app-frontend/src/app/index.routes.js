@@ -28,6 +28,7 @@ import accountTpl from './pages/settings/account/account.html';
 import tokensTpl from './pages/settings/tokens/tokens.html';
 import errorTpl from './pages/error/error.html';
 import shareTpl from './pages/share/share.html';
+import homeTpl from './pages/home/home.html';
 
 function librarySceneStates($stateProvider) {
     $stateProvider
@@ -290,6 +291,17 @@ function loginStates($stateProvider) {
         });
 }
 
+function homeStates($stateProvider) {
+    $stateProvider
+        .state('home',{
+            parent: 'root',
+            url: '/home',
+            templateUrl: homeTpl,
+            controller: 'HomeController',
+            controllerAs: '$ctrl'
+        });
+}
+
 function routeConfig($urlRouterProvider, $stateProvider) {
     'ngInject';
 
@@ -305,6 +317,7 @@ function routeConfig($urlRouterProvider, $stateProvider) {
     settingsStates($stateProvider);
     labStates($stateProvider);
     shareStates($stateProvider);
+    homeStates($stateProvider);
 
     $stateProvider
         .state('error', {

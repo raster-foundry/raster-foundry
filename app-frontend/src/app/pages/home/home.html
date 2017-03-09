@@ -1,0 +1,96 @@
+<div class="container column-stretch dashboard">
+  <div class="main">
+    <div class="content stack-sm">
+      <h2>Home</h2>
+    </div>
+    <div class="row content stack-sm">
+      <div class="column-8">
+        <div class="cta-row">
+          <div class="cta-item">
+            <h3 class="no-margin">Projects & Imports</h3>
+            <div class="cta-flex-text">
+              <strong>Import</strong> your own observation imagery or <strong>find</strong> publicly available imagery for use in a project.
+              Use the Editor to color correct and arrange imagery, creating the perfect basemap.
+            </div>
+            <div class="cta-button-row">
+              <a class="btn btn-primary" ui-sref="library.projects.list">View Projects</a>
+              <button class="btn btn-default">Create a new Project</button>
+            </div>
+            <div class="cta-text">
+              <a>Getting started with Projects</a>
+            </div>
+          </div>
+        </div>
+        <div class="cta-row">
+          <div class="cta-item">
+            <h3 class="no-margin">Tools</h3>
+            <div class="cta-flex-text">
+              Use the Raster Foundry Tools to build custom processing tasks and get the most out of your imagery.
+            </div>
+            <div class="cta-button-row">
+              <a class="btn btn-primary" ui-sref="market.search">Browse Tools</a>
+              <button class="btn btn-default">Create a new Tool</button>
+            </div>
+            <div class="cta-text">
+              <a>Getting started with Tools</a>
+            </div>
+          </div>
+          <div class="cta-item">
+            <h3 class="no-margin">Develop</h3>
+            <div class="cta-flex-text">
+              Leverage Raster Foundry's powerful API and infrastructure to create your own imagery application.
+            </div>
+            <div class="cta-button-row">
+              <a class="btn btn-primary" ui-sref="settings.tokens">Manage API Tokens</a>
+              <button class="btn btn-default">API Documentation</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="column-4">
+        <div class="content">
+          <div class="sidebar-section">
+            <div class="sidebar-row">
+              <h3 class="no-margin">Account</h3>
+            </div>
+            <div class="sidebar-row">
+              Hello, <strong>{{$ctrl.authService.profile().nickname}}</strong>
+            </div>
+            <div class="sidebar-row">
+              <a class="btn btn-primary" ui-sref="settings.profile">Account Settings</a>
+            </div>
+          </div>
+          <div class="sidebar-section">
+              <div class="sidebar-row">
+                <h3 class="no-margin">Help</h3>
+              </div>
+              <div class="sidebar-row">
+                <a>Raster Foundry guide</a>
+              </div>
+              <div class="sidebar-row">
+                <a>Getting started</a>
+              </div>
+              <div class="sidebar-row">
+                <a>Raster Foundry API Documentation</a>
+              </div>
+            </div>
+          </div>
+          <div class="sidebar-section">
+            <div class="sidebar-row">
+              <h3 class="no-margin">From our blog</h3>
+            </div>
+            <div class="sidebar-row">
+              <a>A blog post...</a>
+            </div>
+            <div class="sidebar-row">
+              <a>A blog post...</a>
+            </div>
+            <div class="sidebar-row">
+              <a>A blog post...</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
