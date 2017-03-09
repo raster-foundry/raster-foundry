@@ -2,7 +2,9 @@ package com.azavea.rf.common
 
 import scala.concurrent._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.collection.mutable
 import scala.util.{Success, Failure}
+import java.io.{PrintStream, StringWriter, ByteArrayOutputStream}
 
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
@@ -11,7 +13,9 @@ import akka.stream.Materializer
 import spray.json._
 import DefaultJsonProtocol._
 
-trait RollbarNotifier {
+import com.typesafe.scalalogging.LazyLogging
+
+trait RollbarNotifier extends LazyLogging {
 
   implicit val system: ActorSystem
   implicit val materializer: Materializer
@@ -34,15 +38,53 @@ trait RollbarNotifier {
     "data" -> JsObject(
       "environment" -> this.environment.toJson,
       "body" -> JsObject(
-        "message" -> JsObject(
-          "body" -> e.getMessage.toJson,
-          "stackTrace" -> (e.getStackTrace map { x: StackTraceElement => x.toString })
-            .mkString("\n")
-            .toJson
-        )
+        "trace_chain" -> {
+          val traces = mutable.ListBuffer.empty[JsObject]
+          var thr = e: Throwable
+          do {
+            traces += createTrace(thr)
+            thr = thr.getCause
+          } while (thr != null)
+
+          JsArray(traces.toVector)
+        }
       )
     )
   )
+
+  def createTrace(throwable: Throwable): JsObject = {
+    val frames = throwable.getStackTrace.map { element =>
+      val lineNo = if(element.getLineNumber > 0) Seq(("lineno" -> element.getLineNumber.toJson)) else Nil
+      val frame = Seq(
+          "class_name" -> element.getClassName.toJson,
+          "filename" -> element.getFileName.toJson,
+          "method" -> element.getMethodName.toJson
+      ) ++ lineNo
+      JsObject(Map(frame:_*))
+    }
+
+    val raw = try {
+      val baos = new ByteArrayOutputStream()
+      val ps = new PrintStream(baos)
+      throwable.printStackTrace(ps)
+      ps.close()
+      baos.close()
+      Some(baos.toString("UTF-8"))
+    } catch {
+      case e: Exception => {
+        logger.debug(s"Exception printing stack trace.", e)
+        None
+      }
+    }
+
+    JsObject(
+      "frames" -> JsArray(frames.toVector),
+      "exception" -> JsObject(
+          "class" -> throwable.getClass.getCanonicalName.toJson,
+          "message" -> throwable.getMessage.toJson),
+      "raw" -> raw.toJson
+    )
+  }
 
   def sendError(e: Exception): Unit = {
     val payload = this.buildRollbarPayload(e)
