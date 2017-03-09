@@ -132,6 +132,7 @@
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+  word-wrap: normal !important;
   padding-right: 1rem;
 
   p, span {

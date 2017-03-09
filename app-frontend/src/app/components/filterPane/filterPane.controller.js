@@ -1,17 +1,33 @@
 import _ from 'lodash';
 export default class FilterPaneController {
-    constructor(datasourceService) {
+    constructor(datasourceService, authService, $scope, $rootScope, $timeout) {
         'ngInject';
         this.datasourceService = datasourceService;
+        this.authService = authService;
+        this.$scope = $scope;
+        this.$rootScope = $rootScope;
+        this.$timeout = $timeout;
     }
 
     $onInit() {
         this.toggleDrag = {toggle: false, enabled: false};
-        this.initFilters();
+        this.$scope.$watch(() => this.authService.isLoggedIn, (isLoggedIn) => {
+            if (isLoggedIn) {
+                this.initFilters();
+            }
+        });
+        this.$scope.$watch('$ctrl.opened', (opened) => {
+            if (opened) {
+                this.$timeout(() => this.$rootScope.$broadcast('reCalcViewDimensions'), 50);
+            }
+        });
+        if (this.authService.isLoggedIn) {
+            this.initFilters();
+        }
     }
 
     close() {
-        this.onCloseClick();
+        this.opened = false;
     }
 
     onYearFiltersChange(id, minModel, maxModel) {

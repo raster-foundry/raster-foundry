@@ -18,14 +18,14 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import spray.json._
 import com.typesafe.scalalogging.LazyLogging
 
-
+import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 
 object SceneRoutes extends LazyLogging {
 
   def root: Route =
-    pathPrefix(JavaUUID).as(RfLayerId) { id =>
+    pathPrefix(JavaUUID) { id =>
       pathPrefix("rgb") {
         layerTileAndHistogram(id) { (futureMaybeTile, futureHist) =>
           imageRoute(futureMaybeTile, futureHist)
@@ -58,13 +58,13 @@ object SceneRoutes extends LazyLogging {
       }
     }
 
-  def layerTile(layer: RfLayerId) =
+  def layerTile(layer: UUID) =
     pathPrefix(IntNumber / IntNumber / IntNumber).tmap[Future[Option[MultibandTile]]] {
       case (zoom: Int, x: Int, y: Int) =>
         LayerCache.maybeTile(layer, zoom, SpatialKey(x, y))
     }
 
-  def layerTileAndHistogram(id: RfLayerId) =
+  def layerTileAndHistogram(id: UUID) =
     pathPrefix(IntNumber / IntNumber / IntNumber).tmap[(Future[Option[MultibandTile]], Future[Array[Histogram[Double]]])] {
       case (zoom: Int, x: Int, y: Int) =>
         val futureMaybeTile = LayerCache.maybeTile(id, zoom, SpatialKey(x, y))
@@ -75,7 +75,7 @@ object SceneRoutes extends LazyLogging {
   def pngAsHttpResponse(png: Png): HttpResponse =
     HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/png`), png.bytes))
 
-  def imageThumbnailRoute(id: RfLayerId) =
+  def imageThumbnailRoute(id: UUID) =
     colorCorrectParams { params =>
       parameters('size.as[Int].?(256)) { size =>
       complete {
@@ -95,7 +95,7 @@ object SceneRoutes extends LazyLogging {
     }
   }
 
-  def imageHistogramRoute(id: RfLayerId) =
+  def imageHistogramRoute(id: UUID) =
     colorCorrectParams { params =>
       parameters('size.as[Int].?(64)) { size =>
       import DefaultJsonProtocol._

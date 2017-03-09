@@ -4,7 +4,7 @@ In Raster Foundry imagery is ingested through a Spark job that collects
 together potentially many different sources and attempts to produce a
 single tile with multiple bands. The ingest process consumes a block of
 JSON which specifies the details of exactly how a given ingest should
-occur. Further detail can be found below.  
+occur. Further detail can be found below.
 
 ## Table of Contents
 
@@ -18,14 +18,14 @@ occur. Further detail can be found below.
 Each ingest is kicked off with `spark-submit` rather than `java -jar` so
 that all jars necessary for distributed processing are provided at
 runtime. This means, however, that a working Spark installation must be
-available wherever the process is to be run.  
+available wherever the process is to be run.
 
 ### Building the Jar
 
 Through docker, the environment needed to build and run the
 ingest are provided. To build the ingest jar, simply run
 `scripts/cibuild` or directly call
-`docker-compose run --no-deps --rm --entrypoint ./sbt app-server ingest/assembly`.  
+`docker-compose run --no-deps --rm --entrypoint ./sbt api-server ingest/assembly`.
 
 ### Running an Ingest
 
@@ -33,7 +33,7 @@ Once the ingest jar has been built, the ingest can be run locally in a
 couple of different ways. In the demonstration that follows, we'll use
 `localJob.json` which attempts a filesystem based ingest - both source
 and destination - but which requires no special credentials and runs
-fairly quickly due to the limited size of the source tiles.  
+fairly quickly due to the limited size of the source tiles.
 
 A one-off local ingest which attempts to carry out the entire ingest job
 inside the driver (rather than serializing portions of the program for
@@ -49,7 +49,7 @@ To carry out a more complex (and production-like) ingest, multiple
 docker containers can be used to simulate a real, distributed cluster.
 First, we'll need to ensure that the cluster is running and is ready to
 take jobs. Note the docker-compose file selection. We must do this to
-ensure that Spark is avalaible.  
+ensure that Spark is avalaible.
 
 ```bash
 docker-compose -f docker-compose.spark.yml up spark-master spark-worker
@@ -73,7 +73,7 @@ To run the slower S3 based ingest (input and output) defined in
 `awsJob.json` within the ingest subproject, `r/localJob/awsJob/g` the
 above and consider boosting the available memory on driver and executor
 above `2G`. Larger jobs will almost certainly require more memory than
-is necessary for the ingest described above.  
+is necessary for the ingest described above.
 
 ## Example JSON
 
@@ -98,6 +98,17 @@ the ingest subproject](../../app-backend/ingest/src/test/resources/awsJob.json):
         "id": "8436f7e9-b7f7-4d4f-bda8-76b32c356dff",
         /** Layer Output Definition */
         "output": {
+            /**
+              * NoData Pattern
+              * @type Object
+              */
+            "ndPattern": {
+                /**
+                  * Band/cell value pattern which specifies NoData cells
+                  * @type Map[Number, Number] (the key is serialized as a string by JSON convention)
+                  */
+                "pattern": { "1": 3.3, "2": 5.3 }
+            },
             /**
               * Output Layer URI
               * @type String

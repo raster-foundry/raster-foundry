@@ -26,7 +26,9 @@ class Datasources(_tableTag: Tag) extends Table[Datasource](_tableTag, "datasour
     with OrgFkVisibleFields
 {
   def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, organizationId, name,
-           visibility, colorCorrection, extras) <> (Datasource.tupled, Datasource.unapply)
+           visibility, colorCorrection, composites, extras) <> (
+    Datasource.tupled, Datasource.unapply
+  )
 
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
   val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")
@@ -37,6 +39,7 @@ class Datasources(_tableTag: Tag) extends Table[Datasource](_tableTag, "datasour
   val name: Rep[String] = column[String]("name")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
   val colorCorrection: Rep[Map[String, Any]] = column[Map[String, Any]]("color_correction", O.Length(2147483647,varying=false))
+  val composites: Rep[Map[String, Any]] = column[Map[String, Any]]("composites", O.Length(2147483647, varying=false))
   val extras: Rep[Map[String, Any]] = column[Map[String, Any]]("extras", O.Length(2147483647,varying=false))
 
   lazy val organizationsFk = foreignKey("datasources_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
@@ -96,7 +99,7 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
     *
     * @param datasourceId UUID ID of datasource to remove
     */
-  def deleteDatasource(datasourceId: UUID) = 
+  def deleteDatasource(datasourceId: UUID) =
     Datasources.filter(_.id === datasourceId).delete
 
 /** Update a datasource @param datasource Datasource to use for update
@@ -115,6 +118,7 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
       updateDatasource.name,
       updateDatasource.visibility,
       updateDatasource.colorCorrection,
+      updateDatasource.composites,
       updateDatasource.extras
     )
 
@@ -125,6 +129,7 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
       datasource.name,
       datasource.visibility,
       datasource.colorCorrection,
+      datasource.composites,
       datasource.extras
     )
   }

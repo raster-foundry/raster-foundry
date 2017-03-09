@@ -4,6 +4,7 @@ export default {
     templateUrl: diagramContainerTpl,
     controller: 'DiagramContainerController',
     bindings: {
-        onPreview: '&'
+        onPreview: '&',
+        onShare: '&'
     }
 };

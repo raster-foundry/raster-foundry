@@ -5,9 +5,9 @@
         </encoder>
     </appender>
 
-    <logger name="scalacache" level="${APP_SERVER_LOG_LEVEL:-info}" />
+    <logger name="com.azavea.rf" level="${RF_LOG_LEVEL:-INFO}"/>
 
-    <root level="${APP_SERVER_LOG_LEVEL:-info}">
+    <root level="INFO">
         <appender-ref ref="stdout"/>
     </root>
 </configuration>

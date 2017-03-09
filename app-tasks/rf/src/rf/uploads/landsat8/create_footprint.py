@@ -24,7 +24,7 @@ def create_footprints(csv_row):
     lr = (csv_row['lowerRightCornerLongitude'], csv_row['lowerRightCornerLatitude'])
     ul = (csv_row['upperLeftCornerLongitude'], csv_row['upperLeftCornerLatitude'])
     ur = (csv_row['upperRightCornerLongitude'], csv_row['upperRightCornerLatitude'])
-    src_coords = [ll, lr, ur, ul]
+    src_coords = [(float(c[0]), float(c[1])) for c in [ll, lr, ur, ul]]
 
     min_x = min([coord[0] for coord in src_coords])
     min_y = min([coord[1] for coord in src_coords])
@@ -34,15 +34,12 @@ def create_footprints(csv_row):
     transformed_coords = [[
         [transform(src_proj, target_proj, coord[0], coord[1]) for coord in src_coords]
     ]]
-
-    data_geojson = {'type': 'MultiPolygon', 'coordinates': transformed_coords}
-    data_footprint = Footprint(organization, data_geojson)
+    data_footprint = Footprint(organization, transformed_coords)
 
     transformed_tile_coords = [[
         [transform(src_proj, target_proj, coord[0], coord[1]) for coord in
          [(min_x, min_y), (max_x, min_y), (max_x, max_y), (min_x, max_y)]]
     ]]
-    tile_geojson = {'type': 'MultiPolygon', 'coordinates': transformed_tile_coords}
-    tile_footprint = Footprint(organization, tile_geojson)
+    tile_footprint = Footprint(organization, transformed_tile_coords)
 
     return tile_footprint, data_footprint

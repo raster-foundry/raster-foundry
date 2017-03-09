@@ -1,25 +1,10 @@
-import base64
-from datetime import datetime, timedelta
-import requests
-import jwt
 import json
+import logging
 import os
 
+from rf.utils.io import get_session
 
-def get_session():
-    """Helper method to create a requests Session"""
-
-    jwt_secret = base64.urlsafe_b64decode(os.getenv('AUTH0_CLIENT_SECRET'))
-    claims = {
-        'sub': 'rf|airflow-user',
-        'iat': datetime.utcnow(),
-        'exp': datetime.utcnow() + timedelta(hours=3)
-    }
-    encoded_jwt = jwt.encode(claims, jwt_secret, algorithm='HS256')
-    session = requests.Session()
-
-    session.headers.update({'Authorization': 'Bearer {}'.format(encoded_jwt)})
-    return session
+logger = logging.getLogger(__name__)
 
 
 class BaseModel(object):
@@ -41,7 +26,7 @@ class BaseModel(object):
         response = session.get(url)
         response.raise_for_status()
 
-        return cls.from_json(response.json())
+        return cls.from_dict(response.json())
 
     @classmethod
     def from_dict(cls, d):
@@ -61,5 +46,20 @@ class BaseModel(object):
         url = '{HOST}{URL_PATH}'.format(HOST=self.HOST, URL_PATH=self.URL_PATH)
         session = get_session()
         response = session.post(url, json=self.to_dict())
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except:
+            logger.exception('Unable to create object via API: %s', response.text)
+            raise
         return self.from_dict(response.json())
+
+    def update(self):
+        url = '{HOST}{URL_PATH}{id}'.format(HOST=self.HOST, URL_PATH=self.URL_PATH, id=self.id)
+        session = get_session()
+        response = session.put(url, json=self.to_dict())
+        try:
+            response.raise_for_status()
+        except:
+            logger.exception('Unable to update scene: %s', response.text)
+            raise
+        return response

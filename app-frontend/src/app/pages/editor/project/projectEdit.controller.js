@@ -2,7 +2,8 @@ const Map = require('es6-map');
 
 export default class ProjectEditController {
     constructor( // eslint-disable-line max-params
-        $scope, $rootScope, $location, $state, mapService, projectService, layerService, $uibModal
+        $scope, $rootScope, $location, $state, mapService, projectService, layerService, $uibModal,
+        mapUtilsService
     ) {
         'ngInject';
         this.$state = $state;
@@ -11,6 +12,7 @@ export default class ProjectEditController {
         this.$rootScope = $rootScope;
         this.projectService = projectService;
         this.layerService = layerService;
+        this.mapUtilsService = mapUtilsService;
         this.$uibModal = $uibModal;
         this.getMap = () => mapService.getMap('project');
 
@@ -36,6 +38,7 @@ export default class ProjectEditController {
                 this.projectService.query({id: this.projectId}).then(
                     (project) => {
                         this.project = project;
+                        this.fitProjectExtent();
                         this.loadingProject = false;
                     },
                     () => {
@@ -48,8 +51,6 @@ export default class ProjectEditController {
                 this.selectProjectModal();
             }
         }
-
-        this.$scope.$watch('$ctrl.sceneList', this.fitAllScenes.bind(this));
 
         this.$scope.$on('$destroy', () => {
             if (this.activeModal) {
@@ -91,24 +92,23 @@ export default class ProjectEditController {
         }
     }
 
-    fitSelectedScenes() {
-        this.fitScenes(Array.from(this.selectedScenes.values()));
-    }
-
     bringSelectedScenesToFront() {
         this.cachedZIndices = new Map();
         for (const [id, l] of this.selectedLayers) {
-            l.getSceneTileLayer().then((tiles) => {
-                this.cachedZIndices.set(id, tiles.options.zIndex);
-                tiles.bringToFront();
-            });
+            let tiles = l.getSceneTileLayer();
+            this.cachedZIndices.set(id, tiles.options.zIndex);
+            tiles.bringToFront();
         }
     }
 
-    fitAllScenes() {
-        if (this.sceneList.length) {
-            this.fitScenes(this.sceneList);
-        }
+    fitProjectExtent() {
+        this.getMap().then(m => {
+            this.mapUtilsService.fitMapToProject(m, this.project);
+        });
+    }
+
+    fitSelectedScenes() {
+        this.fitScenes(Array.from(this.selectedScenes.values()));
     }
 
     fitScenes(scenes) {
@@ -120,9 +120,10 @@ export default class ProjectEditController {
 
     getSceneList() {
         this.sceneRequestState = {loading: true};
-        this.projectService.getAllProjectScenes(
+        this.sceneListQuery = this.projectService.getAllProjectScenes(
             {projectId: this.projectId}
-        ).then(
+        );
+        this.sceneListQuery.then(
             (allScenes) => {
                 this.sceneList = allScenes;
                 for (const scene of this.sceneList) {

@@ -1,14 +1,36 @@
+/* globals Auth0Lock */
+import assetLogo from '../../../assets/images/logo-raster-foundry.png';
 export default (app) => {
     class AuthService {
         constructor( // eslint-disable-line max-params
-            lock, store, jwtHelper, $q, featureFlagOverrides, featureFlags
+            lock, jwtHelper, $q, featureFlagOverrides, featureFlags,
+            $state, APP_CONFIG, localStorage
         ) {
             this.lock = lock;
-            this.store = store;
+            this.localStorage = localStorage;
             this.jwtHelper = jwtHelper;
             this.$q = $q;
+            this.$state = $state;
             this.featureFlags = featureFlags;
             this.featureFlagOverrides = featureFlagOverrides;
+
+            let options = {
+                initialScreen: 'forgotPassword',
+                prefill: {
+                    email: this.profile() && this.profile().email
+                },
+                allowLogin: false,
+                closable: true,
+                auth: {
+                    redirect: false,
+                    sso: true
+                },
+                theme: {
+                    logo: assetLogo,
+                    primaryColor: '#5e509b'
+                }
+            };
+            this.resetLock = new Auth0Lock(APP_CONFIG.clientId, APP_CONFIG.auth0Domain, options);
 
             lock.on('authenticated', this.onLogin.bind(this));
             lock.on('authorization_error', this.onLoginFail.bind(this));
@@ -19,14 +41,20 @@ export default (app) => {
                 this.lock.show();
             } else if (!this.jwtHelper.isTokenExpired(token)) {
                 this.onLogin({idToken: token});
+            } else if (this.jwtHelper.isTokenExpired(token)) {
+                this.localStorage.remove('item_token');
+                this.$state.go('login');
             } else {
-                this.store.remove('item_token');
                 this.lock.show();
             }
         }
 
+        changePassword() {
+            this.resetLock.show();
+        }
+
         onLogin(authResult) {
-            this.store.set('id_token', authResult.idToken);
+            this.localStorage.set('id_token', authResult.idToken);
 
             this.lock.getProfile(authResult.idToken, (error, profile) => {
                 if (error) {
@@ -39,7 +67,7 @@ export default (app) => {
                 }
                 /* eslint-enable no-undef */
 
-                this.store.set('profile', profile);
+                this.localStorage.set('profile', profile);
                 this.featureFlagOverrides.setUser(profile.user_id);
                 let userFlags = profile.user_metadata && profile.user_metadata.featureFlags ?
                     profile.user_metadata.featureFlags : [];
@@ -57,6 +85,7 @@ export default (app) => {
                 this.promise.resolve(authResult);
                 delete this.promise;
             }
+            this.$state.go('browse');
         }
 
         onLoginFail(error) {
@@ -67,18 +96,18 @@ export default (app) => {
         }
 
         profile() {
-            return this.store.get('profile');
+            return this.localStorage.get('profile');
         }
 
         token() {
-            return this.store.get('id_token', this.token);
+            return this.localStorage.get('id_token', this.token);
         }
 
         logout() {
-            this.store.remove('id_token');
-            this.store.remove('profile');
+            this.localStorage.remove('id_token');
+            this.localStorage.remove('profile');
             this.isLoggedIn = false;
-            this.login();
+            this.$state.go('login');
         }
 
         createRefreshToken(name) {

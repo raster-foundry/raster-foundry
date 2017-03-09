@@ -1,24 +1,29 @@
 package com.azavea.rf.common
 
-import scala.concurrent.Future
+import com.azavea.rf.database.Database
+import com.azavea.rf.database.tables._
+import com.azavea.rf.datamodel._
+
 import akka.http.scaladsl.model.headers.{HttpChallenge, _}
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.AuthenticationFailedRejection.CredentialsRejected
-import akka.http.scaladsl.server.directives.ParameterDirectives.ParamMagnet
 import akka.http.scaladsl.server.Directives._
-import de.choffmeister.auth.common.JsonWebToken
-import com.azavea.rf.database.tables._
-import com.azavea.rf.database.Database
-import com.azavea.rf.datamodel._
+import akka.http.scaladsl.server.directives.ParameterDirectives.ParamMagnet
 import com.typesafe.config.ConfigFactory
+import org.json4s._
+import pdi.jwt.{Jwt, JwtJson4s, JwtAlgorithm}
+
+import scala.util.{Success,Failure}
+import scala.concurrent.Future
 
 trait Authentication extends Directives {
 
   implicit def database: Database
+  implicit val formats = DefaultFormats
 
   val configAuth = ConfigFactory.load()
   private val auth0Config = configAuth.getConfig("auth0")
-  private val auth0Secret = java.util.Base64.getUrlDecoder.decode(auth0Config.getString("secret"))
+  private val auth0Secret = auth0Config.getString("secret")
 
   // Default user returned when no credentials are provided
   lazy val anonymousUser:Future[Option[User]] = Users.getUserById("default")
@@ -31,45 +36,38 @@ trait Authentication extends Directives {
     */
   def authenticate: Directive1[User] = {
     validateTokenHeader.flatMap { validToken =>
-      validToken.claimAsString("sub") match {
-        case Right(sub) =>
+      JwtJson4s.decodeJson(validToken, auth0Secret, Seq(JwtAlgorithm.HS256)) match {
+        case Success(parts) =>
+          val sub = (parts \ "sub").extract[String]
+
           onSuccess(Users.getUserById(sub)).flatMap {
             case Some(user) => provide(user)
             case None => onSuccess(Users.createUserWithAuthId(sub)).flatMap {
               user => provide(user)
             }
           }
-        case Left(_) => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
+        case Failure(_) => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
       }
     }
   }
 
   /**
-    * Validates a token parameter and optionally returns it if validd, else rejects request
+    * Validates a token parameter and optionally returns it if valid, else rejects request
     */
-  def validateTokenParameter: Directive1[JsonWebToken] = {
+  def validateTokenParameter: Directive1[String] = {
     parameter('token).flatMap { token =>
-
-      JsonWebToken.read(token, auth0Secret) match {
-        case Right(token) => {
-          provide(token)
-        }
-        case _ => {
-          reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
-        }
-      }
+      if(Jwt.isValid(token, auth0Secret, Seq(JwtAlgorithm.HS256))) { provide(token) }
+      else { reject(AuthenticationFailedRejection(CredentialsRejected, challenge)) }
     }
   }
 
   /**
     * Validates token header, if valid returns token else rejects request
     */
-  def validateTokenHeader: Directive1[JsonWebToken] = {
+  def validateTokenHeader: Directive1[String] = {
     extractTokenHeader.flatMap { token =>
-      JsonWebToken.read(token, auth0Secret) match {
-        case Right(token) => provide(token)
-        case _ => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
-      }
+      if(Jwt.isValid(token, auth0Secret, Seq(JwtAlgorithm.HS256))) { provide(token) }
+      else { reject(AuthenticationFailedRejection(CredentialsRejected, challenge)) }
     }
   }
 

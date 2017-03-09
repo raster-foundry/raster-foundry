@@ -8,6 +8,7 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.models import DAG
 
 from rf.uploads.landsat8 import find_landsat8_scenes, create_landsat8_scenes
+from rf.utils.exception_reporting import wrap_rollbar
 
 rf_logger = logging.getLogger('rf')
 ch = logging.StreamHandler()
@@ -18,21 +19,24 @@ rf_logger.addHandler(ch)
 
 logger = logging.getLogger(__name__)
 
-start_date = datetime(2016, 11, 6)
 
+schedule = None if os.getenv('ENVIRONMENT') == 'development' else '@daily'
+start_date = datetime(2016, 11, 6)
 args = {
     'owner': 'raster-foundry',
     'start_date': start_date
 }
 
+
 dag = DAG(
     dag_id='find_landsat8_scenes',
     default_args=args,
-    schedule_interval='@daily',
+    schedule_interval=schedule,
     concurrency=int(os.getenv('AIRFLOW_DAG_CONCURRENCY', 24))
 )
 
 
+@wrap_rollbar
 def import_landsat8_scenes(*args, **kwargs):
     """Find new Landsat 8 scenes and kick off imports
 

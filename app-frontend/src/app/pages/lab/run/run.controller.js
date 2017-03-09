@@ -2,7 +2,8 @@
 
 export default class LabRunController {
     constructor( // eslint-disable-line max-params
-        $scope, $timeout, $element, authService, $uibModal, mapService, projectService) {
+        $scope, $timeout, $element, authService, $uibModal, mapService, projectService,
+        mapUtilsService) {
         'ngInject';
         this.$scope = $scope;
         this.$timeout = $timeout;
@@ -10,15 +11,8 @@ export default class LabRunController {
         this.$uibModal = $uibModal;
         this.authService = authService;
         this.projectService = projectService;
+        this.mapUtilsService = mapUtilsService;
         this.getMap = () => mapService.getMap('lab-run-preview');
-
-        $scope.$watch('$ctrl.isShowingPreview', () => {
-            this.getMap().then((mapWrapper) => {
-                $timeout(() => {
-                    mapWrapper.map.invalidateSize();
-                }, 50);
-            });
-        });
     }
 
     $onInit() {
@@ -88,18 +82,17 @@ export default class LabRunController {
     getNodeUrl(node) {
         let token = this.authService.token();
         if (this.inputs.length === 2 && this.inputs[0].id && this.inputs[1].id) {
-            if (node.part === 'input') {
+            if (node.tag.startsWith('input')) {
                 let tag = new Date().getTime();
-                return `/tiles/${this.inputs[node.input].organizationId}` +
-                       '/rf_airflow-user' +
-                       `/project/${this.inputs[node.input].id}/{z}/{x}/{y}/` +
+                let inputNum = node.tag.split('_')[1];
+                return `/tiles/${this.inputs[inputNum].id}/{z}/{x}/{y}/` +
                        `?tag=${tag}&token=${token}`;
             }
             let base =
                 '/tiles/tools/dfac6307-b5ef-43f7-beda-b9f208bb7726/ndvi-diff-tool/{z}/{x}/{y}';
             let lc80 = `LC8_0=${this.inputs[0].id}`;
             let lc81 = `LC8_1=${this.inputs[1].id}`;
-            let part = `part=${node.part}`;
+            let part = `part=${node.tag}`;
             let class0 = `class0=${this.thresholds.before.toFixed(2)}:0;99999999:1.0`;
             let class1 = `class1=${this.thresholds.after.toFixed(2)}:0;99999999:1.0`;
             let cm =
@@ -178,7 +171,7 @@ export default class LabRunController {
                     if (!this.alreadyPreviewed) {
                         this.alreadyPreviewed = true;
                         this.$timeout(() => {
-                            this.fitSceneList(this.inputs[0].id);
+                            this.fitProjectExtent(this.inputs[1]);
                         });
                     }
                 });
@@ -186,27 +179,17 @@ export default class LabRunController {
         }
     }
 
-    fitSceneList(projectId) {
-        this.sceneRequestState = {loading: true};
-        this.projectService.getAllProjectScenes(
-            {projectId: projectId}
-        ).then(
-            (allScenes) => {
-                this.sceneList = allScenes;
-                this.fitScenes(this.sceneList);
-            },
-            (error) => {
-                this.sceneRequestState.errorMsg = error;
-            }
-        ).finally(() => {
-            this.sceneRequestState.loading = false;
-        });
+    shareNode(data) {
+        if (data) {
+            let tileUrl = this.getNodeUrl(data);
+            this.publishModal(tileUrl);
+        }
     }
 
-    fitScenes(scenes) {
-        this.getMap().then((map) =>{
-            let sceneFootprints = scenes.map((scene) => scene.dataFootprint);
-            map.map.fitBounds(L.geoJSON(sceneFootprints).getBounds());
+    fitProjectExtent(project) {
+        this.getMap().then(m => {
+            m.map.invalidateSize();
+            this.mapUtilsService.fitMapToProject(m, project);
         });
     }
 
@@ -234,5 +217,22 @@ export default class LabRunController {
             this.onParameterChange();
             this.$scope.$evalAsync();
         });
+    }
+
+    publishModal(tileUrl) {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        if (tileUrl) {
+            this.activeModal = this.$uibModal.open({
+                component: 'rfPublishModal',
+                resolve: {
+                    tileUrl: () => this.projectService.getBaseURL() + tileUrl,
+                    noDownload: () => true
+                }
+            });
+        }
+        return this.activeModal;
     }
 }

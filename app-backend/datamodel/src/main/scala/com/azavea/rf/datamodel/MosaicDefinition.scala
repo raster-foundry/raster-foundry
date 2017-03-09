@@ -5,15 +5,14 @@ import spray.json.DefaultJsonProtocol._
 
 import java.util.UUID
 
-case class MosaicDefinition(definition: Seq[(UUID, Option[ColorCorrect.Params])])
+case class MosaicDefinition(sceneId: UUID, colorCorrections: Option[ColorCorrect.Params])
 
 object MosaicDefinition {
-  implicit val defaultMosaicDefinitionFormat = jsonFormat1(MosaicDefinition.apply _)
+  implicit val defaultMosaicDefinitionFormat = jsonFormat2(MosaicDefinition.apply)
 
-  def fromScenesToProjects(scenesToProjects: Seq[SceneToProject]): MosaicDefinition =
-    MosaicDefinition(
-      scenesToProjects.map { case SceneToProject(sceneId, projectId, sceneOrder, colorCorrection) =>
-        sceneId -> colorCorrection
-      }
-    )
+  def fromScenesToProjects(scenesToProjects: Seq[SceneToProject]): Seq[MosaicDefinition] = {
+    scenesToProjects.map { case SceneToProject(sceneId, projectId, sceneOrder, colorCorrection) =>
+      MosaicDefinition(sceneId, colorCorrection)
+    }
+  }
 }

@@ -250,6 +250,18 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     }
   }
 
+  /** Filter scenes based on scene query parameters
+    *
+    * For reuse in other tables that need to filter scenes, e.g., projects
+    */
+  def filterScenes(combinedParams: CombinedSceneQueryParams) = {
+    Scenes.filterByOrganization(combinedParams.orgParams)
+      .filterByUser(combinedParams.userParams)
+      .filterByTimestamp(combinedParams.timestampParams)
+      .filterBySceneParams(combinedParams.sceneParams)
+      .filterByImageParams(combinedParams.imageParams)
+  }
+
   /** Get scenes given a page request and query parameters */
   def listScenes(pageRequest: PageRequest, combinedParams: CombinedSceneQueryParams, user: User)
                 (implicit database: DB): Future[PaginatedResponse[Scene.WithRelated]] = {
@@ -264,12 +276,8 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     } map { Scene.WithRelated.fromRecords }
 
     val totalScenesQueryResult = database.db.run {
-      val action = Scenes
-        .filterByOrganization(combinedParams.orgParams)
-        .filterByUser(combinedParams.userParams)
-        .filterByTimestamp(combinedParams.timestampParams)
-        .filterBySceneParams(combinedParams.sceneParams)
-        .filterByImageParams(combinedParams.imageQueryParameters)
+      val action = Scenes.filterScenes(combinedParams)
+        .filterUserVisibility(user)
         .length
         .result
       logger.debug(s"Total Query for scenes -- SQL: ${action.statements.headOption}")
@@ -285,15 +293,6 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
       PaginatedResponse(totalScenes, hasPrevious, hasNext,
         pageRequest.offset, pageRequest.limit, scenes.toSeq)
     }
-  }
-
-  def listScenesAutoOrder(projectId: UUID)(implicit database: DB) = database.db.run {
-    Scenes
-      .filter { scene =>
-        scene.id in ScenesToProjects.filter(_.projectId === projectId).map(_.sceneId)
-      }.sortBy { scene =>
-        (scene.acquisitionDate.desc.nullsLast, scene.cloudCover.desc.nullsLast)
-      }.result
   }
 
   def sceneGrid(params: CombinedGridQueryParams, bboxes: Seq[Projected[Polygon]])(implicit database: DB) = {
@@ -386,7 +385,7 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
       updateScene.modifiedAt, updateScene.modifiedBy, updateScene.ingestSizeBytes,
       updateScene.datasource, updateScene.cloudCover,  updateScene.acquisitionDate,
       updateScene.tags, updateScene.sceneMetadata, updateScene.thumbnailStatus,
-      updateScene.boundaryStatus, updateScene.name, updateScene.tileFootprint,
+      updateScene.boundaryStatus, updateScene.ingestStatus, updateScene.name, updateScene.tileFootprint,
       updateScene.dataFootprint, updateScene.metadataFiles, updateScene.ingestLocation
     )
     database.db.run {
@@ -394,7 +393,7 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
         updateTime, user.id, scene.ingestSizeBytes,
         scene.datasource, scene.filterFields.cloudCover, scene.filterFields.acquisitionDate,
         scene.tags, scene.sceneMetadata, scene.statusFields.thumbnailStatus,
-        scene.statusFields.boundaryStatus, scene.name, scene.tileFootprint,
+        scene.statusFields.boundaryStatus, scene.statusFields.ingestStatus, scene.name, scene.tileFootprint,
         scene.dataFootprint, scene.metadataFiles, scene.ingestLocation
       ))
     } map {
@@ -402,14 +401,22 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
       case _ => throw new IllegalStateException("Error while updating scene")
     }
   }
+
+  def getScenesFootprints(sceneIds: Seq[UUID]):DBIO[Seq[Option[Projected[Geometry]]]] = {
+    Scenes
+      .filter(scene => scene.id inSet sceneIds)
+      .map(_.dataFootprint)
+      .result
+  }
 }
+
 
 
 class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) extends LazyLogging {
   import Scenes.datePart
 
 
-  /** TODO: it isn't currently clear how to implement enum type ordering. 
+  /** TODO: it isn't currently clear how to implement enum type ordering.
     *
     * IngestStatus has a toInt method to facilitate, but Slick is complaining
     */
@@ -571,7 +578,7 @@ class ScenesJoinQuery[M, U, C[_]](sceneJoin: Scenes.JoinQuery) {
       .filterByUser(combinedParams.userParams)
       .filterByTimestamp(combinedParams.timestampParams)
       .filterBySceneParams(combinedParams.sceneParams)
-      .filterByImageParams(combinedParams.imageQueryParameters)
+      .filterByImageParams(combinedParams.imageParams)
       .sort(pageRequest.sort)
       .drop(pageRequest.offset * pageRequest.limit)
       .take(pageRequest.limit)

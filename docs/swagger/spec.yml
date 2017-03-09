@@ -70,6 +70,38 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  /users/me/:
+    get:
+      summary: Get logged in user profile
+      tags:
+        - Users
+      responses:
+        200:
+          description: Profile found
+          schema:
+            $ref: '#/definitions/Auth0User'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    patch:
+      summary: Update user profile
+      parameters:
+        - name: Profile
+          in: body
+          schema:
+            $ref: '#/definitions/Auth0UserProfile'
+      tags:
+        - Users
+      responses:
+        200:
+          description: Profile updated
+          schema:
+            $ref: '#/definitions/Auth0User'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
   /users/{uuid}/:
     get:
       summary: Get a single user
@@ -244,7 +276,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
     put:
-      summary: Update a user's role
+      summary: Update a user\'s role
       tags:
         - Users
       parameters:
@@ -278,6 +310,10 @@ paths:
         - Datasources
       parameters:
         - $ref: '#/parameters/name'
+      # TODO: fill in all possible responses
+      responses:
+        200:
+          description: SUCCESS
   /scenes/:
     get:
       summary: Lists paginated scenes that a user has access to
@@ -586,7 +622,6 @@ paths:
       tags:
         - Imagery
       parameters:
-        - $ref: '#/parameters/uuid'
         - name: scenes
           in: body
           required: true
@@ -596,38 +631,91 @@ paths:
             items:
               type: string
               format: uuid
+        - $ref: '#/parameters/uuid'
       responses:
         204:
           description: No content, delete successful
-  /projects/{uuid}/mosaic/:
-    get:
-      summary: List of a project's scene IDs and their associated color correction parameters to be used in mosaicing
+  /projects/{uuid}/scenes/bulk-add-from-query/:
+    post:
+      summary: Create a new association between a set of scenes and this project
       tags:
         - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - name: combinedSceneQueryParameters
+          description: combined query parameters for finding scenes to add to this project
+          in: body
+          schema:
+            $ref: '#/definitions/CombinedSceneQueryParams'
+      responses:
+        201:
+          description: List of scenes added to project
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Scene'
+
+  /projects/{uuid}/mosaic/:
+    get:
+      summary: List of a project\'s scene IDs and their associated color correction parameters to be used in mosaicing
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
       responses:
         200:
           description: An ordered list of scene IDs and corresponding color correction parameters
-  /projects/{uuid}/mosaic/{uuid}:
+          schema:
+            $ref: '#/definitions/MosaicDefinition'
+  /projects/{uuid}/mosaic/{uuid2}:
     get:
-      summary: A project/scene pairing's persisted color correction parameters
+      summary: A project/scene pairing\'s persisted color correction parameters
       tags:
         - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/uuid2'
       responses:
         200:
           description: Color correction parameters
-    post:
+          schema:
+            $ref: '#/definitions/ColorCorrection'
+    put:
       summary: Associate posted color correction parameters with a project/scene pairing
       tags:
-        -Imagery
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/uuid2'
+        - name: updatedColorCorrection
+          description: Updated color corrections
+          in: body
+          schema:
+            $ref: '#/definitions/ColorCorrection'
+      responses:
+        204:
+          description: Successfully updated color correction parameters
   /projects/{uuid}/order:
     get:
       summary: An ordered list of scene IDs belonging to the specified project
       tags:
         - Imagery
-    post:
+      parameters:
+        - $ref: '#/parameters/uuid'
+      # TODO: fill in all possible responses
+      responses:
+        200:
+          description: Order of scenes in project for mosaic purposes
+    put:
       summary: Create/update an ordering among scenes within the specified project
       tags:
         - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      # TODO: fill in all possible responses
+      responses:
+        204:
+          description: Successfully updated order of scenes in project
   /images/:
     get:
       summary: Paginated list of project images
@@ -969,6 +1057,66 @@ paths:
       responses:
         204:
           description: Successfully deleted a tool category
+  /tool-runs/:
+    get:
+      summary: Retrieve a list of tool runs
+      tags:
+        - Lab
+      parameters:
+        - $ref: '#/parameters/project'
+        - $ref: '#/parameters/tool'
+        - $ref: '#/parameters/createdBy'
+      responses:
+        200:
+          description: Paginated list of tool runs
+          schema:
+            $ref: '#/definitions/ToolRunPaginated'
+    post:
+      summary: Create a new tool run
+      tags:
+        - Lab
+      responses:
+        201:
+          description: Successfully created tool run
+          schema:
+            $ref: '#/definitions/ToolRun'
+        400:
+          description: Incorrect values for creating tool run
+  /tool-runs/{uuid}/:
+    get:
+      summary: Retrieve details about a tool run
+      tags:
+        - Lab
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: Details about object
+          schema:
+            $ref: '#/definitions/ToolRun'
+        404:
+          description: Error if insufficient permissions or run not found
+    put:
+      summary: Update a tool run
+      tags:
+        - Lab
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Successfully updated tool run
+        400:
+          description: Bad parameters for updating tool run
+    delete:
+      summary: Delete a tool run
+      tags:
+        - Lab
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Successfully deleted a tool run
+
 
 parameters:
   orderingBase:
@@ -1015,6 +1163,12 @@ parameters:
     format: int32
   uuid:
     name: uuid
+    in: path
+    required: true
+    type: string
+    format: uuid
+  uuid2:
+    name: uuid2
     in: path
     required: true
     type: string
@@ -1215,12 +1369,6 @@ parameters:
     in: query
     type: number
     required: false
-  bboxCoordinates:
-    name: bboxCoordinates
-    description: Bounding box as a path parameter. eg "/southwest_lng,southwest_lat,northeast_lng,northeast_lat/"
-    in: path
-    type: string
-    required: true
   zoom:
     name: zoom
     description: The zoom level used to split the bbox into a grid
@@ -1264,6 +1412,20 @@ parameters:
     in: query
     type: string
     required: false
+  tool:
+    name: toolId
+    description: Filter by tool\'s slug label
+    in: query
+    type: string
+    format: uuid
+    required: false
+  createdBy:
+    name: createdBy
+    description: Filter by creator\'s slug label
+    in: query
+    type: string
+    required: false
+
 definitions:
   BaseModel:
     type: object
@@ -1276,6 +1438,56 @@ definitions:
       organizationId:
         type: string
         description: uuid for organization
+  MosaicDefinition:
+    type: object
+    properties:
+      sceneId:
+        type: string
+        format: uuid
+      colorCorrection:
+        $ref: '#/definitions/ColorCorrection'
+  ColorCorrection:
+    type: object
+    properties:
+      alpha:
+        type: number
+        format: float
+      beta:
+        type: number
+        format: float
+      redBand:
+        type: number
+        format: integer
+      greenBand:
+        type: number
+        format: integer
+      blueBand:
+        type: number
+        format: integer
+      redGamma:
+        type: number
+        format: float
+      greenGamma:
+        type: number
+        format: float
+      blueGamma:
+        type: number
+        format: float
+      brightness:
+        type: number
+        format: float
+      min:
+        type: number
+        format: float
+      max:
+        type: number
+        format: float
+      equalize:
+        type: boolean
+      contrast:
+        type: number
+        format: float
+
   TimeModelMixin:
     type: object
     readOnly: true
@@ -1311,9 +1523,55 @@ definitions:
         description: User ID for Raster Foundry
       organizations:
         type: array
-        description: List of organization's a user belongs to and their level of membership
+        description: List of organization\'s a user belongs to and their level of membership
         items:
           $ref: '#/definitions/UserOrg'
+  Auth0User:
+    type: object
+    properties:
+      email:
+        type: string
+      email_verified:
+        type: boolean
+      username:
+        type: string
+      phone_number:
+        type: string
+      phone_verified:
+        type: boolean
+      user_id:
+        type: string
+      created_at:
+        type: string
+      updated_at:
+        type: string
+      identities:
+        type: array
+        items:
+          type: string
+      user_metadata:
+        type: object
+      picture:
+        type: string
+      name:
+        type: string
+      nickname:
+        type: string
+      given_name:
+        type: string
+      family_name:
+        type: string
+  Auth0UserProfile:
+    type: object
+    properties:
+      email:
+        type: string
+      phone_number:
+        type: string
+      user_metadata:
+        type: object
+      username:
+        type: string
   RefreshToken:
     type: object
     properties:
@@ -1426,15 +1684,17 @@ definitions:
   Organization:
     type: object
     allOf:
-      - $ref: '#/definitions/BaseModel'
       - $ref: '#/definitions/TimeModelMixin'
-    required:
-      - name
-      - id
     properties:
+      id:
+        type: string
+        description: Organization
       name:
         type: string
         description: Display name for organization
+    required:
+      - name
+      - id
   UserRole:
     type: object
     properties:
@@ -1516,12 +1776,14 @@ definitions:
             type: string
             format: uuid
             description: Data source scene originated from
+          # TODO: make work with geometry objects
           dataFootprint:
-            type: geojson
             description: polygon for which this scene has data
+            type: object
             readOnly: true
+          # TODO: make work with geometry objects
           tileFootprint:
-            type: geojson
+            type: object
             description: polygon enclosing this scene
             readOnly: true
           sceneMetadata:
@@ -1537,10 +1799,8 @@ definitions:
             items:
               - type: string
           filterFields:
-            type: object
             $ref: '#/definitions/FilterFields'
           statusFields:
-            type: object
             $ref: '#/definitions/StatusFields'
 
   FilterFields:
@@ -1562,7 +1822,7 @@ definitions:
         type: number
         format: float32
         description: Elevation of the sun
-      
+
   StatusFields:
     type: object
     properties:
@@ -1628,6 +1888,12 @@ definitions:
             type: array
             items:
               - type: string
+          extent:
+            type: object
+            description: GeoJSON Geometry of project extent
+          manualOrder:
+            type: boolean
+            description: Is true if project scenes are manually ordered
   Image:
     allOf:
       - $ref: '#/definitions/BaseModel'
@@ -1641,13 +1907,13 @@ definitions:
               - PUBLIC
               - ORGANIZATION
               - OWNERONLY
-          fileName:
+          filename:
             type: string
             description: Name of the image file
           resolutionMeters:
             type: number
             description: Size of pixel in meters
-          sourceURI:
+          sourceUri:
             type: string
             description: URI to original source. This should include a protocol-like prefix to identify where it is located http://, s3://, etc.
           rawDataBytes:
@@ -1667,12 +1933,14 @@ definitions:
             description: Metadata about this image
           metadataFiles:
             type: array
+            items:
+              type: string
             description: |
               Metadata files that should be present for processing all
               images in a scene (e.g. relevant .mtl files or .xml)
         required:
-          - fileName
-          - sourceURI
+          - filename
+          - sourceUri
   ProjectPaginated:
     allOf:
       - $ref: '#/definitions/PaginatedResponse'
@@ -1692,7 +1960,7 @@ definitions:
   Band:
     type: object
     properties:
-      imageId:
+      image:
         type: string
         format: UUID
       name:
@@ -1714,7 +1982,7 @@ definitions:
             type: integer
             format: int32
             description: The width of the thumbnail, in pixels
-          scene:
+          sceneId:
             type: string
             format: uuid
             description: Scene that image is associated with
@@ -1722,13 +1990,13 @@ definitions:
             type: integer
             format: int32
             description: The height of the thumbnail, in pixels
-          size:
+          thumbnailSize:
             type: string
             description: Summary of size
             enum:
-              - small
-              - large
-              - square
+              - SMALL
+              - LARGE
+              - SQUARE
           url:
             type: string
             format: uri
@@ -1756,6 +2024,10 @@ definitions:
           description: |
             A long description of the tool, including is use-cases,
             purpose, and any potential references
+        organization:
+          description: The owning organization of the Tool
+          items:
+            $ref: '#/definitions/Organization'
         requirements:
           type: string
           description: A brief description of requirements, including any relevant band requirements
@@ -1763,12 +2035,12 @@ definitions:
           type: array
           description: Tool tags associated with a tool
           items:
-            type: string
+            $ref: '#/definitions/ToolTag'
         categories:
           type: array
           description: Category of geoprocessing tool
           items:
-            type: string
+            $ref: '#/definitions/ToolCategory'
         license:
           type: string
           description: Usage license of tool
@@ -1786,7 +2058,7 @@ definitions:
           enum:
             - PUBLIC
             - ORGANIZATION
-            - OWNERONLY
+            - PRIVATE
   ToolPaginated:
     allOf:
     - $ref: '#/definitions/PaginatedResponse'
@@ -1825,12 +2097,6 @@ definitions:
           slugLabel:
             type: string
             description: Slug label for use in urls
-  ToolCategoryCreate:
-    type: object
-    properties:
-      category:
-        type: string
-        description: User displayed label for category
   ToolCategoryPaginated:
       allOf:
       - $ref: '#/definitions/PaginatedResponse'
@@ -1840,6 +2106,41 @@ definitions:
             type: array
             items:
               $ref: '#/definitions/ToolCategory'
+  ToolRun:
+    allOf:
+      - $ref: '#/definitions/BaseModel'
+      - $ref: '#/definitions/UserTrackingMixin'
+      - type: object
+        properties:
+          execution_parameters:
+            type: object
+            description: Parameters for running the tool
+          project:
+            type: string
+            format: uuid
+            description: Project with which this run is associated
+          tool:
+            type: string
+            format: uuid
+            description: Tool being run
+          visibility:
+            type: string
+            description: Level of restriction on viewing
+            enum:
+              - PUBLIC
+              - ORGANIZATION
+              - PRIVATE
+
+  ToolRunPaginated:
+    allOf:
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/ToolRun'
+
   Error:
     type: object
     properties:
@@ -1848,3 +2149,139 @@ definitions:
         format: int32
       message:
         type: string
+
+  OrgParams:
+    type: object
+    description: Organization parameters to filter scenes
+    properties:
+      organizations:
+        type: array
+        items:
+          type: string
+          format: uuid
+
+  UserParams:
+    type: object
+    description: User parameters to filter scenes
+    properties:
+      createdBy:
+        type: string
+      modifiedBy:
+        type: string
+
+  TimestampParams:
+    type: object
+    description: Timestamp parameters to filter scenes
+    properties:
+      minCreateDatetime:
+        type: string
+        format: datetime
+      maxCreateDateTime:
+        type: string
+        format: datetime
+      minModifiedDatetime:
+        type: string
+        format: datetime
+      maxModifiedDatetime:
+        type: string
+        format: datetime
+
+  SceneParams:
+    type: object
+    description: scene params
+    properties:
+      maxCloudCover:
+        type: number
+        format: float32
+      minCloudCover:
+        type: number
+        format: float32
+      minAcquisitionDatetime:
+        type: string
+        format: datetime
+      maxAcquisitionDatetime:
+        type: string
+        format: datetime
+      datasource:
+        type: array
+        items:
+          type: string
+          format: uuid
+      month:
+        type: array
+        items:
+          type: number
+          format: int
+      minDayOfMonth:
+        type: number
+        format: int
+      maxDayOfMonth:
+        type: number
+        format: int
+      maxSunAzimuth:
+        type: number
+        format: float32
+      minSunAzimuth:
+        type: number
+        format: float32
+      maxSunElevation:
+        type: number
+        format: float32
+      minSunElevation:
+        type: number
+        format: float32
+      bbox:
+        type: string
+      point:
+        type: string
+      project:
+        type: string
+        format: uuid
+      ingested:
+        type: boolean
+      ingestStatus:
+        type: string
+        enum:
+          - NOTINGESTED
+          - TOBEINGESTED
+          - INGESTING
+          - INGESTED
+          - FAILED
+
+  ImageParams:
+    type: object
+    description: image params
+    properties:
+      minRawDataBytes:
+        type: number
+        format: int
+      maxRawDataBytes:
+        type: number
+        format: int
+      minResolution:
+        type: number
+        format: float32
+      maxResolution:
+        type: number
+        format: float32
+      scene:
+        type: array
+        items:
+          type: string
+          format: uuid
+
+  CombinedSceneQueryParams:
+    type: object
+    description: Combined query parameters for filtering scenes
+    discriminator: type
+    properties:
+      orgParams:
+        $ref: '#/definitions/OrgParams'
+      userParams:
+        $ref: '#/definitions/UserParams'
+      timestampParams:
+        $ref: '#/definitions/TimestampParams'
+      sceneParams:
+        $ref: '#/definitions/SceneParams'
+      imageParams:
+        $ref: '#/definitions/ImageParams'

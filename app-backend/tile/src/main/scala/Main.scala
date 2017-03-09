@@ -28,7 +28,7 @@ object Main extends App
 
   import AkkaSystem._
 
-  implicit lazy val database = Database.DEFAULT
+  val database = Database.DEFAULT
   val router = new Router()
 
   Http().bindAndHandle(router.root, httpHost, httpPort)

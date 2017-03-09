@@ -25,11 +25,7 @@ export default class MarketToolController {
     }
 
     populateTestData() {
-        this.testScreenshots = [
-            {id: 1, url: 'https://placehold.it/1000x480'},
-            {id: 2, url: 'https://placehold.it/1000x480'},
-            {id: 3, url: 'https://placehold.it/1000x480'}
-        ];
+        this.testScreenshots = [];
         this.similarQueryResult = {
             count: 25,
             hasNext: true,
@@ -43,11 +39,7 @@ export default class MarketToolController {
                     'live green vegetation or not.',
                 uploader: 'Raster Foundry',
                 id: 'uuid1',
-                screenshots: [
-                    {id: 1, url: 'https://placehold.it/1000x480'},
-                    {id: 2, url: 'https://placehold.it/1000x480'},
-                    {id: 3, url: 'https://placehold.it/1000x480'}
-                ],
+                screenshots: [],
                 tags: [
                     'Image Classification', 'Tagged'
                 ],
@@ -64,11 +56,7 @@ export default class MarketToolController {
                     'Output will be an integer layer with values 0-360',
                 uploader: 'Raster Foundry',
                 id: 'uuid2',
-                screenshots: [
-                    {id: 1, url: 'https://placehold.it/1000x480'},
-                    {id: 2, url: 'https://placehold.it/1000x480'},
-                    {id: 3, url: 'https://placehold.it/1000x480'}
-                ],
+                screenshots: [],
                 tags: [
                     'Image Classification', 'Tagged'
                 ],
@@ -90,11 +78,7 @@ export default class MarketToolController {
                     'possibility of both positive and negative values.',
                 uploader: 'Raster Foundry',
                 id: 'uuid3',
-                screenshots: [
-                    {id: 1, url: 'https://placehold.it/1000x480'},
-                    {id: 2, url: 'https://placehold.it/1000x480'},
-                    {id: 3, url: 'https://placehold.it/1000x480'}
-                ],
+                screenshots: [],
                 tags: [
                     'Image Classification', 'Tagged'
                 ],

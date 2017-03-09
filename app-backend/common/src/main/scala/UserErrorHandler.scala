@@ -5,11 +5,15 @@ import akka.http.scaladsl.model.StatusCodes
 import com.typesafe.scalalogging.LazyLogging
 import spray.json.{SerializationException, DeserializationException}
 import com.typesafe.scalalogging.LazyLogging
+import org.postgresql.util.PSQLException
+
 
 trait UserErrorHandler extends Directives
     with RollbarNotifier
     with LazyLogging {
   val userExceptionHandler = ExceptionHandler {
+    case e: PSQLException if(e.getSQLState == "23505") =>
+      complete(StatusCodes.ClientError(409)("Duplicate Key", ""))
     case e: IllegalArgumentException =>
       logger.error(RfStackTrace(e))
       sendError(e)

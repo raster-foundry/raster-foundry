@@ -2,7 +2,7 @@ name := "rf-backend"
 
 addCommandAlias("mg", "migrations/run")
 
-
+scalaVersion := Version.scala
 
 lazy val commonSettings = Seq(
   organization := "com.azavea",
@@ -28,7 +28,7 @@ lazy val commonSettings = Seq(
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " }
 )
 
-lazy val appSettings = commonSettings ++ Seq(
+lazy val apiSettings = commonSettings ++ Seq(
   fork in run := true,
   connectInput in run := true,
   cancelable in Global := true,
@@ -73,10 +73,11 @@ lazy val migrationsDependencies =
 
 lazy val testDependencies = List(
     Dependencies.scalatest,
+    Dependencies.geotrellisRasterTestkit,
     Dependencies.akkatestkit
 )
 
-lazy val appDependencies = dbDependencies ++ migrationsDependencies ++
+lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
     testDependencies ++ Seq(
   Dependencies.akka,
   Dependencies.akkahttp,
@@ -84,34 +85,43 @@ lazy val appDependencies = dbDependencies ++ migrationsDependencies ++
   Dependencies.akkajson,
   Dependencies.akkastream,
   Dependencies.akkaSlf4j,
-  Dependencies.authCommon,
   Dependencies.akkaHttpExtensions,
   Dependencies.commonsIO,
   Dependencies.ammoniteOps,
   Dependencies.geotrellisSlick,
-  Dependencies.geotrellisS3
+  Dependencies.geotrellisS3,
+  Dependencies.caffeine,
+  Dependencies.scaffeine,
+  Dependencies.findbugAnnotations
 )
 
 lazy val root = Project("root", file("."))
-  .aggregate(app, migrations, datamodel, database, ingest)
+  .aggregate(api, migrations, datamodel, database, ingest)
   .settings(commonSettings:_*)
 
-lazy val app = Project("app", file("app"))
+lazy val api = Project("api", file("api"))
   .dependsOn(database, datamodel, common)
-  .settings(appSettings:_*)
+  .settings(apiSettings:_*)
   .settings({
-    libraryDependencies ++= appDependencies
+    libraryDependencies ++= apiDependencies
   })
 
 lazy val common = Project("common", file("common"))
   .dependsOn(database, datamodel)
-  .settings(appSettings:_*)
-  .settings({libraryDependencies ++= Seq(
-    Dependencies.authAkka,
+  .settings(apiSettings:_*)
+  .settings({libraryDependencies ++= testDependencies ++ Seq(
+    Dependencies.jwtCore,
+    Dependencies.json4s,
+    Dependencies.jwtJson,
     Dependencies.akka,
     Dependencies.akkahttp,
     Dependencies.commonsIO,
-    Dependencies.geotrellisS3
+    Dependencies.caffeine,
+    Dependencies.scaffeine,
+    Dependencies.elasticacheClient,
+    Dependencies.geotrellisS3,
+    Dependencies.findbugAnnotations,
+    Dependencies.chill
   )})
 
 lazy val migrations = Project("migrations", file("migrations"))
@@ -143,10 +153,11 @@ lazy val ingest = Project("ingest", file("ingest"))
   .settings(commonSettings:_*)
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({
-    libraryDependencies ++= loggingDependencies ++ Seq(
+    libraryDependencies ++= loggingDependencies ++ testDependencies ++ Seq(
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisS3,
       Dependencies.geotrellisUtil,
+      Dependencies.geotrellisRaster,
       Dependencies.akkajson,
       Dependencies.spark,
       Dependencies.scopt
@@ -161,7 +172,12 @@ lazy val tile = Project("tile", file("tile"))
   .dependsOn(ingest)
   .settings(commonSettings:_*)
   .settings({
-    libraryDependencies ++= testDependencies
+    libraryDependencies ++= loggingDependencies ++ testDependencies ++ Seq(
+      Dependencies.spark,
+      Dependencies.geotrellisSpark,
+      Dependencies.geotrellisS3,
+      Dependencies.akkajson
+    )
   })
   .settings(assemblyMergeStrategy in assembly := {
     case "reference.conf" => MergeStrategy.concat
@@ -171,20 +187,6 @@ lazy val tile = Project("tile", file("tile"))
     case _ => MergeStrategy.first
   })
   .settings(assemblyJarName in assembly := "rf-tile-server.jar")
-  .settings({
-    libraryDependencies ++= loggingDependencies ++ Seq(
-      Dependencies.commonsIO,
-      Dependencies.spark,
-      Dependencies.geotrellisSpark,
-      Dependencies.geotrellisS3,
-      Dependencies.caffeine,
-      Dependencies.scaffeine,
-      Dependencies.elasticacheClient,
-      Dependencies.scalacacheCaffeine,
-      Dependencies.scalacacheMemcache.exclude("net.spy", "spymemcached"),
-      Dependencies.akkajson
-    )
-  })
 
 lazy val tool = Project("tool", file("tool"))
   .settings(commonSettings:_*)

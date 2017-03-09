@@ -1,3 +1,5 @@
+import Map from 'es6-map';
+
 export default class MapContainerController {
     constructor($log, $element, $scope, $timeout, mapService) {
         'ngInject';
@@ -9,6 +11,10 @@ export default class MapContainerController {
     }
 
     $onInit() {
+        this.isLoadingTiles = false;
+        this.hasTileLoadingError = false;
+        this.tileLoadingErrors = new Map();
+        this.tileLoadingStatus = new Map();
         this.initMap();
     }
 
@@ -45,7 +51,48 @@ export default class MapContainerController {
 
         this.$timeout(() => {
             this.map.invalidateSize();
-            this.mapService.registerMap(this.map, this.mapId, this.options);
+            this.mapWrapper = this.mapService.registerMap(this.map, this.mapId, this.options);
+            this.addLoadingIndicator();
         }, 400);
+    }
+
+    addLoadingIndicator() {
+        this.mapWrapper.onLayerGroupEvent('layeradd', this.handleLayerAdded, this);
+    }
+
+    handleLayerAdded(e) {
+        let layer = e.layer;
+        let isTileLayer = layer._tiles && layer._url;
+        let layerId = layer._leaflet_id;
+
+        if (isTileLayer) {
+            this.setLoading(layerId, true);
+            layer.on('loading', () => {
+                this.setLoadingError(layerId, false);
+                this.setLoading(layerId, true);
+            });
+            layer.on('load', () => {
+                this.setLoading(layerId, false);
+            });
+            layer.on('tileerror', () => {
+                this.setLoadingError(layerId, true);
+            });
+        }
+    }
+
+    setLoading(layerId, status) {
+        this.tileLoadingStatus.set(layerId, status);
+        this.$scope.$evalAsync(() => {
+            this.isLoadingTiles =
+                Array.from(this.tileLoadingStatus.values()).reduce((acc, cur) => acc || cur, false);
+        });
+    }
+
+    setLoadingError(layerId, status) {
+        this.tileLoadingErrors.set(layerId, status);
+        this.$scope.$evalAsync(() => {
+            this.hasTileLoadingError =
+                Array.from(this.tileLoadingErrors.values()).reduce((acc, cur) => acc || cur, false);
+        });
     }
 }

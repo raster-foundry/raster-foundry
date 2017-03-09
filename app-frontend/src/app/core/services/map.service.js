@@ -23,7 +23,7 @@ class MapWrapper {
         this._geoJsonMap = new Map();
         this._geoJsonLayerGroup = L.geoJSON().addTo(this.map);
         this._layerMap = new Map();
-        this._layerGroup = L.layerGroup().addTo(this.map);
+        this._layerGroup = L.featureGroup().addTo(this.map);
         this.persistedThumbnails = new Map();
         this.disableFootprints = false;
 
@@ -44,7 +44,8 @@ class MapWrapper {
     }
 
     getBaseMapLayer(layerName) {
-        let url = `https://cartodb-basemaps-{s}.global.ssl.fastly.net/${layerName}/{z}/{x}/{y}.png`;
+        let url =
+            `https://cartodb-basemaps-{s}.global.ssl.fastly.net/${layerName}/{z}/{x}/{y}.png`;
         let properties = {
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">' +
                 'OpenStreetMap</a> &copy;<a href="http://cartodb.com/attributions">CartoDB</a>',
@@ -118,6 +119,22 @@ class MapWrapper {
             this.off(this._followResizeListener);
             delete this._followLayerAddListener;
             delete this._followResizeListener;
+        }
+    }
+
+    onLayerGroupEvent(event, callback, scope=this) {
+        let callbackId = this._callbackCounter;
+        this._callbackCounter += 1;
+        this._callbacks.set(callbackId, [event, callback]);
+        this._layerGroup.on(event, callback, scope);
+        return callbackId;
+    }
+
+    offLayerGroupEvent(callbackId) {
+        if (this._callbacks.has(callbackId)) {
+            let offPair = this._callbacks.get(callbackId);
+            this._layerGroup.off(offPair[0], offPair[1]);
+            this._callbacks.delete(callbackId);
         }
     }
 
@@ -407,6 +424,7 @@ export default (app) => {
                 });
                 this._mapPromises.delete(id);
             }
+            return mapWrapper;
         }
 
         deregisterMap(id) {

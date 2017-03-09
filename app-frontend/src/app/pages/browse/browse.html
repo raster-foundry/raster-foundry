@@ -103,7 +103,7 @@
 
   <div class="sidebar sidebar-extended map-filters"
        ng-show="$ctrl.showFilterPane && !$ctrl.activeScene">
-    <rf-filter-pane on-close-click="$ctrl.toggleFilterPane()" filters="$ctrl.filters"></rf-filter-pane>
+    <rf-filter-pane data-opened="$ctrl.showFilterPane" filters="$ctrl.filters"></rf-filter-pane>
   </div>
 
   <div class="main">

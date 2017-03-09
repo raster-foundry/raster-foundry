@@ -5,14 +5,19 @@ const _ = require('lodash');
 export default class BrowseController {
     constructor( // eslint-disable-line max-params
         $log, $scope, sceneService, gridLayerService,
-        authService, $state, $uibModal, $timeout, mapService
+        authService, $state, $uibModal, $timeout, mapService,
+        sessionStorage
     ) {
         'ngInject';
+
         this.$log = $log;
         this.sceneService = sceneService;
         this.authService = authService;
         this.$state = $state;
         this.$uibModal = $uibModal;
+        this.gridLayerService = gridLayerService;
+        this.sessionStorage = sessionStorage;
+
         this.getBrowseMap = () => mapService.getMap('browse');
         this.getDetailMap = () => mapService.getMap('detail');
 
@@ -27,20 +32,15 @@ export default class BrowseController {
         this.gridFilterActive = false;
         // initial data
 
-        this.queryParams = _.mapValues($state.params, (val) => {
-            if (val === '' || typeof val === 'undefined') {
-                return null;
-            }
-            return val;
-        });
-
-        this.gridLayer = gridLayerService.createNewGridLayer(Object.assign({}, this.queryParams));
-        // 100 is just a placeholder "big" number to leave plenty of space for basemaps
-        this.gridLayer.setZIndex(100);
-
-        this.gridLayer.onClick = (e, b) => {
-            this.onGridClick(e, b);
-        };
+        this.queryParams = Object.assign(
+            _.mapValues($state.params, (val) => {
+                if (val === '' || typeof val === 'undefined') {
+                    return null;
+                }
+                return val;
+            }),
+            this.sessionStorage.get('filters') || {}
+        );
 
         if ($state.params.id) {
             this.sceneService.query({id: $state.params.id}).then(
@@ -80,7 +80,6 @@ export default class BrowseController {
         );
 
         this.getBrowseMap().then((browseMap) => {
-            browseMap.addLayer('canvasGrid', this.gridLayer);
             browseMap.map.fitBounds(this.bounds);
             browseMap.on('contextmenu', ($event) => {
                 $event.originalEvent.preventDefault();
@@ -127,12 +126,15 @@ export default class BrowseController {
     }
 
     onQueryParamsChange() {
+        this.sessionStorage.set('filters', this.queryParams);
         this.$state.go('.', this.queryParams, {notify: false, inherit: false, location: 'replace'});
         this.requestNewSceneList();
     }
 
     updateSceneGrid() {
-        this.gridLayer.updateParams(this.queryParams);
+        if (this.gridLayer) {
+            this.gridLayer.updateParams(this.queryParams);
+        }
     }
 
     // TODO: This should be refactored to use a one-way binding from the filter controller
@@ -159,6 +161,23 @@ export default class BrowseController {
     onLoggedInChange(newValue) {
         if (newValue) {
             this.requestNewSceneList();
+
+            this.gridLayer = this.gridLayerService.createNewGridLayer(
+                Object.assign({}, this.queryParams)
+            );
+            // 100 is just a placeholder "big" number to leave plenty of space for basemaps
+            this.gridLayer.setZIndex(100);
+            this.gridLayer.onClick = (e, b) => {
+                this.onGridClick(e, b);
+            };
+            this.getBrowseMap().then(browseMap => {
+                browseMap.addLayer('canvasGrid', this.gridLayer);
+            });
+        } else if (this.gridLayer) {
+            this.getBrowseMap().then(browseMap => {
+                browseMap.deleteLayers('canvasGrid');
+                delete this.gridLayer;
+            });
         }
     }
 

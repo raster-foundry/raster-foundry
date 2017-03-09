@@ -9,11 +9,13 @@
     <p>Publish or export your project</p>
   </div>
   <div class="modal-body">
-    <div class="content">
+    <div class="content" ng-show="$ctrl.resolve.shareUrl">
       <h4>Publishing</h4>
       <div class="form-group">
         <div>
-          <a class="btn btn-primary" ui-sref="share({projectid: $ctrl.resolve.project.id})">
+          <a class="btn btn-primary"
+             target="_blank"
+             ui-sref="share({projectid: $ctrl.resolve.project.id})">
             Preview Your Published Project
           </a>
         </div>
@@ -38,20 +40,30 @@
       <h4>Exporting</h4>
       <div class="form-group">
         <label>XYZ resource link</label>
+        <div class="form-group">
+          <div class="btn-group inline">
+            <button class="btn btn-primary"
+                    ng-repeat="mapping in $ctrl.urlMappings"
+                    ng-click="$ctrl.onUrlMappingChange(mapping)"
+                    ng-class="{'active': mapping.active}">
+              {{mapping.label}}
+            </button>
+          </div>
+        </div>
         <div class="form-group all-in-one">
           <label for="tile-link" class="sr-only">URI Link</label>
           <input id="tile-link" type="text" class="form-control"
-                  value="{{$ctrl.resolve.tileUrl}}" readonly>
+                  value="{{$ctrl.mappedTileUrl}}" readonly>
           <!--
             @TODO: the copy button is intended to copy the url for the user which
             is not currently implemented
           -->
-          <button class="btn btn-link">
+          <button clipboard text="$ctrl.mappedTileUrl" class="btn btn-link">
             Copy
           </button>
         </div>
       </div>
-      <div class="form-group">
+      <div class="form-group" ng-show="!$ctrl.resolve.noDownload">
         <label>Download an image of your project</label>
         <div>
           <a class="btn btn-primary" href="">

@@ -3,8 +3,12 @@ $secondary-navbar-height: 7rem;
 
 .container-not-scrollable {
   height: calc(100vh - #{$navbar-height});
+  max-height: calc(100vh - #{$navbar-height}); // Fixes flex + height issue in some browsers
+  min-height: calc(100vh - #{$navbar-height}); // Fixes flex + height issue in some browsers
   &.with-header {
-    height: calc(100vh - #{$navbar-height} - #{$secondary-navbar-height})
+    height: calc(100vh - #{$navbar-height} - #{$secondary-navbar-height});
+    max-height: calc(100vh - #{$navbar-height} - #{$secondary-navbar-height}); // Fixes flex + height issue in some browsers
+    min-height: calc(100vh - #{$navbar-height} - #{$secondary-navbar-height}); // Fixes flex + height issue in some browsers
   }
 }
 

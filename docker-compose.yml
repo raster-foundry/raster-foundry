@@ -10,6 +10,7 @@ services:
 
   memcached:
     image: memcached:1.4-alpine
+    command: -I 5242880b
 
   nginx:
     image: raster-foundry-nginx
@@ -22,7 +23,7 @@ services:
       - "airflow-flower:127.0.0.1"
       - "airflow-webserver:127.0.0.1"
     links:
-      - app-server
+      - api-server
       - tile-server
     volumes:
       - ./nginx/srv/dist/:/srv/dist/
@@ -30,7 +31,7 @@ services:
       - ./nginx/etc/nginx/includes/:/etc/nginx/includes/
       - ./nginx/etc/nginx/conf.d/:/etc/nginx/conf.d/
 
-  app-server:
+  api-server:
     image: openjdk:8-jre
     links:
       - postgres:database.service.rasterfoundry.internal
@@ -43,7 +44,7 @@ services:
       - $HOME/.aws:/root/.aws:ro
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt
-    command: app/run
+    command: api/run
 
   tile-server:
     image: openjdk:8-jre

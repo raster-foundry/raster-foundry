@@ -54,7 +54,7 @@ def create_sentinel2_scenes(tile_path):
     tileFootprint, dataFootprint = create_footprints(tileinfo)
     thumbnails = create_thumbnails(scene_id, tile_path)
     tags = ['Sentinel-2', 'JPEG2000']
-    aws_base = bucket.name + '.s3.amazonaws.com'
+    aws_base = 'https://' + bucket.name + '.s3.amazonaws.com'
     metadataFiles = [
         os.path.join(aws_base, tile_path, 'tileInfo.json'),
         os.path.join(aws_base, tile_path, 'metadata.xml'),

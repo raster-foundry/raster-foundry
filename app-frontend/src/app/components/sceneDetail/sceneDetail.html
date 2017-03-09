@@ -14,9 +14,10 @@
     <img ng-if="$ctrl.scene.thumbnails.length && $ctrl.showThumbnail"
         ng-attr-src="{{$ctrl.thumbnailService.getBestFitUrl($ctrl.scene.thumbnails, 275)}}"
         class="center-img rounded-img detail-img">
-    <img ng-if="!$ctrl.scene.thumbnails.length && $ctrl.showThumbnail"
-         src="https://placehold.it/275x275"
-         class="center-img rounded-img detail-img">
+    <div ng-if="!$ctrl.scene.thumbnails.length && $ctrl.showThumbnail"
+         class="center-img rounded-img detail-img image-placeholder block-placeholder color-white">
+         <div>No scene preview available</div>
+    </div>
     <h5 class="color-dark">Scene properties</h5>
     <dl class="meta-list">
       <dt ng-repeat-start="(field, value) in $ctrl.scene.filterFields">

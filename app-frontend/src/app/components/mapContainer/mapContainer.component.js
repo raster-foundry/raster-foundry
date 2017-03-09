@@ -1,6 +1,6 @@
-// import mapTpl from './mapContainer.html';
+import mapTpl from './mapContainer.html';
 const mapContainer = {
-    template: '<div></div>',
+    templateUrl: mapTpl,
     controller: 'MapContainerController',
     bindings: {
         mapId: '@',

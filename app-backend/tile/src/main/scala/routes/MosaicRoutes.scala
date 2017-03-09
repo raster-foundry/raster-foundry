@@ -5,6 +5,7 @@ import com.azavea.rf.tile.image._
 import com.azavea.rf.datamodel.ColorCorrect.Params.colorCorrectParams
 import com.azavea.rf.database.Database
 
+import geotrellis.raster._
 import geotrellis.raster.render.Png
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._
@@ -17,23 +18,39 @@ import java.util.UUID
 
 object MosaicRoutes extends LazyLogging {
 
+  val emptyTilePng = IntArrayTile.ofDim(256, 256).renderPng
+
   def pngAsHttpResponse(png: Png): HttpResponse =
     HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/png`), png.bytes))
 
   def mosaicProject(implicit db: Database): Route =
-    pathPrefix(JavaUUID / IntNumber / IntNumber / IntNumber) { (projectId, zoom, x, y) =>
-      parameter("tag".?) { tag =>
-        get {
-          complete {
-            Mosaic(projectId, zoom, x, y, tag).map { maybeTile =>
-              maybeTile.map { tile => pngAsHttpResponse(tile.renderPng()) }
+    pathPrefix(JavaUUID) { projectId =>
+      pathPrefix("export") {
+        parameter("bbox".?, "zoom".as[Int]?) { (bbox, zoom) =>
+          get {
+            complete {
+              Mosaic.render(projectId, zoom, bbox).map { maybeRender =>
+                maybeRender.map { tile => pngAsHttpResponse(tile.renderPng()) }
+              }
+            }
+          }
+        }
+      } ~ pathPrefix (IntNumber / IntNumber / IntNumber ) { (zoom, x, y) =>
+        parameter("tag".?) { tag =>
+          get {
+            complete {
+              Mosaic(projectId, zoom, x, y, tag).map { maybeTile =>
+                pngAsHttpResponse {
+                  maybeTile.map(_.renderPng()).getOrElse(emptyTilePng)
+                }
+              }
             }
           }
         }
       }
     }
 
-// TODO: re-eable this, needed for project color correction endpoint
+// TODO: re-enable this, needed for project color correction endpoint
 //   def mosaicScenes: Route =
 //     pathPrefix(JavaUUID / Segment / "mosaic" / IntNumber / IntNumber / IntNumber) { (orgId, userId, zoom, x, y) =>
 //       colorCorrectParams { params =>

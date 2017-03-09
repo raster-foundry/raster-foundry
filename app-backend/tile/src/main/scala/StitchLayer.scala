@@ -1,6 +1,7 @@
 package com.azavea.rf.tile
 
 import com.azavea.rf.database.Database
+import com.azavea.rf.common.cache._
 
 import geotrellis.proj4._
 import geotrellis.raster._
@@ -10,13 +11,15 @@ import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.s3._
 import com.typesafe.scalalogging.LazyLogging
+
+import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.util.{Try, Success, Failure}
-import scalacache._
+
 
 object StitchLayer extends LazyLogging with Config {
-  implicit val cache = LayerCache.memcached
+  implicit val memcachedClient = LayerCache.memcachedClient
   implicit val database = Database.DEFAULT
 
   /** This function will iterate through zoom levels a layer, starting with 1, until it finds the level
@@ -31,13 +34,14 @@ object StitchLayer extends LazyLogging with Config {
     * Because this is an expensive operation the stitched tile is cached.
     * For non-cached version use [[stitch]] function.
     */
-  def apply(id: RfLayerId, size: Int): Future[Option[MultibandTile]] =
-    caching(s"stitch-{$size}") {
+  val stitchCache = HeapBackedMemcachedClient[Option[MultibandTile]](memcachedClient)
+  def apply(id: UUID, size: Int): Future[Option[MultibandTile]] =
+    stitchCache.caching(s"stitch-{$size}") { implicit ec =>
       for {
-        prefix <- id.prefix
+        prefix <- LayerCache.prefixFromLayerId(id)
         store <- LayerCache.attributeStore(prefix)
       }
-      yield stitch(store, id.sceneId.toString, size)
+      yield stitch(store, id.toString, size)
     }
 
   def stitch(store: AttributeStore, layerName: String, size: Int): Option[MultibandTile] = {

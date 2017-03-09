@@ -1,7 +1,7 @@
 """Python class representation of a Raster Foundry Image"""
 
 from .base import BaseModel
-
+from .band import Band
 
 class Image(BaseModel):
 
@@ -38,9 +38,10 @@ class Image(BaseModel):
 
     @classmethod
     def from_dict(cls, d):
+        bands = [Band.from_dict(band) for band in d.get('bands')]
         return cls(
             d.get('organizationId'), d.get('rawDataBytes'), d.get('visibility'), d.get('filename'),
-            d.get('sourceuri'), d.get('bands'), d.get('imageMetadata'), d.get('resolutionMeters'),
+            d.get('sourceUri'), bands, d.get('imageMetadata'), d.get('resolutionMeters'),
             d.get('scene')
         )
 

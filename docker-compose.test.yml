@@ -20,13 +20,14 @@ services:
       - ./app-frontend/package.json:/opt/raster-foundry/app-frontend/package.json
       - ./app-frontend/src:/opt/raster-foundry/app-frontend/src
       - ./app-frontend/webpack.config.js:/opt/raster-foundry/app-frontend/webpack.config.js
+      - ./docs/swagger/spec.yml:/opt/swagger/spec.yml
     entrypoint: yarn
     command: run build
 
-  app-server:
-    image: raster-foundry-app-server:${GIT_COMMIT:-latest}
+  api-server:
+    image: raster-foundry-api-server:${GIT_COMMIT:-latest}
     build:
-      context: ./app-backend/app
+      context: ./app-backend/api
       dockerfile: Dockerfile
 
   tile-server:
@@ -39,6 +40,12 @@ services:
     image: raster-foundry-app-migrations:${GIT_COMMIT:-latest}
     build:
       context: ./app-backend
+      dockerfile: Dockerfile
+
+  spark-ingest:
+    image: raster-foundry-spark-ingest:${GIT_COMMIT}
+    build:
+      context: ./app-backend/ingest
       dockerfile: Dockerfile
 
   airflow:

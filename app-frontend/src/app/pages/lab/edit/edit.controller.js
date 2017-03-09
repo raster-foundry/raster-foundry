@@ -2,7 +2,7 @@ const Map = require('es6-map');
 
 export default class LabEditController {
     constructor( // eslint-disable-line max-params
-        $scope, $state, $uibModal, mapService, layerService, projectService) {
+        $scope, $state, $uibModal, mapService, layerService, projectService, mapUtilsService) {
         'ngInject';
         this.$scope = $scope;
         this.$parent = $scope.$parent.$ctrl;
@@ -11,6 +11,7 @@ export default class LabEditController {
         this.mapService = mapService;
         this.layerService = layerService;
         this.projectService = projectService;
+        this.mapUtilsService = mapUtilsService;
         this.inputs = {
             bands: {
                 nir: '5',
@@ -24,8 +25,9 @@ export default class LabEditController {
         this.getMap = () => this.mapService.getMap('lab-run');
         this.projectId = this.$state.params.projectid;
         this.sceneLayers = new Map();
-
-        if (this.$parent.toolId && !this.project) {
+        if (this.project) {
+            this.fitProjectExtent();
+        } else if (this.$parent.toolId && !this.project) {
             this.ensureProjectSelected();
         }
     }
@@ -36,6 +38,7 @@ export default class LabEditController {
             this.projectService.query({id: this.projectId}).then(
                 (project) => {
                     this.project = project;
+                    this.fitProjectExtent();
                     this.loadingProject = false;
                     this.getSceneList();
                 },
@@ -49,16 +52,9 @@ export default class LabEditController {
         }
     }
 
-    fitAllScenes() {
-        if (this.sceneList.length) {
-            this.fitScenes(this.sceneList);
-        }
-    }
-
-    fitScenes(scenes) {
-        this.getMap().then((map) =>{
-            let sceneFootprints = scenes.map((scene) => scene.dataFootprint);
-            map.map.fitBounds(L.geoJSON(sceneFootprints).getBounds());
+    fitProjectExtent() {
+        this.getMap().then(m => {
+            this.mapUtilsService.fitMapToProject(m, this.project);
         });
     }
 
@@ -69,7 +65,7 @@ export default class LabEditController {
         ).then(
             (allScenes) => {
                 this.sceneList = allScenes;
-                this.fitAllScenes();
+                this.fitProjectExtent();
                 this.layersFromScenes();
             },
             (error) => {
@@ -81,7 +77,6 @@ export default class LabEditController {
     }
 
     layersFromScenes() {
-        // Create scene layers to use for color correction
         for (const scene of this.sceneList) {
             let sceneLayer = this.layerService.layerFromScene(scene, this.projectId);
             this.sceneLayers.set(scene.id, sceneLayer);

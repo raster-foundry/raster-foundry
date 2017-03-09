@@ -15,22 +15,25 @@ case class Datasource(
   name: String,
   visibility: Visibility,
   colorCorrection: Map[String, Any],
+  composites: Map[String, Any],
   extras: Map[String, Any]
 )
 
 object Datasource {
 
+  implicit val defaultDatasourceFormat = jsonFormat11(Datasource.apply _)
+
   def tupled = (Datasource.apply _).tupled
 
   def create = Create.apply _
 
-  implicit val defaultDatasourceFormat = jsonFormat10(Datasource.apply _)
 
   case class Create(
     organizationId: UUID,
     name: String,
     visibility: Visibility,
     colorCorrection: Map[String, Any],
+    composites: Map[String, Any],
     extras: Map[String, Any]
   ) {
     def toDatasource(userId: String): Datasource = {
@@ -46,12 +49,13 @@ object Datasource {
         this.name,
         this.visibility,
         this.colorCorrection,
+        this.composites,
         this.extras
       )
     }
   }
 
   object Create {
-    implicit val defaultDatasourceCreateFormat = jsonFormat5(Create.apply _)
+    implicit val defaultDatasourceCreateFormat = jsonFormat6(Create.apply _)
   }
 }

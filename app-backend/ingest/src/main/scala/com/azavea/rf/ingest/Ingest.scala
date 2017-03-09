@@ -1,32 +1,35 @@
 package com.azavea.rf.ingest
 
 import com.azavea.rf.ingest.util._
-import com.azavea.rf.ingest.tool._
+import com.azavea.rf.ingest.model._
 
-import geotrellis.raster.histogram.Histogram
+import geotrellis.raster._
 import geotrellis.raster.io._
+import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.resample.NearestNeighbor
+import geotrellis.raster.io.geotiff.MultibandGeoTiff
 import geotrellis.spark._
 import geotrellis.spark.io._
+import geotrellis.spark.io.s3._
+import geotrellis.spark.tiling._
 import geotrellis.spark.io.file._
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod
-import geotrellis.spark.io.s3._
 import geotrellis.spark.pyramid.Pyramid
 import geotrellis.vector.ProjectedExtent
-import geotrellis.raster._
-import geotrellis.raster.io.geotiff.MultibandGeoTiff
-import geotrellis.spark.tiling._
 import geotrellis.proj4._
 
+import com.typesafe.scalalogging.LazyLogging
 import org.apache.spark.rdd._
 import org.apache.spark._
 import spray.json._
 import DefaultJsonProtocol._
+import com.amazonaws.services.s3.model.DeleteObjectsRequest.KeyVersion
+
+import scala.collection.JavaConverters._
 import java.net.URI
 
-case class BandTile(band: Int, tile: Tile)
 
-object Ingest extends SparkJob {
+object Ingest extends SparkJob with LazyLogging {
 
   case class Params(
     jobDefinition: URI = new URI(""),
@@ -36,7 +39,7 @@ object Ingest extends SparkJob {
   type RfLayerWriter = Writer[LayerId, RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]]]
   type RfLayerDeleter = LayerDeleter[LayerId]
 
-  /** Get a layerwriter and an attribute store for the catalog located at the provided URI
+  /** Get a LayerWriter and an attribute store for the catalog located at the provided URI
     *
     * @param outputDef The ingest job's output definition
     */
@@ -54,6 +57,35 @@ object Ingest extends SparkJob {
       (writer, deleter, fileWriter.attributeStore)
   }
 
+  def deleteLayer(deleter: RfLayerDeleter)(layerId: LayerId): Unit = {
+    try {
+      deleter.delete(layerId)
+    } catch { case _: Throwable =>
+      // TODO: Bump GT version and use overwrite/clobber logic when the changes in
+      //       https://github.com/locationtech/geotrellis/pull/2039 are released.
+      //       This fix should be available in GT ver. 1.0.1.
+      //       This is *NOT* a permanent fix and will NOT resolve similar issues encountered
+      //       locally (this should be fine as S3 ingests are the focus in the near term).
+      deleter match { case del: S3LayerDeleter => // This is always the case (we just need type refinement)
+        del.attributeStore match {
+          case attStore: S3AttributeStore =>
+            logger.info(s"Overwritten layer metadata $layerId not found. Proceeding with attribute deletion...")
+            val s3Client = S3Client.DEFAULT
+            val listing = s3Client
+              .listObjectsIterator(attStore.bucket, attStore.path(attStore.prefix, "_attributes"))
+              .map { _.getKey }
+              .filter { _.contains(s"${S3AttributeStore.SEP}${layerId.name}${S3AttributeStore.SEP}${layerId.zoom}.json") }
+              .map { key => new KeyVersion(key) }
+              .toList
+
+              s3Client.deleteObjects(attStore.bucket, listing)
+          case _ =>
+            logger.error("This branch should be unreachable from GT LayerDeleter instances")
+        }
+      }
+    }
+  }
+
   /** Produce metadata for an IngestLayer
     *
     *  @param layer A specification for ingesting a layer
@@ -62,7 +94,7 @@ object Ingest extends SparkJob {
   def calculateTileLayerMetadata(layer: IngestLayer, scheme: LayoutScheme): (Int, TileLayerMetadata[SpatialKey]) = {
     // We need to build TileLayerMetadata that we expect to start pyramid from
     val overallExtent = layer.sources
-      .map({ src => src.extent.reproject(src.getCRSExtent, layer.output.crs) })
+      .map({ src => src.extent.reproject(src.extentCrs, layer.output.crs) })
       .reduce(_ combine _)
 
     // Infer the base level of the TMS pyramid based on overall extent and cellSize
@@ -102,7 +134,7 @@ object Ingest extends SparkJob {
       hs1.zip(hs2).map { case (a, b) => a merge b }
     })
 
-  /** We need to supress this warning because there's a perfectly safe `head` call being
+  /** We need to suppress this warning because there's a perfectly safe `head` call being
     *  made here. The compiler just isn't smart enough to figure that out
     *
     *  @param layer An ingest layer specification
@@ -112,6 +144,7 @@ object Ingest extends SparkJob {
     val resampleMethod = layer.output.resampleMethod
     val tileSize = layer.output.tileSize
     val destCRS = layer.output.crs
+    val ndPattern = layer.output.ndPattern
     val bandCount: Int = layer.sources.map(_.bandMaps.map(_.target).max).max
     val layoutScheme = ZoomedLayoutScheme(destCRS, tileSize)
 
@@ -119,7 +152,13 @@ object Ingest extends SparkJob {
     val sourceTiles: RDD[((ProjectedExtent, Int), Tile)] =
       sc.parallelize(layer.sources, layer.sources.length).flatMap { source =>
         val tiffBytes = readBytes(source.uri)
-        val MultibandGeoTiff(mbTile, srcExtent, srcCRS, _, _) = MultibandGeoTiff(tiffBytes)
+        val MultibandGeoTiff(mbTileIn, srcExtent, srcCRS, _, _) = MultibandGeoTiff(tiffBytes)
+
+        // Set NoData values if a pattern has been specified
+        val mbTile = ndPattern match {
+          case Some(pattern) => pattern(mbTileIn)
+          case None => mbTileIn
+        }
 
         source.bandMaps.map { bm: BandMapping =>
           // GeoTrellis multi-band tiles are 0 indexed
@@ -137,7 +176,7 @@ object Ingest extends SparkJob {
 
     // Merge Tiles into MultibandTile and fill in bands that aren't listed
     val multibandTiledRdd: RDD[(SpatialKey, MultibandTile)] = tiledRdd
-      .map { case ((key, band), tile) => key ->(tile, band) }
+      .map { case ((key, band), tile) => key -> (tile, band) }
       .groupByKey
       .map { case (key, tiles) =>
         val prototype: Tile = tiles.head._1
@@ -151,53 +190,38 @@ object Ingest extends SparkJob {
 
     val layerRdd = ContextRDD(multibandTiledRdd, tileLayerMetadata)
     val (writer, deleter, attributeStore) = getRfLayerManagement(layer.output)
+
     val sharedId = LayerId(layer.id.toString, 0)
+    val failsafeDeleteLayer = deleteLayer(deleter)(_)
 
-    if (overwriteLayer) {
-      try {
-        deleter.delete(sharedId)
-        attributeStore.delete(sharedId)
-      } catch {
-        case e: Throwable => throw e
-      }
-    }
+    if (overwriteLayer && attributeStore.layerExists(sharedId)) { failsafeDeleteLayer(sharedId) }
 
+    logger.info("Writing layers")
+    attributeStore.write(sharedId, "ingestComplete", false)
     if (layer.output.pyramid) { // If pyramiding
       Pyramid.upLevels(layerRdd, layoutScheme, maxZoom, 1, resampleMethod) { (rdd, zoom) =>
-        // attributes that apply to all layers are placed at zoom 0
+        logger.info(s"Writing zoom level $zoom in ${layer.id.toString}")
         val layerId = LayerId(layer.id.toString, zoom)
+        if (overwriteLayer && attributeStore.layerExists(layerId)) { failsafeDeleteLayer(layerId) }
+        attributeStore.write(layerId, "layerComplete", false)
+        writer.write(layerId, rdd)
 
-        try {
-          if (overwriteLayer) { deleter.delete(layerId) }
-          writer.write(layerId, rdd)
-
-          if (zoom == math.max(maxZoom / 2, 1)) {
-            import spray.json.DefaultJsonProtocol._
-            attributeStore.write(sharedId, "histogram", multibandHistogram(rdd, numBuckets = 256))
-          }
-
-          if (zoom == 1) {
-            attributeStore.write(sharedId, "extent", rdd.metadata.extent)(ExtentJsonFormat) // avoid using default JF
-            attributeStore.write(sharedId, "crs", rdd.metadata.crs)(CRSJsonFormat) // avoid using default JF
-          }
-          // Write an attribute for verification of completed ingest
-          attributeStore.write(sharedId, "ingestComplete", true)
-        } catch {
-          case e: Throwable =>
-            attributeStore.write(sharedId, "ingestComplete", false)
+        if (zoom == math.max(maxZoom / 2, 1)) {
+          attributeStore.write(sharedId, "histogram", multibandHistogram(rdd, numBuckets = 256))
         }
+
+        if (zoom == 1) {
+          attributeStore.write(sharedId, "extent", rdd.metadata.extent)(ExtentJsonFormat) // avoid using default JF
+          attributeStore.write(sharedId, "crs", rdd.metadata.crs)(CRSJsonFormat) // avoid using default JF
+        }
+        attributeStore.write(layerId, "layerComplete", true)
       }
     } else { // If not pyramiding. TODO: figure out exactly what we want to store here
-      try {
-        if (overwriteLayer) { deleter.delete(sharedId) }
-        writer.write(sharedId, layerRdd)
-        attributeStore.write(sharedId, "ingestComplete", true)
-      } catch {
-        case e: Throwable =>
-          attributeStore.write(sharedId, "ingestComplete", false)
-      }
+      logger.info(s"Writing (no pyramid) layer ${layer.id.toString}")
+      writer.write(sharedId, layerRdd)
     }
-
+    attributeStore.write(sharedId, "ingestComplete", true)
+    logger.info("Ingest complete")
   }
 
   /** Sample ingest definitions can be found in the accompanying test/resources
@@ -218,7 +242,7 @@ object Ingest extends SparkJob {
 
     try {
       ingestDefinition.layers.foreach(ingestLayer(params.overwrite))
-      if (params.testRun) ingestDefinition.layers.foreach(Testing.validateCatalogEntry)
+      if (params.testRun) { ingestDefinition.layers.foreach(Validation.validateCatalogEntry) }
     } finally {
       sc.stop
     }

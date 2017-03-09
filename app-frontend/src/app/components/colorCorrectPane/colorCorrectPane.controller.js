@@ -37,7 +37,7 @@ export default class ColorCorrectPaneController {
     }
 
     $onDestroy() {
-        this.$parent.fitAllScenes();
+        this.$parent.fitProjectExtent();
         this.getMap().then((map) => {
             this.selectedScenes.forEach((scene) => map.deleteGeojson(scene.id));
         });

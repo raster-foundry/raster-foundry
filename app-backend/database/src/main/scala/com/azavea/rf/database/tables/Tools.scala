@@ -31,7 +31,7 @@ class Tools(_tableTag: Tag) extends Table[Tool](_tableTag, "tools")
 {
   def * = (id, createdAt, modifiedAt, createdBy, modifiedBy, organizationId,
     title, description, requirements, license, visibility, compatibleDataSources,
-    stars) <> (Tool.tupled, Tool.unapply)
+    stars, definition) <> (Tool.tupled, Tool.unapply)
 
   val id: Rep[UUID] = column[UUID]("id", O.PrimaryKey)
   val createdAt: Rep[Timestamp] = column[Timestamp]("created_at")
@@ -47,6 +47,7 @@ class Tools(_tableTag: Tag) extends Table[Tool](_tableTag, "tools")
   val compatibleDataSources: Rep[List[String]] = column[List[String]]("compatible_data_sources",
     O.Length(Int.MaxValue, varying = false), O.Default(List.empty))
   val stars: Rep[Float] = column[Float]("stars", O.Default(0.0f))
+  val definition: Rep[Map[String, Any]] = column[Map[String, Any]]("definition", O.Length(2147483647,varying=false))
 
   lazy val organizationsFk =
     foreignKey("tools_organization_id_fkey", organizationId, Organizations)(
@@ -78,27 +79,31 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
 
     val toolRelatedJoin = (query
       joinLeft ToolTagsToTools on { case (m, t) =>  m.id === t.toolId }
-      joinLeft ToolCategoriesToTools on { case ((m, t), c) =>  m.id === c.toolId }
+      joinLeft ToolTags on { case ((_, t), tt) => t.map(_.toolTagId) === tt.id }
+      joinLeft ToolCategoriesToTools on { case (((m, _), _), c) =>  m.id === c.toolId }
+      joinLeft ToolCategories on { case ((((_, _), _), c), cc) => c.map(_.toolCategorySlug) === cc.slugLabel }
+      joinLeft Organizations on { case (((((m, _), _), _), _), o) => m.organizationId === o.id }
     )
 
     for {
-      ((tool, toolTagToTool), toolCategoryToTool) <- toolRelatedJoin
+      (((((tool, toolTagToTool), toolTag), toolCategoryToTool), toolCategory), organization) <- toolRelatedJoin
     } yield (
       tool,
-      toolTagToTool.map(_.toolTagId),
-      toolCategoryToTool.map(_.toolCategorySlug)
+      toolTag,
+      toolCategory,
+      organization
     )
   }
 
-  def groupByTool(joins: Seq[Tool.TagCategoryJoin]): Seq[Tool.WithRelated] =
-    joins.groupBy(_.tool).map { case (tool, tagCategoryJoins) =>
+  def groupByTool(joins: Seq[Tool.ToolRelationshipJoin]): Seq[Tool.WithRelated] =
+    joins.groupBy(_.tool).map { case (tool, toolRelationshipJoins) =>
       Tool.WithRelated(
         tool.id,
         tool.createdAt,
         tool.modifiedAt,
         tool.createdBy,
         tool.modifiedBy,
-        tool.organizationId,
+        toolRelationshipJoins.flatMap(_.organization).headOption,
         tool.title,
         tool.description,
         tool.requirements,
@@ -106,8 +111,9 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
         tool.visibility,
         tool.compatibleDataSources,
         tool.stars,
-        tagCategoryJoins.flatMap(_.toolTagId).distinct,
-        tagCategoryJoins.flatMap(_.toolCategorySlug).distinct
+        tool.definition,
+        toolRelationshipJoins.flatMap(_.toolTag).distinct,
+        toolRelationshipJoins.flatMap(_.toolCategory).distinct
       )
     }.toSeq
 
@@ -132,7 +138,7 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
     val toolsQueryResult = database.db.run {
       toolsQueryAction
     } map {
-      joinTuples => joinTuples.map(joinTuple => Tool.TagCategoryJoin.tupled(joinTuple))
+      joinTuples => joinTuples.map(joinTuple => Tool.ToolRelationshipJoin.tupled(joinTuple))
     } map {
       groupByTool
     }
@@ -164,7 +170,7 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
     database.db.run {
       joinRelated(Tools.filter(_.id === toolId)).result
     } map {
-      joinTuples => joinTuples.map(joinTuple => Tool.TagCategoryJoin.tupled(joinTuple))
+      joinTuples => joinTuples.map(joinTuple => Tool.ToolRelationshipJoin.tupled(joinTuple))
     } map {
       groupByTool
     } map {
@@ -178,7 +184,7 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
     * @param userId String user/owner to create a new tool with
     */
   def insertTool(tooltoCreate: Tool.Create, userId: String)(
-                  implicit database: DB): Future[Tool.WithRelated] = {
+                  implicit database: DB): Future[Tool.WithRelatedUUIDs] = {
 
     val (tool, toolTagToTools, toolCategoryToTools) = tooltoCreate
       .toToolWithRelatedTuple(userId)
@@ -203,7 +209,7 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
     database.db.run {
       insertAction
     } map { _ =>
-      tool.withRelatedFromComponents(toolTagToTools.map(_.toolTagId),
+      tool.withRelatedFromComponentUUIDs(toolTagToTools.map(_.toolTagId),
         toolCategoryToTools.map(_.toolCategorySlug))
     }
   }

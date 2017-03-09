@@ -74,10 +74,7 @@ class ProjectSceneController {
     }
 
     removeScene() {
-        this.projectService.removeSceneFromProject({
-            projectId: this.projectId,
-            sceneId: this.sceneId
-        }).then(
+        this.projectService.removeScenesFromProject(this.projectId, [this.sceneId]).then(
             () => {
                 this.$state.go('^.scenes');
             },

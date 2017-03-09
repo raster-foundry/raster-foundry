@@ -10,8 +10,8 @@
             <a href
                ng-class="{'active': $ctrl.isActiveColorMode(key)}"
                ng-click="$ctrl.setBands(key)"
-               ng-repeat="(key, band) in $ctrl.bands track by $index">
-              {{band.label}}
+               ng-repeat="(key, composite) in $ctrl.unifiedComposites track by $index">
+              {{composite.label}}
             </a>
           </li>
         </ul>
