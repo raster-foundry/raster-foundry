@@ -15,7 +15,7 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.models import DAG
 from airflow.bin.cli import trigger_dag
 
-from rf.utils.io import get_jwt, get_session, IngestStatus
+from rf.utils.io import get_session, IngestStatus
 from rf.utils.exception_reporting import wrap_rollbar
 
 rf_logger = logging.getLogger('rf')
@@ -34,11 +34,7 @@ default_args = {
 }
 
 
-http_connection_id = 'raster-foundry'
 base_params = {'ingestStatus': IngestStatus.TOBEINGESTED}
-headers = {'Authorization': 'Bearer {}'.format(get_jwt())}
-host = os.getenv('RF_HOST')
-
 DagArgs = namedtuple('DagArgs', 'dag_id, conf, run_id')
 
 
@@ -53,6 +49,7 @@ def get_uningested_scenes():
     params['page'] = 0
     session = get_session()
 
+    host = os.getenv('RF_HOST')
     scene_url = '{host}/api/scenes/'.format(host=host)
     scene_response = session.get(scene_url, params=params).json()
     scenes = scene_response['results']
