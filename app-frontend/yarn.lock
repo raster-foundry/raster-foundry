@@ -139,10 +139,6 @@ angular-sanitize@1.5.8:
   version "1.5.8"
   resolved "https://registry.yarnpkg.com/angular-sanitize/-/angular-sanitize-1.5.8.tgz#1832f69487ee820a21cbe30055a8fb1bdf297ab8"
 
-angular-storage@0.0.15:
-  version "0.0.15"
-  resolved "https://registry.yarnpkg.com/angular-storage/-/angular-storage-0.0.15.tgz#005d64808982848d949725e2b2bf90a1dd27afc1"
-
 angular-touch@1.5.8:
   version "1.5.8"
   resolved "https://registry.yarnpkg.com/angular-touch/-/angular-touch-1.5.8.tgz#b2443c435f8774617ee79bb11fb69ef4f5d5b8f5"
@@ -6384,6 +6380,10 @@ supports-color@^3.1.0, supports-color@^3.1.1, supports-color@^3.1.2:
   resolved "https://registry.yarnpkg.com/supports-color/-/supports-color-3.1.2.tgz#72a262894d9d408b956ca05ff37b2ed8a6e2a2d5"
   dependencies:
     has-flag "^1.0.0"
+
+svg-pan-zoom@ariutta/svg-pan-zoom:
+  version "3.4.1"
+  resolved "https://codeload.github.com/ariutta/svg-pan-zoom/tar.gz/3b799ecc93ac1b3c4094b5455cafbe84ff025339"
 
 svgo@^0.7.0:
   version "0.7.1"

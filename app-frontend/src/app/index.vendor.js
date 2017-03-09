@@ -23,6 +23,7 @@ import 'angular-messages';
 import 'angular-aria';
 import 'angular-resource';
 import 'leaflet';
+import 'svg-pan-zoom';
 import 'jointjs';
 
 
