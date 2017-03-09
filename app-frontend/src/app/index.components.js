@@ -5,6 +5,7 @@ export default angular.module('index.components', [
     require('./components/toolSearch/toolSearch.module.js').name,
     require('./components/toolItem/toolItem.module.js').name,
     require('./components/filterPane/filterPane.module.js').name,
+    require('./components/callToActionItem/callToActionItem.module.js').name,
     require('./components/colorCorrectPane/colorCorrectPane.module.js').name,
     require('./components/colorCorrectScenes/colorCorrectScenes.module.js').name,
     require('./components/colorCorrectAdjust/colorCorrectAdjust.module.js').name,
