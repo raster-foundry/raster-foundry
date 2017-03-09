@@ -716,6 +716,96 @@ paths:
       responses:
         204:
           description: Successfully updated order of scenes in project
+  /map-tokens/:
+    get:
+      summary: Get a list of map tokens
+      description: |
+        Lists map tokens, automatically filtered by a user
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectId'
+      responses:
+        200:
+          description: Paginated list of map tokens
+          schema:
+            $ref: '#/definitions/MapTokenPaginated'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create a new map token
+      tags:
+        - Imagery
+      parameters:
+        - name: MapToken
+          in: body
+          schema:
+            $ref: '#/definitions/MapToken'
+      responses:
+        201:
+          description: Map token created
+          schema:
+            $ref: '#/definitions/MapToken'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /map-tokens/{uuid}/:
+    get:
+      summary: Retrieve map token details
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: Info about map token
+          schema:
+            $ref: '#/definitions/MapToken'
+        404:
+          description: |
+            UUID parameter does not refer to a map token or the user is not able to view the token it refers to
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Update a map token
+      tags:
+        - Imagery
+      parameters:
+        - name: mapToken
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/MapToken'
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Update successful (no further processing needed)
+        404:
+          description: |
+            The UUID parameter does not refer to a map token or the user does not have access to the token it refers to
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Delete a map token
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Deletion successful (no content)
+        404:
+          description: |
+            The UUID parameter does not refer to a map token or the user does not have access to the token it refers to
+          schema:
+            $ref: '#/definitions/Error'
   /images/:
     get:
       summary: Paginated list of project images
@@ -1119,6 +1209,7 @@ paths:
 
 
 parameters:
+
   orderingBase:
     name: ordering
     in: query
@@ -1147,6 +1238,12 @@ parameters:
     name: sceneId
     in: query
     description: UUID for scene
+    type: string
+    format: uuid
+  projectId:
+    name: projectId
+    in: query
+    description: UUID for project
     type: string
     format: uuid
   page:
@@ -1438,6 +1535,35 @@ definitions:
       organizationId:
         type: string
         description: uuid for organization
+  MapToken:
+    type: object
+    allOf:
+      - $ref: '#/definitions/BaseModel'
+      - $ref: '#/definitions/TimeModelMixin'
+      - $ref: '#/definitions/UserTrackingMixin'
+    properties:
+      token:
+        type: string
+        format: uuid
+      label:
+        type: string
+        description: Human friendly label for map token
+      project:
+        type: object
+        properties:
+          id:
+            type: string
+            format: UUID
+          name:
+            type: string
+  MapTokenPaginated:
+    allOf:
+      - $ref: '#/definitions/PaginatedResponse'
+    properties:
+      results:
+        type: array
+        items:
+          $ref: '#/definitions/MapToken'
   MosaicDefinition:
     type: object
     properties:
@@ -2035,12 +2161,12 @@ definitions:
           type: array
           description: Tool tags associated with a tool
           items:
-            $ref: '#/definitions/ToolTag'
+            type: string
         categories:
           type: array
           description: Category of geoprocessing tool
           items:
-            $ref: '#/definitions/ToolCategory'
+            type: string
         license:
           type: string
           description: Usage license of tool
