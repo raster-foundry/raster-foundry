@@ -20,6 +20,7 @@ case class Project(
   slugLabel: String,
   description: String,
   visibility: Visibility,
+  tileVisibility: Visibility,
   tags: List[String] = List.empty,
   extent: Option[Projected[Geometry]] = None,
   manualOrder: Boolean = true
@@ -32,7 +33,7 @@ object Project extends GeoJsonSupport {
 
   def create = Create.apply _
 
-  implicit val defaultProjectFormat = jsonFormat13(Project.apply _)
+  implicit val defaultProjectFormat = jsonFormat14(Project.apply _)
 
   def slugify(input: String): String = {
     import java.text.Normalizer
@@ -49,6 +50,7 @@ object Project extends GeoJsonSupport {
     name: String,
     description: String,
     visibility: Visibility,
+    tileVisibility: Visibility,
     tags: List[String]
   ) {
     def toProject(userId: String): Project = {
@@ -64,12 +66,13 @@ object Project extends GeoJsonSupport {
         slugify(name),
         description,
         visibility,
+        tileVisibility,
         tags
       )
     }
   }
 
   object Create {
-    implicit val defaultProjectFormat = jsonFormat5(Create.apply _)
+    implicit val defaultProjectFormat = jsonFormat6(Create.apply _)
   }
 }

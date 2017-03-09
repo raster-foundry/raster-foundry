@@ -1884,7 +1884,7 @@ definitions:
             enum:
               - PUBLIC
               - ORGANIZATION
-              - OWNERONLY
+              - PRIVATE
           tags:
             type: array
             description: Tags associated with image
@@ -2009,7 +2009,14 @@ definitions:
             enum:
               - PUBLIC
               - ORGANIZATION
-              - OWNERONLY
+              - PRIVATE
+          tileVisibility:
+            type: string
+            description: Level of restriction on viewing
+            enum:
+              - PUBLIC
+              - ORGANIZATION
+              - PRIVATE
           tags:
             type: array
             items:
@@ -2032,7 +2039,7 @@ definitions:
             enum:
               - PUBLIC
               - ORGANIZATION
-              - OWNERONLY
+              - PRIVATE
           filename:
             type: string
             description: Name of the image file
