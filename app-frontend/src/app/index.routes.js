@@ -293,7 +293,7 @@ function loginStates($stateProvider) {
 
 function homeStates($stateProvider) {
     $stateProvider
-        .state('home',{
+        .state('home', {
             parent: 'root',
             url: '/home',
             templateUrl: homeTpl,
