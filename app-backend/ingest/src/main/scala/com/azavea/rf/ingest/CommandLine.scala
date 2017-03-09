@@ -28,5 +28,13 @@ object CommandLine {
       .text("The location of the json which defines an ingest job")
       .required
 
+    opt[Int]('w',"windowSize")
+      .action( (s, conf) => conf.copy(windowSize = s) )
+      .text("Pixel window size for streaming GeoTiff reads")
+
+    opt[Int]('p',"partitionsPerFile")
+      .action( (s, conf) => conf.copy(partitionsPerFile = s) )
+      .text("Number of RDD partitions to create per each source file")
+
   }
 }
