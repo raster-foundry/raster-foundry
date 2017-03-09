@@ -1,7 +1,7 @@
 .cta-row {
   display: flex;
-  margin-bottom: 2rem;
   align-items: stretch;
+  flex-wrap: wrap;
 }
 
 rf-call-to-action-item,
@@ -12,8 +12,9 @@ rf-call-to-action-item,
   min-height: 250px;
   display: flex;
   flex-direction: column;
-  margin-right: 2rem;
+  margin: 0 0 2rem 2rem;
   border-radius: 4px;
+  min-width: 380px;
   h2, h3 {
     margin: 0 0 1rem 0;
   }
