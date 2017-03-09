@@ -1,8 +1,9 @@
 package com.azavea.rf.ingest
 
+import java.io.File
+
 import com.azavea.rf.ingest.util._
 import com.azavea.rf.ingest.model._
-
 import geotrellis.raster._
 import geotrellis.raster.io._
 import geotrellis.raster.histogram.Histogram
@@ -17,7 +18,6 @@ import geotrellis.spark.io.index.ZCurveKeyIndexMethod
 import geotrellis.spark.pyramid.Pyramid
 import geotrellis.vector.ProjectedExtent
 import geotrellis.proj4._
-
 import com.typesafe.scalalogging.LazyLogging
 import org.apache.spark.rdd._
 import org.apache.spark._
@@ -28,13 +28,21 @@ import com.amazonaws.services.s3.model.DeleteObjectsRequest.KeyVersion
 import scala.collection.JavaConverters._
 import java.net.URI
 
+import geotrellis.spark.io.hadoop.HdfsRangeReader
+import geotrellis.spark.io.s3.util.S3RangeReader
+import geotrellis.util.{FileRangeReader, RangeReader}
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
+
 
 object Ingest extends SparkJob with LazyLogging {
 
   case class Params(
     jobDefinition: URI = new URI(""),
     testRun: Boolean = false,
-    overwrite: Boolean = false
+    overwrite: Boolean = false,
+    windowSize: Int = 1024,
+    partitionsPerFile: Int = 8
   )
   type RfLayerWriter = Writer[LayerId, RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]]]
   type RfLayerDeleter = LayerDeleter[LayerId]
@@ -134,13 +142,48 @@ object Ingest extends SparkJob with LazyLogging {
       hs1.zip(hs2).map { case (a, b) => a merge b }
     })
 
+
+  def uriRangReader(uri: URI): RangeReader = {
+    uri.getScheme match {
+      case "hdfs" =>
+        HdfsRangeReader(new Path(uri), new Configuration)
+      case "file" =>
+        FileRangeReader(new File(uri))
+      case "s3" | "s3a" | "s3n" =>
+        val (bucket, prefix) = S3.parse(uri)
+        S3RangeReader(bucket, prefix, S3Client.DEFAULT)
+      case "http" | "https" =>
+        ???
+    }
+  }
+
+  /** Chip out a grid bounds into component pieces of at least given size */
+  def gridBoundChips(gb: GridBounds, chipWidth: Int, chipHeight: Int): Iterator[GridBounds] = {
+    val cw = math.min(chipWidth, gb.width)
+    val ch = math.min(chipHeight, gb.height)
+
+    // To avoid thin chips on the right/bottom borders merge to left/top
+    val chipCols: Int = gb.width / cw
+    val chipRows: Int = gb.height / ch
+    for {
+      col <- Iterator.range(start = 0, end = chipCols)
+      row <- Iterator.range(start = 0, end = chipRows)
+    } yield {
+      GridBounds(
+        colMin = col * cw,
+        rowMin = row * cw,
+        colMax = if (col == chipCols - 1) gb.colMax else col * cw + cw - 1,
+        rowMax = if (row == chipRows - 1) gb.rowMax else row * ch + ch - 1)
+    }
+  }
+
   /** We need to suppress this warning because there's a perfectly safe `head` call being
     *  made here. The compiler just isn't smart enough to figure that out
     *
     *  @param layer An ingest layer specification
     */
   @SuppressWarnings(Array("TraversableHead"))
-  def ingestLayer(overwriteLayer: Boolean)(layer: IngestLayer)(implicit sc: SparkContext) = {
+  def ingestLayer(params: Params)(layer: IngestLayer)(implicit sc: SparkContext) = {
     val resampleMethod = layer.output.resampleMethod
     val tileSize = layer.output.tileSize
     val destCRS = layer.output.crs
@@ -150,22 +193,34 @@ object Ingest extends SparkJob with LazyLogging {
 
     // Read source tiles and reproject them to desired CRS
     val sourceTiles: RDD[((ProjectedExtent, Int), Tile)] =
-      sc.parallelize(layer.sources, layer.sources.length).flatMap { source =>
-        val tiffBytes = readBytes(source.uri)
-        val MultibandGeoTiff(mbTileIn, srcExtent, srcCRS, _, _) = MultibandGeoTiff(tiffBytes)
+      sc.parallelize(layer.sources, layer.sources.length)
+        .flatMap ({ source =>
+          val geotiff = MultibandGeoTiff(
+            byteReader = uriRangReader(source.uri),
+            decompress = false,
+            streaming = true)
 
-        // Set NoData values if a pattern has been specified
-        val mbTile = ndPattern match {
-          case Some(pattern) => pattern(mbTileIn)
-          case None => mbTileIn
-        }
+          gridBoundChips(geotiff.tile.gridBounds, params.windowSize, params.windowSize)
+            .map { chipBounds => (source, chipBounds) }
+        })
+        .repartition(layer.sources.length * params.partitionsPerFile)
+        .flatMap { case (source, chipBounds) =>
+          val geotiff = MultibandGeoTiff(
+            byteReader = uriRangReader(source.uri),
+            decompress = false,
+            streaming = true)
 
-        source.bandMaps.map { bm: BandMapping =>
-          // GeoTrellis multi-band tiles are 0 indexed
-          val band = mbTile.band(bm.source - 1).reproject(srcExtent, srcCRS, destCRS)
-          (ProjectedExtent(band.extent, destCRS), bm.target - 1) -> band.tile
+          val chip = geotiff.tile.crop(chipBounds)
+          val chipExtent = geotiff.rasterExtent.extentFor(chipBounds)
+          // Set NoData values if a pattern has been specified
+          val maskedChip = ndPattern.fold(chip)(mask => mask(chip))
+
+          source.bandMaps.map { bm: BandMapping =>
+            // GeoTrellis multi-band tiles are 0 indexed
+            val band = maskedChip.band(bm.source - 1).reproject(chipExtent, geotiff.crs, destCRS)
+            (ProjectedExtent(band.extent, destCRS), bm.target - 1) -> band.tile
+          }
         }
-      }.split(512, 512) // TODO: Figure out what to do about this split
 
     val (maxZoom, tileLayerMetadata) = Ingest.calculateTileLayerMetadata(layer, layoutScheme)
 
@@ -194,7 +249,7 @@ object Ingest extends SparkJob with LazyLogging {
     val sharedId = LayerId(layer.id.toString, 0)
     val failsafeDeleteLayer = deleteLayer(deleter)(_)
 
-    if (overwriteLayer && attributeStore.layerExists(sharedId)) { failsafeDeleteLayer(sharedId) }
+    if (params.overwrite && attributeStore.layerExists(sharedId)) { failsafeDeleteLayer(sharedId) }
 
     logger.info("Writing layers")
     attributeStore.write(sharedId, "ingestComplete", false)
@@ -202,7 +257,7 @@ object Ingest extends SparkJob with LazyLogging {
       Pyramid.upLevels(layerRdd, layoutScheme, maxZoom, 1, resampleMethod) { (rdd, zoom) =>
         logger.info(s"Writing zoom level $zoom in ${layer.id.toString}")
         val layerId = LayerId(layer.id.toString, zoom)
-        if (overwriteLayer && attributeStore.layerExists(layerId)) { failsafeDeleteLayer(layerId) }
+        if (params.overwrite && attributeStore.layerExists(layerId)) { failsafeDeleteLayer(layerId) }
         attributeStore.write(layerId, "layerComplete", false)
         writer.write(layerId, rdd)
 
@@ -241,7 +296,7 @@ object Ingest extends SparkJob with LazyLogging {
     implicit val sc = new SparkContext(conf)
 
     try {
-      ingestDefinition.layers.foreach(ingestLayer(params.overwrite))
+      ingestDefinition.layers.foreach(ingestLayer(params))
       if (params.testRun) { ingestDefinition.layers.foreach(Validation.validateCatalogEntry) }
     } finally {
       sc.stop
