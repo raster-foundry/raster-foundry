@@ -1,0 +1,218 @@
+<div class="modal-scrollable-body modal-sidebar-header">
+  <div class="modal-header">
+    <button type="button" class="close" aria-label="Close" ng-click="$ctrl.dismiss()">
+      <span aria-hidden="true">&times;</span>
+    </button>
+    <h4 class="modal-title">
+      Create Project
+    </h4>
+    <p>Get started on a new Project</p>
+  </div>
+
+  <!--Body for TYPE-->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('TYPE')">
+    <div class="content">
+      <h3 class="modal-content-header">Name your Project</h3>
+      <form>
+        <div class="form-group all-in-one">
+          <label for="name"><i class="icon-project"></i></label>
+          <input id="name" type="text" class="form-control"
+                placeholder="New project name" ng-model="$ctrl.projectBuffer.name">
+        </div>
+        <div class="form-group color-danger"
+            ng-if="$ctrl.showProjectCreateError && $ctrl.projectCreateErrorText"
+        >
+            {{$ctrl.projectCreateErrorText}}
+        </div>
+      </form>
+    </div>
+    <div class="content">
+      <h3 class="modal-content-header">Select a Project type</h3>
+      <div class="box-select-row">
+        <rf-box-select-item
+          title="Standard Project"
+          ng-class="{selected: $ctrl.projectAttributeIs('type', 'standard')}"
+          ng-click="$ctrl.setProjectAttribute('type','standard')"
+        >
+          Start a new project and begin importing your own earth observation imagery immediately, or discover publicly available scenes to add to your project.
+        </rf-box-select-item>
+        <rf-box-select-item
+          title="Monitoring Project"
+          ng-class="{selected: $ctrl.projectAttributeIs('type', 'monitoring')}"
+          class="disabled"
+        >
+          Set an area of interest extent on the map, an update frequency and automatically add new scenes to the project as they are added to Raster Foundry.
+        </rf-box-select-item>
+      </div>
+    </div>
+  </div>
+
+  <!--Body for NAME-->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('ADD_SCENES')">
+    <div class="content">
+      <h3 class="modal-content-header">Add Scenes to your Project</h3>
+      <p>
+        Your Project, <strong>{{$ctrl.project.name}}</strong>, has been created. Now we'll add imagery to your project.
+      </p>
+      <div class="box-select-row">
+        <rf-box-select-item
+          title="Use public imagery"
+          ng-class="{selected: $ctrl.projectAttributeIs('addType', 'public')}"
+          ng-click="$ctrl.setProjectAttribute('addType','public')"
+        >
+          Jump into the Scene Browser and find publicly available scenes for use in your project immediately.
+        </rf-box-select-item>
+        <rf-box-select-item
+          title="Import your own"
+          ng-class="{selected: $ctrl.projectAttributeIs('addType', 'import')}"
+          ng-click="$ctrl.setProjectAttribute('addType','import')"
+        >
+          Import your own earth observation imagery from a drone, manned aerial vehicle or satellite source directly from your S3 Bucket or your hard drive.
+        </rf-box-select-item>
+      </div>
+    </div>
+  </div>
+
+  <!--Body for IMPORT-->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('IMPORT')">
+    <div class="content">
+      <h3 class="no-margin">Import your Scenes</h3>
+      <p>Select the source you'd like to import your imagery from.</p>
+      <div class="box-select-row">
+          <rf-box-select-item
+          class="small"
+          ng-class="{selected: $ctrl.projectAttributeIs('importType', 'local')}"
+          ng-click="$ctrl.setProjectAttribute('importType', 'local')"
+        >
+          <div class="text-center"><strong>Local Files</strong></div>
+        </rf-box-select-item>
+        <rf-box-select-item
+          class="small"
+          ng-class="{selected: $ctrl.projectAttributeIs('importType', 'uri')}"
+          ng-click="$ctrl.setProjectAttribute('importType', 'uri')"
+        >
+          <div class="text-center"><strong>URI</strong></div>
+        </rf-box-select-item>
+        <rf-box-select-item
+          class="small"
+          ng-class="{selected: $ctrl.projectAttributeIs('importType', 's3')}"
+          ng-click="$ctrl.setProjectAttribute('importType', 's3')"
+        >
+          <div class="text-center"><strong>AWS S3</strong></div>
+        </rf-box-select-item>
+        <rf-box-select-item
+          class="small"
+          ng-class="{selected: $ctrl.projectAttributeIs('importType', 'dropbox')}"
+          ng-click="$ctrl.setProjectAttribute('importType', 'dropbox')"
+        >
+          <div class="text-center"><strong>DropBox</strong></div>
+        </rf-box-select-item>
+      </div>
+    </div>
+
+    <!--Local file import -->
+    <div class="content" ng-if="$ctrl.projectAttributeIs('importType', 'local')">
+      <h3 class="no-margin">Local File Import</h3>
+      <p>Select imagery files from your computer and we'll import them into Raster Foundry Scenes.</p>
+      <button class="btn btn-primary">Select Files</button>
+    </div>
+
+    <!--URI import -->
+    <div class="content" ng-if="$ctrl.projectAttributeIs('importType', 'uri')">
+      <h3 class="no-margin">Import from a URI</h3>
+      <p>Point us to an imagery URI and we'll import the imagery into Raster Foundry Scenes.</p>
+      <form>
+        <div class="form-group all-in-one">
+          <label for="uri"><i class="icon-project"></i></label>
+          <input id="uri" type="text" class="form-control"
+                placeholder="Imagery URI">
+        </div>
+      </form>
+    </div>
+
+    <!--AWS S3 import -->
+    <div class="content" ng-if="$ctrl.projectAttributeIs('importType', 's3')">
+      <h3 class="no-margin">Import from an AWS S3 Bucket</h3>
+      <p>Point us to an Amazon Web Services S3 Bucket and we'll import the imagery in that bucket into Raster Foundry Scenes.</p>
+      <form>
+        <div class="form-group all-in-one">
+          <label for="s3"><i class="icon-project"></i></label>
+          <input id="s3" type="text" class="form-control"
+                placeholder="AWS S3 Bucket URI">
+        </div>
+      </form>
+    </div>
+
+    <!--Body for IMPORT_SUCCESS-->
+    <div class="modal-body" ng-if="$ctrl.currentStepIs('IMPORT_SUCCESS')">
+      <div class="content">
+        <h3 class="no-margin">Success!</h3>
+        <p>
+          Your scenes are importing into Raster Foundry now.
+          This may take some time and we will notify you when the process is complete.
+          In the meantime checkout your Notification Center for up to date information on all of your projects.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!--Default Footer-->
+  <div
+    ng-if="$ctrl.currentStepIsNot(['SUCCESS', 'ADD_SCENES', 'IMPORT', 'IMPORT_SUCCESS'])"
+    class="modal-footer"
+  >
+    <button type="button" class="btn pull-left"
+            ng-click="$ctrl.closeWithData(1)">
+      Cancel
+    </button>
+
+    <button type="button" class="btn"
+            ng-if="$ctrl.hasPreviousStep()"
+            ng-click="$ctrl.gotoPreviousStep()">
+      Back
+    </button>
+    <button type="button" class="btn btn-primary"
+            ng-click="$ctrl.handleNext()"
+            ng-disabled="$ctrl.isCreatingProject">
+      Next
+    </button>
+  </div>
+
+  <!--Footer for ADD_SCENES-->
+  <div ng-if="$ctrl.currentStepIs('ADD_SCENES')" class="modal-footer">
+    <button type="button" class="btn pull-left"
+            ng-click="$ctrl.closeWithData(1)">
+      Add Scenes later
+    </button>
+    <button type="button" class="btn btn-primary"
+            ng-click="$ctrl.handleNext()">
+      Next
+    </button>
+  </div>
+
+  <!--Footer for IMPORT-->
+  <div ng-if="$ctrl.currentStepIs('IMPORT')" class="modal-footer">
+    <button type="button" class="btn pull-left"
+            ng-click="$ctrl.closeWithData(1)">
+      Add Scenes later
+    </button>
+    <button type="button" class="btn"
+            ng-if="$ctrl.hasPreviousStep()"
+            ng-click="$ctrl.gotoPreviousStep()">
+      Back
+    </button>
+    <button type="button" class="btn btn-primary"
+            ng-click="$ctrl.handleNext()">
+      Next
+    </button>
+  </div>
+
+
+  <!--Footer for SUCCESS-->
+  <div ng-if="$ctrl.currentStepIs('IMPORT_SUCCESS')" class="modal-footer">
+    <button type="button" class="btn btn-primary"
+            ng-click="$ctrl.closeWithData(1)">
+      Done
+    </button>
+  </div>
+</div>
