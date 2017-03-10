@@ -126,6 +126,13 @@ export default (app) => {
             });
             return this.promise.promise;
         }
+
+        verifyAuthCache() {
+            this.isLoggedIn = Boolean(
+                this.localStorage.get('id_token') && this.localStorage.get('profile')
+            );
+            return this.isLoggedIn;
+        }
     }
 
     app.service('authService', AuthService);

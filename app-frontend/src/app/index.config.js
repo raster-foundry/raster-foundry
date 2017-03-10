@@ -52,6 +52,19 @@ function config( // eslint-disable-line max-params
     }
 
     $httpProvider.interceptors.push('jwtInterceptor');
+    $httpProvider.interceptors.push(function ($q, $injector) {
+        'ngInject';
+        return {
+            responseError: function (rejection) {
+                let authService = $injector.get('authService');
+                if (rejection.status === 401 &&
+                    rejection.config.url.indexOf('/api') === 0) {
+                    authService.logout();
+                }
+                return $q.reject(rejection);
+            }
+        };
+    });
 
     configProvider.init(process.env);
 
