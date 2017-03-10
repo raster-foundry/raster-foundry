@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import Konva from 'konva';
 
-/* eslint no-underscore-dangle: ["error", {"allowAfterThis": true}] */
 /* eslint no-unused-vars: 0 */
 /* eslint spaced-comment: 0 */
 

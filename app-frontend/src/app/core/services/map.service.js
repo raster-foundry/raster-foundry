@@ -1,5 +1,4 @@
 import Map from 'es6-map';
-/* eslint no-underscore-dangle: ["error", {"allowAfterThis": true}] */
 /* eslint no-unused-vars: 0 */
 /* eslint spaced-comment: 0 */
 
@@ -122,7 +121,7 @@ class MapWrapper {
         }
     }
 
-    onLayerGroupEvent(event, callback, scope=this) {
+    onLayerGroupEvent(event, callback, scope = this) {
         let callbackId = this._callbackCounter;
         this._callbackCounter += 1;
         this._callbacks.set(callbackId, [event, callback]);
@@ -435,7 +434,8 @@ export default (app) => {
                         promise.reject('Map has been deleted');
                     });
                 }
-                mapWrapper._callbacks.forEach( // eslint-disable-line no-underscore-dangle
+                // eslint-disable-next-line no-underscore-dangle
+                mapWrapper._callbacks.forEach(
                     (value, key) => {
                         mapWrapper.off(key);
                     }
