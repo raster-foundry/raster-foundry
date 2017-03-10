@@ -1,4 +1,3 @@
-// Component code
 import boxSelectItemTpl from './boxSelectItem.html';
 
 const rfBoxSelectItem = {
