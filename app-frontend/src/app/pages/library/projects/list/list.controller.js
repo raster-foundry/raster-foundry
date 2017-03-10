@@ -1,10 +1,11 @@
 class ProjectsListController {
     constructor( // eslint-disable-line max-params
-        $log, $state, $scope, projectService, userService
+        $log, $state, $uibModal, $scope, projectService, userService
     ) {
         'ngInject';
         this.$log = $log;
         this.$state = $state;
+        this.$uibModal = $uibModal;
         this.projectService = projectService;
         this.userService = userService;
         this.$scope = $scope;
@@ -68,26 +69,20 @@ class ProjectsListController {
         this.$state.go('^.detail.scenes', {project: project, projectid: project.id});
     }
 
-    createNewProject(name) {
-        this.showProjectCreateError = false;
-        if (name) {
-            delete this.newProjectName;
-            this.projectService.createProject(name).then(
-                () => {
-                    this.populateProjectList(this.currentPage);
-                },
-                (err) => {
-                    this.projectCreateErrorText =
-                        'There was an error creating the project';
-                    this.showProjectCreateError = true;
-                    this.$log.error('Error creating project:', err);
-                }
-            );
-        } else {
-            this.projectCreateErrorText =
-                'A name is needed to create a new project';
-            this.showProjectCreateError = true;
+    createNewProject() {
+        if (this.newProjectModal) {
+            this.newProjectModal.dismiss();
         }
+
+        this.newProjectModal = this.$uibModal.open({
+            // TODO
+        });
+
+        this.newProjectModal.result.then(() => {
+            // TODO once workflow is a bit more fleshed out
+            // project => {}
+        });
+        return this.newProjectModal;
     }
 }
 

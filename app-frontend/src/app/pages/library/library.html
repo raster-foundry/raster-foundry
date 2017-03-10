@@ -1,24 +1,4 @@
 <div class="container column-stretch dashboard">
-  <div class="sidebar">
-    <div class="sidebar-scrollable">
-      <button class="btn btn-primary" type="button">Import Scenes</button>
-      <nav>
-        <a ui-sref="library.scenes.list"
-           ng-class="{
-                     'active': $ctrl.$state.$current.name.includes('library.scenes')
-                     }">
-          Scenes
-        </a>
-        <a ui-sref="library.projects.list"
-        ng-class="{
-                  'active': $ctrl.$state.$current.name.includes('library.projects')
-                  }">
-          Projects
-        </a>
-        <a ui-sref="library.tools" ui-sref-active="active">Tools</a>
-      </nav>
-    </div>
-  </div>
   <div class="main" ui-view></div>
 </div>
 
