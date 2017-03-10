@@ -38,7 +38,7 @@ Development workflow varies by developer, but a typical development experience m
  - Start up the vagrant machine with `vagrant up --provision`
  - Get an `sbt` console open using `./scripts/console api-server ./sbt`
  - Make changes to Scala code
- - Try compiling (`~compile`) or running the service to inspect it (`~app/run`)
+ - Try compiling (`~compile`) or running the service to inspect it (`~api/run`)
 
 ### Migrations
 
