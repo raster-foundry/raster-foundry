@@ -24,7 +24,5 @@ export default angular.module('index.components', [
     require('./components/refreshTokenModal/refreshTokenModal.module.js').name,
     require('./components/downloadModal/downloadModal.module.js').name,
     require('./components/featureFlagOverrides/featureFlagOverrides.module.js').name,
-    require('./components/selectProjectModal/selectProjectModal.module.js').name,
-    require('./components/selectToolModal/selectToolModal.module.js').name,
     require('./components/toggle/toggle.module.js').name
 ]);
