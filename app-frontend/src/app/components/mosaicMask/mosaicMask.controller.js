@@ -160,7 +160,8 @@ export default class MosaicMaskController {
     editMask($event) {
         // this.makeHttpUpdateToProjectSceneMasks();
         Object.values(
-            $event.layers._layers  // eslint-disable-line no-underscore-dangle
+            // eslint-disable-next-line no-underscore-dangle
+            $event.layers._layers
         ).forEach((layer) => {
             layer.properties.area = this.calculateArea(layer);
         });

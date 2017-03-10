@@ -37,9 +37,9 @@ export default (app) => {
             this.projectService = projectService;
             this.bands = bands;
             this.projectId = projectId;
-            this._sceneTiles = null; // eslint-disable-line no-underscore-dangle
-            this._mosaicTiles = null; // eslint-disable-line no-underscore-dangle
-            this._correction = null; // eslint-disable-line no-underscore-dangle
+            this._sceneTiles = null;
+            this._mosaicTiles = null;
+            this._correction = null;
         }
 
         /** Function to return bounds from either the project or the scene
@@ -79,13 +79,13 @@ export default (app) => {
          * @return {$promise} promise for leaflet tile layer for scenes
          */
         getSceneTileLayer() {
-            if (this._sceneTiles) { // eslint-disable-line no-underscore-dangle
-                return this._sceneTiles; // eslint-disable-line no-underscore-dangle
+            if (this._sceneTiles) {
+                return this._sceneTiles;
             }
             this._sceneTiles = L.tileLayer(this.getSceneLayerURL(),
                 {bounds: this.bounds, attribution: 'Raster Foundry'}
             );
-            return this._sceneTiles; // eslint-disable-line no-underscore-dangle
+            return this._sceneTiles;
         }
 
         /** Function to return a promise that resolves into a leaflet tile layer for mosaic
@@ -93,30 +93,29 @@ export default (app) => {
          * @return {$promise} promise for leaflet tile layer for mosaic
          */
         getMosaicTileLayer() {
-            if (this._mosaicTiles) { // eslint-disable-line no-underscore-dangle
+            if (this._mosaicTiles) {
                 return this.$q((resolve) => {
-                    resolve(this._mosaicTiles); // eslint-disable-line no-underscore-dangle
+                    resolve(this._mosaicTiles);
                 });
             }
             return this.getMosaicLayerURL().then((url) => {
-                this._mosaicTiles = L.tileLayer(url, // eslint-disable-line no-underscore-dangle
+                this._mosaicTiles = L.tileLayer(url,
                                                 {bounds: this.bounds, attribution: 'Raster Foundry'}
                                                );
-                return this._mosaicTiles; // eslint-disable-line no-underscore-dangle
+                return this._mosaicTiles;
             });
         }
 
         getNDVILayer(bands = [5, 4]) {
-            if (this._tiles) { // eslint-disable-line no-underscore-dangle
+            if (this._tiles) {
                 return this.$q((resolve) => {
-                    resolve(this._tiles); // eslint-disable-line no-underscore-dangle
+                    resolve(this._tiles);
                 });
             }
-            // eslint-disable-next-line no-underscore-dangle
             this._tiles = L.tileLayer(this.getNDVIURL(bands),
                 {bounds: this.bounds, attribution: 'Raster Foundry'}
             );
-            return this._tiles; // eslint-disable-line no-underscore-dangle
+            return this._tiles;
         }
 
         /**
@@ -173,7 +172,7 @@ export default (app) => {
          * @returns {null} null
          */
         resetTiles() {
-            this._correction = this.colorCorrectService // eslint-disable-line no-underscore-dangle
+            this._correction = this.colorCorrectService
                 .getDefaultColorCorrection();
             return this.colorCorrectService.reset(this.scene.id, this.projectId)
                 .then(() => this.colorCorrect());
@@ -218,17 +217,17 @@ export default (app) => {
             return this.colorCorrectService.get(
                 this.scene.id, this.projectId
             ).then((data) => {
-                this._correction = data; // eslint-disable-line no-underscore-dangle
-                return this._correction; // eslint-disable-line no-underscore-dangle
+                this._correction = data;
+                return this._correction;
             });
         }
 
         getCachedColorCorrection() {
-            return this._correction; // eslint-disable-line no-underscore-dangle
+            return this._correction;
         }
 
         updateColorCorrection(corrections) {
-            this._correction = corrections; // eslint-disable-line no-underscore-dangle
+            this._correction = corrections;
             return this.colorCorrectService.update(
                 this.scene.id, this.projectId, corrections
             ).then(() => this.colorCorrect());

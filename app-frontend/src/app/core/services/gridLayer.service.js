@@ -1,5 +1,4 @@
 import Konva from 'konva';
-/* eslint no-underscore-dangle: "off" */
 export default (app) => {
     /** Service to create a Leaflet grid layer for scenes
      */
@@ -79,7 +78,6 @@ export default (app) => {
                  * @returns {L.LatLngBounds} Bounds of specified sub-tile
                  */
                 getRectBounds: function (coords, rectIndex) {
-                    // eslint-disable-next-line no-underscore-dangle
                     switch (rectIndex) {
                     case 0:
                         let subCoords0 = new L.Point(coords.x * 2, coords.y * 2);
