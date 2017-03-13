@@ -725,6 +725,8 @@ paths:
         - Imagery
       parameters:
         - $ref: '#/parameters/projectId'
+        - $ref: '#/parameters/organization'
+        - $ref: '#/parameters/createdBy'
       responses:
         200:
           description: Paginated list of map tokens
@@ -1542,10 +1544,7 @@ definitions:
       - $ref: '#/definitions/TimeModelMixin'
       - $ref: '#/definitions/UserTrackingMixin'
     properties:
-      token:
-        type: string
-        format: uuid
-      label:
+      name:
         type: string
         description: Human friendly label for map token
       project:
