@@ -9,8 +9,9 @@ import java.sql.Timestamp
 import java.time.Instant
 
 package object tool extends RfJsonProtocols {
-  //implicit val paginatedToolFormat = jsonFormat6(PaginatedResponse[Tool.WithRelated])
-  /** Circe rules */
+  implicit val paginatedToolFormat = jsonFormat6(PaginatedResponse[Tool.WithRelated])
+
+  /** Circe codecs */
   implicit def encodePaginated[A: Encoder] =
     Encoder.forProduct6("count", "hasPrevious", "hasNext", "page", "pageSize", "results")({pr: PaginatedResponse[A] =>
       (pr.count, pr.hasPrevious, pr.hasNext, pr.page, pr.pageSize, pr.results)

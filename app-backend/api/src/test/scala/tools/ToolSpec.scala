@@ -11,9 +11,11 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import org.scalatest.{Matchers, WordSpec}
 import spray.json._
-import io.circe._
-import io.circe.syntax._
-import io.circe.generic.auto._
+import DefaultJsonProtocol._
+import com.azavea.rf.datamodel._
+import com.azavea.rf.api.utils.Config
+import com.azavea.rf.api.{AuthUtils, DBSpec, Router}
+import concurrent.duration._
 
 import java.util.UUID
 import scala.concurrent.duration._
@@ -41,10 +43,10 @@ class ToolSpec extends WordSpec
     Visibility.Public,
     List("Test tool datasource"),
     2.5f,
-    MapAlgebraAST.RFMLRasterSource.empty + MapAlgebraAST.RFMLRasterSource.empty,
+    JsObject(),
     List(),
     List()
-)
+  )
 
   // Alias to baseRoutes to be explicit
   val baseRoutes = routes
@@ -69,24 +71,23 @@ class ToolSpec extends WordSpec
   }
 
   "/api/tools/" should {
-
     "reject creating tools without authentication" in {
       Post("/api/tools/").withEntity(
         HttpEntity(
           ContentTypes.`application/json`,
-          newTool.asJson.toString()
+          newTool.toJson.toString()
         )
       ) ~> baseRoutes ~> check {
         reject
       }
     }
 
-    "create a tool with authorization" in {
+    "create a tool record that can't be parsed as a MapAlgebraAST" in {
       Post("/api/tools/").withHeadersAndEntity(
         List(authorization),
         HttpEntity(
           ContentTypes.`application/json`,
-          newTool.asJson.toString()
+          newTool.toJson.toString()
         )
       ) ~> baseRoutes ~> check {
         responseAs[Tool]

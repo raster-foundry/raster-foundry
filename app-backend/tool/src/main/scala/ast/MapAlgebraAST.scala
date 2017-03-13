@@ -42,7 +42,7 @@ object MapAlgebraAST {
 
 
   /** Map Algebra sources (leaves) */
-  sealed abstract class Source[T](val `type`: String) extends MapAlgebraAST {
+  sealed abstract class Source[+T](val `type`: String) extends MapAlgebraAST {
     def value: Option[T]
     def args: List[MapAlgebraAST] = List.empty
     def evaluable = value.isDefined

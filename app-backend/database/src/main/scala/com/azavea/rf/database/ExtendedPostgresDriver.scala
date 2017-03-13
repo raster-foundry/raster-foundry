@@ -50,14 +50,6 @@ trait ExtendedPostgresDriver extends ExPostgresDriver
     implicit val colorCorrectParamsMapper = MappedJdbcType.base[ColorCorrect.Params, JsValue](_.toJson,
       _.convertTo[ColorCorrect.Params])
 
-    // This is a Circe mapping rather than SprayJson, hence PgCirceJsonSupport above
-    implicit val mapAlgebraASTTypeMapper = MappedJdbcType.base[MapAlgebraAST, Json](_.asJson,
-      _.as[MapAlgebraAST] match {
-        case Right(ast) => ast
-        case Left(e) => throw e
-      }
-    )
-
     implicit val userRoleTypeMapper = createEnumJdbcType[User.Role]("UserRole", _.repr,
       User.Role.fromString, quoteName = false)
     implicit val userRoleTypeListMapper = createEnumListJdbcType[User.Role]("UserRole",
