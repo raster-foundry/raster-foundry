@@ -8,7 +8,7 @@ import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.tool.ast._
 
-import io.circe._
+import spray.json._
 import slick.model.ForeignKeyAction
 import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 import com.typesafe.scalalogging.LazyLogging
@@ -50,7 +50,7 @@ class Tools(_tableTag: Tag) extends Table[Tool](_tableTag, "tools")
   val compatibleDataSources: Rep[List[String]] = column[List[String]]("compatible_data_sources",
     O.Length(Int.MaxValue, varying = false), O.Default(List.empty))
   val stars: Rep[Float] = column[Float]("stars", O.Default(0.0f))
-  val definition: Rep[MapAlgebraAST] = column[MapAlgebraAST]("definition", O.Length(2147483647,varying=false))
+  val definition: Rep[JsValue] = column[JsValue]("definition", O.Length(2147483647,varying=false))
 
   lazy val organizationsFk =
     foreignKey("tools_organization_id_fkey", organizationId, Organizations)(
