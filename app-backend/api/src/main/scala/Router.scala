@@ -18,6 +18,7 @@ import com.azavea.rf.api.toolcategory.ToolCategoryRoutes
 import com.azavea.rf.api.toolrun.ToolRunRoutes
 import com.azavea.rf.api.grid.GridRoutes
 import com.azavea.rf.api.datasource.DatasourceRoutes
+import com.azavea.rf.api.maptoken.MapTokenRoutes
 import com.azavea.rf.api.utils.Config
 
 /**
@@ -41,6 +42,7 @@ trait Router extends HealthCheckRoutes
     with ToolRunRoutes
     with GridRoutes
     with DatasourceRoutes
+    with MapTokenRoutes
     with Config {
 
   val corsSettings = CorsSettings.defaultSettings
@@ -62,7 +64,8 @@ trait Router extends HealthCheckRoutes
       pathPrefix("tool-categories") { toolCategoryRoutes } ~
       pathPrefix("tool-runs") { toolRunRoutes } ~
       pathPrefix("scene-grid") { gridRoutes } ~
-      pathPrefix("datasources") { datasourceRoutes }
+      pathPrefix("datasources") { datasourceRoutes } ~
+      pathPrefix("map-tokens") { mapTokenRoutes }
     } ~
     pathPrefix("config") {
       configRoutes

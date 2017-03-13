@@ -192,3 +192,14 @@ case class CombinedToolCategoryQueryParams(
 case class DatasourceQueryParameters(
   name: Option[String] = None
 )
+
+case class MapTokenQueryParameters(
+  name: Option[String] = None,
+  projectId: Option[UUID] = None
+)
+
+case class CombinedMapTokenQueryParameters(
+  orgParams: OrgQueryParameters = OrgQueryParameters(),
+  userParams: UserQueryParameters = UserQueryParameters(),
+  mapTokenParams: MapTokenQueryParameters = MapTokenQueryParameters()
+)
