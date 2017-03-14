@@ -23,7 +23,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import java.util.UUID
 
-// TODO: I need a better way to bind shit ... Right now I just swap out Var for Op ...
+// TODO: I need a better way to bind ops ... Right now I just swap out Var for Op ...
 
 object ToolRoutes extends LazyLogging {
   val userId: String = "rf_airflow-user"
