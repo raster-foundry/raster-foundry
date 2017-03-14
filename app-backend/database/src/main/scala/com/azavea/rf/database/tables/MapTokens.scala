@@ -15,8 +15,7 @@ import slick.model.ForeignKeyAction
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-/**
-  * Created by cbrown on 3/11/17.
+/** Tokens associated with projects for sharing purposes
   */
 class MapTokens(_tableTag: Tag) extends Table[MapToken](_tableTag, "map_tokens")
   with NameField
@@ -107,22 +106,22 @@ object MapTokens extends TableQuery(tag => new MapTokens(tag)) with LazyLogging 
 
 class MapTokensTableQuery[M, U, C[_]](mapTokens: MapTokens.TableQuery) {
   def page(pageRequest: PageRequest): MapTokens.TableQuery = {
-    MapTokens
+    mapTokens
       .drop(pageRequest.offset * pageRequest.limit)
       .take(pageRequest.limit)
   }
 
   def filterByProject(projectId: Option[UUID]): MapTokens.TableQuery = {
     projectId match {
-      case Some(id) => MapTokens.filter(_.projectId === id)
-      case _ => MapTokens
+      case Some(id) => mapTokens.filter(_.projectId === id)
+      case _ => mapTokens
     }
   }
 
   def filterByName(name: Option[String]): MapTokens.TableQuery = {
     name match {
-      case Some(s) => MapTokens.filter(_.name === s)
-      case _ => MapTokens
+      case Some(s) => mapTokens.filter(_.name === s)
+      case _ => mapTokens
     }
   }
 }
