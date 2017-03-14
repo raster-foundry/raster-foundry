@@ -23,7 +23,7 @@ export default class DiagramContainerController {
         this.cellSize = [300, 75];
         this.paddingFactor = 0.8;
         this.nodeSeparationFactor = 0.25;
-        this.panEnabled = false;
+        this.panActive = false;
         this.initContextMenus();
         this.contextMenuTpl =
             `<div class="lab-contextmenu" ng-show="isShowingContextMenu">
@@ -73,11 +73,11 @@ export default class DiagramContainerController {
             this.paper.on('blank:pointerclick', this.onPaperClick.bind(this));
             this.paper.on('cell:pointerclick', this.onCellClick.bind(this));
             this.paper.on('blank:pointerdown', () => {
-                this.panEnabled = true;
+                this.panActive = true;
                 this.$scope.$evalAsync();
             });
             this.paper.on('blank:pointerup', () => {
-                this.panEnabled = false;
+                this.panActive = false;
                 this.$scope.$evalAsync();
             });
         }
@@ -100,7 +100,7 @@ export default class DiagramContainerController {
             if (!this.svgPanZoom) {
                 this.svgPanZoom = SvgPanZoom(this.paper.svg, {
                     beforePan: () => {
-                        return this.panEnabled;
+                        return this.panActive;
                     },
                     dblClickZoomEnabled: false,
                     fit: false
