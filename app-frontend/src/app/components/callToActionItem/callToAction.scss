@@ -2,6 +2,7 @@
   display: flex;
   align-items: stretch;
   flex-wrap: wrap;
+  flex-direction: row;
 }
 
 rf-call-to-action-item,
@@ -12,7 +13,7 @@ rf-call-to-action-item,
   min-height: 250px;
   display: flex;
   flex-direction: column;
-  margin: 0 0 2rem 2rem;
+  margin: 0 2rem 2rem 0;
   border-radius: 4px;
   min-width: 380px;
   h2, h3 {

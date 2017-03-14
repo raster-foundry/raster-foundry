@@ -75,13 +75,14 @@ class ProjectsListController {
         }
 
         this.newProjectModal = this.$uibModal.open({
-            // TODO
+            component: 'rfCreateProjectModal'
         });
 
         this.newProjectModal.result.then(() => {
             // TODO once workflow is a bit more fleshed out
             // project => {}
         });
+
         return this.newProjectModal;
     }
 }
