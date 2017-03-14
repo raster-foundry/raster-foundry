@@ -74,9 +74,11 @@ export default class DiagramContainerController {
             this.paper.on('cell:pointerclick', this.onCellClick.bind(this));
             this.paper.on('blank:pointerdown', () => {
                 this.panEnabled = true;
+                this.$scope.$evalAsync();
             });
             this.paper.on('blank:pointerup', () => {
                 this.panEnabled = false;
+                this.$scope.$evalAsync();
             });
         }
 
