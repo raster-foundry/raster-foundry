@@ -26,11 +26,8 @@
           <label for="tile-link" class="sr-only">URL</label>
           <input id="tile-link" type="text" class="form-control"
                   value="{{$ctrl.resolve.shareUrl}}" readonly>
-          <!--
-            @TODO: the copy button is intended to copy the url for the user which
-            is not currently implemented
-          -->
-          <button class="btn btn-link">
+          <button class="btn btn-link"
+                  clipboard text="$ctrl.resolve.shareUrl">
             Copy
           </button>
         </div>
@@ -42,7 +39,8 @@
             <button class="btn btn-primary"
                     ng-repeat="policy in $ctrl.sharePolicies"
                     ng-click="$ctrl.onPolicyChange(policy)"
-                    ng-class="{'active': policy.active}">
+                    ng-class="{'active': policy.active}"
+                    ng-disabled="!policy.enabled">
               {{policy.label}}
             </button>
           </div>
@@ -50,6 +48,36 @@
         <div class="panel">
           <div class="panel-body">
             {{$ctrl.activePolicy.description}}
+            <div style="margin-top: 1em;" ng-if="$ctrl.activePolicy.token">
+              <div class="form-group all-in-one">
+                <input type="text" class="form-control" ng-model="$ctrl.newTokenName" placeholder="Token Name">
+                <button class="btn btn-link"
+                        ng-if="$ctrl.activePolicy.token"
+                        type="button"
+                        ng-click="$ctrl.createMapToken($ctrl.newTokenName)">
+                  <i class="icon-plus"></i> Create
+                </button>
+              </div>
+              <div class="list-group">
+                <rf-token-item token="token"
+                               on-delete="$ctrl.deleteToken(token)"
+                               on-update="$ctrl.updateToken(token, name)"
+                               ng-repeat="token in $ctrl.tokens track by token.id">
+                </rf-token-item>
+              </div>
+              <div class="list-group" ng-show="$ctrl.loadingTokens">
+                <span class="list-placeholder">
+                  <i class="icon-load"></i>
+                </span>
+              </div>
+              <div class="list-group"
+                   ng-if="(!$ctrl.tokens || !$ctrl.tokens.length) && !$ctrl.loadingTokens">
+                You have not generated any tokens.
+              </div>
+              <button class="btn btn-primary" type="button" ui-sref="settings.tokens.map">
+                Manage All Tokens
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -72,10 +100,6 @@
           <label for="tile-link" class="sr-only">URI Link</label>
           <input id="tile-link" type="text" class="form-control"
                   value="{{$ctrl.mappedTileUrl}}" readonly>
-          <!--
-            @TODO: the copy button is intended to copy the url for the user which
-            is not currently implemented
-          -->
           <button clipboard text="$ctrl.mappedTileUrl" class="btn btn-link">
             Copy
           </button>

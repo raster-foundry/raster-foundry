@@ -26,6 +26,8 @@ import settingsTpl from './pages/settings/settings.html';
 import profileTpl from './pages/settings/profile/profile.html';
 import accountTpl from './pages/settings/account/account.html';
 import tokensTpl from './pages/settings/tokens/tokens.html';
+import apiTokensTpl from './pages/settings/tokens/api/api.html';
+import mapTokensTpl from './pages/settings/tokens/map/map.html';
 import errorTpl from './pages/error/error.html';
 import shareTpl from './pages/share/share.html';
 import homeTpl from './pages/home/home.html';
@@ -187,6 +189,19 @@ function settingsStates($stateProvider) {
             url: '/tokens',
             templateUrl: tokensTpl,
             controller: 'TokensController',
+            controllerAs: '$ctrl',
+            abstract: true
+        })
+        .state('settings.tokens.api', {
+            url: '/api',
+            templateUrl: apiTokensTpl,
+            controller: 'ApiTokensController',
+            controllerAs: '$ctrl'
+        })
+        .state('settings.tokens.map', {
+            url: '/map',
+            templateUrl: mapTokensTpl,
+            controller: 'MapTokensController',
             controllerAs: '$ctrl'
         });
 }

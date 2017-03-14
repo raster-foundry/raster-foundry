@@ -1,9 +1,11 @@
 export default (app) => {
     class TokenService {
-        constructor($resource) {
+        constructor($resource, $q, $log) {
             'ngInject';
+            this.$q = $q;
+            this.$log = $log;
 
-            this.Token = $resource(
+            this.ApiToken = $resource(
                 '/api/tokens/:id', {
                     id: '@id'
                 }, {
@@ -17,14 +19,50 @@ export default (app) => {
                     }
                 }
             );
+
+            this.MapToken = $resource(
+                '/api/map-tokens/:id', {
+                    id: '@id'
+                }, {
+                    create: {
+                        method: 'POST'
+                    },
+                    query: {
+                        method: 'GET',
+                        cache: false,
+                        isArray: false
+                    },
+                    delete: {
+                        method: 'DELETE'
+                    },
+                    update: {
+                        method: 'PUT'
+                    }
+                });
         }
 
-        query(params = {}) {
-            return this.Token.query(params).$promise;
+        queryApiTokens(params = {}) {
+            return this.ApiToken.query(params).$promise;
         }
 
-        delete(params) {
-            return this.Token.delete(params).$promise;
+        deleteApiToken(params) {
+            return this.ApiToken.delete(params).$promise;
+        }
+
+        createMapToken(params) {
+            return this.MapToken.create(params).$promise;
+        }
+
+        queryMapTokens(params = {}) {
+            return this.MapToken.query(params).$promise;
+        }
+
+        deleteMapToken(params) {
+            return this.MapToken.delete(params).$promise;
+        }
+
+        updateMapToken(params) {
+            return this.MapToken.update(params).$promise;
         }
     }
 

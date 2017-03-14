@@ -1,0 +1,44 @@
+<div class="token-item-container">
+  <div class="list-group-right">
+    <div class="form-group all-in-one" ng-if="$ctrl.token.name">
+      <input type="text" class="form-control"
+             ng-model="$ctrl.newName"
+             ng-disabled="!$ctrl.editing">
+      <input type="text"
+             ng-if="!$ctrl.editing"
+             class="form-control"
+             style="cursor: text"
+             ng-value="$ctrl.token.id" disabled>
+      <button class="btn btn-link"
+              ng-if="!$ctrl.editing"
+              clipboard text="$ctrl.token.id">
+        Copy
+      </button>
+      <button class="btn"
+              ng-if="!$ctrl.editing"
+              ng-click="$ctrl.startEditing()">
+        <i class="icon-pencil"></i>
+      </button>
+      <button class="btn"
+              ng-if="$ctrl.editing"
+              ng-click="$ctrl.onEditComplete($ctrl.newName)">
+        <i class="icon-check"></i>
+      </button>
+      <button class="btn"
+              ng-if="$ctrl.editing"
+              ng-click="$ctrl.onEditCancel()">
+        <i class="icon-cross"></i>
+      </button>
+      <button class="btn" ng-click="$ctrl.onDelete()">
+        <i class="icon-trash"></i>
+      </button>
+    </div>
+    <div class="form-group all-in-one" ng-if="$ctrl.token.device_name">
+      <input type="text" class="form-control" ng-value="$ctrl.token.device_name" disabled>
+      <button class="btn btn-link"
+              ng-click="$ctrl.deleteToken(token.id)">
+        <i class="icon-trash"></i>
+      </button>
+    </div>
+  </div>
+</div>
