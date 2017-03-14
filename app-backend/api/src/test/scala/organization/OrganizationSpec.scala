@@ -7,13 +7,16 @@ import akka.http.scaladsl.model.{HttpEntity, ContentTypes}
 import akka.http.scaladsl.server.Route
 import akka.actor.ActorSystem
 import concurrent.duration._
-import spray.json._
 
 import com.azavea.rf.datamodel._
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.{DBSpec, Router}
 import com.azavea.rf.api.AuthUtils
 
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.syntax._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 class OrganizationSpec extends WordSpec
     with Matchers
@@ -49,7 +52,7 @@ class OrganizationSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          newOrg.toJson.toString()
+          newOrg.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         responseAs[Organization]

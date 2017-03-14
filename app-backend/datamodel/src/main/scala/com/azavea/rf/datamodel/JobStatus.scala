@@ -1,7 +1,7 @@
 package com.azavea.rf.datamodel
 
-import spray.json._
-import DefaultJsonProtocol._
+import io.circe._
+import cats.syntax.either._
 
 sealed abstract class JobStatus(val repr: String) {
   override def toString = repr
@@ -25,12 +25,11 @@ object JobStatus {
     case _ => throw new Exception(s"Invalid string: $s")
   }
 
-  implicit object DefaultJobStatusJsonFormat extends RootJsonFormat[JobStatus] {
-    def write(status: JobStatus): JsValue = JsString(status.toString)
-    def read(js: JsValue): JobStatus = js match {
-      case JsString(status) => fromString(status)
-      case _ =>
-        deserializationError("Failed to parse thumbnail size string representation (${js}) to JobStatus")
+  implicit val jobStatusEncoder: Encoder[JobStatus] =
+    Encoder.encodeString.contramap[JobStatus](_.toString)
+
+  implicit val jobStatusDecoder: Decoder[JobStatus] =
+    Decoder.decodeString.emap { str =>
+      Either.catchNonFatal(fromString(str)).leftMap(t => "JobStatus")
     }
-  }
 }

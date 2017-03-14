@@ -1,22 +1,29 @@
 package com.azavea.rf.api.image
 
-import java.util.UUID
-
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.model.StatusCodes
-
-import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-
 import com.azavea.rf.common.{Authentication, UserErrorHandler}
 import com.azavea.rf.database.tables.Images
 import com.azavea.rf.database.Database
 import com.azavea.rf.datamodel._
 
+import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.model.StatusCodes
+import com.lonelyplanet.akka.http.extensions.PaginationDirectives
+import io.circe._
+import io.circe.generic.auto._
+import de.heikoseeberger.akkahttpcirce.CirceSupport
+
+import java.util.UUID
+
+import io.circe._
+import io.circe.generic.auto._
+
+import de.heikoseeberger.akkahttpcirce.CirceSupport
 
 trait ImageRoutes extends Authentication
     with ImageQueryParametersDirective
     with PaginationDirectives
-    with UserErrorHandler {
+    with UserErrorHandler
+    with CirceSupport {
 
   implicit def database: Database
 

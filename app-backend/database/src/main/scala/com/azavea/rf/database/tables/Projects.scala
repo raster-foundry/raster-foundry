@@ -12,13 +12,14 @@ import geotrellis.vector.{Geometry, Extent}
 import com.lonelyplanet.akka.http.extensions._
 import com.typesafe.scalalogging.LazyLogging
 import slick.model.ForeignKeyAction
+import io.circe._
+import io.circe.optics.JsonPath._
 
 import java.util.UUID
 import java.util.Date
 import java.sql.Timestamp
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-
 
 /** Table description of table projects. Objects of this class serve as prototypes for rows in queries. */
 class Projects(_tableTag: Tag) extends Table[Project](_tableTag, "projects")
@@ -232,6 +233,7 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     }
   }
 
+  // TODO: refactor this to use optics. It's the last Map[String, Any] anywhere in the database
   def getCompositeBands(composite: Map[String, Any]): (Int, Int, Int) = {
     val bands = composite.get("value") match {
       case Some(b) => b.asInstanceOf[Map[String, Any]]
@@ -269,6 +271,9 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     // Users should only be able to add scenes they are authorized to view to a project
     val authSceneCount =
       Scenes.filter(_.id inSet sceneIds).filterUserVisibility(user).length.result
+
+    def compositeFromArray(arr: List[Json]): Json = ???.asInstanceOf[Json]
+    def compositeFromObj(obj: Json): Json = ???.asInstanceOf[Json]
 
     database.db.run {
       authProjectCount zip authSceneCount
@@ -332,36 +337,35 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
             database.db.run {
               sceneCompositesQuery.result
             } flatMap { sceneComposites =>
-              val sceneToProjects = sceneComposites.map {
-                case (sceneId, composites) => {
-                  val composite: Map[String, Any] = composites.get("natural") match {
-                    case Some(c: Map[String, Any]) => c
-                    case _ => composites.headOption match {
-                      case Some((key: String, value: Any)) => value match {
-                        case Some(c: Map[String, Any]) => c
-                        case _ => Map.empty[String, Any]
-                      }
-                      case _ => Map.empty[String, Any]
+              val sceneToProjects = sceneComposites.map { case (sceneId, composites) =>
+                def getNaturalObj(js: Json) = root.natural.obj.getOption(js)
+                def getNaturalArr(js: Json) = root.natural.arr.getOption(js)
+                val composite =
+                  (getNaturalObj(composites), getNaturalArr(composites)) match {
+                    case (Some(jsObj), _) => jsObj
+                    case (_, Some(jsArr)) => jsArr.headOption match {
+                      case Some(js) => js
+                      case None => Json.Null
                     }
+                    case (_, _) => Json.Null
                   }
 
-                  val (redBand, greenBand, blueBand) = getCompositeBands(
-                    composite.asInstanceOf[Map[String, Any]]
-                  )
+                val (redBand, greenBand, blueBand) = getCompositeBands(
+                  composite.asInstanceOf[Map[String, Any]]
+                )
 
-                  SceneToProject(
-                    sceneId, projectId, None, Some(
-                      ColorCorrect.Params(
-                        redBand, greenBand, blueBand, // Bands
-                        None, None, None,             // Gamma
-                        None, None,                   // Contrast, Brightness
-                        None, None,                   // Alpha, Beta
-                        None, None,                   // Min, Max
-                        false                         // Equalize
-                      )
+                SceneToProject(
+                  sceneId, projectId, None, Some(
+                    ColorCorrect.Params(
+                      redBand, greenBand, blueBand, // Bands
+                      None, None, None,             // Gamma
+                      None, None,                   // Contrast, Brightness
+                      None, None,                   // Alpha, Beta
+                      None, None,                   // Min, Max
+                      false                         // Equalize
                     )
                   )
-                }
+                )
               }
 
               database.db.run {

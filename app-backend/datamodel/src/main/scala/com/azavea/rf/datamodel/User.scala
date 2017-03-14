@@ -1,7 +1,8 @@
 package com.azavea.rf.datamodel
 
-import spray.json._
-import spray.json.DefaultJsonProtocol._
+import io.circe._
+import cats.syntax.either._
+
 import java.sql.Timestamp
 import java.util.UUID
 
@@ -36,14 +37,11 @@ case class User(
   modifiedAt: Timestamp
 )
 
-
 object User {
 
   def tupled = (User.apply _).tupled
 
   def create = Create.apply _
-
-  implicit val defaultUserFormat = jsonFormat5(User.apply _)
 
   case class Create(
     id: String,
@@ -54,9 +52,6 @@ object User {
       val now = new Timestamp((new java.util.Date()).getTime())
       User(id, organizationId, role, now, now)
     }
-  }
-  object Create {
-    implicit val defaultUserCreateFormat = jsonFormat3(Create.apply _)
   }
 }
 

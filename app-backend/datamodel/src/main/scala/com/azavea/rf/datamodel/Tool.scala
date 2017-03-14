@@ -1,7 +1,6 @@
 package com.azavea.rf.datamodel
 
-import spray.json._
-import DefaultJsonProtocol._
+import io.circe._
 
 import java.util.UUID
 import java.sql.Timestamp
@@ -21,7 +20,7 @@ case class Tool(
   visibility: Visibility,
   compatibleDataSources: List[String] = List.empty,
   stars: Float = 0.0f,
-  definition: JsValue
+  definition: Json
 ) {
   def withRelatedFromComponents(toolTags: Seq[ToolTag], toolCategories: Seq[ToolCategory], organization: Option[Organization]):
       Tool.WithRelated = Tool.WithRelated(
@@ -67,8 +66,6 @@ case class Tool(
 /** Case class for tool creation */
 object Tool {
 
-  implicit val defaultToolFormat = jsonFormat14(Tool.apply _)
-
   def create = Create.apply _
 
   def tupled = (Tool.apply _).tupled
@@ -82,7 +79,7 @@ object Tool {
     visibility: Visibility,
     compatibleDataSources: List[String],
     stars: Float,
-    definition: JsValue,
+    definition: Json,
     tags: Seq[UUID],
     categories: Seq[String]
   ) {
@@ -114,10 +111,6 @@ object Tool {
     }
   }
 
-  object Create {
-    implicit val defaultToolCreateFormat = jsonFormat11(Create.apply _)
-  }
-
   // join of tool/tag/category
   case class ToolRelationshipJoin(tool: Tool, toolTag: Option[ToolTag], toolCategory: Option[ToolCategory], organization: Option[Organization])
 
@@ -140,13 +133,12 @@ object Tool {
     visibility: Visibility,
     compatibleDataSources: List[String] = List.empty,
     stars: Float = 0.0f,
-    definition: JsValue,
+    definition: Json,
     tags: Seq[ToolTag],
     categories: Seq[ToolCategory]
   )
 
   object WithRelated {
-    implicit val defaultToolWithRelatedFormat = jsonFormat16(WithRelated.apply)
 
     def fromRecords(records: Seq[(Tool, Option[ToolTag], Option[ToolCategory], Option[Organization])]): Iterable[Tool.WithRelated] = {
       val distinctTools = records.map(_._1).distinct
@@ -180,13 +172,9 @@ object Tool {
     visibility: Visibility,
     compatibleDataSources: List[String] = List.empty,
     stars: Float = 0.0f,
-    definition: JsValue,
+    definition: Json,
     tags: Seq[UUID],
     categories: Seq[String]
   )
-
-  object WithRelatedUUIDs {
-    implicit val defaultToolWithRelatedUUIDsFormat = jsonFormat16(WithRelatedUUIDs.apply)
-  }
 }
 

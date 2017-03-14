@@ -6,6 +6,7 @@ import com.azavea.rf.api.AuthUtils
 import java.sql.Timestamp
 import java.time.Instant
 
+import io.circe.syntax._
 
 trait ProjectSpecHelper {
   val authorization = AuthUtils.generateAuthHeader("Default")
@@ -33,7 +34,7 @@ trait ProjectSpecHelper {
 
   def newScene(name: String, cloudCover: Option[Float] = None) = Scene.Create(
     None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), landsatId,
-    Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any],
+    Map("instrument type" -> "satellite", "splines reticulated" -> "0").asJson,
     name, None, None, List.empty[String], List.empty[Image.Banded],
     List.empty[Thumbnail.Identified], None,
     SceneFilterFields(cloudCover,
@@ -45,7 +46,7 @@ trait ProjectSpecHelper {
 
   def newPrivateScene(name: String, cloudCover: Option[Float] = None) = Scene.Create(
     None, publicOrgId, 0, Visibility.Private, List("Test", "Public", "Low Resolution"), landsatId,
-    Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any],
+    Map("instrument type" -> "satellite", "splines reticulated" -> "0").asJson,
     name, None, None, List.empty[String], List.empty[Image.Banded],
     List.empty[Thumbnail.Identified], None,
     SceneFilterFields(cloudCover,

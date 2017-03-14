@@ -5,9 +5,9 @@ import com.azavea.rf.tool.ast._
 
 import geotrellis.slick.PostGisProjectionSupport
 import com.github.tminglei.slickpg._
-import spray.json._
 import io.circe._
 import io.circe.syntax._
+import io.circe.generic.auto._
 
 import scala.collection.immutable.Map
 
@@ -24,7 +24,6 @@ trait ExtendedPostgresDriver extends ExPostgresDriver
     with PgArraySupport
     with PgRangeSupport
     with PgCirceJsonSupport
-    with PgSprayJsonSupport
     with PgEnumSupport
     with PostGisProjectionSupport {
 
@@ -36,19 +35,17 @@ trait ExtendedPostgresDriver extends ExPostgresDriver
   object RFAPI extends API
       with ArrayImplicits
       with RangeImplicits
-      with SprayJsonImplicits
       with CirceImplicits
-      with RFDatabaseJsonProtocol
       with PostGISProjectionImplicits
       with PostGISProjectionAssistants {
 
     implicit def strListTypeMapper = new SimpleArrayJdbcType[String]("text").to(_.toList)
 
-    implicit val metadataMapper = MappedJdbcType.base[Map[String, Any], JsValue](_.toJson,
-      _.convertTo[Map[String, Any]])
-
-    implicit val colorCorrectParamsMapper = MappedJdbcType.base[ColorCorrect.Params, JsValue](_.toJson,
-      _.convertTo[ColorCorrect.Params])
+    implicit val colorCorrectParamsMapper = MappedJdbcType.base[ColorCorrect.Params, Json](_.asJson,
+      _.as[ColorCorrect.Params] match {
+        case Right(ast) => ast
+        case Left(e) => throw e
+      })
 
     implicit val userRoleTypeMapper = createEnumJdbcType[UserRole]("UserRole", _.repr,
       UserRole.fromString, quoteName = false)

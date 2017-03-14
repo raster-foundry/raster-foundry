@@ -20,6 +20,10 @@ import java.time.Instant
 import geotrellis.vector.{MultiPolygon, Polygon, Point, Geometry}
 import geotrellis.slick.Projected
 
+import io.circe._
+import io.circe.syntax._
+import io.circe.generic.auto._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 class SceneSpec extends WordSpec
     with Matchers
@@ -85,7 +89,7 @@ class SceneSpec extends WordSpec
 
     val newSceneDatasource1 = Scene.Create(
       None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), landsatId,
-      Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any],
+      Map("instrument type" -> "satellite", "splines reticulated" -> "0").asJson,
       "test scene datasource 1",
       mpoly, mpoly, List.empty[String], List.empty[Image.Banded], List.empty[Thumbnail.Identified], None,
       SceneFilterFields(None,
@@ -97,7 +101,7 @@ class SceneSpec extends WordSpec
 
     val newSceneDatasource2 = Scene.Create(
       None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), sentinelId,
-      Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any],
+      Map("instrument type" -> "satellite", "splines reticulated" -> "0").asJson,
       "test scene datasource 2", None, None, List.empty[String], List.empty[Image.Banded],
       List.empty[Thumbnail.Identified], Some("an_s3_bucket_location"),
       SceneFilterFields(None, None, None, None),
@@ -108,7 +112,7 @@ class SceneSpec extends WordSpec
       Post("/api/scenes/").withEntity(
         HttpEntity(
           ContentTypes.`application/json`,
-          newSceneDatasource1.toJson.toString()
+          newSceneDatasource1.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         reject
@@ -120,20 +124,20 @@ class SceneSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          newSceneDatasource1.toJson.toString()
+          newSceneDatasource1.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         val sceneWithRelated = responseAs[Scene.WithRelated]
         val newSceneDatasource1Image = Image.Banded(
           publicOrgId, 0, Visibility.Public, "filename", "uri",
-          sceneWithRelated.id, Map():Map[String, Any], 20.2f, List.empty[String],
+          sceneWithRelated.id, ().asJson, 20.2f, List.empty[String],
           List[Band.Create](Band.Create("i'm a band", 4, List[Int](550, 600)))
         )
         Post("/api/images/").withHeadersAndEntity(
           List(authHeader),
           HttpEntity(
             ContentTypes.`application/json`,
-            newSceneDatasource1Image.toJson.toString()
+            newSceneDatasource1Image.asJson.noSpaces
           )
         ) ~> baseRoutes ~> check {
           responseAs[Image.WithRelated]
@@ -144,7 +148,7 @@ class SceneSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          newSceneDatasource2.toJson.toString()
+          newSceneDatasource2.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         responseAs[Scene.WithRelated]
@@ -156,7 +160,7 @@ class SceneSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          newSceneDatasource1.toJson.toString()
+          newSceneDatasource1.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         status shouldEqual StatusCodes.ClientError(409)("Duplicate Key", "")

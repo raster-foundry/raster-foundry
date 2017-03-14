@@ -6,6 +6,9 @@ import com.azavea.rf.api.AuthUtils
 import java.sql.Timestamp
 import java.time.Instant
 
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.syntax._
 
 trait ThumbnailSpecHelper {
   val authorization = AuthUtils.generateAuthHeader("Default")
@@ -17,7 +20,7 @@ trait ThumbnailSpecHelper {
 
   val newScene = Scene.Create(
     None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), landsatId,
-    Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any],
+    Map("instrument type" -> "satellite", "splines reticulated" -> "0").asJson,
     "test scene project",
     None, None, List.empty[String], List.empty[Image.Banded], List.empty[Thumbnail.Identified], None,
     SceneFilterFields(None,

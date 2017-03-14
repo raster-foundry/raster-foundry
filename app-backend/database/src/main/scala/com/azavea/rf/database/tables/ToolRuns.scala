@@ -13,6 +13,8 @@ import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.fields._
 import com.azavea.rf.database.query._
 
+import io.circe.Json
+
 class ToolRuns(_TableTag: Tag) extends Table[ToolRun](_TableTag, "tool_runs")
     with TimestampFields {
   def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, visibility,
@@ -27,7 +29,7 @@ class ToolRuns(_TableTag: Tag) extends Table[ToolRun](_TableTag, "tool_runs")
   val organizationId: Rep[UUID] = column[UUID]("organization")
   val projectId: Rep[UUID] = column[UUID]("project")
   val toolId: Rep[UUID] = column[UUID]("tool")
-  val execution_parameters: Rep[Map[String, Any]] = column[Map[String, Any]]("execution_parameters")
+  val execution_parameters: Rep[Json] = column[Json]("execution_parameters")
 
   lazy val createdByUserFK = foreignKey("tool_runs_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val modifiedByUserFK = foreignKey("tool_runs_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)

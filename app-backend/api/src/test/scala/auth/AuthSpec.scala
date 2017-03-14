@@ -13,6 +13,10 @@ import com.azavea.rf.api.user._
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.{AuthUtils, DBSpec, Router}
 
+import io.circe._
+import io.circe.generic.auto._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
+
 class AuthSpec extends WordSpec
     with Matchers
     with ScalatestRouteTest

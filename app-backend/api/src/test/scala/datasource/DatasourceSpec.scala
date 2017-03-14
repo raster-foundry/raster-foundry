@@ -9,7 +9,6 @@ import akka.http.scaladsl.model.{HttpEntity, ContentTypes}
 import akka.http.scaladsl.server.Route
 import akka.actor.ActorSystem
 import concurrent.duration._
-import spray.json._
 
 import com.azavea.rf.datamodel._
 import com.azavea.rf.api.utils.Config
@@ -17,6 +16,10 @@ import com.azavea.rf.api.{DBSpec, Router, AuthUtils}
 import java.sql.Timestamp
 import java.time.Instant
 
+import io.circe._
+import io.circe.syntax._
+import io.circe.generic.auto._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 class DatasourceSpec extends WordSpec
     with Matchers
@@ -32,29 +35,29 @@ class DatasourceSpec extends WordSpec
   val authHeader = AuthUtils.generateAuthHeader("Default")
   val baseDatasourcePath = "/api/datasources/"
   val publicOrgId = UUID.fromString("dfac6307-b5ef-43f7-beda-b9f208bb7726")
-  val exColorCorrect = Map[String, Any](
-    "alpha" -> 0,
-    "blueBand" -> 1,
-    "min" -> 0,
-    "max" -> 20000,
-    "redGamma" -> 0,
-    "equalize" -> false,
-    "beta" -> 13,
-    "blueGamma" -> 0,
-    "brightness" -> -6,
-    "greenBand" -> 2,
-    "contrast" -> 9,
-    "redBand" -> 3,
-    "greenGamma" -> 0
-  )
+  val exColorCorrect = ColorCorrect.Params(
+    redBand = 3,
+    greenBand = 2,
+    blueBand = 1,
+    redGamma = Some(0.0),
+    greenGamma = Some(0.0),
+    blueGamma = Some(0.0),
+    contrast = Some(9),
+    brightness = Some(-6),
+    alpha = Some(0.0),
+    beta = Some(13.0),
+    min = Some(0),
+    max = Some(20000),
+    equalize = false
+  ).asJson
 
   val datasource1 = Datasource.Create(
     publicOrgId,
     "Datasource1",
     Visibility.Public,
     exColorCorrect,
-    Map(),
-    Map()
+    ().asJson,
+    ().asJson
   )
 
   val datasource2 = Datasource.Create(
@@ -62,8 +65,8 @@ class DatasourceSpec extends WordSpec
     "Datasource2",
     Visibility.Public,
     exColorCorrect,
-    Map(),
-    Map()
+    ().asJson,
+    ().asJson
   )
 
   // A third datasource scoped to a different privacy level
@@ -72,8 +75,8 @@ class DatasourceSpec extends WordSpec
     "Datasource3",
     Visibility.Private,
     exColorCorrect,
-    Map(),
-    Map()
+    ().asJson,
+    ().asJson
   )
 
   // Alias to baseRoutes to be explicit
@@ -96,7 +99,7 @@ class DatasourceSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          datasource1.toJson.toString()
+          datasource1.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         responseAs[Datasource]
@@ -106,7 +109,7 @@ class DatasourceSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          datasource2.toJson.toString()
+          datasource2.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         responseAs[Datasource]
@@ -116,7 +119,7 @@ class DatasourceSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          datasource3.toJson.toString()
+          datasource3.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         responseAs[Datasource]

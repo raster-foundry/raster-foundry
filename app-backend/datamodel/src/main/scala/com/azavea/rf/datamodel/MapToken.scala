@@ -1,7 +1,7 @@
 package com.azavea.rf.datamodel
 
 import java.util.UUID
-import spray.json.DefaultJsonProtocol._
+
 import java.sql.Timestamp
 
 /**
@@ -20,8 +20,6 @@ case class MapToken(
 
 
 object MapToken {
-  implicit val defaultMapTokenFormat = jsonFormat8(MapToken.apply _)
-
   def tupled = (MapToken.apply _).tupled
 
   def create = Create.apply _
@@ -46,9 +44,5 @@ object MapToken {
         this.project
       )
     }
-  }
-
-  object Create {
-    implicit val defaultMapTokenCreateFormat = jsonFormat3(Create.apply _)
   }
 }

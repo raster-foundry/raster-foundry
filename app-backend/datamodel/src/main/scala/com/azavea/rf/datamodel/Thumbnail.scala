@@ -1,10 +1,7 @@
 package com.azavea.rf.datamodel
 
-import spray.json._
-import spray.json.DefaultJsonProtocol._
 import java.util.UUID
 import java.sql.Timestamp
-
 
 case class Thumbnail(
   id: UUID,
@@ -27,8 +24,6 @@ object Thumbnail {
   def create = Create.apply _
 
   def identified = Identified.apply _
-
-  implicit val defaultThumbnailFormat = jsonFormat9(Thumbnail.apply)
 
   /** Thumbnail class prior to ID assignment */
   case class Create(
@@ -55,10 +50,6 @@ object Thumbnail {
     }
   }
 
-  object Create {
-    implicit val defaultCreateFormat = jsonFormat6(create)
-  }
-
   /** Thumbnail class when posted with an ID */
   case class Identified(
     id: Option[UUID],
@@ -83,9 +74,5 @@ object Thumbnail {
         this.thumbnailSize
       )
     }
-  }
-
-  object Identified {
-    implicit val defaultIdentifiedFormat = jsonFormat7(Identified.apply)
   }
 }

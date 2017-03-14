@@ -7,13 +7,17 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import akka.actor.ActorSystem
 import org.scalatest.{Matchers, WordSpec}
-import spray.json._
 
 import concurrent.duration._
 
 import com.azavea.rf.datamodel._
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.{AuthUtils, DBSpec, Router}
+
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.syntax._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 class ToolTagSpec extends WordSpec
     with Matchers
@@ -62,7 +66,7 @@ class ToolTagSpec extends WordSpec
       Post("/api/tool-tags/").withEntity(
         HttpEntity(
           ContentTypes.`application/json`,
-          newToolTag.toJson.toString()
+          newToolTag.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         reject
@@ -74,7 +78,7 @@ class ToolTagSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          newToolTag.toJson.toString()
+          newToolTag.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         responseAs[ToolTag]
