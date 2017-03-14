@@ -1,7 +1,8 @@
 class SettingsController {
-    constructor($log) {
+    constructor($log, $state) {
         'ngInject';
         this.$log = $log;
+        this.$state = $state;
     }
 }
 

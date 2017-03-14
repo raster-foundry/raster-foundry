@@ -1,0 +1,26 @@
+<div class="panel tab-description">
+  Map tokens allow read-only access to the tiles of a particular project.
+  <br>
+  Share these as freely as you wish.
+</div>
+<div class="form-group all-in-one">
+  <input id="search" type="text" class="form-control" placeholder="Search by Name"
+         ng-model="$ctrl.searchText" disabled>
+  <button class="btn btn-link" type="button" ng-click="$ctrl.search($ctrl.searchText)" disabled>Search</button>
+</div>
+<div class="list-group">
+  <rf-token-item token="token"
+                 on-delete="$ctrl.deleteToken(token)"
+                 on-update="$ctrl.updateToken(token, name)"
+                 ng-repeat="token in $ctrl.tokens track by token.id">
+  </rf-token-item>
+</div>
+<div class="list-group"
+     ng-if="(!$ctrl.tokens || !$ctrl.tokens.length) && !$ctrl.loading">
+  You have not generated any map tokens
+</div>
+<div class="list-group" ng-show="$ctrl.loading">
+  <span class="list-placeholder">
+    <i class="icon-load"></i>
+  </span>
+</div>

@@ -4,7 +4,12 @@
       <nav>
         <a ui-sref="settings.profile" ui-sref-active="active">Profile</a>
         <a ui-sref="settings.account" ui-sref-active="active">Account</a>
-        <a ui-sref="settings.tokens" ui-sref-active="active">API tokens</a>
+        <a ui-sref="settings.tokens.api"
+           ng-class="{
+                     'active': $ctrl.$state.$current.name.includes('settings.tokens')
+                     }">
+          Tokens
+        </a>
         <a ui-sref="settings.organizations"
            ui-sref-active="active"
            feature-flag="profile-org-edit"

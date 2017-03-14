@@ -14,12 +14,33 @@ export default (app) => {
             this.featureFlags = featureFlags;
             this.featureFlagOverrides = featureFlagOverrides;
 
-            let options = {
+            let passResetOptions = {
                 initialScreen: 'forgotPassword',
+                allowLogin: false,
+                closable: true,
                 prefill: {
                     email: this.profile() && this.profile().email
                 },
-                allowLogin: false,
+                auth: {
+                    redirect: false,
+                    sso: true
+                },
+                theme: {
+                    logo: assetLogo,
+                    primaryColor: '#5e509b'
+                }
+            };
+            this.resetLock = new Auth0Lock(
+                APP_CONFIG.clientId, APP_CONFIG.auth0Domain, passResetOptions
+            );
+
+            let tokenCreateOptions = {
+                initialScreen: 'login',
+                allowLogin: true,
+                allowSignUp: false,
+                allowForgotPassword: false,
+                autoclose: true,
+                rememberLastLogin: false,
                 closable: true,
                 auth: {
                     redirect: false,
@@ -30,7 +51,13 @@ export default (app) => {
                     primaryColor: '#5e509b'
                 }
             };
-            this.resetLock = new Auth0Lock(APP_CONFIG.clientId, APP_CONFIG.auth0Domain, options);
+
+            this.tokenCreateLock = new Auth0Lock(
+                APP_CONFIG.clientId, APP_CONFIG.auth0Domain, tokenCreateOptions
+            );
+
+            this.tokenCreateLock.on('authenticated', this.onTokenCreated.bind(this));
+            this.tokenCreateLock.on('authorization_error', this.onTokenCreateFail.bind(this));
 
             lock.on('authenticated', this.onLogin.bind(this));
             lock.on('authorization_error', this.onLoginFail.bind(this));
@@ -46,6 +73,20 @@ export default (app) => {
                 this.$state.go('login');
             } else {
                 this.lock.show();
+            }
+        }
+
+        onTokenCreated(authResult) {
+            if (this.promise) {
+                this.promise.resolve(authResult);
+                delete this.promise;
+            }
+        }
+
+        onTokenCreateFail(error) {
+            if (this.promise) {
+                this.promise.reject(error);
+                delete this.promise;
             }
         }
 
@@ -113,10 +154,7 @@ export default (app) => {
         createRefreshToken(name) {
             this.promise = this.$q.defer();
             this.lastTokenName = name;
-            this.lock.show({
-                allowSignUp: false,
-                allowForgotPassword: false,
-                rememberLastLogin: false,
+            this.tokenCreateLock.show({
                 auth: {
                     params: {
                         scope: 'openid offline_access',
