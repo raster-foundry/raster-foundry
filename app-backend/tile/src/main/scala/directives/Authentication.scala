@@ -1,12 +1,19 @@
 package com.azavea.rf.tile
 
+import java.util.UUID
+
 import akka.http.scaladsl.server.{Directive1, Directives}
 import com.azavea.rf.common.Authentication
+import com.azavea.rf.database.ActionRunner
+import com.azavea.rf.database.tables.{MapTokens, Projects}
+import com.azavea.rf.datamodel.Visibility
 
 import scala.util.Try
 
 
-trait TileAuthentication extends Authentication with Directives {
+trait TileAuthentication extends Authentication
+  with Directives
+  with ActionRunner {
 
   // Default auth setting to true
   private val tileAuthSetting: String = sys.env.getOrElse("RF_TILE_AUTH_REQUIRED", "true")
@@ -30,4 +37,23 @@ trait TileAuthentication extends Authentication with Directives {
       provide(true)
     }
   }
+
+  def isProjectPublic(id: UUID): Directive1[Boolean] =
+    onSuccess(Projects.getProject(id)).flatMap {
+      case Some(project) => provide(project.tileVisibility == Visibility.Public)
+      case _ => provide(false)
+    }
+
+  def isMapTokenValid(projectId: UUID): Directive1[Boolean] = {
+    parameter('mapToken).flatMap { mapToken =>
+      val mapTokenId = UUID.fromString(mapToken)
+      onSuccess(readOneDirect(MapTokens.validateMapToken(projectId, mapTokenId))).flatMap {
+        case 1 => provide(true)
+        case _ => provide(false)
+      }
+    }
+  }
+
+  def tileAccessAuthorized(projectId: UUID): Directive1[Boolean] =
+    isTokenParameterValid | isMapTokenValid(projectId) | isProjectPublic(projectId)
 }

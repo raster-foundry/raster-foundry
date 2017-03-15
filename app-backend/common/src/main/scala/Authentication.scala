@@ -62,6 +62,15 @@ trait Authentication extends Directives {
   }
 
   /**
+    * Validates a token parameter and returns true if valid, false otherwise
+    */
+  def isTokenParameterValid: Directive1[Boolean] = {
+    parameter('token).flatMap { token =>
+      provide(Jwt.isValid(token, auth0Secret, Seq(JwtAlgorithm.HS256)))
+    }
+  }
+
+  /**
     * Validates token header, if valid returns token else rejects request
     */
   def validateTokenHeader: Directive1[String] = {
