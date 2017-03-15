@@ -23,26 +23,24 @@ object MosaicRoutes extends LazyLogging {
   def pngAsHttpResponse(png: Png): HttpResponse =
     HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/png`), png.bytes))
 
-  def mosaicProject(implicit db: Database): Route =
-    pathPrefix(JavaUUID) { projectId =>
-      pathPrefix("export") {
-        parameter("bbox".?, "zoom".as[Int]?) { (bbox, zoom) =>
-          get {
-            complete {
-              Mosaic.render(projectId, zoom, bbox).map { maybeRender =>
-                maybeRender.map { tile => pngAsHttpResponse(tile.renderPng()) }
-              }
+  def mosaicProject(projectId: UUID)(implicit db: Database): Route =
+    pathPrefix("export") {
+      parameter("bbox".?, "zoom".as[Int]?) { (bbox, zoom) =>
+        get {
+          complete {
+            Mosaic.render(projectId, zoom, bbox).map { maybeRender =>
+              maybeRender.map { tile => pngAsHttpResponse(tile.renderPng()) }
             }
           }
         }
-      } ~ pathPrefix (IntNumber / IntNumber / IntNumber ) { (zoom, x, y) =>
-        parameter("tag".?) { tag =>
-          get {
-            complete {
-              Mosaic(projectId, zoom, x, y, tag).map { maybeTile =>
-                pngAsHttpResponse {
-                  maybeTile.map(_.renderPng()).getOrElse(emptyTilePng)
-                }
+      }
+    } ~ pathPrefix (IntNumber / IntNumber / IntNumber ) { (zoom, x, y) =>
+      parameter("tag".?) { tag =>
+        get {
+          complete {
+            Mosaic(projectId, zoom, x, y, tag).map { maybeTile =>
+              pngAsHttpResponse {
+                maybeTile.map(_.renderPng()).getOrElse(emptyTilePng)
               }
             }
           }
