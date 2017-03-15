@@ -1,12 +1,15 @@
 class HomeController {
-    constructor(authService, $uibModal) {
+    constructor(authService, $uibModal, feedService) {
         'ngInject';
         this.authService = authService;
         this.$uibModal = $uibModal;
+        this.feedService = feedService;
     }
 
     $onInit() {
-
+        this.feedService.getPosts().then(posts => {
+            this.blogPosts = posts;
+        });
     }
 
     $onDestroy() {

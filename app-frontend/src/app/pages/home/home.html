@@ -74,18 +74,13 @@
               </div>
             </div>
           </div>
-          <div class="sidebar-section">
+          <div class="sidebar-section" ng-if="$ctrl.blogPosts">
             <div class="sidebar-row">
               <h3 class="no-margin">From our blog</h3>
             </div>
-            <div class="sidebar-row">
-              <a>A blog post...</a>
-            </div>
-            <div class="sidebar-row">
-              <a>A blog post...</a>
-            </div>
-            <div class="sidebar-row">
-              <a>A blog post...</a>
+            <div class="sidebar-row" ng-repeat="post in $ctrl.blogPosts">
+              <a ng-href="https://blog.rasterfoundry.com/{{post.uniqueSlug}}"
+                 target="about:blank">{{post.title}}</a>
             </div>
           </div>
         </div>
