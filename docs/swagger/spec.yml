@@ -1208,7 +1208,14 @@ paths:
       responses:
         204:
           description: Successfully deleted a tool run
-
+  /feed/:
+    get:
+      summary: Get the cached RSS feed
+      tags:
+        - Users
+      responses:
+        200:
+          description: RSS feed json as a string
 
 parameters:
 
