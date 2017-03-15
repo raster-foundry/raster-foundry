@@ -173,19 +173,24 @@ lazy val ingest = Project("ingest", file("ingest"))
     )
   })
 
+import io.gatling.sbt.GatlingPlugin
 lazy val tile = Project("tile", file("tile"))
   .dependsOn(datamodel)
   .dependsOn(database)
   .dependsOn(common)
   .dependsOn(tool)
   .dependsOn(ingest)
+  .enablePlugins(GatlingPlugin)
   .settings(commonSettings:_*)
   .settings({
     libraryDependencies ++= loggingDependencies ++ testDependencies ++ Seq(
       Dependencies.spark,
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisS3,
-      Dependencies.akkaSprayJson
+      Dependencies.akkaSprayJson,
+      Dependencies.gatlingApp,
+      Dependencies.gatlingTest,
+      Dependencies.gatlingHighcharts
     )
   })
   .settings(assemblyMergeStrategy in assembly := {

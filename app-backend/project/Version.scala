@@ -32,4 +32,5 @@ object Version {
   val circe              = "0.7.0"
   val akkaCirceJson      = "1.12.0"
   val cats               = "0.9.0"
+  val gatling            = "2.2.4"
 }
