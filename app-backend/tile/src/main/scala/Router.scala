@@ -47,9 +47,14 @@ class Router extends LazyLogging
       } ~
       tileAuthenticateOption { _ =>
         SceneRoutes.root ~
-        MosaicRoutes.mosaicProject(database) ~
         pathPrefix("tools") {
           ToolRoutes.root(database)
+        }
+      } ~
+      pathPrefix(JavaUUID) { projectId =>
+        tileAccessAuthorized(projectId) {
+          case true => MosaicRoutes.mosaicProject(projectId)(database)
+          case _ => reject(AuthorizationFailedRejection)
         }
       }
     }
