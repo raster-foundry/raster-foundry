@@ -1,4 +1,5 @@
 const Map = require('es6-map');
+const SvgPanZoom = require('svg-pan-zoom');
 /* global joint, $ */
 
 import { coreTools, compressedTool } from './toolJson.js';
@@ -22,6 +23,7 @@ export default class DiagramContainerController {
         this.cellSize = [300, 75];
         this.paddingFactor = 0.8;
         this.nodeSeparationFactor = 0.25;
+        this.panActive = false;
         this.initContextMenus();
         this.contextMenuTpl =
             `<div class="lab-contextmenu" ng-show="isShowingContextMenu">
@@ -70,6 +72,14 @@ export default class DiagramContainerController {
             });
             this.paper.on('blank:pointerclick', this.onPaperClick.bind(this));
             this.paper.on('cell:pointerclick', this.onCellClick.bind(this));
+            this.paper.on('blank:pointerdown', () => {
+                this.panActive = true;
+                this.$scope.$evalAsync();
+            });
+            this.paper.on('blank:pointerup', () => {
+                this.panActive = false;
+                this.$scope.$evalAsync();
+            });
         }
 
         if (this.shapes) {
@@ -87,6 +97,38 @@ export default class DiagramContainerController {
             this.paper.scaleContentToFit({
                 padding: padding
             });
+            if (!this.svgPanZoom) {
+                this.svgPanZoom = SvgPanZoom(this.paper.svg, {
+                    beforePan: () => {
+                        return this.panActive;
+                    },
+                    beforeZoom: () => {
+                        this.hideContextMenu();
+                    },
+                    dblClickZoomEnabled: false,
+                    fit: false
+                });
+            }
+        }
+    }
+
+    zoomIn() {
+        if (this.svgPanZoom) {
+            this.svgPanZoom.zoomIn();
+        }
+    }
+
+    zoomOut() {
+        if (this.svgPanZoom) {
+            this.svgPanZoom.zoomOut();
+        }
+    }
+
+    fitAndCenter() {
+        if (this.svgPanZoom) {
+            this.svgPanZoom.fit();
+            this.svgPanZoom.center();
+            this.svgPanZoom.zoomOut();
         }
     }
 
