@@ -84,7 +84,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             echo "Uploading Spark Ingest JAR to S3"
             aws s3 cp \
                 "${DIR}/../app-backend/ingest/target/scala-2.11/rf-ingest.jar" \
-                "s3://rasterfoundry-global-artifacts-us-east-1/ingest/rf-ingest-${GIT_COMMIT}.jar"
+                "s3://${RF_ARTIFACTS_BUCKET}/ingest/rf-ingest-${GIT_COMMIT}.jar"
         else
             echo "ERROR: No AWS_ECR_ENDPOINT variable defined."
             exit 1
