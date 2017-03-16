@@ -79,7 +79,7 @@ paths:
         200:
           description: Profile found
           schema:
-            $ref: '#/definitions/Auth0User'
+            $ref: '#/definitions/UserWithOAuth'
         default:
           description: Unexpected error
           schema:
@@ -1658,6 +1658,13 @@ definitions:
         description: List of organization\'s a user belongs to and their level of membership
         items:
           $ref: '#/definitions/UserOrg'
+  UserWithOAuth:
+    type: object
+    properties:
+      user:
+        $ref: '#/definitions/User'
+      oauth:
+        $ref: '#/definitions/Auth0User'
   Auth0User:
     type: object
     properties:

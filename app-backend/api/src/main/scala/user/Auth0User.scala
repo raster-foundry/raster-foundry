@@ -4,21 +4,20 @@ import spray.json._
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.Uri.{Path, Query}
 import akka.http.scaladsl.model.headers.{Authorization, GenericHttpCredentials}
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.http.scaladsl.marshalling.Marshal
 import com.azavea.rf.datamodel.SerializationUtils
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.Future
-
+import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.datamodel.User
 import com.azavea.rf.api.utils.Config
-import com.azavea.rf.api.utils.{ManagementBearerToken, Auth0Exception}
-
+import com.azavea.rf.api.utils.{Auth0Exception, ManagementBearerToken}
+import com.azavea.rf.database.tables.Users
+import com.azavea.rf.datamodel.User.RoleOrgJoin
 import com.typesafe.scalalogging.LazyLogging
 
 case class Auth0User(
@@ -42,6 +41,15 @@ case class Auth0User(
   family_name: Option[String]
 )
 
+case class UserWithOAuth(
+  user: User.WithOrgs,
+  oauth: Auth0User
+)
+
+object UserWithOAuth extends SerializationUtils {
+  implicit val inner = jsonFormat2(UserWithOAuth.apply _)
+}
+
 case class Auth0UserUpdate(
   email: Option[String],
   phone_number: Option[String],
@@ -50,6 +58,15 @@ case class Auth0UserUpdate(
 )
 object Auth0UserUpdate extends SerializationUtils {
   implicit val inner = jsonFormat4(Auth0UserUpdate.apply _)
+}
+
+case class UserWithOAuthUpdate(
+  user: RoleOrgJoin,
+  oauth: Auth0UserUpdate
+)
+
+object UserWithOAuthUpdate extends SerializationUtils {
+  implicit val inner = jsonFormat2(UserWithOAuthUpdate.apply _)
 }
 
 object Auth0UserService extends Config with LazyLogging{
@@ -91,11 +108,21 @@ object Auth0UserService extends Config with LazyLogging{
       }
   }
 
-  def getAuth0User(user: User) : Future[Auth0User] = {
-    for {
+  def getAuth0User(user: User)(implicit database: DB) : Future[UserWithOAuth] = {
+     val query: Future[Auth0User] = for {
       bearerToken <- authBearerTokenCache.get(1)
       auth0User <- requestAuth0User(user, bearerToken)
     } yield auth0User
+    query.flatMap { auth0User =>
+      Users.getUserWithOrgsById(user.id).map { userWithOrg =>
+        userWithOrg match {
+          case Some(userWithOrg: User.WithOrgs) =>
+            UserWithOAuth(userWithOrg, auth0User)
+          case _ =>
+            throw new Auth0Exception(StatusCodes.NotFound, "Unable to find user in database.")
+        }
+      }
+    }
   }
 
   def requestAuth0User(user: User, bearerToken: ManagementBearerToken): Future[Auth0User] = {
