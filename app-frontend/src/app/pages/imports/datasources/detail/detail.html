@@ -1,0 +1,54 @@
+<div class="main">
+  <div class="content stack-sm">
+    <h2><a class="text-dark" ui-sref="imports.datasources.detail">{{$ctrl.datasource.name}}</a></h2>
+  </div>
+  <div class="row content stack-sm">
+    <div class="column-9">
+      <ui-view>
+        <div class="cta-row">
+          <rf-call-to-action-item title="Color Correction">
+            <div class="cta-flex-text">
+              You can create a default color correction that will be applied to all imagery from the <strong>{{$ctrl.datasource.name}}</strong> datasource.
+            </div>
+            <div class="cta-button-row">
+              <a class="btn btn-primary" ui-sref="imports.datasources.detail.colorCorrection">Edit default color correction</a>
+            </div>
+            <div class="cta-text">
+              <a>Getting started with Color Correction</a>
+            </div>
+          </rf-call-to-action-item>
+          <rf-call-to-action-item title="False Color Composites">
+            <div class="cta-flex-text">
+              Raster Foundry allows you to create preset false color composites that will be available for all imagery from the <strong>{{$ctrl.datasource.name}}</strong> datasource.
+            </div>
+            <div class="cta-button-row">
+              <a class="btn btn-primary" ui-sref="imports.datasources.detail.colorComposites">Edit composite presets</a>
+            </div>
+            <div class="cta-text">
+              <a>Getting started with color composites</a>
+            </div>
+          </rf-call-to-action-item>
+        </div>
+      </ui-view>
+    </div>
+    <div class="column-3">
+      <div class="content">
+        <div class="sidebar-section">
+          <button class="btn btn-primary">Start an Import</button>
+        </div>
+        <div class="sidebar-section">
+          <h5>What is a datasource?</h5>
+          <p class="font-size-small">
+            A project is a collection of scenes from many different sources where you can then run color corrections and mosaic into a basemap.
+          </p>
+        </div>
+        <div class="sidebar-section">
+          <h5>What is a datasource?</h5>
+          <p class="font-size-small">
+            A project is a collection of scenes from many different sources where you can then run color corrections and mosaic into a basemap.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
