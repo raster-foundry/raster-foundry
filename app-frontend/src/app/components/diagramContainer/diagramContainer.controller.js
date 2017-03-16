@@ -102,10 +102,33 @@ export default class DiagramContainerController {
                     beforePan: () => {
                         return this.panActive;
                     },
+                    beforeZoom: () => {
+                        this.hideContextMenu();
+                    },
                     dblClickZoomEnabled: false,
                     fit: false
                 });
             }
+        }
+    }
+
+    zoomIn() {
+        if (this.svgPanZoom) {
+            this.svgPanZoom.zoomIn();
+        }
+    }
+
+    zoomOut() {
+        if (this.svgPanZoom) {
+            this.svgPanZoom.zoomOut();
+        }
+    }
+
+    fitAndCenter() {
+        if (this.svgPanZoom) {
+            this.svgPanZoom.fit();
+            this.svgPanZoom.center();
+            this.svgPanZoom.zoomOut();
         }
     }
 
