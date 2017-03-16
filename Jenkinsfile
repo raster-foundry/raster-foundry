@@ -7,18 +7,24 @@ node {
       checkout scm
     }
 
+    env.AWS_DEFAULT_REGION = 'us-east-1'
+    env.RF_ARTIFACTS_BUCKET = 'rasterfoundry-global-artifacts-us-east-1'
+
     // Execute `cibuild` wrapped within a plugin that translates
     // ANSI color codes to something that renders inside the Jenkins
     // console.
     stage('cibuild') {
+
+      // Override Settings bucket for testing
+      env.RF_SETTINGS_BUCKET = 'rasterfoundry-testing-config-us-east-1'
       wrap([$class: 'AnsiColorBuildWrapper']) {
         sh 'scripts/cibuild'
       }
     }
 
+    env.RF_SETTINGS_BUCKET = 'rasterfoundry-staging-config-us-east-1'
+
     if (env.BRANCH_NAME == 'develop' || env.BRANCH_NAME.startsWith('release/')) {
-      env.AWS_DEFAULT_REGION = 'us-east-1'
-      env.RF_SETTINGS_BUCKET = 'rasterfoundry-staging-config-us-east-1'
 
       // Publish container images built and tested during `cibuild`
       // to the private Amazon Container Registry tagged with the

@@ -22,7 +22,8 @@ function load_database_backup() {
     check_database
 
     pushd "${DIR}/.."
-    aws s3 cp "s3://rasterfoundry-development-config-us-east-1/database.pgdump" "data/database.pgdump"
+    echo "Downloading database from s3"
+    aws s3 cp "s3://${RF_SETTINGS_BUCKET}/database.pgdump" "data/database.pgdump"
     popd
 
     echo "Drop rasterfoundry database"
