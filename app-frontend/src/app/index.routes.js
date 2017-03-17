@@ -1,3 +1,4 @@
+/* eslint max-len: 0 */
 import rootTpl from './pages/root/root.html';
 import loginTpl from './pages/login/login.html';
 import browseTpl from './pages/browse/browse.html';

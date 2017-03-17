@@ -1,5 +1,5 @@
 class DatasourceDetailController {
-    constructor( // eslint-disable-line max-params
+    constructor(
         $stateParams, datasourceService
     ) {
         'ngInject';
@@ -17,6 +17,7 @@ class DatasourceDetailController {
         this.datasourceService.get(this.datasourceId).then(
             datasourceResponse => {
                 this.datasource = datasourceResponse;
+                this.initBuffers();
             },
             () => {
                 this.isLoadingDatasourceError = true;
@@ -26,14 +27,24 @@ class DatasourceDetailController {
         });
     }
 
-    parseColorCorrection() {
+    initBuffers() {
         this.colorCorrectionBuffer = Object.assign({}, this.datasource.colorCorrection);
-        console.log(this.colorCorrectionBuffer);
+        this.colorCompositesBuffer = Object.assign({}, this.datasource.composites);
     }
 
     parseColorComposites() {
-        this.colorCompositesBuffer = Object.assign({}, this.datasource.composites);
-        console.log(this.colorCompositesBuffer);
+    }
+
+    saveColorCorrection() {
+        // @TODO: implement, replace json with buffer
+    }
+
+    saveColorComposites() {
+        // @TODO: implement, replace json with buffer
+    }
+
+    cancel() {
+        this.initBuffers();
     }
 }
 

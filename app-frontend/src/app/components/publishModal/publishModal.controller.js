@@ -9,7 +9,8 @@ export default class PublishModalController {
         this.$uibModal = $uibModal;
 
         // TODO change this when we implement orgs
-        this.userOrg = 'dfac6307-b5ef-43f7-beda-b9f208bb7726'; // default public org
+        // default public org
+        this.userOrg = 'dfac6307-b5ef-43f7-beda-b9f208bb7726';
     }
 
     $onInit() {

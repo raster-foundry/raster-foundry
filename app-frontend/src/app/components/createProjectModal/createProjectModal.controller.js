@@ -95,7 +95,7 @@ export default class CreateProjectModalController {
             this.showProjectCreateError = false;
             return true;
         }
-        this.projectCreateErrorText = "A name is needed for your new project";
+        this.projectCreateErrorText = 'A name is needed for your new project';
         this.showProjectCreateError = true;
         return false;
     }
@@ -114,7 +114,7 @@ export default class CreateProjectModalController {
                         this.isCreatingProject = false;
                     });
                 }
-            } else if ( this.currentStepIs('ADD_SCENES') &&
+            } else if (this.currentStepIs('ADD_SCENES') &&
                         this.projectAttributeIs('addType', 'public')
             ) {
                 this.gotoSceneBrowser();
