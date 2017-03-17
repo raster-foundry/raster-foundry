@@ -227,79 +227,12 @@ paths:
         200:
           description: Paginated list of user roles
           schema:
-            $ref: '#/definitions/UserRolePaginated'
+            $ref: '#/definitions/UserPaginated'
         default:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
-    post:
-      summary: Add a user to an organization
-      tags:
-        - Users
-      parameters:
-        - name: organizationId
-          in: path
-          required: true
-          type: string
-        - name: user
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/UserRoleCreate'
-      responses:
-        201:
-          description: Created user role
-          schema:
-            $ref: '#/definitions/UserRole'
 
-  /organizations/{organizationId}/users/{userId}:
-    get:
-      summary: Get a user and their role for the specified organization
-      tags:
-        - Users
-      parameters:
-        - name: organizationId
-          in: path
-          required: true
-          type: string
-        - name: userId
-          in: path
-          required: true
-          type: string
-      responses:
-        200:
-          description: Returned user role
-          schema:
-            $ref: '#/definitions/UserRole'
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
-    put:
-      summary: Update a user\'s role
-      tags:
-        - Users
-      parameters:
-        - name: organizationId
-          in: path
-          required: true
-          type: string
-        - name: userId
-          in: path
-          required: true
-          type: string
-        - name: user role
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/UserRole'
-      responses:
-        204:
-          description: Update Successful (No Content)
-        default:
-          description: Unexpected error
-          schema:
-            $ref: '#/definitions/Error'
   /datasources/:
     get:
       summary: Lists paginated datasources that a user has access to
@@ -1762,18 +1695,27 @@ definitions:
         description: UUID of user who most recently modified the object
   User:
     type: object
+    allOf:
+      - $ref: '#/definitions/TimeModelMixin'
     required:
       - id
-      - organizations
+      - organizationId
+      - role
     properties:
       id:
         type: string
         description: User ID for Raster Foundry
-      organizations:
-        type: array
-        description: List of organization\'s a user belongs to and their level of membership
-        items:
-          $ref: '#/definitions/UserOrg'
+      organizationId:
+        type: string
+        format: uuid
+        description: UUID of organization to which user belongs
+      role:
+        type: string
+        description: User role in organization
+        enum:
+          - USER
+          - VIEWER
+          - OWNER
   UserWithOAuth:
     type: object
     properties:
@@ -1862,23 +1804,6 @@ definitions:
           - USER
           - VIEWER
           - OWNER
-  UserOrg:
-    type: object
-    properties:
-      id:
-        type: string
-        format: uuid
-        description: Identifier for organization in the database
-      name:
-        type: string
-        description: Display name for organization
-      role:
-        type: string
-        description: Level of membership in an organization
-        enum:
-          - USER
-          - VIEWER
-          - OWNER
   PaginatedResponse:
     type: object
     required:
@@ -1950,51 +1875,6 @@ definitions:
     required:
       - name
       - id
-  UserRole:
-    type: object
-    properties:
-      id:
-        type: string
-        description: User id
-        readOnly: true
-      role:
-        type: string
-        description: User role in organization
-      createdAt:
-        type: string
-        description: timestamp of object creation
-        format: date-time
-        readOnly: true
-      modifiedAt:
-        type: string
-        description: timestamp of object modificiation
-        format: date-time
-        readOnly: true
-    required:
-      - id
-      - role
-      - createdAt
-      - modifiedAt
-  UserRolePaginated:
-    allOf:
-      - $ref: '#/definitions/PaginatedResponse'
-    properties:
-      results:
-        type: array
-        items:
-          $ref: '#/definitions/UserRole'
-  UserRoleCreate:
-    type: object
-    properties:
-      id:
-        type: string
-        description: User id
-      role:
-        type: string
-        description: User role in organization
-    required:
-      - id
-      - role
   Scene:
     allOf:
       - $ref: '#/definitions/BaseModel'
