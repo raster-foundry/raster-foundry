@@ -50,14 +50,14 @@ trait ExtendedPostgresDriver extends ExPostgresDriver
     implicit val colorCorrectParamsMapper = MappedJdbcType.base[ColorCorrect.Params, JsValue](_.toJson,
       _.convertTo[ColorCorrect.Params])
 
-    implicit val userRoleTypeMapper = createEnumJdbcType[User.Role]("UserRole", _.repr,
-      User.Role.fromString, quoteName = false)
-    implicit val userRoleTypeListMapper = createEnumListJdbcType[User.Role]("UserRole",
-      _.repr, User.Role.fromString, quoteName = false)
+    implicit val userRoleTypeMapper = createEnumJdbcType[UserRole]("UserRole", _.repr,
+      UserRole.fromString, quoteName = false)
+    implicit val userRoleTypeListMapper = createEnumListJdbcType[UserRole]("UserRole",
+      _.repr, UserRole.fromString, quoteName = false)
     implicit val userRoleColumnExtensionMethodsBuilder =
-      createEnumColumnExtensionMethodsBuilder[User.Role]
+      createEnumColumnExtensionMethodsBuilder[UserRole]
     implicit val userRoleOptionColumnExtensionMethodsBuilder =
-      createEnumOptionColumnExtensionMethodsBuilder[User.Role]
+      createEnumOptionColumnExtensionMethodsBuilder[UserRole]
 
     implicit val ingestStatusTypeMapper = createEnumJdbcType[IngestStatus](
       "IngestStatus", _.repr,
