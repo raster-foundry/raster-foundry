@@ -17,7 +17,6 @@ import com.azavea.rf.datamodel.User
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.utils.{Auth0Exception, ManagementBearerToken}
 import com.azavea.rf.database.tables.Users
-import com.azavea.rf.datamodel.User.RoleOrgJoin
 import com.typesafe.scalalogging.LazyLogging
 
 case class Auth0User(
@@ -42,7 +41,7 @@ case class Auth0User(
 )
 
 case class UserWithOAuth(
-  user: User.WithOrgs,
+  user: User,
   oauth: Auth0User
 )
 
@@ -61,7 +60,7 @@ object Auth0UserUpdate extends SerializationUtils {
 }
 
 case class UserWithOAuthUpdate(
-  user: RoleOrgJoin,
+  user: User.Create,
   oauth: Auth0UserUpdate
 )
 
@@ -114,10 +113,10 @@ object Auth0UserService extends Config with LazyLogging{
       auth0User <- requestAuth0User(user, bearerToken)
     } yield auth0User
     query.flatMap { auth0User =>
-      Users.getUserWithOrgsById(user.id).map { userWithOrg =>
-        userWithOrg match {
-          case Some(userWithOrg: User.WithOrgs) =>
-            UserWithOAuth(userWithOrg, auth0User)
+      Users.getUserById(user.id).map { user =>
+        user match {
+          case Some(user: User) =>
+            UserWithOAuth(user, auth0User)
           case _ =>
             throw new Auth0Exception(StatusCodes.NotFound, "Unable to find user in database.")
         }

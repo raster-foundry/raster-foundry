@@ -35,7 +35,8 @@ trait UserRoutes extends Authentication with PaginationDirectives with UserError
     } ~
     pathPrefix(Segment) { authIdEncoded =>
       pathEndOrSingleSlash {
-        get { getUserByEncodedAuthId(authIdEncoded) }
+        get { getUserByEncodedAuthId(authIdEncoded) } ~
+        put { updateUserByEncodedAuthId(authIdEncoded) }
       }
     }
   }
@@ -43,7 +44,7 @@ trait UserRoutes extends Authentication with PaginationDirectives with UserError
   def listUsers: Route = authenticate { user =>
     withPagination { page =>
       complete {
-        Users.getPaginatedUsers(page)
+        Users.listUsers(page)
       }
     }
   }
@@ -52,7 +53,7 @@ trait UserRoutes extends Authentication with PaginationDirectives with UserError
   def createUser: Route = authenticate { admin =>
     entity(as[User.Create]) { newUser =>
       onSuccess(Users.createUser(newUser)) { createdUser =>
-        onSuccess(Users.getUserWithOrgsById(createdUser.id)) {
+        onSuccess(Users.getUserById(createdUser.id)) {
           case Some(user) => complete((StatusCodes.Created, user))
           case None => throw new IllegalStateException("Unable to create user")
         }
@@ -78,7 +79,19 @@ trait UserRoutes extends Authentication with PaginationDirectives with UserError
     rejectEmptyResponse {
       complete {
         val authId = URLDecoder.decode(authIdEncoded, "US_ASCII")
-        Users.getUserWithOrgsById(authId)
+        Users.getUserById(authId)
+      }
+    }
+  }
+
+  // TODO: Restrict to users with correct permissions, e.g. admin
+  def updateUserByEncodedAuthId(authIdEncoded: String): Route = authenticate { admin =>
+    entity(as[User]) { updatedUser =>
+      onSuccess(Users.updateUser(updatedUser, authIdEncoded)) {
+        case 1 => complete(StatusCodes.NoContent)
+        case count => throw new IllegalStateException(
+          s"Error updating user: update result expected to be: 1, was $count"
+        )
       }
     }
   }
