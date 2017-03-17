@@ -61,7 +61,7 @@ class AuthSpec extends WordSpec
       Get("/").addHeader(authorization) ~> authenticateDirectiveTestRoute ~> check {
         Get(s"/api/users/$newUserId")
           .addHeader(authorization) ~> baseRoutes ~> check {
-          responseAs[User.WithOrgs]
+          responseAs[User]
         }
       }
     }
