@@ -1,8 +1,19 @@
 class ColorCorrectionController {
     constructor($scope, $state) {
         'ngInject';
+        this.$scope = $scope;
         this.$parent = $scope.$parent.$ctrl;
         this.$state = $state;
+    }
+
+    $onInit() {
+        this.initListeners();
+    }
+
+    initListeners() {
+        this.$scope.$on('$locationChangeStart', () => {
+            this.$parent.cancel();
+        });
     }
 
     updateBuffer(adj, val) {
@@ -15,7 +26,6 @@ class ColorCorrectionController {
 
     cancel() {
         this.$state.go('imports.datasources.detail');
-        this.$parent.cancel();
     }
 }
 
