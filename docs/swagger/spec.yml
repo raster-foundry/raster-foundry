@@ -314,6 +314,122 @@ paths:
       responses:
         200:
           description: SUCCESS
+  /uploads/:
+    get:
+      summary: Get a list of uploads
+      description: |
+        The uploads API endpoint enables searching, listing, and creating new uploads.
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/orderingBase'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/organization'
+        - $ref: '#/parameters/datasource'
+      responses:
+        200:
+          description: Paginated list of uploads
+          schema:
+            $ref: '#/definitions/UploadPaginated'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create an upload
+      description: |
+        Create a new upload.
+      tags:
+        - Imagery
+      parameters:
+        - name: Upload
+          in: body
+          schema:
+            $ref: '#/definitions/UploadCreate'
+      responses:
+        201:
+          description: Upload created
+          schema:
+            $ref: '#/definitions/Upload'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /uploads/{uuid}/:
+    get:
+      summary: Retrieve upload details
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: Info about upload
+          schema:
+            $ref: '#/definitions/Upload'
+        404:
+          description: |
+            UUID parameter does not refer to an upload or the user is not able to view the upload it refers to
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Update an upload
+      tags:
+        - Imagery
+      parameters:
+        - name: upload
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Upload'
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Update successful (no further processing needed)
+        404:
+          description: |
+            The UUID parameter does not refer to a upload or the user does not have access to the upload it refers to
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Delete an upload
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Deletion successful (no content)
+        404:
+          description: |
+            The UUID parameter does not refer to an upload or the user does not have access to the upload it refers to
+          schema:
+            $ref: '#/definitions/Error'
+  /uploads/{uuid}/credentials/:
+    get:
+      summary: Get credentials scoped to this uploads bucket. If this is not a local upload
+      tags:
+        - Authentication
+        - Imagery
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          type: string
+      responses:
+        200:
+          description: AWS credentials scoped to the upload bucket with prefix
+          schema:
+            $ref: '#/definitions/UploadCredentials'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
   /scenes/:
     get:
       summary: Lists paginated scenes that a user has access to
@@ -2331,7 +2447,73 @@ definitions:
       maxModifiedDatetime:
         type: string
         format: datetime
+  UploadCreate:
+    type: object
+    properties:
+      uploadStatus:
+        type: string
+        description: Status of upload
+        enum:
+          - CREATED
+          - UPLOADING
+          - UPLOADED
+          - QUEUED
+          - PROCESSING
+          - COMPLETE
+      files:
+        type: array
+        items:
+          type: string
+      uploadType:
+        type: string
+        description: Source of files and uploads
+        enum:
+          - DROPBOX
+          - S3
+          - LOCAL
+      fileType:
+        type: string
+        description: type of data being uploaded, limited to two options right now
+        enum:
+          - GEOTIFF
+          - GEOTIFF_WITH_METADATA
+      datasource:
+        type: string
+        description: datasource of tiffs being uploaded
+        format: uuid
 
+  Upload:
+    allOf:
+    - $ref: '#/definitions/BaseModel'
+    - $ref: '#/definitions/UserTrackingMixin'
+    - $ref: '#/definitions/UploadCreate'
+    - type: object
+      properties:
+        files:
+          type: array
+          items:
+            type: string
+  UploadPaginated:
+    allOf:
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/Upload'
+  UploadCredentials:
+    type: object
+    properties:
+      accessKey:
+        type: string
+      secretAccessKey:
+         type: string
+      sessionToken:
+        type: string
+      expiration:
+        type: string
+        format: datetime
   SceneParams:
     type: object
     description: scene params
