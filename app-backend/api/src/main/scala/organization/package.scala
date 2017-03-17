@@ -8,5 +8,5 @@ package object organization extends RfJsonProtocols {
   //implicit val userWithRoleCreateFormat = jsonFormat2(UserWithRoleCreate)
   //implicit val userWithRoleFormat = jsonFormat4(UserWithRole)
   implicit val paginatedOrganizationsFormat = jsonFormat6(PaginatedResponse[Organization])
-  implicit val paginatedUserWithRoleFormat = jsonFormat6(PaginatedResponse[User.WithRole])
+  implicit val paginatedUserFormat = jsonFormat6(PaginatedResponse[User])
 }

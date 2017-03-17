@@ -29,17 +29,6 @@ trait OrganizationRoutes extends Authentication with PaginationDirectives with U
       pathEndOrSingleSlash {
         get { getOrganization(orgId) } ~
         put { updateOrganization(orgId) }
-      } ~
-      pathPrefix("users") {
-        pathEndOrSingleSlash {
-          get { listOrganizationUsers(orgId) } ~
-          post { addUserToOrganization(orgId) }
-        } ~
-        pathPrefix(Segment) { userId =>
-          get { getOrganizationUser(orgId, userId) } ~
-          put { updateOrganizationUser(orgId, userId) } ~
-          delete { deleteOrganizationUser(orgId, userId) }
-        }
       }
     }
   }
@@ -79,47 +68,4 @@ trait OrganizationRoutes extends Authentication with PaginationDirectives with U
     }
   }
 
-  def listOrganizationUsers(orgId: UUID): Route = authenticate { user =>
-    withPagination { page =>
-      complete {
-        Organizations.listOrganizationUsers(page, orgId)
-      }
-    }
-  }
-
-  def addUserToOrganization(orgId: UUID): Route = authenticate { user =>
-    entity(as[User.WithRoleCreate]) { userWithRole =>
-      complete { Organizations.addUserToOrganization(userWithRole, orgId) }
-    }
-  }
-
-  def getOrganizationUser(orgId: UUID, userId: String): Route = authenticate { user =>
-    rejectEmptyResponse {
-      complete {
-        Organizations.getUserOrgRole(userId, orgId)
-      }
-    }
-  }
-
-  def updateOrganizationUser(orgId: UUID, userId: String): Route = authenticate { user =>
-    entity(as[User.WithRole]) { userWithRole =>
-      onSuccess(Organizations.updateUserOrgRole(userWithRole, orgId, userId)) {
-        case 1 => complete(StatusCodes.NoContent)
-        case 0 => complete(StatusCodes.NotFound)
-        case count => throw new IllegalStateException(
-          s"Error updating organization users: update result expected to be: 1, was $count"
-        )
-      }
-    }
-  }
-
-  def deleteOrganizationUser(orgId: UUID, userId: String): Route = authenticate { user =>
-    onSuccess(Organizations.deleteUserOrgRole(userId, orgId)) {
-      case 1 => complete(StatusCodes.NoContent)
-      case 0 => complete(StatusCodes.NotFound)
-      case count => throw new IllegalStateException(
-        s"Error deleting organization users: delete result expected to be: 1, was $count"
-      )
-    }
-  }
 }
