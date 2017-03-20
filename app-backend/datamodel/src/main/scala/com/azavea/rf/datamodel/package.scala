@@ -69,6 +69,6 @@ implicit val projectedGeometryEncoder: Encoder[Projected[Geometry]] =
 
   // TODO: make this tolerate more than one incoming srid
   implicit val projectedGeometryDecoder: Decoder[Projected[Geometry]] = Decoder[String] map { str =>
-    Projected(str.parseGeoJson[Geometry], 4362)
+    Projected(str.parseGeoJson[Geometry], 4326).reproject(CRS.fromEpsgCode(4326), CRS.fromEpsgCode(3857))(3857)
   }
 }
