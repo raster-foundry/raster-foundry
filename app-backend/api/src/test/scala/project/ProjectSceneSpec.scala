@@ -86,7 +86,7 @@ class ProjectSceneSpec extends WordSpec
       }
     }
 
-    "be able to attach scene to project via post" in {
+    "be able to attach a scene to project via post" in {
       // Get projects to get ID
       Get("/api/projects/").withHeaders(
         List(authHeader)

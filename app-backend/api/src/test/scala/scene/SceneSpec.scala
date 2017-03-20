@@ -9,7 +9,6 @@ import akka.http.scaladsl.model.{HttpEntity, ContentTypes}
 import akka.http.scaladsl.server.Route
 import akka.actor.ActorSystem
 import concurrent.duration._
-import spray.json._
 
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.{DBSpec, Router, AuthUtils}
