@@ -226,9 +226,10 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
 
     database.db.run {
       actions.transactionally
-    } map { case (_, _, imSeq: Seq[Tuple2[Image, Seq[Band]]]) =>
+    } map {
+      case (_, _, imSeq: Seq[Tuple2[Image, Seq[Band]]]) =>
         val imagesWithRelated = imSeq.map({case (im: Image, bs: Seq[Band]) => im.withRelatedFromComponents(bs)})
-      scene.withRelatedFromComponents(imagesWithRelated, thumbnails)
+        scene.withRelatedFromComponents(imagesWithRelated, thumbnails)
     }
   }
 
