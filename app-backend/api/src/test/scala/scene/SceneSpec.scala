@@ -84,7 +84,7 @@ class SceneSpec extends WordSpec
     }
     val mpoly = Some(Projected(
       MultiPolygon(Polygon(Seq(Point(100,100), Point(110,100), Point(110,110),
-        Point(100,110), Point(100,100)))), 4326))
+        Point(100,110), Point(100,100)))), 4362))
 
     val newSceneDatasource1 = Scene.Create(
       None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), landsatId,
