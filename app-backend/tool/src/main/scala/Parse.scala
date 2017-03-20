@@ -48,10 +48,10 @@ class DivParser extends RootJsonReader[Op] {
     json match {
       case obj: JsObject =>
         ??? // named argument list
-        // get HMap of JsReader for shit, use it to parse, delicate
+        // get HMap of JsReader for stuff, use it to parse, delicate
       case arr: JsArray =>
         ??? // positional argument list
-        // get HList of JsReader for shit, use it to parse, deligate
+        // get HList of JsReader for stuff, use it to parse, deligate
       case _ =>
         throw new DeserializationException(s"Expected argument list, found: $json")
     }

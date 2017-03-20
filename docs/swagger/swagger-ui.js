@@ -16853,7 +16853,7 @@ var hasIntrospection = (function(){'_';}).toString().indexOf('_') > -1,
     needCheckProps = true,
     testPropObj = { toString : '' };
 
-for(var i in testPropObj) { // fucking ie hasn't toString, valueOf in for
+for(var i in testPropObj) { // ie hasn't toString, valueOf in for
     testPropObj.hasOwnProperty(i) && (needCheckProps = false);
 }
 
