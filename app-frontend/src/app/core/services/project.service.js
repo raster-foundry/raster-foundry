@@ -2,8 +2,10 @@
 
 export default (app) => {
     class ProjectService {
-        constructor($resource, $location, userService, $http, $q) {
+        constructor($resource, $location, tokenService, userService, $http, $q) {
             'ngInject';
+
+            this.tokenService = tokenService;
             this.userService = userService;
             this.$http = $http;
             this.$location = $location;
@@ -226,7 +228,16 @@ export default (app) => {
         }
 
         getProjectShareURL(project) {
-            return `${this.getBaseURL()}/#/share/${project.id}`;
+            let deferred = this.$q.defer();
+            let shareUrl = `${this.getBaseURL()}/#/share/${project.id}`;
+            if (project.tileVisibility === 'PRIVATE') {
+                this.tokenService.getOrCreateProjectMapToken(project).then((token) => {
+                    deferred.resolve(`${shareUrl}/?mapToken=${token.id}`);
+                });
+            } else {
+                deferred.resolve(shareUrl);
+            }
+            return deferred.promise;
         }
     }
 

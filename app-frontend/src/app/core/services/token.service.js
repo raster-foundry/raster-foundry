@@ -64,6 +64,30 @@ export default (app) => {
         updateMapToken(params) {
             return this.MapToken.update(params).$promise;
         }
+
+        getOrCreateProjectMapToken(project) {
+            let deferred = this.$q.defer();
+            this.queryMapTokens({project: project.id}).then((response) => {
+                let token = response.results.find((el) => el.name === project.name);
+                if (token) {
+                    deferred.resolve(token);
+                } else {
+                    this.createMapToken({
+                        name: project.name,
+                        project: project.id,
+                        organizationId: project.organizationId
+                    }).then((res) => {
+                        // TODO: Toast this
+                        this.$log.debug('token created!', res);
+                        deferred.resolve(res);
+                    }, (err) => {
+                        // TODO: Toast this
+                        deferred.reject('error creating token', err);
+                    });
+                }
+            });
+            return deferred.promise;
+        }
     }
 
     app.service('tokenService', TokenService);
