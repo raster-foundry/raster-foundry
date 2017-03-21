@@ -233,37 +233,13 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     }
   }
 
-  // TODO: refactor this to use optics. It's the last Map[String, Any] anywhere in the database
-  def getCompositeBands(composite: Map[String, Any]): (Int, Int, Int) = {
-    val bands = composite.get("value") match {
-      case Some(b) => b.asInstanceOf[Map[String, Any]]
-      case _ => Map.empty[String, Any]
-    }
-    val redBand = bands.get("redBand") match {
-      case Some(b) => b.asInstanceOf[Int]
-      case _ => 0
-    }
-    val greenBand = bands.get("greenBand") match {
-      case Some(b) => b.asInstanceOf[Int]
-      case _ => 1
-    }
-    val blueBand = bands.get("blueBand") match {
-      case Some(b) => b.asInstanceOf[Int]
-      case _ => 2
-    }
-
-    (redBand, greenBand, blueBand)
-  }
-
-
-
   /** Adds a list of scenes to a project
     *
     * @param sceneIds Seq[UUID] list of primary keys of scenes to add to project
     * @param projectId UUID primary key of back to add scenes to
     */
   def addScenesToProject(sceneIds: Seq[UUID], projectId: UUID, user: User)
-                       (implicit database: DB): Future[Iterable[Scene.WithRelated]] = {
+                        (implicit database: DB): Future[Iterable[Scene.WithRelated]] = {
     // Users should not be able to add scenes to a project they did not create (for now)
     val authProjectCount =
       Projects.filter(_.id === projectId).filter(_.createdBy === user.id).length.result
@@ -271,9 +247,6 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     // Users should only be able to add scenes they are authorized to view to a project
     val authSceneCount =
       Scenes.filter(_.id inSet sceneIds).filterUserVisibility(user).length.result
-
-    def compositeFromArray(arr: List[Json]): Json = ???.asInstanceOf[Json]
-    def compositeFromObj(obj: Json): Json = ???.asInstanceOf[Json]
 
     database.db.run {
       authProjectCount zip authSceneCount
@@ -338,21 +311,13 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
               sceneCompositesQuery.result
             } flatMap { sceneComposites =>
               val sceneToProjects = sceneComposites.map { case (sceneId, composites) =>
-                def getNaturalObj(js: Json) = root.natural.obj.getOption(js)
-                def getNaturalArr(js: Json) = root.natural.arr.getOption(js)
-                val composite =
-                  (getNaturalObj(composites), getNaturalArr(composites)) match {
-                    case (Some(jsObj), _) => jsObj
-                    case (_, Some(jsArr)) => jsArr.headOption match {
-                      case Some(js) => js
-                      case None => Json.Null
-                    }
-                    case (_, _) => Json.Null
-                  }
+                val redBandPath = root.natural.value.redBand.int
+                val greenBandPath = root.natural.value.greenBand.int
+                val blueBandPath = root.natural.value.blueBand.int
 
-                val (redBand, greenBand, blueBand) = getCompositeBands(
-                  composite.asInstanceOf[Map[String, Any]]
-                )
+                val redBand = redBandPath.getOption(composites).getOrElse(0)
+                val greenBand = greenBandPath.getOption(composites).getOrElse(0)
+                val blueBand = blueBandPath.getOption(composites).getOrElse(0) 
 
                 SceneToProject(
                   sceneId, projectId, None, Some(
@@ -368,22 +333,27 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
                 )
               }
 
+              logger.info(s"Number of sceneToProject inserts: ${sceneToProjects.length}")
               database.db.run {
                 ScenesToProjects.forceInsertAll(sceneToProjects)
+              } flatMap {
+                _ => {
+                  val scenesNotIngestedQuery = for {
+                    s <- Scenes if s.id.inSet(sceneIds) && s.ingestStatus.inSet(
+                      Set(IngestStatus.NotIngested, IngestStatus.Failed))
+                  } yield (s.ingestStatus)
+
+                  database.db.run {
+                    scenesNotIngestedQuery.update((IngestStatus.ToBeIngested))
+                  }
+
+                  logger.info(s"Scene IDs right at the end: $sceneIds")
+                  listSelectProjectScenes(projectId, sceneIds)
+                }
               }
             }
           }
 
-          val scenesNotIngestedQuery = for {
-            s <- Scenes if s.id.inSet(sceneIds) && s.ingestStatus.inSet(
-              Set(IngestStatus.NotIngested, IngestStatus.Failed))
-          } yield (s.ingestStatus)
-
-          database.db.run {
-            scenesNotIngestedQuery.update((IngestStatus.ToBeIngested))
-          }
-
-          listSelectProjectScenes(projectId, sceneIds)
         }
         case (0, _) => throw new IllegalStateException("Error updating project: not authorized to modify this project")
         case (_, _) => throw new IllegalStateException("Error updating project: not authorized to use one or more of these scenes")
