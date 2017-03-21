@@ -82,9 +82,11 @@ class SceneSpec extends WordSpec
         responseAs[PaginatedResponse[Scene.WithRelated]]
       }
     }
-    val mpoly = Some(Projected(
-      MultiPolygon(Polygon(Seq(Point(100,100), Point(110,100), Point(110,110),
-        Point(100,110), Point(100,100)))), 4362))
+    val mpoly = Some(
+      Projected(
+        MultiPolygon(Polygon(Seq(Point(125.6, 10.1), Point(125.7,10.1), Point(125.7,10.2),
+                                 Point(125.6,10.2), Point(125.6,10.1)))), 4326)
+    )
 
     val newSceneDatasource1 = Scene.Create(
       None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), landsatId,
@@ -268,19 +270,15 @@ class SceneSpec extends WordSpec
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]
         res.count shouldEqual 0
       }
-      Get("/api/scenes/?bbox=0,0,0.001,0.001").withHeaders(
+      /** fully contains the scene */
+      Get("/api/scenes/?bbox=100,10,130,20").withHeaders(
         List(authHeader)
       ) ~> baseRoutes ~> check {
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]
         res.count shouldEqual 1
       }
-      Get("/api/scenes/?bbox=0,0,0.00001,0.00001;0,0,0.001,0.001").withHeaders(
-        List(authHeader)
-      ) ~> baseRoutes ~> check {
-        val res = responseAs[PaginatedResponse[Scene.WithRelated]]
-        res.count shouldEqual 1
-      }
-      Get("/api/scenes/?bbox=0,0,0.001,0.001;1,1,1.001,1.001").withHeaders(
+      /** partially contains the scene, with another box that doesn't at all */
+      Get("/api/scenes/?bbox=100,10,125.6,10.1;0,0,0.001,0.001").withHeaders(
         List(authHeader)
       ) ~> baseRoutes ~> check {
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]
@@ -289,7 +287,7 @@ class SceneSpec extends WordSpec
     }
 
     "filter scenes by point" in {
-      Get("/api/scenes/?point=0.0009,0.0009").withHeaders(
+      Get("/api/scenes/?point=125.65,10.15").withHeaders(
         List(authHeader)
       ) ~> baseRoutes ~> check {
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]
