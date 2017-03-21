@@ -50,25 +50,32 @@ package object datamodel {
     Either.catchNonFatal(UUID.fromString(str)).leftMap(t => "UUID")
   }
 
-implicit val projectedGeometryEncoder: Encoder[Projected[Geometry]] =
-  new Encoder[Projected[Geometry]] {
-    final def apply(g: Projected[Geometry]): Json = {
-      val reprojected = g match {
-        case Projected(geom, 4326) => geom
-        case Projected(geom, 3857) => geom.reproject(WebMercator, LatLng)
-        case Projected(geom, srid) => try {
-          geom.reproject(CRS.fromString(s"EPSG:$srid"), LatLng)
-        } catch {
-          case e: Exception =>
-            throw new InvalidParameterException(s"Unsupported Geometry SRID: $srid").initCause(e)
+  implicit val projectedGeometryEncoder: Encoder[Projected[Geometry]] =
+    new Encoder[Projected[Geometry]] {
+      final def apply(g: Projected[Geometry]): Json = {
+        val reprojected = g match {
+          case Projected(geom, 4326) => geom
+          case Projected(geom, 3857) => geom.reproject(WebMercator, LatLng)
+          case Projected(geom, srid) => try {
+            geom.reproject(CRS.fromString(s"EPSG:$srid"), LatLng)
+          } catch {
+            case e: Exception =>
+              throw new InvalidParameterException(s"Unsupported Geometry SRID: $srid").initCause(e)
+          }
         }
+        Encoder.encodeString(reprojected.toGeoJson)
       }
-      Encoder.encodeString(reprojected.toGeoJson)
     }
-  }
 
   // TODO: make this tolerate more than one incoming srid
   implicit val projectedGeometryDecoder: Decoder[Projected[Geometry]] = Decoder[String] map { str =>
     Projected(str.parseGeoJson[Geometry], 4326).reproject(CRS.fromEpsgCode(4326), CRS.fromEpsgCode(3857))(3857)
   }
+
+  implicit val userRoleEncoder: Encoder[UserRole] =
+    Encoder.encodeString.contramap[UserRole](_.toString)
+  implicit val userRoleDecoder: Decoder[UserRole] =
+    Decoder.decodeString.emap { str =>
+      Either.catchNonFatal(UserRole.fromString(str)).leftMap(r => "UserRole")
+    }
 }

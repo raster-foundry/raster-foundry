@@ -18,15 +18,6 @@ object UserRole {
     case "ADMIN" => Admin
     case _ => throw new Exception(s"Unsupported user role string: $s")
   }
-
-  implicit object DefaultJobStatusJsonFormat extends RootJsonFormat[UserRole] {
-    def write(role: UserRole): JsValue = JsString(role.toString)
-    def read(js: JsValue): UserRole = js match {
-      case JsString(js) => fromString(js)
-      case _ =>
-        deserializationError("Failed to parse thumbnail size string representation (${js}) to JobStatus")
-    }
-  }
 }
 
 case class User(
@@ -48,7 +39,7 @@ object User {
     organizationId: UUID,
     role: UserRole = Viewer
   ) {
-    def toUser(): User = {
+    def toUser: User = {
       val now = new Timestamp((new java.util.Date()).getTime())
       User(id, organizationId, role, now, now)
     }

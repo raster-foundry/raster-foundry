@@ -1,6 +1,6 @@
 package com.azavea.rf.api.auth
 
-import com.azavea.rf.datamodel.User
+import com.azavea.rf.datamodel._
 import org.scalatest.{Matchers, WordSpec}
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import akka.http.scaladsl.model.StatusCodes
