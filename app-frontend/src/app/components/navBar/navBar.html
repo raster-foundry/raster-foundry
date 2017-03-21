@@ -7,6 +7,18 @@
     <span class="navbar-vertical-divider"></span>
     <nav>
       <a href ui-sref="home" ui-sref-active="active">Home</a>
+      <div ng-if="$ctrl.projectService.currentProject" uib-dropdown class="dropdown-project" on-toggle="toggled($ctrl.optionsOpen)">
+        <a href uib-dropdown-toggle>
+          <span class="username">{{$ctrl.projectService.currentProject.name}}</span>
+          <i class="icon-caret-down"></i>
+        </a>
+        <ul class="dropdown-menu" aria-labelledby="dLabel">
+          <li><a href ui-sref="editor.project.color.scenes({projectid: $ctrl.projectService.currentProjectId})" ng-class="{ disabled: $ctrl.$state.$current.name.includes('editor')}">Edit</a></li>
+          <li><a href ui-sref="browse({projectid: $ctrl.projectService.currentProjectId})"  ng-class="{ disabled: $ctrl.$state.$current.name.includes('browse')}">Add Scenes</a></li>
+          <li role="separator" class="divider"></li>
+          <li><a href ng-click="">Switch Projects</a></li>
+        </ul>
+      </div>
       <a href ui-sref="library.projects.list" ui-sref-active="active">Projects</a>
       <a href ui-sref="imports" ui-sref-active="active">Imports</a>
       <a href ui-sref="market.search"

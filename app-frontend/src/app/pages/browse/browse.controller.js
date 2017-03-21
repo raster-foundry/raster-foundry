@@ -3,23 +3,30 @@ const Map = require('es6-map');
 const _ = require('lodash');
 
 export default class BrowseController {
-    constructor( // eslint-disable-line max-params
-        $log, $scope, sceneService, gridLayerService,
-        authService, $state, $uibModal, $timeout, mapService,
-        sessionStorage
+    constructor(
+        $log, $scope, $state, $timeout, $uibModal, sceneService, gridLayerService,
+        authService, mapService, projectService, sessionStorage
     ) {
         'ngInject';
 
         this.$log = $log;
-        this.sceneService = sceneService;
-        this.authService = authService;
         this.$state = $state;
         this.$uibModal = $uibModal;
+        this.$scope = $scope;
+        this.$timeout = $timeout;
+        this.sceneService = sceneService;
+        this.authService = authService;
+        this.projectService = projectService;
         this.gridLayerService = gridLayerService;
         this.sessionStorage = sessionStorage;
+        this.mapService = mapService;
+    }
 
-        this.getBrowseMap = () => mapService.getMap('browse');
-        this.getDetailMap = () => mapService.getMap('detail');
+    $onInit() {
+        this.loadProject();
+
+        this.getBrowseMap = () => this.mapService.getMap('browse');
+        this.getDetailMap = () => this.mapService.getMap('detail');
 
         this.assetLogo = assetLogo;
         this.scenes = {
@@ -30,10 +37,26 @@ export default class BrowseController {
         this.selectedScenes = new Map();
         this.sceneList = [];
         this.gridFilterActive = false;
-        // initial data
 
+        this.initParams();
+        this.initWatchers();
+        this.initMap();
+    }
+
+    loadProject() {
+        const projectId = this.$state.params.projectid;
+        if (projectId) {
+            this.projectService.loadProject(projectId).then(p => {
+                this.project = p;
+            });
+        } else {
+            this.$state.go('home');
+        }
+    }
+
+    initParams() {
         this.queryParams = Object.assign(
-            _.mapValues($state.params, (val) => {
+            _.mapValues(this.$state.params, (val) => {
                 if (val === '' || typeof val === 'undefined') {
                     return null;
                 }
@@ -42,43 +65,50 @@ export default class BrowseController {
             this.sessionStorage.get('filters') || {}
         );
 
-        if ($state.params.id) {
-            this.sceneService.query({id: $state.params.id}).then(
-                (scene) => {
-                    this.openDetailPane(scene);
-                },
-                () => {
-                    this.queryParams.id = null;
-                    this.$state.go('.', this.queryParams, {notify: false});
-                }
-            );
-        }
-
         this.filters = Object.assign({}, this.queryParams);
         delete this.filters.id;
         delete this.filters.bbox;
 
-        // Default bounds; we can set these to something more meaningful later, e.g. the user's
-        // most recent project's bounding box, or an IP-based geolocation. If a bbox is set in
-        // the query params, always use that.
         if (this.queryParams.bbox) {
             this.bounds = this.parseBBoxString(this.queryParams.bbox);
         } else {
             this.bounds = [[-30, -90], [50, 0]];
         }
+    }
 
-        // watchers
-        $scope.$on('$stateChangeStart', this.onStateChangeStart.bind(this));
+    initSelectedProject() {
+        if (this.$state.params.projectid) {
+            this.$state.go('.', this.queryParams, {notify: false});
+        }
+    }
+
+    initSelectedScene() {
+        if (this.$state.params.sceneid) {
+            this.sceneService.query({id: this.$state.params.sceneid}).then(
+                (scene) => {
+                    this.openDetailPane(scene);
+                },
+                () => {
+                    this.queryParams.sceneid = null;
+                    this.$state.go('.', this.queryParams, {notify: false});
+                }
+            );
+        }
+    }
+
+    initWatchers() {
+        this.$scope.$on('$stateChangeStart', this.onStateChangeStart.bind(this));
         // TODO: Switch to one-way &-binding from child component
-        $scope.$watchCollection('$ctrl.filters', this.onFilterChange.bind(this));
-
-        $scope.$watch(
-            function () {
-                return authService.isLoggedIn;
+        this.$scope.$watchCollection('$ctrl.filters', this.onFilterChange.bind(this));
+        this.$scope.$watch(
+            () => {
+                return this.authService.isLoggedIn;
             },
             this.onLoggedInChange.bind(this)
         );
+    }
 
+    initMap() {
         this.getBrowseMap().then((browseMap) => {
             browseMap.map.fitBounds(this.bounds);
             browseMap.on('contextmenu', ($event) => {
@@ -90,7 +120,7 @@ export default class BrowseController {
                 return false;
             });
             browseMap.on('moveend', ($event, mapWrapper) => {
-                $timeout(() => {
+                this.$timeout(() => {
                     this.registerClick = true;
                 }, 125);
                 this.onViewChange(
@@ -105,15 +135,15 @@ export default class BrowseController {
     onStateChangeStart(event, toState, toParams, fromState) {
         if (toState.name === fromState.name) {
             event.preventDefault();
-            if (toParams.id === '') {
+            if (toParams.sceneid === '') {
                 this.closeDetailPane();
             } else {
-                this.sceneService.query({id: toParams.id}).then(
+                this.sceneService.query({id: toParams.sceneid}).then(
                     (scene) => {
                         this.openDetailPane(scene);
                     },
                     () => {
-                        this.queryParams.id = null;
+                        this.queryParams.sceneid = null;
                         this.$state.go(
                             '.',
                             this.queryParams,
@@ -141,7 +171,8 @@ export default class BrowseController {
     // rather than a scope watch.
     onFilterChange(newFilters) {
         this.queryParams = Object.assign({
-            id: this.queryParams.id,
+            projectid: this.queryParams.projectid,
+            sceneid: this.queryParams.sceneid,
             bbox: this.queryParams.bbox
         }, newFilters);
         this.onQueryParamsChange();
@@ -153,7 +184,8 @@ export default class BrowseController {
         this.zoom = zoom;
         this.center = newCenter;
         this.queryParams = Object.assign({
-            id: this.queryParams.id
+            sceneid: this.queryParams.sceneid,
+            projectid: this.queryParams.projectId,
         }, this.filters, {bbox: this.bboxCoords});
         this.onQueryParamsChange();
     }
@@ -252,7 +284,7 @@ export default class BrowseController {
         if (this.gridFilterActive) {
             params.bbox = this.getGridBboxFilterString();
         }
-        delete params.id;
+        delete params.sceneid;
         this.sceneService.query(
             Object.assign({
                 sort: 'createdAt,desc',
@@ -290,7 +322,7 @@ export default class BrowseController {
         if (this.gridFilterActive) {
             params.bbox = this.getGridBboxFilterString();
         }
-        delete params.id;
+        delete params.sceneid;
         this.sceneService.query(
             Object.assign({
                 sort: 'createdAt,desc',
@@ -314,7 +346,7 @@ export default class BrowseController {
 
     openDetailPane(scene) {
         this.activeScene = scene;
-        this.queryParams.id = scene.id;
+        this.queryParams.sceneid = scene.id;
         this.$state.go('.', this.queryParams, {notify: false, location: true});
         this.getDetailMap().then((map) => {
             map.setThumbnail(scene);
@@ -328,7 +360,7 @@ export default class BrowseController {
 
     closeDetailPane() {
         delete this.activeScene;
-        this.queryParams.id = null;
+        this.queryParams.sceneid = null;
         this.$state.go('.', this.queryParams, {notify: false});
         this.getDetailMap().then((map) => {
             map.deleteThumbnail();
