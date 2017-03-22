@@ -250,7 +250,6 @@ export default (app) => {
             request.then(
                 p => {
                     this.currentProject = p;
-                    this.$rootScope.$broadcast('project:loaded');
                 },
                 () => {
                     this.currentProjectId = null;
