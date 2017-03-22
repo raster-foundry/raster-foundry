@@ -21,11 +21,6 @@ object Organization {
 
   implicit val defaultOrganizationFormat = jsonFormat4(Organization.apply _)
 
-  case class WithRole(id: java.util.UUID, name: String, role: User.Role)
-  object WithRole {
-    implicit val defaultOrgRoleFormat = jsonFormat3(Organization.WithRole.apply _)
-  }
-
   case class Create(name: String) {
     def toOrganization(): Organization = {
       val id = java.util.UUID.randomUUID()

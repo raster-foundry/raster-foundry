@@ -34,6 +34,9 @@ trait ActionRunner {
   def readOne[T](a: DBIO[Option[T]])(implicit database: DB): Future[Option[T]] =
     database.db.run(a)
 
+  def readOneDirect[T](a: DBIO[T])(implicit database: DB): Future[T] =
+    database.db.run(a)
+
   def write[T](a: DBIO[T])(implicit database: DB): Future[T] = database.db.run(a)
 
   def update(a: DBIO[Int])(implicit database: DB): Future[Int] = database.db.run(a)

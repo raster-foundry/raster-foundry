@@ -27,7 +27,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     else
         echo "Pulling down configuration settings for test environment"
         pushd "${DIR}/.."
-        aws s3 cp "s3://rasterfoundry-testing-config-us-east-1/.env" ".env"
+        aws s3 cp "s3://${RF_SETTINGS_BUCKET}/.env" ".env"
         popd
 
         echo "Building static asset bundle"

@@ -37,7 +37,6 @@ dag = DAG(
 )
 
 
-batch = boto3.client('batch')
 batch_job_definition = os.getenv('BATCH_INGEST_JOB_NAME')
 batch_job_queue = os.getenv('BATCH_INGEST_JOB_QUEUE')
 
@@ -52,6 +51,7 @@ def get_latest_batch_job_revision():
 
     This function is used to get the lates AWS batch ARN to submit an ingest job to
     """
+    batch = boto3.client('batch')
     job_definitions = batch.describe_job_definitions(jobDefinitionName=batch_job_definition)['jobDefinitions']
     latest_definition = sorted(job_definitions, key=lambda job: job['revision'], reverse=True)[0]
     return latest_definition['jobDefinitionArn']
@@ -68,6 +68,7 @@ def execute_ingest_batch_job(ingest_s3_uri, ingest_def_id):
     Returns:
         dict
     """
+    batch = boto3.client('batch')
     ingest_arn = get_latest_batch_job_revision()
     response = batch.submit_job(
         jobName='ingest-{}'.format(ingest_def_id),
@@ -92,6 +93,8 @@ def wait_for_success(response):
     """
     job_id = response['jobId']
     job_name = response['jobName']
+
+    batch = boto3.client('batch')
     get_description = lambda: batch.describe_jobs(jobs=[job_id])['jobs'][0]
     logger.info('Starting to check for status updates for job %s', job_name)
     job_description = get_description()

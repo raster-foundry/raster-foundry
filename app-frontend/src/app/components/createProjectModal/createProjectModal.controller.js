@@ -114,8 +114,9 @@ export default class CreateProjectModalController {
                         this.isCreatingProject = false;
                     });
                 }
-            } else if (this.currentStepIs('ADD_SCENES') &&
-                        this.projectAttributeIs('addType', 'public')
+            } else if (
+                this.currentStepIs('ADD_SCENES') &&
+                this.projectAttributeIs('addType', 'public')
             ) {
                 this.gotoSceneBrowser();
             } else {
