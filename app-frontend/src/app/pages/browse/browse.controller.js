@@ -55,30 +55,31 @@ export default class BrowseController {
     }
 
     initParams() {
+        const routeParams = [
+            'projectid',
+            'sceneid'
+        ];
+
+        const cleanedParams = _.omit(this.$state.params, routeParams) || {};
+        const cleanedFilters = _.omit(this.sessionStorage.get('filters'), routeParams) || {};
+
         this.queryParams = Object.assign(
-            _.mapValues(this.$state.params, (val) => {
-                if (val === '' || typeof val === 'undefined') {
-                    return null;
-                }
-                return val;
-            }),
-            this.sessionStorage.get('filters') || {}
+            _.mapValues(cleanedParams, (val) => val ? val : null),
+            cleanedFilters
         );
 
+        this.routeParams =
+            _.mapValues(_.pick(this.$state.params, routeParams), (val) => val ? val : null);
+
+        this.initSelectedScene();
+
         this.filters = Object.assign({}, this.queryParams);
-        delete this.filters.id;
         delete this.filters.bbox;
 
         if (this.queryParams.bbox) {
             this.bounds = this.parseBBoxString(this.queryParams.bbox);
         } else {
             this.bounds = [[-30, -90], [50, 0]];
-        }
-    }
-
-    initSelectedProject() {
-        if (this.$state.params.projectid) {
-            this.$state.go('.', this.queryParams, {notify: false});
         }
     }
 
@@ -89,8 +90,7 @@ export default class BrowseController {
                     this.openDetailPane(scene);
                 },
                 () => {
-                    this.queryParams.sceneid = null;
-                    this.$state.go('.', this.queryParams, {notify: false});
+                    this.$state.go('.', this.getCombinedParams(), {notify: false});
                 }
             );
         }
@@ -134,19 +134,21 @@ export default class BrowseController {
 
     onStateChangeStart(event, toState, toParams, fromState) {
         if (toState.name === fromState.name) {
-            event.preventDefault();
-            if (toParams.sceneid === '') {
+            if (!toParams.sceneid) {
                 this.closeDetailPane();
             } else {
+                // Should we be waiting on this response to open the pane?
+                // Could make the UI feel sluggish, we may want to find
+                // a way to avoid this
                 this.sceneService.query({id: toParams.sceneid}).then(
                     (scene) => {
                         this.openDetailPane(scene);
                     },
                     () => {
-                        this.queryParams.sceneid = null;
+                        this.routeParams.sceneid = null;
                         this.$state.go(
                             '.',
-                            this.queryParams,
+                            this.getCombinedParams(),
                             {notify: false, location: 'replace'}
                         );
                     }
@@ -157,8 +159,16 @@ export default class BrowseController {
 
     onQueryParamsChange() {
         this.sessionStorage.set('filters', this.queryParams);
-        this.$state.go('.', this.queryParams, {notify: false, inherit: false, location: 'replace'});
+        this.$state.go('.', this.getCombinedParams(), {
+            notify: false,
+            inherit: false,
+            location: 'replace'
+        });
         this.requestNewSceneList();
+    }
+
+    getCombinedParams() {
+        return Object.assign(this.queryParams, this.routeParams);
     }
 
     updateSceneGrid() {
@@ -171,8 +181,6 @@ export default class BrowseController {
     // rather than a scope watch.
     onFilterChange(newFilters) {
         this.queryParams = Object.assign({
-            projectid: this.queryParams.projectid,
-            sceneid: this.queryParams.sceneid,
             bbox: this.queryParams.bbox
         }, newFilters);
         this.onQueryParamsChange();
@@ -183,10 +191,7 @@ export default class BrowseController {
         this.bboxCoords = newBounds.toBBoxString();
         this.zoom = zoom;
         this.center = newCenter;
-        this.queryParams = Object.assign({
-            sceneid: this.queryParams.sceneid,
-            projectid: this.queryParams.projectId,
-        }, this.filters, {bbox: this.bboxCoords});
+        this.queryParams = Object.assign(this.filters, {bbox: this.bboxCoords});
         this.onQueryParamsChange();
     }
 
@@ -346,8 +351,8 @@ export default class BrowseController {
 
     openDetailPane(scene) {
         this.activeScene = scene;
-        this.queryParams.sceneid = scene.id;
-        this.$state.go('.', this.queryParams, {notify: false, location: true});
+        this.routeParams.sceneid = scene.id;
+        this.$state.go('.', this.getCombinedParams(), {notify: false, location: true});
         this.getDetailMap().then((map) => {
             map.setThumbnail(scene);
             let sceneBounds = this.sceneService.getSceneBounds(scene);
@@ -359,12 +364,14 @@ export default class BrowseController {
     }
 
     closeDetailPane() {
-        delete this.activeScene;
-        this.queryParams.sceneid = null;
-        this.$state.go('.', this.queryParams, {notify: false});
-        this.getDetailMap().then((map) => {
-            map.deleteThumbnail();
-        });
+        if (this.activeScene) {
+            delete this.activeScene;
+            this.routeParams.sceneid = null;
+            this.$state.go('.', this.getCombinedParams(), {notify: false});
+            this.getDetailMap().then((map) => {
+                map.deleteThumbnail();
+            });
+        }
     }
 
     toggleFilterPane() {
@@ -422,31 +429,6 @@ export default class BrowseController {
         }
     }
 
-    projectModal() {
-        if (!this.selectedScenes || this.selectedScenes.size === 0) {
-            return;
-        }
-
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-        this.activeModal = this.$uibModal.open({
-            component: 'rfProjectAddModal',
-            resolve: {
-                scenes: () => this.selectedScenes
-            }
-        });
-
-        this.activeModal.result.then((result) => {
-            if (result && result === 'scenes') {
-                this.sceneModal();
-            }
-            delete this.activeModal;
-        }, () => {
-            delete this.activeModal;
-        });
-    }
-
     sceneModal() {
         if (!this.selectedScenes || this.selectedScenes.size === 0) {
             return;
@@ -461,18 +443,12 @@ export default class BrowseController {
             resolve: {
                 scenes: () => this.selectedScenes,
                 selectScene: () => this.setSelected.bind(this),
-                selectNoScenes: () => this.selectNoScenes.bind(this)
+                selectNoScenes: () => this.selectNoScenes.bind(this),
+                project: () => this.projectService.currentProject
             }
         });
 
-        this.activeModal.result.then((result) => {
-            if (result === 'project') {
-                this.projectModal();
-            } else {
-                this.$log.debug('modal result: ', result, ' is not implemented yet');
-            }
-            delete this.activeModal;
-        }, () => {
+        this.activeModal.result.then().finally(() => {
             delete this.activeModal;
         });
     }
