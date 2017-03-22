@@ -62,7 +62,13 @@ const App = angular.module(
         require('./pages/settings/tokens/api/api.module.js').name,
         require('./pages/settings/tokens/map/map.module.js').name,
         require('./pages/error/error.module.js').name,
-        require('./pages/home/home.module.js').name
+        require('./pages/home/home.module.js').name,
+        require('./pages/imports/imports.module.js').name,
+        require('./pages/imports/datasources/datasources.module.js').name,
+        require('./pages/imports/datasources/list/list.module.js').name,
+        require('./pages/imports/datasources/detail/detail.module.js').name,
+        require('./pages/imports/datasources/detail/colorComposites/colorComposites.module').name,
+        require('./pages/imports/datasources/detail/colorCorrection/colorCorrection.module').name
     ]
 );
 

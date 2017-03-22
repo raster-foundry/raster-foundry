@@ -1,0 +1,39 @@
+<ui-view class="main">
+  <div class="container column-stretch dashboard">
+    <div class="main">
+      <div class="content stack-sm">
+        <h2>Imports</h2>
+      </div>
+      <div class="row content stack-sm">
+        <div class="column-12">
+          <div class="cta-row">
+            <rf-call-to-action-item title="Datasources">
+              <div class="cta-flex-text">
+                Datasources allow you to connect to various imagery sources and import scenes into Raster Foundry.
+              </div>
+              <div class="cta-button-row">
+                <a class="btn btn-primary" ui-sref="imports.datasources.list">Browse Datasources</a>
+                <br/>
+                <button class="btn btn-default">Create a new Datasource</button>
+              </div>
+              <div class="cta-text">
+                <a>Getting started with Datasources</a>
+              </div>
+            </rf-call-to-action-item>
+            <rf-call-to-action-item title="Scenes">
+              <div class="cta-flex-text">
+                Raster Foundry creates Scenes from your Datasources.
+              </div>
+              <div class="cta-button-row">
+                <a class="btn btn-primary" ui-sref="settings.tokens">Browse Imported Scenes</a>
+              </div>
+              <div class="cta-text">
+                <a>Getting started with your Scenes</a>
+              </div>
+            </rf-call-to-action-item>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ui-view>

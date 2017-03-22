@@ -1,3 +1,4 @@
+/* eslint max-len: 0 */
 import rootTpl from './pages/root/root.html';
 import loginTpl from './pages/login/login.html';
 import browseTpl from './pages/browse/browse.html';
@@ -31,6 +32,13 @@ import mapTokensTpl from './pages/settings/tokens/map/map.html';
 import errorTpl from './pages/error/error.html';
 import shareTpl from './pages/share/share.html';
 import homeTpl from './pages/home/home.html';
+import importsTpl from './pages/imports/imports.html';
+import importsDatasourcesTpl from './pages/imports/datasources/datasources.html';
+import importsDatasourcesListTpl from './pages/imports/datasources/list/list.html';
+import importsDatasourcesDetailTpl from './pages/imports/datasources/detail/detail.html';
+import datasourceColorCompositesTpl from './pages/imports/datasources/detail/colorComposites/colorComposites.html';
+import datasourceColorCorrectionTpl from './pages/imports/datasources/detail/colorCorrection/colorCorrection.html';
+
 
 function librarySceneStates($stateProvider) {
     $stateProvider
@@ -317,6 +325,52 @@ function homeStates($stateProvider) {
         });
 }
 
+function importStates($stateProvider) {
+    $stateProvider
+        .state('imports', {
+            parent: 'root',
+            url: '/imports',
+            templateUrl: importsTpl,
+            controller: 'ImportsController',
+            controllerAs: '$ctrl'
+        })
+        .state('imports.datasources', {
+            url: '/datasources',
+            templateUrl: importsDatasourcesTpl,
+            controller: 'DatasourcesController',
+            controllerAs: '$ctrl',
+            abstract: true
+        })
+        .state('imports.datasources.list', {
+            url: '/list?:page',
+            templateUrl: importsDatasourcesListTpl,
+            controller: 'DatasourceListController',
+            controllerAs: '$ctrl'
+        })
+        .state('imports.datasources.detail', {
+            url: '/detail/:datasourceid',
+            templateUrl: importsDatasourcesDetailTpl,
+            controller: 'DatasourceDetailController',
+            controllerAs: '$ctrl'
+        })
+        .state('imports.datasources.detail.colorComposites', {
+            url: '/color-composites',
+            templateUrl: datasourceColorCompositesTpl,
+            controller: 'ColorCompositesController',
+            controllerAs: '$ctrl'
+        })
+        .state('imports.datasources.detail.colorCorrection', {
+            url: '/color-correction',
+            templateUrl: datasourceColorCorrectionTpl,
+            controller: 'ColorCorrectionController',
+            controllerAs: '$ctrl'
+        })
+        .state('imports.scenes', {
+            url: '/scenes',
+            template: '<div>Scenes</div>'
+        });
+}
+
 function routeConfig($urlRouterProvider, $stateProvider) {
     'ngInject';
 
@@ -333,6 +387,7 @@ function routeConfig($urlRouterProvider, $stateProvider) {
     labStates($stateProvider);
     shareStates($stateProvider);
     homeStates($stateProvider);
+    importStates($stateProvider);
 
     $stateProvider
         .state('error', {
