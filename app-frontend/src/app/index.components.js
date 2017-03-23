@@ -29,5 +29,6 @@ export default angular.module('index.components', [
     require('./components/toggle/toggle.module.js').name,
     require('./components/tokenItem/tokenItem.module.js').name,
     require('./components/datasourceItem/datasourceItem.module.js').name,
-    require('./components/selectProjectModal/selectProjectModal.module.js').name
+    require('./components/selectProjectModal/selectProjectModal.module.js').name,
+    require('./components/importModal/importModal.module.js').name
 ]);

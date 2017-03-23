@@ -1,8 +1,9 @@
 class DatasourceDetailController {
     constructor(
-        $stateParams, datasourceService
+        $stateParams, $uibModal, datasourceService
     ) {
         'ngInject';
+        this.$uibModal = $uibModal;
         this.datasourceId = $stateParams.datasourceid;
         this.datasourceService = datasourceService;
     }
@@ -32,7 +33,20 @@ class DatasourceDetailController {
         this.colorCompositesBuffer = Object.assign({}, this.datasource.composites);
     }
 
-    parseColorComposites() {
+    openImportModal() {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        this.activeModal = this.$uibModal.open({
+            component: 'rfImportModal'
+        });
+
+        this.activeModal.result.then(() => {
+
+        });
+
+        return this.activeModal;
     }
 
     saveColorCorrection() {
