@@ -34,6 +34,8 @@ class Router extends LazyLogging
   implicit val system = AkkaSystem.system
   implicit val materializer = AkkaSystem.materializer
 
+  val toolRoutes = new ToolRoutes()
+
   def root = handleExceptions(tileExceptionHandler) {
     pathPrefix("tiles") {
       pathPrefix("healthcheck") {
@@ -48,7 +50,7 @@ class Router extends LazyLogging
       tileAuthenticateOption { _ =>
         SceneRoutes.root ~
         pathPrefix("tools") {
-          ToolRoutes.root(database)
+          toolRoutes.root(toolRoutes.cachedSource)
         }
       } ~
       pathPrefix(JavaUUID) { projectId =>

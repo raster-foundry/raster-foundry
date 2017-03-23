@@ -120,3 +120,4 @@ app-tasks/usr/local/airflow/logs/
 .idea
 .ensime_cache
 /app-tasks/jars/rf-batch.jar
+/data
