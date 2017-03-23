@@ -76,6 +76,14 @@
   @include button-states($shade-normal);
 }
 
+.btn-light {
+  background: $shade-light;
+  border-color: darken($shade-light, 5%);
+  color: #fff;
+
+  @include button-states($shade-light);
+}
+
 .btn-primary {
   background: $brand-primary;
   border-color: darken($brand-primary, 5%);
@@ -90,6 +98,14 @@
   color: #fff;
 
   @include button-states($brand-secondary);
+}
+
+.btn-tertiary {
+  background: $brand-tertiary;
+  border-color: darken($brand-tertiary, 5%);
+  color: #fff;
+
+  @include button-states($brand-tertiary);
 }
 
 .btn-link {
