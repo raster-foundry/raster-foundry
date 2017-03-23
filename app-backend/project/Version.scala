@@ -33,4 +33,5 @@ object Version {
   val akkaCirceJson      = "1.12.0"
   val cats               = "0.9.0"
   val gatling            = "2.2.4"
+  val scalajHttp        = "2.3.0"
 }

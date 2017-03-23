@@ -188,6 +188,11 @@ lazy val tile = Project("tile", file("tile"))
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisS3,
       Dependencies.akkaSprayJson,
+      Dependencies.circeCore % "it,test",
+      Dependencies.circeGeneric % "it,test",
+      Dependencies.circeParser % "it,test",
+      Dependencies.circeOptics % "it,test",
+      Dependencies.scalajHttp % "it,test",
       Dependencies.gatlingApp,
       Dependencies.gatlingTest,
       Dependencies.gatlingHighcharts
