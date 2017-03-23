@@ -20,6 +20,7 @@ import com.azavea.rf.api.grid.GridRoutes
 import com.azavea.rf.api.datasource.DatasourceRoutes
 import com.azavea.rf.api.maptoken.MapTokenRoutes
 import com.azavea.rf.api.feed.FeedRoutes
+import com.azavea.rf.api.upload.UploadRoutes
 import com.azavea.rf.api.utils.Config
 
 /**
@@ -45,6 +46,7 @@ trait Router extends HealthCheckRoutes
     with DatasourceRoutes
     with MapTokenRoutes
     with FeedRoutes
+    with UploadRoutes
     with Config {
 
   val corsSettings = CorsSettings.defaultSettings
@@ -68,6 +70,7 @@ trait Router extends HealthCheckRoutes
       pathPrefix("scene-grid") { gridRoutes } ~
       pathPrefix("datasources") { datasourceRoutes } ~
       pathPrefix("map-tokens") { mapTokenRoutes } ~
+      pathPrefix("uploads") { uploadRoutes } ~
       pathPrefix("feed") { feedRoutes }
     } ~
     pathPrefix("config") {
