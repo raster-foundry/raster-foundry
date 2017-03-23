@@ -213,6 +213,7 @@ lazy val tile = Project("tile", file("tile"))
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisS3,
       Dependencies.akkaSprayJson,
+      Dependencies.akkaCirceJson,
       Dependencies.circeCore % "it,test",
       Dependencies.circeGeneric % "it,test",
       Dependencies.circeParser % "it,test",
@@ -237,6 +238,7 @@ lazy val tool = Project("tool", file("tool"))
   .settings({
     libraryDependencies ++= loggingDependencies ++ Seq(
       Dependencies.geotrellisRaster,
+      Dependencies.geotrellisRasterTestkit,
       Dependencies.shapeless,
       Dependencies.scalatest,
       Dependencies.circeCore,
