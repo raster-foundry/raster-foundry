@@ -1,8 +1,17 @@
 package com.azavea.rf.tile.routes
 
 import com.azavea.rf.tile.image._
+import com.azavea.rf.tile._
+import com.azavea.rf.tool.ast._
 import com.azavea.rf.database.Database
+import com.azavea.rf.database.tables.Tools
+import com.azavea.rf.datamodel._
+import com.azavea.rf.tool.ast.codec._
+import com.azavea.rf.tool.ast._
 
+import io.circe._
+import io.circe.parser._
+import io.circe.syntax._
 import geotrellis.raster._
 import geotrellis.raster.render._
 import geotrellis.raster.io._
@@ -15,48 +24,22 @@ import geotrellis.proj4.CRS
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes}
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import com.typesafe.scalalogging.LazyLogging
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 import spray.json._
+//import cats.implicits._
+//import org.scalatest._
+//import cats.syntax.either._
+import cats.data._
 import cats.implicits._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import java.util.UUID
 
-// TODO: I need a better way to bind ops ... Right now I just swap out Var for Op ...
 
-object ToolRoutes extends LazyLogging {
+class ToolRoutes(implicit db: Database) extends LazyLogging {
   val userId: String = "rf_airflow-user"
-
-  val red = Op('red)
-  val nir = Op('nir)
-  val ndvi = (nir - red) / (nir + red)
-
-  def ndvi0 = {
-    val params0 = Map(
-      Op.Var('red) -> Op("LC8_0[3]"),
-      Op.Var('nir) -> Op("LC8_0[4]"))
-    ndvi.bind(params0)
-  }
-
-  def ndvi1 = {
-    val params1 = Map(
-      Op.Var('red) -> Op("LC8_1[3]"),
-      Op.Var('nir) -> Op("LC8_1[4]"))
-    ndvi.bind(params1)
-  }
-
-  def reclass0(breaks: Map[Double, Double]) = {
-    Reclassify(ndvi0, BreakMap(breaks))
-  }
-
-  def reclass1(breaks: Map[Double, Double]) = {
-    Reclassify(ndvi1, BreakMap(breaks))
-  }
-
-  def ndviDiff(breaks0: Map[Double, Double], breaks1: Map[Double, Double]) = {
-    reclass1(breaks1) - reclass0(breaks0)
-  }
 
   def lookupColorMap(str: Option[String]): ColorMap = {
     str match {
@@ -84,54 +67,35 @@ object ToolRoutes extends LazyLogging {
   def root(implicit database: Database): Route =
     pathPrefix(Segment / "ndvi-diff-tool"){ organizationId =>
       (pathEndOrSingleSlash & get & rejectEmptyResponse) {
-        complete("model JSON")
+        complete(futureTool)
       } ~
       pathPrefix(IntNumber / IntNumber / IntNumber){ (z, x, y) =>
         parameter(
           'part.?,
-          'LC8_0, 'LC8_1,
-          'class0.?("0.1:0;99999999:1.0"), // Make this big so that all values are caught
-          'class1.?("0.1:0;99999999:1.0"),
           'geotiff.?(false),
           'cm.?
         )
-        { (partId, p0, p1, class0, class1, geotiffOutput, colorMap) =>
+        { (partId, geotiffOutput, colorMap) =>
           complete {
-            val varMap = Map(
-              'LC8_0 -> { (z: Int, x: Int, y: Int) =>
-                Mosaic.raw(UUID.fromString(p0), z, x, y).value},
-              'LC8_1 -> { (z: Int, x: Int, y: Int) =>
-                Mosaic.raw(UUID.fromString(p1), z, x, y).value})
+            OptionT(futureTool).mapFilter { tool =>
+              logger.debug(s"Raw Tool: $tool")
+              // TODO: return useful HTTP errors on parse failure
+              tool.definition.as[MapAlgebraAST] match {
+                case Left(failure) =>
+                  logger.error(s"Failed to parse MapAlgebraAST from: ${tool.definition.noSpaces} with $failure")
+                  None
 
-            val model: Op = partId match {
-              case Some("ndvi0") => ndvi0
-              case Some("ndvi1") => ndvi1
-              case Some("class0") => reclass0(parseBreakMap(class0))
-              case Some("class1") => reclass1(parseBreakMap(class1))
-              case _ => ndviDiff(parseBreakMap(class0), parseBreakMap(class1))
-            }
+                case Right(ast) =>
+                  logger.debug(s"Parsed Tool: ${ast}")
+                  ast.some
+              }
+            }.map { ast =>
+              // TODO: can we move it outside the z/x/y to get some re-use? (don't think so but should check)
+              val tms = Interpreter.tms(ast, source)
+              OptionT(tms(z,x,y)).map { op =>
+                val tile = op.toTile(IntCellType).get
+                // TODO: use color ramp to paint the tile
 
-            logger.debug(s"model prior to param binding: $model")
-
-            // TODO: Inspect what variables are actually required, only fetch those tiles
-            val futureTiles = varMap.map { case (sym, tms) =>
-              tms(z, x, y).map { maybeTile => sym -> maybeTile }
-            }
-
-            Future.sequence(futureTiles).map { tiles =>
-              // construct a list of parameters to bind to the NDVI-diff model
-              val params = tiles.map { case (name, maybeTile) =>
-                Op.Var(name) -> Op.Unbound(maybeTile)
-              }.toMap
-
-              logger.debug(s"Params to bind to model: $params")
-              val assignedModel = model.bind(params)
-              logger.debug(s"model after param binding: $assignedModel")
-              assert(assignedModel.fullyBound) // Verification that binding completed
-
-              val calculation = assignedModel.toTile(FloatCellType)
-
-              calculation.map { tile =>
                 if (geotiffOutput) {
                   // Largely for debugging, the Extent and CRS are *NOT* meaningful
                   val geotiff = SinglebandGeoTiff(tile, Extent(0, 0, 0, 0), CRS.fromEpsgCode(3857))
@@ -140,8 +104,8 @@ object ToolRoutes extends LazyLogging {
                   val png = tile.renderPng(lookupColorMap(colorMap))
                   pngAsHttpResponse(png)
                 }
-              }
-            }
+              }.value
+            }.value
           }
         }
       }
