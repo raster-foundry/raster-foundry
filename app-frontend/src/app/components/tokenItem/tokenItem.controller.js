@@ -15,8 +15,8 @@ export default class TokenItem {
         );
     }
 
-    onDelete() {
-        this.onDelete({token: this.token});
+    deleteToken() {
+        this.onDelete({data: this.token});
     }
 
     startEditing() {
