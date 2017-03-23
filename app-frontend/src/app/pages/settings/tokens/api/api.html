@@ -18,7 +18,10 @@
   </div>
 </form>
 <div class="list-group">
-  <rf-token-item token="token" ng-repeat="token in $ctrl.tokens track by token.id">
+  <rf-token-item
+    token="token"
+    on-delete="$ctrl.deleteToken(token)"
+    ng-repeat="token in $ctrl.tokens track by token.id">
 </div>
 <div class="list-group"
      ng-if="(!$ctrl.tokens || !$ctrl.tokens.length) && !$ctrl.loading">
