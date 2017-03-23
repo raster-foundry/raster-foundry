@@ -6,6 +6,7 @@ import java.sql.Timestamp
 import java.time.Instant
 
 import io.circe._
+import io.circe.parser._
 import cats.syntax.either._
 
 import geotrellis.vector._
@@ -63,13 +64,16 @@ package object datamodel {
               throw new InvalidParameterException(s"Unsupported Geometry SRID: $srid").initCause(e)
           }
         }
-        Encoder.encodeString(reprojected.toGeoJson)
+        parse(reprojected.toGeoJson) match {
+          case Right(js: Json) => js
+          case Left(e) => throw e
+        }
       }
     }
 
   // TODO: make this tolerate more than one incoming srid
-  implicit val projectedGeometryDecoder: Decoder[Projected[Geometry]] = Decoder[String] map { str =>
-    Projected(str.parseGeoJson[Geometry], 4326).reproject(CRS.fromEpsgCode(4326), CRS.fromEpsgCode(3857))(3857)
+  implicit val projectedGeometryDecoder: Decoder[Projected[Geometry]] = Decoder[Json] map { js =>
+    Projected(js.spaces4.parseGeoJson[Geometry], 4326).reproject(CRS.fromEpsgCode(4326), CRS.fromEpsgCode(3857))(3857)
   }
 
   implicit val userRoleEncoder: Encoder[UserRole] =
