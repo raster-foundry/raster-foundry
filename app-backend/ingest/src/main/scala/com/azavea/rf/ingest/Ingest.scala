@@ -14,6 +14,7 @@ import geotrellis.spark.io._
 import geotrellis.spark.io.s3._
 import geotrellis.spark.tiling._
 import geotrellis.spark.io.file._
+import geotrellis.spark.io.http.util.HttpRangeReader
 import geotrellis.spark.io.index.ZCurveKeyIndexMethod
 import geotrellis.spark.pyramid.Pyramid
 import geotrellis.vector.ProjectedExtent
@@ -153,7 +154,7 @@ object Ingest extends SparkJob with LazyLogging {
         val (bucket, prefix) = S3.parse(uri)
         S3RangeReader(bucket, prefix, S3Client.DEFAULT)
       case "http" | "https" =>
-        ???
+        new HttpRangeReader(uri.toURL())
     }
   }
 
