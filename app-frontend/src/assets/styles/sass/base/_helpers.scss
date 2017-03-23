@@ -96,6 +96,25 @@
   display: none !important;
 }
 
+// responsive hiding
+@include respond-to(md-down) {
+  .hide-md {
+    display: none;
+  }
+}
+
+@include respond-to(sm-down) {
+  .hide-sm {
+    display: none;
+  }
+}
+
+@include respond-to(xs) {
+  .hide-xs {
+    display: none;
+  }
+}
+
 .invisible {
   opacity: 0;
   visibility: hidden;
@@ -119,4 +138,8 @@
   display: flex;
   flex-direction: column;
   height: 100%; // firefox overflow fix
+}
+
+.flex-display {
+  display: flex;
 }
