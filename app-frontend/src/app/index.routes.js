@@ -236,7 +236,7 @@ function browseStates($stateProvider) {
     $stateProvider
         .state('browse', {
             parent: 'root',
-            url: '/browse/:id?' + queryParams,
+            url: '/browse/:projectid/:sceneid?' + queryParams,
             templateUrl: browseTpl,
             controller: 'BrowseController',
             controllerAs: '$ctrl'
@@ -397,7 +397,7 @@ function routeConfig($urlRouterProvider, $stateProvider) {
             controllerAs: '$ctrl'
         });
 
-    $urlRouterProvider.otherwise('/browse/');
+    $urlRouterProvider.otherwise('/home/');
 }
 
 

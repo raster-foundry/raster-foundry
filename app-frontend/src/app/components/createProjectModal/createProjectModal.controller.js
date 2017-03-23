@@ -82,8 +82,10 @@ export default class CreateProjectModalController {
     }
 
     gotoSceneBrowser() {
-        this.close();
-        this.$state.go('browse');
+        if (this.project) {
+            this.close();
+            this.$state.go('browse', {projectid: this.project.id});
+        }
     }
 
     createProject() {

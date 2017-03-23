@@ -30,26 +30,17 @@
   </div>
   <div class="modal-footer">
   	<div class="pull-left">
-  	  <button type="button"
-              class="btn btn-secondary"
-              ng-disabled="!$ctrl.selectedScenes || $ctrl.selectedScenes.size === 0"
-              ng-click="$ctrl.close({$value: 'project'})">
-        <i class="icon-bucket"></i>
-        Add to a Project
-      </button>
-  	  <span>&nbsp;or&nbsp;</span>
-  	  <button type="button"
-              class="btn btn-primary"
-              ng-disabled="!$ctrl.selectedScenes || $ctrl.selectedScenes.size === 0"
-              ng-click="$ctrl.close({$value: 'editor'})">
-        <i class="icon-mosaic"></i>
-        Editor
+      <button type="button" class="btn" data-dismiss="modal"
+              ng-click="$ctrl.dismiss();">
+        Cancel
       </button>
   	</div>
-  	<button type="button" class="btn" data-dismiss="modal"
-            ng-click="$ctrl.resolve.selectNoScenes()">
-      <i class="icon-cross"></i>
-      Deselect All
-    </button>
+      <button type="button"
+              class="btn btn-secondary"
+              ng-disabled="!$ctrl.selectedScenes || $ctrl.selectedScenes.size === 0"
+              ng-click="$ctrl.addScenesToProject()">
+        <i class="icon-bucket"></i>
+        Add to <strong>{{$ctrl.resolve.project.name}}</strong>
+      </button>
   </div>
 </div>

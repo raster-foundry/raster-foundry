@@ -16,7 +16,6 @@ export default class ProjectEditController {
         this.$uibModal = $uibModal;
         this.getMap = () => mapService.getMap('project');
 
-
         this.mapOptions = {
             static: false,
             fitToGeojson: false
@@ -35,7 +34,7 @@ export default class ProjectEditController {
         if (!this.project) {
             if (this.projectId) {
                 this.loadingProject = true;
-                this.projectService.query({id: this.projectId}).then(
+                this.projectService.loadProject(this.projectId).then(
                     (project) => {
                         this.project = project;
                         this.fitProjectExtent();

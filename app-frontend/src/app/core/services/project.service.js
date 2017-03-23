@@ -11,6 +11,8 @@ export default (app) => {
             this.$location = $location;
             this.$q = $q;
 
+            this.currentProject = null;
+
             this.Project = $resource(
                 '/api/projects/:id/', {
                     id: '@properties.id'
@@ -67,14 +69,15 @@ export default (app) => {
             return this.Project.query(params).$promise;
         }
 
+        get(id) {
+            return this.Project.get({id}).$promise;
+        }
+
         createProject(name) {
             return this.userService.getCurrentUser().then(
                 (user) => {
-                    let publicOrg = user.organizations.filter(
-                        (org) => org.name === 'Public'
-                    )[0];
                     return this.Project.create({
-                        organizationId: publicOrg.id, name: name, description: '',
+                        organizationId: user.organizationId, name: name, description: '',
                         visibility: 'PRIVATE', tileVisibility: 'PRIVATE', tags: []
                     }).$promise;
                 },
@@ -238,6 +241,23 @@ export default (app) => {
                 deferred.resolve(shareUrl);
             }
             return deferred.promise;
+        }
+
+        loadProject(id) {
+            this.isLoadingProject = true;
+            this.currentProjectId = id;
+            const request = this.get(id);
+            request.then(
+                p => {
+                    this.currentProject = p;
+                },
+                () => {
+                    this.currentProjectId = null;
+                }
+            ).finally(() => {
+                this.isLoadingProject = false;
+            });
+            return request;
         }
     }
 

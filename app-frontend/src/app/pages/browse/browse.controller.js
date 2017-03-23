@@ -3,23 +3,30 @@ const Map = require('es6-map');
 const _ = require('lodash');
 
 export default class BrowseController {
-    constructor( // eslint-disable-line max-params
-        $log, $scope, sceneService, gridLayerService,
-        authService, $state, $uibModal, $timeout, mapService,
-        sessionStorage
+    constructor(
+        $log, $scope, $state, $timeout, $uibModal, sceneService, gridLayerService,
+        authService, mapService, projectService, sessionStorage
     ) {
         'ngInject';
 
         this.$log = $log;
-        this.sceneService = sceneService;
-        this.authService = authService;
         this.$state = $state;
         this.$uibModal = $uibModal;
+        this.$scope = $scope;
+        this.$timeout = $timeout;
+        this.sceneService = sceneService;
+        this.authService = authService;
+        this.projectService = projectService;
         this.gridLayerService = gridLayerService;
         this.sessionStorage = sessionStorage;
+        this.mapService = mapService;
+    }
 
-        this.getBrowseMap = () => mapService.getMap('browse');
-        this.getDetailMap = () => mapService.getMap('detail');
+    $onInit() {
+        this.loadProject();
+
+        this.getBrowseMap = () => this.mapService.getMap('browse');
+        this.getDetailMap = () => this.mapService.getMap('detail');
 
         this.assetLogo = assetLogo;
         this.scenes = {
@@ -30,55 +37,78 @@ export default class BrowseController {
         this.selectedScenes = new Map();
         this.sceneList = [];
         this.gridFilterActive = false;
-        // initial data
+
+        this.initParams();
+        this.initWatchers();
+        this.initMap();
+    }
+
+    loadProject() {
+        const projectId = this.$state.params.projectid;
+        if (projectId) {
+            this.projectService.loadProject(projectId).then(p => {
+                this.project = p;
+            });
+        } else {
+            this.$state.go('home');
+        }
+    }
+
+    initParams() {
+        const routeParams = [
+            'projectid',
+            'sceneid'
+        ];
+
+        const cleanedParams = _.omit(this.$state.params, routeParams) || {};
+        const cleanedFilters = _.omit(this.sessionStorage.get('filters'), routeParams) || {};
 
         this.queryParams = Object.assign(
-            _.mapValues($state.params, (val) => {
-                if (val === '' || typeof val === 'undefined') {
-                    return null;
-                }
-                return val;
-            }),
-            this.sessionStorage.get('filters') || {}
+            _.mapValues(cleanedParams, (val) => val ? val : null),
+            cleanedFilters
         );
 
-        if ($state.params.id) {
-            this.sceneService.query({id: $state.params.id}).then(
-                (scene) => {
-                    this.openDetailPane(scene);
-                },
-                () => {
-                    this.queryParams.id = null;
-                    this.$state.go('.', this.queryParams, {notify: false});
-                }
-            );
-        }
+        this.routeParams =
+            _.mapValues(_.pick(this.$state.params, routeParams), (val) => val ? val : null);
+
+        this.initSelectedScene();
 
         this.filters = Object.assign({}, this.queryParams);
-        delete this.filters.id;
         delete this.filters.bbox;
 
-        // Default bounds; we can set these to something more meaningful later, e.g. the user's
-        // most recent project's bounding box, or an IP-based geolocation. If a bbox is set in
-        // the query params, always use that.
         if (this.queryParams.bbox) {
             this.bounds = this.parseBBoxString(this.queryParams.bbox);
         } else {
             this.bounds = [[-30, -90], [50, 0]];
         }
+    }
 
-        // watchers
-        $scope.$on('$stateChangeStart', this.onStateChangeStart.bind(this));
+    initSelectedScene() {
+        if (this.$state.params.sceneid) {
+            this.sceneService.query({id: this.$state.params.sceneid}).then(
+                (scene) => {
+                    this.openDetailPane(scene);
+                },
+                () => {
+                    this.$state.go('.', this.getCombinedParams(), {notify: false});
+                }
+            );
+        }
+    }
+
+    initWatchers() {
+        this.$scope.$on('$stateChangeStart', this.onStateChangeStart.bind(this));
         // TODO: Switch to one-way &-binding from child component
-        $scope.$watchCollection('$ctrl.filters', this.onFilterChange.bind(this));
-
-        $scope.$watch(
-            function () {
-                return authService.isLoggedIn;
+        this.$scope.$watchCollection('$ctrl.filters', this.onFilterChange.bind(this));
+        this.$scope.$watch(
+            () => {
+                return this.authService.isLoggedIn;
             },
             this.onLoggedInChange.bind(this)
         );
+    }
 
+    initMap() {
         this.getBrowseMap().then((browseMap) => {
             browseMap.map.fitBounds(this.bounds);
             browseMap.on('contextmenu', ($event) => {
@@ -90,7 +120,7 @@ export default class BrowseController {
                 return false;
             });
             browseMap.on('moveend', ($event, mapWrapper) => {
-                $timeout(() => {
+                this.$timeout(() => {
                     this.registerClick = true;
                 }, 125);
                 this.onViewChange(
@@ -104,19 +134,21 @@ export default class BrowseController {
 
     onStateChangeStart(event, toState, toParams, fromState) {
         if (toState.name === fromState.name) {
-            event.preventDefault();
-            if (toParams.id === '') {
+            if (!toParams.sceneid) {
                 this.closeDetailPane();
             } else {
-                this.sceneService.query({id: toParams.id}).then(
+                // Should we be waiting on this response to open the pane?
+                // Could make the UI feel sluggish, we may want to find
+                // a way to avoid this
+                this.sceneService.query({id: toParams.sceneid}).then(
                     (scene) => {
                         this.openDetailPane(scene);
                     },
                     () => {
-                        this.queryParams.id = null;
+                        this.routeParams.sceneid = null;
                         this.$state.go(
                             '.',
-                            this.queryParams,
+                            this.getCombinedParams(),
                             {notify: false, location: 'replace'}
                         );
                     }
@@ -127,8 +159,16 @@ export default class BrowseController {
 
     onQueryParamsChange() {
         this.sessionStorage.set('filters', this.queryParams);
-        this.$state.go('.', this.queryParams, {notify: false, inherit: false, location: 'replace'});
+        this.$state.go('.', this.getCombinedParams(), {
+            notify: false,
+            inherit: false,
+            location: 'replace'
+        });
         this.requestNewSceneList();
+    }
+
+    getCombinedParams() {
+        return Object.assign(this.queryParams, this.routeParams);
     }
 
     updateSceneGrid() {
@@ -141,7 +181,6 @@ export default class BrowseController {
     // rather than a scope watch.
     onFilterChange(newFilters) {
         this.queryParams = Object.assign({
-            id: this.queryParams.id,
             bbox: this.queryParams.bbox
         }, newFilters);
         this.onQueryParamsChange();
@@ -152,9 +191,7 @@ export default class BrowseController {
         this.bboxCoords = newBounds.toBBoxString();
         this.zoom = zoom;
         this.center = newCenter;
-        this.queryParams = Object.assign({
-            id: this.queryParams.id
-        }, this.filters, {bbox: this.bboxCoords});
+        this.queryParams = Object.assign(this.filters, {bbox: this.bboxCoords});
         this.onQueryParamsChange();
     }
 
@@ -252,7 +289,7 @@ export default class BrowseController {
         if (this.gridFilterActive) {
             params.bbox = this.getGridBboxFilterString();
         }
-        delete params.id;
+        delete params.sceneid;
         this.sceneService.query(
             Object.assign({
                 sort: 'createdAt,desc',
@@ -290,7 +327,7 @@ export default class BrowseController {
         if (this.gridFilterActive) {
             params.bbox = this.getGridBboxFilterString();
         }
-        delete params.id;
+        delete params.sceneid;
         this.sceneService.query(
             Object.assign({
                 sort: 'createdAt,desc',
@@ -314,8 +351,8 @@ export default class BrowseController {
 
     openDetailPane(scene) {
         this.activeScene = scene;
-        this.queryParams.id = scene.id;
-        this.$state.go('.', this.queryParams, {notify: false, location: true});
+        this.routeParams.sceneid = scene.id;
+        this.$state.go('.', this.getCombinedParams(), {notify: false, location: true});
         this.getDetailMap().then((map) => {
             map.setThumbnail(scene);
             let sceneBounds = this.sceneService.getSceneBounds(scene);
@@ -327,12 +364,14 @@ export default class BrowseController {
     }
 
     closeDetailPane() {
-        delete this.activeScene;
-        this.queryParams.id = null;
-        this.$state.go('.', this.queryParams, {notify: false});
-        this.getDetailMap().then((map) => {
-            map.deleteThumbnail();
-        });
+        if (this.activeScene) {
+            delete this.activeScene;
+            this.routeParams.sceneid = null;
+            this.$state.go('.', this.getCombinedParams(), {notify: false});
+            this.getDetailMap().then((map) => {
+                map.deleteThumbnail();
+            });
+        }
     }
 
     toggleFilterPane() {
@@ -390,31 +429,6 @@ export default class BrowseController {
         }
     }
 
-    projectModal() {
-        if (!this.selectedScenes || this.selectedScenes.size === 0) {
-            return;
-        }
-
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-        this.activeModal = this.$uibModal.open({
-            component: 'rfProjectAddModal',
-            resolve: {
-                scenes: () => this.selectedScenes
-            }
-        });
-
-        this.activeModal.result.then((result) => {
-            if (result && result === 'scenes') {
-                this.sceneModal();
-            }
-            delete this.activeModal;
-        }, () => {
-            delete this.activeModal;
-        });
-    }
-
     sceneModal() {
         if (!this.selectedScenes || this.selectedScenes.size === 0) {
             return;
@@ -429,18 +443,12 @@ export default class BrowseController {
             resolve: {
                 scenes: () => this.selectedScenes,
                 selectScene: () => this.setSelected.bind(this),
-                selectNoScenes: () => this.selectNoScenes.bind(this)
+                selectNoScenes: () => this.selectNoScenes.bind(this),
+                project: () => this.projectService.currentProject
             }
         });
 
-        this.activeModal.result.then((result) => {
-            if (result === 'project') {
-                this.projectModal();
-            } else {
-                this.$log.debug('modal result: ', result, ' is not implemented yet');
-            }
-            delete this.activeModal;
-        }, () => {
+        this.activeModal.result.then().finally(() => {
             delete this.activeModal;
         });
     }
