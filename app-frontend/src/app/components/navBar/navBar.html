@@ -1,6 +1,6 @@
-<div class="navbar primary-navbar" ng-show="!$ctrl.loadError"  ng-if="!$ctrl.$state.$current.name.includes('share')">
+<div class="navbar primary-navbar row no-margin" ng-show="!$ctrl.loadError"  ng-if="!$ctrl.$state.$current.name.includes('share')">
   <!-- Nav Left -->
-  <div class="navbar-left">
+  <div>
     <a href="#" class="brand">
       <img ng-attr-src="{{$ctrl.assetLogo}}">
     </a>
@@ -26,20 +26,10 @@
                    active: $ctrl.$state.$current.name.includes('market')
                    }">Tools</a>
     </nav>
-    <span class="navbar-vertical-divider"></span>
   </div>
 
   <!-- Nav Right -->
-  <div class="navbar-right">
-    <nav>
-      <a href class="icon-link" title="Help">
-        <i class="icon-help"></i>
-      </a>
-      <a href class="icon-link" title="Processing">
-        <i class="icon-processing"></i>
-      </a>
-    </nav>
-    <span class="navbar-vertical-divider"></span>
+  <div class="row no-margin columns-center column align-right">
     <nav>
       <div ng-if="$ctrl.authService.isLoggedIn" uib-dropdown class="dropdown-my-account" on-toggle="toggled($ctrl.optionsOpen)">
         <a href uib-dropdown-toggle>
