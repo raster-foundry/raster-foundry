@@ -50,6 +50,7 @@
     "leaflet-draw": "~0.4.7",
     "lodash": "~4.5.0",
     "moment": "^2.18.1",
+    "ng-file-upload": "^12.2.13",
     "ng-infinite-scroll": "~1.3.0",
     "ng-rollbar": "^1.9.2",
     "nvd3": "~1.8.4",

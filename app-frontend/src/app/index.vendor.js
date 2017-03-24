@@ -30,6 +30,7 @@ import 'svg-pan-zoom';
 import 'jointjs';
 import 'angular-load';
 import 'ng-rollbar';
+import 'ng-file-upload';
 
 // local scripts
 // import '../assets/js/...';

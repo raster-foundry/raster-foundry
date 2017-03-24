@@ -6,6 +6,7 @@ class DatasourceDetailController {
         this.$uibModal = $uibModal;
         this.datasourceId = $stateParams.datasourceid;
         this.datasourceService = datasourceService;
+        this.openImportModal();
     }
 
     $onInit() {

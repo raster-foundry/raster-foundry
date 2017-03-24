@@ -8,6 +8,7 @@ export default class ImportModalController {
     $onInit() {
         this.steps = [
             'IMPORT',
+            'LOCAL_UPLOAD',
             'IMPORT_SUCCESS'
         ];
         this.importType = 'local';
