@@ -1,6 +1,6 @@
 <div class="navbar primary-navbar row no-margin" ng-show="!$ctrl.loadError"  ng-if="!$ctrl.$state.$current.name.includes('share')">
   <!-- Nav Left -->
-  <div>
+  <div class="navbar-section">
     <a href="#" class="brand">
       <img ng-attr-src="{{$ctrl.assetLogo}}">
     </a>
@@ -29,7 +29,7 @@
   </div>
 
   <!-- Nav Right -->
-  <div class="row no-margin columns-center column align-right">
+  <div class="row no-margin columns-center column align-right navbar-section">
     <nav>
       <div ng-if="$ctrl.authService.isLoggedIn" uib-dropdown class="dropdown-my-account" on-toggle="toggled($ctrl.optionsOpen)">
         <a href uib-dropdown-toggle>
