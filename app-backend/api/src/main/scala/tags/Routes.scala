@@ -1,15 +1,20 @@
 package com.azavea.rf.api.tooltag
 
-import java.util.UUID
-
-import scala.util.{Success, Failure}
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Route
 import com.azavea.rf.common.{Authentication, UserErrorHandler}
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.ToolTags
 import com.azavea.rf.datamodel._
+
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Route
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
+import io.circe._
+import io.circe.generic.auto._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
+
+import scala.util.{Success, Failure}
+import java.util.UUID
+
 
 trait ToolTagRoutes extends Authentication with PaginationDirectives with UserErrorHandler {
   implicit def database: Database

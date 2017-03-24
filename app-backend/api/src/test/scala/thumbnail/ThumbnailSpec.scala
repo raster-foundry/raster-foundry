@@ -9,7 +9,6 @@ import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import akka.http.scaladsl.server.Route
 import akka.actor.ActorSystem
 import org.scalatest.{Matchers, WordSpec}
-import spray.json._
 
 import concurrent.duration._
 
@@ -19,6 +18,11 @@ import com.azavea.rf.datamodel._
 import com.azavea.rf.api.scene._
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.{DBSpec, Router}
+
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.syntax._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 import scala.util.{Success, Failure, Try}
 
@@ -126,7 +130,7 @@ class ThumbnailSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          newScene.toJson.toString()
+          newScene.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         responseAs[Scene.WithRelated]
@@ -155,7 +159,7 @@ class ThumbnailSpec extends WordSpec
         Post("/api/thumbnails/").withEntity(
           HttpEntity(
             ContentTypes.`application/json`,
-            thumbnailToPost1.toJson.toString()
+            thumbnailToPost1.asJson.noSpaces
           )
         ) ~> baseRoutes ~> check {
           reject
@@ -165,7 +169,7 @@ class ThumbnailSpec extends WordSpec
           List(authHeader),
           HttpEntity(
             ContentTypes.`application/json`,
-            thumbnailToPost1.toJson.toString()
+            thumbnailToPost1.asJson.noSpaces
           )
         ) ~> baseRoutes ~> check {
           responseAs[Thumbnail]
@@ -175,7 +179,7 @@ class ThumbnailSpec extends WordSpec
           List(authHeader),
           HttpEntity(
             ContentTypes.`application/json`,
-            thumbnailToPost2.toJson.toString()
+            thumbnailToPost2.asJson.noSpaces
           )
         ) ~> baseRoutes ~> check {
           responseAs[Thumbnail]

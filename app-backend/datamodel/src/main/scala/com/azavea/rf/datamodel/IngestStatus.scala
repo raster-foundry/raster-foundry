@@ -1,7 +1,9 @@
 package com.azavea.rf.datamodel
 
-import spray.json._
-import DefaultJsonProtocol._
+import io.circe._
+import cats.syntax.either._
+
+import java.security.InvalidParameterException
 
 sealed abstract class IngestStatus(val repr: String) {
   override def toString = repr
@@ -35,15 +37,14 @@ object IngestStatus {
     case "INGESTING" => Ingesting
     case "INGESTED" => Ingested
     case "FAILED" => Failed
-    case _ => throw new DeserializationException(s"Invalid IngestStatus: $s")
+    case _ => throw new InvalidParameterException(s"Invalid IngestStatus: $s")
   }
 
-  implicit object DefaultIngestStatusJsonFormat extends RootJsonFormat[IngestStatus] {
-    def write(status: IngestStatus): JsValue = JsString(status.toString)
-    def read(js: JsValue): IngestStatus = js match {
-      case JsString(status) => fromString(status)
-      case _ =>
-        deserializationError("Failed to parse ingest string representation (${js}) to IngestStatus")
+  implicit val ingestStatusEncoder: Encoder[IngestStatus] =
+    Encoder.encodeString.contramap[IngestStatus](_.toString)
+
+  implicit val ingestStatusDecoder: Decoder[IngestStatus] =
+    Decoder.decodeString.emap { str =>
+      Either.catchNonFatal(fromString(str)).leftMap(t => "IngestStatus")
     }
-  }
 }

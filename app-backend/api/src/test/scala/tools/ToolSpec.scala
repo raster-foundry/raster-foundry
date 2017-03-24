@@ -10,12 +10,15 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import org.scalatest.{Matchers, WordSpec}
-import spray.json._
-import DefaultJsonProtocol._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.{AuthUtils, DBSpec, Router}
 import concurrent.duration._
+
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.syntax._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 import java.util.UUID
 import scala.concurrent.duration._
@@ -43,7 +46,7 @@ class ToolSpec extends WordSpec
     Visibility.Public,
     List("Test tool datasource"),
     2.5f,
-    JsObject(),
+    ().asJson,
     List(),
     List()
   )
@@ -75,7 +78,7 @@ class ToolSpec extends WordSpec
       Post("/api/tools/").withEntity(
         HttpEntity(
           ContentTypes.`application/json`,
-          newTool.toJson.toString()
+          newTool.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         reject
@@ -87,7 +90,7 @@ class ToolSpec extends WordSpec
         List(authorization),
         HttpEntity(
           ContentTypes.`application/json`,
-          newTool.toJson.toString()
+          newTool.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         responseAs[Tool]

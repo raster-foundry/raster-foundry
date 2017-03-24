@@ -7,10 +7,12 @@ import com.azavea.rf.datamodel.{JobStatus, IngestStatus}
 import geotrellis.slick.Projected
 import geotrellis.vector.Geometry
 
+import io.circe.Json
+
 trait SceneFields  { self: Table[_] =>
   def name: Rep[String]
   def datasource: Rep[UUID]
-  def sceneMetadata: Rep[Map[String, Any]]
+  def sceneMetadata: Rep[Json]
   def cloudCover: Rep[Option[Float]]
   def acquisitionDate: Rep[Option[java.sql.Timestamp]]
   def thumbnailStatus: Rep[JobStatus]

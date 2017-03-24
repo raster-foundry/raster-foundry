@@ -1,7 +1,7 @@
 package com.azavea.rf.datamodel
 
-import spray.json._
-import spray.json.DefaultJsonProtocol._
+import io.circe._
+
 import java.util.UUID
 import java.sql.Timestamp
 
@@ -14,14 +14,12 @@ case class Datasource(
   organizationId: UUID,
   name: String,
   visibility: Visibility,
-  colorCorrection: Map[String, Any],
-  composites: Map[String, Any],
-  extras: Map[String, Any]
+  colorCorrection: Json,
+  composites: Json,
+  extras: Json
 )
 
 object Datasource {
-
-  implicit val defaultDatasourceFormat = jsonFormat11(Datasource.apply _)
 
   def tupled = (Datasource.apply _).tupled
 
@@ -32,9 +30,9 @@ object Datasource {
     organizationId: UUID,
     name: String,
     visibility: Visibility,
-    colorCorrection: Map[String, Any],
-    composites: Map[String, Any],
-    extras: Map[String, Any]
+    colorCorrection: Json,
+    composites: Json,
+    extras: Json
   ) {
     def toDatasource(userId: String): Datasource = {
       val id = java.util.UUID.randomUUID()
@@ -55,7 +53,4 @@ object Datasource {
     }
   }
 
-  object Create {
-    implicit val defaultDatasourceCreateFormat = jsonFormat6(Create.apply _)
-  }
 }

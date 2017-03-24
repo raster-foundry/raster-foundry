@@ -82,7 +82,6 @@ lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
   Dependencies.akka,
   Dependencies.akkahttp,
   Dependencies.akkaHttpCors,
-  Dependencies.akkaSprayJson,
   Dependencies.akkaCirceJson,
   Dependencies.akkastream,
   Dependencies.akkaSlf4j,
@@ -103,6 +102,7 @@ lazy val root = Project("root", file("."))
 lazy val api = Project("api", file("api"))
   .dependsOn(database, datamodel, common)
   .settings(apiSettings:_*)
+  .settings(resolvers += Resolver.bintrayRepo("hseeberger", "maven"))
   .settings({
     libraryDependencies ++= apiDependencies
   })
@@ -140,7 +140,9 @@ lazy val datamodel = Project("datamodel", file("datamodel"))
     libraryDependencies ++= loggingDependencies ++ Seq(
       Dependencies.geotrellisSlick % "provided",
       Dependencies.geotrellisRaster,
-      Dependencies.akkaSprayJson
+      Dependencies.circeCore,
+      Dependencies.akka,
+      Dependencies.akkahttp
     )
   })
 

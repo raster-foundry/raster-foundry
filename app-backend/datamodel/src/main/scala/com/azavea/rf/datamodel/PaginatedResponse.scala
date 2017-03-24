@@ -1,8 +1,5 @@
 package com.azavea.rf.datamodel
 
-import spray.json._
-import spray.json.DefaultJsonProtocol._
-
 /**
  * Case class for paginated results
  *

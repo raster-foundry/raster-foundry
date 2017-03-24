@@ -3,7 +3,7 @@ package com.azavea.rf.common
 import akka.http.scaladsl.server.{Route, ExceptionHandler, Directives}
 import akka.http.scaladsl.model.StatusCodes
 import com.typesafe.scalalogging.LazyLogging
-import spray.json.{SerializationException, DeserializationException}
+import java.security.InvalidParameterException
 import com.typesafe.scalalogging.LazyLogging
 import org.postgresql.util.PSQLException
 
@@ -22,14 +22,10 @@ trait UserErrorHandler extends Directives
       logger.error(RfStackTrace(e))
       sendError(e)
       complete(StatusCodes.ClientError(400)("Bad Request", e.getMessage))
-    case e: DeserializationException =>
+    case e: InvalidParameterException =>
       logger.error(RfStackTrace(e))
       sendError(e)
-      complete(StatusCodes.ClientError(400)("Decoding Error", e.getMessage))
-    case e: SerializationException =>
-      logger.error(RfStackTrace(e))
-      sendError(e)
-      complete(StatusCodes.ServerError(500)("Encoding Error", e.getMessage))
+      complete(StatusCodes.ClientError(400)("Bad Request", e.getMessage))
     case e: Exception =>
       sendError(e)
       complete(StatusCodes.ServerError(501)("An unknown error occurred", ""))

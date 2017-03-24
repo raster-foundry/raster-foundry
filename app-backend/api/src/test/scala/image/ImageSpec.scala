@@ -9,7 +9,6 @@ import akka.http.scaladsl.model.{HttpEntity, ContentTypes}
 import akka.http.scaladsl.server.Route
 import akka.actor.ActorSystem
 import concurrent.duration._
-import spray.json._
 
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.{DBSpec, Router, AuthUtils}
@@ -18,6 +17,10 @@ import com.azavea.rf.datamodel._
 import java.sql.Timestamp
 import java.time.Instant
 
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.syntax._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 class ImageSpec extends WordSpec
     with Matchers
@@ -37,7 +40,7 @@ class ImageSpec extends WordSpec
 
   val newSceneDatasource1 = Scene.Create(
     None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), landsatId,
-    Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any],
+    Map("instrument type" -> "satellite", "splines reticulated" -> "0").asJson,
     "test scene image spec 1", None, None, List.empty[String], List.empty[Image.Banded],
     List.empty[Thumbnail.Identified], None,
     SceneFilterFields(None,
@@ -100,7 +103,7 @@ class ImageSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          newSceneDatasource1.toJson.toString()
+          newSceneDatasource1.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         val sceneId = responseAs[Scene.WithRelated].id
@@ -108,7 +111,7 @@ class ImageSpec extends WordSpec
         val newImageDatasource1 = Image.Banded(
           publicOrgId, 1024, Visibility.Public, "test-image.png", "s3://public/s3/test-image.png",
           sceneId,
-          Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any],
+          Map("instrument type" -> "satellite", "splines reticulated" -> "0").asJson,
           20.2f, List.empty[String], List[Band.Create](Band.Create("name", 3, List(100, 250)))
         )
 
@@ -116,7 +119,7 @@ class ImageSpec extends WordSpec
           List(authHeader),
           HttpEntity(
             ContentTypes.`application/json`,
-            newImageDatasource1.toJson.toString()
+            newImageDatasource1.asJson.noSpaces
           )
         ) ~> baseRoutes ~> check {
           responseAs[Image.WithRelated]

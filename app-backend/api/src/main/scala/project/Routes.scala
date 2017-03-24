@@ -3,8 +3,6 @@ package com.azavea.rf.api.project
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling._
 import akka.http.scaladsl.model.StatusCodes
-import spray.json._
-import DefaultJsonProtocol._
 import com.lonelyplanet.akka.http.extensions.{PaginationDirectives, Order}
 
 import com.azavea.rf.common.{Authentication, UserErrorHandler}
@@ -15,33 +13,21 @@ import com.azavea.rf.datamodel._
 import com.azavea.rf.api.scene._
 import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
 
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.parser._
+import io.circe.syntax._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
+
 import java.util.UUID
 
 trait ProjectRoutes extends Authentication
     with QueryParametersCommon
-    with QueryParameterJsonFormat
     with SceneQueryParameterDirective
     with PaginationDirectives
     with UserErrorHandler {
 
   implicit def database: Database
-
-  implicit val rawIntFromEntityUnmarshaller: FromEntityUnmarshaller[UUID] =
-    PredefinedFromEntityUnmarshallers.stringUnmarshaller.map{ s =>
-      UUID.fromString(s)
-    }
-
-  /** This seems like it almost definitely shouldn't be necessary, but scala refuses
-    * to use the jsonFormats implicitly available from QueryParameterJsonFormat,
-    * and this implicit makes it stop complaining.
-    *
-    * Writing unmarshallers seems more manual and superfluous than writing json formats,
-    * but here we are.
-    */
-  implicit val combinedSceneQueryParamsUnmarshaller: FromEntityUnmarshaller[CombinedSceneQueryParams] =
-    PredefinedFromEntityUnmarshallers.stringUnmarshaller.map{ s =>
-      CombinedSceneQueryParamsReader.read(s.parseJson)
-    }
 
   val BULK_OPERATION_MAX_LIMIT = 100
 

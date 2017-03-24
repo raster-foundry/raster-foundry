@@ -3,7 +3,12 @@ package com.azavea.rf.api.healthcheck
 import com.azavea.rf.database.tables.Users
 import com.azavea.rf.database.Database
 import com.azavea.rf.api.AkkaSystem
+import com.azavea.rf.api.Codec._
 import scala.concurrent.ExecutionContext.Implicits.global
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.syntax._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 /**
   * Available healthcheck values
@@ -11,6 +16,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 object HealthCheckStatus extends Enumeration {
   type Status = Value
   val OK, Failing = Value
+
+  def fromString(str: String): Status = str match {
+    case "OK" => OK
+    case "Failing" => Failing
+  }
 }
 
 

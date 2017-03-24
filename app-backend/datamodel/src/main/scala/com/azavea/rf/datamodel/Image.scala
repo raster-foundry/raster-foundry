@@ -1,9 +1,9 @@
 package com.azavea.rf.datamodel
 
-import spray.json._
-import spray.json.DefaultJsonProtocol._
 import java.util.UUID
 import java.sql.Timestamp
+
+import io.circe.Json
 
 case class Image(
   id: UUID,
@@ -17,7 +17,7 @@ case class Image(
   filename: String,
   sourceUri: String,
   scene: UUID,
-  imageMetadata: Map[String, Any],
+  imageMetadata: Json,
   resolutionMeters: Float,
   metadataFiles: List[String]
 ) {
@@ -46,8 +46,6 @@ object Image {
 
   def tupled = (Image.apply _).tupled
 
-  implicit val defaultImageFormat = jsonFormat14(Image.apply _)
-
   case class Create(
     organizationId: UUID,
     rawDataBytes: Int,
@@ -55,7 +53,7 @@ object Image {
     filename: String,
     sourceUri: String,
     scene: UUID,
-    imageMetadata: Map[String, Any],
+    imageMetadata: Json,
     resolutionMeters: Float,
     metadataFiles: List[String]
   ) {
@@ -81,10 +79,6 @@ object Image {
     }
   }
 
-  object Create {
-    implicit val defaultImageCreateFormat = jsonFormat9(Create.apply _)
-  }
-
   /** Image class when posted with bands */
   case class Banded(
     organizationId: UUID,
@@ -93,7 +87,7 @@ object Image {
     filename: String,
     sourceUri: String,
     scene: UUID,
-    imageMetadata: Map[String, Any],
+    imageMetadata: Json,
     resolutionMeters: Float,
     metadataFiles: List[String],
     bands: Seq[Band.Create]
@@ -113,10 +107,6 @@ object Image {
     }
   }
 
-  object Banded {
-    implicit val defaultImageBandedFormat = jsonFormat10(Banded.apply _)
-  }
-
   case class WithRelated(
     id: UUID,
     createdAt: Timestamp,
@@ -129,7 +119,7 @@ object Image {
     filename: String,
     sourceUri: String,
     scene: UUID,
-    imageMetadata: Map[String, Any],
+    imageMetadata: Json,
     resolutionMeters: Float,
     metadataFiles: List[String],
     bands: Seq[Band]
@@ -154,8 +144,6 @@ object Image {
   }
 
   object WithRelated {
-    implicit val defaultImageWithRelatedFormat = jsonFormat15(WithRelated.apply _)
-
     /** Helper function to create Iterable[Image.WithRelated] from join
       *
       * @param records result of join query to return image with related information

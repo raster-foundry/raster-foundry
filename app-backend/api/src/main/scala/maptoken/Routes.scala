@@ -9,6 +9,9 @@ import com.azavea.rf.common.{Authentication, UserErrorHandler}
 import com.azavea.rf.database.tables.{Images, MapTokens}
 import com.azavea.rf.database.{ActionRunner, Database}
 import com.azavea.rf.datamodel._
+import io.circe._
+import io.circe.generic.auto._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 
 trait MapTokenRoutes extends Authentication

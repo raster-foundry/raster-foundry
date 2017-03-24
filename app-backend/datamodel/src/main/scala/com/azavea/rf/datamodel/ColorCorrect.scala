@@ -1,15 +1,13 @@
 package com.azavea.rf.datamodel
 
+import io.circe._
+import io.circe.syntax._
 import geotrellis.raster._
 import geotrellis.raster.equalization.HistogramEqualization
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.sigmoidal.SigmoidalContrast
-
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
-import spray.json._
-import DefaultJsonProtocol._
-
 
 object ColorCorrect {
   case class Params(
@@ -30,7 +28,6 @@ object ColorCorrect {
   }
 
   object Params {
-    implicit val defaultColorCorrectParamsFormat = jsonFormat13(Params.apply _)
 
     def colorCorrectParams: Directive1[Params] =
       parameters(

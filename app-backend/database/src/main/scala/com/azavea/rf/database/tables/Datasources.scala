@@ -1,16 +1,17 @@
 package com.azavea.rf.database.tables
 
-import java.sql.Timestamp
-import java.util.UUID
-
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.fields.{OrgFkVisibleFields, TimestampFields, UserFkFields, NameField}
 import com.azavea.rf.database.query.{DatasourceQueryParameters, ListQueryResult}
 import com.azavea.rf.datamodel._
+
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import com.typesafe.scalalogging.LazyLogging
 import slick.model.ForeignKeyAction
+import io.circe._
 
+import java.sql.Timestamp
+import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -38,9 +39,9 @@ class Datasources(_tableTag: Tag) extends Table[Datasource](_tableTag, "datasour
   val organizationId: Rep[java.util.UUID] = column[java.util.UUID]("organization_id")
   val name: Rep[String] = column[String]("name")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
-  val colorCorrection: Rep[Map[String, Any]] = column[Map[String, Any]]("color_correction", O.Length(2147483647,varying=false))
-  val composites: Rep[Map[String, Any]] = column[Map[String, Any]]("composites", O.Length(2147483647, varying=false))
-  val extras: Rep[Map[String, Any]] = column[Map[String, Any]]("extras", O.Length(2147483647,varying=false))
+  val colorCorrection: Rep[Json] = column[Json]("color_correction", O.Length(2147483647,varying=false))
+  val composites: Rep[Json] = column[Json]("composites", O.Length(2147483647, varying=false))
+  val extras: Rep[Json] = column[Json]("extras", O.Length(2147483647,varying=false))
 
   lazy val organizationsFk = foreignKey("datasources_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val createdByUserFK = foreignKey("datasources_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)

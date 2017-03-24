@@ -1,6 +1,5 @@
 package com.azavea.rf.datamodel
 
-import spray.json.DefaultJsonProtocol._
 import java.util.UUID
 import java.sql.Timestamp
 
@@ -27,8 +26,6 @@ object ToolCategory {
   def create = Create.apply _
 
   def tupled = (ToolCategory.apply _).tupled
-
-  implicit val defaultToolCategoryFormat = jsonFormat6(ToolCategory.apply _)
 
   case class Create(
       category: String
@@ -61,9 +58,5 @@ object ToolCategory {
         category
       )
     }
-  }
-
-  object Create {
-    implicit val defaultToolCategoryCreateFormat = jsonFormat1(Create.apply _)
   }
 }

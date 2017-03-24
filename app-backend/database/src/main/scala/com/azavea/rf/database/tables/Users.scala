@@ -85,7 +85,7 @@ object Users extends TableQuery(tag => new Users(tag)) with LazyLogging {
   }
 
   def createUser(user: User.Create)(implicit database: DB):  Future[User] = {
-    val userRow = user.toUser()
+    val userRow = user.toUser
 
     val insertAction = Users.forceInsert(userRow)
     val userInsert = (

@@ -14,6 +14,8 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import com.typesafe.scalalogging.LazyLogging
 
+import io.circe.Json
+
 class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
     with ImageFields
     with OrganizationFkFields
@@ -35,7 +37,7 @@ class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
   val filename: Rep[String] = column[String]("filename")
   val sourceuri: Rep[String] = column[String]("sourceuri")
   val scene: Rep[java.util.UUID] = column[java.util.UUID]("scene")
-  val imageMetadata: Rep[Map[String, Any]] = column[Map[String, Any]]("image_metadata", O.Length(2147483647,varying=false))
+  val imageMetadata: Rep[Json] = column[Json]("image_metadata", O.Length(2147483647,varying=false))
   val resolutionMeters: Rep[Float] = column[Float]("resolution_meters")
   val metadataFiles: Rep[List[String]] = column[List[String]]("metadata_files", O.Length(2147483647,varying=false), O.Default(List.empty))
 

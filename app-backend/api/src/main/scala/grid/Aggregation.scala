@@ -4,7 +4,6 @@ import geotrellis.proj4._
 import geotrellis.slick.Projected
 import geotrellis.vector.{Extent, Feature, Point, Polygon}
 import geotrellis.vector.io.json._
-import spray.json.DefaultJsonProtocol._
 
 // Code adapted from http://stackoverflow.com/questions/23457916/how-to-get-latitude-and-longitude-bounds-from-google-maps-x-y-and-zoom-parameter
 object Aggregation {
@@ -25,7 +24,6 @@ object Aggregation {
   }
 
   case class GridData(count: Int)
-  implicit val gridDataFormat = jsonFormat1(GridData)
 
   def latLngBboxFromString(bbox: String): Projected[Polygon] = try {
     val polygon = Extent.fromString(bbox).toPolygon()

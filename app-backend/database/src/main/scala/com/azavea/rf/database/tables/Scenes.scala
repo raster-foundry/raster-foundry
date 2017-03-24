@@ -21,6 +21,8 @@ import java.sql.Timestamp
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import io.circe.Json
+
 
 /** Table description of table scenes. Objects of this class serve as prototypes for rows in queries. */
 class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
@@ -39,7 +41,7 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
   val tags: Rep[List[String]] = column[List[String]]("tags", O.Length(2147483647,varying=false))
   val datasource: Rep[UUID] = column[UUID]("datasource")
-  val sceneMetadata: Rep[Map[String, Any]] = column[Map[String, Any]]("scene_metadata", O.Length(2147483647,varying=false))
+  val sceneMetadata: Rep[Json] = column[Json]("scene_metadata", O.Length(2147483647,varying=false))
   val cloudCover: Rep[Option[Float]] = column[Option[Float]]("cloud_cover", O.Default(None))
   val acquisitionDate: Rep[Option[java.sql.Timestamp]] = column[Option[java.sql.Timestamp]]("acquisition_date", O.Default(None))
   val thumbnailStatus: Rep[JobStatus] = column[JobStatus]("thumbnail_status")
@@ -73,7 +75,7 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
     Visibility,
     List[String],
     UUID,
-    Map[String, Any],
+    Json,
     String,
     Option[Projected[Geometry]],
     Option[Projected[Geometry]],
@@ -224,9 +226,10 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
 
     database.db.run {
       actions.transactionally
-    } map { case (_, _, imSeq: Seq[Tuple2[Image, Seq[Band]]]) =>
+    } map {
+      case (_, _, imSeq: Seq[Tuple2[Image, Seq[Band]]]) =>
         val imagesWithRelated = imSeq.map({case (im: Image, bs: Seq[Band]) => im.withRelatedFromComponents(bs)})
-      scene.withRelatedFromComponents(imagesWithRelated, thumbnails)
+        scene.withRelatedFromComponents(imagesWithRelated, thumbnails)
     }
   }
 

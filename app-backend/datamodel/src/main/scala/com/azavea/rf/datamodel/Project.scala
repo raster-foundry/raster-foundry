@@ -4,8 +4,6 @@ import geotrellis.vector.io.json.GeoJsonSupport
 import geotrellis.vector.{Geometry, Point}
 import geotrellis.slick.Projected
 
-import spray.json._
-import spray.json.DefaultJsonProtocol._
 import java.util.UUID
 import java.sql.Timestamp
 
@@ -32,8 +30,6 @@ object Project extends GeoJsonSupport {
   def tupled = (Project.apply _).tupled
 
   def create = Create.apply _
-
-  implicit val defaultProjectFormat = jsonFormat14(Project.apply _)
 
   def slugify(input: String): String = {
     import java.text.Normalizer
@@ -70,9 +66,5 @@ object Project extends GeoJsonSupport {
         tags
       )
     }
-  }
-
-  object Create {
-    implicit val defaultProjectFormat = jsonFormat6(Create.apply _)
   }
 }

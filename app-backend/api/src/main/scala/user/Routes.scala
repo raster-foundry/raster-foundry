@@ -11,6 +11,9 @@ import com.azavea.rf.common.{Authentication, UserErrorHandler}
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.Users
 import com.azavea.rf.datamodel._
+import io.circe._
+import io.circe.generic.auto._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 
 /**

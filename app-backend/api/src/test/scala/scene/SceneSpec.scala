@@ -9,7 +9,6 @@ import akka.http.scaladsl.model.{HttpEntity, ContentTypes}
 import akka.http.scaladsl.server.Route
 import akka.actor.ActorSystem
 import concurrent.duration._
-import spray.json._
 
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.{DBSpec, Router, AuthUtils}
@@ -20,6 +19,10 @@ import java.time.Instant
 import geotrellis.vector.{MultiPolygon, Polygon, Point, Geometry}
 import geotrellis.slick.Projected
 
+import io.circe._
+import io.circe.syntax._
+import io.circe.generic.auto._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 class SceneSpec extends WordSpec
     with Matchers
@@ -79,13 +82,15 @@ class SceneSpec extends WordSpec
         responseAs[PaginatedResponse[Scene.WithRelated]]
       }
     }
-    val mpoly = Some(Projected(
-      MultiPolygon(Polygon(Seq(Point(100,100), Point(110,100), Point(110,110),
-        Point(100,110), Point(100,100)))), 3857))
+    val mpoly = Some(
+      Projected(
+        MultiPolygon(Polygon(Seq(Point(125.6, 10.1), Point(125.7,10.1), Point(125.7,10.2),
+                                 Point(125.6,10.2), Point(125.6,10.1)))), 4326)
+    )
 
     val newSceneDatasource1 = Scene.Create(
       None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), landsatId,
-      Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any],
+      Map("instrument type" -> "satellite", "splines reticulated" -> "0").asJson,
       "test scene datasource 1",
       mpoly, mpoly, List.empty[String], List.empty[Image.Banded], List.empty[Thumbnail.Identified], None,
       SceneFilterFields(None,
@@ -97,7 +102,7 @@ class SceneSpec extends WordSpec
 
     val newSceneDatasource2 = Scene.Create(
       None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), sentinelId,
-      Map("instrument type" -> "satellite", "splines reticulated" -> 0):Map[String, Any],
+      Map("instrument type" -> "satellite", "splines reticulated" -> "0").asJson,
       "test scene datasource 2", None, None, List.empty[String], List.empty[Image.Banded],
       List.empty[Thumbnail.Identified], Some("an_s3_bucket_location"),
       SceneFilterFields(None, None, None, None),
@@ -108,7 +113,7 @@ class SceneSpec extends WordSpec
       Post("/api/scenes/").withEntity(
         HttpEntity(
           ContentTypes.`application/json`,
-          newSceneDatasource1.toJson.toString()
+          newSceneDatasource1.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         reject
@@ -120,20 +125,20 @@ class SceneSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          newSceneDatasource1.toJson.toString()
+          newSceneDatasource1.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         val sceneWithRelated = responseAs[Scene.WithRelated]
         val newSceneDatasource1Image = Image.Banded(
           publicOrgId, 0, Visibility.Public, "filename", "uri",
-          sceneWithRelated.id, Map():Map[String, Any], 20.2f, List.empty[String],
+          sceneWithRelated.id, ().asJson, 20.2f, List.empty[String],
           List[Band.Create](Band.Create("i'm a band", 4, List[Int](550, 600)))
         )
         Post("/api/images/").withHeadersAndEntity(
           List(authHeader),
           HttpEntity(
             ContentTypes.`application/json`,
-            newSceneDatasource1Image.toJson.toString()
+            newSceneDatasource1Image.asJson.noSpaces
           )
         ) ~> baseRoutes ~> check {
           responseAs[Image.WithRelated]
@@ -144,7 +149,7 @@ class SceneSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          newSceneDatasource2.toJson.toString()
+          newSceneDatasource2.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         responseAs[Scene.WithRelated]
@@ -156,7 +161,7 @@ class SceneSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          newSceneDatasource1.toJson.toString()
+          newSceneDatasource1.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         status shouldEqual StatusCodes.ClientError(409)("Duplicate Key", "")
@@ -265,19 +270,15 @@ class SceneSpec extends WordSpec
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]
         res.count shouldEqual 0
       }
-      Get("/api/scenes/?bbox=0,0,0.001,0.001").withHeaders(
+      /** fully contains the scene */
+      Get("/api/scenes/?bbox=100,10,130,20").withHeaders(
         List(authHeader)
       ) ~> baseRoutes ~> check {
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]
         res.count shouldEqual 1
       }
-      Get("/api/scenes/?bbox=0,0,0.00001,0.00001;0,0,0.001,0.001").withHeaders(
-        List(authHeader)
-      ) ~> baseRoutes ~> check {
-        val res = responseAs[PaginatedResponse[Scene.WithRelated]]
-        res.count shouldEqual 1
-      }
-      Get("/api/scenes/?bbox=0,0,0.001,0.001;1,1,1.001,1.001").withHeaders(
+      /** partially contains the scene, with another box that doesn't at all */
+      Get("/api/scenes/?bbox=100,10,125.6,10.1;0,0,0.001,0.001").withHeaders(
         List(authHeader)
       ) ~> baseRoutes ~> check {
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]
@@ -286,7 +287,7 @@ class SceneSpec extends WordSpec
     }
 
     "filter scenes by point" in {
-      Get("/api/scenes/?point=0.0009,0.0009").withHeaders(
+      Get("/api/scenes/?point=125.65,10.15").withHeaders(
         List(authHeader)
       ) ~> baseRoutes ~> check {
         val res = responseAs[PaginatedResponse[Scene.WithRelated]]

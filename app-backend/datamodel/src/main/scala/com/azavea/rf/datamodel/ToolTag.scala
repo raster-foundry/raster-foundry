@@ -1,6 +1,5 @@
 package com.azavea.rf.datamodel
 
-import spray.json.DefaultJsonProtocol._
 import java.util.UUID
 import java.sql.Timestamp
 
@@ -30,8 +29,6 @@ object ToolTag {
 
   def tupled = (ToolTag.apply _).tupled
 
-  implicit val defaultToolTagFormat = jsonFormat7(ToolTag.apply _)
-
   /** Case class to handle creating a new tool tag
     *
     * @param organizationId UUID organization to create tag for
@@ -56,7 +53,5 @@ object ToolTag {
     }
   }
 
-  object Create {
-    implicit val defaultToolTagCreateFormat = jsonFormat2(Create.apply _)
-  }
+  object Create
 }
