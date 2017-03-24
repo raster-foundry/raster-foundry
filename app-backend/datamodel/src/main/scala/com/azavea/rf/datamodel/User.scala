@@ -23,7 +23,17 @@ case class User(
   role: UserRole,
   createdAt: Timestamp,
   modifiedAt: Timestamp
-)
+) {
+  private val rootOrganizationId = UUID.fromString("9e2bef18-3f46-426b-a5bd-9913ee1ff840")
+
+  def isInRootOrganization: Boolean = {
+    this.organizationId == rootOrganizationId
+  }
+
+  def isInRootOrSameOrganizationAs(target: { def organizationId: UUID }): Boolean = {
+    this.isInRootOrganization || this.organizationId == target.organizationId
+  }
+}
 
 object User {
 
