@@ -83,8 +83,10 @@ trait ProjectRoutes extends Authentication
 
   def createProject: Route = authenticate { user =>
     entity(as[Project.Create]) { newProject =>
-      onSuccess(Projects.insertProject(newProject.toProject(user.id))) { project =>
-        complete(StatusCodes.Created, project)
+      authorize(user.isInRootOrSameOrganizationAs(newProject)) {
+        onSuccess(Projects.insertProject(newProject.toProject(user.id))) { project =>
+          complete(StatusCodes.Created, project)
+        }
       }
     }
   }
@@ -99,11 +101,13 @@ trait ProjectRoutes extends Authentication
 
   def updateProject(projectId: UUID): Route = authenticate { user =>
     entity(as[Project]) { updatedProject =>
-      onSuccess(Projects.updateProject(updatedProject, projectId, user)) {
-        case 1 => complete(StatusCodes.NoContent)
-        case count => throw new IllegalStateException(
-          s"Error updating project: update result expected to be 1, was $count"
-        )
+      authorize(user.isInRootOrSameOrganizationAs(updatedProject)) {
+        onSuccess(Projects.updateProject(updatedProject, projectId, user)) {
+          case 1 => complete(StatusCodes.NoContent)
+          case count => throw new IllegalStateException(
+            s"Error updating project: update result expected to be 1, was $count"
+          )
+        }
       }
     }
   }

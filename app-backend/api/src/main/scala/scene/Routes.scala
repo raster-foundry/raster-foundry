@@ -50,8 +50,10 @@ trait SceneRoutes extends Authentication
 
   def createScene: Route = authenticate { user =>
     entity(as[Scene.Create]) { newScene =>
-      onSuccess(Scenes.insertScene(newScene, user)) { scene =>
-        complete((StatusCodes.Created, scene))
+      authorize(user.isInRootOrSameOrganizationAs(newScene)) {
+        onSuccess(Scenes.insertScene(newScene, user)) { scene =>
+          complete((StatusCodes.Created, scene))
+        }
       }
     }
   }
@@ -66,16 +68,18 @@ trait SceneRoutes extends Authentication
 
   def updateScene(sceneId: UUID): Route = authenticate { user =>
     entity(as[Scene]) { updatedScene =>
-      onComplete(Scenes.updateScene(updatedScene, sceneId, user)) {
-        case Success(result) => {
-          result match {
-            case 1 => complete(StatusCodes.NoContent)
-            case count => throw new IllegalStateException(
-              s"Error updating scene: update result expected to be 1, was $count"
-            )
+      authorize(user.isInRootOrSameOrganizationAs(updatedScene)) {
+        onComplete(Scenes.updateScene(updatedScene, sceneId, user)) {
+          case Success(result) => {
+            result match {
+              case 1 => complete(StatusCodes.NoContent)
+              case count => throw new IllegalStateException(
+                s"Error updating scene: update result expected to be 1, was $count"
+              )
+            }
           }
+          case Failure(e) => throw e
         }
-        case Failure(e) => throw e
       }
     }
   }

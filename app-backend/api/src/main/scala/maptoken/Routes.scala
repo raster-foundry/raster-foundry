@@ -49,8 +49,10 @@ trait MapTokenRoutes extends Authentication
 
   def createMapToken: Route = authenticate { user =>
     entity(as[MapToken.Create]) { newMapToken =>
-      onSuccess(write[MapToken](MapTokens.insertMapToken(newMapToken, user))) { mapToken =>
-        complete(mapToken)
+      authorize(user.isInRootOrSameOrganizationAs(newMapToken)) {
+        onSuccess(write[MapToken](MapTokens.insertMapToken(newMapToken, user))) { mapToken =>
+          complete(mapToken)
+        }
       }
     }
   }
@@ -67,8 +69,10 @@ trait MapTokenRoutes extends Authentication
 
   def updateMapToken(mapTokenId: UUID): Route = authenticate { user =>
     entity(as[MapToken]) { updatedMapToken =>
-      onSuccess(update(MapTokens.updateMapToken(updatedMapToken, mapTokenId, user))) { count =>
-        complete(StatusCodes.NoContent)
+      authorize(user.isInRootOrSameOrganizationAs(updatedMapToken)) {
+        onSuccess(update(MapTokens.updateMapToken(updatedMapToken, mapTokenId, user))) { count =>
+          complete(StatusCodes.NoContent)
+        }
       }
     }
   }

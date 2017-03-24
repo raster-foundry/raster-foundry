@@ -64,16 +64,20 @@ trait UploadRoutes extends Authentication
 
   def createUpload: Route = authenticate { user =>
     entity(as[Upload.Create]) { newUpload =>
-      onSuccess(write[Upload](Uploads.insertUpload(newUpload, user))) { upload =>
-        complete(upload)
+      authorize(user.isInRootOrSameOrganizationAs(newUpload)) {
+        onSuccess(write[Upload](Uploads.insertUpload(newUpload, user))) { upload =>
+          complete(upload)
+        }
       }
     }
   }
 
   def updateUpload(uploadId: UUID): Route = authenticate { user =>
     entity(as[Upload]) { updateUpload =>
-      onSuccess(update(Uploads.updateUpload(updateUpload, uploadId, user))) { count =>
-        complete(StatusCodes.NoContent)
+      authorize(user.isInRootOrSameOrganizationAs(updateUpload)) {
+        onSuccess(update(Uploads.updateUpload(updateUpload, uploadId, user))) { count =>
+          complete(StatusCodes.NoContent)
+        }
       }
     }
   }
