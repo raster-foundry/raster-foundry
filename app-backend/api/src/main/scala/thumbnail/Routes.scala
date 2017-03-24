@@ -65,8 +65,10 @@ trait ThumbnailRoutes extends Authentication
 
   def createThumbnail: Route = authenticate { user =>
     entity(as[Thumbnail.Create]) { newThumbnail =>
-      onSuccess(Thumbnails.insertThumbnail(newThumbnail.toThumbnail)) { thumbnail =>
-        complete(StatusCodes.Created, thumbnail)
+      authorize(user.isInRootOrSameOrganizationAs(newThumbnail)) {
+        onSuccess(Thumbnails.insertThumbnail(newThumbnail.toThumbnail)) { thumbnail =>
+          complete(StatusCodes.Created, thumbnail)
+        }
       }
     }
   }
@@ -97,12 +99,14 @@ trait ThumbnailRoutes extends Authentication
 
   def updateThumbnail(thumbnailId: UUID): Route = authenticate { user =>
     entity(as[Thumbnail]) { updatedThumbnail =>
-      onSuccess(Thumbnails.updateThumbnail(updatedThumbnail, thumbnailId)) {
-        case 1 => complete(StatusCodes.NoContent)
-        case 0 => complete(StatusCodes.NotFound)
-        case count => throw new IllegalStateException(
-          s"Error updating thumbnail: update result expected to be 1, was $count"
-        )
+      authorize(user.isInRootOrSameOrganizationAs(updatedThumbnail)) {
+        onSuccess(Thumbnails.updateThumbnail(updatedThumbnail, thumbnailId)) {
+          case 1 => complete(StatusCodes.NoContent)
+          case 0 => complete(StatusCodes.NotFound)
+          case count => throw new IllegalStateException(
+            s"Error updating thumbnail: update result expected to be 1, was $count"
+          )
+        }
       }
     }
   }

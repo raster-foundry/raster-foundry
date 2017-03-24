@@ -43,8 +43,10 @@ trait ToolTagRoutes extends Authentication with PaginationDirectives with UserEr
 
   def createToolTag: Route = authenticate { user =>
     entity(as[ToolTag.Create]) { newToolTag =>
-      onSuccess(ToolTags.insertToolTag(newToolTag, user.id)) { toolTag =>
-        complete(StatusCodes.Created, toolTag)
+      authorize(user.isInRootOrSameOrganizationAs(newToolTag)) {
+        onSuccess(ToolTags.insertToolTag(newToolTag, user.id)) { toolTag =>
+          complete(StatusCodes.Created, toolTag)
+        }
       }
     }
   }
@@ -57,16 +59,18 @@ trait ToolTagRoutes extends Authentication with PaginationDirectives with UserEr
 
   def updateToolTag(toolTagId: UUID): Route = authenticate { user =>
     entity(as[ToolTag]) { updatedToolTag =>
-      onComplete(ToolTags.updateToolTag(updatedToolTag, toolTagId, user)) {
-        case Success(result) => {
-          result match {
-            case 1 => complete(StatusCodes.NoContent)
-            case count => throw new IllegalStateException(
-              s"Error updating tool tag: update result expected to be 1, was $count"
-            )
+      authorize(user.isInRootOrSameOrganizationAs(updatedToolTag)) {
+        onComplete(ToolTags.updateToolTag(updatedToolTag, toolTagId, user)) {
+          case Success(result) => {
+            result match {
+              case 1 => complete(StatusCodes.NoContent)
+              case count => throw new IllegalStateException(
+                s"Error updating tool tag: update result expected to be 1, was $count"
+              )
+            }
           }
+          case Failure(e) => throw e
         }
-        case Failure(e) => throw e
       }
     }
   }

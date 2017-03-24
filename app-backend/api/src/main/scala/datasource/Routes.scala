@@ -60,16 +60,20 @@ trait DatasourceRoutes extends Authentication
 
   def createDatasource: Route = authenticate { user =>
     entity(as[Datasource.Create]) { newDatasource =>
-      onSuccess(write[Datasource](Datasources.insertDatasource(newDatasource, user))) { datasource =>
-        complete(datasource)
+      authorize(user.isInRootOrSameOrganizationAs(newDatasource)) {
+        onSuccess(write[Datasource](Datasources.insertDatasource(newDatasource, user))) { datasource =>
+          complete(datasource)
+        }
       }
     }
   }
 
   def updateDatasource(datasourceId: UUID): Route = authenticate { user =>
     entity(as[Datasource]) { updateDatasource =>
-      onSuccess(update(Datasources.updateDatasource(updateDatasource, datasourceId, user))) { count =>
-        complete(StatusCodes.NoContent)
+      authorize(user.isInRootOrSameOrganizationAs(updateDatasource)) {
+        onSuccess(update(Datasources.updateDatasource(updateDatasource, datasourceId, user))) { count =>
+          complete(StatusCodes.NoContent)
+        }
       }
     }
   }

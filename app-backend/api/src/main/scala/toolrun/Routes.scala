@@ -47,8 +47,10 @@ trait ToolRunRoutes extends Authentication
 
   def createToolRun: Route = authenticate { user =>
     entity(as[ToolRun.Create]) { newRun =>
-      onSuccess(write(ToolRuns.insertToolRun(newRun, user.id))) { toolRun =>
-        complete(StatusCodes.Created, toolRun)
+      authorize(user.isInRootOrSameOrganizationAs(newRun)) {
+        onSuccess(write(ToolRuns.insertToolRun(newRun, user.id))) { toolRun =>
+          complete(StatusCodes.Created, toolRun)
+        }
       }
     }
   }
@@ -61,16 +63,18 @@ trait ToolRunRoutes extends Authentication
 
   def updateToolRun(runId: UUID): Route = authenticate { user =>
     entity(as[ToolRun]) { updatedRun =>
-      onComplete(update(ToolRuns.updateToolRun(updatedRun, runId, user))) {
-        case Success(result) => {
-          result match {
-            case 1 => complete(StatusCodes.NoContent)
-            case count => throw new IllegalStateException(
-              s"Error updating tool run: update result expected to be 1, was $count"
-            )
+      authorize(user.isInRootOrSameOrganizationAs(updatedRun)) {
+        onComplete(update(ToolRuns.updateToolRun(updatedRun, runId, user))) {
+          case Success(result) => {
+            result match {
+              case 1 => complete(StatusCodes.NoContent)
+              case count => throw new IllegalStateException(
+                s"Error updating tool run: update result expected to be 1, was $count"
+              )
+            }
           }
+          case Failure(e) => throw e
         }
-        case Failure(e) => throw e
       }
     }
   }
