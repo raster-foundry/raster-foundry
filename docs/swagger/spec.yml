@@ -1594,31 +1594,32 @@ definitions:
         type: string
         description: uuid for organization
   MapToken:
-    type: object
     allOf:
-      - $ref: '#/definitions/BaseModel'
-      - $ref: '#/definitions/TimeModelMixin'
-      - $ref: '#/definitions/UserTrackingMixin'
-    properties:
-      name:
-        type: string
-        description: Human friendly label for map token
-      project:
-        type: object
-        properties:
-          id:
-            type: string
-            format: UUID
-          name:
-            type: string
+    - $ref: '#/definitions/BaseModel'
+    - $ref: '#/definitions/TimeModelMixin'
+    - $ref: '#/definitions/UserTrackingMixin'
+    - type: object
+      properties:
+        name:
+          type: string
+          description: Human friendly label for map token
+        project:
+          type: object
+          properties:
+            id:
+              type: string
+              format: UUID
+            name:
+              type: string
   MapTokenPaginated:
     allOf:
-      - $ref: '#/definitions/PaginatedResponse'
-    properties:
-      results:
-        type: array
-        items:
-          $ref: '#/definitions/MapToken'
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/MapToken'
   MosaicDefinition:
     type: object
     properties:
@@ -1694,28 +1695,28 @@ definitions:
         format: uuid
         description: UUID of user who most recently modified the object
   User:
-    type: object
     allOf:
-      - $ref: '#/definitions/TimeModelMixin'
-    required:
-      - id
-      - organizationId
-      - role
-    properties:
-      id:
-        type: string
-        description: User ID for Raster Foundry
-      organizationId:
-        type: string
-        format: uuid
-        description: UUID of organization to which user belongs
-      role:
-        type: string
-        description: User role in organization
-        enum:
-          - USER
-          - VIEWER
-          - OWNER
+    - $ref: '#/definitions/TimeModelMixin'
+    - type: object
+      required:
+        - id
+        - organizationId
+        - role
+      properties:
+        id:
+          type: string
+          description: User ID for Raster Foundry
+        organizationId:
+          type: string
+          format: uuid
+          description: UUID of organization to which user belongs
+        role:
+          type: string
+          description: User role in organization
+          enum:
+            - USER
+            - VIEWER
+            - OWNER
   UserWithOAuth:
     type: object
     properties:
@@ -1838,43 +1839,46 @@ definitions:
         readOnly: true
   UserPaginated:
     allOf:
-      - $ref: '#/definitions/PaginatedResponse'
-    properties:
-      results:
-        type: array
-        items:
-          $ref: '#/definitions/User'
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/User'
   ScenePaginated:
     allOf:
-      - $ref: '#/definitions/PaginatedResponse'
-    properties:
-      results:
-        type: array
-        items:
-          $ref: '#/definitions/Scene'
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/Scene'
 
   OrganizationPaginated:
     allOf:
-      - $ref: '#/definitions/PaginatedResponse'
-    properties:
-      results:
-        type: array
-        items:
-          $ref: '#/definitions/Organization'
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/Organization'
   Organization:
-    type: object
     allOf:
-      - $ref: '#/definitions/TimeModelMixin'
-    properties:
-      id:
-        type: string
-        description: Organization
-      name:
-        type: string
-        description: Display name for organization
-    required:
-      - name
-      - id
+    - $ref: '#/definitions/TimeModelMixin'
+    - type: object
+      properties:
+        id:
+          type: string
+          description: Organization
+        name:
+          type: string
+          description: Display name for organization
+      required:
+        - name
+        - id
   Scene:
     allOf:
       - $ref: '#/definitions/BaseModel'
@@ -1998,107 +2002,109 @@ definitions:
 
   Project:
     allOf:
-      - $ref: '#/definitions/BaseModel'
-      - $ref: '#/definitions/UserTrackingMixin'
-      - type: object
-        properties:
-          name:
-            type: string
-            description: The display name of the project
-          slugLabel:
-            type: string
-            description: URL-safe version of name
-            readOnly: true
-          description:
-            type: string
-            description: Long-form description of the project
-          visibility:
-            type: string
-            description: Level of restriction on viewing
-            enum:
-              - PUBLIC
-              - ORGANIZATION
-              - PRIVATE
-          tileVisibility:
-            type: string
-            description: Level of restriction on viewing
-            enum:
-              - PUBLIC
-              - ORGANIZATION
-              - PRIVATE
-          tags:
-            type: array
-            items:
-              - type: string
-          extent:
-            type: object
-            description: GeoJSON Geometry of project extent
-          manualOrder:
-            type: boolean
-            description: Is true if project scenes are manually ordered
+    - $ref: '#/definitions/BaseModel'
+    - $ref: '#/definitions/UserTrackingMixin'
+    - type: object
+      properties:
+        name:
+          type: string
+          description: The display name of the project
+        slugLabel:
+          type: string
+          description: URL-safe version of name
+          readOnly: true
+        description:
+          type: string
+          description: Long-form description of the project
+        visibility:
+          type: string
+          description: Level of restriction on viewing
+          enum:
+            - PUBLIC
+            - ORGANIZATION
+            - PRIVATE
+        tileVisibility:
+          type: string
+          description: Level of restriction on viewing
+          enum:
+            - PUBLIC
+            - ORGANIZATION
+            - PRIVATE
+        tags:
+          type: array
+          items:
+            - type: string
+        extent:
+          type: object
+          description: GeoJSON Geometry of project extent
+        manualOrder:
+          type: boolean
+          description: Is true if project scenes are manually ordered
   Image:
     allOf:
-      - $ref: '#/definitions/BaseModel'
-      - $ref: '#/definitions/UserTrackingMixin'
-      - type: object
-        properties:
-          visibility:
+    - $ref: '#/definitions/BaseModel'
+    - $ref: '#/definitions/UserTrackingMixin'
+    - type: object
+      properties:
+        visibility:
+          type: string
+          description: Level of restriction on viewing
+          enum:
+            - PUBLIC
+            - ORGANIZATION
+            - PRIVATE
+        filename:
+          type: string
+          description: Name of the image file
+        resolutionMeters:
+          type: number
+          description: Size of pixel in meters
+        sourceUri:
+          type: string
+          description: URI to original source. This should include a protocol-like prefix to identify where it is located http://, s3://, etc.
+        rawDataBytes:
+          type: integer
+          description: Size of original uploaded imagery in bytes
+        bands:
+          type: array
+          description: list of band types for image; a single band denotes a single band image, multiple bands should be listed in order (e.g if it is an RGB tiff then bands should be [red, green blue])
+          items:
+            $ref: '#/definitions/Band'
+        scene:
+          type: string
+          format: uuid
+          description: Scene that image is associated with
+        image_metadata:
+          type: object
+          description: Metadata about this image
+        metadataFiles:
+          type: array
+          items:
             type: string
-            description: Level of restriction on viewing
-            enum:
-              - PUBLIC
-              - ORGANIZATION
-              - PRIVATE
-          filename:
-            type: string
-            description: Name of the image file
-          resolutionMeters:
-            type: number
-            description: Size of pixel in meters
-          sourceUri:
-            type: string
-            description: URI to original source. This should include a protocol-like prefix to identify where it is located http://, s3://, etc.
-          rawDataBytes:
-            type: integer
-            description: Size of original uploaded imagery in bytes
-          bands:
-            type: array
-            description: list of band types for image; a single band denotes a single band image, multiple bands should be listed in order (e.g if it is an RGB tiff then bands should be [red, green blue])
-            items:
-              $ref: '#/definitions/Band'
-          scene:
-            type: string
-            format: uuid
-            description: Scene that image is associated with
-          image_metadata:
-            type: object
-            description: Metadata about this image
-          metadataFiles:
-            type: array
-            items:
-              type: string
-            description: |
-              Metadata files that should be present for processing all
-              images in a scene (e.g. relevant .mtl files or .xml)
-        required:
-          - filename
-          - sourceUri
+          description: |
+            Metadata files that should be present for processing all
+            images in a scene (e.g. relevant .mtl files or .xml)
+      required:
+        - filename
+        - sourceUri
   ProjectPaginated:
     allOf:
-      - $ref: '#/definitions/PaginatedResponse'
-    properties:
-      results:
-        type: array
-        items:
-          $ref: '#/definitions/Project'
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/Project'
   ImagePaginated:
     allOf:
-      - $ref: '#/definitions/PaginatedResponse'
-    properties:
-      results:
-        type: array
-        items:
-          $ref: '#/definitions/Image'
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/Image'
   Band:
     type: object
     properties:
@@ -2117,32 +2123,32 @@ definitions:
           type: integer
   Thumbnail:
     allOf:
-      - $ref: '#/definitions/BaseModel'
-      - type: object
-        properties:
-          widthPx:
-            type: integer
-            format: int32
-            description: The width of the thumbnail, in pixels
-          sceneId:
-            type: string
-            format: uuid
-            description: Scene that image is associated with
-          heightPx:
-            type: integer
-            format: int32
-            description: The height of the thumbnail, in pixels
-          thumbnailSize:
-            type: string
-            description: Summary of size
-            enum:
-              - SMALL
-              - LARGE
-              - SQUARE
-          url:
-            type: string
-            format: uri
-            description: A client-accessible URL pointing to the image file
+    - $ref: '#/definitions/BaseModel'
+    - type: object
+      properties:
+        widthPx:
+          type: integer
+          format: int32
+          description: The width of the thumbnail, in pixels
+        sceneId:
+          type: string
+          format: uuid
+          description: Scene that image is associated with
+        heightPx:
+          type: integer
+          format: int32
+          description: The height of the thumbnail, in pixels
+        thumbnailSize:
+          type: string
+          description: Summary of size
+          enum:
+            - SMALL
+            - LARGE
+            - SQUARE
+        url:
+          type: string
+          format: uri
+          description: A client-accessible URL pointing to the image file
   ThumbnailPaginated:
     allOf:
     - $ref: '#/definitions/PaginatedResponse'
@@ -2230,48 +2236,48 @@ definitions:
             $ref: '#/definitions/ToolTag'
   ToolCategory:
     allOf:
-      - $ref: '#/definitions/BaseModel'
-      - type: object
-        properties:
-          category:
-            type: string
-            description: User displayed label for category
-          slugLabel:
-            type: string
-            description: Slug label for use in urls
+    - $ref: '#/definitions/BaseModel'
+    - type: object
+      properties:
+        category:
+          type: string
+          description: User displayed label for category
+        slugLabel:
+          type: string
+          description: Slug label for use in urls
   ToolCategoryPaginated:
-      allOf:
-      - $ref: '#/definitions/PaginatedResponse'
-      - type: object
-        properties:
-          results:
-            type: array
-            items:
-              $ref: '#/definitions/ToolCategory'
+    allOf:
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/ToolCategory'
   ToolRun:
     allOf:
-      - $ref: '#/definitions/BaseModel'
-      - $ref: '#/definitions/UserTrackingMixin'
-      - type: object
-        properties:
-          execution_parameters:
-            type: object
-            description: Parameters for running the tool
-          project:
-            type: string
-            format: uuid
-            description: Project with which this run is associated
-          tool:
-            type: string
-            format: uuid
-            description: Tool being run
-          visibility:
-            type: string
-            description: Level of restriction on viewing
-            enum:
-              - PUBLIC
-              - ORGANIZATION
-              - PRIVATE
+    - $ref: '#/definitions/BaseModel'
+    - $ref: '#/definitions/UserTrackingMixin'
+    - type: object
+      properties:
+        execution_parameters:
+          type: object
+          description: Parameters for running the tool
+        project:
+          type: string
+          format: uuid
+          description: Project with which this run is associated
+        tool:
+          type: string
+          format: uuid
+          description: Tool being run
+        visibility:
+          type: string
+          description: Level of restriction on viewing
+          enum:
+            - PUBLIC
+            - ORGANIZATION
+            - PRIVATE
 
   ToolRunPaginated:
     allOf:
