@@ -1,8 +1,9 @@
 export default class ImportModalController {
-    constructor($state, projectService) {
+    constructor($state, projectService, Upload) {
         'ngInject';
         this.$state = $state;
         this.projectService = projectService;
+        this.Upload = Upload;
     }
 
     $onInit() {
@@ -14,6 +15,11 @@ export default class ImportModalController {
         this.importType = 'local';
         this.currentStep = this.steps[0];
         this.allowNext = true;
+        this.selectedFiles = [];
+    }
+
+    shouldShowFileList() {
+        return this.selectedFiles.length;
     }
 
     projectAttributeIs(attr, value) {
@@ -125,5 +131,27 @@ export default class ImportModalController {
 
     closeWithData(data) {
         this.close({$value: data});
+    }
+
+    filesSelected(files, file, newFiles, duplicateFiles, invalidFiles, e) {
+        console.log(files);
+        this.selectedFiles = files;
+    }
+
+    getTotalFileSize() {
+        if (this.selectedFiles.length) {
+            return this.selectedFiles.reduce((acc, f) => {
+                return acc + f.size;
+            }, 0);
+        }
+        return 0;
+    }
+
+    removeFileAtIndex(index) {
+        this.selectedFiles.splice(index, 1);
+    }
+
+    removeAllFiles() {
+        this.selectedFiles = [];
     }
 }

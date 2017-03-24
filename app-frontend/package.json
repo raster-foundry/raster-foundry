@@ -28,6 +28,7 @@
     "angular-clipboard": "^1.5.0",
     "angular-cookies": "~1.5.8",
     "angular-deferred-bootstrap": "~0.1.9",
+    "angular-filter": "^0.5.15",
     "angular-jwt": "0.0.9",
     "angular-load": "^0.4.1",
     "angular-lock": "~1.0.5",

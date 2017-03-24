@@ -31,6 +31,7 @@ import 'jointjs';
 import 'angular-load';
 import 'ng-rollbar';
 import 'ng-file-upload';
+import 'angular-filter';
 
 // local scripts
 // import '../assets/js/...';

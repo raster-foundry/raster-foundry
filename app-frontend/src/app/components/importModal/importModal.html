@@ -14,6 +14,9 @@
     <div class="content">
       <h3 class="no-margin">Import your Scenes</h3>
       <p>Select the source you'd like to import your imagery from.</p>
+      <p ng-if="$ctrl.resolve.project">Any scenes created from this import will automatically
+        be added to the <strong>{{$ctrl.resolve.project.name}}</strong> project.
+      </p>
       <div class="box-select-row">
           <rf-box-select-item
           class="small"
@@ -42,30 +45,83 @@
         </rf-box-select-item>
       </div>
     </div>
-
+  </div>
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('LOCAL_UPLOAD')"
+    ngf-multiple=true
+    ngf-pattern="'*'"
+    ngf-drop-available=true
+    ng-model="$ctrl.selectedFiles"
+    ngf-keep="'distinct'"
+    ngf-drop>
     <!--Local file import -->
-    <div class="content" ng-if="$ctrl.currentStepIs('LOCAL_UPLOAD')">
+    <div class="content">
       <h3 class="no-margin">Local File Import</h3>
-      <p>Select imagery files from your computer and we'll import them into Raster Foundry Scenes.</p>
-      <button class="btn btn-primary">Select Files</button>
+      <ng-container ng-if="!$ctrl.shouldShowFileList()">
+        <p>Select imagery files from your computer and we'll import them into Raster Foundry Scenes. Raster Foundry currently allows for uploading GeoTIFF files only.</p>
+        <div class="text-center">
+          <button class="btn btn-primary"
+                  ngf-multiple=true
+                  ng-model="$ctrl.selectedFiles"
+                  ngf-pattern="'*.tif'"
+                  ngf-keep="'distinct'"
+                  ngf-select
+          >
+            Select Files
+          </button>
+        </div>
+      </ng-container>
+      <ng-container ng-show="$ctrl.shouldShowFileList()">
+        <p><strong>{{$ctrl.selectedFiles.length}}</strong> file(s) have been selected totalling <strong>{{$ctrl.getTotalFileSize() | byteFmt: 2}}</strong></p>
+        <div class="row align-right">
+          <button class="btn"
+                  ng-click="$ctrl.removeAllFiles()"
+          >
+            Remove All Files
+          </button>
+          &nbsp;
+          <button class="btn btn-primary"
+                  ngf-multiple=true
+                  ng-model="$ctrl.selectedFiles"
+                  ngf-pattern="'*.tif'"
+                  ngf-keep="'distinct'"
+          >
+            Add More Files
+          </button>
+        </div>
+        <div class="list-group">
+          <div class="list-group-item" ng-repeat="file in $ctrl.selectedFiles">
+            <div class="list-group-overflow">
+              <span title="{{$ctrl.scene.name}}">
+                <strong class="color-dark">{{file.name}}</strong>
+              </span>
+              <br>
+              <span>{{file.size | byteFmt: 2}}</span>
+            </div>
+            <div class="list-group-right">
+              <button class="btn btn-square btn-secondary" ng-click="$ctrl.removeFileAtIndex($index)" >
+                <i class="icon-cross"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </ng-container>
     </div>
-
+  </div>
     <!--Body for IMPORT_SUCCESS-->
-    <div class="modal-body" ng-if="$ctrl.currentStepIs('IMPORT_SUCCESS')">
-      <div class="content">
-        <h3 class="no-margin">Success!</h3>
-        <p>
-          Your scenes are importing into Raster Foundry now.
-          This may take some time and we will notify you when the process is complete.
-          In the meantime checkout your Notification Center for up to date information on all of your projects.
-        </p>
-      </div>
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('IMPORT_SUCCESS')">
+    <div class="content">
+      <h3 class="no-margin">Success!</h3>
+      <p>
+        Your scenes are importing into Raster Foundry now.
+        This may take some time and we will notify you when the process is complete.
+        In the meantime checkout your Notification Center for up to date information on all of your projects.
+      </p>
     </div>
   </div>
 
   <!--Default Footer-->
   <div
-    ng-if="$ctrl.currentStepIsNot(['SUCCESS', 'ADD_SCENES', 'IMPORT_SUCCESS'])"
+    ng-if="$ctrl.currentStepIsNot(['IMPORT_SUCCESS'])"
     class="modal-footer"
   >
     <button type="button" class="btn pull-left"
