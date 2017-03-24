@@ -2,9 +2,6 @@ package com.azavea.rf.api
 
 import com.azavea.rf.datamodel._
 
-import io.circe._
-import cats.syntax.either._
-
 import java.sql.Timestamp
 import java.time.Instant
 

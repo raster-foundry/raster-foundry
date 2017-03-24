@@ -1,8 +1,5 @@
 package com.azavea.rf.datamodel
 
-import io.circe._
-import cats.syntax.either._
-
 import java.sql.Timestamp
 import java.util.UUID
 
