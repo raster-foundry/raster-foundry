@@ -31,4 +31,5 @@ object Version {
   val chill              = "0.9.2"
   val circe              = "0.7.0"
   val akkaCirceJson      = "1.12.0"
+  val cats               = "0.9.0"
 }

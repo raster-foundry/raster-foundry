@@ -17,7 +17,8 @@ import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTyp
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import spray.json._
 import com.typesafe.scalalogging.LazyLogging
-
+import cats.data._
+import cats.implicits._
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
@@ -61,14 +62,14 @@ object SceneRoutes extends LazyLogging {
   def layerTile(layer: UUID) =
     pathPrefix(IntNumber / IntNumber / IntNumber).tmap[Future[Option[MultibandTile]]] {
       case (zoom: Int, x: Int, y: Int) =>
-        LayerCache.maybeTile(layer, zoom, SpatialKey(x, y))
+        LayerCache.layerTile(layer, zoom, SpatialKey(x, y)).value
     }
 
   def layerTileAndHistogram(id: UUID) =
-    pathPrefix(IntNumber / IntNumber / IntNumber).tmap[(Future[Option[MultibandTile]], Future[Array[Histogram[Double]]])] {
+    pathPrefix(IntNumber / IntNumber / IntNumber).tmap[(OptionT[Future, MultibandTile], OptionT[Future, Array[Histogram[Double]]])] {
       case (zoom: Int, x: Int, y: Int) =>
-        val futureMaybeTile = LayerCache.maybeTile(id, zoom, SpatialKey(x, y))
-        val futureHistogram = LayerCache.bandHistogram(id, zoom)
+        val futureMaybeTile = LayerCache.layerTile(id, zoom, SpatialKey(x, y))
+        val futureHistogram = LayerCache.layerHistogram(id, zoom)
         (futureMaybeTile, futureHistogram)
     }
 
@@ -79,18 +80,17 @@ object SceneRoutes extends LazyLogging {
     colorCorrectParams { params =>
       parameters('size.as[Int].?(256)) { size =>
       complete {
-        val futureHist = LayerCache.bandHistogram(id, 0)
+        val futureHist = LayerCache.layerHistogram(id, 0)
         val futureMaybeTile = StitchLayer(id, size)
-
-        for {
-          maybeTile <- futureMaybeTile
-          layerHist <- futureHist
-        } yield {
-          maybeTile.map { tile =>
-            val (rgbTile, rgbHist) = params.reorderBands(tile, layerHist)
+        val futureResponse = 
+          for {
+            tile <- futureMaybeTile
+            hist <- futureHist
+          } yield {
+            val (rgbTile, rgbHist) = params.reorderBands(tile, hist)
             pngAsHttpResponse(ColorCorrect(rgbTile, rgbHist, params).renderPng)
           }
-        }
+        futureResponse.value
       }
     }
   }
@@ -101,32 +101,32 @@ object SceneRoutes extends LazyLogging {
       import DefaultJsonProtocol._
       complete {
         val futureMaybeTile = StitchLayer(id, size)
-        val futureHist = LayerCache.bandHistogram(id, 0)
-        for {
-          maybeTile <- futureMaybeTile
-          layerHist <- futureHist
-        } yield {
-          maybeTile.map { tile =>
-            val (rgbTile, rgbHist) = params.reorderBands(tile, layerHist)
+        val futureHist = LayerCache.layerHistogram(id, 0)
+        val futureResponse =
+          for {
+            tile <- futureMaybeTile
+            hist <- futureHist
+          } yield {
+            val (rgbTile, rgbHist) = params.reorderBands(tile, hist)
             ColorCorrect(rgbTile, rgbHist, params).bands.map(_.histogram).toArray
           }
-        }
+        futureResponse.value
       }
     }
   }
 
-  def imageRoute(futureMaybeTile: Future[Option[MultibandTile]], futureHist: Future[Array[Histogram[Double]]]): Route =
+  def imageRoute(futureMaybeTile: OptionT[Future, MultibandTile], futureHist: OptionT[Future, Array[Histogram[Double]]]): Route =
     colorCorrectParams { params =>
       complete {
-        for {
-          maybeTile <- futureMaybeTile
-          layerHist <- futureHist
-        } yield {
-          maybeTile.map { tile =>
-            val (rgbTile, rgbHist) = params.reorderBands(tile, layerHist)
+        val futureResponse =
+          for {
+            tile <- futureMaybeTile
+            hist <- futureHist
+          } yield {
+            val (rgbTile, rgbHist) = params.reorderBands(tile, hist)
             pngAsHttpResponse(ColorCorrect(rgbTile, rgbHist, params).renderPng)
           }
-        }
+        futureResponse.value
       }
     }
 
