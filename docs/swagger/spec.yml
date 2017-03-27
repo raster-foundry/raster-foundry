@@ -358,7 +358,7 @@ paths:
         200:
           description: AWS credentials scoped to the upload bucket with prefix
           schema:
-            $ref: '#/definitions/UploadCredentials'
+            $ref: '#/definitions/UploadCredentialsResponse'
         default:
           description: Unexpected error
           schema:
@@ -2393,15 +2393,22 @@ definitions:
   UploadCredentials:
     type: object
     properties:
-      accessKey:
+      AccessKeyId:
         type: string
-      secretAccessKey:
+      SecretAccessKey:
          type: string
-      sessionToken:
+      SessionToken:
         type: string
-      expiration:
+      Expiration:
         type: string
         format: datetime
+  UploadCredentialsResponse:
+    type: object
+    properties:
+      credentials:
+        $ref: '#/definitions/UploadCredentials'
+      bucketPath:
+        type: string
   SceneParams:
     type: object
     description: scene params
