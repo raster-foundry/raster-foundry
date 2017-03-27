@@ -11,6 +11,7 @@ sealed trait MapAlgebraAST extends Product with Serializable {
   def label: Option[String]
   def evaluable: Boolean
   def unbound: List[MapAlgebraAST]
+  def find(id: UUID): Option[MapAlgebraAST]
 }
 
 object MapAlgebraAST {
@@ -21,6 +22,15 @@ object MapAlgebraAST {
       args.foldLeft(List[MapAlgebraAST]())({ case (list, mapAlgebra) =>
         list ++ mapAlgebra.unbound
       }).distinct
+
+    def find(id: UUID): Option[MapAlgebraAST] =
+      if (this.id == id)
+        Some(this)
+      else {
+        val matches = this.args.map(_.find(id)).flatten
+        require(matches.length < 2, s"Ambiguous IDs ($matches) on Map Algebra AST ($this)")
+        matches.headOption
+      }
   }
 
   @JsonCodec
@@ -54,6 +64,9 @@ object MapAlgebraAST {
     def args: List[MapAlgebraAST] = List.empty
     def evaluable = value.isDefined
     def unbound: List[MapAlgebraAST] = if (evaluable) List.empty else List(this)
+    def find(id: UUID): Option[MapAlgebraAST] =
+      if (this.id == id) Some(this)
+      else None
   }
 
   @JsonCodec
