@@ -35,6 +35,11 @@ trait UploadRoutes extends Authentication
         get { getUpload(uploadId) } ~
         put { updateUpload(uploadId) } ~
         delete { deleteUpload(uploadId) }
+      } ~
+      pathPrefix("credentials") {
+        pathEndOrSingleSlash {
+          getUploadCredentials(uploadId)
+        }
       }
     }
   }
@@ -80,6 +85,15 @@ trait UploadRoutes extends Authentication
       case count => throw new IllegalStateException(
         s"Error deleting upload. Delete result expected to be 1, was $count"
       )
+    }
+  }
+
+  def getUploadCredentials(uploadId: UUID): Route = authenticate { user =>
+    validateTokenHeader { jwt =>
+      onSuccess(readOne[Upload](Uploads.getUpload(uploadId))) {
+        case Some(_) => complete(Auth0DelegationService.getCredentials(user, uploadId, jwt))
+        case None => complete(StatusCodes.NotFound)
+      }
     }
   }
 }
