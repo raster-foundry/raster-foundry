@@ -2,7 +2,6 @@ package com.azavea.rf.tile
 
 import com.azavea.rf.database.Database
 import com.azavea.rf.common.cache._
-
 import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.vector._
@@ -11,12 +10,11 @@ import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.s3._
 import com.typesafe.scalalogging.LazyLogging
-
 import java.util.UUID
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
-import scala.util.{Try, Success, Failure}
-
+import scala.util.{Failure, Success, Try}
+import cats.data._
+import cats.implicits._
 
 object StitchLayer extends LazyLogging with Config {
   implicit val memcachedClient = LayerCache.memcachedClient
@@ -34,14 +32,12 @@ object StitchLayer extends LazyLogging with Config {
     * Because this is an expensive operation the stitched tile is cached.
     * For non-cached version use [[stitch]] function.
     */
-  val stitchCache = HeapBackedMemcachedClient[Option[MultibandTile]](memcachedClient)
-  def apply(id: UUID, size: Int): Future[Option[MultibandTile]] =
-    stitchCache.caching(s"stitch-{$size}") { implicit ec =>
-      for {
-        prefix <- LayerCache.prefixFromLayerId(id)
-        store <- LayerCache.attributeStore(prefix)
+  val stitchCache = HeapBackedMemcachedClient(memcachedClient)
+  def apply(id: UUID, size: Int): OptionT[Future, MultibandTile] =
+    stitchCache.cachingOptionT(s"stitch-{$size}") { implicit ec =>
+      LayerCache.attributeStoreForLayer(id).mapFilter { store =>
+        stitch(store, id.toString, size)
       }
-      yield stitch(store, id.toString, size)
     }
 
   def stitch(store: AttributeStore, layerName: String, size: Int): Option[MultibandTile] = {

@@ -46,4 +46,5 @@ object Dependencies {
   val circeParser             = "io.circe"                    %% "circe-parser"                      % Version.circe
   val circeOptics             = "io.circe"                    %% "circe-optics"                      % Version.circe
   val akkaCirceJson           = "de.heikoseeberger"           %% "akka-http-circe"                   % Version.akkaCirceJson
+  val cats                    = "org.typelevel"               %% "cats"                              % Version.cats
 }

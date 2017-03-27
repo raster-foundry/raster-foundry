@@ -2,7 +2,7 @@ package com.azavea.rf.common.cache
 
 import com.github.blemale.scaffeine.{Scaffeine, Cache => ScaffeineCache}
 import net.spy.memcached._
-
+import cats.data._
 import scala.concurrent._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -19,18 +19,11 @@ import com.azavea.rf.common.Config
   *  @note Each instance of this wrapper will have its own instance of a Caffeine
   *         cache (a guava-inspired java library).
   */
-class HeapBackedMemcachedClient[CachedType](
+class HeapBackedMemcachedClient(
   client: MemcachedClient,
   options: HeapBackedMemcachedClient.Options = HeapBackedMemcachedClient.Options()) {
 
-  /** The caffeine cache (on heap) which prevents cache race conditions.
-    * Entries on this cache are intended to live only long enough to satisfy requests from a "stampeding heard".
-    */
-  private val onHeapCache: ScaffeineCache[String, Future[CachedType]] =
-    Scaffeine()
-      .expireAfterAccess(options.heapTTL)
-      .maximumSize(options.maxSize)
-      .build[String, Future[CachedType]]()
+  import HeapBackedMemcachedClient._
 
   /**
     * Returns the value associated with `cacheKey` in the memcached, obtaining that value from
@@ -52,12 +45,21 @@ class HeapBackedMemcachedClient[CachedType](
     * @param mappingFunction  the function to compute a value
     * @return the current (existing or computed) value associated with the specified key
     */
-  def caching(cacheKey: String)(mappingFunction: ExecutionContext => Future[CachedType]): Future[CachedType] = {
+  def caching[T](cacheKey: String)(mappingFunction: ExecutionContext => Future[T]): Future[T] = {
     val sanitizedKey = HeapBackedMemcachedClient.sanitizeKey(cacheKey)
     onHeapCache.get(sanitizedKey, { key: String =>
-      client.getOrElseUpdate[CachedType](key, mappingFunction(options.ec), options.memcachedTTL)(options.ec)
-    })
+      client.getOrElseUpdate[T](key, mappingFunction(options.ec), options.memcachedTTL)(options.ec)
+    }).asInstanceOf[Future[T]]
   }
+
+  def cachingOptionT[T](cacheKey: String)(mappingFunction: ExecutionContext => OptionT[Future, T]): OptionT[Future, T] = {
+    val sanitizedKey = HeapBackedMemcachedClient.sanitizeKey(cacheKey)
+    val futureOption = onHeapCache.get(sanitizedKey, { key: String =>
+      client.getOrElseUpdate[Option[T]](key, mappingFunction(options.ec).value, options.memcachedTTL)(options.ec)
+    }).asInstanceOf[Future[Option[T]]]
+    OptionT(futureOption)
+  }
+
 }
 
 object HeapBackedMemcachedClient {
@@ -80,8 +82,18 @@ object HeapBackedMemcachedClient {
     maxSize: Int = Config.memcached.heapMaxEntries
   )
 
-  def apply[CachedType](client: MemcachedClient, options: Options = Options()) =
-    new HeapBackedMemcachedClient[CachedType](client, options)
+  /** The caffeine cache (on heap) which prevents cache race conditions.
+    * Entries on this cache are intended to live only long enough to satisfy requests from a "stampeding heard".
+    */
+  private val onHeapCache: ScaffeineCache[String, Future[Any]] =
+    Scaffeine()
+      .expireAfterAccess(Config.memcached.heapEntryTTL)
+      .maximumSize(Config.memcached.heapMaxEntries)
+      .build[String, Future[Any]]()
+
+
+  def apply(client: MemcachedClient, options: Options = Options()) =
+    new HeapBackedMemcachedClient(client, options)
 
   /** This key sanitizer replaces whitespace with '_' and throws in case of control characters */
   def sanitizeKey(key: String): String = {
