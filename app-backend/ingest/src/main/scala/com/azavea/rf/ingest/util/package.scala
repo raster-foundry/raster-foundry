@@ -6,15 +6,11 @@ import geotrellis.spark.io.s3.AmazonS3Client
 import geotrellis.spark.io.s3.util.S3RangeReader
 
 import com.amazonaws.services.s3.{ AmazonS3URI, AmazonS3Client => AWSAmazonS3Client }
-import com.amazonaws.services.s3.model.{ListObjectsRequest, ObjectListing}
 import com.amazonaws.auth._
 import org.apache.commons.io.IOUtils
-import org.apache.spark.rdd.RDD
-import org.apache.spark._
 
 import java.io._
 import java.net._
-import java.util._
 
 package object util {
 

@@ -10,6 +10,7 @@ object Version {
   val scalaTest          = "2.2.6"
   val scapegoat          = "1.2.0"
   val slf4j              = "1.6.4"
+  val scalaLogging       = "3.5.0"
   val slick              = "3.1.1"
   val slickPG            = "0.14.6"
   val json4s             = "3.5.0"
