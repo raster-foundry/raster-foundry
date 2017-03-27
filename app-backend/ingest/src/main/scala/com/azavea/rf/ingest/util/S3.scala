@@ -2,7 +2,7 @@ package com.azavea.rf.ingest.util
 
 import com.amazonaws.auth._
 import com.amazonaws.services.s3.model.{ListObjectsRequest, ObjectListing}
-import com.amazonaws.services.s3.{AmazonS3Client, AmazonS3URI}
+import com.amazonaws.services.s3.{AmazonS3Client, AmazonS3URI, AmazonS3ClientBuilder }
 import geotrellis.spark.io.s3.S3LayerWriter
 import org.apache.commons.io.IOUtils
 import org.apache.spark._
@@ -18,8 +18,9 @@ import scala.collection.mutable
 import scala.util.matching.Regex
 
 object S3 {
-  val cred = new DefaultAWSCredentialsProviderChain()
-  val client = new AmazonS3Client(cred)
+  val client = AmazonS3ClientBuilder.standard()
+    .withCredentials(new DefaultAWSCredentialsProviderChain())
+    .build()
 
   // From GT codebase
   private val idRx = "[A-Z0-9]{20}"

@@ -160,7 +160,8 @@ lazy val ingest = Project("ingest", file("ingest"))
   .settings(commonSettings:_*)
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({
-    libraryDependencies ++= loggingDependencies ++ testDependencies ++ Seq(
+    libraryDependencies ++= testDependencies ++ Seq(
+      Dependencies.scalaLogging,
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisS3,
       Dependencies.geotrellisUtil,

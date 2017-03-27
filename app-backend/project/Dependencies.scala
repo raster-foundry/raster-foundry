@@ -23,6 +23,7 @@ object Dependencies {
   val scalaforklift           = "com.liyaos"                  %% "scala-forklift-slick"              % Version.scalaForklift
   val scalatest               = "org.scalatest"               %% "scalatest"                         % Version.scalaTest % "test"
   val slf4j                   = "org.slf4j"                    % "slf4j-simple"                      % Version.slf4j
+  val scalaLogging            = "com.typesafe.scala-logging"  %% "scala-logging"                     % Version.scalaLogging
   val slick                   = "com.typesafe.slick"          %% "slick"                             % Version.slick
   val slickPG                 = "com.github.tminglei"         %% "slick-pg"                          % Version.slickPG
   val slickPGSpray            = "com.github.tminglei"         %% "slick-pg_spray-json"               % Version.slickPG
