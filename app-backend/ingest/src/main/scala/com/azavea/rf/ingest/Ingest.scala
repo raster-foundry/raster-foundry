@@ -153,8 +153,13 @@ object Ingest extends SparkJob with LazyLogging {
       case "s3" | "s3a" | "s3n" =>
         val (bucket, prefix) = S3.parse(uri)
         S3RangeReader(bucket, prefix, S3Client.DEFAULT)
+      case "http" | "https"
+          if uri.getAuthority == "s3.amazonaws.com"
+          && uri.getQuery.contains("AWSAccessKeyId") =>
+        // Signed S3 URLs don't support HEAD requests
+        new HttpRangeReader(uri.toURL(), useHeadRequest = false)
       case "http" | "https" =>
-        new HttpRangeReader(uri.toURL())
+        new HttpRangeReader(uri.toURL(), useHeadRequest = true)
     }
   }
 
