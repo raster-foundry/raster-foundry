@@ -25,6 +25,7 @@ import 'angular-resource';
 import 'leaflet';
 import 'svg-pan-zoom';
 import 'jointjs';
+import 'angular-load';
 
 
 // local scripts

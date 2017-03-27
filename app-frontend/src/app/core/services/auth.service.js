@@ -4,7 +4,7 @@ export default (app) => {
     class AuthService {
         constructor( // eslint-disable-line max-params
             lock, jwtHelper, $q, featureFlagOverrides, featureFlags,
-            $state, APP_CONFIG, localStorage
+            $state, APP_CONFIG, localStorage, intercomService
         ) {
             this.lock = lock;
             this.localStorage = localStorage;
@@ -13,6 +13,7 @@ export default (app) => {
             this.$state = $state;
             this.featureFlags = featureFlags;
             this.featureFlagOverrides = featureFlagOverrides;
+            this.intercomService = intercomService;
 
             let passResetOptions = {
                 initialScreen: 'forgotPassword',
@@ -126,6 +127,7 @@ export default (app) => {
                     delete this.promise;
                 }
                 this.$state.go('home');
+                this.intercomService.bootWithUser(profile);
             });
         }
 
@@ -148,6 +150,7 @@ export default (app) => {
             this.localStorage.remove('id_token');
             this.localStorage.remove('profile');
             this.isLoggedIn = false;
+            this.intercomService.shutdown();
             this.$state.go('login');
         }
 

@@ -1,5 +1,5 @@
 function runBlock( // eslint-disable-line max-params
-    $rootScope, jwtHelper, $state, $location, APP_CONFIG, authService, localStorage
+    $rootScope, jwtHelper, $state, $location, APP_CONFIG, authService, localStorage, intercomService
 ) {
     'ngInject';
 
@@ -10,6 +10,8 @@ function runBlock( // eslint-disable-line max-params
         } else if (toState.name !== 'login' && !authService.verifyAuthCache()) {
             e.preventDefault();
             $state.go('login');
+        } else {
+            intercomService.bootWithUser(authService.profile());
         }
     });
 

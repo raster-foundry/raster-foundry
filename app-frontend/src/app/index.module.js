@@ -24,6 +24,7 @@ const App = angular.module(
         'infinite-scroll',
         'ngResource',
         'oc.lazyLoad',
+        'angularLoad',
 
         // core
         require('./core/core.module').name,
