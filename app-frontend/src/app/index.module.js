@@ -24,6 +24,7 @@ const App = angular.module(
         'infinite-scroll',
         'ngResource',
         'oc.lazyLoad',
+        'tandibar/ng-rollbar',
 
         // core
         require('./core/core.module').name,
