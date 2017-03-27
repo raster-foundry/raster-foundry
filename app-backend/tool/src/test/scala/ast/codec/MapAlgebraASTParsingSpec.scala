@@ -12,11 +12,10 @@ import cats.syntax.either._
 import java.util.UUID
 
 
-class ParseSpec extends FunSpec with Matchers {
+class MapAlgebraASTParsingSpec extends FunSpec with Matchers {
 
-  def ndvi(red: MapAlgebraAST, nir: MapAlgebraAST): MapAlgebraAST = {
+  def ndvi(red: MapAlgebraAST, nir: MapAlgebraAST): MapAlgebraAST =
     (red - nir) / (red + nir)
-  }
 
   def ndviDiff(red1: MapAlgebraAST, nir1: MapAlgebraAST, red2: MapAlgebraAST, nir2: MapAlgebraAST, breaks: ClassBreaks): MapAlgebraAST =
     ndvi(red1, nir1).reclassify(breaks) - ndvi(red2, nir2).reclassify(breaks)
