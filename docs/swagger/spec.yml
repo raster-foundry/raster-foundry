@@ -2379,6 +2379,8 @@ definitions:
           type: array
           items:
             type: string
+        metadata:
+          type: object
   UploadPaginated:
     allOf:
     - $ref: '#/definitions/PaginatedResponse'
