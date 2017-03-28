@@ -32,7 +32,7 @@ You will be prompted for an access key and secret key.
 
 #### Setting Development Environment Variables
 
-The `.env.template` file is a template file with environemnt variables that get injected into running containers during development. This file should be copied into the AWS config bucket created after filling in sensitive information (replacing all `PLACEHOLDER` values with appropriate values for your AWS setup). When provisioning this file is copied to the development environment and injected into containers with `docker-compose`.
+The `.env.template` file is a template file with environment variables that get injected into running containers during development. This file should be copied into the AWS config bucket created after filling in sensitive information (replacing all `PLACEHOLDER` values with appropriate values for your AWS setup). When provisioning this file is copied to the development environment and injected into containers with `docker-compose`.
 
 In addition to setting up an AWS account, you must register for an Auth0 account to produce secrets to use in the `.env` file. You need to go through setting up an application and copying over the client IDs, domain, and secret.
 
@@ -45,8 +45,8 @@ The last thing to set up with Auth0 are the allowed callback URLs and logout URL
 Vagrant is used to manage VirtualBox provisioning and configuration. Raster Foundry follows the approach outlined [here](https://githubengineering.com/scripts-to-rule-them-all/) ("Scripts to Rule Them All") to have as consistent a development experience as possible. Almost all interaction with consoles and servers can be managed via calls to a script located in `./scripts`. Default values for the S3 config and data buckets in addition to AWS profile will be used if they are not set with an environment variable. Before running vagrant, these should be injected into your shell environment:
 ```bash
 export RF_AWS_PROFILE=raster-foundry
-export RF_SETTINGS_BUCKET=rf-dev-config-us-east-1
-export RF_ARTIFACTS_BUCKET=rf-global-artifacts-us-east-1
+export RF_SETTINGS_BUCKET=rasterfoundry-development-config-us-east-1
+export RF_ARTIFACTS_BUCKET=rasterfoundry-global-artifacts-us-east-1
 ```
 
 After exporting your environment settings, you are ready to get started:

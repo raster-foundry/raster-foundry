@@ -119,14 +119,14 @@ export default (app) => {
                     return configFlags.includes(flag.key);
                 });
                 this.featureFlags.set(flagOverrides);
+                this.isLoggedIn = true;
+                this.lock.hide();
+                if (authResult.refreshToken) {
+                    this.promise.resolve(authResult);
+                    delete this.promise;
+                }
+                this.$state.go('home');
             });
-            this.isLoggedIn = true;
-            this.lock.hide();
-            if (authResult.refreshToken) {
-                this.promise.resolve(authResult);
-                delete this.promise;
-            }
-            this.$state.go('browse');
         }
 
         onLoginFail(error) {

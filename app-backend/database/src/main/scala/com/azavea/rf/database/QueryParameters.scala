@@ -203,3 +203,8 @@ case class CombinedMapTokenQueryParameters(
   userParams: UserQueryParameters = UserQueryParameters(),
   mapTokenParams: MapTokenQueryParameters = MapTokenQueryParameters()
 )
+
+case class UploadQueryParameters(
+  organization: Option[UUID] = None,
+  datasource: Option[UUID] = None
+)

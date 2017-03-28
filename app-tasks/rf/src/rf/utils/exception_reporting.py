@@ -5,6 +5,12 @@ import rollbar
 
 logger = logging.getLogger(__name__)
 
+environment = os.getenv('ENVIRONMENT')
+rollbar_token = os.getenv('ROLLBAR_SERVER_TOKEN')
+
+# Avoid use of threads by default in case the worker exits before sending message
+rollbar.init(rollbar_token, environment, handler='blocking')
+
 
 def wrap_rollbar(func):
     """Decorator to wrap functions to report exceptions to rollbar
@@ -12,11 +18,6 @@ def wrap_rollbar(func):
     Note:
       This re-raises the exception after notifying rollbar
     """
-    environment = os.getenv('ENVIRONMENT')
-    rollbar_token = os.getenv('ROLLBAR_SERVER_TOKEN')
-
-    # Avoid use of threads by default in case the worker exits before sending message
-    rollbar.init(rollbar_token, environment, handler='blocking')
 
     def func_wrapper(*args, **kwargs):
         try:
