@@ -78,7 +78,7 @@ object HeapBackedMemcachedClient {
   case class Options(
     ec: ExecutionContext = defaultExecutionContext,
     heapTTL: FiniteDuration = Config.memcached.heapEntryTTL,
-    memcachedTTL: FiniteDuration = 12.minutes,
+    memcachedTTL: FiniteDuration = Config.memcached.ttl,
     maxSize: Int = Config.memcached.heapMaxEntries
   )
 
