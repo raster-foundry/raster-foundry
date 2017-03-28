@@ -52,7 +52,7 @@ trait DatasourceRoutes extends Authentication
     get {
       rejectEmptyResponse {
         complete {
-          readOne[Datasource](Datasources.getDatasource(datasourceId))
+          readOne[Datasource](Datasources.getDatasource(datasourceId, user))
         }
       }
     }
@@ -79,7 +79,7 @@ trait DatasourceRoutes extends Authentication
   }
 
   def deleteDatasource(datasourceId: UUID): Route = authenticate { user =>
-    onSuccess(drop(Datasources.deleteDatasource(datasourceId))) {
+    onSuccess(drop(Datasources.deleteDatasource(datasourceId, user))) {
       case 1 => complete(StatusCodes.NoContent)
       case 0 => complete(StatusCodes.NotFound)
       case count => throw new IllegalStateException(

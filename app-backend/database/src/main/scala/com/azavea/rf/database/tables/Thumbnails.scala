@@ -69,11 +69,15 @@ object Thumbnails extends TableQuery(tag => new Thumbnails(tag)) with LazyLoggin
   /** Retrieve a single thumbnail from the database
     *
     * @param thumbnailId UUID ID Of thumbnail to query with
+    * @param user        Results will be limited to user's organization
     */
-  def getThumbnail(thumbnailId: UUID)
+  def getThumbnail(thumbnailId: UUID, user: User)
                   (implicit database: DB): Future[Option[Thumbnail]] = {
 
-    val action = Thumbnails.filter(_.id === thumbnailId).result
+    val action = Thumbnails
+                   .filterToSharedOrganizationIfNotInRoot(user)
+                   .filter(_.id === thumbnailId)
+                   .result
     logger.debug(s"Retrieving thumbnail with: ${action.statements.headOption}")
     database.db.run {
       action.headOption
@@ -107,11 +111,15 @@ object Thumbnails extends TableQuery(tag => new Thumbnails(tag)) with LazyLoggin
   /** Delete a scene from the database
     *
     * @param thumbnailId UUID ID of scene to delete
+    * @param user        Results will be limited to user's organization
     */
-  def deleteThumbnail(thumbnailId: UUID)
+  def deleteThumbnail(thumbnailId: UUID, user: User)
                      (implicit database: DB): Future[Int] = {
 
-    val action = Thumbnails.filter(_.id === thumbnailId).delete
+    val action = Thumbnails
+                   .filterToSharedOrganizationIfNotInRoot(user)
+                   .filter(_.id === thumbnailId)
+                   .delete
     logger.debug(s"Deleting thumbnail with: ${action.statements.headOption}")
     database.db.run {
       action.map {

@@ -3,7 +3,7 @@ package com.azavea.rf.database.fields
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.query.OrgQueryParameters
 import com.azavea.rf.database.tables.Organizations
-import com.azavea.rf.datamodel.Organization
+import com.azavea.rf.datamodel.{Organization, User}
 import slick.lifted.ForeignKeyQuery
 
 trait OrganizationFkFields  { self: Table[_] =>
@@ -18,6 +18,14 @@ object OrganizationFkFields {
         that.filter { rec =>
           rec.organizationId inSet orgParams.organizations.toSet
         }
+      } else {
+        that
+      }
+    }
+
+    def filterToSharedOrganizationIfNotInRoot(user: User) = {
+      if (!user.isInRootOrganization) {
+        that.filter(_.organizationId === user.organizationId)
       } else {
         that
       }

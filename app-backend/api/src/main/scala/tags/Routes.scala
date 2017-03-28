@@ -53,7 +53,7 @@ trait ToolTagRoutes extends Authentication with PaginationDirectives with UserEr
 
   def getToolTag(toolTagId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
-      complete(ToolTags.getToolTag(toolTagId))
+      complete(ToolTags.getToolTag(toolTagId, user))
     }
   }
 
@@ -76,7 +76,7 @@ trait ToolTagRoutes extends Authentication with PaginationDirectives with UserEr
   }
 
   def deleteToolTag(toolTagId: UUID): Route = authenticate { user =>
-    onSuccess(ToolTags.deleteToolTag(toolTagId)) {
+    onSuccess(ToolTags.deleteToolTag(toolTagId, user)) {
       case 1 => complete(StatusCodes.NoContent)
       case 0 => complete(StatusCodes.NotFound)
       case count => throw new IllegalStateException(

@@ -62,7 +62,7 @@ trait ImageRoutes extends Authentication
     get {
       rejectEmptyResponse {
         complete {
-          Images.getImage(imageId)
+          Images.getImage(imageId, user)
         }
       }
     }
@@ -79,7 +79,7 @@ trait ImageRoutes extends Authentication
   }
 
   def deleteImage(imageId: UUID): Route = authenticate { user =>
-    onSuccess(Images.deleteImage(imageId)) {
+    onSuccess(Images.deleteImage(imageId, user)) {
       case 1 => complete(StatusCodes.NoContent)
       case 0 => complete(StatusCodes.NotFound)
       case count => throw new IllegalStateException(

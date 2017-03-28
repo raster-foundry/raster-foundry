@@ -61,7 +61,7 @@ trait SceneRoutes extends Authentication
   def getScene(sceneId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        Scenes.getScene(sceneId)
+        Scenes.getScene(sceneId, user)
       }
     }
   }
@@ -85,7 +85,7 @@ trait SceneRoutes extends Authentication
   }
 
   def deleteScene(sceneId: UUID): Route = authenticate { user =>
-    onSuccess(Scenes.deleteScene(sceneId)) {
+    onSuccess(Scenes.deleteScene(sceneId, user)) {
       case 1 => complete(StatusCodes.NoContent)
       case 0 => complete(StatusCodes.NotFound)
       case count => throw new IllegalStateException(

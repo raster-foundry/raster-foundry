@@ -77,7 +77,7 @@ trait ThumbnailRoutes extends Authentication
     withPagination { page =>
       rejectEmptyResponse {
         complete {
-          Thumbnails.getThumbnail(thumbnailId)
+          Thumbnails.getThumbnail(thumbnailId, user)
         }
       }
     }
@@ -112,7 +112,7 @@ trait ThumbnailRoutes extends Authentication
   }
 
   def deleteThumbnail(thumbnailId: UUID): Route = authenticate { user =>
-    onSuccess(Thumbnails.deleteThumbnail(thumbnailId)) {
+    onSuccess(Thumbnails.deleteThumbnail(thumbnailId, user)) {
       case 1 => complete(StatusCodes.NoContent)
       case 0 => complete(StatusCodes.NotFound)
       case count => throw new IllegalStateException(

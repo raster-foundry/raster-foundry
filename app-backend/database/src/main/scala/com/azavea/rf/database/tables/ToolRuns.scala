@@ -50,8 +50,12 @@ object ToolRuns extends TableQuery(tag => new ToolRuns(tag)) with LazyLogging {
   def insertToolRun(tr: ToolRun.Create, userId: String): DBIO[ToolRun] =
     (ToolRuns returning ToolRuns).forceInsert(tr.toToolRun(userId))
 
-  def getToolRun(id: UUID): DBIO[Option[ToolRun]] =
-    ToolRuns.filter(_.id === id).result.headOption
+  def getToolRun(id: UUID, user: User): DBIO[Option[ToolRun]] =
+    ToolRuns
+      .filterToSharedOrganizationIfNotInRoot(user)
+      .filter(_.id === id)
+      .result
+      .headOption
 
   def listToolRuns(offset: Int, limit: Int,
                    toolRunParams: CombinedToolRunQueryParameters): ListQueryResult[ToolRun] = {
@@ -87,8 +91,11 @@ object ToolRuns extends TableQuery(tag => new ToolRuns(tag)) with LazyLogging {
     )
   }
 
-  def deleteToolRun(id: UUID): DBIO[Int] =
-    ToolRuns.filter(_.id === id).delete
+  def deleteToolRun(id: UUID, user: User): DBIO[Int] =
+    ToolRuns
+      .filterToSharedOrganizationIfNotInRoot(user)
+      .filter(_.id === id)
+      .delete
 }
 
 class ToolRunDefaultQuery[M, U, C[_]](toolruns: ToolRuns.TableQuery) {

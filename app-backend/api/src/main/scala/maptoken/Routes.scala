@@ -61,7 +61,7 @@ trait MapTokenRoutes extends Authentication
     get {
       rejectEmptyResponse {
         complete {
-          readOne[MapToken](MapTokens.getMapToken(mapTokenId))
+          readOne[MapToken](MapTokens.getMapToken(mapTokenId, user))
         }
       }
     }
@@ -78,7 +78,7 @@ trait MapTokenRoutes extends Authentication
   }
 
   def deleteMapToken(mapTokenId: UUID): Route = authenticate { user =>
-    onSuccess(drop(MapTokens.deleteMapToken(mapTokenId))) {
+    onSuccess(drop(MapTokens.deleteMapToken(mapTokenId, user))) {
       case 1 => complete(StatusCodes.NoContent)
       case 0 => complete(StatusCodes.NotFound)
       case count => throw new IllegalStateException(

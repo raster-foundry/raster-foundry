@@ -55,7 +55,7 @@ trait ToolRoutes extends Authentication
 
   def getTool(toolId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
-      complete(Tools.getTool(toolId))
+      complete(Tools.getTool(toolId, user))
     }
   }
 
@@ -78,7 +78,7 @@ trait ToolRoutes extends Authentication
   }
 
   def deleteTool(toolId: UUID): Route = authenticate { user =>
-    onSuccess(Tools.deleteTool(toolId)) {
+    onSuccess(Tools.deleteTool(toolId, user)) {
       case 1 => complete(StatusCodes.NoContent)
       case 0 => complete(StatusCodes.NotFound)
       case count => throw new IllegalStateException(

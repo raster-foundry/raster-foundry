@@ -91,16 +91,25 @@ object Uploads extends TableQuery(tag => new Uploads(tag)) with LazyLogging {
   /** Given a upload ID, attempt to retrieve it from the database
     *
     * @param uploadId UUID ID of upload to get from database
+    * @param user     Results will be limited to user's organization
     */
-  def getUpload(uploadId: UUID) =
-    Uploads.filter(_.id === uploadId).result.headOption
+  def getUpload(uploadId: UUID, user: User) =
+    Uploads
+      .filterToSharedOrganizationIfNotInRoot(user)
+      .filter(_.id === uploadId)
+      .result
+      .headOption
 
   /** Given a upload ID, attempt to remove it from the database
     *
     * @param uploadId UUID ID of upload to remove
+    * @param user     Results will be limited to user's organization
     */
-  def deleteUpload(uploadId: UUID) =
-    Uploads.filter(_.id === uploadId).delete
+  def deleteUpload(uploadId: UUID, user: User) =
+    Uploads
+      .filterToSharedOrganizationIfNotInRoot(user)
+      .filter(_.id === uploadId)
+      .delete
 
 /** Update a upload @param upload Upload to use for update
     * @param uploadId UUID of upload to update
