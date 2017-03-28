@@ -31,12 +31,7 @@ class MapWrapper {
             let div = L.DomUtil.create('div', 'map-control-panel');
 
             div.innerHTML =
-                '<button class="btn btn-default"><i class="icon-resize-full"></i></button>' +
-                '<hr>' +
-                '<button class="btn btn-default btn-block"><i class="icon-search">' +
-                '</i> Find places</button>' +
-                '<button class="btn btn-default btn-block">Basemap</button>' +
-                '<div class="map-control-popout layer-picker"></div>';
+                '<button class="btn btn-default"><i class="icon-resize-full"></i></button>';
             return div;
         };
         this.changeOptions(this.options);
