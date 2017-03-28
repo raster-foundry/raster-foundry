@@ -190,7 +190,6 @@
     "no-underscore-dangle": ["error", { "allowAfterThis": true }], // disallow dangling underscores in identifiers
     "one-var": [1, "never"], // allow just one var statement per function (off by default)
     "padded-blocks": [1, "never"], // enforce padding within blocks (off by default)
-    "quote-props": [1, "as-needed"], // require quotes around object literal property names (off by default)
     "quotes": [1, "single"], // specify whether double or single quotes should be used
     "semi": [1, "always"], // require or disallow use of semicolons instead of ASI
     "semi-spacing": [1, {"before": false, "after": true}], // enforce spacing before and after semicolons

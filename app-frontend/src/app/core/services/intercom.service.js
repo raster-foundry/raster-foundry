@@ -9,7 +9,7 @@ export default (app) => {
             this.angularLoad = angularLoad;
             this.scriptLoaded = false;
             // @TODO: load this value from the APP_CONFIG
-            this.appId = 'w247m8f0';
+            this.appId = APP_CONFIG.intercomAppId;
             this.srcUrl = `https://widget.intercom.io/widget/${this.appId}`;
         }
 

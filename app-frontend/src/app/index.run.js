@@ -9,6 +9,7 @@ function runBlock( // eslint-disable-line max-params
             $state.go('error');
         } else if (toState.name !== 'login' && !authService.verifyAuthCache()) {
             e.preventDefault();
+            intercomService.shutdown();
             $state.go('login');
         } else {
             intercomService.bootWithUser(authService.profile());
@@ -22,6 +23,7 @@ function runBlock( // eslint-disable-line max-params
                 authService.login(token);
             }
         } else {
+            intercomService.shutdown();
             $state.go('login');
         }
     });
