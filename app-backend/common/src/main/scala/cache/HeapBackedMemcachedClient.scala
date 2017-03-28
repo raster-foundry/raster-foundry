@@ -23,7 +23,14 @@ class HeapBackedMemcachedClient(
   client: MemcachedClient,
   options: HeapBackedMemcachedClient.Options = HeapBackedMemcachedClient.Options()) {
 
-  import HeapBackedMemcachedClient._
+  /** The caffeine cache (on heap) which prevents cache race conditions.
+   * Entries on this cache are intended to live only long enough to satisfy requests from a "stampeding heard".
+   */
+  private val onHeapCache: ScaffeineCache[String, Future[Any]] =
+    Scaffeine()
+      .expireAfterAccess(Config.memcached.heapEntryTTL)
+      .maximumSize(Config.memcached.heapMaxEntries)
+      .build[String, Future[Any]]()
 
   /**
     * Returns the value associated with `cacheKey` in the memcached, obtaining that value from
@@ -81,16 +88,6 @@ object HeapBackedMemcachedClient {
     memcachedTTL: FiniteDuration = Config.memcached.ttl,
     maxSize: Int = Config.memcached.heapMaxEntries
   )
-
-  /** The caffeine cache (on heap) which prevents cache race conditions.
-    * Entries on this cache are intended to live only long enough to satisfy requests from a "stampeding heard".
-    */
-  private val onHeapCache: ScaffeineCache[String, Future[Any]] =
-    Scaffeine()
-      .expireAfterAccess(Config.memcached.heapEntryTTL)
-      .maximumSize(Config.memcached.heapMaxEntries)
-      .build[String, Future[Any]]()
-
 
   def apply(client: MemcachedClient, options: Options = Options()) =
     new HeapBackedMemcachedClient(client, options)

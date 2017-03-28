@@ -53,7 +53,6 @@ object Mosaic {
   }
 
 
-  val mosaicDefinitionCache = HeapBackedMemcachedClient(memcachedClient)
   def mosaicDefinition(projectId: UUID, tagttl: Option[TagWithTTL])(implicit db: Database): OptionT[Future, Seq[MosaicDefinition]] = {
     val cacheKey = tagttl match {
       case Some(t) => s"mosaic-definition-$projectId-${t.tag}"
