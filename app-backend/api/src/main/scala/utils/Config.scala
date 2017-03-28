@@ -27,6 +27,7 @@ trait Config {
 
   val featureFlags = featureFlagConfig.getConfigList("features")
 
+  val region = s3Config.getString("region")
   val dataBucket = s3Config.getString("dataBucket")
   val thumbnailBucket = s3Config.getString("thumbnailBucket")
 }
