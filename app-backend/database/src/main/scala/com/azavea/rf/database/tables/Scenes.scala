@@ -237,12 +237,14 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
   /** Retrieve a single scene from the database
     *
     * @param sceneId java.util.UUID ID of scene to query with
+    * @param user    Results will be limited to user's organization
     */
-  def getScene(sceneId: UUID)
+  def getScene(sceneId: UUID, user: User)
               (implicit database: DB): Future[Option[Scene.WithRelated]] = {
 
     database.db.run {
       val action = Scenes
+        .filterToSharedOrganizationIfNotInRoot(user)
         .filter(_.id === sceneId)
         .joinWithRelated
         .result
@@ -361,10 +363,14 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
   /** Delete a scene from the database
     *
     * @param sceneId java.util.UUID ID of scene to delete
+    * @param user    Results will be limited to user's organization
     */
-  def deleteScene(sceneId: UUID)(implicit database: DB): Future[Int] = {
+  def deleteScene(sceneId: UUID, user: User)(implicit database: DB): Future[Int] = {
     database.db.run {
-      Scenes.filter(_.id === sceneId).delete
+      Scenes
+        .filterToSharedOrganizationIfNotInRoot(user)
+        .filter(_.id === sceneId)
+        .delete
     }
   }
 

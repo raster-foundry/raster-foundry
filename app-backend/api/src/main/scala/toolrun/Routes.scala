@@ -57,7 +57,7 @@ trait ToolRunRoutes extends Authentication
 
   def getToolRun(runId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
-      complete(readOne(ToolRuns.getToolRun(runId)))
+      complete(readOne(ToolRuns.getToolRun(runId, user)))
     }
   }
 
@@ -80,7 +80,7 @@ trait ToolRunRoutes extends Authentication
   }
 
   def deleteToolRun(runId: UUID): Route = authenticate { user =>
-    onSuccess(database.db.run(ToolRuns.deleteToolRun(runId))) {
+    onSuccess(database.db.run(ToolRuns.deleteToolRun(runId, user))) {
       case 1 => complete(StatusCodes.NoContent)
       case 0 => complete(StatusCodes.NotFound)
       case count => throw new IllegalStateException(

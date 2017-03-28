@@ -146,12 +146,17 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
   /** Get project given a projectId
     *
     * @param projectId UUID primary key of project to retrieve
+    * @user user       Results will be limited to user's organization
     */
-  def getProject(projectId: UUID)
+  def getProject(projectId: UUID, user: User)
                (implicit database: DB): Future[Option[Project]] = {
 
     database.db.run {
-      Projects.filter(_.id === projectId).result.headOption
+      Projects
+        .filterToSharedOrganizationIfNotInRoot(user)
+        .filter(_.id === projectId)
+        .result
+        .headOption
     }
   }
 
@@ -191,11 +196,15 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
   /** Delete a given project from the database
     *
     * @param projectId UUID primary key of project to delete
+    * @param user      Results will be limited to user's organization
     */
-  def deleteProject(projectId: UUID)(implicit database: DB): Future[Int] = {
+  def deleteProject(projectId: UUID, user: User)(implicit database: DB): Future[Int] = {
 
     database.db.run {
-      Projects.filter(_.id === projectId).delete
+      Projects
+        .filterToSharedOrganizationIfNotInRoot(user)
+        .filter(_.id === projectId)
+        .delete
     }
   }
 

@@ -165,13 +165,18 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
   /** Retrieve a single tool from the database
     *
     * @param toolId java.util.UUID ID of tool to query
+    * @param user   Results will be limited to user's organization
     */
-  def getTool(toolId: UUID)(implicit database: DB): Future[Option[Tool.WithRelated]] = {
+  def getTool(toolId: UUID, user: User)(implicit database: DB): Future[Option[Tool.WithRelated]] = {
     val test = joinRelated(Tools.filter(_.id === toolId)).result
     logger.debug(s"Fetching a tool -- SQL: ${test.statements.headOption}")
 
     database.db.run {
-      joinRelated(Tools.filter(_.id === toolId)).result
+      joinRelated(
+        Tools
+          .filterToSharedOrganizationIfNotInRoot(user)
+          .filter(_.id === toolId)
+      ).result
     } map {
       joinTuples => joinTuples.map(joinTuple => Tool.ToolRelationshipJoin.tupled(joinTuple))
     } map {
@@ -220,10 +225,14 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
   /** Delete a given tool
     *
     * @param toolId UUID ID of tool to delete
+    * @param user   Results will be limited to user's organization
     */
-  def deleteTool(toolId: UUID)(implicit database: DB): Future[Int] = {
+  def deleteTool(toolId: UUID, user: User)(implicit database: DB): Future[Int] = {
     database.db.run {
-      Tools.filter(_.id === toolId).delete
+      Tools
+        .filterToSharedOrganizationIfNotInRoot(user)
+        .filter(_.id === toolId)
+        .delete
     }
   }
 

@@ -50,8 +50,12 @@ object MapTokens extends TableQuery(tag => new MapTokens(tag)) with LazyLogging 
   implicit class withMapTokensTableQuery[M, U, C[_]](mapTokens: MapTokens.TableQuery) extends
     MapTokensTableQuery[M, U, C](mapTokens)
 
-  def getMapToken(mapTokenId: UUID)(implicit database: DB): DBIO[Option[MapToken]]= {
-    MapTokens.filter(_.id === mapTokenId).result.headOption
+  def getMapToken(mapTokenId: UUID, user: User)(implicit database: DB): DBIO[Option[MapToken]]= {
+    MapTokens
+      .filterToSharedOrganizationIfNotInRoot(user)
+      .filter(_.id === mapTokenId)
+      .result
+      .headOption
   }
 
   def validateMapToken(projectId: UUID, mapTokenId: UUID): DBIO[Int] = {
@@ -83,8 +87,11 @@ object MapTokens extends TableQuery(tag => new MapTokens(tag)) with LazyLogging 
     (MapTokens returning MapTokens).forceInsert(mapToken)
   }
 
-  def deleteMapToken(mapTokenId: UUID): DBIO[Int] = {
-    MapTokens.filter(_.id === mapTokenId).delete
+  def deleteMapToken(mapTokenId: UUID, user: User): DBIO[Int] = {
+    MapTokens
+      .filterToSharedOrganizationIfNotInRoot(user)
+      .filter(_.id === mapTokenId)
+      .delete
   }
 
   def updateMapToken(mapToken: MapToken, mapTokenId: UUID, user: User) = {

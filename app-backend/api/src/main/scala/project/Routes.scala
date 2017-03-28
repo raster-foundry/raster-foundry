@@ -94,7 +94,7 @@ trait ProjectRoutes extends Authentication
   def getProject(projectId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        Projects.getProject(projectId)
+        Projects.getProject(projectId, user)
       }
     }
   }
@@ -113,7 +113,7 @@ trait ProjectRoutes extends Authentication
   }
 
   def deleteProject(projectId: UUID): Route = authenticate { user =>
-    onSuccess(Projects.deleteProject(projectId)) {
+    onSuccess(Projects.deleteProject(projectId, user)) {
       case 1 => complete(StatusCodes.NoContent)
       case 0 => complete(StatusCodes.NotFound)
       case count => throw new IllegalStateException(

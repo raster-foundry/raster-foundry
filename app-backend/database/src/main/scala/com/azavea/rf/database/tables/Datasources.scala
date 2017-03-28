@@ -92,16 +92,25 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
   /** Given a datasource ID, attempt to retrieve it from the database
     *
     * @param datasourceId UUID ID of datasource to get from database
+    * @param user         Results will be limited to user's organization
     */
-  def getDatasource(datasourceId: UUID) =
-    Datasources.filter(_.id === datasourceId).result.headOption
+  def getDatasource(datasourceId: UUID, user: User) =
+    Datasources
+      .filterToSharedOrganizationIfNotInRoot(user)
+      .filter(_.id === datasourceId)
+      .result
+      .headOption
 
   /** Given a datasource ID, attempt to remove it from the database
     *
     * @param datasourceId UUID ID of datasource to remove
+    * @param user         Results will be limited to user's organization
     */
-  def deleteDatasource(datasourceId: UUID) =
-    Datasources.filter(_.id === datasourceId).delete
+  def deleteDatasource(datasourceId: UUID, user: User) =
+    Datasources
+      .filterToSharedOrganizationIfNotInRoot(user)
+      .filter(_.id === datasourceId)
+      .delete
 
 /** Update a datasource @param datasource Datasource to use for update
     * @param datasourceId UUID of datasource to update

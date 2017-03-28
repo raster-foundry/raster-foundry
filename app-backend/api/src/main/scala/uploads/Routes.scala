@@ -57,7 +57,7 @@ trait UploadRoutes extends Authentication
   def getUpload(uploadId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        readOne[Upload](Uploads.getUpload(uploadId))
+        readOne[Upload](Uploads.getUpload(uploadId, user))
       }
     }
   }
@@ -83,7 +83,7 @@ trait UploadRoutes extends Authentication
   }
 
   def deleteUpload(uploadId: UUID): Route = authenticate { user =>
-    onSuccess(drop(Uploads.deleteUpload(uploadId))) {
+    onSuccess(drop(Uploads.deleteUpload(uploadId, user))) {
       case 1 => complete(StatusCodes.NoContent)
       case 0 => complete(StatusCodes.NotFound)
       case count => throw new IllegalStateException(
@@ -94,7 +94,7 @@ trait UploadRoutes extends Authentication
 
   def getUploadCredentials(uploadId: UUID): Route = authenticate { user =>
     validateTokenHeader { jwt =>
-      onSuccess(readOne[Upload](Uploads.getUpload(uploadId))) {
+      onSuccess(readOne[Upload](Uploads.getUpload(uploadId, user))) {
         case Some(_) => complete(Auth0DelegationService.getCredentials(user, uploadId, jwt))
         case None => complete(StatusCodes.NotFound)
       }

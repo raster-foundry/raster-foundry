@@ -115,9 +115,14 @@ object ToolTags extends TableQuery(tag => new ToolTags(tag)) with LazyLogging {
   /** Given a tool tag ID, attempt to retrieve it from the database
     *
     * @param toolTagId UUID ID of tool tag to get from database
+    * @param user      Results will be limited to user's organization
     */
-  def getToolTag(toolTagId: UUID)(implicit database: DB): Future[Option[ToolTag]] = {
-    val fetchAction = ToolTags.filter(_.id === toolTagId).result.headOption
+  def getToolTag(toolTagId: UUID, user: User)(implicit database: DB): Future[Option[ToolTag]] = {
+    val fetchAction = ToolTags
+                        .filterToSharedOrganizationIfNotInRoot(user)
+                        .filter(_.id === toolTagId)
+                        .result
+                        .headOption
 
     database.db.run {
       fetchAction
@@ -127,10 +132,14 @@ object ToolTags extends TableQuery(tag => new ToolTags(tag)) with LazyLogging {
   /** Delete a given tool tag
     *
     * @param toolTagId UUID ID of tool tag to delete
+    * @param user      Results will be limited to user's organization
     */
-  def deleteToolTag(toolTagId: UUID)(implicit database: DB): Future[Int] = {
+  def deleteToolTag(toolTagId: UUID, user: User)(implicit database: DB): Future[Int] = {
     database.db.run {
-      ToolTags.filter(_.id === toolTagId).delete
+      ToolTags
+        .filterToSharedOrganizationIfNotInRoot(user)
+        .filter(_.id === toolTagId)
+        .delete
     }
   }
 
