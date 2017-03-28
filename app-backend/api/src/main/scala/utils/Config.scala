@@ -21,5 +21,7 @@ trait Config {
 
   val featureFlags = featureFlagConfig.getConfigList("features")
 
+  val dataBucket = s3Config.getString("dataBucket")
+  val userUploadPath = s3Config.getString("userUploadPath")
   val thumbnailBucket = s3Config.getString("thumbnailBucket")
 }
