@@ -1,6 +1,7 @@
 package com.azavea.rf.api.uploads
 
-import java.util.UUID
+import java.sql.Timestamp
+import java.util.{Date, UUID}
 
 import com.azavea.rf.api.utils.{Auth0Exception, Config}
 import com.azavea.rf.datamodel.User
@@ -8,6 +9,9 @@ import com.azavea.rf.datamodel.User
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
+
+import com.amazonaws.auth.{AWSCredentials, AWSSessionCredentials, AWSStaticCredentialsProvider}
+import com.amazonaws.services.s3.AmazonS3ClientBuilder
 
 import com.typesafe.scalalogging.LazyLogging
 
@@ -25,7 +29,11 @@ case class Credentials (
   Expiration: String,
   SecretAccessKey: String,
   SessionToken: String
-)
+) extends AWSCredentials with AWSSessionCredentials {
+  override def getAWSAccessKeyId = this.AccessKeyId
+  override def getAWSSecretKey = this.SecretAccessKey
+  override def getSessionToken = this.SessionToken
+}
 
 case class CredentialsWithBucketPath (
   credentials: Credentials,
@@ -50,6 +58,7 @@ object Auth0DelegationService extends Config with LazyLogging {
       "id_token" -> jwt,
       "target" -> auth0ClientId
     ).toEntity
+    val path = s"user-uploads/${user.id}/${uploadId.toString}"
 
     Http()
       .singleRequest(HttpRequest(
@@ -60,10 +69,24 @@ object Auth0DelegationService extends Config with LazyLogging {
       .flatMap {
         case HttpResponse(StatusCodes.OK, _, entity, _) =>
           Unmarshal(entity).to[Json].map(credentialsPath.getOption).map {
-            case Some(credentials) => CredentialsWithBucketPath(
-              credentials,
-              s"https://s3.amazonaws.com/${dataBucket}/user-uploads/${user.id}/${uploadId.toString}"
-            )
+            case Some(credentials) => {
+              val s3 = AmazonS3ClientBuilder.standard
+                         .withCredentials(new AWSStaticCredentialsProvider(credentials))
+                         .withRegion(region)
+                         .build()
+
+              // Add timestamp object to test credentials
+              val now = new Timestamp(new Date().getTime)
+              s3.putObject(
+                dataBucket,
+                s"${path}/RFUploadAccessTestFile",
+                s"Allow Upload Access for RF: ${path} at ${now.toString}"
+              )
+
+              val bucketUrl = s3.getUrl(dataBucket, path)
+
+              CredentialsWithBucketPath(credentials, bucketUrl.toString)
+            }
             case None => throw new Auth0Exception(
               StatusCodes.InternalServerError,
               "Missing credentials in AWS STS delegation response"
