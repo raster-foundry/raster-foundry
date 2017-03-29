@@ -1,6 +1,9 @@
 package geotrellis.raster.op
 
+import com.azavea.rf.tool.ast._
+
 import geotrellis.raster._
+import geotrellis.raster.render._
 
 import spire.syntax.cfor._
 import com.typesafe.scalalogging.LazyLogging
@@ -20,6 +23,7 @@ sealed trait Op extends TileLike with Grid with LazyLogging {
   def *(x: Int) = this.map((_: Int) * x)
   def *(x: Double) = this.mapDouble(_ * x)
   def *(other: Op) = this.dualCombine(other)(_ * _)(_ * _)
+  def classification(breaks: BreakMap[Double, Int]) = this.classify({ i => breaks(i) })
 
   def left: Op
   def right: Op
@@ -28,6 +32,9 @@ sealed trait Op extends TileLike with Grid with LazyLogging {
   def get(col: Int, row: Int): Int
   def getDouble(col: Int, row: Int): Double
   def fullyBound: Boolean
+
+  def classify(f: Double => Int) =
+    Op.Classify(this, f)
 
   def map(f: Int => Int): Op.Tree =
     Op.MapInt(this, f)
@@ -177,6 +184,14 @@ object Op {
     def left = Op.Nil
     def right = Op.Nil
     def bind(args: Map[Var, Op]): Op = this
+  }
+
+  case class Classify(left: Op, f: Double => Int) extends Tree {
+    def get(col: Int, row: Int) = f(left.getDouble(col, row))
+    def getDouble(col: Int, row: Int) = i2d(get(col, row))
+    def right = Op.Nil
+    def bind(args: Map[Var, Op]): Op =
+      Classify(left.bind(args), f)
   }
 
   case class MapInt(left: Op, f: Int => Int) extends Tree {

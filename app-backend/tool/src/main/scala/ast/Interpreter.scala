@@ -30,6 +30,16 @@ object Interpreter {
       }
     }
 
+    def evalS(
+      futureTile: Future[Option[Op]],
+      f: Op => Op
+    ): Future[Option[Op]] = {
+      for (tile <- futureTile) yield {
+        val maybeTile = if (tile.isDefined) tile else None
+        maybeTile.map(f)
+      }
+    }
+
     (z: Int, x: Int, y: Int) => {
       def eval(ast: MapAlgebraAST): Future[Option[Op]] = ast match {
         case RFMLRasterSource(id, label, rasterRef) =>
@@ -48,6 +58,9 @@ object Interpreter {
 
         case Division(args, _, _) =>
           evalF(args.map(eval),  _ / _)
+
+        case Classification(args, _, _, breaks) =>
+          evalS(eval(args.head), _.classify(breaks.toBreakMap))
       }
 
       if (ast.evaluable) eval(ast)
