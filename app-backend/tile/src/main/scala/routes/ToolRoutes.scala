@@ -12,6 +12,7 @@ import com.azavea.rf.tool.ast._
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
+import io.circe.generic.auto._
 import geotrellis.raster._
 import geotrellis.raster.render._
 import geotrellis.raster.io._
