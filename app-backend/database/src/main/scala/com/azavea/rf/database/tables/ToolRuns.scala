@@ -16,6 +16,8 @@ import com.azavea.rf.database.query._
 import io.circe.Json
 
 class ToolRuns(_TableTag: Tag) extends Table[ToolRun](_TableTag, "tool_runs")
+    with UserFkVisibleFields
+    with OrganizationFkFields
     with TimestampFields {
   def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, visibility,
            organizationId, projectId, toolId, execution_parameters) <> (ToolRun.tupled, ToolRun.unapply _)
@@ -33,7 +35,7 @@ class ToolRuns(_TableTag: Tag) extends Table[ToolRun](_TableTag, "tool_runs")
 
   lazy val createdByUserFK = foreignKey("tool_runs_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val modifiedByUserFK = foreignKey("tool_runs_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
-  lazy val organizationFK = foreignKey("tool_runs_organization_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val organizationsFk = foreignKey("tool_runs_organization_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val projectFK = foreignKey("tool_runs_project_fkey", projectId, Projects)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val toolFK = foreignKey("tool_runs_tool_fkey", toolId, Tools)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 
