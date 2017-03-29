@@ -18,7 +18,7 @@ class MapAlgebraASTParsingSpec extends FunSpec with Matchers {
     (red - nir) / (red + nir)
 
   def ndviDiff(red1: MapAlgebraAST, nir1: MapAlgebraAST, red2: MapAlgebraAST, nir2: MapAlgebraAST, breaks: ClassBreaks): MapAlgebraAST =
-    ndvi(red1, nir1).reclassify(breaks) - ndvi(red2, nir2).reclassify(breaks)
+    ndvi(red1, nir1).classify(breaks) - ndvi(red2, nir2).classify(breaks)
 
 
   it("Can round trip an NDVI difference definition") {
@@ -36,7 +36,7 @@ class MapAlgebraASTParsingSpec extends FunSpec with Matchers {
   it("Can round trip an arbitrary symbol trees") {
     val src = MapAlgebraAST.RFMLRasterSource.empty
     val classBreaks = ClassBreaks(Map())
-    val tree = (src - src + src * src / src).reclassify(classBreaks)
+    val tree = (src - src + src * src / src).classify(classBreaks)
 
     val jsonOut1 = tree.asJson
     val jsonIn = jsonOut1.as[MapAlgebraAST].toOption
