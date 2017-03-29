@@ -1,10 +1,11 @@
 /* globals Auth0Lock */
+
 import assetLogo from '../../../assets/images/logo-raster-foundry.png';
 export default (app) => {
     class AuthService {
         constructor( // eslint-disable-line max-params
             lock, jwtHelper, $q, featureFlagOverrides, featureFlags,
-            $state, APP_CONFIG, localStorage
+            $state, APP_CONFIG, localStorage, rollbarWrapperService
         ) {
             this.lock = lock;
             this.localStorage = localStorage;
@@ -13,6 +14,7 @@ export default (app) => {
             this.$state = $state;
             this.featureFlags = featureFlags;
             this.featureFlagOverrides = featureFlagOverrides;
+            this.rollbarWrapperService = rollbarWrapperService;
 
             let passResetOptions = {
                 initialScreen: 'forgotPassword',
@@ -119,6 +121,7 @@ export default (app) => {
                     return configFlags.includes(flag.key);
                 });
                 this.featureFlags.set(flagOverrides);
+                this.rollbarWrapper.init(profile);
                 this.isLoggedIn = true;
                 this.lock.hide();
                 if (authResult.refreshToken) {
@@ -147,6 +150,7 @@ export default (app) => {
         logout() {
             this.localStorage.remove('id_token');
             this.localStorage.remove('profile');
+            this.rollbarWrapperService.init();
             this.isLoggedIn = false;
             this.$state.go('login');
         }

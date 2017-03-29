@@ -1,5 +1,6 @@
 function runBlock( // eslint-disable-line max-params
-    $rootScope, jwtHelper, $state, $location, APP_CONFIG, authService, localStorage
+    $rootScope, jwtHelper, $state, $location, APP_CONFIG,
+    authService, localStorage, rollbarWrapperService
 ) {
     'ngInject';
 
@@ -9,7 +10,10 @@ function runBlock( // eslint-disable-line max-params
             $state.go('error');
         } else if (toState.name !== 'login' && !authService.verifyAuthCache()) {
             e.preventDefault();
+            rollbarWrapperService.init();
             $state.go('login');
+        } else {
+            rollbarWrapperService.init(authService.profile());
         }
     });
 
@@ -17,9 +21,11 @@ function runBlock( // eslint-disable-line max-params
         let token = localStorage.get('id_token');
         if (token) {
             if (!authService.verifyAuthCache()) {
+                rollbarWrapperService.init();
                 authService.login(token);
             }
         } else {
+            rollbarWrapperService.init();
             $state.go('login');
         }
     });

@@ -397,7 +397,7 @@ function routeConfig($urlRouterProvider, $stateProvider) {
             controllerAs: '$ctrl'
         });
 
-    $urlRouterProvider.otherwise('/home/');
+    $urlRouterProvider.otherwise('/home');
 }
 
 
