@@ -13,6 +13,7 @@ import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
 import io.circe.generic.auto._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 import geotrellis.raster._
 import geotrellis.raster.render._
 import geotrellis.raster.io._
@@ -26,11 +27,6 @@ import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes}
 import com.typesafe.scalalogging.LazyLogging
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
-import spray.json._
-//import cats.implicits._
-//import org.scalatest._
-//import cats.syntax.either._
 import cats.data._
 import cats.implicits._
 
