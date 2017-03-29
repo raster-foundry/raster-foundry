@@ -7,7 +7,7 @@ function config( // eslint-disable-line max-params
     $logProvider, $compileProvider,
     jwtInterceptorProvider,
     $httpProvider, configProvider, APP_CONFIG,
-    lockProvider, featureFlagsProvider
+    lockProvider, featureFlagsProvider, RollbarProvider
 ) {
     'ngInject';
 
@@ -64,6 +64,14 @@ function config( // eslint-disable-line max-params
                 return $q.reject(rejection);
             }
         };
+    });
+
+    RollbarProvider.init({
+        accessToken: APP_CONFIG.rollbarClientToken,
+        captureUncaught: true,
+        payload: {
+            environment: process.env.NODE_ENV || 'production'
+        }
     });
 
     configProvider.init(process.env);

@@ -6,7 +6,7 @@ import rollbar
 logger = logging.getLogger(__name__)
 
 environment = os.getenv('ENVIRONMENT')
-rollbar_token = os.getenv('ROLLBAR_API_TOKEN')
+rollbar_token = os.getenv('ROLLBAR_SERVER_TOKEN')
 
 # Avoid use of threads by default in case the worker exits before sending message
 rollbar.init(rollbar_token, environment, handler='blocking')
@@ -26,7 +26,7 @@ def wrap_rollbar(func):
             if all([environment, rollbar_token]):
                 rollbar.report_exc_info()
             else:
-                logger.warning('Both ENVIRONMENT and ROLLBAR_API_TOKEN must be set to log exceptions to rollbar')
+                logger.warning('Both ENVIRONMENT and ROLLBAR_SERVER_TOKEN must be set to log exceptions to rollbar')
             raise
 
     return func_wrapper

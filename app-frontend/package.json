@@ -49,6 +49,7 @@
     "leaflet-draw": "~0.4.7",
     "lodash": "~4.5.0",
     "ng-infinite-scroll": "~1.3.0",
+    "ng-rollbar": "^1.9.2",
     "nvd3": "~1.8.4",
     "svg-pan-zoom": "ariutta/svg-pan-zoom",
     "webpack-fail-plugin": "^1.0.6"
