@@ -4,9 +4,10 @@ import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 import io.gatling.http.request.builder.HttpRequestBuilder
 import com.typesafe.config.ConfigFactory
-import geotrellis.proj4.LatLng
+import geotrellis.proj4._
+import geotrellis.spark._
 import geotrellis.spark.tiling._
-import geotrellis.vector.Extent
+import geotrellis.vector._
 
 import scala.concurrent.duration._
 import scala.collection.JavaConverters._
@@ -14,35 +15,19 @@ import scala.util.Random
 import java.util.UUID
 
 object TmsUtils {
-  /** Provided zoom and lat, generate a tile's Y coord */
-  def getTileY(lat: Double, zoom: Int):  Int = {
-    val zoomRes = 1 << zoom // one dimensional resolution
-    val yIdx = Math.floor((1 - Math.log(Math.tan(Math.toRadians(lat)) + 1 / Math.cos(Math.toRadians(lat))) / Math.PI) / 2 * zoomRes)
-
-    if (yIdx < 0)
-      0
-    else if (yIdx >= zoomRes)
-      zoomRes - 1
-    else
-      yIdx.toInt
-  }
-
-  /** Provided zoom and lon, generate a tile's X coord */
-  def getTileX(lon: Double, zoom: Int): Int = {
-    val zoomRes = 1 << zoom // one dimensional resolution
-    val xIdx = Math.floor((lon + 180) / 360 * zoomRes)
-
-    if (xIdx < 0)
-      0
-    else if (xIdx >= zoomRes)
-      zoomRes - 1
-    else
-      xIdx.toInt
-  }
+  val pyramid = {
+    val scheme = ZoomedLayoutScheme(WebMercator)
+    for (z <- 1 to 30) yield {
+      z -> scheme.levelForZoom(z)
+    }
+  }.toMap
 
   /** Given lat, lon, and zoom, generate a canonical (z, x, y) TMS index */
-  def getTileZXY(lat: Double, lon: Double, zoom: Int) =
-    (zoom, getTileX(lon, zoom), getTileY(lat, zoom))
+  def getTileZXY(lat: Double, lon: Double, zoom: Int) = {
+    val p = Point(lon, lat).reproject(LatLng, WebMercator)
+    val SpatialKey(x, y) = pyramid(zoom).layout.mapTransform(p)
+    (zoom, x, y)
+  }
 
   /** For a given lat, long, and zoom, generate a full screen (up to 16 tile
     *  requests) of TMS tile indices.
@@ -73,14 +58,14 @@ object TmsUtils {
   // Functions for random values
   val rnd = new Random(Config.TMS.randomSeed)
   def randomLat(min: Double = -90, max: Double = 90) = {
-    val minVal = Math.min(min, -90)
+    val minVal = Math.max(min, -90)
     val maxVal = Math.max(minVal, Math.min(max, 90))
     val range = maxVal - minVal
     (rnd.nextDouble() * range) + minVal
   }
 
   def randomLon(min: Double = -180, max: Double = 180) = {
-    val minVal = Math.min(min, -180)
+    val minVal = Math.max(min, -180)
     val maxVal = Math.max(minVal, Math.min(max, 180))
     val range = maxVal - minVal
     (rnd.nextDouble() * range) + minVal
@@ -97,7 +82,7 @@ object TmsUtils {
 
   /** Random TMS indices constrained by a provided bounding box and bounding zoom levels */
   def randomTileIdxsForBBox(bbox: Extent = LatLng.worldExtent, minZoom: Int = 1, maxZoom: Int = 20): Seq[(Int, Int, Int)] =
-    tileIdxsForScreen(randomLat(bbox.xmin, bbox.xmax), randomLon(bbox.ymin, bbox.ymax), randomZoom(minZoom, maxZoom))
+    tileIdxsForScreen(randomLat(bbox.ymin, bbox.ymax), randomLon(bbox.xmin, bbox.xmax), randomZoom(minZoom, maxZoom))
 
   /** A gatling [[Feeder] instance for generating requests that mimic TMS requests */
   def randomTileFeeder(bbox: Extent = LatLng.worldExtent, minZoom: Int = 1, maxZoom: Int = 20) = {
@@ -106,4 +91,3 @@ object TmsUtils {
     }
   }
 }
-
