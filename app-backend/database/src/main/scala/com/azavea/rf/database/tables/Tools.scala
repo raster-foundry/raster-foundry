@@ -127,10 +127,12 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
     *
     * @param page page request that has limit, offset, and sort parameters
     */
-  def listTools(page: PageRequest)(implicit database: DB):
+  def listTools(page: PageRequest, user: User)(implicit database: DB):
       Future[PaginatedResponse[Tool.WithRelated]] = {
 
-    val pagedTools = Tools
+    val accessibleTools = Tools.filterToSharedOrganizationIfNotInRoot(user)
+
+    val pagedTools = accessibleTools
       .sort(page.sort)
       .drop(page.offset * page.limit)
       .take(page.limit)
@@ -146,7 +148,7 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
       groupByTool
     }
 
-    val nToolsAction = Tools.length.result
+    val nToolsAction = accessibleTools.length.result
     logger.debug(s"Counting tools -- SQL: ${nToolsAction.statements.headOption}")
     val totalToolsResult = database.db.run {
       nToolsAction

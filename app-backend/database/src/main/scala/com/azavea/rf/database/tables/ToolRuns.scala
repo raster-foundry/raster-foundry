@@ -58,9 +58,10 @@ object ToolRuns extends TableQuery(tag => new ToolRuns(tag)) with LazyLogging {
       .headOption
 
   def listToolRuns(offset: Int, limit: Int,
-                   toolRunParams: CombinedToolRunQueryParameters): ListQueryResult[ToolRun] = {
+                   toolRunParams: CombinedToolRunQueryParameters, user: User): ListQueryResult[ToolRun] = {
     val dropRecords = limit * offset
-    val toolRunFilterQuery = ToolRuns
+    val accessibleToolRuns = ToolRuns.filterToSharedOrganizationIfNotInRoot(user)
+    val toolRunFilterQuery = accessibleToolRuns
       .filterByTimestamp(toolRunParams.timestampParams)
       .filterByToolRunParams(toolRunParams.toolRunParams)
 
@@ -69,7 +70,7 @@ object ToolRuns extends TableQuery(tag => new ToolRuns(tag)) with LazyLogging {
          .drop(dropRecords)
          .take(limit)
          .result):DBIO[Seq[ToolRun]],
-      ToolRuns.length.result
+      accessibleToolRuns.length.result
     )
   }
 

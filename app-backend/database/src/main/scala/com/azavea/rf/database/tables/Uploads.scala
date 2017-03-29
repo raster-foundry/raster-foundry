@@ -65,16 +65,17 @@ object Uploads extends TableQuery(tag => new Uploads(tag)) with LazyLogging {
     * @param limit Int limit of objects per page
     * @param queryParams UploadQueryparameters query parameters for request
     */
-  def listUploads(offset: Int, limit: Int, queryParams: UploadQueryParameters) = {
+  def listUploads(offset: Int, limit: Int, queryParams: UploadQueryParameters, user: User) = {
 
     val dropRecords = limit * offset
+    val accessibleUploads = Uploads.filterToSharedOrganizationIfNotInRoot(user)
     ListQueryResult[Upload](
-      (Uploads
+      (accessibleUploads
          .filterByUploadParams(queryParams)
          .drop(dropRecords)
          .take(limit)
          .result):DBIO[Seq[Upload]],
-      Uploads.length.result
+      accessibleUploads.length.result
     )
   }
 

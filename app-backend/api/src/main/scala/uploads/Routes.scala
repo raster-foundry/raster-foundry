@@ -48,7 +48,7 @@ trait UploadRoutes extends Authentication
     (withPagination & uploadQueryParams) {
       (page: PageRequest, queryParams: UploadQueryParameters) =>
       complete {
-        list[Upload](Uploads.listUploads(page.offset, page.limit, queryParams),
+        list[Upload](Uploads.listUploads(page.offset, page.limit, queryParams, user),
           page.offset, page.limit)
       }
     }
