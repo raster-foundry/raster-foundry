@@ -55,49 +55,6 @@ class ThumbnailSpec extends WordSpec
   // Alias to baseRoutes to be explicit
   val baseRoutes = routes
 
-  "Creating a row" should {
-    "add a row to the table" ignore {
-      val result = Thumbnails.insertThumbnail(baseThumbnailRow)
-      assert(result === Success)
-    }
-  }
-
-  "Getting a row" should {
-    "return the expected row" ignore {
-      assert(Thumbnails.getThumbnail(uuid) === baseThumbnailRow)
-    }
-  }
-
-  "Updating a row" should {
-    "change the expected values" ignore {
-      val newThumbnailsRow = Thumbnail(
-        uuid,
-        new Timestamp(1234687268),
-        new Timestamp(1234687268),
-        uuid,
-        256,
-        128,
-        uuid,
-        "https://website.com",
-        ThumbnailSize.Large
-      )
-      val result = Thumbnails.updateThumbnail(newThumbnailsRow, uuid)
-      assert(result === 1)
-      Thumbnails.getThumbnail(uuid) map {
-        case Some(resp) => assert(resp.widthPx === 256)
-        case _ => Failure(new Exception("Field not updated successfully"))
-      }
-    }
-  }
-
-  "Deleting a row" should {
-    "remove a row from the table" ignore {
-      val result = Thumbnails.deleteThumbnail(uuid)
-      assert(result === 1)
-    }
-  }
-
-
   "/api/thumbnails/{uuid}" should {
     "return a 404 for non-existent thumbnail" ignore {
       Get(s"${baseThumbnail}${publicOrgId}") ~> Route.seal(baseRoutes) ~> check {
