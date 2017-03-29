@@ -157,7 +157,9 @@ object ToolTags extends TableQuery(tag => new ToolTags(tag)) with LazyLogging {
     val updateTime = new Timestamp((new java.util.Date).getTime)
 
     val updateToolTagQuery = for {
-      updateToolTag <- ToolTags.filter(_.id === toolTagId)
+      updateToolTag <- ToolTags
+                         .filterToSharedOrganizationIfNotInRoot(user)
+                         .filter(_.id === toolTagId)
     } yield (updateToolTag.modifiedAt, updateToolTag.modifiedBy, updateToolTag.tag)
 
     database.db.run {

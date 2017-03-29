@@ -100,7 +100,7 @@ trait ThumbnailRoutes extends Authentication
   def updateThumbnail(thumbnailId: UUID): Route = authenticate { user =>
     entity(as[Thumbnail]) { updatedThumbnail =>
       authorize(user.isInRootOrSameOrganizationAs(updatedThumbnail)) {
-        onSuccess(Thumbnails.updateThumbnail(updatedThumbnail, thumbnailId)) {
+        onSuccess(Thumbnails.updateThumbnail(updatedThumbnail, thumbnailId, user)) {
           case 1 => complete(StatusCodes.NoContent)
           case 0 => complete(StatusCodes.NotFound)
           case count => throw new IllegalStateException(

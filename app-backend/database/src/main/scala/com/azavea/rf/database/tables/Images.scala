@@ -189,7 +189,9 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
     val bands = image.bands
 
     val updateImageQuery = for {
-      updateImage <- Images.filter(_.id === imageId)
+      updateImage <- Images
+                       .filterToSharedOrganizationIfNotInRoot(user)
+                       .filter(_.id === imageId)
     } yield (
       updateImage.modifiedAt, updateImage.modifiedBy, updateImage.rawDataBytes,
       updateImage.visibility, updateImage.filename, updateImage.sourceuri,

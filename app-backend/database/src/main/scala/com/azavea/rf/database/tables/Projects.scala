@@ -228,7 +228,9 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     val updateTime = new Timestamp((new Date).getTime)
 
     val updateProjectQuery = for {
-      updateProject <- Projects.filter(_.id === projectId)
+      updateProject <- Projects
+                         .filterToSharedOrganizationIfNotInRoot(user)
+                         .filter(_.id === projectId)
     } yield (
       updateProject.modifiedAt, updateProject.modifiedBy, updateProject.name, updateProject.description,
       updateProject.visibility, updateProject.tileVisibility, updateProject.tags
