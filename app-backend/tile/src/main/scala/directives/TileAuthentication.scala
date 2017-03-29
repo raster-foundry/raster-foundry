@@ -39,8 +39,8 @@ trait TileAuthentication extends Authentication
   }
 
   def isProjectPublic(id: UUID): Directive1[Boolean] =
-    onSuccess(Projects.getProject(id)).flatMap {
-      case Some(project) => provide(project.tileVisibility == Visibility.Public)
+    onSuccess(Projects.getPublicProject(id)).flatMap {
+      case Some(_) => provide(true)
       case _ => provide(false)
     }
 

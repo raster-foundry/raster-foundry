@@ -58,7 +58,7 @@ object LayerCache extends Config with LazyLogging {
 
   def layerUri(layerId: UUID)(implicit ec: ExecutionContext): OptionT[Future, String] = {
     layerUriCache.get(layerId, _ => blocking {
-      OptionT(Scenes.getScene(layerId).map(_.flatMap(_.ingestLocation)))
+      OptionT(Scenes.getSceneForCaching(layerId).map(_.flatMap(_.ingestLocation)))
     })
   }
 

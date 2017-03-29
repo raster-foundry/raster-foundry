@@ -143,10 +143,26 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     }.map(Scene.WithRelated.fromRecords)
   }
 
-  /** Get project given a projectId
+  /** Get public project given a projectId
     *
     * @param projectId UUID primary key of project to retrieve
-    * @user user       Results will be limited to user's organization
+    */
+  def getPublicProject(projectId: UUID)
+                      (implicit database: DB): Future[Option[Project]] = {
+
+    database.db.run {
+      Projects
+        .filter(_.tileVisibility === Visibility.fromString("PUBLIC"))
+        .filter(_.id === projectId)
+        .result
+        .headOption
+    }
+  }
+
+  /** Get project given a projectId and user
+    *
+    * @param projectId UUID primary key of project to retrieve
+    * @param user      Results will be limited to user's organization
     */
   def getProject(projectId: UUID, user: User)
                (implicit database: DB): Future[Option[Project]] = {

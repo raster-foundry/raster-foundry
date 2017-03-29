@@ -255,6 +255,24 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     }
   }
 
+  /** Retrieve single scene from database for caching purposes
+    * This does not filter by user and should not be used by standard routes.
+    *
+    * @param sceneId java.util.UUID ID of scene to query with
+    */
+  def getSceneForCaching(sceneId: UUID)
+                        (implicit database: DB): Future[Option[Scene.WithRelated]] = {
+
+    database.db.run {
+      Scenes
+        .filter(_.id === sceneId)
+        .joinWithRelated
+        .result
+    } map { result =>
+      Scene.WithRelated.fromRecords(result).headOption
+    }
+  }
+
   /** Filter scenes based on scene query parameters
     *
     * For reuse in other tables that need to filter scenes, e.g., projects
