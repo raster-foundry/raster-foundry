@@ -36,7 +36,7 @@ trait ToolTagRoutes extends Authentication with PaginationDirectives with UserEr
   def listToolTags: Route = authenticate { user =>
     (withPagination) { (page) =>
       complete {
-        ToolTags.listToolTags(page)
+        ToolTags.listToolTags(page, user)
       }
     }
   }

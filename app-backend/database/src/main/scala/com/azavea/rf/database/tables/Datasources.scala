@@ -61,12 +61,13 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
     *
     * @param pageRequest PageRequest information about sorting and page size
     */
-  def listDatasources(offset: Int, limit: Int, datasourceParams: DatasourceQueryParameters) = {
+  def listDatasources(offset: Int, limit: Int, datasourceParams: DatasourceQueryParameters, user: User) = {
 
     val dropRecords = limit * offset
+    val accessibleDatasources = Datasources.filterToSharedOrganizationIfNotInRoot(user)
     val datasourceFilterQuery = datasourceParams.name match {
-      case Some(n) => Datasources.filter(_.name === n)
-      case _ => Datasources
+      case Some(n) => accessibleDatasources.filter(_.name === n)
+      case _ => accessibleDatasources
     }
 
     ListQueryResult[Datasource](

@@ -58,7 +58,7 @@ trait ThumbnailRoutes extends Authentication
   def listThumbnails: Route = authenticate { user =>
     (withPagination & thumbnailSpecificQueryParameters) { (page, thumbnailParams) =>
       complete {
-        Thumbnails.listThumbnails(page, thumbnailParams)
+        Thumbnails.listThumbnails(page, thumbnailParams, user)
       }
     }
   }

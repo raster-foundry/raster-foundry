@@ -38,7 +38,7 @@ trait ToolRoutes extends Authentication
   def listTools: Route = authenticate { user =>
     (withPagination) { (page) =>
       complete {
-        Tools.listTools(page)
+        Tools.listTools(page, user)
       }
     }
   }
