@@ -25,7 +25,6 @@ import cats.data._
 import cats.implicits._
 
 import com.typesafe.scalalogging.LazyLogging
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * ValueReaders need to read layer metadata in order to know how to decode (x/y) queries into resource reads.
@@ -40,33 +39,42 @@ object LayerCache extends Config with LazyLogging {
   implicit val database = Database.DEFAULT
 
   val memcachedClient = KryoMemcachedClient.DEFAULT
+  private val histogramCache = HeapBackedMemcachedClient(memcachedClient)
+  private val tileCache = HeapBackedMemcachedClient(memcachedClient)
 
-  /** The caffeine cache to use for attribute stores */
-  private val attributeStoreCache: ScaffeineCache[UUID, OptionT[Future, AttributeStore]] =
+  private val layerUriCache: ScaffeineCache[UUID, OptionT[Future, String]] =
     Scaffeine()
       .recordStats()
       .expireAfterAccess(5.minutes)
       .maximumSize(500)
-      .build[UUID, OptionT[Future, AttributeStore]]
+      .build[UUID, OptionT[Future, String]]
 
-  private val histogramCache = HeapBackedMemcachedClient(memcachedClient)
-  private val tileCache = HeapBackedMemcachedClient(memcachedClient)
-  private val layerLocationCache = HeapBackedMemcachedClient(memcachedClient)
+  private val attributeStoreCache: ScaffeineCache[UUID, OptionT[Future, (AttributeStore, Map[String, Int])]] =
+    Scaffeine()
+      .recordStats()
+      .expireAfterAccess(5.minutes)
+      .maximumSize(500)
+      .build[UUID, OptionT[Future, (AttributeStore, Map[String, Int])]]
 
-  def layerUri(layerId: UUID): OptionT[Future, String] = OptionT {
-    layerLocationCache.caching(s"layer-uri-${layerId.toString}") { _ =>
-      Scenes.getScene(layerId).map(_.flatMap(_.ingestLocation))
-    }
+  def layerUri(layerId: UUID)(implicit ec: ExecutionContext): OptionT[Future, String] = {
+    layerUriCache.get(layerId, _ => blocking {
+      OptionT(Scenes.getScene(layerId).map(_.flatMap(_.ingestLocation)))
+    })
   }
 
-  def attributeStoreForLayer(layerId: UUID): OptionT[Future, AttributeStore] = {
+  def attributeStoreForLayer(layerId: UUID)(implicit ec: ExecutionContext): OptionT[Future, (AttributeStore, Map[String, Int])] = {
     attributeStoreCache.get(layerId, _ =>
       layerUri(layerId).mapFilter { catalogUri =>
         for (result <- S3UrlRx.findFirstMatchIn(catalogUri)) yield {
           val bucket = result.group("bucket")
           val prefix = result.group("prefix")
           // TODO: Decide if we should verify URI is valid. This may be a store that always fails to read
-          S3AttributeStore(bucket, prefix)
+
+          val store = S3AttributeStore(bucket, prefix)
+          val maxZooms: Map[String, Int] = blocking {
+            store.layerIds.groupBy(_.name).mapValues(_.map(_.zoom).max)
+          }
+          (store, maxZooms)
         }
       }
     )
@@ -74,24 +82,26 @@ object LayerCache extends Config with LazyLogging {
 
   def layerHistogram(layerId: UUID, zoom: Int): OptionT[Future, Array[Histogram[Double]]] = {
     histogramCache.cachingOptionT(s"histogram-$layerId-$zoom") { implicit ec =>
-      attributeStoreForLayer(layerId).map { store =>
+      attributeStoreForLayer(layerId).map { case (store, _) => blocking {
         store.read[Array[Histogram[Double]]](LayerId(layerId.toString, 0), "histogram")
-      }
+      }}
     }
   }
 
   def layerTile(layerId: UUID, zoom: Int, key: SpatialKey): OptionT[Future, MultibandTile] = {
     tileCache.cachingOptionT(s"tile-$layerId-$zoom-${key.col}-${key.row}") { implicit ec =>
-      attributeStoreForLayer(layerId).mapFilter { store =>
+      attributeStoreForLayer(layerId).mapFilter { case (store, _) =>
         val reader = new S3ValueReader(store).reader[SpatialKey, MultibandTile](LayerId(layerId.toString, zoom))
-        Try {
-          reader.read(key)
-        } match {
-          case Success(tile) => Option(tile)
-          case Failure(e: ValueNotFoundError) => None
-          case Failure(e) =>
-            logger.error(s"Reading layer $layerId at $key: ${e.getMessage}")
-            None
+        blocking {
+          Try {
+            reader.read(key)
+          } match {
+            case Success(tile) => Option(tile)
+            case Failure(e: ValueNotFoundError) => None
+            case Failure(e) =>
+              logger.error(s"Reading layer $layerId at $key: ${e.getMessage}")
+              None
+          }
         }
       }
     }
@@ -99,20 +109,22 @@ object LayerCache extends Config with LazyLogging {
 
   def layerTileForExtent(layerId: UUID, zoom: Int, extent: Extent): OptionT[Future, MultibandTile] = {
     tileCache.cachingOptionT(s"extent-tile-$layerId-$zoom-$extent") { implicit ec =>
-      attributeStoreForLayer(layerId).mapFilter { store =>
-        Try {
-          S3CollectionLayerReader(store)
-            .query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](LayerId(layerId.toString, zoom))
-            .where(Intersects(extent))
-            .result
-            .stitch
-            .crop(extent)
-            .tile
-        } match {
-          case Success(tile) => Option(tile)
-          case Failure(e) =>
-            logger.error(s"Query layer $layerId at zoom $zoom for $extent: ${e.getMessage}")
-            None
+      attributeStoreForLayer(layerId).mapFilter { case (store, _) =>
+        blocking {
+          Try {
+            S3CollectionLayerReader(store)
+              .query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](LayerId(layerId.toString, zoom))
+              .where(Intersects(extent))
+              .result
+              .stitch
+              .crop(extent)
+              .tile
+          } match {
+            case Success(tile) => Option(tile)
+            case Failure(e) =>
+              logger.error(s"Query layer $layerId at zoom $zoom for $extent: ${e.getMessage}")
+              None
+          }
         }
       }
     }

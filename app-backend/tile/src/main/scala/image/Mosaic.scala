@@ -28,30 +28,18 @@ object Mosaic {
   val memcachedClient = LayerCache.memcachedClient
   val memcached = HeapBackedMemcachedClient(LayerCache.memcachedClient)
 
-  /** Cache the result of metadata queries that may have required walking up the pyramid to find suitable layers */
-
-  /** The caffeine cache to use for tile layer metadata */
-  val tileLayerMetadataCache: ScaffeineCache[String, Future[Option[(Int, TileLayerMetadata[SpatialKey])]]] =
-    Scaffeine()
-      .recordStats()
-      .expireAfterAccess(5.minutes)
-      .maximumSize(500)
-      .build[String, Future[Option[(Int, TileLayerMetadata[SpatialKey])]]]()
-
   def tileLayerMetadata(id: UUID, zoom: Int)(implicit database: Database): OptionT[Future, (Int, TileLayerMetadata[SpatialKey])] = {
-    // TODO: use a way to get the closest zoom level without multiple reads
-    def readMetadata(store: AttributeStore, tryZoom: Int): Option[(Int, TileLayerMetadata[SpatialKey])] =
-      try {
-        Some(tryZoom -> store.readMetadata[TileLayerMetadata[SpatialKey]](LayerId(id.toString, tryZoom)))
-      } catch {
-        case e: AttributeNotFoundError if tryZoom > 0 => readMetadata(store, tryZoom - 1)
+    LayerCache.attributeStoreForLayer(id).mapFilter { case (store, pyramidMaxZoom) =>
+      // because metadata attributes are cached in AttributeStore itself, there is no point caching this function
+      val layerName = id.toString
+      for (maxZoom <- pyramidMaxZoom.get(layerName)) yield {
+        val z = if (zoom > maxZoom) maxZoom else zoom
+        blocking {
+          z -> store.readMetadata[TileLayerMetadata[SpatialKey]](LayerId(layerName, z))
+        }
       }
-
-    memcached.cachingOptionT[(Int, TileLayerMetadata[SpatialKey])](s"mosaic-tlm-$id-$zoom") { _ =>
-      LayerCache.attributeStoreForLayer(id).mapFilter { store => readMetadata(store, zoom) }
     }
   }
-
 
   def mosaicDefinition(projectId: UUID, tagttl: Option[TagWithTTL])(implicit db: Database): OptionT[Future, Seq[MosaicDefinition]] = {
     val cacheKey = tagttl match {
