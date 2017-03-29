@@ -23,8 +23,7 @@ trait MapAlgebraOperationCodecs {
       case Some("/") => ma.as[MapAlgebraAST.Division]
       case Some("*") => ma.as[MapAlgebraAST.Multiplication]
       case Some("mask") => ma.as[MapAlgebraAST.Masking]
-      case Some("intReclassify") => ma.as[MapAlgebraAST.IntReclassification]
-      case Some("doubleReclassify") => ma.as[MapAlgebraAST.DoubleReclassification]
+      case Some("classify") => ma.as[MapAlgebraAST.Classification]
       case Some(unrecognized) =>
         throw new InvalidParameterException(s"'$unrecognized' is not a recognized map algebra operation")
       case None =>
@@ -44,10 +43,8 @@ trait MapAlgebraOperationCodecs {
         multiplication.asJson
       case masking: MapAlgebraAST.Masking =>
         masking.asJson
-      case reclassification: MapAlgebraAST.IntReclassification =>
-        reclassification.asJson
-      case reclassification: MapAlgebraAST.DoubleReclassification =>
-        reclassification.asJson
+      case classification: MapAlgebraAST.Classification =>
+        classification.asJson
       case operation =>
         throw new InvalidParameterException(s"Encoder for $operation not yet implemented")
     }
@@ -79,14 +76,9 @@ trait MapAlgebraOperationCodecs {
   implicit lazy val encodeMasking: Encoder[MapAlgebraAST.Masking] =
     Encoder.forProduct4("apply", "args", "id", "label")(op => (op.symbol, op.args, op.id, op.label))
 
-  implicit lazy val decodeIntReclassification: Decoder[MapAlgebraAST.IntReclassification] =
-    Decoder.forProduct4("args", "id", "label", "classBreaks")(MapAlgebraAST.IntReclassification.apply _)
-  implicit lazy val encodeIntReclassification: Encoder[MapAlgebraAST.IntReclassification] =
-    Encoder.forProduct5("apply", "args", "id", "label", "classBreaks")(op => (op.symbol, op.args, op.id, op.label, op.classBreaks))
-
-  implicit lazy val decodeDoubleReclassification: Decoder[MapAlgebraAST.DoubleReclassification] =
-    Decoder.forProduct4("args", "id", "label", "classBreaks")(MapAlgebraAST.DoubleReclassification.apply _)
-  implicit lazy val encodeDoubleReclassification: Encoder[MapAlgebraAST.DoubleReclassification] =
+  implicit lazy val decodeClassification: Decoder[MapAlgebraAST.Classification] =
+    Decoder.forProduct4("args", "id", "label", "classBreaks")(MapAlgebraAST.Classification.apply _)
+  implicit lazy val encodeClassification: Encoder[MapAlgebraAST.Classification] =
     Encoder.forProduct5("apply", "args", "id", "label", "classBreaks")(op => (op.symbol, op.args, op.id, op.label, op.classBreaks))
 
 }

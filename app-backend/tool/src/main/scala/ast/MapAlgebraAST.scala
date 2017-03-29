@@ -54,8 +54,8 @@ object MapAlgebraAST {
       extends Operation("mask")
 
   @JsonCodec
-  case class Reclassification(args: List[MapAlgebraAST], id: UUID, label: Option[String], classBreaks: ClassBreaks)
-      extends Operation("reclassify")
+  case class Classification(args: List[MapAlgebraAST], id: UUID, label: Option[String], classBreaks: ClassBreaks)
+      extends Operation("classify")
 
   /** Map Algebra sources (leaves) */
   sealed abstract class Source[+T](val `type`: String) extends MapAlgebraAST {
