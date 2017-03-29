@@ -15,7 +15,7 @@ import org.scalatest._
 import scalaz._
 import Scalaz._
 
-class InterpreterSpec
+class MapAlgebraOpSpec
     extends FunSpec
        with Matchers
        with TileBuilders
@@ -51,39 +51,21 @@ class InterpreterSpec
     }
   }
 
-  it("should evaluate simple ast") {
-    val tms = Interpreter.tms(
-      ast = red - nir, source = goodSource
-    )
-
-    val ret: Future[Option[Op]] = tms(0,1,1)
-    val op = Await.result(ret, 10.seconds).get
-    val tile = op.toTile(IntCellType).get
-
-    requests.length should be (2)
-    tile should be (createValueTile(4, -1))
-  }
-
-
-  it("should not fetch unless the AST is fully defined") {
+  it("should evaluate classification") {
     requests = Nil
     val undefined = nir.copy(value = None)
+    // This breakmap should convert all cells (which are set to a value of 5) to 77
+    val breakmap = ClassBreaks(Map(6.0 -> 77), LessThanOrEqualTo, 123)
     val tms = Interpreter.tms(
-      ast = red - undefined, source = goodSource
+      ast = red.classify(breakmap), source = goodSource
     )
 
-    val ret: Future[Option[Op]] = tms(0,1,1)
+    val ret: Future[Option[Op]] = tms(0, 1, 1)
     val op = Await.result(ret, 10.seconds)
 
-    requests should be (empty)
-    op should be (None)
-  }
+    val maybeTile = op.flatMap(_.toTile(IntCellType))
 
-  it("should deal with bad raster sources") {
-
-  }
-
-  it("should deal with out of bounds band index") {
-
+    requests.length should be (1)
+    assertEqual(maybeTile.get, createValueTile(4, 77).toArray)
   }
 }

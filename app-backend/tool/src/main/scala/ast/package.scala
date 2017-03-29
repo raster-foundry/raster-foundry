@@ -29,7 +29,7 @@ package object ast extends MapAlgebraCodec {
   }
 
   implicit class MapAlgebraASTHelperMethods(val self: MapAlgebraAST) {
-    def Classify(breaks: ClassBreaks) =
+    def classify(breaks: ClassBreaks) =
       MapAlgebraAST.Classification(List(self), UUID.randomUUID(), Some(s"Classify(${self.label.getOrElse(self.id)})"), breaks)
 
     def +(other: MapAlgebraAST): MapAlgebraAST.Operation =
