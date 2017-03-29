@@ -4,11 +4,10 @@ import net.spy.memcached._
 import com.typesafe.scalalogging.LazyLogging
 import scala.concurrent._
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
 
 
 class MemcachedClientMethods(client: MemcachedClient) extends LazyLogging {
-  def getOrElseUpdate[CachedType](cacheKey: String, expensiveOperation: Future[CachedType], ttl: Duration)(implicit ec: ExecutionContext): Future[CachedType] = {
+  def getOrElseUpdate[CachedType](cacheKey: String, expensiveOperation: => Future[CachedType], ttl: Duration)(implicit ec: ExecutionContext): Future[CachedType] = blocking {
     val futureCached = Future { client.asyncGet(cacheKey).get() }
     futureCached.flatMap({ value =>
       if (value != null) { // cache hit
