@@ -21,7 +21,7 @@
       </div>
       <a href ui-sref="library.projects.list" ui-sref-active="active">Projects</a>
       <a href ui-sref="imports" ui-sref-active="active">Imports</a>
-      <a href ui-sref="market.search"
+      <a href feature-flag="tools-ui" ui-sref="market.search"
          ng-class="{
                    active: $ctrl.$state.$current.name.includes('market')
                    }">Tools</a>
