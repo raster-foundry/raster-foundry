@@ -57,7 +57,6 @@ object MapAlgebraAST {
   case class Reclassification(args: List[MapAlgebraAST], id: UUID, label: Option[String], classBreaks: ClassBreaks)
       extends Operation("reclassify")
 
-
   /** Map Algebra sources (leaves) */
   sealed abstract class Source[+T](val `type`: String) extends MapAlgebraAST {
     def value: Option[T]
