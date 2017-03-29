@@ -21,6 +21,7 @@ require('./services/storage.service')(shared);
 require('./services/mapUtils.service')(shared);
 require('./services/feed.service')(shared);
 require('./services/intercom.service')(shared);
+require('./services/rollbarWrapper.service')(shared);
 
 require('./services/featureFlagOverrides.service')(shared);
 require('./services/featureFlags.provider')(shared);

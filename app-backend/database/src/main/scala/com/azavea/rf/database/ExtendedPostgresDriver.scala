@@ -87,6 +87,33 @@ trait ExtendedPostgresDriver extends ExPostgresDriver
     implicit val visibilityOptionColumnExtensionMethodsBuilder =
       createEnumOptionColumnExtensionMethodsBuilder[Visibility]
 
+    implicit val uploadStatusTypeMapper = createEnumJdbcType[UploadStatus]("UploadStatus", _.repr,
+      UploadStatus.fromString, quoteName = false)
+    implicit val uploadStatusTypeListMapper = createEnumListJdbcType[UploadStatus]("UploadStatus", _.repr,
+      UploadStatus.fromString, quoteName = false)
+    implicit val uploadStatusColumnExtensionMethodsBuilder =
+      createEnumColumnExtensionMethodsBuilder[UploadStatus]
+    implicit val uploadStatusOptionColumnExtensionMethodsBuilder =
+      createEnumOptionColumnExtensionMethodsBuilder[UploadStatus]
+
+    implicit val fileTypeMapper = createEnumJdbcType[FileType]("FileType", _.repr,
+      FileType.fromString, quoteName = false)
+    implicit val fileTypeListMapper = createEnumListJdbcType[FileType]("FileType", _.repr,
+      FileType.fromString, quoteName = false)
+    implicit val fileTypeColumnExtensionMethodsBuilder =
+      createEnumColumnExtensionMethodsBuilder[FileType]
+    implicit val fileTypeOptionColumnExtensionMethodsBuilder =
+      createEnumOptionColumnExtensionMethodsBuilder[FileType]
+
+    implicit val uploadTypeTypeMapper = createEnumJdbcType[UploadType]("UploadType", _.repr,
+      UploadType.fromString, quoteName = false)
+    implicit val uploadTypeTypeListMapper = createEnumListJdbcType[UploadType]("UploadType", _.repr,
+      UploadType.fromString, quoteName = false)
+    implicit val uploadTypeColumnExtensionMethodsBuilder =
+      createEnumColumnExtensionMethodsBuilder[UploadType]
+    implicit val uploadTypeOptionColumnExtensionMethodsBuilder =
+      createEnumOptionColumnExtensionMethodsBuilder[UploadType]
+
     implicit val thumbnailDimTypeMapper = createEnumJdbcType[ThumbnailSize]("ThumbnailSize", _.toString,
       ThumbnailSize.fromString, quoteName = false)
     implicit val thumbnailDimTypeListMapper = createEnumListJdbcType[ThumbnailSize]("ThumbnailSize", _.toString,

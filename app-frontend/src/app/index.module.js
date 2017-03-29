@@ -25,6 +25,7 @@ const App = angular.module(
         'ngResource',
         'oc.lazyLoad',
         'angularLoad',
+        'tandibar/ng-rollbar',
 
         // core
         require('./core/core.module').name,

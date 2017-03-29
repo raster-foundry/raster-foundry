@@ -14,7 +14,8 @@ import geotrellis.raster.GridBounds
 import geotrellis.proj4._
 import geotrellis.slick.Projected
 import geotrellis.vector.{Polygon, Extent}
-
+import cats.data._
+import cats.implicits._
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
@@ -25,132 +26,87 @@ case class TagWithTTL(tag: String, ttl: Duration)
 
 object Mosaic {
   val memcachedClient = LayerCache.memcachedClient
+  val memcached = HeapBackedMemcachedClient(LayerCache.memcachedClient)
 
-  /** Cache the result of metadata queries that may have required walking up the pyramid to find suitable layers */
-
-  /** The caffeine cache to use for tile layer metadata */
-  val tileLayerMetadataCache: ScaffeineCache[String, Future[Option[(Int, TileLayerMetadata[SpatialKey])]]] =
-    Scaffeine()
-      .recordStats()
-      .expireAfterAccess(5.minutes)
-      .maximumSize(500)
-      .build[String, Future[Option[(Int, TileLayerMetadata[SpatialKey])]]]()
-
-  def tileLayerMetadata(id: UUID, zoom: Int)(implicit database: Database) = {
-    def readMetadata(store: AttributeStore, tryZoom: Int): Option[(Int, TileLayerMetadata[SpatialKey])] =
-      try {
-        Some(tryZoom -> store.readMetadata[TileLayerMetadata[SpatialKey]](LayerId(id.toString, tryZoom)))
-      } catch {
-        case e: AttributeNotFoundError if tryZoom > 0 => readMetadata(store, tryZoom - 1)
+  def tileLayerMetadata(id: UUID, zoom: Int)(implicit database: Database): OptionT[Future, (Int, TileLayerMetadata[SpatialKey])] = {
+    LayerCache.attributeStoreForLayer(id).mapFilter { case (store, pyramidMaxZoom) =>
+      // because metadata attributes are cached in AttributeStore itself, there is no point caching this function
+      val layerName = id.toString
+      for (maxZoom <- pyramidMaxZoom.get(layerName)) yield {
+        val z = if (zoom > maxZoom) maxZoom else zoom
+        blocking {
+          z -> store.readMetadata[TileLayerMetadata[SpatialKey]](LayerId(layerName, z))
+        }
       }
-
-    tileLayerMetadataCache.get(s"mosaic-tlm-$id-$zoom", { cKey =>
-      for {
-        prefix <- LayerCache.prefixFromLayerId(id)
-        store <- LayerCache.attributeStore(prefix)
-      } yield {
-        readMetadata(store, zoom)
-      }
-    })
+    }
   }
 
-
-  val mosaicDefinitionCache = HeapBackedMemcachedClient[Option[Seq[MosaicDefinition]]](memcachedClient)
-  def mosaicDefinition(projectId: UUID, tagttl: Option[TagWithTTL])(implicit db: Database) = {
+  def mosaicDefinition(projectId: UUID, tagttl: Option[TagWithTTL])(implicit db: Database): OptionT[Future, Seq[MosaicDefinition]] = {
     val cacheKey = tagttl match {
       case Some(t) => s"mosaic-definition-$projectId-${t.tag}"
       case None => s"mosaic-definition-$projectId"
     }
-    mosaicDefinitionCache.caching(cacheKey) { implicit ec =>
-      ScenesToProjects.getMosaicDefinition(projectId)
+
+    memcached.cachingOptionT(cacheKey) { _ =>
+      OptionT(ScenesToProjects.getMosaicDefinition(projectId))
     }
   }
 
   /** Fetch the tile for given resolution. If it is not present, use a tile from a lower zoom level */
-  def fetch(id: UUID, zoom: Int, col: Int, row: Int)(implicit database: Database): Future[Option[MultibandTile]] =
-    tileLayerMetadata(id, zoom).flatMap {
-      case Some((sourceZoom, tlm)) =>
-        val zdiff = zoom - sourceZoom
-        val pdiff = 1 << zdiff
-        val sourceKey = SpatialKey(col / pdiff, row / pdiff)
-        if (tlm.bounds includes sourceKey)
-          for ( maybeTile <- LayerCache.maybeTile(id, sourceZoom, sourceKey) ) yield {
-            for (tile <- maybeTile) yield {
-              val innerCol  = col % pdiff
-              val innerRow  = row % pdiff
-              val cols = tile.cols / pdiff
-              val rows = tile.rows / pdiff
-              tile.crop(GridBounds(
-                colMin = innerCol * cols,
-                rowMin = innerRow * rows,
-                colMax = (innerCol + 1) * cols - 1,
-                rowMax = (innerRow + 1) * rows - 1
-              )).resample(256, 256)
-            }
-          }
-        else
-          Future.successful(None)
-      case None =>
-        Future.successful(None)
+  def fetch(id: UUID, zoom: Int, col: Int, row: Int)(implicit database: Database): OptionT[Future, MultibandTile] =
+    tileLayerMetadata(id, zoom).flatMap { case (sourceZoom, tlm) =>
+      val zoomDiff = zoom - sourceZoom
+      val resolutionDiff = 1 << zoomDiff
+      val sourceKey = SpatialKey(col / resolutionDiff, row / resolutionDiff)
+      if (tlm.bounds.includes(sourceKey)) {
+        LayerCache.layerTile(id, sourceZoom, sourceKey).map { tile =>
+          val innerCol = col % resolutionDiff
+          val innerRow = row % resolutionDiff
+          val cols = tile.cols / resolutionDiff
+          val rows = tile.rows / resolutionDiff
+          tile.crop(GridBounds(
+            colMin = innerCol * cols,
+            rowMin = innerRow * rows,
+            colMax = (innerCol + 1) * cols - 1,
+            rowMax = (innerRow + 1) * rows - 1
+          )).resample(256, 256)
+        }
+      } else {
+        OptionT.none[Future, MultibandTile]
+      }
     }
 
   /** Fetch the rendered tile for the given zoom level and bbox
     * If no bbox is specified, it will use the project tileLayerMetadata layoutExtent
     */
-  def fetchRenderedExtent(id: UUID, zoom: Int, bbox: Option[Projected[Polygon]])(implicit database: Database):
-      Future[Option[MultibandTile]] = {
-    tileLayerMetadata(id, zoom).flatMap {
-      case Some((sourceZoom, tlm)) =>
-        val zdiff = zoom - sourceZoom
-        val pdiff = 1 << zdiff
-
-        val extent = bbox match {
-          case Some(bbox) => bbox.envelope
-          case None =>
-            tlm.layoutExtent
-        }
-        val gridBounds = tlm.layout.mapTransform(extent)
-
-        for (
-          maybeRenderedExtent <- LayerCache.maybeRenderExtent(id, sourceZoom, extent)
-        ) yield maybeRenderedExtent
-      case None =>
-        Future.successful(None)
+  def fetchRenderedExtent(id: UUID, zoom: Int, bbox: Option[Projected[Polygon]])(implicit database: Database): OptionT[Future,MultibandTile] = {
+    tileLayerMetadata(id, zoom).flatMap { case (sourceZoom, tlm) =>
+      val extent: Extent =
+        bbox.map { case Projected(poly, srid) =>
+          poly.envelope.reproject(CRS.fromEpsgCode(srid), tlm.crs)
+        }.getOrElse(tlm.layoutExtent)
+      LayerCache.layerTileForExtent(id, sourceZoom, extent)
     }
   }
 
   /** Fetch all bands of a [[MultibandTile]] and return them without assuming anything of their semantics */
-  def raw(
-    projectId: UUID,
-    zoom: Int, col: Int, row: Int
-  )(implicit db: Database): Future[Option[MultibandTile]] = {
+  def raw(projectId: UUID, zoom: Int, col: Int, row: Int)(implicit db: Database): OptionT[Future, MultibandTile] = {
+    mosaicDefinition(projectId, None).flatMap { mosaic =>
+      val mayhapTiles: Seq[OptionT[Future, MultibandTile]] =
+        for (MosaicDefinition(sceneId, _) <- mosaic) yield
+          for (tile <- Mosaic.fetch(sceneId, zoom, col, row)) yield
+            tile
 
-    // Lookup project definition
-    // NOTE: raw does NOT cache the mosaicDefinition
-    val mayhapMosaic: Future[Option[Seq[MosaicDefinition]]] = mosaicDefinition(projectId, None)
-
-    mayhapMosaic.flatMap {
-      case None => // can't merge a project without mosaic definition
-        Future.successful(Option.empty[MultibandTile])
-
-      case Some(mosaicDefinition) =>
-        val mayhapTiles =
-          for (
-             mosaic <- mosaicDefinition
-          ) yield {
-            for {
-              maybeTile <- Mosaic.fetch(mosaic.sceneId, zoom, col, row)
-            } yield
-              for (tile <- maybeTile) yield tile
-          }
-
-        Future.sequence(mayhapTiles).map { maybeTiles =>
+      val futureMergeTile: Future[Option[MultibandTile]] =
+        Future.sequence(mayhapTiles.map(_.value)).map { maybeTiles =>
           val tiles = maybeTiles.flatten
           if (tiles.nonEmpty)
             Option(tiles.reduce(_ merge _))
           else
             Option.empty[MultibandTile]
         }
+
+      OptionT(futureMergeTile)
     }
   }
 
@@ -168,7 +124,7 @@ object Mosaic {
     *   @param zoomOption  the zoom level to use
     *   @param bboxOption the bounding box for the image
     */
-  def render(projectId: UUID, zoomOption: Option[Int], bboxOption: Option[String])(implicit database: Database): Future[Option[MultibandTile]] = {
+  def render(projectId: UUID, zoomOption: Option[Int], bboxOption: Option[String])(implicit database: Database): OptionT[Future, MultibandTile] = {
     val bboxPolygon: Option[Projected[Polygon]] =
       try {
         bboxOption map { bbox =>
@@ -181,34 +137,28 @@ object Mosaic {
 
     val zoom: Int = zoomOption.getOrElse(8)
 
-    val maybeMosaic: Future[Option[Seq[MosaicDefinition]]] = mosaicDefinition(projectId, None)
-
-    maybeMosaic.flatMap {
-      case None => // can't merge a project without mosaic definition
-        Future.successful(Option.empty[MultibandTile])
-
-      case Some(mosaic) =>
-        val maybeTiles =
-          for (mosaicDefinition <- mosaic) yield {
-              mosaicDefinition.colorCorrections match {
-                case None =>
-                  Future.successful(Option.empty[MultibandTile])
-                case Some(params) =>
-                  for {
-                    maybeTile <- Mosaic.fetchRenderedExtent(mosaicDefinition.sceneId, zoom, bboxPolygon)
-                    hist <- LayerCache.bandHistogram(mosaicDefinition.sceneId, zoom)
-                  } yield
-                    for (tile <- maybeTile) yield params.colorCorrect(tile, hist)
+    mosaicDefinition(projectId, None).flatMap { mosaic =>
+      val mayhapTiles: Seq[OptionT[Future, MultibandTile]] =
+        mosaic.flatMap { case MosaicDefinition(sceneId, maybeColorCorrectParams) =>
+          maybeColorCorrectParams.map { colorCorrectParams =>
+            Mosaic.fetchRenderedExtent(sceneId, zoom, bboxPolygon).flatMap { tile =>
+              LayerCache.layerHistogram(sceneId, zoom).map { hist =>
+                colorCorrectParams.colorCorrect(tile, hist)
               }
-          }
+            }
+          }.toSeq
+        }
 
-        Future.sequence(maybeTiles).map { maybeTiles =>
+      val futureMergeTile: Future[Option[MultibandTile]] =
+        Future.sequence(mayhapTiles.map(_.value)).map { maybeTiles =>
           val tiles = maybeTiles.flatten
           if (tiles.nonEmpty)
             Option(tiles.reduce(_ merge _))
           else
             Option.empty[MultibandTile]
-      }
+        }
+
+      OptionT(futureMergeTile)
     }
   }
 
@@ -226,50 +176,37 @@ object Mosaic {
     rgbOnly: Boolean = true
   )(
     implicit db: Database
-  ): Future[Option[MultibandTile]] = {
-
+  ): OptionT[Future, MultibandTile] = {
     // Lookup project definition
-    val maybeMosaic: Future[Option[Seq[MosaicDefinition]]] = tag match {
-      case Some(t) =>
-        // tag present, include in lookup to re-use cache
-        mosaicDefinition(projectId, Option(TagWithTTL(tag=t, ttl=60.seconds)))
-      case None =>
-        // no tag to control cache rollover, so don't cache
-        mosaicDefinition(projectId, None)
-    }
-
-    maybeMosaic.flatMap {
-      case None => // can't merge a project without mosaic definition
-        Future.successful(Option.empty[MultibandTile])
-
-      case Some(mosaic) =>
-        val maybeTiles =
-          for (mosaicDefinition <- mosaic) yield {
-            if (rgbOnly) {
-              mosaicDefinition.colorCorrections match {
-                case None =>
-                  Future.successful(Option.empty[MultibandTile])
-                case Some(params) =>
-                  for {
-                    maybeTile <- Mosaic.fetch(mosaicDefinition.sceneId, zoom, col, row)
-                    hist <- LayerCache.bandHistogram(mosaicDefinition.sceneId, zoom)
-                  } yield
-                    for (tile <- maybeTile) yield params.colorCorrect(tile, hist)
+    // tag present, include in lookup to re-use cache
+    // no tag to control cache rollover, so don't cache
+    mosaicDefinition(projectId, tag.map(s => TagWithTTL(tag=s, ttl=60.seconds))).flatMap { mosaic =>
+      val mayhapTiles: Seq[OptionT[Future, MultibandTile]] =
+        mosaic.flatMap { case MosaicDefinition(sceneId, maybeColorCorrectParams) =>
+          if (rgbOnly) {
+            maybeColorCorrectParams.map { colorCorrectParams =>
+              Mosaic.fetch(sceneId, zoom, col, row).flatMap { tile =>
+                LayerCache.layerHistogram(sceneId, zoom).map { hist =>
+                  colorCorrectParams.colorCorrect(tile, hist)
+                }
               }
-            } else { // Return all bands
-              for {
-                maybeTile <- Mosaic.fetch(mosaicDefinition.sceneId, zoom, col, row)
-              } yield maybeTile
-            }
+            }.toSeq
+          } else {
+            // Wrap in List so it can flattened by the same flatMap above
+            List(Mosaic.fetch(sceneId, zoom, col, row))
           }
+        }
 
-        Future.sequence(maybeTiles).map { maybeTiles =>
+      val futureMergeTile: Future[Option[MultibandTile]] =
+        Future.sequence(mayhapTiles.map(_.value)).map { maybeTiles =>
           val tiles = maybeTiles.flatten
           if (tiles.nonEmpty)
             Option(tiles.reduce(_ merge _))
           else
-            None
-      }
+            Option.empty[MultibandTile]
+        }
+
+      OptionT(futureMergeTile)
     }
   }
 }

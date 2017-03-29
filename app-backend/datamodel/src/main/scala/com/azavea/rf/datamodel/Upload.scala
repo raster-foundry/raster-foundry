@@ -1,0 +1,57 @@
+package com.azavea.rf.datamodel
+
+import io.circe._
+
+import java.util.UUID
+import java.sql.Timestamp
+
+case class Upload(
+  id: UUID,
+  createdAt: Timestamp,
+  createdBy: String,
+  modifiedAt: Timestamp,
+  modifiedBy: String,
+  organizationId: UUID,
+  uploadStatus: UploadStatus,
+  fileType: FileType,
+  uploadType: UploadType,
+  files: List[String],
+  datasource: UUID,
+  metadata: Json
+)
+
+object Upload {
+
+  def tupled = (Upload.apply _).tupled
+
+  def create = Upload.apply _
+
+  case class Create(
+    organizationId: UUID,
+    uploadStatus: UploadStatus,
+    fileType: FileType,
+    uploadType: UploadType,
+    files: List[String],
+    datasource: UUID,
+    metadata: Json
+  ) {
+    def toUpload(userId: String): Upload = {
+      val id = UUID.randomUUID()
+      val now = new Timestamp((new java.util.Date()).getTime())
+      Upload(
+        id,
+        now, // createdAt
+        userId, // createdBy
+        now, // modifiedAt
+        userId, // modifiedBy
+        this.organizationId,
+        this.uploadStatus,
+        this.fileType,
+        this.uploadType,
+        this.files,
+        this.datasource,
+        this.metadata
+      )
+    }
+  }
+}

@@ -1,5 +1,6 @@
-function runBlock( // eslint-disable-line max-params
-    $rootScope, jwtHelper, $state, $location, APP_CONFIG, authService, localStorage, intercomService
+function runBlock(
+    $rootScope, jwtHelper, $state, $location, APP_CONFIG,
+    authService, localStorage, rollbarWrapperService, intercomService
 ) {
     'ngInject';
 
@@ -9,9 +10,11 @@ function runBlock( // eslint-disable-line max-params
             $state.go('error');
         } else if (toState.name !== 'login' && !authService.verifyAuthCache()) {
             e.preventDefault();
+            rollbarWrapperService.init();
             intercomService.shutdown();
             $state.go('login');
         } else {
+            rollbarWrapperService.init(authService.profile());
             intercomService.bootWithUser(authService.profile());
         }
     });
@@ -20,10 +23,12 @@ function runBlock( // eslint-disable-line max-params
         let token = localStorage.get('id_token');
         if (token) {
             if (!authService.verifyAuthCache()) {
+                rollbarWrapperService.init();
                 authService.login(token);
             }
         } else {
             intercomService.shutdown();
+            rollbarWrapperService.init();
             $state.go('login');
         }
     });

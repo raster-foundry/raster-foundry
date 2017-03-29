@@ -23,6 +23,7 @@ object Dependencies {
   val scalaforklift           = "com.liyaos"                  %% "scala-forklift-slick"              % Version.scalaForklift
   val scalatest               = "org.scalatest"               %% "scalatest"                         % Version.scalaTest % "test"
   val slf4j                   = "org.slf4j"                    % "slf4j-simple"                      % Version.slf4j
+  val scalaLogging            = "com.typesafe.scala-logging"  %% "scala-logging"                     % Version.scalaLogging
   val slick                   = "com.typesafe.slick"          %% "slick"                             % Version.slick
   val slickPG                 = "com.github.tminglei"         %% "slick-pg"                          % Version.slickPG
   val slickPGSpray            = "com.github.tminglei"         %% "slick-pg_spray-json"               % Version.slickPG
@@ -46,4 +47,9 @@ object Dependencies {
   val circeParser             = "io.circe"                    %% "circe-parser"                      % Version.circe
   val circeOptics             = "io.circe"                    %% "circe-optics"                      % Version.circe
   val akkaCirceJson           = "de.heikoseeberger"           %% "akka-http-circe"                   % Version.akkaCirceJson
+  val cats                    = "org.typelevel"               %% "cats"                              % Version.cats
+  val gatlingHighcharts       = "io.gatling.highcharts"        % "gatling-charts-highcharts"         % Version.gatling
+  val gatlingTest             = "io.gatling"                   % "gatling-test-framework"            % Version.gatling % "test,it"
+  val gatlingApp              = "io.gatling"                   % "gatling-app"                       % Version.gatling % "test,it"
+  val scalajHttp             = "org.scalaj"                  %% "scalaj-http"                       % Version.scalajHttp
 }

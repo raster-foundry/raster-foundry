@@ -2,7 +2,6 @@ package com.azavea.rf.tile.routes
 
 import com.azavea.rf.tile._
 import com.azavea.rf.tile.image._
-import com.azavea.rf.datamodel.ColorCorrect.Params.colorCorrectParams
 import com.azavea.rf.database.Database
 
 import geotrellis.raster._
@@ -11,10 +10,9 @@ import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes}
 import com.typesafe.scalalogging.LazyLogging
-
+import cats.implicits._
 import scala.concurrent.ExecutionContext.Implicits.global
 import java.util.UUID
-
 
 object MosaicRoutes extends LazyLogging {
 
@@ -23,14 +21,16 @@ object MosaicRoutes extends LazyLogging {
   def pngAsHttpResponse(png: Png): HttpResponse =
     HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/png`), png.bytes))
 
+
   def mosaicProject(projectId: UUID)(implicit db: Database): Route =
     pathPrefix("export") {
       parameter("bbox".?, "zoom".as[Int]?) { (bbox, zoom) =>
         get {
           complete {
-            Mosaic.render(projectId, zoom, bbox).map { maybeRender =>
-              maybeRender.map { tile => pngAsHttpResponse(tile.renderPng()) }
-            }
+            Mosaic.render(projectId, zoom, bbox)
+              .map(_.renderPng)
+              .map(pngAsHttpResponse)
+              .value
           }
         }
       }
@@ -38,11 +38,10 @@ object MosaicRoutes extends LazyLogging {
       parameter("tag".?) { tag =>
         get {
           complete {
-            Mosaic(projectId, zoom, x, y, tag).map { maybeTile =>
-              pngAsHttpResponse {
-                maybeTile.map(_.renderPng()).getOrElse(emptyTilePng)
-              }
-            }
+            Mosaic(projectId, zoom, x, y, tag)
+              .map(_.renderPng)
+              .getOrElse(emptyTilePng)
+              .map(pngAsHttpResponse)
           }
         }
       }

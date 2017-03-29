@@ -20,7 +20,7 @@ trait RollbarNotifier extends LazyLogging {
   implicit val system: ActorSystem
   implicit val materializer: Materializer
 
-  val rollbarApiToken = sys.env.get("ROLLBAR_API_TOKEN") match {
+  val rollbarApiToken = sys.env.get("ROLLBAR_SERVER_TOKEN") match {
     case Some(t) => t
     case _ =>
       throw new RuntimeException("Rollbar API token must be present to notify rollbar")

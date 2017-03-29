@@ -5,7 +5,7 @@ import scala.util.{Success, Failure, Try}
 import org.apache.commons.io.IOUtils
 
 import com.amazonaws.auth._
-import com.amazonaws.services.s3.{AmazonS3Client, AmazonS3URI}
+import com.amazonaws.services.s3.{AmazonS3ClientBuilder, AmazonS3URI}
 import com.amazonaws.services.s3.model.{S3Object, ObjectMetadata}
 
 import java.io._
@@ -13,7 +13,9 @@ import java.net._
 
 package object S3 {
   def getObject(uri: URI): S3Object = {
-    val client = new AmazonS3Client(new DefaultAWSCredentialsProviderChain)
+    val client = AmazonS3ClientBuilder.standard()
+      .withCredentials(new DefaultAWSCredentialsProviderChain())
+      .build()
     val s3uri = new AmazonS3URI(uri)
     Try(client.getObject(s3uri.getBucket, s3uri.getKey)) match {
       case Success(o) => o
