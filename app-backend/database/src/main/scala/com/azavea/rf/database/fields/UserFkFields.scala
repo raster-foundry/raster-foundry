@@ -31,5 +31,13 @@ object UserFkFields {
     def filterToOwner(user: User) = {
       that.filter(_.createdBy === user.id)
     }
+
+    def filterToOwnerIfNotInRootOrganization(user: User) = {
+      if (!user.isInRootOrganization) {
+        that.filter(_.createdBy === user.id)
+      } else {
+        that
+      }
+    }
   }
 }

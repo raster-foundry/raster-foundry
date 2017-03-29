@@ -52,7 +52,7 @@ object MapTokens extends TableQuery(tag => new MapTokens(tag)) with LazyLogging 
 
   def getMapToken(mapTokenId: UUID, user: User)(implicit database: DB): DBIO[Option[MapToken]]= {
     MapTokens
-      .filterToSharedOrganizationIfNotInRoot(user)
+      .filterToOwnerIfNotInRootOrganization(user)
       .filter(_.id === mapTokenId)
       .result
       .headOption
@@ -68,7 +68,7 @@ object MapTokens extends TableQuery(tag => new MapTokens(tag)) with LazyLogging 
 
   def listMapTokens(offset: Int, limit: Int, user: User, queryParameters: CombinedMapTokenQueryParameters):ListQueryResult[MapToken] = {
     val mapTokens = MapTokens
-      .filterToOwner(user)
+      .filterToOwnerIfNotInRootOrganization(user)
       .filterByProject(queryParameters.mapTokenParams.projectId)
       .filterByName(queryParameters.mapTokenParams.name)
       .filterByOrganization(queryParameters.orgParams)
@@ -89,7 +89,7 @@ object MapTokens extends TableQuery(tag => new MapTokens(tag)) with LazyLogging 
 
   def deleteMapToken(mapTokenId: UUID, user: User): DBIO[Int] = {
     MapTokens
-      .filterToSharedOrganizationIfNotInRoot(user)
+      .filterToOwnerIfNotInRootOrganization(user)
       .filter(_.id === mapTokenId)
       .delete
   }
@@ -97,7 +97,9 @@ object MapTokens extends TableQuery(tag => new MapTokens(tag)) with LazyLogging 
   def updateMapToken(mapToken: MapToken, mapTokenId: UUID, user: User) = {
     val updateTime = new Timestamp((new java.util.Date).getTime)
     val updateMapTokenQuery = for {
-      updateMapToken <- MapTokens.filter(_.id === mapTokenId).filterToOwner(user)
+      updateMapToken <- MapTokens
+                          .filterToOwnerIfNotInRootOrganization(user)
+                          .filter(_.id === mapTokenId)
     } yield (
       updateMapToken.modifiedAt,
       updateMapToken.modifiedBy,
