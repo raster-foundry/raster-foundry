@@ -29,8 +29,11 @@ package object ast extends MapAlgebraCodec {
   }
 
   implicit class MapAlgebraASTHelperMethods(val self: MapAlgebraAST) {
-    def reclassify(breaks: ClassBreaks) =
-      MapAlgebraAST.Reclassification(List(self), UUID.randomUUID(), Some(s"reclassify(${self.label.getOrElse(self.id)})"), breaks)
+    def intReclassify(breaks: IntClassBreaks) =
+      MapAlgebraAST.IntReclassification(List(self), UUID.randomUUID(), Some(s"intReclassify(${self.label.getOrElse(self.id)})"), breaks)
+
+    def doubleReclassify(breaks: DoubleClassBreaks) =
+      MapAlgebraAST.DoubleReclassification(List(self), UUID.randomUUID(), Some(s"doubleReclassify(${self.label.getOrElse(self.id)})"), breaks)
 
     def +(other: MapAlgebraAST): MapAlgebraAST.Operation =
       MapAlgebraAST.Addition(List(self, other), UUID.randomUUID(), Some(s"${self.label.getOrElse(self.id)}_+_${other.label.getOrElse(other.id)}"))
