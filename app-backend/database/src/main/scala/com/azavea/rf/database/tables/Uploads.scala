@@ -120,7 +120,9 @@ object Uploads extends TableQuery(tag => new Uploads(tag)) with LazyLogging {
     val updateTime = new Timestamp((new java.util.Date).getTime)
 
     val updateUploadQuery = for {
-      updateUpload <- Uploads.filter(_.id === uploadId)
+      updateUpload <- Uploads
+                        .filterToSharedOrganizationIfNotInRoot(user)
+                        .filter(_.id === uploadId)
     } yield (
       updateUpload.modifiedAt,
       updateUpload.modifiedBy,

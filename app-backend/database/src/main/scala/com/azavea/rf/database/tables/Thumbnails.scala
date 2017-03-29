@@ -140,13 +140,15 @@ object Thumbnails extends TableQuery(tag => new Thumbnails(tag)) with LazyLoggin
     * @param thumbnail Thumbnail scene to use to update the database
     * @param thumbnailId UUID ID of scene to update
     */
-  def updateThumbnail(thumbnail: Thumbnail, thumbnailId: UUID)
+  def updateThumbnail(thumbnail: Thumbnail, thumbnailId: UUID, user: User)
                      (implicit database: DB): Future[Int] = {
 
     val updateTime = new Timestamp((new java.util.Date).getTime)
 
     val updateThumbnailQuery = for {
-      updateThumbnail <- Thumbnails.filter(_.id === thumbnailId)
+      updateThumbnail <- Thumbnails
+                           .filterToSharedOrganizationIfNotInRoot(user)
+                           .filter(_.id === thumbnailId)
     } yield (
       updateThumbnail.modifiedAt, updateThumbnail.widthPx, updateThumbnail.heightPx,
       updateThumbnail.thumbnailSize, updateThumbnail.scene, updateThumbnail.url

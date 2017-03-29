@@ -121,7 +121,9 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
     val updateTime = new Timestamp((new java.util.Date).getTime)
 
     val updateDatasourceQuery = for {
-      updateDatasource <- Datasources.filter(_.id === datasourceId)
+      updateDatasource <- Datasources
+                            .filterToSharedOrganizationIfNotInRoot(user)
+                            .filter(_.id === datasourceId)
     } yield (
       updateDatasource.modifiedAt,
       updateDatasource.modifiedBy,
