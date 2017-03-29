@@ -18,7 +18,8 @@ object Interpreter {
   )(implicit ec: ExecutionContext): (Int, Int, Int) => Future[Option[Op]] = {
     // have to parse AST per-request because there is no structure to capture intermediate results
 
-    def evalF(
+    // Binary operation evaluation
+    def evalB(
       futureTiles: Seq[Future[Option[Op]]],
       f: (Op, Op) => Op
     ): Future[Option[Op]] = {
@@ -30,7 +31,8 @@ object Interpreter {
       }
     }
 
-    def evalS(
+    // Unary operation evaluation
+    def evalU(
       futureTile: Future[Option[Op]],
       f: Op => Op
     ): Future[Option[Op]] = {
@@ -47,20 +49,23 @@ object Interpreter {
             source(ref, z, x, y)
           }.map(Op.apply).value
 
-        case Addition(args, _, _) =>
-          evalF(args.map(eval),  _ + _)
+        // For the exhaustive match
+        case op: Operation => op match {
+          case Addition(args, _, _) =>
+            evalB(args.map(eval),  _ + _)
 
-        case Subtraction(args, _, _) =>
-          evalF(args.map(eval),  _ - _)
+          case Subtraction(args, _, _) =>
+            evalB(args.map(eval),  _ - _)
 
-        case Multiplication(args, _, _) =>
-          evalF(args.map(eval),  _ * _)
+          case Multiplication(args, _, _) =>
+            evalB(args.map(eval),  _ * _)
 
-        case Division(args, _, _) =>
-          evalF(args.map(eval),  _ / _)
+          case Division(args, _, _) =>
+            evalB(args.map(eval),  _ / _)
 
-        case Classification(args, _, _, breaks) =>
-          evalS(eval(args.head), _.classify(breaks.toBreakMap))
+          case Classification(args, _, _, breaks) =>
+            evalU(eval(args.head), _.classify(breaks.toBreakMap))
+        }
       }
 
       if (ast.evaluable) eval(ast)

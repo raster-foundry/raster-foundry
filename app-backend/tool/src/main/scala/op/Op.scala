@@ -23,7 +23,7 @@ sealed trait Op extends TileLike with Grid with LazyLogging {
   def *(x: Int) = this.map((_: Int) * x)
   def *(x: Double) = this.mapDouble(_ * x)
   def *(other: Op) = this.dualCombine(other)(_ * _)(_ * _)
-  def classification(breaks: BreakMap[Double, Int]) = this.classify({ i => breaks(i) })
+  def classify(breaks: BreakMap[Double, Int]) = this.classification({ i => breaks(i) })
 
   def left: Op
   def right: Op
@@ -33,7 +33,7 @@ sealed trait Op extends TileLike with Grid with LazyLogging {
   def getDouble(col: Int, row: Int): Double
   def fullyBound: Boolean
 
-  def classify(f: Double => Int) =
+  def classification(f: Double => Int) =
     Op.Classify(this, f)
 
   def map(f: Int => Int): Op.Tree =
@@ -169,7 +169,7 @@ object Op {
   /** This object represents cases in which the catalog returns no tiles at the given coords */
   case object Empty extends Tree {
     def get(col: Int, row: Int): Int = NODATA
-    def getDouble(col: Int, row: Int): Double = NODATA
+    def getDouble(col: Int, row: Int): Double = doubleNODATA
     def left = Op.Nil
     def right = Op.Nil
     def bind(args: Map[Var, Op]): Op = this
@@ -196,7 +196,7 @@ object Op {
 
   case class MapInt(left: Op, f: Int => Int) extends Tree {
     def get(col: Int, row: Int) = f(left.get(col, row))
-    def getDouble(col: Int, row: Int) = i2d(f(left.get(col, row)))
+    def getDouble(col: Int, row: Int) = i2d(get(col, row))
     def right = Op.Nil
     def bind(args: Map[Var, Op]): Op =
       MapInt(left.bind(args), f)
