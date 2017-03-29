@@ -14,15 +14,11 @@ import geotrellis.spark.io._
 import geotrellis.spark.io.s3.{S3AttributeStore, S3CollectionLayerReader, S3ValueReader}
 import com.github.blemale.scaffeine.{Scaffeine, Cache => ScaffeineCache}
 import geotrellis.vector.Extent
-import com.github.benmanes.caffeine.cache._
-import spray.json.DefaultJsonProtocol._
-import net.spy.memcached._
-import java.net.InetSocketAddress
-import java.util.concurrent.{Executors, TimeUnit}
-import java.util.UUID
 
+import spray.json.DefaultJsonProtocol._
+
+import java.util.UUID
 import scala.concurrent._
-import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.util._
 import cats.data._
@@ -46,12 +42,12 @@ object LayerCache extends Config with LazyLogging {
   val memcachedClient = KryoMemcachedClient.DEFAULT
 
   /** The caffeine cache to use for attribute stores */
-  private val attributeStoreCache: ScaffeineCache[String, AttributeStore] =
+  private val attributeStoreCache: ScaffeineCache[UUID, OptionT[Future, AttributeStore]] =
     Scaffeine()
       .recordStats()
       .expireAfterAccess(5.minutes)
       .maximumSize(500)
-      .build[String, AttributeStore]()
+      .build[UUID, OptionT[Future, AttributeStore]]
 
   private val histogramCache = HeapBackedMemcachedClient(memcachedClient)
   private val tileCache = HeapBackedMemcachedClient(memcachedClient)
@@ -64,15 +60,16 @@ object LayerCache extends Config with LazyLogging {
   }
 
   def attributeStoreForLayer(layerId: UUID): OptionT[Future, AttributeStore] = {
-    // we are not caching the attribute store based on layerId but based on the catalog location
-    layerUri(layerId).mapFilter { catalogUri =>
-      for (result <- S3UrlRx.findFirstMatchIn(catalogUri)) yield {
-        val bucket = result.group("bucket")
-        val prefix = result.group("prefix")
-        // TODO: Decide if we should verify URI is valid. This may be a store that always fails to read
-        attributeStoreCache.get(catalogUri, _ => S3AttributeStore(bucket, prefix))
+    attributeStoreCache.get(layerId, _ =>
+      layerUri(layerId).mapFilter { catalogUri =>
+        for (result <- S3UrlRx.findFirstMatchIn(catalogUri)) yield {
+          val bucket = result.group("bucket")
+          val prefix = result.group("prefix")
+          // TODO: Decide if we should verify URI is valid. This may be a store that always fails to read
+          S3AttributeStore(bucket, prefix)
+        }
       }
-    }
+    )
   }
 
   def layerHistogram(layerId: UUID, zoom: Int): OptionT[Future, Array[Histogram[Double]]] = {
