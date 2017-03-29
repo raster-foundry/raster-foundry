@@ -54,23 +54,26 @@ object Mosaic {
 
   /** Fetch the tile for given resolution. If it is not present, use a tile from a lower zoom level */
   def fetch(id: UUID, zoom: Int, col: Int, row: Int)(implicit database: Database): OptionT[Future, MultibandTile] =
-    for {
-      (sourceZoom, tlm) <- tileLayerMetadata(id, zoom)
-      zoomDiff = zoom - sourceZoom
-      resolutionDiff = 1 << zoomDiff
-      sourceKey = SpatialKey(col / resolutionDiff, row / resolutionDiff)
-      tile <- LayerCache.layerTile(id, sourceZoom, sourceKey) if tlm.bounds.includes(sourceKey)
-    } yield {
-      val innerCol = col % resolutionDiff
-      val innerRow = row % resolutionDiff
-      val cols = tile.cols / resolutionDiff
-      val rows = tile.rows / resolutionDiff
-      tile.crop(GridBounds(
-        colMin = innerCol * cols,
-        rowMin = innerRow * rows,
-        colMax = (innerCol + 1) * cols - 1,
-        rowMax = (innerRow + 1) * rows - 1
-      )).resample(256, 256)
+    tileLayerMetadata(id, zoom).flatMap { case (sourceZoom, tlm) =>
+      val zoomDiff = zoom - sourceZoom
+      val resolutionDiff = 1 << zoomDiff
+      val sourceKey = SpatialKey(col / resolutionDiff, row / resolutionDiff)
+      if (tlm.bounds.includes(sourceKey)) {
+        LayerCache.layerTile(id, sourceZoom, sourceKey).map { tile =>
+          val innerCol = col % resolutionDiff
+          val innerRow = row % resolutionDiff
+          val cols = tile.cols / resolutionDiff
+          val rows = tile.rows / resolutionDiff
+          tile.crop(GridBounds(
+            colMin = innerCol * cols,
+            rowMin = innerRow * rows,
+            colMax = (innerCol + 1) * cols - 1,
+            rowMax = (innerRow + 1) * rows - 1
+          )).resample(256, 256)
+        }
+      } else {
+        OptionT.none[Future, MultibandTile]
+      }
     }
 
   /** Fetch the rendered tile for the given zoom level and bbox
