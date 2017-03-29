@@ -111,6 +111,10 @@ angular-jwt@0.0.9:
   version "0.0.9"
   resolved "https://registry.yarnpkg.com/angular-jwt/-/angular-jwt-0.0.9.tgz#912587b520189d28d089446c7faaf30ef7534313"
 
+angular-load@^0.4.1:
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/angular-load/-/angular-load-0.4.1.tgz#cc07dd668b5177368bfaad804108a5b6ab7bd76f"
+
 angular-lock@~1.0.5:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/angular-lock/-/angular-lock-1.0.5.tgz#1c929d1bbc867129c8288cfb17bebd900dab8b5f"

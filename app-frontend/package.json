@@ -29,6 +29,7 @@
     "angular-cookies": "~1.5.8",
     "angular-deferred-bootstrap": "~0.1.9",
     "angular-jwt": "0.0.9",
+    "angular-load": "^0.4.1",
     "angular-lock": "~1.0.5",
     "angular-messages": "1.5.8",
     "angular-nvd3": "~1.0.8",

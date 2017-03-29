@@ -7,7 +7,7 @@ import com.azavea.rf.database.Database
 import com.azavea.rf.api.AkkaSystem
 
 case class FeatureFlag(key: String, active: Boolean, name: String, description: String)
-case class AngularConfig(clientId: String, auth0Domain: String, rollbarClientToken: String, featureFlags: Seq[FeatureFlag])
+case class AngularConfig(clientId: String, auth0Domain: String, rollbarClientToken: String, intercomAppId:String, featureFlags: Seq[FeatureFlag])
 
 object AngularConfigService extends AkkaSystem.LoggerExecutor with Config {
   def getConfig():
@@ -22,6 +22,6 @@ object AngularConfigService extends AkkaSystem.LoggerExecutor with Config {
       )
     }.toSeq
 
-    AngularConfig(auth0ClientId, auth0Domain, rollbarClientToken, features)
+    AngularConfig(auth0ClientId, auth0Domain, rollbarClientToken, intercomAppId, features)
   }
 }

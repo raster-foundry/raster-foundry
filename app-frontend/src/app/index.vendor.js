@@ -25,8 +25,8 @@ import 'angular-resource';
 import 'leaflet';
 import 'svg-pan-zoom';
 import 'jointjs';
+import 'angular-load';
 import 'ng-rollbar';
-
 
 // local scripts
 // import '../assets/js/...';
