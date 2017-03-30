@@ -12,56 +12,21 @@
       <a href ng-click="$ctrl.resetAllFilters()" class="btn btn-toggle btn-small btn-block">Clear all filters</a>
     </div>
     <div class="filter">
-      <label>Year</label>
-      <div class="filter-item">
-        <div id="year_slider"></div>
+      <label>Date Range: </label>
+      <div>
+        <ob-daterangepicker
+            class="right"
+            range="$ctrl.datefilter"
+            ranges="$ctrl.dateranges"
+            calendars-always-on="true"
+            on-apply="$ctrl.setDateRange(start, end)"
+            ng-class="{'active': $ctrl.dateFilterToggle.value}"
+        ></ob-daterangepicker>
+        <rf-toggle data-model="$ctrl.dateFilterToggle"
+                   on-change="$ctrl.onDateFilterToggle(value)"
+                   style="float: right;"
+        ></rf-toggle>
       </div>
-      <div class="btn-group">
-        <button type="button"
-                class="btn btn-toggle btn-small"
-                ng-class="{'active': $ctrl.yearFilterMode === 'range'}"
-                ng-click="$ctrl.setYearFilterMode('range')">
-          Year Range
-        </button>
-        <button type="button"
-                class="btn btn-toggle btn-small"
-                ng-class="{'active': $ctrl.yearFilterMode === 'single'}"
-                ng-click="$ctrl.setYearFilterMode('single')">
-          Single year
-        </button>
-      </div>
-      <br/>
-        <rzslider rz-slider-model="$ctrl.yearRangeFilters.minModel"
-                  rz-slider-high="$ctrl.yearRangeFilters.maxModel"
-                  rz-slider-options="$ctrl.yearRangeFilters.options"
-                  ng-show="$ctrl.yearFilterMode === 'range'"
-        ></rzslider>
-        <rzslider rz-slider-model="$ctrl.singleYearFilter.value"
-                  rz-slider-options="$ctrl.singleYearFilter.options"
-                  ng-show="$ctrl.yearFilterMode === 'single'"
-        ></rzslider>
-    </div>
-    <div class="filter"
-         ng-mouseup="$ctrl.toggleDrag.toggle = false"
-         ng-mouseleave="$ctrl.toggleDrag.toggle = false">
-      <label>Month</label>
-      <div class="filter-item month-filter">
-        <button type="button"
-                class="btn btn-toggle btn-small"
-                autocomplete="off"
-                ng-class="{'active': monthAttrs.enabled}"
-                ng-mousedown="$ctrl.onMonthFilterMousedown(month, monthAttrs)"
-                ng-mouseover="$ctrl.onMonthFilterMouseover(month)"
-                ng-repeat="(month, monthAttrs) in $ctrl.monthFilters track by month">
-          {{monthAttrs.label}}
-        </button>
-      </div>
-    </div>
-    <div class="filter">
-      <label>Day of Month</label>
-      <rzslider rz-slider-model="$ctrl.dayOfMonthFilters.minModel"
-                rz-slider-high="$ctrl.dayOfMonthFilters.maxModel"
-                rz-slider-options="$ctrl.dayOfMonthFilters.options"></rzslider>
     </div>
     <div class="filter">
       <label>Cloud cover</label>

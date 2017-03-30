@@ -1,8 +1,11 @@
 'use strict';
+require('../../node_modules/ob-daterangepicker/dist/styles/ob-daterangepicker.css');
 
 // node_modules
 import 'jquery';
+import 'moment';
 import 'angular';
+import 'ob-daterangepicker';
 import 'd3';
 import 'nvd3';
 import 'angular-nvd3';

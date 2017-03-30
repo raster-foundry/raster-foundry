@@ -165,6 +165,10 @@ angular@^1.0.8, angular@^1.x, angular@~1.5.8:
   version "1.5.11"
   resolved "https://registry.yarnpkg.com/angular/-/angular-1.5.11.tgz#8c5ba7386f15965c9acf3429f6881553aada30d6"
 
+angular@~1.4.2:
+  version "1.4.14"
+  resolved "https://registry.yarnpkg.com/angular/-/angular-1.4.14.tgz#9d0feaf60ce6e52ce50f49ee328656d1e1875c37"
+
 angularjs-slider@~6.0.0:
   version "6.0.0"
   resolved "https://registry.yarnpkg.com/angularjs-slider/-/angularjs-slider-6.0.0.tgz#c0f430d859d9f4f7c03f092dd289ed2545c582c6"
@@ -4537,6 +4541,14 @@ mkdirp@~0.3.5:
   version "0.3.5"
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-0.3.5.tgz#de3e5f8961c88c787ee1368df849ac4413eca8d7"
 
+moment@^2.18.1:
+  version "2.18.1"
+  resolved "https://registry.yarnpkg.com/moment/-/moment-2.18.1.tgz#c36193dd3ce1c2eed2adb7c802dbbc77a81b1c0f"
+
+moment@~2.10.6:
+  version "2.10.6"
+  resolved "https://registry.yarnpkg.com/moment/-/moment-2.10.6.tgz#6cb21967c79cba7b0ca5e66644f173662b3efa77"
+
 ms@0.7.1:
   version "0.7.1"
   resolved "https://registry.yarnpkg.com/ms/-/ms-0.7.1.tgz#9cd13c03adbff25b65effde7ce864ee952017098"
@@ -4795,6 +4807,13 @@ nvd3@^1.7.1, nvd3@~1.8.4:
 oauth-sign@~0.8.1:
   version "0.8.2"
   resolved "https://registry.yarnpkg.com/oauth-sign/-/oauth-sign-0.8.2.tgz#46a6ab7f0aead8deae9ec0565780b7d4efeb9d43"
+
+ob-daterangepicker@^0.10.3:
+  version "0.10.3"
+  resolved "https://registry.yarnpkg.com/ob-daterangepicker/-/ob-daterangepicker-0.10.3.tgz#1cc22b614485b9e67344799f389d343982e089d1"
+  dependencies:
+    angular "~1.4.2"
+    moment "~2.10.6"
 
 object-assign@^2.0.0:
   version "2.1.1"

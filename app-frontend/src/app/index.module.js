@@ -12,6 +12,7 @@ const App = angular.module(
         // plugins
         require('angular-ui-router'),
         require('angular-nvd3'),
+        'obDateRangePicker',
         'angular-jwt',
         'angular-clipboard',
         'auth0.lock',
