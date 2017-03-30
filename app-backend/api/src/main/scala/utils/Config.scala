@@ -8,7 +8,6 @@ trait Config {
   private val auth0Config = config.getConfig("auth0")
   private val intercomConfig = config.getConfig("intercom")
   private val rollbarConfig = config.getConfig("rollbar")
-  private val featureFlagConfig = config.getConfig("featureFlags")
   private val s3Config = config.getConfig("s3")
 
   val httpHost = httpConfig.getString("interface")
@@ -24,8 +23,6 @@ trait Config {
 
   val intercomAppId = intercomConfig.getString("appId")
   val rollbarClientToken = rollbarConfig.getString("clientToken")
-
-  val featureFlags = featureFlagConfig.getConfigList("features")
 
   val region = s3Config.getString("region")
   val dataBucket = s3Config.getString("dataBucket")
