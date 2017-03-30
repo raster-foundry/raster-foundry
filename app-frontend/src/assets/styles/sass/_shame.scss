@@ -240,3 +240,16 @@ rf-project-editor .leaflet-tile {
 .form-group.all-in-one [readonly] {
   background: none;
 }
+
+ob-daterangepicker {
+  margin-bottom: 2em;
+  .picker-dropdown-container {
+    position: absolute;
+    z-index: 10;
+  }
+  &.active {
+    .picker-dropdown-container {
+      background: $shade-dark;
+    }
+  }
+}

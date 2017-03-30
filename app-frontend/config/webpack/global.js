@@ -137,7 +137,12 @@ module.exports = function (_path) {
                 loaders: [
                     'expose?joint'
                 ]
-            },{
+            }, {
+                test: require.resolve('moment'),
+                loaders: [
+                    'expose?moment'
+                ]
+            }, {
                 test: /node_modules[\\\/]auth0-lock[\\\/].*\.js$/,
                 loaders: ['transform-loader/cacheable?brfs',
                           'transform-loader/cacheable?packageify']
