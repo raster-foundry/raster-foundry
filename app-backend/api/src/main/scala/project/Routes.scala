@@ -62,6 +62,11 @@ trait ProjectRoutes extends Authentication
         pathPrefix(JavaUUID) { sceneId =>
           get { getProjectSceneColorCorrectParams(projectId, sceneId) } ~
           put { setProjectSceneColorCorrectParams(projectId, sceneId) }
+        } ~
+        pathPrefix("bulk-update-color-corrections") {
+          pathEndOrSingleSlash {
+            post { setProjectScenesColorCorrectParams(projectId) }
+          }
         }
       } ~
       pathPrefix("order") {
@@ -159,6 +164,15 @@ trait ProjectRoutes extends Authentication
   def setProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) = authenticate { user =>
     entity(as[ColorCorrect.Params]) { ccParams =>
       onSuccess(ScenesToProjects.setColorCorrectParams(projectId, sceneId, ccParams)) { sceneToProject =>
+        complete(StatusCodes.NoContent)
+      }
+    }
+  }
+
+  /** Set color correction parameters for a list of scenes */
+  def setProjectScenesColorCorrectParams(projectId: UUID) = authenticate { user =>
+    entity(as[BatchParams]) { params =>
+      onSuccess(ScenesToProjects.setColorCorrectParamsBatch(projectId, params)) { scenesToProject =>
         complete(StatusCodes.NoContent)
       }
     }
