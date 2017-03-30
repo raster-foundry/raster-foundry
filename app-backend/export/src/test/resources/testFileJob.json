@@ -1,0 +1,25 @@
+{
+    "id":"dda6080f-f7ad-455d-b409-764dd8c57039",
+    "input":{
+        "projectId":"6de62bb2-5cd9-41c9-b5f8-d2902f8b8725",
+        "resolution": 8,
+        "mask": {"type":"MultiPolygon","coordinates":[[[[-67.50000000407866,2.8113711946224087],[-67.50000000407866,8.407168167437906],[-61.875000001492985,8.407168167437906],[-61.875000001492985,2.8113711946224087],[-67.50000000407866,2.8113711946224087]]]]},
+        "layers":[
+            {
+                "layerId":"ca10532c-0432-4bb2-9d89-9ab8ba4b7e51",
+                "ingestLocation":"s3://rasterfoundry-staging-catalogs-us-east-1/layers",
+                "attributes":[ ]
+            }
+        ]
+    },
+    "output":{
+        "source":"file:///tmp",
+        "stitch":false,
+        "crop":false,
+        "render":{
+            "operation":"id",
+            "bands":[0, 1, 2]
+        },
+        "rasterSize": 512
+    }
+}

@@ -173,6 +173,22 @@ lazy val ingest = Project("ingest", file("ingest"))
     )
   })
 
+lazy val export = Project("export", file("export"))
+  .settings(commonSettings:_*)
+  .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
+  .settings({
+    libraryDependencies ++= testDependencies ++ Seq(
+      Dependencies.scalaLogging,
+      Dependencies.geotrellisSpark,
+      Dependencies.geotrellisS3,
+      Dependencies.geotrellisUtil,
+      Dependencies.geotrellisRaster,
+      Dependencies.akkaSprayJson,
+      Dependencies.spark,
+      Dependencies.scopt
+    )
+  })
+
 import io.gatling.sbt.GatlingPlugin
 lazy val tile = Project("tile", file("tile"))
   .dependsOn(datamodel)

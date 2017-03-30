@@ -18,7 +18,9 @@ services:
       SPARK_DAEMON_JAVA_OPTS: "-Dspark.deploy.recoveryMode=FILESYSTEM -Dspark.deploy.recoveryDirectory=/spark-state"
     volumes:
       - ./app-backend/ingest/src/test/resources:/opt/rf/test-resources
+      - ./app-backend/export/src/test/resources:/opt/rf/export-test-resources
       - ./app-backend/ingest/target/scala-2.11/rf-ingest.jar:/opt/rf/jars/rf-ingest.jar
+      - ./app-backend/export/target/scala-2.11/rf-export.jar:/opt/rf/jars/rf-export.jar
       - $HOME/.aws:/var/lib/spark/.aws:ro
       # Spark cluster state
       - /spark-state
@@ -66,7 +68,9 @@ services:
       SPARK_EXECUTOR_MEMORY: "2G"
     volumes:
       - ./app-backend/ingest/src/test/resources:/opt/rf/test-resources
+      - ./app-backend/export/src/test/resources:/opt/rf/export-test-resources
       - ./app-backend/ingest/target/scala-2.11/rf-ingest.jar:/opt/rf/jars/rf-ingest.jar
+      - ./app-backend/export/target/scala-2.11/rf-export.jar:/opt/rf/jars/rf-export.jar
       - ./worker-tasks/:/opt/raster-foundry/worker-tasks/
       - ./.ivy2:/root/.ivy2
       - ./.sbt:/root/.sbt
