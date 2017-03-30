@@ -1,0 +1,25 @@
+{
+    "id":"dda6080f-f7ad-455d-b409-764dd8c57039",
+    "input":{
+        "projectId":"6de62bb2-5cd9-41c9-b5f8-d2902f8b8725",
+        "resolution": 8,
+        "layers":[
+            {
+                "layerId":"ca10532c-0432-4bb2-9d89-9ab8ba4b7e51",
+                "ingestLocation":"s3://rasterfoundry-staging-catalogs-us-east-1/layers",
+                "attributes":[ ]
+            }
+        ]
+    },
+    "output":{
+        "source":"s3://rasterfoundry-test/daunnc-test",
+        "stitch":false,
+        "render":{
+            "operation":"id",
+            "bands":[4, 3, 2]
+        },
+        "crop":false,
+        "rasterSize": 1024,
+        "crs":"EPSG:3857"
+    }
+}

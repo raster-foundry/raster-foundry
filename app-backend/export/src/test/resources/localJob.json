@@ -1,0 +1,56 @@
+{
+    "id":"dda6080f-f7ad-455d-b409-764dd8c57039",
+    "input":{
+        "projectId":"dda6080f-f7ad-455d-b409-764dd8c57036",
+        "resolution":15,
+        "layers":[
+            {
+                "layerId":"8436f7e9-b7f7-4d4f-bda8-76b32c356cff",
+                "ingestLocation":"s3://test/",
+                "attributes":[
+
+                ]
+            }
+        ],
+        "mask":{
+            "type":"MultiPolygon",
+            "coordinates":[
+                [
+                    [
+                        [
+                            -78.91337999999999,
+                            -12.25582
+                        ],
+                        [
+                            -77.20025,
+                            -12.620750000000017
+                        ],
+                        [
+                            -76.82601,
+                            -10.880060000000018
+                        ],
+                        [
+                            -78.52844,
+                            -10.519079999999995
+                        ],
+                        [
+                            -78.91337999999999,
+                            -12.25582
+                        ]
+                    ]
+                ]
+            ]
+        }
+    },
+    "output":{
+        "source":"s3://test/",
+        "stitch":false,
+        "render":{
+            "operation":"id",
+            "bands":[1, 2, 3]
+        },
+        "crop":false,
+        "rasterSize": 256,
+        "crs":"epsg:32654"
+    }
+}
