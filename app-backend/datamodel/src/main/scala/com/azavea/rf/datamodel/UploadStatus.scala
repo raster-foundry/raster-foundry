@@ -14,6 +14,8 @@ object UploadStatus {
   case object Queued extends UploadStatus("QUEUED")
   case object Processing extends UploadStatus("PROCESSING")
   case object Complete extends UploadStatus("COMPLETE")
+  case object Failed extends UploadStatus("FAILED")
+  case object Aborted extends UploadStatus("ABORTED")
 
   def fromString(s: String): UploadStatus = s.toUpperCase match {
     case "CREATED" => Created
@@ -22,6 +24,8 @@ object UploadStatus {
     case "QUEUED" => Queued
     case "PROCESSING" => Processing
     case "COMPLETE" => Complete
+    case "FAILED" => Failed
+    case "ABORTED" => Aborted
   }
 
   implicit val uploadStatusEncoder: Encoder[UploadStatus] =
