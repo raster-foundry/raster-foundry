@@ -9,7 +9,7 @@ import akka.http.scaladsl.model.StatusCodes
 
 import com.lonelyplanet.akka.http.extensions.{PaginationDirectives, PageRequest}
 
-import com.azavea.rf.common.{Authentication, UserErrorHandler}
+import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
 import com.azavea.rf.database.tables.Uploads
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.{Database, ActionRunner}
@@ -21,6 +21,7 @@ import de.heikoseeberger.akkahttpcirce.CirceSupport._
 trait UploadRoutes extends Authentication
     with UploadQueryParameterDirective
     with PaginationDirectives
+    with CommonHandlers
     with UserErrorHandler
     with ActionRunner {
   implicit def database: Database
@@ -75,8 +76,8 @@ trait UploadRoutes extends Authentication
   def updateUpload(uploadId: UUID): Route = authenticate { user =>
     entity(as[Upload]) { updateUpload =>
       authorize(user.isInRootOrSameOrganizationAs(updateUpload)) {
-        onSuccess(update(Uploads.updateUpload(updateUpload, uploadId, user))) { count =>
-          complete(StatusCodes.NoContent)
+        onSuccess(update(Uploads.updateUpload(updateUpload, uploadId, user))) {
+          completeSingleOrNotFound
         }
       }
     }
@@ -84,11 +85,7 @@ trait UploadRoutes extends Authentication
 
   def deleteUpload(uploadId: UUID): Route = authenticate { user =>
     onSuccess(drop(Uploads.deleteUpload(uploadId, user))) {
-      case 1 => complete(StatusCodes.NoContent)
-      case 0 => complete(StatusCodes.NotFound)
-      case count => throw new IllegalStateException(
-        s"Error deleting upload. Delete result expected to be 1, was $count"
-      )
+      completeSingleOrNotFound
     }
   }
 

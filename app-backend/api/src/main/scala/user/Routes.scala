@@ -7,7 +7,7 @@ import akka.http.scaladsl.model.StatusCodes
 
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 
-import com.azavea.rf.common.{Authentication, UserErrorHandler}
+import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.Users
 import com.azavea.rf.datamodel._
@@ -19,7 +19,10 @@ import de.heikoseeberger.akkahttpcirce.CirceSupport._
 /**
   * Routes for users
   */
-trait UserRoutes extends Authentication with PaginationDirectives with UserErrorHandler {
+trait UserRoutes extends Authentication
+    with PaginationDirectives
+    with CommonHandlers
+    with UserErrorHandler {
 
   implicit def database: Database
 
@@ -91,10 +94,7 @@ trait UserRoutes extends Authentication with PaginationDirectives with UserError
   def updateUserByEncodedAuthId(authIdEncoded: String): Route = authenticateRootMember { root =>
     entity(as[User]) { updatedUser =>
       onSuccess(Users.updateUser(updatedUser, authIdEncoded)) {
-        case 1 => complete(StatusCodes.NoContent)
-        case count => throw new IllegalStateException(
-          s"Error updating user: update result expected to be: 1, was $count"
-        )
+        completeSingleOrNotFound
       }
     }
   }

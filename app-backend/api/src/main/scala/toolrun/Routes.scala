@@ -1,6 +1,6 @@
 package com.azavea.rf.api.toolrun
 
-import com.azavea.rf.common.{Authentication, UserErrorHandler}
+import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
 import com.azavea.rf.database.{ActionRunner, Database}
 import com.azavea.rf.database.tables.ToolRuns
 import com.azavea.rf.datamodel._
@@ -19,6 +19,7 @@ import java.util.UUID
 trait ToolRunRoutes extends Authentication
     with PaginationDirectives
     with ToolRunQueryParametersDirective
+    with CommonHandlers
     with UserErrorHandler
     with ActionRunner {
   implicit def database: Database
@@ -64,16 +65,8 @@ trait ToolRunRoutes extends Authentication
   def updateToolRun(runId: UUID): Route = authenticate { user =>
     entity(as[ToolRun]) { updatedRun =>
       authorize(user.isInRootOrSameOrganizationAs(updatedRun)) {
-        onComplete(update(ToolRuns.updateToolRun(updatedRun, runId, user))) {
-          case Success(result) => {
-            result match {
-              case 1 => complete(StatusCodes.NoContent)
-              case count => throw new IllegalStateException(
-                s"Error updating tool run: update result expected to be 1, was $count"
-              )
-            }
-          }
-          case Failure(e) => throw e
+        onSuccess(update(ToolRuns.updateToolRun(updatedRun, runId, user))) {
+          completeSingleOrNotFound
         }
       }
     }
@@ -81,11 +74,7 @@ trait ToolRunRoutes extends Authentication
 
   def deleteToolRun(runId: UUID): Route = authenticate { user =>
     onSuccess(database.db.run(ToolRuns.deleteToolRun(runId, user))) {
-      case 1 => complete(StatusCodes.NoContent)
-      case 0 => complete(StatusCodes.NotFound)
-      case count => throw new IllegalStateException(
-        s"Error deleting tool run: delete result expected to be 1, was $count"
-      )
+      completeSingleOrNotFound
     }
   }
 }

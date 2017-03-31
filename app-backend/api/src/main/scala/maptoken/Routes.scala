@@ -5,7 +5,7 @@ import java.util.UUID
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-import com.azavea.rf.common.{Authentication, UserErrorHandler}
+import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
 import com.azavea.rf.database.tables.{Images, MapTokens}
 import com.azavea.rf.database.{ActionRunner, Database}
 import com.azavea.rf.datamodel._
@@ -17,6 +17,7 @@ import de.heikoseeberger.akkahttpcirce.CirceSupport._
 trait MapTokenRoutes extends Authentication
     with MapTokensQueryParameterDirective
     with PaginationDirectives
+    with CommonHandlers
     with UserErrorHandler
     with ActionRunner {
 
@@ -70,8 +71,8 @@ trait MapTokenRoutes extends Authentication
   def updateMapToken(mapTokenId: UUID): Route = authenticate { user =>
     entity(as[MapToken]) { updatedMapToken =>
       authorize(user.isInRootOrSameOrganizationAs(updatedMapToken)) {
-        onSuccess(update(MapTokens.updateMapToken(updatedMapToken, mapTokenId, user))) { count =>
-          complete(StatusCodes.NoContent)
+        onSuccess(update(MapTokens.updateMapToken(updatedMapToken, mapTokenId, user))) {
+          completeSingleOrNotFound
         }
       }
     }
@@ -79,11 +80,7 @@ trait MapTokenRoutes extends Authentication
 
   def deleteMapToken(mapTokenId: UUID): Route = authenticate { user =>
     onSuccess(drop(MapTokens.deleteMapToken(mapTokenId, user))) {
-      case 1 => complete(StatusCodes.NoContent)
-      case 0 => complete(StatusCodes.NotFound)
-      case count => throw new IllegalStateException(
-        s"Error deleting image: delete result expected to be 1, was $count"
-      )
+      completeSingleOrNotFound
     }
   }
 }
