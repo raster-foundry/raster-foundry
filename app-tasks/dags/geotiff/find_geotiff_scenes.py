@@ -1,9 +1,8 @@
 from collections import namedtuple
+from datetime import datetime, timedelta
 import json
 import logging
 import os
-import boto3
-from datetime import datetime
 
 from airflow.models import DAG
 from airflow.bin.cli import trigger_dag
@@ -30,7 +29,7 @@ DagArgs = namedtuple('DagArgs', 'dag_id, conf, run_id')
 dag = DAG(
     dag_id='find_geotiff_scenes',
     default_args=args,
-    schedule_interval=None,
+    schedule_interval=timedelta(minutes=2),
     concurrency=int(os.getenv('AIRFLOW_DAG_CONCURRENCY', 24))
 )
 
