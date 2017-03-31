@@ -95,11 +95,8 @@ export default class FilterPaneController {
     }
 
     onCloudCoverFiltersChange(id, minModel, maxModel) {
-        if (minModel === this.cloudCoverRange.min) {
-            delete this.filters.minCloudCover;
-        } else {
-            this.filters.minCloudCover = minModel;
-        }
+        // Some scenes have a cloudCover < 0, which is invalid. filter them out.
+        this.filters.minCloudCover = minModel;
 
         if (maxModel === this.cloudCoverRange.max) {
             delete this.filters.maxCloudCover;
@@ -285,7 +282,7 @@ export default class FilterPaneController {
 
         this.cloudCoverFilters.minModel = this.cloudCoverRange.min;
         this.cloudCoverFilters.maxModel = this.cloudCoverRange.max;
-        delete this.filters.minCloudCover;
+        this.filters.minCloudCover = this.cloudCoverRange.min;
         delete this.filters.maxCloudCover;
 
 
