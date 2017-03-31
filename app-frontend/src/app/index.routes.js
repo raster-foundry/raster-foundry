@@ -371,8 +371,10 @@ function importStates($stateProvider) {
         });
 }
 
-function routeConfig($urlRouterProvider, $stateProvider) {
+function routeConfig($urlRouterProvider, $stateProvider, $urlMatcherFactoryProvider) {
     'ngInject';
+
+    $urlMatcherFactoryProvider.strictMode(false);
 
     $stateProvider.state('root', {
         templateUrl: rootTpl
