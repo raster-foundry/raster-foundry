@@ -18,6 +18,7 @@ import io.circe.optics.JsonPath._
 import java.util.UUID
 import java.util.Date
 import java.sql.Timestamp
+import akka.http.scaladsl.model.{IllegalRequestException, StatusCodes}
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -298,7 +299,7 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
                     updateProjectExtentQuery.update(newProjectExtentGeometry)
                   }
                 }
-                case _ => throw new IllegalStateException("Error updating project: no project matching id found")
+                case _ => throw IllegalRequestException(StatusCodes.ClientError(404)("Not Found", "Error updating project: no project matching id found"))
               }
             }
 
@@ -355,8 +356,8 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
           }
 
         }
-        case (0, _) => throw new IllegalStateException("Error updating project: not authorized to modify this project")
-        case (_, _) => throw new IllegalStateException("Error updating project: not authorized to use one or more of these scenes")
+        case (0, _) => throw IllegalRequestException(StatusCodes.ClientError(403)("Forbidden", "Error updating project: not authorized to modify this project"))
+        case (_, _) => throw IllegalRequestException(StatusCodes.ClientError(403)("Forbidden", "Error updating project: not authorized to use one or more of these scenes"))
       }
     }
   }

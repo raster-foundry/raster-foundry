@@ -1,10 +1,9 @@
 package com.azavea.rf.common
 
-import akka.http.scaladsl.server.{Route, ExceptionHandler, Directives}
-import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.{ExceptionHandler, Directives}
+import akka.http.scaladsl.model.{IllegalRequestException, StatusCodes}
 import com.typesafe.scalalogging.LazyLogging
 import java.security.InvalidParameterException
-import com.typesafe.scalalogging.LazyLogging
 import org.postgresql.util.PSQLException
 
 
@@ -23,6 +22,10 @@ trait UserErrorHandler extends Directives
     case e: InvalidParameterException =>
       logger.error(RfStackTrace(e))
       complete(StatusCodes.ClientError(400)("Bad Request", e.getMessage))
+    case e: IllegalRequestException =>
+      logger.error(RfStackTrace(e))
+      // Status code and error message are expected to be contained within
+      complete(e)
     case e: Exception =>
       sendError(e)
       complete(StatusCodes.ServerError(501)("An unknown error occurred", ""))
