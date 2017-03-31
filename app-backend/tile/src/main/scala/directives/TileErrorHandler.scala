@@ -15,7 +15,6 @@ trait TileErrorHandler extends Directives
   val tileExceptionHandler = ExceptionHandler {
     case e: IllegalArgumentException =>
       logger.error(RfStackTrace(e))
-      sendError(e)
       complete(StatusCodes.ClientError(400)("Bad Argument", e.getMessage))
     case e: IllegalStateException =>
       logger.error(RfStackTrace(e))
@@ -23,15 +22,12 @@ trait TileErrorHandler extends Directives
       complete(StatusCodes.ClientError(400)("Bad Request", e.getMessage))
     case e: DeserializationException =>
       logger.error(RfStackTrace(e))
-      sendError(e)
       complete(StatusCodes.ClientError(400)("Decoding Error", e.getMessage))
     case e: SerializationException =>
       logger.error(RfStackTrace(e))
-      sendError(e)
       complete(StatusCodes.ServerError(500)("Encoding Error", e.getMessage))
     case e: LayerIOError =>
       logger.error(RfStackTrace(e))
-      sendError(e)
       complete(StatusCodes.ClientError(404)("Scene or Scene tile data not found", e.getMessage))
     case e: Exception =>
       sendError(e)
