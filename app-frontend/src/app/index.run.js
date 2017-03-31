@@ -13,7 +13,7 @@ function runBlock(
             rollbarWrapperService.init();
             intercomService.shutdown();
             $state.go('login');
-        } else {
+        } else if (toState.name !== 'login') {
             rollbarWrapperService.init(authService.profile());
             intercomService.bootWithUser(authService.profile());
         }
