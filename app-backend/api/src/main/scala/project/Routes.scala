@@ -5,7 +5,7 @@ import akka.http.scaladsl.unmarshalling._
 import akka.http.scaladsl.model.StatusCodes
 import com.lonelyplanet.akka.http.extensions.{PaginationDirectives, Order}
 
-import com.azavea.rf.common.{Authentication, UserErrorHandler}
+import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
 import com.azavea.rf.database.tables._
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.Database
@@ -25,6 +25,7 @@ trait ProjectRoutes extends Authentication
     with QueryParametersCommon
     with SceneQueryParameterDirective
     with PaginationDirectives
+    with CommonHandlers
     with UserErrorHandler {
 
   implicit def database: Database
@@ -103,10 +104,7 @@ trait ProjectRoutes extends Authentication
     entity(as[Project]) { updatedProject =>
       authorize(user.isInRootOrSameOrganizationAs(updatedProject)) {
         onSuccess(Projects.updateProject(updatedProject, projectId, user)) {
-          case 1 => complete(StatusCodes.NoContent)
-          case count => throw new IllegalStateException(
-            s"Error updating project: update result expected to be 1, was $count"
-          )
+          completeSingleOrNotFound
         }
       }
     }
@@ -114,11 +112,7 @@ trait ProjectRoutes extends Authentication
 
   def deleteProject(projectId: UUID): Route = authenticate { user =>
     onSuccess(Projects.deleteProject(projectId, user)) {
-      case 1 => complete(StatusCodes.NoContent)
-      case 0 => complete(StatusCodes.NotFound)
-      case count => throw new IllegalStateException(
-        s"Error deleting project: delete result expected to be 1, was $count"
-      )
+      completeSingleOrNotFound
     }
   }
 

@@ -1,6 +1,6 @@
 package com.azavea.rf.api.tooltag
 
-import com.azavea.rf.common.{Authentication, UserErrorHandler}
+import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.ToolTags
 import com.azavea.rf.datamodel._
@@ -16,7 +16,10 @@ import scala.util.{Success, Failure}
 import java.util.UUID
 
 
-trait ToolTagRoutes extends Authentication with PaginationDirectives with UserErrorHandler {
+trait ToolTagRoutes extends Authentication
+    with PaginationDirectives
+    with CommonHandlers
+    with UserErrorHandler {
   implicit def database: Database
 
   val toolTagRoutes: Route = handleExceptions(userExceptionHandler) {
@@ -60,16 +63,8 @@ trait ToolTagRoutes extends Authentication with PaginationDirectives with UserEr
   def updateToolTag(toolTagId: UUID): Route = authenticate { user =>
     entity(as[ToolTag]) { updatedToolTag =>
       authorize(user.isInRootOrSameOrganizationAs(updatedToolTag)) {
-        onComplete(ToolTags.updateToolTag(updatedToolTag, toolTagId, user)) {
-          case Success(result) => {
-            result match {
-              case 1 => complete(StatusCodes.NoContent)
-              case count => throw new IllegalStateException(
-                s"Error updating tool tag: update result expected to be 1, was $count"
-              )
-            }
-          }
-          case Failure(e) => throw e
+        onSuccess(ToolTags.updateToolTag(updatedToolTag, toolTagId, user)) {
+          completeSingleOrNotFound
         }
       }
     }
@@ -77,11 +72,7 @@ trait ToolTagRoutes extends Authentication with PaginationDirectives with UserEr
 
   def deleteToolTag(toolTagId: UUID): Route = authenticate { user =>
     onSuccess(ToolTags.deleteToolTag(toolTagId, user)) {
-      case 1 => complete(StatusCodes.NoContent)
-      case 0 => complete(StatusCodes.NotFound)
-      case count => throw new IllegalStateException(
-        s"Error deleting tag: delete result expected to be 1, was $count"
-      )
+      completeSingleOrNotFound
     }
   }
 

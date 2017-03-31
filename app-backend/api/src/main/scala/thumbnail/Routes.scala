@@ -1,6 +1,6 @@
 package com.azavea.rf.api.thumbnail
 
-import com.azavea.rf.common.{UserErrorHandler, Authentication, S3}
+import com.azavea.rf.common.{UserErrorHandler, Authentication, S3, CommonHandlers}
 import com.azavea.rf.database.tables.Thumbnails
 import com.azavea.rf.database.Database
 import com.azavea.rf.datamodel._
@@ -23,6 +23,7 @@ import scala.util.{Success, Failure, Try}
 trait ThumbnailRoutes extends Authentication
     with ThumbnailQueryParameterDirective
     with PaginationDirectives
+    with CommonHandlers
     with UserErrorHandler
     with Config {
 
@@ -101,11 +102,7 @@ trait ThumbnailRoutes extends Authentication
     entity(as[Thumbnail]) { updatedThumbnail =>
       authorize(user.isInRootOrSameOrganizationAs(updatedThumbnail)) {
         onSuccess(Thumbnails.updateThumbnail(updatedThumbnail, thumbnailId, user)) {
-          case 1 => complete(StatusCodes.NoContent)
-          case 0 => complete(StatusCodes.NotFound)
-          case count => throw new IllegalStateException(
-            s"Error updating thumbnail: update result expected to be 1, was $count"
-          )
+          completeSingleOrNotFound
         }
       }
     }
@@ -113,11 +110,7 @@ trait ThumbnailRoutes extends Authentication
 
   def deleteThumbnail(thumbnailId: UUID): Route = authenticate { user =>
     onSuccess(Thumbnails.deleteThumbnail(thumbnailId, user)) {
-      case 1 => complete(StatusCodes.NoContent)
-      case 0 => complete(StatusCodes.NotFound)
-      case count => throw new IllegalStateException(
-        s"Error deleting thumbnail: delete result expected to be 1, was $count"
-      )
+      completeSingleOrNotFound
     }
   }
 }
