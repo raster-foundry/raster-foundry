@@ -2364,6 +2364,8 @@ definitions:
           - QUEUED
           - PROCESSING
           - COMPLETE
+          - FAILED
+          - ABORTED
       files:
         type: array
         items:

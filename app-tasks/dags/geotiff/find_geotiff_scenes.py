@@ -1,15 +1,15 @@
 from collections import namedtuple
+from datetime import datetime, timedelta
 import json
 import logging
 import os
-import boto3
-from datetime import datetime
 
 from airflow.models import DAG
 from airflow.bin.cli import trigger_dag
 from airflow.operators.python_operator import PythonOperator
 
 from rf.utils.exception_reporting import wrap_rollbar
+from rf.models import Upload
 
 rf_logger = logging.getLogger('rf')
 ch = logging.StreamHandler()
@@ -29,7 +29,7 @@ DagArgs = namedtuple('DagArgs', 'dag_id, conf, run_id')
 dag = DAG(
     dag_id='find_geotiff_scenes',
     default_args=args,
-    schedule_interval=None,
+    schedule_interval=timedelta(minutes=2),
     concurrency=int(os.getenv('AIRFLOW_DAG_CONCURRENCY', 24))
 )
 
@@ -49,19 +49,12 @@ def find_geotiffs(*args, **kwargs):
     """Find geotiffs which match the bucket and prefix and kick off imports
     """
 
-    logging.info("Finding geotiff scenes...")
+    logger.info("Finding geotiff scenes...")
 
-    conf = kwargs['dag_run'].conf
-
-    bucket = conf.get('bucket')
-    prefix = conf.get('prefix')
-
-    execution_date = kwargs['execution_date']
+    conf = kwargs['dag_run'].conf if kwargs['dag_run'] else {}
 
     try:
-        tilepaths = find_geotiff_scenes(
-            bucket, prefix
-        )
+        upload_ids = Upload.get_importable_uploads()
     except:
         logger.error('encountered error finding tile paths')
         raise
@@ -69,32 +62,19 @@ def find_geotiffs(*args, **kwargs):
 
     dag_id = 'import_geotiff_scenes'
 
-    group_max = int(os.getenv('AIRFLOW_CHUNK_SIZE', 32))
-    num_groups = group_max if len(tilepaths) >= group_max else len(tilepaths)
-    logger.info('Kicking off %s dags to import scene groups', num_groups)
-
-    tilepath_groups = chunkify(tilepaths, num_groups)
-    for idx, path_group in enumerate(tilepath_groups):
-        slug_path = '_'.join(path_group[0].split('/'))
-        run_id = 'geotiff_import_{year}_{month}_{day}_{idx}_{slug}'.format(
-            year=execution_date.year, month=execution_date.month, day=execution_date.day,
-            idx=idx, slug=slug_path
+    for upload_id in upload_ids:
+        run_id = 'geotiff_import_{upload_id}'.format(
+            upload_id=upload_id
         )
         logger.info('Kicking off new scene import: %s', run_id)
-        conf['tilepaths'] = path_group
+        upload = Upload.from_id(upload_id)
+        upload.update_upload_status('Queued')
+        conf['upload_id'] = upload_id
         confjson = json.dumps(conf)
         dag_args = DagArgs(dag_id=dag_id, conf=confjson, run_id=run_id)
         trigger_dag(dag_args)
 
-    logger.info('Finished kicking off new Geotiff scene dags')
-
-
-@wrap_rollbar
-def find_geotiff_scenes(bucket_name, files_prefix):
-    s3 = boto3.resource('s3')
-    bucket = s3.Bucket(bucket_name)
-    keys = [s3_tif.key for s3_tif in bucket.objects.filter(Prefix=files_prefix)]
-    return keys
+    logger.info('Finished kicking off new uploaded scene dags')
 
 
 PythonOperator(
