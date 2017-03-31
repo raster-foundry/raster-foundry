@@ -431,10 +431,15 @@ export default class FilterPaneController {
         delete this.filters.minSunAzimuth;
         delete this.filters.maxSunAzimuth;
 
-        this.sourceFilters = _.mapValues(this.sourceFilters, (val) => {
-            val.enabled = false;
-            return val;
-        });
+        Object.values(this.dynamicSourceFilters)
+            .forEach((ds) => {
+                ds.enabled = false;
+            });
+        Object.values(this.staticSourceFilters)
+            .forEach((ds) => {
+                ds.enabled = false;
+            });
+        this.filters.datasource = [];
 
         this.ingestFilter = 'any';
         delete this.filters.ingested;
