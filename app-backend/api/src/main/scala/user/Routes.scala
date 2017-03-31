@@ -44,7 +44,7 @@ trait UserRoutes extends Authentication with PaginationDirectives with UserError
     }
   }
 
-  def listUsers: Route = authenticate { user =>
+  def listUsers: Route = authenticateRootMember { user =>
     withPagination { page =>
       complete {
         Users.listUsers(page)
@@ -52,8 +52,7 @@ trait UserRoutes extends Authentication with PaginationDirectives with UserError
     }
   }
 
-  // TODO: Restrict to users with correct permissions, e.g. admin
-  def createUser: Route = authenticate { admin =>
+  def createUser: Route = authenticateRootMember { root =>
     entity(as[User.Create]) { newUser =>
       onSuccess(Users.createUser(newUser)) { createdUser =>
         onSuccess(Users.getUserById(createdUser.id)) {
@@ -80,15 +79,16 @@ trait UserRoutes extends Authentication with PaginationDirectives with UserError
 
   def getUserByEncodedAuthId(authIdEncoded: String): Route = authenticate { user =>
     rejectEmptyResponse {
-      complete {
-        val authId = URLDecoder.decode(authIdEncoded, "US_ASCII")
-        Users.getUserById(authId)
+      val authId = URLDecoder.decode(authIdEncoded, "US_ASCII")
+      if (user.isInRootOrganization || user.id == authId) {
+        complete(Users.getUserById(authId))
+      } else {
+        complete(StatusCodes.NotFound)
       }
     }
   }
 
-  // TODO: Restrict to users with correct permissions, e.g. admin
-  def updateUserByEncodedAuthId(authIdEncoded: String): Route = authenticate { admin =>
+  def updateUserByEncodedAuthId(authIdEncoded: String): Route = authenticateRootMember { root =>
     entity(as[User]) { updatedUser =>
       onSuccess(Users.updateUser(updatedUser, authIdEncoded)) {
         case 1 => complete(StatusCodes.NoContent)

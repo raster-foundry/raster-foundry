@@ -36,17 +36,17 @@ object Organizations extends TableQuery(tag => new Organizations(tag)) with Lazy
       new NameFieldSort(identity[Organizations]),
       new TimestampSort(identity[Organizations]))
 
-  def listOrganizations(page: PageRequest)(implicit database: DB): Future[PaginatedResponse[Organization]] = {
+  def pageOrganizations(organizations: TableQuery, page: PageRequest, database: DB) = {
 
     val organizationsQueryResult = database.db.run {
-      Organizations
+      organizations
         .drop(page.offset * page.limit)
         .take(page.limit)
         .sort(page.sort)
         .result
     }
     val totalOrganizationsQuery = database.db.run {
-      Organizations.length.result
+      organizations.length.result
     }
 
     for {
@@ -59,6 +59,12 @@ object Organizations extends TableQuery(tag => new Organizations(tag)) with Lazy
         page.offset, page.limit, organizations)
     }
   }
+
+  def listOrganizations(page: PageRequest)(implicit database: DB) =
+    pageOrganizations(Organizations, page, database)
+
+  def listFilteredOrganizations(ids: Seq[UUID], page: PageRequest)(implicit database: DB) =
+    pageOrganizations(Organizations.filter(_.id inSet ids), page, database)
 
   def getOrganization(id: java.util.UUID)(implicit database: DB): Future[Option[Organization]] = {
     val action = Organizations.filter(_.id === id).result

@@ -89,4 +89,14 @@ trait Authentication extends Directives {
       case _ => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
     }
   }
+
+  /**
+    * Directive that only allows members of root organization
+    */
+  def authenticateRootMember: Directive1[User] = {
+    authenticate.flatMap { user =>
+      if (user.isInRootOrganization) { provide(user) }
+      else { reject(AuthorizationFailedRejection) }
+    }
+  }
 }

@@ -37,13 +37,15 @@ trait OrganizationRoutes extends Authentication with PaginationDirectives with U
 
   def listOrganizations: Route = authenticate { user =>
     withPagination { page =>
-      complete {
-        Organizations.listOrganizations(page)
+      if (user.isInRootOrganization) {
+        complete(Organizations.listOrganizations(page))
+      } else {
+        complete(Organizations.listFilteredOrganizations(List(user.organizationId), page))
       }
     }
   }
 
-  def createOrganization: Route = authenticate { user =>
+  def createOrganization: Route = authenticateRootMember { root =>
     entity(as[Organization.Create]) { newOrg =>
       onSuccess(Organizations.createOrganization(newOrg)) { org =>
         complete(StatusCodes.Created, org)
@@ -53,13 +55,15 @@ trait OrganizationRoutes extends Authentication with PaginationDirectives with U
 
   def getOrganization(orgId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
-      complete {
-        Organizations.getOrganization(orgId)
+      if (user.isInRootOrSameOrganizationAs(new { val organizationId = orgId })) {
+        complete(Organizations.getOrganization(orgId))
+      } else {
+        complete(StatusCodes.NotFound)
       }
     }
   }
 
-  def updateOrganization(orgId: UUID): Route = authenticate { user =>
+  def updateOrganization(orgId: UUID): Route = authenticateRootMember { root =>
     entity(as[Organization]) { updatedOrg =>
       onSuccess(Organizations.updateOrganization(updatedOrg, orgId)) {
         case 1 => complete(StatusCodes.NoContent)
