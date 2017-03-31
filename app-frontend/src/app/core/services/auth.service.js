@@ -122,7 +122,7 @@ export default (app) => {
                     return configFlags.includes(flag.key);
                 });
                 this.featureFlags.set(flagOverrides);
-                this.rollbarWrapper.init(profile);
+                this.rollbarWrapperService.init(profile);
                 this.isLoggedIn = true;
                 this.lock.hide();
                 if (authResult.refreshToken) {

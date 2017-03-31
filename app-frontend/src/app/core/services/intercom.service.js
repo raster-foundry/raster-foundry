@@ -35,7 +35,9 @@ export default (app) => {
         }
 
         shutdown() {
-            Intercom('shutdown');
+            if (this.scriptLoaded) {
+                Intercom('shutdown');
+            }
         }
     }
 
