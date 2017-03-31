@@ -716,6 +716,24 @@ paths:
           description: An ordered list of scene IDs and corresponding color correction parameters
           schema:
             $ref: '#/definitions/MosaicDefinition'
+
+  /projects/{uuid}/mosaic/bulk-update-color-corrections/:
+    post:
+      summary: Persist a batch of project/scene pairing\'s color correction parameters
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - name: combinedSceneCorrectionParameters
+          description: Combined color correction parameters
+          in: body
+          schema:
+            $ref: '#/definitions/CombinedSceneCorrectionParams'
+      responses:
+        200:
+          description: Successfully updated all scenes' color correction parameters
+        
+      
   /projects/{uuid}/mosaic/{uuid2}:
     get:
       summary: A project/scene pairing\'s persisted color correction parameters
@@ -2508,3 +2526,19 @@ definitions:
         $ref: '#/definitions/SceneParams'
       imageParams:
         $ref: '#/definitions/ImageParams'
+
+  SceneCorrectionParam:
+    type: object
+    description: A paired scene ID and color correction parameter list
+    properties:
+      sceneId:
+        type: string
+        format: uuid
+      params:
+        $ref: '#/definitions/ColorCorrection'
+          
+  CombinedSceneCorrectionParams:
+    type: array
+    description: Combined color correction parameters for multiple scenes
+    items:
+      $ref: '#/definitions/SceneCorrectionParam'
