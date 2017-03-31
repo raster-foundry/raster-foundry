@@ -17,11 +17,7 @@ export default (app) => {
          */
         requestGrid(coords, params) {
             let url = `/api/scene-grid/${coords.z}/${coords.x}/${coords.y}/`;
-            let validParams = Object.assign(
-                params,
-                {minCloudCover: params.minCloudCover ? params.minCloudCover : 0}
-            );
-            return this.$http.get(url, {params: validParams});
+            return this.$http.get(url, {params: params});
         }
 
         /** Create grid layer given a set of filter parameters
@@ -32,14 +28,15 @@ export default (app) => {
          */
         createNewGridLayer(params) {
             let self = this;
+            let gridParams = Object.assign(params);
 
-            delete params.bbox;
+            delete gridParams.bbox;
 
             let GridLayer = L.GridLayer.extend({
 
                 requestGrid: self.requestGrid.bind(self),
 
-                params: params,
+                params: gridParams,
 
                 /** Function called when parameters have been updated to force a redraw
                  *
@@ -48,9 +45,31 @@ export default (app) => {
                  * @returns {null} null
                  */
                 updateParams: function (updateParams) {
-                    delete params.bbox;
-                    this.params = updateParams;
-                    this.redraw();
+                    // Hacky way to determine param object equality because JS:
+                    // Ignore bbox and null parameters and handles arrays/lists
+                    function paramsAreEqual(oldParams, newParams) {
+                        let newParamsArray = Object.getOwnPropertyNames(newParams)
+                            .filter((prop) => {
+                                return newParams[prop] !== null && prop !== 'bbox';
+                            })
+                            .map((prop) => {
+                                return [prop, newParams[prop]];
+                            });
+                        let oldParamsArray = Object.getOwnPropertyNames(oldParams)
+                            .filter((prop) => {
+                                return oldParams[prop] !== null && prop !== 'bbox';
+                            })
+                            .map((prop) => {
+                                return [prop, oldParams[prop]];
+                            });
+                        return JSON.stringify(newParamsArray.sort()) ===
+                            JSON.stringify(oldParamsArray.sort());
+                    }
+
+                    if (!paramsAreEqual(this.params, updateParams)) {
+                        this.params = Object.assign(updateParams);
+                        this.redraw();
+                    }
                 },
 
                 /** Function to calculate shade of grid cell based on number of contained scenes
