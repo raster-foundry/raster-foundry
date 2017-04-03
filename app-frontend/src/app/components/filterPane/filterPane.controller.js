@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import moment from 'moment';
 export default class FilterPaneController {
     constructor(datasourceService, authService, $scope, $rootScope, $timeout) {
