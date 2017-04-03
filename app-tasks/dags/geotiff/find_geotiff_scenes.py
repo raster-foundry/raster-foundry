@@ -63,12 +63,16 @@ def find_geotiffs(*args, **kwargs):
         # We already tried to check this above but the uploads endpoint doesn't currently
         # support an uploadStatus filter so we have to check again to avoid trying to
         # kick off imports and setting the status a second time
-        if upload.uploadStatus.upper() == 'UPLOADED':
-            upload.update_upload_status('Queued')
-            conf['upload_id'] = upload_id
-            confjson = json.dumps(conf)
-            dag_args = DagArgs(dag_id=dag_id, conf=confjson, run_id=run_id)
-            trigger_dag(dag_args)
+        try:
+            if upload.uploadStatus.upper() == 'UPLOADED':
+                upload.update_upload_status('Queued')
+                conf['upload_id'] = upload_id
+                confjson = json.dumps(conf)
+                dag_args = DagArgs(dag_id=dag_id, conf=confjson, run_id=run_id)
+                trigger_dag(dag_args)
+        except:
+            upload.update_upload_status('Failed')
+            raise
 
     logger.info('Finished kicking off new uploaded scene dags')
 

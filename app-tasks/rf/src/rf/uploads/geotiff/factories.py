@@ -20,10 +20,7 @@ class GeoTiffS3SceneFactory(object):
 
         captureDate = datetime.date(YYYY, MM, DD)
 
-        factory = GeoTiffS3SceneFactory('<Organization ID Here>', Visibility.PRIVATE,
-                                        '<data source name here', captureDate,
-                                        '<bucket name here>',
-                                        '<folder prefix here, e.g. imagery-provider-name/philly>')
+        factory = GeoTiffS3SceneFactory('<Upload Here>')
         for scene in factory.generate_scenes():
             # do something with the created scenes
             # Note that this will download GeoTIFFs locally, so it is best run somewhere with a fast
@@ -31,8 +28,6 @@ class GeoTiffS3SceneFactory(object):
     ```
     """
     def __init__(self, upload):
-#        organizationId, visibility, datasource, acquisitionDate,
-#                 bucket_name, files_prefix, tags=[]):
         """Args:
             upload (Upload): instance of upload model to create scenes for
         """
