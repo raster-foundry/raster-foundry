@@ -1,8 +1,9 @@
 package com.azavea.rf.datamodel
 
 import java.sql.Timestamp
-import java.util.UUID
+import java.util.{ Date, UUID }
 
+import geotrellis.slick.Projected
 import geotrellis.vector.MultiPolygon
 
 // --- //
@@ -18,12 +19,12 @@ case class AOI(
   id: UUID,
   createdAt: Timestamp,
   modifiedAt: Timestamp,
-//  organizationId: UUID,
-//  createdBy: String,
-//  modifiedBy: String,
+  organizationId: UUID,
+  createdBy: String,
+  modifiedBy: String,
 
   /* Unique fields */
-  area: MultiPolygon
+  area: Projected[MultiPolygon]
 )
 
 /* TODO 2017 April  3 @ 15:38
@@ -35,11 +36,11 @@ object AOI {
 
   def create = Create.apply _
 
-  case class Create(area: MultiPolygon) {
+  case class Create(org: UUID, area: Projected[MultiPolygon]) {
     def toAOI(userId: String): AOI = {
-      val now = new Timestamp((new java.util.Date()).getTime)
+      val now = new Timestamp((new Date()).getTime)
 
-      AOI(UUID.randomUUID, now, now, area)
+      AOI(UUID.randomUUID, now, now, org, userId, userId, area)
     }
   }
 }
