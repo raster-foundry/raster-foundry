@@ -17,7 +17,8 @@ case class Upload(
   uploadType: UploadType,
   files: List[String],
   datasource: UUID,
-  metadata: Json
+  metadata: Json,
+  visibility: Visibility
 )
 
 object Upload {
@@ -33,7 +34,8 @@ object Upload {
     uploadType: UploadType,
     files: List[String],
     datasource: UUID,
-    metadata: Json
+    metadata: Json,
+    visibility: Visibility
   ) {
     def toUpload(userId: String): Upload = {
       val id = UUID.randomUUID()
@@ -50,7 +52,8 @@ object Upload {
         this.uploadType,
         this.files,
         this.datasource,
-        this.metadata
+        this.metadata,
+        this.visibility
       )
     }
   }
