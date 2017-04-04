@@ -36,9 +36,9 @@ class AOIs(_tableTag: Tag) extends Table[AOI](_tableTag, "aois")
   val area: Rep[Projected[MultiPolygon]] = column[Projected[MultiPolygon]]("area")
 
   /* Foreign Keys */
-  lazy val organizationsFk = foreignKey("projects_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
-  lazy val createdByUserFK = foreignKey("projects_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
-  lazy val modifiedByUserFK = foreignKey("projects_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val organizationsFk = foreignKey("aois_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val createdByUserFK = foreignKey("aois_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val modifiedByUserFK = foreignKey("aois_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 
 }
 
