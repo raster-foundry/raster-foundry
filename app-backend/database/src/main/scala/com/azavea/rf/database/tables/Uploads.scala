@@ -4,7 +4,7 @@ import java.sql.Timestamp
 import java.util.UUID
 
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
-import com.azavea.rf.database.fields.{OrganizationFkFields, TimestampFields, UserFkFields, NameField}
+import com.azavea.rf.database.fields.{OrganizationFkFields, TimestampFields, UserFkFields, NameField, VisibilityField}
 import com.azavea.rf.database.query.{UploadQueryParameters, ListQueryResult}
 import com.azavea.rf.datamodel._
 import com.lonelyplanet.akka.http.extensions.PageRequest
@@ -26,7 +26,7 @@ class Uploads(_tableTag: Tag) extends Table[Upload](_tableTag, "uploads")
     with OrganizationFkFields
 {
   def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, organizationId, uploadStatus, fileType,
-    uploadType, files, datasource, metadata) <> (
+    uploadType, files, datasource, metadata, visibility) <> (
     Upload.tupled, Upload.unapply
   )
 
@@ -42,6 +42,7 @@ class Uploads(_tableTag: Tag) extends Table[Upload](_tableTag, "uploads")
   val files: Rep[List[String]] = column[List[String]]("files")
   val datasource: Rep[java.util.UUID] = column[java.util.UUID]("datasource")
   val metadata: Rep[Json] = column[Json]("metadata", O.Length(2147483647,varying=false))
+  val visibility: Rep[Visibility] = column[Visibility]("visibility")
 
   lazy val organizationsFk = foreignKey("uploads_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val createdByUserFK = foreignKey("uploads_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
@@ -119,7 +120,8 @@ object Uploads extends TableQuery(tag => new Uploads(tag)) with LazyLogging {
       updateUpload.datasource,
       updateUpload.uploadType,
       updateUpload.uploadStatus,
-      updateUpload.metadata
+      updateUpload.metadata,
+      updateUpload.visibility
     )
 
     updateUploadQuery.update(
@@ -130,7 +132,8 @@ object Uploads extends TableQuery(tag => new Uploads(tag)) with LazyLogging {
       upload.datasource,
       upload.uploadType,
       upload.uploadStatus,
-      upload.metadata
+      upload.metadata,
+      upload.visibility
     )
   }
 }

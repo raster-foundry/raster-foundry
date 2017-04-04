@@ -2387,7 +2387,13 @@ definitions:
         type: string
         description: datasource of tiffs being uploaded
         format: uuid
-
+      visibility:
+        type: string
+        description: Level of restriction on viewing
+        enum:
+          - PUBLIC
+          - ORGANIZATION
+          - PRIVATE
   Upload:
     allOf:
     - $ref: '#/definitions/BaseModel'
