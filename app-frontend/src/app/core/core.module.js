@@ -22,9 +22,12 @@ require('./services/mapUtils.service')(shared);
 require('./services/feed.service')(shared);
 require('./services/intercom.service')(shared);
 require('./services/rollbarWrapper.service')(shared);
+require('./services/upload.service')(shared);
 
 require('./services/featureFlagOverrides.service')(shared);
 require('./services/featureFlags.provider')(shared);
 require('./services/featureFlag.directive')(shared);
+
+require('./aws-sdk-s3.module.js');
 
 export default shared;

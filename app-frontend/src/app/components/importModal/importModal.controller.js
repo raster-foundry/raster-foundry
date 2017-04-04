@@ -1,21 +1,32 @@
+/* global AWS */
+/* global document */
+
 export default class ImportModalController {
-    constructor($state, projectService, Upload) {
+    constructor($scope, $state, projectService, Upload,
+                uploadService, userService, rollbarWrapperService) {
         'ngInject';
+        this.$scope = $scope;
         this.$state = $state;
         this.projectService = projectService;
         this.Upload = Upload;
+        this.uploadService = uploadService;
+        this.userService = userService;
+        this.rollbarWrapperService = rollbarWrapperService;
     }
 
     $onInit() {
         this.steps = [
             'IMPORT',
             'LOCAL_UPLOAD',
-            'IMPORT_SUCCESS'
+            'UPLOAD_PROGRESS',
+            'IMPORT_SUCCESS',
+            'IMPORT_ERROR'
         ];
         this.importType = 'local';
-        this.currentStep = this.steps[0];
-        this.allowNext = true;
         this.selectedFiles = [];
+        this.uploadProgressPct = {};
+        this.uploadProgressFlexString = {};
+        this.setCurrentStep(this.steps[0]);
     }
 
     shouldShowFileList() {
@@ -64,22 +75,27 @@ export default class ImportModalController {
         return this.getCurrentStepIndex() > 0;
     }
 
+    setCurrentStep(step) {
+        this.currentStep = step;
+        this.onStepEnter();
+    }
+
     gotoPreviousStep() {
         if (this.hasPreviousStep()) {
-            this.currentStep = this.steps[this.getCurrentStepIndex() - 1];
+            this.setCurrentStep(this.steps[this.getCurrentStepIndex() - 1]);
         }
     }
 
     gotoNextStep() {
         if (this.hasNextStep()) {
-            this.currentStep = this.steps[this.getCurrentStepIndex() + 1];
+            this.setCurrentStep(this.steps[this.getCurrentStepIndex() + 1]);
         }
     }
 
     gotoStep(step) {
         const stepIndex = this.steps.indexOf(step);
         if (stepIndex) {
-            this.currentStep = this.step;
+            this.setCurrentStep(this.steps[stepIndex]);
         }
     }
 
@@ -104,38 +120,133 @@ export default class ImportModalController {
         return false;
     }
 
+    verifyFileCount() {
+        if (this.selectedFiles.length) {
+            this.allowNext = true;
+        } else {
+            this.allowNext = false;
+        }
+    }
+
     handleNext() {
         if (this.allowNext) {
-            if (this.currentStepIs('TYPE')) {
-                if (this.validateProjectName()) {
-                    this.allowNext = false;
-                    this.isCreatingProject = true;
-                    this.createProject().then(p => {
-                        this.project = p;
-                        this.gotoNextStep();
-                    }).finally(() => {
-                        this.allowNext = true;
-                        this.isCreatingProject = false;
-                    });
-                }
-            } else if (
-                this.currentStepIs('ADD_SCENES') &&
-                this.projectAttributeIs('addType', 'public')
-            ) {
-                this.gotoSceneBrowser();
+            if (this.currentStepIs('LOCAL_UPLOAD')) {
+                this.gotoNextStep();
+                this.allowNext = false;
+                this.startUpload();
             } else {
                 this.gotoNextStep();
             }
         }
     }
 
-    closeWithData(data) {
-        this.close({$value: data});
+    onStepEnter() {
+        if (this.currentStepIs('LOCAL_UPLOAD')) {
+            this.verifyFileCount();
+        } else if (this.currentStepIs('IMPORT')) {
+            this.allowNext = true;
+        }
     }
 
-    filesSelected(files, file, newFiles, duplicateFiles, invalidFiles, e) {
-        console.log(files);
+    startUpload() {
+        this.userService
+            .getCurrentUser()
+            .then(this.createUpload.bind(this))
+            .then(upload => {
+                this.upload = upload;
+                return upload;
+            })
+            .then(this.getUploadCredentials.bind(this))
+            .then(this.sendFiles.bind(this));
+    }
+
+
+    createUpload(user) {
+        return this.uploadService.create({
+            files: this.selectedFiles.map(f => f.name),
+            datasource: this.resolve.datasource.id,
+            fileType: 'GEOTIFF',
+            uploadType: 'LOCAL',
+            uploadStatus: 'UPLOADING',
+            organizationId: user.organizationId,
+            metadata: {}
+        });
+    }
+
+    getUploadCredentials(upload) {
+        return this.uploadService.credentials(upload);
+    }
+
+    sendFiles(credentialData) {
+        this.uploadedFileCount = 0;
+        const parser = document.createElement('a');
+        parser.href = credentialData.bucketPath;
+        const bucket = decodeURI(parser.hostname.split('.')[0] + parser.pathname);
+        const config = new AWS.Config({
+            accessKeyId: credentialData.credentials.AccessKeyId,
+            secretAccessKey: credentialData.credentials.SecretAccessKey,
+            sessionToken: credentialData.credentials.SessionToken
+        });
+        const s3 = new AWS.S3(config);
+        this.selectedFiles.forEach(f => this.sendFile(s3, bucket, f));
+    }
+
+    sendFile(s3, bucket, file) {
+        const upload = new AWS.S3.ManagedUpload({
+            params: {
+                Bucket: bucket,
+                Key: file.name,
+                Body: file
+            },
+            service: s3
+        });
+        const uploadPromise = upload.promise();
+
+        upload.on('httpUploadProgress', this.handleUploadProgress.bind(this));
+        uploadPromise.then(() => {
+            this.$scope.$evalAsync(() => {
+                this.uploadDone();
+            });
+        }, err => {
+            this.uploadError(err);
+        });
+    }
+
+    uploadDone() {
+        this.uploadedFileCount += 1;
+        if (this.uploadedFileCount === this.selectedFiles.length) {
+            this.uploadsDone();
+        }
+    }
+
+    uploadsDone() {
+        this.upload.uploadStatus = 'UPLOADED';
+        this.uploadService.update(this.upload).then(() => {
+            this.gotoStep('IMPORT_SUCCESS');
+            this.allowNext = true;
+        });
+    }
+
+    uploadError(err) {
+        this.rollbarWrapperService.error(err);
+    }
+
+    handleUploadProgress(progress) {
+        this.$scope.$evalAsync(() => {
+            this.uploadProgressPct[progress.key] =
+                `${(progress.loaded / progress.total * 100).toFixed(1)}%`;
+            this.uploadProgressFlexString[progress.key] =
+                `${(progress.loaded / progress.total).toFixed(3)} 0`;
+        });
+    }
+
+    closeWithData(data) {
+        this.close({ $value: data });
+    }
+
+    filesSelected(files) {
         this.selectedFiles = files;
+        this.verifyFileCount();
     }
 
     getTotalFileSize() {
@@ -149,9 +260,11 @@ export default class ImportModalController {
 
     removeFileAtIndex(index) {
         this.selectedFiles.splice(index, 1);
+        this.verifyFileCount();
     }
 
     removeAllFiles() {
         this.selectedFiles = [];
+        this.verifyFileCount();
     }
 }

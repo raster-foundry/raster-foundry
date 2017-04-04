@@ -48,10 +48,11 @@
   </div>
   <div class="modal-body" ng-if="$ctrl.currentStepIs('LOCAL_UPLOAD')"
     ngf-multiple=true
-    ngf-pattern="'*'"
+    ngf-pattern="'*.tif'"
     ngf-drop-available=true
     ng-model="$ctrl.selectedFiles"
     ngf-keep="'distinct'"
+    ngf-change="$ctrl.filesSelected($files)"
     ngf-drop>
     <!--Local file import -->
     <div class="content">
@@ -64,6 +65,7 @@
                   ng-model="$ctrl.selectedFiles"
                   ngf-pattern="'*.tif'"
                   ngf-keep="'distinct'"
+                  ngf-change="$ctrl.filesSelected($files)"
                   ngf-select
           >
             Select Files
@@ -84,6 +86,8 @@
                   ng-model="$ctrl.selectedFiles"
                   ngf-pattern="'*.tif'"
                   ngf-keep="'distinct'"
+                  ngf-change="$ctrl.filesSelected($files)"
+                  ngf-select
           >
             Add More Files
           </button>
@@ -107,7 +111,34 @@
       </ng-container>
     </div>
   </div>
-    <!--Body for IMPORT_SUCCESS-->
+
+  <!--Body for UPLOAD_PROGRESS-->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('UPLOAD_PROGRESS')">
+    <div class="content">
+      <h3 class="no-margin">Upload in progress...</h3>
+      <div class="list-group">
+          <div class="list-group-item no-flex" ng-repeat="file in $ctrl.selectedFiles">
+            <div class="list-group-item-contents">
+              <div class="list-group-overflow">
+                <span title="{{$ctrl.scene.name}}">
+                  <strong class="color-dark">{{file.name}}</strong>
+                </span>
+                <br>
+                <span>{{file.size | byteFmt: 2}}</span>
+              </div>
+              <div class="list-group-right">
+                {{$ctrl.uploadProgressPct[file.name] || '0%'}}
+              </div>
+            </div>
+            <div class="list-group-item-contents">
+              <div class="upload-progress-bar" ng-style="{ 'flex': $ctrl.uploadProgressFlexString[file.name] || '0 0' }"></div>
+            </div>
+          </div>
+        </div>
+    </div>
+  </div>
+
+  <!--Body for IMPORT_SUCCESS-->
   <div class="modal-body" ng-if="$ctrl.currentStepIs('IMPORT_SUCCESS')">
     <div class="content">
       <h3 class="no-margin">Success!</h3>
@@ -121,7 +152,7 @@
 
   <!--Default Footer-->
   <div
-    ng-if="$ctrl.currentStepIsNot(['IMPORT_SUCCESS'])"
+    ng-if="$ctrl.currentStepIsNot(['UPLOAD_PROGRESS', 'IMPORT_SUCCESS'])"
     class="modal-footer"
   >
     <button type="button" class="btn pull-left"
@@ -136,11 +167,14 @@
     </button>
     <button type="button" class="btn btn-primary"
             ng-click="$ctrl.handleNext()"
-            ng-disabled="$ctrl.isCreatingProject">
+            ng-disabled="!$ctrl.allowNext">
       Next
     </button>
   </div>
 
+  <!--Footer for UPLOAD_PROGRESS-->
+  <div ng-if="$ctrl.currentStepIs(['UPLOAD_PROGRESS'])" class="modal-footer">
+  </div>
 
   <!--Footer for SUCCESS-->
   <div ng-if="$ctrl.currentStepIs('IMPORT_SUCCESS')" class="modal-footer">
