@@ -4,9 +4,10 @@ import com.azavea.rf.tool.ast._
 
 import geotrellis.raster._
 import geotrellis.raster.render._
-
 import spire.syntax.cfor._
 import com.typesafe.scalalogging.LazyLogging
+import cats.data.Validated
+import Validated._
 
 
 sealed trait Op extends TileLike with Grid with LazyLogging {
