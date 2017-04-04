@@ -1,19 +1,21 @@
-package com.azavea.rf.tool.ast
-
-import java.util.UUID
+package com.azavea.rf.tool.op
 
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.ast.MapAlgebraAST._
+
 import geotrellis.raster._
 import geotrellis.raster.op._
 import geotrellis.raster.testkit._
 import geotrellis.raster.render._
-import scala.concurrent.{Future, ExecutionContext, Await}
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
 import org.scalatest._
 import scalaz._
 import Scalaz._
+
+import scala.concurrent.{Future, ExecutionContext, Await}
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
+import java.util.UUID
+
 
 class MapAlgebraOpSpec
     extends FunSpec
@@ -55,7 +57,7 @@ class MapAlgebraOpSpec
     requests = Nil
     val undefined = nir.copy(value = None)
     // This breakmap should convert all cells (which are set to a value of 5) to 77
-    val breakmap = ClassBreaks(Map(6.0 -> 77), LessThanOrEqualTo, 123)
+    val breakmap = ClassBreaks(Map(6.0 -> 77), ClassBreaks.Options(LessThanOrEqualTo, 123))
     val tms = Interpreter.tms(
       ast = red.classify(breakmap), source = goodSource
     )
