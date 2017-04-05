@@ -15,7 +15,6 @@ const App = angular.module(
         'obDateRangePicker',
         'angular-jwt',
         'angular-clipboard',
-        'auth0.lock',
         'ngAnimate',
         'ngCookies',
         'ngTouch',

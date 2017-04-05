@@ -9,9 +9,10 @@ class ErrorController {
         this.$window = $window;
 
         if (!APP_CONFIG.error) {
-            $state.go('browse');
+            $state.go('login');
+        } else {
+            $interval(this.getConfig.bind(this), 5000);
         }
-        $interval(this.getConfig.bind(this), 5000);
     }
 
     getConfig() {
