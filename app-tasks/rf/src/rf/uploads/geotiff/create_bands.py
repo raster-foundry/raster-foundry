@@ -1,7 +1,11 @@
+import logging
+
 import rasterio
 from rasterio.enums import ColorInterp
 
 from rf.models import Band
+
+logger = logging.getLogger(__name__)
 
 # TODO: This module as it currently stands is specific to the UltraCam Falcon, which is just one of
 # several imaging systems used by manned and unmanned aerial imagery providers, so this doesn't
@@ -43,7 +47,12 @@ def create_geotiff_bands(tif_path):
             colorinterp = src.colorinterp(band)
             if colorinterp == ColorInterp.undefined:
                 band_data = band_data_lookup['nir']
-            else:
+            elif colorinterp.name in band_data_lookup:
                 band_data = band_data_lookup[colorinterp.name]
+            else:
+                # If we get a name for a layer that we can't map to anything, log
+                # and ignore it.
+                logger.warning('Could not map layer with name %s', colorinterp.name)
+                continue
             bands.append(Band(band_data[0], band, band_data[1]))
     return bands

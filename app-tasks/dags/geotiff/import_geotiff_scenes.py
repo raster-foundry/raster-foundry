@@ -8,7 +8,8 @@ from airflow.operators.python_operator import PythonOperator
 
 from airflow.models import DAG
 
-from rf.uploads.geotiff import GeoTiffS3SceneFactory
+from rf.models import Upload
+from rf.uploads.geotiff.factories import GeoTiffS3SceneFactory
 from rf.uploads.geotiff.io import s3_url
 from rf.uploads.geotiff.create_thumbnails import create_thumbnails
 from rf.utils.io import Visibility
@@ -40,43 +41,23 @@ dag = DAG(
 def import_geotiffs(*args, **kwargs):
     """Find geotiffs which match the bucket and prefix and kick off imports"""
 
-    logging.info("Finding geotiff scenes...")
+    logging.info('Processing geotiff uploads...')
     conf = kwargs['dag_run'].conf
 
-    tilepaths = conf.get('tilepaths')
-    organization = conf.get('organization')
-    datasource = conf.get('datasource')
-    capture_date = conf.get('capture_date')
-    bucket_name = conf.get('bucket')
+    upload_id = conf.get('upload_id')
+    upload = Upload.from_id(upload_id)
+    upload.update_upload_status('Processing')
 
-    factory = GeoTiffS3SceneFactory(
-        organization, Visibility.PRIVATE, datasource,
-        capture_date, bucket_name, ''
-    )
-
-    s3 = boto3.resource('s3')
-    bucket = s3.Bucket(bucket_name)
-
-    for path in tilepaths:
-        local_tif = tempfile.NamedTemporaryFile(delete=False)
-        try:
-            bucket.download_file(path, local_tif.name)
-            # We need to override the autodetected filename because we're loading into temp
-            # files which don't preserve the file name that is on S3.
-            filename = os.path.basename(path)
-            scene = factory.create_geotiff_scene(local_tif.name, os.path.splitext(filename)[0])
-            image = factory.create_geotiff_image(
-                local_tif.name, s3_url(bucket.name, path),
-                scene.id, filename
-            )
-
-            scene.thumbnails = create_thumbnails(local_tif.name, scene.id, organization)
-            scene.images = [image]
+    try:
+        factory = GeoTiffS3SceneFactory(upload)
+        scenes = factory.generate_scenes()
+        for scene in scenes:
             scene.create()
-        finally:
-            os.remove(local_tif.name)
-
-    logger.info('Finished importing scenes')
+        upload.update_upload_status('Complete')
+        logger.info('Finished importing scenes')
+    except:
+        upload.update_upload_status('Failed')
+        raise
 
 
 geotiff_importer = PythonOperator(

@@ -77,9 +77,11 @@ def transform_polygon_coordinates(feature, src_crs, target_crs):
         dict
     """
     copied_feature = feature.copy()
+    coords_array = copied_feature['coordinates']
     for index, coords in enumerate(copied_feature['coordinates']):
         reproj_coords = coord_transform(coords, src_crs, target_crs)
-        feature['coordinates'][index] = reproj_coords
+        coords_array[index] = reproj_coords
+    feature['coordinates'] = [coords_array]
     return feature
 
 
@@ -103,11 +105,11 @@ def extract_polygon(mask_tif_path):
 
     footprint, value = geoms.next()
 
-    assert value == 1.0, 'Geometry should be of value 1'
+    assert value == 1.0, 'Geometry should be of value 1, got %r' % value
 
     target_crs = Proj(init='epsg:4326')
     feature = transform_polygon_coordinates(footprint, src_crs, target_crs)
-    return {'type': 'MultiPolygon', 'coordinates': [feature['coordinates']]}
+    return feature['coordinates']
 
 
 def extract_footprints(organization_id, tif_path):

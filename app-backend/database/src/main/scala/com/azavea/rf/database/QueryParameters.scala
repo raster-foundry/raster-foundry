@@ -204,6 +204,7 @@ case class CombinedMapTokenQueryParameters(
   mapTokenParams: MapTokenQueryParameters = MapTokenQueryParameters()
 )
 
+// TODO add uploadStatus
 case class UploadQueryParameters(
   organization: Option[UUID] = None,
   datasource: Option[UUID] = None

@@ -30,18 +30,8 @@ dag = DAG(
     dag_id='find_geotiff_scenes',
     default_args=args,
     schedule_interval=timedelta(minutes=2),
-    concurrency=int(os.getenv('AIRFLOW_DAG_CONCURRENCY', 24))
+    concurrency=1
 )
-
-
-def chunkify(lst, n):
-    """Helper function to split a list into roughly n chunks
-
-    Args:
-        lst (List): list of things to split
-        n (Int): number of chunks to split into
-    """
-    return [lst[i::n] for i in xrange(n)]
 
 
 @wrap_rollbar
@@ -52,6 +42,8 @@ def find_geotiffs(*args, **kwargs):
     logger.info("Finding geotiff scenes...")
 
     conf = kwargs['dag_run'].conf if kwargs['dag_run'] else {}
+    if conf is None:
+        conf = {}
 
     try:
         upload_ids = Upload.get_importable_uploads()
@@ -68,11 +60,19 @@ def find_geotiffs(*args, **kwargs):
         )
         logger.info('Kicking off new scene import: %s', run_id)
         upload = Upload.from_id(upload_id)
-        upload.update_upload_status('Queued')
-        conf['upload_id'] = upload_id
-        confjson = json.dumps(conf)
-        dag_args = DagArgs(dag_id=dag_id, conf=confjson, run_id=run_id)
-        trigger_dag(dag_args)
+        # We already tried to check this above but the uploads endpoint doesn't currently
+        # support an uploadStatus filter so we have to check again to avoid trying to
+        # kick off imports and setting the status a second time
+        try:
+            if upload.uploadStatus.upper() == 'UPLOADED':
+                upload.update_upload_status('Queued')
+                conf['upload_id'] = upload_id
+                confjson = json.dumps(conf)
+                dag_args = DagArgs(dag_id=dag_id, conf=confjson, run_id=run_id)
+                trigger_dag(dag_args)
+        except:
+            upload.update_upload_status('Failed')
+            raise
 
     logger.info('Finished kicking off new uploaded scene dags')
 
