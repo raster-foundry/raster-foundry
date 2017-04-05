@@ -32,6 +32,7 @@ class OrganizationSpec extends WordSpec
   val baseRoutes = routes
 
   val authHeader = AuthUtils.generateAuthHeader("Default")
+
   "/api/organizations" should {
     "require authentication" in {
       Get("/api/organizations") ~> baseRoutes ~> check {
@@ -45,7 +46,7 @@ class OrganizationSpec extends WordSpec
         responseAs[PaginatedResponse[Organization]]
       }
     }
-    "allow creation of new organizations" in {
+    "require authorization for creation of new organizations" in {
       val newOrg = Organization.Create("Test Organization")
       Post("/api/organizations")
         .withHeadersAndEntity(
@@ -55,7 +56,7 @@ class OrganizationSpec extends WordSpec
           newOrg.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
-        responseAs[Organization]
+        rejection
       }
     }
   }
