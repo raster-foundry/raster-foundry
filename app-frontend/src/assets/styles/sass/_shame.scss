@@ -253,3 +253,32 @@ ob-daterangepicker {
     }
   }
 }
+
+.color-correct-pane {
+
+  .content {
+    padding-top: 1rem;
+  }
+
+  .filter {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  .filter-separator {
+    &.offset {
+      margin-right: 5rem;
+    }
+    border-bottom: 1px solid $shade-dark;
+    button {
+      transform: translateY(-50%) translateX(5.1rem);
+      float: right;
+      &.active {
+        background: $shade-dark;
+      }
+    }
+    &:last-of-type {
+      margin-bottom: 2rem;
+    }
+  }
+}
