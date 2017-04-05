@@ -112,7 +112,33 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
     }
   }
 
+  def setColorCorrectParamsBatch(projectId: UUID, params: BatchParams)(implicit database:DB) ={
+    val scenesToProject = params.items
+      .map(p => SceneToProject(p.sceneId, projectId, None, Some(p.params)))
+      .map(s => ScenesToProjects.insertOrUpdate(s))
+    
+    val recordCheck = params.items
+      .map(p =>
+        ScenesToProjects
+          .filter(_.projectId === projectId)
+          .filter(_.sceneId === p.sceneId)
+          .length
+          .result
+          .map {
+            case 1 => p
+            case _ => throw new IllegalStateException("Error updating scene's color correction")
+          })
 
+    val action = (for {
+      dbUpsert <- DBIO.seq(scenesToProject.map(o => o): _*)
+      dbCheck <- DBIO.seq(recordCheck.map(o => o): _*)
+    } yield (dbUpsert, dbCheck)).transactionally
+
+    database.db.run(action).map {
+      case (_, _) => scenesToProject
+      case _ => throw new IllegalStateException("One or more scenes did not update properly")
+    }
+  }
 
   /** Get color correction parameters from a project/scene pairing */
   def getColorCorrectParams(projectId: UUID, sceneId: UUID)(implicit database: DB) = {
