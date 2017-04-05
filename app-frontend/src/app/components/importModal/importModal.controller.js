@@ -168,6 +168,7 @@ export default class ImportModalController {
             fileType: 'GEOTIFF',
             uploadType: 'LOCAL',
             uploadStatus: 'UPLOADING',
+            visibility: 'PRIVATE',
             organizationId: user.organizationId,
             metadata: {}
         });
