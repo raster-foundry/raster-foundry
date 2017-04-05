@@ -4,10 +4,9 @@ import assetLogo from '../../../assets/images/logo-raster-foundry.png';
 export default (app) => {
     class AuthService {
         constructor( // eslint-disable-line max-params
-            lock, jwtHelper, $q, featureFlagOverrides, featureFlags,
+            jwtHelper, $q, featureFlagOverrides, featureFlags,
             $state, APP_CONFIG, localStorage, rollbarWrapperService, intercomService
         ) {
-            this.lock = lock;
             this.localStorage = localStorage;
             this.jwtHelper = jwtHelper;
             this.$q = $q;
@@ -16,6 +15,37 @@ export default (app) => {
             this.featureFlagOverrides = featureFlagOverrides;
             this.intercomService = intercomService;
             this.rollbarWrapperService = rollbarWrapperService;
+
+            if (!APP_CONFIG.error) {
+                this.initAuth0(APP_CONFIG);
+            }
+        }
+
+        initAuth0(APP_CONFIG) {
+            let loginOptions = {
+                closable: false,
+                auth: {
+                    redirect: false,
+                    sso: true
+                },
+                theme: {
+                    logo: assetLogo,
+                    primaryColor: '#5e509b'
+                },
+                additionalSignUpFields: [{
+                    name: 'companyName',
+                    placeholder: 'Company name'
+                }, {
+                    name: 'companySize',
+                    placeholder: 'How large is your company?'
+                }, {
+                    name: 'reference',
+                    placeholder: 'How\'d you find out about us?'
+                }, {
+                    name: 'phoneNumber',
+                    placeholder: 'Phone Number'
+                }]
+            };
 
             let passResetOptions = {
                 initialScreen: 'forgotPassword',
@@ -33,8 +63,13 @@ export default (app) => {
                     primaryColor: '#5e509b'
                 }
             };
+
             this.resetLock = new Auth0Lock(
                 APP_CONFIG.clientId, APP_CONFIG.auth0Domain, passResetOptions
+            );
+
+            this.loginLock = new Auth0Lock(
+                APP_CONFIG.clientId, APP_CONFIG.auth0Domain, loginOptions
             );
 
             let tokenCreateOptions = {
@@ -62,20 +97,20 @@ export default (app) => {
             this.tokenCreateLock.on('authenticated', this.onTokenCreated.bind(this));
             this.tokenCreateLock.on('authorization_error', this.onTokenCreateFail.bind(this));
 
-            lock.on('authenticated', this.onLogin.bind(this));
-            lock.on('authorization_error', this.onLoginFail.bind(this));
+            this.loginLock.on('authenticated', this.onLogin.bind(this));
+            this.loginLock.on('authorization_error', this.onLoginFail.bind(this));
         }
 
         login(token) {
             if (!token) {
-                this.lock.show();
+                this.loginLock.show();
             } else if (!this.jwtHelper.isTokenExpired(token)) {
                 this.onLogin({idToken: token});
             } else if (this.jwtHelper.isTokenExpired(token)) {
                 this.localStorage.remove('item_token');
                 this.$state.go('login');
             } else {
-                this.lock.show();
+                this.loginLock.show();
             }
         }
 
@@ -100,7 +135,7 @@ export default (app) => {
         onLogin(authResult) {
             this.localStorage.set('id_token', authResult.idToken);
 
-            this.lock.getProfile(authResult.idToken, (error, profile) => {
+            this.loginLock.getProfile(authResult.idToken, (error, profile) => {
                 if (error) {
                     return;
                 }
@@ -124,7 +159,7 @@ export default (app) => {
                 this.featureFlags.set(flagOverrides);
                 this.rollbarWrapperService.init(profile);
                 this.isLoggedIn = true;
-                this.lock.hide();
+                this.loginLock.hide();
                 if (authResult.refreshToken) {
                     this.promise.resolve(authResult);
                     delete this.promise;
