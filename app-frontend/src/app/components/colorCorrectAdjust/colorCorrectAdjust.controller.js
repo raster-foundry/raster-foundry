@@ -38,17 +38,31 @@ export default class ColorCorrectAdjustController {
             step: 10
         };
 
+        let allGamma = ['redGamma', 'greenGamma', 'blueGamma'];
+
         this.redGammaOptions = Object.assign({
             id: 'redGamma',
-            onEnd: (id, val) => this.onFilterChange(id, val, this.redGammaOptions)
+            onEnd: (id, val) => {
+                this.onFilterChange(
+                    this.gammaLinkToggle ? allGamma : 'redGamma', val, this.redGammaOptions
+                );
+            }
         }, baseGammaOptions);
         this.greenGammaOptions = Object.assign({
             id: 'greenGamma',
-            onEnd: (id, val) => this.onFilterChange(id, val, this.greenGammaOptions)
+            onEnd: (id, val) => {
+                this.onFilterChange(
+                    this.gammaLinkToggle ? allGamma : 'greenGamma', val, this.greenGammaOptions
+                );
+            }
         }, baseGammaOptions);
         this.blueGammaOptions = Object.assign({
             id: 'blueGamma',
-            onEnd: (id, val) => this.onFilterChange(id, val, this.blueGammaOptions)
+            onEnd: (id, val) => {
+                this.onFilterChange(
+                    this.gammaLinkToggle ? allGamma : 'blueGamma', val, this.blueGammaOptions
+                );
+            }
         }, baseGammaOptions);
 
         this.alphaOptions = Object.assign({
@@ -77,6 +91,8 @@ export default class ColorCorrectAdjustController {
             }
         }, minMaxOptions);
 
+        this.gammaLinkToggle = true;
+
         this.gammaToggle = {value: true};
         this.sigToggle = {value: true};
         this.bcToggle = {value: true};
@@ -91,6 +107,9 @@ export default class ColorCorrectAdjustController {
     $onChanges(changes) {
         if ('correction' in changes && changes.correction.currentValue) {
             this.correction = changes.correction.currentValue;
+
+            this.gammaLinkToggle = this.correction.redGamma === this.correction.blueGamma &&
+                this.correction.blueGamma === this.correction.greenGamma;
 
             if (this.correction.redGamma === null &&
                 this.correction.greenGamma === null &&
@@ -217,13 +236,30 @@ export default class ColorCorrectAdjustController {
      * @returns {null} null
      */
     onFilterChange(id, val, options) {
-        if (id && !options.disabled) {
+        if (Array.isArray(id)) {
+            id.forEach((key) => {
+                if (!options.disabled) {
+                    this.correction[key] = val;
+                } else {
+                    this.correction[key] = null;
+                }
+            });
+        } else if (id && !options.disabled) {
             this.correction[id] = val;
         } else if (id) {
             this.correction[id] = null;
         }
         this.sliderCorrection = Object.assign({}, this.correction);
         this.onCorrectionChange({newCorrection: Object.assign({}, this.correction)});
+    }
+
+    gammaLinkToggled() {
+        this.gammaLinkToggle = !this.gammaLinkToggle;
+        if (this.gammaLinkToggle) {
+            this.onFilterChange(
+                ['redGamma', 'greenGamma', 'blueGamma'],
+                this.correction.redGamma, this.redGammaOptions);
+        }
     }
 
     gammaToggled(value) {

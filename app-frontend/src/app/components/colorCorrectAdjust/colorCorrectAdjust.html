@@ -18,6 +18,14 @@
                     rz-slider-options="$ctrl.redGammaOptions"
           ></rzslider>
         </div>
+        <div class="filter-separator offset">
+          <button type="button"
+                  ng-click="$ctrl.gammaLinkToggled()"
+                  ng-class="{'active': $ctrl.gammaLinkToggle}"
+                  class="btn btn-default btn-square">
+            <i class="icon-mosaic"></i>
+          </button>
+        </div>
         <div class="filter">
           <label>Green</label>
           <div class="filter-item slider-filter">
@@ -26,6 +34,14 @@
           <rzslider rz-slider-model="$ctrl.sliderCorrection.greenGamma"
                     rz-slider-options="$ctrl.greenGammaOptions"
           ></rzslider>
+        </div>
+        <div class="filter-separator offset">
+          <button type="button"
+                  ng-click="$ctrl.gammaLinkToggled()"
+                  ng-class="{'active': $ctrl.gammaLinkToggle}"
+                  class="btn btn-default btn-square">
+            <i class="icon-mosaic"></i>
+          </button>
         </div>
         <div class="filter">
           <label>Blue</label>
@@ -36,6 +52,7 @@
                     rz-slider-options="$ctrl.blueGammaOptions"
           ></rzslider>
         </div>
+        <div class="filter-separator"></div>
       </div>
     </div>
 
@@ -55,6 +72,7 @@
                     rz-slider-options="$ctrl.alphaOptions"
           ></rzslider>
         </div>
+        <div class="filter-separator"></div>
         <div class="filter">
           <label>Beta</label>
           <div class="filter-item slider-filter">
@@ -64,6 +82,7 @@
                     rz-slider-options="$ctrl.betaOptions"
           ></rzslider>
         </div>
+        <div class="filter-separator"></div>
       </div>
     </div>
 
@@ -79,6 +98,7 @@
           <rzslider rz-slider-model="$ctrl.sliderCorrection.brightness"
                     rz-slider-options="$ctrl.brightnessOptions"></rzslider>
         </div>
+        <div class="filter-separator"></div>
         <div class="filter">
           <label>Contrast</label>
           <div class="filter-item slider-filter">
@@ -87,6 +107,7 @@
           <rzslider rz-slider-model="$ctrl.sliderCorrection.contrast"
                     rz-slider-options="$ctrl.contrastOptions"></rzslider>
         </div>
+        <div class="filter-separator"></div>
       </div>
     </div>
     <div class="filter-group">

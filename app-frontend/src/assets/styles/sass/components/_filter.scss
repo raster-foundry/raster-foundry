@@ -1,7 +1,6 @@
 .filter {
   padding-top: 2rem;
   padding-bottom: 2rem;
-  border-bottom: 1px solid $shade-dark;
 
   &:first-child {
     padding-top: 0;
@@ -21,7 +20,7 @@
 .month-filter {
   display: flex;
   flex-wrap: wrap;
-  
+
   .btn {
     flex-basis: 24%;
     margin: .5%;
