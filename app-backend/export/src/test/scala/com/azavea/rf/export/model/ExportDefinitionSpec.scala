@@ -1,5 +1,7 @@
 package com.azavea.rf.export.model
 
+import com.azavea.rf.datamodel.ColorCorrect
+
 import geotrellis.proj4.CRS
 import geotrellis.vector._
 import geotrellis.vector.io._
@@ -29,7 +31,23 @@ class ExportDefinitionSpec extends FunSpec with Matchers {
           ExportLayerDefinition(
             layerId = UUID.fromString("8436f7e9-b7f7-4d4f-bda8-76b32c356cff"),
             ingestLocation = new URI("s3://test/"),
-            attributes = List()
+            colorCorrections = Some(
+              ColorCorrect.Params(
+                redBand = 0,
+                greenBand = 1,
+                blueBand = 2,
+                redGamma = Some(1d),
+                greenGamma = Some(2d),
+                blueGamma = Some(3d),
+                contrast = Some(4d),
+                brightness = Some(5),
+                alpha = Some(6d),
+                beta = Some(7d),
+                min = Some(8),
+                max = Some(9),
+                equalize = true
+              )
+            )
           )
         ),
         mask = Some(

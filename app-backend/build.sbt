@@ -174,6 +174,7 @@ lazy val ingest = Project("ingest", file("ingest"))
   })
 
 lazy val export = Project("export", file("export"))
+  .dependsOn(datamodel)
   .settings(commonSettings:_*)
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({

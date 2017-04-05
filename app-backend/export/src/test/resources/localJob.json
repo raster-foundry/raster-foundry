@@ -7,9 +7,21 @@
             {
                 "layerId":"8436f7e9-b7f7-4d4f-bda8-76b32c356cff",
                 "ingestLocation":"s3://test/",
-                "attributes":[
-
-                ]
+                "colorCorrections": {
+                    "redBand": 0,
+                    "blueBand": 2,
+                    "greenBand": 1,
+                    "alpha": 6.0,
+                    "min": 8,
+                    "max": 9,
+                    "redGamma": 1.0,
+                    "equalize": true,
+                    "beta": 7.0,
+                    "blueGamma": 3.0,
+                    "brightness": 5,
+                    "contrast": 4.0,
+                    "greenGamma": 2.0
+                }
             }
         ],
         "mask":{
