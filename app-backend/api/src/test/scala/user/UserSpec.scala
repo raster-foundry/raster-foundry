@@ -30,9 +30,10 @@ class UserSpec extends WordSpec
   val baseRoutes = routes
 
   "/api/users" should {
-    "return a paginated list of users" in {
+    "require authorization for returning a paginated list of users" in {
       Get("/api/users").withHeaders(List(authHeader)) ~> baseRoutes ~> check {
-        responseAs[PaginatedResponse[User]]
+        // responseAs[PaginatedResponse[User]]
+        rejection
       }
     }
 
