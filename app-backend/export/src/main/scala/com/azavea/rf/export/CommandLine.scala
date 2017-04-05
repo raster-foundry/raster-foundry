@@ -5,9 +5,7 @@ import scala.util._
 
 object CommandLine {
   case class Params(
-    jobDefinition: URI = new URI(""),
-    testRun: Boolean = false,
-    overwrite: Boolean = false
+    jobDefinition: URI = new URI("")
   )
 
   // Used for reading text in as URI
@@ -19,12 +17,6 @@ object CommandLine {
     override def terminate(exitState: Either[String, Unit]): Unit = ()
 
     head("raster-foundry-export", "0.1")
-
-    opt[Unit]('t', "test").action( (_, conf) =>
-      conf.copy(testRun = true) ).text("Run this job as a test - verify output")
-
-    opt[Unit]("overwrite").action( (_, conf) =>
-      conf.copy(overwrite = true) ).text("Overwrite conflicting layers")
 
     opt[URI]('j',"jobDefinition")
       .action( (jd, conf) => conf.copy(jobDefinition = jd) )

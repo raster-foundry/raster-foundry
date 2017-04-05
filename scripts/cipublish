@@ -39,6 +39,12 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             docker-compose \
                 run --rm --no-deps api-server ingest/assembly
 
+            echo "Building export JAR"
+            docker-compose \
+                run --rm --no-deps api-server export/clean
+            docker-compose \
+                run --rm --no-deps api-server export/assembly
+
             echo "Building application JAR"
             docker-compose \
                 run --rm --no-deps api-server api/clean
@@ -64,7 +70,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             docker tag "raster-foundry-nginx:${GIT_COMMIT}" \
                    "${AWS_ECR_ENDPOINT}/raster-foundry-nginx:${GIT_COMMIT}"
             docker tag "raster-foundry-spark-ingest:${GIT_COMMIT}" \
-                   "${AWS_ECR_ENDPOINT}/raster-foundry-spark-ingest:${GIT_COMMIT}"
+                   "${AWS_ECR_ENDPOINT}/raster-foundry-spark-ingest:${GIT_COMMIT}"            
             docker tag "raster-foundry-api-server:${GIT_COMMIT}" \
                    "${AWS_ECR_ENDPOINT}/raster-foundry-api-server:${GIT_COMMIT}"
             docker tag "raster-foundry-tile-server:${GIT_COMMIT}" \
@@ -75,7 +81,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                    "${AWS_ECR_ENDPOINT}/raster-foundry-migrations:${GIT_COMMIT}"
 
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-nginx:${GIT_COMMIT}"
-            docker push "${AWS_ECR_ENDPOINT}/raster-foundry-spark-ingest:${GIT_COMMIT}"
+            docker push "${AWS_ECR_ENDPOINT}/raster-foundry-spark-ingest:${GIT_COMMIT}"            
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-api-server:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-tile-server:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-airflow:${GIT_COMMIT}"
@@ -85,6 +91,11 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             aws s3 cp \
                 "${DIR}/../app-backend/ingest/target/scala-2.11/rf-ingest.jar" \
                 "s3://${RF_ARTIFACTS_BUCKET}/ingest/rf-ingest-${GIT_COMMIT}.jar"
+
+            echo "Uploading Spark Export JAR to S3"
+            aws s3 cp \
+                "${DIR}/../app-backend/export/target/scala-2.11/rf-export.jar" \
+                "s3://${RF_ARTIFACTS_BUCKET}/export/rf-export-${GIT_COMMIT}.jar"
 
             ./scripts/deploy-docs
         else

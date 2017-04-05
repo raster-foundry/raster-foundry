@@ -1,16 +1,18 @@
 package com.azavea.rf.export
 
+import com.azavea.rf.datamodel.ColorCorrect
+
 import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.vector._
 
 import spray.json._
+import spray.json.DefaultJsonProtocol._
 
 import java.net.URI
 import java.util.UUID
 
 package object model {
-
   implicit class HasCellSize[A <: { def rows: Int; def cols: Int; def extent: Extent }](obj: A) {
     def cellSize: CellSize = CellSize(obj.extent.width / obj.cols, obj.extent.height / obj.rows)
   }
@@ -75,4 +77,6 @@ package object model {
         deserializationError(s"Expected java URI, got: $value")
     }
   }
+
+  implicit val colorCorrectParamsJsonFormat = jsonFormat13(ColorCorrect.Params.apply _)
 }

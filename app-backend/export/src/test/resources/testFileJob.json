@@ -8,7 +8,21 @@
             {
                 "layerId":"ca10532c-0432-4bb2-9d89-9ab8ba4b7e51",
                 "ingestLocation":"s3://rasterfoundry-staging-catalogs-us-east-1/layers",
-                "attributes":[ ]
+                "colorCorrections": {
+                    "redBand": 4,
+                    "greenBand": 3,
+                    "blueBand": 2,
+                    "redGamma": 0.5,
+                    "greenGamma": 0.5,
+                    "blueGamma": 0.5,
+                    "alpha": null,
+                    "min": 4500,
+                    "max": 17000,
+                    "equalize": false,
+                    "beta": null,
+                    "brightness": null,
+                    "contrast": null
+                }
             }
         ]
     },
@@ -20,6 +34,6 @@
             "operation":"id",
             "bands":[0, 1, 2]
         },
-        "rasterSize": 512
+        "rasterSize": 1024
     }
 }
