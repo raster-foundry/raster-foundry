@@ -63,7 +63,7 @@ class GeoTiffS3SceneFactory(object):
 
                 # TODO: thumbnails aren't currently created in a way that matches serialization
                 # in the API
-                scene.thumbnails = [] # create_thumbnails(local_tif.name, scene.id, self.organizationId)
+                scene.thumbnails = create_thumbnails(local_tif.name, scene.id, self.organizationId)
                 scene.images = [image]
             finally:
                 os.remove(local_tif.name)
