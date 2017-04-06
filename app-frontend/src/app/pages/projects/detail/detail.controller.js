@@ -1,15 +1,17 @@
-export default class ProjectScenesController {
+import Map from 'es6-map';
+
+export default class ProjectsDetailController {
     constructor( // eslint-disable-line max-params
         $log, $state, $location, projectService, $scope, $uibModal,
         mapService, authService, mapUtilsService
     ) {
         'ngInject';
 
+        this.selectedScenes = new Map();
         this.$log = $log;
         this.$state = $state;
         this.$location = $location;
         this.projectService = projectService;
-        this.$parent = $scope.$parent.$ctrl;
         this.$uibModal = $uibModal;
         this.$scope = $scope;
         this.mapService = mapService;
@@ -38,11 +40,11 @@ export default class ProjectScenesController {
                         this.initMap();
                     },
                     () => {
-                        this.$state.go('^.^.list');
+                        this.$state.go('^.list');
                     }
                 );
             } else {
-                this.$state.go('^.^.list');
+                this.$state.go('^.list');
             }
         } else {
             this.populateSceneList(this.$state.params.page || 1);
@@ -121,29 +123,23 @@ export default class ProjectScenesController {
         });
     }
 
-    viewSceneDetail(scene) {
-        this.$state.go(
-            '^.scene',
-            {
-                scene: scene,
-                sceneid: scene.id
-            }
-        );
+    viewSceneDetail() {
+        // TODO:  Open scene preview modal
     }
 
     selectNone() {
-        this.$parent.selectedScenes.clear();
+        this.selectedScenes.clear();
     }
 
     isSelected(scene) {
-        return this.$parent.selectedScenes.has(scene.id);
+        return this.selectedScenes.has(scene.id);
     }
 
     setSelected(scene, selected) {
         if (selected) {
-            this.$parent.selectedScenes.set(scene.id, scene);
+            this.selectedScenes.set(scene.id, scene);
         } else {
-            this.$parent.selectedScenes.delete(scene.id);
+            this.selectedScenes.delete(scene.id);
         }
     }
 
@@ -171,7 +167,7 @@ export default class ProjectScenesController {
             () => {
                 this.projectService.deleteProject(this.projectId).then(
                     () => {
-                        this.$state.go('^.^.list');
+                        this.$state.go('^.list');
                     },
                     (err) => {
                         this.$log.debug('error deleting project', err);
@@ -184,7 +180,7 @@ export default class ProjectScenesController {
         if (this.activeModal) {
             this.activeModal.dismiss();
         }
-        let downloadSets = Array.from(this.$parent.selectedScenes)
+        let downloadSets = Array.from(this.selectedScenes)
             .map(([, val]) => {
                 let images = val.images.map((image) => {
                     return {
@@ -241,11 +237,11 @@ export default class ProjectScenesController {
     }
 
     removeScenes() {
-        let sceneIds = Array.from(this.$parent.selectedScenes.keys());
+        let sceneIds = Array.from(this.selectedScenes.keys());
         this.projectService.removeScenesFromProject(this.projectId, sceneIds).then(
             () => {
                 this.populateSceneList(this.currentPage);
-                this.$parent.selectedScenes.clear();
+                this.selectedScenes.clear();
             },
             (err) => {
                 // later on, use toasts or something instead of a debug message
@@ -308,4 +304,4 @@ export default class ProjectScenesController {
     dismissErrorMessage() {
         this.showError = false;
     }
- }
+}

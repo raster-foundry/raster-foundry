@@ -1,6 +1,6 @@
 import ProjectsController from './projects.controller.js';
 
-const ProjectsModule = angular.module('pages.library.projects', []);
+const ProjectsModule = angular.module('pages.projects', []);
 
 ProjectsModule.controller('ProjectsController', ProjectsController);
 

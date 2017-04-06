@@ -4,7 +4,7 @@ require('./list.scss');
 
 import ProjectsListController from './list.controller.js';
 
-const ProjectsListModule = angular.module('pages.library.projects.list', [pagination, modal]);
+const ProjectsListModule = angular.module('pages.projects.list', [pagination, modal]);
 
 ProjectsListModule.controller('ProjectsListController', ProjectsListController);
 

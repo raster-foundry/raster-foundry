@@ -1,0 +1,43 @@
+<div class="dropdown-project"
+     uib-dropdown
+     on-toggle="toggled($ctrl.optionsOpen)">
+  <span class="navbar-vertical-divider"></span>
+  <a href uib-dropdown-toggle>
+    <span class="username">My Project</span>
+    <i class="icon-caret-down"></i>
+  </a>
+  <ul class="dropdown-menu" aria-labelledby="dLabel">
+    <li>
+      <a href
+         ui-sref="projects.detail({projectid: $ctrl.projectId})">
+        <i class="icon-info"></i>
+        Project details
+      </a>
+    </li>
+    <li>
+      <a href
+         ui-sref="projects.edit({projectid: $ctrl.projectId})">
+        <i class="icon-color-correct"></i> Edit Project
+      </a>
+    </li>
+    <li>
+      <a href
+         ui-sref="projects.edit.addscenes({projectid: $ctrl.projectId})"
+         ng-class="{ disabled: $ctrl.$state.$current.name.includes('addscenes')}">
+        <i class="icon-imports"></i> Add Scenes
+      </a>
+    </li>
+    <li role="separator" class="divider"></li>
+    <li><a href><i class="icon-share"></i>Share</a></li>
+    <li><a href
+           class="delete-text"
+           ng-click="$ctrl.deleteProjectModal()">
+      <i class="icon-trash"></i>Delete</a>
+    </li>
+    <li role="separator" class="divider"></li>
+    <li><a href ng-click="$ctrl.selectProjectModal()">
+      <i class="icon-project"></i> Switch Projects
+    </a></li>
+  </ul>
+</div>
+<span class="username" ng-if="$ctrl.projectService.currentProject.name">{{$ctrl.projectService.currentProject.name}}</span>
