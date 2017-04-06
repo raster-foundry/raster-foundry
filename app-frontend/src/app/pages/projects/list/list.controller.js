@@ -66,7 +66,7 @@ class ProjectsListController {
     }
 
     viewProjectDetail(project) {
-        this.$state.go('^.detail.scenes', {project: project, projectid: project.id});
+        this.$state.go('^.detail', {project: project, projectid: project.id});
     }
 
     createNewProject() {

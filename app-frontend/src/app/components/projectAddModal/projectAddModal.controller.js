@@ -84,11 +84,11 @@ export default class ProjectAddModalController {
                     if (this.selectedProjects.size === 0) {
                         this.resolve.scenes.clear();
                         if (numProjects > 1) {
-                            this.$state.go('library.projects.list');
+                            this.$state.go('projects.list');
                             this.close();
                         } else {
                             this.$state.go(
-                                'library.projects.detail.scenes',
+                                'projects.detail.scenes',
                                 {projectid: projectId}
                             );
                             this.close();

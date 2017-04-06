@@ -46,6 +46,10 @@
     clear: both;
     color: $shade-light;
     white-space: nowrap; // prevent links from randomly breaking onto new lines
+
+    &.delete-text {
+      color: $danger;
+    }
   }
 }
 
@@ -226,6 +230,7 @@
         background-color: $brand-primary;
         color: #fff;
       }
+
     }
   }
 }
