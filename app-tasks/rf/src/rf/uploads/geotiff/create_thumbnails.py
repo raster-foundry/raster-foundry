@@ -40,8 +40,8 @@ def create_thumbnails(tif_path, scene_id, organization_id):
     scale_large = size_large / max_dim
     scale_small = size_small / max_dim
 
-    dim_large = (dim[0] * scale_large, dim[1] * scale_large)
-    dim_small = (dim[0] * scale_small, dim[1] * scale_small)
+    dim_large = (int(dim[0] * scale_large), int(dim[1] * scale_large))
+    dim_small = (int(dim[0] * scale_small), int(dim[1] * scale_small))
 
     # Create paths for each size thumb
     path_large = '{}-LARGE.png'.format(scene_id)

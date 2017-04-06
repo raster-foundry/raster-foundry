@@ -5,8 +5,8 @@ class Upload(BaseModel):
     URL_PATH = '/api/uploads/'
 
     def __init__(self, organizationId, uploadStatus, fileType, uploadType, files,
-                 datasource, metadata, id=None, createdAt=None, createdBy=None,
-                 modifiedAt=None, modifiedBy=None):
+                 datasource, metadata, visibility, id=None, createdAt=None,
+                 createdBy=None, modifiedAt=None, modifiedBy=None):
         self.id = id
         self.createdAt = createdAt
         self.createdBy = createdBy
@@ -19,6 +19,7 @@ class Upload(BaseModel):
         self.files = files
         self.datasource = datasource
         self.metadata = metadata
+        self.visibility = visibility
 
     def to_dict(self):
         return dict(
@@ -34,6 +35,7 @@ class Upload(BaseModel):
             files=self.files,
             datasource=self.datasource,
             metadata=self.metadata,
+            visibility=self.visibility
         )
 
     def update_upload_status(self, status):
@@ -50,6 +52,7 @@ class Upload(BaseModel):
             d.get('files'),
             d.get('datasource'),
             d.get('metadata'),
+            d.get('visibility'),
             d.get('id'),
             d.get('createdAt'),
             d.get('createdBy'),
