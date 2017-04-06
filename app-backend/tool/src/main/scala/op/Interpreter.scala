@@ -70,9 +70,7 @@ object Interpreter extends LazyLogging {
       for (interpreted <- futureTile) yield {
         interpreted match {
           case Valid(tileOp) =>
-            val result = f(tileOp)
-            logger.debug("unary result", result)
-            Valid(result)
+            Valid(f(tileOp))
           case errors@Invalid(_) =>
             logger.debug(s"unary failure on $interpreted")
             errors
