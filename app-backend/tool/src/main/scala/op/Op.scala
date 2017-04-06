@@ -15,7 +15,7 @@ sealed trait Op extends TileLike with Grid with LazyLogging {
   def +(x: Int) = this.map((_: Int) + x)
   def +(x: Double) = this.mapDouble(_ + x)
   def +(other: Op) = this.dualCombine(other)(_ + _)(_ + _)
-  def -(x: Int) = this.map((_: Int) - x)
+  def -(x: Int) = {println(x); this.map((_: Int) - x)}
   def -(x: Double) = this.mapDouble(_ - x)
   def -(other: Op) = this.dualCombine(other)(_ - _)(_ - _)
   def /(x: Int) = this.map((_: Int) / x)
@@ -69,13 +69,13 @@ sealed trait Op extends TileLike with Grid with LazyLogging {
         if (ct.isFloatingPoint) {
           cfor(0)(_ < rows, _ + 1) { row =>
             cfor(0)(_ < cols, _ + 1) { col =>
-              Some(mutableOutput.setDouble(col, row, getDouble(col, row)))
+              mutableOutput.setDouble(col, row, getDouble(col, row))
             }
           }
         } else {
           cfor(0)(_ < rows, _ + 1) { row =>
             cfor(0)(_ < cols, _ + 1) { col =>
-              Some(mutableOutput.set(col, row, get(col, row)))
+              mutableOutput.set(col, row, get(col, row))
             }
           }
         }
