@@ -1,28 +1,25 @@
 /* eslint max-len: 0 */
 import rootTpl from './pages/root/root.html';
 import loginTpl from './pages/login/login.html';
-import browseTpl from './pages/browse/browse.html';
 import labTpl from './pages/lab/lab.html';
 import labEditTpl from './pages/lab/edit/edit.html';
 import labRunTpl from './pages/lab/run/run.html';
 import marketTpl from './pages/market/market.html';
 import marketSearchTpl from './pages/market/search/search.html';
 import marketToolTpl from './pages/market/tool/tool.html';
-import editorTpl from './pages/editor/editor.html';
-import colorCorrectScenesStateTpl from
-    './components/colorCorrectScenes/colorCorrectScenes.state.html';
-import colorCorrectPaneStateTpl from './components/colorCorrectPane/colorCorrectPane.state.html';
-import mosaicScenesStateTpl from './components/mosaicScenes/mosaicScenes.state.html';
-import mosaicMaskStateTpl from './components/mosaicMask/mosaicMask.state.html';
-import libraryTpl from './pages/library/library.html';
-import scenesTpl from './pages/library/scenes/scenes.html';
-import scenesListTpl from './pages/library/scenes/list/list.html';
-import sceneDetailTpl from './pages/library/scenes/detail/detail.html';
-import projectsTpl from './pages/library/projects/projects.html';
-import projectsListTpl from './pages/library/projects/list/list.html';
-import projectsDetailTpl from './pages/library/projects/detail/detail.html';
-import projectSceneTpl from './pages/library/projects/detail/scene/scene.html';
-import projectScenesTpl from './pages/library/projects/detail/projectScenes/projectScenes.html';
+
+import projectsTpl from './pages/projects/projects.html';
+import projectsNavbarTpl from './pages/projects/navbar/navbar.html';
+import projectsEditTpl from './pages/projects/edit/edit.html';
+import projectsEditColorTpl from './pages/projects/edit/color/color.html';
+import projectsEditColorAdjustTpl from './pages/projects/edit/color/adjust/adjust.html';
+import projectsListTpl from './pages/projects/list/list.html';
+import projectsDetailTpl from './pages/projects/detail/detail.html';
+import projectAddScenesTpl from './pages/projects/edit/addscenes/addscenes.html';
+import projectOrderScenesTpl from './pages/projects/edit/order/order.html';
+import projectMaskingTpl from './pages/projects/edit/masking/masking.html';
+import projectMaskingDrawTpl from './pages/projects/edit/masking/draw/draw.html';
+
 import settingsTpl from './pages/settings/settings.html';
 import profileTpl from './pages/settings/profile/profile.html';
 import accountTpl from './pages/settings/account/account.html';
@@ -39,135 +36,104 @@ import importsDatasourcesDetailTpl from './pages/imports/datasources/detail/deta
 import datasourceColorCompositesTpl from './pages/imports/datasources/detail/colorComposites/colorComposites.html';
 import datasourceColorCorrectionTpl from './pages/imports/datasources/detail/colorCorrection/colorCorrection.html';
 
+function projectEditStates($stateProvider) {
+    let addScenesQueryParams = [
+        'maxCloudCover',
+        'minCloudCover',
+        'minAcquisitionDatetime',
+        'maxAcquisitionDatetime',
+        'datasource',
+        'maxSunAzimuth',
+        'minSunAzimuth',
+        'maxSunElevation',
+        'minSunElevation',
+        'bbox',
+        'point',
+        'ingested'
+    ].join('&');
 
-function librarySceneStates($stateProvider) {
-    $stateProvider
-        .state('library.scenes', {
-            url: '/scenes',
-            templateUrl: scenesTpl,
-            controller: 'ScenesController',
-            controllerAs: '$ctrl',
-            abstract: true
-        })
-        .state('library.scenes.detail', {
-            url: '/detail/:id',
-            templateUrl: sceneDetailTpl,
-            params: {scene: null},
-            controller: 'SceneDetailController',
+    $stateProvider.state('projects.edit', {
+        url: '/edit/:projectid',
+        params: {project: null},
+        views: {
+            'navmenu@root': {
+                templateUrl: projectsNavbarTpl,
+                controller: 'ProjectsNavbarController',
+                controllerAs: '$ctrl'
+            },
+            '': {
+                templateUrl: projectsEditTpl,
+                controller: 'ProjectsEditController',
+                controllerAs: '$ctrl'
+            }
+        }
+    })
+        .state('projects.edit.color', {
+            url: '/color',
+            templateUrl: projectsEditColorTpl,
+            controller: 'ProjectsEditColorController',
             controllerAs: '$ctrl'
         })
-        .state('library.scenes.list', {
-            url: '/list?:page',
-            templateUrl: scenesListTpl,
-            controller: 'ScenesListController',
+        .state('projects.edit.color.adjust', {
+            url: '/adjust',
+            templateUrl: projectsEditColorAdjustTpl,
+            controller: 'ProjectsEditColorAdjustController',
+            controllerAs: '$ctrl',
+            params: {
+                layers: null
+            }
+        })
+        .state('projects.edit.addscenes', {
+            url: '/addscenes/:sceneid?' + addScenesQueryParams,
+            templateUrl: projectAddScenesTpl,
+            controller: 'ProjectsAddScenesController',
+            controllerAs: '$ctrl'
+        })
+        .state('projects.edit.order', {
+            url: '/order',
+            templateUrl: projectOrderScenesTpl,
+            controller: 'ProjectsOrderScenesController',
+            controllerAs: '$ctrl'
+        })
+        .state('projects.edit.masking', {
+            url: '/masking',
+            templateUrl: projectMaskingTpl,
+            controller: 'ProjectsMaskingController',
+            controllerAs: '$ctrl'
+        })
+        .state('projects.edit.masking.draw', {
+            url: '/mask',
+            templateUrl: projectMaskingDrawTpl,
+            controller: 'ProjectsMaskingDrawController',
             controllerAs: '$ctrl'
         });
 }
 
-function libraryProjectStates($stateProvider) {
+function projectStates($stateProvider) {
     $stateProvider
-        .state('library.projects', {
+        .state('projects', {
+            parent: 'root',
             url: '/projects',
             templateUrl: projectsTpl,
             controller: 'ProjectsController',
             controllerAs: '$ctrl',
             abstract: true
         })
-        .state('library.projects.list', {
+        .state('projects.list', {
             url: '/list?:page',
             templateUrl: projectsListTpl,
             controller: 'ProjectsListController',
             controllerAs: '$ctrl'
         })
-        .state('library.projects.detail', {
-            url: '/detail/:projectid',
+        .state('projects.detail', {
+            url: '/detail/:projectid?:page',
             params: {project: null},
             templateUrl: projectsDetailTpl,
             controller: 'ProjectsDetailController',
-            controllerAs: '$ctrl',
-            abstract: true
-        })
-        .state('library.projects.detail.scenes', {
-            url: '/list?:page',
-            templateUrl: projectScenesTpl,
-            params: {project: null},
-            controller: 'ProjectScenesController',
-            controllerAs: '$ctrl'
-        })
-        .state('library.projects.detail.scene', {
-            url: '/scenes/:sceneid',
-            templateUrl: projectSceneTpl,
-            params: {scene: null},
-            controller: 'ProjectSceneController',
             controllerAs: '$ctrl'
         });
-}
 
-function libraryStates($stateProvider) {
-    $stateProvider
-        .state('library', {
-            parent: 'root',
-            url: '/library',
-            templateUrl: libraryTpl,
-            controller: 'LibraryController',
-            controllerAs: '$ctrl',
-            abstract: true
-        });
-    librarySceneStates($stateProvider);
-    libraryProjectStates($stateProvider);
-}
-
-function editorStates($stateProvider) {
-    $stateProvider
-        .state('editor', {
-            parent: 'root',
-            url: '/editor',
-            templateUrl: editorTpl,
-            controller: 'EditorController',
-            controllerAs: '$ctrl',
-            abstract: true
-        })
-        .state('editor.project', {
-            url: '/project/:projectid?',
-            template: '<rf-project-editor class="app-content"></rf-project-editor>',
-            abstract: true
-        })
-        .state('editor.project.color', {
-            url: '/color-correct',
-            template: '<ui-view class="flex-column"></ui-view>',
-            abstract: true
-        })
-        .state('editor.project.color.scenes', {
-            url: '/scenes',
-            templateUrl: colorCorrectScenesStateTpl
-        })
-        .state('editor.project.color.adjust', {
-            url: '/adjust',
-            params: {
-                layers: null
-            },
-            templateUrl: colorCorrectPaneStateTpl
-        })
-        .state('editor.project.mosaic', {
-            url: '/mosaic',
-            template: '<ui-view class="flex-column"></ui-view>',
-            abstract: true
-        })
-        .state('editor.project.mosaic.scenes', {
-            url: '/scenes',
-            templateUrl: mosaicScenesStateTpl
-        })
-        .state('editor.project.mosaic.params', {
-            url: '/params',
-            template: '<rf-mosaic-params class="flex-column sidebar-dark"></rf-mosaic-params>'
-        })
-        .state('editor.project.mosaic.mask', {
-            url: '/mask/:sceneid',
-            params: {
-                scene: null
-            },
-            templateUrl: mosaicMaskStateTpl
-        });
+    projectEditStates($stateProvider);
 }
 
 function settingsStates($stateProvider) {
@@ -210,32 +176,6 @@ function settingsStates($stateProvider) {
             url: '/map',
             templateUrl: mapTokensTpl,
             controller: 'MapTokensController',
-            controllerAs: '$ctrl'
-        });
-}
-
-function browseStates($stateProvider) {
-    let queryParams = [
-        'maxCloudCover',
-        'minCloudCover',
-        'minAcquisitionDatetime',
-        'maxAcquisitionDatetime',
-        'datasource',
-        'maxSunAzimuth',
-        'minSunAzimuth',
-        'maxSunElevation',
-        'minSunElevation',
-        'bbox',
-        'point',
-        'ingested'
-    ].join('&');
-
-    $stateProvider
-        .state('browse', {
-            parent: 'root',
-            url: '/browse/:projectid/:sceneid?' + queryParams,
-            templateUrl: browseTpl,
-            controller: 'BrowseController',
             controllerAs: '$ctrl'
         });
 }
@@ -378,10 +318,11 @@ function routeConfig($urlRouterProvider, $stateProvider, $urlMatcherFactoryProvi
     });
 
     loginStates($stateProvider);
-    browseStates($stateProvider);
+    // browseStates($stateProvider);
     marketStates($stateProvider);
-    editorStates($stateProvider);
-    libraryStates($stateProvider);
+    // editorStates($stateProvider);
+    // libraryStates($stateProvider);
+    projectStates($stateProvider);
     settingsStates($stateProvider);
     labStates($stateProvider);
     shareStates($stateProvider);
