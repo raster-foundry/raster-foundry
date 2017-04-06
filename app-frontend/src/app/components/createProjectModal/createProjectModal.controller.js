@@ -1,16 +1,15 @@
 export default class CreateProjectModalController {
-    constructor($state, projectService) {
+    constructor($state, projectService, $uibModal) {
         'ngInject';
         this.$state = $state;
         this.projectService = projectService;
+        this.$uibModal = $uibModal;
     }
 
     $onInit() {
         this.steps = [
             'TYPE',
-            'ADD_SCENES',
-            'IMPORT',
-            'IMPORT_SUCCESS'
+            'ADD_SCENES'
         ];
         this.currentStep = this.steps[0];
         this.projectBuffer = {
@@ -88,6 +87,25 @@ export default class CreateProjectModalController {
         }
     }
 
+    startImport() {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        this.activeModal = this.$uibModal.open({
+            component: 'rfImportModal',
+            resolve: {
+                project: () => this.project
+            }
+        });
+
+        this.activeModal.result.then(() => {
+
+        });
+
+        return this.activeModal;
+    }
+
     createProject() {
         return this.projectService.createProject(this.projectBuffer.name);
     }
@@ -116,11 +134,12 @@ export default class CreateProjectModalController {
                         this.isCreatingProject = false;
                     });
                 }
-            } else if (
-                this.currentStepIs('ADD_SCENES') &&
-                this.projectAttributeIs('addType', 'public')
-            ) {
-                this.gotoSceneBrowser();
+            } else if (this.currentStepIs('ADD_SCENES')) {
+                if (this.projectAttributeIs('addType', 'public')) {
+                    this.gotoSceneBrowser();
+                } else {
+                    this.startImport();
+                }
             } else {
                 this.gotoNextStep();
             }

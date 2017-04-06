@@ -26,6 +26,7 @@ const App = angular.module(
         'oc.lazyLoad',
         'angularLoad',
         'tandibar/ng-rollbar',
+        'angular.filter',
 
         // core
         require('./core/core.module').name,

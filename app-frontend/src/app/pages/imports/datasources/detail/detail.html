@@ -6,6 +6,19 @@
     <div class="column-9">
       <ui-view>
         <div class="cta-row">
+          <rf-call-to-action-item title="Import your imagery">
+            <div class="cta-flex-text">
+              Start a new import process to add additional imagery from this datasource.
+            </div>
+            <div class="cta-button-row">
+              <button class="btn btn-primary" ng-click="$ctrl.openImportModal()">Start an Import</button>
+            </div>
+            <div class="cta-text">
+              <a>Learn more about importing your imagery</a>
+            </div>
+          </rf-call-to-action-item>
+        </div>
+        <div class="cta-row">
           <rf-call-to-action-item title="Color Correction">
             <div class="cta-flex-text">
               You can create a default color correction that will be applied to all imagery from the <strong>{{$ctrl.datasource.name}}</strong> datasource.
@@ -34,7 +47,7 @@
     <div class="column-3">
       <div class="content">
         <div class="sidebar-section">
-          <button class="btn btn-primary">Start an Import</button>
+          <button class="btn btn-primary" ng-click="$ctrl.openImportModal()">Start an Import</button>
         </div>
         <div class="sidebar-section">
           <h5>What is a datasource?</h5>

@@ -79,7 +79,8 @@ module.exports = function (_path) {
             }, {
                 test: /\.js$/,
                 exclude: [
-                    path.resolve(_path, 'node_modules')
+                    path.resolve(_path, 'node_modules'),
+                    path.resolve(_path, 'src/app/core/aws-sdk-s3.module.js')
                 ],
                 loader: 'babel-loader',
                 query: {

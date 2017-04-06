@@ -107,6 +107,12 @@ angular-deferred-bootstrap@~0.1.9:
   version "0.1.9"
   resolved "https://registry.yarnpkg.com/angular-deferred-bootstrap/-/angular-deferred-bootstrap-0.1.9.tgz#fcff01b542bffcdd0d5dfb148942e77135de346e"
 
+angular-filter@^0.5.15:
+  version "0.5.15"
+  resolved "https://registry.yarnpkg.com/angular-filter/-/angular-filter-0.5.15.tgz#73e09eddab1a65754d0f9c786a43111deccd0984"
+  dependencies:
+    angular "*"
+
 angular-jwt@0.0.9:
   version "0.0.9"
   resolved "https://registry.yarnpkg.com/angular-jwt/-/angular-jwt-0.0.9.tgz#912587b520189d28d089446c7faaf30ef7534313"
@@ -161,7 +167,7 @@ angular-ui-tree@~2.22.1:
   version "2.22.2"
   resolved "https://registry.yarnpkg.com/angular-ui-tree/-/angular-ui-tree-2.22.2.tgz#42c4dd582d10c191bbcda6693d7d71c094af155e"
 
-angular@^1.0.8, angular@^1.x, angular@~1.5.8:
+angular@*, angular@^1.0.8, angular@^1.x, angular@~1.5.8:
   version "1.5.11"
   resolved "https://registry.yarnpkg.com/angular/-/angular-1.5.11.tgz#8c5ba7386f15965c9acf3429f6881553aada30d6"
 
@@ -4622,6 +4628,10 @@ ng-annotate@^1.0.2:
     stringmap "~0.2.2"
     stringset "~0.2.1"
     tryor "~0.1.2"
+
+ng-file-upload@^12.2.13:
+  version "12.2.13"
+  resolved "https://registry.yarnpkg.com/ng-file-upload/-/ng-file-upload-12.2.13.tgz#01800f3872e526f95310f8477e99e4f12d0d8d14"
 
 ng-infinite-scroll@~1.3.0:
   version "1.3.0"
