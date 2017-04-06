@@ -7,25 +7,30 @@ import com.azavea.rf.tool.ast.MapAlgebraAST._
 import geotrellis.raster._
 import geotrellis.raster.op._
 import geotrellis.raster.render.{BreakMap, MapStrategy}
-import cats._, cats.data._, cats.implicits._
-import cats._
 import cats.data._
+import cats.data.Validated._
 import cats.implicits._
-import Validated._
+import com.typesafe.scalalogging.LazyLogging
 
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.{Future, ExecutionContext, Await}
+import scala.concurrent.duration._
 import java.lang.IllegalStateException
 import java.net.URI
 
 
-object Interpreter {
 
+/** This interpreter handles resource resolution and compilation of MapAlgebra ASTs */
+object Interpreter extends LazyLogging {
+
+  /** The Interpreted type is either a list of failures or a compiled MapAlgebra operation */
   type Interpreted = ValidatedNel[InterpreterError, Op]
-  def valid(op: Op): Interpreted =
-    valid(op)
-  def invalid(error: InterpreterError): Interpreted =
-    invalid(error)
 
+  /** The primary method of this Interpreter
+    *
+    * @param ast     A [[MapAlgebraAST]] which defines transformations over arbitrary rasters
+    * @param source  A function from an [[RFMLRaster]] and z/x/y (tms) integers to possibly
+    *                 existing tiles
+    */
   def tms(
     ast: MapAlgebraAST,
     source: (RFMLRaster, Int, Int, Int) => Future[Option[Tile]]
@@ -37,88 +42,85 @@ object Interpreter {
       futureTiles: Seq[Future[Interpreted]],
       f: (Op, Op) => Op
     ): Future[Interpreted] = {
-      def applyB(outInterpreted: Future[Interpreted], sourceInterpreted: Future[Interpreted]): Future[Interpreted] = {
-        for {
-          in <- sourceInterpreted
-          out <- outInterpreted
-        } yield {
-          (in, out) match {
-            case (Valid(inOp), Valid(outOp)) => valid(f(inOp, outOp))
-            case (Invalid(e1), Invalid(e2)) => Invalid(e1 concat e2)
-            case (_, errors@Invalid(_)) => errors
-            case (errors@Invalid(_), _) => errors
-          }
+      logger.debug("evalBinary")
+      def applyB(accumulator: Interpreted, value: Interpreted): Interpreted = {
+        (accumulator, value) match {
+          case (Valid(acc), Valid(v)) =>
+            Valid(f(acc, v))
+          case (Invalid(e1), Invalid(e2)) =>
+            Invalid(e1 concat e2)
+          case (_, errors@Invalid(_)) =>
+            errors
+          case (errors@Invalid(_), _) =>
+            errors
         }
       }
-      futureTiles.reduce(applyB)
+
+      Future.sequence(futureTiles).map { tiles =>
+        tiles.tail.foldLeft(tiles.head)(applyB)
+      }
     }
-    //      ast.unbound.reduceLeft { case(interpreted, subAst) =>
-    //        interpreted |@| MissingParameter(subAst.id)
-    //  for (tiles <- Future.sequence(futureTiles)) yield {
-    //    // wish there was Option.sequence
-    //    val maybeList: Option[Seq[Op]] =
-    //      if (tiles.forall(_.isDefined)) Some(tiles.flatten) else None
-    //    maybeList.map(_.reduce(f))
-    //  }
-    //}
 
     // Unary operation evaluation
     def evalUnary(
       futureTile: Future[Interpreted],
       f: Op => Op
     ): Future[Interpreted] = {
+      logger.debug("evalUnary")
       for (interpreted <- futureTile) yield {
         interpreted match {
-          case Valid(tile) =>
-            valid(f(tile))
+          case Valid(tileOp) =>
+            val result = f(tileOp)
+            logger.debug("unary result", result)
+            Valid(result)
           case errors@Invalid(_) =>
+            logger.debug(s"unary failure on $interpreted")
             errors
         }
       }
     }
 
     (z: Int, x: Int, y: Int) => {
+      logger.debug(s"resolving tile at z: $z, x: $x, y: $y")
       def eval(ast: MapAlgebraAST): Future[Interpreted] = ast match {
-        case RFMLRasterSource(id, label, rasterRef) =>
-          require(rasterRef.isDefined, "Expectation of fully bound parameters violated")
-          val ref = rasterRef.get
+        case RFMLRasterSource(id, label, None) =>
+          logger.debug(s"case unbound rastersource at $id")
+          Future.successful { Invalid(NonEmptyList.of(MissingParameter(id))) }
+
+        case RFMLRasterSource(id, label, Some(ref)) =>
+          logger.debug(s"case bound rastersource at $id")
           source(ref, z, x, y).map { maybeTile =>
             val maybeOp = maybeTile.map(Op.apply)
-            Validated.fromOption(maybeOp, { NonEmptyList.of(TileRetrievalError(ref.id, new URI(""))) })
+            Validated.fromOption(maybeOp, { NonEmptyList.of(RasterRetrievalError(id)) })
           }
 
         // For the exhaustive match
-        case op: Operation => op match {
-          case Addition(args, _, _) =>
+        case op: Operation =>
+          op match {
+          case Addition(args, id, _) =>
+            logger.debug(s"case addition at $id")
             evalBinary(args.map(eval),  _ + _)
 
-          case Subtraction(args, _, _) =>
+          case Subtraction(args, id, _) =>
+            logger.debug(s"case subtraction at $id")
             evalBinary(args.map(eval),  _ - _)
 
-          case Multiplication(args, _, _) =>
+          case Multiplication(args, id, _) =>
+            logger.debug(s"case multiplication at $id")
             evalBinary(args.map(eval),  _ * _)
 
-          case Division(args, _, _) =>
+          case Division(args, id, _) =>
+            logger.debug(s"case division at $id")
             evalBinary(args.map(eval),  _ / _)
 
-          case Classification(args, _, _, breaks) =>
+          case Classification(args, id, _, breaks) =>
+            logger.debug(s"case classification at $id with breakmap ${breaks.toBreakMap}")
+            val breakmap = breaks.toBreakMap
             evalUnary(eval(args.head), _.classify(breaks.toBreakMap))
         }
       }
 
-      if (ast.evaluable)
-        eval(ast)
-      else {
-        Future.successful {
-          var failures = ast.unbound.map { subAst: MapAlgebraAST => MissingParameter(subAst.id) }
-          NonEmptyList.fromList(failures) match {
-            case Some(nel) =>
-              Invalid(nel)
-            case None =>
-              throw new IllegalStateException("Unable to produce list of unbound variables")
-          }
-        }
-      }
+      eval(ast)
     }
   }
 }
