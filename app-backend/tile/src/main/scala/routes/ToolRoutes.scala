@@ -1,5 +1,6 @@
 package com.azavea.rf.tile.routes
 
+import com.azavea.rf.common.Authentication
 import com.azavea.rf.tile.image._
 import com.azavea.rf.tile._
 import com.azavea.rf.tool.ast._
@@ -8,7 +9,9 @@ import com.azavea.rf.database.tables.Tools
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast.codec._
 import com.azavea.rf.tool.ast._
+import com.azavea.rf.tool.op._
 
+import akka.http.scaladsl.marshalling.Marshal
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
@@ -28,6 +31,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes}
 import com.typesafe.scalalogging.LazyLogging
 import cats.data._
+import cats.data.Validated._
 import cats.implicits._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -35,7 +39,7 @@ import scala.concurrent._
 import java.util.UUID
 
 
-class ToolRoutes(implicit db: Database) extends LazyLogging {
+class ToolRoutes(implicit val database: Database) extends Authentication with LazyLogging {
   val userId: String = "rf_airflow-user"
 
   def lookupColorMap(str: Option[String]): ColorMap = {
@@ -101,8 +105,21 @@ class ToolRoutes(implicit db: Database) extends LazyLogging {
                   val png = tile.renderPng(lookupColorMap(colorMap))
                   pngAsHttpResponse(png)
                 }
-              }.value
-            }.value
+
+                // TODO: can we move it outside the z/x/y to get some re-use? (don't think so but should check)
+                val tms = Interpreter.tms(ast, source)
+                tms(z,x,y).map { op =>
+                  op match {
+                    case Valid(op) =>
+                      val tile = op.toTile(IntCellType).get
+                      val png = tile.renderPng(lookupColorMap(colorMap))
+                      Future.successful { pngAsHttpResponse(png) }
+                    case Invalid(errors) =>
+                      Marshal(200 -> errors.toList).to[HttpResponse]
+                  }
+                }
+              }
+            }
           }
         }
       }
