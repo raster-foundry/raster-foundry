@@ -1,12 +1,14 @@
 export default class ColorCorrectPaneController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, $q, projectService, $state, featureFlags, sceneService, mapService
+        $log, $scope, $q, projectService, $state, featureFlags,
+        sceneService, mapService, colorCorrectService
     ) {
         'ngInject';
         this.$parent = $scope.$parent.$ctrl;
         this.projectService = projectService;
         this.sceneService = sceneService;
         this.featureFlags = featureFlags;
+        this.colorCorrectService = colorCorrectService;
         this.$state = $state;
         this.$q = $q;
         this.getMap = () => mapService.getMap('project');
@@ -68,10 +70,15 @@ export default class ColorCorrectPaneController {
      */
     onCorrectionChange(newCorrection) {
         let promises = [];
+        const sceneIds = Array.from(this.selectedScenes.keys());
         if (newCorrection) {
-            for (let layer of this.selectedLayers.values()) {
-                promises.push(layer.updateColorCorrection(newCorrection));
-            }
+            promises.push(
+                this.colorCorrectService.bulkUpdate(
+                    this.projectService.currentProject.id,
+                    sceneIds,
+                    newCorrection
+                )
+            );
 
             if (this.featureFlags.isOn('display-histogram')) {
                 this.fetchHistograms();
@@ -79,6 +86,8 @@ export default class ColorCorrectPaneController {
             this.redrawMosaic(promises, newCorrection);
         }
     }
+
+
 
     redrawMosaic(promises, newCorrection) {
         if (!promises.length) {

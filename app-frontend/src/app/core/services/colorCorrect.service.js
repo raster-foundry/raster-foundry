@@ -24,6 +24,17 @@ export default (app) => {
                     }
                 }
             );
+
+            this.bulkColorCorrect = $resource(
+                '/api/projects/:projectId/mosaic/bulk-update-color-corrections/', {}, {
+                    create: {
+                        method: 'POST',
+                        params: {
+                            id: '@projectId'
+                        }
+                    }
+                }
+            );
         }
 
         /** Function to return default color correction
@@ -85,6 +96,26 @@ export default (app) => {
             ).$promise.then(() => {
                 return data;
             });
+        }
+
+        /** Function to update or create color correction for multiple scenes
+         *
+         * @param {string} projectId id of current project
+         * @param {string[]} sceneIds array of scenes to set color correction for
+         * @param {object} data color-correction params to set for each scene
+         * @return {Promise} response with data
+         */
+        bulkUpdate(projectId, sceneIds, data) {
+            const bulkData = sceneIds.map(s => {
+                return {
+                    sceneId: s,
+                    params: data
+                }
+            });
+            return this.bulkColorCorrect.create(
+                { projectId: projectId },
+                { items: bulkData }
+            ).$promise;
         }
 
     }
