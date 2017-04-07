@@ -59,25 +59,21 @@
           <rf-box-select-item
           class="small"
           ng-class="{selected: $ctrl.importType === 'local'}"
-          ng-click="$ctrl.setProjectAttribute('importType', 'local')"
         >
           <div class="text-center"><strong>Local Files</strong></div>
         </rf-box-select-item>
         <rf-box-select-item
           class="small disabled"
-          ng-click="$ctrl.setProjectAttribute('importType', 'uri')"
         >
           <div class="text-center"><strong>URI</strong></div>
         </rf-box-select-item>
         <rf-box-select-item
           class="small disabled"
-          ng-click="$ctrl.setProjectAttribute('importType', 's3')"
         >
           <div class="text-center"><strong>AWS S3</strong></div>
         </rf-box-select-item>
         <rf-box-select-item
           class="small disabled"
-          ng-click="$ctrl.setProjectAttribute('importType', 'dropbox')"
         >
           <div class="text-center"><strong>DropBox</strong></div>
         </rf-box-select-item>
