@@ -1,5 +1,3 @@
-/* global process */
-
 export default (app) => {
     class RollbarWrapperService {
         constructor($resource, APP_CONFIG, Rollbar) {
