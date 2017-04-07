@@ -9,6 +9,8 @@ const rfSceneItem = {
         selected: '&',
         onSelect: '&',
         onAction: '&',
+        onView: '&',
+        onDownload: '&',
         actionIcon: '<'
     }
 };

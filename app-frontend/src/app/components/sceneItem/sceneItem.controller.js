@@ -5,6 +5,7 @@ export default class SceneItemController {
         this.mapService = mapService;
         this.isSelectable = $attrs.hasOwnProperty('selectable');
         this.isDraggable = $attrs.hasOwnProperty('draggable');
+        this.isEditable = $attrs.hasOwnProperty('editable');
         this.datasourceService = datasourceService;
         this.$scope = $scope;
     }
@@ -43,6 +44,16 @@ export default class SceneItemController {
 
     onAction(event) {
         this.onAction({scene: this.scene});
+        event.stopPropagation();
+    }
+
+    onView(event) {
+        this.onView({scene: this.scene});
+        event.stopPropagation();
+    }
+
+    onDownload(event) {
+        this.onDownload({scene: this.scene});
         event.stopPropagation();
     }
 }
