@@ -1,0 +1,48 @@
+<div class="list-group" ng-if="$ctrl.loading">
+  <span class="list-placeholder">
+    <i class="icon-load"></i>
+  </span>
+</div>
+<div class="list-group">
+  <rf-scene-item
+      on-view="$ctrl.viewSceneDetail(scene)"
+      on-download="$ctrl.downloadModal(scene)"
+      scene="scene"
+      editable
+      ng-repeat="scene in $ctrl.sceneList track by scene.id">
+  </rf-scene-item>
+</div>
+<div class="list-group text-center"
+     ng-if="$ctrl.shouldShowSceneList()">
+  <ul uib-pagination
+      items-per-page="$ctrl.lastSceneResult.pageSize"
+      total-items="$ctrl.lastSceneResult.count"
+      ng-model="$ctrl.currentPage"
+      max-size="4"
+      rotate="true"
+      boundary-link-numbers="true"
+      force-ellipses="true"
+      ng-change="$ctrl.populateSceneList($ctrl.currentPage)">
+  </ul>
+</div>
+<div ng-if="$ctrl.shouldShowImportBox()" class="list-group">
+    <rf-call-to-action-item title="You haven't imported any scenes">
+      <div class="cta-flex-text">
+        Every scene that you import will be listed here. After you have imported one or more scenes,
+        you can return to this page to view them.
+      </div>
+      <div class="cta-button-row">
+        <a class="btn btn-primary" ng-click="$ctrl.importModal()">Import scenes</a>
+      </div>
+      <div class="cta-text">
+        <a>Getting started with Imports</a>
+      </div>
+    </rf-call-to-action-item>
+</div>
+<div class="list-group" ng-if="$ctrl.errorMsg">
+  <span class="list-placeholder">
+    {{$ctrl.errorMsg}}
+    <a href ng-click="$ctrl.populateSceneList(1)">Try again</a>
+  </span>
+</div>
+
