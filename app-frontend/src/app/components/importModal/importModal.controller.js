@@ -3,7 +3,8 @@
 
 export default class ImportModalController {
     constructor($scope, $state, projectService, Upload,
-                uploadService, userService, rollbarWrapperService) {
+                uploadService, userService, rollbarWrapperService,
+                datasourceService) {
         'ngInject';
         this.$scope = $scope;
         this.$state = $state;
@@ -12,25 +13,48 @@ export default class ImportModalController {
         this.uploadService = uploadService;
         this.userService = userService;
         this.rollbarWrapperService = rollbarWrapperService;
+        this.datasourceService = datasourceService;
     }
 
     $onInit() {
-        this.steps = [
+        this.initSteps();
+        this.importType = 'local';
+        this.selectedFiles = [];
+        this.uploadProgressPct = {};
+        this.uploadProgressFlexString = {};
+        this.setCurrentStepIndex(0);
+        this.datsource = this.resolve.datasource || false;
+    }
+
+    initSteps() {
+        this.steps = [];
+        if (!this.resolve.datasource) {
+            this.steps.push('DATASOURCE_SELECT');
+        }
+        this.steps = this.steps.concat([
             'IMPORT',
             'LOCAL_UPLOAD',
             'UPLOAD_PROGRESS',
             'IMPORT_SUCCESS',
             'IMPORT_ERROR'
-        ];
-        this.importType = 'local';
-        this.selectedFiles = [];
-        this.uploadProgressPct = {};
-        this.uploadProgressFlexString = {};
-        this.setCurrentStep(this.steps[0]);
+        ]);
     }
 
     shouldShowFileList() {
         return this.selectedFiles.length;
+    }
+
+    shouldShowList() {
+        return !this.isLoadingDatasources &&
+            this.datasources.count &&
+            this.datasources.count > 0;
+    }
+
+    shouldShowPagination() {
+        return !this.isLoadingDatasources &&
+            !this.isErrorLoadingDatasources &&
+            this.datasources.count &&
+            this.datasources.count > this.pageSize;
     }
 
     projectAttributeIs(attr, value) {
@@ -42,6 +66,11 @@ export default class ImportModalController {
 
     setProjectAttribute(attr, value) {
         this.projectBuffer[attr] = value;
+    }
+
+    handleDatasourceSelect(datasource) {
+        this.datasource = datasource;
+        this.gotoNextStep();
     }
 
     currentStepIs(step) {
@@ -80,6 +109,11 @@ export default class ImportModalController {
         this.onStepEnter();
     }
 
+    setCurrentStepIndex(index) {
+        this.currentStep = this.steps[index];
+        this.onStepEnter();
+    }
+
     gotoPreviousStep() {
         if (this.hasPreviousStep()) {
             this.setCurrentStep(this.steps[this.getCurrentStepIndex() - 1]);
@@ -94,7 +128,7 @@ export default class ImportModalController {
 
     gotoStep(step) {
         const stepIndex = this.steps.indexOf(step);
-        if (stepIndex) {
+        if (stepIndex >= 0) {
             this.setCurrentStep(this.steps[stepIndex]);
         }
     }
@@ -145,6 +179,8 @@ export default class ImportModalController {
             this.verifyFileCount();
         } else if (this.currentStepIs('IMPORT')) {
             this.allowNext = true;
+        } else if (this.currentStepIs('DATASOURCE_SELECT')) {
+            this.loadDatasources();
         }
     }
 
@@ -164,7 +200,7 @@ export default class ImportModalController {
     createUpload(user) {
         return this.uploadService.create({
             files: this.selectedFiles.map(f => f.name),
-            datasource: this.resolve.datasource.id,
+            datasource: this.datasource.id,
             fileType: 'GEOTIFF',
             uploadType: 'LOCAL',
             uploadStatus: 'UPLOADING',
@@ -183,6 +219,7 @@ export default class ImportModalController {
         const parser = document.createElement('a');
         parser.href = credentialData.bucketPath;
         const bucket = decodeURI(parser.hostname.split('.')[0] + parser.pathname);
+        this.upload.files = this.upload.files.map(f => `s3://${bucket}/${f}`);
         const config = new AWS.Config({
             accessKeyId: credentialData.credentials.AccessKeyId,
             secretAccessKey: credentialData.credentials.SecretAccessKey,
@@ -193,7 +230,7 @@ export default class ImportModalController {
     }
 
     sendFile(s3, bucket, file) {
-        const upload = new AWS.S3.ManagedUpload({
+        const managedUpload = new AWS.S3.ManagedUpload({
             params: {
                 Bucket: bucket,
                 Key: file.name,
@@ -201,9 +238,9 @@ export default class ImportModalController {
             },
             service: s3
         });
-        const uploadPromise = upload.promise();
+        const uploadPromise = managedUpload.promise();
 
-        upload.on('httpUploadProgress', this.handleUploadProgress.bind(this));
+        managedUpload.on('httpUploadProgress', this.handleUploadProgress.bind(this));
         uploadPromise.then(() => {
             this.$scope.$evalAsync(() => {
                 this.uploadDone();
@@ -267,5 +304,26 @@ export default class ImportModalController {
     removeAllFiles() {
         this.selectedFiles = [];
         this.verifyFileCount();
+    }
+
+    loadDatasources(page = 1) {
+        this.isLoadingDatasources = true;
+        this.isErrorLoadingDatasources = false;
+        this.datasourceService.query({
+            sort: 'createdAt,desc',
+            pageSize: this.pageSize,
+            page: page - 1
+        }).then(
+            datasourceResponse => {
+                this.datasources = datasourceResponse;
+                this.currentPage = datasourceResponse.page + 1;
+            },
+            () => {
+                this.isErrorLoadingDatasources = true;
+            })
+            .finally(() => {
+                this.isLoadingDatasources = false;
+            }
+        );
     }
 }

@@ -99,9 +99,7 @@ export default class CreateProjectModalController {
             }
         });
 
-        this.activeModal.result.then(() => {
-
-        });
+        this.dismiss();
 
         return this.activeModal;
     }

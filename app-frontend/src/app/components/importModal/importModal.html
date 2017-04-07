@@ -9,6 +9,44 @@
     <p>Import your imagery from various sources</p>
   </div>
 
+  <!-- Body for DATASOURCE_SELECT-->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('DATASOURCE_SELECT')">
+    <div class="content">
+      <div class="list-group">
+        <div class="form-group all-in-one">
+          <label for="search"><i class="icon-search"></i></label>
+          <input id="search" type="text" class="form-control"
+                placeholder="Search Datasources" ng-model="$ctrl.searchString">
+        </div>
+        <div class="list-group-item" ng-repeat="datasource in $ctrl.datasources.results | filter: {name: $ctrl.searchString}">
+          <div class="list-group-overflow">
+            <strong class="color-dark">{{datasource.name}}</strong><br>
+          </div>
+          <div class="list-group-right">
+            <button class="btn btn-square" ng-click="$ctrl.handleDatasourceSelect(datasource)">
+              Select
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Datasource pagination, show only when item count exceeds page size-->
+      <div class="list-group text-center"
+          ng-show="$ctrl.shouldShowPagination()">
+        <ul uib-pagination
+            items-per-page="$ctrl.pageSize"
+            total-items="$ctrl.datasources.count"
+            ng-model="$ctrl.currentPage"
+            max-size="4"
+            rotate="true"
+            boundary-link-numbers="true"
+            force-ellipses="true"
+            ng-change="$ctrl.loadDatasources($ctrl.currentPage)">
+        </ul>
+      </div>
+    </div>
+  </div>
+
   <!--Body for IMPORT-->
   <div class="modal-body" ng-if="$ctrl.currentStepIs('IMPORT')">
     <div class="content">
@@ -21,31 +59,29 @@
           <rf-box-select-item
           class="small"
           ng-class="{selected: $ctrl.importType === 'local'}"
-          ng-click="$ctrl.setProjectAttribute('importType', 'local')"
         >
           <div class="text-center"><strong>Local Files</strong></div>
         </rf-box-select-item>
         <rf-box-select-item
           class="small disabled"
-          ng-click="$ctrl.setProjectAttribute('importType', 'uri')"
         >
           <div class="text-center"><strong>URI</strong></div>
         </rf-box-select-item>
         <rf-box-select-item
           class="small disabled"
-          ng-click="$ctrl.setProjectAttribute('importType', 's3')"
         >
           <div class="text-center"><strong>AWS S3</strong></div>
         </rf-box-select-item>
         <rf-box-select-item
           class="small disabled"
-          ng-click="$ctrl.setProjectAttribute('importType', 'dropbox')"
         >
           <div class="text-center"><strong>DropBox</strong></div>
         </rf-box-select-item>
       </div>
     </div>
   </div>
+
+  <!-- Body for LOCAL_UPLOAD -->
   <div class="modal-body" ng-if="$ctrl.currentStepIs('LOCAL_UPLOAD')"
     ngf-multiple=true
     ngf-pattern="'*.tif'"
@@ -152,7 +188,7 @@
 
   <!--Default Footer-->
   <div
-    ng-if="$ctrl.currentStepIsNot(['UPLOAD_PROGRESS', 'IMPORT_SUCCESS'])"
+    ng-if="$ctrl.currentStepIsNot(['UPLOAD_PROGRESS', 'IMPORT_SUCCESS', 'DATASOURCE_SELECT'])"
     class="modal-footer"
   >
     <button type="button" class="btn pull-left"
@@ -174,6 +210,14 @@
 
   <!--Footer for UPLOAD_PROGRESS-->
   <div ng-if="$ctrl.currentStepIs(['UPLOAD_PROGRESS'])" class="modal-footer">
+  </div>
+
+  <!--Footer for DATASOURCE_SELECT-->
+  <div ng-if="$ctrl.currentStepIs(['DATASOURCE_SELECT'])" class="modal-footer">
+    <button type="button" class="btn pull-left"
+            ng-click="$ctrl.closeWithData(1)">
+      Cancel
+    </button>
   </div>
 
   <!--Footer for SUCCESS-->
