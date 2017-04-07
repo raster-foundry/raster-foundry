@@ -102,15 +102,17 @@ export default (app) => {
          *
          * @param {string} projectId id of current project
          * @param {string[]} sceneIds array of scenes to set color correction for
-         * @param {object} data color-correction params to set for each scene
+         * @param {object} data color-correction params to set for each scene.
+         * If not provided, color corrections are returned to their defaults
          * @return {Promise} response with data
          */
         bulkUpdate(projectId, sceneIds, data) {
+            const resolvedColorCorrection = data || this.getDefaultColorCorrection();
             const bulkData = sceneIds.map(s => {
                 return {
                     sceneId: s,
-                    params: data
-                }
+                    params: resolvedColorCorrection
+                };
             });
             return this.bulkColorCorrect.create(
                 { projectId: projectId },
