@@ -1,6 +1,6 @@
 """Task for scheduled finding new Landsat 8 scenes to ingest"""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import os
 
@@ -43,7 +43,7 @@ def import_landsat8_scenes(*args, **kwargs):
     Uses the execution date from the Airflow context to determine what day
     to check for imports.
     """
-    execution_date = kwargs['execution_date']
+    execution_date = kwargs['execution_date'] - timedelta(days=1)
     logging.info('Finding Landsat 8 scenes for date: %s', execution_date)
 
     csv_rows = find_landsat8_scenes(execution_date.year, execution_date.month,
