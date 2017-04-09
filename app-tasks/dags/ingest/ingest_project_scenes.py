@@ -10,8 +10,8 @@ import boto3
 
 from rf.utils.io import IngestStatus
 from rf.models import Scene
-from rf.ingest import create_landsat8_ingest
-from rf.uploads.landsat8.settings import datasource_id
+from rf.ingest import create_landsat8_ingest, create_ingest_definition
+from rf.uploads.landsat8.settings import datasource_id as landsat_id
 from rf.utils.exception_reporting import wrap_rollbar
 
 rf_logger = logging.getLogger('rf')
@@ -135,17 +135,16 @@ def create_ingest_definition_op(*args, **kwargs):
     if scene.ingestStatus != IngestStatus.TOBEINGESTED:
         raise Exception('Scene is no longer waiting to be ingested, error error')
 
-    if scene.datasource != datasource_id:
-        raise Exception('Unable to import scene %s, only able to import Landsat 8 scenes', scene.id)
-
-
     scene.ingestStatus = IngestStatus.INGESTING
     logger.info('Updating scene status to ingesting')
     scene.update()
     logger.info('Successfully updated scene status')
 
     logger.info('Creating ingest definition')
-    ingest_definition = create_landsat8_ingest(scene)
+    if scene.datasource != landsat_id:
+        ingest_definition = create_ingest_definition(scene)
+    else:
+        ingest_definition = create_landsat8_ingest(scene)
     ingest_definition.put_in_s3()
     logger.info('Successfully created and pushed ingest definition')
 
