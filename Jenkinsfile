@@ -11,17 +11,12 @@ node {
     env.RF_ARTIFACTS_BUCKET = 'rasterfoundry-global-artifacts-us-east-1'
     env.RF_DOCS_BUCKET = 'rasterfoundry-staging-docs-site-us-east-1'
 
-    if (env.BRANCH_NAME.startsWith('release/')){
-      env.RF_DOCS_BUCKET = 'rasterfoundry-production-docs-site-us-east-1'
-    }
-
     // Execute `cibuild` wrapped within a plugin that translates
     // ANSI color codes to something that renders inside the Jenkins
     // console.
     stage('cibuild') {
-
-      // Override Settings bucket for testing
       env.RF_SETTINGS_BUCKET = 'rasterfoundry-testing-config-us-east-1'
+
       wrap([$class: 'AnsiColorBuildWrapper']) {
         sh 'scripts/cibuild'
       }
@@ -30,6 +25,11 @@ node {
     env.RF_SETTINGS_BUCKET = 'rasterfoundry-staging-config-us-east-1'
 
     if (env.BRANCH_NAME == 'develop' || env.BRANCH_NAME.startsWith('release/')) {
+      // When a release branch is used, override `env.RF_DOCS_BUCKET`
+      // so that the production documentation site is published by `cipublish`.
+      if (env.BRANCH_NAME.startsWith('release/')){
+        env.RF_DOCS_BUCKET = 'rasterfoundry-production-docs-site-us-east-1'
+      }
 
       // Publish container images built and tested during `cibuild`
       // to the private Amazon Container Registry tagged with the

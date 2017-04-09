@@ -70,7 +70,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             docker tag "raster-foundry-nginx:${GIT_COMMIT}" \
                    "${AWS_ECR_ENDPOINT}/raster-foundry-nginx:${GIT_COMMIT}"
             docker tag "raster-foundry-spark-ingest:${GIT_COMMIT}" \
-                   "${AWS_ECR_ENDPOINT}/raster-foundry-spark-ingest:${GIT_COMMIT}"            
+                   "${AWS_ECR_ENDPOINT}/raster-foundry-spark-ingest:${GIT_COMMIT}"
             docker tag "raster-foundry-api-server:${GIT_COMMIT}" \
                    "${AWS_ECR_ENDPOINT}/raster-foundry-api-server:${GIT_COMMIT}"
             docker tag "raster-foundry-tile-server:${GIT_COMMIT}" \
@@ -81,7 +81,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                    "${AWS_ECR_ENDPOINT}/raster-foundry-migrations:${GIT_COMMIT}"
 
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-nginx:${GIT_COMMIT}"
-            docker push "${AWS_ECR_ENDPOINT}/raster-foundry-spark-ingest:${GIT_COMMIT}"            
+            docker push "${AWS_ECR_ENDPOINT}/raster-foundry-spark-ingest:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-api-server:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-tile-server:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-airflow:${GIT_COMMIT}"
