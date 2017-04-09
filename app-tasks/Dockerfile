@@ -3,8 +3,6 @@ FROM python:2.7
 ENV AIRFLOW_HOME /usr/local/airflow
 
 COPY requirements.txt /tmp/
-COPY rf/ /tmp/rf
-
 RUN set -ex \
     addgroup --system airflow \
     && adduser --disabled-password --system --group \
@@ -26,9 +24,11 @@ RUN set -ex \
     && pip install --no-cache-dir \
            numpy==$(grep "numpy" /tmp/requirements.txt | cut -d= -f3) \
     && pip install --no-cache-dir -r /tmp/requirements.txt \
-    && (cd /tmp/rf && python setup.py install) \
     && apt-get purge -y --auto-remove ${buildDeps} \
     && rm -rf /var/lib/apt/lists/*
+
+COPY rf/ /tmp/rf
+RUN (cd /tmp/rf && python setup.py install)
 
 USER airflow
 WORKDIR ${AIRFLOW_HOME}
