@@ -3,7 +3,7 @@
 
 class Source(object):
     def __init__(self, uri, extent, band_maps, cell_size,
-                 source_crs, extent_crs):
+                  extent_crs, source_crs=None):
 
         """
             Create a new ingest Source
@@ -13,8 +13,8 @@ class Source(object):
                 extent (List[float]): extent of the source
                 starting_target_band (int): index of first target band
                 band_maps (List[dict]): list of mappings for each band within the image
-                crs (str): CRS of the Source
                 extent_crs (str): CRS of the extent
+                crs (str): Optional CRS of the Source
         """
         self.uri = uri
         self.cell_size = cell_size
@@ -35,7 +35,7 @@ class Source(object):
         )
 
     def to_dict(self):
-        return {
+        d = {
             'crs': self.source_crs,
             'extentCrs': self.extent_crs,
             'cellSize': self.cell_size,
@@ -43,3 +43,8 @@ class Source(object):
             'extent': self.extent,
             'bandMaps': self.band_maps
         }
+
+        if self.source_crs:
+            d['crs'] = self.source_crs
+
+        return d
