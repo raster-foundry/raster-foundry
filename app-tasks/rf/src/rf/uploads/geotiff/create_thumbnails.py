@@ -43,15 +43,21 @@ def create_thumbnails(tif_path, scene_id, organization_id):
     dim_large = (int(dim[0] * scale_large), int(dim[1] * scale_large))
     dim_small = (int(dim[0] * scale_small), int(dim[1] * scale_small))
 
+    tempdir = os.path.dirname(tif_path)
+
     # Create paths for each size thumb
-    path_large = '{}-LARGE.png'.format(scene_id)
-    path_small = '{}-SMALL.png'.format(scene_id)
+    path_large = os.path.join(tempdir, '{}-LARGE.png'.format(scene_id))
+    path_small = os.path.join(tempdir, '{}-SMALL.png'.format(scene_id))
+
+    # Color Corrected
+    path_cc_large = os.path.join(tempdir, '{}-CC-LARGE.png'.format(scene_id))
+    path_cc_small = os.path.join(tempdir, '{}-CC-SMALL.png'.format(scene_id))
 
     # Create urls for each size Thumbnail
-    url_large = '/thumbnails/{}'.format(path_large)
-    url_small = '/thumbnails/{}'.format(path_small)
+    url_large = '/thumbnails/{}'.format(os.path.basename(path_cc_large))
+    url_small = '/thumbnails/{}'.format(os.path.basename(path_cc_small))
 
-    try_to_remove_files([r_tif_path, rp_tif_path, path_large, path_small])
+    try_to_remove_files([r_tif_path, rp_tif_path, path_large, path_small, path_cc_large, path_cc_small])
 
     if os.path.isfile(tif_path):
         try:
@@ -99,15 +105,12 @@ def create_thumbnails(tif_path, scene_id, organization_id):
             # If any subprocess calls fail, we need to clean up before exiting
             try_to_remove_files([r_tif_path, rp_tif_path, path_large, path_small])
             raise
-
         if os.path.isfile(path_large) and os.path.isfile(path_small):
             s3_bucket_name = os.getenv('THUMBNAIL_BUCKET')
             s3_bucket = boto3.resource('s3').Bucket(s3_bucket_name)
-            s3_bucket.upload_file(path_large, path_large, {'ContentType': 'image/png'})
-            s3_bucket.upload_file(path_small, path_small, {'ContentType': 'image/png'})
-
+            s3_bucket.upload_file(path_cc_large, os.path.basename(path_cc_large), {'ContentType': 'image/png'})
+            s3_bucket.upload_file(path_cc_small, os.path.basename(path_cc_small), {'ContentType': 'image/png'})
         try_to_remove_files([r_tif_path, rp_tif_path, path_large, path_small])
-
     else:
         return
 
