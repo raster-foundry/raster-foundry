@@ -1,1 +1,2 @@
 from .landsat8_ingest import create_landsat8_ingest
+from .geotiff_ingest import create_ingest_definition
