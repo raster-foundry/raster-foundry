@@ -101,6 +101,23 @@ def create_thumbnails(tif_path, scene_id, organization_id):
                 '-of', 'PNG',
                 '-q',
             ], env=mod_env)
+
+            # Do basic histogram normalization to improve thumbnails
+            subprocess.check_call([
+                'convert',
+                path_small,
+                '-normalize',
+                path_cc_small
+            ])
+
+            # Do basic histogram normalization to improve thumbnails
+            subprocess.check_call([
+                'convert',
+                path_large,
+                '-normalize',
+                path_cc_large
+            ])
+
         except:
             # If any subprocess calls fail, we need to clean up before exiting
             try_to_remove_files([r_tif_path, rp_tif_path, path_large, path_small])
