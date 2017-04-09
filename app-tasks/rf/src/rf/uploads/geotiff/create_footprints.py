@@ -24,6 +24,7 @@ def create_tif_mask(temp_dir, local_tif_path):
     """
     _, tile_mask_tif_path = tempfile.mkstemp(suffix='.TIF', dir=temp_dir)
     _, data_mask_tif_path = tempfile.mkstemp(suffix='.TIF', dir=temp_dir)
+
     with rasterio.open(local_tif_path) as src:
         kwargs = src.meta.copy()
         kwargs.update({
@@ -34,17 +35,15 @@ def create_tif_mask(temp_dir, local_tif_path):
         })
 
         with rasterio.open(data_mask_tif_path, 'w', **kwargs) as dst:
-            for _, window in src.block_windows(1):
-                block = src.read(4, window=window)
-                block[block < 255] = 1
-                block[block == 255] = 0
-                dst.write(block.astype(rasterio.ubyte), window=window, indexes=1)
+            dataset_mask = src.dataset_mask()
+            dst.write(dataset_mask, indexes=1)
 
         with rasterio.open(tile_mask_tif_path, 'w', **kwargs) as dst:
             for _, window in src.block_windows(1):
-                block = src.read(4, window=window)
-                block[block <= 255] = 1
-                dst.write(block.astype(rasterio.ubyte), window=window, indexes=1)
+                block = src.read(1, window=window)
+                block.fill(255)
+                block = block.astype(rasterio.ubyte)
+                dst.write(block, window=window, indexes=1)
 
     return tile_mask_tif_path, data_mask_tif_path
 
@@ -101,11 +100,10 @@ def extract_polygon(mask_tif_path):
         src_affine = src.affine
 
     mask = np.ma.masked_equal(raster, 0)
-    geoms = shapes(raster, mask=mask, transform=src_affine, connectivity=8)
+    geoms = shapes(raster, mask=mask.astype('bool'), transform=src_affine, connectivity=8)
 
     footprint, value = geoms.next()
-
-    assert value == 1.0, 'Geometry should be of value 1, got %r' % value
+    assert value == 255, 'Geometry should be of value 255, got %r' % value
 
     target_crs = Proj(init='epsg:4326')
     feature = transform_polygon_coordinates(footprint, src_crs, target_crs)
