@@ -1,0 +1,45 @@
+<div ui-view class="sidebar">
+  <div class="sidebar-project">
+    <div class="sidebar-row">
+      <div class="btn-group">
+        <button class="btn" ui-sref="projects.edit"><i class="icon-caret-left"></i>Project</button>
+        <button class="btn btn-primary" ui-sref="projects.edit.color">Simple</button>
+      </div>
+      <h5 class="sidebar-title">Advanced Color correction</h5>
+    </div>
+    <ul class="sidebar-list">
+      <li class="header">
+        <span>Select scenes to adjust color and click <strong>Color Correct</strong></span>
+        <div class="btn-group">
+          <button type="button"
+                  class="btn btn-primary"
+                  style="width: 14rem;"
+                  ng-disabled="$ctrl.selectedScenes.size === 0"
+                  ui-sref="projects.edit.advancedcolor.adjust">
+            Color Correct
+          </button>
+          <button type="button"
+                  class="btn btn-square"
+                  ng-class="{'btn-secondary': !$ctrl.shouldSelectAll()}"
+                  ng-click="$ctrl.onToggleSelection()">
+            <i ng-class="{'icon-plus': $ctrl.shouldSelectAll(),
+                         'icon-cross': !$ctrl.shouldSelectAll()}"></i>
+          </button>
+        </div>
+      </li>
+    </ul>
+  </div>
+  <div class="sidebar-scrollable">
+    <div class="list-group">
+      <rf-scene-item
+          scene="scene"
+          selectable
+          selected="$ctrl.isSelected(scene)"
+          on-select="$ctrl.setSelected(scene, selected)"
+          ng-mouseover="$ctrl.$parent.setHoveredScene(scene)"
+          ng-mouseleave="$ctrl.$parent.removeHoveredScene()"
+          ng-repeat="scene in $ctrl.$parent.sceneList track by scene.id">
+      </rf-scene-item>
+    </div>
+  </div>
+</div>

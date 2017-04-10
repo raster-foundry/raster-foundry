@@ -12,10 +12,13 @@ import projectsTpl from './pages/projects/projects.html';
 import projectsNavbarTpl from './pages/projects/navbar/navbar.html';
 import projectsEditTpl from './pages/projects/edit/edit.html';
 import projectsEditColorTpl from './pages/projects/edit/color/color.html';
-import projectsEditColorAdjustTpl from './pages/projects/edit/color/adjust/adjust.html';
+import projectsEditColormodeTpl from './pages/projects/edit/colormode/colormode.html';
+import projectsAdvancedColorTpl from './pages/projects/edit/advancedcolor/advancedcolor.html';
+import projectsColorAdjustTpl from './pages/projects/edit/advancedcolor/adjust/adjust.html';
 import projectsListTpl from './pages/projects/list/list.html';
 import projectsDetailTpl from './pages/projects/detail/detail.html';
-import projectAddScenesTpl from './pages/projects/edit/addscenes/addscenes.html';
+import projectsScenesTpl from './pages/projects/edit/scenes/scenes.html';
+import projectsSceneBrowserTpl from './pages/projects/edit/browse/browse.html';
 import projectOrderScenesTpl from './pages/projects/edit/order/order.html';
 import projectMaskingTpl from './pages/projects/edit/masking/masking.html';
 import projectMaskingDrawTpl from './pages/projects/edit/masking/draw/draw.html';
@@ -52,41 +55,57 @@ function projectEditStates($stateProvider) {
         'ingested'
     ].join('&');
 
-    $stateProvider.state('projects.edit', {
-        url: '/edit/:projectid',
-        params: {project: null},
-        views: {
-            'navmenu@root': {
-                templateUrl: projectsNavbarTpl,
-                controller: 'ProjectsNavbarController',
-                controllerAs: '$ctrl'
-            },
-            '': {
-                templateUrl: projectsEditTpl,
-                controller: 'ProjectsEditController',
-                controllerAs: '$ctrl'
+    $stateProvider
+        .state('projects.edit', {
+            url: '/edit/:projectid',
+            params: {project: null},
+            views: {
+                'navmenu@root': {
+                    templateUrl: projectsNavbarTpl,
+                    controller: 'ProjectsNavbarController',
+                    controllerAs: '$ctrl'
+                },
+                '': {
+                    templateUrl: projectsEditTpl,
+                    controller: 'ProjectsEditController',
+                    controllerAs: '$ctrl'
+                }
             }
-        }
-    })
+        })
+        .state('projects.edit.colormode', {
+            url: '/colormode',
+            templateUrl: projectsEditColormodeTpl,
+            controller: 'ProjectsEditColormodeController',
+            controllerAs: '$ctrl'
+        })
         .state('projects.edit.color', {
             url: '/color',
             templateUrl: projectsEditColorTpl,
             controller: 'ProjectsEditColorController',
             controllerAs: '$ctrl'
         })
-        .state('projects.edit.color.adjust', {
-            url: '/adjust',
-            templateUrl: projectsEditColorAdjustTpl,
-            controller: 'ProjectsEditColorAdjustController',
-            controllerAs: '$ctrl',
-            params: {
-                layers: null
-            }
+        .state('projects.edit.advancedcolor', {
+            url: '/advancedcolor',
+            templateUrl: projectsAdvancedColorTpl,
+            controller: 'ProjectsAdvancedColorController',
+            controllerAs: '$ctrl'
         })
-        .state('projects.edit.addscenes', {
-            url: '/addscenes/:sceneid?' + addScenesQueryParams,
-            templateUrl: projectAddScenesTpl,
-            controller: 'ProjectsAddScenesController',
+        .state('projects.edit.advancedcolor.adjust', {
+            url: '/adjust',
+            templateUrl: projectsColorAdjustTpl,
+            controller: 'ProjectsColorAdjustController',
+            controllerAs: '$ctrl'
+        })
+        .state('projects.edit.scenes', {
+            url: '/scenes',
+            templateUrl: projectsScenesTpl,
+            controller: 'ProjectsScenesController',
+            controllerAs: '$ctrl'
+        })
+        .state('projects.edit.browse', {
+            url: '/browse/:sceneid?' + addScenesQueryParams,
+            templateUrl: projectsSceneBrowserTpl,
+            controller: 'ProjectsSceneBrowserController',
             controllerAs: '$ctrl'
         })
         .state('projects.edit.order', {

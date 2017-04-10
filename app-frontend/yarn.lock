@@ -121,10 +121,6 @@ angular-load@^0.4.1:
   version "0.4.1"
   resolved "https://registry.yarnpkg.com/angular-load/-/angular-load-0.4.1.tgz#cc07dd668b5177368bfaad804108a5b6ab7bd76f"
 
-angular-lock@~1.0.5:
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/angular-lock/-/angular-lock-1.0.5.tgz#1c929d1bbc867129c8288cfb17bebd900dab8b5f"
-
 angular-messages@1.5.8:
   version "1.5.8"
   resolved "https://registry.yarnpkg.com/angular-messages/-/angular-messages-1.5.8.tgz#1f91d1e7f3f4f2e5ab5adefee2c9a7196b1a34cf"
@@ -175,9 +171,9 @@ angular@~1.4.2:
   version "1.4.14"
   resolved "https://registry.yarnpkg.com/angular/-/angular-1.4.14.tgz#9d0feaf60ce6e52ce50f49ee328656d1e1875c37"
 
-angularjs-slider@~6.0.0:
-  version "6.0.0"
-  resolved "https://registry.yarnpkg.com/angularjs-slider/-/angularjs-slider-6.0.0.tgz#c0f430d859d9f4f7c03f092dd289ed2545c582c6"
+angularjs-slider@~6.1.1:
+  version "6.1.1"
+  resolved "https://registry.yarnpkg.com/angularjs-slider/-/angularjs-slider-6.1.1.tgz#488461669840c5bba34b7608b9e00667a1435693"
 
 ansi-escapes@^1.1.0:
   version "1.4.0"

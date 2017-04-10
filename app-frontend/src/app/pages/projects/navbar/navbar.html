@@ -20,22 +20,17 @@
         <i class="icon-color-correct"></i> Edit Project
       </a>
     </li>
-    <li>
-      <a href
-         ui-sref="projects.edit.addscenes({projectid: $ctrl.projectId})"
-         ng-class="{ disabled: $ctrl.$state.$current.name.includes('addscenes')}">
-        <i class="icon-imports"></i> Add Scenes
-      </a>
-    </li>
     <li role="separator" class="divider"></li>
     <li><a href><i class="icon-share"></i>Share</a></li>
     <li><a href
-           class="delete-text"
+           class="color-danger"
            ng-click="$ctrl.deleteProjectModal()">
       <i class="icon-trash"></i>Delete</a>
     </li>
     <li role="separator" class="divider"></li>
-    <li><a href ng-click="$ctrl.selectProjectModal()">
+    <li>
+      <a href
+         ui-sref="projects.list">
       <i class="icon-project"></i> Switch Projects
     </a></li>
   </ul>

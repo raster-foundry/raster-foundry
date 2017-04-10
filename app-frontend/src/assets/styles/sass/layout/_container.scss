@@ -18,6 +18,7 @@
     max-width: 100%; // inherit does not work in IE so we use 100%
     flex: 1;
     position: relative;
+    justify-content: center;
 
     &.dashboard {
       width: 100%;
