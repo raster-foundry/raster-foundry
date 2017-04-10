@@ -10,6 +10,7 @@ import com.azavea.rf.database.tables.FeatureFlags
 
 case class AngularConfig(
   clientId: String,
+  clientEnvironment: String,
   auth0Domain: String,
   rollbarClientToken: String,
   intercomAppId: String,
@@ -19,5 +20,5 @@ case class AngularConfig(
 object AngularConfigService extends AkkaSystem.LoggerExecutor with Config {
   def getConfig()(implicit database: Database) = for {
     features:Seq[FeatureFlag] <- FeatureFlags.listFeatureFlags()
-  } yield AngularConfig(auth0ClientId, auth0Domain, rollbarClientToken, intercomAppId, features)
+  } yield AngularConfig(auth0ClientId, clientEnvironment, auth0Domain, rollbarClientToken, intercomAppId, features)
 }

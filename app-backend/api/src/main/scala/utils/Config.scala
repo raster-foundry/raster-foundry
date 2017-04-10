@@ -6,6 +6,7 @@ trait Config {
   val config = ConfigFactory.load()
   private val httpConfig = config.getConfig("http")
   private val auth0Config = config.getConfig("auth0")
+  private val clientConfig = config.getConfig("client")
   private val intercomConfig = config.getConfig("intercom")
   private val rollbarConfig = config.getConfig("rollbar")
   private val s3Config = config.getConfig("s3")
@@ -19,6 +20,8 @@ trait Config {
   val auth0ClientId = auth0Config.getString("clientId")
   val auth0ManagementClientId = auth0Config.getString("managementClientId")
   val auth0ManagementSecret = auth0Config.getString("managementSecret")
+
+  val clientEnvironment = clientConfig.getString("clientEnvironment")
 
 
   val intercomAppId = intercomConfig.getString("appId")

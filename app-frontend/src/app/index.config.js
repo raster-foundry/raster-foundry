@@ -39,7 +39,7 @@ function config( // eslint-disable-line max-params
         accessToken: APP_CONFIG.rollbarClientToken,
         captureUncaught: true,
         payload: {
-            environment: process.env.NODE_ENV || 'production'
+            environment: APP_CONFIG.clientEnvironment
         }
     });
 

@@ -1,12 +1,10 @@
-/* global process */
-
 export default (app) => {
     class RollbarWrapperService {
         constructor($resource, APP_CONFIG, Rollbar) {
             'ngInject';
             this.Rollbar = Rollbar;
             this.accessToken = APP_CONFIG.rollbarClientToken;
-            this.env = process.env.NODE_ENV || 'production';
+            this.env = APP_CONFIG.clientEnvironment;
         }
 
         init(user = {}) {
