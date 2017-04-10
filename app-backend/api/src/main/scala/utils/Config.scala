@@ -10,6 +10,7 @@ trait Config {
   private val intercomConfig = config.getConfig("intercom")
   private val rollbarConfig = config.getConfig("rollbar")
   private val s3Config = config.getConfig("s3")
+  private val tileServerConfig = config.getConfig("tileServer")
 
   val httpHost = httpConfig.getString("interface")
   val httpPort = httpConfig.getInt("port")
@@ -30,4 +31,6 @@ trait Config {
   val region = s3Config.getString("region")
   val dataBucket = s3Config.getString("dataBucket")
   val thumbnailBucket = s3Config.getString("thumbnailBucket")
+
+  val tileServerLocation = tileServerConfig.getString("location")
 }
