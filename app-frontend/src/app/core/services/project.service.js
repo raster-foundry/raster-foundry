@@ -2,7 +2,7 @@
 
 export default (app) => {
     class ProjectService {
-        constructor($resource, $location, tokenService, userService, $http, $q) {
+        constructor($resource, $location, tokenService, userService, $http, $q, APP_CONFIG) {
             'ngInject';
 
             this.tokenService = tokenService;
@@ -12,6 +12,8 @@ export default (app) => {
             this.$q = $q;
 
             this.currentProject = null;
+
+            this.tileServer = `${APP_CONFIG.tileServerLocation}`;
 
             this.Project = $resource(
                 '/api/projects/:id/', {
@@ -226,8 +228,7 @@ export default (app) => {
 
             let formattedParams = L.Util.getParamString(params);
 
-            return this.getBaseURL() +
-                `/tiles/${project.id}/{z}/{x}/{y}/${formattedParams}`;
+            return `${this.tileServer}/${project.id}/{z}/{x}/{y}/${formattedParams}`;
         }
 
         getProjectShareURL(project) {
