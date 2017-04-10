@@ -260,6 +260,7 @@ paths:
         - $ref: '#/parameters/page'
         - $ref: '#/parameters/organization'
         - $ref: '#/parameters/datasource'
+        - $ref: '#/parameters/uploadStatus'
       responses:
         200:
           description: Paginated list of uploads
@@ -1435,6 +1436,21 @@ parameters:
     items:
       type: string
       format: uuid
+  uploadStatus:
+    name: uploadStatus
+    description: Status of upload
+    in: query
+    type: string
+    required: false
+    enum:
+      - CREATED
+      - UPLOADING
+      - UPLOADED
+      - QUEUED
+      - PROCESSING
+      - COMPLETE
+      - FAILED
+      - ABORTED
   month:
     name: month
     description: Only return results from this month
