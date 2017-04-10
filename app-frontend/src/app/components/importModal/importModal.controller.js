@@ -23,7 +23,7 @@ export default class ImportModalController {
         this.uploadProgressPct = {};
         this.uploadProgressFlexString = {};
         this.setCurrentStepIndex(0);
-        this.datsource = this.resolve.datasource || false;
+        this.datasource = this.resolve.datasource || false;
     }
 
     initSteps() {
