@@ -1,12 +1,14 @@
 export default class ColorCorrectPaneController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, $q, projectService, $state, featureFlags, sceneService, mapService
+        $log, $scope, $q, projectService, $state, featureFlags,
+        sceneService, mapService, colorCorrectService
     ) {
         'ngInject';
         this.$parent = $scope.$parent.$ctrl;
         this.projectService = projectService;
         this.sceneService = sceneService;
         this.featureFlags = featureFlags;
+        this.colorCorrectService = colorCorrectService;
         this.$state = $state;
         this.$q = $q;
         this.getMap = () => mapService.getMap('project');
@@ -44,14 +46,18 @@ export default class ColorCorrectPaneController {
     }
 
     resetCorrection() {
-        let promises = [];
-        for (let layer of this.selectedLayers.values()) {
-            promises.push(layer.resetTiles());
+        const sceneIds = Array.from(this.selectedScenes.keys());
+        const promise = this.colorCorrectService.bulkUpdate(
+            this.projectService.currentProject.id,
+            sceneIds
+        );
+        const defaultCorrection = this.colorCorrectService.getDefaultColorCorrection();
+
+        if (this.featureFlags.isOn('display-histogram')) {
+            this.fetchHistograms();
         }
-        this.firstLayer.getColorCorrection().then((correction) => {
-            this.setCorrection(correction);
-            this.redrawMosaic(promises, correction);
-        });
+        this.setCorrection(defaultCorrection);
+        this.redrawMosaic(promise, defaultCorrection);
     }
 
     setCorrection(correction) {
@@ -67,24 +73,23 @@ export default class ColorCorrectPaneController {
      * @returns {null} null
      */
     onCorrectionChange(newCorrection) {
-        let promises = [];
+        const sceneIds = Array.from(this.selectedScenes.keys());
         if (newCorrection) {
-            for (let layer of this.selectedLayers.values()) {
-                promises.push(layer.updateColorCorrection(newCorrection));
-            }
+            const promise = this.colorCorrectService.bulkUpdate(
+                this.projectService.currentProject.id,
+                sceneIds,
+                newCorrection
+            );
 
             if (this.featureFlags.isOn('display-histogram')) {
                 this.fetchHistograms();
             }
-            this.redrawMosaic(promises, newCorrection);
+            this.redrawMosaic(promise, newCorrection);
         }
     }
 
-    redrawMosaic(promises, newCorrection) {
-        if (!promises.length) {
-            return;
-        }
-        this.$q.all(promises).then(() => {
+    redrawMosaic(promise, newCorrection) {
+        promise.then(() => {
             this.mosaic.getMosaicTileLayer().then((tiles) => {
                 let newParams = this.mosaic.paramsFromObject(newCorrection);
                 this.mosaic.getMosaicLayerURL(newParams).then((url) => {
