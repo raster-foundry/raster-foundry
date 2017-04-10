@@ -136,7 +136,7 @@ export default class ImportModalController {
     gotoSceneBrowser() {
         if (this.project) {
             this.close();
-            this.$state.go('browse', {projectid: this.project.id});
+            this.$state.go('project.scenes.browse', {projectid: this.project.id});
         }
     }
 

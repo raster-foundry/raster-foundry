@@ -1,7 +1,7 @@
 <div class="list-group-item with-rows">
   <div><h4 class="color-dark">{{$ctrl.project.name}}</h4></div>
   <div class="list-group-item-content">
-    <div class="list-group-overflow" ng-if="!$ctrl.project.scenes">
+    <div class="list-group-overflow project-preview-container" ng-if="!$ctrl.project.scenes">
       This project doesn't have any scenes yet
     </div>
     <div class="list-group-overflow project-preview-container" ng-if="$ctrl.project.scenes">
@@ -11,23 +11,31 @@
       <div class="font-size-small">
         <div>
           <div class="dropdown btn-group" uib-dropdown ng-if="!$ctrl.isSelectable">
-            <a class="btn btn-default" ui-sref="browse({projectid: $ctrl.project.id})">View</a>
+            <a class="btn btn-default" ui-sref="projects.edit({projectid: $ctrl.project.id})">
+              Edit
+            </a>
             <button type="button" class="btn btn-default btn-slim" uib-dropdown-toggle>
               <i class="icon-caret-down"></i>
             </button>
             <ul class="dropdown-menu" uib-dropdown-menu role="menu">
               <li role="menuitem">
-                <a href ui-sref="^.detail.scenes({projectid: $ctrl.project.id})">Details</a>
+                <a href ui-sref="projects.detail({projectid: $ctrl.project.id})">
+                  <i class="icon-color-correct"></i>Project Details
+                </a>
               </li>
               <li role="menuitem">
-                <a ui-sref="editor.project.color.scenes({projectid: $ctrl.project.id})">Edit</a>
+                <a href ui-sref="projects.edit.scenes({projectid: $ctrl.project.id})">
+                  <i class="icon-project"></i>Add Scenes
+                </a>
               </li>
               <li role="menuitem">
-                <a href ng-click="$ctrl.publishModal()">Share</a>
+                <a href ng-click="$ctrl.publishModal()"><i class="icon-share"></i>Share</a>
               </li>
               <li class="divider"></li>
               <li role="menuitem">
-                <a href class="color-danger" ng-click="$ctrl.deleteModal()"><i class="icon-trash"></i>Delete</a>
+                <a href class="color-danger" ng-click="$ctrl.deleteModal()">
+                  <i class="icon-trash"></i>Delete
+                </a>
               </li>
             </ul>
           </div>

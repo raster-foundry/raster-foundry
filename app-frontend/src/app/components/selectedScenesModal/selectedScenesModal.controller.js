@@ -14,8 +14,8 @@ export default class SelectedScenesModalController {
         return this.selectedScenes.has(scene.id);
     }
 
-    viewSceneDetail(scene) {
-        this.$state.go('browse', {id: scene.id});
+    viewSceneDetail() {
+        // open scene preview modal, instead of navving to browse
         this.dismiss();
     }
 

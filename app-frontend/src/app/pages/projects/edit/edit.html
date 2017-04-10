@@ -1,12 +1,88 @@
-<div>Project edit page</div>
-<ui-view>
-  <div>Edit selection sidebar content goes here</div>
-  <div><a href ui-sref="projects.edit.addscenes">add scenes</a></div>
-  <div><a href ui-sref="projects.edit.color">edit color</a></div>
-  <div><a href ui-sref="projects.edit.order">edit order</a></div>
-  <div><a href ui-sref="projects.edit.masking">edit masking</a></div>
-  <div><a href>share modal</a></div>
-  <div><a href>export modal</a></div>
-</ui-view>
-
-Map goes here
+<div class="container column-stretch container-not-scrollable">
+  <div class="sidebar" ui-view>
+    <div class="sidebar-project">
+      <h5 class="sidebar-title">Editing project</h5>
+      <ul class="sidebar-list">
+        <li class="header">
+          <span class="label">Add/Remove Scenes</span>
+          <button class="btn btn-primary fixedwidth" type="button" ui-sref="projects.edit.scenes">
+            Add/Remove scenes
+          </button>
+          <i class="icon-info"></i>
+        </li>
+        <li class="header">
+          <span class="label">Project Variation</span>
+          <span class="btn-group">
+            <button class="btn btn-light btn-small" disabled>User Defined</button>
+            <button class="btn btn-square" disabled><i class="icon-trash"></i></button>
+              <button class="btn btn-square" disabled><i class="icon-plus"></i></button>
+          </span>
+          <i class="icon-info"></i>
+        </li>
+    </div>
+    <div class="sidebar-scrollable">
+      <ul class="sidebar-list">
+        <li class="separator">
+          <span class="label">Color mode</span>
+          <button class="btn btn-light fixedwidth"
+                  type="button"
+                  ui-sref="projects.edit.colormode">
+            Select Mode
+          </button>
+          <i class="icon-info"></i>
+        </li>
+        <li class="separator">
+          <span class="label">Color correction</span>
+          <button class="btn btn-light fixedwidth"
+                  type="button"
+                  ui-sref="projects.edit.color">
+            Color correct
+          </button>
+          <i class="icon-info"></i>
+        </li>
+        <li class="separator">
+          <span class="label">Scene order</span>
+          <button class="btn btn-light fixedwidth"
+                  type="button"
+                  ui-sref="projects.edit.order">
+            Reorder scenes
+          </button>
+          <i class="icon-info"></i>
+        </li>
+        <li class="separator">
+          <span class="label">Masking</span>
+          <button class="btn btn-light fixedwidth"
+                  type="button"
+                  ui-sref="projects.edit.masking">
+            Mask scenes
+          </button>
+          <i class="icon-info"></i>
+        </li>
+        <li class="separator">
+          <span class="label">Share</span>
+          <button class="btn btn-light fixedwidth"
+                  type="button">
+            Share project
+          </button>
+          <i class="icon-info"></i>
+        </li>
+        <li>
+          <span class="label">Export</span>
+          <button class="btn btn-light fixedwidth"
+                  type="button">
+            Export project
+          </button>
+          <i class="icon-info"></i>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="main">
+    <rf-map-container map-id="edit" ng-show="!$ctrl.showPreviewMap"></rf-map-container>
+    <rf-map-container map-id="preview"
+                      ng-if="$ctrl.showPreviewMap"
+                      initial-center="$ctrl.center"
+                      initial-zoom="$ctrl.zoom"
+    ></rf-map-container>
+  </div>
+</div

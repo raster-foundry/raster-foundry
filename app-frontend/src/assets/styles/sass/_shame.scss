@@ -332,3 +332,70 @@ ob-daterangepicker {
 .project-preview-map .map-container{
   max-height: 300px;
 }
+
+.sidebar-project {
+  position: relative;
+  border-bottom: 2px solid #ddd;
+  padding: 1rem 1.5rem;
+  .sidebar-row {
+    display: flex;
+    align-content: row;
+    .sidebar-title {
+      margin-left: 1rem;
+      flex: 1;
+    }
+  }
+}
+.sidebar-list {
+  list-style: none;
+  display: block;
+  margin: 0 0 0 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    align-items: center;
+    padding: 1.5rem 1rem 2.5rem 1rem;
+
+    .fixedwidth {
+      width: 20rem;
+    }
+
+    .label {
+      flex: 1;
+      font-weight: bold;
+    }
+
+    i .icon-info {
+      cursor: help;
+    }
+
+    &.separator {
+      border-bottom: 1px solid #ddd;
+      margin-bottom: 1rem;
+      margin: 0rem 1rem 0rem 1rem;
+      padding: 1.5rem 0 1.5rem 0;
+    }
+
+    &.header {
+      margin-left: 0;
+      padding: 1rem 0 1rem 0;
+    }
+  }
+}
+
+.navbar {
+  padding-top: 0.7rem;
+  padding-bottom: 0.8rem;
+}
+
+.icon-load.animated {
+  animation: 2s linear 0s normal none infinite spin;
+}
+
+.filter-group-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+}
