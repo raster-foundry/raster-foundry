@@ -12,6 +12,7 @@ export default (app) => {
          * @param {object} authService service for auth, used to get token for layers
          * @param {object} colorCorrectService color correction service
          * @param {object} projectService project service
+         * @param {object} APP_CONFIG config of application
          * @param {object} scene response from the API, optional
          * @param {object} projectId project that layer is in
          * @param {boolean} projectMosaic flag to enable requesting layers from mosaic tile server
@@ -21,8 +22,8 @@ export default (app) => {
          * @param {object} bands keys = band type, values = band number
          */
         constructor( // eslint-disable-line max-params
-            $http, $q, authService, colorCorrectService, projectService, scene, projectId,
-            projectMosaic = true, gammaCorrect = true, sigmoidCorrect = true,
+            $http, $q, authService, colorCorrectService, projectService, APP_CONFIG,
+            scene, projectId, projectMosaic = true, gammaCorrect = true, sigmoidCorrect = true,
             colorClipCorrect = true, bands = {red: 3, green: 2, blue: 1}
         ) {
             this.$http = $http;
@@ -40,6 +41,8 @@ export default (app) => {
             this._sceneTiles = null;
             this._mosaicTiles = null;
             this._correction = null;
+
+            this.tileServer = `${APP_CONFIG.tileServerLocation}`;
         }
 
         /** Function to return bounds from either the project or the scene
@@ -123,19 +126,21 @@ export default (app) => {
          * @returns {string} URL for this tile layer
          */
         getSceneLayerURL() {
-            return `/tiles/${this.scene.id}/rgb/{z}/{x}/{y}/?${this.formatColorParams()}`;
+            return `${this.tileServer}/${this.scene.id}/rgb/` +
+                `{z}/{x}/{y}/?${this.formatColorParams()}`;
         }
 
         getMosaicLayerURL(params = {}) {
             params.token = this.authService.token();
             let formattedParams = L.Util.getParamString(params);
             return this.$q((resolve) => {
-                resolve(`/tiles/${this.projectId}/{z}/{x}/{y}/${formattedParams}`);
+                resolve(`${this.tileServer}/${this.projectId}/{z}/{x}/{y}/${formattedParams}`);
             });
         }
 
         getNDVIURL(bands) {
-            return `/tiles/${this.scene.id}/ndvi/{z}/{x}/{y}/?bands=${bands[0]},${bands[1]}`;
+            return `${this.tileServer}/${this.scene.id}/` +
+                `ndvi/{z}/{x}/{y}/?bands=${bands[0]},${bands[1]}`;
         }
 
         /**
@@ -143,7 +148,7 @@ export default (app) => {
          * @returns {string} URL for the histogram
          */
         getHistogramURL() {
-            return `/tiles/${this.scene.id}/rgb/histogram/?${this.formatColorParams()}`;
+            return `${this.tileServer}/${this.scene.id}/rgb/histogram/?${this.formatColorParams()}`;
         }
 
         /**
@@ -262,13 +267,14 @@ export default (app) => {
     }
 
     class LayerService {
-        constructor($http, $q, authService, colorCorrectService, projectService) {
+        constructor($http, $q, authService, colorCorrectService, projectService, APP_CONFIG) {
             'ngInject';
             this.$http = $http;
             this.$q = $q;
             this.authService = authService;
             this.colorCorrectService = colorCorrectService;
             this.projectService = projectService;
+            this.APP_CONFIG = APP_CONFIG;
         }
 
         /**
@@ -280,7 +286,7 @@ export default (app) => {
          */
         layerFromScene(scene, projectId, projectMosaic = false) {
             return new Layer(this.$http, this.$q, this.authService,
-                this.colorCorrectService, this.projectService,
+                this.colorCorrectService, this.projectService, this.APP_CONFIG,
                 scene, projectId, projectMosaic);
         }
     }
