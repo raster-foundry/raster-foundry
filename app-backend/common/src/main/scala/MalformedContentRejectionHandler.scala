@@ -11,11 +11,14 @@ object RFRejectionHandler {
   implicit val rfRejectionHandler:RejectionHandler = RejectionHandler.newBuilder()
     .handle {
     case e: MalformedRequestContentRejection => {
-      val missingFieldPattern = """(?:DownField\()(.*)(?:\))""".r
-      missingFieldPattern findFirstMatchIn e.message match {
-        case Some(matchedGroup) =>
-          complete(ClientError(400)("Bad Request", s"Missing field ${matchedGroup.group(1)}"))
-        case _ => complete(ClientError(400)("Bad Request", e.message))
+      val missingFieldPattern = """(.*decode value.*)(?:DownField\()(.*)(?:\))""".r
+      val badTypePattern = """(?:.*DownField\()(.*)(?:\))""".r
+      e.getCause.getMessage match {
+        case missingFieldPattern(missing: Any, field) =>
+          complete(ClientError(400)("Bad Request", s"Missing field: $field"))
+        case badTypePattern(field) =>
+          complete(ClientError(400)("Bad Request", s"Field cannot be parsed to expected type: $field"))
+        case _ => complete(ClientError(400)("Bad Request", e.getCause.getMessage))
       }
     }
   }
