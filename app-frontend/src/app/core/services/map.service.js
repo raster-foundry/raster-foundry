@@ -25,6 +25,7 @@ class MapWrapper {
         this._layerGroup = L.featureGroup().addTo(this.map);
         this.persistedThumbnails = new Map();
         this.disableFootprints = false;
+        this.basemapsAdded = false;
 
         this._controls = L.control({position: 'topright'});
         this._controls.onAdd = function () {
@@ -57,6 +58,14 @@ class MapWrapper {
             this.map.boxZoom,
             this.map.keyboard
         ];
+        let baseMaps = {
+            Light: this.getBaseMapLayer('light_all'),
+            Dark: this.getBaseMapLayer('dark_all')
+        };
+        if (!this.basemapsAdded) {
+            baseMaps.Light.addTo(this.map);
+            this.basemapsAdded = true;
+        }
         if (options && options.static) {
             this._controls.remove();
             mapInteractionOptions.map((option) => {
@@ -72,12 +81,8 @@ class MapWrapper {
                 this.controlsAdded = true;
                 let zoomControl = L.control.zoom({position: 'topright'});
                 this._controls.addTo(this.map);
+
                 // Add basemap controls to map's controls
-                let baseMaps = {
-                    Light: this.getBaseMapLayer('light_all'),
-                    Dark: this.getBaseMapLayer('dark_all')
-                };
-                baseMaps.Light.addTo(this.map);
                 let baseMapControl = L.control.layers(baseMaps, {});
                 baseMapControl.addTo(this.map);
                 zoomControl.addTo(this.map);

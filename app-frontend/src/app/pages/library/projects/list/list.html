@@ -37,10 +37,9 @@
       </div>
       <div class="list-group">
         <rf-project-item
-            ng-click="$ctrl.viewProjectDetail(project)"
             project="project"
             class="selectable"
-            ng-repeat="project in $ctrl.projectList 
+            ng-repeat="project in $ctrl.projectList
                        | filter: {name: $ctrl.projectSearchString}
                        track by project.id">
         </rf-project-item>

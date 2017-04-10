@@ -282,3 +282,27 @@ ob-daterangepicker {
     }
   }
 }
+
+.list-group-item.with-rows {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.list-group-item-content {
+  display: flex;
+  flex-direction: row;
+  align-items: start;
+  flex: 1;
+  .list-group-overflow {
+    flex: 1;
+    align-self: stretch;
+  }
+}
+
+.project-preview-container {
+  height: 200px;
+}
+
+.btn.btn-slim {
+  padding: 1rem;
+}
