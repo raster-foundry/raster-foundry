@@ -1,6 +1,8 @@
 package com.azavea.rf.export
 
-import com.azavea.rf.export.model._
+import io.circe.parser._
+
+import com.azavea.rf.datamodel._
 import com.azavea.rf.export.util._
 
 import geotrellis.proj4.LatLng
@@ -18,7 +20,6 @@ import geotrellis.spark.io.s3._
 import com.typesafe.scalalogging.LazyLogging
 import org.apache.hadoop.fs.Path
 import org.apache.spark._
-import spray.json._
 import spray.json.DefaultJsonProtocol._
 import cats.implicits._
 
@@ -135,7 +136,11 @@ object Export extends SparkJob with LazyLogging {
         throw new Exception("Unable to parse command line arguments")
     }
 
-    val exportDefinition = readString(params.jobDefinition).parseJson.convertTo[ExportDefinition]
+    val exportDefinition =
+      decode[ExportDefinition](readString(params.jobDefinition)) match {
+        case Right(r) => r
+        case _ => throw new Exception("Incorrect ExportDefinition JSON")
+      }
 
     implicit val sc = new SparkContext(conf)
     try {

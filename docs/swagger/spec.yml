@@ -1283,6 +1283,120 @@ paths:
       responses:
         200:
           description: RSS feed json as a string
+  /exports/:
+    get:
+      summary: Get a list of exports
+      description: |
+        The exprots API endpoint enables searching, listing, and creating new exports.
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/orderingBase'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/organization'
+        - $ref: '#/parameters/project'
+        - $ref: '#/parameters/exportStatus'
+      responses:
+        200:
+          description: Paginated list of exports
+          schema:
+            $ref: '#/definitions/ExportPaginated'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create an export
+      description: |
+        Create a new export.
+      tags:
+        - Imagery
+      parameters:
+        - name: Export
+          in: body
+          schema:
+            $ref: '#/definitions/ExportCreate'
+      responses:
+        201:
+          description: Export created
+          schema:
+            $ref: '#/definitions/Export'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'  
+  /exports/{uuid}/:
+    get:
+      summary: Retrieve export details
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: Info about export
+          schema:
+            $ref: '#/definitions/Export'
+        404:
+          description: |
+            UUID parameter does not refer to an export or the user is not able to view the export it refers to
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Update an export
+      tags:
+        - Imagery
+      parameters:
+        - name: upload
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Export'
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Update successful (no further processing needed)
+        404:
+          description: |
+            The UUID parameter does not refer to a upload or the user does not have access to the upload it refers to
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Delete an export
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Deletion successful (no content)
+        404:
+          description: |
+            The UUID parameter does not refer to an export or the user does not have access to the export it refers to
+          schema:
+            $ref: '#/definitions/Error'
+  /exports/{uuid}/definition:
+    get:
+      summary: Retrieve export details
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: Info about export, in export job format
+          schema:
+            $ref: '#/definitions/ExportDefinition'
+        404:
+          description: |
+            UUID parameter does not refer to an export or the user is not able to view the export it refers to
+          schema:
+            $ref: '#/definitions/Error'
 
 parameters:
 
@@ -1598,6 +1712,21 @@ parameters:
     in: query
     type: string
     required: false
+  exportStatus:
+    name: exportStatus
+    description: Status of export
+    in: query
+    type: string
+    required: false
+    enum:
+      - CREATED
+      - EXPORTING
+      - EXPORTED
+      - QUEUED
+      - PROCESSING
+      - COMPLETE
+      - FAILED
+      - ABORTED
 
 definitions:
   BaseModel:
@@ -2550,3 +2679,168 @@ definitions:
     description: Combined color correction parameters for multiple scenes
     items:
       $ref: '#/definitions/SceneCorrectionParam'
+  ExportCreate:
+    type: object
+    properties:
+      projectId:
+        type: string
+        format: uuid
+      sceneIds:
+        type: array
+        items:
+          type: string
+          format: uuid
+      exportStatus:
+        type: string
+        description: Status of export
+        enum:
+          - CREATED
+          - EXPORTING
+          - EXPORTED
+          - QUEUED
+          - PROCESSING
+          - COMPLETE
+          - FAILED
+          - ABORTED
+      exportType:
+        type: string
+        description: Source of exports
+        enum:
+          - DROPBOX
+          - S3
+          - LOCAL
+      visibility:
+        type: string
+        description: Level of restriction on viewing
+        enum:
+          - PUBLIC
+          - ORGANIZATION
+          - PRIVATE
+      exportOptions:
+        $ref: '#/definitions/ExportOptions'
+  Export:
+    allOf:
+    - $ref: '#/definitions/BaseModel'
+    - $ref: '#/definitions/UserTrackingMixin'
+    - $ref: '#/definitions/ExportCreate'
+    - type: object
+      properties:
+        exportStatus:
+          type: string
+          description: Status of export
+          enum:
+            - CREATED
+            - EXPORTING
+            - EXPORTED
+            - QUEUED
+            - PROCESSING
+            - COMPLETE
+            - FAILED
+            - ABORTED
+  ExportPaginated:
+    allOf:
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/Export'  
+  ExportOptions:
+    type: object
+    description: export params
+    properties:
+      bands:
+        type: array
+        description: bands in the exported geotiffs
+        items:
+          type: integer
+      rasterSize: 
+        type: integer
+        description: desired tiff size after export
+      crs:
+        type: integer
+        description: epsg projection code
+      mask:
+        type: object
+        description: geojson multipolygon
+      stitch:
+        type: boolean
+        description: stitch tiles into a single geotiff if possible
+      crop:
+        type: boolean
+        description: crop stitched raster by provided mask if possible
+  ExportDefinition:
+    type: object
+    properties:
+      exportStatus:
+        type: string
+        description: Status of upload
+        enum:
+          - CREATED
+          - EXPORTING
+          - EXPORTED
+          - QUEUED
+          - PROCESSING
+          - COMPLETE
+          - FAILED
+          - ABORTED
+      input:
+        $ref: '#/definitions/InputExportDefinition'
+      output:
+        $ref: '#/definitions/OutputExportDefinition'
+  InputExportDefinition:
+    type: object
+    properties:
+      projectId:
+        type: string
+        format: uuid
+      resolution:
+        type: integer
+        description: required resolution (currently it's zoom level)
+      mask:
+        type: object
+        description: geojson multipolygon
+      layers:
+        type: object
+        properties:
+          layerId:
+            type: string
+            format: uuid
+          ingestLocation:
+            type: string
+            format: uuid
+          colorCorrections:
+            $ref: '#/definitions/ColorCorrection'          
+  OutputExportDefinition:
+    type: object
+    properties:        
+      rasterSize: 
+        type: integer
+        description: desired tiff size after export
+      crs:
+        type: integer
+        description: epsg projection code
+      stitch:
+        type: boolean
+        description: stitch tiles into a single geotiff if possible
+      crop:
+        type: boolean
+        description: crop stitched raster by provided mask if possible
+      source:
+        type: string
+        format: uuid
+        description: output export path
+      render:
+        $ref: '#/definitions/Render'
+  Render:
+    type: object
+    properties:
+      operation:
+        type: string
+        description: currently useless Field
+      bands:
+        type: array
+        description: bands in the exported geotiffs
+        items:
+          type: integer

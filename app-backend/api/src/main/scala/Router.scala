@@ -3,6 +3,7 @@ package com.azavea.rf.api
 
 import ch.megard.akka.http.cors.CorsDirectives._
 import ch.megard.akka.http.cors.CorsSettings
+
 import com.azavea.rf.api.project.ProjectRoutes
 import com.azavea.rf.api.healthcheck._
 import com.azavea.rf.api.organization.OrganizationRoutes
@@ -21,6 +22,7 @@ import com.azavea.rf.api.datasource.DatasourceRoutes
 import com.azavea.rf.api.maptoken.MapTokenRoutes
 import com.azavea.rf.api.feed.FeedRoutes
 import com.azavea.rf.api.uploads.UploadRoutes
+import com.azavea.rf.api.exports.ExportRoutes
 import com.azavea.rf.api.utils.Config
 
 /**
@@ -47,6 +49,7 @@ trait Router extends HealthCheckRoutes
     with MapTokenRoutes
     with FeedRoutes
     with UploadRoutes
+    with ExportRoutes
     with Config {
 
   val corsSettings = CorsSettings.defaultSettings
@@ -71,7 +74,8 @@ trait Router extends HealthCheckRoutes
       pathPrefix("datasources") { datasourceRoutes } ~
       pathPrefix("map-tokens") { mapTokenRoutes } ~
       pathPrefix("feed") { feedRoutes } ~
-      pathPrefix("uploads") { uploadRoutes }
+      pathPrefix("uploads") { uploadRoutes } ~
+      pathPrefix("exports") { exportRoutes }
     } ~
     pathPrefix("config") {
       configRoutes

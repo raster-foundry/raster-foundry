@@ -1,6 +1,6 @@
 package com.azavea.rf
 
-import geotrellis.raster.MultibandTile
+import geotrellis.raster.{CellSize, MultibandTile}
 import geotrellis.raster.split._
 import geotrellis.spark._
 import geotrellis.spark.tiling._
@@ -8,6 +8,10 @@ import geotrellis.util.Component
 import geotrellis.vector._
 
 package object export {
+  implicit class HasCellSize[A <: { def rows: Int; def cols: Int; def extent: Extent }](obj: A) {
+    def cellSize: CellSize = CellSize(obj.extent.width / obj.cols, obj.extent.height / obj.rows)
+  }
+
   implicit class withRasterFoundryTilerKeyMethods(val self: (ProjectedExtent, Int))
       extends TilerKeyMethods[(ProjectedExtent, Int), (SpatialKey, Int)] {
     def extent = self._1.extent

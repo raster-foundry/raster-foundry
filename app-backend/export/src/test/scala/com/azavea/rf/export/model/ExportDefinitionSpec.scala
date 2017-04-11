@@ -1,12 +1,15 @@
 package com.azavea.rf.export.model
 
-import com.azavea.rf.datamodel.ColorCorrect
+import com.azavea.rf.datamodel._
+
+import io.circe.parser._
+import io.circe.syntax._
 
 import geotrellis.proj4.CRS
 import geotrellis.vector._
 import geotrellis.vector.io._
+import cats.implicits._
 
-import spray.json._
 import org.scalatest._
 
 import java.net.URI
@@ -81,8 +84,7 @@ class ExportDefinitionSpec extends FunSpec with Matchers {
             |            ]
             |        ]
             |    }
-          """.stripMargin.parseJson.convertTo[MultiPolygon]
-        )
+          """.stripMargin.parseGeoJson[MultiPolygon]())
       ),
       output = OutputDefinition(
         crs = Some(CRS.fromEpsgCode(32654)),
@@ -94,9 +96,13 @@ class ExportDefinitionSpec extends FunSpec with Matchers {
       )
     )
 
-    val actual = getJson("/localJob.json").parseJson.convertTo[ExportDefinition]
+    val actual =
+      decode[ExportDefinition](getJson("/localJob.json")).toOption match {
+        case Some(ed) => ed
+        case _ => throw new Exception("Incorrect json to parse")
+      }
 
-    expected.toJson shouldBe actual.toJson
+    expected.asJson shouldBe actual.asJson
   }
 }
 
