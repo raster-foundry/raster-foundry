@@ -1,5 +1,6 @@
 package com.azavea.rf
 
+import java.net.URI
 import java.util.UUID
 import java.security.InvalidParameterException
 import java.sql.Timestamp
@@ -9,10 +10,10 @@ import io.circe._
 import io.circe.parser._
 import io.circe.generic.semiauto._
 import cats.syntax.either._
+import io.circe.syntax._
 
 import geotrellis.vector._
 import geotrellis.vector.io._
-import geotrellis.vector.io.json._
 import geotrellis.proj4._
 import geotrellis.slick.Projected
 
@@ -30,7 +31,6 @@ package object datamodel {
         (pr.count, pr.hasPrevious, pr.hasNext, pr.page, pr.pageSize, pr.results)
       }
     )
-  implicit def decodePaginated[A: Decoder]: Decoder[PaginatedResponse[A]] = deriveDecoder
 
   implicit val timestampEncoder: Encoder[Timestamp] =
     Encoder.encodeString.contramap[Timestamp](_.toInstant.toString)
@@ -70,4 +70,47 @@ package object datamodel {
   implicit val projectedGeometryDecoder: Decoder[Projected[Geometry]] = Decoder[Json] map { js =>
     Projected(js.spaces4.parseGeoJson[Geometry], 4326).reproject(CRS.fromEpsgCode(4326), CRS.fromEpsgCode(3857))(3857)
   }
+
+  implicit val crsEncoder: Encoder[CRS] =
+    Encoder.encodeString.contramap[CRS] { crs => s"epsg:${crs.epsgCode}" }
+  implicit val crsDecoder: Decoder[CRS] =
+    Decoder.decodeString.emap { str =>
+      Either.catchNonFatal(CRS.fromName(str)).leftMap(_ => "CRS")
+    }
+
+  implicit val extentEncoder: Encoder[Extent] =
+    new Encoder[Extent] {
+      final def apply(extent: Extent): Json =
+        List(extent.xmin, extent.ymin, extent.xmax, extent.ymax).asJson
+    }
+  implicit val extentDecoder: Decoder[Extent] =
+    Decoder[Json] emap { js =>
+      js.as[List[Double]].map { case List(xmin, ymin, xmax, ymax) =>
+        Extent(xmin, ymin, xmax, ymax)
+      }.leftMap(_ => "Extent")
+    }
+
+  implicit val uriEncoder: Encoder[URI] =
+    Encoder.encodeString.contramap[URI] { _.toString }
+  implicit val uriDecoder: Decoder[URI] =
+    Decoder.decodeString.emap { str =>
+      Either.catchNonFatal(URI.create(str)).leftMap(_ => "URI")
+    }
+
+  implicit val multipolygonEncoder: Encoder[MultiPolygon] =
+    new Encoder[MultiPolygon] {
+      final def apply(mp: MultiPolygon): Json = {
+        parse(mp.toGeoJson) match {
+          case Right(js: Json) => js
+          case Left(e) => throw e
+        }
+      }
+    }
+
+  implicit val multipolygonDecoder: Decoder[MultiPolygon] = Decoder[Json] map {
+    _.spaces4.parseGeoJson[MultiPolygon]
+  }
+
+  implicit val decodeProjectedMultiPolygon: Decoder[Projected[MultiPolygon]] = deriveDecoder
+  implicit val encodeProjectedMultiPolygon: Encoder[Projected[MultiPolygon]] = deriveEncoder
 }

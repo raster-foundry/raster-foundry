@@ -10,21 +10,24 @@ import com.lonelyplanet.akka.http.extensions.PageRequest
 import com.typesafe.scalalogging.LazyLogging
 import slick.model.ForeignKeyAction
 import io.circe.Json
+import cats.implicits._
 
 import java.sql.Timestamp
 import java.util.UUID
+import java.net.URI
 
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /** Table that represents exports
   *
   * Exports represent asynchronous export tasks to export data
   */
 class Exports(_tableTag: Tag) extends Table[Export](_tableTag, "exports")
-    with TimestampFields
-    with OrganizationFkFields
+  with TimestampFields
+  with OrganizationFkFields
 {
-  def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, organizationId, projectId, sceneIds, exportStatus,
+  def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, organizationId, projectId, exportStatus,
     exportType, visibility, exportOptions) <> (
     Export.tupled, Export.unapply
   )
@@ -36,7 +39,6 @@ class Exports(_tableTag: Tag) extends Table[Export](_tableTag, "exports")
   val modifiedBy: Rep[String] = column[String]("modified_by", O.Length(255,varying=true))
   val organizationId: Rep[java.util.UUID] = column[java.util.UUID]("organization_id")
   val projectId: Rep[java.util.UUID] = column[java.util.UUID]("project_id", O.PrimaryKey)
-  val sceneIds: Rep[List[java.util.UUID]] = column[List[java.util.UUID]]("scene_ids")
   val exportStatus: Rep[ExportStatus] = column[ExportStatus]("export_status")
   val exportType: Rep[ExportType] = column[ExportType]("export_type")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
@@ -63,15 +65,15 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
     * @param limit Int limit of objects per page
     * @param queryParams [[ExportQueryParameters]] query parameters for request
     */
-  def listExports(offset: Int, limit: Int, queryParams: ExportQueryParameters) = {
-
+  def listExports(offset: Int, limit: Int, queryParams: ExportQueryParameters, user: User): ListQueryResult[Export] = {
     val dropRecords = limit * offset
+    val accessibleExports = Exports.filterToSharedOrganizationIfNotInRoot(user)
     ListQueryResult[Export](
-      (Exports
+      accessibleExports
         .filterByExportParams(queryParams)
-         .drop(dropRecords)
-         .take(limit)
-         .result):DBIO[Seq[Export]],
+        .drop(dropRecords)
+        .take(limit)
+        .result: DBIO[Seq[Export]],
       Exports.length.result
     )
   }
@@ -90,18 +92,39 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
     *
     * @param exportId UUID ID of export to get from database
     */
-  def getExport(exportId: UUID) =
-    Exports.filter(_.id === exportId).result.headOption
+  def getExport(exportId: UUID, user: User) =
+    Exports
+      .filterToSharedOrganizationIfNotInRoot(user)
+      .filter(_.id === exportId)
+      .result
+      .headOption
 
   /** Given an export ID, attempt to remove it from the database
     *
     * @param exportId UUID ID of export to remove
     */
-  def deleteExport(exportId: UUID) =
-    Exports.filter(_.id === exportId).delete
+  def deleteExport(exportId: UUID, user: User) =
+    Exports
+      .filterToSharedOrganizationIfNotInRoot(user)
+      .filter(_.id === exportId).delete
 
-  def getScenes(export: Export, user: User)(implicit database: DB): List[Future[Option[Scene.WithRelated]]] =
-    export.sceneIds.map(Scenes.getScene(_, user))
+  def getScenes(export: Export, user: User)(implicit database: DB): Future[Iterable[Scene.WithRelated]] = {
+    database.db.run {
+      val action = Scenes
+        .filter { scene =>
+          scene.id in ScenesToProjects
+            .filter(_.projectId === export.projectId)
+            .sortBy(_.sceneOrder.asc.nullsLast)
+            .map(_.sceneId)
+        }
+        .joinWithRelated
+        .result
+      logger.debug(s"Total Query for scenes -- SQL: ${action.statements.headOption}")
+      action
+    } map { result =>
+      Scene.WithRelated.fromRecords(result)
+    }
+  }
 
   /** Export an export @param export Export to use for export
     * @param exportId UUID of export to update
@@ -117,7 +140,6 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
       updateExport.modifiedBy,
       updateExport.organizationId,
       updateExport.projectId,
-      updateExport.sceneIds,
       updateExport.exportStatus,
       updateExport.exportType,
       updateExport.visibility,
@@ -129,12 +151,54 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
       user.id,
       export.organizationId,
       export.projectId,
-      export.sceneIds,
       export.exportStatus,
       export.exportType,
       export.visibility,
       export.exportOptions
     )
+  }
+
+  def getExportDefinition(export: Export, user: User)(implicit database: DB): Future[Option[ExportDefinition]] = {
+    export
+      .exportOptions
+      .as[ExportOptions]
+      .toOption
+      .map { exportOptions =>
+        getScenes(export, user)
+          .flatMap { iterable =>
+            val list = iterable.toList
+            val exportLayerDefinitions: Future[ExportDefinition] =
+              list
+                .map { scene =>
+                  ScenesToProjects.getColorCorrectParams(export.projectId, scene.id) map { ccp =>
+                    ExportLayerDefinition(scene.id, new URI(scene.ingestLocation.getOrElse("")), ccp.flatten)
+                  }
+                }
+                .sequence[Future, ExportLayerDefinition]
+                .map { layers =>
+                  ExportDefinition(
+                    export.id,
+                    input = InputDefinition(
+                      projectId = export.projectId,
+                      resolution = exportOptions.resolution,
+                      layers = layers.toArray,
+                      mask = exportOptions.mask.map(_.geom)
+                    ),
+                    output = OutputDefinition(
+                      crs = exportOptions.getCrs,
+                      rasterSize = exportOptions.rasterSize,
+                      render = Some(exportOptions.render),
+                      crop = exportOptions.crop,
+                      stitch = exportOptions.stitch,
+                      source = exportOptions.source
+                    )
+                  )
+                }
+
+            exportLayerDefinitions
+          }
+      }
+      .sequence
   }
 }
 
@@ -168,7 +232,7 @@ class ExportTableQuery[M, U, C[_]](exports: Exports.TableQuery) {
   }
 
   def page(pageRequest: PageRequest): Exports.TableQuery = {
-    Exports
+    exports
       .drop(pageRequest.offset * pageRequest.limit)
       .take(pageRequest.limit)
   }

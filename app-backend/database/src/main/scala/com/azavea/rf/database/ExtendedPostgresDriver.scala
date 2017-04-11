@@ -93,9 +93,9 @@ trait ExtendedPostgresDriver extends ExPostgresDriver
     implicit val uploadStatusOptionColumnExtensionMethodsBuilder =
       createEnumOptionColumnExtensionMethodsBuilder[UploadStatus]
 
-    implicit val exportStatusTypeMapper = createEnumJdbcType[ExportStatus]("UploadStatus", _.repr,
+    implicit val exportStatusTypeMapper = createEnumJdbcType[ExportStatus]("ExportStatus", _.repr,
       ExportStatus.fromString, quoteName = false)
-    implicit val exportStatusTypeListMapper = createEnumListJdbcType[ExportStatus]("UploadStatus", _.repr,
+    implicit val exportStatusTypeListMapper = createEnumListJdbcType[ExportStatus]("ExportStatus", _.repr,
       ExportStatus.fromString, quoteName = false)
     implicit val exportStatusColumnExtensionMethodsBuilder =
       createEnumColumnExtensionMethodsBuilder[ExportStatus]

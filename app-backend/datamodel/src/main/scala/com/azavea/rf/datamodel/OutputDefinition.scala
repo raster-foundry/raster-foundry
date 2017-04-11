@@ -1,8 +1,7 @@
-package com.azavea.rf.export.model
+package com.azavea.rf.datamodel
 
 import geotrellis.proj4.CRS
-
-import spray.json.DefaultJsonProtocol._
+import io.circe.generic.JsonCodec
 
 import java.net.URI
 
@@ -15,6 +14,7 @@ import java.net.URI
   * @param stitch stitch result raster into one
   * @param source output source [[URI]]
   */
+@JsonCodec
 case class OutputDefinition(
   crs: Option[CRS],
   rasterSize: Option[Int],
@@ -23,7 +23,3 @@ case class OutputDefinition(
   stitch: Boolean,
   source: URI
 )
-
-object OutputDefinition {
-  implicit val jsonFormat = jsonFormat6(OutputDefinition.apply _)
-}

@@ -1,10 +1,13 @@
 package com.azavea.rf.datamodel
 
 import io.circe._
+import io.circe.parser._
+import io.circe.generic.JsonCodec
 
 import java.util.UUID
 import java.sql.Timestamp
 
+@JsonCodec
 case class Export(
   id: UUID,
   createdAt: Timestamp,
@@ -13,7 +16,6 @@ case class Export(
   modifiedBy: String,
   organizationId: UUID,
   projectId: UUID,
-  sceneIds: List[UUID],
   exportStatus: ExportStatus,
   exportType: ExportType,
   visibility: Visibility,
@@ -26,10 +28,10 @@ object Export {
 
   def create = Export.apply _
 
+  @JsonCodec
   case class Create(
     organizationId: UUID,
     projectId: UUID,
-    sceneIds: List[UUID],
     exportStatus: ExportStatus,
     exportType: ExportType,
     visibility: Visibility,
@@ -45,7 +47,6 @@ object Export {
         modifiedAt = now,
         modifiedBy = userId,
         projectId = this.projectId,
-        sceneIds = this.sceneIds,
         organizationId = this.organizationId,
         exportStatus = this.exportStatus,
         exportType = this.exportType,

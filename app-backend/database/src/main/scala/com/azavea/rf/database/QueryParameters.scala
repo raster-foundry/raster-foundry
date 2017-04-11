@@ -235,6 +235,7 @@ case class UploadQueryParameters(
   uploadStatus: Option[String] = None
 )
 
+@JsonCodec
 case class ExportQueryParameters(
   organization: Option[UUID] = None,
   project: Option[UUID] = None,

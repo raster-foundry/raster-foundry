@@ -186,6 +186,7 @@ lazy val export = Project("export", file("export"))
       Dependencies.geotrellisUtil,
       Dependencies.geotrellisRaster,
       Dependencies.akkaSprayJson,
+      Dependencies.geotrellisSlick,
       Dependencies.spark,
       Dependencies.scopt
     )

@@ -1,6 +1,8 @@
-package com.azavea.rf.export.model
+package com.azavea.rf.datamodel
 
-import spray.json.DefaultJsonProtocol._
+import com.azavea.rf.datamodel._
+import io.circe.generic.JsonCodec
+
 import java.util.UUID
 
 /** The top level structure defining an export job
@@ -9,12 +11,9 @@ import java.util.UUID
   * @param input [[InputDefinition]] with inforamation about input data for an export job
   * @param output [[OutputDefinition]] with inforamation about output data for an export job
   */
+@JsonCodec
 case class ExportDefinition(
   id: UUID,
   input: InputDefinition,
   output: OutputDefinition
 )
-
-object ExportDefinition {
-  implicit val jsonFormat = jsonFormat3(ExportDefinition.apply _)
-}
