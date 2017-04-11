@@ -39,8 +39,8 @@ export default class ProjectItemController {
 
     fitProjectExtent() {
         this.getMap().then(mapWrapper => {
-            mapWrapper.map.invalidateSize();
             this.mapUtilsService.fitMapToProject(mapWrapper, this.project, -150);
+            mapWrapper.map.invalidateSize();
         });
     }
 

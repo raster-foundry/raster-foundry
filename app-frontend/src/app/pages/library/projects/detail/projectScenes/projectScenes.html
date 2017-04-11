@@ -1,7 +1,7 @@
-<div class="row content stack-sm" >
+<rf-static-map map-id="{{$ctrl.project.id}}-big-preview" ng-if="$ctrl.project" class="project-preview-map"></rf-static-map>
+<div class="row content stack-sm max-width">
   <div class="column-8" ng-if="!$ctrl.loading">
     <div class="library-header">
-      <div ng-class="{'invisible': $ctrl.$parent.selectedScenes.size}">
         <h1 class="h3 page-title">
           <a ui-sref="^.^.list"><i class="icon-caret-left"></i> Projects</a><br>
           <span ng-hide="$ctrl.isEditingProjectName">
@@ -14,14 +14,14 @@
                 ng-show="!$ctrl.$parent.selectedScenes.size && !$ctrl.isEditingProjectName && !$ctrl.isSavingProjectNameEdit">
           <i class="icon-pencil"></i>
         </button>
-        <div class="color-danger" ng-show="$ctrl.showError">
+        <div class="color-danger" ng-if="$ctrl.showError">
           There was an error renaming the project.
           <button class="btn btn-tiny" type="submit"
                   ng-click="$ctrl.dismissErrorMessage()">
             <i class="icon-cross color-danger"></i>
           </button>
         </div>
-        <div ng-show="$ctrl.isEditingProjectName">
+        <div ng-if="$ctrl.isEditingProjectName">
           <form class="ng-pristine ng-valid">
             <div class="form-group all-in-one">
               <input id="name" type="text" class="form-control"
@@ -29,42 +29,39 @@
                     ng-attr-autofocus="{{$ctrl.isEditingProjectName || undefined }}">
               <button class="btn btn-link" type="submit"
                       ng-click="$ctrl.cancelProjectNameEdit()"
-                      ng-show="!$ctrl.isSavingProjectNameEdit">
+                      ng-if="!$ctrl.isSavingProjectNameEdit">
                 <i class="icon-cross"></i>
               </button>
               <button class="btn btn-link" type="submit"
                       ng-click="$ctrl.saveProjectNameEdit()"
-                      ng-show="!$ctrl.isSavingProjectNameEdit">
+                      ng-if="!$ctrl.isSavingProjectNameEdit">
                 <i class="icon-check"></i>
               </button>
             </div>
           </form>
         </div>
+        <div class="flex-fill"></div>
+        <a href ng-click="$ctrl.$state.go('browse', {projectid: $ctrl.projectId})"
+           class="btn btn-primary btn-small">
+          <i class="icon-mosaic"></i> Edit project
+        </a>
+    </div>
+    <div class="list-info">
+      <div class="list-info-item">
+        Last edited on {{ $ctrl.project.modifiedAt | date : 'shortDate' }}
       </div>
-      <div class="library-header-reveal"
-           ng-show="$ctrl.$parent.selectedScenes.size">
-        <h1 class="h4">
-          <ng-pluralize count="$ctrl.$parent.selectedScenes.size"
-                        when="{'one': '1 scene selected.',
-                              'other': '{} scenes selected.'}">
-          </ng-pluralize>
-        </h1>
-        <div class="library-header-actions">
-          <a href ng-click="$ctrl.downloadModal()"><i class="icon-download"></i> Download</a>
-          <a href ng-click="$ctrl.selectNone()">Deselect All</a>
-          <a href class="link-danger" ng-click="$ctrl.removeScenes()">Remove from Project</a>
-        </div>
+      <div class="list-info-item">
+        <ng-pluralize count="$ctrl.sceneList.length"
+                      when="{'one': '1 scene',
+                            'other': '{} scenes'}">
+        </ng-pluralize>
       </div>
     </div>
     <div class="list-group">
       <rf-scene-item
-          ng-click="$ctrl.viewSceneDetail(scene)"
           scene="scene"
-          selectable
-          selected="$ctrl.isSelected(scene)"
-          on-select="$ctrl.setSelected(scene, selected)"
-          class="selectable"
           ng-repeat="scene in $ctrl.sceneList track by scene.id">
+          <a href class="link-danger" ng-click="$ctrl.removeScene(scene)">Remove from Project</a>
       </rf-scene-item>
     </div>
     <div class="list-group text-center"
@@ -91,23 +88,23 @@
       </span>
     </div>
   </div>
-  <div class="column-8" ng-if="$ctrl.loading">
+  <div class="column-10" ng-if="$ctrl.loading">
     <div class="list-group">
       <div class="list-placeholder">
           <i class="icon-load"></i>
       </div>
     </div>
   </div>
-  <div class="column-4">
+  <div class="column-2">
     <div class="content">
       <nav>
-        <a href ng-click="$ctrl.$state.go('browse', {projectid: $ctrl.projectId})" class="btn btn-secondary btn-small btn-block"><i class="icon-mosaic"></i> View <strong>{{$ctrl.project.name}}</strong></a>
-        <hr>
+        <a href ui-sref="browse({projectid: $ctrl.project.id})"><i class="icon-plus"></i> Add scenes</a>
         <a href ng-click="$ctrl.publishModal()"><i class="icon-share"></i> Share</a>
+        <hr>
         <a href class="color-danger"
            ng-click="$ctrl.deleteProject()">
           <i class="icon-trash"></i>
-          Delete Project
+          Delete
         </a>
       </nav>
     </div>

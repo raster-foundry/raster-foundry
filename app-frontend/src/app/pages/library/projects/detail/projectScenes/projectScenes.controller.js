@@ -1,6 +1,7 @@
 export default class ProjectScenesController {
     constructor( // eslint-disable-line max-params
-        $log, $state, $location, projectService, $scope, $uibModal
+        $log, $state, $location, projectService, $scope, $uibModal,
+        mapService, authService, mapUtilsService
     ) {
         'ngInject';
 
@@ -11,6 +12,9 @@ export default class ProjectScenesController {
         this.$parent = $scope.$parent.$ctrl;
         this.$uibModal = $uibModal;
         this.$scope = $scope;
+        this.mapService = mapService;
+        this.authService = authService;
+        this.mapUtilsService = mapUtilsService;
     }
 
     $onInit() {
@@ -29,6 +33,9 @@ export default class ProjectScenesController {
                         this.project = project;
                         this.loading = false;
                         this.populateSceneList(this.$state.params.page || 1);
+                        this.getMap =
+                            () => this.mapService.getMap(`${this.project.id}-big-preview`);
+                        this.initMap();
                     },
                     () => {
                         this.$state.go('^.^.list');
@@ -39,12 +46,37 @@ export default class ProjectScenesController {
             }
         } else {
             this.populateSceneList(this.$state.params.page || 1);
+            this.getMap = () => this.mapService.getMap(`${this.project.id}-map`);
+            this.initMap();
         }
 
         this.$scope.$on('$destroy', () => {
             if (this.activeModal) {
                 this.activeModal.dismiss();
             }
+        });
+    }
+
+    initMap() {
+        this.fitProjectExtent();
+        this.addProjectLayer();
+    }
+
+    addProjectLayer() {
+        let url = this.projectService.getProjectLayerURL(
+            this.project,
+            this.authService.token()
+        );
+        let layer = L.tileLayer(url);
+
+        this.getMap().then(m => {
+            m.addLayer('share-layer', layer);
+        });
+    }
+
+    fitProjectExtent() {
+        this.getMap().then(mapWrapper => {
+            this.mapUtilsService.fitMapToProject(mapWrapper, this.project, -250);
         });
     }
 
@@ -211,6 +243,20 @@ export default class ProjectScenesController {
     removeScenes() {
         let sceneIds = Array.from(this.$parent.selectedScenes.keys());
         this.projectService.removeScenesFromProject(this.projectId, sceneIds).then(
+            () => {
+                this.populateSceneList(this.currentPage);
+                this.$parent.selectedScenes.clear();
+            },
+            (err) => {
+                // later on, use toasts or something instead of a debug message
+                this.$log.debug('Error removing scenes from project.', err);
+                this.populateSceneList(this.currentPage);
+            }
+        );
+    }
+
+    removeScene(scene) {
+        this.projectService.removeScenesFromProject(this.projectId, [ scene.id ]).then(
             () => {
                 this.populateSceneList(this.currentPage);
                 this.$parent.selectedScenes.clear();

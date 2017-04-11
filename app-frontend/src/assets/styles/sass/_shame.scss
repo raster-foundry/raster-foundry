@@ -306,3 +306,29 @@ ob-daterangepicker {
 .btn.btn-slim {
   padding: 1rem;
 }
+
+.max-width {
+  margin: 0 auto;
+  max-width: 1160px !important;
+}
+
+.list-info {
+    padding: 2rem;
+    background: #f0f0f0;
+    border-radius: 2px;
+    display: flex;
+    .list-info-item {
+      margin-left: 2rem;
+      &:first-child {
+        margin-left: 0;
+      }
+    }
+}
+
+.flex-fill {
+  flex: 1 !important;
+}
+
+.project-preview-map .map-container{
+  max-height: 300px;
+}

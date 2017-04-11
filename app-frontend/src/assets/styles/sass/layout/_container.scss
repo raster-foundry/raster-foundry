@@ -21,11 +21,11 @@
 
     &.dashboard {
       width: 100%;
-	    max-width: 1160px;
+	    // max-width: 1160px;
     }
     &.dashboard-filter {
       width: 100%;
-      max-width: 1160px;
+      // max-width: 1160px;
       flex: 1;
       &.wide {
         max-width: initial;
@@ -36,7 +36,7 @@
 
 .container {
 	width: 100%;
-	max-width: 1160px;
+	// max-width: 1160px;
 	margin: auto;
   display: flex;
 }

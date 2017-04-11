@@ -77,6 +77,7 @@ export default class StaticMapController {
             });
             layer.on('load', () => {
                 this.setLoading(layerId, false);
+                this.map.invalidateSize();
             });
             layer.on('tileerror', () => {
                 this.setLoadingError(layerId, true);
