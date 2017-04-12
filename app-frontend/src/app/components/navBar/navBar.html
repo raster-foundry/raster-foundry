@@ -6,25 +6,39 @@
     </a>
     <span class="navbar-vertical-divider"></span>
     <nav>
-      <a href ui-sref="home" ui-sref-active="active">Home</a>
-      <div ng-if="$ctrl.projectService.currentProject" uib-dropdown class="dropdown-project" on-toggle="toggled($ctrl.optionsOpen)">
-        <a href uib-dropdown-toggle>
-          <span class="username">{{$ctrl.projectService.currentProject.name}}</span>
-          <i class="icon-caret-down"></i>
-        </a>
-        <ul class="dropdown-menu" aria-labelledby="dLabel">
-          <li><a href ui-sref="editor.project.color.scenes({projectid: $ctrl.projectService.currentProjectId})" ng-class="{ disabled: $ctrl.$state.$current.name.includes('editor')}">Edit</a></li>
-          <li><a href ui-sref="browse({projectid: $ctrl.projectService.currentProjectId})"  ng-class="{ disabled: $ctrl.$state.$current.name.includes('browse')}">Add Scenes</a></li>
-          <li role="separator" class="divider"></li>
-          <li><a href ng-click="$ctrl.selectProjectModal()">Switch Projects</a></li>
-        </ul>
-      </div>
-      <a href ui-sref="library.projects.list" ui-sref-active="active">Projects</a>
-      <a href ui-sref="imports" ui-sref-active="active">Imports</a>
-      <a href feature-flag="tools-ui" ui-sref="market.search"
+      <a href
+         ng-class="{'icon': $ctrl.isInProject()}"
+         ui-sref="home"
+         ui-sref-active="active">
+        <i class="icon-info"></i>
+        <span ng-if="!$ctrl.isInProject()">Home</span>
+      </a>
+      <a href
+         ng-class="{'icon': $ctrl.isInProject(),
+                    'active': $ctrl.$state.includes('projects') }"
+         ui-sref="projects.list"
+        <i class="icon-project"></i>
+        <span ng-if="!$ctrl.isInProject()">Projects</span>
+      </a>
+      <a href
+         ng-class="{'icon': $ctrl.isInProject(),
+                    'active': $ctrl.$state.includes('imports') }"
+         ui-sref="imports">
+        <i class="icon-imports"></i>
+        <span ng-if="!$ctrl.isInProject()">Imports</span>
+      </a>
+      <a href
+         feature-flag="tools-ui"
+         ui-sref="market.search"
          ng-class="{
-                   active: $ctrl.$state.$current.name.includes('market')
-                   }">Tools</a>
+                   active: $ctrl.$state.$current.name.includes('market'),
+                   icon: $ctrl.isInProject()
+                   }">
+        <i class="icon-model"></i>
+        <span ng-if="!$ctrl.isInProject()">Tools</span>
+      </a>
+
+      <span ui-view="navmenu"></span>
     </nav>
   </div>
 
@@ -39,9 +53,15 @@
           <i class="icon-caret-down"></i>
         </a>
         <ul class="dropdown-menu" aria-labelledby="dLabel">
-          <li><a href ui-sref="settings.profile">Settings</a></li>
+          <li>
+            <a href ui-sref="settings.profile">
+              <i class="icon-settings"></i> Settings
+            </a>
+          </li>
           <li role="separator" class="divider"></li>
-          <li><a href ng-click="$ctrl.logout()">Sign out</a></li>
+          <li><a href ng-click="$ctrl.logout()">
+            <i class="icon-cancel"></i> Sign out
+          </a></li>
         </ul>
       </div>
     </nav>

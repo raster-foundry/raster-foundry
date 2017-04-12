@@ -18,6 +18,10 @@ export default class NavBarController {
         this.projectService = projectService;
     }
 
+    isInProject() {
+        return this.$state.includes('projects.edit');
+    }
+
     $onInit() {
         this.optionsOpen = false;
         this.assetLogo = assetLogo;
@@ -29,24 +33,5 @@ export default class NavBarController {
 
     logout() {
         this.authService.logout();
-    }
-
-    selectProjectModal() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.$uibModal.open({
-            component: 'rfSelectProjectModal',
-            resolve: {
-                project: () => this.projectService.currentProject
-            }
-        });
-
-        this.activeModal.result.then(p => {
-            this.$state.go(this.$state.$current, { projectid: p.id });
-        });
-
-        return this.activeModal;
     }
 }

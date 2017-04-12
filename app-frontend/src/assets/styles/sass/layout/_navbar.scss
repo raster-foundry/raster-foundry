@@ -14,6 +14,10 @@
       display: inline-block;
       padding: 2rem 2.5rem;
 
+      &.icon {
+        padding: 2rem 1rem;
+      }
+
       &:hover {
         color: #fff;
       }
