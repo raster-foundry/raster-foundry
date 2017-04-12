@@ -233,3 +233,9 @@ case class UploadQueryParameters(
   organization: Option[UUID] = None,
   datasource: Option[UUID] = None
 )
+
+case class ExportQueryParameters(
+  organization: Option[UUID] = None,
+  project: Option[UUID] = None,
+  exportStatus: Iterable[String] = Seq[String]()
+)
