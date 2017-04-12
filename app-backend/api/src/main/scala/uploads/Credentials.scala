@@ -5,25 +5,22 @@ import java.util.{Date, UUID}
 
 import com.azavea.rf.api.utils.{Auth0Exception, Config}
 import com.azavea.rf.datamodel.User
-
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
-
 import com.amazonaws.auth.{AWSCredentials, AWSSessionCredentials, AWSStaticCredentialsProvider}
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
-
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
-import io.circe.generic.auto._
+import io.circe.generic.JsonCodec
 import io.circe.optics.JsonPath._
 import io.circe.Json
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 
+@JsonCodec
 case class Credentials (
   AccessKeyId: String,
   Expiration: String,
@@ -35,6 +32,7 @@ case class Credentials (
   override def getSessionToken = this.SessionToken
 }
 
+@JsonCodec
 case class CredentialsWithBucketPath (
   credentials: Credentials,
   bucketPath: String

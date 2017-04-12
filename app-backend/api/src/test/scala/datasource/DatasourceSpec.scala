@@ -18,7 +18,6 @@ import java.time.Instant
 
 import io.circe._
 import io.circe.syntax._
-import io.circe.generic.auto._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 class DatasourceSpec extends WordSpec

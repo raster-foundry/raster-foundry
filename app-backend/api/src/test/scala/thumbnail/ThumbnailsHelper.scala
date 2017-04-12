@@ -7,7 +7,6 @@ import java.sql.Timestamp
 import java.time.Instant
 
 import io.circe._
-import io.circe.generic.auto._
 import io.circe.syntax._
 
 trait ThumbnailSpecHelper {

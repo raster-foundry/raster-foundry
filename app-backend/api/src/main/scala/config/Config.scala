@@ -8,6 +8,9 @@ import com.azavea.rf.datamodel.FeatureFlag
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.FeatureFlags
 
+import io.circe.generic.JsonCodec
+
+@JsonCodec
 case class AngularConfig(
   clientId: String,
   clientEnvironment: String,

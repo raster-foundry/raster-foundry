@@ -10,10 +10,10 @@ import com.azavea.rf.api.utils.queryparams._
 trait ToolCategoryQueryParametersDirective extends QueryParametersCommon {
   val toolCategorySpecificQueryParams = parameters((
     'search.as[String].?
-  )).as(ToolCategoryQueryParameters)
+  )).as(ToolCategoryQueryParameters.apply _)
 
   val toolCategoryQueryParameters = (
     timestampQueryParameters &
     toolCategorySpecificQueryParams
-  ).as(CombinedToolCategoryQueryParams)
+  ).as(CombinedToolCategoryQueryParams.apply _)
 }

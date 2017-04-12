@@ -3,6 +3,9 @@ package com.azavea.rf.datamodel
 import java.util.UUID
 import java.sql.Timestamp
 
+import io.circe._
+import io.circe.generic.JsonCodec
+
 /** A user generate tag to track tools in the Raster Foundry lab
   *
   * @param id UUID Unique identifier for Tool Tag
@@ -13,18 +16,18 @@ import java.sql.Timestamp
   * @param modifiedBy String User ID that last modified tag
   * @param tag String Tag that is displayed to user
   */
+@JsonCodec
 case class ToolTag(
-    id: UUID,
-    createdAt: Timestamp,
-    modifiedAt: Timestamp,
-    organizationId: UUID,
-    createdBy: String,
-    modifiedBy: String,
-    tag: String
+  id: UUID,
+  createdAt: Timestamp,
+  modifiedAt: Timestamp,
+  organizationId: UUID,
+  createdBy: String,
+  modifiedBy: String,
+  tag: String
 )
 
 object ToolTag {
-
   def create = Create.apply _
 
   def tupled = (ToolTag.apply _).tupled
@@ -34,10 +37,8 @@ object ToolTag {
     * @param organizationId UUID organization to create tag for
     * @param tag String user supplied string to use for tag
     */
-  case class Create(
-      organizationId: UUID,
-      tag: String
-  ) {
+  @JsonCodec
+  case class Create(organizationId: UUID, tag: String) {
 
     def toToolTag(userId: String): ToolTag = {
       val now = new Timestamp((new java.util.Date()).getTime())
@@ -52,6 +53,4 @@ object ToolTag {
       )
     }
   }
-
-  object Create
 }

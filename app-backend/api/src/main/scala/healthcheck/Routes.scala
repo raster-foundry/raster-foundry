@@ -9,7 +9,6 @@ import com.azavea.rf.api.Codec._
 import com.azavea.rf.common.{Authentication, RollbarNotifier}
 import com.azavea.rf.database.Database
 import io.circe._
-import io.circe.generic.auto._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 

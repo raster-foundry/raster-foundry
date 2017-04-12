@@ -14,10 +14,10 @@ trait ToolRunQueryParametersDirective extends QueryParametersCommon {
     'createdBy.as[String].?,
     'projectId.as[UUID].?,
     'toolId.as[UUID].?
-  )).as(ToolRunQueryParameters)
+  )).as(ToolRunQueryParameters.apply _)
 
   val toolRunQueryParameters = (
     toolRunSpecificQueryParams &
     timestampQueryParameters
-  ).as(CombinedToolRunQueryParameters)
+  ).as(CombinedToolRunQueryParameters.apply _)
 }

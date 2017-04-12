@@ -1,10 +1,12 @@
 package com.azavea.rf.datamodel
 
 import io.circe._
-
 import java.util.UUID
 import java.sql.Timestamp
 
+import io.circe.generic.JsonCodec
+
+@JsonCodec
 case class Upload(
   id: UUID,
   createdAt: Timestamp,
@@ -27,6 +29,7 @@ object Upload {
 
   def create = Upload.apply _
 
+  @JsonCodec
   case class Create(
     organizationId: UUID,
     uploadStatus: UploadStatus,

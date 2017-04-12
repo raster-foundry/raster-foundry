@@ -21,7 +21,6 @@ import geotrellis.slick.Projected
 
 import io.circe._
 import io.circe.syntax._
-import io.circe.generic.auto._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 class SceneSpec extends WordSpec

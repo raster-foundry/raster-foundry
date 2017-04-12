@@ -1,12 +1,14 @@
 package com.azavea.rf.datamodel
 
 import geotrellis.vector.io.json.GeoJsonSupport
-import geotrellis.vector.{Geometry, Point}
+import geotrellis.vector.Geometry
 import geotrellis.slick.Projected
+import io.circe.generic.JsonCodec
 
 import java.util.UUID
 import java.sql.Timestamp
 
+@JsonCodec
 case class Project(
   id: UUID,
   createdAt: Timestamp,
@@ -26,7 +28,6 @@ case class Project(
 
 /** Case class for project creation */
 object Project extends GeoJsonSupport {
-
   def tupled = (Project.apply _).tupled
 
   def create = Create.apply _
@@ -41,6 +42,7 @@ object Project extends GeoJsonSupport {
         .toLowerCase)
   }
 
+  @JsonCodec
   case class Create(
     organizationId: UUID,
     name: String,

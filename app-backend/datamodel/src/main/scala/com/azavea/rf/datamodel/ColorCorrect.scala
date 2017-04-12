@@ -2,6 +2,8 @@ package com.azavea.rf.datamodel
 
 import io.circe._
 import io.circe.syntax._
+import io.circe.generic.JsonCodec
+
 import geotrellis.raster._
 import geotrellis.raster.equalization.HistogramEqualization
 import geotrellis.raster.histogram.Histogram
@@ -10,6 +12,8 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 
 object ColorCorrect {
+
+  @JsonCodec
   case class Params(
     redBand: Int, greenBand: Int, blueBand: Int,
     redGamma: Option[Double], greenGamma: Option[Double], blueGamma: Option[Double],
@@ -28,7 +32,6 @@ object ColorCorrect {
   }
 
   object Params {
-
     def colorCorrectParams: Directive1[Params] =
       parameters(
         'redBand.as[Int].?(0), 'greenBand.as[Int].?(1), 'blueBand.as[Int].?(2),

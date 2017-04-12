@@ -7,9 +7,6 @@ import geotrellis.slick.PostGisProjectionSupport
 import com.github.tminglei.slickpg._
 import io.circe._
 import io.circe.syntax._
-import io.circe.generic.auto._
-
-import scala.collection.immutable.Map
 
 /** Custom Postgres driver that adds custom column types and implicit conversions
   *

@@ -16,13 +16,15 @@ import com.azavea.rf.datamodel.User
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.utils.{Auth0Exception, ManagementBearerToken}
 
-import io.circe._
-import io.circe.generic.auto._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import io.circe.generic.JsonCodec
 
 // TODO: this sort of case class definition should live in datamodel
+@JsonCodec
 case class RefreshToken(refresh_token: String)
+@JsonCodec
 case class DeviceCredential(id: String, device_name: String)
+@JsonCodec
 case class AuthorizedToken(id_token: String, expires_in: Int, token_type: String)
 
 object TokenService extends Config {

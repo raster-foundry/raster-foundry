@@ -1,12 +1,15 @@
 package com.azavea.rf.datamodel
 
 import java.util.UUID
-
 import java.sql.Timestamp
+
+import io.circe.generic.JsonCodec
 
 /**
   * Created by cbrown on 3/11/17.
   */
+
+@JsonCodec
 case class MapToken(
   id: UUID,
   createdAt: Timestamp,
@@ -24,6 +27,7 @@ object MapToken {
 
   def create = Create.apply _
 
+  @JsonCodec
   case class Create(
     organizationId: UUID,
     name: String,

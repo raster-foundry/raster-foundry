@@ -20,7 +20,6 @@ import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.{DBSpec, Router}
 
 import io.circe._
-import io.circe.generic.auto._
 import io.circe.syntax._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 

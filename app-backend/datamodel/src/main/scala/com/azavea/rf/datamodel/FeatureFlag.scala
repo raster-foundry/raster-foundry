@@ -1,7 +1,10 @@
 package com.azavea.rf.datamodel
 
+import io.circe.generic.JsonCodec
+
 import java.util.UUID
 
+@JsonCodec
 case class FeatureFlag(
   id: UUID,
   key: String,

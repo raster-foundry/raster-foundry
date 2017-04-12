@@ -2,6 +2,10 @@ package com.azavea.rf.datamodel
 
 import java.util.UUID
 
+import io.circe._
+import io.circe.generic.JsonCodec
+
+@JsonCodec
 case class MosaicDefinition(sceneId: UUID, colorCorrections: Option[ColorCorrect.Params])
 
 object MosaicDefinition {

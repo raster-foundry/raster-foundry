@@ -3,6 +3,10 @@ package com.azavea.rf.datamodel
 import java.util.UUID
 import java.sql.Timestamp
 
+import io.circe._
+import io.circe.generic.JsonCodec
+
+@JsonCodec
 case class Thumbnail(
   id: UUID,
   createdAt: Timestamp,
@@ -18,7 +22,6 @@ case class Thumbnail(
 }
 
 object Thumbnail {
-
   def tupled = (Thumbnail.apply _).tupled
 
   def create = Create.apply _
@@ -26,6 +29,7 @@ object Thumbnail {
   def identified = Identified.apply _
 
   /** Thumbnail class prior to ID assignment */
+  @JsonCodec
   case class Create(
     organizationId: UUID,
     thumbnailSize: ThumbnailSize,
@@ -51,6 +55,7 @@ object Thumbnail {
   }
 
   /** Thumbnail class when posted with an ID */
+  @JsonCodec
   case class Identified(
     id: Option[UUID],
     organizationId: UUID,

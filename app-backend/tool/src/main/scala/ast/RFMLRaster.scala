@@ -2,18 +2,21 @@ package com.azavea.rf.tool.ast
 
 import io.circe._
 import io.circe.syntax._
-import io.circe.generic.auto._
-
 import java.util.UUID
 import java.security.InvalidParameterException
 
+import io.circe.generic.JsonCodec
 
 sealed abstract class RFMLRaster(val `type`: String) {
   def id: UUID
 }
+@JsonCodec
 case class SceneRaster(id: UUID, band: Option[Int]) extends RFMLRaster("scene")
+@JsonCodec
 case class ProjectRaster(id: UUID, band: Option[Int]) extends RFMLRaster("project")
+@JsonCodec
 case class MLToolRaster(id: UUID, node: Option[UUID]) extends RFMLRaster("tool")
+@JsonCodec
 case class RasterReference(id: UUID) extends RFMLRaster("reference")
 
 object RFMLRaster {

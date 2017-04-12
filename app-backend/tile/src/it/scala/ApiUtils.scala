@@ -1,25 +1,14 @@
 package com.azavea.rf.tile
 
 import io.circe._
-import io.circe.syntax._
 import io.circe.parser._
-import io.circe.generic.auto._
 import scalaj.http._
-import io.gatling.core.Predef._
-import io.gatling.http.Predef._
-import io.gatling.http.request.builder.HttpRequestBuilder
 import cats.syntax.either._
-import com.typesafe.config.ConfigFactory
 import geotrellis.vector._
-import geotrellis.proj4._
 import geotrellis.slick._
-import geotrellis.vector.io._
 
-import scala.concurrent.duration._
-import scala.collection.JavaConverters._
 import scala.util._
 import java.util.UUID
-import java.lang.IllegalStateException
 
 object ApiUtils {
 

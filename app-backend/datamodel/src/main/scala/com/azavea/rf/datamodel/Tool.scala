@@ -5,7 +5,10 @@ import io.circe._
 import java.util.UUID
 import java.sql.Timestamp
 
+import io.circe.generic.JsonCodec
+
 /** Model Lab Tool */
+@JsonCodec
 case class Tool(
   id: UUID,
   createdAt: Timestamp,
@@ -65,11 +68,11 @@ case class Tool(
 
 /** Case class for tool creation */
 object Tool {
-
   def create = Create.apply _
 
   def tupled = (Tool.apply _).tupled
 
+  @JsonCodec
   case class Create(
     organizationId: UUID,
     title: String,
@@ -112,6 +115,7 @@ object Tool {
   }
 
   // join of tool/tag/category
+  @JsonCodec
   case class ToolRelationshipJoin(tool: Tool, toolTag: Option[ToolTag], toolCategory: Option[ToolCategory], organization: Option[Organization])
 
   object ToolRelationshipJoin {
@@ -119,6 +123,7 @@ object Tool {
   }
 
   /** Tool class when posted with category and tag ids */
+  @JsonCodec
   case class WithRelated(
     id: UUID,
     createdAt: Timestamp,
@@ -158,6 +163,7 @@ object Tool {
     }
   }
 
+  @JsonCodec
   case class WithRelatedUUIDs(
     id: UUID,
     createdAt: Timestamp,
@@ -177,4 +183,3 @@ object Tool {
     categories: Seq[String]
   )
 }
-

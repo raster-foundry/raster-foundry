@@ -8,17 +8,11 @@ import com.azavea.rf.api.utils.Config
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.{StatusCodes, ContentType, HttpEntity, HttpResponse, MediaType, MediaTypes}
-import akka.http.scaladsl.model.MediaType.Binary
-import org.apache.commons.io.IOUtils
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-import io.circe._
-import io.circe.generic.auto._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 import java.util.UUID
 import java.net.URI
-import scala.util.{Success, Failure, Try}
-
 
 trait ThumbnailRoutes extends Authentication
     with ThumbnailQueryParameterDirective

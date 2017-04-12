@@ -17,11 +17,11 @@ trait ImageQueryParametersDirective extends QueryParametersCommon {
     'minResolution.as[Float].?,
     'maxResolution.as[Float].?,
     'scene.as[UUID].*
-  ).as(ImageQueryParameters)
+  ).as(ImageQueryParameters.apply _)
 
   val imageQueryParameters = (orgQueryParams &
     timestampQueryParameters &
     imageSpecificQueryParams
-  ).as(CombinedImageQueryParams)
+  ).as(CombinedImageQueryParams.apply _)
 
 }

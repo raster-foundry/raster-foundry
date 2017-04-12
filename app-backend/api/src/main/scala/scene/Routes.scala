@@ -12,7 +12,6 @@ import akka.http.scaladsl.server.Route
 import io.circe._
 import io.circe.syntax._
 import io.circe.parser._
-import io.circe.generic.auto._
 
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 

@@ -34,21 +34,14 @@ package object datamodel {
     Encoder.encodeString.contramap[Timestamp](_.toInstant.toString)
   implicit val timestampDecoder: Decoder[Timestamp] =
     Decoder.decodeString.emap { str =>
-      Either.catchNonFatal(Timestamp.from(Instant.parse(str))).leftMap(t => "Timestamp")
-    }
-
-  implicit val thumbnailSizeEncoder: Encoder[ThumbnailSize] =
-    Encoder.encodeString.contramap[ThumbnailSize](_.toString)
-  implicit val thumbnailSizeDecoder: Decoder[ThumbnailSize] =
-    Decoder.decodeString.emap { str =>
-      Either.catchNonFatal(ThumbnailSize.fromString(str)).leftMap(t => "ThumbnailSize")
+      Either.catchNonFatal(Timestamp.from(Instant.parse(str))).leftMap(_ => "Timestamp")
     }
 
   implicit val uuidEncoder: Encoder[UUID] =
     Encoder.encodeString.contramap[UUID](_.toString)
   implicit val uuidDecoder: Decoder[UUID] =
     Decoder.decodeString.emap { str =>
-    Either.catchNonFatal(UUID.fromString(str)).leftMap(t => "UUID")
+    Either.catchNonFatal(UUID.fromString(str)).leftMap(_ => "UUID")
   }
 
   implicit val projectedGeometryEncoder: Encoder[Projected[Geometry]] =
@@ -75,11 +68,4 @@ package object datamodel {
   implicit val projectedGeometryDecoder: Decoder[Projected[Geometry]] = Decoder[Json] map { js =>
     Projected(js.spaces4.parseGeoJson[Geometry], 4326).reproject(CRS.fromEpsgCode(4326), CRS.fromEpsgCode(3857))(3857)
   }
-
-  implicit val userRoleEncoder: Encoder[UserRole] =
-    Encoder.encodeString.contramap[UserRole](_.toString)
-  implicit val userRoleDecoder: Decoder[UserRole] =
-    Decoder.decodeString.emap { str =>
-      Either.catchNonFatal(UserRole.fromString(str)).leftMap(r => "UserRole")
-    }
 }

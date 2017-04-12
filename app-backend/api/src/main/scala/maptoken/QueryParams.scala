@@ -13,11 +13,11 @@ trait MapTokensQueryParameterDirective extends QueryParametersCommon {
   val mapTokenSpecificQueryParams = parameters(
     'name.as[String].?,
     'project.as[UUID].?
-  ).as(MapTokenQueryParameters)
+  ).as(MapTokenQueryParameters.apply _)
 
   val mapTokenQueryParams = (
     orgQueryParams &
     userQueryParameters &
     mapTokenSpecificQueryParams
-    ).as(CombinedMapTokenQueryParameters)
+    ).as(CombinedMapTokenQueryParameters.apply _)
 }
