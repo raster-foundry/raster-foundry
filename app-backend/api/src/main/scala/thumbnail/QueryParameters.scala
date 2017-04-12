@@ -15,5 +15,5 @@ trait ThumbnailQueryParameterDirective extends QueryParametersCommon {
 
   val thumbnailSpecificQueryParameters = parameters(
     'sceneId.as[UUID].?
-  ).as(ThumbnailQueryParameters)
+  ).as(ThumbnailQueryParameters.apply _)
 }

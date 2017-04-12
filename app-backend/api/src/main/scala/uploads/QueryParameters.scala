@@ -12,5 +12,5 @@ trait UploadQueryParameterDirective extends QueryParametersCommon {
   val uploadQueryParams = parameters((
     'datasource.as[UUID].?,
     'organization.as[UUID].?
-  )).as(UploadQueryParameters)
+  )).as(UploadQueryParameters.apply _)
 }

@@ -14,7 +14,6 @@ import com.azavea.rf.database.Database
 import com.azavea.rf.database._
 import com.typesafe.scalalogging.LazyLogging
 import io.circe._
-import io.circe.generic.auto._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 trait GridRoutes extends Authentication

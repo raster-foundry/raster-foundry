@@ -14,7 +14,6 @@ import com.azavea.rf.api.{DBSpec, Router}
 import com.azavea.rf.api.AuthUtils
 
 import io.circe._
-import io.circe.generic.auto._
 import io.circe.syntax._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 

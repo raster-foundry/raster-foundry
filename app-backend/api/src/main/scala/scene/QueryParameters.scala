@@ -31,12 +31,12 @@ trait SceneQueryParameterDirective extends QueryParametersCommon
     'project.as[UUID].?,
     'ingested.as[Boolean].?,
     'ingestStatus.as[String].*
-  )).as(SceneQueryParameters)
+  )).as(SceneQueryParameters.apply _)
 
   val sceneQueryParameters = (orgQueryParams &
     userQueryParameters &
     timestampQueryParameters &
     sceneSpecificQueryParams &
     imageSpecificQueryParams
-  ).as(CombinedSceneQueryParams)
+  ).as(CombinedSceneQueryParams.apply _)
 }

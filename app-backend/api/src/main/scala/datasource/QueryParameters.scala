@@ -11,5 +11,5 @@ import com.azavea.rf.api.utils.queryparams._
 trait DatasourceQueryParameterDirective extends QueryParametersCommon {
   val datasourceQueryParams = parameters((
     'name.as[String].?
-  )).as(DatasourceQueryParameters)
+  )).as(DatasourceQueryParameters.apply _)
 }

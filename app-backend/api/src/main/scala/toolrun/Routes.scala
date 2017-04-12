@@ -9,7 +9,6 @@ import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import io.circe._
-import io.circe.generic.auto._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 import scala.concurrent.ExecutionContext.Implicits.global

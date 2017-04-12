@@ -3,8 +3,10 @@ package com.azavea.rf.datamodel
 import java.util.UUID
 import java.sql.Timestamp
 
-import io.circe.Json
+import io.circe._
+import io.circe.generic.JsonCodec
 
+@JsonCodec
 case class ToolRun(
   id: UUID,
   createdAt: Timestamp,
@@ -22,6 +24,7 @@ object ToolRun {
   def create = Create.apply _
   def tupled = (ToolRun.apply _).tupled
 
+  @JsonCodec
   case class Create(
     visibility: Visibility,
     organizationId: UUID,

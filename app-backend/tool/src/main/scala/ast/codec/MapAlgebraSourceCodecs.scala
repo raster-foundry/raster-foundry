@@ -2,13 +2,9 @@ package com.azavea.rf.tool.ast.codec
 
 import com.azavea.rf.tool.ast._
 
-import geotrellis.raster.render._
 import io.circe._
-import io.circe.optics.JsonPath._
 import io.circe.syntax._
-import io.circe.generic.auto._
 
-import scala.util.Try
 import java.security.InvalidParameterException
 
 

@@ -1,10 +1,12 @@
 package com.azavea.rf.datamodel
 
 import io.circe._
-
 import java.util.UUID
 import java.sql.Timestamp
 
+import io.circe.generic.JsonCodec
+
+@JsonCodec
 case class Datasource(
   id: UUID,
   createdAt: java.sql.Timestamp,
@@ -26,6 +28,7 @@ object Datasource {
   def create = Create.apply _
 
 
+  @JsonCodec
   case class Create(
     organizationId: UUID,
     name: String,
@@ -52,5 +55,4 @@ object Datasource {
       )
     }
   }
-
 }

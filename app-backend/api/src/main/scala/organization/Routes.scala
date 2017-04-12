@@ -9,7 +9,6 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import io.circe._
-import io.circe.generic.auto._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 import java.util.UUID

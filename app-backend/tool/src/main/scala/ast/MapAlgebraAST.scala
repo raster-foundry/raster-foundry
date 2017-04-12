@@ -2,6 +2,7 @@ package com.azavea.rf.tool.ast
 
 import java.util.UUID
 
+import io.circe.generic.JsonCodec
 
 /** The ur-type for a recursive representation of MapAlgebra operations */
 sealed trait MapAlgebraAST extends Product with Serializable {
@@ -22,21 +23,27 @@ object MapAlgebraAST {
       }).distinct
   }
 
+  @JsonCodec
   case class Addition(args: List[MapAlgebraAST], id: UUID, label: Option[String])
       extends Operation("+")
 
+  @JsonCodec
   case class Subtraction(args: List[MapAlgebraAST], id: UUID, label: Option[String])
       extends Operation("-")
 
+  @JsonCodec
   case class Multiplication(args: List[MapAlgebraAST], id: UUID, label: Option[String])
       extends Operation("*")
 
+  @JsonCodec
   case class Division(args: List[MapAlgebraAST], id: UUID, label: Option[String])
       extends Operation("/")
 
+  @JsonCodec
   case class Masking(args: List[MapAlgebraAST], id: UUID, label: Option[String])
       extends Operation("mask")
 
+  @JsonCodec
   case class Reclassification(args: List[MapAlgebraAST], id: UUID, label: Option[String], classBreaks: ClassBreaks)
       extends Operation("reclassify")
 
@@ -49,6 +56,7 @@ object MapAlgebraAST {
     def unbound: List[MapAlgebraAST] = if (evaluable) List.empty else List(this)
   }
 
+  @JsonCodec
   case class RFMLRasterSource(id: UUID, label: Option[String], value: Option[RFMLRaster])
       extends Source[RFMLRaster]("raster")
 

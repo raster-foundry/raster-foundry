@@ -1,7 +1,8 @@
 package com.azavea.rf.datamodel
 
-import java.util.UUID
 import java.sql.Timestamp
+
+import io.circe.generic.JsonCodec
 
 /** A user generate category to track tools in the Raster Foundry lab
   *
@@ -12,6 +13,7 @@ import java.sql.Timestamp
   * @param modifiedBy String User ID that last modified category
   * @param category String Category that is displayed to user
   */
+@JsonCodec
 case class ToolCategory(
     slugLabel: String,
     createdAt: Timestamp,
@@ -27,6 +29,7 @@ object ToolCategory {
 
   def tupled = (ToolCategory.apply _).tupled
 
+  @JsonCodec
   case class Create(
       category: String
   ) {

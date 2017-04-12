@@ -3,6 +3,10 @@ package com.azavea.rf.datamodel
 import akka.http.scaladsl.unmarshalling._
 import java.util.UUID
 
+import io.circe._
+import io.circe.generic.JsonCodec
+
+@JsonCodec
 case class Band(
   id: UUID,
   image: UUID,
@@ -12,11 +16,11 @@ case class Band(
 )
 
 object Band {//extends RangeUnmarshaler{
-
   def create = Create.apply _
 
   def tupled = (Band.apply _).tupled
 
+  @JsonCodec
   case class Create(
     name: String,
     number: Int,
@@ -34,8 +38,7 @@ object Band {//extends RangeUnmarshaler{
     }
   }
 
-  object Create
-
+  @JsonCodec
   case class Identified(
     id: Option[UUID],
     imageId: UUID,

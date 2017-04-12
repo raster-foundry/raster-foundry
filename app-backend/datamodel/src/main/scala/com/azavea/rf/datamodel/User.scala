@@ -3,12 +3,23 @@ package com.azavea.rf.datamodel
 import java.sql.Timestamp
 import java.util.UUID
 
+import io.circe._
+import io.circe.generic.JsonCodec
+import cats.syntax.either._
+
 sealed abstract class UserRole(val repr: String) extends Product with Serializable
 case object UserRoleRole extends UserRole("USER")
 case object Viewer extends UserRole("VIEWER")
 case object Admin extends UserRole("ADMIN")
 
 object UserRole {
+  implicit val userRoleEncoder: Encoder[UserRole] =
+    Encoder.encodeString.contramap[UserRole](_.toString)
+  implicit val userRoleDecoder: Decoder[UserRole] =
+    Decoder.decodeString.emap { str =>
+      Either.catchNonFatal(UserRole.fromString(str)).leftMap(_ => "UserRole")
+    }
+
   def fromString(s: String) = s.toUpperCase match {
     case "USER" => UserRoleRole  // TODO Think of a better name than UserRoleRole
     case "VIEWER" => Viewer
@@ -17,6 +28,7 @@ object UserRole {
   }
 }
 
+@JsonCodec
 case class User(
   id: String,
   organizationId: UUID,
@@ -36,11 +48,11 @@ case class User(
 }
 
 object User {
-
   def tupled = (User.apply _).tupled
 
   def create = Create.apply _
 
+  @JsonCodec
   case class Create(
     id: String,
     organizationId: UUID,
@@ -52,5 +64,3 @@ object User {
     }
   }
 }
-
-

@@ -4,11 +4,8 @@ import com.azavea.rf.tool.ast._
 
 import io.circe._
 import io.circe.syntax._
-import io.circe.generic.auto._
-import io.circe.optics.JsonPath._
 
 import java.security.InvalidParameterException
-
 
 trait MapAlgebraCodec
     extends MapAlgebraSourceCodecs

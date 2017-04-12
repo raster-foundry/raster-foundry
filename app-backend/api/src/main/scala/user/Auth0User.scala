@@ -2,8 +2,7 @@ package com.azavea.rf.api.user
 
 import com.azavea.rf.datamodel.User
 import com.azavea.rf.api.utils.Config
-import com.azavea.rf.api.utils.{ManagementBearerToken, Auth0Exception}
-
+import com.azavea.rf.api.utils.{Auth0Exception, ManagementBearerToken}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model._
@@ -14,7 +13,7 @@ import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.typesafe.scalalogging.LazyLogging
 import io.circe._
 import io.circe.syntax._
-import io.circe.generic.auto._
+import io.circe.generic.JsonCodec
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -24,6 +23,7 @@ import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.tables.Users
 import com.typesafe.scalalogging.LazyLogging
 
+@JsonCodec
 case class Auth0User(
   email: Option[String], email_verified: Option[Boolean],
   username: Option[String],
@@ -45,11 +45,13 @@ case class Auth0User(
   family_name: Option[String]
 )
 
+@JsonCodec
 case class UserWithOAuth(
   user: User,
   oauth: Auth0User
 )
 
+@JsonCodec
 case class Auth0UserUpdate(
   email: Option[String],
   phone_number: Option[String],
@@ -57,6 +59,7 @@ case class Auth0UserUpdate(
   username: Option[String]
 )
 
+@JsonCodec
 case class UserWithOAuthUpdate(
   user: User.Create,
   oauth: Auth0UserUpdate

@@ -26,18 +26,18 @@ trait QueryParameterDeserializers {
 trait QueryParametersCommon extends QueryParameterDeserializers {
   def projectQueryParameters = (
     orgQueryParams & userQueryParameters & timestampQueryParameters
-  ).as(ProjectQueryParameters)
+  ).as(ProjectQueryParameters.apply _)
 
   def orgQueryParams = parameters(
     'organization.as(deserializerUUID).*
-  ).as(OrgQueryParameters)
+  ).as(OrgQueryParameters.apply _)
 
   def userQueryParameters = parameters(
     (
     'createdBy.as[String].?,
     'modifiedBy.as[String].?
     )
-  ).as(UserQueryParameters)
+  ).as(UserQueryParameters.apply _)
 
   def timestampQueryParameters = parameters(
     (
@@ -46,5 +46,5 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
       'minModifiedDatetime.as(deserializerTimestamp).?,
       'maxModifiedDatetime.as(deserializerTimestamp).?
     )
-  ).as(TimestampQueryParameters)
+  ).as(TimestampQueryParameters.apply _)
 }

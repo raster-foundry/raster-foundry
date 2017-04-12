@@ -6,11 +6,10 @@ import java.util.UUID
 import geotrellis.vector.Geometry
 import geotrellis.slick.Projected
 
-import slick.collection.heterogeneous.{HList, HNil}
-import slick.collection.heterogeneous.syntax._
+import io.circe._
+import io.circe.generic.JsonCodec
 
-import io.circe.Json
-
+@JsonCodec
 case class SceneFilterFields(
   cloudCover: Option[Float] = None,
   acquisitionDate: Option[java.sql.Timestamp] = None,
@@ -29,6 +28,7 @@ object SceneFilterFields {
   )
 }
 
+@JsonCodec
 case class SceneStatusFields(
   thumbnailStatus: JobStatus,
   boundaryStatus: JobStatus,
@@ -45,6 +45,7 @@ object SceneStatusFields {
   )
 }
 
+@JsonCodec
 case class Scene(
   id: UUID,
   createdAt: java.sql.Timestamp,
@@ -96,8 +97,8 @@ case class Scene(
 
 
 object Scene {
-
   /** Case class extracted from a POST request */
+  @JsonCodec
   case class Create(
     id: Option[UUID],
     organizationId: UUID,
@@ -141,6 +142,7 @@ object Scene {
     }
   }
 
+  @JsonCodec
   case class WithRelated(
     id: UUID,
     createdAt: Timestamp,

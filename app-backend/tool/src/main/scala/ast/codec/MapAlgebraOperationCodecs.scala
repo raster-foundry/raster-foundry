@@ -6,7 +6,6 @@ import geotrellis.raster.render._
 import io.circe._
 import io.circe.optics.JsonPath._
 import io.circe.syntax._
-import io.circe.generic.auto._
 
 import scala.util.Try
 import java.security.InvalidParameterException

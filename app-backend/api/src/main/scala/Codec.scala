@@ -3,7 +3,6 @@ package com.azavea.rf.api
 import com.azavea.rf.api.healthcheck.HealthCheckStatus
 
 import io.circe._
-import io.circe.generic.auto._
 
 object Codec {
   implicit val healthcheckEncoder: Encoder[HealthCheckStatus.Status] =

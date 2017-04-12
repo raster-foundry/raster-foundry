@@ -3,8 +3,10 @@ package com.azavea.rf.datamodel
 import java.util.UUID
 import java.sql.Timestamp
 
-import io.circe.Json
+import io.circe._
+import io.circe.generic.JsonCodec
 
+@JsonCodec
 case class Image(
   id: UUID,
   createdAt: Timestamp,
@@ -46,6 +48,7 @@ object Image {
 
   def tupled = (Image.apply _).tupled
 
+  @JsonCodec
   case class Create(
     organizationId: UUID,
     rawDataBytes: Int,
@@ -80,6 +83,7 @@ object Image {
   }
 
   /** Image class when posted with bands */
+  @JsonCodec
   case class Banded(
     organizationId: UUID,
     rawDataBytes: Int,
@@ -107,6 +111,7 @@ object Image {
     }
   }
 
+  @JsonCodec
   case class WithRelated(
     id: UUID,
     createdAt: Timestamp,
