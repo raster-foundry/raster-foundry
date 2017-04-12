@@ -97,7 +97,7 @@ lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
 )
 
 lazy val root = Project("root", file("."))
-  .aggregate(api, migrations, datamodel, database, ingest)
+  .aggregate(api, migrations, datamodel, database, batch)
   .settings(commonSettings:_*)
 
 lazy val api = Project("api", file("api"))
@@ -158,23 +158,7 @@ lazy val database = Project("database", file("database"))
      )
   })
 
-lazy val ingest = Project("ingest", file("ingest"))
-  .settings(commonSettings:_*)
-  .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
-  .settings({
-    libraryDependencies ++= testDependencies ++ Seq(
-      Dependencies.scalaLogging,
-      Dependencies.geotrellisSpark,
-      Dependencies.geotrellisS3,
-      Dependencies.geotrellisUtil,
-      Dependencies.geotrellisRaster,
-      Dependencies.akkaSprayJson,
-      Dependencies.spark,
-      Dependencies.scopt
-    )
-  })
-
-lazy val export = Project("export", file("export"))
+lazy val batch = Project("batch", file("batch"))
   .dependsOn(datamodel)
   .settings(commonSettings:_*)
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
@@ -198,7 +182,7 @@ lazy val tile = Project("tile", file("tile"))
   .dependsOn(database)
   .dependsOn(common)
   .dependsOn(tool)
-  .dependsOn(ingest)
+  .dependsOn(batch)
   .enablePlugins(GatlingPlugin)
   .settings(commonSettings:_*)
   .settings({
