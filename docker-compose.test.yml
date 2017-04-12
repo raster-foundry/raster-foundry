@@ -42,18 +42,6 @@ services:
       context: ./app-backend
       dockerfile: Dockerfile
 
-  spark-ingest:
-    image: raster-foundry-spark-ingest:${GIT_COMMIT}
-    build:
-      context: ./app-backend/ingest
-      dockerfile: Dockerfile
-
-  spark-export:
-    image: raster-foundry-spark-export:${GIT_COMMIT}
-    build:
-      context: ./app-backend/export
-      dockerfile: Dockerfile
-
   airflow:
     image: raster-foundry-airflow:${GIT_COMMIT:-latest}
     build:

@@ -3,7 +3,6 @@ package com.azavea.rf.tile
 import com.azavea.rf.database.Database
 import com.azavea.rf.common.cache._
 import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
-import com.azavea.rf.ingest.util.S3.S3UrlRx
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.Scenes
 import geotrellis.raster._
@@ -11,7 +10,7 @@ import geotrellis.raster.histogram.Histogram
 import geotrellis.spark._
 import geotrellis.raster.io._
 import geotrellis.spark.io._
-import geotrellis.spark.io.s3.{S3AttributeStore, S3CollectionLayerReader, S3ValueReader}
+import geotrellis.spark.io.s3.{S3InputFormat, S3AttributeStore, S3CollectionLayerReader, S3ValueReader}
 import com.github.blemale.scaffeine.{Scaffeine, Cache => ScaffeineCache}
 import geotrellis.vector.Extent
 
@@ -65,7 +64,7 @@ object LayerCache extends Config with LazyLogging {
   def attributeStoreForLayer(layerId: UUID)(implicit ec: ExecutionContext): OptionT[Future, (AttributeStore, Map[String, Int])] = {
     attributeStoreCache.get(layerId, _ =>
       layerUri(layerId).mapFilter { catalogUri =>
-        for (result <- S3UrlRx.findFirstMatchIn(catalogUri)) yield {
+        for (result <- S3InputFormat.S3UrlRx.findFirstMatchIn(catalogUri)) yield {
           val bucket = result.group("bucket")
           val prefix = result.group("prefix")
           // TODO: Decide if we should verify URI is valid. This may be a store that always fails to read

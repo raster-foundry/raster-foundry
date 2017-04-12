@@ -33,17 +33,11 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                       -f "${DIR}/../docker-compose.test.yml"\
                       build app-migrations
 
-            echo "Building ingest JAR"
+            echo "Building batch JAR"
             docker-compose \
-                run --rm --no-deps api-server ingest/clean
+                run --rm --no-deps api-server batch/clean
             docker-compose \
-                run --rm --no-deps api-server ingest/assembly
-
-            echo "Building export JAR"
-            docker-compose \
-                run --rm --no-deps api-server export/clean
-            docker-compose \
-                run --rm --no-deps api-server export/assembly
+                run --rm --no-deps api-server batch/assembly
 
             echo "Building application JAR"
             docker-compose \
@@ -61,7 +55,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             GIT_COMMIT="${GIT_COMMIT}" docker-compose \
                       -f "${DIR}/../docker-compose.yml" \
                       -f "${DIR}/../docker-compose.test.yml"\
-                      build nginx api-server tile-server spark-ingest
+                      build nginx api-server tile-server
 
             # Evaluate the return value of the get-login subcommand, which
             # is a docker login command with temporarily ECR credentials.
@@ -69,8 +63,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 
             docker tag "raster-foundry-nginx:${GIT_COMMIT}" \
                    "${AWS_ECR_ENDPOINT}/raster-foundry-nginx:${GIT_COMMIT}"
-            docker tag "raster-foundry-spark-ingest:${GIT_COMMIT}" \
-                   "${AWS_ECR_ENDPOINT}/raster-foundry-spark-ingest:${GIT_COMMIT}"
+
             docker tag "raster-foundry-api-server:${GIT_COMMIT}" \
                    "${AWS_ECR_ENDPOINT}/raster-foundry-api-server:${GIT_COMMIT}"
             docker tag "raster-foundry-tile-server:${GIT_COMMIT}" \
@@ -81,21 +74,15 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                    "${AWS_ECR_ENDPOINT}/raster-foundry-migrations:${GIT_COMMIT}"
 
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-nginx:${GIT_COMMIT}"
-            docker push "${AWS_ECR_ENDPOINT}/raster-foundry-spark-ingest:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-api-server:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-tile-server:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-airflow:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-migrations:${GIT_COMMIT}"
 
-            echo "Uploading Spark Ingest JAR to S3"
+            echo "Uploading Spark Batch JAR to S3"
             aws s3 cp \
-                "${DIR}/../app-backend/ingest/target/scala-2.11/rf-ingest.jar" \
-                "s3://${RF_ARTIFACTS_BUCKET}/ingest/rf-ingest-${GIT_COMMIT}.jar"
-
-            echo "Uploading Spark Export JAR to S3"
-            aws s3 cp \
-                "${DIR}/../app-backend/export/target/scala-2.11/rf-export.jar" \
-                "s3://${RF_ARTIFACTS_BUCKET}/export/rf-export-${GIT_COMMIT}.jar"
+                "${DIR}/../app-backend/batch/target/scala-2.11/rf-batch.jar" \
+                "s3://${RF_ARTIFACTS_BUCKET}/batch/rf-batch-${GIT_COMMIT}.jar"
 
             ./scripts/deploy-docs
         else
