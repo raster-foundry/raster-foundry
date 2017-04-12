@@ -13,7 +13,7 @@ import concurrent.duration._
 import org.scalatest.{Matchers, WordSpec}
 
 import io.circe._
-import io.circe.generic.auto._
+import com.azavea.rf.common.cache.circe.auto._
 import io.circe.syntax._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 

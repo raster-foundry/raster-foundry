@@ -11,7 +11,7 @@ import com.azavea.rf.api.{DBSpec, Router}
 import com.azavea.rf.api.AuthUtils
 
 import io.circe._
-import io.circe.generic.auto._
+import com.azavea.rf.common.cache.circe.auto._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 class UserSpec extends WordSpec

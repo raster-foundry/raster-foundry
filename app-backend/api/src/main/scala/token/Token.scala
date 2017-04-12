@@ -17,7 +17,7 @@ import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.utils.{Auth0Exception, ManagementBearerToken}
 
 import io.circe._
-import io.circe.generic.auto._
+import com.azavea.rf.common.cache.circe.auto._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 // TODO: this sort of case class definition should live in datamodel

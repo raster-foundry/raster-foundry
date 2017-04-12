@@ -18,7 +18,7 @@ import com.typesafe.scalalogging.LazyLogging
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-import io.circe.generic.auto._
+import com.azavea.rf.common.cache.circe.auto._
 import io.circe.optics.JsonPath._
 import io.circe.Json
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
