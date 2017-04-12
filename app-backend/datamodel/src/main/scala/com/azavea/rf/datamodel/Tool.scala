@@ -144,7 +144,6 @@ object Tool {
   )
 
   object WithRelated {
-
     def fromRecords(records: Seq[(Tool, Option[ToolTag], Option[ToolCategory], Option[Organization])]): Iterable[Tool.WithRelated] = {
       val distinctTools = records.map(_._1).distinct
       val groupedTools = records.groupBy(_._1)

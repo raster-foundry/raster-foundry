@@ -7,6 +7,7 @@ import java.time.Instant
 
 import io.circe._
 import io.circe.parser._
+import io.circe.generic.semiauto._
 import cats.syntax.either._
 
 import geotrellis.vector._
@@ -29,6 +30,7 @@ package object datamodel {
         (pr.count, pr.hasPrevious, pr.hasNext, pr.page, pr.pageSize, pr.results)
       }
     )
+  implicit def decodePaginated[A: Decoder]: Decoder[PaginatedResponse[A]] = deriveDecoder
 
   implicit val timestampEncoder: Encoder[Timestamp] =
     Encoder.encodeString.contramap[Timestamp](_.toInstant.toString)

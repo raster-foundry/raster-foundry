@@ -18,11 +18,11 @@ import io.circe.syntax._
   *  - text[] (array text)
   */
 trait ExtendedPostgresDriver extends ExPostgresDriver
-    with PgArraySupport
-    with PgRangeSupport
-    with PgCirceJsonSupport
-    with PgEnumSupport
-    with PostGisProjectionSupport {
+  with PgArraySupport
+  with PgRangeSupport
+  with PgCirceJsonSupport
+  with PgEnumSupport
+  with PostGisProjectionSupport {
 
   override val pgjson = "jsonb"
 
@@ -30,11 +30,11 @@ trait ExtendedPostgresDriver extends ExPostgresDriver
 
   // Implicit conversions to/from column types
   object RFAPI extends API
-      with ArrayImplicits
-      with RangeImplicits
-      with CirceImplicits
-      with PostGISProjectionImplicits
-      with PostGISProjectionAssistants {
+    with ArrayImplicits
+    with RangeImplicits
+    with CirceImplicits
+    with PostGISProjectionImplicits
+    with PostGISProjectionAssistants {
 
     implicit def strListTypeMapper = new SimpleArrayJdbcType[String]("text").to(_.toList)
 
@@ -93,6 +93,15 @@ trait ExtendedPostgresDriver extends ExPostgresDriver
     implicit val uploadStatusOptionColumnExtensionMethodsBuilder =
       createEnumOptionColumnExtensionMethodsBuilder[UploadStatus]
 
+    implicit val exportStatusTypeMapper = createEnumJdbcType[ExportStatus]("UploadStatus", _.repr,
+      ExportStatus.fromString, quoteName = false)
+    implicit val exportStatusTypeListMapper = createEnumListJdbcType[ExportStatus]("UploadStatus", _.repr,
+      ExportStatus.fromString, quoteName = false)
+    implicit val exportStatusColumnExtensionMethodsBuilder =
+      createEnumColumnExtensionMethodsBuilder[ExportStatus]
+    implicit val exportStatusOptionColumnExtensionMethodsBuilder =
+      createEnumOptionColumnExtensionMethodsBuilder[ExportStatus]
+
     implicit val fileTypeMapper = createEnumJdbcType[FileType]("FileType", _.repr,
       FileType.fromString, quoteName = false)
     implicit val fileTypeListMapper = createEnumListJdbcType[FileType]("FileType", _.repr,
@@ -110,6 +119,15 @@ trait ExtendedPostgresDriver extends ExPostgresDriver
       createEnumColumnExtensionMethodsBuilder[UploadType]
     implicit val uploadTypeOptionColumnExtensionMethodsBuilder =
       createEnumOptionColumnExtensionMethodsBuilder[UploadType]
+
+    implicit val exportTypeTypeMapper = createEnumJdbcType[ExportType]("ExportType", _.repr,
+      ExportType.fromString, quoteName = false)
+    implicit val exportTypeTypeListMapper = createEnumListJdbcType[ExportType]("ExportType", _.repr,
+      ExportType.fromString, quoteName = false)
+    implicit val exportTypeColumnExtensionMethodsBuilder =
+      createEnumColumnExtensionMethodsBuilder[ExportType]
+    implicit val exportTypeOptionColumnExtensionMethodsBuilder =
+      createEnumOptionColumnExtensionMethodsBuilder[ExportType]
 
     implicit val thumbnailDimTypeMapper = createEnumJdbcType[ThumbnailSize]("ThumbnailSize", _.toString,
       ThumbnailSize.fromString, quoteName = false)
