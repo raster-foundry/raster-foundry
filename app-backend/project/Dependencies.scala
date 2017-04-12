@@ -51,5 +51,5 @@ object Dependencies {
   val gatlingHighcharts       = "io.gatling.highcharts"        % "gatling-charts-highcharts"         % Version.gatling
   val gatlingTest             = "io.gatling"                   % "gatling-test-framework"            % Version.gatling % "test,it"
   val gatlingApp              = "io.gatling"                   % "gatling-app"                       % Version.gatling % "test,it"
-  val scalajHttp             = "org.scalaj"                  %% "scalaj-http"                       % Version.scalajHttp
+  val scalajHttp              = "org.scalaj"                  %% "scalaj-http"                       % Version.scalajHttp
 }
