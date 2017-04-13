@@ -72,7 +72,6 @@ export default (app) => {
                 if (token) {
                     deferred.resolve(token);
                 } else {
-
                     this.createMapToken({
                         name: project.name,
                         project: project.id,

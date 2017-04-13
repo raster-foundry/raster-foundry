@@ -1,4 +1,4 @@
-<div class="row content stack-sm">
+<div class="row content stack-sm max-width">
   <div class="column-8">
     <div class="library-header">
       <h1 class="h3"><i class="icon-project"></i>Projects</h1>
@@ -37,10 +37,9 @@
       </div>
       <div class="list-group">
         <rf-project-item
-            ng-click="$ctrl.viewProjectDetail(project)"
             project="project"
             class="selectable"
-            ng-repeat="project in $ctrl.projectList 
+            ng-repeat="project in $ctrl.projectList
                        | filter: {name: $ctrl.projectSearchString}
                        track by project.id">
         </rf-project-item>
