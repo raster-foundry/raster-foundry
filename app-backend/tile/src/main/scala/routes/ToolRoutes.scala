@@ -81,7 +81,7 @@ object ToolRoutes extends LazyLogging {
     }.toMap
   }
 
-  def root(implicit db: Database): Route =
+  def root(implicit database: Database): Route =
     pathPrefix(Segment / "ndvi-diff-tool"){ organizationId =>
       (pathEndOrSingleSlash & get & rejectEmptyResponse) {
         complete("model JSON")

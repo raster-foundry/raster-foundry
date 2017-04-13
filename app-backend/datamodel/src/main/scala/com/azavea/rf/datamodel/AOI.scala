@@ -29,9 +29,6 @@ case class AOI(
   filters: Json
 )
 
-/* TODO 2017 April  3 @ 15:38
- * I'm not sure if this needs `GeoJsonSupport`. Why does `Project`?
- */
 object AOI {
 
   def tupled = (AOI.apply _).tupled

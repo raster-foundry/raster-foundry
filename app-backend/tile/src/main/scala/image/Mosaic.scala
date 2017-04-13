@@ -41,7 +41,7 @@ object Mosaic {
     }
   }
 
-  def mosaicDefinition(projectId: UUID, tagttl: Option[TagWithTTL])(implicit db: Database): OptionT[Future, Seq[MosaicDefinition]] = {
+  def mosaicDefinition(projectId: UUID, tagttl: Option[TagWithTTL])(implicit database: Database): OptionT[Future, Seq[MosaicDefinition]] = {
     val cacheKey = tagttl match {
       case Some(t) => s"mosaic-definition-$projectId-${t.tag}"
       case None => s"mosaic-definition-$projectId"
@@ -90,7 +90,7 @@ object Mosaic {
   }
 
   /** Fetch all bands of a [[MultibandTile]] and return them without assuming anything of their semantics */
-  def raw(projectId: UUID, zoom: Int, col: Int, row: Int)(implicit db: Database): OptionT[Future, MultibandTile] = {
+  def raw(projectId: UUID, zoom: Int, col: Int, row: Int)(implicit database: Database): OptionT[Future, MultibandTile] = {
     mosaicDefinition(projectId, None).flatMap { mosaic =>
       val mayhapTiles: Seq[OptionT[Future, MultibandTile]] =
         for (MosaicDefinition(sceneId, _) <- mosaic) yield
@@ -175,7 +175,7 @@ object Mosaic {
     tag: Option[String] = None,
     rgbOnly: Boolean = true
   )(
-    implicit db: Database
+    implicit database: Database
   ): OptionT[Future, MultibandTile] = {
     // Lookup project definition
     // tag present, include in lookup to re-use cache

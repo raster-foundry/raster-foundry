@@ -22,7 +22,7 @@ object MosaicRoutes extends LazyLogging {
     HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/png`), png.bytes))
 
 
-  def mosaicProject(projectId: UUID)(implicit db: Database): Route =
+  def mosaicProject(projectId: UUID)(implicit database: Database): Route =
     pathPrefix("export") {
       parameter("bbox".?, "zoom".as[Int]?) { (bbox, zoom) =>
         get {
