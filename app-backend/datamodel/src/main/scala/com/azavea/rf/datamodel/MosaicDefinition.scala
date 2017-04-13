@@ -10,7 +10,7 @@ case class MosaicDefinition(sceneId: UUID, colorCorrections: Option[ColorCorrect
 
 object MosaicDefinition {
   def fromScenesToProjects(scenesToProjects: Seq[SceneToProject]): Seq[MosaicDefinition] = {
-    scenesToProjects.map { case SceneToProject(sceneId, projectId, sceneOrder, colorCorrection) =>
+    scenesToProjects.map { case SceneToProject(sceneId, _, _, _, colorCorrection) =>
       MosaicDefinition(sceneId, colorCorrection)
     }
   }

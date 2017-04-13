@@ -1,26 +1,25 @@
 package com.azavea.rf.database.tables
 
-import com.azavea.rf.database.fields._
-import com.azavea.rf.database.query._
-import com.azavea.rf.database.sort._
+import java.util.UUID
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.datamodel._
-
-import com.typesafe.scalalogging.LazyLogging
 import com.lonelyplanet.akka.http.extensions.PageRequest
-import spray.json._
+import com.typesafe.scalalogging.LazyLogging
 
-import java.util.UUID
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+// --- //
 
 /** Table description of table scenes_to_project. Objects of this class serve as prototypes for rows in queries. */
 class ScenesToProjects(_tableTag: Tag) extends Table[SceneToProject](_tableTag, "scenes_to_projects") {
-  def * = (sceneId, projectId, sceneOrder, colorCorrectParams) <> (SceneToProject.tupled, SceneToProject.unapply)
+  def * = (sceneId, projectId, accepted, sceneOrder, colorCorrectParams) <> (SceneToProject.tupled, SceneToProject.unapply)
 
-  val sceneId: Rep[java.util.UUID] = column[java.util.UUID]("scene_id", O.PrimaryKey)
-  val projectId: Rep[java.util.UUID] = column[java.util.UUID]("project_id", O.PrimaryKey)
+  val sceneId: Rep[UUID] = column[UUID]("scene_id", O.PrimaryKey)
+  val projectId: Rep[UUID] = column[UUID]("project_id", O.PrimaryKey)
+  val accepted: Rep[Boolean] = column[Boolean]("accepted")
   val sceneOrder: Rep[Option[Int]] = column[Option[Int]]("scene_order")
   val colorCorrectParams: Rep[Option[ColorCorrect.Params]] = column[Option[ColorCorrect.Params]]("mosaic_definition")
 
@@ -99,7 +98,7 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
 
   /** Attach color correction parameters to a project/scene pairing */
   def setColorCorrectParams(projectId: UUID, sceneId: UUID, colorCorrectParams: ColorCorrect.Params)(implicit database: DB) = {
-    val sceneToProject = SceneToProject(sceneId, projectId, None, Some(colorCorrectParams))
+    val sceneToProject = SceneToProject(sceneId, projectId, true, None, Some(colorCorrectParams))
     database.db.run {
       ScenesToProjects.insertOrUpdate(
         sceneToProject

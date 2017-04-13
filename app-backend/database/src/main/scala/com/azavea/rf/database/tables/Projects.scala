@@ -350,7 +350,7 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
                 val blueBand = blueBandPath.getOption(composites).getOrElse(0)
 
                 SceneToProject(
-                  sceneId, projectId, None, Some(
+                  sceneId, projectId, true, None, Some(
                     ColorCorrect.Params(
                       redBand, greenBand, blueBand, // Bands
                       None, None, None,             // Gamma
@@ -454,7 +454,7 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
                            (implicit database: DB): Future[Iterable[Scene.WithRelated]] = {
 
     val scenesToProjects = sceneIds.map { sceneId =>
-      SceneToProject(sceneId, projectId)
+      SceneToProject(sceneId, projectId, true)
     }
 
     val actions = DBIO.seq(
