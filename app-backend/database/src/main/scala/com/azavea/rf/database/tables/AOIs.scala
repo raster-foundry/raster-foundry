@@ -15,6 +15,7 @@ import com.azavea.rf.datamodel.{AOI, User}
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.slick.Projected
 import geotrellis.vector.MultiPolygon
+import io.circe.Json
 
 // --- //
 
@@ -22,7 +23,7 @@ import geotrellis.vector.MultiPolygon
 class AOIs(_tableTag: Tag) extends Table[AOI](_tableTag, "aois")
     with TimestampFields with OrganizationFkFields with UserFkFields {
 
-  def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, area) <> (AOI.tupled, AOI.unapply)
+  def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, area, filters) <> (AOI.tupled, AOI.unapply)
 
   /* Database Fields */
   val id: Rep[UUID] = column[UUID]("id", O.PrimaryKey)
@@ -34,6 +35,7 @@ class AOIs(_tableTag: Tag) extends Table[AOI](_tableTag, "aois")
 
   /* Unique Fields */
   val area: Rep[Projected[MultiPolygon]] = column[Projected[MultiPolygon]]("area")
+  val filters: Rep[Json] = column[Json]("filters")
 
   /* Foreign Keys */
   lazy val organizationsFk = foreignKey("aois_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
