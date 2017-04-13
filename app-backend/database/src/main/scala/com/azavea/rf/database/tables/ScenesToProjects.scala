@@ -113,9 +113,9 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
 
   def setColorCorrectParamsBatch(projectId: UUID, params: BatchParams)(implicit database:DB) ={
     val scenesToProject = params.items
-      .map(p => SceneToProject(p.sceneId, projectId, None, Some(p.params)))
+      .map(p => SceneToProject(p.sceneId, projectId, true, None, Some(p.params)))
       .map(s => ScenesToProjects.insertOrUpdate(s))
-    
+
     val recordCheck = params.items
       .map(p =>
         ScenesToProjects
