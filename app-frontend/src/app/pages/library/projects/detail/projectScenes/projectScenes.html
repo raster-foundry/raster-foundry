@@ -41,7 +41,7 @@
           </form>
         </div>
         <div class="flex-fill"></div>
-        <a href ng-click="$ctrl.$state.go('browse', {projectid: $ctrl.projectId})"
+        <a href ui-sref="editor.project.color.scenes({projectid: $ctrl.project.id})"
            class="btn btn-primary btn-small">
           <i class="icon-mosaic"></i> Edit project
         </a>
