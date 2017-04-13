@@ -42,7 +42,7 @@ then
 
         echo "Executing Scala test suite"
         docker-compose \
-            run --rm api-server test
+            run --rm --entrypoint=/bin/bash api-server ./sbt test:compile && ./sbt test
 
         # TODO: https://github.com/azavea/raster-foundry/issues/435
         # echo "Executing JavaScript test suite"

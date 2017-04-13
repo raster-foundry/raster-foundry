@@ -12,7 +12,7 @@ import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.Users
 import com.azavea.rf.datamodel._
 import io.circe._
-import io.circe.generic.auto._
+import com.azavea.rf.common.cache.circe.auto._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 

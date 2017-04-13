@@ -10,7 +10,7 @@ import com.azavea.rf.api.{DBSpec, Router}
 import com.azavea.rf.api.Codec._
 
 import io.circe._
-import io.circe.generic.auto._
+import com.azavea.rf.common.cache.circe.auto._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 class HealthCheckSpec extends WordSpec

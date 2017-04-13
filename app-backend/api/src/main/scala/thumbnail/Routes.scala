@@ -12,7 +12,7 @@ import akka.http.scaladsl.model.MediaType.Binary
 import org.apache.commons.io.IOUtils
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import io.circe._
-import io.circe.generic.auto._
+import com.azavea.rf.common.cache.circe.auto._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 import java.util.UUID

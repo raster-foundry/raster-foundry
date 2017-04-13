@@ -125,6 +125,9 @@ lazy val common = Project("common", file("common"))
     Dependencies.chill,
     Dependencies.cats
   )})
+  .settings(
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.patch)
+  )
 
 lazy val migrations = Project("migrations", file("migrations"))
   .dependsOn(datamodel)
