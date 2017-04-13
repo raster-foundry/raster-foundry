@@ -24,6 +24,7 @@ import com.azavea.rf.api.feed.FeedRoutes
 import com.azavea.rf.api.uploads.UploadRoutes
 import com.azavea.rf.api.exports.ExportRoutes
 import com.azavea.rf.api.utils.Config
+import com.azavea.rf.api.featureflags.FeatureFlagRoutes
 
 /**
   * Contains all routes for Raster Foundry API/Healthcheck endpoints.
@@ -50,7 +51,8 @@ trait Router extends HealthCheckRoutes
     with FeedRoutes
     with UploadRoutes
     with ExportRoutes
-    with Config {
+    with Config
+    with FeatureFlagRoutes {
 
   val corsSettings = CorsSettings.defaultSettings
 
@@ -79,6 +81,9 @@ trait Router extends HealthCheckRoutes
     } ~
     pathPrefix("config") {
       configRoutes
+    } ~
+    pathPrefix("feature-flags") {
+      featureFlagRoutes
     } ~
     pathPrefix("thumbnails") {
       thumbnailImageRoutes
