@@ -18,19 +18,19 @@ trait ProjectSpecHelper {
   val fakeOrgId = UUID.fromString("dfac6307-b5ef-43f7-beda-b9f208bb7725")
 
   val newProject1 = Project.Create(
-    publicOrgId, "Test One", "This is the first test project", Visibility.Public, Visibility.Private, List("testing")
+    publicOrgId, "Test One", "This is the first test project", Visibility.Public, Visibility.Private, false, Long.MaxValue, List("testing")
   )
 
   val newProject2 = Project.Create(
-    publicOrgId, "Test Two", "This is the second test project", Visibility.Public, Visibility.Private, List("testing")
+    publicOrgId, "Test Two", "This is the second test project", Visibility.Public, Visibility.Private, false, Long.MaxValue, List("testing")
   )
 
   val newProject3 = Project.Create(
-    publicOrgId, "Test Three", "This is the third test project", Visibility.Public, Visibility.Private, List("testing")
+    publicOrgId, "Test Three", "This is the third test project", Visibility.Public, Visibility.Private, false, Long.MaxValue, List("testing")
   )
 
   val newProject4 = Project.Create(
-    publicOrgId, "Test Three", "This is the third test project", Visibility.Private, Visibility.Private, List("testing")
+    publicOrgId, "Test Three", "This is the third test project", Visibility.Private, Visibility.Private, false, Long.MaxValue, List("testing")
   )
 
   val landsatId = UUID.fromString("697a0b91-b7a8-446e-842c-97cda155554d")

@@ -1,26 +1,24 @@
 package com.azavea.rf.database.tables
 
-import com.azavea.rf.database.fields._
-import com.azavea.rf.database.sort._
-import com.azavea.rf.datamodel._
-import com.azavea.rf.database.query._
+import java.sql.Timestamp
+import java.util.{Date, UUID}
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
+import akka.http.scaladsl.model.{IllegalRequestException, StatusCodes}
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
-
-import geotrellis.slick.Projected
-import geotrellis.vector.{Geometry, Extent}
+import com.azavea.rf.database.fields._
+import com.azavea.rf.database.query._
+import com.azavea.rf.database.sort._
+import com.azavea.rf.datamodel._
 import com.lonelyplanet.akka.http.extensions._
 import com.typesafe.scalalogging.LazyLogging
-import slick.model.ForeignKeyAction
+import geotrellis.slick.Projected
+import geotrellis.vector.{Extent, Geometry}
 import io.circe._
 import io.circe.optics.JsonPath._
-
-import java.util.UUID
-import java.util.Date
-import java.sql.Timestamp
-import akka.http.scaladsl.model.{IllegalRequestException, StatusCodes}
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /** Table description of table projects. Objects of this class serve as prototypes for rows in queries. */
 class Projects(_tableTag: Tag) extends Table[Project](_tableTag, "projects")
@@ -30,12 +28,13 @@ class Projects(_tableTag: Tag) extends Table[Project](_tableTag, "projects")
                                       with TimestampFields
 {
   def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, name,
-           slugLabel, description, visibility, tileVisibility, tags, extent, manualOrder) <> (Project.tupled, Project.unapply)
+    slugLabel, description, visibility, tileVisibility, isAOIProject, aoiCadence,
+    aoisLastChecked, tags, extent, manualOrder) <> (Project.tupled, Project.unapply)
 
-  val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
-  val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")
-  val modifiedAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("modified_at")
-  val organizationId: Rep[java.util.UUID] = column[java.util.UUID]("organization_id")
+  val id: Rep[UUID] = column[UUID]("id", O.PrimaryKey)
+  val createdAt: Rep[Timestamp] = column[Timestamp]("created_at")
+  val modifiedAt: Rep[Timestamp] = column[Timestamp]("modified_at")
+  val organizationId: Rep[UUID] = column[UUID]("organization_id")
   val createdBy: Rep[String] = column[String]("created_by", O.Length(255,varying=true))
   val modifiedBy: Rep[String] = column[String]("modified_by", O.Length(255,varying=true))
   val name: Rep[String] = column[String]("name")
@@ -46,6 +45,9 @@ class Projects(_tableTag: Tag) extends Table[Project](_tableTag, "projects")
   val tags: Rep[List[String]] = column[List[String]]("tags", O.Length(2147483647,varying=false), O.Default(List.empty))
   val extent: Rep[Option[Projected[Geometry]]] = column[Option[Projected[Geometry]]]("extent", O.Length(2147483647,varying=false), O.Default(None))
   val manualOrder: Rep[Boolean] = column[Boolean]("manual_order", O.Default(true))
+  val isAOIProject: Rep[Boolean] = column[Boolean]("is_aoi_project", O.Default(false))
+  val aoiCadence: Rep[Long] = column[Long]("aoi_cadence")
+  val aoisLastChecked: Rep[Timestamp] = column[Timestamp]("aois_last_checked")
 
   lazy val organizationsFk = foreignKey("projects_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val createdByUserFK = foreignKey("projects_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
@@ -345,7 +347,7 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
 
                 val redBand = redBandPath.getOption(composites).getOrElse(0)
                 val greenBand = greenBandPath.getOption(composites).getOrElse(0)
-                val blueBand = blueBandPath.getOption(composites).getOrElse(0) 
+                val blueBand = blueBandPath.getOption(composites).getOrElse(0)
 
                 SceneToProject(
                   sceneId, projectId, None, Some(
