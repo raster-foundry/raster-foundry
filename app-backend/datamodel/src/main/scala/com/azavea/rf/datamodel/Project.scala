@@ -24,7 +24,7 @@ case class Project(
   visibility: Visibility,
   tileVisibility: Visibility,
   isAOIProject: Boolean,
-  aoiCadence: Long, /* Milliseconds */
+  aoiCadenceMillis: Long, /* Milliseconds */
   aoisLastChecked: Timestamp,
   tags: List[String] = List.empty,
   extent: Option[Projected[Geometry]] = None,
@@ -33,6 +33,7 @@ case class Project(
 
 /** Case class for project creation */
 object Project extends GeoJsonSupport {
+
   /* One week, in milliseconds */
   val DEFAULT_CADENCE: Long = 604800000
 
@@ -58,7 +59,7 @@ object Project extends GeoJsonSupport {
     visibility: Visibility,
     tileVisibility: Visibility,
     isAOIProject: Boolean,
-    aoiCadence: Long,
+    aoiCadenceMillis: Long,
     tags: List[String]
   ) {
     def toProject(userId: String): Project = {
@@ -76,8 +77,8 @@ object Project extends GeoJsonSupport {
         visibility,
         tileVisibility,
         isAOIProject,
-        aoiCadence,
-        now,
+        aoiCadenceMillis,
+        new Timestamp(now.getTime - aoiCadenceMillis),
         tags
       )
     }

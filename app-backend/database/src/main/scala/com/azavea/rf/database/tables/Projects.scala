@@ -28,7 +28,7 @@ class Projects(_tableTag: Tag) extends Table[Project](_tableTag, "projects")
                                       with TimestampFields
 {
   def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, name,
-    slugLabel, description, visibility, tileVisibility, isAOIProject, aoiCadence,
+    slugLabel, description, visibility, tileVisibility, isAOIProject, aoiCadenceMillis,
     aoisLastChecked, tags, extent, manualOrder) <> (Project.tupled, Project.unapply)
 
   val id: Rep[UUID] = column[UUID]("id", O.PrimaryKey)
@@ -46,7 +46,7 @@ class Projects(_tableTag: Tag) extends Table[Project](_tableTag, "projects")
   val extent: Rep[Option[Projected[Geometry]]] = column[Option[Projected[Geometry]]]("extent", O.Length(2147483647,varying=false), O.Default(None))
   val manualOrder: Rep[Boolean] = column[Boolean]("manual_order", O.Default(true))
   val isAOIProject: Rep[Boolean] = column[Boolean]("is_aoi_project", O.Default(false))
-  val aoiCadence: Rep[Long] = column[Long]("aoi_cadence")
+  val aoiCadenceMillis: Rep[Long] = column[Long]("aoi_cadence_millis")
   val aoisLastChecked: Rep[Timestamp] = column[Timestamp]("aois_last_checked")
 
   lazy val organizationsFk = foreignKey("projects_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)

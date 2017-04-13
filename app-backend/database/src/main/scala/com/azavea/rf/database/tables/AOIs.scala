@@ -53,25 +53,25 @@ object AOIs extends TableQuery(tag => new AOIs(tag)) with LazyLogging {
       new TimestampSort(identity))
 
   /** Add an AOI to the database. */
-  def insertAOI(aoi: AOI)(implicit db: DB): Future[AOI] =
-    db.db.run(AOIs.forceInsert(aoi)).map(_ => aoi)
+  def insertAOI(aoi: AOI)(implicit database: DB): Future[AOI] =
+    database.db.run(AOIs.forceInsert(aoi)).map(_ => aoi)
 
   /** Get an [[AOI]] given its UUID. */
-  def getAOI(aoi: UUID)(implicit db: DB): OptionT[Future, AOI] =
-    OptionT(db.db.run(AOIs.filter(_.id === aoi).result.headOption))
+  def getAOI(aoi: UUID)(implicit database: DB): OptionT[Future, AOI] =
+    OptionT(database.db.run(AOIs.filter(_.id === aoi).result.headOption))
 
   /** Delete an [[AOI]] given its UUID. */
-  def deleteAOI(aoi: UUID)(implicit db: DB): Future[Int] =
-    db.db.run(AOIs.filter(_.id === aoi).delete)
+  def deleteAOI(aoi: UUID)(implicit database: DB): Future[Int] =
+    database.db.run(AOIs.filter(_.id === aoi).delete)
 
-  def updateAOI(aoi: AOI, aoiId: UUID, user: User)(implicit db: DB): Future[Int] = {
+  def updateAOI(aoi: AOI, aoiId: UUID, user: User)(implicit database: DB): Future[Int] = {
 
     val now = new Timestamp((new Date()).getTime)
 
     val query = AOIs.filter(_.id === aoiId)
       .map(a => (a.modifiedAt, a.modifiedBy, a.area))
 
-    db.db.run(query.update((now, user.id, aoi.area))).map {
+    database.db.run(query.update((now, user.id, aoi.area))).map {
       case 1 => 1
       case c => throw new IllegalStateException(s"Error updating project: update result expected to be 1, was $c")
     }
