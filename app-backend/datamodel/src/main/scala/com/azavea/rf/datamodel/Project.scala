@@ -1,12 +1,14 @@
 package com.azavea.rf.datamodel
 
-import geotrellis.vector.io.json.GeoJsonSupport
-import geotrellis.vector.Geometry
+import java.sql.Timestamp
+import java.util.UUID
+
 import geotrellis.slick.Projected
+import geotrellis.vector.Geometry
+import geotrellis.vector.io.json.GeoJsonSupport
 import io.circe.generic.JsonCodec
 
-import java.util.UUID
-import java.sql.Timestamp
+// --- //
 
 @JsonCodec
 case class Project(
@@ -21,6 +23,9 @@ case class Project(
   description: String,
   visibility: Visibility,
   tileVisibility: Visibility,
+  isAOIProject: Boolean,
+  aoiCadence: Long, /* Milliseconds */
+  aoisLastChecked: Timestamp,
   tags: List[String] = List.empty,
   extent: Option[Projected[Geometry]] = None,
   manualOrder: Boolean = true
@@ -28,6 +33,9 @@ case class Project(
 
 /** Case class for project creation */
 object Project extends GeoJsonSupport {
+  /* One week, in milliseconds */
+  val DEFAULT_CADENCE: Long = 604800000
+
   def tupled = (Project.apply _).tupled
 
   def create = Create.apply _
@@ -49,6 +57,8 @@ object Project extends GeoJsonSupport {
     description: String,
     visibility: Visibility,
     tileVisibility: Visibility,
+    isAOIProject: Boolean,
+    aoiCadence: Long,
     tags: List[String]
   ) {
     def toProject(userId: String): Project = {
@@ -65,6 +75,9 @@ object Project extends GeoJsonSupport {
         description,
         visibility,
         tileVisibility,
+        isAOIProject,
+        aoiCadence,
+        now,
         tags
       )
     }
