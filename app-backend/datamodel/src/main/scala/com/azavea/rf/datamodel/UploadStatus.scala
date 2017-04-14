@@ -26,6 +26,7 @@ object UploadStatus {
     case "COMPLETE" => Complete
     case "FAILED" => Failed
     case "ABORTED" => Aborted
+    case _ => throw new IllegalArgumentException(s"Argument $s cannot be mapped to UploadStatus")
   }
 
   implicit val uploadStatusEncoder: Encoder[UploadStatus] =
