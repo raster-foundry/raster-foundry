@@ -17,6 +17,69 @@ produces:
 consumes:
   - application/json
 
+x-top-matter:
+  - title: Introduction
+    level: 1
+    content: |
+      This document describes the Raster Foundry API, which is meant to by used by user facing frontends or backend-servers.
+      Generally speaking, all user facing functions are available on the default frontend unless specified otherwise.
+  - title: Using the API
+    level: 2
+    content: |
+      For testing purposes, our API can be queried using tools such as <a href="https://curl.haxx.se/">cURL</a>, <a href="https://www.getpostman.com/">Postman</a>, or <a href="https://advancedrestclient.com/">Advanced Rest Client</a>
+
+x-resources:
+  - name: Projects
+    description: |
+      Projects are composed of scenes, and are the unit which Tools act on
+    further-description:
+      - title: Project permissions
+        content: |
+          Projects can be shared publicly, with your organzation, or privately by link only.
+          Currently, only private projects are supported.
+
+  - name: Scenes
+    description: |
+      Scenes are sets of images which are viewed and color corrected as a unit
+    further-description:
+      - title: Scene permissions
+        content: |
+          Scenes can be shared publicly, with your organzation, or privately.
+          All user uploaded Scenes are by default private, and Scenes generated from publicly available data are public.
+
+  - name: Images
+    description: |
+      A single image, with 1 or more bands
+    further-description:
+      - title: Image permissions
+        content: |
+          Images can be shared publicly, with your organzation, or privately.
+          All user uploaded Images are by default private, and Images generated from publicly available data are public.
+  - name: Uploads
+    description: User uploads
+    further-description:
+      - title: Image permissions
+        content: |
+          All user uploads are private
+  - name: Datasources
+    description: |
+      Datasources contain information common to all images uploaded through them such as composites and default color corrections
+  - name: Tokens
+    description: |
+      Tokens are used to access the API, either through a frontend or an api client.
+  - name: Tools
+    description: |
+      Tools are used to apply transformations to Rasters
+  - name: Users
+    description: |
+      User management functions
+  - name: Organizations
+    description: |
+      Organization management functions
+  - name: Exports
+    description: |
+      View and manage project Exports
+
 tags:
   - name: Users
     description: Operations involving users and organizations
@@ -31,6 +94,7 @@ tags:
 
 paths:
   /users/:
+    x-resource: Users
     get:
       summary: Get a list of users
       description: |
@@ -52,8 +116,6 @@ paths:
             $ref: '#/definitions/Error'
     post:
       summary: Create a user
-      description: |
-        Create a new user.
       tags:
         - Users
       parameters:
@@ -71,6 +133,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   /users/me/:
+    x-resource: Users
     get:
       summary: Get logged in user profile
       tags:
@@ -103,6 +166,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   /users/{uuid}/:
+    x-resource: Users
     get:
       summary: Get a single user
       tags:
@@ -141,6 +205,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   /organizations/:
+    x-resource: Organizations
     get:
       summary: Retrieve list of organizations
       tags:
@@ -174,6 +239,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   /organizations/{organizationId}/:
+    x-resource: Organizations
     get:
       summary: Retrieve details for an organization
       tags:
@@ -214,6 +280,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   /organizations/{organizationId}/users/:
+    x-resource: Organizations
     get:
       summary: Get a list of users and their roles for the specified organization
       tags:
@@ -234,6 +301,7 @@ paths:
             $ref: '#/definitions/Error'
 
   /datasources/:
+    x-resource: Datasources
     get:
       summary: Lists paginated datasources that a user has access to
       description: |
@@ -248,6 +316,7 @@ paths:
         200:
           description: SUCCESS
   /uploads/:
+    x-resource: Uploads
     get:
       summary: Get a list of uploads
       description: |
@@ -291,6 +360,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   /uploads/{uuid}/:
+    x-resource: Uploads
     get:
       summary: Retrieve upload details
       tags:
@@ -345,6 +415,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   /uploads/{uuid}/credentials/:
+    x-resource: Uploads
     get:
       summary: Get credentials scoped to this uploads bucket. If this is not a local upload
       tags:
@@ -365,6 +436,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   /scenes/:
+    x-resource: Scenes
     get:
       summary: Lists paginated scenes that a user has access to
       description: |
@@ -418,6 +490,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   /scenes/{uuid}/:
+    x-resource: Scenes
     get:
       summary: Retrieve scene details
       tags:
@@ -472,6 +545,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   /scene-grid/{zoom}/{column}/{row}/:
+    x-resource: Scenes
     get:
       summary: Scene statistics for a tile
       tags:
@@ -509,6 +583,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   /projects/:
+    x-resource: Projects
     get:
       summary: Get list of projects the user is authorized to view
       tags:
@@ -540,6 +615,7 @@ paths:
           schema:
             $ref: '#/definitions/Project'
   /projects/{uuid}/:
+    x-resource: Projects
     get:
       summary: Retrieve project details
       tags:
@@ -593,6 +669,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   /projects/{uuid}/scenes/:
+    x-resource: Projects
     get:
       summary: Get a list of scenes associated with this project
       tags:
@@ -686,6 +763,7 @@ paths:
         204:
           description: No content, delete successful
   /projects/{uuid}/scenes/bulk-add-from-query/:
+    x-resource: Projects
     post:
       summary: Create a new association between a set of scenes and this project
       tags:
@@ -706,6 +784,7 @@ paths:
               $ref: '#/definitions/Scene'
 
   /projects/{uuid}/mosaic/:
+    x-resource: Projects
     get:
       summary: List of a project\'s scene IDs and their associated color correction parameters to be used in mosaicing
       tags:
@@ -719,6 +798,7 @@ paths:
             $ref: '#/definitions/MosaicDefinition'
 
   /projects/{uuid}/mosaic/bulk-update-color-corrections/:
+    x-resource: Projects
     post:
       summary: Persist a batch of project/scene pairing\'s color correction parameters
       tags:
@@ -732,10 +812,12 @@ paths:
             $ref: '#/definitions/CombinedSceneCorrectionParams'
       responses:
         200:
-          description: Successfully updated all scenes' color correction parameters
+          description: |
+            Successfully updated all scenes\' color correction parameters
         
       
   /projects/{uuid}/mosaic/{uuid2}:
+    x-resource: Projects
     get:
       summary: A project/scene pairing\'s persisted color correction parameters
       tags:
@@ -764,6 +846,7 @@ paths:
         204:
           description: Successfully updated color correction parameters
   /projects/{uuid}/order:
+    x-resource: Projects
     get:
       summary: An ordered list of scene IDs belonging to the specified project
       tags:
@@ -785,6 +868,7 @@ paths:
         204:
           description: Successfully updated order of scenes in project
   /map-tokens/:
+    x-resource: Tokens
     get:
       summary: Get a list of map tokens
       description: |
@@ -823,6 +907,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   /map-tokens/{uuid}/:
+    x-resource: Tokens
     get:
       summary: Retrieve map token details
       tags:
@@ -877,6 +962,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   /images/:
+    x-resource: Images
     get:
       summary: Paginated list of project images
       tags:
@@ -911,6 +997,7 @@ paths:
           schema:
             $ref: '#/definitions/Image'
   /images/{uuid}:
+    x-resource: Images
     get:
       summary: Details of a Image
       tags:
@@ -951,6 +1038,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   /thumbnails/:
+    x-resource: Scenes
     get:
       summary: Paginated list of thumbnails
       tags:
@@ -966,6 +1054,7 @@ paths:
           schema:
             $ref: '#/definitions/ThumbnailPaginated'
   /thumbnails/{uuid}/:
+    x-resource: Scenes
     get:
       summary: Thumbnail details
       tags:
@@ -982,6 +1071,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   /tokens/:
+    x-resource: Tokens
     get:
       summary: |
         Retrieve a list of refresh token summaries. Note: Only names and identifiers are revealed,
@@ -1023,6 +1113,7 @@ paths:
         default:
           description: Error message if insufficient permissions are present
   /tokens/{refreshTokenId}/:
+    x-resource: Tokens
     delete:
       parameters:
         - name: refreshTokenId
@@ -1036,6 +1127,7 @@ paths:
         204:
           description: Revocation successful, No Content
   /tools/:
+    x-resource: Tools
     get:
       summary: Lists tools that perform a set of geoprocessing/map algebra functions
       tags:
@@ -1070,6 +1162,7 @@ paths:
         default:
           description: Error message if insufficient permissions to create a new tool
   /tools/{uuid}/:
+    x-resource: Tools
     get:
       summary: Retrieve details for a single geoprocessing tool
       tags:
@@ -1106,6 +1199,7 @@ paths:
         404:
           description: Error message if insufficient permissions to update a tool
   /tool-tags/:
+    x-resource: Tools
     get:
       summary: List tool tags
       tags:
@@ -1131,6 +1225,7 @@ paths:
         default:
           description: Error message if insufficient permissions to create a tool
   /tool-tags/{uuid}/:
+    x-resource: Tools
     get:
       summary: Get detail of a tool tag
       tags:
@@ -1167,6 +1262,7 @@ paths:
         default:
           description: Unable to delete tag due to insufficient permissions or tag does not exist
   /tool-categories/:
+    x-resource: Tools
     get:
       summary: Retrieve list of tool categories
       parameters:
@@ -1188,6 +1284,7 @@ paths:
           schema:
             $ref: '#/definitions/ToolCategory'
   /tool-categories/{slugLabel}/:
+    x-resource: Tools
     get:
       summary: Retrieve details of a tool category
       tags:
@@ -1218,6 +1315,7 @@ paths:
         204:
           description: Successfully deleted a tool category
   /tool-runs/:
+    x-resource: Tools
     get:
       summary: Retrieve a list of tool runs
       tags:
@@ -1243,6 +1341,7 @@ paths:
         400:
           description: Incorrect values for creating tool run
   /tool-runs/{uuid}/:
+    x-resource: Tools
     get:
       summary: Retrieve details about a tool run
       tags:
@@ -1285,6 +1384,7 @@ paths:
         200:
           description: RSS feed json as a string
   /exports/:
+    x-resource: Exports
     get:
       summary: Get a list of exports
       description: |
@@ -1328,6 +1428,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'  
   /exports/{uuid}/:
+    x-resource: Exports
     get:
       summary: Retrieve export details
       tags:
@@ -1382,6 +1483,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
   /exports/{uuid}/definition:
+    x-resource: Exports
     get:
       summary: Retrieve export details
       tags:
