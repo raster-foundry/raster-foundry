@@ -33,9 +33,18 @@ import java.util.UUID
 import java.io._
 
 
+/** Interpreting a [[MapAlgebraAST]] requires providing a function from
+  *  (at least) an RFMLRaster (the source/terminal-node type of the AST)
+  *  to a Future[Option[Tile]]. This object provides instance of such
+  *  functions.
+  */
 object TileSources extends LazyLogging {
-  /** This source will return the raster for all of zoom level 1 */
-  def cachedGlobalSource(implicit database: Database): RFMLRaster => Future[Option[Tile]] = { r =>
+
+  /** This source will return the raster for all of zoom level 1 and is
+    *  useful for generating a histogram which allows binning values into
+    *  quantiles.
+    */
+  def cachedGlobalSource(r: RFMLRaster)(implicit database: Database): Future[Option[Tile]] =
     r match {
       case scene @ SceneRaster(sceneId, Some(band)) =>
         LayerCache.layerTileForExtent(sceneId, 1, WebMercator.worldExtent)
@@ -53,9 +62,9 @@ object TileSources extends LazyLogging {
         logger.warn(s"Request for $project does not contain band index")
         Future.successful(None)
     }
-  }
 
-  def cachedTmsSource(implicit database: Database): (RFMLRaster, Int, Int, Int) => Future[Option[Tile]] = { (r, z, x, y) =>
+  /** This source provides support for z/x/y TMS tiles */
+  def cachedTmsSource(r: RFMLRaster, z: Int, x: Int, y: Int)(implicit database: Database): Future[Option[Tile]] =
     r match {
       case scene @ SceneRaster(sceneId, Some(band)) =>
         LayerCache.layerTile(sceneId, z, SpatialKey(x, y))
@@ -76,5 +85,4 @@ object TileSources extends LazyLogging {
       case _ =>
         Future.failed(new Exception(s"Cannot handle $r"))
     }
-  }
 }
