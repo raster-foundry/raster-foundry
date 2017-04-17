@@ -158,9 +158,14 @@ class UploadTableQuery[M, U, C[_]](uploads: Uploads.TableQuery) {
       case _ => uploads
     }
 
-    queryParams.datasource match {
+    val filteredBySource = queryParams.datasource match {
       case Some(ds) => filteredByOrg.filter(_.datasource === ds)
       case _ => filteredByOrg
+    }
+
+    queryParams.uploadStatus match {
+      case Some(st) => filteredBySource.filter(_.uploadStatus === UploadStatus.fromString(st))
+      case _ => filteredBySource
     }
   }
 
