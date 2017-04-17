@@ -27,7 +27,6 @@ object Interpreter extends LazyLogging {
   /** The Interpreted type is either a list of failures or a compiled MapAlgebra operation */
   type Interpreted = ValidatedNel[InterpreterError, Op]
 
-
   // Binary operation evaluation
   def evalBinary(
     futureTiles: Seq[Future[Interpreted]],
@@ -69,11 +68,42 @@ object Interpreter extends LazyLogging {
     }
   }
 
-  /**  */
-  def globalHistogram(
+  def operationToAST(
+    op: Operation,
+    eval: MapAlgebraAST => Future[Interpreted]
+  )(implicit ec: ExecutionContext) = op match {
+    case Addition(args, id, _) =>
+      logger.debug(s"case addition at $id")
+      evalBinary(args.map(eval),  _ + _)
+
+    case Subtraction(args, id, _) =>
+      logger.debug(s"case subtraction at $id")
+      evalBinary(args.map(eval),  _ - _)
+
+    case Multiplication(args, id, _) =>
+      logger.debug(s"case multiplication at $id")
+      evalBinary(args.map(eval),  _ * _)
+
+    case Division(args, id, _) =>
+      logger.debug(s"case division at $id")
+      evalBinary(args.map(eval),  _ / _)
+
+    case Classification(args, id, _, breaks) =>
+      logger.debug(s"case classification at $id with breakmap ${breaks.toBreakMap}")
+      val breakmap = breaks.toBreakMap
+      evalUnary(eval(args.head), _.classify(breaks.toBreakMap))
+  }
+
+  /** The Interpreter method for producing a global, zoom-level 1 tile
+    *
+    * @param ast     A [[MapAlgebraAST]] which defines transformations over arbitrary rasters
+    * @param source  A function from an [[RFMLRaster]] and z/x/y (tms) integers to possibly
+    *                 existing tiles
+    */
+  def interpretGlobal(
     ast: MapAlgebraAST,
     source: RFMLRaster => Future[Option[Tile]]
-  )(implicit ec: ExecutionContext): Future[Option[StreamingHistogram]] = {
+  )(implicit ec: ExecutionContext): Future[Interpreted] = {
 
     def eval(ast: MapAlgebraAST): Future[Interpreted] = ast match {
       case RFMLRasterSource(id, label, None) =>
@@ -89,46 +119,19 @@ object Interpreter extends LazyLogging {
 
       // For the exhaustive match
       case op: Operation =>
-        op match {
-        case Addition(args, id, _) =>
-          logger.debug(s"case addition at $id")
-          evalBinary(args.map(eval),  _ + _)
-
-        case Subtraction(args, id, _) =>
-          logger.debug(s"case subtraction at $id")
-          evalBinary(args.map(eval),  _ - _)
-
-        case Multiplication(args, id, _) =>
-          logger.debug(s"case multiplication at $id")
-          evalBinary(args.map(eval),  _ * _)
-
-        case Division(args, id, _) =>
-          logger.debug(s"case division at $id")
-          evalBinary(args.map(eval),  _ / _)
-
-        case Classification(args, id, _, breaks) =>
-          logger.debug(s"case classification at $id with breakmap ${breaks.toBreakMap}")
-          val breakmap = breaks.toBreakMap
-          evalUnary(eval(args.head), _.classify(breaks.toBreakMap))
-      }
+        operationToAST(op, eval)
     }
 
-    eval(ast).map { interpreted =>
-      interpreted match {
-        case Valid(op) =>
-          op.toTile(DoubleCellType).map({ tile => StreamingHistogram.fromTile(tile) })
-        case i@Invalid(_) => None
-      }
-    }
+    eval(ast)
   }
 
-  /** The primary method of this Interpreter
+  /** The Interpreter method for producing z/x/y TMS tiles
     *
     * @param ast     A [[MapAlgebraAST]] which defines transformations over arbitrary rasters
     * @param source  A function from an [[RFMLRaster]] and z/x/y (tms) integers to possibly
     *                 existing tiles
     */
-  def tms(
+  def interpretTMS(
     ast: MapAlgebraAST,
     source: (RFMLRaster, Int, Int, Int) => Future[Option[Tile]]
   )(implicit ec: ExecutionContext): (Int, Int, Int) => Future[Interpreted] = {
@@ -149,28 +152,7 @@ object Interpreter extends LazyLogging {
 
         // For the exhaustive match
         case op: Operation =>
-          op match {
-          case Addition(args, id, _) =>
-            logger.debug(s"case addition at $id")
-            evalBinary(args.map(eval),  _ + _)
-
-          case Subtraction(args, id, _) =>
-            logger.debug(s"case subtraction at $id")
-            evalBinary(args.map(eval),  _ - _)
-
-          case Multiplication(args, id, _) =>
-            logger.debug(s"case multiplication at $id")
-            evalBinary(args.map(eval),  _ * _)
-
-          case Division(args, id, _) =>
-            logger.debug(s"case division at $id")
-            evalBinary(args.map(eval),  _ / _)
-
-          case Classification(args, id, _, breaks) =>
-            logger.debug(s"case classification at $id with breakmap ${breaks.toBreakMap}")
-            val breakmap = breaks.toBreakMap
-            evalUnary(eval(args.head), _.classify(breaks.toBreakMap))
-        }
+          operationToAST(op, eval)
       }
 
       eval(ast)

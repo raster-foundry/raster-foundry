@@ -1,9 +1,12 @@
 package com.azavea.rf.tool.ast
 
+import io.circe.generic.JsonCodec
 import geotrellis.raster.render._
 import geotrellis.raster._
 import geotrellis.util._
-import io.circe.generic.JsonCodec
+import spire.math.Sorting
+import spire.std.any._
+import spire.syntax.order._
 
 @JsonCodec
 case class ClassBreaks(
@@ -18,6 +21,7 @@ case class ClassBreaks(
 }
 
 object ClassBreaks {
+  @JsonCodec
   case class Options(
     boundaryType: ClassBoundaryType = LessThanOrEqualTo,
     ndValue: Int = NODATA,
