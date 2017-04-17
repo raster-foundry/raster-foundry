@@ -3,7 +3,7 @@ import logging
 import os
 
 from airflow.models import DAG
-from airflow.operators import PythonOperator, BranchPythonOperator
+from airflow.operators import PythonOperator
 
 from rf.utils.exception_reporting import wrap_rollbar
 
@@ -29,9 +29,8 @@ dag = DAG(
 )
 
 
-def check_whether_update_available(**context):
+def update_aoi_project(**context):
     # check whether a project needs to update
-
     conf = context['dag_run'].conf
     project_id = conf.get('project_id')
     logger.info('Checking whether %s has updated scenes available', project_id)
@@ -41,59 +40,16 @@ def check_whether_update_available(**context):
     # whether the project needs to be updated
     import random
     update_available = random.random() > 0.5
-    if update_available:
-        logger.info('AOI project %s has an update available', project_id)
-        task_id = 'update_project'
+    try:
+        if update_available:
+            logger.info('AOI project %s has an update available', project_id)
+            logger.info('Updating AOI project %s', project_id)
+    finally: 
+        logger.info('Setting last updated time for project %s', project_id)
 
-    return task_id
-
-
-def update_project(**context):
-    conf = context['dag_run'].conf
-    project_id = conf.get('project_id')
-    logger.info('Updating AOI project %s', project_id)
-
-
-def dont_update_project(**context):
-    conf = context['dag_run'].conf
-    project_id = conf.get('project_id')
-    logger.info('Not updating AOI project %s, no need', project_id)
-
-
-def mark_project_update_time(**context):
-    conf = context['dag_run'].conf
-    project_id = conf.get('project_id')
-    logger.info('Updating AOI project %s\'s last update time', project_id)
-
-
-check_operator = BranchPythonOperator(
-    task_id='check_project_update_available',
+PythonOperator(
+    task_id='update_aoi_project',
     provide_context=True,
-    python_callable=check_whether_update_available,
+    python_callable=update_aoi_project,
     dag=dag
 )
-
-update_operator = PythonOperator(
-    task_id='update_project',
-    provide_context=True,
-    python_callable=update_project,
-    dag=dag
-)
-update_operator.set_upstream(check_operator)
-
-dont_update_operator = PythonOperator(
-    task_id='dont_update_project',
-    provide_context=True,
-    python_callable=dont_update_project,
-    dag=dag
-)
-dont_update_operator.set_upstream(check_operator)
-
-finish_operator = PythonOperator(
-    task_id='mark_project_updated',
-    provide_context=True,
-    python_callable=mark_project_update_time,
-    dag=dag,
-    trigger_rule='one_success'
-)
-finish_operator.set_upstream([update_operator, dont_update_operator])
