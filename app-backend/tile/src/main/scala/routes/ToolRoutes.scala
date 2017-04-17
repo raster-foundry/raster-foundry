@@ -37,6 +37,7 @@ import cats.data._
 import cats.data.Validated._
 import cats.implicits._
 
+import java.security.InvalidParameterException
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import java.util.UUID
@@ -110,23 +111,18 @@ class ToolRoutes(implicit val database: Database) extends Authentication with La
                   val png = tile.renderPng(lookupColorMap(colorMap))
                   pngAsHttpResponse(png)
                 }
-                println(ast)
 
-                // TODO: can we move it outside the z/x/y to get some re-use? (don't think so but should check)
-                val tms = Interpreter.tms(ast, source)
-                val histogram = Interpreter.globalHistogram(ast, TileSources.cachedGlobalSource)
+                val tms = Interpreter.interpretTMS(ast, source)
 
                 for {
                   op <- tms(z, x, y)
-                  hist <- Interpreter.globalHistogram(ast, TileSources.cachedGlobalSource)
                 } yield {
                   op match {
                     case Valid(op) =>
-                      println("in op...", op)
                       try {
                         val tile = op.toTile(DoubleCellType).get
                         val colormap = geotrellis.raster.render.ColorRamps.Viridis
-                        val png = tile.renderPng(colormap.toColorMap(hist.get))
+                        val png = tile.renderPng(colormap.toColorMap(maybeHist.get))
                         Future.successful { pngAsHttpResponse(png) }
                       } catch {
                         case e: Throwable =>
@@ -137,6 +133,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication with La
                       }
                     case Invalid(errors) =>
                       Marshal(400 -> errors.toList).to[HttpResponse]
+                  }
                 }
               }
             }
