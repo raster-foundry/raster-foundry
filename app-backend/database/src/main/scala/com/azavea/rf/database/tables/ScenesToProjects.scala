@@ -165,4 +165,14 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
         None
     })
   }
+
+  /** Approve a pending Scene which passed an AOI check. */
+  def acceptScene(projectId: UUID, sceneId: UUID)(implicit database: DB): Future[Int] = {
+    database.db.run(
+      ScenesToProjects
+        .filter(r => r.projectId === projectId && r.sceneId === sceneId)
+        .map(_.accepted)
+        .update(true)
+    )
+  }
 }

@@ -53,11 +53,16 @@ trait ProjectRoutes extends Authentication
           put { updateProjectScenes(projectId) } ~
           delete { deleteProjectScenes(projectId) }
         } ~
-          pathPrefix("bulk-add-from-query") {
-            pathEndOrSingleSlash {
-              post { addProjectScenesFromQueryParams(projectId) }
-            }
+        pathPrefix("bulk-add-from-query") {
+          pathEndOrSingleSlash {
+            post { addProjectScenesFromQueryParams(projectId) }
           }
+        } ~
+        pathPrefix(JavaUUID) { sceneId =>
+          pathPrefix("accept") {
+            post { acceptScene(projectId, sceneId) }
+          }
+        }
       } ~
       pathPrefix("mosaic") {
         pathEndOrSingleSlash {
@@ -142,6 +147,12 @@ trait ProjectRoutes extends Authentication
           complete(StatusCodes.Created, a)
         }
       }
+    }
+  }
+
+  def acceptScene(projectId: UUID, sceneId: UUID): Route = authenticate { user =>
+    complete {
+      ScenesToProjects.acceptScene(projectId, sceneId)
     }
   }
 
