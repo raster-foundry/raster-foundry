@@ -89,31 +89,33 @@ object LayerCache extends Config with LazyLogging {
       }}
     }
 
-  def modelLayerHistogram(toolId: UUID, nodeId: Option[UUID]): OptionT[Future, Histogram[Double]] =
+  def modelLayerGlobalHistogram(toolId: UUID, nodeId: Option[UUID]): OptionT[Future, Histogram[Double]] =
     histogramCache.cachingOptionT(s"model-$toolId-$nodeId") { implicit ec =>
-      val futureTool: Future[Tool.WithRelated] =
-        Tools.getTool(toolId).map { _.getOrElse(throw new java.io.IOException(toolId.toString)) }
+      val futureTool: OptionT[Future, Tool.WithRelated] = OptionT(Tools.getTool(toolId))
 
-      OptionT(futureTool.flatMap { tool =>
-        val ast = tool.definition.as[MapAlgebraAST] match {
+      futureTool.flatMap { tool =>
+        val parsedAst = tool.definition.as[MapAlgebraAST] match {
           case Right(ast) => ast
           case Left(failure) => throw failure
         }
-        val subAst: MapAlgebraAST = nodeId match {
-          case Some(id) =>
-            ast.find(id).getOrElse(throw new InvalidParameterException(s"AST has no node with the id $id"))
-          case None => ast
+
+        val subAst: Option[MapAlgebraAST] = nodeId match {
+          case Some(id) => parsedAst.find(id)
+          case None => Some(parsedAst)
         }
 
-        Interpreter.interpretGlobal(subAst, TileSources.cachedGlobalSource).map({ validatedOp =>
-          for {
-            op <- validatedOp.toOption
-            tile <- op.toTile(DoubleCellType)
-          } yield StreamingHistogram.fromTile(tile)
+        OptionT(subAst match {
+          case Some(ast) =>
+            Interpreter.interpretGlobal(ast, TileSources.cachedGlobalSource).map({ validatedOp =>
+              for {
+                op <- validatedOp.toOption
+                tile <- op.toTile(DoubleCellType)
+              } yield StreamingHistogram.fromTile(tile)
+            })
+          case None => Future.successful { None }
         })
-      })
+      }
     }
-
 
   def layerTile(layerId: UUID, zoom: Int, key: SpatialKey): OptionT[Future, MultibandTile] =
     tileCache.cachingOptionT(s"tile-$layerId-$zoom-${key.col}-${key.row}") { implicit ec =>
