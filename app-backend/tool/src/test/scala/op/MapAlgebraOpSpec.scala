@@ -187,13 +187,11 @@ class MapAlgebraOpSpec
     )
     val testAST = (n - r) / (n + r)
 
-    println("HERE", testAST.asJson.noSpaces)
     requests = Nil
     val tms = Interpreter.tms(
       ast = red + nir, source = goodSource
     )
     val whatever = (red + nir).asJson.noSpaces
-    println(whatever)
 
     val ret = tms(0, 1, 1)
     val op = Await.result(ret, 10.seconds) match {
