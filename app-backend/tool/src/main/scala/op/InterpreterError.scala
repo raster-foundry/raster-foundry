@@ -3,6 +3,7 @@ package com.azavea.rf.tool.op
 import io.circe._
 import io.circe.syntax._
 import io.circe.generic.auto._
+import cats.data._
 
 import java.net.URI
 import java.util.UUID
@@ -27,3 +28,15 @@ object InterpreterError {
       }.asJson
     }
 }
+
+case class InterpreterException(errs: NonEmptyList[InterpreterError]) extends Exception
+
+object InterpreterException {
+  implicit val encodeErrorList: Encoder[InterpreterException] =
+    new Encoder[InterpreterException] {
+      final def apply(exception: InterpreterException): Json = JsonObject.fromMap {
+        Map("Errors" -> exception.errs.toList.asJson)
+      }.asJson
+    }
+}
+
