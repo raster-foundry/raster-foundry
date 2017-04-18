@@ -30,7 +30,7 @@ DagArgs = namedtuple('DagArgs', 'dag_id, conf, run_id')
 dag = DAG(
     dag_id='find_aoi_projects_to_update',
     default_args=default_args,
-    schedule_interval=datetime.timedelta(hours=6),
+    schedule_interval=None,
     concurrency=1
 )
 
