@@ -39,6 +39,8 @@ dag = DAG(
 
 batch_job_definition = os.getenv('BATCH_INGEST_JOB_NAME')
 batch_job_queue = os.getenv('BATCH_INGEST_JOB_QUEUE')
+hosted_zone_id = os.getenv('HOSTED_ZONE_ID')
+jar_path = os.getenv('BATCH_JAR_PATH', 'rf-batch-4b892ca.jar')
 
 
 ################################
@@ -46,20 +48,34 @@ batch_job_queue = os.getenv('BATCH_INGEST_JOB_QUEUE')
 ################################
 
 @wrap_rollbar
-def get_latest_batch_job_revision():
-    """Get latest batch job definition ARN
-
-    This function is used to get the lates AWS batch ARN to submit an ingest job to
-    """
-    batch = boto3.client('batch')
-    job_definitions = batch.describe_job_definitions(jobDefinitionName=batch_job_definition)['jobDefinitions']
-    latest_definition = sorted(job_definitions, key=lambda job: job['revision'], reverse=True)[0]
-    return latest_definition['jobDefinitionArn']
+def get_cluster_id():
+    route53 = boto3.client('route53')
+    record_sets = route53.list_resource_record_sets(
+        HostedZoneId=hosted_zone_id
+    )['ResourceRecordSets']
+    present = [x for x in record_sets if x['Name'] == 'dataproc.rasterfoundry.com.']
+    if not present:
+        logger.error('Could not find dataproc Route 53 record')
+        raise AirflowException('Could not find dataproc Route 53 record')
+    # The cluster id is deep in the object and for some reason is a string surrounded
+    # by double quotes
+    return present[0]['ResourceRecords'][0]['Value'].strip('"')
 
 
 @wrap_rollbar
-def execute_ingest_batch_job(ingest_s3_uri, ingest_def_id):
-    """Kick off ingest in AWS Batch
+def get_batch_jar():
+    bucket = 'rasterfoundry-global-artificats-us-east-1'
+    key = 'batch/{}'.format(jar_path)
+    s3 = boto3.client('s3')
+    resp = s3.get_object(Bucket=bucket, Key=key)
+    with open('rf-batch.jar', 'wb') as outf:
+        outf.write(resp['Body'].read())
+    return True
+
+
+@wrap_rollbar
+def execute_ingest_emr_job(ingest_s3_uri, ingest_def_id, cluster_id):
+    """Kick off ingest in AWS EMR
 
     Args:
         ingest_s3_uri (str): URI for ingest definition
@@ -68,21 +84,36 @@ def execute_ingest_batch_job(ingest_s3_uri, ingest_def_id):
     Returns:
         dict
     """
-    batch = boto3.client('batch')
-    ingest_arn = get_latest_batch_job_revision()
-    response = batch.submit_job(
-        jobName='ingest-{}'.format(ingest_def_id),
-        jobQueue=batch_job_queue,
-        jobDefinition=ingest_arn,
-        parameters={
-            'ingest_definition': ingest_s3_uri
+    step = {
+        'ActionOnFailure': 'CONTINUE',
+        'Name': 'ingest-{}'.format(ingest_def_id),
+        'HadoopJarStep': {
+            'Args': ['spark-submit',
+                     '--master',
+                     'yarn',
+                     '--deploy-mode',
+                     'cluster',
+                     '--class',
+                     'com.azavea.rf.batch.ingest.Ingest',
+                     '--driver-memory', '8G',
+                     's3://rasterfoundry-global-artifacts-us-east-1/batch/{}'.format(jar_path),
+                     '-t',
+                     '-j',
+                     ingest_s3_uri],
+            'Jar': 's3://us-east-1.elasticmapreduce/libs/script-runner/script-runner.jar'
         }
+    }
+    logger.info('Step: %s', step)
+    emr = boto3.client('emr')
+    response = emr.add_job_flow_steps(
+        JobFlowId=cluster_id,
+        Steps=[step]
     )
     return response
 
 
 @wrap_rollbar
-def wait_for_success(response):
+def wait_for_success(response, cluster_id):
     """Wait for batch success/failure given an initial batch response
 
     Args:
@@ -91,30 +122,28 @@ def wait_for_success(response):
     Returns:
         boolean
     """
-    job_id = response['jobId']
-    job_name = response['jobName']
-
-    batch = boto3.client('batch')
-    get_description = lambda: batch.describe_jobs(jobs=[job_id])['jobs'][0]
-    logger.info('Starting to check for status updates for job %s', job_name)
-    job_description = get_description()
-    current_status = job_description['status']
+    step_id = response['StepIds'][0]
+    emr = boto3.client('emr')
+    get_description = lambda: emr.describe_step(ClusterId=cluster_id, StepId=step_id)
+    logger.info('Starting to check for status updates for step %s', step_id)
+    step_description = get_description()
+    current_status = step_description['Step']['Status']['State']
     logger.info('Initial status: %s', current_status)
-    while current_status not in ['SUCCEEDED', 'FAILED']:
+    while current_status not in ['COMPLETED', 'FAILED']:
         description = get_description()
-        status = description['status']
+        status = description['Step']['Status']['State']
         if status != current_status:
             logger.info('Updating status of %s. Old Status: %s New Status: %s',
-                        job_name, current_status, status)
+                        step_id, current_status, status)
             current_status = status
-        time.sleep(15)
-    is_success = (current_status == 'SUCCEEDED')
+        time.sleep(30)
+    is_success = (current_status == 'COMPLETED')
     if is_success:
-        logger.info('Successfully completed ingest for %s', job_name)
+        logger.info('Successfully completed ingest for %s', step_id)
         return True
     else:
-        logger.error('Something went wrong with %s. Current Status: %s', job_name, current_status)
-        raise AirflowException('Ingest failed for {}'.format(job_name))
+        logger.error('Something went wrong with %s. Current Status: %s', step_id, current_status)
+        raise AirflowException('Ingest failed for {}'.format(step_id))
 
 
 ################################
@@ -161,9 +190,10 @@ def launch_spark_ingest_job_op(*args, **kwargs):
     ingest_def_id = xcom_client.xcom_pull(key='ingest_def_id', task_ids=None)
 
     logger.info('Launching Spark ingest job with ingest definition %s', ingest_def_uri)
-    batch_response = execute_ingest_batch_job(ingest_def_uri, ingest_def_id)
+    cluster_id = get_cluster_id()
+    emr_response = execute_ingest_emr_job(ingest_def_uri, ingest_def_id, cluster_id)
     logger.info('Finished launching Spark ingest job. Waiting for status changes.')
-    is_success = wait_for_success(batch_response)
+    is_success = wait_for_success(emr_response, cluster_id)
     return is_success
 
 
