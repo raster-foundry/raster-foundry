@@ -19,24 +19,6 @@ trait ConfigRoutes extends Authentication {
           AngularConfigService.getConfig()
         }
       }
-    } ~
-    pathPrefix("organization") {
-      pathEndOrSingleSlash {
-        get {
-          complete {
-            AngularConfigService.getConfig()
-          }
-        }
-      } ~
-      path(JavaUUID) { orgId =>
-        pathEndOrSingleSlash {
-          get {
-            complete {
-              OrgFeatureFlags.getFeatures(orgId)
-            }
-          }
-        }
-      }
     }
   }
 }
