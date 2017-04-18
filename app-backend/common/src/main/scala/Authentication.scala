@@ -56,7 +56,6 @@ trait Authentication extends Directives {
     */
   def authenticateWithParameter: Directive1[User] = {
     validateTokenParameter.flatMap { validToken =>
-      println("validtoken", validToken)
       JwtJson4s.decodeJson(validToken, auth0Secret, Seq(JwtAlgorithm.HS256)) match {
         case Success(parts) =>
           val sub = (parts \ "sub").extract[String]
