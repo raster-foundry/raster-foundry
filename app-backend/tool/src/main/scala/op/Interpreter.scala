@@ -137,7 +137,7 @@ object Interpreter extends LazyLogging {
   )(implicit ec: ExecutionContext): (Int, Int, Int) => Future[Interpreted] = {
     // have to parse AST per-request because there is no structure to capture intermediate results
     (z: Int, x: Int, y: Int) => {
-      logger.debug(s"resolving tile at z: $z, x: $x, y: $y")
+
       def eval(ast: MapAlgebraAST): Future[Interpreted] = ast match {
         case RFMLRasterSource(id, label, None) =>
           logger.debug(s"case unbound rastersource at $id")

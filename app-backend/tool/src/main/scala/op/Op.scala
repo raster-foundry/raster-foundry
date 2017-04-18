@@ -4,6 +4,8 @@ import com.azavea.rf.tool.ast._
 
 import geotrellis.raster._
 import geotrellis.raster.render._
+import geotrellis.raster.mapalgebra.local._
+
 import spire.syntax.cfor._
 import com.typesafe.scalalogging.LazyLogging
 import cats.data.Validated
@@ -12,18 +14,10 @@ import Validated._
 
 sealed trait Op extends TileLike with Grid with LazyLogging {
   // TODO: Move these out into a TypeClass
-  def +(x: Int) = this.map((_: Int) + x)
-  def +(x: Double) = this.mapDouble(_ + x)
-  def +(other: Op) = this.dualCombine(other)(_ + _)(_ + _)
-  def -(x: Int) = this.map((_: Int) - x)
-  def -(x: Double) = this.mapDouble(_ - x)
-  def -(other: Op) = this.dualCombine(other)(_ - _)(_ - _)
-  //def /(x: Int) = {println("fst", this, x); if (x == 0) NODATA else this.map((_: Int) / x)}
-  //def /(x: Double) = {println("snd", this, x); if (x == 0) Double.NaN else this.mapDouble(_ / x)}
-  def /(other: Op) = this.dualCombine(other)({ (x: Int, y: Int) => if (y == 0) NODATA else x / y })({ (x: Double, y: Double) => if (y == 0) Double.NaN else x / y })
-  def *(x: Int) = this.map((_: Int) * x)
-  def *(x: Double) = this.mapDouble(_ * x)
-  def *(other: Op) = this.dualCombine(other)(_ * _)(_ * _)
+  def +(other: Op) = this.dualCombine(other)(Add.combine)(Add.combine)
+  def -(other: Op) = this.dualCombine(other)(Subtract.combine)(Subtract.combine)
+  def /(other: Op) = this.dualCombine(other)(Divide.combine)(Divide.combine)
+  def *(other: Op) = this.dualCombine(other)(Multiply.combine)(Multiply.combine)
   def classify(breaks: BreakMap[Double, Int]) = this.classification({ i => breaks(i) })
 
   def left: Op

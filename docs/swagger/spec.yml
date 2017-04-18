@@ -2739,6 +2739,121 @@ definitions:
           items:
             $ref: '#/definitions/ToolRun'
 
+  MapAlgebraAST:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+      label:
+        type: string
+
+  MapAlgebraOperationAST:
+    allOf:
+      - $ref: '#/definitions/MapAlgebraAST'
+      - type: object
+        discriminator: apply
+        required:
+          - apply
+        properties:
+          apply:
+            type: string
+          args:
+            type: array
+            items:
+              $ref: '#/definitions/MapAlgebraAST'
+  AdditionAST:
+    description: Local addition across cell values provided to args
+    allOf:
+      - $ref: '#/definitions/MapAlgebraOperationAST'
+  SubtractionAST:
+    description: Local subtraction across cell values provided to args
+    allOf:
+      - $ref: '#/definitions/MapAlgebraOperationAST'
+  DivisionAST:
+    description: Local division across cell values provided to args
+    allOf:
+      - $ref: '#/definitions/MapAlgebraOperationAST'
+  MultiplicationAST:
+    description: Local multiplication across cell values provided to args
+    allOf:
+      - $ref: '#/definitions/MapAlgebraOperationAST'
+  MaskingAST:
+    description: Masking across tiles provided to args
+    allOf:
+      - $ref: '#/definitions/MapAlgebraOperationAST'
+  ClassificationAST:
+    description: Reclassify cell values on tiles provided to args
+    allOf:
+      - $ref: '#/definitions/MapAlgebraOperationAST'
+      - type: object
+        properties:
+          classBreaks:
+            $ref: '#/definitions/ClassBreaks'
+
+  MapAlgebraSourceAST:
+    allOf:
+      - $ref: '#/definitions/MapAlgebraAST'
+      - type: object
+  RasterFoundrySourceAST:
+    allOf:
+      - $ref: '#/definitions/MapAlgebraSourceAST'
+      - type: object
+        properties:
+          value:
+            $ref: '#/definitions/RFMLRaster'
+
+  RFMLRaster:
+    type: object
+    discriminator: type
+    required:
+      - type
+    properties:
+      type:
+        type: string
+      id:
+        type: string
+        format: uuid
+  SceneRaster:
+    allOf:
+      - $ref: '#/definitions/RFMLRaster'
+      - type: object
+        properties:
+          band:
+            type: integer
+  ProjectRaster:
+    allOf:
+      - $ref: '#/definitions/RFMLRaster'
+      - type: object
+        properties:
+          band:
+            type: integer
+
+  ClassBreaks:
+    type: object
+    properties:
+      classMap:
+        type: object
+        description: a dict/map from floating point breaks to integer values
+        properties:
+          dictKeys:
+            type: number
+            format: double
+          dictValues:
+            type: integer
+      options:
+        $ref: '#/definitions/ClassBreakOptions'
+
+  ClassBreakOptions:
+    type: object
+    properties:
+      boundaryType:
+        type: string
+      ndValue:
+        type: integer
+      fallback:
+        type: integer
+
   Error:
     type: object
     properties:
