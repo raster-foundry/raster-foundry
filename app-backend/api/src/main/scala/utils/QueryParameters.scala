@@ -28,6 +28,10 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
     orgQueryParams & userQueryParameters & timestampQueryParameters
   ).as(ProjectQueryParameters.apply _)
 
+def aoiQueryParameters = (
+    orgQueryParams & userQueryParameters & timestampQueryParameters
+  ).as(AoiQueryParameters.apply _)
+
   def orgQueryParams = parameters(
     'organization.as(deserializerUUID).*
   ).as(OrgQueryParameters.apply _)

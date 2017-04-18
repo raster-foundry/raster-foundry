@@ -10,8 +10,10 @@ import cats.data.OptionT
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.fields.{OrganizationFkFields, TimestampFields, UserFkFields}
+import com.azavea.rf.database.query.AoiQueryParameters
 import com.azavea.rf.database.sort._
-import com.azavea.rf.datamodel.{AOI, User}
+import com.azavea.rf.datamodel.{AOI, PaginatedResponse, User}
+import com.lonelyplanet.akka.http.extensions.PageRequest
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.slick.Projected
 import geotrellis.vector.MultiPolygon
@@ -51,6 +53,41 @@ object AOIs extends TableQuery(tag => new AOIs(tag)) with LazyLogging {
     new QuerySorter(
       new OrganizationFkSort(identity),
       new TimestampSort(identity))
+
+  /** Paginate a `list` result. */
+  def page(pageRequest: PageRequest, aois: TableQuery): TableQuery = {
+    aois.sort(pageRequest.sort)
+      .drop(pageRequest.offset * pageRequest.limit)
+      .take(pageRequest.limit)
+  }
+
+  /** Yield a paginated list of all [[AOI]]s that a user has access to. */
+  def listAOIs(
+    pageRequest: PageRequest,
+    queryParams: AoiQueryParameters,
+    user: User
+  )(implicit database: DB): Future[PaginatedResponse[AOI]] = {
+    // TODO: filterUservisibility
+    val aoisQ: Query[AOIs, AOI, Seq] = AOIs.filterByOrganization(queryParams.orgParams)
+      .filterByUser(queryParams.userParams)
+      .filterByTimestamp(queryParams.timestampParams)
+
+    /* Fire the Futures ahead of time */
+    val paginated: Future[Seq[AOI]] = database.db.run(page(pageRequest, aoisQ).result)
+    val totalQ: Future[Int] = database.db.run(aoisQ.length.result)
+
+    for {
+      total <- totalQ
+      aois  <- paginated
+    } yield {
+      val hasNext = (pageRequest.offset + 1) * pageRequest.limit < total
+      val hasPrevious = pageRequest.offset > 0
+
+      PaginatedResponse[AOI](
+        total, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, aois
+      )
+    }
+  }
 
   /** Add an AOI to the database. */
   def insertAOI(aoi: AOI)(implicit database: DB): Future[AOI] =

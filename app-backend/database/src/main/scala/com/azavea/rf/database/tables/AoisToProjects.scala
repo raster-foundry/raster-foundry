@@ -27,7 +27,7 @@ class AoisToProjects(_tableTag: Tag) extends Table[AoiToProject](_tableTag, "aoi
 }
 
 object AoisToProjects extends TableQuery(tag => new AoisToProjects(tag)) with LazyLogging {
-  /** Add an many-to-many connection between a [[Project]] and [[AOI]]. */
+  /** Add a many-to-many connection between a [[Project]] and [[AOI]]. */
   def insert(atp: AoiToProject)(implicit database: DB): Future[AoiToProject] =
     database.db.run(AoisToProjects.forceInsert(atp)).map(_ => atp)
 }
