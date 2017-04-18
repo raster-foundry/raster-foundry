@@ -125,8 +125,10 @@ trait ProjectRoutes extends Authentication
   }
 
   def listAOIs(projectId: UUID): Route = authenticate { user =>
-    complete {
-      Projects.listAOIs(projectId, user)
+    withPagination { page =>
+      complete {
+        Projects.listAOIs(projectId, page, user)
+      }
     }
   }
 

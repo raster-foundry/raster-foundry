@@ -87,7 +87,11 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
   }
 
   /** Get the AOIs belonging to a project. */
-  def listAOIs(projectId: UUID, user: User)(implicit database: DB): Future[Seq[AOI]] = {
+  def listAOIs(
+    projectId: UUID,
+    pageRequest: PageRequest,
+    user: User
+  )(implicit database: DB): Future[PaginatedResponse[AOI]] = {
     // TODO: This should be a join?
     val aois: Future[Seq[UUID]] = database.db.run {
       AoisToProjects
@@ -97,9 +101,25 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
         .result
     }
 
-    aois.flatMap({ ids => database.db.run {
-      AOIs.filter(_.id inSet ids).result
-    }})
+    aois.flatMap({ ids =>
+      // TODO: More filters?
+      val aoisQ: Query[AOIs, AOI, Seq] = AOIs.filter(_.id inSet ids)
+
+      val paginated: Future[Seq[AOI]] = database.db.run(AOIs.page(pageRequest, aoisQ).result)
+      val totalQ: Future[Int] = database.db.run(aoisQ.length.result)
+
+      for {
+        total <- totalQ
+        aois  <- paginated
+      } yield {
+        val hasNext = (pageRequest.offset + 1) * pageRequest.limit < total
+        val hasPrevious = pageRequest.offset > 0
+
+        PaginatedResponse[AOI](
+          total, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, aois
+        )
+      }
+    })
   }
 
   /** Get scenes belonging to a project

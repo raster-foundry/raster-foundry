@@ -130,6 +130,13 @@ case class ProjectQueryParameters(
   timestampParams: TimestampQueryParameters = TimestampQueryParameters()
 )
 
+@JsonCodec
+case class AoiQueryParameters(
+  orgParams: OrgQueryParameters = OrgQueryParameters(),
+  userParams: UserQueryParameters = UserQueryParameters(),
+  timestampParams: TimestampQueryParameters = TimestampQueryParameters()
+)
+
 /** Query parameters specific to tools */
 @JsonCodec
 case class ToolQueryParameters(
