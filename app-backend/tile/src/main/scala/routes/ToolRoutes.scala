@@ -32,6 +32,8 @@ import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes}
+import akka.http.scaladsl.marshalling.PredefinedToEntityMarshallers._
+import akka.http.scaladsl.marshalling._
 import com.typesafe.scalalogging.LazyLogging
 import cats.data._
 import cats.data.Validated._
@@ -55,9 +57,10 @@ class ToolRoutes(implicit val database: Database) extends Authentication with La
     "classificationBoldLandUse" -> geotrellis.raster.render.ColorRamps.ClassificationBoldLandUse
   )
 
-
-  def pngAsHttpResponse(png: Png): HttpResponse =
-    HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/png`), png.bytes))
+  implicit val pngMarshaller: ToEntityMarshaller[Png] = {
+    val contentType = ContentType(MediaTypes.`image/png`)
+    Marshaller.withFixedContentType(contentType) { png ⇒ HttpEntity(contentType, png.bytes) }
+  }
 
   def parseBreakMap(str: String): Map[Double,Double] = {
     str.split(';').map { c: String =>
@@ -70,74 +73,52 @@ class ToolRoutes(implicit val database: Database) extends Authentication with La
     source: (RFMLRaster, Int, Int, Int) => Future[Option[Tile]]
   ): Route =
     pathPrefix(JavaUUID){ (toolId) =>
-      // TODO: check token for organization access
-      val futureTool: Future[Tool.WithRelated] = Tools.getTool(toolId).map {
-        _.getOrElse(throw new java.io.IOException(toolId.toString))
-      }
+      authenticate { user =>
+        // TODO: check token for organization access
+        val futureTool: Future[Option[Tool.WithRelated]] = Tools.getTool(toolId, user)
 
-      (pathEndOrSingleSlash & get & rejectEmptyResponse) {
-        complete(futureTool)
-      } ~
-      pathPrefix(IntNumber / IntNumber / IntNumber){ (z, x, y) =>
-        parameter(
-          'node.?,
-          'geotiff.?(false),
-          'ramp.?("viridis")
-        )
-        { (node, geotiffOutput, colorRamp) =>
-          complete {
-            val nodeId = node.map(UUID.fromString(_))
-            for {
-              tool <- futureTool
-              maybeHist <- LayerCache.modelLayerGlobalHistogram(toolId, nodeId).value
-            } yield {
-              logger.debug(s"Tool JSON: $tool")
-
-              // Parse json to AST and select subnode if specified
-              // TODO: return useful HTTP errors on parse failure
-              val ast = tool.definition.as[MapAlgebraAST] match {
-                case Right(ast) =>
-                  nodeId match {
-                    case Some(id) =>
-                      ast.find(id).getOrElse(throw new InvalidParameterException(s"AST has no node with the id $id"))
-                    case None =>
-                      ast
-                  }
-                case Left(failure) =>
-                  throw failure
-              }
-
-              val tms = Interpreter.interpretTMS(ast, source)
-
-              for {
-                op <- tms(z, x, y)
-              } yield {
-                op match {
-                  case Valid(op) =>
-                    /** TODO: We should spend some time thinking about NODATA on pain of our
-                      *        mishandling the translucent portion of tiles.
-                      */
-                    val tile = op.toTile(DoubleCellType).get
-
-                    (op.toTile(DoubleCellType), defaultRamps.get(colorRamp), maybeHist) match {
-                      case (Some(tile), Some(cmap), Some(hist)) =>
-                        val png = tile.renderPng(cmap.toColorMap(hist))
-                        Future.successful { pngAsHttpResponse(png) }
-                      case (None, _, _) =>
-                        Marshal(500 -> List("Unable to calculate tile from this operation")).to[HttpResponse]
-                      case (_, None, _) =>
-                        Marshal(400 -> List(s"Unknown colormap: ${colorRamp}")).to[HttpResponse]
-                      case (_, _, None) =>
-                        Marshal(400 -> List("Unable to find global histogram for layer")).to[HttpResponse]
-                    }
-                  case Invalid(errors) =>
-                    Marshal(400 -> errors.toList).to[HttpResponse]
-              }
+        (pathEndOrSingleSlash & get & rejectEmptyResponse) {
+          complete(futureTool)
+        } ~
+        pathPrefix(IntNumber / IntNumber / IntNumber) { (z, x, y) =>
+          parameter(
+            'node.?,
+            'geotiff.?(false),
+            'cramp.?("viridis")
+          )
+          { (node, geotiffOutput, colorRamp) =>
+            complete {
+              val nodeId = node.map(UUID.fromString(_))
+              val responsePng = for {
+                tool <- OptionT(futureTool)
+                ramp <- OptionT.fromOption[Future](defaultRamps.get(colorRamp))
+                hist <- LayerCache.modelLayerGlobalHistogram(tool, nodeId)
+                ast  <- OptionT.fromOption[Future](tool.definition.as[MapAlgebraAST] match {
+                          case Right(entireAST) =>
+                            nodeId match {
+                              case Some(id) => entireAST.find(id)
+                              case None => Some(entireAST)
+                            }
+                          case Left(failure) =>
+                            throw failure
+                        })
+                tile <- OptionT({
+                          val tms = Interpreter.interpretTMS(ast, source)
+                          for {
+                            operation <- tms(z, x, y)
+                          } yield {
+                            operation match {
+                              case Valid(op) => op.toTile(DoubleCellType)
+                              case Invalid(errors) => throw InterpreterException(errors)
+                            }
+                          }
+                        })
+              } yield tile.renderPng(ramp.toColorMap(hist))
+              responsePng.value
             }
           }
         }
       }
     }
-  }
 }
 

@@ -55,7 +55,7 @@ trait ToolRoutes extends Authentication
 
   def getTool(toolId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
-      complete(Tools.getTool(toolId))
+      complete(Tools.getTool(toolId, user))
     }
   }
 

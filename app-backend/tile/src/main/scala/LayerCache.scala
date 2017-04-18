@@ -89,32 +89,28 @@ object LayerCache extends Config with LazyLogging {
       }}
     }
 
-  def modelLayerGlobalHistogram(toolId: UUID, nodeId: Option[UUID]): OptionT[Future, Histogram[Double]] =
-    histogramCache.cachingOptionT(s"model-$toolId-$nodeId") { implicit ec =>
-      val futureTool: OptionT[Future, Tool.WithRelated] = OptionT(Tools.getTool(toolId))
-
-      futureTool.flatMap { tool =>
-        val parsedAst = tool.definition.as[MapAlgebraAST] match {
-          case Right(ast) => ast
-          case Left(failure) => throw failure
-        }
-
-        val subAst: Option[MapAlgebraAST] = nodeId match {
-          case Some(id) => parsedAst.find(id)
-          case None => Some(parsedAst)
-        }
-
-        OptionT(subAst match {
-          case Some(ast) =>
-            Interpreter.interpretGlobal(ast, TileSources.cachedGlobalSource).map({ validatedOp =>
-              for {
-                op <- validatedOp.toOption
-                tile <- op.toTile(DoubleCellType)
-              } yield StreamingHistogram.fromTile(tile)
-            })
-          case None => Future.successful { None }
-        })
+  def modelLayerGlobalHistogram(tool: Tool.WithRelated, nodeId: Option[UUID]): OptionT[Future, Histogram[Double]] =
+    histogramCache.cachingOptionT(s"model-${tool.id}-$nodeId") { implicit ec =>
+      val parsedAst = tool.definition.as[MapAlgebraAST] match {
+        case Right(ast) => ast
+        case Left(failure) => throw failure
       }
+
+      val subAst: Option[MapAlgebraAST] = nodeId match {
+        case Some(id) => parsedAst.find(id)
+        case None => Some(parsedAst)
+      }
+
+      OptionT(subAst match {
+        case Some(ast) =>
+          Interpreter.interpretGlobal(ast, TileSources.cachedGlobalSource).map({ validatedOp =>
+            for {
+              op <- validatedOp.toOption
+              tile <- op.toTile(DoubleCellType)
+            } yield StreamingHistogram.fromTile(tile)
+          })
+        case None => Future.successful { None }
+      })
     }
 
   def layerTile(layerId: UUID, zoom: Int, key: SpatialKey): OptionT[Future, MultibandTile] =
