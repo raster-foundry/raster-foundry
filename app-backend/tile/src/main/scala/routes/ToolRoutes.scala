@@ -47,19 +47,14 @@ import java.io._
 class ToolRoutes(implicit val database: Database) extends Authentication with LazyLogging {
   val userId: String = "rf_airflow-user"
 
-  //def lookupColorMap(str: Option[String]): ColorMap = {
-  //  str match {
-  //    case Some(s) if s.contains(':') =>
-  //      ColorMap.fromStringDouble(s).get
-  //    case None =>
-  //      val colorRamp = ColorRamp(0x000000FF, 0xFFFFFFFF)
-  //      //val colorRamp = ColorRamp(Vector(0xD51D26FF, 0xDD5249FF, 0xE6876CFF, 0xEFBC8FFF, 0xF8F2B2FF, 0xC7DD98FF, 0x96C87EFF, 0x65B364FF, 0x349E4BFF))
-  //      val breaks = Array[Double](0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 1.0)
-  //      ColorMap(breaks, colorRamp)
-  //    case Some(_) =>
-  //      throw new Exception("color map string is all messed up")
-  //  }
-  //}
+  val defaultRamps = Map(
+    "viridis" -> geotrellis.raster.render.ColorRamps.Viridis,
+    "inferno" -> geotrellis.raster.render.ColorRamps.Inferno,
+    "magma" -> geotrellis.raster.render.ColorRamps.Magma,
+    "lightYellowToOrange" -> geotrellis.raster.render.ColorRamps.LightYellowToOrange,
+    "classificationBoldLandUse" -> geotrellis.raster.render.ColorRamps.ClassificationBoldLandUse
+  )
+
 
   def pngAsHttpResponse(png: Png): HttpResponse =
     HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/png`), png.bytes))
@@ -71,74 +66,78 @@ class ToolRoutes(implicit val database: Database) extends Authentication with La
     }.toMap
   }
 
-  def root(implicit database: Database): Route =
-    pathPrefix(Segment / "ndvi-diff-tool"){ organizationId =>
+  def root(
+    source: (RFMLRaster, Int, Int, Int) => Future[Option[Tile]]
+  ): Route =
+    pathPrefix(JavaUUID){ (toolId) =>
+      // TODO: check token for organization access
+      val futureTool: Future[Tool.WithRelated] = Tools.getTool(toolId).map {
+        _.getOrElse(throw new java.io.IOException(toolId.toString))
+      }
+
       (pathEndOrSingleSlash & get & rejectEmptyResponse) {
         complete(futureTool)
       } ~
       pathPrefix(IntNumber / IntNumber / IntNumber){ (z, x, y) =>
         parameter(
-          'part.?,
+          'node.?,
           'geotiff.?(false),
-          'cm.?
+          'ramp.?("viridis")
         )
-        { (partId, geotiffOutput, colorMap) =>
+        { (node, geotiffOutput, colorRamp) =>
           complete {
-            OptionT(futureTool).mapFilter { tool =>
-              logger.debug(s"Raw Tool: $tool")
+            val nodeId = node.map(UUID.fromString(_))
+            for {
+              tool <- futureTool
+              maybeHist <- LayerCache.modelLayerGlobalHistogram(toolId, nodeId).value
+            } yield {
+              logger.debug(s"Tool JSON: $tool")
+
+              // Parse json to AST and select subnode if specified
               // TODO: return useful HTTP errors on parse failure
-              tool.definition.as[MapAlgebraAST] match {
-                case Left(failure) =>
-                  logger.error(s"Failed to parse MapAlgebraAST from: ${tool.definition.noSpaces} with $failure")
-                  None
-
+              val ast = tool.definition.as[MapAlgebraAST] match {
                 case Right(ast) =>
-                  logger.debug(s"Parsed Tool: ${ast}")
-                  ast.some
-              }
-            }.map { ast =>
-              // TODO: can we move it outside the z/x/y to get some re-use? (don't think so but should check)
-              val tms = Interpreter.tms(ast, source)
-              OptionT(tms(z,x,y)).map { op =>
-                val tile = op.toTile(IntCellType).get
-                // TODO: use color ramp to paint the tile
-
-                if (geotiffOutput) {
-                  // Largely for debugging, the Extent and CRS are *NOT* meaningful
-                  val geotiff = SinglebandGeoTiff(tile, Extent(0, 0, 0, 0), CRS.fromEpsgCode(3857))
-                  HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/tiff`), geotiff.toByteArray))
-                } else {
-                  val png = tile.renderPng(lookupColorMap(colorMap))
-                  pngAsHttpResponse(png)
-                }
-
-                val tms = Interpreter.interpretTMS(ast, source)
-
-                for {
-                  op <- tms(z, x, y)
-                } yield {
-                  op match {
-                    case Valid(op) =>
-                      try {
-                        val tile = op.toTile(DoubleCellType).get
-                        val colormap = geotrellis.raster.render.ColorRamps.Viridis
-                        val png = tile.renderPng(colormap.toColorMap(maybeHist.get))
-                        Future.successful { pngAsHttpResponse(png) }
-                      } catch {
-                        case e: Throwable =>
-                          val sw = new StringWriter
-                          e.printStackTrace(new PrintWriter(sw))
-                          println(sw.toString())
-                          throw e
-                      }
-                    case Invalid(errors) =>
-                      Marshal(400 -> errors.toList).to[HttpResponse]
+                  nodeId match {
+                    case Some(id) =>
+                      ast.find(id).getOrElse(throw new InvalidParameterException(s"AST has no node with the id $id"))
+                    case None =>
+                      ast
                   }
-                }
+                case Left(failure) =>
+                  throw failure
+              }
+
+              val tms = Interpreter.interpretTMS(ast, source)
+
+              for {
+                op <- tms(z, x, y)
+              } yield {
+                op match {
+                  case Valid(op) =>
+                    /** TODO: We should spend some time thinking about NODATA on pain of our
+                      *        mishandling the translucent portion of tiles.
+                      */
+                    val tile = op.toTile(DoubleCellType).get
+
+                    (op.toTile(DoubleCellType), defaultRamps.get(colorRamp), maybeHist) match {
+                      case (Some(tile), Some(cmap), Some(hist)) =>
+                        val png = tile.renderPng(cmap.toColorMap(hist))
+                        Future.successful { pngAsHttpResponse(png) }
+                      case (None, _, _) =>
+                        Marshal(500 -> List("Unable to calculate tile from this operation")).to[HttpResponse]
+                      case (_, None, _) =>
+                        Marshal(400 -> List(s"Unknown colormap: ${colorRamp}")).to[HttpResponse]
+                      case (_, _, None) =>
+                        Marshal(400 -> List("Unable to find global histogram for layer")).to[HttpResponse]
+                    }
+                  case Invalid(errors) =>
+                    Marshal(400 -> errors.toList).to[HttpResponse]
               }
             }
           }
         }
       }
     }
+  }
 }
+
