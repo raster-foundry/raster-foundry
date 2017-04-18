@@ -799,6 +799,19 @@ paths:
       responses:
         204:
           description: No content, delete successful
+
+  /projects/{uuid}/scenes/{uuid2}/accept:
+    post:
+      summary: Approve a pending Scene which passed an AOI check.
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/uuid2'
+      responses:
+        204:
+          description: Successfully accepted the Scene.
+
   /projects/{uuid}/scenes/bulk-add-from-query/:
     x-resource: Projects
     post:
