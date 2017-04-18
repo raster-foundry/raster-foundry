@@ -5,7 +5,8 @@ import java.util.{Date, UUID}
 
 import geotrellis.slick.Projected
 import geotrellis.vector.MultiPolygon
-import io.circe.Json
+import io.circe._
+import io.circe.generic.JsonCodec
 
 // --- //
 
@@ -15,7 +16,7 @@ import io.circe.Json
   * the Scene will be added to the user's Project in a "pending" state. If the
   * user then accepts a "pending" Scene, it will be added to their project.
   */
-case class AOI(
+@JsonCodec case class AOI(
   /* Database fields */
   id: UUID,
   createdAt: Timestamp,
@@ -35,6 +36,7 @@ object AOI {
 
   def create = Create.apply _
 
+  @JsonCodec
   case class Create(organizationId: UUID, area: Projected[MultiPolygon], filters: Json) {
     def toAOI(userId: String): AOI = {
       val now = new Timestamp((new Date()).getTime)
