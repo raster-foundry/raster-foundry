@@ -51,6 +51,6 @@ PythonOperator(
     task_id='update_aoi_project',
     provide_context=True,
     python_callable=update_aoi_project,
-    sla=datetime.timedelta(minutes=3),
+    execution_timeout=datetime.timedelta(seconds=60),
     dag=dag
 )
