@@ -51,5 +51,6 @@ PythonOperator(
     task_id='update_aoi_project',
     provide_context=True,
     python_callable=update_aoi_project,
+    sla=datetime.timedelta(minutes=3),
     dag=dag
 )
