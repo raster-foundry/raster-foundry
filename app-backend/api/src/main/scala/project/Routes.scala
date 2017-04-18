@@ -1,24 +1,22 @@
 package com.azavea.rf.api.project
 
+import java.util.UUID
+
+import scala.concurrent.ExecutionContext.Implicits.global
+
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling._
-import akka.http.scaladsl.model.StatusCodes
-import com.lonelyplanet.akka.http.extensions.{PaginationDirectives, Order}
-
-import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
-import com.azavea.rf.database.tables._
-import com.azavea.rf.database.query._
-import com.azavea.rf.database.Database
-import com.azavea.rf.datamodel._
 import com.azavea.rf.api.scene._
 import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
-
-import io.circe._
-import io.circe.parser._
-import io.circe.syntax._
+import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
+import com.azavea.rf.database.Database
+import com.azavea.rf.database.query._
+import com.azavea.rf.database.tables._
+import com.azavea.rf.datamodel._
+import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
-
-import java.util.UUID
+import io.circe._
 
 trait ProjectRoutes extends Authentication
     with QueryParametersCommon
@@ -42,6 +40,12 @@ trait ProjectRoutes extends Authentication
         put { updateProject(projectId) } ~
         delete { deleteProject(projectId) }
       } ~
+      pathPrefix("aoi") {
+        pathEndOrSingleSlash {
+          get { listAOIs(projectId) } ~
+          post { createAOI(projectId) }
+        }
+      }
       pathPrefix("scenes") {
         pathEndOrSingleSlash {
           get { listProjectScenes(projectId) } ~
@@ -117,6 +121,25 @@ trait ProjectRoutes extends Authentication
   def deleteProject(projectId: UUID): Route = authenticate { user =>
     onSuccess(Projects.deleteProject(projectId, user)) {
       completeSingleOrNotFound
+    }
+  }
+
+  def listAOIs(projectId: UUID): Route = authenticate { user =>
+    complete {
+      Projects.listAOIs(projectId, user)
+    }
+  }
+
+  def createAOI(projectId: UUID): Route = authenticate { user =>
+    entity(as[AOI.Create]) { aoi =>
+      authorize(user.isInRootOrSameOrganizationAs(aoi)) {
+        onSuccess({ for {
+          a <- AOIs.insertAOI(aoi.toAOI(user.id))
+          _ <- AoisToProjects.insert(AoiToProject(a.id, projectId))
+        } yield a }) { a =>
+          complete(StatusCodes.Created, a)
+        }
+      }
     }
   }
 

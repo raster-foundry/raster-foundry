@@ -2,6 +2,10 @@ package com.azavea.rf.database.tables
 
 import java.util.UUID
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
+import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.datamodel._
 import com.typesafe.scalalogging.LazyLogging
@@ -22,4 +26,8 @@ class AoisToProjects(_tableTag: Tag) extends Table[AoiToProject](_tableTag, "aoi
 
 }
 
-object AoisToProjects extends TableQuery(tag => new AoisToProjects(tag)) with LazyLogging
+object AoisToProjects extends TableQuery(tag => new AoisToProjects(tag)) with LazyLogging {
+  /** Add an many-to-many connection between a [[Project]] and [[AOI]]. */
+  def insert(atp: AoiToProject)(implicit database: DB): Future[AoiToProject] =
+    database.db.run(AoisToProjects.forceInsert(atp)).map(_ => atp)
+}

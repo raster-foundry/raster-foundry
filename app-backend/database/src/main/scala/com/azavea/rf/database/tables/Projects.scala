@@ -86,6 +86,22 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     }
   }
 
+  /** Get the AOIs belonging to a project. */
+  def listAOIs(projectId: UUID, user: User)(implicit database: DB): Future[Seq[AOI]] = {
+    // TODO: This should be a join?
+    val aois: Future[Seq[UUID]] = database.db.run {
+      AoisToProjects
+//        .filterUserVisibility(user)  // TODO!
+        .filter(_.projectId === projectId)
+        .map(_.aoiId)
+        .result
+    }
+
+    aois.flatMap({ ids => database.db.run {
+      AOIs.filter(_.id inSet ids).result
+    }})
+  }
+
   /** Get scenes belonging to a project
     *
     * @param projectId Project for which associated Scenes should be returned
