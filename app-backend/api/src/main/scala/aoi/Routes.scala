@@ -42,7 +42,7 @@ trait AoiRoutes extends Authentication
   def getAOI(id: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        AOIs.getAOI(id).value
+        AOIs.getAOI(id, user).value
       }
     }
   }
@@ -59,7 +59,7 @@ trait AoiRoutes extends Authentication
 
   // TODO: User Permissions?
   def deleteAOI(id: UUID): Route = authenticate { user =>
-    onSuccess(AOIs.deleteAOI(id)) {
+    onSuccess(AOIs.deleteAOI(id, user)) {
       completeSingleOrNotFound
     }
   }

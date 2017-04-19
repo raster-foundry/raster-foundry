@@ -95,15 +95,14 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     // TODO: This should be a join?
     val aois: Future[Seq[UUID]] = database.db.run {
       AoisToProjects
-//        .filterUserVisibility(user)  // TODO!
         .filter(_.projectId === projectId)
         .map(_.aoiId)
         .result
     }
 
     aois.flatMap({ ids =>
-      // TODO: More filters?
-      val aoisQ: Query[AOIs, AOI, Seq] = AOIs.filter(_.id inSet ids)
+      val aoisQ: Query[AOIs, AOI, Seq] =
+        AOIs.filterToSharedOrganizationIfNotInRoot(user).filter(_.id inSet ids)
 
       val paginated: Future[Seq[AOI]] = database.db.run(AOIs.page(pageRequest, aoisQ).result)
       val totalQ: Future[Int] = database.db.run(aoisQ.length.result)
