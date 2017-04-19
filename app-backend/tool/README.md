@@ -174,7 +174,7 @@ libraries by their URI as well as full definition in this example:
         }
     ],
     "result": {
-        "apply", "+",
+        "apply": "+",
         "args": [
             {
                 "apply": "ndvi",
