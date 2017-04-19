@@ -1,5 +1,3 @@
-import Map from 'es6-map';
-
 export default class ProjectsDetailController {
     constructor( // eslint-disable-line max-params
         $log, $state, $location, projectService, $scope, $uibModal,
@@ -7,11 +5,11 @@ export default class ProjectsDetailController {
     ) {
         'ngInject';
 
-        this.selectedScenes = new Map();
         this.$log = $log;
         this.$state = $state;
         this.$location = $location;
         this.projectService = projectService;
+        this.$parent = $scope.$parent.$ctrl;
         this.$uibModal = $uibModal;
         this.$scope = $scope;
         this.mapService = mapService;
@@ -40,11 +38,11 @@ export default class ProjectsDetailController {
                         this.initMap();
                     },
                     () => {
-                        this.$state.go('^.list');
+                        this.$state.go('projects.list');
                     }
                 );
             } else {
-                this.$state.go('^.list');
+                this.$state.go('projects.list');
             }
         } else {
             this.populateSceneList(this.$state.params.page || 1);
@@ -123,24 +121,8 @@ export default class ProjectsDetailController {
         });
     }
 
-    viewSceneDetail() {
-        // TODO:  Open scene preview modal
-    }
-
-    selectNone() {
-        this.selectedScenes.clear();
-    }
-
-    isSelected(scene) {
-        return this.selectedScenes.has(scene.id);
-    }
-
-    setSelected(scene, selected) {
-        if (selected) {
-            this.selectedScenes.set(scene.id, scene);
-        } else {
-            this.selectedScenes.delete(scene.id);
-        }
+    viewSceneDetail(scene) {
+        this.$log.log('TODO: pop up scene preview', scene);
     }
 
     deleteProject() {
@@ -167,7 +149,7 @@ export default class ProjectsDetailController {
             () => {
                 this.projectService.deleteProject(this.projectId).then(
                     () => {
-                        this.$state.go('^.list');
+                        this.$state.go('projects.list');
                     },
                     (err) => {
                         this.$log.debug('error deleting project', err);
@@ -175,37 +157,6 @@ export default class ProjectsDetailController {
                 );
             });
     }
-
-    downloadModal() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-        let downloadSets = Array.from(this.selectedScenes)
-            .map(([, val]) => {
-                let images = val.images.map((image) => {
-                    return {
-                        filename: image.filename,
-                        uri: image.sourceUri,
-                        metadata: image.metadataFiles || []
-                    };
-                });
-
-                return {
-                    label: val.name,
-                    images: images,
-                    metadata: val.metadataFiles || []
-                };
-            });
-        if (downloadSets.length > 0) {
-            this.activeModal = this.$uibModal.open({
-                component: 'rfDownloadModal',
-                resolve: {
-                    downloads: () => downloadSets
-                }
-            });
-        }
-    }
-
     publishModal() {
         if (this.activeModal) {
             this.activeModal.dismiss();
@@ -234,21 +185,6 @@ export default class ProjectsDetailController {
         return !this.loading &&
             this.lastSceneResult &&
             this.lastSceneResult.count === 0;
-    }
-
-    removeScenes() {
-        let sceneIds = Array.from(this.selectedScenes.keys());
-        this.projectService.removeScenesFromProject(this.projectId, sceneIds).then(
-            () => {
-                this.populateSceneList(this.currentPage);
-                this.selectedScenes.clear();
-            },
-            (err) => {
-                // later on, use toasts or something instead of a debug message
-                this.$log.debug('Error removing scenes from project.', err);
-                this.populateSceneList(this.currentPage);
-            }
-        );
     }
 
     removeScene(scene) {
@@ -304,4 +240,4 @@ export default class ProjectsDetailController {
     dismissErrorMessage() {
         this.showError = false;
     }
-}
+ }
