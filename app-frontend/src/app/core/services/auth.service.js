@@ -4,7 +4,7 @@ import assetLogo from '../../../assets/images/logo-raster-foundry.png';
 export default (app) => {
     class AuthService {
         constructor( // eslint-disable-line max-params
-            jwtHelper, $q, featureFlagOverrides, featureFlags,
+            jwtHelper, $q, featureFlagOverrides, featureFlags, perUserFeatureFlags,
             $state, APP_CONFIG, localStorage, rollbarWrapperService, intercomService
         ) {
             this.localStorage = localStorage;
@@ -12,6 +12,7 @@ export default (app) => {
             this.$q = $q;
             this.$state = $state;
             this.featureFlags = featureFlags;
+            this.perUserFeatureFlags = perUserFeatureFlags;
             this.featureFlagOverrides = featureFlagOverrides;
             this.intercomService = intercomService;
             this.rollbarWrapperService = rollbarWrapperService;
@@ -148,15 +149,24 @@ export default (app) => {
 
                 this.localStorage.set('profile', profile);
                 this.featureFlagOverrides.setUser(profile.user_id);
-                let userFlags = profile.user_metadata && profile.user_metadata.featureFlags ?
-                    profile.user_metadata.featureFlags : [];
-                // Not using a set because performance considerations are negligible,
-                // and it would require an additional import
+                // Flags set in the `/config` endpoint; default.
                 let configFlags = this.featureFlags.get().map((flag) => flag.key);
-                let flagOverrides = userFlags.filter((flag) => {
-                    return configFlags.includes(flag.key);
+                // Now that we've authenticated, trigger an override of the default
+                // feature flags from `/conf` with per-user flags from `/feature-flags
+                this.featureFlags.set(this.perUserFeatureFlags.load()).then(() => {
+                    // Override API-specified feature flags with flags from Auth0 metadata
+                    // TODO: We may want to remove this feature and provide all per-user
+                    // feature flags from the `/feature-flags` endpoint, but at the moment
+                    // the only per-user flags that the endpoint supports are based on the
+                    // user's organization, so we need to keep this around to provide more
+                    // granular control over per-user feature flags.
+                    let userFlags = profile.user_metadata && profile.user_metadata.featureFlags ?
+                        profile.user_metadata.featureFlags : [];
+                    let flagOverrides = userFlags.filter((flag) => {
+                        return configFlags.includes(flag.key);
+                    });
+                    this.featureFlags.set(flagOverrides);
                 });
-                this.featureFlags.set(flagOverrides);
                 this.rollbarWrapperService.init(profile);
                 this.isLoggedIn = true;
                 this.loginLock.hide();
