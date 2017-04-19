@@ -9,6 +9,7 @@ trait SparkJob {
   def mergeTiles2[V](values1: Seq[V], values2: Seq[V]): Seq[V] = values1 ++ values2
 
   val jobName: String
+  lazy val name = jobName.toLowerCase
 
   // Some of these options can be set by way of the spark-submit command
   def conf: SparkConf =

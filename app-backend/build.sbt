@@ -160,6 +160,7 @@ lazy val database = Project("database", file("database"))
 
 lazy val batch = Project("batch", file("batch"))
   .dependsOn(datamodel)
+  .dependsOn(database)
   .settings(commonSettings:_*)
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({
@@ -169,10 +170,19 @@ lazy val batch = Project("batch", file("batch"))
       Dependencies.geotrellisS3,
       Dependencies.geotrellisUtil,
       Dependencies.geotrellisRaster,
+      Dependencies.akka,
+      Dependencies.akkahttp,
+      Dependencies.akkaHttpCors,
+      Dependencies.akkaCirceJson,
+      Dependencies.akkastream,
+      Dependencies.akkaSlf4j,
       Dependencies.akkaSprayJson,
       Dependencies.geotrellisSlick,
-      Dependencies.spark,
-      Dependencies.scopt
+      Dependencies.sparkCore,
+      Dependencies.hadoopAws,
+      Dependencies.awsSdk,
+      Dependencies.scopt,
+      Dependencies.ficus
     )
   })
   .settings(assemblyShadeRules in assembly := Seq(

@@ -2,14 +2,13 @@ name := "rf-batch"
 
 assemblyJarName in assembly := "rf-batch.jar"
 
-libraryDependencies ++= Seq(
-  "org.apache.hadoop" % "hadoop-aws" % "2.7.3",
-  "com.amazonaws" % "aws-java-sdk" % "1.7.4"
-)
+mainClass in (Compile, assembly) := Some("com.azavea.rf.batch.Main")
 
 javaOptions += "-Xmx2G"
 
 fork in run := true
+
+test in assembly := { }
 
 assemblyMergeStrategy in assembly := {
   case "reference.conf" => MergeStrategy.concat
