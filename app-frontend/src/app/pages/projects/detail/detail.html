@@ -2,7 +2,7 @@
     <rf-static-map map-id="{{$ctrl.project.id}}-big-preview" ng-if="$ctrl.project" class="project-preview-map"></rf-static-map>
   </div>
   <div class="row content stack-sm max-width">
-    <div class="column-8" ng-if="!$ctrl.loading">
+    <div class="column-10" ng-if="!$ctrl.loading">
       <div class="library-header">
         <h1 class="h3 page-title">
           <a ui-sref="projects.list"><i class="icon-caret-left"></i> Projects</a><br>
@@ -62,7 +62,8 @@
       <div class="list-group">
         <rf-scene-item
             scene="scene"
-            ng-repeat="scene in $ctrl.sceneList track by scene.id">
+            ng-repeat="scene in $ctrl.sceneList track by scene.id"
+            ng-click="$ctrl.openSceneDetailModal(scene)">
           <a href class="link-danger" ng-click="$ctrl.removeScene(scene)">Remove from Project</a>
         </rf-scene-item>
       </div>

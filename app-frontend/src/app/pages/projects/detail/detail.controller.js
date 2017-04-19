@@ -232,6 +232,19 @@ export default class ProjectsDetailController {
         );
     }
 
+    openSceneDetailModal(scene) {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        this.activeModal = this.$uibModal.open({
+            component: 'rfSceneDetailModal',
+            resolve: {
+                scene: () => scene
+            }
+        });
+    }
+
     cancelProjectNameEdit() {
         this.isEditingProjectName = false;
         this.editedProjectName = this.project.name;
