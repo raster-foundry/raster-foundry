@@ -67,7 +67,6 @@ object AOIs extends TableQuery(tag => new AOIs(tag)) with LazyLogging {
     queryParams: AoiQueryParameters,
     user: User
   )(implicit database: DB): Future[PaginatedResponse[AOI]] = {
-    // TODO: filterUservisibility
     val aoisQ: Query[AOIs, AOI, Seq] = AOIs.filterByOrganization(queryParams.orgParams)
       .filterByUser(queryParams.userParams)
       .filterByTimestamp(queryParams.timestampParams)
@@ -94,18 +93,28 @@ object AOIs extends TableQuery(tag => new AOIs(tag)) with LazyLogging {
     database.db.run(AOIs.forceInsert(aoi)).map(_ => aoi)
 
   /** Get an [[AOI]] given its UUID. */
-  def getAOI(aoi: UUID)(implicit database: DB): OptionT[Future, AOI] =
-    OptionT(database.db.run(AOIs.filter(_.id === aoi).result.headOption))
+  def getAOI(aoi: UUID, user: User)(implicit database: DB): OptionT[Future, AOI] =
+    OptionT(database.db.run({
+      AOIs.filterToSharedOrganizationIfNotInRoot(user)
+        .filter(_.id === aoi)
+        .result
+        .headOption
+    }))
 
   /** Delete an [[AOI]] given its UUID. */
-  def deleteAOI(aoi: UUID)(implicit database: DB): Future[Int] =
-    database.db.run(AOIs.filter(_.id === aoi).delete)
+  def deleteAOI(aoi: UUID, user: User)(implicit database: DB): Future[Int] =
+    database.db.run({
+      AOIs.filterToSharedOrganizationIfNotInRoot(user)
+        .filter(_.id === aoi)
+        .delete
+    })
 
   def updateAOI(aoi: AOI, aoiId: UUID, user: User)(implicit database: DB): Future[Int] = {
 
     val now = new Timestamp((new Date()).getTime)
 
-    val query = AOIs.filter(_.id === aoiId)
+    val query = AOIs.filterToSharedOrganizationIfNotInRoot(user)
+      .filter(_.id === aoiId)
       .map(a => (a.modifiedAt, a.modifiedBy, a.area))
 
     database.db.run(query.update((now, user.id, aoi.area))).map {
