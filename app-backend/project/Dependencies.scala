@@ -18,6 +18,9 @@ object Dependencies {
   val geotrellisVector        = "org.locationtech.geotrellis" %% "geotrellis-vector"                 % Version.geotrellis
   val geotrellisUtil          = "org.locationtech.geotrellis" %% "geotrellis-util"                   % Version.geotrellis
   val spark                   = "org.apache.spark"            %% "spark-core"                        % Version.spark % "provided"
+  val sparkCore               = "org.apache.spark"            %% "spark-core"                        % Version.spark
+  val hadoopAws               = "org.apache.hadoop"            % "hadoop-aws"                        % Version.hadoop
+  val awsSdk                  = "com.amazonaws"                % "aws-java-sdk"                      % Version.awsSdk
   val hikariCP                = "com.typesafe.slick"          %% "slick-hikaricp"                    % Version.hikariCP
   val postgres                = "org.postgresql"               % "postgresql"                        % Version.postgres
   val scalaforklift           = "com.liyaos"                  %% "scala-forklift-slick"              % Version.scalaForklift
@@ -51,5 +54,6 @@ object Dependencies {
   val gatlingHighcharts       = "io.gatling.highcharts"        % "gatling-charts-highcharts"         % Version.gatling
   val gatlingTest             = "io.gatling"                   % "gatling-test-framework"            % Version.gatling % "test,it"
   val gatlingApp              = "io.gatling"                   % "gatling-app"                       % Version.gatling % "test,it"
-  val scalajHttp             = "org.scalaj"                  %% "scalaj-http"                       % Version.scalajHttp
+  val scalajHttp              = "org.scalaj"                  %% "scalaj-http"                       % Version.scalajHttp
+  val ficus                   ="com.iheart"                   %% "ficus"                             % Version.ficus
 }

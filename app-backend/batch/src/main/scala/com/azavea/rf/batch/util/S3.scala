@@ -4,8 +4,7 @@ import java.net.URI
 
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
-import com.amazonaws.services.s3.model.{ListObjectsRequest, ObjectListing}
-
+import com.amazonaws.services.s3.model.{ListObjectsRequest, ObjectListing, S3Object}
 import geotrellis.spark.io.s3.S3InputFormat
 import org.apache.hadoop.conf.Configuration
 
@@ -16,6 +15,10 @@ object S3 {
   lazy val client = AmazonS3ClientBuilder.standard()
     .withCredentials(new DefaultAWSCredentialsProviderChain())
     .build()
+
+  /** Get S3Object */
+  def getObject(s3bucket: String, s3prefix: String): S3Object =
+    client.getObject(s3bucket, s3prefix)
 
   /** List the keys to files found within a given bucket */
   def listKeys(url: String, ext: String, recursive: Boolean): Array[URI] = {

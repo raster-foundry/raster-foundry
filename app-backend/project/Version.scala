@@ -21,6 +21,7 @@ object Version {
   val akkaSlf4j          = "2.4.11"
   val ammoniteOps        = "0.7.0"
   val spark              = "2.1.0"
+  val hadoop             = "2.7.3"
   val commonsIO          = "2.5"
   val scopt              = "3.5.0"
   val scaffeine          = "2.0.0"
@@ -34,4 +35,6 @@ object Version {
   val cats               = "0.9.0"
   val gatling            = "2.2.4"
   val scalajHttp         = "2.3.0"
+  val ficus              = "1.4.0"
+  val awsSdk             = "1.7.4"
 }
