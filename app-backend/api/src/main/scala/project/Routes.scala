@@ -45,7 +45,7 @@ trait ProjectRoutes extends Authentication
           get { listAOIs(projectId) } ~
           post { createAOI(projectId) }
         }
-      }
+      } ~
       pathPrefix("scenes") {
         pathEndOrSingleSlash {
           get { listProjectScenes(projectId) } ~
@@ -140,10 +140,12 @@ trait ProjectRoutes extends Authentication
   def createAOI(projectId: UUID): Route = authenticate { user =>
     entity(as[AOI.Create]) { aoi =>
       authorize(user.isInRootOrSameOrganizationAs(aoi)) {
-        onSuccess({ for {
-          a <- AOIs.insertAOI(aoi.toAOI(user.id))
-          _ <- AoisToProjects.insert(AoiToProject(a.id, projectId))
-        } yield a }) { a =>
+        onSuccess({
+          for {
+            a <- AOIs.insertAOI(aoi.toAOI(user.id))
+            _ <- AoisToProjects.insert(AoiToProject(a.id, projectId))
+          } yield a
+        }) { a =>
           complete(StatusCodes.Created, a)
         }
       }
