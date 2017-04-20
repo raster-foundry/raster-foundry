@@ -279,6 +279,7 @@
   .content-row {
     display: flex;
     flex-direction: column;
+    min-height: 0;
     @include respond-to('md-up') {
       flex-direction: row;
     }
