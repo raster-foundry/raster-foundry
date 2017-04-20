@@ -92,7 +92,6 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     pageRequest: PageRequest,
     user: User
   )(implicit database: DB): Future[PaginatedResponse[AOI]] = {
-    // TODO: This should be a join?
     val aois: Future[Seq[UUID]] = database.db.run {
       AoisToProjects
         .filter(_.projectId === projectId)

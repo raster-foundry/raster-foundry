@@ -40,7 +40,7 @@ trait ProjectRoutes extends Authentication
         put { updateProject(projectId) } ~
         delete { deleteProject(projectId) }
       } ~
-      pathPrefix("aoi") {
+      pathPrefix("areas-of-interest") {
         pathEndOrSingleSlash {
           get { listAOIs(projectId) } ~
           post { createAOI(projectId) }
