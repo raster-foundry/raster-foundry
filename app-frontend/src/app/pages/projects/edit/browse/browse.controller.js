@@ -25,6 +25,7 @@ export default class ProjectAddScenesBrowseController {
     }
 
     $onInit() {
+        this.projectScenesReady = false;
         this.allSelected = false;
         this.registerClick = true;
         this.scenes = {
@@ -39,11 +40,13 @@ export default class ProjectAddScenesBrowseController {
             this.project = this.$parent.project;
             this.$parent.waitForProject().then((project) => {
                 this.project = project;
+                this.getProjectSceneIds();
                 this.initWatchers();
                 this.initMap();
             });
         } else {
             this.project = this.$parent.project;
+            this.getProjectSceneIds();
             this.initWatchers();
             this.initMap();
             this.requestNewSceneList();
@@ -141,6 +144,13 @@ export default class ProjectAddScenesBrowseController {
                 this.onGridClick(e, b);
             };
             browseMap.addLayer('canvasGrid', this.gridLayer);
+        });
+    }
+
+    getProjectSceneIds() {
+        this.projectService.getAllProjectScenes({ projectId: this.project.id }).then((scenes) => {
+            this.projectSceneIds = scenes.map(s => s.id);
+            this.projectScenesReady = true;
         });
     }
 
@@ -424,7 +434,9 @@ export default class ProjectAddScenesBrowseController {
             }
         });
 
-        this.activeModal.result.then().finally(() => {
+        this.activeModal.result.then(sceneIds => {
+            this.projectSceneIds = this.projectSceneIds.concat(sceneIds);
+        }).finally(() => {
             delete this.activeModal;
             this.selectNoScenes();
             this.$parent.getSceneList();
@@ -469,5 +481,13 @@ export default class ProjectAddScenesBrowseController {
     toggleSelectAndClosePane() {
         this.setSelected(this.activeScene, !this.isSelected(this.activeScene));
         this.closeDetailPane();
+    }
+
+    isInProject(scene) {
+        if (this.projectSceneIds) {
+            const index = this.projectSceneIds.indexOf(scene.id);
+            return index >= 0;
+        }
+        return false;
     }
 }

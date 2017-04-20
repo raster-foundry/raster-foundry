@@ -57,7 +57,6 @@ function runBlock(
             setupState();
         }
     });
-
 }
 
 export default runBlock;

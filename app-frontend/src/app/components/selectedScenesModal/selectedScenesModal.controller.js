@@ -24,7 +24,7 @@ export default class SelectedScenesModalController {
         this.projectService.addScenes(this.resolve.project.id, sceneIds).then(
             () => {
                 this.resolve.scenes.clear();
-                this.close();
+                this.close({ $value: sceneIds });
             },
             (err) => {
                 // TODO: Show toast or error message instead of debug message

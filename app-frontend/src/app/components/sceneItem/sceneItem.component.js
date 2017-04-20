@@ -8,6 +8,7 @@ const rfSceneItem = {
     bindings: {
         scene: '<',
         selected: '&',
+        isInProject: '<',
         onSelect: '&',
         onAction: '&',
         onView: '&',

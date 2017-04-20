@@ -32,7 +32,7 @@
   </ul>
 </div>
 <div class="sidebar-scrollable">
-  <div class="list-group" ng-if="$ctrl.lastSceneResult">
+  <div class="list-group" ng-if="$ctrl.lastSceneResult && $ctrl.projectScenesReady">
     <div class="list-group-item">
       <strong class="color-dark">{{$ctrl.lastSceneResult.count | number}} scenes found</strong>
     </div>
@@ -48,9 +48,10 @@
         scene="scene"
         selectable
         selected="$ctrl.isSelected(scene)"
+        is-in-project="$ctrl.isInProject(scene)"
         on-select="$ctrl.setSelected(scene, selected)"
         class="selectable"
-        ng-mouseover="$ctrl.setHoveredScene(scene)"
+        ng-mouseenter="$ctrl.setHoveredScene(scene)"
         ng-mouseleave="$ctrl.removeHoveredScene()"
         ng-repeat="scene in $ctrl.sceneList track by scene.id">
     </rf-scene-item>
