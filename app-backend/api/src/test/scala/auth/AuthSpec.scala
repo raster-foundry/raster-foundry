@@ -8,10 +8,10 @@ import akka.actor.ActorSystem
 
 import concurrent.duration._
 import akka.http.scaladsl.server.Route
-import com.azavea.rf.common.Authentication
 import com.azavea.rf.api.user._
 import com.azavea.rf.api.utils.Config
-import com.azavea.rf.api.{AuthUtils, DBSpec, Router}
+import com.azavea.rf.api._
+import com.azavea.rf.common._
 
 import io.circe._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
