@@ -20,7 +20,7 @@ object Version {
   val akkaHttpCors       = "0.1.11"
   val akkaSlf4j          = "2.4.11"
   val ammoniteOps        = "0.7.0"
-  val spark              = "2.0.0"
+  val spark              = "2.1.0"
   val commonsIO          = "2.5"
   val scopt              = "3.5.0"
   val scaffeine          = "2.0.0"
