@@ -399,3 +399,10 @@ ob-daterangepicker {
   justify-content: space-between;
   align-items: flex-end;
 }
+
+.list-group-item.has-action {
+  cursor: pointer;
+  &:hover {
+    background: #fafafa;
+  }
+}
