@@ -101,7 +101,7 @@ lazy val root = Project("root", file("."))
   .settings(commonSettings:_*)
 
 lazy val api = Project("api", file("api"))
-  .dependsOn(database, datamodel, common)
+  .dependsOn(database, datamodel, common % "test->test;compile->compile")
   .settings(apiSettings:_*)
   .settings(resolvers += Resolver.bintrayRepo("hseeberger", "maven"))
   .settings({
@@ -123,6 +123,7 @@ lazy val common = Project("common", file("common"))
     Dependencies.elasticacheClient,
     Dependencies.geotrellisS3,
     Dependencies.findbugAnnotations,
+    Dependencies.ammoniteOps,
     Dependencies.chill,
     Dependencies.cats
   )})
@@ -184,7 +185,7 @@ import io.gatling.sbt.GatlingPlugin
 lazy val tile = Project("tile", file("tile"))
   .dependsOn(datamodel)
   .dependsOn(database)
-  .dependsOn(common)
+  .dependsOn(common % "test->test;compile->compile")
   .dependsOn(tool)
   .dependsOn(batch)
   .enablePlugins(GatlingPlugin)

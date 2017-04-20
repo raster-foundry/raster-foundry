@@ -1,15 +1,17 @@
 package com.azavea.rf.api.project
 
-import java.util.UUID
 import com.azavea.rf.datamodel._
 import com.azavea.rf.api.AuthUtils
-import java.sql.Timestamp
-import java.time.Instant
+import io.circe.syntax._
 
 import geotrellis.vector.{MultiPolygon, Polygon, Point}
 import geotrellis.slick.Projected
 
-import io.circe.syntax._
+import java.util.UUID
+import java.sql.Timestamp
+import java.time.Instant
+
+
 
 trait ProjectSpecHelper {
   val authorization = AuthUtils.generateAuthHeader("Default")

@@ -1,10 +1,9 @@
-package com.azavea.rf.api.utils
+package com.azavea.rf.common.utils
 
+import com.azavea.rf.common._
 
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.scalatest.{Matchers, WordSpec}
-
-import com.azavea.rf.api._
 
 
 /**
@@ -14,7 +13,6 @@ import com.azavea.rf.api._
 final class PGUtilsSpec extends WordSpec
     with Matchers
     with ScalatestRouteTest
-    with Router
     with DBSpec {
 
   implicit val ec = system.dispatcher

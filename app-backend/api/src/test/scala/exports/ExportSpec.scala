@@ -9,7 +9,8 @@ import akka.actor.ActorSystem
 
 import com.azavea.rf.datamodel._
 import com.azavea.rf.api.utils.Config
-import com.azavea.rf.api.{AuthUtils, DBSpec, Router}
+import com.azavea.rf.api._
+import com.azavea.rf.common._
 import com.azavea.rf.api.project.ProjectSpecHelper
 
 import io.circe._

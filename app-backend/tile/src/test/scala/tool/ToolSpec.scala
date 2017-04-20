@@ -1,8 +1,9 @@
-package com.azavea.rf.api.tool
+package com.azavea.rf.tile.tool
 
 import com.azavea.rf.datamodel._
-import com.azavea.rf.api.utils.Config
-import com.azavea.rf.api._
+//import com.azavea.rf.api.utils.Config
+import com.azavea.rf.tile._
+import com.azavea.rf.common.DBSpec
 import com.azavea.rf.common._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.datamodel._
@@ -24,7 +25,6 @@ import scala.concurrent.duration._
 class ToolSpec extends WordSpec
     with Matchers
     with ScalatestRouteTest
-    with Config
     with Router
     with DBSpec {
 

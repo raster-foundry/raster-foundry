@@ -6,7 +6,8 @@ import akka.actor.ActorSystem
 import concurrent.duration._
 
 import com.azavea.rf.api.utils.Config
-import com.azavea.rf.api.{DBSpec, Router}
+import com.azavea.rf.api.Router
+import com.azavea.rf.common._
 import com.azavea.rf.api.Codec._
 
 import io.circe._

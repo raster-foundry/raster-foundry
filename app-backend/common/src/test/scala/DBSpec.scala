@@ -1,10 +1,10 @@
-package com.azavea.rf.api
+package com.azavea.rf.common
+
+import com.azavea.rf.database.{ Database, Config => DatabaseConfig }
+import com.azavea.rf.common.utils._
 
 import ammonite.ops._
-import com.azavea.rf.database.{ Database, Config => DatabaseConfig }
 import org.scalatest._
-
-import com.azavea.rf.api.utils._
 
 
 /**
