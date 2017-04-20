@@ -270,11 +270,21 @@ export default (app) => {
                         stage.add(layer);
                         done(null, tile);
                     });
+                    tile.konvaContexts = [
+                        stage, text, textRect, layer, topLeft, topRight,
+                        bottomLeft, bottomRight
+                    ];
+
                     return tile;
                 }
             });
 
-            return new GridLayer();
+            let gridLayer = new GridLayer();
+            gridLayer.on('tileunload', (event) => {
+                event.tile.konvaContexts.forEach((context) => context.destroy());
+            });
+
+            return gridLayer;
         }
     }
 
