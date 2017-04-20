@@ -3,6 +3,7 @@ package com.azavea.rf.tile.routes
 import com.azavea.rf.common.Authentication
 import com.azavea.rf.tile.image._
 import com.azavea.rf.tile.tool.TileSources
+import com.azavea.rf.tile.directives._
 import com.azavea.rf.tile._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.database.Database
@@ -46,7 +47,9 @@ import java.util.UUID
 import java.io._
 
 
-class ToolRoutes(implicit val database: Database) extends Authentication with LazyLogging {
+class ToolRoutes(implicit val database: Database) extends Authentication
+  with LazyLogging
+  with InterpreterErrorHandler {
   val userId: String = "rf_airflow-user"
 
   val defaultRamps = Map(
@@ -85,36 +88,33 @@ class ToolRoutes(implicit val database: Database) extends Authentication with La
             'node.?,
             'geotiff.?(false),
             'cramp.?("viridis")
-          )
-          { (node, geotiffOutput, colorRamp) =>
-            complete {
-              val nodeId = node.map(UUID.fromString(_))
-              val responsePng = for {
-                tool <- OptionT(futureTool)
-                ramp <- OptionT.fromOption[Future](defaultRamps.get(colorRamp))
-                hist <- LayerCache.modelLayerGlobalHistogram(tool, nodeId)
-                ast  <- OptionT.fromOption[Future](tool.definition.as[MapAlgebraAST] match {
-                          case Right(entireAST) =>
-                            nodeId match {
-                              case Some(id) => entireAST.find(id)
-                              case None => Some(entireAST)
-                            }
-                          case Left(failure) =>
-                            throw failure
-                        })
-                tile <- OptionT({
-                          val tms = Interpreter.interpretTMS(ast, source)
-                          for {
-                            operation <- tms(z, x, y)
-                          } yield {
-                            operation match {
-                              case Valid(op) => op.toTile(DoubleCellType)
+          ) { (node, geotiffOutput, colorRamp) =>
+            handleExceptions(interpreterExceptionHandler) {
+              complete {
+                val nodeId = node.map(UUID.fromString(_))
+                val responsePng = for {
+                  tool <- OptionT(futureTool)
+                  ramp <- OptionT.fromOption[Future](defaultRamps.get(colorRamp))
+                  hist <- LayerCache.modelLayerGlobalHistogram(tool, nodeId)
+                  ast  <- OptionT.fromOption[Future](tool.definition.as[MapAlgebraAST] match {
+                            case Right(entireAST) =>
+                              nodeId match {
+                                case Some(id) => entireAST.find(id)
+                                case None => Some(entireAST)
+                              }
+                            case Left(failure) =>
+                              throw failure
+                          })
+                  tile <- OptionT({
+                            val tms = Interpreter.interpretTMS(ast, source)
+                            tms(z, x, y).map {
+                              case Valid(op) => op.toTile(DoubleConstantNoDataCellType)
                               case Invalid(errors) => throw InterpreterException(errors)
                             }
-                          }
-                        })
-              } yield tile.renderPng(ramp.toColorMap(hist))
-              responsePng.value
+                          })
+                } yield tile.renderPng(ramp.toColorMap(hist))
+                responsePng.value
+              }
             }
           }
         }
