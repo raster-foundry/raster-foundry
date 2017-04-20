@@ -26,6 +26,7 @@ export default class ProjectAddScenesBrowseController {
 
     $onInit() {
         this.allSelected = false;
+        this.registerClick = true;
         this.scenes = {
             count: 0,
             results: []
