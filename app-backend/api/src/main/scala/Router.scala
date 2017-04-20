@@ -1,6 +1,5 @@
 package com.azavea.rf.api
 
-
 import ch.megard.akka.http.cors.CorsDirectives._
 import ch.megard.akka.http.cors.CorsSettings
 import com.azavea.rf.api.aoi.AoiRoutes
@@ -63,7 +62,7 @@ trait Router extends HealthCheckRoutes
     } ~
     pathPrefix("api") {
       pathPrefix("projects") { projectRoutes } ~
-      pathPrefix("aoi") { aoiRoutes } ~
+      pathPrefix("areas-of-interest") { aoiRoutes } ~
       pathPrefix("images") { imageRoutes } ~
       pathPrefix("organizations") { organizationRoutes } ~
       pathPrefix("scenes") { sceneRoutes } ~

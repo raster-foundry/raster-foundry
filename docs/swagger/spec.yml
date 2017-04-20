@@ -669,7 +669,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
-  /projects/{uuid}/aoi/:
+  /projects/{uuid}/areas-of-interest/:
     get:
       summary: Get all Areas of Interest for this project.
       tags:
@@ -916,7 +916,7 @@ paths:
         204:
           description: Successfully updated order of scenes in project
 
-  /aoi/:
+  /areas-of-interest/:
     get:
       summary: Get all AOIs the user is authorized to view.
       tags:
@@ -931,7 +931,7 @@ paths:
           schema:
             $ref: '#/definitions/AoiPaginated'
 
-  /aoi/{uuid}/:
+  /areas-of-interest/{uuid}/:
     get:
       summary: Get a requested Area of Interest.
       parameters:

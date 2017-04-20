@@ -44,15 +44,15 @@ class AoiSpec extends WordSpec
 
   "/api/aoi/" should {
     "require authentication" in {
-      Get("/api/aoi/") ~> baseRoutes ~> check { reject }
+      Get("/api/areas-of-interest/") ~> baseRoutes ~> check { reject }
 
-      Get("/api/aoi/").withHeaders(List(authHeader)) ~> baseRoutes ~> check {
+      Get("/api/areas-of-interest/").withHeaders(List(authHeader)) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[AOI]].count shouldBe 0
       }
     }
   }
 
-  "/api/projects/{uuid}/aoi/"  should {
+  "/api/projects/{uuid}/areas-of-interest/"  should {
     "create an AOI successfully" in {
 
       /* Create a Project first, then an AOI associated with it. */
@@ -67,7 +67,7 @@ class AoiSpec extends WordSpec
         projectId = responseAs[Project].id.toString
       }
 
-      Post(s"/api/projects/${projectId}/aoi/").withHeadersAndEntity(
+      Post(s"/api/projects/${projectId}/areas-of-interest/").withHeadersAndEntity(
         List(authHeader),
         HttpEntity(ContentTypes.`application/json`, aoi.asJson.noSpaces)
       ) ~> baseRoutes ~> check {
@@ -76,17 +76,17 @@ class AoiSpec extends WordSpec
     }
 
     "read a written AOI" in {
-      Get(s"/api/projects/${projectId}/aoi/").withHeaders(List(authHeader)) ~> baseRoutes ~> check {
+      Get(s"/api/projects/${projectId}/areas-of-interest/").withHeaders(List(authHeader)) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[AOI]].count shouldBe 1
       }
 
-      Get(s"/api/aoi/${aoiId}").withHeaders(List(authHeader)) ~> baseRoutes ~> check {
+      Get(s"/api/areas-of-interest/${aoiId}").withHeaders(List(authHeader)) ~> baseRoutes ~> check {
         responseAs[AOI]
       }
     }
 
     "update a written AOI" in {
-      Put(s"/api/aoi/${aoiId}").withHeadersAndEntity(
+      Put(s"/api/areas-of-interest/${aoiId}").withHeadersAndEntity(
         List(authHeader),
         HttpEntity(ContentTypes.`application/json`, aoi.asJson.noSpaces)
       ) ~> baseRoutes ~> check {

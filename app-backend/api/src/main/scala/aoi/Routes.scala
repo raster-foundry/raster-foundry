@@ -57,7 +57,6 @@ trait AoiRoutes extends Authentication
     }
   }
 
-  // TODO: User Permissions?
   def deleteAOI(id: UUID): Route = authenticate { user =>
     onSuccess(AOIs.deleteAOI(id, user)) {
       completeSingleOrNotFound
