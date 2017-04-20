@@ -17,7 +17,8 @@ import com.azavea.rf.database.tables._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.api.scene._
 import com.azavea.rf.api.utils.Config
-import com.azavea.rf.api.{DBSpec, Router}
+import com.azavea.rf.api.Router
+import com.azavea.rf.common._
 
 import io.circe._
 import io.circe.syntax._

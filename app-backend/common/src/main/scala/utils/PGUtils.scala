@@ -1,4 +1,4 @@
-package com.azavea.rf.api.utils
+package com.azavea.rf.common.utils
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
