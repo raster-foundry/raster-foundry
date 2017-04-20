@@ -1,8 +1,12 @@
 <div class="container column-stretch dashboard">
   <div class="row content stack-sm">
-    <div class="column-8">
+    <div class="column-9">
       <div class="library-header">
         <h1 class="h3"><i class="icon-project"></i>Projects</h1>
+        <div class="flex-fill"></div>
+        <a class="btn btn-primary" ng-click="$ctrl.createNewProject()">
+          New project
+        </a>
       </div>
       <div ng-show="$ctrl.loading">
         <span class="list-placeholder h3">
@@ -26,20 +30,10 @@
         </rf-call-to-action-item>
       </div>
       <div ng-if="!$ctrl.loading && $ctrl.projectList.length > 0">
-        <div class="proj-control-row">
-          <div class="form-group all-in-one">
-            <label for="search"><i class="icon-search"></i></label>
-            <input id="search" type="text" class="form-control"
-                   placeholder="Search Projects" ng-model="$ctrl.projectSearchString">
-          </div>
-          <a class="btn btn-primary btn-large" ng-click="$ctrl.createNewProject()">
-            New project
-          </a>
-        </div>
         <div class="list-group">
           <rf-project-item
               project="project"
-              ng-repeat="project in $ctrl.projectList 
+              ng-repeat="project in $ctrl.projectList
                          | filter: {name: $ctrl.projectSearchString}
                          track by project.id">
           </rf-project-item>
@@ -70,18 +64,20 @@
         </div>
       </div>
     </div>
-    <div class="column-4">
+    <div class="column-3">
       <div class="content">
-        <h5>What is a project?</h5>
-        <p class="font-size-small">
-          A project is a collection of scenes from many different sources where you can then run color corrections and mosaic into a basemap.
-        </p>
-        <h5>Are my projects public?</h5>
-        <p class="font-size-small">Your projects can only be seen by you.</p>
-        <h5>How many projects can I have?</h5>
-        <p class="font-size-small">You have an unlimited number of projects.</p>
-        <h5>Do projects have scene size limits?</h5>
-        <p class="font-size-small">Nope. Your projects can have as many scenes as you need.</p>
+        <section>
+          <h5>What is a project?</h5>
+          <p class="font-size-small">
+            A project is a collection of scenes from many different sources where you can then run color corrections and mosaic into a basemap.
+          </p>
+          <h5>Are my projects public?</h5>
+          <p class="font-size-small">Your projects can only be seen by you.</p>
+          <h5>How many projects can I have?</h5>
+          <p class="font-size-small">You have an unlimited number of projects.</p>
+          <h5>Do projects have scene size limits?</h5>
+          <p class="font-size-small">Nope. Your projects can have as many scenes as you need.</p>
+        </section>
       </div>
     </div>
   </div>

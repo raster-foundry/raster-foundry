@@ -3,33 +3,9 @@
     <button class="btn" ui-sref="projects.edit"><i class="icon-caret-left"></i>Project</button>
     <h5 class="sidebar-title">Color mode</h5>
   </div>
-  <ul class="sidebar-list">
-    <li class="header">
-      <span>
-        Use a preconfigured color mode or define your own in <strong>custom</strong>.
-      </span>
-      <button type="button"
-              class="btn btn-primary fixedwidth"
-              disabled>
-        Custom
-      </button>
-    </li>
-  </ul>
 </div>
 <div class="sidebar-scrollable">
   <div class="list-group">
-    <div class="list-group-item">
-      <div style="flex-direction: row;">
-        <span title="Custom Configuration"><strong>Custom Configuration</strong></span>
-        <br>
-        <span>Color mode defined via the Custom interface above</span>
-      </div>
-      <div class="list-group-right">
-        <button class="btn btn-square" disabled>
-          <i class="icon-plus"></i>
-        </button>
-      </div>
-    </div>
     <div class="list-group-item"
          ng-repeat="(key, composite) in $ctrl.$parent.unifiedComposites track by $index">
       <div style="flex-direction: row;">
