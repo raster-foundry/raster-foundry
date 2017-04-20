@@ -11,7 +11,8 @@ import org.scalatest.{Matchers, WordSpec}
 import com.azavea.rf.datamodel._
 import com.azavea.rf.api.scene._
 import com.azavea.rf.api.utils.Config
-import com.azavea.rf.api.{AuthUtils, DBSpec, Router}
+import com.azavea.rf.api._
+import com.azavea.rf.common._
 
 import io.circe._
 import io.circe.parser._

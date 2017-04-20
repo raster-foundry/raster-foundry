@@ -10,7 +10,8 @@ import concurrent.duration._
 
 import com.azavea.rf.datamodel._
 import com.azavea.rf.api.utils.Config
-import com.azavea.rf.api.{DBSpec, Router, AuthUtils}
+import com.azavea.rf.api._
+import com.azavea.rf.common._
 
 import io.circe._
 import io.circe.syntax._
