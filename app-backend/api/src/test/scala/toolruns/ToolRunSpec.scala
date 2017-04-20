@@ -8,7 +8,8 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import com.azavea.rf.datamodel._
 import com.azavea.rf.api.utils.Config
-import com.azavea.rf.api.{AuthUtils, DBSpec, Router}
+import com.azavea.rf.api._
+import com.azavea.rf.common._
 import concurrent.duration._
 import org.scalatest.{Matchers, WordSpec}
 
