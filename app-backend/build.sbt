@@ -175,6 +175,10 @@ lazy val batch = Project("batch", file("batch"))
       Dependencies.scopt
     )
   })
+  .settings(assemblyShadeRules in assembly := Seq(
+      ShadeRule.rename("shapeless.**" -> "com.azavea.shaded.shapeless.@1").inAll
+    )
+  )
 
 import io.gatling.sbt.GatlingPlugin
 lazy val tile = Project("tile", file("tile"))
