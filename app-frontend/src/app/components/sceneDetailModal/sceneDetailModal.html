@@ -1,0 +1,58 @@
+<div class="scene-detail-modal-body">
+  <div class="content-row">
+    <div class="scene-metadata text-left">
+      <div class="scene-metadata-fixed">
+        <button type="button" class="close" aria-label="Close" ng-click="$ctrl.dismiss()">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <p>
+        <strong class="color-dark">{{$ctrl.scene.name}}</strong><br>
+          {{$ctrl.datasourceLoaded ? $ctrl.datasource.name : 'Loading datasource'}}
+        </p>
+      </div>
+      <div class="scene-metadata-scrollable">
+        <h5 class="color-dark">Scene properties</h5>
+        <dl class="meta-list">
+          <dt ng-repeat-start="(field, value) in $ctrl.scene.filterFields">
+            {{field}}
+          </dt>
+          <dd ng-repeat-end>{{value}}</dd>
+          <dt ng-if-start="$ctrl.scene.createdAt">Created Date</dt>
+          <dd ng-if-end>{{$ctrl.scene.createdAt | date}}</dd>
+          <dt ng-if-start="$ctrl.scene.modifiedAt">Modified Date</dt>
+          <dd ng-if-end>{{$ctrl.scene.modifiedAt | date}}</dd>
+          <dt ng-if-start="$ctrl.scene.datasource">Datasource</dt>
+          <dd ng-if-end>{{$ctrl.scene.datasource}}</dd>
+          <dt>Visiblity</dt>
+          <dd>{{$ctrl.scene.visibility}}</dd>
+          <dt ng-repeat-start="(field, value) in $ctrl.scene.statusFields">
+            {{field}}
+          </dt>
+          <dd ng-repeat-end>{{value}}</dd>
+        </dl>
+        <h5 class="color-dark">Scene metadata</h5>
+        <dl class="meta-list">
+          <dt ng-repeat-start="(metaKey, metaVal) in $ctrl.scene.sceneMetadata">
+            {{metaKey}}
+          </dt>
+          <dd ng-repeat-end>{{metaVal}}</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="scene-preview-container">
+      <rf-map-container map-id="scene-preview-map">
+      </rf-map-container>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn pull-left"
+            ng-click="$ctrl.closeWithData(1)">
+      Done
+    </button>
+    <button type="button" class="btn btn-default pull-right"
+            ng-click="$ctrl.openDownloadModal()">
+      <i class="icon-download"></i> Download
+    </button>
+  </div>
+</div>
