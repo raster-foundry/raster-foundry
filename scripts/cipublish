@@ -33,21 +33,11 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                       -f "${DIR}/../docker-compose.test.yml"\
                       build app-migrations
 
-            echo "Building batch JAR"
-            docker-compose \
-                run --rm --no-deps api-server batch/clean
-            docker-compose \
-                run --rm --no-deps api-server batch/assembly
-
             echo "Building application JAR"
-            docker-compose \
-                run --rm --no-deps api-server api/clean
             docker-compose \
                 run --rm --no-deps api-server api/assembly
 
             echo "Building tile server JAR"
-            docker-compose \
-                run --rm --no-deps tile-server tile/clean
             docker-compose \
                 run --rm --no-deps tile-server tile/assembly
 

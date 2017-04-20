@@ -41,3 +41,4 @@ WORKDIR ${AIRFLOW_HOME}
 
 COPY usr/local/airflow/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
 COPY dags/ /opt/raster-foundry/app-tasks/dags/
+COPY jars/ /opt/raster-foundry/jars/

@@ -97,6 +97,7 @@ services:
       - ./app-tasks/dags/:/opt/raster-foundry/app-tasks/dags/
       - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
       - ./app-tasks/rf/src/rf/:/usr/local/bin/rf/
+      - ./app-backend/batch/target/scala-2.11/rf-batch.jar:/opt/raster-foundry/jars/rf-batch.jar
       - $HOME/.aws:/var/lib/airflow/.aws:ro
     build:
       context: ./app-tasks
