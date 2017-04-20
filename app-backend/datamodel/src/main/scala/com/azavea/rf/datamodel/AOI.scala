@@ -35,11 +35,11 @@ object AOI {
 
   def create = Create.apply _
 
-  case class Create(org: UUID, area: Projected[MultiPolygon], filters: Json) {
+  case class Create(organizationId: UUID, area: Projected[MultiPolygon], filters: Json) {
     def toAOI(userId: String): AOI = {
       val now = new Timestamp((new Date()).getTime)
 
-      AOI(UUID.randomUUID, now, now, org, userId, userId, area, filters)
+      AOI(UUID.randomUUID, now, now, organizationId, userId, userId, area, filters)
     }
   }
 }

@@ -668,6 +668,43 @@ paths:
           description: The UUID parameter does not refer to a project or the user does not have access to the project it refers to
           schema:
             $ref: '#/definitions/Error'
+
+  /projects/{uuid}/aoi/:
+    get:
+      summary: Get all Areas of Interest for this project.
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+      responses:
+        200:
+          description: Json summary of the filters and Polygons that make up AOIs for the given project.
+          schema:
+            $ref: '#/definitions/AoiPaginated'
+
+    post:
+      summary: Create an Area of Interest for this project.
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - name: aoi
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/AOI'
+      responses:
+        201:
+          description: Area of Interest created.
+          schema:
+            $ref: '#/definitions/AOI'
+        default:
+          description: Unexpected error.
+          schema:
+            $ref: '#/definitions/Error'
+
   /projects/{uuid}/scenes/:
     x-resource: Projects
     get:
@@ -812,10 +849,8 @@ paths:
             $ref: '#/definitions/CombinedSceneCorrectionParams'
       responses:
         200:
-          description: |
-            Successfully updated all scenes\' color correction parameters
-        
-      
+          description: "Successfully updated all scenes' color correction parameters"
+
   /projects/{uuid}/mosaic/{uuid2}:
     x-resource: Projects
     get:
@@ -867,6 +902,68 @@ paths:
       responses:
         204:
           description: Successfully updated order of scenes in project
+
+  /aoi/:
+    get:
+      summary: Get all AOIs the user is authorized to view.
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/organization'
+      responses:
+        200:
+          description: A paginated list of all AOIs the user is authorized to view.
+          schema:
+            $ref: '#/definitions/AoiPaginated'
+
+  /aoi/{uuid}/:
+    get:
+      summary: Get a requested Area of Interest.
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: "Json summary of the given AOI's filters and Polygons."
+          schema:
+            $ref: '#/definitions/AOI'
+    put:
+      summary: Update an Area of Interest.
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - name: aoi
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/AOI'
+      responses:
+        204:
+          description: Update successful.
+        404:
+          description: The UUID parameter does not refer to a project or the user does not have access to the project it refers to.
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error.
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Delete a project.
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Deletion successful.
+        404:
+          description: The UUID parameter does not refer to a project or the user does not have access to the project it refers to.
+          schema:
+            $ref: '#/definitions/Error'
+
   /map-tokens/:
     x-resource: Tokens
     get:
@@ -1426,7 +1523,7 @@ paths:
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'  
+            $ref: '#/definitions/Error'
   /exports/{uuid}/:
     x-resource: Exports
     get:
@@ -1893,6 +1990,16 @@ definitions:
         format: uuid
       colorCorrection:
         $ref: '#/definitions/ColorCorrection'
+  AOI:
+    type: object
+    properties:
+      organizationId:
+        type: string
+        format: uuid
+      area:
+        type: object
+      filters:
+        $ref: '#/definitions/CombinedSceneQueryParams'
   ColorCorrection:
     type: object
     properties:
@@ -2361,6 +2468,15 @@ definitions:
           type: array
           items:
             $ref: '#/definitions/Project'
+  AoiPaginated:
+    allOf:
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/AOI'
   ImagePaginated:
     allOf:
     - $ref: '#/definitions/PaginatedResponse'
@@ -2791,7 +2907,7 @@ definitions:
         format: uuid
       params:
         $ref: '#/definitions/ColorCorrection'
-          
+
   CombinedSceneCorrectionParams:
     type: array
     description: Combined color correction parameters for multiple scenes
@@ -2863,7 +2979,7 @@ definitions:
         results:
           type: array
           items:
-            $ref: '#/definitions/Export'  
+            $ref: '#/definitions/Export'
   ExportOptions:
     type: object
     description: export params
@@ -2873,7 +2989,7 @@ definitions:
         description: bands in the exported geotiffs
         items:
           type: integer
-      rasterSize: 
+      rasterSize:
         type: integer
         description: desired tiff size after export
       crs:
@@ -2929,11 +3045,11 @@ definitions:
             type: string
             format: uuid
           colorCorrections:
-            $ref: '#/definitions/ColorCorrection'          
+            $ref: '#/definitions/ColorCorrection'
   OutputExportDefinition:
     type: object
-    properties:        
-      rasterSize: 
+    properties:
+      rasterSize:
         type: integer
         description: desired tiff size after export
       crs:
