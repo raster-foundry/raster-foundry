@@ -9,13 +9,21 @@ import java.net.URI
 import java.util.UUID
 
 
+/** The type [[Interpreter.Interpreted]] is either a successfully interpreted AST
+  *  or else a list of all the failures the Interpreter runs into. Those errors are
+  *  instances of InterpreterError.
+  */
 sealed trait InterpreterError {
   val id: UUID
   def repr: String
 }
+
+/** An unbound parameter encountered during evaluation  */
 case class MissingParameter(id: UUID) extends InterpreterError {
   def repr = s"Unbound parameter encountered, unable to evaluate"
 }
+
+/** An error encountered when a bound parameter's source can't be resolved */
 case class RasterRetrievalError(id: UUID, refId: UUID) extends InterpreterError {
   def repr = s"Unable to retrieve raster for $refId"
 }
@@ -25,17 +33,6 @@ object InterpreterError {
     new Encoder[InterpreterError] {
       final def apply(err: InterpreterError): Json = JsonObject.fromMap {
         Map("node" -> err.id.asJson, "reason" -> err.repr.asJson)
-      }.asJson
-    }
-}
-
-case class InterpreterException(errs: NonEmptyList[InterpreterError]) extends Exception
-
-object InterpreterException {
-  implicit val encodeErrorList: Encoder[InterpreterException] =
-    new Encoder[InterpreterException] {
-      final def apply(exception: InterpreterException): Json = JsonObject.fromMap {
-        Map("Errors" -> exception.errs.toList.asJson)
       }.asJson
     }
 }
