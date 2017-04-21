@@ -406,3 +406,7 @@ ob-daterangepicker {
     background: #fafafa;
   }
 }
+
+.list-group-item.is-disabled {
+  opacity: 0.5;
+}

@@ -1,4 +1,4 @@
-<div class="list-group-item has-action">
+<div class="list-group-item has-action {{$ctrl.isDisabled ? 'is-disabled' : ''}}">
   <div ng-if="$ctrl.isDraggable" ui-tree-handle>
     <i class="icon-gripper"></i>
   </div>
@@ -17,7 +17,7 @@
   <div class="list-group-right">
     <button class="btn btn-square"
             ng-click="$ctrl.toggleSelected($event)"
-            ng-if="$ctrl.isSelectable"
+            ng-if="$ctrl.isSelectable && !$ctrl.isDisabled"
             ng-class="{'btn-secondary': $ctrl.selectedStatus}">
       <i ng-class="{
                    'icon-plus': !$ctrl.selectedStatus,
