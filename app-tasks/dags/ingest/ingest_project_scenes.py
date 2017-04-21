@@ -40,7 +40,7 @@ dag = DAG(
 batch_job_definition = os.getenv('BATCH_INGEST_JOB_NAME')
 batch_job_queue = os.getenv('BATCH_INGEST_JOB_QUEUE')
 hosted_zone_id = os.getenv('HOSTED_ZONE_ID')
-jar_path = os.getenv('BATCH_JAR_PATH', 'rf-batch-4b892ca.jar')
+jar_path = os.getenv('BATCH_JAR_PATH', 'rf-batch-ba1b872.jar')
 
 
 ################################
@@ -88,7 +88,7 @@ def execute_ingest_emr_job(ingest_s3_uri, ingest_def_id, cluster_id):
         'ActionOnFailure': 'CONTINUE',
         'Name': 'ingest-{}'.format(ingest_def_id),
         'HadoopJarStep': {
-            'Args': ['spark-submit',
+            'Args': ['/usr/bin/spark-submit',
                      '--master',
                      'yarn',
                      '--deploy-mode',
