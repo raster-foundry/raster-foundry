@@ -3019,16 +3019,13 @@ definitions:
     properties:
       exportStatus:
         type: string
-        description: Status of upload
+        description: Status of export
         enum:
-          - CREATED
+          - NOTEXPORTED
+          - TOBEEXPORTED
           - EXPORTING
           - EXPORTED
-          - QUEUED
-          - PROCESSING
-          - COMPLETE
           - FAILED
-          - ABORTED
       input:
         $ref: '#/definitions/InputExportDefinition'
       output:
