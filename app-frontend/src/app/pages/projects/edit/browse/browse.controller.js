@@ -484,7 +484,7 @@ export default class ProjectAddScenesBrowseController {
     }
 
     isInProject(scene) {
-        if (this.projectSceneIds) {
+        if (this.projectScenesReady) {
             const index = this.projectSceneIds.indexOf(scene.id);
             return index >= 0;
         }
