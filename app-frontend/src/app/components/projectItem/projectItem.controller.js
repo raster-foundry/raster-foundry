@@ -1,8 +1,9 @@
 export default class ProjectItemController {
-    constructor($scope, $attrs, projectService, mapService, mapUtilsService, authService,
+    constructor($scope, $state, $attrs, projectService, mapService, mapUtilsService, authService,
                 $uibModal) {
         'ngInject';
         this.$scope = $scope;
+        this.$state = $state;
         this.$attrs = $attrs;
         this.projectService = projectService;
         this.mapService = mapService;
@@ -87,9 +88,9 @@ export default class ProjectItemController {
         });
         this.activeModal.result.then(
             () => {
-                this.projectService.deleteProject(this.projectId).then(
+                this.projectService.deleteProject(this.project.id).then(
                     () => {
-                        this.$state.go('^.^.list');
+                        this.$state.reload();
                     },
                     (err) => {
                         this.$log.debug('error deleting project', err);
