@@ -1,0 +1,6 @@
+/python/**/*.pyc
+/**/*.egg
+/**/*.egg-info
+/**/eggs
+/**/.eggs
+/**/__pycache__
