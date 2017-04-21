@@ -19,16 +19,16 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     if [ "${1:-}" = "--help" ]; then
         usage
     else
-        if [[ -n "${RF_DOCS_BUCKET}" ]]; then 
+        if [[ -n "${RF_DOCS_BUCKET}" ]]; then
             if [ "${1:-}" = "--dryrun" ]; then
                 echo "Syncing docs to ${RF_DOCS_BUCKET} (dryrun)"
                 aws s3 cp --dryrun \
-                        "${DIR}/../docs/swagger/spec.yml" \
+                        "${DIR}/../app-clients/spec.yml" \
                         "s3://${RF_DOCS_BUCKET}/spec"
             else
                 echo "Syncing docs to ${RF_DOCS_BUCKET}"
                 aws s3 cp \
-                        "${DIR}/../docs/swagger/spec.yml" \
+                        "${DIR}/../app-clients/spec.yml" \
                         "s3://${RF_DOCS_BUCKET}/spec"
             fi
         else
