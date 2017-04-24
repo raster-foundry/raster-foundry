@@ -8,15 +8,7 @@ const rfSceneItem = {
     bindings: {
         scene: '<',
         selected: '&',
-<<<<<<< HEAD
-<<<<<<< HEAD
         isDisabled: '<',
-=======
-        isInProject: '<',
->>>>>>> Disallow adding scenes already added to project
-=======
-        isDisabled: '<',
->>>>>>> Cleanup
         onSelect: '&',
         onAction: '&',
         onView: '&',
