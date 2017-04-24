@@ -1,15 +1,15 @@
 package com.azavea.rf.tile
 
 import com.azavea.rf.tile.tool.TileSources
-import com.azavea.rf.datamodel.Tool
-import com.azavea.rf.tool.op.Interpreter
+import com.azavea.rf.datamodel.{Tool, ToolRun}
+import com.azavea.rf.tool.eval._
+import com.azavea.rf.tool.params._
 import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.rf.common.cache._
 import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables._
 
-import geotrellis.raster.op.Op
 import geotrellis.raster._
 import geotrellis.raster.histogram._
 import geotrellis.spark._
@@ -89,28 +89,22 @@ object LayerCache extends Config with LazyLogging {
       }}
     }
 
-  def modelLayerGlobalHistogram(tool: Tool.WithRelated, nodeId: Option[UUID]): OptionT[Future, Histogram[Double]] =
-    histogramCache.cachingOptionT(s"model-${tool.id}-$nodeId") { implicit ec =>
-      val parsedAst = tool.definition.as[MapAlgebraAST] match {
-        case Right(ast) => ast
-        case Left(failure) => throw failure
-      }
-
-      val subAst: Option[MapAlgebraAST] = nodeId match {
-        case Some(id) => parsedAst.find(id)
-        case None => Some(parsedAst)
-      }
-
-      OptionT(subAst match {
-        case Some(ast) =>
-          Interpreter.interpretGlobal(ast, TileSources.cachedGlobalSource).map({ validatedOp =>
-            for {
-              op <- validatedOp.toOption
-              tile <- op.toTile(DoubleCellType)
-            } yield StreamingHistogram.fromTile(tile)
-          })
-        case None => Future.successful { None }
-      })
+  def modelLayerGlobalHistogram(toolRun: ToolRun, tool: Tool.WithRelated, nodeId: Option[UUID]): OptionT[Future, Histogram[Double]] =
+    histogramCache.cachingOptionT(s"model-${toolRun.id}-$nodeId") { implicit ec =>
+      for {
+        params <- OptionT.fromOption[Future](toolRun.executionParameters.as[EvalParams] match {
+                    case Right(toolRunParams) => Some(toolRunParams)
+                    case Left(failure) => throw failure
+                  })
+        ast    <- OptionT.fromOption[Future](tool.definition.as[MapAlgebraAST] match {
+                    case Right(entireAST) =>
+                      nodeId.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
+                    case Left(failure) =>
+                      throw failure
+                  })
+        lztile <- OptionT(Interpreter.interpretGlobal(ast, params, TileSources.cachedGlobalSource).map(_.toOption))
+        tile   <- OptionT.fromOption[Future](lztile.evaluateDouble)
+      } yield StreamingHistogram.fromTile(tile)
     }
 
   def layerTile(layerId: UUID, zoom: Int, key: SpatialKey): OptionT[Future, MultibandTile] =
