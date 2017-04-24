@@ -1,4 +1,4 @@
-package com.azavea.rf.tool.op
+package com.azavea.rf.tool.eval
 
 import io.circe._
 import io.circe.syntax._

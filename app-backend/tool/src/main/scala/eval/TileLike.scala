@@ -1,4 +1,4 @@
-package geotrellis.raster.op
+package com.azavea.rf.tool.eval
 
 import geotrellis.macros._
 import spire.syntax.cfor._
