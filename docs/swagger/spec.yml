@@ -3024,14 +3024,11 @@ definitions:
         type: string
         description: Status of upload
         enum:
-          - CREATED
+          - NOTEXPORTED
+          - TOBEEXPORTED
           - EXPORTING
           - EXPORTED
-          - QUEUED
-          - PROCESSING
-          - COMPLETE
           - FAILED
-          - ABORTED
       input:
         $ref: '#/definitions/InputExportDefinition'
       output:
