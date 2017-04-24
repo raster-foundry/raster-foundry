@@ -36,6 +36,7 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
   val createdBy: Rep[String] = column[String]("created_by", O.Length(255,varying=true))
   val modifiedAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("modified_at")
   val modifiedBy: Rep[String] = column[String]("modified_by", O.Length(255,varying=true))
+  val owner: Rep[String] = column[String]("owner", O.Length(255,varying=true))
   val organizationId: Rep[java.util.UUID] = column[java.util.UUID]("organization_id")
   val ingestSizeBytes: Rep[Int] = column[Int]("ingest_size_bytes")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
@@ -60,6 +61,7 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
   lazy val createdByUserFK = foreignKey("scenes_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val modifiedByUserFK = foreignKey("scenes_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val datasourceFk = foreignKey("scenes_datasource_fkey", datasource, Datasources)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val ownerUserFK = foreignKey("scenes_owner_fkey", owner, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 
   /** Uniqueness Index over (name,organizationId,datasource) (database name scene_name_org_datasource) */
   val index1 = index("scene_name_org_datasource", (name, organizationId, datasource), unique=true)
@@ -69,6 +71,7 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
     java.sql.Timestamp,
     String,
     java.sql.Timestamp,
+    String,
     String,
     UUID,
     Int,
@@ -92,19 +95,20 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
       sceneTuple._3, // createdBy
       sceneTuple._4, // modifiedAt
       sceneTuple._5, // modifiedBy
-      sceneTuple._6, // organizationId
-      sceneTuple._7, // ingestSizeBytes
-      sceneTuple._8, // visibility
-      sceneTuple._9, // tags
-      sceneTuple._10, // datasource
-      sceneTuple._11, // sceneMetadata
-      sceneTuple._12, // name
-      sceneTuple._13, // tileFootprint
-      sceneTuple._14, // dataFootprint
-      sceneTuple._15, // metadataFiles
-      sceneTuple._16, // ingestLocation
-      SceneFilterFields.tupled.apply(sceneTuple._17), // filterFields
-      SceneStatusFields.tupled.apply(sceneTuple._18) // statusFields
+      sceneTuple._6, // owner
+      sceneTuple._7, // organizationId
+      sceneTuple._8, // ingestSizeBytes
+      sceneTuple._9, // visibility
+      sceneTuple._10, // tags
+      sceneTuple._11, // datasource
+      sceneTuple._12, // sceneMetadata
+      sceneTuple._13, // name
+      sceneTuple._14, // tileFootprint
+      sceneTuple._15, // dataFootprint
+      sceneTuple._16, // metadataFiles
+      sceneTuple._17, // ingestLocation
+      SceneFilterFields.tupled.apply(sceneTuple._18), // filterFields
+      SceneStatusFields.tupled.apply(sceneTuple._19) // statusFields
     )
   }
 
@@ -117,6 +121,7 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
         scene.createdBy,
         scene.modifiedAt,
         scene.modifiedBy,
+        scene.owner,
         scene.organizationId,
         scene.ingestSizeBytes,
         scene.visibility,
@@ -142,6 +147,7 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
     createdBy,
     modifiedAt,
     modifiedBy,
+    owner,
     organizationId,
     ingestSizeBytes,
     visibility,
@@ -201,9 +207,9 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
   def insertScene(sceneCreate: Scene.Create, user: User)
                  (implicit database: DB): Future[Scene.WithRelated] = {
 
-    val scene = sceneCreate.toScene(user.id)
+    val scene = sceneCreate.toScene(user)
     val thumbnails = sceneCreate.thumbnails.map(_.toThumbnail(user.id))
-    val imageSeq = (sceneCreate.images map { im: Image.Banded => im.toImage(user.id) }).zipWithIndex
+    val imageSeq = (sceneCreate.images map { im: Image.Banded => im.toImage(user) }).zipWithIndex
     val bandsSeq = imageSeq map { case (im: Image, ind: Int) =>
       sceneCreate.images(ind).bands map { bd => bd.toBand(im.id) }
     }

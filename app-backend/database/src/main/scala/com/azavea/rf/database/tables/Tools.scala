@@ -32,7 +32,7 @@ class Tools(_tableTag: Tag) extends Table[Tool](_tableTag, "tools")
     with VisibilityField
     with TimestampFields
 {
-  def * = (id, createdAt, modifiedAt, createdBy, modifiedBy, organizationId,
+  def * = (id, createdAt, modifiedAt, createdBy, modifiedBy, owner, organizationId,
     title, description, requirements, license, visibility, compatibleDataSources,
     stars, definition) <> (Tool.tupled, Tool.unapply)
 
@@ -41,6 +41,7 @@ class Tools(_tableTag: Tag) extends Table[Tool](_tableTag, "tools")
   val modifiedAt: Rep[Timestamp] = column[Timestamp]("modified_at")
   val createdBy: Rep[String] = column[String]("created_by", O.Length(255, varying = true))
   val modifiedBy: Rep[String] = column[String]("modified_by", O.Length(255, varying = true))
+  val owner: Rep[String] = column[String]("owner", O.Length(255,varying=true))
   val organizationId: Rep[UUID] = column[UUID]("organization_id")
   val title: Rep[String] = column[String]("title", O.Length(255, varying = true))
   val description: Rep[String] = column[String]("description")
@@ -65,6 +66,7 @@ class Tools(_tableTag: Tag) extends Table[Tool](_tableTag, "tools")
     r => r.id,
     onUpdate = ForeignKeyAction.NoAction,
     onDelete = ForeignKeyAction.NoAction)
+  lazy val ownerUserFK = foreignKey("tools_owner_fkey", owner, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 }
 
 object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
@@ -106,6 +108,7 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
         tool.modifiedAt,
         tool.createdBy,
         tool.modifiedBy,
+        tool.owner,
         toolRelationshipJoins.flatMap(_.organization).headOption,
         tool.title,
         tool.description,
@@ -193,11 +196,11 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
     * @param tooltoCreate Tool.Create object to use to create full tool
     * @param userId String user/owner to create a new tool with
     */
-  def insertTool(tooltoCreate: Tool.Create, userId: String)(
+  def insertTool(tooltoCreate: Tool.Create, user: User)(
                   implicit database: DB): Future[Tool.WithRelatedUUIDs] = {
 
     val (tool, toolTagToTools, toolCategoryToTools) = tooltoCreate
-      .toToolWithRelatedTuple(userId)
+      .toToolWithRelatedTuple(user)
 
     val toolInsertAction = Tools.forceInsert(tool)
     val toolTagToToolsInsertAction = ToolTagsToTools.forceInsertAll(toolTagToTools)

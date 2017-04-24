@@ -28,16 +28,18 @@ class ToolTags(_tableTag: Tag)
     with TimestampFields {
 
   def * =
-    (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, tag) <> (ToolTag.tupled, ToolTag.unapply)
+    (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, owner, tag) <> (ToolTag.tupled, ToolTag.unapply)
 
   val id: Rep[UUID] = column[UUID]("id", O.PrimaryKey)
   val createdAt: Rep[Timestamp] = column[Timestamp]("created_at")
   val createdBy: Rep[String] = column[String]("created_by", O.Length(255, varying = true))
   val modifiedAt: Rep[Timestamp] = column[Timestamp]("modified_at")
   val modifiedBy: Rep[String] = column[String]("modified_by", O.Length(255, varying = true))
+  val owner: Rep[String] = column[String]("owner", O.Length(255,varying=true))
   val organizationId: Rep[UUID] = column[UUID]("organization_id")
   val tag: Rep[String] = column[String]("tag")
 
+  lazy val ownerUserFK = foreignKey("tool_tags_owner_fkey", owner, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val organizationsFk =
     foreignKey("tool_tags_organization_id_fkey", organizationId, Organizations)(
       r => r.id,
@@ -96,11 +98,11 @@ object ToolTags extends TableQuery(tag => new ToolTags(tag)) with LazyLogging {
   /** Insert a tool tag given a create case class with a user
     *
     * @param toolTagtoCreate ToolTag.Create object to use to create full tool tag
-    * @param userId           String user/owner to create a new tool tag with
+    * @param user           User user/owner to create a new tool tag with
     */
-  def insertToolTag(toolTagtoCreate: ToolTag.Create, userId: String)(
+  def insertToolTag(toolTagtoCreate: ToolTag.Create, user: User)(
       implicit database: DB): Future[ToolTag] = {
-    val toolTag = toolTagtoCreate.toToolTag(userId)
+    val toolTag = toolTagtoCreate.toToolTag(user)
     val insertAction = ToolTags.forceInsert(toolTag)
 
     logger.debug(s"Inserting Tool Tag -- SQL: ${insertAction.statements.headOption}")

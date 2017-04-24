@@ -22,7 +22,7 @@ class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
     with UserFkVisibleFields
     with TimestampFields
 {
-  def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy,
+  def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, owner,
     rawDataBytes, visibility, filename, sourceuri, scene, imageMetadata,
     resolutionMeters, metadataFiles) <> (Image.tupled, Image.unapply)
 
@@ -32,6 +32,7 @@ class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
   val organizationId: Rep[java.util.UUID] = column[java.util.UUID]("organization_id")
   val createdBy: Rep[String] = column[String]("created_by", O.Length(255,varying=true))
   val modifiedBy: Rep[String] = column[String]("modified_by", O.Length(255,varying=true))
+  val owner: Rep[String] = column[String]("owner", O.Length(255,varying=true))
   val rawDataBytes: Rep[Int] = column[Int]("raw_data_bytes")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
   val filename: Rep[String] = column[String]("filename")
@@ -49,6 +50,7 @@ class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
   lazy val createdByUserFK = foreignKey("images_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   /** Foreign key referencing Users (database name images_modified_by_fkey) */
   lazy val modifiedByUserFK = foreignKey("images_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val ownerUserFK = foreignKey("images_owner_fkey", owner, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 
 }
 
@@ -72,7 +74,7 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
     */
   def insertImage(imageBanded: Image.Banded, user: User)
                  (implicit database: DB): Future[Image.WithRelated] = {
-    val image = imageBanded.toImage(user.id)
+    val image = imageBanded.toImage(user)
     val bands = imageBanded.bands map { _.toBand(image.id)}
     val insertAction = (
       for {
@@ -101,7 +103,7 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
                       .result
                       .headOption
       bandsFetch <- Bands.filter(_.imageId === imageId).result
-    } yield (imageFetch, bandsFetch) 
+    } yield (imageFetch, bandsFetch)
     database.db.run {
       fetchAction
     } map {

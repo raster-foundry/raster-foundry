@@ -99,7 +99,8 @@ class ProjectSpec extends WordSpec
           newProject1.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
-        responseAs[Project]
+        val p = responseAs[Project]
+        p.owner shouldEqual "Default"
       }
 
       Post("/api/projects/").withHeadersAndEntity(
@@ -109,7 +110,8 @@ class ProjectSpec extends WordSpec
           newProject2.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
-        responseAs[Project]
+        val p = responseAs[Project]
+        p.owner shouldEqual "Default"
       }
     }
 

@@ -46,7 +46,7 @@ trait ToolRoutes extends Authentication
   def createTool: Route = authenticate { user =>
     entity(as[Tool.Create]) { newTool =>
       authorize(user.isInRootOrSameOrganizationAs(newTool)) {
-        onSuccess(Tools.insertTool(newTool, user.id)) { tool =>
+        onSuccess(Tools.insertTool(newTool, user)) { tool =>
           complete(StatusCodes.Created, tool)
         }
       }

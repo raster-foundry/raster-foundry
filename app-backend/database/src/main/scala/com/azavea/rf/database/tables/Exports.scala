@@ -2,7 +2,7 @@ package com.azavea.rf.database.tables
 
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
-import com.azavea.rf.database.fields.{OrganizationFkFields, TimestampFields}
+import com.azavea.rf.database.fields._
 import com.azavea.rf.database.query.{ExportQueryParameters, ListQueryResult}
 import com.azavea.rf.datamodel._
 
@@ -26,8 +26,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class Exports(_tableTag: Tag) extends Table[Export](_tableTag, "exports")
   with TimestampFields
   with OrganizationFkFields
+  with UserFkFields
 {
-  def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, organizationId, projectId, exportStatus,
+  def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, owner, organizationId, projectId, exportStatus,
     exportType, visibility, exportOptions) <> (
     Export.tupled, Export.unapply
   )
@@ -37,6 +38,7 @@ class Exports(_tableTag: Tag) extends Table[Export](_tableTag, "exports")
   val createdBy: Rep[String] = column[String]("created_by", O.Length(255,varying=true))
   val modifiedAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("modified_at")
   val modifiedBy: Rep[String] = column[String]("modified_by", O.Length(255,varying=true))
+  val owner: Rep[String] = column[String]("owner", O.Length(255,varying=true))
   val organizationId: Rep[java.util.UUID] = column[java.util.UUID]("organization_id")
   val projectId: Rep[java.util.UUID] = column[java.util.UUID]("project_id", O.PrimaryKey)
   val exportStatus: Rep[ExportStatus] = column[ExportStatus]("export_status")
@@ -48,6 +50,7 @@ class Exports(_tableTag: Tag) extends Table[Export](_tableTag, "exports")
   lazy val organizationsFk = foreignKey("exports_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val createdByUserFK = foreignKey("exports_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val modifiedByUserFK = foreignKey("exports_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val ownerUserFK = foreignKey("exports_owner_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 }
 
 object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
@@ -84,7 +87,7 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
     * @param user               User to create a new export with
     */
   def insertExport(exportToCreate: Export.Create, user: User) = {
-    val export = exportToCreate.toExport(user.id)
+    val export = exportToCreate.toExport(user)
     (Exports returning Exports).forceInsert(export)
   }
 

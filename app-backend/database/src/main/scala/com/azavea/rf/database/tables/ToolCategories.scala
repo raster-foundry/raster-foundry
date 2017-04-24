@@ -27,7 +27,6 @@ class ToolCategories(_tableTag: Tag)
   extends Table[ToolCategory](_tableTag, "tool_categories")
     with ToolCategoryFields
     with LazyLogging
-    with UserFkFields
     with TimestampFields {
 
   def * =

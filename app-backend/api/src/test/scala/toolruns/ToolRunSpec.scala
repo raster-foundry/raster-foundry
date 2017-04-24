@@ -38,7 +38,8 @@ class ToolRunSpec extends WordSpec
     publicOrgId,
     projectId,
     toolId,
-    ().asJson
+    ().asJson,
+    None: Option[String]
   )
 
   val baseRoutes = routes
@@ -85,7 +86,8 @@ class ToolRunSpec extends WordSpec
           newToolRun.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
-        responseAs[ToolRun]
+        val tr = responseAs[ToolRun]
+        tr.owner shouldEqual "Default"
       }
     }
 

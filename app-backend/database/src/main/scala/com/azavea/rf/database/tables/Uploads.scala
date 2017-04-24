@@ -25,16 +25,16 @@ class Uploads(_tableTag: Tag) extends Table[Upload](_tableTag, "uploads")
     with TimestampFields
     with OrganizationFkFields
 {
-  def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, organizationId, uploadStatus, fileType,
-    uploadType, files, datasource, metadata, visibility) <> (
-    Upload.tupled, Upload.unapply
-  )
+  def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, owner,
+    organizationId, uploadStatus, fileType, uploadType, files,
+    datasource, metadata, visibility) <> (Upload.tupled, Upload.unapply)
 
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
   val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")
   val createdBy: Rep[String] = column[String]("created_by", O.Length(255,varying=true))
   val modifiedAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("modified_at")
   val modifiedBy: Rep[String] = column[String]("modified_by", O.Length(255,varying=true))
+  val owner: Rep[String] = column[String]("owner", O.Length(255,varying=true))
   val organizationId: Rep[java.util.UUID] = column[java.util.UUID]("organization_id")
   val uploadStatus: Rep[UploadStatus] = column[UploadStatus]("upload_status")
   val fileType: Rep[FileType] = column[FileType]("file_type")
@@ -48,6 +48,7 @@ class Uploads(_tableTag: Tag) extends Table[Upload](_tableTag, "uploads")
   lazy val createdByUserFK = foreignKey("uploads_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val modifiedByUserFK = foreignKey("uploads_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val datasourceFk = foreignKey("scenes_datasource_fkey", datasource, Datasources)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val ownerUserFK = foreignKey("uploads_owner_fkey", owner, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 }
 
 object Uploads extends TableQuery(tag => new Uploads(tag)) with LazyLogging {
@@ -85,7 +86,7 @@ object Uploads extends TableQuery(tag => new Uploads(tag)) with LazyLogging {
     * @param user               User to create a new upload with
     */
   def insertUpload(uploadToCreate: Upload.Create, user: User) = {
-    val upload = uploadToCreate.toUpload(user.id)
+    val upload = uploadToCreate.toUpload(user)
     (Uploads returning Uploads).forceInsert(upload)
   }
 

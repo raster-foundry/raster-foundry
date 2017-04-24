@@ -71,6 +71,7 @@ class ExportSpec extends WordSpec
         val ex = responseAs[Export]
         insertedExport = ex
         exportId = ex.id.toString
+        ex.owner shouldEqual "Default"
       }
     }
   }

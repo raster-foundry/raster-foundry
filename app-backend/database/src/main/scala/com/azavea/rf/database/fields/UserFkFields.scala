@@ -9,7 +9,9 @@ import slick.lifted.ForeignKeyQuery
 trait UserFkFields { self: Table[_] =>
   def createdBy: Rep[String]
   def modifiedBy: Rep[String]
+  def owner: Rep[String]
 
+  def ownerUserFK: ForeignKeyQuery[Users, User]
   def createdByUserFK: ForeignKeyQuery[Users, User]
   def modifiedByUserFK: ForeignKeyQuery[Users, User]
 }

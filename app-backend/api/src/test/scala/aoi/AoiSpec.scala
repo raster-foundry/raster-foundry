@@ -36,7 +36,7 @@ class AoiSpec extends WordSpec
   /* Test data */
   val area: Projected[MultiPolygon] = mpoly.get.copy(srid = 3857)
   val filters: Json = "{}".asJson
-  val aoi = AOI.Create(publicOrgId, area, filters)
+  val aoi = AOI.Create(publicOrgId, area, filters, None: Option[String])
 
   /* Mutable data! Run! */
   var projectId: String = ""
