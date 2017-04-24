@@ -7,6 +7,7 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.exceptions import AirflowException
 from airflow.models import DAG
 import boto3
+import dns.resolver
 
 from rf.utils.io import IngestStatus
 from rf.models import Scene
@@ -49,17 +50,9 @@ jar_path = os.getenv('BATCH_JAR_PATH', 'rf-batch-ba1b872.jar')
 
 @wrap_rollbar
 def get_cluster_id():
-    route53 = boto3.client('route53')
-    record_sets = route53.list_resource_record_sets(
-        HostedZoneId=hosted_zone_id
-    )['ResourceRecordSets']
-    present = [x for x in record_sets if x['Name'] == 'dataproc.rasterfoundry.com.']
-    if not present:
-        logger.error('Could not find dataproc Route 53 record')
-        raise AirflowException('Could not find dataproc Route 53 record')
-    # The cluster id is deep in the object and for some reason is a string surrounded
-    # by double quotes
-    return present[0]['ResourceRecords'][0]['Value'].strip('"')
+    resolver = dns.resolver.Resolver()
+    cluster_id = resolver.query("dataproc.rasterfoundry.com", "TXT")[0]
+    return cluster_id.to_text().strip('"')
 
 
 @wrap_rollbar

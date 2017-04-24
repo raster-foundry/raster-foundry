@@ -10,3 +10,4 @@ pyproj==1.9.5
 ipython==5.1.0
 pyjwt==1.4.2
 rollbar==0.13.11
+dnspython==1.15.0
