@@ -1,6 +1,7 @@
 package com.azavea.rf.tool.eval
 
 import com.azavea.rf.tool.ast._
+import com.azavea.rf.tool.params._
 import com.azavea.rf.tool.ast.MapAlgebraAST._
 
 import geotrellis.raster._
@@ -99,19 +100,20 @@ object Interpreter extends LazyLogging {
     */
   def interpretGlobal(
     ast: MapAlgebraAST,
+    params: EvalParams,
     source: RFMLRaster => Future[Option[Tile]]
   )(implicit ec: ExecutionContext): Future[Interpreted] = {
 
     def eval(ast: MapAlgebraAST): Future[Interpreted] = ast match {
-      case RFMLRasterSource(id, label, None) =>
-        logger.debug(s"case unbound rastersource at $id")
-        Future.successful { Invalid(NonEmptyList.of(MissingParameter(id))) }
-
-      case RFMLRasterSource(id, label, Some(ref)) =>
-        logger.debug(s"case bound rastersource at $id")
-        source(ref).map { maybeTile =>
-          val maybeLT = maybeTile.map(LazyTile.apply)
-          Validated.fromOption(maybeLT, { NonEmptyList.of(RasterRetrievalError(id, ref.id)) })
+      case Source(id, label) =>
+        if (params.sources.isDefinedAt(id)) {
+          val rfmlRaster = params.sources(id)
+          source(rfmlRaster) map { maybeTile =>
+            val maybeLazyTile = maybeTile.map { tile => LazyTile(tile) }
+            Validated.fromOption(maybeLazyTile, { NonEmptyList.of(RasterRetrievalError(id, rfmlRaster.id)) })
+          }
+        } else {
+          Future.successful { Invalid(NonEmptyList.of(MissingParameter(id))) }
         }
 
       // For the exhaustive match
@@ -130,21 +132,22 @@ object Interpreter extends LazyLogging {
     */
   def interpretTMS(
     ast: MapAlgebraAST,
+    params: EvalParams,
     source: (RFMLRaster, Int, Int, Int) => Future[Option[Tile]]
   )(implicit ec: ExecutionContext): (Int, Int, Int) => Future[Interpreted] = {
     // have to parse AST per-request because there is no structure to capture intermediate results
     (z: Int, x: Int, y: Int) => {
 
       def eval(ast: MapAlgebraAST): Future[Interpreted] = ast match {
-        case RFMLRasterSource(id, label, None) =>
-          logger.debug(s"case unbound rastersource at $id")
-          Future.successful { Invalid(NonEmptyList.of(MissingParameter(id))) }
-
-        case RFMLRasterSource(id, label, Some(ref)) =>
-          logger.debug(s"case bound rastersource at $id")
-          source(ref, z, x, y).map { maybeTile =>
-            val maybeLT = maybeTile.map(LazyTile.apply)
-            Validated.fromOption(maybeLT, { NonEmptyList.of(RasterRetrievalError(id, ref.id)) })
+        case Source(id, label) =>
+          if (params.sources.isDefinedAt(id)) {
+            val rfmlRaster = params.sources(id)
+            source(rfmlRaster, z, x, y) map { maybeTile =>
+              val maybeLazyTile = maybeTile.map { tile => LazyTile(tile) }
+              Validated.fromOption(maybeLazyTile, { NonEmptyList.of(RasterRetrievalError(id, rfmlRaster.id)) })
+            }
+          } else {
+            Future.successful { Invalid(NonEmptyList.of(MissingParameter(id))) }
           }
 
         // For the exhaustive match
