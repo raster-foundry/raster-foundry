@@ -24,6 +24,7 @@ import io.circe.generic.JsonCodec
   organizationId: UUID,
   createdBy: String,
   modifiedBy: String,
+  owner: String,
 
   /* Unique fields */
   area: Projected[MultiPolygon],
@@ -37,11 +38,20 @@ object AOI {
   def create = Create.apply _
 
   @JsonCodec
-  case class Create(organizationId: UUID, area: Projected[MultiPolygon], filters: Json) {
-    def toAOI(userId: String): AOI = {
+  case class Create(
+    organizationId: UUID,
+    area: Projected[MultiPolygon],
+    filters: Json,
+    owner: Option[String]) extends OwnerCheck {
+    def toAOI(user: User): AOI = {
       val now = new Timestamp((new Date()).getTime)
 
-      AOI(UUID.randomUUID, now, now, organizationId, userId, userId, area, filters)
+      val ownerId = checkOwner(user, this.owner)
+
+      AOI(
+        UUID.randomUUID, now, now, organizationId,
+        user.id, user.id, ownerId, area, filters
+      )
     }
   }
 }

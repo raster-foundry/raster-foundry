@@ -52,6 +52,7 @@ case class Scene(
   createdBy: String,
   modifiedAt: java.sql.Timestamp,
   modifiedBy: String,
+  owner: String,
   organizationId: UUID,
   ingestSizeBytes: Int,
   visibility: Visibility,
@@ -77,6 +78,7 @@ case class Scene(
     this.createdBy,
     this.modifiedAt,
     this.modifiedBy,
+    this.owner,
     this.organizationId,
     this.ingestSizeBytes,
     this.visibility,
@@ -108,6 +110,7 @@ object Scene {
     datasource: UUID,
     sceneMetadata: Json,
     name: String,
+    owner: Option[String],
     tileFootprint: Option[Projected[Geometry]],
     dataFootprint: Option[Projected[Geometry]],
     metadataFiles: List[String],
@@ -116,15 +119,19 @@ object Scene {
     ingestLocation: Option[String],
     filterFields: SceneFilterFields = new SceneFilterFields(),
     statusFields: SceneStatusFields
-  ) {
-    def toScene(userId: String): Scene = {
+  ) extends OwnerCheck {
+    def toScene(user: User): Scene = {
       val now = new Timestamp((new java.util.Date()).getTime())
+
+      val ownerId = checkOwner(user, this.owner)
+
       Scene(
         id.getOrElse(UUID.randomUUID),
         now, // createdAt
-        userId, // createdBy
+        user.id, // createdBy
         now, // modifiedAt
-        userId, // modifiedBy
+        user.id, // modifiedBy
+        ownerId, // owner
         organizationId,
         ingestSizeBytes,
         visibility,
@@ -149,6 +156,7 @@ object Scene {
     createdBy: String,
     modifiedAt: Timestamp,
     modifiedBy: String,
+    owner: String,
     organizationId: UUID,
     ingestSizeBytes: Int,
     visibility: Visibility,

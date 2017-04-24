@@ -14,6 +14,7 @@ case class Export(
   createdBy: String,
   modifiedAt: Timestamp,
   modifiedBy: String,
+  owner: String,
   organizationId: UUID,
   projectId: UUID,
   exportStatus: ExportStatus,
@@ -35,17 +36,23 @@ object Export {
     exportStatus: ExportStatus,
     exportType: ExportType,
     visibility: Visibility,
+    owner: Option[String],
     exportOptions: Json
-  ) {
-    def toExport(userId: String): Export = {
+  ) extends OwnerCheck {
+
+    def toExport(user: User): Export = {
       val id = UUID.randomUUID()
       val now = new Timestamp((new java.util.Date()).getTime())
+
+      val ownerId = checkOwner(user, this.owner)
+
       Export(
         id = id,
         createdAt = now,
-        createdBy = userId,
+        createdBy = user.id,
         modifiedAt = now,
-        modifiedBy = userId,
+        modifiedBy = user.id,
+        owner = ownerId,
         projectId = this.projectId,
         organizationId = this.organizationId,
         exportStatus = this.exportStatus,

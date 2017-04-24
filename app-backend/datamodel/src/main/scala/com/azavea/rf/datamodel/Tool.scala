@@ -15,6 +15,7 @@ case class Tool(
   modifiedAt: Timestamp,
   createdBy: String,
   modifiedBy: String,
+  owner: String,
   organizationId: UUID,
   title: String,
   description: String,
@@ -32,6 +33,7 @@ case class Tool(
     this.modifiedAt,
     this.createdBy,
     this.modifiedBy,
+    this.owner,
     organization,
     this.title,
     this.description,
@@ -52,6 +54,7 @@ case class Tool(
     this.modifiedAt,
     this.createdBy,
     this.modifiedBy,
+    this.owner,
     this.organizationId,
     this.title,
     this.description,
@@ -81,20 +84,24 @@ object Tool {
     license: String,
     visibility: Visibility,
     compatibleDataSources: List[String],
+    owner: Option[String],
     stars: Float,
     definition: Json,
     tags: Seq[UUID],
     categories: Seq[String]
-  ) {
-    def toToolWithRelatedTuple(userId: String): (Tool, Seq[ToolTagToTool], Seq[ToolCategoryToTool]) = {
+  ) extends OwnerCheck {
+    def toToolWithRelatedTuple(user: User): (Tool, Seq[ToolTagToTool], Seq[ToolCategoryToTool]) = {
       val now = new Timestamp((new java.util.Date()).getTime())
       val toolId = UUID.randomUUID
+
+      val ownerId = checkOwner(user, this.owner)
       val tool = Tool(
         toolId, // primary key
         now, // createdAt
         now, // modifiedAt
-        userId, // createdBy
-        userId, // modifiedBy
+        user.id, // createdBy
+        user.id, // modifiedBy
+        ownerId, // owner
         organizationId,
         title,
         description,
@@ -130,6 +137,7 @@ object Tool {
     modifiedAt: Timestamp,
     createdBy: String,
     modifiedBy: String,
+    owner: String,
     organization: Option[Organization],
     title: String,
     description: String,
@@ -169,6 +177,7 @@ object Tool {
     modifiedAt: Timestamp,
     createdBy: String,
     modifiedBy: String,
+    owner: String,
     organizationId: UUID,
     title: String,
     description: String,

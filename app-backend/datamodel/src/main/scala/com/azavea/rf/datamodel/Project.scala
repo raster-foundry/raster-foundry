@@ -22,6 +22,7 @@ case class Project(
   organizationId: UUID,
   createdBy: String,
   modifiedBy: String,
+  owner: String,
   name: String,
   slugLabel: String,
   description: String,
@@ -63,17 +64,22 @@ object Project extends GeoJsonSupport {
     tileVisibility: Visibility,
     isAOIProject: Boolean,
     aoiCadenceMillis: Long,
+    owner: Option[String],
     tags: List[String]
-  ) {
-    def toProject(userId: String): Project = {
+  ) extends OwnerCheck {
+    def toProject(user: User): Project = {
       val now = new Timestamp((new java.util.Date()).getTime())
+
+      val ownerId = checkOwner(user, this.owner)
+
       Project(
         UUID.randomUUID, // primary key
         now, // createdAt
         now, // modifiedAt
         organizationId,
-        userId, // createdBy
-        userId, // modifiedBy
+        user.id, // createdBy
+        user.id, // modifiedBy
+        ownerId, // owner
         name,
         slugify(name),
         description,
@@ -97,6 +103,7 @@ object Project extends GeoJsonSupport {
         |@| c.downField("tileVisibility").as[Visibility]
         |@| c.downField("isAOIProject").as[Option[Boolean]].map(_.getOrElse(false))
         |@| c.downField("aoiCadenceMillis").as[Option[Long]].map(_.getOrElse(DEFAULT_CADENCE))
+        |@| c.downField("owner").as[Option[String]]
         |@| c.downField("tags").as[List[String]]
       ).map(Create.apply)
     )

@@ -14,6 +14,7 @@ case class Image(
   organizationId: UUID,
   createdBy: String,
   modifiedBy: String,
+  owner: String,
   rawDataBytes: Int,
   visibility: Visibility,
   filename: String,
@@ -30,6 +31,7 @@ case class Image(
     this.organizationId,
     this.createdBy,
     this.modifiedBy,
+    this.owner,
     this.rawDataBytes,
     this.visibility,
     this.filename,
@@ -57,19 +59,23 @@ object Image {
     sourceUri: String,
     scene: UUID,
     imageMetadata: Json,
+    owner: Option[String],
     resolutionMeters: Float,
     metadataFiles: List[String]
-  ) {
-    def toImage(userId: String): Image = {
+  ) extends OwnerCheck {
+    def toImage(user: User): Image = {
       val now = new Timestamp((new java.util.Date).getTime)
+
+      val ownerId = checkOwner(user, this.owner)
 
       Image(
         UUID.randomUUID, // primary key
         now, // createdAt
         now, // modifiedAt
         organizationId,
-        userId, // createdBy: String,
-        userId, // modifiedBy: String,
+        user.id, // createdBy: String,
+        user.id, // modifiedBy: String,
+        ownerId, // owner: String
         rawDataBytes,
         visibility,
         filename,
@@ -90,13 +96,14 @@ object Image {
     visibility: Visibility,
     filename: String,
     sourceUri: String,
+    owner: Option[String],
     scene: UUID,
     imageMetadata: Json,
     resolutionMeters: Float,
     metadataFiles: List[String],
     bands: Seq[Band.Create]
   ) {
-    def toImage(userId: String): Image = {
+    def toImage(user: User): Image = {
       Image.Create(
         organizationId,
         rawDataBytes,
@@ -105,9 +112,10 @@ object Image {
         sourceUri,
         scene,
         imageMetadata,
+        owner,
         resolutionMeters,
         metadataFiles
-      ).toImage(userId)
+      ).toImage(user)
     }
   }
 
@@ -119,6 +127,7 @@ object Image {
     organizationId: UUID,
     createdBy: String,
     modifiedBy: String,
+    owner: String,
     rawDataBytes: Int,
     visibility: Visibility,
     filename: String,
@@ -137,6 +146,7 @@ object Image {
       organizationId,
       createdBy,
       modifiedBy,
+      owner,
       rawDataBytes,
       visibility,
       filename,
