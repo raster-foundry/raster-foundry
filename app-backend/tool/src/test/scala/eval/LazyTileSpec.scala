@@ -1,13 +1,13 @@
-package com.azavea.rf.tool.op
+package com.azavea.rf.tool.eval
 
 import com.azavea.rf.tool.ast._
+import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.ast.codec.MapAlgebraCodec._
 import com.azavea.rf.tool.ast.MapAlgebraAST._
 
 import io.circe._
 import io.circe.syntax._
 import geotrellis.raster._
-import geotrellis.raster.op._
 import geotrellis.raster.testkit._
 import geotrellis.raster.render._
 import org.scalatest._
@@ -20,7 +20,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import java.util.UUID
 
 
-class MapAlgebraOpSpec
+class LazyTileSpec
     extends FunSpec
        with Matchers
        with TileBuilders
@@ -70,14 +70,14 @@ class MapAlgebraOpSpec
     requests = Nil
     // This breakmap should convert all cells (which are set to a value of 5) to 77
     val breakmap = ClassBreaks(Map(6.0 -> 77), ClassBreaks.Options(LessThanOrEqualTo, 123))
-    val tms = Interpreter.tms(
+    val tms = Interpreter.interpretTMS(
       ast = red.classify(breakmap), source = goodSource
     )
 
     val ret = tms(0, 1, 1)
     val op = Await.result(ret, 10.seconds) match {
-      case Valid(tileOp) =>
-        val maybeTile = tileOp.toTile(IntCellType)
+      case Valid(lazyTile) =>
+        val maybeTile = lazyTile.evaluate
         requests.length should be (1)
         assertEqual(maybeTile.get, createValueTile(4, 77).toArray)
       case i@Invalid(_) =>
@@ -87,14 +87,14 @@ class MapAlgebraOpSpec
 
   it("should evaluate subtraction") {
     requests = Nil
-    val tms = Interpreter.tms(
+    val tms = Interpreter.interpretTMS(
       ast = blue - nir, source = goodSource
     )
 
     val ret = tms(0, 1, 1)
     val op = Await.result(ret, 10.seconds) match {
-      case Valid(tileOp) =>
-        val maybeTile = tileOp.toTile(DoubleCellType)
+      case Valid(lazytile) =>
+        val maybeTile = lazytile.evaluateDouble
         requests.length should be (2)
         maybeTile.get.get(0, 0) should be (1 - 5)
       case i@Invalid(_) =>
@@ -106,14 +106,14 @@ class MapAlgebraOpSpec
     requests = Nil
     // 4, 5, 1
     val ast = Subtraction(List(nir, red, blue), UUID.randomUUID(), None)
-    val tms = Interpreter.tms(
+    val tms = Interpreter.interpretTMS(
       ast = ast, source = goodSource
     )
 
     val ret = tms(0, 1, 1)
     val op = Await.result(ret, 10.seconds) match {
-      case Valid(tileOp) =>
-        val maybeTile = tileOp.toTile(DoubleCellType)
+      case Valid(lazytile) =>
+        val maybeTile = lazytile.evaluateDouble
         requests.length should be (ast.args.length)
         maybeTile.get.get(0, 0) should be (5 - 4 - 1)
       case i@Invalid(_) =>
@@ -123,14 +123,14 @@ class MapAlgebraOpSpec
 
   it("should evaluate division") {
     requests = Nil
-    val tms = Interpreter.tms(
+    val tms = Interpreter.interpretTMS(
       ast = red / nir, source = goodSource
     )
 
     val ret = tms(0, 1, 1)
     val op = Await.result(ret, 10.seconds) match {
-      case Valid(tileOp) =>
-        val maybeTile = tileOp.toTile(DoubleCellType)
+      case Valid(lazytile) =>
+        val maybeTile = lazytile.evaluateDouble
         requests.length should be (2)
         maybeTile.get.getDouble(0, 0) should be (4.0 / 5.0)
       case i@Invalid(_) =>
@@ -141,14 +141,14 @@ class MapAlgebraOpSpec
   it("should preserve order of operations while evaluating division") {
     requests = Nil
     val ast = Division(List(blue, nir, red), UUID.randomUUID(), None)
-    val tms = Interpreter.tms(
+    val tms = Interpreter.interpretTMS(
       ast = ast, source = goodSource
     )
 
     val ret = tms(0, 1, 1)
     val op = Await.result(ret, 10.seconds) match {
-      case Valid(tileOp) =>
-        val maybeTile = tileOp.toTile(DoubleCellType)
+      case Valid(lazytile) =>
+        val maybeTile = lazytile.evaluateDouble
         requests.length should be (ast.args.length)
         maybeTile.get.getDouble(0, 0) should be (1.0 / 5.0 / 4.0)
       case i@Invalid(_) =>
@@ -158,14 +158,14 @@ class MapAlgebraOpSpec
 
   it("should evaluate multiplication") {
     requests = Nil
-    val tms = Interpreter.tms(
+    val tms = Interpreter.interpretTMS(
       ast = red * nir, source = goodSource
     )
 
     val ret = tms(0, 1, 1)
     val op = Await.result(ret, 10.seconds) match {
-      case Valid(tileOp) =>
-        val maybeTile = tileOp.toTile(DoubleCellType)
+      case Valid(lazytile) =>
+        val maybeTile = lazytile.evaluateDouble
         requests.length should be (2)
         maybeTile.get.getDouble(0, 0) should be (4.0 * 5.0)
       case i@Invalid(_) =>
@@ -188,15 +188,15 @@ class MapAlgebraOpSpec
     val testAST = (n - r) / (n + r)
 
     requests = Nil
-    val tms = Interpreter.tms(
+    val tms = Interpreter.interpretTMS(
       ast = red + nir, source = goodSource
     )
     val whatever = (red + nir).asJson.noSpaces
 
     val ret = tms(0, 1, 1)
     val op = Await.result(ret, 10.seconds) match {
-      case Valid(tileOp) =>
-        val maybeTile = tileOp.toTile(DoubleCellType)
+      case Valid(lazytile) =>
+        val maybeTile = lazytile.evaluateDouble
         requests.length should be (2)
         maybeTile.get.getDouble(0, 0) should be (4.0 + 5.0)
       case i@Invalid(_) =>

@@ -1,12 +1,9 @@
-package com.azavea.rf.tool.op
-
-import java.util.UUID
+package com.azavea.rf.tool.eval
 
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.ast.MapAlgebraAST._
 
 import geotrellis.raster._
-import geotrellis.raster.op._
 import geotrellis.raster.histogram._
 import geotrellis.raster.render.{BreakMap, MapStrategy}
 import cats.data._
@@ -18,19 +15,19 @@ import scala.concurrent.{Future, ExecutionContext, Await}
 import scala.concurrent.duration._
 import java.lang.IllegalStateException
 import java.net.URI
-
+import java.util.UUID
 
 
 /** This interpreter handles resource resolution and compilation of MapAlgebra ASTs */
 object Interpreter extends LazyLogging {
 
   /** The Interpreted type is either a list of failures or a compiled MapAlgebra operation */
-  type Interpreted = ValidatedNel[InterpreterError, Op]
+  type Interpreted = ValidatedNel[InterpreterError, LazyTile]
 
   // Binary operation evaluation
   def evalBinary(
     futureTiles: Seq[Future[Interpreted]],
-    f: (Op, Op) => Op
+    f: (LazyTile, LazyTile) => LazyTile
   )(implicit ec: ExecutionContext): Future[Interpreted] = {
     logger.debug("evalBinary")
     def applyB(accumulator: Interpreted, value: Interpreted): Interpreted = {
@@ -54,13 +51,13 @@ object Interpreter extends LazyLogging {
   // Unary operation evaluation
   def evalUnary(
     futureTile: Future[Interpreted],
-    f: Op => Op
+    f: LazyTile => LazyTile
   )(implicit ec: ExecutionContext): Future[Interpreted] = {
     logger.debug("evalUnary")
     for (interpreted <- futureTile) yield {
       interpreted match {
-        case Valid(tileOp) =>
-          Valid(f(tileOp))
+        case Valid(lazyTile) =>
+          Valid(f(lazyTile))
         case errors@Invalid(_) =>
           logger.debug(s"unary failure on $interpreted")
           errors
@@ -68,8 +65,8 @@ object Interpreter extends LazyLogging {
     }
   }
 
-  def operationToAST(
-    op: Operation,
+  def interpretOperation(
+    op: MapAlgebraAST.Operation,
     eval: MapAlgebraAST => Future[Interpreted]
   )(implicit ec: ExecutionContext) = op match {
     case Addition(args, id, _) =>
@@ -113,13 +110,13 @@ object Interpreter extends LazyLogging {
       case RFMLRasterSource(id, label, Some(ref)) =>
         logger.debug(s"case bound rastersource at $id")
         source(ref).map { maybeTile =>
-          val maybeOp = maybeTile.map(Op.apply)
-          Validated.fromOption(maybeOp, { NonEmptyList.of(RasterRetrievalError(id, ref.id)) })
+          val maybeLT = maybeTile.map(LazyTile.apply)
+          Validated.fromOption(maybeLT, { NonEmptyList.of(RasterRetrievalError(id, ref.id)) })
         }
 
       // For the exhaustive match
       case op: Operation =>
-        operationToAST(op, eval)
+        interpretOperation(op, eval)
     }
 
     eval(ast)
@@ -146,13 +143,13 @@ object Interpreter extends LazyLogging {
         case RFMLRasterSource(id, label, Some(ref)) =>
           logger.debug(s"case bound rastersource at $id")
           source(ref, z, x, y).map { maybeTile =>
-            val maybeOp = maybeTile.map(Op.apply)
-            Validated.fromOption(maybeOp, { NonEmptyList.of(RasterRetrievalError(id, ref.id)) })
+            val maybeLT = maybeTile.map(LazyTile.apply)
+            Validated.fromOption(maybeLT, { NonEmptyList.of(RasterRetrievalError(id, ref.id)) })
           }
 
         // For the exhaustive match
         case op: Operation =>
-          operationToAST(op, eval)
+          interpretOperation(op, eval)
       }
 
       eval(ast)
