@@ -32,8 +32,13 @@ trait Config {
 
   protected case class ExportDef(
     awsRegion: Option[String],
-    bucketName: String
-  ) { }
+    bucketName: String,
+    awsDataproc: String,
+    sparkJarS3: String,
+    sparkJar: String,
+    sparkClass: String,
+    sparkMemory: String
+  )
 
   private lazy val config = ConfigFactory.load()
   protected lazy val landsat8Config = config.as[Landsat8]("landsat8")
