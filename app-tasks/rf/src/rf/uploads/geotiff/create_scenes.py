@@ -1,7 +1,4 @@
-import boto3
 import logging
-import os
-import tempfile
 import uuid
 
 from rf.models import Scene
@@ -17,7 +14,7 @@ def create_geotiff_scene(tif_path, organizationId, datasource,
                          ingestSizeBytes=0, visibility=Visibility.PRIVATE, tags=[],
                          sceneMetadata=None, name=None, thumbnailStatus=JobStatus.QUEUED,
                          boundaryStatus=JobStatus.QUEUED, ingestStatus=IngestStatus.TOBEINGESTED,
-                         metadataFiles=[],
+                         metadataFiles=[], owner=None,
                          **kwargs):
     """Returns scenes that can be created via API given a local path to a geotiff.
 
@@ -77,6 +74,7 @@ def create_geotiff_scene(tif_path, organizationId, datasource,
         boundaryStatus,
         ingestStatus,
         metadataFiles,
+        owner=owner,
         **sceneKwargs
     )
 
