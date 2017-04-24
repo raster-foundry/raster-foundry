@@ -9,7 +9,7 @@ class Image(BaseModel):
 
     def __init__(self, organizationId, rawDataBytes, visibility, filename,
                  sourceuri, bands, imageMetadata, resolutionMeters, metadataFiles,
-                 scene=None):
+                 scene=None, owner=None):
         """Create a new Image
 
         Args:
@@ -21,6 +21,7 @@ class Image(BaseModel):
             bands (List[Band]): list of bands in image
             imageMetadata (dict): extra information about the image
             resolutionMeters (float): resolution of image
+            owner (str): optional owner of image
         """
         self.organizationId = organizationId
         self.rawDataBytes = rawDataBytes
@@ -32,6 +33,7 @@ class Image(BaseModel):
         self.resolutionMeters = resolutionMeters
         self.metadataFiles = metadataFiles
         self.bands = bands
+        self.owner = owner
 
     def __repr__(self):
         return '<Image: {}>'.format(self.filename)
@@ -42,7 +44,7 @@ class Image(BaseModel):
         return cls(
             d.get('organizationId'), d.get('rawDataBytes'), d.get('visibility'), d.get('filename'),
             d.get('sourceUri'), bands, d.get('imageMetadata'), d.get('resolutionMeters'),
-            d.get('scene')
+            d.get('scene'), d.get('owner')
         )
 
     def to_dict(self):
@@ -55,7 +57,8 @@ class Image(BaseModel):
             bands=[band.to_dict() for band in self.bands],
             imageMetadata=self.imageMetadata,
             metadataFiles=self.metadataFiles,
-            resolutionMeters=self.resolutionMeters
+            resolutionMeters=self.resolutionMeters,
+            owner=self.owner
         )
 
         if self.scene:

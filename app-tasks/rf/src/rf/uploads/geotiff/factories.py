@@ -33,6 +33,7 @@ class GeoTiffS3SceneFactory(object):
         """
         self._upload = upload
         self.files = self._upload.files
+        self.owner = upload.owner
         self.organizationId = self._upload.organizationId
         self.visibility = Visibility.PRIVATE
         self.datasource = self._upload.datasource
@@ -71,7 +72,7 @@ class GeoTiffS3SceneFactory(object):
 
     def create_geotiff_image(self, tif_path, source_uri, scene, filename):
         return create_geotiff_image(self.organizationId, tif_path, source_uri, scene=scene.id,
-                                    filename=filename, visibility=self.visibility)
+                                    filename=filename, visibility=self.visibility, owner=self.owner)
 
     def create_geotiff_scene(self, tif_path, name):
         return create_geotiff_scene(
@@ -81,5 +82,6 @@ class GeoTiffS3SceneFactory(object):
             visibility=self.visibility,
             tags=self.tags,
             acquisitionDate=self.acquisitionDate,
-            name=name
+            name=name,
+            owner=self.owner
         )
