@@ -1,6 +1,7 @@
 package com.azavea.rf.tool.ast
 
-import geotrellis.raster.op._
+import com.azavea.rf.tool.eval._
+
 import org.scalatest._
 import io.circe._
 import io.circe.parser._
