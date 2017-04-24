@@ -5,7 +5,8 @@ import scala.concurrent.duration._
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
-import com.azavea.rf.api.{AuthUtils, DBSpec, Router}
+import com.azavea.rf.api.{AuthUtils, Router}
+import com.azavea.rf.common._
 import com.azavea.rf.api.project.ProjectSpecHelper
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.datamodel.{AOI, PaginatedResponse, Project}

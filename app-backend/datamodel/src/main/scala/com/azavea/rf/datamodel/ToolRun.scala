@@ -17,7 +17,7 @@ case class ToolRun(
   organizationId: UUID,
   project: UUID,
   tool: UUID,
-  execution_parameters: Json
+  executionParameters: Json
 )
 
 object ToolRun {
@@ -30,7 +30,7 @@ object ToolRun {
     organizationId: UUID,
     project: UUID,
     tool: UUID,
-    execution_parameters: Json
+    executionParameters: Json
   ) {
     def toToolRun(userId: String): ToolRun = {
       val now = new Timestamp((new java.util.Date).getTime)
@@ -44,7 +44,7 @@ object ToolRun {
         organizationId,
         project,
         tool,
-        execution_parameters
+        executionParameters
       )
     }
   }
