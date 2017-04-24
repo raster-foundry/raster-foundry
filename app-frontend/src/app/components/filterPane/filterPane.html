@@ -22,7 +22,7 @@
             on-apply="$ctrl.setDateRange(start, end)"
             ng-class="{'active': $ctrl.dateFilterToggle.value}"
         ></ob-daterangepicker>
-        <rf-toggle data-model="$ctrl.dateFilterToggle"
+        <rf-toggle data-model="$ctrl.dateFilterToggle.value"
                    on-change="$ctrl.onDateFilterToggle(value)"
                    style="float: right;"
         ></rf-toggle>

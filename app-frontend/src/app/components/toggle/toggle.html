@@ -1,6 +1,5 @@
-<label class="switch">
-  <input type="checkbox"
-         ng-model="$ctrl.model.value"
-         ng-change="$ctrl.onChange({value: $ctrl.model.value})">
-  <div class="slider round"></div>
-</label>
+<div class="checkbox-container"
+     ng-class="{'is-checked': $ctrl.model}"
+     ng-click="$ctrl.toggle()">
+  <i class="icon-check"></i>
+</div>

@@ -9,7 +9,7 @@
     padding: 0;
 
     &.rz-draggable {
-      transition: 100ms ease-in-out width, 
+      transition: 100ms ease-in-out width,
                   100ms ease-in-out left;
     }
   }
@@ -26,11 +26,11 @@
   }
 
   .rz-pointer {
-    width: 24px;
-    height: 24px;
-    left: -12px;
-    top: -6px;
-    border-radius: 2px;
+    width: 18px;
+    height: 18px;
+    left: -9px;
+    top: -3px;
+    border-radius: 1px;
     background: lighten($brand-primary, 5%);
     transition: 100ms ease-in-out left;
 
@@ -41,6 +41,13 @@
 
   .rz-bubble {
     display: none;
+    &.rz-floor, &.rz-ceil {
+      display: block;
+      padding: 0px;
+      bottom: 0px;
+      margin-top: 24px;
+      font-size: 1.2rem;
+    }
   }
 
   .rz-ticks {
@@ -51,7 +58,7 @@
       top: 4px;
       width: 3px;
       height: 3px;
-      background: $brand-primary;
+      background: $shade-normal;
       vertical-align: middle;
       margin-top: 0;
       display: inline-block;
@@ -69,7 +76,7 @@
     bottom: inherit;
     transform: translate(-50%, 12px); // IE is ignoring bottom so we transform-y instead
   }
-  
+
   .rz-ticks .rz-tick{
 
     &.rz-selected {

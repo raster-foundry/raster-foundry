@@ -1,4 +1,4 @@
-<div class="color-correct-pane flex-column sidebar-dark">
+<div class="color-correct-pane flex-column sidebar-dark flex-fill">
   <div class="sidebar-static">
     <a href ng-click="$ctrl.$parent.resetCorrection()" class="link-histogram-reset">
       Reset Changes
@@ -10,129 +10,184 @@
   <div class="sidebar-scrollable">
     <div class="content histogram-filters">
       <div class="color-filters-container">
+
         <!-- Color Correction -->
+
+        <!-- Gamme correction-->
         <div class="filter-group">
           <div class="filter-group-header">
-            <p class="h5">Gamma Correction</p>
-            <rf-toggle data-model="$ctrl.gammaToggle"
+            <rf-toggle data-model="$ctrl.gammaToggle.value"
                        on-change="$ctrl.gammaToggled(value)">
             </rf-toggle>
+            <h5>Gamma Correction</h5>
           </div>
-          <div class="filter-group-body">
+          <div class="filter-group-body" ng-show="$ctrl.gammaToggle.value">
             <div class="filter">
-              <label>Red</label>
-              <div class="filter-item slider-filter">
-                <div id="red_slider"></div>
-              </div>
-              <rzslider rz-slider-model="$ctrl.sliderCorrection.redGamma"
+              <label>
+                Red
+                <i class="icon-locked color-white" ng-if="$ctrl.gammaLinkToggle"></i>
+              </label>
+              <rzslider class="dark"
+                        rz-slider-model="$ctrl.sliderCorrection.redGamma"
                         rz-slider-options="$ctrl.redGammaOptions"
               ></rzslider>
+              <input class="filter-adjust-input"
+                     type="number"
+                     min=0
+                     max=2
+                     step=0.01
+                     ng-model="$ctrl.sliderCorrection.redGamma"
+                     ng-model-options="{ debounce: 250 }"
+                     ng-change="$ctrl.onGammaFilterChange('redGamma', $ctrl.sliderCorrection.redGamma)">
             </div>
-            <div class="filter-separator offset">
+            <!--<div class="filter-separator offset">
               <button type="button"
                       ng-click="$ctrl.gammaLinkToggled()"
                       ng-class="{'active': $ctrl.gammaLinkToggle}"
                       class="btn btn-default btn-square">
                 <i class="icon-mosaic"></i>
               </button>
-            </div>
+            </div>-->
             <div class="filter">
-              <label>Green</label>
-              <div class="filter-item slider-filter">
-                <div id="green_slider"></div>
-              </div>
-              <rzslider rz-slider-model="$ctrl.sliderCorrection.greenGamma"
+              <label>
+                Green
+                <i class="icon-locked color-white" ng-if="$ctrl.gammaLinkToggle"></i>
+              </label>
+              <rzslider class="dark"
+                        rz-slider-model="$ctrl.sliderCorrection.greenGamma"
                         rz-slider-options="$ctrl.greenGammaOptions"
               ></rzslider>
+              <input class="filter-adjust-input"
+                     type="number"
+                     min=0
+                     max=2
+                     step=0.01
+                     ng-model="$ctrl.sliderCorrection.greenGamma"
+                     ng-model-options="{ debounce: 250 }"
+                     ng-change="$ctrl.onGammaFilterChange('greenGamma', $ctrl.sliderCorrection.greenGramma)">
             </div>
-            <div class="filter-separator offset">
+            <!--<div class="filter-separator offset">
               <button type="button"
                       ng-click="$ctrl.gammaLinkToggled()"
                       ng-class="{'active': $ctrl.gammaLinkToggle}"
                       class="btn btn-default btn-square">
                 <i class="icon-mosaic"></i>
               </button>
-            </div>
+            </div>-->
             <div class="filter">
-              <label>Blue</label>
-              <div class="filter-item slider-filter">
-                <div id="blue_slider"></div>
-              </div>
-              <rzslider rz-slider-model="$ctrl.sliderCorrection.blueGamma"
+              <label>
+                Blue
+                <i class="icon-locked color-white" ng-if="$ctrl.gammaLinkToggle"></i>
+              </label>
+              <rzslider class="dark"
+                        rz-slider-model="$ctrl.sliderCorrection.blueGamma"
                         rz-slider-options="$ctrl.blueGammaOptions"
               ></rzslider>
+              <input class="filter-adjust-input"
+                     type="number"
+                     min=0
+                     max=2
+                     step=0.01
+                     ng-model="$ctrl.sliderCorrection.blueGamma"
+                     ng-model-options="{ debounce: 250 }"
+                     ng-change="$ctrl.onGammaFilterChange('blueGamma', $ctrl.sliderCorrection.blueGamma)">
             </div>
-            <div class="filter-separator"></div>
+            <div class="filter-group-option">
+              <label class="color-white">Link Sliders</label>
+              <rf-toggle data-model="$ctrl.gammaLinkToggle" on-change="$ctrl.gammaLinkToggled()"></rf-toggle>
+            </div>
           </div>
         </div>
 
+        <!-- Sigmoidal correction-->
         <div class="filter-group">
           <div class="filter-group-header">
-            <p class="h5">Sigmoidal Correction</p>
-            <rf-toggle data-model="$ctrl.sigToggle"
+            <rf-toggle data-model="$ctrl.sigToggle.value"
                        on-change="$ctrl.sigToggled(value)"></rf-toggle>
+            <h5>Sigmoidal Correction</h5>
           </div>
-          <div class="filter-group-body">
+          <div class="filter-group-body" ng-show="$ctrl.sigToggle.value">
             <div class="filter">
-              <label>Alpha</label>
-              <div class="filter-item slider-filter">
-                <div id="alpha_slider"></div>
-              </div>
-              <rzslider rz-slider-model="$ctrl.sliderCorrection.alpha"
+              <label>Threshold</label>
+              <rzslider class="dark"
+                        rz-slider-model="$ctrl.sliderCorrection.alpha"
                         rz-slider-options="$ctrl.alphaOptions"
               ></rzslider>
+              <input class="filter-adjust-input"
+                     type="number"
+                     min=0
+                     max=1
+                     step=0.01
+                     ng-model="$ctrl.sliderCorrection.alpha"
+                     ng-model-options="{ debounce: 250 }"
+                     ng-change="$ctrl.onFilterChange('alpha', $ctrl.sliderCorrection.alpha)">
             </div>
-            <div class="filter-separator"></div>
             <div class="filter">
-              <label>Beta</label>
-              <div class="filter-item slider-filter">
-                <div id="beta_slider"></div>
-              </div>
-              <rzslider rz-slider-model="$ctrl.sliderCorrection.beta"
+              <label>Contrast</label>
+              <rzslider class="dark"
+                        rz-slider-model="$ctrl.sliderCorrection.beta"
                         rz-slider-options="$ctrl.betaOptions"
               ></rzslider>
+              <input class="filter-adjust-input"
+                     type="number"
+                     min=0
+                     max=50
+                     step=1
+                     ng-model="$ctrl.sliderCorrection.beta"
+                     ng-model-options="{ debounce: 250 }"
+                     ng-change="$ctrl.onFilterChange('beta', $ctrl.sliderCorrection.beta)">
             </div>
-            <div class="filter-separator"></div>
           </div>
         </div>
 
+        <!-- Brightness/contrast correction-->
         <div class="filter-group">
           <div class="filter-group-header">
-            <p class="h5">Brightness/Contrast</p>
-            <rf-toggle data-model="$ctrl.bcToggle"
+            <rf-toggle data-model="$ctrl.bcToggle.value"
                        on-change="$ctrl.bcToggled(value)"></rf-toggle>
+            <h5 class="h5">Brightness/Contrast</h5>
           </div>
-          <div class="filter-group-body">
+          <div class="filter-group-body" ng-show="$ctrl.bcToggle.value">
             <div class="filter">
               <label>Brightness</label>
-              <rzslider rz-slider-model="$ctrl.sliderCorrection.brightness"
+              <rzslider class="dark"
+                        rz-slider-model="$ctrl.sliderCorrection.brightness"
                         rz-slider-options="$ctrl.brightnessOptions"></rzslider>
+              <input class="filter-adjust-input"
+                     type="number"
+                     step="1"
+                     ng-model="$ctrl.sliderCorrection.brightness"
+                     ng-model-options="{ debounce: 250 }"
+                     ng-change="$ctrl.onFilterChange('brightness', $ctrl.sliderCorrection.brightness)">
             </div>
-            <div class="filter-separator"></div>
             <div class="filter">
               <label>Contrast</label>
-              <div class="filter-item slider-filter">
-                <div id="contrast"></div>
-              </div>
-              <rzslider rz-slider-model="$ctrl.sliderCorrection.contrast"
+              <rzslider class="dark"
+                        rz-slider-model="$ctrl.sliderCorrection.contrast"
                         rz-slider-options="$ctrl.contrastOptions"></rzslider>
+              <input class="filter-adjust-input"
+                     type="number"
+                     step="1"
+                     ng-model="$ctrl.sliderCorrection.contrast"
+                     ng-model-options="{ debounce: 250 }"
+                     ng-change="$ctrl.onFilterChange('contast', $ctrl.sliderCorrection.contrast)">
             </div>
-            <div class="filter-separator"></div>
           </div>
         </div>
         <div class="filter-group">
           <div class="filter-group-header">
-            <p class="h5">Clipping</p>
-            <rf-toggle data-model="$ctrl.minMaxToggle"
+            <rf-toggle data-model="$ctrl.minMaxToggle.value"
                        on-change="$ctrl.minMaxToggled(value)"></rf-toggle>
+            <h5>Clipping</h5>
           </div>
-          <div class="filter-group-body">
+          <div class="filter-group-body" ng-show="$ctrl.minMaxToggle.value">
             <div class="filter">
               <label>Min/Max Clipping</label>
               <div class="filter-item slider-filter">
                 <div id="minmax"></div>
               </div>
-              <rzslider rz-slider-model="$ctrl.sliderCorrection.min"
+              <rzslider class="dark"
+                        rz-slider-model="$ctrl.sliderCorrection.min"
                         rz-slider-high="$ctrl.sliderCorrection.max"
                         rz-slider-options="$ctrl.minMaxOptions"
               ></rzslider>

@@ -1,15 +1,15 @@
 .filter {
-  padding-top: 2rem;
-  padding-bottom: 2rem;
-
-  &:first-child {
-    padding-top: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  & > * {
+    margin-right: 1.2rem !important;
   }
-
   label {
     color: $shade-light;
-    display: block;
-    margin-bottom: 1.2rem;
+    width: 80px;
+    font-size: 1.2rem;
+    flex-shrink: 0;
   }
 }
 
