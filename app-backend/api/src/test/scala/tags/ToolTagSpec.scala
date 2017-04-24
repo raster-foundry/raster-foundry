@@ -34,7 +34,14 @@ class ToolTagSpec extends WordSpec
   val baseToolTag = "/tool-tags/"
   val newToolTag = ToolTag.Create(
     publicOrgId,
-    "test tag"
+    "test tag",
+    None: Option[String]
+  )
+
+  val newToolTagBadOwner = ToolTag.Create(
+    publicOrgId,
+    "bad owner",
+    Some("Not a real user")
   )
 
   // Alias to baseRoutes to be explicit
@@ -72,6 +79,18 @@ class ToolTagSpec extends WordSpec
       }
     }
 
+    "reject setting owner to another user" in {
+      Post("/api/tool-tags/").withHeadersAndEntity(
+        List(authHeader),
+        HttpEntity(
+          ContentTypes.`application/json`,
+          newToolTagBadOwner.asJson.noSpaces
+        )
+      ) ~> baseRoutes ~> check {
+        reject
+      }
+    }
+
     "create a tool tag with authHeader" in {
       Post("/api/tool-tags/").withHeadersAndEntity(
         List(authHeader),
@@ -80,7 +99,8 @@ class ToolTagSpec extends WordSpec
           newToolTag.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
-        responseAs[ToolTag]
+        val tt = responseAs[ToolTag]
+        tt.owner shouldEqual "Default"
       }
     }
 

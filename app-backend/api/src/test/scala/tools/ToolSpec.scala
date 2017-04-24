@@ -44,6 +44,7 @@ class ToolSpec extends WordSpec
     "Test tool license",
     Visibility.Public,
     List("Test tool datasource"),
+    None: Option[String],
     2.5f,
     ().asJson,
     List(),
@@ -92,7 +93,8 @@ class ToolSpec extends WordSpec
           newTool.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
-        responseAs[Tool]
+        val tool = responseAs[Tool]
+        tool.owner shouldEqual "Default"
       }
     }
 

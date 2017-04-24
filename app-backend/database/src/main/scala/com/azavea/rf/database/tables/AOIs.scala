@@ -25,7 +25,8 @@ import io.circe.Json
 class AOIs(_tableTag: Tag) extends Table[AOI](_tableTag, "aois")
     with TimestampFields with OrganizationFkFields with UserFkFields {
 
-  def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, area, filters) <> (AOI.tupled, AOI.unapply)
+  def * = (id, createdAt, modifiedAt, organizationId, createdBy,
+    modifiedBy, owner, area, filters) <> (AOI.tupled, AOI.unapply)
 
   /* Database Fields */
   val id: Rep[UUID] = column[UUID]("id", O.PrimaryKey)
@@ -34,6 +35,7 @@ class AOIs(_tableTag: Tag) extends Table[AOI](_tableTag, "aois")
   val organizationId: Rep[UUID] = column[UUID]("organization_id")
   val createdBy: Rep[String] = column[String]("created_by", O.Length(255,varying=true))
   val modifiedBy: Rep[String] = column[String]("modified_by", O.Length(255,varying=true))
+  val owner: Rep[String] = column[String]("owner", O.Length(255,varying=true))
 
   /* Unique Fields */
   val area: Rep[Projected[MultiPolygon]] = column[Projected[MultiPolygon]]("area")
@@ -43,7 +45,7 @@ class AOIs(_tableTag: Tag) extends Table[AOI](_tableTag, "aois")
   lazy val organizationsFk = foreignKey("aois_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val createdByUserFK = foreignKey("aois_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val modifiedByUserFK = foreignKey("aois_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
-
+  lazy val ownerUserFK = foreignKey("aois_owner_fkey", owner, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 }
 
 object AOIs extends TableQuery(tag => new AOIs(tag)) with LazyLogging {

@@ -40,7 +40,8 @@ class ImageSpec extends WordSpec
   val newSceneDatasource1 = Scene.Create(
     None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), landsatId,
     Map("instrument type" -> "satellite", "splines reticulated" -> "0").asJson,
-    "test scene image spec 1", None, None, List.empty[String], List.empty[Image.Banded],
+    "test scene image spec 1", None: Option[String],
+    None, None, List.empty[String], List.empty[Image.Banded],
     List.empty[Thumbnail.Identified], None,
     SceneFilterFields(None,
                       Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
@@ -109,7 +110,7 @@ class ImageSpec extends WordSpec
 
         val newImageDatasource1 = Image.Banded(
           publicOrgId, 1024, Visibility.Public, "test-image.png", "s3://public/s3/test-image.png",
-          sceneId,
+          None, sceneId,
           Map("instrument type" -> "satellite", "splines reticulated" -> "0").asJson,
           20.2f, List.empty[String], List[Band.Create](Band.Create("name", 3, List(100, 250)))
         )
@@ -121,7 +122,8 @@ class ImageSpec extends WordSpec
             newImageDatasource1.asJson.noSpaces
           )
         ) ~> baseRoutes ~> check {
-          responseAs[Image.WithRelated]
+          val image = responseAs[Image.WithRelated]
+          image.owner shouldEqual "Default"
         }
       }
     }

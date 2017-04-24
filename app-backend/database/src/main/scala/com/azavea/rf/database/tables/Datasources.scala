@@ -26,7 +26,7 @@ class Datasources(_tableTag: Tag) extends Table[Datasource](_tableTag, "datasour
     with TimestampFields
     with OrgFkVisibleFields
 {
-  def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, organizationId, name,
+  def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, owner, organizationId, name,
            visibility, colorCorrection, composites, extras) <> (
     Datasource.tupled, Datasource.unapply
   )
@@ -36,6 +36,7 @@ class Datasources(_tableTag: Tag) extends Table[Datasource](_tableTag, "datasour
   val createdBy: Rep[String] = column[String]("created_by", O.Length(255,varying=true))
   val modifiedAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("modified_at")
   val modifiedBy: Rep[String] = column[String]("modified_by", O.Length(255,varying=true))
+  val owner: Rep[String] = column[String]("owner", O.Length(255,varying=true))
   val organizationId: Rep[java.util.UUID] = column[java.util.UUID]("organization_id")
   val name: Rep[String] = column[String]("name")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
@@ -46,6 +47,7 @@ class Datasources(_tableTag: Tag) extends Table[Datasource](_tableTag, "datasour
   lazy val organizationsFk = foreignKey("datasources_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val createdByUserFK = foreignKey("datasources_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val modifiedByUserFK = foreignKey("datasources_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val ownerUserFK = foreignKey("datasources_owner_fkey", owner, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 }
 
 object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogging {
@@ -85,7 +87,7 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
     * @param user               User to create a new datasource with
     */
   def insertDatasource(datasourceToCreate: Datasource.Create, user: User) = {
-    val datasource = datasourceToCreate.toDatasource(user.id)
+    val datasource = datasourceToCreate.toDatasource(user)
     (Datasources returning Datasources).forceInsert(datasource)
   }
 

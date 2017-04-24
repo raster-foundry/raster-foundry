@@ -21,6 +21,7 @@ trait ExportSpecHelper { self: ProjectSpecHelper =>
     exportStatus = ExportStatus.ToBeExported,
     exportType = ExportType.Local,
     visibility = Visibility.Public,
+    owner = None,
     exportOptions = ExportOptions(
       mask = None,
       resolution = 2,

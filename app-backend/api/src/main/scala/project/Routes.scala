@@ -98,7 +98,7 @@ trait ProjectRoutes extends Authentication
   def createProject: Route = authenticate { user =>
     entity(as[Project.Create]) { newProject =>
       authorize(user.isInRootOrSameOrganizationAs(newProject)) {
-        onSuccess(Projects.insertProject(newProject.toProject(user.id))) { project =>
+        onSuccess(Projects.insertProject(newProject.toProject(user))) { project =>
           complete(StatusCodes.Created, project)
         }
       }
@@ -142,7 +142,7 @@ trait ProjectRoutes extends Authentication
       authorize(user.isInRootOrSameOrganizationAs(aoi)) {
         onSuccess({
           for {
-            a <- AOIs.insertAOI(aoi.toAOI(user.id))
+            a <- AOIs.insertAOI(aoi.toAOI(user))
             _ <- AoisToProjects.insert(AoiToProject(a.id, projectId))
           } yield a
         }) { a =>

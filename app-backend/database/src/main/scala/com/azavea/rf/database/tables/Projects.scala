@@ -27,7 +27,7 @@ class Projects(_tableTag: Tag) extends Table[Project](_tableTag, "projects")
                                       with UserFkVisibleFields
                                       with TimestampFields
 {
-  def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, name,
+  def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, owner, name,
     slugLabel, description, visibility, tileVisibility, isAOIProject, aoiCadenceMillis,
     aoisLastChecked, tags, extent, manualOrder) <> (Project.tupled, Project.unapply)
 
@@ -37,6 +37,7 @@ class Projects(_tableTag: Tag) extends Table[Project](_tableTag, "projects")
   val organizationId: Rep[UUID] = column[UUID]("organization_id")
   val createdBy: Rep[String] = column[String]("created_by", O.Length(255,varying=true))
   val modifiedBy: Rep[String] = column[String]("modified_by", O.Length(255,varying=true))
+  val owner: Rep[String] = column[String]("owner", O.Length(255,varying=true))
   val name: Rep[String] = column[String]("name")
   val slugLabel: Rep[String] = column[String]("slug_label", O.Length(255,varying=true))
   val description: Rep[String] = column[String]("description")
@@ -52,6 +53,7 @@ class Projects(_tableTag: Tag) extends Table[Project](_tableTag, "projects")
   lazy val organizationsFk = foreignKey("projects_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val createdByUserFK = foreignKey("projects_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val modifiedByUserFK = foreignKey("projects_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val ownerUserFK = foreignKey("projects_owner_fkey", owner, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 }
 
 object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {

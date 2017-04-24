@@ -23,13 +23,14 @@ class MapTokens(_tableTag: Tag) extends Table[MapToken](_tableTag, "map_tokens")
   with OrganizationFkFields
   with UserFkFields
 {
-  def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, organizationId, name, projectId) <> (
+  def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, owner, organizationId, name, projectId) <> (
     MapToken.tupled, MapToken.unapply
   )
 
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
   val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")
   val createdBy: Rep[String] = column[String]("created_by", O.Length(255,varying=true))
+  val owner: Rep[String] = column[String]("owner", O.Length(255,varying=true))
   val modifiedAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("modified_at")
   val modifiedBy: Rep[String] = column[String]("modified_by", O.Length(255,varying=true))
   val organizationId: Rep[java.util.UUID] = column[java.util.UUID]("organization_id")
@@ -40,6 +41,7 @@ class MapTokens(_tableTag: Tag) extends Table[MapToken](_tableTag, "map_tokens")
   lazy val createdByUserFK = foreignKey("map_tokens_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val modifiedByUserFK = foreignKey("map_tokens_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val projectsFk = foreignKey("map_tokens_project_id_fkey", projectId, Projects)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val ownerUserFK = foreignKey("datasources_owner_fkey", owner, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 }
 
 object MapTokens extends TableQuery(tag => new MapTokens(tag)) with LazyLogging {
@@ -83,7 +85,7 @@ object MapTokens extends TableQuery(tag => new MapTokens(tag)) with LazyLogging 
   }
 
   def insertMapToken(mapTokenCreate: MapToken.Create, user: User): DBIO[MapToken] = {
-    val mapToken = mapTokenCreate.toMapToken(user.id)
+    val mapToken = mapTokenCreate.toMapToken(user)
     (MapTokens returning MapTokens).forceInsert(mapToken)
   }
 

@@ -90,7 +90,7 @@ class SceneSpec extends WordSpec
     val newSceneDatasource1 = Scene.Create(
       None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), landsatId,
       Map("instrument type" -> "satellite", "splines reticulated" -> "0").asJson,
-      "test scene datasource 1",
+      "test scene datasource 1", None,
       mpoly, mpoly, List.empty[String], List.empty[Image.Banded], List.empty[Thumbnail.Identified], None,
       SceneFilterFields(None,
                         Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
@@ -102,7 +102,7 @@ class SceneSpec extends WordSpec
     val newSceneDatasource2 = Scene.Create(
       None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), sentinelId,
       Map("instrument type" -> "satellite", "splines reticulated" -> "0").asJson,
-      "test scene datasource 2", None, None, List.empty[String], List.empty[Image.Banded],
+      "test scene datasource 2", None, None, None, List.empty[String], List.empty[Image.Banded],
       List.empty[Thumbnail.Identified], Some("an_s3_bucket_location"),
       SceneFilterFields(None, None, None, None),
       SceneStatusFields(JobStatus.Processing, JobStatus.Processing, IngestStatus.Ingested)
@@ -128,8 +128,10 @@ class SceneSpec extends WordSpec
         )
       ) ~> baseRoutes ~> check {
         val sceneWithRelated = responseAs[Scene.WithRelated]
+        sceneWithRelated.owner shouldEqual "Default"
+
         val newSceneDatasource1Image = Image.Banded(
-          publicOrgId, 0, Visibility.Public, "filename", "uri",
+          publicOrgId, 0, Visibility.Public, "filename", "uri", None,
           sceneWithRelated.id, ().asJson, 20.2f, List.empty[String],
           List[Band.Create](Band.Create("i'm a band", 4, List[Int](550, 600)))
         )

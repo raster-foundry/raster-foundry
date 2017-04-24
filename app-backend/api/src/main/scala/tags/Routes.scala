@@ -46,7 +46,7 @@ trait ToolTagRoutes extends Authentication
   def createToolTag: Route = authenticate { user =>
     entity(as[ToolTag.Create]) { newToolTag =>
       authorize(user.isInRootOrSameOrganizationAs(newToolTag)) {
-        onSuccess(ToolTags.insertToolTag(newToolTag, user.id)) { toolTag =>
+        onSuccess(ToolTags.insertToolTag(newToolTag, user)) { toolTag =>
           complete(StatusCodes.Created, toolTag)
         }
       }

@@ -54,6 +54,7 @@ class DatasourceSpec extends WordSpec
     publicOrgId,
     "Datasource1",
     Visibility.Public,
+    None: Option[String],
     exColorCorrect,
     ().asJson,
     ().asJson
@@ -63,6 +64,7 @@ class DatasourceSpec extends WordSpec
     publicOrgId,
     "Datasource2",
     Visibility.Public,
+    None: Option[String],
     exColorCorrect,
     ().asJson,
     ().asJson
@@ -73,6 +75,7 @@ class DatasourceSpec extends WordSpec
     publicOrgId,
     "Datasource3",
     Visibility.Private,
+    None: Option[String],
     exColorCorrect,
     ().asJson,
     ().asJson
@@ -101,7 +104,8 @@ class DatasourceSpec extends WordSpec
           datasource1.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
-        responseAs[Datasource]
+        val ds = responseAs[Datasource]
+        ds.owner shouldEqual "Default"
       }
 
       Post("/api/datasources/").withHeadersAndEntity(
