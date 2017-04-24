@@ -10,7 +10,7 @@ import com.azavea.rf.database.tables.Tools
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast.codec._
 import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.op._
+import com.azavea.rf.tool.eval._
 
 import io.circe._
 import io.circe.parser._
@@ -19,7 +19,6 @@ import io.circe.generic.auto._
 import cats.data._
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
-
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._
 
