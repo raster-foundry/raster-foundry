@@ -35,6 +35,7 @@
     "angular-nvd3": "~1.0.8",
     "angular-resource": "1.5.8",
     "angular-sanitize": "1.5.8",
+    "angular-tooltips": "^1.1.10",
     "angular-touch": "1.5.8",
     "angular-ui-bootstrap": "~2.1.4",
     "angular-ui-router": "~0.3.1",

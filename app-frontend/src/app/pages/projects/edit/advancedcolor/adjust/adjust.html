@@ -12,14 +12,72 @@
       <div class="color-filters-container">
 
         <!-- Color Correction -->
+        <!-- Sigmoidal correction-->
+        <div class="filter-group">
+          <div class="filter-group-header">
+            <rf-toggle data-model="$ctrl.sigToggle.value"
+                       on-change="$ctrl.sigToggled(value)"></rf-toggle>
+            <h5>Sigmoidal Correction</h5>
+            <i class="icon-info"
+               tooltips
+               tooltip-template="
+                Sigmoidal adjustments alter the contrast and brightness of an image by mimicking the way humans see color.
+                It can be especially effective in imagery where the output is too dark or bright to see details.
+               "
+               tooltip-size="small"
+               tooltip-class="rf-tooltip"
+               tooltip-side="bottom"></i>
+          </div>
+          <div class="filter-group-body" ng-show="$ctrl.sigToggle.value">
+            <div class="filter">
+              <label>Threshold</label>
+              <rzslider class="dark"
+                        rz-slider-model="$ctrl.sliderCorrection.alpha"
+                        rz-slider-options="$ctrl.alphaOptions"
+              ></rzslider>
+              <input class="filter-adjust-input"
+                     type="number"
+                     min=0
+                     max=1
+                     step=0.01
+                     ng-model="$ctrl.sliderCorrection.alpha"
+                     ng-model-options="{ debounce: 250 }"
+                     ng-change="$ctrl.onFilterChange('alpha', $ctrl.sliderCorrection.alpha)">
+            </div>
+            <div class="filter">
+              <label>Contrast</label>
+              <rzslider class="dark"
+                        rz-slider-model="$ctrl.sliderCorrection.beta"
+                        rz-slider-options="$ctrl.betaOptions"
+              ></rzslider>
+              <input class="filter-adjust-input"
+                     type="number"
+                     min=0
+                     max=50
+                     step=1
+                     ng-model="$ctrl.sliderCorrection.beta"
+                     ng-model-options="{ debounce: 250 }"
+                     ng-change="$ctrl.onFilterChange('beta', $ctrl.sliderCorrection.beta)">
+            </div>
+          </div>
+        </div>
 
-        <!-- Gamme correction-->
+        <!-- Gamma correction-->
         <div class="filter-group">
           <div class="filter-group-header">
             <rf-toggle data-model="$ctrl.gammaToggle.value"
                        on-change="$ctrl.gammaToggled(value)">
             </rf-toggle>
             <h5>Gamma Correction</h5>
+            <i class="icon-info"
+               tooltips
+               tooltip-template="
+                Adjusting the the RGB gamma values will brighten or darken mid-tones.
+                Gamma adjustments are effective in reducing atmospheric haze in the blue and green bands.
+               "
+               tooltip-size="small"
+               tooltip-class="rf-tooltip"
+               tooltip-side="bottom"></i>
           </div>
           <div class="filter-group-body" ng-show="$ctrl.gammaToggle.value">
             <div class="filter">
@@ -99,46 +157,6 @@
           </div>
         </div>
 
-        <!-- Sigmoidal correction-->
-        <div class="filter-group">
-          <div class="filter-group-header">
-            <rf-toggle data-model="$ctrl.sigToggle.value"
-                       on-change="$ctrl.sigToggled(value)"></rf-toggle>
-            <h5>Sigmoidal Correction</h5>
-          </div>
-          <div class="filter-group-body" ng-show="$ctrl.sigToggle.value">
-            <div class="filter">
-              <label>Threshold</label>
-              <rzslider class="dark"
-                        rz-slider-model="$ctrl.sliderCorrection.alpha"
-                        rz-slider-options="$ctrl.alphaOptions"
-              ></rzslider>
-              <input class="filter-adjust-input"
-                     type="number"
-                     min=0
-                     max=1
-                     step=0.01
-                     ng-model="$ctrl.sliderCorrection.alpha"
-                     ng-model-options="{ debounce: 250 }"
-                     ng-change="$ctrl.onFilterChange('alpha', $ctrl.sliderCorrection.alpha)">
-            </div>
-            <div class="filter">
-              <label>Contrast</label>
-              <rzslider class="dark"
-                        rz-slider-model="$ctrl.sliderCorrection.beta"
-                        rz-slider-options="$ctrl.betaOptions"
-              ></rzslider>
-              <input class="filter-adjust-input"
-                     type="number"
-                     min=0
-                     max=50
-                     step=1
-                     ng-model="$ctrl.sliderCorrection.beta"
-                     ng-model-options="{ debounce: 250 }"
-                     ng-change="$ctrl.onFilterChange('beta', $ctrl.sliderCorrection.beta)">
-            </div>
-          </div>
-        </div>
 
         <!-- Brightness/contrast correction-->
         <div class="filter-group">

@@ -31,6 +31,7 @@ import 'angular-load';
 import 'ng-rollbar';
 import 'ng-file-upload';
 import 'angular-filter';
+import 'angular-tooltips';
 
 // local scripts
 // import '../assets/js/...';

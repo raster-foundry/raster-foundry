@@ -145,6 +145,10 @@ angular-sanitize@1.5.8:
   version "1.5.8"
   resolved "https://registry.yarnpkg.com/angular-sanitize/-/angular-sanitize-1.5.8.tgz#1832f69487ee820a21cbe30055a8fb1bdf297ab8"
 
+angular-tooltips@^1.1.10:
+  version "1.1.10"
+  resolved "https://registry.yarnpkg.com/angular-tooltips/-/angular-tooltips-1.1.10.tgz#ad8293205c9829ae269a42d86bc0b4d8ddfec0b0"
+
 angular-touch@1.5.8:
   version "1.5.8"
   resolved "https://registry.yarnpkg.com/angular-touch/-/angular-touch-1.5.8.tgz#b2443c435f8774617ee79bb11fb69ef4f5d5b8f5"
