@@ -7,7 +7,8 @@ const rfexportModal = {
         dismiss: '&',
         modalInstance: '<',
         resolve: '<'
-    }
+    },
+    controller: 'ExportModalController'
 };
 
 export default rfexportModal;

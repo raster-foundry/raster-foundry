@@ -62,6 +62,10 @@ export default (app) => {
                         params: {
                             projectId: '@projectId'
                         }
+                    },
+                    export: {
+                        method: 'POST',
+                        url: '/api/exports/'
                     }
                 }
             );
@@ -73,6 +77,26 @@ export default (app) => {
 
         get(id) {
             return this.Project.get({id}).$promise;
+        }
+
+        export(projectId, zoom) {
+            return this.userService.getCurrentUser().then(
+                (user) => {
+                    return this.Project.export({
+                        organizationId: user.organizationId,
+                        projectId: projectId,
+                        exportStatus: 'TOBEEXPORTED',
+                        exportType: 'S3',
+                        visibility: 'PRIVATE',
+                        exportOptions: {
+                            rasterSize: zoom
+                        }
+                    }).$promise;
+                },
+                (error) => {
+                    return error;
+                }
+            );
         }
 
         createProject(name) {

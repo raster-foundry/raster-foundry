@@ -3,7 +3,7 @@ const Map = require('es6-map');
 export default class ProjectsEditController {
     constructor( // eslint-disable-line max-params
         $log, $q, $state, $scope, projectService, mapService, mapUtilsService, layerService,
-        datasourceService
+        datasourceService, $uibModal
     ) {
         'ngInject';
         this.$log = $log;
@@ -14,6 +14,7 @@ export default class ProjectsEditController {
         this.mapUtilsService = mapUtilsService;
         this.layerService = layerService;
         this.datasourceService = datasourceService;
+        this.$uibModal = $uibModal;
 
         this.getMap = () => mapService.getMap('edit');
     }
@@ -144,5 +145,23 @@ export default class ProjectsEditController {
                 return ao;
             }, {});
         }, composites[0]);
+    }
+
+    openExportModal() {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        this.getMap().then(m => {
+            return m.map.getZoom();
+        }).then(zoom => {
+            this.activeModal = this.$uibModal.open({
+                component: 'rfExportModal',
+                resolve: {
+                    project: () => this.project,
+                    zoom: () => zoom
+                }
+            });
+        });
     }
 }
