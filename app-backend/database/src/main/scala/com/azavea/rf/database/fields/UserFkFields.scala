@@ -22,7 +22,8 @@ object UserFkFields {
       that.filter{ rec =>
         List(
           userParams.createdBy.map(rec.createdBy === _),
-          userParams.modifiedBy.map(rec.modifiedBy === _)
+          userParams.modifiedBy.map(rec.modifiedBy === _),
+          userParams.owner.map(rec.owner === _)
         )
           .flatten
           .reduceLeftOption(_ && _)
@@ -31,12 +32,12 @@ object UserFkFields {
     }
 
     def filterToOwner(user: User) = {
-      that.filter(_.createdBy === user.id)
+      that.filter(_.owner === user.id)
     }
 
     def filterToOwnerIfNotInRootOrganization(user: User) = {
       if (!user.isInRootOrganization) {
-        that.filter(_.createdBy === user.id)
+        that.filter(_.owner === user.id)
       } else {
         that
       }

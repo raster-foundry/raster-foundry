@@ -24,6 +24,7 @@ case class ToolTag(
   organizationId: UUID,
   createdBy: String,
   modifiedBy: String,
+  owner: String,
   tag: String
 )
 
@@ -38,17 +39,25 @@ object ToolTag {
     * @param tag String user supplied string to use for tag
     */
   @JsonCodec
-  case class Create(organizationId: UUID, tag: String) {
+  case class Create(
+    organizationId: UUID,
+    tag: String,
+    owner: Option[String]
+  ) extends OwnerCheck {
 
-    def toToolTag(userId: String): ToolTag = {
+    def toToolTag(user: User): ToolTag = {
       val now = new Timestamp((new java.util.Date()).getTime())
+
+      val ownerId = checkOwner(user, this.owner)
+
       ToolTag(
         UUID.randomUUID,
         now,
         now,
         organizationId,
-        userId,
-        userId,
+        user.id,
+        user.id,
+        ownerId,
         tag
       )
     }

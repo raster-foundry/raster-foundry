@@ -18,6 +18,19 @@ import geotrellis.proj4._
 import geotrellis.slick.Projected
 
 package object datamodel {
+
+  trait OwnerCheck {
+    def checkOwner(createUser: User, ownerUserId: Option[String]): String = {
+      (createUser, ownerUserId) match {
+        case (user, Some(id)) if user.id == id => user.id
+        case (user, Some(id)) if user.isInRootOrganization => id
+        case (user, Some(id)) if !user.isInRootOrganization =>
+          throw new IllegalArgumentException("Insufficient permissions to set owner on object")
+        case (user, _) => user.id
+      }
+    }
+  }
+
   implicit def encodePaginated[A: Encoder] =
     Encoder.forProduct6(
       "count",

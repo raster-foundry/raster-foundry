@@ -13,6 +13,7 @@ case class ToolRun(
   createdBy: String,
   modifiedAt: Timestamp,
   modifiedBy: String,
+  owner: String,
   visibility: Visibility,
   organizationId: UUID,
   project: UUID,
@@ -30,16 +31,21 @@ object ToolRun {
     organizationId: UUID,
     project: UUID,
     tool: UUID,
-    execution_parameters: Json
-  ) {
-    def toToolRun(userId: String): ToolRun = {
+    execution_parameters: Json,
+    owner: Option[String]
+  ) extends OwnerCheck {
+    def toToolRun(user: User): ToolRun = {
       val now = new Timestamp((new java.util.Date).getTime)
+
+      val ownerId = checkOwner(user, this.owner)
+
       ToolRun(
         UUID.randomUUID,
         now,
-        userId,
+        user.id,
         now,
-        userId,
+        user.id,
+        ownerId,
         visibility,
         organizationId,
         project,

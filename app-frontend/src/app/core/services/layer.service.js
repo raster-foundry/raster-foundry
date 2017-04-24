@@ -260,7 +260,7 @@ export default (app) => {
             let tmp = [].concat(scene)[0];
             return {
                 // TODO: replace this once user IDs are URL safe ISSUE: 766
-                userId: tmp.createdBy.replace('|', '_'),
+                userId: tmp.owner.replace('|', '_'),
                 organizationId: tmp.organizationId
             };
         }

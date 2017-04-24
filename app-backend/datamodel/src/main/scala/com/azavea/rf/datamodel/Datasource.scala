@@ -13,6 +13,7 @@ case class Datasource(
   createdBy: String,
   modifiedAt: java.sql.Timestamp,
   modifiedBy: String,
+  owner: String,
   organizationId: UUID,
   name: String,
   visibility: Visibility,
@@ -29,23 +30,28 @@ object Datasource {
 
 
   @JsonCodec
-  case class Create(
+  case class Create (
     organizationId: UUID,
     name: String,
     visibility: Visibility,
+    owner: Option[String],
     colorCorrection: Json,
     composites: Json,
     extras: Json
-  ) {
-    def toDatasource(userId: String): Datasource = {
+  ) extends OwnerCheck  {
+    def toDatasource(user: User): Datasource = {
       val id = java.util.UUID.randomUUID()
       val now = new Timestamp((new java.util.Date()).getTime())
+
+      val ownerId = checkOwner(user, this.owner)
+
       Datasource(
         id,
         now, // createdAt
-        userId, // createdBy
+        user.id, // createdBy
         now, // modifiedAt
-        userId, // modifiedBy
+        user.id, // modifiedBy
+        ownerId, // owner
         this.organizationId,
         this.name,
         this.visibility,

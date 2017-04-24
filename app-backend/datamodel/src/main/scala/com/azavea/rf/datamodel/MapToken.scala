@@ -16,6 +16,7 @@ case class MapToken(
   createdBy: String,
   modifiedAt: Timestamp,
   modifiedBy: String,
+  owner: String,
   organizationId: UUID,
   name: String,
   project: UUID
@@ -31,18 +32,22 @@ object MapToken {
   case class Create(
     organizationId: UUID,
     name: String,
-    project: UUID
-  ) {
-    def toMapToken(userId: String): MapToken = {
+    project: UUID,
+    owner: Option[String]
+  ) extends OwnerCheck {
+    def toMapToken(user: User): MapToken = {
+
       val id = java.util.UUID.randomUUID()
-      val token = java.util.UUID.randomUUID()
       val now = new Timestamp((new java.util.Date()).getTime())
+      val ownerId = checkOwner(user, this.owner)
+
       MapToken(
         id,
         now,
-        userId,
+        user.id,
         now,
-        userId,
+        user.id,
+        ownerId,
         this.organizationId,
         this.name,
         this.project

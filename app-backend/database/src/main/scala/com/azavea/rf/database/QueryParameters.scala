@@ -180,7 +180,8 @@ case class OrgQueryParameters(
 @JsonCodec
 case class UserQueryParameters(
   createdBy: Option[String] = None,
-  modifiedBy: Option[String] = None
+  modifiedBy: Option[String] = None,
+  owner: Option[String] = None
 )
 
 /** Query parameters to filter by modified/created times */

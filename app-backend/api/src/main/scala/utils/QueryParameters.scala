@@ -39,7 +39,8 @@ def aoiQueryParameters = (
   def userQueryParameters = parameters(
     (
     'createdBy.as[String].?,
-    'modifiedBy.as[String].?
+    'modifiedBy.as[String].?,
+    'owner.as[String].?
     )
   ).as(UserQueryParameters.apply _)
 
