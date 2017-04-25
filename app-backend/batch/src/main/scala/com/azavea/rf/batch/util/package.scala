@@ -13,6 +13,14 @@ import java.io._
 import java.net._
 
 package object util {
+  implicit class ThrowableMethods[T <: Throwable](e: T) {
+    def stackTraceString: String = {
+      val sw = new StringWriter
+      e.printStackTrace(new PrintWriter(sw))
+      sw.toString
+    }
+  }
+
   def getTiffTags(uri: URI): TiffTags = uri.getScheme match {
     case "file" =>
       TiffTagsReader.read(uri.toString)
@@ -36,7 +44,7 @@ package object util {
     case "s3" =>
       val client = new AWSAmazonS3Client(new DefaultAWSCredentialsProviderChain)
       val s3uri = new AmazonS3URI(uri)
-      client.getObject(s3uri.getBucket, s3uri.getKey).getObjectContent()
+      client.getObject(s3uri.getBucket, s3uri.getKey).getObjectContent
     case _ =>
       throw new IllegalArgumentException(s"Resource at $uri is not valid")
   }
@@ -58,6 +66,18 @@ package object util {
       IOUtils.toString(is)
     } finally {
       is.close()
+    }
+  }
+
+  def isUriExists(uri: String): Boolean =
+    isUriExists(new URI(uri))
+
+  def isUriExists(uri: URI): Boolean = {
+    try {
+      getStream(uri)
+      true
+    } catch {
+      case _: FileNotFoundException => false
     }
   }
 }

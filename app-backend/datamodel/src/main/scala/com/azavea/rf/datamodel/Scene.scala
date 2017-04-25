@@ -172,7 +172,30 @@ object Scene {
     ingestLocation: Option[String],
     filterFields: SceneFilterFields = new SceneFilterFields(),
     statusFields: SceneStatusFields
-  )
+  ) {
+    def toScene: Scene =
+      Scene(
+        id,
+        createdAt,
+        createdBy,
+        modifiedAt,
+        modifiedBy,
+        owner,
+        organizationId,
+        ingestSizeBytes,
+        visibility,
+        tags,
+        datasource,
+        sceneMetadata,
+        name,
+        tileFootprint,
+        dataFootprint,
+        metadataFiles,
+        ingestLocation,
+        filterFields,
+        statusFields
+      )
+    }
 
   object WithRelated {
     /** Helper function to create Iterable[Scene.WithRelated] from join

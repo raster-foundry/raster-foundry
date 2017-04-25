@@ -1,7 +1,7 @@
 package com.azavea.rf.batch.landsat8
 
 import com.azavea.rf.batch.Job
-import com.azavea.rf.batch.util.S3
+import com.azavea.rf.batch.util._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.tables._
 import com.azavea.rf.datamodel._
@@ -12,45 +12,41 @@ import geotrellis.proj4.CRS
 import geotrellis.slick.Projected
 import geotrellis.vector._
 import jp.ne.opt.chronoscala.Imports._
+import org.postgresql.util.PSQLException
 
 import java.time.{LocalDate, ZoneOffset}
 import java.util.UUID
 
-import scala.io.Source
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
 import scala.util.control.Breaks._
 
 case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), threshold: Int = 10)(implicit val database: DB) extends Job {
   val name = "import_landsat8"
 
-  @SuppressWarnings(Array("OptionGet"))
-  protected def getCsv: ListBuffer[Map[String, String]] = {
-    val source = Source.fromURL(landsat8Config.usgsLandsatUrl, "UTF-8")
-    val lines = source.getLines()
+  protected def scenesFromCsv(srcProj: CRS = CRS.fromName("EPSG:4326"), targetProj: CRS = CRS.fromName("EPSG:3857")): Future[ListBuffer[Scene.Create]] = {
+    val reader = CSV.parse(landsat8Config.usgsLandsatUrl)
+    val iterator = reader.iterator()
 
     val endDate = startDate + 1.day
-    val buffer = ListBuffer[Map[String, String]]()
-    val idToIndex: Map[String, Int] = lines.next().split(",").map(_.trim).zipWithIndex.toMap
-    val indexToId = idToIndex map { case (v, i) => i -> v }
+    val buffer = ListBuffer[Future[Option[Scene.Create]]]()
+    val (_, indexToId) = CSV.getBiFunctions(iterator.next())
 
     var counter = 0
     breakable {
-      lines foreach { line =>
+      while(iterator.hasNext) {
+        val line = reader.readNext()
+
         val row =
           line
-            .split(",")
-            .map(_.trim)
             .zipWithIndex
             .map { case (v, i) => indexToId(i) -> v }
             .toMap
 
         row.get("acquisitionDate") foreach { dateStr =>
           val date = LocalDate.parse(dateStr)
-          if (startDate <= date && endDate > date) buffer += row
+          if (startDate <= date && endDate > date) buffer += csvRowToScene(row, srcProj, targetProj)
           else if (date < startDate) counter += 1
         }
 
@@ -58,38 +54,29 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
       }
     }
 
-    buffer
+    Future.sequence(buffer).map(_.flatten)
   }
 
-  protected def getLandsatPath(landsatId: String) = {
+  protected def getLandsatPath(landsatId: String): String = {
     val (wPath, wRow) = landsatId.substring(3, 6) -> landsatId.substring(6, 9)
     val path = s"L8/$wPath/$wRow/$landsatId"
     logger.debug(s"Constructed path: $path")
     path
   }
 
-  protected def getLandsatUrl(landsatId: String) = {
+  protected def getLandsatUrl(landsatId: String): String = {
     val rootUrl = s"https://landsat-pds.s3.amazonaws.com/${getLandsatPath(landsatId)}"
     logger.debug(s"Constructed Root URL: $rootUrl")
     rootUrl
   }
 
-  protected def s3ObjExists(url: String): Boolean = {
-    try {
-      Source.fromURL(url, "UTF-8")
-      true
-    } catch {
-      case _: java.io.FileNotFoundException => false
-    }
-  }
-
   protected def sizeFromPath(tifPath: String, landsatId: String): Int = {
-    val path = s"${getLandsatPath(landsatId)}$tifPath"
+    val path = s"${getLandsatPath(landsatId)}/$tifPath"
     logger.info(s"Getting object size for path: $path")
-    S3.getObject(landsat8Config.bucketName, path).getObjectMetadata.getContentLength.toInt
+    S3.getObject(landsat8Config.bucketName, path, landsat8Config.awsRegion).getObjectMetadata.getContentLength.toInt
   }
 
-  protected def createThumbnails(sceneId: UUID, landsatId: String) = {
+  protected def createThumbnails(sceneId: UUID, landsatId: String): List[Thumbnail.Identified] = {
     val path = getLandsatUrl(landsatId)
     val smallUrl = s"$path${landsatId}_thumb_small.jpg}"
     val largeUrl = s"$path${landsatId}_thumb_large.jpg}"
@@ -115,7 +102,7 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
 
 
   @SuppressWarnings(Array("TraversableHead"))
-  protected def csvRowToScene(row: Map[String, String], srcProj: CRS = CRS.fromName("EPSG:4326"), targetProj: CRS = CRS.fromName("EPSG:4326")): Future[Option[Scene.Create]] = Future {
+  protected def csvRowToScene(row: Map[String, String], srcProj: CRS = CRS.fromName("EPSG:4326"), targetProj: CRS = CRS.fromName("EPSG:3857")): Future[Option[Scene.Create]] = Future {
     val sceneId = UUID.randomUUID()
     val landsatId = row("sceneID")
 
@@ -124,7 +111,8 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
     val ul = row("upperLeftCornerLongitude").toDouble -> row("upperLeftCornerLatitude").toDouble
     val ur = row("upperRightCornerLongitude").toDouble -> row("upperRightCornerLatitude").toDouble
 
-    val srcCoords = ll :: lr :: ul :: ur :: Nil
+    val srcCoords  = ll :: lr :: ul :: ur :: Nil
+    val srcPolygon = Polygon(Line(srcCoords :+ srcCoords.head))
 
     val sortedByX = srcCoords.sortBy(_.x)
     val sortedByY = srcCoords.sortBy(_.y)
@@ -137,30 +125,30 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
     )
 
     val (transformedCoords, transformedExtent) = {
-      if (srcProj.equals(targetProj)) Polygon(Line(srcCoords :+ srcCoords.head)) -> extent
-      else
-        Polygon(Line(srcCoords.map {
-          _.reproject(srcProj, targetProj)
-        })) -> extent.reproject(srcProj, targetProj)
+      if (srcProj.equals(targetProj)) srcPolygon -> extent
+      else srcPolygon.reproject(srcProj, targetProj) -> extent.reproject(srcProj, targetProj)
     }
 
     val landsatPath = getLandsatPath(landsatId)
+    val s3Url = s"${landsat8Config.awsLandsatBase}${landsatPath}/index.html"
 
-
-    if (!s3ObjExists(s"${landsat8Config.awsLandsatBase}${landsatPath}index.html")) {
+    if (!isUriExists(s3Url)) {
       logger.warn(
         "AWS and USGS are not always in sync. Try again in several hours.\n" +
-          s"If you believe this message is in error, check ${landsat8Config.awsLandsatBase}${landsatPath} manually."
+          s"If you believe this message is in error, check $s3Url manually."
       )
       None
     } else {
-      val acquisitionDate = Some(new java.sql.Timestamp(
-        LocalDate
-          .parse(row("acquisitionDate"))
-          .atStartOfDay(ZoneOffset.UTC)
-          .toInstant
-          .getEpochSecond * 1000l
-      ))
+      val acquisitionDate =
+        row.get("acquisitionDate").map { dt =>
+          new java.sql.Timestamp(
+            LocalDate
+              .parse(dt)
+              .atStartOfDay(ZoneOffset.UTC)
+              .toInstant
+              .getEpochSecond * 1000l
+          )
+        }
 
       val cloudCover = row.get("cloudCoverFull").map(_.toFloat)
       val sunElevation = row.get("sunElevation").map(_.toFloat)
@@ -184,6 +172,7 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
             visibility = Visibility.Public,
             filename = tiffPath,
             sourceUri = s"${getLandsatUrl(landsatId)}${tiffPath}",
+            owner = Some(airflowUser),
             scene = sceneId,
             imageMetadata = Json.Null,
             resolutionMeters = resolution,
@@ -201,6 +190,7 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
         datasource = landsat8Config.datasourceUUID,
         sceneMetadata = sceneMetadata.asJson,
         name = s"L8 $landsatPath",
+        owner = Some(airflowUser),
         tileFootprint = targetProj.epsgCode.map(Projected(MultiPolygon(transformedExtent.toPolygon()), _)),
         dataFootprint = targetProj.epsgCode.map(Projected(MultiPolygon(transformedCoords), _)),
         metadataFiles = List(s"${landsat8Config.awsLandsatBase}${landsatPath}${landsatId}_MTL.txt"),
@@ -225,35 +215,51 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
 
   def run: Unit = {
     logger.info("Importing scenes...")
-    val future = Users.getUserById(airflowUser).flatMap { userOpt =>
-      val user = userOpt.getOrElse(throw new Exception(s"User $airflowUser doesn't exist."))
+    Users.getUserById(airflowUser).flatMap { userOpt =>
+      val user = userOpt.getOrElse {
+        val e = new Exception(s"User $airflowUser doesn't exist.")
+        sendError(e)
+        stop
+        throw e
+      }
 
-      Future
-        .sequence(getCsv.map(csvRowToScene(_)))
-        .map(_.flatten)
+      scenesFromCsv()
         .flatMap { scenes =>
           Future.sequence(scenes.map { scene =>
             val id = scene.id.map(_.toString).getOrElse("")
             logger.info(s"Importing scene $id...")
-            val future = Scenes.insertScene(scene, user)
+            val future =
+              Scenes.insertScene(scene, user).map(_.toScene).recover {
+                case e: PSQLException => {
+                  logger.error(s"An error occurred during scene $id import. Skipping...")
+                  logger.error(e.stackTraceString)
+                  sendError(e)
+                  scene.toScene(user)
+                }
+              }
+
             future onComplete {
               case Success(s) => logger.info(s"Finished importing scene ${s.id}.")
               case Failure(e) => {
                 logger.error(s"An error occurred during scene $id import.")
-                throw e
+                logger.error(e.stackTraceString)
+                sendError(e)
               }
             }
             future
           })
         }
+    } onComplete {
+      case Success(scenes) => {
+        logger.info(s"Successfully imported scenes: ${scenes.map(_.id.toString).mkString(", ")}.")
+        stop
+      }
+      case Failure(e) => {
+        logger.error(e.stackTraceString)
+        sendError(e)
+        stop
+      }
     }
-
-    future onComplete {
-      case Success(scenes) => logger.info(s"Successfully imported scenes: ${scenes.map(_.id.toString).mkString(", ")}.")
-      case Failure(e) => throw e
-    }
-
-    Await.result(future, Duration.Inf)
   }
 }
 
