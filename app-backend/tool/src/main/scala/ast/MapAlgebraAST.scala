@@ -21,6 +21,7 @@ object MapAlgebraAST {
   /** Map Algebra operations (nodes in this tree) */
   abstract class Operation(val symbol: String) extends MapAlgebraAST {
 
+    @SuppressWarnings(Array("TraversableHead"))
     def find(id: UUID): Option[MapAlgebraAST] =
       if (this.id == id)
         Some(this)

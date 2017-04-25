@@ -17,7 +17,7 @@ sealed trait InterpreterError {
 
 /** An unbound parameter encountered during evaluation  */
 case class MissingParameter(id: UUID) extends InterpreterError {
-  def repr = s"Unbound parameter encountered, unable to evaluate"
+  def repr = s"Unbound parameter at $id encountered, unable to evaluate"
 }
 
 /** An error encountered when a bound parameter's source can't be resolved */

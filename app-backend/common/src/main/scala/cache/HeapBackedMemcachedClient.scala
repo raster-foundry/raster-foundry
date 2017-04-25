@@ -93,6 +93,7 @@ object HeapBackedMemcachedClient {
     new HeapBackedMemcachedClient(client, options)
 
   /** This key sanitizer replaces whitespace with '_' and throws in case of control characters */
+  @SuppressWarnings(Array("OptionGet"))
   def sanitizeKey(key: String): String = {
     val blacklist = "[^\u0020-\u007e]".r
     assert(key.length <= 250, s"Keys of length 250 or greater are not allowed; key provided has length of ${key.length}")
