@@ -89,7 +89,7 @@ export default (app) => {
                         exportType: 'S3',
                         visibility: 'PRIVATE',
                         exportOptions: {
-                            rasterSize: zoom
+                            resolution: zoom
                         }
                     }).$promise;
                 },

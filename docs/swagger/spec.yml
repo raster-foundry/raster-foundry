@@ -3022,7 +3022,7 @@ definitions:
     properties:
       exportStatus:
         type: string
-        description: Status of upload
+        description: Status of export
         enum:
           - NOTEXPORTED
           - TOBEEXPORTED
