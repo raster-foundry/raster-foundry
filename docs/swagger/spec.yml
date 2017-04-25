@@ -310,6 +310,7 @@ paths:
       tags:
         - Datasources
       parameters:
+        - $ref: '#/parameters/owner'
         - $ref: '#/parameters/name'
       # TODO: fill in all possible responses
       responses:
@@ -330,6 +331,7 @@ paths:
         - $ref: '#/parameters/organization'
         - $ref: '#/parameters/datasource'
         - $ref: '#/parameters/uploadStatus'
+        - $ref: '#/parameters/owner'
       responses:
         200:
           description: Paginated list of uploads
@@ -447,6 +449,7 @@ paths:
         - Imagery
       parameters:
         - $ref: '#/parameters/orderingScene'
+        - $ref: '#/parameters/owner'
         - $ref: '#/parameters/pageSize'
         - $ref: '#/parameters/page'
         - $ref: '#/parameters/organization'
@@ -592,6 +595,7 @@ paths:
         - $ref: '#/parameters/orderingBase'
         - $ref: '#/parameters/pageSize'
         - $ref: '#/parameters/page'
+        - $ref: '#/parameters/owner'
         - $ref: '#/parameters/organization'
         - $ref: '#/parameters/tags'
       responses:
@@ -925,6 +929,7 @@ paths:
         - $ref: '#/parameters/pageSize'
         - $ref: '#/parameters/page'
         - $ref: '#/parameters/organization'
+        - $ref: '#/parameters/owner'
       responses:
         200:
           description: A paginated list of all AOIs the user is authorized to view.
@@ -1086,6 +1091,7 @@ paths:
         - $ref: '#/parameters/maxRawDataBytes'
         - $ref: '#/parameters/minResolution'
         - $ref: '#/parameters/maxResolution'
+        - $ref: '#/parameters/owner'
       responses:
         200:
           description: Paginated list of images
@@ -1245,6 +1251,7 @@ paths:
       parameters:
         - $ref: '#/parameters/orderingBase'
         - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/owner'
         - $ref: '#/parameters/page'
         - $ref: '#/parameters/minRating'
         - $ref: '#/parameters/maxRating'
@@ -1316,6 +1323,7 @@ paths:
         - Lab
       parameters:
         - $ref: '#/parameters/search'
+        - $ref: '#/parameters/owner'
       responses:
         200:
           description: Retrieve a paginated list of tool tags
@@ -1433,6 +1441,7 @@ paths:
       parameters:
         - $ref: '#/parameters/project'
         - $ref: '#/parameters/tool'
+        - $ref: '#/parameters/owner'
         - $ref: '#/parameters/createdBy'
       responses:
         200:
@@ -1507,6 +1516,7 @@ paths:
         - $ref: '#/parameters/page'
         - $ref: '#/parameters/organization'
         - $ref: '#/parameters/project'
+        - $ref: '#/parameters/owner'
         - $ref: '#/parameters/exportStatus'
       responses:
         200:
@@ -1936,7 +1946,13 @@ parameters:
     required: false
   createdBy:
     name: createdBy
-    description: Filter by creator\'s slug label
+    description: Filter by creator
+    in: query
+    type: string
+    required: false
+  owner:
+    name: owner
+    description: Filter by object owner
     in: query
     type: string
     required: false
@@ -1968,6 +1984,12 @@ definitions:
       organizationId:
         type: string
         description: uuid for organization
+  BaseCreate:
+    type: object
+    properties:
+      owner:
+        type: string
+        description: Optional during object creation, owner of an object
   MapToken:
     allOf:
     - $ref: '#/definitions/BaseModel'
@@ -2069,16 +2091,19 @@ definitions:
         format: date-time
   UserTrackingMixin:
     type: object
-    readOnly: true
     properties:
       createdBy:
         type: string
-        format: uuid
-        description: UUID of user who created the Object
+        description: User who created the Object
+        readOnly: true
       modifiedBy:
         type: string
-        format: uuid
-        description: UUID of user who most recently modified the object
+        description: User who most recently modified the object
+        readOnly: true
+      owner:
+        type: string
+        description: User who owns the object
+
   User:
     allOf:
     - $ref: '#/definitions/TimeModelMixin'
@@ -2710,6 +2735,8 @@ definitions:
         type: string
       modifiedBy:
         type: string
+      owner:
+        type: string
 
   TimestampParams:
     type: object
@@ -2729,47 +2756,50 @@ definitions:
         format: datetime
   UploadCreate:
     type: object
-    properties:
-      uploadStatus:
-        type: string
-        description: Status of upload
-        enum:
-          - CREATED
-          - UPLOADING
-          - UPLOADED
-          - QUEUED
-          - PROCESSING
-          - COMPLETE
-          - FAILED
-          - ABORTED
-      files:
-        type: array
-        items:
+    allOf:
+    - $ref: '#/definitions/BaseCreate'
+    - type: object
+      properties:
+        uploadStatus:
           type: string
-      uploadType:
-        type: string
-        description: Source of files and uploads
-        enum:
-          - DROPBOX
-          - S3
-          - LOCAL
-      fileType:
-        type: string
-        description: type of data being uploaded, limited to two options right now
-        enum:
-          - GEOTIFF
-          - GEOTIFF_WITH_METADATA
-      datasource:
-        type: string
-        description: datasource of tiffs being uploaded
-        format: uuid
-      visibility:
-        type: string
-        description: Level of restriction on viewing
-        enum:
-          - PUBLIC
-          - ORGANIZATION
-          - PRIVATE
+          description: Status of upload
+          enum:
+            - CREATED
+            - UPLOADING
+            - UPLOADED
+            - QUEUED
+            - PROCESSING
+            - COMPLETE
+            - FAILED
+            - ABORTED
+        files:
+          type: array
+          items:
+            type: string
+        uploadType:
+          type: string
+          description: Source of files and uploads
+          enum:
+            - DROPBOX
+            - S3
+            - LOCAL
+        fileType:
+          type: string
+          description: type of data being uploaded, limited to two options right now
+          enum:
+            - GEOTIFF
+            - GEOTIFF_WITH_METADATA
+        datasource:
+          type: string
+          description: datasource of tiffs being uploaded
+          format: uuid
+        visibility:
+          type: string
+          description: Level of restriction on viewing
+          enum:
+            - PUBLIC
+            - ORGANIZATION
+            - PRIVATE
   Upload:
     allOf:
     - $ref: '#/definitions/BaseModel'
@@ -2928,43 +2958,46 @@ definitions:
       $ref: '#/definitions/SceneCorrectionParam'
   ExportCreate:
     type: object
-    properties:
-      projectId:
-        type: string
-        format: uuid
-      sceneIds:
-        type: array
-        items:
+    allOf:
+    - $ref: '#/definitions/BaseCreate'
+    - type: object
+      properties:
+        projectId:
           type: string
           format: uuid
-      exportStatus:
-        type: string
-        description: Status of export
-        enum:
-          - CREATED
-          - EXPORTING
-          - EXPORTED
-          - QUEUED
-          - PROCESSING
-          - COMPLETE
-          - FAILED
-          - ABORTED
-      exportType:
-        type: string
-        description: Source of exports
-        enum:
-          - DROPBOX
-          - S3
-          - LOCAL
-      visibility:
-        type: string
-        description: Level of restriction on viewing
-        enum:
-          - PUBLIC
-          - ORGANIZATION
-          - PRIVATE
-      exportOptions:
-        $ref: '#/definitions/ExportOptions'
+        sceneIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        exportStatus:
+          type: string
+          description: Status of export
+          enum:
+            - CREATED
+            - EXPORTING
+            - EXPORTED
+            - QUEUED
+            - PROCESSING
+            - COMPLETE
+            - FAILED
+            - ABORTED
+        exportType:
+          type: string
+          description: Source of exports
+          enum:
+            - DROPBOX
+            - S3
+            - LOCAL
+        visibility:
+          type: string
+          description: Level of restriction on viewing
+          enum:
+            - PUBLIC
+            - ORGANIZATION
+            - PRIVATE
+        exportOptions:
+          $ref: '#/definitions/ExportOptions'
   Export:
     allOf:
     - $ref: '#/definitions/BaseModel'
@@ -3044,7 +3077,7 @@ definitions:
         format: uuid
       resolution:
         type: integer
-        description: required resolution (currently it's zoom level)
+        description: "required resolution (currently it's zoom level)"
       mask:
         type: object
         description: geojson multipolygon
