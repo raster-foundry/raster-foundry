@@ -1,9 +1,8 @@
 package com.azavea.rf.tool.ast
 
-import geotrellis.raster.render.ColorRamp
-import io.circe.generic.JsonCodec
-
 import java.util.UUID
+
+import io.circe.generic.JsonCodec
 
 
 /** The ur-type for a recursive representation of MapAlgebra operations */
@@ -25,7 +24,7 @@ object MapAlgebraAST {
       if (this.id == id)
         Some(this)
       else {
-        val matches = this.args.map(_.find(id)).flatten
+        val matches = this.args.flatMap(_.find(id))
         require(matches.length < 2, s"Ambiguous IDs ($matches) on Map Algebra AST ($this)")
         matches.headOption
       }
@@ -60,6 +59,7 @@ object MapAlgebraAST {
   @JsonCodec
   case class Source(id: UUID, label: Option[String]) extends MapAlgebraAST {
     def args: List[MapAlgebraAST] = List.empty
+
     def find(id: UUID): Option[MapAlgebraAST] =
       if (this.id == id) Some(this)
       else None
@@ -73,4 +73,3 @@ object MapAlgebraAST {
   /** TODO: Add other source types (or treat of them as hyperparameters - e.g. ClassBreaks, above) */
 
 }
-
