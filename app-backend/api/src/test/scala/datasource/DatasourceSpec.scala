@@ -47,6 +47,7 @@ class DatasourceSpec extends WordSpec
     beta = Some(13.0),
     min = Some(0),
     max = Some(20000),
+    saturation = Some(1.0),
     equalize = false
   ).asJson
 

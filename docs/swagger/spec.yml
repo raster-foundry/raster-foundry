@@ -2071,6 +2071,9 @@ definitions:
       max:
         type: number
         format: float
+      saturation:
+        type: number
+        format: float
       equalize:
         type: boolean
       contrast:

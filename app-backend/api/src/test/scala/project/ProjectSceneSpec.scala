@@ -289,6 +289,7 @@ class ProjectSceneSpec extends WordSpec
         Some(10), Some(20),                // Contrast, Brightness
         None, None,                        // Alpha, Beta
         None, None,                        // Min, Max
+        None,                              // Saturation
         false                              // Equalize?
       )
 
