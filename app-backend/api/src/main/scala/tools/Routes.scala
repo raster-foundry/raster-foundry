@@ -1,18 +1,15 @@
 package com.azavea.rf.api.tool
 
-import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
+import java.util.UUID
+
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Route
+import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.Tools
 import com.azavea.rf.datamodel._
-import com.azavea.rf.tool.ast._
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Route
-import io.circe._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
-
-import scala.util.{Success, Failure}
-import java.util.UUID
 
 trait ToolRoutes extends Authentication
     with PaginationDirectives

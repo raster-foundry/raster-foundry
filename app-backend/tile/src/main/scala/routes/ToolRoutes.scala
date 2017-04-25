@@ -1,49 +1,28 @@
 package com.azavea.rf.tile.routes
 
-import com.azavea.rf.common.Authentication
-import com.azavea.rf.tile.image._
-import com.azavea.rf.tile.tool.TileSources
-import com.azavea.rf.tile.directives._
-import com.azavea.rf.tile._
-import com.azavea.rf.database.Database
-import com.azavea.rf.database.tables.{Tools, ToolRuns}
-import com.azavea.rf.datamodel._
-import com.azavea.rf.tool.ast.codec._
-import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.eval._
-import com.azavea.rf.tool.params._
+import java.util.UUID
 
-import io.circe._
-import io.circe.parser._
-import io.circe.syntax._
-import io.circe.generic.auto._
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
-import geotrellis.raster._
-import geotrellis.raster.render._
-import geotrellis.raster.io._
-import geotrellis.raster.render.{Png, ColorRamp, ColorMap}
-import geotrellis.raster.io.geotiff._
-import geotrellis.vector.Extent
-import geotrellis.slick.Projected
-import geotrellis.spark._
-import geotrellis.spark.tiling._
-import geotrellis.proj4._
-import akka.http.scaladsl.server._
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes}
-import akka.http.scaladsl.marshalling.PredefinedToEntityMarshallers._
+import scala.concurrent._
+import scala.concurrent.ExecutionContext.Implicits.global
+
 import akka.http.scaladsl.marshalling._
-import com.typesafe.scalalogging.LazyLogging
+import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes}
+import akka.http.scaladsl.server._
 import cats.data._
 import cats.data.Validated._
 import cats.implicits._
-
-import java.security.InvalidParameterException
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent._
-import java.util.UUID
-import java.io._
+import com.azavea.rf.common.Authentication
+import com.azavea.rf.database.Database
+import com.azavea.rf.database.tables.{ToolRuns, Tools}
+import com.azavea.rf.tile._
+import com.azavea.rf.tile.directives._
+import com.azavea.rf.tool.ast._
+import com.azavea.rf.tool.eval._
+import com.azavea.rf.tool.params._
+import com.typesafe.scalalogging.LazyLogging
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import geotrellis.raster._
+import geotrellis.raster.render._
 
 
 class ToolRoutes(implicit val database: Database) extends Authentication
@@ -127,4 +106,3 @@ class ToolRoutes(implicit val database: Database) extends Authentication
       }
     }
 }
-

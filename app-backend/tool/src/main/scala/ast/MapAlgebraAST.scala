@@ -20,15 +20,17 @@ sealed trait MapAlgebraAST extends Product with Serializable {
 object MapAlgebraAST {
   /** Map Algebra operations (nodes in this tree) */
   abstract class Operation(val symbol: String) extends MapAlgebraAST {
+
     def find(id: UUID): Option[MapAlgebraAST] =
       if (this.id == id)
         Some(this)
       else {
-        val matches = this.args.flatMap(_.find(id))
+        val matches = args.flatMap(_.find(id))
         require(matches.length < 2, s"Ambiguous IDs ($matches) on Map Algebra AST ($this)")
         matches.headOption
       }
-    def sources: Seq[UUID] = this.args.flatMap(_.sources)
+
+    def sources: Seq[UUID] = args.flatMap(_.sources)
   }
 
   @JsonCodec
