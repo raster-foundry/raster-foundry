@@ -102,6 +102,20 @@ class ToolRoutes(implicit val database: Database) extends Authentication
               }
             }
           }
+        } ~
+        pathPrefix("validate") {
+          complete {
+            val result: OptionT[Future, Boolean] = for {
+              toolRun <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
+              tool    <- OptionT(Tools.getTool(toolRun.tool, user))
+              params  <- OptionT.fromOption[Future](toolRun.executionParameters.as[EvalParams].toOption)
+              ast     <- OptionT.fromOption[Future](tool.definition.as[MapAlgebraAST].toOption)
+            } yield {
+              ast.validateSources(params.sources.keySet)
+            }
+
+            result.value
+          }
         }
       }
     }
