@@ -23,8 +23,11 @@ lazy val commonSettings = Seq(
     "-language:experimental.macros",
     "-feature"
   ),
-  resolvers += Resolver.sonatypeRepo("snapshots"),
-  resolvers += Resolver.bintrayRepo("lonelyplanet", "maven"),
+  resolvers ++= Seq(
+    Resolver.sonatypeRepo("snapshots"),
+    Resolver.bintrayRepo("lonelyplanet", "maven"),
+    Resolver.bintrayRepo("kwark", "maven") // Required for Slick 3.1.1.2, see https://github.com/azavea/raster-foundry/pull/1576
+  ),
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
   addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 )
@@ -159,6 +162,7 @@ lazy val database = Project("database", file("database"))
   })
 
 lazy val batch = Project("batch", file("batch"))
+  .dependsOn(common)
   .dependsOn(datamodel)
   .dependsOn(database)
   .settings(commonSettings:_*)

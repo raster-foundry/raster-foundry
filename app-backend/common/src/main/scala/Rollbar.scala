@@ -1,10 +1,7 @@
 package com.azavea.rf.common
 
-import scala.concurrent._
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.mutable
-import scala.util.{Success, Failure}
-import java.io.{PrintStream, StringWriter, ByteArrayOutputStream}
+import java.io.{PrintStream, ByteArrayOutputStream}
 
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
@@ -33,14 +30,14 @@ trait RollbarNotifier extends LazyLogging {
     case _ => "staging"
   }
 
-  def buildRollbarPayload(e: Exception): JsObject = JsObject(
+  def buildRollbarPayload(e: Throwable): JsObject = JsObject(
     "access_token" -> this.rollbarApiToken.toJson,
     "data" -> JsObject(
       "environment" -> this.environment.toJson,
       "body" -> JsObject(
         "trace_chain" -> {
           val traces = mutable.ListBuffer.empty[JsObject]
-          var thr = e: Throwable
+          var thr = e
           do {
             traces += createTrace(thr)
             thr = thr.getCause
@@ -54,7 +51,7 @@ trait RollbarNotifier extends LazyLogging {
 
   def createTrace(throwable: Throwable): JsObject = {
     val frames = throwable.getStackTrace.map { element =>
-      val lineNo = if(element.getLineNumber > 0) Seq(("lineno" -> element.getLineNumber.toJson)) else Nil
+      val lineNo = if(element.getLineNumber > 0) Seq("lineno" -> element.getLineNumber.toJson) else Nil
       val frame = Seq(
           "class_name" -> element.getClassName.toJson,
           "filename" -> element.getFileName.toJson,
@@ -86,7 +83,7 @@ trait RollbarNotifier extends LazyLogging {
     )
   }
 
-  def sendError(e: Exception): Unit = {
+  def sendError(e: Throwable): Unit = {
     val payload = this.buildRollbarPayload(e)
     Http().singleRequest(
       HttpRequest(HttpMethod("POST", false, false, RequestEntityAcceptance.Expected),

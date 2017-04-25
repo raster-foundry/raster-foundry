@@ -22,6 +22,7 @@ trait Config {
     bandLookup: Landsat8Bands,
     datasourceId: String,
     usgsLandsatUrl: String,
+    awsRegion: Option[String],
     awsLandsatBase: String,
     bucketName: String
   ) {
