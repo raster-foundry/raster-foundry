@@ -56,17 +56,6 @@ def get_cluster_id():
 
 
 @wrap_rollbar
-def get_batch_jar():
-    bucket = 'rasterfoundry-global-artificats-us-east-1'
-    key = 'batch/{}'.format(jar_path)
-    s3 = boto3.client('s3')
-    resp = s3.get_object(Bucket=bucket, Key=key)
-    with open('rf-batch.jar', 'wb') as outf:
-        outf.write(resp['Body'].read())
-    return True
-
-
-@wrap_rollbar
 def execute_ingest_emr_job(ingest_s3_uri, ingest_def_id, cluster_id):
     """Kick off ingest in AWS EMR
 
@@ -88,9 +77,9 @@ def execute_ingest_emr_job(ingest_s3_uri, ingest_def_id, cluster_id):
                      'cluster',
                      '--class',
                      'com.azavea.rf.batch.ingest.Ingest',
-                     '--driver-memory', '8G',
                      's3://rasterfoundry-global-artifacts-us-east-1/batch/{}'.format(jar_path),
                      '-t',
+                     '--overwrite',
                      '-j',
                      ingest_s3_uri],
             'Jar': 's3://us-east-1.elasticmapreduce/libs/script-runner/script-runner.jar'
