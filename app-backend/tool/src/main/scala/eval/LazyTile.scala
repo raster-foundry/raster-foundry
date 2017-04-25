@@ -76,6 +76,7 @@ sealed trait LazyTile extends TileLike with Grid with LazyLogging {
 
 }
 
+@SuppressWarnings(Array("EitherGet"))
 object LazyTile {
   implicit def tileToLazyTile(tile: Tile): LazyTile = Bound(tile)
 
@@ -139,7 +140,7 @@ object LazyTile {
         case Some(Unbound(None)) =>
           LazyTile.Empty
         case None =>
-          logger.debug(s"Unable to find match for variable")
+          logger.debug("Unable to find match for variable")
           this
         case _ =>
           logger.info(s"Unexpected match found while binding variable ($this) with args: ($args)")

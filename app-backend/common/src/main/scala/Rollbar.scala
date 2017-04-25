@@ -72,7 +72,7 @@ trait RollbarNotifier extends LazyLogging {
       Some(baos.toString("UTF-8"))
     } catch {
       case e: Exception => {
-        logger.debug(s"Exception printing stack trace.", e)
+        logger.debug("Exception printing stack trace.", e)
         None
       }
     }
