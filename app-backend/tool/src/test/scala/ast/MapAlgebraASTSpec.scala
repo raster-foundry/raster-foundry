@@ -13,13 +13,13 @@ import java.util.UUID
 
 class MapAlgebraASTSpec extends FunSpec with Matchers {
 
-  def testSource() = MapAlgebraAST.RFMLRasterSource.empty
+  def randomSourceAST = MapAlgebraAST.Source(UUID.randomUUID, None)
 
   it("Can find subtrees by ID") {
-    val src1 = MapAlgebraAST.RFMLRasterSource.empty
-    val src2 = MapAlgebraAST.RFMLRasterSource.empty
-    val src3 = MapAlgebraAST.RFMLRasterSource.empty
-    val src4 = MapAlgebraAST.RFMLRasterSource.empty
+    val src1 = randomSourceAST
+    val src2 = randomSourceAST
+    val src3 = randomSourceAST
+    val src4 = randomSourceAST
     val uberAst = src1 + src2 * src3 / src4
 
     uberAst.find(src4.id) should be (Some(src4))
