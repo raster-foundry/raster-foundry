@@ -1,36 +1,19 @@
 package com.azavea.rf.tile.tool
 
-import com.azavea.rf.common.Authentication
-import com.azavea.rf.tile.image._
-import com.azavea.rf.tile._
-import com.azavea.rf.tool.ast._
-import com.azavea.rf.database.Database
-import com.azavea.rf.database.tables.Tools
-import com.azavea.rf.datamodel._
-import com.azavea.rf.tool.ast.codec._
-import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.op._
+import scala.concurrent._
+import scala.concurrent.ExecutionContext.Implicits.global
 
+import cats.implicits._
+import com.azavea.rf.database.Database
+import com.azavea.rf.tile._
+import com.azavea.rf.tile.image._
+import com.azavea.rf.tool.ast._
+import com.typesafe.scalalogging.LazyLogging
+import geotrellis.proj4._
 import geotrellis.raster._
-import geotrellis.raster.render._
-import geotrellis.raster.io._
-import geotrellis.raster.op._
-import geotrellis.raster.render.{Png, ColorRamp, ColorMap}
-import geotrellis.raster.io.geotiff._
-import geotrellis.vector.Extent
 import geotrellis.slick.Projected
 import geotrellis.spark._
 import geotrellis.spark.tiling._
-import geotrellis.proj4._
-import com.typesafe.scalalogging.LazyLogging
-import cats.data._
-import cats.data.Validated._
-import cats.implicits._
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent._
-import java.util.UUID
-import java.io._
 
 
 /** Interpreting a [[MapAlgebraAST]] requires providing a function from
