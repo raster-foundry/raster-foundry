@@ -1,22 +1,21 @@
 package com.azavea.rf.tool.eval
 
+import java.util.UUID
+
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+
+import cats.data.{NonEmptyList => NEL, _}
+import cats.data.Validated._
+import cats.implicits._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.ast.MapAlgebraAST._
 import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.params._
-
 import geotrellis.raster._
 import geotrellis.raster.testkit._
-import geotrellis.raster.render._
 import org.scalatest._
-import cats.data.{NonEmptyList => NEL, _}
-import cats.data.Validated._
-
-import scala.concurrent.{Future, ExecutionContext, Await}
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
-import java.net.URI
-import java.util.UUID
 
 
 class InterpreterSpec
@@ -24,7 +23,6 @@ class InterpreterSpec
        with Matchers
        with TileBuilders
        with RasterMatchers {
-  import MapAlgebraAST._
 
   def randomSourceAST = MapAlgebraAST.Source(UUID.randomUUID, None)
 
@@ -109,5 +107,17 @@ class InterpreterSpec
     lt should be (Invalid(NEL.of(RasterRetrievalError(src1.id, redTileSource.id), MissingParameter(src2.id))))
   }
 
-}
+  it("interpretPure") {
+    val src1 = randomSourceAST
+    val src2 = randomSourceAST
 
+    val tms = Interpreter.interpretPure[Unit](
+      ast = src1 - src2,
+      params = EvalParams(Map(src1.id -> redTileSource, src2.id -> nirTileSource))
+    )
+
+    tms shouldBe Valid(())
+
+  }
+
+}
