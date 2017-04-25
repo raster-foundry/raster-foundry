@@ -1,22 +1,14 @@
 package com.azavea.rf.tool.eval
 
-import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.params._
-import com.azavea.rf.tool.ast.MapAlgebraAST._
+import scala.concurrent.{ExecutionContext, Future}
 
-import geotrellis.raster._
-import geotrellis.raster.histogram._
-import geotrellis.raster.render.{BreakMap, MapStrategy}
 import cats.data._
 import cats.data.Validated._
-import cats.implicits._
+import com.azavea.rf.tool.ast._
+import com.azavea.rf.tool.ast.MapAlgebraAST._
+import com.azavea.rf.tool.params._
 import com.typesafe.scalalogging.LazyLogging
-
-import scala.concurrent.{Future, ExecutionContext, Await}
-import scala.concurrent.duration._
-import java.lang.IllegalStateException
-import java.net.URI
-import java.util.UUID
+import geotrellis.raster._
 
 
 /** This interpreter handles resource resolution and compilation of MapAlgebra ASTs */

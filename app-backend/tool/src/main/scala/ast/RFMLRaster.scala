@@ -1,12 +1,11 @@
 package com.azavea.rf.tool.ast
 
-import io.circe._
-import io.circe.syntax._
-import io.circe.generic.JsonCodec
-
-import java.util.UUID
 import java.security.InvalidParameterException
+import java.util.UUID
 
+import io.circe._
+import io.circe.generic.JsonCodec
+import io.circe.syntax._
 
 sealed abstract class RFMLRaster(val `type`: String) {
   def id: UUID
