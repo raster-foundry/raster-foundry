@@ -91,10 +91,8 @@ class ToolRoutes(implicit val database: Database) extends Authentication
                   tile    <- OptionT({
                                val tms = Interpreter.interpretTMS(ast, params, source)
                                tms(z, x, y).map {
-                                 case Valid(op) =>
-                                   op.evaluateDouble
-                                 case Invalid(errors) =>
-                                   throw InterpreterException(errors)
+                                 case Valid(op) => op.evaluateDouble
+                                 case Invalid(errors) => throw InterpreterException(errors)
                                }
                              })
                 } yield tile.renderPng(ramp.toColorMap(hist))
