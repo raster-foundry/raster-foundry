@@ -1,12 +1,10 @@
 package com.azavea.rf.tool
 
+import java.util.UUID
+
 import com.azavea.rf.tool.ast.codec.MapAlgebraCodec
 import io.circe._
 import io.circe.optics.JsonPath._
-
-import scala.util.Try
-import java.util.UUID
-import java.security.InvalidParameterException
 
 package object ast extends MapAlgebraCodec {
 
