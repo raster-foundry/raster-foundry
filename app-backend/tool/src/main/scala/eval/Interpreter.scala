@@ -18,6 +18,7 @@ object Interpreter extends LazyLogging {
   type Interpreted = ValidatedNel[InterpreterError, LazyTile]
 
   // Binary operation evaluation
+  @SuppressWarnings(Array("TraversableHead"))
   def evalBinary(
     futureTiles: Seq[Future[Interpreted]],
     f: (LazyTile, LazyTile) => LazyTile
@@ -58,6 +59,7 @@ object Interpreter extends LazyLogging {
     }
   }
 
+  @SuppressWarnings(Array("TraversableHead"))
   def interpretOperation(
     op: MapAlgebraAST.Operation,
     eval: MapAlgebraAST => Future[Interpreted]
