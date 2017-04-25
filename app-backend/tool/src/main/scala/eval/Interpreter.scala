@@ -2,8 +2,10 @@ package com.azavea.rf.tool.eval
 
 import scala.concurrent.{ExecutionContext, Future}
 
+import cats._
 import cats.data._
 import cats.data.Validated._
+import cats.implicits._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.ast.MapAlgebraAST._
 import com.azavea.rf.tool.params._
@@ -90,14 +92,11 @@ object Interpreter extends LazyLogging {
     * without fetching any Rasters. Only interprets the structural validatity of
     * the AST, given the params.
     */
-  /*
-  def interpretPure(ast: MapAlgebraAST, params: EvalParams): Interpreted[Unit] = ast match {
-    case Source(id, label) if params.sources.isDefinedAt(id) => Valid(Unit)
+  def interpretPure[M: Monoid](ast: MapAlgebraAST, params: EvalParams): Interpreted[M] = ast match {
+    case Source(id, label) if params.sources.isDefinedAt(id) => Valid(Monoid.empty)
     case Source(id, _) => Invalid(NonEmptyList.of(MissingParameter(id)))
-
-
+    case operation => operation.args.foldMap(a => interpretPure(a, params))
   }
-   */
 
   /** The Interpreter method for producing a global, zoom-level 1 tile
     *
