@@ -1,12 +1,14 @@
-import moment from 'moment';
 export default class FilterPaneController {
-    constructor(datasourceService, authService, $scope, $rootScope, $timeout) {
+    constructor(datasourceService, authService, $scope, $rootScope, $timeout,
+                $uibModal, moment) {
         'ngInject';
         this.datasourceService = datasourceService;
         this.authService = authService;
         this.$scope = $scope;
         this.$rootScope = $rootScope;
         this.$timeout = $timeout;
+        this.$uibModal = $uibModal;
+        this.Moment = moment;
     }
 
     $onInit() {
@@ -29,35 +31,35 @@ export default class FilterPaneController {
 
     initDatefilter() {
         this.datefilter = {
-            start: moment().subtract(100, 'years'),
-            end: moment()
+            start: this.moment().subtract(100, 'years'),
+            end: this.moment()
         };
         this.dateranges = [
             {
                 name: 'Today',
-                start: moment(),
-                end: moment()
+                start: this.moment(),
+                end: this.moment()
             },
             {
-                name: 'The Last Month',
-                start: moment().subtract(1, 'months'),
-                end: moment()
+                name: 'The last month',
+                start: this.moment().subtract(1, 'months'),
+                end: this.moment()
             },
             {
-                name: 'The Last Year',
-                start: moment().subtract(1, 'years'),
-                end: moment()
+                name: 'The last year',
+                start: this.moment().subtract(1, 'years'),
+                end: this.moment()
             },
             {
                 name: 'All',
-                start: moment().subtract(100, 'years'),
-                end: moment()
+                start: this.moment().subtract(100, 'years'),
+                end: this.moment()
             }
         ];
 
         if (this.filters.minAcquisitionDatetime && this.filters.maxAcquisitionDatetime) {
-            this.datefilter.start = moment(this.filters.minAcquisitionDatetime);
-            this.datefilter.end = moment(this.filters.maxAcquisitionDatetime);
+            this.datefilter.start = this.moment(this.filters.minAcquisitionDatetime);
+            this.datefilter.end = this.moment(this.filters.maxAcquisitionDatetime);
         }
 
         if (!this.filters.minAcquisitionDatetime || !this.filters.maxAcquisitionDatetime) {
@@ -73,7 +75,10 @@ export default class FilterPaneController {
         this.dateFilterToggle = {value: false};
     }
 
-    setDateRange(start, end) {
+    setDateRange(start, end, preset) {
+        this.datefilter.start = start;
+        this.datefilter.end = end;
+        this.datefilterPreset = preset || false;
         this.dateFilterToggle.value = true;
         this.filters.minAcquisitionDatetime = start.toISOString();
         this.filters.maxAcquisitionDatetime = end.toISOString();
@@ -354,5 +359,28 @@ export default class FilterPaneController {
                 !this.staticSourceFilters[sourceId].enabled;
         }
         this.onSourceFilterChange();
+    }
+
+    openDatePickerModal() {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        this.activeModal = this.$uibModal.open({
+            component: 'rfDatePickerModal',
+            resolve: {
+                config: () => Object({
+                    range: this.datefilter,
+                    ranges: this.dateranges
+                })
+            }
+        });
+
+        this.activeModal.result.then(
+            range => {
+                if (range) {
+                    this.setDateRange(range.start, range.end, range.preset)
+                }
+            });
     }
 }
