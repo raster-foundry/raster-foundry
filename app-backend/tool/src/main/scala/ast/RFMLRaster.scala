@@ -33,7 +33,7 @@ object RFMLRaster {
       case Some(unrecognized) =>
         throw new InvalidParameterException(s"'$unrecognized' is not a recognized map algebra raster source type")
       case None =>
-        throw new InvalidParameterException(s"Required 'type' property not found on map algebra raster source")
+        throw new InvalidParameterException("Required property, 'type', not found on map algebra raster source")
     }
   }
 
