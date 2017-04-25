@@ -1,12 +1,9 @@
 package com.azavea.rf.tool.eval
 
+import java.util.UUID
+
 import io.circe._
 import io.circe.syntax._
-import io.circe.generic.auto._
-import cats.data._
-
-import java.net.URI
-import java.util.UUID
 
 
 /** The type [[Interpreter.Interpreted]] is either a successfully interpreted AST
@@ -36,4 +33,3 @@ object InterpreterError {
       }.asJson
     }
 }
-

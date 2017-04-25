@@ -1,16 +1,10 @@
 package com.azavea.rf.tool.eval
 
-import com.azavea.rf.tool.ast._
-
-import geotrellis.raster._
-import geotrellis.raster.render._
-import geotrellis.raster.mapalgebra.local._
-
-import spire.syntax.cfor._
 import com.typesafe.scalalogging.LazyLogging
-import cats.data.Validated
-import Validated._
-
+import geotrellis.raster._
+import geotrellis.raster.mapalgebra.local._
+import geotrellis.raster.render._
+import spire.syntax.cfor._
 
 sealed trait LazyTile extends TileLike with Grid with LazyLogging {
   // TODO: Move these out into a TypeClass
