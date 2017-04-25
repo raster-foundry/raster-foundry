@@ -43,6 +43,12 @@ class ToolRoutes(implicit val database: Database) extends Authentication
     Marshaller.withFixedContentType(contentType) { png ⇒ HttpEntity(contentType, png.bytes) }
   }
 
+  /** Convert an [[Either]] to an [[Option]], or throw the error. */
+  def maybeThrow[A <: Throwable, B, C](e: Either[A, B])(f: B => C): Option[C] = e match {
+    case Right(a) => Some(f(a))
+    case Left(failure) => throw failure
+  }
+
   def parseBreakMap(str: String): Map[Double,Double] = {
     str.split(';').map { c: String =>
       val Array(a, b) = c.trim.split(':').map(_.toDouble)
@@ -76,17 +82,11 @@ class ToolRoutes(implicit val database: Database) extends Authentication
                 val responsePng = for {
                   toolRun <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
                   tool    <- OptionT(Tools.getTool(toolRun.tool, user))
-                  params  <- OptionT.fromOption[Future](toolRun.executionParameters.as[EvalParams] match {
-                               case Right(toolRunParams) => Some(toolRunParams)
-                               case Left(failure) => throw failure
-                             })
+                  params  <- OptionT.fromOption[Future](maybeThrow(toolRun.executionParameters.as[EvalParams])(identity))
                   ramp    <- OptionT.fromOption[Future](defaultRamps.get(colorRamp))
-                  ast     <- OptionT.fromOption[Future](tool.definition.as[MapAlgebraAST] match {
-                               case Right(entireAST) =>
-                                 nodeId.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
-                               case Left(failure) =>
-                                 throw failure
-                             })
+                  ast     <- OptionT.fromOption[Future](maybeThrow(tool.definition.as[MapAlgebraAST])(entireAST =>
+                    nodeId.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))).flatten
+                  )
                   hist    <- LayerCache.modelLayerGlobalHistogram(toolRun, tool, nodeId)
                   tile    <- OptionT({
                                val tms = Interpreter.interpretTMS(ast, params, source)
@@ -104,17 +104,23 @@ class ToolRoutes(implicit val database: Database) extends Authentication
           }
         } ~
         pathPrefix("validate") {
-          complete {
-            val result: OptionT[Future, Boolean] = for {
-              toolRun <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
-              tool    <- OptionT(Tools.getTool(toolRun.tool, user))
-              params  <- OptionT.fromOption[Future](toolRun.executionParameters.as[EvalParams].toOption)
-              ast     <- OptionT.fromOption[Future](tool.definition.as[MapAlgebraAST].toOption)
-            } yield {
-              ast.validateSources(params.sources.keySet)
-            }
+          handleExceptions(interpreterExceptionHandler) {
+            complete {
+              val result: OptionT[Future, Interpreter.Interpreted[Unit]] = for {
+                toolRun <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
+                tool    <- OptionT(Tools.getTool(toolRun.tool, user))
+                params  <- OptionT.fromOption[Future](maybeThrow(toolRun.executionParameters.as[EvalParams])(identity))
+                ast     <- OptionT.fromOption[Future](maybeThrow(tool.definition.as[MapAlgebraAST])(identity))
+              } yield {
+                Interpreter.interpretPure[Unit](ast, params)
+              }
 
-            result.value
+              result.value.map({
+                case Some(Valid(_)) => Some(true) // TODO: What to return on success?
+                case Some(Invalid(nel)) => throw InterpreterException(nel)
+                case None => None
+              })
+            }
           }
         }
       }
