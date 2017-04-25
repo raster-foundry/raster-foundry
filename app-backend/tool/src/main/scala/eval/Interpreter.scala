@@ -15,16 +15,16 @@ import geotrellis.raster._
 object Interpreter extends LazyLogging {
 
   /** The Interpreted type is either a list of failures or a compiled MapAlgebra operation */
-  type Interpreted = ValidatedNel[InterpreterError, LazyTile]
+  type Interpreted[A] = ValidatedNel[InterpreterError, A]
 
   // Binary operation evaluation
   @SuppressWarnings(Array("TraversableHead"))
   def evalBinary(
-    futureTiles: Seq[Future[Interpreted]],
+    futureTiles: Seq[Future[Interpreted[LazyTile]]],
     f: (LazyTile, LazyTile) => LazyTile
-  )(implicit ec: ExecutionContext): Future[Interpreted] = {
+  )(implicit ec: ExecutionContext): Future[Interpreted[LazyTile]] = {
     logger.debug("evalBinary")
-    def applyB(accumulator: Interpreted, value: Interpreted): Interpreted = {
+    def applyB(accumulator: Interpreted[LazyTile], value: Interpreted[LazyTile]): Interpreted[LazyTile] = {
       (accumulator, value) match {
         case (Valid(acc), Valid(v)) =>
           Valid(f(acc, v))
@@ -44,9 +44,9 @@ object Interpreter extends LazyLogging {
 
   // Unary operation evaluation
   def evalUnary(
-    futureTile: Future[Interpreted],
+    futureTile: Future[Interpreted[LazyTile]],
     f: LazyTile => LazyTile
-  )(implicit ec: ExecutionContext): Future[Interpreted] = {
+  )(implicit ec: ExecutionContext): Future[Interpreted[LazyTile]] = {
     logger.debug("evalUnary")
     for (interpreted <- futureTile) yield {
       interpreted match {
@@ -62,7 +62,7 @@ object Interpreter extends LazyLogging {
   @SuppressWarnings(Array("TraversableHead"))
   def interpretOperation(
     op: MapAlgebraAST.Operation,
-    eval: MapAlgebraAST => Future[Interpreted]
+    eval: MapAlgebraAST => Future[Interpreted[LazyTile]]
   )(implicit ec: ExecutionContext) = op match {
     case Addition(args, id, _) =>
       logger.debug(s"case addition at $id")
@@ -86,6 +86,19 @@ object Interpreter extends LazyLogging {
       evalUnary(eval(args.head), _.classify(breaks.toBreakMap))
   }
 
+  /** Interpret an AST with its matched execution parameters, but do so
+    * without fetching any Rasters. Only interprets the structural validatity of
+    * the AST, given the params.
+    */
+  /*
+  def interpretPure(ast: MapAlgebraAST, params: EvalParams): Interpreted[Unit] = ast match {
+    case Source(id, label) if params.sources.isDefinedAt(id) => Valid(Unit)
+    case Source(id, _) => Invalid(NonEmptyList.of(MissingParameter(id)))
+
+
+  }
+   */
+
   /** The Interpreter method for producing a global, zoom-level 1 tile
     *
     * @param ast     A [[MapAlgebraAST]] which defines transformations over arbitrary rasters
@@ -96,9 +109,9 @@ object Interpreter extends LazyLogging {
     ast: MapAlgebraAST,
     params: EvalParams,
     source: RFMLRaster => Future[Option[Tile]]
-  )(implicit ec: ExecutionContext): Future[Interpreted] = {
+  )(implicit ec: ExecutionContext): Future[Interpreted[LazyTile]] = {
 
-    def eval(ast: MapAlgebraAST): Future[Interpreted] = ast match {
+    def eval(ast: MapAlgebraAST): Future[Interpreted[LazyTile]] = ast match {
       case Source(id, label) =>
         if (params.sources.isDefinedAt(id)) {
           val rfmlRaster = params.sources(id)
@@ -128,11 +141,11 @@ object Interpreter extends LazyLogging {
     ast: MapAlgebraAST,
     params: EvalParams,
     source: (RFMLRaster, Int, Int, Int) => Future[Option[Tile]]
-  )(implicit ec: ExecutionContext): (Int, Int, Int) => Future[Interpreted] = {
+  )(implicit ec: ExecutionContext): (Int, Int, Int) => Future[Interpreted[LazyTile]] = {
     // have to parse AST per-request because there is no structure to capture intermediate results
     (z: Int, x: Int, y: Int) => {
 
-      def eval(ast: MapAlgebraAST): Future[Interpreted] = ast match {
+      def eval(ast: MapAlgebraAST): Future[Interpreted[LazyTile]] = ast match {
         case Source(id, label) =>
           if (params.sources.isDefinedAt(id)) {
             val rfmlRaster = params.sources(id)
