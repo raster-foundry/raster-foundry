@@ -11,11 +11,10 @@ import akka.http.scaladsl.server._
 import cats.data._
 import cats.data.Validated._
 import cats.implicits._
-import com.azavea.rf.common.Authentication
+import com.azavea.rf.common._
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.{ToolRuns, Tools}
 import com.azavea.rf.tile._
-import com.azavea.rf.tile.directives._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.params._
@@ -41,12 +40,6 @@ class ToolRoutes(implicit val database: Database) extends Authentication
   implicit val pngMarshaller: ToEntityMarshaller[Png] = {
     val contentType = ContentType(MediaTypes.`image/png`)
     Marshaller.withFixedContentType(contentType) { png ⇒ HttpEntity(contentType, png.bytes) }
-  }
-
-  /** Convert an [[Either]] to an [[Option]], or throw the error. */
-  def maybeThrow[A <: Throwable, B, C](e: Either[A, B])(f: B => C): Option[C] = e match {
-    case Right(a) => Some(f(a))
-    case Left(failure) => throw failure
   }
 
   def parseBreakMap(str: String): Map[Double,Double] = {
@@ -103,22 +96,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
         } ~
         pathPrefix("validate") {
           handleExceptions(interpreterExceptionHandler) {
-            complete {
-              val result: OptionT[Future, Interpreter.Interpreted[Unit]] = for {
-                toolRun <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
-                tool    <- OptionT(Tools.getTool(toolRun.tool, user))
-                params  <- OptionT.fromOption[Future](maybeThrow(toolRun.executionParameters.as[EvalParams])(identity))
-                ast     <- OptionT.fromOption[Future](maybeThrow(tool.definition.as[MapAlgebraAST])(identity))
-              } yield {
-                Interpreter.interpretPure[Unit](ast, params)
-              }
-
-              result.value.map({
-                case Some(Valid(_)) => Some(true) // TODO: What to return on success?
-                case Some(Invalid(nel)) => throw InterpreterException(nel)
-                case None => None
-              })
-            }
+            complete(validateAST(toolRunId, user).value)
           }
         }
       }
