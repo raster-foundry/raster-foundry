@@ -141,6 +141,29 @@
           </div>
         </div>
 
+        <!-- Saturation correction -->
+        <div class="filter-group">
+          <div class="filter-group-header">
+            <rf-toggle data-model="$ctrl.saturationToggle.value"
+                       on-change="$ctrl.saturationToggled(value)"></rf-toggle>
+            <h5 class="h5">Saturation</h5>
+          </div>
+          <div class="filter-group-body" ng-show="$ctrl.saturationToggle.value">
+            <div class="filter">
+              <label>Saturation</label>
+              <rzslider class="dark"
+                        rz-slider-model="$ctrl.sliderCorrection.saturation"
+                        rz-slider-options="$ctrl.saturationOptions"></rzslider>
+              <input class="filter-adjust-input"
+                     type="number"
+                     step="1"
+                     ng-model="$ctrl.sliderCorrection.saturation"
+                     ng-model-options="{ debounce: 250 }"
+                     ng-change="$ctrl.onFilterChange('saturation', $ctrl.sliderCorrection.saturation)">
+            </div>
+          </div>
+        </div>
+
         <div class="filter-group">
           <div class="filter-group-header">
             <rf-toggle data-model="$ctrl.minMaxToggle.value"

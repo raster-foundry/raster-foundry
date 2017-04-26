@@ -17,6 +17,14 @@ export default class ProjectsColorAdjustController {
             precision: 2
         };
 
+        let baseSaturationOptions = {
+            floor: 0,
+            ceil: 2,
+            step: 0.01,
+            showTicks: 0.25,
+            precision: 2
+        };
+
         let baseFilterOptions = {
             floor: -60,
             ceil: 60,
@@ -74,6 +82,13 @@ export default class ProjectsColorAdjustController {
             }
         }, baseGammaOptions);
 
+        this.saturationOptions = Object.assign({
+            id: 'saturation',
+            onEnd: (id, val) => {
+                this.onFilterChange(id, val, baseSaturationOptions);
+            }
+        }, baseSaturationOptions);
+
         this.alphaOptions = Object.assign({
             id: 'alpha',
             onEnd: (id, val) => this.onFilterChange(id, val, this.alphaOptions)
@@ -102,10 +117,11 @@ export default class ProjectsColorAdjustController {
 
         this.gammaLinkToggle = true;
 
-        this.gammaToggle = {value: true};
-        this.sigToggle = {value: true};
-        this.bcToggle = {value: true};
-        this.minMaxToggle = {value: true};
+        this.gammaToggle = { value: true };
+        this.sigToggle = { value: true };
+        this.bcToggle = { value: true };
+        this.minMaxToggle = { value: true };
+        this.saturationToggle = { value: true };
 
         this.sliderCorrection = {min: minMaxOptions.floor, max: minMaxOptions.ceil};
     }
@@ -142,6 +158,10 @@ export default class ProjectsColorAdjustController {
                 this.greenGammaOptions.disabled = false;
                 this.blueGammaOptions.disabled = false;
                 this.gammaToggle.value = true;
+            }
+
+            if (this.correction.saturation === null) {
+                this.saturationToggle.value = false;
             }
 
             if (this.correction.alpha === null &&
@@ -204,6 +224,7 @@ export default class ProjectsColorAdjustController {
             redGamma: 0.5,
             greenGamma: 0.5,
             blueGamma: 0.5,
+            saturation: 0.5,
             brightness: -6,
             contrast: 0,
             alpha: 0.2,
@@ -221,6 +242,12 @@ export default class ProjectsColorAdjustController {
             }
             if (correction.blueGamma === null) {
                 correction.blueGamma = defaults.blueGamma;
+            }
+        }
+
+        if (this.saturationToggle.value) {
+            if (correction.saturation === null) {
+                correction.saturation = defaults.saturation;
             }
         }
 
@@ -307,6 +334,15 @@ export default class ProjectsColorAdjustController {
             this.correction.redGamma = null;
             this.correction.greenGamma = null;
             this.correction.blueGamma = null;
+        }
+        this.setDefaultsForEnabled();
+        this.onFilterChange();
+    }
+
+    saturationToggled(value) {
+        this.saturationOptions.disabled = !value;
+        if (!value) {
+            this.correction.saturation = null;
         }
         this.setDefaultsForEnabled();
         this.onFilterChange();
