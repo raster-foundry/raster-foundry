@@ -17,7 +17,7 @@
           <div class="filter-group-header">
             <rf-toggle data-model="$ctrl.sigToggle.value"
                        on-change="$ctrl.sigToggled(value)"></rf-toggle>
-            <h5>Sigmoidal Correction</h5>
+            <h5>Sigmoidal Contast</h5>
             <i class="icon-info"
                tooltips
                tooltip-template="
@@ -68,7 +68,7 @@
             <rf-toggle data-model="$ctrl.gammaToggle.value"
                        on-change="$ctrl.gammaToggled(value)">
             </rf-toggle>
-            <h5>Gamma Correction</h5>
+            <h5>Color Balance</h5>
             <i class="icon-info"
                tooltips
                tooltip-template="
@@ -98,14 +98,6 @@
                      ng-model-options="{ debounce: 250 }"
                      ng-change="$ctrl.onGammaFilterChange('redGamma', $ctrl.sliderCorrection.redGamma)">
             </div>
-            <!--<div class="filter-separator offset">
-              <button type="button"
-                      ng-click="$ctrl.gammaLinkToggled()"
-                      ng-class="{'active': $ctrl.gammaLinkToggle}"
-                      class="btn btn-default btn-square">
-                <i class="icon-mosaic"></i>
-              </button>
-            </div>-->
             <div class="filter">
               <label>
                 Green
@@ -124,14 +116,6 @@
                      ng-model-options="{ debounce: 250 }"
                      ng-change="$ctrl.onGammaFilterChange('greenGamma', $ctrl.sliderCorrection.greenGramma)">
             </div>
-            <!--<div class="filter-separator offset">
-              <button type="button"
-                      ng-click="$ctrl.gammaLinkToggled()"
-                      ng-class="{'active': $ctrl.gammaLinkToggle}"
-                      class="btn btn-default btn-square">
-                <i class="icon-mosaic"></i>
-              </button>
-            </div>-->
             <div class="filter">
               <label>
                 Blue
@@ -157,41 +141,6 @@
           </div>
         </div>
 
-
-        <!-- Brightness/contrast correction-->
-        <div class="filter-group">
-          <div class="filter-group-header">
-            <rf-toggle data-model="$ctrl.bcToggle.value"
-                       on-change="$ctrl.bcToggled(value)"></rf-toggle>
-            <h5 class="h5">Brightness/Contrast</h5>
-          </div>
-          <div class="filter-group-body" ng-show="$ctrl.bcToggle.value">
-            <div class="filter">
-              <label>Brightness</label>
-              <rzslider class="dark"
-                        rz-slider-model="$ctrl.sliderCorrection.brightness"
-                        rz-slider-options="$ctrl.brightnessOptions"></rzslider>
-              <input class="filter-adjust-input"
-                     type="number"
-                     step="1"
-                     ng-model="$ctrl.sliderCorrection.brightness"
-                     ng-model-options="{ debounce: 250 }"
-                     ng-change="$ctrl.onFilterChange('brightness', $ctrl.sliderCorrection.brightness)">
-            </div>
-            <div class="filter">
-              <label>Contrast</label>
-              <rzslider class="dark"
-                        rz-slider-model="$ctrl.sliderCorrection.contrast"
-                        rz-slider-options="$ctrl.contrastOptions"></rzslider>
-              <input class="filter-adjust-input"
-                     type="number"
-                     step="1"
-                     ng-model="$ctrl.sliderCorrection.contrast"
-                     ng-model-options="{ debounce: 250 }"
-                     ng-change="$ctrl.onFilterChange('contast', $ctrl.sliderCorrection.contrast)">
-            </div>
-          </div>
-        </div>
         <div class="filter-group">
           <div class="filter-group-header">
             <rf-toggle data-model="$ctrl.minMaxToggle.value"

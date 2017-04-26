@@ -1,7 +1,7 @@
 .filter {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
   font-size: 1.2rem;
   &:not(:last-child) {
     margin-bottom: 1.2rem;

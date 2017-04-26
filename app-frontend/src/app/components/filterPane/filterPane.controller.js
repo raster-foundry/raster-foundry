@@ -31,35 +31,35 @@ export default class FilterPaneController {
 
     initDatefilter() {
         this.datefilter = {
-            start: this.moment().subtract(100, 'years'),
-            end: this.moment()
+            start: this.Moment().subtract(100, 'years'),
+            end: this.Moment()
         };
         this.dateranges = [
             {
                 name: 'Today',
-                start: this.moment(),
-                end: this.moment()
+                start: this.Moment(),
+                end: this.Moment()
             },
             {
                 name: 'The last month',
-                start: this.moment().subtract(1, 'months'),
-                end: this.moment()
+                start: this.Moment().subtract(1, 'months'),
+                end: this.Moment()
             },
             {
                 name: 'The last year',
-                start: this.moment().subtract(1, 'years'),
-                end: this.moment()
+                start: this.Moment().subtract(1, 'years'),
+                end: this.Moment()
             },
             {
                 name: 'All',
-                start: this.moment().subtract(100, 'years'),
-                end: this.moment()
+                start: this.Moment().subtract(100, 'years'),
+                end: this.Moment()
             }
         ];
 
         if (this.filters.minAcquisitionDatetime && this.filters.maxAcquisitionDatetime) {
-            this.datefilter.start = this.moment(this.filters.minAcquisitionDatetime);
-            this.datefilter.end = this.moment(this.filters.maxAcquisitionDatetime);
+            this.datefilter.start = this.Moment(this.filters.minAcquisitionDatetime);
+            this.datefilter.end = this.Moment(this.filters.maxAcquisitionDatetime);
         }
 
         if (!this.filters.minAcquisitionDatetime || !this.filters.maxAcquisitionDatetime) {
@@ -379,7 +379,7 @@ export default class FilterPaneController {
         this.activeModal.result.then(
             range => {
                 if (range) {
-                    this.setDateRange(range.start, range.end, range.preset)
+                    this.setDateRange(range.start, range.end, range.preset);
                 }
             });
     }

@@ -252,7 +252,7 @@ export default class ProjectsColorAdjustController {
         }
     }
 
-    onGammaFilterChange(id, val, options={}) {
+    onGammaFilterChange(id, val, options = {}) {
         let relevantIds = id;
         if (this.gammaLinkToggle) {
             relevantIds = ['redGamma', 'greenGamma', 'blueGamma'];
@@ -268,7 +268,7 @@ export default class ProjectsColorAdjustController {
      * @param {object} options todo
      * @returns {null} null
      */
-    onFilterChange(id, val, options={}) {
+    onFilterChange(id, val, options = {}) {
         if (Array.isArray(id)) {
             id.forEach((key) => {
                 if (!options.disabled) {
