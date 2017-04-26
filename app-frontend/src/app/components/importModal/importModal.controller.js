@@ -198,7 +198,7 @@ export default class ImportModalController {
 
 
     createUpload(user) {
-        return this.uploadService.create({
+        let uploadObject = {
             files: this.selectedFiles.map(f => f.name),
             datasource: this.datasource.id,
             fileType: 'GEOTIFF',
@@ -207,7 +207,11 @@ export default class ImportModalController {
             visibility: 'PRIVATE',
             organizationId: user.organizationId,
             metadata: {}
-        });
+        };
+        if (this.resolve.project) {
+            uploadObject.projectId = this.resolve.project.id;
+        }
+        return this.uploadService.create(uploadObject);
     }
 
     getUploadCredentials(upload) {
