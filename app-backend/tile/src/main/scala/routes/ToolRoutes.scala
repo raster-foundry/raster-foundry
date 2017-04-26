@@ -75,11 +75,11 @@ class ToolRoutes(implicit val database: Database) extends Authentication
                 val responsePng = for {
                   toolRun <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
                   tool    <- OptionT(Tools.getTool(toolRun.tool, user))
-                  params  <- OptionT.fromOption[Future](maybeThrow(toolRun.executionParameters.as[EvalParams])(identity))
+                  params  <- OptionT.fromOption[Future](maybeThrow(toolRun.executionParameters.as[EvalParams]))
                   ramp    <- OptionT.fromOption[Future](defaultRamps.get(colorRamp))
-                  ast     <- OptionT.fromOption[Future](maybeThrow(tool.definition.as[MapAlgebraAST])(entireAST =>
-                    nodeId.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))).flatten
-                  )
+                  ast     <- OptionT.fromOption[Future](maybeThrow(tool.definition.as[MapAlgebraAST]).flatMap(entireAST =>
+                    nodeId.flatMap(id => entireAST.find(id))
+                  ))
                   hist    <- LayerCache.modelLayerGlobalHistogram(toolRun, tool, nodeId)
                   tile    <- OptionT({
                                val tms = Interpreter.interpretTMS(ast, params, source)
