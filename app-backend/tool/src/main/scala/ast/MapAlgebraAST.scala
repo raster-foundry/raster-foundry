@@ -12,10 +12,6 @@ sealed trait MapAlgebraAST extends Product with Serializable {
   def label: Option[String]
   def find(id: UUID): Option[MapAlgebraAST]
   def sources: Seq[UUID]
-
-  def validateSources(sourceIds: Set[UUID]): Boolean =
-    sources.foldLeft(true)(_ && sourceIds.contains(_))
-
 }
 
 object MapAlgebraAST {
