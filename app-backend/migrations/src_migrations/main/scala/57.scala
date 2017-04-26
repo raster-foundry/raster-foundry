@@ -4,6 +4,7 @@ import com.liyaos.forklift.slick.SqlMigration
 object M57 {
   RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(57)(List(
     sqlu"""
+<<<<<<< HEAD
 ALTER TABLE aois ADD COLUMN owner VARCHAR(255) NULL;
 ALTER TABLE datasources ADD COLUMN owner VARCHAR(255) NULL;
 ALTER TABLE exports ADD COLUMN owner VARCHAR(255) NULL;
