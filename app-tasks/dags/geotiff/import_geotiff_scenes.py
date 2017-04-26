@@ -52,13 +52,14 @@ def import_geotiffs(*args, **kwargs):
     try:
         factory = GeoTiffS3SceneFactory(upload)
         scenes = factory.generate_scenes()
-        for scene in scenes:
-            scene.create()
+        created_scenes = [scene.create() for scene in scenes]
         # Hit the batch scenes to projects endpoint here
         if upload.projectId:
+            logger.info("Upload specified a project. Linking scenes to project.")
+            scene_ids = [scene.id for scene in created_scenes]
             batch_scene_to_project_url = '{HOST}/api/projects/{PROJECT}/scenes'.format(HOST=HOST, PROJECT=upload.projectId)
             session = get_session()
-            response = session.post(batch_scene_to_project_url, params={'scenes': [scene.id for scene in scenes]})
+            response = session.post(batch_scene_to_project_url, json=scene_ids)
             response.raise_for_status()
         upload.update_upload_status('Complete')
         logger.info('Finished importing scenes')

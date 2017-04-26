@@ -64,7 +64,7 @@ class Upload(BaseModel):
             modifiedAt=d.get('modifiedAt'),
             modifiedBy=d.get('modifiedBy'),
             owner=d.get('owner'),
-            d.get('projectId')
+            projectId=d.get('projectId')
         )
 
     @classmethod
