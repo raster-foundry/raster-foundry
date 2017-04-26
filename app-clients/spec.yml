@@ -4,10 +4,9 @@ info:
   description: An application to find and manipulate large-scale geospatial and raster data
   version: "0.1.0"
 
-host: localhost:9000
+host: app.rasterfoundry.com
 
 schemes:
-  - http
   - https
 
 basePath: /api
@@ -863,7 +862,6 @@ paths:
       responses:
         200:
           description: "Successfully updated all scenes' color correction parameters"
-
   /projects/{uuid}/mosaic/{uuid2}:
     x-resource: Projects
     get:
@@ -2898,7 +2896,6 @@ definitions:
   CombinedSceneQueryParams:
     type: object
     description: Combined query parameters for filtering scenes
-    discriminator: type
     properties:
       orgParams:
         $ref: '#/definitions/OrgParams'
