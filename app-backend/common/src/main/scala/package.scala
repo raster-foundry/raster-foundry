@@ -20,8 +20,8 @@ import com.azavea.rf.tool.params.EvalParams
 package object common {
 
   /** Convert an [[Either]] to an [[Option]], or throw the error. */
-  def maybeThrow[A <: Throwable, B, C](e: Either[A, B])(f: B => C): Option[C] = e match {
-    case Right(a) => Some(f(a))
+  def maybeThrow[A <: Throwable, B](e: Either[A, B]): Option[B] = e match {
+    case Right(a) => Some(a)
     case Left(failure) => throw failure
   }
 
@@ -36,8 +36,8 @@ package object common {
     val result: OptionT[Future, Interpreter.Interpreted[M]] = for {
       toolRun <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
       tool    <- OptionT(Tools.getTool(toolRun.tool, user))
-      params  <- OptionT.fromOption[Future](maybeThrow(toolRun.executionParameters.as[EvalParams])(identity))
-      ast     <- OptionT.fromOption[Future](maybeThrow(tool.definition.as[MapAlgebraAST])(identity))
+      params  <- OptionT.fromOption[Future](maybeThrow(toolRun.executionParameters.as[EvalParams]))
+      ast     <- OptionT.fromOption[Future](maybeThrow(tool.definition.as[MapAlgebraAST]))
     } yield {
       Interpreter.interpretPure[M](ast, params)
     }
