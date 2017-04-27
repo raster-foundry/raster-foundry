@@ -29,6 +29,10 @@ case class DatabaseError(id: UUID) extends InterpreterError {
   def repr = s"Unable to retrieve ToolRun $id or its associated Tool from the database"
 }
 
+case class ASTDecodeError(id: UUID, msg: DecodingFailure) extends InterpreterError {
+  def repr = s"Unable to decode the AST associated with ToolRun ${id}: ${msg}"
+}
+
 object InterpreterError {
   implicit val encodeInterpreterErrors: Encoder[InterpreterError] =
     new Encoder[InterpreterError] {
