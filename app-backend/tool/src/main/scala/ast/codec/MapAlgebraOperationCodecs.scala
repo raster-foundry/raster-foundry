@@ -44,36 +44,4 @@ trait MapAlgebraOperationCodecs {
         throw new InvalidParameterException(s"Encoder for $operation not yet implemented")
     }
   }
-
-  // Codec instances
-  implicit lazy val decodeAddition: Decoder[MapAlgebraAST.Addition] =
-    Decoder.forProduct3("args", "id", "label")(MapAlgebraAST.Addition.apply)
-  implicit lazy val encodeAddition: Encoder[MapAlgebraAST.Addition] =
-    Encoder.forProduct4("apply", "args", "id", "label")(op => (op.symbol, op.args, op.id, op.label))
-
-  implicit lazy val decodeSubtraction: Decoder[MapAlgebraAST.Subtraction] =
-    Decoder.forProduct3("args", "id", "label")(MapAlgebraAST.Subtraction.apply)
-  implicit lazy val encodeSubtraction: Encoder[MapAlgebraAST.Subtraction] =
-    Encoder.forProduct4("apply", "args", "id", "label")(op => (op.symbol, op.args, op.id, op.label))
-
-  implicit lazy val decodeDivision: Decoder[MapAlgebraAST.Division] =
-    Decoder.forProduct3("args", "id", "label")(MapAlgebraAST.Division.apply)
-  implicit lazy val encodeDivision: Encoder[MapAlgebraAST.Division] =
-    Encoder.forProduct4("apply", "args", "id", "label")(op => (op.symbol, op.args, op.id, op.label))
-
-  implicit lazy val decodeMultiplication: Decoder[MapAlgebraAST.Multiplication] =
-    Decoder.forProduct3("args", "id", "label")(MapAlgebraAST.Multiplication.apply)
-  implicit lazy val encodeMultiplication: Encoder[MapAlgebraAST.Multiplication] =
-    Encoder.forProduct4("apply", "args", "id", "label")(op => (op.symbol, op.args, op.id, op.label))
-
-  implicit lazy val decodeMasking: Decoder[MapAlgebraAST.Masking] =
-    Decoder.forProduct3("args", "id", "label")(MapAlgebraAST.Masking.apply)
-  implicit lazy val encodeMasking: Encoder[MapAlgebraAST.Masking] =
-    Encoder.forProduct4("apply", "args", "id", "label")(op => (op.symbol, op.args, op.id, op.label))
-
-  implicit lazy val decodeClassification: Decoder[MapAlgebraAST.Classification] =
-    Decoder.forProduct4("args", "id", "label", "classBreaks")(MapAlgebraAST.Classification.apply _)
-  implicit lazy val encodeClassification: Encoder[MapAlgebraAST.Classification] =
-    Encoder.forProduct5("apply", "args", "id", "label", "classBreaks")(op => (op.symbol, op.args, op.id, op.label, op.classBreaks))
-
 }

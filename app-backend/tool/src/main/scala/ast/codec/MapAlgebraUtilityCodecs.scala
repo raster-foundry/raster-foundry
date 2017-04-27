@@ -2,11 +2,18 @@ package com.azavea.rf.tool.ast.codec
 
 import com.azavea.rf.tool.ast._
 
+import geotrellis.raster.io._
+import geotrellis.raster.histogram._
 import geotrellis.raster.render._
+import spray.json._
+import DefaultJsonProtocol._
 import io.circe._
+import io.circe.syntax._
+import io.circe.parser._
 
-import scala.util.Try
 import java.security.InvalidParameterException
+import java.util.UUID
+import scala.util.Try
 
 trait MapAlgebraUtilityCodecs {
   implicit def mapAlgebraDecoder: Decoder[MapAlgebraAST]
@@ -17,6 +24,13 @@ trait MapAlgebraUtilityCodecs {
   }
   implicit val encodeKeyDouble: KeyEncoder[Double] = new KeyEncoder[Double] {
     final def apply(key: Double): String = key.toString
+  }
+
+  implicit val decodeKeyUUID: KeyDecoder[UUID] = new KeyDecoder[UUID] {
+    final def apply(key: String): Option[UUID] = Try(UUID.fromString(key)).toOption
+  }
+  implicit val encodeKeyUUID: KeyEncoder[UUID] = new KeyEncoder[UUID] {
+    final def apply(key: UUID): String = key.toString
   }
 
   implicit lazy val classBoundaryDecoder: Decoder[ClassBoundaryType] =
@@ -42,5 +56,31 @@ trait MapAlgebraUtilityCodecs {
           throw new InvalidParameterException(s"'$unrecognized' is not a recognized ClassBoundaryType")
       }
     })
+
+  implicit val colorRampDecoder: Decoder[ColorRamp] =
+    Decoder[Vector[Int]].map({ ColorRamp(_) })
+
+  implicit val colorRampEncoder: Encoder[ColorRamp] = new Encoder[ColorRamp] {
+    final def apply(cRamp: ColorRamp): Json = cRamp.colors.toArray.asJson
+  }
+
+  implicit val histogramDecoder: Decoder[Histogram[Double]] = Decoder[JsValue].map { js =>
+    js.convertTo[Histogram[Double]]
+  }
+
+  implicit val histogramEncoder: Encoder[Histogram[Double]] = new Encoder[Histogram[Double]] {
+    final def apply(hist: Histogram[Double]): Json = hist.toJson.asJson
+  }
+
+  implicit val sprayJsonDecoder: Decoder[JsValue] = Decoder[Json].map { js =>
+    js.noSpaces.parseJson
+  }
+
+  implicit val sprayJsonEncoder: Encoder[JsValue] = new Encoder[JsValue] {
+    final def apply(jsvalue: JsValue): Json = parse(jsvalue.compactPrint) match {
+      case Right(success) => success
+      case Left(fail) => throw fail
+    }
+  }
 }
 
