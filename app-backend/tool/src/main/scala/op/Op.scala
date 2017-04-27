@@ -18,9 +18,9 @@ sealed trait Op extends TileLike with Grid with LazyLogging {
   def -(x: Int) = this.map((_: Int) - x)
   def -(x: Double) = this.mapDouble(_ - x)
   def -(other: Op) = this.dualCombine(other)(_ - _)(_ - _)
-  def /(x: Int) = this.map((_: Int) / x)
-  def /(x: Double) = this.mapDouble(_ / x)
-  def /(other: Op) = this.dualCombine(other)(_ / _)(_ / _)
+  //def /(x: Int) = {println("fst", this, x); if (x == 0) NODATA else this.map((_: Int) / x)}
+  //def /(x: Double) = {println("snd", this, x); if (x == 0) Double.NaN else this.mapDouble(_ / x)}
+  def /(other: Op) = this.dualCombine(other)({ (x: Int, y: Int) => if (y == 0) NODATA else x / y })({ (x: Double, y: Double) => if (y == 0) Double.NaN else x / y })
   def *(x: Int) = this.map((_: Int) * x)
   def *(x: Double) = this.mapDouble(_ * x)
   def *(other: Op) = this.dualCombine(other)(_ * _)(_ * _)
