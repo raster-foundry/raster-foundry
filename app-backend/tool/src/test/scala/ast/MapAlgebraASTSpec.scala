@@ -1,19 +1,13 @@
 package com.azavea.rf.tool.ast
 
-import com.azavea.rf.tool.eval._
+import java.util.UUID
 
 import org.scalatest._
-import io.circe._
-import io.circe.parser._
-import io.circe.syntax._
-import cats.syntax.either._
-
-import java.util.UUID
 
 
 class MapAlgebraASTSpec extends FunSpec with Matchers {
 
-  def randomSourceAST = MapAlgebraAST.Source(UUID.randomUUID, None)
+  def randomSourceAST = MapAlgebraAST.Source(UUID.randomUUID, None, None)
 
   it("Can find subtrees by ID") {
     val src1 = randomSourceAST

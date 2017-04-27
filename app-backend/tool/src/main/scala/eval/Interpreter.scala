@@ -66,23 +66,23 @@ object Interpreter extends LazyLogging {
     op: MapAlgebraAST.Operation,
     eval: MapAlgebraAST => Future[Interpreted[LazyTile]]
   )(implicit ec: ExecutionContext) = op match {
-    case Addition(args, id, _) =>
+    case Addition(args, id, _, _) =>
       logger.debug(s"case addition at $id")
       evalBinary(args.map(eval),  _ + _)
 
-    case Subtraction(args, id, _) =>
+    case Subtraction(args, id, _, _) =>
       logger.debug(s"case subtraction at $id")
       evalBinary(args.map(eval),  _ - _)
 
-    case Multiplication(args, id, _) =>
+    case Multiplication(args, id, _, _) =>
       logger.debug(s"case multiplication at $id")
       evalBinary(args.map(eval),  _ * _)
 
-    case Division(args, id, _) =>
+    case Division(args, id, _, _) =>
       logger.debug(s"case division at $id")
       evalBinary(args.map(eval),  _ / _)
 
-    case Classification(args, id, _, breaks) =>
+    case Classification(args, id, _, _, breaks) =>
       logger.debug(s"case classification at $id with breakmap ${breaks.toBreakMap}")
       val breakmap = breaks.toBreakMap
       evalUnary(eval(args.head), _.classify(breaks.toBreakMap))
@@ -92,10 +92,10 @@ object Interpreter extends LazyLogging {
     * without fetching any Rasters. Only interprets the structural validatity of
     * the AST, given the params.
     */
-  def interpretPure[M: Monoid](ast: MapAlgebraAST, params: EvalParams): Interpreted[M] = ast match {
-    case Source(id, label) if params.sources.isDefinedAt(id) => Valid(Monoid.empty)
-    case Source(id, _) => Invalid(NonEmptyList.of(MissingParameter(id)))
-    case operation => operation.args.foldMap(a => interpretPure(a, params))
+  def interpretPure[M: Monoid](ast: MapAlgebraAST, ps: EvalParams): Interpreted[M] = ast match {
+    case Source(id, _, _) if ps.sources.isDefinedAt(id) => Valid(Monoid.empty)
+    case Source(id, _, _) => Invalid(NonEmptyList.of(MissingParameter(id)))
+    case operation => operation.args.foldMap(a => interpretPure(a, ps))
   }
 
   /** The Interpreter method for producing a global, zoom-level 1 tile
@@ -111,7 +111,7 @@ object Interpreter extends LazyLogging {
   )(implicit ec: ExecutionContext): Future[Interpreted[LazyTile]] = {
 
     def eval(ast: MapAlgebraAST): Future[Interpreted[LazyTile]] = ast match {
-      case Source(id, label) =>
+      case Source(id, label, _) =>
         if (params.sources.isDefinedAt(id)) {
           val rfmlRaster = params.sources(id)
           source(rfmlRaster) map { maybeTile =>
@@ -145,7 +145,7 @@ object Interpreter extends LazyLogging {
     (z: Int, x: Int, y: Int) => {
 
       def eval(ast: MapAlgebraAST): Future[Interpreted[LazyTile]] = ast match {
-        case Source(id, label) =>
+        case Source(id, label, _) =>
           if (params.sources.isDefinedAt(id)) {
             val rfmlRaster = params.sources(id)
             source(rfmlRaster, z, x, y) map { maybeTile =>

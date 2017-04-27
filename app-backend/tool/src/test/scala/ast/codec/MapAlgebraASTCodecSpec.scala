@@ -1,21 +1,18 @@
 package com.azavea.rf.tool.ast.codec
 
-import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.eval._
-
-import org.scalatest._
-import io.circe._
-import io.circe.parser._
-import io.circe.syntax._
-import cats.syntax.either._
-
 import java.util.UUID
+
+import cats.syntax.either._
+import com.azavea.rf.tool.ast._
+import io.circe._
+import io.circe.syntax._
+import org.scalatest._
 
 
 class MapAlgebraASTCodecSpec extends FunSpec with Matchers {
 
   def randomSource: MapAlgebraAST.Source =
-    MapAlgebraAST.Source(UUID.randomUUID, None)
+    MapAlgebraAST.Source(UUID.randomUUID, None, None)
 
   def ndvi(red: MapAlgebraAST, nir: MapAlgebraAST): MapAlgebraAST =
     (red - nir) / (red + nir)

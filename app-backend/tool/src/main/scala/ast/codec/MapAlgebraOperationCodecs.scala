@@ -47,33 +47,33 @@ trait MapAlgebraOperationCodecs {
 
   // Codec instances
   implicit lazy val decodeAddition: Decoder[MapAlgebraAST.Addition] =
-    Decoder.forProduct3("args", "id", "label")(MapAlgebraAST.Addition.apply)
+    Decoder.forProduct4("args", "id", "label", "metadata")(MapAlgebraAST.Addition.apply)
   implicit lazy val encodeAddition: Encoder[MapAlgebraAST.Addition] =
-    Encoder.forProduct4("apply", "args", "id", "label")(op => (op.symbol, op.args, op.id, op.label))
+    Encoder.forProduct5("apply", "args", "id", "label", "metadata")(op => (op.symbol, op.args, op.id, op.label, op.metadata))
 
   implicit lazy val decodeSubtraction: Decoder[MapAlgebraAST.Subtraction] =
-    Decoder.forProduct3("args", "id", "label")(MapAlgebraAST.Subtraction.apply)
+    Decoder.forProduct4("args", "id", "label", "metadata")(MapAlgebraAST.Subtraction.apply)
   implicit lazy val encodeSubtraction: Encoder[MapAlgebraAST.Subtraction] =
-    Encoder.forProduct4("apply", "args", "id", "label")(op => (op.symbol, op.args, op.id, op.label))
+    Encoder.forProduct5("apply", "args", "id", "label", "metadata")(op => (op.symbol, op.args, op.id, op.label, op.metadata))
 
   implicit lazy val decodeDivision: Decoder[MapAlgebraAST.Division] =
-    Decoder.forProduct3("args", "id", "label")(MapAlgebraAST.Division.apply)
+    Decoder.forProduct4("args", "id", "label", "metadata")(MapAlgebraAST.Division.apply)
   implicit lazy val encodeDivision: Encoder[MapAlgebraAST.Division] =
-    Encoder.forProduct4("apply", "args", "id", "label")(op => (op.symbol, op.args, op.id, op.label))
+    Encoder.forProduct5("apply", "args", "id", "label", "metadata")(op => (op.symbol, op.args, op.id, op.label, op.metadata))
 
   implicit lazy val decodeMultiplication: Decoder[MapAlgebraAST.Multiplication] =
-    Decoder.forProduct3("args", "id", "label")(MapAlgebraAST.Multiplication.apply)
+    Decoder.forProduct4("args", "id", "label", "metadata")(MapAlgebraAST.Multiplication.apply)
   implicit lazy val encodeMultiplication: Encoder[MapAlgebraAST.Multiplication] =
-    Encoder.forProduct4("apply", "args", "id", "label")(op => (op.symbol, op.args, op.id, op.label))
+    Encoder.forProduct5("apply", "args", "id", "label", "metadata")(op => (op.symbol, op.args, op.id, op.label, op.metadata))
 
   implicit lazy val decodeMasking: Decoder[MapAlgebraAST.Masking] =
-    Decoder.forProduct3("args", "id", "label")(MapAlgebraAST.Masking.apply)
+    Decoder.forProduct4("args", "id", "label", "metadata")(MapAlgebraAST.Masking.apply)
   implicit lazy val encodeMasking: Encoder[MapAlgebraAST.Masking] =
-    Encoder.forProduct4("apply", "args", "id", "label")(op => (op.symbol, op.args, op.id, op.label))
+    Encoder.forProduct5("apply", "args", "id", "label", "metadata")(op => (op.symbol, op.args, op.id, op.label, op.metadata))
 
   implicit lazy val decodeClassification: Decoder[MapAlgebraAST.Classification] =
-    Decoder.forProduct4("args", "id", "label", "classBreaks")(MapAlgebraAST.Classification.apply _)
+    Decoder.forProduct5("args", "id", "label", "metadata", "classBreaks")(MapAlgebraAST.Classification.apply _)
   implicit lazy val encodeClassification: Encoder[MapAlgebraAST.Classification] =
-    Encoder.forProduct5("apply", "args", "id", "label", "classBreaks")(op => (op.symbol, op.args, op.id, op.label, op.classBreaks))
+    Encoder.forProduct6("apply", "args", "id", "label", "metadata", "classBreaks")(op => (op.symbol, op.args, op.id, op.label, op.metadata, op.classBreaks))
 
 }
