@@ -9,9 +9,22 @@ import io.circe.generic.JsonCodec
 sealed trait MapAlgebraAST extends Product with Serializable {
   def id: UUID
   def args: List[MapAlgebraAST]
-  def label: Option[String]
+  def metadata: Option[NodeMetadata]
   def find(id: UUID): Option[MapAlgebraAST]
   def sources: Seq[UUID]
+
+  def overrideMetadata(otherMD: Option[NodeMetadata]): Option[NodeMetadata] =
+    (metadata, otherMD) match {
+      case (Some(defaults), Some(overrides)) =>
+        Some(NodeMetadata(
+          overrides.label.orElse(defaults.label),
+          overrides.description.orElse(defaults.description),
+          overrides.histogram.orElse(defaults.histogram)
+        ))
+      case (None, Some(_)) => otherMD
+      case (Some(_), None) => metadata
+      case _ => None
+    }
 }
 
 object MapAlgebraAST {
@@ -32,32 +45,32 @@ object MapAlgebraAST {
   }
 
   @JsonCodec
-  case class Addition(args: List[MapAlgebraAST], id: UUID, label: Option[String])
+  case class Addition(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
       extends Operation("+")
 
   @JsonCodec
-  case class Subtraction(args: List[MapAlgebraAST], id: UUID, label: Option[String])
+  case class Subtraction(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
       extends Operation("-")
 
   @JsonCodec
-  case class Multiplication(args: List[MapAlgebraAST], id: UUID, label: Option[String])
+  case class Multiplication(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
       extends Operation("*")
 
   @JsonCodec
-  case class Division(args: List[MapAlgebraAST], id: UUID, label: Option[String])
+  case class Division(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
       extends Operation("/")
 
   @JsonCodec
-  case class Masking(args: List[MapAlgebraAST], id: UUID, label: Option[String])
+  case class Masking(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
       extends Operation("mask")
 
   @JsonCodec
-  case class Classification(args: List[MapAlgebraAST], id: UUID, label: Option[String], classBreaks: ClassBreaks)
+  case class Classification(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], classBreaks: ClassBreaks)
       extends Operation("classify")
 
   /** Map Algebra sources (leaves) */
   @JsonCodec
-  case class Source(id: UUID, label: Option[String]) extends MapAlgebraAST {
+  case class Source(id: UUID, metadata: Option[NodeMetadata]) extends MapAlgebraAST {
     def args: List[MapAlgebraAST] = List.empty
 
     def find(id: UUID): Option[MapAlgebraAST] =
