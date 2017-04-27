@@ -52,7 +52,7 @@ trait ToolRunRoutes extends Authentication
         onSuccess(write(ToolRuns.insertToolRun(newRun, user))) { toolRun =>
           handleExceptions(interpreterExceptionHandler) {
             complete {
-              validateAST[Unit](toolRun.id, user).value.map(_ => (StatusCodes.Created, toolRun))
+              validateAST[Unit](toolRun.id, user).map(_ => (StatusCodes.Created, toolRun))
             }
           }
         }
