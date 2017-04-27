@@ -1,1 +1,1 @@
-../../../../src_migrations/main/scala/58.scala
+../../../../src_migrations/main/scala/59.scala
