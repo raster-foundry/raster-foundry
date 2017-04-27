@@ -96,7 +96,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
         } ~
         pathPrefix("validate") {
           handleExceptions(interpreterExceptionHandler) {
-            complete(validateAST(toolRunId, user).value)
+            complete(validateAST[Unit](toolRunId, user))
           }
         }
       }
