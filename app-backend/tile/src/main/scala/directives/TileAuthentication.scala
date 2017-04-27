@@ -26,8 +26,8 @@ trait TileAuthentication extends Authentication
     */
   def tileAuthenticateOption: Directive1[Boolean] = {
 
-    val requireAuth = Try(tileAuthSetting.toBoolean)
-      .getOrElse(true)
+    val requireAuth = false//Try(tileAuthSetting.toBoolean)
+      //.getOrElse(true)
 
     if (requireAuth) {
       validateTokenParameter.flatMap {

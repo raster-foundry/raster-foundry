@@ -1,5 +1,6 @@
 package com.azavea.rf.tile
 
+import com.azavea.rf.tool.op.Interpreter
 import com.azavea.rf.database.Database
 import com.azavea.rf.common.cache._
 import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
@@ -86,6 +87,15 @@ object LayerCache extends Config with LazyLogging {
       }}
     }
   }
+
+  def modelLayerHistogram(modelId: UUID, nodeId: UUID): OptionT[Future, Array[Histogram[Double]]] = {
+    histogramCache.cachingOptionT(s"model-$modelId-$nodeId") { implicit ec =>
+      val ast = ???
+      Interpreter.globalHistogram(ast, ???)
+      ???
+    }
+  }
+
 
   def layerTile(layerId: UUID, zoom: Int, key: SpatialKey): OptionT[Future, MultibandTile] = {
     tileCache.cachingOptionT(s"tile-$layerId-$zoom-${key.col}-${key.row}") { implicit ec =>
