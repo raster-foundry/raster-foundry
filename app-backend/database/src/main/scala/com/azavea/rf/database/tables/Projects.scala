@@ -318,9 +318,10 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
       authProjectCount zip authSceneCount
     } flatMap { r: (Int, Int) =>
       (r._1, r._2) match {
-        case (projectCount, sceneCount) if projectCount == 1 && sceneCount == sceneIds.length => {
+        case (projectCount, sceneCount) if projectCount == 1 && sceneCount == sceneIds.length || user.isInRootOrganization => {
           // Only allow this action to be performed if authorization is perfect
           // The user must be authorized to modify the project and must have access to ALL scenes
+          // or the user must be part of the root organization
           val sceneProjectJoinQuery = for {
             s <- ScenesToProjects if s.sceneId.inSet(sceneIds) && s.projectId === projectId
           } yield s.sceneId

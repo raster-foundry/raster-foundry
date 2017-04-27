@@ -21,7 +21,8 @@ case class Upload(
   files: List[String],
   datasource: UUID,
   metadata: Json,
-  visibility: Visibility
+  visibility: Visibility,
+  projectId: Option[UUID]
 )
 
 object Upload {
@@ -40,12 +41,12 @@ object Upload {
     datasource: UUID,
     metadata: Json,
     owner: Option[String],
-    visibility: Visibility
+    visibility: Visibility,
+    projectId: Option[UUID]
   ) extends OwnerCheck {
     def toUpload(user: User): Upload = {
       val id = UUID.randomUUID()
       val now = new Timestamp((new java.util.Date()).getTime())
-
       val ownerId = checkOwner(user, this.owner)
 
       Upload(
@@ -62,7 +63,8 @@ object Upload {
         this.files,
         this.datasource,
         this.metadata,
-        this.visibility
+        this.visibility,
+        this.projectId
       )
     }
   }

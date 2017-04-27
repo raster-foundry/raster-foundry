@@ -2800,6 +2800,10 @@ definitions:
             - PUBLIC
             - ORGANIZATION
             - PRIVATE
+        projectId:
+          type: string
+          format: uuid
+          description: during the import process, add scenes to a project if specified
   Upload:
     allOf:
     - $ref: '#/definitions/BaseModel'
