@@ -251,7 +251,13 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
         }
     } onComplete {
       case Success(scenes) => {
-        logger.info(s"Successfully imported scenes: ${scenes.map(_.id.toString).mkString(", ")}.")
+        if(scenes.nonEmpty) logger.info(s"Successfully imported scenes: ${scenes.map(_.id.toString).mkString(", ")}.")
+        else {
+          val e = new Exception(s"No scenes available for the ${startDate}")
+          sendError(e)
+          stop
+          throw e
+        }
         stop
       }
       case Failure(e) => {
