@@ -1,20 +1,18 @@
 package com.azavea.rf
 
-import cats.data.NonEmptyList
-import com.azavea.rf.tool.eval.DatabaseError
 import java.util.UUID
 
 import scala.concurrent.{ExecutionContext, Future}
 
 import cats._
-import cats.data.OptionT
+import cats.data.{NonEmptyList, OptionT}
 import cats.data.Validated.{Invalid, Valid}
 import cats.implicits._
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.{ToolRuns, Tools}
-import com.azavea.rf.datamodel.User
+import com.azavea.rf.datamodel.{Tool, ToolRun, User}
 import com.azavea.rf.tool.ast.MapAlgebraAST
-import com.azavea.rf.tool.eval.Interpreter
+import com.azavea.rf.tool.eval.{ASTDecodeError, DatabaseError, Interpreter}
 import com.azavea.rf.tool.params.EvalParams
 
 package object common {
@@ -36,10 +34,8 @@ package object common {
     val result: OptionT[Future, Interpreter.Interpreted[M]] = for {
       toolRun <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
       tool    <- OptionT(Tools.getTool(toolRun.tool, user))
-      params  <- OptionT.fromOption[Future](maybeThrow(toolRun.executionParameters.as[EvalParams]))
-      ast     <- OptionT.fromOption[Future](maybeThrow(tool.definition.as[MapAlgebraAST]))
     } yield {
-      Interpreter.interpretPure[M](ast, params)
+      validateASTPure[M](toolRun, tool)
     }
 
     result.value.map({
@@ -49,4 +45,13 @@ package object common {
     })
   }
 
+  def validateASTPure[M: Monoid](tr: ToolRun, t: Tool.WithRelated): Interpreter.Interpreted[M] = {
+
+    (t.definition.as[MapAlgebraAST] |@| tr.executionParameters.as[EvalParams]).map(
+      Interpreter.interpretPure[M](_, _)
+    ) match {
+      case Right(a) => a
+      case Left(err) => Invalid(NonEmptyList.of(ASTDecodeError(tr.id, err)))
+    }
+  }
 }
