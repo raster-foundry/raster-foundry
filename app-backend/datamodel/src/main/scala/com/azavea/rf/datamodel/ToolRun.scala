@@ -16,7 +16,6 @@ case class ToolRun(
   owner: String,
   visibility: Visibility,
   organizationId: UUID,
-  project: UUID,
   tool: UUID,
   executionParameters: Json
 )
@@ -29,7 +28,6 @@ object ToolRun {
   case class Create(
     visibility: Visibility,
     organizationId: UUID,
-    project: UUID,
     tool: UUID,
     executionParameters: Json,
     owner: Option[String]
@@ -49,7 +47,6 @@ object ToolRun {
         ownerId,
         visibility,
         organizationId,
-        project,
         tool,
         executionParameters
       )
