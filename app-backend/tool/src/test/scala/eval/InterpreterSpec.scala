@@ -24,7 +24,7 @@ class InterpreterSpec
        with TileBuilders
        with RasterMatchers {
 
-  def randomSourceAST = MapAlgebraAST.Source(UUID.randomUUID, None)
+  def randomSourceAST = MapAlgebraAST.Source(UUID.randomUUID, None, None)
 
   val redTileSource = SceneRaster(UUID.randomUUID, Some(4))
 
@@ -57,7 +57,7 @@ class InterpreterSpec
     val src2 = randomSourceAST
     val tms = Interpreter.interpretTMS(
       ast = src1 - src2,
-      params = EvalParams(Map(src1.id -> redTileSource, src2.id -> nirTileSource)),
+      params = EvalParams(Map(src1.id -> redTileSource, src2.id -> nirTileSource), Map.empty),
       source = goodSource
     )
 
@@ -79,7 +79,7 @@ class InterpreterSpec
     val src2 = randomSourceAST
     val tms = Interpreter.interpretTMS(
       ast = src1 - src2,
-      params = EvalParams(Map(src1.id -> redTileSource)),
+      params = EvalParams(Map(src1.id -> redTileSource), Map.empty),
       source = goodSource
     )
 
@@ -96,7 +96,7 @@ class InterpreterSpec
     val src2 = randomSourceAST
     val tms = Interpreter.interpretTMS(
       ast = src1 - src2,
-      params = EvalParams(Map(src1.id -> redTileSource)),
+      params = EvalParams(Map(src1.id -> redTileSource), Map.empty),
       source = badSource
     )
 
@@ -112,8 +112,8 @@ class InterpreterSpec
     val src2 = randomSourceAST
 
     val tms = Interpreter.interpretPure[Unit](
-      ast = src1 - src2,
-      params = EvalParams(Map(src1.id -> redTileSource, src2.id -> nirTileSource))
+      src1 - src2,
+      EvalParams(Map(src1.id -> redTileSource, src2.id -> nirTileSource), Map.empty)
     )
 
     tms shouldBe Valid(())
