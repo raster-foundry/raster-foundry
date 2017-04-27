@@ -25,6 +25,10 @@ case class RasterRetrievalError(id: UUID, refId: UUID) extends InterpreterError 
   def repr = s"Unable to retrieve raster for $refId"
 }
 
+case class DatabaseError(id: UUID) extends InterpreterError {
+  def repr = s"Unable to retrieve ToolRun $id or its associated Tool from the database"
+}
+
 object InterpreterError {
   implicit val encodeInterpreterErrors: Encoder[InterpreterError] =
     new Encoder[InterpreterError] {
