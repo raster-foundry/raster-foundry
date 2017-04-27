@@ -21,7 +21,7 @@ class ToolRuns(_TableTag: Tag) extends Table[ToolRun](_TableTag, "tool_runs")
     with TimestampFields {
 
   def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, owner, visibility,
-           organizationId, projectId, toolId, executionParameters) <> (ToolRun.tupled, ToolRun.unapply _)
+           organizationId, toolId, executionParameters) <> (ToolRun.tupled, ToolRun.unapply _)
 
   val id: Rep[UUID]  = column[UUID]("id", O.PrimaryKey)
   val createdAt: Rep[Timestamp] = column[Timestamp]("created_at")
@@ -31,14 +31,12 @@ class ToolRuns(_TableTag: Tag) extends Table[ToolRun](_TableTag, "tool_runs")
   val owner: Rep[String] = column[String]("owner", O.Length(255,varying=true))
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
   val organizationId: Rep[UUID] = column[UUID]("organization")
-  val projectId: Rep[UUID] = column[UUID]("project")
   val toolId: Rep[UUID] = column[UUID]("tool")
   val executionParameters: Rep[Json] = column[Json]("execution_parameters")
 
   lazy val createdByUserFK = foreignKey("tool_runs_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val modifiedByUserFK = foreignKey("tool_runs_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val organizationsFk = foreignKey("tool_runs_organization_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
-  lazy val projectFK = foreignKey("tool_runs_project_fkey", projectId, Projects)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val toolFK = foreignKey("tool_runs_tool_fkey", toolId, Tools)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val ownerUserFK = foreignKey("tool_runs_owner_fkey", owner, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 }
@@ -108,11 +106,6 @@ class ToolRunDefaultQuery[M, U, C[_]](toolruns: ToolRuns.TableQuery) {
     toolruns.filter { toolRun =>
       toolRunParams.createdBy
         .map(toolRun.createdBy === _)
-        .reduceLeftOption(_ || _)
-        .getOrElse(true: Rep[Boolean])
-    }.filter { toolRun =>
-      toolRunParams.projectId
-        .map(toolRun.projectId === _)
         .reduceLeftOption(_ || _)
         .getOrElse(true: Rep[Boolean])
     }.filter { toolRun =>
