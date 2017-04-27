@@ -13,13 +13,13 @@ trait UserErrorHandler extends Directives
   val userExceptionHandler = ExceptionHandler {
     case e: PSQLException if(e.getSQLState == "23505") =>
       complete(StatusCodes.ClientError(409)("Duplicate Key", ""))
+    case e: InvalidParameterException =>
+      logger.error(RfStackTrace(e))
+      complete(StatusCodes.ClientError(400)("Bad Request", e.getMessage))
     case e: IllegalArgumentException =>
       logger.error(RfStackTrace(e))
       complete(StatusCodes.ClientError(400)("Bad Argument", e.getMessage))
     case e: IllegalStateException =>
-      logger.error(RfStackTrace(e))
-      complete(StatusCodes.ClientError(400)("Bad Request", e.getMessage))
-    case e: InvalidParameterException =>
       logger.error(RfStackTrace(e))
       complete(StatusCodes.ClientError(400)("Bad Request", e.getMessage))
     case e: IllegalRequestException =>

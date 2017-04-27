@@ -52,6 +52,27 @@ trait Authentication extends Directives {
   }
 
   /**
+    * Authenticates user based on bearer token (JWT)
+    */
+  def authenticateWithParameter: Directive1[User] = {
+    validateTokenParameter.flatMap { validToken =>
+      println("validtoken", validToken)
+      JwtJson4s.decodeJson(validToken, auth0Secret, Seq(JwtAlgorithm.HS256)) match {
+        case Success(parts) =>
+          val sub = (parts \ "sub").extract[String]
+
+          onSuccess(Users.getUserById(sub)).flatMap {
+            case Some(user) => provide(user)
+            case None => onSuccess(Users.createUserWithAuthId(sub)).flatMap {
+              user => provide(user)
+            }
+          }
+        case Failure(_) => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
+      }
+    }
+  }
+
+  /**
     * Validates a token parameter and optionally returns it if valid, else rejects request
     */
   def validateTokenParameter: Directive1[String] = {

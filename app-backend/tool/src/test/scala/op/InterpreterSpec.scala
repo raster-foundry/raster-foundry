@@ -101,7 +101,7 @@ class InterpreterSpec
     val op = Await.result(ret, 10.seconds)
 
     requests should be (empty)
-    op should be (Invalid(NEL.of(RasterRetrievalError(red.id), MissingParameter(undefined.id))))
+    op should be (Invalid(NEL.of(RasterRetrievalError(red.id, red.value.get.id), MissingParameter(undefined.id))))
   }
 
   it("should deal with out of bounds band index") {
@@ -119,7 +119,7 @@ class InterpreterSpec
     val op = Await.result(ret, 10.seconds)
 
     requests should be (empty)
-    op should be (Invalid(NEL.of(RasterRetrievalError(outOfBounds.id))))
+    op should be (Invalid(NEL.of(RasterRetrievalError(outOfBounds.id, outOfBounds.value.get.id))))
   }
 }
 

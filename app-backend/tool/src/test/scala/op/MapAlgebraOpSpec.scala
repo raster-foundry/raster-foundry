@@ -1,8 +1,11 @@
 package com.azavea.rf.tool.op
 
 import com.azavea.rf.tool.ast._
+import com.azavea.rf.tool.ast.codec.MapAlgebraCodec._
 import com.azavea.rf.tool.ast.MapAlgebraAST._
 
+import io.circe._
+import io.circe.syntax._
 import geotrellis.raster._
 import geotrellis.raster.op._
 import geotrellis.raster.testkit._
@@ -171,10 +174,26 @@ class MapAlgebraOpSpec
   }
 
   it("should evaluate addition") {
+
+    val r = RFMLRasterSource(
+      id = UUID.randomUUID,
+      label = Some("red"),
+      value = Some(SceneRaster(UUID.fromString("63b15316-2b28-4280-8eb5-c98de4adffab"), Some(4)))
+    )
+    val n = RFMLRasterSource(
+      id = UUID.randomUUID,
+      label = Some("nir"),
+      value = Some(SceneRaster(UUID.fromString("63b15316-2b28-4280-8eb5-c98de4adffab"), Some(5)))
+    )
+    val testAST = (n - r) / (n + r)
+
+    println("HERE", testAST.asJson.noSpaces)
     requests = Nil
     val tms = Interpreter.tms(
       ast = red + nir, source = goodSource
     )
+    val whatever = (red + nir).asJson.noSpaces
+    println(whatever)
 
     val ret = tms(0, 1, 1)
     val op = Await.result(ret, 10.seconds) match {
