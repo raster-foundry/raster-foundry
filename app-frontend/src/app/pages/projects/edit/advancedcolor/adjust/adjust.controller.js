@@ -12,9 +12,9 @@ export default class ProjectsColorAdjustController {
         let baseGammaOptions = {
             floor: 0,
             ceil: 2,
-            step: 0.1,
-            precision: 1,
-            showTicks: 0.25
+            step: 0.01,
+            showTicks: 0.25,
+            precision: 2
         };
 
         let baseFilterOptions = {
@@ -30,7 +30,7 @@ export default class ProjectsColorAdjustController {
             ceil: 1,
             step: 0.01,
             precision: 2,
-            showTicks: 0.2
+            showTicks: 0.1
         };
 
         let betaOptions = {
@@ -172,7 +172,7 @@ export default class ProjectsColorAdjustController {
             if (this.correction.min === null &&
                 this.correction.max === null) {
                 this.minMaxOptions.disabled = true;
-                this.minMaxToggle = false;
+                this.minMaxToggle.value = false;
 
                 this.setDefaultsForEnabled();
 
@@ -252,6 +252,14 @@ export default class ProjectsColorAdjustController {
         }
     }
 
+    onGammaFilterChange(id, val, options = {}) {
+        let relevantIds = id;
+        if (this.gammaLinkToggle) {
+            relevantIds = ['redGamma', 'greenGamma', 'blueGamma'];
+        }
+        this.onFilterChange(relevantIds, val, options);
+    }
+
     /**
      * Makes color correction changes available as a component output
      *
@@ -260,7 +268,7 @@ export default class ProjectsColorAdjustController {
      * @param {object} options todo
      * @returns {null} null
      */
-    onFilterChange(id, val, options) {
+    onFilterChange(id, val, options = {}) {
         if (Array.isArray(id)) {
             id.forEach((key) => {
                 if (!options.disabled) {

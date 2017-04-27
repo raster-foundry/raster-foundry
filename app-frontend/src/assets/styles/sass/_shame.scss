@@ -241,19 +241,6 @@ rf-project-editor .leaflet-tile {
   background: none;
 }
 
-ob-daterangepicker {
-  margin-bottom: 2em;
-  .picker-dropdown-container {
-    position: absolute;
-    z-index: 10;
-  }
-  &.active {
-    .picker-dropdown-container {
-      background: $shade-dark;
-    }
-  }
-}
-
 .color-correct-pane {
 
   .content {
@@ -392,12 +379,35 @@ ob-daterangepicker {
 .icon-load.animated {
   animation: 2s linear 0s normal none infinite spin;
 }
+.filter-group {
+  border-bottom: 1px solid #353C58;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
 
 .filter-group-header {
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
+  margin-bottom: 1rem;
+  & > * {
+    margin-right: 1rem;
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+}
+
+.filter-group-option {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 1.2rem;
+  & > * {
+    margin-right: 1rem;
+    margin-top: 0;
+    margin-bottom: 0;
+  }
 }
 
 .list-group-item.has-action {
@@ -409,4 +419,48 @@ ob-daterangepicker {
 
 .list-group-item.is-disabled {
   opacity: 0.5;
+}
+
+.checkbox-container {
+  height: 2rem;
+  width: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #aaa;
+  border-radius: 2px;
+  color: #999;
+  & i {
+    margin: 0;
+    padding: 0;
+  }
+  &.is-checked {
+    border: 1px solid #8ca3fd;
+    background: #8ca3fd;
+    color: #fff;
+  }
+}
+
+.filter-adjust-input {
+  width: 50px;
+  max-width: 50px;
+  border: 0px;
+  background: rgba(0, 0, 0, 0.14902);
+  padding: 0.5rem 0.2rem;
+  text-align: center;
+  font-size: 1.2rem;
+  flex-grow: 0;
+  flex-shrink: 0;
+  color: #ccc;
+}
+
+.rzslider.dark {
+  .rz-bubble {
+    color: #ccc;
+  }
+}
+
+.rf-tooltip {
+  min-width: 250px;
+  text-align: left;
 }

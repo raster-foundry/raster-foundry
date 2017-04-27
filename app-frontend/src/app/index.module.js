@@ -27,6 +27,7 @@ const App = angular.module(
         'angularLoad',
         'tandibar/ng-rollbar',
         'angular.filter',
+        '720kb.tooltips',
 
         // core
         require('./core/core.module').name,
