@@ -4,9 +4,11 @@ import com.azavea.rf.tool.ast._
 
 import geotrellis.raster.render._
 import io.circe._
+import io.circe.syntax._
 
-import scala.util.Try
 import java.security.InvalidParameterException
+import java.util.UUID
+import scala.util.Try
 
 trait MapAlgebraUtilityCodecs {
   implicit def mapAlgebraDecoder: Decoder[MapAlgebraAST]
@@ -17,6 +19,13 @@ trait MapAlgebraUtilityCodecs {
   }
   implicit val encodeKeyDouble: KeyEncoder[Double] = new KeyEncoder[Double] {
     final def apply(key: Double): String = key.toString
+  }
+
+  implicit val decodeKeyUUID: KeyDecoder[UUID] = new KeyDecoder[UUID] {
+    final def apply(key: String): Option[UUID] = Try(UUID.fromString(key)).toOption
+  }
+  implicit val encodeKeyUUID: KeyEncoder[UUID] = new KeyEncoder[UUID] {
+    final def apply(key: UUID): String = key.toString
   }
 
   implicit lazy val classBoundaryDecoder: Decoder[ClassBoundaryType] =
@@ -42,5 +51,12 @@ trait MapAlgebraUtilityCodecs {
           throw new InvalidParameterException(s"'$unrecognized' is not a recognized ClassBoundaryType")
       }
     })
+
+  implicit val colorRampDecoder: Decoder[ColorRamp] =
+    Decoder[Vector[Int]].map({ ColorRamp(_) })
+
+  implicit val colorRampEncoder: Encoder[ColorRamp] = new Encoder[ColorRamp] {
+    final def apply(cRamp: ColorRamp): Json = cRamp.colors.toArray.asJson
+  }
 }
 

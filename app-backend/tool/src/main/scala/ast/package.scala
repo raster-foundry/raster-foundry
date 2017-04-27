@@ -11,7 +11,7 @@ package object ast extends MapAlgebraCodec {
   implicit class CirceMapAlgebraJsonMethods(val self: Json) {
     def _id: Option[UUID] = root.id.string.getOption(self).map(UUID.fromString(_))
     def _type: Option[String] = root.`type`.string.getOption(self)
-    def _label: Option[String] = root.label.string.getOption(self)
+    def _label: Option[String] = root.metadata.label.string.getOption(self)
     def _symbol: Option[String] = root.selectDynamic("apply").string.getOption(self)
 
     def _fields: Option[Seq[String]] = root.obj.getOption(self).map(_.fields)
@@ -27,19 +27,25 @@ package object ast extends MapAlgebraCodec {
   }
 
   implicit class MapAlgebraASTHelperMethods(val self: MapAlgebraAST) {
+    private def generateMetadata = Some(NodeMetadata(
+      Some(s"Classify(${self.metadata.flatMap(_.label).getOrElse(self.id)})"),
+      None,
+      None
+    ))
+
     def classify(breaks: ClassBreaks) =
-      MapAlgebraAST.Classification(List(self), UUID.randomUUID(), Some(s"Classify(${self.label.getOrElse(self.id)})"), breaks)
+      MapAlgebraAST.Classification(List(self), UUID.randomUUID(), generateMetadata, breaks)
 
     def +(other: MapAlgebraAST): MapAlgebraAST.Operation =
-      MapAlgebraAST.Addition(List(self, other), UUID.randomUUID(), Some(s"${self.label.getOrElse(self.id)}_+_${other.label.getOrElse(other.id)}"))
+      MapAlgebraAST.Addition(List(self, other), UUID.randomUUID(), generateMetadata)
 
     def -(other: MapAlgebraAST): MapAlgebraAST.Operation =
-      MapAlgebraAST.Subtraction(List(self, other), UUID.randomUUID(), Some(s"${self.label.getOrElse(self.id)}_-_${other.label.getOrElse(other.id)}"))
+      MapAlgebraAST.Subtraction(List(self, other), UUID.randomUUID(), generateMetadata)
 
     def *(other: MapAlgebraAST): MapAlgebraAST.Operation =
-      MapAlgebraAST.Multiplication(List(self, other), UUID.randomUUID(), Some(s"${self.label.getOrElse(self.id)}_*_${other.label.getOrElse(other.id)}"))
+      MapAlgebraAST.Multiplication(List(self, other), UUID.randomUUID(), generateMetadata)
 
     def /(other: MapAlgebraAST): MapAlgebraAST.Operation =
-      MapAlgebraAST.Division(List(self, other), UUID.randomUUID(), Some(s"${self.label.getOrElse(self.id)}_/_${other.label.getOrElse(other.id)}"))
+      MapAlgebraAST.Division(List(self, other), UUID.randomUUID(), generateMetadata)
   }
 }
