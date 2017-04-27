@@ -4,10 +4,11 @@ import com.azavea.rf.database.Database
 import com.azavea.rf.tile.image._
 import com.azavea.rf.tile.tool._
 import com.azavea.rf.tile.tool.ToolParams._
-import com.azavea.rf.datamodel.ColorCorrect
-import ColorCorrect.Params.colorCorrectParams
 import com.azavea.rf.tile.routes._
+import com.azavea.rf.tile.tool.TileSources
 import com.azavea.rf.common.UserErrorHandler
+import com.azavea.rf.datamodel.ColorCorrect
+import com.azavea.rf.datamodel.ColorCorrect.Params.colorCorrectParams
 
 
 import geotrellis.raster._
@@ -50,7 +51,7 @@ class Router extends LazyLogging
       tileAuthenticateOption { _ =>
         SceneRoutes.root ~
         pathPrefix("tools") {
-          toolRoutes.root(toolRoutes.cachedSource)
+          toolRoutes.root(TileSources.cachedTmsSource)
         }
       } ~
       pathPrefix(JavaUUID) { projectId =>

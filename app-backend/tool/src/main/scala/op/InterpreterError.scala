@@ -15,8 +15,8 @@ sealed trait InterpreterError {
 case class MissingParameter(id: UUID) extends InterpreterError {
   def repr = s"Unbound parameter encountered, unable to evaluate"
 }
-case class RasterRetrievalError(id: UUID) extends InterpreterError {
-  def repr = s"Unable to retrieve raster for $id"
+case class RasterRetrievalError(id: UUID, refId: UUID) extends InterpreterError {
+  def repr = s"Unable to retrieve raster for $refId"
 }
 
 object InterpreterError {

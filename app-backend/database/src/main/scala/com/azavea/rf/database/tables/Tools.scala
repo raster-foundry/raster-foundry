@@ -171,14 +171,13 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
     * @param toolId java.util.UUID ID of tool to query
     * @param user   Results will be limited to user's organization
     */
-  def getTool(toolId: UUID, user: User)(implicit database: DB): Future[Option[Tool.WithRelated]] = {
+  def getTool(toolId: UUID)(implicit database: DB): Future[Option[Tool.WithRelated]] = {
     val test = joinRelated(Tools.filter(_.id === toolId)).result
     logger.debug(s"Fetching a tool -- SQL: ${test.statements.headOption}")
 
     database.db.run {
       joinRelated(
         Tools
-          .filterToSharedOrganizationIfNotInRoot(user)
           .filter(_.id === toolId)
       ).result
     } map {
