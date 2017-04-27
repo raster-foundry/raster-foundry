@@ -1,26 +1,27 @@
 package com.azavea.rf.api.toolrun
 
-import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
+import java.util.UUID
+
+import scala.concurrent.ExecutionContext.Implicits.global
+
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Route
+import cats.implicits._
+import com.azavea.rf.common._
 import com.azavea.rf.database.{ActionRunner, Database}
 import com.azavea.rf.database.tables.ToolRuns
 import com.azavea.rf.datamodel._
-
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Route
-import io.circe._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.{Success, Failure}
-import java.util.UUID
 
 trait ToolRunRoutes extends Authentication
     with PaginationDirectives
     with ToolRunQueryParametersDirective
     with CommonHandlers
     with UserErrorHandler
+    with InterpreterErrorHandler
     with ActionRunner {
+
   implicit def database: Database
 
   val toolRunRoutes: Route = handleExceptions(userExceptionHandler) {
@@ -49,7 +50,11 @@ trait ToolRunRoutes extends Authentication
     entity(as[ToolRun.Create]) { newRun =>
       authorize(user.isInRootOrSameOrganizationAs(newRun)) {
         onSuccess(write(ToolRuns.insertToolRun(newRun, user))) { toolRun =>
-          complete(StatusCodes.Created, toolRun)
+          handleExceptions(interpreterExceptionHandler) {
+            complete {
+              validateAST[Unit](toolRun.id, user).value.map(_ => (StatusCodes.Created, toolRun))
+            }
+          }
         }
       }
     }

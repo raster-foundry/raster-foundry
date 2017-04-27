@@ -1,9 +1,12 @@
 package com.azavea.rf
 
+import cats.data.NonEmptyList
+import com.azavea.rf.tool.eval.DatabaseError
 import java.util.UUID
 
 import scala.concurrent.{ExecutionContext, Future}
 
+import cats._
 import cats.data.OptionT
 import cats.data.Validated.{Invalid, Valid}
 import cats.implicits._
@@ -22,23 +25,27 @@ package object common {
     case Left(failure) => throw failure
   }
 
-  def validateAST(
+  /** Validate an AST, given some ToolRun. In the case of success, returns
+    * the zero element of some specified Monoid.
+    */
+  def validateAST[M: Monoid](
     toolRunId: UUID,
     user: User
-  )(implicit database: Database, ec: ExecutionContext): OptionT[Future, Boolean] = {
+  )(implicit database: Database, ec: ExecutionContext): Future[M] = {
 
-    val result: OptionT[Future, Interpreter.Interpreted[Unit]] = for {
+    val result: OptionT[Future, Interpreter.Interpreted[M]] = for {
       toolRun <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
       tool    <- OptionT(Tools.getTool(toolRun.tool, user))
       params  <- OptionT.fromOption[Future](maybeThrow(toolRun.executionParameters.as[EvalParams])(identity))
       ast     <- OptionT.fromOption[Future](maybeThrow(tool.definition.as[MapAlgebraAST])(identity))
     } yield {
-      Interpreter.interpretPure(ast, params)
+      Interpreter.interpretPure[M](ast, params)
     }
 
-    result.map({
-      case Valid(_) => true // TODO: What to return on success?
-      case Invalid(nel) => throw InterpreterException(nel)
+    result.value.map({
+      case Some(Valid(a)) => a
+      case Some(Invalid(nel)) => throw InterpreterException(nel)
+      case None => throw InterpreterException(NonEmptyList.of(DatabaseError(toolRunId)))
     })
   }
 
