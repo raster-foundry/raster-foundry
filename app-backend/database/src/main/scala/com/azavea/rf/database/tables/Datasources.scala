@@ -1,16 +1,17 @@
 package com.azavea.rf.database.tables
 
-import java.sql.Timestamp
-import java.util.UUID
-
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.fields.{OrgFkVisibleFields, TimestampFields, UserFkFields, NameField}
 import com.azavea.rf.database.query.{DatasourceQueryParameters, ListQueryResult}
 import com.azavea.rf.datamodel._
+
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import com.typesafe.scalalogging.LazyLogging
 import slick.model.ForeignKeyAction
+import io.circe._
 
+import java.sql.Timestamp
+import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -25,7 +26,7 @@ class Datasources(_tableTag: Tag) extends Table[Datasource](_tableTag, "datasour
     with TimestampFields
     with OrgFkVisibleFields
 {
-  def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, organizationId, name,
+  def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, owner, organizationId, name,
            visibility, colorCorrection, composites, extras) <> (
     Datasource.tupled, Datasource.unapply
   )
@@ -35,16 +36,18 @@ class Datasources(_tableTag: Tag) extends Table[Datasource](_tableTag, "datasour
   val createdBy: Rep[String] = column[String]("created_by", O.Length(255,varying=true))
   val modifiedAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("modified_at")
   val modifiedBy: Rep[String] = column[String]("modified_by", O.Length(255,varying=true))
+  val owner: Rep[String] = column[String]("owner", O.Length(255,varying=true))
   val organizationId: Rep[java.util.UUID] = column[java.util.UUID]("organization_id")
   val name: Rep[String] = column[String]("name")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
-  val colorCorrection: Rep[Map[String, Any]] = column[Map[String, Any]]("color_correction", O.Length(2147483647,varying=false))
-  val composites: Rep[Map[String, Any]] = column[Map[String, Any]]("composites", O.Length(2147483647, varying=false))
-  val extras: Rep[Map[String, Any]] = column[Map[String, Any]]("extras", O.Length(2147483647,varying=false))
+  val colorCorrection: Rep[Json] = column[Json]("color_correction", O.Length(2147483647,varying=false))
+  val composites: Rep[Json] = column[Json]("composites", O.Length(2147483647, varying=false))
+  val extras: Rep[Json] = column[Json]("extras", O.Length(2147483647,varying=false))
 
   lazy val organizationsFk = foreignKey("datasources_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val createdByUserFK = foreignKey("datasources_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val modifiedByUserFK = foreignKey("datasources_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val ownerUserFK = foreignKey("datasources_owner_fkey", owner, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 }
 
 object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogging {
@@ -60,12 +63,13 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
     *
     * @param pageRequest PageRequest information about sorting and page size
     */
-  def listDatasources(offset: Int, limit: Int, datasourceParams: DatasourceQueryParameters) = {
+  def listDatasources(offset: Int, limit: Int, datasourceParams: DatasourceQueryParameters, user: User) = {
 
     val dropRecords = limit * offset
+    val accessibleDatasources = Datasources.filterToSharedOrganizationIfNotInRoot(user)
     val datasourceFilterQuery = datasourceParams.name match {
-      case Some(n) => Datasources.filter(_.name === n)
-      case _ => Datasources
+      case Some(n) => accessibleDatasources.filter(_.name === n)
+      case _ => accessibleDatasources
     }
 
     ListQueryResult[Datasource](
@@ -83,7 +87,7 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
     * @param user               User to create a new datasource with
     */
   def insertDatasource(datasourceToCreate: Datasource.Create, user: User) = {
-    val datasource = datasourceToCreate.toDatasource(user.id)
+    val datasource = datasourceToCreate.toDatasource(user)
     (Datasources returning Datasources).forceInsert(datasource)
   }
 
@@ -91,16 +95,25 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
   /** Given a datasource ID, attempt to retrieve it from the database
     *
     * @param datasourceId UUID ID of datasource to get from database
+    * @param user         Results will be limited to user's organization
     */
-  def getDatasource(datasourceId: UUID) =
-    Datasources.filter(_.id === datasourceId).result.headOption
+  def getDatasource(datasourceId: UUID, user: User) =
+    Datasources
+      .filterToSharedOrganizationIfNotInRoot(user)
+      .filter(_.id === datasourceId)
+      .result
+      .headOption
 
   /** Given a datasource ID, attempt to remove it from the database
     *
     * @param datasourceId UUID ID of datasource to remove
+    * @param user         Results will be limited to user's organization
     */
-  def deleteDatasource(datasourceId: UUID) =
-    Datasources.filter(_.id === datasourceId).delete
+  def deleteDatasource(datasourceId: UUID, user: User) =
+    Datasources
+      .filterToSharedOrganizationIfNotInRoot(user)
+      .filter(_.id === datasourceId)
+      .delete
 
 /** Update a datasource @param datasource Datasource to use for update
     * @param datasourceId UUID of datasource to update
@@ -110,7 +123,9 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
     val updateTime = new Timestamp((new java.util.Date).getTime)
 
     val updateDatasourceQuery = for {
-      updateDatasource <- Datasources.filter(_.id === datasourceId)
+      updateDatasource <- Datasources
+                            .filterToSharedOrganizationIfNotInRoot(user)
+                            .filter(_.id === datasourceId)
     } yield (
       updateDatasource.modifiedAt,
       updateDatasource.modifiedBy,

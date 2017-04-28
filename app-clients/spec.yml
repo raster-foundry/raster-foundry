@@ -1,0 +1,3087 @@
+swagger: '2.0'
+info:
+  title: Raster Foundry
+  description: An application to find and manipulate large-scale geospatial and raster data
+  version: "0.1.0"
+
+host: app.rasterfoundry.com
+
+schemes:
+  - https
+
+basePath: /api
+
+produces:
+  - application/json
+consumes:
+  - application/json
+
+x-top-matter:
+  - title: Introduction
+    level: 1
+    content: |
+      This document describes the Raster Foundry API, which is meant to by used by user facing frontends or backend-servers.
+      Generally speaking, all user facing functions are available on the default frontend unless specified otherwise.
+  - title: Using the API
+    level: 2
+    content: |
+      For testing purposes, our API can be queried using tools such as <a href="https://curl.haxx.se/">cURL</a>, <a href="https://www.getpostman.com/">Postman</a>, or <a href="https://advancedrestclient.com/">Advanced Rest Client</a>
+
+x-resources:
+  - name: Projects
+    description: |
+      Projects are composed of scenes, and are the unit which Tools act on
+    further-description:
+      - title: Project permissions
+        content: |
+          Projects can be shared publicly, with your organzation, or privately by link only.
+          Currently, only private projects are supported.
+
+  - name: Scenes
+    description: |
+      Scenes are sets of images which are viewed and color corrected as a unit
+    further-description:
+      - title: Scene permissions
+        content: |
+          Scenes can be shared publicly, with your organzation, or privately.
+          All user uploaded Scenes are by default private, and Scenes generated from publicly available data are public.
+
+  - name: Images
+    description: |
+      A single image, with 1 or more bands
+    further-description:
+      - title: Image permissions
+        content: |
+          Images can be shared publicly, with your organzation, or privately.
+          All user uploaded Images are by default private, and Images generated from publicly available data are public.
+  - name: Uploads
+    description: User uploads
+    further-description:
+      - title: Image permissions
+        content: |
+          All user uploads are private
+  - name: Datasources
+    description: |
+      Datasources contain information common to all images uploaded through them such as composites and default color corrections
+  - name: Tokens
+    description: |
+      Tokens are used to access the API, either through a frontend or an api client.
+  - name: Tools
+    description: |
+      Tools are used to apply transformations to Rasters
+  - name: Users
+    description: |
+      User management functions
+  - name: Organizations
+    description: |
+      Organization management functions
+  - name: Exports
+    description: |
+      View and manage project Exports
+
+tags:
+  - name: Users
+    description: Operations involving users and organizations
+  - name: Authentication
+    description: Resources to obtain, use, and delete API tokens
+  - name: Imagery
+    description: Interact with imagery
+  - name: Lab
+    description: Geospatial processing discovery and endpoints
+  - name: Statistics
+    description: Statistical metadata about geospatial data
+
+paths:
+  /users/:
+    x-resource: Users
+    get:
+      summary: Get a list of users
+      description: |
+        The Users API endpoint enables searching and listing users.
+      tags:
+        - Users
+      parameters:
+        - $ref: '#/parameters/orderingBase'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+      responses:
+        200:
+          description: Paginated list of users
+          schema:
+            $ref: '#/definitions/UserPaginated'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create a user
+      tags:
+        - Users
+      parameters:
+        - name: User
+          in: body
+          schema:
+            $ref: '#/definitions/UserCreate'
+      responses:
+        201:
+          description: User created
+          schema:
+            $ref: '#/definitions/User'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /users/me/:
+    x-resource: Users
+    get:
+      summary: Get logged in user profile
+      tags:
+        - Users
+      responses:
+        200:
+          description: Profile found
+          schema:
+            $ref: '#/definitions/UserWithOAuth'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    patch:
+      summary: Update user profile
+      parameters:
+        - name: Profile
+          in: body
+          schema:
+            $ref: '#/definitions/Auth0UserProfile'
+      tags:
+        - Users
+      responses:
+        200:
+          description: Profile updated
+          schema:
+            $ref: '#/definitions/Auth0User'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /users/{uuid}/:
+    x-resource: Users
+    get:
+      summary: Get a single user
+      tags:
+        - Users
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: User found
+          schema:
+            $ref: '#/definitions/User'
+        404:
+          description: User not found
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Update a user
+      tags:
+        - Users
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - name: User
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        204:
+          description: Update successful (No Content)
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /organizations/:
+    x-resource: Organizations
+    get:
+      summary: Retrieve list of organizations
+      tags:
+        - Users
+      parameters:
+        - $ref: '#/parameters/orderingBase'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+      responses:
+        200:
+          description: Paginated list of organizations
+          schema:
+            $ref: '#/definitions/OrganizationPaginated'
+    post:
+      summary: Create a new organization
+      tags:
+        - Users
+      parameters:
+        - name: organization
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Organization'
+      responses:
+        201:
+          description: Return newly created organization
+          schema:
+            $ref: '#/definitions/Organization'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /organizations/{organizationId}/:
+    x-resource: Organizations
+    get:
+      summary: Retrieve details for an organization
+      tags:
+        - Users
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          type: string
+      responses:
+        200:
+          description: Returned organization
+          schema:
+            $ref: '#/definitions/Organization'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Update an organization
+      tags:
+        - Users
+      parameters:
+        - name: organization
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Organization'
+        - name: organizationId
+          in: path
+          required: true
+          type: string
+      responses:
+        204:
+          description: Update successful (No Content)
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /organizations/{organizationId}/users/:
+    x-resource: Organizations
+    get:
+      summary: Get a list of users and their roles for the specified organization
+      tags:
+        - Users
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          type: string
+      responses:
+        200:
+          description: Paginated list of user roles
+          schema:
+            $ref: '#/definitions/UserPaginated'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /datasources/:
+    x-resource: Datasources
+    get:
+      summary: Lists paginated datasources that a user has access to
+      description: |
+        Datasources are sensors that share common metadata, like default color corrections. Scenes from
+        a given datasource can be mosaiced and color corrected together.
+      tags:
+        - Datasources
+      parameters:
+        - $ref: '#/parameters/name'
+      # TODO: fill in all possible responses
+      responses:
+        200:
+          description: SUCCESS
+  /uploads/:
+    x-resource: Uploads
+    get:
+      summary: Get a list of uploads
+      description: |
+        The uploads API endpoint enables searching, listing, and creating new uploads.
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/orderingBase'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/organization'
+        - $ref: '#/parameters/datasource'
+        - $ref: '#/parameters/uploadStatus'
+      responses:
+        200:
+          description: Paginated list of uploads
+          schema:
+            $ref: '#/definitions/UploadPaginated'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create an upload
+      description: |
+        Create a new upload.
+      tags:
+        - Imagery
+      parameters:
+        - name: Upload
+          in: body
+          schema:
+            $ref: '#/definitions/UploadCreate'
+      responses:
+        201:
+          description: Upload created
+          schema:
+            $ref: '#/definitions/Upload'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /uploads/{uuid}/:
+    x-resource: Uploads
+    get:
+      summary: Retrieve upload details
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: Info about upload
+          schema:
+            $ref: '#/definitions/Upload'
+        404:
+          description: |
+            UUID parameter does not refer to an upload or the user is not able to view the upload it refers to
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Update an upload
+      tags:
+        - Imagery
+      parameters:
+        - name: upload
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Upload'
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Update successful (no further processing needed)
+        404:
+          description: |
+            The UUID parameter does not refer to a upload or the user does not have access to the upload it refers to
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Delete an upload
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Deletion successful (no content)
+        404:
+          description: |
+            The UUID parameter does not refer to an upload or the user does not have access to the upload it refers to
+          schema:
+            $ref: '#/definitions/Error'
+  /uploads/{uuid}/credentials/:
+    x-resource: Uploads
+    get:
+      summary: Get credentials scoped to this uploads bucket. If this is not a local upload
+      tags:
+        - Authentication
+        - Imagery
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          type: string
+      responses:
+        200:
+          description: AWS credentials scoped to the upload bucket with prefix
+          schema:
+            $ref: '#/definitions/UploadCredentialsResponse'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /scenes/:
+    x-resource: Scenes
+    get:
+      summary: Lists paginated scenes that a user has access to
+      description: |
+        Scenes are groups of images that share metadata and would typically be viewed together on a map.
+        They are ingested into Raster RDDs by GeoTrellis and are able to be added to projects, mosaiced,
+        and have other operations performed on them.
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/orderingScene'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/organization'
+        - $ref: '#/parameters/maxCloudCover'
+        - $ref: '#/parameters/minCloudCover'
+        - $ref: '#/parameters/minAcquisitionDatetime'
+        - $ref: '#/parameters/maxAcquisitionDatetime'
+        - $ref: '#/parameters/minCreateDatetime'
+        - $ref: '#/parameters/maxCreateDatetime'
+        - $ref: '#/parameters/datasource'
+        - $ref: '#/parameters/month'
+        - $ref: '#/parameters/minDayOfMonth'
+        - $ref: '#/parameters/maxDayOfMonth'
+        - $ref: '#/parameters/maxSunAzimuth'
+        - $ref: '#/parameters/minSunAzimuth'
+        - $ref: '#/parameters/maxSunElevation'
+        - $ref: '#/parameters/minSunElevation'
+        - $ref: '#/parameters/minResolution'
+        - $ref: '#/parameters/maxResolution'
+        - $ref: '#/parameters/tags'
+        - $ref: '#/parameters/bbox'
+        - $ref: '#/parameters/project'
+        - $ref: '#/parameters/ingested'
+        - $ref: '#/parameters/ingestStatus'
+      responses:
+        200:
+          description: Paginated list of scenes
+          schema:
+            $ref: '#/definitions/ScenePaginated'
+    post:
+      summary: Create a new scene
+      tags:
+        - Imagery
+      responses:
+        201:
+          description: Successfully created a new scene
+          schema:
+            $ref: '#/definitions/Scene'
+        400:
+          description: Client error creating a scene
+          schema:
+            $ref: '#/definitions/Error'
+  /scenes/{uuid}/:
+    x-resource: Scenes
+    get:
+      summary: Retrieve scene details
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: Info about Scene
+          schema:
+            $ref: '#/definitions/Scene'
+        404:
+          description: |
+            UUID parameter does not refer to an scene or the user is not able to view the scene it refers to
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Update a scene
+      tags:
+        - Imagery
+      parameters:
+        - name: scene
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Scene'
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Update successful (no further processing needed)
+        404:
+          description: |
+            The UUID parameter does not refer to a scene or the user does not have access to the scene it refers to
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Delete a scene (Warning will delete any associated imagery)
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Deletion successful (no content)
+        404:
+          description: |
+            The UUID parameter does not refer to a scene or the user does not have access to the scene it refers to
+          schema:
+            $ref: '#/definitions/Error'
+  /scene-grid/{zoom}/{column}/{row}/:
+    x-resource: Scenes
+    get:
+      summary: Scene statistics for a tile
+      tags:
+        - Statistics
+      parameters:
+        - $ref: '#/parameters/column'
+        - $ref: '#/parameters/row'
+        - $ref: '#/parameters/zoom'
+        - $ref: '#/parameters/organization'
+        - $ref: '#/parameters/maxCloudCover'
+        - $ref: '#/parameters/minCloudCover'
+        - $ref: '#/parameters/minAcquisitionDatetime'
+        - $ref: '#/parameters/maxAcquisitionDatetime'
+        - $ref: '#/parameters/minCreateDatetime'
+        - $ref: '#/parameters/maxCreateDatetime'
+        - $ref: '#/parameters/datasource'
+        - $ref: '#/parameters/month'
+        - $ref: '#/parameters/minDayOfMonth'
+        - $ref: '#/parameters/maxDayOfMonth'
+        - $ref: '#/parameters/maxSunAzimuth'
+        - $ref: '#/parameters/minSunAzimuth'
+        - $ref: '#/parameters/maxSunElevation'
+        - $ref: '#/parameters/minSunElevation'
+        - $ref: '#/parameters/minResolution'
+        - $ref: '#/parameters/maxResolution'
+        - $ref: '#/parameters/tags'
+        - $ref: '#/parameters/ingested'
+      responses:
+        200:
+          description: Statistics for the given bounding box
+          schema:
+            $ref: '#/definitions/SceneGrid'
+        400:
+          description: Invalid Parameters
+          schema:
+            $ref: '#/definitions/Error'
+  /projects/:
+    x-resource: Projects
+    get:
+      summary: Get list of projects the user is authorized to view
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/orderingBase'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/organization'
+        - $ref: '#/parameters/tags'
+      responses:
+        200:
+          description: Paginated list of projects the user is authorized to view
+          schema:
+            $ref: '#/definitions/ProjectPaginated'
+    post:
+      summary: Create a new project
+      tags:
+        - Imagery
+      parameters:
+        - name: project
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Project'
+      responses:
+        202:
+          description: Project details; at this point scene processes may be in-progress
+          schema:
+            $ref: '#/definitions/Project'
+  /projects/{uuid}/:
+    x-resource: Projects
+    get:
+      summary: Retrieve project details
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: Info about Project
+          schema:
+            $ref: '#/definitions/Project'
+        404:
+          description: |
+            UUID parameter does not refer to a project or the user is not able to view the project it refers to
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Update a project
+      tags:
+        - Imagery
+      parameters:
+        - name: project
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Project'
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Update successful (no further processing needed)
+        404:
+          description: |
+            The UUID parameter does not refer to a project or the user does not have access to the project it refers to
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Delete a project
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Deletion successful (no content)
+        404:
+          description: The UUID parameter does not refer to a project or the user does not have access to the project it refers to
+          schema:
+            $ref: '#/definitions/Error'
+
+  /projects/{uuid}/areas-of-interest/:
+    get:
+      summary: Get all Areas of Interest for this project.
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+      responses:
+        200:
+          description: Json summary of the filters and Polygons that make up AOIs for the given project.
+          schema:
+            $ref: '#/definitions/AoiPaginated'
+
+    post:
+      summary: Create an Area of Interest for this project.
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - name: aoi
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/AOI'
+      responses:
+        201:
+          description: Area of Interest created.
+          schema:
+            $ref: '#/definitions/AOI'
+        default:
+          description: Unexpected error.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /projects/{uuid}/scenes/:
+    x-resource: Projects
+    get:
+      summary: Get a list of scenes associated with this project
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/orderingScene'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/organization'
+        - $ref: '#/parameters/maxCloudCover'
+        - $ref: '#/parameters/minCloudCover'
+        - $ref: '#/parameters/minAcquisitionDatetime'
+        - $ref: '#/parameters/maxAcquisitionDatetime'
+        - $ref: '#/parameters/minCreateDatetime'
+        - $ref: '#/parameters/maxCreateDatetime'
+        - $ref: '#/parameters/datasource'
+        - $ref: '#/parameters/month'
+        - $ref: '#/parameters/minDayOfMonth'
+        - $ref: '#/parameters/maxDayOfMonth'
+        - $ref: '#/parameters/maxSunAzimuth'
+        - $ref: '#/parameters/minSunAzimuth'
+        - $ref: '#/parameters/maxSunElevation'
+        - $ref: '#/parameters/minSunElevation'
+        - $ref: '#/parameters/minResolution'
+        - $ref: '#/parameters/maxResolution'
+        - $ref: '#/parameters/tags'
+        - $ref: '#/parameters/ingested'
+        - $ref: '#/parameters/ingestStatus'
+      responses:
+        200:
+          description: Paginated list of scenes associated with this project
+          schema:
+            $ref: '#/definitions/ScenePaginated'
+    post:
+      summary: Create a new association between a set of scenes and this project
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - name: scenes
+          in: body
+          required: true
+          description: UUIDs of scenes to place in project
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+      responses:
+        201:
+          description: List of scenes added to project
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Scene'
+    put:
+      summary: Replace the set of scenes in a project
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - name: scenes
+          in: body
+          required: true
+          description: UUIDs of scenes to replace in project
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+      responses:
+        204:
+          description: No content, update successful
+    delete:
+      summary: Delete a set of scenes from a project
+      tags:
+        - Imagery
+      parameters:
+        - name: scenes
+          in: body
+          required: true
+          description: UUIDs of scenes to delete in project
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: No content, delete successful
+
+  /projects/{uuid}/scenes/{uuid2}/accept:
+    post:
+      summary: Approve a pending Scene which passed an AOI check.
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/uuid2'
+      responses:
+        204:
+          description: Successfully accepted the Scene.
+
+  /projects/{uuid}/scenes/bulk-add-from-query/:
+    x-resource: Projects
+    post:
+      summary: Create a new association between a set of scenes and this project
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - name: combinedSceneQueryParameters
+          description: combined query parameters for finding scenes to add to this project
+          in: body
+          schema:
+            $ref: '#/definitions/CombinedSceneQueryParams'
+      responses:
+        201:
+          description: List of scenes added to project
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Scene'
+
+  /projects/{uuid}/mosaic/:
+    x-resource: Projects
+    get:
+      summary: List of a project\'s scene IDs and their associated color correction parameters to be used in mosaicing
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: An ordered list of scene IDs and corresponding color correction parameters
+          schema:
+            $ref: '#/definitions/MosaicDefinition'
+
+  /projects/{uuid}/mosaic/bulk-update-color-corrections/:
+    x-resource: Projects
+    post:
+      summary: Persist a batch of project/scene pairing\'s color correction parameters
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - name: combinedSceneCorrectionParameters
+          description: Combined color correction parameters
+          in: body
+          schema:
+            $ref: '#/definitions/CombinedSceneCorrectionParams'
+      responses:
+        200:
+          description: "Successfully updated all scenes' color correction parameters"
+  /projects/{uuid}/mosaic/{uuid2}:
+    x-resource: Projects
+    get:
+      summary: A project/scene pairing\'s persisted color correction parameters
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/uuid2'
+      responses:
+        200:
+          description: Color correction parameters
+          schema:
+            $ref: '#/definitions/ColorCorrection'
+    put:
+      summary: Associate posted color correction parameters with a project/scene pairing
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/uuid2'
+        - name: updatedColorCorrection
+          description: Updated color corrections
+          in: body
+          schema:
+            $ref: '#/definitions/ColorCorrection'
+      responses:
+        204:
+          description: Successfully updated color correction parameters
+  /projects/{uuid}/order:
+    x-resource: Projects
+    get:
+      summary: An ordered list of scene IDs belonging to the specified project
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      # TODO: fill in all possible responses
+      responses:
+        200:
+          description: Order of scenes in project for mosaic purposes
+    put:
+      summary: Create/update an ordering among scenes within the specified project
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      # TODO: fill in all possible responses
+      responses:
+        204:
+          description: Successfully updated order of scenes in project
+
+  /areas-of-interest/:
+    get:
+      summary: Get all AOIs the user is authorized to view.
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/organization'
+      responses:
+        200:
+          description: A paginated list of all AOIs the user is authorized to view.
+          schema:
+            $ref: '#/definitions/AoiPaginated'
+
+  /areas-of-interest/{uuid}/:
+    get:
+      summary: Get a requested Area of Interest.
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: "Json summary of the given AOI's filters and Polygons."
+          schema:
+            $ref: '#/definitions/AOI'
+    put:
+      summary: Update an Area of Interest.
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - name: aoi
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/AOI'
+      responses:
+        204:
+          description: Update successful.
+        404:
+          description: The UUID parameter does not refer to a project or the user does not have access to the project it refers to.
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error.
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Delete a project.
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Deletion successful.
+        404:
+          description: The UUID parameter does not refer to a project or the user does not have access to the project it refers to.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /map-tokens/:
+    x-resource: Tokens
+    get:
+      summary: Get a list of map tokens
+      description: |
+        Lists map tokens, automatically filtered by a user
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/projectId'
+        - $ref: '#/parameters/organization'
+        - $ref: '#/parameters/createdBy'
+      responses:
+        200:
+          description: Paginated list of map tokens
+          schema:
+            $ref: '#/definitions/MapTokenPaginated'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create a new map token
+      tags:
+        - Imagery
+      parameters:
+        - name: MapToken
+          in: body
+          schema:
+            $ref: '#/definitions/MapToken'
+      responses:
+        201:
+          description: Map token created
+          schema:
+            $ref: '#/definitions/MapToken'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /map-tokens/{uuid}/:
+    x-resource: Tokens
+    get:
+      summary: Retrieve map token details
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: Info about map token
+          schema:
+            $ref: '#/definitions/MapToken'
+        404:
+          description: |
+            UUID parameter does not refer to a map token or the user is not able to view the token it refers to
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Update a map token
+      tags:
+        - Imagery
+      parameters:
+        - name: mapToken
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/MapToken'
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Update successful (no further processing needed)
+        404:
+          description: |
+            The UUID parameter does not refer to a map token or the user does not have access to the token it refers to
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Delete a map token
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Deletion successful (no content)
+        404:
+          description: |
+            The UUID parameter does not refer to a map token or the user does not have access to the token it refers to
+          schema:
+            $ref: '#/definitions/Error'
+  /images/:
+    x-resource: Images
+    get:
+      summary: Paginated list of project images
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/orderingBase'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/sceneId'
+        - $ref: '#/parameters/minRawDataBytes'
+        - $ref: '#/parameters/maxRawDataBytes'
+        - $ref: '#/parameters/minResolution'
+        - $ref: '#/parameters/maxResolution'
+      responses:
+        200:
+          description: Paginated list of images
+          schema:
+            $ref: '#/definitions/ImagePaginated'
+    post:
+      summary: Create a new image not associated with any Project
+      tags:
+        - Imagery
+      parameters:
+        - name: image
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Image'
+      responses:
+        202:
+          description: Project image details; thumbnails and boundary in-progress
+          schema:
+            $ref: '#/definitions/Image'
+  /images/{uuid}:
+    x-resource: Images
+    get:
+      summary: Details of a Image
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: Image details
+          schema:
+            $ref: '#/definitions/Image'
+        404:
+          description: Image UUID was not found
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Update a Image
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - name: image
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Image'
+      responses:
+        202:
+          description: Update successful, further processing required
+          schema:
+            $ref: '#/definitions/Image'
+        200:
+          description: Update successful, no further processing required
+          schema:
+            $ref: '#/definitions/Image'
+        404:
+          description: Image UUID was not found
+          schema:
+            $ref: '#/definitions/Error'
+  /thumbnails/:
+    x-resource: Scenes
+    get:
+      summary: Paginated list of thumbnails
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/orderingBase'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/sceneId'
+      responses:
+        200:
+          description: Paginated list of thumbnail images
+          schema:
+            $ref: '#/definitions/ThumbnailPaginated'
+  /thumbnails/{uuid}/:
+    x-resource: Scenes
+    get:
+      summary: Thumbnail details
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: Details on Thumbnail object
+          schema:
+            $ref: '#/definitions/Thumbnail'
+        404:
+          description: Thumbnail UUID was not found
+          schema:
+            $ref: '#/definitions/Error'
+  /tokens/:
+    x-resource: Tokens
+    get:
+      summary: |
+        Retrieve a list of refresh token summaries. Note: Only names and identifiers are revealed,
+        refresh tokens themselves are only revealed once, when created for security purposes.
+      tags:
+        - Authentication
+      responses:
+        200:
+          description: List of refresh token identifiers
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/RefreshToken'
+        404:
+          description: No refresh tokens found for user
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: |
+        Request a new JSON web token to use in requests using a refresh token
+      parameters:
+        - name: refreshToken
+          in: body
+          required: true
+          description: Refresh token object to use when requesting a new JWT
+          schema:
+            type: object
+            properties:
+              refresh_token:
+                type: string
+                description: Refresh token used to generate new JWT
+      tags:
+        - Authentication
+      responses:
+        201:
+          description: Retrieved a new auth token
+          schema:
+            $ref: '#/definitions/AuthToken'
+        default:
+          description: Error message if insufficient permissions are present
+  /tokens/{refreshTokenId}/:
+    x-resource: Tokens
+    delete:
+      parameters:
+        - name: refreshTokenId
+          in: path
+          required: true
+          type: string
+      summary: Delete a refresh token and revoke its access
+      tags:
+        - Authentication
+      responses:
+        204:
+          description: Revocation successful, No Content
+  /tools/:
+    x-resource: Tools
+    get:
+      summary: Lists tools that perform a set of geoprocessing/map algebra functions
+      tags:
+        - Lab
+      parameters:
+        - $ref: '#/parameters/orderingBase'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/minRating'
+        - $ref: '#/parameters/maxRating'
+        - $ref: '#/parameters/toolCategory'
+        - $ref: '#/parameters/toolTag'
+        - $ref: '#/parameters/search'
+      responses:
+        200:
+          description: Returns a paginated list of tools
+          schema:
+            $ref: '#/definitions/ToolPaginated'
+        404:
+          description: Error message if insufficient permissions or objects not present
+        default:
+          description: Error message if insufficient permissions
+    post:
+      summary: Create a new geoprocessing tool
+      tags:
+        - Lab
+      responses:
+        201:
+          description: Create a new geoprocessing tool
+          schema:
+            $ref: '#/definitions/Tool'
+        default:
+          description: Error message if insufficient permissions to create a new tool
+  /tools/{uuid}/:
+    x-resource: Tools
+    get:
+      summary: Retrieve details for a single geoprocessing tool
+      tags:
+        - Lab
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: Geoprocessing tool record
+          schema:
+            $ref: '#/definitions/Tool'
+        404:
+          description: Error message returned if insufficent permissions or tool does not exist
+    delete:
+      summary: Delete a tool
+      tags:
+        - Lab
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Delete successful
+        default:
+          description: Delete unsuccessful, either object did not exist or insufficient permissions
+    put:
+      summary: Update a geoprocessing tool
+      tags:
+        - Lab
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Update an existing geoprocessing tool
+        404:
+          description: Error message if insufficient permissions to update a tool
+  /tool-tags/:
+    x-resource: Tools
+    get:
+      summary: List tool tags
+      tags:
+        - Lab
+      parameters:
+        - $ref: '#/parameters/search'
+      responses:
+        200:
+          description: Retrieve a paginated list of tool tags
+          schema:
+            $ref: '#/definitions/ToolTagPaginated'
+        404:
+          description: Error message if insufficent permissions or no tools exist
+    post:
+      summary: Create a tool tag
+      tags:
+        - Lab
+      responses:
+        201:
+          description: Successfully created a new tag for tools
+          schema:
+            $ref: '#/definitions/ToolTag'
+        default:
+          description: Error message if insufficient permissions to create a tool
+  /tool-tags/{uuid}/:
+    x-resource: Tools
+    get:
+      summary: Get detail of a tool tag
+      tags:
+        - Lab
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: Successfully retrieved a tool
+          schema:
+            $ref: '#/definitions/ToolTag'
+        404:
+          description: Error message if insufficient permissions or tag does not exist
+    delete:
+      summary: Delete a given tag
+      tags:
+        - Lab
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Successfully deleted a tag
+        default:
+          description: Error message if insufficient permissions to delete a tag
+    put:
+      summary: Update a given tool tag
+      tags:
+        - Lab
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Successfully updated tag
+        default:
+          description: Unable to delete tag due to insufficient permissions or tag does not exist
+  /tool-categories/:
+    x-resource: Tools
+    get:
+      summary: Retrieve list of tool categories
+      parameters:
+        - $ref: '#/parameters/search'
+      tags:
+        - Lab
+      responses:
+        200:
+          description: Paginated list of tool categories
+          schema:
+            $ref: '#/definitions/ToolCategoryPaginated'
+    post:
+      summary: Create a new tool category
+      tags:
+        - Lab
+      responses:
+        201:
+          description: Successfully created a new tool category
+          schema:
+            $ref: '#/definitions/ToolCategory'
+  /tool-categories/{slugLabel}/:
+    x-resource: Tools
+    get:
+      summary: Retrieve details of a tool category
+      tags:
+        - Lab
+      parameters:
+        - $ref: '#/parameters/slugLabel'
+      responses:
+        200:
+          description: Retrieved a single tool category
+          schema:
+            $ref: '#/definitions/ToolCategory'
+    put:
+      summary: Update a tool category
+      tags:
+        - Lab
+      responses:
+        204:
+          description: Successfully updated a tool category
+      parameters:
+        - $ref: '#/parameters/slugLabel'
+    delete:
+      summary: Delete a tool category
+      tags:
+        - Lab
+      parameters:
+        - $ref: '#/parameters/slugLabel'
+      responses:
+        204:
+          description: Successfully deleted a tool category
+  /tool-runs/:
+    x-resource: Tools
+    get:
+      summary: Retrieve a list of tool runs
+      tags:
+        - Lab
+      parameters:
+        - $ref: '#/parameters/project'
+        - $ref: '#/parameters/tool'
+        - $ref: '#/parameters/createdBy'
+      responses:
+        200:
+          description: Paginated list of tool runs
+          schema:
+            $ref: '#/definitions/ToolRunPaginated'
+    post:
+      summary: Create a new tool run
+      tags:
+        - Lab
+      responses:
+        201:
+          description: Successfully created tool run
+          schema:
+            $ref: '#/definitions/ToolRun'
+        400:
+          description: Incorrect values for creating tool run
+  /tool-runs/{uuid}/:
+    x-resource: Tools
+    get:
+      summary: Retrieve details about a tool run
+      tags:
+        - Lab
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: Details about object
+          schema:
+            $ref: '#/definitions/ToolRun'
+        404:
+          description: Error if insufficient permissions or run not found
+    put:
+      summary: Update a tool run
+      tags:
+        - Lab
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Successfully updated tool run
+        400:
+          description: Bad parameters for updating tool run
+    delete:
+      summary: Delete a tool run
+      tags:
+        - Lab
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Successfully deleted a tool run
+  /feed/:
+    get:
+      summary: Get the cached RSS feed
+      tags:
+        - Users
+      responses:
+        200:
+          description: RSS feed json as a string
+  /exports/:
+    x-resource: Exports
+    get:
+      summary: Get a list of exports
+      description: |
+        The exprots API endpoint enables searching, listing, and creating new exports.
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/orderingBase'
+        - $ref: '#/parameters/pageSize'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/organization'
+        - $ref: '#/parameters/project'
+        - $ref: '#/parameters/exportStatus'
+      responses:
+        200:
+          description: Paginated list of exports
+          schema:
+            $ref: '#/definitions/ExportPaginated'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      summary: Create an export
+      description: |
+        Create a new export.
+      tags:
+        - Imagery
+      parameters:
+        - name: Export
+          in: body
+          schema:
+            $ref: '#/definitions/ExportCreate'
+      responses:
+        201:
+          description: Export created
+          schema:
+            $ref: '#/definitions/Export'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+  /exports/{uuid}/:
+    x-resource: Exports
+    get:
+      summary: Retrieve export details
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: Info about export
+          schema:
+            $ref: '#/definitions/Export'
+        404:
+          description: |
+            UUID parameter does not refer to an export or the user is not able to view the export it refers to
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary: Update an export
+      tags:
+        - Imagery
+      parameters:
+        - name: upload
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Export'
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Update successful (no further processing needed)
+        404:
+          description: |
+            The UUID parameter does not refer to a upload or the user does not have access to the upload it refers to
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Delete an export
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Deletion successful (no content)
+        404:
+          description: |
+            The UUID parameter does not refer to an export or the user does not have access to the export it refers to
+          schema:
+            $ref: '#/definitions/Error'
+  /exports/{uuid}/definition:
+    x-resource: Exports
+    get:
+      summary: Retrieve export details
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: Info about export, in export job format
+          schema:
+            $ref: '#/definitions/ExportDefinition'
+        404:
+          description: |
+            UUID parameter does not refer to an export or the user is not able to view the export it refers to
+          schema:
+            $ref: '#/definitions/Error'
+
+parameters:
+
+  orderingBase:
+    name: ordering
+    in: query
+    description: Field to order results by; meaning of label varies based on tool
+    type: array
+    collectionFormat: pipes
+    items:
+      type: string
+      enum:
+        - createdAt,desc
+        - createdAt,asc
+        - modifiedAt,desc
+        - modifiedAt,asc
+  name:
+    name: name
+    in: query
+    description: name of a datasource to filter to
+    type: string
+  organization:
+    name: organization
+    in: query
+    description: UUID for organization to filter by
+    type: string
+    format: uuid
+  sceneId:
+    name: sceneId
+    in: query
+    description: UUID for scene
+    type: string
+    format: uuid
+  projectId:
+    name: projectId
+    in: query
+    description: UUID for project
+    type: string
+    format: uuid
+  page:
+    name: page
+    in: query
+    description: Page of results to go to
+    type: number
+    format: int32
+  pageSize:
+    name: pageSize
+    in: query
+    description: Number of results per page in paginated response
+    type: number
+    format: int32
+  uuid:
+    name: uuid
+    in: path
+    required: true
+    type: string
+    format: uuid
+  uuid2:
+    name: uuid2
+    in: path
+    required: true
+    type: string
+    format: uuid
+  slugLabel:
+    name: slugLabel
+    description: A url-safe slug label
+    in: path
+    required: true
+    type: string
+  minCloudCover:
+    name: minCloudCover
+    description: Only return results with cloud cover greater than this number
+    in: query
+    type: number
+    minimum: 0
+    maximum: 1.0
+    required: false
+  maxCloudCover:
+    name: maxCloudCover
+    description: Only return results with cloud cover less than this number
+    in: query
+    type: number
+    required: false
+  minAcquisitionDatetime:
+    name: minAcquisitionDatetime
+    description: Only return results acquired after this datetime
+    in: query
+    type: string
+    required: false
+    format: datetime
+  maxAcquisitionDatetime:
+    name: maxAcquisitionDatetime
+    description: Only return results acquired before this datetime
+    in: query
+    type: string
+    required: false
+    format: datetime
+  minCreateDatetime:
+    name: minCreateDatetime
+    description: Only return results created after this datetime
+    in: query
+    type: string
+    required: false
+    format: datetime
+  minSunElevation:
+    name: minSunElevation
+    description: Only return results with sun elevation greater than this value
+    in: query
+    type: number
+    required: false
+  maxSunElevation:
+    name: maxSunElevation
+    description: Only return results with sun elevation less than this value
+    in: query
+    type: number
+    required: false
+  minSunAzimuth:
+    name: minSunAzimuth
+    description: Only return results with sun elevation greater than this value
+    in: query
+    type: number
+    required: false
+  maxSunAzimuth:
+    name: maxSunAzimuth
+    description: Only return results with sun azium greater than this value
+    in: query
+    type: number
+    required: false
+  maxCreateDatetime:
+    name: maxCreateDatetime
+    description: Only return results created before this datetime
+    in: query
+    type: string
+    required: false
+    format: datetime
+  tags:
+    name: tags
+    description: Only return results that contain these tags
+    in: query
+    type: array
+    required: false
+    items:
+      type: string
+  datasource:
+    name: datasource
+    description: Only return results belonging to this datasource
+    in: query
+    type: array
+    required: false
+    items:
+      type: string
+      format: uuid
+  uploadStatus:
+    name: uploadStatus
+    description: Status of upload
+    in: query
+    type: string
+    required: false
+    enum:
+      - CREATED
+      - UPLOADING
+      - UPLOADED
+      - QUEUED
+      - PROCESSING
+      - COMPLETE
+      - FAILED
+      - ABORTED
+  month:
+    name: month
+    description: Only return results from this month
+    required: false
+    in: query
+    type: array
+    items:
+      type: number
+      format: int
+      maximum: 12
+      minimum: 1
+  minDayOfMonth:
+    name: minDayOfMonth
+    description: Only return results with acquisition day-of-month greater-than or equal-to this day
+    in: query
+    type: number
+  maxDayOfMonth:
+    name: maxDayOfMonth
+    description: Only return results with acquisition day-of-month less-than than or equal-to this day
+    in: query
+    type: number
+  orderingScene:
+    name: ordering
+    in: query
+    description: Fields to sort scenes by
+    type: array
+    collectionFormat: pipes
+    items:
+      type: string
+      enum:
+        - createdAt,desc
+        - createdAt,asc
+        - modifiedAt,desc
+        - modifiedAt,asc
+        - organization,asc
+        - organization,desc
+        - datasource,asc
+        - datasource,desc
+        - month,asc
+        - month,desc
+        - createDatetime,asc
+        - createDatetime,desc
+        - acquisitionDatetime,asc
+        - acquisitionDatetime,desc
+        - sunAzimuth,asc
+        - sunAzimuth,desc
+        - cloudCover,asc
+        - cloudCover,desc
+  toolTag:
+    name: toolTag
+    description: Only return results that contain these tool tags
+    in: query
+    type: array
+    required: false
+    items:
+      type: string
+      format: uuid
+  toolCategory:
+    name: toolCategory
+    description: Only return results that satisfy this category
+    in: query
+    type: array
+    required: false
+    items:
+      type: string
+  minRating:
+    name: minRating
+    description: Only return results greater than this rating
+    in: query
+    type: number
+    required: false
+  maxRating:
+    name: maxRating
+    description: Only return results less than this rating
+    in: query
+    type: number
+    required: false
+  search:
+    name: search
+    description: Full text search string
+    in: query
+    type: string
+    required: false
+  minRawDataBytes:
+    name: minRawDataBytes
+    description: Only return images larger than this amount of bytes
+    in: query
+    type: integer
+    required: false
+  maxRawDataBytes:
+    name: maxRawDataBytes
+    description: Only return images less than this amount of bytes
+    in: query
+    type: integer
+    required: false
+  minResolution:
+    name: minResolution
+    description: Only return objects that have elements greater than this resolution
+    in: query
+    type: number
+    required: false
+  maxResolution:
+    name: maxResolution
+    description: Only return objects that have elements with a resolution less than this amount
+    in: query
+    type: number
+    required: false
+  zoom:
+    name: zoom
+    description: The zoom level used to split the bbox into a grid
+    in: path
+    type: number
+    required: true
+  column:
+    name: column
+    description: column of tile requested
+    in: path
+    type: number
+    required: true
+  row:
+    name: row
+    description: row of tile requested
+    in: path
+    type: number
+    required: true
+  bbox:
+    name: bbox
+    description: Bounding box. eg "bbox=southwest_lng,southwest_lat,northeast_lng,northeast_lat". Delimit multiple with semicolon.
+    in: query
+    type: string
+    required: false
+  project:
+    name: project
+    description: Project uuid to filter only
+    in: query
+    type: string
+    format: uuid
+    required: false
+  ingested:
+    name: ingested
+    description: Filter by ingest status
+    in: query
+    type: boolean
+    required: false
+  ingestStatus:
+    name: ingestStatus
+    description: Filter by specific ingest status
+    in: query
+    type: string
+    required: false
+  tool:
+    name: toolId
+    description: Filter by tool\'s slug label
+    in: query
+    type: string
+    format: uuid
+    required: false
+  createdBy:
+    name: createdBy
+    description: Filter by creator\'s slug label
+    in: query
+    type: string
+    required: false
+  exportStatus:
+    name: exportStatus
+    description: Status of export
+    in: query
+    type: string
+    required: false
+    enum:
+      - CREATED
+      - EXPORTING
+      - EXPORTED
+      - QUEUED
+      - PROCESSING
+      - COMPLETE
+      - FAILED
+      - ABORTED
+
+definitions:
+  BaseModel:
+    type: object
+    readOnly: true
+    properties:
+      id:
+        type: string
+        description: unique identifier for object
+        format: uuid
+      organizationId:
+        type: string
+        description: uuid for organization
+  MapToken:
+    allOf:
+    - $ref: '#/definitions/BaseModel'
+    - $ref: '#/definitions/TimeModelMixin'
+    - $ref: '#/definitions/UserTrackingMixin'
+    - type: object
+      properties:
+        name:
+          type: string
+          description: Human friendly label for map token
+        project:
+          type: object
+          properties:
+            id:
+              type: string
+              format: UUID
+            name:
+              type: string
+  MapTokenPaginated:
+    allOf:
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/MapToken'
+  MosaicDefinition:
+    type: object
+    properties:
+      sceneId:
+        type: string
+        format: uuid
+      colorCorrection:
+        $ref: '#/definitions/ColorCorrection'
+  AOI:
+    type: object
+    properties:
+      organizationId:
+        type: string
+        format: uuid
+      area:
+        type: object
+      filters:
+        $ref: '#/definitions/CombinedSceneQueryParams'
+  ColorCorrection:
+    type: object
+    properties:
+      alpha:
+        type: number
+        format: float
+      beta:
+        type: number
+        format: float
+      redBand:
+        type: number
+        format: integer
+      greenBand:
+        type: number
+        format: integer
+      blueBand:
+        type: number
+        format: integer
+      redGamma:
+        type: number
+        format: float
+      greenGamma:
+        type: number
+        format: float
+      blueGamma:
+        type: number
+        format: float
+      brightness:
+        type: number
+        format: float
+      min:
+        type: number
+        format: float
+      max:
+        type: number
+        format: float
+      equalize:
+        type: boolean
+      contrast:
+        type: number
+        format: float
+
+  TimeModelMixin:
+    type: object
+    readOnly: true
+    properties:
+      createdAt:
+        type: string
+        description: timestamp of object creation
+        format: date-time
+      modifiedAt:
+        type: string
+        description: timestamp of object modificiation
+        format: date-time
+  UserTrackingMixin:
+    type: object
+    readOnly: true
+    properties:
+      createdBy:
+        type: string
+        format: uuid
+        description: UUID of user who created the Object
+      modifiedBy:
+        type: string
+        format: uuid
+        description: UUID of user who most recently modified the object
+  User:
+    allOf:
+    - $ref: '#/definitions/TimeModelMixin'
+    - type: object
+      required:
+        - id
+        - organizationId
+        - role
+      properties:
+        id:
+          type: string
+          description: User ID for Raster Foundry
+        organizationId:
+          type: string
+          format: uuid
+          description: UUID of organization to which user belongs
+        role:
+          type: string
+          description: User role in organization
+          enum:
+            - USER
+            - VIEWER
+            - OWNER
+  UserWithOAuth:
+    type: object
+    properties:
+      user:
+        $ref: '#/definitions/User'
+      oauth:
+        $ref: '#/definitions/Auth0User'
+  Auth0User:
+    type: object
+    properties:
+      email:
+        type: string
+      email_verified:
+        type: boolean
+      username:
+        type: string
+      phone_number:
+        type: string
+      phone_verified:
+        type: boolean
+      user_id:
+        type: string
+      created_at:
+        type: string
+      updated_at:
+        type: string
+      identities:
+        type: array
+        items:
+          type: string
+      user_metadata:
+        type: object
+      picture:
+        type: string
+      name:
+        type: string
+      nickname:
+        type: string
+      given_name:
+        type: string
+      family_name:
+        type: string
+  Auth0UserProfile:
+    type: object
+    properties:
+      email:
+        type: string
+      phone_number:
+        type: string
+      user_metadata:
+        type: object
+      username:
+        type: string
+  RefreshToken:
+    type: object
+    properties:
+      device_name:
+        type: string
+        description: User created identifier to track refresh tokens
+      id:
+        type: string
+        description: Auth0 provided identifier used to delete refresh tokens
+  AuthToken:
+    type: object
+    properties:
+      id_token:
+        type: string
+        description: JSON Web Token that can be used for authenticating API requests
+      token_type:
+        type: string
+        description: Type of token returned by using the refresh token
+  UserCreate:
+    type: object
+    properties:
+      id:
+        type: string
+        description: Auth0 ID for user
+      organizationId:
+        type: string
+        format: uuid
+        description: UUID for organization that user is being created for
+      role:
+        type: string
+        description: Role to create user with in the provided organization
+        enum:
+          - USER
+          - VIEWER
+          - OWNER
+  PaginatedResponse:
+    type: object
+    required:
+      - count
+      - hasNext
+      - hasPrevious
+      - page
+      - pageSize
+    properties:
+      count:
+        type: integer
+        format: int32
+        readOnly: true
+        description: number of total objects matching query
+      hasNext:
+        type: boolean
+        readOnly: true
+        description: True if more results can be fetched, otherwise false
+      hasPrevious:
+        type: boolean
+        readOnly: true
+        description: True if previous results can be fetched, otherwise false
+      page:
+        type: integer
+        readOnly: true
+        format: int32
+        description: Current page of paginated query results
+      pageSize:
+        type: integer
+        format: int32
+        description: Number of results per page
+        readOnly: true
+  UserPaginated:
+    allOf:
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/User'
+  ScenePaginated:
+    allOf:
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/Scene'
+
+  OrganizationPaginated:
+    allOf:
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/Organization'
+  Organization:
+    allOf:
+    - $ref: '#/definitions/TimeModelMixin'
+    - type: object
+      properties:
+        id:
+          type: string
+          description: Organization
+        name:
+          type: string
+          description: Display name for organization
+      required:
+        - name
+        - id
+  Scene:
+    allOf:
+      - $ref: '#/definitions/BaseModel'
+      - $ref: '#/definitions/UserTrackingMixin'
+      - type: object
+        properties:
+          name:
+            type: string
+            description: The display name of the project
+          ingestSizeBytes:
+            type: integer
+            description: Size of ingested data in bytes.
+          visibility:
+            type: string
+            description: Level of restriction on viewing
+            enum:
+              - PUBLIC
+              - ORGANIZATION
+              - PRIVATE
+          tags:
+            type: array
+            description: Tags associated with image
+            items:
+              - type: string
+          images:
+            type: array
+            items:
+              $ref: '#/definitions/Image'
+          thumbnails:
+            type: array
+            items:
+              $ref: '#/definitions/Thumbnail'
+          dataSource:
+            type: string
+            format: uuid
+            description: Data source scene originated from
+          # TODO: make work with geometry objects
+          dataFootprint:
+            description: polygon for which this scene has data
+            type: object
+            readOnly: true
+          # TODO: make work with geometry objects
+          tileFootprint:
+            type: object
+            description: polygon enclosing this scene
+            readOnly: true
+          sceneMetadata:
+            type: object
+            description: |
+              Metadata about the scene -- some aspects we will eventually want to nail down that will
+              be fairly common and/or required for scenes
+          metadataFiles:
+            type: array
+            description: |
+              Metadata files that should be present for processing all
+              images in a scene (e.g. relevant .mtl files or .xml)
+            items:
+              - type: string
+          filterFields:
+            $ref: '#/definitions/FilterFields'
+          statusFields:
+            $ref: '#/definitions/StatusFields'
+
+  FilterFields:
+    type: object
+    properties:
+      cloudCover:
+        type: number
+        format: float32
+        description: Proportion of cloud coverage for scene
+      acquisitionDate:
+        type: string
+        format: datetime
+        description: Date scene was acquired from instrument (e.g. satellite, drone)
+      sunAzimuth:
+        type: number
+        format: float32
+        description: Azimuth of the sun
+      sunElevation:
+        type: number
+        format: float32
+        description: Elevation of the sun
+
+  StatusFields:
+    type: object
+    properties:
+      thumbnailStatus:
+        type: string
+        description: status of thumbnail generation
+        enum:
+          - SUCCESS
+          - FAILURE
+          - PARTIALFAILURE
+          - QUEUED
+          - PROCESSING
+      footprintStatus:
+        type: string
+        description: status of footprint generation
+        enum:
+          - SUCCESS
+          - FAILURE
+          - PARTIALFAILURE
+          - QUEUED
+          - PROCESSING
+      ingestStatus:
+        type: string
+        description: status of ingest
+        enum:
+          - NOTINGESTED
+          - TOBEINGESTED
+          - INGESTING
+          - INGESTED
+          - FAILED
+
+  SceneGrid:
+    type: array
+    items:
+      - type: number
+        format: integer
+    readOnly: true
+
+  Project:
+    allOf:
+    - $ref: '#/definitions/BaseModel'
+    - $ref: '#/definitions/UserTrackingMixin'
+    - type: object
+      properties:
+        name:
+          type: string
+          description: The display name of the project
+        slugLabel:
+          type: string
+          description: URL-safe version of name
+          readOnly: true
+        description:
+          type: string
+          description: Long-form description of the project
+        visibility:
+          type: string
+          description: Level of restriction on viewing
+          enum:
+            - PUBLIC
+            - ORGANIZATION
+            - PRIVATE
+        tileVisibility:
+          type: string
+          description: Level of restriction on viewing
+          enum:
+            - PUBLIC
+            - ORGANIZATION
+            - PRIVATE
+        tags:
+          type: array
+          items:
+            - type: string
+        extent:
+          type: object
+          description: GeoJSON Geometry of project extent
+        manualOrder:
+          type: boolean
+          description: Is true if project scenes are manually ordered
+  Image:
+    allOf:
+    - $ref: '#/definitions/BaseModel'
+    - $ref: '#/definitions/UserTrackingMixin'
+    - type: object
+      properties:
+        visibility:
+          type: string
+          description: Level of restriction on viewing
+          enum:
+            - PUBLIC
+            - ORGANIZATION
+            - PRIVATE
+        filename:
+          type: string
+          description: Name of the image file
+        resolutionMeters:
+          type: number
+          description: Size of pixel in meters
+        sourceUri:
+          type: string
+          description: URI to original source. This should include a protocol-like prefix to identify where it is located http://, s3://, etc.
+        rawDataBytes:
+          type: integer
+          description: Size of original uploaded imagery in bytes
+        bands:
+          type: array
+          description: list of band types for image; a single band denotes a single band image, multiple bands should be listed in order (e.g if it is an RGB tiff then bands should be [red, green blue])
+          items:
+            $ref: '#/definitions/Band'
+        scene:
+          type: string
+          format: uuid
+          description: Scene that image is associated with
+        image_metadata:
+          type: object
+          description: Metadata about this image
+        metadataFiles:
+          type: array
+          items:
+            type: string
+          description: |
+            Metadata files that should be present for processing all
+            images in a scene (e.g. relevant .mtl files or .xml)
+      required:
+        - filename
+        - sourceUri
+  ProjectPaginated:
+    allOf:
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/Project'
+  AoiPaginated:
+    allOf:
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          results:
+            type: array
+            items:
+              $ref: '#/definitions/AOI'
+  ImagePaginated:
+    allOf:
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/Image'
+  Band:
+    type: object
+    properties:
+      image:
+        type: string
+        format: UUID
+      name:
+        type: string
+        description: String representation of band name
+      number:
+        type: integer
+        description: Band number for image
+      wavelength:
+        type: array
+        items:
+          type: integer
+  Thumbnail:
+    allOf:
+    - $ref: '#/definitions/BaseModel'
+    - type: object
+      properties:
+        widthPx:
+          type: integer
+          format: int32
+          description: The width of the thumbnail, in pixels
+        sceneId:
+          type: string
+          format: uuid
+          description: Scene that image is associated with
+        heightPx:
+          type: integer
+          format: int32
+          description: The height of the thumbnail, in pixels
+        thumbnailSize:
+          type: string
+          description: Summary of size
+          enum:
+            - SMALL
+            - LARGE
+            - SQUARE
+        url:
+          type: string
+          format: uri
+          description: A client-accessible URL pointing to the image file
+  ThumbnailPaginated:
+    allOf:
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/Thumbnail'
+  Tool:
+    allOf:
+    - $ref: '#/definitions/BaseModel'
+    - $ref: '#/definitions/UserTrackingMixin'
+    - type: object
+      properties:
+        title:
+          type: string
+          description: Title of tool displayed to users
+        description:
+          type: string
+          description: |
+            A long description of the tool, including is use-cases,
+            purpose, and any potential references
+        organization:
+          description: The owning organization of the Tool
+          items:
+            $ref: '#/definitions/Organization'
+        requirements:
+          type: string
+          description: A brief description of requirements, including any relevant band requirements
+        tags:
+          type: array
+          description: Tool tags associated with a tool
+          items:
+            type: string
+        categories:
+          type: array
+          description: Category of geoprocessing tool
+          items:
+            type: string
+        license:
+          type: string
+          description: Usage license of tool
+        compatibleDatasources:
+          type: array
+          description: Datasources that can be used with this geoprocessing tool
+          items:
+            type: string
+        stars:
+          type: number
+          description: User rating of geoprocessing tool
+        visibility:
+          type: string
+          description: Level of restriction on viewing
+          enum:
+            - PUBLIC
+            - ORGANIZATION
+            - PRIVATE
+  ToolPaginated:
+    allOf:
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/Tool'
+  ToolTag:
+    allOf:
+    - $ref: '#/definitions/BaseModel'
+    - $ref: '#/definitions/UserTrackingMixin'
+    - type: object
+      properties:
+        label:
+          type: string
+          description: User displayed label
+  ToolTagPaginated:
+    allOf:
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/ToolTag'
+  ToolCategory:
+    allOf:
+    - $ref: '#/definitions/BaseModel'
+    - type: object
+      properties:
+        category:
+          type: string
+          description: User displayed label for category
+        slugLabel:
+          type: string
+          description: Slug label for use in urls
+  ToolCategoryPaginated:
+    allOf:
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/ToolCategory'
+  ToolRun:
+    allOf:
+    - $ref: '#/definitions/BaseModel'
+    - $ref: '#/definitions/UserTrackingMixin'
+    - type: object
+      properties:
+        execution_parameters:
+          type: object
+          description: Parameters for running the tool
+        project:
+          type: string
+          format: uuid
+          description: Project with which this run is associated
+        tool:
+          type: string
+          format: uuid
+          description: Tool being run
+        visibility:
+          type: string
+          description: Level of restriction on viewing
+          enum:
+            - PUBLIC
+            - ORGANIZATION
+            - PRIVATE
+
+  ToolRunPaginated:
+    allOf:
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/ToolRun'
+
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+
+  OrgParams:
+    type: object
+    description: Organization parameters to filter scenes
+    properties:
+      organizations:
+        type: array
+        items:
+          type: string
+          format: uuid
+
+  UserParams:
+    type: object
+    description: User parameters to filter scenes
+    properties:
+      createdBy:
+        type: string
+      modifiedBy:
+        type: string
+
+  TimestampParams:
+    type: object
+    description: Timestamp parameters to filter scenes
+    properties:
+      minCreateDatetime:
+        type: string
+        format: datetime
+      maxCreateDateTime:
+        type: string
+        format: datetime
+      minModifiedDatetime:
+        type: string
+        format: datetime
+      maxModifiedDatetime:
+        type: string
+        format: datetime
+  UploadCreate:
+    type: object
+    properties:
+      uploadStatus:
+        type: string
+        description: Status of upload
+        enum:
+          - CREATED
+          - UPLOADING
+          - UPLOADED
+          - QUEUED
+          - PROCESSING
+          - COMPLETE
+          - FAILED
+          - ABORTED
+      files:
+        type: array
+        items:
+          type: string
+      uploadType:
+        type: string
+        description: Source of files and uploads
+        enum:
+          - DROPBOX
+          - S3
+          - LOCAL
+      fileType:
+        type: string
+        description: type of data being uploaded, limited to two options right now
+        enum:
+          - GEOTIFF
+          - GEOTIFF_WITH_METADATA
+      datasource:
+        type: string
+        description: datasource of tiffs being uploaded
+        format: uuid
+      visibility:
+        type: string
+        description: Level of restriction on viewing
+        enum:
+          - PUBLIC
+          - ORGANIZATION
+          - PRIVATE
+  Upload:
+    allOf:
+    - $ref: '#/definitions/BaseModel'
+    - $ref: '#/definitions/UserTrackingMixin'
+    - $ref: '#/definitions/UploadCreate'
+    - type: object
+      properties:
+        files:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+  UploadPaginated:
+    allOf:
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/Upload'
+  UploadCredentials:
+    type: object
+    properties:
+      AccessKeyId:
+        type: string
+      SecretAccessKey:
+         type: string
+      SessionToken:
+        type: string
+      Expiration:
+        type: string
+        format: datetime
+  UploadCredentialsResponse:
+    type: object
+    properties:
+      credentials:
+        $ref: '#/definitions/UploadCredentials'
+      bucketPath:
+        type: string
+  SceneParams:
+    type: object
+    description: scene params
+    properties:
+      maxCloudCover:
+        type: number
+        format: float32
+      minCloudCover:
+        type: number
+        format: float32
+      minAcquisitionDatetime:
+        type: string
+        format: datetime
+      maxAcquisitionDatetime:
+        type: string
+        format: datetime
+      datasource:
+        type: array
+        items:
+          type: string
+          format: uuid
+      month:
+        type: array
+        items:
+          type: number
+          format: int
+      minDayOfMonth:
+        type: number
+        format: int
+      maxDayOfMonth:
+        type: number
+        format: int
+      maxSunAzimuth:
+        type: number
+        format: float32
+      minSunAzimuth:
+        type: number
+        format: float32
+      maxSunElevation:
+        type: number
+        format: float32
+      minSunElevation:
+        type: number
+        format: float32
+      bbox:
+        type: string
+      point:
+        type: string
+      project:
+        type: string
+        format: uuid
+      ingested:
+        type: boolean
+      ingestStatus:
+        type: string
+        enum:
+          - NOTINGESTED
+          - TOBEINGESTED
+          - INGESTING
+          - INGESTED
+          - FAILED
+
+  ImageParams:
+    type: object
+    description: image params
+    properties:
+      minRawDataBytes:
+        type: number
+        format: int
+      maxRawDataBytes:
+        type: number
+        format: int
+      minResolution:
+        type: number
+        format: float32
+      maxResolution:
+        type: number
+        format: float32
+      scene:
+        type: array
+        items:
+          type: string
+          format: uuid
+
+  CombinedSceneQueryParams:
+    type: object
+    description: Combined query parameters for filtering scenes
+    properties:
+      orgParams:
+        $ref: '#/definitions/OrgParams'
+      userParams:
+        $ref: '#/definitions/UserParams'
+      timestampParams:
+        $ref: '#/definitions/TimestampParams'
+      sceneParams:
+        $ref: '#/definitions/SceneParams'
+      imageParams:
+        $ref: '#/definitions/ImageParams'
+
+  SceneCorrectionParam:
+    type: object
+    description: A paired scene ID and color correction parameter list
+    properties:
+      sceneId:
+        type: string
+        format: uuid
+      params:
+        $ref: '#/definitions/ColorCorrection'
+
+  CombinedSceneCorrectionParams:
+    type: array
+    description: Combined color correction parameters for multiple scenes
+    items:
+      $ref: '#/definitions/SceneCorrectionParam'
+  ExportCreate:
+    type: object
+    properties:
+      projectId:
+        type: string
+        format: uuid
+      sceneIds:
+        type: array
+        items:
+          type: string
+          format: uuid
+      exportStatus:
+        type: string
+        description: Status of export
+        enum:
+          - CREATED
+          - EXPORTING
+          - EXPORTED
+          - QUEUED
+          - PROCESSING
+          - COMPLETE
+          - FAILED
+          - ABORTED
+      exportType:
+        type: string
+        description: Source of exports
+        enum:
+          - DROPBOX
+          - S3
+          - LOCAL
+      visibility:
+        type: string
+        description: Level of restriction on viewing
+        enum:
+          - PUBLIC
+          - ORGANIZATION
+          - PRIVATE
+      exportOptions:
+        $ref: '#/definitions/ExportOptions'
+  Export:
+    allOf:
+    - $ref: '#/definitions/BaseModel'
+    - $ref: '#/definitions/UserTrackingMixin'
+    - $ref: '#/definitions/ExportCreate'
+    - type: object
+      properties:
+        exportStatus:
+          type: string
+          description: Status of export
+          enum:
+            - CREATED
+            - EXPORTING
+            - EXPORTED
+            - QUEUED
+            - PROCESSING
+            - COMPLETE
+            - FAILED
+            - ABORTED
+  ExportPaginated:
+    allOf:
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/Export'
+  ExportOptions:
+    type: object
+    description: export params
+    properties:
+      bands:
+        type: array
+        description: bands in the exported geotiffs
+        items:
+          type: integer
+      rasterSize:
+        type: integer
+        description: desired tiff size after export
+      crs:
+        type: integer
+        description: epsg projection code
+      mask:
+        type: object
+        description: geojson multipolygon
+      stitch:
+        type: boolean
+        description: stitch tiles into a single geotiff if possible
+      crop:
+        type: boolean
+        description: crop stitched raster by provided mask if possible
+  ExportDefinition:
+    type: object
+    properties:
+      exportStatus:
+        type: string
+        description: Status of export
+        enum:
+          - NOTEXPORTED
+          - TOBEEXPORTED
+          - EXPORTING
+          - EXPORTED
+          - FAILED
+      input:
+        $ref: '#/definitions/InputExportDefinition'
+      output:
+        $ref: '#/definitions/OutputExportDefinition'
+  InputExportDefinition:
+    type: object
+    properties:
+      projectId:
+        type: string
+        format: uuid
+      resolution:
+        type: integer
+        description: required resolution (currently it's zoom level)
+      mask:
+        type: object
+        description: geojson multipolygon
+      layers:
+        type: object
+        properties:
+          layerId:
+            type: string
+            format: uuid
+          ingestLocation:
+            type: string
+            format: uuid
+          colorCorrections:
+            $ref: '#/definitions/ColorCorrection'
+  OutputExportDefinition:
+    type: object
+    properties:
+      rasterSize:
+        type: integer
+        description: desired tiff size after export
+      crs:
+        type: integer
+        description: epsg projection code
+      stitch:
+        type: boolean
+        description: stitch tiles into a single geotiff if possible
+      crop:
+        type: boolean
+        description: crop stitched raster by provided mask if possible
+      source:
+        type: string
+        format: uuid
+        description: output export path
+      render:
+        $ref: '#/definitions/Render'
+  Render:
+    type: object
+    properties:
+      operation:
+        type: string
+        description: currently useless Field
+      bands:
+        type: array
+        description: bands in the exported geotiffs
+        items:
+          type: integer

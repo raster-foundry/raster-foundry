@@ -1,0 +1,230 @@
+<div class="modal-scrollable-body modal-sidebar-header">
+  <div class="modal-header">
+    <button type="button" class="close" aria-label="Close" ng-click="$ctrl.dismiss()">
+      <span aria-hidden="true">&times;</span>
+    </button>
+    <h4 class="modal-title">
+      Start an Import
+    </h4>
+    <p>Import your imagery from various sources</p>
+  </div>
+
+  <!-- Body for DATASOURCE_SELECT-->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('DATASOURCE_SELECT')">
+    <div class="content">
+      <div class="list-group">
+        <div class="form-group all-in-one">
+          <label for="search"><i class="icon-search"></i></label>
+          <input id="search" type="text" class="form-control"
+                placeholder="Search Datasources" ng-model="$ctrl.searchString">
+        </div>
+        <div class="list-group-item" ng-repeat="datasource in $ctrl.datasources.results | filter: {name: $ctrl.searchString}">
+          <div class="list-group-overflow">
+            <strong class="color-dark">{{datasource.name}}</strong><br>
+          </div>
+          <div class="list-group-right">
+            <button class="btn btn-square" ng-click="$ctrl.handleDatasourceSelect(datasource)">
+              Select
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Datasource pagination, show only when item count exceeds page size-->
+      <div class="list-group text-center"
+          ng-show="$ctrl.shouldShowPagination()">
+        <ul uib-pagination
+            items-per-page="$ctrl.pageSize"
+            total-items="$ctrl.datasources.count"
+            ng-model="$ctrl.currentPage"
+            max-size="4"
+            rotate="true"
+            boundary-link-numbers="true"
+            force-ellipses="true"
+            ng-change="$ctrl.loadDatasources($ctrl.currentPage)">
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!--Body for IMPORT-->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('IMPORT')">
+    <div class="content">
+      <h3 class="no-margin">Import your Scenes</h3>
+      <p>Select the source you'd like to import your imagery from.</p>
+      <p ng-if="$ctrl.resolve.project">Any scenes created from this import will automatically
+        be added to the <strong>{{$ctrl.resolve.project.name}}</strong> project.
+      </p>
+      <div class="box-select-row">
+          <rf-box-select-item
+          class="small"
+          ng-class="{selected: $ctrl.importType === 'local'}"
+        >
+          <div class="text-center"><strong>Local Files</strong></div>
+        </rf-box-select-item>
+        <rf-box-select-item
+          class="small disabled"
+        >
+          <div class="text-center"><strong>URI</strong></div>
+        </rf-box-select-item>
+        <rf-box-select-item
+          class="small disabled"
+        >
+          <div class="text-center"><strong>AWS S3</strong></div>
+        </rf-box-select-item>
+        <rf-box-select-item
+          class="small disabled"
+        >
+          <div class="text-center"><strong>DropBox</strong></div>
+        </rf-box-select-item>
+      </div>
+    </div>
+  </div>
+
+  <!-- Body for LOCAL_UPLOAD -->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('LOCAL_UPLOAD')"
+    ngf-multiple=true
+    ngf-pattern="'*.tif'"
+    ngf-drop-available=true
+    ng-model="$ctrl.selectedFiles"
+    ngf-keep="'distinct'"
+    ngf-change="$ctrl.filesSelected($files)"
+    ngf-drop>
+    <!--Local file import -->
+    <div class="content">
+      <h3 class="no-margin">Local File Import</h3>
+      <ng-container ng-if="!$ctrl.shouldShowFileList()">
+        <p>Select imagery files from your computer and we'll import them into Raster Foundry Scenes. Raster Foundry currently allows for uploading GeoTIFF files only.</p>
+        <div class="text-center">
+          <button class="btn btn-primary"
+                  ngf-multiple=true
+                  ng-model="$ctrl.selectedFiles"
+                  ngf-pattern="'*.tif'"
+                  ngf-keep="'distinct'"
+                  ngf-change="$ctrl.filesSelected($files)"
+                  ngf-select
+          >
+            Select Files
+          </button>
+        </div>
+      </ng-container>
+      <ng-container ng-show="$ctrl.shouldShowFileList()">
+        <p><strong>{{$ctrl.selectedFiles.length}}</strong> file(s) have been selected totalling <strong>{{$ctrl.getTotalFileSize() | byteFmt: 2}}</strong></p>
+        <div class="row align-right">
+          <button class="btn"
+                  ng-click="$ctrl.removeAllFiles()"
+          >
+            Remove All Files
+          </button>
+          &nbsp;
+          <button class="btn btn-primary"
+                  ngf-multiple=true
+                  ng-model="$ctrl.selectedFiles"
+                  ngf-pattern="'*.tif'"
+                  ngf-keep="'distinct'"
+                  ngf-change="$ctrl.filesSelected($files)"
+                  ngf-select
+          >
+            Add More Files
+          </button>
+        </div>
+        <div class="list-group">
+          <div class="list-group-item" ng-repeat="file in $ctrl.selectedFiles">
+            <div class="list-group-overflow">
+              <span title="{{$ctrl.scene.name}}">
+                <strong class="color-dark">{{file.name}}</strong>
+              </span>
+              <br>
+              <span>{{file.size | byteFmt: 2}}</span>
+            </div>
+            <div class="list-group-right">
+              <button class="btn btn-square btn-secondary" ng-click="$ctrl.removeFileAtIndex($index)" >
+                <i class="icon-cross"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+
+  <!--Body for UPLOAD_PROGRESS-->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('UPLOAD_PROGRESS')">
+    <div class="content">
+      <h3 class="no-margin">Upload in progress...</h3>
+      <div class="list-group">
+          <div class="list-group-item no-flex" ng-repeat="file in $ctrl.selectedFiles">
+            <div class="list-group-item-contents">
+              <div class="list-group-overflow">
+                <span title="{{$ctrl.scene.name}}">
+                  <strong class="color-dark">{{file.name}}</strong>
+                </span>
+                <br>
+                <span>{{file.size | byteFmt: 2}}</span>
+              </div>
+              <div class="list-group-right">
+                {{$ctrl.uploadProgressPct[file.name] || '0%'}}
+              </div>
+            </div>
+            <div class="list-group-item-contents">
+              <div class="upload-progress-bar" ng-style="{ 'flex': $ctrl.uploadProgressFlexString[file.name] || '0 0' }"></div>
+            </div>
+          </div>
+        </div>
+    </div>
+  </div>
+
+  <!--Body for IMPORT_SUCCESS-->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('IMPORT_SUCCESS')">
+    <div class="content">
+      <h3 class="no-margin">Success!</h3>
+      <p>
+        Your scenes are importing into Raster Foundry now.
+        This may take some time and we will notify you when the process is complete.
+        In the meantime checkout your Notification Center for up to date information on all of your projects.
+      </p>
+    </div>
+  </div>
+
+  <!--Default Footer-->
+  <div
+    ng-if="$ctrl.currentStepIsNot(['UPLOAD_PROGRESS', 'IMPORT_SUCCESS', 'DATASOURCE_SELECT'])"
+    class="modal-footer"
+  >
+    <button type="button" class="btn pull-left"
+            ng-click="$ctrl.closeWithData(1)">
+      Cancel
+    </button>
+
+    <button type="button" class="btn"
+            ng-if="$ctrl.hasPreviousStep()"
+            ng-click="$ctrl.gotoPreviousStep()">
+      Back
+    </button>
+    <button type="button" class="btn btn-primary"
+            ng-click="$ctrl.handleNext()"
+            ng-disabled="!$ctrl.allowNext">
+      Next
+    </button>
+  </div>
+
+  <!--Footer for UPLOAD_PROGRESS-->
+  <div ng-if="$ctrl.currentStepIs(['UPLOAD_PROGRESS'])" class="modal-footer">
+  </div>
+
+  <!--Footer for DATASOURCE_SELECT-->
+  <div ng-if="$ctrl.currentStepIs(['DATASOURCE_SELECT'])" class="modal-footer">
+    <button type="button" class="btn pull-left"
+            ng-click="$ctrl.closeWithData(1)">
+      Cancel
+    </button>
+  </div>
+
+  <!--Footer for SUCCESS-->
+  <div ng-if="$ctrl.currentStepIs('IMPORT_SUCCESS')" class="modal-footer">
+    <button type="button" class="btn btn-primary"
+            ng-click="$ctrl.closeWithData(1)">
+      Done
+    </button>
+  </div>
+</div>

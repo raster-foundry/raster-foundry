@@ -7,12 +7,14 @@ import akka.http.scaladsl.model.{HttpEntity, ContentTypes}
 import akka.http.scaladsl.server.Route
 import akka.actor.ActorSystem
 import concurrent.duration._
-import spray.json._
 
 import com.azavea.rf.datamodel._
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.{DBSpec, Router, AuthUtils}
 
+import io.circe._
+import io.circe.syntax._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 class ProjectSpec extends WordSpec
     with ProjectSpecHelper
@@ -82,7 +84,7 @@ class ProjectSpec extends WordSpec
       Post("/api/projects/").withEntity(
         HttpEntity(
           ContentTypes.`application/json`,
-          newProject1.toJson.toString()
+          newProject1.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         reject
@@ -94,20 +96,22 @@ class ProjectSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          newProject1.toJson.toString()
+          newProject1.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
-        responseAs[Project]
+        val p = responseAs[Project]
+        p.owner shouldEqual "Default"
       }
 
       Post("/api/projects/").withHeadersAndEntity(
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          newProject2.toJson.toString()
+          newProject2.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
-        responseAs[Project]
+        val p = responseAs[Project]
+        p.owner shouldEqual "Default"
       }
     }
 

@@ -1,0 +1,25 @@
+<div class="token-item-container">
+  <div class="list-group-right">
+    <div class="form-group all-in-one" ng-if="$ctrl.token.name">
+      <input type="text"
+             ng-if="!$ctrl.editing"
+             class="form-control"
+             style="cursor: text"
+             ng-value="$ctrl.token.name" disabled>
+      <button class="btn" ng-click="$ctrl.onDelete()">
+        <i class="icon-trash"></i>
+      </button>
+      <button class="btn btn-primary"
+              ng-click="$ctrl.publishModal()"
+              ng-disabled="!$ctrl.project">Share</button>
+    </div>
+    <div class="form-group all-in-one" ng-if="$ctrl.token.device_name">
+      <input type="text" class="form-control" ng-value="$ctrl.token.device_name" disabled>
+      <button class="btn btn-link"
+              ng-click="$ctrl.deleteToken(token.id)">
+        <i class="icon-trash"></i>
+      </button>
+
+    </div>
+  </div>
+</div>

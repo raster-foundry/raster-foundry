@@ -9,16 +9,19 @@ import akka.http.scaladsl.model.StatusCodes
 
 import com.lonelyplanet.akka.http.extensions.{PaginationDirectives, PageRequest}
 
-import com.azavea.rf.common.{Authentication, UserErrorHandler}
+import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
 import com.azavea.rf.database.tables.Datasources
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.{Database, ActionRunner}
 import com.azavea.rf.datamodel._
+import io.circe._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 trait DatasourceRoutes extends Authentication
     with DatasourceQueryParameterDirective
     with PaginationDirectives
     with UserErrorHandler
+    with CommonHandlers
     with ActionRunner {
   implicit def database: Database
 
@@ -38,7 +41,7 @@ trait DatasourceRoutes extends Authentication
     (withPagination & datasourceQueryParams) {
       (page: PageRequest, datasourceParams: DatasourceQueryParameters) =>
       complete {
-        list[Datasource](Datasources.listDatasources(page.offset, page.limit, datasourceParams),
+        list[Datasource](Datasources.listDatasources(page.offset, page.limit, datasourceParams, user),
                          page.offset,
                          page.limit)
       }
@@ -49,7 +52,7 @@ trait DatasourceRoutes extends Authentication
     get {
       rejectEmptyResponse {
         complete {
-          readOne[Datasource](Datasources.getDatasource(datasourceId))
+          readOne[Datasource](Datasources.getDatasource(datasourceId, user))
         }
       }
     }
@@ -57,27 +60,27 @@ trait DatasourceRoutes extends Authentication
 
   def createDatasource: Route = authenticate { user =>
     entity(as[Datasource.Create]) { newDatasource =>
-      onSuccess(write[Datasource](Datasources.insertDatasource(newDatasource, user))) { datasource =>
-        complete(datasource)
+      authorize(user.isInRootOrSameOrganizationAs(newDatasource)) {
+        onSuccess(write[Datasource](Datasources.insertDatasource(newDatasource, user))) { datasource =>
+          complete(datasource)
+        }
       }
     }
   }
 
   def updateDatasource(datasourceId: UUID): Route = authenticate { user =>
     entity(as[Datasource]) { updateDatasource =>
-      onSuccess(update(Datasources.updateDatasource(updateDatasource, datasourceId, user))) { count =>
-        complete(StatusCodes.NoContent)
+      authorize(user.isInRootOrSameOrganizationAs(updateDatasource)) {
+        onSuccess(update(Datasources.updateDatasource(updateDatasource, datasourceId, user))) {
+          completeSingleOrNotFound
+        }
       }
     }
   }
 
   def deleteDatasource(datasourceId: UUID): Route = authenticate { user =>
-    onSuccess(drop(Datasources.deleteDatasource(datasourceId))) {
-      case 1 => complete(StatusCodes.NoContent)
-      case 0 => complete(StatusCodes.NotFound)
-      case count => throw new IllegalStateException(
-        s"Error deleting datasource. Delete result expected to be 1, was $count"
-      )
+    onSuccess(drop(Datasources.deleteDatasource(datasourceId, user))) {
+      completeSingleOrNotFound
     }
   }
 }

@@ -1,0 +1,37 @@
+export default (app) => {
+    class UploadService {
+        constructor($resource) {
+            'ngInject';
+            this.Upload = $resource(
+                '/api/uploads/:id', {
+                    id: '@id'
+                }, {
+                    create: {
+                        method: 'POST'
+                    },
+                    credentials: {
+                        method: 'GET',
+                        url: '/api/uploads/:id/credentials'
+                    },
+                    update: {
+                        method: 'PUT'
+                    }
+                }
+            );
+        }
+
+        create(data) {
+            return this.Upload.create(data).$promise;
+        }
+
+        credentials(upload) {
+            return this.Upload.credentials({ id: upload.id }).$promise;
+        }
+
+        update(data) {
+            return this.Upload.update(data).$promise;
+        }
+    }
+
+    app.service('uploadService', UploadService);
+};

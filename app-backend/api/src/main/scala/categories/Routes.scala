@@ -8,6 +8,9 @@ import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.ToolCategories
 import com.azavea.rf.datamodel._
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
+import io.circe._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
+
 
 trait ToolCategoryRoutes extends Authentication
     with PaginationDirectives

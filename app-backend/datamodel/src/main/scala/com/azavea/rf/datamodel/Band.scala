@@ -1,10 +1,12 @@
 package com.azavea.rf.datamodel
 
 import akka.http.scaladsl.unmarshalling._
-import spray.json._
-import spray.json.DefaultJsonProtocol._
 import java.util.UUID
 
+import io.circe._
+import io.circe.generic.JsonCodec
+
+@JsonCodec
 case class Band(
   id: UUID,
   image: UUID,
@@ -14,13 +16,11 @@ case class Band(
 )
 
 object Band {//extends RangeUnmarshaler{
-
   def create = Create.apply _
 
   def tupled = (Band.apply _).tupled
 
-  implicit val defaultBandFormat = jsonFormat5(Band.apply _)
-
+  @JsonCodec
   case class Create(
     name: String,
     number: Int,
@@ -38,10 +38,7 @@ object Band {//extends RangeUnmarshaler{
     }
   }
 
-  object Create {
-    implicit val defaultBandCreateFormat = jsonFormat3(Create.apply _)
-  }
-
+  @JsonCodec
   case class Identified(
     id: Option[UUID],
     imageId: UUID,
@@ -60,7 +57,5 @@ object Band {//extends RangeUnmarshaler{
     }
   }
 
-  object Identified {
-    implicit val defaultIdentifiedBandFormat = jsonFormat5(Identified.apply _)
-  }
+  object Identified
 }

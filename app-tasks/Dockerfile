@@ -3,8 +3,6 @@ FROM python:2.7
 ENV AIRFLOW_HOME /usr/local/airflow
 
 COPY requirements.txt /tmp/
-COPY rf/ /tmp/rf
-
 RUN set -ex \
     addgroup --system airflow \
     && adduser --disabled-password --system --group \
@@ -16,22 +14,31 @@ RUN set -ex \
     && buildDeps=' \
        python-dev \
     ' \
+    && javaDeps=' \
+       openjdk-8-jre \
+    ' \
     && gdal=' \
        gdal-bin \
        libgdal1h \
        libgdal-dev \
     ' \
     && echo "deb http://ftp.debian.org/debian jessie-backports main" > /etc/apt/sources.list.d/backports.list \
-    && apt-get update && apt-get install -y --no-install-recommends ${buildDeps} ${gdal} \
+    && apt-get update \
+    && apt-get -t jessie-backports install -y --no-install-recommends ca-certificates-java \
+    && apt-get install -y --no-install-recommends ${buildDeps} ${gdal} ${javaDeps} \
+    && update-java-alternatives -s java-1.8.0-openjdk-amd64 \
     && pip install --no-cache-dir \
            numpy==$(grep "numpy" /tmp/requirements.txt | cut -d= -f3) \
     && pip install --no-cache-dir -r /tmp/requirements.txt \
-    && (cd /tmp/rf && python setup.py install) \
     && apt-get purge -y --auto-remove ${buildDeps} \
     && rm -rf /var/lib/apt/lists/*
+
+COPY rf/ /tmp/rf
+RUN (cd /tmp/rf && python setup.py install)
 
 USER airflow
 WORKDIR ${AIRFLOW_HOME}
 
 COPY usr/local/airflow/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
 COPY dags/ /opt/raster-foundry/app-tasks/dags/
+COPY jars/ /opt/raster-foundry/jars/

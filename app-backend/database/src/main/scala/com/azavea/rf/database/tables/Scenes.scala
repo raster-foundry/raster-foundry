@@ -21,6 +21,8 @@ import java.sql.Timestamp
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import io.circe.Json
+
 
 /** Table description of table scenes. Objects of this class serve as prototypes for rows in queries. */
 class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
@@ -34,12 +36,13 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
   val createdBy: Rep[String] = column[String]("created_by", O.Length(255,varying=true))
   val modifiedAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("modified_at")
   val modifiedBy: Rep[String] = column[String]("modified_by", O.Length(255,varying=true))
+  val owner: Rep[String] = column[String]("owner", O.Length(255,varying=true))
   val organizationId: Rep[java.util.UUID] = column[java.util.UUID]("organization_id")
   val ingestSizeBytes: Rep[Int] = column[Int]("ingest_size_bytes")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
   val tags: Rep[List[String]] = column[List[String]]("tags", O.Length(2147483647,varying=false))
   val datasource: Rep[UUID] = column[UUID]("datasource")
-  val sceneMetadata: Rep[Map[String, Any]] = column[Map[String, Any]]("scene_metadata", O.Length(2147483647,varying=false))
+  val sceneMetadata: Rep[Json] = column[Json]("scene_metadata", O.Length(2147483647,varying=false))
   val cloudCover: Rep[Option[Float]] = column[Option[Float]]("cloud_cover", O.Default(None))
   val acquisitionDate: Rep[Option[java.sql.Timestamp]] = column[Option[java.sql.Timestamp]]("acquisition_date", O.Default(None))
   val thumbnailStatus: Rep[JobStatus] = column[JobStatus]("thumbnail_status")
@@ -58,6 +61,7 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
   lazy val createdByUserFK = foreignKey("scenes_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val modifiedByUserFK = foreignKey("scenes_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val datasourceFk = foreignKey("scenes_datasource_fkey", datasource, Datasources)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val ownerUserFK = foreignKey("scenes_owner_fkey", owner, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 
   /** Uniqueness Index over (name,organizationId,datasource) (database name scene_name_org_datasource) */
   val index1 = index("scene_name_org_datasource", (name, organizationId, datasource), unique=true)
@@ -68,12 +72,13 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
     String,
     java.sql.Timestamp,
     String,
+    String,
     UUID,
     Int,
     Visibility,
     List[String],
     UUID,
-    Map[String, Any],
+    Json,
     String,
     Option[Projected[Geometry]],
     Option[Projected[Geometry]],
@@ -90,19 +95,20 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
       sceneTuple._3, // createdBy
       sceneTuple._4, // modifiedAt
       sceneTuple._5, // modifiedBy
-      sceneTuple._6, // organizationId
-      sceneTuple._7, // ingestSizeBytes
-      sceneTuple._8, // visibility
-      sceneTuple._9, // tags
-      sceneTuple._10, // datasource
-      sceneTuple._11, // sceneMetadata
-      sceneTuple._12, // name
-      sceneTuple._13, // tileFootprint
-      sceneTuple._14, // dataFootprint
-      sceneTuple._15, // metadataFiles
-      sceneTuple._16, // ingestLocation
-      SceneFilterFields.tupled.apply(sceneTuple._17), // filterFields
-      SceneStatusFields.tupled.apply(sceneTuple._18) // statusFields
+      sceneTuple._6, // owner
+      sceneTuple._7, // organizationId
+      sceneTuple._8, // ingestSizeBytes
+      sceneTuple._9, // visibility
+      sceneTuple._10, // tags
+      sceneTuple._11, // datasource
+      sceneTuple._12, // sceneMetadata
+      sceneTuple._13, // name
+      sceneTuple._14, // tileFootprint
+      sceneTuple._15, // dataFootprint
+      sceneTuple._16, // metadataFiles
+      sceneTuple._17, // ingestLocation
+      SceneFilterFields.tupled.apply(sceneTuple._18), // filterFields
+      SceneStatusFields.tupled.apply(sceneTuple._19) // statusFields
     )
   }
 
@@ -115,6 +121,7 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
         scene.createdBy,
         scene.modifiedAt,
         scene.modifiedBy,
+        scene.owner,
         scene.organizationId,
         scene.ingestSizeBytes,
         scene.visibility,
@@ -140,6 +147,7 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
     createdBy,
     modifiedAt,
     modifiedBy,
+    owner,
     organizationId,
     ingestSizeBytes,
     visibility,
@@ -199,9 +207,9 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
   def insertScene(sceneCreate: Scene.Create, user: User)
                  (implicit database: DB): Future[Scene.WithRelated] = {
 
-    val scene = sceneCreate.toScene(user.id)
+    val scene = sceneCreate.toScene(user)
     val thumbnails = sceneCreate.thumbnails.map(_.toThumbnail(user.id))
-    val imageSeq = (sceneCreate.images map { im: Image.Banded => im.toImage(user.id) }).zipWithIndex
+    val imageSeq = (sceneCreate.images map { im: Image.Banded => im.toImage(user) }).zipWithIndex
     val bandsSeq = imageSeq map { case (im: Image, ind: Int) =>
       sceneCreate.images(ind).bands map { bd => bd.toBand(im.id) }
     }
@@ -224,9 +232,10 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
 
     database.db.run {
       actions.transactionally
-    } map { case (_, _, imSeq: Seq[Tuple2[Image, Seq[Band]]]) =>
+    } map {
+      case (_, _, imSeq: Seq[Tuple2[Image, Seq[Band]]]) =>
         val imagesWithRelated = imSeq.map({case (im: Image, bs: Seq[Band]) => im.withRelatedFromComponents(bs)})
-      scene.withRelatedFromComponents(imagesWithRelated, thumbnails)
+        scene.withRelatedFromComponents(imagesWithRelated, thumbnails)
     }
   }
 
@@ -234,17 +243,37 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
   /** Retrieve a single scene from the database
     *
     * @param sceneId java.util.UUID ID of scene to query with
+    * @param user    Results will be limited to user's organization
     */
-  def getScene(sceneId: UUID)
+  def getScene(sceneId: UUID, user: User)
               (implicit database: DB): Future[Option[Scene.WithRelated]] = {
 
     database.db.run {
       val action = Scenes
+        .filterToSharedOrganizationIfNotInRoot(user)
         .filter(_.id === sceneId)
         .joinWithRelated
         .result
       logger.debug(s"Total Query for scenes -- SQL: ${action.statements.headOption}")
       action
+    } map { result =>
+      Scene.WithRelated.fromRecords(result).headOption
+    }
+  }
+
+  /** Retrieve single scene from database for caching purposes
+    * This does not filter by user and should not be used by standard routes.
+    *
+    * @param sceneId java.util.UUID ID of scene to query with
+    */
+  def getSceneForCaching(sceneId: UUID)
+                        (implicit database: DB): Future[Option[Scene.WithRelated]] = {
+
+    database.db.run {
+      Scenes
+        .filter(_.id === sceneId)
+        .joinWithRelated
+        .result
     } map { result =>
       Scene.WithRelated.fromRecords(result).headOption
     }
@@ -358,10 +387,14 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
   /** Delete a scene from the database
     *
     * @param sceneId java.util.UUID ID of scene to delete
+    * @param user    Results will be limited to user's organization
     */
-  def deleteScene(sceneId: UUID)(implicit database: DB): Future[Int] = {
+  def deleteScene(sceneId: UUID, user: User)(implicit database: DB): Future[Int] = {
     database.db.run {
-      Scenes.filter(_.id === sceneId).delete
+      Scenes
+        .filterToSharedOrganizationIfNotInRoot(user)
+        .filter(_.id === sceneId)
+        .delete
     }
   }
 

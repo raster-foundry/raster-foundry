@@ -13,9 +13,13 @@ import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.fields._
 import com.azavea.rf.database.query._
 
+import io.circe.Json
+
 class ToolRuns(_TableTag: Tag) extends Table[ToolRun](_TableTag, "tool_runs")
+    with UserFkVisibleFields
+    with OrganizationFkFields
     with TimestampFields {
-  def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, visibility,
+  def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, owner, visibility,
            organizationId, projectId, toolId, execution_parameters) <> (ToolRun.tupled, ToolRun.unapply _)
 
   val id: Rep[UUID]  = column[UUID]("id", O.PrimaryKey)
@@ -23,18 +27,19 @@ class ToolRuns(_TableTag: Tag) extends Table[ToolRun](_TableTag, "tool_runs")
   val createdBy: Rep[String] = column[String]("created_by")
   val modifiedAt: Rep[Timestamp] = column[Timestamp]("modified_at")
   val modifiedBy: Rep[String] = column[String]("modified_by")
+  val owner: Rep[String] = column[String]("owner", O.Length(255,varying=true))
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
   val organizationId: Rep[UUID] = column[UUID]("organization")
   val projectId: Rep[UUID] = column[UUID]("project")
   val toolId: Rep[UUID] = column[UUID]("tool")
-  val execution_parameters: Rep[Map[String, Any]] = column[Map[String, Any]]("execution_parameters")
+  val execution_parameters: Rep[Json] = column[Json]("execution_parameters")
 
   lazy val createdByUserFK = foreignKey("tool_runs_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val modifiedByUserFK = foreignKey("tool_runs_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
-  lazy val organizationFK = foreignKey("tool_runs_organization_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val organizationsFk = foreignKey("tool_runs_organization_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val projectFK = foreignKey("tool_runs_project_fkey", projectId, Projects)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val toolFK = foreignKey("tool_runs_tool_fkey", toolId, Tools)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
-
+  lazy val ownerUserFK = foreignKey("tool_runs_owner_fkey", owner, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 }
 
 object ToolRuns extends TableQuery(tag => new ToolRuns(tag)) with LazyLogging {
@@ -43,16 +48,21 @@ object ToolRuns extends TableQuery(tag => new ToolRuns(tag)) with LazyLogging {
   implicit class withToolRunsTableQuery[M, U, C[_]](toolruns: ToolRuns.TableQuery) extends
       ToolRunDefaultQuery[M, U, C](toolruns)
 
-  def insertToolRun(tr: ToolRun.Create, userId: String): DBIO[ToolRun] =
-    (ToolRuns returning ToolRuns).forceInsert(tr.toToolRun(userId))
+  def insertToolRun(tr: ToolRun.Create, user: User): DBIO[ToolRun] =
+    (ToolRuns returning ToolRuns).forceInsert(tr.toToolRun(user))
 
-  def getToolRun(id: UUID): DBIO[Option[ToolRun]] =
-    ToolRuns.filter(_.id === id).result.headOption
+  def getToolRun(id: UUID, user: User): DBIO[Option[ToolRun]] =
+    ToolRuns
+      .filterToSharedOrganizationIfNotInRoot(user)
+      .filter(_.id === id)
+      .result
+      .headOption
 
   def listToolRuns(offset: Int, limit: Int,
-                   toolRunParams: CombinedToolRunQueryParameters): ListQueryResult[ToolRun] = {
+                   toolRunParams: CombinedToolRunQueryParameters, user: User): ListQueryResult[ToolRun] = {
     val dropRecords = limit * offset
-    val toolRunFilterQuery = ToolRuns
+    val accessibleToolRuns = ToolRuns.filterToSharedOrganizationIfNotInRoot(user)
+    val toolRunFilterQuery = accessibleToolRuns
       .filterByTimestamp(toolRunParams.timestampParams)
       .filterByToolRunParams(toolRunParams.toolRunParams)
 
@@ -61,7 +71,7 @@ object ToolRuns extends TableQuery(tag => new ToolRuns(tag)) with LazyLogging {
          .drop(dropRecords)
          .take(limit)
          .result):DBIO[Seq[ToolRun]],
-      ToolRuns.length.result
+      accessibleToolRuns.length.result
     )
   }
 
@@ -69,7 +79,9 @@ object ToolRuns extends TableQuery(tag => new ToolRuns(tag)) with LazyLogging {
     val updateTime = new Timestamp((new java.util.Date).getTime)
 
     val updateToolRunQuery = for {
-      updateToolRun <- ToolRuns.filter(_.id === id)
+      updateToolRun <- ToolRuns
+                         .filterToSharedOrganizationIfNotInRoot(user)
+                         .filter(_.id === id)
     } yield (
       updateToolRun.modifiedAt,
       updateToolRun.modifiedBy,
@@ -83,8 +95,11 @@ object ToolRuns extends TableQuery(tag => new ToolRuns(tag)) with LazyLogging {
     )
   }
 
-  def deleteToolRun(id: UUID): DBIO[Int] =
-    ToolRuns.filter(_.id === id).delete
+  def deleteToolRun(id: UUID, user: User): DBIO[Int] =
+    ToolRuns
+      .filterToSharedOrganizationIfNotInRoot(user)
+      .filter(_.id === id)
+      .delete
 }
 
 class ToolRunDefaultQuery[M, U, C[_]](toolruns: ToolRuns.TableQuery) {

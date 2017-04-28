@@ -9,37 +9,43 @@
     <p>Publish or export your project</p>
   </div>
   <div class="modal-body">
-    <div class="content" ng-show="$ctrl.resolve.shareUrl">
-      <h4>Publishing</h4>
+    <div class="content" ng-show="$ctrl.shareUrl">
+      <h4>Sharing</h4>
       <div class="form-group">
-        <div>
-          <a class="btn btn-primary"
-             target="_blank"
-             ui-sref="share({projectid: $ctrl.resolve.project.id})">
-            Preview Your Published Project
-          </a>
+        <label>Map Visibility</label>
+        <div class="form-group">
+          <div class="btn-group inline">
+            <button class="btn btn-primary"
+                    ng-repeat="policy in $ctrl.sharePolicies"
+                    ng-if="policy.enabled"
+                    ng-click="$ctrl.onPolicyChange(policy)"
+                    ng-class="{'active': policy.active}"
+                    ng-disabled="!policy.enabled">
+              {{policy.label}}
+            </button>
+          </div>
         </div>
       </div>
       <div class="form-group">
-        <label>Published page URL</label>
+        <label>Share Page</label>
         <div class="form-group all-in-one">
           <label for="tile-link" class="sr-only">URL</label>
           <input id="tile-link" type="text" class="form-control"
-                  value="{{$ctrl.resolve.shareUrl}}" readonly>
-          <!--
-            @TODO: the copy button is intended to copy the url for the user which
-            is not currently implemented
-          -->
-          <button class="btn btn-link">
+                 value="{{$ctrl.shareUrl}}" readonly>
+          <button class="btn btn-link"
+                  clipboard text="$ctrl.shareUrl">
             Copy
           </button>
+          <a class="btn btn-primary"
+             target="_blank"
+             ui-sref="share({projectid: $ctrl.resolve.project.id})">
+            Open
+          </a>
         </div>
       </div>
-    </div>
-    <div class="content">
-      <h4>Exporting</h4>
+
       <div class="form-group">
-        <label>XYZ resource link</label>
+        <label>Tile URL Template</label>
         <div class="form-group">
           <div class="btn-group inline">
             <button class="btn btn-primary"
@@ -54,21 +60,20 @@
           <label for="tile-link" class="sr-only">URI Link</label>
           <input id="tile-link" type="text" class="form-control"
                   value="{{$ctrl.mappedTileUrl}}" readonly>
-          <!--
-            @TODO: the copy button is intended to copy the url for the user which
-            is not currently implemented
-          -->
           <button clipboard text="$ctrl.mappedTileUrl" class="btn btn-link">
             Copy
           </button>
         </div>
       </div>
-      <div class="form-group" ng-show="!$ctrl.resolve.noDownload">
-        <label>Download an image of your project</label>
-        <div>
-          <a class="btn btn-primary" href="">
-            Download .png
-          </a>
+      <div ng-if="$ctrl.activePolicy.enum === 'PRIVATE'" class="form-group">
+        <label>Map Token</label>
+        <div class="form-group all-in-one">
+          <input id="tile-link" type="text" class="form-control"
+                 value="{{$ctrl.mapToken.id}}" readonly>
+          <button class="btn btn-link"
+                  clipboard text="$ctrl.mapToken">
+            Copy
+          </button>
         </div>
       </div>
     </div>

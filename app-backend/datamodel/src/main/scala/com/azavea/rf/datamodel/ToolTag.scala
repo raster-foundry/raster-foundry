@@ -1,8 +1,10 @@
 package com.azavea.rf.datamodel
 
-import spray.json.DefaultJsonProtocol._
 import java.util.UUID
 import java.sql.Timestamp
+
+import io.circe._
+import io.circe.generic.JsonCodec
 
 /** A user generate tag to track tools in the Raster Foundry lab
   *
@@ -14,49 +16,50 @@ import java.sql.Timestamp
   * @param modifiedBy String User ID that last modified tag
   * @param tag String Tag that is displayed to user
   */
+@JsonCodec
 case class ToolTag(
-    id: UUID,
-    createdAt: Timestamp,
-    modifiedAt: Timestamp,
-    organizationId: UUID,
-    createdBy: String,
-    modifiedBy: String,
-    tag: String
+  id: UUID,
+  createdAt: Timestamp,
+  modifiedAt: Timestamp,
+  organizationId: UUID,
+  createdBy: String,
+  modifiedBy: String,
+  owner: String,
+  tag: String
 )
 
 object ToolTag {
-
   def create = Create.apply _
 
   def tupled = (ToolTag.apply _).tupled
-
-  implicit val defaultToolTagFormat = jsonFormat7(ToolTag.apply _)
 
   /** Case class to handle creating a new tool tag
     *
     * @param organizationId UUID organization to create tag for
     * @param tag String user supplied string to use for tag
     */
+  @JsonCodec
   case class Create(
-      organizationId: UUID,
-      tag: String
-  ) {
+    organizationId: UUID,
+    tag: String,
+    owner: Option[String]
+  ) extends OwnerCheck {
 
-    def toToolTag(userId: String): ToolTag = {
+    def toToolTag(user: User): ToolTag = {
       val now = new Timestamp((new java.util.Date()).getTime())
+
+      val ownerId = checkOwner(user, this.owner)
+
       ToolTag(
         UUID.randomUUID,
         now,
         now,
         organizationId,
-        userId,
-        userId,
+        user.id,
+        user.id,
+        ownerId,
         tag
       )
     }
-  }
-
-  object Create {
-    implicit val defaultToolTagCreateFormat = jsonFormat2(Create.apply _)
   }
 }

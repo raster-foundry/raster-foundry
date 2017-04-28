@@ -1,28 +1,31 @@
 package com.azavea.rf.api.config
 
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.JavaConversions._
 import com.azavea.rf.api.utils.Config
-import com.azavea.rf.database.Database
 import com.azavea.rf.api.AkkaSystem
+import com.azavea.rf.datamodel.FeatureFlag
+import com.azavea.rf.database.Database
+import com.azavea.rf.database.tables.FeatureFlags
 
-case class FeatureFlag(key: String, active: Boolean, name: String, description: String)
-case class AngularConfig(clientId: String, auth0Domain: String, featureFlags: Seq[FeatureFlag])
+import io.circe.generic.JsonCodec
+
+@JsonCodec
+case class AngularConfig(
+  clientId: String,
+  clientEnvironment: String,
+  auth0Domain: String,
+  rollbarClientToken: String,
+  intercomAppId: String,
+  featureFlags: Seq[FeatureFlag],
+  tileServerLocation: String
+)
 
 object AngularConfigService extends AkkaSystem.LoggerExecutor with Config {
-  def getConfig():
-      AngularConfig = {
-
-    val features: Seq[FeatureFlag] = featureFlags.map { featureConfig =>
-      FeatureFlag(
-        featureConfig.getString("key"),
-        featureConfig.getBoolean("active"),
-        featureConfig.getString("name"),
-        featureConfig.getString("description")
-      )
-    }.toSeq
-    implicit val featureFlagFormat = jsonFormat4(FeatureFlag)
-
-    return AngularConfig(auth0ClientId, auth0Domain, features)
-  }
+  def getConfig()(implicit database: Database) = for {
+    features:Seq[FeatureFlag] <- FeatureFlags.listFeatureFlags()
+  } yield AngularConfig(
+    auth0ClientId, clientEnvironment, auth0Domain, rollbarClientToken,
+    intercomAppId, features, tileServerLocation
+  )
 }

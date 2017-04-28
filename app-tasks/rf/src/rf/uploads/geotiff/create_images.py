@@ -8,7 +8,8 @@ from .create_bands import create_geotiff_bands
 
 
 def create_geotiff_image(organizationId, tif_path, sourceuri, filename=None,
-                         visibility=Visibility.PRIVATE, imageMetadata={}, scene=None):
+                         visibility=Visibility.PRIVATE, imageMetadata={}, scene=None,
+                         owner=None):
     """Create an Image object from a GeoTIFF.
 
     Args:
@@ -18,6 +19,7 @@ def create_geotiff_image(organizationId, tif_path, sourceuri, filename=None,
         visibility (str): accessibility level for object
         imageMetadata (dict): Optional dict of metadata about the image
         scene (Scene): Optional Scene object holding this image
+        owner (str): Optional owner of an image
     """
     filename = filename if filename else os.path.basename(tif_path)
     return Image(
@@ -33,5 +35,6 @@ def create_geotiff_image(organizationId, tif_path, sourceuri, filename=None,
         # select the X resolution.
         get_geotiff_resolution(tif_path)[0],
         [],
-        scene=scene
+        scene=scene,
+        owner=owner
     )

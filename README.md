@@ -10,18 +10,47 @@ A virtual machine is used to encapsulate Docker dependencies. `docker-compose` i
 - VirtualBox 5.0+
 - Ansible 1.8+ (on host)
 - AWS CLI 1.10+
+- AWS Account (to store artifacts, secrets)
+- [Auth0 Account](https://auth0.com/) (user management)
+- [Rollbar Account](https://rollbar.com/) (error reporting -- optional)
 
-On your host machine you need to set up a `raster-foundry` profile for the Raster Foundry AWS account using the following command:
+#### Setting Up AWS Account
 
+There are a set of tasks necessary before starting development in order to provision Raster Foundry. Raster Foundry depends heavily on AWS resources and using AWS resources to manage secrets/containers/artifacts in development. If only local development is being done, the primary resource that will be used are S3 buckets to store secrets.
+
+In the AWS account you need to create a few buckets for the following:
+ - A bucket to house raw data (e.g. geotiffs, JPEG2000, ingest definitions, etc.)
+ - A config bucket that will store secrets for development and or other environments, an exported database for development data
+ - A bucket to house processed data (e.g. thumbnails, processed raster RDDs)
+
+The names of the buckets are not important, but they should be memorable and easy to parse for your own sake. On your host machine you need to set up an AWS profile for the account with the S3 buckets. For instance, to set up an AWS profile called `raster-foundry` with the AWS cli the following command would be used:
 ```
 $ aws configure --profile raster-foundry
 ```
 
 You will be prompted for an access key and secret key.
 
+#### Setting Development Environment Variables
+
+The `.env.template` file is a template file with environment variables that get injected into running containers during development. This file should be copied into the AWS config bucket created after filling in sensitive information (replacing all `PLACEHOLDER` values with appropriate values for your AWS setup). When provisioning this file is copied to the development environment and injected into containers with `docker-compose`.
+
+In addition to setting up an AWS account, you must register for an Auth0 account to produce secrets to use in the `.env` file. You need to go through setting up an application and copying over the client IDs, domain, and secret.
+
+Additionally, if you want to exercise token management in the application, you need to generate a management API app to handle managing the generation of [refresh tokens for users via the management API](https://auth0.com/docs/api/management/v2/tokens). This is not necessary for most functionality in the application and can be deferred until later if you desire.
+
+The last thing to set up with Auth0 are the allowed callback URLs and logout URLs. These need to be edited to allow interaction for local development from `localhost:9091` and `localhost:9100`.
+
 ### Development
 
-_tldr_
+Vagrant is used to manage VirtualBox provisioning and configuration. Raster Foundry follows the approach outlined [here](https://githubengineering.com/scripts-to-rule-them-all/) ("Scripts to Rule Them All") to have as consistent a development experience as possible. Almost all interaction with consoles and servers can be managed via calls to a script located in `./scripts`. Default values for the S3 config and data buckets in addition to AWS profile will be used if they are not set with an environment variable. Before running vagrant, these should be injected into your shell environment:
+```bash
+export RF_AWS_PROFILE=raster-foundry
+export RF_SETTINGS_BUCKET=rasterfoundry-development-config-us-east-1
+export RF_ARTIFACTS_BUCKET=rasterfoundry-global-artifacts-us-east-1
+```
+
+After exporting your environment settings, you are ready to get started:
+
 ```bash
 $ vagrant up
 $ vagrant ssh
@@ -32,13 +61,15 @@ Use `vagrant up` to provision a virtual machine. During provisioning `docker` an
 
 Once the machine is provisioned you can start services or development by ssh-ing into the machine (`vagrant ssh`) and using the helper scripts in the `/opt/raster-foundry/scripts` directory.
 
+If you do not have a development database to seed your database with, you will need to initialize the database with `mg init` inside an `sbt` console `./scripts/console api-server ./sbt`
+
 Development workflow varies by developer, but a typical development experience might include the following:
 
  - Create a new feature branch
  - Start up the vagrant machine with `vagrant up --provision`
  - Get an `sbt` console open using `./scripts/console api-server ./sbt`
  - Make changes to Scala code
- - Try compiling (`~compile`) or running the service to inspect it (`~app/run`)
+ - Try compiling (`~compile`) or running the service to inspect it (`~api/run`)
 
 ### Migrations
 
@@ -62,7 +93,7 @@ To do frontend development you will want to install [`nvm`](https://github.com/c
 
 Then _outside_ the VM, while the server is still running, run `yarn run start` while inside the `app-frontend/` directory. This will start a `webpack-dev-server` on port 9091 that will auto-reload after javascript and styling changes.
 
-There are three options to rebuild the static assets served by Nginx:
+The two options to rebuild the static assets served by Nginx:
 
  - Run `yarn run build` outside the VM
  - Run `./scripts/console app-frontend "yarn run build"`
@@ -71,7 +102,6 @@ There are three options to rebuild the static assets served by Nginx:
 To run tests you can do one of the following (in order of speed):
 
  - Run `yarn run test` outside the VM (or `yarn run test-watch`)
- - Run `./scripts/console app-frontend "yarn run test"` inside the VM
  - Run `./scripts/test` inside the VM (will also run additional project tests)
 
 ## Ports
@@ -86,9 +116,6 @@ The Vagrant configuration maps the following host ports to services running in t
 | Tile Server (akka)        | [`9900`](http://localhost:9900) | `RF_PORT_9900`       |
 | Airflow UI                | [`8080`](http://localhost:8080) | `RF_PORT_8080`       |
 | Airflow Flower            | [`5555`](http://localhost:5555) | `RF_PORT_5555`       |
-| Swagger Editor            | [`9090`](http://localhost:9090) | `RF_PORT_9090`       |
-| Swagger UI                | [`9999`](http://localhost:9999) | `RF_PORT_9999`       |
-
 
 ## Scripts
 

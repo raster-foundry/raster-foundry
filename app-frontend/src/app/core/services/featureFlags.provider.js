@@ -1,5 +1,6 @@
 function updateFlagsAndGetAll(newFlags) {
-    Object.values(newFlags).forEach(flag => {
+    let flagsList = angular.isArray(newFlags) ? newFlags : Object.values(newFlags);
+    flagsList.forEach(flag => {
         this.serverFlagCache[flag.key] = flag.active;
         flag.active = this.isOn(flag.key);
     });
@@ -20,6 +21,7 @@ export default app => {
             this.serverFlagCache = {};
             this.flags = [];
             this.initialFlags = initialFlags ? initialFlags : [];
+            this.perUserFlags = {};
             this.featureFlagOverrides = featureFlagOverrides;
             if (this.initialFlags.length) {
                 this.set(initialFlags);
@@ -70,6 +72,18 @@ export default app => {
 
     }
 
+    class PerUserFeatureFlagService {
+        constructor($resource) {
+            'ngInject';
+
+            this.PerUserFeatureFlag = $resource('/feature-flags/');
+        }
+
+        load() {
+            return this.PerUserFeatureFlag.query().$promise;
+        }
+    }
+
     class FeatureFlagsProvider {
         constructor() {
             this.initialFlags = [];
@@ -85,5 +99,6 @@ export default app => {
         }
     }
 
+    app.service('perUserFeatureFlags', PerUserFeatureFlagService);
     app.provider('featureFlags', FeatureFlagsProvider);
 };

@@ -1,7 +1,6 @@
 package com.azavea.rf.datamodel
 
-import spray.json._
-import spray.json.DefaultJsonProtocol._
+import io.circe.generic.JsonCodec
 
 /**
  * Case class for paginated results
@@ -13,6 +12,7 @@ import spray.json.DefaultJsonProtocol._
  * @param pageSize number of results per page
  * @param results sequence of results for a page
  */
+@JsonCodec
 case class PaginatedResponse[A](
   count: Int,
   hasPrevious: Boolean,

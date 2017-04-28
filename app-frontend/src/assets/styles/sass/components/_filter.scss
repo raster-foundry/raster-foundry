@@ -1,16 +1,19 @@
 .filter {
-  padding-top: 2rem;
-  padding-bottom: 2rem;
-  border-bottom: 1px solid $shade-dark;
-
-  &:first-child {
-    padding-top: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  font-size: 1.2rem;
+  &:not(:last-child) {
+    margin-bottom: 1.2rem;
   }
-
+  & > *:not(:last-child) {
+    margin-right: 1.2rem !important;
+  }
   label {
     color: $shade-light;
-    display: block;
-    margin-bottom: 1.2rem;
+    width: 80px;
+    font-size: 1.2rem;
+    flex-shrink: 0;
   }
 }
 
@@ -21,7 +24,7 @@
 .month-filter {
   display: flex;
   flex-wrap: wrap;
-  
+
   .btn {
     flex-basis: 24%;
     margin: .5%;

@@ -1,10 +1,12 @@
 package com.azavea.rf.database
 
 import com.azavea.rf.datamodel._
+import com.azavea.rf.tool.ast._
+
 import geotrellis.slick.PostGisProjectionSupport
 import com.github.tminglei.slickpg._
-import scala.collection.immutable.Map
-import spray.json._
+import io.circe._
+import io.circe.syntax._
 
 /** Custom Postgres driver that adds custom column types and implicit conversions
   *
@@ -16,11 +18,11 @@ import spray.json._
   *  - text[] (array text)
   */
 trait ExtendedPostgresDriver extends ExPostgresDriver
-    with PgArraySupport
-    with PgRangeSupport
-    with PgSprayJsonSupport
-    with PgEnumSupport
-    with PostGisProjectionSupport {
+  with PgArraySupport
+  with PgRangeSupport
+  with PgCirceJsonSupport
+  with PgEnumSupport
+  with PostGisProjectionSupport {
 
   override val pgjson = "jsonb"
 
@@ -28,30 +30,29 @@ trait ExtendedPostgresDriver extends ExPostgresDriver
 
   // Implicit conversions to/from column types
   object RFAPI extends API
-      with ArrayImplicits
-      with RangeImplicits
-      with JsonImplicits
-      with RFDatabaseJsonProtocol
-      with PostGISProjectionImplicits
-      with PostGISProjectionAssistants {
+    with ArrayImplicits
+    with RangeImplicits
+    with CirceImplicits
+    with PostGISProjectionImplicits
+    with PostGISProjectionAssistants {
 
     implicit def strListTypeMapper = new SimpleArrayJdbcType[String]("text").to(_.toList)
 
-    implicit val metadataMapper = MappedJdbcType.base[Map[String, Any], JsValue](_.toJson,
-      _.convertTo[Map[String, Any]])
+    implicit val colorCorrectParamsMapper = MappedJdbcType.base[ColorCorrect.Params, Json](_.asJson,
+      _.as[ColorCorrect.Params] match {
+        case Right(ast) => ast
+        case Left(e) => throw e
+      })
 
-    implicit val colorCorrectParamsMapper = MappedJdbcType.base[ColorCorrect.Params, JsValue](_.toJson,
-      _.convertTo[ColorCorrect.Params])
-
-    implicit val userRoleTypeMapper = createEnumJdbcType[User.Role]("UserRole", _.repr,
-      User.Role.fromString, quoteName = false)
-    implicit val userRoleTypeListMapper = createEnumListJdbcType[User.Role]("UserRole",
-      _.repr, User.Role.fromString, quoteName = false)
+    implicit val userRoleTypeMapper = createEnumJdbcType[UserRole]("UserRole", _.repr,
+      UserRole.fromString, quoteName = false)
+    implicit val userRoleTypeListMapper = createEnumListJdbcType[UserRole]("UserRole",
+      _.repr, UserRole.fromString, quoteName = false)
     implicit val userRoleColumnExtensionMethodsBuilder =
-      createEnumColumnExtensionMethodsBuilder[User.Role]
+      createEnumColumnExtensionMethodsBuilder[UserRole]
     implicit val userRoleOptionColumnExtensionMethodsBuilder =
-      createEnumOptionColumnExtensionMethodsBuilder[User.Role]
- 
+      createEnumOptionColumnExtensionMethodsBuilder[UserRole]
+
     implicit val ingestStatusTypeMapper = createEnumJdbcType[IngestStatus](
       "IngestStatus", _.repr,
       IngestStatus.fromString, quoteName = false
@@ -82,6 +83,51 @@ trait ExtendedPostgresDriver extends ExPostgresDriver
       createEnumColumnExtensionMethodsBuilder[Visibility]
     implicit val visibilityOptionColumnExtensionMethodsBuilder =
       createEnumOptionColumnExtensionMethodsBuilder[Visibility]
+
+    implicit val uploadStatusTypeMapper = createEnumJdbcType[UploadStatus]("UploadStatus", _.repr,
+      UploadStatus.fromString, quoteName = false)
+    implicit val uploadStatusTypeListMapper = createEnumListJdbcType[UploadStatus]("UploadStatus", _.repr,
+      UploadStatus.fromString, quoteName = false)
+    implicit val uploadStatusColumnExtensionMethodsBuilder =
+      createEnumColumnExtensionMethodsBuilder[UploadStatus]
+    implicit val uploadStatusOptionColumnExtensionMethodsBuilder =
+      createEnumOptionColumnExtensionMethodsBuilder[UploadStatus]
+
+    implicit val exportStatusTypeMapper = createEnumJdbcType[ExportStatus]("ExportStatus", _.repr,
+      ExportStatus.fromString, quoteName = false)
+    implicit val exportStatusTypeListMapper = createEnumListJdbcType[ExportStatus]("ExportStatus", _.repr,
+      ExportStatus.fromString, quoteName = false)
+    implicit val exportStatusColumnExtensionMethodsBuilder =
+      createEnumColumnExtensionMethodsBuilder[ExportStatus]
+    implicit val exportStatusOptionColumnExtensionMethodsBuilder =
+      createEnumOptionColumnExtensionMethodsBuilder[ExportStatus]
+
+    implicit val fileTypeMapper = createEnumJdbcType[FileType]("FileType", _.repr,
+      FileType.fromString, quoteName = false)
+    implicit val fileTypeListMapper = createEnumListJdbcType[FileType]("FileType", _.repr,
+      FileType.fromString, quoteName = false)
+    implicit val fileTypeColumnExtensionMethodsBuilder =
+      createEnumColumnExtensionMethodsBuilder[FileType]
+    implicit val fileTypeOptionColumnExtensionMethodsBuilder =
+      createEnumOptionColumnExtensionMethodsBuilder[FileType]
+
+    implicit val uploadTypeTypeMapper = createEnumJdbcType[UploadType]("UploadType", _.repr,
+      UploadType.fromString, quoteName = false)
+    implicit val uploadTypeTypeListMapper = createEnumListJdbcType[UploadType]("UploadType", _.repr,
+      UploadType.fromString, quoteName = false)
+    implicit val uploadTypeColumnExtensionMethodsBuilder =
+      createEnumColumnExtensionMethodsBuilder[UploadType]
+    implicit val uploadTypeOptionColumnExtensionMethodsBuilder =
+      createEnumOptionColumnExtensionMethodsBuilder[UploadType]
+
+    implicit val exportTypeTypeMapper = createEnumJdbcType[ExportType]("ExportType", _.repr,
+      ExportType.fromString, quoteName = false)
+    implicit val exportTypeTypeListMapper = createEnumListJdbcType[ExportType]("ExportType", _.repr,
+      ExportType.fromString, quoteName = false)
+    implicit val exportTypeColumnExtensionMethodsBuilder =
+      createEnumColumnExtensionMethodsBuilder[ExportType]
+    implicit val exportTypeOptionColumnExtensionMethodsBuilder =
+      createEnumOptionColumnExtensionMethodsBuilder[ExportType]
 
     implicit val thumbnailDimTypeMapper = createEnumJdbcType[ThumbnailSize]("ThumbnailSize", _.toString,
       ThumbnailSize.fromString, quoteName = false)

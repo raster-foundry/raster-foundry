@@ -11,7 +11,10 @@ import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.{AuthUtils, DBSpec, Router}
 import concurrent.duration._
 import org.scalatest.{Matchers, WordSpec}
-import spray.json._
+
+import io.circe._
+import io.circe.syntax._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 class ToolRunSpec extends WordSpec
     with Matchers
@@ -35,7 +38,8 @@ class ToolRunSpec extends WordSpec
     publicOrgId,
     projectId,
     toolId,
-    Map()
+    ().asJson,
+    None: Option[String]
   )
 
   val baseRoutes = routes
@@ -66,7 +70,7 @@ class ToolRunSpec extends WordSpec
       Post("/api/tool-runs/").withEntity(
         HttpEntity(
           ContentTypes.`application/json`,
-          newToolRun.toJson.toString()
+          newToolRun.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         reject
@@ -79,10 +83,11 @@ class ToolRunSpec extends WordSpec
         List(authorization),
         HttpEntity(
           ContentTypes.`application/json`,
-          newToolRun.toJson.toString()
+          newToolRun.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
-        responseAs[ToolRun]
+        val tr = responseAs[ToolRun]
+        tr.owner shouldEqual "Default"
       }
     }
 
@@ -93,4 +98,3 @@ class ToolRunSpec extends WordSpec
     }
   }
 }
-

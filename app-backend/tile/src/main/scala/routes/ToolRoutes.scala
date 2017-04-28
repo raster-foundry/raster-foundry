@@ -18,12 +18,12 @@ import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTyp
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import com.typesafe.scalalogging.LazyLogging
 import spray.json._
-
+import cats.implicits._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import java.util.UUID
 
-// TODO: I need a better way to bind shit ... Right now I just swap out Var for Op ...
+// TODO: I need a better way to bind ops ... Right now I just swap out Var for Op ...
 
 object ToolRoutes extends LazyLogging {
   val userId: String = "rf_airflow-user"
@@ -81,7 +81,7 @@ object ToolRoutes extends LazyLogging {
     }.toMap
   }
 
-  def root(implicit db: Database): Route =
+  def root(implicit database: Database): Route =
     pathPrefix(Segment / "ndvi-diff-tool"){ organizationId =>
       (pathEndOrSingleSlash & get & rejectEmptyResponse) {
         complete("model JSON")
@@ -99,9 +99,9 @@ object ToolRoutes extends LazyLogging {
           complete {
             val varMap = Map(
               'LC8_0 -> { (z: Int, x: Int, y: Int) =>
-                Mosaic.raw(UUID.fromString(p0), z, x, y)},
+                Mosaic.raw(UUID.fromString(p0), z, x, y).value},
               'LC8_1 -> { (z: Int, x: Int, y: Int) =>
-                Mosaic.raw(UUID.fromString(p1), z, x, y)})
+                Mosaic.raw(UUID.fromString(p1), z, x, y).value})
 
             val model: Op = partId match {
               case Some("ndvi0") => ndvi0

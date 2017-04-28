@@ -7,13 +7,15 @@ import akka.http.scaladsl.model.{HttpEntity, ContentTypes}
 import akka.http.scaladsl.server.Route
 import akka.actor.ActorSystem
 import concurrent.duration._
-import spray.json._
 
 import com.azavea.rf.datamodel._
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.{DBSpec, Router}
 import com.azavea.rf.api.AuthUtils
 
+import io.circe._
+import io.circe.syntax._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 class OrganizationSpec extends WordSpec
     with Matchers
@@ -29,6 +31,7 @@ class OrganizationSpec extends WordSpec
   val baseRoutes = routes
 
   val authHeader = AuthUtils.generateAuthHeader("Default")
+
   "/api/organizations" should {
     "require authentication" in {
       Get("/api/organizations") ~> baseRoutes ~> check {
@@ -42,17 +45,17 @@ class OrganizationSpec extends WordSpec
         responseAs[PaginatedResponse[Organization]]
       }
     }
-    "allow creation of new organizations" in {
+    "require authorization for creation of new organizations" in {
       val newOrg = Organization.Create("Test Organization")
       Post("/api/organizations")
         .withHeadersAndEntity(
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          newOrg.toJson.toString()
+          newOrg.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
-        responseAs[Organization]
+        rejection
       }
     }
   }
@@ -76,81 +79,6 @@ class OrganizationSpec extends WordSpec
       Get(s"/api/organizations/$orgUUID")
         .addHeader(authHeader) ~> Route.seal(baseRoutes) ~> check {
         status shouldEqual StatusCodes.NotFound
-      }
-    }
-  }
-  "/api/organizations/{uuid}/users" should {
-    "return a list of user roles for the organization" in {
-      Get("/api/organizations")
-        .addHeader(authHeader) ~> baseRoutes ~> check {
-        val orgs = responseAs[PaginatedResponse[Organization]]
-        val orgId = orgs.results.head.id
-        Get(s"/api/organizations/$orgId/users")
-          .addHeader(authHeader) ~> baseRoutes ~> check {
-          responseAs[PaginatedResponse[User.WithRole]]
-        }
-      }
-    }
-    "add a user to an organization" in {
-      Get("/api/organizations")
-        .addHeader(authHeader) ~> baseRoutes ~> check {
-        val orgs = responseAs[PaginatedResponse[Organization]]
-        val orgId = orgs.results.head.id
-        val newUserWithRole = User.WithRoleCreate("Default", User.Viewer)
-        Post(s"/api/organizations/$orgId/users")
-          .withHeadersAndEntity(
-          List(authHeader),
-          HttpEntity(
-            ContentTypes.`application/json`,
-            newUserWithRole.toJson.toString()
-          )
-        ) ~> baseRoutes ~> check {
-          val createdUser = responseAs[User.WithRole]
-          Get(s"/api/organizations/$orgId/users/Default")
-            .addHeader(authHeader) ~> baseRoutes ~> check {
-            responseAs[User.WithRole] shouldEqual createdUser
-          }
-        }
-      }
-    }
-  }
-  "/api/organizations/{uuid}/users/{userId}" should {
-    "return a user's role in the organization" in {
-      Get("/api/organizations")
-        .addHeader(authHeader) ~> baseRoutes ~> check {
-        val orgs = responseAs[PaginatedResponse[Organization]]
-        val orgId = orgs.results.head.id
-        val newUserWithRole = User.WithRoleCreate("Default", User.Viewer)
-        Post(s"/api/organizations/$orgId/users")
-          .withHeadersAndEntity(
-          List(authHeader),
-          HttpEntity(
-            ContentTypes.`application/json`,
-            newUserWithRole.toJson.toString()
-          )
-        ) ~> baseRoutes ~> check {
-          Get(s"/api/organizations/$orgId/users/Default")
-            .addHeader(authHeader) ~> baseRoutes ~> check {
-            responseAs[User.WithRole]
-          }
-        }
-      }
-    }
-    "edit a user's role in the organization" in {
-      Get("/api/organizations")
-        .addHeader(authHeader) ~> baseRoutes ~> check {
-        val orgs = responseAs[PaginatedResponse[Organization]]
-        val orgId = orgs.results.head.id
-        Get(s"/api/organizations/$orgId/users/Default")
-        .addHeader(authHeader) ~> baseRoutes ~> check {
-          responseAs[User.WithRole]
-        }
-      }
-    }
-    "delete a user's role in the organization" in {
-      Get("/api/organizations")
-        .addHeader(authHeader) ~> baseRoutes ~> check {
-        //TODO
       }
     }
   }

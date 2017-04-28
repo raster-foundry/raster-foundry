@@ -79,7 +79,8 @@ module.exports = function (_path) {
             }, {
                 test: /\.js$/,
                 exclude: [
-                    path.resolve(_path, 'node_modules')
+                    path.resolve(_path, 'node_modules'),
+                    path.resolve(_path, 'src/app/core/aws-sdk-s3.module.js')
                 ],
                 loader: 'babel-loader',
                 query: {
@@ -137,7 +138,12 @@ module.exports = function (_path) {
                 loaders: [
                     'expose?joint'
                 ]
-            },{
+            }, {
+                test: require.resolve('moment'),
+                loaders: [
+                    'expose?moment'
+                ]
+            }, {
                 test: /node_modules[\\\/]auth0-lock[\\\/].*\.js$/,
                 loaders: ['transform-loader/cacheable?brfs',
                           'transform-loader/cacheable?packageify']

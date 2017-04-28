@@ -1,17 +1,15 @@
 package com.azavea.rf.datamodel
 
-import spray.json._
-import spray.json.DefaultJsonProtocol._
 import java.sql.Timestamp
 import java.util.UUID
 
-import geotrellis.vector.io.json.GeoJsonSupport
 import geotrellis.vector.Geometry
 import geotrellis.slick.Projected
 
-import slick.collection.heterogeneous.{HList, HNil}
-import slick.collection.heterogeneous.syntax._
+import io.circe._
+import io.circe.generic.JsonCodec
 
+@JsonCodec
 case class SceneFilterFields(
   cloudCover: Option[Float] = None,
   acquisitionDate: Option[java.sql.Timestamp] = None,
@@ -20,8 +18,6 @@ case class SceneFilterFields(
 )
 
 object SceneFilterFields {
-  implicit val defaultSceneFilterFieldsJsonFormat = jsonFormat4(SceneFilterFields.apply)
-
   def tupled = (SceneFilterFields.apply _).tupled
 
   type TupleType = (
@@ -32,6 +28,7 @@ object SceneFilterFields {
   )
 }
 
+@JsonCodec
 case class SceneStatusFields(
   thumbnailStatus: JobStatus,
   boundaryStatus: JobStatus,
@@ -39,8 +36,6 @@ case class SceneStatusFields(
 )
 
 object SceneStatusFields {
-  implicit val defaultSceneStatusFieldsJsonFormat = jsonFormat3(SceneStatusFields.apply)
-
   def tupled = (SceneStatusFields.apply _).tupled
 
   type TupleType = (
@@ -50,18 +45,20 @@ object SceneStatusFields {
   )
 }
 
+@JsonCodec
 case class Scene(
   id: UUID,
   createdAt: java.sql.Timestamp,
   createdBy: String,
   modifiedAt: java.sql.Timestamp,
   modifiedBy: String,
+  owner: String,
   organizationId: UUID,
   ingestSizeBytes: Int,
   visibility: Visibility,
   tags: List[String],
   datasource: UUID,
-  sceneMetadata: Map[String, Any],
+  sceneMetadata: Json,
   name: String,
   tileFootprint: Option[Projected[Geometry]] = None,
   dataFootprint: Option[Projected[Geometry]] = None,
@@ -72,8 +69,6 @@ case class Scene(
 ) {
   def toScene = this
 
-
-
   def withRelatedFromComponents(
     images: Seq[Image.WithRelated],
     thumbnails: Seq[Thumbnail]
@@ -83,6 +78,7 @@ case class Scene(
     this.createdBy,
     this.modifiedAt,
     this.modifiedBy,
+    this.owner,
     this.organizationId,
     this.ingestSizeBytes,
     this.visibility,
@@ -102,11 +98,9 @@ case class Scene(
 }
 
 
-object Scene extends GeoJsonSupport {
-
-  implicit val defaultSceneFormat = jsonFormat18(Scene.apply)
-
+object Scene {
   /** Case class extracted from a POST request */
+  @JsonCodec
   case class Create(
     id: Option[UUID],
     organizationId: UUID,
@@ -114,8 +108,9 @@ object Scene extends GeoJsonSupport {
     visibility: Visibility,
     tags: List[String],
     datasource: UUID,
-    sceneMetadata: Map[String, Any],
+    sceneMetadata: Json,
     name: String,
+    owner: Option[String],
     tileFootprint: Option[Projected[Geometry]],
     dataFootprint: Option[Projected[Geometry]],
     metadataFiles: List[String],
@@ -124,15 +119,19 @@ object Scene extends GeoJsonSupport {
     ingestLocation: Option[String],
     filterFields: SceneFilterFields = new SceneFilterFields(),
     statusFields: SceneStatusFields
-  ) {
-    def toScene(userId: String): Scene = {
+  ) extends OwnerCheck {
+    def toScene(user: User): Scene = {
       val now = new Timestamp((new java.util.Date()).getTime())
+
+      val ownerId = checkOwner(user, this.owner)
+
       Scene(
         id.getOrElse(UUID.randomUUID),
         now, // createdAt
-        userId, // createdBy
+        user.id, // createdBy
         now, // modifiedAt
-        userId, // modifiedBy
+        user.id, // modifiedBy
+        ownerId, // owner
         organizationId,
         ingestSizeBytes,
         visibility,
@@ -150,22 +149,20 @@ object Scene extends GeoJsonSupport {
     }
   }
 
-  object Create {
-    implicit val defaultThumbnailWithRelatedFormat = jsonFormat16(Create.apply)
-  }
-
+  @JsonCodec
   case class WithRelated(
     id: UUID,
     createdAt: Timestamp,
     createdBy: String,
     modifiedAt: Timestamp,
     modifiedBy: String,
+    owner: String,
     organizationId: UUID,
     ingestSizeBytes: Int,
     visibility: Visibility,
     tags: List[String],
     datasource: UUID,
-    sceneMetadata: Map[String, Any],
+    sceneMetadata: Json,
     name: String,
     tileFootprint: Option[Projected[Geometry]],
     dataFootprint: Option[Projected[Geometry]],
@@ -175,11 +172,32 @@ object Scene extends GeoJsonSupport {
     ingestLocation: Option[String],
     filterFields: SceneFilterFields = new SceneFilterFields(),
     statusFields: SceneStatusFields
-  )
+  ) {
+    def toScene: Scene =
+      Scene(
+        id,
+        createdAt,
+        createdBy,
+        modifiedAt,
+        modifiedBy,
+        owner,
+        organizationId,
+        ingestSizeBytes,
+        visibility,
+        tags,
+        datasource,
+        sceneMetadata,
+        name,
+        tileFootprint,
+        dataFootprint,
+        metadataFiles,
+        ingestLocation,
+        filterFields,
+        statusFields
+      )
+    }
 
   object WithRelated {
-    implicit val defaultSceneWithRelatedFormat = ScenesJsonProtocol.SceneWithRelatedFormat
-
     /** Helper function to create Iterable[Scene.WithRelated] from join
       *
       * It is necessary to map over the distinct scenes because that is the only way to

@@ -1,5 +1,6 @@
 import os
 import rasterio
+import urlparse
 
 
 def get_geotiff_metadata(tif_path):
@@ -55,6 +56,12 @@ def get_geotiff_size_bytes(tif_path):
 
 def s3_url(bucket, key):
     return 's3://{bucket}/{key}'.format(bucket=bucket, key=key)
+
+
+def s3_bucket_and_key_from_url(s3_url):
+    parts = urlparse.urlparse(s3_url) 
+    # parts.path[1:] drops the leading slash that urlparse includes
+    return (parts.netloc, parts.path[1:])
 
 
 def get_geotiff_dimensions(tif_path):

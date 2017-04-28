@@ -1,20 +1,23 @@
 package com.azavea.rf.database.tables
 
+import io.circe._
 import com.azavea.rf.database.fields._
 import com.azavea.rf.database.sort._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
+import com.azavea.rf.tool.ast._
+
 import slick.model.ForeignKeyAction
+import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
+import com.typesafe.scalalogging.LazyLogging
+
 import java.util.UUID
 import java.util.Date
 import java.sql.Timestamp
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
-import com.typesafe.scalalogging.LazyLogging
-import scala.concurrent.Future
 
 /** Table that represents tools in the Raster Foundry lab
   *
@@ -29,7 +32,7 @@ class Tools(_tableTag: Tag) extends Table[Tool](_tableTag, "tools")
     with VisibilityField
     with TimestampFields
 {
-  def * = (id, createdAt, modifiedAt, createdBy, modifiedBy, organizationId,
+  def * = (id, createdAt, modifiedAt, createdBy, modifiedBy, owner, organizationId,
     title, description, requirements, license, visibility, compatibleDataSources,
     stars, definition) <> (Tool.tupled, Tool.unapply)
 
@@ -38,6 +41,7 @@ class Tools(_tableTag: Tag) extends Table[Tool](_tableTag, "tools")
   val modifiedAt: Rep[Timestamp] = column[Timestamp]("modified_at")
   val createdBy: Rep[String] = column[String]("created_by", O.Length(255, varying = true))
   val modifiedBy: Rep[String] = column[String]("modified_by", O.Length(255, varying = true))
+  val owner: Rep[String] = column[String]("owner", O.Length(255,varying=true))
   val organizationId: Rep[UUID] = column[UUID]("organization_id")
   val title: Rep[String] = column[String]("title", O.Length(255, varying = true))
   val description: Rep[String] = column[String]("description")
@@ -47,7 +51,7 @@ class Tools(_tableTag: Tag) extends Table[Tool](_tableTag, "tools")
   val compatibleDataSources: Rep[List[String]] = column[List[String]]("compatible_data_sources",
     O.Length(Int.MaxValue, varying = false), O.Default(List.empty))
   val stars: Rep[Float] = column[Float]("stars", O.Default(0.0f))
-  val definition: Rep[Map[String, Any]] = column[Map[String, Any]]("definition", O.Length(2147483647,varying=false))
+  val definition: Rep[Json] = column[Json]("definition", O.Length(2147483647,varying=false))
 
   lazy val organizationsFk =
     foreignKey("tools_organization_id_fkey", organizationId, Organizations)(
@@ -62,6 +66,7 @@ class Tools(_tableTag: Tag) extends Table[Tool](_tableTag, "tools")
     r => r.id,
     onUpdate = ForeignKeyAction.NoAction,
     onDelete = ForeignKeyAction.NoAction)
+  lazy val ownerUserFK = foreignKey("tools_owner_fkey", owner, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 }
 
 object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
@@ -103,6 +108,7 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
         tool.modifiedAt,
         tool.createdBy,
         tool.modifiedBy,
+        tool.owner,
         toolRelationshipJoins.flatMap(_.organization).headOption,
         tool.title,
         tool.description,
@@ -124,10 +130,12 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
     *
     * @param page page request that has limit, offset, and sort parameters
     */
-  def listTools(page: PageRequest)(implicit database: DB):
+  def listTools(page: PageRequest, user: User)(implicit database: DB):
       Future[PaginatedResponse[Tool.WithRelated]] = {
 
-    val pagedTools = Tools
+    val accessibleTools = Tools.filterToSharedOrganizationIfNotInRoot(user)
+
+    val pagedTools = accessibleTools
       .sort(page.sort)
       .drop(page.offset * page.limit)
       .take(page.limit)
@@ -143,7 +151,7 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
       groupByTool
     }
 
-    val nToolsAction = Tools.length.result
+    val nToolsAction = accessibleTools.length.result
     logger.debug(s"Counting tools -- SQL: ${nToolsAction.statements.headOption}")
     val totalToolsResult = database.db.run {
       nToolsAction
@@ -162,13 +170,18 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
   /** Retrieve a single tool from the database
     *
     * @param toolId java.util.UUID ID of tool to query
+    * @param user   Results will be limited to user's organization
     */
-  def getTool(toolId: UUID)(implicit database: DB): Future[Option[Tool.WithRelated]] = {
+  def getTool(toolId: UUID, user: User)(implicit database: DB): Future[Option[Tool.WithRelated]] = {
     val test = joinRelated(Tools.filter(_.id === toolId)).result
     logger.debug(s"Fetching a tool -- SQL: ${test.statements.headOption}")
 
     database.db.run {
-      joinRelated(Tools.filter(_.id === toolId)).result
+      joinRelated(
+        Tools
+          .filterToSharedOrganizationIfNotInRoot(user)
+          .filter(_.id === toolId)
+      ).result
     } map {
       joinTuples => joinTuples.map(joinTuple => Tool.ToolRelationshipJoin.tupled(joinTuple))
     } map {
@@ -183,11 +196,11 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
     * @param tooltoCreate Tool.Create object to use to create full tool
     * @param userId String user/owner to create a new tool with
     */
-  def insertTool(tooltoCreate: Tool.Create, userId: String)(
+  def insertTool(tooltoCreate: Tool.Create, user: User)(
                   implicit database: DB): Future[Tool.WithRelatedUUIDs] = {
 
     val (tool, toolTagToTools, toolCategoryToTools) = tooltoCreate
-      .toToolWithRelatedTuple(userId)
+      .toToolWithRelatedTuple(user)
 
     val toolInsertAction = Tools.forceInsert(tool)
     val toolTagToToolsInsertAction = ToolTagsToTools.forceInsertAll(toolTagToTools)
@@ -217,10 +230,14 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
   /** Delete a given tool
     *
     * @param toolId UUID ID of tool to delete
+    * @param user   Results will be limited to user's organization
     */
-  def deleteTool(toolId: UUID)(implicit database: DB): Future[Int] = {
+  def deleteTool(toolId: UUID, user: User)(implicit database: DB): Future[Int] = {
     database.db.run {
-      Tools.filter(_.id === toolId).delete
+      Tools
+        .filterToSharedOrganizationIfNotInRoot(user)
+        .filter(_.id === toolId)
+        .delete
     }
   }
 
@@ -246,7 +263,9 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
     val updateTime = new Timestamp((new java.util.Date).getTime)
 
     val updateToolQuery = for {
-      updateTool <- Tools.filter(_.id === toolId)
+      updateTool <- Tools
+                      .filterToSharedOrganizationIfNotInRoot(user)
+                      .filter(_.id === toolId)
     } yield (
       updateTool.modifiedAt, updateTool.modifiedBy, updateTool.title,
       updateTool.description, updateTool.requirements, updateTool.license,

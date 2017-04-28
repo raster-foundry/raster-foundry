@@ -23,9 +23,13 @@ lazy val commonSettings = Seq(
     "-language:experimental.macros",
     "-feature"
   ),
-  resolvers += Resolver.sonatypeRepo("snapshots"),
-  resolvers += Resolver.bintrayRepo("lonelyplanet", "maven"),
-  shellPrompt := { s => Project.extract(s).currentProject.id + " > " }
+  resolvers ++= Seq(
+    Resolver.sonatypeRepo("snapshots"),
+    Resolver.bintrayRepo("lonelyplanet", "maven"),
+    Resolver.bintrayRepo("kwark", "maven") // Required for Slick 3.1.1.2, see https://github.com/azavea/raster-foundry/pull/1576
+  ),
+  shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
+  addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 )
 
 lazy val apiSettings = commonSettings ++ Seq(
@@ -82,7 +86,7 @@ lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
   Dependencies.akka,
   Dependencies.akkahttp,
   Dependencies.akkaHttpCors,
-  Dependencies.akkajson,
+  Dependencies.akkaCirceJson,
   Dependencies.akkastream,
   Dependencies.akkaSlf4j,
   Dependencies.akkaHttpExtensions,
@@ -96,12 +100,13 @@ lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
 )
 
 lazy val root = Project("root", file("."))
-  .aggregate(api, migrations, datamodel, database, ingest)
+  .aggregate(api, migrations, datamodel, database, batch)
   .settings(commonSettings:_*)
 
 lazy val api = Project("api", file("api"))
   .dependsOn(database, datamodel, common)
   .settings(apiSettings:_*)
+  .settings(resolvers += Resolver.bintrayRepo("hseeberger", "maven"))
   .settings({
     libraryDependencies ++= apiDependencies
   })
@@ -121,7 +126,8 @@ lazy val common = Project("common", file("common"))
     Dependencies.elasticacheClient,
     Dependencies.geotrellisS3,
     Dependencies.findbugAnnotations,
-    Dependencies.chill
+    Dependencies.chill,
+    Dependencies.cats
   )})
 
 lazy val migrations = Project("migrations", file("migrations"))
@@ -132,13 +138,16 @@ lazy val migrations = Project("migrations", file("migrations"))
   })
 
 lazy val datamodel = Project("datamodel", file("datamodel"))
+  .dependsOn(tool)
   .settings(commonSettings:_*)
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({
     libraryDependencies ++= loggingDependencies ++ Seq(
       Dependencies.geotrellisSlick % "provided",
       Dependencies.geotrellisRaster,
-      Dependencies.akkajson
+      Dependencies.circeCore,
+      Dependencies.akka,
+      Dependencies.akkahttp
     )
   })
 
@@ -146,37 +155,68 @@ lazy val database = Project("database", file("database"))
   .dependsOn(datamodel)
   .settings(commonSettings:_*)
   .settings({
-     libraryDependencies ++= slickDependencies ++ dbDependencies ++ loggingDependencies ++ Seq(Dependencies.akkaHttpExtensions)
+     libraryDependencies ++= slickDependencies ++ dbDependencies ++ loggingDependencies ++ Seq(
+       Dependencies.akkaHttpExtensions,
+       Dependencies.slickPGCirce
+     )
   })
 
-lazy val ingest = Project("ingest", file("ingest"))
+lazy val batch = Project("batch", file("batch"))
+  .dependsOn(common)
+  .dependsOn(datamodel)
+  .dependsOn(database)
   .settings(commonSettings:_*)
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({
-    libraryDependencies ++= loggingDependencies ++ testDependencies ++ Seq(
+    libraryDependencies ++= testDependencies ++ Seq(
+      Dependencies.scalaLogging,
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisS3,
       Dependencies.geotrellisUtil,
       Dependencies.geotrellisRaster,
-      Dependencies.akkajson,
-      Dependencies.spark,
-      Dependencies.scopt
+      Dependencies.akka,
+      Dependencies.akkahttp,
+      Dependencies.akkaHttpCors,
+      Dependencies.akkaCirceJson,
+      Dependencies.akkastream,
+      Dependencies.akkaSlf4j,
+      Dependencies.akkaSprayJson,
+      Dependencies.geotrellisSlick,
+      Dependencies.sparkCore,
+      Dependencies.hadoopAws,
+      Dependencies.awsSdk,
+      Dependencies.scopt,
+      Dependencies.ficus
     )
   })
+  .settings(assemblyShadeRules in assembly := Seq(
+      ShadeRule.rename("shapeless.**" -> "com.azavea.shaded.shapeless.@1").inAll
+    )
+  )
 
+import io.gatling.sbt.GatlingPlugin
 lazy val tile = Project("tile", file("tile"))
   .dependsOn(datamodel)
   .dependsOn(database)
   .dependsOn(common)
   .dependsOn(tool)
-  .dependsOn(ingest)
+  .dependsOn(batch)
+  .enablePlugins(GatlingPlugin)
   .settings(commonSettings:_*)
   .settings({
     libraryDependencies ++= loggingDependencies ++ testDependencies ++ Seq(
       Dependencies.spark,
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisS3,
-      Dependencies.akkajson
+      Dependencies.akkaSprayJson,
+      Dependencies.circeCore % "it,test",
+      Dependencies.circeGeneric % "it,test",
+      Dependencies.circeParser % "it,test",
+      Dependencies.circeOptics % "it,test",
+      Dependencies.scalajHttp % "it,test",
+      Dependencies.gatlingApp,
+      Dependencies.gatlingTest,
+      Dependencies.gatlingHighcharts
     )
   })
   .settings(assemblyMergeStrategy in assembly := {
@@ -194,6 +234,10 @@ lazy val tool = Project("tool", file("tool"))
     libraryDependencies ++= loggingDependencies ++ Seq(
       Dependencies.geotrellisRaster,
       Dependencies.shapeless,
-      Dependencies.scalatest
+      Dependencies.scalatest,
+      Dependencies.circeCore,
+      Dependencies.circeGeneric,
+      Dependencies.circeParser,
+      Dependencies.circeOptics
     )
   })

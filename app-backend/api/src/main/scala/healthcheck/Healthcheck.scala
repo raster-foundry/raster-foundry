@@ -3,7 +3,12 @@ package com.azavea.rf.api.healthcheck
 import com.azavea.rf.database.tables.Users
 import com.azavea.rf.database.Database
 import com.azavea.rf.api.AkkaSystem
+import com.azavea.rf.api.Codec._
+
 import scala.concurrent.ExecutionContext.Implicits.global
+import io.circe._
+import io.circe.generic.JsonCodec
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 /**
   * Available healthcheck values
@@ -11,17 +16,12 @@ import scala.concurrent.ExecutionContext.Implicits.global
 object HealthCheckStatus extends Enumeration {
   type Status = Value
   val OK, Failing = Value
+
+  def fromString(str: String): Status = str match {
+    case "OK" => OK
+    case "Failing" => Failing
+  }
 }
-
-
-/**
-  * Individual service check for a component (database, cache, etc.)
-  *
-  * @param service name of service that check is for
-  * @param status status of service (e.g. OK, UNHEALTHY)
-  */
-case class ServiceCheck(service: String, status: HealthCheckStatus.Status)
-
 
 /**
   * Overall healthcheck for Raster Foundry
@@ -30,8 +30,17 @@ case class ServiceCheck(service: String, status: HealthCheckStatus.Status)
   * @param services list of individual service checks
   *
   */
+@JsonCodec
 case class HealthCheck(status: HealthCheckStatus.Status, services: Seq[ServiceCheck])
 
+/**
+  * Individual service check for a component (database, cache, etc.)
+  *
+  * @param service name of service that check is for
+  * @param status status of service (e.g. OK, UNHEALTHY)
+  */
+@JsonCodec
+case class ServiceCheck(service: String, status: HealthCheckStatus.Status)
 
 /**
   * Exception for database errors
@@ -39,7 +48,6 @@ case class HealthCheck(status: HealthCheckStatus.Status, services: Seq[ServiceCh
   * @param description description of error
   */
 case class DatabaseException(description:String) extends Exception
-
 
 object HealthCheckService extends AkkaSystem.LoggerExecutor {
 

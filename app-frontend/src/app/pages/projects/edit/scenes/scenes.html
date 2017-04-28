@@ -1,0 +1,31 @@
+<div class="sidebar-project">
+  <div class="sidebar-row">
+    <button class="btn" ui-sref="projects.edit"><i class="icon-caret-left"></i>Project</button>
+    <h5 class="sidebar-title">Add/Remove scenes</h5>
+  </div>
+  <ul class="sidebar-list">
+    <li class="header">
+      <span>
+        Remove scenes by clicking <i class="icon-trash"></i>
+        or browse scenes to add.
+      </span>
+      <button type="button"
+              class="btn btn-primary fixedwidth"
+              ui-sref="projects.edit.browse({sceneid: null})">
+        Browse scenes to add
+      </button>
+    </li>
+  </ul>
+</div>
+<div class="sidebar-scrollable">
+  <div class="list-group">
+    <rf-scene-item
+        scene="scene"
+        on-action="$ctrl.removeSceneFromProject(scene)"
+        ng-mouseover="$ctrl.$parent.setHoveredScene(scene)"
+        ng-mouseleave="$ctrl.$parent.removeHoveredScene()"
+        action-icon="'icon-trash'"
+        ng-repeat="scene in $ctrl.$parent.sceneList track by scene.id">
+    </rf-scene-item>
+  </div>
+</div>

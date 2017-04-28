@@ -13,8 +13,9 @@ object UserFkVisibleFields {
   implicit class DefaultQuery[M <: UserFkVisibleFields, U, C[_]](that: Query[M, U, Seq]) {
     def filterUserVisibility(user: User) = {
       that.filter { rec => {
-        rec.visibility === Visibility.fromString("PUBLIC") || rec.createdBy === user.id
-      }
+        rec.visibility === Visibility.fromString("PUBLIC") ||
+        rec.owner === user.id ||
+        user.isInRootOrganization }
       }
     }
   }

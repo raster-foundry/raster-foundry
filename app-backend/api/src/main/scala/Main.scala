@@ -6,6 +6,7 @@ import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 
 import com.azavea.rf.api.utils.Config
+import com.azavea.rf.common.RFRejectionHandler._
 import com.azavea.rf.database.Database
 
 object AkkaSystem {
@@ -17,7 +18,10 @@ object AkkaSystem {
   }
 }
 
-object Main extends App with Config with Router with AkkaSystem.LoggerExecutor {
+object Main extends App
+    with Config
+    with Router
+    with AkkaSystem.LoggerExecutor {
   implicit lazy val database = Database.DEFAULT
   implicit val system = AkkaSystem.system
   implicit val materializer = AkkaSystem.materializer

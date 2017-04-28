@@ -12,6 +12,7 @@ export default (app) => {
          * @param {object} authService service for auth, used to get token for layers
          * @param {object} colorCorrectService color correction service
          * @param {object} projectService project service
+         * @param {object} APP_CONFIG config of application
          * @param {object} scene response from the API, optional
          * @param {object} projectId project that layer is in
          * @param {boolean} projectMosaic flag to enable requesting layers from mosaic tile server
@@ -21,8 +22,8 @@ export default (app) => {
          * @param {object} bands keys = band type, values = band number
          */
         constructor( // eslint-disable-line max-params
-            $http, $q, authService, colorCorrectService, projectService, scene, projectId,
-            projectMosaic = true, gammaCorrect = true, sigmoidCorrect = true,
+            $http, $q, authService, colorCorrectService, projectService, APP_CONFIG,
+            scene, projectId, projectMosaic = true, gammaCorrect = true, sigmoidCorrect = true,
             colorClipCorrect = true, bands = {red: 3, green: 2, blue: 1}
         ) {
             this.$http = $http;
@@ -37,9 +38,11 @@ export default (app) => {
             this.projectService = projectService;
             this.bands = bands;
             this.projectId = projectId;
-            this._sceneTiles = null; // eslint-disable-line no-underscore-dangle
-            this._mosaicTiles = null; // eslint-disable-line no-underscore-dangle
-            this._correction = null; // eslint-disable-line no-underscore-dangle
+            this._sceneTiles = null;
+            this._mosaicTiles = null;
+            this._correction = null;
+
+            this.tileServer = `${APP_CONFIG.tileServerLocation}`;
         }
 
         /** Function to return bounds from either the project or the scene
@@ -79,13 +82,13 @@ export default (app) => {
          * @return {$promise} promise for leaflet tile layer for scenes
          */
         getSceneTileLayer() {
-            if (this._sceneTiles) { // eslint-disable-line no-underscore-dangle
-                return this._sceneTiles; // eslint-disable-line no-underscore-dangle
+            if (this._sceneTiles) {
+                return this._sceneTiles;
             }
             this._sceneTiles = L.tileLayer(this.getSceneLayerURL(),
                 {bounds: this.bounds, attribution: 'Raster Foundry'}
             );
-            return this._sceneTiles; // eslint-disable-line no-underscore-dangle
+            return this._sceneTiles;
         }
 
         /** Function to return a promise that resolves into a leaflet tile layer for mosaic
@@ -93,30 +96,29 @@ export default (app) => {
          * @return {$promise} promise for leaflet tile layer for mosaic
          */
         getMosaicTileLayer() {
-            if (this._mosaicTiles) { // eslint-disable-line no-underscore-dangle
+            if (this._mosaicTiles) {
                 return this.$q((resolve) => {
-                    resolve(this._mosaicTiles); // eslint-disable-line no-underscore-dangle
+                    resolve(this._mosaicTiles);
                 });
             }
             return this.getMosaicLayerURL().then((url) => {
-                this._mosaicTiles = L.tileLayer(url, // eslint-disable-line no-underscore-dangle
+                this._mosaicTiles = L.tileLayer(url,
                                                 {bounds: this.bounds, attribution: 'Raster Foundry'}
                                                );
-                return this._mosaicTiles; // eslint-disable-line no-underscore-dangle
+                return this._mosaicTiles;
             });
         }
 
         getNDVILayer(bands = [5, 4]) {
-            if (this._tiles) { // eslint-disable-line no-underscore-dangle
+            if (this._tiles) {
                 return this.$q((resolve) => {
-                    resolve(this._tiles); // eslint-disable-line no-underscore-dangle
+                    resolve(this._tiles);
                 });
             }
-            // eslint-disable-next-line no-underscore-dangle
             this._tiles = L.tileLayer(this.getNDVIURL(bands),
                 {bounds: this.bounds, attribution: 'Raster Foundry'}
             );
-            return this._tiles; // eslint-disable-line no-underscore-dangle
+            return this._tiles;
         }
 
         /**
@@ -124,19 +126,21 @@ export default (app) => {
          * @returns {string} URL for this tile layer
          */
         getSceneLayerURL() {
-            return `/tiles/${this.scene.id}/rgb/{z}/{x}/{y}/?${this.formatColorParams()}`;
+            return `${this.tileServer}/${this.scene.id}/rgb/` +
+                `{z}/{x}/{y}/?${this.formatColorParams()}`;
         }
 
         getMosaicLayerURL(params = {}) {
             params.token = this.authService.token();
             let formattedParams = L.Util.getParamString(params);
             return this.$q((resolve) => {
-                resolve(`/tiles/${this.projectId}/{z}/{x}/{y}/${formattedParams}`);
+                resolve(`${this.tileServer}/${this.projectId}/{z}/{x}/{y}/${formattedParams}`);
             });
         }
 
         getNDVIURL(bands) {
-            return `/tiles/${this.scene.id}/ndvi/{z}/{x}/{y}/?bands=${bands[0]},${bands[1]}`;
+            return `${this.tileServer}/${this.scene.id}/` +
+                `ndvi/{z}/{x}/{y}/?bands=${bands[0]},${bands[1]}`;
         }
 
         /**
@@ -144,7 +148,7 @@ export default (app) => {
          * @returns {string} URL for the histogram
          */
         getHistogramURL() {
-            return `/tiles/${this.scene.id}/rgb/histogram/?${this.formatColorParams()}`;
+            return `${this.tileServer}/${this.scene.id}/rgb/histogram/?${this.formatColorParams()}`;
         }
 
         /**
@@ -173,7 +177,7 @@ export default (app) => {
          * @returns {null} null
          */
         resetTiles() {
-            this._correction = this.colorCorrectService // eslint-disable-line no-underscore-dangle
+            this._correction = this.colorCorrectService
                 .getDefaultColorCorrection();
             return this.colorCorrectService.reset(this.scene.id, this.projectId)
                 .then(() => this.colorCorrect());
@@ -218,17 +222,17 @@ export default (app) => {
             return this.colorCorrectService.get(
                 this.scene.id, this.projectId
             ).then((data) => {
-                this._correction = data; // eslint-disable-line no-underscore-dangle
-                return this._correction; // eslint-disable-line no-underscore-dangle
+                this._correction = data;
+                return this._correction;
             });
         }
 
         getCachedColorCorrection() {
-            return this._correction; // eslint-disable-line no-underscore-dangle
+            return this._correction;
         }
 
         updateColorCorrection(corrections) {
-            this._correction = corrections; // eslint-disable-line no-underscore-dangle
+            this._correction = corrections;
             return this.colorCorrectService.update(
                 this.scene.id, this.projectId, corrections
             ).then(() => this.colorCorrect());
@@ -256,20 +260,21 @@ export default (app) => {
             let tmp = [].concat(scene)[0];
             return {
                 // TODO: replace this once user IDs are URL safe ISSUE: 766
-                userId: tmp.createdBy.replace('|', '_'),
+                userId: tmp.owner.replace('|', '_'),
                 organizationId: tmp.organizationId
             };
         }
     }
 
     class LayerService {
-        constructor($http, $q, authService, colorCorrectService, projectService) {
+        constructor($http, $q, authService, colorCorrectService, projectService, APP_CONFIG) {
             'ngInject';
             this.$http = $http;
             this.$q = $q;
             this.authService = authService;
             this.colorCorrectService = colorCorrectService;
             this.projectService = projectService;
+            this.APP_CONFIG = APP_CONFIG;
         }
 
         /**
@@ -281,7 +286,7 @@ export default (app) => {
          */
         layerFromScene(scene, projectId, projectMosaic = false) {
             return new Layer(this.$http, this.$q, this.authService,
-                this.colorCorrectService, this.projectService,
+                this.colorCorrectService, this.projectService, this.APP_CONFIG,
                 scene, projectId, projectMosaic);
         }
     }

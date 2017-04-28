@@ -1,7 +1,7 @@
 package com.azavea.rf.datamodel
 
-import spray.json._
-import DefaultJsonProtocol._
+import io.circe.{Decoder, Encoder}
+import cats.syntax.either._
 
 /** The possible sizes of thumbnail */
 sealed abstract class ThumbnailSize(val repr: String) {
@@ -9,18 +9,16 @@ sealed abstract class ThumbnailSize(val repr: String) {
 }
 
 object ThumbnailSize {
+  implicit val thumbnailSizeEncoder: Encoder[ThumbnailSize] =
+    Encoder.encodeString.contramap[ThumbnailSize](_.toString)
+  implicit val thumbnailSizeDecoder: Decoder[ThumbnailSize] =
+    Decoder.decodeString.emap { str =>
+      Either.catchNonFatal(ThumbnailSize.fromString(str)).leftMap(_ => "ThumbnailSize")
+    }
+
   case object Small extends ThumbnailSize("SMALL")
   case object Large extends ThumbnailSize("LARGE")
   case object Square extends ThumbnailSize("SQUARE")
-
-  implicit object DefaultThumbnailSizeJsonFormat extends RootJsonFormat[ThumbnailSize] {
-    def write(size: ThumbnailSize): JsValue = JsString(size.toString)
-    def read(js: JsValue): ThumbnailSize = js match {
-      case JsString(dim) => fromString(dim)
-      case _ =>
-        deserializationError("Failed to parse thumbnail size string representation (${js}) to ThumbnailSize")
-    }
-  }
 
   def fromString(s: String): ThumbnailSize = s.toUpperCase match {
     case "SMALL" => Small

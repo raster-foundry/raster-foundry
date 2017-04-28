@@ -7,7 +7,10 @@ import concurrent.duration._
 
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.{DBSpec, Router}
+import com.azavea.rf.api.Codec._
 
+import io.circe._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 class HealthCheckSpec extends WordSpec
     with Matchers

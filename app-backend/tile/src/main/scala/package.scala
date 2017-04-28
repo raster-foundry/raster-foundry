@@ -1,3 +1,21 @@
 package com.azavea.rf
 
-package object tile {}
+import com.azavea.rf.datamodel.{MosaicDefinition, ColorCorrect}
+
+import spray.json._
+import spray.json.DefaultJsonProtocol._
+
+import java.util.UUID
+
+package object tile {
+  implicit object UUIDJsonFormat extends RootJsonFormat[UUID] {
+    def write(uuid: UUID): JsValue = JsString(uuid.toString)
+    def read(js: JsValue): UUID = js match {
+      case JsString(uuid) => UUID.fromString(uuid)
+      case _ =>
+        deserializationError("Failed to parse UUID string ${js} to java UUID")
+    }
+  }
+  implicit val defaultColorCorrectParamsFormat = jsonFormat13(ColorCorrect.Params.apply)
+  implicit val defaultMosaicDefinitionFormat = jsonFormat2(MosaicDefinition.apply)
+}

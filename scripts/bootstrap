@@ -19,20 +19,18 @@ function main() {
     echo "Pulling down development environment..."
     pushd "${DIR}/.."
     # Download environment configuration from S3
-    aws s3 cp "s3://rasterfoundry-development-config-us-east-1/.env" ".env"
+    aws s3 cp "s3://${RF_SETTINGS_BUCKET}/.env" ".env"
     popd
 
     echo "Building/Pulling containers..."
     docker-compose \
         -f "${DIR}/../docker-compose.yml" \
         -f "${DIR}/../docker-compose.airflow.yml" \
-        -f "${DIR}/../docker-compose.swagger.yml" \
         build
     docker-compose \
         -f "${DIR}/../docker-compose.yml" \
         -f "${DIR}/../docker-compose.airflow.yml" \
-        -f "${DIR}/../docker-compose.swagger.yml" \
-        pull postgres swagger-editor redis memcached
+        pull postgres redis memcached api-client
 }
 
 

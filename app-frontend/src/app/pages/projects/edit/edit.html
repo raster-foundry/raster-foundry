@@ -1,0 +1,62 @@
+<div class="container column-stretch container-not-scrollable">
+  <div class="sidebar" ui-view>
+    <div class="sidebar-project">
+      <h5 class="sidebar-title">Editing project</h5>
+      <ul class="sidebar-list">
+        <li class="header">
+          <span class="label">Add/Remove Scenes</span>
+          <button class="btn btn-primary fixedwidth" type="button" ui-sref="projects.edit.scenes">
+            Add/Remove scenes
+          </button>
+          <i class="icon-info"></i>
+        </li>
+    </div>
+    <div class="sidebar-scrollable">
+      <ul class="sidebar-list">
+        <li class="separator">
+          <span class="label">Color mode</span>
+          <button class="btn btn-light fixedwidth"
+                  type="button"
+                  ui-sref="projects.edit.colormode">
+            Select Mode
+          </button>
+          <i class="icon-info"></i>
+        </li>
+        <li class="separator">
+          <span class="label">Color correction</span>
+          <button class="btn btn-light fixedwidth"
+                  type="button"
+                  ui-sref="projects.edit.color">
+            Color correct
+          </button>
+          <i class="icon-info"></i>
+        </li>
+        <li class="separator">
+          <span class="label">Share</span>
+          <button class="btn btn-light fixedwidth"
+                  type="button">
+            Share project
+          </button>
+          <i class="icon-info"></i>
+        </li>
+        <li>
+          <span class="label">Export</span>
+          <button class="btn btn-light fixedwidth"
+                  type="button"
+                  ng-click="$ctrl.openExportModal()">
+            Export project
+          </button>
+          <i class="icon-info"></i>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="main">
+    <rf-map-container map-id="edit" ng-show="!$ctrl.showPreviewMap"></rf-map-container>
+    <rf-map-container map-id="preview"
+                      ng-if="$ctrl.showPreviewMap"
+                      initial-center="$ctrl.center"
+                      initial-zoom="$ctrl.zoom"
+    ></rf-map-container>
+  </div>
+</div

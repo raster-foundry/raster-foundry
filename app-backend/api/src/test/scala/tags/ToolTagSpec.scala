@@ -7,13 +7,16 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import akka.actor.ActorSystem
 import org.scalatest.{Matchers, WordSpec}
-import spray.json._
 
 import concurrent.duration._
 
 import com.azavea.rf.datamodel._
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.{AuthUtils, DBSpec, Router}
+
+import io.circe._
+import io.circe.syntax._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 class ToolTagSpec extends WordSpec
     with Matchers
@@ -31,7 +34,14 @@ class ToolTagSpec extends WordSpec
   val baseToolTag = "/tool-tags/"
   val newToolTag = ToolTag.Create(
     publicOrgId,
-    "test tag"
+    "test tag",
+    None: Option[String]
+  )
+
+  val newToolTagBadOwner = ToolTag.Create(
+    publicOrgId,
+    "bad owner",
+    Some("Not a real user")
   )
 
   // Alias to baseRoutes to be explicit
@@ -62,7 +72,19 @@ class ToolTagSpec extends WordSpec
       Post("/api/tool-tags/").withEntity(
         HttpEntity(
           ContentTypes.`application/json`,
-          newToolTag.toJson.toString()
+          newToolTag.asJson.noSpaces
+        )
+      ) ~> baseRoutes ~> check {
+        reject
+      }
+    }
+
+    "reject setting owner to another user" in {
+      Post("/api/tool-tags/").withHeadersAndEntity(
+        List(authHeader),
+        HttpEntity(
+          ContentTypes.`application/json`,
+          newToolTagBadOwner.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         reject
@@ -74,10 +96,11 @@ class ToolTagSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          newToolTag.toJson.toString()
+          newToolTag.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
-        responseAs[ToolTag]
+        val tt = responseAs[ToolTag]
+        tt.owner shouldEqual "Default"
       }
     }
 

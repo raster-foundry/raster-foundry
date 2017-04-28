@@ -1,50 +1,57 @@
 package com.azavea.rf.datamodel
 
-import spray.json._
-import spray.json.DefaultJsonProtocol._
+import io.circe._
 import java.util.UUID
 import java.sql.Timestamp
 
+import io.circe.generic.JsonCodec
+
+@JsonCodec
 case class Datasource(
   id: UUID,
   createdAt: java.sql.Timestamp,
   createdBy: String,
   modifiedAt: java.sql.Timestamp,
   modifiedBy: String,
+  owner: String,
   organizationId: UUID,
   name: String,
   visibility: Visibility,
-  colorCorrection: Map[String, Any],
-  composites: Map[String, Any],
-  extras: Map[String, Any]
+  colorCorrection: Json,
+  composites: Json,
+  extras: Json
 )
 
 object Datasource {
-
-  implicit val defaultDatasourceFormat = jsonFormat11(Datasource.apply _)
 
   def tupled = (Datasource.apply _).tupled
 
   def create = Create.apply _
 
 
-  case class Create(
+  @JsonCodec
+  case class Create (
     organizationId: UUID,
     name: String,
     visibility: Visibility,
-    colorCorrection: Map[String, Any],
-    composites: Map[String, Any],
-    extras: Map[String, Any]
-  ) {
-    def toDatasource(userId: String): Datasource = {
+    owner: Option[String],
+    colorCorrection: Json,
+    composites: Json,
+    extras: Json
+  ) extends OwnerCheck  {
+    def toDatasource(user: User): Datasource = {
       val id = java.util.UUID.randomUUID()
       val now = new Timestamp((new java.util.Date()).getTime())
+
+      val ownerId = checkOwner(user, this.owner)
+
       Datasource(
         id,
         now, // createdAt
-        userId, // createdBy
+        user.id, // createdBy
         now, // modifiedAt
-        userId, // modifiedBy
+        user.id, // modifiedBy
+        ownerId, // owner
         this.organizationId,
         this.name,
         this.visibility,
@@ -53,9 +60,5 @@ object Datasource {
         this.extras
       )
     }
-  }
-
-  object Create {
-    implicit val defaultDatasourceCreateFormat = jsonFormat6(Create.apply _)
   }
 }

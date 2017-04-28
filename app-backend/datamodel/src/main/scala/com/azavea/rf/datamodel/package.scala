@@ -1,10 +1,16 @@
 package com.azavea.rf
 
-import spray.json._
-import DefaultJsonProtocol._
+import java.net.URI
 import java.util.UUID
+import java.security.InvalidParameterException
 import java.sql.Timestamp
 import java.time.Instant
+
+import io.circe._
+import io.circe.parser._
+import io.circe.generic.semiauto._
+import cats.syntax.either._
+import io.circe.syntax._
 
 import geotrellis.vector._
 import geotrellis.vector.io._
@@ -12,87 +18,112 @@ import geotrellis.proj4._
 import geotrellis.slick.Projected
 
 package object datamodel {
-  // Implicits necessary for full serialization
-  implicit object UUIDJsonFormat extends RootJsonFormat[UUID] {
-    def write(uuid: UUID): JsValue = JsString(uuid.toString)
-    def read(js: JsValue): UUID = js match {
-      case JsString(uuid) => UUID.fromString(uuid)
-      case _ =>
-        deserializationError("Failed to parse UUID string ${js} to java UUID")
+
+  trait OwnerCheck {
+    def checkOwner(createUser: User, ownerUserId: Option[String]): String = {
+      (createUser, ownerUserId) match {
+        case (user, Some(id)) if user.id == id => user.id
+        case (user, Some(id)) if user.isInRootOrganization => id
+        case (user, Some(id)) if !user.isInRootOrganization =>
+          throw new IllegalArgumentException("Insufficient permissions to set owner on object")
+        case (user, _) => user.id
+      }
     }
   }
 
-  implicit val defaultPaginatedUUIDFormat = jsonFormat6(PaginatedResponse[UUID])
+  implicit def encodePaginated[A: Encoder] =
+    Encoder.forProduct6(
+      "count",
+      "hasPrevious",
+      "hasNext",
+      "page",
+      "pageSize",
+      "results"
+    )({
+        pr: PaginatedResponse[A] =>
+        (pr.count, pr.hasPrevious, pr.hasNext, pr.page, pr.pageSize, pr.results)
+      }
+    )
 
-  implicit object TimeStampJsonFormat extends RootJsonFormat[Timestamp] {
-    def write(time: Timestamp) = JsString(time.toInstant().toString())
-
-    def read(json: JsValue) = json match {
-      case JsString(time) => Timestamp.from(Instant.parse(time))
-      case _ => throw new DeserializationException(s"Expected ISO 8601 Date but got $json")
+  implicit val timestampEncoder: Encoder[Timestamp] =
+    Encoder.encodeString.contramap[Timestamp](_.toInstant.toString)
+  implicit val timestampDecoder: Decoder[Timestamp] =
+    Decoder.decodeString.emap { str =>
+      Either.catchNonFatal(Timestamp.from(Instant.parse(str))).leftMap(_ => "Timestamp")
     }
+
+  implicit val uuidEncoder: Encoder[UUID] =
+    Encoder.encodeString.contramap[UUID](_.toString)
+  implicit val uuidDecoder: Decoder[UUID] =
+    Decoder.decodeString.emap { str =>
+    Either.catchNonFatal(UUID.fromString(str)).leftMap(_ => "UUID")
   }
 
-  implicit object RFExtentJsonFormat extends RootJsonFormat[Extent] {
-    def write(extent: Extent): JsValue =
-      JsArray(
-        JsNumber(extent.xmin),
-        JsNumber(extent.ymin),
-        JsNumber(extent.xmax),
-        JsNumber(extent.ymax)
-      )
-    def read(value: JsValue): Extent = value match {
-      case JsArray(extent) =>
-        assert(extent.size == 4)
-        val parsedExtent = extent.map({
-          case JsNumber(minmax) => minmax.toDouble
-          case _ => deserializationError("Failed to parse extent array")
-        })
-        Extent(parsedExtent(0), parsedExtent(1), parsedExtent(2), parsedExtent(3))
-      case _ =>
-        deserializationError("Failed to parse extent array")
-    }
-  }
-
-  implicit object AnyJsonFormat extends JsonFormat[Any] {
-    def write(x: Any) = x match {
-      case n: Int => JsNumber(n)
-      case s: String => JsString(s)
-      case x: Seq[_] => seqFormat[Any].write(x)
-      case m: Map[String, _] => mapFormat[String, Any].write(m)
-      case b: Boolean if b == true => JsTrue
-      case b: Boolean if b == false => JsFalse
-      case x => serializationError("Do not understand object of type " + x.getClass.getName)
-    }
-    def read(value: JsValue) = value match {
-      case JsNumber(n) => n.intValue()
-      case JsString(s) => s
-      case a: JsArray => listFormat[Any].read(value)
-      case o: JsObject => mapFormat[String, Any].read(value)
-      case JsTrue => true
-      case JsFalse => false
-      case x => deserializationError("Do not understand how to deserialize " + x)
-    }
-  }
-
-  // This format will/should only be used for route Geometry serialization
-  implicit object ProjectedGeometryFormat extends RootJsonFormat[Projected[Geometry]] {
-    // on write we convert the database geometry to LatLng
-    def write(multipolygon: Projected[Geometry]): JsValue = {
-      multipolygon match {
-        case Projected(geom, 4326) => geom
-        case Projected(geom, 3857) => geom.reproject(WebMercator, LatLng)
-        case Projected(geom, srid) => try {
-          geom.reproject(CRS.fromString(s"EPSG:$srid"), LatLng)
-        } catch {
-          case e: Exception =>
-            throw new SerializationException(s"Unsupported Geometry SRID: $srid").initCause(e)
+  implicit val projectedGeometryEncoder: Encoder[Projected[Geometry]] =
+    new Encoder[Projected[Geometry]] {
+      final def apply(g: Projected[Geometry]): Json = {
+        val reprojected = g match {
+          case Projected(geom, 4326) => geom
+          case Projected(geom, 3857) => geom.reproject(WebMercator, LatLng)
+          case Projected(geom, srid) => try {
+            geom.reproject(CRS.fromString(s"EPSG:$srid"), LatLng)
+          } catch {
+            case e: Exception =>
+              throw new InvalidParameterException(s"Unsupported Geometry SRID: $srid").initCause(e)
+          }
+        }
+        parse(reprojected.toGeoJson) match {
+          case Right(js: Json) => js
+          case Left(e) => throw e
         }
       }
-    }.toJson
+    }
 
-    // on read we assume all geometries are in LatLng
-    def read(value: JsValue) =
-      Projected(value.convertTo[Geometry].reproject(LatLng, WebMercator), 3857)
+  // TODO: make this tolerate more than one incoming srid
+  implicit val projectedGeometryDecoder: Decoder[Projected[Geometry]] = Decoder[Json] map { js =>
+    Projected(js.spaces4.parseGeoJson[Geometry], 4326).reproject(CRS.fromEpsgCode(4326), CRS.fromEpsgCode(3857))(3857)
   }
+
+  implicit val crsEncoder: Encoder[CRS] =
+    Encoder.encodeString.contramap[CRS] { crs => s"epsg:${crs.epsgCode}" }
+  implicit val crsDecoder: Decoder[CRS] =
+    Decoder.decodeString.emap { str =>
+      Either.catchNonFatal(CRS.fromName(str)).leftMap(_ => "CRS")
+    }
+
+  implicit val extentEncoder: Encoder[Extent] =
+    new Encoder[Extent] {
+      final def apply(extent: Extent): Json =
+        List(extent.xmin, extent.ymin, extent.xmax, extent.ymax).asJson
+    }
+  implicit val extentDecoder: Decoder[Extent] =
+    Decoder[Json] emap { js =>
+      js.as[List[Double]].map { case List(xmin, ymin, xmax, ymax) =>
+        Extent(xmin, ymin, xmax, ymax)
+      }.leftMap(_ => "Extent")
+    }
+
+  implicit val uriEncoder: Encoder[URI] =
+    Encoder.encodeString.contramap[URI] { _.toString }
+  implicit val uriDecoder: Decoder[URI] =
+    Decoder.decodeString.emap { str =>
+      Either.catchNonFatal(URI.create(str)).leftMap(_ => "URI")
+    }
+
+  implicit val multipolygonEncoder: Encoder[MultiPolygon] =
+    new Encoder[MultiPolygon] {
+      final def apply(mp: MultiPolygon): Json = {
+        parse(mp.toGeoJson) match {
+          case Right(js: Json) => js
+          case Left(e) => throw e
+        }
+      }
+    }
+
+  implicit val multipolygonDecoder: Decoder[MultiPolygon] = Decoder[Json] map {
+    _.spaces4.parseGeoJson[MultiPolygon]
+  }
+
+  implicit val decodeProjectedMultiPolygon: Decoder[Projected[MultiPolygon]] = deriveDecoder
+  implicit val encodeProjectedMultiPolygon: Encoder[Projected[MultiPolygon]] = deriveEncoder
 }

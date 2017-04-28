@@ -4,16 +4,20 @@ import java.util.UUID
 import java.sql.Timestamp
 import java.time.Instant
 
+import com.azavea.rf.datamodel._
+import io.circe.generic.JsonCodec
 import geotrellis.proj4._
 import geotrellis.slick.Projected
-import geotrellis.vector.{Point, Polygon, Extent}
+import geotrellis.vector.{Extent, Point, Polygon}
 
 /** Case class representing all /thumbnail query parameters */
+@JsonCodec
 case class ThumbnailQueryParameters(
   sceneId: Option[UUID] = None
 )
 
 /** Case class for combined params for images */
+@JsonCodec
 case class CombinedImageQueryParams(
   orgParams: OrgQueryParameters = OrgQueryParameters(),
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
@@ -21,6 +25,7 @@ case class CombinedImageQueryParams(
 )
 
 /** Query parameters specific to image files */
+@JsonCodec
 case class ImageQueryParameters(
   minRawDataBytes: Option[Int] = None,
   maxRawDataBytes: Option[Int] = None,
@@ -30,6 +35,7 @@ case class ImageQueryParameters(
 )
 
 /** Case class representing all possible query parameters */
+@JsonCodec
 case class SceneQueryParameters(
   maxCloudCover: Option[Float] = None,
   minCloudCover: Option[Float] = None,
@@ -79,6 +85,7 @@ case class SceneQueryParameters(
 }
 
 /** Case class for Grid query parameters */
+@JsonCodec
 case class GridQueryParameters(
   maxCloudCover: Option[Float] = None,
   minCloudCover: Option[Float] = None,
@@ -96,6 +103,7 @@ case class GridQueryParameters(
 )
 
 /** Combined all query parameters */
+@JsonCodec
 case class CombinedSceneQueryParams(
   orgParams: OrgQueryParameters = OrgQueryParameters(),
   userParams: UserQueryParameters = UserQueryParameters(),
@@ -105,6 +113,7 @@ case class CombinedSceneQueryParams(
 )
 
 /** Combined all query parameters for grids */
+@JsonCodec
 case class CombinedGridQueryParams(
   orgParams: OrgQueryParameters = OrgQueryParameters(),
   userParams: UserQueryParameters = UserQueryParameters(),
@@ -113,15 +122,23 @@ case class CombinedGridQueryParams(
   imageParams: ImageQueryParameters = ImageQueryParameters()
 )
 
-
 /** Case class for project query parameters */
+@JsonCodec
 case class ProjectQueryParameters(
   orgParams: OrgQueryParameters = OrgQueryParameters(),
   userParams: UserQueryParameters = UserQueryParameters(),
   timestampParams: TimestampQueryParameters = TimestampQueryParameters()
 )
 
+@JsonCodec
+case class AoiQueryParameters(
+  orgParams: OrgQueryParameters = OrgQueryParameters(),
+  userParams: UserQueryParameters = UserQueryParameters(),
+  timestampParams: TimestampQueryParameters = TimestampQueryParameters()
+)
+
 /** Query parameters specific to tools */
+@JsonCodec
 case class ToolQueryParameters(
   minRating: Option[Double] = None,
   maxRating: Option[Double] = None,
@@ -131,6 +148,7 @@ case class ToolQueryParameters(
 )
 
 /** Combined tool query parameters */
+@JsonCodec
 case class CombinedToolQueryParameters(
   orgParams: OrgQueryParameters = OrgQueryParameters(),
   userParams: UserQueryParameters = UserQueryParameters(),
@@ -138,12 +156,14 @@ case class CombinedToolQueryParameters(
   toolParams: ToolQueryParameters = ToolQueryParameters()
 )
 
+@JsonCodec
 case class FootprintQueryParameters(
   x: Option[Double] = None,
   y: Option[Double] = None,
   bbox: Option[String] = None
 )
 
+@JsonCodec
 case class CombinedFootprintQueryParams(
   orgParams: OrgQueryParameters = OrgQueryParameters(),
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
@@ -151,17 +171,21 @@ case class CombinedFootprintQueryParams(
 )
 
 /** Common query parameters for models that have organization attributes */
+@JsonCodec
 case class OrgQueryParameters(
   organizations: Iterable[UUID] = Seq[UUID]()
 )
 
 /** Query parameters to filter by users */
+@JsonCodec
 case class UserQueryParameters(
   createdBy: Option[String] = None,
-  modifiedBy: Option[String] = None
+  modifiedBy: Option[String] = None,
+  owner: Option[String] = None
 )
 
 /** Query parameters to filter by modified/created times */
+@JsonCodec
 case class TimestampQueryParameters(
   minCreateDatetime: Option[Timestamp] = None,
   maxCreateDatetime: Option[Timestamp] = None,
@@ -169,26 +193,59 @@ case class TimestampQueryParameters(
   maxModifiedDatetime: Option[Timestamp] = None
 )
 
+@JsonCodec
 case class ToolCategoryQueryParameters(
   search: Option[String] = None
 )
 
+@JsonCodec
 case class ToolRunQueryParameters(
   createdBy: Option[String] = None,
   projectId: Option[UUID] = None,
   toolId: Option[UUID] = None
 )
 
+@JsonCodec
 case class CombinedToolRunQueryParameters(
   toolRunParams: ToolRunQueryParameters = ToolRunQueryParameters(),
   timestampParams: TimestampQueryParameters = TimestampQueryParameters()
 )
 
+@JsonCodec
 case class CombinedToolCategoryQueryParams(
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
   toolCategoryParams: ToolCategoryQueryParameters = ToolCategoryQueryParameters()
 )
 
+@JsonCodec
 case class DatasourceQueryParameters(
   name: Option[String] = None
+)
+
+@JsonCodec
+case class MapTokenQueryParameters(
+  name: Option[String] = None,
+  projectId: Option[UUID] = None
+)
+
+@JsonCodec
+case class CombinedMapTokenQueryParameters(
+  orgParams: OrgQueryParameters = OrgQueryParameters(),
+  userParams: UserQueryParameters = UserQueryParameters(),
+  mapTokenParams: MapTokenQueryParameters = MapTokenQueryParameters()
+)
+
+// TODO add uploadStatus
+@JsonCodec
+case class UploadQueryParameters(
+  organization: Option[UUID] = None,
+  datasource: Option[UUID] = None,
+  uploadStatus: Option[String] = None
+)
+
+@JsonCodec
+case class ExportQueryParameters(
+  organization: Option[UUID] = None,
+  project: Option[UUID] = None,
+  exportStatus: Iterable[String] = Seq[String]()
 )

@@ -17,12 +17,16 @@ body {
 
 a {
 	text-decoration: none;
-	font-weight: 700;
-	color: $shade-light;
+	font-weight: 600;
+	color: $brand-primary;
 
   &:hover {
-    color: $brand-primary;
+    color: darken($brand-primary, 10%);
     cursor: pointer;
+  }
+
+  &:not([class]):hover {
+    text-decoration: underline;
   }
 
   &:disabled, &.disabled, &[disabled] {
@@ -41,4 +45,9 @@ hr {
   border: 0;
   border-top: 1px solid #ddd;
   clear: both;
+}
+
+section {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
 }

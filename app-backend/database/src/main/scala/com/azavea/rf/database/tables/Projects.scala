@@ -1,24 +1,24 @@
 package com.azavea.rf.database.tables
 
-import com.azavea.rf.database.fields._
-import com.azavea.rf.database.sort._
-import com.azavea.rf.datamodel._
-import com.azavea.rf.database.query._
+import java.sql.Timestamp
+import java.util.{Date, UUID}
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
+import akka.http.scaladsl.model.{IllegalRequestException, StatusCodes}
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
-
-import geotrellis.slick.Projected
-import geotrellis.vector.{Geometry, Extent}
+import com.azavea.rf.database.fields._
+import com.azavea.rf.database.query._
+import com.azavea.rf.database.sort._
+import com.azavea.rf.datamodel._
 import com.lonelyplanet.akka.http.extensions._
 import com.typesafe.scalalogging.LazyLogging
-import slick.model.ForeignKeyAction
-
-import java.util.UUID
-import java.util.Date
-import java.sql.Timestamp
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
-
+import geotrellis.slick.Projected
+import geotrellis.vector.{Extent, Geometry}
+import io.circe._
+import io.circe.optics.JsonPath._
 
 /** Table description of table projects. Objects of this class serve as prototypes for rows in queries. */
 class Projects(_tableTag: Tag) extends Table[Project](_tableTag, "projects")
@@ -27,26 +27,33 @@ class Projects(_tableTag: Tag) extends Table[Project](_tableTag, "projects")
                                       with UserFkVisibleFields
                                       with TimestampFields
 {
-  def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, name,
-           slugLabel, description, visibility, tags, extent, manualOrder) <> (Project.tupled, Project.unapply)
+  def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, owner, name,
+    slugLabel, description, visibility, tileVisibility, isAOIProject, aoiCadenceMillis,
+    aoisLastChecked, tags, extent, manualOrder) <> (Project.tupled, Project.unapply)
 
-  val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
-  val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")
-  val modifiedAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("modified_at")
-  val organizationId: Rep[java.util.UUID] = column[java.util.UUID]("organization_id")
+  val id: Rep[UUID] = column[UUID]("id", O.PrimaryKey)
+  val createdAt: Rep[Timestamp] = column[Timestamp]("created_at")
+  val modifiedAt: Rep[Timestamp] = column[Timestamp]("modified_at")
+  val organizationId: Rep[UUID] = column[UUID]("organization_id")
   val createdBy: Rep[String] = column[String]("created_by", O.Length(255,varying=true))
   val modifiedBy: Rep[String] = column[String]("modified_by", O.Length(255,varying=true))
+  val owner: Rep[String] = column[String]("owner", O.Length(255,varying=true))
   val name: Rep[String] = column[String]("name")
   val slugLabel: Rep[String] = column[String]("slug_label", O.Length(255,varying=true))
   val description: Rep[String] = column[String]("description")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
+  val tileVisibility: Rep[Visibility] = column[Visibility]("tile_visibility")
   val tags: Rep[List[String]] = column[List[String]]("tags", O.Length(2147483647,varying=false), O.Default(List.empty))
   val extent: Rep[Option[Projected[Geometry]]] = column[Option[Projected[Geometry]]]("extent", O.Length(2147483647,varying=false), O.Default(None))
   val manualOrder: Rep[Boolean] = column[Boolean]("manual_order", O.Default(true))
+  val isAOIProject: Rep[Boolean] = column[Boolean]("is_aoi_project", O.Default(false))
+  val aoiCadenceMillis: Rep[Long] = column[Long]("aoi_cadence_millis")
+  val aoisLastChecked: Rep[Timestamp] = column[Timestamp]("aois_last_checked")
 
   lazy val organizationsFk = foreignKey("projects_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val createdByUserFK = foreignKey("projects_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val modifiedByUserFK = foreignKey("projects_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val ownerUserFK = foreignKey("projects_owner_fkey", owner, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 }
 
 object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
@@ -79,6 +86,40 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     } map { _ =>
       project
     }
+  }
+
+  /** Get the AOIs belonging to a project. */
+  def listAOIs(
+    projectId: UUID,
+    pageRequest: PageRequest,
+    user: User
+  )(implicit database: DB): Future[PaginatedResponse[AOI]] = {
+    val aois: Future[Seq[UUID]] = database.db.run {
+      AoisToProjects
+        .filter(_.projectId === projectId)
+        .map(_.aoiId)
+        .result
+    }
+
+    aois.flatMap({ ids =>
+      val aoisQ: Query[AOIs, AOI, Seq] =
+        AOIs.filterToSharedOrganizationIfNotInRoot(user).filter(_.id inSet ids)
+
+      val paginated: Future[Seq[AOI]] = database.db.run(AOIs.page(pageRequest, aoisQ).result)
+      val totalQ: Future[Int] = database.db.run(aoisQ.length.result)
+
+      for {
+        total <- totalQ
+        aois  <- paginated
+      } yield {
+        val hasNext = (pageRequest.offset + 1) * pageRequest.limit < total
+        val hasPrevious = pageRequest.offset > 0
+
+        PaginatedResponse[AOI](
+          total, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, aois
+        )
+      }
+    })
   }
 
   /** Get scenes belonging to a project
@@ -140,15 +181,36 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     }.map(Scene.WithRelated.fromRecords)
   }
 
-  /** Get project given a projectId
+  /** Get public project given a projectId
     *
     * @param projectId UUID primary key of project to retrieve
     */
-  def getProject(projectId: UUID)
+  def getPublicProject(projectId: UUID)
+                      (implicit database: DB): Future[Option[Project]] = {
+
+    database.db.run {
+      Projects
+        .filter(_.tileVisibility === Visibility.fromString("PUBLIC"))
+        .filter(_.id === projectId)
+        .result
+        .headOption
+    }
+  }
+
+  /** Get project given a projectId and user
+    *
+    * @param projectId UUID primary key of project to retrieve
+    * @param user      Results will be limited to user's organization
+    */
+  def getProject(projectId: UUID, user: User)
                (implicit database: DB): Future[Option[Project]] = {
 
     database.db.run {
-      Projects.filter(_.id === projectId).result.headOption
+      Projects
+        .filterToSharedOrganizationIfNotInRoot(user)
+        .filter(_.id === projectId)
+        .result
+        .headOption
     }
   }
 
@@ -188,11 +250,15 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
   /** Delete a given project from the database
     *
     * @param projectId UUID primary key of project to delete
+    * @param user      Results will be limited to user's organization
     */
-  def deleteProject(projectId: UUID)(implicit database: DB): Future[Int] = {
+  def deleteProject(projectId: UUID, user: User)(implicit database: DB): Future[Int] = {
 
     database.db.run {
-      Projects.filter(_.id === projectId).delete
+      Projects
+        .filterToSharedOrganizationIfNotInRoot(user)
+        .filter(_.id === projectId)
+        .delete
     }
   }
 
@@ -216,14 +282,16 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     val updateTime = new Timestamp((new Date).getTime)
 
     val updateProjectQuery = for {
-      updateProject <- Projects.filter(_.id === projectId)
+      updateProject <- Projects
+                         .filterToSharedOrganizationIfNotInRoot(user)
+                         .filter(_.id === projectId)
     } yield (
       updateProject.modifiedAt, updateProject.modifiedBy, updateProject.name, updateProject.description,
-      updateProject.visibility, updateProject.tags
+      updateProject.visibility, updateProject.tileVisibility, updateProject.tags
     )
     database.db.run {
       updateProjectQuery.update((
-        updateTime, user.id, project.name, project.description, project.visibility, project.tags
+        updateTime, user.id, project.name, project.description, project.visibility, project.tileVisibility, project.tags
       ))
     } map {
       case 1 => 1
@@ -231,36 +299,13 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     }
   }
 
-  def getCompositeBands(composite: Map[String, Any]): (Int, Int, Int) = {
-    val bands = composite.get("value") match {
-      case Some(b) => b.asInstanceOf[Map[String, Any]]
-      case _ => Map.empty[String, Any]
-    }
-    val redBand = bands.get("redBand") match {
-      case Some(b) => b.asInstanceOf[Int]
-      case _ => 0
-    }
-    val greenBand = bands.get("greenBand") match {
-      case Some(b) => b.asInstanceOf[Int]
-      case _ => 1
-    }
-    val blueBand = bands.get("blueBand") match {
-      case Some(b) => b.asInstanceOf[Int]
-      case _ => 2
-    }
-
-    (redBand, greenBand, blueBand)
-  }
-
-
-
   /** Adds a list of scenes to a project
     *
     * @param sceneIds Seq[UUID] list of primary keys of scenes to add to project
     * @param projectId UUID primary key of back to add scenes to
     */
   def addScenesToProject(sceneIds: Seq[UUID], projectId: UUID, user: User)
-                       (implicit database: DB): Future[Iterable[Scene.WithRelated]] = {
+                        (implicit database: DB): Future[Iterable[Scene.WithRelated]] = {
     // Users should not be able to add scenes to a project they did not create (for now)
     val authProjectCount =
       Projects.filter(_.id === projectId).filter(_.createdBy === user.id).length.result
@@ -273,9 +318,10 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
       authProjectCount zip authSceneCount
     } flatMap { r: (Int, Int) =>
       (r._1, r._2) match {
-        case (projectCount, sceneCount) if projectCount == 1 && sceneCount == sceneIds.length => {
+        case (projectCount, sceneCount) if projectCount == 1 && sceneCount == sceneIds.length || user.isInRootOrganization => {
           // Only allow this action to be performed if authorization is perfect
           // The user must be authorized to modify the project and must have access to ALL scenes
+          // or the user must be part of the root organization
           val sceneProjectJoinQuery = for {
             s <- ScenesToProjects if s.sceneId.inSet(sceneIds) && s.projectId === projectId
           } yield s.sceneId
@@ -319,7 +365,7 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
                     updateProjectExtentQuery.update(newProjectExtentGeometry)
                   }
                 }
-                case _ => throw new IllegalStateException("Error updating project: no project matching id found")
+                case _ => throw IllegalRequestException(StatusCodes.ClientError(404)("Not Found", "Error updating project: no project matching id found"))
               }
             }
 
@@ -331,57 +377,53 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
             database.db.run {
               sceneCompositesQuery.result
             } flatMap { sceneComposites =>
-              val sceneToProjects = sceneComposites.map {
-                case (sceneId, composites) => {
-                  val composite: Map[String, Any] = composites.get("natural") match {
-                    case Some(c: Map[String, Any]) => c
-                    case _ => composites.headOption match {
-                      case Some((key: String, value: Any)) => value match {
-                        case Some(c: Map[String, Any]) => c
-                        case _ => Map.empty[String, Any]
-                      }
-                      case _ => Map.empty[String, Any]
-                    }
-                  }
+              val sceneToProjects = sceneComposites.map { case (sceneId, composites) =>
+                val redBandPath = root.natural.value.redBand.int
+                val greenBandPath = root.natural.value.greenBand.int
+                val blueBandPath = root.natural.value.blueBand.int
 
-                  val (redBand, greenBand, blueBand) = getCompositeBands(
-                    composite.asInstanceOf[Map[String, Any]]
-                  )
+                val redBand = redBandPath.getOption(composites).getOrElse(0)
+                val greenBand = greenBandPath.getOption(composites).getOrElse(0)
+                val blueBand = blueBandPath.getOption(composites).getOrElse(0)
 
-                  SceneToProject(
-                    sceneId, projectId, None, Some(
-                      ColorCorrect.Params(
-                        redBand, greenBand, blueBand, // Bands
-                        None, None, None,             // Gamma
-                        None, None,                   // Contrast, Brightness
-                        None, None,                   // Alpha, Beta
-                        None, None,                   // Min, Max
-                        false                         // Equalize
-                      )
+                SceneToProject(
+                  sceneId, projectId, true, None, Some(
+                    ColorCorrect.Params(
+                      redBand, greenBand, blueBand, // Bands
+                      None, None, None,             // Gamma
+                      None, None,                   // Contrast, Brightness
+                      None, None,                   // Alpha, Beta
+                      None, None,                   // Min, Max
+                      false                         // Equalize
                     )
                   )
-                }
+                )
               }
 
+              logger.info(s"Number of sceneToProject inserts: ${sceneToProjects.length}")
               database.db.run {
                 ScenesToProjects.forceInsertAll(sceneToProjects)
+              } flatMap {
+                _ => {
+                  val scenesNotIngestedQuery = for {
+                    s <- Scenes if s.id.inSet(sceneIds) && s.ingestStatus.inSet(
+                      Set(IngestStatus.NotIngested, IngestStatus.Failed))
+                  } yield (s.ingestStatus)
+
+                  database.db.run {
+                    scenesNotIngestedQuery.update((IngestStatus.ToBeIngested))
+                  }
+
+                  logger.info(s"Scene IDs right at the end: $sceneIds")
+                  listSelectProjectScenes(projectId, sceneIds)
+                }
               }
             }
           }
 
-          val scenesNotIngestedQuery = for {
-            s <- Scenes if s.id.inSet(sceneIds) && s.ingestStatus.inSet(
-              Set(IngestStatus.NotIngested, IngestStatus.Failed))
-          } yield (s.ingestStatus)
-
-          database.db.run {
-            scenesNotIngestedQuery.update((IngestStatus.ToBeIngested))
-          }
-
-          listSelectProjectScenes(projectId, sceneIds)
         }
-        case (0, _) => throw new IllegalStateException("Error updating project: not authorized to modify this project")
-        case (_, _) => throw new IllegalStateException("Error updating project: not authorized to use one or more of these scenes")
+        case (0, _) => throw IllegalRequestException(StatusCodes.ClientError(403)("Forbidden", "Error updating project: not authorized to modify this project"))
+        case (_, _) => throw IllegalRequestException(StatusCodes.ClientError(403)("Forbidden", "Error updating project: not authorized to use one or more of these scenes"))
       }
     }
   }
@@ -449,7 +491,7 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
                            (implicit database: DB): Future[Iterable[Scene.WithRelated]] = {
 
     val scenesToProjects = sceneIds.map { sceneId =>
-      SceneToProject(sceneId, projectId)
+      SceneToProject(sceneId, projectId, true)
     }
 
     val actions = DBIO.seq(

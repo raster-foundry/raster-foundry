@@ -14,13 +14,15 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import com.typesafe.scalalogging.LazyLogging
 
+import io.circe.Json
+
 class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
     with ImageFields
     with OrganizationFkFields
     with UserFkVisibleFields
     with TimestampFields
 {
-  def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy,
+  def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, owner,
     rawDataBytes, visibility, filename, sourceuri, scene, imageMetadata,
     resolutionMeters, metadataFiles) <> (Image.tupled, Image.unapply)
 
@@ -30,12 +32,13 @@ class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
   val organizationId: Rep[java.util.UUID] = column[java.util.UUID]("organization_id")
   val createdBy: Rep[String] = column[String]("created_by", O.Length(255,varying=true))
   val modifiedBy: Rep[String] = column[String]("modified_by", O.Length(255,varying=true))
+  val owner: Rep[String] = column[String]("owner", O.Length(255,varying=true))
   val rawDataBytes: Rep[Int] = column[Int]("raw_data_bytes")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
   val filename: Rep[String] = column[String]("filename")
   val sourceuri: Rep[String] = column[String]("sourceuri")
   val scene: Rep[java.util.UUID] = column[java.util.UUID]("scene")
-  val imageMetadata: Rep[Map[String, Any]] = column[Map[String, Any]]("image_metadata", O.Length(2147483647,varying=false))
+  val imageMetadata: Rep[Json] = column[Json]("image_metadata", O.Length(2147483647,varying=false))
   val resolutionMeters: Rep[Float] = column[Float]("resolution_meters")
   val metadataFiles: Rep[List[String]] = column[List[String]]("metadata_files", O.Length(2147483647,varying=false), O.Default(List.empty))
 
@@ -47,6 +50,7 @@ class Images(_tableTag: Tag) extends Table[Image](_tableTag, "images")
   lazy val createdByUserFK = foreignKey("images_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   /** Foreign key referencing Users (database name images_modified_by_fkey) */
   lazy val modifiedByUserFK = foreignKey("images_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val ownerUserFK = foreignKey("images_owner_fkey", owner, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 
 }
 
@@ -70,7 +74,7 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
     */
   def insertImage(imageBanded: Image.Banded, user: User)
                  (implicit database: DB): Future[Image.WithRelated] = {
-    val image = imageBanded.toImage(user.id)
+    val image = imageBanded.toImage(user)
     val bands = imageBanded.bands map { _.toBand(image.id)}
     val insertAction = (
       for {
@@ -87,14 +91,19 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
   /** Get an image given an ID
     *
     * @param imageId UUID ID of image to get from database
+    * @param user    Results will be limited to user's organization
     */
-  def getImage(imageId: UUID)
+  def getImage(imageId: UUID, user: User)
               (implicit database: DB): Future[Option[Image.WithRelated]] = {
 
     val fetchAction = for {
-      imageFetch <- Images.filter(_.id === imageId).result.headOption
+      imageFetch <- Images
+                      .filterToSharedOrganizationIfNotInRoot(user)
+                      .filter(_.id === imageId)
+                      .result
+                      .headOption
       bandsFetch <- Bands.filter(_.imageId === imageId).result
-    } yield (imageFetch, bandsFetch) 
+    } yield (imageFetch, bandsFetch)
     database.db.run {
       fetchAction
     } map {
@@ -150,10 +159,14 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
   /** Delete an image from the database
     *
     * @param imageId UUID id of image to delete from database
+    * @param user    Results will be limited to user's organization
     */
-  def deleteImage(imageId: UUID)(implicit database: DB): Future[Int] = {
+  def deleteImage(imageId: UUID, user: User)(implicit database: DB): Future[Int] = {
     database.db.run {
-      Images.filter(_.id === imageId).delete
+      Images
+        .filterToSharedOrganizationIfNotInRoot(user)
+        .filter(_.id === imageId)
+        .delete
     }
   }
 
@@ -178,7 +191,9 @@ object Images extends TableQuery(tag => new Images(tag)) with LazyLogging {
     val bands = image.bands
 
     val updateImageQuery = for {
-      updateImage <- Images.filter(_.id === imageId)
+      updateImage <- Images
+                       .filterToSharedOrganizationIfNotInRoot(user)
+                       .filter(_.id === imageId)
     } yield (
       updateImage.modifiedAt, updateImage.modifiedBy, updateImage.rawDataBytes,
       updateImage.visibility, updateImage.filename, updateImage.sourceuri,

@@ -9,7 +9,9 @@ import slick.lifted.ForeignKeyQuery
 trait UserFkFields { self: Table[_] =>
   def createdBy: Rep[String]
   def modifiedBy: Rep[String]
+  def owner: Rep[String]
 
+  def ownerUserFK: ForeignKeyQuery[Users, User]
   def createdByUserFK: ForeignKeyQuery[Users, User]
   def modifiedByUserFK: ForeignKeyQuery[Users, User]
 }
@@ -20,7 +22,8 @@ object UserFkFields {
       that.filter{ rec =>
         List(
           userParams.createdBy.map(rec.createdBy === _),
-          userParams.modifiedBy.map(rec.modifiedBy === _)
+          userParams.modifiedBy.map(rec.modifiedBy === _),
+          userParams.owner.map(rec.owner === _)
         )
           .flatten
           .reduceLeftOption(_ && _)
@@ -29,7 +32,15 @@ object UserFkFields {
     }
 
     def filterToOwner(user: User) = {
-      that.filter(_.createdBy === user.id)
+      that.filter(_.owner === user.id)
+    }
+
+    def filterToOwnerIfNotInRootOrganization(user: User) = {
+      if (!user.isInRootOrganization) {
+        that.filter(_.owner === user.id)
+      } else {
+        that
+      }
     }
   }
 }

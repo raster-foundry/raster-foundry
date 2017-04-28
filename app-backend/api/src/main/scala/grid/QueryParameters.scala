@@ -27,12 +27,12 @@ trait GridQueryParameterDirective extends QueryParametersCommon
     'maxSunElevation.as[Float].?,
     'minSunElevation.as[Float].?,
     'ingested.as[Boolean].?
-  )).as(GridQueryParameters)
+  )).as(GridQueryParameters.apply _)
 
   val gridQueryParameters = (orgQueryParams &
     userQueryParameters &
     timestampQueryParameters &
     gridSpecificQueryParams &
     imageSpecificQueryParams
-  ).as(CombinedGridQueryParams)
+  ).as(CombinedGridQueryParams.apply _)
 }

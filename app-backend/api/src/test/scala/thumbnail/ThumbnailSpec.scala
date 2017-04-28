@@ -9,7 +9,6 @@ import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import akka.http.scaladsl.server.Route
 import akka.actor.ActorSystem
 import org.scalatest.{Matchers, WordSpec}
-import spray.json._
 
 import concurrent.duration._
 
@@ -19,6 +18,10 @@ import com.azavea.rf.datamodel._
 import com.azavea.rf.api.scene._
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.{DBSpec, Router}
+
+import io.circe._
+import io.circe.syntax._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 import scala.util.{Success, Failure, Try}
 
@@ -50,49 +53,6 @@ class ThumbnailSpec extends WordSpec
 
   // Alias to baseRoutes to be explicit
   val baseRoutes = routes
-
-  "Creating a row" should {
-    "add a row to the table" ignore {
-      val result = Thumbnails.insertThumbnail(baseThumbnailRow)
-      assert(result === Success)
-    }
-  }
-
-  "Getting a row" should {
-    "return the expected row" ignore {
-      assert(Thumbnails.getThumbnail(uuid) === baseThumbnailRow)
-    }
-  }
-
-  "Updating a row" should {
-    "change the expected values" ignore {
-      val newThumbnailsRow = Thumbnail(
-        uuid,
-        new Timestamp(1234687268),
-        new Timestamp(1234687268),
-        uuid,
-        256,
-        128,
-        uuid,
-        "https://website.com",
-        ThumbnailSize.Large
-      )
-      val result = Thumbnails.updateThumbnail(newThumbnailsRow, uuid)
-      assert(result === 1)
-      Thumbnails.getThumbnail(uuid) map {
-        case Some(resp) => assert(resp.widthPx === 256)
-        case _ => Failure(new Exception("Field not updated successfully"))
-      }
-    }
-  }
-
-  "Deleting a row" should {
-    "remove a row from the table" ignore {
-      val result = Thumbnails.deleteThumbnail(uuid)
-      assert(result === 1)
-    }
-  }
-
 
   "/api/thumbnails/{uuid}" should {
     "return a 404 for non-existent thumbnail" ignore {
@@ -126,7 +86,7 @@ class ThumbnailSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          newScene.toJson.toString()
+          newScene.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         responseAs[Scene.WithRelated]
@@ -155,7 +115,7 @@ class ThumbnailSpec extends WordSpec
         Post("/api/thumbnails/").withEntity(
           HttpEntity(
             ContentTypes.`application/json`,
-            thumbnailToPost1.toJson.toString()
+            thumbnailToPost1.asJson.noSpaces
           )
         ) ~> baseRoutes ~> check {
           reject
@@ -165,7 +125,7 @@ class ThumbnailSpec extends WordSpec
           List(authHeader),
           HttpEntity(
             ContentTypes.`application/json`,
-            thumbnailToPost1.toJson.toString()
+            thumbnailToPost1.asJson.noSpaces
           )
         ) ~> baseRoutes ~> check {
           responseAs[Thumbnail]
@@ -175,7 +135,7 @@ class ThumbnailSpec extends WordSpec
           List(authHeader),
           HttpEntity(
             ContentTypes.`application/json`,
-            thumbnailToPost2.toJson.toString()
+            thumbnailToPost2.asJson.noSpaces
           )
         ) ~> baseRoutes ~> check {
           responseAs[Thumbnail]

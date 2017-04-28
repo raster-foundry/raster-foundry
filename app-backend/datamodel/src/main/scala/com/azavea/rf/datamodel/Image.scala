@@ -1,10 +1,12 @@
 package com.azavea.rf.datamodel
 
-import spray.json._
-import spray.json.DefaultJsonProtocol._
 import java.util.UUID
 import java.sql.Timestamp
 
+import io.circe._
+import io.circe.generic.JsonCodec
+
+@JsonCodec
 case class Image(
   id: UUID,
   createdAt: Timestamp,
@@ -12,12 +14,13 @@ case class Image(
   organizationId: UUID,
   createdBy: String,
   modifiedBy: String,
+  owner: String,
   rawDataBytes: Int,
   visibility: Visibility,
   filename: String,
   sourceUri: String,
   scene: UUID,
-  imageMetadata: Map[String, Any],
+  imageMetadata: Json,
   resolutionMeters: Float,
   metadataFiles: List[String]
 ) {
@@ -28,6 +31,7 @@ case class Image(
     this.organizationId,
     this.createdBy,
     this.modifiedBy,
+    this.owner,
     this.rawDataBytes,
     this.visibility,
     this.filename,
@@ -46,8 +50,7 @@ object Image {
 
   def tupled = (Image.apply _).tupled
 
-  implicit val defaultImageFormat = jsonFormat14(Image.apply _)
-
+  @JsonCodec
   case class Create(
     organizationId: UUID,
     rawDataBytes: Int,
@@ -55,20 +58,24 @@ object Image {
     filename: String,
     sourceUri: String,
     scene: UUID,
-    imageMetadata: Map[String, Any],
+    imageMetadata: Json,
+    owner: Option[String],
     resolutionMeters: Float,
     metadataFiles: List[String]
-  ) {
-    def toImage(userId: String): Image = {
+  ) extends OwnerCheck {
+    def toImage(user: User): Image = {
       val now = new Timestamp((new java.util.Date).getTime)
+
+      val ownerId = checkOwner(user, this.owner)
 
       Image(
         UUID.randomUUID, // primary key
         now, // createdAt
         now, // modifiedAt
         organizationId,
-        userId, // createdBy: String,
-        userId, // modifiedBy: String,
+        user.id, // createdBy: String,
+        user.id, // modifiedBy: String,
+        ownerId, // owner: String
         rawDataBytes,
         visibility,
         filename,
@@ -81,24 +88,22 @@ object Image {
     }
   }
 
-  object Create {
-    implicit val defaultImageCreateFormat = jsonFormat9(Create.apply _)
-  }
-
   /** Image class when posted with bands */
+  @JsonCodec
   case class Banded(
     organizationId: UUID,
     rawDataBytes: Int,
     visibility: Visibility,
     filename: String,
     sourceUri: String,
+    owner: Option[String],
     scene: UUID,
-    imageMetadata: Map[String, Any],
+    imageMetadata: Json,
     resolutionMeters: Float,
     metadataFiles: List[String],
     bands: Seq[Band.Create]
   ) {
-    def toImage(userId: String): Image = {
+    def toImage(user: User): Image = {
       Image.Create(
         organizationId,
         rawDataBytes,
@@ -107,16 +112,14 @@ object Image {
         sourceUri,
         scene,
         imageMetadata,
+        owner,
         resolutionMeters,
         metadataFiles
-      ).toImage(userId)
+      ).toImage(user)
     }
   }
 
-  object Banded {
-    implicit val defaultImageBandedFormat = jsonFormat10(Banded.apply _)
-  }
-
+  @JsonCodec
   case class WithRelated(
     id: UUID,
     createdAt: Timestamp,
@@ -124,12 +127,13 @@ object Image {
     organizationId: UUID,
     createdBy: String,
     modifiedBy: String,
+    owner: String,
     rawDataBytes: Int,
     visibility: Visibility,
     filename: String,
     sourceUri: String,
     scene: UUID,
-    imageMetadata: Map[String, Any],
+    imageMetadata: Json,
     resolutionMeters: Float,
     metadataFiles: List[String],
     bands: Seq[Band]
@@ -142,6 +146,7 @@ object Image {
       organizationId,
       createdBy,
       modifiedBy,
+      owner,
       rawDataBytes,
       visibility,
       filename,
@@ -154,8 +159,6 @@ object Image {
   }
 
   object WithRelated {
-    implicit val defaultImageWithRelatedFormat = jsonFormat15(WithRelated.apply _)
-
     /** Helper function to create Iterable[Image.WithRelated] from join
       *
       * @param records result of join query to return image with related information

@@ -1,0 +1,26 @@
+<div class="list-group-item">
+  <div class="list-group-overflow">
+    <strong class="color-dark">{{$ctrl.datasource.name}}</strong><br>
+    Modified on {{$ctrl.datasource.modifiedAt | date}}
+  </div>
+  <div class="list-group-right">
+
+    <button class="btn btn-square"
+            ng-click="$ctrl.toggleSelected($event)"
+            ng-if="$ctrl.isSelectable"
+            ng-class="{'btn-secondary': $ctrl.selectedStatus}">
+      <i ng-class="{
+                   'icon-plus': !$ctrl.selectedStatus,
+                   'icon-cross': $ctrl.selectedStatus,
+                   'icon-check': $ctrl.selectedStatus === 'added'
+                   }">
+      </i>
+    </button>
+    <a class="btn btn-square"
+       ui-sref="imports.datasources.detail({ datasourceid: $ctrl.datasource.id })"
+       ui-sref-opts="{inherit: false}"
+       ng-if="!$ctrl.isSelectable">
+      View
+    </a>
+  </div>
+</div>

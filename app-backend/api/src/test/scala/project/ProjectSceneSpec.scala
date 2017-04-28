@@ -4,15 +4,19 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.{HttpEntity, ContentTypes}
 import akka.http.scaladsl.testkit.{ScalatestRouteTest, RouteTestTimeout}
-import com.azavea.rf.datamodel._
 import com.azavea.rf.database.query._
 import concurrent.duration._
 import org.scalatest.{Matchers, WordSpec}
-import spray.json._
 
+import com.azavea.rf.datamodel._
 import com.azavea.rf.api.scene._
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.{AuthUtils, DBSpec, Router}
+
+import io.circe._
+import io.circe.parser._
+import io.circe.syntax._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 import java.util.UUID
 
@@ -40,7 +44,7 @@ class ProjectSceneSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          newProject1.toJson.toString()
+          newProject1.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         responseAs[Project]
@@ -50,7 +54,7 @@ class ProjectSceneSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          newScene("first test scene").toJson.toString()
+          newScene("first test scene").asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         responseAs[Scene.WithRelated]
@@ -60,7 +64,7 @@ class ProjectSceneSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          newScene("second test scene").toJson.toString()
+          newScene("second test scene").asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         responseAs[Scene.WithRelated]
@@ -81,7 +85,7 @@ class ProjectSceneSpec extends WordSpec
       }
     }
 
-    "be able to attach scene to project via post" in {
+    "be able to attach a scene to project via post" in {
       // Get projects to get ID
       Get("/api/projects/").withHeaders(
         List(authHeader)
@@ -100,7 +104,7 @@ class ProjectSceneSpec extends WordSpec
             List(authHeader),
             HttpEntity(
               ContentTypes.`application/json`,
-              List(sceneId).toJson.toString()
+              List(sceneId).asJson.noSpaces
             )
           ) ~> baseRoutes ~> check {
             status shouldEqual StatusCodes.OK
@@ -115,7 +119,7 @@ class ProjectSceneSpec extends WordSpec
         List(alternateAuthHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          newProject4.toJson.toString()
+          newProject4.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         val unauthedProject = responseAs[Project]
@@ -131,7 +135,7 @@ class ProjectSceneSpec extends WordSpec
             List(authHeader),
             HttpEntity(
               ContentTypes.`application/json`,
-              List(sceneId).toJson.toString()
+              List(sceneId).asJson.noSpaces
             )
           ) ~> baseRoutes ~> check {
             reject
@@ -153,7 +157,7 @@ class ProjectSceneSpec extends WordSpec
           List(alternateAuthHeader),
           HttpEntity(
             ContentTypes.`application/json`,
-            newPrivateScene("third test scene - private, unowned").toJson.toString()
+            newPrivateScene("third test scene - private, unowned").asJson.noSpaces
           )
         ) ~> baseRoutes ~> check {
           val privateScene = responseAs[Scene.WithRelated]
@@ -162,7 +166,7 @@ class ProjectSceneSpec extends WordSpec
             List(authHeader),
             HttpEntity(
               ContentTypes.`application/json`,
-              List(privateScene.id).toJson.toString()
+              List(privateScene.id).asJson.noSpaces
             )
           ) ~> baseRoutes ~> check {
             reject
@@ -204,7 +208,7 @@ class ProjectSceneSpec extends WordSpec
             List(authHeader),
             HttpEntity(
               ContentTypes.`application/json`,
-              List(sceneId).toJson.toString()
+              List(sceneId).asJson.noSpaces
             )
           ) ~> baseRoutes ~> check {
             status shouldEqual StatusCodes.OK
@@ -260,7 +264,7 @@ class ProjectSceneSpec extends WordSpec
             List(authHeader),
             HttpEntity(
               ContentTypes.`application/json`,
-              sceneIds1.reverse.toJson.toString()
+              sceneIds1.reverse.asJson.noSpaces
             )
           ) ~> baseRoutes ~> check {
             status shouldEqual StatusCodes.NoContent
@@ -304,7 +308,7 @@ class ProjectSceneSpec extends WordSpec
             List(authHeader),
             HttpEntity(
               ContentTypes.`application/json`,
-              colorCorrectParams.toJson.toString()
+              colorCorrectParams.asJson.noSpaces
             )
           ) ~> baseRoutes ~> check {
             status shouldEqual StatusCodes.NoContent
@@ -348,7 +352,7 @@ class ProjectSceneSpec extends WordSpec
             List(authHeader),
             HttpEntity(
               ContentTypes.`application/json`,
-              List(sceneId).toJson.toString()
+              List(sceneId).asJson.noSpaces
             )
           ) ~> baseRoutes ~> check {
             status shouldEqual StatusCodes.NoContent
@@ -387,7 +391,7 @@ class ProjectSceneSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          scene1.toJson.toString
+          scene1.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         responseAs[Scene.WithRelated]
@@ -399,7 +403,7 @@ class ProjectSceneSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          newProject3.toJson.toString()
+          newProject3.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         responseAs[Project]
@@ -409,7 +413,7 @@ class ProjectSceneSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          queryParams.toJson.toString
+          queryParams.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         responseAs[Iterable[Scene.WithRelated]]
@@ -425,7 +429,7 @@ class ProjectSceneSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          scene2.toJson.toString()
+          scene2.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         responseAs[Scene.WithRelated]
@@ -435,7 +439,7 @@ class ProjectSceneSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          scene3.toJson.toString()
+          scene3.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         responseAs[Scene.WithRelated]
@@ -445,7 +449,7 @@ class ProjectSceneSpec extends WordSpec
         List(authHeader),
         HttpEntity(
           ContentTypes.`application/json`,
-          queryParams.toJson.toString()
+          queryParams.asJson.noSpaces
         )
       ) ~> baseRoutes ~> check {
         responseAs[Iterable[Scene.WithRelated]]

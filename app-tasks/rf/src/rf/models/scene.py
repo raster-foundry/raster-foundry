@@ -21,7 +21,7 @@ class Scene(BaseModel):
                  ingestStatus, metadataFiles, sunAzimuth=None, sunElevation=None,
                  cloudCover=None, acquisitionDate=None, id=None, thumbnails=None,
                  tileFootprint=None, dataFootprint=None, images=None, createdAt=None,
-                 modifiedAt=None, createdBy=None, modifiedBy=None, ingestLocation=None):
+                 modifiedAt=None, createdBy=None, modifiedBy=None, ingestLocation=None, owner=None):
         """Create a new Scene
 
         Args:
@@ -44,6 +44,7 @@ class Scene(BaseModel):
             tileFootprint (Footprint): footprint of the tile associated with scene
             dataFootprint (Footprint): footprint of this scene's data
             images (List[Image]): list of images associated with scene
+            owner (str): user that owns a scene
         """
 
         self.ingestLocation = ingestLocation
@@ -60,6 +61,7 @@ class Scene(BaseModel):
         self.boundaryStatus = boundaryStatus
         self.ingestStatus = ingestStatus
         self.metadataFiles = metadataFiles
+        self.owner = owner
 
         # Optional - can be None
         self.sunAzimuth = sunAzimuth
@@ -102,7 +104,8 @@ class Scene(BaseModel):
             statuses.get('boundaryStatus'), statuses.get('ingestStatus'), d.get('metadataFiles'),
             filter_fields.get('sunAzimuth'), filter_fields.get('sunElevation'), filter_fields.get('cloudCover'),
             filter_fields.get('acquisitionDate'), d.get('id'), thumbnails, tile_footprint, data_footprint,
-            images, d.get('createdAt'), d.get('modifiedAt'), d.get('createdBy'), d.get('modifiedBy'), d.get('ingestLocation', '')
+            images, d.get('createdAt'), d.get('modifiedAt'), d.get('createdBy'), d.get('modifiedBy'),
+            d.get('ingestLocation', ''), owner=d.get('owner')
         )
 
     def to_dict(self):
@@ -113,7 +116,8 @@ class Scene(BaseModel):
         scene_dict = dict(
             organizationId=self.organizationId, ingestSizeBytes=self.ingestSizeBytes, visibility=self.visibility,
             tags=self.tags, datasource=self.datasource, sceneMetadata=self.sceneMetadata, filterFields=filterFields,
-            name=self.name, statusFields=statusFields, metadataFiles=self.metadataFiles, ingestLocation=self.ingestLocation)
+            name=self.name, statusFields=statusFields, metadataFiles=self.metadataFiles,
+            ingestLocation=self.ingestLocation, owner=self.owner)
 
         if self.sunAzimuth:
             filterFields['sunAzimuth'] = self.sunAzimuth

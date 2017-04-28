@@ -1,0 +1,34 @@
+<div class="panel tab-description">
+  Api tokens allow an application access our API and
+  to act on your behalf. Treat these the same way you would a password.
+  <br>
+  For security, we recommend creating a separate access token for each
+  application or integration.
+</div>
+<form action="">
+  <label for="new-token">Create token</label>
+  <div class="form-group all-in-one">
+    <input id="new-token" type="text"
+           ng-model="$ctrl.newTokenName"
+           class="form-control"
+           placeholder="Token Name">
+    <button type="button" class="btn btn-link" ng-click="$ctrl.createToken($ctrl.newTokenName)">
+      <i class="icon-plus"></i>Create
+    </button>
+  </div>
+</form>
+<div class="list-group">
+  <rf-token-item
+    token="token"
+    on-delete="$ctrl.deleteToken(token)"
+    ng-repeat="token in $ctrl.tokens track by token.id">
+</div>
+<div class="list-group"
+     ng-if="(!$ctrl.tokens || !$ctrl.tokens.length) && !$ctrl.loading">
+  You have not generated any tokens.
+</div>
+<div class="list-group" ng-show="$ctrl.loading">
+  <span class="list-placeholder">
+    <i class="icon-load"></i>
+  </span>
+</div>

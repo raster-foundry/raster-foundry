@@ -36,17 +36,17 @@ object Organizations extends TableQuery(tag => new Organizations(tag)) with Lazy
       new NameFieldSort(identity[Organizations]),
       new TimestampSort(identity[Organizations]))
 
-  def listOrganizations(page: PageRequest)(implicit database: DB): Future[PaginatedResponse[Organization]] = {
+  def pageOrganizations(organizations: TableQuery, page: PageRequest, database: DB) = {
 
     val organizationsQueryResult = database.db.run {
-      Organizations
+      organizations
         .drop(page.offset * page.limit)
         .take(page.limit)
         .sort(page.sort)
         .result
     }
     val totalOrganizationsQuery = database.db.run {
-      Organizations.length.result
+      organizations.length.result
     }
 
     for {
@@ -59,6 +59,12 @@ object Organizations extends TableQuery(tag => new Organizations(tag)) with Lazy
         page.offset, page.limit, organizations)
     }
   }
+
+  def listOrganizations(page: PageRequest)(implicit database: DB) =
+    pageOrganizations(Organizations, page, database)
+
+  def listFilteredOrganizations(ids: Seq[UUID], page: PageRequest)(implicit database: DB) =
+    pageOrganizations(Organizations.filter(_.id inSet ids), page, database)
 
   def getOrganization(id: java.util.UUID)(implicit database: DB): Future[Option[Organization]] = {
     val action = Organizations.filter(_.id === id).result
@@ -107,110 +113,6 @@ object Organizations extends TableQuery(tag => new Organizations(tag)) with Lazy
         case 1 => 1
         case _ => throw new IllegalStateException("Error while updating organization: Unexpected result")
       }
-    }
-  }
-
-  def listOrganizationUsers(page: PageRequest, id: java.util.UUID)
-                           (implicit database: DB): Future[PaginatedResponse[User.WithRole]] = {
-    val getOrgUsersResult = database.db.run {
-      UsersToOrganizations.filter(_.organizationId === id)
-        .drop(page.offset * page.limit)
-        .take(page.limit)
-        .sort(page.sort)
-        .result
-    } map {
-      rels => rels.map(rel => User.WithRole(rel.userId, rel.role, rel.createdAt, rel.modifiedAt))
-    }
-
-    val totalOrgUsersResult = database.db.run {
-      UsersToOrganizations.filter(_.organizationId === id).length.result
-    }
-
-    for {
-      totalOrgUsers <- totalOrgUsersResult
-      orgUsers <- getOrgUsersResult
-    } yield {
-      val hasNext = (page.offset + 1) * page.limit < totalOrgUsers // 0 indexed page offset
-      val hasPrevious = page.offset > 0
-      PaginatedResponse(totalOrgUsers, hasPrevious, hasNext, page.offset, page.limit, orgUsers)
-    }
-  }
-
-  def getOrganizationUser(orgId: UUID, userId: String)(implicit database: DB): Future[Option[User.WithRole]] = {
-    val getOrgUserQuery = for {
-      relationship <- UsersToOrganizations.filter(_.userId === userId)
-        .filter(_.organizationId === orgId)
-      user <- Users.filter(_.id === relationship.userId)
-    } yield (user.id, relationship.role, relationship.createdAt, relationship.modifiedAt)
-    val action = getOrgUserQuery.result
-    logger.debug(s"Getting org user with: ${action.statements.headOption}")
-    database.db.run {
-      action.headOption
-    } map {
-      case Some(tuple) => Option(User.WithRole.tupled(tuple))
-      case _ => None
-    }
-  }
-
-  def addUserToOrganization(userWithRoleCreate: User.WithRoleCreate, orgId: UUID)
-                           (implicit database: DB): Future[User.WithRole] = {
-    val userWithRole = userWithRoleCreate.toUserWithRole()
-
-    val insertRow =
-      User.ToOrganization(userWithRole.id, orgId, userWithRole.role, userWithRole.createdAt, userWithRole.modifiedAt)
-
-    val action = UsersToOrganizations.forceInsert(insertRow)
-    logger.debug(s"Inserting User to Org with: ${action.statements.headOption}")
-    database.db.run {
-      action.asTry
-    } map {
-      case Success(user) => userWithRole
-      case Failure(_) => throw new IllegalStateException("User is already in the organization")
-    }
-  }
-
-  def getUserOrgRole(userId: String, orgId: UUID)
-                    (implicit database: DB): Future[Option[User.WithRole]] = {
-    val action = UsersToOrganizations.filter(
-      rel => rel.userId === userId && rel.organizationId === orgId
-    ).result
-    logger.debug(s"Getting user org role with: ${action.statements.headOption}")
-    database.db.run {
-      action.headOption.map {
-        case Some(rel) => Some(User.WithRole(rel.userId, rel.role, rel.createdAt, rel.modifiedAt))
-        case _ => None
-      }
-    }
-  }
-
-  def deleteUserOrgRole(userId: String, orgId: UUID)(implicit database: DB): Future[Int] = {
-    val action = UsersToOrganizations.filter(
-      rel => rel.userId === userId && rel.organizationId === orgId
-    ).delete
-    logger.debug(s"Deleting User to Org with: ${action.statements.headOption}")
-    database.db.run {
-      action
-    }
-  }
-
-  def updateUserOrgRole(userWithRole: User.WithRole, orgId: UUID, userId: String)(implicit database: DB): Future[Int] = {
-    val now = new Timestamp((new java.util.Date).getTime)
-
-    val rowUpdate = for {
-      relationship <- UsersToOrganizations.filter(
-        rel => rel.userId === userId && rel.organizationId === orgId
-      )
-    } yield (
-      relationship.modifiedAt, relationship.role
-    )
-
-    val action = rowUpdate.update(
-      (now, userWithRole.role)
-    )
-    logger.debug(s"Updating user with role with: ${action.statements.headOption}")
-
-    database.db.run {
-      action
     }
   }
 }

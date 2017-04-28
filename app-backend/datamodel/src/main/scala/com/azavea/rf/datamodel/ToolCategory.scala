@@ -1,8 +1,8 @@
 package com.azavea.rf.datamodel
 
-import spray.json.DefaultJsonProtocol._
-import java.util.UUID
 import java.sql.Timestamp
+
+import io.circe.generic.JsonCodec
 
 /** A user generate category to track tools in the Raster Foundry lab
   *
@@ -13,6 +13,7 @@ import java.sql.Timestamp
   * @param modifiedBy String User ID that last modified category
   * @param category String Category that is displayed to user
   */
+@JsonCodec
 case class ToolCategory(
     slugLabel: String,
     createdAt: Timestamp,
@@ -28,8 +29,7 @@ object ToolCategory {
 
   def tupled = (ToolCategory.apply _).tupled
 
-  implicit val defaultToolCategoryFormat = jsonFormat6(ToolCategory.apply _)
-
+  @JsonCodec
   case class Create(
       category: String
   ) {
@@ -61,9 +61,5 @@ object ToolCategory {
         category
       )
     }
-  }
-
-  object Create {
-    implicit val defaultToolCategoryCreateFormat = jsonFormat1(Create.apply _)
   }
 }

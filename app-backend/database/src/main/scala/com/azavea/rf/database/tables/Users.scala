@@ -1,21 +1,69 @@
 package com.azavea.rf.database.tables
 
+import java.util.UUID
+import java.sql.Timestamp
+
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
+import com.azavea.rf.database.fields.{TimestampFields, UserFields}
+import com.azavea.rf.database.sort._
 import com.azavea.rf.datamodel._
 import com.typesafe.scalalogging.LazyLogging
-import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
+import com.lonelyplanet.akka.http.extensions.{Order, PageRequest}
+
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class Users(_tableTag: Tag) extends Table[User](_tableTag, "users") {
-  def * = id <> (User.apply, User.unapply)
+class Users(_tableTag: Tag) extends Table[User](_tableTag, "users")
+                                    with UserFields
+                                    with TimestampFields
+{
+  def * = (id, organizationId, role, createdAt, modifiedAt) <> (User.tupled, User.unapply)
 
   val id: Rep[String] = column[String]("id", O.PrimaryKey, O.Length(255,varying=true))
+  val organizationId: Rep[UUID] = column[UUID]("organization_id")
+  val role: Rep[UserRole] = column[UserRole]("role", O.Length(255,varying=true))
+  val createdAt: Rep[Timestamp] = column[Timestamp]("created_at")
+  val modifiedAt: Rep[Timestamp] = column[Timestamp]("modified_at")
 }
 
 object Users extends TableQuery(tag => new Users(tag)) with LazyLogging {
-  type TableQuery = Query[Users,Users#TableElementType, Seq]
+  type TableQuery = Query[Users, Users#TableElementType, Seq]
+  type WithOrgQuery = (Users, Organizations)
+
+  implicit val sorter = new QuerySorter[Users](
+    new UserFieldSort(identity[Users]),
+    new TimestampSort(identity[Users]))
+
+  /**
+    * Returns a paginated result with Users
+    *
+    * @param page page request that has limit, offset, and sort parameters
+    */
+  def listUsers(page: PageRequest)(implicit database: DB):
+    Future[PaginatedResponse[User]] = {
+
+    val usersQueryResult = database.db.run {
+      Users
+        .drop(page.offset * page.limit)
+        .take(page.limit)
+        .sort(page.sort)
+        .result
+    }
+    val totalUsersQuery = database.db.run {
+      Users.length.result
+    }
+
+    for {
+      totalUsers <- totalUsersQuery
+      users <- usersQueryResult
+    } yield {
+      val hasNext = (page.offset + 1) * page.limit < totalUsers // 0 indexed page offset
+      val hasPrevious = page.offset > 0
+      PaginatedResponse(totalUsers, hasPrevious, hasNext,
+        page.offset, page.limit, users)
+    }
+  }
 
   /**
     * Recursively applies a list of sort parameters from a page request
@@ -36,80 +84,17 @@ object Users extends TableQuery(tag => new Users(tag)) with LazyLogging {
     }
   }
 
-  def joinUsersRolesOrgs(query: Query[Users, User, Seq])(implicit database: DB) = {
-    logger.debug(s"Performing Users/Org roles join -- SQL: ${query.result.statements.headOption}")
-
-    val userOrgJoin = query join UsersToOrganizations join Organizations on {
-      case ((user, userToOrg), org) =>
-        user.id === userToOrg.userId &&
-          userToOrg.organizationId === org.id
-    }
-
-    for {
-      ((user, userToOrg), org) <- userOrgJoin
-    } yield (user.id, org.id, org.name, userToOrg.role)
-  }
-
-  def groupByUserId(joins: Seq[User.RoleOrgJoin]): Seq[User.WithOrgs] =
-    joins.groupBy(_.userId).map {
-      case (userId, joins) => User.WithOrgs(userId, joins.map(join => Organization.WithRole(join.orgId, join.orgName, join.userRole)))
-    }.toSeq
-
-  /**
-    * Returns a paginated result with Users
-    *
-    * @param page page request that has limit, offset, and sort parameters
-    */
-  def getPaginatedUsers(page: PageRequest)(implicit database: DB):
-      Future[PaginatedResponse[User.WithOrgs]] = {
-
-    val usersQueryAction = joinUsersRolesOrgs(
-        applySort(Users, page.sort)
-          .drop(page.offset * page.limit)
-          .take(page.limit)
-      ).result
-
-    logger.debug(s"Fetching users -- SQL: ${usersQueryAction.statements.headOption}")
-    val usersQueryResult = database.db.run {
-      usersQueryAction
-    } map {
-      joinTuples => joinTuples.map(joinTuple => User.RoleOrgJoin.tupled(joinTuple))
-    } map {
-      groupByUserId
-    }
-
-    val nUsersAction = Users.length.result
-    logger.debug(s"Counting users -- SQL: ${nUsersAction.statements.headOption}")
-    val totalUsersResult = database.db.run {
-      nUsersAction
-    }
-
-    for {
-      totalUsers <- totalUsersResult
-      users <- usersQueryResult
-    } yield {
-      val hasNext = (page.offset + 1) * page.limit < totalUsers // 0 indexed page offset
-      val hasPrevious = page.offset > 0
-      PaginatedResponse(totalUsers, hasPrevious, hasNext, page.offset, page.limit, users)
-    }
-  }
-
   def createUser(user: User.Create)(implicit database: DB):  Future[User] = {
-    val(userRow, usersToOrganizationsRow) = user.toUsersOrgTuple()
+    val userRow = user.toUser
 
     val insertAction = Users.forceInsert(userRow)
-    val userToOrgAction = UsersToOrganizations.forceInsert(usersToOrganizationsRow)
     val userInsert = (
       for {
         u <- insertAction
-        userToOrg <- userToOrgAction
       } yield ()
     ).transactionally
 
     logger.debug(s"Inserting user -- User SQL: ${insertAction.statements.headOption}")
-    logger.debug(
-      s"Inserting into User/Org join -- User/Org SQL: ${userToOrgAction.statements.headOption}"
-    )
 
     database.db.run {
       userInsert.map(_ => userRow)
@@ -137,16 +122,19 @@ object Users extends TableQuery(tag => new Users(tag)) with LazyLogging {
     }
   }
 
-  def getUserWithOrgsById(userId: String)(implicit database: DB): Future[Option[User.WithOrgs]] = {
-    database.db.run {
-      joinUsersRolesOrgs(Users.filter(_.id === userId)).result
-    } map {
-      joinTuples => joinTuples.map(joinTuple => User.RoleOrgJoin.tupled(joinTuple))
-    } map {
-      groupByUserId
-    } map {
-      _.headOption
-    }
+  def updateUser(user: User, id: String)(implicit database: DB): Future[Int] = {
+    val now = new Timestamp((new java.util.Date).getTime)
+    val updateQuery = for {
+      u <- Users.filter(_.id === id)
+    } yield (
+      u.organizationId, u.role, u.modifiedAt
+    )
 
+    database.db.run {
+      updateQuery.update((user.organizationId, user.role, now))
+    } map {
+      case 1 => 1
+      case _ => throw new IllegalStateException("Error while updating user: Unexpected result")
+    }
   }
 }

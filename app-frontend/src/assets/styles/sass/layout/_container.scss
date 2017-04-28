@@ -1,7 +1,7 @@
 /*
  Fix this.
  the wrapper is preventing the library pages from working correctly. Columns arent stretching.
- If this is removed than map pages become broken. its fucked as is.
+ If this is removed than map pages become broken. its broken as is.
  */
 .app-wrapper {
   //height: 100%;
@@ -18,15 +18,15 @@
     max-width: 100%; // inherit does not work in IE so we use 100%
     flex: 1;
     position: relative;
+    justify-content: center;
 
     &.dashboard {
       width: 100%;
-	    max-width: 1160px;
-      min-height: 100vh;
+	    // max-width: 1160px;
     }
     &.dashboard-filter {
       width: 100%;
-      max-width: 1160px;
+      // max-width: 1160px;
       flex: 1;
       &.wide {
         max-width: initial;
@@ -37,7 +37,7 @@
 
 .container {
 	width: 100%;
-	max-width: 1160px;
+	// max-width: 1160px;
 	margin: auto;
   display: flex;
 }

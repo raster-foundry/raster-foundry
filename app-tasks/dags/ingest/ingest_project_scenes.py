@@ -7,11 +7,12 @@ from airflow.operators.python_operator import PythonOperator
 from airflow.exceptions import AirflowException
 from airflow.models import DAG
 import boto3
+import dns.resolver
 
 from rf.utils.io import IngestStatus
 from rf.models import Scene
-from rf.ingest import create_landsat8_ingest
-from rf.uploads.landsat8.settings import datasource_id
+from rf.ingest import create_landsat8_ingest, create_ingest_definition
+from rf.uploads.landsat8.settings import datasource_id as landsat_id
 from rf.utils.exception_reporting import wrap_rollbar
 
 rf_logger = logging.getLogger('rf')
@@ -37,9 +38,10 @@ dag = DAG(
 )
 
 
-batch = boto3.client('batch')
 batch_job_definition = os.getenv('BATCH_INGEST_JOB_NAME')
 batch_job_queue = os.getenv('BATCH_INGEST_JOB_QUEUE')
+hosted_zone_id = os.getenv('HOSTED_ZONE_ID')
+jar_path = os.getenv('BATCH_JAR_PATH', 'rf-batch-ba1b872.jar')
 
 
 ################################
@@ -47,19 +49,15 @@ batch_job_queue = os.getenv('BATCH_INGEST_JOB_QUEUE')
 ################################
 
 @wrap_rollbar
-def get_latest_batch_job_revision():
-    """Get latest batch job definition ARN
-
-    This function is used to get the lates AWS batch ARN to submit an ingest job to
-    """
-    job_definitions = batch.describe_job_definitions(jobDefinitionName=batch_job_definition)['jobDefinitions']
-    latest_definition = sorted(job_definitions, key=lambda job: job['revision'], reverse=True)[0]
-    return latest_definition['jobDefinitionArn']
+def get_cluster_id():
+    resolver = dns.resolver.Resolver()
+    cluster_id = resolver.query("dataproc.rasterfoundry.com", "TXT")[0]
+    return cluster_id.to_text().strip('"')
 
 
 @wrap_rollbar
-def execute_ingest_batch_job(ingest_s3_uri, ingest_def_id):
-    """Kick off ingest in AWS Batch
+def execute_ingest_emr_job(ingest_s3_uri, ingest_def_id, cluster_id):
+    """Kick off ingest in AWS EMR
 
     Args:
         ingest_s3_uri (str): URI for ingest definition
@@ -68,20 +66,36 @@ def execute_ingest_batch_job(ingest_s3_uri, ingest_def_id):
     Returns:
         dict
     """
-    ingest_arn = get_latest_batch_job_revision()
-    response = batch.submit_job(
-        jobName='ingest-{}'.format(ingest_def_id),
-        jobQueue=batch_job_queue,
-        jobDefinition=ingest_arn,
-        parameters={
-            'ingest_definition': ingest_s3_uri
+    step = {
+        'ActionOnFailure': 'CONTINUE',
+        'Name': 'ingest-{}'.format(ingest_def_id),
+        'HadoopJarStep': {
+            'Args': ['/usr/bin/spark-submit',
+                     '--master',
+                     'yarn',
+                     '--deploy-mode',
+                     'cluster',
+                     '--class',
+                     'com.azavea.rf.batch.ingest.Ingest',
+                     's3://rasterfoundry-global-artifacts-us-east-1/batch/{}'.format(jar_path),
+                     '-t',
+                     '--overwrite',
+                     '-j',
+                     ingest_s3_uri],
+            'Jar': 's3://us-east-1.elasticmapreduce/libs/script-runner/script-runner.jar'
         }
+    }
+    logger.info('Step: %s', step)
+    emr = boto3.client('emr')
+    response = emr.add_job_flow_steps(
+        JobFlowId=cluster_id,
+        Steps=[step]
     )
     return response
 
 
 @wrap_rollbar
-def wait_for_success(response):
+def wait_for_success(response, cluster_id):
     """Wait for batch success/failure given an initial batch response
 
     Args:
@@ -90,28 +104,28 @@ def wait_for_success(response):
     Returns:
         boolean
     """
-    job_id = response['jobId']
-    job_name = response['jobName']
-    get_description = lambda: batch.describe_jobs(jobs=[job_id])['jobs'][0]
-    logger.info('Starting to check for status updates for job %s', job_name)
-    job_description = get_description()
-    current_status = job_description['status']
+    step_id = response['StepIds'][0]
+    emr = boto3.client('emr')
+    get_description = lambda: emr.describe_step(ClusterId=cluster_id, StepId=step_id)
+    logger.info('Starting to check for status updates for step %s', step_id)
+    step_description = get_description()
+    current_status = step_description['Step']['Status']['State']
     logger.info('Initial status: %s', current_status)
-    while current_status not in ['SUCCEEDED', 'FAILED']:
+    while current_status not in ['COMPLETED', 'FAILED']:
         description = get_description()
-        status = description['status']
+        status = description['Step']['Status']['State']
         if status != current_status:
             logger.info('Updating status of %s. Old Status: %s New Status: %s',
-                        job_name, current_status, status)
+                        step_id, current_status, status)
             current_status = status
-        time.sleep(15)
-    is_success = (current_status == 'SUCCEEDED')
+        time.sleep(30)
+    is_success = (current_status == 'COMPLETED')
     if is_success:
-        logger.info('Successfully completed ingest for %s', job_name)
+        logger.info('Successfully completed ingest for %s', step_id)
         return True
     else:
-        logger.error('Something went wrong with %s. Current Status: %s', job_name, current_status)
-        raise AirflowException('Ingest failed for {}'.format(job_name))
+        logger.error('Something went wrong with %s. Current Status: %s', step_id, current_status)
+        raise AirflowException('Ingest failed for {}'.format(step_id))
 
 
 ################################
@@ -132,17 +146,16 @@ def create_ingest_definition_op(*args, **kwargs):
     if scene.ingestStatus != IngestStatus.TOBEINGESTED:
         raise Exception('Scene is no longer waiting to be ingested, error error')
 
-    if scene.datasource != datasource_id:
-        raise Exception('Unable to import scene %s, only able to import Landsat 8 scenes', scene.id)
-
-
     scene.ingestStatus = IngestStatus.INGESTING
     logger.info('Updating scene status to ingesting')
     scene.update()
     logger.info('Successfully updated scene status')
 
     logger.info('Creating ingest definition')
-    ingest_definition = create_landsat8_ingest(scene)
+    if scene.datasource != landsat_id:
+        ingest_definition = create_ingest_definition(scene)
+    else:
+        ingest_definition = create_landsat8_ingest(scene)
     ingest_definition.put_in_s3()
     logger.info('Successfully created and pushed ingest definition')
 
@@ -159,9 +172,10 @@ def launch_spark_ingest_job_op(*args, **kwargs):
     ingest_def_id = xcom_client.xcom_pull(key='ingest_def_id', task_ids=None)
 
     logger.info('Launching Spark ingest job with ingest definition %s', ingest_def_uri)
-    batch_response = execute_ingest_batch_job(ingest_def_uri, ingest_def_id)
+    cluster_id = get_cluster_id()
+    emr_response = execute_ingest_emr_job(ingest_def_uri, ingest_def_id, cluster_id)
     logger.info('Finished launching Spark ingest job. Waiting for status changes.')
-    is_success = wait_for_success(batch_response)
+    is_success = wait_for_success(emr_response, cluster_id)
     return is_success
 
 

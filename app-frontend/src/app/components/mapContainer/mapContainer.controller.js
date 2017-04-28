@@ -62,7 +62,9 @@ export default class MapContainerController {
 
     handleLayerAdded(e) {
         let layer = e.layer;
+        // eslint-disable-next-line no-underscore-dangle
         let isTileLayer = layer._tiles && layer._url;
+        // eslint-disable-next-line no-underscore-dangle
         let layerId = layer._leaflet_id;
 
         if (isTileLayer) {

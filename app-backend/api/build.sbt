@@ -7,6 +7,8 @@ initialCommands in console := """
   |import com.azavea.rf.database.Database
   |import com.azavea.rf.database.ExtendedPostgresDriver.api._
   |import com.azavea.rf.database.tables._
+  |import io.circe._
+  |import io.circe.syntax._
   |import java.util.UUID
   |import java.sql.Timestamp
   |import java.time.Instant

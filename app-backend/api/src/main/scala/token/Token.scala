@@ -16,9 +16,15 @@ import com.azavea.rf.datamodel.User
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.utils.{Auth0Exception, ManagementBearerToken}
 
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import io.circe.generic.JsonCodec
 
+// TODO: this sort of case class definition should live in datamodel
+@JsonCodec
 case class RefreshToken(refresh_token: String)
+@JsonCodec
 case class DeviceCredential(id: String, device_name: String)
+@JsonCodec
 case class AuthorizedToken(id_token: String, expires_in: Int, token_type: String)
 
 object TokenService extends Config {
@@ -26,6 +32,7 @@ object TokenService extends Config {
   import com.azavea.rf.api.AkkaSystem._
 
   val uri = Uri(s"https://$auth0Domain/api/v2/device-credentials")
+
   val auth0BearerHeader = List(
     Authorization(GenericHttpCredentials("Bearer", auth0Bearer))
   )
@@ -121,6 +128,13 @@ object TokenService extends Config {
   }
 
   def revokeRefreshToken(user: User, deviceId: String): Future[StatusCode] = {
+    for {
+      bearerToken <- authBearerTokenCache.get(1)
+      statusCodeOption <- requestRefreshTokenRevocation(user, deviceId, bearerToken)
+    } yield statusCodeOption
+  }
+
+  def requestRefreshTokenRevocation(user: User, deviceId: String, bearerToken: ManagementBearerToken): Future[StatusCode] = {
 
     listRefreshTokens(user).flatMap { deviceCredentials =>
       deviceCredentials.count(dc => dc.id == deviceId) > 0 match {
@@ -129,14 +143,16 @@ object TokenService extends Config {
             .singleRequest(HttpRequest(
               method = DELETE,
               uri = s"$uri/$deviceId",
-              headers = auth0BearerHeader
+              headers = List(
+                Authorization(GenericHttpCredentials("Bearer", bearerToken.access_token))
+              )
             ))
             .map {
               case HttpResponse(StatusCodes.NoContent, _, _, _) =>
                 StatusCodes.NoContent
               case HttpResponse(errCode, _, error, _) =>
                 throw new Auth0Exception(errCode, error.toString)
-            }
+        }
         case _ => Future(StatusCodes.NotFound)
       }
     }

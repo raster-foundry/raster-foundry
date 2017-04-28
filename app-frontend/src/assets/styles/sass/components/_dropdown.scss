@@ -190,9 +190,15 @@
       right: auto; left: 1rem;
     }
   }
+
+  // @TODO: this may need to be removed
+  // Added to handle non-float navbar
+  .navbar-section .dropdown-menu {
+    right: auto; left: 1rem;
+  }
 }
 
-/* 
+/*
  * sidebar-dropdown which is generally seen in color correction UI
  */
 .sidebar-dropdown {
@@ -220,6 +226,7 @@
         background-color: $brand-primary;
         color: #fff;
       }
+
     }
   }
 }

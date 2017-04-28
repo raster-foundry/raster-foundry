@@ -5,7 +5,7 @@
 // .modal-open      - body class for killing the scroll
 // .modal           - container to scroll within
 // .modal-dialog    - positioning shell for the actual modal
-// .modal-content   - actual modal w/ bg and corners and shit
+// .modal-content   - actual modal w/ bg and corners and stuff
 
 // Kill the scroll on the body
 .modal-open {
@@ -237,8 +237,8 @@
     flex: 1;
     overflow: auto;
   }
-  
-  /* 
+
+  /*
     Modal with a sidebar instead up top header
    */
   @include respond-to('md-up') {
@@ -269,3 +269,40 @@
   }
 }
 
+.scene-detail-modal-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  @include respond-to('md-up') {
+    max-height: calc(100vh - 100px);
+  }
+  .content-row {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    @include respond-to('md-up') {
+      flex-direction: row;
+    }
+  }
+  .scene-metadata {
+    max-width: 350px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #ddd;
+    background-color: #fff;
+    & > div {
+      padding: 1.5rem;
+    }
+    .scene-metadata-fixed {
+      border-bottom: 1px solid #ddd;
+    }
+    .scene-metadata-scrollable {
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+  }
+  .scene-preview-container {
+    flex: 1;
+    padding: 0;
+  }
+}

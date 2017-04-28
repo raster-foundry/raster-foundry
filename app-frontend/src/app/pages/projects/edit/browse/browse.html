@@ -1,0 +1,77 @@
+<div class="sidebar-project" ng-show="!$ctrl.activeScene">
+  <div class="sidebar-row">
+    <button class="btn" ui-sref="projects.edit.scenes">
+      <i class="icon-caret-left"></i>Scenes
+    </button>
+    <h5 class="sidebar-title">Browse scenes</h5>
+    <button class="btn btn-default"
+            type="button"
+            ng-click="$ctrl.toggleFilterPane()">
+      Sort/Filter
+    </button>
+  </div>
+  <ul class="sidebar-list">
+    <li class="header">
+      <span>Select scenes and click <strong>Add Scenes</strong> to add to the project.</span>
+      <div class="btn-group">
+        <button type="button"
+                class="btn btn-primary"
+                style="width: 12rem;"
+                ng-click="$ctrl.sceneModal()">
+          Add Scenes
+        </button>
+        <button type="button"
+                class="btn btn-square"
+                ng-class="{'btn-secondary': $ctrl.allSelected}"
+                ng-click="$ctrl.selectAllScenes()">
+          <i ng-class="{'icon-plus': !$ctrl.allSelected,
+                       'icon-cross': $ctrl.allSelected}"></i>
+        </button>
+      </div>
+    </li>
+  </ul>
+</div>
+<div class="sidebar-scrollable">
+  <div class="list-group" ng-if="$ctrl.lastSceneResult && $ctrl.projectScenesReady">
+    <div class="list-group-item">
+      <strong class="color-dark">{{$ctrl.lastSceneResult.count | number}} scenes found</strong>
+    </div>
+  </div>
+  <div infinite-scroll="$ctrl.getMoreScenes()"
+       infinite-scroll-distance="0.5"
+       infinite-scroll-disabled="$ctrl.loadingScenes || ($ctrl.lastSceneResult && !$ctrl.lastSceneResult.hasNext) || $ctrl.errorMsg"
+       infinite-scroll-container="'#infscroll'"
+       infinite-scroll-immediate-check=false
+       class="list-group">
+    <rf-scene-item
+        ng-click="$ctrl.openDetailPane(scene)"
+        scene="scene"
+        selectable
+        selected="$ctrl.isSelected(scene)"
+        is-disabled="$ctrl.isInProject(scene)"
+        on-select="$ctrl.setSelected(scene, selected)"
+        class="selectable"
+        ng-mouseenter="$ctrl.setHoveredScene(scene)"
+        ng-mouseleave="$ctrl.removeHoveredScene()"
+        ng-repeat="scene in $ctrl.sceneList track by scene.id">
+    </rf-scene-item>
+  </div>
+</div>
+<div class="sidebar sidebar-extended map-filters"
+     ng-show="$ctrl.showFilterPane && !$ctrl.activeScene">
+  <rf-filter-pane data-opened="$ctrl.showFilterPane"
+                  filters="$ctrl.filters"></rf-filter-pane>
+</div>
+
+<!-- Scene detail view -->
+<div class="scene-detail-map" ng-if="$ctrl.activeScene">
+  <div class="container column-stretch container-not-scrollable">
+    <rf-scene-detail class="sidebar"
+                     scene="$ctrl.activeScene"
+                     show-thumbnail="true"
+                     on-close-click="$ctrl.closeDetailPane()"
+                     on-select-click="$ctrl.toggleSelectAndClosePane()"
+                     is-selected="$ctrl.isSelected($ctrl.activeScene)"
+    ></rf-scene-detail>
+  </div>
+</div>

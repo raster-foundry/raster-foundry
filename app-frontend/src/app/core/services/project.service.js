@@ -2,12 +2,18 @@
 
 export default (app) => {
     class ProjectService {
-        constructor($resource, $location, userService, $http, $q) {
+        constructor($resource, $location, tokenService, userService, $http, $q, APP_CONFIG) {
             'ngInject';
+
+            this.tokenService = tokenService;
             this.userService = userService;
             this.$http = $http;
             this.$location = $location;
             this.$q = $q;
+
+            this.currentProject = null;
+
+            this.tileServer = `${APP_CONFIG.tileServerLocation}`;
 
             this.Project = $resource(
                 '/api/projects/:id/', {
@@ -56,6 +62,10 @@ export default (app) => {
                         params: {
                             projectId: '@projectId'
                         }
+                    },
+                    export: {
+                        method: 'POST',
+                        url: '/api/exports/'
                     }
                 }
             );
@@ -65,15 +75,36 @@ export default (app) => {
             return this.Project.query(params).$promise;
         }
 
+        get(id) {
+            return this.Project.get({id}).$promise;
+        }
+
+        export(projectId, zoom) {
+            return this.userService.getCurrentUser().then(
+                (user) => {
+                    return this.Project.export({
+                        organizationId: user.organizationId,
+                        projectId: projectId,
+                        exportStatus: 'TOBEEXPORTED',
+                        exportType: 'S3',
+                        visibility: 'PRIVATE',
+                        exportOptions: {
+                            resolution: zoom
+                        }
+                    }).$promise;
+                },
+                (error) => {
+                    return error;
+                }
+            );
+        }
+
         createProject(name) {
             return this.userService.getCurrentUser().then(
                 (user) => {
-                    let publicOrg = user.organizations.filter(
-                        (org) => org.name === 'Public'
-                    )[0];
                     return this.Project.create({
-                        organizationId: publicOrg.id, name: name, description: '',
-                        visibility: 'PRIVATE', tags: []
+                        organizationId: user.organizationId, name: name, description: '',
+                        visibility: 'PRIVATE', tileVisibility: 'PRIVATE', tags: []
                     }).$promise;
                 },
                 (error) => {
@@ -221,12 +252,37 @@ export default (app) => {
 
             let formattedParams = L.Util.getParamString(params);
 
-            return this.getBaseURL() +
-                `/tiles/${project.id}/{z}/{x}/{y}/${formattedParams}`;
+            return `${this.tileServer}/${project.id}/{z}/{x}/{y}/${formattedParams}`;
         }
 
         getProjectShareURL(project) {
-            return `${this.getBaseURL()}/#/share/${project.id}`;
+            let deferred = this.$q.defer();
+            let shareUrl = `${this.getBaseURL()}/#/share/${project.id}`;
+            if (project.tileVisibility === 'PRIVATE') {
+                this.tokenService.getOrCreateProjectMapToken(project).then((token) => {
+                    deferred.resolve(`${shareUrl}/?mapToken=${token.id}`);
+                });
+            } else {
+                deferred.resolve(shareUrl);
+            }
+            return deferred.promise;
+        }
+
+        loadProject(id) {
+            this.isLoadingProject = true;
+            this.currentProjectId = id;
+            const request = this.get(id);
+            request.then(
+                p => {
+                    this.currentProject = p;
+                },
+                () => {
+                    this.currentProjectId = null;
+                }
+            ).finally(() => {
+                this.isLoadingProject = false;
+            });
+            return request;
         }
     }
 

@@ -27,7 +27,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     else
         echo "Pulling down configuration settings for test environment"
         pushd "${DIR}/.."
-        aws s3 cp "s3://rasterfoundry-testing-config-us-east-1/.env" ".env"
+        aws s3 cp "s3://${RF_SETTINGS_BUCKET}/.env" ".env"
         popd
 
         echo "Building static asset bundle"
@@ -40,6 +40,15 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             -f "${DIR}/../docker-compose.test.yml" \
             run --rm app-frontend run build
 
+        echo "Building batch JAR"
+        docker-compose \
+            run --rm --no-deps api-server batch/clean
+        docker-compose \
+            run --rm --no-deps api-server batch/assembly
+
+        cp "${DIR}/../app-backend/batch/target/scala-2.11/rf-batch.jar" \
+           "${DIR}/../app-tasks/jars/rf-batch.jar"
+
         echo "Building Airflow container image"
         GIT_COMMIT="${GIT_COMMIT}" docker-compose \
                   -f "${DIR}/../docker-compose.yml" \
@@ -50,5 +59,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         echo "Running tests"
         GIT_COMMIT="${GIT_COMMIT}" ./scripts/test
         echo "All tests pass!"
+
+        ./scripts/deploy-docs --dryrun
     fi
 fi

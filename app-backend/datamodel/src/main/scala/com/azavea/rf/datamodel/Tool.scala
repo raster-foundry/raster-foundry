@@ -1,16 +1,21 @@
 package com.azavea.rf.datamodel
 
-import spray.json._
-import spray.json.DefaultJsonProtocol._
+import io.circe._
+
 import java.util.UUID
 import java.sql.Timestamp
 
+import io.circe.generic.JsonCodec
+
+/** Model Lab Tool */
+@JsonCodec
 case class Tool(
   id: UUID,
   createdAt: Timestamp,
   modifiedAt: Timestamp,
   createdBy: String,
   modifiedBy: String,
+  owner: String,
   organizationId: UUID,
   title: String,
   description: String,
@@ -19,7 +24,7 @@ case class Tool(
   visibility: Visibility,
   compatibleDataSources: List[String] = List.empty,
   stars: Float = 0.0f,
-  definition: Map[String, Any]
+  definition: Json
 ) {
   def withRelatedFromComponents(toolTags: Seq[ToolTag], toolCategories: Seq[ToolCategory], organization: Option[Organization]):
       Tool.WithRelated = Tool.WithRelated(
@@ -28,6 +33,7 @@ case class Tool(
     this.modifiedAt,
     this.createdBy,
     this.modifiedBy,
+    this.owner,
     organization,
     this.title,
     this.description,
@@ -48,6 +54,7 @@ case class Tool(
     this.modifiedAt,
     this.createdBy,
     this.modifiedBy,
+    this.owner,
     this.organizationId,
     this.title,
     this.description,
@@ -64,13 +71,11 @@ case class Tool(
 
 /** Case class for tool creation */
 object Tool {
-
   def create = Create.apply _
 
   def tupled = (Tool.apply _).tupled
 
-  implicit val defaultToolFormat = jsonFormat14(Tool.apply _)
-
+  @JsonCodec
   case class Create(
     organizationId: UUID,
     title: String,
@@ -79,20 +84,24 @@ object Tool {
     license: String,
     visibility: Visibility,
     compatibleDataSources: List[String],
+    owner: Option[String],
     stars: Float,
-    definition: Map[String, Any],
+    definition: Json,
     tags: Seq[UUID],
     categories: Seq[String]
-  ) {
-    def toToolWithRelatedTuple(userId: String): (Tool, Seq[ToolTagToTool], Seq[ToolCategoryToTool]) = {
+  ) extends OwnerCheck {
+    def toToolWithRelatedTuple(user: User): (Tool, Seq[ToolTagToTool], Seq[ToolCategoryToTool]) = {
       val now = new Timestamp((new java.util.Date()).getTime())
       val toolId = UUID.randomUUID
+
+      val ownerId = checkOwner(user, this.owner)
       val tool = Tool(
         toolId, // primary key
         now, // createdAt
         now, // modifiedAt
-        userId, // createdBy
-        userId, // modifiedBy
+        user.id, // createdBy
+        user.id, // modifiedBy
+        ownerId, // owner
         organizationId,
         title,
         description,
@@ -112,24 +121,23 @@ object Tool {
     }
   }
 
-  object Create {
-    implicit val defaultToolFormat = jsonFormat11(Create.apply _)
-  }
-
   // join of tool/tag/category
+  @JsonCodec
   case class ToolRelationshipJoin(tool: Tool, toolTag: Option[ToolTag], toolCategory: Option[ToolCategory], organization: Option[Organization])
+
   object ToolRelationshipJoin {
     def tupled = (ToolRelationshipJoin.apply _).tupled
-    implicit val defaultToolRelationshipJoinFormat = jsonFormat4(ToolRelationshipJoin.apply _)
   }
 
   /** Tool class when posted with category and tag ids */
+  @JsonCodec
   case class WithRelated(
     id: UUID,
     createdAt: Timestamp,
     modifiedAt: Timestamp,
     createdBy: String,
     modifiedBy: String,
+    owner: String,
     organization: Option[Organization],
     title: String,
     description: String,
@@ -138,14 +146,12 @@ object Tool {
     visibility: Visibility,
     compatibleDataSources: List[String] = List.empty,
     stars: Float = 0.0f,
-    definition: Map[String, Any],
+    definition: Json,
     tags: Seq[ToolTag],
     categories: Seq[ToolCategory]
   )
 
   object WithRelated {
-    implicit val defaultToolWithRelatedFormat = jsonFormat16(WithRelated.apply)
-
     def fromRecords(records: Seq[(Tool, Option[ToolTag], Option[ToolCategory], Option[Organization])]): Iterable[Tool.WithRelated] = {
       val distinctTools = records.map(_._1).distinct
       val groupedTools = records.groupBy(_._1)
@@ -164,12 +170,14 @@ object Tool {
     }
   }
 
+  @JsonCodec
   case class WithRelatedUUIDs(
     id: UUID,
     createdAt: Timestamp,
     modifiedAt: Timestamp,
     createdBy: String,
     modifiedBy: String,
+    owner: String,
     organizationId: UUID,
     title: String,
     description: String,
@@ -178,12 +186,8 @@ object Tool {
     visibility: Visibility,
     compatibleDataSources: List[String] = List.empty,
     stars: Float = 0.0f,
-    definition: Map[String, Any],
+    definition: Json,
     tags: Seq[UUID],
     categories: Seq[String]
   )
-
-  object WithRelatedUUIDs {
-    implicit val defaultToolWithRelatedFormat = jsonFormat16(WithRelatedUUIDs.apply)
-  }
 }

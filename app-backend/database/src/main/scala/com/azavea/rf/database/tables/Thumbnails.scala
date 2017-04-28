@@ -69,21 +69,27 @@ object Thumbnails extends TableQuery(tag => new Thumbnails(tag)) with LazyLoggin
   /** Retrieve a single thumbnail from the database
     *
     * @param thumbnailId UUID ID Of thumbnail to query with
+    * @param user        Results will be limited to user's organization
     */
-  def getThumbnail(thumbnailId: UUID)
+  def getThumbnail(thumbnailId: UUID, user: User)
                   (implicit database: DB): Future[Option[Thumbnail]] = {
 
-    val action = Thumbnails.filter(_.id === thumbnailId).result
+    val action = Thumbnails
+                   .filterToSharedOrganizationIfNotInRoot(user)
+                   .filter(_.id === thumbnailId)
+                   .result
     logger.debug(s"Retrieving thumbnail with: ${action.statements.headOption}")
     database.db.run {
       action.headOption
     }
   }
 
-  def listThumbnails(pageRequest: PageRequest, queryParams: ThumbnailQueryParameters)
+  def listThumbnails(pageRequest: PageRequest, queryParams: ThumbnailQueryParameters, user: User)
                     (implicit database: DB): Future[PaginatedResponse[Thumbnail]] = {
 
-    val thumbnails = Thumbnails.filterBySceneParams(queryParams)
+    val thumbnails = Thumbnails
+                       .filterToSharedOrganizationIfNotInRoot(user)
+                       .filterBySceneParams(queryParams)
 
     val paginatedThumbnails = database.db.run {
       val action = thumbnails.page(pageRequest).result
@@ -107,11 +113,15 @@ object Thumbnails extends TableQuery(tag => new Thumbnails(tag)) with LazyLoggin
   /** Delete a scene from the database
     *
     * @param thumbnailId UUID ID of scene to delete
+    * @param user        Results will be limited to user's organization
     */
-  def deleteThumbnail(thumbnailId: UUID)
+  def deleteThumbnail(thumbnailId: UUID, user: User)
                      (implicit database: DB): Future[Int] = {
 
-    val action = Thumbnails.filter(_.id === thumbnailId).delete
+    val action = Thumbnails
+                   .filterToSharedOrganizationIfNotInRoot(user)
+                   .filter(_.id === thumbnailId)
+                   .delete
     logger.debug(s"Deleting thumbnail with: ${action.statements.headOption}")
     database.db.run {
       action.map {
@@ -130,13 +140,15 @@ object Thumbnails extends TableQuery(tag => new Thumbnails(tag)) with LazyLoggin
     * @param thumbnail Thumbnail scene to use to update the database
     * @param thumbnailId UUID ID of scene to update
     */
-  def updateThumbnail(thumbnail: Thumbnail, thumbnailId: UUID)
+  def updateThumbnail(thumbnail: Thumbnail, thumbnailId: UUID, user: User)
                      (implicit database: DB): Future[Int] = {
 
     val updateTime = new Timestamp((new java.util.Date).getTime)
 
     val updateThumbnailQuery = for {
-      updateThumbnail <- Thumbnails.filter(_.id === thumbnailId)
+      updateThumbnail <- Thumbnails
+                           .filterToSharedOrganizationIfNotInRoot(user)
+                           .filter(_.id === thumbnailId)
     } yield (
       updateThumbnail.modifiedAt, updateThumbnail.widthPx, updateThumbnail.heightPx,
       updateThumbnail.thumbnailSize, updateThumbnail.scene, updateThumbnail.url

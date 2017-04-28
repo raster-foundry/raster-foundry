@@ -54,12 +54,12 @@ class BaseModel(object):
         return self.from_dict(response.json())
 
     def update(self):
-        url = '{HOST}{URL_PATH}{id}'.format(HOST=self.HOST, URL_PATH=self.URL_PATH, id=self.id)
+        url = '{HOST}{URL_PATH}{id}/'.format(HOST=self.HOST, URL_PATH=self.URL_PATH, id=self.id)
         session = get_session()
         response = session.put(url, json=self.to_dict())
         try:
             response.raise_for_status()
         except:
-            logger.exception('Unable to update scene: %s', response.text)
+            logger.exception('Unable to update: %s', response.text)
             raise
         return response

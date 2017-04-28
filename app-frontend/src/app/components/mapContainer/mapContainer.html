@@ -1,4 +1,22 @@
 <div class="map-container">
+  <div class="lab-control-panel">
+    <button class="btn btn-default"
+            ng-click="$ctrl.fitToBounds()"
+    >
+      <i class="icon-resize-full"></i>
+    </button>
+    <div class="filler"></div>
+    <button class="btn btn-default"
+            ng-click="$ctrl.zoomIn()"
+    >
+      +
+    </button>
+    <button class="btn btn-default"
+            ng-click="$ctrl.zoomOut()"
+    >
+      -
+    </button>
+  </div>
   <div class="map-container-loading" ng-show="$ctrl.isLoadingTiles">
     <div class="bg-primary">Loading</div>
   </div>

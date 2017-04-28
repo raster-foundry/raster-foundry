@@ -1,47 +1,31 @@
 package com.azavea.rf.api.project
 
+import java.util.UUID
+
+import scala.concurrent.ExecutionContext.Implicits.global
+
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling._
-import akka.http.scaladsl.model.StatusCodes
-import spray.json._
-import DefaultJsonProtocol._
-import com.lonelyplanet.akka.http.extensions.{PaginationDirectives, Order}
-
-import com.azavea.rf.common.{Authentication, UserErrorHandler}
-import com.azavea.rf.database.tables._
-import com.azavea.rf.database.query._
-import com.azavea.rf.database.Database
-import com.azavea.rf.datamodel._
 import com.azavea.rf.api.scene._
 import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
-
-import java.util.UUID
+import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
+import com.azavea.rf.database.Database
+import com.azavea.rf.database.query._
+import com.azavea.rf.database.tables._
+import com.azavea.rf.datamodel._
+import com.lonelyplanet.akka.http.extensions.PaginationDirectives
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import io.circe._
 
 trait ProjectRoutes extends Authentication
     with QueryParametersCommon
-    with QueryParameterJsonFormat
     with SceneQueryParameterDirective
     with PaginationDirectives
+    with CommonHandlers
     with UserErrorHandler {
 
   implicit def database: Database
-
-  implicit val rawIntFromEntityUnmarshaller: FromEntityUnmarshaller[UUID] =
-    PredefinedFromEntityUnmarshallers.stringUnmarshaller.map{ s =>
-      UUID.fromString(s)
-    }
-
-  /** This seems like it almost definitely shouldn't be necessary, but scala refuses
-    * to use the jsonFormats implicitly available from QueryParameterJsonFormat,
-    * and this implicit makes it stop complaining.
-    *
-    * Writing unmarshallers seems more manual and superfluous than writing json formats,
-    * but here we are.
-    */
-  implicit val combinedSceneQueryParamsUnmarshaller: FromEntityUnmarshaller[CombinedSceneQueryParams] =
-    PredefinedFromEntityUnmarshallers.stringUnmarshaller.map{ s =>
-      CombinedSceneQueryParamsReader.read(s.parseJson)
-    }
 
   val BULK_OPERATION_MAX_LIMIT = 100
 
@@ -56,6 +40,12 @@ trait ProjectRoutes extends Authentication
         put { updateProject(projectId) } ~
         delete { deleteProject(projectId) }
       } ~
+      pathPrefix("areas-of-interest") {
+        pathEndOrSingleSlash {
+          get { listAOIs(projectId) } ~
+          post { createAOI(projectId) }
+        }
+      } ~
       pathPrefix("scenes") {
         pathEndOrSingleSlash {
           get { listProjectScenes(projectId) } ~
@@ -63,11 +53,16 @@ trait ProjectRoutes extends Authentication
           put { updateProjectScenes(projectId) } ~
           delete { deleteProjectScenes(projectId) }
         } ~
-          pathPrefix("bulk-add-from-query") {
-            pathEndOrSingleSlash {
-              post { addProjectScenesFromQueryParams(projectId) }
-            }
+        pathPrefix("bulk-add-from-query") {
+          pathEndOrSingleSlash {
+            post { addProjectScenesFromQueryParams(projectId) }
           }
+        } ~
+        pathPrefix(JavaUUID) { sceneId =>
+          pathPrefix("accept") {
+            post { acceptScene(projectId, sceneId) }
+          }
+        }
       } ~
       pathPrefix("mosaic") {
         pathEndOrSingleSlash {
@@ -76,6 +71,11 @@ trait ProjectRoutes extends Authentication
         pathPrefix(JavaUUID) { sceneId =>
           get { getProjectSceneColorCorrectParams(projectId, sceneId) } ~
           put { setProjectSceneColorCorrectParams(projectId, sceneId) }
+        } ~
+        pathPrefix("bulk-update-color-corrections") {
+          pathEndOrSingleSlash {
+            post { setProjectScenesColorCorrectParams(projectId) }
+          }
         }
       } ~
       pathPrefix("order") {
@@ -97,8 +97,10 @@ trait ProjectRoutes extends Authentication
 
   def createProject: Route = authenticate { user =>
     entity(as[Project.Create]) { newProject =>
-      onSuccess(Projects.insertProject(newProject.toProject(user.id))) { project =>
-        complete(StatusCodes.Created, project)
+      authorize(user.isInRootOrSameOrganizationAs(newProject)) {
+        onSuccess(Projects.insertProject(newProject.toProject(user))) { project =>
+          complete(StatusCodes.Created, project)
+        }
       }
     }
   }
@@ -106,29 +108,53 @@ trait ProjectRoutes extends Authentication
   def getProject(projectId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        Projects.getProject(projectId)
+        Projects.getProject(projectId, user)
       }
     }
   }
 
   def updateProject(projectId: UUID): Route = authenticate { user =>
     entity(as[Project]) { updatedProject =>
-      onSuccess(Projects.updateProject(updatedProject, projectId, user)) {
-        case 1 => complete(StatusCodes.NoContent)
-        case count => throw new IllegalStateException(
-          s"Error updating project: update result expected to be 1, was $count"
-        )
+      authorize(user.isInRootOrSameOrganizationAs(updatedProject)) {
+        onSuccess(Projects.updateProject(updatedProject, projectId, user)) {
+          completeSingleOrNotFound
+        }
       }
     }
   }
 
   def deleteProject(projectId: UUID): Route = authenticate { user =>
-    onSuccess(Projects.deleteProject(projectId)) {
-      case 1 => complete(StatusCodes.NoContent)
-      case 0 => complete(StatusCodes.NotFound)
-      case count => throw new IllegalStateException(
-        s"Error deleting project: delete result expected to be 1, was $count"
-      )
+    onSuccess(Projects.deleteProject(projectId, user)) {
+      completeSingleOrNotFound
+    }
+  }
+
+  def listAOIs(projectId: UUID): Route = authenticate { user =>
+    withPagination { page =>
+      complete {
+        Projects.listAOIs(projectId, page, user)
+      }
+    }
+  }
+
+  def createAOI(projectId: UUID): Route = authenticate { user =>
+    entity(as[AOI.Create]) { aoi =>
+      authorize(user.isInRootOrSameOrganizationAs(aoi)) {
+        onSuccess({
+          for {
+            a <- AOIs.insertAOI(aoi.toAOI(user))
+            _ <- AoisToProjects.insert(AoiToProject(a.id, projectId))
+          } yield a
+        }) { a =>
+          complete(StatusCodes.Created, a)
+        }
+      }
+    }
+  }
+
+  def acceptScene(projectId: UUID, sceneId: UUID): Route = authenticate { user =>
+    complete {
+      ScenesToProjects.acceptScene(projectId, sceneId)
     }
   }
 
@@ -173,6 +199,15 @@ trait ProjectRoutes extends Authentication
   def setProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) = authenticate { user =>
     entity(as[ColorCorrect.Params]) { ccParams =>
       onSuccess(ScenesToProjects.setColorCorrectParams(projectId, sceneId, ccParams)) { sceneToProject =>
+        complete(StatusCodes.NoContent)
+      }
+    }
+  }
+
+  /** Set color correction parameters for a list of scenes */
+  def setProjectScenesColorCorrectParams(projectId: UUID) = authenticate { user =>
+    entity(as[BatchParams]) { params =>
+      onSuccess(ScenesToProjects.setColorCorrectParamsBatch(projectId, params)) { scenesToProject =>
         complete(StatusCodes.NoContent)
       }
     }

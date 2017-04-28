@@ -1,0 +1,82 @@
+<div class="main">
+  <div class="content stack-sm">
+    <h2>Datasources</h2>
+  </div>
+  <div class="row content stack-sm">
+    <div class="column-9">
+
+      <!-- Loading Indicator, show only when loading datasources-->
+      <div class="text-center" ng-show="$ctrl.isLoadingDatasources">
+        <div>Loading Datasources</div>
+        <span class="list-placeholder h3">
+          <i class="icon-load"></i>
+        </span>
+      </div>
+
+      <!-- Datasource List, show only when there are datasources-->
+      <div class="list-group" ng-show="$ctrl.shouldShowList()">
+        <div class="form-group all-in-one">
+          <label for="search"><i class="icon-search"></i></label>
+          <input id="search" type="text" class="form-control"
+                placeholder="Search Datasources" ng-model="$ctrl.searchString">
+        </div>
+        <rf-datasource-item
+          ng-repeat="datasource in $ctrl.datasources.results | filter: {name: $ctrl.searchString}"
+          datasource="datasource"
+        >
+        </rf-datasource-item>
+      </div>
+
+      <!-- Datasource pagination, show only when item count exceeds page size-->
+      <div class="list-group text-center"
+          ng-show="$ctrl.shouldShowPagination()">
+        <ul uib-pagination
+            items-per-page="$ctrl.pageSize"
+            total-items="$ctrl.datasources.count"
+            ng-model="$ctrl.currentPage"
+            max-size="4"
+            rotate="true"
+            boundary-link-numbers="true"
+            force-ellipses="true"
+            ng-change="$ctrl.loadDatasources($ctrl.currentPage)">
+        </ul>
+      </div>
+
+      <!-- Placeholder, show only when loading is complete and no datasources were found-->
+      <div class="cta-row" ng-if="$ctrl.shouldShowPlaceholder()">
+        <rf-call-to-action-item title="You haven't created any datasources yet">
+          <div class="cta-flex-text">
+            You can create a new datasource by linking Raster Foundry with various kinds of imagery sources like your comptuer, Amazon S3 Buckets, DropBox, and many other sources.
+          </div>
+          <div class="cta-button-row">
+            <a class="btn btn-primary">Create a new Datasource</a>
+          </div>
+          <div class="cta-text">
+            <a>Getting started with Datasources</a>
+          </div>
+        </rf-call-to-action-item>
+      </div>
+
+    </div>
+    <div class="column-3">
+      <div class="content">
+        <!-- We aren't creating datasources outside of the import process for now -->
+        <!--<div class="sidebar-section">
+          <button class="btn btn-primary">Create a new Datasource</button>
+        </div>-->
+        <div class="sidebar-section">
+          <h5>What is a datasource?</h5>
+          <p class="font-size-small">
+            A project is a collection of scenes from many different sources where you can then run color corrections and mosaic into a basemap.
+          </p>
+        </div>
+        <div class="sidebar-section">
+          <h5>What is a datasource?</h5>
+          <p class="font-size-small">
+            A project is a collection of scenes from many different sources where you can then run color corrections and mosaic into a basemap.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

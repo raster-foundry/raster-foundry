@@ -1,23 +1,28 @@
 .panel {
   border: 1px solid #ccc;
   border-radius: 2px;
+  display: block;
+  width: 100%;
 
-  .panel-body {
-    padding: 2rem;
-    &.centered {
-      text-align: center;
-    }
-    h5 {
-      margin: 0 0 1rem 0;
-      color: $shade-light;
-    }
+  &.panel-warning {
+    border-color: $warning;
+  }
+
+  &.panel-danger {
+    border-color: $danger;
+  }
+
+  &.panel-off-white {
+    border: none;
+    background-color: rgba($shade-light, .1);
   }
 }
 
-.panel-warning {
-  border-color: $warning;
-}
+.panel-body {
+  padding: 2rem;
 
-.panel-danger {
-  border-color: $danger;
+  .btn {
+    margin-top: .5rem;
+    margin-bottom: .5rem;
+  }
 }

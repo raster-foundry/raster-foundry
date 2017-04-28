@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import Konva from 'konva';
 
-/* eslint no-underscore-dangle: ["error", {"allowAfterThis": true}] */
 /* eslint no-unused-vars: 0 */
 /* eslint spaced-comment: 0 */
 
@@ -57,7 +56,7 @@ export default (app) => {
                     let points = _.flatten(result);
 
 
-                    let stage = new Konva.Stage({
+                    let stage = this.stage = new Konva.Stage({
                         container: tile,
                         width: size.x,
                         height: size.y
@@ -93,6 +92,15 @@ export default (app) => {
                         this.layer.draw();
                     };
                     stage.add(layer);
+                },
+                onRemove: function () {
+                    L.DomUtil.remove(this._image);
+                    if (this.options.interactive) {
+                        this.removeInteractiveTarget(this._image);
+                    }
+                    this.stage.destroy();
+                    this.layer.destroy();
+                    this.lineImage.destroy();
                 }
 
             });

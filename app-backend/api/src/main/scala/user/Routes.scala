@@ -7,16 +7,21 @@ import akka.http.scaladsl.model.StatusCodes
 
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 
-import com.azavea.rf.common.{Authentication, UserErrorHandler}
+import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.Users
 import com.azavea.rf.datamodel._
+import io.circe._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 
 /**
   * Routes for users
   */
-trait UserRoutes extends Authentication with PaginationDirectives with UserErrorHandler {
+trait UserRoutes extends Authentication
+    with PaginationDirectives
+    with CommonHandlers
+    with UserErrorHandler {
 
   implicit def database: Database
 
@@ -35,24 +40,24 @@ trait UserRoutes extends Authentication with PaginationDirectives with UserError
     } ~
     pathPrefix(Segment) { authIdEncoded =>
       pathEndOrSingleSlash {
-        get { getUserByEncodedAuthId(authIdEncoded) }
+        get { getUserByEncodedAuthId(authIdEncoded) } ~
+        put { updateUserByEncodedAuthId(authIdEncoded) }
       }
     }
   }
 
-  def listUsers: Route = authenticate { user =>
+  def listUsers: Route = authenticateRootMember { user =>
     withPagination { page =>
       complete {
-        Users.getPaginatedUsers(page)
+        Users.listUsers(page)
       }
     }
   }
 
-  // TODO: Restrict to users with correct permissions, e.g. admin
-  def createUser: Route = authenticate { admin =>
+  def createUser: Route = authenticateRootMember { root =>
     entity(as[User.Create]) { newUser =>
       onSuccess(Users.createUser(newUser)) { createdUser =>
-        onSuccess(Users.getUserWithOrgsById(createdUser.id)) {
+        onSuccess(Users.getUserById(createdUser.id)) {
           case Some(user) => complete((StatusCodes.Created, user))
           case None => throw new IllegalStateException("Unable to create user")
         }
@@ -76,9 +81,19 @@ trait UserRoutes extends Authentication with PaginationDirectives with UserError
 
   def getUserByEncodedAuthId(authIdEncoded: String): Route = authenticate { user =>
     rejectEmptyResponse {
-      complete {
-        val authId = URLDecoder.decode(authIdEncoded, "US_ASCII")
-        Users.getUserWithOrgsById(authId)
+      val authId = URLDecoder.decode(authIdEncoded, "US_ASCII")
+      if (user.isInRootOrganization || user.id == authId) {
+        complete(Users.getUserById(authId))
+      } else {
+        complete(StatusCodes.NotFound)
+      }
+    }
+  }
+
+  def updateUserByEncodedAuthId(authIdEncoded: String): Route = authenticateRootMember { root =>
+    entity(as[User]) { updatedUser =>
+      onSuccess(Users.updateUser(updatedUser, authIdEncoded)) {
+        completeSingleOrNotFound
       }
     }
   }

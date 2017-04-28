@@ -1,4 +1,3 @@
-/* eslint-disable no-underscore-dangle */
 require('./sideBySide.scss');
 
 let mapWasDragEnabled;
@@ -78,6 +77,7 @@ L.Control.SideBySide = L.Control.extend(
             this._map = map;
 
             let container = this._container = L.DomUtil.create(
+                // eslint-disable-next-line no-underscore-dangle
                 'div', 'leaflet-sbs', map._controlContainer
             );
 
