@@ -56,4 +56,5 @@ object Dependencies {
   val gatlingApp              = "io.gatling"                   % "gatling-app"                       % Version.gatling % "test,it"
   val scalajHttp              = "org.scalaj"                  %% "scalaj-http"                       % Version.scalajHttp
   val ficus                   ="com.iheart"                   %% "ficus"                             % Version.ficus
+  val dnsJava                 = "dnsjava"                      % "dnsjava"                           % Version.dnsJava
 }

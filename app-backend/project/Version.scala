@@ -37,4 +37,5 @@ object Version {
   val scalajHttp         = "2.3.0"
   val ficus              = "1.4.0"
   val awsSdk             = "1.11.92"
+  val dnsJava            = "2.1.8"
 }

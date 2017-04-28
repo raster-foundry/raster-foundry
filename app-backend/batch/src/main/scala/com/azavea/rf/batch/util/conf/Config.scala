@@ -30,7 +30,14 @@ trait Config {
     def datasourceUUID = UUID.fromString(datasourceId)
   }
 
+  protected case class ExportDef(
+    awsRegion: Option[String],
+    bucketName: String
+  ) { }
+
   private lazy val config = ConfigFactory.load()
   protected lazy val landsat8Config = config.as[Landsat8]("landsat8")
   protected lazy val airflowUser = config.as[String]("airflow.user")
+  protected lazy val exportDefConfig = config.as[ExportDef]("export-def")
+  val jarPath = "s3://us-east-1.elasticmapreduce/libs/script-runner/script-runner.jar"
 }
