@@ -5,6 +5,7 @@ import com.azavea.rf.datamodel.{Tool, ToolRun}
 import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.params._
 import com.azavea.rf.tool.ast.MapAlgebraAST
+import com.azavea.rf.common._
 import com.azavea.rf.common.cache._
 import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 import com.azavea.rf.database.Database
@@ -91,12 +92,9 @@ object LayerCache extends Config with LazyLogging {
 
   def modelLayerGlobalHistogram(toolRun: ToolRun, tool: Tool.WithRelated, nodeId: Option[UUID]): OptionT[Future, Histogram[Double]] =
     histogramCache.cachingOptionT(s"model-${toolRun.id}-$nodeId") { implicit ec =>
-      val maybeAST = tool.definition.as[MapAlgebraAST] match {
-        case Right(entireAST) =>
-          nodeId.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
-        case Left(failure) =>
-          throw failure
-      }
+    val maybeAST = maybeThrow(tool.definition.as[MapAlgebraAST]).flatMap(entireAST =>
+      nodeId.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
+    )
 
       OptionT.fromOption[Future](
         for {
@@ -106,10 +104,7 @@ object LayerCache extends Config with LazyLogging {
         } yield hist
       ).orElse(
         for {
-          params <- OptionT.fromOption[Future](toolRun.executionParameters.as[EvalParams] match {
-                      case Right(toolRunParams) => Some(toolRunParams)
-                      case Left(failure) => throw failure
-                    })
+          params <- OptionT.fromOption[Future](maybeThrow(toolRun.executionParameters.as[EvalParams]))
           ast    <- OptionT.fromOption[Future](maybeAST)
           lztile <- OptionT(Interpreter.interpretGlobal(ast, params, TileSources.cachedGlobalSource).map(_.toOption))
           tile   <- OptionT.fromOption[Future](lztile.evaluateDouble)
