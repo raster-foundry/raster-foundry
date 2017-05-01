@@ -1,4 +1,7 @@
 api/target/*
+authentication/target/*
+batch/target/*
+common/target/*
 database/target/*
 datamodel/target/*
 ingest/target/*
@@ -6,4 +9,5 @@ migrations/target/*
 project/target/*
 target/*
 tile/target/*
+tool/target/*
 .idea/*
