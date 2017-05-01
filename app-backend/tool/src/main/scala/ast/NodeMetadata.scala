@@ -1,6 +1,7 @@
 package com.azavea.rf.tool.ast
 
 import geotrellis.raster.render.ColorRamp
+import geotrellis.raster.histogram._
 import io.circe._
 import io.circe.syntax._
 import io.circe.disjunctionCodecs._
@@ -12,14 +13,14 @@ import com.azavea.rf.tool.ast.codec.MapAlgebraCodec
 case class NodeMetadata(
   label: Option[String],
   description: Option[String],
-  rendering: Option[Either[ColorRamp, ClassBreaks]]
+  histogram: Option[Histogram[Double]]
 )
 
 object NodeMetadata extends MapAlgebraCodec {
   implicit val nodeMetadataEncoder: Encoder[NodeMetadata] =
-    Encoder.forProduct3("label", "description", "rendering")(nmd =>
-      (nmd.label, nmd.description, nmd.rendering)
+    Encoder.forProduct3("label", "description", "histogram")(nmd =>
+      (nmd.label, nmd.description, nmd.histogram)
     )
   implicit val nodeMetadataDecoder: Decoder[NodeMetadata] =
-    Decoder.forProduct3("label", "description", "rendering")(NodeMetadata.apply)
+    Decoder.forProduct3("label", "description", "histogram")(NodeMetadata.apply)
 }

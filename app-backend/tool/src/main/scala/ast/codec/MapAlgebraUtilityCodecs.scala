@@ -2,7 +2,11 @@ package com.azavea.rf.tool.ast.codec
 
 import com.azavea.rf.tool.ast._
 
+import geotrellis.raster.io._
+import geotrellis.raster.histogram._
 import geotrellis.raster.render._
+import spray.json._
+import DefaultJsonProtocol._
 import io.circe._
 import io.circe.syntax._
 
@@ -57,6 +61,14 @@ trait MapAlgebraUtilityCodecs {
 
   implicit val colorRampEncoder: Encoder[ColorRamp] = new Encoder[ColorRamp] {
     final def apply(cRamp: ColorRamp): Json = cRamp.colors.toArray.asJson
+  }
+
+  implicit val histogramDecoder: Decoder[Histogram[Double]] = Decoder[Json].map { js =>
+    js.noSpaces.parseJson.convertTo[Histogram[Double]]
+  }
+
+  implicit val histogramEncoder: Encoder[Histogram[Double]] = new Encoder[Histogram[Double]] {
+    final def apply(hist: Histogram[Double]): Json = ???
   }
 }
 

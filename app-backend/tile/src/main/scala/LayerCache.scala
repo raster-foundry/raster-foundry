@@ -91,20 +91,30 @@ object LayerCache extends Config with LazyLogging {
 
   def modelLayerGlobalHistogram(toolRun: ToolRun, tool: Tool.WithRelated, nodeId: Option[UUID]): OptionT[Future, Histogram[Double]] =
     histogramCache.cachingOptionT(s"model-${toolRun.id}-$nodeId") { implicit ec =>
-      for {
-        params <- OptionT.fromOption[Future](toolRun.executionParameters.as[EvalParams] match {
-                    case Right(toolRunParams) => Some(toolRunParams)
-                    case Left(failure) => throw failure
-                  })
-        ast    <- OptionT.fromOption[Future](tool.definition.as[MapAlgebraAST] match {
-                    case Right(entireAST) =>
-                      nodeId.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
-                    case Left(failure) =>
-                      throw failure
-                  })
-        lztile <- OptionT(Interpreter.interpretGlobal(ast, params, TileSources.cachedGlobalSource).map(_.toOption))
-        tile   <- OptionT.fromOption[Future](lztile.evaluateDouble)
-      } yield StreamingHistogram.fromTile(tile)
+      val maybeAST = tool.definition.as[MapAlgebraAST] match {
+        case Right(entireAST) =>
+          nodeId.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
+        case Left(failure) =>
+          throw failure
+      }
+
+      OptionT.fromOption[Future](
+        for {
+          ast  <- maybeAST
+          md   <- ast.metadata
+          hist <- md.histogram
+        } yield hist
+      ).orElse(
+        for {
+          params <- OptionT.fromOption[Future](toolRun.executionParameters.as[EvalParams] match {
+                      case Right(toolRunParams) => Some(toolRunParams)
+                      case Left(failure) => throw failure
+                    })
+          ast    <- OptionT.fromOption[Future](maybeAST)
+          lztile <- OptionT(Interpreter.interpretGlobal(ast, params, TileSources.cachedGlobalSource).map(_.toOption))
+          tile   <- OptionT.fromOption[Future](lztile.evaluateDouble)
+        } yield StreamingHistogram.fromTile(tile)
+      )
     }
 
   def layerTile(layerId: UUID, zoom: Int, key: SpatialKey): OptionT[Future, MultibandTile] =

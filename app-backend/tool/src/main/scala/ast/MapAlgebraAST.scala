@@ -12,6 +12,19 @@ sealed trait MapAlgebraAST extends Product with Serializable {
   def metadata: Option[NodeMetadata]
   def find(id: UUID): Option[MapAlgebraAST]
   def sources: Seq[UUID]
+
+  def overrideMetadata(otherMD: Option[NodeMetadata]): Option[NodeMetadata] =
+    (metadata, otherMD) match {
+      case (Some(defaults), Some(overrides)) =>
+        Some(NodeMetadata(
+          overrides.label.orElse(defaults.label),
+          overrides.description.orElse(defaults.description),
+          overrides.histogram.orElse(defaults.histogram)
+        ))
+      case (None, Some(_)) => otherMD
+      case (Some(_), None) => metadata
+      case _ => None
+    }
 }
 
 object MapAlgebraAST {
