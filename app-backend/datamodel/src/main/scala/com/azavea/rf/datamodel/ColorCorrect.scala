@@ -117,6 +117,8 @@ object ColorCorrect {
   case class Params(
     redBand: Int, greenBand: Int, blueBand: Int,
     redGamma: Option[Double], greenGamma: Option[Double], blueGamma: Option[Double],
+    redMax: Option[Int], greenMax: Option[Int], blueMax: Option[Int],
+    redMin: Option[Int], greenMin: Option[Int], blueMin: Option[Int],
     contrast: Option[Double], brightness: Option[Int],
     alpha: Option[Double], beta: Option[Double],
     min: Option[Int], max: Option[Int],
@@ -137,6 +139,8 @@ object ColorCorrect {
       parameters(
         'redBand.as[Int].?(0), 'greenBand.as[Int].?(1), 'blueBand.as[Int].?(2),
         "redGamma".as[Double].?, "greenGamma".as[Double].?, "blueGamma".as[Double].?,
+        "redMax".as[Int].?, "greenMax".as[Int].?, "blueMax".as[Int].?,
+        "redMin".as[Int].?, "greenMin".as[Int].?, "blueMin".as[Int].?,
         "contrast".as[Double].?, "brightness".as[Int].?,
         'alpha.as[Double].?, 'beta.as[Double].?,
         "min".as[Int].?, "max".as[Int].?,
@@ -149,14 +153,27 @@ object ColorCorrect {
     val maybeEqualize =
       if (params.equalize) Some(HistogramEqualization(_: MultibandTile, rgbHist)) else None
 
+    val rgbBand =
+      (specificBand:Option[Int], allBands:Option[Int], tileDefault: Int) =>
+        specificBand.fold(allBands)(Some(_)).fold(Some(tileDefault))(x => Some(x))
+    
+    case class ClippingParams(band: Int, min: Option[Int], max: Option[Int])
+    val rgbBandArgs = (
+      ClippingParams(0, params.redMin, params.redMax)
+        :: ClippingParams(1, params.greenMin, params.greenMax)
+        :: ClippingParams(2, params.blueMin, params.blueMax)
+        :: Nil
+    )
+
     val normalizeAndClampValues =
-      (_: MultibandTile).mapBands { (i, tile) =>
-        normalizeAndClamp(tile,
-          oldMin = params.min.getOrElse(0),
-          oldMax = params.max.getOrElse(maxCellValue(tile.cellType)),
-          newMin = 0,
-          newMax = 255
-        ).convert(UByteConstantNoDataCellType)
+      (_:MultibandTile).mapBands { (i, tile) =>
+        val maybeNewTile = for {
+          args <- rgbBandArgs.find(cp => cp.band == i)
+          nmax <- rgbBand(args.max, params.max, maxCellValue(tile.cellType))
+          nmin <- rgbBand(args.min, params.min, 0)
+        } yield normalizeAndClamp(tile, oldMin = nmin, oldMax = nmax, newMin = 0, newMax = 255).convert(UByteConstantNoDataCellType)
+        
+        maybeNewTile.getOrElse(tile)
       }
 
     val maybeAdjustBrightness =
