@@ -3,6 +3,7 @@ package com.azavea.rf.batch.util.conf
 import com.azavea.rf.datamodel.Band
 
 import geotrellis.proj4.CRS
+import shapeless.syntax.typeable._
 import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.Ficus
 import net.ceedubs.ficus.readers.ArbitraryTypeReader
@@ -75,8 +76,8 @@ trait Config {
     def bandByName(key: String): Option[Band.Create] =
       bandLookup.getClass.getDeclaredFields.toList.filter(_.getName == key).map { field =>
         field.setAccessible(true)
-        field.get(bandLookup).asInstanceOf[Band.Create]
-      }.headOption
+        field.get(bandLookup).cast[Band.Create] // safe shapeless cast, instead asInstanceOf call
+      }.headOption.flatten
   }
 
   private lazy val config = ConfigFactory.load()
