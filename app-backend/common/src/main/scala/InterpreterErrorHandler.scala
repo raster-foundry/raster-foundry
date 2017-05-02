@@ -1,11 +1,13 @@
 package com.azavea.rf.common
 
+import com.azavea.rf.tool.eval.InterpreterError
+
 import akka.http.scaladsl.server.{Directives, ExceptionHandler}
 import cats.data.NonEmptyList
-import com.azavea.rf.tool.eval.InterpreterError
 import com.typesafe.scalalogging.LazyLogging
 import io.circe._
 import io.circe.syntax._
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 // --- //
 
@@ -22,6 +24,6 @@ trait InterpreterErrorHandler extends Directives with LazyLogging {
   val interpreterExceptionHandler = ExceptionHandler {
     case ie: InterpreterException =>
       logger.debug(ie.errors.asJson.noSpaces)
-      complete(ie)
+      complete(ie.errors)
   }
 }
