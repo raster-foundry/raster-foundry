@@ -1,6 +1,8 @@
 """Creates a data/tile footprint"""
 import logging
+import subprocess
 import tempfile
+
 import numpy as np
 from pyproj import Proj, transform
 import rasterio
@@ -123,7 +125,16 @@ def extract_footprints(organization_id, tif_path):
     logger.info('Beginning process to extract footprint for image:%s', tif_path)
 
     with get_tempdir() as temp_dir:
-        tile_mask_tif_path, data_mask_tif_path = create_tif_mask(temp_dir, tif_path)
+        _, resampled_tif_path = tempfile.mkstemp(suffix='.TIF', dir=temp_dir)
+
+        # Resample to a max width of 1024 (gdal sets height correctly when set to 0)
+        subprocess.check_call([
+            'gdalwarp', tif_path, resampled_tif_path,
+            '-ts', '1024', '0',
+            '-q'
+        ])
+
+        tile_mask_tif_path, data_mask_tif_path = create_tif_mask(temp_dir, resampled_tif_path)
         data_footprint = extract_polygon(data_mask_tif_path)
         tile_footprint = extract_polygon(tile_mask_tif_path)
         return (Footprint(organization_id, tile_footprint),
