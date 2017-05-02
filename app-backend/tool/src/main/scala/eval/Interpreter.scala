@@ -12,6 +12,8 @@ import com.azavea.rf.tool.params._
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster._
 
+import java.util.UUID
+
 
 /** This interpreter handles resource resolution and compilation of MapAlgebra ASTs */
 object Interpreter extends LazyLogging {
@@ -92,10 +94,10 @@ object Interpreter extends LazyLogging {
     * without fetching any Rasters. Only interprets the structural validatity of
     * the AST, given the params.
     */
-  def interpretPure[M: Monoid](ast: MapAlgebraAST, params: EvalParams): Interpreted[M] = ast match {
-    case Source(id, label) if params.sources.isDefinedAt(id) => Valid(Monoid.empty)
+  def interpretPure[M: Monoid](ast: MapAlgebraAST, sourceMapping: Map[UUID, RFMLRaster]): Interpreted[M] = ast match {
+    case Source(id, _) if sourceMapping.isDefinedAt(id) => Valid(Monoid.empty)
     case Source(id, _) => Invalid(NonEmptyList.of(MissingParameter(id)))
-    case operation => operation.args.foldMap(a => interpretPure(a, params))
+    case operation => operation.args.foldMap(a => interpretPure(a, sourceMapping))
   }
 
   /** The Interpreter method for producing a global, zoom-level 1 tile
@@ -106,18 +108,21 @@ object Interpreter extends LazyLogging {
     */
   def interpretGlobal(
     ast: MapAlgebraAST,
-    params: EvalParams,
+    sourceMapping: Map[UUID, RFMLRaster],
     source: RFMLRaster => Future[Option[Tile]]
   )(implicit ec: ExecutionContext): Future[Interpreted[LazyTile]] = {
+    val emptyTile = IntArrayTile(Array(), 0, 0)
 
     def eval(ast: MapAlgebraAST): Future[Interpreted[LazyTile]] = ast match {
       case Source(id, label) =>
-        if (params.sources.isDefinedAt(id)) {
-          val rfmlRaster = params.sources(id)
-          source(rfmlRaster) map { maybeTile =>
-            val maybeLazyTile = maybeTile.map { tile => LazyTile(tile) }
-            Validated.fromOption(maybeLazyTile, { NonEmptyList.of(RasterRetrievalError(id, rfmlRaster.id)) })
-          }
+        if (sourceMapping.isDefinedAt(id)) {
+          val rfmlRaster = sourceMapping(id)
+          source(rfmlRaster).map({ maybeTile =>
+            val lazyTile = maybeTile.map(LazyTile(_)).getOrElse(LazyTile(emptyTile))
+            Valid(lazyTile)
+          }).recover({ case t: Throwable =>
+            Invalid(NonEmptyList.of(RasterRetrievalError(id, rfmlRaster.id)))
+          })
         } else {
           Future.successful { Invalid(NonEmptyList.of(MissingParameter(id))) }
         }
@@ -125,6 +130,8 @@ object Interpreter extends LazyLogging {
       // For the exhaustive match
       case op: Operation =>
         interpretOperation(op, eval)
+      case unsupported =>
+        throw new java.lang.IllegalStateException(s"Pattern match failure on putative AST: $unsupported")
     }
 
     eval(ast)
@@ -138,7 +145,7 @@ object Interpreter extends LazyLogging {
     */
   def interpretTMS(
     ast: MapAlgebraAST,
-    params: EvalParams,
+    sourceMapping: Map[UUID, RFMLRaster],
     source: (RFMLRaster, Int, Int, Int) => Future[Option[Tile]]
   )(implicit ec: ExecutionContext): (Int, Int, Int) => Future[Interpreted[LazyTile]] = {
     // have to parse AST per-request because there is no structure to capture intermediate results
@@ -148,8 +155,8 @@ object Interpreter extends LazyLogging {
 
       def eval(ast: MapAlgebraAST): Future[Interpreted[LazyTile]] = ast match {
         case Source(id, label) =>
-          if (params.sources.isDefinedAt(id)) {
-            val rfmlRaster = params.sources(id)
+          if (sourceMapping.isDefinedAt(id)) {
+            val rfmlRaster = sourceMapping(id)
             source(rfmlRaster, z, x, y)
               .map({ maybeTile =>
                 val lazyTile = maybeTile.map(LazyTile(_)).getOrElse(LazyTile(emptyTile))

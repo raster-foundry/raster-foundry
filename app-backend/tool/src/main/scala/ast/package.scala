@@ -33,8 +33,8 @@ package object ast extends MapAlgebraCodec {
       None
     ))
 
-    def classify(breaks: ClassBreaks) =
-      MapAlgebraAST.Classification(List(self), UUID.randomUUID(), generateMetadata, breaks)
+    def classify(classmap: ClassMap) =
+      MapAlgebraAST.Classification(List(self), UUID.randomUUID(), generateMetadata, classmap)
 
     def +(other: MapAlgebraAST): MapAlgebraAST.Operation =
       MapAlgebraAST.Addition(List(self, other), UUID.randomUUID(), generateMetadata)

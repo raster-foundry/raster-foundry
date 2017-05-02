@@ -57,11 +57,11 @@ class LazyTileSpec
   it("should evaluate classification") {
     requests = Nil
     // This breakmap should convert all cells (which are set to a value of 5) to 77
-    val breakmap = ClassBreaks(Map(6.0 -> 77), ClassBreaks.Options(LessThanOrEqualTo, 123))
+    val breakmap = ClassMap(Map(6.0 -> 77), ClassMap.Options(LessThanOrEqualTo, 123))
     val srcAST = randomSourceAST
     val tms = Interpreter.interpretTMS(
       ast = srcAST.classify(breakmap),
-      params = EvalParams(Map(srcAST.id -> redTileSource)),
+      sourceMapping = Map(srcAST.id -> redTileSource),
       source = goodSource
     )
 
@@ -82,7 +82,7 @@ class LazyTileSpec
     val src2 = randomSourceAST
     val tms = Interpreter.interpretTMS(
       ast = src1 - src2,
-      params = EvalParams(Map(src1.id -> blueTileSource, src2.id -> nirTileSource)),
+      sourceMapping = Map(src1.id -> blueTileSource, src2.id -> nirTileSource),
       source = goodSource
     )
 
@@ -106,7 +106,7 @@ class LazyTileSpec
     val ast = Subtraction(List(src1, src2, src3), UUID.randomUUID(), None)
     val tms = Interpreter.interpretTMS(
       ast = ast,
-      params = EvalParams(Map(src1.id -> nirTileSource, src2.id -> redTileSource, src3.id -> blueTileSource)),
+      sourceMapping = Map(src1.id -> nirTileSource, src2.id -> redTileSource, src3.id -> blueTileSource),
       source = goodSource
     )
 
@@ -127,7 +127,7 @@ class LazyTileSpec
     val src2 = randomSourceAST
     val tms = Interpreter.interpretTMS(
       ast = src1 / src2,
-      params = EvalParams(Map(src1.id -> redTileSource, src2.id -> nirTileSource)),
+      sourceMapping = Map(src1.id -> redTileSource, src2.id -> nirTileSource),
       source = goodSource
     )
 
@@ -150,7 +150,7 @@ class LazyTileSpec
     val ast = Division(List(src1, src2, src3), UUID.randomUUID(), None)
     val tms = Interpreter.interpretTMS(
       ast = ast,
-      params = EvalParams(Map(src1.id -> blueTileSource, src2.id -> nirTileSource, src3.id -> redTileSource)),
+      sourceMapping = Map(src1.id -> blueTileSource, src2.id -> nirTileSource, src3.id -> redTileSource),
       source = goodSource
     )
 
@@ -171,7 +171,7 @@ class LazyTileSpec
     val src2 = randomSourceAST
     val tms = Interpreter.interpretTMS(
       ast = src1 * src2,
-      params = EvalParams(Map(src1.id -> redTileSource, src2.id -> nirTileSource)),
+      sourceMapping = Map(src1.id -> redTileSource, src2.id -> nirTileSource),
       source = goodSource
     )
 
@@ -192,7 +192,7 @@ class LazyTileSpec
     val src2 = randomSourceAST
     val tms = Interpreter.interpretTMS(
       ast = src1 + src2,
-      params = EvalParams(Map(src1.id -> redTileSource, src2.id -> nirTileSource)),
+      sourceMapping = Map(src1.id -> redTileSource, src2.id -> nirTileSource),
       source = goodSource
     )
 

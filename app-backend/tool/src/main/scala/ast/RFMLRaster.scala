@@ -11,10 +11,8 @@ sealed abstract class RFMLRaster(val `type`: String) {
   def id: UUID
 }
 
-@JsonCodec
 case class SceneRaster(id: UUID, band: Option[Int]) extends RFMLRaster("scene")
 
-@JsonCodec
 case class ProjectRaster(id: UUID, band: Option[Int]) extends RFMLRaster("project")
 
 object RFMLRaster {
@@ -28,6 +26,16 @@ object RFMLRaster {
         throw new InvalidParameterException("Required property, 'type', not found on map algebra raster source")
     }
   }
+
+  implicit lazy val decodeSceneRaster: Decoder[SceneRaster] =
+    Decoder.forProduct2("id", "band")(SceneRaster.apply)
+  implicit lazy val encodeSceneRaster: Encoder[SceneRaster] =
+    Encoder.forProduct3("id", "band", "type")(op => (op.id, op.band, op.`type`))
+
+  implicit lazy val decodeProjectRaster: Decoder[ProjectRaster] =
+    Decoder.forProduct2("id", "band")(ProjectRaster.apply)
+  implicit lazy val encodeProjectRaster: Encoder[ProjectRaster] =
+    Encoder.forProduct3("id", "band", "type")(op => (op.id, op.band, op.`type`))
 
   implicit lazy val encodeRFMLRaster = new Encoder[RFMLRaster] {
     def apply(rasterDefinition: RFMLRaster): Json = rasterDefinition match {
