@@ -27,12 +27,15 @@ import com.azavea.rf.datamodel._
 
 case class CreateExportDef(exportId: UUID)(implicit val database: DB) extends Job {
   val name = "create_export_def"
+
+  /** Get S3 client per each call */
+  def s3Client = S3(None)
     
   protected def writeExportDefToS3(exportDef: ExportDefinition) = {
     logger.info(s"Uploading export definition ${exportDef.id.toString} to S3 at ${exportDefConfig.bucketName}")
     val uri = s"rasterfoundry-development-data-us-east-1/${exportDefConfig.bucketName}"
     val future = Future[Option[String]] {
-      S3.putObject(uri, s"${exportDef.id.toString}.json", None, exportDef.asJson.toString)
+      s3Client.putObject(uri, s"${exportDef.id.toString}.json", exportDef.asJson.toString)
       Some(uri)
     }
 
