@@ -1,7 +1,7 @@
 package com.azavea.rf.tile
 
 import com.azavea.rf.tile.tool.TileSources
-import com.azavea.rf.datamodel.{Tool, ToolRun}
+import com.azavea.rf.datamodel.{Tool, ToolRun, User}
 import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.params._
 import com.azavea.rf.tool.ast.MapAlgebraAST
@@ -46,6 +46,7 @@ object LayerCache extends Config with LazyLogging {
   val memcachedClient = KryoMemcachedClient.DEFAULT
   private val histogramCache = HeapBackedMemcachedClient(memcachedClient)
   private val tileCache = HeapBackedMemcachedClient(memcachedClient)
+  private val astCache = HeapBackedMemcachedClient(memcachedClient)
 
   private val layerUriCache: ScaffeineCache[UUID, OptionT[Future, String]] =
     Scaffeine()
@@ -149,6 +150,16 @@ object LayerCache extends Config with LazyLogging {
               None
           }
         }
+      }
+    }
+
+  def toolRunAndTool(toolRunId: UUID, user: User): OptionT[Future, (ToolRun, Tool.WithRelated)] =
+    astCache.cachingOptionT(s"tool+run-$toolRunId-${user.id}") { implicit ec =>
+      blocking {
+        for {
+          toolRun <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
+          tool    <- OptionT(Tools.getTool(toolRun.tool, user))
+        } yield (toolRun, tool)
       }
     }
 }
