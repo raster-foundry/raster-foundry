@@ -413,7 +413,7 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     val updateTime = new Timestamp((new java.util.Date).getTime)
 
     val updateSceneQuery = for {
-      updateScene <- Scenes.filterToOwner(user).filter(_.id === sceneId)
+      updateScene <- Scenes.filterToOwnerIfNotInRootOrganization(user).filter(_.id === sceneId)
     } yield (
       updateScene.modifiedAt, updateScene.modifiedBy, updateScene.ingestSizeBytes,
       updateScene.datasource, updateScene.cloudCover,  updateScene.acquisitionDate,
