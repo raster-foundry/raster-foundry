@@ -142,16 +142,21 @@ object Interpreter extends LazyLogging {
     source: (RFMLRaster, Int, Int, Int) => Future[Option[Tile]]
   )(implicit ec: ExecutionContext): (Int, Int, Int) => Future[Interpreted[LazyTile]] = {
     // have to parse AST per-request because there is no structure to capture intermediate results
+    val emptyTile = IntArrayTile(Array(), 0, 0)
+
     (z: Int, x: Int, y: Int) => {
 
       def eval(ast: MapAlgebraAST): Future[Interpreted[LazyTile]] = ast match {
         case Source(id, label) =>
           if (params.sources.isDefinedAt(id)) {
             val rfmlRaster = params.sources(id)
-            source(rfmlRaster, z, x, y) map { maybeTile =>
-              val maybeLazyTile = maybeTile.map { tile => LazyTile(tile) }
-              Validated.fromOption(maybeLazyTile, { NonEmptyList.of(RasterRetrievalError(id, rfmlRaster.id)) })
-            }
+            source(rfmlRaster, z, x, y)
+              .map({ maybeTile =>
+                val lazyTile = maybeTile.map(LazyTile(_)).getOrElse(LazyTile(emptyTile))
+                Valid(lazyTile)
+              }).recover({ case t: Throwable =>
+                Invalid(NonEmptyList.of(RasterRetrievalError(id, rfmlRaster.id)))
+              })
           } else {
             Future.successful { Invalid(NonEmptyList.of(MissingParameter(id))) }
           }
