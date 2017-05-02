@@ -51,7 +51,7 @@ object TileSources extends LazyLogging {
     r match {
       case scene @ SceneRaster(sceneId, Some(band)) =>
         LayerCache.layerTile(sceneId, z, SpatialKey(x, y))
-          .map( tile => tile.bands(band)).value
+          .map(tile => tile.bands(band)).value
 
       case scene @ SceneRaster(sceneId, None) =>
         logger.warn(s"Request for $scene does not contain band index")
@@ -59,7 +59,7 @@ object TileSources extends LazyLogging {
 
       case project @ ProjectRaster(projId, Some(band)) =>
         Mosaic.fetch(projId, z, x, y)
-          .map( tile => tile.bands(band)).value
+          .map(tile => tile.bands(band)).value
 
       case project @ ProjectRaster(projId, None) =>
         logger.warn(s"Request for $project does not contain band index")
