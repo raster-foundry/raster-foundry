@@ -53,7 +53,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
     source: (RFMLRaster, Int, Int, Int) => Future[Option[Tile]]
   ): Route =
     pathPrefix(JavaUUID){ (toolRunId) =>
-      authenticate { user =>
+      authenticateWithParameter { user =>
         // TODO: check token for organization access
         (pathEndOrSingleSlash & get & rejectEmptyResponse) {
           complete {
@@ -78,7 +78,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
                   params  <- OptionT.fromOption[Future](maybeThrow(toolRun.executionParameters.as[EvalParams]))
                   ramp    <- OptionT.fromOption[Future](defaultRamps.get(colorRamp))
                   ast     <- OptionT.fromOption[Future](maybeThrow(tool.definition.as[MapAlgebraAST]).flatMap(entireAST =>
-                    nodeId.flatMap(id => entireAST.find(id))
+                    nodeId.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
                   ))
                   hist    <- LayerCache.modelLayerGlobalHistogram(toolRun, tool, nodeId)
                   tile    <- OptionT({
