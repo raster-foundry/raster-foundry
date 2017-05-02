@@ -64,16 +64,12 @@ trait MapAlgebraUtilityCodecs {
     final def apply(cRamp: ColorRamp): Json = cRamp.colors.toArray.asJson
   }
 
-  implicit val histogramDecoder: Decoder[Histogram[Double]] = Decoder[JsValue].map { js =>
-    js.convertTo[Histogram[Double]]
+  implicit val histogramDecoder: Decoder[Histogram[Double]] = Decoder[Json].map { js =>
+    js.noSpaces.parseJson.convertTo[Histogram[Double]]
   }
 
   implicit val histogramEncoder: Encoder[Histogram[Double]] = new Encoder[Histogram[Double]] {
     final def apply(hist: Histogram[Double]): Json = hist.toJson.asJson
-  }
-
-  implicit val sprayJsonDecoder: Decoder[JsValue] = Decoder[Json].map { js =>
-    js.noSpaces.parseJson
   }
 
   implicit val sprayJsonEncoder: Encoder[JsValue] = new Encoder[JsValue] {

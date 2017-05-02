@@ -58,4 +58,5 @@ object Dependencies {
   val ficus                   = "com.iheart"                  %% "ficus"                             % Version.ficus
   val dnsJava                 = "dnsjava"                      % "dnsjava"                           % Version.dnsJava
   val dropbox                 = "com.dropbox.core"             % "dropbox-core-sdk"                  % Version.dropbox
+  val scalaCheck              = "org.scalacheck"              %% "scalacheck"                        % Version.scalaCheck % "test"
 }

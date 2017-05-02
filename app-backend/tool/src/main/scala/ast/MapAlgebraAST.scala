@@ -44,28 +44,22 @@ object MapAlgebraAST {
     def sources: Seq[UUID] = args.flatMap(_.sources)
   }
 
-  @JsonCodec
   case class Addition(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
       extends Operation("+")
 
-  @JsonCodec
   case class Subtraction(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
       extends Operation("-")
 
-  @JsonCodec
   case class Multiplication(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
       extends Operation("*")
 
-  @JsonCodec
   case class Division(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
       extends Operation("/")
 
-  @JsonCodec
   case class Masking(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
       extends Operation("mask")
 
-  @JsonCodec
-  case class Classification(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], classBreaks: ClassBreaks)
+  case class Classification(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], classMap: ClassMap)
       extends Operation("classify")
 
   /** Map Algebra sources (leaves) */
@@ -83,6 +77,6 @@ object MapAlgebraAST {
     def empty: Source = Source(UUID.randomUUID(), None)
   }
 
-  /** TODO: Add other source types (or treat of them as hyperparameters - e.g. ClassBreaks, above) */
+  /** TODO: Add other source types (or treat of them as hyperparameters - e.g. ClassMap, above) */
 
 }

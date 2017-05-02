@@ -1,8 +1,9 @@
 package com.azavea.rf.tile
 
 import com.azavea.rf.tile.tool.TileSources
-import com.azavea.rf.datamodel.{Tool, ToolRun}
+import com.azavea.rf.datamodel.{Tool, ToolRun, User}
 import com.azavea.rf.tool.eval._
+import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.params._
 import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.rf.common._
@@ -11,7 +12,10 @@ import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables._
 
+import io.circe._
+import io.circe.syntax._
 import geotrellis.raster._
+import geotrellis.raster.render._
 import geotrellis.raster.histogram._
 import geotrellis.spark._
 import geotrellis.raster.io._
@@ -46,6 +50,7 @@ object LayerCache extends Config with LazyLogging {
   val memcachedClient = KryoMemcachedClient.DEFAULT
   private val histogramCache = HeapBackedMemcachedClient(memcachedClient)
   private val tileCache = HeapBackedMemcachedClient(memcachedClient)
+  private val astCache = HeapBackedMemcachedClient(memcachedClient)
 
   private val layerUriCache: ScaffeineCache[UUID, OptionT[Future, String]] =
     Scaffeine()
@@ -90,28 +95,6 @@ object LayerCache extends Config with LazyLogging {
       }}
     }
 
-  def modelLayerGlobalHistogram(toolRun: ToolRun, tool: Tool.WithRelated, nodeId: Option[UUID]): OptionT[Future, Histogram[Double]] =
-    histogramCache.cachingOptionT(s"model-${toolRun.id}-$nodeId") { implicit ec =>
-    val maybeAST = maybeThrow(tool.definition.as[MapAlgebraAST]).flatMap(entireAST =>
-      nodeId.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
-    )
-
-      OptionT.fromOption[Future](
-        for {
-          ast  <- maybeAST
-          md   <- ast.metadata
-          hist <- md.histogram
-        } yield hist
-      ).orElse(
-        for {
-          params <- OptionT.fromOption[Future](maybeThrow(toolRun.executionParameters.as[EvalParams]))
-          ast    <- OptionT.fromOption[Future](maybeAST)
-          lztile <- OptionT(Interpreter.interpretGlobal(ast, params, TileSources.cachedGlobalSource).map(_.toOption))
-          tile   <- OptionT.fromOption[Future](lztile.evaluateDouble)
-        } yield StreamingHistogram.fromTile(tile)
-      )
-    }
-
   def layerTile(layerId: UUID, zoom: Int, key: SpatialKey): OptionT[Future, MultibandTile] =
     tileCache.cachingOptionT(s"tile-$layerId-$zoom-${key.col}-${key.row}") { implicit ec =>
       attributeStoreForLayer(layerId).mapFilter { case (store, _) =>
@@ -129,6 +112,7 @@ object LayerCache extends Config with LazyLogging {
         }
       }
     }
+
 
   def layerTileForExtent(layerId: UUID, zoom: Int, extent: Extent): OptionT[Future, MultibandTile] =
     tileCache.cachingOptionT(s"extent-tile-$layerId-$zoom-$extent") { implicit ec =>
@@ -150,5 +134,74 @@ object LayerCache extends Config with LazyLogging {
           }
         }
       }
+    }
+
+  /** Calculate the histogram for the least resolute zoom level to automatically render tiles */
+  def modelLayerGlobalHistogram(
+    ast: MapAlgebraAST,
+    params: EvalParams,
+    toolRun: ToolRun,
+    user: User
+  ): OptionT[Future, Histogram[Double]] =
+    histogramCache.cachingOptionT(s"model-${toolRun.id}-${ast.id}") { implicit ec =>
+      for {
+        lztile <- OptionT(Interpreter.interpretGlobal(ast, params.sources, TileSources.cachedGlobalSource).map(_.toOption))
+        tile   <- OptionT.fromOption[Future](lztile.evaluateDouble)
+      } yield {
+        val hist = StreamingHistogram.fromTile(tile)
+        val currentMetadata = params.metadata.getOrElse(ast.id, NodeMetadata())
+        val updatedMetadata = currentMetadata.copy(histogram = Some(hist))
+        val updatedParams = params.copy(metadata=params.metadata + (ast.id -> updatedMetadata))
+        val updatedToolRun = toolRun.copy(executionParameters=updatedParams.asJson)
+        try {
+          database.db.run { ToolRuns.updateToolRun(updatedToolRun, toolRun.id, user) }
+        } catch {
+          case e: Exception => logger.error(s"Unable to update ToolRun (${toolRun.id}): ${e.getMessage}")
+        }
+
+        hist
+      }
+    }
+
+  /** Calculate all of the prerequisites to evaluation of an AST over a set of tile sources */
+  def toolEvalRequirements(
+    toolRunId: UUID,
+    subNode: Option[UUID],
+    user: User
+  ): OptionT[Future, (ToolRun, Tool.WithRelated, MapAlgebraAST, EvalParams, ColorMap)] =
+    astCache.cachingOptionT(s"tool+run-$toolRunId-${subNode}-${user.id}") { implicit ec =>
+      for {
+        toolRun <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
+        tool    <- OptionT(Tools.getTool(toolRun.tool, user))
+        ast     <- OptionT.fromOption[Future]({
+                     logger.debug(s"Parsing Tool AST with ${tool.definition}")
+                     val entireAST = parseOrThrow[MapAlgebraAST](tool.definition)
+                     subNode.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
+                   })
+        nodeId  <- OptionT.pure[Future, UUID](subNode.getOrElse(ast.id))
+        params  <- OptionT.pure[Future, EvalParams]({
+                     logger.debug(s"Parsing ToolRun parameters with ${toolRun.executionParameters}")
+                     val parsedParams = parseOrThrow[EvalParams](toolRun.executionParameters)
+                     val md = (parsedParams.metadata.get(ast.id), ast.metadata) match {
+                       case (Some(overrides), Some(defaults)) => overrides.fallbackTo(defaults)
+                       case (None, Some(defaults)) => defaults
+                       case (Some(overrides), None) => overrides
+                       case (None, None) => NodeMetadata()
+                     }
+                     EvalParams(
+                       parsedParams.sources,
+                       parsedParams.metadata + (ast.id -> md)
+                     )
+                   })
+       metadata <- OptionT.fromOption[Future](params.metadata.get(nodeId))
+       cMap     <- OptionT.fromOption[Future](metadata.classMap.map(_.toColorMap)).orElse({
+                     for {
+                       hist  <- OptionT.fromOption[Future](metadata.histogram)
+                                  .orElse(LayerCache.modelLayerGlobalHistogram(ast, params, toolRun, user))
+                       cRamp <- OptionT.fromOption[Future](metadata.colorRamp)
+                                  .orElse(OptionT.pure[Future, ColorRamp](geotrellis.raster.render.ColorRamps.Viridis))
+                     } yield cRamp.toColorMap(hist)
+                   })
+      } yield (toolRun, tool, ast, params, cMap)
     }
 }

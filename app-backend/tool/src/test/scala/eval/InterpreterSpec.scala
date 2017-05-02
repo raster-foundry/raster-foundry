@@ -50,14 +50,12 @@ class InterpreterSpec
     }
   }
 
-  val badSource = (raster: RFMLRaster, z: Int, x: Int, y: Int) => Future.successful { None }
-
   it("should evaluate simple ast") {
     val src1 = randomSourceAST
     val src2 = randomSourceAST
     val tms = Interpreter.interpretTMS(
       ast = src1 - src2,
-      params = EvalParams(Map(src1.id -> redTileSource, src2.id -> nirTileSource)),
+      sourceMapping = Map(src1.id -> redTileSource, src2.id -> nirTileSource),
       source = goodSource
     )
 
@@ -79,7 +77,7 @@ class InterpreterSpec
     val src2 = randomSourceAST
     val tms = Interpreter.interpretTMS(
       ast = src1 - src2,
-      params = EvalParams(Map(src1.id -> redTileSource)),
+      sourceMapping = Map(src1.id -> redTileSource),
       source = goodSource
     )
 
@@ -90,13 +88,19 @@ class InterpreterSpec
     lt should be (Invalid(NEL.of(MissingParameter(src2.id))))
   }
 
-  it("should deal with bad raster sources and aggregate multiple errors") {
+  /** A failed future is semantically different than successfully returned None. This test
+    *  allows us to simulate a failure encountered while retrieving a tile as opposed to
+    *  an empty region of some tile layout.
+    */
+  it("should deal with bad raster sourceMapping and aggregate multiple errors") {
     requests = Nil
     val src1 = randomSourceAST
     val src2 = randomSourceAST
+    val badSource = (raster: RFMLRaster, z: Int, x: Int, y: Int) => Future.failed { new Exception("Some exception") }
+
     val tms = Interpreter.interpretTMS(
       ast = src1 - src2,
-      params = EvalParams(Map(src1.id -> redTileSource)),
+      sourceMapping = Map(src1.id -> redTileSource),
       source = badSource
     )
 
@@ -113,7 +117,7 @@ class InterpreterSpec
 
     val tms = Interpreter.interpretPure[Unit](
       ast = src1 - src2,
-      params = EvalParams(Map(src1.id -> redTileSource, src2.id -> nirTileSource))
+      sourceMapping = Map(src1.id -> redTileSource, src2.id -> nirTileSource)
     )
 
     tms shouldBe Valid(())

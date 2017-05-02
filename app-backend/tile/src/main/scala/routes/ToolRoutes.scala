@@ -9,7 +9,7 @@ import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.params._
 
 import akka.http.scaladsl.marshalling._
-import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes}
+import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes, StatusCodes}
 import akka.http.scaladsl.server._
 import cats.data._
 import cats.data.Validated._
@@ -26,7 +26,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class ToolRoutes(implicit val database: Database) extends Authentication
   with LazyLogging
-  with InterpreterErrorHandler {
+  with InterpreterExceptionHandling
+  with CommonHandlers {
   val userId: String = "rf_airflow-user"
 
   val defaultRamps = Map(
@@ -49,54 +50,58 @@ class ToolRoutes(implicit val database: Database) extends Authentication
     }.toMap
   }
 
-  def root(
+  /** Endpoint to be used for kicking the histogram cache and ensuring tiles are quickly loaded */
+  val preflight =
+    (handleExceptions(interpreterExceptionHandler) & handleExceptions(circeDecodingError)) {
+      pathPrefix(JavaUUID){ (toolRunId) =>
+        parameter('node.?) { node =>
+          authenticateWithParameter { user =>
+            val nodeId = node.map(UUID.fromString(_))
+            onSuccess(LayerCache.toolEvalRequirements(toolRunId, nodeId, user).value) { _ =>
+              complete { StatusCodes.NoContent }
+            }
+          }
+        }
+      }
+    }
+
+  /** The central endpoint for ModelLab; serves TMS tiles given a [[ToolRun]] specification */
+  def tms(
     source: (RFMLRaster, Int, Int, Int) => Future[Option[Tile]]
   ): Route =
-    pathPrefix(JavaUUID){ (toolRunId) =>
-      authenticateWithParameter { user =>
-        // TODO: check token for organization access
-        (pathEndOrSingleSlash & get & rejectEmptyResponse) {
-          complete {
-            (for {
-              toolRun <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
-              tool    <- OptionT(Tools.getTool(toolRun.tool, user))
-            } yield tool).value
-          }
-        } ~
-        pathPrefix(IntNumber / IntNumber / IntNumber) { (z, x, y) =>
-          parameter(
-            'node.?,
-            'geotiff.?(false),
-            'cramp.?("viridis")
-          ) { (node, geotiffOutput, colorRamp) =>
-            handleExceptions(interpreterExceptionHandler) {
+    (handleExceptions(interpreterExceptionHandler) & handleExceptions(circeDecodingError)) {
+      pathPrefix(JavaUUID){ (toolRunId) =>
+        authenticateWithParameter { user =>
+          pathPrefix(IntNumber / IntNumber / IntNumber) { (z, x, y) =>
+            parameter(
+              'node.?,
+              'geotiff.?(false),
+              'cramp.?("viridis")
+            ) { (node, geotiffOutput, colorRamp) =>
               complete {
                 val nodeId = node.map(UUID.fromString(_))
                 val responsePng = for {
-                  toolRun <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
-                  tool    <- OptionT(Tools.getTool(toolRun.tool, user))
-                  params  <- OptionT.fromOption[Future](maybeThrow(toolRun.executionParameters.as[EvalParams]))
-                  ast     <- OptionT.fromOption[Future](maybeThrow(tool.definition.as[MapAlgebraAST]).flatMap(entireAST =>
-                               nodeId.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
-                             ))
-                  hist    <- LayerCache.modelLayerGlobalHistogram(toolRun, tool, nodeId)
-                  ramp    <- OptionT.fromOption[Future](defaultRamps.get(colorRamp))
+                  (toolRun, tool, ast, params, cMap) <- LayerCache.toolEvalRequirements(toolRunId, nodeId, user)
                   tile    <- OptionT({
-                               val tms = Interpreter.interpretTMS(ast, params, source)
+                               val tms = Interpreter.interpretTMS(ast, params.sources, source)
+                               logger.debug(s"Attempting to retrieve TMS tile at $z/$x/$y")
                                tms(z, x, y).map {
                                  case Valid(op) => op.evaluateDouble
                                  case Invalid(errors) => throw InterpreterException(errors)
                                }
                              })
-                } yield tile.renderPng(ramp.toColorMap(hist))
+                } yield {
+                  logger.debug(s"Tile successfully produced at $z/$x/$y")
+                  tile.renderPng(cMap)
+                }
                 responsePng.value
               }
             }
-          }
-        } ~
-        pathPrefix("validate") {
-          handleExceptions(interpreterExceptionHandler) {
-            complete(validateAST[Unit](toolRunId, user))
+          } ~
+          pathPrefix("validate") {
+            authenticateWithParameter { user =>
+              complete(validateAST[Unit](toolRunId, user))
+            }
           }
         }
       }

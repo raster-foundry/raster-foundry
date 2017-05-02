@@ -6,18 +6,28 @@ import geotrellis.raster.render._
 import spire.std.any._
 
 @JsonCodec
-case class ClassBreaks(
-  classMap: Map[Double, Int],
-  options: ClassBreaks.Options = ClassBreaks.Options()
+case class ClassMap(
+  classifications: Map[Double, Int],
+  options: ClassMap.Options = ClassMap.Options()
 ) {
   lazy val mapStrategy =
     new MapStrategy(options.boundaryType, options.ndValue, options.fallback, false)
 
   def toBreakMap =
-    new BreakMap(classMap, mapStrategy, { i: Double => isNoData(i) })
+    new BreakMap(classifications, mapStrategy, { i: Double => isNoData(i) })
+
+  def toColorMap =
+    ColorMap(
+      classifications,
+      ColorMap.Options(
+        options.boundaryType,
+        options.ndValue,
+        options.fallback
+      )
+    )
 }
 
-object ClassBreaks {
+object ClassMap {
   @JsonCodec
   case class Options(
     boundaryType: ClassBoundaryType = LessThanOrEqualTo,
