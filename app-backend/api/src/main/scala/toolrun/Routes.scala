@@ -19,7 +19,7 @@ trait ToolRunRoutes extends Authentication
     with ToolRunQueryParametersDirective
     with CommonHandlers
     with UserErrorHandler
-    with InterpreterErrorHandler
+    with InterpreterExceptionHandling
     with ActionRunner {
 
   implicit def database: Database

@@ -8,6 +8,8 @@ import cats._
 import cats.data.{NonEmptyList, OptionT}
 import cats.data.Validated.{Invalid, Valid}
 import cats.implicits._
+import io.circe._
+import io.circe.syntax._
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.{ToolRuns, Tools}
 import com.azavea.rf.datamodel.{Tool, ToolRun, User}
@@ -17,10 +19,10 @@ import com.azavea.rf.tool.params.EvalParams
 
 package object common {
 
-  /** Convert an [[Either]] to an [[Option]], or throw the error. */
-  def maybeThrow[A <: Throwable, B](e: Either[A, B]): Option[B] = e match {
-    case Right(a) => Some(a)
-    case Left(failure) => throw failure
+  /** Parse JSON as the argument type provided and throw in case of failure. */
+  def parseOrThrow[A: Decoder](js: Json): A = js.as[A] match {
+    case Right(a) => a
+    case Left(decodingFailure) => throw decodingFailure
   }
 
   /** Validate an AST, given some ToolRun. In the case of success, returns
@@ -47,9 +49,9 @@ package object common {
 
   def validateASTPure[M: Monoid](tr: ToolRun, t: Tool.WithRelated): Interpreter.Interpreted[M] = {
 
-    (t.definition.as[MapAlgebraAST] |@| tr.executionParameters.as[EvalParams]).map(
-      Interpreter.interpretPure[M](_, _)
-    ) match {
+    (t.definition.as[MapAlgebraAST] |@| tr.executionParameters.as[EvalParams]).map({ case (ast, params) =>
+      Interpreter.interpretPure[M](ast, params.sources)
+    }) match {
       case Right(a) => a
       case Left(err) => Invalid(NonEmptyList.of(ASTDecodeError(tr.id, err)))
     }

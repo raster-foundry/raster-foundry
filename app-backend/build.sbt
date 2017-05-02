@@ -245,6 +245,7 @@ lazy val tool = Project("tool", file("tool"))
       Dependencies.circeCore,
       Dependencies.circeGeneric,
       Dependencies.circeParser,
-      Dependencies.circeOptics
+      Dependencies.circeOptics,
+      Dependencies.scalaCheck
     )
   })
