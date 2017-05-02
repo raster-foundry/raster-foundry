@@ -1,16 +1,5 @@
 package com.azavea.rf.tile.routes
 
-import java.util.UUID
-
-import scala.concurrent._
-import scala.concurrent.ExecutionContext.Implicits.global
-
-import akka.http.scaladsl.marshalling._
-import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes}
-import akka.http.scaladsl.server._
-import cats.data._
-import cats.data.Validated._
-import cats.implicits._
 import com.azavea.rf.common._
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.{ToolRuns, Tools}
@@ -18,10 +7,21 @@ import com.azavea.rf.tile._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.params._
+
+import akka.http.scaladsl.marshalling._
+import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes}
+import akka.http.scaladsl.server._
+import cats.data._
+import cats.data.Validated._
+import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 import geotrellis.raster._
 import geotrellis.raster.render._
+
+import java.util.UUID
+import scala.concurrent._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 
 class ToolRoutes(implicit val database: Database) extends Authentication
@@ -78,8 +78,8 @@ class ToolRoutes(implicit val database: Database) extends Authentication
                   params  <- OptionT.fromOption[Future](maybeThrow(toolRun.executionParameters.as[EvalParams]))
                   ramp    <- OptionT.fromOption[Future](defaultRamps.get(colorRamp))
                   ast     <- OptionT.fromOption[Future](maybeThrow(tool.definition.as[MapAlgebraAST]).flatMap(entireAST =>
-                    nodeId.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
-                  ))
+                               nodeId.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
+                             ))
                   hist    <- LayerCache.modelLayerGlobalHistogram(toolRun, tool, nodeId)
                   tile    <- OptionT({
                                val tms = Interpreter.interpretTMS(ast, params, source)
