@@ -6,6 +6,7 @@ import os
 import subprocess
 
 import boto3
+import rasterio
 
 from rf.models import Thumbnail
 
@@ -80,27 +81,34 @@ def create_thumbnails(tif_path, scene_id, organization_id):
             # Add variable to avoid sidecar files
             mod_env['GDAL_PAM_ENABLED'] = 'NO'
 
-            # Convert tif to pngs (large)
-            subprocess.check_call([
+            with rasterio.open(rp_tif_path) as src:
+                num_bands = src.count
+                if num_bands >= 3:
+                    bands = ['-b', '1',
+                             '-b', '2',
+                             '-b', '3']
+                else:
+                    bands = ['-b', '1']
+
+            large_thumbnail_gdal_command = [
                 'gdal_translate', rp_tif_path, path_large,
-                '-b', '1',
-                '-b', '2',
-                '-b', '3',
                 '-outsize', str(dim_large[0]), str(dim_large[1]),
                 '-of', 'PNG',
                 '-q'
-            ], env=mod_env)
+            ] + bands
 
-            # Convert tif to pngs (small)
-            subprocess.check_call([
+            small_thumbnail_gdal_command = [
                 'gdal_translate', rp_tif_path, path_small,
-                '-b', '1',
-                '-b', '2',
-                '-b', '3',
                 '-outsize', str(dim_small[0]), str(dim_small[1]),
                 '-of', 'PNG',
-                '-q',
-            ], env=mod_env)
+                '-q'
+            ] + bands
+
+            # Convert tif to pngs (large)
+            subprocess.check_call(large_thumbnail_gdal_command, env=mod_env)
+
+            # Convert tif to pngs (small)
+            subprocess.check_call(small_thumbnail_gdal_command, env=mod_env)
 
             # Do basic histogram normalization to improve thumbnails
             subprocess.check_call([
