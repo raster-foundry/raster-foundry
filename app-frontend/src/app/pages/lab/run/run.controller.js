@@ -3,7 +3,7 @@
 export default class LabRunController {
     constructor( // eslint-disable-line max-params
         $scope, $timeout, $element, authService, $uibModal, mapService, projectService,
-        mapUtilsService) {
+        mapUtilsService, APP_CONFIG) {
         'ngInject';
         this.$scope = $scope;
         this.$timeout = $timeout;
@@ -13,6 +13,8 @@ export default class LabRunController {
         this.projectService = projectService;
         this.mapUtilsService = mapUtilsService;
         this.getMap = () => mapService.getMap('lab-run-preview');
+
+        this.tileServer = `${APP_CONFIG.tileServerLocation}`;
     }
 
     $onInit() {
@@ -85,11 +87,12 @@ export default class LabRunController {
             if (node.tag.startsWith('input')) {
                 let tag = new Date().getTime();
                 let inputNum = node.tag.split('_')[1];
-                return `/tiles/${this.inputs[inputNum].id}/{z}/{x}/{y}/` +
+                return `${this.tileServer}/${this.inputs[inputNum].id}/{z}/{x}/{y}/` +
                        `?tag=${tag}&token=${token}`;
             }
             let base =
-                '/tiles/tools/dfac6307-b5ef-43f7-beda-b9f208bb7726/ndvi-diff-tool/{z}/{x}/{y}';
+                `${this.tileServer}/tools/dfac6307-b5ef-43f7-beda-b9f208bb7726` +
+                 '/ndvi-diff-tool/{z}/{x}/{y}';
             let lc80 = `LC8_0=${this.inputs[0].id}`;
             let lc81 = `LC8_1=${this.inputs[1].id}`;
             let part = `part=${node.tag}`;

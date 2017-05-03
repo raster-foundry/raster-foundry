@@ -394,6 +394,7 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
                       None, None,                   // Contrast, Brightness
                       None, None,                   // Alpha, Beta
                       None, None,                   // Min, Max
+                      None,                         // Saturation
                       false                         // Equalize
                     )
                   )
