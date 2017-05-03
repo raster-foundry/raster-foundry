@@ -1,5 +1,14 @@
 # Change Log
 
+## [0.4.0](https://github.com/azavea/raster-foundry/tree/0.4.0) (2017-05-03)
+[Full Changelog](https://github.com/azavea/raster-foundry/compare/0.3.0...0.4.0)
+
+**Merged pull requests:**
+
+- Fix tile server location in lab UI [\#1655](https://github.com/azavea/raster-foundry/pull/1655)
+- Fix reversal of `crs` and `extent\_crs` [\#1614](https://github.com/azavea/raster-foundry/pull/1614)
+- Update scala dockerignore to include new subprojects [\#1612](https://github.com/azavea/raster-foundry/pull/1612)
+
 ## [0.3.0](https://github.com/azavea/raster-foundry/tree/0.3.0) (2017-04-28)
 [Full Changelog](https://github.com/azavea/raster-foundry/compare/0.2.0...0.3.0)
 
@@ -8,6 +17,7 @@
 - Import landsat8 dag to use jar [\#1597](https://github.com/azavea/raster-foundry/pull/1597)
 - Connect imported scenes to project [\#1594](https://github.com/azavea/raster-foundry/pull/1594)
 - Saturation slider [\#1587](https://github.com/azavea/raster-foundry/pull/1587)
+- Add Saturation parameter to color correction [\#1585](https://github.com/azavea/raster-foundry/pull/1585)
 - AST Validation Endpoint [\#1582](https://github.com/azavea/raster-foundry/pull/1582)
 - Root project should build all subprojects [\#1581](https://github.com/azavea/raster-foundry/pull/1581)
 - Add Explicit Owner Field/Filter [\#1580](https://github.com/azavea/raster-foundry/pull/1580)
