@@ -11,6 +11,8 @@
                     "redBand": 0,
                     "blueBand": 2,
                     "greenBand": 1,
+                    "redMax": 9, "greenMax": 9, "blueMax": 9,
+                    "redMin": null, "greenMin": null, "blueMin": null,
                     "alpha": 6.0,
                     "min": 8,
                     "max": 9,
