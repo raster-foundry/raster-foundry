@@ -78,9 +78,10 @@ class ProjectsListController {
             component: 'rfCreateProjectModal'
         });
 
-        this.newProjectModal.result.then(() => {
-            // TODO once workflow is a bit more fleshed out
-            // project => {}
+        this.newProjectModal.result.then((data) => {
+            if (data.reloadProjectList) {
+                this.populateProjectList(1);
+            }
         });
 
         return this.newProjectModal;
