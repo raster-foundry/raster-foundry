@@ -17,6 +17,7 @@ object S3 {
     val builder = AmazonS3ClientBuilder.standard()
       .withCredentials(new DefaultAWSCredentialsProviderChain())
 
+
     region.fold(builder)(builder.withRegion).build()
   }
 
@@ -25,6 +26,10 @@ object S3 {
   /** Get S3Object */
   def getObject(s3bucket: String, s3prefix: String, region: Option[String] = None): S3Object =
     getClient(region).getObject(s3bucket, s3prefix)
+
+  def putObject(s3bucket: String, s3Key:String, region: Option[String] = None, content:String) = {
+    getClient(region).putObject(s3bucket, s3Key, content)
+  }
 
   /** List the keys to files found within a given bucket */
   def listKeys(url: String, ext: String, recursive: Boolean): Array[URI] = {

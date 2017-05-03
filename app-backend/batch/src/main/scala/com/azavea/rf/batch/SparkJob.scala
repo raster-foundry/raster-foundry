@@ -1,7 +1,6 @@
 package com.azavea.rf.batch
 
 import org.apache.spark._
-
 trait SparkJob {
   // Functions for combine step
   def createTiles[V](value: V): Seq[V]                         = Seq(value)
