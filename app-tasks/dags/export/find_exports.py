@@ -66,7 +66,7 @@ def get_exports():
     session = get_session()
     host = HOST
     params = base_params.copy()
-    params['page'] = 0 
+    params['page'] = 0
     exports_url = '{host}{api}'.format(host=host, api=API_PATH)
     response = session.get(exports_url, params=params).json()
     queued_exports = response['results']
@@ -106,7 +106,7 @@ def find_exports():
 dag = DAG(
     dag_id='find_exports',
     default_args=default_args,
-    schedule_interval=datetime.timedelta(seconds=10),
+    schedule_interval=datetime.timedelta(minutes=1),
     concurrency=os.getenv('AIRFLOW_DAG_CONCURRENCY', 24)
 )
 
