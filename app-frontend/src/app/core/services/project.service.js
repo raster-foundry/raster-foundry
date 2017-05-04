@@ -85,7 +85,7 @@ export default (app) => {
                     return this.Project.export({
                         organizationId: user.organizationId,
                         projectId: projectId,
-                        exportStatus: 'TOBEEXPORTED',
+                        exportStatus: 'NOTEXPORTED',
                         exportType: 'S3',
                         visibility: 'PRIVATE',
                         exportOptions: {
