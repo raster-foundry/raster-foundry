@@ -30,7 +30,7 @@ function main() {
     docker-compose \
         -f "${DIR}/../docker-compose.yml" \
         -f "${DIR}/../docker-compose.airflow.yml" \
-        pull postgres redis memcached api-client
+        pull postgres redis memcached
 }
 
 
