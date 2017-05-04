@@ -1,7 +1,7 @@
 package com.azavea.rf.database.tables
 
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
-import com.azavea.rf.database.fields.{OrgFkVisibleFields, TimestampFields, UserFkFields, NameField}
+import com.azavea.rf.database.fields.{OrgFkVisibleFields, TimestampFields, UserFkVisibleFields, NameField}
 import com.azavea.rf.database.query.{DatasourceQueryParameters, ListQueryResult}
 import com.azavea.rf.datamodel._
 
@@ -24,6 +24,7 @@ import scala.concurrent.Future
 class Datasources(_tableTag: Tag) extends Table[Datasource](_tableTag, "datasources")
     with NameField
     with TimestampFields
+    with UserFkVisibleFields
     with OrgFkVisibleFields
 {
   def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, owner, organizationId, name,
@@ -66,7 +67,7 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
   def listDatasources(offset: Int, limit: Int, datasourceParams: DatasourceQueryParameters, user: User) = {
 
     val dropRecords = limit * offset
-    val accessibleDatasources = Datasources.filterToSharedOrganizationIfNotInRoot(user)
+    val accessibleDatasources = Datasources.filterUserVisibility(user)
     val datasourceFilterQuery = datasourceParams.name match {
       case Some(n) => accessibleDatasources.filter(_.name === n)
       case _ => accessibleDatasources
