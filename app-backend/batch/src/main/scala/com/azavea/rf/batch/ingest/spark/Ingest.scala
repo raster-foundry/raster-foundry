@@ -1,8 +1,9 @@
-package com.azavea.rf.batch.ingest
+package com.azavea.rf.batch.ingest.spark
 
 import io.circe.parser._
 
 import com.azavea.rf.batch._
+import com.azavea.rf.batch.ingest._
 import com.azavea.rf.batch.ingest.model._
 import com.azavea.rf.batch.util._
 

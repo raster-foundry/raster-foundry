@@ -1,4 +1,4 @@
-package com.azavea.rf.batch.sentinel2
+package com.azavea.rf.batch.sentinel2.airflow
 
 import com.azavea.rf.batch.Job
 import com.azavea.rf.database.{Database => DB}
