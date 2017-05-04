@@ -1,4 +1,4 @@
-package com.azavea.rf.batch.airflow.export
+package com.azavea.rf.batch.export.airflow
 
 import java.util.UUID
 

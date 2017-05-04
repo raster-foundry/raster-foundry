@@ -13,7 +13,7 @@ import org.scalatest.{FunSpec, Matchers}
 
 @SuppressWarnings(Array("OptionGet"))
 class TileInfoSpec extends FunSpec with Matchers with BatchSpec {
-  import ImportSentinel2._
+  import com.azavea.rf.batch.sentinel2.airflow.ImportSentinel2._
 
   it("Should parse sentinel2 tileInfo.json") {
     val json: Option[Json] = parse(getJson("/sentinel2/tileInfo.json")).toOption

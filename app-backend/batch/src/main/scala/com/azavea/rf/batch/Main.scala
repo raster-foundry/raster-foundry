@@ -1,10 +1,10 @@
 package com.azavea.rf.batch
 
-import com.azavea.rf.batch.export.Export
-import com.azavea.rf.batch.ingest.Ingest
-import com.azavea.rf.batch.landsat8.ImportLandsat8
-import com.azavea.rf.batch.airflow.export.CreateExportDef
-import com.azavea.rf.batch.sentinel2.ImportSentinel2
+import com.azavea.rf.batch.export.spark.Export
+import com.azavea.rf.batch.export.airflow.CreateExportDef
+import com.azavea.rf.batch.ingest.spark.Ingest
+import com.azavea.rf.batch.landsat8.airflow.ImportLandsat8
+import com.azavea.rf.batch.sentinel2.airflow.ImportSentinel2
 
 object Main {
   val modules = Map[String, Array[String] => Unit](

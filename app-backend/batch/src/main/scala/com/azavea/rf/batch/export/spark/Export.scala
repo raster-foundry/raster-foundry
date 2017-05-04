@@ -1,10 +1,11 @@
-package com.azavea.rf.batch.export
+package com.azavea.rf.batch.export.spark
 
 import io.circe.parser._
 
 import com.azavea.rf.datamodel._
 import com.azavea.rf.batch._
 import com.azavea.rf.batch.util._
+import com.azavea.rf.batch.export._
 
 import geotrellis.proj4.LatLng
 import geotrellis.raster._
