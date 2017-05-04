@@ -145,7 +145,8 @@ object Ingest extends SparkJob with LazyLogging {
         FileRangeReader(new File(uri))
       case "s3" | "s3a" | "s3n" =>
         val (bucket, prefix) = S3.parse(uri)
-        S3RangeReader(bucket, prefix, S3Client.DEFAULT)
+        val decodedPrefix = java.net.URLDecoder.decode(prefix, "UTF-8")
+        S3RangeReader(bucket, decodedPrefix, S3Client.DEFAULT)
       case "http" | "https"
           if uri.getAuthority == "s3.amazonaws.com"
           && uri.getQuery.contains("AWSAccessKeyId") =>
