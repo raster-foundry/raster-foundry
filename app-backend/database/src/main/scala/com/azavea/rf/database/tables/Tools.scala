@@ -28,8 +28,7 @@ class Tools(_tableTag: Tag) extends Table[Tool](_tableTag, "tools")
     with ToolFields
     with LazyLogging
     with OrganizationFkFields
-    with UserFkFields
-    with VisibilityField
+    with UserFkVisibleFields
     with TimestampFields
 {
   def * = (id, createdAt, modifiedAt, createdBy, modifiedBy, owner, organizationId,
@@ -133,7 +132,7 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
   def listTools(page: PageRequest, user: User)(implicit database: DB):
       Future[PaginatedResponse[Tool.WithRelated]] = {
 
-    val accessibleTools = Tools.filterToSharedOrganizationIfNotInRoot(user)
+    val accessibleTools = Tools.filterUserVisibility(user)
 
     val pagedTools = accessibleTools
       .sort(page.sort)
