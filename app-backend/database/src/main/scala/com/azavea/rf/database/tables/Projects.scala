@@ -203,12 +203,34 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     * @param user      Results will be limited to user's organization
     */
   def getProject(projectId: UUID, user: User)
-               (implicit database: DB): Future[Option[Project]] = {
+                (implicit database: DB): Future[Option[Project]] = {
 
     database.db.run {
       Projects
         .filterToSharedOrganizationIfNotInRoot(user)
         .filter(_.id === projectId)
+        .result
+        .headOption
+    }
+  }
+
+  /** Get AOI project and its AOI given a projectId and user
+    *
+    * @param projectId UUID primary key of project to retrieve
+    * @param user      Results will be limited to user's organization
+    */
+  def getAOIProject(projectId: UUID, user: User)
+                   (implicit database: DB): Future[Option[(Project, AOI)]] = {
+
+    database.db.run {
+      Projects
+        .filterToSharedOrganizationIfNotInRoot(user)
+        .filter(_.id === projectId)
+        .join(AoisToProjects)
+        .on { case (p, o) => p.id === o.projectId }
+        .join(AOIs)
+        .on { case ((_, atp), a) => atp.aoiId === a.id }
+        .map { case ((p, _), a) => p -> a }
         .result
         .headOption
     }
