@@ -5,6 +5,8 @@ export default {
     controller: 'DiagramContainerController',
     bindings: {
         onPreview: '&',
-        onShare: '&'
+        onShare: '&',
+        toolDefinition: '<',
+        toolParameters: '<'
     }
 };

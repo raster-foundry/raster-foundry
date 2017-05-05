@@ -22,11 +22,9 @@ class labController {
     fetchTool() {
         this.loadingTool = true;
         this.toolRequest = this.toolService.get(this.toolId);
-        this.toolRequest.then(d => {
-            this.tool = d;
-            this.tool.createdAtFormatted = new Date(d.createdAt).toLocaleDateString();
-            this.tool.modifiedAtFormatted = new Date(d.modifiedAt).toLocaleDateString();
-            this.loadingTools = false;
+        this.toolRequest.then(tool => {
+            this.tool = tool;
+            this.loadingTool = false;
         });
     }
 

@@ -237,12 +237,14 @@ function labStates($stateProvider) {
             abstract: true
         })
         .state('lab.edit', {
+            parent: 'lab',
             url: '/edit',
             templateUrl: labEditTpl,
             controller: 'LabEditController',
             controllerAs: '$ctrl'
         })
         .state('lab.run', {
+            parent: 'lab',
             url: '/run/:projectid?',
             templateUrl: labRunTpl,
             controller: 'LabRunController',
