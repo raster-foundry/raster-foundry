@@ -1,5 +1,19 @@
 # Change Log
 
+## [0.5.0](https://github.com/azavea/raster-foundry/tree/0.5.0) (2017-05-05)
+[Full Changelog](https://github.com/azavea/raster-foundry/compare/0.4.0...0.5.0)
+
+**Merged pull requests:**
+
+- Few Small Bugfixes [\#1686](https://github.com/azavea/raster-foundry/pull/1686)
+- Remove remaining references to app-clients [\#1684](https://github.com/azavea/raster-foundry/pull/1684)
+- Remove Python API client from main repository [\#1681](https://github.com/azavea/raster-foundry/pull/1681)
+- Group by IDs to construct Scene.WithRelateds instead of by scenes [\#1673](https://github.com/azavea/raster-foundry/pull/1673)
+- Add support for single band raster import [\#1662](https://github.com/azavea/raster-foundry/pull/1662)
+- Import Sentinel2 dag to use jar [\#1615](https://github.com/azavea/raster-foundry/pull/1615)
+- Sentinel2 import [\#1611](https://github.com/azavea/raster-foundry/pull/1611)
+- Implement export workflow [\#1609](https://github.com/azavea/raster-foundry/pull/1609)
+
 ## [0.4.0](https://github.com/azavea/raster-foundry/tree/0.4.0) (2017-05-03)
 [Full Changelog](https://github.com/azavea/raster-foundry/compare/0.3.0...0.4.0)
 

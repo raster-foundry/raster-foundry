@@ -147,6 +147,21 @@ export default class ProjectsEditController {
         }, composites[0]);
     }
 
+    publishModal() {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        this.activeModal = this.$uibModal.open({
+            component: 'rfPublishModal',
+            resolve: {
+                project: () => this.project,
+                tileUrl: () => this.projectService.getProjectLayerURL(this.project),
+                shareUrl: () => this.projectService.getProjectShareURL(this.project)
+            }
+        });
+    }
+
     openExportModal() {
         if (this.activeModal) {
             this.activeModal.dismiss();

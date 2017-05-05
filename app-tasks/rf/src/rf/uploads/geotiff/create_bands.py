@@ -28,7 +28,8 @@ band_data_lookup = {
     'red': ('Red', [590, 670]),
     'green': ('Green', [490, 590]),
     'blue': ('Blue', [400, 490]),
-    'pan': ('Panchromatic', [400, 760])
+    'pan': ('Panchromatic', [400, 760]),
+    'gray': ('Gray', [0, 0])
 }
 
 

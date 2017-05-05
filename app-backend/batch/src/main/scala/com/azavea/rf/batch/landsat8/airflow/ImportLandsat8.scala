@@ -1,4 +1,4 @@
-package com.azavea.rf.batch.landsat8
+package com.azavea.rf.batch.landsat8.airflow
 
 import com.azavea.rf.batch.Job
 import com.azavea.rf.batch.util._
@@ -23,7 +23,10 @@ import scala.util.{Failure, Success}
 import scala.util.control.Breaks._
 
 case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), threshold: Int = 10)(implicit val database: DB) extends Job {
-  val name = "import_landsat8"
+  val name = ImportLandsat8.name
+
+  /** Get S3 client per each call */
+  def s3Client = S3(landsat8Config.awsRegion)
 
   protected def scenesFromCsv(srcProj: CRS = CRS.fromName("EPSG:4326"), targetProj: CRS = CRS.fromName("EPSG:3857")): Future[ListBuffer[Scene.Create]] = {
     val reader = CSV.parse(landsat8Config.usgsLandsatUrl)
@@ -73,7 +76,7 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
   protected def sizeFromPath(tifPath: String, landsatId: String): Int = {
     val path = s"${getLandsatPath(landsatId)}/$tifPath"
     logger.info(s"Getting object size for path: $path")
-    S3.getObject(landsat8Config.bucketName, path, landsat8Config.awsRegion).getObjectMetadata.getContentLength.toInt
+    s3Client.getObject(landsat8Config.bucketName, path).getObjectMetadata.getContentLength.toInt
   }
 
   protected def createThumbnails(sceneId: UUID, landsatId: String): List[Thumbnail.Identified] = {

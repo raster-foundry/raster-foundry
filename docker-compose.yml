@@ -63,11 +63,3 @@ services:
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt
     command: tile/run
-
-  api-client:
-    image: raster-foundry-client:${GIT_COMMIT:-latest}
-    build:
-      context: ./app-clients/
-      dockerfile: Dockerfile.python
-    volumes:
-      - ./app-clients/python/:/opt/raster-foundry/clients/python/

@@ -206,20 +206,27 @@ object Scene {
       * @param records result of join query to return scene with related
       * information
       */
+    @SuppressWarnings(Array("TraversableHead"))
     def fromRecords(records: Seq[(Scene, Option[Image], Option[Band], Option[Thumbnail])])
       : Iterable[Scene.WithRelated] = {
-      val distinctScenes = records.map(_._1).distinct
-      val groupedScenes = records.groupBy(_._1)
+      val distinctScenes = records.map(_._1.id).distinct
+      val groupedScenes = records.map(_._1).groupBy(_.id)
+      val groupedRecords = records.groupBy(_._1.id)
       val groupedBands = records.flatMap(_._3).distinct.groupBy(_.image)
 
       distinctScenes.map { scene =>
-        val (seqImages, seqThumbnails) = groupedScenes(scene).map {
+        val (seqImages, seqThumbnails) = groupedRecords(scene).map {
           case (_, image, _, thumbnail) => (image, thumbnail)
         }.unzip
         val imagesWithComponents: Seq[Image.WithRelated] = seqImages.flatten.distinct.map {
           image => image.withRelatedFromComponents(groupedBands.getOrElse(image.id, Seq[Band]()))
         }
-        scene.withRelatedFromComponents(imagesWithComponents, seqThumbnails.flatten.distinct)
+        groupedScenes.get(scene) match {
+          case Some(scene) => scene.head.withRelatedFromComponents(
+            imagesWithComponents, seqThumbnails.flatten.distinct
+          )
+          case _ => throw new Exception("This is impossible")
+        }
       }
     }
   }

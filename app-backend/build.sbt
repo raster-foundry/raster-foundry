@@ -186,7 +186,8 @@ lazy val batch = Project("batch", file("batch"))
       Dependencies.hadoopAws,
       Dependencies.awsSdk,
       Dependencies.scopt,
-      Dependencies.ficus
+      Dependencies.ficus,
+      Dependencies.dnsJava
     )
   })
   .settings(assemblyShadeRules in assembly := Seq(

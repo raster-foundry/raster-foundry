@@ -6,17 +6,12 @@ import os
 from airflow.operators.bash_operator import BashOperator
 from airflow.models import DAG
 
-from rf.uploads.landsat8 import find_landsat8_scenes, create_landsat8_scenes
-from rf.utils.exception_reporting import wrap_rollbar
-
-
 schedule = None if os.getenv('ENVIRONMENT') == 'development' else '@daily'
 start_date = datetime(2016, 11, 6)
 args = {
     'owner': 'raster-foundry',
     'start_date': start_date
 }
-
 
 dag = DAG(
     dag_id='find_landsat8_scenes',

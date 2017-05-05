@@ -1,5 +1,8 @@
 package com.azavea.rf.batch
 
+import io.circe.parser.parse
+import cats.implicits._
+
 import geotrellis.raster.io.geotiff.reader.TiffTagsReader
 import geotrellis.raster.io.geotiff.tags.TiffTags
 import geotrellis.spark.io.s3.AmazonS3Client
@@ -13,6 +16,15 @@ import java.io._
 import java.net._
 
 package object util {
+  implicit class InputStreamMethods(is: InputStream) {
+    def toJson = {
+      val lines = scala.io.Source.fromInputStream(is).getLines
+      val json = lines.mkString(" ")
+      is.close()
+      parse(json).toOption
+    }
+  }
+
   implicit class ThrowableMethods[T <: Throwable](e: T) {
     def stackTraceString: String = {
       val sw = new StringWriter

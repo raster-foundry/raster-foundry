@@ -1,4 +1,4 @@
-package com.azavea.rf.batch.ingest
+package com.azavea.rf.batch.ingest.spark
 
 import com.azavea.rf.batch.ingest.model._
 

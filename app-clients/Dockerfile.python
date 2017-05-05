@@ -1,7 +1,0 @@
-FROM python:3.6.1
-
-COPY . /opt/raster-foundry/clients
-
-WORKDIR /opt/raster-foundry/clients/python
-RUN python3.6 setup.py install && \
-    pip3 install ipython>=6.0
