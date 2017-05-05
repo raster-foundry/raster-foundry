@@ -41,7 +41,7 @@ dag = DAG(
 batch_job_definition = os.getenv('BATCH_INGEST_JOB_NAME')
 batch_job_queue = os.getenv('BATCH_INGEST_JOB_QUEUE')
 hosted_zone_id = os.getenv('HOSTED_ZONE_ID')
-jar_path = os.getenv('BATCH_JAR_PATH', 'rf-batch-ba1b872.jar')
+jar_path = os.getenv('BATCH_JAR_PATH', 'rf-batch-53937da.jar')
 
 
 ################################
@@ -76,7 +76,7 @@ def execute_ingest_emr_job(ingest_s3_uri, ingest_def_id, cluster_id):
                      '--deploy-mode',
                      'cluster',
                      '--class',
-                     'com.azavea.rf.batch.ingest.Ingest',
+                     'com.azavea.rf.batch.ingest.spark.Ingest',
                      's3://rasterfoundry-global-artifacts-us-east-1/batch/{}'.format(jar_path),
                      '-t',
                      '--overwrite',
