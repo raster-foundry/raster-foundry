@@ -448,9 +448,6 @@ export default class ProjectAddScenesBrowseController {
         this.$parent.showPreviewMap = true;
         this.routeParams.sceneid = scene.id;
         this.$state.go('.', this.getCombinedParams(), {notify: false, location: true});
-        this.getMap().then((map) => {
-            map.deleteThumbnail(scene);
-        });
         this.getPreviewMap().then((previewMap) => {
             previewMap.setThumbnail(scene);
             let sceneBounds = this.sceneService.getSceneBounds(scene);
