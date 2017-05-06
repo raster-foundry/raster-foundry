@@ -35,17 +35,18 @@ export default class ProjectAddScenesBrowseController {
         this.selectedScenes = new Map();
         this.sceneList = [];
         this.gridFilterActive = false;
-        this.initParams();
         if (!this.$parent.project) {
             this.project = this.$parent.project;
             this.$parent.waitForProject().then((project) => {
                 this.project = project;
+                this.initParams();
                 this.getProjectSceneIds();
                 this.initWatchers();
                 this.initMap();
             });
         } else {
             this.project = this.$parent.project;
+            this.initParams();
             this.getProjectSceneIds();
             this.initWatchers();
             this.initMap();
@@ -69,7 +70,12 @@ export default class ProjectAddScenesBrowseController {
         ];
 
         const cleanedParams = _.omit(this.$state.params, routeParams) || {};
-        const cleanedFilters = _.omit(this.sessionStorage.get('filters'), routeParams) || {};
+        const sessionFilters = this.sessionStorage.get('filters');
+        let cleanedFilters = {};
+
+        if (sessionFilters.forProjectId === this.project.id) {
+            cleanedFilters = _.omit(this.sessionStorage.get('filters'), routeParams) || {};
+        }
 
         this.queryParams = Object.assign(
             _.mapValues(cleanedParams, (val) => val ? val : null),
@@ -278,7 +284,8 @@ export default class ProjectAddScenesBrowseController {
     }
 
     onQueryParamsChange() {
-        this.sessionStorage.set('filters', this.queryParams);
+        const filterObject = Object.assign(this.queryParams, { forProjectId: this.project.id });
+        this.sessionStorage.set('filters', filterObject);
         this.$state.go('.', this.getCombinedParams(), {
             notify: false,
             inherit: false,

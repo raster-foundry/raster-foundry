@@ -12,21 +12,25 @@ export default class FilterPaneController {
     }
 
     $onInit() {
+        if (this.authService.isLoggedIn) {
+            this.initFilters();
+            this.initDatefilter();
+        }
+
         this.toggleDrag = {toggle: false, enabled: false};
-        this.initDatefilter();
+
         this.$scope.$watch(() => this.authService.isLoggedIn, (isLoggedIn) => {
             if (isLoggedIn) {
                 this.initFilters();
+                this.initDatefilter();
             }
         });
+
         this.$scope.$watch('$ctrl.opened', (opened) => {
             if (opened) {
                 this.$timeout(() => this.$rootScope.$broadcast('reCalcViewDimensions'), 50);
             }
         });
-        if (this.authService.isLoggedIn) {
-            this.initFilters();
-        }
     }
 
     initDatefilter() {
@@ -142,8 +146,12 @@ export default class FilterPaneController {
         this.cachedFilters = {};
 
         this.cloudCoverRange = {min: 0, max: 100};
-        let minCloudCover = parseInt(this.filters.minCloudCover, 10) ||
-            this.cloudCoverRange.min;
+
+        let minCloudCover = this.cloudCoverRange.min;
+        if (this.filters.minCloudCover) {
+            minCloudCover = parseInt(this.filters.minCloudCover, 10);
+        }
+
         let maxCloudCover = parseInt(this.filters.maxCloudCover, 10) || 10;
 
         if (!this.filters.minCloudCover && minCloudCover !== this.cloudCoverRange.min) {
