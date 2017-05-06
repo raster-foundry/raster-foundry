@@ -364,8 +364,7 @@ export default class ProjectAddScenesBrowseController {
     }
 
     selectNoScenes() {
-        this.selectedScenes.clear();
-        this.sceneList.forEach(s => this.setSelected(s, false));
+        this.selectedScenes.forEach((s, id) => this.setSelected(s, false));
     }
 
     onGridClick(e, bbox) {
@@ -436,9 +435,9 @@ export default class ProjectAddScenesBrowseController {
 
         this.activeModal.result.then(sceneIds => {
             this.projectSceneIds = this.projectSceneIds.concat(sceneIds);
+            this.selectNoScenes();
         }).finally(() => {
             delete this.activeModal;
-            this.selectNoScenes();
             this.$parent.getSceneList();
         });
     }
@@ -486,5 +485,10 @@ export default class ProjectAddScenesBrowseController {
             return index >= 0;
         }
         return false;
+    }
+
+    gotoProjectScenes() {
+        this.selectNoScenes();
+        this.$state.go('projects.edit.scenes');
     }
 }
