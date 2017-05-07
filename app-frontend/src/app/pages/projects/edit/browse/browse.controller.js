@@ -371,7 +371,7 @@ export default class ProjectAddScenesBrowseController {
     }
 
     selectNoScenes() {
-        this.selectedScenes.forEach((s, id) => this.setSelected(s, false));
+        this.selectedScenes.forEach(s => this.setSelected(s, false));
     }
 
     onGridClick(e, bbox) {
