@@ -1,4 +1,4 @@
-.library-header {
+.dashboard-header {
   min-height: 5.5rem;
   padding-top: 1rem;
   position: relative;
@@ -18,7 +18,7 @@
   }
 }
 
-.library-header-reveal {
+.dashboard-header-reveal {
   width: 100%;
   background: #fff;
   padding-top: 1rem;
@@ -37,7 +37,7 @@
   }
 }
 
-.library-header-actions {
+.dashboard-header-actions {
   float: right;
 
   a {

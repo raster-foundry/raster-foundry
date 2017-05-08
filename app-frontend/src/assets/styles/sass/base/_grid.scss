@@ -68,6 +68,11 @@
   }
 }
 
+.column.spacer {
+  width: 5rem;
+  flex: none;
+}
+
 // Individual column vertical aligment
 .column-top {
   align-self: flex-start;
