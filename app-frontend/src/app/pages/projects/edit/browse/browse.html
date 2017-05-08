@@ -1,6 +1,6 @@
 <div class="sidebar-project" ng-show="!$ctrl.activeScene">
   <div class="sidebar-row">
-    <button class="btn" ui-sref="projects.edit.scenes">
+    <button class="btn" ng-click="$ctrl.gotoProjectScenes()">
       <i class="icon-caret-left"></i>Scenes
     </button>
     <h5 class="sidebar-title">Browse scenes</h5>
@@ -59,7 +59,8 @@
 </div>
 <div class="sidebar sidebar-extended map-filters"
      ng-show="$ctrl.showFilterPane && !$ctrl.activeScene">
-  <rf-filter-pane data-opened="$ctrl.showFilterPane"
+  <rf-filter-pane ng-if="$ctrl.filters"
+                  data-opened="$ctrl.showFilterPane"
                   filters="$ctrl.filters"></rf-filter-pane>
 </div>
 

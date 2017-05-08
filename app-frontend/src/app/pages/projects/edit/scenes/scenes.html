@@ -21,6 +21,7 @@
   <div class="list-group">
     <rf-scene-item
         scene="scene"
+        ng-click="$ctrl.openSceneDetailModal(scene)"
         on-action="$ctrl.removeSceneFromProject(scene)"
         ng-mouseover="$ctrl.$parent.setHoveredScene(scene)"
         ng-mouseleave="$ctrl.$parent.removeHoveredScene()"
