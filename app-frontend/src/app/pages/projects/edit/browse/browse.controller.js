@@ -70,7 +70,7 @@ export default class ProjectAddScenesBrowseController {
         ];
 
         const cleanedParams = _.omit(this.$state.params, routeParams) || {};
-        const sessionFilters = this.sessionStorage.get('filters');
+        const sessionFilters = this.sessionStorage.get('filters') || {};
         let cleanedFilters = {};
 
         if (sessionFilters.forProjectId === this.project.id) {
