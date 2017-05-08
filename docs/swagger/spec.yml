@@ -2062,6 +2062,24 @@ definitions:
       blueGamma:
         type: number
         format: float
+      redMax:
+        type: number
+        format: float
+      redMin:
+        type: number
+        format: float
+      greenMax:
+        type: number
+        format: float
+      greenMin:
+        type: number
+        format: float
+      blueMax:
+        type: number
+        format: float
+      blueMin:
+        type: number
+        format: float
       brightness:
         type: number
         format: float

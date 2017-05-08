@@ -391,6 +391,8 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
                     ColorCorrect.Params(
                       redBand, greenBand, blueBand, // Bands
                       None, None, None,             // Gamma
+                      None, None, None,             // Clipping Max: R,G,B
+                      None, None, None,             // Clipping Min: R,G,B
                       None, None,                   // Contrast, Brightness
                       None, None,                   // Alpha, Beta
                       None, None,                   // Min, Max

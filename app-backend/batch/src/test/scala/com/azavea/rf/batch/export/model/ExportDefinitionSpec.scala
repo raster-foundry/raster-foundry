@@ -33,6 +33,8 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
                 redBand = 0,
                 greenBand = 1,
                 blueBand = 2,
+                redMax = Some(9), greenMax = Some(9), blueMax = Some(9),
+                redMin = None, greenMin = None, blueMin = None,
                 redGamma = Some(1d),
                 greenGamma = Some(2d),
                 blueGamma = Some(3d),
