@@ -96,7 +96,8 @@ lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
   Dependencies.geotrellisS3,
   Dependencies.caffeine,
   Dependencies.scaffeine,
-  Dependencies.findbugAnnotations
+  Dependencies.findbugAnnotations,
+  Dependencies.dropbox
 )
 
 lazy val root = Project("root", file("."))
@@ -188,7 +189,8 @@ lazy val batch = Project("batch", file("batch"))
       Dependencies.awsSdk,
       Dependencies.scopt,
       Dependencies.ficus,
-      Dependencies.dnsJava
+      Dependencies.dnsJava,
+      Dependencies.dropbox
     )
   })
   .settings(assemblyShadeRules in assembly := Seq(

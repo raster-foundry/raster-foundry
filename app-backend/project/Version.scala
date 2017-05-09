@@ -38,4 +38,5 @@ object Version {
   val ficus              = "1.4.0"
   val awsSdk             = "1.11.92"
   val dnsJava            = "2.1.8"
+  val dropbox            = "2.1.1"
 }
