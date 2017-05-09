@@ -44,6 +44,8 @@ services:
       - ./.bintray:/root/.bintray
       - $HOME/.aws:/root/.aws:ro
     working_dir: /opt/raster-foundry/app-backend/
+    environment:
+      - AIRFLOW_SERVER_LOCATION=http://airflow.service.rasterfoundry.internal:8080
     entrypoint: ./sbt
     command: api/run
 

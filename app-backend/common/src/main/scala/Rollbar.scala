@@ -49,6 +49,16 @@ trait RollbarNotifier extends LazyLogging {
     )
   )
 
+  def buildRollbarPayload(s: String): JsObject = JsObject(
+    "access_token" -> this.rollbarApiToken.toJson,
+    "data" -> JsObject(
+      "environment" -> this.environment.toJson,
+      "body" -> JsObject(
+        "message" -> JsObject("body" -> JsString(s))
+      )
+    )
+  )
+
   def createTrace(throwable: Throwable): JsObject = {
     val frames = throwable.getStackTrace.map { element =>
       val lineNo = if(element.getLineNumber > 0) Seq("lineno" -> element.getLineNumber.toJson) else Nil
@@ -85,11 +95,20 @@ trait RollbarNotifier extends LazyLogging {
 
   def sendError(e: Throwable): Unit = {
     val payload = this.buildRollbarPayload(e)
+    sendError(payload)
+  }
+
+  def sendError(s: String): Unit = {
+    val payload = this.buildRollbarPayload(s)
+    sendError(payload)
+  }
+
+  def sendError(payload: JsObject): Unit = {
     Http().singleRequest(
       HttpRequest(HttpMethod("POST", false, false, RequestEntityAcceptance.Expected),
-                  uri = this.url,
-                  entity = HttpEntity(ContentTypes.`application/json`,
-                                      payload.toString))
+        uri = this.url,
+        entity = HttpEntity(ContentTypes.`application/json`,
+          payload.toString))
     )
   }
 }

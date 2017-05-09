@@ -120,6 +120,7 @@ lazy val common = Project("common", file("common"))
     Dependencies.jwtJson,
     Dependencies.akka,
     Dependencies.akkahttp,
+    Dependencies.akkaCirceJson,
     Dependencies.commonsIO,
     Dependencies.caffeine,
     Dependencies.scaffeine,
