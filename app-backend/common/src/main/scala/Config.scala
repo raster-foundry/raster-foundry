@@ -7,6 +7,13 @@ import java.util.concurrent.TimeUnit
 object Config {
   private val config = ConfigFactory.load()
 
+  object airflow {
+    private val airflowConfig = config.getConfig("airflow")
+
+    val baseUrl = airflowConfig.getString("baseURL")
+
+  }
+
   object memcached {
     private lazy val memcachedConfig = config.getConfig("memcached")
 

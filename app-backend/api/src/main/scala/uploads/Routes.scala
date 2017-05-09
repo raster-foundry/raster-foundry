@@ -2,26 +2,25 @@ package com.azavea.rf.api.uploads
 
 import java.util.UUID
 
-import scala.util.{Success, Failure}
-
+import scala.concurrent.ExecutionContext.Implicits.global
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
-
-import com.lonelyplanet.akka.http.extensions.{PaginationDirectives, PageRequest}
-
-import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
+import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
+import com.azavea.rf.common.{Airflow, Authentication, CommonHandlers, UserErrorHandler}
 import com.azavea.rf.database.tables.Uploads
 import com.azavea.rf.database.query._
-import com.azavea.rf.database.{Database, ActionRunner}
+import com.azavea.rf.database.{ActionRunner, Database}
 import com.azavea.rf.datamodel._
 import io.circe._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
+
 
 trait UploadRoutes extends Authentication
     with UploadQueryParameterDirective
     with PaginationDirectives
     with CommonHandlers
     with UserErrorHandler
+    with Airflow
     with ActionRunner {
   implicit def database: Database
 
@@ -66,6 +65,9 @@ trait UploadRoutes extends Authentication
     entity(as[Upload.Create]) { newUpload =>
       authorize(user.isInRootOrSameOrganizationAs(newUpload)) {
         onSuccess(write[Upload](Uploads.insertUpload(newUpload, user))) { upload =>
+          if (upload.uploadStatus == UploadStatus.Uploaded) {
+            kickoffSceneImport(upload.id)
+          }
           complete(upload)
         }
       }
@@ -75,9 +77,21 @@ trait UploadRoutes extends Authentication
   def updateUpload(uploadId: UUID): Route = authenticate { user =>
     entity(as[Upload]) { updateUpload =>
       authorize(user.isInRootOrSameOrganizationAs(updateUpload)) {
-        onSuccess(update(Uploads.updateUpload(updateUpload, uploadId, user))) {
-          completeSingleOrNotFound
-        }
+        onSuccess(for {
+          u <- readOne[Upload](Uploads.getUpload(updateUpload.id, user))
+          c <- update(Uploads.updateUpload(updateUpload, uploadId, user))
+        } yield {
+          (u, c) match {
+            case (Some(upload), 1) =>
+              if (upload.uploadStatus != UploadStatus.Uploaded &&
+                updateUpload.uploadStatus == UploadStatus.Uploaded
+              ) kickoffSceneImport(upload.id)
+              StatusCodes.NoContent
+            case (_, 0) => StatusCodes.NotFound
+            case (_, 1) => StatusCodes.NoContent
+            case (_, _) => StatusCodes.NoContent
+          }
+        }){ s => complete(s) }
       }
     }
   }
