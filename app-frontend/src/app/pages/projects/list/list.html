@@ -1,54 +1,53 @@
-<div class="container column-stretch dashboard">
+<div class="container dashboard">
   <div class="row content stack-sm">
     <div class="column-8">
+
+      <!-- Dashboard Header -->
       <div class="dashboard-header">
         <h1 class="h3"><i class="icon-project color-light"></i>Projects</h1>
         <div class="flex-fill"></div>
-        <a class="btn btn-primary" ng-click="$ctrl.createNewProject()">
+        <a class="btn btn-primary" ng-click="$ctrl.createNewProject()" ng-if="!$ctrl.loading && $ctrl.projectList.length > 0">
           New project
         </a>
       </div>
+      <!-- Dashboard Header -->
+
+      <!-- Loading indicator -->
       <div ng-show="$ctrl.loading">
         <span class="list-placeholder h3">
           <i class="icon-load"></i>
         </span>
       </div>
-      <div class="column-11" ng-if="!$ctrl.loading && $ctrl.projectList.length === 0">
-        <rf-call-to-action-item title="You haven't created any projects yet">
-          <div class="cta-flex-text">
+      <!-- Loading indicator -->
+
+      <!-- No project placeholder -->
+      <div ng-if="!$ctrl.loading && $ctrl.projectList.length === 0">
+        <rf-call-to-action-item title="You haven't created any projects yet" class="panel panel-off-white">
+          <p class="pb-25">
             You can create a new project by <strong>importing</strong> your own earth observation
             imagery, or <strong>searching</strong> publicly available scenes for use in your project.
             Then you can <strong>edit</strong> your project to color-correct the scenes and arrange
             them into a perfectly mosaicked basemap.
-          </div>
-          <div class="cta-button-row">
-            <a class="btn btn-primary" ng-click="$ctrl.createNewProject()">New project</a>
-          </div>
-          <div class="cta-text">
+          </p>
+          <a class="btn btn-primary" ng-click="$ctrl.createNewProject()">New project</a>
+          <p>
             <a>Getting started with Projects</a>
-          </div>
+          </p>
         </rf-call-to-action-item>
       </div>
+      <!-- No project placeholder -->
+
+      <!-- Project List -->
       <div ng-if="!$ctrl.loading && $ctrl.projectList.length > 0">
-        <div class="list-group">
-          <rf-project-item
-              project="project"
-              ng-repeat="project in $ctrl.projectList
-                         | filter: {name: $ctrl.projectSearchString}
-                         track by project.id">
-          </rf-project-item>
-        </div>
-        <div class="list-group" ng-show="$ctrl.loading">
-          <span class="list-placeholder">
-            <i class="icon-load"></i>
-          </span>
-        </div>
-        <div ng-if="!$ctrl.loading && $ctrl.lastProjectResult && $ctrl.lastProjectResult.count === 0"
-             class="list-group">
-          <span class="list-placeholder">
-            You have not created any Projects.
-          </span>
-        </div>
+        <rf-project-item
+            class="project-preview panel panel-off-white"
+            project="project"
+            ng-repeat="project in $ctrl.projectList
+                       | filter: {name: $ctrl.projectSearchString}
+                       track by project.id">
+        </rf-project-item>
+
+        <!-- Pagination -->
         <div class="list-group text-center"
              ng-show="!$ctrl.loading && $ctrl.lastProjectResult && $ctrl.lastProjectResult.count > $ctrl.lastProjectResult.pageSize && !$ctrl.errorMsg">
           <ul uib-pagination
@@ -62,7 +61,10 @@
               ng-change="$ctrl.populateProjectList($ctrl.currentPage)">
           </ul>
         </div>
+        <!-- Pagination -->
       </div>
+      <!-- Project List -->
+
     </div>
     <div class="column spacer"></div>
     <div class="column">
