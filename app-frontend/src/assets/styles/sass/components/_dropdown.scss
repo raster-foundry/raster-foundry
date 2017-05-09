@@ -24,6 +24,7 @@
   min-width: calc(100% - 2rem);
   padding: 10px;
   margin: 0; // override default ul
+  margin-top: -2px;
   list-style: none;
   text-align: left; // Ensures proper alignment if parent has it changed (e.g., modal footer)
   background-color: $shade-dark;
