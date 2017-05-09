@@ -35,6 +35,8 @@ services:
     image: openjdk:8-jre
     links:
       - postgres:database.service.rasterfoundry.internal
+    external_links:
+      - airflow-webserver:airflow.service.rasterfoundry.internal
     env_file: .env
     ports:
       - "9000:9000"

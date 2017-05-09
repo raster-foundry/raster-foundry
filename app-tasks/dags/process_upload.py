@@ -1,7 +1,5 @@
 import logging
 import os
-import tempfile
-import boto3
 from datetime import datetime
 
 from airflow.operators.python_operator import PythonOperator
@@ -10,9 +8,7 @@ from airflow.models import DAG
 
 from rf.models import Upload
 from rf.uploads.geotiff.factories import GeoTiffS3SceneFactory
-from rf.uploads.geotiff.io import s3_url
-from rf.uploads.geotiff.create_thumbnails import create_thumbnails
-from rf.utils.io import Visibility, get_session
+from rf.utils.io import get_session
 from rf.utils.exception_reporting import wrap_rollbar
 
 
@@ -30,7 +26,7 @@ args = {
 }
 
 dag = DAG(
-    dag_id='import_geotiff_scenes',
+    dag_id='process_upload',
     default_args=args,
     schedule_interval=None,
     concurrency=int(os.getenv('AIRFLOW_DAG_CONCURRENCY', 24))
@@ -39,13 +35,13 @@ dag = DAG(
 HOST = os.getenv('RF_HOST')
 
 @wrap_rollbar
-def import_geotiffs(*args, **kwargs):
-    """Find geotiffs which match the bucket and prefix and kick off imports"""
+def process_upload(*args, **kwargs):
+    """Import scenes for a given upload"""
 
     logging.info('Processing geotiff uploads...')
     conf = kwargs['dag_run'].conf
 
-    upload_id = conf.get('upload_id')
+    upload_id = conf.get('uploadId')
     upload = Upload.from_id(upload_id)
     upload.update_upload_status('Processing')
 
@@ -53,7 +49,7 @@ def import_geotiffs(*args, **kwargs):
         factory = GeoTiffS3SceneFactory(upload)
         scenes = factory.generate_scenes()
         created_scenes = [scene.create() for scene in scenes]
-        # Hit the batch scenes to projects endpoint here
+
         if upload.projectId:
             logger.info("Upload specified a project. Linking scenes to project.")
             scene_ids = [scene.id for scene in created_scenes]
@@ -68,9 +64,9 @@ def import_geotiffs(*args, **kwargs):
         raise
 
 
-geotiff_importer = PythonOperator(
-    task_id='import_geotiffs',
-    python_callable=import_geotiffs,
+process_upload_op = PythonOperator(
+    task_id='process_upload',
+    python_callable=process_upload,
     provide_context=True,
     dag=dag
 )
