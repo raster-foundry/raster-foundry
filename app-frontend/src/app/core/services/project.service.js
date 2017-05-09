@@ -217,7 +217,8 @@ export default (app) => {
             return this.getAllProjectScenes({ projectId }).then(scenes => {
                 if (scenes) {
                     const counts = scenes.reduce((acc, scene) => {
-                        acc[scene.statusFields.ingestStatus] = acc[scene.statusFields.ingestStatus] + 1 || 1;
+                        const ingestStatus = scene.statusFields.ingestStatus;
+                        acc[ingestStatus] = acc[ingestStatus] + 1 || 1;
                         return acc;
                     }, {});
                     if (counts.FAILED) {

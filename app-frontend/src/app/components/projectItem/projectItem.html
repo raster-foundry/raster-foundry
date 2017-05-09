@@ -1,5 +1,10 @@
 <div class="list-group-item with-rows">
-  <div><h4 class="color-dark">{{$ctrl.project.name}}</h4></div>
+  <div>
+    <h4 class="color-dark">
+      {{$ctrl.project.name}}
+      <rf-status-tag ng-if="$ctrl.status" entity-type="project" status="$ctrl.status"></rf-status-tag>
+    </h4>
+  </div>
   <div class="list-group-item-content">
     <div class="list-group-overflow project-preview-container" ng-if="!$ctrl.project.scenes">
       This project doesn't have any scenes yet
