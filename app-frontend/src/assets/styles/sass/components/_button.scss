@@ -31,7 +31,7 @@
   display: inline-block;
   outline: 0;
   border: none;
-  padding: 1rem 2rem;
+  padding: .8rem 2rem;
   font-weight: 500;
   line-height: 1;
   text-align: center;
@@ -268,5 +268,11 @@
 
   .btn ~ .btn {
     margin-left: -1px !important;
+  }
+
+  // changes padding on toggle for dropdown btn-groups
+  .dropdown-toggle {
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
  }

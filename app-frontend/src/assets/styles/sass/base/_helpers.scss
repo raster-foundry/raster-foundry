@@ -97,6 +97,13 @@
   }
 }
 
+.link-light {
+  color: $shade-light !important;
+  &:hover {
+    color: darken($shade-light, 5%) !important;
+  }
+}
+
 .hide {
   display: none !important;
 }

@@ -73,6 +73,10 @@
   flex: none;
 }
 
+.column.noflex {
+  flex: 0;
+}
+
 // Individual column vertical aligment
 .column-top {
   align-self: flex-start;
@@ -90,6 +94,18 @@
   align-self: stretch;
 }
 
+// Individual column reordering
+.flex-unordered {
+  order: 0;
+}
+
+.flex-first {
+  order: -1;
+}
+
+.flex-last {
+  order: 1;
+}
 
 // Column Stacking
 @include respond-to(md-down) {

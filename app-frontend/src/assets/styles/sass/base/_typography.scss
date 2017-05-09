@@ -47,6 +47,7 @@ h6, .h6 {
 }
 
 p, .p {
+  @extend .font-base;
   font-size: 1.4rem;
   line-height: 1.8;
   margin-top: 1rem;

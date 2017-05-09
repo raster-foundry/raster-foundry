@@ -46,6 +46,7 @@
 // TODO: Matt Look at color-correct, carousel
 @import
   "components/spacing",
+  "components/breadcrumb",
   "components/button",
   "components/image",
   "components/form",
@@ -72,7 +73,6 @@
  * Pages
 **/
 @import
-  "pages/default",
   "pages/dashboard",
   "pages/editor";
 
