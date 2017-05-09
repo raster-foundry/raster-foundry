@@ -14,9 +14,8 @@ case class FindAOIProjects(implicit val database: DB) extends Job {
 
   import database.driver.api._
 
-  /** Function to sum Reps of diff types */
-  val sumTime: (Rep[String], Rep[Timestamp], Rep[Long]) => Rep[Timestamp] =
-    SimpleFunction.ternary[String, Timestamp, Long, Timestamp]("+")
+  /** Convert Long to Timestamp function */
+  protected val toTimestamp = SimpleFunction.unary[Long, Timestamp]("to_timestamp")
 
   def run: Unit = {
     logger.info("Finding AOI projects...")
@@ -32,7 +31,7 @@ case class FindAOIProjects(implicit val database: DB) extends Job {
         Projects
           .filterToSharedOrganizationIfNotInRoot(user)
           .filter { p =>
-            p.isAOIProject && sumTime("TIME", p.aoisLastChecked, p.aoiCadenceMillis) <= Timestamp.from(ZonedDateTime.now.toInstant)
+            p.isAOIProject && p.aoisLastChecked <= toTimestamp(p.aoiCadenceMillis * (-1l) + ZonedDateTime.now.toInstant.toEpochMilli)
           }
           .join(AoisToProjects)
           .on { case (p, o) => p.id === o.projectId }
