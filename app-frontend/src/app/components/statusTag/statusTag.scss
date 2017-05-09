@@ -1,0 +1,25 @@
+div.status-tag {
+  display: inline-block;
+  font-size: 1rem;
+  padding: 0.33em 0.5em;
+  color: #777;
+  border-radius: 2px;
+  font-weight: normal;
+  vertical-align: middle;
+}
+
+.grey-tag {
+  background: #dadada;
+}
+
+.yellow-tag {
+  background: #FFCA28;
+}
+
+.green-tag {
+  background: #81C784
+}
+
+.red-tag {
+  background: #E57373;
+}
