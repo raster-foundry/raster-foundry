@@ -1,13 +1,12 @@
-const Map = require('es6-map');
-const SvgPanZoom = require('svg-pan-zoom');
 /* global joint, $ */
 
-import { coreTools, compressedTool } from './toolJson.js';
+const Map = require('es6-map');
+const SvgPanZoom = require('svg-pan-zoom');
 
 
 export default class DiagramContainerController {
     constructor( // eslint-disable-line max-params
-        $element, $scope, $state, $timeout, $compile, mousetipService) {
+        $element, $scope, $state, $timeout, $compile, mousetipService, toolService) {
         'ngInject';
         this.$element = $element;
         this.$scope = $scope;
@@ -15,6 +14,7 @@ export default class DiagramContainerController {
         this.$timeout = $timeout;
         this.$compile = $compile;
         this.mousetipService = mousetipService;
+        this.toolService = toolService;
     }
 
     $onInit() {
@@ -35,9 +35,7 @@ export default class DiagramContainerController {
                     </button>
                 </div>
             </div>`;
-
-        this.toolJson = compressedTool;
-        this.coreToolsJson = coreTools;
+        this.coreToolsJson = this.toolService.getCoreTools();
         this.extractInputs();
         this.extractShapes();
         this.initDiagram();
@@ -182,7 +180,7 @@ export default class DiagramContainerController {
     extractInputs() {
         this.inputsJson = [];
 
-        let json = Object.assign({}, this.toolJson);
+        let json = Object.assign({}, this.toolDefinition);
         let inputs = [json];
         while (inputs.length) {
             let input = inputs.pop();
@@ -205,7 +203,7 @@ export default class DiagramContainerController {
         let nextId = 0;
         let nodes = new Map();
         let shapes = [];
-        let json = Object.assign({}, this.toolJson);
+        let json = Object.assign({}, this.toolDefinition);
         let inputs = [json];
 
         while (inputs.length) {
