@@ -10,6 +10,7 @@ import com.azavea.rf.database.tables.ScenesToProjects
 import com.azavea.rf.datamodel.ColorCorrect
 
 import geotrellis.raster._
+import geotrellis.raster.io.geotiff._
 import geotrellis.raster.render.Png
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._
@@ -19,9 +20,15 @@ import com.typesafe.scalalogging.LazyLogging
 import cats.implicits._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 import scala.collection.mutable.ArrayBuffer
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import java.util.UUID
+
+import akka.http.scaladsl.marshalling.Marshaller
+import geotrellis.proj4._
+import geotrellis.slick.Projected
+import geotrellis.vector.{Extent, Polygon}
 
 object MosaicRoutes extends LazyLogging {
 
@@ -30,16 +37,29 @@ object MosaicRoutes extends LazyLogging {
   def pngAsHttpResponse(png: Png): HttpResponse =
     HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/png`), png.bytes))
 
+  def tiffAsHttpResponse(tiff: MultibandGeoTiff): HttpResponse =
+    HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/tiff`), tiff.toByteArray))
 
   def mosaicProject(projectId: UUID)(implicit database: Database): Route =
     pathPrefix("export") {
-      parameter("bbox".?, "zoom".as[Int]?) { (bbox, zoom) =>
-        get {
-          complete {
-            Mosaic.render(projectId, zoom, bbox)
-              .map(_.renderPng)
-              .map(pngAsHttpResponse)
-              .value
+      optionalHeaderValueByName("Accept") { acceptContentType =>
+        parameter("bbox", "zoom".as[Int]?, "colorCorrect".as[Boolean] ? true) {
+          (bbox, zoom, colorCorrect) => get {
+            complete {
+              val mosaic = Mosaic.render(projectId, zoom, Option(bbox), colorCorrect)
+              val poly = Projected(Extent.fromString(bbox).toPolygon(), 4326)
+                .reproject(LatLng, WebMercator)(3857)
+              val extent = poly.envelope
+              acceptContentType match {
+                case Some("image/tiff") => mosaic
+                    .map{ m => MultibandGeoTiff(m, extent, WebMercator) }
+                    .map(tiffAsHttpResponse)
+                    .value
+                case _ => mosaic.map(_.renderPng)
+                    .map(pngAsHttpResponse)
+                    .value
+              }
+            }
           }
         }
       }
