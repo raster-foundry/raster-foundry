@@ -1,9 +1,11 @@
 import datetime
 import logging
 import os
+import subprocess
 
 from airflow.models import DAG
 from airflow.operators import PythonOperator
+from airflow.exceptions import AirflowException
 
 from rf.utils.exception_reporting import wrap_rollbar
 
@@ -28,24 +30,26 @@ dag = DAG(
     concurrency=os.getenv('AIRFLOW_DAG_CONCURRENCY', 24)
 )
 
+def start_update(project_id):
+    bash_cmd = 'java -cp /opt/raster-foundry/jars/rf-batch.jar com.azavea.rf.batch.Main update_aoi_project {0}'.format(project_id)
 
+    exit_code = subprocess.call([bash_cmd], shell=True)
+    logger.info('Checking whether %s has updated scenes available', project_id)
+    is_success = exit_code == 0
+
+    if is_success:
+        logger.info('Successfully completed project %s update', project_id)        
+    else:
+        raise AirflowException('Update of project %s failed', project_id)
+    
+    return is_success
+
+@wrap_rollbar
 def update_aoi_project(**context):
     # check whether a project needs to update
     conf = context['dag_run'].conf
     project_id = conf.get('project_id')
-    logger.info('Checking whether %s has updated scenes available', project_id)
-
-    task_id = 'dont_update_project'
-    # this would be replaced by a subprocess call to some jar that determines
-    # whether the project needs to be updated
-    import random
-    update_available = random.random() > 0.5
-    try:
-        if update_available:
-            logger.info('AOI project %s has an update available', project_id)
-            logger.info('Updating AOI project %s', project_id)
-    finally: 
-        logger.info('Setting last updated time for project %s', project_id)
+    start_update(project_id)
 
 PythonOperator(
     task_id='update_aoi_project',
