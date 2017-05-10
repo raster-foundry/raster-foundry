@@ -184,18 +184,18 @@ def launch_spark_ingest_job_op(*args, **kwargs):
 @wrap_rollbar
 def set_ingest_status_success_op(*args, **kwargs):
     """Set scene ingest status on success"""
-    # xcom_client = kwargs['task_instance']
-    # scene_id = xcom_client.xcom_pull(key='ingest_scene_id', task_ids=None)
-    # logger.info("Setting scene (%s) ingested status to success", scene_id)
-    # scene = Scene.from_id(scene_id)
-    # scene.ingestStatus = IngestStatus.INGESTED
+    xcom_client = kwargs['task_instance']
+    scene_id = xcom_client.xcom_pull(key='ingest_scene_id', task_ids=None)
+    logger.info("Setting scene (%s) ingested status to success", scene_id)
+    scene = Scene.from_id(scene_id)
+    scene.ingestStatus = IngestStatus.INGESTED
 
-    # layer_s3_bucket = os.getenv('TILE_SERVER_BUCKET')
+    layer_s3_bucket = os.getenv('TILE_SERVER_BUCKET')
 
-    # s3_output_location = 's3://{}/layers'.format(layer_s3_bucket)
-    # scene.ingestLocation = s3_output_location
-    # scene.update()
-    # logger.info("Finished setting scene (%s) ingest status (%s)", scene_id, IngestStatus.INGESTED)
+    s3_output_location = 's3://{}/layers'.format(layer_s3_bucket)
+    scene.ingestLocation = s3_output_location
+    scene.update()
+    logger.info("Finished setting scene (%s) ingest status (%s)", scene_id, IngestStatus.INGESTED)
     return "Done Success"
 
 @wrap_rollbar
