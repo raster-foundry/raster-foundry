@@ -50,13 +50,15 @@ UPDATE_DAG_ID = 'update_aoi_projects'
 def find_aoi_projects_to_update():
     """Find AOI projects to check for updates and push their IDs to xcoms"""
     logger.info('Finding AOI projects to check for updates')
-    # This is check_output to mock shelling out to some scala command
-    # and returning a sequence of UUIDs
-    projects = subprocess.check_output([
-        'echo', 'some-project, ids, here, maybe, many, of-them'
-    ])
-    return {'project_ids': projects.strip().split(', ')}
 
+    bash_cmd = 'java -cp /opt/raster-foundry/jars/rf-batch.jar com.azavea.rf.batch.Main find_aoi_projects'    
+    cmd = subprocess.Popen(bash_cmd, shell=True, stdout=subprocess.PIPE)
+    projects = ['']
+    for line in cmd.stdout:
+        if 'ProjectIds:' in line:            
+            projects = [p.strip() for p in line.replace('ProjectIds:', '').strip().split(',')]        
+
+    return {'project_ids': projects}
 
 @wrap_rollbar
 def kickoff_aoi_project_update_checks(**context):
@@ -64,34 +66,11 @@ def kickoff_aoi_project_update_checks(**context):
     project_ids = xcom['project_ids']
     logger.info('Found projects to check for updates: %s', project_ids)
     execution_date = context['execution_date']
-    # TODO: remove this
-    # so we can keep kicking off jobs with the same bogus ids from the 
-    def add_random_text(s):
-        """Add random text to a string s"""
-        import random
-        from string import ascii_lowercase
-        letters = [random.choice(ascii_lowercase) for _ in xrange(25)]
-        return s + ''.join(letters)
-
     for project_id in project_ids:
-        # Run ID goes out to seconds because users may have really high frequency cadences
-        # Maybe we shouldn't allow cadences below a certain value?
-        run_id = (
-            'aoi_project_update_{project_id}_{year}_{month}_{day}_{hour}_{minute}_{second}'
-        ).format(
-            project_id=project_id,
-            year=execution_date.year,
-            month=execution_date.month,
-            day=execution_date.day,
-            hour=execution_date.hour,
-            minute=execution_date.minute,
-            second=execution_date.second
-        )
-        run_id = add_random_text(run_id)
+        run_id = 'update_aoi_{}_{}'.format(project_id, datetime.datetime.now().isoformat())
         conf = json.dumps({'project_id': project_id})
         dag_args = DagArgs(dag_id=UPDATE_DAG_ID, conf=conf, run_id=run_id)
         trigger_dag(dag_args)
-
 
 find_operator = PythonOperator(
     task_id=FIND_TASK_ID,
