@@ -102,9 +102,8 @@ export default (app) => {
                 });
             }
             return this.getMosaicLayerURL().then((url) => {
-                this._mosaicTiles = L.tileLayer(url,
-                                                {bounds: this.bounds, attribution: 'Raster Foundry'}
-                                               );
+                let options = {maxZoom: 30, bounds: this.bounds, attribution: 'Raster Foundry'};
+                this._mosaicTiles = L.tileLayer(url, options);
                 return this._mosaicTiles;
             });
         }

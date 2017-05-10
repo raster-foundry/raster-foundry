@@ -7,8 +7,8 @@ from .models import Ingest, Source, Layer
 
 layer_s3_bucket = os.getenv('TILE_SERVER_BUCKET')
 
-# 1 cm resolution is as high as we go, otherwise zoom levels get ridiculous
-MIN_RESOLUTION_METERS = .1
+# 2 cm resolution is as high as we go, otherwise zoom levels get ridiculous
+MIN_RESOLUTION_METERS = .02
 
 
 def get_safe_uri(uri):
