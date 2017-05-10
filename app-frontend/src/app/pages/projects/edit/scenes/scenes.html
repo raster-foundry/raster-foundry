@@ -1,14 +1,24 @@
+<div class="sidebar-header">
+  <a class="btn sidebar-header-nav-btn" ui-sref="projects.edit">
+    <i class="icon-arrow-left"></i>
+  </a>
+  <h5 class="sidebar-title">Add or Remove Scenes</h5>
+</div>
 <div class="sidebar-project">
-  <div class="sidebar-row">
-    <button class="btn" ui-sref="projects.edit"><i class="icon-caret-left"></i>Project</button>
-    <h5 class="sidebar-title">Add/Remove scenes</h5>
-  </div>
   <ul class="sidebar-list">
-    <li class="header">
-      <span>
-        Remove scenes by clicking <i class="icon-trash"></i>
-        or browse scenes to add.
-      </span>
+    <li ng-if="$ctrl.$parent.project.isAOIProject">
+      <div class="banner banner-secondary">
+        <div>12 scenes awaiting approval</div>
+        <div>
+          <button class="btn btn-border-light" ui-sref="projects.edit.aoi-approve">Review Scenes</button>
+        </div>
+      </div>
+    </li>
+    <li>
+      <div class="label">
+        <span class="text">Remove scenes by clicking <i class="icon-trash"></i>
+        or browse scenes to add.</span>
+      </div>
       <button type="button"
               class="btn btn-primary fixedwidth"
               ui-sref="projects.edit.browse({sceneid: null})">

@@ -22,6 +22,8 @@ import projectsSceneBrowserTpl from './pages/projects/edit/browse/browse.html';
 import projectOrderScenesTpl from './pages/projects/edit/order/order.html';
 import projectMaskingTpl from './pages/projects/edit/masking/masking.html';
 import projectMaskingDrawTpl from './pages/projects/edit/masking/draw/draw.html';
+import aoiApproveTpl from './pages/projects/edit/aoi-approve/aoi-approve.html';
+import aoiParametersTpl from './pages/projects/edit/aoi-parameters/aoi-parameters.html';
 
 import settingsTpl from './pages/settings/settings.html';
 import profileTpl from './pages/settings/profile/profile.html';
@@ -124,6 +126,18 @@ function projectEditStates($stateProvider) {
             url: '/mask',
             templateUrl: projectMaskingDrawTpl,
             controller: 'ProjectsMaskingDrawController',
+            controllerAs: '$ctrl'
+        })
+        .state('projects.edit.aoi-approve', {
+            url: '/aoi-approve',
+            templateUrl: aoiApproveTpl,
+            controller: 'AOIApproveController',
+            controllerAs: '$ctrl'
+        })
+        .state('projects.edit.aoi-parameters', {
+            url: '/aoi-parameters',
+            templateUrl: aoiParametersTpl,
+            controller: 'AOIParametersController',
             controllerAs: '$ctrl'
         });
 }
@@ -237,14 +251,12 @@ function labStates($stateProvider) {
             abstract: true
         })
         .state('lab.edit', {
-            parent: 'lab',
             url: '/edit',
             templateUrl: labEditTpl,
             controller: 'LabEditController',
             controllerAs: '$ctrl'
         })
         .state('lab.run', {
-            parent: 'lab',
             url: '/run/:projectid?',
             templateUrl: labRunTpl,
             controller: 'LabRunController',

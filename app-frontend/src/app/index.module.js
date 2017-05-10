@@ -66,6 +66,8 @@ const App = angular.module(
         require('./pages/projects/edit/order/order.module.js').name,
         require('./pages/projects/edit/masking/masking.module.js').name,
         require('./pages/projects/edit/masking/draw/draw.module.js').name,
+        require('./pages/projects/edit/aoi-approve/aoi-approve.module.js').name,
+        require('./pages/projects/edit/aoi-parameters/aoi-parameters.module.js').name,
 
         require('./pages/imports/imports.module.js').name,
         require('./pages/imports/datasources/datasources.module.js').name,

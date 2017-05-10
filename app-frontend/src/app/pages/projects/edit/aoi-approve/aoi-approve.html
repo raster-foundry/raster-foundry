@@ -1,0 +1,32 @@
+<div class="sidebar-project">
+  <div class="sidebar-header">
+    <a class="btn sidebar-header-nav-btn" ui-sref="projects.edit">
+      <i class="icon-arrow-left"></i>
+    </a>
+    <h5 class="sidebar-title">AOI Scene Approval</h5>
+  </div>
+  <ul class="sidebar-list">
+    <li>
+      <div class="label">
+        <span class="text">
+          Select scenes to approve and click <strong>Approve Scenes</strong> to add to the project.
+        </span>
+      </div>
+      <div class="btn-group fixedwidth">
+        <button type="button"
+                class="btn btn-primary"
+                style="width: 12rem;"
+                ng-click="$ctrl.sceneModal()">
+          Approve Scenes
+        </button>
+        <button type="button"
+                class="btn dropdown-toggle"
+                ng-class="{'btn-secondary': $ctrl.allSelected}"
+                ng-click="$ctrl.selectAllScenes()">
+          <i ng-class="{'icon-plus': !$ctrl.allSelected,
+                       'icon-cross': $ctrl.allSelected}"></i>
+        </button>
+      </div>
+    </li>
+  </ul>
+</div>

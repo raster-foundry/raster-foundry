@@ -161,7 +161,30 @@
   }
 }
 
-/* 
+.btn-border{
+  border-color: $text-base;
+  background: none;
+  color: $text-base;
+  font-weight: 700;
+  &:hover, &.hover,
+  &:active, &.active, {
+    background: $brand-primary;
+  }
+}
+
+.btn-border-light {
+  border-color: $white;
+  background: none;
+  color: $white;
+  font-weight: 700;
+  &:hover, &.hover,
+  &:active, &.active, {
+    background: $brand-primary;
+  }
+}
+
+
+/*
  * Button Sizes
  */
 .btn-tiny {
@@ -187,8 +210,7 @@
   width: 100%;
 }
 
-
-/* 
+/*
  * Button actions
  */
 .btn-toggle {
@@ -239,7 +261,7 @@
 }
 
 
-/* 
+/*
  * Button groups
  */
  .btn-group {
@@ -247,7 +269,7 @@
 
   .btn {
     margin: 0 !important;
-
+    flex-grow: 1;
 
     // FIX ISSUE WHERE ONLY ONE BUTTON HAS MESSED UP RADIUS
     &:not(:last-child):not(.dropdown-toggle) {
@@ -270,9 +292,16 @@
     margin-left: -1px !important;
   }
 
+  .dropdown-label {
+    text-align: left;
+    font-weight: normal;
+  }
+
   // changes padding on toggle for dropdown btn-groups
   .dropdown-toggle {
     padding-left: 1rem;
     padding-right: 1rem;
+    flex-grow: 0;
+    flex-shrink: 0;
   }
  }
