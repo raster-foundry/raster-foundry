@@ -139,9 +139,8 @@ object CreateExportDef {
 
     val job = args.toList match {
       case List(exportId) => CreateExportDef(UUID.fromString(exportId))
-      case _ => {
+      case _ =>
         throw new IllegalArgumentException("Argument could not be parsed to UUID")
-      }
     }
   
     job.run
