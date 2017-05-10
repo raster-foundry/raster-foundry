@@ -123,12 +123,16 @@ object Mosaic {
     *
     *   @param zoomOption  the zoom level to use
     *   @param bboxOption the bounding box for the image
+    *   @param colorCorrect setting to determine if color correction should be applied
     */
-  def render(projectId: UUID, zoomOption: Option[Int], bboxOption: Option[String])(implicit database: Database): OptionT[Future, MultibandTile] = {
+  def render(
+    projectId: UUID, zoomOption: Option[Int], bboxOption: Option[String],
+    colorCorrect: Boolean = true)(implicit database: Database): OptionT[Future, MultibandTile] = {
+
     val bboxPolygon: Option[Projected[Polygon]] =
       try {
         bboxOption map { bbox =>
-          Projected(Extent.fromString(bbox).toPolygon(), 4326).reproject(LatLng, WebMercator)(3858)
+          Projected(Extent.fromString(bbox).toPolygon(), 4326).reproject(LatLng, WebMercator)(3857)
         }
       } catch {
         case e: Exception =>
@@ -142,9 +146,14 @@ object Mosaic {
         mosaic.flatMap { case MosaicDefinition(sceneId, maybeColorCorrectParams) =>
           maybeColorCorrectParams.map { colorCorrectParams =>
             Mosaic.fetchRenderedExtent(sceneId, zoom, bboxPolygon).flatMap { tile =>
-              LayerCache.layerHistogram(sceneId, zoom).map { hist =>
-                colorCorrectParams.colorCorrect(tile, hist)
+              if (colorCorrect) {
+                LayerCache.layerHistogram(sceneId, zoom).map { hist =>
+                  colorCorrectParams.colorCorrect(tile, hist)
+                }
+              } else {
+                OptionT[Future, MultibandTile](Future(Some(tile)))
               }
+
             }
           }.toSeq
         }
