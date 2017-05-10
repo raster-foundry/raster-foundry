@@ -106,10 +106,10 @@ export default (app) => {
         }
 
         getStatusFields(entityType, status) {
-          if (statusMapping[entityType] && statusMapping[entityType][status]) {
-              return statusMapping[entityType][status];
-          }
-          return false;
+            if (statusMapping[entityType] && statusMapping[entityType][status]) {
+                return statusMapping[entityType][status];
+            }
+            return false;
         }
     }
 
