@@ -1,15 +1,30 @@
 <div class="container column-stretch container-not-scrollable">
   <div class="sidebar" ui-view>
     <div class="sidebar-project">
-      <h5 class="sidebar-title">Editing project</h5>
+      <div class="sidebar-header">
+        <h5 class="sidebar-title">Editing project</h5>
+        <div ng-if="$ctrl.project.isAOIProject" class="inline-tag border-teal-tag">AOI Project</div>
+        <div ng-if="$ctrl.project.isAOIProject" class="header-controls">
+          <a ui-sref="projects.edit.aoi-parameters">Edit AOI Parameters</a>
+        </div>
+      </div>
       <ul class="sidebar-list">
-        <li class="header">
+        <li ng-if="$ctrl.project.isAOIProject">
+          <div class="banner banner-secondary">
+            <div>12 scenes awaiting approval</div>
+            <div>
+              <button class="btn btn-border-light" ui-sref="projects.edit.aoi-approve">Review Scenes</button>
+            </div>
+          </div>
+        </li>
+        <li>
           <span class="label">Add/Remove Scenes</span>
           <button class="btn btn-primary fixedwidth" type="button" ui-sref="projects.edit.scenes">
             Add/Remove scenes
           </button>
           <i class="icon-info"></i>
         </li>
+      </ul>
     </div>
     <div class="sidebar-scrollable">
       <ul class="sidebar-list">
@@ -40,7 +55,7 @@
           </button>
           <i class="icon-info"></i>
         </li>
-        <li>
+        <li class="separator">
           <span class="label">Export</span>
           <button class="btn btn-light fixedwidth"
                   type="button"
