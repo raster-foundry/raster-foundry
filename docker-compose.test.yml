@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
 
   app-frontend:
-    image: kkarczmarczyk/node-yarn:6.9-wheezy
+    image: node:6.10-alpine
     working_dir: /opt/raster-foundry/app-frontend/
     volumes:
       - ./app-frontend/.babelrc:/opt/raster-foundry/app-frontend/.babelrc
