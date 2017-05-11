@@ -1,3 +1,4 @@
+/* eslint-disable */
 import angular from 'angular';
 import DateRangePickerModalComponent from './dateRangePickerModal.component.js';
 import DateRangePickerModalController from './dateRangePickerModal.controller.js';

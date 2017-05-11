@@ -1,0 +1,18 @@
+<div class="modal-body">
+  <div class="content datepicker-row">
+    <calendar
+        api="$ctrl.pickerApi"
+        selected-day="$ctrl._selectedDay"
+        min-day="$ctrl._getMinDay()"
+        max-day="$ctrl._getMaxDay()"
+        interceptors="$ctrl.calendarInterceptors"
+        show-input="false">
+    </calendar>
+  </div>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn pull-left"
+          ng-click="$ctrl.cancel()">
+    Cancel
+  </button>
+</div>
