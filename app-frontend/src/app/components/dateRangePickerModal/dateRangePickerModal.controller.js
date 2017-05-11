@@ -1,4 +1,4 @@
-export default class DatePickerModalController {
+export default class DateRangePickerModalController {
     constructor(moment, dateRangePickerConf) {
         'ngInject';
         this.Moment = moment;
