@@ -64,9 +64,10 @@ case class UpdateAOIProject(projectId: UUID)(implicit val database: DB) extends 
         stop
       }
       case Failure(e) => {
+        e.printStackTrace()
         sendError(e)
         stop
-        throw e
+        sys.exit(1)
       }
     }
   }

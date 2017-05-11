@@ -82,7 +82,7 @@ case class CreateExportDef(exportId: UUID)(implicit val database: DB) extends Jo
   def run: Unit = {
     logger.info("Starting export process...")
 
-    val startEmr = (ed:ExportDefinition, edu:String) => Future { startExportEmrJob(ed, edu) }
+    val startEmr = (ed: ExportDefinition, edu: String) => Future { startExportEmrJob(ed, edu) }
 
     val createExportDef = for {
       user: User <- OptionT(Users.getUserById(airflowUser))
@@ -118,9 +118,10 @@ case class CreateExportDef(exportId: UUID)(implicit val database: DB) extends Jo
         stop
       }
       case Failure(e) => {
+        e.printStackTrace()
         sendError(e)
         stop
-        throw e
+        sys.exit(1)
       }
     }
   }

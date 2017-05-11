@@ -23,7 +23,6 @@ case class FindAOIProjects(implicit val database: DB) extends Job {
       val user = userOpt.getOrElse {
         val e = new Exception(s"User $airflowUser doesn't exist.")
         sendError(e)
-        stop
         throw e
       }
 
@@ -46,9 +45,10 @@ case class FindAOIProjects(implicit val database: DB) extends Job {
         stop
       }
       case Failure(e) => {
+        e.printStackTrace()
         sendError(e)
         stop
-        throw e
+        sys.exit(1)
       }
     }
   }
