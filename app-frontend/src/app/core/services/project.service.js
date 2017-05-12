@@ -55,7 +55,8 @@ export default (app) => {
                         cache: false,
                         url: '/api/projects/:projectId/scenes',
                         params: {
-                            projectId: '@projectId'
+                            projectId: '@projectId',
+                            pending: '@pending'
                         }
                     },
                     removeScenes: {

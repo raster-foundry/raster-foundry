@@ -69,7 +69,10 @@ export default class ProjectsEditController {
     getSceneList() {
         this.sceneRequestState = {loading: true};
         this.sceneListQuery = this.projectService.getAllProjectScenes(
-            {projectId: this.projectId}
+            {
+                projectId: this.projectId,
+                pending: false
+            }
         );
         this.sceneListQuery.then(
             (allScenes) => {
