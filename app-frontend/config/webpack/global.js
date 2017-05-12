@@ -172,13 +172,13 @@ module.exports = function (_path) {
 
         // load plugins
         plugins: [
+            new webpack.optimize.DedupePlugin(),
             new webpack.ProvidePlugin({
                 $: 'jquery',
                 jQuery: 'jquery',
                 L: 'leaflet'
             }),
             new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
-            new webpack.optimize.DedupePlugin(),
             new webpack.optimize.AggressiveMergingPlugin({
                 moveToParents: true
             }),
