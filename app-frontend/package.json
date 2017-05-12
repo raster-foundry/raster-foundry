@@ -118,7 +118,7 @@
     "url-loader": "~0.5.6",
     "webpack": "~1.12.12",
     "webpack-dev-server": "1.16.2",
-    "yarn": "^0.23.4"
+    "yarn": "^0.24.3"
   },
   "engines": {
     "node": ">=0.12.0"
