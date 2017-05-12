@@ -740,6 +740,7 @@ paths:
         - $ref: '#/parameters/tags'
         - $ref: '#/parameters/ingested'
         - $ref: '#/parameters/ingestStatus'
+        - $ref: '#/parameters/pending'
       responses:
         200:
           description: Paginated list of scenes associated with this project
@@ -1936,6 +1937,12 @@ parameters:
     description: Filter by specific ingest status
     in: query
     type: string
+    required: false
+  pending:
+    name: pending
+    description: Filter by scene's acceptance for an AOI project
+    in: query
+    type: boolean
     required: false
   tool:
     name: toolId
