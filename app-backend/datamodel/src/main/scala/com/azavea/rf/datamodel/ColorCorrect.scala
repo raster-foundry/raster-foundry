@@ -1,5 +1,7 @@
 package com.azavea.rf.datamodel
 
+import java.io._
+
 import io.circe._
 import io.circe.syntax._
 import io.circe.generic.JsonCodec
@@ -7,12 +9,16 @@ import io.circe.generic.JsonCodec
 import spire.syntax.cfor._
 
 import geotrellis.raster._
+import geotrellis.raster.crop._
 import geotrellis.raster.equalization.HistogramEqualization
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.sigmoidal.SigmoidalContrast
+import geotrellis.raster.stitch
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 
+import scala.math._
+import scala.annotation.tailrec
 
 object SaturationAdjust {
   def apply(rgbTile: MultibandTile, chromaFactor: Double): MultibandTile = {
@@ -111,6 +117,216 @@ object SaturationAdjust {
   }
 }
 
+case class Memo[I <% K, K, O](f: I => O) extends (I => O) {
+  import collection.mutable.{Map => Dict}
+  type Input = I
+  type Key = K
+  type Output = O
+
+  val cache = Dict.empty[K, O]
+  override def apply(x: I) = cache.getOrElseUpdate(x, f(x))
+}
+
+object WhiteBalance {
+  
+  @inline def clamp8Bit(z: Int): Int = {
+    if (z < 0) 0
+    else if (z > 255) 255
+    else z
+  }
+
+  def stitch(pieces: List[(MultibandTile, (Int, Int))], cols: Int, rows: Int): MultibandTile = {
+    val headTile = pieces.head._1
+    val bands = Array.fill[MutableArrayTile](headTile.bandCount)(ArrayTile.empty(headTile.cellType, cols, rows))
+
+    for ((tile, (updateColMin, updateRowMin)) <- pieces) {
+      for(b <- 0 until headTile.bandCount) {
+        bands(b).update(updateColMin, updateRowMin, tile.band(b))
+      }
+    }
+
+    ArrayMultibandTile(bands)
+  }
+
+  def apply(rgbTile: MultibandTile): MultibandTile = {
+    val tileSegments = 16
+    val rowWidth = rgbTile.rows/tileSegments
+    val splitTile = rgbTile.split(cols=rgbTile.cols, rows=(rgbTile.rows / tileSegments).toInt)
+    val tiles =
+      splitTile
+        .map(t => (t, 0, 0))
+        .foldLeft(List[(MultibandTile, Int, Int)]())((acc, x) => {
+          if (acc.length == 0) {
+            x :: acc
+          } else {
+            (x._1, 0, (acc.head._3 + rowWidth)) :: acc
+          }
+        })
+
+    try {
+      val newTiles = tiles.map(t => (adjustGrey(t._1, 0, false), (t._2, t._3)))
+      val newTile = stitch(newTiles.toList, cols=rgbTile.cols, rows=rgbTile.rows)
+      newTile.convert(UByteConstantNoDataCellType)
+    } catch {
+      case ex:Exception => {
+        val sw = new StringWriter
+        ex.printStackTrace(new PrintWriter(sw))
+        println(sw.toString)
+        throw ex
+      }
+    }
+  }
+
+  def RgbToYuv(rByte: Int, gByte: Int, bByte: Int): YUV = {
+    type I = (Int, Int, Int)
+    type K = (Int, Int, Int)
+    type O = YUV
+
+    type MemoizedFn = Memo[I, K, O]
+
+    implicit def encode(input: MemoizedFn#Input): MemoizedFn#Key = (input._1, input._2, input._3)
+    
+    def rgbToYuv(rb: Int, gb: Int, bb: Int): YUV = {
+      val (r, g, b) = (rb, gb, bb)
+      val W_r = 0.299
+      val W_b = 0.114
+      val W_g = 1 - W_r - W_b
+
+      val Y = W_r*r + W_g*g + W_b*b
+      val U = -0.168736*r + -0.331264*g + 0.5*b
+      val V = 0.5*r + -0.418688*g + -0.081312*b
+
+      YUV(Y,U,V)
+    }
+
+    lazy val f: MemoizedFn = Memo {
+      case (r, g, b) => rgbToYuv(r,g,b)
+      case _ => throw new IllegalArgumentException("Wrong number of arguments")
+    }
+
+    f((rByte, gByte, bByte))
+  }
+  
+  case class AutoBalanceParams (
+    maxIter: Int, gainIncr:Double, doubleStepThreshold:Double, convergenceThreshold:Double, greyThreshold:Double
+  )
+
+  case class YUV (y: Double, u: Double, v: Double)
+
+  val balanceParams = AutoBalanceParams(maxIter=1000, gainIncr=0.01, doubleStepThreshold=0.8, convergenceThreshold=0.001, greyThreshold=0.3)
+
+  def mapBands(mbTile:MultibandTile, f: Array[Int] => Option[YUV]): List[List[Option[YUV]]]  = {
+    val newTile = MultibandTile(mbTile.bands)
+    val array = Array.ofDim[Option[YUV]](newTile.cols, newTile.rows)
+
+    cfor(0)(_ < newTile.rows, _ + 1) { row =>
+      cfor(0)(_ < newTile.cols, _ + 1) { col =>
+        val bandValues = Array.ofDim[Int](newTile.bandCount)
+        cfor(0)(_ < newTile.bandCount, _ + 1) { band =>
+          bandValues(band) = newTile.bands(band).get(col, row)
+        }
+        array(col)(row) = f(bandValues)
+      }
+    }
+
+    array.map(_.toList).toList
+  }
+  
+  def mapTile(rgbTile:MultibandTile, f: Array[Int] => Array[Int]): MultibandTile  = {
+    val (nred, ngreen, nblue) = (
+      ArrayTile.alloc(rgbTile.cellType, rgbTile.cols, rgbTile.rows),
+      ArrayTile.alloc(rgbTile.cellType, rgbTile.cols, rgbTile.rows),
+      ArrayTile.alloc(rgbTile.cellType, rgbTile.cols, rgbTile.rows)
+    )
+
+    cfor(0)(_ < rgbTile.rows, _ + 1) { row =>
+      cfor(0)(_ < rgbTile.cols, _ + 1) { col =>
+        val bandValues = Array.ofDim[Int](rgbTile.bandCount)
+        cfor(0)(_ < rgbTile.bandCount, _ + 1) { band =>
+          bandValues(band) = rgbTile.bands(band).get(col, row)
+        }
+        bandValues.toList match {
+          case (r :: g :: b :: xs) if (isData(r) && isData(g) && isData(b)) => {
+            val newVals = f(bandValues)
+            nred.set(col, row, newVals(0))
+            ngreen.set(col, row, newVals(1))
+            nblue.set(col, row, newVals(2))
+          }
+          case _ => { }
+        }
+      }
+    }
+
+    MultibandTile(nred, ngreen, nblue)
+  }
+  
+  @tailrec
+  def adjustGrey(rgbTile:MultibandTile, iter:Int, converged:Boolean):MultibandTile = {
+    if (iter>=balanceParams.maxIter || converged) {
+      rgbTile
+    } else {
+      // convert tile to YUV
+      val tileYuv = mapBands(rgbTile, (rgb) => {
+          val bands = rgb.toList.map((i:Int) => if (isData(i)) Some(i) else None)
+          val r :: g :: b :: xs = bands
+          val rgbs = (r, g, b)
+          val yuv = rgbs match {
+            case (Some(rd), Some(gr), Some(bl)) =>  Some(RgbToYuv(rd, gr, bl))
+            case _ => None
+          }
+          yuv
+      })
+      
+      // find grey chromaticity
+      val offGrey = (yuv:YUV) => (abs(yuv.u) + abs(yuv.v)) / yuv.y
+      val greys = tileYuv.map(lst => lst.map(yuv => {
+        for {
+          y <- yuv
+        } yield {
+          if (offGrey(y) < balanceParams.greyThreshold) Some(y) else None
+        }
+      })).flatten
+
+      // calculate average "off-grey"-ness of U & V
+      val uBar = greys.map(yuvs => yuvs.map(mYuv => {
+          mYuv match {
+            case Some(yuv) => yuv.u
+            case _ => 0.0
+          }
+      })).flatten.sum / greys.length
+      
+      val vBar = greys.map(yuvs => yuvs.map(mYuv => {
+          mYuv match {
+            case Some(yuv) => yuv.v
+            case _ => 0.0
+          }
+      })).flatten.sum / greys.length
+
+      // adjust red & blue channels if convergence hasn't been reached
+      val err = if (abs(uBar) > abs(vBar)) uBar else vBar
+      val gainVal = (err match {
+        case x if x < balanceParams.convergenceThreshold => 0
+        case x if x > (balanceParams.doubleStepThreshold * 1) => 2 * balanceParams.gainIncr * signum(err)
+        case _ => balanceParams.gainIncr * err
+      })
+
+      val channelGain = if (abs(uBar) > abs(vBar)) List((1 - gainVal), 1, 1) else List(1, 1, (1 - gainVal))
+
+      val adjustedTile = mapTile(rgbTile, (arr) => {
+        (for {
+          r :: g :: b :: xs <- Some(arr.toList)
+          nr :: ng :: nb :: xs <- Some(channelGain)
+        } yield {
+          ((r*nr) :: (g*ng) :: (b*nb) :: Nil).map(_.toInt).map(i => clamp8Bit(i))
+        }).getOrElse(arr.toList).toArray
+      })
+
+      adjustGrey(adjustedTile, iter + 1, if (gainVal == 0) true else false)
+    }
+  }
+  
+}
+
 object ColorCorrect {
 
   @JsonCodec
@@ -123,7 +339,8 @@ object ColorCorrect {
     alpha: Option[Double], beta: Option[Double],
     min: Option[Int], max: Option[Int],
     saturation: Option[Double],
-    equalize: Boolean
+    equalize: Boolean,
+    autoBalance: Boolean
   ) {
     def reorderBands(tile: MultibandTile, hist: Seq[Histogram[Double]]): (MultibandTile, Array[Histogram[Double]]) =
       (tile.subsetBands(redBand, greenBand, blueBand), Array(hist(redBand), hist(greenBand), hist(blueBand)))
@@ -145,7 +362,8 @@ object ColorCorrect {
         'alpha.as[Double].?, 'beta.as[Double].?,
         "min".as[Int].?, "max".as[Int].?,
         "saturation".as[Double].?,
-        'equalize.as[Boolean].?(false)
+        'equalize.as[Boolean].?(false),
+        'autoBalance.as[Boolean].?(false)
       ).as(ColorCorrect.Params.apply _)
   }
 
@@ -257,11 +475,15 @@ object ColorCorrect {
       for (saturationFactor <- params.saturation)
         yield SaturationAdjust(_: MultibandTile, saturationFactor)
 
+    val maybeWhiteBalance =
+      if (params.autoBalance) Some(WhiteBalance(_:MultibandTile)) else None
+
 
     // Sequence of transformations to tile, flatten removes None from the list
     val transformations: List[MultibandTile => MultibandTile] = List(
       maybeEqualize,
       maybeClipBands(layerNormalizeArgs),
+      maybeWhiteBalance,
       maybeAdjustBrightness,
       maybeAdjustGamma,
       maybeAdjustContrast,
