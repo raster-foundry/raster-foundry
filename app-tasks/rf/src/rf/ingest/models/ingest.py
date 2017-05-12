@@ -2,9 +2,13 @@
 
 import uuid
 import json
+from botocore.errorfactory import ClientError
 import boto3
 import os
 import logging
+import time
+
+from rf.models import Scene
 
 s3 = boto3.resource('s3')
 logger = logging.getLogger(__name__)
@@ -13,6 +17,7 @@ logger = logging.getLogger(__name__)
 class Ingest(object):
 
     DATA_BUCKET = os.getenv('DATA_BUCKET')
+    INGEST_STATUS_BUCKET = os.getenv('INGEST_STATUS_BUCKET')
 
     def __init__(self, id, layers):
 
@@ -61,3 +66,21 @@ class Ingest(object):
         )
         logger.info('Successfully pushed ingest definition %s to %s', self.id, self.s3_uri)
         return object
+
+    @classmethod
+    def get_status_from_s3(cls, ingest_id):
+        client = boto3.client('s3')
+        logger.info('Checking for and fetching ingest status from {}/{}'.format(
+            cls.INGEST_STATUS_BUCKET, ingest_id
+        ))
+
+        total_time = 0
+        while True:
+            try:
+                s3resp = client.get_object(Bucket=cls.INGEST_STATUS_BUCKET, Key=ingest_id)
+                result = json.loads(s3resp['Body'].read())
+                break
+            except ClientError:
+                logger.info('Ingest %s has not yet completed', ingest_id)
+                time.sleep(20)
+        return result

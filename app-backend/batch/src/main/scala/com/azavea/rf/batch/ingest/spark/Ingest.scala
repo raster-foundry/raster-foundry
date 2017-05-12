@@ -1,11 +1,15 @@
 package com.azavea.rf.batch.ingest.spark
 
 import io.circe.parser._
+import io.circe.syntax._
 
 import com.azavea.rf.batch._
 import com.azavea.rf.batch.ingest._
 import com.azavea.rf.batch.ingest.model._
 import com.azavea.rf.batch.util._
+import com.azavea.rf.batch.util.conf.Config
+import com.azavea.rf.common.S3.putObject
+import com.azavea.rf.datamodel.IngestStatus
 
 import geotrellis.raster._
 import geotrellis.raster.histogram.Histogram
@@ -32,10 +36,14 @@ import org.apache.spark.rdd._
 import spray.json._
 import spray.json.DefaultJsonProtocol._
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
+
 import java.io.File
 import java.net.URI
+import java.util.UUID
 
-object Ingest extends SparkJob with LazyLogging {
+object Ingest extends SparkJob with LazyLogging with Config {
   val jobName = "Ingest"
 
   type RfLayerWriter = Writer[LayerId, RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]]]
@@ -290,17 +298,36 @@ object Ingest extends SparkJob with LazyLogging {
       case None =>
         throw new Exception("Unable to parse command line arguments")
     }
-
     val ingestDefinition = decode[IngestDefinition](readString(params.jobDefinition)) match {
       case Right(r) => r
       case _ => throw new Exception("Incorrect IngestDefinition JSON")
     }
+    val sceneId = {
+      UUID.fromString(params.sceneId)
+      params.sceneId
+    }
+    val statusBucket = params.statusBucket
 
     implicit val sc = new SparkContext(conf)
+
+    implicit def asS3Payload(status: IngestStatus): String =
+      Map("sceneId" -> sceneId, "ingestStatus" -> status.toString).asJson.noSpaces
 
     try {
       ingestDefinition.layers.foreach(ingestLayer(params))
       if (params.testRun) { ingestDefinition.layers.foreach(Validation.validateCatalogEntry) }
+      putObject(
+        statusBucket,
+        ingestDefinition.id.toString,
+        IngestStatus.Ingested
+      )
+    } catch {
+      case t: Throwable =>
+        putObject(
+          params.statusBucket,
+          ingestDefinition.id.toString,
+          IngestStatus.Failed
+        )
     } finally {
       sc.stop
     }

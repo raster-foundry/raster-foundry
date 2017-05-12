@@ -36,4 +36,15 @@ package object S3 {
       s3InputStream.close()
     }
   }
+
+  def putObject(bucket: String, key: String, contents: String): String = {
+    val client = AmazonS3ClientBuilder.standard()
+      .withCredentials(new DefaultAWSCredentialsProviderChain())
+      .build()
+
+    Try(client.putObject(bucket, key, contents)) match {
+      case Success(_) => contents
+      case Failure(ex) => throw new Exception(ex)
+    }
+  }
 }
