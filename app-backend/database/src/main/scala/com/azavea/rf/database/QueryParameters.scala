@@ -53,7 +53,8 @@ case class SceneQueryParameters(
   point: Option[String] = None,
   project: Option[UUID] = None,
   ingested: Option[Boolean] = None,
-  ingestStatus: Iterable[String] = Seq[String]()
+  ingestStatus: Iterable[String] = Seq[String](),
+  pending: Option[Boolean] = None
 ) {
   val bboxPolygon: Option[Seq[Projected[Polygon]]] = try {
     bbox match {

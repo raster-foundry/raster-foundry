@@ -30,7 +30,8 @@ trait SceneQueryParameterDirective extends QueryParametersCommon
     'point.as[String].?,
     'project.as[UUID].?,
     'ingested.as[Boolean].?,
-    'ingestStatus.as[String].*
+    'ingestStatus.as[String].*,
+    'pending.as[Boolean].?
   )).as(SceneQueryParameters.apply _)
 
   val sceneQueryParameters = (orgQueryParams &
