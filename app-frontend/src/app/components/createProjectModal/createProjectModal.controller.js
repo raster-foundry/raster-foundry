@@ -13,7 +13,7 @@ export default class CreateProjectModalController {
         ];
         this.currentStep = this.steps[0];
         this.projectBuffer = {
-            type: 'standard',
+            isAOIProject: false,
             addType: 'public'
         };
         this.allowNext = true;
@@ -106,7 +106,7 @@ export default class CreateProjectModalController {
     }
 
     createProject() {
-        return this.projectService.createProject(this.projectBuffer.name);
+        return this.projectService.createProject(this.projectBuffer.name, this.projectBuffer);
     }
 
     validateProjectName() {

@@ -101,12 +101,17 @@ export default (app) => {
             );
         }
 
-        createProject(name) {
+        createProject(name, params = {}) {
             return this.userService.getCurrentUser().then(
                 (user) => {
                     return this.Project.create({
-                        organizationId: user.organizationId, name: name, description: '',
-                        visibility: 'PRIVATE', tileVisibility: 'PRIVATE', tags: []
+                        organizationId: user.organizationId,
+                        name: name,
+                        description: params.description || '',
+                        visibility: params.visibility || 'PRIVATE',
+                        tileVisibility: params.tileVisibility || 'PRIVATE',
+                        tags: params.tags || [],
+                        isAOIProject: params.isAOIProject || false
                     }).$promise;
                 },
                 (error) => {
