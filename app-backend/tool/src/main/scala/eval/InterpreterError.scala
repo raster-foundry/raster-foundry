@@ -24,6 +24,14 @@ case class IncorrectArgCount(id: UUID, expected: Int, actual: Int) extends Inter
   def repr = s"Operation ${id} was given ${actual} args, but expected ${expected}"
 }
 
+case class UnhandledCase(id: UUID) extends InterpreterError {
+  def repr = s"Some branch of Interpreter logic has yet to be implemented: ${id}"
+}
+
+case class AttributeStoreFetchError(id: UUID) extends InterpreterError {
+  def repr = s"Unable to fetch an S3AttributeStore for Scene ${id}"
+}
+
 /** An error encountered when a bound parameter's source can't be resolved */
 case class RasterRetrievalError(id: UUID, refId: UUID) extends InterpreterError {
   def repr = s"Unable to retrieve raster for $refId"

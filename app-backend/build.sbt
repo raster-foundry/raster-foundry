@@ -21,7 +21,8 @@ lazy val commonSettings = Seq(
     "-language:postfixOps",
     "-language:existentials",
     "-language:experimental.macros",
-    "-feature"
+    "-feature",
+    "-Ypartial-unification"
   ),
   resolvers ++= Seq(
     Resolver.sonatypeRepo("snapshots"),
