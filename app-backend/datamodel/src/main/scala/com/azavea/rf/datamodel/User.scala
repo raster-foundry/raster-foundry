@@ -34,7 +34,8 @@ case class User(
   organizationId: UUID,
   role: UserRole,
   createdAt: Timestamp,
-  modifiedAt: Timestamp
+  modifiedAt: Timestamp,
+  dropboxCredential: Option[String]
 ) {
   private val rootOrganizationId = UUID.fromString("9e2bef18-3f46-426b-a5bd-9913ee1ff840")
 
@@ -60,7 +61,7 @@ object User {
   ) {
     def toUser: User = {
       val now = new Timestamp((new java.util.Date()).getTime())
-      User(id, organizationId, role, now, now)
+      User(id, organizationId, role, now, now, None)
     }
   }
 }

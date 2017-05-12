@@ -2155,6 +2155,9 @@ definitions:
             - USER
             - VIEWER
             - OWNER
+        dropboxCredential:
+          type: string
+          description: Optional credentials allowing RF to access Dropbox account
   UserWithOAuth:
     type: object
     properties:
