@@ -5,7 +5,7 @@ object Version {
   val geotrellis         = "1.1.0-RC3"
   val hikariCP           = "3.1.1.2"
   val postgres           = "9.4-1201-jdbc41"
-  val scala              = "2.11.8"
+  val scala              = "2.11.11"
   val scalaForklift      = "0.2.2"
   val scalaTest          = "2.2.6"
   val scapegoat          = "1.2.0"
