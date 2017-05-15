@@ -1,5 +1,7 @@
 package com.azavea.rf.tool.eval
 
+import java.util.UUID
+
 import scala.concurrent.{ExecutionContext, Future}
 
 import cats._
@@ -8,11 +10,8 @@ import cats.data.Validated._
 import cats.implicits._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.ast.MapAlgebraAST._
-import com.azavea.rf.tool.params._
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster._
-
-import java.util.UUID
 
 
 /** This interpreter handles resource resolution and compilation of MapAlgebra ASTs */
@@ -103,10 +102,33 @@ object Interpreter extends LazyLogging {
     * without fetching any Rasters. Only interprets the structural validatity of
     * the AST, given the params.
     */
-  def interpretPure[M: Monoid](ast: MapAlgebraAST, sourceMapping: Map[UUID, RFMLRaster]): Interpreted[M] = ast match {
+  def interpretPure[M: Monoid](
+    ast: MapAlgebraAST,
+    sourceMapping: Map[UUID, RFMLRaster]
+  ): Interpreted[M] = ast match {
+    /* Validate leaf nodes */
     case Source(id, _) if sourceMapping.isDefinedAt(id) => Valid(Monoid.empty)
     case Source(id, _) => Invalid(NonEmptyList.of(MissingParameter(id)))
-    case operation => operation.args.foldMap(a => interpretPure(a, sourceMapping))
+
+    /* Unary operations must have only one arguments */
+    case op: UnaryOp => {
+      /* Check for errors further down, first */
+      val kids: Interpreted[M] = op.args.foldMap(a => interpretPure(a, sourceMapping))
+
+      if (op.args.length == 1) kids else {
+        /* Add this error to any from lower down via their Semigroup instance */
+        Invalid(NonEmptyList.of(IncorrectArgCount(op.id, 1, op.args.length))).combine(kids)
+      }
+    }
+
+    /* All binary operations must have at least 2 arguments */
+    case op => {
+      val kids: Interpreted[M] = op.args.foldMap(a => interpretPure(a, sourceMapping))
+
+      if (op.args.length > 1) kids else {
+        Invalid(NonEmptyList.of(IncorrectArgCount(op.id, 2, op.args.length))).combine(kids)
+      }
+    }
   }
 
   /** The Interpreter method for producing a global, zoom-level 1 tile

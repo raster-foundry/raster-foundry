@@ -30,6 +30,9 @@ object MapAlgebraAST {
     def sources: Seq[MapAlgebraAST.Source] = args.flatMap(_.sources).distinct
   }
 
+  /** Operations which should only have one argument. */
+  abstract class UnaryOp(override val symbol: String) extends Operation(symbol)
+
   case class Addition(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
       extends Operation("+")
 
@@ -46,7 +49,7 @@ object MapAlgebraAST {
       extends Operation("mask")
 
   case class Classification(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], classMap: ClassMap)
-      extends Operation("classify")
+      extends UnaryOp("classify")
 
   case class Max(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
       extends Operation("max")

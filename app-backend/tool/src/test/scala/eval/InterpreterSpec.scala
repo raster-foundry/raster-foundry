@@ -12,7 +12,6 @@ import cats.implicits._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.ast.MapAlgebraAST._
 import com.azavea.rf.tool.eval._
-import com.azavea.rf.tool.params._
 import geotrellis.raster._
 import geotrellis.raster.testkit._
 import org.scalatest._
@@ -111,7 +110,7 @@ class InterpreterSpec
     lt should be (Invalid(NEL.of(RasterRetrievalError(src1.id, redTileSource.id), MissingParameter(src2.id))))
   }
 
-  it("interpretPure") {
+  it("interpretPure - simple") {
     val src1 = randomSourceAST
     val src2 = randomSourceAST
 
@@ -122,6 +121,15 @@ class InterpreterSpec
 
     tms shouldBe Valid(())
 
+  }
+
+  it("interpretPure - multiple errors") {
+    val ast: MapAlgebraAST = Addition(List(Source.empty), UUID.randomUUID, None)
+
+    Interpreter.interpretPure[Unit](ast, Map.empty) match {
+      case Invalid(nel) => nel.size shouldBe 2
+      case Valid(_) => fail
+    }
   }
 
 }
