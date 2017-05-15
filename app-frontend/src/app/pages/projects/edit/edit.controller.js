@@ -30,6 +30,7 @@ export default class ProjectsEditController {
         this.sceneLayers = new Map();
         this.projectId = this.$state.params.projectid;
         this.layers = [];
+
         if (!this.project) {
             if (this.projectId) {
                 this.loadingProject = true;
@@ -100,12 +101,16 @@ export default class ProjectsEditController {
     }
 
     getPendingSceneList() {
-        this.projectService.getAllProjectScenes({
-            projectId: this.projectId,
-            pending: true
-        }).then(pendingScenes => {
-            this.pendingSceneList = pendingScenes;
-        });
+        if (!this.pendingSceneRequest) {
+            this.pendingSceneRequest = this.projectService.getAllProjectScenes({
+                projectId: this.projectId,
+                pending: true
+            });
+            this.pendingSceneRequest.then(pendingScenes => {
+                this.pendingSceneList = pendingScenes;
+            });
+        }
+        return this.pendingSceneRequest;
     }
 
     layerFromProject() {

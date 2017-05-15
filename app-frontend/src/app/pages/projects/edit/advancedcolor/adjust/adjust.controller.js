@@ -19,19 +19,11 @@ export default class ProjectsColorAdjustController {
         };
 
         let baseSaturationOptions = {
-
             floor: 0,
             ceil: 2,
             step: 0.01,
             showTicks: 0.25,
             precision: 2
-        };
-
-        let baseFilterOptions = {
-            floor: -60,
-            ceil: 60,
-            step: 1,
-            showTicks: 10
         };
 
         let alphaOptions = {
@@ -94,20 +86,19 @@ export default class ProjectsColorAdjustController {
             onEnd: (id, val) => this.onFilterChange(id, val, this.betaOptions)
         }, betaOptions);
 
-        this.brightnessOptions = Object.assign({
-            id: 'brightness',
-            onEnd: (id, val) => this.onFilterChange(id, val, this.brightnessOptions)
-        }, baseFilterOptions);
-        this.contrastOptions = Object.assign({
-            id: 'contrast',
-            onEnd: (id, val) => this.onFilterChange(id, val, this.contrastOptions)
-        }, baseFilterOptions);
+        this.minMaxOptions = Object.assign({
+            id: 'minmax',
+            onEnd: (id, low, high) => {
+                this.onFilterChange('min', low, this.minMaxOptions);
+                this.onFilterChange('max', high, this.minMaxOptions);
+            }
+        }, minMaxOptions);
 
         this.gammaLinkToggle = true;
 
         this.gammaToggle = { value: true };
         this.sigToggle = { value: true };
-        this.bcToggle = { value: true };
+        this.minMaxToggle = { value: true };
         this.saturationToggle = { value: true };
     }
 
@@ -150,14 +141,8 @@ export default class ProjectsColorAdjustController {
             if (this.correction.redGamma === null &&
                 this.correction.greenGamma === null &&
                 this.correction.blueGamma === null) {
-                this.redGammaOptions.disabled = true;
-                this.greenGammaOptions.disabled = true;
-                this.blueGammaOptions.disabled = true;
                 this.gammaToggle.value = false;
             } else {
-                this.redGammaOptions.disabled = false;
-                this.greenGammaOptions.disabled = false;
-                this.blueGammaOptions.disabled = false;
                 this.gammaToggle.value = true;
             }
 
@@ -167,28 +152,31 @@ export default class ProjectsColorAdjustController {
 
             if (this.correction.alpha === null &&
                 this.correction.beta === null) {
-                this.alphaOptions.disabled = true;
-                this.betaOptions.disabled = true;
                 this.sigToggle.value = false;
             } else {
-                this.alphaOptions.disabled = false;
-                this.betaOptions.disabled = false;
                 this.sigToggle.value = true;
             }
 
-            if (this.correction.brightness === null &&
-                (this.correction.contrast === null || this.correction.contract === 0)) {
-                this.brightnessOptions.disabled = true;
-                this.contrastOptions.disabled = true;
-                this.correction.contrast = 0;
-                this.bcToggle.value = false;
+            let defaultMinMax = {};
+
+            if (this.correction.min === null &&
+                this.correction.max === null) {
+                this.minMaxToggle.value = false;
+
+                this.setDefaultsForEnabled();
+
+                defaultMinMax.min = 0;
+                defaultMinMax.max = 65535;
             } else {
-                this.brightnessOptions.disabled = false;
-                this.contrastOptions.disabled = false;
-                this.bcToggle.value = true;
+                this.minMax = true;
+
+                this.setDefaultsForEnabled();
+
+                defaultMinMax.min = this.correction.min;
+                defaultMinMax.max = this.correction.max;
             }
 
-            this.sliderCorrection = Object.assign({}, this.correction);
+            this.sliderCorrection = Object.assign(defaultMinMax, this.correction);
             this.$timeout(() => {
                 this.$scope.$broadcast('rzSliderForceRender');
             });
@@ -201,12 +189,10 @@ export default class ProjectsColorAdjustController {
      */
     setDefaultsForEnabled() {
         let defaults = {
-            redGamma: 0.5,
-            greenGamma: 0.5,
-            blueGamma: 0.5,
-            saturation: 0.5,
-            brightness: -6,
-            contrast: 0,
+            redGamma: 1,
+            greenGamma: 1,
+            blueGamma: 1,
+            saturation: 1,
             alpha: 0.2,
             beta: 13,
             min: 0,
@@ -239,23 +225,22 @@ export default class ProjectsColorAdjustController {
                 correction.beta = defaults.beta;
             }
         }
-
-        if (this.bcToggle.value) {
-            if (correction.brightness === null && correction.contrast === 0) {
-                correction.contrast = defaults.contrast;
+        if (this.minMaxToggle.value) {
+            if (correction.min === null) {
+                correction.min = defaults.min;
             }
-            if (correction.brightness === null) {
-                correction.brightness = defaults.brightness;
+            if (correction.max === null) {
+                correction.max = defaults.max;
             }
         }
     }
 
-    onGammaFilterChange(id, val, options = {}) {
+    onGammaFilterChange(id, val) {
         let relevantIds = id;
         if (this.gammaLinkToggle) {
             relevantIds = ['redGamma', 'greenGamma', 'blueGamma'];
         }
-        this.onFilterChange(relevantIds, val, options);
+        this.onFilterChange(relevantIds, val);
     }
 
     /**
@@ -266,20 +251,15 @@ export default class ProjectsColorAdjustController {
      * @param {object} options todo
      * @returns {null} null
      */
-    onFilterChange(id, val, options = {}) {
+    onFilterChange(id, val) {
         if (Array.isArray(id)) {
             id.forEach((key) => {
-                if (!options.disabled) {
-                    this.correction[key] = val;
-                } else {
-                    this.correction[key] = null;
-                }
+                this.correction[key] = val;
             });
-        } else if (id && !options.disabled) {
-            this.correction[id] = val;
         } else if (id) {
-            this.correction[id] = null;
+            this.correction[id] = val;
         }
+
         this.sliderCorrection = Object.assign({}, this.correction);
         this.$parent.onCorrectionChange(Object.assign({}, this.correction));
 
@@ -298,10 +278,9 @@ export default class ProjectsColorAdjustController {
         }
     }
 
-    gammaToggled(value) {
-        this.redGammaOptions.disabled = !value;
-        this.greenGammaOptions.disabled = !value;
-        this.blueGammaOptions.disabled = !value;
+    gammaToggled() {
+        const value = !this.gammaToggle.value;
+        this.gammaToggle.value = value;
         if (!value) {
             this.correction.redGamma = null;
             this.correction.greenGamma = null;
@@ -311,8 +290,9 @@ export default class ProjectsColorAdjustController {
         this.onFilterChange();
     }
 
-    saturationToggled(value) {
-        this.saturationOptions.disabled = !value;
+    saturationToggled() {
+        const value = !this.saturationToggle.value;
+        this.saturationToggle.value = value;
         if (!value) {
             this.correction.saturation = null;
         }
@@ -320,9 +300,9 @@ export default class ProjectsColorAdjustController {
         this.onFilterChange();
     }
 
-    sigToggled(value) {
-        this.alphaOptions.disabled = !value;
-        this.betaOptions.disabled = !value;
+    sigToggled() {
+        const value = !this.sigToggle.value;
+        this.sigToggle.value = value;
         if (!value) {
             this.correction.alpha = null;
             this.correction.beta = null;
@@ -331,12 +311,12 @@ export default class ProjectsColorAdjustController {
         this.onFilterChange();
     }
 
-    bcToggled(value) {
-        this.brightnessOptions.disabled = !value;
-        this.contrastOptions.disabled = !value;
+    minMaxToggled() {
+        const value = !this.minMaxToggle.value;
+        this.minMaxToggle.value = value;
         if (!value) {
-            this.correction.brightness = null;
-            this.correction.contrast = 0;
+            this.correction.min = null;
+            this.correction.max = null;
         }
         this.setDefaultsForEnabled();
         this.onFilterChange();
