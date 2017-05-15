@@ -182,12 +182,13 @@ object LayerCache extends Config with LazyLogging {
         params  <- OptionT.pure[Future, EvalParams]({
                      logger.debug(s"Parsing ToolRun parameters with ${toolRun.executionParameters}")
                      val parsedParams = parseOrThrow[EvalParams](toolRun.executionParameters)
-                     val md = (parsedParams.metadata.get(ast.id), ast.metadata) match {
-                       case (Some(overrides), Some(defaults)) => overrides.fallbackTo(defaults)
-                       case (None, Some(defaults)) => defaults
-                       case (Some(overrides), None) => overrides
-                       case (None, None) => NodeMetadata()
-                     }
+                     val defaults = ast.metadata
+                     val overrides = parsedParams.metadata.get(ast.id)
+                     val md = (overrides |@| defaults).map(_.fallbackTo(_))
+                       .orElse(overrides)
+                       .orElse(defaults)
+                       .getOrElse(NodeMetadata())
+
                      EvalParams(
                        parsedParams.sources,
                        parsedParams.metadata + (ast.id -> md)
