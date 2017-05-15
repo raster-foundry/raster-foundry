@@ -3,36 +3,47 @@
 export default class LabRunController {
     constructor( // eslint-disable-line max-params
         $scope, $timeout, $element, authService, $uibModal, mapService, projectService,
-        mapUtilsService, APP_CONFIG) {
+        mapUtilsService, toolService, APP_CONFIG) {
         'ngInject';
         this.$scope = $scope;
+        this.$parent = $scope.$parent.$ctrl;
         this.$timeout = $timeout;
         this.$element = $element;
         this.$uibModal = $uibModal;
         this.authService = authService;
         this.projectService = projectService;
         this.mapUtilsService = mapUtilsService;
+        this.toolService = toolService;
         this.getMap = () => mapService.getMap('lab-run-preview');
-
         this.tileServer = `${APP_CONFIG.tileServerLocation}`;
     }
 
     $onInit() {
-        this.inputs = [false, false];
-        this.inputParameters = [{
-            bands: {
-                nir: '5',
-                red: '4'
-            }
-        }, {
-            bands: {
-                nir: '5',
-                red: '4'
-            }
-        }];
-        this.initControls();
-        this.sceneList = [];
-        this.generatedPreview = false;
+        this.$parent.toolRequest.then(tool => {
+            this.tool = tool;
+
+            // @TODO: when we have validated tools, the following hardcoded
+            // params should be replace with param parsing
+            this.inputs = [false, false];
+            this.inputParameters = [{
+                bands: {
+                    nir: '5',
+                    red: '4'
+                }
+            }, {
+                bands: {
+                    nir: '5',
+                    red: '4'
+                }
+            }];
+
+            // @TODO: this will need to be removed when we have validated tools
+            this.tool.definition = this.toolService.getToolStub();
+
+            this.initControls();
+            this.sceneList = [];
+            this.generatedPreview = false;
+        });
     }
 
     initControls() {

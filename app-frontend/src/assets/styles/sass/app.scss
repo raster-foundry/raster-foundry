@@ -37,6 +37,7 @@
   "layout/navbar",
   "layout/header",
   "layout/sidebar",
+  "layout/aside",
   "layout/footer";
 
 /**
@@ -45,6 +46,7 @@
 // TODO: Matt Look at color-correct, carousel
 @import
   "components/spacing",
+  "components/breadcrumb",
   "components/button",
   "components/image",
   "components/form",
@@ -71,8 +73,7 @@
  * Pages
 **/
 @import
-  "pages/default",
-  "pages/library",
+  "pages/dashboard",
   "pages/editor";
 
 

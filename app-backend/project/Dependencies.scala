@@ -55,6 +55,7 @@ object Dependencies {
   val gatlingTest             = "io.gatling"                   % "gatling-test-framework"            % Version.gatling % "test,it"
   val gatlingApp              = "io.gatling"                   % "gatling-app"                       % Version.gatling % "test,it"
   val scalajHttp              = "org.scalaj"                  %% "scalaj-http"                       % Version.scalajHttp
-  val ficus                   ="com.iheart"                   %% "ficus"                             % Version.ficus
+  val ficus                   = "com.iheart"                  %% "ficus"                             % Version.ficus
   val dnsJava                 = "dnsjava"                      % "dnsjava"                           % Version.dnsJava
+  val dropbox                 = "com.dropbox.core"             % "dropbox-core-sdk"                  % Version.dropbox
 }

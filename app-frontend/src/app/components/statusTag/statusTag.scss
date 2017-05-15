@@ -1,0 +1,35 @@
+div.inline-tag {
+  display: inline-block;
+  font-size: 1rem;
+  padding: 0.33em 0.5em;
+  border-radius: 2px;
+  font-weight: normal;
+  vertical-align: middle;
+}
+
+.grey-tag {
+  background: #dadada;
+  color: #777;
+}
+
+.yellow-tag {
+  background: #FFCA28;
+  color: #777;
+}
+
+.green-tag {
+  background: #81C784;
+  color: #777;
+}
+
+.red-tag {
+  background: #E57373;
+  color: #777;
+}
+
+.border-teal-tag {
+  $color: #2FC1D0;
+  color: $color;
+  border: 1px solid $color;
+  text-transform: uppercase;
+}

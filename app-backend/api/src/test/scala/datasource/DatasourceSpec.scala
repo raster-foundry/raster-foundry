@@ -38,6 +38,8 @@ class DatasourceSpec extends WordSpec
     redBand = 3,
     greenBand = 2,
     blueBand = 1,
+    redMax = Some(20000), greenMax = Some(20000), blueMax = Some(20000),
+    redMin = None, greenMin = None, blueMin = None,
     redGamma = Some(0.0),
     greenGamma = Some(0.0),
     blueGamma = Some(0.0),

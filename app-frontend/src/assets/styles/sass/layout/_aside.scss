@@ -1,0 +1,33 @@
+aside,
+.aside {
+  padding: 2rem;
+  border-radius: 2px;
+  border: 1px solid #ddd;
+
+  a {
+    font-weight: 400;
+  }
+
+  h5 {
+    margin: 0;
+  }
+
+  ul {
+    margin: 0;
+  }
+
+  section {
+    padding: 0;
+    margin-bottom: 2rem;
+
+    &:last-of-type:not(.aside-footer) {
+      margin-bottom: 0;
+    }
+  }
+
+  .aside-footer {
+    margin: 0 -2rem -2rem;
+    padding: 2rem;
+    background: rgba($shade-light, .1);
+  }
+}

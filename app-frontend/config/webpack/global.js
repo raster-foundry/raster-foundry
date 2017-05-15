@@ -98,7 +98,7 @@ module.exports = function (_path) {
                 loader: DEVELOPMENT ? 'style-loader!' + stylesLoader
                     : ExtractTextPlugin.extract('style-loader', stylesLoader)
             }, {
-                test: /\.(woff2|woff|ttf|eot|svg)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+                test: /\.(woff2|woff|ttf|eot|svg)(\?[0-9]+)?(#[0-9a-zA-Z]+)?$/,
                 loaders: [
                     'url-loader?name=assets/fonts/[name]_[hash].[ext]'
                 ]
@@ -172,13 +172,13 @@ module.exports = function (_path) {
 
         // load plugins
         plugins: [
+            new webpack.optimize.DedupePlugin(),
             new webpack.ProvidePlugin({
                 $: 'jquery',
                 jQuery: 'jquery',
                 L: 'leaflet'
             }),
             new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
-            new webpack.optimize.DedupePlugin(),
             new webpack.optimize.AggressiveMergingPlugin({
                 moveToParents: true
             }),

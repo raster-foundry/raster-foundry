@@ -17,6 +17,7 @@ export default class CreateProjectModalController {
             addType: 'public'
         };
         this.allowNext = true;
+        this.returnData = Object.assign({}, this.resolve.returnData);
     }
 
     projectAttributeIs(attr, value) {
@@ -83,7 +84,7 @@ export default class CreateProjectModalController {
     gotoSceneBrowser() {
         if (this.project) {
             this.close();
-            this.$state.go('projects.edit', {projectid: this.project.id});
+            this.$state.go('projects.edit.browse', {projectid: this.project.id});
         }
     }
 
@@ -99,7 +100,7 @@ export default class CreateProjectModalController {
             }
         });
 
-        this.dismiss();
+        this.closeWithData();
 
         return this.activeModal;
     }
@@ -126,6 +127,7 @@ export default class CreateProjectModalController {
                     this.isCreatingProject = true;
                     this.createProject().then(p => {
                         this.project = p;
+                        this.returnData.reloadProjectList = true;
                         this.gotoNextStep();
                     }).finally(() => {
                         this.allowNext = true;
@@ -144,7 +146,7 @@ export default class CreateProjectModalController {
         }
     }
 
-    closeWithData(data) {
-        this.close({$value: data});
+    closeWithData() {
+        this.close({$value: this.returnData});
     }
 }

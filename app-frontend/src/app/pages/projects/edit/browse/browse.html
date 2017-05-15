@@ -1,19 +1,33 @@
-<div class="sidebar-project" ng-show="!$ctrl.activeScene">
-  <div class="sidebar-row">
-    <button class="btn" ui-sref="projects.edit.scenes">
-      <i class="icon-caret-left"></i>Scenes
-    </button>
-    <h5 class="sidebar-title">Browse scenes</h5>
-    <button class="btn btn-default"
+<div class="sidebar-header">
+  <a class="btn sidebar-header-nav-btn" ui-sref="projects.edit.scenes">
+    <i class="icon-arrow-left"></i>
+  </a>
+  <h5 class="sidebar-title">Browse Scenes</h5>
+  <div class="header-controls">
+    <button class="btn btn-default btn-small"
             type="button"
             ng-click="$ctrl.toggleFilterPane()">
       Sort/Filter
     </button>
   </div>
+</div>
+<div class="sidebar-project" ng-show="!$ctrl.activeScene">
   <ul class="sidebar-list">
-    <li class="header">
-      <span>Select scenes and click <strong>Add Scenes</strong> to add to the project.</span>
-      <div class="btn-group">
+    <li ng-if="$ctrl.$parent.project.isAOIProject">
+      <div class="banner banner-secondary">
+        <div>12 scenes awaiting approval</div>
+        <div>
+          <button class="btn btn-border-light" ui-sref="projects.edit.aoi-approve">Review Scenes</button>
+        </div>
+      </div>
+    </li>
+    <li>
+      <div class="label">
+        <span class="text">
+          Select scenes and click <strong>Add Scenes</strong> to add to the project.
+        </span>
+      </div>
+      <div class="btn-group fixedwidth">
         <button type="button"
                 class="btn btn-primary"
                 style="width: 12rem;"
@@ -21,7 +35,7 @@
           Add Scenes
         </button>
         <button type="button"
-                class="btn btn-square"
+                class="btn dropdown-toggle"
                 ng-class="{'btn-secondary': $ctrl.allSelected}"
                 ng-click="$ctrl.selectAllScenes()">
           <i ng-class="{'icon-plus': !$ctrl.allSelected,
@@ -31,35 +45,36 @@
     </li>
   </ul>
 </div>
-<div class="sidebar-scrollable">
-  <div class="list-group" ng-if="$ctrl.lastSceneResult && $ctrl.projectScenesReady">
-    <div class="list-group-item">
-      <strong class="color-dark">{{$ctrl.lastSceneResult.count | number}} scenes found</strong>
-    </div>
+<div class="list-group" ng-if="$ctrl.lastSceneResult && $ctrl.projectScenesReady">
+  <div class="list-group-item">
+    <strong class="color-dark">{{$ctrl.lastSceneResult.count | number}} scenes found</strong>
   </div>
-  <div infinite-scroll="$ctrl.getMoreScenes()"
-       infinite-scroll-distance="0.5"
-       infinite-scroll-disabled="$ctrl.loadingScenes || ($ctrl.lastSceneResult && !$ctrl.lastSceneResult.hasNext) || $ctrl.errorMsg"
-       infinite-scroll-container="'#infscroll'"
-       infinite-scroll-immediate-check=false
-       class="list-group">
-    <rf-scene-item
-        ng-click="$ctrl.openDetailPane(scene)"
-        scene="scene"
-        selectable
-        selected="$ctrl.isSelected(scene)"
-        is-disabled="$ctrl.isInProject(scene)"
-        on-select="$ctrl.setSelected(scene, selected)"
-        class="selectable"
-        ng-mouseenter="$ctrl.setHoveredScene(scene)"
-        ng-mouseleave="$ctrl.removeHoveredScene()"
-        ng-repeat="scene in $ctrl.sceneList track by scene.id">
-    </rf-scene-item>
+</div>
+<div class="sidebar-scrollable list-group">
+  <rf-scene-item
+      ng-click="$ctrl.openDetailPane(scene)"
+      scene="scene"
+      selectable
+      selected="$ctrl.isSelected(scene)"
+      is-disabled="$ctrl.isInProject(scene)"
+      on-select="$ctrl.setSelected(scene, selected)"
+      class="selectable"
+      ng-mouseenter="$ctrl.setHoveredScene(scene)"
+      ng-mouseleave="$ctrl.removeHoveredScene()"
+      ng-repeat="scene in $ctrl.sceneList track by scene.id">
+  </rf-scene-item>
+  <div class="sidebar-content">
+    <button class="btn btn-block btn-secondary"
+            ng-if="!$ctrl.loadingScenes && $ctrl.lastSceneResult && $ctrl.lastSceneResult.hasNext && !$ctrl.errorMsg"
+            ng-click="$ctrl.getMoreScenes()">
+      Load More Scenes
+    </button>
   </div>
 </div>
 <div class="sidebar sidebar-extended map-filters"
      ng-show="$ctrl.showFilterPane && !$ctrl.activeScene">
-  <rf-filter-pane data-opened="$ctrl.showFilterPane"
+  <rf-filter-pane ng-if="$ctrl.filters"
+                  data-opened="$ctrl.showFilterPane"
                   filters="$ctrl.filters"></rf-filter-pane>
 </div>
 

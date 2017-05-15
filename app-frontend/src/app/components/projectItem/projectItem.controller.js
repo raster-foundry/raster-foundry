@@ -24,6 +24,7 @@ export default class ProjectItemController {
 
         this.fitProjectExtent();
         this.addProjectLayer();
+        this.getProjectStatus();
     }
 
     addProjectLayer() {
@@ -48,6 +49,15 @@ export default class ProjectItemController {
     toggleSelected(event) {
         this.onSelect({project: this.project, selected: !this.selectedStatus});
         event.stopPropagation();
+    }
+
+    getProjectStatus() {
+        if (!this.statusFetched) {
+            this.projectService.getProjectStatus(this.project.id).then(status => {
+                this.status = status;
+            });
+            this.statusFetched = true;
+        }
     }
 
     publishModal() {

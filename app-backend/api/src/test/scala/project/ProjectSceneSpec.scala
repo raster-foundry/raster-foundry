@@ -286,6 +286,8 @@ class ProjectSceneSpec extends WordSpec
       val colorCorrectParams = ColorCorrect.Params(
         1, 2, 3,                           // Band Order (R, G, B)
         Some(0.53), Some(0.8), Some(0.32), // Gamma levels
+        None, None, None,                  // Clipping max
+        None, None, None,                  // Clipping min
         Some(10), Some(20),                // Contrast, Brightness
         None, None,                        // Alpha, Beta
         None, None,                        // Min, Max

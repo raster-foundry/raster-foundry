@@ -1,6 +1,6 @@
 <div class="modal-scrollable-body modal-sidebar-header">
   <div class="modal-header">
-    <button type="button" class="close" aria-label="Close" ng-click="$ctrl.dismiss()">
+    <button type="button" class="close" aria-label="Close" ng-click="$ctrl.closeWithData()">
       <span aria-hidden="true">&times;</span>
     </button>
     <h4 class="modal-title">
@@ -47,7 +47,7 @@
     </div>
   </div>
 
-  <!--Body for NAME-->
+  <!--Body for ADD_SCENES-->
   <div class="modal-body" ng-if="$ctrl.currentStepIs('ADD_SCENES')">
     <div class="content">
       <h3 class="modal-content-header">Add Scenes to your Project</h3>
@@ -60,7 +60,7 @@
           ng-class="{selected: $ctrl.projectAttributeIs('addType', 'public')}"
           ng-click="$ctrl.setProjectAttribute('addType','public')"
         >
-          Jump into the Scene Browser and find publicly available scenes for use in your project immediately.
+          Jump into the Scene Browser and use your existing imports and publicly available imagery in your project.
         </rf-box-select-item>
         <rf-box-select-item
           title="Import your own"
@@ -75,7 +75,7 @@
 
   <!--Default Footer-->
   <div
-    ng-if="$ctrl.currentStepIsNot(['SUCCESS', 'ADD_SCENES', 'IMPORT', 'IMPORT_SUCCESS'])"
+    ng-if="$ctrl.currentStepIs('TYPE')"
     class="modal-footer"
   >
     <button type="button" class="btn pull-left"
@@ -96,40 +96,16 @@
   </div>
 
   <!--Footer for ADD_SCENES-->
-  <div ng-if="$ctrl.currentStepIs('ADD_SCENES')" class="modal-footer">
+  <div ng-if="$ctrl.currentStepIs('ADD_SCENES')"
+       class="modal-footer"
+  >
     <button type="button" class="btn pull-left"
-            ng-click="$ctrl.closeWithData(1)">
+            ng-click="$ctrl.closeWithData()">
       Add Scenes later
     </button>
     <button type="button" class="btn btn-primary"
             ng-click="$ctrl.handleNext()">
       Next
-    </button>
-  </div>
-
-  <!--Footer for IMPORT-->
-  <div ng-if="$ctrl.currentStepIs('IMPORT')" class="modal-footer">
-    <button type="button" class="btn pull-left"
-            ng-click="$ctrl.closeWithData(1)">
-      Add Scenes later
-    </button>
-    <button type="button" class="btn"
-            ng-if="$ctrl.hasPreviousStep()"
-            ng-click="$ctrl.gotoPreviousStep()">
-      Back
-    </button>
-    <button type="button" class="btn btn-primary"
-            ng-click="$ctrl.handleNext()">
-      Next
-    </button>
-  </div>
-
-
-  <!--Footer for SUCCESS-->
-  <div ng-if="$ctrl.currentStepIs('IMPORT_SUCCESS')" class="modal-footer">
-    <button type="button" class="btn btn-primary"
-            ng-click="$ctrl.closeWithData(1)">
-      Done
     </button>
   </div>
 </div>

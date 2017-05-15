@@ -212,10 +212,6 @@ rf-project-editor .leaflet-tile {
 .flex-column {
   flex-grow: 1;
 }
-
-.btn-group .btn {
-  flex-grow: 1;
-}
 //
 
 
@@ -286,10 +282,6 @@ rf-project-editor .leaflet-tile {
   }
 }
 
-.project-preview-container {
-  height: 200px;
-}
-
 .btn.btn-slim {
   padding: 1rem;
 }
@@ -323,7 +315,6 @@ rf-project-editor .leaflet-tile {
 .sidebar-project {
   position: relative;
   border-bottom: 2px solid #ddd;
-  padding: 1rem 1.5rem;
   .sidebar-row {
     display: flex;
     align-content: row;
@@ -333,44 +324,112 @@ rf-project-editor .leaflet-tile {
     }
   }
 }
+.sidebar-header {
+  padding: 1.25rem 2rem;
+  background: #f1f1f1;
+  display: flex;
+  align-items: center;
+  height: 48px;
+  border-bottom: 1px solid #ddd;
+  & > * {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+  .header-controls {
+    flex: 1;
+    text-align: right;
+    font-size: 1.2rem;
+  }
+  .inline-tag {
+    margin-left: 1rem;
+  }
+  .sidebar-header-nav-btn {
+    padding: 0;
+    border: none;
+    background: none;
+    color: #465076;
+    font-size: 2.8rem;
+  }
+}
+
 .sidebar-list {
   list-style: none;
   display: block;
   margin: 0 0 0 0;
   padding: 0;
 
-  li {
+  & > li {
     display: flex;
     align-items: center;
-    padding: 1.5rem 1rem 2.5rem 1rem;
-
+    padding: 1.5rem 1rem 1.5rem 1rem;
+    &:not(:first-child) {
+      padding-top: 0rem;
+    }
+    &.separator {
+      border-bottom: 1px solid #ddd;
+      margin-bottom: 1rem;
+      margin: 0rem 1rem 0rem 1rem;
+      padding: 1.5rem 0 1.5rem 0;
+      &:last-of-type{
+        border-bottom: none;
+      }
+      &.separator-primary {
+        margin: 0rem;
+        padding: 1.5rem 1rem;
+        border-bottom: none;
+        background: #738FFC;
+        color: #fff;
+      }
+    }
+    &.header {
+      margin-left: 0;
+      padding: 1rem 0 1rem 0;
+    }
     .fixedwidth {
       width: 20rem;
     }
 
     .label {
       flex: 1;
-      font-weight: bold;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      margin-right: 1rem;
+      .text {
+        font-weight: normal;
+        font-size: 1.2rem;
+      }
+      .info {
+        font-size: 1.2rem;
+        font-style: italic;
+        font-weight: normal;
+      }
     }
 
     i .icon-info {
       cursor: help;
     }
 
-    &.separator {
-      border-bottom: 1px solid #ddd;
-      margin-bottom: 1rem;
-      margin: 0rem 1rem 0rem 1rem;
-      padding: 1.5rem 0 1.5rem 0;
-    }
-
-    &.header {
-      margin-left: 0;
-      padding: 1rem 0 1rem 0;
+    .banner {
+      padding: 1rem;
+      border-radius: 2px;
+      color: #fff;
+      flex: 1;
+      text-align: center;
+      div:not(:last-child) {
+        margin-bottom: 1rem;
+      }
     }
   }
-}
 
+
+}
+.sidebar-content {
+  padding: 1rem;
+}
+.banner-secondary {
+  background: #2FC1D0;
+}
 .navbar {
   padding-top: 0.7rem;
   padding-bottom: 0.8rem;

@@ -31,10 +31,10 @@ default_args = {
 
 
 dag = DAG(
-    dag_id='ingest_project_scenes',
+    dag_id='ingest_scene',
     default_args=default_args,
     schedule_interval=None,
-    concurrency=int(os.getenv('AIRFLOW_DAG_CONCURRENCY', 4))
+    concurrency=int(os.getenv('AIRFLOW_DAG_CONCURRENCY', 24))
 )
 
 
@@ -137,11 +137,13 @@ def create_ingest_definition_op(*args, **kwargs):
     """Create ingest definition and upload to S3"""
 
     logger.info('Beginning to create ingest definition...')
-    xcom_client = kwargs['task_instance']
     conf = kwargs['dag_run'].conf
-    scene_dict = conf.get('scene')
-    xcom_client.xcom_push(key='ingest_scene_id', value=scene_dict['id'])
-    scene = Scene.from_id(scene_dict['id'])
+    logger.info('CONF: {}'.format(conf))
+    xcom_client = kwargs['task_instance']
+
+    scene_id = conf.get('sceneId')
+    xcom_client.xcom_push(key='ingest_scene_id', value=scene_id)
+    scene = Scene.from_id(scene_id)
 
     if scene.ingestStatus != IngestStatus.TOBEINGESTED:
         raise Exception('Scene is no longer waiting to be ingested, error error')
@@ -194,7 +196,7 @@ def set_ingest_status_success_op(*args, **kwargs):
     scene.ingestLocation = s3_output_location
     scene.update()
     logger.info("Finished setting scene (%s) ingest status (%s)", scene_id, IngestStatus.INGESTED)
-
+    return "Done Success"
 
 @wrap_rollbar
 def set_ingest_status_failure_op(*args, **kwargs):
@@ -202,11 +204,8 @@ def set_ingest_status_failure_op(*args, **kwargs):
     xcom_client = kwargs['task_instance']
     scene_id = xcom_client.xcom_pull(key='ingest_scene_id', task_ids=None)
     logger.info("Setting scene (%s) ingested status to failed", scene_id)
-    scene = Scene.from_id(scene_id)
-    scene.ingestStatus = IngestStatus.FAILED
-    scene.update()
     logger.info("Finished setting scene (%s) ingest status (%s)", scene_id, IngestStatus.FAILED)
-
+    return "Done Success"
 
 ################################
 # Tasks                        #

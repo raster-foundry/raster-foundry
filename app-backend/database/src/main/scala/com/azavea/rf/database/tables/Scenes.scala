@@ -521,7 +521,15 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) extends LazyLoggin
     sceneParams.project match {
       case Some(projectId) => {
         filteredScenes.filter { scene =>
-          scene.id in ScenesToProjects.filter(_.projectId === projectId).map(_.sceneId)
+          scene.id in ScenesToProjects
+            .filter(_.projectId === projectId)
+            .filter { s2p =>
+              sceneParams.pending
+                .map(s2p.accepted =!= _)
+                .reduceLeftOption(_ || _)
+                .getOrElse(true: Rep[Boolean])
+            }
+            .map(_.sceneId)
         }
       }
       case _ => {

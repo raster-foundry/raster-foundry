@@ -740,6 +740,7 @@ paths:
         - $ref: '#/parameters/tags'
         - $ref: '#/parameters/ingested'
         - $ref: '#/parameters/ingestStatus'
+        - $ref: '#/parameters/pending'
       responses:
         200:
           description: Paginated list of scenes associated with this project
@@ -1937,6 +1938,12 @@ parameters:
     in: query
     type: string
     required: false
+  pending:
+    name: pending
+    description: Filter by scene's acceptance for an AOI project
+    in: query
+    type: boolean
+    required: false
   tool:
     name: toolId
     description: Filter by tool\'s slug label
@@ -2060,6 +2067,24 @@ definitions:
         type: number
         format: float
       blueGamma:
+        type: number
+        format: float
+      redMax:
+        type: number
+        format: float
+      redMin:
+        type: number
+        format: float
+      greenMax:
+        type: number
+        format: float
+      greenMin:
+        type: number
+        format: float
+      blueMax:
+        type: number
+        format: float
+      blueMin:
         type: number
         format: float
       brightness:
@@ -2453,6 +2478,9 @@ definitions:
         manualOrder:
           type: boolean
           description: Is true if project scenes are manually ordered
+        isAOIProject:
+          type: boolean
+          description: Is true if project is an area-of-interest project
   Image:
     allOf:
     - $ref: '#/definitions/BaseModel'

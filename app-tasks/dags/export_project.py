@@ -2,16 +2,13 @@ from __future__ import print_function
 import datetime
 import logging
 import os
-import time
-import json
 
 import subprocess
 
 from airflow.models import DAG
-from airflow.operators import BashOperator, PythonOperator
+from airflow.operators import PythonOperator
 from airflow.exceptions import AirflowException
 
-from rf.utils.io import get_session
 from rf.utils.exception_reporting import wrap_rollbar
 
 
@@ -33,7 +30,7 @@ default_args = {
 }
 
 dag = DAG(
-    dag_id='do_export',
+    dag_id='export_project',
     default_args=default_args,
     schedule_interval=None,
     concurrency=os.getenv('AIRFLOW_DAG_CONCURRENCY', 4)
@@ -46,7 +43,7 @@ def start_export(export_id):
     subprocess.call([bash_cmd], shell=True)
     logger.info('Launched export creation process, watching for updates...')
     is_success = wait_for_success()
-    
+
     return is_success
 
 def wait_for_success(response=None):
@@ -67,7 +64,7 @@ def create_export_definition_op(*args, **kwargs):
     conf = kwargs['dag_run'].conf
     export_id = conf['exportId']
 
-    
+
     xcom_client.xcom_push(key='export_def_id',value=export_id)
     start_export(export_id)
 

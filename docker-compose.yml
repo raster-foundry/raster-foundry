@@ -35,6 +35,8 @@ services:
     image: openjdk:8-jre
     links:
       - postgres:database.service.rasterfoundry.internal
+    external_links:
+      - airflow-webserver:airflow.service.rasterfoundry.internal
     env_file: .env
     ports:
       - "9000:9000"
@@ -44,6 +46,8 @@ services:
       - ./.bintray:/root/.bintray
       - $HOME/.aws:/root/.aws:ro
     working_dir: /opt/raster-foundry/app-backend/
+    environment:
+      - AIRFLOW_SERVER_LOCATION=http://airflow.service.rasterfoundry.internal:8080
     entrypoint: ./sbt
     command: api/run
 

@@ -32,5 +32,7 @@ export default angular.module('index.components', [
     require('./components/staticMap/staticMap.module.js').name,
     require('./components/sceneDetailModal/sceneDetailModal.module.js').name,
     require('./components/datePickerModal/datePickerModal.module.js').name,
-    require('./components/exportModal/exportModal.module.js').name
+    require('./components/exportModal/exportModal.module.js').name,
+    require('./components/statusTag/statusTag.module.js').name,
+    require('./components/aoiFilterPane/aoiFilterPane.module.js').name
 ]);

@@ -5,18 +5,14 @@ import java.util.UUID
 import org.xbill.DNS._
 
 import scala.collection.JavaConverters._
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
+import scala.concurrent.Future
 import scala.util._
 
-import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import cats.data._
 import cats.implicits._
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
-import com.amazonaws.services.elasticmapreduce.{AmazonElasticMapReduceClient, AmazonElasticMapReduceClientBuilder}
+import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClientBuilder
 import com.amazonaws.services.elasticmapreduce.model.{AddJobFlowStepsRequest, StepConfig, HadoopJarStepConfig}
-import io.circe.generic.JsonCodec
 import io.circe.syntax._
 
 import com.azavea.rf.batch.Job
@@ -78,17 +74,15 @@ case class CreateExportDef(exportId: UUID)(implicit val database: DB) extends Jo
 
     val emrClient = AmazonElasticMapReduceClientBuilder.standard().withCredentials(new DefaultAWSCredentialsProviderChain()).build()
     emrClient.addJobFlowSteps(jobSteps)
-    ()
   }
 
-  def updateExportStatus(export:Export, status: ExportStatus) = {
-    export.copy(exportStatus=status)
-  }
+  def updateExportStatus(export: Export, status: ExportStatus): Export =
+    export.copy(exportStatus = status)
 
   def run: Unit = {
     logger.info("Starting export process...")
 
-    val startEmr = (ed:ExportDefinition, edu:String) => Future { startExportEmrJob(ed, edu) }
+    val startEmr = (ed: ExportDefinition, edu: String) => Future { startExportEmrJob(ed, edu) }
 
     val createExportDef = for {
       user: User <- OptionT(Users.getUserById(airflowUser))
@@ -119,13 +113,15 @@ case class CreateExportDef(exportId: UUID)(implicit val database: DB) extends Jo
     }
 
     createExportDef.value.onComplete {
-      case Success(s) => {
+      case Success(_) => {
         logger.info("Export job sent to cluster and status updated")
         stop
       }
       case Failure(e) => {
+        e.printStackTrace()
+        sendError(e)
         stop
-        throw e
+        sys.exit(1)
       }
     }
   }
@@ -139,9 +135,8 @@ object CreateExportDef {
 
     val job = args.toList match {
       case List(exportId) => CreateExportDef(UUID.fromString(exportId))
-      case _ => {
+      case _ =>
         throw new IllegalArgumentException("Argument could not be parsed to UUID")
-      }
     }
   
     job.run

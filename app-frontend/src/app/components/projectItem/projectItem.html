@@ -1,65 +1,63 @@
-<div class="list-group-item with-rows">
-  <div><h4 class="color-dark">{{$ctrl.project.name}}</h4></div>
-  <div class="list-group-item-content">
-    <div class="list-group-overflow project-preview-container" ng-if="!$ctrl.project.scenes">
-      This project doesn't have any scenes yet
-    </div>
-    <div class="list-group-overflow project-preview-container" ng-if="$ctrl.project.scenes">
-      <rf-static-map map-id="{{$ctrl.project.id}}-map"></rf-static-map>
-    </div>
-    <div class="list-group-right">
-      <div class="font-size-small">
-        <div>
-          <div class="dropdown btn-group" uib-dropdown ng-if="!$ctrl.isSelectable">
-            <a class="btn btn-default" ui-sref="projects.edit({projectid: $ctrl.project.id})">
-              Edit
+<div class="panel-body">
+  <h4 class="project-title">
+    {{$ctrl.project.name}}
+    <rf-status-tag ng-if="$ctrl.status" entity-type="project" status="$ctrl.status"></rf-status-tag>
+    </h4>
+  <div class="row">
+    <div class="column noflex">
+      <div class="dropdown btn-group" uib-dropdown ng-if="!$ctrl.isSelectable">
+        <a class="btn btn-default" ui-sref="projects.edit({projectid: $ctrl.project.id})">
+          Edit
+        </a>
+        <button type="button" class="btn btn-default" uib-dropdown-toggle>
+          <i class="icon-caret-down"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+          <li role="menuitem">
+            <a href ui-sref="projects.detail({projectid: $ctrl.project.id})">
+              <i class="icon-color-correct"></i>Project Details
             </a>
-            <button type="button" class="btn btn-default btn-slim" uib-dropdown-toggle>
-              <i class="icon-caret-down"></i>
-            </button>
-            <ul class="dropdown-menu" uib-dropdown-menu role="menu">
-              <li role="menuitem">
-                <a href ui-sref="projects.detail({projectid: $ctrl.project.id})">
-                  <i class="icon-color-correct"></i>Project Details
-                </a>
-              </li>
-              <li role="menuitem">
-                <a href ui-sref="projects.edit.browse({projectid: $ctrl.project.id})">
-                  <i class="icon-project"></i>Add Scenes
-                </a>
-              </li>
-              <li role="menuitem">
-                <a href ng-click="$ctrl.publishModal()"><i class="icon-share"></i>Share</a>
-              </li>
-              <li class="divider"></li>
-              <li role="menuitem">
-                <a href class="color-danger" ng-click="$ctrl.deleteModal()">
-                  <i class="icon-trash"></i>Delete
-                </a>
-              </li>
-            </ul>
-          </div>
-          <button class="btn btn-square"
-                  ng-click="$ctrl.toggleSelected($event)"
-                  ng-if="$ctrl.isSelectable"
-                  ng-class="{'btn-secondary': $ctrl.selectedStatus}">
-            <i ng-class="{
-                        'icon-plus': !$ctrl.selectedStatus,
-                        'icon-cross': $ctrl.selectedStatus,
-                        'icon-check': $ctrl.selectedStatus === 'added'
-                        }">
-            </i>
-          </button>
-        </div>
-        <div>
+          </li>
+          <li role="menuitem">
+            <a href ui-sref="projects.edit.browse({projectid: $ctrl.project.id})">
+              <i class="icon-project"></i>Add Scenes
+            </a>
+          </li>
+          <li role="menuitem">
+            <a href ng-click="$ctrl.publishModal()"><i class="icon-share"></i>Share</a>
+          </li>
+          <li class="divider"></li>
+          <li role="menuitem">
+            <a href class="color-danger" ng-click="$ctrl.deleteModal()">
+              <i class="icon-trash"></i>Delete
+            </a>
+          </li>
+        </ul>
+      </div>
+      <ul class="list-unstyled">
+        <li>
           <ng-pluralize count="$ctrl.project.scenes"
                         when="{'one': '1 Scene',
                               'other': '{} Scenes'}">
           </ng-pluralize>
-        </div>
-        <div>
-          Edited {{$ctrl.project.modifiedAt | date : 'shortDate'}}
-        </div>
+        </li>
+        <li>Edited {{$ctrl.project.modifiedAt | date : 'shortDate'}}</li>
+      </ul>
+    </div>
+    <div class="column">
+
+      <!-- IF project has no scenes -->
+      <div class="project-preview-container placeholder" ng-if="!$ctrl.project.scenes">
+        This project doesn't have any scenes yet
+      </div>
+
+      <!-- IF using a project's map: -->
+      <!-- <div class="project-preview-container" ng-if="$ctrl.project.scenes">
+        <rf-static-map map-id="{{$ctrl.project.id}}-map"></rf-static-map>
+      </div> -->
+
+      <!-- IF using a project's thumbnail: -->
+      <div class="project-preview-container thumbnail" ng-if="$ctrl.project.scenes" style="background-image: url(...);">
       </div>
     </div>
   </div>

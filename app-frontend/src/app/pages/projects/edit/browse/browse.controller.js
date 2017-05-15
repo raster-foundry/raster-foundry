@@ -35,17 +35,18 @@ export default class ProjectAddScenesBrowseController {
         this.selectedScenes = new Map();
         this.sceneList = [];
         this.gridFilterActive = false;
-        this.initParams();
         if (!this.$parent.project) {
             this.project = this.$parent.project;
             this.$parent.waitForProject().then((project) => {
                 this.project = project;
+                this.initParams();
                 this.getProjectSceneIds();
                 this.initWatchers();
                 this.initMap();
             });
         } else {
             this.project = this.$parent.project;
+            this.initParams();
             this.getProjectSceneIds();
             this.initWatchers();
             this.initMap();
@@ -69,7 +70,12 @@ export default class ProjectAddScenesBrowseController {
         ];
 
         const cleanedParams = _.omit(this.$state.params, routeParams) || {};
-        const cleanedFilters = _.omit(this.sessionStorage.get('filters'), routeParams) || {};
+        const sessionFilters = this.sessionStorage.get('filters') || {};
+        let cleanedFilters = {};
+
+        if (sessionFilters.forProjectId === this.project.id) {
+            cleanedFilters = _.omit(this.sessionStorage.get('filters'), routeParams) || {};
+        }
 
         this.queryParams = Object.assign(
             _.mapValues(cleanedParams, (val) => val ? val : null),
@@ -278,7 +284,8 @@ export default class ProjectAddScenesBrowseController {
     }
 
     onQueryParamsChange() {
-        this.sessionStorage.set('filters', this.queryParams);
+        const filterObject = Object.assign(this.queryParams, { forProjectId: this.project.id });
+        this.sessionStorage.set('filters', filterObject);
         this.$state.go('.', this.getCombinedParams(), {
             notify: false,
             inherit: false,
@@ -364,8 +371,7 @@ export default class ProjectAddScenesBrowseController {
     }
 
     selectNoScenes() {
-        this.selectedScenes.clear();
-        this.sceneList.forEach(s => this.setSelected(s, false));
+        this.selectedScenes.forEach(s => this.setSelected(s, false));
     }
 
     onGridClick(e, bbox) {
@@ -436,9 +442,9 @@ export default class ProjectAddScenesBrowseController {
 
         this.activeModal.result.then(sceneIds => {
             this.projectSceneIds = this.projectSceneIds.concat(sceneIds);
+            this.selectNoScenes();
         }).finally(() => {
             delete this.activeModal;
-            this.selectNoScenes();
             this.$parent.getSceneList();
         });
     }
@@ -448,9 +454,6 @@ export default class ProjectAddScenesBrowseController {
         this.$parent.showPreviewMap = true;
         this.routeParams.sceneid = scene.id;
         this.$state.go('.', this.getCombinedParams(), {notify: false, location: true});
-        this.getMap().then((map) => {
-            map.deleteThumbnail(scene);
-        });
         this.getPreviewMap().then((previewMap) => {
             previewMap.setThumbnail(scene);
             let sceneBounds = this.sceneService.getSceneBounds(scene);
@@ -489,5 +492,10 @@ export default class ProjectAddScenesBrowseController {
             return index >= 0;
         }
         return false;
+    }
+
+    gotoProjectScenes() {
+        this.selectNoScenes();
+        this.$state.go('projects.edit.scenes');
     }
 }

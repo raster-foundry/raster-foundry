@@ -1,28 +1,30 @@
 package com.azavea.rf.api.exports
 
-import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
+import java.util.UUID
+
+import akka.http.scaladsl.server.Route
+import com.typesafe.scalalogging.LazyLogging
+import cats.implicits._
+import cats.data._
+import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import io.circe._
+
+import com.azavea.rf.common._
 import com.azavea.rf.database.tables.Exports
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.{ActionRunner, Database}
 import com.azavea.rf.datamodel._
 
-import cats.implicits._
-import cats.data._
-import io.circe._
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
-import akka.http.scaladsl.server.Route
-import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
-
-import java.util.UUID
-
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 
 trait ExportRoutes extends Authentication
   with ExportQueryParameterDirective
   with PaginationDirectives
   with CommonHandlers
   with UserErrorHandler
+  with LazyLogging
+  with Airflow
   with ActionRunner {
   implicit def database: Database
 
@@ -77,6 +79,7 @@ trait ExportRoutes extends Authentication
     entity(as[Export.Create]) { newExport =>
       authorize(user.isInRootOrSameOrganizationAs(newExport)) {
         onSuccess(write[Export](Exports.insertExport(newExport, user))) { export =>
+          kickoffProjectExport(export.id)
           complete(export)
         }
       }

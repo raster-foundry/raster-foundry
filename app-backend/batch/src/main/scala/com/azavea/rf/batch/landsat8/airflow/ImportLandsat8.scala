@@ -222,7 +222,6 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
       val user = userOpt.getOrElse {
         val e = new Exception(s"User $airflowUser doesn't exist.")
         sendError(e)
-        stop
         throw e
       }
 
@@ -257,16 +256,18 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
         if(scenes.nonEmpty) logger.info(s"Successfully imported scenes: ${scenes.map(_.id.toString).mkString(", ")}.")
         else {
           val e = new Exception(s"No scenes available for the ${startDate}")
+          e.printStackTrace()
           sendError(e)
           stop
-          throw e
+          sys.exit(1)
         }
         stop
       }
       case Failure(e) => {
-        logger.error(e.stackTraceString)
+        e.printStackTrace()
         sendError(e)
         stop
+        sys.exit(1)
       }
     }
   }

@@ -42,9 +42,14 @@
   color: $shade-dark !important;
 }
 
+.color-light {
+  color: $shade-light !important;
+}
+
 .color-white {
   color: #fff !important;
 }
+
 
 // background helpers
 .bg-primary {
@@ -89,6 +94,13 @@
   color: $danger !important;
   &:hover {
     color: darken($danger, 5%) !important;
+  }
+}
+
+.link-light {
+  color: $shade-light !important;
+  &:hover {
+    color: darken($shade-light, 5%) !important;
   }
 }
 

@@ -2,11 +2,13 @@
 
 export default (app) => {
     class ProjectService {
-        constructor($resource, $location, tokenService, userService, $http, $q, APP_CONFIG) {
+        constructor($resource, $location, tokenService, userService, statusService,
+                    $http, $q, APP_CONFIG) {
             'ngInject';
 
             this.tokenService = tokenService;
             this.userService = userService;
+            this.statusService = statusService;
             this.$http = $http;
             this.$location = $location;
             this.$q = $q;
@@ -209,6 +211,26 @@ export default (app) => {
             });
 
             return deferred.promise;
+        }
+
+        getProjectStatus(projectId) {
+            return this.getAllProjectScenes({ projectId }).then(scenes => {
+                if (scenes) {
+                    const counts = scenes.reduce((acc, scene) => {
+                        const ingestStatus = scene.statusFields.ingestStatus;
+                        acc[ingestStatus] = acc[ingestStatus] + 1 || 1;
+                        return acc;
+                    }, {});
+                    if (counts.FAILED) {
+                        return 'FAILED';
+                    } else if (counts.NOTINGESTING || counts.TOBEINGESTED || counts.INGESTING) {
+                        return 'PARTIAL';
+                    } else if (counts.INGESTED) {
+                        return 'CURRENT';
+                    }
+                }
+                return 'NOSCENES';
+            });
         }
 
         getProjectSceneCount(params) {
