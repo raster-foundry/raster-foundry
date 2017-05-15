@@ -54,7 +54,8 @@ function projectEditStates($stateProvider) {
         'minSunElevation',
         'bbox',
         'point',
-        'ingested'
+        'ingested',
+        'owner'
     ].join('&');
 
     $stateProvider

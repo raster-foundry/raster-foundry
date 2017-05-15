@@ -98,16 +98,30 @@
           <button class="btn btn-toggle btn-small"
                   ng-click="$ctrl.toggleSourceFilter(id)"
                   ng-class="{'active': filter.enabled}"
-                  ng-repeat="(id, filter) in $ctrl.staticSourceFilters track by id"
-                  disabled>
-            {{filter.datasource.name}}
-          </button>
-          <button class="btn btn-toggle btn-small"
-                  ng-click="$ctrl.toggleSourceFilter(id)"
-                  ng-class="{'active': filter.enabled}"
                   ng-repeat="(id, filter) in $ctrl.dynamicSourceFilters track by id">
             {{filter.datasource.name}}
           </button>
+        </div>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter">
+        <label>Owner</label>
+        <div class="filter-item tag-filter">
+          <div class="btn-group">
+            <button type="button"
+                    class="btn btn-toggle btn-small"
+                    ng-class="{'active': $ctrl.importOwnerFilter === 'any'}"
+                    ng-click="$ctrl.setImportOwnerFilter('any')">
+              All Users
+            </button>
+            <button type="button"
+                    class="btn btn-toggle btn-small"
+                    ng-class="{'active': $ctrl.importOwnerFilter === 'user'}"
+                    ng-click="$ctrl.setImportOwnerFilter('user')">
+              My Imports
+            </button>
+          </div>
         </div>
       </div>
     </div>
