@@ -42,6 +42,9 @@ export default class ProjectsEditController {
                         this.projectUpdateListeners.forEach((wait) => {
                             wait.resolve(project);
                         });
+                        if (this.project.isAOIProject) {
+                            this.getPendingSceneList();
+                        }
                     },
                     () => {
                         this.loadingProject = false;
@@ -51,6 +54,8 @@ export default class ProjectsEditController {
             } else {
                 this.$state.go('projects.list');
             }
+        } else if (this.project.isAOIProject) {
+            this.getPendingSceneList();
         }
     }
 
@@ -91,6 +96,15 @@ export default class ProjectsEditController {
             }
         ).finally(() => {
             this.sceneRequestState.loading = false;
+        });
+    }
+
+    getPendingSceneList() {
+        this.projectService.getAllProjectScenes({
+            projectId: this.projectId,
+            pending: true
+        }).then(pendingScenes => {
+            this.pendingSceneList = pendingScenes;
         });
     }
 
