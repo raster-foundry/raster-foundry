@@ -65,6 +65,20 @@ class ToolRoutes(implicit val database: Database) extends Authentication
       }
     }
 
+  /** Endpoint used to verify that a [[ToolRun]] is sufficient to
+    *  evaluate the [[Tool]] to which it refers
+    */
+  val validate =
+    (handleExceptions(interpreterExceptionHandler) & handleExceptions(circeDecodingError)) {
+      pathPrefix(JavaUUID){ (toolRunId) =>
+        pathPrefix("validate") {
+          authenticateWithParameter { user =>
+            complete(validateAST[Unit](toolRunId, user))
+          }
+        }
+      }
+    }
+
   /** The central endpoint for ModelLab; serves TMS tiles given a [[ToolRun]] specification */
   def tms(
     source: (RFMLRaster, Int, Int, Int) => Future[Option[Tile]]
@@ -96,11 +110,6 @@ class ToolRoutes(implicit val database: Database) extends Authentication
                 }
                 responsePng.value
               }
-            }
-          } ~
-          pathPrefix("validate") {
-            authenticateWithParameter { user =>
-              complete(validateAST[Unit](toolRunId, user))
             }
           }
         }
