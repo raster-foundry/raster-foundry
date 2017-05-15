@@ -20,6 +20,10 @@ case class MissingParameter(id: UUID) extends InterpreterError {
   def repr = s"Unbound parameter at $id encountered, unable to evaluate"
 }
 
+case class IncorrectArgCount(id: UUID, expected: Int, actual: Int) extends InterpreterError {
+  def repr = s"Operation ${id} was given ${actual} args, but expected ${expected}"
+}
+
 /** An error encountered when a bound parameter's source can't be resolved */
 case class RasterRetrievalError(id: UUID, refId: UUID) extends InterpreterError {
   def repr = s"Unable to retrieve raster for $refId"

@@ -1,13 +1,9 @@
 package com.azavea.rf.tool.ast
 
-import geotrellis.raster.render._
-import geotrellis.raster.histogram._
-import io.circe._
-import io.circe.syntax._
-import io.circe.disjunctionCodecs._
-import io.circe.generic.JsonCodec
-
 import com.azavea.rf.tool.ast.codec.MapAlgebraCodec
+import geotrellis.raster.histogram._
+import geotrellis.raster.render._
+import io.circe._
 
 
 case class NodeMetadata(
