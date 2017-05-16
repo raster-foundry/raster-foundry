@@ -18,6 +18,7 @@ import geotrellis.raster.Tile
 import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.s3._
+import geotrellis.spark.render._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
@@ -25,7 +26,9 @@ import org.apache.spark.rdd.RDD
 
 package object ast {
 
-  /** Evaluate an AST of RDD Sources. */
+  /** Evaluate an AST of RDD Sources. Assumes that the AST's
+    * [[NodeMetadata]] has already been replaced, if applicable.
+    */
   def interpretRDD(
     ast: MapAlgebraAST,
     sourceMapping: Map[UUID, RFMLRaster],
@@ -40,12 +43,13 @@ package object ast {
       ast: MapAlgebraAST,
       rdds: Map[UUID, RDD[(SpatialKey, Tile)]]
     ): RDD[(SpatialKey, Tile)] = ast match {
-      case Source(id, _) => rdds(id) // TODO: Handle metadata replacement?
+      case Source(id, _) => rdds(id)
       case Addition(args, _, _) => args.map(eval(_, rdds)).reduce(_ + _)
       case Subtraction(args, _, _) => args.map(eval(_, rdds)).reduce(_ - _)
       case Multiplication(args, _, _) => args.map(eval(_, rdds)).reduce(_ * _)
       case Division(args, _, _) => args.map(eval(_, rdds)).reduce(_ / _)
-      case _ => ??? // Beware...
+      case Classification(args, _, _, classMap) => eval(args.head, rdds).color(classMap.toColorMap)
+      case _ => ???
     }
 
     /* Guarantee correctness before performing Map Algebra */
