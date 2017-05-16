@@ -59,9 +59,19 @@
   }
 }
 
-.border-teal-tag {
-  $color: #2FC1D0;
-  color: $color;
-  border: 1px solid $color;
+.inline-tag.aoi-tag {
+  color: $brand-secondary;
+  border: 1px solid $brand-secondary;
   text-transform: uppercase;
+  position: relative;
+  left: inherit;
+  top: inherit;
+  transform: none;
+  text-indent: 0;
+  box-shadow: none;
+  line-height: 1;
+  font-size: 10px;
+  font-weight: 700;
+  height: auto;
+  width: auto;
 }
