@@ -129,7 +129,7 @@ angular-mocks@~1.5.8:
   version "1.5.11"
   resolved "https://registry.yarnpkg.com/angular-mocks/-/angular-mocks-1.5.11.tgz#a0e1dd0ea55fd77ee7a757d75536c5e964c86f81"
 
-angular-nvd3@~1.0.8:
+angular-nvd3@~1.0.9:
   version "1.0.9"
   resolved "https://registry.yarnpkg.com/angular-nvd3/-/angular-nvd3-1.0.9.tgz#8d8a71487d9e5a122e8a5d0f5cd26ab0e491a6f5"
   dependencies:
