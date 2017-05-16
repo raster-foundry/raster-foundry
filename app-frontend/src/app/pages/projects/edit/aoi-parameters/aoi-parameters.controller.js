@@ -25,6 +25,8 @@ const updateFrequencies = [
     }
 ];
 
+// @TODO: when we have the backend available to handle this, uncomment
+/*
 const addMethods = [
     {
         label: 'added when found',
@@ -35,6 +37,7 @@ const addMethods = [
         value: 'MANUAL'
     }
 ];
+*/
 
 export default class AOIParametersController {
     constructor($scope, $state, $uibModal, moment, projectService) {
@@ -55,8 +58,10 @@ export default class AOIParametersController {
         this.$parent.fetchProject().then(project => {
             this.project = project;
             this.aoiProjectParameters = {
-                aoiCadenceMillis: this.project.aoiCadenceMillis || 604800000,
-                aoisLastChecked: this.Moment(this.project.aoisLastChecked) || this.Moment().startOf('day')
+                aoiCadenceMillis: this.project.aoiCadenceMillis ||
+                    604800000,
+                aoisLastChecked: this.Moment(this.project.aoisLastChecked) ||
+                    this.Moment().startOf('day')
             };
             this.aoiParameters = {
                 filters: {},
@@ -114,13 +119,15 @@ export default class AOIParametersController {
         // Ensure the project is available before we save
         this.$parent.fetchProject().then(srcProject => {
             const projectToSave = Object.assign(srcProject, this.aoiProjectParameters);
-            this.projectService.updateProject(projectToSave).then(project => {
+            this.projectService.updateProject(projectToSave).then(() => {
                 // @TODO: this code can be reactivated once we have shapes to give to the backend
+                // the promise above returns the project
+                //
                 // const aoiToCreate = Object.assign(this.aoiParameters, { projectId: project.id });
                 // this.projectService.createAOI(aoiToCreate).then(() => {
-                    this.$state.go('projects.edit');
+                this.$state.go('projects.edit');
                 // });
             });
-        })
+        });
     }
 }

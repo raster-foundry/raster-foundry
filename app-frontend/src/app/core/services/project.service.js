@@ -76,6 +76,14 @@ export default (app) => {
                         params: {
                             projectId: '@projectId'
                         }
+                    },
+                    approveScene: {
+                        method: 'POST',
+                        url: '/api/projects/:projectId/scenes/:sceneId/accept',
+                        params: {
+                            projectId: '@projectId',
+                            sceneId: '@sceneId'
+                        }
                     }
                 }
             );
@@ -274,6 +282,10 @@ export default (app) => {
                     Object.assign(params, { organizationId: user.organizationId });
                 return this.Project.createAOI(paramsWithOrg);
             }).$promise;
+        }
+
+        approveScene(projectId, sceneId) {
+            return this.Project.approveScene({ projectId, sceneId }).$promise;
         }
 
         getBaseURL() {
