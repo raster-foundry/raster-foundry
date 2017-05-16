@@ -84,10 +84,19 @@ object Interpreter extends LazyLogging {
       logger.debug(s"case division at $id")
       evalBinary(args.map(eval),  _ / _)
 
+    case Max(args, id, _) =>
+      logger.debug(s"case max at $id")
+      evalBinary(args.map(eval), _ max _)
+
+    case Min(args, id, _) =>
+      logger.debug(s"case min at $id")
+      evalBinary(args.map(eval), _ min _)
+
     case Classification(args, id, _, breaks) =>
       logger.debug(s"case classification at $id with breakmap ${breaks.toBreakMap}")
       val breakmap = breaks.toBreakMap
       evalUnary(eval(args.head), _.classify(breaks.toBreakMap))
+
   }
 
   /** Interpret an AST with its matched execution parameters, but do so

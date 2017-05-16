@@ -20,6 +20,8 @@ trait MapAlgebraOperationCodecs {
       case Some("/") => ma.as[MapAlgebraAST.Division]
       case Some("*") => ma.as[MapAlgebraAST.Multiplication]
       case Some("mask") => ma.as[MapAlgebraAST.Masking]
+      case Some("min") => ma.as[MapAlgebraAST.Min]
+      case Some("max") => ma.as[MapAlgebraAST.Max]
       case Some("classify") => ma.as[MapAlgebraAST.Classification]
       case Some(unrecognized) =>
         Left(DecodingFailure(s"Unrecognized node type: $unrecognized", ma.history))
@@ -40,6 +42,10 @@ trait MapAlgebraOperationCodecs {
         multiplication.asJson
       case masking: MapAlgebraAST.Masking =>
         masking.asJson
+      case min: MapAlgebraAST.Min =>
+        min.asJson
+      case max: MapAlgebraAST.Max =>
+        max.asJson
       case classification: MapAlgebraAST.Classification =>
         classification.asJson
       case operation =>
@@ -78,4 +84,13 @@ trait MapAlgebraOperationCodecs {
   implicit lazy val encodeClassification: Encoder[MapAlgebraAST.Classification] =
     Encoder.forProduct5("apply", "args", "id", "metadata", "classMap")(op => (op.symbol, op.args, op.id, op.metadata, op.classMap))
 
+  implicit lazy val decodeMax: Decoder[MapAlgebraAST.Max] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.Max.apply)
+  implicit lazy val encodeMax: Encoder[MapAlgebraAST.Max] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeMin: Decoder[MapAlgebraAST.Min] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.Min.apply)
+  implicit lazy val encodeMin: Encoder[MapAlgebraAST.Min] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
 }

@@ -49,6 +49,12 @@ object MapAlgebraAST {
   case class Classification(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], classMap: ClassMap)
       extends Operation("classify")
 
+  case class Max(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
+      extends Operation("max")
+
+  case class Min(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
+      extends Operation("min")
+
   /** Map Algebra sources (leaves) */
   @JsonCodec
   case class Source(id: UUID, metadata: Option[NodeMetadata]) extends MapAlgebraAST {

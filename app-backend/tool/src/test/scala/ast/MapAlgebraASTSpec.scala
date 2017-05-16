@@ -1,5 +1,6 @@
 package com.azavea.rf.tool.ast
 
+import com.azavea.rf.tool.ast.codec._
 import com.azavea.rf.tool.eval._
 
 import org.scalatest._
@@ -20,7 +21,9 @@ class MapAlgebraASTSpec extends FunSpec with Matchers {
     val src2 = randomSourceAST
     val src3 = randomSourceAST
     val src4 = randomSourceAST
-    val uberAst = src1 + src2 * src3 / src4
+    val src5 = randomSourceAST
+    val src6 = randomSourceAST
+    val uberAst = src1 + src2 * src3 / src4 max src5 min src6
 
     uberAst.find(src4.id) should be (Some(src4))
   }

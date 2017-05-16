@@ -206,4 +206,46 @@ class LazyTileSpec
         fail(s"$i")
     }
   }
+
+  it("should evaluate max") {
+    requests = Nil
+    val src1 = randomSourceAST
+    val src2 = randomSourceAST
+    val tms = Interpreter.interpretTMS(
+      ast = src1.max(src2),
+      sourceMapping = Map(src1.id -> blueTileSource, src2.id -> nirTileSource),
+      source = goodSource
+    )
+
+    val ret = tms(0, 1, 1)
+    val op = Await.result(ret, 10.seconds) match {
+      case Valid(lazytile) =>
+        val maybeTile = lazytile.evaluateDouble
+        requests.length should be (2)
+        maybeTile.get.get(0, 0) should be (5)
+      case i@Invalid(_) =>
+        fail(s"$i")
+    }
+  }
+
+  it("should evaluate min") {
+    requests = Nil
+    val src1 = randomSourceAST
+    val src2 = randomSourceAST
+    val tms = Interpreter.interpretTMS(
+      ast = src1.min(src2),
+      sourceMapping = Map(src1.id -> blueTileSource, src2.id -> nirTileSource),
+      source = goodSource
+    )
+
+    val ret = tms(0, 1, 1)
+    val op = Await.result(ret, 10.seconds) match {
+      case Valid(lazytile) =>
+        val maybeTile = lazytile.evaluateDouble
+        requests.length should be (2)
+        maybeTile.get.get(0, 0) should be (1)
+      case i@Invalid(_) =>
+        fail(s"$i")
+    }
+  }
 }
