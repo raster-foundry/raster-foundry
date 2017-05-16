@@ -23,7 +23,8 @@
                     "equalize": false,
                     "beta": null,
                     "brightness": null,
-                    "contrast": null
+                    "contrast": null,
+                    "autoBalance": false
                 }
             }
         ]
