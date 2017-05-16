@@ -35,7 +35,7 @@ export default class ProjectsEditController {
             if (this.projectId) {
                 this.loadingProject = true;
                 this.projectUpdateListeners = [];
-                this.projectService.loadProject(this.projectId).then(
+                this.fetchProject().then(
                     (project) => {
                         this.project = project;
                         this.fitProjectExtent();
@@ -70,6 +70,13 @@ export default class ProjectsEditController {
         this.getMap().then(m => {
             this.mapUtilsService.fitMapToProject(m, this.project);
         });
+    }
+
+    fetchProject() {
+        if (!this.projectRequest) {
+            this.projectRequest = this.projectService.loadProject(this.projectId);
+        }
+        return this.projectRequest;
     }
 
     getSceneList() {
