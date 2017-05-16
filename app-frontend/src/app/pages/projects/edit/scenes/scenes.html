@@ -27,6 +27,19 @@
     </li>
   </ul>
 </div>
+<div class="list-group" ng-if="$ctrl.$parent.sceneList">
+  <div class="list-group-item">
+    <strong class="color-dark">
+      <ng-pluralize count="$ctrl.$parent.sceneList.length"
+                    when="{'0': 'No scenes',
+                          'one': '1 scene',
+                          'other': '{} scenes'
+                          }">
+      </ng-pluralize>
+    </strong>
+    in this project
+  </div>
+</div>
 <div class="sidebar-scrollable">
   <div class="list-group">
     <rf-scene-item
