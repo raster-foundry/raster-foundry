@@ -12,6 +12,8 @@ sealed trait LazyTile extends TileLike with Grid with LazyLogging {
   def -(other: LazyTile) = this.dualCombine(other)(Subtract.combine)(Subtract.combine)
   def /(other: LazyTile) = this.dualCombine(other)(Divide.combine)(Divide.combine)
   def *(other: LazyTile) = this.dualCombine(other)(Multiply.combine)(Multiply.combine)
+  def max(other: LazyTile) = this.dualCombine(other)(Max.combine)(Max.combine)
+  def min(other: LazyTile) = this.dualCombine(other)(Min.combine)(Min.combine)
   def classify(breaks: BreakMap[Double, Int]) = this.classification({ i => breaks(i) })
 
   def left: LazyTile

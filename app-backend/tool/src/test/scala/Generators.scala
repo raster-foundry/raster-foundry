@@ -67,7 +67,9 @@ object Generators {
                      MapAlgebraAST.Subtraction.apply _,
                      MapAlgebraAST.Multiplication.apply _,
                      MapAlgebraAST.Division.apply _,
-                     MapAlgebraAST.Masking.apply _
+                     MapAlgebraAST.Masking.apply _,
+                     MapAlgebraAST.Max.apply _,
+                     MapAlgebraAST.Min.apply _
                    ))
     args <- containerOfN[List, MapAlgebraAST](2, genMapAlgebraAST(depth))
     id <- arbitrary[UUID]
