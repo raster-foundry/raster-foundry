@@ -69,6 +69,9 @@ export default (app) => {
                     export: {
                         method: 'POST',
                         url: '/api/exports/'
+                    },
+                    createAOI: {
+                        method: 'POST'
                     }
                 }
             );
