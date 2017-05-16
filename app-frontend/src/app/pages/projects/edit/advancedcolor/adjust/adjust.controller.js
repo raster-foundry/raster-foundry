@@ -1,6 +1,6 @@
 export default class ProjectsColorAdjustController {
     constructor( // eslint-disable-line max-params
-        $log, $state, $scope, $timeout
+        $log, $state, $scope, $timeout, histogramService
     ) {
         'ngInject';
         this.$log = $log;
@@ -8,6 +8,7 @@ export default class ProjectsColorAdjustController {
         this.$parent = $scope.$parent.$ctrl;
         this.$scope = $scope;
         this.$timeout = $timeout;
+        this.histogramService = histogramService;
 
         let baseGammaOptions = {
             floor: 0,
@@ -18,6 +19,7 @@ export default class ProjectsColorAdjustController {
         };
 
         let baseSaturationOptions = {
+
             floor: 0,
             ceil: 2,
             step: 0.01,
@@ -47,12 +49,6 @@ export default class ProjectsColorAdjustController {
             step: 0.1,
             precision: 2,
             showTicks: 1
-        };
-
-        let minMaxOptions = {
-            floor: 0,
-            ceil: 255,
-            step: 1
         };
 
         let allGamma = ['redGamma', 'greenGamma', 'blueGamma'];
@@ -107,23 +103,12 @@ export default class ProjectsColorAdjustController {
             onEnd: (id, val) => this.onFilterChange(id, val, this.contrastOptions)
         }, baseFilterOptions);
 
-        this.minMaxOptions = Object.assign({
-            id: 'minmax',
-            onEnd: (id, low, high) => {
-                this.onFilterChange('min', low, this.minMaxOptions);
-                this.onFilterChange('max', high, this.minMaxOptions);
-            }
-        }, minMaxOptions);
-
         this.gammaLinkToggle = true;
 
         this.gammaToggle = { value: true };
         this.sigToggle = { value: true };
         this.bcToggle = { value: true };
-        this.minMaxToggle = { value: true };
         this.saturationToggle = { value: true };
-
-        this.sliderCorrection = {min: minMaxOptions.floor, max: minMaxOptions.ceil};
     }
 
     $onInit() {
@@ -132,6 +117,22 @@ export default class ProjectsColorAdjustController {
         }
 
         this.$scope.$watch('$ctrl.$parent.correction', this.$onChanges.bind(this));
+        this.initHistogram();
+    }
+
+    initHistogram() {
+        let sceneKeys = this.$parent.selectedScenes &&
+            Array.from(this.$parent.selectedScenes.keys());
+        if (!sceneKeys || !sceneKeys.length) {
+            return;
+        }
+        this.histogramData = [];
+        this.histogramService.getHistogram(
+            this.$state.params.projectid,
+            Array.from(sceneKeys)
+        ).then((response) => {
+            this.histogramData = response.data;
+        });
     }
 
     /**
@@ -187,28 +188,7 @@ export default class ProjectsColorAdjustController {
                 this.bcToggle.value = true;
             }
 
-            let defaultMinMax = {};
-
-            if (this.correction.min === null &&
-                this.correction.max === null) {
-                this.minMaxOptions.disabled = true;
-                this.minMaxToggle.value = false;
-
-                this.setDefaultsForEnabled();
-
-                defaultMinMax.min = 0;
-                defaultMinMax.max = 65535;
-            } else {
-                this.minMaxOptions.disabled = false;
-                this.minMax = true;
-
-                this.setDefaultsForEnabled();
-
-                defaultMinMax.min = this.correction.min;
-                defaultMinMax.max = this.correction.max;
-            }
-
-            this.sliderCorrection = Object.assign(defaultMinMax, this.correction);
+            this.sliderCorrection = Object.assign({}, this.correction);
             this.$timeout(() => {
                 this.$scope.$broadcast('rzSliderForceRender');
             });
@@ -268,15 +248,6 @@ export default class ProjectsColorAdjustController {
                 correction.brightness = defaults.brightness;
             }
         }
-
-        if (this.minMaxToggle.value) {
-            if (correction.min === null) {
-                correction.min = defaults.min;
-            }
-            if (correction.max === null) {
-                correction.max = defaults.max;
-            }
-        }
     }
 
     onGammaFilterChange(id, val, options = {}) {
@@ -288,7 +259,7 @@ export default class ProjectsColorAdjustController {
     }
 
     /**
-     * Makes color correction changes available as a component output
+     * Makes color correction changes available as a component rgbSum
      *
      * @param {string} id used to identify correction that has been modified
      * @param {number} val new value for a color correction
@@ -314,6 +285,7 @@ export default class ProjectsColorAdjustController {
 
         this.$timeout(() => {
             this.$scope.$broadcast('rzSliderForceRender');
+            this.initHistogram();
         });
     }
 
@@ -362,7 +334,6 @@ export default class ProjectsColorAdjustController {
     bcToggled(value) {
         this.brightnessOptions.disabled = !value;
         this.contrastOptions.disabled = !value;
-        this.minMaxOptions.disabled = !value;
         if (!value) {
             this.correction.brightness = null;
             this.correction.contrast = 0;
@@ -371,13 +342,25 @@ export default class ProjectsColorAdjustController {
         this.onFilterChange();
     }
 
-    minMaxToggled(value) {
-        this.minMaxOptions.disabled = !value;
-        if (!value) {
-            this.correction.min = null;
-            this.correction.max = null;
-        }
-        this.setDefaultsForEnabled();
-        this.onFilterChange();
+    onHistogramChange(clipping) {
+        let clipParams = {
+            min: clipping.rgb.min,
+            max: clipping.rgb.max,
+
+            redMin: clipping.red.min !== clipping.rgb.min ? clipping.red.min : null,
+            redMax: clipping.red.max !== clipping.rgb.max ? clipping.red.max : null,
+
+            greenMin: clipping.green.min !== clipping.rgb.min ? clipping.green.min : null,
+            greenMax: clipping.green.max !== clipping.rgb.max ? clipping.green.max : null,
+
+            blueMin: clipping.blue.min !== clipping.rgb.min ? clipping.blue.min : null,
+            blueMax: clipping.blue.max !== clipping.rgb.max ? clipping.blue.max : null
+        };
+        Object.assign(this.correction, clipParams);
+        this.$parent.onCorrectionChange(
+            Object.assign({}, this.correction)
+        ).then(() => {
+            this.initHistogram();
+        });
     }
 }

@@ -1,5 +1,7 @@
 package com.azavea.rf.tile
 
+import ch.megard.akka.http.cors.CorsDirectives._
+import ch.megard.akka.http.cors.CorsSettings
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 import akka.http.scaladsl.server._
 import com.azavea.rf.database.Database
@@ -17,32 +19,36 @@ class Router extends LazyLogging
 
   val toolRoutes = new ToolRoutes()
 
-  def root = handleExceptions(tileExceptionHandler) {
-    pathPrefix("tiles") {
-      pathPrefix(JavaUUID) { projectId =>
-        tileAccessAuthorized(projectId) {
-          case true => MosaicRoutes.mosaicProject(projectId)(database)
-          case _ => reject(AuthorizationFailedRejection)
-        }
-      } ~
-      pathPrefix("healthcheck") {
-        pathEndOrSingleSlash {
-          get {
-            complete {
-              HttpResponse(StatusCodes.OK)
+  val corsSettings = CorsSettings.defaultSettings
+
+  def root = cors() {
+    handleExceptions(tileExceptionHandler) {
+      pathPrefix("tiles") {
+        pathPrefix(JavaUUID) { projectId =>
+          tileAccessAuthorized(projectId) {
+            case true => MosaicRoutes.mosaicProject(projectId)(database)
+            case _ => reject(AuthorizationFailedRejection)
+          }
+        } ~
+        pathPrefix("healthcheck") {
+          pathEndOrSingleSlash {
+            get {
+              complete {
+                HttpResponse(StatusCodes.OK)
+              }
             }
           }
-        }
-      } ~
-      tileAuthenticateOption { _ =>
-        SceneRoutes.root
-      } ~
-      pathPrefix("tools") {
-        get {
-          tileAuthenticateOption { _ =>
-            toolRoutes.tms(TileSources.cachedTmsSource) ~
-            toolRoutes.validate ~
-            toolRoutes.preflight
+        } ~
+        tileAuthenticateOption { _ =>
+          SceneRoutes.root
+        } ~
+        pathPrefix("tools") {
+          get {
+            tileAuthenticateOption { _ =>
+              toolRoutes.tms(TileSources.cachedTmsSource) ~
+              toolRoutes.validate ~
+              toolRoutes.preflight
+            }
           }
         }
       }

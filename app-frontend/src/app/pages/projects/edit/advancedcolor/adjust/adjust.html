@@ -9,7 +9,27 @@
   </div>
   <div class="sidebar-scrollable">
     <div class="content histogram-filters">
+      <div class="filter-item tag-filter">
+        <div class="filter-group-header">
+        <h5>Histogram and Clipping</h5>
+        <i class="icon-info"
+           tooltips
+           tooltip-template="The histogram visualizes every pixel in the project from dark to light
+                             (left to right). You can change extreme darks and lights to be less
+                             extreme by setting a min/max value that the pixels are allowed to be.
+                             The effect of this is a more vibrant and realistic image.
+                             "
+           tooltip-size="small"
+           tooltip-class="rf-tooltip"
+           tooltip-side="bottom"></i>
+        </div>
+      </div>
       <div class="color-filters-container">
+        <rf-channel-histogram data="$ctrl.histogramData"
+                              on-change="$ctrl.onHistogramChange(clipping)"
+                              corrections="$ctrl.correction">
+        </rf-channel-histogram>
+      </div>
 
         <!-- Color Correction -->
         <!-- Sigmoidal correction-->
@@ -160,27 +180,6 @@
                      ng-model="$ctrl.sliderCorrection.saturation"
                      ng-model-options="{ debounce: 250 }"
                      ng-change="$ctrl.onFilterChange('saturation', $ctrl.sliderCorrection.saturation)">
-            </div>
-          </div>
-        </div>
-
-        <div class="filter-group">
-          <div class="filter-group-header">
-            <rf-toggle data-model="$ctrl.minMaxToggle.value"
-                       on-change="$ctrl.minMaxToggled(value)"></rf-toggle>
-            <h5>Clipping</h5>
-          </div>
-          <div class="filter-group-body" ng-show="$ctrl.minMaxToggle.value">
-            <div class="filter">
-              <label>Min/Max Clipping</label>
-              <div class="filter-item slider-filter">
-                <div id="minmax"></div>
-              </div>
-              <rzslider class="dark"
-                        rz-slider-model="$ctrl.sliderCorrection.min"
-                        rz-slider-high="$ctrl.sliderCorrection.max"
-                        rz-slider-options="$ctrl.minMaxOptions"
-              ></rzslider>
             </div>
           </div>
         </div>

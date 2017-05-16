@@ -513,6 +513,16 @@ rf-project-editor .leaflet-tile {
   color: #ccc;
 }
 
+.histogram-input {
+  margin-top: 0.5em;
+  .pull-right {
+    float: right;
+  }
+  .btn-group {
+    display: inline-flex !important;
+  }
+}
+
 .rzslider.dark {
   .rz-bubble {
     color: #ccc;
@@ -522,4 +532,10 @@ rf-project-editor .leaflet-tile {
 .rf-tooltip {
   min-width: 250px;
   text-align: left;
+}
+
+.nvd3.nv-line {
+  .nv-point {
+    display: none;
+  }
 }
