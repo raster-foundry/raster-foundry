@@ -93,7 +93,6 @@ object Interpreter extends LazyLogging {
 
     case Classification(args, id, _, breaks) =>
       logger.debug(s"case classification at $id with breakmap ${breaks.toBreakMap}")
-      val breakmap = breaks.toBreakMap
       evalUnary(eval(args.head), _.classify(breaks.toBreakMap))
 
   }
