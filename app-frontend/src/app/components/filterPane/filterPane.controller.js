@@ -369,13 +369,13 @@ export default class FilterPaneController {
         this.onSourceFilterChange();
     }
 
-    openDatePickerModal() {
+    openDateRangePickerModal() {
         if (this.activeModal) {
             this.activeModal.dismiss();
         }
 
         this.activeModal = this.$uibModal.open({
-            component: 'rfDatePickerModal',
+            component: 'rfDateRangePickerModal',
             resolve: {
                 config: () => Object({
                     range: this.datefilter,

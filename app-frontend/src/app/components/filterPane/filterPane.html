@@ -10,7 +10,7 @@
   <div class="content">
     <div class="filter-group">
       <div class="filter">
-        <a href ng-click="$ctrl.resetAllFilters()" class="btn btn-toggle btn-small btn-block">Clear all filters</a>
+        <button ng-click="$ctrl.resetAllFilters()" class="btn btn-toggle btn-small btn-block">Clear all filters</button>
       </div>
     </div>
     <div class="filter-group">
@@ -25,7 +25,7 @@
       <div class="filter">
         <label></label>
         <button class="btn btn-small btn-primary flex-fill"
-                ng-click="$ctrl.openDatePickerModal()"
+                ng-click="$ctrl.openDateRangePickerModal()"
                 ng-class="{'disabled': !$ctrl.dateFilterToggle.value}">Select a Date</button>
 
       </div>

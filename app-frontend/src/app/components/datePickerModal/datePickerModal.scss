@@ -1,48 +1,13 @@
-.datepicker-row {
-  display: flex;
+calendar .board .day.selected:not(.other-month):not(.disabled) {
+  background: #8ca3fd;
 }
 
-.datepicker-ranges {
-  flex: 1;
-  margin-left: 3rem;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
+.auto-width-modal {
+  display: flex !important;
+  align-items: center;
   justify-content: center;
+  .modal-dialog {
+    display: inline-block;
+    width: auto;
+  }
 }
-
-.preset-header {
-  margin-bottom: 2rem;
-}
-
-.btn-range {
-  margin-bottom: 1rem;
-}
-
-calendar div.header {
-  background: #465076;
-  border: none;
-}
-
-calendar div.board {
-  border-top: none;
-}
-
-calendar .board .day.in-range:not(.other-month):not(.disabled) {
-    background: #ddd;
-    color: #777;
-}
-
-calendar .board .day.range-end:not(.other-month):not(.disabled) {
-    background: #738FFC;
-    border-top-right-radius: 2px;
-    border-bottom-right-radius: 2px;
-    color: #fff;
-}
-calendar .board .day.range-start:not(.other-month):not(.disabled) {
-    background: #738FFC;
-    border-top-left-radius: 2px;
-    border-bottom-left-radius: 2px;
-    color: #fff;
-}
-
