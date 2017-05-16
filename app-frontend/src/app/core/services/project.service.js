@@ -71,7 +71,11 @@ export default (app) => {
                         url: '/api/exports/'
                     },
                     createAOI: {
-                        method: 'POST'
+                        method: 'POST',
+                        url: '/api/projects/:projectId/areas-of-interest/',
+                        params: {
+                            projectId: '@projectId'
+                        }
                     }
                 }
             );
@@ -262,6 +266,14 @@ export default (app) => {
 
         updateProject(params) {
             return this.Project.updateProject(params).$promise;
+        }
+
+        createAOI(params) {
+            return this.userService.getCurrentUser().then(user => {
+                const paramsWithOrg =
+                    Object.assign(params, { organizationId: user.organizationId });
+                return this.Project.createAOI(paramsWithOrg);
+            }).$promise;
         }
 
         getBaseURL() {
