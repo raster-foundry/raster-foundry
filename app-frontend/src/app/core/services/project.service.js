@@ -277,6 +277,42 @@ export default (app) => {
             return `${this.tileServer}/${project.id}/{z}/{x}/{y}/${formattedParams}`;
         }
 
+        getZoomLevel(bbox) {
+            let diffLng = Math.abs(bbox[0] - bbox[2]);
+            let diffLat = Math.abs(bbox[1] - bbox[3]);
+
+            // Scale down if latitude is less than 55 to adjust for
+            // web mercator distortion
+            let lngMultiplier = bbox[0] < 55 ? 0.8 : 1;
+            let maxDiff = diffLng > diffLat ? diffLng : diffLat;
+            let diff = maxDiff * lngMultiplier;
+            if (diff >= 0.5) {
+                return 8;
+            } else if (diff >= 0.01 && diff < 0.5) {
+                return 11;
+            } else if (diff >= 0.005 && diff < 0.01) {
+                return 16;
+            }
+            return 18;
+        }
+
+        getProjectThumbnailURL(project, token) {
+            if (project.extent) {
+                let coords = project.extent.coordinates[0];
+                // Lower left and upper right coordinates in extent
+                let bbox = [... coords[0], ... coords[2]];
+                let params = {
+                    bbox: bbox,
+                    zoom: this.getZoomLevel(bbox),
+                    token: token
+                };
+                let formattedParams = L.Util.getParamString(params);
+                let url = `${this.tileServer}/${project.id}/export/${formattedParams}`;
+                return url;
+            }
+            return null;
+        }
+
         getProjectShareURL(project) {
             let deferred = this.$q.defer();
             let shareUrl = `${this.getBaseURL()}/#/share/${project.id}`;
