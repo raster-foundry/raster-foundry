@@ -24,6 +24,6 @@ trait InterpreterExceptionHandling extends Directives with LazyLogging {
   val interpreterExceptionHandler = ExceptionHandler {
     case ie: InterpreterException =>
       logger.debug(ie.errors.asJson.noSpaces)
-      complete(ie.errors)
+      complete{ (StatusCodes.BadRequest, ie.errors) }
   }
 }
