@@ -12,9 +12,9 @@ import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.Scenes
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.ast.MapAlgebraAST._
-import com.azavea.rf.tool.eval.{AttributeStoreFetchError, Interpreter, UnhandledCase}
+import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.eval.Interpreter.Interpreted
-import geotrellis.raster.Tile
+import geotrellis.raster.{MultibandTile, Tile}
 import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.s3._
@@ -59,6 +59,7 @@ package object ast {
     (pure |@| rdds).map({ case (_, rs) => eval(ast, rs) })
   }
 
+  /** This requires that for each [[RFMLRaster]] that a band number be specified. */
   def fetch(raster: RFMLRaster, zoom: Int)
     (implicit ec: ExecutionContext,
       database: Database,
@@ -66,15 +67,16 @@ package object ast {
     ): Interpreted[RDD[(SpatialKey, Tile)] with Metadata[TileLayerMetadata[SpatialKey]]] = raster match {
 
     case ProjectRaster(id, _) => Invalid(NonEmptyList.of(UnhandledCase(id)))
-
-    case SceneRaster(id, _) => {
+    case SceneRaster(id, None) => Invalid(NonEmptyList.of(NoBandGiven(id)))
+    case SceneRaster(id, Some(band)) => {
       val storeF: Future[Option[AttributeStore]] = getStore(id).recover({ case _ => None })
 
       Await.result(storeF, 10 seconds) match {
         case None => Invalid(NonEmptyList.of(AttributeStoreFetchError(id)))
         case Some(store) => {
           val rdd = S3LayerReader(store)
-            .read[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](LayerId(id.toString, zoom))
+            .read[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](LayerId(id.toString, zoom))
+            .withContext(rdd => rdd.mapValues(_.band(band)))
 
           Valid(rdd)
         }
