@@ -25,6 +25,13 @@ export default class ProjectItemController {
         this.fitProjectExtent();
         this.addProjectLayer();
         this.getProjectStatus();
+        this.getThumbnailURL();
+    }
+
+    getThumbnailURL() {
+        this.thumbnailUrl = this.projectService.getProjectThumbnailURL(
+            this.project, this.authService.token()
+        );
     }
 
     addProjectLayer() {
