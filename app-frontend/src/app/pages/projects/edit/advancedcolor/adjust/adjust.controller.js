@@ -33,26 +33,26 @@ export default class ProjectsColorAdjustController {
         };
 
         let alphaOptions = {
-            value: 0.6,
             floor: 0,
-            ceil: 1,
+            ceil: 2,
             step: 0.01,
-            precision: 2,
-            showTicks: 0.1
+            showTicks: 0.25,
+            precision: 2
         };
 
         let betaOptions = {
-            value: 10,
+            value: 0.6,
             floor: 0,
-            ceil: 50,
-            step: 1,
-            showTicks: 10
+            ceil: 10,
+            step: 0.1,
+            precision: 2,
+            showTicks: 1
         };
 
         let minMaxOptions = {
             floor: 0,
-            ceil: 65535,
-            step: 10
+            ceil: 255,
+            step: 1
         };
 
         let allGamma = ['redGamma', 'greenGamma', 'blueGamma'];
