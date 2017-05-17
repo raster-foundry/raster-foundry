@@ -28,6 +28,10 @@ case class UnhandledCase(id: UUID) extends InterpreterError {
   def repr = s"Some branch of Interpreter logic has yet to be implemented: ${id}"
 }
 
+case class NoBandGiven(id: UUID) extends InterpreterError {
+  def repr = s"No band value given for Scene ${id}"
+}
+
 case class AttributeStoreFetchError(id: UUID) extends InterpreterError {
   def repr = s"Unable to fetch an S3AttributeStore for Scene ${id}"
 }
