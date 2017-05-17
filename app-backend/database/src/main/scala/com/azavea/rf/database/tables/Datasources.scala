@@ -100,7 +100,7 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
     */
   def getDatasource(datasourceId: UUID, user: User) =
     Datasources
-      .filterToSharedOrganizationIfNotInRoot(user)
+      .filterUserVisibility(user)
       .filter(_.id === datasourceId)
       .result
       .headOption
