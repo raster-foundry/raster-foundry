@@ -53,8 +53,8 @@
               <input class="filter-adjust-input"
                      type="number"
                      min=0
-                     max=50
-                     step=1
+                     max=1
+                     step=0.01
                      ng-model="$ctrl.sliderCorrection.beta"
                      ng-model-options="{ debounce: 250 }"
                      ng-change="$ctrl.onFilterChange('beta', $ctrl.sliderCorrection.beta)">
