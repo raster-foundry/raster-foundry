@@ -1,6 +1,7 @@
 package com.azavea.rf.database.tables
 
 import java.util.UUID
+import java.sql.Timestamp
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -14,10 +15,12 @@ import com.typesafe.scalalogging.LazyLogging
 
 /** The table description for the "aois_to_projects" many-to-many table. */
 class AoisToProjects(_tableTag: Tag) extends Table[AoiToProject](_tableTag, "aois_to_projects") {
-  def * = (aoiId, projectId) <> (AoiToProject.tupled, AoiToProject.unapply)
+  def * = (aoiId, projectId, approvalRequired, startTime) <> (AoiToProject.tupled, AoiToProject.unapply)
 
   val aoiId: Rep[UUID] = column[UUID]("aoi_id", O.PrimaryKey)
   val projectId: Rep[UUID] = column[UUID]("project_id", O.PrimaryKey)
+  val approvalRequired: Rep[Boolean] = column[Boolean]("approval_required", O.Default(true))
+  val startTime: Rep[Timestamp] = column[Timestamp]("start_time")
 
   val pk = primaryKey("aois_to_projects_pkey", (aoiId, projectId))
 
