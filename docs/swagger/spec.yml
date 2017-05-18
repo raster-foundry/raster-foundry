@@ -37,7 +37,7 @@ x-resources:
       - title: Project permissions
         content: |
           Projects are currently private to the user that created them and cannot be discovered by other Raster Foundry users. However, projects can be shared publicly as a tiled web map with a direct link.
-          Project permissions will eventually expand to include making projects discoverable to all users or just users within an organzation.
+          Project permissions will eventually expand to include making projects discoverable to all users or just users within an organization.
   - name: Scenes
     description: |
       Scenes are single or multi-image rasters where every image within the scene shares the same metadata characteristics and are always associated with a datasource. This simplest example of a scene is a single-band image like a land classification raster. The most complex example is a multi-image scene made up of multi-band images, like a pre-tiled aerial image where each tile is one piece of a larger coherent scene.
@@ -45,10 +45,10 @@ x-resources:
       - title: Scene permissions
         content: |
           By default, imported scenes are private to the user that uploaded them and scenes generated from public data sources are discoverable by all users.
-          Scene permissions will eventually expand to include making imported scenes discoverable to all users or just users within an organzation.
+          Scene permissions will eventually expand to include making imported scenes discoverable to all users or just users within an organization.
   - name: Images
     description: |
-      Images are single or multi-band rasters that can be viewed and edited as a single unit but are always associated with a parent scene. They are sometimes synonymous with their parent scenes and othertimes just one of several images associated with their parent scenes. One common example of an image is a multispectral satellite image; another is a land classification raster.
+      Images are single or multi-band rasters that can be viewed and edited as a single unit but are always associated with a parent scene. They are sometimes synonymous with their parent scenes and other times just one of several images associated with their parent scenes. One common example of an image is a multispectral satellite image; another is a land classification raster.
     further-description:
       - title: Image permissions
         content: |
@@ -65,14 +65,14 @@ x-resources:
 
       "Currently, datasources cannot be created through the API and must be requested (<a href="https://github.com/azavea/raster-foundry/issues" target="_blank">preferably as a Github issue in the source repository</a>)."
 
-      "In the future, users will be able to manage the creation, ammendment, and deletion of datasources directy through the API. Also, users will be able to assign transformations like color correction, band composites, or color maps to datasources as a default for themselves and/or their organizations."
+      "In the future, users will be able to manage the creation, amendment, and deletion of datasources directly through the API. Also, users will be able to assign transformations like color correction, band composites, or color maps to datasources as a default for themselves and/or their organizations."
   - name: Tokens
     description: |
       Tokens are used to securely identify users and applications accessing the API.
   - name: Tools
     description: |
-      Tools are algorithms that can be applied to projects manually or programmatically.
-      Tools can range from primitive statistical queries, to algebraic functions, to complex logic trees of operations happening in parrallel. Tools can be constructed of other tools, custom-defined operations, or both. They can take any number of projects as inputs.
+      Tools are algorithms that can be applied to projects manually or automatically.
+      Tools can range from primitive statistical queries, to algebraic functions, to complex logic trees of operations happening in parallel. Tools can be constructed of other tools, custom-defined operations, or both. They can take any number of projects as inputs.
   - name: Users
     description: |
       Users and third party applications can be managed with the Users resource.
