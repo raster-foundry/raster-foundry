@@ -26,6 +26,15 @@ import org.apache.spark.rdd.RDD
 
 package object ast {
 
+  /** Perform a binary operation on RDDs, while preserving any metadata they had. */
+  private def binary(
+    f: (RDD[(SpatialKey, Tile)], RDD[(SpatialKey, Tile)]) => RDD[(SpatialKey, Tile)],
+    tlr0: TileLayerRDD[SpatialKey],
+    tlr1: TileLayerRDD[SpatialKey]
+  ): TileLayerRDD[SpatialKey] = {
+    TileLayerRDD(f(tlr0, tlr1), tlr0.metadata.combine(tlr1.metadata))
+  }
+
   /** Evaluate an AST of RDD Sources. Assumes that the AST's
     * [[NodeMetadata]] has already been replaced, if applicable.
     */
@@ -36,19 +45,24 @@ package object ast {
   )(implicit ec: ExecutionContext,
     database: Database,
     sc: SparkContext
-  ): Interpreted[RDD[(SpatialKey, Tile)]] = {
+  ): Interpreted[TileLayerRDD[SpatialKey]] = {
 
     /* Perform Map Algebra over a validated RDD-filled AST */
     def eval(
       ast: MapAlgebraAST,
-      rdds: Map[UUID, RDD[(SpatialKey, Tile)]]
-    ): RDD[(SpatialKey, Tile)] = ast match {
+      rdds: Map[UUID, TileLayerRDD[SpatialKey]]
+    ): TileLayerRDD[SpatialKey] = ast match {
       case Source(id, _) => rdds(id)
-      case Addition(args, _, _) => args.map(eval(_, rdds)).reduce(_ + _)
-      case Subtraction(args, _, _) => args.map(eval(_, rdds)).reduce(_ - _)
-      case Multiplication(args, _, _) => args.map(eval(_, rdds)).reduce(_ * _)
-      case Division(args, _, _) => args.map(eval(_, rdds)).reduce(_ / _)
-      case Classification(args, _, _, classMap) => eval(args.head, rdds).color(classMap.toColorMap)
+      case Addition(args, _, _) =>
+        args.map(eval(_, rdds)).reduce((acc,r) => binary({_ + _}, acc, r))
+      case Subtraction(args, _, _) =>
+        args.map(eval(_, rdds)).reduce((acc,r) => binary({_ - _}, acc, r))
+      case Multiplication(args, _, _) =>
+        args.map(eval(_, rdds)).reduce((acc,r) => binary({_ * _}, acc, r))
+      case Division(args, _, _) =>
+        args.map(eval(_, rdds)).reduce((acc,r) => binary({_ / _}, acc, r))
+      case Classification(args, _, _, classMap) =>
+        eval(args.head, rdds).withContext(_.color(classMap.toColorMap))
       case _ => ???
     }
 
@@ -64,7 +78,7 @@ package object ast {
     (implicit ec: ExecutionContext,
       database: Database,
       sc: SparkContext
-    ): Interpreted[RDD[(SpatialKey, Tile)] with Metadata[TileLayerMetadata[SpatialKey]]] = raster match {
+    ): Interpreted[TileLayerRDD[SpatialKey]] = raster match {
 
     case ProjectRaster(id, _) => Invalid(NonEmptyList.of(UnhandledCase(id)))
     case SceneRaster(id, None) => Invalid(NonEmptyList.of(NoBandGiven(id)))
