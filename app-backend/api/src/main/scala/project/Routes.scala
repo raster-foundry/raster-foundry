@@ -1,6 +1,7 @@
 package com.azavea.rf.api.project
 
-import java.util.UUID
+import java.sql.Timestamp
+import java.util.{Date, UUID}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -145,7 +146,7 @@ trait ProjectRoutes extends Authentication
         onSuccess({
           for {
             a <- AOIs.insertAOI(aoi.toAOI(user))
-            _ <- AoisToProjects.insert(AoiToProject(a.id, projectId))
+            _ <- AoisToProjects.insert(AoiToProject(a.id, projectId, true, new Timestamp((new Date).getTime)))
           } yield a
         }) { a =>
           complete(StatusCodes.Created, a)
