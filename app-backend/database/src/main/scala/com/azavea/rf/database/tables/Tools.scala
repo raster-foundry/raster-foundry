@@ -177,7 +177,7 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
     database.db.run {
       joinRelated(
         Tools
-          .filterToSharedOrganizationIfNotInRoot(user)
+          .filterUserVisibility(user)
           .filter(_.id === toolId)
       ).result
     } map {
