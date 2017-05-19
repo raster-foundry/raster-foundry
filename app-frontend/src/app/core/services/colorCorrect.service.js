@@ -7,7 +7,7 @@ export default (app) => {
                 '/api/projects/:projectId/mosaic/:sceneId/', {}, {
                     get: {
                         method: 'GET',
-                        cache: false,
+                        cache: true,
                         transformResponse: (data) => {
                             let parsedData = {};
                             if (data !== '') {
@@ -48,20 +48,41 @@ export default (app) => {
                 redBand: 3,
                 greenBand: 2,
                 blueBand: 1,
-                redGamma: null,
-                blueGamma: null,
-                greenGamma: null,
-                redMin: null,
-                redMax: null,
-                greenMin: null,
-                greenMax: null,
-                blueMin: null,
-                blueMax: null,
-                alpha: null,
-                beta: null,
-                min: null,
-                max: null,
-                equalize: false
+                gamma: {
+                    enabled: false,
+                    redGamma: 1.0,
+                    blueGamma: 1.0,
+                    greenGamma: 1.0
+                },
+                bandClipping: {
+                    enabled: false,
+                    redMin: 0,
+                    greenMin: 0,
+                    blueMin: 0,
+                    redMax: 255,
+                    greenMax: 255,
+                    blueMax: 255
+                },
+                sigmoidalContrast: {
+                    enabled: false,
+                    alpha: 1.0,
+                    beta: 1.0
+                },
+                tileClipping: {
+                    enabled: false,
+                    min: 0,
+                    max: 255
+                },
+                equalize: {
+                    enabled: false
+                },
+                saturation: {
+                    enabled: false,
+                    saturation: 1.0
+                },
+                autoBalance: {
+                    enabled: false
+                }
             };
         }
 

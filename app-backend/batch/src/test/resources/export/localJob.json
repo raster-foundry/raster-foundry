@@ -11,20 +11,37 @@
                     "redBand": 0,
                     "blueBand": 2,
                     "greenBand": 1,
-                    "redMax": 9, "greenMax": 9, "blueMax": 9,
-                    "redMin": null, "greenMin": null, "blueMin": null,
-                    "alpha": 6.0,
-                    "min": 8,
-                    "max": 9,
-                    "redGamma": 1.0,
-                    "equalize": true,
-                    "beta": 7.0,
-                    "blueGamma": 3.0,
-                    "brightness": 5,
-                    "contrast": 4.0,
-                    "saturation": 1.0,
-                    "greenGamma": 2.0,
-                    "autoBalance": false
+                    "bandClipping": {
+                        "enabled": true,
+                        "redMax": 9, "greenMax": 9, "blueMax": 9,
+                        "redMin": null, "greenMin": null, "blueMin": null
+                    },
+                    "sigmoidalContrast": {
+                        "enabled": true,
+                        "alpha": 6.0,
+                        "beta": 7.0
+                    },
+                    "tileClipping": {
+                        "enabled": true,
+                        "min": 8,
+                        "max": 9
+                    },
+                    "gamma": {
+                        "enabled": true,
+                        "redGamma": 1.0,
+                        "greenGamma": 2.0,
+                        "blueGamma": 3.0
+                    },
+                    "equalize": {
+                        "enabled": true
+                    },
+                    "saturation": {
+                        "enabled": true,
+                        "saturation": 1.0
+                    },
+                    "autoBalance": {
+                        "enabled": false
+                    }
                 }
             }
         ],

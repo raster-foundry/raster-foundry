@@ -242,7 +242,7 @@ object Mosaic {
   def hasColorCorrection(projectId: UUID)(implicit database: Database) =
     mosaicDefinition(projectId, None).map { mosaic =>
       mosaic.flatMap { case MosaicDefinition(sceneId, maybeColorCorrectParams) =>
-        maybeColorCorrectParams.flatMap(_.autoBalance)
+        maybeColorCorrectParams.map(_.autoBalance.enabled)
       }.foldLeft(true)((acc, x) => acc && x)
     }.value.map {
       case Some(true) => true

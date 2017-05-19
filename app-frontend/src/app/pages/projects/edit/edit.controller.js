@@ -93,8 +93,6 @@ export default class ProjectsEditController {
                 this.sceneList = allScenes;
                 for (const scene of this.sceneList) {
                     let scenelayer = this.layerService.layerFromScene(scene, this.projectId);
-                    // Init color correction data
-                    scenelayer.getColorCorrection();
                     this.sceneLayers.set(scene.id, scenelayer);
                 }
                 this.layerFromProject();

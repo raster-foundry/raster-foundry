@@ -40,7 +40,6 @@ export default (app) => {
             this.projectId = projectId;
             this._sceneTiles = null;
             this._mosaicTiles = null;
-            this._correction = null;
 
             this.tileServer = `${APP_CONFIG.tileServerLocation}`;
         }
@@ -161,99 +160,25 @@ export default (app) => {
         }
 
         /**
-         * Helper function to update tile layer with new bands
-         * @param {object} bands bands to update layer with
-         * @returns {null} null
-         */
-        updateBands(bands = {redBand: 3, greenBand: 2, blueBand: 1}) {
-            return this.getColorCorrection().then((correction) => {
-                this.updateColorCorrection(Object.assign(correction, bands));
-            });
-        }
-
-        /**
-         * Reset tile layer with default color corrections
-         * @returns {null} null
-         */
-        resetTiles() {
-            this._correction = this.colorCorrectService
-                .getDefaultColorCorrection();
-            return this.colorCorrectService.reset(this.scene.id, this.projectId)
-                .then(() => this.colorCorrect());
-        }
-
-        formatColorParams() {
-            this._correction.token = this.authService.token();
-            let formattedParams = L.Util.getParamString(this._correction);
-            return formattedParams;
-        }
-
-        /**
-         * Helper function to turn a correction object into usable params
+         * Helper function to inject required tile layer query params into an object
          *
-         * for some reason  getColorCorrection's returned object includes all
-         * sorts of extra attributes like $promise that we don't want leaflet
-         * to turn into query params, so we have to grab only the parts that
-         * we want to get the request to work.
-         *
-         * @param {object} object containing color correction params
-         * @returns {object} initial object filtered to legal parameters
+         * @param {object} object containing tile query params
+         * @returns {object} initial object with necessary params injected
          */
-        paramsFromObject(object) {
+        tileLayerParams() {
             return {
-                redBand: object.redBand,
-                blueBand: object.blueBand,
-                greenBand: object.greenBand,
-                redGamma: object.redGamma,
-                greenGamma: object.greenGamma,
-                blueGamma: object.blueGamma,
-                redMax: object.redMax,
-                blueMax: object.blueMax,
-                greenMax: object.greenMax,
-                redMin: object.redMin,
-                blueMin: object.blueMin,
-                greenMin: object.greenMin,
-                brightness: object.brightness,
-                contrast: object.contrast,
-                alpha: object.alpha,
-                beta: object.beta,
-                min: object.min,
-                max: object.max,
-                equalize: object.equalize,
-                tag: object.tag ? object.tag : (new Date()).getTime()
+                tag: (new Date()).getTime()
             };
         }
 
-        getColorCorrection() {
-            return this.colorCorrectService.get(
-                this.scene.id, this.projectId
-            ).then((data) => {
-                this._correction = data;
-                return this._correction;
-            });
-        }
-
-        getCachedColorCorrection() {
-            return this._correction;
-        }
-
-        updateColorCorrection(corrections) {
-            this._correction = corrections;
-            return this.colorCorrectService.update(
-                this.scene.id, this.projectId, corrections
-            ).then(() => this.colorCorrect());
-        }
-
         /**
-         * Apply color corrections to tile layer and refresh layer
-         * @param {object} corrections object with various parameters color correcting
-         * @returns {null} null
+         * Return this layer's color correction object
+         *
+         * @returns {Promise} Promise for result from color correction service
          */
-        colorCorrect() {
-            let tiles = this.getSceneTileLayer();
-            return tiles.setUrl(this.getSceneLayerURL());
+        getColorCorrection() {
+            return this.colorCorrectService.get(this.scene.id, this.projectId);
         }
-
 
         /**
          * Helper function to get user params from scene or list of scenes

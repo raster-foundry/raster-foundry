@@ -28,7 +28,7 @@ export default class ProjectsColorAdjustController {
 
         let alphaOptions = {
             floor: 0,
-            ceil: 2,
+            ceil: 1,
             step: 0.01,
             showTicks: 0.25,
             precision: 2
@@ -43,56 +43,35 @@ export default class ProjectsColorAdjustController {
             showTicks: 1
         };
 
-        let allGamma = ['redGamma', 'greenGamma', 'blueGamma'];
-
         this.redGammaOptions = Object.assign({
             id: 'redGamma',
-            onEnd: (id, val) => {
-                this.onFilterChange(
-                    this.gammaLinkToggle ? allGamma : 'redGamma', val, this.redGammaOptions
-                );
-            }
+            onEnd: (id, val) => this.onGammaFilterChange(val)
         }, baseGammaOptions);
         this.greenGammaOptions = Object.assign({
             id: 'greenGamma',
-            onEnd: (id, val) => {
-                this.onFilterChange(
-                    this.gammaLinkToggle ? allGamma : 'greenGamma', val, this.greenGammaOptions
-                );
-            }
+            onEnd: (id, val) => this.onGammaFilterChange(val)
         }, baseGammaOptions);
         this.blueGammaOptions = Object.assign({
             id: 'blueGamma',
-            onEnd: (id, val) => {
-                this.onFilterChange(
-                    this.gammaLinkToggle ? allGamma : 'blueGamma', val, this.blueGammaOptions
-                );
-            }
+            onEnd: (id, val) => this.onGammaFilterChange(val)
         }, baseGammaOptions);
 
         this.saturationOptions = Object.assign({
             id: 'saturation',
-            onEnd: (id, val) => {
-                this.onFilterChange(id, val, baseSaturationOptions);
-            }
+            onEnd: () => this.onFilterChange()
         }, baseSaturationOptions);
 
         this.alphaOptions = Object.assign({
             id: 'alpha',
-            onEnd: (id, val) => this.onFilterChange(id, val, this.alphaOptions)
+            onEnd: () => this.onFilterChange()
         }, alphaOptions);
 
         this.betaOptions = Object.assign({
             id: 'beta',
-            onEnd: (id, val) => this.onFilterChange(id, val, this.betaOptions)
+            onEnd: () => this.onFilterChange()
         }, betaOptions);
 
         this.gammaLinkToggle = true;
-
-        this.gammaToggle = { value: true };
-        this.sigToggle = { value: true };
-        this.minMaxToggle = { value: true };
-        this.saturationToggle = { value: true };
     }
 
     $onInit() {
@@ -120,56 +99,17 @@ export default class ProjectsColorAdjustController {
     }
 
     /**
-      * When corrections are initialized outside the controller, infer disabled status
+      *
       * @param {object} correction updated correction
       * @returns {undefined}
       */
     $onChanges(correction) {
         if (correction) {
-            this.correction = correction;
+            this.correction = Object.assign({}, this.correction, correction);
 
-            this.gammaLinkToggle = this.correction.redGamma === this.correction.blueGamma &&
+            this.gammaLinkToggle = this.correction.gamma.enabled === this.correction.redGamma &&
                 this.correction.blueGamma === this.correction.greenGamma;
 
-            if (this.correction.redGamma === null &&
-                this.correction.greenGamma === null &&
-                this.correction.blueGamma === null) {
-                this.gammaToggle.value = false;
-            } else {
-                this.gammaToggle.value = true;
-            }
-
-            if (this.correction.saturation === null) {
-                this.saturationToggle.value = false;
-            }
-
-            if (this.correction.alpha === null &&
-                this.correction.beta === null) {
-                this.sigToggle.value = false;
-            } else {
-                this.sigToggle.value = true;
-            }
-
-            let defaultMinMax = {};
-
-            if (this.correction.min === null &&
-                this.correction.max === null) {
-                this.minMaxToggle.value = false;
-
-                this.setDefaultsForEnabled();
-
-                defaultMinMax.min = 0;
-                defaultMinMax.max = 65535;
-            } else {
-                this.minMax = true;
-
-                this.setDefaultsForEnabled();
-
-                defaultMinMax.min = this.correction.min;
-                defaultMinMax.max = this.correction.max;
-            }
-
-            this.sliderCorrection = Object.assign(defaultMinMax, this.correction);
             this.$timeout(() => {
                 this.$scope.$broadcast('rzSliderForceRender');
             });
@@ -177,73 +117,26 @@ export default class ProjectsColorAdjustController {
     }
 
     /**
-     * For any enabled correction categories, set valid values
-     * @returns {undefined}
-     */
-    setDefaultsForEnabled() {
-        let defaults = {
-            redGamma: 1,
-            greenGamma: 1,
-            blueGamma: 1,
-            saturation: 1,
-            alpha: 0.2,
-            beta: 13
-        };
-        let correction = this.correction;
-        if (this.gammaToggle.value) {
-            if (correction.redGamma === null) {
-                correction.redGamma = defaults.redGamma;
-            }
-            if (correction.greenGamma === null) {
-                correction.greenGamma = defaults.greenGamma;
-            }
-            if (correction.blueGamma === null) {
-                correction.blueGamma = defaults.blueGamma;
-            }
-        }
-
-        if (this.saturationToggle.value) {
-            if (correction.saturation === null) {
-                correction.saturation = defaults.saturation;
-            }
-        }
-
-        if (this.sigToggle.value) {
-            if (correction.alpha === null) {
-                correction.alpha = defaults.alpha;
-            }
-            if (correction.beta === null) {
-                correction.beta = defaults.beta;
-            }
-        }
-    }
-
-    onGammaFilterChange(id, val) {
-        let relevantIds = id;
+      * Account for slider linkage when doing gamma correction
+      *
+      * @param {int} val The new value which should be propagated to all bands if linked
+      * @returns {undefined}
+      */
+    onGammaFilterChange(val) {
         if (this.gammaLinkToggle) {
-            relevantIds = ['redGamma', 'greenGamma', 'blueGamma'];
+            this.correction.gamma.redGamma = val;
+            this.correction.gamma.greenGamma = val;
+            this.correction.gamma.blueGamma = val;
         }
-        this.onFilterChange(relevantIds, val);
+        this.onFilterChange();
     }
 
     /**
      * Makes color correction changes available as a component rgbSum
      *
-     * @param {string} id used to identify correction that has been modified
-     * @param {number} val new value for a color correction
-     * @param {object} options todo
-     * @returns {null} null
+     * @returns {undefined}
      */
-    onFilterChange(id, val) {
-        if (Array.isArray(id)) {
-            id.forEach((key) => {
-                this.correction[key] = val;
-            });
-        } else if (id) {
-            this.correction[id] = val;
-        }
-
-        this.sliderCorrection = Object.assign({}, this.correction);
+    onFilterChange() {
         this.$parent.onCorrectionChange(Object.assign({}, this.correction));
 
         this.$timeout(() => {
@@ -255,64 +148,38 @@ export default class ProjectsColorAdjustController {
     gammaLinkToggled() {
         this.gammaLinkToggle = !this.gammaLinkToggle;
         if (this.gammaLinkToggle) {
-            this.onFilterChange(
-                ['redGamma', 'greenGamma', 'blueGamma'],
-                this.correction.redGamma, this.redGammaOptions);
+            this.correction.gamma.greenGamma = this.correction.gamma.redGamma;
+            this.correction.gamma.blueGamma = this.correction.gamma.redGamma;
         }
-    }
-
-    gammaToggled() {
-        const value = !this.gammaToggle.value;
-        this.gammaToggle.value = value;
-        if (!value) {
-            this.correction.redGamma = null;
-            this.correction.greenGamma = null;
-            this.correction.blueGamma = null;
-        }
-        this.setDefaultsForEnabled();
         this.onFilterChange();
     }
 
-    saturationToggled() {
-        const value = !this.saturationToggle.value;
-        this.saturationToggle.value = value;
-        if (!value) {
-            this.correction.saturation = null;
-        }
-        this.setDefaultsForEnabled();
-        this.onFilterChange();
-    }
-
-    sigToggled() {
-        const value = !this.sigToggle.value;
-        this.sigToggle.value = value;
-        if (!value) {
-            this.correction.alpha = null;
-            this.correction.beta = null;
-        }
-        this.setDefaultsForEnabled();
+    storeToggle(value, correctionName) {
+        this.correction[correctionName].enabled = value;
         this.onFilterChange();
     }
 
     onHistogramChange(clipping) {
-        let clipParams = {
-            min: clipping.rgb.min,
-            max: clipping.rgb.max,
+        let tileClip = this.correction.tileClipping;
+        tileClip.min = clipping.rgb.min;
+        tileClip.max = clipping.rgb.max;
+        tileClip.enabled = typeof clipping.rgb.min !== 'undefined' ||
+            typeof clipping.rgb.max !== 'undefined';
 
-            redMin: clipping.red.min !== clipping.rgb.min ? clipping.red.min : null,
-            redMax: clipping.red.max !== clipping.rgb.max ? clipping.red.max : null,
-
-            greenMin: clipping.green.min !== clipping.rgb.min ? clipping.green.min : null,
-            greenMax: clipping.green.max !== clipping.rgb.max ? clipping.green.max : null,
-
-            blueMin: clipping.blue.min !== clipping.rgb.min ? clipping.blue.min : null,
-            blueMax: clipping.blue.max !== clipping.rgb.max ? clipping.blue.max : null
-        };
-        Object.assign(this.correction, clipParams);
-        this.$parent.onCorrectionChange(
-            Object.assign({}, this.correction)
-        ).then(() => {
-            this.initHistogram();
-        });
+        let bandClip = this.correction.bandClipping;
+        bandClip.redMin = clipping.red.min;
+        bandClip.redMax = clipping.red.max;
+        bandClip.greenMin = clipping.green.min;
+        bandClip.greenMax = clipping.green.max;
+        bandClip.blueMin = clipping.blue.min;
+        bandClip.blueMax = clipping.blue.max;
+        bandClip.enabled =
+            typeof clipping.red.min !== 'undefined' ||
+            typeof clipping.red.max !== 'undefined' ||
+            typeof clipping.green.min !== 'undefined' ||
+            typeof clipping.green.max !== 'undefined' ||
+            typeof clipping.blue.min !== 'undefined' ||
+            typeof clipping.blue.max !== 'undefined';
+        this.onFilterChange();
     }
 }
