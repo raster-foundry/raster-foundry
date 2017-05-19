@@ -3,12 +3,14 @@ package com.azavea.rf.api.exports
 import java.util.UUID
 
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.model.StatusCodes
 import com.typesafe.scalalogging.LazyLogging
 import cats.implicits._
 import cats.data._
 import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 import io.circe._
+import io.circe.parser.decode
 
 import com.azavea.rf.common._
 import com.azavea.rf.database.tables.Exports
@@ -78,9 +80,13 @@ trait ExportRoutes extends Authentication
   def createExport: Route = authenticate { user =>
     entity(as[Export.Create]) { newExport =>
       authorize(user.isInRootOrSameOrganizationAs(newExport)) {
-        onSuccess(write[Export](Exports.insertExport(newExport, user))) { export =>
-          kickoffProjectExport(export.id)
-          complete(export)
+        newExport.exportOptions.as[ExportOptions] match {
+          case Left(df:DecodingFailure) => complete((StatusCodes.BadRequest, s"JSON decoder exception: ${df.show}"))
+          case Right(x) =>
+            onSuccess(write(Exports.insertExport(newExport, user))) { export =>
+              kickoffProjectExport(export.id)
+              complete(export)
+            }
         }
       }
     }
