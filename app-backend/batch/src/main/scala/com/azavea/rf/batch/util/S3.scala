@@ -1,25 +1,48 @@
 package com.azavea.rf.batch.util
 
 import geotrellis.spark.io.s3.S3InputFormat
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
-import com.amazonaws.services.s3.AmazonS3ClientBuilder
-import com.amazonaws.services.s3.model.{ListObjectsRequest, ObjectListing, PutObjectResult, S3Object}
+
+import com.amazonaws.auth.{AWSCredentialsProvider, DefaultAWSCredentialsProviderChain}
+import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
+import com.amazonaws.services.s3.model._
+import com.amazonaws.regions.Regions
 import org.apache.hadoop.conf.Configuration
+
 import java.net.URI
 
 import scala.collection.mutable
 import scala.collection.JavaConverters._
+import scala.annotation.tailrec
 
-case class S3(region: Option[String] = None) extends Serializable {
-  lazy val client = {
+case class S3(
+  credentialsProviderChain: AWSCredentialsProvider = new DefaultAWSCredentialsProviderChain,
+  region: Option[String] = None
+) extends Serializable {
+
+  lazy val client: AmazonS3 = {
     val builder =
       AmazonS3ClientBuilder
         .standard()
-        .withCredentials(new DefaultAWSCredentialsProviderChain())
+        .withCredentials(credentialsProviderChain)
 
-
-    region.fold(builder)(builder.withRegion).build()
+    region.fold(builder.withRegion(Regions.US_EAST_1))(builder.withRegion).build()
   }
+
+  /** Copy buckets */
+  @tailrec
+  final def copyListing(bucket: String, destBucket: String, sourcePrefix: String, destPrefix: String, listing: ObjectListing): Unit = {
+    listing.getObjectSummaries.asScala.foreach { os =>
+      val key = os.getKey
+      client.copyObject(bucket, key, destBucket, key.replace(sourcePrefix, destPrefix))
+    }
+    if (listing.isTruncated) copyListing(bucket, destBucket, sourcePrefix, destPrefix, client.listNextBatchOfObjects(listing))
+  }
+
+  def listObjects(bucketName: String, prefix: String): ObjectListing =
+    listObjects(new ListObjectsRequest(bucketName, prefix, null, null, null))
+
+  def listObjects(listObjectsRequest: ListObjectsRequest): ObjectListing =
+    client.listObjects(listObjectsRequest)
 
   /** Get S3Object */
   def getObject(s3bucket: String, s3prefix: String): S3Object =
@@ -73,12 +96,10 @@ object S3 {
   }
 
   /** Set credentials in case Hadoop configuration files don't specify S3 credentials. */
-  def setCredentials(conf: Configuration): Configuration = {
-    val pc = new DefaultAWSCredentialsProviderChain
-
+  def setCredentials(conf: Configuration, credentialsProviderChain: AWSCredentialsProvider = new DefaultAWSCredentialsProviderChain): Configuration = {
     conf.set("fs.s3.impl", classOf[org.apache.hadoop.fs.s3native.NativeS3FileSystem].getName)
-    conf.set("fs.s3.awsAccessKeyId", pc.getCredentials.getAWSAccessKeyId)
-    conf.set("fs.s3.awsSecretAccessKey", pc.getCredentials.getAWSSecretKey)
+    conf.set("fs.s3.awsAccessKeyId", credentialsProviderChain.getCredentials.getAWSAccessKeyId)
+    conf.set("fs.s3.awsSecretAccessKey", credentialsProviderChain.getCredentials.getAWSSecretKey)
     conf
   }
 }

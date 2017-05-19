@@ -1,6 +1,7 @@
 package com.azavea.rf.batch.export
 
 import java.net.URI
+
 import scala.util._
 
 object CommandLine {
@@ -19,7 +20,7 @@ object CommandLine {
     head("raster-foundry-export", "0.1")
 
     opt[URI]('j',"jobDefinition")
-      .action( (jd, conf) => conf.copy(jobDefinition = jd) )
+      .action((jd, conf) => conf.copy(jobDefinition = jd))
       .text("The location of the json which defines an ingest job")
       .required
   }
