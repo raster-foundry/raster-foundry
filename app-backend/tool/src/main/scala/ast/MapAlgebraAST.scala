@@ -24,7 +24,6 @@ object MapAlgebraAST {
         Some(this)
       else {
         val matches = args.flatMap(_.find(id))
-        require(matches.length < 2, s"Ambiguous IDs ($matches) on Map Algebra AST ($this)")
         matches.headOption
       }
 
