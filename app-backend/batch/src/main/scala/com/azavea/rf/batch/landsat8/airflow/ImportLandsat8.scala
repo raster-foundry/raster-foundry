@@ -26,7 +26,7 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
   val name = ImportLandsat8.name
 
   /** Get S3 client per each call */
-  def s3Client = S3(landsat8Config.awsRegion)
+  def s3Client = S3(region = landsat8Config.awsRegion)
 
   protected def scenesFromCsv(srcProj: CRS = CRS.fromName("EPSG:4326"), targetProj: CRS = CRS.fromName("EPSG:3857")): Future[ListBuffer[Scene.Create]] = {
     val reader = CSV.parse(landsat8Config.usgsLandsatUrl)

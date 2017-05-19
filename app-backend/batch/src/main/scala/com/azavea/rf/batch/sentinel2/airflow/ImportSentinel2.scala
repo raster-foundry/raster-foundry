@@ -28,7 +28,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
   val name = ImportSentinel2.name
 
   /** Get S3 client per each call */
-  def s3Client = S3(sentinel2Config.awsRegion)
+  def s3Client = S3(region = sentinel2Config.awsRegion)
 
   def createImages(sceneId: UUID, tileInfo: Json, resolution: Float): List[Image.Banded] = {
     val tileInfoPath = tileInfo.hcursor.downField("path").as[String].toOption.getOrElse("")
