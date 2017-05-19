@@ -4,67 +4,72 @@ import java.util.UUID
 
 import io.circe.generic.JsonCodec
 
+
 /** The ur-type for a recursive representation of MapAlgebra operations */
 sealed trait MapAlgebraAST extends Product with Serializable {
   def id: UUID
   def args: List[MapAlgebraAST]
-  def label: Option[String]
-  def evaluable: Boolean
-  def unbound: List[MapAlgebraAST]
+  def metadata: Option[NodeMetadata]
+  def find(id: UUID): Option[MapAlgebraAST]
+  def sources: Seq[UUID]
 }
 
 object MapAlgebraAST {
   /** Map Algebra operations (nodes in this tree) */
   abstract class Operation(val symbol: String) extends MapAlgebraAST {
-    def evaluable: Boolean = (args.length >= 1) && (args.foldLeft(true)(_ && _.evaluable))
-    def unbound: List[MapAlgebraAST] =
-      args.foldLeft(List[MapAlgebraAST]())({ case (list, mapAlgebra) =>
-        list ++ mapAlgebra.unbound
-      }).distinct
+
+    @SuppressWarnings(Array("TraversableHead"))
+    def find(id: UUID): Option[MapAlgebraAST] =
+      if (this.id == id)
+        Some(this)
+      else {
+        val matches = args.flatMap(_.find(id))
+        require(matches.length < 2, s"Ambiguous IDs ($matches) on Map Algebra AST ($this)")
+        matches.headOption
+      }
+
+    def sources: Seq[UUID] = args.flatMap(_.sources)
   }
 
-  @JsonCodec
-  case class Addition(args: List[MapAlgebraAST], id: UUID, label: Option[String])
+  case class Addition(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
       extends Operation("+")
 
-  @JsonCodec
-  case class Subtraction(args: List[MapAlgebraAST], id: UUID, label: Option[String])
+  case class Subtraction(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
       extends Operation("-")
 
-  @JsonCodec
-  case class Multiplication(args: List[MapAlgebraAST], id: UUID, label: Option[String])
+  case class Multiplication(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
       extends Operation("*")
 
-  @JsonCodec
-  case class Division(args: List[MapAlgebraAST], id: UUID, label: Option[String])
+  case class Division(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
       extends Operation("/")
 
-  @JsonCodec
-  case class Masking(args: List[MapAlgebraAST], id: UUID, label: Option[String])
+  case class Masking(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
       extends Operation("mask")
 
-  @JsonCodec
-  case class Reclassification(args: List[MapAlgebraAST], id: UUID, label: Option[String], classBreaks: ClassBreaks)
-      extends Operation("reclassify")
+  case class Classification(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], classMap: ClassMap)
+      extends Operation("classify")
 
+  case class Max(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
+      extends Operation("max")
+
+  case class Min(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
+      extends Operation("min")
 
   /** Map Algebra sources (leaves) */
-  sealed abstract class Source[+T](val `type`: String) extends MapAlgebraAST {
-    def value: Option[T]
-    def args: List[MapAlgebraAST] = List.empty
-    def evaluable = value.isDefined
-    def unbound: List[MapAlgebraAST] = if (evaluable) List.empty else List(this)
-  }
-
   @JsonCodec
-  case class RFMLRasterSource(id: UUID, label: Option[String], value: Option[RFMLRaster])
-      extends Source[RFMLRaster]("raster")
+  case class Source(id: UUID, metadata: Option[NodeMetadata]) extends MapAlgebraAST {
+    def args: List[MapAlgebraAST] = List.empty
 
-  object RFMLRasterSource {
-    def empty: RFMLRasterSource = RFMLRasterSource(UUID.randomUUID(), None, None)
+    def find(id: UUID): Option[MapAlgebraAST] =
+      if (this.id == id) Some(this)
+      else None
+    def sources: Seq[UUID] = List(this.id)
   }
 
-  /** TODO: Add other source types (or treat of them as hyperparameters - e.g. ClassBreaks, above) */
+  object Source {
+    def empty: Source = Source(UUID.randomUUID(), None)
+  }
+
+  /** TODO: Add other source types (or treat of them as hyperparameters - e.g. ClassMap, above) */
 
 }
-

@@ -223,6 +223,8 @@ export default class FilterPaneController {
         this.initIngestFilter();
 
         this.initSourceFilters();
+
+        this.importOwnerFilter = this.filters.owner ? 'user' : 'any';
     }
 
     initIngestFilter() {
@@ -258,36 +260,6 @@ export default class FilterPaneController {
                 }
             }
         });
-
-        // Define static source filters
-        this.staticSourceFilters = {
-            mine: {
-                datasource: {
-                    id: 'mine',
-                    name: 'My Imports'
-                },
-                enabled: false
-            },
-            users: {
-                datasource: {
-                    id: 'users',
-                    name: 'Raster Foundry Users'
-                },
-                enabled: false
-            }
-        };
-
-        if (this.filters.datasource) {
-            if (Array.isArray(this.filters.datasource)) {
-                this.filters.datasource.forEach(dsf => {
-                    if (this.staticSourceFilters[dsf]) {
-                        this.staticSourceFilters[dsf].enabled = true;
-                    }
-                });
-            } else if (this.staticSourceFilters[this.filters.datasource]) {
-                this.staticSourceFilters[this.filters.datasource].enabled = true;
-            }
-        }
     }
 
     resetAllFilters() {
@@ -297,7 +269,6 @@ export default class FilterPaneController {
         this.cloudCoverFilters.maxModel = this.cloudCoverRange.max;
         this.filters.minCloudCover = this.cloudCoverRange.min;
         delete this.filters.maxCloudCover;
-
 
         this.sunElevationFilters.minModel = this.sunElevationRange.min;
         this.sunElevationFilters.maxModel = this.sunElevationRange.max;
@@ -313,10 +284,6 @@ export default class FilterPaneController {
             .forEach((ds) => {
                 ds.enabled = false;
             });
-        Object.values(this.staticSourceFilters)
-            .forEach((ds) => {
-                ds.enabled = false;
-            });
         this.filters.datasource = [];
 
         this.ingestFilter = 'any';
@@ -328,6 +295,20 @@ export default class FilterPaneController {
     setIngestFilter(mode) {
         this.ingestFilter = mode;
         this.onIngestFilterChange();
+    }
+
+    setImportOwnerFilter(mode) {
+        this.importOwnerFilter = mode;
+        this.onImportOwnerFilterChange();
+    }
+
+    onImportOwnerFilterChange() {
+        if (this.importOwnerFilter === 'user') {
+            let profile = this.authService.profile();
+            this.filters.owner = profile ? profile.user_id : null;
+        } else {
+            delete this.filters.owner;
+        }
     }
 
     onIngestFilterChange() {
@@ -352,30 +333,23 @@ export default class FilterPaneController {
         Object.values(this.dynamicSourceFilters)
             .filter(ds => ds.enabled)
             .forEach(ds => this.filters.datasource.push(ds.datasource.id));
-
-        Object.values(this.staticSourceFilters)
-            .filter(ds => ds.enabled)
-            .forEach(ds => this.filters.datasource.push(ds.datasource.id));
     }
 
     toggleSourceFilter(sourceId) {
         if (this.dynamicSourceFilters[sourceId]) {
             this.dynamicSourceFilters[sourceId].enabled =
                 !this.dynamicSourceFilters[sourceId].enabled;
-        } else if (this.staticSourceFilters[sourceId]) {
-            this.staticSourceFilters[sourceId].enabled =
-                !this.staticSourceFilters[sourceId].enabled;
         }
         this.onSourceFilterChange();
     }
 
-    openDatePickerModal() {
+    openDateRangePickerModal() {
         if (this.activeModal) {
             this.activeModal.dismiss();
         }
 
         this.activeModal = this.$uibModal.open({
-            component: 'rfDatePickerModal',
+            component: 'rfDateRangePickerModal',
             resolve: {
                 config: () => Object({
                     range: this.datefilter,

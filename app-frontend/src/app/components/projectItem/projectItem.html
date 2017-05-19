@@ -1,8 +1,6 @@
 <div class="panel-body">
-  <h4 class="project-title">
-    {{$ctrl.project.name}}
-    <rf-status-tag ng-if="$ctrl.status" entity-type="project" status="$ctrl.status"></rf-status-tag>
-    </h4>
+  <h4 class="project-title">{{$ctrl.project.name}}</h4>
+  <rf-status-tag ng-if="$ctrl.status" entity-type="project" status="$ctrl.status"></rf-status-tag>
   <div class="row">
     <div class="column noflex">
       <div class="dropdown btn-group" uib-dropdown ng-if="!$ctrl.isSelectable">
@@ -57,7 +55,9 @@
       </div> -->
 
       <!-- IF using a project's thumbnail: -->
-      <div class="project-preview-container thumbnail" ng-if="$ctrl.project.scenes" style="background-image: url(...);">
+      <div class="project-preview-container thumbnail"
+           ng-if="$ctrl.project.scenes && $ctrl.thumbnailUrl && $ctrl.status === 'CURRENT'"
+           style="background-image: url({{$ctrl.thumbnailUrl}})">
       </div>
     </div>
   </div>

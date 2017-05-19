@@ -153,28 +153,78 @@ object ColorCorrect {
     val maybeEqualize =
       if (params.equalize) Some(HistogramEqualization(_: MultibandTile, rgbHist)) else None
 
+    case class LayerClipping(redMin: Int, redMax: Int, greenMin: Int, greenMax:Int, blueMin: Int, blueMax: Int)
+    sealed trait ClipValue
+    case class ClipBounds(min: Int, max: Int) extends ClipValue
+    case class MaybeClipBounds(maybeMin: Option[Int], maybeMax: Option[Int]) extends ClipValue
+    case class ClippingParams(band: Int, bounds: ClipValue)
+   
+    val layerRgbClipping = (for {
+      (r :: g :: b :: xs) <- Some(rgbHist.toList)
+      isCorrected   <- Some((r :: g :: b :: Nil).foldLeft(true) {(acc, hst) => (
+                          acc && (hst match {
+                            case x if 1 until 255 contains x.minValue().map(_.toInt).getOrElse(0) => true
+                            case x if 1 until 255 contains x.maxValue().map(_.toInt).getOrElse(255) => true
+                            case _ => false
+                          })
+                        )})
+      layerClp      <- if (!isCorrected) {
+                          val getMin = (hst:Histogram[Double]) => hst.minValue().map(_.toInt).getOrElse(0)
+                          val getMax = (hst:Histogram[Double]) => hst.maxValue().map(_.toInt).getOrElse(255)
+                          Some(LayerClipping(getMin(r), getMax(r), getMin(g), getMax(g), getMin(b), getMax(b)))
+                        } else { None }
+    } yield layerClp).getOrElse(LayerClipping(0, 255, 0, 255, 0, 255))
+
     val rgbBand =
       (specificBand:Option[Int], allBands:Option[Int], tileDefault: Int) =>
         specificBand.fold(allBands)(Some(_)).fold(Some(tileDefault))(x => Some(x))
+
+    val layerNormalizeArgs = Some(
+      ClippingParams(0, ClipBounds(layerRgbClipping.redMin, layerRgbClipping.redMax))
+        :: ClippingParams(1, ClipBounds(layerRgbClipping.greenMin, layerRgbClipping.greenMax))
+        :: ClippingParams(2, ClipBounds(layerRgbClipping.blueMin, layerRgbClipping.blueMax))
+        :: Nil
+    )
     
-    case class ClippingParams(band: Int, min: Option[Int], max: Option[Int])
-    val rgbBandArgs = (
-      ClippingParams(0, params.redMin, params.redMax)
-        :: ClippingParams(1, params.greenMin, params.greenMax)
-        :: ClippingParams(2, params.blueMin, params.blueMax)
+    val colorCorrectArgs = Some(
+      ClippingParams(0, MaybeClipBounds(params.redMin, params.redMax))
+        :: ClippingParams(1, MaybeClipBounds(params.greenMin, params.greenMax))
+        :: ClippingParams(2, MaybeClipBounds(params.blueMin, params.blueMax))
         :: Nil
     )
 
-    val normalizeAndClampValues =
-      (_:MultibandTile).mapBands { (i, tile) =>
-        val maybeNewTile = for {
-          args <- rgbBandArgs.find(cp => cp.band == i)
-          nmax <- rgbBand(args.max, params.max, maxCellValue(tile.cellType))
-          nmin <- rgbBand(args.min, params.min, 0)
-        } yield normalizeAndClamp(tile, oldMin = nmin, oldMax = nmax, newMin = 0, newMax = 255).convert(UByteConstantNoDataCellType)
-        
-        maybeNewTile.getOrElse(tile)
-      }
+    val maybeClipBands =
+      (clipParams:Option[List[ClippingParams]]) =>
+        for {
+          clipParams <- clipParams
+        } yield {
+          (_:MultibandTile).mapBands { (i, tile) =>
+            (for {
+              args <- clipParams.find(cp => cp.band == i)
+            } yield {
+              args match {
+                case ClippingParams(_, ClipBounds(min, max)) => {
+                  (for {
+                    clipMin <- rgbBand(None, None, min)
+                    clipMax <- rgbBand(None, None, max)
+                    newMin <- Some(0)
+                    newMax <- Some(255)
+                  } yield {
+                    normalizeAndClamp(tile, clipMin, clipMax, newMin, newMax)
+                  })
+                }
+                case ClippingParams(_, MaybeClipBounds(min, max)) => {
+                  (for {
+                    clipMin <- rgbBand(min, params.min, 0)
+                    clipMax <- rgbBand(max, params.max, 255)
+                  } yield {
+                    clipBands(tile, clipMin, clipMax)
+                  })
+                }
+              }
+            }).flatten.getOrElse(tile)
+          }
+        }
 
     val maybeAdjustBrightness =
       for (b <- params.brightness)
@@ -211,12 +261,13 @@ object ColorCorrect {
     // Sequence of transformations to tile, flatten removes None from the list
     val transformations: List[MultibandTile => MultibandTile] = List(
       maybeEqualize,
-      Some(normalizeAndClampValues),
+      maybeClipBands(layerNormalizeArgs),
       maybeAdjustBrightness,
       maybeAdjustGamma,
       maybeAdjustContrast,
       maybeAdjustSaturation,
-      maybeSigmoidal
+      maybeSigmoidal,
+      maybeClipBands(colorCorrectArgs)
     ).flatten
 
     // Apply tile transformations in order from left to right
@@ -240,6 +291,14 @@ object ColorCorrect {
       case _: ByteCells | _: ShortCells | _: IntCells =>
         ((1 << ct.bits) - 1) - (1 << (ct.bits - 1))
     }
+
+  def clipBands(tile: Tile, min: Int, max: Int): Tile = {
+    tile.mapIfSet { z =>
+      if (z > max) 255
+      else if (z < min) 0
+      else z
+    }
+  }
 
   def normalizeAndClamp(tile: Tile, oldMin: Int, oldMax: Int, newMin: Int, newMax: Int): Tile = {
     val dNew = newMax - newMin

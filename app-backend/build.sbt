@@ -101,11 +101,11 @@ lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
 )
 
 lazy val root = Project("root", file("."))
-  .aggregate(api, migrations, datamodel, database, batch)
+  .aggregate(api, common, migrations, datamodel, database, batch, tile, tool)
   .settings(commonSettings:_*)
 
 lazy val api = Project("api", file("api"))
-  .dependsOn(database, datamodel, common)
+  .dependsOn(database, datamodel, common % "test->test;compile->compile")
   .settings(apiSettings:_*)
   .settings(resolvers += Resolver.bintrayRepo("hseeberger", "maven"))
   .settings({
@@ -128,6 +128,7 @@ lazy val common = Project("common", file("common"))
     Dependencies.elasticacheClient,
     Dependencies.geotrellisS3,
     Dependencies.findbugAnnotations,
+    Dependencies.ammoniteOps,
     Dependencies.chill,
     Dependencies.cats
   )})
@@ -202,7 +203,7 @@ import io.gatling.sbt.GatlingPlugin
 lazy val tile = Project("tile", file("tile"))
   .dependsOn(datamodel)
   .dependsOn(database)
-  .dependsOn(common)
+  .dependsOn(common % "test->test;compile->compile")
   .dependsOn(tool)
   .dependsOn(batch)
   .enablePlugins(GatlingPlugin)
@@ -213,6 +214,7 @@ lazy val tile = Project("tile", file("tile"))
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisS3,
       Dependencies.akkaSprayJson,
+      Dependencies.akkaCirceJson,
       Dependencies.circeCore % "it,test",
       Dependencies.circeGeneric % "it,test",
       Dependencies.circeParser % "it,test",
@@ -237,11 +239,13 @@ lazy val tool = Project("tool", file("tool"))
   .settings({
     libraryDependencies ++= loggingDependencies ++ Seq(
       Dependencies.geotrellisRaster,
+      Dependencies.geotrellisRasterTestkit,
       Dependencies.shapeless,
       Dependencies.scalatest,
       Dependencies.circeCore,
       Dependencies.circeGeneric,
       Dependencies.circeParser,
-      Dependencies.circeOptics
+      Dependencies.circeOptics,
+      Dependencies.scalaCheck
     )
   })

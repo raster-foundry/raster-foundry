@@ -2,23 +2,22 @@ package com.azavea.rf.api.tool
 
 import com.azavea.rf.datamodel._
 import com.azavea.rf.api.utils.Config
-import com.azavea.rf.api.{AuthUtils, DBSpec, Router}
+import com.azavea.rf.api._
+import com.azavea.rf.common._
 import com.azavea.rf.tool.ast._
+import com.azavea.rf.datamodel._
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import org.scalatest.{Matchers, WordSpec}
-import com.azavea.rf.datamodel._
-import com.azavea.rf.api.utils.Config
-import com.azavea.rf.api.{AuthUtils, DBSpec, Router}
 import concurrent.duration._
-
 import io.circe._
 import io.circe.syntax._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
+import java.sql.Timestamp
 import java.util.UUID
 import scala.concurrent.duration._
 

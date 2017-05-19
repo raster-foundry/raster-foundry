@@ -1,44 +1,44 @@
 export default class DatePickerModalController {
-    constructor(moment, dateRangePickerConf) {
+    constructor(moment, datePickerConf) {
         'ngInject';
         this.Moment = moment;
-        this.dateRangePickerConf = dateRangePickerConf;
+        this.datePickerConf = datePickerConf;
     }
 
     $onInit() {
         this.pickerApi = {};
-        this.range = this.range || this.resolve.config.range || {};
-        this._range = {
-            start: this.range.start || this.Moment(),
-            end: this.range.end || this.Moment()
-        };
-        this.ranges = this.resolve.config.ranges || [];
         this.minDay = this.resolve.config.minDay;
         this.maxDay = this.resolve.config.maxDay;
+
+        this.format = () => this.datePickerConf.format;
+
+        this._selectedDay = this.getSelectedDay();
+        this.setCalendarInterceptors();
     }
 
-    isActivePreset(range, index) {
-        return this.selectedRangeIndex === index && this.matchesSelectedRange(range);
+    setCalendarInterceptors() {
+        this.calendarInterceptors = {
+            daySelected: this.daySelected.bind(this)
+        };
     }
 
-    matchesSelectedRange(range) {
-        return range.start.isSame(this._range.start) && range.end.isSame(this._range.end);
-    }
-
-    onPresetSelect(range, index) {
-        this._range.start = range.start;
-        this._range.end = range.end;
-        this.selectedRangeIndex = index;
-    }
-
-    getSelectedPreset() {
-        if (this.selectedRangeIndex) {
-            let selectedRange = this.ranges[this.selectedRangeIndex];
-            if (this.matchesSelectedRange(selectedRange)) {
-                return selectedRange;
-            }
+    daySelected(day) {
+        if (!day.isSame(this._selectedDay, 'day')) {
+            this.pickerApi.render();
+            this.value = this.Moment(day).format(this.getFormat());
+            this._selectedDay = day;
+            this.apply();
+        } else {
+            this.cancel();
         }
-        return false;
+    }
+
+    getSelectedDay() {
+        return this.Moment(this.selectedDay || this.Moment(), this.getFormat());
+    }
+
+    getFormat() {
+        return this.format() || 'MM DD, YYYY';
     }
 
     cancel() {
@@ -46,15 +46,7 @@ export default class DatePickerModalController {
     }
 
     apply() {
-        let data = {
-            start: this._range.start,
-            end: this._range.end
-        };
-        const selectedRange = this.getSelectedPreset();
-        if (selectedRange) {
-            data.preset = selectedRange.name;
-        }
-        this.closeWithData(data);
+        this.closeWithData(this._selectedDay);
     }
 
     closeWithData(data) {

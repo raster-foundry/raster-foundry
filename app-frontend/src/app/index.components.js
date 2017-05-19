@@ -31,6 +31,7 @@ export default angular.module('index.components', [
     require('./components/importModal/importModal.module.js').name,
     require('./components/staticMap/staticMap.module.js').name,
     require('./components/sceneDetailModal/sceneDetailModal.module.js').name,
+    require('./components/dateRangePickerModal/dateRangePickerModal.module.js').name,
     require('./components/datePickerModal/datePickerModal.module.js').name,
     require('./components/exportModal/exportModal.module.js').name,
     require('./components/statusTag/statusTag.module.js').name,

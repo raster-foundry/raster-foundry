@@ -8,7 +8,8 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import com.azavea.rf.datamodel._
 import com.azavea.rf.api.utils.Config
-import com.azavea.rf.api.{AuthUtils, DBSpec, Router}
+import com.azavea.rf.api._
+import com.azavea.rf.common._
 import concurrent.duration._
 import org.scalatest.{Matchers, WordSpec}
 
@@ -30,13 +31,11 @@ class ToolRunSpec extends WordSpec
   val authorization = AuthUtils.generateAuthHeader("Default")
   val publicOrgId = UUID.fromString("dfac6307-b5ef-43f7-beda-b9f208bb7726")
   // Non-functional UUIDs
-  val projectId = UUID.fromString("4b027dff-a31e-4ce3-b928-7f5a9d254bd0")
   val toolId = UUID.fromString("e609629f-05f5-4b18-a0e9-ea612b3c9ed7")
   val baseToolRun = "/tool-runs/"
   val newToolRun = ToolRun.Create(
     Visibility.Public,
     publicOrgId,
-    projectId,
     toolId,
     ().asJson,
     None: Option[String]

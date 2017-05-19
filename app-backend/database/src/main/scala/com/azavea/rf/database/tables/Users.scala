@@ -18,13 +18,15 @@ class Users(_tableTag: Tag) extends Table[User](_tableTag, "users")
                                     with UserFields
                                     with TimestampFields
 {
-  def * = (id, organizationId, role, createdAt, modifiedAt) <> (User.tupled, User.unapply)
+  def * = (id, organizationId, role, createdAt, modifiedAt, dropboxCredential) <>
+    (User.tupled, User.unapply)
 
   val id: Rep[String] = column[String]("id", O.PrimaryKey, O.Length(255,varying=true))
   val organizationId: Rep[UUID] = column[UUID]("organization_id")
   val role: Rep[UserRole] = column[UserRole]("role", O.Length(255,varying=true))
   val createdAt: Rep[Timestamp] = column[Timestamp]("created_at")
   val modifiedAt: Rep[Timestamp] = column[Timestamp]("modified_at")
+  val dropboxCredential: Rep[Option[String]] = column[Option[String]]("dropbox_credential")
 }
 
 object Users extends TableQuery(tag => new Users(tag)) with LazyLogging {

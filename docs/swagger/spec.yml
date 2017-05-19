@@ -1,7 +1,7 @@
 swagger: '2.0'
 info:
   title: Raster Foundry
-  description: An application to find and manipulate large-scale geospatial and raster data
+  description: An application to find, view, and analyze geospatial data at any scale
   version: "0.1.0"
 
 host: localhost:9000
@@ -21,64 +21,67 @@ x-top-matter:
   - title: Introduction
     level: 1
     content: |
-      This document describes the Raster Foundry API, which is meant to by used by user facing frontends or backend-servers.
-      Generally speaking, all user facing functions are available on the default frontend unless specified otherwise.
-  - title: Using the API
+      The Raster Foundry API allows developers to find, view, and analyze geospatial data in Raster Foundry. As the name implies, it's especially useful for working with large raster datasets like satellite imagery.
+
+      Raster Foundry is built with an openly licensed, open source code base. If you'd like to peek under the hood, make a request, or become a contributor, <a href="https://github.com/azavea/raster-foundry/issues" target="_blank">find us on Github</a>.
+  - title: Authentication
     level: 2
     content: |
-      For testing purposes, our API can be queried using tools such as <a href="https://curl.haxx.se/">cURL</a>, <a href="https://www.getpostman.com/">Postman</a>, or <a href="https://advancedrestclient.com/">Advanced Rest Client</a>
+      Our API identifies applications and users with <a href="https://jwt.io/introduction/" target="_blank">JSON Web Tokens (JWT)</a>. Refresh tokens can be created in your Raster Foundry account and used to generate example requests signed with valid session tokens <a href="https://help.rasterfoundry.com/developer-resources/generating-a-refresh-token-in-order-to-use-the-api" target="_blank">(detailed instructions are available here)</a>.
 
 x-resources:
   - name: Projects
     description: |
-      Projects are composed of scenes, and are the unit which Tools act on
+      Projects are user-defined collections of scenes and are the fundamental unit that tools act on.
     further-description:
       - title: Project permissions
         content: |
-          Projects can be shared publicly, with your organzation, or privately by link only.
-          Currently, only private projects are supported.
-
+          Projects are currently private to the user that created them and cannot be discovered by other Raster Foundry users. However, projects can be shared publicly as a tiled web map with a direct link.
+          Project permissions will eventually expand to include making projects discoverable to all users or just users within an organization.
   - name: Scenes
     description: |
-      Scenes are sets of images which are viewed and color corrected as a unit
+      Scenes are single or multi-image rasters where every image within the scene shares the same metadata characteristics and are always associated with a datasource. This simplest example of a scene is a single-band image like a land classification raster. The most complex example is a multi-image scene made up of multi-band images, like a pre-tiled aerial image where each tile is one piece of a larger coherent scene.
     further-description:
       - title: Scene permissions
         content: |
-          Scenes can be shared publicly, with your organzation, or privately.
-          All user uploaded Scenes are by default private, and Scenes generated from publicly available data are public.
-
+          By default, imported scenes are private to the user that uploaded them and scenes generated from public data sources are discoverable by all users.
+          Scene permissions will eventually expand to include making imported scenes discoverable to all users or just users within an organization.
   - name: Images
     description: |
-      A single image, with 1 or more bands
+      Images are single or multi-band rasters that can be viewed and edited as a single unit but are always associated with a parent scene. They are sometimes synonymous with their parent scenes and other times just one of several images associated with their parent scenes. One common example of an image is a multispectral satellite image; another is a land classification raster.
     further-description:
       - title: Image permissions
         content: |
-          Images can be shared publicly, with your organzation, or privately.
-          All user uploaded Images are by default private, and Images generated from publicly available data are public.
+          Images respect the permissions applied to their parent scenes.
   - name: Uploads
-    description: User uploads
+    description: Uploads are datasets that a user or application has attempted to upload to Raster Foundry (successfully or unsuccessfully).
     further-description:
-      - title: Image permissions
+      - title: Uploads permissions
         content: |
-          All user uploads are private
+          All user uploads are private to that user.
   - name: Datasources
     description: |
-      Datasources contain information common to all images uploaded through them such as composites and default color corrections
+      "Datasources contain information common to all scenes associated with them, such as the number of bands to expect in images associated with that datasource. A datasource can be specific (e.g. a particular earth observation satellite) or generic (e.g. a 3-band sensor on a UAV). All scenes must have an associated datasource."
+
+      "Currently, datasources cannot be created through the API and must be requested (<a href="https://github.com/azavea/raster-foundry/issues" target="_blank">preferably as a Github issue in the source repository</a>)."
+
+      "In the future, users will be able to manage the creation, amendment, and deletion of datasources directly through the API. Also, users will be able to assign transformations like color correction, band composites, or color maps to datasources as a default for themselves and/or their organizations."
   - name: Tokens
     description: |
-      Tokens are used to access the API, either through a frontend or an api client.
+      Tokens are used to securely identify users and applications accessing the API.
   - name: Tools
     description: |
-      Tools are used to apply transformations to Rasters
+      Tools are algorithms that can be applied to projects manually or automatically.
+      Tools can range from primitive statistical queries, to algebraic functions, to complex logic trees of operations happening in parallel. Tools can be constructed of other tools, custom-defined operations, or both. They can take any number of projects as inputs.
   - name: Users
     description: |
-      User management functions
+      Users and third party applications can be managed with the Users resource.
   - name: Organizations
     description: |
-      Organization management functions
+      Organizations are associations of users who share uniform access to permissions-protected resources.
   - name: Exports
     description: |
-      View and manage project Exports
+      Projects can be exported, but individual scenes and images cannot.
 
 tags:
   - name: Users
@@ -98,7 +101,7 @@ paths:
     get:
       summary: Get a list of users
       description: |
-        The Users API endpoint enables searching and listing users.
+        Search for and list users by different characteristics
       tags:
         - Users
       parameters:
@@ -135,7 +138,7 @@ paths:
   /users/me/:
     x-resource: Users
     get:
-      summary: Get logged in user profile
+      summary: Get a logged-in user profile
       tags:
         - Users
       responses:
@@ -207,7 +210,7 @@ paths:
   /organizations/:
     x-resource: Organizations
     get:
-      summary: Retrieve list of organizations
+      summary: Get a list of organizations
       tags:
         - Users
       parameters:
@@ -220,7 +223,7 @@ paths:
           schema:
             $ref: '#/definitions/OrganizationPaginated'
     post:
-      summary: Create a new organization
+      summary: Create an organization
       tags:
         - Users
       parameters:
@@ -231,7 +234,7 @@ paths:
             $ref: '#/definitions/Organization'
       responses:
         201:
-          description: Return newly created organization
+          description: Get newly created organization
           schema:
             $ref: '#/definitions/Organization'
         default:
@@ -241,7 +244,7 @@ paths:
   /organizations/{organizationId}/:
     x-resource: Organizations
     get:
-      summary: Retrieve details for an organization
+      summary: Get details for an organization
       tags:
         - Users
       parameters:
@@ -282,7 +285,7 @@ paths:
   /organizations/{organizationId}/users/:
     x-resource: Organizations
     get:
-      summary: Get a list of users and their roles for the specified organization
+      summary: Get users and roles for an organization
       tags:
         - Users
       parameters:
@@ -303,7 +306,7 @@ paths:
   /datasources/:
     x-resource: Datasources
     get:
-      summary: Lists paginated datasources that a user has access to
+      summary: Get a list of datasources
       description: |
         Datasources are sensors that share common metadata, like default color corrections. Scenes from
         a given datasource can be mosaiced and color corrected together.
@@ -364,7 +367,7 @@ paths:
   /uploads/{uuid}/:
     x-resource: Uploads
     get:
-      summary: Retrieve upload details
+      summary: Get upload details
       tags:
         - Imagery
       parameters:
@@ -381,15 +384,16 @@ paths:
             $ref: '#/definitions/Error'
     put:
       summary: Update an upload
+      description: Update an existing upload
       tags:
         - Imagery
       parameters:
+        - $ref: '#/parameters/uuid'
         - name: upload
           in: body
           required: true
           schema:
-            $ref: '#/definitions/Upload'
-        - $ref: '#/parameters/uuid'
+            $ref: '#/definitions/UploadCreate'
       responses:
         204:
           description: Update successful (no further processing needed)
@@ -419,7 +423,7 @@ paths:
   /uploads/{uuid}/credentials/:
     x-resource: Uploads
     get:
-      summary: Get credentials scoped to this uploads bucket. If this is not a local upload
+      summary: Get credentials for an AWS S3 bucket
       tags:
         - Authentication
         - Imagery
@@ -440,11 +444,7 @@ paths:
   /scenes/:
     x-resource: Scenes
     get:
-      summary: Lists paginated scenes that a user has access to
-      description: |
-        Scenes are groups of images that share metadata and would typically be viewed together on a map.
-        They are ingested into Raster RDDs by GeoTrellis and are able to be added to projects, mosaiced,
-        and have other operations performed on them.
+      summary: Get a list of scenes
       tags:
         - Imagery
       parameters:
@@ -480,7 +480,7 @@ paths:
           schema:
             $ref: '#/definitions/ScenePaginated'
     post:
-      summary: Create a new scene
+      summary: Create a scene
       tags:
         - Imagery
       responses:
@@ -495,7 +495,7 @@ paths:
   /scenes/{uuid}/:
     x-resource: Scenes
     get:
-      summary: Retrieve scene details
+      summary: Get scene details
       tags:
         - Imagery
       parameters:
@@ -534,7 +534,10 @@ paths:
           schema:
             $ref: '#/definitions/Error'
     delete:
-      summary: Delete a scene (Warning will delete any associated imagery)
+      summary: Delete a scene
+      description: |
+        Warning: this will delete any associated imagery as well.
+
       tags:
         - Imagery
       parameters:
@@ -550,7 +553,7 @@ paths:
   /scene-grid/{zoom}/{column}/{row}/:
     x-resource: Scenes
     get:
-      summary: Scene statistics for a tile
+      summary: Get scene statistics for a tile
       tags:
         - Statistics
       parameters:
@@ -588,7 +591,9 @@ paths:
   /projects/:
     x-resource: Projects
     get:
-      summary: Get list of projects the user is authorized to view
+      summary: Get a list of projects
+      description:  |
+        Only projects that the user has permission to view will be returned.
       tags:
         - Imagery
       parameters:
@@ -604,7 +609,7 @@ paths:
           schema:
             $ref: '#/definitions/ProjectPaginated'
     post:
-      summary: Create a new project
+      summary: Create a project
       tags:
         - Imagery
       parameters:
@@ -621,7 +626,7 @@ paths:
   /projects/{uuid}/:
     x-resource: Projects
     get:
-      summary: Retrieve project details
+      summary: Get project details
       tags:
         - Imagery
       parameters:
@@ -675,7 +680,7 @@ paths:
 
   /projects/{uuid}/areas-of-interest/:
     get:
-      summary: Get all Areas of Interest for this project.
+      summary: Get all areas of interest for a project
       tags:
         - Imagery
       parameters:
@@ -689,7 +694,7 @@ paths:
             $ref: '#/definitions/AoiPaginated'
 
     post:
-      summary: Create an Area of Interest for this project.
+      summary: Create an area of interest for a project
       tags:
         - Imagery
       parameters:
@@ -712,7 +717,7 @@ paths:
   /projects/{uuid}/scenes/:
     x-resource: Projects
     get:
-      summary: Get a list of scenes associated with this project
+      summary: Get a list of scenes associated with a project
       tags:
         - Imagery
       parameters:
@@ -747,7 +752,7 @@ paths:
           schema:
             $ref: '#/definitions/ScenePaginated'
     post:
-      summary: Create a new association between a set of scenes and this project
+      summary: Add scenes to a project by their ID
       tags:
         - Imagery
       parameters:
@@ -769,7 +774,7 @@ paths:
             items:
               $ref: '#/definitions/Scene'
     put:
-      summary: Replace the set of scenes in a project
+      summary: Replace scenes in a project
       tags:
         - Imagery
       parameters:
@@ -787,7 +792,7 @@ paths:
         204:
           description: No content, update successful
     delete:
-      summary: Delete a set of scenes from a project
+      summary: Delete scenes from a project
       tags:
         - Imagery
       parameters:
@@ -807,7 +812,7 @@ paths:
 
   /projects/{uuid}/scenes/{uuid2}/accept:
     post:
-      summary: Approve a pending Scene which passed an AOI check.
+      summary: Approve a pending scene which has passed an area of interest check.
       tags:
         - Imagery
       parameters:
@@ -820,7 +825,7 @@ paths:
   /projects/{uuid}/scenes/bulk-add-from-query/:
     x-resource: Projects
     post:
-      summary: Create a new association between a set of scenes and this project
+      summary: Add scenes to a project based on search parameters
       tags:
         - Imagery
       parameters:
@@ -841,7 +846,7 @@ paths:
   /projects/{uuid}/mosaic/:
     x-resource: Projects
     get:
-      summary: List of a project\'s scene IDs and their associated color correction parameters to be used in mosaicing
+      summary: "Get a list of a project's scene IDs and their color-correction parameters"
       tags:
         - Imagery
       parameters:
@@ -855,7 +860,7 @@ paths:
   /projects/{uuid}/mosaic/bulk-update-color-corrections/:
     x-resource: Projects
     post:
-      summary: Persist a batch of project/scene pairing\'s color correction parameters
+      summary: Save color-correction parameters for all scenes in a project
       tags:
         - Imagery
       parameters:
@@ -872,7 +877,7 @@ paths:
   /projects/{uuid}/mosaic/{uuid2}:
     x-resource: Projects
     get:
-      summary: A project/scene pairing\'s persisted color correction parameters
+      summary: "Get a project's saved color-correction parameters"
       tags:
         - Imagery
       parameters:
@@ -884,7 +889,7 @@ paths:
           schema:
             $ref: '#/definitions/ColorCorrection'
     put:
-      summary: Associate posted color correction parameters with a project/scene pairing
+      summary: Save color-correction parameters for a particular scene
       tags:
         - Imagery
       parameters:
@@ -901,7 +906,7 @@ paths:
   /projects/{uuid}/order:
     x-resource: Projects
     get:
-      summary: An ordered list of scene IDs belonging to the specified project
+      summary: Get a list of scene IDs belonging to a project
       tags:
         - Imagery
       parameters:
@@ -911,7 +916,7 @@ paths:
         200:
           description: Order of scenes in project for mosaic purposes
     put:
-      summary: Create/update an ordering among scenes within the specified project
+      summary: Set a z-index order for scenes within the specified project
       tags:
         - Imagery
       parameters:
@@ -923,7 +928,7 @@ paths:
 
   /areas-of-interest/:
     get:
-      summary: Get all AOIs the user is authorized to view.
+      summary: Get a list of areas of interest
       tags:
         - Imagery
       parameters:
@@ -939,7 +944,7 @@ paths:
 
   /areas-of-interest/{uuid}/:
     get:
-      summary: Get a requested Area of Interest.
+      summary: Get a specific area of interest
       parameters:
         - $ref: '#/parameters/uuid'
       responses:
@@ -948,7 +953,7 @@ paths:
           schema:
             $ref: '#/definitions/AOI'
     put:
-      summary: Update an Area of Interest.
+      summary: Update an area of interest
       tags:
         - Imagery
       parameters:
@@ -970,7 +975,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
     delete:
-      summary: Delete a project.
+      summary: Delete a project
       tags:
         - Imagery
       parameters:
@@ -988,7 +993,7 @@ paths:
     get:
       summary: Get a list of map tokens
       description: |
-        Lists map tokens, automatically filtered by a user
+        Map tokens are filtered by user
       tags:
         - Imagery
       parameters:
@@ -1005,7 +1010,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
     post:
-      summary: Create a new map token
+      summary: Create a map token
       tags:
         - Imagery
       parameters:
@@ -1025,7 +1030,7 @@ paths:
   /map-tokens/{uuid}/:
     x-resource: Tokens
     get:
-      summary: Retrieve map token details
+      summary: Get map token details
       tags:
         - Imagery
       parameters:
@@ -1080,7 +1085,7 @@ paths:
   /images/:
     x-resource: Images
     get:
-      summary: Paginated list of project images
+      summary: Get a list of images in a project
       tags:
         - Imagery
       parameters:
@@ -1099,7 +1104,9 @@ paths:
           schema:
             $ref: '#/definitions/ImagePaginated'
     post:
-      summary: Create a new image not associated with any Project
+      summary: Create an image
+      description:  |
+        You must associate an image with a scene, either one you create for that image or an existing one that you are adding the newly created image to.
       tags:
         - Imagery
       parameters:
@@ -1116,7 +1123,7 @@ paths:
   /images/{uuid}:
     x-resource: Images
     get:
-      summary: Details of a Image
+      summary: Get the details of an image
       tags:
         - Imagery
       parameters:
@@ -1131,7 +1138,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
     put:
-      summary: Update a Image
+      summary: Update an image
       tags:
         - Imagery
       parameters:
@@ -1157,7 +1164,7 @@ paths:
   /thumbnails/:
     x-resource: Scenes
     get:
-      summary: Paginated list of thumbnails
+      summary: Get a list of thumbnails
       tags:
         - Imagery
       parameters:
@@ -1173,7 +1180,7 @@ paths:
   /thumbnails/{uuid}/:
     x-resource: Scenes
     get:
-      summary: Thumbnail details
+      summary: Get thumbnail details
       tags:
         - Imagery
       parameters:
@@ -1191,8 +1198,9 @@ paths:
     x-resource: Tokens
     get:
       summary: |
-        Retrieve a list of refresh token summaries. Note: Only names and identifiers are revealed,
-        refresh tokens themselves are only revealed once, when created for security purposes.
+        Get a list of refresh token summaries
+      description: |
+        Note: Only names and identifiers are revealed. Refresh tokens themselves are only revealed once (when they are created) for security purposes.
       tags:
         - Authentication
       responses:
@@ -1208,7 +1216,7 @@ paths:
             $ref: '#/definitions/Error'
     post:
       summary: |
-        Request a new JSON web token to use in requests using a refresh token
+        Request a new refresh token
       parameters:
         - name: refreshToken
           in: body
@@ -1246,7 +1254,7 @@ paths:
   /tools/:
     x-resource: Tools
     get:
-      summary: Lists tools that perform a set of geoprocessing/map algebra functions
+      summary: Get a list of tools
       tags:
         - Lab
       parameters:
@@ -1269,7 +1277,7 @@ paths:
         default:
           description: Error message if insufficient permissions
     post:
-      summary: Create a new geoprocessing tool
+      summary: Create a tool
       tags:
         - Lab
       responses:
@@ -1282,7 +1290,7 @@ paths:
   /tools/{uuid}/:
     x-resource: Tools
     get:
-      summary: Retrieve details for a single geoprocessing tool
+      summary: Get details for a particular tool
       tags:
         - Lab
       parameters:
@@ -1306,7 +1314,7 @@ paths:
         default:
           description: Delete unsuccessful, either object did not exist or insufficient permissions
     put:
-      summary: Update a geoprocessing tool
+      summary: Update a tool
       tags:
         - Lab
       parameters:
@@ -1319,7 +1327,7 @@ paths:
   /tool-tags/:
     x-resource: Tools
     get:
-      summary: List tool tags
+      summary: Get a list of tool tags
       tags:
         - Lab
       parameters:
@@ -1346,7 +1354,7 @@ paths:
   /tool-tags/{uuid}/:
     x-resource: Tools
     get:
-      summary: Get detail of a tool tag
+      summary: Get the details of a tool tag
       tags:
         - Lab
       parameters:
@@ -1359,7 +1367,7 @@ paths:
         404:
           description: Error message if insufficient permissions or tag does not exist
     delete:
-      summary: Delete a given tag
+      summary: Delete a tool tag
       tags:
         - Lab
       parameters:
@@ -1370,7 +1378,7 @@ paths:
         default:
           description: Error message if insufficient permissions to delete a tag
     put:
-      summary: Update a given tool tag
+      summary: Update a tool tag
       tags:
         - Lab
       parameters:
@@ -1383,7 +1391,7 @@ paths:
   /tool-categories/:
     x-resource: Tools
     get:
-      summary: Retrieve list of tool categories
+      summary: Get a list of tool categories
       parameters:
         - $ref: '#/parameters/search'
       tags:
@@ -1394,7 +1402,7 @@ paths:
           schema:
             $ref: '#/definitions/ToolCategoryPaginated'
     post:
-      summary: Create a new tool category
+      summary: Create a tool category
       tags:
         - Lab
       responses:
@@ -1405,7 +1413,7 @@ paths:
   /tool-categories/{slugLabel}/:
     x-resource: Tools
     get:
-      summary: Retrieve details of a tool category
+      summary: Get the details of a tool category
       tags:
         - Lab
       parameters:
@@ -1436,7 +1444,9 @@ paths:
   /tool-runs/:
     x-resource: Tools
     get:
-      summary: Retrieve a list of tool runs
+      summary: Get a list of tool runs
+      description: |
+        A tool run is a specific implementation of a tool. Tool runs can specify inputs and parameters neccessary to execute a tool.
       tags:
         - Lab
       parameters:
@@ -1450,7 +1460,7 @@ paths:
           schema:
             $ref: '#/definitions/ToolRunPaginated'
     post:
-      summary: Create a new tool run
+      summary: Create a tool run
       tags:
         - Lab
       responses:
@@ -1463,7 +1473,7 @@ paths:
   /tool-runs/{uuid}/:
     x-resource: Tools
     get:
-      summary: Retrieve details about a tool run
+      summary: Get details about a tool run
       tags:
         - Lab
       parameters:
@@ -1507,8 +1517,6 @@ paths:
     x-resource: Exports
     get:
       summary: Get a list of exports
-      description: |
-        The exprots API endpoint enables searching, listing, and creating new exports.
       tags:
         - Imagery
       parameters:
@@ -1551,7 +1559,7 @@ paths:
   /exports/{uuid}/:
     x-resource: Exports
     get:
-      summary: Retrieve export details
+      summary: Get export details
       tags:
         - Imagery
       parameters:
@@ -1606,7 +1614,7 @@ paths:
   /exports/{uuid}/definition:
     x-resource: Exports
     get:
-      summary: Retrieve export details
+      summary: Get export details
       tags:
         - Imagery
       parameters:
@@ -1627,7 +1635,7 @@ parameters:
   orderingBase:
     name: ordering
     in: query
-    description: Field to order results by; meaning of label varies based on tool
+    description: Field to order results; meaning of label varies based on endpoint
     type: array
     collectionFormat: pipes
     items:
@@ -1915,7 +1923,7 @@ parameters:
     required: true
   bbox:
     name: bbox
-    description: Bounding box. eg "bbox=southwest_lng,southwest_lat,northeast_lng,northeast_lat". Delimit multiple with semicolon.
+    description: Bounding box of the form "bbox=southwest_lng,southwest_lat,northeast_lng,northeast_lat". Delimit multiple with semicolons.
     in: query
     type: string
     required: false
@@ -1940,13 +1948,13 @@ parameters:
     required: false
   pending:
     name: pending
-    description: Filter by scene's acceptance for an AOI project
+    description: "Filter by scene's acceptance for an AOI project"
     in: query
     type: boolean
     required: false
   tool:
     name: toolId
-    description: Filter by tool\'s slug label
+    description: "Filter by tool's slug label"
     in: query
     type: string
     format: uuid
@@ -2122,7 +2130,7 @@ definitions:
     properties:
       createdBy:
         type: string
-        description: User who created the Object
+        description: User who created the object
         readOnly: true
       modifiedBy:
         type: string

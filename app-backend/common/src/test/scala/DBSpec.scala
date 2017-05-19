@@ -1,10 +1,10 @@
-package com.azavea.rf.api
+package com.azavea.rf.common
+
+import com.azavea.rf.database.{ Database, Config => DatabaseConfig }
+import com.azavea.rf.common.utils._
 
 import ammonite.ops._
-import com.azavea.rf.database.{ Database, Config => DatabaseConfig }
 import org.scalatest._
-
-import com.azavea.rf.api.utils._
 
 
 /**
@@ -26,7 +26,7 @@ trait DBSpec extends Suite with BeforeAndAfterAll with DatabaseConfig {
   override def beforeAll() {
     super.beforeAll()
     PGUtils.dropDB(jdbcNoDBUrl, dbname, dbUser, dbPassword)
-    PGUtils.copyDB(jdbcNoDBUrl, "testing_template", dbname, dbUser, dbPassword)
+    PGUtils.copyDB(jdbcNoDBUrl, InitializeDB.testDB, dbname, dbUser, dbPassword)
     db = new Database(jdbcNoDBUrl + dbname, dbUser, dbPassword)
   }
 
@@ -54,11 +54,14 @@ object InitializeDB extends DatabaseConfig {
   // Working directory, needed for running %sbt commands
   implicit val wd = cwd
 
+  import java.util.UUID
+  val seed = UUID.randomUUID().toString.replace("-", "_")
+  val testDB = s"testing_template${seed}"
   // Recreate the test database
-  PGUtils.dropDB(jdbcNoDBUrl, "testing_template", dbUser, dbPassword)
-  PGUtils.createDB(jdbcNoDBUrl, "testing_template", dbUser, dbPassword)
+  PGUtils.dropDB(jdbcNoDBUrl, testDB, dbUser, dbPassword)
+  PGUtils.createDB(jdbcNoDBUrl, testDB, dbUser, dbPassword)
 
   // Run migrations
-  %`./sbt`("mg init", POSTGRES_URL=s"${jdbcNoDBUrl}testing_template")
-  %`./sbt`(";mg update ;mg apply", POSTGRES_URL=s"${jdbcNoDBUrl}testing_template")
+  %`./sbt`("mg init", POSTGRES_URL=s"${jdbcNoDBUrl}${testDB}")
+  %`./sbt`(";mg update ;mg apply", POSTGRES_URL=s"${jdbcNoDBUrl}${testDB}")
 }
