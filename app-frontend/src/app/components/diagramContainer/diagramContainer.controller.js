@@ -35,16 +35,13 @@ export default class DiagramContainerController {
                     </button>
                 </div>
             </div>`;
-        this.coreToolsJson = this.toolService.getCoreTools();
         this.extractInputs();
         this.extractShapes();
         this.initDiagram();
     }
 
     getToolLabel(json) {
-        return json.label ||
-            (this.coreToolsJson[json.apply] ?
-            this.coreToolsJson[json.apply].label : json.apply);
+        return json.metadata.label || json.apply;
     }
 
     initDiagram() {
@@ -140,12 +137,12 @@ export default class DiagramContainerController {
         }, {
             label: 'View output',
             callback: () => {
-                this.onPreview({data: this.nodes.get(this.selectedCellView.model.id)});
+                this.onPreview({data: this.selectedCellView.model.id});
             }
         }, {
             label: 'Share',
             callback: () => {
-                this.onShare({data: this.nodes.get(this.selectedCellView.model.id)});
+                this.onShare({data: this.selectedCellView.model.id});
             }
         }];
         this.cancelComparisonMenu = [{
@@ -220,12 +217,12 @@ export default class DiagramContainerController {
 
             // Input nodes not of the layer type are not made into rectangles
             if (!input.type || input.type === 'layer') {
-                let rectInputs = args.filter(a => a.type === 'layer' || a.apply).length;
+                let rectInputs = args.length;
                 let rectOutputs = ['Output'];
                 let ports = this.createPorts(rectInputs, rectOutputs);
                 let currentId = nextId.toString();
                 let rectAttrs = {
-                    id: currentId,
+                    id: input.id,
                     label: this.getToolLabel(input),
                     inputs: rectInputs,
                     outputs: rectOutputs,
@@ -318,7 +315,7 @@ export default class DiagramContainerController {
     startComparison() {
         this.mousetipService.set('Select a node to compare');
         this.isComparing = true;
-        this.comparison[0] = this.nodes.get(this.selectedCellView.model.id);
+        this.comparison[0] = this.selectedCellView.model.id;
         this.showContextMenu(this.selectedCellView, this.cancelComparisonMenu);
     }
 
@@ -326,7 +323,7 @@ export default class DiagramContainerController {
         this.mousetipService.remove();
         this.hideContextMenu();
         this.isComparing = false;
-        this.comparison[1] = this.nodes.get(cv.model.id);
+        this.comparison[1] = cv.model.id;
         this.onPreview({data: this.comparison});
     }
 

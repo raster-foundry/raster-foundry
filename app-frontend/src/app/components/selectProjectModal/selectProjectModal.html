@@ -14,9 +14,7 @@
     <div class="list-group">
       <rf-project-item
           project="project"
-          selectable
-          selected="$ctrl.resolve.project.id === project.id"
-          on-select="$ctrl.setSelected(project)"
+          ng-click="$ctrl.setSelected(project)"
           ng-repeat="project in $ctrl.projectList track by project.id">
       </rf-project-item>
     </div>
