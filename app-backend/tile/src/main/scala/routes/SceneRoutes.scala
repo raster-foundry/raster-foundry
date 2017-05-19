@@ -2,7 +2,6 @@ package com.azavea.rf.tile.routes
 
 import com.azavea.rf.tile._
 import com.azavea.rf.datamodel.ColorCorrect
-import com.azavea.rf.datamodel.ColorCorrect.Params.colorCorrectParams
 import com.azavea.rf.tile.tool._
 import com.azavea.rf.tile.tool.ToolParams._
 
@@ -28,8 +27,8 @@ object SceneRoutes extends LazyLogging {
   def root: Route =
     pathPrefix(JavaUUID) { id =>
       pathPrefix("rgb") {
-        layerTileAndHistogram(id) { (futureMaybeTile, futureHist) =>
-          imageRoute(futureMaybeTile, futureHist)
+        layerTileAndHistogram(id) { (futureMaybeTile, _) =>
+          imageRoute(futureMaybeTile)
         } ~
         pathPrefix("thumbnail") {
           pathEndOrSingleSlash {
@@ -77,57 +76,41 @@ object SceneRoutes extends LazyLogging {
     HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/png`), png.bytes))
 
   def imageThumbnailRoute(id: UUID) =
-    colorCorrectParams { params =>
-      parameters('size.as[Int].?(256)) { size =>
+    parameters('size.as[Int].?(256)) { size =>
       complete {
-        val futureHist = LayerCache.layerHistogram(id, 0)
         val futureMaybeTile = StitchLayer(id, size)
-        val futureResponse = 
+        val futureResponse =
           for {
             tile <- futureMaybeTile
-            hist <- futureHist
           } yield {
-            val (rgbTile, rgbHist) = params.reorderBands(tile, hist)
-            pngAsHttpResponse(ColorCorrect(rgbTile, rgbHist, params).renderPng)
+            pngAsHttpResponse(tile.renderPng)
           }
         futureResponse.value
       }
     }
-  }
 
-  def imageHistogramRoute(id: UUID) =
-    colorCorrectParams { params =>
-      parameters('size.as[Int].?(64)) { size =>
-      import DefaultJsonProtocol._
-      complete {
-        val futureMaybeTile = StitchLayer(id, size)
-        val futureHist = LayerCache.layerHistogram(id, 0)
-        val futureResponse =
-          for {
-            tile <- futureMaybeTile
-            hist <- futureHist
-          } yield {
-            val (rgbTile, rgbHist) = params.reorderBands(tile, hist)
-            ColorCorrect(rgbTile, rgbHist, params).bands.map(_.histogram).toArray
-          }
-        futureResponse.value
-      }
+  def imageHistogramRoute(id: UUID) = {
+    import DefaultJsonProtocol._
+    complete {
+      val futureResponse =
+        for {
+          hist <- LayerCache.layerHistogram(id, 0).value
+        } yield {
+          hist.toArray
+        }
+      futureResponse.value
     }
   }
 
-  def imageRoute(futureMaybeTile: OptionT[Future, MultibandTile], futureHist: OptionT[Future, Array[Histogram[Double]]]): Route =
-    colorCorrectParams { params =>
-      complete {
-        val futureResponse =
-          for {
-            tile <- futureMaybeTile
-            hist <- futureHist
-          } yield {
-            val (rgbTile, rgbHist) = params.reorderBands(tile, hist)
-            pngAsHttpResponse(ColorCorrect(rgbTile, rgbHist, params).renderPng)
-          }
-        futureResponse.value
-      }
+  def imageRoute(futureMaybeTile: OptionT[Future, MultibandTile]): Route =
+    complete {
+      val futureResponse =
+        for {
+          tile <- futureMaybeTile
+        } yield {
+          pngAsHttpResponse(tile.renderPng)
+        }
+      futureResponse.value
     }
 
   def toolRoute(

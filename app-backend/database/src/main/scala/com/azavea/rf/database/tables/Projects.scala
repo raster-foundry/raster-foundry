@@ -13,6 +13,7 @@ import com.azavea.rf.database.fields._
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.sort._
 import com.azavea.rf.datamodel._
+import com.azavea.rf.datamodel.color._
 import com.lonelyplanet.akka.http.extensions._
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.slick.Projected
@@ -411,16 +412,16 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
                 SceneToProject(
                   sceneId, projectId, true, None, Some(
                     ColorCorrect.Params(
-                      redBand, greenBand, blueBand, // Bands
-                      None, None, None,             // Gamma
-                      None, None, None,             // Clipping Max: R,G,B
-                      None, None, None,             // Clipping Min: R,G,B
-                      None, None,                   // Contrast, Brightness
-                      None, None,                   // Alpha, Beta
-                      None, None,                   // Min, Max
-                      None,                         // Saturation
-                      false,                        // Equalize
-                      None                          // Auto White Balance
+                      redBand, greenBand, blueBand,             // Bands
+                      // Color corrections; everything starts out disabled (false) and null for now
+                      BandGamma(false, None, None, None),       // Gamma
+                      PerBandClipping(false, None, None, None,  // Clipping Max: R,G,B
+                                             None, None, None), // Clipping Min: R,G,B
+                      MultiBandClipping(false, None, None),     // Min, Max
+                      SigmoidalContrast(false, None, None),     // Alpha, Beta
+                      Saturation(false, None),                  // Saturation
+                      Equalization(false),                      // Equalize
+                      AutoWhiteBalance(false)                       // Auto White Balance
                     )
                   )
                 )

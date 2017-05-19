@@ -9,6 +9,7 @@ import concurrent.duration._
 import org.scalatest.{Matchers, WordSpec}
 
 import com.azavea.rf.datamodel._
+import com.azavea.rf.datamodel.color._
 import com.azavea.rf.api.scene._
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api._
@@ -285,16 +286,15 @@ class ProjectSceneSpec extends WordSpec
 
     "associate color correction parameters with a scene/project pairing and get that project's mosaic definition" in {
       val colorCorrectParams = ColorCorrect.Params(
-        1, 2, 3,                           // Band Order (R, G, B)
-        Some(0.53), Some(0.8), Some(0.32), // Gamma levels
-        None, None, None,                  // Clipping max
-        None, None, None,                  // Clipping min
-        Some(10), Some(20),                // Contrast, Brightness
-        None, None,                        // Alpha, Beta
-        None, None,                        // Min, Max
-        None,                              // Saturation
-        false,                             // Equalize?
-        Some(false)                        // Auto white-balance
+        1, 2, 3,                                            // Band Order (R, G, B)
+        BandGamma(true, Some(0.53), Some(0.8), Some(0.32)), // Gamma levels
+        PerBandClipping(false, None, None, None,            // Band clipping max
+                        None, None, None),                  // Band clipping min
+        MultiBandClipping(false, None, None),               // Tile clipping min, max
+        SigmoidalContrast(false, None, None),               // Alpha, Beta
+        Saturation(false, None),                            // Saturation
+        Equalization(false),                                // Equalize?
+        AutoWhiteBalance(false)                             // Auto white-balance
       )
 
       Get("/api/projects/").withHeaders(

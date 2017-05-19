@@ -2,6 +2,7 @@ package com.azavea.rf.batch.export.model
 
 import com.azavea.rf.batch.BatchSpec
 import com.azavea.rf.datamodel._
+import com.azavea.rf.datamodel.color._
 
 import io.circe.parser._
 import io.circe.syntax._
@@ -33,20 +34,37 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
                 redBand = 0,
                 greenBand = 1,
                 blueBand = 2,
-                redMax = Some(9), greenMax = Some(9), blueMax = Some(9),
-                redMin = None, greenMin = None, blueMin = None,
-                redGamma = Some(1d),
-                greenGamma = Some(2d),
-                blueGamma = Some(3d),
-                contrast = Some(4d),
-                brightness = Some(5),
-                alpha = Some(6d),
-                beta = Some(7d),
-                min = Some(8),
-                max = Some(9),
-                saturation = Some(1.0),
-                equalize = true,
-                autoBalance = Some(false)
+                bandClipping = PerBandClipping(
+                  enabled = true,
+                  redMax = Some(9), greenMax = Some(9), blueMax = Some(9),
+                  redMin = None, greenMin = None, blueMin = None
+                ),
+                gamma = BandGamma(
+                  enabled = true,
+                  redGamma = Some(1d),
+                  greenGamma = Some(2d),
+                  blueGamma = Some(3d)
+                ),
+                sigmoidalContrast = SigmoidalContrast(
+                  enabled = true,
+                  alpha = Some(6d),
+                  beta = Some(7d)
+                ),
+                tileClipping = MultiBandClipping(
+                  enabled = true,
+                  min = Some(8),
+                  max = Some(9)
+                ),
+                saturation = Saturation(
+                  enabled = true,
+                  saturation = Some(1.0)
+                ),
+                equalize = Equalization(
+                  enabled = true
+                ),
+                autoBalance = AutoWhiteBalance(
+                  enabled = false
+                )
               )
             )
           )

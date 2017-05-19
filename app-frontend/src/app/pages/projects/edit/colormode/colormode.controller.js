@@ -1,10 +1,11 @@
 export default class ProjectsEditColormode {
-    constructor($scope, $q, colorCorrectService) {
+    constructor($scope, $q, colorCorrectService, projectService) {
         'ngInject';
         this.$scope = $scope;
         this.$parent = $scope.$parent.$ctrl;
         this.$q = $q;
         this.colorCorrectService = colorCorrectService;
+        this.projectService = projectService;
 
         this.bands = {
             natural: {
@@ -44,30 +45,46 @@ export default class ProjectsEditColormode {
                 value: {redBand: 4, greenBand: 6, blueBand: 0}
             }
         };
+
+        this.currentBands = null;
+        this.correction = null;
+    }
+
+    $onInit() {
+        this.$parent.sceneListQuery.then(() => {
+            let layer = this.$parent.sceneLayers.values().next();
+            if (layer && layer.value) {
+                layer.value.getColorCorrection().then((correction) => {
+                    this.currentBands = {
+                        redBand: correction.redBand,
+                        greenBand: correction.greenBand,
+                        blueBand: correction.blueBand
+                    };
+                    this.correction = correction;
+                });
+            }
+        });
     }
 
     isActiveColorMode(key) {
-        let layer = this.$parent.sceneLayers.values().next();
-        let currentBands = {};
-        if (layer && layer.value) {
-            currentBands = layer.value.getCachedColorCorrection();
-        }
         let keyBands = this.bands[key].value;
 
-        let isActive = currentBands &&
-            keyBands.redBand === currentBands.redBand &&
-            keyBands.greenBand === currentBands.greenBand &&
-            keyBands.blueBand === currentBands.blueBand;
+        let isActive = this.currentBands &&
+            keyBands.redBand === this.currentBands.redBand &&
+            keyBands.greenBand === this.currentBands.greenBand &&
+            keyBands.blueBand === this.currentBands.blueBand;
         return isActive;
     }
 
     setBands(bandName) {
-        this.mosaic = this.$parent.mosaicLayer.values().next().value;
-        let promises = [];
-        this.$parent.sceneLayers.forEach((layer) => {
-            promises.push(layer.updateBands(this.$parent.unifiedComposites[bandName].value));
-        });
-        this.redrawMosaic(promises, this.$parent.unifiedComposites[bandName].value);
+        this.currentBands = this.bands[bandName].value;
+        this.correction = Object.assign(this.correction, this.currentBands);
+        const promise = this.colorCorrectService.bulkUpdate(
+            this.projectService.currentProject.id,
+            Array.from(this.$parent.sceneLayers.keys()),
+            this.correction
+        );
+        this.redrawMosaic(promise);
     }
 
     /**

@@ -92,27 +92,33 @@ export default class ChannelHistogramController {
             let corr = changesObj.corrections.currentValue;
             Object.assign(
                 this.clipping.rgb,
-                {min: corr.min, max: corr.max}
+                {min: corr.tileClipping.min, max: corr.tileClipping.max}
             );
             Object.assign(
                 this.clipping.red,
                 {
-                    min: Number.isInteger(corr.redMin) ? corr.redMin : corr.min,
-                    max: Number.isInteger(corr.redMax) ? corr.redMax : corr.max
+                    min: Number.isInteger(corr.bandClipping.redMin) ?
+                        corr.bandClipping.redMin : corr.tileClipping.min,
+                    max: Number.isInteger(corr.bandClipping.redMax) ?
+                        corr.bandClipping.redMax : corr.tileClipping.max
                 }
             );
             Object.assign(
                 this.clipping.green,
                 {
-                    min: Number.isInteger(corr.greenMin) ? corr.greenMin : corr.min,
-                    max: Number.isInteger(corr.greenMax) ? corr.greenMax : corr.max
+                    min: Number.isInteger(corr.bandClipping.greenMin) ?
+                        corr.bandClipping.greenMin : corr.tileClipping.min,
+                    max: Number.isInteger(corr.bandClipping.greenMax) ?
+                        corr.bandClipping.greenMax : corr.tileClipping.max
                 }
             );
             Object.assign(
                 this.clipping.blue,
                 {
-                    min: Number.isInteger(corr.blueMin) ? corr.blueMin : corr.min,
-                    max: Number.isInteger(corr.blueMax) ? corr.blueMax : corr.max
+                    min: Number.isInteger(corr.bandClipping.blueMin) ?
+                        corr.bandClipping.blueMin : corr.tileClipping.min,
+                    max: Number.isInteger(corr.bandClipping.blueMax) ?
+                        corr.bandClipping.blueMax : corr.tileClipping.max
                 }
             );
         }
