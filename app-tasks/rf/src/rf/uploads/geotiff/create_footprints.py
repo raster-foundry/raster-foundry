@@ -28,6 +28,7 @@ def create_tif_mask(temp_dir, local_tif_path):
     _, tile_mask_tif_path = tempfile.mkstemp(suffix='.TIF', dir=temp_dir)
     _, data_mask_tif_path = tempfile.mkstemp(suffix='.TIF', dir=temp_dir)
 
+    logger.info('Creating masks to extract footprints')
     with rasterio.open(local_tif_path) as src:
         kwargs = src.meta.copy()
         kwargs.update({
@@ -78,6 +79,7 @@ def transform_polygon_coordinates(feature, src_crs, target_crs):
     Returns:
         dict
     """
+    logger.info('Transforming footpring coordinates')
     copied_feature = feature.copy()
     coords_array = copied_feature['coordinates']
     for index, coords in enumerate(copied_feature['coordinates']):
@@ -103,7 +105,8 @@ def extract_polygon(mask_tif_path):
         src_affine = src.affine
 
     mask = np.ma.masked_equal(raster, 0)
-    geoms = shapes(raster, mask=mask.astype('bool'), transform=src_affine, connectivity=8)
+    logger.info('Extracting shapes from footprint masks')
+    geoms = shapes(raster, mask=mask.astype('bool'), transform=src_affine, connectivity=4)
 
     footprint, value = geoms.next()
     assert value == 255, 'Geometry should be of value 255, got %r' % value
@@ -124,19 +127,29 @@ def extract_footprints(organization_id, tif_path):
         tuple
     """
     logger.info('Beginning process to extract footprint for image:%s', tif_path)
-
     with get_tempdir() as temp_dir:
+
         _, resampled_tif_path = tempfile.mkstemp(suffix='.TIF', dir=temp_dir)
 
-        # Resample to a max width of 1024 (gdal sets height correctly when set to 0)
-        subprocess.check_call([
-            'gdalwarp', tif_path, resampled_tif_path,
-            '-ts', '1024', '0',
-            '-q'
-        ])
+        with rasterio.open(tif_path) as src:
+            y, x = src.shape
+
+            aspect = y / float(x)
+        x_size = 512
+        y_size = int(512 * aspect)
+
+        # Resample to a max width of 512
+        cmd = [
+            'gdal_translate', tif_path, resampled_tif_path,
+            '-outsize', str(x_size), str(y_size),
+        ]
+        logger.info('Running GDAL command: %s', ' '.join(cmd))
+
+        subprocess.check_call(cmd)
 
         tile_mask_tif_path, data_mask_tif_path = create_tif_mask(temp_dir, resampled_tif_path)
         data_footprint = extract_polygon(data_mask_tif_path)
         tile_footprint = extract_polygon(tile_mask_tif_path)
+
         return (Footprint(organization_id, tile_footprint),
                 Footprint(organization_id, data_footprint))
