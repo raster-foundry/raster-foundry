@@ -10,6 +10,7 @@ from rasterio.features import shapes
 
 from rf.models import Footprint
 from rf.uploads.landsat8.io import get_tempdir
+from rasterio.features import sieve
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +38,8 @@ def create_tif_mask(temp_dir, local_tif_path):
         })
 
         with rasterio.open(data_mask_tif_path, 'w', **kwargs) as dst:
-            dataset_mask = src.dataset_mask()
-            dst.write(dataset_mask, indexes=1)
+            mask = sieve(src.dataset_mask(), size=40)
+            dst.write(mask, indexes=1)
 
         with rasterio.open(tile_mask_tif_path, 'w', **kwargs) as dst:
             for _, window in src.block_windows(1):
