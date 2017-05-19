@@ -2,6 +2,7 @@
 
 Depends on having geotiff file already downloaded
 """
+import logging
 import os
 import subprocess
 
@@ -11,6 +12,9 @@ import rasterio
 from rf.models import Thumbnail
 
 from .io import get_geotiff_dimensions
+
+logger = logging.getLogger(__name__)
+
 
 def create_thumbnails(tif_path, scene_id, organization_id):
     """Creates thumbnails based on a geotiff path and scene
@@ -62,14 +66,14 @@ def create_thumbnails(tif_path, scene_id, organization_id):
 
     if os.path.isfile(tif_path):
         try:
-            # Resample tif
+
+            logger.info('Performing thumbnail resampling')
             subprocess.check_call([
-                'gdalwarp', tif_path, r_tif_path,
-                '-ts', str(dim_large[0]), str(dim_large[1]),
-                '-q'
+                'gdal_translate', tif_path, r_tif_path,
+                '-outsize', str(dim_large[0]), str(dim_large[1]),
             ])
 
-            # Reproject tif
+            logger.info('Performing thumbnail warping')
             subprocess.check_call([
                 'gdalwarp', r_tif_path, rp_tif_path,
                 '-t_srs', 'EPSG:3857',
@@ -90,6 +94,7 @@ def create_thumbnails(tif_path, scene_id, organization_id):
                 else:
                     bands = ['-b', '1']
 
+            logger.info('Creating thumbnail files')
             large_thumbnail_gdal_command = [
                 'gdal_translate', rp_tif_path, path_large,
                 '-outsize', str(dim_large[0]), str(dim_large[1]),
@@ -131,6 +136,7 @@ def create_thumbnails(tif_path, scene_id, organization_id):
             try_to_remove_files([r_tif_path, rp_tif_path, path_large, path_small])
             raise
         if os.path.isfile(path_large) and os.path.isfile(path_small):
+            logger.info('Uploading thumbnails to S3')
             s3_bucket_name = os.getenv('THUMBNAIL_BUCKET')
             s3_bucket = boto3.resource('s3').Bucket(s3_bucket_name)
             s3_bucket.upload_file(path_cc_large, os.path.basename(path_cc_large), {'ContentType': 'image/png'})
