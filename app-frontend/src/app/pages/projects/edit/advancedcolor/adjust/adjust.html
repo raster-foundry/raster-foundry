@@ -61,7 +61,7 @@
                      max=1
                      step=0.01
                      ng-model="$ctrl.sliderCorrection.alpha"
-                     ng-model-options="{ debounce: 250 }"
+                     ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
                      ng-change="$ctrl.onFilterChange('alpha', $ctrl.sliderCorrection.alpha)">
             </div>
             <div class="filter">
@@ -76,7 +76,7 @@
                      max=1
                      step=0.01
                      ng-model="$ctrl.sliderCorrection.beta"
-                     ng-model-options="{ debounce: 250 }"
+                     ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
                      ng-change="$ctrl.onFilterChange('beta', $ctrl.sliderCorrection.beta)">
             </div>
           </div>
@@ -115,7 +115,7 @@
                      max=2
                      step=0.01
                      ng-model="$ctrl.sliderCorrection.redGamma"
-                     ng-model-options="{ debounce: 250 }"
+                     ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
                      ng-change="$ctrl.onGammaFilterChange('redGamma', $ctrl.sliderCorrection.redGamma)">
             </div>
             <div class="filter">
@@ -133,8 +133,8 @@
                      max=2
                      step=0.01
                      ng-model="$ctrl.sliderCorrection.greenGamma"
-                     ng-model-options="{ debounce: 250 }"
-                     ng-change="$ctrl.onGammaFilterChange('greenGamma', $ctrl.sliderCorrection.greenGramma)">
+                     ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
+                     ng-change="$ctrl.onGammaFilterChange('greenGamma', $ctrl.sliderCorrection.greenGamma)">
             </div>
             <div class="filter">
               <label>
@@ -151,7 +151,7 @@
                      max=2
                      step=0.01
                      ng-model="$ctrl.sliderCorrection.blueGamma"
-                     ng-model-options="{ debounce: 250 }"
+                     ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
                      ng-change="$ctrl.onGammaFilterChange('blueGamma', $ctrl.sliderCorrection.blueGamma)">
             </div>
             <div class="filter-group-option">
@@ -178,7 +178,7 @@
                      type="number"
                      step="1"
                      ng-model="$ctrl.sliderCorrection.saturation"
-                     ng-model-options="{ debounce: 250 }"
+                     ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
                      ng-change="$ctrl.onFilterChange('saturation', $ctrl.sliderCorrection.saturation)">
             </div>
           </div>
