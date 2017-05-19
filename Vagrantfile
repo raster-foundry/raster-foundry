@@ -25,8 +25,10 @@ Vagrant.configure(2) do |config|
   config.vm.network :forwarded_port, guest: 9000, host: Integer(ENV.fetch("RF_PORT_9000", 9000))
   # tileserver
   config.vm.network :forwarded_port, guest: 9900, host: Integer(ENV.fetch("RF_PORT_9900", 9900))
-  # nginx
+  # nginx-api
   config.vm.network :forwarded_port, guest: 9100, host: Integer(ENV.fetch("RF_PORT_9100", 9100))
+  # nginx-tileserver
+  config.vm.network :forwarded_port, guest: 9101, host: Integer(ENV.fetch("RF_PORT_9101", 9101))
   # airflow webserver editor
   config.vm.network :forwarded_port, guest: 8080, host: Integer(ENV.fetch("RF_PORT_8080", 8080))
   # airflow flower editor
