@@ -193,7 +193,8 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
                       render = Some(exportOptions.render),
                       crop = exportOptions.crop,
                       stitch = exportOptions.stitch,
-                      source = exportOptions.source
+                      source = exportOptions.source,
+                      dropboxCredential = user.dropboxCredential
                     )
                   )
                 }

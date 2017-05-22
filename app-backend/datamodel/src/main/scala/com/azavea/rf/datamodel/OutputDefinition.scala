@@ -13,6 +13,7 @@ import java.net.URI
   * @param crop crop result rasters
   * @param stitch stitch result raster into one
   * @param source output source [[URI]]
+  * @param dropboxCredential dropbox token
   */
 @JsonCodec
 case class OutputDefinition(
@@ -21,5 +22,6 @@ case class OutputDefinition(
   render: Option[Render],
   crop: Boolean,
   stitch: Boolean,
-  source: URI
+  source: URI,
+  dropboxCredential: Option[String]
 )
