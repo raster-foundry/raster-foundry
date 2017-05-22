@@ -90,7 +90,8 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
         render = Some(Render(operation = "id", bands = Some(Array(1, 2, 3)))),
         crop = false,
         stitch = false,
-        source = new URI("s3://test/")
+        source = new URI("s3://test/"),
+        dropboxCredential = None
       )
     )
 

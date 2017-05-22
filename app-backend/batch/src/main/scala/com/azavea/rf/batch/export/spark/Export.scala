@@ -1,11 +1,12 @@
 package com.azavea.rf.batch.export.spark
 
 import io.circe.parser._
-
 import com.azavea.rf.datamodel._
 import com.azavea.rf.batch._
 import com.azavea.rf.batch.util._
 import com.azavea.rf.batch.export._
+import com.azavea.rf.batch.dropbox._
+import com.azavea.rf.batch.util.conf._
 
 import geotrellis.proj4.LatLng
 import geotrellis.raster._
@@ -24,10 +25,11 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark._
 import spray.json.DefaultJsonProtocol._
 import cats.implicits._
+import com.dropbox.core.v2.files.{CreateFolderErrorException, WriteMode}
 
 import java.util.UUID
 
-object Export extends SparkJob with LazyLogging {
+object Export extends SparkJob with Config with LazyLogging {
   val jobName = "Export"
 
   /** Get a LayerReader and an attribute store for the catalog located at the provided URI
@@ -122,10 +124,35 @@ object Export extends SparkJob with LazyLogging {
         if(output.crop) input.mask.fold(raster)(mp => raster.crop(mp.envelope.reproject(LatLng, md.crs)))
         else raster
 
-      GeoTiff(craster, md.crs).write(
-        new Path(s"${output.source.toString}/${input.resolution}-${UUID.randomUUID()}.tiff"),
-        wrappedConfiguration.get
-      )
+      def outputPath(root: String) = s"${root}/${input.resolution}-${UUID.randomUUID()}.tiff"
+      val geoTiff = GeoTiff(craster, md.crs)
+
+      output.source.getScheme match {
+        case "dropbox" if exportDefinition.output.dropboxCredential.isDefined => {
+          val client = dropboxConfig.client(exportDefinition.output.dropboxCredential.getOrElse(""))
+          try {
+            client
+              .files
+              .createFolder(output.source.getPath)
+          } catch {
+            case e: CreateFolderErrorException =>
+              logger.warn(s"Target Path already exists, ${e.errorValue}")
+          }
+          geoTiff.dropboxWrite { is =>
+            try {
+              client
+                .files
+                .uploadBuilder(outputPath(output.source.getPath))
+                .withMode(WriteMode.OVERWRITE)
+                .uploadAndFinish(is)
+                .getId
+                .split("id:")
+                .last
+            } finally is.close()
+          }
+        }
+        case _ => geoTiff.write(new Path(outputPath(output.source.toString)), wrappedConfiguration.get)
+      }
     }
   }
 

@@ -3156,6 +3156,9 @@ definitions:
         description: output export path
       render:
         $ref: '#/definitions/Render'
+      dropboxCredential:
+        type: string
+        description: Dropbox token
   Render:
     type: object
     properties:

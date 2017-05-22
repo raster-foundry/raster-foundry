@@ -1,7 +1,7 @@
 package com.azavea.rf.batch
 
 import com.azavea.rf.batch.export.spark.Export
-import com.azavea.rf.batch.export.airflow.{CreateExportDef, S3Copy}
+import com.azavea.rf.batch.export.airflow.{CreateExportDef, DropboxCopy, S3Copy}
 import com.azavea.rf.batch.ingest.spark.Ingest
 import com.azavea.rf.batch.landsat8.airflow.ImportLandsat8
 import com.azavea.rf.batch.sentinel2.airflow.ImportSentinel2
@@ -16,7 +16,8 @@ object Main {
     CreateExportDef.name  -> (CreateExportDef.main(_)),
     FindAOIProjects.name  -> (FindAOIProjects.main(_)),
     UpdateAOIProject.name -> (UpdateAOIProject.main(_)),
-    S3Copy.name           -> (S3Copy.main(_))
+    S3Copy.name           -> (S3Copy.main(_)),
+    DropboxCopy.name      -> (DropboxCopy.main(_))
   )
 
   def main(args: Array[String]): Unit = {
