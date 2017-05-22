@@ -5,6 +5,7 @@ import scala.util.{Success, Failure, Try}
 import org.apache.commons.io.IOUtils
 
 import com.amazonaws.auth._
+import com.amazonaws.regions._
 import com.amazonaws.services.s3.{AmazonS3ClientBuilder, AmazonS3URI}
 import com.amazonaws.services.s3.model.{S3Object, ObjectMetadata}
 
@@ -12,9 +13,10 @@ import java.io._
 import java.net._
 
 package object S3 {
-  val builder = AmazonS3ClientBuilder.standard()
-  builder.setRegion("us-east-1")
-  val client = builder.build()
+  val client = AmazonS3ClientBuilder.standard()
+    .withCredentials(new DefaultAWSCredentialsProviderChain())
+    .withRegion(Regions.US_EAST_1)
+    .build()
 
   def getObject(uri: URI): S3Object = {
     val s3uri = new AmazonS3URI(uri)
