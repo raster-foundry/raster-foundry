@@ -83,6 +83,7 @@ export default class ProjectsEditColormode {
         }
         this.mosaic.getColorCorrection().then((lastCorrection) => {
             let ccParams = this.mosaic.paramsFromObject(lastCorrection);
+            ccParams.tag = new Date().getTime();
             return Object.assign(ccParams, newBands);
         }).then((newCorrection) => {
             this.$q.all(promises).then(() => {

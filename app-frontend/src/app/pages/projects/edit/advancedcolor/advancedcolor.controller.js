@@ -245,6 +245,7 @@ export default class ProjectsAdvancedColorController {
         return promise.then(() => {
             this.mosaic().getMosaicTileLayer().then((tiles) => {
                 let newParams = this.mosaic().paramsFromObject(newCorrection);
+                newParams.tag = new Date().getTime();
                 this.mosaic().getMosaicLayerURL(newParams).then((url) => {
                     tiles.setUrl(url);
                 });
