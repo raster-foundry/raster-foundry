@@ -1,11 +1,13 @@
 export default class AOIApproveController {
-    constructor($scope, $state, $q, $log, projectService) {
+    constructor($scope, $state, $q, $log, projectService, mapService) {
         'ngInject';
         this.$parent = $scope.$parent.$ctrl;
         this.$state = $state;
         this.$q = $q;
         this.$log = $log;
         this.projectService = projectService;
+        this.mapService = mapService;
+        this.getMap = () => this.mapService.getMap('edit');
     }
 
     $onInit() {
@@ -70,6 +72,22 @@ export default class AOIApproveController {
         } else {
             this.approveAllScenes();
         }
+    }
+
+    setHoveredScene(scene) {
+        if (scene !== this.hoveredScene) {
+            this.hoveredScene = scene;
+            this.getMap().then((map) => {
+                map.setThumbnail(scene);
+            });
+        }
+    }
+
+    removeHoveredScene() {
+        this.getMap().then((map) => {
+            delete this.hoveredScene;
+            map.deleteThumbnail();
+        });
     }
 
     getSceneStatusCount() {

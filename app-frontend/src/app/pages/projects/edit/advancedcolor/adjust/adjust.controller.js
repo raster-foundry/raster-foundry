@@ -81,18 +81,11 @@ export default class ProjectsColorAdjustController {
             id: 'alpha',
             onEnd: (id, val) => this.onFilterChange(id, val, this.alphaOptions)
         }, alphaOptions);
+
         this.betaOptions = Object.assign({
             id: 'beta',
             onEnd: (id, val) => this.onFilterChange(id, val, this.betaOptions)
         }, betaOptions);
-
-        this.minMaxOptions = Object.assign({
-            id: 'minmax',
-            onEnd: (id, low, high) => {
-                this.onFilterChange('min', low, this.minMaxOptions);
-                this.onFilterChange('max', high, this.minMaxOptions);
-            }
-        }, minMaxOptions);
 
         this.gammaLinkToggle = true;
 
@@ -194,9 +187,7 @@ export default class ProjectsColorAdjustController {
             blueGamma: 1,
             saturation: 1,
             alpha: 0.2,
-            beta: 13,
-            min: 0,
-            max: 65535
+            beta: 13
         };
         let correction = this.correction;
         if (this.gammaToggle.value) {
@@ -223,14 +214,6 @@ export default class ProjectsColorAdjustController {
             }
             if (correction.beta === null) {
                 correction.beta = defaults.beta;
-            }
-        }
-        if (this.minMaxToggle.value) {
-            if (correction.min === null) {
-                correction.min = defaults.min;
-            }
-            if (correction.max === null) {
-                correction.max = defaults.max;
             }
         }
     }
@@ -306,17 +289,6 @@ export default class ProjectsColorAdjustController {
         if (!value) {
             this.correction.alpha = null;
             this.correction.beta = null;
-        }
-        this.setDefaultsForEnabled();
-        this.onFilterChange();
-    }
-
-    minMaxToggled() {
-        const value = !this.minMaxToggle.value;
-        this.minMaxToggle.value = value;
-        if (!value) {
-            this.correction.min = null;
-            this.correction.max = null;
         }
         this.setDefaultsForEnabled();
         this.onFilterChange();
