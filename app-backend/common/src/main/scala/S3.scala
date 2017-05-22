@@ -12,10 +12,11 @@ import java.io._
 import java.net._
 
 package object S3 {
+  val builder = AmazonS3ClientBuilder.standard()
+  builder.setRegion("us-east-1")
+  val client = builder.build()
+
   def getObject(uri: URI): S3Object = {
-    val client = AmazonS3ClientBuilder.standard()
-      .withCredentials(new DefaultAWSCredentialsProviderChain())
-      .build()
     val s3uri = new AmazonS3URI(uri)
     Try(client.getObject(s3uri.getBucket, s3uri.getKey)) match {
       case Success(o) => o
@@ -38,10 +39,6 @@ package object S3 {
   }
 
   def putObject(bucket: String, key: String, contents: String): String = {
-    val client = AmazonS3ClientBuilder.standard()
-      .withCredentials(new DefaultAWSCredentialsProviderChain())
-      .build()
-
     Try(client.putObject(bucket, key, contents)) match {
       case Success(_) => contents
       case Failure(ex) => throw new Exception(ex)
