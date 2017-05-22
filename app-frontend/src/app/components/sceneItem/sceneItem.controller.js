@@ -39,7 +39,9 @@ export default class SceneItemController {
 
     toggleSelected(event) {
         this.onSelect({scene: this.scene, selected: !this.selectedStatus});
-        event.stopPropagation();
+        if (event) {
+            event.stopPropagation();
+        }
     }
 
     onAction(event) {
