@@ -1,9 +1,10 @@
 export default class ProjectsEditColormode {
-    constructor($scope, $q) {
+    constructor($scope, $q, colorCorrectService) {
         'ngInject';
         this.$scope = $scope;
         this.$parent = $scope.$parent.$ctrl;
         this.$q = $q;
+        this.colorCorrectService = colorCorrectService;
 
         this.bands = {
             natural: {
@@ -91,6 +92,11 @@ export default class ProjectsEditColormode {
                         tiles.setUrl(url);
                     });
                 });
+                this.colorCorrectService.bulkUpdate(
+                    this.$parent.project.id,
+                    Array.from(this.$parent.sceneList.map((scene) => scene.id)),
+                    newCorrection
+                );
             });
         });
     }

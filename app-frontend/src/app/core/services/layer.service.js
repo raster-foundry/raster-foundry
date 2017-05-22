@@ -207,12 +207,19 @@ export default (app) => {
                 redGamma: object.redGamma,
                 greenGamma: object.greenGamma,
                 blueGamma: object.blueGamma,
+                redMax: object.redMax,
+                blueMax: object.blueMax,
+                greenMax: object.greenMax,
+                redMin: object.redMin,
+                blueMin: object.blueMin,
+                greenMin: object.greenMin,
                 brightness: object.brightness,
                 contrast: object.contrast,
                 alpha: object.alpha,
                 beta: object.beta,
                 min: object.min,
                 max: object.max,
+                equalize: object.equalize,
                 tag: object.tag ? object.tag : (new Date()).getTime()
             };
         }
