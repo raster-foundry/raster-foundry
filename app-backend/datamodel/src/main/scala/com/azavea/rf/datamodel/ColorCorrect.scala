@@ -13,7 +13,6 @@ import geotrellis.raster.crop._
 import geotrellis.raster.equalization.HistogramEqualization
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.sigmoidal.SigmoidalContrast
-import geotrellis.raster.stitch
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 
@@ -135,38 +134,27 @@ object WhiteBalance {
     else z
   }
 
-  def stitch(pieces: List[(MultibandTile, (Int, Int))], cols: Int, rows: Int): MultibandTile = {
-    val headTile = pieces.head._1
-    val bands = Array.fill[MutableArrayTile](headTile.bandCount)(ArrayTile.empty(headTile.cellType, cols, rows))
+  def apply(rgbTiles: List[MultibandTile]): List[MultibandTile] = {
+    val tileAdjs = rgbTiles.par.map(t => tileRgbAdjustments(t)).toList.foldLeft((0.0, 0.0, 0.0))((acc, x) => {
+      (acc._1 + (x._1 / rgbTiles.length), acc._2 + (x._2 / rgbTiles.length), acc._3 + (x._3 / rgbTiles.length))
+    })
 
-    for ((tile, (updateColMin, updateRowMin)) <- pieces) {
-      for(b <- 0 until headTile.bandCount) {
-        bands(b).update(updateColMin, updateRowMin, tile.band(b))
-      }
-    }
-
-    ArrayMultibandTile(bands)
+    val newTiles = 
+      rgbTiles
+        .map(t => MultibandTile(
+          t.band(0).mapIfSet(c => clamp8Bit((c * tileAdjs._1).toInt)),
+          t.band(1).mapIfSet(c => clamp8Bit((c * tileAdjs._2).toInt)),
+          t.band(2).mapIfSet(c => clamp8Bit((c * tileAdjs._3).toInt))))
+        .map(_.convert(UByteConstantNoDataCellType))
+    
+    newTiles
   }
 
-  def apply(rgbTile: MultibandTile): MultibandTile = {
-    val tileSegments = 16
-    val rowWidth = rgbTile.rows/tileSegments
-    val splitTile = rgbTile.split(cols=rgbTile.cols, rows=(rgbTile.rows / tileSegments).toInt)
-    val tiles =
-      splitTile
-        .map(t => (t, 0, 0))
-        .foldLeft(List[(MultibandTile, Int, Int)]())((acc, x) => {
-          if (acc.length == 0) {
-            x :: acc
-          } else {
-            (x._1, 0, (acc.head._3 + rowWidth)) :: acc
-          }
-        })
-
+  def tileRgbAdjustments(rgbTile: MultibandTile): (Double, Double, Double) = {
     try {
-      val newTiles = tiles.map(t => (adjustGrey(t._1, 0, false), (t._2, t._3)))
-      val newTile = stitch(newTiles.toList, cols=rgbTile.cols, rows=rgbTile.rows)
-      newTile.convert(UByteConstantNoDataCellType)
+      val resampledTile = rgbTile.resample(128, 128)
+      val newTileAdjs = adjustGrey(resampledTile, (1.0, 1.0, 1.0), 0, false)
+      newTileAdjs
     } catch {
       case ex:Exception => {
         val sw = new StringWriter
@@ -232,38 +220,10 @@ object WhiteBalance {
     array.map(_.toList).toList
   }
   
-  def mapTile(rgbTile:MultibandTile, f: Array[Int] => Array[Int]): MultibandTile  = {
-    val (nred, ngreen, nblue) = (
-      ArrayTile.alloc(rgbTile.cellType, rgbTile.cols, rgbTile.rows),
-      ArrayTile.alloc(rgbTile.cellType, rgbTile.cols, rgbTile.rows),
-      ArrayTile.alloc(rgbTile.cellType, rgbTile.cols, rgbTile.rows)
-    )
-
-    cfor(0)(_ < rgbTile.rows, _ + 1) { row =>
-      cfor(0)(_ < rgbTile.cols, _ + 1) { col =>
-        val bandValues = Array.ofDim[Int](rgbTile.bandCount)
-        cfor(0)(_ < rgbTile.bandCount, _ + 1) { band =>
-          bandValues(band) = rgbTile.bands(band).get(col, row)
-        }
-        bandValues.toList match {
-          case (r :: g :: b :: xs) if (isData(r) && isData(g) && isData(b)) => {
-            val newVals = f(bandValues)
-            nred.set(col, row, newVals(0))
-            ngreen.set(col, row, newVals(1))
-            nblue.set(col, row, newVals(2))
-          }
-          case _ => { }
-        }
-      }
-    }
-
-    MultibandTile(nred, ngreen, nblue)
-  }
-  
   @tailrec
-  def adjustGrey(rgbTile:MultibandTile, iter:Int, converged:Boolean):MultibandTile = {
+  def adjustGrey(rgbTile:MultibandTile, adjustments:(Double, Double, Double), iter:Int, converged:Boolean):(Double, Double, Double) = {
     if (iter>=balanceParams.maxIter || converged) {
-      rgbTile
+      adjustments
     } else {
       // convert tile to YUV
       val tileYuv = mapBands(rgbTile, (rgb) => {
@@ -310,18 +270,15 @@ object WhiteBalance {
         case _ => balanceParams.gainIncr * err
       })
 
-      val channelGain = if (abs(uBar) > abs(vBar)) List((1 - gainVal), 1, 1) else List(1, 1, (1 - gainVal))
+      val channelGain = if (abs(vBar) > abs(uBar)) List((1 - gainVal), 1, 1) else List(1, 1, (1 - gainVal))
+      val newAdjustments = (adjustments._1 * channelGain(0), adjustments._2 * channelGain(1), adjustments._3 * channelGain(2))
 
-      val adjustedTile = mapTile(rgbTile, (arr) => {
-        (for {
-          r :: g :: b :: xs <- Some(arr.toList)
-          nr :: ng :: nb :: xs <- Some(channelGain)
-        } yield {
-          ((r*nr) :: (g*ng) :: (b*nb) :: Nil).map(_.toInt).map(i => clamp8Bit(i))
-        }).getOrElse(arr.toList).toArray
-      })
+      val balancedTile = MultibandTile(
+        rgbTile.band(0).mapIfSet(c => clamp8Bit((c*channelGain(0)).toInt)),
+        rgbTile.band(1).mapIfSet(c => clamp8Bit((c*channelGain(1)).toInt)),
+        rgbTile.band(2).mapIfSet(c => clamp8Bit((c*channelGain(2)).toInt)))
 
-      adjustGrey(adjustedTile, iter + 1, if (gainVal == 0) true else false)
+      adjustGrey(balancedTile, newAdjustments, iter + 1, if (gainVal == 0) true else false)
     }
   }
   
@@ -340,7 +297,7 @@ object ColorCorrect {
     min: Option[Int], max: Option[Int],
     saturation: Option[Double],
     equalize: Boolean,
-    autoBalance: Boolean
+    autoBalance: Option[Boolean]
   ) {
     def reorderBands(tile: MultibandTile, hist: Seq[Histogram[Double]]): (MultibandTile, Array[Histogram[Double]]) =
       (tile.subsetBands(redBand, greenBand, blueBand), Array(hist(redBand), hist(greenBand), hist(blueBand)))
@@ -363,7 +320,7 @@ object ColorCorrect {
         "min".as[Int].?, "max".as[Int].?,
         "saturation".as[Double].?,
         'equalize.as[Boolean].?(false),
-        'autoBalance.as[Boolean].?(false)
+        'autoBalance.as[Boolean].?
       ).as(ColorCorrect.Params.apply _)
   }
 
@@ -475,15 +432,11 @@ object ColorCorrect {
       for (saturationFactor <- params.saturation)
         yield SaturationAdjust(_: MultibandTile, saturationFactor)
 
-    val maybeWhiteBalance =
-      if (params.autoBalance) Some(WhiteBalance(_:MultibandTile)) else None
-
 
     // Sequence of transformations to tile, flatten removes None from the list
     val transformations: List[MultibandTile => MultibandTile] = List(
       maybeEqualize,
       maybeClipBands(layerNormalizeArgs),
-      maybeWhiteBalance,
       maybeAdjustBrightness,
       maybeAdjustGamma,
       maybeAdjustContrast,

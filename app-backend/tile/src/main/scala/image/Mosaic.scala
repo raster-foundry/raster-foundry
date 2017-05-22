@@ -2,7 +2,7 @@ package com.azavea.rf.tile.image
 
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.ScenesToProjects
-import com.azavea.rf.datamodel.MosaicDefinition
+import com.azavea.rf.datamodel.{MosaicDefinition, WhiteBalance}
 import com.azavea.rf.common.cache._
 
 import com.github.blemale.scaffeine.{ Cache => ScaffeineCache, Scaffeine }
@@ -141,9 +141,18 @@ object Mosaic {
 
     val zoom: Int = zoomOption.getOrElse(8)
 
+    val colorCorrectionParams = mosaicDefinition(projectId, None).map { mosaic =>
+      mosaic.map { case MosaicDefinition(sceneId, maybeColorCorrectParams) =>
+        maybeColorCorrectParams.map { colorCorrectParams => {
+          println(s"Autobalance: ${colorCorrectParams.autoBalance}")
+          colorCorrectParams.autoBalance
+        }}.flatten
+      }.flatten.foldLeft(true)((acc, x) => acc && x)
+    }
+
     mosaicDefinition(projectId, None).flatMap { mosaic =>
-      val mayhapTiles: Seq[OptionT[Future, MultibandTile]] =
-        mosaic.flatMap { case MosaicDefinition(sceneId, maybeColorCorrectParams) =>
+      val mayhapTiles: Seq[OptionT[Future, MultibandTile]] = {
+        val tiles = mosaic.flatMap { case MosaicDefinition(sceneId, maybeColorCorrectParams) =>
           maybeColorCorrectParams.map { colorCorrectParams =>
             Mosaic.fetchRenderedExtent(sceneId, zoom, bboxPolygon).flatMap { tile =>
               if (colorCorrect) {
@@ -157,17 +166,26 @@ object Mosaic {
             }
           }.toSeq
         }
+        tiles
+      }
 
-      val futureMergeTile: Future[Option[MultibandTile]] =
+      val futureMergeTile =
         Future.sequence(mayhapTiles.map(_.value)).map { maybeTiles =>
           val tiles = maybeTiles.flatten
-          if (tiles.nonEmpty)
-            Option(tiles.reduce(_ merge _))
-          else
-            Option.empty[MultibandTile]
+          val balancedTiles = for {
+            balance <- colorCorrectionParams
+          } yield {
+            val newTiles =
+              if (balance)
+                WhiteBalance(tiles.toList).toSeq
+              else
+                tiles
+            newTiles.reduce(_ merge _)
+          }
+          balancedTiles.value
         }
 
-      OptionT(futureMergeTile)
+      OptionT(futureMergeTile.flatMap(identity))
     }
   }
 
@@ -189,6 +207,13 @@ object Mosaic {
     // Lookup project definition
     // tag present, include in lookup to re-use cache
     // no tag to control cache rollover, so don't cache
+    val colorCorrectionParams = mosaicDefinition(projectId, None).map { mosaic =>
+      mosaic.map { case MosaicDefinition(sceneId, maybeColorCorrectParams) =>
+        maybeColorCorrectParams.map { colorCorrectParams => {
+          colorCorrectParams.autoBalance
+        }}.flatten
+      }.flatten.foldLeft(true)((acc, x) => acc && x)
+    }
     mosaicDefinition(projectId, tag.map(s => TagWithTTL(tag=s, ttl=60.seconds))).flatMap { mosaic =>
       val mayhapTiles: Seq[OptionT[Future, MultibandTile]] =
         mosaic.flatMap { case MosaicDefinition(sceneId, maybeColorCorrectParams) =>
@@ -206,16 +231,23 @@ object Mosaic {
           }
         }
 
-      val futureMergeTile: Future[Option[MultibandTile]] =
+      val futureMergeTile =
         Future.sequence(mayhapTiles.map(_.value)).map { maybeTiles =>
           val tiles = maybeTiles.flatten
-          if (tiles.nonEmpty)
-            Option(tiles.reduce(_ merge _))
-          else
-            Option.empty[MultibandTile]
+          val balancedTiles = for {
+            balance <- colorCorrectionParams
+          } yield {
+            val newTiles =
+              if (balance)
+                WhiteBalance(tiles.toList).toSeq
+              else
+                tiles
+            newTiles.reduce(_ merge _)
+          }
+          balancedTiles.value
         }
 
-      OptionT(futureMergeTile)
+      OptionT(futureMergeTile.flatMap(identity))
     }
   }
 }
