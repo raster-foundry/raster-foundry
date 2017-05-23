@@ -1,6 +1,8 @@
 <div class="panel-body">
-  <h4 class="project-title">{{$ctrl.project.name}}</h4>
-  <rf-status-tag ng-if="$ctrl.status" entity-type="project" status="$ctrl.status"></rf-status-tag>
+  <div class="tag-container">
+    <h4 class="project-title">{{$ctrl.project.name}}</h4>
+    <rf-status-tag ng-if="$ctrl.status" entity-type="project" status="$ctrl.status"></rf-status-tag>
+  </div>
   <div class="row">
     <div class="column noflex">
       <div class="dropdown btn-group" uib-dropdown ng-if="!$ctrl.isSelectable">

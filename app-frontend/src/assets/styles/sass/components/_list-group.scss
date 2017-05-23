@@ -1,5 +1,4 @@
 .list-group {
-  position: relative;
   &.load-message {
     text-align: center;
     font-size: 1.25em;
@@ -10,7 +9,6 @@
 .list-placeholder {
   padding: 1.5rem;
   display: flex;
-  position: relative;
   justify-content: center;
   opacity: .5;
 
@@ -44,7 +42,6 @@
   margin: 0 0 0 3rem;
   display: flex;
   align-items: center;
-  position: relative;
   border-left: 1px solid #ddd;
   border-right: 1px solid #ddd;
   border-bottom: 1px solid #ddd;
@@ -71,7 +68,7 @@
   border-bottom: 1px solid #ddd;
   display: flex;
   align-items: center;
-  position: relative;
+
   > * {
     margin: 0 5px;
   }
@@ -87,8 +84,6 @@
 
   .list-group-right {
     margin-left: auto;
-    position: relative;
-    z-index: 1;
     text-align: right;
 
     > * {
