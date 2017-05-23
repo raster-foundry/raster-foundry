@@ -15,6 +15,7 @@ import _root_.io.circe.parser._
 import cats.data.Validated._
 import cats.implicits._
 import com.azavea.rf.batch.util._
+import com.azavea.rf.common.InterpreterException
 import com.azavea.rf.database.Database
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast.MapAlgebraAST
@@ -55,7 +56,7 @@ object Export extends SparkJob with Config with LazyLogging {
     conf: HadoopConfiguration
   )(implicit sc: SparkContext): Unit = {
     interpretRDD(ast, params.sources, ed.input.resolution) match {
-      case Invalid(errs) => ???
+      case Invalid(errs) => throw new InterpreterException(errs)
       case Valid(rdd) => {
 
         val mt: MapKeyTransform = rdd.metadata.layout.mapTransform
