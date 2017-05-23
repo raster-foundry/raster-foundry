@@ -3,8 +3,11 @@
     <button type="button" class="close" aria-label="Close" ng-click="$ctrl.dismiss()">
       <span aria-hidden="true">&times;</span>
     </button>
-    <h4 class="modal-title">
+    <h4 class="modal-title" ng-if="!$ctrl.resolve.project">
       Start an Import
+    </h4>
+    <h4 class="modal-title" ng-if="$ctrl.resolve.project">
+      Import into {{$ctrl.resolve.project.name}}
     </h4>
     <p>Import your imagery from various sources</p>
   </div>

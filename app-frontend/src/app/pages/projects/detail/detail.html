@@ -48,7 +48,7 @@
               </form>
             </div>
             </div>
-            <a href ui-sref="projects.edit({projectid: $ctrl.project.id})"
+            <a ui-sref="projects.edit({projectid: $ctrl.project.id})"
                class="btn btn-primary btn-small">
               <i class="icon-edit"></i> Edit project
             </a>
@@ -61,7 +61,7 @@
                 scene="scene"
                 ng-repeat="scene in $ctrl.sceneList track by scene.id"
                 ng-click="$ctrl.openSceneDetailModal(scene)">
-              <a href class="link-light" ng-click="$ctrl.removeScene(scene, $event)">Remove from Project</a>
+              <a class="link-light" ng-click="$ctrl.removeScene(scene, $event)">Remove from Project</a>
             </rf-scene-item>
           </div>
           <!-- Scene List -->
@@ -93,7 +93,7 @@
           <div class="list-group" ng-show="$ctrl.errorMsg">
             <span class="list-placeholder">
               {{$ctrl.errorMsg}}
-              <a href ng-click="$ctrl.populateSceneList(1)">Try again</a>
+              <a ng-click="$ctrl.populateSceneList(1)">Try again</a>
             </span>
           </div>
           <!-- Reload? Scene list -->
@@ -130,14 +130,17 @@
             <section class="aside-footer">
               <ul class="list-unstyled m-0">
                 <li>
-                  <a href class="link-light" ui-sref="projects.edit.browse({projectid: $ctrl.project.id})"><i class="icon-plus"></i> Add scenes</a>
+                  <a class="link-light" ui-sref="projects.edit.browse({projectid: $ctrl.project.id})"><i class="icon-plus"></i> Add scenes</a>
                 </li>
                 <li>
-                  <a href class="link-light" ng-click="$ctrl.publishModal()"><i class="icon-share"></i> Share</a>
+                  <a class="link-light" ng-click="$ctrl.openImportModal()"><i class="icon-plus"></i> Import scenes</a>
+                </li>
+                <li>
+                  <a class="link-light" ng-click="$ctrl.publishModal()"><i class="icon-share"></i> Share</a>
                 </li>
                 <hr>
                 <li>
-                  <a href class="link-danger" ng-click="$ctrl.deleteProject()"><i class="icon-trash"></i>Delete</a>
+                  <a class="link-danger" ng-click="$ctrl.deleteProject()"><i class="icon-trash"></i>Delete</a>
                 </li>
               </ul>
             </section>

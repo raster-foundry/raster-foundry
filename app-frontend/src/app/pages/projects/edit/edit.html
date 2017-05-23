@@ -18,9 +18,16 @@
           </div>
         </li>
         <li>
-          <span class="label">Add/Remove Scenes</span>
-          <button class="btn btn-primary fixedwidth" type="button" ui-sref="projects.edit.scenes">
+          <span class="label">Scene Management</span>
+          <a class="btn btn-primary fixedwidth" ui-sref="projects.edit.scenes">
             Add/Remove scenes
+          </a>
+          <i class="icon-info"></i>
+        </li>
+        <li>
+          <span class="label"></span>
+          <button class="btn btn-primary fixedwidth" ng-click="$ctrl.openImportModal()">
+            Import Scenes
           </button>
           <i class="icon-info"></i>
         </li>
