@@ -13,7 +13,7 @@ import java.io._
 import java.net._
 
 package object S3 {
-  def client = AmazonS3ClientBuilder.standard()
+  lazy val client = AmazonS3ClientBuilder.standard()
     .withCredentials(new DefaultAWSCredentialsProviderChain())
     .withRegion(Regions.US_EAST_1)
     .build()
