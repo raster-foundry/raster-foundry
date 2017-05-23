@@ -51,7 +51,8 @@ class DatasourceSpec extends WordSpec
     min = Some(0),
     max = Some(20000),
     saturation = Some(1.0),
-    equalize = false
+    equalize = false,
+    autoBalance = Some(false)
   ).asJson
 
   val datasource1 = Datasource.Create(

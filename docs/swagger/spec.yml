@@ -2109,6 +2109,8 @@ definitions:
         format: float
       equalize:
         type: boolean
+      autoBalance:
+        type: boolean
       contrast:
         type: number
         format: float

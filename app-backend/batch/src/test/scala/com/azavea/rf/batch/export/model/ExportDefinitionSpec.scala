@@ -45,7 +45,8 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
                 min = Some(8),
                 max = Some(9),
                 saturation = Some(1.0),
-                equalize = true
+                equalize = true,
+                autoBalance = Some(false)
               )
             )
           )

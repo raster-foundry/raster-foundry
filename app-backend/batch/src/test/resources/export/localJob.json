@@ -23,7 +23,8 @@
                     "brightness": 5,
                     "contrast": 4.0,
                     "saturation": 1.0,
-                    "greenGamma": 2.0
+                    "greenGamma": 2.0,
+                    "autoBalance": false
                 }
             }
         ],
