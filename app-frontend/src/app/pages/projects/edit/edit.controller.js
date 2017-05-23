@@ -2,14 +2,15 @@ const Map = require('es6-map');
 
 export default class ProjectsEditController {
     constructor( // eslint-disable-line max-params
-        $log, $q, $state, $scope, projectService, mapService, mapUtilsService, layerService,
-        datasourceService, $uibModal
+        $log, $q, $state, $scope, authService, projectService, mapService,
+        mapUtilsService, layerService, datasourceService, $uibModal
     ) {
         'ngInject';
         this.$log = $log;
         this.$q = $q;
         this.$state = $state;
         this.$scope = $scope;
+        this.authService = authService;
         this.projectService = projectService;
         this.mapUtilsService = mapUtilsService;
         this.layerService = layerService;
@@ -26,6 +27,7 @@ export default class ProjectsEditController {
             }
         });
 
+        this._cachedLayer = null;
         this.mosaicLayer = new Map();
         this.sceneLayers = new Map();
         this.projectId = this.$state.params.projectid;
@@ -92,13 +94,20 @@ export default class ProjectsEditController {
     }
 
     layerFromProject() {
-        let layer = this.layerService.layerFromScene(this.sceneList, this.projectId, true);
-        this.mosaicLayer.set(this.projectId, layer);
-        layer.getMosaicTileLayer().then((tiles) => {
-            this.getMap().then((map) => {
-                map.setLayer('project', tiles);
-            });
+        let url = this.projectService.getProjectLayerURL(
+            this.project,
+            this.authService.token()
+        );
+        let layer = L.tileLayer(url);
+
+        this.getMap().then(m => {
+            if (this._cachedLayer) {
+                m.map.removeLayer(this._cachedLayer);
+            }
+            m.addLayer('project-layer', layer);
+            this._cachedLayer = layer;
         });
+        this.mosaicLayer.set(this.projectId, layer);
     }
 
     setHoveredScene(scene) {
