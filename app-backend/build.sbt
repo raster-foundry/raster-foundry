@@ -195,7 +195,13 @@ lazy val batch = Project("batch", file("batch"))
     )
   })
   .settings(assemblyShadeRules in assembly := Seq(
-      ShadeRule.rename("shapeless.**" -> "com.azavea.shaded.shapeless.@1").inAll
+      ShadeRule.rename("shapeless.**" -> "com.azavea.shaded.shapeless.@1").inAll,
+      ShadeRule.rename(
+        "com.amazonaws.services.s3.**" -> "com.azavea.shaded.amazonaws.services.s3.@1"
+      ).inAll,
+      ShadeRule.rename(
+        "com.amazonaws.**" -> "com.azavea.shaded.amazonaws.@1"
+      ).inAll
     )
   )
 

@@ -13,7 +13,7 @@ import java.io._
 import java.net._
 
 package object S3 {
-  val client = AmazonS3ClientBuilder.standard()
+  def client = AmazonS3ClientBuilder.standard()
     .withCredentials(new DefaultAWSCredentialsProviderChain())
     .withRegion(Regions.US_EAST_1)
     .build()
@@ -41,9 +41,7 @@ package object S3 {
   }
 
   def putObject(bucket: String, key: String, contents: String): String = {
-    Try(client.putObject(bucket, key, contents)) match {
-      case Success(_) => contents
-      case Failure(ex) => throw new Exception(ex)
-    }
+    client.putObject(bucket, key, contents)
+    contents
   }
 }
