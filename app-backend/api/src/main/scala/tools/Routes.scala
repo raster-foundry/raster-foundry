@@ -4,10 +4,12 @@ import java.util.UUID
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
-import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
+import com.azavea.rf.common._
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.Tools
 import com.azavea.rf.datamodel._
+import com.azavea.rf.tool.ast._
+import com.azavea.rf.tool.ast.codec._
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
@@ -28,6 +30,20 @@ trait ToolRoutes extends Authentication
         get { getTool(toolId) } ~
         put { updateTool(toolId) } ~
         delete { deleteTool(toolId) }
+      } ~
+      pathPrefix("sources") {
+        pathEndOrSingleSlash {
+          get { getToolSources(toolId) }
+        }
+      }
+    }
+  }
+
+  def getToolSources(toolId: UUID): Route = authenticate { user =>
+    rejectEmptyResponse {
+      onSuccess(Tools.getTool(toolId, user)) { maybeTool =>
+        val sources = maybeTool.map { tool => parseOrThrow[MapAlgebraAST](tool.definition).sources }
+        complete(sources)
       }
     }
   }

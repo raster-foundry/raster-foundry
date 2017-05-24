@@ -38,12 +38,13 @@ object TileSources extends LazyLogging {
         Future.successful(None)
 
       case project @ ProjectRaster(projId, Some(band)) =>
-        Mosaic.fetchRenderedExtent(projId, 1, Some(Projected(WebMercator.worldExtent.toPolygon, 4326)))
+        Mosaic.rawForExtent(projId, 1, Some(Projected(LatLng.worldExtent.toPolygon, 4326)))
           .map({ tile => tile.bands(band) }).value
 
       case project @ ProjectRaster(projId, None) =>
         logger.warn(s"Request for $project does not contain band index")
         Future.successful(None)
+
     }
 
   /** This source provides support for z/x/y TMS tiles */
@@ -58,7 +59,7 @@ object TileSources extends LazyLogging {
         Future.successful(None)
 
       case project @ ProjectRaster(projId, Some(band)) =>
-        Mosaic.fetch(projId, z, x, y)
+        Mosaic.raw(projId, z, x, y)
           .map(tile => tile.bands(band)).value
 
       case project @ ProjectRaster(projId, None) =>
