@@ -15,6 +15,9 @@ from rasterio.features import sieve
 logger = logging.getLogger(__name__)
 
 
+FILL_VALUE = 255
+
+
 def create_tif_mask(temp_dir, local_tif_path):
     """Uses rasterio to create masks for tile and data
 
@@ -40,12 +43,13 @@ def create_tif_mask(temp_dir, local_tif_path):
 
         with rasterio.open(data_mask_tif_path, 'w', **kwargs) as dst:
             mask = sieve(src.dataset_mask(), size=40)
+            mask[~np.isnan(mask) & mask != 0] = FILL_VALUE
             dst.write(mask, indexes=1)
 
         with rasterio.open(tile_mask_tif_path, 'w', **kwargs) as dst:
             for _, window in src.block_windows(1):
                 block = src.read(1, window=window)
-                block.fill(255)
+                block.fill(FILL_VALUE)
                 block = block.astype(rasterio.ubyte)
                 dst.write(block, window=window, indexes=1)
 
@@ -109,7 +113,7 @@ def extract_polygon(mask_tif_path):
     geoms = shapes(raster, mask=mask.astype('bool'), transform=src_affine, connectivity=4)
 
     footprint, value = geoms.next()
-    assert value == 255, 'Geometry should be of value 255, got %r' % value
+    assert value == FILL_VALUE, 'Geometry should be of value 255, got %r' % value
 
     target_crs = Proj(init='epsg:4326')
     feature = transform_polygon_coordinates(footprint, src_crs, target_crs)
