@@ -26,8 +26,10 @@ trait Config {
     bandLookup: Landsat8Bands,
     datasourceId: String,
     usgsLandsatUrl: String,
+    usgsLandsatUrlC1: String,
     awsRegion: Option[String],
     awsLandsatBase: String,
+    awsLandsatBaseC1: String,
     bucketName: String
   ) {
     def organizationUUID = UUID.fromString(organization)
