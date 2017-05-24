@@ -52,8 +52,10 @@
   }
 
   .dropdown > a {
-    padding: 1rem 1.5rem;
+    padding: .8rem 1rem;
     margin: 0 1rem;
+    border: 1px solid $shade-dark;
+    border-radius: 2px;
 
     i {
       vertical-align: middle;
@@ -66,6 +68,29 @@
   &.secondary-navbar {
     border-top: 1px solid $shade-dark;
     padding: 0;
+  }
+
+  .project-title {
+    display: inline-block;
+    vertical-align: middle;
+    font-weight: 600;
+    color: #fff;
+    padding: 1.5rem;
+    max-width: 30rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .dropdown-project {
+    margin-left: -1.5rem;
+
+    > a.dropdown-toggle {
+      padding: .8rem 1rem;
+      border: 1px solid $shade-dark;
+      border-radius: 2px;
+      color: #fff;
+    }
   }
 }
 
@@ -94,7 +119,7 @@
 .navbar-vertical-divider {
   display: inline-block;
   width: 1px;
-  height: 48px;
+  height: 4.8rem;
   background-color: $shade-dark;
   vertical-align: middle;
 }

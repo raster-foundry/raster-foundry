@@ -1,0 +1,38 @@
+.alert {
+  padding: 1rem;
+  border-radius: 2px;
+  flex: 1;
+  text-align: center;
+  color: #fff;
+  background-color: $shade-normal;
+}
+
+@mixin alert-state($color) {
+  background-color: $color;
+}
+
+.alert-primary {
+  @include alert-state($brand-primary);
+}
+
+.alert-secondary {
+  @include alert-state($brand-secondary);
+}
+
+.alert-warning {
+  @include alert-state($warning);
+}
+
+.alert-danger {
+  @include alert-state($danger);
+}
+
+.alert-message {
+  @extend .p;
+  margin-top: 0;
+}
+
+.alert-action {
+  @extend .btn;
+  @extend .btn-ghost-white
+}

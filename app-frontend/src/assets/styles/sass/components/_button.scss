@@ -25,6 +25,34 @@
   }
 }
 
+@mixin ghost-button-states($color, $textColor) {
+  &:hover, &.hover,
+  &:active, &.active, {
+    color: $textColor;
+    background-color: rgba($color, .25);
+    border-color: darken($color, 5%);
+  }
+
+  &:active, &.active {
+    box-shadow: inset 0 2px 2px 0px rgba(black, .2);
+  }
+
+  &:focus, &.focus {
+    outline: none;
+    box-shadow: 0 1px 2px -1px $brand-primary;
+  }
+
+  // Note: <buttons> and <a> handle active+focus differently. This will normalize behaviour.
+  &:focus:active {
+    box-shadow: inset 0 2px 2px 0px rgba(black, .2);
+  }
+
+  &:disabled, &.disabled, &[disabled] {
+    opacity: .5;
+    cursor: not-allowed;
+  }
+}
+
 .btn {
   position: relative;
   cursor: pointer;
@@ -68,6 +96,9 @@
   }
 }
 
+/* 
+ * Solid bg-color buttons
+ */
 .btn-default {
   background: $shade-normal;
   border-color: darken($shade-normal, 5%);
@@ -108,6 +139,48 @@
   @include button-states($brand-tertiary);
 }
 
+.btn-warning {
+  background: $warning;
+  border-color: darken($warning, 5%);
+  color: #fff;
+
+  @include button-states($warning);
+}
+
+.btn-danger {
+  background: $danger;
+  border-color: darken($danger, 5%);
+  color: #fff;
+
+  @include button-states($danger);
+}
+
+/* 
+ * Ghost buttons, borders only
+ */
+.btn-ghost {
+  background-color: transparent;
+}
+
+.btn-ghost-white {
+  background-color: transparent;
+  color: #fff;
+  border-color: #fff;
+
+  @include ghost-button-states(#fff, #fff);
+}
+
+.btn-ghost-default {
+  background-color: transparent;
+  color: $shade-normal;
+  border-color: $shade-normal;
+
+  @include ghost-button-states($shade-normal, #fff);
+}
+
+/* 
+ * Button styled link a link
+ */
 .btn-link {
   border-color: transparent;
   color: $brand-primary;
@@ -122,65 +195,12 @@
   }
 }
 
-.btn-warning {
-  background: $warning;
-  border-color: darken($warning, 5%);
-  color: #fff;
-
-  @include button-states($warning);
-}
-
-.btn-danger {
-	background: $danger;
-  border-color: darken($danger, 5%);
-  color: #fff;
-
-  @include button-states($danger);
-}
-
 .btn-tag {
   background-color: $brand-primary;
   color: #fff;
   font-weight: 700;
   padding: 0.5rem;
   border-radius: 1px;
-}
-
-
-.btn-flat {
-  border-color: transparent;
-  color: $brand-primary;
-  background-color: transparent;
-  font-weight: 700;
-
-  &:hover, &.hover,
-  &:active, &.active, {
-    background-color: transparent;
-    border-color: transparent;
-    color: $brand-secondary;
-  }
-}
-
-.btn-border{
-  border-color: $text-base;
-  background: none;
-  color: $text-base;
-  font-weight: 700;
-  &:hover, &.hover,
-  &:active, &.active, {
-    background: $brand-primary;
-  }
-}
-
-.btn-border-light {
-  border-color: $white;
-  background: none;
-  color: $white;
-  font-weight: 700;
-  &:hover, &.hover,
-  &:active, &.active, {
-    background: $brand-primary;
-  }
 }
 
 
@@ -211,7 +231,7 @@
 }
 
 /*
- * Button actions
+ * Button toggles
  */
 .btn-toggle {
   background : $shade-dark;
@@ -264,7 +284,7 @@
 /*
  * Button groups
  */
- .btn-group {
+.btn-group {
   display: flex !important;
 
   .btn {
@@ -304,4 +324,4 @@
     flex-grow: 0;
     flex-shrink: 0;
   }
- }
+}

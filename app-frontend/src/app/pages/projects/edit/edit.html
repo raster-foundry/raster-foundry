@@ -1,79 +1,113 @@
 <div class="container column-stretch container-not-scrollable">
   <div class="sidebar" ui-view>
-    <div class="sidebar-project">
+
+    <!-- Sidebar static / non scrolling -->
+    <div class="sidebar-static">
+      <!-- Sidebar Header -->
       <div class="sidebar-header">
         <h5 class="sidebar-title">Editing project</h5>
         <div ng-if="$ctrl.project.isAOIProject" class="inline-tag aoi-tag">AOI Project</div>
-        <div ng-if="$ctrl.project.isAOIProject" class="header-controls">
+        <div ng-if="$ctrl.project.isAOIProject" class="sidebar-actions">
           <a ui-sref="projects.edit.aoi-parameters">Edit AOI Parameters</a>
         </div>
       </div>
-      <ul class="sidebar-list">
-        <li ng-if="$ctrl.project.isAOIProject && $ctrl.pendingSceneList.length">
-          <div class="banner banner-secondary">
-            <div>{{$ctrl.pendingSceneList.length}} scenes awaiting approval</div>
-            <div>
-              <button class="btn btn-border-light" ui-sref="projects.edit.aoi-approve">Review Scenes</button>
-            </div>
+      <!-- Sidebar Header -->
+
+      <!-- Alert -->
+      <div ng-if="$ctrl.project.isAOIProject && $ctrl.pendingSceneList.length" class="content">
+        <div class="alert alert-secondary">
+          <div class="alert-message">{{$ctrl.pendingSceneList.length}} scenes awaiting approval</div>
+          <button class="alert-action" ui-sref="projects.edit.aoi-approve">Review Scenes</button>
+        </div>
+      </div>
+      <!-- Alert -->
+
+      <!-- List Group -->
+      <div class="list-group">
+        <div class="list-group-item">
+          <label>Scenes</label>
+          <div class="list-group-right column-6 nogutter btn-group">
+            <button class="btn btn-primary btn-block" type="button" ui-sref="projects.edit.scenes">
+              Manage
+            </button>
+            <button class="btn btn-primary btn-block" type="button" ng-click="$ctrl.openImportModal()">
+              Import
+            </button>
           </div>
-        </li>
-        <li>
-          <span class="label">Scene Management</span>
-          <a class="btn btn-primary fixedwidth" ui-sref="projects.edit.scenes">
-            Add/Remove scenes
-          </a>
           <i class="icon-info"></i>
-        </li>
-        <li>
-          <span class="label"></span>
-          <button class="btn btn-primary fixedwidth" ng-click="$ctrl.openImportModal()">
-            Import Scenes
-          </button>
-          <i class="icon-info"></i>
-        </li>
-      </ul>
+        </div>
+      </div>
+      <!-- List Group -->
     </div>
+    <!-- Sidebar static / non scrolling -->
+
+    <!-- Sidebar scrollable area -->
     <div class="sidebar-scrollable">
-      <ul class="sidebar-list">
-        <li class="separator">
-          <span class="label">Color mode</span>
-          <button class="btn btn-light fixedwidth"
-                  type="button"
-                  ui-sref="projects.edit.colormode">
-            Select Mode
-          </button>
+      <!-- List Group -->
+      <div class="list-group">
+        <!-- Color Mode -->
+        <div class="list-group-item">
+          <label>Color mode</label>
+          <div class="list-group-right column-6 nogutter">
+            <button class="btn btn-light btn-block"
+                    type="button"
+                    ui-sref="projects.edit.colormode">
+              Select mode
+            </button>
+          </div>
           <i class="icon-info"></i>
-        </li>
-        <li class="separator">
-          <span class="label">Color correction</span>
-          <button class="btn btn-light fixedwidth"
-                  type="button"
-                  ui-sref="projects.edit.color">
-            Color correct
-          </button>
+        </div>
+        <!-- Color Mode -->
+
+        <!-- Color Correction -->
+        <div class="list-group-item">
+          <label>Color correction</label>
+          <div class="list-group-right column-6 nogutter">
+            <button class="btn btn-light btn-block"
+                    type="button"
+                    ui-sref="projects.edit.color">
+              Color correct
+            </button>
+          </div>
           <i class="icon-info"></i>
-        </li>
-        <li class="separator">
-          <span class="label">Share</span>
-          <button class="btn btn-light fixedwidth"
-                  type="button"
-                  ng-click="$ctrl.publishModal()">
-            Share project
-          </button>
+        </div>
+        <!-- Color Correction -->
+
+        <!-- Sharing -->
+        <div class="list-group-item">
+          <label>Sharing</label>
+          <div class="list-group-right column-6 nogutter">
+            <button class="btn btn-light btn-block"
+                    type="button"
+                    ng-click="$ctrl.publishModal()">
+              Share project
+            </button>
+          </div>
           <i class="icon-info"></i>
-        </li>
-        <li class="separator">
-          <span class="label">Export</span>
-          <button class="btn btn-light fixedwidth"
-                  type="button"
-                  ng-click="$ctrl.openExportModal()">
-            Export project
-          </button>
+        </div>
+        <!-- Sharing -->
+
+        <!-- Export -->
+        <div class="list-group-item">
+          <label>Export</label>
+          <div class="list-group-right column-6 nogutter">
+            <button class="btn btn-light btn-block"
+                    type="button"
+                    ng-click="$ctrl.openExportModal()">
+              Export project
+            </button>
+          </div>
           <i class="icon-info"></i>
-        </li>
-      </ul>
+        </div>
+        <!-- Export -->
+      </div>
+      <!-- List Group -->
     </div>
+    <!-- Sidebar scrollable area -->
   </div>
+  <!-- Sidebar -->
+
+  <!-- Main map area -->
   <div class="main">
     <rf-map-container map-id="edit" ng-show="!$ctrl.showPreviewMap"></rf-map-container>
     <rf-map-container map-id="preview"
@@ -82,4 +116,5 @@
                       initial-zoom="$ctrl.zoom"
     ></rf-map-container>
   </div>
-</div
+  <!-- Main map area -->
+</div>

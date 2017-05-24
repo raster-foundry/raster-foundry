@@ -14,11 +14,9 @@
 <div class="sidebar-project" ng-show="!$ctrl.activeScene">
   <ul class="sidebar-list">
     <li ng-if="$ctrl.$parent.project.isAOIProject && $ctrl.$parent.pendingSceneList.length">
-      <div class="banner banner-secondary">
-        <div>{{$ctrl.$parent.pendingSceneList.length}} scenes awaiting approval</div>
-        <div>
-          <button class="btn btn-border-light" ui-sref="projects.edit.aoi-approve">Review Scenes</button>
-        </div>
+      <div class="alert alert-secondary">
+        <div class="alert-message">{{$ctrl.$parent.pendingSceneList.length}} scenes awaiting approval</div>
+        <button class="alert-action" ui-sref="projects.edit.aoi-approve">Review Scenes</button>
       </div>
     </li>
     <li>
