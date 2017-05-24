@@ -22,15 +22,14 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success}
 import scala.util.control.Breaks._
 
-@deprecated(message = "Use com.azavea.rf.batch.landsat8.airflow.ImportLandsat8C1 instead, as USGS changes LC8 storage rules: https://landsat.usgs.gov/landsat-collections", since = "https://github.com/azavea/raster-foundry/pull/1821")
-case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), threshold: Int = 10)(implicit val database: DB) extends Job {
-  val name = ImportLandsat8.name
+case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), threshold: Int = 10)(implicit val database: DB) extends Job {
+  val name = ImportLandsat8C1.name
 
   /** Get S3 client per each call */
   def s3Client = S3(region = landsat8Config.awsRegion)
 
   protected def scenesFromCsv(srcProj: CRS = CRS.fromName("EPSG:4326"), targetProj: CRS = CRS.fromName("EPSG:3857")): Future[ListBuffer[Scene.Create]] = {
-    val reader = CSV.parse(landsat8Config.usgsLandsatUrl)
+    val reader = CSV.parse(landsat8Config.usgsLandsatUrlC1)
     val iterator = reader.iterator()
 
     val endDate = startDate + 1.day
@@ -61,29 +60,30 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
     Future.sequence(buffer).map(_.flatten)
   }
 
-  protected def getLandsatPath(landsatId: String): String = {
-    val (wPath, wRow) = landsatId.substring(3, 6) -> landsatId.substring(6, 9)
-    val path = s"L8/$wPath/$wRow/$landsatId"
+  protected def getLandsatPath(productId: String): String = {
+    val p = productId.split("_")(2)
+    val (wPath, wRow) = p.substring(0, 3) -> p.substring(3, 6)
+    val path = s"L8/$wPath/$wRow/$productId"
     logger.debug(s"Constructed path: $path")
     path
   }
 
-  protected def getLandsatUrl(landsatId: String): String = {
-    val rootUrl = s"https://landsat-pds.s3.amazonaws.com/${getLandsatPath(landsatId)}"
+  protected def getLandsatUrl(productId: String): String = {
+    val rootUrl = s"${landsat8Config.awsLandsatBaseC1}${getLandsatPath(productId)}"
     logger.debug(s"Constructed Root URL: $rootUrl")
     rootUrl
   }
 
-  protected def sizeFromPath(tifPath: String, landsatId: String): Int = {
-    val path = s"${getLandsatPath(landsatId)}/$tifPath"
+  protected def sizeFromPath(tifPath: String, productId: String): Int = {
+    val path = s"c1/${getLandsatPath(productId)}/$tifPath"
     logger.info(s"Getting object size for path: $path")
     s3Client.getObject(landsat8Config.bucketName, path).getObjectMetadata.getContentLength.toInt
   }
 
-  protected def createThumbnails(sceneId: UUID, landsatId: String): List[Thumbnail.Identified] = {
-    val path = getLandsatUrl(landsatId)
-    val smallUrl = s"$path${landsatId}_thumb_small.jpg}"
-    val largeUrl = s"$path${landsatId}_thumb_large.jpg}"
+  protected def createThumbnails(sceneId: UUID, productId: String): List[Thumbnail.Identified] = {
+    val path = getLandsatUrl(productId)
+    val smallUrl = s"$path${productId}_thumb_small.jpg}"
+    val largeUrl = s"$path${productId}_thumb_large.jpg}"
 
     Thumbnail.Identified(
       id = None,
@@ -108,7 +108,7 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
   @SuppressWarnings(Array("TraversableHead"))
   protected def csvRowToScene(row: Map[String, String], srcProj: CRS = CRS.fromName("EPSG:4326"), targetProj: CRS = CRS.fromName("EPSG:3857")): Future[Option[Scene.Create]] = Future {
     val sceneId = UUID.randomUUID()
-    val landsatId = row("sceneID")
+    val productId = row("LANDSAT_PRODUCT_ID")
 
     val ll = row("lowerLeftCornerLongitude").toDouble -> row("lowerLeftCornerLatitude").toDouble
     val lr = row("lowerRightCornerLongitude").toDouble -> row("lowerRightCornerLatitude").toDouble
@@ -133,8 +133,8 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
       else srcPolygon.reproject(srcProj, targetProj) -> extent.reproject(srcProj, targetProj)
     }
 
-    val landsatPath = getLandsatPath(landsatId)
-    val s3Url = s"${landsat8Config.awsLandsatBase}${landsatPath}/index.html"
+    val landsatPath = getLandsatPath(productId)
+    val s3Url = s"${landsat8Config.awsLandsatBaseC1}${landsatPath}/index.html"
 
     if (!isUriExists(s3Url)) {
       logger.warn(
@@ -165,17 +165,17 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
       val images =
         (bands15m.map { band =>
           val b = band.name.split(" - ").last
-          (15f, s"${landsatId}_B${b}.TIF", band)
+          (15f, s"${productId}_B${b}.TIF", band)
         } ++ bands30m.map { band =>
           val b = band.name.split(" - ").last
-          (30f, s"${landsatId}_B${b}.TIF", band)
+          (30f, s"${productId}_B${b}.TIF", band)
         }).map { case (resolution, tiffPath, band) =>
           Image.Banded(
             organizationId = landsat8Config.organizationUUID,
-            rawDataBytes = sizeFromPath(tiffPath, landsatId),
+            rawDataBytes = sizeFromPath(tiffPath, productId),
             visibility = Visibility.Public,
             filename = tiffPath,
-            sourceUri = s"${getLandsatUrl(landsatId)}/${tiffPath}",
+            sourceUri = s"${getLandsatUrl(productId)}/${tiffPath}",
             owner = Some(airflowUser),
             scene = sceneId,
             imageMetadata = Json.Null,
@@ -197,9 +197,9 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
         owner = Some(airflowUser),
         tileFootprint = targetProj.epsgCode.map(Projected(MultiPolygon(transformedExtent.toPolygon()), _)),
         dataFootprint = targetProj.epsgCode.map(Projected(MultiPolygon(transformedCoords), _)),
-        metadataFiles = List(s"${landsat8Config.awsLandsatBase}${landsatPath}/${landsatId}_MTL.txt"),
+        metadataFiles = List(s"${landsat8Config.awsLandsatBaseC1}${landsatPath}/${productId}_MTL.txt"),
         images = images,
-        thumbnails = createThumbnails(sceneId, landsatId),
+        thumbnails = createThumbnails(sceneId, productId),
         ingestLocation = None,
         filterFields = SceneFilterFields(
           cloudCover = cloudCover,
@@ -274,16 +274,16 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
   }
 }
 
-object ImportLandsat8 {
-  val name = "import_landsat8"
+object ImportLandsat8C1 {
+  val name = "import_landsat8_c1"
 
   def main(args: Array[String]): Unit = {
     implicit val db = DB.DEFAULT
 
     val job = args.toList match {
-      case List(date, threshold) => ImportLandsat8(LocalDate.parse(date), threshold.toInt)
-      case List(date) => ImportLandsat8(LocalDate.parse(date))
-      case _ => ImportLandsat8()
+      case List(date, threshold) => ImportLandsat8C1(LocalDate.parse(date), threshold.toInt)
+      case List(date) => ImportLandsat8C1(LocalDate.parse(date))
+      case _ => ImportLandsat8C1()
     }
 
     job.run
