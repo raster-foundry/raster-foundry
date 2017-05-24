@@ -2,9 +2,11 @@ import toggleTpl from './toggle.html';
 const rfToggle = {
     templateUrl: toggleTpl,
     controller: 'ToggleController',
+    transclude: true,
     bindings: {
         model: '=',
-        onChange: '&'
+        onChange: '&',
+        className: '@'
     },
     controllerAs: '$ctrl'
 };

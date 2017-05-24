@@ -1,5 +1,5 @@
-<div class="checkbox-container"
+<div class="checkbox-container {{$ctrl.className}}"
      ng-class="{'is-checked': $ctrl.model}"
-     ng-click="$ctrl.toggle()">
-  <i class="icon-check"></i>
+     ng-click="$ctrl.toggle($event)"
+     ng-transclude>
 </div>

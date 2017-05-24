@@ -30,11 +30,12 @@ export default class ProjectsEditController {
         this.sceneLayers = new Map();
         this.projectId = this.$state.params.projectid;
         this.layers = [];
+
         if (!this.project) {
             if (this.projectId) {
                 this.loadingProject = true;
                 this.projectUpdateListeners = [];
-                this.projectService.loadProject(this.projectId).then(
+                this.fetchProject().then(
                     (project) => {
                         this.project = project;
                         this.fitProjectExtent();
@@ -42,6 +43,9 @@ export default class ProjectsEditController {
                         this.projectUpdateListeners.forEach((wait) => {
                             wait.resolve(project);
                         });
+                        if (this.project.isAOIProject) {
+                            this.getPendingSceneList();
+                        }
                     },
                     () => {
                         this.loadingProject = false;
@@ -51,6 +55,8 @@ export default class ProjectsEditController {
             } else {
                 this.$state.go('projects.list');
             }
+        } else if (this.project.isAOIProject) {
+            this.getPendingSceneList();
         }
     }
 
@@ -66,10 +72,20 @@ export default class ProjectsEditController {
         });
     }
 
+    fetchProject() {
+        if (!this.projectRequest) {
+            this.projectRequest = this.projectService.loadProject(this.projectId);
+        }
+        return this.projectRequest;
+    }
+
     getSceneList() {
         this.sceneRequestState = {loading: true};
         this.sceneListQuery = this.projectService.getAllProjectScenes(
-            {projectId: this.projectId}
+            {
+                projectId: this.projectId,
+                pending: false
+            }
         );
         this.sceneListQuery.then(
             (allScenes) => {
@@ -89,6 +105,19 @@ export default class ProjectsEditController {
         ).finally(() => {
             this.sceneRequestState.loading = false;
         });
+    }
+
+    getPendingSceneList() {
+        if (!this.pendingSceneRequest) {
+            this.pendingSceneRequest = this.projectService.getAllProjectScenes({
+                projectId: this.projectId,
+                pending: true
+            });
+            this.pendingSceneRequest.then(pendingScenes => {
+                this.pendingSceneList = pendingScenes;
+            });
+        }
+        return this.pendingSceneRequest;
     }
 
     layerFromProject() {

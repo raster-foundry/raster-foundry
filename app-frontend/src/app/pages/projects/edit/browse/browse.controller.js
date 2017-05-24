@@ -498,4 +498,17 @@ export default class ProjectAddScenesBrowseController {
         this.selectNoScenes();
         this.$state.go('projects.edit.scenes');
     }
+
+    openSceneDetailModal(scene) {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        this.activeModal = this.$uibModal.open({
+            component: 'rfSceneDetailModal',
+            resolve: {
+                scene: () => scene
+            }
+        });
+    }
 }

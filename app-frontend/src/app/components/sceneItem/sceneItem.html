@@ -19,15 +19,9 @@
     </div>
   </div>
   <div class="list-group-right">
-    <button class="btn btn-square"
-            ng-click="$ctrl.toggleSelected($event)"
-            ng-if="$ctrl.isSelectable && !$ctrl.isDisabled"
-            ng-class="{'btn-secondary': $ctrl.selectedStatus}">
-      <i ng-class="{
-                   'icon-plus': !$ctrl.selectedStatus,
-                   'icon-cross': $ctrl.selectedStatus
-                   }"></i>
-    </button>
+    <rf-toggle ng-if="$ctrl.isSelectable && !$ctrl.isDisabled" model="$ctrl.selectedStatus" on-change="$ctrl.toggleSelected($event)">
+      <i class="icon-check"></i>
+    </rf-toggle>
     <button class="btn btn-square"
             ng-click="$ctrl.onAction($event)"
             ng-if="$ctrl.actionIcon">

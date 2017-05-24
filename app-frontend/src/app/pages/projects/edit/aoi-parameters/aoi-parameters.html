@@ -4,7 +4,7 @@
   </a>
   <h5 class="sidebar-title">AOI Parameters</h5>
 </div>
-<ul class="sidebar-list">
+<ul class="sidebar-list" ng-if="$ctrl.project">
   <li class="separator separator-primary">
     <div class="label">
       Area of Interest
@@ -24,51 +24,36 @@
   </li>
   <li class="separator">
     <span class="label">Update frequency</span>
-    <div class="dropdown btn-group fixedwidth" uib-dropdown>
+    <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
       <a class="btn dropdown-label">
-
+        {{$ctrl.getCurrentFrequency()}}
       </a>
-      <button type="button" class="btn  dropdown-toggle" uib-dropdown-toggle>
+      <button type="button" class="btn btn-light dropdown-toggle">
         <i class="icon-caret-down"></i>
       </button>
       <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
         <li ng-repeat="frequency in $ctrl.updateFrequencies" role="menuitem">
-          {{frequency.label}}
+          <a ng-click="$ctrl.updateFrequency(frequency.value)">{{frequency.label}}</a>
         </li>
       </ul>
     </div>
     <i class="icon-info"></i>
   </li>
   <li class="separator">
-    <span class="label">Update method</span>
-    <div class="dropdown btn-group fixedwidth" uib-dropdown>
-      <a class="btn dropdown-label">
-      </a>
-      <button type="button" class="btn  dropdown-toggle" uib-dropdown-toggle>
-        <i class="icon-caret-down"></i>
-      </button>
-      <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
-        <li role="menuitem">Added when found</li>
-        <li role="menuitem">Added when approved</li>
-      </ul>
-    </div>
-    <i class="icon-info"></i>
-  </li>
-  <li class="separator">
     <span class="label">Start time</span>
-    <div class="dropdown btn-group fixedwidth">
+    <div class="dropdown btn-group fixedwidth" ng-click="$ctrl.openDatePickerModal()">
       <a class="btn dropdown-label" >
-        Edit
+        {{$ctrl.getCurrentStartTime()}}
       </a>
-      <button type="button" class="btn  dropdown-toggle" uib-dropdown-toggle>
+      <button type="button" class="btn btn-light dropdown-toggle">
         <i class="icon-calendar"></i>
       </button>
     </div>
     <i class="icon-info"></i>
   </li>
 </ul>
-<div class="sidebar-content">
-  <button class="btn btn-primary btn-block" type="button">
+<div class="sidebar-content" ng-if="$ctrl.project">
+  <button class="btn btn-primary btn-block" type="button" ng-click="$ctrl.saveParameters()">
     Start AOI Monitoring
   </button>
 </div>
@@ -76,5 +61,5 @@
      ng-show="$ctrl.showFilters">
   <rf-aoi-filter-pane ng-if="$ctrl.showFilters"
                   data-opened="$ctrl.showFilters"
-                  filters="$ctrl.filters"></rf-aoi-filter-pane>
+                  filters="$ctrl.aoiParameters.filters"></rf-aoi-filter-pane>
 </div>

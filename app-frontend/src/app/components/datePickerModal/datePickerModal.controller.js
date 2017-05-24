@@ -11,7 +11,7 @@ export default class DatePickerModalController {
         this.maxDay = this.resolve.config.maxDay;
 
         this.format = () => this.datePickerConf.format;
-
+        this.selectedDay = this.resolve.config.selectedDay;
         this._selectedDay = this.getSelectedDay();
         this.setCalendarInterceptors();
     }

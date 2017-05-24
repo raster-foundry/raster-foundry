@@ -187,7 +187,9 @@ export default class ProjectsDetailController {
             this.lastSceneResult.count === 0;
     }
 
-    removeScene(scene) {
+    removeScene(scene, $event) {
+        $event.stopPropagation();
+        $event.preventDefault();
         this.projectService.removeScenesFromProject(this.projectId, [ scene.id ]).then(
             () => {
                 this.populateSceneList(this.currentPage);

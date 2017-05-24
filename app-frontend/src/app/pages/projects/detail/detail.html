@@ -61,7 +61,7 @@
                 scene="scene"
                 ng-repeat="scene in $ctrl.sceneList track by scene.id"
                 ng-click="$ctrl.openSceneDetailModal(scene)">
-              <a href class="link-light" ng-click="$ctrl.removeScene(scene)">Remove from Project</a>
+              <a class="color-danger" ng-click="$ctrl.removeScene(scene, $event)">Remove from Project</a>
             </rf-scene-item>
           </div>
           <!-- Scene List -->
@@ -118,7 +118,7 @@
               <ul class="list-unstyled m-0">
                 <li>Last edited on {{ $ctrl.project.modifiedAt | date : 'shortDate' }}</li>
                 <li>
-                  <ng-pluralize count="$ctrl.sceneList.length" 
+                  <ng-pluralize count="$ctrl.sceneList.length"
                                 when="{'one': '1 scene', 'other': '{} scenes'}">
                   </ng-pluralize>
                 </li>
@@ -142,7 +142,7 @@
               </ul>
             </section>
             <!-- Project Actions -->
-            
+
           </div>
         </div>
       </div>
