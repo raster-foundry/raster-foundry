@@ -151,8 +151,8 @@ object LayerCache extends Config with LazyLogging {
         val hist = StreamingHistogram.fromTile(tile)
         val currentMetadata = params.metadata.getOrElse(ast.id, NodeMetadata())
         val updatedMetadata = currentMetadata.copy(histogram = Some(hist))
-        val updatedParams = params.copy(metadata=params.metadata + (ast.id -> updatedMetadata))
-        val updatedToolRun = toolRun.copy(executionParameters=updatedParams.asJson)
+        val updatedParams = params.copy(metadata = params.metadata + (ast.id -> updatedMetadata))
+        val updatedToolRun = toolRun.copy(executionParameters = updatedParams.asJson)
         try {
           database.db.run { ToolRuns.updateToolRun(updatedToolRun, toolRun.id, user) }
         } catch {
@@ -171,38 +171,39 @@ object LayerCache extends Config with LazyLogging {
   ): OptionT[Future, (ToolRun, Tool.WithRelated, MapAlgebraAST, EvalParams, ColorMap)] =
     astCache.cachingOptionT(s"tool+run-$toolRunId-${subNode}-${user.id}") { implicit ec =>
       for {
-        toolRun <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
-        tool    <- OptionT(Tools.getTool(toolRun.tool, user))
-        ast     <- OptionT.fromOption[Future]({
-                     logger.debug(s"Parsing Tool AST with ${tool.definition}")
-                     val entireAST = parseOrThrow[MapAlgebraAST](tool.definition)
-                     subNode.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
-                   })
-        nodeId  <- OptionT.pure[Future, UUID](subNode.getOrElse(ast.id))
-        params  <- OptionT.pure[Future, EvalParams]({
-                     logger.debug(s"Parsing ToolRun parameters with ${toolRun.executionParameters}")
-                     val parsedParams = parseOrThrow[EvalParams](toolRun.executionParameters)
-                     val defaults = ast.metadata
-                     val overrides = parsedParams.metadata.get(ast.id)
-                     val md = (overrides |@| defaults).map(_.fallbackTo(_))
-                       .orElse(overrides)
-                       .orElse(defaults)
-                       .getOrElse(NodeMetadata())
+        toolRun  <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
+        tool     <- OptionT(Tools.getTool(toolRun.tool, user))
+        ast      <- OptionT.fromOption[Future]({
+                      logger.debug(s"Parsing Tool AST with ${tool.definition}")
+                      val entireAST = parseOrThrow[MapAlgebraAST](tool.definition)
+                      subNode.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
+                    })
+        nodeId   <- OptionT.pure[Future, UUID](subNode.getOrElse(ast.id))
+        params   <- OptionT.pure[Future, EvalParams]({
+                      logger.debug(s"Parsing ToolRun parameters with ${toolRun.executionParameters}")
+                      val parsedParams = parseOrThrow[EvalParams](toolRun.executionParameters)
+                      val defaults = ast.metadata
+                      val overrides = parsedParams.metadata.get(ast.id)
+                      val md = (overrides |@| defaults).map(_.fallbackTo(_))
+                        .orElse(overrides)
+                        .orElse(defaults)
+                        .getOrElse(NodeMetadata())
 
-                     EvalParams(
-                       parsedParams.sources,
-                       parsedParams.metadata + (ast.id -> md)
-                     )
-                   })
-       metadata <- OptionT.fromOption[Future](params.metadata.get(nodeId))
-       cMap     <- OptionT.fromOption[Future](metadata.classMap.map(_.toColorMap)).orElse({
-                     for {
-                       hist  <- OptionT.fromOption[Future](metadata.histogram)
-                                  .orElse(LayerCache.modelLayerGlobalHistogram(ast, params, toolRun, user))
-                       cRamp <- OptionT.fromOption[Future](metadata.colorRamp)
-                                  .orElse(OptionT.pure[Future, ColorRamp](geotrellis.raster.render.ColorRamps.Viridis))
-                     } yield cRamp.toColorMap(hist)
-                   })
+                      EvalParams(
+                        parsedParams.sources,
+                        parsedParams.metadata + (ast.id -> md)
+                      )
+                    })
+        metadata <- OptionT.fromOption[Future](params.metadata.get(nodeId))
+        cMap     <- OptionT.fromOption[Future](metadata.classMap.map(_.toColorMap)).orElse({
+                      for {
+                        hist  <- OptionT.fromOption[Future](metadata.histogram)
+                                   .orElse(LayerCache.modelLayerGlobalHistogram(ast, params, toolRun, user))
+                        cRamp <- OptionT.fromOption[Future](metadata.colorRamp)
+                                   .orElse(OptionT.pure[Future, ColorRamp](geotrellis.raster.render.ColorRamps.Viridis))
+                      } yield cRamp.toColorMap(hist)
+                    })
       } yield (toolRun, tool, ast, params, cMap)
     }
 }
+

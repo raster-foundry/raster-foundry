@@ -76,16 +76,37 @@ object Mosaic {
       }
     }
 
-  /** Fetch the rendered tile for the given zoom level and bbox
+  /** Fetch the tile for the given zoom level and bbox
     * If no bbox is specified, it will use the project tileLayerMetadata layoutExtent
     */
-  def fetchRenderedExtent(id: UUID, zoom: Int, bbox: Option[Projected[Polygon]])(implicit database: Database): OptionT[Future,MultibandTile] = {
+  def fetchRenderedExtent(id: UUID, zoom: Int, bbox: Option[Projected[Polygon]])(implicit database: Database): OptionT[Future, MultibandTile] = {
     tileLayerMetadata(id, zoom).flatMap { case (sourceZoom, tlm) =>
       val extent: Extent =
         bbox.map { case Projected(poly, srid) =>
           poly.envelope.reproject(CRS.fromEpsgCode(srid), tlm.crs)
         }.getOrElse(tlm.layoutExtent)
       LayerCache.layerTileForExtent(id, sourceZoom, extent)
+    }
+  }
+
+  /** Fetch all bands of a [[MultibandTile]] for the given extent and return them without assuming anything of their semantics */
+  def rawForExtent(projectId: UUID, zoom: Int, bbox: Option[Projected[Polygon]])(implicit database: Database): OptionT[Future, MultibandTile] = {
+    mosaicDefinition(projectId, None).flatMap { mosaic =>
+      val mayhapTiles: Seq[OptionT[Future, MultibandTile]] =
+        for (MosaicDefinition(sceneId, _) <- mosaic) yield
+          for (tile <- Mosaic.fetchRenderedExtent(sceneId, zoom, bbox)) yield
+            tile
+
+      val futureMergeTile: Future[Option[MultibandTile]] =
+        Future.sequence(mayhapTiles.map(_.value)).map { maybeTiles =>
+          val tiles = maybeTiles.flatten
+          if (tiles.nonEmpty)
+            Option(tiles.reduce(_ merge _))
+          else
+            Option.empty[MultibandTile]
+        }
+
+      OptionT(futureMergeTile)
     }
   }
 
