@@ -100,7 +100,8 @@ case class GridQueryParameters(
   minSunAzimuth: Option[Float] = None,
   maxSunElevation: Option[Float] = None,
   minSunElevation: Option[Float] = None,
-  ingested: Option[Boolean] = None
+  ingested: Option[Boolean] = None,
+  ingestStatus: Iterable[String] = Seq[String]()
 )
 
 /** Combined all query parameters */
