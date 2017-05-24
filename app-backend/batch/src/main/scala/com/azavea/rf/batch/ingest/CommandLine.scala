@@ -5,11 +5,13 @@ import java.net.URI
 
 object CommandLine {
   case class Params(
+    sceneId: String = "",
     jobDefinition: URI = new URI(""),
     testRun: Boolean = false,
     overwrite: Boolean = false,
     windowSize: Int = 1024,
-    partitionsPerFile: Int = 8
+    partitionsPerFile: Int = 8,
+    statusBucket: String = "rasterfoundry-dataproc-ingest-status-us-east-1"
   )
 
   // Used for reading text in as URI
@@ -28,6 +30,11 @@ object CommandLine {
     opt[Unit]("overwrite").action( (_, conf) =>
       conf.copy(overwrite = true) ).text("Overwrite conflicting layers")
 
+    opt[String]('s', "sceneId")
+      .action( (scene, conf) => conf.copy(sceneId = scene) )
+      .text("The id of the scene to ingest")
+      .required
+
     opt[URI]('j',"jobDefinition")
       .action( (jd, conf) => conf.copy(jobDefinition = jd) )
       .text("The location of the json which defines an ingest job")
@@ -41,5 +48,8 @@ object CommandLine {
       .action( (s, conf) => conf.copy(partitionsPerFile = s) )
       .text("Number of RDD partitions to create per each source file")
 
+    opt[String]('b',"statusBucket")
+      .action( (s, conf) => conf.copy(statusBucket = s) )
+      .text("S3 bucket to write status jsons to")
   }
 }
