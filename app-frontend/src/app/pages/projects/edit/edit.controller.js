@@ -27,7 +27,6 @@ export default class ProjectsEditController {
             }
         });
 
-        this._cachedLayer = null;
         this.mosaicLayer = new Map();
         this.sceneLayers = new Map();
         this.projectId = this.$state.params.projectid;
@@ -101,11 +100,7 @@ export default class ProjectsEditController {
         let layer = L.tileLayer(url);
 
         this.getMap().then(m => {
-            if (this._cachedLayer) {
-                m.map.removeLayer(this._cachedLayer);
-            }
-            m.addLayer('project-layer', layer);
-            this._cachedLayer = layer;
+            m.setLayer('project-layer', layer);
         });
         this.mosaicLayer.set(this.projectId, layer);
     }
