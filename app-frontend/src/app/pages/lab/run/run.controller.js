@@ -57,7 +57,7 @@ export default class LabRunController {
         return this.sources.reduce((tr, s) => {
             tr.executionParameters.sources[s.id] = {
                 id: false,
-                band: false,
+                band: null,
                 type: 'project'
             };
             return tr;
