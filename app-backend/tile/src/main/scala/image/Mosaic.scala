@@ -162,17 +162,8 @@ object Mosaic {
 
     val zoom: Int = zoomOption.getOrElse(8)
 
-    val colorCorrectionParams = mosaicDefinition(projectId, None).map { mosaic =>
-      mosaic.map { case MosaicDefinition(sceneId, maybeColorCorrectParams) =>
-        maybeColorCorrectParams.map { colorCorrectParams => {
-          println(s"Autobalance: ${colorCorrectParams.autoBalance}")
-          colorCorrectParams.autoBalance
-        }}.flatten
-      }.flatten.foldLeft(true)((acc, x) => acc && x)
-    }
-
     mosaicDefinition(projectId, None).flatMap { mosaic =>
-      val mayhapTiles: Seq[OptionT[Future, MultibandTile]] = {
+      val futureTiles: Future[Seq[MultibandTile]] = {
         val tiles = mosaic.flatMap { case MosaicDefinition(sceneId, maybeColorCorrectParams) =>
           maybeColorCorrectParams.map { colorCorrectParams =>
             Mosaic.fetchRenderedExtent(sceneId, zoom, bboxPolygon).flatMap { tile =>
@@ -184,29 +175,19 @@ object Mosaic {
                 OptionT[Future, MultibandTile](Future(Some(tile)))
               }
 
-            }
+            }.value
           }.toSeq
         }
-        tiles
+        Future.sequence(tiles).map(_.flatten)
       }
 
       val futureMergeTile =
-        Future.sequence(mayhapTiles.map(_.value)).map { maybeTiles =>
-          val tiles = maybeTiles.flatten
-          val balancedTiles = for {
-            balance <- colorCorrectionParams
-          } yield {
-            val newTiles =
-              if (balance)
-                WhiteBalance(tiles.toList).toSeq
-              else
-                tiles
-            newTiles.reduce(_ merge _)
-          }
-          balancedTiles.value
-        }
+        for {
+          doColorCorrect <- hasColorCorrection(projectId)
+          tiles <- futureTiles
+        } yield colorCorrectAndMergeTiles(tiles, doColorCorrect)
 
-      OptionT(futureMergeTile.flatMap(identity))
+      OptionT(futureMergeTile)
     }
   }
 
@@ -228,47 +209,57 @@ object Mosaic {
     // Lookup project definition
     // tag present, include in lookup to re-use cache
     // no tag to control cache rollover, so don't cache
-    val colorCorrectionParams = mosaicDefinition(projectId, None).map { mosaic =>
-      mosaic.map { case MosaicDefinition(sceneId, maybeColorCorrectParams) =>
-        maybeColorCorrectParams.map { colorCorrectParams => {
-          colorCorrectParams.autoBalance
-        }}.flatten
-      }.flatten.foldLeft(true)((acc, x) => acc && x)
-    }
     mosaicDefinition(projectId, tag.map(s => TagWithTTL(tag=s, ttl=60.seconds))).flatMap { mosaic =>
-      val mayhapTiles: Seq[OptionT[Future, MultibandTile]] =
-        mosaic.flatMap { case MosaicDefinition(sceneId, maybeColorCorrectParams) =>
+      val futureTiles: Future[Seq[MultibandTile]] = {
+        val tiles = mosaic.flatMap { case MosaicDefinition(sceneId, maybeColorCorrectParams) =>
           if (rgbOnly) {
             maybeColorCorrectParams.map { colorCorrectParams =>
               Mosaic.fetch(sceneId, zoom, col, row).flatMap { tile =>
                 LayerCache.layerHistogram(sceneId, zoom).map { hist =>
                   colorCorrectParams.colorCorrect(tile, hist)
                 }
-              }
-            }.toSeq
+              }.value
+            }
           } else {
             // Wrap in List so it can flattened by the same flatMap above
-            List(Mosaic.fetch(sceneId, zoom, col, row))
+            List(Mosaic.fetch(sceneId, zoom, col, row).value)
           }
-        }
+        }.toSeq
+        Future.sequence(tiles).map(_.flatten)
+      }
 
       val futureMergeTile =
-        Future.sequence(mayhapTiles.map(_.value)).map { maybeTiles =>
-          val tiles = maybeTiles.flatten
-          val balancedTiles = for {
-            balance <- colorCorrectionParams
-          } yield {
-            val newTiles =
-              if (balance)
-                WhiteBalance(tiles.toList).toSeq
-              else
-                tiles
-            newTiles.reduce(_ merge _)
-          }
-          balancedTiles.value
-        }
+        for {
+          doColorCorrect <- hasColorCorrection(projectId)
+          tiles <- futureTiles
+        } yield colorCorrectAndMergeTiles(tiles, doColorCorrect)
 
-      OptionT(futureMergeTile.flatMap(identity))
+      OptionT(futureMergeTile)
     }
+  }
+
+  /** Check to see if a project has color correction; if this isn't specified, default to false */
+  def hasColorCorrection(projectId: UUID)(implicit database: Database) =
+    mosaicDefinition(projectId, None).map { mosaic =>
+      mosaic.flatMap { case MosaicDefinition(sceneId, maybeColorCorrectParams) =>
+        maybeColorCorrectParams.flatMap(_.autoBalance)
+      }.foldLeft(true)((acc, x) => acc && x)
+    }.value.map {
+      case Some(true) => true
+      case _ => false
+    }
+
+  /** Merge tiles together, optionally color correcting */
+  def colorCorrectAndMergeTiles(tiles: Seq[MultibandTile], doColorCorrect: Boolean): Option[MultibandTile] = {
+    val newTiles =
+      if (doColorCorrect)
+        WhiteBalance(tiles.toList)
+      else
+        tiles
+
+    if (newTiles.isEmpty)
+      None
+    else
+      Some(newTiles.reduce(_ merge _))
   }
 }

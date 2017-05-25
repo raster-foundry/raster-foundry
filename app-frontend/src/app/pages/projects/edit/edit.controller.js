@@ -212,4 +212,23 @@ export default class ProjectsEditController {
             });
         });
     }
+
+    openImportModal() {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        this.activeModal = this.$uibModal.open({
+            component: 'rfImportModal',
+            resolve: {
+                project: () => this.project
+            }
+        });
+
+        this.activeModal.result.then(() => {
+
+        });
+
+        return this.activeModal;
+    }
 }

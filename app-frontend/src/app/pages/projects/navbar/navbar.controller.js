@@ -32,6 +32,23 @@ export default class ProjectsNavbarController {
         return this.activeModal;
     }
 
+    openPublishModal() {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        this.activeModal = this.$uibModal.open({
+            component: 'rfPublishModal',
+            resolve: {
+                project: () => this.project,
+                tileUrl: () => this.projectService.getProjectLayerURL(this.project),
+                shareUrl: () => this.projectService.getProjectShareURL(this.project)
+            }
+        });
+
+        return this.activeModal;
+    }
+
     deleteProjectModal() {
         if (this.activeModal) {
             this.activeModal.dismiss();
