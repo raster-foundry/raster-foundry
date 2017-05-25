@@ -146,7 +146,7 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
     val inDef = InputDefinition(
       UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57036"),
       15,
-      Right(ASTInput(ast, params, Map.empty))
+      Right(ASTInput(ast, params, params.sources.mapValues(_ => "s3://foo/bar/")))
     )
 
     val ed = ExportDefinition(
@@ -154,6 +154,8 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
       inDef,
       outDef
     )
+
+//    println(ed.asJson.spaces2)
 
     decode[ExportDefinition](ed.asJson.spaces2) match {
       case Right(ed2) => ed2 shouldBe ed
