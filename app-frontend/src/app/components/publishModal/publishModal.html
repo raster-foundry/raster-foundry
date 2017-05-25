@@ -36,11 +36,10 @@
                   clipboard text="$ctrl.shareUrl">
             Copy
           </button>
-          <a class="btn btn-primary"
-             target="_blank"
-             ui-sref="share({projectid: $ctrl.resolve.project.id})">
+          <button class="btn btn-primary"
+                  ng-click="$ctrl.openProjectShare()">
             Open
-          </a>
+          </button>
         </div>
       </div>
 
@@ -71,7 +70,7 @@
           <input id="tile-link" type="text" class="form-control"
                  value="{{$ctrl.mapToken.id}}" readonly>
           <button class="btn btn-link"
-                  clipboard text="$ctrl.mapToken">
+                  clipboard text="$ctrl.mapToken.id">
             Copy
           </button>
         </div>
