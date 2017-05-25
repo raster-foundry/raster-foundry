@@ -1,5 +1,5 @@
 export default class PublishModalController {
-    constructor($q, projectService, $log, tokenService, authService, $uibModal) {
+    constructor($q, projectService, $log, tokenService, authService, $uibModal, $window, $state) {
         'ngInject';
 
         this.authService = authService;
@@ -8,6 +8,8 @@ export default class PublishModalController {
         this.tokenService = tokenService;
         this.$uibModal = $uibModal;
         this.$q = $q;
+        this.$window = $window;
+        this.$state = $state;
     }
 
     $onInit() {
@@ -106,6 +108,11 @@ export default class PublishModalController {
             });
         }
         this.hydrateTileUrl(this.getActiveMapping());
+    }
+
+    openProjectShare() {
+        let url = this.$state.href('share', {projectid: this.resolve.project.id});
+        this.$window.open(url, '_blank');
     }
 
     onUrlMappingChange(mapping) {
