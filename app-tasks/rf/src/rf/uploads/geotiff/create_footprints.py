@@ -113,7 +113,8 @@ def extract_polygon(mask_tif_path):
     geoms = shapes(raster, mask=mask.astype('bool'), transform=src_affine, connectivity=4)
 
     footprint, value = geoms.next()
-    assert value == FILL_VALUE, 'Geometry should be of value 255, got %r' % value
+    assert value == FILL_VALUE, 'Geometry should be of value %s, got %r' % (
+        FILL_VALUE, value)
 
     target_crs = Proj(init='epsg:4326')
     feature = transform_polygon_coordinates(footprint, src_crs, target_crs)
