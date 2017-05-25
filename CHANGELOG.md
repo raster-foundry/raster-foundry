@@ -1,5 +1,14 @@
 # Change Log
 
+## [0.9.0](https://github.com/azavea/raster-foundry/tree/0.9.0) (2017-05-25)
+[Full Changelog](https://github.com/azavea/raster-foundry/compare/0.8.0...0.9.0)
+
+**Merged pull requests:**
+
+- Avoid reducing over empty list [\#1840](https://github.com/azavea/raster-foundry/pull/1840)
+- Set data value explicitly [\#1831](https://github.com/azavea/raster-foundry/pull/1831)
+- Allow import into existing project [\#1813](https://github.com/azavea/raster-foundry/pull/1813)
+
 ## [0.8.0](https://github.com/azavea/raster-foundry/tree/0.8.0) (2017-05-25)
 [Full Changelog](https://github.com/azavea/raster-foundry/compare/0.7.0...0.8.0)
 
@@ -11,6 +20,7 @@
 - Add function to get raw tile for extent [\#1825](https://github.com/azavea/raster-foundry/pull/1825)
 - Fix Alex's merge conflict [\#1823](https://github.com/azavea/raster-foundry/pull/1823)
 - Change `ingested` filters to use`scene.ingestStatus` [\#1815](https://github.com/azavea/raster-foundry/pull/1815)
+- Fix imports view dropdown menus [\#1814](https://github.com/azavea/raster-foundry/pull/1814)
 - Use bulk-update for color mode changes [\#1810](https://github.com/azavea/raster-foundry/pull/1810)
 - Update color corrections on field blur, make debounce longer [\#1803](https://github.com/azavea/raster-foundry/pull/1803)
 - Implement Robust Auto White-Balance [\#1787](https://github.com/azavea/raster-foundry/pull/1787)
@@ -24,6 +34,7 @@
 
 - Add support for external S3 export [\#1799](https://github.com/azavea/raster-foundry/pull/1799)
 - Various Upload Processing Fixes [\#1795](https://github.com/azavea/raster-foundry/pull/1795)
+- Add approval\_required and start\_time fields to AoisToProjects model [\#1794](https://github.com/azavea/raster-foundry/pull/1794)
 - New histogram with clipping [\#1793](https://github.com/azavea/raster-foundry/pull/1793)
 - Respond with 400 for interpreter errors [\#1786](https://github.com/azavea/raster-foundry/pull/1786)
 - Update swagger Spec Copy [\#1771](https://github.com/azavea/raster-foundry/pull/1771)
