@@ -9,24 +9,77 @@
     <li>
       <div class="label">
         <span class="text">
-          Select scenes to approve and click <strong>Approve Scenes</strong> to add to the project.
+          Select scenes to approve and reject and click <strong>Apply</strong> to add to the project. Any unselected scenes will be unaffected.
         </span>
       </div>
       <div class="btn-group fixedwidth">
         <button type="button"
                 class="btn btn-primary"
                 style="width: 12rem;"
-                ng-click="$ctrl.sceneModal()">
-          Approve Scenes
+                ng-click="$ctrl.applySceneStatuses()"
+                ng-disabled="!$ctrl.sceneStatusCounts.APPROVED && !$ctrl.sceneStatusCounts.REJECTED">
+          Apply
         </button>
         <button type="button"
                 class="btn dropdown-toggle"
-                ng-class="{'btn-secondary': $ctrl.allSelected}"
-                ng-click="$ctrl.selectAllScenes()">
-          <i ng-class="{'icon-plus': !$ctrl.allSelected,
-                       'icon-cross': $ctrl.allSelected}"></i>
+                ng-class="{'btn-secondary': $ctrl.sceneStatusCounts.APPROVED && $ctrl.sceneStatusCounts.APPROVED === $ctrl.sceneStatusCounts.TOTAL}"
+                ng-click="$ctrl.toggleAllSceneApproval()">
+          <i class="icon-check"></i>
         </button>
       </div>
     </li>
   </ul>
+</div>
+<div class="list-group" ng-if="$ctrl.pendingSceneList">
+  <div class="list-group-item">
+    <span class="no-margin" ng-if="!$ctrl.sceneStatusCounts.APPROVED && !$ctrl.sceneStatusCounts.REJECTED">No scenes selected to approve</span>
+    <span class="no-margin" ng-if="$ctrl.sceneStatusCounts.APPROVED">
+      <ng-pluralize count="$ctrl.sceneStatusCounts.APPROVED"
+                    when="{'one': '1 scene',
+                          'other': '{} scenes'
+                          }">
+      </ng-pluralize>
+      <strong class="color-primary">approved</strong>
+    </span>
+    <span class="no-margin" ng-if="$ctrl.sceneStatusCounts.APPROVED && $ctrl.sceneStatusCounts.REJECTED">&nbsp;and&nbsp;</span>
+    <span class="no-margin" ng-if="$ctrl.sceneStatusCounts.REJECTED">
+      <ng-pluralize count="$ctrl.sceneStatusCounts.REJECTED"
+                    when="{'one': '1 scene',
+                          'other': '{} scenes'
+                          }">
+      </ng-pluralize>
+      <strong class="color-danger">rejected</strong>
+    </span>
+  </div>
+</div>
+<div class="sidebar-scrollable list-group">
+  <rf-scene-item
+      ng-click="$ctrl.openSceneDetailModal(scene)"
+      scene="scene"
+      is-disabled="$ctrl.isInProject(scene)"
+      on-select="$ctrl.setSelected(scene, selected)"
+      class="selectable"
+      ng-mouseenter="$ctrl.setHoveredScene(scene)"
+      ng-mouseleave="$ctrl.removeHoveredScene()"
+      ng-repeat="scene in $ctrl.pendingSceneList track by scene.id">
+    <rf-toggle model="$ctrl.isSceneApproved(scene)" on-change="$ctrl.toggleSceneApproval(scene, $event)">
+      <i class="icon-check"></i>
+    </rf-toggle>
+    <rf-toggle model="$ctrl.isSceneRejected(scene)" on-change="$ctrl.toggleSceneRejection(scene, $event)" class-name="danger">
+      <i class="icon-cross"></i>
+    </rf-toggle>
+  </rf-scene-item>
+  <div class="sidebar-content">
+    <button class="btn btn-block btn-secondary"
+            ng-if="!$ctrl.loadingScenes && $ctrl.lastSceneResult && $ctrl.lastSceneResult.hasNext && !$ctrl.errorMsg"
+            ng-click="$ctrl.getMoreScenes()">
+      Load More Scenes
+    </button>
+  </div>
+</div>
+<div class="sidebar sidebar-extended map-filters"
+     ng-show="$ctrl.showFilterPane && !$ctrl.activeScene">
+  <rf-filter-pane ng-if="$ctrl.filters"
+                  data-opened="$ctrl.showFilterPane"
+                  filters="$ctrl.filters"></rf-filter-pane>
 </div>

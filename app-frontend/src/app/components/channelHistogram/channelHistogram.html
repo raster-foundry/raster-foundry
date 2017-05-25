@@ -1,3 +1,49 @@
-<div class="graph-container">
-  <nvd3 options="$ctrl.histOptions" data="$ctrl.histData"></nvd3>
+<div class="btn-group">
+  <button type="button"
+          class="btn btn-toggle btn-small"
+          ng-class="{'active': $ctrl.histogramMode === 'rgb'}"
+          ng-click="$ctrl.setHistogramMode('rgb')">
+    RGB
+  </button>
+  <button type="button"
+          class="btn btn-toggle btn-small"
+          ng-class="{'active': $ctrl.histogramMode === 'red'}"
+          ng-click="$ctrl.setHistogramMode('red')">
+    Red
+  </button>
+  <button type="button"
+          class="btn btn-toggle btn-small"
+          ng-class="{'active': $ctrl.histogramMode === 'green'}"
+          ng-click="$ctrl.setHistogramMode('green')">
+    Green
+  </button>
+  <button type="button"
+          class="btn btn-toggle btn-small"
+          ng-class="{'active': $ctrl.histogramMode === 'blue'}"
+          ng-click="$ctrl.setHistogramMode('blue')">
+    Blue
+  </button>
 </div>
+<div class="graph-container" style="height: 100px;">
+  <nvd3 options="$ctrl.histOptions" data="$ctrl.histData" api="$ctrl.api"></nvd3>
+  <div class="list-group" ng-show="!$ctrl.histData.length">
+    <span class="list-placeholder">
+      <i class="icon-load"></i>
+    </span>
+  </div>
+</div>
+<div class="histogram-input">
+  <input class="filter-adjust-input" type="number"
+         ng-model="$ctrl.currentModeMin"
+         ng-attr-min="{{$ctrl.minClip}}"
+         ng-attr-max="{{$ctrl.maxClip}}"
+         ng-model-options="{ debounce: 500 }"
+         ng-change="$ctrl.onClipInputChange($ctrl.currentModeMin, undefined)">
+  <input class="filter-adjust-input pull-right" type="number"
+         ng-model="$ctrl.currentModeMax"
+         ng-attr-min="{{$ctrl.minClip}}"
+         ng-attr-max="{{$ctrl.maxClip}}"
+         ng-model-options="{ debounce: 500 }"
+         ng-change="$ctrl.onClipInputChange(undefined, $ctrl.currentModeMax)">
+</div>
+<div class="color-filters-container">

@@ -1,6 +1,6 @@
 export default class ProjectsColorAdjustController {
     constructor( // eslint-disable-line max-params
-        $log, $state, $scope, $timeout
+        $log, $state, $scope, $timeout, histogramService
     ) {
         'ngInject';
         this.$log = $log;
@@ -8,6 +8,7 @@ export default class ProjectsColorAdjustController {
         this.$parent = $scope.$parent.$ctrl;
         this.$scope = $scope;
         this.$timeout = $timeout;
+        this.histogramService = histogramService;
 
         let baseGammaOptions = {
             floor: 0,
@@ -25,13 +26,6 @@ export default class ProjectsColorAdjustController {
             precision: 2
         };
 
-        let baseFilterOptions = {
-            floor: -60,
-            ceil: 60,
-            step: 1,
-            showTicks: 10
-        };
-
         let alphaOptions = {
             floor: 0,
             ceil: 2,
@@ -47,12 +41,6 @@ export default class ProjectsColorAdjustController {
             step: 0.1,
             precision: 2,
             showTicks: 1
-        };
-
-        let minMaxOptions = {
-            floor: 0,
-            ceil: 255,
-            step: 1
         };
 
         let allGamma = ['redGamma', 'greenGamma', 'blueGamma'];
@@ -93,37 +81,18 @@ export default class ProjectsColorAdjustController {
             id: 'alpha',
             onEnd: (id, val) => this.onFilterChange(id, val, this.alphaOptions)
         }, alphaOptions);
+
         this.betaOptions = Object.assign({
             id: 'beta',
             onEnd: (id, val) => this.onFilterChange(id, val, this.betaOptions)
         }, betaOptions);
 
-        this.brightnessOptions = Object.assign({
-            id: 'brightness',
-            onEnd: (id, val) => this.onFilterChange(id, val, this.brightnessOptions)
-        }, baseFilterOptions);
-        this.contrastOptions = Object.assign({
-            id: 'contrast',
-            onEnd: (id, val) => this.onFilterChange(id, val, this.contrastOptions)
-        }, baseFilterOptions);
-
-        this.minMaxOptions = Object.assign({
-            id: 'minmax',
-            onEnd: (id, low, high) => {
-                this.onFilterChange('min', low, this.minMaxOptions);
-                this.onFilterChange('max', high, this.minMaxOptions);
-            }
-        }, minMaxOptions);
-
         this.gammaLinkToggle = true;
 
         this.gammaToggle = { value: true };
         this.sigToggle = { value: true };
-        this.bcToggle = { value: true };
         this.minMaxToggle = { value: true };
         this.saturationToggle = { value: true };
-
-        this.sliderCorrection = {min: minMaxOptions.floor, max: minMaxOptions.ceil};
     }
 
     $onInit() {
@@ -132,6 +101,22 @@ export default class ProjectsColorAdjustController {
         }
 
         this.$scope.$watch('$ctrl.$parent.correction', this.$onChanges.bind(this));
+        this.initHistogram();
+    }
+
+    initHistogram() {
+        let sceneKeys = this.$parent.selectedScenes &&
+            Array.from(this.$parent.selectedScenes.keys());
+        if (!sceneKeys || !sceneKeys.length) {
+            return;
+        }
+        this.histogramData = [];
+        this.histogramService.getHistogram(
+            this.$state.params.projectid,
+            Array.from(sceneKeys)
+        ).then((response) => {
+            this.histogramData = response.data;
+        });
     }
 
     /**
@@ -149,14 +134,8 @@ export default class ProjectsColorAdjustController {
             if (this.correction.redGamma === null &&
                 this.correction.greenGamma === null &&
                 this.correction.blueGamma === null) {
-                this.redGammaOptions.disabled = true;
-                this.greenGammaOptions.disabled = true;
-                this.blueGammaOptions.disabled = true;
                 this.gammaToggle.value = false;
             } else {
-                this.redGammaOptions.disabled = false;
-                this.greenGammaOptions.disabled = false;
-                this.blueGammaOptions.disabled = false;
                 this.gammaToggle.value = true;
             }
 
@@ -166,32 +145,15 @@ export default class ProjectsColorAdjustController {
 
             if (this.correction.alpha === null &&
                 this.correction.beta === null) {
-                this.alphaOptions.disabled = true;
-                this.betaOptions.disabled = true;
                 this.sigToggle.value = false;
             } else {
-                this.alphaOptions.disabled = false;
-                this.betaOptions.disabled = false;
                 this.sigToggle.value = true;
-            }
-
-            if (this.correction.brightness === null &&
-                (this.correction.contrast === null || this.correction.contract === 0)) {
-                this.brightnessOptions.disabled = true;
-                this.contrastOptions.disabled = true;
-                this.correction.contrast = 0;
-                this.bcToggle.value = false;
-            } else {
-                this.brightnessOptions.disabled = false;
-                this.contrastOptions.disabled = false;
-                this.bcToggle.value = true;
             }
 
             let defaultMinMax = {};
 
             if (this.correction.min === null &&
                 this.correction.max === null) {
-                this.minMaxOptions.disabled = true;
                 this.minMaxToggle.value = false;
 
                 this.setDefaultsForEnabled();
@@ -199,7 +161,6 @@ export default class ProjectsColorAdjustController {
                 defaultMinMax.min = 0;
                 defaultMinMax.max = 65535;
             } else {
-                this.minMaxOptions.disabled = false;
                 this.minMax = true;
 
                 this.setDefaultsForEnabled();
@@ -221,16 +182,12 @@ export default class ProjectsColorAdjustController {
      */
     setDefaultsForEnabled() {
         let defaults = {
-            redGamma: 0.5,
-            greenGamma: 0.5,
-            blueGamma: 0.5,
-            saturation: 0.5,
-            brightness: -6,
-            contrast: 0,
+            redGamma: 1,
+            greenGamma: 1,
+            blueGamma: 1,
+            saturation: 1,
             alpha: 0.2,
-            beta: 13,
-            min: 0,
-            max: 65535
+            beta: 13
         };
         let correction = this.correction;
         if (this.gammaToggle.value) {
@@ -259,61 +216,39 @@ export default class ProjectsColorAdjustController {
                 correction.beta = defaults.beta;
             }
         }
-
-        if (this.bcToggle.value) {
-            if (correction.brightness === null && correction.contrast === 0) {
-                correction.contrast = defaults.contrast;
-            }
-            if (correction.brightness === null) {
-                correction.brightness = defaults.brightness;
-            }
-        }
-
-        if (this.minMaxToggle.value) {
-            if (correction.min === null) {
-                correction.min = defaults.min;
-            }
-            if (correction.max === null) {
-                correction.max = defaults.max;
-            }
-        }
     }
 
-    onGammaFilterChange(id, val, options = {}) {
+    onGammaFilterChange(id, val) {
         let relevantIds = id;
         if (this.gammaLinkToggle) {
             relevantIds = ['redGamma', 'greenGamma', 'blueGamma'];
         }
-        this.onFilterChange(relevantIds, val, options);
+        this.onFilterChange(relevantIds, val);
     }
 
     /**
-     * Makes color correction changes available as a component output
+     * Makes color correction changes available as a component rgbSum
      *
      * @param {string} id used to identify correction that has been modified
      * @param {number} val new value for a color correction
      * @param {object} options todo
      * @returns {null} null
      */
-    onFilterChange(id, val, options = {}) {
+    onFilterChange(id, val) {
         if (Array.isArray(id)) {
             id.forEach((key) => {
-                if (!options.disabled) {
-                    this.correction[key] = val;
-                } else {
-                    this.correction[key] = null;
-                }
+                this.correction[key] = val;
             });
-        } else if (id && !options.disabled) {
-            this.correction[id] = val;
         } else if (id) {
-            this.correction[id] = null;
+            this.correction[id] = val;
         }
+
         this.sliderCorrection = Object.assign({}, this.correction);
         this.$parent.onCorrectionChange(Object.assign({}, this.correction));
 
         this.$timeout(() => {
             this.$scope.$broadcast('rzSliderForceRender');
+            this.initHistogram();
         });
     }
 
@@ -326,10 +261,9 @@ export default class ProjectsColorAdjustController {
         }
     }
 
-    gammaToggled(value) {
-        this.redGammaOptions.disabled = !value;
-        this.greenGammaOptions.disabled = !value;
-        this.blueGammaOptions.disabled = !value;
+    gammaToggled() {
+        const value = !this.gammaToggle.value;
+        this.gammaToggle.value = value;
         if (!value) {
             this.correction.redGamma = null;
             this.correction.greenGamma = null;
@@ -339,8 +273,9 @@ export default class ProjectsColorAdjustController {
         this.onFilterChange();
     }
 
-    saturationToggled(value) {
-        this.saturationOptions.disabled = !value;
+    saturationToggled() {
+        const value = !this.saturationToggle.value;
+        this.saturationToggle.value = value;
         if (!value) {
             this.correction.saturation = null;
         }
@@ -348,9 +283,9 @@ export default class ProjectsColorAdjustController {
         this.onFilterChange();
     }
 
-    sigToggled(value) {
-        this.alphaOptions.disabled = !value;
-        this.betaOptions.disabled = !value;
+    sigToggled() {
+        const value = !this.sigToggle.value;
+        this.sigToggle.value = value;
         if (!value) {
             this.correction.alpha = null;
             this.correction.beta = null;
@@ -359,25 +294,25 @@ export default class ProjectsColorAdjustController {
         this.onFilterChange();
     }
 
-    bcToggled(value) {
-        this.brightnessOptions.disabled = !value;
-        this.contrastOptions.disabled = !value;
-        this.minMaxOptions.disabled = !value;
-        if (!value) {
-            this.correction.brightness = null;
-            this.correction.contrast = 0;
-        }
-        this.setDefaultsForEnabled();
-        this.onFilterChange();
-    }
+    onHistogramChange(clipping) {
+        let clipParams = {
+            min: clipping.rgb.min,
+            max: clipping.rgb.max,
 
-    minMaxToggled(value) {
-        this.minMaxOptions.disabled = !value;
-        if (!value) {
-            this.correction.min = null;
-            this.correction.max = null;
-        }
-        this.setDefaultsForEnabled();
-        this.onFilterChange();
+            redMin: clipping.red.min !== clipping.rgb.min ? clipping.red.min : null,
+            redMax: clipping.red.max !== clipping.rgb.max ? clipping.red.max : null,
+
+            greenMin: clipping.green.min !== clipping.rgb.min ? clipping.green.min : null,
+            greenMax: clipping.green.max !== clipping.rgb.max ? clipping.green.max : null,
+
+            blueMin: clipping.blue.min !== clipping.rgb.min ? clipping.blue.min : null,
+            blueMax: clipping.blue.max !== clipping.rgb.max ? clipping.blue.max : null
+        };
+        Object.assign(this.correction, clipParams);
+        this.$parent.onCorrectionChange(
+            Object.assign({}, this.correction)
+        ).then(() => {
+            this.initHistogram();
+        });
     }
 }

@@ -11,14 +11,17 @@ export default class ProjectsScenesController {
         this.projectService = projectService;
     }
 
-    removeSceneFromProject(scene) {
+    removeSceneFromProject(scene, $event) {
+        $event.stopPropagation();
+        $event.preventDefault();
         this.projectService.removeScenesFromProject(this.projectId, [scene.id]).then(
             () => {
                 this.$parent.getSceneList();
             },
             () => {
                 this.$log.log('error removing scene from project');
-            });
+            }
+        );
     }
 
     openSceneDetailModal(scene) {

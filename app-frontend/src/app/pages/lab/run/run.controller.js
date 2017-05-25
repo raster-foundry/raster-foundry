@@ -21,65 +21,53 @@ export default class LabRunController {
     $onInit() {
         this.$parent.toolRequest.then(tool => {
             this.tool = tool;
-
-            // @TODO: when we have validated tools, the following hardcoded
-            // params should be replace with param parsing
-            this.inputs = [false, false];
-            this.inputParameters = [{
-                bands: {
-                    nir: '5',
-                    red: '4'
-                }
-            }, {
-                bands: {
-                    nir: '5',
-                    red: '4'
-                }
-            }];
-
-            // @TODO: this will need to be removed when we have validated tools
-            this.tool.definition = this.toolService.getToolStub();
-
-            this.initControls();
-            this.sceneList = [];
+            // This will be a call to the API
+            this.sources = this.generateSourcesFromTool();
+            this.toolRun = this.generateToolRun();
             this.generatedPreview = false;
         });
     }
 
-    initControls() {
-        this.thresholds = {};
-
-        this.thresholds.before = 0.1;
-        this.thresholds.after = 0.1;
-
-        this.reclassifyBeforeThreshold = {
-            options: {
-                floor: -1,
-                ceil: 1,
-                step: 0.05,
-                precision: 2,
-                onChange: this.onReclassifyBeforeThresholdChange.bind(this)
+    generateSourcesFromTool() {
+        let nodes = [this.tool.definition];
+        let sources = [];
+        let sourceIds = [];
+        let currentNode = 0;
+        let shouldContinue = true;
+        while (shouldContinue) {
+            let args = nodes[currentNode].args || false;
+            if (args) {
+                nodes = nodes.concat(args);
             }
-        };
-        this.reclassifyAfterThreshold = {
-            options: {
-                floor: -1,
-                ceil: 1,
-                step: 0.05,
-                precision: 2,
-                onChange: this.onReclassifyAfterThresholdChange.bind(this)
+            currentNode += 1;
+            shouldContinue = currentNode < nodes.length;
+        }
+        nodes.forEach(n => {
+            if (!n.apply) {
+                if (sourceIds.indexOf(n.id) < 0) {
+                    sourceIds.push(n.id);
+                    sources.push(n);
+                }
             }
-        };
+        });
+        return sources;
     }
 
-    onReclassifyBeforeThresholdChange(id, val) {
-        this.thresholds.before = val;
-        this.onParameterChange();
-    }
-
-    onReclassifyAfterThresholdChange(id, val) {
-        this.thresholds.after = val;
-        this.onParameterChange();
+    generateToolRun() {
+        return this.sources.reduce((tr, s) => {
+            tr.executionParameters.sources[s.id] = {
+                id: false,
+                band: null,
+                type: 'project'
+            };
+            return tr;
+        }, {
+            visibility: 'PUBLIC',
+            tool: this.tool.id,
+            executionParameters: {
+                sources: {}
+            }
+        });
     }
 
     onParameterChange() {
@@ -94,25 +82,9 @@ export default class LabRunController {
 
     getNodeUrl(node) {
         let token = this.authService.token();
-        if (this.inputs.length === 2 && this.inputs[0].id && this.inputs[1].id) {
-            if (node.tag.startsWith('input')) {
-                let tag = new Date().getTime();
-                let inputNum = node.tag.split('_')[1];
-                return `${this.tileServer}/${this.inputs[inputNum].id}/{z}/{x}/{y}/` +
-                       `?tag=${tag}&token=${token}`;
-            }
-            let base =
-                `${this.tileServer}/tools/dfac6307-b5ef-43f7-beda-b9f208bb7726` +
-                 '/ndvi-diff-tool/{z}/{x}/{y}';
-            let lc80 = `LC8_0=${this.inputs[0].id}`;
-            let lc81 = `LC8_1=${this.inputs[1].id}`;
-            let part = `part=${node.tag}`;
-            let class0 = `class0=${this.thresholds.before.toFixed(2)}:0;99999999:1.0`;
-            let class1 = `class1=${this.thresholds.after.toFixed(2)}:0;99999999:1.0`;
-            let cm =
-                node.part === 'final' ? 'cm=-0.01:-16777216;0.01:0;1000000000:16711680' : '';
-            let params = `${lc80}&${lc81}&${part}&${cm}&${class0}&${class1}`;
-            return `${base}?${params}&token=${token}`;
+        if (this.lastToolRun) {
+            // eslint-disable-next-line max-len
+            return `${this.tileServer}/tools/${this.lastToolRun.id}/{z}/{x}/{y}?token=${token}&node=${node}`;
         }
         return false;
     }
@@ -185,7 +157,11 @@ export default class LabRunController {
                     if (!this.alreadyPreviewed) {
                         this.alreadyPreviewed = true;
                         this.$timeout(() => {
-                            this.fitProjectExtent(this.inputs[1]);
+                            let s = this.lastToolRun.executionParameters.sources;
+                            let firstSourceId = Object.keys(s)[0];
+                            this.projectService.get(s[firstSourceId].id).then(p => {
+                                this.fitProjectExtent(p);
+                            });
                         });
                     }
                 });
@@ -211,7 +187,13 @@ export default class LabRunController {
         this.isShowingPreview = false;
     }
 
-    selectProjectModal(src) {
+    createToolRun() {
+        this.toolService.createToolRun(this.toolRun).then(tr => {
+            this.lastToolRun = tr;
+        });
+    }
+
+    selectProjectModal(sourceId) {
         if (this.activeModal) {
             this.activeModal.dismiss();
         }
@@ -219,7 +201,7 @@ export default class LabRunController {
         this.activeModal = this.$uibModal.open({
             component: 'rfSelectProjectModal',
             resolve: {
-                project: () => this.inputs[src],
+                project: () => this.toolRun.executionParameters.sources[sourceId].id || false,
                 content: () => ({
                     title: 'Select a project'
                 })
@@ -227,7 +209,9 @@ export default class LabRunController {
         });
 
         this.activeModal.result.then(p => {
-            this.inputs[src] = p;
+            this.toolRun.executionParameters.sources[sourceId].id = p.id;
+            // eslint-disable-next-line no-underscore-dangle
+            this.toolRun.executionParameters.sources[sourceId]._name = p.name;
             this.onParameterChange();
             this.$scope.$evalAsync();
         });

@@ -9,9 +9,9 @@
         </div>
       </div>
       <ul class="sidebar-list">
-        <li ng-if="$ctrl.project.isAOIProject">
+        <li ng-if="$ctrl.project.isAOIProject && $ctrl.pendingSceneList.length">
           <div class="banner banner-secondary">
-            <div>12 scenes awaiting approval</div>
+            <div>{{$ctrl.pendingSceneList.length}} scenes awaiting approval</div>
             <div>
               <button class="btn btn-border-light" ui-sref="projects.edit.aoi-approve">Review Scenes</button>
             </div>

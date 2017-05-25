@@ -488,7 +488,7 @@ rf-project-editor .leaflet-tile {
   justify-content: center;
   border: 1px solid #aaa;
   border-radius: 2px;
-  color: #999;
+  color: #ccc;
   & i {
     margin: 0;
     padding: 0;
@@ -496,6 +496,11 @@ rf-project-editor .leaflet-tile {
   &.is-checked {
     border: 1px solid #8ca3fd;
     background: #8ca3fd;
+    color: #fff;
+  }
+  &.is-checked.danger {
+    border: 1px solid #F98094;
+    background: #F98094;
     color: #fff;
   }
 }
@@ -513,6 +518,16 @@ rf-project-editor .leaflet-tile {
   color: #ccc;
 }
 
+.histogram-input {
+  margin-top: 0.5em;
+  .pull-right {
+    float: right;
+  }
+  .btn-group {
+    display: inline-flex !important;
+  }
+}
+
 .rzslider.dark {
   .rz-bubble {
     color: #ccc;
@@ -522,4 +537,14 @@ rf-project-editor .leaflet-tile {
 .rf-tooltip {
   min-width: 250px;
   text-align: left;
+}
+
+.nvd3.nv-line {
+  .nv-point {
+    display: none;
+  }
+}
+
+span.no-margin {
+  margin: 0 !important;
 }

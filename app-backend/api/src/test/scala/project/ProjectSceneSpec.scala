@@ -293,7 +293,8 @@ class ProjectSceneSpec extends WordSpec
         None, None,                        // Alpha, Beta
         None, None,                        // Min, Max
         None,                              // Saturation
-        false                              // Equalize?
+        false,                             // Equalize?
+        Some(false)                        // Auto white-balance
       )
 
       Get("/api/projects/").withHeaders(

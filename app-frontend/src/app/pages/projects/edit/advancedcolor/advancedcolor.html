@@ -1,29 +1,30 @@
 <div ui-view class="sidebar flex-fill">
   <div class="sidebar-project">
-    <div class="sidebar-row">
-      <div class="btn-group">
-        <button class="btn" ui-sref="projects.edit"><i class="icon-caret-left"></i>Project</button>
-        <button class="btn btn-primary" ui-sref="projects.edit.color">Simple</button>
-      </div>
-      <h5 class="sidebar-title">Advanced Color correction</h5>
+    <div class="sidebar-header">
+      <a class="btn sidebar-header-nav-btn" ui-sref="projects.edit.color">
+        <i class="icon-arrow-left"></i>
+      </a>
+      <h5 class="sidebar-title">Advanced Color Correction</h5>
     </div>
+
     <ul class="sidebar-list">
-      <li class="header">
-        <span>Select scenes to adjust color and click <strong>Color Correct</strong></span>
-        <div class="btn-group">
+      <li>
+        <div class="label">
+          <span class="text">Select scenes to adjust color and click <strong>Color Correct</strong></span>
+        </div>
+        <div class="btn-group fixedwidth">
           <button type="button"
                   class="btn btn-primary"
-                  style="width: 14rem;"
+                  style="width: 12rem;"
                   ng-disabled="$ctrl.selectedScenes.size === 0"
                   ui-sref="projects.edit.advancedcolor.adjust">
             Color Correct
           </button>
           <button type="button"
-                  class="btn btn-square"
+                  class="btn dropdown-toggle"
                   ng-class="{'btn-secondary': !$ctrl.shouldSelectAll()}"
                   ng-click="$ctrl.onToggleSelection()">
-            <i ng-class="{'icon-plus': $ctrl.shouldSelectAll(),
-                         'icon-cross': !$ctrl.shouldSelectAll()}"></i>
+            <i class="icon-check"></i>
           </button>
         </div>
       </li>

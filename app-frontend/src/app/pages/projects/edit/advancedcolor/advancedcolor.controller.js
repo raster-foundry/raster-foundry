@@ -220,8 +220,9 @@ export default class ProjectsAdvancedColorController {
                 sceneIds,
                 newCorrection
             );
-            this.redrawMosaic(promise, newCorrection);
+            return this.redrawMosaic(promise);
         }
+        return this.$q.reject();
     }
 
 
@@ -240,14 +241,9 @@ export default class ProjectsAdvancedColorController {
         this.correction = correction;
     }
 
-    redrawMosaic(promise, newCorrection) {
-        promise.then(() => {
-            this.mosaic().getMosaicTileLayer().then((tiles) => {
-                let newParams = this.mosaic().paramsFromObject(newCorrection);
-                this.mosaic().getMosaicLayerURL(newParams).then((url) => {
-                    tiles.setUrl(url);
-                });
-            });
+    redrawMosaic(promise) {
+        return promise.then(() => {
+            this.$parent.layerFromProject();
         });
     }
 }

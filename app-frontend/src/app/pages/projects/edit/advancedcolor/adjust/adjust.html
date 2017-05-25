@@ -9,15 +9,37 @@
   </div>
   <div class="sidebar-scrollable">
     <div class="content histogram-filters">
+      <div class="filter-item tag-filter">
+        <div class="filter-group-header">
+        <h5>Histogram and Clipping</h5>
+        <i class="icon-info"
+           tooltips
+           tooltip-template="The histogram visualizes every pixel in the project from dark to light
+                             (left to right). You can change extreme darks and lights to be less
+                             extreme by setting a min/max value that the pixels are allowed to be.
+                             The effect of this is a more vibrant and realistic image.
+                             "
+           tooltip-size="small"
+           tooltip-class="rf-tooltip"
+           tooltip-side="bottom"></i>
+        </div>
+      </div>
       <div class="color-filters-container">
+        <rf-channel-histogram data="$ctrl.histogramData"
+                              on-change="$ctrl.onHistogramChange(clipping)"
+                              corrections="$ctrl.correction">
+        </rf-channel-histogram>
+      </div>
 
         <!-- Color Correction -->
         <!-- Sigmoidal correction-->
         <div class="filter-group">
           <div class="filter-group-header">
             <rf-toggle data-model="$ctrl.sigToggle.value"
-                       on-change="$ctrl.sigToggled(value)"></rf-toggle>
-            <h5>Sigmoidal Contast</h5>
+                       on-change="$ctrl.sigToggled(value)">
+              <i class="icon-check"></i>
+            </rf-toggle>
+            <h5>Sigmoidal Contrast</h5>
             <i class="icon-info"
                tooltips
                tooltip-template="
@@ -41,7 +63,7 @@
                      max=1
                      step=0.01
                      ng-model="$ctrl.sliderCorrection.alpha"
-                     ng-model-options="{ debounce: 250 }"
+                     ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
                      ng-change="$ctrl.onFilterChange('alpha', $ctrl.sliderCorrection.alpha)">
             </div>
             <div class="filter">
@@ -56,7 +78,7 @@
                      max=1
                      step=0.01
                      ng-model="$ctrl.sliderCorrection.beta"
-                     ng-model-options="{ debounce: 250 }"
+                     ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
                      ng-change="$ctrl.onFilterChange('beta', $ctrl.sliderCorrection.beta)">
             </div>
           </div>
@@ -66,7 +88,8 @@
         <div class="filter-group">
           <div class="filter-group-header">
             <rf-toggle data-model="$ctrl.gammaToggle.value"
-                       on-change="$ctrl.gammaToggled(value)">
+                       on-change="$ctrl.gammaToggled()">
+              <i class="icon-check"></i>
             </rf-toggle>
             <h5>Color Balance</h5>
             <i class="icon-info"
@@ -95,7 +118,7 @@
                      max=2
                      step=0.01
                      ng-model="$ctrl.sliderCorrection.redGamma"
-                     ng-model-options="{ debounce: 250 }"
+                     ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
                      ng-change="$ctrl.onGammaFilterChange('redGamma', $ctrl.sliderCorrection.redGamma)">
             </div>
             <div class="filter">
@@ -113,8 +136,8 @@
                      max=2
                      step=0.01
                      ng-model="$ctrl.sliderCorrection.greenGamma"
-                     ng-model-options="{ debounce: 250 }"
-                     ng-change="$ctrl.onGammaFilterChange('greenGamma', $ctrl.sliderCorrection.greenGramma)">
+                     ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
+                     ng-change="$ctrl.onGammaFilterChange('greenGamma', $ctrl.sliderCorrection.greenGamma)">
             </div>
             <div class="filter">
               <label>
@@ -131,12 +154,12 @@
                      max=2
                      step=0.01
                      ng-model="$ctrl.sliderCorrection.blueGamma"
-                     ng-model-options="{ debounce: 250 }"
+                     ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
                      ng-change="$ctrl.onGammaFilterChange('blueGamma', $ctrl.sliderCorrection.blueGamma)">
             </div>
             <div class="filter-group-option">
               <label class="color-white">Link Sliders</label>
-              <rf-toggle data-model="$ctrl.gammaLinkToggle" on-change="$ctrl.gammaLinkToggled()"></rf-toggle>
+              <rf-toggle data-model="$ctrl.gammaLinkToggle" on-change="$ctrl.gammaLinkToggled()"><i class="icon-check"></i></rf-toggle>
             </div>
           </div>
         </div>
@@ -145,7 +168,9 @@
         <div class="filter-group">
           <div class="filter-group-header">
             <rf-toggle data-model="$ctrl.saturationToggle.value"
-                       on-change="$ctrl.saturationToggled(value)"></rf-toggle>
+                       on-change="$ctrl.saturationToggled(value)">
+              <i class="icon-check"></i>
+            </rf-toggle>
             <h5 class="h5">Saturation</h5>
           </div>
           <div class="filter-group-body" ng-show="$ctrl.saturationToggle.value">
@@ -158,29 +183,8 @@
                      type="number"
                      step="1"
                      ng-model="$ctrl.sliderCorrection.saturation"
-                     ng-model-options="{ debounce: 250 }"
+                     ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
                      ng-change="$ctrl.onFilterChange('saturation', $ctrl.sliderCorrection.saturation)">
-            </div>
-          </div>
-        </div>
-
-        <div class="filter-group">
-          <div class="filter-group-header">
-            <rf-toggle data-model="$ctrl.minMaxToggle.value"
-                       on-change="$ctrl.minMaxToggled(value)"></rf-toggle>
-            <h5>Clipping</h5>
-          </div>
-          <div class="filter-group-body" ng-show="$ctrl.minMaxToggle.value">
-            <div class="filter">
-              <label>Min/Max Clipping</label>
-              <div class="filter-item slider-filter">
-                <div id="minmax"></div>
-              </div>
-              <rzslider class="dark"
-                        rz-slider-model="$ctrl.sliderCorrection.min"
-                        rz-slider-high="$ctrl.sliderCorrection.max"
-                        rz-slider-options="$ctrl.minMaxOptions"
-              ></rzslider>
             </div>
           </div>
         </div>

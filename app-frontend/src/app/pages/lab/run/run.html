@@ -9,154 +9,42 @@
       <div class="list-group">
         <div class="list-group-item list-group-item-stacked">
           <h5 class="sidebar-title">
-              Area of interest (Before)
+              {{$ctrl.tool.title}}
           </h5>
-          <div class="instructions-container" ng-show="!$ctrl.inputs[0]">
-            <p>
-              The <b>vegetation change detection</b> tool requires a source with NIR and Red bands
-            </p>
-            <button class="btn btn-primary"
-                    ng-click="$ctrl.selectProjectModal(0)">
-              Select A Source
-            </button>
-          </div>
-          <form class="form">
-            <div class="form-group" ng-show="$ctrl.inputs[0]">
-              <label for="formGroupExampleInput">Input Source</label>
-              <div class="form-group all-in-one">
-                <input type="text" class="form-control" id="input-0" placeholder="Example input" readonly ng-value="$ctrl.inputs[0].name">
-                <button class="btn btn-link" ng-click="$ctrl.selectProjectModal(0)">
-                  Change
-                </button>
+          <ng-container ng-repeat="source in $ctrl.sources">
+            <div class="instructions-container" ng-show="!$ctrl.toolRun.executionParameters.sources[source.id].id">
+              <h4>{{source.metadata.label}}</h4>
+              <div>{{source.metadata.description}}</div>
+              <br/>
+              <button class="btn btn-primary"
+                      ng-click="$ctrl.selectProjectModal(source.id)">
+                Select A Source
+              </button>
+            </div>
+            <form class="form">
+              <div class="form-group" ng-show="$ctrl.toolRun.executionParameters.sources[source.id].id">
+                <h4>{{source.metadata.label}}</h4>
+                <label for="formGroupExampleInput">Project</label>
+                <div class="form-group all-in-one">
+                  <input type="text" class="form-control" id="input-0" placeholder="Select a source" readonly ng-value="$ctrl.toolRun.executionParameters.sources[source.id]._name">
+                  <button class="btn btn-link" ng-click="$ctrl.selectProjectModal(source.id)">
+                    Change
+                  </button>
+                </div>
               </div>
-            </div>
-            <div class="form-group" ng-show="$ctrl.inputs[0]">
-              <label for="red-band-map-1">Red Band</label>
-              <select class="form-control" id="red-band-map-1"  ng-model="$ctrl.inputParameters[0].bands.red">
-                <option value="1">Band 1</option>
-                <option value="2">Band 2</option>
-                <option value="3">Band 3</option>
-                <option value="4">Band 4</option>
-                <option value="5">Band 5</option>
-                <option value="6">Band 6</option>
-                <option value="7">Band 7</option>
-                <option value="8">Band 8</option>
-                <option value="9">Band 9</option>
-                <option value="10">Band 10</option>
-                <option value="11">Band 11</option>
-              </select>
-            </div>
-            <div class="form-group" ng-show="$ctrl.inputs[0]">
-              <label for="nir-band-map-1">NIR Band</label>
-              <select class="form-control" id="nir-band-map-1" ng-model="$ctrl.inputParameters[0].bands.nir">
-                <option value="1">Band 1</option>
-                <option value="2">Band 2</option>
-                <option value="3">Band 3</option>
-                <option value="4">Band 4</option>
-                <option value="5">Band 5</option>
-                <option value="6">Band 6</option>
-                <option value="7">Band 7</option>
-                <option value="8">Band 8</option>
-                <option value="9">Band 9</option>
-                <option value="10">Band 10</option>
-                <option value="11">Band 11</option>
-              </select>
-            </div>
-          </form>
-        </div>
-
-        <div class="list-group-item list-group-item-stacked">
-          <h5 class="sidebar-title">
-              Area of interest (After)
-          </h5>
-          <div class="instructions-container" ng-show="!$ctrl.inputs[1]">
-            <p>
-              The <b>vegetation change detection</b> tool requires a source with NIR and Red bands
-            </p>
-            <button class="btn btn-primary"
-                    ng-click="$ctrl.selectProjectModal(1)">
-              Select A Source
-            </button>
-          </div>
-          <form class="form">
-            <div class="form-group" ng-show="$ctrl.inputs[1]">
-              <label for="formGroupExampleInput">Input Source</label>
-              <div class="form-group all-in-one">
-                <input type="text" class="form-control" id="input-1" placeholder="Example input" readonly ng-value="$ctrl.inputs[1].name">
-                <button class="btn btn-link" ng-click="$ctrl.selectProjectModal(1)">
-                  Change
-                </button>
+              <div class="form-group" ng-show="$ctrl.toolRun.executionParameters.sources[source.id].id">
+                <label for="red-band-map-1">Band</label>
+                <input class="form-control"
+                       ng-model="$ctrl.toolRun.executionParameters.sources[source.id].band"
+                       ng-change="$ctrl.onParameterChange()">
               </div>
-            </div>
-            <div class="form-group" ng-show="$ctrl.inputs[1]">
-              <label for="red-band-map-2">Red Band</label>
-              <select class="form-control" id="red-band-map-2"  ng-model="$ctrl.inputParameters[1].bands.red">
-                <option value="1">Band 1</option>
-                <option value="2">Band 2</option>
-                <option value="3">Band 3</option>
-                <option value="4">Band 4</option>
-                <option value="5">Band 5</option>
-                <option value="6">Band 6</option>
-                <option value="7">Band 7</option>
-                <option value="8">Band 8</option>
-                <option value="9">Band 9</option>
-                <option value="10">Band 10</option>
-                <option value="11">Band 11</option>
-              </select>
-            </div>
-            <div class="form-group" ng-show="$ctrl.inputs[1]">
-              <label for="nir-band-map-2">NIR Band</label>
-              <select class="form-control" id="nir-band-map-2" ng-model="$ctrl.inputParameters[1].bands.nir">
-                <option value="1">Band 1</option>
-                <option value="2">Band 2</option>
-                <option value="3">Band 3</option>
-                <option value="4">Band 4</option>
-                <option value="5">Band 5</option>
-                <option value="6">Band 6</option>
-                <option value="7">Band 7</option>
-                <option value="8">Band 8</option>
-                <option value="9">Band 9</option>
-                <option value="10">Band 10</option>
-                <option value="11">Band 11</option>
-              </select>
-            </div>
-          </form>
-        </div>
-        <div class="list-group-item list-group-item-stacked">
-          <h5 class="sidebar-title">
-              Vegetation index
-          </h5>
-          <form class="form">
-            <div class="form-group">
-              <label for="formGroupExampleInput">Threshold</label>
-              <div>
-                <rzslider id="reclassify-before-threshold-value"
-                          class="light"
-                          rz-slider-model="$ctrl.thresholds.before"
-                          rz-slider-options="$ctrl.reclassifyBeforeThreshold.options">
-                </rzslider>
-              </div>
-            </div>
-          </form>
-        </div>
-        <div class="list-group-item list-group-item-stacked">
-          <h5 class="sidebar-title">
-              Vegetation index
-          </h5>
-          <form class="form">
-            <div class="form-group">
-              <label for="formGroupExampleInput">Threshold</label>
-              <div>
-                <rzslider id="reclassify-after-threshold-value"
-                          class="light"
-                          rz-slider-model="$ctrl.thresholds.after"
-                          rz-slider-options="$ctrl.reclassifyAfterThreshold.options">
-                </rzslider>
-              </div>
-            </div>
-          </form>
+            </form>
+          </ng-container>
         </div>
       </div>
+    </div>
+    <div class="sidebar-static">
+      <button class="btn btn-primary btn-block" ng-click="$ctrl.createToolRun()">Apply Parameters</button>
     </div>
   </div>
   <div class="main with-position">

@@ -4,7 +4,9 @@ const channelHistogram = {
     templateUrl: channelHistogramTpl,
     controller: 'ChannelHistogramController',
     bindings: {
-        data: '<'
+        data: '<',
+        corrections: '<',
+        onChange: '&'
     }
 };
 

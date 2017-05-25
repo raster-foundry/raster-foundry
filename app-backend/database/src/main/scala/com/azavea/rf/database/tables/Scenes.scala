@@ -499,7 +499,7 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) extends LazyLoggin
       }
     }.filter { scene =>
       sceneParams.ingested
-        .map(scene.ingestLocation.isDefined === _)
+        .map((scene.ingestStatus === IngestStatus.fromString("INGESTED")) === _:Rep[Boolean])
         .reduceLeftOption(_ || _)
         .getOrElse(true: Rep[Boolean])
     }.filter { scene =>
@@ -576,7 +576,21 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) extends LazyLoggin
         .getOrElse(true: Rep[Boolean])
     }.filter { scene =>
       gridParams.ingested
-        .map(scene.ingestLocation.isDefined === _)
+        .map((scene.ingestStatus === IngestStatus.fromString("INGESTED")) === _:Rep[Boolean])
+        .reduceLeftOption(_ || _)
+        .getOrElse(true: Rep[Boolean])
+    }.filter { scene =>
+      gridParams.ingestStatus
+        .map( status =>
+          try {
+            scene.ingestStatus === IngestStatus.fromString(status)
+          } catch {
+            case e : Exception =>
+              throw new IllegalArgumentException(
+                s"Invalid Ingest Status: $status"
+              )
+          }
+        )
         .reduceLeftOption(_ || _)
         .getOrElse(true: Rep[Boolean])
     }

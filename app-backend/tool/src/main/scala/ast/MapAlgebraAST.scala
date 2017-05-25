@@ -11,7 +11,7 @@ sealed trait MapAlgebraAST extends Product with Serializable {
   def args: List[MapAlgebraAST]
   def metadata: Option[NodeMetadata]
   def find(id: UUID): Option[MapAlgebraAST]
-  def sources: Seq[UUID]
+  def sources: Seq[MapAlgebraAST.Source]
 }
 
 object MapAlgebraAST {
@@ -24,11 +24,10 @@ object MapAlgebraAST {
         Some(this)
       else {
         val matches = args.flatMap(_.find(id))
-        require(matches.length < 2, s"Ambiguous IDs ($matches) on Map Algebra AST ($this)")
         matches.headOption
       }
 
-    def sources: Seq[UUID] = args.flatMap(_.sources)
+    def sources: Seq[MapAlgebraAST.Source] = args.flatMap(_.sources).distinct
   }
 
   case class Addition(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
@@ -63,7 +62,7 @@ object MapAlgebraAST {
     def find(id: UUID): Option[MapAlgebraAST] =
       if (this.id == id) Some(this)
       else None
-    def sources: Seq[UUID] = List(this.id)
+    def sources: Seq[MapAlgebraAST.Source] = List(this)
   }
 
   object Source {

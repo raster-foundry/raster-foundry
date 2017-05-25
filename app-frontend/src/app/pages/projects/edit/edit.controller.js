@@ -2,14 +2,15 @@ const Map = require('es6-map');
 
 export default class ProjectsEditController {
     constructor( // eslint-disable-line max-params
-        $log, $q, $state, $scope, projectService, mapService, mapUtilsService, layerService,
-        datasourceService, $uibModal
+        $log, $q, $state, $scope, authService, projectService, mapService,
+        mapUtilsService, layerService, datasourceService, $uibModal
     ) {
         'ngInject';
         this.$log = $log;
         this.$q = $q;
         this.$state = $state;
         this.$scope = $scope;
+        this.authService = authService;
         this.projectService = projectService;
         this.mapUtilsService = mapUtilsService;
         this.layerService = layerService;
@@ -30,11 +31,12 @@ export default class ProjectsEditController {
         this.sceneLayers = new Map();
         this.projectId = this.$state.params.projectid;
         this.layers = [];
+
         if (!this.project) {
             if (this.projectId) {
                 this.loadingProject = true;
                 this.projectUpdateListeners = [];
-                this.projectService.loadProject(this.projectId).then(
+                this.fetchProject().then(
                     (project) => {
                         this.project = project;
                         this.fitProjectExtent();
@@ -42,6 +44,9 @@ export default class ProjectsEditController {
                         this.projectUpdateListeners.forEach((wait) => {
                             wait.resolve(project);
                         });
+                        if (this.project.isAOIProject) {
+                            this.getPendingSceneList();
+                        }
                     },
                     () => {
                         this.loadingProject = false;
@@ -51,6 +56,8 @@ export default class ProjectsEditController {
             } else {
                 this.$state.go('projects.list');
             }
+        } else if (this.project.isAOIProject) {
+            this.getPendingSceneList();
         }
     }
 
@@ -66,10 +73,20 @@ export default class ProjectsEditController {
         });
     }
 
+    fetchProject() {
+        if (!this.projectRequest) {
+            this.projectRequest = this.projectService.loadProject(this.projectId);
+        }
+        return this.projectRequest;
+    }
+
     getSceneList() {
         this.sceneRequestState = {loading: true};
         this.sceneListQuery = this.projectService.getAllProjectScenes(
-            {projectId: this.projectId}
+            {
+                projectId: this.projectId,
+                pending: false
+            }
         );
         this.sceneListQuery.then(
             (allScenes) => {
@@ -91,14 +108,30 @@ export default class ProjectsEditController {
         });
     }
 
-    layerFromProject() {
-        let layer = this.layerService.layerFromScene(this.sceneList, this.projectId, true);
-        this.mosaicLayer.set(this.projectId, layer);
-        layer.getMosaicTileLayer().then((tiles) => {
-            this.getMap().then((map) => {
-                map.setLayer('project', tiles);
+    getPendingSceneList() {
+        if (!this.pendingSceneRequest) {
+            this.pendingSceneRequest = this.projectService.getAllProjectScenes({
+                projectId: this.projectId,
+                pending: true
             });
+            this.pendingSceneRequest.then(pendingScenes => {
+                this.pendingSceneList = pendingScenes;
+            });
+        }
+        return this.pendingSceneRequest;
+    }
+
+    layerFromProject() {
+        let url = this.projectService.getProjectLayerURL(
+            this.project,
+            this.authService.token()
+        );
+        let layer = L.tileLayer(url);
+
+        this.getMap().then(m => {
+            m.setLayer('project-layer', layer);
         });
+        this.mosaicLayer.set(this.projectId, layer);
     }
 
     setHoveredScene(scene) {
