@@ -120,27 +120,29 @@ object Interpreter extends LazyLogging {
     sourceMapping: Map[UUID, RFMLRaster],
     source: RFMLRaster => Future[Option[Tile]]
   )(implicit ec: ExecutionContext): Future[Interpreted[LazyTile]] = {
-    val emptyTile = IntArrayTile(Array(), 0, 0)
+    val emptyTile = IntConstantNoDataArrayTile(Array(NODATA), 1, 1)
 
-    def eval(ast: MapAlgebraAST): Future[Interpreted[LazyTile]] = ast match {
-      case Source(id, label) =>
-        if (sourceMapping.isDefinedAt(id)) {
-          val rfmlRaster = sourceMapping(id)
-          source(rfmlRaster).map({ maybeTile =>
-            val lazyTile = maybeTile.map(LazyTile(_)).getOrElse(LazyTile(emptyTile))
-            Valid(lazyTile)
-          }).recover({ case t: Throwable =>
-            Invalid(NonEmptyList.of(RasterRetrievalError(id, rfmlRaster.id)))
-          })
-        } else {
-          Future.successful { Invalid(NonEmptyList.of(MissingParameter(id))) }
-        }
+    def eval(ast: MapAlgebraAST): Future[Interpreted[LazyTile]] = {
+      ast match {
+        case Source(id, label) =>
+          if (sourceMapping.isDefinedAt(id)) {
+            val rfmlRaster = sourceMapping(id)
+            source(rfmlRaster).map({ maybeTile =>
+              val lazyTile = maybeTile.map(LazyTile(_)).getOrElse(LazyTile(emptyTile))
+              Valid(lazyTile)
+            }).recover({ case t: Throwable =>
+              Invalid(NonEmptyList.of(RasterRetrievalError(id, rfmlRaster.id)))
+            })
+          } else {
+            Future.successful { Invalid(NonEmptyList.of(MissingParameter(id))) }
+          }
 
-      // For the exhaustive match
-      case op: Operation =>
-        interpretOperation(op, eval)
-      case unsupported =>
-        throw new java.lang.IllegalStateException(s"Pattern match failure on putative AST: $unsupported")
+        // For the exhaustive match
+        case op: Operation =>
+          interpretOperation(op, eval)
+        case unsupported =>
+          throw new java.lang.IllegalStateException(s"Pattern match failure on putative AST: $unsupported")
+      }
     }
 
     eval(ast)
@@ -158,7 +160,7 @@ object Interpreter extends LazyLogging {
     source: (RFMLRaster, Int, Int, Int) => Future[Option[Tile]]
   )(implicit ec: ExecutionContext): (Int, Int, Int) => Future[Interpreted[LazyTile]] = {
     // have to parse AST per-request because there is no structure to capture intermediate results
-    val emptyTile = IntArrayTile(Array(), 0, 0)
+    val emptyTile = IntConstantNoDataArrayTile(Array(NODATA), 1, 1)
 
     (z: Int, x: Int, y: Int) => {
 

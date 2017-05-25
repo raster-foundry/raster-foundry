@@ -419,7 +419,8 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
                       None, None,                   // Alpha, Beta
                       None, None,                   // Min, Max
                       None,                         // Saturation
-                      false                         // Equalize
+                      false,                        // Equalize
+                      None                          // Auto White Balance
                     )
                   )
                 )

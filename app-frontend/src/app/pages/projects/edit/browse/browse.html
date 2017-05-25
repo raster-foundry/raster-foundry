@@ -13,9 +13,9 @@
 </div>
 <div class="sidebar-project" ng-show="!$ctrl.activeScene">
   <ul class="sidebar-list">
-    <li ng-if="$ctrl.$parent.project.isAOIProject">
+    <li ng-if="$ctrl.$parent.project.isAOIProject && $ctrl.$parent.pendingSceneList.length">
       <div class="banner banner-secondary">
-        <div>12 scenes awaiting approval</div>
+        <div>{{$ctrl.$parent.pendingSceneList.length}} scenes awaiting approval</div>
         <div>
           <button class="btn btn-border-light" ui-sref="projects.edit.aoi-approve">Review Scenes</button>
         </div>
@@ -52,7 +52,7 @@
 </div>
 <div class="sidebar-scrollable list-group">
   <rf-scene-item
-      ng-click="$ctrl.openDetailPane(scene)"
+      ng-click="$ctrl.openSceneDetailModal(scene)"
       scene="scene"
       selectable
       selected="$ctrl.isSelected(scene)"
@@ -76,17 +76,4 @@
   <rf-filter-pane ng-if="$ctrl.filters"
                   data-opened="$ctrl.showFilterPane"
                   filters="$ctrl.filters"></rf-filter-pane>
-</div>
-
-<!-- Scene detail view -->
-<div class="scene-detail-map" ng-if="$ctrl.activeScene">
-  <div class="container column-stretch container-not-scrollable">
-    <rf-scene-detail class="sidebar"
-                     scene="$ctrl.activeScene"
-                     show-thumbnail="true"
-                     on-close-click="$ctrl.closeDetailPane()"
-                     on-select-click="$ctrl.toggleSelectAndClosePane()"
-                     is-selected="$ctrl.isSelected($ctrl.activeScene)"
-    ></rf-scene-detail>
-  </div>
 </div>

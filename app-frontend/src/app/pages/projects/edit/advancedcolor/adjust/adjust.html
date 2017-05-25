@@ -36,8 +36,10 @@
         <div class="filter-group">
           <div class="filter-group-header">
             <rf-toggle data-model="$ctrl.sigToggle.value"
-                       on-change="$ctrl.sigToggled(value)"></rf-toggle>
-            <h5>Sigmoidal Contast</h5>
+                       on-change="$ctrl.sigToggled(value)">
+              <i class="icon-check"></i>
+            </rf-toggle>
+            <h5>Sigmoidal Contrast</h5>
             <i class="icon-info"
                tooltips
                tooltip-template="
@@ -86,7 +88,8 @@
         <div class="filter-group">
           <div class="filter-group-header">
             <rf-toggle data-model="$ctrl.gammaToggle.value"
-                       on-change="$ctrl.gammaToggled(value)">
+                       on-change="$ctrl.gammaToggled()">
+              <i class="icon-check"></i>
             </rf-toggle>
             <h5>Color Balance</h5>
             <i class="icon-info"
@@ -156,7 +159,7 @@
             </div>
             <div class="filter-group-option">
               <label class="color-white">Link Sliders</label>
-              <rf-toggle data-model="$ctrl.gammaLinkToggle" on-change="$ctrl.gammaLinkToggled()"></rf-toggle>
+              <rf-toggle data-model="$ctrl.gammaLinkToggle" on-change="$ctrl.gammaLinkToggled()"><i class="icon-check"></i></rf-toggle>
             </div>
           </div>
         </div>
@@ -165,7 +168,9 @@
         <div class="filter-group">
           <div class="filter-group-header">
             <rf-toggle data-model="$ctrl.saturationToggle.value"
-                       on-change="$ctrl.saturationToggled(value)"></rf-toggle>
+                       on-change="$ctrl.saturationToggled(value)">
+              <i class="icon-check"></i>
+            </rf-toggle>
             <h5 class="h5">Saturation</h5>
           </div>
           <div class="filter-group-body" ng-show="$ctrl.saturationToggle.value">

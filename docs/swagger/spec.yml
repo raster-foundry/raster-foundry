@@ -579,6 +579,7 @@ paths:
         - $ref: '#/parameters/maxResolution'
         - $ref: '#/parameters/tags'
         - $ref: '#/parameters/ingested'
+        - $ref: '#/parameters/ingestStatus'
       responses:
         200:
           description: Statistics for the given bounding box
@@ -2108,6 +2109,8 @@ definitions:
         type: number
         format: float
       equalize:
+        type: boolean
+      autoBalance:
         type: boolean
       contrast:
         type: number

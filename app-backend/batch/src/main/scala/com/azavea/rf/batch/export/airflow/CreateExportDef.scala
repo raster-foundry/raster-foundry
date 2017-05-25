@@ -22,10 +22,10 @@ import com.azavea.rf.database.tables._
 import com.azavea.rf.datamodel._
 
 case class CreateExportDef(exportId: UUID)(implicit val database: DB) extends Job {
-  val name = "create_export_def"
+  val name = CreateExportDef.name
 
   /** Get S3 client per each call */
-  def s3Client = S3(None)
+  def s3Client = S3()
     
   protected def writeExportDefToS3(exportDef: ExportDefinition) = {
     logger.info(s"Uploading export definition ${exportDef.id.toString} to S3 at ${exportDefConfig.bucketName}")

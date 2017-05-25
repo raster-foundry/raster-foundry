@@ -87,7 +87,7 @@
   <!-- Body for LOCAL_UPLOAD -->
   <div class="modal-body" ng-if="$ctrl.currentStepIs('LOCAL_UPLOAD')"
     ngf-multiple=true
-    ngf-pattern="'*.tif'"
+    ngf-pattern="'*.tif,*.tiff'"
     ngf-drop-available=true
     ng-model="$ctrl.selectedFiles"
     ngf-keep="'distinct'"
@@ -102,7 +102,7 @@
           <button class="btn btn-primary"
                   ngf-multiple=true
                   ng-model="$ctrl.selectedFiles"
-                  ngf-pattern="'*.tif'"
+                  ngf-pattern="'*.tif,*.tiff'"
                   ngf-keep="'distinct'"
                   ngf-change="$ctrl.filesSelected($files)"
                   ngf-select
@@ -123,7 +123,7 @@
           <button class="btn btn-primary"
                   ngf-multiple=true
                   ng-model="$ctrl.selectedFiles"
-                  ngf-pattern="'*.tif'"
+                  ngf-pattern="'*.tif,*.tiff'"
                   ngf-keep="'distinct'"
                   ngf-change="$ctrl.filesSelected($files)"
                   ngf-select

@@ -12,8 +12,9 @@ export default class ToggleController {
             this.model = changes.dataModel.currentValue;
         }
     }
-    toggle() {
-        this.model = !this.model;
-        this.onChange({value: this.model});
+    toggle($event) {
+        $event.stopPropagation();
+        $event.preventDefault();
+        this.onChange({value: !this.model});
     }
 }

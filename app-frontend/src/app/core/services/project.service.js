@@ -55,7 +55,8 @@ export default (app) => {
                         cache: false,
                         url: '/api/projects/:projectId/scenes',
                         params: {
-                            projectId: '@projectId'
+                            projectId: '@projectId',
+                            pending: '@pending'
                         }
                     },
                     removeScenes: {
@@ -68,6 +69,21 @@ export default (app) => {
                     export: {
                         method: 'POST',
                         url: '/api/exports/'
+                    },
+                    createAOI: {
+                        method: 'POST',
+                        url: '/api/projects/:projectId/areas-of-interest/',
+                        params: {
+                            projectId: '@projectId'
+                        }
+                    },
+                    approveScene: {
+                        method: 'POST',
+                        url: '/api/projects/:projectId/scenes/:sceneId/accept',
+                        params: {
+                            projectId: '@projectId',
+                            sceneId: '@sceneId'
+                        }
                     }
                 }
             );
@@ -101,12 +117,17 @@ export default (app) => {
             );
         }
 
-        createProject(name) {
+        createProject(name, params = {}) {
             return this.userService.getCurrentUser().then(
                 (user) => {
                     return this.Project.create({
-                        organizationId: user.organizationId, name: name, description: '',
-                        visibility: 'PRIVATE', tileVisibility: 'PRIVATE', tags: []
+                        organizationId: user.organizationId,
+                        name: name,
+                        description: params.description || '',
+                        visibility: params.visibility || 'PRIVATE',
+                        tileVisibility: params.tileVisibility || 'PRIVATE',
+                        tags: params.tags || [],
+                        isAOIProject: params.isAOIProject || false
                     }).$promise;
                 },
                 (error) => {
@@ -253,6 +274,18 @@ export default (app) => {
 
         updateProject(params) {
             return this.Project.updateProject(params).$promise;
+        }
+
+        createAOI(params) {
+            return this.userService.getCurrentUser().then(user => {
+                const paramsWithOrg =
+                    Object.assign(params, { organizationId: user.organizationId });
+                return this.Project.createAOI(paramsWithOrg);
+            }).$promise;
+        }
+
+        approveScene(projectId, sceneId) {
+            return this.Project.approveScene({ projectId, sceneId }).$promise;
         }
 
         getBaseURL() {

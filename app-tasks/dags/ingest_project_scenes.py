@@ -11,6 +11,7 @@ import dns.resolver
 
 from rf.utils.io import IngestStatus
 from rf.models import Scene
+from rf.ingest.models import Ingest
 from rf.ingest import create_landsat8_ingest, create_ingest_definition
 from rf.uploads.landsat8.settings import datasource_id as landsat_id
 from rf.utils.exception_reporting import wrap_rollbar
@@ -41,7 +42,7 @@ dag = DAG(
 batch_job_definition = os.getenv('BATCH_INGEST_JOB_NAME')
 batch_job_queue = os.getenv('BATCH_INGEST_JOB_QUEUE')
 hosted_zone_id = os.getenv('HOSTED_ZONE_ID')
-jar_path = os.getenv('BATCH_JAR_PATH', 'rf-batch-53937da.jar')
+jar_path = os.getenv('BATCH_JAR_PATH', 'rf-batch-g874b19.jar')
 
 
 ################################
@@ -56,12 +57,14 @@ def get_cluster_id():
 
 
 @wrap_rollbar
-def execute_ingest_emr_job(ingest_s3_uri, ingest_def_id, cluster_id):
+def execute_ingest_emr_job(scene_id, ingest_s3_uri, ingest_def_id, cluster_id):
     """Kick off ingest in AWS EMR
 
     Args:
+        scene_id (str): id of the scene to ingest
         ingest_s3_uri (str): URI for ingest definition
         ingest_def_id (str): ID to namespace ingest job
+        cluster_id (str): ID of the cluster to submit work to
 
     Returns:
         dict
@@ -75,11 +78,15 @@ def execute_ingest_emr_job(ingest_s3_uri, ingest_def_id, cluster_id):
                      'yarn',
                      '--deploy-mode',
                      'cluster',
+                     '--conf',
+                     'spark.yarn.submit.waitAppCompletion=false',
                      '--class',
                      'com.azavea.rf.batch.ingest.spark.Ingest',
                      's3://rasterfoundry-global-artifacts-us-east-1/batch/{}'.format(jar_path),
                      '-t',
                      '--overwrite',
+                     '-s',
+                     scene_id,
                      '-j',
                      ingest_s3_uri],
             'Jar': 's3://us-east-1.elasticmapreduce/libs/script-runner/script-runner.jar'
@@ -164,6 +171,7 @@ def create_ingest_definition_op(*args, **kwargs):
     # Store values for later tasks
     xcom_client.xcom_push(key='ingest_def_uri', value=ingest_definition.s3_uri)
     xcom_client.xcom_push(key='ingest_def_id', value=ingest_definition.id)
+    xcom_client.xcom_push(key='scene_id', value=scene.id)
 
 
 @wrap_rollbar
@@ -172,40 +180,29 @@ def launch_spark_ingest_job_op(*args, **kwargs):
     xcom_client = kwargs['task_instance']
     ingest_def_uri = xcom_client.xcom_pull(key='ingest_def_uri', task_ids=None)
     ingest_def_id = xcom_client.xcom_pull(key='ingest_def_id', task_ids=None)
+    scene_id = xcom_client.xcom_pull(key='scene_id', task_ids=None)
 
     logger.info('Launching Spark ingest job with ingest definition %s', ingest_def_uri)
     cluster_id = get_cluster_id()
-    emr_response = execute_ingest_emr_job(ingest_def_uri, ingest_def_id, cluster_id)
+    emr_response = execute_ingest_emr_job(scene_id, ingest_def_uri, ingest_def_id, cluster_id)
     logger.info('Finished launching Spark ingest job. Waiting for status changes.')
     is_success = wait_for_success(emr_response, cluster_id)
     return is_success
 
 
 @wrap_rollbar
-def set_ingest_status_success_op(*args, **kwargs):
-    """Set scene ingest status on success"""
+def wait_for_status_op(*args, **kwargs):
+    """Wait for a result from the Spark job"""
     xcom_client = kwargs['task_instance']
-    scene_id = xcom_client.xcom_pull(key='ingest_scene_id', task_ids=None)
-    logger.info("Setting scene (%s) ingested status to success", scene_id)
+    ingest_def_id = xcom_client.xcom_pull(key='ingest_def_id', task_ids=None)
+    ingest_status_dict = Ingest.get_status_from_s3(ingest_def_id)
+    scene_id = ingest_status_dict['sceneId']
+    status = ingest_status_dict['ingestStatus']
     scene = Scene.from_id(scene_id)
-    scene.ingestStatus = IngestStatus.INGESTED
-
-    layer_s3_bucket = os.getenv('TILE_SERVER_BUCKET')
-
-    s3_output_location = 's3://{}/layers'.format(layer_s3_bucket)
-    scene.ingestLocation = s3_output_location
+    scene.ingestStatus = IngestStatus.fromString(status)
+    logger.info('Setting scene %s ingest status to %s', scene.id, scene.ingestStatus)
     scene.update()
-    logger.info("Finished setting scene (%s) ingest status (%s)", scene_id, IngestStatus.INGESTED)
-    return "Done Success"
-
-@wrap_rollbar
-def set_ingest_status_failure_op(*args, **kwargs):
-    """Set ingest status on failure"""
-    xcom_client = kwargs['task_instance']
-    scene_id = xcom_client.xcom_pull(key='ingest_scene_id', task_ids=None)
-    logger.info("Setting scene (%s) ingested status to failed", scene_id)
-    logger.info("Finished setting scene (%s) ingest status (%s)", scene_id, IngestStatus.FAILED)
-    return "Done Success"
+    logger.infoi('Successfully updated scene %s\'s ingest status', scene.id)
 
 ################################
 # Tasks                        #
@@ -225,21 +222,10 @@ launch_spark_ingest_task = PythonOperator(
     dag=dag
 )
 
-
-set_ingest_status_success_task = PythonOperator(
-    task_id='set_ingest_status_success',
-    python_callable=set_ingest_status_success_op,
+wait_for_status_task = PythonOperator(
+    task_id='wait_for_status',
     provide_context=True,
-    trigger_rule='all_success',
-    dag=dag
-)
-
-
-set_ingest_status_failure_task = PythonOperator(
-    task_id='set_ingest_status_failure',
-    python_callable=set_ingest_status_failure_op,
-    provide_context=True,
-    trigger_rule='all_failed',
+    python_callable=wait_for_status_op,
     dag=dag
 )
 
@@ -247,6 +233,5 @@ set_ingest_status_failure_task = PythonOperator(
 ################################
 # DAG Structure Specification  #
 ################################
-set_ingest_status_success_task.set_upstream(launch_spark_ingest_task)
-set_ingest_status_failure_task.set_upstream(launch_spark_ingest_task)
 launch_spark_ingest_task.set_upstream(create_ingest_definition_task)
+wait_for_status_task.set_upstream(launch_spark_ingest_task)
