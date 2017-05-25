@@ -187,9 +187,11 @@ export default class ProjectsDetailController {
             this.lastSceneResult.count === 0;
     }
 
-    removeScene(scene, $event) {
-        $event.stopPropagation();
-        $event.preventDefault();
+    removeScene(scene, event) {
+        if (event) {
+            event.stopPropagation();
+            event.preventDefault();
+        }
         this.projectService.removeScenesFromProject(this.projectId, [ scene.id ]).then(
             () => {
                 this.populateSceneList(this.currentPage);
@@ -245,6 +247,25 @@ export default class ProjectsDetailController {
                 scene: () => scene
             }
         });
+    }
+
+    openImportModal() {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        this.activeModal = this.$uibModal.open({
+            component: 'rfImportModal',
+            resolve: {
+                project: () => this.project
+            }
+        });
+
+        this.activeModal.result.then(() => {
+
+        });
+
+        return this.activeModal;
     }
 
     cancelProjectNameEdit() {
