@@ -146,7 +146,7 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
     val inDef = InputDefinition(
       UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57036"),
       15,
-      Right(ASTInput(ast, params))
+      Right(ASTInput(ast, params, Map.empty))
     )
 
     val ed = ExportDefinition(

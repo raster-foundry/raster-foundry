@@ -8,7 +8,6 @@ import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.params._
 
-import cats._
 import cats.data._
 import cats.implicits._
 import com.lonelyplanet.akka.http.extensions.PageRequest
@@ -188,7 +187,7 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
         )
 
         val style: OptionT[Future, Either[SimpleInput, ASTInput]] = export.toolRunId match {
-          case Some(id) => astInput(id, user).map(Right(_))
+          case Some(id) => astInput(id, export, user).map(Right(_))
           case None => {
             /* Hand-holding the type system */
             val work: Future[Option[Either[SimpleInput, ASTInput]]] =
@@ -214,6 +213,7 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
 
   private def astInput(
     toolRunId: UUID,
+    export: Export,
     user: User
   )(implicit database: DB): OptionT[Future, ASTInput] = {
 
@@ -222,8 +222,11 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
       tool   <- OptionT(Tools.getTool(tRun.tool, user))
       ast    <- OptionT.pure[Future, MapAlgebraAST](parseOrThrow[MapAlgebraAST](tool.definition))
       params <- OptionT.pure[Future, EvalParams](parseOrThrow[EvalParams](tRun.executionParameters))
+      scenes <- OptionT(getScenes(export, user)
+        .map(_.map(s => s.ingestLocation.map(l => (s.id, l))).toList.sequence)
+      )
     } yield {
-      ASTInput(ast, params)
+      ASTInput(ast, params, scenes.toMap)
     }
   }
 
