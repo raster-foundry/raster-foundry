@@ -88,15 +88,6 @@ class IngestStatus(object):
     INGESTED = 'INGESTED'
     FAILED = 'FAILED'
 
-    @classmethod
-    def from_string(s):
-        lookup = {
-            k: k.upper() for k in [
-                'notingested', 'tobeingested', 'ingesting',
-                'ingested', 'failed'
-            ]
-        }
-        return lookup[s.lower()]
 
 class Visibility(object):
     PUBLIC = 'PUBLIC'
