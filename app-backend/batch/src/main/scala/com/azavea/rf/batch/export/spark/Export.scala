@@ -48,27 +48,32 @@ object Export extends SparkJob with Config with LazyLogging {
     val wrappedConfiguration: HadoopConfiguration =
       HadoopConfiguration(S3.setCredentials(sc.hadoopConfiguration))
 
-    interpretRDD(ed.input.ast, ed.input.params.sources, ed.input.resolution) match {
-      case Invalid(errs) => ???
-      case Valid(rdd) => {
+    ed.input.style match {
+      case Left(SimpleInput(layers, mask)) => ???
+      case Right(ASTInput(ast, params)) => {
+        interpretRDD(ast, params.sources, ed.input.resolution) match {
+          case Invalid(errs) => ???
+          case Valid(rdd) => {
 
-        val mt: MapKeyTransform = rdd.metadata.layout.mapTransform
-        val crs: CRS = rdd.metadata.crs
+            val mt: MapKeyTransform = rdd.metadata.layout.mapTransform
+            val crs: CRS = rdd.metadata.crs
 
-        if(!ed.output.stitch) {
-          /* Create GeoTiffs and output them */
-          val singles: RDD[(SpatialKey, SinglebandGeoTiff)] =
-            rdd.map({ case (key, tile) => (key, SinglebandGeoTiff(tile, mt(key), crs)) })
+            if(!ed.output.stitch) {
+              /* Create GeoTiffs and output them */
+              val singles: RDD[(SpatialKey, SinglebandGeoTiff)] =
+                rdd.map({ case (key, tile) => (key, SinglebandGeoTiff(tile, mt(key), crs)) })
 
-          writeGeoTiffs(singles, ed, wrappedConfiguration)
-        } else {
-          /* Stitch the Layer into a single GeoTiff and output it */
-          val single: SinglebandGeoTiff = GeoTiff(rdd.stitch, crs)
+              writeGeoTiffs(singles, ed, wrappedConfiguration)
+            } else {
+              /* Stitch the Layer into a single GeoTiff and output it */
+              val single: SinglebandGeoTiff = GeoTiff(rdd.stitch, crs)
 
-          single.write(
-            new Path(s"${ed.output.source.toString}/${ed.input.resolution}-${UUID.randomUUID()}.tiff"),
-            wrappedConfiguration.get
-          )
+              single.write(
+                new Path(s"${ed.output.source.toString}/${ed.input.resolution}-${UUID.randomUUID()}.tiff"),
+                wrappedConfiguration.get
+              )
+            }
+          }
         }
       }
     }
