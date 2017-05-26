@@ -160,6 +160,9 @@ object Export extends SparkJob with Config with LazyLogging {
           .stitch
       val craster =
         if(ed.output.crop) mask.fold(raster)(mp => raster.crop(mp.envelope.reproject(LatLng, md.crs)))
+
+      val craster: Raster[MultibandTile] =
+        if(exportDef.output.crop) exportDef.input.mask.fold(raster)(mp => raster.crop(mp.envelope.reproject(LatLng, md.crs)))
         else raster
 
       writeGeoTiff[MultibandTile, MultibandGeoTiff](GeoTiff(craster, md.crs), ed, conf, singlePath)
