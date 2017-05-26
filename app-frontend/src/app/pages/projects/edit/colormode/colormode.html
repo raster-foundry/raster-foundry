@@ -1,8 +1,18 @@
 <div class="sidebar-project">
-  <div class="sidebar-row">
-    <button class="btn" ui-sref="projects.edit"><i class="icon-caret-left"></i>Project</button>
-    <h5 class="sidebar-title">Color mode</h5>
+  <div class="sidebar-header">
+    <a class="btn sidebar-header-nav-btn" ui-sref="projects.edit">
+      <i class="icon-arrow-left"></i>
+    </a>
+    <h5 class="sidebar-title">Color Mode</h5>
   </div>
+
+  <ul class="sidebar-list">
+    <li>
+      <div class="label">
+        <span class="text">Color modes determine how various sensor bands are translated into visible color.</span>
+      </div>
+    </li>
+  </ul>
 </div>
 <div class="sidebar-scrollable">
   <div class="list-group">
@@ -12,12 +22,9 @@
         <span title="{{composite.label}}"><strong>{{composite.label}}</strong></span>
       </div>
       <div class="list-group-right">
-        <button class="btn btn-square"
-                ng-class="{'btn-secondary': $ctrl.isActiveColorMode(key)}"
-                ng-click="$ctrl.setBands(key)">
-          <i ng-class="{'icon-cross': $ctrl.isActiveColorMode(key),
-                       'icon-plus': !$ctrl.isActiveColorMode(key)}"></i>
-        </button>
+        <rf-toggle data-model="$ctrl.isActiveColorMode(key)" on-change="$ctrl.setBands(key)">
+          <i class="icon-check"></i>
+        </rf-toggle>
       </div>
     </div>
   </div>

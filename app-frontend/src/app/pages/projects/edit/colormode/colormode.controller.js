@@ -1,9 +1,8 @@
 export default class ProjectsEditColormode {
-    constructor($scope, $q, colorCorrectService, projectService) {
+    constructor($scope, colorCorrectService, projectService) {
         'ngInject';
         this.$scope = $scope;
         this.$parent = $scope.$parent.$ctrl;
-        this.$q = $q;
         this.colorCorrectService = colorCorrectService;
         this.projectService = projectService;
 
@@ -90,11 +89,11 @@ export default class ProjectsEditColormode {
     /**
      * Trigger the redraw of the mosaic layer with new bands
      *
-     * @param {promise[]} promises array of scene color correction promises
+     * @param {promise} promise color-correction promise
      * @returns {null} null
      */
-    redrawMosaic(promises) {
-        this.$q.all(promises).then(() => {
+    redrawMosaic(promise) {
+        promise.then(() => {
             this.$parent.layerFromProject();
         });
     }

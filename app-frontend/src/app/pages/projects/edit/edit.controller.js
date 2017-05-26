@@ -16,7 +16,6 @@ export default class ProjectsEditController {
         this.layerService = layerService;
         this.datasourceService = datasourceService;
         this.$uibModal = $uibModal;
-
         this.getMap = () => mapService.getMap('edit');
     }
 
@@ -156,12 +155,9 @@ export default class ProjectsEditController {
     }
 
     initColorComposites() {
-        this.$q.all(
-            this.sceneList.map(s => this.datasourceService.get(s.datasource))
-        ).then(
-            dsl => {
-                this.datasources = dsl;
-                this.unifiedComposites = this.unifyComposites(dsl);
+        this.fetchUnifiedComposites(true).then(
+            composites => {
+                this.unifiedComposites = composites;
             }
         );
     }
@@ -176,6 +172,26 @@ export default class ProjectsEditController {
                 return ao;
             }, {});
         }, composites[0]);
+    }
+
+    fetchDatasources(force = false) {
+        if (!this.datasourceRequest || force) {
+            this.datasourceRequest = this.$q.all(
+                this.sceneList.map(s => this.datasourceService.get(s.datasource))
+            );
+        }
+        return this.datasourceRequest;
+    }
+
+    fetchUnifiedComposites(force = false) {
+        if (!this.unifiedCompositeRequest || force) {
+            this.unifiedCompositeRequest = this.fetchDatasources(force).then(
+                datasources => {
+                    return this.unifyComposites(datasources);
+                }
+            );
+        }
+        return this.unifiedCompositeRequest;
     }
 
     publishModal() {
