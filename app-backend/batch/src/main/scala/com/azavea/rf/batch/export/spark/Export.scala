@@ -16,7 +16,6 @@ import cats.data.Validated._
 import cats.implicits._
 import com.azavea.rf.batch.util._
 import com.azavea.rf.common.InterpreterException
-import com.azavea.rf.database.Database
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.rf.tool.params.EvalParams
@@ -47,15 +46,14 @@ object Export extends SparkJob with Config with LazyLogging {
 
   val jobName = "Export"
 
-  implicit lazy val database = Database.DEFAULT
-
   def astExport(
     ed: ExportDefinition,
     ast: MapAlgebraAST,
     params: EvalParams,
+    ingestLocs: Map[UUID, String],
     conf: HadoopConfiguration
   )(implicit sc: SparkContext): Unit = {
-    interpretRDD(ast, params.sources, ed.input.resolution) match {
+    interpretRDD(ast, params.sources, ed.input.resolution, ingestLocs) match {
       case Invalid(errs) => throw new InterpreterException(errs)
       case Valid(rdd) => {
 
@@ -70,7 +68,7 @@ object Export extends SparkJob with Config with LazyLogging {
           writeGeoTiffs[Tile, SinglebandGeoTiff](singles, ed, conf)
         } else {
           /* Stitch the Layer into a single GeoTiff and output it */
-          val single: SinglebandGeoTiff = GeoTiff(rdd.stitch, crs)
+        val single: SinglebandGeoTiff = GeoTiff(rdd.stitch, crs)
 
           single.write(
             new Path(s"${ed.output.source.toString}/${ed.input.resolution}-${UUID.randomUUID()}.tiff"),
@@ -224,7 +222,7 @@ object Export extends SparkJob with Config with LazyLogging {
 
       exportDef.input.style match {
         case Left(SimpleInput(layers, mask)) => multibandExport(exportDef, layers, mask, conf)
-        case Right(ASTInput(ast, params)) => astExport(exportDef, ast, params, conf)
+        case Right(ASTInput(ast, params, locs)) => astExport(exportDef, ast, params, locs, conf)
       }
     } finally {
       sc.stop

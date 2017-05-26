@@ -48,4 +48,4 @@ object InputDefinition {
 case class SimpleInput(layers: Array[ExportLayerDefinition], mask: Option[MultiPolygon])
 
 @JsonCodec
-case class ASTInput(ast: MapAlgebraAST, params: EvalParams)
+case class ASTInput(ast: MapAlgebraAST, params: EvalParams, ingestLocs: Map[UUID, String])
