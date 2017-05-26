@@ -58,6 +58,10 @@
 .column {
   flex: 1;
   padding: $column-padding;
+
+  &.nogutter {
+    padding: 0;
+  }
 }
 
 @for $i from 1 through $column-count {
@@ -65,6 +69,10 @@
     flex: none;
     padding: $column-padding;
     width: ($i/$column-count) * 100%;
+
+    &.nogutter {
+      padding: 0;
+    }
   }
 }
 

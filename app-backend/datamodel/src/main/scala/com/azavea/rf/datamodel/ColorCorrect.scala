@@ -18,6 +18,7 @@ import akka.http.scaladsl.server._
 
 import scala.math._
 import scala.annotation.tailrec
+import com.azavea.rf.datamodel.color._
 
 object SaturationAdjust {
   def apply(rgbTile: MultibandTile, chromaFactor: Double): MultibandTile = {
@@ -139,14 +140,14 @@ object WhiteBalance {
       (acc._1 + (x._1 / rgbTiles.length), acc._2 + (x._2 / rgbTiles.length), acc._3 + (x._3 / rgbTiles.length))
     })
 
-    val newTiles = 
+    val newTiles =
       rgbTiles
         .map(t => MultibandTile(
           t.band(0).mapIfSet(c => clamp8Bit((c * tileAdjs._1).toInt)),
           t.band(1).mapIfSet(c => clamp8Bit((c * tileAdjs._2).toInt)),
           t.band(2).mapIfSet(c => clamp8Bit((c * tileAdjs._3).toInt))))
         .map(_.convert(UByteConstantNoDataCellType))
-    
+
     newTiles
   }
 
@@ -173,7 +174,7 @@ object WhiteBalance {
     type MemoizedFn = Memo[I, K, O]
 
     implicit def encode(input: MemoizedFn#Input): MemoizedFn#Key = (input._1, input._2, input._3)
-    
+
     def rgbToYuv(rb: Int, gb: Int, bb: Int): YUV = {
       val (r, g, b) = (rb, gb, bb)
       val W_r = 0.299
@@ -281,23 +282,29 @@ object WhiteBalance {
       adjustGrey(balancedTile, newAdjustments, iter + 1, if (gainVal == 0) true else false)
     }
   }
-  
+
 }
 
 object ColorCorrect {
-
+  // TODO: Now that each correction is a separate class, it should be possible to refactor this object to place the
+  // necessary corrections with the classes that enable them. So rather than
+  // ```
+  // val maybeAdjustContrast =
+  //   for (c <- params.brightContrast.contrast)
+  //     yield (mb: MultibandTile) => mb.mapBands { (i, tile) => adjustContrast(tile, c) }
+  // ```
+  //
+  // We would do something like `params.brightContrast.adjustContrast(tile)`
   @JsonCodec
   case class Params(
     redBand: Int, greenBand: Int, blueBand: Int,
-    redGamma: Option[Double], greenGamma: Option[Double], blueGamma: Option[Double],
-    redMax: Option[Int], greenMax: Option[Int], blueMax: Option[Int],
-    redMin: Option[Int], greenMin: Option[Int], blueMin: Option[Int],
-    contrast: Option[Double], brightness: Option[Int],
-    alpha: Option[Double], beta: Option[Double],
-    min: Option[Int], max: Option[Int],
-    saturation: Option[Double],
-    equalize: Boolean,
-    autoBalance: Option[Boolean]
+    gamma: BandGamma,
+    bandClipping: PerBandClipping,
+    tileClipping: MultiBandClipping,
+    sigmoidalContrast: SigmoidalContrast,
+    saturation: Saturation,
+    equalize: Equalization,
+    autoBalance: AutoWhiteBalance
   ) {
     def reorderBands(tile: MultibandTile, hist: Seq[Histogram[Double]]): (MultibandTile, Array[Histogram[Double]]) =
       (tile.subsetBands(redBand, greenBand, blueBand), Array(hist(redBand), hist(greenBand), hist(blueBand)))
@@ -308,32 +315,16 @@ object ColorCorrect {
     }
   }
 
-  object Params {
-    def colorCorrectParams: Directive1[Params] =
-      parameters(
-        'redBand.as[Int].?(0), 'greenBand.as[Int].?(1), 'blueBand.as[Int].?(2),
-        "redGamma".as[Double].?, "greenGamma".as[Double].?, "blueGamma".as[Double].?,
-        "redMax".as[Int].?, "greenMax".as[Int].?, "blueMax".as[Int].?,
-        "redMin".as[Int].?, "greenMin".as[Int].?, "blueMin".as[Int].?,
-        "contrast".as[Double].?, "brightness".as[Int].?,
-        'alpha.as[Double].?, 'beta.as[Double].?,
-        "min".as[Int].?, "max".as[Int].?,
-        "saturation".as[Double].?,
-        'equalize.as[Boolean].?(false),
-        'autoBalance.as[Boolean].?
-      ).as(ColorCorrect.Params.apply _)
-  }
-
   def apply(rgbTile: MultibandTile, rgbHist: Array[Histogram[Double]], params: Params): MultibandTile = {
     val maybeEqualize =
-      if (params.equalize) Some(HistogramEqualization(_: MultibandTile, rgbHist)) else None
+      if (params.equalize.enabled) Some(HistogramEqualization(_: MultibandTile, rgbHist)) else None
 
     case class LayerClipping(redMin: Int, redMax: Int, greenMin: Int, greenMax:Int, blueMin: Int, blueMax: Int)
     sealed trait ClipValue
     case class ClipBounds(min: Int, max: Int) extends ClipValue
     case class MaybeClipBounds(maybeMin: Option[Int], maybeMax: Option[Int]) extends ClipValue
     case class ClippingParams(band: Int, bounds: ClipValue)
-   
+
     val layerRgbClipping = (for {
       (r :: g :: b :: xs) <- Some(rgbHist.toList)
       isCorrected   <- Some((r :: g :: b :: Nil).foldLeft(true) {(acc, hst) => (
@@ -360,11 +351,11 @@ object ColorCorrect {
         :: ClippingParams(2, ClipBounds(layerRgbClipping.blueMin, layerRgbClipping.blueMax))
         :: Nil
     )
-    
+
     val colorCorrectArgs = Some(
-      ClippingParams(0, MaybeClipBounds(params.redMin, params.redMax))
-        :: ClippingParams(1, MaybeClipBounds(params.greenMin, params.greenMax))
-        :: ClippingParams(2, MaybeClipBounds(params.blueMin, params.blueMax))
+      ClippingParams(0, MaybeClipBounds(params.bandClipping.redMin, params.bandClipping.redMax))
+        :: ClippingParams(1, MaybeClipBounds(params.bandClipping.greenMin, params.bandClipping.greenMax))
+        :: ClippingParams(2, MaybeClipBounds(params.bandClipping.blueMin, params.bandClipping.blueMax))
         :: Nil
     )
 
@@ -390,8 +381,8 @@ object ColorCorrect {
                 }
                 case ClippingParams(_, MaybeClipBounds(min, max)) => {
                   (for {
-                    clipMin <- rgbBand(min, params.min, 0)
-                    clipMax <- rgbBand(max, params.max, 255)
+                    clipMin <- rgbBand(min, params.tileClipping.min, 0)
+                    clipMax <- rgbBand(max, params.tileClipping.max, 255)
                   } yield {
                     clipBands(tile, clipMin, clipMax)
                   })
@@ -401,35 +392,33 @@ object ColorCorrect {
           }
         }
 
-    val maybeAdjustBrightness =
-      for (b <- params.brightness)
-        yield (mb: MultibandTile) => mb.mapBands { (i, tile) => adjustBrightness(tile, b) }
-
-    val maybeAdjustContrast =
-      for (c <- params.contrast)
-        yield (mb: MultibandTile) => mb.mapBands { (i, tile) => adjustContrast(tile, c) }
-
     val maybeAdjustGamma =
-      for (c <- params.contrast)
+      for (c <- params.sigmoidalContrast.alpha)
         yield (_: MultibandTile).mapBands { (i, tile) =>
           i match {
-            case 0 =>
-              params.redGamma.fold(tile)(gamma => gammaCorrect(tile, gamma))
-            case 1 =>
-              params.greenGamma.fold(tile)(gamma => gammaCorrect(tile, gamma))
-            case 2 =>
-              params.blueGamma.fold(tile)(gamma => gammaCorrect(tile, gamma))
+            case 0 => params.gamma.redGamma match {
+              case None => tile
+              case Some(gamma) => gammaCorrect(tile, gamma)
+            }
+            case 1 => params.gamma.greenGamma match {
+              case None => tile
+              case Some(gamma) => gammaCorrect(tile, gamma)
+            }
+            case 2 => params.gamma.blueGamma match {
+              case None => tile
+              case Some(gamma) => gammaCorrect(tile, gamma)
+            }
             case _ =>
               sys.error("Too many bands")
           }
         }
 
     val maybeSigmoidal =
-      for (alpha <- params.alpha; beta <- params.beta)
+      for (alpha <- params.sigmoidalContrast.alpha; beta <- params.sigmoidalContrast.beta)
         yield SigmoidalContrast(_: MultibandTile, alpha, beta)
 
     val maybeAdjustSaturation =
-      for (saturationFactor <- params.saturation)
+      for (saturationFactor <- params.saturation.saturation)
         yield SaturationAdjust(_: MultibandTile, saturationFactor)
 
 
@@ -437,9 +426,7 @@ object ColorCorrect {
     val transformations: List[MultibandTile => MultibandTile] = List(
       maybeEqualize,
       maybeClipBands(layerNormalizeArgs),
-      maybeAdjustBrightness,
       maybeAdjustGamma,
-      maybeAdjustContrast,
       maybeAdjustSaturation,
       maybeSigmoidal,
       maybeClipBands(colorCorrectArgs)
@@ -492,20 +479,6 @@ object ColorCorrect {
       else scaled
     }
   }
-
-  def adjustBrightness(tile: Tile, brightness: Int): Tile =
-    tile.mapIfSet { z =>
-      clampColor(if (z > 0) z + brightness else z)
-    }
-
-
-  def adjustContrast(tile: Tile, contrast: Double): Tile =
-    tile.mapIfSet { z =>
-      clampColor {
-        val contrastFactor = (259 * (contrast + 255)) / (255 * (259 - contrast))
-        ((contrastFactor * (z - 128)) + 128).toInt
-      }
-    }
 
   def gammaCorrect(tile: Tile, gamma: Double): Tile =
     tile.mapIfSet { z =>

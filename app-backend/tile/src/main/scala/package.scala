@@ -16,6 +16,4 @@ package object tile {
         deserializationError("Failed to parse UUID string ${js} to java UUID")
     }
   }
-  implicit val defaultColorCorrectParamsFormat = jsonFormat21(ColorCorrect.Params.apply)
-  implicit val defaultMosaicDefinitionFormat = jsonFormat2(MosaicDefinition.apply)
 }

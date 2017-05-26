@@ -2054,12 +2054,6 @@ definitions:
   ColorCorrection:
     type: object
     properties:
-      alpha:
-        type: number
-        format: float
-      beta:
-        type: number
-        format: float
       redBand:
         type: number
         format: integer
@@ -2069,52 +2063,83 @@ definitions:
       blueBand:
         type: number
         format: integer
-      redGamma:
-        type: number
-        format: float
-      greenGamma:
-        type: number
-        format: float
-      blueGamma:
-        type: number
-        format: float
-      redMax:
-        type: number
-        format: float
-      redMin:
-        type: number
-        format: float
-      greenMax:
-        type: number
-        format: float
-      greenMin:
-        type: number
-        format: float
-      blueMax:
-        type: number
-        format: float
-      blueMin:
-        type: number
-        format: float
-      brightness:
-        type: number
-        format: float
-      min:
-        type: number
-        format: float
-      max:
-        type: number
-        format: float
+      sigmoidalContrast:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+          alpha:
+            type: number
+            format: float
+          beta:
+            type: number
+            format: float
+      gamma:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+          redGamma:
+            type: number
+            format: float
+          greenGamma:
+            type: number
+            format: float
+          blueGamma:
+            type: number
+            format: float
+      bandClipping:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+          redMax:
+            type: number
+            format: int
+          redMin:
+            type: number
+            format: int
+          greenMax:
+            type: number
+            format: int
+          greenMin:
+            type: number
+            format: int
+          blueMax:
+            type: number
+            format: int
+          blueMin:
+            type: number
+            format: int
+      tileClipping:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+          min:
+            type: number
+            format: int
+          max:
+            type: number
+            format: int
       saturation:
-        type: number
-        format: float
+        type: object
+        properties:
+          enabled:
+            type: boolean
+          saturation:
+            type: number
+            format: float
       equalize:
-        type: boolean
+        type: object
+        properties:
+          enabled:
+            type: boolean
       autoBalance:
-        type: boolean
-      contrast:
-        type: number
-        format: float
+        type: object
+        properties:
+          enabled:
+            type: boolean
 
   TimeModelMixin:
     type: object
@@ -3156,6 +3181,9 @@ definitions:
         description: output export path
       render:
         $ref: '#/definitions/Render'
+      dropboxCredential:
+        type: string
+        description: Dropbox token
   Render:
     type: object
     properties:

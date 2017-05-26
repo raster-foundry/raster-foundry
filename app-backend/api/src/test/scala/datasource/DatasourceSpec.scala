@@ -35,32 +35,13 @@ class DatasourceSpec extends WordSpec
   val authHeader = AuthUtils.generateAuthHeader("Default")
   val baseDatasourcePath = "/api/datasources/"
   val publicOrgId = UUID.fromString("dfac6307-b5ef-43f7-beda-b9f208bb7726")
-  val exColorCorrect = ColorCorrect.Params(
-    redBand = 3,
-    greenBand = 2,
-    blueBand = 1,
-    redMax = Some(20000), greenMax = Some(20000), blueMax = Some(20000),
-    redMin = None, greenMin = None, blueMin = None,
-    redGamma = Some(0.0),
-    greenGamma = Some(0.0),
-    blueGamma = Some(0.0),
-    contrast = Some(9),
-    brightness = Some(-6),
-    alpha = Some(0.0),
-    beta = Some(13.0),
-    min = Some(0),
-    max = Some(20000),
-    saturation = Some(1.0),
-    equalize = false,
-    autoBalance = Some(false)
-  ).asJson
 
   val datasource1 = Datasource.Create(
     publicOrgId,
     "Datasource1",
     Visibility.Public,
     None: Option[String],
-    exColorCorrect,
+    ().asJson,
     ().asJson,
     ().asJson
   )
@@ -70,7 +51,7 @@ class DatasourceSpec extends WordSpec
     "Datasource2",
     Visibility.Public,
     None: Option[String],
-    exColorCorrect,
+    ().asJson,
     ().asJson,
     ().asJson
   )
@@ -81,7 +62,7 @@ class DatasourceSpec extends WordSpec
     "Datasource3",
     Visibility.Private,
     None: Option[String],
-    exColorCorrect,
+    ().asJson,
     ().asJson,
     ().asJson
   )

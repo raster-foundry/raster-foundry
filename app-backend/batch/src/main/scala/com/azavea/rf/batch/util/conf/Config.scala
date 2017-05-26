@@ -7,6 +7,8 @@ import shapeless.syntax.typeable._
 import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.Ficus
 import net.ceedubs.ficus.readers.ArbitraryTypeReader
+import com.dropbox.core.v2.DbxClientV2
+import com.dropbox.core.{DbxAppInfo, DbxRequestConfig}
 
 import java.util.UUID
 
@@ -24,8 +26,10 @@ trait Config {
     bandLookup: Landsat8Bands,
     datasourceId: String,
     usgsLandsatUrl: String,
+    usgsLandsatUrlC1: String,
     awsRegion: Option[String],
     awsLandsatBase: String,
+    awsLandsatBaseC1: String,
     bucketName: String
   ) {
     def organizationUUID = UUID.fromString(organization)
@@ -80,10 +84,18 @@ trait Config {
       }.headOption.flatten
   }
 
+  case class Dropbox(appKey: String, appSecret: String) {
+    lazy val appInfo = new DbxAppInfo(appKey, appSecret)
+    lazy val config  = new DbxRequestConfig("azavea/rf-dropbox-test")
+
+    def client(accessToken: String) = new DbxClientV2(config, accessToken)
+  }
+
   private lazy val config = ConfigFactory.load()
   protected lazy val landsat8Config = config.as[Landsat8]("landsat8")
   protected lazy val sentinel2Config = config.as[Sentinel2]("sentinel2")
   protected lazy val airflowUser = config.as[String]("airflow.user")
   protected lazy val exportDefConfig = config.as[ExportDef]("export-def")
+  protected lazy val dropboxConfig = config.as[Dropbox]("dropbox")
   val jarPath = "s3://us-east-1.elasticmapreduce/libs/script-runner/script-runner.jar"
 }

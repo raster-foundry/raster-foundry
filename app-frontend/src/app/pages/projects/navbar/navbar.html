@@ -1,9 +1,10 @@
+<span class="navbar-vertical-divider"></span>
+<span class="project-title" ng-if="$ctrl.projectService.currentProject.name">{{$ctrl.projectService.currentProject.name}}</span>
 <div class="dropdown-project"
      uib-dropdown
      on-toggle="toggled($ctrl.optionsOpen)">
-  <span class="navbar-vertical-divider"></span>
   <a uib-dropdown-toggle>
-    <span class="username">My Project</span>
+    <span class="sr-only">Project options dropdown</span>
     <i class="icon-caret-down"></i>
   </a>
   <ul class="dropdown-menu" aria-labelledby="dLabel">
@@ -31,4 +32,3 @@
     </a></li>
   </ul>
 </div>
-<span class="username" ng-if="$ctrl.projectService.currentProject.name">{{$ctrl.projectService.currentProject.name}}</span>

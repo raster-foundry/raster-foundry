@@ -79,7 +79,7 @@ class ProjectsListController {
         });
 
         this.newProjectModal.result.then((data) => {
-            if (data.reloadProjectList) {
+            if (data && data.reloadProjectList) {
                 this.populateProjectList(1);
             }
         });
