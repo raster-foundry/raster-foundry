@@ -1,5 +1,12 @@
 # Change Log
 
+## [0.9.1](https://github.com/azavea/raster-foundry/tree/0.9.1) (2017-05-26)
+[Full Changelog](https://github.com/azavea/raster-foundry/compare/0.9.0...0.9.1)
+
+**Merged pull requests:**
+
+- Fix method call to get ingest status [\#1849](https://github.com/azavea/raster-foundry/pull/1849)
+
 ## [0.9.0](https://github.com/azavea/raster-foundry/tree/0.9.0) (2017-05-25)
 [Full Changelog](https://github.com/azavea/raster-foundry/compare/0.8.0...0.9.0)
 

@@ -24,10 +24,10 @@ node {
 
     env.RF_SETTINGS_BUCKET = 'rasterfoundry-staging-config-us-east-1'
 
-    if (env.BRANCH_NAME == 'develop' || env.BRANCH_NAME.startsWith('release/')) {
+    if (env.BRANCH_NAME == 'develop' || env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('hotfix/')) {
       // When a release branch is used, override `env.RF_DOCS_BUCKET`
       // so that the production documentation site is published by `cipublish`.
-      if (env.BRANCH_NAME.startsWith('release/')){
+      if (env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('hotfix/')) {
         env.RF_DOCS_BUCKET = 'rasterfoundry-production-docs-site-us-east-1'
       }
 
@@ -68,7 +68,7 @@ node {
         // When a release branch is used, override `env.RF_SETTINGS_BUCKET`
         // so that it uses the production infrastructure configuration
         // settings.
-        if (env.BRANCH_NAME.startsWith('release/')) {
+        if (env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('hotfix/')) {
           env.RF_SETTINGS_BUCKET = 'rasterfoundry-production-config-us-east-1'
 
           def slackMessage = ":rasterfoundry: production deployment in-progress... <${env.BUILD_URL}|View Build>"
