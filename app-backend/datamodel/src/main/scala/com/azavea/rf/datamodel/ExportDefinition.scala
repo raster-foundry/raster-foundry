@@ -1,6 +1,5 @@
 package com.azavea.rf.datamodel
 
-import com.azavea.rf.datamodel._
 import io.circe.generic.JsonCodec
 
 import java.util.UUID

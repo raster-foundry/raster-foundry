@@ -184,8 +184,9 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
                     input = InputDefinition(
                       projectId = export.projectId,
                       resolution = exportOptions.resolution,
-                      layers = layers.toArray,
-                      mask = exportOptions.mask.map(_.geom)
+                      ast = ???,
+                      params = ???,  // TODO: Holy shit fix this!
+                      colorCorrections = None
                     ),
                     output = OutputDefinition(
                       crs = exportOptions.getCrs,
