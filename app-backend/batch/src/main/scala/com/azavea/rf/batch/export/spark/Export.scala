@@ -2,8 +2,6 @@ package com.azavea.rf.batch.export.spark
 
 import java.util.UUID
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
 import com.azavea.rf.batch._
 import com.azavea.rf.batch.ast._
 import com.azavea.rf.batch.dropbox._
@@ -34,7 +32,6 @@ import geotrellis.spark.io.s3._
 import geotrellis.spark.tiling.MapKeyTransform
 import geotrellis.spark.tiling._
 import geotrellis.vector.MultiPolygon
-import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
@@ -68,12 +65,9 @@ object Export extends SparkJob with Config with LazyLogging {
           writeGeoTiffs[Tile, SinglebandGeoTiff](singles, ed, conf)
         } else {
           /* Stitch the Layer into a single GeoTiff and output it */
-        val single: SinglebandGeoTiff = GeoTiff(rdd.stitch, crs)
+          val single: SinglebandGeoTiff = GeoTiff(rdd.stitch, crs)
 
-          single.write(
-            new Path(s"${ed.output.source.toString}/${ed.input.resolution}-${UUID.randomUUID()}.tiff"),
-            conf.get
-          )
+          writeGeoTiff[Tile, SinglebandGeoTiff](single, ed, conf, singlePath)
         }
       }
     }
@@ -169,29 +163,35 @@ object Export extends SparkJob with Config with LazyLogging {
         if(ed.output.crop) mask.fold(raster)(mp => raster.crop(mp.envelope.reproject(LatLng, md.crs)))
         else raster
 
-      GeoTiff(craster, md.crs).write(
-        new Path(s"${ed.output.source.toString}/${ed.input.resolution}-${UUID.randomUUID()}.tiff"),
-        conf.get
-      )
+      writeGeoTiff[MultibandTile, MultibandGeoTiff](GeoTiff(craster, md.crs), ed, conf, singlePath)
     }
   }
 
+  def singlePath(ed: ExportDefinition): String =
+    s"${ed.output.source.toString}/${ed.input.resolution}-${UUID.randomUUID()}.tiff"
+
+  /** Write a single GeoTiff. */
+  private def writeGeoTiff[T <: CellGrid, G <: GeoTiff[T]](
+    tiff: G,
+    ed: ExportDefinition,
+    conf: HadoopConfiguration,
+    path: ExportDefinition => String
+  ): Unit = {
+    tiff.write(new Path(path(ed)), conf.get)
+  }
+
   /** Write a layer of GeoTiffs. */
-  def writeGeoTiffs[T <: CellGrid, G <: GeoTiff[T]](
+  private def writeGeoTiffs[T <: CellGrid, G <: GeoTiff[T]](
     rdd: RDD[(SpatialKey, G)],
     ed: ExportDefinition,
     conf: HadoopConfiguration
   ): Unit = {
-    rdd.foreachPartition({ iter =>
-      // TODO: Is this thread safe? This type seems to be mutable.
-      val config: Configuration = conf.get
+    def path(key: SpatialKey): ExportDefinition => String = { ed =>
+      s"${ed.output.source.toString}/${ed.input.resolution}-${key.col}-ed.${key.row}.tiff"
+    }
 
-      iter.foreach({ case (key, tile) =>
-        tile.write(
-          new Path(s"${ed.output.source.toString}/${ed.input.resolution}-${key.col}-ed.${key.row}.tiff"),
-          config
-        )
-      })
+    rdd.foreachPartition({ iter =>
+      iter.foreach({ case (key, tile) => writeGeoTiff[T, G](tile, ed, conf, path(key)) })
     })
   }
 
