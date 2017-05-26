@@ -2,21 +2,19 @@ package com.azavea.rf.batch.export.spark
 
 import java.util.UUID
 
+import cats.data.Validated._
+import cats.implicits._
 import com.azavea.rf.batch._
 import com.azavea.rf.batch.ast._
 import com.azavea.rf.batch.dropbox._
 import com.azavea.rf.batch.export._
-import com.azavea.rf.batch.util.conf._
-import com.azavea.rf.datamodel._
-
-import _root_.io.circe.parser._
-import cats.data.Validated._
-import cats.implicits._
 import com.azavea.rf.batch.util._
+import com.azavea.rf.batch.util.conf._
 import com.azavea.rf.common.InterpreterException
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.rf.tool.params.EvalParams
+import com.dropbox.core.v2.DbxClientV2
 import com.dropbox.core.v2.files.{CreateFolderErrorException, WriteMode}
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.proj4.{CRS, LatLng}
@@ -29,9 +27,9 @@ import geotrellis.spark.io._
 import geotrellis.spark.io.file._
 import geotrellis.spark.io.hadoop._
 import geotrellis.spark.io.s3._
-import geotrellis.spark.tiling.MapKeyTransform
 import geotrellis.spark.tiling._
 import geotrellis.vector.MultiPolygon
+import _root_.io.circe.parser._
 import org.apache.hadoop.fs.Path
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
@@ -170,14 +168,36 @@ object Export extends SparkJob with Config with LazyLogging {
   def singlePath(ed: ExportDefinition): String =
     s"${ed.output.source.toString}/${ed.input.resolution}-${UUID.randomUUID()}.tiff"
 
-  /** Write a single GeoTiff. */
+  /** Write a single GeoTiff to some target. */
   private def writeGeoTiff[T <: CellGrid, G <: GeoTiff[T]](
     tiff: G,
     ed: ExportDefinition,
     conf: HadoopConfiguration,
     path: ExportDefinition => String
-  ): Unit = {
-    tiff.write(new Path(path(ed)), conf.get)
+  ): Unit = ed.output.source.getScheme match {
+    case "dropbox" if ed.output.dropboxCredential.isDefined => {
+      val client: DbxClientV2 = dropboxConfig.client(ed.output.dropboxCredential.getOrElse(""))
+
+      try {
+        client.files.createFolder(ed.output.source.getPath)
+      } catch {
+        case e: CreateFolderErrorException =>
+          logger.warn(s"Target Path already exists, ${e.errorValue}")
+      }
+      tiff.dropboxWrite { is =>
+        try {
+          client
+            .files
+            .uploadBuilder(path(ed))
+            .withMode(WriteMode.OVERWRITE)
+            .uploadAndFinish(is)
+            .getId
+            .split("id:")
+            .last
+        } finally is.close()
+      }
+    }
+    case _ => tiff.write(new Path(path(ed)), conf.get)
   }
 
   /** Write a layer of GeoTiffs. */
