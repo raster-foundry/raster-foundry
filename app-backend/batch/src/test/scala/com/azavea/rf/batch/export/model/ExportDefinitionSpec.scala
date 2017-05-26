@@ -3,6 +3,9 @@ package com.azavea.rf.batch.export.model
 import com.azavea.rf.batch.BatchSpec
 import com.azavea.rf.datamodel._
 import com.azavea.rf.datamodel.color._
+import com.azavea.rf.tool.ast.MapAlgebraAST._
+import com.azavea.rf.tool.ast._
+import com.azavea.rf.tool.params._
 
 import io.circe.parser._
 import io.circe.syntax._
@@ -19,7 +22,17 @@ import java.net.URI
 import java.util.UUID
 
 class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
-  it("Print Export definition") {
+  val outDef = OutputDefinition(
+    crs = Some(CRS.fromEpsgCode(32654)),
+    rasterSize = Some(256),
+    render = Some(Render(operation = "id", bands = Some(Array(1, 2, 3)))),
+    crop = false,
+    stitch = false,
+    source = new URI("s3://test/"),
+    dropboxCredential = None
+  )
+
+  it("SimpleInput") {
     val cc = ColorCorrect.Params(
       redBand = 0,
       greenBand = 1,
@@ -105,15 +118,7 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
           mask = Some(mask)
         ))
       ),
-      output = OutputDefinition(
-        crs = Some(CRS.fromEpsgCode(32654)),
-        rasterSize = Some(256),
-        render = Some(Render(operation = "id", bands = Some(Array(1, 2, 3)))),
-        crop = false,
-        stitch = false,
-        source = new URI("s3://test/"),
-        dropboxCredential = None
-      )
+      output = outDef
     )
 
     val actual =
@@ -123,5 +128,36 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
       }
 
     expected.asJson shouldBe actual.asJson
+  }
+
+  it("ASTInput isomorphism") {
+    val s0 = Source(UUID.randomUUID, None)
+    val s1 = Source(UUID.randomUUID, None)
+    val ast: MapAlgebraAST = Addition(List(s0, s1), UUID.randomUUID, None)
+
+    val params = EvalParams(
+      Map(
+        s0.id -> SceneRaster(UUID.randomUUID, Some(5)),
+        s1.id -> SceneRaster(UUID.randomUUID, Some(5))
+      ),
+      Map.empty
+    )
+
+    val inDef = InputDefinition(
+      UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57036"),
+      15,
+      Right(ASTInput(ast, params))
+    )
+
+    val ed = ExportDefinition(
+      UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57039"),
+      inDef,
+      outDef
+    )
+
+    decode[ExportDefinition](ed.asJson.spaces2) match {
+      case Right(ed2) => ed2 shouldBe ed
+      case Left(err) => throw new Exception(s"EXDEF: ${err}")
+    }
   }
 }
