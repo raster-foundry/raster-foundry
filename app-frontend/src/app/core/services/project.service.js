@@ -1,4 +1,26 @@
 /* global L */
+const availableProcessingOptions = [
+    {
+        label: 'Color Corrected',
+        description:
+            `Export with the color-corrections and false color composites configured
+            for this project`,
+        value: 'current',
+        default: true
+    }, {
+        label: 'Raw',
+        value: 'raw',
+        exportOptions: {
+            raw: true
+        }
+    }, {
+        label: 'NDVI',
+        value: 'ndvi',
+        description:
+            'Assess whether the target being observed contains live green vegetation or not',
+        toolId: '7311e8ca-9af7-4fab-b63e-559d2e765388'
+    }
+];
 
 export default (app) => {
     class ProjectService {
@@ -14,6 +36,7 @@ export default (app) => {
             this.$http = $http;
             this.$location = $location;
             this.$q = $q;
+            this.availableProcessingOptions = availableProcessingOptions;
 
             this.currentProject = null;
 
@@ -107,19 +130,34 @@ export default (app) => {
             return this.Project.get({id}).$promise;
         }
 
-        export(projectId, zoom) {
-            return this.authService.getCurrentUser().then(
+        export(project, settings = {}, options = {}) {
+            const defaultOptions = {
+                resolution: 9,
+                stitch: false,
+                crop: false
+            };
+
+            const finalOptions = Object.assign(defaultOptions, options);
+
+            const defaultSettings = {
+                projectId: project.id,
+                exportStatus: 'NOTEXPORTED',
+                exportType: 'S3',
+                visibility: 'PRIVATE',
+                exportOptions: finalOptions
+            };
+
+            const finalSettings = Object.assign(defaultSettings, settings);
+
+            const userRequest = this.authService.getCurrentUser();
+
+            return userRequest.then(
                 (user) => {
-                    return this.Project.export({
-                        organizationId: user.organizationId,
-                        projectId: projectId,
-                        exportStatus: 'NOTEXPORTED',
-                        exportType: 'S3',
-                        visibility: 'PRIVATE',
-                        exportOptions: {
-                            resolution: zoom
-                        }
-                    }).$promise;
+                    return this.Project.export(
+                        Object.assign(finalSettings, {
+                            organizationId: user.organizationId
+                        })
+                    ).$promise;
                 },
                 (error) => {
                     return error;

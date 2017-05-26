@@ -337,7 +337,7 @@ rf-project-editor .leaflet-tile {
   border-bottom: 1px solid $border-color-default;
   &.dark {
     background: $shade-dark;
-    border-bottom: $shade-normal;
+    border-bottom: 1px solid $shade-normal;
   }
   & > * {
     margin-top: 0;
@@ -435,6 +435,10 @@ rf-project-editor .leaflet-tile {
 .sidebar-content {
   padding: 1rem;
 }
+
+.sidebar-list-item.dark {
+  color: $off-white;
+}
 .banner-secondary {
   background: $brand-secondary;
 }
@@ -497,6 +501,8 @@ rf-project-editor .leaflet-tile {
   border: 1px solid rgba($text-base, .5);
   border-radius: $border-radius-base;
   color: rgba($text-base, .5);
+  cursor: pointer;
+
   & i {
     margin: 0;
     padding: 0;
@@ -513,12 +519,16 @@ rf-project-editor .leaflet-tile {
   }
 }
 
-.filter-adjust-input {
-  width: 50px;
-  max-width: 50px;
+.dark-input {
   border: 0px;
   background: rgba(0, 0, 0, 0.14902);
   padding: 0.5rem 0.2rem;
+}
+
+.filter-adjust-input {
+  @extend .dark-input;
+  width: 50px;
+  max-width: 50px;
   text-align: center;
   font-size: 1.2rem;
   flex-grow: 0;
@@ -1401,4 +1411,38 @@ table.upload-info {
 
 .picture-description {
   flex: 1;
+}
+
+.output-processing-option {
+  $thumbnail-size: 75px;
+  border-bottom: 1px solid $shade-dark;
+  padding: 1.5rem !important;
+  flex-direction: column;
+  align-items: stretch !important;
+  &.selected {
+    background: $shade-dark;
+  }
+  .output-processing-option-row {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    &:not(:first-child) {
+      margin-bottom: 1rem;
+    }
+  }
+  .output-preview {
+    width: $thumbnail-size;
+    height: $thumbnail-size;
+    margin-right: 1.5rem;
+  }
+  .output-description {
+    flex: 1;
+    min-height: $thumbnail-size/2;
+  }
+  .output-params {
+    margin-top: 1.5rem;
+  }
+  .output-selection {
+    margin-left: 1rem;
+  }
 }

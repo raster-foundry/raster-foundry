@@ -1,0 +1,116 @@
+<div class="sidebar-header">
+  <a class="btn sidebar-header-nav-btn" ui-sref="projects.edit">
+    <i class="icon-arrow-left"></i>
+  </a>
+  <h5 class="sidebar-title">Export</h5>
+</div>
+<ul class="sidebar-list" ng-if="$ctrl.project">
+  <li class="separator" ng-if="$ctrl.enableExportCropping">
+    <div class="label">
+      Area to Export
+    </div>
+    <button class="btn btn-default fixedwidth">
+      Define area to export
+    </button>
+    <i class="icon-info"></i>
+  </li>
+  <li class="separator">
+    <div class="label">
+      Output Processing
+    </div>
+    <div class="dropdown btn-group fixedwidth" ng-click="$ctrl.toggleParameters()">
+      <a class="btn dropdown-label" >
+       {{$ctrl.getCurrentProcessingOption().label}}
+      </a>
+      <button type="button" class="btn btn-default dropdown-toggle">
+        <i class="icon-settings"></i>
+      </button>
+    </div>
+    <i class="icon-info"></i>
+  </li>
+  <li class="separator" ng-if="$ctrl.enableExportTargets">
+    <span class="label">Export to...</span>
+    <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
+      <a class="btn dropdown-label">
+
+      </a>
+      <button type="button" class="btn btn-default dropdown-toggle">
+        <i class="icon-caret-down"></i>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+      </ul>
+    </div>
+    <i class="icon-info"></i>
+  </li>
+  <li class="separator">
+    <span class="label">Approximate resolution</span>
+    <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
+      <a class="btn dropdown-label" >
+       {{$ctrl.getCurrentResolution().label}}
+      </a>
+      <button type="button" class="btn btn-default dropdown-toggle">
+        <i class="icon-caret-down"></i>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+        <li ng-repeat="res in $ctrl.availableResolutions" role="menuitem">
+          <a ng-click="$ctrl.updateResolution(res.value)">{{res.label}}</a>
+        </li>
+      </ul>
+    </div>
+    <i class="icon-info"></i>
+  </li>
+</ul>
+<div class="sidebar-content" ng-if="$ctrl.project">
+  <button class="btn btn-primary btn-block" type="button" ng-click="$ctrl.startExport()" ng-if="!$ctrl.isExporting">
+    Start Export
+  </button>
+  <button class="btn btn-block" type="button" disabled ng-if="$ctrl.isExporting">
+    Starting export...
+  </button>
+</div>
+<div class="sidebar sidebar-extended map-filters"
+     ng-show="$ctrl.showParameters">
+  <div class="sidebar-header dark">
+    <h5>Output Processing</h5>
+    <div class="header-controls">
+      <button class="btn btn-default btn-small" ng-click="$ctrl.toggleParameters()">
+        Close
+      </button>
+    </div>
+  </div>
+  <div class="sidebar-scrollable">
+    <ul class="sidebar-list">
+      <li class="sidebar-list-item dark output-processing-option"
+          ng-repeat="option in $ctrl.availableProcessingOptions"
+          ng-class="{'selected': $ctrl.isCurrentProcessingOption(option)}">
+        <div class="output-processing-option-row">
+          <div class="output-preview image-placeholder" ng-if="$ctrl.showPreviewImages">
+          </div>
+          <div class="output-description">
+            <p><strong>{{option.label}}</strong>
+            <p class="color-light">{{option.description}}
+          </div>
+          <div class="output-selection">
+            <rf-toggle value="$ctrl.isCurrentProcessingOption(option)"
+                       on-change="$ctrl.handleOptionChange(value, option)">
+              <i class="icon-check"></i>
+            </rf-toggle>
+          </div>
+        </div>
+        <div class="output-processing-option-row output-params"
+             ng-repeat="source in $ctrl.currentToolSources"
+             ng-if="$ctrl.shouldShowProcessingParams(option)">
+          <div class="label">
+            {{source.metadata.label}}
+          </div>
+          <input class="fixedwidth form-control slim"
+                 type="number"
+                 ng-model="$ctrl.currentToolRun.executionParameters.sources[source.id].band"
+                 min=0
+                 step=1>
+          <i class="icon-info"></i>
+        </div>
+      </li>
+    </ul>
+  </div>
+</div>
