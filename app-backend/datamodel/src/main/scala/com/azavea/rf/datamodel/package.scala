@@ -85,7 +85,8 @@ package object datamodel {
   }
 
   implicit val crsEncoder: Encoder[CRS] =
-    Encoder.encodeString.contramap[CRS] { crs => s"epsg:${crs.epsgCode}" }
+    Encoder.encodeString.contramap[CRS] { crs => s"epsg:${crs.epsgCode.getOrElse(0)}" }
+
   implicit val crsDecoder: Decoder[CRS] =
     Decoder.decodeString.emap { str =>
       Either.catchNonFatal(CRS.fromName(str)).leftMap(_ => "CRS")
