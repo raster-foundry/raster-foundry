@@ -29,7 +29,6 @@ class DatasourceDetailController {
     }
 
     initBuffers() {
-        this.colorCorrectionBuffer = Object.assign({}, this.datasource.colorCorrection);
         this.colorCompositesBuffer = Object.assign({}, this.datasource.composites);
     }
 

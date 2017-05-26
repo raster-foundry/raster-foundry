@@ -39,7 +39,6 @@ import importsDatasourcesTpl from './pages/imports/datasources/datasources.html'
 import importsDatasourcesListTpl from './pages/imports/datasources/list/list.html';
 import importsDatasourcesDetailTpl from './pages/imports/datasources/detail/detail.html';
 import datasourceColorCompositesTpl from './pages/imports/datasources/detail/colorComposites/colorComposites.html';
-import datasourceColorCorrectionTpl from './pages/imports/datasources/detail/colorCorrection/colorCorrection.html';
 
 function projectEditStates($stateProvider) {
     let addScenesQueryParams = [
@@ -328,12 +327,6 @@ function importStates($stateProvider) {
             url: '/color-composites',
             templateUrl: datasourceColorCompositesTpl,
             controller: 'ColorCompositesController',
-            controllerAs: '$ctrl'
-        })
-        .state('imports.datasources.detail.colorCorrection', {
-            url: '/color-correction',
-            templateUrl: datasourceColorCorrectionTpl,
-            controller: 'ColorCorrectionController',
             controllerAs: '$ctrl'
         })
         .state('imports.scenes', {
