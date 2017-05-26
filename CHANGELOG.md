@@ -1,5 +1,21 @@
 # Change Log
 
+## [0.10.0](https://github.com/azavea/raster-foundry/tree/0.10.0) (2017-05-26)
+
+[Full Changelog](https://github.com/azavea/raster-foundry/compare/0.9.1...0.10.0)
+
+**Merged pull requests:**
+
+- Feature/lk/default projects [\#1850](https://github.com/azavea/raster-foundry/pull/1850)
+- Update/fix color-mode selection [\#1846](https://github.com/azavea/raster-foundry/pull/1846)
+- Handle possible undefined return from project create modal [\#1845](https://github.com/azavea/raster-foundry/pull/1845)
+- Fix object copied to clipboard in share modal [\#1842](https://github.com/azavea/raster-foundry/pull/1842)
+- Cleans up main project edit page [\#1827](https://github.com/azavea/raster-foundry/pull/1827)
+- C1 Scala Landsat8 import  [\#1821](https://github.com/azavea/raster-foundry/pull/1821)
+- Dropbox export [\#1809](https://github.com/azavea/raster-foundry/pull/1809)
+- Refactor color correction storage [\#1843](https://github.com/azavea/raster-foundry/pull/1843)
+
+
 ## [0.9.1](https://github.com/azavea/raster-foundry/tree/0.9.1) (2017-05-26)
 [Full Changelog](https://github.com/azavea/raster-foundry/compare/0.9.0...0.9.1)
 
