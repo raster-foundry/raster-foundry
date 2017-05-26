@@ -39,7 +39,8 @@ export default (app) => {
 
         /** Function to return default color correction
          *
-         * @TODO: refactor to pull defaults from datasource
+         * @TODO: refactor to reset to natural color mode & all corrections disabled at neutral
+         *        settings
          *
          * @return {object} default color correction object
          */

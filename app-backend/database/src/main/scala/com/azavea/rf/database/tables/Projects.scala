@@ -341,7 +341,10 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
       authProjectCount zip authSceneCount
     } flatMap { r: (Int, Int) =>
       (r._1, r._2) match {
-        case (projectCount, sceneCount) if projectCount == 1 && sceneCount == sceneIds.length || user.isInRootOrganization => {
+        case (projectCount, sceneCount)
+            if projectCount == 1 &&
+            sceneCount == sceneIds.length ||
+            user.isInRootOrganization => {
           // Only allow this action to be performed if authorization is perfect
           // The user must be authorized to modify the project and must have access to ALL scenes
           // or the user must be part of the root organization
@@ -401,13 +404,13 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
               sceneCompositesQuery.result
             } flatMap { sceneComposites =>
               val sceneToProjects = sceneComposites.map { case (sceneId, composites) =>
-                val redBandPath = root.natural.value.redBand.int
-                val greenBandPath = root.natural.value.greenBand.int
-                val blueBandPath = root.natural.value.blueBand.int
+                val redBandPath = root.natural.selectDynamic("value").redBand.int
+                val greenBandPath = root.natural.selectDynamic("value").greenBand.int
+                val blueBandPath = root.natural.selectDynamic("value").blueBand.int
 
-                val redBand = redBandPath.getOption(composites).getOrElse(0)
-                val greenBand = greenBandPath.getOption(composites).getOrElse(0)
-                val blueBand = blueBandPath.getOption(composites).getOrElse(0)
+                val redBand = redBandPath.getOption(composites).getOrElse(1)
+                val greenBand = greenBandPath.getOption(composites).getOrElse(2)
+                val blueBand = blueBandPath.getOption(composites).getOrElse(3)
 
                 SceneToProject(
                   sceneId, projectId, true, None, Some(
