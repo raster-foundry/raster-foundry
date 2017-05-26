@@ -1,7 +1,13 @@
 # Change Log
 
-## [0.10.0](https://github.com/azavea/raster-foundry/tree/0.10.0) (2017-05-26)
+## [0.10.1](https://github.com/azavea/raster-foundry/tree/0.10.1) (2017-05-26)
+[Full Changelog](https://github.com/azavea/raster-foundry/compare/0.10.0...0.10.1)
 
+**Merged pull requests:**
+
+- Remove unecessary from\_string method [\#1853](https://github.com/azavea/raster-foundry/pull/1853)
+
+## [0.10.0](https://github.com/azavea/raster-foundry/tree/0.10.0) (2017-05-26)
 [Full Changelog](https://github.com/azavea/raster-foundry/compare/0.9.1...0.10.0)
 
 **Merged pull requests:**
@@ -14,7 +20,6 @@
 - C1 Scala Landsat8 import  [\#1821](https://github.com/azavea/raster-foundry/pull/1821)
 - Dropbox export [\#1809](https://github.com/azavea/raster-foundry/pull/1809)
 - Refactor color correction storage [\#1843](https://github.com/azavea/raster-foundry/pull/1843)
-
 
 ## [0.9.1](https://github.com/azavea/raster-foundry/tree/0.9.1) (2017-05-26)
 [Full Changelog](https://github.com/azavea/raster-foundry/compare/0.9.0...0.9.1)
