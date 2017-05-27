@@ -14,6 +14,8 @@ import com.lonelyplanet.akka.http.extensions.{Order, PageRequest}
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import slick.dbio.DBIO
+
 class Users(_tableTag: Tag) extends Table[User](_tableTag, "users")
                                     with UserFields
                                     with TimestampFields
@@ -90,17 +92,37 @@ object Users extends TableQuery(tag => new Users(tag)) with LazyLogging {
     val userRow = user.toUser
 
     val insertAction = Users.forceInsert(userRow)
-    val userInsert = (
-      for {
-        u <- insertAction
-      } yield ()
-    ).transactionally
 
     logger.debug(s"Inserting user -- User SQL: ${insertAction.statements.headOption}")
 
     database.db.run {
-      userInsert.map(_ => userRow)
+      insertAction.map(_ => userRow)
     }
+  }
+
+  def cloneProjectsFromDefault(user: User)(implicit database: DB): Future[Unit] = {
+     // copy the projects, with corrected user information / owner
+     val defaultUserId = "default_projects"
+     val now = new Timestamp((new java.util.Date()).getTime)
+     val insertProjectsAction = for {
+       projects <- Projects.filter(_.owner === defaultUserId).result
+       insertedProjects <- (Projects returning Projects.map(_.id)).forceInsertAll(projects.map(project =>
+         project.copy(id = UUID.randomUUID(), createdAt = now, modifiedAt = now, owner=user.id)
+       ))
+       result <- DBIO.sequence(
+         insertedProjects.zip(projects.map(_.id)) map { case (newId, oldId) =>
+           for {
+             scenesToProjects <- ScenesToProjects.filter(_.projectId === oldId).result
+             insertedScenesToProjects <- (ScenesToProjects returning ScenesToProjects).forceInsertAll(scenesToProjects.map(sceneToProject =>
+             sceneToProject.copy(projectId=newId)))
+           } yield ()
+         }
+       )
+     } yield ()
+
+     database.db.run {
+       insertProjectsAction
+     }
   }
 
   def createUserWithAuthId(sub: String)(implicit database: DB): Future[User] = {
@@ -109,7 +131,11 @@ object Users extends TableQuery(tag => new Users(tag)) with LazyLogging {
       Organizations.filter(_.name === "Public").result.headOption
     } flatMap {
       case Some(org) =>
-        createUser(User.Create(sub, org.id))
+        createUser(User.Create(sub, org.id)) map { user =>
+          cloneProjectsFromDefault(user)
+          user
+        }
+
       case _ =>
         throw new Exception("No public org found in database")
     }
