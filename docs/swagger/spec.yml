@@ -3067,6 +3067,10 @@ definitions:
             - PUBLIC
             - ORGANIZATION
             - PRIVATE
+        toolRunId:
+          type: string
+          format: uuid
+          description: Optional id of a ToolRun. Specifying this will perform an RDD-AST-based export job.
         exportOptions:
           $ref: '#/definitions/ExportOptions'
   Export:
