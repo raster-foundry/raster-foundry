@@ -44,7 +44,7 @@ class MapWrapper {
         let properties = {
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">' +
                 'OpenStreetMap</a> &copy;<a href="http://cartodb.com/attributions">CartoDB</a>',
-            maxZoom: 19
+            maxZoom: 30
         };
         return L.tileLayer(url, properties);
     }
