@@ -3,6 +3,7 @@ package com.azavea.rf.datamodel
 import io.circe._
 import io.circe.parser._
 import io.circe.generic.JsonCodec
+import cats.implicits._
 
 import java.util.UUID
 import java.sql.Timestamp
@@ -21,7 +22,9 @@ case class Export(
   exportType: ExportType,
   visibility: Visibility,
   exportOptions: Json
-)
+) {
+  def getExportOptions: Option[ExportOptions] = exportOptions.as[ExportOptions].toOption
+}
 
 object Export {
 

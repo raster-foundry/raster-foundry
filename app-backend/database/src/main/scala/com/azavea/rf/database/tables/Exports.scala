@@ -102,6 +102,13 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
       .result
       .headOption
 
+  def getExportWithStatus(exportId: UUID, user: User, exportStatus: ExportStatus) =
+    Exports
+      .filterToSharedOrganizationIfNotInRoot(user)
+      .filter(e => e.id === exportId && e.exportStatus === exportStatus)
+      .result
+      .headOption
+
   /** Given an export ID, attempt to remove it from the database
     *
     * @param exportId UUID ID of export to remove
@@ -204,6 +211,8 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
       }
       .sequence
   }
+
+
 }
 
 class ExportTableQuery[M, U, C[_]](exports: Exports.TableQuery) {

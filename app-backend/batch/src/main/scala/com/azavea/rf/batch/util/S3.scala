@@ -3,10 +3,11 @@ package com.azavea.rf.batch.util
 import geotrellis.spark.io.s3.S3InputFormat
 
 import com.amazonaws.auth.{AWSCredentialsProvider, DefaultAWSCredentialsProviderChain}
-import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
+import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder, AmazonS3URI}
 import com.amazonaws.services.s3.model._
 import com.amazonaws.regions.Regions
 import org.apache.hadoop.conf.Configuration
+import org.apache.commons.io.IOUtils
 
 import java.net.URI
 
@@ -48,6 +49,18 @@ case class S3(
   def getObject(s3bucket: String, s3prefix: String): S3Object =
     client.getObject(s3bucket, s3prefix)
 
+  def getObject(uri: URI): S3Object = {
+    val s3uri = new AmazonS3URI(uri)
+    getObject(s3uri.getBucket, s3uri.getKey)
+  }
+
+  def getObjectMetadata(s3Object: S3Object): ObjectMetadata = s3Object.getObjectMetadata
+
+  def getObjectBytes(s3Object: S3Object): Array[Byte] = {
+    val s3InputStream = s3Object.getObjectContent
+    try IOUtils.toByteArray(s3InputStream) finally s3InputStream.close()
+  }
+
   def putObject(s3bucket: String, s3Key: String, content: String): PutObjectResult =
     client.putObject(s3bucket, s3Key, content)
 
@@ -63,9 +76,8 @@ case class S3(
       .withBucketName(s3bucket)
       .withPrefix(s3prefix)
 
-    if (! recursive) { // Avoid digging into a deeper directory
-      objectRequest.withDelimiter("/")
-    }
+    // Avoid digging into a deeper directory
+    if (!recursive) objectRequest.withDelimiter("/")
 
     listKeys(objectRequest)
       .collect { case key if key.endsWith(ext) => new URI(s"s3://${s3bucket}/${key}") }.toArray
