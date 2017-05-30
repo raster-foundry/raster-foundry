@@ -34,8 +34,8 @@ case class DropboxCopy(source: URI, target: URI, accessToken: String, region: Op
             is(obj.getObjectContent, key)
           } } ::: accumulator
 
-      if(!listing.isTruncated) getObjects ::: accumulator
-      else copy(s3Client.client.listNextBatchOfObjects(listing), getObjects ::: accumulator)
+      if(!listing.isTruncated) getObjects
+      else copy(s3Client.client.listNextBatchOfObjects(listing), getObjects)
     }
 
     val prefix = {
