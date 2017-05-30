@@ -202,7 +202,7 @@ def wait_for_status_op(*args, **kwargs):
     scene.ingestStatus = status
     logger.info('Setting scene %s ingest status to %s', scene.id, scene.ingestStatus)
     scene.update()
-    logger.infoi('Successfully updated scene %s\'s ingest status', scene.id)
+    logger.info('Successfully updated scene %s\'s ingest status', scene.id)
 
 ################################
 # Tasks                        #
