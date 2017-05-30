@@ -20,38 +20,31 @@ object Interpreter extends LazyLogging {
   /** The Interpreted type is either a list of failures or a compiled MapAlgebra operation */
   type Interpreted[A] = ValidatedNel[InterpreterError, A]
 
-  // Binary operation evaluation
-  @SuppressWarnings(Array("TraversableHead"))
-  def evalBinary(tiles: List[LazyTile], f: (LazyTile, LazyTile) => LazyTile): LazyTile = {
-    logger.debug("evalBinary")
-    tiles.reduce(f)
-  }
-
   @SuppressWarnings(Array("TraversableHead"))
   def interpretOperation(op: Operation, eval: MapAlgebraAST => LazyTile): LazyTile = op match {
     case Addition(args, id, _) =>
       logger.debug(s"case addition at $id")
-      evalBinary(args.map(eval),  _ + _)
+      args.map(eval).reduce(_ + _)
 
     case Subtraction(args, id, _) =>
       logger.debug(s"case subtraction at $id")
-      evalBinary(args.map(eval),  _ - _)
+      args.map(eval).reduce(_ - _)
 
     case Multiplication(args, id, _) =>
       logger.debug(s"case multiplication at $id")
-      evalBinary(args.map(eval),  _ * _)
+      args.map(eval).reduce(_ * _)
 
     case Division(args, id, _) =>
       logger.debug(s"case division at $id")
-      evalBinary(args.map(eval),  _ / _)
+      args.map(eval).reduce(_ / _)
 
     case Max(args, id, _) =>
       logger.debug(s"case max at $id")
-      evalBinary(args.map(eval), _ max _)
+      args.map(eval).reduce(_ max _)
 
     case Min(args, id, _) =>
       logger.debug(s"case min at $id")
-      evalBinary(args.map(eval), _ min _)
+      args.map(eval).reduce(_ min _)
 
     case Classification(args, id, _, breaks) =>
       logger.debug(s"case classification at $id with breakmap ${breaks.toBreakMap}")
