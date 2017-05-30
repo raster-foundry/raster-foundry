@@ -206,11 +206,6 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
       .value
   }
 
-  private def parseOrThrow[A: Decoder](js: Json): A = js.as[A] match {
-    case Right(a) => a
-    case Left(decodingFailure) => throw decodingFailure
-  }
-
   private def astInput(
     toolRunId: UUID,
     export: Export,
@@ -220,8 +215,8 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
     for {
       tRun   <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
       tool   <- OptionT(Tools.getTool(tRun.tool, user))
-      ast    <- OptionT.pure[Future, MapAlgebraAST](parseOrThrow[MapAlgebraAST](tool.definition))
-      params <- OptionT.pure[Future, EvalParams](parseOrThrow[EvalParams](tRun.executionParameters))
+      ast    <- OptionT.pure[Future, MapAlgebraAST](tool.definition.as[MapAlgebraAST].valueOr(throw _))
+      params <- OptionT.pure[Future, EvalParams](tRun.executionParameters.as[EvalParams].valueOr(throw _))
       scenes <- OptionT(getScenes(export, user)
         .map(_.map(s => s.ingestLocation.map(l => (s.id, l))).toList.sequence)
       )
@@ -243,7 +238,7 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
               ExportLayerDefinition(scene.id, new URI(scene.ingestLocation.getOrElse("")), ccp.flatten)
             })
           })
-          .sequence[Future, ExportLayerDefinition]
+          .sequence
           .map({ layers =>
             SimpleInput(layers.toArray, exportOptions.mask.map(_.geom))
           })

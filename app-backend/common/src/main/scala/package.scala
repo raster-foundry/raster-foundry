@@ -18,12 +18,6 @@ import io.circe._
 
 package object common {
 
-  /** Parse JSON as the argument type provided and throw in case of failure. */
-  def parseOrThrow[A: Decoder](js: Json): A = js.as[A] match {
-    case Right(a) => a
-    case Left(decodingFailure) => throw decodingFailure
-  }
-
   /** Validate an AST, given some ToolRun. In the case of success, returns
     * the zero element of some specified Monoid.
     */

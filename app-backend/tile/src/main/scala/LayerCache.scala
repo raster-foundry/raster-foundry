@@ -175,13 +175,13 @@ object LayerCache extends Config with LazyLogging {
         tool     <- OptionT(Tools.getTool(toolRun.tool, user))
         ast      <- OptionT.fromOption[Future]({
                       logger.debug(s"Parsing Tool AST with ${tool.definition}")
-                      val entireAST = parseOrThrow[MapAlgebraAST](tool.definition)
+                      val entireAST = tool.definition.as[MapAlgebraAST].valueOr(throw _)
                       subNode.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
                     })
         nodeId   <- OptionT.pure[Future, UUID](subNode.getOrElse(ast.id))
         params   <- OptionT.pure[Future, EvalParams]({
                       logger.debug(s"Parsing ToolRun parameters with ${toolRun.executionParameters}")
-                      val parsedParams = parseOrThrow[EvalParams](toolRun.executionParameters)
+                      val parsedParams = toolRun.executionParameters.as[EvalParams].valueOr(throw _)
                       val defaults = ast.metadata
                       val overrides = parsedParams.metadata.get(ast.id)
                       val md = (overrides |@| defaults).map(_.fallbackTo(_))
@@ -206,4 +206,3 @@ object LayerCache extends Config with LazyLogging {
       } yield (toolRun, tool, ast, params, cMap)
     }
 }
-
