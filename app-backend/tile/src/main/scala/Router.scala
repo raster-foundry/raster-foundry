@@ -33,9 +33,7 @@ class Router extends LazyLogging
         pathPrefix("healthcheck") {
           pathEndOrSingleSlash {
             get {
-              complete {
-                HttpResponse(StatusCodes.OK)
-              }
+              HealthCheckRoute.root
             }
           }
         } ~
