@@ -61,8 +61,8 @@ package object ast {
         args.map(eval(_, rdds)).reduce((acc,r) => binary({_ * _}, acc, r))
       case Division(args, _, _) =>
         args.map(eval(_, rdds)).reduce((acc,r) => binary({_ / _}, acc, r))
-      case Classification(args, _, _, classMap) =>
-        eval(args.head, rdds).withContext(_.color(classMap.toColorMap))
+      case Classification(arg :: _, _, _, classMap) =>
+        eval(arg, rdds).withContext(_.color(classMap.toColorMap))
       case _ => ???
     }
 
