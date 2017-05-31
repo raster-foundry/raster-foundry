@@ -7,7 +7,7 @@ export default (app) => {
                 '/api/projects/:projectId/mosaic/:sceneId/', {}, {
                     get: {
                         method: 'GET',
-                        cache: true,
+                        cache: false,
                         transformResponse: (data) => {
                             let parsedData = {};
                             if (data !== '') {
