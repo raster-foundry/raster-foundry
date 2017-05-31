@@ -139,6 +139,7 @@ object LayerCache extends Config with LazyLogging {
       }
     }
 
+
   /** Calculate the histogram for the least resolute zoom level to automatically render tiles */
   def modelLayerGlobalHistogram(
     toolRunId: UUID,
@@ -183,6 +184,7 @@ object LayerCache extends Config with LazyLogging {
         tool     <- OptionT(Tools.getTool(toolRun.tool, user))
       } yield (tool, toolRun)
     }
+
 
 
   /** Calculate all of the prerequisites to evaluation of an AST over a set of tile sources */
