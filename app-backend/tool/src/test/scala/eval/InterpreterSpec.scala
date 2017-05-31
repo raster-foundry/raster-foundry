@@ -84,7 +84,7 @@ class InterpreterSpec
     val lt = Await.result(ret, 10.seconds)
 
     requests should be (empty)
-    lt should be (Invalid(NEL.of(RasterRetrievalError(redTileSource.id), MissingParameter(src2.id))))
+    lt should be (Invalid(NEL.of(MissingParameter(src2.id), RasterRetrievalError(src1.id, redTileSource.id))))
   }
 
   it("interpretPure - simple") {
