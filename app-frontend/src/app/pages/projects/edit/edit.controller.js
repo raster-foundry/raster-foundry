@@ -123,7 +123,9 @@ export default class ProjectsEditController {
             this.project,
             this.authService.token()
         );
-        let layer = L.tileLayer(url);
+        let layer = L.tileLayer(url, {
+            maxZoom: 30
+        });
 
         this.getMap().then(m => {
             m.setLayer('project-layer', layer);
