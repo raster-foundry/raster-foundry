@@ -22,6 +22,7 @@ trait ExportSpecHelper { self: ProjectSpecHelper =>
     exportType = ExportType.Local,
     visibility = Visibility.Public,
     owner = None,
+    toolRunId = None,
     exportOptions = ExportOptions(
       mask = None,
       resolution = 2,

@@ -1,14 +1,14 @@
- package com.azavea.rf.datamodel
+package com.azavea.rf.datamodel
 
 import java.util.UUID
 
 import cats.implicits._
-import io.circe._
-import io.circe.generic.JsonCodec
-import io.circe.generic.semiauto._
 import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.rf.tool.params.EvalParams
 import geotrellis.vector.MultiPolygon
+import io.circe._
+import io.circe.generic.JsonCodec
+import io.circe.syntax._
 
 /** 2017 May 19 @ 13:30
   * There are two varieties Export - those that involve an AST, which
@@ -31,7 +31,12 @@ object InputDefinition {
     ).map(InputDefinition.apply)
   )
 
-  implicit val eitherEnc: Encoder[Either[SimpleInput, ASTInput]] = deriveEncoder
+  implicit val eitherEnc: Encoder[Either[SimpleInput, ASTInput]] = new Encoder[Either[SimpleInput, ASTInput]] {
+    final def apply(a: Either[SimpleInput, ASTInput]): Json = a match {
+      case Left(l) => l.asJson
+      case Right(r) => r.asJson
+    }
+  }
 
   implicit val enc: Encoder[InputDefinition] =
     Encoder.forProduct3("projectId", "resolution", "style")(u =>

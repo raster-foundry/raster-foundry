@@ -19,6 +19,7 @@ case class Export(
   exportStatus: ExportStatus,
   exportType: ExportType,
   visibility: Visibility,
+  toolRunId: Option[UUID],
   exportOptions: Json
 )
 
@@ -36,6 +37,7 @@ object Export {
     exportType: ExportType,
     visibility: Visibility,
     owner: Option[String],
+    toolRunId: Option[UUID],
     exportOptions: Json
   ) extends OwnerCheck {
 
@@ -57,6 +59,7 @@ object Export {
         exportStatus = this.exportStatus,
         exportType = this.exportType,
         visibility = this.visibility,
+        toolRunId = this.toolRunId,
         exportOptions = this.exportOptions
       )
     }
