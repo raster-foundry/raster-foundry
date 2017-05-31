@@ -96,13 +96,11 @@ object Interpreter extends LazyLogging {
     source: RFMLRaster => Future[Option[Tile]]
   )(implicit ec: ExecutionContext): Future[Interpreted[LazyTile]] = {
 
-    def eval(tiles: Map[UUID, Tile], ast: MapAlgebraAST): LazyTile = {
-      ast match {
-        case Source(id, _) => LazyTile(tiles(id))
-        case op: Operation => interpretOperation(op, { tree => eval(tiles, tree) })
-        case unsupported =>
-          throw new java.lang.IllegalStateException(s"Pattern match failure on putative AST: $unsupported")
-      }
+    def eval(tiles: Map[UUID, Tile], ast: MapAlgebraAST): LazyTile = ast match {
+      case Source(id, _) => LazyTile(tiles(id))
+      case op: Operation => interpretOperation(op, { tree => eval(tiles, tree) })
+      case unsupported =>
+        throw new java.lang.IllegalStateException(s"Pattern match failure on putative AST: $unsupported")
     }
 
     val pure: Interpreted[Unit] = interpretPure[Unit](ast, sourceMapping)
@@ -132,27 +130,8 @@ object Interpreter extends LazyLogging {
     source: (RFMLRaster, Int, Int, Int) => Future[Option[Tile]]
   )(implicit ec: ExecutionContext): (Int, Int, Int) => Future[Interpreted[LazyTile]] = {
 
-    /* Validate the AST once */
-    val pure: Interpreted[Unit] = interpretPure[Unit](ast, sourceMapping)
-
     (z: Int, x: Int, y: Int) => {
-
-      def eval(tiles: Map[UUID, Tile], ast: MapAlgebraAST): LazyTile = ast match {
-        case Source(id, label) => LazyTile(tiles(id))
-        case op: Operation => interpretOperation(op, { tree => eval(tiles, tree) })
-      }
-
-      sourceMapping
-        .mapValues(r => source(r, z, x, y).map(_.toRight(r.id)).recover({ case _ => Left(r.id) }))
-        .sequence
-        .map({ sms =>
-          val tiles: Interpreted[Map[UUID, Tile]] = sms.map({
-            case (id, Left(rid)) => (id, Invalid(NonEmptyList.of(RasterRetrievalError(id, rid))))
-            case (id, Right(tile)) => (id, Valid(tile))
-          }).sequence
-
-          (pure |@| tiles).map({ case (_, ts) => eval(ts, ast) })
-        })
+      interpretGlobal(ast, sourceMapping, { raster: RFMLRaster => source(raster, z, x, y) })
     }
   }
 }
