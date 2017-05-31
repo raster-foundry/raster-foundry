@@ -198,8 +198,13 @@ def wait_for_status_op(*args, **kwargs):
     ingest_status_dict = Ingest.get_status_from_s3(ingest_def_id)
     scene_id = ingest_status_dict['sceneId']
     status = ingest_status_dict['ingestStatus']
+
     scene = Scene.from_id(scene_id)
+    layer_s3_bucket = os.getenv('TILE_SERVER_BUCKET')
+    s3_output_location = 's3://{}/layers'.format(layer_s3_bucket)
+    scene.ingestLocation = s3_output_location
     scene.ingestStatus = status
+
     logger.info('Setting scene %s ingest status to %s', scene.id, scene.ingestStatus)
     scene.update()
     logger.info('Successfully updated scene %s\'s ingest status', scene.id)
