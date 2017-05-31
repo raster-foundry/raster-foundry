@@ -6,7 +6,7 @@ export default class ExportModalController {
 
     $onInit() {
         this.minZoom = 1;
-        this.maxZoom = 22;
+        this.maxZoom = 30;
         this.projectId = this.resolve.project.id;
         this.zoom = this.resolve.zoom;
         this.exportSuccess = false;

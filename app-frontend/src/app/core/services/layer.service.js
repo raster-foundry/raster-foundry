@@ -84,8 +84,11 @@ export default (app) => {
             if (this._sceneTiles) {
                 return this._sceneTiles;
             }
-            this._sceneTiles = L.tileLayer(this.getSceneLayerURL(),
-                {bounds: this.bounds, attribution: 'Raster Foundry'}
+            this._sceneTiles = L.tileLayer(
+                this.getSceneLayerURL(),
+                {
+                    maxZoom: 30, bounds: this.bounds, attribution: 'Raster Foundry'
+                }
             );
             return this._sceneTiles;
         }
@@ -113,8 +116,11 @@ export default (app) => {
                     resolve(this._tiles);
                 });
             }
-            this._tiles = L.tileLayer(this.getNDVIURL(bands),
-                {bounds: this.bounds, attribution: 'Raster Foundry'}
+            this._tiles = L.tileLayer(
+                this.getNDVIURL(bands),
+                {
+                    maxZoom: 30, bounds: this.bounds, attribution: 'Raster Foundry'
+                }
             );
             return this._tiles;
         }
