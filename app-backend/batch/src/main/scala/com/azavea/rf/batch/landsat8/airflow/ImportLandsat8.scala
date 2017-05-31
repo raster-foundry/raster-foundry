@@ -280,7 +280,10 @@ object ImportLandsat8 {
   def main(args: Array[String]): Unit = {
     implicit val db = DB.DEFAULT
 
+    /** Since 30/04/2017 old LC8 collection is not updated */
     val job = args.toList match {
+      case List(date, threshold) if LocalDate.parse(date) > LocalDate.of(2017, 4, 30) => ImportLandsat8C1(LocalDate.parse(date), threshold.toInt)
+      case List(date) if LocalDate.parse(date) > LocalDate.of(2017, 4, 30) => ImportLandsat8C1(LocalDate.parse(date))
       case List(date, threshold) => ImportLandsat8(LocalDate.parse(date), threshold.toInt)
       case List(date) => ImportLandsat8(LocalDate.parse(date))
       case _ => ImportLandsat8()
