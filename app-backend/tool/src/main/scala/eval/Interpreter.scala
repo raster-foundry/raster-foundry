@@ -107,14 +107,17 @@ object Interpreter extends LazyLogging {
 
     val pure: Interpreted[Unit] = interpretPure[Unit](ast, sourceMapping)
 
-    sourceMapping.mapValues(source(_)).sequence.map({ sms =>
-      val tiles: Interpreted[Map[UUID, Tile]] = sms.map({
-        case (id, None) => (id, Invalid(NonEmptyList.of(RasterRetrievalError(id))))
-        case (id, Some(tile)) => (id, Valid(tile))
-      }).sequence
+    sourceMapping
+      .mapValues(r => source(r).map(_.toRight(r.id)).recover({ case _ => Left(r.id) }))
+      .sequence
+      .map({ sms =>
+        val tiles: Interpreted[Map[UUID, Tile]] = sms.map({
+          case (id, Left(rid)) => (id, Invalid(NonEmptyList.of(RasterRetrievalError(id, rid))))
+          case (id, Right(tile)) => (id, Valid(tile))
+        }).sequence
 
-      (pure |@| tiles).map({ case (_, ts) => eval(ts, ast) })
-    })
+        (pure |@| tiles).map({ case (_, ts) => eval(ts, ast) })
+      })
   }
 
   /** The Interpreter method for producing z/x/y TMS tiles
@@ -139,14 +142,17 @@ object Interpreter extends LazyLogging {
         case op: Operation => interpretOperation(op, { tree => eval(tiles, tree) })
       }
 
-      sourceMapping.mapValues(source(_, z, x, y)).sequence.map({ sms =>
-        val tiles: Interpreted[Map[UUID, Tile]] = sms.map({
-          case (id, None) => (id, Invalid(NonEmptyList.of(RasterRetrievalError(id))))
-          case (id, Some(tile)) => (id, Valid(tile))
-        }).sequence
+      sourceMapping
+        .mapValues(r => source(r, z, x, y).map(_.toRight(r.id)).recover({ case _ => Left(r.id) }))
+        .sequence
+        .map({ sms =>
+          val tiles: Interpreted[Map[UUID, Tile]] = sms.map({
+            case (id, Left(rid)) => (id, Invalid(NonEmptyList.of(RasterRetrievalError(id, rid))))
+            case (id, Right(tile)) => (id, Valid(tile))
+          }).sequence
 
-        (pure |@| tiles).map({ case (_, ts) => eval(ts, ast) })
-      })
+          (pure |@| tiles).map({ case (_, ts) => eval(ts, ast) })
+        })
     }
   }
 }
