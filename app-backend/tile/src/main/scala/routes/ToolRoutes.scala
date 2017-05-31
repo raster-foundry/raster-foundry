@@ -1,6 +1,7 @@
 package com.azavea.rf.tile.routes
 
 import com.azavea.rf.common._
+import com.azavea.rf.common.ast._
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.{ToolRuns, Tools}
 import com.azavea.rf.tile._
