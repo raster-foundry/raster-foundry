@@ -408,9 +408,9 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
                 val greenBandPath = root.natural.selectDynamic("value").greenBand.int
                 val blueBandPath = root.natural.selectDynamic("value").blueBand.int
 
-                val redBand = redBandPath.getOption(composites).getOrElse(1)
-                val greenBand = greenBandPath.getOption(composites).getOrElse(2)
-                val blueBand = blueBandPath.getOption(composites).getOrElse(3)
+                val redBand = redBandPath.getOption(composites).getOrElse(0)
+                val greenBand = greenBandPath.getOption(composites).getOrElse(1)
+                val blueBand = blueBandPath.getOption(composites).getOrElse(2)
 
                 SceneToProject(
                   sceneId, projectId, true, None, Some(
