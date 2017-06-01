@@ -13,22 +13,20 @@ export default class PublishModalController {
     }
 
     $onInit() {
-        this.urlMappings = [
-            {
+        this.urlMappings = {
+            standard: {
                 label: 'Standard',
                 z: 'z',
                 x: 'x',
-                y: 'y',
-                active: true
+                y: 'y'
             },
-            {
+            arcGIS: {
                 label: 'ArcGIS',
                 z: 'level',
                 x: 'col',
-                y: 'row',
-                active: false
+                y: 'row'
             }
-        ];
+        };
 
         let sharePolicies = [
             {
@@ -72,8 +70,12 @@ export default class PublishModalController {
         );
 
         this.activePolicy = this.sharePolicies.find((policy) => policy.active);
+        this.tileLayerUrls = {
+            standard: null,
+            arcGIS: null
+        };
         this.updateShareUrl();
-        this.hydrateTileUrl(this.getActiveMapping());
+        this.hydrateTileUrls();
     }
 
     updateShareUrl() {
@@ -107,7 +109,7 @@ export default class PublishModalController {
                 this.activePolicy = oldPolicy;
             });
         }
-        this.hydrateTileUrl(this.getActiveMapping());
+        this.hydrateTileUrls();
     }
 
     openProjectShare() {
@@ -115,34 +117,25 @@ export default class PublishModalController {
         this.$window.open(url, '_blank');
     }
 
-    onUrlMappingChange(mapping) {
-        this.setActiveMappingByLabel(mapping.label);
-        this.hydrateTileUrl(mapping);
-    }
-
-    hydrateTileUrl(mapping) {
-        let tileUrl = this.resolve.tileUrl
-            .replace('{z}', `{${mapping.z}}`)
-            .replace('{x}', `{${mapping.x}}`)
-            .replace('{y}', `{${mapping.y}}`);
-        if (this.activePolicy.enum === 'PRIVATE') {
+    hydrateTileUrls() {
+        let zxyUrl = this.resolve.tileUrl
+            .replace('{z}', `{${this.urlMappings.standard.z}}`)
+            .replace('{x}', `{${this.urlMappings.standard.x}}`)
+            .replace('{y}', `{${this.urlMappings.standard.y}}`);
+        let arcGISUrl = this.resolve.tileUrl
+            .replace('{z}', `{${this.urlMappings.arcGIS.z}}`)
+            .replace('{x}', `{${this.urlMappings.arcGIS.x}}`)
+            .replace('{y}', `{${this.urlMappings.arcGIS.y}}`);
+        if (this.activePolicy.enum !== 'PRIVATE') {
+            this.tileLayerUrls.arcGIS = `${arcGISUrl}`;
+            this.tileLayerUrls.standard = `${zxyUrl}`;
+        } else {
             this.tokenService.getOrCreateProjectMapToken(this.project).then(
                 (mapToken) => {
                     this.mapToken = mapToken;
-                    this.mappedTileUrl = `${tileUrl}&mapToken=${mapToken.id}`;
+                    this.tileLayerUrls.standard = `${zxyUrl}&mapToken=${mapToken.id}`;
+                    this.tileLayerUrls.arcGIS = `${arcGISUrl}&mapToken=${mapToken.id}`;
                 });
-        } else {
-            this.mappedTileUrl = tileUrl;
         }
-    }
-
-    getActiveMapping() {
-        return this.urlMappings.find(m => m.active);
-    }
-
-    setActiveMappingByLabel(label) {
-        this.urlMappings.forEach(m => {
-            m.active = m.label === label;
-        });
     }
 }

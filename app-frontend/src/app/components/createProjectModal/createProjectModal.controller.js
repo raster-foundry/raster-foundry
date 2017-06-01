@@ -142,9 +142,10 @@ export default class CreateProjectModalController {
                     });
                 }
             } else if (this.currentStepIs('ADD_SCENES')) {
-                if (this.projectBuffer.isAOIProject && this.projectAttributeIs('addType', 'public')) {
+                let isPublic = this.projectAttributeIs('addType', 'public');
+                if (this.projectBuffer.isAOIProject && isPublic) {
                     this.gotoAOIParameters();
-                } else if (this.projectAttributeIs('addType', 'public')) {
+                } else if (isPublic) {
                     this.gotoSceneBrowser();
                 } else {
                     this.startImport();
