@@ -88,6 +88,13 @@ export default class CreateProjectModalController {
         }
     }
 
+    gotoAOIParameters() {
+        if (this.project) {
+            this.close();
+            this.$state.go('projects.edit.aoi-parameters', {projectid: this.project.id});
+        }
+    }
+
     startImport() {
         if (this.activeModal) {
             this.activeModal.dismiss();
@@ -135,7 +142,9 @@ export default class CreateProjectModalController {
                     });
                 }
             } else if (this.currentStepIs('ADD_SCENES')) {
-                if (this.projectAttributeIs('addType', 'public')) {
+                if (this.projectBuffer.isAOIProject && this.projectAttributeIs('addType', 'public')) {
+                    this.gotoAOIParameters();
+                } else if (this.projectAttributeIs('addType', 'public')) {
                     this.gotoSceneBrowser();
                 } else {
                     this.startImport();
