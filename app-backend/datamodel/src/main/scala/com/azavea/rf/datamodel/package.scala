@@ -16,6 +16,7 @@ import geotrellis.vector._
 import geotrellis.vector.io._
 import geotrellis.proj4._
 import geotrellis.slick.Projected
+import scala.util.Try
 
 package object datamodel {
 
@@ -85,10 +86,11 @@ package object datamodel {
   }
 
   implicit val crsEncoder: Encoder[CRS] =
-    Encoder.encodeString.contramap[CRS] { crs => s"epsg:${crs.epsgCode}" }
+    Encoder.encodeString.contramap[CRS] { crs => crs.epsgCode.map { c => s"epsg:$c" }.getOrElse(crs.toProj4String) }
+
   implicit val crsDecoder: Decoder[CRS] =
     Decoder.decodeString.emap { str =>
-      Either.catchNonFatal(CRS.fromName(str)).leftMap(_ => "CRS")
+      Either.catchNonFatal(Try(CRS.fromName(str)) getOrElse CRS.fromString(str)).leftMap(_ => "CRS")
     }
 
   implicit val extentEncoder: Encoder[Extent] =

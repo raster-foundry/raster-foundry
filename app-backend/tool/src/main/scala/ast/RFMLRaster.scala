@@ -4,10 +4,9 @@ import java.security.InvalidParameterException
 import java.util.UUID
 
 import io.circe._
-import io.circe.generic.JsonCodec
 import io.circe.syntax._
 
-sealed abstract class RFMLRaster(val `type`: String) {
+sealed abstract class RFMLRaster(val `type`: String) extends Serializable {
   def id: UUID
 }
 

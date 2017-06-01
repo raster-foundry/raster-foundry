@@ -1,8 +1,8 @@
 package com.azavea.rf.datamodel
 
 import io.circe._
-import io.circe.parser._
 import io.circe.generic.JsonCodec
+import cats.implicits._
 
 import java.util.UUID
 import java.sql.Timestamp
@@ -20,8 +20,11 @@ case class Export(
   exportStatus: ExportStatus,
   exportType: ExportType,
   visibility: Visibility,
+  toolRunId: Option[UUID],
   exportOptions: Json
-)
+) {
+  def getExportOptions: Option[ExportOptions] = exportOptions.as[ExportOptions].toOption
+}
 
 object Export {
 
@@ -37,6 +40,7 @@ object Export {
     exportType: ExportType,
     visibility: Visibility,
     owner: Option[String],
+    toolRunId: Option[UUID],
     exportOptions: Json
   ) extends OwnerCheck {
 
@@ -58,6 +62,7 @@ object Export {
         exportStatus = this.exportStatus,
         exportType = this.exportType,
         visibility = this.visibility,
+        toolRunId = this.toolRunId,
         exportOptions = this.exportOptions
       )
     }

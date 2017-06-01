@@ -1630,6 +1630,26 @@ paths:
             UUID parameter does not refer to an export or the user is not able to view the export it refers to
           schema:
             $ref: '#/definitions/Error'
+  /exports/{uuid}/files:
+    x-resource: Exports
+    get:
+      summary: Get available files for the export
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: List of urls to download exported data
+          schema:
+            type: "array"
+            items:
+              type: "string"
+        404:
+          description: |
+            UUID parameter does not refer to an export or the user is not able to view the export it refers to or export was not finished successfully yet.
+          schema:
+            $ref: '#/definitions/Error'
 
 parameters:
 
@@ -3067,6 +3087,10 @@ definitions:
             - PUBLIC
             - ORGANIZATION
             - PRIVATE
+        toolRunId:
+          type: string
+          format: uuid
+          description: Optional id of a ToolRun. Specifying this will perform an RDD-AST-based export job.
         exportOptions:
           $ref: '#/definitions/ExportOptions'
   Export:

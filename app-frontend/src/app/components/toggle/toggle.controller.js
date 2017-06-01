@@ -3,18 +3,25 @@ export default class ToggleController {
         'ngInject';
     }
     $onInit() {
-        if (!this.model) {
-            this.model = false;
-        }
+        this.currentValue = this.value || this.model || false;
     }
     $onChanges(changes) {
-        if ('model' in changes && changes.dataModel.currentValue) {
-            this.model = changes.dataModel.currentValue;
+        if ('value' in changes) {
+            this.currentValue = changes.value.currentValue;
         }
     }
     toggle($event) {
         $event.stopPropagation();
         $event.preventDefault();
-        this.onChange({value: !this.model});
+        this.currentValue = !this.currentValue;
+
+        // Mutate `this.model` only if it is defined (which would
+        // indicate we are using two-way binding)
+        // eslint-disable-next-line no-eq-null, eqeqeq
+        if (this.model != null) {
+            this.model = this.currentValue;
+        }
+
+        this.onChange({value: this.currentValue});
     }
 }

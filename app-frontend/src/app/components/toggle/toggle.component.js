@@ -5,6 +5,7 @@ const rfToggle = {
     transclude: true,
     bindings: {
         model: '=',
+        value: '<',
         onChange: '&',
         className: '@'
     },

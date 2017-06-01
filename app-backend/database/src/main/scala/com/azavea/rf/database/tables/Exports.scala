@@ -1,16 +1,19 @@
 package com.azavea.rf.database.tables
 
-import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.fields._
 import com.azavea.rf.database.query.{ExportQueryParameters, ListQueryResult}
+import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.datamodel._
+import com.azavea.rf.tool.ast._
+import com.azavea.rf.tool.params._
 
+import cats.data._
+import cats.implicits._
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import com.typesafe.scalalogging.LazyLogging
+import io.circe._
 import slick.model.ForeignKeyAction
-import io.circe.Json
-import cats.implicits._
 
 import java.sql.Timestamp
 import java.util.UUID
@@ -29,7 +32,7 @@ class Exports(_tableTag: Tag) extends Table[Export](_tableTag, "exports")
   with UserFkFields
 {
   def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, owner, organizationId, projectId, exportStatus,
-    exportType, visibility, exportOptions) <> (
+    exportType, visibility, toolRunId, exportOptions) <> (
     Export.tupled, Export.unapply
   )
 
@@ -44,6 +47,7 @@ class Exports(_tableTag: Tag) extends Table[Export](_tableTag, "exports")
   val exportStatus: Rep[ExportStatus] = column[ExportStatus]("export_status")
   val exportType: Rep[ExportType] = column[ExportType]("export_type")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
+  val toolRunId: Rep[Option[UUID]] = column[Option[UUID]]("toolrun_id")
   val exportOptions: Rep[Json] = column[Json]("export_options")
 
   lazy val projectsFk = foreignKey("exports_project_id_fkey", projectId, Projects)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
@@ -51,6 +55,7 @@ class Exports(_tableTag: Tag) extends Table[Export](_tableTag, "exports")
   lazy val createdByUserFK = foreignKey("exports_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val modifiedByUserFK = foreignKey("exports_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val ownerUserFK = foreignKey("exports_owner_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val toolRunFK = foreignKey("toolrun_id", toolRunId, ToolRuns)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 }
 
 object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
@@ -99,6 +104,13 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
     Exports
       .filterToSharedOrganizationIfNotInRoot(user)
       .filter(_.id === exportId)
+      .result
+      .headOption
+
+  def getExportWithStatus(exportId: UUID, user: User, exportStatus: ExportStatus) =
+    Exports
+      .filterToSharedOrganizationIfNotInRoot(user)
+      .filter(e => e.id === exportId && e.exportStatus === exportStatus)
       .result
       .headOption
 
@@ -161,49 +173,86 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
     )
   }
 
-  def getExportDefinition(export: Export, user: User)(implicit database: DB): Future[Option[ExportDefinition]] = {
-    export
-      .exportOptions
-      .as[ExportOptions]
-      .toOption
-      .map { exportOptions =>
-        getScenes(export, user)
-          .flatMap { iterable =>
-            val list = iterable.toList
-            val exportLayerDefinitions: Future[ExportDefinition] =
-              list
-                .map { scene =>
-                  ScenesToProjects.getColorCorrectParams(export.projectId, scene.id) map { ccp =>
-                    ExportLayerDefinition(scene.id, new URI(scene.ingestLocation.getOrElse("")), ccp.flatten)
-                  }
-                }
-                .sequence[Future, ExportLayerDefinition]
-                .map { layers =>
-                  ExportDefinition(
-                    export.id,
-                    input = InputDefinition(
-                      projectId = export.projectId,
-                      resolution = exportOptions.resolution,
-                      layers = layers.toArray,
-                      mask = exportOptions.mask.map(_.geom)
-                    ),
-                    output = OutputDefinition(
-                      crs = exportOptions.getCrs,
-                      rasterSize = exportOptions.rasterSize,
-                      render = Some(exportOptions.render),
-                      crop = exportOptions.crop,
-                      stitch = exportOptions.stitch,
-                      source = exportOptions.source,
-                      dropboxCredential = user.dropboxCredential
-                    )
-                  )
-                }
+  def getExportDefinition(
+    export: Export,
+    user: User
+  )(implicit database: DB): Future[Option[ExportDefinition]] = {
 
-            exportLayerDefinitions
+    val eo: OptionT[Future, ExportOptions] =
+      OptionT.fromOption[Future](export.exportOptions.as[ExportOptions].toOption)
+
+    eo.flatMap({ exportOptions =>
+
+        val outDef = OutputDefinition(
+          crs = exportOptions.getCrs,
+          rasterSize = exportOptions.rasterSize,
+          render = Some(exportOptions.render),
+          crop = exportOptions.crop,
+          stitch = exportOptions.stitch,
+          source = exportOptions.source,
+          dropboxCredential = user.dropboxCredential
+        )
+
+        val style: OptionT[Future, Either[SimpleInput, ASTInput]] = export.toolRunId match {
+          case Some(id) => astInput(id, export, user).map(Right(_))
+          case None => {
+            /* Hand-holding the type system */
+            val work: Future[Option[Either[SimpleInput, ASTInput]]] =
+              simpleInput(export, user, exportOptions).map(si => Some(Left(si)))
+
+            OptionT(work)
           }
-      }
-      .sequence
+        }
+
+        style.map(s => ExportDefinition(
+          export.id,
+          InputDefinition(export.projectId, exportOptions.resolution, s),
+          outDef
+        ))
+      })
+      .value
   }
+
+  private def astInput(
+    toolRunId: UUID,
+    export: Export,
+    user: User
+  )(implicit database: DB): OptionT[Future, ASTInput] = {
+
+    for {
+      tRun   <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
+      tool   <- OptionT(Tools.getTool(tRun.tool, user))
+      ast    <- OptionT.pure[Future, MapAlgebraAST](tool.definition.as[MapAlgebraAST].valueOr(throw _))
+      params <- OptionT.pure[Future, EvalParams](tRun.executionParameters.as[EvalParams].valueOr(throw _))
+      scenes <- OptionT(getScenes(export, user)
+        .map(_.map(s => s.ingestLocation.map(l => (s.id, l))).toList.sequence)
+      )
+    } yield {
+      ASTInput(ast, params, scenes.toMap)
+    }
+  }
+
+  private def simpleInput(
+    export: Export,
+    user: User,
+    exportOptions: ExportOptions
+  )(implicit database: DB): Future[SimpleInput] = {
+    getScenes(export, user)
+      .flatMap({ iterable =>
+        iterable.toList
+          .map({ scene =>
+            ScenesToProjects.getColorCorrectParams(export.projectId, scene.id) map({ ccp =>
+              ExportLayerDefinition(scene.id, new URI(scene.ingestLocation.getOrElse("")), ccp.flatten)
+            })
+          })
+          .sequence
+          .map({ layers =>
+            SimpleInput(layers.toArray, exportOptions.mask.map(_.geom))
+          })
+      })
+  }
+
+
 }
 
 class ExportTableQuery[M, U, C[_]](exports: Exports.TableQuery) {

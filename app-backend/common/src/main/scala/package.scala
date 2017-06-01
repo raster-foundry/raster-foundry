@@ -8,22 +8,15 @@ import cats._
 import cats.data.{NonEmptyList, OptionT}
 import cats.data.Validated.{Invalid, Valid}
 import cats.implicits._
-import io.circe._
-import io.circe.syntax._
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.{ToolRuns, Tools}
 import com.azavea.rf.datamodel.{Tool, ToolRun, User}
 import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.rf.tool.eval.{ASTDecodeError, DatabaseError, Interpreter}
 import com.azavea.rf.tool.params.EvalParams
+import io.circe._
 
 package object common {
-
-  /** Parse JSON as the argument type provided and throw in case of failure. */
-  def parseOrThrow[A: Decoder](js: Json): A = js.as[A] match {
-    case Right(a) => a
-    case Left(decodingFailure) => throw decodingFailure
-  }
 
   /** Validate an AST, given some ToolRun. In the case of success, returns
     * the zero element of some specified Monoid.

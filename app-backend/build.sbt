@@ -21,7 +21,8 @@ lazy val commonSettings = Seq(
     "-language:postfixOps",
     "-language:existentials",
     "-language:experimental.macros",
-    "-feature"
+    "-feature",
+    "-Ypartial-unification"
   ),
   resolvers ++= Seq(
     Resolver.sonatypeRepo("snapshots"),
@@ -165,9 +166,7 @@ lazy val database = Project("database", file("database"))
   })
 
 lazy val batch = Project("batch", file("batch"))
-  .dependsOn(common)
-  .dependsOn(datamodel)
-  .dependsOn(database)
+  .dependsOn(common, datamodel, database, tool)
   .settings(commonSettings:_*)
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({

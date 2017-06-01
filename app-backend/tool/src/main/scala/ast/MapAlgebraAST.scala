@@ -16,7 +16,7 @@ sealed trait MapAlgebraAST extends Product with Serializable {
 
 object MapAlgebraAST {
   /** Map Algebra operations (nodes in this tree) */
-  abstract class Operation(val symbol: String) extends MapAlgebraAST {
+  abstract class Operation(val symbol: String) extends MapAlgebraAST with Serializable {
 
     @SuppressWarnings(Array("TraversableHead"))
     def find(id: UUID): Option[MapAlgebraAST] =
@@ -29,6 +29,9 @@ object MapAlgebraAST {
 
     def sources: Seq[MapAlgebraAST.Source] = args.flatMap(_.sources).distinct
   }
+
+  /** Operations which should only have one argument. */
+  abstract class UnaryOp(override val symbol: String) extends Operation(symbol) with Serializable
 
   case class Addition(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
       extends Operation("+")
@@ -46,7 +49,7 @@ object MapAlgebraAST {
       extends Operation("mask")
 
   case class Classification(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], classMap: ClassMap)
-      extends Operation("classify")
+      extends UnaryOp("classify")
 
   case class Max(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
       extends Operation("max")

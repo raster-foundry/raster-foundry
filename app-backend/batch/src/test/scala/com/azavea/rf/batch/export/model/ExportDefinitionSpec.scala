@@ -3,6 +3,9 @@ package com.azavea.rf.batch.export.model
 import com.azavea.rf.batch.BatchSpec
 import com.azavea.rf.datamodel._
 import com.azavea.rf.datamodel.color._
+import com.azavea.rf.tool.ast.MapAlgebraAST._
+import com.azavea.rf.tool.ast._
+import com.azavea.rf.tool.params._
 
 import io.circe.parser._
 import io.circe.syntax._
@@ -19,58 +22,55 @@ import java.net.URI
 import java.util.UUID
 
 class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
-  it("Print Export definition") {
-    val expected = ExportDefinition(
-      id = UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57039"),
-      input = InputDefinition(
-        projectId = UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57036"),
-        resolution = 15,
-        layers = Array(
-          ExportLayerDefinition(
-            layerId = UUID.fromString("8436f7e9-b7f7-4d4f-bda8-76b32c356cff"),
-            ingestLocation = new URI("s3://test/"),
-            colorCorrections = Some(
-              ColorCorrect.Params(
-                redBand = 0,
-                greenBand = 1,
-                blueBand = 2,
-                bandClipping = PerBandClipping(
-                  enabled = true,
-                  redMax = Some(9), greenMax = Some(9), blueMax = Some(9),
-                  redMin = None, greenMin = None, blueMin = None
-                ),
-                gamma = BandGamma(
-                  enabled = true,
-                  redGamma = Some(1d),
-                  greenGamma = Some(2d),
-                  blueGamma = Some(3d)
-                ),
-                sigmoidalContrast = SigmoidalContrast(
-                  enabled = true,
-                  alpha = Some(6d),
-                  beta = Some(7d)
-                ),
-                tileClipping = MultiBandClipping(
-                  enabled = true,
-                  min = Some(8),
-                  max = Some(9)
-                ),
-                saturation = Saturation(
-                  enabled = true,
-                  saturation = Some(1.0)
-                ),
-                equalize = Equalization(
-                  enabled = true
-                ),
-                autoBalance = AutoWhiteBalance(
-                  enabled = false
-                )
-              )
-            )
-          )
-        ),
-        mask = Some(
-          """
+  val outDef = OutputDefinition(
+    crs = Some(CRS.fromEpsgCode(32654)),
+    rasterSize = Some(256),
+    render = Some(Render(operation = "id", bands = Some(Array(1, 2, 3)))),
+    crop = false,
+    stitch = false,
+    source = new URI("s3://test/"),
+    dropboxCredential = None
+  )
+
+  it("SimpleInput") {
+    val cc = ColorCorrect.Params(
+      redBand = 0,
+      greenBand = 1,
+      blueBand = 2,
+      bandClipping = PerBandClipping(
+        enabled = true,
+        redMax = Some(9), greenMax = Some(9), blueMax = Some(9),
+        redMin = None, greenMin = None, blueMin = None
+      ),
+      gamma = BandGamma(
+        enabled = true,
+        redGamma = Some(1d),
+        greenGamma = Some(2d),
+        blueGamma = Some(3d)
+      ),
+      sigmoidalContrast = SigmoidalContrast(
+        enabled = true,
+        alpha = Some(6d),
+        beta = Some(7d)
+      ),
+      tileClipping = MultiBandClipping(
+        enabled = true,
+        min = Some(8),
+        max = Some(9)
+      ),
+      saturation = Saturation(
+        enabled = true,
+        saturation = Some(1.0)
+      ),
+      equalize = Equalization(
+        enabled = true
+      ),
+      autoBalance = AutoWhiteBalance(
+        enabled = false
+      )
+    )
+
+    val mask = """
             |{
             |        "type":"MultiPolygon",
             |        "coordinates":[
@@ -100,17 +100,25 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
             |            ]
             |        ]
             |    }
-          """.stripMargin.parseGeoJson[MultiPolygon]())
+          """.stripMargin.parseGeoJson[MultiPolygon]()
+
+
+    val expected = ExportDefinition(
+      id = UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57039"),
+      input = InputDefinition(
+        projectId = UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57036"),
+        resolution = 15,
+        style = Left(SimpleInput(
+          layers = Array(
+            ExportLayerDefinition(
+              layerId = UUID.fromString("8436f7e9-b7f7-4d4f-bda8-76b32c356cff"),
+              ingestLocation = new URI("s3://test/"),
+              colorCorrections = Some(cc)
+            )),
+          mask = Some(mask)
+        ))
       ),
-      output = OutputDefinition(
-        crs = Some(CRS.fromEpsgCode(32654)),
-        rasterSize = Some(256),
-        render = Some(Render(operation = "id", bands = Some(Array(1, 2, 3)))),
-        crop = false,
-        stitch = false,
-        source = new URI("s3://test/"),
-        dropboxCredential = None
-      )
+      output = outDef
     )
 
     val actual =
@@ -121,5 +129,37 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
 
     expected.asJson shouldBe actual.asJson
   }
-}
 
+  it("ASTInput isomorphism") {
+    val s0 = Source(UUID.randomUUID, None)
+    val s1 = Source(UUID.randomUUID, None)
+    val ast: MapAlgebraAST = Addition(List(s0, s1), UUID.randomUUID, None)
+
+    val params = EvalParams(
+      Map(
+        s0.id -> SceneRaster(UUID.randomUUID, Some(5)),
+        s1.id -> SceneRaster(UUID.randomUUID, Some(5))
+      ),
+      Map.empty
+    )
+
+    val inDef = InputDefinition(
+      UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57036"),
+      15,
+      Right(ASTInput(ast, params, params.sources.mapValues(_ => "s3://foo/bar/")))
+    )
+
+    val ed = ExportDefinition(
+      UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57039"),
+      inDef,
+      outDef
+    )
+
+//    println(ed.asJson.spaces2)
+
+    decode[ExportDefinition](ed.asJson.spaces2) match {
+      case Right(ed2) => ed2 shouldBe ed
+      case Left(err) => throw new Exception(s"EXDEF: ${err}")
+    }
+  }
+}

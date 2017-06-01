@@ -17,7 +17,6 @@ case class Datasource(
   organizationId: UUID,
   name: String,
   visibility: Visibility,
-  colorCorrection: Json,
   composites: Json,
   extras: Json
 )
@@ -35,7 +34,6 @@ object Datasource {
     name: String,
     visibility: Visibility,
     owner: Option[String],
-    colorCorrection: Json,
     composites: Json,
     extras: Json
   ) extends OwnerCheck  {
@@ -55,7 +53,6 @@ object Datasource {
         this.organizationId,
         this.name,
         this.visibility,
-        this.colorCorrection,
         this.composites,
         this.extras
       )

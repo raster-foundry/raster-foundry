@@ -1,14 +1,14 @@
 package com.azavea.rf.api.exports
 
-import java.util.UUID
-
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.model.StatusCodes
 import com.typesafe.scalalogging.LazyLogging
-import cats.implicits._
 import cats.data._
+import cats.implicits._
 import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 import io.circe._
+import io.circe.parser.decode
 
 import com.azavea.rf.common._
 import com.azavea.rf.database.tables.Exports
@@ -16,6 +16,10 @@ import com.azavea.rf.database.query._
 import com.azavea.rf.database.{ActionRunner, Database}
 import com.azavea.rf.datamodel._
 
+import java.net.URI
+import java.util.UUID
+
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 trait ExportRoutes extends Authentication
@@ -42,6 +46,11 @@ trait ExportRoutes extends Authentication
       pathPrefix("definition") {
         pathEndOrSingleSlash {
           get { getExportDefinition(exportId) }
+        }
+      } ~
+      pathPrefix("files") {
+        pathEndOrSingleSlash {
+          get { exportFiles(exportId) }
         }
       }
     }
@@ -78,9 +87,13 @@ trait ExportRoutes extends Authentication
   def createExport: Route = authenticate { user =>
     entity(as[Export.Create]) { newExport =>
       authorize(user.isInRootOrSameOrganizationAs(newExport)) {
-        onSuccess(write[Export](Exports.insertExport(newExport, user))) { export =>
-          kickoffProjectExport(export.id)
-          complete(export)
+        newExport.exportOptions.as[ExportOptions] match {
+          case Left(df:DecodingFailure) => complete((StatusCodes.BadRequest, s"JSON decoder exception: ${df.show}"))
+          case Right(x) =>
+            onSuccess(write(Exports.insertExport(newExport, user))) { export =>
+              kickoffProjectExport(export.id)
+              complete(export)
+            }
         }
       }
     }
@@ -99,6 +112,17 @@ trait ExportRoutes extends Authentication
   def deleteExport(exportId: UUID): Route = authenticate { user =>
     onSuccess(drop(Exports.deleteExport(exportId, user))) {
       completeSingleOrNotFound
+    }
+  }
+
+  def exportFiles(exportId: UUID): Route = authenticate { user =>
+    rejectEmptyResponse {
+      complete {
+        (for {
+          export: Export <- OptionT(readOne[Export](Exports.getExportWithStatus(exportId, user, ExportStatus.Exported)))
+          list: List[String] <- OptionT.fromOption[Future] { export.getExportOptions.map(_.getSignedUrls(): List[String]) }
+        } yield list).value
+      }
     }
   }
 }

@@ -4,6 +4,7 @@ import java.util.UUID
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
+import cats.implicits._
 import com.azavea.rf.common._
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.Tools
@@ -42,7 +43,7 @@ trait ToolRoutes extends Authentication
   def getToolSources(toolId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       onSuccess(Tools.getTool(toolId, user)) { maybeTool =>
-        val sources = maybeTool.map { tool => parseOrThrow[MapAlgebraAST](tool.definition).sources }
+        val sources = maybeTool.map(_.definition.as[MapAlgebraAST].valueOr(throw _).sources)
         complete(sources)
       }
     }

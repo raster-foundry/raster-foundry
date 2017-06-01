@@ -1,90 +1,135 @@
 package com.azavea.rf.batch.export.spark
 
-import io.circe.parser._
-import com.azavea.rf.datamodel._
-import com.azavea.rf.batch._
-import com.azavea.rf.batch.util._
-import com.azavea.rf.batch.export._
-import com.azavea.rf.batch.dropbox._
-import com.azavea.rf.batch.util.conf._
-
-import geotrellis.proj4.LatLng
-import geotrellis.raster._
-import geotrellis.raster.io._
-import geotrellis.raster.histogram.Histogram
-import geotrellis.raster.io.geotiff.{GeoTiff, MultibandGeoTiff}
-import geotrellis.spark._
-import geotrellis.spark.io._
-import geotrellis.spark.tiling._
-import geotrellis.spark.io.hadoop._
-import geotrellis.spark.io.file._
-import geotrellis.spark.io.s3._
-
-import com.typesafe.scalalogging.LazyLogging
-import org.apache.hadoop.fs.Path
-import org.apache.spark._
-import spray.json.DefaultJsonProtocol._
-import cats.implicits._
-import com.dropbox.core.v2.files.{CreateFolderErrorException, WriteMode}
-
 import java.util.UUID
 
+import cats.data.Validated._
+import cats.implicits._
+import com.azavea.rf.batch._
+import com.azavea.rf.batch.ast._
+import com.azavea.rf.batch.dropbox._
+import com.azavea.rf.batch.export._
+import com.azavea.rf.batch.util._
+import com.azavea.rf.batch.util.conf._
+import com.azavea.rf.common.InterpreterException
+import com.azavea.rf.datamodel._
+import com.azavea.rf.tool.ast.MapAlgebraAST
+import com.azavea.rf.tool.params.EvalParams
+import com.dropbox.core.v2.DbxClientV2
+import com.dropbox.core.v2.files.{CreateFolderErrorException, WriteMode}
+import com.typesafe.scalalogging.LazyLogging
+import geotrellis.proj4.{CRS, LatLng}
+import geotrellis.raster._
+import geotrellis.raster.histogram.Histogram
+import geotrellis.raster.io._
+import geotrellis.raster.io.geotiff.{GeoTiff, MultibandGeoTiff, SinglebandGeoTiff}
+import geotrellis.spark._
+import geotrellis.spark.io._
+import geotrellis.spark.io.file._
+import geotrellis.spark.io.hadoop._
+import geotrellis.spark.io.s3._
+import geotrellis.spark.tiling._
+import geotrellis.vector.MultiPolygon
+import _root_.io.circe.parser._
+import org.apache.hadoop.fs.Path
+import org.apache.spark._
+import org.apache.spark.rdd.RDD
+import spray.json.DefaultJsonProtocol._
+
+// --- //
+
 object Export extends SparkJob with Config with LazyLogging {
+
   val jobName = "Export"
+
+  def astExport(
+    ed: ExportDefinition,
+    ast: MapAlgebraAST,
+    params: EvalParams,
+    ingestLocs: Map[UUID, String],
+    conf: HadoopConfiguration
+  )(implicit sc: SparkContext): Unit = {
+    interpretRDD(ast, params.sources, ed.input.resolution, ingestLocs) match {
+      case Invalid(errs) => throw new InterpreterException(errs)
+      case Valid(rdd) => {
+
+        val mt: MapKeyTransform = rdd.metadata.layout.mapTransform
+        val crs: CRS = rdd.metadata.crs
+
+        if(!ed.output.stitch) {
+          /* Create GeoTiffs and output them */
+          val singles: RDD[(SpatialKey, SinglebandGeoTiff)] =
+            rdd.map({ case (key, tile) => (key, SinglebandGeoTiff(tile, mt(key), crs)) })
+
+          writeGeoTiffs[Tile, SinglebandGeoTiff](singles, ed, conf)
+        } else {
+          /* Stitch the Layer into a single GeoTiff and output it */
+          val single: SinglebandGeoTiff = GeoTiff(rdd.stitch, crs)
+
+          writeGeoTiff[Tile, SinglebandGeoTiff](single, ed, conf, singlePath)
+        }
+      }
+    }
+  }
 
   /** Get a LayerReader and an attribute store for the catalog located at the provided URI
     *
-    * @param exportLayerDef export job's layer definition
+    *  @param exportLayerDef export job's layer definition
     */
-  def getRfLayerManagement(exportLayerDef: ExportLayerDefinition)(implicit @transient sc: SparkContext): (FilteringLayerReader[LayerId], AttributeStore) =
-    exportLayerDef.ingestLocation.getScheme match {
+  def getRfLayerManagement(
+    ed: ExportLayerDefinition
+  )(implicit @transient sc: SparkContext): (FilteringLayerReader[LayerId], AttributeStore) = {
+    ed.ingestLocation.getScheme match {
       case "s3" | "s3a" | "s3n" =>
-        val (bucket, prefix) = S3.parse(exportLayerDef.ingestLocation)
+        val (bucket, prefix) = S3.parse(ed.ingestLocation)
         val reader = S3LayerReader(bucket, prefix)
         (reader, reader.attributeStore)
       case "file" =>
-        val reader = FileLayerReader(exportLayerDef.ingestLocation.getPath)
+        val reader = FileLayerReader(ed.ingestLocation.getPath)
         (reader, reader.attributeStore)
     }
+  }
 
-  def exportProject(params: CommandLine.Params)(exportDefinition: ExportDefinition)(implicit @transient sc: SparkContext) = {
-    val wrappedConfiguration = HadoopConfiguration(S3.setCredentials(sc.hadoopConfiguration))
-    val (input, output) = exportDefinition.input -> exportDefinition.output
-    val rdds = input.layers.map { ld =>
-      val (reader, attributeStore) = getRfLayerManagement(ld)
-      val layerId = LayerId(ld.layerId.toString, input.resolution)
-      val md = attributeStore.readMetadata[TileLayerMetadata[SpatialKey]](layerId)
-      val hist = ld.colorCorrections.map { _ => attributeStore.read[Array[Histogram[Double]]](LayerId(layerId.name, 0), "histogram") }
-      val crs = output.crs.getOrElse(md.crs)
+  def multibandExport(
+    ed: ExportDefinition,
+    layers: Array[ExportLayerDefinition],
+    mask: Option[MultiPolygon],
+    conf: HadoopConfiguration
+  )(implicit @transient sc: SparkContext): Unit = {
 
-      val query = {
-        val q = reader.query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](layerId)
-        input.mask.fold(q)(mp => q.where(Intersects(mp.reproject(LatLng, md.crs))))
-      } result
+    val rdds = layers.map { ld =>
+      val (reader, store) = getRfLayerManagement(ld)
+      val layerId = LayerId(ld.layerId.toString, ed.input.resolution)
+      val md = store.readMetadata[TileLayerMetadata[SpatialKey]](layerId)
+      val hist = ld.colorCorrections.map { _ => store.read[Array[Histogram[Double]]](LayerId(layerId.name, 0), "histogram") }
+      val crs = ed.output.crs.getOrElse(md.crs)
 
-      val bandsQuery = query.withContext {
-        _.mapValues { tile =>
-          val ctile = (ld.colorCorrections |@| hist) map { _.colorCorrect(tile, _) } getOrElse tile
+      val q = reader.query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](layerId)
 
-          output.render.flatMap(_.bands.map(_.toSeq)) match {
-            case Some(seq) if seq.nonEmpty => ctile.subsetBands(seq)
-            case _ => ctile
-          }
-        }
-      }
+      val query: ContextRDD[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]] =
+        mask
+          .fold(q)(mp => q.where(Intersects(mp.reproject(LatLng, md.crs))))
+          .result
+          .withContext({ rdd => rdd.mapValues({ tile =>
+            val ctile = (ld.colorCorrections |@| hist) map { _.colorCorrect(tile, _) } getOrElse tile
 
-      output.rasterSize match {
+            ed.output.render.flatMap(_.bands.map(_.toSeq)) match {
+              case Some(seq) if seq.nonEmpty => ctile.subsetBands(seq)
+              case _ => ctile
+            }
+          })})
+
+      ed.output.rasterSize match {
         case Some(rs) if md.crs != crs || rs != md.tileCols || rs != md.tileRows =>
-          bandsQuery.reproject(ZoomedLayoutScheme(crs, rs))._2
+          query.reproject(ZoomedLayoutScheme(crs, rs))._2
         case _ if md.crs != crs =>
-          bandsQuery.reproject(ZoomedLayoutScheme(crs, math.min(md.tileCols, md.tileRows)))._2
-        case _ => bandsQuery
+          query.reproject(ZoomedLayoutScheme(crs, math.min(md.tileCols, md.tileRows)))._2
+        case _ => query
       }
     }
 
     /** Tile merge with respect to layer initial ordering */
-    if(!output.stitch) {
-      val result =
+    if(!ed.output.stitch) {
+      val result: RDD[(SpatialKey, MultibandGeoTiff)] =
         rdds
           .zipWithIndex
           .map { case (rdd, i) =>
@@ -101,18 +146,10 @@ object Export extends SparkJob with Config with LazyLogging {
           }
           .flatMapValues(v => v)
 
-      result.foreachPartition { iter =>
-        val configuration = wrappedConfiguration.get
-        iter.foreach { case (key, tile) =>
-          tile.write(
-            new Path(s"${output.source.toString}/${input.resolution}-${key.col}-${key.row}.tiff"),
-            configuration
-          )
-        }
-      }
+      writeGeoTiffs[MultibandTile, MultibandGeoTiff](result, ed, conf)
     } else {
       val md = rdds.map(_.metadata).reduce(_ combine _)
-      val raster =
+      val raster: Raster[MultibandTile] =
         rdds
           .zipWithIndex
           .map { case (rdd, i) => rdd.mapValues { value => i -> value } }
@@ -121,39 +158,61 @@ object Export extends SparkJob with Config with LazyLogging {
           .withContext { _.mapValues { _.sortBy(_._1).map(_._2).reduce(_ merge _) } }
           .stitch
       val craster =
-        if(output.crop) input.mask.fold(raster)(mp => raster.crop(mp.envelope.reproject(LatLng, md.crs)))
+        if(ed.output.crop) mask.fold(raster)(mp => raster.crop(mp.envelope.reproject(LatLng, md.crs)))
         else raster
 
-      def outputPath(root: String) = s"${root}/${input.resolution}-${UUID.randomUUID()}.tiff"
-      val geoTiff = GeoTiff(craster, md.crs)
+      writeGeoTiff[MultibandTile, MultibandGeoTiff](GeoTiff(craster, md.crs), ed, conf, singlePath)
+    }
+  }
 
-      output.source.getScheme match {
-        case "dropbox" if exportDefinition.output.dropboxCredential.isDefined => {
-          val client = dropboxConfig.client(exportDefinition.output.dropboxCredential.getOrElse(""))
-          try {
-            client
-              .files
-              .createFolder(output.source.getPath)
-          } catch {
-            case e: CreateFolderErrorException =>
-              logger.warn(s"Target Path already exists, ${e.errorValue}")
-          }
-          geoTiff.dropboxWrite { is =>
-            try {
-              client
-                .files
-                .uploadBuilder(outputPath(output.source.getPath))
-                .withMode(WriteMode.OVERWRITE)
-                .uploadAndFinish(is)
-                .getId
-                .split("id:")
-                .last
-            } finally is.close()
-          }
-        }
-        case _ => geoTiff.write(new Path(outputPath(output.source.toString)), wrappedConfiguration.get)
+  def singlePath(ed: ExportDefinition): String =
+    s"${ed.output.source.toString}/${ed.input.resolution}-${UUID.randomUUID()}.tiff"
+
+  /** Write a single GeoTiff to some target. */
+  private def writeGeoTiff[T <: CellGrid, G <: GeoTiff[T]](
+    tiff: G,
+    ed: ExportDefinition,
+    conf: HadoopConfiguration,
+    path: ExportDefinition => String
+  ): Unit = ed.output.source.getScheme match {
+    case "dropbox" if ed.output.dropboxCredential.isDefined => {
+      val client: DbxClientV2 = dropboxConfig.client(ed.output.dropboxCredential.getOrElse(""))
+
+      try {
+        client.files.createFolder(ed.output.source.getPath)
+      } catch {
+        case e: CreateFolderErrorException =>
+          logger.warn(s"Target Path already exists, ${e.errorValue}")
+      }
+      tiff.dropboxWrite { is =>
+        try {
+          client
+            .files
+            .uploadBuilder(path(ed))
+            .withMode(WriteMode.OVERWRITE)
+            .uploadAndFinish(is)
+            .getId
+            .split("id:")
+            .last
+        } finally is.close()
       }
     }
+    case _ => tiff.write(new Path(path(ed)), conf.get)
+  }
+
+  /** Write a layer of GeoTiffs. */
+  private def writeGeoTiffs[T <: CellGrid, G <: GeoTiff[T]](
+    rdd: RDD[(SpatialKey, G)],
+    ed: ExportDefinition,
+    conf: HadoopConfiguration
+  ): Unit = {
+    def path(key: SpatialKey): ExportDefinition => String = { ed =>
+      s"${ed.output.source.toString}/${ed.input.resolution}-${key.col}-ed.${key.row}.tiff"
+    }
+
+    rdd.foreachPartition({ iter =>
+      iter.foreach({ case (key, tile) => writeGeoTiff[T, G](tile, ed, conf, path(key)) })
+    })
   }
 
   /**
@@ -169,15 +228,22 @@ object Export extends SparkJob with Config with LazyLogging {
         throw new Exception("Unable to parse command line arguments")
     }
 
-    val exportDefinition =
+    val exportDef =
       decode[ExportDefinition](readString(params.jobDefinition)) match {
         case Right(r) => r
         case _ => throw new Exception("Incorrect ExportDefinition JSON")
       }
 
     implicit val sc = new SparkContext(conf)
+
     try {
-      exportProject(params)(exportDefinition)
+      val conf: HadoopConfiguration =
+        HadoopConfiguration(S3.setCredentials(sc.hadoopConfiguration))
+
+      exportDef.input.style match {
+        case Left(SimpleInput(layers, mask)) => multibandExport(exportDef, layers, mask, conf)
+        case Right(ASTInput(ast, params, locs)) => astExport(exportDef, ast, params, locs, conf)
+      }
     } finally {
       sc.stop
     }

@@ -14,6 +14,8 @@ trait Job extends Config with RollbarNotifier {
   implicit lazy val executionContext = materializer.executionContext
 
   /** ActorSystem needs to be closed manually. */
-  def stop: Unit =
-    system.terminate()
+  def stop: Unit = system.terminate()
+
+  /** Run function should be defined for all Jobs */
+  def run: Unit
 }

@@ -19,7 +19,7 @@ import scala.concurrent.Future
 /** Table that represents datasources
   *
   * Datasources can be user generated and help associate things like
-  * tool compatibility and color correction settings to imagery sources
+  * tool compatibility and settings to imagery sources
   */
 class Datasources(_tableTag: Tag) extends Table[Datasource](_tableTag, "datasources")
     with NameField
@@ -28,7 +28,7 @@ class Datasources(_tableTag: Tag) extends Table[Datasource](_tableTag, "datasour
     with OrgFkVisibleFields
 {
   def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, owner, organizationId, name,
-           visibility, colorCorrection, composites, extras) <> (
+           visibility, composites, extras) <> (
     Datasource.tupled, Datasource.unapply
   )
 
@@ -41,7 +41,6 @@ class Datasources(_tableTag: Tag) extends Table[Datasource](_tableTag, "datasour
   val organizationId: Rep[java.util.UUID] = column[java.util.UUID]("organization_id")
   val name: Rep[String] = column[String]("name")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
-  val colorCorrection: Rep[Json] = column[Json]("color_correction", O.Length(2147483647,varying=false))
   val composites: Rep[Json] = column[Json]("composites", O.Length(2147483647, varying=false))
   val extras: Rep[Json] = column[Json]("extras", O.Length(2147483647,varying=false))
 
@@ -133,7 +132,6 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
       updateDatasource.organizationId,
       updateDatasource.name,
       updateDatasource.visibility,
-      updateDatasource.colorCorrection,
       updateDatasource.composites,
       updateDatasource.extras
     )
@@ -144,7 +142,6 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
       datasource.organizationId,
       datasource.name,
       datasource.visibility,
-      datasource.colorCorrection,
       datasource.composites,
       datasource.extras
     )
