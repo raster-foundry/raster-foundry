@@ -1,6 +1,24 @@
 # Change Log
 
-## [0.10.1](https://github.com/azavea/raster-foundry/tree/0.10.1) (2017-05-26)
+## [0.11.0](https://github.com/azavea/raster-foundry/tree/0.11.0) (2017-06-01)
+[Full Changelog](https://github.com/azavea/raster-foundry/compare/0.10.1...0.11.0)
+
+**Merged pull requests:**
+
+- Update ingest location when updating scenes [\#1888](https://github.com/azavea/raster-foundry/pull/1888)
+- Set max zoom level to 30 instead of leaving undefined [\#1879](https://github.com/azavea/raster-foundry/pull/1879)
+- Update old ImportLandsat8 [\#1872](https://github.com/azavea/raster-foundry/pull/1872)
+- Add one-way binding to toggle [\#1871](https://github.com/azavea/raster-foundry/pull/1871)
+- Don't cache color-corrections [\#1870](https://github.com/azavea/raster-foundry/pull/1870)
+- Fix max zoom level [\#1868](https://github.com/azavea/raster-foundry/pull/1868)
+- Add Intercom websocket endpoints to content security policy [\#1866](https://github.com/azavea/raster-foundry/pull/1866)
+- Remove color corrections from datasources [\#1863](https://github.com/azavea/raster-foundry/pull/1863)
+- Fix typo in logger \(infoi =\> info\) [\#1859](https://github.com/azavea/raster-foundry/pull/1859)
+- Allow downloading of completed exports [\#1855](https://github.com/azavea/raster-foundry/pull/1855)
+- Check JSON parameters before writing them to DB [\#1812](https://github.com/azavea/raster-foundry/pull/1812)
+- Exports via RDD-based ASTs [\#1728](https://github.com/azavea/raster-foundry/pull/1728)
+
+## [0.10.1](https://github.com/azavea/raster-foundry/tree/0.10.1) (2017-05-27)
 [Full Changelog](https://github.com/azavea/raster-foundry/compare/0.10.0...0.10.1)
 
 **Merged pull requests:**
@@ -10,29 +28,23 @@
 ## [0.10.0](https://github.com/azavea/raster-foundry/tree/0.10.0) (2017-05-26)
 [Full Changelog](https://github.com/azavea/raster-foundry/compare/0.9.1...0.10.0)
 
-**Merged pull requests:**
-
-- Feature/lk/default projects [\#1850](https://github.com/azavea/raster-foundry/pull/1850)
-- Update/fix color-mode selection [\#1846](https://github.com/azavea/raster-foundry/pull/1846)
-- Handle possible undefined return from project create modal [\#1845](https://github.com/azavea/raster-foundry/pull/1845)
-- Fix object copied to clipboard in share modal [\#1842](https://github.com/azavea/raster-foundry/pull/1842)
-- Cleans up main project edit page [\#1827](https://github.com/azavea/raster-foundry/pull/1827)
-- C1 Scala Landsat8 import  [\#1821](https://github.com/azavea/raster-foundry/pull/1821)
-- Dropbox export [\#1809](https://github.com/azavea/raster-foundry/pull/1809)
-- Refactor color correction storage [\#1843](https://github.com/azavea/raster-foundry/pull/1843)
-
 ## [0.9.1](https://github.com/azavea/raster-foundry/tree/0.9.1) (2017-05-26)
 [Full Changelog](https://github.com/azavea/raster-foundry/compare/0.9.0...0.9.1)
 
 **Merged pull requests:**
 
+- Bump Terraform version on Jenkins to 0.9.6 [\#1851](https://github.com/azavea/raster-foundry/pull/1851)
+- Feature/lk/default projects [\#1850](https://github.com/azavea/raster-foundry/pull/1850)
 - Fix method call to get ingest status [\#1849](https://github.com/azavea/raster-foundry/pull/1849)
+- Update/fix color-mode selection [\#1846](https://github.com/azavea/raster-foundry/pull/1846)
+- Handle possible undefined return from project create modal [\#1845](https://github.com/azavea/raster-foundry/pull/1845)
 
 ## [0.9.0](https://github.com/azavea/raster-foundry/tree/0.9.0) (2017-05-25)
 [Full Changelog](https://github.com/azavea/raster-foundry/compare/0.8.0...0.9.0)
 
 **Merged pull requests:**
 
+- Fix object copied to clipboard in share modal [\#1842](https://github.com/azavea/raster-foundry/pull/1842)
 - Avoid reducing over empty list [\#1840](https://github.com/azavea/raster-foundry/pull/1840)
 - Set data value explicitly [\#1831](https://github.com/azavea/raster-foundry/pull/1831)
 - Allow import into existing project [\#1813](https://github.com/azavea/raster-foundry/pull/1813)
@@ -45,11 +57,14 @@
 - Make the lab work [\#1833](https://github.com/azavea/raster-foundry/pull/1833)
 - Add tiffs to acceptable file patterns [\#1832](https://github.com/azavea/raster-foundry/pull/1832)
 - Tool source endpoint [\#1828](https://github.com/azavea/raster-foundry/pull/1828)
+- Cleans up main project edit page [\#1827](https://github.com/azavea/raster-foundry/pull/1827)
 - Add function to get raw tile for extent [\#1825](https://github.com/azavea/raster-foundry/pull/1825)
 - Fix Alex's merge conflict [\#1823](https://github.com/azavea/raster-foundry/pull/1823)
+- C1 Scala Landsat8 import  [\#1821](https://github.com/azavea/raster-foundry/pull/1821)
 - Change `ingested` filters to use`scene.ingestStatus` [\#1815](https://github.com/azavea/raster-foundry/pull/1815)
 - Fix imports view dropdown menus [\#1814](https://github.com/azavea/raster-foundry/pull/1814)
 - Use bulk-update for color mode changes [\#1810](https://github.com/azavea/raster-foundry/pull/1810)
+- Dropbox export [\#1809](https://github.com/azavea/raster-foundry/pull/1809)
 - Update color corrections on field blur, make debounce longer [\#1803](https://github.com/azavea/raster-foundry/pull/1803)
 - Implement Robust Auto White-Balance [\#1787](https://github.com/azavea/raster-foundry/pull/1787)
 - Connect AOI front-end to API [\#1769](https://github.com/azavea/raster-foundry/pull/1769)
@@ -60,6 +75,7 @@
 
 **Merged pull requests:**
 
+- Refactor color correction storage [\#1843](https://github.com/azavea/raster-foundry/pull/1843)
 - Add support for external S3 export [\#1799](https://github.com/azavea/raster-foundry/pull/1799)
 - Various Upload Processing Fixes [\#1795](https://github.com/azavea/raster-foundry/pull/1795)
 - Add approval\_required and start\_time fields to AoisToProjects model [\#1794](https://github.com/azavea/raster-foundry/pull/1794)
