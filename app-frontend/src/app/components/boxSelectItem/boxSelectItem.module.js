@@ -1,7 +1,6 @@
 import angular from 'angular';
 import BoxSelectItemComponent from './boxSelectItem.component.js';
 import BoxSelectItemController from './boxSelectItem.controller.js';
-require('./boxSelectItem.scss');
 
 const BoxSelectItemModule = angular.module('components.boxSelectItem', []);
 

@@ -2,7 +2,6 @@ import angular from 'angular';
 import PublishModalComponent from './publishModal.component.js';
 import PublishModalController from './publishModal.controller.js';
 require('../../../assets/font/fontello/css/fontello.css');
-require('./publishModal.scss');
 
 const PublishModalModule = angular.module('components.publishModal', []);
 

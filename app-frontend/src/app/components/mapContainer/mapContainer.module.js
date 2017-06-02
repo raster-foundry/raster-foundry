@@ -5,8 +5,6 @@ import MapContainerController from './mapContainer.controller.js';
 require('leaflet/dist/leaflet.css');
 require('leaflet-draw/dist/leaflet.draw.css');
 require('leaflet-draw/dist/leaflet.draw.js');
-require('./sideBySide.module.js');
-require('./mapContainer.scss');
 
 const MapContainerModule = angular.module('components.mapContainer', []);
 
