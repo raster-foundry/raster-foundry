@@ -82,8 +82,8 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
 
   protected def createThumbnails(sceneId: UUID, productId: String): List[Thumbnail.Identified] = {
     val path = getLandsatUrl(productId)
-    val smallUrl = s"$path${productId}_thumb_small.jpg}"
-    val largeUrl = s"$path${productId}_thumb_large.jpg}"
+    val smallUrl = s"$path/${productId}_thumb_small.jpg}"
+    val largeUrl = s"$path/${productId}_thumb_large.jpg}"
 
     Thumbnail.Identified(
       id = None,
@@ -115,7 +115,7 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
     val ul = row("upperLeftCornerLongitude").toDouble -> row("upperLeftCornerLatitude").toDouble
     val ur = row("upperRightCornerLongitude").toDouble -> row("upperRightCornerLatitude").toDouble
 
-    val srcCoords  = ll :: lr :: ul :: ur :: Nil
+    val srcCoords  = ll :: ul :: ur :: lr :: Nil
     val srcPolygon = Polygon(Line(srcCoords :+ srcCoords.head))
 
     val sortedByX = srcCoords.sortBy(_.x)
