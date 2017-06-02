@@ -51,8 +51,8 @@
 // Actual modal
 .modal-content {
   position: relative;
-  background-color: #F9F9F9;
-  border-radius: 2px;
+  background-color: lighten($off-white, 2%);
+  border-radisu: $border-radius-base;
   background-clip: padding-box;
   outline: 0;
   display: flex;
@@ -67,7 +67,7 @@
   bottom: 0;
   left: 0;
   z-index: 1040;
-  background-color: #353b59;
+  background-color: $shade-dark;
   // Fade for backdrop
   &.fade { opacity: 0; }
   &.in { opacity: .7; }
@@ -80,7 +80,7 @@
   text-align: center;
   padding: 2.5rem;
   background-color: #fff;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid $border-color-default;
 
   p {
     margin: 0;
@@ -118,7 +118,7 @@
   @extend .clearfix;
   padding: 1.5rem;
   text-align: right;
-  border-top: 1px solid #e5e5e5;
+  border-top: 1px solid $border-color-default;
   background-color: #fff;
 
   // Properly space out buttons
@@ -249,7 +249,7 @@
         left: 0;
         width: 250px;
         bottom: 0;
-        border-right: 1px solid #ddd;
+        border-right: 1px solid $border-color-default;
         text-align: left;
         z-index: 1;
       }
@@ -288,13 +288,13 @@
     max-width: 350px;
     display: flex;
     flex-direction: column;
-    border-right: 1px solid #ddd;
+    border-right: 1px solid $border-color-default;
     background-color: #fff;
     & > div {
       padding: 1.5rem;
     }
     .scene-metadata-fixed {
-      border-bottom: 1px solid #ddd;
+      border-bottom: 1px solid $border-color-default;
     }
     .scene-metadata-scrollable {
       overflow-y: auto;

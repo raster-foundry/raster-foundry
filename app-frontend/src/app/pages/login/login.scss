@@ -1,9 +1,0 @@
-// @designmatty style this
-// the vh-based height will probably break on mobile browsers,
-// but we aren't really supporting them now
-@import "../../../assets/styles/sass/utils/variables";
-
-.login {
-  background: $shade-normal;
-  height: 100vh;
-}

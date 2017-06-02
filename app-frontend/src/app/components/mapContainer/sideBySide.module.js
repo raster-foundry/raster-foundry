@@ -1,5 +1,3 @@
-require('./sideBySide.scss');
-
 let mapWasDragEnabled;
 let mapWasTapEnabled;
 

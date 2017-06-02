@@ -45,8 +45,8 @@ label {
   font-weight: 600;
   background-color: #fff;
   background-image: none;
-  border: 1px solid #ddd;
-  border-radius: 2px;
+  border: 1px solid $border-color-default;
+  border-radisu: $border-radius-base;
 
   &:focus {
     border-color: $brand-primary;
@@ -85,7 +85,7 @@ label {
   // Disabled and read-only inputs
   &[disabled],
   &[readonly] {
-    background-color: #f3f3f3;
+    background-color: $off-white;
     opacity: 1;
   }
 
@@ -132,8 +132,8 @@ input[type=radio] {
   display: flex;
   flex-direction: row;
   align-items: stretch;
-  border-radius: 2px;
-  border: 1px solid #ddd;
+  border-radisu: $border-radius-base;
+  border: 1px solid $border-color-default;
   background-color: #fff;
 
   label:not(.sr-only) {
@@ -150,7 +150,7 @@ input[type=radio] {
 
   .btn {
     border: none;
-    border-left: 1px solid #ddd;
+    border-left: 1px solid $border-color-default;
     border-radius: 0;
     flex: none; // safari fix width issue
   }

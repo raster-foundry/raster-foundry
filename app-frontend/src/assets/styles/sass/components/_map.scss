@@ -33,7 +33,7 @@
     background: $shade-normal;
     border: 1px solid $shade-dark !important;
     color: $shade-light;
-    border-radius: 2px !important;
+    border-radius: $border-radius-base !important;
     vertical-align: middle;
     line-height: 1.1;
     height: 25px;
@@ -45,7 +45,7 @@
       background: $shade-normal;
       border: 1px solid $shade-dark !important;
       color: #fff;
-      border-radius: 2px !important;
+      border-radius: $border-radius-base !important;
       vertical-align: middle;
       line-height: 1.1;
       height: 25px;

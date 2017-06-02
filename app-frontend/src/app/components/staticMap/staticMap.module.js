@@ -3,7 +3,6 @@ import StaticMapComponent from './staticMap.component.js';
 import StaticMapController from './staticMap.controller.js';
 
 require('leaflet/dist/leaflet.css');
-require('./staticMap.scss');
 
 const StaticMapModule = angular.module('components.staticMap', []);
 

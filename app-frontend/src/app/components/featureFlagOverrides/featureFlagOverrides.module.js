@@ -5,8 +5,6 @@ import FeatureFlagOverridesController from './featureFlagOverrides.controller.js
 
 const FeatureFlagOverridesModule = angular.module('components.featureFlagOverrides', []);
 
-require('./featureFlagOverrides.scss');
-
 FeatureFlagOverridesModule.component(
     'rfFeatureFlagOverrides',
     FeatureFlagOverridesComponent

@@ -1,5 +1,4 @@
 import ImportsController from './imports.controller.js';
-require('./imports.scss');
 
 const ImportsModule = angular.module('pages.imports', []);
 

@@ -1,24 +1,28 @@
-/**
- * To compile sass run the following line in the root directory
- * sass --watch assets/sass:assets/css --style compressed
-**/
-
-/**
- * Vendors
-**/
+/* * * *
+ * Theme settings
+ * Overrides the default settings
+ * uncomment @import if using
+ * * * */
 /* @import
-  "vendors/..."; */
+ "theme/settings/colors",
+ "theme/settings/variables"; */
 
-/**
- * Utils
-**/
+/* * * *
+ * Settings
+ * * * */
 @import
-  "utils/mixins",
-  "utils/variables";
+  "settings/colors",
+  "settings/variables";
 
-/**
+/* * * *
+ * Tools
+ * * * */
+@import
+  "tools/mixins";
+
+/* * * *
  * Base
-**/
+ * * * */
 @import
 	"base/normalize",
   "base/animation",
@@ -28,9 +32,9 @@
   "base/grid",
   "base/helpers";
 
-/**
+/* * * *
  * Layout
-**/
+ * * * */
 @import
   "layout/container",
   "layout/main",
@@ -40,10 +44,9 @@
   "layout/aside",
   "layout/footer";
 
-/**
+/* * * *
  * Components
-**/
-// TODO: Matt Look at color-correct, carousel
+ * * * */
 @import
   "components/alert",
   "components/spacing",
@@ -71,24 +74,23 @@
   "components/tags",
   "components/slider";
 
-/**
+/* * * *
  * Pages
-**/
+ * * * */
 @import
   "pages/dashboard",
   "pages/editor";
 
-
-/**
- * Vendors
-**/
-@import
-  "vendors/nouislider";
-
-/**
+/* * * *
  * Shame
- * Temporary, overrides, sloppy
- * The goal of this file is for it to not exist
-**/
+ * * * */
 @import
   "shame";
+
+/* * * *
+ * Theme styles
+ * Overrides default styles
+ * uncomment @import if using
+ * * * */
+/* @import
+  "theme/core"; */
