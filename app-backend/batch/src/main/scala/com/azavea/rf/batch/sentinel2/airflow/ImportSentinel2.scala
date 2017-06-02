@@ -240,7 +240,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
 object ImportSentinel2 {
   val name = "import_sentinel2"
 
-  def multiPolygonFromJson(tileinfo: Json, key: String, targetCrs: CRS = CRS.fromName("EPSG:4326")): Option[MultiPolygon] = {
+  def multiPolygonFromJson(tileinfo: Json, key: String, targetCrs: CRS = CRS.fromName("EPSG:3857")): Option[MultiPolygon] = {
     val geom = tileinfo.hcursor.downField(key)
     val polygon = geom.focus.map(_.noSpaces.parseGeoJson[Polygon])
     val srcProj =
