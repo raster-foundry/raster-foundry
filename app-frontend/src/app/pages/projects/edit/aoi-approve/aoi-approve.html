@@ -62,12 +62,12 @@
       ng-mouseenter="$ctrl.setHoveredScene(scene)"
       ng-mouseleave="$ctrl.removeHoveredScene()"
       ng-repeat="scene in $ctrl.pendingSceneList track by scene.id">
-    <rf-toggle model="$ctrl.isSceneApproved(scene)" on-change="$ctrl.toggleSceneApproval(scene, $event)">
+    <rf-toggle-ow value="$ctrl.isSceneApproved(scene)" on-change="$ctrl.toggleSceneApproval(scene, $event)">
       <i class="icon-check"></i>
-    </rf-toggle>
-    <rf-toggle model="$ctrl.isSceneRejected(scene)" on-change="$ctrl.toggleSceneRejection(scene, $event)" class-name="danger">
+    </rf-toggle-ow>
+    <rf-toggle-ow value="$ctrl.isSceneRejected(scene)" on-change="$ctrl.toggleSceneRejection(scene, $event)" class-name="danger">
       <i class="icon-cross"></i>
-    </rf-toggle>
+    </rf-toggle-ow>
   </rf-scene-item>
   <div class="sidebar-content">
     <button class="btn btn-block btn-secondary"
