@@ -68,7 +68,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
         rawDataBytes     = objMetadata.getContentLength.toInt,
         visibility       = Visibility.Public,
         filename         = filename,
-        sourceUri        = s"${sentinel2Config.baseHttpPath}/${obj}",
+        sourceUri        = s"${sentinel2Config.baseHttpPath}${obj}",
         owner            = airflowUser.some,
         scene            = sceneId,
         imageMetadata    = Json.Null,
@@ -81,7 +81,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
 
   def createThumbnails(sceneId: UUID, tilePath: String): List[Thumbnail.Identified] = {
     val keyPath: String = s"$tilePath/preview.jpg"
-    val thumbnailUrl = s"${sentinel2Config.baseHttpPath}/$keyPath"
+    val thumbnailUrl = s"${sentinel2Config.baseHttpPath}$keyPath"
 
     if (!isUriExists(thumbnailUrl)) Nil
     else
