@@ -40,7 +40,7 @@
 
     .open .dropdown-toggle {
       background: $shade-dark;
-      border-radius: 2px 2px 0 0;
+      border-radius: $border-radius-base $border-radius-base 0 0;
     }
   }
 
@@ -55,7 +55,7 @@
     padding: .8rem 1rem;
     margin: 0 1rem;
     border: 1px solid $shade-dark;
-    border-radius: 2px;
+    border-radisu: $border-radius-base;
 
     i {
       vertical-align: middle;
@@ -88,7 +88,7 @@
     > a.dropdown-toggle {
       padding: .8rem 1rem;
       border: 1px solid $shade-dark;
-      border-radius: 2px;
+      border-radisu: $border-radius-base;
       color: #fff;
     }
   }

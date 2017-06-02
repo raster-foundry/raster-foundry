@@ -63,7 +63,7 @@ div.image-placeholder {
   background: $shade-dark;
   color: $shade-light;
   margin: 2px;
-  border-radius: 2px;
+  border-radius: $border-radius-base;
   padding: 4px 7px;
   opacity: .9;
   transition: .1s ease-in-out opacity;
@@ -155,7 +155,7 @@ rf-project-editor .leaflet-tile {
   transform: translate(-50%);
   padding: 10px;
   margin: 2px 0;
-  border-radius: 2px;
+  border-radius: $border-radius-base;
   width: 310px;
   height: auto;
 
@@ -219,7 +219,7 @@ rf-project-editor .leaflet-tile {
 .mosaic-priority-option {
   background: $shade-dark;
   padding: 10px;
-  border-radius: 2px;
+  border-radius: $border-radius-base;
   margin-bottom: 4px;
   color: white;
   font-weight: 600;
@@ -416,7 +416,7 @@ rf-project-editor .leaflet-tile {
 
     .banner {
       padding: 1rem;
-      border-radius: 2px;
+      border-radius: $border-radius-base;
       color: #fff;
       flex: 1;
       text-align: center;
@@ -491,7 +491,7 @@ rf-project-editor .leaflet-tile {
   align-items: center;
   justify-content: center;
   border: 1px solid rgba($text-base, .5);
-  border-radius: 2px;
+  border-radius: $border-radius-base;
   color: rgba($text-base, .5);
   & i {
     margin: 0;
@@ -752,14 +752,14 @@ calendar .board .day.in-range:not(.other-month):not(.disabled) {
 
 calendar .board .day.range-end:not(.other-month):not(.disabled) {
     background: $brand-primary;
-    border-top-right-radius: 2px;
-    border-bottom-right-radius: 2px;
+    border-top-right-radius: $border-radius-base;
+    border-bottom-right-radius: $border-radius-base;
     color: #fff;
 }
 calendar .board .day.range-start:not(.other-month):not(.disabled) {
     background: $brand-primary;
-    border-top-left-radius: 2px;
-    border-bottom-left-radius: 2px;
+    border-top-left-radius: $border-radius-base;
+    border-bottom-left-radius: $border-radius-base;
     color: #fff;
 }
 
@@ -830,7 +830,7 @@ div.lab-workspace.is-dragging svg {
     background: $shade-normal;
     border: 1px solid $shade-dark !important;
     color: $shade-light;
-    border-radius: 2px !important;
+    border-radius: $border-radius-base !important;
     vertical-align: middle;
     line-height: 1.1;
     height: 25px;
@@ -842,7 +842,7 @@ div.lab-workspace.is-dragging svg {
       background: $shade-normal;
       border: 1px solid $shade-dark !important;
       color: #fff;
-      border-radius: 2px !important;
+      border-radius: $border-radius-base !important;
       vertical-align: middle;
       line-height: 1.1;
       height: 25px;
@@ -1359,7 +1359,7 @@ table.upload-info {
     border-color: $brand-primary $brand-primary transparent $brand-primary;
     color: $brand-primary;
     background-color: transparent;
-    border-radius: 2px 2px 0 0;
+    border-radius: $border-radius-base $border-radius-base 0 0;
 
     &:hover, &.hover,
     &:active, &.active, {
@@ -1376,7 +1376,7 @@ table.upload-info {
     padding: 1em;
     &.tab-description {
       margin-bottom: 1em;
-      border-radius: 0 0 2px 2px;
+      border-radius: 0 0 $border-radius-base $border-radius-base;
       border-color: $brand-primary $brand-primary $brand-primary $brand-primary;
     }
   }

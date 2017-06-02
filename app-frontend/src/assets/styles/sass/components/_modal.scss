@@ -52,7 +52,7 @@
 .modal-content {
   position: relative;
   background-color: lighten($off-white, 2%);
-  border-radius: 2px;
+  border-radisu: $border-radius-base;
   background-clip: padding-box;
   outline: 0;
   display: flex;
