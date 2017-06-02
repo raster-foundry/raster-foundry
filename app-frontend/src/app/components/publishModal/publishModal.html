@@ -44,22 +44,19 @@
       </div>
 
       <div class="form-group">
-        <label>Tile URL Template</label>
-        <div class="form-group">
-          <div class="btn-group inline">
-            <button class="btn btn-primary"
-                    ng-repeat="mapping in $ctrl.urlMappings"
-                    ng-click="$ctrl.onUrlMappingChange(mapping)"
-                    ng-class="{'active': mapping.active}">
-              {{mapping.label}}
-            </button>
-          </div>
-        </div>
+        <label for="tile-link">ZXY Tile Layer URL</label>
         <div class="form-group all-in-one">
-          <label for="tile-link" class="sr-only">URI Link</label>
           <input id="tile-link" type="text" class="form-control"
-                  value="{{$ctrl.mappedTileUrl}}" readonly>
-          <button clipboard text="$ctrl.mappedTileUrl" class="btn btn-link">
+                  value="{{$ctrl.tileLayerUrls.standard}}" readonly>
+          <button clipboard text="$ctrl.tileLayerUrls.standard" class="btn btn-link">
+            Copy
+          </button>
+        </div>
+        <label for="tile-link">ArcGIS Tile Layer URL</label>
+        <div class="form-group all-in-one">
+          <input id="tile-link" type="text" class="form-control"
+                  value="{{$ctrl.tileLayerUrls.arcGIS}}" readonly>
+          <button clipboard text="$ctrl.tileLayerUrls.arcGIS" class="btn btn-link">
             Copy
           </button>
         </div>
