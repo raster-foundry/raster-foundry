@@ -53,7 +53,7 @@ class TileInfoSpec extends FunSpec with Matchers with BatchSpec {
         |      ]
         |    ]
         |  }
-      """.stripMargin.parseGeoJson[Polygon].reproject(CRS.fromName("EPSG:32601"), CRS.fromName("EPSG:4326"))
+      """.stripMargin.parseGeoJson[Polygon].reproject(CRS.fromName("EPSG:32601"), CRS.fromName("EPSG:3857"))
 
     val tileDataGeometry =
       """
@@ -166,7 +166,7 @@ class TileInfoSpec extends FunSpec with Matchers with BatchSpec {
         |      ]
         |    ]
         |  }
-      """.stripMargin.parseGeoJson[Polygon].reproject(CRS.fromName("EPSG:32601"), CRS.fromName("EPSG:4326"))
+      """.stripMargin.parseGeoJson[Polygon].reproject(CRS.fromName("EPSG:32601"), CRS.fromName("EPSG:3857"))
 
     val sceneMetadata =
       Map(

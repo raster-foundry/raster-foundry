@@ -29,12 +29,12 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
   /** Get S3 client per each call */
   def s3Client = S3(region = landsat8Config.awsRegion)
 
-  protected def scenesFromCsv(srcProj: CRS = CRS.fromName("EPSG:4326"), targetProj: CRS = CRS.fromName("EPSG:3857")): Future[ListBuffer[Scene.Create]] = {
+  protected def scenesFromCsv(user: User, srcProj: CRS = CRS.fromName("EPSG:4326"), targetProj: CRS = CRS.fromName("EPSG:3857")): Future[ListBuffer[Scene]] = {
     val reader = CSV.parse(landsat8Config.usgsLandsatUrl)
     val iterator = reader.iterator()
 
     val endDate = startDate + 1.day
-    val buffer = ListBuffer[Future[Option[Scene.Create]]]()
+    val buffer = ListBuffer[Future[Option[Scene]]]()
     val (_, indexToId) = CSV.getBiFunctions(iterator.next())
 
     var counter = 0
@@ -50,7 +50,7 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
 
         row.get("acquisitionDate") foreach { dateStr =>
           val date = LocalDate.parse(dateStr)
-          if (startDate <= date && endDate > date) buffer += csvRowToScene(row, srcProj, targetProj)
+          if (startDate <= date && endDate > date) buffer += csvRowToScene(row, user, srcProj, targetProj)
           else if (date < startDate) counter += 1
         }
 
@@ -106,7 +106,7 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
 
 
   @SuppressWarnings(Array("TraversableHead"))
-  protected def csvRowToScene(row: Map[String, String], srcProj: CRS = CRS.fromName("EPSG:4326"), targetProj: CRS = CRS.fromName("EPSG:3857")): Future[Option[Scene.Create]] = Future {
+  protected def csvRowToScene(row: Map[String, String], user: User, srcProj: CRS = CRS.fromName("EPSG:4326"), targetProj: CRS = CRS.fromName("EPSG:3857")): Future[Option[Scene]] = Future {
     val sceneId = UUID.randomUUID()
     val landsatId = row("sceneID")
 
@@ -141,7 +141,7 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
         "AWS and USGS are not always in sync. Try again in several hours.\n" +
           s"If you believe this message is in error, check $s3Url manually."
       )
-      None
+      Future(None)
     } else {
       val acquisitionDate =
         row.get("acquisitionDate").map { dt =>
@@ -185,7 +185,7 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
           )
         }
 
-      Some(Scene.Create(
+      val scene = Scene.Create(
         id = Some(sceneId),
         organizationId = landsat8Config.organizationUUID,
         ingestSizeBytes = 0,
@@ -212,46 +212,39 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
           boundaryStatus = JobStatus.Success,
           ingestStatus = IngestStatus.NotIngested
         )
-      ))
+      )
 
+      val future =
+        Scenes.insertScene(scene, user).map(_.toScene).recover {
+          case e: PSQLException => {
+            logger.error(s"An error occurred during scene $sceneId import. Skipping...")
+            logger.error(e.stackTraceString)
+            sendError(e)
+            scene.toScene(user)
+          }
+        }
+
+      future onComplete {
+        case Success(s) => logger.info(s"Finished importing scene ${s.id}.")
+        case Failure(e) => {
+          logger.error(s"An error occurred during scene $sceneId import.")
+          logger.error(e.stackTraceString)
+          sendError(e)
+        }
+      }
+
+      future.map(Some(_))
     }
-  }
+  }.flatMap(identity)
 
   def run: Unit = {
     logger.info("Importing scenes...")
     Users.getUserById(airflowUser).flatMap { userOpt =>
-      val user = userOpt.getOrElse {
+      scenesFromCsv(userOpt.getOrElse {
         val e = new Exception(s"User $airflowUser doesn't exist.")
         sendError(e)
         throw e
-      }
-
-      scenesFromCsv()
-        .flatMap { scenes =>
-          Future.sequence(scenes.map { scene =>
-            val id = scene.id.map(_.toString).getOrElse("")
-            logger.info(s"Importing scene $id...")
-            val future =
-              Scenes.insertScene(scene, user).map(_.toScene).recover {
-                case e: PSQLException => {
-                  logger.error(s"An error occurred during scene $id import. Skipping...")
-                  logger.error(e.stackTraceString)
-                  sendError(e)
-                  scene.toScene(user)
-                }
-              }
-
-            future onComplete {
-              case Success(s) => logger.info(s"Finished importing scene ${s.id}.")
-              case Failure(e) => {
-                logger.error(s"An error occurred during scene $id import.")
-                logger.error(e.stackTraceString)
-                sendError(e)
-              }
-            }
-            future
-          })
-        }
+      })
     } onComplete {
       case Success(scenes) => {
         if(scenes.nonEmpty) logger.info(s"Successfully imported scenes: ${scenes.map(_.id.toString).mkString(", ")}.")
