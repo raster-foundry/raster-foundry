@@ -1,5 +1,6 @@
 """Creates a data/tile footprint"""
 import logging
+import os
 import subprocess
 import tempfile
 
@@ -83,7 +84,7 @@ def transform_polygon_coordinates(feature, src_crs, target_crs):
     Returns:
         dict
     """
-    logger.info('Transforming footpring coordinates')
+    logger.info('Transforming footprint coordinates')
     copied_feature = feature.copy()
     coords_array = copied_feature['coordinates']
     for index, coords in enumerate(copied_feature['coordinates']):
@@ -91,6 +92,29 @@ def transform_polygon_coordinates(feature, src_crs, target_crs):
         coords_array[index] = reproj_coords
     feature['coordinates'] = [coords_array]
     return feature
+
+
+def add_crs_metadata(mask_tif_path):
+    """Adds CRS to tifs that lack it
+
+    Args:
+        mask_tif_path (str): path to tif to extract geojson from
+
+    Returns:
+        str: path to transformed output
+    """
+
+    base_path = ''.join(mask_tif_path.split('.')[:-1])
+    warped_path = base_path + '-warped.tif'
+    warp_cmd = ['gdalwarp', '-t_srs',  'epsg:4326', '-of', 'vrt',
+                mask_tif_path, 'warped.vrt']
+    translate_cmd = ['gdal_translate', '-co', 'compress=LZW', 'warped.vrt', warped_path]
+    try:
+        subprocess.check_call(warp_cmd)
+        subprocess.check_call(translate_cmd)
+    finally:
+        os.remove('warped.vrt')
+    return warped_path
 
 
 def extract_polygon(mask_tif_path):
@@ -105,8 +129,16 @@ def extract_polygon(mask_tif_path):
 
     with rasterio.open(mask_tif_path, 'r') as src:
         raster = src.read(1)
-        src_crs = Proj(init=src.crs.get('init'))
-        src_affine = src.affine
+        start_crs = src.crs.get('init')
+        if start_crs is None:
+            logger.info('No SRID available in tiff; adding one.')
+            new_path = add_crs_metadata(mask_tif_path)
+            with rasterio.open(new_path, 'r') as src2:
+                src_crs = Proj(init=src2.crs.get('init'))
+                src_affine = src2.affine
+        else:
+            src_crs = Proj(init=src.crs.get('init'))
+            src_affine = src.affine
 
     mask = np.ma.masked_equal(raster, 0)
     logger.info('Extracting shapes from footprint masks')
