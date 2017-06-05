@@ -242,7 +242,7 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
   private def ingestLocs(
     sources: EvalParams,
     user: User
-  )(implicit database: DB): OptionT[Future, (Map[UUID, String], Map[UUID, List[String]])] = {
+  )(implicit database: DB): OptionT[Future, (Map[UUID, String], Map[UUID, List[(UUID, String)]])] = {
 
     val (scenes, projects): (Stream[SceneRaster], Stream[ProjectRaster]) =
       sources.sources.toStream
@@ -258,7 +258,7 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
       )
     }).sequence.map(_.toMap)
 
-    val projectsF: OptionT[Future, Map[UUID, List[String]]] =
+    val projectsF: OptionT[Future, Map[UUID, List[(UUID, String)]]] =
       projects.map({ case ProjectRaster(id, _) =>
         OptionT(ScenesToProjects.allSceneIngestLocs(id)).map((id, _))
       }).sequence.map(_.toMap)

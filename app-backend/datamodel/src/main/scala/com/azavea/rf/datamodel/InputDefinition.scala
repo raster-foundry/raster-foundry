@@ -51,7 +51,8 @@ case class SimpleInput(layers: Array[ExportLayerDefinition], mask: Option[MultiP
 case class ASTInput(
   ast: MapAlgebraAST,
   params: EvalParams,
+  /* Ingest locations of "singleton" scenes that appear in the EvalParams */
   ingestLocs: Map[UUID, String],
   /* Ingest locations (and implicit ordering) of each scene in each project */
-  projectScenes: Map[UUID, List[String]]
+  projectScenes: Map[UUID, List[(UUID, String)]]
 )

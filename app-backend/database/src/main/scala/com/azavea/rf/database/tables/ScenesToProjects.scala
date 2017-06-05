@@ -181,7 +181,7 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
     * If even one of the Scenes doesn't have an `ingestLocation`, we fail
     * the whole operation.
     */
-  def allSceneIngestLocs(projectId: UUID)(implicit database: DB): Future[Option[List[String]]] = {
+  def allSceneIngestLocs(projectId: UUID)(implicit database: DB): Future[Option[List[(UUID, String)]]] = {
     val sceneIds: Future[Seq[UUID]] = database.db.run {
       ScenesToProjects
         .filter(_.projectId === projectId)
@@ -190,8 +190,8 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
         .result
     }
 
-    val scenes: Seq[UUID] => Future[Option[List[String]]] = { ids: Seq[UUID] =>
-      database.db.run(Scenes.filter(_.id inSet ids).map(_.ingestLocation).result)
+    val scenes: Seq[UUID] => Future[Option[List[(UUID, String)]]] = { ids: Seq[UUID] =>
+      database.db.run(Scenes.filter(_.id inSet ids).map(s => s.ingestLocation.map((s.id, _))).result)
         .map(_.toList.sequence)
     }
 
