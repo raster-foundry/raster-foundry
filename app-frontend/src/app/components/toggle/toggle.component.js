@@ -4,7 +4,7 @@ const rfToggle = {
     controller: 'ToggleController',
     transclude: true,
     bindings: {
-        model: '=',
+        value: '<',
         onChange: '&',
         className: '@'
     },

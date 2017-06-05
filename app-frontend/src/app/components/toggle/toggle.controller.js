@@ -3,18 +3,16 @@ export default class ToggleController {
         'ngInject';
     }
     $onInit() {
-        if (!this.model) {
-            this.model = false;
-        }
+        this.currentValue = this.value || false;
     }
     $onChanges(changes) {
-        if ('model' in changes && changes.dataModel.currentValue) {
-            this.model = changes.dataModel.currentValue;
+        if ('value' in changes) {
+            this.currentValue = changes.value.currentValue;
         }
     }
     toggle($event) {
         $event.stopPropagation();
         $event.preventDefault();
-        this.onChange({value: !this.model});
+        this.onChange({value: !this.currentValue});
     }
 }
