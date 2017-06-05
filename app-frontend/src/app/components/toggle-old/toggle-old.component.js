@@ -1,10 +1,10 @@
-import toggleTpl from './toggle.html';
+import toggleTpl from './toggle-old.html';
 const rfToggle = {
     templateUrl: toggleTpl,
-    controller: 'ToggleController',
+    controller: 'ToggleOldController',
     transclude: true,
     bindings: {
-        value: '<',
+        model: '=',
         onChange: '&',
         className: '@'
     },

@@ -21,9 +21,9 @@
     </div>
   </div>
   <div class="list-group-right">
-    <rf-toggle ng-if="$ctrl.isSelectable && !$ctrl.isDisabled" model="$ctrl.selectedStatus" on-change="$ctrl.toggleSelected($event)">
+    <rf-toggle-old ng-if="$ctrl.isSelectable && !$ctrl.isDisabled" model="$ctrl.selectedStatus" on-change="$ctrl.toggleSelected($event)">
       <i class="icon-check"></i>
-    </rf-toggle>
+    </rf-toggle-old>
     <button class="btn btn-square"
             ng-click="$ctrl.onAction($event)"
             ng-if="$ctrl.actionIcon">

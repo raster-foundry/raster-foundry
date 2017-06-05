@@ -35,10 +35,10 @@
         <!-- Sigmoidal correction-->
         <div class="filter-group">
           <div class="filter-group-header">
-            <rf-toggle data-model="$ctrl.correction.sigmoidalContrast.enabled"
+            <rf-toggle-old data-model="$ctrl.correction.sigmoidalContrast.enabled"
                        on-change="$ctrl.storeToggle(value, 'sigmoidalContrast')">
               <i class="icon-check"></i>
-            </rf-toggle>
+            </rf-toggle-old>
             <h5>Sigmoidal Contrast</h5>
             <i class="icon-info"
                tooltips
@@ -87,10 +87,10 @@
         <!-- Gamma correction-->
         <div class="filter-group">
           <div class="filter-group-header">
-            <rf-toggle data-model="$ctrl.correction.gamma.enabled"
+            <rf-toggle-old data-model="$ctrl.correction.gamma.enabled"
                        on-change="$ctrl.storeToggle(value, 'gamma')">
               <i class="icon-check"></i>
-            </rf-toggle>
+            </rf-toggle-old>
             <h5>Color Balance</h5>
             <i class="icon-info"
                tooltips
@@ -159,7 +159,7 @@
             </div>
             <div class="filter-group-option">
               <label class="color-white">Link Sliders</label>
-              <rf-toggle data-model="$ctrl.gammaLinkToggle" on-change="$ctrl.gammaLinkToggled()"><i class="icon-check"></i></rf-toggle>
+              <rf-toggle-old data-model="$ctrl.gammaLinkToggle" on-change="$ctrl.gammaLinkToggled()"><i class="icon-check"></i></rf-toggle-old>
             </div>
           </div>
         </div>
@@ -167,10 +167,10 @@
         <!-- Saturation correction -->
         <div class="filter-group">
           <div class="filter-group-header">
-            <rf-toggle data-model="$ctrl.correction.saturation.enabled"
+            <rf-toggle-old data-model="$ctrl.correction.saturation.enabled"
                        on-change="$ctrl.storeToggle(value, 'saturation')">
               <i class="icon-check"></i>
-            </rf-toggle>
+            </rf-toggle-old>
             <h5 class="h5">Saturation</h5>
           </div>
           <div class="filter-group-body" ng-show="$ctrl.correction.saturation.enabled">
