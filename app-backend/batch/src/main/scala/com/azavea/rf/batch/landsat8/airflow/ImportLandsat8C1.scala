@@ -82,8 +82,8 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
 
   protected def createThumbnails(sceneId: UUID, productId: String): List[Thumbnail.Identified] = {
     val path = getLandsatUrl(productId)
-    val smallUrl = s"$path/${productId}_thumb_small.jpg}"
-    val largeUrl = s"$path/${productId}_thumb_large.jpg}"
+    val smallUrl = s"$path/${productId}_thumb_small.jpg"
+    val largeUrl = s"$path/${productId}_thumb_large.jpg"
 
     Thumbnail.Identified(
       id = None,
