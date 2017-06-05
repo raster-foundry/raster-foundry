@@ -67,7 +67,7 @@ div.image-placeholder {
   padding: 4px 7px;
   opacity: .9;
   transition: .1s ease-in-out opacity;
-  font-family: 'Open Sans', sans-serif;
+  font-family: $font-base;
   max-width: 400px;
 
   &:hover {

@@ -105,6 +105,19 @@ To run tests you can do one of the following (in order of speed):
  - Run `yarn run test` outside the VM (or `yarn run test-watch`)
  - Run `./scripts/test` inside the VM (will also run additional project tests)
 
+#### Frontend Theming
+
+Frontend theming should only be used if you intend on forking and white labeling the application. Theming of the frontend application can be done easily with a few tweaks to the `scss`. To get theming working correctly, follow these instructions: 
+
+ - Edit `app-frontend/src/assets/styles/sass/app.scss` and uncomment the two blocks of code which reference theme files. This will turn the theme files _on_.
+ - All theme overrides will then be written inside of `app-frontend/src/assets/styles/sass/theme`
+     - app-wide variables for changing fonts, colors, etc. are located in `app-frontend/src/assets/styles/sass/theme/settings`.
+     - `_core.scss` should contain the bulk of style overrides which `/settings/` does **not** cover.
+     - **Tip:** You can mimic the main application `scss` structure inside of `/theme/` and `@import` the files into `_core.scss`
+ - WIP: we are still working out the kinks for icon fonts and branding assets.
+
+Due to active development to Raster Foundry, some aspects of theming might break and will need active maintenance. 
+
 ## Ports
 
 The Vagrant configuration maps the following host ports to services running in the virtual machines. Ports can be overridden for individual developers using environment variables

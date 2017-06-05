@@ -8,7 +8,7 @@
 @include heading-tags {
   margin-bottom: 1rem;
   line-height: 1.1;
-  font-family: 'Titillium Web', sans-serif;
+  font-family: $font-header;
   color: $shade-dark;
 }
 
@@ -59,11 +59,11 @@ p, .p {
 }
 
 .font-base {
-  font-family: 'Open Sans', sans-serif;
+  font-family: $font-base;
 }
 
 .font-alt {
-  font-family: 'Titillium Web', sans-serif;
+  font-family: $font-header;
 }
 
 .text-uppercase {
