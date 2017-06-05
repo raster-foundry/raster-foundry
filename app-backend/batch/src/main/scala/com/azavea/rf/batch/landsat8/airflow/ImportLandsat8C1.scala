@@ -28,7 +28,7 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
   /** Get S3 client per each call */
   def s3Client = S3(region = landsat8Config.awsRegion)
 
-  protected def scenesFromCsv(user: User, srcProj: CRS = CRS.fromName("EPSG:4326"), targetProj: CRS = CRS.fromName("EPSG:3857")): Future[ListBuffer[Scene]] = {
+  protected def scenesFromCsv(user: User, srcProj: CRS = CRS.fromName("EPSG:4326"), targetProj: CRS = CRS.fromName("EPSG:3857")): Future[ListBuffer[Option[Scene]]] = {
     val reader = CSV.parse(landsat8Config.usgsLandsatUrlC1)
     val iterator = reader.iterator()
 
@@ -57,7 +57,7 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
       }
     }
 
-    Future.sequence(buffer).map(_.flatten)
+    Future.sequence(buffer)
   }
 
   protected def getLandsatPath(productId: String): String = {
@@ -109,148 +109,158 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
   protected def csvRowToScene(row: Map[String, String], user: User, srcProj: CRS = CRS.fromName("EPSG:4326"), targetProj: CRS = CRS.fromName("EPSG:3857")): Future[Option[Scene]] = Future {
     val sceneId = UUID.randomUUID()
     val productId = row("LANDSAT_PRODUCT_ID")
-
-    val ll = row("lowerLeftCornerLongitude").toDouble -> row("lowerLeftCornerLatitude").toDouble
-    val lr = row("lowerRightCornerLongitude").toDouble -> row("lowerRightCornerLatitude").toDouble
-    val ul = row("upperLeftCornerLongitude").toDouble -> row("upperLeftCornerLatitude").toDouble
-    val ur = row("upperRightCornerLongitude").toDouble -> row("upperRightCornerLatitude").toDouble
-
-    val srcCoords  = ll :: ul :: ur :: lr :: Nil
-    val srcPolygon = Polygon(Line(srcCoords :+ srcCoords.head))
-
-    val sortedByX = srcCoords.sortBy(_.x)
-    val sortedByY = srcCoords.sortBy(_.y)
-
-    val extent = Extent(
-      xmin = sortedByX.head.x,
-      ymin = sortedByY.head.y,
-      xmax = sortedByX.last.x,
-      ymax = sortedByY.last.y
-    )
-
-    val (transformedCoords, transformedExtent) = {
-      if (srcProj.equals(targetProj)) srcPolygon -> extent
-      else srcPolygon.reproject(srcProj, targetProj) -> extent.reproject(srcProj, targetProj)
-    }
-
     val landsatPath = getLandsatPath(productId)
-    val s3Url = s"${landsat8Config.awsLandsatBaseC1}${landsatPath}/index.html"
+    val sceneName = s"L8 $landsatPath"
 
-    if (!isUriExists(s3Url)) {
-      logger.warn(
-        "AWS and USGS are not always in sync. Try again in several hours.\n" +
-          s"If you believe this message is in error, check $s3Url manually."
-      )
-      Future(None)
-    } else {
-      val acquisitionDate =
-        row.get("acquisitionDate").map { dt =>
-          new java.sql.Timestamp(
-            LocalDate
-              .parse(dt)
-              .atStartOfDay(ZoneOffset.UTC)
-              .toInstant
-              .getEpochSecond * 1000l
-          )
-        }
+    Scenes.sceneNameExistsForUser(sceneName, user).flatMap { exists =>
+      if (exists) Future(None)
+      else {
+        val ll = row("lowerLeftCornerLongitude").toDouble -> row("lowerLeftCornerLatitude").toDouble
+        val lr = row("lowerRightCornerLongitude").toDouble -> row("lowerRightCornerLatitude").toDouble
+        val ul = row("upperLeftCornerLongitude").toDouble -> row("upperLeftCornerLatitude").toDouble
+        val ur = row("upperRightCornerLongitude").toDouble -> row("upperRightCornerLatitude").toDouble
 
-      val cloudCover = row.get("cloudCoverFull").map(_.toFloat)
-      val sunElevation = row.get("sunElevation").map(_.toFloat)
-      val sunAzimuth = row.get("sunAzimuth").map(_.toFloat)
-      val bands15m = landsat8Config.bandLookup.`15m`
-      val bands30m = landsat8Config.bandLookup.`30m`
-      val tags = List("Landsat 8", "GeoTIFF")
-      val sceneMetadata = row.filter { case (_, v) => v.nonEmpty }
+        val srcCoords  = ll :: ul :: ur :: lr :: Nil
+        val srcPolygon = Polygon(Line(srcCoords :+ srcCoords.head))
 
-      val images =
-        (bands15m.map { band =>
-          val b = band.name.split(" - ").last
-          (15f, s"${productId}_B${b}.TIF", band)
-        } ++ bands30m.map { band =>
-          val b = band.name.split(" - ").last
-          (30f, s"${productId}_B${b}.TIF", band)
-        }).map { case (resolution, tiffPath, band) =>
-          Image.Banded(
-            organizationId = landsat8Config.organizationUUID,
-            rawDataBytes = sizeFromPath(tiffPath, productId),
-            visibility = Visibility.Public,
-            filename = tiffPath,
-            sourceUri = s"${getLandsatUrl(productId)}/${tiffPath}",
-            owner = Some(airflowUser),
-            scene = sceneId,
-            imageMetadata = Json.Null,
-            resolutionMeters = resolution,
-            metadataFiles = List(),
-            bands = List(band)
-          )
-        }
+        val sortedByX = srcCoords.sortBy(_.x)
+        val sortedByY = srcCoords.sortBy(_.y)
 
-      val scene = Scene.Create(
-        id = Some(sceneId),
-        organizationId = landsat8Config.organizationUUID,
-        ingestSizeBytes = 0,
-        visibility = Visibility.Public,
-        tags = tags,
-        datasource = landsat8Config.datasourceUUID,
-        sceneMetadata = sceneMetadata.asJson,
-        name = s"L8 $landsatPath",
-        owner = Some(airflowUser),
-        tileFootprint = targetProj.epsgCode.map(Projected(MultiPolygon(transformedExtent.toPolygon()), _)),
-        dataFootprint = targetProj.epsgCode.map(Projected(MultiPolygon(transformedCoords), _)),
-        metadataFiles = List(s"${landsat8Config.awsLandsatBaseC1}${landsatPath}/${productId}_MTL.txt"),
-        images = images,
-        thumbnails = createThumbnails(sceneId, productId),
-        ingestLocation = None,
-        filterFields = SceneFilterFields(
-          cloudCover = cloudCover,
-          sunAzimuth = sunAzimuth,
-          sunElevation = sunElevation,
-          acquisitionDate = acquisitionDate
-        ),
-        statusFields = SceneStatusFields(
-          thumbnailStatus = JobStatus.Success,
-          boundaryStatus = JobStatus.Success,
-          ingestStatus = IngestStatus.NotIngested
+        val extent = Extent(
+          xmin = sortedByX.head.x,
+          ymin = sortedByY.head.y,
+          xmax = sortedByX.last.x,
+          ymax = sortedByY.last.y
         )
-      )
 
-      val future =
-        Scenes.insertScene(scene, user).map(_.toScene).recover {
-          case e: PSQLException => {
-            logger.error(s"An error occurred during scene $sceneId import. Skipping...")
-            logger.error(e.stackTraceString)
-            sendError(e)
-            scene.toScene(user)
-          }
+        val (transformedCoords, transformedExtent) = {
+          if (srcProj.equals(targetProj)) srcPolygon -> extent
+          else srcPolygon.reproject(srcProj, targetProj) -> extent.reproject(srcProj, targetProj)
         }
 
-      future onComplete {
-        case Success(s) => logger.info(s"Finished importing scene ${s.id}.")
-        case Failure(e) => {
-          logger.error(s"An error occurred during scene $sceneId import.")
-          logger.error(e.stackTraceString)
-          sendError(e)
+        val s3Url = s"${landsat8Config.awsLandsatBaseC1}${landsatPath}/index.html"
+
+        if (!isUriExists(s3Url)) {
+          logger.warn(
+            "AWS and USGS are not always in sync. Try again in several hours.\n" +
+              s"If you believe this message is in error, check $s3Url manually."
+          )
+          Future(None)
+        } else {
+          val acquisitionDate =
+            row.get("acquisitionDate").map { dt =>
+              new java.sql.Timestamp(
+                LocalDate
+                  .parse(dt)
+                  .atStartOfDay(ZoneOffset.UTC)
+                  .toInstant
+                  .getEpochSecond * 1000l
+              )
+            }
+
+          val cloudCover = row.get("cloudCoverFull").map(_.toFloat)
+          val sunElevation = row.get("sunElevation").map(_.toFloat)
+          val sunAzimuth = row.get("sunAzimuth").map(_.toFloat)
+          val bands15m = landsat8Config.bandLookup.`15m`
+          val bands30m = landsat8Config.bandLookup.`30m`
+          val tags = List("Landsat 8", "GeoTIFF")
+          val sceneMetadata = row.filter { case (_, v) => v.nonEmpty }
+
+          val images = (
+            bands15m.map { band =>
+              val b = band.name.split(" - ").last
+              (15f, s"${productId}_B${b}.TIF", band)
+            } ++ bands30m.map { band =>
+              val b = band.name.split(" - ").last
+              (30f, s"${productId}_B${b}.TIF", band)
+            }
+            ).map {
+            case (resolution, tiffPath, band) =>
+              Image.Banded(
+                organizationId = landsat8Config.organizationUUID,
+                rawDataBytes = sizeFromPath(tiffPath, productId),
+                visibility = Visibility.Public,
+                filename = tiffPath,
+                sourceUri = s"${getLandsatUrl(productId)}/${tiffPath}",
+                owner = Some(airflowUser),
+                scene = sceneId,
+                imageMetadata = Json.Null,
+                resolutionMeters = resolution,
+                metadataFiles = List(),
+                bands = List(band)
+              )
+          }
+
+          val scene = Scene.Create(
+            id = Some(sceneId),
+            organizationId = landsat8Config.organizationUUID,
+            ingestSizeBytes = 0,
+            visibility = Visibility.Public,
+            tags = tags,
+            datasource = landsat8Config.datasourceUUID,
+            sceneMetadata = sceneMetadata.asJson,
+            name = landsatPath,
+            owner = Some(airflowUser),
+            tileFootprint = targetProj.epsgCode.map(Projected(MultiPolygon(transformedExtent.toPolygon()), _)),
+            dataFootprint = targetProj.epsgCode.map(Projected(MultiPolygon(transformedCoords), _)),
+            metadataFiles = List(s"${landsat8Config.awsLandsatBaseC1}${landsatPath}/${productId}_MTL.txt"),
+            images = images,
+            thumbnails = createThumbnails(sceneId, productId),
+            ingestLocation = None,
+            filterFields = SceneFilterFields(
+              cloudCover = cloudCover,
+              sunAzimuth = sunAzimuth,
+              sunElevation = sunElevation,
+              acquisitionDate = acquisitionDate
+            ),
+            statusFields = SceneStatusFields(
+              thumbnailStatus = JobStatus.Success,
+              boundaryStatus = JobStatus.Success,
+              ingestStatus = IngestStatus.NotIngested
+            )
+          )
+          val future =
+            Scenes.insertScene(scene, user).map(_.toScene).recover {
+              case e: PSQLException => {
+                logger.error(s"An error occurred during scene ${scene.id} import. Skipping...")
+                logger.error(e.stackTraceString)
+                sendError(e)
+                scene.toScene(user)
+              }
+            }
+
+          future onComplete {
+            case Success(s) => logger.info(s"Finished importing scene ${s.id}.")
+            case Failure(e) => {
+              logger.error(s"An error occurred during scene ${scene.id} import.")
+              logger.error(e.stackTraceString)
+              sendError(e)
+            }
+          }
+          future.map(Some(_))
         }
       }
-
-      future.map(Some(_))
     }
   }.flatMap(identity)
 
   def run: Unit = {
     logger.info("Importing scenes...")
     Users.getUserById(airflowUser).flatMap { userOpt =>
-      scenesFromCsv(userOpt.getOrElse {
-        val e = new Exception(s"User $airflowUser doesn't exist.")
-        sendError(e)
-        throw e
-      })
+      scenesFromCsv(
+        userOpt.getOrElse {
+          val e = new Exception(s"User $airflowUser doesn't exist.")
+          sendError(e)
+          throw e
+        }
+      )
     } onComplete {
       case Success(scenes) => {
-        if(scenes.nonEmpty) logger.info(s"Successfully imported scenes: ${scenes.map(_.id.toString).mkString(", ")}.")
+        val unskippedScenes = scenes.flatten
+        if(unskippedScenes.nonEmpty) logger.info(s"Successfully imported scenes: ${unskippedScenes.map(_.id.toString).mkString(", ")}.")
+        else if (scenes.nonEmpty) logger.info("All scenes were already imported")
         else {
           val e = new Exception(s"No scenes available for the ${startDate}")
-          e.printStackTrace()
+          logger.error(e.stackTraceString)
           sendError(e)
           stop
           sys.exit(1)
@@ -258,7 +268,7 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
         stop
       }
       case Failure(e) => {
-        e.printStackTrace()
+        logger.error(e.stackTraceString)
         sendError(e)
         stop
         sys.exit(1)
