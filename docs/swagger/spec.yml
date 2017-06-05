@@ -207,6 +207,26 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  /users/{uuid}/dropbox-setup/:
+    x-resource: Users
+    post:
+      summary: Store a dropbox access token for a user from an authorization code
+      tags:
+        - Users
+      parameters:
+          - $ref: '#/parameters/uuid'
+          - name: authorizationCode
+            in: body
+            required: true
+            schema:
+              type: string
+      responses:
+        200:
+          description: Dropbox access token successfully fetched
+        404:
+          description: User not found
+          schema:
+            $ref: '#/definitions/Error'
   /organizations/:
     x-resource: Organizations
     get:
@@ -1670,7 +1690,6 @@ paths:
             $ref: '#/definitions/Error'
 
 parameters:
-
   orderingBase:
     name: ordering
     in: query
