@@ -21,11 +21,11 @@ import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.tables._
 import com.azavea.rf.datamodel._
 
-case class CreateExportDef(exportId: UUID)(implicit val database: DB) extends Job {
+case class CreateExportDef(exportId: UUID, region: Option[String] = None)(implicit val database: DB) extends Job {
   val name = CreateExportDef.name
 
   /** Get S3 client per each call */
-  def s3Client = S3()
+  def s3Client = S3(region = region)
     
   protected def writeExportDefToS3(exportDef: ExportDefinition) = {
     logger.info(s"Uploading export definition ${exportDef.id.toString} to S3 at ${exportDefConfig.bucketName}")
@@ -72,7 +72,7 @@ case class CreateExportDef(exportId: UUID)(implicit val database: DB) extends Jo
     jobSteps.setJobFlowId(getClusterId())
     jobSteps.setSteps(List(steps).asJava)
 
-    val emrClient = AmazonElasticMapReduceClientBuilder.standard().withCredentials(new DefaultAWSCredentialsProviderChain()).build()
+    val emrClient = AmazonElasticMapReduceClientBuilder.standard().withCredentials(s3Client.credentialsProviderChain).build()
     emrClient.addJobFlowSteps(jobSteps)
   }
 
@@ -101,16 +101,17 @@ case class CreateExportDef(exportId: UUID)(implicit val database: DB) extends Jo
             updateExportStatus(export, ExportStatus.Exported)
           })
           .recover {
-            case _ => {
+            case e: Throwable => {
+              logger.error(s"An error occurred during export ${export.id}. Skipping...")
+              logger.error(e.stackTraceString)
+              sendError(e)
               updateExportStatus(export, ExportStatus.Failed)
             }
           }
           .flatMap(result => {
             database.db.run(Exports.updateExport(result, exportId, user))
           }))
-    } yield {
-      emrJobStatus
-    }
+    } yield emrJobStatus
 
     createExportDef.value.onComplete {
       case Success(_) => {
@@ -134,6 +135,7 @@ object CreateExportDef {
     implicit val db = DB.DEFAULT
 
     val job = args.toList match {
+      case List(exportId, region) => CreateExportDef(UUID.fromString(exportId), Some(region))
       case List(exportId) => CreateExportDef(UUID.fromString(exportId))
       case _ =>
         throw new IllegalArgumentException("Argument could not be parsed to UUID")
