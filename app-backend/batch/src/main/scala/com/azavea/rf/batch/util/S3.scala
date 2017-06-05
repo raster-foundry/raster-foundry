@@ -26,7 +26,7 @@ case class S3(
         .standard()
         .withCredentials(credentialsProviderChain)
 
-    region.fold(builder.withRegion(Regions.US_EAST_1))(builder.withRegion).build()
+    region.fold(builder)(builder.withRegion).build()
   }
 
   /** Copy buckets */
