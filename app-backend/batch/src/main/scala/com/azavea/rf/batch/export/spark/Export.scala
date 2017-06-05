@@ -45,10 +45,11 @@ object Export extends SparkJob with Config with LazyLogging {
     ed: ExportDefinition,
     ast: MapAlgebraAST,
     params: EvalParams,
-    ingestLocs: Map[UUID, String],
+    sceneLocs: Map[UUID, String],
+    projLocs: Map[UUID, List[(UUID, String)]],
     conf: HadoopConfiguration
   )(implicit sc: SparkContext): Unit = {
-    interpretRDD(ast, params.sources, ed.input.resolution, ingestLocs) match {
+    interpretRDD(ast, params.sources, ed.input.resolution, sceneLocs, projLocs) match {
       case Invalid(errs) => throw new InterpreterException(errs)
       case Valid(rdd) => {
 
@@ -241,8 +242,10 @@ object Export extends SparkJob with Config with LazyLogging {
         HadoopConfiguration(S3.setCredentials(sc.hadoopConfiguration))
 
       exportDef.input.style match {
-        case Left(SimpleInput(layers, mask)) => multibandExport(exportDef, layers, mask, conf)
-        case Right(ASTInput(ast, params, locs, _)) => astExport(exportDef, ast, params, locs, conf)
+        case Left(SimpleInput(layers, mask)) =>
+          multibandExport(exportDef, layers, mask, conf)
+        case Right(ASTInput(ast, params, sceneLocs, projLocs)) =>
+          astExport(exportDef, ast, params, sceneLocs, projLocs, conf)
       }
     } finally {
       sc.stop
