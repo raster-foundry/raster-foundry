@@ -3,11 +3,11 @@
    This file is used for styles that don't quite
    fit anywhere in the sass directory yet. The idea
    is simple, quick styling to avoid the headache
-   of worrying about scss structure. 
+   of worrying about scss structure.
 
  - Who is this for?
    Project contributors that hate css or worry about
-   the sass structure. Use this file to put in quick 
+   the sass structure. Use this file to put in quick
    styling that a designer can easily find and fix later.
 
  - By the end of project development, this file
@@ -330,11 +330,15 @@ rf-project-editor .leaflet-tile {
 }
 .sidebar-header {
   padding: 1.25rem 2rem;
-  background: $off-white;
   display: flex;
   align-items: center;
   height: 48px;
+  background: $off-white;
   border-bottom: 1px solid $border-color-default;
+  &.dark {
+    background: $shade-dark;
+    border-bottom: $shade-normal;
+  }
   & > * {
     margin-top: 0;
     margin-bottom: 0;
@@ -559,7 +563,7 @@ rf-status-tag {
   left: 0;
 }
 
-/* 
+/*
  * Component: callToActionItem
  */
 
@@ -580,7 +584,7 @@ rf-status-tag {
 
 
 
-/* 
+/*
  * Component: boxSelectItem
  */
 .box-select-row {
@@ -669,7 +673,7 @@ rf-box-select-item{
   }
 }
 
-/* 
+/*
  * Component: createProjectModal
  * Component: importModal
  */
@@ -695,7 +699,7 @@ rf-box-select-item{
 }
 
 
-/* 
+/*
  * component: datePickerModal
  */
 calendar .board .day.selected:not(.other-month):not(.disabled) {
@@ -712,7 +716,7 @@ calendar .board .day.selected:not(.other-month):not(.disabled) {
   }
 }
 
-/* 
+/*
  * Component: dateRangePickerModal
  */
 .datepicker-row {
@@ -763,7 +767,7 @@ calendar .board .day.range-start:not(.other-month):not(.disabled) {
     color: #fff;
 }
 
-/* 
+/*
  * component: diagramContainer
  */
 // @TODO: incorporate dropdown styles into app styles
@@ -852,7 +856,7 @@ div.lab-workspace.is-dragging svg {
 }
 
 
-/* 
+/*
  * component: featureFlagOverrids
  */
 .feature-flags-desc {
@@ -871,7 +875,7 @@ div.lab-workspace.is-dragging svg {
   padding: 0.5em;
 }
 
-/* 
+/*
  * component: mapContainer
  */
 .leaflet-container {
@@ -901,7 +905,7 @@ div.lab-workspace.is-dragging svg {
 }
 
 
-/* 
+/*
  * component: mapContainer - sideBySide
  */
 .leaflet-sbs-range {
@@ -1019,7 +1023,7 @@ div.lab-workspace.is-dragging svg {
 }
 
 
-/* 
+/*
  * component: mosaicMack
  */
 $navbar-height: 8rem;
@@ -1053,7 +1057,7 @@ $secondary-navbar-height: 7rem;
 }
 
 
-/* 
+/*
  * component: publishModal
  */
 .modal-body .centered-text {
@@ -1071,7 +1075,7 @@ $secondary-navbar-height: 7rem;
   display: inline-flex !important;
 }
 
-/* 
+/*
  * component: toggle
  */
 /* The switch - the box around the slider */
@@ -1134,7 +1138,7 @@ input:checked + .slider:before {
 }
 
 
-/* 
+/*
  * page: home
  * page: imports
  * page: imports/datasources
@@ -1164,7 +1168,7 @@ h2.no-margin, h3.no-margin {
 }
 
 
-/* 
+/*
  * page: lab
  */
 nav .btn-group {
@@ -1248,7 +1252,7 @@ rf-diagram-container {
     flex: 1;
 }
 
-/* 
+/*
  * page: lab/run
  */
 .preview-control-bar {
@@ -1298,7 +1302,7 @@ rf-diagram-container {
 }
 
 
-/* 
+/*
  * page: lab/edit
  */
 .run-project-name {
@@ -1308,7 +1312,7 @@ rf-diagram-container {
 }
 
 
-/* 
+/*
  * page: login
  */
 .login {
@@ -1317,7 +1321,7 @@ rf-diagram-container {
 }
 
 
-/* 
+/*
  * page: market/tool
  */
 table.upload-info {
@@ -1336,7 +1340,7 @@ table.upload-info {
 }
 
 
-/* 
+/*
  * page: projects/list
  */
 .proj-control-row {
@@ -1351,7 +1355,7 @@ table.upload-info {
 }
 
 
-/* 
+/*
  * page: settings/token
  */
 .tab-header {
@@ -1383,7 +1387,7 @@ table.upload-info {
 }
 
 
-/* 
+/*
  * page: settings/profile
  */
 .picture-section {
