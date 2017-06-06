@@ -1,6 +1,7 @@
 export default class SelectedScenesModalController {
     constructor($log, $state, projectService) {
         'ngInject';
+        this.$log = $log;
         this.$state = $state;
         this.projectService = projectService;
         this.scenes = [];
