@@ -77,10 +77,10 @@ const App = angular.module(
 
         require('./pages/settings/settings.module.js').name,
         require('./pages/settings/profile/profile.module.js').name,
-        require('./pages/settings/account/account.module.js').name,
         require('./pages/settings/tokens/tokens.module.js').name,
         require('./pages/settings/tokens/api/api.module.js').name,
-        require('./pages/settings/tokens/map/map.module.js').name
+        require('./pages/settings/tokens/map/map.module.js').name,
+        require('./pages/settings/connections/connections.module.js').name
     ]
 );
 

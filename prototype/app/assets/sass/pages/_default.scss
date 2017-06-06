@@ -13,3 +13,10 @@
     margin-left: 1rem;
   }
 }
+
+.page-subtitle {
+  @extend .h3;
+  display: inline;
+  margin-top: 0rem;
+  margin-bottom: 1rem;
+}
