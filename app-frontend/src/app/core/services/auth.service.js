@@ -4,12 +4,14 @@ import assetLogo from '../../../assets/images/logo-raster-foundry.png';
 export default (app) => {
     class AuthService {
         constructor( // eslint-disable-line max-params
-            jwtHelper, $q, featureFlagOverrides, featureFlags, perUserFeatureFlags,
-            $state, APP_CONFIG, localStorage, rollbarWrapperService, intercomService
+            jwtHelper, $q, $timeout, featureFlagOverrides, featureFlags,
+            perUserFeatureFlags, $state, APP_CONFIG, localStorage,
+            rollbarWrapperService, intercomService
         ) {
             this.localStorage = localStorage;
             this.jwtHelper = jwtHelper;
             this.$q = $q;
+            this.$timeout = $timeout;
             this.$state = $state;
             this.featureFlags = featureFlags;
             this.perUserFeatureFlags = perUserFeatureFlags;
@@ -20,6 +22,8 @@ export default (app) => {
             if (!APP_CONFIG.error) {
                 this.initAuth0(APP_CONFIG);
             }
+
+            this.pendingReauth = null;
         }
 
         initAuth0(APP_CONFIG) {
@@ -136,6 +140,8 @@ export default (app) => {
         onLogin(authResult) {
             this.localStorage.set('id_token', authResult.idToken);
 
+            this.setReauthentication(authResult.idToken);
+
             this.loginLock.getProfile(authResult.idToken, (error, profile) => {
                 if (error) {
                     return;
@@ -218,11 +224,27 @@ export default (app) => {
         }
 
         verifyAuthCache() {
+            const token = this.token();
             this.isLoggedIn = Boolean(
-                this.localStorage.get('id_token') && this.localStorage.get('profile')
+                token && this.profile() && !this.jwtHelper.isTokenExpired(token)
             );
+            if (this.isLoggedIn) {
+                this.setReauthentication(token);
+            }
             return this.isLoggedIn;
         }
+
+        setReauthentication(token) {
+            if (!this.pendingReauth) {
+                // Set up a $timeout to reauthenticate 5 minutes before the token will expire
+                const expDate = this.jwtHelper.getTokenExpirationDate(token);
+                const nowDate = new Date();
+                const timeoutMillis = expDate.getTime() - nowDate.getTime() - 5 * 60 * 1000;
+                // Store in case we need to cancel for some reason
+                this.pendingReauth = this.$timeout(() => this.login(null), timeoutMillis);
+            }
+        }
+
     }
 
     app.service('authService', AuthService);
