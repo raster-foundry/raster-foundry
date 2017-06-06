@@ -23,7 +23,6 @@ export default class SelectedScenesModalController {
         let sceneIds = Array.from(this.selectedScenes.keys());
         this.projectService.addScenes(this.resolve.project.id, sceneIds).then(
             () => {
-                this.resolve.scenes.clear();
                 this.close({ $value: sceneIds });
             },
             (err) => {
