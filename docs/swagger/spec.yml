@@ -823,6 +823,24 @@ paths:
         204:
           description: Successfully accepted the Scene.
 
+  /projects/{uuid}/scenes/accept:
+    post:
+      summary: Approve a list of pending scenes which have passed an area of interest check.
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - name: scenes
+          in: body
+          required: true
+          description: UUIDs of scenes to approve
+          schema:
+            $ref: '#/definitions/BulkAcceptParams'
+      responses:
+        204:
+          description: Successfully accepted scenes
+      
+
   /projects/{uuid}/scenes/bulk-add-from-query/:
     x-resource: Projects
     post:
@@ -3219,3 +3237,13 @@ definitions:
         description: bands in the exported geotiffs
         items:
           type: integer
+
+  BulkAcceptParams:
+    type: object
+    description: bulk accept params 
+    properties:
+      sceneIds:
+        type: array
+        items:
+          type: string
+          format: uuid
