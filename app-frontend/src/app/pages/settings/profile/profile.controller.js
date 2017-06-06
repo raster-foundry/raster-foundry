@@ -1,3 +1,4 @@
+/* globals process */
 class ProfileController {
     constructor($log, localStorage, authService, $window, userService) {
         'ngInject';
@@ -19,6 +20,8 @@ class ProfileController {
         };
         this.provider = this.profile.identities[0].provider;
         this.providerName = providerMap[this.provider];
+
+        this.env = process.env.NODE_ENV;
     }
 
     updateGoogleProfile() {

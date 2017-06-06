@@ -25,6 +25,7 @@ require('./services/rollbarWrapper.service')(shared);
 require('./services/upload.service')(shared);
 require('./services/status.service')(shared);
 require('./services/histogram.service')(shared);
+require('./services/dropbox.service')(shared);
 
 require('./services/featureFlagOverrides.service')(shared);
 require('./services/featureFlags.provider')(shared);

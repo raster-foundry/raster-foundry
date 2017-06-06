@@ -18,7 +18,8 @@ case class AngularConfig(
   rollbarClientToken: String,
   intercomAppId: String,
   featureFlags: Seq[FeatureFlag],
-  tileServerLocation: String
+  tileServerLocation: String,
+  dropboxClientId: String
 )
 
 object AngularConfigService extends AkkaSystem.LoggerExecutor with Config {
@@ -26,6 +27,6 @@ object AngularConfigService extends AkkaSystem.LoggerExecutor with Config {
     features:Seq[FeatureFlag] <- FeatureFlags.listFeatureFlags()
   } yield AngularConfig(
     auth0ClientId, clientEnvironment, auth0Domain, rollbarClientToken,
-    intercomAppId, features, tileServerLocation
+    intercomAppId, features, tileServerLocation, dropboxClientId
   )
 }
