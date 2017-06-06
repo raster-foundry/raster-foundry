@@ -1,6 +1,7 @@
 export default class SelectedScenesModalController {
     constructor($log, $state, projectService) {
         'ngInject';
+        this.$log = $log;
         this.$state = $state;
         this.projectService = projectService;
         this.scenes = [];
@@ -23,7 +24,6 @@ export default class SelectedScenesModalController {
         let sceneIds = Array.from(this.selectedScenes.keys());
         this.projectService.addScenes(this.resolve.project.id, sceneIds).then(
             () => {
-                this.resolve.scenes.clear();
                 this.close({ $value: sceneIds });
             },
             (err) => {
