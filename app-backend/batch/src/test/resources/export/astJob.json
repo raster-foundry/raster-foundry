@@ -9,34 +9,45 @@
         "args": [
           {
             "id": "fea6c736-458a-4b59-b0d2-ac4bf7ba0a13",
-            "metadata": null
+            "metadata": {}
           },
           {
             "id": "a928ba7d-1c7b-4988-a546-873bfdb089dd",
-            "metadata": null
+            "metadata": {}
           }
         ],
         "id": "370775ee-c8a1-4671-a00a-3a2aa79dfb40",
-        "metadata": null
+        "metadata": {}
       },
       "params": {
         "sources": {
           "fea6c736-458a-4b59-b0d2-ac4bf7ba0a13": {
-            "id": "535f33b5-7a81-4403-b58a-89f6d71faf4a",
+            "id": "26f2f8a8-5864-44e6-8bb9-7faac73e0135",
             "band": 5,
-            "type": "scene"
+            "type": "project"
           },
           "a928ba7d-1c7b-4988-a546-873bfdb089dd": {
-            "id": "63b15316-2b28-4280-8eb5-c98de4adffab",
+            "id": "fd3939c4-af0b-47c9-a0b0-8714733fd846",
             "band": 5,
-            "type": "scene"
+            "type": "project"
           }
         },
-        "metadata": null
+        "metadata": {}
       },
-      "ingestLocs": {
-        "63b15316-2b28-4280-8eb5-c98de4adffab": "s3://rasterfoundry-staging-catalogs-us-east-1/dfac6307-b5ef-43f7-beda-b9f208bb7726/rf_airflow-user",
-        "535f33b5-7a81-4403-b58a-89f6d71faf4a": "s3://rasterfoundry-staging-catalogs-us-east-1/dfac6307-b5ef-43f7-beda-b9f208bb7726/rf_airflow-user"
+      "ingestLocs": {},
+      "projectScenes": {
+        "26f2f8a8-5864-44e6-8bb9-7faac73e0135": [
+          [
+            "63b15316-2b28-4280-8eb5-c98de4adffab",
+            "s3://rasterfoundry-staging-catalogs-us-east-1/dfac6307-b5ef-43f7-beda-b9f208bb7726/rf_airflow-user"
+          ]
+        ],
+        "fd3939c4-af0b-47c9-a0b0-8714733fd846": [
+          [
+            "535f33b5-7a81-4403-b58a-89f6d71faf4a",
+            "s3://rasterfoundry-staging-catalogs-us-east-1/dfac6307-b5ef-43f7-beda-b9f208bb7726/rf_airflow-user"
+          ]
+        ]
       }
     }
   },
@@ -52,7 +63,7 @@
       ]
     },
     "crop": false,
-    "stitch": false,
-    "source": "s3://rasterfoundry-test/colin-test/"
+    "stitch": true,
+    "source": "s3://rasterfoundry-test/colin-test-stitch/"
   }
 }
