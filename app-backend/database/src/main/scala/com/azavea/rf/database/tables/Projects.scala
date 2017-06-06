@@ -310,12 +310,14 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
                          .filter(_.id === projectId)
     } yield (
       updateProject.modifiedAt, updateProject.modifiedBy, updateProject.name, updateProject.description,
-      updateProject.visibility, updateProject.tileVisibility, updateProject.tags
+      updateProject.visibility, updateProject.tileVisibility, updateProject.tags, updateProject.aoiCadenceMillis,
+      updateProject.aoisLastChecked
     )
     database.db.run {
-      updateProjectQuery.update((
-        updateTime, user.id, project.name, project.description, project.visibility, project.tileVisibility, project.tags
-      ))
+      updateProjectQuery.update(
+        (updateTime, user.id, project.name, project.description, project.visibility, project.tileVisibility, project.tags,
+         project.aoiCadenceMillis, project.aoisLastChecked)
+      )
     } map {
       case 1 => 1
       case c => throw new IllegalStateException(s"Error updating project: update result expected to be 1, was $c")
