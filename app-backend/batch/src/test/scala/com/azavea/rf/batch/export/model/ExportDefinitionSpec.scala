@@ -130,7 +130,7 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
     expected.asJson shouldBe actual.asJson
   }
 
-  it("ASTInput isomorphism") {
+  it("ASTInput isomorphism (scene nodes)") {
     val s0 = Source(UUID.randomUUID, None)
     val s1 = Source(UUID.randomUUID, None)
     val ast: MapAlgebraAST = Addition(List(s0, s1), UUID.randomUUID, None)
@@ -156,6 +156,47 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
     )
 
 //    println(ed.asJson.spaces2)
+
+    decode[ExportDefinition](ed.asJson.spaces2) match {
+      case Right(ed2) => ed2 shouldBe ed
+      case Left(err) => throw new Exception(s"EXDEF: ${err}")
+    }
+  }
+
+  it("ASTInput isomorphism (project nodes)") {
+    val s0 = Source(UUID.randomUUID, None)
+    val s1 = Source(UUID.randomUUID, None)
+    val ast: MapAlgebraAST = Addition(List(s0, s1), UUID.randomUUID, None)
+
+    val params = EvalParams(
+      Map(
+        s0.id -> ProjectRaster(UUID.randomUUID, Some(5)),
+        s1.id -> ProjectRaster(UUID.randomUUID, Some(5))
+      ),
+      Map.empty
+    )
+
+    val astIn = ASTInput(ast, params, Map.empty, params.sources.mapValues(_ => List(
+      (UUID.fromString("9ad5d110-15ee-41bc-9727-d9d29b15c382"),"s3://foo/bar/1"),
+      (UUID.fromString("ebd4b9e0-f3fe-4ed7-87ba-b9046573ab08"),"s3://foo/bar/2"),
+      (UUID.fromString("1c25c436-32be-428c-8c61-09502337da09"),"s3://foo/bar/3")
+        /* These cause very strange bugs, where the UUIDs change every time `astIn` is called */
+//      (UUID.randomUUID, "s3://foo/bar/1"),
+//      (UUID.randomUUID, "s3://foo/bar/2"),
+//      (UUID.randomUUID, "s3://foo/bar/3")
+    )))
+
+    val inDef = InputDefinition(
+      Some(UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57036")),
+      15,
+      Right(astIn)
+    )
+
+    val ed = ExportDefinition(
+      UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57039"),
+      inDef,
+      outDef
+    )
 
     decode[ExportDefinition](ed.asJson.spaces2) match {
       case Right(ed2) => ed2 shouldBe ed
