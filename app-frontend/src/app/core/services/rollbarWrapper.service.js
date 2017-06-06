@@ -8,14 +8,16 @@ export default (app) => {
         }
 
         init(user = {}) {
-            this.Rollbar.configure({
-                accessToken: this.accessToken,
-                captureUncaught: true,
-                payload: {
-                    environment: this.env,
-                    person: user
-                }
-            });
+            if (this.env !== 'development') {
+                this.Rollbar.configure({
+                    accessToken: this.accessToken,
+                    captureUncaught: true,
+                    payload: {
+                        environment: this.env,
+                        person: user
+                    }
+                });
+            }
         }
     }
 

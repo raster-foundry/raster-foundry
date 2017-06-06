@@ -200,7 +200,8 @@ module.exports = function (_path) {
             new HtmlWebpackPlugin({
                 filename: 'index.html',
                 template: path.join(_path, 'src', 'tpl-index.html'),
-                heapLoad: DEVELOPMENT ? '2743344218' : '3505855839'
+                heapLoad: DEVELOPMENT ? '2743344218' : '3505855839',
+                development: DEVELOPMENT
             })
         ]
     };
