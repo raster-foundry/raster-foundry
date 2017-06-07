@@ -3143,6 +3143,9 @@ definitions:
     type: object
     description: export params
     properties:
+      operation:
+        type: string
+        description: currently a not supported flag, describes a render operation, "id" by defaut.
       bands:
         type: array
         description: bands in the exported geotiffs
@@ -3163,6 +3166,9 @@ definitions:
       crop:
         type: boolean
         description: crop stitched raster by provided mask if possible
+      raw:
+        type: boolean
+        description: make a raw export skipping all color correction steps
   ExportDefinition:
     type: object
     properties:
