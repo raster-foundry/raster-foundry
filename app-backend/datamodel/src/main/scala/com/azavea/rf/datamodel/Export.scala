@@ -16,7 +16,7 @@ case class Export(
   modifiedBy: String,
   owner: String,
   organizationId: UUID,
-  projectId: UUID,
+  projectId: Option[UUID],
   exportStatus: ExportStatus,
   exportType: ExportType,
   visibility: Visibility,
@@ -35,7 +35,7 @@ object Export {
   @JsonCodec
   case class Create(
     organizationId: UUID,
-    projectId: UUID,
+    projectId: Option[UUID],
     exportStatus: ExportStatus,
     exportType: ExportType,
     visibility: Visibility,

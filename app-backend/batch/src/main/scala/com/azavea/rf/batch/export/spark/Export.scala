@@ -242,7 +242,7 @@ object Export extends SparkJob with Config with LazyLogging {
 
       exportDef.input.style match {
         case Left(SimpleInput(layers, mask)) => multibandExport(exportDef, layers, mask, conf)
-        case Right(ASTInput(ast, params, locs)) => astExport(exportDef, ast, params, locs, conf)
+        case Right(ASTInput(ast, params, locs, _)) => astExport(exportDef, ast, params, locs, conf)
       }
     } finally {
       sc.stop
