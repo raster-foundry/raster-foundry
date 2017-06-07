@@ -22,7 +22,8 @@ case class DropboxAuthRequest(
   *
   * get returns a random 16 byte string that we're using
   * to pretend we set state in the /authorize request.
-  * set and clear do nothing.
+  * set and clear are around just to make the interface
+  * happy
   */
 class DummySessionStore extends DbxSessionStore {
 
