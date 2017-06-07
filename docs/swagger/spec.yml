@@ -215,16 +215,10 @@ paths:
         - Users
       parameters:
           - $ref: '#/parameters/uuid'
-          - name: authorizationCode
+          - name: DropboxAuthRequest
             in: body
-            required: true
             schema:
-              type: string
-          - name: redirectURI
-            in: body
-            required: true
-            schema:
-              type: string
+              $ref: '#/definitions/DropboxAuthRequest'
       responses:
         200:
           description: Dropbox access token successfully fetched
@@ -2103,6 +2097,13 @@ definitions:
         format: uuid
       colorCorrection:
         $ref: '#/definitions/ColorCorrection'
+  DropboxAuthRequest:
+    type: object
+    properties:
+      authorizationCode:
+        type: string
+      redirectURI:
+        type: string
   AOI:
     type: object
     properties:
