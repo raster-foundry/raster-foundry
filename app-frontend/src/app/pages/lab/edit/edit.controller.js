@@ -105,7 +105,7 @@ export default class LabEditController {
         const keyboard = Boolean(this.project);
 
         this.activeModal = this.$uibModal.open({
-            component: 'rfSelectProjectModal',
+            component: 'rfProjectSelectModal',
             backdrop: backdrop,
             keyboard: keyboard,
             resolve: {
@@ -126,7 +126,7 @@ export default class LabEditController {
         const keyboard = Boolean(this.project);
 
         this.activeModal = this.$uibModal.open({
-            component: 'rfSelectProjectModal',
+            component: 'rfProjectSelectModal',
             backdrop: backdrop,
             keyboard: keyboard,
             resolve: {
