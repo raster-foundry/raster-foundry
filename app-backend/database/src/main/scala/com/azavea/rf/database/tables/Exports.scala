@@ -55,7 +55,7 @@ class Exports(_tableTag: Tag) extends Table[Export](_tableTag, "exports")
   lazy val createdByUserFK = foreignKey("exports_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val modifiedByUserFK = foreignKey("exports_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val ownerUserFK = foreignKey("exports_owner_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
-  lazy val toolRunFK = foreignKey("toolrun_id", toolRunId, ToolRuns)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val toolRunFK = foreignKey("toolrun_id", toolRunId, ToolRuns)(r => r.id.?, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 }
 
 object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
@@ -177,12 +177,9 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
     export: Export,
     user: User
   )(implicit database: DB): Future[Option[ExportDefinition]] = {
-
-    val eo: OptionT[Future, ExportOptions] =
-      OptionT.fromOption[Future](export.exportOptions.as[ExportOptions].toOption)
+    val eo: OptionT[Future, ExportOptions] = OptionT.fromOption[Future](export.getExportOptions)
 
     eo.flatMap({ exportOptions =>
-
         val outDef = OutputDefinition(
           crs = exportOptions.getCrs,
           rasterSize = exportOptions.rasterSize,
@@ -241,9 +238,12 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
       .flatMap({ iterable =>
         iterable.toList
           .map({ scene =>
-            ScenesToProjects.getColorCorrectParams(export.projectId, scene.id) map({ ccp =>
-              ExportLayerDefinition(scene.id, new URI(scene.ingestLocation.getOrElse("")), ccp.flatten)
-            })
+            if(exportOptions.raw)
+              Future(ExportLayerDefinition(scene.id, new URI(scene.ingestLocation.getOrElse("")), None))
+            else
+              ScenesToProjects.getColorCorrectParams(export.projectId, scene.id) map ({ ccp =>
+                ExportLayerDefinition(scene.id, new URI(scene.ingestLocation.getOrElse("")), ccp.flatten)
+              })
           })
           .sequence
           .map({ layers =>
@@ -251,8 +251,6 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
           })
       })
   }
-
-
 }
 
 class ExportTableQuery[M, U, C[_]](exports: Exports.TableQuery) {

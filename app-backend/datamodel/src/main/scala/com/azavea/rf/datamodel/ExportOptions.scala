@@ -13,11 +13,13 @@ case class ExportOptions(
   resolution: Int,
   stitch: Boolean,
   crop: Boolean,
+  raw: Boolean,
   bands: Option[Seq[Int]],
   rasterSize: Option[Int],
   crs: Option[Int],
-  source: URI
+  source: URI,
+  operation: Option[String]
 ) {
-  def render = Render("id", bands)
+  def render = Render(operation.getOrElse("id"), bands)
   def getCrs = crs.map(CRS.fromEpsgCode)
 }

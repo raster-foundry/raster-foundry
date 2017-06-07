@@ -28,10 +28,12 @@ trait ExportSpecHelper { self: ProjectSpecHelper =>
       resolution = 2,
       stitch = false,
       crop = false,
+      raw = false,
       bands = None,
       rasterSize = None,
       crs = None,
-      source = new URI("s3://test")
+      source = new URI("s3://test"),
+      operation = Some("id")
     ).asJson
   )
 
