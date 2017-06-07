@@ -1,3 +1,4 @@
+<ui-view></ui-view>
 <div class="sidebar-header">
   <a class="btn sidebar-header-nav-btn" ui-sref="projects.edit">
     <i class="icon-arrow-left"></i>
@@ -10,7 +11,8 @@
       Area of Interest
       <div class="info">Required</div>
     </div>
-    <button class="btn btn-default fixedwidth">
+    <button class="btn btn-default fixedwidth"
+            ui-sref=".draw-aoi">
       Edit Area of Interest
     </button>
     <i class="icon-info"></i>

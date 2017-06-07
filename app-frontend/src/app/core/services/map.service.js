@@ -289,6 +289,17 @@ class MapWrapper {
             .addLayer(id, layer);
     }
 
+    /** Set an array of layers to an id
+     * @param {string} id id to refer to the layers by
+     * @param {L.Layer[]} layers layers to set
+     * @returns {this} this
+     */
+    setLayerArray(id, layers) {
+        // use a copy of the layers array
+        this._layerMap.set(id, layers.slice(0));
+        return this;
+    }
+
     /** Get a set of layers by id.
      * @param {string} id layer id
      * @returns {Array} list of layers

@@ -1,3 +1,4 @@
+/* globals _ */
 const updateFrequencies = [
     {
         label: 'every 6 hours',
@@ -40,14 +41,21 @@ const addMethods = [
 */
 
 export default class AOIParametersController {
-    constructor($scope, $state, $uibModal, moment, projectService) {
+    constructor(
+        $log, $q, $scope, $state, $uibModal,
+        moment, projectService, aoiService, authService
+    ) {
         'ngInject';
+        this.$log = $log;
+        this.$q = $q;
         this.$parent = $scope.$parent.$ctrl;
         this.$state = $state;
         this.$uibModal = $uibModal;
         this.Moment = moment;
         this.updateFrequencies = updateFrequencies;
         this.projectService = projectService;
+        this.aoiService = aoiService;
+        this.authService = authService;
     }
 
     $onInit() {
@@ -55,8 +63,12 @@ export default class AOIParametersController {
         this.projectLoaded = false;
         this.aoiProjectParameters = {};
         this.aoiParamters = {};
-        this.$parent.fetchProject().then(project => {
-            this.project = project;
+
+        this.$q.all({
+            project: this.$parent.fetchProject(),
+            aois: this.fetchProjectAOIs()
+        }).then((result) => {
+            this.project = result.project;
             this.aoiProjectParameters = {
                 aoiCadenceMillis: this.project.aoiCadenceMillis ||
                     604800000,
@@ -69,6 +81,69 @@ export default class AOIParametersController {
             };
             this.projectLoaded = true;
         });
+    }
+
+    aoiAreaToPolygons(aoiArea) {
+        return aoiArea.geom.coordinates.map((polygonCoords) => {
+            return {
+                type: 'Polygon',
+                coordinates: polygonCoords
+            };
+        });
+    }
+
+    fetchProjectAOIs() {
+        this.aoiRequest = this.projectService.getProjectAois(
+            this.$parent.projectId
+        ).then((response) => {
+            this.projectAois = response.results || [];
+            if (response.results && response.results.length === 1) {
+                let aoi = _.first(this.projectAois);
+                this.aoiPolygons = aoi ? this.aoiAreaToPolygons(aoi.area) : [];
+                return response.results;
+            } else if (response.results && response.results.length > 1) {
+                this.unsupportedAois = true;
+                return this.$q.reject('Multiple AOIs are currently not supported.');
+            }
+
+            return [];
+        }, (error) => {
+            this.$log.error('Error fetching project aois', error);
+        });
+    }
+
+    updateProjectAOIs(polygonCoordinates) {
+        if (this.projectAois && this.projectAois.length === 1) {
+            // update existing aoi
+            let aoiToUpdate = this.projectAois[0];
+            if (polygonCoordinates.length) {
+                aoiToUpdate.area = {
+                    geom: {type: 'MultiPolygon', coordinates: polygonCoordinates},
+                    srid: 3857
+                };
+            } else {
+                this.$log.error('An AOI must be composed of at least one polygon');
+            }
+            this.aoiService.updateAOI(aoiToUpdate).then(() => {
+                this.fetchProjectAOIs();
+            });
+        } else if (this.projectAois && !this.projectAois.length && polygonCoordinates.length) {
+            let newAOI = {
+                owner: this.authService.profile().user_id,
+                area: {
+                    geom: {type: 'MultiPolygon', coordinates: polygonCoordinates},
+                    srid: 3857
+                },
+                filters: {}
+            };
+            this.projectService.createAOI(this.project.id, newAOI).then(() => {
+                this.fetchProjectAOIs();
+            });
+        } else {
+            // more than one aoi, or aois were not successfully fetched - don't allow update
+            this.$log.error('Tried to update an aoi in a project with more' +
+                            'than 1 aoi. This is not currently supported');
+        }
     }
 
     toggleFilters() {

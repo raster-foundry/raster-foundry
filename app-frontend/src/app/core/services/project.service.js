@@ -59,6 +59,14 @@ export default (app) => {
                             pending: '@pending'
                         }
                     },
+                    projectAois: {
+                        method: 'GET',
+                        cache: false,
+                        url: '/api/projects/:projectId/areas-of-interest',
+                        params: {
+                            projectId: '@projectId'
+                        }
+                    },
                     removeScenes: {
                         method: 'DELETE',
                         url: '/api/projects/:projectId/scenes/',
@@ -276,12 +284,17 @@ export default (app) => {
             return this.Project.updateProject(params).$promise;
         }
 
-        createAOI(params) {
-            return this.userService.getCurrentUser().then(user => {
-                const paramsWithOrg =
-                    Object.assign(params, { organizationId: user.organizationId });
-                return this.Project.createAOI(paramsWithOrg);
-            }).$promise;
+        createAOI(project, params) {
+            return this.$q((resolve, reject) => {
+                this.userService.getCurrentUser().then(user => {
+                    const paramsWithOrg =
+                          Object.assign(params, { organizationId: user.organizationId });
+                    this.Project.createAOI(
+                        {projectId: project},
+                        paramsWithOrg
+                    ).$promise.then(() => resolve(), (err) => reject(err));
+                });
+            });
         }
 
         approveScene(projectId, sceneId) {
@@ -374,6 +387,10 @@ export default (app) => {
                 this.isLoadingProject = false;
             });
             return request;
+        }
+
+        getProjectAois(projectId) {
+            return this.Project.projectAois({projectId: projectId}).$promise;
         }
     }
 
