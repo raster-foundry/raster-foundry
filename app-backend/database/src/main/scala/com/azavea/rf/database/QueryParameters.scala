@@ -251,3 +251,8 @@ case class ExportQueryParameters(
   project: Option[UUID] = None,
   exportStatus: Iterable[String] = Seq[String]()
 )
+
+@JsonCodec
+case class DropboxAuthQueryParameters(
+  code: Option[String] = None
+)

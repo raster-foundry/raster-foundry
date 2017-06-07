@@ -135,6 +135,20 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+  /users/dropbox-setup/:
+    x-resource: Users
+    post:
+      summary: Store a dropbox access token for a user from an authorization code
+      tags:
+        - Users
+      parameters:
+          - name: DropboxAuthRequest
+            in: body
+            schema:
+              $ref: '#/definitions/DropboxAuthRequest'
+      responses:
+        200:
+          description: Dropbox access token successfully fetched
   /users/me/:
     x-resource: Users
     get:
@@ -1670,7 +1684,6 @@ paths:
             $ref: '#/definitions/Error'
 
 parameters:
-
   orderingBase:
     name: ordering
     in: query
@@ -2079,6 +2092,13 @@ definitions:
         format: uuid
       colorCorrection:
         $ref: '#/definitions/ColorCorrection'
+  DropboxAuthRequest:
+    type: object
+    properties:
+      authorizationCode:
+        type: string
+      redirectURI:
+        type: string
   AOI:
     type: object
     properties:

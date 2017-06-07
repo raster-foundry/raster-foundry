@@ -28,7 +28,7 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
     orgQueryParams & userQueryParameters & timestampQueryParameters
   ).as(ProjectQueryParameters.apply _)
 
-def aoiQueryParameters = (
+  def aoiQueryParameters = (
     orgQueryParams & userQueryParameters & timestampQueryParameters
   ).as(AoiQueryParameters.apply _)
 
