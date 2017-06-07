@@ -142,7 +142,6 @@ paths:
       tags:
         - Users
       parameters:
-          - $ref: '#/parameters/uuid'
           - name: DropboxAuthRequest
             in: body
             schema:
