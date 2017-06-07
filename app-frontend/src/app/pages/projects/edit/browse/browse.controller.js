@@ -431,7 +431,7 @@ export default class ProjectAddScenesBrowseController {
         }
 
         this.activeModal = this.$uibModal.open({
-            component: 'rfSelectedScenesModal',
+            component: 'rfProjectAddScenesModal',
             resolve: {
                 scenes: () => this.selectedScenes,
                 selectScene: () => this.setSelected.bind(this),

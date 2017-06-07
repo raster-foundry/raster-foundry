@@ -202,7 +202,7 @@ export default class ProjectsEditController {
         }
 
         this.activeModal = this.$uibModal.open({
-            component: 'rfPublishModal',
+            component: 'rfProjectPublishModal',
             resolve: {
                 project: () => this.project,
                 tileUrl: () => this.projectService.getProjectLayerURL(this.project),
@@ -220,7 +220,7 @@ export default class ProjectsEditController {
             return m.map.getZoom();
         }).then(zoom => {
             this.activeModal = this.$uibModal.open({
-                component: 'rfExportModal',
+                component: 'rfProjectExportModal',
                 resolve: {
                     project: () => this.project,
                     zoom: () => zoom
@@ -235,7 +235,7 @@ export default class ProjectsEditController {
         }
 
         this.activeModal = this.$uibModal.open({
-            component: 'rfImportModal',
+            component: 'rfSceneImportModal',
             resolve: {
                 project: () => this.project
             }

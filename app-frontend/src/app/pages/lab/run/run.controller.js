@@ -199,7 +199,7 @@ export default class LabRunController {
         }
 
         this.activeModal = this.$uibModal.open({
-            component: 'rfSelectProjectModal',
+            component: 'rfProjectSelectModal',
             resolve: {
                 project: () => this.toolRun.executionParameters.sources[sourceId].id || false,
                 content: () => ({
@@ -224,7 +224,7 @@ export default class LabRunController {
 
         if (tileUrl) {
             this.activeModal = this.$uibModal.open({
-                component: 'rfPublishModal',
+                component: 'rfProjectPublishModal',
                 resolve: {
                     tileUrl: () => this.projectService.getBaseURL() + tileUrl,
                     noDownload: () => true

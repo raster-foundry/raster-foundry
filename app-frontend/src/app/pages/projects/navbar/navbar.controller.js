@@ -19,7 +19,7 @@ export default class ProjectsNavbarController {
         }
 
         this.activeModal = this.$uibModal.open({
-            component: 'rfSelectProjectModal',
+            component: 'rfProjectSelectModal',
             resolve: {
                 project: () => this.projectService.currentProject
             }
@@ -38,7 +38,7 @@ export default class ProjectsNavbarController {
         }
 
         this.activeModal = this.$uibModal.open({
-            component: 'rfPublishModal',
+            component: 'rfProjectPublishModal',
             resolve: {
                 project: () => this.project,
                 tileUrl: () => this.projectService.getProjectLayerURL(this.project),

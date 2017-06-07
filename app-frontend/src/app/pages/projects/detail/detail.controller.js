@@ -163,7 +163,7 @@ export default class ProjectsDetailController {
         }
 
         this.activeModal = this.$uibModal.open({
-            component: 'rfPublishModal',
+            component: 'rfProjectPublishModal',
             resolve: {
                 project: () => this.project,
                 tileUrl: () => this.projectService.getProjectLayerURL(this.project),
@@ -255,7 +255,7 @@ export default class ProjectsDetailController {
         }
 
         this.activeModal = this.$uibModal.open({
-            component: 'rfImportModal',
+            component: 'rfSceneImportModal',
             resolve: {
                 project: () => this.project
             }

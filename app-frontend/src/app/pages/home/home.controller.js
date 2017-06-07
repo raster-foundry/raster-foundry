@@ -22,7 +22,7 @@ class HomeController {
         }
 
         this.activeModal = this.$uibModal.open({
-            component: 'rfCreateProjectModal'
+            component: 'rfProjectCreateModal'
         });
 
         this.activeModal.result.then(() => {
