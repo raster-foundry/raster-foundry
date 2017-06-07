@@ -17,14 +17,14 @@ import io.circe.syntax._
   * cropping / stitching.
   */
 case class InputDefinition(
-  projectId: UUID,  // TODO: Might not be necessary.
+  projectId: Option[UUID],  // TODO: Might not be necessary.
   resolution: Int,
   style: Either[SimpleInput, ASTInput]
 )
 
 object InputDefinition {
   implicit val dec: Decoder[InputDefinition] = Decoder.instance(c =>
-    (c.downField("projectId").as[UUID]
+    (c.downField("projectId").as[Option[UUID]]
       |@| c.downField("resolution").as[Int]
       |@| c.downField("style").as[SimpleInput].map(Left(_))
            .orElse(c.downField("style").as[ASTInput].map(Right(_)))
@@ -48,4 +48,10 @@ object InputDefinition {
 case class SimpleInput(layers: Array[ExportLayerDefinition], mask: Option[MultiPolygon])
 
 @JsonCodec
-case class ASTInput(ast: MapAlgebraAST, params: EvalParams, ingestLocs: Map[UUID, String])
+case class ASTInput(
+  ast: MapAlgebraAST,
+  params: EvalParams,
+  ingestLocs: Map[UUID, String],
+  /* Ingest locations (and implicit ordering) of each scene in each project */
+  projectScenes: Map[UUID, List[String]]
+)
