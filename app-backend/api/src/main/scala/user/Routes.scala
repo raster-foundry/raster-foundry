@@ -114,8 +114,9 @@ trait UserRoutes extends Authentication
       val authFinish = webAuth.finishFromRedirect(
         dbxAuthRequest.redirectURI, session, queryParams
       )
-      logger.info("authFinish created")
+      logger.debug("Auth finish from Dropbox successful")
       Users.storeDropboxAccessToken(userId, authFinish.getAccessToken)
+      logger.debug(s"Sent access code for user $userId to database")
       complete(StatusCodes.OK)
     }
   }
