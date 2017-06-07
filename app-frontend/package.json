@@ -16,6 +16,7 @@
     "clean": "rimraf dist/*",
     "build-nginx": "rimraf ../nginx/srv/dist/* && yarn run build && cp -R dist/* ../nginx/srv/dist/",
     "dev": "cross-env NODE_ENV=development webpack-dev-server",
+    "postinstall": "npm rebuild node-sass",
     "sort-packages": "sort-package-json",
     "start": "yarn run dev",
     "test": "karma start karma.conf.js",
