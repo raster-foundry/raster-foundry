@@ -6,7 +6,7 @@ export default (app) => {
 
             this.authService = authService;
             this.DropboxSetup = $resource(
-                '/api/users/:userid/dropbox-setup', {}, {
+                '/api/users/dropbox-setup', {}, {
                     confirm: {
                         method: 'POST'
                     }

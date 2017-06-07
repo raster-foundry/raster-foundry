@@ -46,16 +46,16 @@ trait UserRoutes extends Authentication
       patch {
         updateAuth0User
       }
+    }  ~
+    pathPrefix("dropbox-setup") {
+      pathEndOrSingleSlash {
+        post { getDropboxAccessToken }
+      }
     } ~
     pathPrefix(Segment) { authIdEncoded =>
       pathEndOrSingleSlash {
         get { getUserByEncodedAuthId(authIdEncoded) } ~
         put { updateUserByEncodedAuthId(authIdEncoded) }
-      } ~
-      pathPrefix("dropbox-setup") {
-        pathEndOrSingleSlash {
-          post { getDropboxAccessToken(authIdEncoded) }
-        }
       }
     }
   }
@@ -94,8 +94,8 @@ trait UserRoutes extends Authentication
     }
   }
 
-  def getDropboxAccessToken(authIdEncoded: String): Route = {
-    val userId = URLDecoder.decode(authIdEncoded)
+  def getDropboxAccessToken: Route = authenticate {
+    user =>
     entity(as[DropboxAuthRequest]) { dbxAuthRequest =>
       val redirectURI = dbxAuthRequest.redirectURI
       val (dbxKey, dbxSecret) =
@@ -115,8 +115,8 @@ trait UserRoutes extends Authentication
         dbxAuthRequest.redirectURI, session, queryParams
       )
       logger.debug("Auth finish from Dropbox successful")
-      Users.storeDropboxAccessToken(userId, authFinish.getAccessToken)
-      logger.debug(s"Sent access code for user $userId to database")
+      Users.storeDropboxAccessToken(user.id, authFinish.getAccessToken)
+      logger.debug(s"Sent access code for user ${user.id} to database")
       complete(StatusCodes.OK)
     }
   }
