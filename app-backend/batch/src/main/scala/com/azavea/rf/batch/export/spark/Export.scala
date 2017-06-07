@@ -166,8 +166,8 @@ object Export extends SparkJob with Config with LazyLogging {
     }
   }
 
-  def singlePath(ed: ExportDefinition): String =
-    s"${ed.output.source.toString}/${ed.input.resolution}-${UUID.randomUUID()}.tiff"
+  private def singlePath(ed: ExportDefinition): String =
+    s"${ed.output.source.toString}/${ed.input.resolution}-${UUID.randomUUID()}-${ed.id}.tiff"
 
   /** Write a single GeoTiff to some target. */
   private def writeGeoTiff[T <: CellGrid, G <: GeoTiff[T]](
@@ -208,7 +208,7 @@ object Export extends SparkJob with Config with LazyLogging {
     conf: HadoopConfiguration
   ): Unit = {
     def path(key: SpatialKey): ExportDefinition => String = { ed =>
-      s"${ed.output.source.toString}/${ed.input.resolution}-${key.col}-ed.${key.row}.tiff"
+      s"${ed.output.source.toString}/${ed.input.resolution}-${key.col}-${key.row}-${ed.id}.tiff"
     }
 
     rdd.foreachPartition({ iter =>

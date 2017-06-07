@@ -195,6 +195,6 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
         .map(_.toList.sequence)
     }
 
-    sceneIds >>= scenes
+    sceneIds.flatMap(scenes)
   }
 }
