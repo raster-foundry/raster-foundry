@@ -18,6 +18,7 @@ import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 import com.typesafe.scalalogging.LazyLogging
 
+import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -96,7 +97,7 @@ trait UserRoutes extends Authentication
   def getDropboxAccessToken(authIdEncoded: String): Route = {
     val userId = URLDecoder.decode(authIdEncoded)
     entity(as[DropboxAuthRequest]) { dbxAuthRequest =>
-      val code = dbxAuthRequest.authorizationCode
+      val redirectURI = dbxAuthRequest.redirectURI
       val (dbxKey, dbxSecret) =
         (sys.env.get("DROPBOX_KEY"), sys.env.get("DROPBOX_SECRET")) match {
           case (Some(key), Some(secret)) => (key, secret)
@@ -105,7 +106,15 @@ trait UserRoutes extends Authentication
       val dbxConfig = new DbxRequestConfig("raster-foundry-authorizer")
       val appInfo = new DbxAppInfo(dbxKey, dbxSecret)
       val webAuth = new DbxWebAuth(dbxConfig, appInfo)
-      val authFinish = webAuth.finishFromCode(code)
+      val session = new DummySessionStore()
+      val queryParams = Map[String, Array[String]](
+        "code" -> Array(dbxAuthRequest.authorizationCode),
+        "state" -> Array(session.get)
+      ).asJava
+      val authFinish = webAuth.finishFromRedirect(
+        dbxAuthRequest.redirectURI, session, queryParams
+      )
+      logger.info("authFinish created")
       Users.storeDropboxAccessToken(userId, authFinish.getAccessToken)
       complete(StatusCodes.OK)
     }

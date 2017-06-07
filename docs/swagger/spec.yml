@@ -220,6 +220,11 @@ paths:
             required: true
             schema:
               type: string
+          - name: redirectURI
+            in: body
+            required: true
+            schema:
+              type: string
       responses:
         200:
           description: Dropbox access token successfully fetched
