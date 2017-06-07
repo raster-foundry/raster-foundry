@@ -11,11 +11,16 @@ import geotrellis.spark.io.s3.util.S3RangeReader
 import com.amazonaws.auth._
 import com.amazonaws.services.s3.{AmazonS3URI, AmazonS3Client => AWSAmazonS3Client}
 import org.apache.commons.io.IOUtils
+import org.apache.hadoop.conf.Configuration
 
 import java.io._
 import java.net._
 
 package object util {
+  implicit class ConfigurationMethods(conf: Configuration) {
+    def isKeyUnset(key: String): Boolean = conf.get(key) == null
+  }
+
   implicit class InputStreamMethods(is: InputStream) {
     def toJson = {
       val lines = scala.io.Source.fromInputStream(is).getLines
