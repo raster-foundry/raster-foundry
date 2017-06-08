@@ -8,7 +8,7 @@ const rfSceneImportModal = {
         modalInstance: '<',
         resolve: '<'
     },
-    controller: 'ImportModalController'
+    controller: 'SceneImportModalController'
 };
 
 export default rfSceneImportModal;
