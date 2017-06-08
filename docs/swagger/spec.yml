@@ -694,6 +694,7 @@ paths:
             $ref: '#/definitions/Error'
 
   /projects/{uuid}/areas-of-interest/:
+    x-resource: Projects
     get:
       summary: Get all areas of interest for a project
       tags:
@@ -853,7 +854,7 @@ paths:
       responses:
         204:
           description: Successfully accepted scenes
-      
+
 
   /projects/{uuid}/scenes/bulk-add-from-query/:
     x-resource: Projects
@@ -3266,7 +3267,7 @@ definitions:
 
   BulkAcceptParams:
     type: object
-    description: bulk accept params 
+    description: bulk accept params
     properties:
       sceneIds:
         type: array
