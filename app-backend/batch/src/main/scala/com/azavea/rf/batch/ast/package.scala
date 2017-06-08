@@ -42,6 +42,7 @@ package object ast {
   )(implicit sc: SparkContext): Interpreted[TileLayerRDD[SpatialKey]] = {
 
     /* Perform Map Algebra over a validated RDD-filled AST */
+    @SuppressWarnings(Array("TraversableHead"))
     def eval(
       ast: MapAlgebraAST,
       rdds: Map[UUID, TileLayerRDD[SpatialKey]]
@@ -57,6 +58,18 @@ package object ast {
         args.map(eval(_, rdds)).reduce((acc,r) => binary({_ / _}, acc, r))
       case Classification(arg :: _, _, _, classMap) =>
         eval(arg, rdds).withContext(_.color(classMap.toColorMap))
+      case Max(args, _, _) => {
+        val kids: List[TileLayerRDD[SpatialKey]] = args.map(eval(_, rdds))
+
+        /* The head call will never fail */
+        ContextRDD(kids.head.localMax(kids.tail), kids.map(_.metadata).reduce(_ combine _))
+      }
+      case Min(args, _, _) => {
+        val kids: List[TileLayerRDD[SpatialKey]] = args.map(eval(_, rdds))
+
+        /* The head call will never fail */
+        ContextRDD(kids.head.localMin(kids.tail), kids.map(_.metadata).reduce(_ combine _))
+      }
       case op => throw new Exception(s"Unimplemented Operation given! ${op}")
     }
 
