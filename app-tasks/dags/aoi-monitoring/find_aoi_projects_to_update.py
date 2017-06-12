@@ -30,7 +30,7 @@ DagArgs = namedtuple('DagArgs', 'dag_id, conf, run_id')
 dag = DAG(
     dag_id='find_aoi_projects_to_update',
     default_args=default_args,
-    schedule_interval=None,
+    schedule_interval=datetime.timedelta(hours=6),
     concurrency=1
 )
 
@@ -51,12 +51,12 @@ def find_aoi_projects_to_update():
     """Find AOI projects to check for updates and push their IDs to xcoms"""
     logger.info('Finding AOI projects to check for updates')
 
-    bash_cmd = 'java -cp /opt/raster-foundry/jars/rf-batch.jar com.azavea.rf.batch.Main find_aoi_projects'    
+    bash_cmd = 'java -cp /opt/raster-foundry/jars/rf-batch.jar com.azavea.rf.batch.Main find_aoi_projects'
     cmd = subprocess.Popen(bash_cmd, shell=True, stdout=subprocess.PIPE)
     projects = ['']
     for line in cmd.stdout:
-        if 'ProjectIds:' in line:            
-            projects = [p.strip() for p in line.replace('ProjectIds:', '').strip().split(',')]        
+        if 'ProjectIds:' in line:
+            projects = [p.strip() for p in line.replace('ProjectIds:', '').strip().split(',')]
 
     return {'project_ids': projects}
 
