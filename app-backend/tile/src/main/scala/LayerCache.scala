@@ -1,5 +1,6 @@
 package com.azavea.rf.tile
 
+import com.azavea.rf.tile.image._
 import com.azavea.rf.tile.tool.TileSources
 import com.azavea.rf.datamodel.{Tool, ToolRun, User}
 import com.azavea.rf.tool.eval._
@@ -17,9 +18,12 @@ import io.circe.syntax._
 import geotrellis.raster._
 import geotrellis.raster.render._
 import geotrellis.raster.histogram._
-import geotrellis.spark._
 import geotrellis.raster.io._
+import geotrellis.vector.io._
 import geotrellis.spark.io._
+import geotrellis.spark._
+import geotrellis.spark.tiling._
+import geotrellis.proj4._
 import geotrellis.spark.io.s3.{S3InputFormat, S3AttributeStore, S3CollectionLayerReader, S3ValueReader}
 import com.github.blemale.scaffeine.{Scaffeine, Cache => ScaffeineCache}
 import geotrellis.vector.Extent
@@ -113,7 +117,6 @@ object LayerCache extends Config with LazyLogging {
       }
     }
 
-
   def layerTileForExtent(layerId: UUID, zoom: Int, extent: Extent): OptionT[Future, MultibandTile] =
     tileCache.cachingOptionT(s"extent-tile-$layerId-$zoom-$extent") { implicit ec =>
       attributeStoreForLayer(layerId).mapFilter { case (store, _) =>
@@ -138,15 +141,19 @@ object LayerCache extends Config with LazyLogging {
 
   /** Calculate the histogram for the least resolute zoom level to automatically render tiles */
   def modelLayerGlobalHistogram(
-    ast: MapAlgebraAST,
-    params: EvalParams,
-    toolRun: ToolRun,
-    user: User
-  ): OptionT[Future, Histogram[Double]] =
-    histogramCache.cachingOptionT(s"model-${toolRun.id}-${ast.id}") { implicit ec =>
+    toolRunId: UUID,
+    subNode: Option[UUID],
+    user: User,
+    voidCache: Boolean = false
+  ): OptionT[Future, Histogram[Double]] = {
+    val cacheKey = s"histogram-${toolRunId}-${subNode}-${user.id}"
+    if (voidCache) histogramCache.delete(cacheKey)
+    histogramCache.cachingOptionT(cacheKey) { implicit ec =>
       for {
-        lztile <- OptionT(Interpreter.interpretGlobal(ast, params.sources, TileSources.cachedGlobalSource).map(_.toOption))
-        tile   <- OptionT.fromOption[Future](lztile.evaluateDouble)
+        (tool, toolRun) <- LayerCache.toolAndToolRun(toolRunId, user, voidCache)
+        (ast, params)   <- LayerCache.toolEvalRequirements(toolRunId, subNode, user, voidCache)
+        lztile          <- OptionT(Interpreter.interpretGlobal(ast, params.sources, TileSources.globalSource).map(_.toOption))
+        tile            <- OptionT.fromOption[Future](lztile.evaluateDouble)
       } yield {
         val hist = StreamingHistogram.fromTile(tile)
         val currentMetadata = params.metadata.getOrElse(ast.id, NodeMetadata())
@@ -156,23 +163,40 @@ object LayerCache extends Config with LazyLogging {
         try {
           database.db.run { ToolRuns.updateToolRun(updatedToolRun, toolRun.id, user) }
         } catch {
-          case e: Exception => logger.error(s"Unable to update ToolRun (${toolRun.id}): ${e.getMessage}")
+          case e: Exception =>
+            logger.error(s"Unable to update ToolRun (${toolRun.id}): ${e.getMessage}")
         }
 
         hist
       }
     }
+  }
+
+  def toolAndToolRun(
+    toolRunId: UUID,
+    user: User,
+    voidCache: Boolean = false
+  ): OptionT[Future, (Tool.WithRelated, ToolRun)] =
+    astCache.cachingOptionT(s"tool+run-$toolRunId-${user.id}") { implicit ec =>
+      for {
+        toolRun  <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
+        tool     <- OptionT(Tools.getTool(toolRun.tool, user))
+      } yield (tool, toolRun)
+    }
+
 
   /** Calculate all of the prerequisites to evaluation of an AST over a set of tile sources */
   def toolEvalRequirements(
     toolRunId: UUID,
     subNode: Option[UUID],
-    user: User
-  ): OptionT[Future, (ToolRun, Tool.WithRelated, MapAlgebraAST, EvalParams, ColorMap)] =
-    astCache.cachingOptionT(s"tool+run-$toolRunId-${subNode}-${user.id}") { implicit ec =>
+    user: User,
+    voidCache: Boolean = false
+  ): OptionT[Future, (MapAlgebraAST, EvalParams)] = {
+    val cacheKey = s"ast+params-$toolRunId-${subNode}-${user.id}"
+    if (voidCache) histogramCache.delete(cacheKey)
+    astCache.cachingOptionT(cacheKey) { implicit ec =>
       for {
-        toolRun  <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
-        tool     <- OptionT(Tools.getTool(toolRun.tool, user))
+        (tool, toolRun) <- toolAndToolRun(toolRunId, user)
         ast      <- OptionT.fromOption[Future]({
                       logger.debug(s"Parsing Tool AST with ${tool.definition}")
                       val entireAST = tool.definition.as[MapAlgebraAST].valueOr(throw _)
@@ -194,15 +218,34 @@ object LayerCache extends Config with LazyLogging {
                         parsedParams.metadata + (ast.id -> md)
                       )
                     })
-        metadata <- OptionT.fromOption[Future](params.metadata.get(nodeId))
-        cMap     <- OptionT.fromOption[Future](metadata.classMap.map(_.toColorMap)).orElse({
-                      for {
-                        hist  <- OptionT.fromOption[Future](metadata.histogram)
-                                   .orElse(LayerCache.modelLayerGlobalHistogram(ast, params, toolRun, user))
-                        cRamp <- OptionT.fromOption[Future](metadata.colorRamp)
-                                   .orElse(OptionT.pure[Future, ColorRamp](geotrellis.raster.render.ColorRamps.Viridis))
-                      } yield cRamp.toColorMap(hist)
-                    })
-      } yield (toolRun, tool, ast, params, cMap)
+      } yield (ast, params)
     }
+  }
+
+  /** Calculate all of the prerequisites to evaluation of an AST over a set of tile sources */
+  def toolRunColorMap(
+    toolRunId: UUID,
+    subNode: Option[UUID],
+    user: User,
+    voidCache: Boolean = false
+  ): OptionT[Future, ColorMap] = {
+    val cacheKey = s"colormap-$toolRunId-${subNode}-${user.id}"
+    if (voidCache) astCache.delete(cacheKey)
+    astCache.cachingOptionT(cacheKey) { implicit ec =>
+      for {
+        (tool, toolRun) <- LayerCache.toolAndToolRun(toolRunId, user, voidCache)
+        (ast, params)   <- LayerCache.toolEvalRequirements(toolRunId, subNode, user, voidCache)
+        nodeId          <- OptionT.pure[Future, UUID](subNode.getOrElse(ast.id))
+        metadata        <- OptionT.fromOption[Future](params.metadata.get(nodeId))
+        cmap            <- OptionT.fromOption[Future](metadata.classMap.map(_.toColorMap)).orElse({
+                             for {
+                               hist  <- OptionT.fromOption[Future](metadata.histogram)
+                                 .orElse(LayerCache.modelLayerGlobalHistogram(toolRunId, subNode, user, voidCache))
+                               cRamp <- OptionT.fromOption[Future](metadata.colorRamp)
+                                 .orElse(OptionT.pure[Future, ColorRamp](geotrellis.raster.render.ColorRamps.Viridis))
+                             } yield cRamp.toColorMap(hist)
+                           })
+      } yield cmap
+    }
+  }
 }
