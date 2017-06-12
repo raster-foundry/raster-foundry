@@ -45,6 +45,7 @@ class Router extends LazyLogging
             tileAuthenticateOption { _ =>
               toolRoutes.tms(TileSources.cachedTmsSource) ~
               toolRoutes.validate ~
+              toolRoutes.histogram ~
               toolRoutes.preflight
             }
           }

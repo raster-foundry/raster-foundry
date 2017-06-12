@@ -1,21 +1,24 @@
 package com.azavea.rf.tile.image
 
+import com.azavea.rf.tile._
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.ScenesToProjects
 import com.azavea.rf.datamodel.{MosaicDefinition, WhiteBalance}
 import com.azavea.rf.common.cache._
 
 import com.github.blemale.scaffeine.{ Cache => ScaffeineCache, Scaffeine }
-import com.azavea.rf.tile._
 import geotrellis.raster._
+import geotrellis.raster.io._
 import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.raster.GridBounds
 import geotrellis.proj4._
 import geotrellis.slick.Projected
 import geotrellis.vector.{Polygon, Extent}
+import geotrellis.vector.io._
 import cats.data._
 import cats.implicits._
+
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
@@ -85,6 +88,7 @@ object Mosaic {
         bbox.map { case Projected(poly, srid) =>
           poly.envelope.reproject(CRS.fromEpsgCode(srid), tlm.crs)
         }.getOrElse(tlm.layoutExtent)
+
       LayerCache.layerTileForExtent(id, sourceZoom, extent)
     }
   }
@@ -93,9 +97,7 @@ object Mosaic {
   def rawForExtent(projectId: UUID, zoom: Int, bbox: Option[Projected[Polygon]])(implicit database: Database): OptionT[Future, MultibandTile] = {
     mosaicDefinition(projectId, None).flatMap { mosaic =>
       val mayhapTiles: Seq[OptionT[Future, MultibandTile]] =
-        for (MosaicDefinition(sceneId, _) <- mosaic) yield
-          for (tile <- Mosaic.fetchRenderedExtent(sceneId, zoom, bbox)) yield
-            tile
+        for (MosaicDefinition(sceneId, _) <- mosaic) yield Mosaic.fetchRenderedExtent(sceneId, zoom, bbox)
 
       val futureMergeTile: Future[Option[MultibandTile]] =
         Future.sequence(mayhapTiles.map(_.value)).map { maybeTiles =>
@@ -114,9 +116,8 @@ object Mosaic {
   def raw(projectId: UUID, zoom: Int, col: Int, row: Int)(implicit database: Database): OptionT[Future, MultibandTile] = {
     mosaicDefinition(projectId, None).flatMap { mosaic =>
       val mayhapTiles: Seq[OptionT[Future, MultibandTile]] =
-        for (MosaicDefinition(sceneId, _) <- mosaic) yield
-          for (tile <- Mosaic.fetch(sceneId, zoom, col, row)) yield
-            tile
+        for (MosaicDefinition(sceneId, _) <- mosaic) yield Mosaic.fetch(sceneId, zoom, col, row)
+
 
       val futureMergeTile: Future[Option[MultibandTile]] =
         Future.sequence(mayhapTiles.map(_.value)).map { maybeTiles =>

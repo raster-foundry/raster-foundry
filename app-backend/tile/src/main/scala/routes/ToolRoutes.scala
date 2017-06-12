@@ -54,10 +54,13 @@ class ToolRoutes(implicit val database: Database) extends Authentication
   val preflight =
     (handleExceptions(interpreterExceptionHandler) & handleExceptions(circeDecodingError)) {
       pathPrefix(JavaUUID){ (toolRunId) =>
-        parameter('node.?) { node =>
+        parameter(
+          'node.?,
+          'voidCache.as[Boolean].?(false)
+        ) { (node, void) =>
           authenticateWithParameter { user =>
             val nodeId = node.map(UUID.fromString(_))
-            onSuccess(LayerCache.toolEvalRequirements(toolRunId, nodeId, user).value) { _ =>
+            onSuccess(LayerCache.toolEvalRequirements(toolRunId, nodeId, user, void).value) { _ =>
               complete { StatusCodes.NoContent }
             }
           }
@@ -79,6 +82,26 @@ class ToolRoutes(implicit val database: Database) extends Authentication
       }
     }
 
+  /** Endpoint used to get a [[ToolRun]] histogram */
+  val histogram =
+    (handleExceptions(interpreterExceptionHandler) & handleExceptions(circeDecodingError)) {
+      pathPrefix(JavaUUID){ (toolRunId) =>
+        pathPrefix("histogram") {
+          authenticateWithParameter { user =>
+            parameter(
+              'node.?,
+              'voidCache.as[Boolean].?(false)
+            ) { (node, void) =>
+              complete {
+                val nodeId = node.map(UUID.fromString(_))
+                LayerCache.modelLayerGlobalHistogram(toolRunId, nodeId, user, void).value
+              }
+            }
+          }
+        }
+      }
+    }
+
   /** The central endpoint for ModelLab; serves TMS tiles given a [[ToolRun]] specification */
   def tms(
     source: (RFMLRaster, Int, Int, Int) => Future[Option[Tile]]
@@ -95,15 +118,17 @@ class ToolRoutes(implicit val database: Database) extends Authentication
               complete {
                 val nodeId = node.map(UUID.fromString(_))
                 val responsePng = for {
-                  (toolRun, tool, ast, params, cMap) <- LayerCache.toolEvalRequirements(toolRunId, nodeId, user)
-                  tile    <- OptionT({
-                               val tms = Interpreter.interpretTMS(ast, params.sources, source)
-                               logger.debug(s"Attempting to retrieve TMS tile at $z/$x/$y")
-                               tms(z, x, y).map {
-                                 case Valid(op) => op.evaluateDouble
-                                 case Invalid(errors) => throw InterpreterException(errors)
-                               }
-                             })
+                  (toolRun, tool) <- LayerCache.toolAndToolRun(toolRunId, user)
+                  (ast, params)   <- LayerCache.toolEvalRequirements(toolRunId, nodeId, user)
+                  tile            <- OptionT({
+                                       val tms = Interpreter.interpretTMS(ast, params.sources, source)
+                                       logger.debug(s"Attempting to retrieve TMS tile at $z/$x/$y")
+                                       tms(z, x, y).map {
+                                         case Valid(op) => op.evaluateDouble
+                                         case Invalid(errors) => throw InterpreterException(errors)
+                                       }
+                                     })
+                  cMap            <- LayerCache.toolRunColorMap(toolRunId, nodeId, user)
                 } yield {
                   logger.debug(s"Tile successfully produced at $z/$x/$y")
                   tile.renderPng(cMap)
