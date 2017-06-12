@@ -27,6 +27,7 @@ import geotrellis.spark.tiling._
 import geotrellis.util.{FileRangeReader, RangeReader}
 import geotrellis.vector.ProjectedExtent
 
+import  com.amazonaws.services.s3.AmazonS3URI
 import com.amazonaws.services.s3.model.DeleteObjectsRequest.KeyVersion
 import com.typesafe.scalalogging.LazyLogging
 import org.apache.hadoop.conf.Configuration
@@ -185,6 +186,12 @@ object Ingest extends SparkJob with LazyLogging with Config {
     }
   }
 
+  def getSizeFromURI(uri: URI, s3Client: S3Client): Long = {
+    val amazonURI = new AmazonS3URI(uri)
+    val obj = s3Client.getObject(amazonURI.getBucket, amazonURI.getKey)
+    obj.getObjectMetadata.getContentLength
+  }
+
   /** We need to suppress this warning because there's a perfectly safe `head` call being
     *  made here. The compiler just isn't smart enough to figure that out
     *
@@ -198,6 +205,12 @@ object Ingest extends SparkJob with LazyLogging with Config {
     val ndPattern = layer.output.ndPattern
     val bandCount: Int = layer.sources.map(_.bandMaps.map(_.target).max).max
     val layoutScheme = ZoomedLayoutScheme(destCRS, tileSize)
+    val s3Client = S3Client.DEFAULT
+    val repartitionSize =
+      layer.sources.map { s =>
+        // Convert partitionsSize from megabytes to bytes
+        math.max(params.partitionsPerFile, getSizeFromURI(s.uri, s3Client) / (params.partitionsSize * 1024 * 1024))
+      }.sum.toInt
 
     // Read source tiles and reproject them to desired CRS
     val sourceTiles: RDD[((ProjectedExtent, Int), Tile)] =
@@ -211,7 +224,7 @@ object Ingest extends SparkJob with LazyLogging with Config {
           gridBoundChips(geotiff.tile.gridBounds, params.windowSize, params.windowSize)
             .map { chipBounds => (source, chipBounds) }
         })
-        .repartition(layer.sources.length * params.partitionsPerFile)
+        .repartition(repartitionSize)
         .flatMap { case (source, chipBounds) =>
           val geotiff = MultibandGeoTiff(
             byteReader = uriRangReader(source.uri),
@@ -323,6 +336,7 @@ object Ingest extends SparkJob with LazyLogging with Config {
       )
     } catch {
       case t: Throwable =>
+        logger.error(t.stackTraceString)
         putObject(
           params.statusBucket,
           ingestDefinition.id.toString,
