@@ -11,6 +11,7 @@ object CommandLine {
     overwrite: Boolean = false,
     windowSize: Int = 1024,
     partitionsPerFile: Int = 8,
+    partitionsSize: Int = 50, // partition size in mb to calculate repartitioning
     statusBucket: String = "rasterfoundry-dataproc-ingest-status-us-east-1"
   )
 
@@ -46,7 +47,11 @@ object CommandLine {
 
     opt[Int]('p',"partitionsPerFile")
       .action( (s, conf) => conf.copy(partitionsPerFile = s) )
-      .text("Number of RDD partitions to create per each source file")
+      .text("Min number of RDD partitions to create per each source file")
+
+    opt[Int]('z',"partitionsSize")
+      .action( (s, conf) => conf.copy(partitionsSize = s) )
+      .text("Partition size to calculate repartitioning (object size / partition size)")
 
     opt[String]('b',"statusBucket")
       .action( (s, conf) => conf.copy(statusBucket = s) )
