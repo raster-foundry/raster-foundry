@@ -9,6 +9,8 @@ if ["up", "provision", "status"].include?(ARGV.first)
   AnsibleGalaxyHelper.install_dependent_roles("deployment/ansible")
 end
 
+ANSIBLE_VERSION = "2.3.1.0"
+
 Vagrant.configure(2) do |config|
   config.vm.box = "ubuntu/trusty64"
 
@@ -54,11 +56,11 @@ Vagrant.configure(2) do |config|
 
   config.vm.provision "shell" do |s|
     s.inline = <<-SHELL
-      if [ ! -x /usr/local/bin/ansible ]; then
+      if [ ! -x /usr/local/bin/ansible ] || ! ansible --version | grep #{ANSIBLE_VERSION}; then
         sudo apt-get update -qq
         sudo apt-get install python-pip python-dev -y
         sudo pip install paramiko==1.16.0
-        sudo pip install ansible==2.0.2.0
+        sudo pip install ansible==#{ANSIBLE_VERSION}
       fi
 
       cd /opt/raster-foundry/deployment/ansible && \
