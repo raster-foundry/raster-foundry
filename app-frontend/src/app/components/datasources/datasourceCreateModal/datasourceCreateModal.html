@@ -1,0 +1,77 @@
+<div class="modal-scrollable-body modal-sidebar-header">
+  <div class="modal-header">
+    <button type="button" class="close" aria-label="Close" ng-click="$ctrl.dismiss()">
+      <span aria-hidden="true">&times;</span>
+    </button>
+    <h4 class="modal-title">
+      Create new datasource
+    </h4>
+    <p>Organize your imagery by its source and define color composites.</p>
+  </div>
+  <!-- Body controls -->
+  <!-- NAME step (step 1) -->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('NAME')">
+    <div class="content">
+      <h3 class="modal-content-header">Name your new datasource</h3>
+      <form name="form">
+        <div class="form-group all-in-one">
+          <label for="name"><i class="icon-database"></i></label>
+          <input id="name" name="name" type="text" class="form-control" required=""
+                placeholder="New datasource name" ng-model="$ctrl.datasourceBuffer.name">
+        </div>
+        <div class="form-group color-danger"
+            ng-if="$ctrl.showError && form.name.$error.required"
+        >
+            Please provide a name for this datasource.
+        </div>
+        <div class="form-group color-danger"
+          ng-if="$ctrl.showError && !form.name.$error"
+        >
+          There was an error creating the datasource
+        </div>
+      </form>
+    </div>
+  </div>
+  <!-- SUCCESS step (step 2) -->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('SUCCESS')">
+    <div class="content">
+      <h3 class="modal-content-header">Success!</h3>
+      <p>You have successfully created a new datasource. The next time you import imagery, you
+      will be able to assign it to this datasource.
+      </p>
+      <p>Now you can:</p>
+      <ul>
+        <li>
+          <a ui-sref="imports.datasources.detail.colorComposites({
+            datasourceid: $ctrl.datasource.id
+          })"
+            ng-click="$ctrl.dismiss()">Edit your datasource's color composites</a>
+        </li>
+        <li>
+          <a ui-sref="imports.datasources.detail({
+            datasourceid: $ctrl.datasource.id
+            })"
+            ng-click="$ctrl.dismiss()">Import imagery from this datasource</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <!-- Footer -->
+  <!-- NAME -->
+  <div class="modal-footer" ng-if="$ctrl.currentStepIs('NAME')">
+    <button type="button" class="btn pull-left" ng-click="$ctrl.dismiss()">
+      Cancel
+    </button>
+    <button type="button" class="btn btn-primary"
+            ng-click="$ctrl.handleCreate()"
+            ng-disabled="$ctrl.isCreatingDatasource">
+      Create
+    </button>
+  </div>
+  <!-- SUCCESS -->
+  <div class="modal-footer" ng-if="$ctrl.currentStepIs('SUCCESS')">
+    <button type="button" class="btn btn-primary" ng-click="$ctrl.dismiss()">
+      Done
+    </button>
+  </div>
+</div>
