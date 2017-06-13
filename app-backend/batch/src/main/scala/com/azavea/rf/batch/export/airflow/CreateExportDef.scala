@@ -1,5 +1,6 @@
 package com.azavea.rf.batch.export.airflow
 
+import cats._
 import cats.data._
 import cats.implicits._
 
@@ -24,8 +25,8 @@ case class CreateExportDef(exportId: UUID, region: Option[String] = None)(implic
 
   /** Get S3 client per each call */
   def s3Client = S3(region = region)
-    
-  protected def writeExportDefToS3(exportDef: ExportDefinition) = {
+
+  protected def writeExportDefToS3(exportDef: ExportDefinition): Future[Option[String]] = {
     logger.info(s"Uploading export definition ${exportDef.id.toString} to S3 at ${exportDefConfig.bucketName}")
     val uri = s"rasterfoundry-development-data-us-east-1/${exportDefConfig.bucketName}"
     val future = Future[Option[String]] {
@@ -82,44 +83,59 @@ case class CreateExportDef(exportId: UUID, region: Option[String] = None)(implic
   def updateExportStatus(export: Export, status: ExportStatus): Export =
     export.copy(exportStatus = status)
 
+  /** Borrowed from Cats.
+    * TODO: Use /their/ implementation once cats 1.0.0 comes out.
+    */
+  private def fromOptionF[F[_], E, A](fopt: F[Option[A]], ifNone: => E)(implicit F: Functor[F]): EitherT[F, E, A] =
+    EitherT(F.map(fopt)(opt => Either.fromOption(opt, ifNone)))
+
   def run: Unit = {
     logger.info("Starting export process...")
 
     val startEmr = (ed: ExportDefinition, edu: String) => Future { startExportEmrJob(ed, edu) }
 
     val createExportDef = for {
-      user: User <- OptionT(Users.getUserById(airflowUser))
-      export: Export <- OptionT(database.db.run(Exports.getExport(exportId, user)))
-      exportDef: ExportDefinition <- OptionT(Exports.getExportDefinition(export, user))
-      exportDefUri: String <- OptionT(writeExportDefToS3(exportDef))
-      exportStatus: Int <- OptionT.liftF(
-        database.db.run(
-          Exports.updateExport(
-            updateExportStatus(export, ExportStatus.Exporting),
-            exportId,
-            user)))
-      emrJobStatus <- OptionT.liftF(
-        startEmr(exportDef, exportDefUri)
-          .map(result => {
-            result.getStepIds.asScala.headOption foreach { stepId =>
-              println(s"StepId: $stepId")
-            }
-            export
-          })
-          .recover {
+      user <- fromOptionF[Future, String, User](Users.getUserById(airflowUser), "DB: Failed to fetch User.")
+      export <- fromOptionF[Future, String, Export](
+        database.db.run(Exports.getExport(exportId, user)), "DB: Failed to fetch Export."
+      )
+      exportDef <- fromOptionF[Future, String, ExportDefinition](
+        Exports.getExportDefinition(export, user), "DB: Failed to fetch ExportDefinition."
+      )
+      exportDefUri <- fromOptionF[Future, String, String](
+        writeExportDefToS3(exportDef), s"Failed to write ExportDefinition to S3:\n${exportDef.asJson.spaces2}"
+      )
+      exportStatus <- EitherT.right[Future, String, Int](database.db.run(Exports.updateExport(
+        updateExportStatus(export, ExportStatus.Exporting),
+        exportId,
+        user
+      )))
+      emrJobStatus <- EitherT.right[Future, String, Unit](
+        startEmr(exportDef, exportDefUri).map({ result =>
+          result.getStepIds.asScala.headOption.foreach(stepId => println(s"StepId: $stepId"))
+          export
+        })
+          .recover({
             case e: Throwable => {
               logger.error(s"An error occurred during export ${export.id}. Skipping...")
               logger.error(e.stackTraceString)
               sendError(e)
               updateExportStatus(export, ExportStatus.Failed)
             }
-          }
-          .flatMap(result => {
-            database.db.run(Exports.updateExport(result, exportId, user))
-          }))
+          })
+          .flatMap({ result =>
+            database.db.run(Exports.updateExport(result, exportId, user)).map(_ => ())
+          })
+      )
     } yield emrJobStatus
 
     createExportDef.value.onComplete {
+      case Success(Left(e)) => {
+        logger.error(e)
+        sendError(e)
+        stop
+        sys.exit(1)
+      }
       case Success(_) => {
         logger.info("Export job sent to cluster and status updated")
         stop
@@ -146,7 +162,7 @@ object CreateExportDef {
       case _ =>
         throw new IllegalArgumentException("Argument could not be parsed to UUID")
     }
-  
+
     job.run
   }
 }
