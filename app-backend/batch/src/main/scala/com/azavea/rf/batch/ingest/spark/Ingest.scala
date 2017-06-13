@@ -5,6 +5,7 @@ import io.circe.syntax._
 
 import com.azavea.rf.batch._
 import com.azavea.rf.batch.ingest._
+import com.azavea.rf.batch.ingest.json._
 import com.azavea.rf.batch.ingest.model._
 import com.azavea.rf.batch.util._
 import com.azavea.rf.batch.util.conf.Config
@@ -27,7 +28,7 @@ import geotrellis.spark.tiling._
 import geotrellis.util.{FileRangeReader, RangeReader}
 import geotrellis.vector.ProjectedExtent
 
-import  com.amazonaws.services.s3.AmazonS3URI
+import com.amazonaws.services.s3.AmazonS3URI
 import com.amazonaws.services.s3.model.DeleteObjectsRequest.KeyVersion
 import com.typesafe.scalalogging.LazyLogging
 import org.apache.hadoop.conf.Configuration
@@ -312,25 +313,22 @@ object Ingest extends SparkJob with LazyLogging with Config {
       case Right(r) => r
       case _ => throw new Exception("Incorrect IngestDefinition JSON")
     }
-    val sceneId = {
-      UUID.fromString(params.sceneId)
-      params.sceneId
-    }
-    val statusBucket = params.statusBucket
+    val sceneId = UUID.fromString(params.sceneId)
 
     implicit val sc = new SparkContext(conf)
 
-    implicit def asS3Payload(status: IngestStatus): String =
-      Map("sceneId" -> sceneId, "ingestStatus" -> status.toString).asJson.noSpaces
+    implicit def asS3Payload(status: IngestStatus): String = S3IngestStatus(sceneId, status).asJson.noSpaces
 
     try {
-      ingestDefinition.layers.foreach(ingestLayer(params))
       if (params.testRun) { ingestDefinition.layers.foreach(Validation.validateCatalogEntry) }
-      putObject(
-        statusBucket,
-        ingestDefinition.id.toString,
-        IngestStatus.Ingested
-      )
+      else {
+        ingestDefinition.layers.foreach(ingestLayer(params))
+        putObject(
+          params.statusBucket,
+          ingestDefinition.id.toString,
+          IngestStatus.Ingested
+        )
+      }
     } catch {
       case t: Throwable =>
         logger.error(t.stackTraceString)
