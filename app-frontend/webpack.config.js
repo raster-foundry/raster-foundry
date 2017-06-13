@@ -4,11 +4,15 @@
           no-console: 0
  */
 
-const _ = require('lodash');
+const fs = require('fs');
+const merge = require('webpack-merge');
+
 const configs = {
 
     // global section
     global: require(__dirname + '/config/webpack/global'),
+    overrides: fs.existsSync(__dirname + '/config/webpack/overrides.js') ?
+        require(__dirname + '/config/webpack/overrides') : null,
 
     // config by enviroments
     production: require(__dirname + '/config/webpack/environments/production'),
@@ -24,7 +28,8 @@ let load = function () {
     console.log('Current Environment: ', ENV);
 
     // load config file by environment
-    return configs && _.merge(
+    return configs && merge(
+        configs.overrides ? configs.overrides(__dirname) : null,
         configs.global(__dirname),
         configs[ENV](__dirname)
     );

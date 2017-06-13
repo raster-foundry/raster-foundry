@@ -112,6 +112,7 @@ Frontend theming should only be used if you intend on forking and white labeling
  - Edit `app-frontend/src/assets/styles/sass/app.scss` and uncomment the two blocks of code which reference theme files. This will turn the theme files _on_.
  - All theme overrides will then be written inside of `app-frontend/src/assets/styles/sass/theme`
      - app-wide variables for changing fonts, colors, etc. are located in `app-frontend/src/assets/styles/sass/theme/settings`.
+     - app-wide variables for changing build options, basemaps, and app name are located in `app-frontend/config/webpack/overrides.js`. To start, copy the template file located in the same directory. Variables currently available for configuration are pre-populated at the top of the file.
      - `_core.scss` should contain the bulk of style overrides which `/settings/` does **not** cover.
      - **Tip:** You can mimic the main application `scss` structure inside of `/theme/` and `@import` the files into `_core.scss`
  - WIP: we are still working out the kinks for icon fonts and branding assets.

@@ -4343,7 +4343,7 @@ lodash@^4.0.0, lodash@^4.0.1, lodash@^4.2.0, lodash@^4.3.0, lodash@^4.5.0, lodas
   version "4.5.1"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.5.1.tgz#80e8a074ca5f3893a6b1c10b2a636492d710c316"
 
-lodash@^4.17.2:
+lodash@^4.17.2, lodash@^4.17.4:
   version "4.17.4"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.4.tgz#78203a4d1c328ae1d86dca6460e369b57f4055ae"
 
@@ -7139,6 +7139,12 @@ webpack-dev-server@1.16.2:
 webpack-fail-plugin@^1.0.6:
   version "1.0.6"
   resolved "https://registry.yarnpkg.com/webpack-fail-plugin/-/webpack-fail-plugin-1.0.6.tgz#a135ee070a258548837f921d452004c695889ee7"
+
+webpack-merge@4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/webpack-merge/-/webpack-merge-4.1.0.tgz#6ad72223b3e0b837e531e4597c199f909361511e"
+  dependencies:
+    lodash "^4.17.4"
 
 webpack@~1.12.12:
   version "1.12.15"

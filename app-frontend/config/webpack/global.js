@@ -17,6 +17,29 @@ const DEVELOPMENT = NODE_ENV === 'production' ? false : true;
 const stylesLoader = 'css-loader?sourceMap!postcss-loader!sass-loader?' +
         'outputStyle=expanded&sourceMap=true&sourceMapContents=true';
 
+const basemaps = JSON.stringify({
+    layers: {
+        Light: {
+            url: 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+            properties: {
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">' +
+                    'OpenStreetMap</a> &copy;<a href="http://cartodb.com/attributions">CartoDB</a>',
+                maxZoom: 30
+            },
+            default: true
+        },
+        Dark: {
+            url: 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png',
+            properties: {
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">' +
+                    'OpenStreetMap</a> &copy;<a href="http://cartodb.com/attributions">CartoDB</a>',
+                maxZoom: 30
+            }
+        }
+    },
+    default: 'Light'
+});
+
 module.exports = function (_path) {
     let rootAssetPath = _path + 'src';
 
@@ -202,6 +225,12 @@ module.exports = function (_path) {
                 template: path.join(_path, 'src', 'tpl-index.html'),
                 heapLoad: DEVELOPMENT ? '2743344218' : '3505855839',
                 development: DEVELOPMENT
+            }),
+            new webpack.DefinePlugin({
+                'BUILDCONFIG': {
+                    APP_NAME: '\'RasterFoundry\'',
+                    BASEMAPS: basemaps
+                }
             })
         ]
     };

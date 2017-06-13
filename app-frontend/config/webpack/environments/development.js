@@ -1,7 +1,6 @@
 'use strict';
 /* globals module process */
-/* no-console: 0
- */
+/* no-console: 0 */
 
 
 const webpack = require('webpack');

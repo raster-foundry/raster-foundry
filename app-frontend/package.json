@@ -119,6 +119,7 @@
     "url-loader": "~0.5.6",
     "webpack": "~1.12.12",
     "webpack-dev-server": "1.16.2",
+    "webpack-merge": "4.1.0",
     "yarn": "^0.24.3"
   },
   "engines": {
