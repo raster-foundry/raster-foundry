@@ -37,9 +37,6 @@ import org.apache.spark.rdd._
 import spray.json._
 import spray.json.DefaultJsonProtocol._
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
-
 import java.io.File
 import java.net.URI
 import java.util.UUID

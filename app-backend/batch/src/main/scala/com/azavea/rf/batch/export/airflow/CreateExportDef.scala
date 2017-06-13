@@ -1,18 +1,11 @@
 package com.azavea.rf.batch.export.airflow
 
-import java.util.UUID
-
-import org.xbill.DNS._
-
-import scala.collection.JavaConverters._
-import scala.concurrent.Future
-import scala.util._
-
 import cats.data._
 import cats.implicits._
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+
+import org.xbill.DNS._
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClientBuilder
-import com.amazonaws.services.elasticmapreduce.model.{AddJobFlowStepsRequest, StepConfig, HadoopJarStepConfig}
+import com.amazonaws.services.elasticmapreduce.model.{AddJobFlowStepsRequest, AddJobFlowStepsResult, HadoopJarStepConfig, StepConfig}
 import io.circe.syntax._
 
 import com.azavea.rf.batch.Job
@@ -20,6 +13,11 @@ import com.azavea.rf.batch.util._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.tables._
 import com.azavea.rf.datamodel._
+
+import java.util.UUID
+import scala.collection.JavaConverters._
+import scala.concurrent.Future
+import scala.util._
 
 case class CreateExportDef(exportId: UUID, region: Option[String] = None)(implicit val database: DB) extends Job {
   val name = CreateExportDef.name
@@ -55,13 +53,18 @@ case class CreateExportDef(exportId: UUID, region: Option[String] = None)(implic
     clusterId
   }
 
-  protected def startExportEmrJob(exportDef: ExportDefinition, exportDefUri: String): Unit = {
+  protected def startExportEmrJob(exportDef: ExportDefinition, exportDefUri: String): AddJobFlowStepsResult = {
     val jarStep = new HadoopJarStepConfig()
     jarStep.setJar(jarPath)
-    jarStep.setArgs(List("/usr/bin/spark-submit", "--master", "yarn", "--deploy-mode",
-          "cluster", "--class", exportDefConfig.sparkClass, "--driver-memory", exportDefConfig.sparkMemory,
-          s"${exportDefConfig.sparkJarS3}/${exportDefConfig.sparkJar}",
-          "-j", s"s3://${exportDefUri}/${exportDef.id}.json").asJava)
+    jarStep.setArgs(
+      List(
+        "/usr/bin/spark-submit", "--master", "yarn", "--deploy-mode",
+        "cluster", "--conf", "spark.yarn.submit.waitAppCompletion=false",
+        "--class", exportDefConfig.sparkClass, "--driver-memory", exportDefConfig.sparkMemory,
+        s"${exportDefConfig.sparkJarS3}/${exportDefConfig.sparkJar}",
+        "-j", s"s3://${exportDefUri}/${exportDef.id}.json"
+      ).asJava
+    )
 
     val steps = new StepConfig()
     steps.setName(s"export-${exportDef.id}")
@@ -98,7 +101,10 @@ case class CreateExportDef(exportId: UUID, region: Option[String] = None)(implic
       emrJobStatus <- OptionT.liftF(
         startEmr(exportDef, exportDefUri)
           .map(result => {
-            updateExportStatus(export, ExportStatus.Exported)
+            result.getStepIds.asScala.headOption foreach { stepId =>
+              println(s"StepId: $stepId")
+            }
+            export
           })
           .recover {
             case e: Throwable => {
@@ -119,7 +125,7 @@ case class CreateExportDef(exportId: UUID, region: Option[String] = None)(implic
         stop
       }
       case Failure(e) => {
-        e.printStackTrace()
+        logger.error(e.stackTraceString)
         sendError(e)
         stop
         sys.exit(1)
