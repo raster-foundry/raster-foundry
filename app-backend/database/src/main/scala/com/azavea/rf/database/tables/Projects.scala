@@ -276,12 +276,38 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     * @param user      Results will be limited to user's organization
     */
   def deleteProject(projectId: UUID, user: User)(implicit database: DB): Future[Int] = {
+    for {
+      projectAois <- database.db.run {
+        AoisToProjects
+          .filter(_.projectId === projectId)
+          .map(_.aoiId)
+          .result
+      }
 
-    database.db.run {
-      Projects
-        .filterToSharedOrganizationIfNotInRoot(user)
-        .filter(_.id === projectId)
-        .delete
+      deleteProjectAois <- Future.sequence(projectAois.map { aoi =>
+        database.db.run {
+          AoisToProjects
+            .filter(_.aoiId === aoi)
+            .delete
+        }
+      })
+
+      deleteAois <- Future.sequence(projectAois.map { aoi =>
+        database.db.run {
+          AOIs.filterToSharedOrganizationIfNotInRoot(user)
+            .filter(_.id === aoi )
+            .delete
+        }
+      })
+
+      deleteProject <- database.db.run {
+        Projects
+          .filterToSharedOrganizationIfNotInRoot(user)
+          .filter(_.id === projectId)
+          .delete
+      }
+    } yield {
+      deleteProject
     }
   }
 
