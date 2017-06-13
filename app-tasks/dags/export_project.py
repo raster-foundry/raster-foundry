@@ -2,13 +2,15 @@ from __future__ import print_function
 import datetime
 import logging
 import os
+import time
 
 import subprocess
+import dns.resolver
+import boto3
 
 from airflow.models import DAG
 from airflow.operators import PythonOperator
 from airflow.exceptions import AirflowException
-
 from rf.utils.exception_reporting import wrap_rollbar
 
 rf_logger = logging.getLogger('rf')
@@ -43,13 +45,14 @@ def get_cluster_id():
     return cluster_id.to_text().strip('"')
 
 @wrap_rollbar
-def start_export(export_id):
+def start_export(export_id, xcom_client):
     bash_cmd = 'java -cp /opt/raster-foundry/jars/rf-batch.jar com.azavea.rf.batch.Main create_export_def {0}'.format(export_id)
     cmd = subprocess.Popen(bash_cmd, shell=True, stdout=subprocess.PIPE)
-    step_id = ''
+    step_id = ''    
     for line in cmd.stdout:
+        logger.info(line.strip())
         if 'StepId:' in line:            
-            step_id = line.replace('StepId:', '').strip()        
+            step_id = line.replace('StepId:', '').strip()
     
     xcom_client.xcom_push(key='export_id', value=export_id)
     logger.info('Launched export creation process, watching for updates...')
@@ -94,7 +97,9 @@ def wait_for_status_op(*args, **kwargs):
 
     bash_cmd = 'java -cp /opt/raster-foundry/jars/rf-batch.jar com.azavea.rf.batch.Main check_export_status {0}'.format(export_id)
     logger.info('Updating %s\'s export status after successful EMR status', export_id)
-    subprocess.call([bash_cmd], shell=True)
+    cmd = subprocess.Popen(bash_cmd, shell=True, stdout=subprocess.PIPE)
+    for line in cmd.stdout:
+        logger.info(line.strip())
 
 # PythonOperators
 @wrap_rollbar
@@ -104,8 +109,8 @@ def create_export_definition_op(*args, **kwargs):
     conf = kwargs['dag_run'].conf
     export_id = conf['exportId']
 
-    xcom_client.xcom_push(key='export_def_id',value=export_id)
-    start_export(export_id)
+    xcom_client.xcom_push(key='export_id',value=export_id)
+    start_export(export_id, xcom_client)
 
 # TASKS
 create_export_definition_task = PythonOperator(

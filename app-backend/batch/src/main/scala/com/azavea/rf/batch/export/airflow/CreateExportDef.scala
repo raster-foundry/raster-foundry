@@ -105,7 +105,6 @@ case class CreateExportDef(exportId: UUID, region: Option[String] = None)(implic
               println(s"StepId: $stepId")
             }
             export
-            // updateExportStatus(export, ExportStatus.Exported)
           })
           .recover {
             case e: Throwable => {
