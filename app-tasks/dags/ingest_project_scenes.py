@@ -35,7 +35,8 @@ dag = DAG(
     dag_id='ingest_scene',
     default_args=default_args,
     schedule_interval=None,
-    concurrency=int(os.getenv('AIRFLOW_DAG_CONCURRENCY', 24))
+    concurrency=int(os.getenv('AIRFLOW_DAG_CONCURRENCY', 24)),
+    dagrun_timeout=datetime.timedelta(minutes=60)
 )
 
 
