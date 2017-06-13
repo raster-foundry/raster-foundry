@@ -6,7 +6,8 @@ import scala.util._
 
 object CommandLine {
   case class Params(
-    jobDefinition: URI = new URI("")
+    jobDefinition: URI = new URI(""),
+    statusBucket: String = "rasterfoundry-dataproc-export-status-us-east-1"
   )
 
   // Used for reading text in as URI
@@ -23,5 +24,9 @@ object CommandLine {
       .action((jd, conf) => conf.copy(jobDefinition = jd))
       .text("The location of the json which defines an ingest job")
       .required
+
+    opt[String]('b',"statusBucket")
+      .action( (s, conf) => conf.copy(statusBucket = s) )
+      .text("S3 bucket to write status jsons to")
   }
 }

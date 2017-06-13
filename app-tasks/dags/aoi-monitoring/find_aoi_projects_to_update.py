@@ -55,6 +55,7 @@ def find_aoi_projects_to_update():
     cmd = subprocess.Popen(bash_cmd, shell=True, stdout=subprocess.PIPE)
     projects = ['']
     for line in cmd.stdout:
+        logger.info(line.strip())
         if 'ProjectIds:' in line:
             projects = [p.strip() for p in line.replace('ProjectIds:', '').strip().split(',')]
 
