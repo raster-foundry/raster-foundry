@@ -1,9 +1,9 @@
 export default (app) => {
     class ToolService {
-        constructor($resource, $http, userService) {
+        constructor($resource, $http, authService) {
             'ngInject';
             this.$http = $http;
-            this.userService = userService;
+            this.authService = authService;
             this.Tool = $resource(
                 '/api/tools/:id/', {
                     id: '@properties.id'
@@ -42,7 +42,7 @@ export default (app) => {
         }
 
         createToolRun(toolRun) {
-            return this.userService.getCurrentUser().then(
+            return this.authService.getCurrentUser().then(
                 (user) => {
                     return this.ToolRun.create(Object.assign(toolRun, {
                         organizationId: user.organizationId

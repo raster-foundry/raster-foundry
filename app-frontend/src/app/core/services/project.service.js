@@ -2,12 +2,14 @@
 
 export default (app) => {
     class ProjectService {
-        constructor($resource, $location, tokenService, userService, statusService,
-                    $http, $q, APP_CONFIG) {
+        constructor(
+            $resource, $location, $http, $q, APP_CONFIG,
+            tokenService, authService, statusService
+        ) {
             'ngInject';
 
             this.tokenService = tokenService;
-            this.userService = userService;
+            this.authService = authService;
             this.statusService = statusService;
             this.$http = $http;
             this.$location = $location;
@@ -106,7 +108,7 @@ export default (app) => {
         }
 
         export(projectId, zoom) {
-            return this.userService.getCurrentUser().then(
+            return this.authService.getCurrentUser().then(
                 (user) => {
                     return this.Project.export({
                         organizationId: user.organizationId,
@@ -126,7 +128,7 @@ export default (app) => {
         }
 
         createProject(name, params = {}) {
-            return this.userService.getCurrentUser().then(
+            return this.authService.getCurrentUser().then(
                 (user) => {
                     return this.Project.create({
                         organizationId: user.organizationId,
@@ -286,7 +288,7 @@ export default (app) => {
 
         createAOI(project, params) {
             return this.$q((resolve, reject) => {
-                this.userService.getCurrentUser().then(user => {
+                this.authService.getCurrentUser().then(user => {
                     const paramsWithOrg =
                           Object.assign(params, { organizationId: user.organizationId });
                     this.Project.createAOI(

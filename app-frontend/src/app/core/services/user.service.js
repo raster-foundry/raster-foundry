@@ -4,18 +4,7 @@ export default (app) => {
             'ngInject';
             this.authService = authService;
             this.localStorage = localStorage;
-            this.User = $resource('/api/users/:id', {
-                id: '@id'
-            }, {
-                query: {
-                    method: 'GET',
-                    cache: false
-                },
-                get: {
-                    method: 'GET',
-                    cache: false
-                }
-            });
+
             this.UserMetadata = $resource(
                 'https://' + APP_CONFIG.auth0Domain +
                     '/api/v2/users/:userid',
@@ -30,11 +19,6 @@ export default (app) => {
                         cache: false
                     }
                 });
-        }
-
-        getCurrentUser() {
-            let id = this.authService.profile().user_id;
-            return this.User.get({id: id}).$promise;
         }
 
         updateUserMetadata(userdata) {
