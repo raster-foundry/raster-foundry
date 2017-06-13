@@ -1,7 +1,8 @@
 import Map from 'es6-map';
+import Set from 'es6-set';
 /* eslint no-unused-vars: 0 */
 /* eslint spaced-comment: 0 */
-/* globals BUILDCONFIG _ */
+/* globals BUILDCONFIG _ console */
 
 class MapWrapper {
     // MapWrapper is a bare es6 class, so does not use angular injections
@@ -24,19 +25,32 @@ class MapWrapper {
         this._geoJsonMap = new Map();
         this._geoJsonLayerGroup = L.geoJSON().addTo(this.map);
         this._layerMap = new Map();
+        this._hiddenLayerMap = new Map();
         this._layerGroup = L.featureGroup().addTo(this.map);
+        this._toggleableLayers = new Set();
         this.persistedThumbnails = new Map();
         this.disableFootprints = false;
-        this.basemapsAdded = false;
 
-        this._controls = L.control({position: 'topright'});
-        this._controls.onAdd = function () {
-            let div = L.DomUtil.create('div', 'map-control-panel');
+        this.map.createPane('basemap').style.zIndex = 199;
+        this.baseMaps = {};
 
-            div.innerHTML =
-                '<button class="btn btn-default"><i class="icon-resize-full"></i></button>';
-            return div;
-        };
+        let basemapLayers = BUILDCONFIG.BASEMAPS.layers;
+        Object.keys(basemapLayers).forEach((basemapName) => {
+            let basemaps = basemapLayers[basemapName];
+            let basemapOptions = Object.assign(
+                {pane: 'basemap'},
+                basemaps.properties
+            );
+            this.baseMaps[basemapName] = L.tileLayer(
+                basemaps.url,
+                basemapOptions
+            );
+        });
+        let defaultBasemap = BUILDCONFIG.BASEMAPS.default ?
+            BUILDCONFIG.BASEMAPS.default :
+            this.baseMaps[Object.keys(this.baseMaps)[0]];
+        this.setBasemap(defaultBasemap);
+
         this.changeOptions(this.options);
     }
 
@@ -49,24 +63,8 @@ class MapWrapper {
             this.map.boxZoom,
             this.map.keyboard
         ];
-        let baseMaps = {};
-        let basemapLayers = BUILDCONFIG.BASEMAPS.layers;
-        Object.keys(basemapLayers).forEach((basemapName) => {
-            let basemap = basemapLayers[basemapName];
-            baseMaps[basemapName] = L.tileLayer(basemap.url, basemap.properties);
-        });
-        let defaultBasemap;
-        if (BUILDCONFIG.BASEMAPS.default) {
-            defaultBasemap = baseMaps[BUILDCONFIG.BASEMAPS.default];
-        } else {
-            defaultBasemap = baseMaps[Object.keys(baseMaps)[0]];
-        }
-        if (!this.basemapsAdded && defaultBasemap) {
-            defaultBasemap.addTo(this.map);
-            this.basemapsAdded = true;
-        }
+
         if (options && options.static) {
-            this._controls.remove();
             mapInteractionOptions.map((option) => {
                 option.disable();
             });
@@ -74,26 +72,6 @@ class MapWrapper {
             mapInteractionOptions.map((option) => {
                 option.enable();
             });
-
-            // Add zoom control to map's controls
-            if (!this.controlsAdded) {
-                this.controlsAdded = true;
-                let zoomControl = L.control.zoom({position: 'topright'});
-                this._controls.addTo(this.map);
-
-                // Add basemap controls to map's controls
-                let baseMapControl = L.control.layers(baseMaps, {});
-                baseMapControl.addTo(this.map);
-                zoomControl.addTo(this.map);
-
-                // eslint-disable-next-line no-underscore-dangle
-                let mapContainer = $(this.map._container);
-                let $zoom = mapContainer.find('.leaflet-control-zoom');
-                let $lpicker = mapContainer.find('.leaflet-control-layers');
-                let $mpc = mapContainer.find('.map-control-panel');
-                $mpc.prepend($zoom);
-                $mpc.append($lpicker);
-            }
         }
 
         if (options && options.fitToGeojson) {
@@ -117,6 +95,16 @@ class MapWrapper {
             this.off(this._followResizeListener);
             delete this._followLayerAddListener;
             delete this._followResizeListener;
+        }
+    }
+
+    setBasemap(basemapKey) {
+        if (this.currentBasemap !== basemapKey) {
+            if (this.currentBasemap) {
+                this.map.removeLayer(this.baseMaps[this.currentBasemap]);
+            }
+            this.baseMaps[basemapKey].addTo(this.map);
+            this.currentBasemap = basemapKey;
         }
     }
 
@@ -262,12 +250,37 @@ class MapWrapper {
         return this;
     }
 
+    hideGeojson() {
+        if (!this.geojsonHidden) {
+            this._geoJsonLayerGroup.removeFrom(this.map);
+            this.geojsonHidden = true;
+        }
+    }
+
+    showGeojson() {
+        if (this.geojsonHidden) {
+            this._geoJsonLayerGroup.addTo(this.map);
+            this.geojsonHidden = false;
+        }
+    }
+
+    getGeojsonVisibility() {
+        return this.geojsonHidden ? 'hidden' : 'visible';
+    }
+
     /** Add a layer to the set of layers identified by an id
      * @param {string} id layer id
      * @param {L.Layer} layer layer to add
+     * @param {Boolean?} showToggle show a toggle in the layer picker
      * @returns {this} this
      */
-    addLayer(id, layer) {
+    addLayer(id, layer, showToggle) {
+        if (showToggle) {
+            this._toggleableLayers.add(id);
+        } else if (showToggle === false) {
+            this._toggleableLayers.delete(id);
+        }
+
         this._layerGroup.addLayer(layer);
         let layerList = this.getLayers(id);
         if (layerList && layerList.length) {
@@ -280,23 +293,100 @@ class MapWrapper {
 
     /** Add a Layer or LayerGroup to the map, identified by an id
      * @param {string} id id to refer to the layer by
-     * @param {L.Layer | L.LayerGroup} layer layer to add
+     * @param {L.Layer | L.LayerGroup | L.Layer[]} layer layer to add
+     * @param {Boolean?} showToggle show a toggle in the layer picker
      * @returns {this} this
      */
-    setLayer(id, layer) {
-        return this.deleteLayers(id)
-            .addLayer(id, layer);
+    setLayer(id, layer, showToggle) {
+        if (showToggle) {
+            this._toggleableLayers.add(id);
+        } else if (showToggle === false) {
+            this._toggleableLayers.delete(id);
+        }
+
+        let toggle = this._toggleableLayers.has(id);
+
+        this.deleteLayers(id);
+
+        if (toggle) {
+            this._toggleableLayers.add(id);
+        }
+
+        if (Array.isArray(layer)) {
+            this._layerMap.set(id, layer);
+            layer.map((layerItem) => {
+                this._layerGroup.addLayer(layerItem);
+            });
+            return this;
+        }
+        return this.addLayer(id, layer, showToggle);
     }
 
-    /** Set an array of layers to an id
-     * @param {string} id id to refer to the layers by
-     * @param {L.Layer[]} layers layers to set
+    /** Hide all layers associated with an id
+     * @param {string} id id associated with layers
      * @returns {this} this
      */
-    setLayerArray(id, layers) {
-        // use a copy of the layers array
-        this._layerMap.set(id, layers.slice(0));
+    hideLayers(id) {
+        let layers = this._layerMap.get(id);
+        let hiddenLayers = this._hiddenLayerMap.get(id);
+
+        if (layers) {
+            let allLayers = hiddenLayers ? layers.concat(hiddenLayers) : layers;
+            // add layers to this._hiddenLayerMap
+            this._hiddenLayerMap.set(id, allLayers);
+            // remove layers from this._layerMap
+            layers.forEach((layer) => {
+                this._layerGroup.removeLayer(layer);
+            });
+            this._layerMap.delete(id);
+        }
+
         return this;
+    }
+
+    /** Show all layers associated with an id
+     * @param {string} id id associated with layers
+     * @returns {this} this
+     */
+    showLayers(id) {
+        let hiddenLayers = this._hiddenLayerMap.get(id);
+        let layers = this._layerMap.get(id);
+        if (hiddenLayers) {
+            let allLayers = layers ? hiddenLayers.concat(layers) : hiddenLayers;
+            // add layers to this._layerMap
+            this._layerMap.set(id, allLayers);
+            hiddenLayers.forEach((layer) => {
+                this._layerGroup.addLayer(layer);
+            });
+            // remove layers from this._hiddenLayerMap
+            this._hiddenLayerMap.delete(id);
+        }
+
+        return this;
+    }
+
+    layerHasId(layer, id) {
+        let hiddenLayers = this._hiddenLayerMap.get(id);
+        let layers = this._layerMap.get(id);
+        return hiddenLayers && hiddenLayers.includes(layer) || layers && layers.includes(layer);
+    }
+
+    /** Get the visibility of layers matching an id
+     * @param {string} id id associated with layers
+     * @returns {string} one of 'hidden' 'visible' or 'mixed'
+     */
+    getLayerVisibility(id) {
+        let hiddenLayers = this._hiddenLayerMap.get(id);
+        let visibleLayers = this._layerMap.get(id);
+        let state = 'none';
+        if (hiddenLayers && visibleLayers) {
+            state = 'mixed';
+        } else if (hiddenLayers) {
+            state = 'hidden';
+        } else if (visibleLayers) {
+            state = 'visible';
+        }
+        return state;
     }
 
     /** Get a set of layers by id.
@@ -312,12 +402,14 @@ class MapWrapper {
      * @returns {this} this
      */
     deleteLayers(id) {
+        this._toggleableLayers.delete(id);
         let layerList = this.getLayers(id);
         if (layerList && layerList.length) {
             for (const layer of layerList) {
                 this._layerGroup.removeLayer(layer);
             }
             this._layerMap.delete(id);
+            this._hiddenLayerMap.delete(id);
         }
         return this;
     }
@@ -363,8 +455,12 @@ class MapWrapper {
                 if (!persist) {
                     this.setLayer('thumbnail', overlay);
                 } else {
-                    overlay.addTo(this.map);
                     this.persistedThumbnails.set(scene.id, overlay);
+                    this.setLayer(
+                        'Selected Scenes',
+                        Array.from(this.persistedThumbnails.values()),
+                        true
+                    );
                 }
                 this.setGeojson(
                     'thumbnail',
@@ -390,8 +486,8 @@ class MapWrapper {
             this.deleteLayers('thumbnail');
             this.deleteGeojson('thumbnail');
         } else if (this.persistedThumbnails.has(scene.id)) {
-            this.map.removeLayer(this.persistedThumbnails.get(scene.id));
             this.persistedThumbnails.delete(scene.id);
+            this.setLayer('Selected Scenes', Array.from(this.persistedThumbnails.values()));
         }
         return this;
     }

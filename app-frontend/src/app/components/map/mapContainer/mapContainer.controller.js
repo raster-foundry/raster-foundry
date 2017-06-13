@@ -1,13 +1,16 @@
 import Map from 'es6-map';
+/* globals BUILDCONFIG */
 
 export default class MapContainerController {
-    constructor($log, $element, $scope, $timeout, mapService) {
+    constructor($log, $document, $element, $scope, $timeout, mapService) {
         'ngInject';
+        this.$document = $document;
         this.$element = $element;
         this.$log = $log;
         this.$scope = $scope;
         this.$timeout = $timeout;
         this.mapService = mapService;
+        this.getMap = () => this.mapService.getMap(this.mapId);
     }
 
     $onInit() {
@@ -20,7 +23,7 @@ export default class MapContainerController {
 
     $onChanges(changes) {
         if (changes.options && changes.options.currentValue) {
-            this.mapService.getMap(this.mapId).then((mapWrapper) => {
+            this.getMap().then((mapWrapper) => {
                 mapWrapper.changeOptions(changes.options.currentValue);
             });
         }
@@ -28,6 +31,10 @@ export default class MapContainerController {
 
     $onDestroy() {
         this.mapService.deregisterMap(this.mapId);
+        delete this.mapWrapper;
+        if (this.clickListener) {
+            this.$document.off('click', this.clickListener);
+        }
     }
 
     initMap() {
@@ -54,6 +61,145 @@ export default class MapContainerController {
             this.mapWrapper = this.mapService.registerMap(this.map, this.mapId, this.options);
             this.addLoadingIndicator();
         }, 400);
+
+        this.basemapOptions = BUILDCONFIG.BASEMAPS.layers;
+        this.basemapKeys = Object.keys(this.basemapOptions);
+    }
+
+    zoomIn() {
+        this.map.zoomIn();
+        this.$timeout(() => {}, 500);
+    }
+
+    zoomOut() {
+        this.map.zoomOut();
+        this.$timeout(()=> {}, 500);
+    }
+
+    toggleFullscreen() {
+        // fullscreen mode is only supported in vendor-specific mode right now
+        let mapElement = this.$element[0];
+
+        if (this.$document[0].webkitFullscreenEnabled && mapElement.webkitRequestFullscreen) {
+            if (!this.inFullscreenMode) {
+                mapElement.webkitRequestFullscreen();
+                this.inFullscreenMode = true;
+            } else {
+                this.$document[0].webkitExitFullscreen();
+                this.inFullscreenMode = false;
+            }
+        } else if (this.$document[0].mozFullScreenEnabled && mapElement.mozRequestFullScreen) {
+            if (!this.inFullscreenMode) {
+                mapElement.mozRequestFullScreen();
+                this.inFullscreenMode = true;
+            } else {
+                this.$document[0].mozCancelFullScreen();
+                this.inFullscreenMode = false;
+            }
+        } else if (this.$document[0].msFullscreenEnabled && mapElement.msRequestFullscreen) {
+            if (!this.inFullscreenMode) {
+                mapElement.msRequestFullscreen();
+                this.inFullscreenMode = true;
+            } else {
+                this.$document[0].msExitFullscreen();
+                this.inFullscreenMode = false;
+            }
+        }
+    }
+
+    toggleLayerPicker(event) {
+        event.stopPropagation();
+        const onClick = () => {
+            this.layerPickerOpen = false;
+            this.$document.off('click', this.clickListener);
+            this.$scope.$evalAsync();
+        };
+        if (!this.layerPickerOpen) {
+            this.layerPickerOpen = true;
+            this.clickListener = onClick;
+            this.$document.on('click', onClick);
+        } else {
+            this.layerPickerOpen = false;
+            this.$document.off('click', this.clickListener);
+            delete this.clickListener;
+        }
+    }
+
+    toggleableLayers() {
+        if (this.mapWrapper) {
+            // eslint-disable-next-line
+            return Array.from(this.mapWrapper._toggleableLayers.values());
+        }
+        return [];
+    }
+
+
+    layerEnabled(layerId) {
+        if (this.mapWrapper) {
+            return this.mapWrapper.getLayerVisibility(layerId) === 'visible';
+        }
+        return false;
+    }
+
+    toggleLayer(layerId) {
+        const layerState = this.mapWrapper.getLayerVisibility(layerId);
+        if (layerState === 'visible') {
+            this.mapWrapper.hideLayers(layerId);
+        } else if (layerState === 'hidden' || layerState === 'mixed') {
+            this.mapWrapper.showLayers(layerId);
+        }
+    }
+
+    toggleGeojson() {
+        if (this.mapWrapper.getGeojsonVisibility() === 'hidden') {
+            this.mapWrapper.showGeojson();
+        } else {
+            this.mapWrapper.hideGeojson();
+        }
+    }
+
+    geojsonEnabled() {
+        if (this.mapWrapper) {
+            return this.mapWrapper.getGeojsonVisibility() === 'visible';
+        }
+        return false;
+    }
+
+    mapHasGeojson() {
+        if (this.mapWrapper) {
+            // eslint-disable-next-line
+            return this.mapWrapper._geoJsonMap.size > 0;
+        }
+        return false;
+    }
+
+    setBasemap(basemapKey) {
+        this.mapWrapper.setBasemap(basemapKey);
+    }
+
+    getBasemapStyle(basemapKey) {
+        if (this.mapWrapper) {
+            let options = this.basemapOptions[basemapKey];
+            let url = L.Util.template(
+                options.url,
+                Object.assign(
+                    {
+                        s: options.properties.subdomains && options.properties.subdomains[0] ?
+                            options.properties.subdomains[0] : 'a',
+                        z: '4',
+                        x: '8',
+                        y: '6'
+                    },
+                    options.properties
+                )
+            );
+            return {'background': `url(${url}) no-repeat center`};
+        }
+        return {};
+    }
+
+    cancelPropagation(event) {
+        event.stopPropagation();
     }
 
     addLoadingIndicator() {
