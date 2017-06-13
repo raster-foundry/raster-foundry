@@ -1,4 +1,4 @@
-/* globals Auth0Lock */
+/* globals Auth0Lock heap */
 
 import assetLogo from '../../../assets/images/logo-raster-foundry.png';
 export default (app) => {
@@ -6,7 +6,7 @@ export default (app) => {
         constructor( // eslint-disable-line max-params
             jwtHelper, $q, $timeout, featureFlagOverrides, featureFlags,
             perUserFeatureFlags, $state, APP_CONFIG, localStorage,
-            rollbarWrapperService, intercomService
+            rollbarWrapperService, intercomService, $resource
         ) {
             this.localStorage = localStorage;
             this.jwtHelper = jwtHelper;
@@ -24,6 +24,19 @@ export default (app) => {
             }
 
             this.pendingReauth = null;
+
+            this.User = $resource('/api/users/:id', {
+                id: '@id'
+            }, {
+                query: {
+                    method: 'GET',
+                    cache: false
+                },
+                get: {
+                    method: 'GET',
+                    cache: false
+                }
+            });
         }
 
         initAuth0(APP_CONFIG) {
@@ -137,6 +150,11 @@ export default (app) => {
             this.resetLock.show();
         }
 
+        getCurrentUser() {
+            let id = this.profile().user_id;
+            return this.User.get({id: id}).$promise;
+        }
+
         onLogin(authResult) {
             this.localStorage.set('id_token', authResult.idToken);
 
@@ -147,13 +165,20 @@ export default (app) => {
                     return;
                 }
 
-                /* eslint-disable no-undef */
-                if (typeof heap !== 'undefined' && typeof heap.identify === 'function') {
-                    heap.identify(profile.email);
-                }
-                /* eslint-enable no-undef */
-
                 this.localStorage.set('profile', profile);
+
+                if (typeof heap !== 'undefined' &&
+                    typeof heap.identify === 'function' &&
+                    typeof heap.addUserProperties === 'function' &&
+                    typeof heap.addEventProperties === 'function'
+                   ) {
+                    heap.identify(profile.email);
+                    this.getCurrentUser().then((user) => {
+                        heap.addUserProperties({organization: user.organizationId});
+                        heap.addEventProperties({'Logged In': 'true'});
+                    });
+                }
+
                 this.featureFlagOverrides.setUser(profile.user_id);
                 // Flags set in the `/config` endpoint; default.
                 let configFlags = this.featureFlags.get().map((flag) => flag.key);
@@ -201,6 +226,9 @@ export default (app) => {
         }
 
         logout() {
+            if (typeof heap !== 'undefined' && typeof heap.removeEventProperty === 'function') {
+                heap.removeEventProperty('Logged In');
+            }
             this.localStorage.remove('id_token');
             this.localStorage.remove('profile');
             this.rollbarWrapperService.init();

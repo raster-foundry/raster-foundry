@@ -3,8 +3,8 @@ import dropboxIcon from '../../../../assets/images/dropbox-icon.svg';
 import dropboxWordmark from '../../../../assets/images/dropbox-wordmark.svg';
 class ConnectionsController {
     constructor(
-        $log, $state, authService, $interval, $uibModal, $location, dropboxService, userService,
-        APP_CONFIG
+        $log, $state, $interval, $uibModal, $location,
+        dropboxService, authService, APP_CONFIG
     ) {
         'ngInject';
 
@@ -17,14 +17,13 @@ class ConnectionsController {
 
         this.authService = authService;
         this.dropboxService = dropboxService;
-        this.userService = userService;
 
         this.dropboxIcon = dropboxIcon;
         this.dropboxWordmark = dropboxWordmark;
     }
 
     $onInit() {
-        this.userService.getCurrentUser().then((user) => {
+        this.authService.getCurrentUser().then((user) => {
             this.user = user;
             this.dropboxConnected = Boolean(user.dropboxCredential);
         });
