@@ -1,18 +1,20 @@
 package com.azavea.rf.batch.export.airflow
 
-import com.azavea.rf.batch.Job
+import com.azavea.rf.batch._
 import com.azavea.rf.batch.export.json.S3ExportStatus
 import com.azavea.rf.batch.util._
 import com.azavea.rf.database.tables._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.datamodel._
 
+import cats._
 import cats.data._
 import cats.implicits._
 import io.circe.parser.decode
 
 import java.util.UUID
 
+import scala.concurrent.Future
 import scala.util._
 import scala.io.Source
 
@@ -29,10 +31,18 @@ case class CheckExportStatus(exportId: UUID, statusBucket: String = "rasterfound
   def run: Unit = {
     logger.info(s"Checking export ${exportId} process...")
     val json =
-      Source
-        .fromInputStream(s3Client.getObject(statusBucket, s"$exportId.json").getObjectContent)
-        .getLines
-        .mkString(" ")
+      try {
+        Source
+          .fromInputStream(s3Client.getObject(statusBucket, exportId.toString).getObjectContent)
+          .getLines
+          .mkString(" ")
+      } catch {
+        case e: Throwable =>
+          logger.error(e.stackTraceString)
+          sendError(e.stackTraceString)
+          stop
+          sys.exit(1)
+      }
 
     val s3ExportStatus =
       decode[S3ExportStatus](json) match {
@@ -44,20 +54,30 @@ case class CheckExportStatus(exportId: UUID, statusBucket: String = "rasterfound
       }
 
     val result = for {
-      user: User <- OptionT(Users.getUserById(airflowUser))
-      export: Export <- OptionT(database.db.run(Exports.getExport(exportId, user)))
-      exportStatus: Int <- OptionT.liftF(
+      user <- fromOptionF[Future, String, User](Users.getUserById(airflowUser), "DB: Failed to fetch User.")
+      export <- fromOptionF[Future, String, Export](database.db.run(Exports.getExport(exportId, user)), "DB: Failed to fetch Export.")
+      exportStatus <- EitherT.right[Future, String, Int](
         database.db.run(
           Exports.updateExport(
             updateExportStatus(export, s3ExportStatus.exportStatus),
             exportId,
-            user)))
+            user
+          )
+        )
+      )
     } yield exportStatus
 
     result.value.onComplete {
+      case Success(Left(e)) => {
+        logger.error(e)
+        sendError(e)
+        stop
+        sys.exit(1)
+      }
       case Success(_) if s3ExportStatus.exportStatus == ExportStatus.Failed => {
-        logger.info(s"Export finished with ${ExportStatus.Failed}")
-        sendError(new Exception(s"Export finished with ${ExportStatus.Failed}"))
+        val msg = s"Export finished with ${ExportStatus.Failed}"
+        logger.info(msg)
+        sendError(msg)
         stop
         sys.exit(1)
       }
