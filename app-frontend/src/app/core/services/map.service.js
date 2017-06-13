@@ -357,8 +357,7 @@ class MapWrapper {
                         opacity: 1,
                         dataMask: scene.dataFootprint,
                         thumbnail: thumbUrl,
-                        attribution: `©${d.name}` +
-                            ' | Previews are not representative of actual scene quality.'
+                        attribution: `©${d.name} `
                     }
                 );
                 if (!persist) {
