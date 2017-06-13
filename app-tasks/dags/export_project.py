@@ -11,7 +11,6 @@ from airflow.exceptions import AirflowException
 
 from rf.utils.exception_reporting import wrap_rollbar
 
-
 rf_logger = logging.getLogger('rf')
 ch = logging.StreamHandler()
 ch.setLevel(logging.INFO)
@@ -37,33 +36,73 @@ dag = DAG(
 )
 
 # UTILS
+@wrap_rollbar
+def get_cluster_id():
+    resolver = dns.resolver.Resolver()
+    cluster_id = resolver.query("dataproc.rasterfoundry.com", "TXT")[0]
+    return cluster_id.to_text().strip('"')
+
+@wrap_rollbar
 def start_export(export_id):
     bash_cmd = 'java -cp /opt/raster-foundry/jars/rf-batch.jar com.azavea.rf.batch.Main create_export_def {0}'.format(export_id)
-
-    subprocess.call([bash_cmd], shell=True)
+    cmd = subprocess.Popen(bash_cmd, shell=True, stdout=subprocess.PIPE)
+    step_id = ''
+    for line in cmd.stdout:
+        if 'StepId:' in line:            
+            step_id = line.replace('StepId:', '').strip()        
+    
+    xcom_client.xcom_push(key='export_id', value=export_id)
     logger.info('Launched export creation process, watching for updates...')
-    is_success = wait_for_success()
+    is_success = wait_for_success(step_id, get_cluster_id())
 
     return is_success
 
-def wait_for_success(response=None):
-    # TODO: this is spurious until a means of determining success or failure is used
-    successful = True
-    if successful:
-        logger.info('Successfully completed export')
+@wrap_rollbar
+def wait_for_success(step_id, cluster_id):
+    """Wait for batch success/failure given an initial batch response
+
+    Returns:
+        boolean
+    """    
+    emr = boto3.client('emr')
+    get_description = lambda: emr.describe_step(ClusterId=cluster_id, StepId=step_id)
+    logger.info('Starting to check for status updates for step %s', step_id)
+    step_description = get_description()
+    current_status = step_description['Step']['Status']['State']
+    logger.info('Initial status: %s', current_status)
+    while current_status not in ['COMPLETED', 'FAILED']:
+        description = get_description()
+        status = description['Step']['Status']['State']
+        if status != current_status:
+            logger.info('Updating status of %s. Old Status: %s New Status: %s',
+                        step_id, current_status, status)
+            current_status = status
+        time.sleep(30)
+    is_success = (current_status == 'COMPLETED')
+    if is_success:
+        logger.info('Successfully completed export for %s', step_id)
         return True
     else:
-        raise AirflowException('Export failed')
+        logger.error('Something went wrong with %s. Current Status: %s', step_id, current_status)
+        raise AirflowException('Export failed for {}'.format(step_id))
+
+@wrap_rollbar
+def wait_for_status_op(*args, **kwargs):
+    """Wait for a result from the Spark job"""
+    xcom_client = kwargs['task_instance']
+    export_id = xcom_client.xcom_pull(key='export_id', task_ids=None)
+
+    bash_cmd = 'java -cp /opt/raster-foundry/jars/rf-batch.jar com.azavea.rf.batch.Main check_export_status {0}'.format(export_id)
+    logger.info('Updating %s\'s export status after successful EMR status', export_id)
+    subprocess.call([bash_cmd], shell=True)
 
 # PythonOperators
-
 @wrap_rollbar
 def create_export_definition_op(*args, **kwargs):
     logger.info('Beginning to create export definition')
     xcom_client = kwargs['task_instance']
     conf = kwargs['dag_run'].conf
     export_id = conf['exportId']
-
 
     xcom_client.xcom_push(key='export_def_id',value=export_id)
     start_export(export_id)
@@ -75,3 +114,12 @@ create_export_definition_task = PythonOperator(
     python_callable=create_export_definition_op,
     dag=dag
 )
+
+wait_for_status_task = PythonOperator(
+    task_id='wait_for_status',
+    provide_context=True,
+    python_callable=wait_for_status_op,
+    dag=dag
+)
+
+wait_for_status_task.set_upstream(create_export_definition_task)

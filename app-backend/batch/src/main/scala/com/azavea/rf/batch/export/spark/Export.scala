@@ -1,9 +1,7 @@
 package com.azavea.rf.batch.export.spark
 
-import java.util.UUID
-
-import cats.data.Validated._
-import cats.implicits._
+import io.circe.parser._
+import io.circe.syntax._
 import com.azavea.rf.batch._
 import com.azavea.rf.batch.ast._
 import com.azavea.rf.batch.dropbox._
@@ -14,9 +12,7 @@ import com.azavea.rf.common.InterpreterException
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.rf.tool.params.EvalParams
-import com.dropbox.core.v2.DbxClientV2
-import com.dropbox.core.v2.files.{CreateFolderErrorException, WriteMode}
-import com.typesafe.scalalogging.LazyLogging
+import com.azavea.rf.common.S3.putObject
 import geotrellis.proj4.{CRS, LatLng}
 import geotrellis.raster._
 import geotrellis.raster.histogram.Histogram
@@ -29,13 +25,18 @@ import geotrellis.spark.io.hadoop._
 import geotrellis.spark.io.s3._
 import geotrellis.spark.tiling._
 import geotrellis.vector.MultiPolygon
-import _root_.io.circe.parser._
+import com.dropbox.core.v2.DbxClientV2
+import com.dropbox.core.v2.files.{CreateFolderErrorException, WriteMode}
+import com.typesafe.scalalogging.LazyLogging
 import org.apache.hadoop.fs.Path
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
+import cats.data.Validated._
+import cats.implicits._
 import spray.json.DefaultJsonProtocol._
+import java.util.UUID
 
-// --- //
+import com.azavea.rf.batch.export.json.S3ExportStatus
 
 object Export extends SparkJob with Config with LazyLogging {
 
@@ -50,7 +51,7 @@ object Export extends SparkJob with Config with LazyLogging {
     conf: HadoopConfiguration
   )(implicit sc: SparkContext): Unit = {
     interpretRDD(ast, params.sources, ed.input.resolution, sceneLocs, projLocs) match {
-      case Invalid(errs) => throw new InterpreterException(errs)
+      case Invalid(errs) => throw InterpreterException(errs)
       case Valid(rdd) => {
 
         val mt: MapKeyTransform = rdd.metadata.layout.mapTransform
@@ -74,7 +75,7 @@ object Export extends SparkJob with Config with LazyLogging {
 
   /** Get a LayerReader and an attribute store for the catalog located at the provided URI
     *
-    *  @param exportLayerDef export job's layer definition
+    *  @param ed export job's layer definition
     */
   def getRfLayerManagement(
     ed: ExportLayerDefinition
@@ -96,7 +97,6 @@ object Export extends SparkJob with Config with LazyLogging {
     mask: Option[MultiPolygon],
     conf: HadoopConfiguration
   )(implicit @transient sc: SparkContext): Unit = {
-
     val rdds = layers.map { ld =>
       val (reader, store) = getRfLayerManagement(ld)
       val layerId = LayerId(ld.layerId.toString, ed.input.resolution)
@@ -167,7 +167,7 @@ object Export extends SparkJob with Config with LazyLogging {
   }
 
   private def singlePath(ed: ExportDefinition): String =
-    s"${ed.output.source.toString}/${ed.input.resolution}-${UUID.randomUUID()}-${ed.id}.tiff"
+    s"${ed.output.source.toString}/${ed.input.resolution}-${ed.id}-${UUID.randomUUID()}.tiff"
 
   /** Write a single GeoTiff to some target. */
   private def writeGeoTiff[T <: CellGrid, G <: GeoTiff[T]](
@@ -237,6 +237,9 @@ object Export extends SparkJob with Config with LazyLogging {
 
     implicit val sc = new SparkContext(conf)
 
+    implicit def asS3Payload(status: ExportStatus): String =
+      S3ExportStatus(exportDef.id, status).asJson.noSpaces
+
     try {
       val conf: HadoopConfiguration =
         HadoopConfiguration(S3.setCredentials(sc.hadoopConfiguration))
@@ -247,6 +250,20 @@ object Export extends SparkJob with Config with LazyLogging {
         case Right(ASTInput(ast, params, sceneLocs, projLocs)) =>
           astExport(exportDef, ast, params, sceneLocs, projLocs, conf)
       }
+
+      putObject(
+        params.statusBucket,
+        exportDef.id.toString,
+        ExportStatus.Exported
+      )
+    } catch {
+      case t: Throwable =>
+        logger.error(t.stackTraceString)
+        putObject(
+          params.statusBucket,
+          exportDef.id.toString,
+          ExportStatus.Failed
+        )
     } finally {
       sc.stop
     }
