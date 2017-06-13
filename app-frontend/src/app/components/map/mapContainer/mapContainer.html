@@ -1,26 +1,77 @@
-<div class="map-container">
-  <div class="lab-control-panel">
-    <button class="btn btn-default"
-            ng-click="$ctrl.fitToBounds()"
-    >
+<div class="map-container"></div>
+<div class="map-container-controls">
+  <button class="btn btn-default btn-square btn-small"
+          title="Zoom In"
+          ng-click="$ctrl.zoomIn()">
+    <i class="icon-plus"></i>
+  </button>
+  <div class="map-zoom" title="Current Zoom">{{$ctrl.map.getZoom()}}</div>
+  <button class="btn btn-default btn-square btn-small"
+          title="Zoom Out"
+          ng-click="$ctrl.zoomOut()">
+    <i class="icon-minus"></i>
+  </button>
+  <div class="filler"></div>
+  <div class="map-control">
+    <button class="btn btn-default btn-square btn-small"
+            title="Layers"
+            ng-click="$ctrl.toggleLayerPicker($event)">
+      <i class="icon-project"></i>
+    </button>
+    <div class="dropdown-control layer-picker"
+         ng-show="$ctrl.layerPickerOpen"
+         ng-click="$ctrl.cancelPropagation($event)">
+      <div class="layer-picker-title">Basemap and Layers</div>
+      <div class="dropdown-arrow"></div>
+      <div class="layer-picker-body">
+        <div class="layer-picker-option"
+             ng-repeat="layer in $ctrl.basemapKeys"
+             ng-style="$ctrl.getBasemapStyle(layer)"
+             ng-click="$ctrl.setBasemap(layer)"
+             ng-attr-title="{{layer}}"
+        >
+          <div class="layer-picker-label"></div>
+          <button class="btn btn-default btn-square"
+                  ng-class="{'hide-icon': $ctrl.mapWrapper.currentBasemap !== layer}">
+            <span class="icon-check" ></span>
+          </button>
+        </div>
+        <div class="layer-picker-divider"></div>
+        <div class="layer-picker-option"
+             ng-click="$ctrl.toggleLayer(layerId)"
+             ng-repeat="layerId in $ctrl.toggleableLayers()">
+          <div class="layer-picker-label">
+            {{layerId}}
+          </div>
+          <button class="btn btn-default btn-square">
+            <span class="icon-check" ng-class="{'hide-icon': !$ctrl.layerEnabled(layerId)}"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div ng-show="$ctrl.mapHasGeojson()">
+    <div class="filler"></div>
+    <button class="btn btn-square btn-small"
+            title="Selection Polygon"
+            ng-class="{'btn-primary': $ctrl.geojsonEnabled(),
+                   'btn-default': !$ctrl.geojsonEnabled()}"
+            ng-click="$ctrl.toggleGeojson()">
+      <span class="icon-mosaic"></span>
+    </button>
+  </div>
+  <div feature-flag="fullscreen-map">
+    <div class="filler"></div>
+    <button class="btn btn-default btn-square btn-small"
+            title="Full Screen"
+            ng-click="$ctrl.toggleFullscreen()">
       <i class="icon-resize-full"></i>
     </button>
-    <div class="filler"></div>
-    <button class="btn btn-default"
-            ng-click="$ctrl.zoomIn()"
-    >
-      +
-    </button>
-    <button class="btn btn-default"
-            ng-click="$ctrl.zoomOut()"
-    >
-      -
-    </button>
   </div>
-  <div class="map-container-loading" ng-show="$ctrl.isLoadingTiles">
-    <div class="bg-primary">Loading</div>
-  </div>
-  <div class="map-container-loading" ng-show="$ctrl.hasTileLoadingError">
-    <div class="bg-warning color-dark">There was an error loading tiles</div>
-  </div>
+</div>
+<div class="map-container-loading" ng-show="$ctrl.isLoadingTiles">
+  <div class="bg-primary">Loading</div>
+</div>
+<div class="map-container-loading" ng-show="$ctrl.hasTileLoadingError">
+  <div class="bg-warning color-dark">There was an error loading tiles</div>
 </div>

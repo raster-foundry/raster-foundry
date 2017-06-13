@@ -889,7 +889,7 @@ div.lab-workspace.is-dragging svg {
     pointer-events: true;
   }
   text-align: center;
-  z-index: 2000;
+  z-index: 1025;
   div {
     padding: 4px 12px;
     color: #fff;
@@ -897,6 +897,126 @@ div.lab-workspace.is-dragging svg {
     background: rgba(0,0,0,.5);
   }
 }
+
+.map-container-controls {
+  position: absolute;
+  top: .5rem;
+  right: .5rem;
+  z-index: 1025;
+  display: flex;
+  flex-direction: column;
+  background: $shade-dark;
+  padding: .5em;
+  border-radius: 3px;
+  pointer-event: none;
+}
+
+.map-zoom {
+  text-align: center;
+  padding: .25em;
+  font-weight: bold;
+}
+
+.btn-square.btn-small {
+  padding: 0.7rem;
+  font-size: 1.7rem;
+}
+
+.filler {
+  height: .5em;
+}
+
+rf-map-container:-webkit-full-screen {
+  width: 100%;
+  height: 100%;
+}
+
+.map-control {
+  position: relative;
+}
+
+.dropdown-control {
+  position: absolute;
+  transform: translateX(-100%);
+  left: -1em;
+  top: -2.25em;
+}
+
+.layer-picker {
+  width: 15em;
+  background: $shade-dark;
+  z-index: 1025;
+  &:focus {
+    outline: transparent;
+  }
+  user-select: none;
+}
+
+.layer-picker-title {
+  color: $white;
+  font-weight: bold;
+  padding: .5em;
+  text-align: center;
+  border-bottom: 1px solid $shade-normal;
+}
+
+.layer-picker-body {
+  margin: 0.75em;
+}
+
+.layer-picker-option {
+  display: flex;
+  cursor: pointer;
+  width: 100%;
+  height: 30px;
+  margin: 0 0 0.25em 0;
+  border-radius: 5px;
+  border: 2px solid $shade-normal;
+  .btn.btn-square {
+    height: 100%;
+    padding: .25em;
+    border: 1px solid $shade-normal;
+    border-radius: 0;
+  }
+  &:hover {
+    border: 2px solid $shade-light;
+    .btn.btn-square {
+      border: 1px solid $shade-light;
+      background: $shade-light;
+    }
+  }
+  &:focus {
+    outline: transparent;
+  }
+}
+.layer-picker-divider {
+  border-bottom: 1px solid $shade-normal;
+  margin-bottom: .5em;
+  padding-top: .25em;
+}
+.layer-picker-label{
+  flex: 1;
+  text-align: center;
+  color: $white;
+}
+
+.hide-icon {
+  visibility: hidden;
+}
+
+.dropdown-arrow {
+  position: absolute;
+  margin: 0;
+  width: 0;
+  height: 0;
+  border-top: .5em solid transparent;
+  border-bottom: .5em solid transparent;
+  border-left: .5em solid $shade-dark;
+  right: 0;
+  transform: translateX(100%);
+  top: 2.9em;
+}
+
 
 
 /*

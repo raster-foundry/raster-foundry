@@ -2,20 +2,24 @@ const Map = require('es6-map');
 
 export default class ProjectsEditController {
     constructor( // eslint-disable-line max-params
-        $log, $q, $state, $scope, authService, projectService, mapService,
-        mapUtilsService, layerService, datasourceService, $uibModal
+        $log, $q, $state, $scope, $uibModal,
+        authService, projectService, mapService,
+        mapUtilsService, layerService, datasourceService,
+        imageOverlayService, thumbnailService
     ) {
         'ngInject';
         this.$log = $log;
         this.$q = $q;
         this.$state = $state;
         this.$scope = $scope;
+        this.$uibModal = $uibModal;
         this.authService = authService;
         this.projectService = projectService;
         this.mapUtilsService = mapUtilsService;
         this.layerService = layerService;
         this.datasourceService = datasourceService;
-        this.$uibModal = $uibModal;
+        this.imageOverlayService = imageOverlayService;
+        this.thumbnailService = thumbnailService;
         this.getMap = () => mapService.getMap('edit');
     }
 
@@ -89,6 +93,10 @@ export default class ProjectsEditController {
         );
         this.sceneListQuery.then(
             (allScenes) => {
+                this.addUningestedScenesToMap(allScenes.filter(
+                    (scene) => scene.statusFields.ingestStatus !== 'INGESTED'
+                ));
+
                 this.sceneList = allScenes;
                 for (const scene of this.sceneList) {
                     let scenelayer = this.layerService.layerFromScene(scene, this.projectId);
@@ -102,6 +110,37 @@ export default class ProjectsEditController {
             }
         ).finally(() => {
             this.sceneRequestState.loading = false;
+        });
+    }
+
+    addUningestedScenesToMap(scenes) {
+        this.getMap().then((mapWrapper) => {
+            mapWrapper.deleteLayers('Uningested Scenes');
+            scenes.filter((scene) => {
+                return scene.tileFootprint && scene.thumbnails && scene.thumbnails.length;
+            }).forEach((scene) => {
+                let thumbUrl = this.thumbnailService.getBestFitUrl(scene.thumbnails, 1000);
+                let boundsGeoJson = L.geoJSON();
+                boundsGeoJson.addData(scene.tileFootprint);
+                let imageBounds = boundsGeoJson.getBounds();
+
+                this.datasourceService.get(scene.datasource).then(d => {
+                    let overlay = this.imageOverlayService.createNewImageOverlay(
+                        thumbUrl,
+                        imageBounds, {
+                            opacity: 1,
+                            dataMask: scene.dataFootprint,
+                            thumbnail: thumbUrl,
+                            attribution: `©${d.name} `
+                        }
+                    );
+                    mapWrapper.addLayer(
+                        'Uningested Scenes',
+                        overlay,
+                        true
+                    );
+                });
+            });
         });
     }
 
@@ -128,7 +167,7 @@ export default class ProjectsEditController {
         });
 
         this.getMap().then(m => {
-            m.setLayer('project-layer', layer);
+            m.setLayer('Ingested Scenes', layer, true);
         });
         this.mosaicLayer.set(this.projectId, layer);
     }
