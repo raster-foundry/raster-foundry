@@ -30,6 +30,7 @@ dag = DAG(
     concurrency=os.getenv('AIRFLOW_DAG_CONCURRENCY', 24)
 )
 
+@wrap_rollbar
 def start_update(project_id):
     bash_cmd = 'java -cp /opt/raster-foundry/jars/rf-batch.jar com.azavea.rf.batch.Main update_aoi_project {0}'.format(project_id)
 
@@ -38,10 +39,10 @@ def start_update(project_id):
     is_success = exit_code == 0
 
     if is_success:
-        logger.info('Successfully completed project %s update', project_id)        
+        logger.info('Successfully completed project %s update', project_id)
     else:
         raise AirflowException('Update of project %s failed', project_id)
-    
+
     return is_success
 
 @wrap_rollbar
