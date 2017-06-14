@@ -3,7 +3,7 @@
 
 export default class SceneImportModalController {
     constructor($scope, $state, projectService, Upload,
-                uploadService, userService, rollbarWrapperService,
+                uploadService, authService, rollbarWrapperService,
                 datasourceService) {
         'ngInject';
         this.$scope = $scope;
@@ -11,7 +11,7 @@ export default class SceneImportModalController {
         this.projectService = projectService;
         this.Upload = Upload;
         this.uploadService = uploadService;
-        this.userService = userService;
+        this.authService = authService;
         this.rollbarWrapperService = rollbarWrapperService;
         this.datasourceService = datasourceService;
     }
@@ -185,7 +185,7 @@ export default class SceneImportModalController {
     }
 
     startUpload() {
-        this.userService
+        this.authService
             .getCurrentUser()
             .then(this.createUpload.bind(this))
             .then(upload => {
