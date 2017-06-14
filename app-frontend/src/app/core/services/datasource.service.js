@@ -1,9 +1,9 @@
 export default (app) => {
     class DatasourceService {
-        constructor($resource, userService) {
+        constructor($resource, authService) {
             'ngInject';
 
-            this.userService = userService;
+            this.authService = authService;
 
             this.Datasource = $resource(
                 '/api/datasources/:id/', {
@@ -33,7 +33,7 @@ export default (app) => {
         }
 
         createDatasource(name, composites, params = {}) {
-            return this.userService.getCurrentUser().then(
+            return this.authService.getCurrentUser().then(
                 (user) => {
                     return this.Datasource.create({
                         organizationId: user.organizationId,
