@@ -47,6 +47,7 @@ object Dependencies {
   val chill                   = "com.twitter"                 %% "chill"                             % Version.chill
   val circeCore               = "io.circe"                    %% "circe-core"                        % Version.circe
   val circeGeneric            = "io.circe"                    %% "circe-generic"                     % Version.circe
+  val circeGenericExtras      = "io.circe"                    %% "circe-generic-extras"              % Version.circe
   val circeParser             = "io.circe"                    %% "circe-parser"                      % Version.circe
   val circeOptics             = "io.circe"                    %% "circe-optics"                      % Version.circe
   val akkaCirceJson           = "de.heikoseeberger"           %% "akka-http-circe"                   % Version.akkaCirceJson

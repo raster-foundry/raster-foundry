@@ -1,6 +1,8 @@
 package com.azavea.rf.datamodel
 
+import java.net.{URI, URLEncoder}
 import java.sql.Timestamp
+import java.util.Date
 import java.util.UUID
 
 import io.circe._
@@ -46,6 +48,9 @@ case class User(
   def isInRootOrSameOrganizationAs(target: { def organizationId: UUID }): Boolean = {
     this.isInRootOrganization || this.organizationId == target.organizationId
   }
+
+  def getDefaultExportSource(export: Export, dataBucket: String): URI =
+    new URI(s"s3://$dataBucket/user-exports/${URLEncoder.encode(id, "UTF-8")}/${export.id}")
 }
 
 object User {
