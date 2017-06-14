@@ -15,10 +15,11 @@ import io.circe.parser.decode
 import java.util.UUID
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.util._
 import scala.io.Source
 
-case class CheckExportStatus(exportId: UUID, statusBucket: String = "rasterfoundry-dataproc-export-status-us-east-1", region: Option[String] = None)
+case class CheckExportStatus(exportId: UUID, statusBucket: String = "rasterfoundry-dataproc-export-status-us-east-1", time: Duration = 60.minutes, region: Option[String] = None)
                             (implicit val database: DB) extends Job {
   val name = CreateExportDef.name
 
@@ -32,10 +33,12 @@ case class CheckExportStatus(exportId: UUID, statusBucket: String = "rasterfound
     logger.info(s"Checking export ${exportId} process...")
     val json =
       try {
-        Source
-          .fromInputStream(s3Client.getObject(statusBucket, exportId.toString).getObjectContent)
-          .getLines
-          .mkString(" ")
+        retry(time, 30.seconds) {
+          Source
+            .fromInputStream(s3Client.getObject(statusBucket, exportId.toString).getObjectContent)
+            .getLines
+            .mkString(" ")
+        }
       } catch {
         case e: Throwable =>
           logger.error(e.stackTraceString)
@@ -103,7 +106,8 @@ object CheckExportStatus {
     implicit val db = DB.DEFAULT
 
     val job = args.toList match {
-      case List(exportId, statusBucket, region) => CheckExportStatus(UUID.fromString(exportId), statusBucket, Some(region))
+      case List(exportId, statusBucket, duration, region) => CheckExportStatus(UUID.fromString(exportId), statusBucket, Duration(duration), Some(region))
+      case List(exportId, statusBucket, duration) => CheckExportStatus(UUID.fromString(exportId), statusBucket, Duration(duration))
       case List(exportId, statusBucket) => CheckExportStatus(UUID.fromString(exportId), statusBucket)
       case List(exportId) => CheckExportStatus(UUID.fromString(exportId))
       case _ =>
