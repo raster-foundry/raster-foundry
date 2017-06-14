@@ -90,4 +90,7 @@ package object S3 {
     client.putObject(bucket, key, contents)
     contents
   }
+
+  def doesObjectExist(bucket: String, key: String): Boolean =
+    client.doesObjectExist(bucket, key)
 }

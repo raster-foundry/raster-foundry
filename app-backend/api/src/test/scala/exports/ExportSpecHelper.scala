@@ -33,7 +33,7 @@ trait ExportSpecHelper { self: ProjectSpecHelper =>
       rasterSize = None,
       crs = None,
       source = new URI("s3://test"),
-      operation = Some("id")
+      operation = "id"
     ).asJson
   )
 

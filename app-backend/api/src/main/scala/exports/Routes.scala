@@ -8,7 +8,7 @@ import cats.implicits._
 import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 import io.circe._
-import io.circe.parser.decode
+import io.circe.syntax._
 
 import com.azavea.rf.common._
 import com.azavea.rf.database.tables.Exports
@@ -16,7 +16,6 @@ import com.azavea.rf.database.query._
 import com.azavea.rf.database.{ActionRunner, Database}
 import com.azavea.rf.datamodel._
 
-import java.net.URI
 import java.util.UUID
 
 import scala.concurrent.Future
@@ -91,18 +90,20 @@ trait ExportRoutes extends Authentication
           case Left(df:DecodingFailure) => complete((StatusCodes.BadRequest, s"JSON decoder exception: ${df.show}"))
           case Right(x) =>
             onSuccess(write(Exports.insertExport(newExport, user))) { export =>
-              kickoffProjectExport(export.id)
-              complete(export)
+              val updateExport = user.updateDefaultExportSource(export)
+              kickoffProjectExport(updateExport.id)
+              update(Exports.updateExport(updateExport, updateExport.id, user))
+              complete(updateExport)
             }
         }
       }
     }
   }
 
-  def updateExport(uploadId: UUID): Route = authenticate { user =>
+  def updateExport(exportId: UUID): Route = authenticate { user =>
     entity(as[Export]) { updateExport =>
       authorize(user.isInRootOrSameOrganizationAs(updateExport)) {
-        onSuccess(update(Exports.updateExport(updateExport, uploadId, user))) {
+        onSuccess(update(Exports.updateExport(updateExport, exportId, user))) {
           completeSingleOrNotFound
         }
       }

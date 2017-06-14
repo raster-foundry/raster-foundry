@@ -150,6 +150,7 @@ lazy val datamodel = Project("datamodel", file("datamodel"))
       Dependencies.geotrellisSlick % "provided",
       Dependencies.geotrellisRaster,
       Dependencies.circeCore,
+      Dependencies.circeGenericExtras,
       Dependencies.akka,
       Dependencies.akkahttp
     )
