@@ -6,11 +6,11 @@ import geotrellis.spark._
 import geotrellis.spark.tiling._
 import geotrellis.util.Component
 import geotrellis.vector._
-
 import cats._
 import cats.data._
 import cats.implicits._
 
+import scala.concurrent.duration.Duration
 import scala.util.Either
 
 package object batch {
@@ -37,4 +37,19 @@ package object batch {
     */
   def fromOptionF[F[_], E, A](fopt: F[Option[A]], ifNone: => E)(implicit F: Functor[F]): EitherT[F, E, A] =
     EitherT(F.map(fopt)(opt => Either.fromOption(opt, ifNone)))
+
+  def retry[A](time: Duration, pause: Duration)(code: => A): A = {
+    var result: Option[A] = None
+    var remaining = time
+    while (remaining > Duration.Zero) {
+      remaining -= pause
+      try {
+        result = Some(code)
+        remaining = Duration.Zero
+      } catch {
+        case _ if remaining > Duration.Zero => Thread.sleep(pause.toMillis)
+      }
+    }
+    result.getOrElse(throw new Exception(s"Retry failed in $time"))
+  }
 }

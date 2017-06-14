@@ -251,6 +251,7 @@ object Export extends SparkJob with Config with LazyLogging {
           astExport(exportDef, ast, params, sceneLocs, projLocs, conf)
       }
 
+      logger.info(s"Writing status into the ${params.statusBucket}/${exportDef.id}")
       putObject(
         params.statusBucket,
         exportDef.id.toString,
@@ -258,6 +259,7 @@ object Export extends SparkJob with Config with LazyLogging {
       )
     } catch {
       case t: Throwable =>
+        logger.info(s"Writing status into the ${params.statusBucket}/${exportDef.id}")
         logger.error(t.stackTraceString)
         putObject(
           params.statusBucket,
