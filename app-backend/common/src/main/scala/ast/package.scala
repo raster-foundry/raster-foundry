@@ -14,12 +14,13 @@ import cats.implicits._
 import cats.data.Validated.{Invalid, Valid}
 import io.circe._
 
+import java.lang.IllegalArgumentException
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
 package object ast {
 
-  /** Collect resources necessary to carry out substitutions on  ASTs */
+  /** Collect resources necessary to carry out substitutions on  ASTs while avoiding cycles */
   def assembleSubstitutions(
     ast: MapAlgebraAST,
     user: User,
@@ -27,18 +28,22 @@ package object ast {
   )(implicit database: Database, ec: ExecutionContext): OptionT[Future, Map[UUID, MapAlgebraAST]] =
     ast match {
       case ToolReference(id, refId) =>
-        OptionT(Tools.getTool(refId, user)).map({ referent =>
+        OptionT(Tools.getTool(refId, user)).flatMap({ referent =>
           val astPatch = referent.definition.as[MapAlgebraAST].valueOr(throw _)
-          if (assembled.keys.toList.contains(refId)) ??? // CYCLE DETECTED
-          else Map(refId -> astPatch)
+          // Here's where we can hope to catch cycles as we traverse down
+          //  the tree (keeping track of previously encountered references)
+          if (assembled.keys.toList.contains(refId))
+            throw new IllegalArgumentException(s"Repeated substitution $refId found; likely cyclical reference")
+          else
+            assembleSubstitutions(astPatch, user, assembled ++ Map(refId -> astPatch))
         })
       case op: MapAlgebraAST.Operation =>
         val childSubstitutions = op.args.map({ arg => assembleSubstitutions(arg, user, assembled) }).sequence
         childSubstitutions.map({ substitutions =>
-          substitutions.foldLeft(Map[UUID, MapAlgebraAST]())({ case (map, subs) => map ++ subs })
+          substitutions.foldLeft(Map[UUID, MapAlgebraAST]())({ case (map, subs) => map ++ subs }) ++ assembled
         })
       case _ =>
-        OptionT.pure[Future, Map[UUID, MapAlgebraAST]](Map[UUID, MapAlgebraAST]())
+        OptionT.pure[Future, Map[UUID, MapAlgebraAST]](assembled)
       }
 
 

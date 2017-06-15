@@ -76,6 +76,11 @@ object Generators {
     nmd <- Gen.option(genNodeMetadata)
   } yield MapAlgebraAST.Constant(id, const, nmd)
 
+  lazy val genRefAST = for {
+    id <- arbitrary[UUID]
+    toolId <- arbitrary[UUID]
+  } yield MapAlgebraAST.ToolReference(id, toolId)
+
   def genBinaryOpAST(depth: Int) = for {
     constructor <- Gen.lzy(Gen.oneOf(
                      MapAlgebraAST.Addition.apply _,
@@ -103,11 +108,13 @@ object Generators {
     (1 -> genClassificationAST(depth))
   )
 
+  def genLeafAST = Gen.oneOf(genConstantAST, genSourceAST, genRefAST)
+
   /** We are forced to manually control flow in this generator to prevent stack overflows
     *  See: http://stackoverflow.com/questions/19829293/scalacheck-arbitrary-implicits-and-recursive-generators
     */
   def genMapAlgebraAST(depth: Int = 1): Gen[MapAlgebraAST] =
-    if (depth >= 100) genConstantAST
-    else Gen.frequency((1 -> genOpAST(depth + 1)), (1 -> genSourceAST))
+    if (depth >= 100) genLeafAST
+    else Gen.frequency((1 -> genOpAST(depth + 1)), (1 -> genLeafAST))
 
 }
