@@ -6,7 +6,7 @@ import java.util.UUID
 
 /** The top level structure defining an export job
   *
-  * @param id The UUID which identifies this particular ingest job
+  * @param id The UUID which identifies this particular export job
   * @param input [[InputDefinition]] with inforamation about input data for an export job
   * @param output [[OutputDefinition]] with inforamation about output data for an export job
   */

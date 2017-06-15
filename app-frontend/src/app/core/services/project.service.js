@@ -165,7 +165,7 @@ export default (app) => {
             const defaultSettings = {
                 projectId: project.id,
                 exportStatus: 'NOTEXPORTED',
-                exportType: 'S3',
+                exportType: exportType ? exportType : 'S3',
                 visibility: 'PRIVATE',
                 exportOptions: finalOptions
             };

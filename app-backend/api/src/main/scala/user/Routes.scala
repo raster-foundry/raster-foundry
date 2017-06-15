@@ -21,6 +21,7 @@ import com.typesafe.scalalogging.LazyLogging
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.util.{Failure, Success}
 
 
 /**
@@ -115,9 +116,7 @@ trait UserRoutes extends Authentication
         dbxAuthRequest.redirectURI, session, queryParams
       )
       logger.debug("Auth finish from Dropbox successful")
-      Users.storeDropboxAccessToken(user.id, authFinish.getAccessToken)
-      logger.debug(s"Sent access code for user ${user.id} to database")
-      complete(StatusCodes.OK)
+      complete(Users.storeDropboxAccessToken(user.id, authFinish.getAccessToken))
     }
   }
 
