@@ -11,9 +11,9 @@ import java.net.URI
 case class ExportOptions(
   mask: Option[Projected[MultiPolygon]],
   resolution: Int,
-  stitch: Boolean,
-  crop: Boolean,
-  raw: Boolean,
+  stitch: Boolean = false,
+  crop: Boolean = false,
+  raw: Boolean = false,
   bands: Option[Seq[Int]],
   rasterSize: Option[Int],
   crs: Option[Int],
