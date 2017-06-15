@@ -65,7 +65,7 @@ object TileSources extends LazyLogging {
       case project @ ProjectRaster(projId, Some(band)) =>
         GlobalSummary.minAcceptableProjectZoom(projId).flatMap { case (extent, zoom) =>
           Mosaic.rawForExtent(projId, zoom, Some(Projected(extent.toPolygon, 3857)))
-            .map({ tile => tile.bands(band) })
+            .map({ tile => tile.band(band) })
         }.value
 
       case project @ ProjectRaster(projId, None) =>
@@ -79,7 +79,7 @@ object TileSources extends LazyLogging {
     r match {
       case scene @ SceneRaster(sceneId, Some(band)) =>
         LayerCache.layerTile(sceneId, z, SpatialKey(x, y))
-          .map(tile => tile.bands(band)).value
+          .map(tile => tile.band(band)).value
 
       case scene @ SceneRaster(sceneId, None) =>
         logger.warn(s"Request for $scene does not contain band index")
@@ -87,7 +87,7 @@ object TileSources extends LazyLogging {
 
       case project @ ProjectRaster(projId, Some(band)) =>
         Mosaic.raw(projId, z, x, y)
-          .map(tile => tile.bands(band)).value
+          .map(tile => tile.band(band)).value
 
       case project @ ProjectRaster(projId, None) =>
         logger.warn(s"Request for $project does not contain band index")
