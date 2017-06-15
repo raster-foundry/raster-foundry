@@ -3,7 +3,7 @@ package com.azavea.rf.datamodel
 import geotrellis.proj4.CRS
 import io.circe.generic.JsonCodec
 
-import java.net.URI
+import java.net.{URI, URLDecoder}
 
 /**
   * Output definition
@@ -24,4 +24,6 @@ case class OutputDefinition(
   stitch: Boolean,
   source: URI,
   dropboxCredential: Option[String]
-)
+) {
+  def getURLDecodedSource: String = URLDecoder.decode(source.toString, "UTF-8")
+}

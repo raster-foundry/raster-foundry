@@ -101,6 +101,17 @@ def wait_for_status_op(*args, **kwargs):
     for line in cmd.stdout:
         logger.info(line.strip())
 
+    # Wait until process terminates (without using cmd.wait())
+    while cmd.poll() is None:
+        time.sleep(0.5)
+ 
+    if cmd.returncode == 0:
+        logger.info('Successfully completed export %s', export_id)
+        return True
+    else:
+        logger.error('Something went wrong with %s', export_id)
+        raise AirflowException('Export failed for {}'.format(export_id))
+
 # PythonOperators
 @wrap_rollbar
 def create_export_definition_op(*args, **kwargs):
@@ -110,7 +121,7 @@ def create_export_definition_op(*args, **kwargs):
     export_id = conf['exportId']
 
     xcom_client.xcom_push(key='export_id',value=export_id)
-    start_export(export_id, xcom_client)
+    return start_export(export_id, xcom_client)
 
 # TASKS
 create_export_definition_task = PythonOperator(
