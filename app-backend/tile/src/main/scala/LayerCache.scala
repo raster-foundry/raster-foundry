@@ -8,6 +8,7 @@ import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.params._
 import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.rf.common._
+import com.azavea.rf.common.ast._
 import com.azavea.rf.common.cache._
 import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 import com.azavea.rf.database.Database
@@ -199,11 +200,13 @@ object LayerCache extends Config with LazyLogging {
     astCache.cachingOptionT(cacheKey) { implicit ec =>
       for {
         (tool, toolRun) <- toolAndToolRun(toolRunId, user)
-        ast      <- OptionT.fromOption[Future]({
+        oldAst      <- OptionT.fromOption[Future]({
                       logger.debug(s"Parsing Tool AST with ${tool.definition}")
                       val entireAST = tool.definition.as[MapAlgebraAST].valueOr(throw _)
                       subNode.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
                     })
+        subs     <- assembleSubstitutions(oldAst, user)
+        ast      <- OptionT.fromOption[Future](oldAst.substitute(subs))
         nodeId   <- OptionT.pure[Future, UUID](subNode.getOrElse(ast.id))
         params   <- OptionT.pure[Future, EvalParams]({
                       logger.debug(s"Parsing ToolRun parameters with ${toolRun.executionParameters}")
