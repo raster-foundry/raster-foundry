@@ -52,7 +52,7 @@ class ConnectionsController {
 
         let offsets = calculateOffsets(500, 500);
         let origin = `${this.$location.protocol()}://${this.$location.host()}` +
-            `${this.$location.port() ? ':' + this.$location.port() : ''}`;
+            `${this.$location.port() !== 443 ? ':' + this.$location.port() : ''}`;
         let dropboxOauthUrl = 'https://dropbox.com/oauth2/authorize?response_type=code' +
             `&client_id=${this.config.dropboxClientId}` +
             `&redirect_uri=${origin}/callback`;
