@@ -104,11 +104,13 @@ trait RollbarNotifier extends LazyLogging {
   }
 
   def sendError(payload: JsObject): Unit = {
-    Http().singleRequest(
-      HttpRequest(HttpMethod("POST", false, false, RequestEntityAcceptance.Expected),
-        uri = this.url,
-        entity = HttpEntity(ContentTypes.`application/json`,
-          payload.toString))
-    )
+    if (this.environment != "development") {
+      Http().singleRequest(
+        HttpRequest(HttpMethod("POST", false, false, RequestEntityAcceptance.Expected),
+          uri = this.url,
+          entity = HttpEntity(ContentTypes.`application/json`,
+            payload.toString))
+      )
+    }
   }
 }

@@ -9,6 +9,8 @@ if ["up", "provision", "status"].include?(ARGV.first)
   AnsibleGalaxyHelper.install_dependent_roles("deployment/ansible")
 end
 
+ANSIBLE_VERSION = "2.3.1.0"
+
 Vagrant.configure(2) do |config|
   config.vm.box = "ubuntu/trusty64"
 
@@ -25,8 +27,10 @@ Vagrant.configure(2) do |config|
   config.vm.network :forwarded_port, guest: 9000, host: Integer(ENV.fetch("RF_PORT_9000", 9000))
   # tileserver
   config.vm.network :forwarded_port, guest: 9900, host: Integer(ENV.fetch("RF_PORT_9900", 9900))
-  # nginx
+  # nginx-api
   config.vm.network :forwarded_port, guest: 9100, host: Integer(ENV.fetch("RF_PORT_9100", 9100))
+  # nginx-tileserver
+  config.vm.network :forwarded_port, guest: 9101, host: Integer(ENV.fetch("RF_PORT_9101", 9101))
   # airflow webserver editor
   config.vm.network :forwarded_port, guest: 8080, host: Integer(ENV.fetch("RF_PORT_8080", 8080))
   # airflow flower editor
@@ -52,11 +56,11 @@ Vagrant.configure(2) do |config|
 
   config.vm.provision "shell" do |s|
     s.inline = <<-SHELL
-      if [ ! -x /usr/local/bin/ansible ]; then
+      if [ ! -x /usr/local/bin/ansible ] || ! ansible --version | grep #{ANSIBLE_VERSION}; then
         sudo apt-get update -qq
         sudo apt-get install python-pip python-dev -y
         sudo pip install paramiko==1.16.0
-        sudo pip install ansible==2.0.2.0
+        sudo pip install ansible==#{ANSIBLE_VERSION}
       fi
 
       cd /opt/raster-foundry/deployment/ansible && \

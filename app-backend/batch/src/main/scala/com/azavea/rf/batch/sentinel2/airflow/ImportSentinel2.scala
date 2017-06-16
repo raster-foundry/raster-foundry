@@ -68,7 +68,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
         rawDataBytes     = objMetadata.getContentLength.toInt,
         visibility       = Visibility.Public,
         filename         = filename,
-        sourceUri        = s"${sentinel2Config.baseHttpPath}/${obj}",
+        sourceUri        = s"${sentinel2Config.baseHttpPath}${obj}",
         owner            = airflowUser.some,
         scene            = sceneId,
         imageMetadata    = Json.Null,
@@ -81,7 +81,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
 
   def createThumbnails(sceneId: UUID, tilePath: String): List[Thumbnail.Identified] = {
     val keyPath: String = s"$tilePath/preview.jpg"
-    val thumbnailUrl = s"${sentinel2Config.baseHttpPath}/$keyPath"
+    val thumbnailUrl = s"${sentinel2Config.baseHttpPath}$keyPath"
 
     if (!isUriExists(thumbnailUrl)) Nil
     else
@@ -96,7 +96,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
       ) :: Nil
   }
 
-  def findScenes(date: LocalDate, user: User): Future[List[Scene]] = {
+  def findScenes(date: LocalDate, user: User): Future[List[Option[Scene]]] = {
     logger.info(s"Searching for new scenes on $date")
     Future.sequence(
       s3Client
@@ -116,91 +116,97 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
               tilesJson.flatMap { tileJson =>
                 tileJson.hcursor.downField("path").as[String].toOption.map { tilePath =>
                   val sceneId = UUID.randomUUID()
-                  logger.info(s"Starting scene creation for sentinel 2 scene: ${tilePath}")
-                  val tileinfo =
-                    s3Client
-                      .getObject(sentinel2Config.bucketName, s"${tilePath}/tileInfo.json")
-                        .getObjectContent
-                        .toJson
-                        .getOrElse(Json.Null)
+                  val sceneName = s"S2 $tilePath"
 
-                  val images = List(10f, 20f, 60f).map(createImages(sceneId, tileinfo, _)).reduce(_ ++ _)
+                  Scenes.sceneNameExistsForUser(sceneName, user).flatMap { exists =>
+                    if (exists) Future(None)
+                    else {
+                      logger.info(s"Starting scene creation for sentinel 2 scene: ${tilePath}")
+                      val tileinfo =
+                        s3Client
+                          .getObject(sentinel2Config.bucketName, s"${tilePath}/tileInfo.json")
+                          .getObjectContent
+                          .toJson
+                          .getOrElse(Json.Null)
 
-                  val (tileFootprint, dataFootprint) =
-                    multiPolygonFromJson(tileinfo, "tileGeometry", sentinel2Config.targetProjCRS) ->
-                      multiPolygonFromJson(tileinfo, "tileDataGeometry", sentinel2Config.targetProjCRS)
+                      val images = List(10f, 20f, 60f).map(createImages(sceneId, tileinfo, _)).reduce(_ ++ _)
 
-                  val sceneMetadata: Map[String, String] = getSceneMetadata(tileinfo)
+                      val (tileFootprint, dataFootprint) =
+                        multiPolygonFromJson(tileinfo, "tileGeometry", sentinel2Config.targetProjCRS) ->
+                          multiPolygonFromJson(tileinfo, "tileDataGeometry", sentinel2Config.targetProjCRS)
 
-                  val awsBase = s"https://${sentinel2Config.bucketName}.s3.amazonaws.com"
+                      val sceneMetadata: Map[String, String] = getSceneMetadata(tileinfo)
 
-                  val metadataFiles = List(
-                    s"$awsBase/$tilePath/tileInfo.json",
-                    s"$awsBase/$tilePath/metadata.xml",
-                    s"$awsBase/$tilePath/productInfo.json"
-                  )
+                      val awsBase = s"https://${sentinel2Config.bucketName}.s3.amazonaws.com"
 
-                  val cloudCover = sceneMetadata.get("dataCoveragePercentage").map(_.toFloat)
-                  val acquisitionDate = sceneMetadata.get("timeStamp").map { dt =>
-                    new java.sql.Timestamp(
-                      ZonedDateTime
-                        .parse(dt)
-                        .toInstant
-                        .getEpochSecond * 1000l
-                    )
-                  }
+                      val metadataFiles = List(
+                        s"$awsBase/$tilePath/tileInfo.json",
+                        s"$awsBase/$tilePath/metadata.xml",
+                        s"$awsBase/$tilePath/productInfo.json"
+                      )
 
-                  val scene = Scene.Create(
-                    id              = sceneId.some,
-                    organizationId  = sentinel2Config.organizationUUID,
-                    ingestSizeBytes = 0,
-                    visibility      = Visibility.Public,
-                    tags            = List("Sentinel-2", "JPEG2000"),
-                    datasource      = sentinel2Config.datasourceUUID,
-                    sceneMetadata   = sceneMetadata.asJson,
-                    name            = s"S2 $tilePath",
-                    owner           = airflowUser.some,
-                    tileFootprint   = (sentinel2Config.targetProjCRS.epsgCode |@| tileFootprint).map { case (code, mp) => Projected(mp, code) },
-                    dataFootprint   = (sentinel2Config.targetProjCRS.epsgCode |@| dataFootprint).map { case (code, mp) => Projected(mp, code) },
-                    metadataFiles   = metadataFiles,
-                    images          = images,
-                    thumbnails      = createThumbnails(sceneId, tilePath),
-                    ingestLocation  = None,
-                    filterFields    = SceneFilterFields(
-                      cloudCover      = cloudCover,
-                      acquisitionDate = acquisitionDate
-                    ),
-                    statusFields = SceneStatusFields(
-                      thumbnailStatus = JobStatus.Success,
-                      boundaryStatus  = JobStatus.Success,
-                      ingestStatus    = IngestStatus.NotIngested
-                    )
-                  )
-
-                  logger.info(s"Importing scene $sceneId...")
-                  val future =
-                    Scenes.insertScene(scene, user).map(_.toScene).recover {
-                      case e: PSQLException => {
-                        logger.error(s"An error occurred during scene $sceneId import. Skipping...")
-                        logger.error(e.stackTraceString)
-                        sendError(e)
-                        scene.toScene(user)
+                      val cloudCover = sceneMetadata.get("dataCoveragePercentage").map(_.toFloat)
+                      val acquisitionDate = sceneMetadata.get("timeStamp").map { dt =>
+                        new java.sql.Timestamp(
+                          ZonedDateTime
+                            .parse(dt)
+                            .toInstant
+                            .getEpochSecond * 1000l
+                        )
                       }
-                    }
 
-                  future onComplete {
-                    case Success(s) => logger.info(s"Finished importing scene ${s.id}.")
-                    case Failure(e) => {
-                      logger.error(s"An error occurred during scene $sceneId import.")
-                      logger.error(e.stackTraceString)
-                      sendError(e)
+                      val scene = Scene.Create(
+                        id              = sceneId.some,
+                        organizationId  = sentinel2Config.organizationUUID,
+                        ingestSizeBytes = 0,
+                        visibility      = Visibility.Public,
+                        tags            = List("Sentinel-2", "JPEG2000"),
+                        datasource      = sentinel2Config.datasourceUUID,
+                        sceneMetadata   = sceneMetadata.asJson,
+                        name            = sceneName,
+                        owner           = airflowUser.some,
+                        tileFootprint   = (sentinel2Config.targetProjCRS.epsgCode |@| tileFootprint).map { case (code, mp) => Projected(mp, code) },
+                        dataFootprint   = (sentinel2Config.targetProjCRS.epsgCode |@| dataFootprint).map { case (code, mp) => Projected(mp, code) },
+                        metadataFiles   = metadataFiles,
+                        images          = images,
+                        thumbnails      = createThumbnails(sceneId, tilePath),
+                        ingestLocation  = None,
+                        filterFields    = SceneFilterFields(
+                          cloudCover      = cloudCover,
+                          acquisitionDate = acquisitionDate
+                        ),
+                        statusFields = SceneStatusFields(
+                          thumbnailStatus = JobStatus.Success,
+                          boundaryStatus  = JobStatus.Success,
+                          ingestStatus    = IngestStatus.NotIngested
+                        )
+                      )
+
+                      logger.info(s"Importing scene $sceneId...")
+                      val future =
+                        Scenes.insertScene(scene, user).map(_.toScene).recover {
+                          case e: PSQLException => {
+                            logger.error(s"An error occurred during scene $sceneId import. Skipping...")
+                            logger.error(e.stackTraceString)
+                            sendError(e)
+                            scene.toScene(user)
+                          }
+                        }
+
+                      future onComplete {
+                        case Success(s) => logger.info(s"Finished importing scene ${s.id}.")
+                        case Failure(e) => {
+                          logger.error(s"An error occurred during scene $sceneId import.")
+                          logger.error(e.stackTraceString)
+                          sendError(e)
+                        }
+                      }
+                      future.map(Some(_))
                     }
                   }
-                  future
                 }
               }
             }
-
             Future.sequence(optList.getOrElse(Nil))
           }.flatMap(identity)
         }
@@ -217,10 +223,12 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
       })
     } onComplete {
       case Success(scenes) => {
-        if(scenes.nonEmpty) logger.info(s"Successfully imported scenes: ${scenes.map(_.id.toString).mkString(", ")}.")
+        val unskippedScenes = scenes.flatten
+        if(unskippedScenes.nonEmpty) logger.info(s"Successfully imported scenes: ${unskippedScenes.map(_.id.toString).mkString(", ")}.")
+        else if (scenes.nonEmpty) logger.info("All scenes were already imported")
         else {
           val e = new Exception(s"No scenes available for the ${startDate}")
-          e.printStackTrace()
+          logger.error(e.stackTraceString)
           sendError(e)
           stop
           sys.exit(1)
@@ -228,7 +236,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
         stop
       }
       case Failure(e) => {
-        e.printStackTrace()
+        logger.error(e.stackTraceString)
         sendError(e)
         stop
         sys.exit(1)
@@ -240,7 +248,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
 object ImportSentinel2 {
   val name = "import_sentinel2"
 
-  def multiPolygonFromJson(tileinfo: Json, key: String, targetCrs: CRS = CRS.fromName("EPSG:4326")): Option[MultiPolygon] = {
+  def multiPolygonFromJson(tileinfo: Json, key: String, targetCrs: CRS = CRS.fromName("EPSG:3857")): Option[MultiPolygon] = {
     val geom = tileinfo.hcursor.downField(key)
     val polygon = geom.focus.map(_.noSpaces.parseGeoJson[Polygon])
     val srcProj =

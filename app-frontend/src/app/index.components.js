@@ -1,39 +1,52 @@
+/* eslint-disable */
 export default angular.module('index.components', [
-    require('./components/mapContainer/mapContainer.module.js').name,
-    require('./components/diagramContainer/diagramContainer.module.js').name,
-    require('./components/navBar/navBar.module.js').name,
-    require('./components/toolSearch/toolSearch.module.js').name,
-    require('./components/toolItem/toolItem.module.js').name,
-    require('./components/filterPane/filterPane.module.js').name,
-    require('./components/boxSelectItem/boxSelectItem.module.js').name,
-    require('./components/callToActionItem/callToActionItem.module.js').name,
+    // scene components
+    require('./components/scenes/sceneList/sceneList.module.js').name,
+    require('./components/scenes/sceneItem/sceneItem.module.js').name,
+    require('./components/scenes/sceneDetail/sceneDetail.module.js').name,
+    require('./components/scenes/sceneDetailModal/sceneDetailModal.module.js').name,
+    require('./components/scenes/sceneImportModal/sceneImportModal.module.js').name,
+    require('./components/scenes/sceneDownloadModal/sceneDownloadModal.module.js').name,
+    require('./components/scenes/sceneFilterPane/sceneFilterPane.module.js').name,
+
+    // project components
+    require('./components/projects/projectItem/projectItem.module.js').name,
+    require('./components/projects/projectPublishModal/projectPublishModal.module.js').name,
+    require('./components/projects/projectAddScenesModal/projectAddScenesModal.module.js').name,
+    require('./components/projects/projectSelectModal/projectSelectModal.module.js').name,
+    require('./components/projects/projectCreateModal/projectCreateModal.module.js').name,
+    require('./components/projects/projectExportModal/projectExportModal.module.js').name,
+
+    // datasource components
+    require('./components/datasources/datasourceItem/datasourceItem.module.js').name,
+    require('./components/datasources/datasourceCreateModal/datasourceCreateModal.module.js').name,
+
+    // tool components
+    require('./components/tools/toolSearch/toolSearch.module.js').name,
+    require('./components/tools/toolItem/toolItem.module.js').name,
+    require('./components/tools/diagramContainer/diagramContainer.module.js').name,
+
+    // map components
+    require('./components/map/mapContainer/mapContainer.module.js').name,
+    require('./components/map/staticMap/staticMap.module.js').name,
+
+    // settings components
+    require('./components/settings/refreshTokenModal/refreshTokenModal.module.js').name,
+    require('./components/settings/featureFlagOverrides/featureFlagOverrides.module.js').name,
+    require('./components/settings/tokenItem/tokenItem.module.js').name,
+
+    // common components (no domain)
+    require('./components/common/navBar/navBar.module.js').name,
+    require('./components/common/toggle-old/toggle-old.module.js').name,
+    require('./components/common/toggle/toggle.module.js').name,
+    require('./components/common/confirmationModal/confirmationModal.module.js').name,
+    require('./components/common/boxSelectItem/boxSelectItem.module.js').name,
+    require('./components/common/callToActionItem/callToActionItem.module.js').name,
+    require('./components/common/dateRangePickerModal/dateRangePickerModal.module.js').name,
+    require('./components/common/datePickerModal/datePickerModal.module.js').name,
+    require('./components/common/statusTag/statusTag.module.js').name,
+
+    // Single components for new domains
+    require('./components/aoiFilterPane/aoiFilterPane.module.js').name,
     require('./components/channelHistogram/channelHistogram.module.js').name,
-    require('./components/createProjectModal/createProjectModal.module.js').name,
-    require('./components/mosaicScenes/mosaicScenes.module.js').name,
-    require('./components/mosaicMask/mosaicMask.module.js').name,
-    require('./components/maskItem/maskItem.module.js').name,
-    require('./components/mosaicParameters/mosaicScenesParameters.module.js').name,
-    require('./components/sceneList/sceneList.module.js').name,
-    require('./components/sceneItem/sceneItem.module.js').name,
-    require('./components/sceneDetail/sceneDetail.module.js').name,
-    require('./components/projectItem/projectItem.module.js').name,
-    require('./components/publishModal/publishModal.module.js').name,
-    require('./components/selectedScenesModal/selectedScenesModal.module.js').name,
-    require('./components/confirmationModal/confirmationModal.module.js').name,
-    require('./components/projectAddModal/projectAddModal.module.js').name,
-    require('./components/refreshTokenModal/refreshTokenModal.module.js').name,
-    require('./components/downloadModal/downloadModal.module.js').name,
-    require('./components/featureFlagOverrides/featureFlagOverrides.module.js').name,
-    require('./components/toggle/toggle.module.js').name,
-    require('./components/tokenItem/tokenItem.module.js').name,
-    require('./components/datasourceItem/datasourceItem.module.js').name,
-    require('./components/selectProjectModal/selectProjectModal.module.js').name,
-    require('./components/importModal/importModal.module.js').name,
-    require('./components/staticMap/staticMap.module.js').name,
-    require('./components/sceneDetailModal/sceneDetailModal.module.js').name,
-    require('./components/dateRangePickerModal/dateRangePickerModal.module.js').name,
-    require('./components/datePickerModal/datePickerModal.module.js').name,
-    require('./components/exportModal/exportModal.module.js').name,
-    require('./components/statusTag/statusTag.module.js').name,
-    require('./components/aoiFilterPane/aoiFilterPane.module.js').name
 ]);

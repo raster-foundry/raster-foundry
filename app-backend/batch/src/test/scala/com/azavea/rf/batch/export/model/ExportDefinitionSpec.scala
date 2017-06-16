@@ -106,7 +106,7 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
     val expected = ExportDefinition(
       id = UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57039"),
       input = InputDefinition(
-        projectId = UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57036"),
+        projectId = Some(UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57036")),
         resolution = 15,
         style = Left(SimpleInput(
           layers = Array(
@@ -130,7 +130,7 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
     expected.asJson shouldBe actual.asJson
   }
 
-  it("ASTInput isomorphism") {
+  it("ASTInput isomorphism (scene nodes)") {
     val s0 = Source(UUID.randomUUID, None)
     val s1 = Source(UUID.randomUUID, None)
     val ast: MapAlgebraAST = Addition(List(s0, s1), UUID.randomUUID, None)
@@ -144,9 +144,9 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
     )
 
     val inDef = InputDefinition(
-      UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57036"),
+      Some(UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57036")),
       15,
-      Right(ASTInput(ast, params, params.sources.mapValues(_ => "s3://foo/bar/")))
+      Right(ASTInput(ast, params, params.sources.mapValues(_ => "s3://foo/bar/"), Map.empty))
     )
 
     val ed = ExportDefinition(
@@ -156,6 +156,43 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
     )
 
 //    println(ed.asJson.spaces2)
+
+    decode[ExportDefinition](ed.asJson.spaces2) match {
+      case Right(ed2) => ed2 shouldBe ed
+      case Left(err) => throw new Exception(s"EXDEF: ${err}")
+    }
+  }
+
+  it("ASTInput isomorphism (project nodes)") {
+    val s0 = Source(UUID.randomUUID, None)
+    val s1 = Source(UUID.randomUUID, None)
+    val ast: MapAlgebraAST = Addition(List(s0, s1), UUID.randomUUID, None)
+
+    val params = EvalParams(
+      Map(
+        s0.id -> ProjectRaster(UUID.randomUUID, Some(5)),
+        s1.id -> ProjectRaster(UUID.randomUUID, Some(5))
+      ),
+      Map.empty
+    )
+
+    val astIn = ASTInput(ast, params, Map.empty, params.sources.map({ case (k, _) => k -> List(
+      (UUID.randomUUID,"s3://foo/bar/1"),
+      (UUID.randomUUID,"s3://foo/bar/2"),
+      (UUID.randomUUID,"s3://foo/bar/3")
+    )}))
+
+    val inDef = InputDefinition(
+      Some(UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57036")),
+      15,
+      Right(astIn)
+    )
+
+    val ed = ExportDefinition(
+      UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57039"),
+      inDef,
+      outDef
+    )
 
     decode[ExportDefinition](ed.asJson.spaces2) match {
       case Right(ed2) => ed2 shouldBe ed

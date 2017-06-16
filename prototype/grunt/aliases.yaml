@@ -1,5 +1,0 @@
-default:
-  - 'sass'
-  - 'postcss'
-  - 'browserSync'
-  - 'watch'

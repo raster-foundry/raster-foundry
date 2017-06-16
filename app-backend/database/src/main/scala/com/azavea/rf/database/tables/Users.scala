@@ -65,7 +65,7 @@ object Users extends TableQuery(tag => new Users(tag)) with LazyLogging {
       val hasNext = (page.offset + 1) * page.limit < totalUsers // 0 indexed page offset
       val hasPrevious = page.offset > 0
       PaginatedResponse(totalUsers, hasPrevious, hasNext,
-        page.offset, page.limit, users)
+                        page.offset, page.limit, users)
     }
   }
 
@@ -148,6 +148,12 @@ object Users extends TableQuery(tag => new Users(tag)) with LazyLogging {
     database.db.run {
       getUserAction.headOption
     }
+  }
+
+  def storeDropboxAccessToken(userId: String, token: String)(implicit database: DB): Future[Int] = {
+    val updateAction = Users.filter(_.id === userId).map(_.dropboxCredential).update(Some(token))
+    logger.debug(s"Attempting to store access token for user $userId")
+    database.db.run(updateAction)
   }
 
   def updateUser(user: User, id: String)(implicit database: DB): Future[Int] = {

@@ -1,0 +1,83 @@
+<div class="modal-scrollable-body modal-sidebar-header">
+  <div class="modal-header">
+    <button type="button" class="close" aria-label="Close" ng-click="$ctrl.dismiss()">
+      <span aria-hidden="true">&times;</span>
+    </button>
+    <h4 class="modal-title">
+      Publish Project - {{$ctrl.resolve.project.name}}
+    </h4>
+    <p>Publish or export your project</p>
+  </div>
+  <div class="modal-body">
+    <div class="content" ng-show="$ctrl.shareUrl">
+      <h4>Sharing</h4>
+      <div class="form-group">
+        <label>Map Visibility</label>
+        <div class="form-group">
+          <div class="btn-group inline">
+            <button class="btn btn-primary"
+                    ng-repeat="policy in $ctrl.sharePolicies"
+                    ng-if="policy.enabled"
+                    ng-click="$ctrl.onPolicyChange(policy)"
+                    ng-class="{'active': policy.active}"
+                    ng-disabled="!policy.enabled">
+              {{policy.label}}
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Share Page</label>
+        <div class="form-group all-in-one">
+          <label for="tile-link" class="sr-only">URL</label>
+          <input id="tile-link" type="text" class="form-control"
+                 value="{{$ctrl.shareUrl}}" readonly>
+          <button class="btn btn-link"
+                  clipboard text="$ctrl.shareUrl">
+            Copy
+          </button>
+          <button class="btn btn-primary"
+                  ng-click="$ctrl.openProjectShare()">
+            Open
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="tile-link">ZXY Tile Layer URL</label>
+        <div class="form-group all-in-one">
+          <input id="tile-link" type="text" class="form-control"
+                  value="{{$ctrl.tileLayerUrls.standard}}" readonly>
+          <button clipboard text="$ctrl.tileLayerUrls.standard" class="btn btn-link">
+            Copy
+          </button>
+        </div>
+        <label for="tile-link">ArcGIS Tile Layer URL</label>
+        <div class="form-group all-in-one">
+          <input id="tile-link" type="text" class="form-control"
+                  value="{{$ctrl.tileLayerUrls.arcGIS}}" readonly>
+          <button clipboard text="$ctrl.tileLayerUrls.arcGIS" class="btn btn-link">
+            Copy
+          </button>
+        </div>
+      </div>
+      <div ng-if="$ctrl.activePolicy.enum === 'PRIVATE'" class="form-group">
+        <label>Map Token</label>
+        <div class="form-group all-in-one">
+          <input id="tile-link" type="text" class="form-control"
+                 value="{{$ctrl.mapToken.id}}" readonly>
+          <button class="btn btn-link"
+                  clipboard text="$ctrl.mapToken.id">
+            Copy
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn"
+            ng-click="$ctrl.dismiss()">
+      Done
+    </button>
+  </div>
+</div>

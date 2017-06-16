@@ -1,7 +1,6 @@
 'use strict';
 /* globals module process */
-/* no-console: 0
- */
+/* no-console: 0 */
 
 
 const webpack = require('webpack');
@@ -19,10 +18,12 @@ module.exports = function (_path) {
             hot: true,
             inline: true,
             progress: true,
-            'history-api-fallback': true,
+            historyApiFallback: true,
             port: port,
             proxy: {
-                '*': 'http://localhost:' + serverport
+                '/api/*': 'http://localhost:' + serverport,
+                '/feature-flags': 'http://localhost:' + serverport,
+                '/config': 'http://localhost:' + serverport
             }
         },
         plugins: [

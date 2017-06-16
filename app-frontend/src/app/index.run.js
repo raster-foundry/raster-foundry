@@ -21,7 +21,7 @@ function runBlock(
                 rollbarWrapperService.init();
                 intercomService.shutdown();
                 $state.go('login');
-            } else if (toState.name !== 'login') {
+            } else if (toState.name !== 'login' && toState.name !== 'callback') {
                 rollbarWrapperService.init(authService.profile());
                 intercomService.bootWithUser(authService.profile());
             }

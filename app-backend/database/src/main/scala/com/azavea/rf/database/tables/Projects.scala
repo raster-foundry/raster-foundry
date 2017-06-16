@@ -276,12 +276,38 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     * @param user      Results will be limited to user's organization
     */
   def deleteProject(projectId: UUID, user: User)(implicit database: DB): Future[Int] = {
+    for {
+      projectAois <- database.db.run {
+        AoisToProjects
+          .filter(_.projectId === projectId)
+          .map(_.aoiId)
+          .result
+      }
 
-    database.db.run {
-      Projects
-        .filterToSharedOrganizationIfNotInRoot(user)
-        .filter(_.id === projectId)
-        .delete
+      deleteProjectAois <- Future.sequence(projectAois.map { aoi =>
+        database.db.run {
+          AoisToProjects
+            .filter(_.aoiId === aoi)
+            .delete
+        }
+      })
+
+      deleteAois <- Future.sequence(projectAois.map { aoi =>
+        database.db.run {
+          AOIs.filterToSharedOrganizationIfNotInRoot(user)
+            .filter(_.id === aoi )
+            .delete
+        }
+      })
+
+      deleteProject <- database.db.run {
+        Projects
+          .filterToSharedOrganizationIfNotInRoot(user)
+          .filter(_.id === projectId)
+          .delete
+      }
+    } yield {
+      deleteProject
     }
   }
 
@@ -310,12 +336,14 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
                          .filter(_.id === projectId)
     } yield (
       updateProject.modifiedAt, updateProject.modifiedBy, updateProject.name, updateProject.description,
-      updateProject.visibility, updateProject.tileVisibility, updateProject.tags
+      updateProject.visibility, updateProject.tileVisibility, updateProject.tags, updateProject.aoiCadenceMillis,
+      updateProject.aoisLastChecked
     )
     database.db.run {
-      updateProjectQuery.update((
-        updateTime, user.id, project.name, project.description, project.visibility, project.tileVisibility, project.tags
-      ))
+      updateProjectQuery.update(
+        (updateTime, user.id, project.name, project.description, project.visibility, project.tileVisibility, project.tags,
+         project.aoiCadenceMillis, project.aoisLastChecked)
+      )
     } map {
       case 1 => 1
       case c => throw new IllegalStateException(s"Error updating project: update result expected to be 1, was $c")

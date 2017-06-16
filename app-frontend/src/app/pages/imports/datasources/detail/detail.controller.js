@@ -38,7 +38,7 @@ class DatasourceDetailController {
         }
 
         this.activeModal = this.$uibModal.open({
-            component: 'rfImportModal',
+            component: 'rfSceneImportModal',
             resolve: {
                 datasource: () => this.datasource
             }

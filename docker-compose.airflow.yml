@@ -21,12 +21,12 @@ services:
       - redis:cache.service.rasterfoundry.internal
     environment:
       - AIRFLOW_HOME=/usr/local/airflow
-      - AIRFLOW_PARALLELISM=2
+      - AIRFLOW_PARALLELISM=8
       - AIRFLOW_FERNET_KEY=secret
       - AIRFLOW_BASE_URL=http://localhost:8080
       - AIRFLOW_WEBSERVER_WORKERS=1
       - AIRFLOW_SECRET_KEY=secret
-      - AIRFLOW_CELERY_CONCURRENCY=4
+      - AIRFLOW_CELERY_CONCURRENCY=2
       - RF_HOST=http://rasterfoundry.com:9000
     ports:
       - "8080:8080"
@@ -48,12 +48,12 @@ services:
       - AIRFLOW_HOME=/usr/local/airflow
       - AIRFLOW_REMOTE_LOG_FOLDER=
       - AIRFLOW_REMOTE_LOG_CONN_ID=
-      - AIRFLOW_PARALLELISM=2
+      - AIRFLOW_PARALLELISM=8
       - AIRFLOW_FERNET_KEY=secret
       - AIRFLOW_BASE_URL=http://localhost:8080
       - AIRFLOW_WEBSERVER_WORKERS=1
       - AIRFLOW_SECRET_KEY=secret
-      - AIRFLOW_CELERY_CONCURRENCY=4
+      - AIRFLOW_CELERY_CONCURRENCY=2
       - RF_HOST=http://rasterfoundry.com:9000
     ports:
       - "5555:5555"
@@ -80,12 +80,12 @@ services:
       - AIRFLOW_HOME=/usr/local/airflow
       - AIRFLOW_REMOTE_LOG_FOLDER=
       - AIRFLOW_REMOTE_LOG_CONN_ID=
-      - AIRFLOW_PARALLELISM=32
+      - AIRFLOW_PARALLELISM=8
       - AIRFLOW_FERNET_KEY=secret
       - AIRFLOW_BASE_URL=http://localhost:8080
       - AIRFLOW_WEBSERVER_WORKERS=1
       - AIRFLOW_SECRET_KEY=secret
-      - AIRFLOW_CELERY_CONCURRENCY=4
+      - AIRFLOW_CELERY_CONCURRENCY=2
       - PYTHONPATH=/opt/raster-foundry/app-tasks/rf/src/
       - RF_HOST=http://rasterfoundry.com:9000
     command: airflow scheduler
@@ -112,12 +112,12 @@ services:
       - AIRFLOW_HOME=/usr/local/airflow
       - AIRFLOW_REMOTE_LOG_FOLDER=
       - AIRFLOW_REMOTE_LOG_CONN_ID=
-      - AIRFLOW_PARALLELISM=32
+      - AIRFLOW_PARALLELISM=8
       - AIRFLOW_FERNET_KEY=secret
       - AIRFLOW_BASE_URL=http://localhost:8080
       - AIRFLOW_WEBSERVER_WORKERS=1
       - AIRFLOW_SECRET_KEY=secret
-      - AIRFLOW_CELERY_CONCURRENCY=4
+      - AIRFLOW_CELERY_CONCURRENCY=2
       - RF_HOST=http://rasterfoundry.com:9000
     command: airflow worker
 
@@ -142,11 +142,11 @@ services:
       - AIRFLOW_HOME=/usr/local/airflow
       - AIRFLOW_REMOTE_LOG_FOLDER=
       - AIRFLOW_REMOTE_LOG_CONN_ID=
-      - AIRFLOW_PARALLELISM=32
+      - AIRFLOW_PARALLELISM=8
       - AIRFLOW_FERNET_KEY=secret
       - AIRFLOW_BASE_URL=http://localhost:8080
       - AIRFLOW_WEBSERVER_WORKERS=1
       - AIRFLOW_SECRET_KEY=secret
-      - AIRFLOW_CELERY_CONCURRENCY=4
+      - AIRFLOW_CELERY_CONCURRENCY=2
       - RF_HOST=http://rasterfoundry.com:9000
     command: airflow worker -q spark

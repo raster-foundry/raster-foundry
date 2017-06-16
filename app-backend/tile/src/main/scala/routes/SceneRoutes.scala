@@ -1,5 +1,6 @@
 package com.azavea.rf.tile.routes
 
+import com.azavea.rf.common.RfStackTrace
 import com.azavea.rf.tile._
 import com.azavea.rf.datamodel.ColorCorrect
 import com.azavea.rf.tile.tool._
@@ -21,6 +22,7 @@ import cats.implicits._
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
+import scala.util._
 
 object SceneRoutes extends LazyLogging {
 
@@ -85,7 +87,15 @@ object SceneRoutes extends LazyLogging {
           } yield {
             pngAsHttpResponse(tile.renderPng)
           }
-        futureResponse.value
+        val future = futureResponse.value
+
+        future onComplete {
+          case Success(s) => s
+          case Failure(e) =>
+            logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
+        }
+
+        future
       }
     }
 
@@ -98,6 +108,13 @@ object SceneRoutes extends LazyLogging {
         } yield {
           hist.toArray
         }
+
+      futureResponse onComplete {
+        case Success(s) => s
+        case Failure(e) =>
+          logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
+      }
+
       futureResponse.value
     }
   }
@@ -110,7 +127,15 @@ object SceneRoutes extends LazyLogging {
         } yield {
           pngAsHttpResponse(tile.renderPng)
         }
-      futureResponse.value
+      val future = futureResponse.value
+
+      future onComplete {
+        case Success(s) => s
+        case Failure(e) =>
+          logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
+      }
+
+      future
     }
 
   def toolRoute(
@@ -121,15 +146,24 @@ object SceneRoutes extends LazyLogging {
   ): Route = {
     toolParams(defaultColorRamp, defaultBreaks) { params =>
       complete {
-        for {
-          maybeTile <- futureMaybeTile
-        } yield {
-          maybeTile.map { tile =>
-            val subsetTile = tile.subsetBands(params.bands)
-            val colorMap = ColorMap(params.breaks, params.ramp)
-            pngAsHttpResponse(index(subsetTile).renderPng(colorMap))
+        val future =
+          for {
+            maybeTile <- futureMaybeTile
+          } yield {
+            maybeTile.map { tile =>
+              val subsetTile = tile.subsetBands(params.bands)
+              val colorMap = ColorMap(params.breaks, params.ramp)
+              pngAsHttpResponse(index(subsetTile).renderPng(colorMap))
+            }
           }
+
+        future onComplete {
+          case Success(s) => s
+          case Failure(e) =>
+            logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
         }
+
+        future
       }
     }
   }

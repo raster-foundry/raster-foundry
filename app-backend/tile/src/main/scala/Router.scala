@@ -33,9 +33,7 @@ class Router extends LazyLogging
         pathPrefix("healthcheck") {
           pathEndOrSingleSlash {
             get {
-              complete {
-                HttpResponse(StatusCodes.OK)
-              }
+              HealthCheckRoute.root
             }
           }
         } ~
@@ -47,6 +45,7 @@ class Router extends LazyLogging
             tileAuthenticateOption { _ =>
               toolRoutes.tms(TileSources.cachedTmsSource) ~
               toolRoutes.validate ~
+              toolRoutes.histogram ~
               toolRoutes.preflight
             }
           }

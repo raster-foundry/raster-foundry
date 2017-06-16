@@ -1,10 +1,22 @@
 version: '2.1'
 services:
-  nginx:
-    image: raster-foundry-nginx:${GIT_COMMIT:-latest}
+  nginx-api:
+    image: raster-foundry-nginx-api:${GIT_COMMIT:-latest}
     build:
       context: ./nginx
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.api
+
+  nginx-tiler:
+    image: raster-foundry-nginx-tiler:${GIT_COMMIT:-latest}
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.tiler
+
+  nginx-airflow:
+    image: raster-foundry-nginx-airflow:${GIT_COMMIT:-latest}
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.airflow
 
   app-frontend:
     image: kkarczmarczyk/node-yarn:6.9-wheezy

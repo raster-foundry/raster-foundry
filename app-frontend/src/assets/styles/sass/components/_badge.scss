@@ -1,7 +1,7 @@
 .badge {
   padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 2px;
+  border: 1px solid $border-color-default;
+  border-radius: $border-radius-base;
   display: inline-block;
 
   >[class^=icon-] {

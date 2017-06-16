@@ -66,14 +66,20 @@
           >
           <p class="help-block">Contact support to change your username</p>
         </div>
+        <button ng-if="$ctrl.provider === 'auth0'"
+                class="btn btn-primary btn-large"
+                ng-click="$ctrl.authService.changePassword()">
+          Change Password
+        </button>
       </div>
       <div ng-if="$ctrl.profile.user_metadata">
         <div class="form-group" ng-repeat="(id, field) in $ctrl.profile.user_metadata track by id">
           <label>{{field.label}}</label>
           <input type="text" class="form-control" ng-model="field.value">
         </div>
-      <button ng-click="$ctrl.updateUserMetadata()" type="button" class="btn btn-primary btn-large">Update Profile</button>
+        <button ng-click="$ctrl.updateUserMetadata()" type="button" class="btn btn-primary btn-large">Update Profile</button>
       </div>
+      <rf-feature-flag-overrides ng-if="$ctrl.env === 'development'"></rf-feature-flag-overrides>
     </form>
   </div>
 </div>

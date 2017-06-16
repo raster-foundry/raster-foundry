@@ -7,12 +7,20 @@ import akka.http.scaladsl.model.StatusCodes
 
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 
+import com.dropbox.core.{DbxAppInfo, DbxRequestConfig, DbxWebAuth}
+
 import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.Users
 import com.azavea.rf.datamodel._
 import io.circe._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
+
+import com.typesafe.scalalogging.LazyLogging
+
+import scala.collection.JavaConverters._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 
 /**
@@ -21,7 +29,8 @@ import de.heikoseeberger.akkahttpcirce.CirceSupport._
 trait UserRoutes extends Authentication
     with PaginationDirectives
     with CommonHandlers
-    with UserErrorHandler {
+    with UserErrorHandler
+    with LazyLogging {
 
   implicit def database: Database
 
@@ -36,6 +45,11 @@ trait UserRoutes extends Authentication
       } ~
       patch {
         updateAuth0User
+      }
+    }  ~
+    pathPrefix("dropbox-setup") {
+      pathEndOrSingleSlash {
+        post { getDropboxAccessToken }
       }
     } ~
     pathPrefix(Segment) { authIdEncoded =>
@@ -70,12 +84,40 @@ trait UserRoutes extends Authentication
       Auth0UserService.getAuth0User(user)
     }
   }
+
   def updateAuth0User: Route = authenticate {
     user =>
     entity(as[Auth0UserUpdate]) { userUpdate =>
       complete {
         Auth0UserService.updateAuth0User(user, userUpdate)
       }
+    }
+  }
+
+  def getDropboxAccessToken: Route = authenticate {
+    user =>
+    entity(as[DropboxAuthRequest]) { dbxAuthRequest =>
+      val redirectURI = dbxAuthRequest.redirectURI
+      val (dbxKey, dbxSecret) =
+        (sys.env.get("DROPBOX_KEY"), sys.env.get("DROPBOX_SECRET")) match {
+          case (Some(key), Some(secret)) => (key, secret)
+          case _ => throw new RuntimeException("App dropbox credentials must be configured")
+        }
+      val dbxConfig = new DbxRequestConfig("raster-foundry-authorizer")
+      val appInfo = new DbxAppInfo(dbxKey, dbxSecret)
+      val webAuth = new DbxWebAuth(dbxConfig, appInfo)
+      val session = new DummySessionStore()
+      val queryParams = Map[String, Array[String]](
+        "code" -> Array(dbxAuthRequest.authorizationCode),
+        "state" -> Array(session.get)
+      ).asJava
+      val authFinish = webAuth.finishFromRedirect(
+        dbxAuthRequest.redirectURI, session, queryParams
+      )
+      logger.debug("Auth finish from Dropbox successful")
+      Users.storeDropboxAccessToken(user.id, authFinish.getAccessToken)
+      logger.debug(s"Sent access code for user ${user.id} to database")
+      complete(StatusCodes.OK)
     }
   }
 

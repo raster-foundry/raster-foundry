@@ -1,15 +1,17 @@
-/* globals Auth0Lock */
+/* globals Auth0Lock heap */
 
 import assetLogo from '../../../assets/images/logo-raster-foundry.png';
 export default (app) => {
     class AuthService {
         constructor( // eslint-disable-line max-params
-            jwtHelper, $q, featureFlagOverrides, featureFlags, perUserFeatureFlags,
-            $state, APP_CONFIG, localStorage, rollbarWrapperService, intercomService
+            jwtHelper, $q, $timeout, featureFlagOverrides, featureFlags,
+            perUserFeatureFlags, $state, APP_CONFIG, localStorage,
+            rollbarWrapperService, intercomService, $resource
         ) {
             this.localStorage = localStorage;
             this.jwtHelper = jwtHelper;
             this.$q = $q;
+            this.$timeout = $timeout;
             this.$state = $state;
             this.featureFlags = featureFlags;
             this.perUserFeatureFlags = perUserFeatureFlags;
@@ -20,6 +22,21 @@ export default (app) => {
             if (!APP_CONFIG.error) {
                 this.initAuth0(APP_CONFIG);
             }
+
+            this.pendingReauth = null;
+
+            this.User = $resource('/api/users/:id', {
+                id: '@id'
+            }, {
+                query: {
+                    method: 'GET',
+                    cache: false
+                },
+                get: {
+                    method: 'GET',
+                    cache: false
+                }
+            });
         }
 
         initAuth0(APP_CONFIG) {
@@ -133,21 +150,35 @@ export default (app) => {
             this.resetLock.show();
         }
 
+        getCurrentUser() {
+            let id = this.profile().user_id;
+            return this.User.get({id: id}).$promise;
+        }
+
         onLogin(authResult) {
             this.localStorage.set('id_token', authResult.idToken);
+
+            this.setReauthentication(authResult.idToken);
 
             this.loginLock.getProfile(authResult.idToken, (error, profile) => {
                 if (error) {
                     return;
                 }
 
-                /* eslint-disable no-undef */
-                if (typeof heap !== 'undefined' && typeof heap.identify === 'function') {
-                    heap.identify(profile.email);
-                }
-                /* eslint-enable no-undef */
-
                 this.localStorage.set('profile', profile);
+
+                if (typeof heap !== 'undefined' &&
+                    typeof heap.identify === 'function' &&
+                    typeof heap.addUserProperties === 'function' &&
+                    typeof heap.addEventProperties === 'function'
+                   ) {
+                    heap.identify(profile.email);
+                    this.getCurrentUser().then((user) => {
+                        heap.addUserProperties({organization: user.organizationId});
+                        heap.addEventProperties({'Logged In': 'true'});
+                    });
+                }
+
                 this.featureFlagOverrides.setUser(profile.user_id);
                 // Flags set in the `/config` endpoint; default.
                 let configFlags = this.featureFlags.get().map((flag) => flag.key);
@@ -195,6 +226,9 @@ export default (app) => {
         }
 
         logout() {
+            if (typeof heap !== 'undefined' && typeof heap.removeEventProperty === 'function') {
+                heap.removeEventProperty('Logged In');
+            }
             this.localStorage.remove('id_token');
             this.localStorage.remove('profile');
             this.rollbarWrapperService.init();
@@ -218,11 +252,27 @@ export default (app) => {
         }
 
         verifyAuthCache() {
+            const token = this.token();
             this.isLoggedIn = Boolean(
-                this.localStorage.get('id_token') && this.localStorage.get('profile')
+                token && this.profile() && !this.jwtHelper.isTokenExpired(token)
             );
+            if (this.isLoggedIn) {
+                this.setReauthentication(token);
+            }
             return this.isLoggedIn;
         }
+
+        setReauthentication(token) {
+            if (!this.pendingReauth) {
+                // Set up a $timeout to reauthenticate 5 minutes before the token will expire
+                const expDate = this.jwtHelper.getTokenExpirationDate(token);
+                const nowDate = new Date();
+                const timeoutMillis = expDate.getTime() - nowDate.getTime() - 5 * 60 * 1000;
+                // Store in case we need to cancel for some reason
+                this.pendingReauth = this.$timeout(() => this.login(null), timeoutMillis);
+            }
+        }
+
     }
 
     app.service('authService', AuthService);

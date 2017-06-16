@@ -43,19 +43,19 @@ class Exports(_tableTag: Tag) extends Table[Export](_tableTag, "exports")
   val modifiedBy: Rep[String] = column[String]("modified_by", O.Length(255,varying=true))
   val owner: Rep[String] = column[String]("owner", O.Length(255,varying=true))
   val organizationId: Rep[java.util.UUID] = column[java.util.UUID]("organization_id")
-  val projectId: Rep[java.util.UUID] = column[java.util.UUID]("project_id", O.PrimaryKey)
+  val projectId: Rep[Option[UUID]] = column[Option[UUID]]("project_id", O.PrimaryKey)
   val exportStatus: Rep[ExportStatus] = column[ExportStatus]("export_status")
   val exportType: Rep[ExportType] = column[ExportType]("export_type")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
   val toolRunId: Rep[Option[UUID]] = column[Option[UUID]]("toolrun_id")
   val exportOptions: Rep[Json] = column[Json]("export_options")
 
-  lazy val projectsFk = foreignKey("exports_project_id_fkey", projectId, Projects)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
+  lazy val projectsFk = foreignKey("exports_project_id_fkey", projectId, Projects)(r => r.id.?, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
   lazy val organizationsFk = foreignKey("exports_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val createdByUserFK = foreignKey("exports_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val modifiedByUserFK = foreignKey("exports_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val ownerUserFK = foreignKey("exports_owner_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
-  lazy val toolRunFK = foreignKey("toolrun_id", toolRunId, ToolRuns)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val toolRunFK = foreignKey("toolrun_id", toolRunId, ToolRuns)(r => r.id.?, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 }
 
 object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
@@ -177,31 +177,30 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
     export: Export,
     user: User
   )(implicit database: DB): Future[Option[ExportDefinition]] = {
-
-    val eo: OptionT[Future, ExportOptions] =
-      OptionT.fromOption[Future](export.exportOptions.as[ExportOptions].toOption)
+    val eo: OptionT[Future, ExportOptions] = OptionT.fromOption[Future](export.getExportOptions)
 
     eo.flatMap({ exportOptions =>
+      val outDef = OutputDefinition(
+        crs = exportOptions.getCrs,
+        rasterSize = exportOptions.rasterSize,
+        render = Some(exportOptions.render),
+        crop = exportOptions.crop,
+        stitch = exportOptions.stitch,
+        source = exportOptions.source,
+        dropboxCredential = user.dropboxCredential
+      )
 
-        val outDef = OutputDefinition(
-          crs = exportOptions.getCrs,
-          rasterSize = exportOptions.rasterSize,
-          render = Some(exportOptions.render),
-          crop = exportOptions.crop,
-          stitch = exportOptions.stitch,
-          source = exportOptions.source,
-          dropboxCredential = user.dropboxCredential
-        )
-
-        val style: OptionT[Future, Either[SimpleInput, ASTInput]] = export.toolRunId match {
-          case Some(id) => astInput(id, export, user).map(Right(_))
-          case None => {
+      val style: OptionT[Future, Either[SimpleInput, ASTInput]] =
+        (export.projectId, export.toolRunId) match {
+          case (_, Some(id)) => astInput(id, export, user).map(Right(_))
+          case (Some(pid), None) => {
             /* Hand-holding the type system */
             val work: Future[Option[Either[SimpleInput, ASTInput]]] =
-              simpleInput(export, user, exportOptions).map(si => Some(Left(si)))
+              simpleInput(pid, export, user, exportOptions).map(si => Some(Left(si)))
 
             OptionT(work)
           }
+          case _ => OptionT.none /* Some non-sensical combination was given */
         }
 
         style.map(s => ExportDefinition(
@@ -213,6 +212,12 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
       .value
   }
 
+  /**
+    * An AST could be given `EvalParams` that ask for scenes from the same
+    * project, from different projects, or all scenes from a project. This can
+    * happen at the same time, and there's nothing illegal about this, we just
+    * need to make sure to include all the ingest locations.
+    */
   private def astInput(
     toolRunId: UUID,
     export: Export,
@@ -224,15 +229,45 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
       tool   <- OptionT(Tools.getTool(tRun.tool, user))
       ast    <- OptionT.pure[Future, MapAlgebraAST](tool.definition.as[MapAlgebraAST].valueOr(throw _))
       params <- OptionT.pure[Future, EvalParams](tRun.executionParameters.as[EvalParams].valueOr(throw _))
-      scenes <- OptionT(getScenes(export, user)
-        .map(_.map(s => s.ingestLocation.map(l => (s.id, l))).toList.sequence)
-      )
+      (scenes, projects) <- ingestLocs(params, user)
     } yield {
-      ASTInput(ast, params, scenes.toMap)
+      ASTInput(ast, params, scenes, projects)
     }
   }
 
+  /** Obtain the ingest locations for all Scenes and Projects which are
+    * referenced in the given [[EvalParams]]. If even a single Scene anywhere is
+    * found to have no `ingestLocation` value, the entire operation fails.
+    */
+  private def ingestLocs(
+    sources: EvalParams,
+    user: User
+  )(implicit database: DB): OptionT[Future, (Map[UUID, String], Map[UUID, List[(UUID, String)]])] = {
+
+    val (scenes, projects): (Stream[SceneRaster], Stream[ProjectRaster]) =
+      sources.sources.toStream
+        .map(_._2)
+        .foldLeft((Stream.empty[SceneRaster], Stream.empty[ProjectRaster]))({
+          case ((sacc, pacc), s: SceneRaster) => (s #:: sacc, pacc)
+          case ((sacc, pacc), p: ProjectRaster) => (sacc, p #:: pacc)
+        })
+
+    val scenesF: OptionT[Future, Map[UUID, String]] = scenes.map({ case SceneRaster(id, _) =>
+      OptionT(Scenes.getScene(id, user)).flatMap(s =>
+        OptionT.fromOption(s.ingestLocation.map((s.id, _)))
+      )
+    }).sequence.map(_.toMap)
+
+    val projectsF: OptionT[Future, Map[UUID, List[(UUID, String)]]] =
+      projects.map({ case ProjectRaster(id, _) =>
+        OptionT(ScenesToProjects.allSceneIngestLocs(id)).map((id, _))
+      }).sequence.map(_.toMap)
+
+    (scenesF |@| projectsF).map((_,_))
+  }
+
   private def simpleInput(
+    projectId: UUID,
     export: Export,
     user: User,
     exportOptions: ExportOptions
@@ -241,9 +276,12 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
       .flatMap({ iterable =>
         iterable.toList
           .map({ scene =>
-            ScenesToProjects.getColorCorrectParams(export.projectId, scene.id) map({ ccp =>
-              ExportLayerDefinition(scene.id, new URI(scene.ingestLocation.getOrElse("")), ccp.flatten)
-            })
+            if(exportOptions.raw)
+              Future(ExportLayerDefinition(scene.id, new URI(scene.ingestLocation.getOrElse("")), None))
+            else
+              ScenesToProjects.getColorCorrectParams(projectId, scene.id) map ({ ccp =>
+                ExportLayerDefinition(scene.id, new URI(scene.ingestLocation.getOrElse("")), ccp.flatten)
+              })
           })
           .sequence
           .map({ layers =>
@@ -251,8 +289,6 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
           })
       })
   }
-
-
 }
 
 class ExportTableQuery[M, U, C[_]](exports: Exports.TableQuery) {

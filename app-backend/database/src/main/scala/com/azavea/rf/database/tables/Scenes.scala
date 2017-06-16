@@ -324,6 +324,17 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     }
   }
 
+  def sceneNameExistsForUser(name: String, user: User)(implicit database: DB) = {
+    val matchingScenes = for {
+      scenes <- Scenes
+      if scenes.owner === user.id
+      if scenes.name === name
+    } yield scenes
+    database.db.run {
+      matchingScenes.exists.result
+    }
+  }
+
   def sceneGrid(params: CombinedGridQueryParams, bboxes: Seq[Projected[Polygon]])(implicit database: DB) = {
     val filteredScenes = Scenes
       .filterByOrganization(params.orgParams)

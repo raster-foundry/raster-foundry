@@ -75,7 +75,7 @@ class ProjectsListController {
         }
 
         this.newProjectModal = this.$uibModal.open({
-            component: 'rfCreateProjectModal'
+            component: 'rfProjectCreateModal'
         });
 
         this.newProjectModal.result.then((data) => {

@@ -37,10 +37,12 @@ package object ast {
     ast: MapAlgebraAST,
     sourceMapping: Map[UUID, RFMLRaster],
     zoom: Int,
-    ingestLocs: Map[UUID, String]
+    sceneLocs: Map[UUID, String],
+    projLocs: Map[UUID, List[(UUID, String)]]
   )(implicit sc: SparkContext): Interpreted[TileLayerRDD[SpatialKey]] = {
 
     /* Perform Map Algebra over a validated RDD-filled AST */
+    @SuppressWarnings(Array("TraversableHead"))
     def eval(
       ast: MapAlgebraAST,
       rdds: Map[UUID, TileLayerRDD[SpatialKey]]
@@ -56,35 +58,59 @@ package object ast {
         args.map(eval(_, rdds)).reduce((acc,r) => binary({_ / _}, acc, r))
       case Classification(arg :: _, _, _, classMap) =>
         eval(arg, rdds).withContext(_.color(classMap.toColorMap))
+      case Max(args, _, _) => {
+        val kids: List[TileLayerRDD[SpatialKey]] = args.map(eval(_, rdds))
+
+        /* The head call will never fail */
+        ContextRDD(kids.head.localMax(kids.tail), kids.map(_.metadata).reduce(_ combine _))
+      }
+      case Min(args, _, _) => {
+        val kids: List[TileLayerRDD[SpatialKey]] = args.map(eval(_, rdds))
+
+        /* The head call will never fail */
+        ContextRDD(kids.head.localMin(kids.tail), kids.map(_.metadata).reduce(_ combine _))
+      }
       case op => throw new Exception(s"Unimplemented Operation given! ${op}")
     }
 
     /* Guarantee correctness before performing Map Algebra */
     val pure = Interpreter.interpretPure[Unit](ast, sourceMapping)
-    val rdds = sourceMapping.mapValues(r => fetch(r, zoom, ingestLocs)).sequence
+    val rdds = sourceMapping.mapValues(r => fetch(r, zoom, sceneLocs, projLocs)).sequence
 
     (pure |@| rdds).map({ case (_, rs) => eval(ast, rs) })
   }
 
   /** This requires that for each [[RFMLRaster]] that a band number be specified. */
-  def fetch(
+  private def fetch(
     raster: RFMLRaster,
     zoom: Int,
-    ingestLocs: Map[UUID, String]
+    sceneLocs: Map[UUID, String],
+    projLocs: Map[UUID, List[(UUID, String)]]
   )(implicit sc: SparkContext): Interpreted[TileLayerRDD[SpatialKey]] = raster match {
 
-    case ProjectRaster(id, _) => Invalid(NonEmptyList.of(UnhandledCase(id)))
-    case SceneRaster(id, None) => Invalid(NonEmptyList.of(NoBandGiven(id)))
-    case SceneRaster(id, Some(band)) => {
-      getStore(id, ingestLocs) match {
-        case None => Invalid(NonEmptyList.of(AttributeStoreFetchError(id)))
-        case Some(store) => {
-          val rdd = S3LayerReader(store)
-            .read[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](LayerId(id.toString, zoom))
-            .withContext(rdd => rdd.mapValues(_.band(band)))
+    case ProjectRaster(id, None) => Invalid(NonEmptyList.of(NoBandGiven(id)))
+    case ProjectRaster(id, Some(band)) => getStores(id, projLocs) match {
+      case None => Invalid(NonEmptyList.of(AttributeStoreFetchError(id)))
+      case Some(stores) => {
+        val rdds: List[TileLayerRDD[SpatialKey]] =
+          stores.map({ case (sceneId, store) =>
+            S3LayerReader(store)
+              .read[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](LayerId(sceneId.toString, zoom))
+              .withContext(rdd => rdd.mapValues(_.band(band)))
+          })
 
-          Valid(rdd)
-        }
+        Valid(rdds.reduce(_ merge _))
+      }
+    }
+    case SceneRaster(id, None) => Invalid(NonEmptyList.of(NoBandGiven(id)))
+    case SceneRaster(id, Some(band)) => getStore(id, sceneLocs) match {
+      case None => Invalid(NonEmptyList.of(AttributeStoreFetchError(id)))
+      case Some(store) => {
+        val rdd = S3LayerReader(store)
+          .read[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](LayerId(id.toString, zoom))
+          .withContext(rdd => rdd.mapValues(_.band(band)))
+
+        Valid(rdd)
       }
     }
   }
@@ -92,13 +118,23 @@ package object ast {
   /** Cleanly fetch an `AttributeStore`, given some the ID of a Scene (which
     * represents a Layer).
     */
-  def getStore(layer: UUID, ingestLocs: Map[UUID, String]): Option[AttributeStore] = {
+  private def getStore(layer: UUID, sceneLocs: Map[UUID, String]): Option[AttributeStore] = for {
+    ingestLocation <- sceneLocs.get(layer)
+    result <- S3InputFormat.S3UrlRx.findFirstMatchIn(ingestLocation)
+  } yield {
+    S3AttributeStore(result.group("bucket"), result.group("prefix"))
+  }
 
-    for {
-      ingestLocation <- ingestLocs.get(layer)
-      result <- S3InputFormat.S3UrlRx.findFirstMatchIn(ingestLocation)
-    } yield {
-      S3AttributeStore(result.group("bucket"), result.group("prefix"))
-    }
+  /** Try to get an [[AttributeStore]] for each Scene in the given Project. */
+  private def getStores(
+    proj: UUID,
+    projLocs: Map[UUID, List[(UUID, String)]]
+  ): Option[List[(UUID, S3AttributeStore)]] = for {
+    (ids, locs) <- projLocs.get(proj).map(_.unzip)
+    results <- locs.map(S3InputFormat.S3UrlRx.findFirstMatchIn(_)).sequence
+  } yield {
+    val stores = results.map(r => S3AttributeStore(r.group("bucket"), r.group("prefix")))
+
+    ids.zip(stores)
   }
 }

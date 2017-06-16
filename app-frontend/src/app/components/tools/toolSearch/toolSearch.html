@@ -1,0 +1,15 @@
+<nav ng-show="$ctrl.$state.$current.name === 'market.search'">
+  <ng-submit ng-submit="$ctrl.onSearchAction()">
+    <div class="form-group search-form">
+      <input type="text"
+             id="search-input"
+             class="form-control"
+             placeholder="Search for tools"
+             ng-model="$ctrl.searchText"
+             ng-keyup="$event.keyCode == 13 && $ctrl.onSearchAction()"/>
+      <button ng-click="$ctrl.onSearchAction()" type="button" class="btn btn-link">
+        <i class="icon-search"></i>
+      </button>
+    </div>
+  </ng-submit>
+</nav>

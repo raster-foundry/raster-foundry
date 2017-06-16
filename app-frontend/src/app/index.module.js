@@ -68,6 +68,7 @@ const App = angular.module(
         require('./pages/projects/edit/masking/draw/draw.module.js').name,
         require('./pages/projects/edit/aoi-approve/aoi-approve.module.js').name,
         require('./pages/projects/edit/aoi-parameters/aoi-parameters.module.js').name,
+        require('./pages/projects/edit/aoi-parameters/draw-aoi/draw-aoi.module.js').name,
 
         require('./pages/imports/imports.module.js').name,
         require('./pages/imports/datasources/datasources.module.js').name,
@@ -77,10 +78,10 @@ const App = angular.module(
 
         require('./pages/settings/settings.module.js').name,
         require('./pages/settings/profile/profile.module.js').name,
-        require('./pages/settings/account/account.module.js').name,
         require('./pages/settings/tokens/tokens.module.js').name,
         require('./pages/settings/tokens/api/api.module.js').name,
-        require('./pages/settings/tokens/map/map.module.js').name
+        require('./pages/settings/tokens/map/map.module.js').name,
+        require('./pages/settings/connections/connections.module.js').name
     ]
 );
 

@@ -12,7 +12,7 @@ import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.fields.{OrganizationFkFields, TimestampFields, UserFkFields}
 import com.azavea.rf.database.query.AoiQueryParameters
 import com.azavea.rf.database.sort._
-import com.azavea.rf.datamodel.{AOI, PaginatedResponse, User}
+import com.azavea.rf.datamodel.{AOI, AoiToProject, PaginatedResponse, User}
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.slick.Projected
@@ -104,12 +104,19 @@ object AOIs extends TableQuery(tag => new AOIs(tag)) with LazyLogging {
     }))
 
   /** Delete an [[AOI]] given its UUID. */
-  def deleteAOI(aoi: UUID, user: User)(implicit database: DB): Future[Int] =
+  def deleteAOI(aoi: UUID, user: User)(implicit database: DB): Future[Int] = {
+    database.db.run({
+      AoisToProjects
+        .filter(_.aoiId === aoi)
+        .delete
+    })
+
     database.db.run({
       AOIs.filterToSharedOrganizationIfNotInRoot(user)
         .filter(_.id === aoi)
         .delete
     })
+  }
 
   def updateAOI(aoi: AOI, aoiId: UUID, user: User)(implicit database: DB): Future[Int] = {
 
@@ -117,9 +124,9 @@ object AOIs extends TableQuery(tag => new AOIs(tag)) with LazyLogging {
 
     val query = AOIs.filterToSharedOrganizationIfNotInRoot(user)
       .filter(_.id === aoiId)
-      .map(a => (a.modifiedAt, a.modifiedBy, a.area))
+      .map(a => (a.modifiedAt, a.modifiedBy, a.area, a.filters))
 
-    database.db.run(query.update((now, user.id, aoi.area))).map {
+    database.db.run(query.update((now, user.id, aoi.area, aoi.filters))).map {
       case 1 => 1
       case c => throw new IllegalStateException(s"Error updating project: update result expected to be 1, was $c")
     }

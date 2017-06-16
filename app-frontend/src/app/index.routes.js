@@ -24,13 +24,14 @@ import projectMaskingTpl from './pages/projects/edit/masking/masking.html';
 import projectMaskingDrawTpl from './pages/projects/edit/masking/draw/draw.html';
 import aoiApproveTpl from './pages/projects/edit/aoi-approve/aoi-approve.html';
 import aoiParametersTpl from './pages/projects/edit/aoi-parameters/aoi-parameters.html';
+import drawAoiTpl from './pages/projects/edit/aoi-parameters/draw-aoi/draw-aoi.html';
 
 import settingsTpl from './pages/settings/settings.html';
 import profileTpl from './pages/settings/profile/profile.html';
-import accountTpl from './pages/settings/account/account.html';
 import tokensTpl from './pages/settings/tokens/tokens.html';
 import apiTokensTpl from './pages/settings/tokens/api/api.html';
 import mapTokensTpl from './pages/settings/tokens/map/map.html';
+import connectionsTpl from './pages/settings/connections/connections.html';
 import errorTpl from './pages/error/error.html';
 import shareTpl from './pages/share/share.html';
 import homeTpl from './pages/home/home.html';
@@ -139,6 +140,12 @@ function projectEditStates($stateProvider) {
             templateUrl: aoiParametersTpl,
             controller: 'AOIParametersController',
             controllerAs: '$ctrl'
+        })
+        .state('projects.edit.aoi-parameters.draw-aoi', {
+            url: '/draw-aoi',
+            templateUrl: drawAoiTpl,
+            controller: 'DrawAoiController',
+            controllerAs: '$ctrl'
         });
 }
 
@@ -186,12 +193,6 @@ function settingsStates($stateProvider) {
             controller: 'ProfileController',
             controllerAs: '$ctrl'
         })
-        .state('settings.account', {
-            url: '/account',
-            templateUrl: accountTpl,
-            controller: 'AccountController',
-            controllerAs: '$ctrl'
-        })
         .state('settings.tokens', {
             url: '/tokens',
             templateUrl: tokensTpl,
@@ -209,6 +210,12 @@ function settingsStates($stateProvider) {
             url: '/map',
             templateUrl: mapTokensTpl,
             controller: 'MapTokensController',
+            controllerAs: '$ctrl'
+        })
+        .state('settings.connections', {
+            url: '/connections',
+            templateUrl: connectionsTpl,
+            controller: 'ConnectionsController',
             controllerAs: '$ctrl'
         });
 }
@@ -335,20 +342,21 @@ function importStates($stateProvider) {
         });
 }
 
-function routeConfig($urlRouterProvider, $stateProvider, $urlMatcherFactoryProvider) {
+function routeConfig($urlRouterProvider, $stateProvider, $urlMatcherFactoryProvider, $locationProvider) {
     'ngInject';
 
     $urlMatcherFactoryProvider.strictMode(false);
+    $locationProvider.html5Mode(true);
+
 
     $stateProvider.state('root', {
         templateUrl: rootTpl
+    }).state('callback', {
+        url: '/callback'
     });
 
     loginStates($stateProvider);
-    // browseStates($stateProvider);
     marketStates($stateProvider);
-    // editorStates($stateProvider);
-    // libraryStates($stateProvider);
     projectStates($stateProvider);
     settingsStates($stateProvider);
     labStates($stateProvider);

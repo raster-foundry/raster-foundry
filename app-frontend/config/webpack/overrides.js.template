@@ -1,0 +1,40 @@
+'use strict';
+/* globals module */
+/* no-console: 0 */
+
+const webpack = require('webpack');
+
+const basemaps = JSON.stringify({
+    layers: {
+        Light: {
+            url: 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+            properties: {
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">' +
+                    'OpenStreetMap</a> &copy;<a href="http://cartodb.com/attributions">CartoDB</a>',
+                maxZoom: 30
+            }
+        },
+        Dark: {
+            url: 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png',
+            properties: {
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">' +
+                    'OpenStreetMap</a> &copy;<a href="http://cartodb.com/attributions">CartoDB</a>',
+                maxZoom: 30
+            }
+        }
+    },
+    default: 'Light'
+});
+
+module.exports = function () {
+    return {
+        plugins: [
+            new webpack.DefinePlugin({
+                'BUILDCONFIG': {
+                    APP_NAME: '\'RasterFoundry?\'',
+                    BASEMAPS: basemaps
+                }
+            })
+        ]
+    };
+};

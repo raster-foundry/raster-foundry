@@ -17,7 +17,7 @@ trait ExportSpecHelper { self: ProjectSpecHelper =>
   var exportId = ""
   lazy val export = Export.Create(
     organizationId = publicOrgId,
-    projectId = UUID.fromString(projectId),
+    projectId = Some(UUID.fromString(projectId)),
     exportStatus = ExportStatus.ToBeExported,
     exportType = ExportType.Local,
     visibility = Visibility.Public,
@@ -28,10 +28,12 @@ trait ExportSpecHelper { self: ProjectSpecHelper =>
       resolution = 2,
       stitch = false,
       crop = false,
+      raw = false,
       bands = None,
       rasterSize = None,
       crs = None,
-      source = new URI("s3://test")
+      source = new URI("s3://test"),
+      operation = "id"
     ).asJson
   )
 

@@ -35,14 +35,15 @@ dag = DAG(
     dag_id='ingest_scene',
     default_args=default_args,
     schedule_interval=None,
-    concurrency=int(os.getenv('AIRFLOW_DAG_CONCURRENCY', 24))
+    concurrency=int(os.getenv('AIRFLOW_DAG_CONCURRENCY', 24)),
+    dagrun_timeout=datetime.timedelta(minutes=60)
 )
 
 
 batch_job_definition = os.getenv('BATCH_INGEST_JOB_NAME')
 batch_job_queue = os.getenv('BATCH_INGEST_JOB_QUEUE')
 hosted_zone_id = os.getenv('HOSTED_ZONE_ID')
-jar_path = os.getenv('BATCH_JAR_PATH', 'rf-batch-g874b19.jar')
+jar_path = os.getenv('BATCH_JAR_PATH', 'rf-batch-94265f7.jar')
 
 
 ################################

@@ -1,33 +1,32 @@
 package com.azavea.rf.batch.export.airflow
 
-import java.util.UUID
-
-import org.xbill.DNS._
-
-import scala.collection.JavaConverters._
-import scala.concurrent.Future
-import scala.util._
-
-import cats.data._
-import cats.implicits._
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
-import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClientBuilder
-import com.amazonaws.services.elasticmapreduce.model.{AddJobFlowStepsRequest, StepConfig, HadoopJarStepConfig}
-import io.circe.syntax._
-
-import com.azavea.rf.batch.Job
+import com.azavea.rf.batch._
 import com.azavea.rf.batch.util._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.tables._
 import com.azavea.rf.datamodel._
 
-case class CreateExportDef(exportId: UUID)(implicit val database: DB) extends Job {
+import org.xbill.DNS._
+import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClientBuilder
+import com.amazonaws.services.elasticmapreduce.model.{AddJobFlowStepsRequest, AddJobFlowStepsResult, HadoopJarStepConfig, StepConfig}
+import io.circe.syntax._
+import cats._
+import cats.data._
+import cats.implicits._
+
+import java.util.UUID
+
+import scala.collection.JavaConverters._
+import scala.concurrent.Future
+import scala.util._
+
+case class CreateExportDef(exportId: UUID, region: Option[String] = None)(implicit val database: DB) extends Job {
   val name = CreateExportDef.name
 
   /** Get S3 client per each call */
-  def s3Client = S3()
-    
-  protected def writeExportDefToS3(exportDef: ExportDefinition) = {
+  def s3Client = S3(region = region)
+
+  protected def writeExportDefToS3(exportDef: ExportDefinition): Future[Option[String]] = {
     logger.info(s"Uploading export definition ${exportDef.id.toString} to S3 at ${exportDefConfig.bucketName}")
     val uri = s"rasterfoundry-development-data-us-east-1/${exportDefConfig.bucketName}"
     val future = Future[Option[String]] {
@@ -55,13 +54,18 @@ case class CreateExportDef(exportId: UUID)(implicit val database: DB) extends Jo
     clusterId
   }
 
-  protected def startExportEmrJob(exportDef: ExportDefinition, exportDefUri: String): Unit = {
+  protected def startExportEmrJob(exportDef: ExportDefinition, exportDefUri: String): AddJobFlowStepsResult = {
     val jarStep = new HadoopJarStepConfig()
     jarStep.setJar(jarPath)
-    jarStep.setArgs(List("/usr/bin/spark-submit", "--master", "yarn", "--deploy-mode",
-          "cluster", "--class", exportDefConfig.sparkClass, "--driver-memory", exportDefConfig.sparkMemory,
-          s"${exportDefConfig.sparkJarS3}/${exportDefConfig.sparkJar}",
-          "-j", s"s3://${exportDefUri}/${exportDef.id}.json").asJava)
+    jarStep.setArgs(
+      List(
+        "/usr/bin/spark-submit", "--master", "yarn", "--deploy-mode",
+        "cluster", "--conf", "spark.yarn.submit.waitAppCompletion=false",
+        "--class", exportDefConfig.sparkClass, "--driver-memory", exportDefConfig.sparkMemory,
+        s"${exportDefConfig.sparkJarS3}/${exportDefConfig.sparkJar}",
+        "-j", s"s3://${exportDefUri}/${exportDef.id}.json"
+      ).asJava
+    )
 
     val steps = new StepConfig()
     steps.setName(s"export-${exportDef.id}")
@@ -72,7 +76,7 @@ case class CreateExportDef(exportId: UUID)(implicit val database: DB) extends Jo
     jobSteps.setJobFlowId(getClusterId())
     jobSteps.setSteps(List(steps).asJava)
 
-    val emrClient = AmazonElasticMapReduceClientBuilder.standard().withCredentials(new DefaultAWSCredentialsProviderChain()).build()
+    val emrClient = AmazonElasticMapReduceClientBuilder.standard().withCredentials(s3Client.credentialsProviderChain).build()
     emrClient.addJobFlowSteps(jobSteps)
   }
 
@@ -85,40 +89,53 @@ case class CreateExportDef(exportId: UUID)(implicit val database: DB) extends Jo
     val startEmr = (ed: ExportDefinition, edu: String) => Future { startExportEmrJob(ed, edu) }
 
     val createExportDef = for {
-      user: User <- OptionT(Users.getUserById(airflowUser))
-      export: Export <- OptionT(database.db.run(Exports.getExport(exportId, user)))
-      exportDef: ExportDefinition <- OptionT(Exports.getExportDefinition(export, user))
-      exportDefUri: String <- OptionT(writeExportDefToS3(exportDef))
-      exportStatus: Int <- OptionT.liftF(
-        database.db.run(
-          Exports.updateExport(
-            updateExportStatus(export, ExportStatus.Exporting),
-            exportId,
-            user)))
-      emrJobStatus <- OptionT.liftF(
-        startEmr(exportDef, exportDefUri)
-          .map(result => {
-            updateExportStatus(export, ExportStatus.Exported)
-          })
-          .recover {
-            case _ => {
+      user <- fromOptionF[Future, String, User](Users.getUserById(airflowUser), "DB: Failed to fetch User.")
+      export <- fromOptionF[Future, String, Export](
+        database.db.run(Exports.getExport(exportId, user)), "DB: Failed to fetch Export."
+      )
+      exportDef <- fromOptionF[Future, String, ExportDefinition](
+        Exports.getExportDefinition(export, user), "DB: Failed to fetch ExportDefinition."
+      )
+      exportDefUri <- fromOptionF[Future, String, String](
+        writeExportDefToS3(exportDef), s"Failed to write ExportDefinition to S3:\n${exportDef.asJson.spaces2}"
+      )
+      exportStatus <- EitherT.right[Future, String, Int](database.db.run(Exports.updateExport(
+        updateExportStatus(export, ExportStatus.Exporting),
+        exportId,
+        user
+      )))
+      emrJobStatus <- EitherT.right[Future, String, Unit](
+        startEmr(exportDef, exportDefUri).map({ result =>
+          result.getStepIds.asScala.headOption.foreach(stepId => println(s"StepId: $stepId"))
+          export
+        })
+          .recover({
+            case e: Throwable => {
+              logger.error(s"An error occurred during export ${export.id}. Skipping...")
+              logger.error(e.stackTraceString)
+              sendError(e)
               updateExportStatus(export, ExportStatus.Failed)
             }
-          }
-          .flatMap(result => {
-            database.db.run(Exports.updateExport(result, exportId, user))
-          }))
-    } yield {
-      emrJobStatus
-    }
+          })
+          .flatMap({ result =>
+            database.db.run(Exports.updateExport(result, exportId, user)).map(_ => ())
+          })
+      )
+    } yield emrJobStatus
 
     createExportDef.value.onComplete {
+      case Success(Left(e)) => {
+        logger.error(e)
+        sendError(e)
+        stop
+        sys.exit(1)
+      }
       case Success(_) => {
         logger.info("Export job sent to cluster and status updated")
         stop
       }
       case Failure(e) => {
-        e.printStackTrace()
+        logger.error(e.stackTraceString)
         sendError(e)
         stop
         sys.exit(1)
@@ -134,11 +151,12 @@ object CreateExportDef {
     implicit val db = DB.DEFAULT
 
     val job = args.toList match {
+      case List(exportId, region) => CreateExportDef(UUID.fromString(exportId), Some(region))
       case List(exportId) => CreateExportDef(UUID.fromString(exportId))
       case _ =>
         throw new IllegalArgumentException("Argument could not be parsed to UUID")
     }
-  
+
     job.run
   }
 }

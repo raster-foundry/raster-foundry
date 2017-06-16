@@ -5,6 +5,7 @@ import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
+import cats.implicits._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.datamodel._
@@ -174,5 +175,26 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
         .map(_.accepted)
         .update(true)
     )
+  }
+
+  /** All ingest locations for Scenes in a given Project.
+    * If even one of the Scenes doesn't have an `ingestLocation`, we fail
+    * the whole operation.
+    */
+  def allSceneIngestLocs(projectId: UUID)(implicit database: DB): Future[Option[List[(UUID, String)]]] = {
+    val sceneIds: Future[Seq[UUID]] = database.db.run {
+      ScenesToProjects
+        .filter(_.projectId === projectId)
+        .sortBy(_.sceneOrder.asc.nullsLast)
+        .map(_.sceneId)
+        .result
+    }
+
+    val scenes: Seq[UUID] => Future[Option[List[(UUID, String)]]] = { ids: Seq[UUID] =>
+      database.db.run(Scenes.filter(_.id inSet ids).map(s => s.ingestLocation.map((s.id, _))).result)
+        .map(_.toList.sequence)
+    }
+
+    sceneIds.flatMap(scenes)
   }
 }

@@ -16,6 +16,7 @@ export default class ProjectsScenesController {
         $event.preventDefault();
         this.projectService.removeScenesFromProject(this.projectId, [scene.id]).then(
             () => {
+                this.$parent.removeHoveredScene();
                 this.$parent.getSceneList();
             },
             () => {

@@ -1,0 +1,129 @@
+<div class="sidebar-header dark">
+  <h5>Filters</h5>
+  <div class="header-controls">
+    <button class="btn btn-default btn-small" ng-click="$ctrl.close()">
+      Close
+    </button>
+  </div>
+</div>
+<div class="sidebar-scrollable" >
+  <div class="content">
+    <div class="filter-group">
+      <div class="filter">
+        <button ng-click="$ctrl.resetAllFilters()" class="btn btn-toggle btn-small btn-block">Clear all filters</button>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter">
+        <label>Date Range</label>
+        <div class="flex-fill"
+             ng-class="{'color-white': $ctrl.dateFilterToggle.value}">
+          <span ng-if="$ctrl.datefilterPreset">{{$ctrl.datefilterPreset}}</span>
+          <span ng-if="!$ctrl.datefilterPreset">{{$ctrl.datefilter.start.calendar()}} to {{$ctrl.datefilter.end.calendar()}}</span>
+        </div>
+      </div>
+      <div class="filter">
+        <label></label>
+        <button class="btn btn-small btn-primary flex-fill"
+                ng-click="$ctrl.openDateRangePickerModal()"
+                ng-class="{'disabled': !$ctrl.dateFilterToggle.value}">Select a Date</button>
+
+      </div>
+      <div class="filter-group-option">
+        <label>Enabled</label>
+        <rf-toggle-old data-model="$ctrl.dateFilterToggle.value"
+                  on-change="$ctrl.onDateFilterToggle(value)"
+        ></rf-toggle-old>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter">
+        <label>Cloud cover</label>
+        <rzslider rz-slider-model="$ctrl.cloudCoverFilters.minModel"
+                  rz-slider-high="$ctrl.cloudCoverFilters.maxModel"
+                  rz-slider-options="$ctrl.cloudCoverFilters.options"></rzslider>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter">
+        <label>Sun elevation</label>
+        <rzslider rz-slider-model="$ctrl.sunElevationFilters.minModel"
+                  rz-slider-high="$ctrl.sunElevationFilters.maxModel"
+                  rz-slider-options="$ctrl.sunElevationFilters.options"></rzslider>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter">
+        <label>Sun azimuth</label>
+        <rzslider rz-slider-model="$ctrl.sunAzimuthFilters.minModel"
+                  rz-slider-high="$ctrl.sunAzimuthFilters.maxModel"
+                  rz-slider-options="$ctrl.sunAzimuthFilters.options"></rzslider>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter"
+          ng-mouseleave="$ctrl.toggleDrag.toggle = false"
+          ng-mouseup="$ctrl.toggleDrag.toggle = false">
+        <label>Ingest Status</label>
+        <div class="filter-item tag-filter">
+          <div class="btn-group">
+            <button type="button"
+                    class="btn btn-toggle btn-small"
+                    ng-class="{'active': $ctrl.ingestFilter === 'any'}"
+                    ng-click="$ctrl.setIngestFilter('any')">
+              Show All
+            </button>
+            <button type="button"
+                    class="btn btn-toggle btn-small"
+                    ng-class="{'active': $ctrl.ingestFilter === 'uningested'}"
+                    ng-click="$ctrl.setIngestFilter('uningested')">
+              Uningested Only
+            </button>
+            <button type="button"
+                    class="btn btn-toggle btn-small"
+                    ng-class="{'active': $ctrl.ingestFilter === 'ingested'}"
+                    ng-click="$ctrl.setIngestFilter('ingested')">
+              Ingested Only
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter"
+          ng-mouseleave="$ctrl.toggleDrag.toggle = false"
+          ng-mouseup="$ctrl.toggleDrag.toggle = false">
+        <label>Imagery sources</label>
+        <div class="filter-item tag-filter">
+          <button class="btn btn-toggle btn-small"
+                  ng-click="$ctrl.toggleSourceFilter(id)"
+                  ng-class="{'active': filter.enabled}"
+                  ng-repeat="(id, filter) in $ctrl.dynamicSourceFilters track by id">
+            {{filter.datasource.name}}
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter">
+        <label>Owner</label>
+        <div class="filter-item tag-filter">
+          <div class="btn-group">
+            <button type="button"
+                    class="btn btn-toggle btn-small"
+                    ng-class="{'active': $ctrl.importOwnerFilter === 'any'}"
+                    ng-click="$ctrl.setImportOwnerFilter('any')">
+              All Users
+            </button>
+            <button type="button"
+                    class="btn btn-toggle btn-small"
+                    ng-class="{'active': $ctrl.importOwnerFilter === 'user'}"
+                    ng-click="$ctrl.setImportOwnerFilter('user')">
+              My Imports
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

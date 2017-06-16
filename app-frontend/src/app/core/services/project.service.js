@@ -2,12 +2,14 @@
 
 export default (app) => {
     class ProjectService {
-        constructor($resource, $location, tokenService, userService, statusService,
-                    $http, $q, APP_CONFIG) {
+        constructor(
+            $resource, $location, $http, $q, APP_CONFIG,
+            tokenService, authService, statusService
+        ) {
             'ngInject';
 
             this.tokenService = tokenService;
-            this.userService = userService;
+            this.authService = authService;
             this.statusService = statusService;
             this.$http = $http;
             this.$location = $location;
@@ -59,6 +61,14 @@ export default (app) => {
                             pending: '@pending'
                         }
                     },
+                    projectAois: {
+                        method: 'GET',
+                        cache: false,
+                        url: '/api/projects/:projectId/areas-of-interest',
+                        params: {
+                            projectId: '@projectId'
+                        }
+                    },
                     removeScenes: {
                         method: 'DELETE',
                         url: '/api/projects/:projectId/scenes/',
@@ -98,7 +108,7 @@ export default (app) => {
         }
 
         export(projectId, zoom) {
-            return this.userService.getCurrentUser().then(
+            return this.authService.getCurrentUser().then(
                 (user) => {
                     return this.Project.export({
                         organizationId: user.organizationId,
@@ -118,7 +128,7 @@ export default (app) => {
         }
 
         createProject(name, params = {}) {
-            return this.userService.getCurrentUser().then(
+            return this.authService.getCurrentUser().then(
                 (user) => {
                     return this.Project.create({
                         organizationId: user.organizationId,
@@ -276,12 +286,17 @@ export default (app) => {
             return this.Project.updateProject(params).$promise;
         }
 
-        createAOI(params) {
-            return this.userService.getCurrentUser().then(user => {
-                const paramsWithOrg =
-                    Object.assign(params, { organizationId: user.organizationId });
-                return this.Project.createAOI(paramsWithOrg);
-            }).$promise;
+        createAOI(project, params) {
+            return this.$q((resolve, reject) => {
+                this.authService.getCurrentUser().then(user => {
+                    const paramsWithOrg =
+                          Object.assign(params, { organizationId: user.organizationId });
+                    this.Project.createAOI(
+                        {projectId: project},
+                        paramsWithOrg
+                    ).$promise.then(() => resolve(), (err) => reject(err));
+                });
+            });
         }
 
         approveScene(projectId, sceneId) {
@@ -374,6 +389,10 @@ export default (app) => {
                 this.isLoadingProject = false;
             });
             return request;
+        }
+
+        getProjectAois(projectId) {
+            return this.Project.projectAois({projectId: projectId}).$promise;
         }
     }
 

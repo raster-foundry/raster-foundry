@@ -26,7 +26,7 @@ case class S3(
         .standard()
         .withCredentials(credentialsProviderChain)
 
-    region.fold(builder.withRegion(Regions.US_EAST_1))(builder.withRegion).build()
+    region.fold(builder)(builder.withRegion).build()
   }
 
   /** Copy buckets */
@@ -109,9 +109,17 @@ object S3 {
 
   /** Set credentials in case Hadoop configuration files don't specify S3 credentials. */
   def setCredentials(conf: Configuration, credentialsProviderChain: AWSCredentialsProvider = new DefaultAWSCredentialsProviderChain): Configuration = {
-    conf.set("fs.s3.impl", classOf[org.apache.hadoop.fs.s3native.NativeS3FileSystem].getName)
-    conf.set("fs.s3.awsAccessKeyId", credentialsProviderChain.getCredentials.getAWSAccessKeyId)
-    conf.set("fs.s3.awsSecretAccessKey", credentialsProviderChain.getCredentials.getAWSSecretKey)
+
+    /**
+      * Identify whether function is called on EMR
+      * fs.AbstractFileSystem.s3a.impl is a specific key which should be set on EMR
+      *
+      * */
+    if(conf.isKeyUnset("fs.AbstractFileSystem.s3a.impl")) {
+      conf.set("fs.s3.impl", classOf[org.apache.hadoop.fs.s3native.NativeS3FileSystem].getName)
+      conf.set("fs.s3.awsAccessKeyId", credentialsProviderChain.getCredentials.getAWSAccessKeyId)
+      conf.set("fs.s3.awsSecretAccessKey", credentialsProviderChain.getCredentials.getAWSSecretKey)
+    }
     conf
   }
 }

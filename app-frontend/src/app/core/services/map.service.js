@@ -1,8 +1,10 @@
 import Map from 'es6-map';
 /* eslint no-unused-vars: 0 */
 /* eslint spaced-comment: 0 */
+/* globals BUILDCONFIG _ */
 
 class MapWrapper {
+    // MapWrapper is a bare es6 class, so does not use angular injections
     constructor( // eslint-disable-line max-params
         leafletMap, mapId, imageOverlayService, datasourceService, options, thumbnailService
     ) {
@@ -38,17 +40,6 @@ class MapWrapper {
         this.changeOptions(this.options);
     }
 
-    getBaseMapLayer(layerName) {
-        let url =
-            `https://cartodb-basemaps-{s}.global.ssl.fastly.net/${layerName}/{z}/{x}/{y}.png`;
-        let properties = {
-            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">' +
-                'OpenStreetMap</a> &copy;<a href="http://cartodb.com/attributions">CartoDB</a>',
-            maxZoom: 30
-        };
-        return L.tileLayer(url, properties);
-    }
-
     changeOptions(options) {
         let mapInteractionOptions = [
             this.map.scrollWheelZoom,
@@ -58,12 +49,20 @@ class MapWrapper {
             this.map.boxZoom,
             this.map.keyboard
         ];
-        let baseMaps = {
-            Light: this.getBaseMapLayer('light_all'),
-            Dark: this.getBaseMapLayer('dark_all')
-        };
-        if (!this.basemapsAdded) {
-            baseMaps.Light.addTo(this.map);
+        let baseMaps = {};
+        let basemapLayers = BUILDCONFIG.BASEMAPS.layers;
+        Object.keys(basemapLayers).forEach((basemapName) => {
+            let basemap = basemapLayers[basemapName];
+            baseMaps[basemapName] = L.tileLayer(basemap.url, basemap.properties);
+        });
+        let defaultBasemap;
+        if (BUILDCONFIG.BASEMAPS.default) {
+            defaultBasemap = baseMaps[BUILDCONFIG.BASEMAPS.default];
+        } else {
+            defaultBasemap = baseMaps[Object.keys(baseMaps)[0]];
+        }
+        if (!this.basemapsAdded && defaultBasemap) {
+            defaultBasemap.addTo(this.map);
             this.basemapsAdded = true;
         }
         if (options && options.static) {
@@ -289,6 +288,17 @@ class MapWrapper {
             .addLayer(id, layer);
     }
 
+    /** Set an array of layers to an id
+     * @param {string} id id to refer to the layers by
+     * @param {L.Layer[]} layers layers to set
+     * @returns {this} this
+     */
+    setLayerArray(id, layers) {
+        // use a copy of the layers array
+        this._layerMap.set(id, layers.slice(0));
+        return this;
+    }
+
     /** Get a set of layers by id.
      * @param {string} id layer id
      * @returns {Array} list of layers
@@ -347,8 +357,7 @@ class MapWrapper {
                         opacity: 1,
                         dataMask: scene.dataFootprint,
                         thumbnail: thumbUrl,
-                        attribution: `©${d.name}` +
-                            ' | Previews are not representative of actual scene quality.'
+                        attribution: `©${d.name} `
                     }
                 );
                 if (!persist) {

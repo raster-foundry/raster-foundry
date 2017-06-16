@@ -28,7 +28,7 @@
   list-style: none;
   text-align: left; // Ensures proper alignment if parent has it changed (e.g., modal footer)
   background-color: $shade-dark;
-  border-radius: 0 0 2px 2px;
+  border-radius: 0 0 $border-radius-base $border-radius-base;
   box-shadow: 0 6px 12px rgba(0, 0, 0, .1);
   background-clip: padding-box;
 

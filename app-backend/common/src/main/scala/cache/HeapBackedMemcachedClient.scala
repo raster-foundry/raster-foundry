@@ -32,6 +32,14 @@ class HeapBackedMemcachedClient(
       .maximumSize(Config.memcached.heapMaxEntries)
       .build[String, Future[Any]]()
 
+
+  /** Clear the specified value within this cache */
+  def delete(key: String) = {
+    client.delete(key)
+    onHeapCache.invalidate(key)
+  }
+
+
   /**
     * Returns the value associated with `cacheKey` in the memcached, obtaining that value from
     * `mappingFunction` if necessary. This method provides a simple substitute for the

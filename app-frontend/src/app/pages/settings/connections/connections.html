@@ -1,0 +1,54 @@
+<div class="row content stack-sm">
+  <div class="column-10">
+    <div class="dashboard-header">
+      <h1 class="page-title">App Connections</h1>
+    </div>
+    <div class="app-connections-group row">
+      <div class="app-connection-container">
+        <div class="app-connection-logo">
+          <img ng-attr-src="{{$ctrl.dropboxIcon}}">
+          <img ng-attr-src="{{$ctrl.dropboxWordmark}}">
+        </div>
+        <div class="app-connection-action">
+          <div class="app-connection-info">
+            <i class="icon-info"
+               tooltips
+               tooltip-template="Import Imagery and Export Projects using your dropbox account."
+               tooltip-size="small"
+               tooltip-class="rf-tooltip"
+               tooltip-side="bottom"
+            ></i>
+          </div>
+          <button type="button"
+                  class="btn btn-tertiary btn-square"
+                  ng-if="$ctrl.dropboxConnected"
+                  ng-click="$ctrl.reconnectToDropbox()"
+                  ng-mouseover="$ctrl.mouseOverDropbox = true"
+                  ng-mouseleave="$ctrl.mouseOverDropbox = false"
+          >
+            <span ng-show="!$ctrl.mouseOverDropbox">
+              Connected
+              <span class="button-spacer"> </span>
+              <span class="icon-check"></span>
+            </span>
+            <span ng-show="$ctrl.mouseOverDropbox">
+              Reconnect
+              <span class="button-spacer"> </span>
+              <span class="icon-plus"></span>
+            </span>
+
+          </button>
+          <button type="button"
+                  class="btn btn-secondary btn-square"
+                  ng-click="$ctrl.connectToDropbox()"
+                  ng-if="!$ctrl.dropboxConnected"
+                  ng-disabled="!$ctrl.user">
+            Connect
+            <span class="button-spacer"> </span>
+            <span class="icon-plus"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

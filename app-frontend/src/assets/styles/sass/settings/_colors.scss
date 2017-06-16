@@ -1,0 +1,31 @@
+// Brand Colors:
+$brand-primary: #738FFC !default;   // purple
+$brand-secondary: #2FC1D0 !default; // green
+$brand-tertiary: #53B1E0 !default;  // blue
+
+// Base Colors:
+$text-base: #7B8391 !default;
+$shade-light: #959CAC !default;  // slightly lighter then $text-base
+$shade-normal: #465076 !default; // deep purple
+$shade-dark: #353C58 !default;   // deepdeep purple
+
+// grays:
+$gray: #38394f !default;
+$gray-light: lighten($gray, 10%) !default; //#4d4f6d
+$gray-lighter: lighten($gray, 35%) !default; //#8c8dad
+$gray-lightest: #ddd !default;
+$gray-dark: darken($gray, 2%) !default; //#343549
+$gray-darker: #1b1c31 !default;
+$link-color: $brand-primary !default;
+
+// whites
+$white: #fff !default;
+$off-white: #f3f3f3 !default;
+
+// Action Colors:
+$warning: #E69348 !default; // orange
+$danger: #F98094 !default;  // pinkish-red
+
+$green: #81C784 !default;
+$yellow: #FFCA28 !default;
+$red: #E57373 !default;

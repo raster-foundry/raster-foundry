@@ -12,24 +12,43 @@ services:
     image: memcached:1.4-alpine
     command: -I 5242880b
 
-  nginx:
-    image: raster-foundry-nginx
+  nginx-api:
+    image: raster-foundry-nginx-api
     build:
       context: ./nginx
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.api
     ports:
       - "9100:443"
     extra_hosts:
       - "airflow-flower:127.0.0.1"
       - "airflow-webserver:127.0.0.1"
+      - "tile-server:127.0.0.1"
     links:
       - api-server
+    volumes:
+      - ./nginx/srv/dist/:/srv/dist/
+      - ./nginx/etc/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/etc/nginx/includes/:/etc/nginx/includes/
+      - ./nginx/etc/nginx/conf.d/api.conf:/etc/nginx/conf.d/api.conf
+
+  nginx-tiler:
+    image: raster-foundry-nginx-tiler
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.tiler
+    ports:
+      - "9101:443"
+    extra_hosts:
+      - "airflow-flower:127.0.0.1"
+      - "airflow-webserver:127.0.0.1"
+      - "api-server:127.0.0.1"
+    links:
       - tile-server
     volumes:
       - ./nginx/srv/dist/:/srv/dist/
       - ./nginx/etc/nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/etc/nginx/includes/:/etc/nginx/includes/
-      - ./nginx/etc/nginx/conf.d/:/etc/nginx/conf.d/
+      - ./nginx/etc/nginx/conf.d/tiler.conf:/etc/nginx/conf.d/tiler.conf
 
   api-server:
     image: openjdk:8-jre

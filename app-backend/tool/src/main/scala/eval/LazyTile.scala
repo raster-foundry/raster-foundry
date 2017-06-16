@@ -138,7 +138,7 @@ object LazyTile {
         case Some(LazyTile.Var(symbol, band)) =>
           LazyTile.Var(symbol, band)
         case Some(Unbound(Some(mbtile))) =>
-          Bound(mbtile.bands(band.getOrElse(0)))
+          Bound(mbtile.band(band.getOrElse(0)))
         case Some(Unbound(None)) =>
           LazyTile.Empty
         case None =>

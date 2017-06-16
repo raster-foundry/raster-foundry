@@ -3,6 +3,7 @@ package com.azavea.rf.tile.routes
 import cats.data.OptionT
 import cats.implicits._
 
+import com.azavea.rf.common.RfStackTrace
 import com.azavea.rf.tile._
 import com.azavea.rf.tile.image._
 import com.azavea.rf.database.Database
@@ -22,7 +23,8 @@ import de.heikoseeberger.akkahttpcirce.CirceSupport._
 import scala.collection.mutable.ArrayBuffer
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent._
+import scala.util._
 import java.util.UUID
 
 import akka.http.scaladsl.marshalling.Marshaller
@@ -50,7 +52,7 @@ object MosaicRoutes extends LazyLogging {
               val poly = Projected(Extent.fromString(bbox).toPolygon(), 4326)
                 .reproject(LatLng, WebMercator)(3857)
               val extent = poly.envelope
-              acceptContentType match {
+              val future = acceptContentType match {
                 case Some("image/tiff") => mosaic
                     .map{ m => MultibandGeoTiff(m, extent, WebMercator) }
                     .map(tiffAsHttpResponse)
@@ -58,7 +60,16 @@ object MosaicRoutes extends LazyLogging {
                 case _ => mosaic.map(_.renderPng)
                     .map(pngAsHttpResponse)
                     .value
+                  
               }
+
+              future onComplete {
+                case Success(s) => s
+                case Failure(e) =>
+                  logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
+              }
+
+              future
             }
           }
         }
@@ -69,10 +80,19 @@ object MosaicRoutes extends LazyLogging {
       parameter("tag".?) { tag =>
         get {
           complete {
-            Mosaic(projectId, zoom, x, y, tag)
-              .map(_.renderPng)
-              .getOrElse(emptyTilePng)
-              .map(pngAsHttpResponse)
+            val future =
+                Mosaic(projectId, zoom, x, y, tag)
+                  .map(_.renderPng)
+                  .getOrElse(emptyTilePng)
+                  .map(pngAsHttpResponse)
+
+            future onComplete {
+              case Success(s) => s
+              case Failure(e) =>
+                logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
+            }
+
+            future
           }
         }
       }
@@ -117,7 +137,15 @@ object MosaicRoutes extends LazyLogging {
         })
       }
       complete {
-        mergedBandHistograms
+        val future = mergedBandHistograms
+
+        future onComplete {
+          case Success(s) => s
+          case Failure(e) =>
+            logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
+        }
+
+        future
       }
     }
   }

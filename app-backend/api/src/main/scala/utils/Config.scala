@@ -11,6 +11,7 @@ trait Config {
   private val rollbarConfig = config.getConfig("rollbar")
   private val s3Config = config.getConfig("s3")
   private val tileServerConfig = config.getConfig("tileServer")
+  private val dropboxConfig = config.getConfig("dropbox")
 
   val httpHost = httpConfig.getString("interface")
   val httpPort = httpConfig.getInt("port")
@@ -33,4 +34,6 @@ trait Config {
   val thumbnailBucket = s3Config.getString("thumbnailBucket")
 
   val tileServerLocation = tileServerConfig.getString("location")
+
+  val dropboxClientId = dropboxConfig.getString("appKey")
 }

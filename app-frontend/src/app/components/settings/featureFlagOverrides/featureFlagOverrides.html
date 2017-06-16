@@ -1,0 +1,30 @@
+<div class="feature-flags">
+  <h5>Feature Flags
+    <span ng-click="$ctrl.show = !$ctrl.show">[ <span ng-if="!$ctrl.show">+</span><span ng-if="$ctrl.show">-</span> ]</span>
+  </h5>
+  <div ng-if="$ctrl.show" id="feature-flag--{{flag.key}}" class="feature-flags-flag" ng-repeat="flag in $ctrl.flags">
+    <div class="feature-flags-name">Feature Name: {{flag.name || flag.key}}</div>
+    <div class="feature-flags-desc">Description: {{flag.description}}</div>
+    <div class="feature-flags-actions">
+      Flag:
+      <button id="feature-flag--{{flag.key}}--enable"
+              class="btn"
+              ng-click="$ctrl.featureFlags.enable(flag)"
+              ng-class="{'btn-primary': $ctrl.featureFlags.isOverridden(flag.key) && $ctrl.featureFlags.isOn(flag.key)}">
+        On
+      </button>
+      <button id="feature-flag--{{flag.key}}--disable"
+              class="btn"
+              ng-click="$ctrl.featureFlags.disable(flag)"
+              ng-class="{'btn-primary': $ctrl.featureFlags.isOverridden(flag.key) && !$ctrl.featureFlags.isOn(flag.key)}">
+        Off
+      </button>
+      <button id="feature-flag--{{flag.key}}--reset"
+              class="btn"
+              ng-click="$ctrl.featureFlags.reset(flag)"
+              ng-class="{'btn-primary': !$ctrl.featureFlags.isOverridden(flag.key)}">
+        Default ({{$ctrl.featureFlags.isOnByDefault(flag.key) ? 'On' : 'Off'}})
+      </button>
+    </div>
+  </div>
+</div>

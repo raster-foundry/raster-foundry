@@ -5,3 +5,4 @@ coverage/
 .idea/
 .tmp/
 config/manifest.json
+config/webpack/overrides.js
