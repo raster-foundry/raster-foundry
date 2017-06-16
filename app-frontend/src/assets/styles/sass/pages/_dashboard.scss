@@ -78,13 +78,36 @@
 }
 
 .project-preview {
-  margin-bottom: 1rem;
 
   .project-title {
     @extend .font-base;
     font-size: 1.6rem;
     margin: 0;
-    padding: 0.2em 0 0 1em;
+    white-space: nowrap;
+    overflow: hidden;
+    max-width: 100%;
+    text-overflow: ellipsis;
+
+    &:after {
+      content: attr(data-title);
+      position: absolute;
+      top: 0;
+      left: 0;
+      padding: 2rem 2rem 1rem;
+      max-width: 100%;
+      white-space: normal;
+      background: #f4f5f7;
+      z-index: 1;
+      visibility: hidden;
+      opacity: 0;
+    }
+
+    &:hover:after {
+      visibility: visible;
+      opacity: 1;
+      transition: .5s ease opacity;
+      transition-delay: .5s;
+    }
   }
 
   .row {
@@ -99,24 +122,53 @@
     line-height: 1;
     font-size: 1.3rem;
     display: block;
+    margin: 0;
+  }
+
+  .dropdown {
+    display: inline-block;
+
+    > .btn {
+      padding-left: 1rem;
+      padding-right: 1rem;
+      margin-bottom: 0;
+    }
+  }
+
+  .dropdown-menu {
+    left: inherit;
+    right: 0;
   }
 }
 
 .project-preview-container {
-  height: 20rem;
+  height: 15rem;
   border-radius: $border-radius-base;
 
   &.placeholder {
-    background: white;
+    background-position: top right;
+    background-color: white;
+    background-size: cover;
+    background-repeat: repeat;
     display: flex;
     align-items: center;
     justify-content: center;
+
+    span {
+      padding: 4px 5px;
+      background: #fff;
+      border: 3px solid $border-color-default;
+      border-radius: $border-radius-base;
+      font-size: 12px;
+      color: $text-base;
+    }
   }
 
-  &.thumbnail {
+  .thumbnail {
+    width: 100%;
+    height: 100%;
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
-    background-color: white;
   }
 }

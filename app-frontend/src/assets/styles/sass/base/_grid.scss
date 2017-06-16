@@ -17,6 +17,10 @@
     margin-left: -1rem;
     margin-right: -1rem;
   }
+
+  @include respond-to(md-down) {
+    max-width: 100%;
+  }
 }
 
 // Alignment on a row

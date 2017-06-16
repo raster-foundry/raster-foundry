@@ -1,3 +1,5 @@
+import projectPlaceholder from '../../../../assets/images/transparent.svg';
+
 export default class ProjectItemController {
     constructor($scope, $state, $attrs, projectService, mapService, mapUtilsService, authService,
                 $uibModal) {
@@ -10,6 +12,8 @@ export default class ProjectItemController {
         this.mapUtilsService = mapUtilsService;
         this.authService = authService;
         this.$uibModal = $uibModal;
+
+        this.projectPlaceholder = projectPlaceholder;
     }
 
     $onInit() {
