@@ -1,76 +1,36 @@
-<div class="container column-stretch dashboard-filter wide">
-  <div class="sidebar">
-    <div class="sidebar-scrollable">
-      <div feature-flag="market-search" class="sidebar-category">
-        <div class="sidebar-category-title">
-          Search Terms
-        </div>
-        <div class="sidebar-category-contents">
-          <button class="btn btn-tag"
-                  ng-repeat="searchTerm in $ctrl.searchTerms"
-                  ng-click="$ctrl.removeSearchTerm($index)">
-            {{searchTerm}}
-            <i class="icon-cross" ></i>
-          </button>
-        </div>
-        <div class="sidebar-category-actions">
-          <a href ng-click="$ctrl.clearSearch()">Clear All</a>
-        </div>
-      </div>
-      <div feature-flag="market-search" class="sidebar-separator"></div>
-      <div class="sidebar-category">
-        <div class="sidebar-category-title">
-          Tags
-        </div>
-        <div class="sidebar-category-contents">
-          <div class="sidebar-selection"
-               ng-repeat="tag in $ctrl.toolTagList">
-            <input id="search-tag-{{$id}}" type="checkbox" ng-change="$ctrl.handleTagChange(tag)" ng-checked="tag.selected" ng-model="tag.selected"/>
-            <label for="search-tag-{{$id}}">{{tag.tag}}</label>
-          </div>
-        </div>
-        <div class="sidebar-category-actions">
-          <a href ng-click="$ctrl.viewMoreTags()">View More</a>
-        </div>
-      </div>
-      <div class="sidebar-separator"></div>
-      <div class="sidebar-category">
-        <div class="sidebar-category-title">
-          Category
-        </div>
-        <div class="sidebar-category-contents">
-          <div class="sidebar-selection"
-               ng-repeat="category in $ctrl.toolCategoryList">
-            <input id="search-category-{{$id}}" type="checkbox" ng-change="$ctrl.handleCategoryChange(category)" ng-checked="category.selected" ng-model="category.selected">
-            <label for="search-category-{{$id}}">{{category.category}}</label>
-          </div>
-        </div>
-        <div class="sidebar-category-actions">
-          <a href ng-click="$ctrl.viewMoreCategories()">View More</a>
-        </div>
-      </div>
-    </div>
-  </div>
+<div class="app-content">
+<div class="container dashboard">
   <div class="main">
-    <div class="content">
-      <div class="row stack-sm">
-        <h1 class="h3 page-title">
-          <a>Showing {{$ctrl.pagination.startingItem}} - {{$ctrl.pagination.endingItem}} of {{$ctrl.pagination.count}} results</a>
-        </h1>
+  <div class="row content stack-sm">
+    <div class="column-8">
+       <!-- Dashboard Header -->
+      <div class="dashboard-header">
+        <h1 class="h3">Tools</h1>
+        <div class="flex-fill"></div>
+        <rf-tool-search on-search="$ctrl.search(text)"></rf-tool-search>
+        <a class="btn btn-primary">New tool</a>
       </div>
-      <div class="row stack-sm">
-        <div class="column">
-          <div class="embedded-scrollable">
-            <div class="list-group">
-              <rf-tool-item
-                  ng-repeat="toolData in $ctrl.toolList"
-                  tool-data="toolData"
-                  ng-click="$ctrl.navTool(toolData)"
-              ></rf-tool-item>
-            </div>
-          </div>
-        </div>
+      <!-- Dashboard Header -->
+
+      <!-- Loading indicator -->
+      <div ng-show="$ctrl.loading">
+        <span class="list-placeholder h3">
+          <i class="icon-load"></i>
+        </span>
       </div>
+      <!-- Loading indicator -->
+
+      <p class="font-size-small">Showing {{$ctrl.pagination.startingItem}} - {{$ctrl.pagination.endingItem}} of {{$ctrl.pagination.count}} tools</p>
+
+      <!-- Temporarily removed ng-click until after demo done and detail page designed. -->
+      <rf-tool-item
+          class="panel panel-off-white"
+          ng-repeat="toolData in $ctrl.toolList"
+          tool-data="toolData"
+          ng-click=""
+      ></rf-tool-item>
+
+      <!-- Pagination -->
       <div class="list-group text-center"
            ng-show="!$ctrl.loading && $ctrl.queryResult && $ctrl.pagination.show && !$ctrl.errorMsg">
         <ul uib-pagination
@@ -84,6 +44,110 @@
             ng-change="$ctrl.populateToolList($ctrl.currentPage)">
         </ul>
       </div>
+      <!-- Pagination -->
+    </div>
+
+    <div class="column spacer"></div>
+    <div class="column">
+
+      <!-- Tool Filters -->
+      <div class="aside aside-filters">
+        <section>
+          <!-- The markup for these checkboxes are good, the angular is hacky -->
+          <!-- <label class="checkbox {{active}}"><input type="checkbox"> {{text label}} </label> -->
+          <ul class="list-unstyled">
+            <li>
+              <label class="checkbox" ng-class="{active : isChecked}">
+                <input id="1" type="checkbox" ng-model="isChecked"/>
+                My tools
+              </label>
+            </li>
+            <li>
+              <label class="checkbox" ng-class="{active : isChecked2}">
+                <input id="2" type="checkbox" ng-model="isChecked2"/>
+                Liked
+              </label>
+            </li>
+            <li>
+              <label class="checkbox" ng-class="{active : isChecked3}">
+                <input id="3" type="checkbox" ng-model="isChecked3"/>
+                Public catalog
+              </label>
+            </li>
+          </ul>
+        </section>
+        <section feature-flag="market-search">
+          <h5>
+            Search terms
+            <a href ng-click="$ctrl.clearSearch()" class="pull-right">Clear</a>
+          </h5>
+          <ul class="list-unstyled">
+            <li ng-repeat="searchTerm in $ctrl.searchTerms">
+              <button class="btn btn-tag"
+                      ng-click="$ctrl.removeSearchTerm($index)">
+                {{searchTerm}}
+                <i class="icon-cross"></i>
+              </button>
+            </li>
+          </ul>
+        </section>
+        <section>
+          <h5>Tags</h5>
+
+          <!-- THESE ARE PLACEHOLDER TAGS BECAUSE THERE ARE NONE CURRENTLY -->
+          <ul class="list-unstyled">
+            <li>
+              <label class="checkbox" ng-class="{active : isChecked4}">
+                <input id="tag1" type="checkbox" ng-model="isChecked4"/>
+                Vegetation index
+              </label>
+            </li>
+            <li>
+              <label class="checkbox" ng-class="{active : isChecked5}">
+                <input id="tag2" type="checkbox" ng-model="isChecked5"/>
+                Image classification
+              </label>
+            </li>
+            <li>
+              <label class="checkbox" ng-class="{active : isChecked6}">
+                <input id="tag3" type="checkbox" ng-model="isChecked6"/>
+                Change
+              </label>
+            </li>
+            <li>
+              <label class="checkbox" ng-class="{active : isChecked7}">
+                <input id="tag4" type="checkbox" ng-model="isChecked7"/>
+                Water index
+              </label>
+            </li>
+          </ul>
+          <ul class="list-unstyled">
+            <li ng-repeat="tag in $ctrl.toolTagList">
+              <label for="search-tag-{{$id}}" class="checkbox">
+                <input id="search-tag-{{$id}}" type="checkbox" ng-change="$ctrl.handleTagChange(tag)" ng-checked="tag.selected" ng-model="tag.selected"/>
+                {{tag.tag}}
+              </label>
+            </li>
+            <li><a href ng-click="$ctrl.viewMoreTags()">View More</a></li>
+          </ul>
+        </section>
+
+        <section>
+          <h5>Category</h5>
+          <ul class="list-unstyled">
+            <li ng-repeat="category in $ctrl.toolCategoryList">
+              <label for="search-category-{{$id}}" class="checkbox" ng-class="{active : category.selected}">
+                <input id="search-category-{{$id}}" type="checkbox" ng-checked="category.selected" ng-model="category.selected">
+                {{category.category}}
+              </label>
+            </li>
+            <li><a href ng-click="$ctrl.viewMoreCategories()">View More</a></li>
+          </ul>
+        </section>
+      </div>
+      <!-- Tool Filters -->
     </div>
   </div>
+</div>
+</div>
 </div>
