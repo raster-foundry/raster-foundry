@@ -15,6 +15,10 @@
       margin-right: 1rem;
     }
   }
+
+  .form-group {
+    margin: 0 1rem;
+  }
 }
 
 .dashboard-header-reveal {
@@ -94,12 +98,13 @@
   ul:not(.dropdown-menu) {
     line-height: 1;
     font-size: 1.3rem;
+    display: block;
   }
 }
 
 .project-preview-container {
   height: 20rem;
-  border-radisu: $border-radius-base;
+  border-radius: $border-radius-base;
 
   &.placeholder {
     background: white;

@@ -23,6 +23,10 @@
     &.dashboard {
       width: 100%;
 	    max-width: 1200px;
+
+      > .row {
+        flex: 1;
+      }
     }
     &.dashboard-filter {
       width: 100%;
