@@ -2,14 +2,12 @@
   <div ng-if="$ctrl.isDraggable" ui-tree-handle>
     <i class="icon-gripper"></i>
   </div>
-  <div class="tag-container">
-    <rf-status-tag entity-type="scene" status="$ctrl.scene.statusFields.ingestStatus"></rf-status-tag>
-    <img ng-if="$ctrl.scene.thumbnails[0]"
-         ng-attr-src="{{$ctrl.thumbnailService.getBestFitUrl($ctrl.scene.thumbnails, 75)}}"
-         class="rounded-img item-img">
-    <div ng-if="!$ctrl.scene.thumbnails.length"
-         class="rounded-img item-img image-placeholder"></div>
-  </div>
+  <rf-status-tag entity-type="scene" status="$ctrl.scene.statusFields.ingestStatus"></rf-status-tag>
+  <img ng-if="$ctrl.scene.thumbnails[0]"
+       ng-attr-src="{{$ctrl.thumbnailService.getBestFitUrl($ctrl.scene.thumbnails, 75)}}"
+       class="rounded-img item-img">
+  <div ng-if="!$ctrl.scene.thumbnails.length"
+       class="rounded-img item-img image-placeholder"></div>
   <div class="list-group-overflow">
     <div>
       <span title="{{$ctrl.scene.name}}">
