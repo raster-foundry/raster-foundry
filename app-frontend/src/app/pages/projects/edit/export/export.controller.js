@@ -40,11 +40,11 @@ export default class ExportController {
 
         // @TODO: this can be removed from both here and the template when the export target
         // feature is implemented
-        this.enableExportTargets = false;
+        this.enableExportTargets = true;
 
         // @TODO: this can be removed from both here and the template when the export cropping
         // feature is implemented
-        this.enableExportCropping = false;
+        this.enableExportCropping = true;
 
         // @TODO: this can be removed from both here and the template when the export option
         // previews are implemented

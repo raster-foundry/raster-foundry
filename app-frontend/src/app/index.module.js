@@ -56,6 +56,8 @@ const App = angular.module(
         require('./pages/projects/navbar/navbar.module.js').name,
         require('./pages/projects/list/list.module.js').name,
         require('./pages/projects/detail/detail.module.js').name,
+        require('./pages/projects/detail/scenes/scenes.module.js').name,
+        require('./pages/projects/detail/exports/exports.module.js').name,
         require('./pages/projects/edit/edit.module.js').name,
         require('./pages/projects/edit/scenes/scenes.module.js').name,
         require('./pages/projects/edit/browse/browse.module.js').name,

@@ -1,0 +1,25 @@
+<div class="tag-container">
+  <rf-status-tag entity-type="export" status="$ctrl.export.exportStatus"></rf-status-tag>
+</div>
+<div class="list-group-item {{$ctrl.isDisabled ? 'is-disabled' : ''}}">
+  <div class="list-group-overflow">
+    <div>
+      <span>
+        <strong class="color-dark">{{$ctrl.export.createdAt | date : 'medium'}}</strong>
+      </span>
+    </div>
+  </div>
+  <div class="list-group-right">
+    <button class="btn btn-default"
+            ng-click="$ctrl.openDownloadModal()"
+            ng-disabled="!$ctrl.isDownloadReady()"
+            ng-if="$ctrl.isDownloadAllowed()">
+      Download
+    </button>
+    <ng-transclude>
+    </ng-transclude>
+  </div>
+</div>
+<div class="list-group-item" ng-if="$ctrl.isShowingDownloads">
+  Testing
+</div>
