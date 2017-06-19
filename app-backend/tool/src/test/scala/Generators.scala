@@ -61,6 +61,12 @@ object Generators {
     nmd <- Gen.option(genNodeMetadata)
   } yield MapAlgebraAST.Source(id, nmd)
 
+  lazy val genConstantAST = for {
+    id <- arbitrary[UUID]
+    const <- arbitrary[Int]
+    nmd <- Gen.option(genNodeMetadata)
+  } yield MapAlgebraAST.Constant(id, const, nmd)
+
   def genBinaryOpAST(depth: Int) = for {
     constructor <- Gen.lzy(Gen.oneOf(
                      MapAlgebraAST.Addition.apply _,
@@ -92,7 +98,7 @@ object Generators {
     *  See: http://stackoverflow.com/questions/19829293/scalacheck-arbitrary-implicits-and-recursive-generators
     */
   def genMapAlgebraAST(depth: Int = 1): Gen[MapAlgebraAST] =
-    if (depth >= 100) genSourceAST
+    if (depth >= 100) genConstantAST
     else Gen.frequency((1 -> genOpAST(depth + 1)), (1 -> genSourceAST))
 
 }

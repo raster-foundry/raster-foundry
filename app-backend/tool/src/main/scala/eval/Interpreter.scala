@@ -63,7 +63,7 @@ object Interpreter extends LazyLogging {
     case Source(id, _) if sourceMapping.isDefinedAt(id) => Valid(Monoid.empty)
     case Source(id, _) => Invalid(NonEmptyList.of(MissingParameter(id)))
 
-    case Constant(id, constant, _) => Valid(Monoid.empty)
+    case Constant(_, _, _) => Valid(Monoid.empty)
 
     /* Unary operations must have only one arguments */
     case op: UnaryOp => {
@@ -100,7 +100,7 @@ object Interpreter extends LazyLogging {
 
     def eval(tiles: Map[UUID, Tile], ast: MapAlgebraAST): LazyTile = ast match {
       case Source(id, _) => LazyTile(tiles(id))
-      case Constant(id, const, _) => LazyTile.Constant(const)
+      case Constant(_, const, _) => LazyTile.Constant(const)
       case op: Operation => interpretOperation(op, { tree => eval(tiles, tree) })
       case unsupported =>
         throw new java.lang.IllegalStateException(s"Pattern match failure on putative AST: $unsupported")
@@ -109,7 +109,7 @@ object Interpreter extends LazyLogging {
     val pure: Interpreted[Unit] = interpretPure[Unit](ast, sourceMapping)
 
     sourceMapping
-      .mapValues(r => source(r).map(_.toRight(r.id)).recover({ case _ => Left(r.id) }))
+      .mapValues(r => source(r).map(_.toRight(r.id)).recover({ case t: Throwable => println(s"${t.getMessage}"); Left(r.id) }))
       .sequence
       .map({ sms =>
         val tiles: Interpreted[Map[UUID, Tile]] = sms.map({
