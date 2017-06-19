@@ -1,18 +1,18 @@
 package com.azavea.rf.tool.eval
 
-import java.util.UUID
-
-import scala.concurrent.{ExecutionContext, Future}
+import com.azavea.rf.tool.ast._
+import com.azavea.rf.tool.ast._
+import com.azavea.rf.tool.ast.MapAlgebraAST._
 
 import cats._
 import cats.data._
 import cats.data.Validated._
 import cats.implicits._
-import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.ast.MapAlgebraAST._
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster._
 
+import java.util.UUID
+import scala.concurrent.{ExecutionContext, Future}
 
 /** This interpreter handles resource resolution and compilation of MapAlgebra ASTs */
 object Interpreter extends LazyLogging {
@@ -63,6 +63,8 @@ object Interpreter extends LazyLogging {
     case Source(id, _) if sourceMapping.isDefinedAt(id) => Valid(Monoid.empty)
     case Source(id, _) => Invalid(NonEmptyList.of(MissingParameter(id)))
 
+    case Constant(id, constant, _) => Valid(Monoid.empty)
+
     /* Unary operations must have only one arguments */
     case op: UnaryOp => {
       /* Check for errors further down, first */
@@ -98,6 +100,7 @@ object Interpreter extends LazyLogging {
 
     def eval(tiles: Map[UUID, Tile], ast: MapAlgebraAST): LazyTile = ast match {
       case Source(id, _) => LazyTile(tiles(id))
+      case Constant(id, const, _) => LazyTile.Constant(const)
       case op: Operation => interpretOperation(op, { tree => eval(tiles, tree) })
       case unsupported =>
         throw new java.lang.IllegalStateException(s"Pattern match failure on putative AST: $unsupported")
