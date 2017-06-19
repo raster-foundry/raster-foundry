@@ -19,7 +19,7 @@ trait MapAlgebraLeafCodecs {
       case Some("const") =>
         ma.as[MapAlgebraAST.Constant]
       case _ =>
-        throw new InvalidParameterException(s"Unrecognized AST: $ma")
+        Left(DecodingFailure(s"Unrecognized leaf node: $ma", ma.history))
     }
   }
 
