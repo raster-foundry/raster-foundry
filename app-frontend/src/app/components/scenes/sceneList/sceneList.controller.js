@@ -54,13 +54,16 @@ export default class SceneListController {
     }
 
     viewSceneDetail(scene) {
-        this.$state.go(
-            'library.scenes.detail',
-            {
-                scene: scene,
-                id: scene.id
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        this.activeModal = this.$uibModal.open({
+            component: 'rfSceneDetailModal',
+            resolve: {
+                scene: () => scene
             }
-        );
+        });
     }
 
     importModal() {
