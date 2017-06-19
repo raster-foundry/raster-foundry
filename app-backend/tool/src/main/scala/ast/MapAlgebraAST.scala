@@ -11,7 +11,7 @@ sealed trait MapAlgebraAST extends Product with Serializable {
   def args: List[MapAlgebraAST]
   def metadata: Option[NodeMetadata]
   def find(id: UUID): Option[MapAlgebraAST]
-  def sources: Seq[MapAlgebraAST.Source]
+  def sources: Seq[MapAlgebraAST.MapAlgebraLeaf]
 }
 
 object MapAlgebraAST {
@@ -27,7 +27,7 @@ object MapAlgebraAST {
         matches.headOption
       }
 
-    def sources: Seq[MapAlgebraAST.Source] = args.flatMap(_.sources).distinct
+    def sources: Seq[MapAlgebraAST.MapAlgebraLeaf] = args.flatMap(_.sources).distinct
   }
 
   /** Operations which should only have one argument. */
@@ -57,15 +57,23 @@ object MapAlgebraAST {
   case class Min(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
       extends Operation("min")
 
-  /** Map Algebra sources (leaves) */
-  @JsonCodec
-  case class Source(id: UUID, metadata: Option[NodeMetadata]) extends MapAlgebraAST {
+  abstract class MapAlgebraLeaf(val `type`: String) extends MapAlgebraAST {
     def args: List[MapAlgebraAST] = List.empty
 
     def find(id: UUID): Option[MapAlgebraAST] =
       if (this.id == id) Some(this)
       else None
-    def sources: Seq[MapAlgebraAST.Source] = List(this)
+  }
+
+  @JsonCodec
+  case class Constant(id: UUID, constant: Double, metadata: Option[NodeMetadata]) extends MapAlgebraLeaf("const") {
+    def sources: Seq[MapAlgebraAST.MapAlgebraLeaf] = List()
+  }
+
+  /** Map Algebra sources */
+  @JsonCodec
+  case class Source(id: UUID, metadata: Option[NodeMetadata]) extends MapAlgebraLeaf("src") {
+    def sources: Seq[MapAlgebraAST.MapAlgebraLeaf] = List(this)
   }
 
   object Source {

@@ -355,4 +355,27 @@ class InterpreterSpec
         fail(s"$i")
     }
   }
+
+  it("should evaluate using constant tiles") {
+    requests = Nil
+    val forty = Constant(UUID.randomUUID, 40, None)
+    val two = Constant(UUID.randomUUID, 2, None)
+    val lifeUniverseEtc = forty + two
+    val tms = Interpreter.interpretTMS(
+      ast = lifeUniverseEtc,
+      sourceMapping = Map(),
+      source = goodSource
+    )
+    println("Simple Constant calculation: ", lifeUniverseEtc.asJson.noSpaces)
+
+    val ret = tms(0, 1, 1)
+    val op = Await.result(ret, 10.seconds) match {
+      case Valid(lazytile) =>
+        val maybeTile = lazytile.evaluateDouble
+        requests.length should be (0)
+        maybeTile.get.getDouble(0, 0) should be (42)
+      case i@Invalid(_) =>
+        fail(s"$i")
+    }
+  }
 }

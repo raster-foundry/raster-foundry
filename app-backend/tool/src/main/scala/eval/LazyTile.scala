@@ -243,4 +243,16 @@ object LazyTile {
     def bind(args: Map[Var, LazyTile]): LazyTile =
       DualCombine(left.bind(args), right.bind(args), f, g)
   }
+
+  case class Constant(value: Double) extends Tree {
+    def get(col: Int, row: Int) = value.toInt
+    def getDouble(col: Int, row: Int) = value
+    def left = LazyTile.Nil
+    def right = LazyTile.Nil
+    // These overrides allows us to evaluate a tile which consists of this value
+    override def cols: Int = 256
+    override def rows: Int = 256
+    def bind(args: Map[Var, LazyTile]): LazyTile =
+      this
+  }
 }
