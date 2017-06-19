@@ -10,7 +10,7 @@ services:
 
   memcached:
     image: memcached:1.4-alpine
-    command: -I 5242880b
+    command: -m 4096 -c 8192 -I 5242880b
 
   nginx-api:
     image: raster-foundry-nginx-api
