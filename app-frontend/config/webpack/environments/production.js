@@ -29,7 +29,7 @@ module.exports = function (_path) {
                 verbose: true,
                 dry: false
             }),
-            new Manifest(path.join(_path + '/config', 'manifest.json'), {
+            new Manifest(path.join(_path + '/dist', 'manifest.json'), {
                 rootAssetPath: rootAssetPath,
                 ignorePaths: ['.DS_Store']
             }),
