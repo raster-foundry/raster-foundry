@@ -557,12 +557,6 @@ span.no-margin {
   margin: 0 !important;
 }
 
-rf-status-tag {
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-
 /*
  * Component: callToActionItem
  */
@@ -1401,4 +1395,8 @@ table.upload-info {
 
 .picture-description {
   flex: 1;
+}
+.list-group rf-project-item .panel-body{
+  background: $off-white;
+  margin-bottom: 1rem;
 }

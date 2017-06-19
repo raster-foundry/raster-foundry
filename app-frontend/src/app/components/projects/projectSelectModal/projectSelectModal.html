@@ -14,8 +14,9 @@
     <div class="list-group">
       <rf-project-item
           project="project"
-          ng-click="$ctrl.setSelected(project)"
-          ng-repeat="project in $ctrl.projectList track by project.id">
+          ng-repeat="project in $ctrl.projectList track by project.id"
+          slim="true">
+          <button class="btn btn-default" ng-click="$ctrl.setSelected(project)">Select</button>
       </rf-project-item>
     </div>
     <div class="list-group" ng-show="$ctrl.loading">

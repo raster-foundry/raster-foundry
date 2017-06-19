@@ -69,7 +69,7 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
   }
 
   protected def getLandsatUrl(productId: String): String = {
-    val rootUrl = s"https://landsat-pds.s3.amazonaws.com/${getLandsatPath(productId)}"
+    val rootUrl = s"${landsat8Config.awsLandsatBase}${getLandsatPath(productId)}"
     logger.debug(s"Constructed Root URL: $rootUrl")
     rootUrl
   }
