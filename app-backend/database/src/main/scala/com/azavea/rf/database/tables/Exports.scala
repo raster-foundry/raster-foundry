@@ -9,6 +9,7 @@ import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.params._
 
 import cats.data._
+import cats.syntax._
 import cats.implicits._
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import com.typesafe.scalalogging.LazyLogging
@@ -173,43 +174,66 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
     )
   }
 
+  def getExportStyle(export: Export, exportOptions: ExportOptions, user: User)
+                    (implicit database: DB): OptionT[Future, Either[SimpleInput, ASTInput]] = {
+    (export.projectId, export.toolRunId) match {
+      case (_, Some(id)) => astInput(id, export, user).map(Right(_))
+      case (Some(pid), None) => {
+        /* Hand-holding the type system */
+        val work: Future[Option[Either[SimpleInput, ASTInput]]] =
+          simpleInput(pid, export, user, exportOptions).map(si => Some(Left(si)))
+
+        OptionT(work)
+      }
+      case _ => OptionT.none /* Some non-sensical combination was given */
+    }
+  }
+
   def getExportDefinition(
     export: Export,
     user: User
   )(implicit database: DB): Future[Option[ExportDefinition]] = {
     val eo: OptionT[Future, ExportOptions] = OptionT.fromOption[Future](export.getExportOptions)
+    val dbxToken: OptionT[Future, Option[String]] = OptionT(Users.getDropboxAccessToken(export.owner))
 
-    eo.flatMap({ exportOptions =>
-      val outDef = OutputDefinition(
-        crs = exportOptions.getCrs,
-        rasterSize = exportOptions.rasterSize,
-        render = Some(exportOptions.render),
-        crop = exportOptions.crop,
-        stitch = exportOptions.stitch,
-        source = exportOptions.source,
-        dropboxCredential = user.dropboxCredential
-      )
-
-      val style: OptionT[Future, Either[SimpleInput, ASTInput]] =
-        (export.projectId, export.toolRunId) match {
-          case (_, Some(id)) => astInput(id, export, user).map(Right(_))
-          case (Some(pid), None) => {
-            /* Hand-holding the type system */
-            val work: Future[Option[Either[SimpleInput, ASTInput]]] =
-              simpleInput(pid, export, user, exportOptions).map(si => Some(Left(si)))
-
-            OptionT(work)
-          }
-          case _ => OptionT.none /* Some non-sensical combination was given */
+    /** TODO: For some reason, OptionTs aren't working inside the for comprehension here.
+      * It's a huge nuisance and they should be, given that we throw them into for comps
+      * elsewhere even in this file. /shrug
+      * It's a losing battle and a bit of a vanity battle for now, so leaving it ugly.
+      */
+    eo.value.flatMap(
+      opts => {
+        opts match {
+          case Some(exportOpts) =>
+            dbxToken.value.flatMap(
+              token => {
+                val outDef = OutputDefinition(
+                  crs = exportOpts.getCrs,
+                  rasterSize = exportOpts.rasterSize,
+                  render = Some(exportOpts.render),
+                  crop = exportOpts.crop,
+                  stitch = exportOpts.stitch,
+                  source = exportOpts.source,
+                  dropboxCredential = token.getOrElse(None:Option[String])
+                )
+                getExportStyle(export, exportOpts, user).value.map(
+                  style => {
+                    style.map(
+                      s => ExportDefinition(
+                        export.id,
+                        InputDefinition(export.projectId, exportOpts.resolution, s),
+                        outDef
+                      )
+                    )
+                  }
+                )
+              }
+            )
+          case _ =>
+            throw new Exception(s"Did not find export options for export ${export.id}")
         }
-
-        style.map(s => ExportDefinition(
-          export.id,
-          InputDefinition(export.projectId, exportOptions.resolution, s),
-          outDef
-        ))
-      })
-      .value
+      }
+    )
   }
 
   /**

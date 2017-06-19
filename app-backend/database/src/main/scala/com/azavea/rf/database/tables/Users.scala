@@ -156,6 +156,12 @@ object Users extends TableQuery(tag => new Users(tag)) with LazyLogging {
     database.db.run(updateAction)
   }
 
+  def getDropboxAccessToken(userId: String)(implicit database: DB): Future[Option[Option[String]]] = {
+    val filtAction = Users.filter(_.id === userId).map(_.dropboxCredential).result.headOption
+    logger.debug(s"Attempting to retrieve access token for user $userId")
+    database.db.run(filtAction)
+  }
+
   def updateUser(user: User, id: String)(implicit database: DB): Future[Int] = {
     val now = new Timestamp((new java.util.Date).getTime)
     val updateQuery = for {
