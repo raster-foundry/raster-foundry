@@ -1,10 +1,21 @@
 # Change Log
 
+## [0.13.0](https://github.com/azavea/raster-foundry/tree/0.13.0) (2017-06-19)
+[Full Changelog](https://github.com/azavea/raster-foundry/compare/0.12.0...0.13.0)
+
+**Merged pull requests:**
+
+- Add compressed project-item [\#2051](https://github.com/azavea/raster-foundry/pull/2051)
+- updates the project page layout [\#2046](https://github.com/azavea/raster-foundry/pull/2046)
+- Fix Nginx HTTP virtual host collision [\#2045](https://github.com/azavea/raster-foundry/pull/2045)
+- Safer interpreters [\#1860](https://github.com/azavea/raster-foundry/pull/1860)
+
 ## [0.12.0](https://github.com/azavea/raster-foundry/tree/0.12.0) (2017-06-16)
 [Full Changelog](https://github.com/azavea/raster-foundry/compare/0.11.0...0.12.0)
 
 **Merged pull requests:**
 
+- Thumbnail base url typo fix [\#2037](https://github.com/azavea/raster-foundry/pull/2037)
 - Use https for base of landsat URLs [\#2034](https://github.com/azavea/raster-foundry/pull/2034)
 - updates tools page, fixes border-radius issue [\#2033](https://github.com/azavea/raster-foundry/pull/2033)
 - Omit port from Dropbox OAuth redirect URL [\#2028](https://github.com/azavea/raster-foundry/pull/2028)
