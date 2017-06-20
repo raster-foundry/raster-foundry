@@ -142,9 +142,10 @@ def extract_polygon(mask_tif_path):
 
     mask = np.ma.masked_equal(raster, 0)
     logger.info('Extracting shapes from footprint masks')
-    geoms = shapes(raster, mask=mask.astype('bool'), transform=src_affine, connectivity=4)
+    geoms = list(shapes(raster, mask=mask.astype('bool'), transform=src_affine, connectivity=4))
+    assert len(geoms) > 0, 'Shapes could not be extracted from the footprint masks'
 
-    footprint, value = geoms.next()
+    footprint, value = geoms[0]
     assert value == FILL_VALUE, 'Geometry should be of value %s, got %r' % (
         FILL_VALUE, value)
 
