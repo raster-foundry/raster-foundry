@@ -34,8 +34,7 @@ object Generators {
   lazy val genClassMap: Gen[ClassMap] = for {
     dubs <- Gen.containerOfN[List, Double](30, arbitrary[Double])
     ints <- Gen.containerOfN[List, Int](30, arbitrary[Int])
-    opts <- genClassMapOptions
-  } yield ClassMap(dubs.zip(ints).toMap, opts)
+  } yield ClassMap(dubs.zip(ints).toMap)
 
   lazy val genNodeMetadata: Gen[NodeMetadata] = for {
     label <- Gen.option(arbitrary[String])
