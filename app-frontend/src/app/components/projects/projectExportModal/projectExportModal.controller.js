@@ -45,7 +45,7 @@ export default class ProjectExportModalController {
 
     createExport() {
         let extraOptions = this.exportType.label === 'Dropbox' ?
-            { source: `dropbox:///raster-foundry/${this.projectId}` } :
+            { source: `dropbox:///raster-foundry/${this.projectId}.tif` } :
             {};
         this.projectService
             .export(this.projectId, this.zoom, this.exportType.label, extraOptions)

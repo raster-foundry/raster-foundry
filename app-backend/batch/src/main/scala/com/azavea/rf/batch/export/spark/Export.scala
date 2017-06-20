@@ -208,7 +208,7 @@ object Export extends SparkJob with Config with LazyLogging {
     conf: HadoopConfiguration
   ): Unit = {
     def path(key: SpatialKey): ExportDefinition => String = { ed =>
-      s"${ed.output.getURLDecodedSource}/${ed.input.resolution}-${key.col}-${key.row}-${ed.id}.tiff"
+      s"/${ed.output.getURLDecodedSource}/${ed.input.resolution}-${key.col}-${key.row}-${ed.id}.tiff"
     }
 
     rdd.foreachPartition({ iter =>
