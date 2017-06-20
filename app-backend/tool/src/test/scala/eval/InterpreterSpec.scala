@@ -84,7 +84,7 @@ class InterpreterSpec
     val lt = Await.result(ret, 10.seconds)
 
     requests should be (empty)
-    lt should be (Invalid(NEL.of(MissingParameter(src2.id), RasterRetrievalError(src1.id, theTileSource.id))))
+    lt should be (Invalid(NEL.of(RasterRetrievalError(src1.id, theTileSource.id), MissingParameter(src2.id))))
   }
 
   it("interpretPure - simple") {
@@ -349,7 +349,7 @@ class InterpreterSpec
     val op = Await.result(ret, 10.seconds) match {
       case Valid(lazytile) =>
         val maybeTile = lazytile.evaluateDouble
-        requests.length should be (2)
+        requests.length should be (4)
         maybeTile.get.getDouble(0, 0) should be (-4.0/6.0)
       case i@Invalid(_) =>
         fail(s"$i")

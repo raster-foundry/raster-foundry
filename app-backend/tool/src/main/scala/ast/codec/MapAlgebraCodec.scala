@@ -16,6 +16,8 @@ trait MapAlgebraCodec
     ma._symbol match {
       case Some(_) =>
         ma.as[MapAlgebraAST.Operation]
+      case None if (ma._fields.contains("args")) =>
+        Left(DecodingFailure("Unrecognized node type: $ma", ma.history))
       case None =>
         ma.as[MapAlgebraAST.Source]
     }
