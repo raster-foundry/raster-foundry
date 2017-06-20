@@ -1,13 +1,14 @@
 package com.azavea.rf.tool.eval
 
 import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.ast.MapAlgebraAST._
+import com.azavea.rf.tool.params.ParamOverride
 
 import cats._
 import cats.data._
 import cats.data.Validated._
 import cats.implicits._
+
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster._
 
@@ -49,6 +50,43 @@ object Interpreter extends LazyLogging {
     case Classification(args, id, _, breaks) =>
       logger.debug(s"case classification at $id with breakmap ${breaks.toBreakMap}")
       eval(args.head).classify(breaks.toBreakMap)
+  }
+
+  def overrideParams(
+    ast: MapAlgebraAST,
+    overrides: Map[UUID, ParamOverride]
+  ): Interpreted[MapAlgebraAST] = ast match {
+    /* Can't override data Sources */
+    case s: Source => Valid(s)
+
+    /* Operations which can be overridden */
+    case Classification(args, id, m, b) => {
+      val kids: Interpreted[List[MapAlgebraAST]] =
+        args.map(a => overrideParams(a, overrides)).sequence
+
+      val breaks: Interpreted[ClassMap] = overrides.get(id) match {
+        case None => Valid(b)
+        case Some(ParamOverride.Classification(bs)) => Valid(bs)
+        case Some(_) => Invalid(NonEmptyList.of(InvalidOverride(id)))
+      }
+
+      (kids |@| breaks).map({ case (ks, bs) => Classification(ks, id, m, bs) })
+    }
+
+    /* Non-overridable Operations */
+    case Addition(args, id, m) =>
+      args.map(a => overrideParams(a, overrides)).sequence.map(ks => Addition(ks, id, m))
+    case Subtraction(args, id, m) =>
+      args.map(a => overrideParams(a, overrides)).sequence.map(ks => Subtraction(ks, id, m))
+    case Multiplication(args, id, m) =>
+      args.map(a => overrideParams(a, overrides)).sequence.map(ks => Multiplication(ks, id, m))
+    case Division(args, id, m) =>
+      args.map(a => overrideParams(a, overrides)).sequence.map(ks => Division(ks, id, m))
+    case Min(args, id, m) =>
+      args.map(a => overrideParams(a, overrides)).sequence.map(ks => Min(ks, id, m))
+    case Max(args, id, m) =>
+      args.map(a => overrideParams(a, overrides)).sequence.map(ks => Max(ks, id, m))
+    case op => Invalid(NonEmptyList.of(UnhandledCase(op.id)))
   }
 
   /** Interpret an AST with its matched execution parameters, but do so

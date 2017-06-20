@@ -8,6 +8,10 @@ import io.circe._
 import io.circe.syntax._
 import io.circe.generic.JsonCodec
 
+/* Yes, it is correct that all three of these fields can be empty. It is
+ * possible to construct a legal AST that will produce results yet has no
+ * external data sources.
+ */
 case class EvalParams(
   sources: Map[UUID, RFMLRaster] = Map(),
   metadata: Map[UUID, NodeMetadata] = Map(),
@@ -30,6 +34,9 @@ object EvalParams {
   }
 }
 
+/** A sum type which allows us hold override values of varying types in the
+  * same `Map` in a type safe way.
+  */
 sealed trait ParamOverride
 
 object ParamOverride {

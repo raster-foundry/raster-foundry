@@ -49,6 +49,10 @@ case class ASTDecodeError(id: UUID, msg: DecodingFailure) extends InterpreterErr
   def repr = s"Unable to decode the AST associated with ToolRun ${id}: ${msg}"
 }
 
+case class InvalidOverride(id: UUID) extends InterpreterError {
+  def repr = s"Node ${id} was given an incompatible override value"
+}
+
 object InterpreterError {
   implicit val encodeInterpreterErrors: Encoder[InterpreterError] =
     new Encoder[InterpreterError] {
