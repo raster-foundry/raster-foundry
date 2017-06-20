@@ -115,7 +115,7 @@ class InterpreterSpec
   it("should evaluate classification (case hit)") {
     requests = Nil
     // This breakmap should convert all cells (which are set to a value of 5) to 77
-    val breakmap = ClassMap(Map(6.0 -> 77), ClassMap.Options(LessThanOrEqualTo, 123))
+    val breakmap = ClassMap(Map(6.0 -> 77))
     val srcAST = randomSourceAST
     val tms = Interpreter.interpretTMS(
       ast = srcAST.classify(breakmap),
@@ -139,7 +139,7 @@ class InterpreterSpec
   it("should evaluate classification (case miss)") {
     requests = Nil
     // This breakmap should convert all cells (which are set to a value of 5) to 77
-    val breakmap = ClassMap(Map(2.0 -> 77), ClassMap.Options(LessThanOrEqualTo, 123))
+    val breakmap = ClassMap(Map(2.0 -> 77))
     val srcAST = randomSourceAST
     val tms = Interpreter.interpretTMS(
       ast = srcAST.classify(breakmap),

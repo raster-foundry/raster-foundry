@@ -7,9 +7,11 @@ import spire.std.any._
 
 @JsonCodec
 case class ClassMap(
-  classifications: Map[Double, Int],
-  options: ClassMap.Options = ClassMap.Options()
+  classifications: Map[Double, Int]
 ) {
+  // How exposed should this be to the api?
+  val options: ClassMap.Options = ClassMap.Options()
+
   lazy val mapStrategy =
     new MapStrategy(options.boundaryType, options.ndValue, options.fallback, false)
 
