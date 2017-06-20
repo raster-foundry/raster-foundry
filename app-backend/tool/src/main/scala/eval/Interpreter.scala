@@ -59,7 +59,13 @@ object Interpreter extends LazyLogging {
     /* Can't override data Sources */
     case s: Source => Valid(s)
 
-    /* Operations which can be overridden */
+    /* Nodes which can be overridden */
+    case c: Constant => overrides.get(c.id) match {
+      case None => Valid(c)
+      case Some(ParamOverride.Constant(const)) => Valid(c.copy(constant = const))
+      case Some(_) => Invalid(NonEmptyList.of(InvalidOverride(c.id)))
+    }
+
     case Classification(args, id, m, b) => {
       val kids: Interpreted[List[MapAlgebraAST]] =
         args.map(a => overrideParams(a, overrides)).sequence
