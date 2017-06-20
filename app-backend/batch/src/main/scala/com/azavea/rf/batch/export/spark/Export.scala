@@ -50,7 +50,7 @@ object Export extends SparkJob with Config with LazyLogging {
     projLocs: Map[UUID, List[(UUID, String)]],
     conf: HadoopConfiguration
   )(implicit sc: SparkContext): Unit = {
-    interpretRDD(ast, params.sources, ed.input.resolution, sceneLocs, projLocs) match {
+    interpretRDD(ast, params.sources, params.overrides, ed.input.resolution, sceneLocs, projLocs) match {
       case Invalid(errs) => throw InterpreterException(errs)
       case Valid(rdd) => {
 
