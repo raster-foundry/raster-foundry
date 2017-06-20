@@ -48,6 +48,11 @@ label {
   border: 1px solid $border-color-default;
   border-radius: $border-radius-base;
 
+  &.slim {
+    height: auto;
+    border-radius: $border-radius-base;
+  }
+
   &:focus {
     border-color: $brand-primary;
     outline: 0;
