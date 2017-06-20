@@ -46,7 +46,7 @@ label {
   background-color: #fff;
   background-image: none;
   border: 1px solid $border-color-default;
-  border-radisu: $border-radius-base;
+  border-radius: $border-radius-base;
 
   &.slim {
     height: auto;
@@ -137,7 +137,7 @@ input[type=radio] {
   display: flex;
   flex-direction: row;
   align-items: stretch;
-  border-radisu: $border-radius-base;
+  border-radius: $border-radius-base;
   border: 1px solid $border-color-default;
   background-color: #fff;
 
@@ -172,4 +172,83 @@ input[type=radio] {
 
 .form-group.all-in-one.stacked {
   flex-direction: column;
+}
+
+.form-group.search-form {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  border-radius: $border-radius-base;
+  border: 1px solid $border-color-default;
+
+  .form-control {
+    border: none;
+    height: 3.2rem;
+  }
+
+  .btn-link {
+    border: none;
+  }
+}
+
+label.checkbox {
+  position: relative;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  margin: 0;
+
+  &:after {
+    content: '';
+    order: -1;
+    vertical-align: middle;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 2px;
+    border: 1px solid $shade-light;
+    background: white;
+  }
+
+  &:before {
+    content: '\e803'; // see fontello.css .icon-check:before
+    order: 0;
+    font-family: "fontello";
+    font-style: normal;
+    font-weight: normal;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin-left: -17px;
+    position: relative;
+    z-index: 1;
+    visibility: hidden;
+    opacity: 0;
+    transform: scale(.1);
+    transition: .2s ease-in-out opacity, .4s cubic-bezier(0.68, -0.55, 0.27, 1.55) transform;
+  }
+
+  input[type=checkbox] {
+    visibility: hidden;
+    margin-left: -1rem;
+  }
+
+  &.active {
+    color: $brand-primary;
+    transition: .2s ease-in-out color;
+
+    &:after {
+      border-color: $brand-primary;
+    }
+
+    &:before {
+      visibility: visible;
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  &:hover:not(.active):before {
+    visibility: visible;
+    opacity: .4;
+    transform: scale(1);
+  }
 }

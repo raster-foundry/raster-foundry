@@ -320,15 +320,13 @@ object Ingest extends SparkJob with LazyLogging with Config {
     implicit def asS3Payload(status: IngestStatus): String = S3IngestStatus(sceneId, status).asJson.noSpaces
 
     try {
-      if (params.testRun) { ingestDefinition.layers.foreach(Validation.validateCatalogEntry) }
-      else {
-        ingestDefinition.layers.foreach(ingestLayer(params))
-        putObject(
-          params.statusBucket,
-          ingestDefinition.id.toString,
-          IngestStatus.Ingested
-        )
-      }
+      ingestDefinition.layers.foreach(ingestLayer(params))
+      if (params.testRun) ingestDefinition.layers.foreach(Validation.validateCatalogEntry)
+      putObject(
+        params.statusBucket,
+        ingestDefinition.id.toString,
+        IngestStatus.Ingested
+      )
     } catch {
       case t: Throwable =>
         logger.error(t.stackTraceString)

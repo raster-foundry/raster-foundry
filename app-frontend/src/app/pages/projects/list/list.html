@@ -38,14 +38,16 @@
       <!-- No project placeholder -->
 
       <!-- Project List -->
-      <div ng-if="!$ctrl.loading && $ctrl.projectList.length > 0">
-        <rf-project-item
-            class="project-preview panel panel-off-white"
-            project="project"
-            ng-repeat="project in $ctrl.projectList
+      <div ng-if="!$ctrl.loading && $ctrl.projectList.length > 0" class="row stack-xs">
+        <div class="column-6 flex-display"
+             ng-repeat="project in $ctrl.projectList
                        | filter: {name: $ctrl.projectSearchString}
                        track by project.id">
-        </rf-project-item>
+          <rf-project-item
+              class="project-preview panel panel-off-white"
+              project="project">
+          </rf-project-item>
+        </div>
 
         <!-- Pagination -->
         <div class="list-group text-center"

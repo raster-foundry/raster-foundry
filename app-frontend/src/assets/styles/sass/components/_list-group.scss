@@ -68,6 +68,7 @@
   border-bottom: 1px solid $border-color-default;
   display: flex;
   align-items: center;
+  position: relative;
 
   > * {
     margin: 0 5px;

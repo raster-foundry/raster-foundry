@@ -18,7 +18,7 @@ module AnsibleGalaxyHelper
     ansible_roles_spec = File.join(ansible_directory, "roles.yml")
 
     YAML.load_file(ansible_roles_spec).each do |role|
-      role_name = role["src"]
+      role_name = role["name"] ? role["name"] : role["src"]
       role_version = role["version"]
       role_path = File.join(ansible_directory, "roles", role_name)
       galaxy_metadata = galaxy_install_info(role_path)

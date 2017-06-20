@@ -57,6 +57,7 @@ export default class ProjectAddScenesBrowseController {
             this.getMap().then(browseMap => {
                 browseMap.deleteLayers('canvasGrid');
                 browseMap.deleteLayers('filterBboxLayer');
+                browseMap.deleteLayers('Selected Scenes');
                 browseMap.deleteThumbnail();
             });
             this.selectNoScenes();

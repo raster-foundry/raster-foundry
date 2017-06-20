@@ -1,7 +1,3 @@
-img {
-  max-width: 100%;
-}
-
 .center-img {
   display: block;
   margin: auto;
@@ -10,7 +6,7 @@ img {
 }
 
 .rounded-img {
-  border-radisu: $border-radius-base;
+  border-radius: $border-radius-base;
 }
 
 .circle-img {

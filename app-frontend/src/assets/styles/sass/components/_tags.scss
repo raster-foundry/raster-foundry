@@ -1,9 +1,7 @@
-.tag-container {
-  position: relative;
-}
-
 .inline-tag {
   position: absolute;
+  top: 2.5rem;
+  transform: translateY(-50%);
   left: -1rem;
   display: inline-block;
   font-size: 1.2rem;
@@ -26,6 +24,12 @@
   &:hover {
     color: $shade-dark;
     text-indent: 0;
+  }
+
+  // for tags within a sidebar
+  .sidebar & {
+    left: 1rem;
+    top: 2rem;
   }
 }
 

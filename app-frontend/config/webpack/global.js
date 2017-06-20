@@ -8,7 +8,6 @@
 const path = require('path');
 const webpack = require('webpack');
 const autoprefixer = require('autoprefixer-core');
-const Manifest = require('manifest-revision-webpack-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
@@ -26,6 +25,7 @@ const basemaps = JSON.stringify({
                     'OpenStreetMap</a> &copy;<a href="http://cartodb.com/attributions">CartoDB</a>',
                 maxZoom: 30
             },
+
             default: true
         },
         Dark: {
@@ -33,11 +33,38 @@ const basemaps = JSON.stringify({
             properties: {
                 attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">' +
                     'OpenStreetMap</a> &copy;<a href="http://cartodb.com/attributions">CartoDB</a>',
-                maxZoom: 30
+                maxZoom: 30,
+                subdomains: 'a'
+            }
+        },
+        Aerial: {
+            url: 'https://{s}.{base}.maps.cit.api.here.com/maptile/2.1/{type}/{mapID}/hybrid.day/{z}/{x}/{y}/{size}/{format}?app_id={app_id}&app_code={app_code}&lg={language}',
+            properties: {
+                attribution: 'Map &copy; 1987-2014 <a href="http://developer.here.com">HERE</a>',
+                subdomains: '1234',
+                mapID: 'newest',
+                app_id: 'mXP4DZFBZGyBmuZBKNeo',
+                app_code: 'kBWb6Z7ZLcuQanT_RoP60A',
+                base: 'aerial',
+                maxZoom: 30,
+                maxNativeZoom: 20,
+                type: 'maptile',
+                language: 'eng',
+                format: 'png8',
+                size: '256'
+            }
+        },
+        Streets: {
+            url: 'https://{s}.base.maps.cit.api.here.com/maptile/2.1/maptile/newest/normal.day/{z}/{x}/{y}/256/png8?app_id={app_id}&app_code={app_code}',
+            properties: {
+                attribution: 'Map &copy; 1987-2014 <a href="http://developer.here.com">HERE</a>',
+                subdomains: '1234',
+                app_id: 'mXP4DZFBZGyBmuZBKNeo',
+                app_code: 'kBWb6Z7ZLcuQanT_RoP60A'
             }
         }
     },
-    default: 'Light'
+    default: 'Aerial'
 });
 
 module.exports = function (_path) {
@@ -210,10 +237,6 @@ module.exports = function (_path) {
                 async: true,
                 children: true,
                 minChunks: Infinity
-            }),
-            new Manifest(path.join(_path + '/config', 'manifest.json'), {
-                rootAssetPath: rootAssetPath,
-                ignorePaths: ['.DS_Store']
             }),
             new ExtractTextPlugin(
                 'assets/styles/css/[name]' +

@@ -212,7 +212,7 @@ object WhiteBalance {
       cfor(0)(_ < newTile.cols, _ + 1) { col =>
         val bandValues = Array.ofDim[Int](newTile.bandCount)
         cfor(0)(_ < newTile.bandCount, _ + 1) { band =>
-          bandValues(band) = newTile.bands(band).get(col, row)
+          bandValues(band) = newTile.band(band).get(col, row)
         }
         array(col)(row) = f(bandValues)
       }
