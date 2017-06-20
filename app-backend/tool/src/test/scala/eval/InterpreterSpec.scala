@@ -31,6 +31,7 @@ class InterpreterSpec
     val tms = Interpreter.interpretTMS(
       ast = src1 - src2,
       sourceMapping = Map(src1.id -> tileSource(4), src2.id -> tileSource(5)),
+      overrides = Map.empty,
       source = goodSource
     )
 
@@ -53,6 +54,7 @@ class InterpreterSpec
     val tms = Interpreter.interpretTMS(
       ast = src1 - src2,
       sourceMapping = Map(src1.id -> tileSource(4)),
+      overrides = Map.empty,
       source = goodSource
     )
 
@@ -77,6 +79,7 @@ class InterpreterSpec
     val tms = Interpreter.interpretTMS(
       ast = src1 - src2,
       sourceMapping = Map(src1.id -> theTileSource),
+      overrides = Map.empty,
       source = badSource
     )
 
@@ -117,6 +120,7 @@ class InterpreterSpec
     val tms = Interpreter.interpretTMS(
       ast = srcAST.classify(breakmap),
       sourceMapping = Map(srcAST.id -> tileSource(4)),
+      overrides = Map.empty,
       source = goodSource
     )
     println("Classification node: ", srcAST.classify(breakmap).asJson.noSpaces)
@@ -140,6 +144,7 @@ class InterpreterSpec
     val tms = Interpreter.interpretTMS(
       ast = srcAST.classify(breakmap),
       sourceMapping = Map(srcAST.id -> tileSource(4)),
+      overrides = Map.empty,
       source = goodSource
     )
 
@@ -161,6 +166,7 @@ class InterpreterSpec
     val tms = Interpreter.interpretTMS(
       ast = src1 - src2,
       sourceMapping = Map(src1.id -> tileSource(1), src2.id -> tileSource(5)),
+      overrides = Map.empty,
       source = goodSource
     )
     println("Subtraction node: ", (src1 - src2).asJson.noSpaces)
@@ -186,6 +192,7 @@ class InterpreterSpec
     val tms = Interpreter.interpretTMS(
       ast = ast,
       sourceMapping = Map(src1.id -> tileSource(5), src2.id -> tileSource(4), src3.id -> tileSource(1)),
+      overrides = Map.empty,
       source = goodSource
     )
 
@@ -207,6 +214,7 @@ class InterpreterSpec
     val tms = Interpreter.interpretTMS(
       ast = src1 / src2,
       sourceMapping = Map(src1.id -> tileSource(4), src2.id -> tileSource(5)),
+      overrides = Map.empty,
       source = goodSource
     )
     println("Division node: ", (src1 / src2).asJson.noSpaces)
@@ -231,6 +239,7 @@ class InterpreterSpec
     val tms = Interpreter.interpretTMS(
       ast = ast,
       sourceMapping = Map(src1.id -> tileSource(1), src2.id -> tileSource(5), src3.id -> tileSource(4)),
+      overrides = Map.empty,
       source = goodSource
     )
 
@@ -252,6 +261,7 @@ class InterpreterSpec
     val tms = Interpreter.interpretTMS(
       ast = src1 * src2,
       sourceMapping = Map(src1.id -> tileSource(4), src2.id -> tileSource(5)),
+      overrides = Map.empty,
       source = goodSource
     )
     println("Multiplication node: ", (src1 * src2).asJson.noSpaces)
@@ -274,6 +284,7 @@ class InterpreterSpec
     val tms = Interpreter.interpretTMS(
       ast = src1 + src2,
       sourceMapping = Map(src1.id -> tileSource(4), src2.id -> tileSource(5)),
+      overrides = Map.empty,
       source = goodSource
     )
     println("Addition node: ", (src1 + src2).asJson.noSpaces)
@@ -296,6 +307,7 @@ class InterpreterSpec
     val tms = Interpreter.interpretTMS(
       ast = src1.max(src2),
       sourceMapping = Map(src1.id -> tileSource(1), src2.id -> tileSource(5)),
+      overrides = Map.empty,
       source = goodSource
     )
     println("LocalMax node: ", (src1.max(src2)).asJson.noSpaces)
@@ -318,6 +330,7 @@ class InterpreterSpec
     val tms = Interpreter.interpretTMS(
       ast = src1.min(src2),
       sourceMapping = Map(src1.id -> tileSource(1), src2.id -> tileSource(5)),
+      overrides = Map.empty,
       source = goodSource
     )
     println("LocalMin node: ", (src1.min(src2)).asJson.noSpaces)
@@ -341,6 +354,7 @@ class InterpreterSpec
     val tms = Interpreter.interpretTMS(
       ast = ndvi,
       sourceMapping = Map(nir.id -> tileSource(1), red.id -> tileSource(5)),
+      overrides = Map.empty,
       source = goodSource
     )
     println("Simple NDVI calculation: ", ndvi.asJson.noSpaces)
@@ -364,6 +378,7 @@ class InterpreterSpec
     val tms = Interpreter.interpretTMS(
       ast = lifeUniverseEtc,
       sourceMapping = Map(),
+      overrides = Map.empty,
       source = goodSource
     )
     println("Simple Constant calculation: ", lifeUniverseEtc.asJson.noSpaces)

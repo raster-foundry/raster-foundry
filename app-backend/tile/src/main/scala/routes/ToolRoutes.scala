@@ -121,7 +121,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
                   (toolRun, tool) <- LayerCache.toolAndToolRun(toolRunId, user)
                   (ast, params)   <- LayerCache.toolEvalRequirements(toolRunId, nodeId, user)
                   tile            <- OptionT({
-                                       val tms = Interpreter.interpretTMS(ast, params.sources, source)
+                                       val tms = Interpreter.interpretTMS(ast, params.sources, params.overrides, source)
                                        logger.debug(s"Attempting to retrieve TMS tile at $z/$x/$y")
                                        tms(z, x, y).map {
                                          case Valid(op) => op.evaluateDouble
