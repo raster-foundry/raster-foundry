@@ -35,4 +35,3 @@ trait MapAlgebraCodec
 }
 
 object MapAlgebraCodec extends MapAlgebraCodec
-
