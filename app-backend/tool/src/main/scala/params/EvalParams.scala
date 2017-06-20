@@ -21,7 +21,7 @@ case class EvalParams(
 object EvalParams {
 
   implicit val encodeEvalParams: Encoder[EvalParams] =
-    Encoder.forProduct2("sources", "metadata")(ep => (ep.sources, ep.metadata))
+    Encoder.forProduct3("sources", "metadata", "overrides")(ep => (ep.sources, ep.metadata, ep.overrides))
 
   implicit val decodeEvalParams: Decoder[EvalParams] = new Decoder[EvalParams] {
     final def apply(c: HCursor): Decoder.Result[EvalParams] = {
