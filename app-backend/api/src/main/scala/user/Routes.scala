@@ -21,7 +21,6 @@ import com.typesafe.scalalogging.LazyLogging
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
 
 
 /**

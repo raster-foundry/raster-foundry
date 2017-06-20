@@ -9,7 +9,6 @@ import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.params._
 
 import cats.data._
-import cats.syntax._
 import cats.implicits._
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import com.typesafe.scalalogging.LazyLogging

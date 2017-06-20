@@ -14,7 +14,6 @@ export default class ProjectExportModalController {
             {active: true, label: 'S3'},
             {active: false, label: 'Dropbox'}
         ];
-        this.exportDestination = null;
         this.exportSuccess = false;
         this.exportFailure = false;
         this.zoomSlider = {
