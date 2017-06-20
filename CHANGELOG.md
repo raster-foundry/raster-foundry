@@ -1,5 +1,14 @@
 # Change Log
 
+## [0.14.0](https://github.com/azavea/raster-foundry/tree/0.14.0) (2017-06-20)
+[Full Changelog](https://github.com/azavea/raster-foundry/compare/0.13.0...0.14.0)
+
+**Merged pull requests:**
+
+- Use HTTPs for aerial map tiles [\#2062](https://github.com/azavea/raster-foundry/pull/2062)
+- Feature/lk/better map controls [\#2059](https://github.com/azavea/raster-foundry/pull/2059)
+- Install GDAL 2.1 in Airflow worker container image [\#2057](https://github.com/azavea/raster-foundry/pull/2057)
+
 ## [0.13.0](https://github.com/azavea/raster-foundry/tree/0.13.0) (2017-06-19)
 [Full Changelog](https://github.com/azavea/raster-foundry/compare/0.12.0...0.13.0)
 
