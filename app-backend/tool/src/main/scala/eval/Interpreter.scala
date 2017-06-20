@@ -106,7 +106,6 @@ object Interpreter extends LazyLogging {
     /* Validate leaf nodes */
     case Source(id, _) if sourceMapping.isDefinedAt(id) => Valid(Monoid.empty)
     case Source(id, _) => Invalid(NonEmptyList.of(MissingParameter(id)))
-
     case Constant(_, _, _) => Valid(Monoid.empty)
 
     /* Unary operations must have only one arguments */
@@ -139,6 +138,7 @@ object Interpreter extends LazyLogging {
   def interpretGlobal(
     ast: MapAlgebraAST,
     sourceMapping: Map[UUID, RFMLRaster],
+    overrides: Map[UUID, ParamOverride],
     source: RFMLRaster => Future[Option[Tile]]
   )(implicit ec: ExecutionContext): Future[Interpreted[LazyTile]] = {
 
@@ -151,9 +151,10 @@ object Interpreter extends LazyLogging {
     }
 
     val pure: Interpreted[Unit] = interpretPure[Unit](ast, sourceMapping)
+    val overridden: Interpreted[MapAlgebraAST] = overrideParams(ast, overrides)
 
     sourceMapping
-      .mapValues(r => source(r).map(_.toRight(r.id)).recover({ case t: Throwable => println(s"${t.getMessage}"); Left(r.id) }))
+      .mapValues(r => source(r).map(_.toRight(r.id)).recover({ case t: Throwable => Left(r.id) }))
       .sequence
       .map({ sms =>
         val tiles: Interpreted[Map[UUID, Tile]] = sms.map({
@@ -161,7 +162,7 @@ object Interpreter extends LazyLogging {
           case (id, Right(tile)) => (id, Valid(tile))
         }).sequence
 
-        (pure |@| tiles).map({ case (_, ts) => eval(ts, ast) })
+        (pure |@| overridden |@| tiles).map({ case (_, tree, ts) => eval(ts, tree) })
       })
   }
 
@@ -174,11 +175,12 @@ object Interpreter extends LazyLogging {
   def interpretTMS(
     ast: MapAlgebraAST,
     sourceMapping: Map[UUID, RFMLRaster],
+    overrides: Map[UUID, ParamOverride],
     source: (RFMLRaster, Int, Int, Int) => Future[Option[Tile]]
   )(implicit ec: ExecutionContext): (Int, Int, Int) => Future[Interpreted[LazyTile]] = {
 
     (z: Int, x: Int, y: Int) => {
-      interpretGlobal(ast, sourceMapping, { raster: RFMLRaster => source(raster, z, x, y) })
+      interpretGlobal(ast, sourceMapping, overrides, { raster: RFMLRaster => source(raster, z, x, y) })
     }
   }
 }
