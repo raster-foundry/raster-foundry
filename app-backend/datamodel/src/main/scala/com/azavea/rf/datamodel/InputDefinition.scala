@@ -3,6 +3,7 @@ package com.azavea.rf.datamodel
 import java.util.UUID
 
 import cats.implicits._
+import com.azavea.rf.bridge._
 import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.rf.tool.params.EvalParams
 import geotrellis.vector.MultiPolygon

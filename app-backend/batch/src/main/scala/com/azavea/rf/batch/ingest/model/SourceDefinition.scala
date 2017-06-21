@@ -3,6 +3,7 @@ package com.azavea.rf.batch.ingest.model
 import io.circe.generic.JsonCodec
 import com.azavea.rf.batch.util._
 import com.azavea.rf.datamodel._
+import com.azavea.rf.bridge._
 
 import geotrellis.proj4.{CRS, LatLng}
 import geotrellis.raster._
