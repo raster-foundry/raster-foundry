@@ -1,10 +1,13 @@
 /* global AWS */
 /* global document */
+/* global window */
 
 export default class SceneImportModalController {
-    constructor($scope, $state, projectService, Upload,
-                uploadService, authService, rollbarWrapperService,
-                datasourceService) {
+    constructor(
+        $scope, $state,
+        projectService, Upload, uploadService, authService,
+        rollbarWrapperService, datasourceService
+    ) {
         'ngInject';
         this.$scope = $scope;
         this.$state = $state;
@@ -24,6 +27,15 @@ export default class SceneImportModalController {
         this.uploadProgressFlexString = {};
         this.setCurrentStepIndex(0);
         this.datasource = this.resolve.datasource || false;
+        const onWindowUnload = (event) => {
+            if (this.closeCanceller) {
+                event.returnValue = 'Leaving this page will cancel your upload. Are you sure?';
+            }
+        };
+        this.$scope.$on('$destroy', () => {
+            window.removeEventListener('beforeunload', onWindowUnload);
+        });
+        window.addEventListener('beforeunload', onWindowUnload);
     }
 
     initSteps() {
@@ -185,6 +197,7 @@ export default class SceneImportModalController {
     }
 
     startUpload() {
+        this.preventInterruptions();
         this.authService
             .getCurrentUser()
             .then(this.createUpload.bind(this))
@@ -267,10 +280,14 @@ export default class SceneImportModalController {
             this.gotoStep('IMPORT_SUCCESS');
             this.allowNext = true;
         });
+
+        this.allowInterruptions();
     }
 
     uploadError(err) {
         this.rollbarWrapperService.error(err);
+
+        this.allowInterruptions();
     }
 
     handleUploadProgress(progress) {
@@ -329,5 +346,25 @@ export default class SceneImportModalController {
                 this.isLoadingDatasources = false;
             }
         );
+    }
+
+    preventInterruptions() {
+        if (!this.closeCanceller) {
+            this.closeCanceller = this.$scope.$on('modal.closing', (e) => {
+                e.preventDefault();
+            });
+            this.locationChangeCanceller = this.$scope.$on('$locationChangeStart', (event) => {
+                event.preventDefault();
+            });
+        }
+    }
+
+    allowInterruptions() {
+        if (this.closeCanceller || this.locationChangeCanceller) {
+            this.closeCanceller();
+            delete this.closeCanceller;
+            this.locationChangeCanceller();
+            delete this.locationChangeCanceller();
+        }
     }
 }
