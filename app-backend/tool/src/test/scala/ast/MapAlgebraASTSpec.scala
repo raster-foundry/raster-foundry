@@ -1,16 +1,8 @@
 package com.azavea.rf.tool.ast
 
-import com.azavea.rf.tool.ast.codec._
-import com.azavea.rf.tool.eval._
-
-import org.scalatest._
-import io.circe._
-import io.circe.parser._
-import io.circe.syntax._
-import cats.syntax.either._
-
 import java.util.UUID
 
+import org.scalatest._
 
 class MapAlgebraASTSpec extends FunSpec with Matchers {
 

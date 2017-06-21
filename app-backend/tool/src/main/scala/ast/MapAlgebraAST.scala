@@ -46,8 +46,8 @@ object MapAlgebraAST {
   case class Division(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
       extends Operation("/")
 
-  case class Masking(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
-      extends Operation("mask")
+  case class Masking(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], mask: MultiPolygon)
+      extends UnaryOp("mask")
 
   case class Classification(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], classMap: ClassMap)
       extends UnaryOp("classify")

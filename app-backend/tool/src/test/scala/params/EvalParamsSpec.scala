@@ -2,7 +2,6 @@ package com.azavea.rf.tool.params
 
 import cats.syntax.either._
 import com.azavea.rf.tool.Generators._
-import io.circe._
 import io.circe.syntax._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
