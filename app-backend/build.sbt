@@ -132,7 +132,7 @@ lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
 )
 
 lazy val root = Project("root", file("."))
-  .aggregate(api, common, migrations, datamodel, database, batch, tile, tool)
+  .aggregate(api, common, migrations, datamodel, database, batch, tile, tool, bridge)
   .settings(commonSettings:_*)
 
 lazy val api = Project("api", file("api"))
@@ -172,7 +172,7 @@ lazy val migrations = Project("migrations", file("migrations"))
   })
 
 lazy val datamodel = Project("datamodel", file("datamodel"))
-  .dependsOn(tool)
+  .dependsOn(tool, bridge)
   .settings(commonSettings:_*)
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({
@@ -197,7 +197,7 @@ lazy val database = Project("database", file("database"))
   })
 
 lazy val batch = Project("batch", file("batch"))
-  .dependsOn(common, datamodel, database, tool)
+  .dependsOn(common, datamodel, database, tool, bridge)
   .settings(commonSettings:_*)
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({
@@ -271,6 +271,7 @@ lazy val tile = Project("tile", file("tile"))
   .settings(assemblyJarName in assembly := "rf-tile-server.jar")
 
 lazy val tool = Project("tool", file("tool"))
+  .dependsOn(bridge)
   .settings(commonSettings:_*)
   .settings({
     libraryDependencies ++= loggingDependencies ++ Seq(
@@ -283,5 +284,17 @@ lazy val tool = Project("tool", file("tool"))
       Dependencies.circeParser,
       Dependencies.circeOptics,
       Dependencies.scalaCheck
+    )
+  })
+
+
+lazy val bridge = Project("bridge", file("bridge"))
+  .settings(commonSettings:_*)
+  .settings({
+    libraryDependencies ++= loggingDependencies ++ Seq(
+      Dependencies.circeCore,
+      Dependencies.circeGeneric,
+      Dependencies.circeParser,
+      Dependencies.geotrellisVector
     )
   })

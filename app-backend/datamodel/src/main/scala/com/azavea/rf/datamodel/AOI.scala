@@ -3,6 +3,7 @@ package com.azavea.rf.datamodel
 import java.sql.Timestamp
 import java.util.{Date, UUID}
 
+import com.azavea.rf.bridge._
 import geotrellis.slick.Projected
 import geotrellis.vector.MultiPolygon
 import io.circe._

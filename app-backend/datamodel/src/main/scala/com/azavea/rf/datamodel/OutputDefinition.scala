@@ -1,5 +1,6 @@
 package com.azavea.rf.datamodel
 
+import com.azavea.rf.bridge._
 import geotrellis.proj4.CRS
 import io.circe.generic.JsonCodec
 

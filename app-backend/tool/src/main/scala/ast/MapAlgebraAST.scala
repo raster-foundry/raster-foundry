@@ -1,5 +1,6 @@
 package com.azavea.rf.tool.ast
 
+import geotrellis.vector.MultiPolygon
 import java.util.UUID
 
 import io.circe.generic.JsonCodec
