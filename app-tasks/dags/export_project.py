@@ -13,12 +13,17 @@ from airflow.operators import PythonOperator
 from airflow.exceptions import AirflowException
 from rf.utils.exception_reporting import wrap_rollbar
 
-rf_logger = logging.getLogger('rf')
-ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch = logging.StreamHandler()
+
+ch.setLevel(logging.INFO)
 ch.setFormatter(formatter)
-rf_logger.addHandler(ch)
+
+logging.getLogger('rf').addHandler(ch)
+logging.getLogger().addHandler(ch)
+
+logger = logging.getLogger(__name__)
+
 
 HOST = os.getenv('RF_HOST')
 API_PATH = '/api/exports/'
@@ -48,12 +53,12 @@ def get_cluster_id():
 def start_export(export_id, xcom_client):
     bash_cmd = 'java -cp /opt/raster-foundry/jars/rf-batch.jar com.azavea.rf.batch.Main create_export_def {0}'.format(export_id)
     cmd = subprocess.Popen(bash_cmd, shell=True, stdout=subprocess.PIPE)
-    step_id = ''    
+    step_id = ''
     for line in cmd.stdout:
         logger.info(line.strip())
-        if 'StepId:' in line:            
+        if 'StepId:' in line:
             step_id = line.replace('StepId:', '').strip()
-    
+
     xcom_client.xcom_push(key='export_id', value=export_id)
     logger.info('Launched export creation process, watching for updates...')
     is_success = wait_for_success(step_id, get_cluster_id())
@@ -66,7 +71,7 @@ def wait_for_success(step_id, cluster_id):
 
     Returns:
         boolean
-    """    
+    """
     emr = boto3.client('emr')
     get_description = lambda: emr.describe_step(ClusterId=cluster_id, StepId=step_id)
     logger.info('Starting to check for status updates for step %s', step_id)
@@ -104,7 +109,7 @@ def wait_for_status_op(*args, **kwargs):
     # Wait until process terminates (without using cmd.wait())
     while cmd.poll() is None:
         time.sleep(0.5)
- 
+
     if cmd.returncode == 0:
         logger.info('Successfully completed export %s', export_id)
         return True
