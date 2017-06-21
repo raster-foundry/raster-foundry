@@ -48,21 +48,30 @@ def process_upload(*args, **kwargs):
     upload = Upload.from_id(upload_id)
     upload.update_upload_status('Processing')
 
+    logger.info('Processing upload (%s) for user %s with files %s',
+                upload.id, upload.owner, upload.files)
+
     try:
         factory = GeoTiffS3SceneFactory(upload)
         scenes = factory.generate_scenes()
+        logger.info('Creating scene objects for upload %s, preparing to POST to API', upload.id)
+
         created_scenes = [scene.create() for scene in scenes]
+        logger.info('Successfully created %s scenes (%s)', len(created_scenes), [s.id for s in created_scenes])
 
         if upload.projectId:
-            logger.info("Upload specified a project. Linking scenes to project.")
+            logger.info('Upload specified a project. Linking scenes to project %s', upload.projectId)
             scene_ids = [scene.id for scene in created_scenes]
             batch_scene_to_project_url = '{HOST}/api/projects/{PROJECT}/scenes'.format(HOST=HOST, PROJECT=upload.projectId)
             session = get_session()
             response = session.post(batch_scene_to_project_url, json=scene_ids)
             response.raise_for_status()
         upload.update_upload_status('Complete')
-        logger.info('Finished importing scenes')
+        logger.info('Finished importing scenes for upload (%s) for user %s with files %s',
+                     upload.id, upload.owner, upload.files)
     except:
+        logger.error('Failed to process upload (%s) for user %s with files %s',
+                     upload.id, upload.owner, upload.files)
         upload.update_upload_status('Failed')
         raise
 
