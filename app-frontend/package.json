@@ -48,7 +48,7 @@
     "es6-map": "~0.1.4",
     "jointjs": "~1.0.3",
     "jquery": "~2.1.4",
-    "leaflet": "~1.0.0",
+    "leaflet": "1.0.3",
     "leaflet-draw": "~0.4.9",
     "lodash": "~4.5.0",
     "moment": "^2.18.1",

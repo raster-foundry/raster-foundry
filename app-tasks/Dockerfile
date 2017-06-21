@@ -14,19 +14,19 @@ RUN set -ex \
     && buildDeps=' \
        python-dev \
     ' \
+    && gdalDeps=' \
+       gdal-bin \
+    ' \
     && javaDeps=' \
        openjdk-8-jre \
+       ca-certificates-java \
     ' \
-    && gdal=' \
-       gdal-bin \
-       libgdal1h \
-       libgdal-dev \
-    ' \
-    && echo "deb http://ftp.debian.org/debian jessie-backports main" > /etc/apt/sources.list.d/backports.list \
+    && echo 'deb http://deb.debian.org/debian jessie-backports main' > /etc/apt/sources.list.d/jessie-backports.list \
+    && echo 'deb http://deb.debian.org/debian testing main contrib non-free' > /etc/apt/sources.list.d/testing.list \
     && apt-get update \
-    && apt-get -t jessie-backports install -y --no-install-recommends ca-certificates-java \
-    && apt-get install -y --no-install-recommends ${buildDeps} ${gdal} ${javaDeps} \
-    && update-java-alternatives -s java-1.8.0-openjdk-amd64 \
+    && apt-get install -y --no-install-recommends ${buildDeps} \
+    && apt-get -t testing install -y --no-install-recommends ${gdalDeps} \
+    && apt-get install -y --no-install-recommends ${javaDeps} \
     && pip install --no-cache-dir \
            numpy==$(grep "numpy" /tmp/requirements.txt | cut -d= -f3) \
     && pip install --no-cache-dir -r /tmp/requirements.txt \
