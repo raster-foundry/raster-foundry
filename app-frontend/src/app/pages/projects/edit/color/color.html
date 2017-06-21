@@ -17,28 +17,28 @@
     </li>
   </ul>
 </div>
+
 <div class="sidebar-scrollable">
-  <ul class="sidebar-list">
-    <li class="separator">
-      <button class="btn btn-light btn-block"
-              disabled>
-        Auto Tone
-      </button>
-      <i class="icon-info"></i>
-    </li>
-    <li class="separator">
-      <button class="btn btn-light btn-block"
-              disabled>
-        Auto Contrast
-      </button>
-      <i class="icon-info"></i>
-    </li>
-    <li class="separator">
-      <button class="btn btn-light btn-block"
-              disabled>
-        Auto Color
-      </button>
-      <i class="icon-info"></i>
-    </li>
-  </ul>
+  <div class="list-group">
+    <div class="list-group-item">
+      <div>
+        <span title="Auto Contrast"><strong>Auto Contrast</strong></span>
+      </div>
+      <div class="list-group-right">
+        <rf-toggle value="$ctrl.isActiveAutoColorCorrection('equalize')" on-change="$ctrl.setAutoColorCorrection('equalize')">
+          <i class="icon-check"></i>
+        </rf-toggle>
+      </div>
+    </div>
+    <div class="list-group-item">
+      <div>
+        <span title="Auto Color"><strong>Auto Color</strong></span>
+      </div>
+      <div class="list-group-right">
+        <rf-toggle value="$ctrl.isActiveAutoColorCorrection('autoBalance')" on-change="$ctrl.setAutoColorCorrection('autoBalance')">
+          <i class="icon-check"></i>
+        </rf-toggle>
+      </div>
+    </div>
+  </div>
 </div>
