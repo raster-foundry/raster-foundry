@@ -6,6 +6,7 @@ import io.circe.generic.JsonCodec
 import cats.syntax.either._
 
 import com.azavea.rf.datamodel._
+import com.azavea.rf.bridge._
 
 import geotrellis.proj4.CRS
 import geotrellis.raster._

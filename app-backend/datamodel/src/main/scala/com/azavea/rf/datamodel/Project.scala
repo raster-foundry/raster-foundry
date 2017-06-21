@@ -3,6 +3,7 @@ package com.azavea.rf.datamodel
 import java.sql.Timestamp
 import java.util.UUID
 
+import com.azavea.rf.bridge._
 import cats.implicits._
 import cats.syntax.either._
 import geotrellis.slick.Projected

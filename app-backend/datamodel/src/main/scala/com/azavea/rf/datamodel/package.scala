@@ -1,22 +1,23 @@
 package com.azavea.rf
 
 import java.net.URI
-import java.util.UUID
-import java.security.InvalidParameterException
 import java.sql.Timestamp
 import java.time.Instant
+import java.util.UUID
+import java.security.InvalidParameterException
 
 import io.circe._
 import io.circe.parser._
 import io.circe.generic.semiauto._
-import cats.syntax.either._
-import io.circe.syntax._
+
+import com.azavea.rf.bridge._
 
 import geotrellis.vector._
 import geotrellis.vector.io._
 import geotrellis.proj4._
-import geotrellis.slick.Projected
-import scala.util.Try
+import geotrellis.slick._
+
+import cats.syntax.either._
 
 package object datamodel {
 
@@ -41,9 +42,9 @@ package object datamodel {
       "pageSize",
       "results"
     )({
-        pr: PaginatedResponse[A] =>
-        (pr.count, pr.hasPrevious, pr.hasNext, pr.page, pr.pageSize, pr.results)
-      }
+      pr: PaginatedResponse[A] =>
+      (pr.count, pr.hasPrevious, pr.hasNext, pr.page, pr.pageSize, pr.results)
+    }
     )
 
   implicit val timestampEncoder: Encoder[Timestamp] =
@@ -57,8 +58,15 @@ package object datamodel {
     Encoder.encodeString.contramap[UUID](_.toString)
   implicit val uuidDecoder: Decoder[UUID] =
     Decoder.decodeString.emap { str =>
-    Either.catchNonFatal(UUID.fromString(str)).leftMap(_ => "UUID")
-  }
+      Either.catchNonFatal(UUID.fromString(str)).leftMap(_ => "UUID")
+    }
+
+  implicit val uriEncoder: Encoder[URI] =
+    Encoder.encodeString.contramap[URI] { _.toString }
+  implicit val uriDecoder: Decoder[URI] =
+    Decoder.decodeString.emap { str =>
+      Either.catchNonFatal(URI.create(str)).leftMap(_ => "URI")
+    }
 
   implicit val projectedGeometryEncoder: Encoder[Projected[Geometry]] =
     new Encoder[Projected[Geometry]] {
@@ -85,47 +93,7 @@ package object datamodel {
     Projected(js.spaces4.parseGeoJson[Geometry], 4326).reproject(CRS.fromEpsgCode(4326), CRS.fromEpsgCode(3857))(3857)
   }
 
-  implicit val crsEncoder: Encoder[CRS] =
-    Encoder.encodeString.contramap[CRS] { crs => crs.epsgCode.map { c => s"epsg:$c" }.getOrElse(crs.toProj4String) }
-
-  implicit val crsDecoder: Decoder[CRS] =
-    Decoder.decodeString.emap { str =>
-      Either.catchNonFatal(Try(CRS.fromName(str)) getOrElse CRS.fromString(str)).leftMap(_ => "CRS")
-    }
-
-  implicit val extentEncoder: Encoder[Extent] =
-    new Encoder[Extent] {
-      final def apply(extent: Extent): Json =
-        List(extent.xmin, extent.ymin, extent.xmax, extent.ymax).asJson
-    }
-  implicit val extentDecoder: Decoder[Extent] =
-    Decoder[Json] emap { js =>
-      js.as[List[Double]].map { case List(xmin, ymin, xmax, ymax) =>
-        Extent(xmin, ymin, xmax, ymax)
-      }.leftMap(_ => "Extent")
-    }
-
-  implicit val uriEncoder: Encoder[URI] =
-    Encoder.encodeString.contramap[URI] { _.toString }
-  implicit val uriDecoder: Decoder[URI] =
-    Decoder.decodeString.emap { str =>
-      Either.catchNonFatal(URI.create(str)).leftMap(_ => "URI")
-    }
-
-  implicit val multipolygonEncoder: Encoder[MultiPolygon] =
-    new Encoder[MultiPolygon] {
-      final def apply(mp: MultiPolygon): Json = {
-        parse(mp.toGeoJson) match {
-          case Right(js: Json) => js
-          case Left(e) => throw e
-        }
-      }
-    }
-
-  implicit val multipolygonDecoder: Decoder[MultiPolygon] = Decoder[Json] map {
-    _.spaces4.parseGeoJson[MultiPolygon]
-  }
-
   implicit val decodeProjectedMultiPolygon: Decoder[Projected[MultiPolygon]] = deriveDecoder
   implicit val encodeProjectedMultiPolygon: Encoder[Projected[MultiPolygon]] = deriveEncoder
+
 }
