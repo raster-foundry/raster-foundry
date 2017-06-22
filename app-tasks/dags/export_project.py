@@ -13,6 +13,9 @@ from airflow.operators import PythonOperator
 from airflow.exceptions import AirflowException
 from rf.utils.exception_reporting import wrap_rollbar
 
+from utils import failure_callback
+
+
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 ch = logging.StreamHandler()
 
@@ -133,6 +136,7 @@ create_export_definition_task = PythonOperator(
     task_id='create_export_definition',
     provide_context=True,
     python_callable=create_export_definition_op,
+    on_failure_callback=failure_callback,
     dag=dag
 )
 
@@ -140,6 +144,7 @@ wait_for_status_task = PythonOperator(
     task_id='wait_for_status',
     provide_context=True,
     python_callable=wait_for_status_op,
+    on_failure_callback=failure_callback,
     dag=dag
 )
 

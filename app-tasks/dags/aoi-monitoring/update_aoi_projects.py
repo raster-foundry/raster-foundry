@@ -9,6 +9,9 @@ from airflow.exceptions import AirflowException
 
 from rf.utils.exception_reporting import wrap_rollbar
 
+from utils import failure_callback
+
+
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 ch = logging.StreamHandler()
 
@@ -60,5 +63,6 @@ PythonOperator(
     provide_context=True,
     python_callable=update_aoi_project,
     execution_timeout=datetime.timedelta(seconds=60),
+    on_failure_callback=failure_callback,
     dag=dag
 )
