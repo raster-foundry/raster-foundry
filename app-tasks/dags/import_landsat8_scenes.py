@@ -1,10 +1,13 @@
 """Task for scheduled finding new Landsat 8 scenes to ingest"""
 
-from datetime import datetime, timedelta
+from datetime import datetime
 import os
 
 from airflow.operators.bash_operator import BashOperator
 from airflow.models import DAG
+
+from utils import failure_callback
+
 
 schedule = None if os.getenv('ENVIRONMENT') == 'development' else '@daily'
 start_date = datetime(2016, 11, 6)
@@ -26,5 +29,6 @@ landsat8_finder = BashOperator(
     task_id='import_new_landsat8_scenes',
     provide_context=True,
     bash_command=bash_cmd,
+    on_failure_callback=failure_callback,
     dag=dag
 )

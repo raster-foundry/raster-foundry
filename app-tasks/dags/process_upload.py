@@ -11,6 +11,9 @@ from rf.uploads.geotiff.factories import GeoTiffS3SceneFactory
 from rf.utils.io import get_session
 from rf.utils.exception_reporting import wrap_rollbar
 
+from utils import failure_callback
+
+
 # Logging Setup
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 ch = logging.StreamHandler()
@@ -80,5 +83,6 @@ process_upload_op = PythonOperator(
     task_id='process_upload',
     python_callable=process_upload,
     provide_context=True,
+    on_failure_callback=failure_callback,
     dag=dag
 )

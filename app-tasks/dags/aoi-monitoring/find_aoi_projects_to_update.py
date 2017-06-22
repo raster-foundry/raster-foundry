@@ -10,6 +10,9 @@ from airflow.operators.python_operator import PythonOperator
 
 from rf.utils.exception_reporting import wrap_rollbar
 
+from utils import failure_callback
+
+
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 ch = logging.StreamHandler()
 
@@ -69,7 +72,6 @@ def kickoff_aoi_project_update_checks(**context):
     xcom = context['task_instance'].xcom_pull(task_ids=FIND_TASK_ID)
     project_ids = xcom['project_ids']
     logger.info('Found projects to check for updates: %s', project_ids)
-    execution_date = context['execution_date']
     for project_id in project_ids:
         run_id = 'update_aoi_{}_{}'.format(project_id, datetime.datetime.now().isoformat())
         conf = json.dumps({'project_id': project_id})
@@ -80,6 +82,7 @@ find_operator = PythonOperator(
     task_id=FIND_TASK_ID,
     provide_context=False,
     python_callable=find_aoi_projects_to_update,
+    on_failure_callback=failure_callback,
     dag=dag
 )
 
@@ -87,6 +90,7 @@ kickoff_operator = PythonOperator(
     task_id=KICKOFF_TASK_ID,
     provide_context=True,
     python_callable=kickoff_aoi_project_update_checks,
+    on_failure_callback=failure_callback,
     dag=dag
 )
 kickoff_operator.set_upstream(find_operator)

@@ -16,6 +16,9 @@ from rf.ingest import create_landsat8_ingest, create_ingest_definition
 from rf.uploads.landsat8.settings import datasource_id as landsat_id
 from rf.utils.exception_reporting import wrap_rollbar
 
+from utils import failure_callback
+
+
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 ch = logging.StreamHandler()
 
@@ -231,6 +234,7 @@ create_ingest_definition_task = PythonOperator(
     task_id='create_ingest_definition',
     provide_context=True,
     python_callable=create_ingest_definition_op,
+    on_failure_callback=failure_callback,
     dag=dag
 )
 
@@ -239,6 +243,7 @@ launch_spark_ingest_task = PythonOperator(
     task_id='launch_spark_ingest',
     provide_context=True,
     python_callable=launch_spark_ingest_job_op,
+    on_failure_callback=failure_callback,
     dag=dag
 )
 
@@ -246,6 +251,7 @@ wait_for_status_task = PythonOperator(
     task_id='wait_for_status',
     provide_context=True,
     python_callable=wait_for_status_op,
+    on_failure_callback=failure_callback,
     dag=dag
 )
 
