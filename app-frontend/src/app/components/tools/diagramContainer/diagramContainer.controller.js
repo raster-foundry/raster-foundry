@@ -216,7 +216,7 @@ export default class DiagramContainerController {
             }
 
             // Input nodes not of the layer type are not made into rectangles
-            if (!input.type || input.type === 'layer') {
+            if (!input.type || input.type === 'src') {
                 let rectInputs = args.length;
                 let rectOutputs = ['Output'];
                 let ports = this.createPorts(rectInputs, rectOutputs);
