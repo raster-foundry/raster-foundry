@@ -31,6 +31,18 @@
             </div>
           </rf-call-to-action-item>
         </div>
+        <div class="cta-row" ng-show="$ctrl.notDefaultDatasource()">
+          <rf-call-to-action-item title="Visibility">
+            <div class="cta-flex-text">
+              <div>
+                <rf-toggle value="$ctrl.isPublic" on-change="$ctrl.changeVisibility()">
+                  <i class="icon-check"></i>
+                </rf-toggle>
+                <span title="Public">Public</span>
+              </div>
+            </div>
+          </rf-call-to-action-item>
+        </div>
       </ui-view>
     </div>
     <div class="column-3">
