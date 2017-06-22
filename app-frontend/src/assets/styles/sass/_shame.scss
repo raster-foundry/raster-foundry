@@ -375,9 +375,11 @@ rf-project-editor .leaflet-tile {
     }
     &.separator {
       border-bottom: 1px solid $border-color-default;
-      margin-bottom: 1rem;
-      margin: 0rem 1rem 0rem 1rem;
-      padding: 1.5rem 0 1.5rem 0;
+      margin: 0rem 1rem 1rem 1rem;
+      padding: 0 0 1.5rem 0;
+      &:first-of-type {
+        padding-top: 1.5rem;
+      }
       &:last-of-type{
         border-bottom: none;
       }
