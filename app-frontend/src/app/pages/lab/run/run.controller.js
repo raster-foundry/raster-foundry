@@ -43,7 +43,7 @@ export default class LabRunController {
             shouldContinue = currentNode < nodes.length;
         }
         nodes.forEach(n => {
-            if (!n.apply) {
+            if (!n.apply && n.type === 'src') {
                 if (sourceIds.indexOf(n.id) < 0) {
                     sourceIds.push(n.id);
                     sources.push(n);
