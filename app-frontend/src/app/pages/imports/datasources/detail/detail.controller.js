@@ -15,9 +15,11 @@ class DatasourceDetailController {
     loadDatasource() {
         this.isLoadingDatasource = true;
         this.isLoadingDatasourceError = false;
+        this.isDatasourceVisibilityUpdated = false;
         this.datasourceService.get(this.datasourceId).then(
             datasourceResponse => {
                 this.datasource = datasourceResponse;
+                this.isPublic = this.isPublicDatasource();
                 this.initBuffers();
             },
             () => {
@@ -61,6 +63,33 @@ class DatasourceDetailController {
 
     cancel() {
         this.initBuffers();
+    }
+
+    notDefaultDatasource() {
+        if (this.datasource) {
+            return this.datasource.owner !== 'default';
+        }
+        return false;
+    }
+
+    isPublicDatasource() {
+        if (this.datasource) {
+            return this.datasource.visibility === 'PUBLIC';
+        }
+        return false;
+    }
+
+    changeVisibility() {
+        this.datasource.visibility = this.datasource.visibility === 'PUBLIC' ? 'PRIVATE' : 'PUBLIC';
+        this.isPublic = !this.isPublic;
+        this.datasourceService.updateDatasource(this.datasource).then(
+            () => {
+                this.isDatasourceVisibilityUpdated = true;
+            },
+            () => {
+                this.isDatasourceVisibilityUpdated = false;
+            }
+        );
     }
 }
 

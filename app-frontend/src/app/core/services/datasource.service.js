@@ -15,10 +15,17 @@ export default (app) => {
                     },
                     get: {
                         method: 'GET',
-                        cache: true
+                        cache: false
                     },
                     create: {
                         method: 'POST'
+                    },
+                    update: {
+                        method: 'PUT',
+                        url: '/api/datasources/:id',
+                        params: {
+                            id: '@id'
+                        }
                     }
                 }
             );
@@ -47,6 +54,10 @@ export default (app) => {
                     return error;
                 }
             );
+        }
+
+        updateDatasource(updatedParams = {}) {
+            return this.Datasource.update(updatedParams).$promise;
         }
     }
 
