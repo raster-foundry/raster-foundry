@@ -1,9 +1,15 @@
 package com.azavea.rf.tool.ast
 
+import com.azavea.rf.tool.ast.codec._
+
+import org.scalatest._
+import io.circe._
+import io.circe.syntax._
+
 import java.util.UUID
 
 
-object Examples {
+class CanonicalTools extends FunSpec with Matchers {
   import MapAlgebraAST._
 
   val B1 = Source(
@@ -116,7 +122,51 @@ object Examples {
         )
       ),
       UUID.nameUUIDFromBytes("add".getBytes),
-      None
+      Some(NodeMetadata(
+        Some("Phycocyanin Detection"),
+        Some("http://www.sciencedirect.com/science/article/pii/S0034425716304928"),
+        None, None, None
+      ))
     )
+
+  val improvedNIRwithSAC =
+    Subtraction(
+      List(
+        B5,
+        Multiplication(
+          List(
+            Constant(UUID.nameUUIDFromBytes("-1.03".getBytes), -1.03, None),
+            B6
+          ),
+          UUID.nameUUIDFromBytes("div1".getBytes), None
+        )
+      ),
+      UUID.nameUUIDFromBytes("sub1".getBytes),
+      Some(NodeMetadata(
+        Some("Improved NIR with SAC"),
+        Some("The most performant index from http://www.sciencedirect.com/science/article/pii/S0034425716304928"),
+        None, None, None
+      ))
+    )
+
+  val NIRoverRedWithSAC =
+    Division(
+      List(
+        Subtraction(List(B4, B5), UUID.nameUUIDFromBytes("sub1".getBytes), None),
+        Subtraction(List(B3, B5), UUID.nameUUIDFromBytes("sub2".getBytes), None)
+      ),
+      UUID.nameUUIDFromBytes("div1".getBytes),
+      Some(NodeMetadata(
+        Some("NIR over red, with SAC"),
+        Some("http://www.sciencedirect.com/science/article/pii/S0034425716304928"),
+        None, None, None
+      ))
+    )
+
+  ignore("prints out JSON for these tools") {
+    println(NIRoverRedWithSAC.asJson.noSpaces)
+    println(improvedNIRwithSAC.asJson.noSpaces)
+    println(phycocyanin.asJson.noSpaces)
+  }
 
 }
