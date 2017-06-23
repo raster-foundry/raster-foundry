@@ -52,7 +52,11 @@ package object ast {
       ast: MapAlgebraAST,
       rdds: Map[UUID, TileLayerRDD[SpatialKey]]
     ): TileLayerRDD[SpatialKey] = ast match {
+      /* --- LEAVES --- */
       case Source(id, _) => rdds(id)
+      case Constant(id, const, _) => ???
+
+      /* --- OPERATIONS --- */
       case Addition(args, _, _) =>
         args.map(eval(_, rdds)).reduce((acc,r) => binary({_ + _}, acc, r))
       case Subtraction(args, _, _) =>
@@ -61,8 +65,8 @@ package object ast {
         args.map(eval(_, rdds)).reduce((acc,r) => binary({_ * _}, acc, r))
       case Division(args, _, _) =>
         args.map(eval(_, rdds)).reduce((acc,r) => binary({_ / _}, acc, r))
-      case Classification(arg :: _, _, _, classMap) =>
-        eval(arg, rdds).withContext(_.color(classMap.toColorMap))
+      case Classification(args, _, _, classMap) =>
+        eval(args.head, rdds).withContext(_.color(classMap.toColorMap))
       case Max(args, _, _) => {
         val kids: List[TileLayerRDD[SpatialKey]] = args.map(eval(_, rdds))
 
@@ -75,7 +79,7 @@ package object ast {
         /* The head call will never fail */
         ContextRDD(kids.head.localMin(kids.tail), kids.map(_.metadata).reduce(_ combine _))
       }
-      case op => throw new Exception(s"Unimplemented Operation given! ${op}")
+      case Masking(args, _, _, mask) => eval(args.head, rdds).mask(mask)
     }
 
     /* Guarantee correctness before performing Map Algebra */
