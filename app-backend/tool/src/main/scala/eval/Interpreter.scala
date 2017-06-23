@@ -131,15 +131,14 @@ object Interpreter extends LazyLogging {
     source: RFMLRaster => Future[Option[Tile]]
   )(implicit ec: ExecutionContext): Future[Interpreted[LazyTile]] = {
 
+    @SuppressWarnings(Array("TraversableHead"))
     def eval(tiles: Map[UUID, Tile], ast: MapAlgebraAST): LazyTile = ast match {
 
       /* --- LEAVES --- */
-
       case Source(id, _) => LazyTile(tiles(id))
       case Constant(_, const, _) => LazyTile.Constant(const)
 
       /* --- OPERATIONS --- */
-
       case Addition(args, id, _) =>
         logger.debug(s"case addition at $id")
         args.map(eval(tiles, _)).reduce(_ + _)
