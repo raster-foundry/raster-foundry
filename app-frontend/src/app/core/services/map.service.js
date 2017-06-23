@@ -319,18 +319,25 @@ class MapWrapper {
             });
             return this;
         }
-        return this.addLayer(id, layer, showToggle);
+        return this.addLayer(id, layer);
     }
 
     /** Hide all layers associated with an id
      * @param {string} id id associated with layers
+     * @param {Boolean?} showToggle show a toggle in the layer picker
      * @returns {this} this
      */
-    hideLayers(id) {
+    hideLayers(id, showToggle) {
         let layers = this._layerMap.get(id);
         let hiddenLayers = this._hiddenLayerMap.get(id);
 
         if (layers) {
+            if (showToggle) {
+                this._toggleableLayers.add(id);
+            } else if (showToggle === false) {
+                this._toggleableLayers.delete(id);
+            }
+
             let allLayers = hiddenLayers ? layers.concat(hiddenLayers) : layers;
             // add layers to this._hiddenLayerMap
             this._hiddenLayerMap.set(id, allLayers);
@@ -346,13 +353,15 @@ class MapWrapper {
 
     /** Show all layers associated with an id
      * @param {string} id id associated with layers
+     * @param {Boolean?} showToggle show a toggle in the layer picker
      * @returns {this} this
      */
-    showLayers(id) {
+    showLayers(id, showToggle) {
         let hiddenLayers = this._hiddenLayerMap.get(id);
         let layers = this._layerMap.get(id);
+        let allLayers = hiddenLayers;
         if (hiddenLayers) {
-            let allLayers = layers ? hiddenLayers.concat(layers) : hiddenLayers;
+            allLayers = layers ? hiddenLayers.concat(layers) : hiddenLayers;
             // add layers to this._layerMap
             this._layerMap.set(id, allLayers);
             hiddenLayers.forEach((layer) => {
@@ -360,6 +369,12 @@ class MapWrapper {
             });
             // remove layers from this._hiddenLayerMap
             this._hiddenLayerMap.delete(id);
+        }
+
+        if (allLayers.length && showToggle) {
+            this._toggleableLayers.add(id);
+        } else if (showToggle === false) {
+            this._toggleableLayers.delete(id);
         }
 
         return this;
@@ -394,7 +409,11 @@ class MapWrapper {
      * @returns {Array} list of layers
      */
     getLayers(id) {
-        return this._layerMap.get(id);
+        let visibleLayers = this._layerMap.get(id);
+        let hiddenLayers = this._hiddenLayerMap.get(id);
+        return []
+            .concat(hiddenLayers ? hiddenLayers : [])
+            .concat(visibleLayers ? visibleLayers : []);
     }
 
     /** Delete a layer set from the map
