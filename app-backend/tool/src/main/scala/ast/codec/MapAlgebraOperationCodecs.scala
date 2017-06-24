@@ -24,6 +24,7 @@ trait MapAlgebraOperationCodecs {
       case Some("min") => ma.as[MapAlgebraAST.Min]
       case Some("max") => ma.as[MapAlgebraAST.Max]
       case Some("classify") => ma.as[MapAlgebraAST.Classification]
+      case Some("linear") => ma.as[MapAlgebraAST.Linear]
       case Some(unrecognized) =>
         Left(DecodingFailure(s"Unrecognized node type: $unrecognized", ma.history))
       case None =>
@@ -49,6 +50,8 @@ trait MapAlgebraOperationCodecs {
         max.asJson
       case classification: MapAlgebraAST.Classification =>
         classification.asJson
+      case linear: MapAlgebraAST.Linear =>
+        linear.asJson
       case operation =>
         throw new InvalidParameterException(s"Encoder for $operation not yet implemented")
     }

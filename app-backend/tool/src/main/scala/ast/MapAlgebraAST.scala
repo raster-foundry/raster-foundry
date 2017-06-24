@@ -65,10 +65,10 @@ object MapAlgebraAST {
     val symbol = "linear"
 
     lazy val transform: Double => Double = op match {
-      case LAdd => { n => n + constant }
-      case LSub => { n => n - constant }
-      case LMul => { n => n * constant }
-      case LDiv => { n => n / constant }
+      case LinearOp.Add => { n => n + constant }
+      case LinearOp.Sub => { n => n - constant }
+      case LinearOp.Mul => { n => n * constant }
+      case LinearOp.Div => { n => n / constant }
     }
   }
 
@@ -76,27 +76,27 @@ object MapAlgebraAST {
 
   object LinearOp {
     implicit val dec: Decoder[LinearOp] = Decoder.decodeString.emap({
-      case "+" => Right(LAdd)
-      case "-" => Right(LSub)
-      case "*" => Right(LMul)
-      case "/" => Right(LDiv)
+      case "+" => Right(Add)
+      case "-" => Right(Sub)
+      case "*" => Right(Mul)
+      case "/" => Right(Div)
       case _   => Left("failed!")
     })
 
     implicit val enc: Encoder[LinearOp] = new Encoder[LinearOp] {
       final def apply(op: LinearOp) = op match {
-        case LAdd => Json.fromString("+")
-        case LSub => Json.fromString("-")
-        case LMul => Json.fromString("*")
-        case LDiv => Json.fromString("/")
+        case Add => Json.fromString("+")
+        case Sub => Json.fromString("-")
+        case Mul => Json.fromString("*")
+        case Div => Json.fromString("/")
       }
     }
-  }
 
-  case object LAdd extends LinearOp
-  case object LSub extends LinearOp
-  case object LMul extends LinearOp
-  case object LDiv extends LinearOp
+    case object Add extends LinearOp
+    case object Sub extends LinearOp
+    case object Mul extends LinearOp
+    case object Div extends LinearOp
+  }
 
   sealed trait MapAlgebraLeaf extends MapAlgebraAST {
     val `type`: String
