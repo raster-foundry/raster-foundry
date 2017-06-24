@@ -77,6 +77,8 @@ package object ast {
         ContextRDD(kids.head.localMin(kids.tail), kids.map(_.metadata).reduce(_ combine _))
       }
       case Masking(args, _, _, mask) => eval(args.head, rdds).mask(mask)
+      case op: Linear =>
+        eval(op.args.head, rdds).withContext(_.mapValues(_.mapDouble(op.transform)))
     }
 
     /* Guarantee correctness before performing Map Algebra */

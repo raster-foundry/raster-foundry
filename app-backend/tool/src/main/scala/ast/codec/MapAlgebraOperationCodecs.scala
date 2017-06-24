@@ -24,6 +24,7 @@ trait MapAlgebraOperationCodecs {
       case Some("min") => ma.as[MapAlgebraAST.Min]
       case Some("max") => ma.as[MapAlgebraAST.Max]
       case Some("classify") => ma.as[MapAlgebraAST.Classification]
+      case Some("linear") => ma.as[MapAlgebraAST.Linear]
       case Some(unrecognized) =>
         Left(DecodingFailure(s"Unrecognized node type: $unrecognized", ma.history))
       case None =>
@@ -49,6 +50,8 @@ trait MapAlgebraOperationCodecs {
         max.asJson
       case classification: MapAlgebraAST.Classification =>
         classification.asJson
+      case linear: MapAlgebraAST.Linear =>
+        linear.asJson
       case operation =>
         throw new InvalidParameterException(s"Encoder for $operation not yet implemented")
     }
@@ -94,4 +97,9 @@ trait MapAlgebraOperationCodecs {
     Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.Min.apply)
   implicit lazy val encodeMin: Encoder[MapAlgebraAST.Min] =
     Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeLinear: Decoder[MapAlgebraAST.Linear] =
+    Decoder.forProduct5("args", "id", "metadata", "constant", "op")(MapAlgebraAST.Linear.apply)
+  implicit lazy val encodeLinear: Encoder[MapAlgebraAST.Linear] =
+    Encoder.forProduct6("apply", "args", "id", "metadata", "constant", "op")(op => (op.symbol, op.args, op.id, op.metadata, op.constant, op.op))
 }
