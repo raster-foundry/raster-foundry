@@ -60,6 +60,9 @@ object MapAlgebraAST {
   case class Min(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
       extends Operation { val symbol = "min" }
 
+  case class Linear(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], f: Double => Double)
+    extends UnaryOp { val symbol = "linear" }
+
   sealed trait MapAlgebraLeaf extends MapAlgebraAST {
     val `type`: String
 

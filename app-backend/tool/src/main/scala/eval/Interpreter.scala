@@ -81,6 +81,8 @@ object Interpreter extends LazyLogging {
       args.map(a => overrideParams(a, overrides)).sequence.map(ks => Min(ks, id, m))
     case Max(args, id, m) =>
       args.map(a => overrideParams(a, overrides)).sequence.map(ks => Max(ks, id, m))
+    case Linear(args, id, m, f) =>
+      args.map(a => overrideParams(a, overrides)).sequence.map(ks => Linear(ks, id, m, f))
   }
 
   /** Interpret an AST with its matched execution parameters, but do so
@@ -167,8 +169,11 @@ object Interpreter extends LazyLogging {
         logger.debug(s"case classification at $id with breakmap ${breaks.toBreakMap}")
         eval(tiles, args.head).classify(breaks.toBreakMap)
 
-      case Masking(args, id, _, mask) =>
+      case Masking(args, _, _, mask) =>
         eval(tiles, args.head).mask(extent, mask)
+
+      case Linear(args, _, _, f) =>
+        eval(tiles, args.head).mapDouble(f)
     }
 
     val pure: Interpreted[Unit] = interpretPure[Unit](ast, sourceMapping)
