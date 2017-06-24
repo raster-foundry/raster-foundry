@@ -94,4 +94,9 @@ trait MapAlgebraOperationCodecs {
     Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.Min.apply)
   implicit lazy val encodeMin: Encoder[MapAlgebraAST.Min] =
     Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeLinear: Decoder[MapAlgebraAST.Linear] =
+    Decoder.forProduct5("args", "id", "metadata", "constant", "op")(MapAlgebraAST.Linear.apply)
+  implicit lazy val encodeLinear: Encoder[MapAlgebraAST.Linear] =
+    Encoder.forProduct6("apply", "args", "id", "metadata", "constant", "op")(op => (op.symbol, op.args, op.id, op.metadata, op.constant, op.op))
 }

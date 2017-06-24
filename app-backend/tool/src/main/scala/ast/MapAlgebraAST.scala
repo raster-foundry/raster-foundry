@@ -3,6 +3,7 @@ package com.azavea.rf.tool.ast
 import geotrellis.vector.MultiPolygon
 import java.util.UUID
 
+import io.circe._
 import io.circe.generic.JsonCodec
 
 
@@ -60,8 +61,42 @@ object MapAlgebraAST {
   case class Min(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
       extends Operation { val symbol = "min" }
 
-  case class Linear(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], f: Double => Double)
-    extends UnaryOp { val symbol = "linear" }
+  case class Linear(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], constant: Double, op: LinearOp) extends UnaryOp {
+    val symbol = "linear"
+
+    lazy val transform: Double => Double = op match {
+      case LAdd => { n => n + constant }
+      case LSub => { n => n - constant }
+      case LMul => { n => n * constant }
+      case LDiv => { n => n / constant }
+    }
+  }
+
+  sealed trait LinearOp
+
+  object LinearOp {
+    implicit val dec: Decoder[LinearOp] = Decoder.decodeString.emap({
+      case "+" => Right(LAdd)
+      case "-" => Right(LSub)
+      case "*" => Right(LMul)
+      case "/" => Right(LDiv)
+      case _   => Left("failed!")
+    })
+
+    implicit val enc: Encoder[LinearOp] = new Encoder[LinearOp] {
+      final def apply(op: LinearOp) = op match {
+        case LAdd => Json.fromString("+")
+        case LSub => Json.fromString("-")
+        case LMul => Json.fromString("*")
+        case LDiv => Json.fromString("/")
+      }
+    }
+  }
+
+  case object LAdd extends LinearOp
+  case object LSub extends LinearOp
+  case object LMul extends LinearOp
+  case object LDiv extends LinearOp
 
   sealed trait MapAlgebraLeaf extends MapAlgebraAST {
     val `type`: String

@@ -69,20 +69,20 @@ object Interpreter extends LazyLogging {
     }
 
     /* Non-overridable Operations */
-    case Addition(args, id, m) =>
-      args.map(a => overrideParams(a, overrides)).sequence.map(ks => Addition(ks, id, m))
-    case Subtraction(args, id, m) =>
-      args.map(a => overrideParams(a, overrides)).sequence.map(ks => Subtraction(ks, id, m))
-    case Multiplication(args, id, m) =>
-      args.map(a => overrideParams(a, overrides)).sequence.map(ks => Multiplication(ks, id, m))
-    case Division(args, id, m) =>
-      args.map(a => overrideParams(a, overrides)).sequence.map(ks => Division(ks, id, m))
-    case Min(args, id, m) =>
-      args.map(a => overrideParams(a, overrides)).sequence.map(ks => Min(ks, id, m))
-    case Max(args, id, m) =>
-      args.map(a => overrideParams(a, overrides)).sequence.map(ks => Max(ks, id, m))
-    case Linear(args, id, m, f) =>
-      args.map(a => overrideParams(a, overrides)).sequence.map(ks => Linear(ks, id, m, f))
+    case op: Addition =>
+      op.args.map(a => overrideParams(a, overrides)).sequence.map(ks => op.copy(args = ks))
+    case op: Subtraction =>
+      op.args.map(a => overrideParams(a, overrides)).sequence.map(ks => op.copy(args = ks))
+    case op: Multiplication =>
+      op.args.map(a => overrideParams(a, overrides)).sequence.map(ks => op.copy(args = ks))
+    case op: Division =>
+      op.args.map(a => overrideParams(a, overrides)).sequence.map(ks => op.copy(args = ks))
+    case op: Min =>
+      op.args.map(a => overrideParams(a, overrides)).sequence.map(ks => op.copy(args = ks))
+    case op: Max =>
+      op.args.map(a => overrideParams(a, overrides)).sequence.map(ks => op.copy(args = ks))
+    case op: Linear =>
+      op.args.map(a => overrideParams(a, overrides)).sequence.map(ks => op.copy(args = ks))
   }
 
   /** Interpret an AST with its matched execution parameters, but do so
@@ -172,8 +172,8 @@ object Interpreter extends LazyLogging {
       case Masking(args, _, _, mask) =>
         eval(tiles, args.head).mask(extent, mask)
 
-      case Linear(args, _, _, f) =>
-        eval(tiles, args.head).mapDouble(f)
+      case op: Linear =>
+        eval(tiles, op.args.head).mapDouble(op.transform)
     }
 
     val pure: Interpreted[Unit] = interpretPure[Unit](ast, sourceMapping)
