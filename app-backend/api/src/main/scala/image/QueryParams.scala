@@ -12,8 +12,8 @@ import com.azavea.rf.api.utils.queryparams._
 trait ImageQueryParametersDirective extends QueryParametersCommon {
 
   val imageSpecificQueryParams = parameters(
-    'minRawDataBytes.as[Int].?,
-    'maxRawDataBytes.as[Int].?,
+    'minRawDataBytes.as[Long].?,
+    'maxRawDataBytes.as[Long].?,
     'minResolution.as[Float].?,
     'maxResolution.as[Float].?,
     'scene.as[UUID].*
