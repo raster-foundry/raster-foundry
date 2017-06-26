@@ -3,24 +3,21 @@ services:
   graphite:
     image: sitespeedio/graphite
     ports:
-        - "8181:80"
+      - "8181:80"
 
-  statsite:
-    image: quay.io/azavea/statsite:0.7.1
+  statsd:
+    image: quay.io/azavea/statsd:0.8-alpine
     links:
       - graphite
-    build:
-      context: ./statsite
-      dockerfile: Dockerfile
     volumes:
-      - ./statsite/etc/statsite/:/etc/statsite/
+      - ./statsd/var/lib/statsd/config.js:/var/lib/statsd/config.js
 
   grafana:
     image: grafana/grafana
     restart: always
     ports:
-        - "3000:3000"
+      - "3000:3000"
     links:
-        - graphite
+      - graphite
     environment:
-        - GF_SECURITY_ADMIN_PASSWORD=password
+      - GF_SECURITY_ADMIN_PASSWORD=password
