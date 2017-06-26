@@ -13,7 +13,7 @@
         items-per-page="$ctrl.lastExportResult.pageSize"
         total-items="$ctrl.lastExportResult.count"
         ng-model="$ctrl.currentPage"
-        max-size="4"
+        max-size="6"
         rotate="true"
         boundary-link-numbers="true"
         force-ellipses="true"
@@ -25,7 +25,7 @@
   <!-- No scenes placeholder -->
   <div ng-if="!$ctrl.loading && $ctrl.lastExportResult && $ctrl.lastExportResult.count === 0"
        class="list-group">
-    <span class="list-placeholder">You haven't added any scenes to this Project.</span>
+    <span class="list-placeholder">You haven't exported this project yet</span>
   </div>
   <!-- No scenes placeholder -->
 

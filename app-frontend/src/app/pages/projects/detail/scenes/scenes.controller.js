@@ -1,9 +1,10 @@
 export default class ProjectDetailScenesController {
-    constructor($state, $scope, $timeout, projectService) {
+    constructor($state, $scope, $timeout, $uibModal, projectService) {
         'ngInject';
         this.$state = $state;
         this.$scope = $scope;
         this.$timeout = $timeout;
+        this.$uibModal = $uibModal;
         this.projectService = projectService;
     }
 
@@ -12,11 +13,12 @@ export default class ProjectDetailScenesController {
         this.$scope.$parent.$ctrl.fetchProject().then(p => {
             this.project = p;
             this.isLoadingProject = false;
-            this.populateSceneList(this.$state.params.page || 1);
+            this.populateSceneList(this.$state.params.page);
         });
     }
 
     populateSceneList(page) {
+        const requestPage = Math.max(page | 0, 1) - 1;
         if (this.isLoadingScenes) {
             return;
         }
@@ -28,15 +30,11 @@ export default class ProjectDetailScenesController {
             {
                 sort: 'createdAt,desc',
                 pageSize: '10',
-                page: page - 1,
+                page: requestPage,
                 projectId: this.project.id
             }
         ).then((sceneResult) => {
             this.lastSceneResult = sceneResult;
-            this.numPaginationButtons = 6 - sceneResult.page % 10;
-            if (this.numPaginationButtons < 3) {
-                this.numPaginationButtons = 3;
-            }
             this.currentPage = sceneResult.page + 1;
             let replace = !this.$state.params.page;
             this.$state.transitionTo(
@@ -54,6 +52,19 @@ export default class ProjectDetailScenesController {
         }, () => {
             this.errorMsg = 'Server error.';
             this.isLoadingScenes = false;
+        });
+    }
+
+    openSceneDetailModal(scene) {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        this.activeModal = this.$uibModal.open({
+            component: 'rfSceneDetailModal',
+            resolve: {
+                scene: () => scene
+            }
         });
     }
 }

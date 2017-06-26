@@ -12,11 +12,12 @@ export default class ProjectDetailExportsController {
         this.$scope.$parent.$ctrl.fetchProject().then(p => {
             this.project = p;
             this.isLoadingProject = false;
-            this.populateExportList(this.$state.params.page || 1);
+            this.populateExportList(this.$state.params.page);
         });
     }
 
     populateExportList(page) {
+        const requestPage = Math.max(page | 0, 1) - 1;
         if (this.isLoadingExports) {
             return;
         }
@@ -28,12 +29,11 @@ export default class ProjectDetailExportsController {
             {
                 sort: 'createdAt,desc',
                 pageSize: '10',
-                page: page - 1,
+                page: requestPage,
                 project: this.project.id
             }
         ).then(exportResult => {
             this.lastExportResult = exportResult;
-            this.numPaginationButtons = Math.max(6 - exportResult.page % 10, 3);
             this.currentPage = exportResult.page + 1;
             let replace = !this.$state.params.page;
             this.$state.transitionTo(
