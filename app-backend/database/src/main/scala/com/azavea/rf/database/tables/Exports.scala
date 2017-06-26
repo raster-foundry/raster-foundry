@@ -252,14 +252,14 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
           case ((sacc, pacc), p: ProjectRaster) => (sacc, p #:: pacc)
         })
 
-    val scenesF: OptionT[Future, Map[UUID, String]] = scenes.map({ case SceneRaster(id, _) =>
+    val scenesF: OptionT[Future, Map[UUID, String]] = scenes.map({ case SceneRaster(id, _, _) =>
       OptionT(Scenes.getScene(id, user)).flatMap(s =>
         OptionT.fromOption(s.ingestLocation.map((s.id, _)))
       )
     }).sequence.map(_.toMap)
 
     val projectsF: OptionT[Future, Map[UUID, List[(UUID, String)]]] =
-      projects.map({ case ProjectRaster(id, _) =>
+      projects.map({ case ProjectRaster(id, _, _) =>
         OptionT(ScenesToProjects.allSceneIngestLocs(id)).map((id, _))
       }).sequence.map(_.toMap)
 

@@ -4,6 +4,7 @@ import com.azavea.rf.database.Database
 import com.azavea.rf.tile._
 import com.azavea.rf.tile.image._
 import com.azavea.rf.tool.ast._
+import com.azavea.rf.tool.params._
 
 import com.typesafe.scalalogging.LazyLogging
 import cats.implicits._
@@ -36,7 +37,7 @@ object TileSources extends LazyLogging {
     */
   def globalSource(r: RFMLRaster)(implicit database: Database): Future[Option[Tile]] =
     r match {
-      case scene @ SceneRaster(sceneId, Some(band)) =>
+      case scene @ SceneRaster(sceneId, Some(band), maybeND) =>
         LayerCache.attributeStoreForLayer(sceneId).mapFilter { case (store, _) =>
           GlobalSummary.minAcceptableSceneZoom(sceneId, store).flatMap { case (extent, zoom) =>
             blocking {
@@ -49,7 +50,8 @@ object TileSources extends LazyLogging {
                   .crop(extent)
                   .tile
               } match {
-                case Success(tile) => Option(tile)
+                case Success(tile) =>
+                  Some(tile.interpretAs(maybeND.getOrElse(tile.cellType)))
                 case Failure(e) =>
                   logger.error(s"Query layer $sceneId at zoom $zoom for $extent: ${e.getMessage}")
                   None
@@ -58,17 +60,17 @@ object TileSources extends LazyLogging {
           }
         }.map({ mbtile => mbtile.band(band) }).value
 
-      case scene @ SceneRaster(sceneId, None) =>
+      case scene @ SceneRaster(sceneId, None, _) =>
         logger.warn(s"Request for $scene does not contain band index")
         Future.successful(None)
 
-      case project @ ProjectRaster(projId, Some(band)) =>
+      case project @ ProjectRaster(projId, Some(band), maybeND) =>
         GlobalSummary.minAcceptableProjectZoom(projId).flatMap { case (extent, zoom) =>
           Mosaic.rawForExtent(projId, zoom, Some(Projected(extent.toPolygon, 3857)))
-            .map({ tile => tile.band(band) })
+            .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
         }.value
 
-      case project @ ProjectRaster(projId, None) =>
+      case project @ ProjectRaster(projId, None, _) =>
         logger.warn(s"Request for $project does not contain band index")
         Future.successful(None)
 
@@ -77,19 +79,19 @@ object TileSources extends LazyLogging {
   /** This source provides support for z/x/y TMS tiles */
   def cachedTmsSource(r: RFMLRaster, z: Int, x: Int, y: Int)(implicit database: Database): Future[Option[Tile]] =
     r match {
-      case scene @ SceneRaster(sceneId, Some(band)) =>
+      case scene @ SceneRaster(sceneId, Some(band), maybeND) =>
         LayerCache.layerTile(sceneId, z, SpatialKey(x, y))
-          .map(tile => tile.band(band)).value
+          .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) }).value
 
-      case scene @ SceneRaster(sceneId, None) =>
+      case scene @ SceneRaster(sceneId, None, _) =>
         logger.warn(s"Request for $scene does not contain band index")
         Future.successful(None)
 
-      case project @ ProjectRaster(projId, Some(band)) =>
+      case project @ ProjectRaster(projId, Some(band), maybeND) =>
         Mosaic.raw(projId, z, x, y)
-          .map(tile => tile.band(band)).value
+          .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) }).value
 
-      case project @ ProjectRaster(projId, None) =>
+      case project @ ProjectRaster(projId, None, _) =>
         logger.warn(s"Request for $project does not contain band index")
         Future.successful(None)
 

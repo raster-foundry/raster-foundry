@@ -1,15 +1,15 @@
 package com.azavea.rf.batch
 
-import java.util.UUID
+import com.azavea.rf.tool.ast._
+import com.azavea.rf.tool.eval._
+import com.azavea.rf.tool.params._
+import com.azavea.rf.tool.ast.MapAlgebraAST._
+import com.azavea.rf.tool.eval.Interpreter.Interpreted
+import com.azavea.rf.tool.params.ParamOverride
 
 import cats.data.NonEmptyList
 import cats.data.Validated._
 import cats.implicits._
-import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.ast.MapAlgebraAST._
-import com.azavea.rf.tool.eval._
-import com.azavea.rf.tool.eval.Interpreter.Interpreted
-import com.azavea.rf.tool.params.ParamOverride
 import geotrellis.raster.{MultibandTile, Tile}
 import geotrellis.spark._
 import geotrellis.spark.io._
@@ -17,6 +17,9 @@ import geotrellis.spark.io.s3._
 import geotrellis.spark.render._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+
+import java.util.UUID
+
 
 // --- //
 
@@ -91,27 +94,31 @@ package object ast {
     projLocs: Map[UUID, List[(UUID, String)]]
   )(implicit sc: SparkContext): Interpreted[TileLayerRDD[SpatialKey]] = raster match {
 
-    case ProjectRaster(id, None) => Invalid(NonEmptyList.of(NoBandGiven(id)))
-    case ProjectRaster(id, Some(band)) => getStores(id, projLocs) match {
+    case ProjectRaster(id, None, _) => Invalid(NonEmptyList.of(NoBandGiven(id)))
+    case ProjectRaster(id, Some(band), maybeND) => getStores(id, projLocs) match {
       case None => Invalid(NonEmptyList.of(AttributeStoreFetchError(id)))
       case Some(stores) => {
         val rdds: List[TileLayerRDD[SpatialKey]] =
           stores.map({ case (sceneId, store) =>
             S3LayerReader(store)
               .read[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](LayerId(sceneId.toString, zoom))
-              .withContext(rdd => rdd.mapValues(_.band(band)))
+              .withContext({rdd =>
+                rdd.mapValues({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+              })
           })
 
         Valid(rdds.reduce(_ merge _))
       }
     }
-    case SceneRaster(id, None) => Invalid(NonEmptyList.of(NoBandGiven(id)))
-    case SceneRaster(id, Some(band)) => getStore(id, sceneLocs) match {
+    case SceneRaster(id, None, _) => Invalid(NonEmptyList.of(NoBandGiven(id)))
+    case SceneRaster(id, Some(band), maybeND) => getStore(id, sceneLocs) match {
       case None => Invalid(NonEmptyList.of(AttributeStoreFetchError(id)))
       case Some(store) => {
         val rdd = S3LayerReader(store)
           .read[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](LayerId(id.toString, zoom))
-          .withContext(rdd => rdd.mapValues(_.band(band)))
+          .withContext({ rdd =>
+            rdd.mapValues({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+          })
 
         Valid(rdd)
       }
