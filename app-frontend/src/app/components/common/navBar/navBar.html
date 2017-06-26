@@ -1,7 +1,9 @@
 <div class="navbar primary-navbar row no-margin" ng-show="!$ctrl.loadError"  ng-if="!$ctrl.$state.$current.name.includes('share')">
   <!-- Nav Left -->
   <div class="navbar-section">
-    <a href="#" class="brand">
+    <a href
+       ui-sref="home"
+       class="brand">
       <img ng-attr-src="{{$ctrl.assetLogo}}">
     </a>
     <span class="navbar-vertical-divider"></span>
@@ -16,7 +18,7 @@
       <a href
          ng-class="{'icon': $ctrl.isInProject(),
                     'active': $ctrl.$state.includes('projects') }"
-         ui-sref="projects.list"
+         ui-sref="projects.list">
         <i class="icon-project"></i>
         <span ng-if="!$ctrl.isInProject()">Projects</span>
       </a>

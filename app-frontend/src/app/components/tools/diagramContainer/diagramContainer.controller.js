@@ -41,7 +41,10 @@ export default class DiagramContainerController {
     }
 
     getToolLabel(json) {
-        return json.metadata.label || json.apply;
+        if (json.metadata && json.metadata.label) {
+            return json.metadata.label;
+        }
+        return json.apply;
     }
 
     initDiagram() {
@@ -216,7 +219,7 @@ export default class DiagramContainerController {
             }
 
             // Input nodes not of the layer type are not made into rectangles
-            if (!input.type || input.type === 'layer') {
+            if (!input.type || input.type === 'src') {
                 let rectInputs = args.length;
                 let rectOutputs = ['Output'];
                 let ports = this.createPorts(rectInputs, rectOutputs);

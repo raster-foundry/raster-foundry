@@ -9,7 +9,8 @@ import java.security.InvalidParameterException
 
 trait MapAlgebraCodec
     extends MapAlgebraOperationCodecs
-       with MapAlgebraUtilityCodecs {
+      with MapAlgebraLeafCodecs
+      with MapAlgebraUtilityCodecs {
 
   /** TODO: Add codec paths besides `raster source` and `operation` when supported */
   implicit def mapAlgebraDecoder = Decoder.instance[MapAlgebraAST] { ma =>
@@ -17,7 +18,7 @@ trait MapAlgebraCodec
       case Some(_) =>
         ma.as[MapAlgebraAST.Operation]
       case None =>
-        ma.as[MapAlgebraAST.Source]
+        ma.as[MapAlgebraAST.MapAlgebraLeaf]
     }
   }
 
@@ -25,8 +26,8 @@ trait MapAlgebraCodec
     final def apply(ast: MapAlgebraAST): Json = ast match {
       case operation: MapAlgebraAST.Operation =>
         operation.asJson
-      case source: MapAlgebraAST.Source =>
-        source.asJson
+      case leaf: MapAlgebraAST.MapAlgebraLeaf =>
+        leaf.asJson
       case _ =>
         throw new InvalidParameterException(s"Unrecognized AST: $ast")
     }
@@ -34,4 +35,3 @@ trait MapAlgebraCodec
 }
 
 object MapAlgebraCodec extends MapAlgebraCodec
-

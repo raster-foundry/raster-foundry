@@ -11,15 +11,21 @@ from rf.uploads.geotiff.factories import GeoTiffS3SceneFactory
 from rf.utils.io import get_session
 from rf.utils.exception_reporting import wrap_rollbar
 
+from utils import failure_callback
 
-rf_logger = logging.getLogger('rf')
-ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
+
+# Logging Setup
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch = logging.StreamHandler()
+
+ch.setLevel(logging.INFO)
 ch.setFormatter(formatter)
-rf_logger.addHandler(ch)
+
+logging.getLogger('rf').addHandler(ch)
+logging.getLogger().addHandler(ch)
 
 logger = logging.getLogger(__name__)
+
 
 args = {
     'start_date': datetime(2017, 2, 21)
@@ -38,28 +44,37 @@ HOST = os.getenv('RF_HOST')
 def process_upload(*args, **kwargs):
     """Import scenes for a given upload"""
 
-    logging.info('Processing geotiff uploads...')
+    logger.info('Processing geotiff uploads...')
     conf = kwargs['dag_run'].conf
 
     upload_id = conf.get('uploadId')
     upload = Upload.from_id(upload_id)
     upload.update_upload_status('Processing')
 
+    logger.info('Processing upload (%s) for user %s with files %s',
+                upload.id, upload.owner, upload.files)
+
     try:
         factory = GeoTiffS3SceneFactory(upload)
         scenes = factory.generate_scenes()
+        logger.info('Creating scene objects for upload %s, preparing to POST to API', upload.id)
+
         created_scenes = [scene.create() for scene in scenes]
+        logger.info('Successfully created %s scenes (%s)', len(created_scenes), [s.id for s in created_scenes])
 
         if upload.projectId:
-            logger.info("Upload specified a project. Linking scenes to project.")
+            logger.info('Upload specified a project. Linking scenes to project %s', upload.projectId)
             scene_ids = [scene.id for scene in created_scenes]
             batch_scene_to_project_url = '{HOST}/api/projects/{PROJECT}/scenes'.format(HOST=HOST, PROJECT=upload.projectId)
             session = get_session()
             response = session.post(batch_scene_to_project_url, json=scene_ids)
             response.raise_for_status()
         upload.update_upload_status('Complete')
-        logger.info('Finished importing scenes')
+        logger.info('Finished importing scenes for upload (%s) for user %s with files %s',
+                     upload.id, upload.owner, upload.files)
     except:
+        logger.error('Failed to process upload (%s) for user %s with files %s',
+                     upload.id, upload.owner, upload.files)
         upload.update_upload_status('Failed')
         raise
 
@@ -68,5 +83,6 @@ process_upload_op = PythonOperator(
     task_id='process_upload',
     python_callable=process_upload,
     provide_context=True,
+    on_failure_callback=failure_callback,
     dag=dag
 )

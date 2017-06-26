@@ -4,6 +4,9 @@ from airflow.operators.bash_operator import BashOperator
 from airflow.models import DAG
 from datetime import datetime, timedelta
 
+from utils import failure_callback
+
+
 seven_days_ago = datetime.combine(
     datetime.today() - timedelta(7), datetime.min.time())
 
@@ -25,5 +28,6 @@ sentinel2_importer = BashOperator(
     task_id='import_sentinel2',
     provide_context=True,
     bash_command=bash_cmd,
+    on_failure_callback=failure_callback,
     dag=dag
 )

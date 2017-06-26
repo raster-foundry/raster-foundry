@@ -9,6 +9,7 @@ import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.ast.MapAlgebraAST._
 import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.eval.Interpreter.Interpreted
+import com.azavea.rf.tool.params.ParamOverride
 import geotrellis.raster.{MultibandTile, Tile}
 import geotrellis.spark._
 import geotrellis.spark.io._
@@ -36,6 +37,7 @@ package object ast {
   def interpretRDD(
     ast: MapAlgebraAST,
     sourceMapping: Map[UUID, RFMLRaster],
+    overrides: Map[UUID, ParamOverride],
     zoom: Int,
     sceneLocs: Map[UUID, String],
     projLocs: Map[UUID, List[(UUID, String)]]
@@ -75,9 +77,10 @@ package object ast {
 
     /* Guarantee correctness before performing Map Algebra */
     val pure = Interpreter.interpretPure[Unit](ast, sourceMapping)
+    val over = Interpreter.overrideParams(ast, overrides)
     val rdds = sourceMapping.mapValues(r => fetch(r, zoom, sceneLocs, projLocs)).sequence
 
-    (pure |@| rdds).map({ case (_, rs) => eval(ast, rs) })
+    (pure |@| over |@| rdds).map({ case (_, tree, rs) => eval(tree, rs) })
   }
 
   /** This requires that for each [[RFMLRaster]] that a band number be specified. */

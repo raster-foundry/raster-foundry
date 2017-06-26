@@ -9,14 +9,20 @@ from airflow.exceptions import AirflowException
 
 from rf.utils.exception_reporting import wrap_rollbar
 
-rf_logger = logging.getLogger('rf')
-ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
+from utils import failure_callback
+
+
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch = logging.StreamHandler()
+
+ch.setLevel(logging.INFO)
 ch.setFormatter(formatter)
-rf_logger.addHandler(ch)
+
+logging.getLogger('rf').addHandler(ch)
+logging.getLogger().addHandler(ch)
 
 logger = logging.getLogger(__name__)
+
 
 default_args = {
     'owner': 'raster-foundry',
@@ -57,5 +63,6 @@ PythonOperator(
     provide_context=True,
     python_callable=update_aoi_project,
     execution_timeout=datetime.timedelta(seconds=60),
+    on_failure_callback=failure_callback,
     dag=dag
 )

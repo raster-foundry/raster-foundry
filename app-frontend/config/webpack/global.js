@@ -8,7 +8,6 @@
 const path = require('path');
 const webpack = require('webpack');
 const autoprefixer = require('autoprefixer-core');
-const Manifest = require('manifest-revision-webpack-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
@@ -238,10 +237,6 @@ module.exports = function (_path) {
                 async: true,
                 children: true,
                 minChunks: Infinity
-            }),
-            new Manifest(path.join(_path + '/config', 'manifest.json'), {
-                rootAssetPath: rootAssetPath,
-                ignorePaths: ['.DS_Store']
             }),
             new ExtractTextPlugin(
                 'assets/styles/css/[name]' +

@@ -16,14 +16,20 @@ from rf.ingest import create_landsat8_ingest, create_ingest_definition
 from rf.uploads.landsat8.settings import datasource_id as landsat_id
 from rf.utils.exception_reporting import wrap_rollbar
 
-rf_logger = logging.getLogger('rf')
-ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
+from utils import failure_callback
+
+
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch = logging.StreamHandler()
+
+ch.setLevel(logging.INFO)
 ch.setFormatter(formatter)
-rf_logger.addHandler(ch)
+
+logging.getLogger('rf').addHandler(ch)
+logging.getLogger().addHandler(ch)
 
 logger = logging.getLogger(__name__)
+
 
 default_args = {
     'owner': 'raster-foundry',
@@ -70,6 +76,8 @@ def execute_ingest_emr_job(scene_id, ingest_s3_uri, ingest_def_id, cluster_id):
     Returns:
         dict
     """
+    logger.info('Constructing ingest step request for %s for cluster %s for ingest id %s',
+                scene_id, cluster_id, ingest_def_id)
     step = {
         'ActionOnFailure': 'CONTINUE',
         'Name': 'ingest-{}'.format(ingest_def_id),
@@ -93,12 +101,13 @@ def execute_ingest_emr_job(scene_id, ingest_s3_uri, ingest_def_id, cluster_id):
             'Jar': 's3://us-east-1.elasticmapreduce/libs/script-runner/script-runner.jar'
         }
     }
-    logger.info('Step: %s', step)
+    logger.info('Submitting step to EMR (%s)', step)
     emr = boto3.client('emr')
     response = emr.add_job_flow_steps(
         JobFlowId=cluster_id,
         Steps=[step]
     )
+    logger.info('Received response from EMR API: %s', response)
     return response
 
 
@@ -144,22 +153,23 @@ def wait_for_success(response, cluster_id):
 def create_ingest_definition_op(*args, **kwargs):
     """Create ingest definition and upload to S3"""
 
-    logger.info('Beginning to create ingest definition...')
     conf = kwargs['dag_run'].conf
-    logger.info('CONF: {}'.format(conf))
     xcom_client = kwargs['task_instance']
 
     scene_id = conf.get('sceneId')
     xcom_client.xcom_push(key='ingest_scene_id', value=scene_id)
     scene = Scene.from_id(scene_id)
 
+    logger.info('Beginning to create ingest definition for scene %s for user %s...',
+                scene_id, scene.owner)
+
     if scene.ingestStatus != IngestStatus.TOBEINGESTED:
         raise Exception('Scene is no longer waiting to be ingested, error error')
 
     scene.ingestStatus = IngestStatus.INGESTING
-    logger.info('Updating scene status to ingesting')
+    logger.info('Updating scene (%s) status to ingesting', scene_id)
     scene.update()
-    logger.info('Successfully updated scene status')
+    logger.info('Successfully updated scene (%s) status', scene_id)
 
     logger.info('Creating ingest definition')
     if scene.datasource != landsat_id:
@@ -167,7 +177,7 @@ def create_ingest_definition_op(*args, **kwargs):
     else:
         ingest_definition = create_landsat8_ingest(scene)
     ingest_definition.put_in_s3()
-    logger.info('Successfully created and pushed ingest definition')
+    logger.info('Successfully created and pushed ingest definition for scene %s', scene_id)
 
     # Store values for later tasks
     xcom_client.xcom_push(key='ingest_def_uri', value=ingest_definition.s3_uri)
@@ -183,10 +193,12 @@ def launch_spark_ingest_job_op(*args, **kwargs):
     ingest_def_id = xcom_client.xcom_pull(key='ingest_def_id', task_ids=None)
     scene_id = xcom_client.xcom_pull(key='scene_id', task_ids=None)
 
-    logger.info('Launching Spark ingest job with ingest definition %s', ingest_def_uri)
+    logger.info('Launching Spark ingest job with ingest definition %s for scene %s',
+                ingest_def_uri, scene_id)
     cluster_id = get_cluster_id()
     emr_response = execute_ingest_emr_job(scene_id, ingest_def_uri, ingest_def_id, cluster_id)
-    logger.info('Finished launching Spark ingest job. Waiting for status changes.')
+    logger.info('LaunchedSpark ingest job for %s with ingest ID %s. Waiting for status changes.',
+                scene_id, ingest_def_id)
     is_success = wait_for_success(emr_response, cluster_id)
     return is_success
 
@@ -200,15 +212,20 @@ def wait_for_status_op(*args, **kwargs):
     scene_id = ingest_status_dict['sceneId']
     status = ingest_status_dict['ingestStatus']
 
-    scene = Scene.from_id(scene_id)
     layer_s3_bucket = os.getenv('TILE_SERVER_BUCKET')
     s3_output_location = 's3://{}/layers'.format(layer_s3_bucket)
+
+    logger.info('Waiting for scene status at %s for scene %s with ingest defintion %s',
+                s3_output_location, scene_id, ingest_def_id)
+
+    scene = Scene.from_id(scene_id)
     scene.ingestLocation = s3_output_location
     scene.ingestStatus = status
 
     logger.info('Setting scene %s ingest status to %s', scene.id, scene.ingestStatus)
     scene.update()
     logger.info('Successfully updated scene %s\'s ingest status', scene.id)
+
 
 ################################
 # Tasks                        #
@@ -217,6 +234,7 @@ create_ingest_definition_task = PythonOperator(
     task_id='create_ingest_definition',
     provide_context=True,
     python_callable=create_ingest_definition_op,
+    on_failure_callback=failure_callback,
     dag=dag
 )
 
@@ -225,6 +243,7 @@ launch_spark_ingest_task = PythonOperator(
     task_id='launch_spark_ingest',
     provide_context=True,
     python_callable=launch_spark_ingest_job_op,
+    on_failure_callback=failure_callback,
     dag=dag
 )
 
@@ -232,6 +251,7 @@ wait_for_status_task = PythonOperator(
     task_id='wait_for_status',
     provide_context=True,
     python_callable=wait_for_status_op,
+    on_failure_callback=failure_callback,
     dag=dag
 )
 

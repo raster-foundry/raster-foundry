@@ -152,7 +152,7 @@ object LayerCache extends Config with LazyLogging {
       for {
         (tool, toolRun) <- LayerCache.toolAndToolRun(toolRunId, user, voidCache)
         (ast, params)   <- LayerCache.toolEvalRequirements(toolRunId, subNode, user, voidCache)
-        lztile          <- OptionT(Interpreter.interpretGlobal(ast, params.sources, TileSources.globalSource).map(_.toOption))
+        lztile          <- OptionT(Interpreter.interpretGlobal(ast, params.sources, params.overrides, TileSources.globalSource).map(_.toOption))
         tile            <- OptionT.fromOption[Future](lztile.evaluateDouble)
       } yield {
         val hist = StreamingHistogram.fromTile(tile)
@@ -237,14 +237,18 @@ object LayerCache extends Config with LazyLogging {
         (ast, params)   <- LayerCache.toolEvalRequirements(toolRunId, subNode, user, voidCache)
         nodeId          <- OptionT.pure[Future, UUID](subNode.getOrElse(ast.id))
         metadata        <- OptionT.fromOption[Future](params.metadata.get(nodeId))
+        cRamp           <- OptionT.fromOption[Future](metadata.colorRamp)
+                             .orElse(OptionT.pure[Future, ColorRamp](geotrellis.raster.render.ColorRamps.Viridis))
         cmap            <- OptionT.fromOption[Future](metadata.classMap.map(_.toColorMap)).orElse({
-                             for {
-                               hist  <- OptionT.fromOption[Future](metadata.histogram)
-                                 .orElse(LayerCache.modelLayerGlobalHistogram(toolRunId, subNode, user, voidCache))
-                               cRamp <- OptionT.fromOption[Future](metadata.colorRamp)
-                                 .orElse(OptionT.pure[Future, ColorRamp](geotrellis.raster.render.ColorRamps.Viridis))
-                             } yield cRamp.toColorMap(hist)
-                           })
+                               for {
+                                 breaks <- OptionT.fromOption[Future](metadata.breaks)
+                               } yield cRamp.toColorMap(breaks)
+                             }).orElse({
+                               for {
+                                 hist <- OptionT.fromOption[Future](metadata.histogram)
+                                   .orElse(LayerCache.modelLayerGlobalHistogram(toolRunId, subNode, user, voidCache))
+                               } yield cRamp.toColorMap(hist)
+                             })
       } yield cmap
     }
   }
