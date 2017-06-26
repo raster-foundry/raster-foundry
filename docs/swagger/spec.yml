@@ -2599,7 +2599,7 @@ definitions:
           type: string
           description: URI to original source. This should include a protocol-like prefix to identify where it is located http://, s3://, etc.
         rawDataBytes:
-          type: integer
+          type: long
           description: Size of original uploaded imagery in bytes
         bands:
           type: array
