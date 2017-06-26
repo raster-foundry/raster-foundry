@@ -1,4 +1,11 @@
-<ui-view></ui-view>
+<div class="sidebar-overlay" ng-show="$ctrl.drawing"></div>
+<rf-draw-toolbar
+  ng-if="$ctrl.drawing"
+  map-id="edit"
+  geom="$ctrl.aoiPolygons"
+  options="$ctrl.drawOptions"
+  on-save="$ctrl.onAoiSave(polygons)"
+  on-cancel="$ctrl.onAoiCancel()"></rf-draw-toolbar>
 <div class="sidebar-header">
   <a class="btn sidebar-header-nav-btn" ui-sref="projects.edit">
     <i class="icon-arrow-left"></i>
@@ -12,7 +19,7 @@
       <div class="info">Required</div>
     </div>
     <button class="btn btn-default fixedwidth"
-            ui-sref=".draw-aoi">
+            ng-click="$ctrl.startDrawing()">
       Edit Area of Interest
     </button>
     <i class="icon-info"></i>
