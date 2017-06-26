@@ -6,25 +6,32 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
+import com.typesafe.scalalogging.LazyLogging
+import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import io.circe._
 import geotrellis.vector.io.json._
+import kamon.akka.http.KamonTraceDirectives
 
 import com.azavea.rf.common.{Authentication, UserErrorHandler}
 import com.azavea.rf.database.tables.Scenes
 import com.azavea.rf.database.Database
 import com.azavea.rf.database._
-import com.typesafe.scalalogging.LazyLogging
-import io.circe._
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 trait GridRoutes extends Authentication
     with GridQueryParameterDirective
     with UserErrorHandler
-    with LazyLogging {
+    with LazyLogging
+    with KamonTraceDirectives {
+
   implicit def database: Database
 
   val gridRoutes: Route = handleExceptions(userExceptionHandler) {
     pathPrefix(IntNumber / IntNumber / IntNumber) { (z, x, y) =>
-      get { getGrid(z, x, y) }
+      get {
+        traceName("scene-grid") {
+          getGrid(z, x, y)
+        }
+      }
     }
   }
 

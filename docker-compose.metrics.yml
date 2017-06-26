@@ -1,0 +1,26 @@
+version: '2.1'
+services:
+  graphite:
+    image: sitespeedio/graphite
+    ports:
+        - "8181:80"
+
+  statsite:
+    image: quay.io/azavea/statsite:0.7.1
+    links:
+      - graphite
+    build:
+      context: ./statsite
+      dockerfile: Dockerfile
+    volumes:
+      - ./statsite/etc/statsite/:/etc/statsite/
+
+  grafana:
+    image: grafana/grafana
+    restart: always
+    ports:
+        - "3000:3000"
+    links:
+        - graphite
+    environment:
+        - GF_SECURITY_ADMIN_PASSWORD=password

@@ -31,8 +31,11 @@ import akka.http.scaladsl.marshalling.Marshaller
 import geotrellis.proj4._
 import geotrellis.slick.Projected
 import geotrellis.vector.{Extent, Polygon}
+import kamon.akka.http.KamonTraceDirectives
 
-object MosaicRoutes extends LazyLogging {
+object MosaicRoutes
+    extends LazyLogging
+    with KamonTraceDirectives {
 
   val emptyTilePng = IntArrayTile.ofDim(256, 256).renderPng
 
@@ -45,54 +48,64 @@ object MosaicRoutes extends LazyLogging {
   def mosaicProject(projectId: UUID)(implicit database: Database): Route =
     pathPrefix("export") {
       optionalHeaderValueByName("Accept") { acceptContentType =>
-        parameter("bbox", "zoom".as[Int]?, "colorCorrect".as[Boolean] ? true) {
-          (bbox, zoom, colorCorrect) => get {
-            complete {
-              val mosaic = Mosaic.render(projectId, zoom, Option(bbox), colorCorrect)
-              val poly = Projected(Extent.fromString(bbox).toPolygon(), 4326)
-                .reproject(LatLng, WebMercator)(3857)
-              val extent = poly.envelope
-              val future = acceptContentType match {
-                case Some("image/tiff") => mosaic
-                    .map{ m => MultibandGeoTiff(m, extent, WebMercator) }
-                    .map(tiffAsHttpResponse)
-                    .value
-                case _ => mosaic.map(_.renderPng)
-                    .map(pngAsHttpResponse)
-                    .value
-                  
-              }
+        traceName("tiles-export-request") {
+          parameter("bbox", "zoom".as[Int]?, "colorCorrect".as[Boolean] ? true) {
+            (bbox, zoom, colorCorrect) => get {
+              complete {
+                val mosaic = Mosaic.render(projectId, zoom, Option(bbox), colorCorrect)
+                val poly = Projected(Extent.fromString(bbox).toPolygon(), 4326)
+                  .reproject(LatLng, WebMercator)(3857)
+                val extent = poly.envelope
+                val future = acceptContentType match {
+                  case Some("image/tiff") => mosaic
+                      .map{ m => MultibandGeoTiff(m, extent, WebMercator) }
+                      .map(tiffAsHttpResponse)
+                      .value
+                  case _ => mosaic.map(_.renderPng)
+                      .map(pngAsHttpResponse)
+                      .value
 
-              future onComplete {
-                case Success(s) => s
-                case Failure(e) =>
-                  logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
-              }
+                }
 
-              future
+                future onComplete {
+                  case Success(s) => s
+                  case Failure(e) =>
+                    logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
+                }
+
+                future
+              }
             }
           }
         }
       }
     } ~ pathPrefix("histogram") {
-      post { getProjectScenesHistogram(projectId) }
+      post {
+        traceName("tiles-project-histogram") {
+          getProjectScenesHistogram(projectId)
+        }
+      }
     } ~ pathPrefix (IntNumber / IntNumber / IntNumber ) { (zoom, x, y) =>
-      parameter("tag".?) { tag =>
-        get {
-          complete {
-            val future =
-                Mosaic(projectId, zoom, x, y, tag)
-                  .map(_.renderPng)
-                  .getOrElse(emptyTilePng)
-                  .map(pngAsHttpResponse)
+      traceName("tiles-zxy") {
+        traceName(s"tiles-zxy-${projectId}") {
+          parameter("tag".?) { tag =>
+            get {
+              complete {
+                val future =
+                  Mosaic(projectId, zoom, x, y, tag)
+                    .map(_.renderPng)
+                    .getOrElse(emptyTilePng)
+                    .map(pngAsHttpResponse)
 
-            future onComplete {
-              case Success(s) => s
-              case Failure(e) =>
-                logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
+                future onComplete {
+                  case Success(s) => s
+                  case Failure(e) =>
+                    logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
+                }
+
+                future
+              }
             }
-
-            future
           }
         }
       }
@@ -149,20 +162,4 @@ object MosaicRoutes extends LazyLogging {
       }
     }
   }
-// TODO: re-enable this, needed for project color correction endpoint
-//   def mosaicScenes: Route =
-//     pathPrefix(JavaUUID / Segment / "mosaic" / IntNumber / IntNumber / IntNumber) { (orgId, userId, zoom, x, y) =>
-//       colorCorrectParams { params =>
-//         parameters('scene.*) { scenes =>
-//           get {
-//             complete {
-//               val ids = scenes.map(id => RfLayerId(orgId, userId, UUID.fromString(id)))
-//               Mosaic(params, ids, zoom, x, y).map { maybeTile =>
-//                 maybeTile.map { tile => pngAsHttpResponse(tile.renderPng())}
-//               }
-//             }
-//           }
-//         }
-//       }
-//     }
 }

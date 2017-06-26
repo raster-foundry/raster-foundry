@@ -56,6 +56,7 @@ services:
       - postgres:database.service.rasterfoundry.internal
     external_links:
       - airflow-webserver:airflow.service.rasterfoundry.internal
+      - statsite
     env_file: .env
     ports:
       - "9000:9000"
@@ -75,6 +76,8 @@ services:
     links:
       - postgres:database.service.rasterfoundry.internal
       - memcached:tile-cache.service.rasterfoundry.internal
+    external_links:
+      - statsite
     env_file: .env
     ports:
       - "9900:9900"

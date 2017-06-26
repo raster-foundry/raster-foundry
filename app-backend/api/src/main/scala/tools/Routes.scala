@@ -14,27 +14,54 @@ import com.azavea.rf.tool.ast.codec._
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
+import kamon.akka.http.KamonTraceDirectives
+import kamon.akka.http.KamonTraceDirectives.traceName
+
 trait ToolRoutes extends Authentication
     with PaginationDirectives
     with CommonHandlers
+    with KamonTraceDirectives
     with UserErrorHandler {
 
   implicit def database: Database
 
   val toolRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
-      get { listTools } ~
-      post { createTool }
+      get {
+        traceName("tools-list") {
+          listTools
+        }
+      } ~
+      post {
+        traceName("tools-create") {
+          createTool
+        }
+      }
     } ~
     pathPrefix(JavaUUID) { toolId =>
       pathEndOrSingleSlash {
-        get { getTool(toolId) } ~
-        put { updateTool(toolId) } ~
-        delete { deleteTool(toolId) }
+        get {
+          traceName("tools-detail") {
+            getTool(toolId)
+          }
+        } ~
+        put {
+          traceName("tools-update") {
+            updateTool(toolId)
+          }
+        } ~
+        delete {
+          traceName("tools-delete") {
+            deleteTool(toolId) }
+        }
       } ~
       pathPrefix("sources") {
         pathEndOrSingleSlash {
-          get { getToolSources(toolId) }
+          get {
+            traceName("tools-sources") {
+              getToolSources(toolId)
+            }
+          }
         }
       }
     }

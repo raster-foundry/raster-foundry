@@ -64,6 +64,12 @@ lazy val slickDependencies = List(
     .exclude("postgresql", "postgresql")
 )
 
+lazy val metricsDependencies = List(
+  Dependencies.kamonCore,
+  Dependencies.kamonStatsd,
+  Dependencies.kamonAkkaHttp
+)
+
 lazy val dbDependencies = List(
   Dependencies.hikariCP,
   Dependencies.postgres
@@ -83,7 +89,7 @@ lazy val testDependencies = List(
 )
 
 lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
-    testDependencies ++ Seq(
+    testDependencies ++ metricsDependencies ++ Seq(
   Dependencies.akka,
   Dependencies.akkahttp,
   Dependencies.akkaHttpCors,
@@ -215,7 +221,8 @@ lazy val tile = Project("tile", file("tile"))
   .enablePlugins(GatlingPlugin)
   .settings(commonSettings:_*)
   .settings({
-    libraryDependencies ++= loggingDependencies ++ testDependencies ++ Seq(
+    libraryDependencies ++= loggingDependencies ++ testDependencies ++
+    metricsDependencies ++ Seq(
       Dependencies.spark,
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisS3,

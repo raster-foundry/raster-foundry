@@ -60,4 +60,8 @@ object Dependencies {
   val dnsJava                 = "dnsjava"                      % "dnsjava"                           % Version.dnsJava
   val dropbox                 = "com.dropbox.core"             % "dropbox-core-sdk"                  % Version.dropbox
   val scalaCheck              = "org.scalacheck"              %% "scalacheck"                        % Version.scalaCheck % "test"
+  val kamonCore               = "io.kamon"                    %% "kamon-core"                        % Version.kamon
+  val kamonAkka               = "io.kamon"                    %% "kamon-akka"                        % Version.kamon
+  val kamonStatsd             = "io.kamon"                    %% "kamon-statsd"                      % Version.kamon
+  val kamonAkkaHttp           = "io.kamon"                    %% "kamon-akka-http"                   % Version.kamonAkkaHttp
 }

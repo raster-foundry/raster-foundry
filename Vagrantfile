@@ -41,6 +41,10 @@ Vagrant.configure(2) do |config|
   config.vm.network :forwarded_port, guest: 8889, host: Integer(ENV.fetch("RF_PORT_8888", 8889))
   # spark driver
   config.vm.network :forwarded_port, guest: 4040, host: Integer(ENV.fetch("RF_PORT_4040", 4040))
+  # graphite ui
+  config.vm.network :forwarded_port, guest: 8181, host: Integer(ENV.fetch("RF_PORT_8181", 8181))
+  # grafana ui
+  config.vm.network :forwarded_port, guest: 3000, host: Integer(ENV.fetch("RF_PORT_4040", 3000))
 
   config.vm.provider :virtualbox do |vb|
     vb.memory = 8096
