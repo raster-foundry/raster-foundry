@@ -1,0 +1,51 @@
+<div class="list-group">
+    <rf-scene-item
+        scene="scene"
+        ng-repeat="scene in $ctrl.sceneList track by scene.id"
+        ng-click="$ctrl.openSceneDetailModal(scene)">
+      <a class="color-danger" ng-click="$ctrl.removeScene(scene, $event)">Remove from Project</a>
+    </rf-scene-item>
+  </div>
+  <!-- Scene List -->
+
+  <!-- Pagination -->
+  <div class="list-group text-center"
+       ng-show="!$ctrl.loading && $ctrl.lastSceneResult && $ctrl.lastSceneResult.count > $ctrl.lastSceneResult.pageSize && !$ctrl.errorMsg">
+    <ul uib-pagination
+        items-per-page="$ctrl.lastSceneResult.pageSize"
+        total-items="$ctrl.lastSceneResult.count"
+        ng-model="$ctrl.currentPage"
+        max-size="4"
+        rotate="true"
+        boundary-link-numbers="true"
+        force-ellipses="true"
+        ng-change="$ctrl.populateSceneList($ctrl.currentPage)">
+    </ul>
+  </div>
+  <!-- Pagination -->
+
+  <!-- No scenes placeholder -->
+  <div ng-if="!$ctrl.loading && $ctrl.lastSceneResult && $ctrl.lastSceneResult.count === 0"
+       class="list-group">
+    <span class="list-placeholder">You haven't added any scenes to this Project.</span>
+  </div>
+  <!-- No scenes placeholder -->
+
+  <!-- Reload? Scene list -->
+  <div class="list-group" ng-show="$ctrl.errorMsg">
+    <span class="list-placeholder">
+      {{$ctrl.errorMsg}}
+      <a ng-click="$ctrl.populateSceneList(1)">Try again</a>
+    </span>
+  </div>
+  <!-- Reload? Scene list -->
+</div>
+
+<!-- Loading Indicator -->
+<div class="column-8" ng-if="$ctrl.isLoadingScenes">
+  <div class="list-group">
+    <div class="list-placeholder">
+      <i class="icon-load"></i>
+    </div>
+  </div>
+</div>

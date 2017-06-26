@@ -1561,7 +1561,39 @@ table.upload-info {
   }
 }
 
-.list-group rf-project-item .panel-body{
+.list-group rf-project-item .panel-body {
   background: $off-white;
   margin-bottom: 1rem;
+}
+
+.tabbed-list-header {
+  list-style: none;
+  display: flex;
+  margin: 0;
+  padding: 0;
+  border-bottom: 1px solid $gray-lightest;
+  li a {
+    display: block;
+    padding: 1rem 3rem;
+    margin-bottom: -1px;
+    font-weight: bold;
+    color: $text-base;
+    &.active {
+      color: $brand-primary;
+      border-bottom: 2px solid $brand-primary;
+    }
+  }
+}
+.list-group-item {
+  border-bottom: none;
+}
+.list-group-item:last-of-type {
+  border-bottom: 1px solid $gray-lightest;
+}
+.list-group-overflow {
+  overflow: visible;
+}
+
+rf-export-item {
+  position: relative;
 }

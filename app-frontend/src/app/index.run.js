@@ -11,7 +11,7 @@ function runBlock(
         featureFlags.set(flagsPromise);
     }
 
-    $rootScope.$on('$stateChangeStart', function (e, toState) {
+    $rootScope.$on('$stateChangeStart', function (e, toState, params) {
         function setupState() {
             if (APP_CONFIG.error && toState.name !== 'error') {
                 e.preventDefault();
@@ -24,6 +24,10 @@ function runBlock(
             } else if (toState.name !== 'login' && toState.name !== 'callback') {
                 rollbarWrapperService.init(authService.profile());
                 intercomService.bootWithUser(authService.profile());
+                if (toState.redirectTo) {
+                    e.preventDefault();
+                    $state.go(toState.redirectTo, params);
+                }
             }
         }
         // TODO: I'm not sure exactly where this lies on the continuum between awful and the worst
