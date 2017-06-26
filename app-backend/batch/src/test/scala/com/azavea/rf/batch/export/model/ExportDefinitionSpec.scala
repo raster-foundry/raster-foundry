@@ -137,8 +137,8 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
 
     val params = EvalParams(
       Map(
-        s0.id -> SceneRaster(UUID.randomUUID, Some(5)),
-        s1.id -> SceneRaster(UUID.randomUUID, Some(5))
+        s0.id -> SceneRaster(UUID.randomUUID, Some(5), None),
+        s1.id -> SceneRaster(UUID.randomUUID, Some(5), None)
       ),
       Map.empty
     )
@@ -170,8 +170,8 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
 
     val params = EvalParams(
       Map(
-        s0.id -> ProjectRaster(UUID.randomUUID, Some(5)),
-        s1.id -> ProjectRaster(UUID.randomUUID, Some(5))
+        s0.id -> ProjectRaster(UUID.randomUUID, Some(5), None),
+        s1.id -> ProjectRaster(UUID.randomUUID, Some(5), None)
       ),
       Map.empty
     )
