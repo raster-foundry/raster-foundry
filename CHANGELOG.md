@@ -1,19 +1,40 @@
 # Change Log
 
-## [0.14.0](https://github.com/azavea/raster-foundry/tree/0.14.0) (2017-06-20)
+## [0.15.0](https://github.com/azavea/raster-foundry/tree/0.15.0) (2017-06-26)
+[Full Changelog](https://github.com/azavea/raster-foundry/compare/0.14.0...0.15.0)
+
+**Merged pull requests:**
+
+- Hide project navbar while project is loading [\#2108](https://github.com/azavea/raster-foundry/pull/2108)
+- Fix auth0 issues by upgrading lock library [\#2107](https://github.com/azavea/raster-foundry/pull/2107)
+- Add Algae Bloom Indices [\#2104](https://github.com/azavea/raster-foundry/pull/2104)
+- Improve Airflow DAG/Task Logging [\#2101](https://github.com/azavea/raster-foundry/pull/2101)
+- Link logo to home page [\#2093](https://github.com/azavea/raster-foundry/pull/2093)
+- Prompt before closing window while in upload [\#2088](https://github.com/azavea/raster-foundry/pull/2088)
+- Add  field to sources [\#2085](https://github.com/azavea/raster-foundry/pull/2085)
+
+## [0.14.0](https://github.com/azavea/raster-foundry/tree/0.14.0) (2017-06-21)
 [Full Changelog](https://github.com/azavea/raster-foundry/compare/0.13.0...0.14.0)
 
 **Merged pull requests:**
 
+- Document tool rendering options [\#2068](https://github.com/azavea/raster-foundry/pull/2068)
+- Fix bad css merge [\#2067](https://github.com/azavea/raster-foundry/pull/2067)
+- Check for bad shape extraction [\#2065](https://github.com/azavea/raster-foundry/pull/2065)
+- AST: Overrides for "extra params" [\#2064](https://github.com/azavea/raster-foundry/pull/2064)
 - Use HTTPs for aerial map tiles [\#2062](https://github.com/azavea/raster-foundry/pull/2062)
 - Feature/lk/better map controls [\#2059](https://github.com/azavea/raster-foundry/pull/2059)
 - Install GDAL 2.1 in Airflow worker container image [\#2057](https://github.com/azavea/raster-foundry/pull/2057)
+- Add Constant LazyTile [\#2056](https://github.com/azavea/raster-foundry/pull/2056)
+- Move webpack manifest plugin to prod only [\#2036](https://github.com/azavea/raster-foundry/pull/2036)
+- Introduce new project export pane [\#2022](https://github.com/azavea/raster-foundry/pull/2022)
 
 ## [0.13.0](https://github.com/azavea/raster-foundry/tree/0.13.0) (2017-06-19)
 [Full Changelog](https://github.com/azavea/raster-foundry/compare/0.12.0...0.13.0)
 
 **Merged pull requests:**
 
+- ColorCorrection improvements [\#2094](https://github.com/azavea/raster-foundry/pull/2094)
 - Add compressed project-item [\#2051](https://github.com/azavea/raster-foundry/pull/2051)
 - updates the project page layout [\#2046](https://github.com/azavea/raster-foundry/pull/2046)
 - Fix Nginx HTTP virtual host collision [\#2045](https://github.com/azavea/raster-foundry/pull/2045)
