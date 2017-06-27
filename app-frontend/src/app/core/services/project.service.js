@@ -19,6 +19,18 @@ const availableProcessingOptions = [
         description:
             'Assess whether the target being observed contains live green vegetation or not',
         toolId: '7311e8ca-9af7-4fab-b63e-559d2e765388'
+    }, {
+        label: 'NDWI',
+        value: 'ndwi',
+        description:
+            'An index that is primarily used to distinguish water bodies.',
+        toolId: '2d3a351f-54b4-42a9-9db4-d027b9aac03c'
+    }, {
+        label: 'NDMI',
+        value: 'ndmi',
+        description:
+            'An index that assesses the variation of the moisture content of vegetation.',
+        toolId: '44fad5c9-1e0d-4631-aaa0-a61182619cb1'
     }
 ];
 
