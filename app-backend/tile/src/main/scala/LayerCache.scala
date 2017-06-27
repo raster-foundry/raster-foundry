@@ -155,8 +155,8 @@ object LayerCache extends Config with LazyLogging {
       for {
         (tool, toolRun) <- LayerCache.toolAndToolRun(toolRunId, user, voidCache)
         (ast, params)   <- LayerCache.toolEvalRequirements(toolRunId, subNode, user, voidCache)
-        (extent, zooms) <- TileSources.fullDataWindow(params.sources)
-        lztile          <- OptionT(Interpreter.interpretGlobal(ast, params.sources, params.overrides, extent, { r => TileSources.globalSource(extent, zooms, r) }).map(_.toOption))
+        (extent, zoom)  <- TileSources.fullDataWindow(params.sources)
+        lztile          <- OptionT(Interpreter.interpretGlobal(ast, params.sources, params.overrides, extent, { r => TileSources.globalSource(extent, zoom, r) }).map(_.toOption))
         tile            <- OptionT.fromOption[Future](lztile.evaluateDouble)
       } yield {
         val hist = StreamingHistogram.fromTile(tile)
