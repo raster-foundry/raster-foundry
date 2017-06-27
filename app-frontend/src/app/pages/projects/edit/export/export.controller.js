@@ -32,6 +32,15 @@ const availableTargets = [
     }
 ];
 
+const exportTypes = [
+    {
+        label: 'S3'
+    },
+    {
+        label: 'Dropbox'
+    }
+];
+
 export default class ExportController {
     constructor($scope, $state, $timeout, projectService, toolService, mapService) {
         'ngInject';
@@ -43,6 +52,8 @@ export default class ExportController {
         this.toolService = toolService;
         this.availableResolutions = availableResolutions;
         this.availableTargets = availableTargets;
+        this.exportTypes = exportTypes;
+        this.exportType = this.exportTypes[0];
         this.availableProcessingOptions = this.projectService.availableProcessingOptions;
         this.getMap = () => mapService.getMap('edit');
     }
@@ -72,7 +83,7 @@ export default class ExportController {
             areaType: 'export',
             requirePolygons: false
         };
-      
+
         this.exportTargetURI = '';
         this.exportProcessingOption = this.getDefaultProcessingOption();
         this.exportTarget = this.getDefaultTarget();
@@ -95,6 +106,15 @@ export default class ExportController {
                this.availableTargets[0];
     }
 
+    onExportTypeChange(newExportType) {
+        let newLabel = newExportType.label;
+        this.exportTypes.forEach(exportType => {
+            if (exportType.label === newLabel) {
+                this.exportType = exportType;
+            }
+        });
+    }
+
     getDefaultProcessingOption() {
         return this.availableProcessingOptions.find(o => o.default) ||
                this.availableProcessingOptions[0];
@@ -110,17 +130,33 @@ export default class ExportController {
         return this.exportTarget;
     }
 
+    getCurrentExportType() {
+        const exportType = this.exportType;
+        return {
+            exportType: this.exportTypes
+                .find(e => e.label === exportType.label).label
+        };
+    }
+
+    getExportSource() {
+        return this.getCurrentExportType().exportType === 'Dropbox' ?
+            {source: `dropbox://${this.project.id}`} :
+            {};
+    }
+
     getCurrentProcessingOption() {
         const option = this.exportProcessingOption;
         return this.availableProcessingOptions
             .find(o => o.value === option.value);
     }
 
+
     getExportOptions(options = {}) {
         return Object.assign(
             this.exportOptions,
             this.getCurrentProcessingOption().exportOptions,
             this.mask ? {mask: this.mask} : {},
+            this.getExportSource(),
             options
         );
     }
@@ -238,7 +274,9 @@ export default class ExportController {
 
     createBasicExport() {
         this.projectService
-            .export(this.project, {}, this.getExportOptions())
+            .export(this.project,
+                    Object.assign({}, this.getCurrentExportType()),
+                    this.getExportOptions())
             .finally(() => {
                 this.finishExport();
             });

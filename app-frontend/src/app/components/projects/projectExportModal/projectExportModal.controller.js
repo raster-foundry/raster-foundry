@@ -11,8 +11,8 @@ export default class ProjectExportModalController {
         this.zoom = this.resolve.zoom;
         this.exportType = 'S3';
         this.exportTypes = [
-            {active: true, label: 'S3'},
-            {active: false, label: 'Dropbox'}
+            {label: 'S3'},
+            {label: 'Dropbox'}
         ];
         this.exportSuccess = false;
         this.exportFailure = false;
@@ -30,10 +30,7 @@ export default class ProjectExportModalController {
         let newLabel = newExportType.label;
         this.exportTypes.forEach(exportType => {
             if (exportType.label === newLabel) {
-                exportType.active = true;
                 this.exportType = exportType;
-            } else {
-                exportType.active = false;
             }
         });
     }
