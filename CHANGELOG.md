@@ -1,10 +1,21 @@
 # Change Log
 
+## [0.16.0](https://github.com/azavea/raster-foundry/tree/0.16.0) (2017-06-27)
+[Full Changelog](https://github.com/azavea/raster-foundry/compare/0.15.0...0.16.0)
+
+**Merged pull requests:**
+
+- Add nodata specification to ToolRun sources [\#2131](https://github.com/azavea/raster-foundry/pull/2131)
+- Promote Image.rawDataBytes to a Long [\#2128](https://github.com/azavea/raster-foundry/pull/2128)
+- List exports and download from project details [\#2105](https://github.com/azavea/raster-foundry/pull/2105)
+
 ## [0.15.0](https://github.com/azavea/raster-foundry/tree/0.15.0) (2017-06-26)
 [Full Changelog](https://github.com/azavea/raster-foundry/compare/0.14.0...0.15.0)
 
 **Merged pull requests:**
 
+- Ingest seams fix [\#2118](https://github.com/azavea/raster-foundry/pull/2118)
+- Feature/lk/export mask [\#2116](https://github.com/azavea/raster-foundry/pull/2116)
 - Hide project navbar while project is loading [\#2108](https://github.com/azavea/raster-foundry/pull/2108)
 - Fix auth0 issues by upgrading lock library [\#2107](https://github.com/azavea/raster-foundry/pull/2107)
 - Add Algae Bloom Indices [\#2104](https://github.com/azavea/raster-foundry/pull/2104)
