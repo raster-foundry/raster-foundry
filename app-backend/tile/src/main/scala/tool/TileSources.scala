@@ -35,17 +35,20 @@ object TileSources extends LazyLogging {
     */
   def fullDataWindow(
     rs: Map[UUID, RFMLRaster]
-  )(implicit database: Database): OptionT[Future, (Extent, Map[UUID, Int])] = {
+  )(implicit database: Database): OptionT[Future, (Extent, Int)] = {
     rs
       .values
       .toStream
-      .map(r => dataWindow(r).map({ case (e, z) => (e, (r.id, z)) }))
+      .map(dataWindow)
       .sequence
       .map({ pairs =>
         val (extents, zooms) = pairs.unzip
-        val extent = extents.reduce(_ combine _)
+        val extent: Extent = extents.reduce(_ combine _)
 
-        (extent, zooms.toMap)
+        /* The average of all the reported optimal zoom levels. */
+        val zoom: Int = zooms.sum / zooms.length
+
+        (extent, zoom)
       })
   }
 
@@ -72,14 +75,14 @@ object TileSources extends LazyLogging {
     */
   def globalSource(
     extent: Extent,
-    zooms: Map[UUID, Int],
+    zoom: Int,
     r: RFMLRaster
   )(implicit database: Database): Future[Option[Tile]] = r match {
     case SceneRaster(id, Some(band), maybeND) =>
       LayerCache.attributeStoreForLayer(id).mapFilter({ case (store, _) =>
         blocking {
           Try {
-            val layerId = LayerId(id.toString, zooms(id))
+            val layerId = LayerId(id.toString, zoom)
 
             S3CollectionLayerReader(store)
               .query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](layerId)
@@ -90,14 +93,14 @@ object TileSources extends LazyLogging {
           } match {
             case Success(tile) => Option(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)))
             case Failure(e) =>
-              logger.error(s"Query layer $id at zoom ${zooms(id)} for $extent: ${e.getMessage}")
+              logger.error(s"Query layer $id at zoom $zoom for $extent: ${e.getMessage}")
               None
           }
         }
       }).value
 
     case ProjectRaster(projId, Some(band), maybeND) => {
-      Mosaic.rawForExtent(projId, zooms(projId), Some(Projected(extent.toPolygon, 3857)))
+      Mosaic.rawForExtent(projId, zoom, Some(Projected(extent.toPolygon, 3857)))
         .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) }).value
     }
 
