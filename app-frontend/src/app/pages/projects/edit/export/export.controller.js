@@ -21,6 +21,17 @@ const availableResolutions = [
     }
 ];
 
+const availableTargets = [
+    {
+        label: 'Default',
+        value: 'internalS3',
+        default: true
+    }, {
+        label: 'S3 Bucket',
+        value: 'externalS3'
+    }
+];
+
 export default class ExportController {
     constructor($scope, $state, $timeout, projectService, toolService, mapService) {
         'ngInject';
@@ -31,6 +42,7 @@ export default class ExportController {
         this.projectService = projectService;
         this.toolService = toolService;
         this.availableResolutions = availableResolutions;
+        this.availableTargets = availableTargets;
         this.availableProcessingOptions = this.projectService.availableProcessingOptions;
         this.getMap = () => mapService.getMap('edit');
     }
@@ -41,7 +53,7 @@ export default class ExportController {
 
         // @TODO: this can be removed from both here and the template when the export target
         // feature is implemented
-        this.enableExportTargets = false;
+        this.enableExportTargets = true;
 
         // @TODO: this can be removed from both here and the template when the export option
         // previews are implemented
@@ -60,9 +72,11 @@ export default class ExportController {
             areaType: 'export',
             requirePolygons: false
         };
-
-
+      
+        this.exportTargetURI = '';
         this.exportProcessingOption = this.getDefaultProcessingOption();
+        this.exportTarget = this.getDefaultTarget();
+
         this.$parent.fetchProject().then(project => {
             this.project = project;
         });
@@ -76,6 +90,11 @@ export default class ExportController {
         });
     }
 
+    getDefaultTarget() {
+        return this.availableTargets.find(t => t.default) ||
+               this.availableTargets[0];
+    }
+
     getDefaultProcessingOption() {
         return this.availableProcessingOptions.find(o => o.default) ||
                this.availableProcessingOptions[0];
@@ -85,6 +104,10 @@ export default class ExportController {
         const resolutionValue = this.exportOptions.resolution;
         return this.availableResolutions
             .find(r => r.value === resolutionValue);
+    }
+
+    getCurrentTarget() {
+        return this.exportTarget;
     }
 
     getCurrentProcessingOption() {
@@ -112,12 +135,20 @@ export default class ExportController {
                !this.isLoadingTool;
     }
 
+    shouldShowTargetParams() {
+        return this.getCurrentTarget().value === 'externalS3';
+    }
+
     toggleParameters() {
         this.showParameters = !this.showParameters;
     }
 
     updateResolution(level) {
         this.exportOptions.resolution = level;
+    }
+
+    updateTarget(target) {
+        this.exportTarget = target;
     }
 
     handleOptionChange(state, option) {
@@ -164,8 +195,23 @@ export default class ExportController {
         }
     }
 
+    finalizeExportOptions() {
+        if (this.getCurrentTarget().value === 'externalS3') {
+            this.exportOptions.source = this.exportTargetURI;
+        }
+    }
+
+    validate() {
+        let validationState = true;
+        if (this.getCurrentTarget().value === 'externalS3') {
+            validationState = validationState && this.exportTargetURI;
+        }
+        return validationState;
+    }
+
     startExport() {
         this.isExporting = true;
+        this.finalizeExportOptions();
         if (this.currentToolRun) {
             this.createToolRunExport();
         } else {
