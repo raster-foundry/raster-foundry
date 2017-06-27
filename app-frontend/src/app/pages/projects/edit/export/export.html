@@ -1,3 +1,11 @@
+<div class="sidebar-overlay" ng-show="$ctrl.drawing"></div>
+<rf-draw-toolbar
+  ng-if="$ctrl.drawing"
+  map-id="edit"
+  geom="$ctrl.mask"
+  options="$ctrl.drawOptions"
+  on-save="$ctrl.onDrawSave(polygons)"
+  on-cancel="$ctrl.onDrawCancel()"></rf-draw-toolbar>
 <div class="sidebar-header">
   <a class="btn sidebar-header-nav-btn" ui-sref="projects.edit">
     <i class="icon-arrow-left"></i>
@@ -5,11 +13,11 @@
   <h5 class="sidebar-title">Export</h5>
 </div>
 <ul class="sidebar-list" ng-if="$ctrl.project">
-  <li class="separator" ng-if="$ctrl.enableExportCropping">
+  <li class="separator">
     <div class="label">
       Area to Export
     </div>
-    <button class="btn btn-default fixedwidth">
+    <button class="btn btn-default fixedwidth" ng-click="$ctrl.startDrawing()">
       Define area to export
     </button>
     <i class="icon-info"></i>

@@ -1,0 +1,63 @@
+<div class="draw-toolbar">
+  <div class="column">
+    <div class="draw-toolbar-header row align-center">
+      <span ng-if="$ctrl.drawing">Draw</span>
+      <span ng-if="$ctrl.editing">Edit</span>
+      <span ng-if="$ctrl.deleting">Delete</span>
+      <span ng-if="!$ctrl.drawing && !$ctrl.editing && !$ctrl.deleting">Define</span>
+      &nbsp;your areas
+      <span ng-if="$ctrl.options && $ctrl.options.areaType && $ctrl.options.areaType.length">
+        &nbsp;of {{$ctrl.options.areaType}}
+      </span>
+    </div>
+    <div class="draw-toolbar-actions row align-center"
+         ng-if="!$ctrl.drawing && !$ctrl.editing && !$ctrl.deleting">
+      <button class="btn btn-default"
+              ng-click="$ctrl.toggleDrawing()">
+        <span class="icon-plus"></span>
+        New Area
+      </button>
+      <span class="btn-group">
+        <button class="btn btn-square btn-default"
+                ng-disabled="$ctrl.polygonLayers.length < 1"
+                ng-click="$ctrl.toggleEditing(true)">
+          <span class="icon-edit"></span>
+        </button>
+        <button class="btn btn-square btn-default"
+                ng-disabled="$ctrl.polygonLayers.length < 1"
+                ng-click="$ctrl.toggleDeleting(true)">
+          <span class="icon-trash"></span>
+        </button>
+      </span>
+      <button class="btn btn-tertiary"
+              ng-disabled="$ctrl.options && $ctrl.options.requirePolygons && $ctrl.polygonLayers.length < 1"
+              ng-click="$ctrl.onDoneClicked()">Save</button>
+      <button class="btn btn-light"
+              ng-click="$ctrl.onCancelClicked()">Cancel</button>
+    </div>
+    <div class="draw-toolbar-actions row align-center"
+         ng-if="$ctrl.drawing">
+      <button class="btn btn-light" ng-click="$ctrl.toggleDrawing()">
+        Cancel
+      </button>
+    </div>
+    <div class="draw-toolbar-actions row align-center"
+         ng-if="$ctrl.editing || $ctrl.deleting">
+      <button class="btn btn-danger"
+              ng-click="$ctrl.saveChanges()"
+              ng-if="$ctrl.deleting">
+        <span class="icon-cross"></span>Delete
+      </button>
+      <button class="btn btn-tertiary"
+              ng-click="$ctrl.saveChanges()"
+              ng-if="$ctrl.editing">
+        Save
+      </button>
+      <button class="btn btn-light"
+              ng-click="$ctrl.revertLayers()">
+        Cancel
+      </button>
+    </div>
+
+  </div>
+</div>

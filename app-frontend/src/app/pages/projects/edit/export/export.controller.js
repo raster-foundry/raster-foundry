@@ -33,7 +33,7 @@ const availableTargets = [
 ];
 
 export default class ExportController {
-    constructor($scope, $state, $timeout, projectService, toolService) {
+    constructor($scope, $state, $timeout, projectService, toolService, mapService) {
         'ngInject';
         this.$scope = $scope;
         this.$parent = this.$scope.$parent.$ctrl;
@@ -44,6 +44,7 @@ export default class ExportController {
         this.availableResolutions = availableResolutions;
         this.availableTargets = availableTargets;
         this.availableProcessingOptions = this.projectService.availableProcessingOptions;
+        this.getMap = () => mapService.getMap('edit');
     }
 
     $onInit() {
@@ -53,10 +54,6 @@ export default class ExportController {
         // @TODO: this can be removed from both here and the template when the export target
         // feature is implemented
         this.enableExportTargets = true;
-
-        // @TODO: this can be removed from both here and the template when the export cropping
-        // feature is implemented
-        this.enableExportCropping = false;
 
         // @TODO: this can be removed from both here and the template when the export option
         // previews are implemented
@@ -70,13 +67,26 @@ export default class ExportController {
             raw: false
         };
 
+        // draw options
+        this.drawOptions = {
+            areaType: 'export',
+            requirePolygons: false
+        };
+      
         this.exportTargetURI = '';
-
         this.exportProcessingOption = this.getDefaultProcessingOption();
         this.exportTarget = this.getDefaultTarget();
 
         this.$parent.fetchProject().then(project => {
             this.project = project;
+        });
+
+        this.$scope.$on('$destroy', this.$onDestroy.bind(this));
+    }
+
+    $onDestroy() {
+        this.getMap().then((mapWrapper) => {
+            mapWrapper.deleteLayers('Export Area');
         });
     }
 
@@ -110,6 +120,7 @@ export default class ExportController {
         return Object.assign(
             this.exportOptions,
             this.getCurrentProcessingOption().exportOptions,
+            this.mask ? {mask: this.mask} : {},
             options
         );
     }
@@ -240,5 +251,41 @@ export default class ExportController {
         this.$timeout(() => {
             this.$state.go('projects.edit');
         }, 500);
+    }
+
+    onDrawSave(multipolygon) {
+        this.drawing = false;
+        this.mask = multipolygon;
+        if (multipolygon) {
+            let exportAreaLayer = L.geoJSON(this.mask.geom, {
+                style: () => {
+                    return {
+                        weight: 2,
+                        fillOpacity: 0.2
+                    };
+                }
+            });
+            this.getMap().then((mapWrapper) => {
+                mapWrapper.setLayer('Export Area', exportAreaLayer, true);
+            });
+        } else {
+            this.getMap().then((mapWrapper) => {
+                mapWrapper.deleteLayers('Export Area');
+            });
+        }
+    }
+
+    onDrawCancel() {
+        this.drawing = false;
+        this.getMap().then((mapWrapper) => {
+            mapWrapper.showLayers('Export Area', true);
+        });
+    }
+
+    startDrawing() {
+        this.drawing = true;
+        this.getMap().then((mapWrapper) => {
+            mapWrapper.hideLayers('Export Area', false);
+        });
     }
 }

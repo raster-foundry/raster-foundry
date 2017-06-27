@@ -1,34 +1,36 @@
 <span class="navbar-vertical-divider"></span>
-<span class="project-title" ng-if="$ctrl.projectService.currentProject.name">{{$ctrl.projectService.currentProject.name}}</span>
-<div class="dropdown-project"
-     uib-dropdown
-     on-toggle="toggled($ctrl.optionsOpen)">
-  <a uib-dropdown-toggle>
-    <span class="sr-only">Project options dropdown</span>
-    <i class="icon-caret-down"></i>
-  </a>
-  <ul class="dropdown-menu" aria-labelledby="dLabel">
-    <li>
-      <a ui-sref="projects.detail({projectid: $ctrl.projectId})">
-        <i class="icon-info"></i>
-        Project details
-      </a>
-    </li>
-    <li>
-      <a ui-sref="projects.edit({projectid: $ctrl.projectId})">
-        <i class="icon-color-correct"></i> Edit Project
-      </a>
-    </li>
-    <li role="separator" class="divider"></li>
-    <li><a ng-click="$ctrl.openPublishModal()"><i class="icon-share"></i>Share</a></li>
-    <li><a class="color-danger"
-           ng-click="$ctrl.deleteProjectModal()">
-      <i class="icon-trash"></i>Delete</a>
-    </li>
-    <li role="separator" class="divider"></li>
-    <li>
-      <a ui-sref="projects.list">
-      <i class="icon-project"></i> Switch Projects
-    </a></li>
-  </ul>
-</div>
+<span ng-if="$ctrl.projectService.currentProject.name">
+  <span class="project-title">{{$ctrl.projectService.currentProject.name}}</span>
+  <div class="dropdown-project"
+       uib-dropdown
+       on-toggle="toggled($ctrl.optionsOpen)">
+    <a uib-dropdown-toggle>
+      <span class="sr-only">Project options dropdown</span>
+      <i class="icon-caret-down"></i>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="dLabel">
+      <li>
+        <a ui-sref="projects.detail({projectid: $ctrl.projectId})">
+          <i class="icon-info"></i>
+          Project details
+        </a>
+      </li>
+      <li>
+        <a ui-sref="projects.edit({projectid: $ctrl.projectId})">
+          <i class="icon-color-correct"></i> Edit Project
+        </a>
+      </li>
+      <li role="separator" class="divider"></li>
+      <li><a ng-click="$ctrl.openPublishModal()"><i class="icon-share"></i>Share</a></li>
+      <li><a class="color-danger"
+             ng-click="$ctrl.deleteProjectModal()">
+        <i class="icon-trash"></i>Delete</a>
+      </li>
+      <li role="separator" class="divider"></li>
+      <li>
+        <a ui-sref="projects.list">
+          <i class="icon-project"></i> Switch Projects
+        </a></li>
+    </ul>
+  </div>
+</span>

@@ -10,6 +10,7 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Prop.forAll
 import geotrellis.raster.histogram._
 import geotrellis.raster.render._
+import geotrellis.raster._
 
 import scala.util.Random
 import java.util.UUID
@@ -48,7 +49,16 @@ object Generators {
     band <- arbitrary[Int]
     id <- arbitrary[UUID]
     constructor <- Gen.lzy(Gen.oneOf(SceneRaster.apply _, ProjectRaster.apply _))
-  } yield constructor(id, Some(band))
+    celltype <- Gen.lzy(Gen.oneOf(
+      BitCellType, ByteCellType, UByteCellType, ShortCellType, UShortCellType, IntCellType,
+      FloatCellType, DoubleCellType, ByteConstantNoDataCellType, UByteConstantNoDataCellType,
+      ShortConstantNoDataCellType, UShortConstantNoDataCellType, IntConstantNoDataCellType,
+      FloatConstantNoDataCellType, DoubleConstantNoDataCellType, ByteUserDefinedNoDataCellType(42),
+      UByteUserDefinedNoDataCellType(42), ShortUserDefinedNoDataCellType(42),
+      UShortUserDefinedNoDataCellType(42), IntUserDefinedNoDataCellType(42),
+      FloatUserDefinedNoDataCellType(42), DoubleUserDefinedNoDataCellType(42)
+    ))
+  } yield constructor(id, Some(band), None)
 
   lazy val genEvalParams: Gen[EvalParams] = for {
     astIds  <- containerOfN[List, UUID](12, arbitrary[UUID])

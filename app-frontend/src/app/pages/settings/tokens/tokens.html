@@ -3,18 +3,20 @@
     <div class="dashboard-header">
       <h1 class="h3 page-title">Tokens & Shared Maps</h1>
     </div>
-    <div class="tab-header">
-      <button class="btn btn-tab"
-              ui-sref="settings.tokens.api"
-              ui-sref-active="active">
-        Api
-      </button>
-      <button class="btn btn-tab"
-              ui-sref="settings.tokens.map"
-              ui-sref-active="active">
-        Shared Maps
-      </button>
-    </div>
+    <ul class="tabbed-list-header">
+      <li>
+        <a ui-sref="settings.tokens.api"
+           ui-sref-active="active">
+          API
+        </a>
+      </li>
+      <li>
+        <a ui-sref="settings.tokens.map"
+           ui-sref-active="active">
+          Shared Maps
+        </a>
+      </li>
+    </ul>
     <div class="tab-body" ui-view>
     </div>
   </div>

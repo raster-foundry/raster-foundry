@@ -41,7 +41,10 @@ export default class DiagramContainerController {
     }
 
     getToolLabel(json) {
-        return json.metadata.label || json.apply;
+        if (json.metadata && json.metadata.label) {
+            return json.metadata.label;
+        }
+        return json.apply;
     }
 
     initDiagram() {

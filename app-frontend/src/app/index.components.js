@@ -29,11 +29,16 @@ export default angular.module('index.components', [
     // map components
     require('./components/map/mapContainer/mapContainer.module.js').name,
     require('./components/map/staticMap/staticMap.module.js').name,
+    require('./components/map/drawToolbar/drawToolbar.module.js').name,
 
     // settings components
     require('./components/settings/refreshTokenModal/refreshTokenModal.module.js').name,
     require('./components/settings/featureFlagOverrides/featureFlagOverrides.module.js').name,
     require('./components/settings/tokenItem/tokenItem.module.js').name,
+
+    // export components
+    require('./components/exports/exportItem/exportItem.module.js').name,
+    require('./components/exports/exportDownloadModal/exportDownloadModal.module.js').name,
 
     // common components (no domain)
     require('./components/common/navBar/navBar.module.js').name,
