@@ -48,6 +48,7 @@ export default class AOIParametersController {
         'ngInject';
         this.$log = $log;
         this.$q = $q;
+        this.$scope = $scope;
         this.$parent = $scope.$parent.$ctrl;
         this.$state = $state;
         this.$uibModal = $uibModal;
@@ -61,6 +62,10 @@ export default class AOIParametersController {
     }
 
     $onInit() {
+        this.$scope.$on('$destroy', () => {
+            this.getMap().then(mapWrapper => mapWrapper.deleteLayers('Areas Of Interest'));
+        });
+
         this.showFilters = false;
         this.projectLoaded = false;
         this.aoiProjectParameters = {};
