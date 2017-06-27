@@ -83,10 +83,14 @@
 
 // Hover/Focus state
 .dropdown-menu.dropdown-menu-light > li > a {
-  &:hover,
-  &:focus {
+  &:hover {
     text-decoration: none;
-    color: $brand-primary;
+    color: #fff;
+    background: $brand-primary;
+    &.color-danger {
+      color: #fff !important;
+      background: $danger;
+    }
   }
 }
 

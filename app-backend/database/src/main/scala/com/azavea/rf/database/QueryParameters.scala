@@ -27,8 +27,8 @@ case class CombinedImageQueryParams(
 /** Query parameters specific to image files */
 @JsonCodec
 case class ImageQueryParameters(
-  minRawDataBytes: Option[Int] = None,
-  maxRawDataBytes: Option[Int] = None,
+  minRawDataBytes: Option[Long] = None,
+  maxRawDataBytes: Option[Long] = None,
   minResolution: Option[Float] = None,
   maxResolution: Option[Float] = None,
   scene: Iterable[UUID] = Seq[UUID]()

@@ -103,6 +103,13 @@ export default (app) => {
                         method: 'POST',
                         url: '/api/exports/'
                     },
+                    listExports: {
+                        method: 'GET',
+                        url: '/api/exports?project=:project',
+                        params: {
+                            project: '@project'
+                        }
+                    },
                     createAOI: {
                         method: 'POST',
                         url: '/api/projects/:projectId/areas-of-interest/',
@@ -128,6 +135,10 @@ export default (app) => {
 
         get(id) {
             return this.Project.get({id}).$promise;
+        }
+
+        listExports(params = {}) {
+            return this.Project.listExports(params).$promise;
         }
 
         export(project, settings = {}, options = {}) {

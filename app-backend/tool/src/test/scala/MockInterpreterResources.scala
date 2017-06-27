@@ -25,7 +25,7 @@ trait MockInterpreterResources extends TileBuilders with RasterMatchers {
 
   def randomSourceAST = MapAlgebraAST.Source(UUID.randomUUID, None)
 
-  def tileSource(band: Int) = SceneRaster(UUID.randomUUID, Some(band))
+  def tileSource(band: Int) = SceneRaster(UUID.randomUUID, Some(band), None)
 
   def tile(value: Int): Tile = createValueTile(d = 4, v = value)
 
@@ -33,9 +33,9 @@ trait MockInterpreterResources extends TileBuilders with RasterMatchers {
 
   val goodSource = (raster: RFMLRaster, z: Int, x: Int, y: Int) => {
     raster match {
-      case r@SceneRaster(id, Some(band)) =>
+      case r@SceneRaster(id, Some(band), maybeND) =>
         requests = raster :: requests
-        Future { Some(tile(band)) }
+        Future { Some(tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType))) }
       case _ => Future.failed(new Exception("can't find that"))
     }
   }

@@ -28,11 +28,10 @@ export default class ProjectsDetailController {
         if (!this.project) {
             if (this.projectId) {
                 this.loading = true;
-                this.projectService.query({id: this.projectId}).then(
+                this.fetchProject().then(
                     (project) => {
                         this.project = project;
                         this.loading = false;
-                        this.populateSceneList(this.$state.params.page || 1);
                         this.getMap =
                             () => this.mapService.getMap(`${this.project.id}-big-preview`);
                         this.initMap();
@@ -55,6 +54,13 @@ export default class ProjectsDetailController {
                 this.activeModal.dismiss();
             }
         });
+    }
+
+    fetchProject() {
+        if (!this.projectRequest) {
+            this.projectRequest = this.projectService.loadProject(this.projectId);
+        }
+        return this.projectRequest;
     }
 
     initMap() {
@@ -118,6 +124,26 @@ export default class ProjectsDetailController {
         }, () => {
             this.errorMsg = 'Server error.';
             this.loading = false;
+        });
+    }
+
+    populateExportList(page) {
+        if (this.loadingExports) {
+            return;
+        }
+        delete this.exportLoadingError;
+        this.loadingExports = true;
+        this.exportList = [];
+        this.projectService.listExports({
+            sort: 'createdAt, desc',
+            pageSize: 10,
+            page: page - 1,
+            project: this.project.id
+        }).then(exportResult => {
+            // const replace = !this.$state.params.exportpage;
+            this.lastExportResult = exportResult;
+            this.numExportPaginationButtons = Math.max(6 - exportResult.page % 10, 3);
+            this.currentExportPage = exportResult.page + 1;
         });
     }
 

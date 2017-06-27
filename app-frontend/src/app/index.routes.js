@@ -17,6 +17,8 @@ import projectsAdvancedColorTpl from './pages/projects/edit/advancedcolor/advanc
 import projectsColorAdjustTpl from './pages/projects/edit/advancedcolor/adjust/adjust.html';
 import projectsListTpl from './pages/projects/list/list.html';
 import projectsDetailTpl from './pages/projects/detail/detail.html';
+import projectsDetailScenesTpl from './pages/projects/detail/scenes/scenes.html';
+import projectsDetailExportsTpl from './pages/projects/detail/exports/exports.html';
 import projectsScenesTpl from './pages/projects/edit/scenes/scenes.html';
 import projectsSceneBrowserTpl from './pages/projects/edit/browse/browse.html';
 import projectOrderScenesTpl from './pages/projects/edit/order/order.html';
@@ -173,10 +175,23 @@ function projectStates($stateProvider) {
             controllerAs: '$ctrl'
         })
         .state('projects.detail', {
-            url: '/detail/:projectid?:page',
+            url: '/detail/:projectid',
             params: {project: null},
             templateUrl: projectsDetailTpl,
             controller: 'ProjectsDetailController',
+            controllerAs: '$ctrl',
+            redirectTo: 'projects.detail.scenes'
+        })
+        .state('projects.detail.scenes', {
+            url: '/scenes?:page',
+            templateUrl: projectsDetailScenesTpl,
+            controller: 'ProjectDetailScenesController',
+            controllerAs: '$ctrl'
+        })
+        .state('projects.detail.exports', {
+            url: '/exports?:page',
+            templateUrl: projectsDetailExportsTpl,
+            controller: 'ProjectDetailExportsController',
             controllerAs: '$ctrl'
         });
 

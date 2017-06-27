@@ -15,7 +15,7 @@ case class Image(
   createdBy: String,
   modifiedBy: String,
   owner: String,
-  rawDataBytes: Int,
+  rawDataBytes: Long,
   visibility: Visibility,
   filename: String,
   sourceUri: String,
@@ -53,7 +53,7 @@ object Image {
   @JsonCodec
   case class Create(
     organizationId: UUID,
-    rawDataBytes: Int,
+    rawDataBytes: Long,
     visibility: Visibility,
     filename: String,
     sourceUri: String,
@@ -92,7 +92,7 @@ object Image {
   @JsonCodec
   case class Banded(
     organizationId: UUID,
-    rawDataBytes: Int,
+    rawDataBytes: Long,
     visibility: Visibility,
     filename: String,
     sourceUri: String,
@@ -128,7 +128,7 @@ object Image {
     createdBy: String,
     modifiedBy: String,
     owner: String,
-    rawDataBytes: Int,
+    rawDataBytes: Long,
     visibility: Visibility,
     filename: String,
     sourceUri: String,

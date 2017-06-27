@@ -1,8 +1,9 @@
 package com.azavea.rf.tool.eval
 
 import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.ast.MapAlgebraAST._
 import com.azavea.rf.tool.eval._
+import com.azavea.rf.tool.params._
+import com.azavea.rf.tool.ast.MapAlgebraAST._
 
 import io.circe._
 import io.circe.syntax._
