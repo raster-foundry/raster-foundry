@@ -140,7 +140,7 @@ export default class ExportController {
 
     getExportSource() {
         return this.getCurrentExportType().exportType === 'Dropbox' ?
-            {source: `dropbox://${this.project.id}`} :
+            {source: `dropbox:///${this.project.id}`} :
             {};
     }
 
