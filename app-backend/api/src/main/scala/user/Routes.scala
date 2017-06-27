@@ -115,9 +115,7 @@ trait UserRoutes extends Authentication
         dbxAuthRequest.redirectURI, session, queryParams
       )
       logger.debug("Auth finish from Dropbox successful")
-      Users.storeDropboxAccessToken(user.id, authFinish.getAccessToken)
-      logger.debug(s"Sent access code for user ${user.id} to database")
-      complete(StatusCodes.OK)
+      complete(Users.storeDropboxAccessToken(user.id, authFinish.getAccessToken))
     }
   }
 

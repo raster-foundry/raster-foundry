@@ -9,6 +9,11 @@ export default class ProjectExportModalController {
         this.maxZoom = 30;
         this.projectId = this.resolve.project.id;
         this.zoom = this.resolve.zoom;
+        this.exportType = 'S3';
+        this.exportTypes = [
+            {label: 'S3'},
+            {label: 'Dropbox'}
+        ];
         this.exportSuccess = false;
         this.exportFailure = false;
         this.zoomSlider = {
@@ -21,13 +26,25 @@ export default class ProjectExportModalController {
         };
     }
 
+    onExportTypeChange(newExportType) {
+        let newLabel = newExportType.label;
+        this.exportTypes.forEach(exportType => {
+            if (exportType.label === newLabel) {
+                this.exportType = exportType;
+            }
+        });
+    }
+
     exportNotStarted() {
         return !this.exportSuccess && !this.exportFailure;
     }
 
     createExport() {
+        let extraOptions = this.exportType.label === 'Dropbox' ?
+            { source: `dropbox:///raster-foundry/${this.projectId}.tif` } :
+            {};
         this.projectService
-            .export(this.projectId, this.zoom)
+            .export(this.projectId, this.zoom, this.exportType.label, extraOptions)
             .then(
                 () => {
                     // @TODO: should we do something with the export object that we get back here?

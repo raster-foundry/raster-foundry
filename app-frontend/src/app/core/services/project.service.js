@@ -45,6 +45,7 @@ export default (app) => {
             this.tokenService = tokenService;
             this.authService = authService;
             this.statusService = statusService;
+            this.exportType = 'S3';
             this.$http = $http;
             this.$location = $location;
             this.$q = $q;
@@ -165,7 +166,7 @@ export default (app) => {
             const defaultSettings = {
                 projectId: project.id,
                 exportStatus: 'NOTEXPORTED',
-                exportType: 'S3',
+                exportType: this.exportType ? this.exportType : 'S3',
                 visibility: 'PRIVATE',
                 exportOptions: finalOptions
             };

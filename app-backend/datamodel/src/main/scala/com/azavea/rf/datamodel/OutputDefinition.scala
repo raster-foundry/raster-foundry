@@ -25,5 +25,6 @@ case class OutputDefinition(
   source: URI,
   dropboxCredential: Option[String]
 ) {
-  def getURLDecodedSource: String = URLDecoder.decode(source.toString, "UTF-8")
+  def getURLDecodedSource: String =
+    URLDecoder.decode(source.toString, "UTF-8").replace("dropbox:///", "")
 }
