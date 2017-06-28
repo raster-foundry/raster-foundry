@@ -67,4 +67,21 @@ export default class ProjectDetailScenesController {
             }
         });
     }
+
+    removeScene(scene, event) {
+        if (event) {
+            event.stopPropagation();
+            event.preventDefault();
+        }
+        this.projectService.removeScenesFromProject(this.project.id, [ scene.id ]).then(
+            () => {
+                this.populateSceneList(this.currentPage);
+            },
+            (err) => {
+                // later on, use toasts or something instead of a debug message
+                this.$log.debug('Error removing scenes from project.', err);
+                this.populateSceneList(this.currentPage);
+            }
+        );
+    }
 }
