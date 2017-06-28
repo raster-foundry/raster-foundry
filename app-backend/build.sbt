@@ -237,9 +237,7 @@ lazy val batch = Project("batch", file("batch"))
 
 import io.gatling.sbt.GatlingPlugin
 lazy val tile = Project("tile", file("tile"))
-  .dependsOn(datamodel)
-  .dependsOn(database)
-  .dependsOn(common % "test->test;compile->compile")
+  .dependsOn(database, datamodel, common % "test->test;compile->compile")
   .dependsOn(tool)
   .dependsOn(batch)
   .enablePlugins(GatlingPlugin)
