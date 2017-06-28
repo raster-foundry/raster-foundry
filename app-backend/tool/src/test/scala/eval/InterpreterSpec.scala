@@ -11,6 +11,7 @@ import cats.data.{NonEmptyList => NEL, _}
 import cats.data.Validated._
 import cats.implicits._
 import org.scalatest._
+import geotrellis.vector._
 import geotrellis.raster._
 import geotrellis.raster.render._
 import geotrellis.raster.testkit._
@@ -41,7 +42,7 @@ class InterpreterSpec
       case Valid(lazytile) =>
         val tile = lazytile.evaluate
         requests.length should be (2)
-        assertEqual(tile.get, createValueTile(4, -1).toArray)
+        assertEqual(tile.get, createValueTile(256, -1).toArray)
       case i@Invalid(_) =>
         fail(s"Unable to parse tree for tile retrieval: $i")
     }
@@ -131,7 +132,7 @@ class InterpreterSpec
       case Valid(lazyTile) =>
         val maybeTile = lazyTile.evaluate
         requests.length should be (1)
-        assertEqual(maybeTile.get, createValueTile(4, 77))
+        assertEqual(maybeTile.get, createValueTile(256, 77))
       case i@Invalid(_) =>
         fail(s"$i")
     }
@@ -154,7 +155,7 @@ class InterpreterSpec
       case Valid(lazyTile) =>
         val maybeTile = lazyTile.evaluate
         requests.length should be (1)
-        assertEqual(maybeTile.get, createValueTile(d = 4, v = NODATA))
+        assertEqual(maybeTile.get, createValueTile(256, NODATA))
       case i@Invalid(_) =>
         fail(s"$i")
     }
@@ -390,6 +391,33 @@ class InterpreterSpec
         val maybeTile = lazytile.evaluateDouble
         requests.length should be (0)
         maybeTile.get.getDouble(0, 0) should be (42)
+      case i@Invalid(_) =>
+        fail(s"$i")
+    }
+  }
+
+  it("should evaluate masking") {
+    import geotrellis.proj4._
+    requests = Nil
+    val subExtent: Extent = Interpreter.layouts(2).mapTransform(0, 0)
+    val mask = MultiPolygon(subExtent.toPolygon)
+
+    val src = randomSourceAST
+    val masking = Masking(List(src), UUID.randomUUID, None, mask)
+    val tms = Interpreter.interpretTMS(
+      ast = masking,
+      sourceMapping = Map(src.id -> tileSource(1)),
+      overrides = Map.empty,
+      source = goodSource
+    )
+    println("Simple Masking calculation: ", masking.asJson.noSpaces)
+
+    val ret = tms(1, 0, 0)
+    val op = Await.result(ret, 10.seconds) match {
+      case Valid(lazytile) =>
+        val maybeTile = lazytile.evaluateDouble
+        requests.length should be (1)
+        maybeTile.get.getDouble(10, 10) should be (1)
       case i@Invalid(_) =>
         fail(s"$i")
     }
