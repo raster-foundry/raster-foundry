@@ -1,7 +1,7 @@
 package com.azavea.rf.api.exports
 
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.{Route, PathMatcher}
+import akka.http.scaladsl.model.{StatusCodes, Uri}
 import com.typesafe.scalalogging.LazyLogging
 import cats.data._
 import cats.implicits._
@@ -11,11 +11,12 @@ import io.circe._
 import io.circe.syntax._
 
 import com.azavea.rf.common._
-import com.azavea.rf.database.tables.Exports
+import com.azavea.rf.database.tables.{Exports, Users}
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.{ActionRunner, Database}
 import com.azavea.rf.datamodel._
 
+import java.net.URL
 import java.util.UUID
 
 import scala.concurrent.Future
@@ -49,7 +50,13 @@ trait ExportRoutes extends Authentication
       } ~
       pathPrefix("files") {
         pathEndOrSingleSlash {
-          get { exportFiles(exportId) }
+          get { proxiedFiles(exportId) }
+        } ~
+        pathPrefix(Segment) { objectKey =>
+          // val url = getFileUrl(exportId, objectKey)
+          pathEndOrSingleSlash {
+            redirectRoute(exportId, objectKey)
+          }
         }
       }
     }
@@ -123,6 +130,32 @@ trait ExportRoutes extends Authentication
           export: Export <- OptionT(readOne[Export](Exports.getExportWithStatus(exportId, user, ExportStatus.Exported)))
           list: List[String] <- OptionT.fromOption[Future] { export.getExportOptions.map(_.getSignedUrls(): List[String]) }
         } yield list).value
+      }
+    }
+  }
+
+  def proxiedFiles(exportId: UUID): Route = authenticate { user =>
+    rejectEmptyResponse {
+      complete {
+        (for {
+          export: Export <- OptionT(readOne[Export](Exports.getExportWithStatus(exportId, user, ExportStatus.Exported)))
+          list: List[String] <- OptionT.fromOption[Future] { export.getExportOptions.map(_.getObjectKeys(): List[String]) }
+        } yield list).value
+      }
+    }
+  }
+
+  def redirectRoute(exportId: UUID, objectKey: String): Route = authenticateWithParameter { user =>
+    implicit def javaURLAsAkkaURI(url: URL): Uri = Uri(url.toString)
+    val x: Future[Option[Uri]] = for {
+      export <- readOne[Export](Exports.getExportWithStatus(exportId, user, ExportStatus.Exported))
+      uri <- OptionT.fromOption[Future] { export.get.getExportOptions.map(_.getSignedUrl(objectKey): Uri) }.value
+    } yield uri
+
+    onSuccess(x) { y =>
+      y match {
+        case Some(z) => redirect(z, StatusCodes.TemporaryRedirect)
+        case _ => throw new Exception
       }
     }
   }
