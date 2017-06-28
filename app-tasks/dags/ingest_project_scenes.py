@@ -163,7 +163,7 @@ def create_ingest_definition_op(*args, **kwargs):
     logger.info('Beginning to create ingest definition for scene %s for user %s...',
                 scene_id, scene.owner)
 
-    if scene.ingestStatus != IngestStatus.TOBEINGESTED:
+    if scene.ingestStatus != IngestStatus.TOBEINGESTED and scene.ingestStatus != IngestStatus.FAILED:
         raise Exception('Scene is no longer waiting to be ingested, error error')
 
     scene.ingestStatus = IngestStatus.INGESTING
