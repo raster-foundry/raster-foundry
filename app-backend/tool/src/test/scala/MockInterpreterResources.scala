@@ -27,7 +27,7 @@ trait MockInterpreterResources extends TileBuilders with RasterMatchers {
 
   def tileSource(band: Int) = SceneRaster(UUID.randomUUID, Some(band), None)
 
-  def tile(value: Int): Tile = createValueTile(d = 4, v = value)
+  def tile(value: Int): Tile = createValueTile(d = 256, v = value)
 
   var requests = List.empty[RFMLRaster]
 

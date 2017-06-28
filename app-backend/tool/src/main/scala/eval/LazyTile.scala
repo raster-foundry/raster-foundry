@@ -198,8 +198,8 @@ object LazyTile {
    * and avoid having to do JTS intersection tests.
    */
   case class Masking(left: LazyTile, extent: Extent, mask: MultiPolygon) extends Tree {
-    val xres: Double = cols / (extent.xmax - extent.xmin)
-    val yres: Double = rows / (extent.ymax - extent.ymin)
+    val xres: Double = (extent.xmax - extent.xmin) / cols
+    val yres: Double = (extent.ymax - extent.ymin) / rows
 
     /*
     lazy val cellMask: Tile = {
@@ -218,7 +218,7 @@ object LazyTile {
 
     /** Is the requested pixel inside the Mask area? */
     def inMask(col: Int, row: Int): Boolean = {
-      val p = Point(extent.xmin + col * xres, extent.ymin + row * yres)
+      val p = Point(extent.xmin + (col + 0.5) * xres, extent.ymax - (row + 0.5) * yres)
 
       mask.intersects(p)
     }
