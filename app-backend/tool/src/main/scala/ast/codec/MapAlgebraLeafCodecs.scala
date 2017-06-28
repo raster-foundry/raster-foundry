@@ -16,6 +16,8 @@ trait MapAlgebraLeafCodecs {
     ma._type match {
       case Some("src") =>
         ma.as[MapAlgebraAST.Source]
+      case Some("ref") =>
+        ma.as[MapAlgebraAST.ToolReference]
       case Some("const") =>
         ma.as[MapAlgebraAST.Constant]
       case _ =>
@@ -27,6 +29,8 @@ trait MapAlgebraLeafCodecs {
     final def apply(ast: MapAlgebraAST.MapAlgebraLeaf): Json = ast match {
       case src: MapAlgebraAST.Source =>
         src.asJson
+      case reference: MapAlgebraAST.ToolReference =>
+        reference.asJson
       case const: MapAlgebraAST.Constant =>
         const.asJson
       case _ =>
@@ -37,11 +41,16 @@ trait MapAlgebraLeafCodecs {
   implicit lazy val decodeSource: Decoder[MapAlgebraAST.Source] =
     Decoder.forProduct2("id", "metadata")(MapAlgebraAST.Source.apply)
   implicit lazy val encodeSource: Encoder[MapAlgebraAST.Source] =
-    Encoder.forProduct3("type", "id", "metadata")(op => (op.`type`, op.id, op.metadata))
+    Encoder.forProduct3("type", "id", "metadata")(src => (src.`type`, src.id, src.metadata))
 
   implicit lazy val decodeConstant: Decoder[MapAlgebraAST.Constant] =
     Decoder.forProduct3("id", "constant", "metadata")(MapAlgebraAST.Constant.apply)
   implicit lazy val encodeConstant: Encoder[MapAlgebraAST.Constant] =
-    Encoder.forProduct4("type", "id", "constant", "metadata")(op => (op.`type`, op.id, op.constant, op.metadata))
+    Encoder.forProduct4("type", "id", "constant", "metadata")(const => (const.`type`, const.id, const.constant, const.metadata))
+
+  implicit lazy val decodeReference: Decoder[MapAlgebraAST.ToolReference] =
+    Decoder.forProduct2("id", "toolId")(MapAlgebraAST.ToolReference.apply)
+  implicit lazy val encodeReference: Encoder[MapAlgebraAST.ToolReference] =
+    Encoder.forProduct3("type", "id", "toolId")(ref => (ref.`type`, ref.id, ref.toolId))
 }
 

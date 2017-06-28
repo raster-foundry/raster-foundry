@@ -112,10 +112,8 @@ object MapAlgebraAST {
     def empty: Source = Source(UUID.randomUUID(), None)
   }
 
-  case class ToolReference(id: UUID, toolId: UUID) extends MapAlgebraAST {
-    def args: List[MapAlgebraAST] = List()
+  case class ToolReference(id: UUID, toolId: UUID) extends MapAlgebraLeaf("ref") {
     def metadata: Option[NodeMetadata] = None
-    def find(id: UUID): Option[MapAlgebraAST] = None
     def sources: List[MapAlgebraAST.Source] = List()
     def substitute(substitutions: Map[UUID, MapAlgebraAST]): Option[MapAlgebraAST] =
       substitutions.get(toolId)
