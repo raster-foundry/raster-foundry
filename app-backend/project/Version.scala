@@ -40,4 +40,6 @@ object Version {
   val dnsJava            = "2.1.8"
   val dropbox            = "2.1.1"
   val scalaCheck         = "1.13.4"
+  val kamon              = "0.6.7"
+  val kamonAkkaHttp      = "0.6.8"
 }

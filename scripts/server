@@ -21,6 +21,10 @@ then
     then
         docker-compose -f "${DIR}/../docker-compose.yml" \
                        -f "${DIR}/../docker-compose.airflow.yml" up
+    elif [ "${1:-}" = "--with-metrics" ]
+    then
+        docker-compose -f "${DIR}/../docker-compose.yml" \
+                       -f "${DIR}/../docker-compose.metrics.yml" up
     else
         docker-compose up --remove-orphans
     fi

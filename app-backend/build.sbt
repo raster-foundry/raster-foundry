@@ -33,6 +33,29 @@ lazy val commonSettings = Seq(
   addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 )
 
+// Create a new MergeStrategy for aop.xml files
+val aopMerge = new sbtassembly.MergeStrategy {
+  val name = "aopMerge"
+  import scala.xml._
+  import scala.xml.dtd._
+
+  def apply(tempDir: File, path: String, files: Seq[File]): Either[String, Seq[(File, String)]] = {
+    val dt = DocType("aspectj", PublicID("-//AspectJ//DTD//EN", "http://www.eclipse.org/aspectj/dtd/aspectj.dtd"), Nil)
+    val file = MergeStrategy.createMergeTarget(tempDir, path)
+    val xmls: Seq[Elem] = files.map(XML.loadFile)
+    val aspectsChildren: Seq[Node] = xmls.flatMap(_ \\ "aspectj" \ "aspects" \ "_")
+    val weaverChildren: Seq[Node] = xmls.flatMap(_ \\ "aspectj" \ "weaver" \ "_")
+    val options: String = xmls.map(x => (x \\ "aspectj" \ "weaver" \ "@options").text).mkString(" ").trim
+    val weaverAttr = if (options.isEmpty) Null else new UnprefixedAttribute("options", options, Null)
+    val aspects = new Elem(null, "aspects", Null, TopScope, false, aspectsChildren: _*)
+    val weaver = new Elem(null, "weaver", weaverAttr, TopScope, false, weaverChildren: _*)
+    val aspectj = new Elem(null, "aspectj", Null, TopScope, false, aspects, weaver)
+    XML.save(file.toString, aspectj, "UTF-8", xmlDecl = false, dt)
+    IO.append(file, IO.Newline.getBytes(IO.defaultCharset))
+    Right(Seq(file -> path))
+  }
+}
+
 lazy val apiSettings = commonSettings ++ Seq(
   fork in run := true,
   connectInput in run := true,
@@ -43,6 +66,7 @@ lazy val apiSettings = commonSettings ++ Seq(
     case "application.conf" => MergeStrategy.concat
     case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") => MergeStrategy.discard
     case "META-INF/MANIFEST.MF" => MergeStrategy.discard
+    case PathList("META-INF", "aop.xml") => aopMerge
     case _ => MergeStrategy.first
   },
   resolvers += "Open Source Geospatial Foundation Repo" at "http://download.osgeo.org/webdav/geotools/",
@@ -64,6 +88,12 @@ lazy val slickDependencies = List(
     .exclude("postgresql", "postgresql")
 )
 
+lazy val metricsDependencies = List(
+  Dependencies.kamonCore,
+  Dependencies.kamonStatsd,
+  Dependencies.kamonAkkaHttp
+)
+
 lazy val dbDependencies = List(
   Dependencies.hikariCP,
   Dependencies.postgres
@@ -83,7 +113,7 @@ lazy val testDependencies = List(
 )
 
 lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
-    testDependencies ++ Seq(
+    testDependencies ++ metricsDependencies ++ Seq(
   Dependencies.akka,
   Dependencies.akkahttp,
   Dependencies.akkaHttpCors,
@@ -207,15 +237,14 @@ lazy val batch = Project("batch", file("batch"))
 
 import io.gatling.sbt.GatlingPlugin
 lazy val tile = Project("tile", file("tile"))
-  .dependsOn(datamodel)
-  .dependsOn(database)
-  .dependsOn(common % "test->test;compile->compile")
+  .dependsOn(database, datamodel, common % "test->test;compile->compile")
   .dependsOn(tool)
   .dependsOn(batch)
   .enablePlugins(GatlingPlugin)
   .settings(commonSettings:_*)
   .settings({
-    libraryDependencies ++= loggingDependencies ++ testDependencies ++ Seq(
+    libraryDependencies ++= loggingDependencies ++ testDependencies ++
+    metricsDependencies ++ Seq(
       Dependencies.spark,
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisS3,
@@ -236,6 +265,7 @@ lazy val tile = Project("tile", file("tile"))
     case "application.conf" => MergeStrategy.concat
     case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") => MergeStrategy.discard
     case "META-INF/MANIFEST.MF" => MergeStrategy.discard
+    case PathList("META-INF", "aop.xml") => aopMerge
     case _ => MergeStrategy.first
   })
   .settings(assemblyJarName in assembly := "rf-tile-server.jar")

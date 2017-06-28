@@ -11,23 +11,6 @@ __pycache__/
 # C extensions
 *.so
 
-# Distribution / packaging
-.Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-*.egg-info/
-.installed.cfg
-*.egg
-
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -75,8 +58,6 @@ npm-debug.log
 # MacOS
 .DS_Store
 
-deployment/default.yml
-
 # Scala
 *.class
 *.log
@@ -113,6 +94,7 @@ api-server/.ensime_cache/*
 /.env
 
 .node_modules
+dist/
 
 /data
 /app-tasks/usr/local/airflow/logs/

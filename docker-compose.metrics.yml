@@ -1,0 +1,23 @@
+version: '2.1'
+services:
+  graphite:
+    image: sitespeedio/graphite
+    ports:
+      - "8181:80"
+
+  statsd:
+    image: quay.io/azavea/statsd:0.8-alpine
+    links:
+      - graphite
+    volumes:
+      - ./statsd/var/lib/statsd/config.js:/var/lib/statsd/config.js
+
+  grafana:
+    image: grafana/grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    links:
+      - graphite
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=password
