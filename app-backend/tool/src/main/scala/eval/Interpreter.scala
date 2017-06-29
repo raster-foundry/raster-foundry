@@ -34,6 +34,7 @@ object Interpreter extends LazyLogging {
   ): Interpreted[MapAlgebraAST] = ast match {
     /* Can't override data Sources */
     case s: Source => Valid(s)
+    case t: ToolReference => Valid(t)
 
     /* Nodes which can be overridden */
     case c: Constant => overrides.get(c.id) match {
@@ -69,18 +70,7 @@ object Interpreter extends LazyLogging {
     }
 
     /* Non-overridable Operations */
-    case Addition(args, id, m) =>
-      args.map(a => overrideParams(a, overrides)).sequence.map(ks => Addition(ks, id, m))
-    case Subtraction(args, id, m) =>
-      args.map(a => overrideParams(a, overrides)).sequence.map(ks => Subtraction(ks, id, m))
-    case Multiplication(args, id, m) =>
-      args.map(a => overrideParams(a, overrides)).sequence.map(ks => Multiplication(ks, id, m))
-    case Division(args, id, m) =>
-      args.map(a => overrideParams(a, overrides)).sequence.map(ks => Division(ks, id, m))
-    case Min(args, id, m) =>
-      args.map(a => overrideParams(a, overrides)).sequence.map(ks => Min(ks, id, m))
-    case Max(args, id, m) =>
-      args.map(a => overrideParams(a, overrides)).sequence.map(ks => Max(ks, id, m))
+    case o: Operation => o.args.map(a => overrideParams(a, overrides)).sequence.map(ks => o.withArgs(ks))
   }
 
   /** Interpret an AST with its matched execution parameters, but do so
@@ -95,6 +85,7 @@ object Interpreter extends LazyLogging {
     case Source(id, _) if sourceMapping.isDefinedAt(id) => Valid(Monoid.empty)
     case Source(id, _) => Invalid(NonEmptyList.of(MissingParameter(id)))
     case Constant(_, _, _) => Valid(Monoid.empty)
+    case ToolReference(id, _) => Invalid(NonEmptyList.of(UnsubstitutedRef(id)))
 
     /* Unary operations must have only one arguments */
     case op: UnaryOp => {
@@ -108,7 +99,7 @@ object Interpreter extends LazyLogging {
     }
 
     /* All binary operations must have at least 2 arguments */
-    case op => {
+    case op: Operation => {
       val kids: Interpreted[M] = op.args.foldMap(a => interpretPure(a, sourceMapping))
 
       if (op.args.length > 1) kids else {
@@ -137,6 +128,7 @@ object Interpreter extends LazyLogging {
       /* --- LEAVES --- */
       case Source(id, _) => LazyTile(tiles(id))
       case Constant(_, const, _) => LazyTile.Constant(const)
+      case  ToolReference(_, _) => sys.error("TMS: Attempt to evaluate a ToolReference!")
 
       /* --- OPERATIONS --- */
       case Addition(args, id, _) =>
