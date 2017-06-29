@@ -99,6 +99,20 @@ export default (app) => {
             });
         }
 
+        loadTool(toolId) {
+            this.isLoadingTool = true;
+            this.currentToolId = toolId;
+            const request = this.get(toolId);
+            request.then(t => {
+                this.currentTool = t;
+            }, () => {
+                this.currentToolId = null;
+            }).finally(() => {
+                this.isLoadingTool = false;
+            });
+            return request;
+        }
+
         // @TODO: implement getting related tags and categories
     }
 

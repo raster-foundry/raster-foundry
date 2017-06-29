@@ -1,7 +1,7 @@
 <span class="navbar-vertical-divider"></span>
 <span ng-if="$ctrl.projectService.currentProject.name">
-  <span class="project-title">{{$ctrl.projectService.currentProject.name}}</span>
-  <div class="dropdown-project"
+  <span class="navbar-detail-title">{{$ctrl.projectService.currentProject.name}}</span>
+  <div class="dropdown-navbar-detail"
        uib-dropdown
        on-toggle="toggled($ctrl.optionsOpen)">
     <a uib-dropdown-toggle>

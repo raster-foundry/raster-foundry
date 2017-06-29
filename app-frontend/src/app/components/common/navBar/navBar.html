@@ -9,35 +9,35 @@
     <span class="navbar-vertical-divider"></span>
     <nav>
       <a href
-         ng-class="{'icon': $ctrl.isInProject()}"
+         ng-class="{'icon': $ctrl.hasSubview()}"
          ui-sref="home"
          ui-sref-active="active">
         <i class="icon-home"></i>
-        <span ng-if="!$ctrl.isInProject()">Home</span>
+        <span ng-if="!$ctrl.hasSubview()">Home</span>
       </a>
       <a href
-         ng-class="{'icon': $ctrl.isInProject(),
+         ng-class="{'icon': $ctrl.hasSubview(),
                     'active': $ctrl.$state.includes('projects') }"
          ui-sref="projects.list">
         <i class="icon-project"></i>
-        <span ng-if="!$ctrl.isInProject()">Projects</span>
+        <span ng-if="!$ctrl.hasSubview()">Projects</span>
       </a>
       <a href
-         ng-class="{'icon': $ctrl.isInProject(),
+         ng-class="{'icon': $ctrl.hasSubview(),
                     'active': $ctrl.$state.includes('imports') }"
          ui-sref="imports">
         <i class="icon-imports"></i>
-        <span ng-if="!$ctrl.isInProject()">Imports</span>
+        <span ng-if="!$ctrl.hasSubview()">Imports</span>
       </a>
       <a href
          feature-flag="tools-ui"
          ui-sref="market.search"
          ng-class="{
                    active: $ctrl.$state.$current.name.includes('market'),
-                   icon: $ctrl.isInProject()
+                   icon: $ctrl.hasSubview()
                    }">
         <i class="icon-model"></i>
-        <span ng-if="!$ctrl.isInProject()">Tools</span>
+        <span ng-if="!$ctrl.hasSubview()">Tools</span>
       </a>
 
       <span ui-view="navmenu"></span>
