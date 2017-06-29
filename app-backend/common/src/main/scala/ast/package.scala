@@ -32,7 +32,8 @@ package object ast {
           val astPatch = referent.definition.as[MapAlgebraAST].valueOr(throw _)
           // Here's where we can hope to catch cycles as we traverse down
           //  the tree (keeping track of previously encountered references)
-          if (assembled.keys.toList.contains(refId))
+          if (assembled.get(refId).isDefined)
+            // TODO: EitherT this thing
             throw new IllegalArgumentException(s"Repeated substitution $refId found; likely cyclical reference")
           else
             assembleSubstitutions(astPatch, user, assembled ++ Map(refId -> astPatch))
