@@ -1,11 +1,11 @@
 package com.azavea.rf.tool.ast
 
-import geotrellis.vector.MultiPolygon
 import java.util.UUID
 
 import io.circe.generic.JsonCodec
 import cats.implicits._
 
+import geotrellis.vector.MultiPolygon
 
 /** The ur-type for a recursive representation of MapAlgebra operations */
 sealed trait MapAlgebraAST extends Product with Serializable {
