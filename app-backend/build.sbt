@@ -269,6 +269,7 @@ lazy val tile = Project("tile", file("tile"))
     case _ => MergeStrategy.first
   })
   .settings(assemblyJarName in assembly := "rf-tile-server.jar")
+  .settings(test in assembly := {})
 
 lazy val tool = Project("tool", file("tool"))
   .settings(commonSettings:_*)
