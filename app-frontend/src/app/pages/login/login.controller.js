@@ -1,10 +1,20 @@
 export default class LoginController {
-    constructor(authService, $state) {
+    constructor($state, $location, authService) {
         'ngInject';
-        if (authService.verifyAuthCache()) {
-            $state.go('home');
+        this.$state = $state;
+        this.$location = $location;
+        this.authService = authService;
+    }
+
+    $onInit() {
+        const hash = this.$location.hash();
+        if (hash){
+            this.authService.onImpersonation(hash);
+        }
+        if (this.authService.verifyAuthCache()) {
+            this.$state.go('home');
         } else {
-            authService.login();
+            this.authService.login();
         }
     }
 }
