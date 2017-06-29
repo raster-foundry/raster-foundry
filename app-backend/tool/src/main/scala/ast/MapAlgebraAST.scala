@@ -66,9 +66,9 @@ object MapAlgebraAST {
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = Division(newArgs, id, metadata)
   }
 
-  case class Masking(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
-      extends Operation("mask") {
-    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = Masking(newArgs, id, metadata)
+  case class Masking(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], mask: MultiPolygon)
+      extends UnaryOp("mask") {
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = Masking(newArgs, id, metadata, mask)
   }
 
   case class Classification(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], classMap: ClassMap)
