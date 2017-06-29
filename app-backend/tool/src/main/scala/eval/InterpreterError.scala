@@ -28,6 +28,10 @@ case class UnhandledCase(id: UUID) extends InterpreterError {
   def repr = s"Some branch of Interpreter logic has yet to be implemented: ${id}"
 }
 
+case class UnsubstitutedRef(id: UUID) extends InterpreterError {
+  def repr = s"Unsubstituted Tool reference found: ${id}"
+}
+
 case class NoBandGiven(id: UUID) extends InterpreterError {
   def repr = s"No band value given for Scene ${id}"
 }
