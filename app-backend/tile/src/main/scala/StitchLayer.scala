@@ -2,6 +2,7 @@ package com.azavea.rf.tile
 
 import com.azavea.rf.database.Database
 import com.azavea.rf.common.cache._
+
 import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.vector._
@@ -10,14 +11,16 @@ import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.s3._
 import com.typesafe.scalalogging.LazyLogging
-import java.util.UUID
-import scala.concurrent._
-import scala.util.{Failure, Success, Try}
 import cats.data._
 import cats.implicits._
 
+import java.util.UUID
+import scala.concurrent._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Failure, Success, Try}
+
 object StitchLayer extends LazyLogging with Config {
-  implicit val memcachedClient = LayerCache.memcachedClient
+  implicit lazy val memcachedClient = LayerCache.memcachedClient
   implicit val database = Database.DEFAULT
 
   /** This function will iterate through zoom levels a layer, starting with 1, until it finds the level

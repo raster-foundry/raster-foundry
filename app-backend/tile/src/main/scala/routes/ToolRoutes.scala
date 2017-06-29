@@ -19,7 +19,6 @@ import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 import geotrellis.raster._
 import geotrellis.raster.render._
-import kamon.akka.http.KamonTraceDirectives
 
 import java.util.UUID
 import scala.concurrent._

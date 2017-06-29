@@ -34,5 +34,8 @@ object Config {
 
     lazy val heapMaxEntries: Int =
       memcachedConfig.getInt("heap.max-entries")
+
+    lazy val enabled: Boolean =
+      memcachedConfig.getBoolean("enabled")
   }
 }

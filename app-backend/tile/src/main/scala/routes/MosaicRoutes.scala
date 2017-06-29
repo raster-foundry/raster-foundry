@@ -1,8 +1,5 @@
 package com.azavea.rf.tile.routes
 
-import cats.data.OptionT
-import cats.implicits._
-
 import com.azavea.rf.common.RfStackTrace
 import com.azavea.rf.tile._
 import com.azavea.rf.tile.image._
@@ -13,29 +10,24 @@ import com.azavea.rf.datamodel.ColorCorrect
 import geotrellis.raster._
 import geotrellis.raster.io.geotiff._
 import geotrellis.raster.render.Png
+import geotrellis.proj4._
+import geotrellis.slick.Projected
+import geotrellis.vector.Extent
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes}
-import akka.http.scaladsl.unmarshalling._
 import com.typesafe.scalalogging.LazyLogging
-import cats.implicits._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
-import scala.collection.mutable.ArrayBuffer
+import cats.data.OptionT
+import cats.implicits._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.util._
+import scala.collection.mutable.ArrayBuffer
 import java.util.UUID
 
-import akka.http.scaladsl.marshalling.Marshaller
-import geotrellis.proj4._
-import geotrellis.slick.Projected
-import geotrellis.vector.{Extent, Polygon}
-import kamon.akka.http.KamonTraceDirectives
-
-object MosaicRoutes
-    extends LazyLogging
-    with KamonTraceDirectives {
+object MosaicRoutes extends LazyLogging with KamonTraceDirectives {
 
   val emptyTilePng = IntArrayTile.ofDim(256, 256).renderPng
 

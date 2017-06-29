@@ -3,14 +3,13 @@ package com.azavea.rf.common.cache
 import com.github.blemale.scaffeine.{Scaffeine, Cache => ScaffeineCache}
 import net.spy.memcached._
 import cats.data._
+
 import scala.concurrent._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
-
 import java.util.concurrent.Executors
 
 import com.azavea.rf.common.Config
-
 
 /**
   * Wraps a MemcachedClient to provide a local cache which stores Future results in case
@@ -20,13 +19,13 @@ import com.azavea.rf.common.Config
   *         cache (a guava-inspired java library).
   */
 class HeapBackedMemcachedClient(
-  client: MemcachedClient,
+  client: => MemcachedClient,
   options: HeapBackedMemcachedClient.Options = HeapBackedMemcachedClient.Options()) {
 
   /** The caffeine cache (on heap) which prevents cache race conditions.
-   * Entries on this cache are intended to live only long enough to satisfy requests from a "stampeding heard".
-   */
-  private val onHeapCache: ScaffeineCache[String, Future[Any]] =
+    * Entries on this cache are intended to live only long enough to satisfy requests from a "stampeding heard".
+    */
+  private lazy val onHeapCache: ScaffeineCache[String, Future[Any]] =
     Scaffeine()
       .expireAfterAccess(Config.memcached.heapEntryTTL)
       .maximumSize(Config.memcached.heapMaxEntries)
@@ -34,10 +33,11 @@ class HeapBackedMemcachedClient(
 
 
   /** Clear the specified value within this cache */
-  def delete(key: String) = {
-    client.delete(key)
-    onHeapCache.invalidate(key)
-  }
+  def delete(key: String) =
+    if(options.enabled) {
+      client.delete(key)
+      onHeapCache.invalidate(key)
+    }
 
 
   /**
@@ -61,18 +61,22 @@ class HeapBackedMemcachedClient(
     * @return the current (existing or computed) value associated with the specified key
     */
   def caching[T](cacheKey: String)(mappingFunction: ExecutionContext => Future[T]): Future[T] = {
-    val sanitizedKey = HeapBackedMemcachedClient.sanitizeKey(cacheKey)
-    onHeapCache.get(sanitizedKey, { key: String =>
-      client.getOrElseUpdate[T](key, mappingFunction(options.ec), options.memcachedTTL)(options.ec)
-    }).asInstanceOf[Future[T]]
+    if(options.enabled) {
+      val sanitizedKey = HeapBackedMemcachedClient.sanitizeKey(cacheKey)
+      onHeapCache.get(sanitizedKey, { key: String =>
+        client.getOrElseUpdate[T](key, mappingFunction(options.ec), options.memcachedTTL)(options.ec)
+      }).asInstanceOf[Future[T]]
+    } else mappingFunction(options.ec)
   }
 
   def cachingOptionT[T](cacheKey: String)(mappingFunction: ExecutionContext => OptionT[Future, T]): OptionT[Future, T] = {
-    val sanitizedKey = HeapBackedMemcachedClient.sanitizeKey(cacheKey)
-    val futureOption = onHeapCache.get(sanitizedKey, { key: String =>
-      client.getOrElseUpdate[Option[T]](key, mappingFunction(options.ec).value, options.memcachedTTL)(options.ec)
-    }).asInstanceOf[Future[Option[T]]]
-    OptionT(futureOption)
+    if(options.enabled) {
+      val sanitizedKey = HeapBackedMemcachedClient.sanitizeKey(cacheKey)
+      val futureOption = onHeapCache.get(sanitizedKey, { key: String =>
+        client.getOrElseUpdate[Option[T]](key, mappingFunction(options.ec).value, options.memcachedTTL)(options.ec)
+      }).asInstanceOf[Future[Option[T]]]
+      OptionT(futureOption)
+    } else mappingFunction(options.ec)
   }
 
 }
@@ -87,17 +91,18 @@ object HeapBackedMemcachedClient {
     * It is also important for the number of IO threads to be bounded because once the IO channel is saturated
     * each new request would otherwise continue spawning additional threads until the heap memory is exhausted.
     */
- lazy val defaultExecutionContext: ExecutionContext =
+  lazy val defaultExecutionContext: ExecutionContext =
     ExecutionContext.fromExecutor(Executors.newFixedThreadPool(Config.memcached.threads))
 
   case class Options(
     ec: ExecutionContext = defaultExecutionContext,
     heapTTL: FiniteDuration = Config.memcached.heapEntryTTL,
     memcachedTTL: FiniteDuration = Config.memcached.ttl,
-    maxSize: Int = Config.memcached.heapMaxEntries
+    maxSize: Int = Config.memcached.heapMaxEntries,
+    enabled: Boolean = Config.memcached.enabled
   )
 
-  def apply(client: MemcachedClient, options: Options = Options()) =
+  def apply(client: => MemcachedClient, options: Options = Options()) =
     new HeapBackedMemcachedClient(client, options)
 
   /** This key sanitizer replaces whitespace with '_' and throws in case of control characters */

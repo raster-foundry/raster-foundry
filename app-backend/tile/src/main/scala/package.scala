@@ -1,9 +1,8 @@
 package com.azavea.rf
 
-import com.azavea.rf.datamodel.{MosaicDefinition, ColorCorrect}
-
 import spray.json._
 import spray.json.DefaultJsonProtocol._
+import com.github.blemale.scaffeine.{Cache => ScaffeineCache}
 
 import java.util.UUID
 
@@ -15,5 +14,11 @@ package object tile {
       case _ =>
         deserializationError("Failed to parse UUID string ${js} to java UUID")
     }
+  }
+
+  implicit class withLayerCacheMethods[K, V](cache: ScaffeineCache[K, V]) extends Config {
+    def take(key: K, mappingFunction: K => V): V =
+      if (withCaching) cache.get(key, mappingFunction)
+      else mappingFunction(key)
   }
 }

@@ -2,14 +2,14 @@ package com.azavea.rf.tile.routes
 
 import com.azavea.rf.common.RfStackTrace
 import com.azavea.rf.tile._
-import com.azavea.rf.datamodel.ColorCorrect
 import com.azavea.rf.tile.tool._
 import com.azavea.rf.tile.tool.ToolParams._
 
 import geotrellis.raster._
 import geotrellis.raster.io._
 import geotrellis.raster.histogram.Histogram
-import geotrellis.raster.render.{Png, ColorRamp, ColorMap}
+import geotrellis.raster.render.{ColorMap, ColorRamp, Png}
+
 import geotrellis.spark._
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._
@@ -20,42 +20,49 @@ import com.typesafe.scalalogging.LazyLogging
 import cats.data._
 import cats.implicits._
 import java.util.UUID
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.util._
 
-object SceneRoutes extends LazyLogging {
+object SceneRoutes extends LazyLogging with KamonTraceDirectives {
 
   def root: Route =
     pathPrefix(JavaUUID) { id =>
       pathPrefix("rgb") {
-        layerTileAndHistogram(id) { (futureMaybeTile, _) =>
-          imageRoute(futureMaybeTile)
+        traceName("rgb") {
+          layerTileAndHistogram(id) { (futureMaybeTile, _) =>
+            imageRoute(futureMaybeTile)
+          }
         } ~
         pathPrefix("thumbnail") {
-          pathEndOrSingleSlash {
-            rejectEmptyResponse {
-              get { imageThumbnailRoute(id) }
+          traceName("thumbnail") {
+            pathEndOrSingleSlash {
+              rejectEmptyResponse {
+                get { imageThumbnailRoute(id) }
+              }
             }
           }
         } ~
         pathPrefix("histogram") {
-          pathEndOrSingleSlash {
-            rejectEmptyResponse {
-              get { imageHistogramRoute(id) }
+          traceName("histogram") {
+            pathEndOrSingleSlash {
+              rejectEmptyResponse {
+                get { imageHistogramRoute(id) }
+              }
             }
           }
         }
       } ~
       rejectEmptyResponse {
         (pathPrefix("ndvi") & layerTile(id)){ futureMaybeTile =>
-          get { toolRoute(futureMaybeTile, NDVI, Some(NDVI.colorRamp), Some(NDVI.breaks)) }
+          traceName("ndvi") { get { toolRoute(futureMaybeTile, NDVI, Some(NDVI.colorRamp), Some(NDVI.breaks)) } }
         } ~
         (pathPrefix("ndwi") & layerTile(id)){ futureMaybeTile =>
-          get { toolRoute(futureMaybeTile, NDWI, Some(NDWI.colorRamp), Some(NDWI.breaks)) }
+          traceName("ndwi") { get { toolRoute(futureMaybeTile, NDWI, Some(NDWI.colorRamp), Some(NDWI.breaks)) } }
         } ~
         (pathPrefix("grey") & layerTile(id)){ futureMaybeTile =>
-          get { toolRoute(futureMaybeTile, _.band(0), Some(ColorRamp(Array(0x000000, 0xFFFFFF)))) }
+          traceName("grey") { get { toolRoute(futureMaybeTile, _.band(0), Some(ColorRamp(Array(0x000000, 0xFFFFFF)))) } }
         }
       }
     }
