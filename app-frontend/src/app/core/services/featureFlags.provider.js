@@ -1,3 +1,5 @@
+/* globals BUILDCONFIG */
+
 function updateFlagsAndGetAll(newFlags) {
     let flagsList = angular.isArray(newFlags) ? newFlags : Object.values(newFlags);
     flagsList.forEach(flag => {
@@ -76,7 +78,7 @@ export default app => {
         constructor($resource) {
             'ngInject';
 
-            this.PerUserFeatureFlag = $resource('/feature-flags/');
+            this.PerUserFeatureFlag = $resource(`${BUILDCONFIG.API_HOST}/feature-flags/`);
         }
 
         load() {

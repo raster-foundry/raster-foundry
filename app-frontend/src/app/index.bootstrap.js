@@ -1,4 +1,4 @@
-/* global document */
+/* globals document BUILDCONFIG */
 
 // index.html page to dist folder
 import '!!file-loader?name=[name].[ext]!../favicon.ico';
@@ -19,7 +19,8 @@ angular.element(document).ready(function () {
         },
         resolve: {
             APP_CONFIG: ['$http', ($http) => {
-                return $http.get('/config').then(
+                let url = `${BUILDCONFIG.API_HOST}/config`;
+                return $http.get(url).then(
                     (result) => result,
                     (error) => ({error: error})
                 );

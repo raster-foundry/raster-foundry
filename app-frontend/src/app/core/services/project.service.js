@@ -1,3 +1,5 @@
+/* globals BUILDCONFIG */
+
 /* global L */
 const availableProcessingOptions = [
     {
@@ -56,7 +58,7 @@ export default (app) => {
             this.tileServer = `${APP_CONFIG.tileServerLocation}`;
 
             this.Project = $resource(
-                '/api/projects/:id/', {
+                `${BUILDCONFIG.API_HOST}/api/projects/:id/`, {
                     id: '@properties.id'
                 }, {
                     query: {
@@ -75,14 +77,14 @@ export default (app) => {
                     },
                     updateProject: {
                         method: 'PUT',
-                        url: '/api/projects/:id',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:id`,
                         params: {
                             id: '@id'
                         }
                     },
                     addScenes: {
                         method: 'POST',
-                        url: '/api/projects/:projectId/scenes/',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/scenes/`,
                         params: {
                             projectId: '@projectId'
                         },
@@ -91,7 +93,7 @@ export default (app) => {
                     projectScenes: {
                         method: 'GET',
                         cache: false,
-                        url: '/api/projects/:projectId/scenes',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/scenes`,
                         params: {
                             projectId: '@projectId',
                             pending: '@pending'
@@ -100,14 +102,14 @@ export default (app) => {
                     projectAois: {
                         method: 'GET',
                         cache: false,
-                        url: '/api/projects/:projectId/areas-of-interest',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/areas-of-interest`,
                         params: {
                             projectId: '@projectId'
                         }
                     },
                     removeScenes: {
                         method: 'DELETE',
-                        url: '/api/projects/:projectId/scenes/',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/scenes/`,
                         params: {
                             projectId: '@projectId'
                         }
@@ -118,21 +120,22 @@ export default (app) => {
                     },
                     listExports: {
                         method: 'GET',
-                        url: '/api/exports?project=:project',
+                        url: `${BUILDCONFIG.API_HOST}/api/exports?project=:project`,
                         params: {
                             project: '@project'
                         }
                     },
                     createAOI: {
                         method: 'POST',
-                        url: '/api/projects/:projectId/areas-of-interest/',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/areas-of-interest/`,
                         params: {
                             projectId: '@projectId'
                         }
                     },
                     approveScene: {
                         method: 'POST',
-                        url: '/api/projects/:projectId/scenes/:sceneId/accept',
+                        url: `${BUILDCONFIG.API_HOST}` +
+                            '/api/projects/:projectId/scenes/:sceneId/accept',
                         params: {
                             projectId: '@projectId',
                             sceneId: '@sceneId'
@@ -334,7 +337,7 @@ export default (app) => {
         removeScenesFromProject(projectId, scenes) {
             return this.$http({
                 method: 'DELETE',
-                url: `/api/projects/${projectId}/scenes/`,
+                url: `${BUILDCONFIG.API_HOST}/api/projects/${projectId}/scenes/`,
                 data: scenes,
                 headers: {'Content-Type': 'application/json;charset=utf-8'}
             });
@@ -366,7 +369,7 @@ export default (app) => {
         }
 
         getBaseURL() {
-            let host = this.$location.host();
+            let host = BUILDCONFIG.API_HOST || this.$location.host();
             let protocol = this.$location.protocol();
             let port = this.$location.port();
             let formattedPort = port !== 80 && port !== 443 ? ':' + port : '';

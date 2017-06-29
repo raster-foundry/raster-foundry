@@ -1,3 +1,5 @@
+/* globals BUILDCONFIG */
+
 /* globals _ document */
 export default (app) => {
     class DropboxService {
@@ -6,7 +8,7 @@ export default (app) => {
 
             this.authService = authService;
             this.DropboxSetup = $resource(
-                '/api/users/dropbox-setup', {}, {
+                `${BUILDCONFIG.API_HOST}/api/users/dropbox-setup`, {}, {
                     confirm: {
                         method: 'POST'
                     }

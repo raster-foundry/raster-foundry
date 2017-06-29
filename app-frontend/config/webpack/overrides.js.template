@@ -32,7 +32,8 @@ module.exports = function () {
             new webpack.DefinePlugin({
                 'BUILDCONFIG': {
                     APP_NAME: '\'RasterFoundry?\'',
-                    BASEMAPS: basemaps
+                    BASEMAPS: basemaps,
+                    API_HOST: '\'https://app.rasterfoundry.com\''
                 }
             })
         ]

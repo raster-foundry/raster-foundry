@@ -1,3 +1,5 @@
+/* globals BUILDCONFIG */
+
 export default (app) => {
     class ExportService {
         constructor($resource, $q, authService) {
@@ -6,12 +8,12 @@ export default (app) => {
             this.authService = authService;
 
             this.Export = $resource(
-                '/api/exports/:id/', {
+                `${BUILDCONFIG.API_HOST}/api/exports/:id/`, {
                     id: '@properties.id'
                 }, {
                     getFiles: {
                         isArray: true,
-                        url: '/api/exports/:exportId/files',
+                        url: `${BUILDCONFIG.API_HOST}/api/exports/:exportId/files`,
                         params: {
                             exportId: '@exportId'
                         }

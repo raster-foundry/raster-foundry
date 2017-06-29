@@ -1,3 +1,5 @@
+/* globals BUILDCONFIG */
+
 export default (app) => {
     class DatasourceService {
         constructor($resource, authService) {
@@ -6,7 +8,7 @@ export default (app) => {
             this.authService = authService;
 
             this.Datasource = $resource(
-                '/api/datasources/:id/', {
+                `${BUILDCONFIG.API_HOST}/api/datasources/:id/`, {
                     id: '@properties.id'
                 }, {
                     query: {
