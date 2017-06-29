@@ -225,6 +225,8 @@ def wait_for_status_op(*args, **kwargs):
     logger.info('Setting scene %s ingest status to %s', scene.id, scene.ingestStatus)
     scene.update()
     logger.info('Successfully updated scene %s\'s ingest status', scene.id)
+    if scene.ingestStatus == IngestStatus.FAILED:
+        raise AirflowException('Failed to ingest {} for user {}'.format(scene_id, scene.owner))
 
 
 ################################
