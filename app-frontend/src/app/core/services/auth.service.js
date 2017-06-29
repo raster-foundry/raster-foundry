@@ -120,14 +120,18 @@ export default (app) => {
         }
 
         login(token) {
-            if (!token) {
-                this.loginLock.show();
-            } else if (!this.jwtHelper.isTokenExpired(token)) {
-                this.onLogin({idToken: token});
-            } else if (this.jwtHelper.isTokenExpired(token)) {
-                this.localStorage.remove('item_token');
-                this.$state.go('login');
-            } else {
+            try {
+                if (!token) {
+                    this.loginLock.show();
+                } else if (!this.jwtHelper.isTokenExpired(token)) {
+                    this.onLogin({idToken: token});
+                } else if (this.jwtHelper.isTokenExpired(token)) {
+                    this.localStorage.remove('item_token');
+                    this.$state.go('login');
+                } else {
+                    this.loginLock.show();
+                }
+            } catch (e) {
                 this.loginLock.show();
             }
         }
@@ -210,6 +214,16 @@ export default (app) => {
             });
         }
 
+        onImpersonation(hash) {
+            const rawParams = hash.split('&');
+            rawParams.forEach(p => {
+                const [k, v] = p.split('=');
+                if (k === 'id_token') {
+                    this.onLogin({ idToken: v});
+                }
+            });
+        }
+
         onLoginFail(error) {
             if (this.promise) {
                 this.promise.reject(error);
@@ -252,24 +266,33 @@ export default (app) => {
         }
 
         verifyAuthCache() {
-            const token = this.token();
-            this.isLoggedIn = Boolean(
-                token && this.profile() && !this.jwtHelper.isTokenExpired(token)
-            );
-            if (this.isLoggedIn) {
-                this.setReauthentication(token);
+            try {
+                const token = this.token();
+                this.isLoggedIn = Boolean(
+                    token && this.profile() && !this.jwtHelper.isTokenExpired(token)
+                );
+                if (this.isLoggedIn) {
+                    this.setReauthentication(token);
+                }
+                return this.isLoggedIn;
+            } catch (e) {
+                this.$state.go('login');
+                return false;
             }
-            return this.isLoggedIn;
         }
 
         setReauthentication(token) {
             if (!this.pendingReauth) {
                 // Set up a $timeout to reauthenticate 5 minutes before the token will expire
-                const expDate = this.jwtHelper.getTokenExpirationDate(token);
-                const nowDate = new Date();
-                const timeoutMillis = expDate.getTime() - nowDate.getTime() - 5 * 60 * 1000;
-                // Store in case we need to cancel for some reason
-                this.pendingReauth = this.$timeout(() => this.login(null), timeoutMillis);
+                try {
+                    const expDate = this.jwtHelper.getTokenExpirationDate(token);
+                    const nowDate = new Date();
+                    const timeoutMillis = expDate.getTime() - nowDate.getTime() - 5 * 60 * 1000;
+                    // Store in case we need to cancel for some reason
+                    this.pendingReauth = this.$timeout(() => this.login(null), timeoutMillis);
+                } catch (e) {
+                    this.$state.go('login');
+                }
             }
         }
 
