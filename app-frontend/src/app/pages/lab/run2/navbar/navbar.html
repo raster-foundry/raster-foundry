@@ -1,0 +1,37 @@
+<span class="navbar-vertical-divider"></span>
+<span ng-if="$ctrl.toolService.currentTool.title">
+  <span class="navbar-detail-title" ng-attr-title="{{$ctrl.toolService.currentTool.title}}">
+    {{$ctrl.toolService.currentTool.title}}
+  </span>
+  <div class="dropdown-navbardetail"
+       uib-dropdown
+       on-toggle="toggled($ctrl.optionsOpen)">
+    <a uib-dropdown-toggle>
+      <span class="sr-only">Tool options dropdown</span>
+      <i class="icon-caret-down"></i>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="dLabel">
+      <li>
+        <a ui-sref=".">
+          Tool details
+        </a>
+      </li>
+      <li>
+        <a ui-sref=".">
+          Run
+        </a>
+      </li>
+      <li>
+        <a ui-sref=".">
+          Build
+        </a>
+      </li>
+      <li role="separator" class="divider"></li>
+      <li><a>Save</a></li>
+      <li><a>Save as...</a></li>
+      <li><a>Export</a></li>
+      <li><a class="color-danger">Delete</a>
+      </li>
+    </ul>
+  </div>
+</span>
