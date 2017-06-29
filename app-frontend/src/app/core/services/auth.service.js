@@ -1,3 +1,5 @@
+/* globals BUILDCONFIG */
+
 /* globals Auth0Lock heap */
 
 import assetLogo from '../../../assets/images/logo-raster-foundry.png';
@@ -25,7 +27,7 @@ export default (app) => {
 
             this.pendingReauth = null;
 
-            this.User = $resource('/api/users/:id', {
+            this.User = $resource(`${BUILDCONFIG.API_HOST}/api/users/:id`, {
                 id: '@id'
             }, {
                 query: {

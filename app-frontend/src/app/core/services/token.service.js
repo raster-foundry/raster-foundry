@@ -1,3 +1,5 @@
+/* globals BUILDCONFIG */
+
 export default (app) => {
     class TokenService {
         constructor($resource, $q, $log) {
@@ -6,7 +8,7 @@ export default (app) => {
             this.$log = $log;
 
             this.ApiToken = $resource(
-                '/api/tokens/:id', {
+                `${BUILDCONFIG.API_HOST}/api/tokens/:id`, {
                     id: '@id'
                 }, {
                     query: {
@@ -21,7 +23,7 @@ export default (app) => {
             );
 
             this.MapToken = $resource(
-                '/api/map-tokens/:id', {
+                `${BUILDCONFIG.API_HOST}/api/map-tokens/:id`, {
                     id: '@id'
                 }, {
                     create: {

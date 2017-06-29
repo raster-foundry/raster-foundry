@@ -1,3 +1,5 @@
+/* globals BUILDCONFIG */
+
 export default (app) => {
     class ToolService {
         constructor($resource, $http, authService) {
@@ -5,7 +7,7 @@ export default (app) => {
             this.$http = $http;
             this.authService = authService;
             this.Tool = $resource(
-                '/api/tools/:id/', {
+                `${BUILDCONFIG.API_HOST}/api/tools/:id/`, {
                     id: '@properties.id'
                 }, {
                     query: {
@@ -19,7 +21,7 @@ export default (app) => {
                 }
             );
             this.ToolRun = $resource(
-                '/api/tool-runs/:id/', {
+                `${BUILDCONFIG.API_HOST}/api/tool-runs/:id/`, {
                     id: '@properties.id'
                 }, {
                     create: {

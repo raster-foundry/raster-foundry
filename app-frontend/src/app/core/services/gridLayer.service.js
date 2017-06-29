@@ -1,3 +1,5 @@
+/* globals BUILDCONFIG */
+
 import Konva from 'konva';
 export default (app) => {
     /** Service to create a Leaflet grid layer for scenes
@@ -16,7 +18,7 @@ export default (app) => {
          * @returns {promise} API response for scene grid
          */
         requestGrid(coords, params) {
-            let url = `/api/scene-grid/${coords.z}/${coords.x}/${coords.y}/`;
+            let url = `${BUILDCONFIG.API_HOST}/api/scene-grid/${coords.z}/${coords.x}/${coords.y}/`;
             return this.$http.get(url, {params: params});
         }
 

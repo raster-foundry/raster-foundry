@@ -1,10 +1,14 @@
+/* globals BUILDCONFIG */
+
 export default (app) => {
     class ColorCorrectService {
         constructor($resource) {
             'ngInject';
 
+            let BASE_URL = BUILDCONFIG.API_HOST;
+
             this.colorCorrect = $resource(
-                '/api/projects/:projectId/mosaic/:sceneId/', {}, {
+                `${BASE_URL}/api/projects/:projectId/mosaic/:sceneId/`, {}, {
                     get: {
                         method: 'GET',
                         cache: false,
@@ -26,7 +30,7 @@ export default (app) => {
             );
 
             this.bulkColorCorrect = $resource(
-                '/api/projects/:projectId/mosaic/bulk-update-color-corrections/', {}, {
+                `${BASE_URL}/api/projects/:projectId/mosaic/bulk-update-color-corrections/`, {}, {
                     create: {
                         method: 'POST',
                         params: {
