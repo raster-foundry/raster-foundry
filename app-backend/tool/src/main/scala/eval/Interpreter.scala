@@ -1,20 +1,22 @@
 package com.azavea.rf.tool.eval
 
-import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.params._
-import com.azavea.rf.tool.ast.MapAlgebraAST._
-import com.azavea.rf.tool.params.ParamOverride
+import java.util.UUID
+
+import scala.concurrent.{ExecutionContext, Future}
 
 import cats._
 import cats.data._
 import cats.data.Validated._
 import cats.implicits._
-
+import com.azavea.rf.tool.ast._
+import com.azavea.rf.tool.ast.MapAlgebraAST._
+import com.azavea.rf.tool.params._
 import com.typesafe.scalalogging.LazyLogging
+import geotrellis.proj4.WebMercator
 import geotrellis.raster._
-
-import java.util.UUID
-import scala.concurrent.{ExecutionContext, Future}
+import geotrellis.spark.SpatialKey
+import geotrellis.spark.tiling._
+import geotrellis.vector.{Extent, MultiPolygon}
 
 /** This interpreter handles resource resolution and compilation of MapAlgebra ASTs */
 object Interpreter extends LazyLogging {
@@ -22,36 +24,9 @@ object Interpreter extends LazyLogging {
   /** The Interpreted type is either a list of failures or a compiled MapAlgebra operation */
   type Interpreted[A] = ValidatedNel[InterpreterError, A]
 
-  @SuppressWarnings(Array("TraversableHead"))
-  def interpretOperation(op: Operation, eval: MapAlgebraAST => LazyTile): LazyTile = op match {
-    case Addition(args, id, _) =>
-      logger.debug(s"case addition at $id")
-      args.map(eval).reduce(_ + _)
-
-    case Subtraction(args, id, _) =>
-      logger.debug(s"case subtraction at $id")
-      args.map(eval).reduce(_ - _)
-
-    case Multiplication(args, id, _) =>
-      logger.debug(s"case multiplication at $id")
-      args.map(eval).reduce(_ * _)
-
-    case Division(args, id, _) =>
-      logger.debug(s"case division at $id")
-      args.map(eval).reduce(_ / _)
-
-    case Max(args, id, _) =>
-      logger.debug(s"case max at $id")
-      args.map(eval).reduce(_ max _)
-
-    case Min(args, id, _) =>
-      logger.debug(s"case min at $id")
-      args.map(eval).reduce(_ min _)
-
-    case Classification(args, id, _, breaks) =>
-      logger.debug(s"case classification at $id with breakmap ${breaks.toBreakMap}")
-      eval(args.head).classify(breaks.toBreakMap)
-  }
+  val layouts: Array[LayoutDefinition] = (0 to 30).map(n =>
+    ZoomedLayoutScheme.layoutForZoom(n, WebMercator.worldExtent, 256)
+  ).toArray
 
   def overrideParams(
     ast: MapAlgebraAST,
@@ -80,6 +55,19 @@ object Interpreter extends LazyLogging {
       (kids |@| breaks).map({ case (ks, bs) => Classification(ks, id, m, bs) })
     }
 
+    case Masking(args, id, meta, mask) => {
+      val kids: Interpreted[List[MapAlgebraAST]] =
+        args.map(a => overrideParams(a, overrides)).sequence
+
+      val newMask: Interpreted[MultiPolygon] = overrides.get(id) match {
+        case None => Valid(mask)
+        case Some(ParamOverride.Masking(m)) => Valid(m)
+        case Some(_) => Invalid(NonEmptyList.of(InvalidOverride(id)))
+      }
+
+      (kids |@| newMask).map({ case (ks, m) => Masking(ks, id, meta, m) })
+    }
+
     /* Non-overridable Operations */
     case Addition(args, id, m) =>
       args.map(a => overrideParams(a, overrides)).sequence.map(ks => Addition(ks, id, m))
@@ -93,7 +81,6 @@ object Interpreter extends LazyLogging {
       args.map(a => overrideParams(a, overrides)).sequence.map(ks => Min(ks, id, m))
     case Max(args, id, m) =>
       args.map(a => overrideParams(a, overrides)).sequence.map(ks => Max(ks, id, m))
-    case op => Invalid(NonEmptyList.of(UnhandledCase(op.id)))
   }
 
   /** Interpret an AST with its matched execution parameters, but do so
@@ -140,15 +127,49 @@ object Interpreter extends LazyLogging {
     ast: MapAlgebraAST,
     sourceMapping: Map[UUID, RFMLRaster],
     overrides: Map[UUID, ParamOverride],
+    extent: Extent,
     source: RFMLRaster => Future[Option[Tile]]
   )(implicit ec: ExecutionContext): Future[Interpreted[LazyTile]] = {
 
     def eval(tiles: Map[UUID, Tile], ast: MapAlgebraAST): LazyTile = ast match {
+
+      /* --- LEAVES --- */
+
       case Source(id, _) => LazyTile(tiles(id))
       case Constant(_, const, _) => LazyTile.Constant(const)
-      case op: Operation => interpretOperation(op, { tree => eval(tiles, tree) })
-      case unsupported =>
-        throw new java.lang.IllegalStateException(s"Pattern match failure on putative AST: $unsupported")
+
+      /* --- OPERATIONS --- */
+
+      case Addition(args, id, _) =>
+        logger.debug(s"case addition at $id")
+        args.map(eval(tiles, _)).reduce(_ + _)
+
+      case Subtraction(args, id, _) =>
+        logger.debug(s"case subtraction at $id")
+        args.map(eval(tiles, _)).reduce(_ - _)
+
+      case Multiplication(args, id, _) =>
+        logger.debug(s"case multiplication at $id")
+        args.map(eval(tiles, _)).reduce(_ * _)
+
+      case Division(args, id, _) =>
+        logger.debug(s"case division at $id")
+        args.map(eval(tiles, _)).reduce(_ / _)
+
+      case Max(args, id, _) =>
+        logger.debug(s"case max at $id")
+        args.map(eval(tiles, _)).reduce(_ max _)
+
+      case Min(args, id, _) =>
+        logger.debug(s"case min at $id")
+        args.map(eval(tiles, _)).reduce(_ min _)
+
+      case Classification(args, id, _, breaks) =>
+        logger.debug(s"case classification at $id with breakmap ${breaks.toBreakMap}")
+        eval(tiles, args.head).classify(breaks.toBreakMap)
+
+      case Masking(args, id, _, mask) =>
+        eval(tiles, args.head).mask(extent, mask)
     }
 
     val pure: Interpreted[Unit] = interpretPure[Unit](ast, sourceMapping)
@@ -181,7 +202,13 @@ object Interpreter extends LazyLogging {
   )(implicit ec: ExecutionContext): (Int, Int, Int) => Future[Interpreted[LazyTile]] = {
 
     (z: Int, x: Int, y: Int) => {
-      interpretGlobal(ast, sourceMapping, overrides, { raster: RFMLRaster => source(raster, z, x, y) })
+      interpretGlobal(
+        ast,
+        sourceMapping,
+        overrides,
+        layouts(z).mapTransform(SpatialKey(x,y)),
+        { raster: RFMLRaster => source(raster, z, x, y) }
+      )
     }
   }
 }

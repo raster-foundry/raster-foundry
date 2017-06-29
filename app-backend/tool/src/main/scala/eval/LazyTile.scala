@@ -4,6 +4,7 @@ import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster._
 import geotrellis.raster.mapalgebra.local._
 import geotrellis.raster.render._
+import geotrellis.vector.{ Extent, MultiPolygon, Point }
 import spire.syntax.cfor._
 
 sealed trait LazyTile extends TileLike with Grid with LazyLogging {
@@ -15,6 +16,7 @@ sealed trait LazyTile extends TileLike with Grid with LazyLogging {
   def max(other: LazyTile) = this.dualCombine(other)(Max.combine)(Max.combine)
   def min(other: LazyTile) = this.dualCombine(other)(Min.combine)(Min.combine)
   def classify(breaks: BreakMap[Double, Int]) = this.classification({ i => breaks(i) })
+  def mask(extent: Extent, mask: MultiPolygon) = LazyTile.Masking(this, extent, mask)
 
   def left: LazyTile
   def right: LazyTile
@@ -189,6 +191,55 @@ object LazyTile {
     def right = LazyTile.Nil
     def bind(args: Map[Var, LazyTile]): LazyTile =
       Classify(left.bind(args), f)
+  }
+
+  /* TODO: Precompute a BitRaster based on the mask to show where overlaps occur,
+   * that way we can avoid having to calculate a `Point` upon every `get` call,
+   * and avoid having to do JTS intersection tests.
+   */
+  case class Masking(left: LazyTile, extent: Extent, mask: MultiPolygon) extends Tree {
+    val xres: Double = cols / (extent.xmax - extent.xmin)
+    val yres: Double = rows / (extent.ymax - extent.ymin)
+
+    /*
+    lazy val cellMask: Tile = {
+      val masky = ArrayTile.empty(BitCells, this.cols, this.rows)
+      RasterExtent(extent, this.cols, this.rows)
+        .foreach(mask)({ (col, row) =>
+          masky.set(col, row, 1)
+        })
+
+      masky
+    }
+     */
+
+    /* TODO: Inline this */
+//    def inMask2(col: Int, row: Int): Boolean = cellMask.get(col, row) == 1
+
+    /** Is the requested pixel inside the Mask area? */
+    def inMask(col: Int, row: Int): Boolean = {
+      val p = Point(extent.xmin + col * xres, extent.ymin + row * yres)
+
+      mask.intersects(p)
+    }
+
+    /** Perform the NODATA checks ahead of time, in case the underlying Tile
+      * is sparse. This will then only check for Mask intersection if the value to
+      * give back could be something other than NODATA.
+      */
+    def get(col: Int, row: Int) = {
+      val v: Int = left.get(col, row)
+
+      if (isNoData(v)) v else if (inMask(col, row)) v else NODATA
+    }
+    def getDouble(col: Int, row: Int) = {
+      val v: Double = left.getDouble(col, row)
+
+      if (isNoData(v)) v else if (inMask(col, row)) v else Double.NaN
+    }
+    def right = LazyTile.Nil
+    def bind(args: Map[Var, LazyTile]): LazyTile =
+      Masking(left.bind(args), extent, mask)
   }
 
   case class MapInt(left: LazyTile, f: Int => Int) extends Tree {

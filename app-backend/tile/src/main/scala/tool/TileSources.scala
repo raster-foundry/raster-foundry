@@ -8,15 +8,10 @@ import com.azavea.rf.tool.params._
 
 import com.typesafe.scalalogging.LazyLogging
 import cats.implicits._
-import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.slick.Projected
 import geotrellis.spark._
 import geotrellis.spark.io.s3._
-import geotrellis.spark.tiling._
-import spray.json.DefaultJsonProtocol._
-import geotrellis.raster.io._
-import geotrellis.vector.io._
 import geotrellis.spark.io._
 
 import scala.util._
