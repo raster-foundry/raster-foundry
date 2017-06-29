@@ -276,6 +276,8 @@ lazy val tool = Project("tool", file("tool"))
   .settings(commonSettings:_*)
   .settings({
     libraryDependencies ++= loggingDependencies ++ Seq(
+      Dependencies.spark,
+      Dependencies.geotrellisSpark,
       Dependencies.geotrellisRaster,
       Dependencies.geotrellisRasterTestkit,
       Dependencies.shapeless,
