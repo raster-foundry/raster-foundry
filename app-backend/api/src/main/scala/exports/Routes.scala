@@ -54,7 +54,6 @@ trait ExportRoutes extends Authentication
           get { proxiedFiles(exportId) }
         } ~
         pathPrefix(Segment) { objectKey =>
-          // val url = getFileUrl(exportId, objectKey)
           pathEndOrSingleSlash {
             redirectRoute(exportId, objectKey)
           }
