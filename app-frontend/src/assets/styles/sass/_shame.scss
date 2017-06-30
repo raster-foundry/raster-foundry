@@ -1378,6 +1378,11 @@ rf-diagram-container {
     flex: 1;
 }
 
+rf-diagram-container2 {
+  display: flex;
+  flex: 1;
+}
+
 /*
  * page: lab/run
  */
@@ -1598,4 +1603,11 @@ table.upload-info {
 
 rf-export-item {
   position: relative;
+}
+
+.diagram-cell {
+  position: absolute;
+  background: white;
+  /* Make sure events are propagated to the JointJS element so, e.g. dragging works.*/
+  pointer-events: none;
 }
