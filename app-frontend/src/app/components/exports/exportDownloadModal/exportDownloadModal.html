@@ -10,7 +10,7 @@
   </div>
   <div class="modal-body">
     <ul>
-      <li ng-repeat="file in $ctrl.exportFiles"><a ng-href="{{file}}">Download file {{$index + 1}}</a></li>
+      <li ng-repeat="file in $ctrl.exportFiles"><a ng-href="{{file}}" download target="_blank">Download file {{$index + 1}}</a></li>
     </ul>
     <div class="list-group" ng-show="$ctrl.isLoading">
       <span class="list-placeholder">

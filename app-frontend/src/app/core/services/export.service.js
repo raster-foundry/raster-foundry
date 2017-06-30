@@ -1,7 +1,9 @@
 export default (app) => {
     class ExportService {
-        constructor($resource) {
+        constructor($resource, $q, authService) {
             'ngInject';
+            this.$q = $q;
+            this.authService = authService;
 
             this.Export = $resource(
                 '/api/exports/:id/', {
@@ -19,7 +21,15 @@ export default (app) => {
         }
 
         getFiles(exportObject) {
-            return this.Export.getFiles({ exportId: exportObject.id }).$promise;
+            const token = this.authService.token();
+            return this.$q((resolve) => {
+                this.Export.getFiles({ exportId: exportObject.id })
+                    .then(files => {
+                        resolve(files.map(f => {
+                            return `/api/exports/${exportObject.id}/files/${f}?token=${token}`;
+                        }));
+                    });
+            });
         }
     }
 

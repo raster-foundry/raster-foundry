@@ -75,6 +75,35 @@ package object S3 {
     get(client.listObjects(listObjectsRequest), Nil)
   }
 
+  final def getObjectKeys(source: URI): List[String] = {
+    @tailrec
+    def get(listing: ObjectListing, accumulator: List[String]): List[String] = {
+      def getObjects: List[String] =
+        listing
+          .getObjectSummaries
+          .asScala
+          .toList
+          .filterNot(_.getKey.endsWith("/"))
+          .map(_.getKey.split("/").last) ::: accumulator
+
+      if(!listing.isTruncated) getObjects
+      else get(client.listNextBatchOfObjects(listing), getObjects)
+    }
+
+    val prefix = {
+      val p = source.getPath.tail
+      if(!p.endsWith("/")) s"$p/" else p
+    }
+
+    val listObjectsRequest =
+      new ListObjectsRequest()
+        .withBucketName(source.getHost)
+        .withPrefix(prefix)
+        .withDelimiter("/")
+
+    get(client.listObjects(listObjectsRequest), Nil)
+  }
+
   def listObjects(uri: URI): ObjectListing = {
     val s3uri = new AmazonS3URI(uri)
     listObjects(s3uri.getBucket, s3uri.getKey)
