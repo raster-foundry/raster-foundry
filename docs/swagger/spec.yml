@@ -2277,6 +2277,12 @@ definitions:
             - USER
             - VIEWER
             - OWNER
+        dropboxCredential:
+          type: string
+          description: Contains the user's dropbox credential if a connection has been configured
+        planetCredential:
+          type: string
+          description: Contains the user's planet credential if a connection has been configured
   UserWithOAuth:
     type: object
     properties:
