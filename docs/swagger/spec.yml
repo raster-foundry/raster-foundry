@@ -1691,8 +1691,9 @@ paths:
         - Imagery
       parameters:
         - $ref: '#/parameters/uuid'
-        - in: path
-          name: filename
+        - name: filename
+          required: true
+          in: path
           type: string
           description: The filename of the file the user wishes to download. Filenames of an export need to first be fetched.
       responses:
