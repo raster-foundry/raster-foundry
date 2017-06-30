@@ -21,6 +21,7 @@ import java.util.UUID
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.Success
 
 trait ExportRoutes extends Authentication
   with ExportQueryParameterDirective
@@ -149,12 +150,12 @@ trait ExportRoutes extends Authentication
     implicit def javaURLAsAkkaURI(url: URL): Uri = Uri(url.toString)
     val x: Future[Option[Uri]] = for {
       export <- readOne[Export](Exports.getExportWithStatus(exportId, user, ExportStatus.Exported))
-      uri <- OptionT.fromOption[Future] { export.get.getExportOptions.map(_.getSignedUrl(objectKey): Uri) }.value
+      uri <- OptionT.fromOption[Future] { export.flatMap(_.getExportOptions.map(_.getSignedUrl(objectKey): Uri)) }.value
     } yield uri
 
-    onSuccess(x) { y =>
+    onComplete(x) { y =>
       y match {
-        case Some(z) => redirect(z, StatusCodes.TemporaryRedirect)
+        case Success(Some(z)) => redirect(z, StatusCodes.TemporaryRedirect)
         case _ => throw new Exception
       }
     }
