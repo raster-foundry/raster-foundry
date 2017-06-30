@@ -73,6 +73,11 @@ object Interpreter extends LazyLogging {
     case o: Operation => o.args.map(a => overrideParams(a, overrides)).sequence.map(ks => o.withArgs(ks))
   }
 
+  /** Is a collection of Operation args made up of all [[Constant]] nodes? */
+  private def allConstant(args: List[MapAlgebraAST]): Boolean = {
+    args.forall({ case x: Constant => true; case _ => false })
+  }
+
   /** Interpret an AST with its matched execution parameters, but do so
     * without fetching any Rasters. Only interprets the structural validatity of
     * the AST, given the params.
@@ -92,19 +97,33 @@ object Interpreter extends LazyLogging {
       /* Check for errors further down, first */
       val kids: Interpreted[M] = op.args.foldMap(a => interpretPure(a, sourceMapping))
 
-      if (op.args.length == 1) kids else {
-        /* Add this error to any from lower down via their Semigroup instance */
-        Invalid(NonEmptyList.of(IncorrectArgCount(op.id, 1, op.args.length))).combine(kids)
+      /* Unary ops must only have one argument */
+      val argLen: Interpreted[M] = if (op.args.length == 1) Valid(Monoid.empty) else {
+        Invalid(NonEmptyList.of(IncorrectArgCount(op.id, 1, op.args.length)))
       }
+
+      /* A child-node list of only Constant leaves is not allowed */
+      val allConst: Interpreted[M] = if (!allConstant(op.args)) Valid(Monoid.empty) else {
+        Invalid(NonEmptyList.of(NoSourceLeaves(op.id)))
+      }
+
+      /* Combine these (potential) errors via their Semigroup instance */
+      kids.combine(argLen).combine(allConst)
     }
 
     /* All binary operations must have at least 2 arguments */
     case op: Operation => {
       val kids: Interpreted[M] = op.args.foldMap(a => interpretPure(a, sourceMapping))
 
-      if (op.args.length > 1) kids else {
-        Invalid(NonEmptyList.of(IncorrectArgCount(op.id, 2, op.args.length))).combine(kids)
+      val argLen: Interpreted[M] = if (op.args.length > 1) Valid(Monoid.empty) else {
+        Invalid(NonEmptyList.of(IncorrectArgCount(op.id, 2, op.args.length)))
       }
+
+      val allConst: Interpreted[M] = if (!allConstant(op.args)) Valid(Monoid.empty) else {
+        Invalid(NonEmptyList.of(NoSourceLeaves(op.id)))
+      }
+
+      kids.combine(argLen).combine(allConst)
     }
   }
 
