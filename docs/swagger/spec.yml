@@ -1673,7 +1673,7 @@ paths:
         - $ref: '#/parameters/uuid'
       responses:
         200:
-          description: List of urls to download exported data
+          description: List of files within an export
           schema:
             type: "array"
             items:
@@ -1681,6 +1681,32 @@ paths:
         404:
           description: |
             UUID parameter does not refer to an export or the user is not able to view the export it refers to or export was not finished successfully yet.
+          schema:
+            $ref: '#/definitions/Error'
+  /exports/{uuid}/files/{filename}:
+    x-resource: Exports
+    get:
+      summary: Download a file from an export
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - in: path
+          name: filename
+          type: string
+          description: The filename of the file the user wishes to download. Filenames of an export need to first be fetched.
+      responses:
+        200:
+          description: The content of the reqested file
+          schema:
+            type: file
+        404:
+          description: |
+            UUID does not reference an export that exists, the user has access to, and has finished successfully. The filename may not exist
+          schema:
+            $ref: '#/definitions/Error'
+        503:
+          description: The request rate has been exceeded.
           schema:
             $ref: '#/definitions/Error'
 
