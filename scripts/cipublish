@@ -49,7 +49,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 
             # Evaluate the return value of the get-login subcommand, which
             # is a docker login command with temporarily ECR credentials.
-            eval "$(aws ecr get-login)"
+            eval "$(aws ecr get-login --no-include-email)"
 
             docker tag "raster-foundry-nginx-api:${GIT_COMMIT}" \
                    "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-api:${GIT_COMMIT}"
