@@ -32,6 +32,10 @@ case class UnsubstitutedRef(id: UUID) extends InterpreterError {
   def repr = s"Unsubstituted Tool reference found: ${id}"
 }
 
+case class NoSourceLeaves(id: UUID) extends InterpreterError {
+  def repr = s"The Operation ${id} has only Constant leaves"
+}
+
 case class NoBandGiven(id: UUID) extends InterpreterError {
   def repr = s"No band value given for Scene ${id}"
 }
