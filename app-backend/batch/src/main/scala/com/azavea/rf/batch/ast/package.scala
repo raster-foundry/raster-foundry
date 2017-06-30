@@ -34,6 +34,73 @@ package object ast {
     TileLayerRDD(f(tlr0, tlr1), tlr0.metadata.combine(tlr1.metadata))
   }
 
+  /** Perform a binary reduction on the arguments of some Operation node.
+    * This is complicated by [[Constant]], which renders certain AST
+    * combinations meaningless when dealing with RDDs and GeoTrellis layers. For
+    * instance, how should one evaluate the AST:
+    * {{{
+    * Masking <- Constant
+    * }}}
+    * While this may have meaning on the Tile server, it is meaningless here,
+    * since there is no way to devise a key-space nor metadata for the RDD we'd
+    * have to pull from thin air.
+    *
+    * This function _looks_ like it can throw an error, but it never should.
+    * ASTs that contain Constant nodes in illegal positions will be rejected by
+    * the validator before this code here can ever run.
+    */
+  private def reduce(
+    f: (Double, Double) => Double,
+    g: (Double, RDD[(SpatialKey, Tile)]) => RDD[(SpatialKey, Tile)],
+    h: (RDD[(SpatialKey, Tile)], Double) => RDD[(SpatialKey, Tile)],
+    i: (RDD[(SpatialKey, Tile)], RDD[(SpatialKey, Tile)]) => RDD[(SpatialKey, Tile)],
+    asts: List[MapAlgebraAST],
+    rdds: Map[UUID, TileLayerRDD[SpatialKey]]
+  ): TileLayerRDD[SpatialKey] = {
+    asts.map({
+      case Constant(_, c, _) => Left(c)
+      case ast => Right(eval(ast, rdds))
+    }).reduceLeft[Either[Double, TileLayerRDD[SpatialKey]]]({
+      case (Left(c1), Left(c2))       => Left(f(c1, c2))
+      case (Left(c), Right(rdd))      => Right(rdd.withContext(g(c, _)))
+      case (Right(rdd), Left(c))      => Right(rdd.withContext(h(_, c)))
+      case (Right(rdd1), Right(rdd2)) => Right(binary(i, rdd1, rdd2))
+    }) match {
+      case Right(rdd) => rdd
+      case Left(_) => sys.error("Export: If you're seeing this, there is an error in the AST validation logic.")
+    }
+  }
+
+  /* Perform Map Algebra over a validated RDD-filled AST */
+  @SuppressWarnings(Array("TraversableHead"))
+  private def eval(
+    ast: MapAlgebraAST,
+    rdds: Map[UUID, TileLayerRDD[SpatialKey]]
+  ): TileLayerRDD[SpatialKey] = ast match {
+    /* --- LEAVES --- */
+    case Source(id, _) => rdds(id)
+    case Constant(id, const, _) =>
+      sys.error("Export: If you're seeing this, there is an error in the AST validation logic.")
+    case ToolReference(_, _) =>
+      sys.error("Export: If you're seeing this, there is an error in the AST validation logic.")
+
+    /* --- BINARY OPERATIONS --- */
+    case Addition(args, _, _) => reduce({_ + _}, {_ +: _}, {_ + _}, {_ + _}, args, rdds)
+    case Subtraction(args, _, _) => reduce({_ - _}, {_ -: _}, {_ - _}, {_ - _}, args, rdds)
+    case Multiplication(args, _, _) => reduce({_ * _}, {_ *: _}, {_ * _}, {_ * _}, args, rdds)
+    case Division(args, _, _) => reduce({_ / _}, {_ /: _}, {_ / _}, {_ / _}, args, rdds)
+    case Max(args, _, _) =>
+      reduce({_.max(_)}, { (c, rdd) => rdd.localMax(c) }, {_.localMax(_)}, {_.localMax(_)}, args, rdds)
+    case Min(args, _, _) =>
+      reduce({_.min(_)}, { (c, rdd) => rdd.localMin(c) }, {_.localMin(_)}, {_.localMin(_)}, args, rdds)
+
+    /* --- UNARY OPERATIONS --- */
+    /* The `head` calls here will never fail, nor will they produce a `Constant` */
+    case Classification(args, _, _, classMap) =>
+      eval(args.head, rdds).withContext(_.color(classMap.toColorMap))
+    case Masking(args, _, _, mask) => eval(args.head, rdds).mask(mask)
+  }
+
   /** Evaluate an AST of RDD Sources. Assumes that the AST's
     * [[NodeMetadata]] has already been replaced, if applicable.
     */
@@ -45,42 +112,6 @@ package object ast {
     sceneLocs: Map[UUID, String],
     projLocs: Map[UUID, List[(UUID, String)]]
   )(implicit sc: SparkContext): Interpreted[TileLayerRDD[SpatialKey]] = {
-
-    /* Perform Map Algebra over a validated RDD-filled AST */
-    @SuppressWarnings(Array("TraversableHead"))
-    def eval(
-      ast: MapAlgebraAST,
-      rdds: Map[UUID, TileLayerRDD[SpatialKey]]
-    ): TileLayerRDD[SpatialKey] = ast match {
-      /* --- LEAVES --- */
-      case Source(id, _) => rdds(id)
-      case Constant(id, const, _) => ???
-
-      /* --- OPERATIONS --- */
-      case Addition(args, _, _) =>
-        args.map(eval(_, rdds)).reduce((acc,r) => binary({_ + _}, acc, r))
-      case Subtraction(args, _, _) =>
-        args.map(eval(_, rdds)).reduce((acc,r) => binary({_ - _}, acc, r))
-      case Multiplication(args, _, _) =>
-        args.map(eval(_, rdds)).reduce((acc,r) => binary({_ * _}, acc, r))
-      case Division(args, _, _) =>
-        args.map(eval(_, rdds)).reduce((acc,r) => binary({_ / _}, acc, r))
-      case Classification(args, _, _, classMap) =>
-        eval(args.head, rdds).withContext(_.color(classMap.toColorMap))
-      case Max(args, _, _) => {
-        val kids: List[TileLayerRDD[SpatialKey]] = args.map(eval(_, rdds))
-
-        /* The head call will never fail */
-        ContextRDD(kids.head.localMax(kids.tail), kids.map(_.metadata).reduce(_ combine _))
-      }
-      case Min(args, _, _) => {
-        val kids: List[TileLayerRDD[SpatialKey]] = args.map(eval(_, rdds))
-
-        /* The head call will never fail */
-        ContextRDD(kids.head.localMin(kids.tail), kids.map(_.metadata).reduce(_ combine _))
-      }
-      case Masking(args, _, _, mask) => eval(args.head, rdds).mask(mask)
-    }
 
     /* Guarantee correctness before performing Map Algebra */
     val pure = Interpreter.interpretPure[Unit](ast, sourceMapping)
