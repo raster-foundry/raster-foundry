@@ -73,9 +73,11 @@ object Interpreter extends LazyLogging {
     case o: Operation => o.args.map(a => overrideParams(a, overrides)).sequence.map(ks => o.withArgs(ks))
   }
 
-  /** Is a collection of Operation args made up of all [[Constant]] nodes? */
-  private def allConstant(args: List[MapAlgebraAST]): Boolean = {
-    args.forall({ case x: Constant => true; case _ => false })
+  /** Does a given AST have at least one source? */
+  private def hasSources[M: Monoid](ast: MapAlgebraAST): Interpreted[M] = {
+    if (ast.sources.exists({ case x: Source => true; case _ => false })) Valid(Monoid.empty) else {
+      Invalid(NonEmptyList.of(NoSourceLeaves(ast.id)))
+    }
   }
 
   /** Interpret an AST with its matched execution parameters, but do so
@@ -92,7 +94,7 @@ object Interpreter extends LazyLogging {
     case Constant(_, _, _) => Valid(Monoid.empty)
     case ToolReference(id, _) => Invalid(NonEmptyList.of(UnsubstitutedRef(id)))
 
-    /* Unary operations must have only one arguments */
+    /* Unary operations must have only one argument */
     case op: UnaryOp => {
       /* Check for errors further down, first */
       val kids: Interpreted[M] = op.args.foldMap(a => interpretPure(a, sourceMapping))
@@ -102,13 +104,8 @@ object Interpreter extends LazyLogging {
         Invalid(NonEmptyList.of(IncorrectArgCount(op.id, 1, op.args.length)))
       }
 
-      /* A child-node list of only Constant leaves is not allowed */
-      val allConst: Interpreted[M] = if (!allConstant(op.args)) Valid(Monoid.empty) else {
-        Invalid(NonEmptyList.of(NoSourceLeaves(op.id)))
-      }
-
       /* Combine these (potential) errors via their Semigroup instance */
-      kids.combine(argLen).combine(allConst)
+      kids.combine(argLen).combine(hasSources(op))
     }
 
     /* All binary operations must have at least 2 arguments */
@@ -119,11 +116,7 @@ object Interpreter extends LazyLogging {
         Invalid(NonEmptyList.of(IncorrectArgCount(op.id, 2, op.args.length)))
       }
 
-      val allConst: Interpreted[M] = if (!allConstant(op.args)) Valid(Monoid.empty) else {
-        Invalid(NonEmptyList.of(NoSourceLeaves(op.id)))
-      }
-
-      kids.combine(argLen).combine(allConst)
+      kids.combine(argLen)
     }
   }
 
@@ -147,7 +140,7 @@ object Interpreter extends LazyLogging {
       /* --- LEAVES --- */
       case Source(id, _) => LazyTile(tiles(id))
       case Constant(_, const, _) => LazyTile.Constant(const)
-      case  ToolReference(_, _) => sys.error("TMS: Attempt to evaluate a ToolReference!")
+      case ToolReference(_, _) => sys.error("TMS: Attempt to evaluate a ToolReference!")
 
       /* --- OPERATIONS --- */
       case Addition(args, id, _) =>
@@ -194,7 +187,9 @@ object Interpreter extends LazyLogging {
           case (id, Right(tile)) => (id, Valid(tile))
         }).sequence
 
-        (pure |@| overridden |@| tiles).map({ case (_, tree, ts) => eval(ts, tree) })
+        (pure |@| hasSources(ast) |@| overridden |@| tiles).map({
+          case (_, _, tree, ts) => eval(ts, tree)
+        })
       })
   }
 
