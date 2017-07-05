@@ -1,5 +1,25 @@
 # Change Log
 
+## [0.17.0](https://github.com/azavea/raster-foundry/tree/0.17.0) (2017-07-05)
+[Full Changelog](https://github.com/azavea/raster-foundry/compare/0.16.0...0.17.0)
+
+**Merged pull requests:**
+
+- Add `planetCredential` field to user model [\#2196](https://github.com/azavea/raster-foundry/pull/2196)
+- Add redirection and throttling for downloads [\#2191](https://github.com/azavea/raster-foundry/pull/2191)
+- Disable running tests during assembly [\#2190](https://github.com/azavea/raster-foundry/pull/2190)
+- Allow Auth0 user impersonation [\#2186](https://github.com/azavea/raster-foundry/pull/2186)
+- Add PostgreSQL 9.6 support [\#2184](https://github.com/azavea/raster-foundry/pull/2184)
+- Minor Fixes/Frontend Customization for API Server [\#2181](https://github.com/azavea/raster-foundry/pull/2181)
+- Fix scene removal from project on project details page [\#2180](https://github.com/azavea/raster-foundry/pull/2180)
+- Make polygons visible after saving AOIs/loading AOI parameters page [\#2132](https://github.com/azavea/raster-foundry/pull/2132)
+- Add tools and enable some for export [\#2129](https://github.com/azavea/raster-foundry/pull/2129)
+- \[WIP\] Add Kamon metrics tracking [\#2120](https://github.com/azavea/raster-foundry/pull/2120)
+- Add external S3 bucket target to export UI [\#2110](https://github.com/azavea/raster-foundry/pull/2110)
+- AST: Masking [\#2083](https://github.com/azavea/raster-foundry/pull/2083)
+- Feature/jis/dropbox export frontend [\#2063](https://github.com/azavea/raster-foundry/pull/2063)
+- Tool Reference nodes [\#2020](https://github.com/azavea/raster-foundry/pull/2020)
+
 ## [0.16.0](https://github.com/azavea/raster-foundry/tree/0.16.0) (2017-06-27)
 [Full Changelog](https://github.com/azavea/raster-foundry/compare/0.15.0...0.16.0)
 
@@ -14,6 +34,7 @@
 
 **Merged pull requests:**
 
+- Enable changing datasource visibility on datasource detail page [\#2138](https://github.com/azavea/raster-foundry/pull/2138)
 - Ingest seams fix [\#2118](https://github.com/azavea/raster-foundry/pull/2118)
 - Feature/lk/export mask [\#2116](https://github.com/azavea/raster-foundry/pull/2116)
 - Hide project navbar while project is loading [\#2108](https://github.com/azavea/raster-foundry/pull/2108)
@@ -21,6 +42,7 @@
 - Add Algae Bloom Indices [\#2104](https://github.com/azavea/raster-foundry/pull/2104)
 - Improve Airflow DAG/Task Logging [\#2101](https://github.com/azavea/raster-foundry/pull/2101)
 - Link logo to home page [\#2093](https://github.com/azavea/raster-foundry/pull/2093)
+- Enable front end color auto correction. [\#2092](https://github.com/azavea/raster-foundry/pull/2092)
 - Prompt before closing window while in upload [\#2088](https://github.com/azavea/raster-foundry/pull/2088)
 - Add  field to sources [\#2085](https://github.com/azavea/raster-foundry/pull/2085)
 
