@@ -21,7 +21,6 @@ import scala.util._
 import scala.concurrent._
 import scala.concurrent.ExecutionContext.Implicits.global
 
-
 /** Interpreting a [[MapAlgebraAST]] requires providing a function from
   *  (at least) an RFMLRaster (the source/terminal-node type of the AST)
   *  to a Future[Option[Tile]]. This object provides instance of such

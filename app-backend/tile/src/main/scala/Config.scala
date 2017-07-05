@@ -1,8 +1,6 @@
 package com.azavea.rf.tile
 
 import com.typesafe.config.ConfigFactory
-import scala.concurrent.duration._
-import java.util.concurrent.TimeUnit
 
 trait Config {
   val config = ConfigFactory.load().getConfig("tile-server")

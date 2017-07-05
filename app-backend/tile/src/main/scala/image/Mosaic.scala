@@ -7,23 +7,20 @@ import com.azavea.rf.datamodel.{MosaicDefinition, WhiteBalance}
 import com.azavea.rf.common.cache._
 
 import geotrellis.raster._
-import geotrellis.raster.io._
 import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.raster.GridBounds
 import geotrellis.proj4._
 import geotrellis.slick.Projected
-import geotrellis.vector.{Polygon, Extent}
-import geotrellis.vector.io._
+import geotrellis.vector.{Extent, Polygon}
 import cats.data._
 import cats.implicits._
-import kamon.trace.Tracer
 
 import java.util.UUID
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.concurrent.duration._
-
 
 case class TagWithTTL(tag: String, ttl: Duration)
 
@@ -52,8 +49,8 @@ object Mosaic extends KamonTrace {
         case None => s"mosaic-definition-$projectId"
       }
 
-      memcached.cachingOptionT(cacheKey) { _ =>
-        OptionT(ScenesToProjects.getMosaicDefinition(projectId))
+      memcached.cachingOptionT(cacheKey) {
+        _ => OptionT(ScenesToProjects.getMosaicDefinition(projectId))
       }
     }
 
@@ -124,7 +121,6 @@ object Mosaic extends KamonTrace {
       mosaicDefinition(projectId, None).flatMap { mosaic =>
         val mayhapTiles: Seq[OptionT[Future, MultibandTile]] =
           for (MosaicDefinition(sceneId, _) <- mosaic) yield Mosaic.fetch(sceneId, zoom, col, row)
-
 
         val futureMergeTile: Future[Option[MultibandTile]] =
           Future.sequence(mayhapTiles.map(_.value)).map { maybeTiles =>

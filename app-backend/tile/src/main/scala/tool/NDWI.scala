@@ -1,7 +1,7 @@
 package com.azavea.rf.tile.tool
 
 import geotrellis.raster._
-import geotrellis.raster.render.{Png, ColorRamp, ColorMap}
+import geotrellis.raster.render.{ColorRamp, ColorMap}
 
 /**
   * Normalized Difference Water Index
