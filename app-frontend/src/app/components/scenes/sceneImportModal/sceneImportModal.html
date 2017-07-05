@@ -1,6 +1,6 @@
 <div class="modal-scrollable-body modal-sidebar-header">
   <div class="modal-header">
-    <button type="button" class="close" aria-label="Close" ng-click="$ctrl.dismiss()">
+    <button type="button" class="close" aria-label="Close" ng-click="$ctrl.handleClose()">
       <span aria-hidden="true">&times;</span>
     </button>
     <h4 class="modal-title" ng-if="!$ctrl.resolve.project">
@@ -62,16 +62,14 @@
           <rf-box-select-item
           class="small"
           ng-class="{selected: $ctrl.importType === 'local'}"
+          ng-click="$ctrl.setImportType('local')"
         >
           <div class="text-center"><strong>Local Files</strong></div>
         </rf-box-select-item>
         <rf-box-select-item
-          class="small disabled"
-        >
-          <div class="text-center"><strong>URI</strong></div>
-        </rf-box-select-item>
-        <rf-box-select-item
-          class="small disabled"
+          class="small"
+          ng-class="{selected: $ctrl.importType === 'S3'}"
+          ng-click="$ctrl.setImportType('S3')"
         >
           <div class="text-center"><strong>AWS S3</strong></div>
         </rf-box-select-item>
@@ -80,6 +78,27 @@
         >
           <div class="text-center"><strong>DropBox</strong></div>
         </rf-box-select-item>
+      </div>
+      <div ng-if="$ctrl.importType === 'S3'">
+        <p>
+          Enter the the S3 URI that points to where imagery is located.
+          The import process will import any imagery found in that location into Raster Foundry.
+        </p>
+        <form>
+          <div class="form-group">
+            <label for="name">S3 Bucket</label>
+            <input id="name" type="url" class="form-control"
+                  placeholder="s3://<bucket>/<prefix>/" ng-model="$ctrl.s3Config.bucket">
+          </div>
+          <div class="form-group color-danger"
+              ng-if="$ctrl.showProjectCreateError && $ctrl.projectCreateErrorText"
+          >
+              {{$ctrl.projectCreateErrorText}}
+          </div>
+        </form>
+      </div>
+      <div ng-if="$ctrl.currentError" class="color-danger text-center">
+        {{$ctrl.currentError.data}}
       </div>
     </div>
   </div>
@@ -178,6 +197,13 @@
   </div>
 
   <!--Body for IMPORT_SUCCESS-->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('S3_UPLOAD')">
+    <div class="content">
+      <h3 class="no-margin text-center">Processing your S3 import</h3>
+    </div>
+  </div>
+
+  <!--Body for IMPORT_SUCCESS-->
   <div class="modal-body" ng-if="$ctrl.currentStepIs('IMPORT_SUCCESS')">
     <div class="content">
       <h3 class="no-margin">Success!</h3>
@@ -190,43 +216,28 @@
   </div>
 
   <!--Default Footer-->
-  <div
-    ng-if="$ctrl.currentStepIsNot(['UPLOAD_PROGRESS', 'IMPORT_SUCCESS', 'DATASOURCE_SELECT'])"
-    class="modal-footer"
-  >
+  <div class="modal-footer">
     <button type="button" class="btn pull-left"
-            ng-click="$ctrl.closeWithData(1)">
+            ng-if="$ctrl.allowClose()"
+            ng-click="$ctrl.handleClose()">
       Cancel
     </button>
 
     <button type="button" class="btn"
-            ng-if="$ctrl.hasPreviousStep()"
-            ng-click="$ctrl.gotoPreviousStep()">
+            ng-if="$ctrl.hasPrevious()"
+            ng-click="$ctrl.handlePrevious()"
+            ng-disabled="!$ctrl.allowPrevious()">
       Back
     </button>
     <button type="button" class="btn btn-primary"
+            ng-if="$ctrl.hasNext()"
             ng-click="$ctrl.handleNext()"
-            ng-disabled="!$ctrl.allowNext">
+            ng-disabled="!$ctrl.allowNext()">
       Next
     </button>
-  </div>
-
-  <!--Footer for UPLOAD_PROGRESS-->
-  <div ng-if="$ctrl.currentStepIs(['UPLOAD_PROGRESS'])" class="modal-footer">
-  </div>
-
-  <!--Footer for DATASOURCE_SELECT-->
-  <div ng-if="$ctrl.currentStepIs(['DATASOURCE_SELECT'])" class="modal-footer">
-    <button type="button" class="btn pull-left"
-            ng-click="$ctrl.closeWithData(1)">
-      Cancel
-    </button>
-  </div>
-
-  <!--Footer for SUCCESS-->
-  <div ng-if="$ctrl.currentStepIs('IMPORT_SUCCESS')" class="modal-footer">
     <button type="button" class="btn btn-primary"
-            ng-click="$ctrl.closeWithData(1)">
+            ng-if="$ctrl.allowDone()"
+            ng-click="$ctrl.handleDone()">
       Done
     </button>
   </div>

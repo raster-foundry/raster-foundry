@@ -2,6 +2,8 @@
 /* global document */
 /* global window */
 
+const availableImportTypes = ['local', 'S3'];
+
 export default class SceneImportModalController {
     constructor(
         $scope, $state,
@@ -17,15 +19,19 @@ export default class SceneImportModalController {
         this.authService = authService;
         this.rollbarWrapperService = rollbarWrapperService;
         this.datasourceService = datasourceService;
+        this.availableImportTypes = availableImportTypes;
     }
 
     $onInit() {
         this.initSteps();
         this.importType = 'local';
+        this.s3Config = {
+            bucket: '',
+            prefix: ''
+        };
         this.selectedFiles = [];
         this.uploadProgressPct = {};
         this.uploadProgressFlexString = {};
-        this.setCurrentStepIndex(0);
         this.datasource = this.resolve.datasource || false;
         const onWindowUnload = (event) => {
             if (this.closeCanceller) {
@@ -41,15 +47,112 @@ export default class SceneImportModalController {
     initSteps() {
         this.steps = [];
         if (!this.resolve.datasource) {
-            this.steps.push('DATASOURCE_SELECT');
+            this.steps.push({
+                name: 'DATASOURCE_SELECT',
+                allowClose: () => true,
+                onEnter: () => {
+                    this.loadDatasources();
+                },
+                previous: () => false
+            });
         }
-        this.steps = this.steps.concat([
-            'IMPORT',
-            'LOCAL_UPLOAD',
-            'UPLOAD_PROGRESS',
-            'IMPORT_SUCCESS',
-            'IMPORT_ERROR'
-        ]);
+        this.steps = this.steps.concat([{
+            name: 'IMPORT',
+            previous: () => this.resolve.datasource ? false : 'DATASOURCE_SELECT',
+            allowPrevious: () => true,
+            next: () => {
+                if (this.importType === 'S3') {
+                    return 'S3_UPLOAD';
+                }
+                return 'LOCAL_UPLOAD';
+            },
+            allowNext: () => {
+                if (this.importType === 'local') {
+                    return true;
+                }
+                return this.validateS3Config();
+            },
+            allowClose: () => true,
+            onExit: () => {
+                this.currentError = null;
+            }
+        }, {
+            name: 'LOCAL_UPLOAD',
+            onEnter: () => {
+                this.verifyFileCount();
+            },
+            previous: () => 'IMPORT',
+            allowPrevious: () => true,
+            next: () => 'UPLOAD_PROGRESS',
+            allowNext: () => this.verifyFileCount(),
+            allowClose: () => true
+        }, {
+            name: 'UPLOAD_PROGRESS',
+            onEnter: () => this.startLocalUpload(),
+            next: () => 'IMPORT_SUCCESS'
+        }, {
+            name: 'S3_UPLOAD',
+            previous: () => 'IMPORT',
+            onEnter: () => this.startS3Upload(),
+            next: () => 'IMPORT_SUCCESS'
+        }, {
+            name: 'IMPORT_SUCCESS',
+            allowDone: () => true
+        }, {
+            name: 'IMPORT_ERROR',
+            allowDone: () => true
+        }]);
+
+        this.setCurrentStep(this.steps[0]);
+    }
+
+    getStep(stepName) {
+        return this.steps.find(s => s.name === stepName);
+    }
+
+    allowClose() {
+        const step = this.currentStep;
+        return step.allowClose && step.allowClose();
+    }
+
+    handleClose() {
+        this.dismiss();
+    }
+
+    hasPrevious() {
+        return this.currentStep.previous && this.currentStep.previous();
+    }
+
+    allowPrevious() {
+        return this.currentStep.allowPrevious && this.currentStep.allowPrevious();
+    }
+
+    handlePrevious() {
+        this.setCurrentStep(this.getStep(this.currentStep.previous()));
+    }
+
+    hasNext() {
+        return this.currentStep.next && this.currentStep.next();
+    }
+
+    allowNext() {
+        return this.currentStep.allowNext && this.currentStep.allowNext();
+    }
+
+    handleNext() {
+        this.setCurrentStep(this.getStep(this.currentStep.next()));
+    }
+
+    allowDone() {
+        return this.currentStep.allowDone && this.currentStep.allowDone();
+    }
+
+    handleDone() {
+        this.close();
+    }
+
+    validateS3Config() {
+        return Boolean(this.s3Config.bucket);
     }
 
     shouldShowFileList() {
@@ -69,20 +172,15 @@ export default class SceneImportModalController {
             this.datasources.count > this.pageSize;
     }
 
-    projectAttributeIs(attr, value) {
-        if (this.projectBuffer.hasOwnProperty(attr)) {
-            return this.projectBuffer[attr] === value;
+    setImportType(type) {
+        if (this.availableImportTypes.indexOf(type) >= 0) {
+            this.importType = type;
         }
-        return false;
-    }
-
-    setProjectAttribute(attr, value) {
-        this.projectBuffer[attr] = value;
     }
 
     handleDatasourceSelect(datasource) {
         this.datasource = datasource;
-        this.gotoNextStep();
+        this.setCurrentStep(this.getStep('IMPORT'));
     }
 
     currentStepIs(step) {
@@ -91,69 +189,17 @@ export default class SceneImportModalController {
                 return acc || this.currentStepIs(cs);
             }, false);
         }
-        return this.currentStep === step;
-    }
-
-    currentStepIsNot(step) {
-        if (step.constructor === Array) {
-            return step.reduce((acc, cs) => {
-                return acc && this.currentStepIsNot(cs);
-            }, true);
-        }
-        return this.currentStep !== step;
-    }
-
-    getCurrentStepIndex() {
-        return this.steps.indexOf(this.currentStep);
-    }
-
-    hasNextStep() {
-        const stepLimit = this.steps.length - 1;
-        return this.getCurrentStepIndex() < stepLimit;
-    }
-
-    hasPreviousStep() {
-        return this.getCurrentStepIndex() > 0;
+        return this.currentStep.name === step;
     }
 
     setCurrentStep(step) {
+        if (this.currentStep && this.currentStep.onExit) {
+            this.currentStep.onExit();
+        }
         this.currentStep = step;
-        this.onStepEnter();
-    }
-
-    setCurrentStepIndex(index) {
-        this.currentStep = this.steps[index];
-        this.onStepEnter();
-    }
-
-    gotoPreviousStep() {
-        if (this.hasPreviousStep()) {
-            this.setCurrentStep(this.steps[this.getCurrentStepIndex() - 1]);
+        if (this.currentStep.onEnter) {
+            this.currentStep.onEnter();
         }
-    }
-
-    gotoNextStep() {
-        if (this.hasNextStep()) {
-            this.setCurrentStep(this.steps[this.getCurrentStepIndex() + 1]);
-        }
-    }
-
-    gotoStep(step) {
-        const stepIndex = this.steps.indexOf(step);
-        if (stepIndex >= 0) {
-            this.setCurrentStep(this.steps[stepIndex]);
-        }
-    }
-
-    gotoSceneBrowser() {
-        if (this.project) {
-            this.close();
-            this.$state.go('project.scenes.browse', {projectid: this.project.id});
-        }
-    }
-
-    createProject() {
-        return this.projectService.createProject(this.projectBuffer.name);
     }
 
     validateProjectName() {
@@ -167,36 +213,10 @@ export default class SceneImportModalController {
     }
 
     verifyFileCount() {
-        if (this.selectedFiles.length) {
-            this.allowNext = true;
-        } else {
-            this.allowNext = false;
-        }
+        return Boolean(this.selectedFiles.length);
     }
 
-    handleNext() {
-        if (this.allowNext) {
-            if (this.currentStepIs('LOCAL_UPLOAD')) {
-                this.gotoNextStep();
-                this.allowNext = false;
-                this.startUpload();
-            } else {
-                this.gotoNextStep();
-            }
-        }
-    }
-
-    onStepEnter() {
-        if (this.currentStepIs('LOCAL_UPLOAD')) {
-            this.verifyFileCount();
-        } else if (this.currentStepIs('IMPORT')) {
-            this.allowNext = true;
-        } else if (this.currentStepIs('DATASOURCE_SELECT')) {
-            this.loadDatasources();
-        }
-    }
-
-    startUpload() {
+    startLocalUpload() {
         this.preventInterruptions();
         this.authService
             .getCurrentUser()
@@ -209,18 +229,39 @@ export default class SceneImportModalController {
             .then(this.sendFiles.bind(this));
     }
 
+    startS3Upload() {
+        this.preventInterruptions();
+        this.authService
+            .getCurrentUser()
+            .then(this.createUpload.bind(this))
+            .then(upload => {
+                this.upload = upload;
+                this.uploadsDone();
+                return upload;
+            }, err => {
+                this.uploadError(err);
+                this.handlePrevious();
+            });
+    }
 
     createUpload(user) {
         let uploadObject = {
-            files: this.selectedFiles.map(f => f.name),
+            files: [],
             datasource: this.datasource.id,
             fileType: 'GEOTIFF',
-            uploadType: 'LOCAL',
             uploadStatus: 'UPLOADING',
             visibility: 'PRIVATE',
             organizationId: user.organizationId,
             metadata: {}
         };
+
+        if (this.importType === 'local') {
+            uploadObject.files = this.selectedFiles.map(f => f.name);
+            uploadObject.uploadType = 'LOCAL';
+        } else if (this.importType === 'S3') {
+            uploadObject.uploadType = 'S3';
+            uploadObject.source = encodeURI(this.s3Config.bucket);
+        }
         if (this.resolve.project) {
             uploadObject.projectId = this.resolve.project.id;
         }
@@ -277,17 +318,15 @@ export default class SceneImportModalController {
     uploadsDone() {
         this.upload.uploadStatus = 'UPLOADED';
         this.uploadService.update(this.upload).then(() => {
-            this.gotoStep('IMPORT_SUCCESS');
-            this.allowNext = true;
+            this.handleNext();
         });
 
         this.allowInterruptions();
     }
 
     uploadError(err) {
-        this.rollbarWrapperService.error(err);
-
         this.allowInterruptions();
+        this.currentError = err;
     }
 
     handleUploadProgress(progress) {
@@ -305,7 +344,6 @@ export default class SceneImportModalController {
 
     filesSelected(files) {
         this.selectedFiles = files;
-        this.verifyFileCount();
     }
 
     getTotalFileSize() {
@@ -319,12 +357,10 @@ export default class SceneImportModalController {
 
     removeFileAtIndex(index) {
         this.selectedFiles.splice(index, 1);
-        this.verifyFileCount();
     }
 
     removeAllFiles() {
         this.selectedFiles = [];
-        this.verifyFileCount();
     }
 
     loadDatasources(page = 1) {
