@@ -6,6 +6,7 @@ import time
 from airflow.operators.python_operator import PythonOperator
 from airflow.exceptions import AirflowException
 from airflow.models import DAG
+import subprocess
 import boto3
 import dns.resolver
 
@@ -49,7 +50,7 @@ dag = DAG(
 batch_job_definition = os.getenv('BATCH_INGEST_JOB_NAME')
 batch_job_queue = os.getenv('BATCH_INGEST_JOB_QUEUE')
 hosted_zone_id = os.getenv('HOSTED_ZONE_ID')
-jar_path = os.getenv('BATCH_JAR_PATH', 'rf-batch-87b97ad.jar')
+jar_path = os.getenv('BATCH_JAR_PATH', 'rf-batch-b8bc56f.jar')
 
 
 ################################
@@ -222,12 +223,35 @@ def wait_for_status_op(*args, **kwargs):
     scene.ingestLocation = s3_output_location
     scene.ingestStatus = status
 
+    if scene.ingestStatus != IngestStatus.FAILED:
+        logger.info('Writing scene metadata into postgres.')
+        metadataToPostgres(s3_output_location, scene_id)
+
     logger.info('Setting scene %s ingest status to %s', scene.id, scene.ingestStatus)
     scene.update()
     logger.info('Successfully updated scene %s\'s ingest status', scene.id)
+    
     if scene.ingestStatus == IngestStatus.FAILED:
         raise AirflowException('Failed to ingest {} for user {}'.format(scene_id, scene.owner))
 
+@wrap_rollbar
+def metadataToPostgres(uri, scene_id):
+    bash_cmd = 'java -cp /opt/raster-foundry/jars/rf-batch.jar com.azavea.rf.batch.Main migration_s3_postgres {} layer_attributes {}'.format(uri, scene_id)
+    cmd = subprocess.Popen(bash_cmd, shell=True, stdout=subprocess.PIPE)
+    step_id = ''
+    for line in cmd.stdout:
+        logger.info(line.strip())
+
+    # Wait until process terminates (without using cmd.wait())
+    while cmd.poll() is None:
+        time.sleep(0.5)
+
+    if cmd.returncode == 0:
+        logger.info('Successfully completed metadata postgres write for scene %s', scene_id)
+        return True
+    else:
+        logger.error('Something went wrong with %s', scene_id)
+        raise AirflowException('Metadata postgres write failed for {}'.format(scene_id))
 
 ################################
 # Tasks                        #
