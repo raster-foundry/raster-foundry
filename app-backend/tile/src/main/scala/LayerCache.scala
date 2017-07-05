@@ -202,12 +202,16 @@ object LayerCache extends Config with LazyLogging {
     astCache.cachingOptionT(cacheKey) { implicit ec =>
       for {
         (tool, toolRun) <- toolAndToolRun(toolRunId, user)
-        oldAst      <- OptionT.fromOption[Future]({
+        oldAst   <- OptionT.fromOption[Future]({
                       logger.debug(s"Parsing Tool AST with ${tool.definition}")
                       val entireAST = tool.definition.as[MapAlgebraAST].valueOr(throw _)
                       subNode.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
                     })
-        subs     <- assembleSubstitutions(oldAst, user)
+        subs     <- assembleSubstitutions(oldAst, { id: UUID =>
+                     OptionT(Tools.getTool(id, user))
+                       .map({ referrent => referrent.definition.as[MapAlgebraAST].valueOr(throw _) })
+                       .value
+                   })
         ast      <- OptionT.fromOption[Future](oldAst.substitute(subs))
         nodeId   <- OptionT.pure[Future, UUID](subNode.getOrElse(ast.id))
         params   <- OptionT.pure[Future, EvalParams]({

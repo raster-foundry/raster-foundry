@@ -250,7 +250,13 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
     for {
       tRun   <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
       tool   <- OptionT(Tools.getTool(tRun.tool, user))
-      ast    <- OptionT.pure[Future, MapAlgebraAST](tool.definition.as[MapAlgebraAST].valueOr(throw _))
+      oldAst <- OptionT.pure[Future, MapAlgebraAST](tool.definition.as[MapAlgebraAST].valueOr(throw _))
+      subs   <- assembleSubstitutions(oldAst, { id: UUID =>
+                  OptionT(Tools.getTool(id, user))
+                    .map({ referrent => referrent.definition.as[MapAlgebraAST].valueOr(throw _) })
+                    .value
+                })
+      ast    <- OptionT.fromOption[Future](oldAst.substitute(subs))
       params <- OptionT.pure[Future, EvalParams](tRun.executionParameters.as[EvalParams].valueOr(throw _))
       (scenes, projects) <- ingestLocs(params, user)
     } yield {
