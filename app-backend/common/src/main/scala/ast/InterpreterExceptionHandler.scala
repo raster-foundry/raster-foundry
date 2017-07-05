@@ -1,4 +1,4 @@
-package com.azavea.rf.common
+package com.azavea.rf.common.ast
 
 import com.azavea.rf.tool.eval.InterpreterError
 

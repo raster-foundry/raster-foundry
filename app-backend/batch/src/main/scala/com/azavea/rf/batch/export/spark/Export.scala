@@ -1,18 +1,28 @@
 package com.azavea.rf.batch.export.spark
 
-import io.circe.parser._
-import io.circe.syntax._
+import com.azavea.rf.batch.export.json.S3ExportStatus
 import com.azavea.rf.batch._
 import com.azavea.rf.batch.ast._
 import com.azavea.rf.batch.dropbox._
 import com.azavea.rf.batch.export._
 import com.azavea.rf.batch.util._
 import com.azavea.rf.batch.util.conf._
-import com.azavea.rf.common.InterpreterException
+import com.azavea.rf.common.ast.InterpreterException
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.rf.tool.params.EvalParams
 import com.azavea.rf.common.S3.putObject
+
+import com.dropbox.core.v2.DbxClientV2
+import com.dropbox.core.v2.files.{CreateFolderErrorException, WriteMode}
+import com.typesafe.scalalogging.LazyLogging
+import io.circe.parser._
+import io.circe.syntax._
+import cats.data.Validated._
+import cats.implicits._
+import com.dropbox.core.v2.DbxClientV2
+import com.dropbox.core.v2.files.{CreateFolderErrorException, WriteMode}
+import com.typesafe.scalalogging.LazyLogging
 import geotrellis.proj4.{CRS, LatLng}
 import geotrellis.raster._
 import geotrellis.raster.histogram.Histogram
@@ -25,18 +35,13 @@ import geotrellis.spark.io.hadoop._
 import geotrellis.spark.io.s3._
 import geotrellis.spark.tiling._
 import geotrellis.vector.MultiPolygon
-import com.dropbox.core.v2.DbxClientV2
-import com.dropbox.core.v2.files.{CreateFolderErrorException, WriteMode}
-import com.typesafe.scalalogging.LazyLogging
 import org.apache.hadoop.fs.Path
-import org.apache.spark._
-import org.apache.spark.rdd.RDD
-import cats.data.Validated._
-import cats.implicits._
 import spray.json.DefaultJsonProtocol._
+import org.apache.spark.rdd.RDD
+import org.apache.spark._
+
 import java.util.UUID
 
-import com.azavea.rf.batch.export.json.S3ExportStatus
 
 object Export extends SparkJob with Config with LazyLogging {
 
@@ -167,7 +172,7 @@ object Export extends SparkJob with Config with LazyLogging {
   }
 
   private def singlePath(ed: ExportDefinition): String =
-    s"${ed.output.getURLDecodedSource}/${ed.input.resolution}-${ed.id}-${UUID.randomUUID()}.tiff"
+    s"/${ed.output.getURLDecodedSource}/${ed.input.resolution}-${ed.id}-${UUID.randomUUID()}.tiff"
 
   /** Write a single GeoTiff to some target. */
   private def writeGeoTiff[T <: CellGrid, G <: GeoTiff[T]](
@@ -208,7 +213,7 @@ object Export extends SparkJob with Config with LazyLogging {
     conf: HadoopConfiguration
   ): Unit = {
     def path(key: SpatialKey): ExportDefinition => String = { ed =>
-      s"${ed.output.getURLDecodedSource}/${ed.input.resolution}-${key.col}-${key.row}-${ed.id}.tiff"
+      s"/${ed.output.getURLDecodedSource}/${ed.input.resolution}-${key.col}-${key.row}-${ed.id}.tiff"
     }
 
     rdd.foreachPartition({ iter =>

@@ -5,14 +5,13 @@ import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.Scenes
 import com.azavea.rf.datamodel._
 
-import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
+import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import io.circe._
 import io.circe.syntax._
 import io.circe.parser._
-
+import kamon.akka.http.KamonTraceDirectives
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 import scala.util.{Success, Failure}
@@ -22,20 +21,35 @@ trait SceneRoutes extends Authentication
     with SceneQueryParameterDirective
     with PaginationDirectives
     with CommonHandlers
-    with UserErrorHandler {
+    with UserErrorHandler
+    with KamonTraceDirectives {
 
   implicit def database: Database
 
   val sceneRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
-      get { listScenes } ~
-      post { createScene }
+      get {
+        traceName("scenes-list") {
+        listScenes }
+      } ~
+      post {
+        traceName("scenes-create") {
+        createScene }
+      }
     } ~
     pathPrefix(JavaUUID) { sceneId =>
       pathEndOrSingleSlash {
-        get { getScene(sceneId) } ~
-        put { updateScene(sceneId) } ~
-        delete { deleteScene(sceneId) }
+        get {
+          traceName("scenes-detail") {
+          getScene(sceneId)
+          }
+        } ~
+        put { traceName("scenes-update") {
+          updateScene(sceneId) }
+        } ~
+        delete { traceName("scenes-delete") {
+          deleteScene(sceneId) }
+        }
       }
     }
   }

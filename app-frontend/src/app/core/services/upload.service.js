@@ -1,9 +1,11 @@
+/* globals BUILDCONFIG */
+
 export default (app) => {
     class UploadService {
         constructor($resource) {
             'ngInject';
             this.Upload = $resource(
-                '/api/uploads/:id', {
+                `${BUILDCONFIG.API_HOST}/api/uploads/:id`, {
                     id: '@id'
                 }, {
                     create: {

@@ -1,10 +1,12 @@
+/* globals BUILDCONFIG */
+
 export default (app) => {
     class ToolCategoryService {
         constructor($resource) {
             'ngInject';
 
             this.ToolCategory = $resource(
-                '/api/tool-categories/:id/', {
+                `${BUILDCONFIG.API_HOST}/api/tool-categories/:id/`, {
                     id: '@properties.id'
                 }, {
                     query: {

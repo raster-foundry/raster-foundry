@@ -8,6 +8,7 @@ import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.params._
 import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.rf.common._
+import com.azavea.rf.common.ast._
 import com.azavea.rf.common.cache._
 import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 import com.azavea.rf.database.Database
@@ -139,6 +140,7 @@ object LayerCache extends Config with LazyLogging {
       }
     }
 
+
   /** Calculate the histogram for the least resolute zoom level to automatically render tiles */
   def modelLayerGlobalHistogram(
     toolRunId: UUID,
@@ -147,12 +149,14 @@ object LayerCache extends Config with LazyLogging {
     voidCache: Boolean = false
   ): OptionT[Future, Histogram[Double]] = {
     val cacheKey = s"histogram-${toolRunId}-${subNode}-${user.id}"
+
     if (voidCache) histogramCache.delete(cacheKey)
     histogramCache.cachingOptionT(cacheKey) { implicit ec =>
       for {
         (tool, toolRun) <- LayerCache.toolAndToolRun(toolRunId, user, voidCache)
         (ast, params)   <- LayerCache.toolEvalRequirements(toolRunId, subNode, user, voidCache)
-        lztile          <- OptionT(Interpreter.interpretGlobal(ast, params.sources, params.overrides, TileSources.globalSource).map(_.toOption))
+        (extent, zoom)  <- TileSources.fullDataWindow(params.sources)
+        lztile          <- OptionT(Interpreter.interpretGlobal(ast, params.sources, params.overrides, extent, { r => TileSources.globalSource(extent, zoom, r) }).map(_.toOption))
         tile            <- OptionT.fromOption[Future](lztile.evaluateDouble)
       } yield {
         val hist = StreamingHistogram.fromTile(tile)
@@ -185,6 +189,7 @@ object LayerCache extends Config with LazyLogging {
     }
 
 
+
   /** Calculate all of the prerequisites to evaluation of an AST over a set of tile sources */
   def toolEvalRequirements(
     toolRunId: UUID,
@@ -197,11 +202,13 @@ object LayerCache extends Config with LazyLogging {
     astCache.cachingOptionT(cacheKey) { implicit ec =>
       for {
         (tool, toolRun) <- toolAndToolRun(toolRunId, user)
-        ast      <- OptionT.fromOption[Future]({
+        oldAst      <- OptionT.fromOption[Future]({
                       logger.debug(s"Parsing Tool AST with ${tool.definition}")
                       val entireAST = tool.definition.as[MapAlgebraAST].valueOr(throw _)
                       subNode.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
                     })
+        subs     <- assembleSubstitutions(oldAst, user)
+        ast      <- OptionT.fromOption[Future](oldAst.substitute(subs))
         nodeId   <- OptionT.pure[Future, UUID](subNode.getOrElse(ast.id))
         params   <- OptionT.pure[Future, EvalParams]({
                       logger.debug(s"Parsing ToolRun parameters with ${toolRun.executionParameters}")

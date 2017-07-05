@@ -2,6 +2,7 @@ package com.azavea.rf.tool.ast.codec
 
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.eval._
+import com.azavea.rf.bridge._
 import io.circe._
 import io.circe.syntax._
 
@@ -75,9 +76,9 @@ trait MapAlgebraOperationCodecs {
     Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
 
   implicit lazy val decodeMasking: Decoder[MapAlgebraAST.Masking] =
-    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.Masking.apply)
+    Decoder.forProduct4("args", "id", "metadata", "mask")(MapAlgebraAST.Masking.apply)
   implicit lazy val encodeMasking: Encoder[MapAlgebraAST.Masking] =
-    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+    Encoder.forProduct5("apply", "args", "id", "metadata", "mask")(op => (op.symbol, op.args, op.id, op.metadata, op.mask))
 
   implicit lazy val decodeClassification: Decoder[MapAlgebraAST.Classification] =
     Decoder.forProduct4("args", "id", "metadata", "classMap")(MapAlgebraAST.Classification.apply)

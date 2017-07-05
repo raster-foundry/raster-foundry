@@ -20,7 +20,7 @@ class Users(_tableTag: Tag) extends Table[User](_tableTag, "users")
                                     with UserFields
                                     with TimestampFields
 {
-  def * = (id, organizationId, role, createdAt, modifiedAt, dropboxCredential) <>
+  def * = (id, organizationId, role, createdAt, modifiedAt, dropboxCredential, planetCredential) <>
     (User.tupled, User.unapply)
 
   val id: Rep[String] = column[String]("id", O.PrimaryKey, O.Length(255,varying=true))
@@ -29,6 +29,7 @@ class Users(_tableTag: Tag) extends Table[User](_tableTag, "users")
   val createdAt: Rep[Timestamp] = column[Timestamp]("created_at")
   val modifiedAt: Rep[Timestamp] = column[Timestamp]("modified_at")
   val dropboxCredential: Rep[Option[String]] = column[Option[String]]("dropbox_credential")
+  val planetCredential: Rep[Option[String]] = column[Option[String]]("planet_credential")
 }
 
 object Users extends TableQuery(tag => new Users(tag)) with LazyLogging {
@@ -154,6 +155,12 @@ object Users extends TableQuery(tag => new Users(tag)) with LazyLogging {
     val updateAction = Users.filter(_.id === userId).map(_.dropboxCredential).update(Some(token))
     logger.debug(s"Attempting to store access token for user $userId")
     database.db.run(updateAction)
+  }
+
+  def getDropboxAccessToken(userId: String)(implicit database: DB): Future[Option[Option[String]]] = {
+    val filtAction = Users.filter(_.id === userId).map(_.dropboxCredential).result.headOption
+    logger.debug(s"Attempting to retrieve access token for user $userId")
+    database.db.run(filtAction)
   }
 
   def updateUser(user: User, id: String)(implicit database: DB): Future[Int] = {

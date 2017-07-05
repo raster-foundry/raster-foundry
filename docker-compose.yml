@@ -1,7 +1,7 @@
 version: '2.1'
 services:
   postgres:
-    image: quay.io/azavea/postgis:postgres9.5-postgis2.2
+    image: quay.io/azavea/postgis:2.3-postgres9.6-slim
     volumes:
       - ./data/:/tmp/data/
     env_file: .env
@@ -56,6 +56,7 @@ services:
       - postgres:database.service.rasterfoundry.internal
     external_links:
       - airflow-webserver:airflow.service.rasterfoundry.internal
+      - statsd
     env_file: .env
     ports:
       - "9000:9000"
@@ -75,6 +76,8 @@ services:
     links:
       - postgres:database.service.rasterfoundry.internal
       - memcached:tile-cache.service.rasterfoundry.internal
+    external_links:
+      - statsd
     env_file: .env
     ports:
       - "9900:9900"

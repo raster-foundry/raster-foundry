@@ -1,3 +1,5 @@
+/* globals BUILDCONFIG */
+
 /* global L */
 const availableProcessingOptions = [
     {
@@ -19,6 +21,18 @@ const availableProcessingOptions = [
         description:
             'Assess whether the target being observed contains live green vegetation or not',
         toolId: '7311e8ca-9af7-4fab-b63e-559d2e765388'
+    }, {
+        label: 'NDWI',
+        value: 'ndwi',
+        description:
+            'An index that is primarily used to distinguish water bodies.',
+        toolId: '2d3a351f-54b4-42a9-9db4-d027b9aac03c'
+    }, {
+        label: 'NDMI',
+        value: 'ndmi',
+        description:
+            'An index that assesses the variation of the moisture content of vegetation.',
+        toolId: '44fad5c9-1e0d-4631-aaa0-a61182619cb1'
     }
 ];
 
@@ -33,6 +47,7 @@ export default (app) => {
             this.tokenService = tokenService;
             this.authService = authService;
             this.statusService = statusService;
+            this.exportType = 'S3';
             this.$http = $http;
             this.$location = $location;
             this.$q = $q;
@@ -43,7 +58,7 @@ export default (app) => {
             this.tileServer = `${APP_CONFIG.tileServerLocation}`;
 
             this.Project = $resource(
-                '/api/projects/:id/', {
+                `${BUILDCONFIG.API_HOST}/api/projects/:id/`, {
                     id: '@properties.id'
                 }, {
                     query: {
@@ -62,14 +77,14 @@ export default (app) => {
                     },
                     updateProject: {
                         method: 'PUT',
-                        url: '/api/projects/:id',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:id`,
                         params: {
                             id: '@id'
                         }
                     },
                     addScenes: {
                         method: 'POST',
-                        url: '/api/projects/:projectId/scenes/',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/scenes/`,
                         params: {
                             projectId: '@projectId'
                         },
@@ -78,7 +93,7 @@ export default (app) => {
                     projectScenes: {
                         method: 'GET',
                         cache: false,
-                        url: '/api/projects/:projectId/scenes',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/scenes`,
                         params: {
                             projectId: '@projectId',
                             pending: '@pending'
@@ -87,14 +102,14 @@ export default (app) => {
                     projectAois: {
                         method: 'GET',
                         cache: false,
-                        url: '/api/projects/:projectId/areas-of-interest',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/areas-of-interest`,
                         params: {
                             projectId: '@projectId'
                         }
                     },
                     removeScenes: {
                         method: 'DELETE',
-                        url: '/api/projects/:projectId/scenes/',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/scenes/`,
                         params: {
                             projectId: '@projectId'
                         }
@@ -105,21 +120,22 @@ export default (app) => {
                     },
                     listExports: {
                         method: 'GET',
-                        url: '/api/exports?project=:project',
+                        url: `${BUILDCONFIG.API_HOST}/api/exports?project=:project`,
                         params: {
                             project: '@project'
                         }
                     },
                     createAOI: {
                         method: 'POST',
-                        url: '/api/projects/:projectId/areas-of-interest/',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/areas-of-interest/`,
                         params: {
                             projectId: '@projectId'
                         }
                     },
                     approveScene: {
                         method: 'POST',
-                        url: '/api/projects/:projectId/scenes/:sceneId/accept',
+                        url: `${BUILDCONFIG.API_HOST}` +
+                            '/api/projects/:projectId/scenes/:sceneId/accept',
                         params: {
                             projectId: '@projectId',
                             sceneId: '@sceneId'
@@ -153,7 +169,7 @@ export default (app) => {
             const defaultSettings = {
                 projectId: project.id,
                 exportStatus: 'NOTEXPORTED',
-                exportType: 'S3',
+                exportType: this.exportType ? this.exportType : 'S3',
                 visibility: 'PRIVATE',
                 exportOptions: finalOptions
             };
@@ -321,7 +337,7 @@ export default (app) => {
         removeScenesFromProject(projectId, scenes) {
             return this.$http({
                 method: 'DELETE',
-                url: `/api/projects/${projectId}/scenes/`,
+                url: `${BUILDCONFIG.API_HOST}/api/projects/${projectId}/scenes/`,
                 data: scenes,
                 headers: {'Content-Type': 'application/json;charset=utf-8'}
             });
@@ -353,7 +369,7 @@ export default (app) => {
         }
 
         getBaseURL() {
-            let host = this.$location.host();
+            let host = BUILDCONFIG.API_HOST || this.$location.host();
             let protocol = this.$location.protocol();
             let port = this.$location.port();
             let formattedPort = port !== 80 && port !== 443 ? ':' + port : '';

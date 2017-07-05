@@ -1,10 +1,12 @@
+/* globals BUILDCONFIG */
+
 export default (app) => {
     class SceneService {
         constructor($resource) {
             'ngInject';
 
             this.Scene = $resource(
-                '/api/scenes/:id/', {
+                `${BUILDCONFIG.API_HOST}/api/scenes/:id/`, {
                     id: '@properties.id'
                 }, {
                     query: {

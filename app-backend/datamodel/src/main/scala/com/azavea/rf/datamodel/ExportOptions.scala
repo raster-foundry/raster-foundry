@@ -1,5 +1,6 @@
 package com.azavea.rf.datamodel
 
+import com.azavea.rf.bridge._
 import geotrellis.slick.Projected
 import geotrellis.vector.MultiPolygon
 import geotrellis.proj4.CRS

@@ -1,10 +1,12 @@
+/* globals BUILDCONFIG */
+
 export default (app) => {
     class OrganizationService {
         constructor($resource) {
             'ngInject';
 
             this.Organization = $resource(
-                '/api/organizations/:id/', {
+                `${BUILDCONFIG.API_HOST}/api/organizations/:id/`, {
                     id: '@properties.id'
                 }, {
                     query: {

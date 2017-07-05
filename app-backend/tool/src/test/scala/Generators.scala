@@ -11,6 +11,7 @@ import org.scalacheck.Prop.forAll
 import geotrellis.raster.histogram._
 import geotrellis.raster.render._
 import geotrellis.raster._
+import geotrellis.vector._
 
 import scala.util.Random
 import java.util.UUID
@@ -36,6 +37,13 @@ object Generators {
     dubs <- Gen.containerOfN[List, Double](30, arbitrary[Double])
     ints <- Gen.containerOfN[List, Int](30, arbitrary[Int])
   } yield ClassMap(dubs.zip(ints).toMap)
+
+  /*
+  lazy val genMultiPolygon: Gen[MultiPolygon] = for {
+    xs <- Gen.containerOfN[List, Double](10, arbitrary[Double])
+    ys <- Gen.containerOfN[List, Double](10, arbitrary[Double])
+  } yield MultiPolygon(Polygon(xs.zip(ys) :+ (xs.head, ys.head)))
+   */
 
   lazy val genNodeMetadata: Gen[NodeMetadata] = for {
     label <- Gen.option(arbitrary[String])
@@ -76,13 +84,17 @@ object Generators {
     nmd <- Gen.option(genNodeMetadata)
   } yield MapAlgebraAST.Constant(id, const, nmd)
 
+  lazy val genRefAST = for {
+    id <- arbitrary[UUID]
+    toolId <- arbitrary[UUID]
+  } yield MapAlgebraAST.ToolReference(id, toolId)
+
   def genBinaryOpAST(depth: Int) = for {
     constructor <- Gen.lzy(Gen.oneOf(
                      MapAlgebraAST.Addition.apply _,
                      MapAlgebraAST.Subtraction.apply _,
                      MapAlgebraAST.Multiplication.apply _,
                      MapAlgebraAST.Division.apply _,
-                     MapAlgebraAST.Masking.apply _,
                      MapAlgebraAST.Max.apply _,
                      MapAlgebraAST.Min.apply _
                    ))
@@ -98,16 +110,29 @@ object Generators {
     cmap <- genClassMap
   } yield MapAlgebraAST.Classification(args, id, nmd, cmap)
 
+  def genMaskingAST(depth: Int) = for {
+    args <- containerOfN[List, MapAlgebraAST](1, genMapAlgebraAST(depth))
+    id <- arbitrary[UUID]
+    nmd <- Gen.option(genNodeMetadata)
+  } yield {
+    val mp = MultiPolygon(Polygon((0, 0), (0, 10), (10, 10), (10, 0), (0, 0)))
+
+    MapAlgebraAST.Masking(args, id, nmd, mp)
+  }
+
+  // TODO: If `genMaskingAST` is included, AST generation diverges!
   def genOpAST(depth: Int) = Gen.frequency(
     (5 -> genBinaryOpAST(depth)),
+//    (2 -> genMaskingAST(depth)),
     (1 -> genClassificationAST(depth))
   )
+
+  def genLeafAST = Gen.oneOf(genConstantAST, genSourceAST, genRefAST)
 
   /** We are forced to manually control flow in this generator to prevent stack overflows
     *  See: http://stackoverflow.com/questions/19829293/scalacheck-arbitrary-implicits-and-recursive-generators
     */
   def genMapAlgebraAST(depth: Int = 1): Gen[MapAlgebraAST] =
-    if (depth >= 100) genConstantAST
-    else Gen.frequency((1 -> genOpAST(depth + 1)), (1 -> genSourceAST))
-
+    if (depth >= 100) genLeafAST
+    else Gen.frequency((1 -> genOpAST(depth + 1)), (1 -> genLeafAST))
 }

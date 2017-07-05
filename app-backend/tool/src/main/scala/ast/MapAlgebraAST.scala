@@ -3,7 +3,9 @@ package com.azavea.rf.tool.ast
 import java.util.UUID
 
 import io.circe.generic.JsonCodec
+import cats.implicits._
 
+import geotrellis.vector.MultiPolygon
 
 /** The ur-type for a recursive representation of MapAlgebra operations */
 sealed trait MapAlgebraAST extends Product with Serializable {
@@ -12,11 +14,14 @@ sealed trait MapAlgebraAST extends Product with Serializable {
   def metadata: Option[NodeMetadata]
   def find(id: UUID): Option[MapAlgebraAST]
   def sources: Seq[MapAlgebraAST.MapAlgebraLeaf]
+  def substitute(substitutions: Map[UUID, MapAlgebraAST]): Option[MapAlgebraAST]
 }
 
 object MapAlgebraAST {
   /** Map Algebra operations (nodes in this tree) */
-  abstract class Operation(val symbol: String) extends MapAlgebraAST with Serializable {
+  sealed trait Operation extends MapAlgebraAST with Serializable {
+
+    val symbol: String
 
     @SuppressWarnings(Array("TraversableHead"))
     def find(id: UUID): Option[MapAlgebraAST] =
@@ -28,36 +33,72 @@ object MapAlgebraAST {
       }
 
     def sources: Seq[MapAlgebraAST.MapAlgebraLeaf] = args.flatMap(_.sources).distinct
+
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST
+
+    def substitute(substitutions: Map[UUID, MapAlgebraAST]): Option[MapAlgebraAST] = {
+      val updatedArgs: Option[List[MapAlgebraAST]] = this.args.map({ arg =>
+        arg.substitute(substitutions)
+      }).sequence
+
+      updatedArgs.map({ newArgs => this.withArgs(newArgs) })
+    }
   }
 
   /** Operations which should only have one argument. */
-  abstract class UnaryOp(override val symbol: String) extends Operation(symbol) with Serializable
+  sealed trait UnaryOp extends Operation with Serializable
 
-  case class Addition(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
-      extends Operation("+")
+  case class Addition(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends Operation {
+  val symbol = "+"
 
-  case class Subtraction(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
-      extends Operation("-")
+  def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = Addition(newArgs, id, metadata)
+}
 
-  case class Multiplication(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
-      extends Operation("*")
+  case class Subtraction(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends Operation {
+    val symbol = "-"
 
-  case class Division(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
-      extends Operation("/")
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = Subtraction(newArgs, id, metadata)
+  }
 
-  case class Masking(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
-      extends Operation("mask")
+  case class Multiplication(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends Operation {
+    val symbol = "*"
 
-  case class Classification(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], classMap: ClassMap)
-      extends UnaryOp("classify")
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = Multiplication(newArgs, id, metadata)
+  }
 
-  case class Max(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
-      extends Operation("max")
+  case class Division(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends Operation {
+    val symbol = "/"
 
-  case class Min(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata])
-      extends Operation("min")
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = Division(newArgs, id, metadata)
+  }
 
-  abstract class MapAlgebraLeaf(val `type`: String) extends MapAlgebraAST {
+  case class Masking(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], mask: MultiPolygon) extends UnaryOp {
+    val symbol = "mask"
+
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = Masking(newArgs, id, metadata, mask)
+  }
+
+  case class Classification(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], classMap: ClassMap) extends UnaryOp {
+    val symbol = "classify"
+
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = Classification(newArgs, id, metadata, classMap)
+  }
+
+  case class Max(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends Operation {
+    val symbol = "max"
+
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = Max(newArgs, id, metadata)
+  }
+
+  case class Min(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends Operation {
+    val symbol = "min"
+
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = Min(newArgs, id, metadata)
+  }
+
+  sealed trait MapAlgebraLeaf extends MapAlgebraAST {
+    val `type`: String
+
     def args: List[MapAlgebraAST] = List.empty
 
     def find(id: UUID): Option[MapAlgebraAST] =
@@ -66,20 +107,35 @@ object MapAlgebraAST {
   }
 
   @JsonCodec
-  case class Constant(id: UUID, constant: Double, metadata: Option[NodeMetadata]) extends MapAlgebraLeaf("const") {
+  case class Constant(id: UUID, constant: Double, metadata: Option[NodeMetadata]) extends MapAlgebraLeaf {
+    val `type` = "const"
+
     def sources: Seq[MapAlgebraAST.MapAlgebraLeaf] = List()
+
+    def substitute(substitutions: Map[UUID, MapAlgebraAST]): Option[MapAlgebraAST] = Some(this)
   }
 
   /** Map Algebra sources */
   @JsonCodec
-  case class Source(id: UUID, metadata: Option[NodeMetadata]) extends MapAlgebraLeaf("src") {
+  case class Source(id: UUID, metadata: Option[NodeMetadata]) extends MapAlgebraLeaf {
+    val `type` = "src"
+
     def sources: Seq[MapAlgebraAST.MapAlgebraLeaf] = List(this)
+
+    def substitute(substitutions: Map[UUID, MapAlgebraAST]): Option[MapAlgebraAST] = Some(this)
   }
 
   object Source {
     def empty: Source = Source(UUID.randomUUID(), None)
   }
 
-  /** TODO: Add other source types (or treat of them as hyperparameters - e.g. ClassMap, above) */
+  case class ToolReference(id: UUID, toolId: UUID) extends MapAlgebraLeaf {
+    val `type` = "ref"
+
+    def metadata: Option[NodeMetadata] = None
+    def sources: List[MapAlgebraAST.Source] = List()
+    def substitute(substitutions: Map[UUID, MapAlgebraAST]): Option[MapAlgebraAST] =
+      substitutions.get(toolId)
+  }
 
 }

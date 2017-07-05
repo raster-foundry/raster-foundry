@@ -1,3 +1,5 @@
+/* globals BUILDCONFIG */
+
 export default (app) => {
     class FeedService {
         constructor($resource, $q, $http) {
@@ -11,7 +13,7 @@ export default (app) => {
             return this.$q((resolve, reject) => {
                 this.$http({
                     method: 'GET',
-                    url: '/api/feed'
+                    url: `${BUILDCONFIG.API_HOST}/api/feed`
                 }).then(response => {
                     let raw = response.data;
                     try {

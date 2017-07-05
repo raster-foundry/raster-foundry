@@ -1,15 +1,19 @@
+/* globals BUILDCONFIG */
+
 export default (app) => {
     class ExportService {
-        constructor($resource) {
+        constructor($resource, $q, authService) {
             'ngInject';
+            this.$q = $q;
+            this.authService = authService;
 
             this.Export = $resource(
-                '/api/exports/:id/', {
+                `${BUILDCONFIG.API_HOST}/api/exports/:id/`, {
                     id: '@properties.id'
                 }, {
                     getFiles: {
                         isArray: true,
-                        url: '/api/exports/:exportId/files',
+                        url: `${BUILDCONFIG.API_HOST}/api/exports/:exportId/files`,
                         params: {
                             exportId: '@exportId'
                         }
@@ -19,7 +23,15 @@ export default (app) => {
         }
 
         getFiles(exportObject) {
-            return this.Export.getFiles({ exportId: exportObject.id }).$promise;
+            const token = this.authService.token();
+            return this.$q((resolve) => {
+                this.Export.getFiles({ exportId: exportObject.id })
+                    .then(files => {
+                        resolve(files.map(f => {
+                            return `/api/exports/${exportObject.id}/files/${f}?token=${token}`;
+                        }));
+                    });
+            });
         }
     }
 

@@ -4,6 +4,7 @@ import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster._
 import geotrellis.raster.mapalgebra.local._
 import geotrellis.raster.render._
+import geotrellis.vector.{ Extent, MultiPolygon, Point }
 import spire.syntax.cfor._
 
 sealed trait LazyTile extends TileLike with Grid with LazyLogging {
@@ -15,6 +16,7 @@ sealed trait LazyTile extends TileLike with Grid with LazyLogging {
   def max(other: LazyTile) = this.dualCombine(other)(Max.combine)(Max.combine)
   def min(other: LazyTile) = this.dualCombine(other)(Min.combine)(Min.combine)
   def classify(breaks: BreakMap[Double, Int]) = this.classification({ i => breaks(i) })
+  def mask(extent: Extent, mask: MultiPolygon) = LazyTile.Masking(this, extent, mask)
 
   def left: LazyTile
   def right: LazyTile
@@ -189,6 +191,35 @@ object LazyTile {
     def right = LazyTile.Nil
     def bind(args: Map[Var, LazyTile]): LazyTile =
       Classify(left.bind(args), f)
+  }
+
+  case class Masking(left: LazyTile, extent: Extent, mask: MultiPolygon) extends Tree {
+    lazy val cellMask: Tile = {
+      val masky = ArrayTile.empty(BitCellType, this.cols, this.rows)
+
+      RasterExtent(extent, this.cols, this.rows)
+        .foreach(mask)({ (col, row) => masky.set(col, row, 1) })
+
+      masky
+    }
+
+    /** Perform the NODATA checks ahead of time, in case the underlying Tile
+      * is sparse. This will then only check for Mask intersection if the value to
+      * give back could be something other than NODATA.
+      */
+    def get(col: Int, row: Int): Int = {
+      val v: Int = left.get(col, row)
+
+      if (isNoData(v)) v else if (cellMask.get(col, row) == 1) v else NODATA
+    }
+    def getDouble(col: Int, row: Int): Double = {
+      val v: Double = left.getDouble(col, row)
+
+      if (isNoData(v)) v else if (cellMask.get(col, row) == 1) v else Double.NaN
+    }
+    def right = LazyTile.Nil
+    def bind(args: Map[Var, LazyTile]): LazyTile =
+      Masking(left.bind(args), extent, mask)
   }
 
   case class MapInt(left: LazyTile, f: Int => Int) extends Tree {

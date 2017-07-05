@@ -43,11 +43,12 @@ const addMethods = [
 export default class AOIParametersController {
     constructor(
         $log, $q, $scope, $state, $uibModal,
-        moment, projectService, aoiService, authService
+        moment, projectService, aoiService, authService, mapService
     ) {
         'ngInject';
         this.$log = $log;
         this.$q = $q;
+        this.$scope = $scope;
         this.$parent = $scope.$parent.$ctrl;
         this.$state = $state;
         this.$uibModal = $uibModal;
@@ -56,13 +57,24 @@ export default class AOIParametersController {
         this.projectService = projectService;
         this.aoiService = aoiService;
         this.authService = authService;
+
+        this.getMap = () => mapService.getMap('edit');
     }
 
     $onInit() {
+        this.$scope.$on('$destroy', () => {
+            this.getMap().then(mapWrapper => mapWrapper.deleteLayers('Areas Of Interest'));
+        });
+
         this.showFilters = false;
         this.projectLoaded = false;
+        this.isProjectAoisDrawn = false;
         this.aoiProjectParameters = {};
         this.aoiParamters = {};
+        this.drawOptions = {
+            areaType: 'interest',
+            requirePolygons: true
+        };
 
         this.$q.all({
             project: this.$parent.fetchProject(),
@@ -83,13 +95,22 @@ export default class AOIParametersController {
         });
     }
 
-    aoiAreaToPolygons(aoiArea) {
-        return aoiArea.geom.coordinates.map((polygonCoords) => {
-            return {
-                type: 'Polygon',
-                coordinates: polygonCoords
-            };
+    drawProjectAois(multipolygon) {
+        this.getMap().then((map) => {
+            map.setLayer(
+                'Areas Of Interest',
+                L.geoJSON(multipolygon.geom, {
+                    style: () => {
+                        return {
+                            weight: 2,
+                            fillOpacity: 0.2
+                        };
+                    }
+                }),
+                true
+            );
         });
+        this.isProjectAoisDrawn = true;
     }
 
     fetchProjectAOIs() {
@@ -99,7 +120,10 @@ export default class AOIParametersController {
             this.projectAois = response.results || [];
             if (response.results && response.results.length === 1) {
                 let aoi = _.first(this.projectAois);
-                this.aoiPolygons = aoi ? this.aoiAreaToPolygons(aoi.area) : [];
+                this.aoiPolygons = aoi.area;
+                if (!this.isProjectAoisDrawn) {
+                    this.drawProjectAois(this.aoiPolygons);
+                }
                 return response.results;
             } else if (response.results && response.results.length > 1) {
                 this.unsupportedAois = true;
@@ -112,35 +136,24 @@ export default class AOIParametersController {
         });
     }
 
-    updateProjectAOIs(polygonCoordinates) {
+    updateProjectAOIs(multipolygon, aoiFilters) {
         if (this.projectAois && this.projectAois.length === 1) {
-            // update existing aoi
             let aoiToUpdate = this.projectAois[0];
-            if (polygonCoordinates.length) {
-                aoiToUpdate.area = {
-                    geom: {type: 'MultiPolygon', coordinates: polygonCoordinates},
-                    srid: 3857
-                };
-            } else {
-                this.$log.error('An AOI must be composed of at least one polygon');
-            }
+            aoiToUpdate.area = multipolygon;
+            aoiToUpdate.filters = aoiFilters;
             this.aoiService.updateAOI(aoiToUpdate).then(() => {
                 this.fetchProjectAOIs();
             });
-        } else if (this.projectAois && !this.projectAois.length && polygonCoordinates.length) {
+        } else if (this.projectAois && !this.projectAois.length) {
             let newAOI = {
                 owner: this.authService.profile().user_id,
-                area: {
-                    geom: {type: 'MultiPolygon', coordinates: polygonCoordinates},
-                    srid: 3857
-                },
-                filters: {}
+                area: multipolygon,
+                filters: aoiFilters
             };
             this.projectService.createAOI(this.project.id, newAOI).then(() => {
                 this.fetchProjectAOIs();
             });
         } else {
-            // more than one aoi, or aois were not successfully fetched - don't allow update
             this.$log.error('Tried to update an aoi in a project with more' +
                             'than 1 aoi. This is not currently supported');
         }
@@ -191,18 +204,34 @@ export default class AOIParametersController {
     }
 
     saveParameters() {
-        // Ensure the project is available before we save
         this.$parent.fetchProject().then(srcProject => {
             const projectToSave = Object.assign(srcProject, this.aoiProjectParameters);
             this.projectService.updateProject(projectToSave).then(() => {
-                // @TODO: this code can be reactivated once we have shapes to give to the backend
-                // the promise above returns the project
-                //
-                // const aoiToCreate = Object.assign(this.aoiParameters, { projectId: project.id });
-                // this.projectService.createAOI(aoiToCreate).then(() => {
+                this.updateProjectAOIs(this.savedMultipolygon, this.aoiParameters.filters);
                 this.$state.go('projects.edit');
-                // });
             });
+        });
+    }
+
+    startDrawing() {
+        this.drawing = true;
+        this.getMap().then((mapWrapper) => {
+            mapWrapper.hideLayers('Areas Of Interest', false);
+        });
+    }
+
+    onAoiSave(multipolygon) {
+        this.drawing = false;
+        this.savedMultipolygon = multipolygon;
+        this.drawProjectAois(multipolygon);
+    }
+
+    onAoiCancel() {
+        this.drawing = false;
+        this.getMap().then((mapWrapper) => {
+            if (mapWrapper.getLayers('Areas Of Interest').length) {
+                mapWrapper.showLayers('Areas Of Interest', true);
+            }
         });
     }
 }

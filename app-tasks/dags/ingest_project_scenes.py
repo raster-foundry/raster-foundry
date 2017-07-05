@@ -163,7 +163,7 @@ def create_ingest_definition_op(*args, **kwargs):
     logger.info('Beginning to create ingest definition for scene %s for user %s...',
                 scene_id, scene.owner)
 
-    if scene.ingestStatus != IngestStatus.TOBEINGESTED:
+    if scene.ingestStatus != IngestStatus.TOBEINGESTED and scene.ingestStatus != IngestStatus.FAILED:
         raise Exception('Scene is no longer waiting to be ingested, error error')
 
     scene.ingestStatus = IngestStatus.INGESTING
@@ -225,6 +225,8 @@ def wait_for_status_op(*args, **kwargs):
     logger.info('Setting scene %s ingest status to %s', scene.id, scene.ingestStatus)
     scene.update()
     logger.info('Successfully updated scene %s\'s ingest status', scene.id)
+    if scene.ingestStatus == IngestStatus.FAILED:
+        raise AirflowException('Failed to ingest {} for user {}'.format(scene_id, scene.owner))
 
 
 ################################

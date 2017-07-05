@@ -1,5 +1,6 @@
 package com.azavea.rf.datamodel
 
+import com.azavea.rf.bridge._
 import geotrellis.proj4.CRS
 import io.circe.generic.JsonCodec
 
@@ -25,5 +26,6 @@ case class OutputDefinition(
   source: URI,
   dropboxCredential: Option[String]
 ) {
-  def getURLDecodedSource: String = URLDecoder.decode(source.toString, "UTF-8")
+  def getURLDecodedSource: String =
+    URLDecoder.decode(source.toString, "UTF-8").replace("dropbox:///", "")
 }

@@ -22,6 +22,7 @@ import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 import io.circe._
 import io.circe.generic.JsonCodec
+import kamon.akka.http.KamonTraceDirectives
 
 @JsonCodec
 case class BulkAcceptParams(sceneIds: List[UUID])
@@ -32,7 +33,8 @@ trait ProjectRoutes extends Authentication
     with PaginationDirectives
     with CommonHandlers
     with Airflow
-    with UserErrorHandler {
+    with UserErrorHandler
+    with KamonTraceDirectives {
 
   implicit def database: Database
 
@@ -40,60 +42,138 @@ trait ProjectRoutes extends Authentication
 
   val projectRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
-      get { listProjects } ~
-      post { createProject }
+      get {
+        traceName("projects-list") {
+          listProjects
+        }
+      } ~
+      post {
+        traceName("projects-create") {
+          createProject
+        }
+      }
     } ~
     pathPrefix(JavaUUID) { projectId =>
       pathEndOrSingleSlash {
-        get { getProject(projectId) } ~
-        put { updateProject(projectId) } ~
-        delete { deleteProject(projectId) }
+        get {
+          traceName("projects-detail") {
+            getProject(projectId)
+          }
+        } ~
+        put {
+          traceName("projects-update") {
+            updateProject(projectId)
+          }
+        } ~
+        delete {
+          traceName("projects-delete") {
+            deleteProject(projectId) }
+        }
       } ~
       pathPrefix("areas-of-interest") {
         pathEndOrSingleSlash {
-          get { listAOIs(projectId) } ~
-          post { createAOI(projectId) }
+          get {
+            traceName("projects-list-areas-of-interest") {
+              listAOIs(projectId)
+            }
+          } ~
+          post {
+            traceName("projects-create-areas-of-interest") {
+              createAOI(projectId) }
+          }
         }
       } ~
       pathPrefix("scenes") {
         pathEndOrSingleSlash {
-          get { listProjectScenes(projectId) } ~
-          post { addProjectScenes(projectId) } ~
-          put { updateProjectScenes(projectId) } ~
-          delete { deleteProjectScenes(projectId) }
+          get {
+            traceName("project-list-scenes") {
+              listProjectScenes(projectId)
+            }
+          } ~
+          post {
+            traceName("project-add-scenes-list") {
+              addProjectScenes(projectId)
+            }
+          } ~
+          put {
+            traceName("project-update-scenes-list") {
+              updateProjectScenes(projectId)
+            }
+          } ~
+          delete {
+            traceName("project-delete-scenes-list") {
+              deleteProjectScenes(projectId)
+            }
+          }
         } ~
         pathPrefix("bulk-add-from-query") {
           pathEndOrSingleSlash {
-            post { addProjectScenesFromQueryParams(projectId) }
+            post {
+              traceName("project-add-scenes-from-query") {
+                addProjectScenesFromQueryParams(projectId)
+              }
+            }
           }
         } ~
         pathPrefix("accept") {
-          post { acceptScenes(projectId) }
+          post {
+            traceName("project-accept-scenes-list") {
+              acceptScenes(projectId)
+            }
+          }
         } ~
         pathPrefix(JavaUUID) { sceneId =>
           pathPrefix("accept") {
-            post { acceptScene(projectId, sceneId) }
+            post {
+              traceName("project-accept-scene") {
+                acceptScene(projectId, sceneId)
+              }
+            }
           }
         }
       } ~
       pathPrefix("mosaic") {
         pathEndOrSingleSlash {
-          get { getProjectMosaicDefinition(projectId) }
+          get {
+            traceName("project-get-mosaic-definition") {
+              getProjectMosaicDefinition(projectId)
+            }
+          }
         } ~
         pathPrefix(JavaUUID) { sceneId =>
-          get { getProjectSceneColorCorrectParams(projectId, sceneId) } ~
-          put { setProjectSceneColorCorrectParams(projectId, sceneId) }
+          get {
+            traceName("project-get-scene-color-corrections") {
+              getProjectSceneColorCorrectParams(projectId, sceneId)
+            }
+          } ~
+          put {
+            traceName("project-set-scene-color-corrections") {
+              setProjectSceneColorCorrectParams(projectId, sceneId)
+            }
+          }
         } ~
         pathPrefix("bulk-update-color-corrections") {
           pathEndOrSingleSlash {
-            post { setProjectScenesColorCorrectParams(projectId) }
+            post {
+              traceName("project-bulk-update-color-corrections") {
+                setProjectScenesColorCorrectParams(projectId)
+              }
+            }
           }
         }
       } ~
       pathPrefix("order") {
         pathEndOrSingleSlash {
-          get { listProjectSceneOrder(projectId) } ~
-          put { setProjectSceneOrder(projectId) }
+          get {
+            traceName("projects-get-scene-order") {
+              listProjectSceneOrder(projectId)
+            }
+          } ~
+          put {
+            traceName("projects-set-scene-order") {
+              setProjectSceneOrder(projectId)
+            }
+          }
         }
       }
     }
