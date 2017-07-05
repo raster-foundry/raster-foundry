@@ -24,7 +24,6 @@ import java.util.UUID
 import scala.concurrent._
 import scala.concurrent.ExecutionContext.Implicits.global
 
-
 class ToolRoutes(implicit val database: Database) extends Authentication
     with LazyLogging
     with InterpreterExceptionHandling
