@@ -56,19 +56,16 @@ package object ast {
     i: (RDD[(SpatialKey, Tile)], RDD[(SpatialKey, Tile)]) => RDD[(SpatialKey, Tile)],
     asts: List[MapAlgebraAST],
     rdds: Map[UUID, TileLayerRDD[SpatialKey]]
-  ): TileLayerRDD[SpatialKey] = {
+  ): Either[Double, TileLayerRDD[SpatialKey]] = {
     asts.map({
       case Constant(_, c, _) => Left(c)
-      case ast => Right(eval(ast, rdds))
+      case ast => eval(ast, rdds)
     }).reduceLeft[Either[Double, TileLayerRDD[SpatialKey]]]({
       case (Left(c1), Left(c2))       => Left(f(c1, c2))
       case (Left(c), Right(rdd))      => Right(rdd.withContext(g(c, _)))
       case (Right(rdd), Left(c))      => Right(rdd.withContext(h(_, c)))
       case (Right(rdd1), Right(rdd2)) => Right(binary(i, rdd1, rdd2))
-    }) match {
-      case Right(rdd) => rdd
-      case Left(_) => sys.error("Export: If you're seeing this, there is an error in the AST validation logic.")
-    }
+    })
   }
 
   /* Perform Map Algebra over a validated RDD-filled AST */
@@ -76,9 +73,9 @@ package object ast {
   private def eval(
     ast: MapAlgebraAST,
     rdds: Map[UUID, TileLayerRDD[SpatialKey]]
-  ): TileLayerRDD[SpatialKey] = ast match {
+  ): Either[Double, TileLayerRDD[SpatialKey]] = ast match {
     /* --- LEAVES --- */
-    case Source(id, _) => rdds(id)
+    case Source(id, _) => Right(rdds(id))
     case Constant(id, const, _) =>
       sys.error("Export: If you're seeing this, there is an error in the AST validation logic.")
     case ToolReference(_, _) =>
@@ -97,8 +94,8 @@ package object ast {
     /* --- UNARY OPERATIONS --- */
     /* The `head` calls here will never fail, nor will they produce a `Constant` */
     case Classification(args, _, _, classMap) =>
-      eval(args.head, rdds).withContext(_.color(classMap.toColorMap))
-    case Masking(args, _, _, mask) => eval(args.head, rdds).mask(mask)
+      eval(args.head, rdds).map(_.withContext(_.color(classMap.toColorMap)))
+    case Masking(args, _, _, mask) => eval(args.head, rdds).map(_.mask(mask))
   }
 
   /** Evaluate an AST of RDD Sources. Assumes that the AST's
@@ -118,7 +115,10 @@ package object ast {
     val over = Interpreter.overrideParams(ast, overrides)
     val rdds = sourceMapping.mapValues(r => fetch(r, zoom, sceneLocs, projLocs)).sequence
 
-    (pure |@| over |@| rdds).map({ case (_, tree, rs) => eval(tree, rs) })
+    (pure |@| over |@| rdds).map({ case (_, tree, rs) => eval(tree, rs) match {
+      case Left(_) => sys.error("Export: If you're seeing this, there is an error in the AST validation logic.")
+      case Right(rdd) => rdd
+    }})
   }
 
   /** This requires that for each [[RFMLRaster]] that a band number be specified. */
