@@ -221,7 +221,9 @@ lazy val batch = Project("batch", file("batch"))
       Dependencies.scopt,
       Dependencies.ficus,
       Dependencies.dnsJava,
-      Dependencies.dropbox
+      Dependencies.dropbox,
+      Dependencies.caffeine,
+      Dependencies.scaffeine
     )
   })
   .settings(assemblyShadeRules in assembly := Seq(
