@@ -5,6 +5,7 @@ import com.azavea.rf.database.tables.{ToolRuns, Tools}
 import com.azavea.rf.datamodel.{Tool, ToolRun, User}
 import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.rf.tool.ast.MapAlgebraAST._
+import com.azavea.rf.tool.ast.assembleSubstitutions
 import com.azavea.rf.tool.eval.{ASTDecodeError, DatabaseError, Interpreter}
 import com.azavea.rf.tool.params.EvalParams
 
@@ -20,34 +21,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 package object ast {
 
-  /** Collect resources necessary to carry out substitutions on  ASTs while avoiding cycles */
-  def assembleSubstitutions(
-    ast: MapAlgebraAST,
-    user: User,
-    assembled: Map[UUID, MapAlgebraAST] = Map()
-  )(implicit database: Database, ec: ExecutionContext): OptionT[Future, Map[UUID, MapAlgebraAST]] =
-    ast match {
-      case ToolReference(id, refId) =>
-        OptionT(Tools.getTool(refId, user)).flatMap({ referent =>
-          val astPatch = referent.definition.as[MapAlgebraAST].valueOr(throw _)
-          // Here's where we can hope to catch cycles as we traverse down
-          //  the tree (keeping track of previously encountered references)
-          if (assembled.get(refId).isDefined)
-            // TODO: EitherT this thing
-            throw new IllegalArgumentException(s"Repeated substitution $refId found; likely cyclical reference")
-          else
-            assembleSubstitutions(astPatch, user, assembled ++ Map(refId -> astPatch))
-        })
-      case op: MapAlgebraAST.Operation =>
-        val childSubstitutions = op.args.map({ arg => assembleSubstitutions(arg, user, assembled) }).sequence
-        childSubstitutions.map({ substitutions =>
-          substitutions.foldLeft(Map[UUID, MapAlgebraAST]())({ case (map, subs) => map ++ subs }) ++ assembled
-        })
-      case _ =>
-        OptionT.pure[Future, Map[UUID, MapAlgebraAST]](assembled)
-      }
-
-
   /** Validate an AST, given some ToolRun. In the case of success, returns
     * the zero element of some specified Monoid.
     */
@@ -60,7 +33,11 @@ package object ast {
       toolRun <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
       tool    <- OptionT(Tools.getTool(toolRun.tool, user))
       oldAst  <- OptionT.pure[Future, MapAlgebraAST](tool.definition.as[MapAlgebraAST].valueOr(throw _))
-      subs    <- assembleSubstitutions(oldAst, user)
+      subs    <- assembleSubstitutions(oldAst, { id: UUID =>
+                   OptionT(Tools.getTool(id, user))
+                     .map({ referrent => referrent.definition.as[MapAlgebraAST].valueOr(throw _) })
+                     .value
+                 })
       ast     <- OptionT.fromOption[Future](oldAst.substitute(subs))
       params  <- OptionT.pure[Future, EvalParams](toolRun.executionParameters.as[EvalParams].valueOr(throw _))
     } yield {
