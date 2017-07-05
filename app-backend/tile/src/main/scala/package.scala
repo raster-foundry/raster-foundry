@@ -1,9 +1,7 @@
 package com.azavea.rf
 
 import spray.json._
-import spray.json.DefaultJsonProtocol._
 import com.github.blemale.scaffeine.{Cache => ScaffeineCache}
-
 import java.util.UUID
 
 package object tile {
@@ -12,7 +10,7 @@ package object tile {
     def read(js: JsValue): UUID = js match {
       case JsString(uuid) => UUID.fromString(uuid)
       case _ =>
-        deserializationError("Failed to parse UUID string ${js} to java UUID")
+        deserializationError(s"Failed to parse UUID string ${js} to java UUID")
     }
   }
 

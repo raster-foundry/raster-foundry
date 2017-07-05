@@ -1,15 +1,13 @@
 package com.azavea.rf.tile
 
-import java.util.UUID
-
-import akka.http.scaladsl.server.{Directive1, Directives}
 import com.azavea.rf.common.Authentication
 import com.azavea.rf.database.ActionRunner
 import com.azavea.rf.database.tables.{MapTokens, Projects}
 import com.azavea.rf.datamodel.Visibility
+import akka.http.scaladsl.server.{Directive1, Directives}
 
+import java.util.UUID
 import scala.util.Try
-
 
 trait TileAuthentication extends Authentication
   with Directives

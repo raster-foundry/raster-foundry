@@ -6,7 +6,6 @@ import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.params._
 import com.azavea.rf.tool.ast.MapAlgebraAST
-import com.azavea.rf.common._
 import com.azavea.rf.common.ast._
 import com.azavea.rf.common.cache._
 import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
@@ -20,22 +19,22 @@ import geotrellis.raster.histogram._
 import geotrellis.raster.io._
 import geotrellis.spark.io._
 import geotrellis.spark._
-import geotrellis.spark.io.s3.{S3InputFormat, S3AttributeStore, S3CollectionLayerReader, S3ValueReader}
+import geotrellis.spark.io.s3.{S3CollectionLayerReader, S3ValueReader}
+import geotrellis.spark.io.postgres.PostgresAttributeStore
+import geotrellis.vector.Extent
 
 import com.github.blemale.scaffeine.{Scaffeine, Cache => ScaffeineCache}
-import geotrellis.vector.Extent
 import com.typesafe.scalalogging.LazyLogging
 import spray.json.DefaultJsonProtocol._
-import kamon.trace.Tracer
 import cats.data._
 import cats.implicits._
 
 import java.util.UUID
+
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util._
-
 
 /**
   * ValueReaders need to read layer metadata in order to know how to decode (x/y) queries into resource reads.
@@ -54,13 +53,6 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
   private val tileCache = HeapBackedMemcachedClient(memcachedClient)
   private val astCache = HeapBackedMemcachedClient(memcachedClient)
 
-  private val layerUriCache: ScaffeineCache[UUID, OptionT[Future, String]] =
-    Scaffeine()
-      .recordStats()
-      .expireAfterAccess(5.minutes)
-      .maximumSize(500)
-      .build[UUID, OptionT[Future, String]]
-
   private val attributeStoreCache: ScaffeineCache[UUID, OptionT[Future, (AttributeStore, Map[String, Int])]] =
     Scaffeine()
       .recordStats()
@@ -68,32 +60,15 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
       .maximumSize(500)
       .build[UUID, OptionT[Future, (AttributeStore, Map[String, Int])]]
 
-  def layerUri(layerId: UUID)(implicit ec: ExecutionContext): OptionT[Future, String] =
-    traceName(s"LayerCache.layerUri($layerId)") {
-      layerUriCache.take(layerId, _ => blocking {
-        traceName(s"LayerCache.layerUri($layerId) (no cache)") {
-          OptionT(Scenes.getSceneForCaching(layerId).map(_.flatMap(_.ingestLocation)))
-        }
-      })
-    }
-
   def attributeStoreForLayer(layerId: UUID)(implicit ec: ExecutionContext): OptionT[Future, (AttributeStore, Map[String, Int])] =
     traceName(s"LayerCache.attributeStoreForLayer($layerId)") {
       attributeStoreCache.take(layerId, _ =>
-        layerUri(layerId).mapFilter { catalogUri =>
-          traceName(s"LayerCache.attributeStoreForLayer($layerId) (no cache)") {
-            for (result <- S3InputFormat.S3UrlRx.findFirstMatchIn(catalogUri)) yield {
-              val bucket = result.group("bucket")
-              val prefix = result.group("prefix")
-              // TODO: Decide if we should verify URI is valid. This may be a store that always fails to read
-
-              val store = S3AttributeStore(bucket, prefix)
-              val maxZooms: Map[String, Int] = blocking {
-                store.layerIds.groupBy(_.name).mapValues(_.map(_.zoom).max)
-              }
-              (store, maxZooms)
-            }
+        traceName(s"LayerCache.attributeStoreForLayer($layerId) (no cache)") {
+          val store = PostgresAttributeStore()
+          val maxZooms: Map[String, Int] = blocking {
+            store.layerIds.groupBy(_.name).map { case (k, v) => k -> v.map(_.zoom).max }
           }
+          OptionT.fromOption((store, maxZooms).some)
         }
       )
     }
@@ -119,7 +94,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
               Try {
                 reader.read(key)
               } match {
-                case Success(tile) => Option(tile)
+                case Success(tile) => tile.some
                 case Failure(e: ValueNotFoundError) => None
                 case Failure(e) =>
                   logger.error(s"Reading layer $layerId at $key: ${e.getMessage}")
