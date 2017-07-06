@@ -22,7 +22,8 @@ case class Upload(
   datasource: UUID,
   metadata: Json,
   visibility: Visibility,
-  projectId: Option[UUID]
+  projectId: Option[UUID],
+  source: Option[String]
 )
 
 object Upload {
@@ -42,7 +43,8 @@ object Upload {
     metadata: Json,
     owner: Option[String],
     visibility: Visibility,
-    projectId: Option[UUID]
+    projectId: Option[UUID],
+    source: Option[String]
   ) extends OwnerCheck {
     def toUpload(user: User): Upload = {
       val id = UUID.randomUUID()
@@ -64,7 +66,8 @@ object Upload {
         this.datasource,
         this.metadata,
         this.visibility,
-        this.projectId
+        this.projectId,
+        this.source
       )
     }
   }

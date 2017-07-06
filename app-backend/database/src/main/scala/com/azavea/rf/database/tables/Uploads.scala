@@ -27,7 +27,7 @@ class Uploads(_tableTag: Tag) extends Table[Upload](_tableTag, "uploads")
 {
   def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, owner,
     organizationId, uploadStatus, fileType, uploadType, files,
-    datasource, metadata, visibility, projectId) <> (
+    datasource, metadata, visibility, projectId, source) <> (
     Upload.tupled, Upload.unapply
   )
 
@@ -46,6 +46,7 @@ class Uploads(_tableTag: Tag) extends Table[Upload](_tableTag, "uploads")
   val metadata: Rep[Json] = column[Json]("metadata", O.Length(2147483647,varying=false))
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
   val projectId: Rep[Option[java.util.UUID]] = column[Option[java.util.UUID]]("project_id", O.Default(None))
+  val source: Rep[Option[String]] = column[Option[String]]("source", O.Default(None))
 
   lazy val organizationsFk = foreignKey("uploads_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val createdByUserFK = foreignKey("uploads_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
