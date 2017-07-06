@@ -15,6 +15,7 @@ import geotrellis.vector._
 import geotrellis.raster._
 import geotrellis.raster.render._
 import geotrellis.raster.testkit._
+import geotrellis.raster.mapalgebra.focal.Square
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -37,7 +38,7 @@ class InterpreterSpec
       source = goodSource
     )
 
-    val ret = tms(0,1,1)
+    val ret = tms(0, 1, 1).toOption.get.value
     val tile = Await.result(ret, 10.seconds) match {
       case Valid(lazytile) =>
         val tile = lazytile.evaluate
@@ -60,7 +61,7 @@ class InterpreterSpec
       source = goodSource
     )
 
-    val ret = tms(0,1,1)
+    val ret = tms(0, 1, 1).toOption.get.value
     val lt = Await.result(ret, 10.seconds)
 
     requests.length should be (1)
@@ -85,7 +86,7 @@ class InterpreterSpec
       source = badSource
     )
 
-    val ret = tms(0,1,1)
+    val ret = tms(0, 1, 1).toOption.get.value
     val lt = Await.result(ret, 10.seconds)
 
     requests should be (empty)
@@ -127,7 +128,7 @@ class InterpreterSpec
     )
     println("Classification node: ", srcAST.classify(breakmap).asJson.noSpaces)
 
-    val ret = tms(0, 1, 1)
+    val ret = tms(0, 1, 1).toOption.get.value
     val op = Await.result(ret, 10.seconds) match {
       case Valid(lazyTile) =>
         val maybeTile = lazyTile.evaluate
@@ -150,7 +151,7 @@ class InterpreterSpec
       source = goodSource
     )
 
-    val ret = tms(0, 1, 1)
+    val ret = tms(0, 1, 1).toOption.get.value
     val op = Await.result(ret, 10.seconds) match {
       case Valid(lazyTile) =>
         val maybeTile = lazyTile.evaluate
@@ -173,7 +174,7 @@ class InterpreterSpec
     )
     println("Subtraction node: ", (src1 - src2).asJson.noSpaces)
 
-    val ret = tms(0, 1, 1)
+    val ret = tms(0, 1, 1).toOption.get.value
     val op = Await.result(ret, 10.seconds) match {
       case Valid(lazytile) =>
         val maybeTile = lazytile.evaluateDouble
@@ -198,7 +199,7 @@ class InterpreterSpec
       source = goodSource
     )
 
-    val ret = tms(0, 1, 1)
+    val ret = tms(0, 1, 1).toOption.get.value
     val op = Await.result(ret, 10.seconds) match {
       case Valid(lazytile) =>
         val maybeTile = lazytile.evaluateDouble
@@ -221,7 +222,7 @@ class InterpreterSpec
     )
     println("Division node: ", (src1 / src2).asJson.noSpaces)
 
-    val ret = tms(0, 1, 1)
+    val ret = tms(0, 1, 1).toOption.get.value
     val op = Await.result(ret, 10.seconds) match {
       case Valid(lazytile) =>
         val maybeTile = lazytile.evaluateDouble
@@ -245,7 +246,7 @@ class InterpreterSpec
       source = goodSource
     )
 
-    val ret = tms(0, 1, 1)
+    val ret = tms(0, 1, 1).toOption.get.value
     val op = Await.result(ret, 10.seconds) match {
       case Valid(lazytile) =>
         val maybeTile = lazytile.evaluateDouble
@@ -268,7 +269,7 @@ class InterpreterSpec
     )
     println("Multiplication node: ", (src1 * src2).asJson.noSpaces)
 
-    val ret = tms(0, 1, 1)
+    val ret = tms(0, 1, 1).toOption.get.value
     val op = Await.result(ret, 10.seconds) match {
       case Valid(lazytile) =>
         val maybeTile = lazytile.evaluateDouble
@@ -291,7 +292,7 @@ class InterpreterSpec
     )
     println("Addition node: ", (src1 + src2).asJson.noSpaces)
 
-    val ret = tms(0, 1, 1)
+    val ret = tms(0, 1, 1).toOption.get.value
     val op = Await.result(ret, 10.seconds) match {
       case Valid(lazytile) =>
         val maybeTile = lazytile.evaluateDouble
@@ -314,7 +315,7 @@ class InterpreterSpec
     )
     println("LocalMax node: ", (src1.max(src2)).asJson.noSpaces)
 
-    val ret = tms(0, 1, 1)
+    val ret = tms(0, 1, 1).toOption.get.value
     val op = Await.result(ret, 10.seconds) match {
       case Valid(lazytile) =>
         val maybeTile = lazytile.evaluateDouble
@@ -337,7 +338,7 @@ class InterpreterSpec
     )
     println("LocalMin node: ", (src1.min(src2)).asJson.noSpaces)
 
-    val ret = tms(0, 1, 1)
+    val ret = tms(0, 1, 1).toOption.get.value
     val op = Await.result(ret, 10.seconds) match {
       case Valid(lazytile) =>
         val maybeTile = lazytile.evaluateDouble
@@ -361,7 +362,7 @@ class InterpreterSpec
     )
     println("Simple NDVI calculation: ", ndvi.asJson.noSpaces)
 
-    val ret = tms(0, 1, 1)
+    val ret = tms(0, 1, 1).toOption.get.value
     val op = Await.result(ret, 10.seconds) match {
       case Valid(lazytile) =>
         val maybeTile = lazytile.evaluateDouble
@@ -385,7 +386,7 @@ class InterpreterSpec
     )
     println("Simple Constant calculation: ", lifeUniverseEtc.asJson.noSpaces)
 
-    val ret = tms(0, 1, 1)
+    val ret = tms(0, 1, 1).toOption.get.value
     val op = Await.result(ret, 10.seconds) match {
       case Valid(lazytile) =>
         val maybeTile = lazytile.evaluateDouble
@@ -412,7 +413,33 @@ class InterpreterSpec
     )
     println("Simple Masking calculation: ", masking.asJson.noSpaces)
 
-    val ret = tms(1, 0, 0)
+    val ret = tms(1, 0, 0).toOption.get.value
+    val op = Await.result(ret, 10.seconds) match {
+      case Valid(lazytile) =>
+        val maybeTile = lazytile.evaluateDouble
+        requests.length should be (1)
+        maybeTile.get.getDouble(10, 10) should be (1)
+      case i@Invalid(_) =>
+        fail(s"$i")
+    }
+  }
+
+  it("should evaluate focal max") {
+    requests = Nil
+    val subExtent: Extent = Interpreter.layouts(2).mapTransform(0, 0)
+    val mask = MultiPolygon(subExtent.toPolygon)
+
+    val src = randomSourceAST
+    val masking = FocalMax(List(src), UUID.randomUUID, Square(3))
+    val tms = Interpreter.interpretTMS(
+      ast = masking,
+      sourceMapping = Map(src.id -> tileSource(1)),
+      overrides = Map.empty,
+      source = goodSource
+    )
+    println("Simple Masking calculation: ", masking.asJson.noSpaces)
+
+    val ret = tms(1, 0, 0).toOption.get.value
     val op = Await.result(ret, 10.seconds) match {
       case Valid(lazytile) =>
         val maybeTile = lazytile.evaluateDouble

@@ -48,7 +48,11 @@ object MapAlgebraAST {
   }
 
   /** Operations which should only have one argument. */
-  sealed trait UnaryOp extends Operation with Serializable
+  sealed trait UnaryOperation extends Operation with Serializable
+
+  sealed trait FocalOperation extends UnaryOperation {
+    val neighborhood: Neighborhood
+  }
 
   case class Addition(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends Operation {
   val symbol = "+"
@@ -74,13 +78,13 @@ object MapAlgebraAST {
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = Division(newArgs, id, metadata)
   }
 
-  case class Masking(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], mask: MultiPolygon) extends UnaryOp {
+  case class Masking(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], mask: MultiPolygon) extends UnaryOperation {
     val symbol = "mask"
 
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = Masking(newArgs, id, metadata, mask)
   }
 
-  case class Classification(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], classMap: ClassMap) extends UnaryOp {
+  case class Classification(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], classMap: ClassMap) extends UnaryOperation {
     val symbol = "classify"
 
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = Classification(newArgs, id, metadata, classMap)
@@ -98,11 +102,11 @@ object MapAlgebraAST {
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = Min(newArgs, id, metadata)
   }
 
-  sealed trait FocalOp extends Operation {
-    val neighborhood: Neighborhood
-  }
+  case class FocalMax(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], neighborhood: Neighborhood) extends FocalOperation {
+    val symbol = "focalMax"
 
-  case class FocalMax(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], neighborhood: Neighborhood)
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = FocalMax(newArgs, id, metadata, neighborhood)
+  }
 
   sealed trait MapAlgebraLeaf extends MapAlgebraAST {
     val `type`: String

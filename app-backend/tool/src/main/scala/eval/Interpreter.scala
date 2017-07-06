@@ -12,12 +12,14 @@ import cats.syntax.either._
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.proj4.WebMercator
 import geotrellis.raster._
+import geotrellis.raster.crop.Crop
 import geotrellis.spark.SpatialKey
 import geotrellis.spark.tiling._
 import geotrellis.vector.{Extent, MultiPolygon}
 
 import scala.concurrent.{ExecutionContext, Future}
 import java.util.UUID
+import java.security.InvalidParameterException
 
 
 /** This interpreter handles resource resolution and compilation of MapAlgebra ASTs */
@@ -90,7 +92,7 @@ object Interpreter extends LazyLogging {
     case ToolReference(id, _) => Invalid(NonEmptyList.of(UnsubstitutedRef(id)))
 
     /* Unary operations must have only one arguments */
-    case op: UnaryOp => {
+    case op: UnaryOperation => {
       /* Check for errors further down, first */
       val kids: Interpreted[M] = op.args.foldMap(a => interpretPure(a, sourceMapping))
 
@@ -196,63 +198,104 @@ object Interpreter extends LazyLogging {
     overrides: Map[UUID, ParamOverride],
     source: (RFMLRaster, Int, Int, Int) => Future[Option[Tile]],
     buffer: Int = 0
-  )(implicit ec: ExecutionContext): (Int, Int, Int) => Interpreted[OptionT[Future, LazyTile]] = {
+  )(implicit ec: ExecutionContext): (Int, Int, Int) => Future[Interpreted[LazyTile]] = {
 
     (z: Int, x: Int, y: Int) => {
       val extent = layouts(z).mapTransform(SpatialKey(x,y))
 
       @SuppressWarnings(Array("TraversableHead"))
-      def eval(tiles: Map[UUID, (Int, Int, Int) => Future[Option[Tile]]], ast: MapAlgebraAST, buffer: Int = buffer): OptionT[Future, LazyTile] = ast match {
+      def eval(tiles: Map[UUID, (Int, Int, Int) => Future[Interpreted[Tile]]], ast: MapAlgebraAST, buffer: Int = buffer): Future[Interpreted[LazyTile]] = ast match {
         /* --- LEAVES --- */
         case Source(id, _) =>
-          OptionT(tiles(id)(z, x, y)).map({ tile => LazyTile(tile) })
+          println("SOURCE!", buffer)
+          val resolver: (Int, Int, Int) => Future[Interpreted[Tile]] = tiles(id)
+          if (buffer > 255)
+            Future.successful { Invalid(NonEmptyList.of(ExcessiveFocalBuffer(id, buffer))) }
+          else if (buffer > 0) {
+            for {
+              tl <- resolver(z, x-1, y+1)
+              tm <- resolver(z, x,   y+1)
+              tr <- resolver(z, x+1, y+1)
+              ml <- resolver(z, x-1, y)
+              mm <- resolver(z, x,   y)
+              mr <- resolver(z, x+1, y)
+              bl <- resolver(z, x-1, y-1)
+              bm <- resolver(z, x,   y-1)
+              br <- resolver(z, x+1, y-1)
+            } yield {
+              (tl |@| tm |@| tr |@| ml |@| mm |@| mr |@| bl |@| bm |@| br).map({ case (t1, t2, t3, m1, m2, m3, b1, b2, b3) =>
+                val tile = CompositeTile(Array(t1, t2, t3, m1, m2, m3, b1, b2, b3), TileLayout(3, 3, 256, 256))
+                  .crop(GridBounds(256 - buffer, 512 + buffer, 256 - buffer, 512 + buffer), Crop.Options.DEFAULT)
+                LazyTile(tile)
+              })
+            }
+          }
+          else
+            tiles(id)(z, x, y).map({ interpreted =>
+              interpreted.map({ tile => LazyTile(tile) })
+            })
 
-        case Constant(_, const, _) => OptionT.pure[Future, LazyTile](LazyTile.Constant(const))
+        case Constant(_, const, _) =>
+          Future.successful { Valid(LazyTile.Constant(const)) }
 
-        case  ToolReference(_, _) => sys.error("TMS: Attempt to evaluate a ToolReference!")
+        case  ToolReference(_, _) =>
+          sys.error("TMS: Attempt to evaluate a ToolReference!")
 
-        /* --- OPERATIONS --- */
+        /* --- FOCAL OPERATIONS --- */
+        case FocalMax(args, id, _, neighborhood) =>
+          eval(tiles, args.head).map(_.map(_.focalMax(neighborhood)))
+
+        /* --- LOCAL OPERATIONS --- */
         case Addition(args, id, _) =>
           logger.debug(s"case addition at $id")
-          args.map(eval(tiles, _)).sequence.map(_.reduce(_ + _))
+          args.map(eval(tiles, _)).sequence.map(_.sequence.map(_.reduce(_ + _)))
 
         case Subtraction(args, id, _) =>
           logger.debug(s"case subtraction at $id")
-          args.map(eval(tiles, _)).sequence.map(_.reduce(_ - _))
+          args.map(eval(tiles, _)).sequence.map(_.sequence.map(_.reduce(_ - _)))
 
         case Multiplication(args, id, _) =>
           logger.debug(s"case multiplication at $id")
-          args.map(eval(tiles, _)).sequence.map(_.reduce(_ * _))
+          args.map(eval(tiles, _)).sequence.map(_.sequence.map(_.reduce(_ * _)))
 
         case Division(args, id, _) =>
           logger.debug(s"case division at $id")
-          args.map(eval(tiles, _)).sequence.map(_.reduce(_ / _))
+          args.map(eval(tiles, _)).sequence.map(_.sequence.map(_.reduce(_ / _)))
 
         case Max(args, id, _) =>
           logger.debug(s"case max at $id")
-          args.map(eval(tiles, _)).sequence.map(_.reduce(_ max _))
+          args.map(eval(tiles, _)).sequence.map(_.sequence.map(_.reduce(_ max _)))
 
         case Min(args, id, _) =>
           logger.debug(s"case min at $id")
-          args.map(eval(tiles, _)).sequence.map(_.reduce(_ min _))
+          args.map(eval(tiles, _)).sequence.map(_.sequence.map(_.reduce(_ min _)))
 
         case Classification(args, id, _, breaks) =>
           logger.debug(s"case classification at $id with breakmap ${breaks.toBreakMap}")
-          eval(tiles, args.head).map(_.classify(breaks.toBreakMap))
+          eval(tiles, args.head).map(_.map(_.classify(breaks.toBreakMap)))
 
         case Masking(args, id, _, mask) =>
-          eval(tiles, args.head).map(_.mask(extent, mask))
+          eval(tiles, args.head).map(_.map(_.mask(extent, mask)))
       }
 
       val pure: Interpreted[Unit] = interpretPure[Unit](ast, sourceMapping)
       val overridden: Interpreted[MapAlgebraAST] = overrideParams(ast, overrides)
 
-      val tiles: Map[UUID, (Int, Int, Int) => Future[Option[Tile]]] =
-        sourceMapping.foldLeft(Map[UUID, (Int, Int, Int) => Future[Option[Tile]]]())({ case (map, (nodeId, rfmlRaster)) =>
-          map + (nodeId, source(rfmlRaster, _: Int, _: Int, _: Int))
+      val tiles: Map[UUID, (Int, Int, Int) => Future[Interpreted[Tile]]] =
+        sourceMapping.foldLeft(Map[UUID, (Int, Int, Int) => Future[Interpreted[Tile]]]())({ case (map, (nodeId, rfmlRaster)) =>
+        val func: (Int, Int, Int) => Future[Interpreted[Tile]] = { (z: Int, x: Int, y: Int) =>
+            source(rfmlRaster, z, x, y).map {
+              case Some(tile) => Valid(tile)
+              case None => Invalid(NonEmptyList.of(RasterRetrievalError(nodeId, rfmlRaster.id)))
+            }
+          }
+          map + (nodeId -> func)
         })
 
-      (pure |@| overridden).map({ case (_, tree) => eval(tiles, tree) })
+      (pure |@| overridden) match {
+        case (_, Valid(tree)) => eval(tiles, tree)
+        case (_, Invalid(i)) => Future.successful { Invalid(i) }
+      }
     }
   }
 }

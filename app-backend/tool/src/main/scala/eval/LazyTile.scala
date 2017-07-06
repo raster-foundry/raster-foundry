@@ -2,8 +2,9 @@ package com.azavea.rf.tool.eval
 
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster._
-import geotrellis.raster.mapalgebra.local._
 import geotrellis.raster.render._
+import geotrellis.raster.mapalgebra.local._
+import geotrellis.raster.mapalgebra.focal.Neighborhood
 import geotrellis.vector.{ Extent, MultiPolygon, Point }
 import spire.syntax.cfor._
 
@@ -17,6 +18,7 @@ sealed trait LazyTile extends TileLike with Grid with LazyLogging {
   def min(other: LazyTile) = this.dualCombine(other)(Min.combine)(Min.combine)
   def classify(breaks: BreakMap[Double, Int]) = this.classification({ i => breaks(i) })
   def mask(extent: Extent, mask: MultiPolygon) = LazyTile.Masking(this, extent, mask)
+  def focalMax(n: Neighborhood) = LazyTile.FocalMax(this, n)
 
   def left: LazyTile
   def right: LazyTile
@@ -183,6 +185,19 @@ object LazyTile {
     def left = LazyTile.Nil
     def right = LazyTile.Nil
     def bind(args: Map[Var, LazyTile]): LazyTile = this
+  }
+
+  case class FocalMax(left: LazyTile, n: Neighborhood) extends Tree {
+    val bounds = GridBounds(left.cols + n.extent, left.rows + n.extent, left.cols - n.extent, left.rows - n.extent)
+    lazy val intTile = left.evaluate.map({ tile => tile.focalMax(n, Some(bounds)) }).get
+    lazy val doubleTile = left.evaluateDouble.map({ tile => tile.focalMax(n, Some(bounds)) }).get
+
+    def right: com.azavea.rf.tool.eval.LazyTile = LazyTile.Nil
+    def get(col: Int, row: Int) = intTile.get(col, row)
+    def getDouble(col: Int, row: Int) = doubleTile.get(col, row)
+
+    def bind(args: Map[Var,LazyTile]): LazyTile =
+      FocalMax(left.bind(args), n)
   }
 
   case class Classify(left: LazyTile, f: Double => Int) extends Tree {

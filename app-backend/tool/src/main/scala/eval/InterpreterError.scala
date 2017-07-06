@@ -57,6 +57,10 @@ case class InvalidOverride(id: UUID) extends InterpreterError {
   def repr = s"Node ${id} was given an incompatible override value"
 }
 
+case class ExcessiveFocalBuffer(id: UUID, buffer: Int) extends InterpreterError {
+  def repr = s"Unable to compute focal operation due to extent of focal window exceeding maximum ($buffer > 255)"
+}
+
 object InterpreterError {
   implicit val encodeInterpreterErrors: Encoder[InterpreterError] =
     new Encoder[InterpreterError] {
