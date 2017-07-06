@@ -1,22 +1,24 @@
 package com.azavea.rf.tool.eval
 
-import java.util.UUID
-
-import scala.concurrent.{ExecutionContext, Future}
+import com.azavea.rf.tool.ast._
+import com.azavea.rf.tool.ast.MapAlgebraAST._
+import com.azavea.rf.tool.params._
 
 import cats._
 import cats.data._
 import cats.data.Validated._
 import cats.implicits._
-import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.ast.MapAlgebraAST._
-import com.azavea.rf.tool.params._
+import cats.syntax.either._
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.proj4.WebMercator
 import geotrellis.raster._
 import geotrellis.spark.SpatialKey
 import geotrellis.spark.tiling._
 import geotrellis.vector.{Extent, MultiPolygon}
+
+import scala.concurrent.{ExecutionContext, Future}
+import java.util.UUID
+
 
 /** This interpreter handles resource resolution and compilation of MapAlgebra ASTs */
 object Interpreter extends LazyLogging {
@@ -127,7 +129,9 @@ object Interpreter extends LazyLogging {
 
       /* --- LEAVES --- */
       case Source(id, _) => LazyTile(tiles(id))
+
       case Constant(_, const, _) => LazyTile.Constant(const)
+
       case  ToolReference(_, _) => sys.error("TMS: Attempt to evaluate a ToolReference!")
 
       /* --- OPERATIONS --- */
@@ -179,6 +183,7 @@ object Interpreter extends LazyLogging {
       })
   }
 
+
   /** The Interpreter method for producing z/x/y TMS tiles
     *
     * @param ast     A [[MapAlgebraAST]] which defines transformations over arbitrary rasters
@@ -189,17 +194,65 @@ object Interpreter extends LazyLogging {
     ast: MapAlgebraAST,
     sourceMapping: Map[UUID, RFMLRaster],
     overrides: Map[UUID, ParamOverride],
-    source: (RFMLRaster, Int, Int, Int) => Future[Option[Tile]]
-  )(implicit ec: ExecutionContext): (Int, Int, Int) => Future[Interpreted[LazyTile]] = {
+    source: (RFMLRaster, Int, Int, Int) => Future[Option[Tile]],
+    buffer: Int = 0
+  )(implicit ec: ExecutionContext): (Int, Int, Int) => Interpreted[OptionT[Future, LazyTile]] = {
 
     (z: Int, x: Int, y: Int) => {
-      interpretGlobal(
-        ast,
-        sourceMapping,
-        overrides,
-        layouts(z).mapTransform(SpatialKey(x,y)),
-        { raster: RFMLRaster => source(raster, z, x, y) }
-      )
+      val extent = layouts(z).mapTransform(SpatialKey(x,y))
+
+      @SuppressWarnings(Array("TraversableHead"))
+      def eval(tiles: Map[UUID, (Int, Int, Int) => Future[Option[Tile]]], ast: MapAlgebraAST, buffer: Int = buffer): OptionT[Future, LazyTile] = ast match {
+        /* --- LEAVES --- */
+        case Source(id, _) =>
+          OptionT(tiles(id)(z, x, y)).map({ tile => LazyTile(tile) })
+
+        case Constant(_, const, _) => OptionT.pure[Future, LazyTile](LazyTile.Constant(const))
+
+        case  ToolReference(_, _) => sys.error("TMS: Attempt to evaluate a ToolReference!")
+
+        /* --- OPERATIONS --- */
+        case Addition(args, id, _) =>
+          logger.debug(s"case addition at $id")
+          args.map(eval(tiles, _)).sequence.map(_.reduce(_ + _))
+
+        case Subtraction(args, id, _) =>
+          logger.debug(s"case subtraction at $id")
+          args.map(eval(tiles, _)).sequence.map(_.reduce(_ - _))
+
+        case Multiplication(args, id, _) =>
+          logger.debug(s"case multiplication at $id")
+          args.map(eval(tiles, _)).sequence.map(_.reduce(_ * _))
+
+        case Division(args, id, _) =>
+          logger.debug(s"case division at $id")
+          args.map(eval(tiles, _)).sequence.map(_.reduce(_ / _))
+
+        case Max(args, id, _) =>
+          logger.debug(s"case max at $id")
+          args.map(eval(tiles, _)).sequence.map(_.reduce(_ max _))
+
+        case Min(args, id, _) =>
+          logger.debug(s"case min at $id")
+          args.map(eval(tiles, _)).sequence.map(_.reduce(_ min _))
+
+        case Classification(args, id, _, breaks) =>
+          logger.debug(s"case classification at $id with breakmap ${breaks.toBreakMap}")
+          eval(tiles, args.head).map(_.classify(breaks.toBreakMap))
+
+        case Masking(args, id, _, mask) =>
+          eval(tiles, args.head).map(_.mask(extent, mask))
+      }
+
+      val pure: Interpreted[Unit] = interpretPure[Unit](ast, sourceMapping)
+      val overridden: Interpreted[MapAlgebraAST] = overrideParams(ast, overrides)
+
+      val tiles: Map[UUID, (Int, Int, Int) => Future[Option[Tile]]] =
+        sourceMapping.foldLeft(Map[UUID, (Int, Int, Int) => Future[Option[Tile]]]())({ case (map, (nodeId, rfmlRaster)) =>
+          map + (nodeId, source(rfmlRaster, _: Int, _: Int, _: Int))
+        })
+
+      (pure |@| overridden).map({ case (_, tree) => eval(tiles, tree) })
     }
   }
 }

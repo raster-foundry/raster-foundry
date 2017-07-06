@@ -1,11 +1,13 @@
 package com.azavea.rf.tool.ast
 
-import java.util.UUID
-
 import io.circe.generic.JsonCodec
 import cats.implicits._
 
 import geotrellis.vector.MultiPolygon
+import geotrellis.raster.mapalgebra.focal._
+
+import java.util.UUID
+
 
 /** The ur-type for a recursive representation of MapAlgebra operations */
 sealed trait MapAlgebraAST extends Product with Serializable {
@@ -95,6 +97,12 @@ object MapAlgebraAST {
 
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = Min(newArgs, id, metadata)
   }
+
+  sealed trait FocalOp extends Operation {
+    val neighborhood: Neighborhood
+  }
+
+  case class FocalMax(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], neighborhood: Neighborhood)
 
   sealed trait MapAlgebraLeaf extends MapAlgebraAST {
     val `type`: String

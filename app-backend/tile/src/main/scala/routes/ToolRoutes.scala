@@ -131,18 +131,19 @@ class ToolRoutes(implicit val database: Database) extends Authentication
                   val responsePng = for {
                     (toolRun, tool) <- LayerCache.toolAndToolRun(toolRunId, user)
                     (ast, params)   <- LayerCache.toolEvalRequirements(toolRunId, nodeId, user)
-                    tile            <- OptionT({
-                      val tms = Interpreter.interpretTMS(ast, params.sources, params.overrides, source)
+                    tile            <- {
+                      val tms: (Int, Int, Int) => Interpreter.Interpreted[OptionT[Future, LazyTile]] =
+                        Interpreter.interpretTMS(ast, params.sources, params.overrides, source)
                       logger.debug(s"Attempting to retrieve TMS tile at $z/$x/$y")
-                      tms(z, x, y).map {
-                        case Valid(op) => op.evaluateDouble
+                      tms(z, x, y) match {
+                        case Valid(op) => op.map(_.evaluateDouble)
                         case Invalid(errors) => throw InterpreterException(errors)
                       }
-                    })
+                    }
                     cMap            <- LayerCache.toolRunColorMap(toolRunId, nodeId, user)
                   } yield {
                     logger.debug(s"Tile successfully produced at $z/$x/$y")
-                    tile.renderPng(cMap)
+                    tile.map(_.renderPng(cMap))
                   }
                   responsePng.value
                 }
