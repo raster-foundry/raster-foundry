@@ -180,7 +180,11 @@ export default (app) => {
                    ) {
                     heap.identify(profile.email);
                     this.getCurrentUser().then((user) => {
-                        heap.addUserProperties({organization: user.organizationId});
+                        heap.addUserProperties({
+                            'organization': user.organizationId,
+                            'impersonated': profile.impersonated || false,
+                            'impersonator': profile.impersonated ? profile.impersonator.email : null
+                        });
                         heap.addEventProperties({'Logged In': 'true'});
                     });
                 }
