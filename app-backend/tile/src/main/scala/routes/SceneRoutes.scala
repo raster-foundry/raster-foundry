@@ -21,13 +21,12 @@ import cats.data._
 import cats.implicits._
 import java.util.UUID
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.util._
 
 object SceneRoutes extends LazyLogging with KamonTraceDirectives {
 
-  def root: Route =
+  def root(implicit ec: ExecutionContext): Route =
     pathPrefix(JavaUUID) { id =>
       pathPrefix("rgb") {
         traceName("rgb") {
@@ -84,7 +83,7 @@ object SceneRoutes extends LazyLogging with KamonTraceDirectives {
   def pngAsHttpResponse(png: Png): HttpResponse =
     HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/png`), png.bytes))
 
-  def imageThumbnailRoute(id: UUID) =
+  def imageThumbnailRoute(id: UUID)(implicit ec: ExecutionContext) =
     parameters('size.as[Int].?(256)) { size =>
       complete {
         val futureMaybeTile = StitchLayer(id, size)
@@ -106,7 +105,7 @@ object SceneRoutes extends LazyLogging with KamonTraceDirectives {
       }
     }
 
-  def imageHistogramRoute(id: UUID) = {
+  def imageHistogramRoute(id: UUID)(implicit ec: ExecutionContext) = {
     import DefaultJsonProtocol._
     complete {
       val futureResponse =
@@ -126,7 +125,7 @@ object SceneRoutes extends LazyLogging with KamonTraceDirectives {
     }
   }
 
-  def imageRoute(futureMaybeTile: OptionT[Future, MultibandTile]): Route =
+  def imageRoute(futureMaybeTile: OptionT[Future, MultibandTile])(implicit ec: ExecutionContext): Route =
     complete {
       val futureResponse =
         for {
@@ -150,7 +149,7 @@ object SceneRoutes extends LazyLogging with KamonTraceDirectives {
     index: MultibandTile => Tile,
     defaultColorRamp: Option[ColorRamp] = None,
     defaultBreaks: Option[Array[Double]] = None
-  ): Route = {
+  )(implicit ec: ExecutionContext): Route = {
     toolParams(defaultColorRamp, defaultBreaks) { params =>
       complete {
         val future =

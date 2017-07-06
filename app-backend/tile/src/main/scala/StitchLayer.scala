@@ -16,7 +16,6 @@ import cats.implicits._
 
 import java.util.UUID
 import scala.concurrent._
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success, Try}
 
 object StitchLayer extends LazyLogging with Config {

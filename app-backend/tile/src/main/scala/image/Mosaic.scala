@@ -18,7 +18,6 @@ import cats.implicits._
 
 import java.util.UUID
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.concurrent.duration._
 
@@ -28,7 +27,7 @@ object Mosaic extends KamonTrace {
   lazy val memcachedClient = LayerCache.memcachedClient
   val memcached = HeapBackedMemcachedClient(LayerCache.memcachedClient)
 
-  def tileLayerMetadata(id: UUID, zoom: Int)(implicit database: Database): OptionT[Future, (Int, TileLayerMetadata[SpatialKey])] =
+  def tileLayerMetadata(id: UUID, zoom: Int)(implicit database: Database, ec: ExecutionContext): OptionT[Future, (Int, TileLayerMetadata[SpatialKey])] =
     traceName(s"Mosaic.tileLayerMetadata($id)") {
       LayerCache.attributeStoreForLayer(id).mapFilter { case (store, pyramidMaxZoom) =>
         // because metadata attributes are cached in AttributeStore itself, there is no point caching this function
@@ -42,7 +41,7 @@ object Mosaic extends KamonTrace {
       }
     }
 
-  def mosaicDefinition(projectId: UUID, tagttl: Option[TagWithTTL])(implicit database: Database): OptionT[Future, Seq[MosaicDefinition]] =
+  def mosaicDefinition(projectId: UUID, tagttl: Option[TagWithTTL])(implicit database: Database, ec: ExecutionContext): OptionT[Future, Seq[MosaicDefinition]] =
     traceName(s"Mosaic.mosaicDefinition($projectId)") {
       val cacheKey = tagttl match {
         case Some(t) => s"mosaic-definition-$projectId-${t.tag}"
@@ -55,7 +54,7 @@ object Mosaic extends KamonTrace {
     }
 
   /** Fetch the tile for given resolution. If it is not present, use a tile from a lower zoom level */
-  def fetch(id: UUID, zoom: Int, col: Int, row: Int)(implicit database: Database): OptionT[Future, MultibandTile] =
+  def fetch(id: UUID, zoom: Int, col: Int, row: Int)(implicit database: Database, ec: ExecutionContext): OptionT[Future, MultibandTile] =
     traceName(s"Mosaic.fetch($id)") {
       tileLayerMetadata(id, zoom).flatMap { case (sourceZoom, tlm) =>
         val zoomDiff = zoom - sourceZoom
@@ -83,7 +82,7 @@ object Mosaic extends KamonTrace {
   /** Fetch the tile for the given zoom level and bbox
     * If no bbox is specified, it will use the project tileLayerMetadata layoutExtent
     */
-  def fetchRenderedExtent(id: UUID, zoom: Int, bbox: Option[Projected[Polygon]])(implicit database: Database): OptionT[Future, MultibandTile] =
+  def fetchRenderedExtent(id: UUID, zoom: Int, bbox: Option[Projected[Polygon]])(implicit database: Database, ec: ExecutionContext): OptionT[Future, MultibandTile] =
     traceName(s"Mosaic.fetchRenderedExtent($id)") {
       tileLayerMetadata(id, zoom).flatMap { case (sourceZoom, tlm) =>
         val extent: Extent =
@@ -96,7 +95,7 @@ object Mosaic extends KamonTrace {
     }
 
   /** Fetch all bands of a [[MultibandTile]] for the given extent and return them without assuming anything of their semantics */
-  def rawForExtent(projectId: UUID, zoom: Int, bbox: Option[Projected[Polygon]])(implicit database: Database): OptionT[Future, MultibandTile] =
+  def rawForExtent(projectId: UUID, zoom: Int, bbox: Option[Projected[Polygon]])(implicit database: Database, ec: ExecutionContext): OptionT[Future, MultibandTile] =
     traceName(s"Mosaic.rawForExtent($projectId)") {
       mosaicDefinition(projectId, None).flatMap { mosaic =>
         val mayhapTiles: Seq[OptionT[Future, MultibandTile]] =
@@ -116,7 +115,7 @@ object Mosaic extends KamonTrace {
     }
 
   /** Fetch all bands of a [[MultibandTile]] and return them without assuming anything of their semantics */
-  def raw(projectId: UUID, zoom: Int, col: Int, row: Int)(implicit database: Database): OptionT[Future, MultibandTile] =
+  def raw(projectId: UUID, zoom: Int, col: Int, row: Int)(implicit database: Database, ec: ExecutionContext): OptionT[Future, MultibandTile] =
     traceName(s"Mosaic.raw($projectId)") {
       mosaicDefinition(projectId, None).flatMap { mosaic =>
         val mayhapTiles: Seq[OptionT[Future, MultibandTile]] =
@@ -152,7 +151,7 @@ object Mosaic extends KamonTrace {
     */
   def render(
     projectId: UUID, zoomOption: Option[Int], bboxOption: Option[String],
-    colorCorrect: Boolean = true)(implicit database: Database): OptionT[Future, MultibandTile] =
+    colorCorrect: Boolean = true)(implicit database: Database, ec: ExecutionContext): OptionT[Future, MultibandTile] =
     traceName(s"Mosaic.render($projectId)") {
       val bboxPolygon: Option[Projected[Polygon]] =
         try {
@@ -207,9 +206,7 @@ object Mosaic extends KamonTrace {
     zoom: Int, col: Int, row: Int,
     tag: Option[String] = None,
     rgbOnly: Boolean = true
-  )(
-    implicit database: Database
-  ): OptionT[Future, MultibandTile] = traceName(s"Mosaic.apply($projectId)") {
+  )(implicit database: Database, ec: ExecutionContext): OptionT[Future, MultibandTile] = traceName(s"Mosaic.apply($projectId)") {
     // Lookup project definition
     // tag present, include in lookup to re-use cache
     // no tag to control cache rollover, so don't cache
@@ -243,7 +240,7 @@ object Mosaic extends KamonTrace {
   }
 
   /** Check to see if a project has color correction; if this isn't specified, default to false */
-  def hasColorCorrection(projectId: UUID)(implicit database: Database) =
+  def hasColorCorrection(projectId: UUID)(implicit database: Database, ec: ExecutionContext) =
     mosaicDefinition(projectId, None).map { mosaic =>
       mosaic.flatMap { case MosaicDefinition(sceneId, maybeColorCorrectParams) =>
         maybeColorCorrectParams.map(_.autoBalance.enabled)
