@@ -21,7 +21,6 @@ import de.heikoseeberger.akkahttpcirce.CirceSupport._
 import cats.data.OptionT
 import cats.implicits._
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.util._
 import scala.collection.mutable.ArrayBuffer
@@ -37,7 +36,7 @@ object MosaicRoutes extends LazyLogging with KamonTraceDirectives {
   def tiffAsHttpResponse(tiff: MultibandGeoTiff): HttpResponse =
     HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/tiff`), tiff.toByteArray))
 
-  def mosaicProject(projectId: UUID)(implicit database: Database): Route =
+  def mosaicProject(projectId: UUID)(implicit database: Database, ec: ExecutionContext): Route =
     pathPrefix("export") {
       optionalHeaderValueByName("Accept") { acceptContentType =>
         traceName("tiles-export-request") {
@@ -104,7 +103,7 @@ object MosaicRoutes extends LazyLogging with KamonTraceDirectives {
     }
 
   /** Return the histogram (with color correction applied) for a list of scenes in a project */
-  def getProjectScenesHistogram(projectId: UUID)(implicit database: Database): Route = {
+  def getProjectScenesHistogram(projectId: UUID)(implicit database: Database, ec: ExecutionContext): Route = {
     def correctedHistograms(sceneId: UUID, projectId: UUID) = {
       val tileFuture = StitchLayer(sceneId, 64)
       // getColorCorrectParams returns a Future[Option[Option]] for some reason

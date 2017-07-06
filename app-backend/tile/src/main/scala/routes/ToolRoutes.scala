@@ -22,9 +22,8 @@ import geotrellis.raster.render._
 
 import java.util.UUID
 import scala.concurrent._
-import scala.concurrent.ExecutionContext.Implicits.global
 
-class ToolRoutes(implicit val database: Database) extends Authentication
+class ToolRoutes(implicit val database: Database, ec: ExecutionContext) extends Authentication
     with LazyLogging
     with InterpreterExceptionHandling
     with CommonHandlers

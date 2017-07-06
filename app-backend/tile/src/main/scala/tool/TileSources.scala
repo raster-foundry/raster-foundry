@@ -19,7 +19,6 @@ import geotrellis.vector.Extent
 import java.util.UUID
 import scala.util._
 import scala.concurrent._
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /** Interpreting a [[MapAlgebraAST]] requires providing a function from
   *  (at least) an RFMLRaster (the source/terminal-node type of the AST)
@@ -34,7 +33,7 @@ object TileSources extends LazyLogging {
     */
   def fullDataWindow(
     rs: Map[UUID, RFMLRaster]
-  )(implicit database: Database): OptionT[Future, (Extent, Int)] = {
+  )(implicit database: Database, ec: ExecutionContext): OptionT[Future, (Extent, Int)] = {
     rs
       .values
       .toStream
@@ -56,7 +55,7 @@ object TileSources extends LazyLogging {
     * which one could read a Layer for the purpose of calculating a representative
     * histogram.
     */
-  def dataWindow(r: RFMLRaster)(implicit database: Database): OptionT[Future, (Extent, Int)] = r match {
+  def dataWindow(r: RFMLRaster)(implicit database: Database, ec: ExecutionContext): OptionT[Future, (Extent, Int)] = r match {
     case SceneRaster(id, Some(_), _) => {
       LayerCache.attributeStoreForLayer(id).mapFilter({ case (store, _) =>
         GlobalSummary.minAcceptableSceneZoom(id, store, 256)  // TODO: 512?
@@ -76,7 +75,7 @@ object TileSources extends LazyLogging {
     extent: Extent,
     zoom: Int,
     r: RFMLRaster
-  )(implicit database: Database): Future[Option[Tile]] = r match {
+  )(implicit database: Database, ec: ExecutionContext): Future[Option[Tile]] = r match {
     case SceneRaster(id, Some(band), maybeND) =>
       LayerCache.attributeStoreForLayer(id).mapFilter({ case (store, _) =>
         blocking {
@@ -107,7 +106,7 @@ object TileSources extends LazyLogging {
   }
 
   /** This source provides support for z/x/y TMS tiles */
-  def cachedTmsSource(r: RFMLRaster, z: Int, x: Int, y: Int)(implicit database: Database): Future[Option[Tile]] =
+  def cachedTmsSource(r: RFMLRaster, z: Int, x: Int, y: Int)(implicit database: Database, ec: ExecutionContext): Future[Option[Tile]] =
     r match {
       case scene @ SceneRaster(sceneId, Some(band), maybeND) =>
         LayerCache.layerTile(sceneId, z, SpatialKey(x, y))

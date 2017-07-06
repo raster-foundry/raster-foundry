@@ -18,6 +18,7 @@ import scala.util.Try
 object AkkaSystem {
   implicit val system = ActorSystem("rf-tiler-system")
   implicit val materializer = ActorMaterializer()
+  implicit val executionContext = materializer.executionContext
 
   trait LoggerExecutor {
     protected implicit val log = Logging(system, "tiler")

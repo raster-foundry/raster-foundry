@@ -33,7 +33,6 @@ import java.util.UUID
 
 import scala.concurrent._
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util._
 
 /**
