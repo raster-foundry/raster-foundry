@@ -53,6 +53,19 @@ trait TileAuthentication extends Authentication
     }
   }
 
+  /** Authorize tile access if given valid token, mapToken, or if project is public
+    *
+    * isTokenParameterValid and isMapTokenValid only run if the respective
+    * query parameter is specified. Since isTokenParameterValid does not make
+    * a database call, it is the fastest and should be run first. If mapToken
+    * is specified, we allow access if it is valid. We don't need to make an
+    * additional database call to see if the project is public, since that would
+    * not affect our decision. Finally, those accessing a public project would
+    * not specify a token or mapToken parameter, so only the third directive
+    * will run. We make a single database call to check that.
+    *
+    * This order guarantees that at most one database call is made in every case.
+    */
   def tileAccessAuthorized(projectId: UUID): Directive1[Boolean] =
     isTokenParameterValid | isMapTokenValid(projectId) | isProjectPublic(projectId)
 }
