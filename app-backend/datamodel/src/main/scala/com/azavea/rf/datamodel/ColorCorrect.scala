@@ -115,8 +115,8 @@ object ColorCorrect {
     val (bclipMin, bclipMax, bnewMin, bnewMax) = (bmin, bmax, 0, 255)
 
     val sigmoidal: Double => Double =
-      (sigmoidalContrast.alpha, sigmoidalContrast.beta) match {
-        case (Some(a), Some(b)) => localTransform(rgbTile.cellType, a, b)
+      (sigmoidalContrast.enabled, sigmoidalContrast.alpha, sigmoidalContrast.beta) match {
+        case (true, Some(a), Some(b)) => localTransform(rgbTile.cellType, a, b)
         case _ => identity
       }
 
