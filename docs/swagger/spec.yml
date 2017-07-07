@@ -2936,6 +2936,7 @@ definitions:
           type: array
           items:
             type: string
+          description: An array of strings of file locations. If a source is provided, this can be empty
         uploadType:
           type: string
           description: Source of files and uploads
@@ -2964,6 +2965,9 @@ definitions:
           type: string
           format: uuid
           description: during the import process, add scenes to a project if specified
+        source:
+          type: string
+          description: for uploads of type S3 and Dropbox, the location of the files to import. If files are specified, this field is ignored
   Upload:
     allOf:
     - $ref: '#/definitions/BaseModel'
