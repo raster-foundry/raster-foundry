@@ -13,7 +13,7 @@ export default (app) => {
                     },
                     credentials: {
                         method: 'GET',
-                        url: '/api/uploads/:id/credentials'
+                        url: `${BUILDCONFIG.API_HOST}/api/uploads/:id/credentials`
                     },
                     update: {
                         method: 'PUT'
