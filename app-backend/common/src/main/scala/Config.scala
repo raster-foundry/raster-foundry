@@ -37,5 +37,10 @@ object Config {
 
     lazy val enabled: Boolean =
       memcachedConfig.getBoolean("enabled")
+
+    object heap {
+      lazy val enabled: Boolean =
+        memcachedConfig.getBoolean("heap.enabled")
+    }
   }
 }
