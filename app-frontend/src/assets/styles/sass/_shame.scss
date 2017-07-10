@@ -1610,4 +1610,129 @@ rf-export-item {
   background: white;
   /* Make sure events are propagated to the JointJS element so, e.g. dragging works.*/
   pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  border-radius: 5px;
+}
+
+.node-header {
+  border-radius: 5px 5px 0 0;
+  display: flex;
+  background: rgba(249, 249, 249, 1);
+  pointer-events: none;
+  position: relative;
+}
+
+.node-dropdown {
+  width: 1em;
+  padding: .75em;
+  pointer-events: auto;
+  position: relative;
+  cursor: pointer;
+}
+
+.node-dropdown-icon {
+  width: .4em;
+  height: .4em;
+  border-radius: 50%;
+  background-color: $shade-light;
+  box-shadow: 0px .75em 0px $shade-light, 0px 1.5em 0px $shade-light;
+}
+
+.node-header-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: .25em .25em .5em .5em;
+  .node-header-type {
+    display: flex;
+    flex-direction: row;
+    color: $gray-lighter;
+
+    [class^="icon-"]:before, [class*=" icon-"]:before {
+      width: 1em;
+      margin-right: 0em;
+      margin-left: 0em;
+    }
+  }
+
+  .node-header-label {
+    font-weight: 700;
+    color: rgba(73, 78, 105, 1);
+  }
+}
+
+.node-status {
+  padding: .25em;
+}
+
+
+.node-header-colorblock {
+  border-radius: 5px 0 0 0;
+  width: 1em;
+  &.node-type-input {
+    background: $blue;
+  }
+  &.node-type-function {
+    background: $green;
+  }
+}
+
+.node-body {
+  flex: 1;
+  cursor: auto;
+  pointer-events: auto;
+}
+
+.node-dropdown-menu {
+  position: absolute;
+  left: 2.1em;
+  top: -1em;
+
+  width: 13em;
+  background: white;
+
+  border-radius: 2px;
+  border: 1px solid $shade-light;
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: -10px;
+    top: 2em;
+    width: 0;
+    height: 0;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-right: 10px solid $shade-light;
+  }
+
+  ul {
+    font-weight: 700;
+    list-style: none;
+    margin: 0;
+    padding: .5em 0 0 0;
+  }
+  li {
+    padding: 0 1em .5em 1em;
+    &:hover {
+      color: $shade-dark;
+    }
+    &.disabled {
+      color: $gray-lightest;
+      &:hover {
+        color: $gray-lightest;
+      }
+    }
+  }
+  .divider {
+    height: 1px;
+    margin: 0 .5em 0.5em .5em;
+    overflow: hidden;
+    border-bottom: 1px solid $gray-lightest;
+  }
+}
+
+.joint-element {
+  cursor: drag;
 }
