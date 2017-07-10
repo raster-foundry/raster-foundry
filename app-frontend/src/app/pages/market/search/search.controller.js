@@ -2,25 +2,32 @@
 
 export default class MarketSearchController {
     constructor( // eslint-disable-line max-params
-        $log, $state, toolService, toolTagService, toolCategoryService
+        $log, $scope, $state, toolService, toolTagService, toolCategoryService, $uibModal
     ) {
         'ngInject';
         this.toolService = toolService;
         this.toolTagService = toolTagService;
         this.toolCategoryService = toolCategoryService;
+        this.$scope = $scope;
         this.$state = $state;
         this.$log = $log;
-
-        this.initController();
+        this.$uibModal = $uibModal;
     }
 
-    initController() {
+    $onInit() {
         this.initFilters();
         this.initSearchTerms();
         this.fetchToolList();
         this.fetchToolTags();
         this.fetchToolCategories();
+
+        this.$scope.$on('$destroy', () => {
+            if (this.activeModal) {
+                this.activeModal.dismiss();
+            }
+        });
     }
+
     initFilters() {
         this.queryParams = _.mapValues(this.$state.params, v => {
             return v || null;
@@ -162,5 +169,15 @@ export default class MarketSearchController {
 
     navTool(tool) {
         this.$state.go('market.tool', {id: tool.id, toolData: tool});
+    }
+
+    openToolCreateModal() {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        this.activeModal = this.$uibModal.open({
+            component: 'rfToolCreateModal'
+        });
     }
 }

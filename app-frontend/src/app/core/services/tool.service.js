@@ -17,6 +17,9 @@ export default (app) => {
                     get: {
                         method: 'GET',
                         cache: false
+                    },
+                    create: {
+                        method: 'POST'
                     }
                 }
             );
@@ -41,6 +44,24 @@ export default (app) => {
 
         get(id) {
             return this.Tool.get({id}).$promise;
+        }
+
+        createTool(toolBuffer) {
+            return this.authService.getCurrentUser().then(
+                user => {
+                    const toolDefaults = {
+                        organizationId: user.organizationId,
+                        requirements: '',
+                        license: '',
+                        compatibleDataSources: [],
+                        stars: 5.0,
+                        tags: [],
+                        categories: [],
+                        owner: user.id
+                    };
+                    return this.Tool.create(Object.assign(toolDefaults, toolBuffer)).$promise;
+                }
+            );
         }
 
         createToolRun(toolRun) {

@@ -28,6 +28,7 @@ const App = angular.module(
         'tandibar/ng-rollbar',
         'angular.filter',
         '720kb.tooltips',
+        'uuid4',
 
         // core
         require('./core/core.module').name,
