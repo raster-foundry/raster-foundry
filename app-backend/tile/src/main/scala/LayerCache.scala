@@ -145,6 +145,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
                   .stitch
                   .crop(extent)
                   .tile
+                  .resample(256, 256)
               } match {
                 case Success(tile) => Option(tile)
                 case Failure(e) =>
