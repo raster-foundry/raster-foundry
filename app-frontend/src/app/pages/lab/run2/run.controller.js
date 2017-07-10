@@ -193,6 +193,14 @@ export default class LabRunController {
         });
     }
 
+    onExecutionParametersChange(sourceId, project, band) {
+        if (project && typeof band === 'number' && band >= 0) {
+            this.toolRun.executionParameters.sources[sourceId].id = project.id;
+            this.toolRun.executionParameters.sources[sourceId].band = band;
+            this.onParameterChange();
+        }
+    }
+
     selectProjectModal(sourceId) {
         if (this.activeModal) {
             this.activeModal.dismiss();
