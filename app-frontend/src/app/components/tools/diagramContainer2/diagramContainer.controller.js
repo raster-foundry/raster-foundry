@@ -32,13 +32,13 @@ export default class DiagramContainerController {
         joint.shapes.html.ElementView = joint.dia.ElementView.extend({
             template: `
                 <div class="diagram-cell ">
-                  <div class="joint-cell-header">
-                    <button class="btn btn-square">
-                      <span class="icon-info"></span>test
-                    </button>
-                    <span class="joint-cell-type">{{cellType}}</span>
-                    <span class="joint-cell-title">{{cellTitle}}</span>
-                  </div>
+                  <rf-diagram-node-header
+                    data-model="model"
+                    data-invalid="model.get('cellType') === 'Input'"
+                    data-menu-options="menuOptions"
+                    >
+                  </rf-diagram-node-header>
+                  <div class="node-body"></div>
                 </div>
         `,
             initialize: function () {
@@ -59,8 +59,8 @@ export default class DiagramContainerController {
             },
             updateBox: function () {
                 let bbox = this.model.getBBox();
-                this.scope.cellType = this.model.get('cellType');
-                this.scope.cellTitle = this.model.get('title');
+                this.scope.model = this.model;
+
                 this.$box.css({
                     width: bbox.width,
                     height: bbox.height,
@@ -75,21 +75,11 @@ export default class DiagramContainerController {
 
         this.workspaceElement = this.$element[0].children[0];
         this.comparison = [false, false];
-        this.cellSize = [300, 75];
+        this.cellSize = [300, 150];
         this.paddingFactor = 0.8;
         this.nodeSeparationFactor = 0.25;
         this.panActive = false;
         this.initContextMenus();
-        this.contextMenuTpl =
-            `<div class="lab-contextmenu" ng-show="isShowingContextMenu">
-                <div class="btn-group">
-                    <button ng-repeat="item in currentContextMenu"
-                        ng-click="item.callback()"
-                        class="btn btn-default">
-                        {{item.label}}
-                    </button>
-                </div>
-            </div>`;
         this.extractInputs();
         this.extractShapes();
         this.initDiagram();
@@ -150,21 +140,23 @@ export default class DiagramContainerController {
     }
 
     initContextMenus() {
-        this.contextMenus = new Map();
         this.defaultContextMenu = [{
             label: 'Compare to...',
-            callback: () => {
-                this.startComparison();
+            callback: ($event, model) => {
+                this.selectCell(model);
+                this.startComparison(model.get('id'));
             }
         }, {
             label: 'View output',
-            callback: () => {
-                this.onPreview({data: this.selectedCellView.model.id});
+            callback: ($event, model) => {
+                this.onPreview({data: model.get('id')});
             }
         }, {
+            type: 'divider'
+        }, {
             label: 'Share',
-            callback: () => {
-                this.onShare({data: this.selectedCellView.model.id});
+            callback: ($event, model) => {
+                this.onShare({data: model.get('id')});
             }
         }];
         this.cancelComparisonMenu = [{
@@ -179,19 +171,15 @@ export default class DiagramContainerController {
         this.$scope.$evalAsync(() => {
             if (this.isComparing) {
                 this.cancelComparison();
-            } else {
-                this.hideContextMenu();
-                this.unselectCellView();
             }
+            this.unselectCell();
         });
     }
 
-    onCellClick(cv, evt) {
+    onCellClick(cv) {
         this.$scope.$evalAsync(() => {
             if (this.isComparing) {
                 this.continueComparison(cv);
-            } else {
-                this.selectCellView(cv, evt);
             }
         });
     }
@@ -300,6 +288,7 @@ export default class DiagramContainerController {
             },
             cellType: config.inputs ? 'Function' : 'Input',
             title: config.label || config.id.toString(),
+            contextMenu: this.defaultContextMenu,
             ports: {
                 groups: {
                     inputs: {
@@ -318,11 +307,10 @@ export default class DiagramContainerController {
         });
     }
 
-    startComparison() {
+    startComparison(id) {
         this.mousetipService.set('Select a node to compare');
         this.isComparing = true;
-        this.comparison[0] = this.selectedCellView.model.id;
-        this.showContextMenu(this.selectedCellView, this.cancelComparisonMenu);
+        this.comparison[0] = id;
     }
 
     continueComparison(cv) {
@@ -331,6 +319,7 @@ export default class DiagramContainerController {
         this.isComparing = false;
         this.comparison[1] = cv.model.id;
         this.onPreview({data: this.comparison});
+        this.unselectCell();
     }
 
     cancelComparison() {
@@ -367,27 +356,26 @@ export default class DiagramContainerController {
         }
     }
 
-    selectCellView(cellView) {
-        this.unselectCellView();
-        this.selectedCellView = cellView;
-        cellView.model.attr({
+    selectCell(model) {
+        this.unselectCell();
+        this.selectedCell = model;
+        model.attr({
             rect: {
-                stroke: '#353b59',
+                stroke: '#738FFC',
                 'stroke-width': '1'
             }
         });
-        this.showContextMenu(cellView);
     }
 
-    unselectCellView() {
-        if (this.selectedCellView) {
-            this.selectedCellView.model.attr({
+    unselectCell() {
+        if (this.selectedCell) {
+            this.selectedCell.attr({
                 rect: {
                     stroke: '#959cad',
                     'stroke-width': 0.5
                 }
             });
-            this.selectedCellView = null;
+            this.selectedCell = null;
         }
     }
 

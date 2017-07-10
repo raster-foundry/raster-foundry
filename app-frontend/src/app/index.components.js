@@ -26,6 +26,7 @@ export default angular.module('index.components', [
     require('./components/tools/toolItem/toolItem.module.js').name,
     require('./components/tools/diagramContainer/diagramContainer.module.js').name,
     require('./components/tools/diagramContainer2/diagramContainer.module.js').name,
+    require('./components/tools/diagramNodeHeader/diagramNodeHeader.module.js').name,
 
     // map components
     require('./components/map/mapContainer/mapContainer.module.js').name,
