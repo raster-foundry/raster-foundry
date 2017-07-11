@@ -44,11 +44,11 @@ object SourceDefinition extends LazyLogging {
   ) {
     @SuppressWarnings(Array("OptionGet"))
     def toSourceDefinition: SourceDefinition = {
-      if (extent.isDefined && crs.isDefined && cellSize.isDefined) {
+      if (extent.isDefined && crs.isDefined && cellSize.isDefined && extentCrs.isDefined) {
         SourceDefinition(
           uri,
           extent.get,
-          extentCrs.getOrElse(LatLng),
+          extentCrs.get,
           crs.get,
           cellSize.get,
           bandMaps
