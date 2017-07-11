@@ -4,6 +4,7 @@ import com.azavea.rf.database.Database
 import com.azavea.rf.tile._
 import com.azavea.rf.tile.image._
 import com.azavea.rf.tool.ast._
+import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.params._
 
 import com.typesafe.scalalogging.LazyLogging
@@ -80,7 +81,7 @@ object TileSources extends LazyLogging {
     extent: Extent,
     zoom: Int,
     r: RFMLRaster
-  )(implicit database: Database): Future[Option[Tile]] = r match {
+  )(implicit database: Database): Future[Option[TileProvider]] = r match {
     case SceneRaster(id, Some(band), maybeND) =>
       implicit val sceneIds = Set(id)
       LayerCache.attributeStoreForLayer(id).mapFilter({ case (store, _) =>
@@ -95,7 +96,7 @@ object TileSources extends LazyLogging {
               .crop(extent)
               .tile
           } match {
-            case Success(tile) => Option(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)))
+            case Success(tile) => Some(TileProvider(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)), None))
             case Failure(e) =>
               logger.error(s"Query layer $id at zoom $zoom for $extent: ${e.getMessage}")
               None
@@ -105,19 +106,46 @@ object TileSources extends LazyLogging {
 
     case ProjectRaster(projId, Some(band), maybeND) => {
       Mosaic.rawForExtent(projId, zoom, Some(Projected(extent.toPolygon, 3857)))
-        .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) }).value
+        .map({ tile =>
+          TileProvider(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)), None)
+        }).value
     }
 
     case _ => Future.successful(None)
   }
 
   /** This source provides support for z/x/y TMS tiles */
-  def cachedTmsSource(r: RFMLRaster, z: Int, x: Int, y: Int)(implicit database: Database): Future[Option[Tile]] =
+  def cachedTmsSource(r: RFMLRaster, buffer: Boolean, z: Int, x: Int, y: Int)(implicit database: Database): Future[Option[TileProvider]] =
     r match {
       case scene @ SceneRaster(sceneId, Some(band), maybeND) =>
         implicit val sceneIds = Set(sceneId)
-        LayerCache.layerTile(sceneId, z, SpatialKey(x, y))
-          .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) }).value
+        if (buffer) {
+          val provider: OptionT[Future, TileProvider] = for {
+            tl <- LayerCache.layerTile(sceneId, z, SpatialKey(x - 1, y - 1))
+                    .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+            tm <- LayerCache.layerTile(sceneId, z, SpatialKey(x, y - 1))
+                    .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+            tr <- LayerCache.layerTile(sceneId, z, SpatialKey(x + 1 , y - 1))
+                    .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+            ml <- LayerCache.layerTile(sceneId, z, SpatialKey(x - 1, y))
+                    .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+            mm <- LayerCache.layerTile(sceneId, z, SpatialKey(x, y))
+                    .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+            mr <- LayerCache.layerTile(sceneId, z, SpatialKey(x + 1, y))
+                    .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+            bl <- LayerCache.layerTile(sceneId, z, SpatialKey(x - 1, y + 1))
+                    .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+            bm <- LayerCache.layerTile(sceneId, z, SpatialKey(x, y + 1))
+                    .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+            br <- LayerCache.layerTile(sceneId, z, SpatialKey(x + 1, y + 1))
+                    .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+          } yield TileProvider(mm, Some(Buffers(tl, tm, tr, ml, mr,bl, bm, br)))
+          provider.value
+        } else {
+          LayerCache.layerTile(sceneId, z, SpatialKey(x, y))
+            .map({ tile => TileProvider(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)), None) })
+            .value
+        }
 
       case scene @ SceneRaster(sceneId, None, _) =>
         implicit val sceneIds = Set(sceneId)
@@ -125,8 +153,33 @@ object TileSources extends LazyLogging {
         Future.successful(None)
 
       case project @ ProjectRaster(projId, Some(band), maybeND) =>
-        Mosaic.raw(projId, z, x, y)
-          .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) }).value
+        if (buffer) {
+          val provider: OptionT[Future, TileProvider] = for {
+            tl <- Mosaic.raw(projId, z, x, y)
+                    .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+            tm <- Mosaic.raw(projId, z, x, y)
+                    .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+            tr <- Mosaic.raw(projId, z, x, y)
+                    .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+            ml <- Mosaic.raw(projId, z, x, y)
+                    .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+            mm <- Mosaic.raw(projId, z, x, y)
+                    .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+            mr <- Mosaic.raw(projId, z, x, y)
+                    .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+            bl <- Mosaic.raw(projId, z, x, y)
+                    .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+            bm <- Mosaic.raw(projId, z, x, y)
+                    .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+            br <- Mosaic.raw(projId, z, x, y)
+                    .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+          } yield TileProvider(mm, Some(Buffers(tl, tm, tr, ml, mr,bl, bm, br)))
+          provider.value
+        } else {
+          Mosaic.raw(projId, z, x, y)
+            .map({ tile => TileProvider(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)), None) })
+            .value
+        }
 
       case project @ ProjectRaster(projId, None, _) =>
         logger.warn(s"Request for $project does not contain band index")

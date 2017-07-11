@@ -3,6 +3,8 @@ package com.azavea.rf.tool.eval
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster._
 import geotrellis.raster.mapalgebra.local._
+import geotrellis.raster.mapalgebra.focal
+import geotrellis.raster.mapalgebra.focal.Neighborhood
 import geotrellis.raster.render._
 import geotrellis.vector.{ Extent, MultiPolygon, Point }
 import spire.syntax.cfor._
@@ -17,6 +19,7 @@ sealed trait LazyTile extends TileLike with Grid with LazyLogging {
   def min(other: LazyTile) = this.dualCombine(other)(Min.combine)(Min.combine)
   def classify(breaks: BreakMap[Double, Int]) = this.classification({ i => breaks(i) })
   def mask(extent: Extent, mask: MultiPolygon) = LazyTile.Masking(this, extent, mask)
+  def focalMax(neighborhood: Neighborhood, gridbounds: Option[GridBounds]) = LazyTile.FocalMax(this, neighborhood, gridbounds)
 
   def left: LazyTile
   def right: LazyTile
@@ -285,5 +288,16 @@ object LazyTile {
     override def rows: Int = 256
     def bind(args: Map[Var, LazyTile]): LazyTile =
       this
+  }
+
+  case class FocalMax(left: LazyTile, n: Neighborhood, gridbounds: Option[GridBounds]) extends Tree {
+    lazy val intTile = focal.Max(left.evaluate.get, n, gridbounds)
+    lazy val dblTile = focal.Max(left.evaluateDouble.get, n, gridbounds)
+    override def cols: Int = gridbounds.map({ gb => gb.colMax - gb.colMin }).getOrElse(left.cols)
+    override def rows: Int = gridbounds.map({ gb => gb.rowMax - gb.rowMin }).getOrElse(left.rows)
+    def right = LazyTile.Nil
+    def get(col: Int, row: Int) = intTile.get(col, row)
+    def getDouble(col: Int, row: Int) = dblTile.get(col, row)
+    def bind(args: Map[Var, LazyTile]): LazyTile = this
   }
 }

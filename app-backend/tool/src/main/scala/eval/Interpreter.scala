@@ -94,8 +94,8 @@ object Interpreter extends LazyLogging {
     case Constant(_, _, _) => Valid(Monoid.empty)
     case ToolReference(id, _) => Invalid(NonEmptyList.of(UnsubstitutedRef(id)))
 
-    /* Unary operations must have only one argument */
-    case op: UnaryOp => {
+    /* Unary operations must have only one arguments */
+    case op: UnaryOperation => {
       /* Check for errors further down, first */
       val kids: Interpreted[M] = op.args.foldMap(a => interpretPure(a, sourceMapping))
 
@@ -131,60 +131,67 @@ object Interpreter extends LazyLogging {
     sourceMapping: Map[UUID, RFMLRaster],
     overrides: Map[UUID, ParamOverride],
     extent: Extent,
-    source: RFMLRaster => Future[Option[Tile]]
+    tileSource: RFMLRaster => Future[Option[TileProvider]]
   )(implicit ec: ExecutionContext): Future[Interpreted[LazyTile]] = {
 
     @SuppressWarnings(Array("TraversableHead"))
-    def eval(tiles: Map[UUID, Tile], ast: MapAlgebraAST): LazyTile = ast match {
+    def eval(tiles: Map[UUID, TileProvider], ast: MapAlgebraAST, buffer: Int = 0): LazyTile = ast match {
 
       /* --- LEAVES --- */
-      case Source(id, _) => LazyTile(tiles(id))
+      case Source(id, _) => LazyTile(tiles(id).withBuffer(buffer))
       case Constant(_, const, _) => LazyTile.Constant(const)
       case ToolReference(_, _) => sys.error("TMS: Attempt to evaluate a ToolReference!")
 
-      /* --- OPERATIONS --- */
+      /* --- FOCAL OPERATIONS --- */
+      case FocalMax(args, id, _, neighborhood) =>
+        logger.debug(s"case focal maximum at $id")
+        eval(tiles, args.head, buffer + neighborhood.extent).focalMax(neighborhood, None)
+
+      /* --- LOCAL OPERATIONS --- */
       case Addition(args, id, _) =>
         logger.debug(s"case addition at $id")
-        args.map(eval(tiles, _)).reduce(_ + _)
+        args.map(eval(tiles, _, buffer)).reduce(_ + _)
 
       case Subtraction(args, id, _) =>
         logger.debug(s"case subtraction at $id")
-        args.map(eval(tiles, _)).reduce(_ - _)
+        args.map(eval(tiles, _, buffer)).reduce(_ - _)
 
       case Multiplication(args, id, _) =>
         logger.debug(s"case multiplication at $id")
-        args.map(eval(tiles, _)).reduce(_ * _)
+        args.map(eval(tiles, _, buffer)).reduce(_ * _)
 
       case Division(args, id, _) =>
         logger.debug(s"case division at $id")
-        args.map(eval(tiles, _)).reduce(_ / _)
+        args.map(eval(tiles, _, buffer)).reduce(_ / _)
 
       case Max(args, id, _) =>
         logger.debug(s"case max at $id")
-        args.map(eval(tiles, _)).reduce(_ max _)
+        args.map(eval(tiles, _, buffer)).reduce(_ max _)
 
       case Min(args, id, _) =>
         logger.debug(s"case min at $id")
-        args.map(eval(tiles, _)).reduce(_ min _)
+        args.map(eval(tiles, _, buffer)).reduce(_ min _)
 
       case Classification(args, id, _, breaks) =>
         logger.debug(s"case classification at $id with breakmap ${breaks.toBreakMap}")
-        eval(tiles, args.head).classify(breaks.toBreakMap)
+        eval(tiles, args.head, buffer).classify(breaks.toBreakMap)
 
       case Masking(args, id, _, mask) =>
-        eval(tiles, args.head).mask(extent, mask)
+        eval(tiles, args.head, buffer).mask(extent, mask)
     }
 
     val pure: Interpreted[Unit] = interpretPure[Unit](ast, sourceMapping)
     val overridden: Interpreted[MapAlgebraAST] = overrideParams(ast, overrides)
 
+    val bufferedSources = ast.buffers()
+
     sourceMapping
-      .mapValues(r => source(r).map(_.toRight(r.id)).recover({ case t: Throwable => Left(r.id) }))
+      .mapValues(r => tileSource(r).map(_.toRight(r.id)).recover({ case t: Throwable => Left(r.id) }))
       .sequence
       .map({ sms =>
-        val tiles: Interpreted[Map[UUID, Tile]] = sms.map({
+        val tiles: Interpreted[Map[UUID, TileProvider]] = sms.map({
           case (id, Left(rid)) => (id, Invalid(NonEmptyList.of(RasterRetrievalError(id, rid))))
-          case (id, Right(tile)) => (id, Valid(tile))
+          case (id, Right(provider)) => (id, Valid(provider))
         }).sequence
 
         (pure |@| hasSources(ast) |@| overridden |@| tiles).map({
@@ -203,17 +210,78 @@ object Interpreter extends LazyLogging {
     ast: MapAlgebraAST,
     sourceMapping: Map[UUID, RFMLRaster],
     overrides: Map[UUID, ParamOverride],
-    source: (RFMLRaster, Int, Int, Int) => Future[Option[Tile]]
+    tileSource: (RFMLRaster, Boolean, Int, Int, Int) => Future[Option[TileProvider]]
   )(implicit ec: ExecutionContext): (Int, Int, Int) => Future[Interpreted[LazyTile]] = {
 
     (z: Int, x: Int, y: Int) => {
-      interpretGlobal(
-        ast,
-        sourceMapping,
-        overrides,
-        layouts(z).mapTransform(SpatialKey(x,y)),
-        { raster: RFMLRaster => source(raster, z, x, y) }
-      )
+      val extent = layouts(z).mapTransform(SpatialKey(x,y))
+      @SuppressWarnings(Array("TraversableHead"))
+      def eval(tiles: Map[UUID, TileProvider], ast: MapAlgebraAST, buffer: Int = 0): LazyTile = ast match {
+
+        /* --- LEAVES --- */
+        case Source(id, _) => LazyTile(tiles(id).withBuffer(buffer))
+        case Constant(_, const, _) => LazyTile.Constant(const)
+        case  ToolReference(_, _) => sys.error("TMS: Attempt to evaluate a ToolReference!")
+
+        /* --- FOCAL OPERATIONS --- */
+        case FocalMax(args, id, _, n) =>
+          logger.debug(s"case focal maximum at $id")
+          eval(tiles, args.head, buffer + n.extent)
+            .focalMax(n, Some(GridBounds(n.extent, n.extent, 256 + buffer * 2 + n.extent , 256 + buffer * 2 + n.extent)))
+
+        /* --- LOCAL OPERATIONS --- */
+        case Addition(args, id, _) =>
+          logger.debug(s"case addition at $id")
+          args.map(eval(tiles, _, buffer)).reduce(_ + _)
+
+        case Subtraction(args, id, _) =>
+          logger.debug(s"case subtraction at $id")
+          args.map(eval(tiles, _, buffer)).reduce(_ - _)
+
+        case Multiplication(args, id, _) =>
+          logger.debug(s"case multiplication at $id")
+          args.map(eval(tiles, _, buffer)).reduce(_ * _)
+
+        case Division(args, id, _) =>
+          logger.debug(s"case division at $id")
+          args.map(eval(tiles, _, buffer)).reduce(_ / _)
+
+        case Max(args, id, _) =>
+          logger.debug(s"case max at $id")
+          args.map(eval(tiles, _, buffer)).reduce(_ max _)
+
+        case Min(args, id, _) =>
+          logger.debug(s"case min at $id")
+          args.map(eval(tiles, _, buffer)).reduce(_ min _)
+
+        case Classification(args, id, _, breaks) =>
+          logger.debug(s"case classification at $id with breakmap ${breaks.toBreakMap}")
+          eval(tiles, args.head, buffer).classify(breaks.toBreakMap)
+
+        case Masking(args, id, _, mask) =>
+          eval(tiles, args.head, buffer).mask(extent, mask)
+      }
+
+      val pure: Interpreted[Unit] = interpretPure[Unit](ast, sourceMapping)
+      val overridden: Interpreted[MapAlgebraAST] = overrideParams(ast, overrides)
+
+      val bufferedSources = ast.buffers()
+
+      sourceMapping
+        .map({ case (nodeId, rfml) =>
+            (nodeId -> tileSource(rfml, bufferedSources.contains(nodeId), z, x, y)
+              .map(_.toRight(rfml.id))
+              .recover({ case t: Throwable => Left(rfml.id) }))
+        })
+        .sequence
+        .map({ sms =>
+          val tiles: Interpreted[Map[UUID, TileProvider]] = sms.map({
+            case (id, Left(rid)) => (id, Invalid(NonEmptyList.of(RasterRetrievalError(id, rid))))
+            case (id, Right(provider)) => (id, Valid(provider))
+          }).sequence
+
+          (pure |@| overridden |@| tiles).map({ case (_, tree, ts) => eval(ts, tree) })
+        })
     }
   }
 }

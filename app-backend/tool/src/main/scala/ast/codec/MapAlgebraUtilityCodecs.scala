@@ -5,6 +5,7 @@ import com.azavea.rf.tool.ast._
 import geotrellis.raster.io._
 import geotrellis.raster.histogram._
 import geotrellis.raster.render._
+import geotrellis.raster.mapalgebra.focal._
 import spray.json._
 import DefaultJsonProtocol._
 import io.circe._
@@ -40,8 +41,6 @@ trait MapAlgebraUtilityCodecs {
       case "exact" => Exact
       case "greaterThanOrEqualTo" => GreaterThanOrEqualTo
       case "greaterThan" => GreaterThan
-      case unrecognized =>
-        throw new InvalidParameterException(s"'$unrecognized' is not a recognized ClassBoundaryType")
     }
 
   implicit lazy val classBoundaryEncoder: Encoder[ClassBoundaryType] =
@@ -56,6 +55,26 @@ trait MapAlgebraUtilityCodecs {
           throw new InvalidParameterException(s"'$unrecognized' is not a recognized ClassBoundaryType")
       }
     })
+
+  implicit val neighborhoodDecoder: Decoder[Neighborhood] = Decoder.instance[Neighborhood] { n =>
+    n._type match {
+      case Some("square") => n.as[Square]
+      case unrecognized => Left(DecodingFailure(s"Unrecognized neighborhood: $unrecognized", n.history))
+    }
+  }
+
+  implicit val neighborhoodEncoder: Encoder[Neighborhood] = new Encoder[Neighborhood] {
+    final def apply(n: Neighborhood): Json = n match {
+      case square: Square => square.asJson
+      case unrecognized =>
+        throw new InvalidParameterException(s"Unrecognized neighborhood: $unrecognized")
+    }
+  }
+
+  implicit val squareNeighborhoodDecoder: Decoder[Square] =
+    Decoder.forProduct1("extent")(Square.apply)
+  implicit val squareNeighborhoodEncoder: Encoder[Square] =
+    Encoder.forProduct2("extent", "type")(op => (op.extent, "square"))
 
   implicit val colorRampDecoder: Decoder[ColorRamp] =
     Decoder[Vector[Int]].map({ ColorRamp(_) })

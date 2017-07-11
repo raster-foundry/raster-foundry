@@ -34,7 +34,7 @@ class InterpreterSpec
       ast = src1 - src2,
       sourceMapping = Map(src1.id -> tileSource(4), src2.id -> tileSource(5)),
       overrides = Map.empty,
-      source = goodSource
+      tileSource = goodSource
     )
 
     val ret = tms(0,1,1)
@@ -57,7 +57,7 @@ class InterpreterSpec
       ast = src1 - src2,
       sourceMapping = Map(src1.id -> tileSource(4)),
       overrides = Map.empty,
-      source = goodSource
+      tileSource = goodSource
     )
 
     val ret = tms(0,1,1)
@@ -75,14 +75,14 @@ class InterpreterSpec
     requests = Nil
     val src1 = randomSourceAST
     val src2 = randomSourceAST
-    val badSource = (raster: RFMLRaster, z: Int, x: Int, y: Int) => Future.failed { new Exception("Some exception") }
+    val badSource = (raster: RFMLRaster, buffer: Boolean, z: Int, x: Int, y: Int) => Future.failed { new Exception("Some exception") }
 
     val theTileSource = tileSource(4)
     val tms = Interpreter.interpretTMS(
       ast = src1 - src2,
       sourceMapping = Map(src1.id -> theTileSource),
       overrides = Map.empty,
-      source = badSource
+      tileSource = badSource
     )
 
     val ret = tms(0,1,1)
@@ -123,7 +123,7 @@ class InterpreterSpec
       ast = srcAST.classify(breakmap),
       sourceMapping = Map(srcAST.id -> tileSource(4)),
       overrides = Map.empty,
-      source = goodSource
+      tileSource = goodSource
     )
     println("Classification node: ", srcAST.classify(breakmap).asJson.noSpaces)
 
@@ -147,7 +147,7 @@ class InterpreterSpec
       ast = srcAST.classify(breakmap),
       sourceMapping = Map(srcAST.id -> tileSource(4)),
       overrides = Map.empty,
-      source = goodSource
+      tileSource = goodSource
     )
 
     val ret = tms(0, 1, 1)
@@ -169,7 +169,7 @@ class InterpreterSpec
       ast = src1 - src2,
       sourceMapping = Map(src1.id -> tileSource(1), src2.id -> tileSource(5)),
       overrides = Map.empty,
-      source = goodSource
+      tileSource = goodSource
     )
     println("Subtraction node: ", (src1 - src2).asJson.noSpaces)
 
@@ -195,7 +195,7 @@ class InterpreterSpec
       ast = ast,
       sourceMapping = Map(src1.id -> tileSource(5), src2.id -> tileSource(4), src3.id -> tileSource(1)),
       overrides = Map.empty,
-      source = goodSource
+      tileSource = goodSource
     )
 
     val ret = tms(0, 1, 1)
@@ -217,7 +217,7 @@ class InterpreterSpec
       ast = src1 / src2,
       sourceMapping = Map(src1.id -> tileSource(4), src2.id -> tileSource(5)),
       overrides = Map.empty,
-      source = goodSource
+      tileSource = goodSource
     )
     println("Division node: ", (src1 / src2).asJson.noSpaces)
 
@@ -242,7 +242,7 @@ class InterpreterSpec
       ast = ast,
       sourceMapping = Map(src1.id -> tileSource(1), src2.id -> tileSource(5), src3.id -> tileSource(4)),
       overrides = Map.empty,
-      source = goodSource
+      tileSource = goodSource
     )
 
     val ret = tms(0, 1, 1)
@@ -264,7 +264,7 @@ class InterpreterSpec
       ast = src1 * src2,
       sourceMapping = Map(src1.id -> tileSource(4), src2.id -> tileSource(5)),
       overrides = Map.empty,
-      source = goodSource
+      tileSource = goodSource
     )
     println("Multiplication node: ", (src1 * src2).asJson.noSpaces)
 
@@ -287,7 +287,7 @@ class InterpreterSpec
       ast = src1 + src2,
       sourceMapping = Map(src1.id -> tileSource(4), src2.id -> tileSource(5)),
       overrides = Map.empty,
-      source = goodSource
+      tileSource = goodSource
     )
     println("Addition node: ", (src1 + src2).asJson.noSpaces)
 
@@ -310,7 +310,7 @@ class InterpreterSpec
       ast = src1.max(src2),
       sourceMapping = Map(src1.id -> tileSource(1), src2.id -> tileSource(5)),
       overrides = Map.empty,
-      source = goodSource
+      tileSource = goodSource
     )
     println("LocalMax node: ", (src1.max(src2)).asJson.noSpaces)
 
@@ -333,7 +333,7 @@ class InterpreterSpec
       ast = src1.min(src2),
       sourceMapping = Map(src1.id -> tileSource(1), src2.id -> tileSource(5)),
       overrides = Map.empty,
-      source = goodSource
+      tileSource = goodSource
     )
     println("LocalMin node: ", (src1.min(src2)).asJson.noSpaces)
 
@@ -357,7 +357,7 @@ class InterpreterSpec
       ast = ndvi,
       sourceMapping = Map(nir.id -> tileSource(1), red.id -> tileSource(5)),
       overrides = Map.empty,
-      source = goodSource
+      tileSource = goodSource
     )
     println("Simple NDVI calculation: ", ndvi.asJson.noSpaces)
 
@@ -384,9 +384,33 @@ class InterpreterSpec
       ast = masking,
       sourceMapping = Map(src.id -> tileSource(1)),
       overrides = Map.empty,
-      source = goodSource
+      tileSource = goodSource
     )
     println("Simple Masking calculation: ", masking.asJson.noSpaces)
+
+    val ret = tms(1, 0, 0)
+    val op = Await.result(ret, 10.seconds) match {
+      case Valid(lazytile) =>
+        val maybeTile = lazytile.evaluateDouble
+        requests.length should be (1)
+        maybeTile.get.getDouble(10, 10) should be (1)
+      case i@Invalid(_) =>
+        fail(s"$i")
+    }
+  }
+
+  it("should evaluate focal maximum") {
+    import geotrellis.raster.mapalgebra.focal._
+    requests = Nil
+    val src = randomSourceAST
+    val fmax = FocalMax(List(src), UUID.randomUUID, None, Square(1))
+    val tms = Interpreter.interpretTMS(
+      ast = fmax,
+      sourceMapping = Map(src.id -> tileSource(1)),
+      overrides = Map.empty,
+      tileSource = goodSource
+    )
+    println("Simple focal maximum calculation: ", fmax.asJson.noSpaces)
 
     val ret = tms(1, 0, 0)
     val op = Await.result(ret, 10.seconds) match {

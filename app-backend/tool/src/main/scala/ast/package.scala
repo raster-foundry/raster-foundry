@@ -87,4 +87,13 @@ package object ast extends MapAlgebraCodec {
     def min(other: MapAlgebraAST): MapAlgebraAST.Operation =
       MapAlgebraAST.Min(List(self, other), UUID.randomUUID(), generateMetadata)
   }
+
+  implicit class FocalBuffer(val self: MapAlgebraAST) {
+    def buffers(buffered: Boolean = false): List[UUID] = {println(self);self match {
+      case f: MapAlgebraAST.FocalOperation => f.args.flatMap(_.buffers(true))
+      case op: MapAlgebraAST.Operation => op.args.flatMap(_.buffers(buffered))
+      case MapAlgebraAST.Source(id, _) => if (buffered) List(id) else List()
+      case leaf: MapAlgebraAST.MapAlgebraLeaf => List()
+    }}
+  }
 }
