@@ -105,7 +105,9 @@ object MosaicRoutes extends LazyLogging with KamonTraceDirectives {
 
   /** Return the histogram (with color correction applied) for a list of scenes in a project */
   def getProjectScenesHistogram(projectId: UUID)(implicit database: Database): Route = {
-    def correctedHistograms(sceneId: UUID, projectId: UUID) = {
+    val sceneIdsFuture = OptionT(ScenesToProjects.allScenes(projectId).map(_.toSet.some))
+
+    def correctedHistograms(sceneId: UUID, projectId: UUID) = sceneIdsFuture.flatMap { implicit sceneIds =>
       val tileFuture = StitchLayer(sceneId, 64)
       // getColorCorrectParams returns a Future[Option[Option]] for some reason
       val ccParamFuture = ScenesToProjects.getColorCorrectParams(projectId, sceneId).map { _.flatten }

@@ -50,7 +50,7 @@ dag = DAG(
 batch_job_definition = os.getenv('BATCH_INGEST_JOB_NAME')
 batch_job_queue = os.getenv('BATCH_INGEST_JOB_QUEUE')
 hosted_zone_id = os.getenv('HOSTED_ZONE_ID')
-jar_path = os.getenv('BATCH_JAR_PATH', 'rf-batch-b8bc56f.jar')
+jar_path = os.getenv('BATCH_JAR_PATH', 'rf-batch-761c316.jar')
 
 
 ################################

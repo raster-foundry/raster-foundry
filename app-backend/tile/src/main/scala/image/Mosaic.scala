@@ -28,7 +28,7 @@ object Mosaic extends KamonTrace {
   lazy val memcachedClient = LayerCache.memcachedClient
   val memcached = HeapBackedMemcachedClient(LayerCache.memcachedClient)
 
-  def tileLayerMetadata(id: UUID, zoom: Int)(implicit database: Database): OptionT[Future, (Int, TileLayerMetadata[SpatialKey])] =
+  def tileLayerMetadata(id: UUID, zoom: Int)(implicit database: Database, sceneIds: Set[UUID]): OptionT[Future, (Int, TileLayerMetadata[SpatialKey])] =
     traceName(s"Mosaic.tileLayerMetadata($id)") {
       LayerCache.attributeStoreForLayer(id).mapFilter { case (store, pyramidMaxZoom) =>
         // because metadata attributes are cached in AttributeStore itself, there is no point caching this function
@@ -55,7 +55,7 @@ object Mosaic extends KamonTrace {
     }
 
   /** Fetch the tile for given resolution. If it is not present, use a tile from a lower zoom level */
-  def fetch(id: UUID, zoom: Int, col: Int, row: Int)(implicit database: Database): OptionT[Future, MultibandTile] =
+  def fetch(id: UUID, zoom: Int, col: Int, row: Int)(implicit database: Database, sceneIds: Set[UUID]): OptionT[Future, MultibandTile] =
     traceName(s"Mosaic.fetch($id)") {
       tileLayerMetadata(id, zoom).flatMap { case (sourceZoom, tlm) =>
         val zoomDiff = zoom - sourceZoom
@@ -83,7 +83,7 @@ object Mosaic extends KamonTrace {
   /** Fetch the tile for the given zoom level and bbox
     * If no bbox is specified, it will use the project tileLayerMetadata layoutExtent
     */
-  def fetchRenderedExtent(id: UUID, zoom: Int, bbox: Option[Projected[Polygon]])(implicit database: Database): OptionT[Future, MultibandTile] =
+  def fetchRenderedExtent(id: UUID, zoom: Int, bbox: Option[Projected[Polygon]])(implicit database: Database, sceneIds: Set[UUID]): OptionT[Future, MultibandTile] =
     traceName(s"Mosaic.fetchRenderedExtent($id)") {
       tileLayerMetadata(id, zoom).flatMap { case (sourceZoom, tlm) =>
         val extent: Extent =
@@ -99,6 +99,8 @@ object Mosaic extends KamonTrace {
   def rawForExtent(projectId: UUID, zoom: Int, bbox: Option[Projected[Polygon]])(implicit database: Database): OptionT[Future, MultibandTile] =
     traceName(s"Mosaic.rawForExtent($projectId)") {
       mosaicDefinition(projectId, None).flatMap { mosaic =>
+        implicit val sceneIds = mosaic.map { case MosaicDefinition(sceneId, _) => sceneId }.toSet
+
         val mayhapTiles: Seq[OptionT[Future, MultibandTile]] =
           for (MosaicDefinition(sceneId, _) <- mosaic) yield Mosaic.fetchRenderedExtent(sceneId, zoom, bbox)
 
@@ -119,6 +121,8 @@ object Mosaic extends KamonTrace {
   def raw(projectId: UUID, zoom: Int, col: Int, row: Int)(implicit database: Database): OptionT[Future, MultibandTile] =
     traceName(s"Mosaic.raw($projectId)") {
       mosaicDefinition(projectId, None).flatMap { mosaic =>
+        implicit val sceneIds = mosaic.map { case MosaicDefinition(sceneId, _) => sceneId }.toSet
+
         val mayhapTiles: Seq[OptionT[Future, MultibandTile]] =
           for (MosaicDefinition(sceneId, _) <- mosaic) yield Mosaic.fetch(sceneId, zoom, col, row)
 
@@ -168,6 +172,8 @@ object Mosaic extends KamonTrace {
 
       mosaicDefinition(projectId, None).flatMap { mosaic =>
         val futureTiles: Future[Seq[MultibandTile]] = {
+          implicit val sceneIds = mosaic.map { case MosaicDefinition(sceneId, _) => sceneId }.toSet
+
           val tiles = mosaic.flatMap { case MosaicDefinition(sceneId, maybeColorCorrectParams) =>
             maybeColorCorrectParams.map { colorCorrectParams =>
               Mosaic.fetchRenderedExtent(sceneId, zoom, bboxPolygon).flatMap { tile =>
@@ -215,6 +221,8 @@ object Mosaic extends KamonTrace {
     // no tag to control cache rollover, so don't cache
     mosaicDefinition(projectId, tag.map(s => TagWithTTL(tag=s, ttl=60.seconds))).flatMap { mosaic =>
       val futureTiles: Future[Seq[MultibandTile]] = {
+        implicit val sceneIds = mosaic.map { case MosaicDefinition(sceneId, _) => sceneId }.toSet
+
         val tiles = mosaic.flatMap { case MosaicDefinition(sceneId, maybeColorCorrectParams) =>
           if (rgbOnly) {
             maybeColorCorrectParams.map { colorCorrectParams =>

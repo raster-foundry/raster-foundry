@@ -52,6 +52,7 @@ case class S3ToPostgres(uri: AmazonS3URI, attributeTable: String = "layer_attrib
             case th: Throwable => {
               logger.error(s"Missing fields for $layerId. Skipping...")
               logger.error(th.stackTraceString)
+              sendError(th)
               layerId
             }
           }

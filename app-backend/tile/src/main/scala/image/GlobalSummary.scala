@@ -54,7 +54,7 @@ object GlobalSummary extends LazyLogging {
   def minAcceptableProjectZoom(
     projId: UUID,
     size: Int = 512
-  )(implicit database: Database, ec: ExecutionContext): OptionT[Future, (Extent, Int)] =
+  )(implicit database: Database, ec: ExecutionContext, sceneIds: Set[UUID]): OptionT[Future, (Extent, Int)] =
     Mosaic.mosaicDefinition(projId, None).semiflatMap({ mosaic =>
       Future.sequence(mosaic.map { case MosaicDefinition(sceneId, _) =>
         LayerCache.attributeStoreForLayer(sceneId).mapFilter { case (store, _) =>
