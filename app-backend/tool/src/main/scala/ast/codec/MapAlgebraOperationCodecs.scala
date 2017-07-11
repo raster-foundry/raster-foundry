@@ -24,6 +24,7 @@ trait MapAlgebraOperationCodecs {
       case Some("min") => ma.as[MapAlgebraAST.Min]
       case Some("max") => ma.as[MapAlgebraAST.Max]
       case Some("classify") => ma.as[MapAlgebraAST.Classification]
+      case Some("focalMax") => ma.as[MapAlgebraAST.FocalMax]
       case Some(unrecognized) =>
         Left(DecodingFailure(s"Unrecognized node type: $unrecognized", ma.history))
       case None =>
@@ -49,6 +50,8 @@ trait MapAlgebraOperationCodecs {
         max.asJson
       case classification: MapAlgebraAST.Classification =>
         classification.asJson
+      case fMax: MapAlgebraAST.FocalMax =>
+        fMax.asJson
       case operation =>
         throw new InvalidParameterException(s"Encoder for $operation not yet implemented")
     }
@@ -94,4 +97,9 @@ trait MapAlgebraOperationCodecs {
     Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.Min.apply)
   implicit lazy val encodeMin: Encoder[MapAlgebraAST.Min] =
     Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeFocalMax: Decoder[MapAlgebraAST.FocalMax] =
+    Decoder.forProduct4("args", "id", "metadata", "neighborhood")(MapAlgebraAST.FocalMax.apply)
+  implicit lazy val encodeFocalMax: Encoder[MapAlgebraAST.FocalMax] =
+    Encoder.forProduct5("apply", "args", "id", "metadata", "neighborhood")(op => (op.symbol, op.args, op.id, op.metadata, op.neighborhood))
 }

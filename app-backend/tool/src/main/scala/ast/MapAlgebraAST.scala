@@ -1,11 +1,13 @@
 package com.azavea.rf.tool.ast
 
-import java.util.UUID
-
 import io.circe.generic.JsonCodec
 import cats.implicits._
 
 import geotrellis.vector.MultiPolygon
+import geotrellis.raster.mapalgebra.focal._
+
+import java.util.UUID
+
 
 /** The ur-type for a recursive representation of MapAlgebra operations */
 sealed trait MapAlgebraAST extends Product with Serializable {
@@ -46,7 +48,11 @@ object MapAlgebraAST {
   }
 
   /** Operations which should only have one argument. */
-  sealed trait UnaryOp extends Operation with Serializable
+  sealed trait UnaryOperation extends Operation with Serializable
+
+  sealed trait FocalOperation extends UnaryOperation {
+    val neighborhood: Neighborhood
+  }
 
   case class Addition(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends Operation {
   val symbol = "+"
@@ -72,13 +78,13 @@ object MapAlgebraAST {
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = Division(newArgs, id, metadata)
   }
 
-  case class Masking(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], mask: MultiPolygon) extends UnaryOp {
+  case class Masking(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], mask: MultiPolygon) extends UnaryOperation {
     val symbol = "mask"
 
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = Masking(newArgs, id, metadata, mask)
   }
 
-  case class Classification(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], classMap: ClassMap) extends UnaryOp {
+  case class Classification(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], classMap: ClassMap) extends UnaryOperation {
     val symbol = "classify"
 
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = Classification(newArgs, id, metadata, classMap)
@@ -94,6 +100,12 @@ object MapAlgebraAST {
     val symbol = "min"
 
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = Min(newArgs, id, metadata)
+  }
+
+  case class FocalMax(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], neighborhood: Neighborhood) extends FocalOperation {
+    val symbol = "focalMax"
+
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = FocalMax(newArgs, id, metadata, neighborhood)
   }
 
   sealed trait MapAlgebraLeaf extends MapAlgebraAST {

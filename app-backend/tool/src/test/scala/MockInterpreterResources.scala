@@ -31,11 +31,28 @@ trait MockInterpreterResources extends TileBuilders with RasterMatchers {
 
   var requests = List.empty[RFMLRaster]
 
-  val goodSource = (raster: RFMLRaster, z: Int, x: Int, y: Int) => {
+  val goodSource = (raster: RFMLRaster, buffer: Boolean, z: Int, x: Int, y: Int) => {
     raster match {
       case r@SceneRaster(id, Some(band), maybeND) =>
         requests = raster :: requests
-        Future { Some(tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType))) }
+        if (buffer)
+          Future {
+            Some(TileProvider(
+              tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)),
+              Some(Buffers(
+                tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)),
+                tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)),
+                tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)),
+                tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)),
+                tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)),
+                tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)),
+                tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)),
+                tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType))
+              ))
+            ))
+          }
+        else
+          Future { Some(TileProvider(tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)), None)) }
       case _ => Future.failed(new Exception("can't find that"))
     }
   }
