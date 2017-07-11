@@ -187,7 +187,7 @@ object Interpreter extends LazyLogging {
     val pure: Interpreted[Unit] = interpretPure[Unit](ast, sourceMapping)
     val overridden: Interpreted[MapAlgebraAST] = overrideParams(ast, overrides)
 
-    val bufferedSources = ast.buffers()
+    val bufferedSources = ast.bufferedSources()
 
     sourceMapping
       .mapValues(r => tileSource(r).map(_.toRight(r.id)).recover({ case t: Throwable => Left(r.id) }))
@@ -274,7 +274,7 @@ object Interpreter extends LazyLogging {
       val pure: Interpreted[Unit] = interpretPure[Unit](ast, sourceMapping)
       val overridden: Interpreted[MapAlgebraAST] = overrideParams(ast, overrides)
 
-      val bufferedSources = ast.buffers()
+      val bufferedSources = ast.bufferedSources()
 
       sourceMapping
         .map({ case (nodeId, rfml) =>

@@ -423,4 +423,29 @@ class InterpreterSpec
         fail(s"$i")
     }
   }
+
+  it("should evaluate focal minimum") {
+    import geotrellis.raster.mapalgebra.focal._
+    requests = Nil
+    val src = randomSourceAST
+    val fmin = FocalMin(List(src), UUID.randomUUID, None, Square(1))
+    val tms = Interpreter.interpretTMS(
+      ast = fmin,
+      sourceMapping = Map(src.id -> tileSource(1)),
+      overrides = Map.empty,
+      tileSource = ascendingSource
+    )
+    println("Simple focal minimum calculation: ", fmin.asJson.noSpaces)
+
+    val ret = tms(1, 0, 0)
+    val op = Await.result(ret, 10.seconds) match {
+      case Valid(lazytile) =>
+        val maybeTile = lazytile.evaluateDouble
+        requests.length should be (1)
+        val tile = maybeTile.get
+        tile.get(21, 32) should be (tile.get(20, 32) + 1)
+      case i@Invalid(_) =>
+        fail(s"$i")
+    }
+  }
 }

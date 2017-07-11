@@ -89,11 +89,14 @@ package object ast extends MapAlgebraCodec {
   }
 
   implicit class FocalBuffer(val self: MapAlgebraAST) {
-    def buffers(buffered: Boolean = false): List[UUID] = {println(self);self match {
-      case f: MapAlgebraAST.FocalOperation => f.args.flatMap(_.buffers(true))
-      case op: MapAlgebraAST.Operation => op.args.flatMap(_.buffers(buffered))
-      case MapAlgebraAST.Source(id, _) => if (buffered) List(id) else List()
-      case leaf: MapAlgebraAST.MapAlgebraLeaf => List()
-    }}
+    def bufferedSources(buffered: Boolean = false): Set[UUID] = {
+      val bufferList = self match {
+        case f: MapAlgebraAST.FocalOperation => f.args.flatMap(_.bufferedSources(true))
+        case op: MapAlgebraAST.Operation => op.args.flatMap(_.bufferedSources(buffered))
+        case MapAlgebraAST.Source(id, _) => if (buffered) List(id) else List()
+        case leaf: MapAlgebraAST.MapAlgebraLeaf => List()
+      }
+      bufferList.toSet
+    }
   }
 }
