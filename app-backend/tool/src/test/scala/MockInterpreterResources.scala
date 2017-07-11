@@ -31,15 +31,15 @@ trait MockInterpreterResources extends TileBuilders with RasterMatchers {
 
   var requests = List.empty[RFMLRaster]
 
-  val goodSource = (raster: RFMLRaster, buffer: Boolean, z: Int, x: Int, y: Int) => {
+  val constantSource = (raster: RFMLRaster, buffer: Boolean, z: Int, x: Int, y: Int) => {
     raster match {
       case r@SceneRaster(id, Some(band), maybeND) =>
         requests = raster :: requests
         if (buffer)
           Future {
-            Some(TileProvider(
+            Some(TileWithNeighbors(
               tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)),
-              Some(Buffers(
+              Some(NeighboringTiles(
                 tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)),
                 tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)),
                 tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)),
@@ -52,7 +52,7 @@ trait MockInterpreterResources extends TileBuilders with RasterMatchers {
             ))
           }
         else
-          Future { Some(TileProvider(tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)), None)) }
+          Future { Some(TileWithNeighbors(tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)), None)) }
       case _ => Future.failed(new Exception("can't find that"))
     }
   }
@@ -64,9 +64,9 @@ trait MockInterpreterResources extends TileBuilders with RasterMatchers {
         requests = raster :: requests
         if (buffer)
           Future {
-            Some(TileProvider(
+            Some(TileWithNeighbors(
               ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
-              Some(Buffers(
+              Some(NeighboringTiles(
                 ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
                 ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
                 ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
@@ -75,11 +75,40 @@ trait MockInterpreterResources extends TileBuilders with RasterMatchers {
                 ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
                 ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
                 ascending.interpretAs(maybeND.getOrElse(ascending.cellType))
-              ))
+              )),
+              TileWithNeighbors.Options(256, 256)
             ))
           }
         else
-          Future { Some(TileProvider(ascending.interpretAs(maybeND.getOrElse(ascending.cellType)), None)) }
+          Future { Some(TileWithNeighbors(ascending.interpretAs(maybeND.getOrElse(ascending.cellType)), None)) }
+      case _ => Future.failed(new Exception("can't find that"))
+    }
+  }
+
+  val ascendingSourcep = (raster: RFMLRaster, buffer: Boolean, z: Int, x: Int, y: Int) => {
+    val ascending = IntArrayTile(1 to 16 toArray, 4, 4)
+    raster match {
+      case r@SceneRaster(id, Some(band), maybeND) =>
+        requests = raster :: requests
+        if (buffer)
+          Future {
+            Some(TileWithNeighbors(
+              ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
+              Some(NeighboringTiles(
+                ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
+                ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
+                ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
+                ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
+                ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
+                ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
+                ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
+                ascending.interpretAs(maybeND.getOrElse(ascending.cellType))
+              )),
+              TileWithNeighbors.Options(4, 4)
+            ))
+          }
+        else
+          Future { Some(TileWithNeighbors(ascending.interpretAs(maybeND.getOrElse(ascending.cellType)), None)) }
       case _ => Future.failed(new Exception("can't find that"))
     }
   }

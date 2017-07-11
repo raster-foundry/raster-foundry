@@ -2,10 +2,10 @@ package com.azavea.rf.tool.eval
 
 import geotrellis.raster._
 
-import java.security.InvalidParameterException
+import java.lang.IllegalStateException
 
 
-case class Buffers(
+case class NeighboringTiles(
   tl: Tile,
   tm: Tile,
   tr: Tile,
@@ -16,7 +16,7 @@ case class Buffers(
   br: Tile
 )
 
-case class TileProvider(centerTile: Tile, buffers: Option[Buffers], options: TileProvider.Options = TileProvider.Options.DEFAULT) {
+case class TileWithNeighbors(centerTile: Tile, buffers: Option[NeighboringTiles], options: TileWithNeighbors.Options = TileWithNeighbors.Options.DEFAULT) {
   def withBuffer(buffer: Int): Tile = buffers match {
     case Some(buf) =>
       if (buffer > 0) {
@@ -30,8 +30,8 @@ case class TileProvider(centerTile: Tile, buffers: Option[Buffers], options: Til
         ).crop(
           options.tileCols - buffer,
           options.tileRows - buffer,
-          options.tileCols * 2 + buffer,
-          options.tileRows * 2 + buffer
+          (options.tileCols * 2 - 1) + buffer,
+          (options.tileRows * 2 - 1) + buffer
         )
         println("composite...", buffer, composite.cols, composite.rows)
         composite
@@ -41,11 +41,11 @@ case class TileProvider(centerTile: Tile, buffers: Option[Buffers], options: Til
     case None if (buffer == 0) =>
       centerTile
     case _ =>
-      throw new InvalidParameterException("Buffers being asked for despite not having been prefetched")
+      throw new IllegalStateException("Buffers being asked for despite not having been prefetched")
   }
 }
 
-object TileProvider {
+object TileWithNeighbors {
   case class Options(tileCols: Int, tileRows: Int)
   object Options {
     val DEFAULT = Options(256, 256)

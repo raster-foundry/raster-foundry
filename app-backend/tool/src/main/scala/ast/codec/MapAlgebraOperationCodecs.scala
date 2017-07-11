@@ -26,6 +26,11 @@ trait MapAlgebraOperationCodecs {
       case Some("classify") => ma.as[MapAlgebraAST.Classification]
       case Some("focalMax") => ma.as[MapAlgebraAST.FocalMax]
       case Some("focalMin") => ma.as[MapAlgebraAST.FocalMin]
+      case Some("focalMean") => ma.as[MapAlgebraAST.FocalMean]
+      case Some("focalMedian") => ma.as[MapAlgebraAST.FocalMedian]
+      case Some("focalMode") => ma.as[MapAlgebraAST.FocalMode]
+      case Some("focalSum") => ma.as[MapAlgebraAST.FocalSum]
+      case Some("focalStdDev") => ma.as[MapAlgebraAST.FocalStdDev]
       case Some(unrecognized) =>
         Left(DecodingFailure(s"Unrecognized node type: $unrecognized", ma.history))
       case None =>
@@ -55,6 +60,16 @@ trait MapAlgebraOperationCodecs {
         fMax.asJson
       case fMin: MapAlgebraAST.FocalMin =>
         fMin.asJson
+      case fMean: MapAlgebraAST.FocalMean =>
+        fMean.asJson
+      case fMedian: MapAlgebraAST.FocalMedian =>
+        fMedian.asJson
+      case fMode: MapAlgebraAST.FocalMode =>
+        fMode.asJson
+      case fSum: MapAlgebraAST.FocalSum =>
+        fSum.asJson
+      case fStdDev: MapAlgebraAST.FocalStdDev =>
+        fStdDev.asJson
       case operation =>
         throw new InvalidParameterException(s"Encoder for $operation not yet implemented")
     }
