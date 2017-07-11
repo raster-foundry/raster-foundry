@@ -408,7 +408,7 @@ class InterpreterSpec
       ast = fmax,
       sourceMapping = Map(src.id -> tileSource(1)),
       overrides = Map.empty,
-      tileSource = goodSource
+      tileSource = ascendingSource
     )
     println("Simple focal maximum calculation: ", fmax.asJson.noSpaces)
 
@@ -417,7 +417,8 @@ class InterpreterSpec
       case Valid(lazytile) =>
         val maybeTile = lazytile.evaluateDouble
         requests.length should be (1)
-        maybeTile.get.getDouble(10, 10) should be (1)
+        val tile = maybeTile.get
+        tile.get(21, 32) should be (tile.get(20, 32) + 1)
       case i@Invalid(_) =>
         fail(s"$i")
     }
