@@ -21,6 +21,11 @@ sealed trait LazyTile extends TileLike with Grid with LazyLogging {
   def mask(extent: Extent, mask: MultiPolygon) = LazyTile.Masking(this, extent, mask)
   def focalMax(neighborhood: Neighborhood, gridbounds: Option[GridBounds]) = LazyTile.FocalMax(this, neighborhood, gridbounds)
   def focalMin(neighborhood: Neighborhood, gridbounds: Option[GridBounds]) = LazyTile.FocalMin(this, neighborhood, gridbounds)
+  def focalMean(neighborhood: Neighborhood, gridbounds: Option[GridBounds]) = LazyTile.FocalMean(this, neighborhood, gridbounds)
+  def focalMedian(neighborhood: Neighborhood, gridbounds: Option[GridBounds]) = LazyTile.FocalMedian(this, neighborhood, gridbounds)
+  def focalMode(neighborhood: Neighborhood, gridbounds: Option[GridBounds]) = LazyTile.FocalMode(this, neighborhood, gridbounds)
+  def focalSum(neighborhood: Neighborhood, gridbounds: Option[GridBounds]) = LazyTile.FocalSum(this, neighborhood, gridbounds)
+  def focalStdDev(neighborhood: Neighborhood, gridbounds: Option[GridBounds]) = LazyTile.FocalStdDev(this, neighborhood, gridbounds)
 
   def left: LazyTile
   def right: LazyTile
@@ -291,25 +296,52 @@ object LazyTile {
       this
   }
 
-  case class FocalMax(left: LazyTile, n: Neighborhood, gridbounds: Option[GridBounds]) extends Tree {
-    lazy val intTile = focal.Max(left.evaluate.get, n, gridbounds)
-    lazy val dblTile = focal.Max(left.evaluateDouble.get, n, gridbounds)
+  trait FocalOperation extends Tree {
+    val gridbounds: Option[GridBounds]
+    def intTile: Tile
+    def dblTile: Tile
     override def cols: Int = gridbounds.map({ gb => gb.colMax - gb.colMin }).getOrElse(left.cols)
     override def rows: Int = gridbounds.map({ gb => gb.rowMax - gb.rowMin }).getOrElse(left.rows)
     def right = LazyTile.Nil
+
     def get(col: Int, row: Int) = intTile.get(col, row)
     def getDouble(col: Int, row: Int) = dblTile.get(col, row)
     def bind(args: Map[Var, LazyTile]): LazyTile = this
   }
 
-  case class FocalMin(left: LazyTile, n: Neighborhood, gridbounds: Option[GridBounds]) extends Tree {
+  case class FocalMax(left: LazyTile, n: Neighborhood, gridbounds: Option[GridBounds]) extends FocalOperation {
+    lazy val intTile = focal.Max(left.evaluate.get, n, gridbounds)
+    lazy val dblTile = focal.Max(left.evaluateDouble.get, n, gridbounds)
+  }
+
+  case class FocalMin(left: LazyTile, n: Neighborhood, gridbounds: Option[GridBounds]) extends FocalOperation {
     lazy val intTile = focal.Min(left.evaluate.get, n, gridbounds)
     lazy val dblTile = focal.Min(left.evaluateDouble.get, n, gridbounds)
-    override def cols: Int = gridbounds.map({ gb => gb.colMax - gb.colMin }).getOrElse(left.cols)
-    override def rows: Int = gridbounds.map({ gb => gb.rowMax - gb.rowMin }).getOrElse(left.rows)
-    def right = LazyTile.Nil
-    def get(col: Int, row: Int) = intTile.get(col, row)
-    def getDouble(col: Int, row: Int) = dblTile.get(col, row)
-    def bind(args: Map[Var, LazyTile]): LazyTile = this
   }
+
+  case class FocalMean(left: LazyTile, n: Neighborhood, gridbounds: Option[GridBounds]) extends FocalOperation {
+    lazy val intTile = focal.Mean(left.evaluate.get, n, gridbounds)
+    lazy val dblTile = focal.Mean(left.evaluateDouble.get, n, gridbounds)
+  }
+
+  case class FocalMedian(left: LazyTile, n: Neighborhood, gridbounds: Option[GridBounds]) extends FocalOperation {
+    lazy val intTile = focal.Median(left.evaluate.get, n, gridbounds)
+    lazy val dblTile = focal.Median(left.evaluateDouble.get, n, gridbounds)
+  }
+
+  case class FocalMode(left: LazyTile, n: Neighborhood, gridbounds: Option[GridBounds]) extends FocalOperation {
+    lazy val intTile = focal.Mode(left.evaluate.get, n, gridbounds)
+    lazy val dblTile = focal.Mode(left.evaluateDouble.get, n, gridbounds)
+  }
+
+  case class FocalSum(left: LazyTile, n: Neighborhood, gridbounds: Option[GridBounds]) extends FocalOperation {
+    lazy val intTile = focal.Sum(left.evaluate.get, n, gridbounds)
+    lazy val dblTile = focal.Sum(left.evaluateDouble.get, n, gridbounds)
+  }
+
+  case class FocalStdDev(left: LazyTile, n: Neighborhood, gridbounds: Option[GridBounds]) extends FocalOperation {
+    lazy val intTile = focal.StandardDeviation(left.evaluate.get, n, gridbounds)
+    lazy val dblTile = focal.StandardDeviation(left.evaluateDouble.get, n, gridbounds)
+  }
+
 }

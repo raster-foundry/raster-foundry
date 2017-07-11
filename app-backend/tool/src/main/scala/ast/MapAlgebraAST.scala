@@ -114,6 +114,36 @@ object MapAlgebraAST {
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = FocalMin(newArgs, id, metadata, neighborhood)
   }
 
+  case class FocalMean(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], neighborhood: Neighborhood) extends FocalOperation {
+    val symbol = "focalMean"
+
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = FocalMin(newArgs, id, metadata, neighborhood)
+  }
+
+  case class FocalMedian(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], neighborhood: Neighborhood) extends FocalOperation {
+    val symbol = "focalMedian"
+
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = FocalMin(newArgs, id, metadata, neighborhood)
+  }
+
+  case class FocalMode(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], neighborhood: Neighborhood) extends FocalOperation {
+    val symbol = "focalMode"
+
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = FocalMin(newArgs, id, metadata, neighborhood)
+  }
+
+  case class FocalSum(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], neighborhood: Neighborhood) extends FocalOperation {
+    val symbol = "focalSum"
+
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = FocalMin(newArgs, id, metadata, neighborhood)
+  }
+
+  case class FocalStdDev(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], neighborhood: Neighborhood) extends FocalOperation {
+    val symbol = "focalStdDev"
+
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = FocalMin(newArgs, id, metadata, neighborhood)
+  }
+
   sealed trait MapAlgebraLeaf extends MapAlgebraAST {
     val `type`: String
 
