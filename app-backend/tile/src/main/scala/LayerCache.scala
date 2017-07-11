@@ -53,17 +53,6 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
   private val layerUriCache       = HeapBackedMemcachedClient(memcachedClient)
   private val attributeStoreCache = HeapBackedMemcachedClient(memcachedClient)
 
-  def layerUri(layerId: UUID): OptionT[Future, String] =
-    traceName(s"LayerCache.layerUri($layerId)") {
-      layerUriCache.cachingOptionT(s"layerUri-$layerId") { implicit ec =>
-        blocking {
-          traceName(s"LayerCache.layerUri($layerId) (no cache)") {
-            OptionT(Scenes.getSceneForCaching(layerId).map(_.flatMap(_.ingestLocation)))
-          }
-        }
-      }
-    }
-
   def attributeStoreForLayer(layerId: UUID)(implicit projectLayerIds: Set[UUID]): OptionT[Future, (AttributeStore, Map[String, Int])] =
     traceName(s"LayerCache.attributeStoreForLayer($layerId)") {
       attributeStoreCache.cachingOptionT(s"attributeStoreForLayer-$layerId") { implicit ec =>
