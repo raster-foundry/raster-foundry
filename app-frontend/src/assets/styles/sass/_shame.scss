@@ -823,6 +823,7 @@ div.lab-workspace.is-dragging svg {
 
 .lab-control-panel {
   position: absolute;
+  z-index: 500;
   top: 0;
   right: 0;
   background: $shade-dark;
@@ -1335,6 +1336,8 @@ nav .btn-group {
     background-color: $off-white !important;
     display: flex;
     flex: 1;
+    transition: all 0.1s;
+    position: relative;
 }
 
 .btn-square.really-square {
@@ -1614,6 +1617,9 @@ rf-export-item {
   display: flex;
   flex-direction: column;
   border-radius: 5px;
+  z-index: 1;
+  box-shadow: 4px 4px 4px rgba(0,0,0,0.25);
+  user-select: none;
 }
 
 .node-header {
@@ -1684,6 +1690,33 @@ rf-input-node {
   cursor: auto;
   pointer-events: auto;
   padding: 1em
+}
+
+rf-operation-node {
+  flex: 1;
+  cursor: auto;
+  pointer-events: auto;
+  padding: 1em;
+  display: flex;
+}
+
+.operation-node-body {
+  display: flex;
+  flex: 1;
+  padding: 1em;
+  border-radius: 3px;
+  border: 1px solid $gray-lightest;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-operation {
+  flex: 1;
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: .5em;
 }
 
 .input-node-item {

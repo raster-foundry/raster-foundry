@@ -1,0 +1,9 @@
+<div class="operation-node-body" ng-if="$ctrl.inputModels.length === 2">
+  <button type="button" class="btn btn-operation">{{$ctrl.inputModels[0].attributes.title}}</button>
+  <div class="btn-operation">{{$ctrl.cellOperation}}</div>
+  <button type="button" class="btn btn-operation">{{$ctrl.inputModels[1].attributes.title}}</button>
+</div>
+
+<div class="operation-node-body" ng-if="$ctrl.inputModels.length !== 2">
+    <button type="button" class="btn btn-operation">{{$ctrl.cellOperation}} {{$ctrl.inputModels.length}} inputs</button>
+</div>
