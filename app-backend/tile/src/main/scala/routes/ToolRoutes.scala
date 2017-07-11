@@ -112,7 +112,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
 
   /** The central endpoint for ModelLab; serves TMS tiles given a [[ToolRun]] specification */
   def tms(
-    source: (RFMLRaster, Boolean, Int, Int, Int) => Future[Option[TileProvider]]
+    source: (RFMLRaster, Boolean, Int, Int, Int) => Future[Option[TileWithNeighbors]]
   ): Route =
     (handleExceptions(interpreterExceptionHandler) & handleExceptions(circeDecodingError)) {
       pathPrefix(JavaUUID){ (toolRunId) =>

@@ -187,7 +187,7 @@ object LazyTile {
   case class Bound(tile: Tile) extends Tree {
     override def cols: Int = tile.cols
     override def rows: Int = tile.rows
-    def get(col: Int, row: Int): Int = tile.get(col, row)
+    def get(col: Int, row: Int): Int = {println(tile.asciiDraw);tile.get(col,row)}
     def getDouble(col: Int, row: Int): Double = tile.getDouble(col, row)
     def left = LazyTile.Nil
     def right = LazyTile.Nil
@@ -298,14 +298,14 @@ object LazyTile {
 
   trait FocalOperation extends Tree {
     val gridbounds: Option[GridBounds]
-    def intTile: Tile
-    def dblTile: Tile
     override def cols: Int = gridbounds.map({ gb => gb.colMax - gb.colMin }).getOrElse(left.cols)
     override def rows: Int = gridbounds.map({ gb => gb.rowMax - gb.rowMin }).getOrElse(left.rows)
     def right = LazyTile.Nil
+    def intTile: Tile
+    def dblTile: Tile
 
-    def get(col: Int, row: Int) = intTile.get(col, row)
-    def getDouble(col: Int, row: Int) = dblTile.get(col, row)
+    def get(col: Int, row: Int) = {println(intTile.asciiDraw);intTile.get(col, row)}
+    def getDouble(col: Int, row: Int) = dblTile.getDouble(col, row)
     def bind(args: Map[Var, LazyTile]): LazyTile = this
   }
 
