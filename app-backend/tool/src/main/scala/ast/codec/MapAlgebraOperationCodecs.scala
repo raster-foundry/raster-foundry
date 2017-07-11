@@ -25,6 +25,7 @@ trait MapAlgebraOperationCodecs {
       case Some("max") => ma.as[MapAlgebraAST.Max]
       case Some("classify") => ma.as[MapAlgebraAST.Classification]
       case Some("focalMax") => ma.as[MapAlgebraAST.FocalMax]
+      case Some("focalMin") => ma.as[MapAlgebraAST.FocalMin]
       case Some(unrecognized) =>
         Left(DecodingFailure(s"Unrecognized node type: $unrecognized", ma.history))
       case None =>
@@ -52,6 +53,8 @@ trait MapAlgebraOperationCodecs {
         classification.asJson
       case fMax: MapAlgebraAST.FocalMax =>
         fMax.asJson
+      case fMin: MapAlgebraAST.FocalMin =>
+        fMin.asJson
       case operation =>
         throw new InvalidParameterException(s"Encoder for $operation not yet implemented")
     }
@@ -102,4 +105,35 @@ trait MapAlgebraOperationCodecs {
     Decoder.forProduct4("args", "id", "metadata", "neighborhood")(MapAlgebraAST.FocalMax.apply)
   implicit lazy val encodeFocalMax: Encoder[MapAlgebraAST.FocalMax] =
     Encoder.forProduct5("apply", "args", "id", "metadata", "neighborhood")(op => (op.symbol, op.args, op.id, op.metadata, op.neighborhood))
+
+  implicit lazy val decodeFocalMin: Decoder[MapAlgebraAST.FocalMin] =
+    Decoder.forProduct4("args", "id", "metadata", "neighborhood")(MapAlgebraAST.FocalMin.apply)
+  implicit lazy val encodeFocalMin: Encoder[MapAlgebraAST.FocalMin] =
+    Encoder.forProduct5("apply", "args", "id", "metadata", "neighborhood")(op => (op.symbol, op.args, op.id, op.metadata, op.neighborhood))
+
+  implicit lazy val decodeFocalMean: Decoder[MapAlgebraAST.FocalMean] =
+    Decoder.forProduct4("args", "id", "metadata", "neighborhood")(MapAlgebraAST.FocalMean.apply)
+  implicit lazy val encodeFocalMean: Encoder[MapAlgebraAST.FocalMean] =
+    Encoder.forProduct5("apply", "args", "id", "metadata", "neighborhood")(op => (op.symbol, op.args, op.id, op.metadata, op.neighborhood))
+
+  implicit lazy val decodeFocalMedian: Decoder[MapAlgebraAST.FocalMedian] =
+    Decoder.forProduct4("args", "id", "metadata", "neighborhood")(MapAlgebraAST.FocalMedian.apply)
+  implicit lazy val encodeFocalMedian: Encoder[MapAlgebraAST.FocalMedian] =
+    Encoder.forProduct5("apply", "args", "id", "metadata", "neighborhood")(op => (op.symbol, op.args, op.id, op.metadata, op.neighborhood))
+
+  implicit lazy val decodeFocalMode: Decoder[MapAlgebraAST.FocalMode] =
+    Decoder.forProduct4("args", "id", "metadata", "neighborhood")(MapAlgebraAST.FocalMode.apply)
+  implicit lazy val encodeFocalMode: Encoder[MapAlgebraAST.FocalMode] =
+    Encoder.forProduct5("apply", "args", "id", "metadata", "neighborhood")(op => (op.symbol, op.args, op.id, op.metadata, op.neighborhood))
+
+  implicit lazy val decodeFocalSum: Decoder[MapAlgebraAST.FocalSum] =
+    Decoder.forProduct4("args", "id", "metadata", "neighborhood")(MapAlgebraAST.FocalSum.apply)
+  implicit lazy val encodeFocaSum: Encoder[MapAlgebraAST.FocalSum] =
+    Encoder.forProduct5("apply", "args", "id", "metadata", "neighborhood")(op => (op.symbol, op.args, op.id, op.metadata, op.neighborhood))
+
+  implicit lazy val decodeFocalStdDev: Decoder[MapAlgebraAST.FocalStdDev] =
+    Decoder.forProduct4("args", "id", "metadata", "neighborhood")(MapAlgebraAST.FocalStdDev.apply)
+  implicit lazy val encodeFocalStdDev: Encoder[MapAlgebraAST.FocalStdDev] =
+    Encoder.forProduct5("apply", "args", "id", "metadata", "neighborhood")(op => (op.symbol, op.args, op.id, op.metadata, op.neighborhood))
+
 }

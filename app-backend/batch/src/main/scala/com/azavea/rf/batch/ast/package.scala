@@ -99,11 +99,13 @@ package object ast {
 
     /* --- FOCAL OPERATIONS --- */
     /* The `head` calls here will never fail, nor will they produce a `Constant` */
-    case FocalMax(args, _, _, neighborhood) =>
-      eval(args.head, rdds).map(_.focalMax(neighborhood))
-
-    case FocalMin(args, _, _, neighborhood) =>
-      eval(args.head, rdds).map(_.focalMin(neighborhood))
+    case FocalMax(args, _, _, neighborhood) => eval(args.head, rdds).map(_.focalMax(neighborhood))
+    case FocalMin(args, _, _, neighborhood) => eval(args.head, rdds).map(_.focalMin(neighborhood))
+    case FocalMean(args, _, _, neighborhood) => eval(args.head, rdds).map(_.focalMean(neighborhood))
+    case FocalMedian(args, _, _, neighborhood) => eval(args.head, rdds).map(_.focalMedian(neighborhood))
+    case FocalMode(args, _, _, neighborhood) => eval(args.head, rdds).map(_.focalMode(neighborhood))
+    case FocalSum(args, _, _, neighborhood) => eval(args.head, rdds).map(_.focalSum(neighborhood))
+    case FocalStdDev(args, _, _, neighborhood) => eval(args.head, rdds).map(_.focalStandardDeviation(neighborhood))
   }
 
   /** Evaluate an AST of RDD Sources. Assumes that the AST's

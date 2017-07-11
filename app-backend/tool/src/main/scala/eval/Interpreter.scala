@@ -142,15 +142,6 @@ object Interpreter extends LazyLogging {
       case Constant(_, const, _) => LazyTile.Constant(const)
       case ToolReference(_, _) => sys.error("TMS: Attempt to evaluate a ToolReference!")
 
-      /* --- FOCAL OPERATIONS --- */
-      case FocalMax(args, id, _, neighborhood) =>
-        logger.debug(s"case focal maximum at $id")
-        eval(tiles, args.head).focalMax(neighborhood, None)
-
-      case FocalMin(args, id, _, neighborhood) =>
-        logger.debug(s"case focal minimum at $id")
-        eval(tiles, args.head).focalMin(neighborhood, None)
-
       /* --- LOCAL OPERATIONS --- */
       case Addition(args, id, _) =>
         logger.debug(s"case addition at $id")
@@ -182,6 +173,36 @@ object Interpreter extends LazyLogging {
 
       case Masking(args, id, _, mask) =>
         eval(tiles, args.head).mask(extent, mask)
+
+      /* --- FOCAL OPERATIONS --- */
+      case FocalMax(args, id, _, neighborhood) =>
+        logger.debug(s"case focal maximum at $id")
+        eval(tiles, args.head).focalMax(neighborhood, None)
+
+      case FocalMin(args, id, _, neighborhood) =>
+        logger.debug(s"case focal minimum at $id")
+        eval(tiles, args.head).focalMin(neighborhood, None)
+
+      case FocalMean(args, id, _, neighborhood) =>
+        logger.debug(s"case focal minimum at $id")
+        eval(tiles, args.head).focalMean(neighborhood, None)
+
+      case FocalMedian(args, id, _, neighborhood) =>
+        logger.debug(s"case focal minimum at $id")
+        eval(tiles, args.head).focalMedian(neighborhood, None)
+
+      case FocalMode(args, id, _, neighborhood) =>
+        logger.debug(s"case focal minimum at $id")
+        eval(tiles, args.head).focalMode(neighborhood, None)
+
+      case FocalSum(args, id, _, neighborhood) =>
+        logger.debug(s"case focal minimum at $id")
+        eval(tiles, args.head).focalSum(neighborhood, None)
+
+      case FocalStdDev(args, id, _, neighborhood) =>
+        logger.debug(s"case focal minimum at $id")
+        eval(tiles, args.head).focalStdDev(neighborhood, None)
+
     }
 
     val pure: Interpreted[Unit] = interpretPure[Unit](ast, sourceMapping)
@@ -218,25 +239,15 @@ object Interpreter extends LazyLogging {
   )(implicit ec: ExecutionContext): (Int, Int, Int) => Future[Interpreted[LazyTile]] = {
 
     (z: Int, x: Int, y: Int) => {
-      val extent = layouts(z).mapTransform(SpatialKey(x,y))
+      lazy val extent = layouts(z).mapTransform(SpatialKey(x,y))
+
       @SuppressWarnings(Array("TraversableHead"))
-      def eval(tiles: Map[UUID, TileProvider], ast: MapAlgebraAST, buffer: Int = 0): LazyTile = ast match {
+      def eval(tiles: Map[UUID, TileProvider], ast: MapAlgebraAST, buffer: Int): LazyTile = ast match {
 
         /* --- LEAVES --- */
         case Source(id, _) => LazyTile(tiles(id).withBuffer(buffer))
         case Constant(_, const, _) => LazyTile.Constant(const)
         case  ToolReference(_, _) => sys.error("TMS: Attempt to evaluate a ToolReference!")
-
-        /* --- FOCAL OPERATIONS --- */
-        case FocalMax(args, id, _, n) =>
-          logger.debug(s"case focal maximum at $id")
-          eval(tiles, args.head, buffer + n.extent)
-            .focalMax(n, Some(GridBounds(n.extent, n.extent, 256 + buffer * 2 + n.extent , 256 + buffer * 2 + n.extent)))
-
-        case FocalMin(args, id, _, n) =>
-          logger.debug(s"case focal maximum at $id")
-          eval(tiles, args.head, buffer + n.extent)
-            .focalMin(n, Some(GridBounds(n.extent, n.extent, 256 + buffer * 2 + n.extent , 256 + buffer * 2 + n.extent)))
 
         /* --- LOCAL OPERATIONS --- */
         case Addition(args, id, _) =>
@@ -269,6 +280,43 @@ object Interpreter extends LazyLogging {
 
         case Masking(args, id, _, mask) =>
           eval(tiles, args.head, buffer).mask(extent, mask)
+
+        /* --- FOCAL OPERATIONS --- */
+        case FocalMax(args, id, _, n) =>
+          logger.debug(s"case focal maximum at $id")
+          eval(tiles, args.head, buffer + n.extent)
+            .focalMax(n, Some(GridBounds(n.extent, n.extent, 256 + buffer * 2 + n.extent , 256 + buffer * 2 + n.extent)))
+
+        case FocalMin(args, id, _, n) =>
+          logger.debug(s"case focal maximum at $id")
+          eval(tiles, args.head, buffer + n.extent)
+            .focalMin(n, Some(GridBounds(n.extent, n.extent, 256 + buffer * 2 + n.extent , 256 + buffer * 2 + n.extent)))
+
+        case FocalMean(args, id, _, n) =>
+          logger.debug(s"case focal maximum at $id")
+          eval(tiles, args.head, buffer + n.extent)
+            .focalMean(n, Some(GridBounds(n.extent, n.extent, 256 + buffer * 2 + n.extent , 256 + buffer * 2 + n.extent)))
+
+        case FocalMedian(args, id, _, n) =>
+          logger.debug(s"case focal maximum at $id")
+          eval(tiles, args.head, buffer + n.extent)
+            .focalMedian(n, Some(GridBounds(n.extent, n.extent, 256 + buffer * 2 + n.extent , 256 + buffer * 2 + n.extent)))
+
+        case FocalMode(args, id, _, n) =>
+          logger.debug(s"case focal maximum at $id")
+          eval(tiles, args.head, buffer + n.extent)
+            .focalMode(n, Some(GridBounds(n.extent, n.extent, 256 + buffer * 2 + n.extent , 256 + buffer * 2 + n.extent)))
+
+        case FocalSum(args, id, _, n) =>
+          logger.debug(s"case focal maximum at $id")
+          eval(tiles, args.head, buffer + n.extent)
+            .focalSum(n, Some(GridBounds(n.extent, n.extent, 256 + buffer * 2 + n.extent , 256 + buffer * 2 + n.extent)))
+
+        case FocalStdDev(args, id, _, n) =>
+          logger.debug(s"case focal maximum at $id")
+          eval(tiles, args.head, buffer + n.extent)
+            .focalStdDev(n, Some(GridBounds(n.extent, n.extent, 256 + buffer * 2 + n.extent , 256 + buffer * 2 + n.extent)))
+
       }
 
       val pure: Interpreted[Unit] = interpretPure[Unit](ast, sourceMapping)
@@ -289,7 +337,7 @@ object Interpreter extends LazyLogging {
             case (id, Right(provider)) => (id, Valid(provider))
           }).sequence
 
-          (pure |@| overridden |@| tiles).map({ case (_, tree, ts) => eval(ts, tree) })
+          (pure |@| overridden |@| tiles).map({ case (_, tree, ts) => eval(ts, tree, 0) })
         })
     }
   }
