@@ -2,6 +2,8 @@ import os
 from urlparse import urlparse, ParseResult
 from urllib import quote
 
+import rasterio
+
 from .models import Ingest, Source, Layer
 
 
@@ -30,13 +32,11 @@ def get_safe_uri(uri):
     return safe.geturl()
 
 
-def get_source_definition(image, extent, crs=None):
+def get_source_definition(image):
     """Create source definition from an image
 
     Args:
         image (Image): image to get source definition from
-        extent (List[float]): extent of scene
-        crs (str): optional crs of image
 
     Return:
         Source
@@ -52,8 +52,7 @@ def get_source_definition(image, extent, crs=None):
         width = image.resolutionMeters
         height = image.resolutionMeters
     cell_size = {'width': height, 'height': width}
-    extent_crs = 'epsg:4326'
-    return Source(uri, extent, band_maps, cell_size, extent_crs, crs)
+    return Source(uri, band_maps, cell_size)
 
 
 def get_ingest_layer(scene):
@@ -65,8 +64,7 @@ def get_ingest_layer(scene):
     Return:
         Layer
     """
-    extent = scene.get_extent()
-    sources = [get_source_definition(image, extent) for image in scene.images]
+    sources = [get_source_definition(image) for image in scene.images]
     highest_resolution_meters = min([image.resolutionMeters for image in scene.images])
     if highest_resolution_meters < MIN_RESOLUTION_METERS:
         width = MIN_RESOLUTION_METERS
