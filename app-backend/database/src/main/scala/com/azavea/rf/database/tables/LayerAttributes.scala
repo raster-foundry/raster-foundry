@@ -70,8 +70,11 @@ object LayerAttributes extends TableQuery(tag => new LayerAttributes(tag)) with 
     LayerAttributes.map(r => r.layerName -> r.zoom).result
   }
 
-  def layerIds(layerName: String)(implicit database: DB): Future[Iterable[(String, Int)]] = database.db.run {
-    LayerAttributes.filter(_.layerName === layerName).map(r => r.layerName -> r.zoom).result
+  def layerIds(layerNames: Set[String])(implicit database: DB): Future[Iterable[(String, Int)]] = database.db.run {
+    LayerAttributes
+      .filter(_.layerName inSetBind layerNames)
+      .map(r => r.layerName -> r.zoom)
+      .result
   }
 
   def availableAttributes(layerName: String, zoom: Int)(implicit database: DB): Future[Iterable[String]] = database.db.run {

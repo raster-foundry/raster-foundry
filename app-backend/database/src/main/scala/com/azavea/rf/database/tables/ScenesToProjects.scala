@@ -197,4 +197,12 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
 
     sceneIds.flatMap(scenes)
   }
+
+  def allScenes(projectId: UUID)(implicit database: DB): Future[Seq[UUID]] = database.db.run {
+    ScenesToProjects
+      .filter(_.projectId === projectId)
+      .sortBy(_.sceneOrder.asc.nullsLast)
+      .map(_.sceneId)
+      .result
+  }
 }

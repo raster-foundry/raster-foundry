@@ -70,12 +70,14 @@ object SceneRoutes extends LazyLogging with KamonTraceDirectives {
   def layerTile(layer: UUID) =
     pathPrefix(IntNumber / IntNumber / IntNumber).tmap[Future[Option[MultibandTile]]] {
       case (zoom: Int, x: Int, y: Int) =>
+        implicit val sceneIds = Set(layer)
         LayerCache.layerTile(layer, zoom, SpatialKey(x, y)).value
     }
 
   def layerTileAndHistogram(id: UUID) =
     pathPrefix(IntNumber / IntNumber / IntNumber).tmap[(OptionT[Future, MultibandTile], OptionT[Future, Array[Histogram[Double]]])] {
       case (zoom: Int, x: Int, y: Int) =>
+        implicit val sceneIds = Set(id)
         val futureMaybeTile = LayerCache.layerTile(id, zoom, SpatialKey(x, y))
         val futureHistogram = LayerCache.layerHistogram(id, zoom)
         (futureMaybeTile, futureHistogram)
@@ -87,6 +89,7 @@ object SceneRoutes extends LazyLogging with KamonTraceDirectives {
   def imageThumbnailRoute(id: UUID) =
     parameters('size.as[Int].?(256)) { size =>
       complete {
+        implicit val sceneIds = Set(id)
         val futureMaybeTile = StitchLayer(id, size)
         val futureResponse =
           for {
@@ -109,6 +112,7 @@ object SceneRoutes extends LazyLogging with KamonTraceDirectives {
   def imageHistogramRoute(id: UUID) = {
     import DefaultJsonProtocol._
     complete {
+      implicit val sceneIds = Set(id)
       val futureResponse =
         for {
           hist <- LayerCache.layerHistogram(id, 0).value

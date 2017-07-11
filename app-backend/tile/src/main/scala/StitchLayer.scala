@@ -36,7 +36,7 @@ object StitchLayer extends LazyLogging with Config {
     * For non-cached version use [[stitch]] function.
     */
   val stitchCache = HeapBackedMemcachedClient(memcachedClient)
-  def apply(id: UUID, size: Int): OptionT[Future, MultibandTile] =
+  def apply(id: UUID, size: Int)(implicit sceneIds: Set[UUID]): OptionT[Future, MultibandTile] =
     stitchCache.cachingOptionT(s"stitch-{$size}") { implicit ec =>
       LayerCache.attributeStoreForLayer(id).mapFilter { case (store, _) =>
         stitch(store, id.toString, size)

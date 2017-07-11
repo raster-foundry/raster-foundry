@@ -57,8 +57,8 @@ class PostgresAttributeStore(val attributeTable: String = "layer_attributes")(im
   def layerIds: Seq[LayerId] =
     Await.result(LayerAttributes.layerIds.map(_.map { case (name, zoom) => LayerId(name, zoom) }.toSeq), Duration.Inf)
 
-  def layerIds(layerName: String): Seq[LayerId] =
-    Await.result(LayerAttributes.layerIds(layerName).map(_.map { case (name, zoom) => LayerId(name, zoom) }.toSeq), Duration.Inf)
+  def layerIds(layerNames: Set[String]): Seq[LayerId] =
+    Await.result(LayerAttributes.layerIds(layerNames).map(_.map { case (name, zoom) => LayerId(name, zoom) }.toSeq), Duration.Inf)
 
   def availableAttributes(id: LayerId): Seq[String] =
     Await.result(LayerAttributes.availableAttributes(id.name, id.zoom).map(_.toSeq), Duration.Inf)

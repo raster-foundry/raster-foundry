@@ -58,11 +58,15 @@ object TileSources extends LazyLogging {
     */
   def dataWindow(r: RFMLRaster)(implicit database: Database): OptionT[Future, (Extent, Int)] = r match {
     case SceneRaster(id, Some(_), _) => {
+      implicit val sceneIds = Set(id)
       LayerCache.attributeStoreForLayer(id).mapFilter({ case (store, _) =>
         GlobalSummary.minAcceptableSceneZoom(id, store, 256)  // TODO: 512?
       })
     }
-    case ProjectRaster(id, Some(_), _) => GlobalSummary.minAcceptableProjectZoom(id, 256) // TODO: 512?
+    case ProjectRaster(id, Some(_), _) => {
+      implicit val sceneIds = Set(id)
+      GlobalSummary.minAcceptableProjectZoom(id, 256) // TODO: 512?
+    }
 
     /* Don't attempt work for a RFMLRaster which will fail AST validation anyway */
     case _ => OptionT.none
@@ -78,6 +82,7 @@ object TileSources extends LazyLogging {
     r: RFMLRaster
   )(implicit database: Database): Future[Option[Tile]] = r match {
     case SceneRaster(id, Some(band), maybeND) =>
+      implicit val sceneIds = Set(id)
       LayerCache.attributeStoreForLayer(id).mapFilter({ case (store, _) =>
         blocking {
           Try {
@@ -110,10 +115,12 @@ object TileSources extends LazyLogging {
   def cachedTmsSource(r: RFMLRaster, z: Int, x: Int, y: Int)(implicit database: Database): Future[Option[Tile]] =
     r match {
       case scene @ SceneRaster(sceneId, Some(band), maybeND) =>
+        implicit val sceneIds = Set(sceneId)
         LayerCache.layerTile(sceneId, z, SpatialKey(x, y))
           .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) }).value
 
       case scene @ SceneRaster(sceneId, None, _) =>
+        implicit val sceneIds = Set(sceneId)
         logger.warn(s"Request for $scene does not contain band index")
         Future.successful(None)
 
