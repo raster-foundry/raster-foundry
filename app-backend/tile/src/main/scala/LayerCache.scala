@@ -6,7 +6,7 @@ import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.params._
 import com.azavea.rf.tool.ast.MapAlgebraAST
-import com.azavea.rf.common.ast._
+
 import com.azavea.rf.common.cache._
 import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 import com.azavea.rf.database.Database
@@ -18,21 +18,19 @@ import geotrellis.raster.render._
 import geotrellis.raster.histogram._
 import geotrellis.raster.io._
 import geotrellis.spark.io._
-import geotrellis.spark._
-import geotrellis.spark.io.s3.{S3CollectionLayerReader, S3ValueReader}
 import geotrellis.spark.io.postgres.PostgresAttributeStore
+import geotrellis.spark._
+import geotrellis.spark.io.s3.{S3AttributeStore, S3CollectionLayerReader, S3ValueReader}
 import geotrellis.vector.Extent
 
-import com.github.blemale.scaffeine.{Scaffeine, Cache => ScaffeineCache}
 import com.typesafe.scalalogging.LazyLogging
 import spray.json.DefaultJsonProtocol._
 import cats.data._
 import cats.implicits._
-
+import com.amazonaws.services.s3.AmazonS3URI
 import java.util.UUID
 
 import scala.concurrent._
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util._
 
@@ -48,27 +46,21 @@ import scala.util._
 object LayerCache extends Config with LazyLogging with KamonTrace {
   implicit val database = Database.DEFAULT
 
-  lazy val memcachedClient = KryoMemcachedClient.DEFAULT
-  private val histogramCache = HeapBackedMemcachedClient(memcachedClient)
-  private val tileCache = HeapBackedMemcachedClient(memcachedClient)
-  private val astCache = HeapBackedMemcachedClient(memcachedClient)
+  lazy val memcachedClient        = KryoMemcachedClient.DEFAULT
+  private val histogramCache      = HeapBackedMemcachedClient(memcachedClient)
+  private val tileCache           = HeapBackedMemcachedClient(memcachedClient)
+  private val astCache            = HeapBackedMemcachedClient(memcachedClient)
+  private val attributeStoreCache = HeapBackedMemcachedClient(memcachedClient)
 
-  private val attributeStoreCache: ScaffeineCache[UUID, OptionT[Future, (AttributeStore, Map[String, Int])]] =
-    Scaffeine()
-      .recordStats()
-      .expireAfterAccess(5.minutes)
-      .maximumSize(500)
-      .build[UUID, OptionT[Future, (AttributeStore, Map[String, Int])]]
-
-  def attributeStoreForLayer(layerId: UUID)(implicit ec: ExecutionContext, projectLayerIds: Set[UUID]): OptionT[Future, (AttributeStore, Map[String, Int])] =
+  def attributeStoreForLayer(layerId: UUID)(implicit projectLayerIds: Set[UUID]): OptionT[Future, (AttributeStore, Map[String, Int])] =
     traceName(s"LayerCache.attributeStoreForLayer($layerId)") {
-      attributeStoreCache.take(layerId, _ =>
+      attributeStoreCache.cachingOptionT(s"attributeStoreForLayer-$layerId") { implicit ec =>
         traceName(s"LayerCache.attributeStoreForLayer($layerId) (no cache)") {
           val store = PostgresAttributeStore()
           val maxZooms: Map[String, Int] = blocking { store.maxZoomsForLayers(projectLayerIds.map(_.toString)) }
           OptionT.fromOption((store, maxZooms).some)
         }
-      )
+      }
     }
 
   def layerHistogram(layerId: UUID, zoom: Int)(implicit projectLayerIds: Set[UUID]): OptionT[Future, Array[Histogram[Double]]] =
