@@ -93,6 +93,7 @@ export default class ToolCreateModalController {
             builtNode.id = this.uuid4.generate();
             builtNode.type = 'const';
             builtNode.constant = node.value;
+            builtNode.metadata.label = node.value;
         } else if (node.content) {
             return this.transformNode(node.content);
         }
