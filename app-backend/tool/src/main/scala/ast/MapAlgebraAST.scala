@@ -108,6 +108,12 @@ object MapAlgebraAST {
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = FocalMax(newArgs, id, metadata, neighborhood)
   }
 
+  case class FocalMin(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], neighborhood: Neighborhood) extends FocalOperation {
+    val symbol = "focalMin"
+
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = FocalMin(newArgs, id, metadata, neighborhood)
+  }
+
   sealed trait MapAlgebraLeaf extends MapAlgebraAST {
     val `type`: String
 

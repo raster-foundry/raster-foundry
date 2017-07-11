@@ -96,6 +96,14 @@ package object ast {
     case Classification(args, _, _, classMap) =>
       eval(args.head, rdds).map(_.withContext(_.color(classMap.toColorMap)))
     case Masking(args, _, _, mask) => eval(args.head, rdds).map(_.mask(mask))
+
+    /* --- FOCAL OPERATIONS --- */
+    /* The `head` calls here will never fail, nor will they produce a `Constant` */
+    case FocalMax(args, _, _, neighborhood) =>
+      eval(args.head, rdds).map(_.focalMax(neighborhood))
+
+    case FocalMin(args, _, _, neighborhood) =>
+      eval(args.head, rdds).map(_.focalMin(neighborhood))
   }
 
   /** Evaluate an AST of RDD Sources. Assumes that the AST's
