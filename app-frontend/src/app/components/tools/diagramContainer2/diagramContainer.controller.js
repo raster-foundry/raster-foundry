@@ -5,7 +5,7 @@ const Map = require('es6-map');
 
 export default class DiagramContainerController {
     constructor( // eslint-disable-line max-params
-        $element, $scope, $state, $timeout, $compile, $document,
+        $element, $scope, $state, $timeout, $compile, $document, $window,
         mousetipService, toolService
     ) {
         'ngInject';
@@ -15,6 +15,7 @@ export default class DiagramContainerController {
         this.$timeout = $timeout;
         this.$compile = $compile;
         this.$document = $document;
+        this.$window = $window;
         this.mousetipService = mousetipService;
         this.toolService = toolService;
     }
@@ -22,6 +23,8 @@ export default class DiagramContainerController {
     $onInit() {
         let $scope = this.$scope;
         let $compile = this.$compile;
+
+        this.scale = 1;
 
         $scope.$on('$destroy', this.$onDestroy.bind(this));
 
@@ -37,7 +40,7 @@ export default class DiagramContainerController {
 
         joint.shapes.html.ElementView = joint.dia.ElementView.extend({
             template: `
-                <div class="diagram-cell ">
+                <div class="diagram-cell">
                   <rf-diagram-node-header
                     data-model="model"
                     data-invalid="model.get('invalid')"
@@ -48,6 +51,10 @@ export default class DiagramContainerController {
                     data-model="model"
                     on-change="onChange({sourceId: sourceId, project: project, band: band})"
                   ></rf-input-node>
+                  <rf-operation-node
+                    ng-if="model.get('cellType') === 'Function'"
+                    data-model="model"
+                  ></rf-operation-node>
                 </div>`,
             initialize: function () {
                 _.bindAll(this, 'updateBox');
@@ -63,19 +70,43 @@ export default class DiagramContainerController {
                 joint.dia.ElementView.prototype.render.apply(this, arguments);
                 this.paper.$el.prepend(this.$box);
                 this.updateBox();
+                this.listenTo(this.paper, 'translate', () => {
+                    let bbox = this.model.getBBox();
+                    let origin = this.paper ? this.paper.options.origin : {x: 0, y: 0};
+                    this.$box.css({
+                        left: bbox.x * this.scale + origin.x,
+                        top: bbox.y * this.scale + origin.y
+                    });
+                });
+                this.scale = 1;
+                this.listenTo(this.paper, 'scale', (scale) => {
+                    this.scale = scale;
+                    let bbox = this.model.getBBox();
+                    let origin = this.paper ? this.paper.options.origin : {x: 0, y: 0};
+                    this.$box.css({
+                        left: bbox.x * this.scale + origin.x,
+                        top: bbox.y * this.scale + origin.y,
+                        transform: `scale(${scale})`,
+                        'transform-origin': '0 0'
+                    });
+                });
                 return this;
             },
             updateBox: function () {
                 let bbox = this.model.getBBox();
-                this.scope.model = this.model;
-                this.scope.onChange = this.model.get('onChange');
-                this.scope.sourceId = this.model.get('id');
+                if (this.model !== this.scope.model) {
+                    this.scope.onChange = this.model.get('onChange');
+                    this.scope.sourceId = this.model.get('id');
+                    this.scope.model = this.model;
+                }
+
+                let origin = this.paper ? this.paper.options.origin : {x: 0, y: 0};
 
                 this.$box.css({
                     width: bbox.width,
                     height: bbox.height,
-                    left: bbox.x,
-                    top: bbox.y
+                    left: bbox.x * this.scale + origin.x,
+                    top: bbox.y * this.scale + origin.y
                 });
             },
             removeBox: function () {
@@ -99,6 +130,9 @@ export default class DiagramContainerController {
         if (this.isComparing) {
             this.cancelComparison();
         }
+        if (this.onWindowResize) {
+            this.$window.removeEventListner('resize', this.onWindowResize);
+        }
     }
 
     getToolLabel(json) {
@@ -121,24 +155,43 @@ export default class DiagramContainerController {
                 height: $(this.workspaceElement).height(),
                 width: $(this.workspaceElement).width(),
                 gridSize: 25,
-                drawGrid: true,
+                drawGrid: {
+                    name: 'doubleMesh',
+                    args: [
+                        {thickness: 1, scaleFactor: 6},
+                        {color: 'lightgrey', thickness: 1, scaleFactor: 6}
+                    ]
+                },
                 model: this.graph,
-                clickThreshold: 4
+                clickThreshold: 4,
+                interactive: false
             });
             this.paper.drawGrid({
                 color: '#aaa',
                 thickness: 1
             });
-            this.paper.on('blank:pointerclick', this.onPaperClick.bind(this));
             this.paper.on('cell:pointerdown', this.onCellClick.bind(this));
+            this.paper.on('blank:pointerclick', this.onPaperClick.bind(this));
             this.paper.on('blank:pointerdown', () => {
                 this.panActive = true;
                 this.$scope.$evalAsync();
             });
             this.paper.on('blank:pointerup', () => {
                 this.panActive = false;
+                delete this.lastMousePos;
                 this.$scope.$evalAsync();
             });
+            this.paper.$el.on('mousewheel', this.onMouseWheel.bind(this));
+
+            this.onWindowResize = () => {
+                let width = this.$element[0].offsetWidth;
+                let height = this.$element[0].offsetHeight;
+                this.paper.setDimensions(
+                    width, height
+                );
+            };
+            this.$window.addEventListener('resize', this.onWindowResize);
+            this.$element.on('mousemove', this.onMouseMove.bind(this));
         }
 
         if (this.shapes) {
@@ -152,6 +205,77 @@ export default class DiagramContainerController {
                 marginX: padding,
                 marginY: padding
             });
+        }
+    }
+
+    onMouseWheel(mouseEvent) {
+        let localpoint = this.paper.clientToLocalPoint(
+            mouseEvent.originalEvent.x, mouseEvent.originalEvent.y
+        );
+
+        if (mouseEvent.originalEvent.wheelDelta > 0) {
+            this.zoomIn(localpoint);
+        } else {
+            this.zoomOut(localpoint);
+        }
+    }
+
+    zoomIn(coords) {
+        if (coords) {
+            this.setZoom(this.scale * 1.25, coords);
+        } else {
+            let offset = this.$element.offset();
+            let middle = {
+                x: this.$element[0].offsetWidth / 2,
+                y: this.$element[0].offsetHeight / 2
+            };
+            let middleCoords = this.paper.clientToLocalPoint(
+                middle.x + offset.left, middle.y + offset.top
+            );
+            this.setZoom(this.scale * 1.25, middleCoords);
+        }
+    }
+
+    zoomOut(coords) {
+        if (coords) {
+            this.setZoom(this.scale / 1.25, coords);
+        } else {
+            let offset = this.$element.offset();
+            let middle = {
+                x: this.$element[0].offsetWidth / 2,
+                y: this.$element[0].offsetHeight / 2
+            };
+            let middleCoords = this.paper.clientToLocalPoint(
+                middle.x + offset.left, middle.y + offset.top
+            );
+            this.setZoom(this.scale / 1.25, middleCoords);
+        }
+    }
+
+    setZoom(zoom, coords) {
+        let oldScale = this.scale;
+        this.scale = zoom;
+
+        let scaleDelta = this.scale - oldScale;
+        let origin = this.paper.options.origin;
+
+        let offsetX = -(coords.x * scaleDelta) + origin.x;
+        let offsetY = -(coords.y * scaleDelta) + origin.y;
+
+        this.paper.scale(this.scale);
+        this.paper.translate(offsetX, offsetY);
+    }
+
+    onMouseMove(mouseEvent) {
+        if (this.panActive) {
+            let translate = {
+                x: this.lastMousePos ? this.lastMousePos.x - mouseEvent.offsetX : 0,
+                y: this.lastMousePos ? this.lastMousePos.y - mouseEvent.offsetY : 0
+            };
+            this.lastMousePos = {x: mouseEvent.offsetX, y: mouseEvent.offsetY};
+            let origin = this.paper.options.origin;
+            this.paper.translate(origin.x - translate.x, origin.y - translate.y);
+            this.$scope.$evalAsync();
         }
     }
 
@@ -247,14 +371,16 @@ export default class DiagramContainerController {
                 let rectOutputs = ['Output'];
                 let ports = this.createPorts(rectInputs, rectOutputs);
                 let currentId = nextId.toString();
-                let rectAttrs = {
+                let rectAttrs = Object.assign({
                     id: input.id,
                     label: this.getToolLabel(input),
                     inputs: rectInputs,
                     outputs: rectOutputs,
                     tag: input.tag,
                     ports: ports
-                };
+                }, {
+                    operation: input.apply
+                });
 
                 rectangle = this.constructRect(rectAttrs);
 
@@ -263,7 +389,7 @@ export default class DiagramContainerController {
                 shapes.push(rectangle);
 
                 if (input.parent) {
-                    let firstPort = input.parent.portData.ports.filter(i => {
+                    let firstPort = input.parent.attributes.ports.items.filter(i => {
                         return i.group === 'inputs' && !i.isConnected;
                     })[0];
 
@@ -304,6 +430,7 @@ export default class DiagramContainerController {
             },
             cellType: config.inputs ? 'Function' : 'Input',
             title: config.label || config.id.toString(),
+            operation: config.operation,
             contextMenu: this.defaultContextMenu,
             ports: {
                 groups: {

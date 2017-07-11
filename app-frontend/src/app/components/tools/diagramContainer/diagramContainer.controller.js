@@ -240,7 +240,7 @@ export default class DiagramContainerController {
                 shapes.push(rectangle);
 
                 if (input.parent) {
-                    let firstPort = input.parent.portData.ports.filter(i => {
+                    let firstPort = input.parent.attributes.ports.items.filter(i => {
                         return i.group === 'inputs' && !i.isConnected;
                     })[0];
 
@@ -276,7 +276,7 @@ export default class DiagramContainerController {
         let label = joint.util.breakText(config.label || config.id.toString(), {
             width: this.cellSize[0] * this.paddingFactor,
             height: this.cellSize[1] * this.paddingFactor
-        });
+        }, {lineHeight: 1});
 
         return new joint.shapes.basic.Rect({
             id: config.id,
