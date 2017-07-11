@@ -101,7 +101,7 @@ export default class ToolCreateModalController {
     }
 
     isValid() {
-        return this.toolBuffer.title && this.toolBuffer.definitionExpression;
+        return this.toolBuffer.title && this.definitionExpression;
     }
 
 }
