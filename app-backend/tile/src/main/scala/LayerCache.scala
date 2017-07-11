@@ -50,7 +50,6 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
   private val histogramCache      = HeapBackedMemcachedClient(memcachedClient)
   private val tileCache           = HeapBackedMemcachedClient(memcachedClient)
   private val astCache            = HeapBackedMemcachedClient(memcachedClient)
-  private val layerUriCache       = HeapBackedMemcachedClient(memcachedClient)
   private val attributeStoreCache = HeapBackedMemcachedClient(memcachedClient)
 
   def attributeStoreForLayer(layerId: UUID)(implicit projectLayerIds: Set[UUID]): OptionT[Future, (AttributeStore, Map[String, Int])] =
