@@ -60,6 +60,9 @@ class PostgresAttributeStore(val attributeTable: String = "layer_attributes")(im
   def layerIds(layerNames: Set[String]): Seq[LayerId] =
     Await.result(LayerAttributes.layerIds(layerNames).map(_.map { case (name, zoom) => LayerId(name, zoom) }.toSeq), Duration.Inf)
 
+  def maxZoomsForLayers(layerNames: Set[String]): Map[String, Int] =
+    Await.result(LayerAttributes.maxZoomsForLayers(layerNames), Duration.Inf).toMap
+
   def availableAttributes(id: LayerId): Seq[String] =
     Await.result(LayerAttributes.availableAttributes(id.name, id.zoom).map(_.toSeq), Duration.Inf)
 }

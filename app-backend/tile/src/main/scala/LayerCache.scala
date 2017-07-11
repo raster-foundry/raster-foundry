@@ -65,9 +65,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
       attributeStoreCache.take(layerId, _ =>
         traceName(s"LayerCache.attributeStoreForLayer($layerId) (no cache)") {
           val store = PostgresAttributeStore()
-          val maxZooms: Map[String, Int] = blocking {
-            store.layerIds(projectLayerIds.map(_.toString)).groupBy(_.name).map { case (k, v) => k -> v.map(_.zoom).max }
-          }
+          val maxZooms: Map[String, Int] = blocking { store.maxZoomsForLayers(projectLayerIds.map(_.toString)) }
           OptionT.fromOption((store, maxZooms).some)
         }
       )
