@@ -135,49 +135,53 @@ object Interpreter extends LazyLogging {
   )(implicit ec: ExecutionContext): Future[Interpreted[LazyTile]] = {
 
     @SuppressWarnings(Array("TraversableHead"))
-    def eval(tiles: Map[UUID, TileProvider], ast: MapAlgebraAST, buffer: Int = 0): LazyTile = ast match {
+    def eval(tiles: Map[UUID, TileProvider], ast: MapAlgebraAST): LazyTile = ast match {
 
       /* --- LEAVES --- */
-      case Source(id, _) => LazyTile(tiles(id).withBuffer(buffer))
+      case Source(id, _) => LazyTile(tiles(id).centerTile)
       case Constant(_, const, _) => LazyTile.Constant(const)
       case ToolReference(_, _) => sys.error("TMS: Attempt to evaluate a ToolReference!")
 
       /* --- FOCAL OPERATIONS --- */
       case FocalMax(args, id, _, neighborhood) =>
         logger.debug(s"case focal maximum at $id")
-        eval(tiles, args.head, buffer + neighborhood.extent).focalMax(neighborhood, None)
+        eval(tiles, args.head).focalMax(neighborhood, None)
+
+      case FocalMin(args, id, _, neighborhood) =>
+        logger.debug(s"case focal minimum at $id")
+        eval(tiles, args.head).focalMin(neighborhood, None)
 
       /* --- LOCAL OPERATIONS --- */
       case Addition(args, id, _) =>
         logger.debug(s"case addition at $id")
-        args.map(eval(tiles, _, buffer)).reduce(_ + _)
+        args.map(eval(tiles, _)).reduce(_ + _)
 
       case Subtraction(args, id, _) =>
         logger.debug(s"case subtraction at $id")
-        args.map(eval(tiles, _, buffer)).reduce(_ - _)
+        args.map(eval(tiles, _)).reduce(_ - _)
 
       case Multiplication(args, id, _) =>
         logger.debug(s"case multiplication at $id")
-        args.map(eval(tiles, _, buffer)).reduce(_ * _)
+        args.map(eval(tiles, _)).reduce(_ * _)
 
       case Division(args, id, _) =>
         logger.debug(s"case division at $id")
-        args.map(eval(tiles, _, buffer)).reduce(_ / _)
+        args.map(eval(tiles, _)).reduce(_ / _)
 
       case Max(args, id, _) =>
         logger.debug(s"case max at $id")
-        args.map(eval(tiles, _, buffer)).reduce(_ max _)
+        args.map(eval(tiles, _)).reduce(_ max _)
 
       case Min(args, id, _) =>
         logger.debug(s"case min at $id")
-        args.map(eval(tiles, _, buffer)).reduce(_ min _)
+        args.map(eval(tiles, _)).reduce(_ min _)
 
       case Classification(args, id, _, breaks) =>
         logger.debug(s"case classification at $id with breakmap ${breaks.toBreakMap}")
-        eval(tiles, args.head, buffer).classify(breaks.toBreakMap)
+        eval(tiles, args.head).classify(breaks.toBreakMap)
 
       case Masking(args, id, _, mask) =>
-        eval(tiles, args.head, buffer).mask(extent, mask)
+        eval(tiles, args.head).mask(extent, mask)
     }
 
     val pure: Interpreted[Unit] = interpretPure[Unit](ast, sourceMapping)
@@ -228,6 +232,11 @@ object Interpreter extends LazyLogging {
           logger.debug(s"case focal maximum at $id")
           eval(tiles, args.head, buffer + n.extent)
             .focalMax(n, Some(GridBounds(n.extent, n.extent, 256 + buffer * 2 + n.extent , 256 + buffer * 2 + n.extent)))
+
+        case FocalMin(args, id, _, n) =>
+          logger.debug(s"case focal maximum at $id")
+          eval(tiles, args.head, buffer + n.extent)
+            .focalMin(n, Some(GridBounds(n.extent, n.extent, 256 + buffer * 2 + n.extent , 256 + buffer * 2 + n.extent)))
 
         /* --- LOCAL OPERATIONS --- */
         case Addition(args, id, _) =>
