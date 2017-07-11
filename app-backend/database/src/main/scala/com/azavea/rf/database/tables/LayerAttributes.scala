@@ -78,14 +78,11 @@ object LayerAttributes extends TableQuery(tag => new LayerAttributes(tag)) with 
   }
 
   def maxZoomsForLayers(layerNames: Set[String])(implicit database: DB): Future[Seq[(String, Int)]] = database.db.run {
-    val action = LayerAttributes
+    LayerAttributes
       .filter(_.layerName inSetBind layerNames)
       .groupBy(_.layerName)
       .map { case (layerId, attrs) => layerId -> attrs.map(_.zoom).max.ifNull(0) }
       .result
-
-    println(s"QUERY: ${action.statements.headOption}")
-    action
   }
 
   def availableAttributes(layerName: String, zoom: Int)(implicit database: DB): Future[Iterable[String]] = database.db.run {
