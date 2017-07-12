@@ -8,11 +8,13 @@
     <div class="node-dropdown-icon"></div>
     <div class="node-dropdown-menu" ng-show="$ctrl.showMenu">
       <ul>
-        <li ng-repeat="menuItem in $ctrl.menuItems"
-            ng-click="menuItem.callback($event, $ctrl.model)"
-            ng-class="{'divider': menuItem.type === 'divider'}"
-        >{{menuItem.label}}
+        <span ng-repeat="menuItem in $ctrl.menuItems">
+        <li ng-if="menuItem.type !== 'divider'"
+            ng-click="menuItem.callback($event, $ctrl.model)">
+            {{menuItem.label}}
         </li>
+        <li ng-if="menuItem.type === 'divider'" class="divider"></li>
+        </span>
       </ul>
     </div>
   </div>

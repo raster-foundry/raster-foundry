@@ -1381,6 +1381,7 @@ rf-diagram-container {
 rf-diagram-container2 {
   display: flex;
   flex: 1;
+  overflow: hidden;
 }
 
 /*
@@ -1632,8 +1633,8 @@ rf-export-item {
 }
 
 .node-dropdown-icon {
-  width: .4em;
-  height: .4em;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background-color: $shade-light;
   box-shadow: 0px .75em 0px $shade-light, 0px 1.5em 0px $shade-light;
@@ -1651,7 +1652,7 @@ rf-export-item {
 
     [class^="icon-"]:before, [class*=" icon-"]:before {
       width: 1em;
-      margin-right: 0em;
+      margin-right: .5em;
       margin-left: 0em;
     }
   }
@@ -1678,16 +1679,34 @@ rf-export-item {
   }
 }
 
-.node-body {
+rf-input-node {
   flex: 1;
   cursor: auto;
   pointer-events: auto;
+  padding: 1em
+}
+
+.input-node-item {
+  flex: 0;
+  display: flex;
+  flex-direction: row;
+  flex-basis: fill;
+}
+.input-node-label {
+  padding: 1em;
+  font-weight: 700;
+  flex: 1;
+}
+
+.input-data {
+  width: 20em;
 }
 
 .node-dropdown-menu {
   position: absolute;
   left: 2.1em;
   top: -1em;
+  z-index: 100;
 
   width: 13em;
   background: white;
@@ -1739,4 +1758,11 @@ rf-export-item {
 
 .form-group label + rf-toggle {
   margin-left: 1rem;
+}
+
+.form-group {
+  .btn.fill {
+    flex: 1;
+    line-height: 1em;
+  }
 }

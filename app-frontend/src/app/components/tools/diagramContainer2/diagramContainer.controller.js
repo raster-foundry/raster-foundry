@@ -5,13 +5,16 @@ const Map = require('es6-map');
 
 export default class DiagramContainerController {
     constructor( // eslint-disable-line max-params
-        $element, $scope, $state, $timeout, $compile, mousetipService, toolService) {
+        $element, $scope, $state, $timeout, $compile, $document,
+        mousetipService, toolService
+    ) {
         'ngInject';
         this.$element = $element;
         this.$scope = $scope;
         this.$state = $state;
         this.$timeout = $timeout;
         this.$compile = $compile;
+        this.$document = $document;
         this.mousetipService = mousetipService;
         this.toolService = toolService;
     }
@@ -19,6 +22,9 @@ export default class DiagramContainerController {
     $onInit() {
         let $scope = this.$scope;
         let $compile = this.$compile;
+
+        $scope.$on('$destroy', this.$onDestroy.bind(this));
+
         joint.shapes.html = {};
         joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
             defaults: joint.util.deepSupplement({
@@ -34,13 +40,15 @@ export default class DiagramContainerController {
                 <div class="diagram-cell ">
                   <rf-diagram-node-header
                     data-model="model"
-                    data-invalid="model.get('cellType') === 'Input'"
+                    data-invalid="model.get('invalid')"
                     data-menu-options="menuOptions"
-                    >
-                  </rf-diagram-node-header>
-                  <div class="node-body"></div>
-                </div>
-        `,
+                  ></rf-diagram-node-header>
+                  <rf-input-node
+                    ng-if="model.get('cellType') === 'Input'"
+                    data-model="model"
+                    on-change="onChange({sourceId: sourceId, project: project, band: band})"
+                  ></rf-input-node>
+                </div>`,
             initialize: function () {
                 _.bindAll(this, 'updateBox');
                 joint.dia.ElementView.prototype.initialize.apply(this, arguments);
@@ -60,6 +68,8 @@ export default class DiagramContainerController {
             updateBox: function () {
                 let bbox = this.model.getBBox();
                 this.scope.model = this.model;
+                this.scope.onChange = this.model.get('onChange');
+                this.scope.sourceId = this.model.get('id');
 
                 this.$box.css({
                     width: bbox.width,
@@ -75,14 +85,20 @@ export default class DiagramContainerController {
 
         this.workspaceElement = this.$element[0].children[0];
         this.comparison = [false, false];
-        this.cellSize = [300, 150];
+        this.cellSize = [400, 200];
         this.paddingFactor = 0.8;
-        this.nodeSeparationFactor = 0.25;
+        this.nodeSeparationFactor = 0.2;
         this.panActive = false;
         this.initContextMenus();
         this.extractInputs();
         this.extractShapes();
         this.initDiagram();
+    }
+
+    $onDestroy() {
+        if (this.isComparing) {
+            this.cancelComparison();
+        }
     }
 
     getToolLabel(json) {
@@ -114,7 +130,7 @@ export default class DiagramContainerController {
                 thickness: 1
             });
             this.paper.on('blank:pointerclick', this.onPaperClick.bind(this));
-            this.paper.on('cell:pointerclick', this.onCellClick.bind(this));
+            this.paper.on('cell:pointerdown', this.onCellClick.bind(this));
             this.paper.on('blank:pointerdown', () => {
                 this.panActive = true;
                 this.$scope.$evalAsync();
@@ -280,7 +296,7 @@ export default class DiagramContainerController {
     }
 
     constructRect(config) {
-        return new joint.shapes.html.Element({
+        return new joint.shapes.html.Element(Object.assign({
             id: config.id,
             size: {
                 width: this.cellSize[0],
@@ -304,56 +320,46 @@ export default class DiagramContainerController {
                 },
                 items: config.ports
             }
-        });
+        }, {
+            onChange: this.onParameterChange
+        }));
     }
 
     startComparison(id) {
+        if (this.clickListener) {
+            this.clickListener();
+        }
+
         this.mousetipService.set('Select a node to compare');
         this.isComparing = true;
         this.comparison[0] = id;
+
+        let initialClick = true;
+        const onClick = () => {
+            if (!initialClick) {
+                this.cancelComparison();
+                this.$document.off('click', this.clickListener);
+                this.$scope.$evalAsync();
+                delete this.clickListener;
+            } else {
+                initialClick = false;
+            }
+        };
+        this.clickListener = onClick;
+        this.$document.on('click', onClick);
     }
 
     continueComparison(cv) {
-        this.mousetipService.remove();
-        this.hideContextMenu();
-        this.isComparing = false;
+        this.clickListener();
         this.comparison[1] = cv.model.id;
         this.onPreview({data: this.comparison});
         this.unselectCell();
     }
 
     cancelComparison() {
-        this.hideContextMenu();
         this.isComparing = false;
+        this.unselectCell();
         this.mousetipService.remove();
-    }
-
-    showContextMenu(cv, contextMenu) {
-        this.hideContextMenu();
-
-        let bounds = cv.getBBox() || this.selectedCellView.getBBox || false;
-        let menuScope = this.$scope.$new();
-        menuScope.currentContextMenu = contextMenu ||
-                                       this.contextMenus.get(cv.model.id) ||
-                                       this.defaultContextMenu;
-
-        this.contextMenuEl = this.$compile(this.contextMenuTpl)(menuScope)[0];
-        this.$element[0].appendChild(this.contextMenuEl);
-        this.contextMenuEl = $(this.contextMenuEl).css({
-            top: bounds.y,
-            left: bounds.x + bounds.width / 2
-        });
-
-        menuScope.$evalAsync(() => {
-            menuScope.isShowingContextMenu = true;
-        });
-    }
-
-    hideContextMenu() {
-        this.isShowingContextMenu = false;
-        if (this.contextMenuEl) {
-            this.contextMenuEl.remove();
-        }
     }
 
     selectCell(model) {
