@@ -50,10 +50,6 @@ object MapAlgebraAST {
   /** Operations which should only have one argument. */
   sealed trait UnaryOperation extends Operation with Serializable
 
-  sealed trait FocalOperation extends UnaryOperation {
-    val neighborhood: Neighborhood
-  }
-
   case class Addition(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends Operation {
   val symbol = "+"
 
@@ -102,53 +98,46 @@ object MapAlgebraAST {
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
   }
 
+  sealed trait FocalOperation extends UnaryOperation
+
   case class FocalMax(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], neighborhood: Neighborhood) extends FocalOperation {
     val symbol = "focalMax"
-
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
   }
 
   case class FocalMin(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], neighborhood: Neighborhood) extends FocalOperation {
     val symbol = "focalMin"
-
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
   }
 
   case class FocalMean(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], neighborhood: Neighborhood) extends FocalOperation {
     val symbol = "focalMean"
-
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
   }
 
   case class FocalMedian(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], neighborhood: Neighborhood) extends FocalOperation {
     val symbol = "focalMedian"
-
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
   }
 
   case class FocalMode(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], neighborhood: Neighborhood) extends FocalOperation {
     val symbol = "focalMode"
-
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
   }
 
   case class FocalSum(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], neighborhood: Neighborhood) extends FocalOperation {
     val symbol = "focalSum"
-
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
   }
 
   case class FocalStdDev(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], neighborhood: Neighborhood) extends FocalOperation {
     val symbol = "focalStdDev"
-
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
   }
 
   sealed trait MapAlgebraLeaf extends MapAlgebraAST {
     val `type`: String
-
     def args: List[MapAlgebraAST] = List.empty
-
     def find(id: UUID): Option[MapAlgebraAST] =
       if (this.id == id) Some(this)
       else None
@@ -157,9 +146,7 @@ object MapAlgebraAST {
   @JsonCodec
   case class Constant(id: UUID, constant: Double, metadata: Option[NodeMetadata]) extends MapAlgebraLeaf {
     val `type` = "const"
-
     def sources: Seq[MapAlgebraAST.MapAlgebraLeaf] = List()
-
     def substitute(substitutions: Map[UUID, MapAlgebraAST]): Option[MapAlgebraAST] = Some(this)
   }
 
@@ -167,14 +154,8 @@ object MapAlgebraAST {
   @JsonCodec
   case class Source(id: UUID, metadata: Option[NodeMetadata]) extends MapAlgebraLeaf {
     val `type` = "src"
-
     def sources: Seq[MapAlgebraAST.MapAlgebraLeaf] = List(this)
-
     def substitute(substitutions: Map[UUID, MapAlgebraAST]): Option[MapAlgebraAST] = Some(this)
-  }
-
-  object Source {
-    def empty: Source = Source(UUID.randomUUID(), None)
   }
 
   case class ToolReference(id: UUID, toolId: UUID) extends MapAlgebraLeaf {

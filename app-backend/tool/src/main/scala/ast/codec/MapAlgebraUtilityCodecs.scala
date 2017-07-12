@@ -41,6 +41,8 @@ trait MapAlgebraUtilityCodecs {
       case "exact" => Exact
       case "greaterThanOrEqualTo" => GreaterThanOrEqualTo
       case "greaterThan" => GreaterThan
+      case unrecognized =>
+        throw new InvalidParameterException(s"'$unrecognized' is not a recognized ClassBoundaryType")
     }
 
   implicit lazy val classBoundaryEncoder: Encoder[ClassBoundaryType] =
@@ -59,6 +61,10 @@ trait MapAlgebraUtilityCodecs {
   implicit val neighborhoodDecoder: Decoder[Neighborhood] = Decoder.instance[Neighborhood] { n =>
     n._type match {
       case Some("square") => n.as[Square]
+      case Some("circle") => n.as[Circle]
+      case Some("nesw") => n.as[Nesw]
+      case Some("wedge") => n.as[Wedge]
+      case Some("annulus") => n.as[Annulus]
       case unrecognized => Left(DecodingFailure(s"Unrecognized neighborhood: $unrecognized", n.history))
     }
   }
@@ -66,6 +72,10 @@ trait MapAlgebraUtilityCodecs {
   implicit val neighborhoodEncoder: Encoder[Neighborhood] = new Encoder[Neighborhood] {
     final def apply(n: Neighborhood): Json = n match {
       case square: Square => square.asJson
+      case circle: Circle => circle.asJson
+      case nesw: Nesw => nesw.asJson
+      case wedge: Wedge => wedge.asJson
+      case annulus: Annulus => annulus.asJson
       case unrecognized =>
         throw new InvalidParameterException(s"Unrecognized neighborhood: $unrecognized")
     }
@@ -75,6 +85,26 @@ trait MapAlgebraUtilityCodecs {
     Decoder.forProduct1("extent")(Square.apply)
   implicit val squareNeighborhoodEncoder: Encoder[Square] =
     Encoder.forProduct2("extent", "type")(op => (op.extent, "square"))
+
+  implicit val circleNeighborhoodDecoder: Decoder[Circle] =
+    Decoder.forProduct1("radius")(Circle.apply)
+  implicit val circleNeighborhoodEncoder: Encoder[Circle] =
+    Encoder.forProduct2("radius", "type")(op => (op.extent, "circle"))
+
+  implicit val neswNeighborhoodDecoder: Decoder[Nesw] =
+    Decoder.forProduct1("extent")(Nesw.apply)
+  implicit val neswNeighborhoodEncoder: Encoder[Nesw] =
+    Encoder.forProduct2("extent", "type")(op => (op.extent, "nesw"))
+
+  implicit val wedgeNeighborhoodDecoder: Decoder[Wedge] =
+    Decoder.forProduct3("radius", "startAngle", "endAngle")(Wedge.apply)
+  implicit val wedgeNeighborhoodEncoder: Encoder[Wedge] =
+    Encoder.forProduct4("radius", "startAngle", "endAngle", "type")(op => (op.radius, op.startAngle, op.endAngle, "wedge"))
+
+  implicit val annulusNeighborhoodDecoder: Decoder[Annulus] =
+    Decoder.forProduct2("innerRadius", "outerRadius")(Annulus.apply)
+  implicit val annulusNeighborhoodEncoder: Encoder[Annulus] =
+    Encoder.forProduct3("innerRadius", "outerRadius", "type")(op => (op.innerRadius, op.outerRadius, "annulus"))
 
   implicit val colorRampDecoder: Decoder[ColorRamp] =
     Decoder[Vector[Int]].map({ ColorRamp(_) })
