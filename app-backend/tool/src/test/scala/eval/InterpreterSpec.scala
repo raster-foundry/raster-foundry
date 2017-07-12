@@ -389,7 +389,7 @@ class InterpreterSpec
   it("should evaluate masking") {
     import geotrellis.proj4._
     requests = Nil
-    val subExtent: Extent = Interpreter.layouts(256)(2).mapTransform(0, 0)
+    val subExtent: Extent = Interpreter.layouts(2).mapTransform(0, 0)
     val mask = MultiPolygon(subExtent.toPolygon)
 
     val src = randomSourceAST

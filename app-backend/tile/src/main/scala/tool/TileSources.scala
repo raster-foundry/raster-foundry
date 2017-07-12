@@ -119,7 +119,7 @@ object TileSources extends LazyLogging {
     r match {
       case scene @ SceneRaster(sceneId, Some(band), maybeND) =>
         implicit val sceneIds = Set(sceneId)
-        if (hasBuffer) {
+        if (hasBuffer)
           (for {
             tl <- LayerCache.layerTile(sceneId, z, SpatialKey(x - 1, y - 1))
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
@@ -142,11 +142,10 @@ object TileSources extends LazyLogging {
           } yield {
             TileWithNeighbors(mm, Some(NeighboringTiles(tl, tm, tr, ml, mr,bl, bm, br)))
           }).value
-        } else {
+        else
           LayerCache.layerTile(sceneId, z, SpatialKey(x, y))
             .map({ tile => TileWithNeighbors(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)), None) })
             .value
-        }
 
       case scene @ SceneRaster(sceneId, None, _) =>
         implicit val sceneIds = Set(sceneId)
@@ -154,33 +153,33 @@ object TileSources extends LazyLogging {
         Future.successful(None)
 
       case project @ ProjectRaster(projId, Some(band), maybeND) =>
-        if (hasBuffer) {
-          val tile: OptionT[Future, TileWithNeighbors] = for {
-            tl <- Mosaic.raw(projId, z, x, y)
+        if (hasBuffer)
+          (for {
+            tl <- Mosaic.raw(projId, z, x - 1, y - 1)
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
-            tm <- Mosaic.raw(projId, z, x, y)
+            tm <- Mosaic.raw(projId, z, x, y - 1)
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
-            tr <- Mosaic.raw(projId, z, x, y)
+            tr <- Mosaic.raw(projId, z, x, y - 1)
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
-            ml <- Mosaic.raw(projId, z, x, y)
+            ml <- Mosaic.raw(projId, z, x - 1, y)
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
             mm <- Mosaic.raw(projId, z, x, y)
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
-            mr <- Mosaic.raw(projId, z, x, y)
+            mr <- Mosaic.raw(projId, z, x + 1, y)
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
-            bl <- Mosaic.raw(projId, z, x, y)
+            bl <- Mosaic.raw(projId, z, x - 1, y + 1)
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
-            bm <- Mosaic.raw(projId, z, x, y)
+            bm <- Mosaic.raw(projId, z, x, y + 1)
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
-            br <- Mosaic.raw(projId, z, x, y)
+            br <- Mosaic.raw(projId, z, x + 1, y + 1)
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
-          } yield TileWithNeighbors(mm, Some(NeighboringTiles(tl, tm, tr, ml, mr,bl, bm, br)))
-          tile.value
-        } else {
+          } yield {
+            TileWithNeighbors(mm, Some(NeighboringTiles(tl, tm, tr, ml, mr,bl, bm, br)))
+          }).value
+        else
           Mosaic.raw(projId, z, x, y)
             .map({ tile => TileWithNeighbors(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)), None) })
             .value
-        }
 
       case project @ ProjectRaster(projId, None, _) =>
         logger.warn(s"Request for $project does not contain band index")
