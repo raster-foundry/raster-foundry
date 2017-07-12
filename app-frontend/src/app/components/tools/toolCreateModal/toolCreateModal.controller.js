@@ -28,14 +28,21 @@ export default class ToolCreateModalController {
     }
 
     createTool() {
+        this.currentError = '';
         this.isProcessing = true;
         this.commonSymbols = [];
-        const expressionTree = mathjs.parse(this.definitionExpression);
-        this.toolBuffer.definition = this.transformNode(expressionTree);
-        this.toolService.createTool(this.toolBuffer).then(tool => {
-            this.dismiss();
-            this.$state.go('lab.run', { toolid: tool.id });
-        });
+        let expressionTree = null;
+        try {
+            expressionTree = mathjs.parse(this.definitionExpression);
+            this.toolBuffer.definition = this.transformNode(expressionTree);
+            this.toolService.createTool(this.toolBuffer).then(tool => {
+                this.dismiss();
+                this.$state.go('lab.run', { toolid: tool.id });
+            });
+        } catch (e) {
+            this.currentError = 'The tool definition is not valid';
+            this.isProcessing = false;
+        }
     }
 
     onVisibilityChange(value) {
@@ -102,7 +109,29 @@ export default class ToolCreateModalController {
     }
 
     isValid() {
-        return this.toolBuffer.title && this.definitionExpression;
+        this.currentParsingError = '';
+        const parensBalanced = this.validateParenDepth();
+        if (!parensBalanced) {
+            this.currentParsingError = 'The parentheses in this expression are not balanced';
+        }
+        return this.toolBuffer.title && this.definitionExpression && parensBalanced;
+    }
+
+    validateParenDepth() {
+        const expressionArray = this.definitionExpression.split('');
+        const result = expressionArray.reduce((acc, c) => {
+            if (acc.continue) {
+                let d = acc.depth;
+                if (c === '(') {
+                    d += 1;
+                } else if (c === ')') {
+                    d -= 1;
+                }
+                return { depth: d, continue: d >= 0};
+            }
+            return acc;
+        }, { depth: 0, continue: true });
+        return result.continue && result.depth === 0;
     }
 
 }

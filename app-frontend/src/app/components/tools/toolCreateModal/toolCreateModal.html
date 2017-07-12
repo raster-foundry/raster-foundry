@@ -47,11 +47,17 @@
                     rows=2
                     ng-disabled="$ctrl.isProcessing"></textarea>
         </div>
+        <div ng-if="$ctrl.currentParsingError" class="color-danger text-center form-group">
+          {{$ctrl.currentParsingError}}
+        </div>
         <div class="form-group">
           <label for="name">Make this tool publicly available?</label>
           <rf-toggle value="$ctrl.toolIsPublic()" on-change="$ctrl.onVisibilityChange(value)">
             <i class="icon-check"></i>
           </rf-toggle>
+        </div>
+        <div ng-if="$ctrl.currentError" class="color-danger text-center form-group">
+          {{$ctrl.currentError}}
         </div>
       </form>
     </div>
