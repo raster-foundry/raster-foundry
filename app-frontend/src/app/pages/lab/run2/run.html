@@ -1,5 +1,9 @@
 <!-- Workflow container -->
   <div class="main with-position">
+    <div class="lab-action-controls" ng-show="!$ctrl.isShowingPreview">
+      <button class="btn btn-light">Add Note</button>
+      <button class="btn btn-secondary" ng-click="$ctrl.createToolRun()">Apply Changes</button>
+    </div>
     <rf-diagram-container2 ng-if="$ctrl.tool"
                            class="with-position"
                            on-preview="$ctrl.showPreview(data)"
@@ -20,11 +24,6 @@
         </div>
         <div class="split-container">
           <button class="btn">{{$ctrl.previewData[1].label}}</button>
-        </div>
-      </div>
-      <div class="preview-info-bar" ng-show="$ctrl.previewLayers.length == 1">
-        <div class="split-container">
-          <button class="btn">{{$ctrl.previewData.label}}</button>
         </div>
       </div>
     </div>
