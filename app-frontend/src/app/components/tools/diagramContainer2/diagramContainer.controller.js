@@ -3,7 +3,7 @@
 const Map = require('es6-map');
 
 const maxZoom = 3;
-const minZoom = 0.1;
+const minZoom = 0.025;
 
 export default class DiagramContainerController {
     constructor( // eslint-disable-line max-params
@@ -133,7 +133,7 @@ export default class DiagramContainerController {
             this.cancelComparison();
         }
         if (this.onWindowResize) {
-            this.$window.removeEventListner('resize', this.onWindowResize);
+            this.$window.removeEventListener('resize', this.onWindowResize);
         }
     }
 
@@ -207,7 +207,28 @@ export default class DiagramContainerController {
                 marginX: padding,
                 marginY: padding
             });
+            this.scaleToContent();
         }
+    }
+
+    scaleToContent() {
+        this.paper.translate(0, 0);
+        this.paper.scale(1);
+
+        let preZoomBBox = this.paper.getContentBBox();
+        let xratio =
+            this.paper.options.width / (preZoomBBox.x * 2 + preZoomBBox.width);
+        let yratio =
+            this.paper.options.height / (preZoomBBox.y * 2 + preZoomBBox.height);
+        let ratio = xratio > yratio ? yratio : xratio;
+        this.setZoom(ratio, {x: 0, y: 0});
+
+        let postZoomBBox = this.paper.getContentBBox();
+        let contentWidth = postZoomBBox.x * 2 + postZoomBBox.width;
+        let contentHeight = postZoomBBox.y * 2 + postZoomBBox.height;
+        let xoffset = this.paper.options.width / 2 - contentWidth / 2;
+        let yoffset = this.paper.options.height / 2 - contentHeight / 2;
+        this.paper.translate(xoffset, yoffset);
     }
 
     onMouseWheel(mouseEvent) {
@@ -223,52 +244,45 @@ export default class DiagramContainerController {
     }
 
     zoomIn(coords) {
-        if (coords) {
-            this.setZoom(this.scale * 1.25, coords);
-        } else {
-            let offset = this.$element.offset();
-            let middle = {
-                x: this.$element[0].offsetWidth / 2,
-                y: this.$element[0].offsetHeight / 2
-            };
-            let middleCoords = this.paper.clientToLocalPoint(
-                middle.x + offset.left, middle.y + offset.top
-            );
-            this.setZoom(this.scale * 1.25, middleCoords);
-        }
+        this.setZoom(this.scale * 1.25, coords);
     }
 
     zoomOut(coords) {
-        if (coords) {
-            this.setZoom(this.scale / 1.25, coords);
-        } else {
+        this.setZoom(this.scale / 1.25, coords);
+    }
+
+    setZoom(zoom, coords) {
+        let zoomCoords = coords;
+
+        let oldScale = this.scale;
+        this.scale = zoom;
+        if (zoom > maxZoom) {
+            this.scale = maxZoom;
+        }
+        if (zoom < minZoom) {
+            this.scale = minZoom;
+        }
+
+        let scaleDelta = this.scale - oldScale;
+        let origin = this.paper.options.origin;
+
+        if (!coords) {
             let offset = this.$element.offset();
             let middle = {
                 x: this.$element[0].offsetWidth / 2,
                 y: this.$element[0].offsetHeight / 2
             };
-            let middleCoords = this.paper.clientToLocalPoint(
+            zoomCoords = this.paper.clientToLocalPoint(
                 middle.x + offset.left, middle.y + offset.top
             );
-            this.setZoom(this.scale / 1.25, middleCoords);
         }
-    }
 
-    setZoom(zoom, coords) {
-        if (zoom < maxZoom && zoom > minZoom) {
-            let oldScale = this.scale;
-            this.scale = zoom;
+        let offsetX = -(zoomCoords.x * scaleDelta) + origin.x;
+        let offsetY = -(zoomCoords.y * scaleDelta) + origin.y;
 
-            let scaleDelta = this.scale - oldScale;
-            let origin = this.paper.options.origin;
-
-            let offsetX = -(coords.x * scaleDelta) + origin.x;
-            let offsetY = -(coords.y * scaleDelta) + origin.y;
-
-            this.paper.scale(this.scale);
-            this.paper.translate(offsetX, offsetY);
-            this.$scope.$evalAsync();
-        }
+        this.paper.scale(this.scale);
+        this.paper.translate(offsetX, offsetY);
+        this.$scope.$evalAsync();
     }
 
     onMouseMove(mouseEvent) {

@@ -7,12 +7,18 @@
   <button class="btn btn-default btn-square btn-small"
           title="Zoom In"
           ng-click="$ctrl.zoomIn()">
-    <i class="icon-plus"></i>
+    <span class="icon-plus"></span>
   </button>
   <div class="map-zoom" title="Current Zoom">{{($ctrl.scale * 100).toFixed(0)}}%</div>
   <button class="btn btn-default btn-square btn-small"
           title="Zoom Out"
           ng-click="$ctrl.zoomOut()">
-    <i class="icon-minus"></i>
+    <spam class="icon-minus"></span>
+  </button>
+  <div class="filler"></div>
+  <button class="btn btn-default btn-square btn-small"
+          title="Zoom to Fit"
+          ng-click="$ctrl.scaleToContent()">
+    <span class="icon-resize-full"></span>
   </button>
 </div>
