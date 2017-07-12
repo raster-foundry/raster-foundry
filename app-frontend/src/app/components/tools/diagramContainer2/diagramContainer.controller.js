@@ -2,6 +2,8 @@
 
 const Map = require('es6-map');
 
+const maxZoom = 3;
+const minZoom = 0.1;
 
 export default class DiagramContainerController {
     constructor( // eslint-disable-line max-params
@@ -253,17 +255,20 @@ export default class DiagramContainerController {
     }
 
     setZoom(zoom, coords) {
-        let oldScale = this.scale;
-        this.scale = zoom;
+        if (zoom < maxZoom && zoom > minZoom) {
+            let oldScale = this.scale;
+            this.scale = zoom;
 
-        let scaleDelta = this.scale - oldScale;
-        let origin = this.paper.options.origin;
+            let scaleDelta = this.scale - oldScale;
+            let origin = this.paper.options.origin;
 
-        let offsetX = -(coords.x * scaleDelta) + origin.x;
-        let offsetY = -(coords.y * scaleDelta) + origin.y;
+            let offsetX = -(coords.x * scaleDelta) + origin.x;
+            let offsetY = -(coords.y * scaleDelta) + origin.y;
 
-        this.paper.scale(this.scale);
-        this.paper.translate(offsetX, offsetY);
+            this.paper.scale(this.scale);
+            this.paper.translate(offsetX, offsetY);
+            this.$scope.$evalAsync();
+        }
     }
 
     onMouseMove(mouseEvent) {
