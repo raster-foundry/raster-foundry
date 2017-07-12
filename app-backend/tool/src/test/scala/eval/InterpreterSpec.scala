@@ -109,7 +109,7 @@ class InterpreterSpec
   }
 
   it("interpretPure - multiple errors") {
-    val ast: MapAlgebraAST = Addition(List(Source.empty), UUID.randomUUID, None)
+    val ast: MapAlgebraAST = Addition(List(randomSourceAST), UUID.randomUUID, None)
 
     Interpreter.interpretPure[Unit](ast, Map.empty) match {
       case Invalid(nel) => nel.size shouldBe 2
@@ -481,9 +481,10 @@ class InterpreterSpec
     val ret = tms(1, 0, 0)
     val op = Await.result(ret, 10.seconds) match {
       case Valid(lazytile) =>
-        val tile = lazytile.evaluate.get
+        val tile = lazytile.evaluateDouble.get
         requests.length should be (1)
         tile.get(21, 32) should be (tile.get(20, 32) + 1)
+        tile.get(0, 0) should be (21931)
       case i@Invalid(_) =>
         fail(s"$i")
     }
@@ -559,6 +560,32 @@ class InterpreterSpec
         val tile = lazytile.evaluate.get
         requests.length should be (1)
         tile.get(0, 0) should be (197385)
+      case i@Invalid(_) =>
+        fail(s"$i")
+    }
+  }
+
+  it("should evaluate focal stddev") {
+    import geotrellis.raster.mapalgebra.focal._
+    requests = Nil
+    val src = randomSourceAST
+    val fstddev = FocalStdDev(List(src), UUID.randomUUID, None, Square(1))
+    val tms = Interpreter.interpretTMS(
+      ast = fstddev,
+      sourceMapping = Map(src.id -> tileSource(1)),
+      overrides = Map.empty,
+      tileSource = ascendingSource,
+      256
+    )
+    println("Simple focal standard deviation calculation: ", fstddev.asJson.noSpaces)
+
+    val ret = tms(1, 0, 0)
+    Await.result(ret, 10.seconds) match {
+      case Valid(lazytile) =>
+        val tile = lazytile.evaluateDouble.get
+        requests.length should be (1)
+        // GeoTrellis uses the population StdDev (~ 30713) rather than the sample StdDev (~ 32576)
+        tile.get(0, 0) should be (30713)
       case i@Invalid(_) =>
         fail(s"$i")
     }

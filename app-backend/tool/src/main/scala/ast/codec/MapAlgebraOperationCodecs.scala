@@ -143,7 +143,7 @@ trait MapAlgebraOperationCodecs {
 
   implicit lazy val decodeFocalSum: Decoder[MapAlgebraAST.FocalSum] =
     Decoder.forProduct4("args", "id", "metadata", "neighborhood")(MapAlgebraAST.FocalSum.apply)
-  implicit lazy val encodeFocaSum: Encoder[MapAlgebraAST.FocalSum] =
+  implicit lazy val encodeFocalSum: Encoder[MapAlgebraAST.FocalSum] =
     Encoder.forProduct5("apply", "args", "id", "metadata", "neighborhood")(op => (op.symbol, op.args, op.id, op.metadata, op.neighborhood))
 
   implicit lazy val decodeFocalStdDev: Decoder[MapAlgebraAST.FocalStdDev] =

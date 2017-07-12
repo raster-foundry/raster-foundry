@@ -8,6 +8,7 @@ import org.scalacheck._
 import org.scalacheck.Gen._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Prop.forAll
+import geotrellis.raster.mapalgebra.focal._
 import geotrellis.raster.histogram._
 import geotrellis.raster.render._
 import geotrellis.raster._
@@ -120,11 +121,34 @@ object Generators {
     MapAlgebraAST.Masking(args, id, nmd, mp)
   }
 
+  def genFocalOpAST(depth: Int) = for {
+    constructor  <- Gen.lzy(Gen.oneOf(
+                      MapAlgebraAST.FocalMax.apply _,
+                      MapAlgebraAST.FocalMin.apply _,
+                      MapAlgebraAST.FocalStdDev.apply _,
+                      MapAlgebraAST.FocalMean.apply _,
+                      MapAlgebraAST.FocalMedian.apply _,
+                      MapAlgebraAST.FocalMode.apply _,
+                      MapAlgebraAST.FocalSum.apply _
+                    ))
+    args         <- containerOfN[List, MapAlgebraAST](1, genMapAlgebraAST(depth))
+    id           <- arbitrary[UUID]
+    nmd          <- Gen.option(genNodeMetadata)
+    neighborhood <- Gen.oneOf(
+                      Square(123),
+                      Circle(123.4),
+                      Nesw(123),
+                      Wedge(42.2, 45.1, 51.3),
+                      Annulus(123.0, 123.4)
+                    )
+  } yield constructor(args, id, nmd, neighborhood)
+
   // TODO: If `genMaskingAST` is included, AST generation diverges!
   def genOpAST(depth: Int) = Gen.frequency(
     (5 -> genBinaryOpAST(depth)),
 //    (2 -> genMaskingAST(depth)),
-    (1 -> genClassificationAST(depth))
+    (1 -> genClassificationAST(depth)),
+    (2 -> genFocalOpAST(depth))
   )
 
   def genLeafAST = Gen.oneOf(genConstantAST, genSourceAST, genRefAST)
