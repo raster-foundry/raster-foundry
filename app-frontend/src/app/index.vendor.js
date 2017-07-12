@@ -32,6 +32,8 @@ import 'ng-rollbar';
 import 'ng-file-upload';
 import 'angular-filter';
 import 'angular-tooltips';
+import 'mathjs';
+import 'angular-uuid4';
 
 // local scripts
 // import '../assets/js/...';

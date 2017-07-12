@@ -1736,3 +1736,7 @@ rf-export-item {
 .joint-element {
   cursor: drag;
 }
+
+.form-group label + rf-toggle {
+  margin-left: 1rem;
+}

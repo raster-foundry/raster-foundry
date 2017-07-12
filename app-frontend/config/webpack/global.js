@@ -194,6 +194,11 @@ module.exports = function (_path) {
                     'expose?moment'
                 ]
             }, {
+                test: require.resolve('mathjs'),
+                loaders: [
+                    'expose?mathjs'
+                ]
+            }, {
                 test: /node_modules[\\\/]auth0-lock[\\\/].*\.js$/,
                 loaders: ['transform-loader/cacheable?brfs',
                           'transform-loader/cacheable?packageify']
@@ -226,7 +231,8 @@ module.exports = function (_path) {
             new webpack.ProvidePlugin({
                 $: 'jquery',
                 jQuery: 'jquery',
-                L: 'leaflet'
+                L: 'leaflet',
+                mathjs: 'mathjs'
             }),
             new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
             new webpack.optimize.AggressiveMergingPlugin({
