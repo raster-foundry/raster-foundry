@@ -17,6 +17,16 @@ sealed trait MapAlgebraAST extends Product with Serializable {
   def find(id: UUID): Option[MapAlgebraAST]
   def sources: Seq[MapAlgebraAST.MapAlgebraLeaf]
   def substitute(substitutions: Map[UUID, MapAlgebraAST]): Option[MapAlgebraAST]
+  def bufferedSources(buffered: Boolean = false): Set[UUID] = {
+    val bufferList = this match {
+      case f: MapAlgebraAST.FocalOperation => f.args.flatMap(_.bufferedSources(true))
+      case op: MapAlgebraAST.Operation => op.args.flatMap(_.bufferedSources(buffered))
+      case MapAlgebraAST.Source(id, _) => if (buffered) List(id) else List()
+      case leaf: MapAlgebraAST.MapAlgebraLeaf => List()
+      case _ => List()
+    }
+    bufferList.toSet
+  }
 }
 
 object MapAlgebraAST {

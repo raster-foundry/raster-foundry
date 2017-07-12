@@ -21,7 +21,7 @@ you're attempting isn't already possible with existing primitives.
 I like the cut of your jib.
 
 **Task 1:** Decide if your Operation is also a `Unary` op. Will it only ever
-take one child argument? (Focal operations, for example, are all unary)
+take one child argument? (All focal operations are, for example, unary)
 
 *If no*, your new op can extend the `Operation` type in
 [MapAlgebaAST.scala](https://github.com/azavea/raster-foundry/blob/develop/app-backend/tool/src/main/scala/ast/MapAlgebraAST.scala):
@@ -32,10 +32,10 @@ case class BestOp(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMeta
 }
 ```
 
-*If yes*, you must extend `UnaryOp` instead.
+*If yes*, you must extend `UnaryOperation` or `FocalOperation` instead.
 
 ```scala
-case class BestOp(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends UnaryOp {
+case class BestOp(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends UnaryOperation {
   val symbol = "bestop"
 }
 ```

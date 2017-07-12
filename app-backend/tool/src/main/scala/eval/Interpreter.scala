@@ -24,8 +24,8 @@ object Interpreter extends LazyLogging {
   /** The Interpreted type is either a list of failures or a compiled MapAlgebra operation */
   type Interpreted[A] = ValidatedNel[InterpreterError, A]
 
-  def layouts(tileSize: Int): Array[LayoutDefinition] = (0 to 30).map(n =>
-    ZoomedLayoutScheme.layoutForZoom(n, WebMercator.worldExtent, tileSize)
+  val layouts: Array[LayoutDefinition] = (0 to 30).map(n =>
+    ZoomedLayoutScheme.layoutForZoom(n, WebMercator.worldExtent, 256)
   ).toArray
 
   def overrideParams(
@@ -228,7 +228,7 @@ object Interpreter extends LazyLogging {
   )(implicit ec: ExecutionContext): (Int, Int, Int) => Future[Interpreted[LazyTile]] = {
 
     (z: Int, x: Int, y: Int) => {
-      lazy val extent = layouts(256)(z).mapTransform(SpatialKey(x,y))
+      lazy val extent = layouts(z).mapTransform(SpatialKey(x,y))
 
       @SuppressWarnings(Array("TraversableHead"))
       def eval(tiles: Map[UUID, TileWithNeighbors], ast: MapAlgebraAST, buffer: Int): LazyTile = ast match {

@@ -46,7 +46,7 @@ case class AttributeStoreFetchError(id: UUID) extends InterpreterError {
 
 /** An error encountered when a bound parameter's source can't be resolved */
 case class RasterRetrievalError(id: UUID, refId: UUID) extends InterpreterError {
-  def repr = s"Unable to retrieve raster for Scene ${refId} on AST node ${id}"
+  def repr = s"Unable to retrieve raster for ${refId} on AST node ${id}"
 }
 
 case class DatabaseError(id: UUID) extends InterpreterError {

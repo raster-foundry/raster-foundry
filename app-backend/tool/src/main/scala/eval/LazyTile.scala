@@ -309,36 +309,43 @@ object LazyTile {
     def bind(args: Map[Var, LazyTile]): LazyTile = this
   }
 
+  @SuppressWarnings(Array("OptionGet"))
   case class FocalMax(left: LazyTile, n: Neighborhood, gridbounds: Option[GridBounds]) extends FocalOperation {
     lazy val intTile = focal.Max(left.evaluate.get, n, gridbounds)
     lazy val dblTile = focal.Max(left.evaluateDouble.get, n, gridbounds)
   }
 
+  @SuppressWarnings(Array("OptionGet"))
   case class FocalMin(left: LazyTile, n: Neighborhood, gridbounds: Option[GridBounds]) extends FocalOperation {
     lazy val intTile = focal.Min(left.evaluate.get, n, gridbounds)
     lazy val dblTile = focal.Min(left.evaluateDouble.get, n, gridbounds)
   }
 
+  @SuppressWarnings(Array("OptionGet"))
   case class FocalMean(left: LazyTile, n: Neighborhood, gridbounds: Option[GridBounds]) extends FocalOperation {
     lazy val intTile = focal.Mean(left.evaluate.get, n, gridbounds)
     lazy val dblTile = focal.Mean(left.evaluateDouble.get, n, gridbounds)
   }
 
+  @SuppressWarnings(Array("OptionGet"))
   case class FocalMedian(left: LazyTile, n: Neighborhood, gridbounds: Option[GridBounds]) extends FocalOperation {
     lazy val intTile = focal.Median(left.evaluate.get, n, gridbounds)
     lazy val dblTile = focal.Median(left.evaluateDouble.get, n, gridbounds)
   }
 
+  @SuppressWarnings(Array("OptionGet"))
   case class FocalMode(left: LazyTile, n: Neighborhood, gridbounds: Option[GridBounds]) extends FocalOperation {
     lazy val intTile = focal.Mode(left.evaluate.get, n, gridbounds)
     lazy val dblTile = focal.Mode(left.evaluateDouble.get, n, gridbounds)
   }
 
+  @SuppressWarnings(Array("OptionGet"))
   case class FocalSum(left: LazyTile, n: Neighborhood, gridbounds: Option[GridBounds]) extends FocalOperation {
     lazy val intTile = focal.Sum(left.evaluate.get, n, gridbounds)
     lazy val dblTile = focal.Sum(left.evaluateDouble.get, n, gridbounds)
   }
 
+  @SuppressWarnings(Array("OptionGet"))
   case class FocalStdDev(left: LazyTile, n: Neighborhood, gridbounds: Option[GridBounds]) extends FocalOperation {
     lazy val intTile = focal.StandardDeviation(left.evaluate.get, n, gridbounds)
     lazy val dblTile = focal.StandardDeviation(left.evaluateDouble.get, n, gridbounds)
