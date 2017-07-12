@@ -139,7 +139,7 @@ object TileSources extends LazyLogging {
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
             br <- LayerCache.layerTile(sceneId, z, SpatialKey(x + 1, y + 1))
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
-          } yield TileWithNeighbors(mm, Some(Buffers(tl, tm, tr, ml, mr,bl, bm, br)))
+          } yield TileWithNeighbors(mm, Some(NeighboringTiles(tl, tm, tr, ml, mr,bl, bm, br)))
           tile.value
         } else {
           LayerCache.layerTile(sceneId, z, SpatialKey(x, y))
@@ -173,7 +173,7 @@ object TileSources extends LazyLogging {
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
             br <- Mosaic.raw(projId, z, x, y)
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
-          } yield TileWithNeighbors(mm, Some(Buffers(tl, tm, tr, ml, mr,bl, bm, br)))
+          } yield TileWithNeighbors(mm, Some(NeighboringTiles(tl, tm, tr, ml, mr,bl, bm, br)))
           tile.value
         } else {
           Mosaic.raw(projId, z, x, y)
