@@ -115,12 +115,12 @@ object TileSources extends LazyLogging {
   }
 
   /** This source provides support for z/x/y TMS tiles */
-  def cachedTmsSource(r: RFMLRaster, buffer: Boolean, z: Int, x: Int, y: Int)(implicit database: Database): Future[Option[TileWithNeighbors]] =
+  def cachedTmsSource(r: RFMLRaster, hasBuffer: Boolean, z: Int, x: Int, y: Int)(implicit database: Database): Future[Option[TileWithNeighbors]] =
     r match {
       case scene @ SceneRaster(sceneId, Some(band), maybeND) =>
         implicit val sceneIds = Set(sceneId)
-        if (buffer) {
-          val tile: OptionT[Future, TileWithNeighbors] = for {
+        if (hasBuffer) {
+          (for {
             tl <- LayerCache.layerTile(sceneId, z, SpatialKey(x - 1, y - 1))
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
             tm <- LayerCache.layerTile(sceneId, z, SpatialKey(x, y - 1))
@@ -139,8 +139,9 @@ object TileSources extends LazyLogging {
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
             br <- LayerCache.layerTile(sceneId, z, SpatialKey(x + 1, y + 1))
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
-          } yield TileWithNeighbors(mm, Some(NeighboringTiles(tl, tm, tr, ml, mr,bl, bm, br)))
-          tile.value
+          } yield {
+            TileWithNeighbors(mm, Some(NeighboringTiles(tl, tm, tr, ml, mr,bl, bm, br)))
+          }).value
         } else {
           LayerCache.layerTile(sceneId, z, SpatialKey(x, y))
             .map({ tile => TileWithNeighbors(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)), None) })
@@ -153,7 +154,7 @@ object TileSources extends LazyLogging {
         Future.successful(None)
 
       case project @ ProjectRaster(projId, Some(band), maybeND) =>
-        if (buffer) {
+        if (hasBuffer) {
           val tile: OptionT[Future, TileWithNeighbors] = for {
             tl <- Mosaic.raw(projId, z, x, y)
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
