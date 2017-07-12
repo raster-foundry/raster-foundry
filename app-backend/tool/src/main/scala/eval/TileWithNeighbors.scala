@@ -16,25 +16,23 @@ case class NeighboringTiles(
   br: Tile
 )
 
-case class TileWithNeighbors(centerTile: Tile, buffers: Option[NeighboringTiles], options: TileWithNeighbors.Options = TileWithNeighbors.Options.DEFAULT) {
+case class TileWithNeighbors(centerTile: Tile, buffers: Option[NeighboringTiles]) {
   def withBuffer(buffer: Int): Tile = buffers match {
     case Some(buf) =>
       if (buffer > 0) {
-        val composite = CompositeTile(
+        CompositeTile(
           Seq(
             buf.tl, buf.tm, buf.tr,
             buf.ml, centerTile, buf.mr,
             buf.bl, buf.bm, buf.br
           ),
-          TileLayout(3, 3, options.tileCols, options.tileRows)
+          TileLayout(3, 3, centerTile.cols, centerTile.rows)
         ).crop(
-          options.tileCols - buffer,
-          options.tileRows - buffer,
-          (options.tileCols * 2 - 1) + buffer,
-          (options.tileRows * 2 - 1) + buffer
+          centerTile.cols - buffer,
+          centerTile.rows - buffer,
+          centerTile.cols * 2 + buffer - 1,
+          centerTile.rows * 2 + buffer - 1
         )
-        println("composite...", buffer, composite.cols, composite.rows)
-        composite
       }
       else
         centerTile
@@ -45,9 +43,3 @@ case class TileWithNeighbors(centerTile: Tile, buffers: Option[NeighboringTiles]
   }
 }
 
-object TileWithNeighbors {
-  case class Options(tileCols: Int, tileRows: Int)
-  object Options {
-    val DEFAULT = Options(256, 256)
-  }
-}

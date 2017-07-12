@@ -254,76 +254,62 @@ object Interpreter extends LazyLogging {
         case Addition(args, id, _) =>
           logger.debug(s"case addition at $id")
           args.map(eval(tiles, _, buffer)).reduce(_ + _)
-
         case Subtraction(args, id, _) =>
           logger.debug(s"case subtraction at $id")
           args.map(eval(tiles, _, buffer)).reduce(_ - _)
-
         case Multiplication(args, id, _) =>
           logger.debug(s"case multiplication at $id")
           args.map(eval(tiles, _, buffer)).reduce(_ * _)
-
         case Division(args, id, _) =>
           logger.debug(s"case division at $id")
           args.map(eval(tiles, _, buffer)).reduce(_ / _)
-
         case Max(args, id, _) =>
           logger.debug(s"case max at $id")
           args.map(eval(tiles, _, buffer)).reduce(_ max _)
-
         case Min(args, id, _) =>
           logger.debug(s"case min at $id")
           args.map(eval(tiles, _, buffer)).reduce(_ min _)
-
         case Classification(args, id, _, breaks) =>
           logger.debug(s"case classification at $id with breakmap ${breaks.toBreakMap}")
           eval(tiles, args.head, buffer).classify(breaks.toBreakMap)
-
         case Masking(args, id, _, mask) =>
           eval(tiles, args.head, buffer).mask(extent, mask)
 
         /* --- FOCAL OPERATIONS --- */
         case f: FocalOperation =>
-          val gridbounds = GridBounds(
-            f.neighborhood.extent,
-            f.neighborhood.extent,
-            expectedTileSize + buffer * 2 + f.neighborhood.extent,
-            expectedTileSize + buffer * 2 + f.neighborhood.extent
-          )
-          println("GB", gridbounds.width, gridbounds.height)
-
           f match {
-            case FocalMax(args, id, _, _) =>
+            case FocalMax(args, id, _, n) =>
+              val gridbounds = GridBounds(n.extent, n.extent, expectedTileSize - 1 + buffer * 2 + n.extent, expectedTileSize - 1 + buffer * 2 + n.extent)
               logger.debug(s"case focal maximum at $id with bounds $gridbounds")
               eval(tiles, args.head, buffer + f.neighborhood.extent)
                 .focalMax(f.neighborhood, Some(gridbounds))
-
-            case FocalMin(args, id, _, _) =>
+            case FocalMin(args, id, _, n) =>
+              val gridbounds = GridBounds(n.extent, n.extent, expectedTileSize - 1 + buffer * 2 + n.extent, expectedTileSize - 1 + buffer * 2 + n.extent)
               logger.debug(s"case focal minimum at $id with bounds $gridbounds")
               eval(tiles, args.head, buffer + f.neighborhood.extent)
                 .focalMin(f.neighborhood, Some(gridbounds))
-
-            case FocalMean(args, id, _, _) =>
+            case FocalMean(args, id, _, n) =>
+              val gridbounds = GridBounds(n.extent, n.extent, expectedTileSize - 1 + buffer * 2 + n.extent, expectedTileSize - 1 + buffer * 2 + n.extent)
               logger.debug(s"case focal mean at $id with bounds $gridbounds")
               eval(tiles, args.head, buffer + f.neighborhood.extent)
                 .focalMean(f.neighborhood, Some(gridbounds))
-
-            case FocalMedian(args, id, _, _) =>
+            case FocalMedian(args, id, _, n) =>
+              val gridbounds = GridBounds(n.extent, n.extent, expectedTileSize - 1 + buffer * 2 + n.extent, expectedTileSize - 1 + buffer * 2 + n.extent)
               logger.debug(s"case focal median at $id with bounds $gridbounds")
               eval(tiles, args.head, buffer + f.neighborhood.extent)
                 .focalMedian(f.neighborhood, Some(gridbounds))
-
-            case FocalMode(args, id, _, _) =>
+            case FocalMode(args, id, _, n) =>
+              val gridbounds = GridBounds(n.extent, n.extent, expectedTileSize - 1 + buffer * 2 + n.extent, expectedTileSize - 1 + buffer * 2 + n.extent)
               logger.debug(s"case focal mode at $id with bounds $gridbounds")
               eval(tiles, args.head, buffer + f.neighborhood.extent)
                 .focalMode(f.neighborhood, Some(gridbounds))
-
-            case FocalSum(args, id, _, _) =>
+            case FocalSum(args, id, _, n) =>
+              val gridbounds = GridBounds(n.extent, n.extent, expectedTileSize - 1 + buffer * 2 + n.extent, expectedTileSize - 1 + buffer * 2 + n.extent)
               logger.debug(s"case focal sum at $id with bounds $gridbounds")
               eval(tiles, args.head, buffer + f.neighborhood.extent)
                 .focalSum(f.neighborhood, Some(gridbounds))
-
-            case FocalStdDev(args, id, _, _) =>
+            case FocalStdDev(args, id, _, n) =>
+              val gridbounds = GridBounds(n.extent, n.extent, expectedTileSize - 1 + buffer * 2 + n.extent, expectedTileSize - 1 + buffer * 2 + n.extent)
               logger.debug(s"case focal standard deviation at $id with bounds $gridbounds")
               eval(tiles, args.head, buffer + f.neighborhood.extent)
                 .focalStdDev(f.neighborhood, Some(gridbounds))

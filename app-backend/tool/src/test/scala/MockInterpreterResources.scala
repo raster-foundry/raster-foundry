@@ -75,36 +75,7 @@ trait MockInterpreterResources extends TileBuilders with RasterMatchers {
                 ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
                 ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
                 ascending.interpretAs(maybeND.getOrElse(ascending.cellType))
-              )),
-              TileWithNeighbors.Options(256, 256)
-            ))
-          }
-        else
-          Future { Some(TileWithNeighbors(ascending.interpretAs(maybeND.getOrElse(ascending.cellType)), None)) }
-      case _ => Future.failed(new Exception("can't find that"))
-    }
-  }
-
-  val ascendingSourcep = (raster: RFMLRaster, buffer: Boolean, z: Int, x: Int, y: Int) => {
-    val ascending = IntArrayTile(1 to 16 toArray, 4, 4)
-    raster match {
-      case r@SceneRaster(id, Some(band), maybeND) =>
-        requests = raster :: requests
-        if (buffer)
-          Future {
-            Some(TileWithNeighbors(
-              ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
-              Some(NeighboringTiles(
-                ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
-                ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
-                ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
-                ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
-                ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
-                ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
-                ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
-                ascending.interpretAs(maybeND.getOrElse(ascending.cellType))
-              )),
-              TileWithNeighbors.Options(4, 4)
+              ))
             ))
           }
         else
