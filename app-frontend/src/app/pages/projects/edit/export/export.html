@@ -77,23 +77,6 @@
     </div>
     <i class="icon-info"></i>
   </li>
-  <li class="separator">
-    <span class="label">Export type</span>
-    <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
-      <a class="btn dropdown-label" >
-       {{$ctrl.exportType.label}}
-      </a>
-      <button type="button" class="btn btn-default dropdown-toggle">
-        <i class="icon-caret-down"></i>
-      </button>
-      <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
-        <li ng-repeat="exportType in $ctrl.exportTypes" rol="menuitem">
-          <a ng-click="$ctrl.onExportTypeChange(exportType)">{{exportType.label}}</a>
-        </li>
-      </ul>
-    </div>
-    <i class="icon-info"></i>
-  </li>
 </ul>
 <div class="sidebar-content" ng-if="$ctrl.project">
   <button class="btn btn-primary btn-block" type="button" ng-click="$ctrl.startExport()" ng-if="!$ctrl.isExporting" ng-disabled="!$ctrl.validate()">
