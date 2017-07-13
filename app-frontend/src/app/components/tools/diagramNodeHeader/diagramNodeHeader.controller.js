@@ -5,9 +5,6 @@ export default class DiagramNodeHeaderController {
         this.$scope = $scope;
     }
 
-    $onInit() {
-    }
-
     $onChanges(changes) {
         if (changes.model && changes.model.currentValue) {
             this.cellType = this.model.get('cellType');
@@ -16,8 +13,12 @@ export default class DiagramNodeHeaderController {
         }
     }
 
-    isFunctionType() {
-        return this.cellType === 'Function';
+    get typeMap() {
+        return {
+            'function': 'Function',
+            'src': 'Input',
+            'const': 'Constant'
+        };
     }
 
     toggleMenu() {

@@ -1681,10 +1681,13 @@ rf-export-item {
   border-radius: 5px 0 0 0;
   width: 1em;
   &.node-type-input {
-    background: $blue;
+    background: $node-blue;
   }
   &.node-type-function {
-    background: $green;
+    background: $node-green;
+  }
+  &.node-type-constant {
+    background: $shade-light;
   }
 }
 
@@ -1692,7 +1695,14 @@ rf-input-node {
   flex: 1;
   cursor: auto;
   pointer-events: auto;
-  padding: 1em
+  padding: 1em;
+}
+
+rf-constant-node {
+  flex: 1;
+  cursor: auto;
+  pointer-events: auto;
+  padding: 1em;
 }
 
 rf-operation-node {

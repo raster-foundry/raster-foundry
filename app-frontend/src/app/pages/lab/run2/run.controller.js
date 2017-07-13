@@ -193,10 +193,17 @@ export default class LabRunController {
         });
     }
 
-    onExecutionParametersChange(sourceId, project, band) {
+    onExecutionParametersChange(sourceId, project, band, override) {
         if (project && typeof band === 'number' && band >= 0) {
             this.toolRun.executionParameters.sources[sourceId].id = project.id;
             this.toolRun.executionParameters.sources[sourceId].band = band;
+            this.onParameterChange();
+        }
+        if (override) {
+            if (!this.toolRun.executionParameters.overrides) {
+                this.toolRun.executionParameters.overrides = {};
+            }
+            this.toolRun.executionParameters.overrides[override.id] = {constant: override.value};
             this.onParameterChange();
         }
     }

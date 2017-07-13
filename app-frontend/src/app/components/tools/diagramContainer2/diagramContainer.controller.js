@@ -49,14 +49,19 @@ export default class DiagramContainerController {
                     data-menu-options="menuOptions"
                   ></rf-diagram-node-header>
                   <rf-input-node
-                    ng-if="model.get('cellType') === 'Input'"
+                    ng-if="model.get('cellType') === 'src'"
                     data-model="model"
                     on-change="onChange({sourceId: sourceId, project: project, band: band})"
                   ></rf-input-node>
                   <rf-operation-node
-                    ng-if="model.get('cellType') === 'Function'"
+                    ng-if="model.get('cellType') === 'function'"
                     data-model="model"
                   ></rf-operation-node>
+                  <rf-constant-node
+                    ng-if="model.get('cellType') === 'const'"
+                    data-model="model"
+                    on-change="onChange({override: override})"
+                  ></rf-constant-node>
                 </div>`,
             initialize: function () {
                 _.bindAll(this, 'updateBox');
@@ -393,12 +398,14 @@ export default class DiagramContainerController {
                 let rectAttrs = Object.assign({
                     id: input.id,
                     label: this.getToolLabel(input),
+                    type: input.type ? input.type : 'function',
                     inputs: rectInputs,
                     outputs: rectOutputs,
                     tag: input.tag,
                     ports: ports
                 }, {
-                    operation: input.apply
+                    operation: input.apply,
+                    value: input.constant
                 });
 
                 rectangle = this.constructRect(rectAttrs);
@@ -447,7 +454,7 @@ export default class DiagramContainerController {
                 width: this.cellSize[0],
                 height: this.cellSize[1]
             },
-            cellType: config.inputs ? 'Function' : 'Input',
+            cellType: config.type,
             title: config.label || config.id.toString(),
             operation: config.operation,
             contextMenu: this.defaultContextMenu,
@@ -467,7 +474,8 @@ export default class DiagramContainerController {
                 items: config.ports
             }
         }, {
-            onChange: this.onParameterChange
+            onChange: this.onParameterChange,
+            value: config.value
         }));
     }
 
