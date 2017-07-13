@@ -13,6 +13,8 @@ import com.azavea.rf.database.query._
 import com.azavea.rf.database.{ActionRunner, Database}
 import com.azavea.rf.datamodel._
 import io.circe._
+import io.circe.parser._
+import io.circe.syntax._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 
@@ -65,20 +67,26 @@ trait UploadRoutes extends Authentication
   def createUpload: Route = authenticate { user =>
     entity(as[Upload.Create]) { newUpload =>
       authorize(user.isInRootOrSameOrganizationAs(newUpload)) {
-        val uploadToInsert = (newUpload.uploadType, newUpload.source) match {
+        val decodedMetadata = decode[UploadMetadata](newUpload.metadata.asJson.noSpaces) match {
+          case Left(_) =>
+            throw new IllegalStateException(s"Could not parse  ${newUpload.metadata} to uploadMetadata")
+          case Right(data) => data
+        }
+        val withParsedMetadata = newUpload.copy(sceneMetadata = decodedMetadata)
+        val uploadToInsert = (withParsedMetadata.uploadType, withParsedMetadata.source) match {
           case (UploadType.S3, Some(source)) => {
-            if (newUpload.files.nonEmpty) newUpload
+            if (withParsedMetadata.files.nonEmpty) withParsedMetadata
             else {
               val files = listAllowedFilesInS3Source(source)
-              if (files.nonEmpty) newUpload.copy(files = files)
+              if (files.nonEmpty) withParsedMetadata.copy(files = files)
               else throw new IllegalStateException("No acceptable files found in the provided source")
             }
           }
           case (UploadType.S3, None) => {
-            if (newUpload.files.nonEmpty) newUpload
+            if (withParsedMetadata.files.nonEmpty) withParsedMetadata
             else throw new IllegalStateException("S3 upload must specify a source if no files are specified")
           }
-          case (UploadType.Local, _) => newUpload
+          case (UploadType.Local, _) => withParsedMetadata
           case _ => throw new IllegalStateException("Unsupported import type")
         }
 

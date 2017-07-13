@@ -25,11 +25,6 @@ class Uploads(_tableTag: Tag) extends Table[Upload](_tableTag, "uploads")
     with TimestampFields
     with OrganizationFkFields
 {
-  def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, owner,
-    organizationId, uploadStatus, fileType, uploadType, files,
-    datasource, metadata, visibility, projectId, source) <> (
-    Upload.tupled, Upload.unapply
-  )
 
   val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
   val createdAt: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("created_at")
@@ -47,6 +42,97 @@ class Uploads(_tableTag: Tag) extends Table[Upload](_tableTag, "uploads")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
   val projectId: Rep[Option[java.util.UUID]] = column[Option[java.util.UUID]]("project_id", O.Default(None))
   val source: Rep[Option[String]] = column[Option[String]]("source", O.Default(None))
+  val sceneCloudCover: Rep[Option[Float]] = column[Option[Float]]("scene_metadata")
+  val sceneAcquisitionDate: Rep[Option[Timestamp]] = column[Option[Timestamp]]("scene_acquisition_date")
+
+  type UploadTupleType = (
+    java.util.UUID,
+    java.sql.Timestamp,
+    String,
+    java.sql.Timestamp,
+    String,
+    String,
+    java.util.UUID,
+    UploadStatus,
+    FileType,
+    UploadType,
+    List[String],
+    java.util.UUID,
+    Json,
+    Visibility,
+    Option[java.util.UUID],
+    Option[String],
+    UploadMetadata.TupleType
+  )
+
+  def toModel: UploadTupleType => Upload = { uploadTuple =>
+    Upload(
+      uploadTuple._1, // id
+      uploadTuple._2, // createdAt
+      uploadTuple._3, // createdBy
+      uploadTuple._4, // modifiedAt
+      uploadTuple._5, // modifiedBy
+      uploadTuple._6, // owner
+      uploadTuple._7, // organizationId
+      uploadTuple._8, // uploadStatus
+      uploadTuple._9, // fileType
+      uploadTuple._10, // uploadType
+      uploadTuple._11, // files
+      uploadTuple._12, // datasource
+      uploadTuple._13, // metadata
+      uploadTuple._14, // visibility
+      uploadTuple._15, // projectId
+      uploadTuple._16, // source
+      UploadMetadata.tupled.apply(uploadTuple._17): UploadMetadata // sceneMetadata
+    )
+  }
+
+  @SuppressWarnings(Array("OptionGet"))
+  def toTuple: Upload => Option[UploadTupleType] = { upload =>
+    Some {
+      (
+        upload.id,
+        upload.createdAt,
+        upload.createdBy,
+        upload.modifiedAt,
+        upload.modifiedBy,
+        upload.owner,
+        upload.organizationId,
+        upload.uploadStatus,
+        upload.fileType,
+        upload.uploadType,
+        upload.files,
+        upload.datasource,
+        upload.metadata,
+        upload.visibility,
+        upload.projectId,
+        upload.source,
+        UploadMetadata.unapply(upload.sceneMetadata).get
+      )
+    }
+  }
+
+  val uploadShapedValue = (
+    id,
+    createdAt,
+    createdBy,
+    modifiedAt,
+    modifiedBy,
+    owner,
+    organizationId,
+    uploadStatus,
+    fileType,
+    uploadType,
+    files,
+    datasource,
+    metadata,
+    visibility,
+    projectId,
+    source,
+    (sceneAcquisitionDate, sceneCloudCover)
+  ).shaped[UploadTupleType]
+
+  def * = uploadShapedValue <> (toModel, toTuple)
 
   lazy val organizationsFk = foreignKey("uploads_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val createdByUserFK = foreignKey("uploads_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
