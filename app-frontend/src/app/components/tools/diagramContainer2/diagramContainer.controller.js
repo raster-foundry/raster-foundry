@@ -188,7 +188,7 @@ export default class DiagramContainerController {
                 delete this.lastMousePos;
                 this.$scope.$evalAsync();
             });
-            this.paper.$el.on('mousewheel', this.onMouseWheel.bind(this));
+            this.paper.$el.on('wheel', this.onMouseWheel.bind(this));
 
             this.onWindowResize = () => {
                 let width = this.$element[0].offsetWidth;
@@ -241,7 +241,7 @@ export default class DiagramContainerController {
             mouseEvent.originalEvent.x, mouseEvent.originalEvent.y
         );
 
-        if (mouseEvent.originalEvent.wheelDelta > 0) {
+        if (mouseEvent.originalEvent.deltaY < 0) {
             this.zoomIn(localpoint);
         } else {
             this.zoomOut(localpoint);
