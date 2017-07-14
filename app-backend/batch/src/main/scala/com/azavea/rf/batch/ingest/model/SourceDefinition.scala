@@ -42,7 +42,6 @@ object SourceDefinition extends LazyLogging {
     optionCellSize: Option[CellSize],
     bandMaps: Array[BandMapping]
   ) {
-    @SuppressWarnings(Array("OptionGet"))
     def toSourceDefinition: SourceDefinition = {
       (optionExtent, optionCrs, optionCellSize, optionExtentCrs) match {
         case (Some(extent), Some(crs), Some(cellSize), Some(extentCrs)) => {
@@ -57,7 +56,7 @@ object SourceDefinition extends LazyLogging {
         }
         case _ => {
           logger.debug(s"Reading tiff tags: $uri")
-          lazy val tt = getTiffTags(uri)
+          val tt = getTiffTags(uri)
           SourceDefinition(
             uri,
             tt.extent,
