@@ -35,7 +35,10 @@ export default class DiagramContainerController {
             defaults: joint.util.deepSupplement({
                 type: 'html.Element',
                 attrs: {
-                    rect: { stroke: 'none', 'fill-opacity': 0}
+                    rect: {
+                        stroke: 'none',
+                        'fill-opacity': 0
+                    }
                 }
             }, joint.shapes.basic.Rect.prototype.defaults)
         });
@@ -63,7 +66,7 @@ export default class DiagramContainerController {
                     on-change="onChange({override: override})"
                   ></rf-constant-node>
                 </div>`,
-            initialize: function () {
+            initialize: function() {
                 _.bindAll(this, 'updateBox');
                 joint.dia.ElementView.prototype.initialize.apply(this, arguments);
                 this.model.on('change', this.updateBox, this);
@@ -73,13 +76,16 @@ export default class DiagramContainerController {
 
                 this.updateBox();
             },
-            render: function () {
+            render: function() {
                 joint.dia.ElementView.prototype.render.apply(this, arguments);
                 this.paper.$el.prepend(this.$box);
                 this.updateBox();
                 this.listenTo(this.paper, 'translate', () => {
                     let bbox = this.model.getBBox();
-                    let origin = this.paper ? this.paper.options.origin : {x: 0, y: 0};
+                    let origin = this.paper ? this.paper.options.origin : {
+                        x: 0,
+                        y: 0
+                    };
                     this.$box.css({
                         left: bbox.x * this.scale + origin.x,
                         top: bbox.y * this.scale + origin.y
@@ -89,7 +95,10 @@ export default class DiagramContainerController {
                 this.listenTo(this.paper, 'scale', (scale) => {
                     this.scale = scale;
                     let bbox = this.model.getBBox();
-                    let origin = this.paper ? this.paper.options.origin : {x: 0, y: 0};
+                    let origin = this.paper ? this.paper.options.origin : {
+                        x: 0,
+                        y: 0
+                    };
                     this.$box.css({
                         left: bbox.x * this.scale + origin.x,
                         top: bbox.y * this.scale + origin.y,
@@ -99,7 +108,7 @@ export default class DiagramContainerController {
                 });
                 return this;
             },
-            updateBox: function () {
+            updateBox: function() {
                 let bbox = this.model.getBBox();
                 if (this.model !== this.scope.model) {
                     this.scope.onChange = this.model.get('onChange');
@@ -107,7 +116,10 @@ export default class DiagramContainerController {
                     this.scope.model = this.model;
                 }
 
-                let origin = this.paper ? this.paper.options.origin : {x: 0, y: 0};
+                let origin = this.paper ? this.paper.options.origin : {
+                    x: 0,
+                    y: 0
+                };
 
                 this.$box.css({
                     width: bbox.width,
@@ -116,7 +128,7 @@ export default class DiagramContainerController {
                     top: bbox.y * this.scale + origin.y
                 });
             },
-            removeBox: function () {
+            removeBox: function() {
                 this.$box.remove();
             }
         });
@@ -164,10 +176,14 @@ export default class DiagramContainerController {
                 gridSize: 25,
                 drawGrid: {
                     name: 'doubleMesh',
-                    args: [
-                        {thickness: 1, scaleFactor: 6},
-                        {color: 'lightgrey', thickness: 1, scaleFactor: 6}
-                    ]
+                    args: [{
+                        thickness: 1,
+                        scaleFactor: 6
+                    }, {
+                        color: 'lightgrey',
+                        thickness: 1,
+                        scaleFactor: 6
+                    }]
                 },
                 model: this.graph,
                 clickThreshold: 4,
@@ -212,8 +228,23 @@ export default class DiagramContainerController {
                 marginX: padding,
                 marginY: padding
             });
+            this.overridePositions(this.graph);
             this.scaleToContent();
         }
+    }
+
+    overridePositions(graph) {
+        // eslint-disable-next-line
+        Object.keys(graph._nodes)
+            .map((modelid) => this.paper.getModelById(modelid))
+            .forEach((model) => {
+                if (model.attributes.positionOverride) {
+                    model.position(
+                        model.attributes.positionOverride.x,
+                        model.attributes.positionOverride.y
+                    );
+                }
+            });
     }
 
     scaleToContent() {
@@ -226,7 +257,10 @@ export default class DiagramContainerController {
         let yratio =
             this.paper.options.height / (preZoomBBox.y * 2 + preZoomBBox.height);
         let ratio = xratio > yratio ? yratio : xratio;
-        this.setZoom(ratio, {x: 0, y: 0});
+        this.setZoom(ratio, {
+            x: 0,
+            y: 0
+        });
 
         let postZoomBBox = this.paper.getContentBBox();
         let contentWidth = postZoomBBox.x * 2 + postZoomBBox.width;
@@ -296,7 +330,10 @@ export default class DiagramContainerController {
                 x: this.lastMousePos ? this.lastMousePos.x - mouseEvent.offsetX : 0,
                 y: this.lastMousePos ? this.lastMousePos.y - mouseEvent.offsetY : 0
             };
-            this.lastMousePos = {x: mouseEvent.offsetX, y: mouseEvent.offsetY};
+            this.lastMousePos = {
+                x: mouseEvent.offsetX,
+                y: mouseEvent.offsetY
+            };
             let origin = this.paper.options.origin;
             this.paper.translate(origin.x - translate.x, origin.y - translate.y);
             this.$scope.$evalAsync();
@@ -313,14 +350,18 @@ export default class DiagramContainerController {
         }, {
             label: 'View output',
             callback: ($event, model) => {
-                this.onPreview({data: model.get('id')});
+                this.onPreview({
+                    data: model.get('id')
+                });
             }
         }, {
             type: 'divider'
         }, {
             label: 'Share',
             callback: ($event, model) => {
-                this.onShare({data: model.get('id')});
+                this.onShare({
+                    data: model.get('id')
+                });
             }
         }];
         this.cancelComparisonMenu = [{
@@ -362,7 +403,9 @@ export default class DiagramContainerController {
                     args = Object.values(args);
                 }
                 inputs = inputs.concat(args.map((a) => {
-                    return Object.assign({parent: tool}, a);
+                    return Object.assign({
+                        parent: tool
+                    }, a);
                 }));
             } else {
                 this.inputsJson.push(input);
@@ -405,7 +448,8 @@ export default class DiagramContainerController {
                     ports: ports
                 }, {
                     operation: input.apply,
-                    value: input.constant
+                    value: input.constant,
+                    positionOverride: input.metadata && input.metadata.positionOverride
                 });
 
                 rectangle = this.constructRect(rectAttrs);
@@ -422,8 +466,14 @@ export default class DiagramContainerController {
                     firstPort.isConnected = true;
 
                     let link = new joint.dia.Link({
-                        source: {id: rectangle.id, port: 'Output'},
-                        target: {id: input.parent.id, port: firstPort.id},
+                        source: {
+                            id: rectangle.id,
+                            port: 'Output'
+                        },
+                        target: {
+                            id: input.parent.id,
+                            port: firstPort.id
+                        },
                         attrs: {
                             '.marker-target': {
                                 d: 'M 4 0 L 0 2 L 4 4 z'
@@ -475,7 +525,8 @@ export default class DiagramContainerController {
             }
         }, {
             onChange: this.onParameterChange,
-            value: config.value
+            value: config.value,
+            positionOverride: config.positionOverride
         }));
     }
 
@@ -506,7 +557,9 @@ export default class DiagramContainerController {
     continueComparison(cv) {
         this.clickListener();
         this.comparison[1] = cv.model.id;
-        this.onPreview({data: this.comparison});
+        this.onPreview({
+            data: this.comparison
+        });
         this.unselectCell();
     }
 
@@ -565,8 +618,14 @@ export default class DiagramContainerController {
 
     createLink(src, target) {
         let link = new joint.dia.Link({
-            source: {id: src[0], port: src[1]},
-            target: {id: target[0], port: target[1]},
+            source: {
+                id: src[0],
+                port: src[1]
+            },
+            target: {
+                id: target[0],
+                port: target[1]
+            },
             attrs: {
                 '.marker-target': {
                     d: 'M 4 0 L 0 2 L 4 4 z'
