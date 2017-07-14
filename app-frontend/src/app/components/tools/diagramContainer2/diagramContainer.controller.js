@@ -7,12 +7,13 @@ const minZoom = 0.025;
 
 export default class DiagramContainerController {
     constructor( // eslint-disable-line max-params
-        $element, $scope, $state, $timeout, $compile, $document, $window,
+        $element, $scope, $state, $timeout, $compile, $document, $window, $rootScope,
         mousetipService, toolService
     ) {
         'ngInject';
         this.$element = $element;
         this.$scope = $scope;
+        this.$rootScope = $rootScope;
         this.$state = $state;
         this.$timeout = $timeout;
         this.$compile = $compile;
@@ -66,7 +67,7 @@ export default class DiagramContainerController {
                     on-change="onChange({override: override})"
                   ></rf-constant-node>
                 </div>`,
-            initialize: function() {
+            initialize: function () {
                 _.bindAll(this, 'updateBox');
                 joint.dia.ElementView.prototype.initialize.apply(this, arguments);
                 this.model.on('change', this.updateBox, this);
@@ -76,7 +77,7 @@ export default class DiagramContainerController {
 
                 this.updateBox();
             },
-            render: function() {
+            render: function () {
                 joint.dia.ElementView.prototype.render.apply(this, arguments);
                 this.paper.$el.prepend(this.$box);
                 this.updateBox();
@@ -108,7 +109,7 @@ export default class DiagramContainerController {
                 });
                 return this;
             },
-            updateBox: function() {
+            updateBox: function () {
                 let bbox = this.model.getBBox();
                 if (this.model !== this.scope.model) {
                     this.scope.onChange = this.model.get('onChange');
@@ -128,7 +129,7 @@ export default class DiagramContainerController {
                     top: bbox.y * this.scale + origin.y
                 });
             },
-            removeBox: function() {
+            removeBox: function () {
                 this.$box.remove();
             }
         });
@@ -143,6 +144,10 @@ export default class DiagramContainerController {
         this.extractInputs();
         this.extractShapes();
         this.initDiagram();
+
+        this.$rootScope.$on('lab.resize', () => {
+            this.$timeout(this.onWindowResize, 100);
+        });
     }
 
     $onDestroy() {

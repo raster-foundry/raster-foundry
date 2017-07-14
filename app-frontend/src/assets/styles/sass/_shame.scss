@@ -1630,6 +1630,7 @@ rf-export-item {
   display: flex;
   background: rgba(249, 249, 249, 1);
   pointer-events: none;
+  user-select: none;
   position: relative;
 }
 
@@ -1648,6 +1649,7 @@ rf-export-item {
   background-color: $shade-light;
   box-shadow: 0px .75em 0px $shade-light, 0px 1.5em 0px $shade-light;
 }
+
 
 .node-header-text {
   flex: 1;
@@ -1827,4 +1829,83 @@ rf-operation-node {
     box-shadow: 4px 4px 4px rgba(0,0,0,0.25);
   }
   pointer-events: none;
+}
+
+.lab-container {
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  user-select: none;
+}
+
+.lab-right {
+  position: relative;
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+.lab-left {
+  position: relative;
+  height: 100%;
+}
+
+.resize-separator {
+  user-select: none;
+  pointer-events: none;
+  height: 100%;
+  width: 3px;
+  position: absolute;
+  z-index: 1001;
+  background: $shade-normal;
+  transform: translateX(-1.5px);
+
+  .resize-handle-grabber {
+    user-select: none;
+    position: absolute;
+    top: 50%;
+    transform: translateX(calc(-50% + 1.5px)) translateY(-50%);
+
+    font-size: 1.5em;
+    padding: .25em .1em .25em .1em;
+
+    cursor: col-resize;
+    background: white;
+    border: 1px solid $shade-dark;
+    border-radius: 4px;
+    pointer-events: auto;
+
+    [class^="icon-"]:before, [class*=" icon-"]:before {
+      width: 1em;
+      margin-right: 0em;
+      margin-left: 0em;
+    }
+  }
+}
+
+.resize-ghost {
+  height: 100%;
+  width: 3px;
+  position: absolute;
+  z-index: 1001;
+  background: rgba(149, 156, 172, 0.5);
+  transform: translateX(-50%);
+  user-select: none;
+  pointer-events: none;
+}
+.resize-ghost-text {
+  border-radius: 3px;
+  position: absolute;
+  border: 1px solid $shade-light;
+  background: $white;
+  color: $brand-primary;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  padding: 1em;
+  z-index: 1002;
+  font-weight: 700;
 }
