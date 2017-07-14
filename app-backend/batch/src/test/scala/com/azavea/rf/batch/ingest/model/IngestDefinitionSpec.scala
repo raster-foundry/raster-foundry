@@ -286,39 +286,6 @@ class IngestDefinitionSpec extends FunSpec with Matchers with BatchSpec {
       |}
     """.stripMargin
 
-  it("parses the sample, local definition") {
-    noException should be thrownBy {
-      decode[IngestDefinition](localJson) match {
-        case Right(r) => r
-        case _ => throw new Exception("Incorrect IngestDefinition JSON")
-      }
-    }
-  }
-
-  it("preserves ingest definition source crs") {
-    val ingestDef =
-      decode[IngestDefinition](localJson) match {
-        case Right(r) => r
-        case _ => throw new Exception("Incorrect IngestDefinition JSON")
-      }
-
-    val srcCrs = ingestDef.layers.head.sources.head.crs.epsgCode
-
-    srcCrs shouldEqual Some(32619)
-  }
-
-  it("preserves ingest definition extent crs") {
-    val ingestDef =
-      decode[IngestDefinition](localJson) match {
-        case Right(r) => r
-        case _ => throw new Exception("Incorrect IngestDefinition JSON")
-      }
-
-    val extentCrs = ingestDef.layers.head.sources.head.extentCrs.epsgCode
-
-    extentCrs shouldEqual Some(4326)
-  }
-
   it("parses the sample, aws definition") {
     noException should be thrownBy {
       decode[IngestDefinition](awsJson) match {
