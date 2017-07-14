@@ -23,8 +23,8 @@ def is_tif_too_large(tif_path):
     with rasterio.open(tif_path) as src:
         total_bounds = src.width * src.height
 
-    max_tif_size_bytes = 1000000000
-    geotrellis_max_total_bounds = 2147483647
+    max_tif_size_bytes = 1e9
+    geotrellis_max_total_bounds = 2**31 - 1
     if total_bounds > geotrellis_max_total_bounds or file_stats.st_size > max_tif_size_bytes:
         return True
     return False
