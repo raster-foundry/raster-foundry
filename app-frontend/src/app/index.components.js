@@ -36,6 +36,7 @@ export default angular.module('index.components', [
     require('./components/map/mapContainer/mapContainer.module.js').name,
     require('./components/map/staticMap/staticMap.module.js').name,
     require('./components/map/drawToolbar/drawToolbar.module.js').name,
+    require('./components/map/labMap/labMap.module.js').name,
 
     // settings components
     require('./components/settings/refreshTokenModal/refreshTokenModal.module.js').name,

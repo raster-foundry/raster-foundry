@@ -1,30 +1,50 @@
 <!-- Workflow container -->
-  <div class="main with-position">
-    <div class="lab-action-controls" ng-show="!$ctrl.isShowingPreview">
-      <button class="btn btn-light">Add Note</button>
-      <button class="btn btn-secondary" ng-click="$ctrl.createToolRun()">Apply Changes</button>
+<div class="main with-position">
+  <div class="lab-container">
+    <div class="lab-left"
+         ng-show="$ctrl.isShowingPreview && !!$ctrl.showMap"
+         ng-style="$ctrl.labLeftStyle" draggable="false">
+      <rf-lab-map map-id="lab-preview" on-close="$ctrl.onPreviewClose()"></rf-lab-map>
     </div>
-    <rf-diagram-container2 ng-if="$ctrl.tool"
-                           class="with-position"
-                           on-preview="$ctrl.showPreview(data)"
-                           on-share="$ctrl.shareNode(data)"
-                           on-parameter-change="$ctrl.onExecutionParametersChange(sourceId, project, band, override)"
-                           tool-definition="$ctrl.tool.definition"
-                           tool-parameters="$ctrl.toolParameters">
-    </rf-diagram-container2>
-    <div style="position: absolute; top:0; bottom: 0; left: 0; right: 0;" ng-show="$ctrl.isShowingPreview">
-      <rf-map-container map-id="lab-run-preview"></rf-map-container>
-      <div class="preview-control-bar">
-          <button ng-if="$ctrl.previewLayers.length > 1" class="btn btn-default" ng-click="$ctrl.closePreview()">Exit Node Comparison</button>
-          <button ng-if="!$ctrl.previewLayers || $ctrl.previewLayers.length === 1" class="btn btn-default" ng-click="$ctrl.closePreview()">Exit Node Preview</button>
+    <div class="resize-separator"
+         ng-style="$ctrl.resizeHandleStyle"
+         ng-show="$ctrl.isShowingPreview"
+         draggable="false">
+      <div class="resize-handle-grabber"
+           ng-mousedown="$ctrl.startResize($event)"
+           draggable="false"
+           title="Drag to resize Preview"
+      >
+        <div class="icon-gripper" draggable="false"></div>
       </div>
-      <div class="preview-info-bar" ng-show="$ctrl.previewLayers.length > 1">
-        <div class="split-container">
-          <button class="btn">{{$ctrl.previewData[0].label}}</button>
-        </div>
-        <div class="split-container">
-          <button class="btn">{{$ctrl.previewData[1].label}}</button>
-        </div>
+    </div>
+    <div class="resize-ghost"
+         ng-style="$ctrl.labResizingStyle"
+         ng-show="$ctrl.labResizing"
+         draggable="false">
+      <div class="resize-ghost-text" ng-show="$ctrl.splitPercentX && $ctrl.splitPercentX > 90">
+        Maximize Map
       </div>
+      <div class="resize-ghost-text" ng-show="$ctrl.splitPercentX && $ctrl.splitPercentX < 10">
+        Maximize Diagram
+      </div>
+    </div>
+    <div class="lab-right"
+         ng-style="$ctrl.labRightStyle"
+         ng-show="!!$ctrl.showDiagram || !$ctrl.isShowingPreview"
+         draggable="false">
+      <div class="lab-action-controls">
+        <button class="btn btn-light">Add Note</button>
+        <button class="btn btn-secondary" ng-click="$ctrl.createToolRun()">Apply Changes</button>
+      </div>
+      <rf-diagram-container2 ng-if="$ctrl.tool"
+                             class="with-position"
+                             on-preview="$ctrl.showPreview(data)"
+                             on-share="$ctrl.shareNode(data)"
+                             on-parameter-change="$ctrl.onExecutionParametersChange(sourceId, project, band, override)"
+                             tool-definition="$ctrl.tool.definition"
+                             tool-parameters="$ctrl.toolParameters">
+      </rf-diagram-container2>
     </div>
   </div>
+</div>
