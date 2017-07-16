@@ -11,6 +11,8 @@ import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
   * @param dbPassword password to use to authenticate user
   */
 class Database(jdbcUrl: String, dbUser: String, dbPassword: String) {
+  private val slickThreadCount = 5
+  private val slickQueueSize = 1000
 
   private val hikariConfig = new HikariConfig()
   // This property is now being manually set because it seemed not
@@ -20,7 +22,13 @@ class Database(jdbcUrl: String, dbUser: String, dbPassword: String) {
   hikariConfig.setJdbcUrl(jdbcUrl)
   hikariConfig.setUsername(dbUser)
   hikariConfig.setPassword(dbPassword)
-  hikariConfig.setLeakDetectionThreshold(3000L)
+  hikariConfig.setConnectionTimeout(1000)
+  hikariConfig.setValidationTimeout(1000)
+  hikariConfig.setIdleTimeout(600000)
+  hikariConfig.setMaxLifetime(1800000)
+  hikariConfig.setLeakDetectionThreshold(0)
+  hikariConfig.setMaximumPoolSize(slickThreadCount * 5)
+  hikariConfig.setMinimumIdle(slickThreadCount)
 
   private val dataSource = new HikariDataSource(hikariConfig)
 
@@ -34,7 +42,7 @@ class Database(jdbcUrl: String, dbUser: String, dbPassword: String) {
   import driver.api._
 
   val db = {
-    val executor = AsyncExecutor("slick", numThreads=5, queueSize=1000)
+    val executor = AsyncExecutor("slick", numThreads=slickThreadCount, queueSize=slickQueueSize)
     driver.api.Database.forDataSource(dataSource, executor)
   }
 }
