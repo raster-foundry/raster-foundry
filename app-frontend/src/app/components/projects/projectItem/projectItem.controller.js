@@ -44,7 +44,9 @@ export default class ProjectItemController {
             this.project,
             this.authService.token()
         );
-        let layer = L.tileLayer(url);
+
+        const tileLayerOptions = {maxZoom: 30, attribution: 'Raster Foundry'};
+        let layer = L.tileLayer(url, tileLayerOptions);
 
         this.getMap().then(m => {
             m.addLayer('share-layer', layer);
