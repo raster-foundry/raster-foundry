@@ -17,6 +17,8 @@ class Router extends LazyLogging
   implicit lazy val database = Database.DEFAULT
   implicit val system = AkkaSystem.system
   implicit val materializer = AkkaSystem.materializer
+  lazy val blockingSceneRoutesDispatcher =
+    system.dispatchers.lookup("blocking-scene-routes-dispatcher")
 
   val toolRoutes = new ToolRoutes()
 
@@ -39,7 +41,7 @@ class Router extends LazyLogging
           }
         } ~
         tileAuthenticateOption { _ =>
-          SceneRoutes.root
+          SceneRoutes.root(blockingSceneRoutesDispatcher)
         } ~
         pathPrefix("tools") {
           get {

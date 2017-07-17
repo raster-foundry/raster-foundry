@@ -15,19 +15,19 @@ import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.dispatch.MessageDispatcher
 import spray.json._
 import com.typesafe.scalalogging.LazyLogging
 import cats.data._
 import cats.implicits._
-import java.util.UUID
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import java.util.UUID
 import scala.concurrent._
 import scala.util._
 
 object SceneRoutes extends LazyLogging with KamonTraceDirectives {
 
-  def root: Route =
+  def root(implicit blockingDispatcher: MessageDispatcher): Route =
     pathPrefix(JavaUUID) { id =>
       pathPrefix("rgb") {
         traceName("rgb") {
@@ -86,7 +86,7 @@ object SceneRoutes extends LazyLogging with KamonTraceDirectives {
   def pngAsHttpResponse(png: Png): HttpResponse =
     HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/png`), png.bytes))
 
-  def imageThumbnailRoute(id: UUID) =
+  def imageThumbnailRoute(id: UUID)(implicit blockingDispatcher: MessageDispatcher) =
     parameters('size.as[Int].?(256)) { size =>
       complete {
         implicit val sceneIds = Set(id)
@@ -109,7 +109,7 @@ object SceneRoutes extends LazyLogging with KamonTraceDirectives {
       }
     }
 
-  def imageHistogramRoute(id: UUID) = {
+  def imageHistogramRoute(id: UUID)(implicit blockingDispatcher: MessageDispatcher) = {
     import DefaultJsonProtocol._
     complete {
       implicit val sceneIds = Set(id)
@@ -130,7 +130,7 @@ object SceneRoutes extends LazyLogging with KamonTraceDirectives {
     }
   }
 
-  def imageRoute(futureMaybeTile: OptionT[Future, MultibandTile]): Route =
+  def imageRoute(futureMaybeTile: OptionT[Future, MultibandTile])(implicit blockingDispatcher: MessageDispatcher): Route =
     complete {
       val futureResponse =
         for {
@@ -154,7 +154,7 @@ object SceneRoutes extends LazyLogging with KamonTraceDirectives {
     index: MultibandTile => Tile,
     defaultColorRamp: Option[ColorRamp] = None,
     defaultBreaks: Option[Array[Double]] = None
-  ): Route = {
+  )(implicit blockingDispatcher: MessageDispatcher): Route = {
     toolParams(defaultColorRamp, defaultBreaks) { params =>
       complete {
         val future =
