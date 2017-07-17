@@ -17,6 +17,7 @@ require('./settings/featureFlag.directive')(shared);
 require('./vendor/rollbarWrapper.service')(shared);
 require('./vendor/dropbox.service')(shared);
 require('./vendor/intercom.service')(shared);
+require('./vendor/planetLabs.service.js')(shared);
 require('./vendor/aws-sdk-s3.module.js');
 
 // projects
