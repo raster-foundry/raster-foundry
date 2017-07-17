@@ -7,6 +7,21 @@ import java.sql.Timestamp
 import io.circe.generic.JsonCodec
 
 @JsonCodec
+case class UploadMetadata(
+  sceneAcquisitionDate: Option[Timestamp],
+  sceneCloudCover: Option[Float]
+)
+
+object UploadMetadata {
+  def tupled = (UploadMetadata.apply _).tupled
+
+  type TupleType = (
+    Option[Timestamp],
+    Option[Float]
+  )
+}
+
+@JsonCodec
 case class Upload(
   id: UUID,
   createdAt: Timestamp,
@@ -23,7 +38,8 @@ case class Upload(
   metadata: Json,
   visibility: Visibility,
   projectId: Option[UUID],
-  source: Option[String]
+  source: Option[String],
+  sceneMetadata: UploadMetadata
 )
 
 object Upload {
@@ -44,7 +60,8 @@ object Upload {
     owner: Option[String],
     visibility: Visibility,
     projectId: Option[UUID],
-    source: Option[String]
+    source: Option[String],
+    sceneMetadata: Option[UploadMetadata] = None
   ) extends OwnerCheck {
     def toUpload(user: User): Upload = {
       val id = UUID.randomUUID()
@@ -67,7 +84,8 @@ object Upload {
         this.metadata,
         this.visibility,
         this.projectId,
-        this.source
+        this.source,
+        this.sceneMetadata.getOrElse(UploadMetadata(None, None))
       )
     }
   }
