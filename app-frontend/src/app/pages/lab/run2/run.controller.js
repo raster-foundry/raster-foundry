@@ -1,5 +1,7 @@
 /* global L */
 
+const tileLayerOptions = {maxZoom: 30, attribution: 'Raster Foundry'};
+
 export default class LabRunController {
     constructor( // eslint-disable-line max-params
         $scope, $timeout, $element, $window, $document, $uibModal, $rootScope,
@@ -117,14 +119,14 @@ export default class LabRunController {
             let url1 = this.getNodeUrl(this.previewData[1]);
             if (url0 && url1) {
                 this.previewLayers = [
-                    L.tileLayer(url0),
-                    L.tileLayer(url1)
+                    L.tileLayer(url0, tileLayerOptions),
+                    L.tileLayer(url1, tileLayerOptions)
                 ];
             }
         } else {
             let url0 = this.getNodeUrl(this.previewData);
             if (url0) {
-                this.previewLayers = [L.tileLayer(url0)];
+                this.previewLayers = [L.tileLayer(url0, tileLayerOptions)];
             }
         }
     }
