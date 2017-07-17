@@ -45,6 +45,10 @@ Vagrant.configure(2) do |config|
   config.vm.network :forwarded_port, guest: 8181, host: Integer(ENV.fetch("RF_PORT_8181", 8181))
   # grafana ui
   config.vm.network :forwarded_port, guest: 3000, host: Integer(ENV.fetch("RF_PORT_4040", 3000))
+  # jmx api
+  config.vm.network :forwarded_port, guest: 9010, host: Integer(ENV.fetch("RF_PORT_9010", 9010))
+  # jmx tile
+  config.vm.network :forwarded_port, guest: 9020, host: Integer(ENV.fetch("RF_PORT_9020", 9020))
 
   config.vm.provider :virtualbox do |vb|
     vb.memory = 8096

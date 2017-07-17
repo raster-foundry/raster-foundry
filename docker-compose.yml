@@ -60,6 +60,7 @@ services:
     env_file: .env
     ports:
       - "9000:9000"
+      - "9010:9010"
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/
       - ./.sbt:/root/.sbt
@@ -69,7 +70,15 @@ services:
     environment:
       - AIRFLOW_SERVER_LOCATION=http://airflow.service.rasterfoundry.internal:8080
     entrypoint: ./sbt
-    command: api/run
+    command:
+      - "api/run"
+      - "-Dcom.sun.management.jmxremote.rmi.port=9010"
+      - "-Dcom.sun.management.jmxremote=true"
+      - "-Dcom.sun.management.jmxremote.port=9010"
+      - "-Dcom.sun.management.jmxremote.ssl=false"
+      - "-Dcom.sun.management.jmxremote.authenticate=false"
+      - "-Dcom.sun.management.jmxremote.local.only=false"
+      - "-Djava.rmi.server.hostname=localhost"
 
   tile-server:
     image: openjdk:8-jre
@@ -81,6 +90,7 @@ services:
     env_file: .env
     ports:
       - "9900:9900"
+      - "9020:9020"
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/
       - ./.sbt:/root/.sbt
@@ -88,4 +98,12 @@ services:
       - $HOME/.aws:/root/.aws:ro
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt
-    command: tile/run
+    command:
+      - "tile/run"
+      - "-Dcom.sun.management.jmxremote.rmi.port=9020"
+      - "-Dcom.sun.management.jmxremote=true"
+      - "-Dcom.sun.management.jmxremote.port=9020"
+      - "-Dcom.sun.management.jmxremote.ssl=false"
+      - "-Dcom.sun.management.jmxremote.authenticate=false"
+      - "-Dcom.sun.management.jmxremote.local.only=false"
+      - "-Djava.rmi.server.hostname=localhost"
