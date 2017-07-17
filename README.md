@@ -86,7 +86,7 @@ The workflow for creating a new migration is:
  - Run `mg update` followed by `mg apply`
    - This executes the migration
    - Press `ENTER` once the migration command has completed
- - `mg update` will create a symlink with an absolute path to the migration. This path won't work in all environments so you should manually replace it with a relative symlink to the same location.
+ - `mg update` will create a symlink with an absolute path to the migration. This path won't work in all environments, so you should run `./scripts/fix-migration migration_number` from the vm to update the symlink to a relative path.
 
 #### Frontend Development
 
