@@ -482,7 +482,10 @@ export default class DiagramContainerController {
                         attrs: {
                             '.marker-target': {
                                 d: 'M 4 0 L 0 2 L 4 4 z'
-                            }
+                            },
+                            'g.link-tools': {display: 'none'},
+                            'g.marker-arrowheads': {display: 'none'},
+                            '.connection-wrap': {display: 'none'}
                         }
                     });
 
