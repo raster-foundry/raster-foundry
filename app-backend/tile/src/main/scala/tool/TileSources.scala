@@ -115,7 +115,8 @@ object TileSources extends LazyLogging {
   }
 
   /** This source provides support for z/x/y TMS tiles */
-  def cachedTmsSource(r: RFMLRaster, hasBuffer: Boolean, z: Int, x: Int, y: Int)(implicit database: Database): Future[Option[TileWithNeighbors]] =
+  def cachedTmsSource(r: RFMLRaster, hasBuffer: Boolean, z: Int, x: Int, y: Int)(implicit database: Database): Future[Option[TileWithNeighbors]] = {
+    lazy val ndtile = IntConstantTile(NODATA, 256, 256)
     r match {
       case scene @ SceneRaster(sceneId, Some(band), maybeND) =>
         implicit val sceneIds = Set(sceneId)
@@ -123,22 +124,30 @@ object TileSources extends LazyLogging {
           (for {
             tl <- LayerCache.layerTile(sceneId, z, SpatialKey(x - 1, y - 1))
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+                    .orElse(OptionT.pure[Future, Tile](ndtile))
             tm <- LayerCache.layerTile(sceneId, z, SpatialKey(x, y - 1))
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+                    .orElse(OptionT.pure[Future, Tile](ndtile))
             tr <- LayerCache.layerTile(sceneId, z, SpatialKey(x + 1 , y - 1))
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+                    .orElse(OptionT.pure[Future, Tile](ndtile))
             ml <- LayerCache.layerTile(sceneId, z, SpatialKey(x - 1, y))
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+                    .orElse(OptionT.pure[Future, Tile](ndtile))
             mm <- LayerCache.layerTile(sceneId, z, SpatialKey(x, y))
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
             mr <- LayerCache.layerTile(sceneId, z, SpatialKey(x + 1, y))
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+                    .orElse(OptionT.pure[Future, Tile](ndtile))
             bl <- LayerCache.layerTile(sceneId, z, SpatialKey(x - 1, y + 1))
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+                    .orElse(OptionT.pure[Future, Tile](ndtile))
             bm <- LayerCache.layerTile(sceneId, z, SpatialKey(x, y + 1))
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+                    .orElse(OptionT.pure[Future, Tile](ndtile))
             br <- LayerCache.layerTile(sceneId, z, SpatialKey(x + 1, y + 1))
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+                    .orElse(OptionT.pure[Future, Tile](ndtile))
           } yield {
             TileWithNeighbors(mm, Some(NeighboringTiles(tl, tm, tr, ml, mr,bl, bm, br)))
           }).value
@@ -157,22 +166,30 @@ object TileSources extends LazyLogging {
           (for {
             tl <- Mosaic.raw(projId, z, x - 1, y - 1)
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+                    .orElse(OptionT.pure[Future, Tile](ndtile))
             tm <- Mosaic.raw(projId, z, x, y - 1)
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+                    .orElse(OptionT.pure[Future, Tile](ndtile))
             tr <- Mosaic.raw(projId, z, x, y - 1)
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+                    .orElse(OptionT.pure[Future, Tile](ndtile))
             ml <- Mosaic.raw(projId, z, x - 1, y)
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+                    .orElse(OptionT.pure[Future, Tile](ndtile))
             mm <- Mosaic.raw(projId, z, x, y)
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
             mr <- Mosaic.raw(projId, z, x + 1, y)
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+                    .orElse(OptionT.pure[Future, Tile](ndtile))
             bl <- Mosaic.raw(projId, z, x - 1, y + 1)
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+                    .orElse(OptionT.pure[Future, Tile](ndtile))
             bm <- Mosaic.raw(projId, z, x, y + 1)
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+                    .orElse(OptionT.pure[Future, Tile](ndtile))
             br <- Mosaic.raw(projId, z, x + 1, y + 1)
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
+                    .orElse(OptionT.pure[Future, Tile](ndtile))
           } yield {
             TileWithNeighbors(mm, Some(NeighboringTiles(tl, tm, tr, ml, mr,bl, bm, br)))
           }).value
@@ -188,4 +205,5 @@ object TileSources extends LazyLogging {
       case _ =>
         Future.failed(new Exception(s"Cannot handle $r"))
     }
+  }
 }
