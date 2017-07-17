@@ -149,6 +149,10 @@ export default class LabRunController {
     }
 
     showPreview(data) {
+        if (!this.lastToolRun) {
+            return;
+        }
+
         if (!this.isShowingPreview) {
             this.isShowingPreview = true;
             this.splitPercentX = this.splitPercentX || 25;
@@ -341,6 +345,9 @@ export default class LabRunController {
     createToolRun() {
         this.toolService.createToolRun(this.toolRun).then(tr => {
             this.lastToolRun = tr;
+            delete this.failedToolRun;
+        }, (tr) => {
+            this.failedToolRun = tr;
         });
     }
 

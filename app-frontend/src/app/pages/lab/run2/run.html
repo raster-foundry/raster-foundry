@@ -39,12 +39,23 @@
       </div>
       <rf-diagram-container2 ng-if="$ctrl.tool"
                              class="with-position"
+                             toolrun-valid="!!$ctrl.lastToolRun"
                              on-preview="$ctrl.showPreview(data)"
                              on-share="$ctrl.shareNode(data)"
                              on-parameter-change="$ctrl.onExecutionParametersChange(sourceId, project, band, override)"
                              tool-definition="$ctrl.tool.definition"
                              tool-parameters="$ctrl.toolParameters">
       </rf-diagram-container2>
+    </div>
+    <div class="lab-footer"
+         ng-show="!$ctrl.lastToolRun && !$ctrl.failedToolRun">
+      <span class="icon-warning"></span>
+      You must apply changes after defining inputs.
+    </div>
+    <div class="lab-footer"
+         ng-show="$ctrl.failedToolRun">
+      <span class="icon-warning"></span>
+      There was an error applying your changes. Please verify that all inputs are defined.
     </div>
   </div>
 </div>
