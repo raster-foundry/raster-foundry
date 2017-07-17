@@ -1926,3 +1926,50 @@ rf-operation-node {
   transform: translateX(-50%);
   padding: 1em;
 }
+
+.leaflet-sbs-divider {
+  background-color: $shade-dark;
+  &::after {
+    content: '\e82e';
+    font-family: 'fontello';
+
+    position: relative;
+    top: calc(50% - 9px);
+    left: -11px;
+    z-index: 1500;
+    padding: 13px 7px 13px 7px;
+    border-radius: 3px;
+    background-color: $brand-primary;
+    color: $white;
+
+    width: 25px;
+    height: 40px;
+    background-size: 25px 50px;
+  }
+}
+.leaflet-sbs-range::-webkit-slider-thumb {
+  border-radius: 3px;
+  width: 25px;
+  height: 40px;
+  border-color: transparent;
+  background-image: none;
+  background: transparent;
+}
+.leaflet-sbs-range::-moz-range-thumb {
+  border-radius: 3px;
+  width: 25px;
+  height: 40px;
+  border-radius: 3px;
+  border-color: transparent;
+  background-image: none;
+  background: transparent;
+}
+.leaflet-sbs-range::-ms-thumb {
+  border-radius: 3px;
+  width: 25px;
+  height: 40px;
+  border-radius: 3px;
+  border-color: transparent;
+  background-image: none;
+  background: transparent;
+}

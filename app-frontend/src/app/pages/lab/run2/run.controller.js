@@ -134,7 +134,14 @@ export default class LabRunController {
     addSideBySide() {
         if (!this.sideBySideControl) {
             this.sideBySideControl =
-                L.control.sideBySide(this.previewLayers[0], this.previewLayers[1]);
+                L.control.sideBySide(
+                    this.previewLayers[0],
+                    this.previewLayers[1],
+                    {
+                        padding: 0,
+                        thumbSize: 25
+                    }
+                );
         } else {
             this.sideBySideControl.setLeftLayers(this.previewLayers[0]);
             this.sideBySideControl.setRightLayers(this.previewLayers[1]);
