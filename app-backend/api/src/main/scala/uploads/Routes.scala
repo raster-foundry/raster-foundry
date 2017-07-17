@@ -72,7 +72,7 @@ trait UploadRoutes extends Authentication
             throw new IllegalStateException(s"Could not parse  ${newUpload.metadata} to uploadMetadata")
           case Right(data) => data
         }
-        val withParsedMetadata = newUpload.copy(sceneMetadata = decodedMetadata)
+        val withParsedMetadata = newUpload.copy(sceneMetadata = Some(decodedMetadata))
         val uploadToInsert = (withParsedMetadata.uploadType, withParsedMetadata.source) match {
           case (UploadType.S3, Some(source)) => {
             if (withParsedMetadata.files.nonEmpty) withParsedMetadata

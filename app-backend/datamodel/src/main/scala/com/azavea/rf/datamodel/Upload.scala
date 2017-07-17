@@ -61,7 +61,7 @@ object Upload {
     visibility: Visibility,
     projectId: Option[UUID],
     source: Option[String],
-    sceneMetadata: UploadMetadata
+    sceneMetadata: Option[UploadMetadata] = None
   ) extends OwnerCheck {
     def toUpload(user: User): Upload = {
       val id = UUID.randomUUID()
@@ -85,7 +85,7 @@ object Upload {
         this.visibility,
         this.projectId,
         this.source,
-        this.sceneMetadata
+        this.sceneMetadata.getOrElse(UploadMetadata(None, None))
       )
     }
   }

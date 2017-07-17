@@ -42,7 +42,7 @@ class Uploads(_tableTag: Tag) extends Table[Upload](_tableTag, "uploads")
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
   val projectId: Rep[Option[java.util.UUID]] = column[Option[java.util.UUID]]("project_id", O.Default(None))
   val source: Rep[Option[String]] = column[Option[String]]("source", O.Default(None))
-  val sceneCloudCover: Rep[Option[Float]] = column[Option[Float]]("scene_metadata")
+  val sceneCloudCover: Rep[Option[Float]] = column[Option[Float]]("scene_cloud_cover")
   val sceneAcquisitionDate: Rep[Option[Timestamp]] = column[Option[Timestamp]]("scene_acquisition_date")
 
   type UploadTupleType = (
@@ -83,12 +83,13 @@ class Uploads(_tableTag: Tag) extends Table[Upload](_tableTag, "uploads")
       uploadTuple._14, // visibility
       uploadTuple._15, // projectId
       uploadTuple._16, // source
-      UploadMetadata.tupled.apply(uploadTuple._17): UploadMetadata // sceneMetadata
+      UploadMetadata.tupled.apply(uploadTuple._17) // sceneMetadata
     )
   }
 
   @SuppressWarnings(Array("OptionGet"))
   def toTuple: Upload => Option[UploadTupleType] = { upload =>
+    println(UploadMetadata.unapply(upload.sceneMetadata).get)
     Some {
       (
         upload.id,
