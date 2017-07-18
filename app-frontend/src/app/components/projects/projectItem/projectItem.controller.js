@@ -45,7 +45,7 @@ export default class ProjectItemController {
             this.authService.token()
         );
 
-        const tileLayerOptions = {maxZoom: 30, attribution: 'Raster Foundry'};
+        const tileLayerOptions = {maxZoom: 30};
         let layer = L.tileLayer(url, tileLayerOptions);
 
         this.getMap().then(m => {

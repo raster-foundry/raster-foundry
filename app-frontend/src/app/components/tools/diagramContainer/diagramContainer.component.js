@@ -6,6 +6,7 @@ export default {
     bindings: {
         onPreview: '&',
         onShare: '&',
+        onParameterChange: '&',
         toolDefinition: '<',
         toolParameters: '<'
     }

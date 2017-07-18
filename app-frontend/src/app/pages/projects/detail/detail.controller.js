@@ -74,7 +74,7 @@ export default class ProjectsDetailController {
             this.authService.token()
         );
 
-        let options = {maxZoom: 30, attribution: 'Raster Foundry'};
+        let options = {maxZoom: 30};
         let layer = L.tileLayer(url, options);
 
         this.getMap().then(m => {
