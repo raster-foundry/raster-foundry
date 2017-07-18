@@ -87,7 +87,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
       )
     }
 
-  def layerHistogram(layerId: UUID, zoom: Int)(implicit ec: ExecutionContext): OptionT[Future, Array[Histogram[Double]]] =
+  def layerHistogram(layerId: UUID, zoom: Int): OptionT[Future, Array[Histogram[Double]]] =
     traceName(s"LayerCache.layerHistogram($layerId)") {
       histogramCache.cachingOptionT(s"histogram-$layerId-$zoom") { implicit ec =>
         attributeStoreForLayer(layerId).map { store =>
@@ -98,7 +98,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
       }
     }
 
-  def layerTile(layerId: UUID, zoom: Int, key: SpatialKey)(implicit ec: ExecutionContext): OptionT[Future, MultibandTile] =
+  def layerTile(layerId: UUID, zoom: Int, key: SpatialKey): OptionT[Future, MultibandTile] =
     traceName(s"LayerCache.layerTile($layerId)") {
       tileCache.cachingOptionT(s"tile-$layerId-$zoom-${key.col}-${key.row}") { implicit ec =>
         attributeStoreForLayer(layerId).mapFilter { store =>
@@ -118,7 +118,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
       }
     }
 
-  def layerTileForExtent(layerId: UUID, zoom: Int, extent: Extent)(implicit ec: ExecutionContext): OptionT[Future, MultibandTile] =
+  def layerTileForExtent(layerId: UUID, zoom: Int, extent: Extent): OptionT[Future, MultibandTile] =
     traceName(s"LayerCache.layerTileForExtent($layerId)") {
       tileCache.cachingOptionT(s"extent-tile-$layerId-$zoom-$extent") { implicit ec =>
         attributeStoreForLayer(layerId).mapFilter { store =>
@@ -150,7 +150,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     subNode: Option[UUID],
     user: User,
     voidCache: Boolean = false
-  )(implicit ec: ExecutionContext): OptionT[Future, Histogram[Double]] = traceName(s"LayerCache.modelLayerGlobalHistogram($toolRunId)") {
+  ): OptionT[Future, Histogram[Double]] = traceName(s"LayerCache.modelLayerGlobalHistogram($toolRunId)") {
     val cacheKey = s"histogram-${toolRunId}-${subNode}-${user.id}"
 
     if (voidCache) histogramCache.delete(cacheKey)
@@ -185,7 +185,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     toolRunId: UUID,
     user: User,
     voidCache: Boolean = false
-  )(implicit ec: ExecutionContext): OptionT[Future, (Tool.WithRelated, ToolRun)] =
+  ): OptionT[Future, (Tool.WithRelated, ToolRun)] =
     traceName(s"LayerCache.toolAndToolRun($toolRunId)") {
       astCache.cachingOptionT(s"tool+run-$toolRunId-${user.id}") { implicit ec =>
         traceName(s"LayerCache.toolAndToolRun($toolRunId) (no cache)") {
@@ -205,7 +205,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     subNode: Option[UUID],
     user: User,
     voidCache: Boolean = false
-  )(implicit ec: ExecutionContext): OptionT[Future, (MapAlgebraAST, EvalParams)] =
+  ): OptionT[Future, (MapAlgebraAST, EvalParams)] =
     traceName(s"LayerCache.toolEvalRequirements($toolRunId)") {
       val cacheKey = s"ast+params-$toolRunId-${subNode}-${user.id}"
       if (voidCache) histogramCache.delete(cacheKey)
@@ -251,7 +251,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     subNode: Option[UUID],
     user: User,
     voidCache: Boolean = false
-  )(implicit ec: ExecutionContext): OptionT[Future, ColorMap] = traceName(s"LayerCache.toolRunColorMap($toolRunId)") {
+  ): OptionT[Future, ColorMap] = traceName(s"LayerCache.toolRunColorMap($toolRunId)") {
     val cacheKey = s"colormap-$toolRunId-${subNode}-${user.id}"
     if (voidCache) astCache.delete(cacheKey)
     astCache.cachingOptionT(cacheKey) { implicit ec =>

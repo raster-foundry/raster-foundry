@@ -58,7 +58,7 @@ class HeapBackedMemcachedClient(
     * @param mappingFunction  the function to compute a value
     * @return the current (existing or computed) value associated with the specified key
     */
-  def caching[T](cacheKey: String)(mappingFunction: ExecutionContext => Future[T])(implicit ec: ExecutionContext): Future[T] = {
+  def caching[T](cacheKey: String)(mappingFunction: ExecutionContext => Future[T]): Future[T] = {
     if(options.enabled) {
       val sanitizedKey = HeapBackedMemcachedClient.sanitizeKey(cacheKey)
       if(options.heapEnabled) {
@@ -68,10 +68,10 @@ class HeapBackedMemcachedClient(
       } else {
         client.getOrElseUpdate[T](sanitizedKey, mappingFunction(options.ec), options.memcachedTTL)(options.ec)
       }
-    } else mappingFunction(ec)
+    } else mappingFunction(options.ec)
   }
 
-  def cachingOptionT[T](cacheKey: String)(mappingFunction: ExecutionContext => OptionT[Future, T])(implicit ec: ExecutionContext): OptionT[Future, T] = {
+  def cachingOptionT[T](cacheKey: String)(mappingFunction: ExecutionContext => OptionT[Future, T]): OptionT[Future, T] = {
     if(options.enabled) {
       val sanitizedKey = HeapBackedMemcachedClient.sanitizeKey(cacheKey)
       val futureOption =
@@ -84,7 +84,7 @@ class HeapBackedMemcachedClient(
         }
 
       OptionT(futureOption)
-    } else mappingFunction(ec)
+    } else mappingFunction(options.ec)
   }
 }
 
