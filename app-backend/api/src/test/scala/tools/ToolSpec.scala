@@ -13,8 +13,10 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import org.scalatest.{Matchers, WordSpec}
 import concurrent.duration._
+import cats.syntax.either._
 import io.circe._
 import io.circe.syntax._
+import io.circe.parser._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 
 import java.sql.Timestamp
@@ -100,6 +102,38 @@ class ToolSpec extends WordSpec
     "require authentication for list" in {
       Get("/api/tools/") ~> baseRoutes ~> check {
         reject
+      }
+    }
+  }
+
+  "/api/tools/validate" should {
+    "reject invalid tools" in {
+      Post("/api/tools/validate").withHeadersAndEntity(
+        List(authorization),
+        HttpEntity(
+          ContentTypes.`application/json`,
+          """{
+            "type": "src",
+            "id": 123
+          }"""
+        )
+      ) ~> baseRoutes ~> check {
+        status shouldEqual StatusCodes.BadRequest
+      }
+    }
+
+    "accept valid tools" in {
+      Post("/api/tools/validate").withHeadersAndEntity(
+        List(authorization),
+        HttpEntity(
+          ContentTypes.`application/json`,
+          s"""{
+            "type": "src",
+            "id": "${UUID.randomUUID.toString}"
+          }"""
+        )
+      ) ~> baseRoutes ~> check {
+        status shouldEqual StatusCodes.OK
       }
     }
   }
