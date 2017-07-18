@@ -9,6 +9,7 @@ import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.params._
 
+import akka.dispatch.MessageDispatcher
 import akka.http.scaladsl.marshalling._
 import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes, StatusCodes}
 import akka.http.scaladsl.server._
@@ -22,7 +23,6 @@ import geotrellis.raster.render._
 
 import java.util.UUID
 import scala.concurrent._
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class ToolRoutes(implicit val database: Database) extends Authentication
     with LazyLogging
@@ -53,7 +53,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
   }
 
   /** Endpoint to be used for kicking the histogram cache and ensuring tiles are quickly loaded */
-  val preflight =
+  def preflight(implicit dispatcher: MessageDispatcher): Route =
     (handleExceptions(interpreterExceptionHandler) & handleExceptions(circeDecodingError)) {
       pathPrefix(JavaUUID){ (toolRunId) =>
         traceName("toolrun-preflight") {
@@ -75,7 +75,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
   /** Endpoint used to verify that a [[ToolRun]] is sufficient to
     *  evaluate the [[Tool]] to which it refers
     */
-  val validate =
+  def validate(implicit dispatcher: MessageDispatcher): Route =
     (handleExceptions(interpreterExceptionHandler) & handleExceptions(circeDecodingError)) {
       pathPrefix(JavaUUID){ (toolRunId) =>
         traceName("toolrun-validate") {
@@ -89,7 +89,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
     }
 
   /** Endpoint used to get a [[ToolRun]] histogram */
-  val histogram =
+  def histogram(implicit dispatcher: MessageDispatcher): Route =
     (handleExceptions(interpreterExceptionHandler) & handleExceptions(circeDecodingError)) {
       pathPrefix(JavaUUID){ (toolRunId) =>
         traceName("toolrun-histogram") {
@@ -111,9 +111,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
     }
 
   /** The central endpoint for ModelLab; serves TMS tiles given a [[ToolRun]] specification */
-  def tms(
-    source: (RFMLRaster, Boolean, Int, Int, Int) => Future[Option[TileWithNeighbors]]
-  ): Route =
+  def tms(source: (RFMLRaster, Boolean, Int, Int, Int) => Future[Option[TileWithNeighbors]])(implicit dispatcher: MessageDispatcher): Route =
     (handleExceptions(interpreterExceptionHandler) & handleExceptions(circeDecodingError)) {
       pathPrefix(JavaUUID){ (toolRunId) =>
         authenticateWithParameter { user =>
