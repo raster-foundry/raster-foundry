@@ -4,7 +4,33 @@
     <div class="lab-left"
          ng-show="$ctrl.isShowingPreview && !!$ctrl.showMap"
          ng-style="$ctrl.labLeftStyle" draggable="false">
-      <rf-lab-map map-id="lab-preview" on-close="$ctrl.onPreviewClose()"></rf-lab-map>
+      <rf-lab-map
+        map-id="lab-preview"
+        on-close="$ctrl.onPreviewClose()"
+        comparing="$ctrl.sideBySideAdded"
+        on-compare-click="$ctrl.onCompareClick()"
+      ></rf-lab-map>
+      <rf-node-selector
+        data-node-map="$ctrl.nodeMap"
+        data-selected="$ctrl.leftPreviewSelection"
+        data-position="$ctrl.leftPreviewPosition"
+        on-select="$ctrl.onLeftSelect(node)"
+        on-close="$ctrl.onLeftClose()"
+        ng-if="$ctrl.sideBySideAdded"></rf-node-selector>
+      <rf-node-selector
+        data-node-map="$ctrl.nodeMap"
+        data-selected="$ctrl.rightPreviewSelection"
+        data-position="$ctrl.rightPreviewPosition"
+        on-select="$ctrl.onRightSelect(node)"
+        on-close="$ctrl.onRightClose()"
+        ng-if="$ctrl.sideBySideAdded"></rf-node-selector>
+      <rf-node-selector
+        data-node-map="$ctrl.nodeMap"
+        data-selected="$ctrl.singlePreviewSelection"
+        data-position="$ctrl.singlePreviewPosition"
+        on-select="$ctrl.onSingleSelect(node)"
+        on-close="$ctrl.onSingleClose()"
+        ng-if="!$ctrl.sideBySideAdded && $ctrl.singlePreviewSelection"></rf-node-selector>
     </div>
     <div class="resize-separator"
          ng-style="$ctrl.resizeHandleStyle"
@@ -12,9 +38,9 @@
          draggable="false">
       <div class="resize-handle-grabber"
            ng-mousedown="$ctrl.startResize($event)"
+           ng-touchstart="$ctrl.startResize($event)"
            draggable="false"
-           title="Drag to resize Preview"
-      >
+           title="Drag to resize Preview">
         <div class="icon-gripper" draggable="false"></div>
       </div>
     </div>
@@ -34,17 +60,23 @@
          ng-show="!!$ctrl.showDiagram || !$ctrl.isShowingPreview"
          draggable="false">
       <div class="lab-action-controls">
-        <button class="btn btn-light">Add Note</button>
-        <button class="btn btn-secondary" ng-click="$ctrl.createToolRun()">Apply Changes</button>
+        <!-- button class="btn btn-light">Add Note</button -->
+        <button class="btn btn-secondary"
+                ng-click="$ctrl.createToolRun()"
+                ng-disabled="$ctrl.applyInProgress">
+          Apply Changes
+        </button>
       </div>
-      <rf-diagram-container ng-if="$ctrl.tool"
-                             class="with-position"
-                             toolrun-valid="!!$ctrl.lastToolRun"
-                             on-preview="$ctrl.showPreview(data)"
-                             on-share="$ctrl.shareNode(data)"
-                             on-parameter-change="$ctrl.onExecutionParametersChange(sourceId, project, band, override)"
-                             tool-definition="$ctrl.tool.definition"
-                             tool-parameters="$ctrl.toolParameters">
+      <rf-diagram-container
+        ng-if="$ctrl.tool"
+        class="with-position"
+        toolrun-valid="!!$ctrl.lastToolRun"
+        on-preview="$ctrl.showPreview(data)"
+        on-share="$ctrl.shareNode(data)"
+        on-parameter-change="$ctrl.onExecutionParametersChange(sourceId, project, band, override)"
+        on-graph-complete="$ctrl.onGraphComplete(nodes)"
+        tool-definition="$ctrl.tool.definition"
+        tool-parameters="$ctrl.toolParameters">
       </rf-diagram-container>
     </div>
     <div class="lab-footer"

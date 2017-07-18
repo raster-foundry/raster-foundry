@@ -1,10 +1,11 @@
 <div class="node-header">
-  <div class="node-header-colorblock"
+  <div class="node-header-colorblock "
        ng-class="{'node-type-input': $ctrl.cellType === 'src',
                   'node-type-function': $ctrl.cellType === 'function',
                   'node-type-constant': $ctrl.cellType === 'const'}">
   </div>
   <div class="node-dropdown"
+       ng-class="{'no-outline': $ctrl.showMenu}"
        ng-click="$ctrl.toggleMenu($event)">
     <div class="node-dropdown-icon"></div>
     <div class="node-dropdown-menu" ng-show="$ctrl.showMenu">

@@ -7,6 +7,7 @@ export default {
         onPreview: '&',
         onShare: '&',
         onParameterChange: '&',
+        onGraphComplete: '&',
         toolDefinition: '<',
         toolParameters: '<'
     }

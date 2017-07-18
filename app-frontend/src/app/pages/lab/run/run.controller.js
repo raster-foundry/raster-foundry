@@ -4,11 +4,12 @@ const tileLayerOptions = {maxZoom: 30};
 
 export default class LabRunController {
     constructor( // eslint-disable-line max-params
-        $scope, $timeout, $element, $window, $document, $uibModal, $rootScope,
+        $log, $scope, $timeout, $element, $window, $document, $uibModal, $rootScope,
         mapService, projectService, authService, mapUtilsService, toolService,
         APP_CONFIG
     ) {
         'ngInject';
+        this.$log = $log;
         this.$scope = $scope;
         this.$rootScope = $rootScope;
         this.$parent = $scope.$parent.$ctrl;
@@ -38,6 +39,13 @@ export default class LabRunController {
         this.setWarning(
              'You must apply changes after defining inputs.'
         );
+
+        this.$scope.$on('$destroy', () => {
+            $('body').css({overflow: ''});
+        });
+        $('body').css({overflow: 'hidden'});
+
+        this.singlePreviewPosition = {x: 0, offset: 10, side: 'none'};
     }
 
     generateSourcesFromTool() {
@@ -80,16 +88,6 @@ export default class LabRunController {
                 sources: {}
             }
         });
-    }
-
-    onParameterChange() {
-        if (this.isShowingPreview) {
-            if (this.generatedPreview) {
-                this.updatePreviewLayers();
-            } else {
-                this.showPreview(this.previewData);
-            }
-        }
     }
 
     getNodeUrl(node) {
@@ -141,10 +139,15 @@ export default class LabRunController {
                     this.previewLayers[0],
                     this.previewLayers[1],
                     {
-                        padding: 0,
+                        padding: 25,
                         thumbSize: 25
                     }
                 );
+
+            this.sideBySideControl.on('dividermove', (move) => {
+                this.dividerPosition = move.x;
+                this.$scope.$evalAsync();
+            });
         } else {
             this.sideBySideControl.setLeftLayers(this.previewLayers[0]);
             this.sideBySideControl.setRightLayers(this.previewLayers[1]);
@@ -154,18 +157,22 @@ export default class LabRunController {
             this.sideBySideAdded = true;
             this.getMap().then((m) => {
                 this.sideBySideControl.addTo(m.map);
+                this.$timeout(() => {
+                    this.dividerPosition = this.sideBySideControl.getPosition();
+                }, 150);
             });
         }
     }
 
     showPreview(data) {
+        let defaultSplit = 40;
         if (!this.lastToolRun) {
             return;
         }
 
         if (!this.isShowingPreview) {
             this.isShowingPreview = true;
-            this.splitPercentX = this.splitPercentX || 25;
+            this.splitPercentX = this.splitPercentX || defaultSplit;
             this.setPartitionStyles(this.splitPercentX);
         }
 
@@ -178,7 +185,7 @@ export default class LabRunController {
                     this.previewLayers.forEach(l => l.addTo(m.map));
                     if (data.constructor === Array) {
                         this.addSideBySide();
-                    } else if (!this.isComparing && this.sideBySideAdded) {
+                    } else if (this.sideBySideAdded) {
                         this.sideBySideControl.remove();
                         this.sideBySideAdded = false;
                     }
@@ -353,14 +360,21 @@ export default class LabRunController {
     }
 
     createToolRun() {
+        this.applyInProgress = true;
+        this.clearWarning();
         this.toolService.createToolRun(this.toolRun).then(tr => {
             this.lastToolRun = tr;
             this.clearWarning();
+            if (this.isShowingPreview) {
+                this.showPreview(this.previewData);
+            }
         }, () => {
             this.setWarning(
                 'There was an error applying your changes. ' +
                     'Please verify that all inputs are defined.'
             );
+        }).finally(() => {
+            this.applyInProgress = false;
         });
     }
 
@@ -368,14 +382,12 @@ export default class LabRunController {
         if (project && typeof band === 'number' && band >= 0) {
             this.toolRun.executionParameters.sources[sourceId].id = project.id;
             this.toolRun.executionParameters.sources[sourceId].band = band;
-            this.onParameterChange();
         }
         if (override) {
             if (!this.toolRun.executionParameters.overrides) {
                 this.toolRun.executionParameters.overrides = {};
             }
             this.toolRun.executionParameters.overrides[override.id] = {constant: override.value};
-            this.onParameterChange();
         }
     }
 
@@ -398,7 +410,6 @@ export default class LabRunController {
             this.toolRun.executionParameters.sources[sourceId].id = p.id;
             // eslint-disable-next-line no-underscore-dangle
             this.toolRun.executionParameters.sources[sourceId]._name = p.name;
-            this.onParameterChange();
             this.$scope.$evalAsync();
         });
     }
@@ -426,5 +437,78 @@ export default class LabRunController {
 
     clearWarning() {
         delete this.warning;
+    }
+
+    onCompareClick() {
+        if (this.sideBySideAdded) {
+            this.previewData = this.previewData[0];
+        } else {
+            this.previewData = [this.previewData, this.previewData];
+        }
+        this.showPreview(this.previewData);
+    }
+
+    get leftPreviewSelection() {
+        return Array.isArray(this.previewData) && this.previewData[0];
+    }
+
+    get leftPreviewPosition() {
+        if (!this._leftPreviewPosition || this._leftPreviewPosition.x !== this.dividerPosition) {
+            this._leftPreviewPosition = {x: this.dividerPosition, offset: 10, side: 'left'};
+        }
+        return this._leftPreviewPosition;
+    }
+
+    get rightPreviewSelection() {
+        return Array.isArray(this.previewData) && this.previewData[1];
+    }
+
+    get rightPreviewPosition() {
+        if (!this._rightPreviewPosition || this._rightPreviewPosition.x !== this.dividerPosition) {
+            this._rightPreviewPosition = {x: this.dividerPosition, offset: 10, side: 'right'};
+        }
+        return this._rightPreviewPosition;
+    }
+
+    get singlePreviewSelection() {
+        return this.previewData;
+    }
+
+    onNodeClose(side) {
+        this.previewData = this.previewData[side === 'left' ? 1 : 0];
+        this.showPreview(this.previewData);
+    }
+
+    onGraphComplete(nodes) {
+        this.nodeMap = nodes;
+    }
+
+    onLeftSelect(id) {
+        this.previewData[0] = id;
+        this.showPreview(this.previewData);
+    }
+
+    onRightSelect(id) {
+        this.previewData[1] = id;
+        this.showPreview(this.previewData);
+    }
+
+    onSingleSelect(id) {
+        this.previewData = id;
+        this.showPreview(this.previewData);
+    }
+
+    onLeftClose() {
+        this.previewData = this.previewData[1];
+        this.showPreview(this.previewData);
+    }
+
+    onRightClose() {
+        this.previewData = this.previewData[0];
+        this.showPreview(this.previewData);
+    }
+
+    onSingleClose() {
+        this.onPreviewClose();
     }
 }

@@ -50,10 +50,19 @@
       </div>
     </div>
   </div>
+
+  <div class="filler"></div>
+  <button class="btn btn-square btn-small"
+          title="Compare"
+          ng-class="{'btn-default': !$ctrl.comparing,
+                     'btn-tertiary': $ctrl.comparing}"
+          ng-click="$ctrl.onCompareClick()">
+    <span class="icon-compare"></span>
+  </button>
   <div class="filler"></div>
   <button class="btn btn-default btn-square btn-small"
           title="Close"
           ng-click="$ctrl.onClose()">
-    <span class="icon-cross"></span>
+    <span class="icon-close"></span>
   </button>
 </div>
