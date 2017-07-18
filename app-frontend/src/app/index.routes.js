@@ -4,8 +4,7 @@ import loginTpl from './pages/login/login.html';
 import labTpl from './pages/lab/lab.html';
 import labEditTpl from './pages/lab/edit/edit.html';
 import labRunTpl from './pages/lab/run/run.html';
-import labRun2Tpl from './pages/lab/run2/run.html';
-import labNavbarTpl from './pages/lab/run2/navbar/navbar.html';
+import labNavbarTpl from './pages/lab/run/navbar/navbar.html';
 import marketTpl from './pages/market/market.html';
 import marketSearchTpl from './pages/market/search/search.html';
 import marketToolTpl from './pages/market/tool/tool.html';
@@ -294,22 +293,7 @@ function labStates($stateProvider) {
                    controllerAs: '$ctrl'
                }
            }
-       })
-        .state('lab.run2', {
-            url: '/run2/:projectid?',
-            views: {
-                'navmenu@root': {
-                    templateUrl: labNavbarTpl,
-                    controller: 'LabNavbarController',
-                    controllerAs: '$ctrl'
-                },
-                '': {
-                    templateUrl: labRun2Tpl,
-                    controller: 'LabRunController2',
-                    controllerAs: '$ctrl'
-                }
-            }
-        });
+       });
 }
 
 function shareStates($stateProvider) {

@@ -87,7 +87,8 @@ export default (app) => {
             this._sceneTiles = L.tileLayer(
                 this.getSceneLayerURL(),
                 {
-                    maxZoom: 30, bounds: this.bounds, attribution: 'Raster Foundry'
+                    maxZoom: 30,
+                    bounds: this.bounds
                 }
             );
             return this._sceneTiles;
@@ -104,7 +105,7 @@ export default (app) => {
                 });
             }
             return this.getMosaicLayerURL().then((url) => {
-                let options = {maxZoom: 30, bounds: this.bounds, attribution: 'Raster Foundry'};
+                let options = {maxZoom: 30, bounds: this.bounds};
                 this._mosaicTiles = L.tileLayer(url, options);
                 return this._mosaicTiles;
             });
@@ -119,7 +120,8 @@ export default (app) => {
             this._tiles = L.tileLayer(
                 this.getNDVIURL(bands),
                 {
-                    maxZoom: 30, bounds: this.bounds, attribution: 'Raster Foundry'
+                    maxZoom: 30,
+                    bounds: this.bounds
                 }
             );
             return this._tiles;

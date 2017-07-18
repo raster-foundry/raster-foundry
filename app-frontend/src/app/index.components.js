@@ -26,7 +26,6 @@ export default angular.module('index.components', [
     require('./components/tools/toolItem/toolItem.module.js').name,
     require('./components/tools/toolCreateModal/toolCreateModal.module.js').name,
     require('./components/tools/diagramContainer/diagramContainer.module.js').name,
-    require('./components/tools/diagramContainer2/diagramContainer.module.js').name,
     require('./components/tools/diagramNodeHeader/diagramNodeHeader.module.js').name,
     require('./components/tools/inputNode/inputNode.module.js').name,
     require('./components/tools/operationNode/operationNode.module.js').name,

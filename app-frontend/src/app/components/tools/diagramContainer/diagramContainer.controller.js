@@ -1,43 +1,162 @@
-/* global joint, $ */
+/* global joint, $, _ */
 
 const Map = require('es6-map');
-const SvgPanZoom = require('svg-pan-zoom');
 
+const maxZoom = 3;
+const minZoom = 0.025;
 
 export default class DiagramContainerController {
     constructor( // eslint-disable-line max-params
-        $element, $scope, $state, $timeout, $compile, mousetipService, toolService) {
+        $element, $scope, $state, $timeout, $compile, $document, $window, $rootScope,
+        mousetipService, toolService
+    ) {
         'ngInject';
         this.$element = $element;
         this.$scope = $scope;
+        this.$rootScope = $rootScope;
         this.$state = $state;
         this.$timeout = $timeout;
         this.$compile = $compile;
+        this.$document = $document;
+        this.$window = $window;
         this.mousetipService = mousetipService;
         this.toolService = toolService;
     }
 
     $onInit() {
+        let $scope = this.$scope;
+        let $compile = this.$compile;
+
+        this.scale = 1;
+
+        $scope.$on('$destroy', this.$onDestroy.bind(this));
+
+        joint.shapes.html = {};
+        joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
+            defaults: joint.util.deepSupplement({
+                type: 'html.Element',
+                attrs: {
+                    rect: {
+                        stroke: 'none',
+                        'fill-opacity': 0
+                    }
+                }
+            }, joint.shapes.basic.Rect.prototype.defaults)
+        });
+
+        joint.shapes.html.ElementView = joint.dia.ElementView.extend({
+            template: `
+                <div class="diagram-cell">
+                  <rf-diagram-node-header
+                    data-model="model"
+                    data-invalid="model.get('invalid')"
+                    data-menu-options="menuOptions"
+                  ></rf-diagram-node-header>
+                  <rf-input-node
+                    ng-if="model.get('cellType') === 'src'"
+                    data-model="model"
+                    on-change="onChange({sourceId: sourceId, project: project, band: band})"
+                  ></rf-input-node>
+                  <rf-operation-node
+                    ng-if="model.get('cellType') === 'function'"
+                    data-model="model"
+                  ></rf-operation-node>
+                  <rf-constant-node
+                    ng-if="model.get('cellType') === 'const'"
+                    data-model="model"
+                    on-change="onChange({override: override})"
+                  ></rf-constant-node>
+                </div>`,
+            initialize: function () {
+                _.bindAll(this, 'updateBox');
+                joint.dia.ElementView.prototype.initialize.apply(this, arguments);
+                this.model.on('change', this.updateBox, this);
+                this.$box = angular.element(this.template);
+                this.scope = $scope.$new();
+                $compile(this.$box)(this.scope);
+
+                this.updateBox();
+            },
+            render: function () {
+                joint.dia.ElementView.prototype.render.apply(this, arguments);
+                this.paper.$el.prepend(this.$box);
+                this.updateBox();
+                this.listenTo(this.paper, 'translate', () => {
+                    let bbox = this.model.getBBox();
+                    let origin = this.paper ? this.paper.options.origin : {
+                        x: 0,
+                        y: 0
+                    };
+                    this.$box.css({
+                        left: bbox.x * this.scale + origin.x,
+                        top: bbox.y * this.scale + origin.y
+                    });
+                });
+                this.scale = 1;
+                this.listenTo(this.paper, 'scale', (scale) => {
+                    this.scale = scale;
+                    let bbox = this.model.getBBox();
+                    let origin = this.paper ? this.paper.options.origin : {
+                        x: 0,
+                        y: 0
+                    };
+                    this.$box.css({
+                        left: bbox.x * this.scale + origin.x,
+                        top: bbox.y * this.scale + origin.y,
+                        transform: `scale(${scale})`,
+                        'transform-origin': '0 0'
+                    });
+                });
+                return this;
+            },
+            updateBox: function () {
+                let bbox = this.model.getBBox();
+                if (this.model !== this.scope.model) {
+                    this.scope.onChange = this.model.get('onChange');
+                    this.scope.sourceId = this.model.get('id');
+                    this.scope.model = this.model;
+                }
+
+                let origin = this.paper ? this.paper.options.origin : {
+                    x: 0,
+                    y: 0
+                };
+
+                this.$box.css({
+                    width: bbox.width,
+                    height: bbox.height,
+                    left: bbox.x * this.scale + origin.x,
+                    top: bbox.y * this.scale + origin.y
+                });
+            },
+            removeBox: function () {
+                this.$box.remove();
+            }
+        });
+
         this.workspaceElement = this.$element[0].children[0];
         this.comparison = [false, false];
-        this.cellSize = [300, 75];
+        this.cellSize = [400, 200];
         this.paddingFactor = 0.8;
-        this.nodeSeparationFactor = 0.25;
+        this.nodeSeparationFactor = 0.2;
         this.panActive = false;
         this.initContextMenus();
-        this.contextMenuTpl =
-            `<div class="lab-contextmenu" ng-show="isShowingContextMenu">
-                <div class="btn-group">
-                    <button ng-repeat="item in currentContextMenu"
-                        ng-click="item.callback()"
-                        class="btn btn-default">
-                        {{item.label}}
-                    </button>
-                </div>
-            </div>`;
         this.extractInputs();
         this.extractShapes();
         this.initDiagram();
+
+        this.$rootScope.$on('lab.resize', () => {
+            this.$timeout(this.onWindowResize, 100);
+        });
+    }
+
+    $onDestroy() {
+        if (this.isComparing) {
+            this.cancelComparison();
+        }
+        if (this.onWindowResize) {
+            this.$window.removeEventListener('resize', this.onWindowResize);
+        }
     }
 
     getToolLabel(json) {
@@ -60,24 +179,47 @@ export default class DiagramContainerController {
                 height: $(this.workspaceElement).height(),
                 width: $(this.workspaceElement).width(),
                 gridSize: 25,
-                drawGrid: true,
+                drawGrid: {
+                    name: 'doubleMesh',
+                    args: [{
+                        thickness: 1,
+                        scaleFactor: 6
+                    }, {
+                        color: 'lightgrey',
+                        thickness: 1,
+                        scaleFactor: 6
+                    }]
+                },
                 model: this.graph,
-                clickThreshold: 4
+                clickThreshold: 4,
+                interactive: false
             });
             this.paper.drawGrid({
                 color: '#aaa',
                 thickness: 1
             });
+            this.paper.on('cell:pointerdown', this.onCellClick.bind(this));
             this.paper.on('blank:pointerclick', this.onPaperClick.bind(this));
-            this.paper.on('cell:pointerclick', this.onCellClick.bind(this));
             this.paper.on('blank:pointerdown', () => {
                 this.panActive = true;
                 this.$scope.$evalAsync();
             });
             this.paper.on('blank:pointerup', () => {
                 this.panActive = false;
+                delete this.lastMousePos;
                 this.$scope.$evalAsync();
             });
+            this.paper.$el.on('wheel', this.onMouseWheel.bind(this));
+
+            this.onWindowResize = () => {
+                let width = this.$element[0].offsetWidth;
+                let height = this.$element[0].offsetHeight;
+                this.paper.setDimensions(
+                    width, height
+                );
+            };
+            this.$window.addEventListener('resize', this.onWindowResize);
+            this.$element.on('mousemove', this.onMouseMove.bind(this));
         }
 
         if (this.shapes) {
@@ -91,61 +233,140 @@ export default class DiagramContainerController {
                 marginX: padding,
                 marginY: padding
             });
+            this.overridePositions(this.graph);
+            this.scaleToContent();
+        }
+    }
 
-            this.paper.scaleContentToFit({
-                padding: padding
+    overridePositions(graph) {
+        // eslint-disable-next-line
+        Object.keys(graph._nodes)
+            .map((modelid) => this.paper.getModelById(modelid))
+            .forEach((model) => {
+                if (model.attributes.positionOverride) {
+                    model.position(
+                        model.attributes.positionOverride.x,
+                        model.attributes.positionOverride.y
+                    );
+                }
             });
-            if (!this.svgPanZoom) {
-                this.svgPanZoom = SvgPanZoom(this.paper.svg, {
-                    beforePan: () => {
-                        return this.panActive;
-                    },
-                    beforeZoom: () => {
-                        this.hideContextMenu();
-                    },
-                    dblClickZoomEnabled: false,
-                    fit: false
-                });
-            }
+    }
+
+    scaleToContent() {
+        this.paper.translate(0, 0);
+        this.paper.scale(1);
+
+        let preZoomBBox = this.paper.getContentBBox();
+        let xratio =
+            this.paper.options.width / (preZoomBBox.x * 2 + preZoomBBox.width);
+        let yratio =
+            this.paper.options.height / (preZoomBBox.y * 2 + preZoomBBox.height);
+        let ratio = xratio > yratio ? yratio : xratio;
+        this.setZoom(ratio > 1 ? 1 : ratio, {
+            x: 0,
+            y: 0
+        });
+
+        let postZoomBBox = this.paper.getContentBBox();
+        let contentWidth = postZoomBBox.x * 2 + postZoomBBox.width;
+        let contentHeight = postZoomBBox.y * 2 + postZoomBBox.height;
+        let xoffset = this.paper.options.width / 2 - contentWidth / 2;
+        let yoffset = this.paper.options.height / 2 - contentHeight / 2;
+        this.paper.translate(xoffset, yoffset);
+    }
+
+    onMouseWheel(mouseEvent) {
+        let localpoint = this.paper.clientToLocalPoint(
+            mouseEvent.originalEvent.x, mouseEvent.originalEvent.y
+        );
+
+        if (mouseEvent.originalEvent.deltaY < 0) {
+            this.zoomIn(localpoint);
+        } else {
+            this.zoomOut(localpoint);
         }
     }
 
-    zoomIn() {
-        if (this.svgPanZoom) {
-            this.svgPanZoom.zoomIn();
-        }
+    zoomIn(coords) {
+        this.setZoom(this.scale * 1.25, coords);
     }
 
-    zoomOut() {
-        if (this.svgPanZoom) {
-            this.svgPanZoom.zoomOut();
-        }
+    zoomOut(coords) {
+        this.setZoom(this.scale / 1.25, coords);
     }
 
-    fitAndCenter() {
-        if (this.svgPanZoom) {
-            this.svgPanZoom.fit();
-            this.svgPanZoom.center();
-            this.svgPanZoom.zoomOut();
+    setZoom(zoom, coords) {
+        let zoomCoords = coords;
+
+        let oldScale = this.scale;
+        this.scale = zoom;
+        if (zoom > maxZoom) {
+            this.scale = maxZoom;
+        }
+        if (zoom < minZoom) {
+            this.scale = minZoom;
+        }
+
+        let scaleDelta = this.scale - oldScale;
+        let origin = this.paper.options.origin;
+
+        if (!coords) {
+            let offset = this.$element.offset();
+            let middle = {
+                x: this.$element[0].offsetWidth / 2,
+                y: this.$element[0].offsetHeight / 2
+            };
+            zoomCoords = this.paper.clientToLocalPoint(
+                middle.x + offset.left, middle.y + offset.top
+            );
+        }
+
+        let offsetX = -(zoomCoords.x * scaleDelta) + origin.x;
+        let offsetY = -(zoomCoords.y * scaleDelta) + origin.y;
+
+        this.paper.scale(this.scale);
+        this.paper.translate(offsetX, offsetY);
+        this.$scope.$evalAsync();
+    }
+
+    onMouseMove(mouseEvent) {
+        if (this.panActive) {
+            let translate = {
+                x: this.lastMousePos ? this.lastMousePos.x - mouseEvent.offsetX : 0,
+                y: this.lastMousePos ? this.lastMousePos.y - mouseEvent.offsetY : 0
+            };
+            this.lastMousePos = {
+                x: mouseEvent.offsetX,
+                y: mouseEvent.offsetY
+            };
+            let origin = this.paper.options.origin;
+            this.paper.translate(origin.x - translate.x, origin.y - translate.y);
+            this.$scope.$evalAsync();
         }
     }
 
     initContextMenus() {
-        this.contextMenus = new Map();
         this.defaultContextMenu = [{
             label: 'Compare to...',
-            callback: () => {
-                this.startComparison();
+            callback: ($event, model) => {
+                this.selectCell(model);
+                this.startComparison(model.get('id'));
             }
         }, {
             label: 'View output',
-            callback: () => {
-                this.onPreview({data: this.selectedCellView.model.id});
+            callback: ($event, model) => {
+                this.onPreview({
+                    data: model.get('id')
+                });
             }
         }, {
+            type: 'divider'
+        }, {
             label: 'Share',
-            callback: () => {
-                this.onShare({data: this.selectedCellView.model.id});
+            callback: ($event, model) => {
+                this.onShare({
+                    data: model.get('id')
+                });
             }
         }];
         this.cancelComparisonMenu = [{
@@ -160,19 +381,15 @@ export default class DiagramContainerController {
         this.$scope.$evalAsync(() => {
             if (this.isComparing) {
                 this.cancelComparison();
-            } else {
-                this.hideContextMenu();
-                this.unselectCellView();
             }
+            this.unselectCell();
         });
     }
 
-    onCellClick(cv, evt) {
+    onCellClick(cv) {
         this.$scope.$evalAsync(() => {
             if (this.isComparing) {
                 this.continueComparison(cv);
-            } else {
-                this.selectCellView(cv, evt);
             }
         });
     }
@@ -191,7 +408,9 @@ export default class DiagramContainerController {
                     args = Object.values(args);
                 }
                 inputs = inputs.concat(args.map((a) => {
-                    return Object.assign({parent: tool}, a);
+                    return Object.assign({
+                        parent: tool
+                    }, a);
                 }));
             } else {
                 this.inputsJson.push(input);
@@ -224,14 +443,19 @@ export default class DiagramContainerController {
                 let rectOutputs = ['Output'];
                 let ports = this.createPorts(rectInputs, rectOutputs);
                 let currentId = nextId.toString();
-                let rectAttrs = {
+                let rectAttrs = Object.assign({
                     id: input.id,
                     label: this.getToolLabel(input),
+                    type: input.type ? input.type : 'function',
                     inputs: rectInputs,
                     outputs: rectOutputs,
                     tag: input.tag,
                     ports: ports
-                };
+                }, {
+                    operation: input.apply,
+                    value: input.constant,
+                    positionOverride: input.metadata && input.metadata.positionOverride
+                });
 
                 rectangle = this.constructRect(rectAttrs);
 
@@ -247,12 +471,21 @@ export default class DiagramContainerController {
                     firstPort.isConnected = true;
 
                     let link = new joint.dia.Link({
-                        source: {id: rectangle.id, port: 'Output'},
-                        target: {id: input.parent.id, port: firstPort.id},
+                        source: {
+                            id: rectangle.id,
+                            port: 'Output'
+                        },
+                        target: {
+                            id: input.parent.id,
+                            port: firstPort.id
+                        },
                         attrs: {
                             '.marker-target': {
                                 d: 'M 4 0 L 0 2 L 4 4 z'
-                            }
+                            },
+                            'g.link-tools': {display: 'none'},
+                            'g.marker-arrowheads': {display: 'none'},
+                            '.connection-wrap': {display: 'none'}
                         }
                     });
 
@@ -273,30 +506,16 @@ export default class DiagramContainerController {
     }
 
     constructRect(config) {
-        let label = joint.util.breakText(config.label || config.id.toString(), {
-            width: this.cellSize[0] * this.paddingFactor,
-            height: this.cellSize[1] * this.paddingFactor
-        }, {lineHeight: 1});
-
-        return new joint.shapes.basic.Rect({
+        return new joint.shapes.html.Element(Object.assign({
             id: config.id,
             size: {
                 width: this.cellSize[0],
                 height: this.cellSize[1]
             },
-            attrs: {
-                rect: {
-                    fill: '#fff',
-                    stroke: '#959cad',
-                    'stroke-width': 0.5,
-                    rx: 2,
-                    ry: 4
-                },
-                text: {
-                    fill: '#353b59',
-                    text: label
-                }
-            },
+            cellType: config.type,
+            title: config.label || config.id.toString(),
+            operation: config.operation,
+            contextMenu: this.defaultContextMenu,
             ports: {
                 groups: {
                     inputs: {
@@ -312,79 +531,72 @@ export default class DiagramContainerController {
                 },
                 items: config.ports
             }
-        });
+        }, {
+            onChange: this.onParameterChange,
+            value: config.value,
+            positionOverride: config.positionOverride
+        }));
     }
 
-    startComparison() {
+    startComparison(id) {
+        if (this.clickListener) {
+            this.clickListener();
+        }
+
         this.mousetipService.set('Select a node to compare');
         this.isComparing = true;
-        this.comparison[0] = this.selectedCellView.model.id;
-        this.showContextMenu(this.selectedCellView, this.cancelComparisonMenu);
+        this.comparison[0] = id;
+
+        let initialClick = true;
+        const onClick = () => {
+            if (!initialClick) {
+                this.cancelComparison();
+                this.$document.off('click', this.clickListener);
+                this.$scope.$evalAsync();
+                delete this.clickListener;
+            } else {
+                initialClick = false;
+            }
+        };
+        this.clickListener = onClick;
+        this.$document.on('click', onClick);
     }
 
     continueComparison(cv) {
-        this.mousetipService.remove();
-        this.hideContextMenu();
-        this.isComparing = false;
+        this.clickListener();
         this.comparison[1] = cv.model.id;
-        this.onPreview({data: this.comparison});
+        this.onPreview({
+            data: this.comparison
+        });
+        this.unselectCell();
     }
 
     cancelComparison() {
-        this.hideContextMenu();
         this.isComparing = false;
+        this.unselectCell();
         this.mousetipService.remove();
     }
 
-    showContextMenu(cv, contextMenu) {
-        this.hideContextMenu();
-
-        let bounds = cv.getBBox() || this.selectedCellView.getBBox || false;
-        let menuScope = this.$scope.$new();
-        menuScope.currentContextMenu = contextMenu ||
-                                       this.contextMenus.get(cv.model.id) ||
-                                       this.defaultContextMenu;
-
-        this.contextMenuEl = this.$compile(this.contextMenuTpl)(menuScope)[0];
-        this.$element[0].appendChild(this.contextMenuEl);
-        this.contextMenuEl = $(this.contextMenuEl).css({
-            top: bounds.y,
-            left: bounds.x + bounds.width / 2
-        });
-
-        menuScope.$evalAsync(() => {
-            menuScope.isShowingContextMenu = true;
-        });
-    }
-
-    hideContextMenu() {
-        this.isShowingContextMenu = false;
-        if (this.contextMenuEl) {
-            this.contextMenuEl.remove();
-        }
-    }
-
-    selectCellView(cellView) {
-        this.unselectCellView();
-        this.selectedCellView = cellView;
-        cellView.model.attr({
+    selectCell(model) {
+        this.unselectCell();
+        this.selectedCell = model;
+        model.attr({
             rect: {
-                stroke: '#353b59',
+                stroke: '#738FFC',
                 'stroke-width': '1'
             }
         });
-        this.showContextMenu(cellView);
     }
 
-    unselectCellView() {
-        if (this.selectedCellView) {
-            this.selectedCellView.model.attr({
+    unselectCell() {
+        if (this.selectedCell) {
+            this.selectedCell.attr({
                 rect: {
                     stroke: '#959cad',
                     'stroke-width': 0.5
                 }
             });
-            this.selectedCellView = null;
+            this.selectedCell = null;
         }
     }
 
@@ -414,8 +626,14 @@ export default class DiagramContainerController {
 
     createLink(src, target) {
         let link = new joint.dia.Link({
-            source: {id: src[0], port: src[1]},
-            target: {id: target[0], port: target[1]},
+            source: {
+                id: src[0],
+                port: src[1]
+            },
+            target: {
+                id: target[0],
+                port: target[1]
+            },
             attrs: {
                 '.marker-target': {
                     d: 'M 4 0 L 0 2 L 4 4 z'
