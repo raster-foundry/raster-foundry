@@ -6,7 +6,9 @@ const labMap = {
         mapId: '@',
         options: '<?',
         initialCenter: '<?',
-        onClose: '&'
+        onClose: '&',
+        onCompareClick: '&',
+        comparing: '<'
     }
 };
 

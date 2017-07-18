@@ -155,6 +155,11 @@
   @include button-states($danger);
 }
 
+.btn-transparent {
+  background-color: transparent;
+  border-color: transparent;
+}
+
 /* 
  * Ghost buttons, borders only
  */
@@ -207,6 +212,11 @@
 /*
  * Button Sizes
  */
+.btn-text {
+  font-size: 1em;
+  padding: 0.3em 0.3em;
+}
+
 .btn-tiny {
   font-size: 1.2rem;
   padding: .7rem .5rem;

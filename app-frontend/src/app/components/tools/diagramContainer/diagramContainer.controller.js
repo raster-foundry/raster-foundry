@@ -8,7 +8,7 @@ const minZoom = 0.025;
 export default class DiagramContainerController {
     constructor( // eslint-disable-line max-params
         $element, $scope, $state, $timeout, $compile, $document, $window, $rootScope,
-        mousetipService, toolService
+        mousetipService, toolService, labUtils
     ) {
         'ngInject';
         this.$element = $element;
@@ -21,6 +21,7 @@ export default class DiagramContainerController {
         this.$window = $window;
         this.mousetipService = mousetipService;
         this.toolService = toolService;
+        this.labUtils = labUtils;
     }
 
     $onInit() {
@@ -141,7 +142,9 @@ export default class DiagramContainerController {
         this.nodeSeparationFactor = 0.2;
         this.panActive = false;
         this.initContextMenus();
-        this.extractInputs();
+
+        this.inputsJson = this.labUtils.getToolImports(this.toolDefinition);
+
         this.extractShapes();
         this.initDiagram();
 
@@ -157,13 +160,6 @@ export default class DiagramContainerController {
         if (this.onWindowResize) {
             this.$window.removeEventListener('resize', this.onWindowResize);
         }
-    }
-
-    getToolLabel(json) {
-        if (json.metadata && json.metadata.label) {
-            return json.metadata.label;
-        }
-        return json.apply;
     }
 
     initDiagram() {
@@ -281,9 +277,11 @@ export default class DiagramContainerController {
         );
 
         if (mouseEvent.originalEvent.deltaY < 0) {
-            this.zoomIn(localpoint);
+            let newZoom = this.scale * (1 + mouseEvent.originalEvent.deltaY * -0.002);
+            this.setZoom(newZoom, localpoint);
         } else {
-            this.zoomOut(localpoint);
+            let newZoom = this.scale / (1 + mouseEvent.originalEvent.deltaY * 0.002);
+            this.setZoom(newZoom, localpoint);
         }
     }
 
@@ -394,32 +392,7 @@ export default class DiagramContainerController {
         });
     }
 
-    extractInputs() {
-        this.inputsJson = [];
-
-        let json = Object.assign({}, this.toolDefinition);
-        let inputs = [json];
-        while (inputs.length) {
-            let input = inputs.pop();
-            let args = input.args;
-            if (args) {
-                let tool = this.getToolLabel(input);
-                if (!Array.isArray(args)) {
-                    args = Object.values(args);
-                }
-                inputs = inputs.concat(args.map((a) => {
-                    return Object.assign({
-                        parent: tool
-                    }, a);
-                }));
-            } else {
-                this.inputsJson.push(input);
-            }
-        }
-    }
-
     extractShapes() {
-        let nextId = 0;
         let nodes = new Map();
         let shapes = [];
         let json = Object.assign({}, this.toolDefinition);
@@ -428,38 +401,14 @@ export default class DiagramContainerController {
         while (inputs.length) {
             let input = inputs.pop();
             let rectangle;
-            let args;
-
-            // Args can be array or object, if object, convert to array
-            if (input.args) {
-                args = Array.isArray(input.args) ? input.args : Object.values(input.args);
-            } else {
-                args = [];
-            }
 
             // Input nodes not of the layer type are not made into rectangles
             if (!input.type || input.type === 'src' || input.type === 'const') {
-                let rectInputs = args.length;
-                let rectOutputs = ['Output'];
-                let ports = this.createPorts(rectInputs, rectOutputs);
-                let currentId = nextId.toString();
-                let rectAttrs = Object.assign({
-                    id: input.id,
-                    label: this.getToolLabel(input),
-                    type: input.type ? input.type : 'function',
-                    inputs: rectInputs,
-                    outputs: rectOutputs,
-                    tag: input.tag,
-                    ports: ports
-                }, {
-                    operation: input.apply,
-                    value: input.constant,
-                    positionOverride: input.metadata && input.metadata.positionOverride
-                });
+                let rectAttrs = this.labUtils.getNodeAttributes(input);
 
                 rectangle = this.constructRect(rectAttrs);
 
-                nodes.set(currentId, rectAttrs);
+                nodes.set(input.id, rectAttrs);
 
                 shapes.push(rectangle);
 
@@ -491,18 +440,19 @@ export default class DiagramContainerController {
 
                     shapes.push(link);
                 }
-                if (args) {
-                    inputs = inputs.concat(args.map((a) => {
-                        return Object.assign({
-                            parent: rectangle
-                        }, a);
-                    }));
-                }
-                nextId += 1;
+                inputs = inputs.concat(
+                    this.labUtils.getNodeArgs(input)
+                        .map((a) => {
+                            return Object.assign({
+                                parent: rectangle
+                            }, a);
+                        })
+                );
             }
         }
         this.shapes = shapes;
         this.nodes = nodes;
+        this.onGraphComplete({nodes: nodes});
     }
 
     constructRect(config) {
@@ -598,48 +548,5 @@ export default class DiagramContainerController {
             });
             this.selectedCell = null;
         }
-    }
-
-
-    createPorts(inputs, outputs) {
-        let ports = [];
-        let inputList = Array.isArray(inputs) ?
-            inputs : Array(inputs).fill();
-
-        ports = inputList.map((_, idx) => {
-            return {
-                id: `input-${idx}`,
-                label: `input-${idx}`,
-                group: 'inputs'
-            };
-        });
-
-        ports = ports.concat(outputs.map(o => {
-            return {
-                id: o,
-                group: 'outputs'
-            };
-        }));
-
-        return ports;
-    }
-
-    createLink(src, target) {
-        let link = new joint.dia.Link({
-            source: {
-                id: src[0],
-                port: src[1]
-            },
-            target: {
-                id: target[0],
-                port: target[1]
-            },
-            attrs: {
-                '.marker-target': {
-                    d: 'M 4 0 L 0 2 L 4 4 z'
-                }
-            }
-        });
-        return link;
     }
 }

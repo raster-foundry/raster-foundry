@@ -1627,6 +1627,10 @@ rf-export-item {
   pointer-events: none;
   user-select: none;
   position: relative;
+
+  .node-header-colorblock {
+    border-radius: 5px 0 0 0;
+  }
 }
 
 .node-dropdown {
@@ -1635,6 +1639,12 @@ rf-export-item {
   pointer-events: auto;
   position: relative;
   cursor: pointer;
+
+  &.no-outline {
+    &:focus {
+      outline: none;
+    }
+  }
 }
 
 .node-dropdown-icon {
@@ -1673,9 +1683,8 @@ rf-export-item {
   padding: .25em;
 }
 
-
 .node-header-colorblock {
-  border-radius: 5px 0 0 0;
+  border-radius: 3px 0 0 3px;
   width: 1em;
   &.node-type-input {
     background: $node-blue;
@@ -1756,6 +1765,7 @@ rf-operation-node {
 
   border-radius: 2px;
   border: 1px solid $shade-light;
+
 
   &::after {
     content: "";
@@ -1845,6 +1855,7 @@ rf-operation-node {
 .lab-left {
   position: relative;
   height: 100%;
+  overflow: hidden;
 }
 
 .resize-separator {
@@ -1968,6 +1979,7 @@ rf-operation-node {
   background-image: none;
   background: transparent;
 }
+
 .map-search-prompt {
   text-align: center;
   font-weight: bold;
@@ -2016,4 +2028,77 @@ rf-operation-node {
   }
 }
 
+rf-node-selector {
+  white-space: nowrap;
+  position: absolute;
+  display: flex;
+  flex-direction: row;
+  background: $shade-dark;
+  color: $white;
+  top: .25em;
+  z-index: 1001;
+  border-radius: 3px;
+}
 
+.node-selector-dropdown {
+  font-weight: 700;
+  color: $white;
+  padding: .2em;
+  height: 2.5em;
+  display: flex;
+
+
+  .btn {
+    color: $white;
+    font-weight: 700;
+    width: 15em;
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+  }
+}
+
+.node-selector-close {
+  flex: 0;
+  display: flex;
+  flex-direction: column;
+  .btn {
+    flex: 1;
+  }
+}
+
+.node-select {
+  position: relative;
+  width: 15em;
+  height: 1em;
+  background: $shade-dark;
+}
+
+.node-selections {
+  position: absolute;
+  top: 2em;
+  background: $shade-dark;
+  width: 15em;
+  max-height: 16em;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-radius: 3px;
+}
+
+.node-option {
+  cursor: pointer;
+  padding: .25em .5em .25em .5em;
+  &:hover {
+    background: $shade-light;
+  }
+  &.selected {
+    background: $brand-tertiary;
+  }
+}
+
+.node-filter {
+  color: $shade-dark;
+  padding: .25em;
+  border-radius: 3px;
+  border: 1px solid $shade-light;
+}
