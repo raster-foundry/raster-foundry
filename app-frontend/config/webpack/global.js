@@ -64,7 +64,7 @@ const basemaps = JSON.stringify({
             }
         }
     },
-    default: 'Aerial'
+    default: 'Light'
 });
 
 module.exports = function (_path) {
