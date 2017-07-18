@@ -8,26 +8,32 @@
       <div class="column-12">
 
         <!-- IF project has no scenes -->
-        <div class="project-preview-container placeholder"
-             ng-if="!$ctrl.project.scenes"
-             style="background-image: url({{$ctrl.projectPlaceholder}})">
-          <span>This project doesn't have any scenes yet</span>
-        </div>
+        <a ui-sref="projects.edit({projectid: $ctrl.project.id})" style="text-decoration: none">
+          <div class="project-preview-container placeholder"
+               ng-if="!$ctrl.project.scenes"
+               style="background-image: url({{$ctrl.projectPlaceholder}})">
+            <span>This project doesn't have any scenes yet</span>
+          </div>
+        </a>
 
          <!-- IF not all scenes ingested: -->
-        <div class="project-preview-container placeholder"
-             ng-if="$ctrl.project.scenes && $ctrl.status !== 'CURRENT'"
-             style="background-image: url({{$ctrl.projectPlaceholder}})">
-             <span>Preview unavailable</span>
-        </div>
+        <a ui-sref="projects.edit({projectid: $ctrl.project.id})" style="text-decoration: none">
+          <div class="project-preview-container placeholder"
+               ng-if="$ctrl.project.scenes && $ctrl.status !== 'CURRENT'"
+               style="background-image: url({{$ctrl.projectPlaceholder}})">
+               <span>Preview unavailable</span>
+          </div>
+        </a>
 
         <!-- IF using a project's thumbnail: -->
-        <div class="project-preview-container placeholder"
-             ng-if="$ctrl.project.scenes && $ctrl.thumbnailUrl && $ctrl.status === 'CURRENT'"
-             style="background-image: url({{$ctrl.projectPlaceholder}})">
-          <div class="thumbnail"
-               style="background-image: url({{$ctrl.thumbnailUrl}})"></div>
-        </div>
+        <a ui-sref="projects.edit({projectid: $ctrl.project.id})" style="text-decoration: none">
+          <div class="project-preview-container placeholder"
+               ng-if="$ctrl.project.scenes && $ctrl.thumbnailUrl && $ctrl.status === 'CURRENT'"
+               style="background-image: url({{$ctrl.projectPlaceholder}})">
+            <div class="thumbnail"
+                 style="background-image: url({{$ctrl.thumbnailUrl}})"></div>
+          </div>
+        </a>
       </div>
     </div>
     <div class="row">
@@ -44,7 +50,7 @@
       </div>
       <div class="column-6 text-right">
         <a class="btn btn-default" ui-sref="projects.edit({projectid: $ctrl.project.id})">
-          Edit
+          View
         </a>
         <div uib-dropdown ng-if="!$ctrl.isSelectable">
           <button type="button" class="btn btn-default" uib-dropdown-toggle>
