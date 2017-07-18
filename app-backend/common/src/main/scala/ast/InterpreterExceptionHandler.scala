@@ -16,9 +16,14 @@ case class InterpreterException(errors: NonEmptyList[InterpreterError]) extends 
 trait InterpreterExceptionHandling extends Directives with LazyLogging {
   implicit val encodeErrorList: Encoder[NonEmptyList[InterpreterError]] =
     new Encoder[NonEmptyList[InterpreterError]] {
-      final def apply(errors: NonEmptyList[InterpreterError]): Json = JsonObject.fromMap {
-        Map("Errors" -> errors.toList.asJson)
-      }.asJson
+      final def apply(errors: NonEmptyList[InterpreterError]): Json = {
+        val errMap: JsonObject = JsonObject.fromMap({
+          errors.toList
+            .groupBy({ _.scope })
+            .map({ case (scope, error) => scope -> error.asJson })
+        })
+        JsonObject.fromMap(Map("Errors" -> errMap.asJson)).asJson
+      }
     }
 
   val interpreterExceptionHandler = ExceptionHandler {
