@@ -1,26 +1,30 @@
 package com.azavea.rf.api.tool
 
-import java.util.UUID
-
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Route
-import cats.implicits._
 import com.azavea.rf.common._
+import com.azavea.rf.common.ast._
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.Tools
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.ast.codec._
+
+import io.circe._
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Route
+import cats.implicits._
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
-
 import kamon.akka.http.KamonTraceDirectives
 import kamon.akka.http.KamonTraceDirectives.traceName
+
+import java.util.UUID
+
 
 trait ToolRoutes extends Authentication
     with PaginationDirectives
     with CommonHandlers
     with KamonTraceDirectives
+    with InterpreterExceptionHandling
     with UserErrorHandler {
 
   implicit def database: Database
@@ -35,6 +39,13 @@ trait ToolRoutes extends Authentication
       post {
         traceName("tools-create") {
           createTool
+        }
+      }
+    } ~
+    pathPrefix("validate") {
+      post {
+        traceName("ast-validate") {
+          validateAST
         }
       }
     } ~
@@ -113,6 +124,17 @@ trait ToolRoutes extends Authentication
   def deleteTool(toolId: UUID): Route = authenticate { user =>
     onSuccess(Tools.deleteTool(toolId, user)) {
       completeSingleOrNotFound
+    }
+  }
+
+  def validateAST: Route = authenticate { user =>
+    entity(as[Json]) { ast =>
+      handleExceptions(interpreterExceptionHandler) {
+        complete {
+          validateOnlyAST[Unit](ast)
+          (StatusCodes.OK, ast)
+        }
+      }
     }
   }
 

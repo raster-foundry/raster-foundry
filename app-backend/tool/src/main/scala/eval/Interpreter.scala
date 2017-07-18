@@ -83,21 +83,26 @@ object Interpreter extends LazyLogging {
   /** Interpret an AST with its matched execution parameters, but do so
     * without fetching any Rasters. Only interprets the structural validatity of
     * the AST, given the params.
+    *
+    * @param validReferences A boolean flag for determining whether `ToolReference` nodes are valid
     */
   def interpretPure[M: Monoid](
     ast: MapAlgebraAST,
-    sourceMapping: Map[UUID, RFMLRaster]
+    sourceMapping: Map[UUID, RFMLRaster],
+    validReferences: Boolean
   ): Interpreted[M] = ast match {
     /* Validate leaf nodes */
     case Source(id, _) if sourceMapping.isDefinedAt(id) => Valid(Monoid.empty)
     case Source(id, _) => Invalid(NonEmptyList.of(MissingParameter(id)))
     case Constant(_, _, _) => Valid(Monoid.empty)
-    case ToolReference(id, _) => Invalid(NonEmptyList.of(UnsubstitutedRef(id)))
+    case ToolReference(id, _) =>
+      if (!validReferences) Invalid(NonEmptyList.of(UnsubstitutedRef(id)))
+      else Valid(Monoid.empty)
 
     /* Unary operations must have only one arguments */
     case op: UnaryOperation => {
       /* Check for errors further down, first */
-      val kids: Interpreted[M] = op.args.foldMap(a => interpretPure(a, sourceMapping))
+      val kids: Interpreted[M] = op.args.foldMap(a => interpretPure(a, sourceMapping, validReferences))
 
       /* Unary ops must only have one argument */
       val argLen: Interpreted[M] = if (op.args.length == 1) Valid(Monoid.empty) else {
@@ -110,7 +115,7 @@ object Interpreter extends LazyLogging {
 
     /* All binary operations must have at least 2 arguments */
     case op: Operation => {
-      val kids: Interpreted[M] = op.args.foldMap(a => interpretPure(a, sourceMapping))
+      val kids: Interpreted[M] = op.args.foldMap(a => interpretPure(a, sourceMapping, validReferences))
 
       val argLen: Interpreted[M] = if (op.args.length > 1) Valid(Monoid.empty) else {
         Invalid(NonEmptyList.of(IncorrectArgCount(op.id, 2, op.args.length)))
@@ -288,7 +293,7 @@ object Interpreter extends LazyLogging {
 
     }
 
-    val pure: Interpreted[Unit] = interpretPure[Unit](ast, sourceMapping)
+    val pure: Interpreted[Unit] = interpretPure[Unit](ast, sourceMapping, false)
     val overridden: Interpreted[MapAlgebraAST] = overrideParams(ast, overrides)
 
     val bufferedSources = ast.bufferedSources()
@@ -491,7 +496,7 @@ object Interpreter extends LazyLogging {
             .focalStdDev(n, Some(gridbounds))
       }
 
-      val pure: Interpreted[Unit] = interpretPure[Unit](ast, sourceMapping)
+      val pure: Interpreted[Unit] = interpretPure[Unit](ast, sourceMapping, false)
       val overridden: Interpreted[MapAlgebraAST] = overrideParams(ast, overrides)
 
       val bufferedSources = ast.bufferedSources()

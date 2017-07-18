@@ -7,7 +7,7 @@ import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.rf.tool.ast.MapAlgebraAST._
 import com.azavea.rf.tool.ast.assembleSubstitutions
 import com.azavea.rf.tool.eval.{ASTDecodeError, DatabaseError, Interpreter}
-import com.azavea.rf.tool.params.EvalParams
+import com.azavea.rf.tool.params._
 
 import cats._
 import cats.data._
@@ -41,7 +41,7 @@ package object ast {
       ast     <- OptionT.fromOption[Future](oldAst.substitute(subs))
       params  <- OptionT.pure[Future, EvalParams](toolRun.executionParameters.as[EvalParams].valueOr(throw _))
     } yield {
-      Interpreter.interpretPure[M](ast, params.sources)
+      Interpreter.interpretPure[M](ast, params.sources, false)
     }
 
     result.value.map({
@@ -49,5 +49,28 @@ package object ast {
       case Some(Invalid(nel)) => throw InterpreterException(nel)
       case None => throw InterpreterException(NonEmptyList.of(DatabaseError(toolRunId)))
     })
+  }
+
+  /** Validate an AST, lacking a ToolRun. In the case of success, returns
+    * the zero element of some specified Monoid.
+    */
+  def validateOnlyAST[M: Monoid](
+    json: Json
+  ): M = {
+
+    json.as[MapAlgebraAST].map { ast =>
+      val sourceMapping: Map[UUID, RFMLRaster] =
+        ast.sources
+          .map(_.id -> SceneRaster(UUID.randomUUID, None, None))
+          .toMap
+      Interpreter.interpretPure[M](ast, sourceMapping, true)
+    } match {
+      case Right(interpreted) =>
+        interpreted match {
+          case Valid(a) => a
+          case Invalid(nel) => throw InterpreterException(nel)
+        }
+      case Left(decodeError) => throw InterpreterException(NonEmptyList.of(ASTDecodeError(decodeError)))
+    }
   }
 }
