@@ -19,11 +19,7 @@ class Router extends LazyLogging
 
   implicit val defaultDespatcher = system.dispatchers.defaultGlobalDispatcher
 
-  lazy val blockingMosaicRoutesDispatcher =
-    system.dispatchers.lookup("blocking-io-dispatcher")
   lazy val blockingSceneRoutesDispatcher =
-    system.dispatchers.lookup("blocking-io-dispatcher")
-  lazy val blockingToolRoutesDispatcher =
     system.dispatchers.lookup("blocking-io-dispatcher")
 
   val toolRoutes = new ToolRoutes()
@@ -35,7 +31,7 @@ class Router extends LazyLogging
       pathPrefix("tiles") {
         pathPrefix(JavaUUID) { projectId =>
           tileAccessAuthorized(projectId) {
-            case true => MosaicRoutes.mosaicProject(projectId)(database, blockingMosaicRoutesDispatcher)
+            case true => MosaicRoutes.mosaicProject(projectId)
             case _ => reject(AuthorizationFailedRejection)
           }
         } ~
@@ -52,7 +48,7 @@ class Router extends LazyLogging
         pathPrefix("tools") {
           get {
             tileAuthenticateOption { _ =>
-              TileSources.root(toolRoutes)(database, blockingToolRoutesDispatcher)
+              TileSources.root(toolRoutes)
             }
           }
         }
