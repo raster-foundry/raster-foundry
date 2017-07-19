@@ -29,6 +29,7 @@ import projectMaskingDrawTpl from './pages/projects/edit/masking/draw/draw.html'
 import aoiApproveTpl from './pages/projects/edit/aoi-approve/aoi-approve.html';
 import aoiParametersTpl from './pages/projects/edit/aoi-parameters/aoi-parameters.html';
 import exportTpl from './pages/projects/edit/export/export.html';
+import annotateTpl from './pages/projects/edit/annotate/annotate.html';
 
 import settingsTpl from './pages/settings/settings.html';
 import profileTpl from './pages/settings/profile/profile.html';
@@ -149,6 +150,12 @@ function projectEditStates($stateProvider) {
             url: '/export',
             templateUrl: exportTpl,
             controller: 'ExportController',
+            controllerAs: '$ctrl'
+        })
+        .state('projects.edit.annotate', {
+            url: '/annotate',
+            templateUrl: annotateTpl,
+            controller: 'AnnotateController',
             controllerAs: '$ctrl'
         });
 }
