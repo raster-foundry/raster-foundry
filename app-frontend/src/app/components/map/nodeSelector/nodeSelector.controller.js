@@ -34,13 +34,18 @@ export default class NodeSelectorController {
 
     setPosition(position) {
         let width = this.$element[0].offsetWidth;
-        let sideMult = position.side === 'left' ? -1 : 1;
-        let x = position.offset * sideMult;
+        let percent = position.x * 100;
+        let offset;
         if (position.side === 'left') {
-            x = x - width;
+            offset = width + position.offset;
+        } else if (position.side === 'right' || position.side === 'none') {
+            offset = position.offset;
+        } else {
+            throw new Error(`${position.side} is not a valid side to display a node selector on`);
         }
+        let left = `calc(${percent}% ${position.side === 'left' ? '-' : '+'} ${offset}px)`;
         this.$element.css({
-            left: `${x + position.x}px`
+            left: left
         });
     }
 

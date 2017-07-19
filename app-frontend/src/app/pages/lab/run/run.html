@@ -7,7 +7,7 @@
       <rf-lab-map
         map-id="lab-preview"
         on-close="$ctrl.onPreviewClose()"
-        comparing="$ctrl.sideBySideAdded"
+        comparing="$ctrl.frameControlAdded"
         on-compare-click="$ctrl.onCompareClick()"
       ></rf-lab-map>
       <rf-node-selector
@@ -16,29 +16,29 @@
         data-position="$ctrl.leftPreviewPosition"
         on-select="$ctrl.onLeftSelect(node)"
         on-close="$ctrl.onLeftClose()"
-        ng-if="$ctrl.sideBySideAdded"></rf-node-selector>
+        ng-if="$ctrl.frameControlAdded"></rf-node-selector>
       <rf-node-selector
         data-node-map="$ctrl.nodeMap"
         data-selected="$ctrl.rightPreviewSelection"
         data-position="$ctrl.rightPreviewPosition"
         on-select="$ctrl.onRightSelect(node)"
         on-close="$ctrl.onRightClose()"
-        ng-if="$ctrl.sideBySideAdded"></rf-node-selector>
+        ng-if="$ctrl.frameControlAdded"></rf-node-selector>
       <rf-node-selector
         data-node-map="$ctrl.nodeMap"
         data-selected="$ctrl.singlePreviewSelection"
         data-position="$ctrl.singlePreviewPosition"
         on-select="$ctrl.onSingleSelect(node)"
         on-close="$ctrl.onSingleClose()"
-        ng-if="!$ctrl.sideBySideAdded && $ctrl.singlePreviewSelection"></rf-node-selector>
+        ng-if="!$ctrl.frameControlAdded && $ctrl.singlePreviewSelection"></rf-node-selector>
     </div>
     <div class="resize-separator"
          ng-style="$ctrl.resizeHandleStyle"
          ng-show="$ctrl.isShowingPreview"
          draggable="false">
       <div class="resize-handle-grabber"
-           ng-mousedown="$ctrl.startResize($event)"
-           ng-touchstart="$ctrl.startResize($event)"
+           ng-mousedown="$ctrl.startLabSplitDrag($event)"
+           ng-touchstart="$ctrl.startLabSplitDrag($event)"
            draggable="false"
            title="Drag to resize Preview">
         <div class="icon-gripper" draggable="false"></div>

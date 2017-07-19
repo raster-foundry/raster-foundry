@@ -1,4 +1,5 @@
 /* global L */
+import { FrameView } from '../../../components/map/labMap/frame.module.js';
 
 const tileLayerOptions = {maxZoom: 30};
 
@@ -132,35 +133,48 @@ export default class LabRunController {
         }
     }
 
-    addSideBySide() {
-        if (!this.sideBySideControl) {
-            this.sideBySideControl =
-                L.control.sideBySide(
-                    this.previewLayers[0],
-                    this.previewLayers[1],
-                    {
-                        padding: 25,
-                        thumbSize: 25
-                    }
-                );
-
-            this.sideBySideControl.on('dividermove', (move) => {
-                this.dividerPosition = move.x;
-                this.$scope.$evalAsync();
-            });
-        } else {
-            this.sideBySideControl.setLeftLayers(this.previewLayers[0]);
-            this.sideBySideControl.setRightLayers(this.previewLayers[1]);
+    addFrames() {
+        if (!this.frameControl) {
+            this.frameControl = L.control.frames({});
         }
 
-        if (!this.sideBySideAdded) {
-            this.sideBySideAdded = true;
+        if (!this.frameControlAdded) {
+            this.frameControlAdded = true;
             this.getMap().then((m) => {
-                this.sideBySideControl.addTo(m.map);
-                this.$timeout(() => {
-                    this.dividerPosition = this.sideBySideControl.getPosition();
-                }, 150);
+                this.frameControl.addTo(m.map);
+                let frame = this.frameControl.getFrame();
+                let mapSize = m.map.getSize();
+                frame.dimensions = Object.assign(
+                    frame.dimensions,
+                    {width: mapSize.x, height: mapSize.y}
+                );
+                this.leftFrame = new FrameView();
+                this.leftFrame.dimensions = {
+                    x: 0, y: 0,
+                    width: mapSize.x / 2,
+                    height: mapSize.y
+                };
+                this.leftFrame.children = [this.previewLayers[0]];
+                this.rightFrame = new FrameView();
+                this.rightFrame.dimensions = {
+                    x: mapSize.x / 2, y: 0,
+                    width: mapSize.x / 2,
+                    height: mapSize.y
+                };
+                this.rightFrame.children = [this.previewLayers[1]];
+                frame.children = [this.leftFrame, this.rightFrame];
+                this.dividerPosition = 0.5;
+                frame.onUpdate = (dividers) => {
+                    let currentPosition = this.dividerPosition;
+                    this.dividerPosition = dividers.length ? dividers[0].position : 0;
+                    if (this.dividerPosition !== currentPosition) {
+                        this.$scope.$evalAsync();
+                    }
+                };
             });
+        } else {
+            this.leftFrame.children = [this.previewLayers[0]];
+            this.rightFrame.children = [this.previewLayers[1]];
         }
     }
 
@@ -183,11 +197,11 @@ export default class LabRunController {
                 this.generatedPreview = true;
                 this.getMap().then(m => {
                     this.previewLayers.forEach(l => l.addTo(m.map));
-                    if (data.constructor === Array) {
-                        this.addSideBySide();
-                    } else if (this.sideBySideAdded) {
-                        this.sideBySideControl.remove();
-                        this.sideBySideAdded = false;
+                    if (data instanceof Array) {
+                        this.addFrames();
+                    } else if (this.frameControl) {
+                        this.frameControl.remove();
+                        this.frameControlAdded = false;
                     }
                     if (!this.alreadyPreviewed) {
                         this.alreadyPreviewed = true;
@@ -242,7 +256,7 @@ export default class LabRunController {
         }
     }
 
-    startResize(event) {
+    startLabSplitDrag(event) {
         if (this.labResizing) {
             this.resizeStopListener();
         }
@@ -440,7 +454,7 @@ export default class LabRunController {
     }
 
     onCompareClick() {
-        if (this.sideBySideAdded) {
+        if (this.frameControlAdded) {
             this.previewData = this.previewData[0];
         } else {
             this.previewData = [this.previewData, this.previewData];
