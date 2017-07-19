@@ -73,6 +73,7 @@ const App = angular.module(
         require('./pages/projects/edit/aoi-approve/aoi-approve.module.js').name,
         require('./pages/projects/edit/aoi-parameters/aoi-parameters.module.js').name,
         require('./pages/projects/edit/export/export.module.js').name,
+        require('./pages/projects/edit/annotate/annotate.module.js').name,
 
         require('./pages/imports/imports.module.js').name,
         require('./pages/imports/datasources/datasources.module.js').name,
