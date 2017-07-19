@@ -10,7 +10,11 @@ import com.azavea.rf.tool.params.ParamOverride
 import cats.data.NonEmptyList
 import cats.data.Validated._
 import cats.implicits._
-import geotrellis.raster.{MultibandTile, Tile}
+import geotrellis.raster._
+import geotrellis.raster.mapalgebra.local.{Pow => GTPow, Xor => GTXor, Or => GTOr, And => GTAnd}
+import geotrellis.raster.mapalgebra.local.{Less => GTLess, LessOrEqual => GTLessOrEqual}
+import geotrellis.raster.mapalgebra.local.{Equal => GTEqual, Unequal => GTUnequal}
+import geotrellis.raster.mapalgebra.local.{Greater => GTGreater, GreaterOrEqual => GTGreaterOrEqual}
 import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.s3._
@@ -92,12 +96,60 @@ package object ast {
       reduce({_.min(_)}, { (c, rdd) => rdd.localMin(c) }, {_.localMin(_)}, {_.localMin(_)}, args, rdds)
 
     /* --- UNARY OPERATIONS --- */
+    case Equality(args, id, _) =>
+      reduce({(x, y) => if (GTEqual.compare(x, y)) 1 else 0 }, {(d, r) => r.localEqual(d)}, {_ localEqual _}, {_ localEqual _}, args, rdds)
+    case Inequality(args, id, _) =>
+      reduce({(x, y) => if (GTUnequal.compare(x, y)) 1 else 0 }, {(d, r) => r.localUnequal(d)}, {_ localUnequal _}, {_ localUnequal _}, args, rdds)
+    case Greater(args, id, _) =>
+      reduce({(x, y) => if (GTGreater.compare(x, y)) 1 else 0 }, {(d, r) => r.localGreater(d)}, {_ localGreater _}, {_ localGreater _}, args, rdds)
+    case GreaterOrEqual(args, id, _) =>
+      reduce({(x, y) => if (GTGreaterOrEqual.compare(x, y)) 1 else 0 }, {(d, r) => r.localGreaterOrEqual(d)}, {_ localGreaterOrEqual _}, {_ localGreaterOrEqual _}, args, rdds)
+    case Less(args, id, _) =>
+      reduce({(x, y) => if (GTLess.compare(x, y)) 1 else 0 }, {d2i(_) <<: _}, {_ < d2i(_)}, {(d, r) => r.localLess(d)}, args, rdds)
+    case LessOrEqual(args, id, _) =>
+      reduce({(x, y) => if (GTLessOrEqual.compare(x, y)) 1 else 0 }, {d2i(_) <=: _}, {_ <= d2i(_)}, {(d, r) => r.localLessOrEqual(d) }, args, rdds)
+    case And(args, id, _) =>
+      reduce(GTAnd.combine, {d2i(_) &: _}, {_ & d2i(_)}, {(d, r) => r.localAnd(d)}, args, rdds )
+    case Or(args, id, _) =>
+      reduce(GTOr.combine, {d2i(_) |: _}, {_ | d2i(_)}, {(d, r) => r.localOr(d)}, args, rdds)
+    case Xor(args, id, _) =>
+      reduce(GTXor.combine, {d2i(_) ^: _}, {_ ^ d2i(_)}, {(rdd1, rdd2) => rdd1.combineValues(rdd2, None)({ (t1, t2) => t1.combineDouble(t2)(GTXor.combine) }) }, args, rdds)
+    case Pow(args, id, _) =>
+      reduce(GTPow.combine, {(d, r) => r.localPow(d)}, {_ localPow _}, {_ localPow _}, args, rdds)
+    case Atan2(args, id, _) =>
+      reduce(math.atan2, {(dbl, rdd) => rdd.mapValues(_.mapDouble(math.atan2(dbl, _))) }, {(rdd, dbl) => rdd.mapValues(_.mapDouble(math.atan2(dbl, _))) }, {(rdd1, rdd2) => rdd1.combineValues(rdd2, None)({ (t1, t2) => t1.combineDouble(t2)(math.atan2) }) }, args, rdds)
+
+    /* --- Unary Operations --- */
     /* The `head` calls here will never fail, nor will they produce a `Constant` */
     case Classification(args, _, _, classMap) =>
       eval(args.head, rdds).map(_.withContext(_.color(classMap.toColorMap)))
-    case Masking(args, _, _, mask) => eval(args.head, rdds).map(_.mask(mask))
+    case Masking(args, _, _, mask) =>
+      eval(args.head, rdds).map(_.mask(mask))
+    case IsDefined(args, id, _) => eval(args.head, rdds).map(_.withContext(_.localDefined))
+    case IsUndefined(args, id, _) => eval(args.head, rdds).map(_.withContext(_.localUndefined))
+    case SquareRoot(args, id, _) => eval(args.head, rdds).map(_.withContext(_.localSqrt))
+    case Log(args, id, _) => eval(args.head, rdds).map(_.withContext(_.localLog))
+    case Log10(args, id, _) => eval(args.head, rdds).map(_.withContext(_.localLog10))
+    case Round(args, id, _) => eval(args.head, rdds).map(_.withContext(_.localRound))
+    case Floor(args, id, _) => eval(args.head, rdds).map(_.withContext(_.localFloor))
+    case Ceil(args, id, _) => eval(args.head, rdds).map(_.withContext(_.localCeil))
+    case NumericNegation(args, id, _) => eval(args.head, rdds).map(_.withContext(_.localNegate))
+    case LogicalNegation(args, id, _) => eval(args.head, rdds).map(_.withContext(_.localNot)) // TODO: DO NOT USE THIS
+    case Abs(args, id, _) => eval(args.head, rdds).map(_.withContext(_.localAbs))
+    case Trigonometry(args, id, _, trigFunc) =>
+      trigFunc match {
+        case Trig.Sin => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.sin(_))))
+        case Trig.Cos => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.cos(_))))
+        case Trig.Tan => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.tan(_))))
+        case Trig.Asin => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.asin(_))))
+        case Trig.Acos => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.acos(_))))
+        case Trig.Atan => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.atan(_))))
+        case Trig.Sinh => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.sinh(_))))
+        case Trig.Cosh => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.cosh(_))))
+        case Trig.Tanh => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.tanh(_))))
+      }
 
-    /* --- FOCAL OPERATIONS --- */
+
     /* The `head` calls here will never fail, nor will they produce a `Constant` */
     case FocalMax(args, _, _, neighborhood) => eval(args.head, rdds).map(_.focalMax(neighborhood))
     case FocalMin(args, _, _, neighborhood) => eval(args.head, rdds).map(_.focalMin(neighborhood))

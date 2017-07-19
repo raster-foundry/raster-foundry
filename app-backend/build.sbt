@@ -22,7 +22,8 @@ lazy val commonSettings = Seq(
     "-language:existentials",
     "-language:experimental.macros",
     "-feature",
-    "-Ypartial-unification"
+    "-Ypartial-unification",
+    "-Ypatmat-exhaust-depth", "100"
   ),
   resolvers ++= Seq(
     Resolver.sonatypeRepo("snapshots"),
