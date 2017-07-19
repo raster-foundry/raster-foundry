@@ -30,7 +30,7 @@ object Mosaic extends KamonTrace {
 
   def tileLayerMetadata(id: UUID, zoom: Int)(implicit database: Database, sceneIds: Set[UUID]): OptionT[Future, (Int, TileLayerMetadata[SpatialKey])] =
     traceName(s"Mosaic.tileLayerMetadata($id)") {
-      LayerCache.attributeStoreForLayer(id).mapFilter { case (store, pyramidMaxZoom) =>
+      LayerCache.attributeStoreForLayerWithMaxZooms(id).mapFilter { case (store, pyramidMaxZoom) =>
         // because metadata attributes are cached in AttributeStore itself, there is no point caching this function
         val layerName = id.toString
         for (maxZoom <- pyramidMaxZoom.get(layerName)) yield {

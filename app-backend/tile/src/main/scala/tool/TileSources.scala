@@ -58,16 +58,12 @@ object TileSources extends LazyLogging {
     * histogram.
     */
   def dataWindow(r: RFMLRaster)(implicit database: Database): OptionT[Future, (Extent, Int)] = r match {
-    case SceneRaster(id, Some(_), _) => {
-      implicit val sceneIds = Set(id)
-      LayerCache.attributeStoreForLayer(id).mapFilter({ case (store, _) =>
+    case SceneRaster(id, Some(_), _) =>
+      LayerCache.attributeStoreForLayer(id).mapFilter({ store =>
         GlobalSummary.minAcceptableSceneZoom(id, store, 256)  // TODO: 512?
       })
-    }
-    case ProjectRaster(id, Some(_), _) => {
-      implicit val sceneIds = Set(id)
+    case ProjectRaster(id, Some(_), _) =>
       GlobalSummary.minAcceptableProjectZoom(id, 256) // TODO: 512?
-    }
 
     /* Don't attempt work for a RFMLRaster which will fail AST validation anyway */
     case _ => OptionT.none
@@ -83,8 +79,7 @@ object TileSources extends LazyLogging {
     r: RFMLRaster
   )(implicit database: Database): Future[Option[TileWithNeighbors]] = r match {
     case SceneRaster(id, Some(band), maybeND) =>
-      implicit val sceneIds = Set(id)
-      LayerCache.attributeStoreForLayer(id).mapFilter({ case (store, _) =>
+      LayerCache.attributeStoreForLayer(id).mapFilter({ store =>
         blocking {
           Try {
             val layerId = LayerId(id.toString, zoom)
@@ -119,7 +114,6 @@ object TileSources extends LazyLogging {
     lazy val ndtile = IntConstantTile(NODATA, 256, 256)
     r match {
       case scene @ SceneRaster(sceneId, Some(band), maybeND) =>
-        implicit val sceneIds = Set(sceneId)
         if (hasBuffer)
           (for {
             tl <- LayerCache.layerTile(sceneId, z, SpatialKey(x - 1, y - 1))
@@ -157,7 +151,6 @@ object TileSources extends LazyLogging {
             .value
 
       case scene @ SceneRaster(sceneId, None, _) =>
-        implicit val sceneIds = Set(sceneId)
         logger.warn(s"Request for $scene does not contain band index")
         Future.successful(None)
 
