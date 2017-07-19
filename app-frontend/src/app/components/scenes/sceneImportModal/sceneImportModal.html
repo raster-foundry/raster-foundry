@@ -170,6 +170,30 @@
     </div>
   </div>
 
+  <!--Body for METADATA-->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('METADATA')">
+    <div class="content">
+      <h3 class="no-margin">Add optional metadata</h3>
+      <div>
+        <p>Enter metadata about the scenes in the files you're uploading</p>
+        <form>
+          <div class="form-group">
+            <div>
+              <label for="acquisitionDate">Acquisition Date</label>
+              <input id="acquisitionDate" type="date"
+                     class="form-control" ng-model="$ctrl.sceneData.acquisitionDate">
+            </div>
+            <div>
+              <label for="cloudCover">Cloud Cover</label>
+              <input id="cloudCover" type="number" placeholder=""
+                     class="form-control" ng-model="$ctrl.sceneData.cloudCover">
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!--Body for UPLOAD_PROGRESS-->
   <div class="modal-body" ng-if="$ctrl.currentStepIs('UPLOAD_PROGRESS')">
     <div class="content">
