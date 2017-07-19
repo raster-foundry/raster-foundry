@@ -2974,8 +2974,6 @@ definitions:
         source:
           type: string
           description: for uploads of type S3 and Dropbox, the location of the files to import. If files are specified, this field is ignored
-        sceneMetadata:
-          $ref: '#/definitions/UploadMetadata'
   Upload:
     allOf:
     - $ref: '#/definitions/BaseModel'
@@ -2989,15 +2987,6 @@ definitions:
             type: string
         metadata:
           type: object
-  UploadMetadata:
-    type: object
-    properties:
-      sceneCloudCover:
-        type: number
-        format: float32
-      sceneAcquisitionDate:
-        type: string
-        format: datetime
   UploadPaginated:
     allOf:
     - $ref: '#/definitions/PaginatedResponse'
