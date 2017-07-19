@@ -35,6 +35,9 @@ export default class LabRunController {
             this.toolRun = this.generateToolRun();
             this.generatedPreview = false;
         });
+        this.setWarning(
+             'You must apply changes after defining inputs.'
+        );
     }
 
     generateSourcesFromTool() {
@@ -352,9 +355,12 @@ export default class LabRunController {
     createToolRun() {
         this.toolService.createToolRun(this.toolRun).then(tr => {
             this.lastToolRun = tr;
-            delete this.failedToolRun;
-        }, (tr) => {
-            this.failedToolRun = tr;
+            this.clearWarning();
+        }, () => {
+            this.setWarning(
+                'There was an error applying your changes. ' +
+                    'Please verify that all inputs are defined.'
+            );
         });
     }
 
@@ -412,5 +418,13 @@ export default class LabRunController {
             });
         }
         return this.activeModal;
+    }
+
+    setWarning(text) {
+        this.warning = text;
+    }
+
+    clearWarning() {
+        delete this.warning;
     }
 }
