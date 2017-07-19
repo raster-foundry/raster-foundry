@@ -15,6 +15,44 @@ sealed trait LazyTile extends TileLike with Grid with LazyLogging {
   def -(other: LazyTile) = this.dualCombine(other)(Subtract.combine)(Subtract.combine)
   def /(other: LazyTile) = this.dualCombine(other)(Divide.combine)(Divide.combine)
   def *(other: LazyTile) = this.dualCombine(other)(Multiply.combine)(Multiply.combine)
+  def **(other: LazyTile) = this.dualCombine(other)(Pow.combine)(Pow.combine)
+
+  def ==(other: LazyTile) = this.dualCombine(other)({(a, b) => if (Equal.compare(a, b)) 1 else 0})({(a, b) => if (Equal.compare(a, b)) 1 else 0})
+  def !=(other: LazyTile) = this.dualCombine(other)({(a, b) => if (Unequal.compare(a, b)) 1 else 0})({(a, b) => if (Unequal.compare(a, b)) 1 else 0})
+  def >(other: LazyTile) = this.dualCombine(other)({(a, b) => if (Greater.compare(a, b)) 1 else 0})({(a, b) => if (Greater.compare(a, b)) 1 else 0})
+  def >=(other: LazyTile) = this.dualCombine(other)({(a, b) => if (GreaterOrEqual.compare(a, b)) 1 else 0})({(a, b) => if (GreaterOrEqual.compare(a, b)) 1 else 0})
+  def <(other: LazyTile) = this.dualCombine(other)({(a, b) => if (Less.compare(a, b)) 1 else 0})({(a, b) => if (Less.compare(a, b)) 1 else 0})
+  def <=(other: LazyTile) = this.dualCombine(other)({(a, b) => if (LessOrEqual.compare(a, b)) 1 else 0})({(a, b) => if (LessOrEqual.compare(a, b)) 1 else 0})
+
+  def and(other: LazyTile) = this.dualCombine(other)(And.combine)(And.combine)
+  def or(other: LazyTile) = this.dualCombine(other)(Or.combine)(Or.combine)
+  def xor(other: LazyTile) = this.dualCombine(other)(Xor.combine)(Xor.combine)
+  def not = this.dualMap({z: Int => if(isNoData(z)) z else if (z == 0) 1 else 0})({z => if(isNoData(z)) z else if (z == 0) 1 else 0})
+
+  def ceil = this.dualMap({z: Int => z})({z => math.ceil(z)})
+  def floor = this.dualMap({z: Int => z})({z => math.floor(z)})
+  def round = this.dualMap({z: Int => z})({z => math.round(z)})
+
+  def defined = this.dualMap({z: Int => if(isNoData(z)) 0 else 1})({ z: Double => if(isNoData(z)) 0 else 1 })
+  def undefined = this.dualMap({z: Int => if(isNoData(z)) 1 else 0})({z: Double => if(isNoData(z)) 1 else 0})
+
+  def sqrt = this.dualMap({z: Int => if(isNoData(z) || z < 0) NODATA else math.sqrt(z).toInt})({z: Double => math.sqrt(z)})
+  def log = this.dualMap({z: Int => if(isNoData(z)) z else d2i(math.log(z))})({z: Double => math.log(z)})
+  def log10 = this.dualMap({z: Int => if(isNoData(z)) z else d2i(math.log10(z))})({z: Double => math.log10(z)})
+  def abs = this.dualMap({z: Int => if (isNoData(z)) z else math.abs(z)})({z => if (isNoData(z)) z else math.abs(z)})
+  def inverse = this.dualMap({z: Int => if(isNoData(z)) z else -z})({z => if(isNoData(z)) z else -z})
+
+  def sin = this.dualMap({z: Int => if(isNoData(z)) z else d2i(math.sin(z))})({z => if(isNoData(z)) z else math.sin(z)})
+  def cos = this.dualMap({z: Int => if(isNoData(z)) z else d2i(math.cos(z))})({z => if(isNoData(z)) z else math.cos(z)})
+  def tan = this.dualMap({z: Int => if(isNoData(z)) z else d2i(math.tan(z))})({z => if(isNoData(z)) z else math.tan(z)})
+  def asin = this.dualMap({z: Int => if(isNoData(z)) z else d2i(math.asin(z))})({z => if(isNoData(z)) z else math.asin(z)})
+  def acos = this.dualMap({z: Int => if(isNoData(z)) z else d2i(math.acos(z))})({z => if(isNoData(z)) z else math.acos(z)})
+  def atan = this.dualMap({z: Int => if(isNoData(z)) z else d2i(math.atan(z))})({z => if(isNoData(z)) z else math.atan(z)})
+  def sinh = this.dualMap({z: Int => if(isNoData(z)) z else d2i(math.sinh(z))})({z => if(isNoData(z)) z else math.sinh(z)})
+  def cosh = this.dualMap({z: Int => if(isNoData(z)) z else d2i(math.cosh(z))})({z => if(isNoData(z)) z else math.cosh(z)})
+  def tanh = this.dualMap({z: Int => if(isNoData(z)) z else d2i(math.tanh(z))})({z => if(isNoData(z)) z else math.tanh(z)})
+  def atan2(other: LazyTile) = this.dualCombine(other)({(z1, z2) => d2i(math.atan2(z1, z2))})({(z1, z2) => math.atan2(z1, z2)})
+
   def max(other: LazyTile) = this.dualCombine(other)(Max.combine)(Max.combine)
   def min(other: LazyTile) = this.dualCombine(other)(Min.combine)(Min.combine)
   def classify(breaks: BreakMap[Double, Int]) = this.classification({ i => breaks(i) })
@@ -52,6 +90,9 @@ sealed trait LazyTile extends TileLike with Grid with LazyLogging {
 
   def dualCombine(other: LazyTile)(f: (Int, Int) => Int)(g: (Double, Double) => Double): LazyTile.Tree =
     LazyTile.DualCombine(this, other, f, g)
+
+  def dualMap(f: Int => Int)(g: Double => Double): LazyTile.Tree =
+    LazyTile.DualMap(this, f, g)
 
   def mapIntMapper(mapper: IntTileMapper): LazyTile.Tree =
     LazyTile.IntMapper(this, mapper)
@@ -245,6 +286,14 @@ object LazyTile {
     def right = LazyTile.Nil
     def bind(args: Map[Var, LazyTile]): LazyTile =
       MapDouble(left.bind(args), f)
+  }
+
+  case class DualMap(left: LazyTile, f: Int => Int, g: Double => Double) extends Tree {
+    def get(col: Int, row: Int) = f(left.get(col, row))
+    def getDouble(col: Int, row: Int) = g(left.getDouble(col, row))
+    def right = LazyTile.Nil
+    def bind(args: Map[Var, LazyTile]): LazyTile =
+      DualMap(left.bind(args), f, g)
   }
 
   case class IntMapper(left: LazyTile, mapper: IntTileMapper) extends Tree {

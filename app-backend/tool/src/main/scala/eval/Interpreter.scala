@@ -167,6 +167,100 @@ object Interpreter extends LazyLogging {
       case Masking(args, id, _, mask) =>
         logger.debug(s"case masking at $id")
         eval(tiles, args.head).mask(extent, mask)
+      //case Variance(args, id, _) =>
+      //case Variety(args, id, _) =>
+      //case Minority(args, id, _) =>
+      //case Majority(args, id, _) =>
+      case Equality(args, id, _) =>
+        logger.debug(s"case equality at $id")
+        args.map(eval(tiles, _)).reduce(_ == _)
+      case Inequality(args, id, _) =>
+        logger.debug(s"case inequality at $id")
+        args.map(eval(tiles, _)).reduce(_ != _)
+      case Greater(args, id, _) =>
+        logger.debug(s"case greaterThan at $id")
+        args.map(eval(tiles, _)).reduce(_ > _)
+      case GreaterOrEqual(args, id, _) =>
+        logger.debug(s"case greaterThanOrEqualTo at $id")
+        args.map(eval(tiles, _)).reduce(_ >= _)
+      case Less(args, id, _) =>
+        logger.debug(s"case lessThan at $id")
+        args.map(eval(tiles, _)).reduce(_ < _)
+      case LessOrEqual(args, id, _) =>
+        logger.debug(s"case lessThanOrEqualTo at $id")
+        args.map(eval(tiles, _)).reduce(_ <= _)
+      case And(args, id, _) =>
+        logger.debug(s"case intersection/and at $id")
+        args.map(eval(tiles, _)).reduce(_ and _)
+      case Or(args, id, _) =>
+        logger.debug(s"case union/or at $id")
+        args.map(eval(tiles, _)).reduce(_ or _)
+      case Xor(args, id, _) =>
+        logger.debug(s"case xor at $id")
+        args.map(eval(tiles, _)).reduce(_ xor _)
+      case Pow(args, id, _) =>
+        logger.debug(s"case pow at $id")
+        args.map(eval(tiles, _)).reduce(_ ** _)
+      case Atan2(args, id, _) =>
+        logger.debug(s"case atan2 at $id")
+        args.map(eval(tiles, _)).reduce(_ atan2 _)
+
+      /* --- Unary Operations --- */
+      case IsDefined(args, id, _) =>
+        logger.debug(s"case defined at $id")
+        eval(tiles, args.head).defined
+      case IsUndefined(args, id, _) =>
+        logger.debug(s"case undefined at $id")
+        eval(tiles, args.head).undefined
+      case SquareRoot(args, id, _) =>
+        logger.debug(s"case sqrt at $id")
+        eval(tiles, args.head).sqrt
+      case Log(args, id, _) =>
+        logger.debug(s"case log at $id")
+        eval(tiles, args.head).log
+      case Log10(args, id, _) =>
+        logger.debug(s"case log10 at $id")
+        eval(tiles, args.head).log10
+      case Round(args, id, _) =>
+        logger.debug(s"case round at $id")
+        eval(tiles, args.head).round
+      case Floor(args, id, _) =>
+        logger.debug(s"case floor at $id")
+        eval(tiles, args.head).floor
+      case Ceil(args, id, _) =>
+        logger.debug(s"case ceil at $id")
+        eval(tiles, args.head).ceil
+      case NumericNegation(args, id, _) =>
+        logger.debug(s"case numeric negation at $id")
+        eval(tiles, args.head).inverse
+      case LogicalNegation(args, id, _) =>
+        logger.debug(s"case logical negation at $id")
+        eval(tiles, args.head).not
+      case Abs(args, id, _) =>
+        logger.debug(s"case abs at $id")
+        eval(tiles, args.head).abs
+      case Trigonometry(args, id, _, trigFunc) =>
+        logger.debug(s"case trigFunc at $id with func ${trigFunc}")
+        trigFunc match {
+          case Trig.Sin =>
+            eval(tiles, args.head).sin
+          case Trig.Cos =>
+            eval(tiles, args.head).cos
+          case Trig.Tan =>
+            eval(tiles, args.head).tan
+          case Trig.Asin =>
+            eval(tiles, args.head).asin
+          case Trig.Acos =>
+            eval(tiles, args.head).acos
+          case Trig.Atan =>
+            eval(tiles, args.head).atan
+          case Trig.Sinh =>
+            eval(tiles, args.head).sinh
+          case Trig.Cosh =>
+            eval(tiles, args.head).cosh
+          case Trig.Tanh =>
+            eval(tiles, args.head).tanh
+        }
 
       /* --- FOCAL OPERATIONS --- */
       case FocalMax(args, id, _, neighborhood) =>
@@ -262,6 +356,100 @@ object Interpreter extends LazyLogging {
           eval(tiles, args.head, buffer).classify(breaks.toBreakMap)
         case Masking(args, id, _, mask) =>
           eval(tiles, args.head, buffer).mask(extent, mask)
+        //case Variance(args, id, _) =>
+        //case Variety(args, id, _) =>
+        //case Minority(args, id, _) =>
+        //case Majority(args, id, _) =>
+        case Equality(args, id, _) =>
+          logger.debug(s"case equality at $id")
+          args.map(eval(tiles, _, buffer)).reduce(_ == _)
+        case Inequality(args, id, _) =>
+          logger.debug(s"case inequality at $id")
+          args.map(eval(tiles, _, buffer)).reduce(_ != _)
+        case Greater(args, id, _) =>
+          logger.debug(s"case greaterThan at $id")
+          args.map(eval(tiles, _, buffer)).reduce(_ > _)
+        case GreaterOrEqual(args, id, _) =>
+          logger.debug(s"case greaterThanOrEqualTo at $id")
+          args.map(eval(tiles, _, buffer)).reduce(_ >= _)
+        case Less(args, id, _) =>
+          logger.debug(s"case lessThan at $id")
+          args.map(eval(tiles, _, buffer)).reduce(_ < _)
+        case LessOrEqual(args, id, _) =>
+          logger.debug(s"case lessThanOrEqualTo at $id")
+          args.map(eval(tiles, _, buffer)).reduce(_ <= _)
+        case And(args, id, _) =>
+          logger.debug(s"case intersection/and at $id")
+          args.map(eval(tiles, _, buffer)).reduce(_ and _)
+        case Or(args, id, _) =>
+          logger.debug(s"case union/or at $id")
+          args.map(eval(tiles, _, buffer)).reduce(_ or _)
+        case Xor(args, id, _) =>
+          logger.debug(s"case xor at $id")
+          args.map(eval(tiles, _, buffer)).reduce(_ xor _)
+        case Pow(args, id, _) =>
+          logger.debug(s"case pow at $id")
+          args.map(eval(tiles, _, buffer)).reduce(_ ** _)
+        case Atan2(args, id, _) =>
+          logger.debug(s"case atan2 at $id")
+          args.map(eval(tiles, _, buffer)).reduce(_ atan2 _)
+
+        /* --- Unary Operations --- */
+        case IsDefined(args, id, _) =>
+          logger.debug(s"case defined at $id")
+          eval(tiles, args.head, buffer).defined
+        case IsUndefined(args, id, _) =>
+          logger.debug(s"case undefined at $id")
+          eval(tiles, args.head, buffer).undefined
+        case SquareRoot(args, id, _) =>
+          logger.debug(s"case sqrt at $id")
+          eval(tiles, args.head, buffer).sqrt
+        case Log(args, id, _) =>
+          logger.debug(s"case log at $id")
+          eval(tiles, args.head, buffer).log
+        case Log10(args, id, _) =>
+          logger.debug(s"case log10 at $id")
+          eval(tiles, args.head, buffer).log10
+        case Round(args, id, _) =>
+          logger.debug(s"case round at $id")
+          eval(tiles, args.head, buffer).round
+        case Floor(args, id, _) =>
+          logger.debug(s"case floor at $id")
+          eval(tiles, args.head, buffer).floor
+        case Ceil(args, id, _) =>
+          logger.debug(s"case ceil at $id")
+          eval(tiles, args.head, buffer).ceil
+        case NumericNegation(args, id, _) =>
+          logger.debug(s"case numeric negation at $id")
+          eval(tiles, args.head, buffer).inverse
+        case LogicalNegation(args, id, _) =>
+          logger.debug(s"case logical negation at $id")
+          eval(tiles, args.head, buffer).not
+        case Abs(args, id, _) =>
+          logger.debug(s"case abs at $id")
+          eval(tiles, args.head, buffer).abs
+        case Trigonometry(args, id, _, trigFunc) =>
+          logger.debug(s"case trigFunc at $id with func ${trigFunc}")
+          trigFunc match {
+            case Trig.Sin =>
+              eval(tiles, args.head, buffer).sin
+            case Trig.Cos =>
+              eval(tiles, args.head, buffer).cos
+            case Trig.Tan =>
+              eval(tiles, args.head, buffer).tan
+            case Trig.Asin =>
+              eval(tiles, args.head, buffer).asin
+            case Trig.Acos =>
+              eval(tiles, args.head, buffer).acos
+            case Trig.Atan =>
+              eval(tiles, args.head, buffer).atan
+            case Trig.Sinh =>
+              eval(tiles, args.head, buffer).sinh
+            case Trig.Cosh =>
+              eval(tiles, args.head, buffer).cosh
+            case Trig.Tanh =>
+              eval(tiles, args.head, buffer).tanh
+          }
 
         /* --- FOCAL OPERATIONS --- */
         case FocalMax(args, id, _, n) =>
