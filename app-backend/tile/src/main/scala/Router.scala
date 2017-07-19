@@ -17,8 +17,9 @@ class Router extends LazyLogging
   implicit lazy val database = Database.DEFAULT
   implicit val system = AkkaSystem.system
   implicit val materializer = AkkaSystem.materializer
+
   lazy val blockingSceneRoutesDispatcher =
-    system.dispatchers.lookup("blocking-scene-routes-dispatcher")
+    system.dispatchers.lookup("blocking-io-dispatcher")
 
   val toolRoutes = new ToolRoutes()
 
