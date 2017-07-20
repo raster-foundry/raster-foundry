@@ -167,10 +167,6 @@ object Interpreter extends LazyLogging {
       case Masking(args, id, _, mask) =>
         logger.debug(s"case masking at $id")
         eval(tiles, args.head).mask(extent, mask)
-      //case Variance(args, id, _) =>
-      //case Variety(args, id, _) =>
-      //case Minority(args, id, _) =>
-      //case Majority(args, id, _) =>
       case Equality(args, id, _) =>
         logger.debug(s"case equality at $id")
         args.map(eval(tiles, _)).reduce(_ == _)
@@ -356,10 +352,6 @@ object Interpreter extends LazyLogging {
           eval(tiles, args.head, buffer).classify(breaks.toBreakMap)
         case Masking(args, id, _, mask) =>
           eval(tiles, args.head, buffer).mask(extent, mask)
-        //case Variance(args, id, _) =>
-        //case Variety(args, id, _) =>
-        //case Minority(args, id, _) =>
-        //case Majority(args, id, _) =>
         case Equality(args, id, _) =>
           logger.debug(s"case equality at $id")
           args.map(eval(tiles, _, buffer)).reduce(_ == _)

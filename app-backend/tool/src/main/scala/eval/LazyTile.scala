@@ -24,10 +24,11 @@ sealed trait LazyTile extends TileLike with Grid with LazyLogging {
   def <(other: LazyTile) = this.dualCombine(other)({(a, b) => if (Less.compare(a, b)) 1 else 0})({(a, b) => if (Less.compare(a, b)) 1 else 0})
   def <=(other: LazyTile) = this.dualCombine(other)({(a, b) => if (LessOrEqual.compare(a, b)) 1 else 0})({(a, b) => if (LessOrEqual.compare(a, b)) 1 else 0})
 
+  @SuppressWarnings(Array("ComparingFloatingPointTypes"))
+  def not = this.dualMap({z: Int => if(isNoData(z)) z else if (z == 0) 1 else 0})({z => if(isNoData(z)) z else if (z == 0.0) 1 else 0})
   def and(other: LazyTile) = this.dualCombine(other)(And.combine)(And.combine)
   def or(other: LazyTile) = this.dualCombine(other)(Or.combine)(Or.combine)
   def xor(other: LazyTile) = this.dualCombine(other)(Xor.combine)(Xor.combine)
-  def not = this.dualMap({z: Int => if(isNoData(z)) z else if (z == 0) 1 else 0})({z => if(isNoData(z)) z else if (z == 0) 1 else 0})
 
   def ceil = this.dualMap({z: Int => z})({z => math.ceil(z)})
   def floor = this.dualMap({z: Int => z})({z => math.floor(z)})
