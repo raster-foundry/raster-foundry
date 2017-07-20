@@ -38,7 +38,7 @@ class GeoTiffS3SceneFactory(object):
         self.visibility = Visibility.PRIVATE
         self.datasource = self._upload.datasource
         self.acquisitionDate = self._upload.metadata.get('acquisitionDate')
-        self.cloudCover = self._upload.metadata.get('cloudCover') or 0
+        self.cloudCover = self._upload.metadata.get('cloudCover', 0)
         self.tags = self._upload.metadata.get('tags') or ['']
 
     def generate_scenes(self):
