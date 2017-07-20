@@ -94,37 +94,6 @@ object MapAlgebraAST {
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
   }
 
-  // TODO: Think about how this would be implemented such that laziness might be preserved
-  //case class MinN(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends Operation {
-  //  val symbol = "min-n"
-
-  //  def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
-  //}
-
-  //case class Variance(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends Operation {
-  //  val symbol = "variance"
-
-  //  def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
-  //}
-
-  //case class Variety(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends Operation {
-  //  val symbol = "variety"
-
-  //  def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
-  //}
-
-  //case class Minority(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends Operation {
-  //  val symbol = "minority"
-
-  //  def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
-  //}
-
-  //case class Majority(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends Operation {
-  //  val symbol = "majority"
-
-  //  def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
-  //}
-
   case class Equality(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends Operation {
     val symbol = "=="
 
