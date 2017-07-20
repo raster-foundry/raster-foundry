@@ -34,6 +34,7 @@ import 'angular-filter';
 import 'angular-tooltips';
 import 'mathjs';
 import 'angular-uuid4';
+import 'angucomplete-alt';
 
 // local scripts
 // import '../assets/js/...';
