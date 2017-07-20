@@ -25,7 +25,7 @@ trait MockInterpreterResources extends TileBuilders with RasterMatchers {
 
   def randomSourceAST = MapAlgebraAST.Source(UUID.randomUUID, None)
 
-  def tileSource(band: Int) = SceneRaster(UUID.randomUUID, Some(band), None)
+  def tileRef(band: Int) = SceneRaster(UUID.randomUUID, Some(band), None)
 
   def tile(value: Int): Tile = createValueTile(d = 256, v = value)
 
@@ -60,7 +60,7 @@ trait MockInterpreterResources extends TileBuilders with RasterMatchers {
   val ascendingSource = (raster: RFMLRaster, buffer: Boolean, z: Int, x: Int, y: Int) => {
     val ascending = IntArrayTile(1 to 256*256 toArray, 256, 256)
     raster match {
-      case r@SceneRaster(id, Some(band), maybeND) =>
+      case r@SceneRaster(id, _, maybeND) =>
         requests = raster :: requests
         if (buffer)
           Future {
@@ -80,6 +80,33 @@ trait MockInterpreterResources extends TileBuilders with RasterMatchers {
           }
         else
           Future { Some(TileWithNeighbors(ascending.interpretAs(maybeND.getOrElse(ascending.cellType)), None)) }
+      case _ => Future.failed(new Exception("can't find that"))
+    }
+  }
+
+  val moduloSource = (raster: RFMLRaster, buffer: Boolean, z: Int, x: Int, y: Int) => {
+    def mod(modWhat: Int) = IntArrayTile((1 to 256*256).map(_ % modWhat) toArray, 256, 256)
+    raster match {
+      case r@SceneRaster(id, Some(band), maybeND) =>
+        requests = raster :: requests
+        if (buffer)
+          Future {
+            Some(TileWithNeighbors(
+              mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType)),
+              Some(NeighboringTiles(
+                mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType)),
+                mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType)),
+                mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType)),
+                mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType)),
+                mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType)),
+                mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType)),
+                mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType)),
+                mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType))
+              ))
+            ))
+          }
+        else
+          Future { Some(TileWithNeighbors(mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType)), None)) }
       case _ => Future.failed(new Exception("can't find that"))
     }
   }
