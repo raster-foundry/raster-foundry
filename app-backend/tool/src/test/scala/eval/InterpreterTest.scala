@@ -25,16 +25,14 @@ import java.util.UUID
 object InterpreterTest
     extends FunSpec
        with Matchers {
-  type IntRelation = ((Int, Int), Int)
-  type DblRelation = ((Int, Int), Double)
 
   def int(
     ast: MapAlgebraAST,
     srcMap: Map[UUID, RFMLRaster],
     tileSource: (RFMLRaster, Boolean, Int, Int, Int) => Future[Option[TileWithNeighbors]],
-    overrides: Map[UUID, ParamOverride] = Map.empty,
+    overrides: Map[UUID, ParamOverride],
     label: String
-  )(expectation: IntRelation) {
+  ): Tile = {
     val tms = Interpreter.interpretTMS(
       ast = ast,
       sourceMapping = srcMap,
@@ -48,7 +46,7 @@ object InterpreterTest
     Await.result(ret, 10.seconds) match {
       case Valid(lazytile) =>
         val tile = lazytile.evaluate.get
-        (tile.get _).tupled(expectation._1) should be (expectation._2)
+        tile
       case i@Invalid(_) =>
         fail(s"$i")
     }
@@ -58,9 +56,9 @@ object InterpreterTest
     ast: MapAlgebraAST,
     srcMap: Map[UUID, RFMLRaster],
     tileSource: (RFMLRaster, Boolean, Int, Int, Int) => Future[Option[TileWithNeighbors]],
-    overrides: Map[UUID, ParamOverride] = Map.empty,
+    overrides: Map[UUID, ParamOverride],
     label: String
-  )(expectation: DblRelation) {
+  ): Tile = {
     val tms = Interpreter.interpretTMS(
       ast = ast,
       sourceMapping = srcMap,
@@ -74,7 +72,7 @@ object InterpreterTest
     Await.result(ret, 10.seconds) match {
       case Valid(lazytile) =>
         val tile = lazytile.evaluateDouble.get
-        (tile.getDouble _).tupled(expectation._1) should be (expectation._2)
+        tile
       case i@Invalid(_) =>
         fail(s"$i")
     }
