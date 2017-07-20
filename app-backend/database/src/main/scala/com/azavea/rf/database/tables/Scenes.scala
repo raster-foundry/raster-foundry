@@ -419,29 +419,40 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     * @param user User user performing the update
     */
   def updateScene(scene: Scene, sceneId: UUID, user: User)
-                 (implicit database: DB): Future[Int] = {
+                 (implicit database: DB): Future[(Int, Boolean)] = {
 
     val updateTime = new Timestamp((new java.util.Date).getTime)
 
+    val sceneToUpdate =  Scenes.filterToOwnerIfNotInRootOrganization(user).filter(_.id === sceneId)
+
     val updateSceneQuery = for {
-      updateScene <- Scenes.filterToOwnerIfNotInRootOrganization(user).filter(_.id === sceneId)
+      sceneToUpdate <- sceneToUpdate
     } yield (
-      updateScene.modifiedAt, updateScene.modifiedBy, updateScene.ingestSizeBytes,
-      updateScene.datasource, updateScene.cloudCover,  updateScene.acquisitionDate,
-      updateScene.tags, updateScene.sceneMetadata, updateScene.thumbnailStatus,
-      updateScene.boundaryStatus, updateScene.ingestStatus, updateScene.name, updateScene.tileFootprint,
-      updateScene.dataFootprint, updateScene.metadataFiles, updateScene.ingestLocation
+      sceneToUpdate.modifiedAt, sceneToUpdate.modifiedBy, sceneToUpdate.ingestSizeBytes,
+      sceneToUpdate.datasource, sceneToUpdate.cloudCover,  sceneToUpdate.acquisitionDate,
+      sceneToUpdate.tags, sceneToUpdate.sceneMetadata, sceneToUpdate.thumbnailStatus,
+      sceneToUpdate.boundaryStatus, sceneToUpdate.ingestStatus, sceneToUpdate.name, sceneToUpdate.tileFootprint,
+      sceneToUpdate.dataFootprint, sceneToUpdate.metadataFiles, sceneToUpdate.ingestLocation
     )
+
     database.db.run {
-      updateSceneQuery.update((
-        updateTime, user.id, scene.ingestSizeBytes,
-        scene.datasource, scene.filterFields.cloudCover, scene.filterFields.acquisitionDate,
-        scene.tags, scene.sceneMetadata, scene.statusFields.thumbnailStatus,
-        scene.statusFields.boundaryStatus, scene.statusFields.ingestStatus, scene.name, scene.tileFootprint,
-        scene.dataFootprint, scene.metadataFiles, scene.ingestLocation
-      ))
+      for {
+        originalScene <- sceneToUpdate.result
+        updatedScene <- updateSceneQuery.update((
+          updateTime, user.id, scene.ingestSizeBytes,
+          scene.datasource, scene.filterFields.cloudCover, scene.filterFields.acquisitionDate,
+          scene.tags, scene.sceneMetadata, scene.statusFields.thumbnailStatus,
+          scene.statusFields.boundaryStatus, scene.statusFields.ingestStatus, scene.name, scene.tileFootprint,
+          scene.dataFootprint, scene.metadataFiles, scene.ingestLocation
+        ))
+      } yield (originalScene, updatedScene)
     } map {
-      case 1 => 1
+      case (os, us) => {
+        val kickoffIngest =
+          os.head.statusFields.ingestStatus != IngestStatus.ToBeIngested &&
+          scene.statusFields.ingestStatus == IngestStatus.ToBeIngested
+        (1, kickoffIngest)
+      }
       case _ => throw new IllegalStateException("Error while updating scene")
     }
   }
