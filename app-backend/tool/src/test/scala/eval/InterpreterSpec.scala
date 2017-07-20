@@ -315,201 +315,143 @@ class InterpreterSpec
   }
 
   it("should evaluate max") {
-    requests = Nil
     val src1 = randomSourceAST
     val src2 = randomSourceAST
-    val tms = Interpreter.interpretTMS(
-      ast = src1.max(src2),
-      sourceMapping = Map(src1.id -> tileSource(1), src2.id -> tileSource(5)),
-      overrides = Map.empty,
-      tileSource = constantSource,
-      256
+    val tile = InterpreterTest.int(
+      src1.max(src2),
+      Map(src1.id -> tileSource(1), src2.id -> tileSource(5)),
+      constantSource,
+      Map.empty,
+      "Local maximum"
     )
-    println("LocalMax node: ", (src1.max(src2)).asJson.noSpaces)
-
-    val ret = tms(0, 1, 1)
-    val op = Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val tile = lazytile.evaluate.get
-        requests.length should be (2)
-        tile.get(0, 0) should be (5)
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
+    tile.get(0, 0) should be (5)
   }
 
   it("should evaluate min") {
-    requests = Nil
     val src1 = randomSourceAST
     val src2 = randomSourceAST
-    val tms = Interpreter.interpretTMS(
-      ast = src1.min(src2),
-      sourceMapping = Map(src1.id -> tileSource(1), src2.id -> tileSource(5)),
-      overrides = Map.empty,
-      tileSource = constantSource,
-      256
+    val tile = InterpreterTest.int(
+      src1.min(src2),
+      Map(src1.id -> tileSource(1), src2.id -> tileSource(5)),
+      constantSource,
+      Map.empty,
+      "Local minimum"
     )
-    println("LocalMin node: ", (src1.min(src2)).asJson.noSpaces)
-
-    val ret = tms(0, 1, 1)
-    val op = Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val tile = lazytile.evaluate.get
-        requests.length should be (2)
-        tile.get(0, 0) should be (1)
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
+    tile.get(0, 0) should be (1)
   }
 
   it("should evaluate multiple operations (ndvi)") {
-    requests = Nil
     val nir = randomSourceAST
     val red = randomSourceAST
-    val ndvi = (nir - red) / (nir + red)
-    val tms = Interpreter.interpretTMS(
-      ast = ndvi,
-      sourceMapping = Map(nir.id -> tileSource(1), red.id -> tileSource(5)),
-      overrides = Map.empty,
-      tileSource = constantSource,
-      256
-    )
-    println("NDVI calculation: ", ndvi.asJson.noSpaces)
 
-    val ret = tms(0, 1, 1)
-    val op = Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val tile = lazytile.evaluateDouble.get
-        requests.length should be (2)
-        tile.getDouble(0, 0) should be (-4.0/6.0)
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
+    val tile = InterpreterTest.dbl(
+      (nir - red) / (nir + red),
+      Map(nir.id -> tileSource(1), red.id -> tileSource(5)),
+      constantSource,
+      Map.empty,
+      "Multiple operations (ndvi)"
+    )
+    tile.getDouble(0, 0) should be (-4.0/6.0)
   }
 
   it("should evaluate masking") {
-    import geotrellis.proj4._
-    requests = Nil
-    val subExtent: Extent = Interpreter.layouts(2).mapTransform(0, 0)
+    // We need to select a subextent which is under the z/x/y of 1/1/1
+    val subExtent: Extent = Interpreter.layouts(2).mapTransform(2, 2)
     val mask = MultiPolygon(subExtent.toPolygon)
 
     val src = randomSourceAST
-    val masking = Masking(List(src), UUID.randomUUID, None, mask)
-    val tms = Interpreter.interpretTMS(
-      ast = masking,
-      sourceMapping = Map(src.id -> tileSource(1)),
-      overrides = Map.empty,
-      tileSource = constantSource,
-      256
+    val tile = InterpreterTest.dbl(
+      Masking(List(src), UUID.randomUUID, None, mask),
+      Map(src.id -> tileSource(1)),
+      constantSource,
+      Map.empty,
+      "A masking calculation"
     )
-    println("Masking calculation: ", masking.asJson.noSpaces)
-
-    val ret = tms(1, 0, 0)
-    val op = Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val tile = lazytile.evaluate.get
-        requests.length should be (1)
-        tile.getDouble(10, 10) should be (1)
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
+    tile.getDouble(10, 10) should be (1)
   }
 
   it("should evaluate focal maximum") {
-    import geotrellis.raster.mapalgebra.focal._
-    requests = Nil
     val src = randomSourceAST
-    val fmax = FocalMax(List(src), UUID.randomUUID, None, Square(1))
-    val tms = Interpreter.interpretTMS(
-      ast = fmax,
-      sourceMapping = Map(src.id -> tileSource(1)),
-      overrides = Map.empty,
-      tileSource = ascendingSource,
-      256
+    val tile = InterpreterTest.dbl(
+      FocalMax(List(src), UUID.randomUUID, None, Square(1)),
+      Map(src.id -> tileSource(1)),
+      ascendingSource,
+      Map.empty,
+      "A focal maximum calculation"
     )
-    println("focal maximum calculation: ", fmax.asJson.noSpaces)
-
-    val ret = tms(1, 0, 0)
-    val op = Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val tile = lazytile.evaluate.get
-        requests.length should be (1)
-        tile.get(21, 32) should be (tile.get(20, 32) + 1)
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
+    tile.get(21, 32) should be (8471)
   }
 
   it("should evaluate focal minimum") {
     val src = randomSourceAST
-
-    InterpreterTest.dbl(
+    val tile = InterpreterTest.dbl(
       FocalMin(List(src), UUID.randomUUID, None, Square(1)),
       Map(src.id -> tileSource(1)),
       ascendingSource,
       Map.empty,
       "A focal minimum calculation"
-    )(((21, 32), 7957))
+    )
+    tile.get(21, 32) should be (7957)
   }
 
   it("should evaluate focal mean") {
     val src = randomSourceAST
-
-    InterpreterTest.dbl(
+    val tile = InterpreterTest.dbl(
       FocalMean(List(src), UUID.randomUUID, None, Square(1)),
       Map(src.id -> tileSource(1)),
       ascendingSource,
       Map.empty,
       "A focal mean calculation"
-    )(((21, 32), 8214))
+    )
+    tile.get(21, 32) should be (8214)
   }
 
   it("should evaluate focal median") {
     val src = randomSourceAST
-
-    InterpreterTest.dbl(
+    val tile = InterpreterTest.dbl(
       FocalMedian(List(src), UUID.randomUUID, None, Square(1)),
       Map(src.id -> tileSource(1)),
       ascendingSource,
       Map.empty,
       "A focal median calculation"
-    )(((21, 32), 8214))
+    )
+    tile.get(21, 32) should be (8214)
   }
 
   it("should evaluate focal mode") {
     val src = randomSourceAST
-
-    InterpreterTest.int(
+    val tile = InterpreterTest.int(
       FocalMode(List(src), UUID.randomUUID, None, Square(1)),
       Map(src.id -> tileSource(1)),
       ascendingSource,
       Map.empty,
       "A focal mode calculation"
-    )(((21, 32), NODATA))
+    )
+    tile.get(21, 32) should be (NODATA)
   }
 
 
   it("should evaluate focal sum") {
     val src = randomSourceAST
-
-    InterpreterTest.int(
+    val tile = InterpreterTest.int(
       FocalSum(List(src), UUID.randomUUID, None, Square(1)),
       Map(src.id -> tileSource(1)),
       ascendingSource,
       Map.empty,
       "A focal sum calculation"
-    )(((0,0), 197385))
+    )
+    tile.get(0, 0) should be (197385)
   }
 
   it("should evaluate focal stddev") {
     val src = randomSourceAST
-
-    InterpreterTest.int(
+    val tile = InterpreterTest.int(
       FocalStdDev(List(src), UUID.randomUUID, None, Square(1)),
       Map(src.id -> tileSource(1)),
       ascendingSource,
       Map.empty,
       "A focal standard deviation calculation"
-    )(((0,0), 30713))
+    )
+    tile.get(0, 0) should be (30713)
   }
 }
