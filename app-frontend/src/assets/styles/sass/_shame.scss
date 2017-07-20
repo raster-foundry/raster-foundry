@@ -1968,3 +1968,54 @@ rf-operation-node {
   background-image: none;
   background: transparent;
 }
+.map-search-prompt {
+  text-align: center;
+  font-weight: bold;
+  padding: 2rem 1rem 1rem;
+}
+
+.map-search-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.keyboard-shortcut-key {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: $white;
+  border: 1px solid #ccc;
+  border-radius: $border-radius-base * 2;
+  font-size: 1.2rem;
+  letter-spacing: 0.00625rem;
+  // font-weight: bold;
+  color: #999;
+  // font-family: Courier New, Courier, monospace;
+}
+
+.map-search-results-item {
+  border-radius: $border-radius-base;
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  .label {
+    padding: 1.3rem 1rem;
+    flex: 1;
+  }
+  .info-text {
+    padding: 0 1rem;
+    text-align: right;
+    color: $off-white;
+  }
+  &:hover {
+    background: $shade-normal;
+    color: $white;
+    cursor: pointer;
+  }
+  &.active {
+    background: $brand-primary;
+    color: $white;
+  }
+}
+
+

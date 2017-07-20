@@ -28,6 +28,7 @@ require('./services/histogram.service')(shared);
 require('./services/dropbox.service')(shared);
 require('./services/aoi.service')(shared);
 require('./services/export.service')(shared);
+require('./services/geocode.service')(shared);
 
 require('./services/featureFlagOverrides.service')(shared);
 require('./services/featureFlags.provider')(shared);

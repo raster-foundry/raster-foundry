@@ -15,6 +15,14 @@
   <div class="map-control">
     <button class="btn btn-default btn-square btn-small"
             title="Layers"
+            ng-click="$ctrl.openMapSearchModal()">
+      <i class="icon-search"></i>
+    </button>
+  </div>
+  <div class="filler"></div>
+  <div class="map-control">
+    <button class="btn btn-default btn-square btn-small"
+            title="Layers"
             ng-click="$ctrl.toggleLayerPicker($event)">
       <i class="icon-project"></i>
     </button>

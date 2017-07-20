@@ -2,7 +2,8 @@ import Map from 'es6-map';
 /* globals BUILDCONFIG */
 
 export default class MapContainerController {
-    constructor($log, $document, $element, $scope, $timeout, mapService) {
+    constructor($log, $document, $element, $scope, $timeout, mapService,
+                $uibModal) {
         'ngInject';
         this.$document = $document;
         this.$element = $element;
@@ -10,6 +11,7 @@ export default class MapContainerController {
         this.$scope = $scope;
         this.$timeout = $timeout;
         this.mapService = mapService;
+        this.$uibModal = $uibModal;
         this.getMap = () => this.mapService.getMap(this.mapId);
     }
 
@@ -242,5 +244,25 @@ export default class MapContainerController {
             this.hasTileLoadingError =
                 Array.from(this.tileLoadingErrors.values()).reduce((acc, cur) => acc || cur, false);
         });
+    }
+
+    openMapSearchModal() {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        this.activeModal = this.$uibModal.open({
+            component: 'rfMapSearchModal',
+            resolve: { }
+        });
+
+        this.activeModal.result.then(
+            location => {
+                const mapView = location.mapView;
+                this.map.fitBounds([
+                    [mapView.bottomRight.latitude, mapView.bottomRight.longitude],
+                    [mapView.topLeft.latitude, mapView.topLeft.longitude]
+                ]);
+            });
     }
 }
