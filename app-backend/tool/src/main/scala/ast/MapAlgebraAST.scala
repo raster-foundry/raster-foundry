@@ -273,7 +273,7 @@ object MapAlgebraAST {
   }
 
   case class Trigonometry(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], function: Trig) extends UnaryOperation {
-    val symbol = "acos"
+    val symbol = "trig"
 
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
   }

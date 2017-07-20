@@ -9,7 +9,7 @@ import io.circe.syntax._
 import java.security.InvalidParameterException
 
 
-trait MapAlgebraOperationCodecs {
+trait MapAlgebraOperationCodecs extends MapAlgebraUtilityCodecs {
   implicit def mapAlgebraDecoder: Decoder[MapAlgebraAST]
   implicit def mapAlgebraEncoder: Encoder[MapAlgebraAST]
 
@@ -31,6 +31,27 @@ trait MapAlgebraOperationCodecs {
       case Some("focalMode") => ma.as[MapAlgebraAST.FocalMode]
       case Some("focalSum") => ma.as[MapAlgebraAST.FocalSum]
       case Some("focalStdDev") => ma.as[MapAlgebraAST.FocalStdDev]
+      case Some("and") => ma.as[MapAlgebraAST.And]
+      case Some("not") => ma.as[MapAlgebraAST.LogicalNegation]
+      case Some("or") => ma.as[MapAlgebraAST.Or]
+      case Some("xor") => ma.as[MapAlgebraAST.Xor]
+      case Some("^") => ma.as[MapAlgebraAST.Pow]
+      case Some("abs") => ma.as[MapAlgebraAST.Abs]
+      case Some(">") => ma.as[MapAlgebraAST.Greater]
+      case Some(">=") => ma.as[MapAlgebraAST.GreaterOrEqual]
+      case Some("==") => ma.as[MapAlgebraAST.Equality]
+      case Some("!=") => ma.as[MapAlgebraAST.Inequality]
+      case Some("<") => ma.as[MapAlgebraAST.Less]
+      case Some("<=") => ma.as[MapAlgebraAST.LessOrEqual]
+      case Some("log") => ma.as[MapAlgebraAST.Log]
+      case Some("log10") => ma.as[MapAlgebraAST.Log10]
+      case Some("sqrt") => ma.as[MapAlgebraAST.SquareRoot]
+      case Some("round") => ma.as[MapAlgebraAST.Round]
+      case Some("ceil") => ma.as[MapAlgebraAST.Ceil]
+      case Some("floor") => ma.as[MapAlgebraAST.Floor]
+      case Some("neg") => ma.as[MapAlgebraAST.NumericNegation]
+      case Some("trig") => ma.as[MapAlgebraAST.Trigonometry]
+      case Some("atan2") => ma.as[MapAlgebraAST.Atan2]
       case Some(unrecognized) =>
         Left(DecodingFailure(s"Unrecognized node type: $unrecognized", ma.history))
       case None =>
@@ -70,6 +91,52 @@ trait MapAlgebraOperationCodecs {
         fSum.asJson
       case fStdDev: MapAlgebraAST.FocalStdDev =>
         fStdDev.asJson
+      case and: MapAlgebraAST.And =>
+        and.asJson
+      case not: MapAlgebraAST.LogicalNegation =>
+        not.asJson
+      case or: MapAlgebraAST.Or =>
+        or.asJson
+      case xor: MapAlgebraAST.Xor =>
+        xor.asJson
+      case pow: MapAlgebraAST.Pow =>
+        pow.asJson
+      case abs: MapAlgebraAST.Abs =>
+        abs.asJson
+      case defined: MapAlgebraAST.IsDefined =>
+        defined.asJson
+      case undefined: MapAlgebraAST.IsUndefined =>
+        undefined.asJson
+      case greater: MapAlgebraAST.Greater =>
+        greater.asJson
+      case greaterOrEqual: MapAlgebraAST.GreaterOrEqual =>
+        greaterOrEqual.asJson
+      case equal: MapAlgebraAST.Equality =>
+        equal.asJson
+      case unequal: MapAlgebraAST.Inequality =>
+        unequal.asJson
+      case less: MapAlgebraAST.Less =>
+        less.asJson
+      case lessOrEqual: MapAlgebraAST.LessOrEqual =>
+        lessOrEqual.asJson
+      case log: MapAlgebraAST.Log =>
+        log.asJson
+      case log10: MapAlgebraAST.Log10 =>
+        log10.asJson
+      case sqrt: MapAlgebraAST.SquareRoot =>
+        sqrt.asJson
+      case round: MapAlgebraAST.Round =>
+        round.asJson
+      case ceil: MapAlgebraAST.Ceil =>
+        ceil.asJson
+      case floor: MapAlgebraAST.Floor =>
+        floor.asJson
+      case negative: MapAlgebraAST.NumericNegation =>
+        negative.asJson
+      case trig: MapAlgebraAST.Trigonometry =>
+        trig.asJson
+      case atan2: MapAlgebraAST.Atan2 =>
+        atan2.asJson
       case operation =>
         throw new InvalidParameterException(s"Encoder for $operation not yet implemented")
     }
@@ -151,4 +218,118 @@ trait MapAlgebraOperationCodecs {
   implicit lazy val encodeFocalStdDev: Encoder[MapAlgebraAST.FocalStdDev] =
     Encoder.forProduct5("apply", "args", "id", "metadata", "neighborhood")(op => (op.symbol, op.args, op.id, op.metadata, op.neighborhood))
 
+  implicit lazy val decodeAnd: Decoder[MapAlgebraAST.And] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.And.apply)
+  implicit lazy val encodeAnd: Encoder[MapAlgebraAST.And] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeLogicalNegation: Decoder[MapAlgebraAST.LogicalNegation] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.LogicalNegation.apply)
+  implicit lazy val encodeLogicalNegation: Encoder[MapAlgebraAST.LogicalNegation] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeLogicalDisjunction: Decoder[MapAlgebraAST.Or] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.Or.apply)
+  implicit lazy val encodeLogicalDisjunction: Encoder[MapAlgebraAST.Or] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeLogicallyExclusiveDisjunction: Decoder[MapAlgebraAST.Xor] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.Xor.apply)
+  implicit lazy val encodeLogicallyExclusiveDisjunction: Encoder[MapAlgebraAST.Xor] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodePow: Decoder[MapAlgebraAST.Pow] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.Pow.apply)
+  implicit lazy val encodePow: Encoder[MapAlgebraAST.Pow] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeAbs: Decoder[MapAlgebraAST.Abs] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.Abs.apply)
+  implicit lazy val encodeAbs: Encoder[MapAlgebraAST.Abs] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeGreater: Decoder[MapAlgebraAST.Greater] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.Greater.apply)
+  implicit lazy val encodeGreater: Encoder[MapAlgebraAST.Greater] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeGreaterOrEqual: Decoder[MapAlgebraAST.GreaterOrEqual] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.GreaterOrEqual.apply)
+  implicit lazy val encodeGreaterOrEqual: Encoder[MapAlgebraAST.GreaterOrEqual] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeEquality: Decoder[MapAlgebraAST.Equality] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.Equality.apply)
+  implicit lazy val encodeEquality: Encoder[MapAlgebraAST.Equality] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeInequality: Decoder[MapAlgebraAST.Inequality] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.Inequality.apply)
+  implicit lazy val encodeInequality: Encoder[MapAlgebraAST.Inequality] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeLess: Decoder[MapAlgebraAST.Less] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.Less.apply)
+  implicit lazy val encodeLess: Encoder[MapAlgebraAST.Less] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeLessOrEqual: Decoder[MapAlgebraAST.LessOrEqual] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.LessOrEqual.apply)
+  implicit lazy val encodeLessOrEqual: Encoder[MapAlgebraAST.LessOrEqual] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeLog: Decoder[MapAlgebraAST.Log] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.Log.apply)
+  implicit lazy val encodeLog: Encoder[MapAlgebraAST.Log] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeLog10: Decoder[MapAlgebraAST.Log10] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.Log10.apply)
+  implicit lazy val encodeLog10: Encoder[MapAlgebraAST.Log10] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeSquareRoot: Decoder[MapAlgebraAST.SquareRoot] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.SquareRoot.apply)
+  implicit lazy val encodeSquareRoot: Encoder[MapAlgebraAST.SquareRoot] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeRound: Decoder[MapAlgebraAST.Round] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.Round.apply)
+  implicit lazy val encodeRound: Encoder[MapAlgebraAST.Round] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeCeil: Decoder[MapAlgebraAST.Ceil] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.Ceil.apply)
+  implicit lazy val encodeCeil: Encoder[MapAlgebraAST.Ceil] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeFloor: Decoder[MapAlgebraAST.Floor] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.Floor.apply)
+  implicit lazy val encodeFloor: Encoder[MapAlgebraAST.Floor] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeNumericNegation: Decoder[MapAlgebraAST.NumericNegation] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.NumericNegation.apply)
+  implicit lazy val encodeNumericNegation: Encoder[MapAlgebraAST.NumericNegation] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeTrig: Decoder[MapAlgebraAST.Trigonometry] =
+    Decoder.forProduct4("args", "id", "metadata", "function")(MapAlgebraAST.Trigonometry.apply)
+  implicit lazy val encodeTrig: Encoder[MapAlgebraAST.Trigonometry] =
+    Encoder.forProduct5("apply", "args", "id", "metadata", "function")(op => (op.symbol, op.args, op.id, op.metadata, op.function))
+
+  implicit lazy val decodeAtan2: Decoder[MapAlgebraAST.Atan2] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.Atan2.apply)
+  implicit lazy val encodeAtan2: Encoder[MapAlgebraAST.Atan2] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeIsDefined: Decoder[MapAlgebraAST.IsDefined] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.IsDefined.apply)
+  implicit lazy val encodeIsDefined: Encoder[MapAlgebraAST.IsDefined] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
+
+  implicit lazy val decodeIsUndefined: Decoder[MapAlgebraAST.IsUndefined] =
+    Decoder.forProduct3("args", "id", "metadata")(MapAlgebraAST.IsUndefined.apply)
+  implicit lazy val encodeIsUndefined: Encoder[MapAlgebraAST.IsUndefined] =
+    Encoder.forProduct4("apply", "args", "id", "metadata")(op => (op.symbol, op.args, op.id, op.metadata))
 }
