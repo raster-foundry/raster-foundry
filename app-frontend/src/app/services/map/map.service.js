@@ -285,6 +285,7 @@ class MapWrapper {
         let layerList = this.getLayers(id);
         if (layerList && layerList.length) {
             layerList.push(layer);
+            this._layerMap.set(id, layerList);
         } else {
             this._layerMap.set(id, [layer]);
         }

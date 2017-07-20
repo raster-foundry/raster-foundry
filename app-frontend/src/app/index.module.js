@@ -29,6 +29,7 @@ const App = angular.module(
         'angular.filter',
         '720kb.tooltips',
         'uuid4',
+        'angucomplete-alt',
 
         // services
         require('./services/services.module').name,
