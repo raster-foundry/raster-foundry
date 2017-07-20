@@ -448,9 +448,11 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
       } yield (originalScene, updatedScene)
     } map {
       case (os, us) => {
-        val kickoffIngest =
-          os.head.statusFields.ingestStatus != IngestStatus.ToBeIngested &&
-          scene.statusFields.ingestStatus == IngestStatus.ToBeIngested
+        val kickoffIngest = os.headOption match {
+          case Some(s:Scene) => s.statusFields.ingestStatus != IngestStatus.ToBeIngested &&
+            scene.statusFields.ingestStatus == IngestStatus.ToBeIngested
+          case _ => false
+        }
         (1, kickoffIngest)
       }
       case _ => throw new IllegalStateException("Error while updating scene")
