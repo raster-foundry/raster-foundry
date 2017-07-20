@@ -93,7 +93,7 @@ export default class SceneImportModalController {
                 if (this.importType === 'S3') {
                     return 'S3_UPLOAD';
                 }
-                return 'UPLOAD_PROGRESS'
+                return 'UPLOAD_PROGRESS';
             },
             previous: () => 'IMPORT',
             allowNext: () => true,
