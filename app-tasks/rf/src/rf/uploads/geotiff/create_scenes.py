@@ -10,7 +10,7 @@ from .create_footprints import extract_footprints
 logger = logging.getLogger(__name__)
 
 
-def create_geotiff_scene(tif_path, organizationId, datasource, acquisitionDate=None, cloudCover=None,
+def create_geotiff_scene(tif_path, organizationId, datasource, acquisitionDate=None, cloudCover=0,
                          ingestSizeBytes=0, visibility=Visibility.PRIVATE, tags=[],
                          sceneMetadata=None, name=None, thumbnailStatus=JobStatus.QUEUED,
                          boundaryStatus=JobStatus.QUEUED, ingestStatus=IngestStatus.TOBEINGESTED,
