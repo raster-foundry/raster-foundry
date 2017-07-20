@@ -1,7 +1,5 @@
-/* global $ */
+/* global $, BUILDCONFIG */
 /* eslint-disable camelcase */
-const appId = 'mXP4DZFBZGyBmuZBKNeo';
-const appCode = 'kBWb6Z7ZLcuQanT_RoP60A';
 
 export default (app) => {
     class GeocodeService {
@@ -10,8 +8,8 @@ export default (app) => {
         getLocationSuggestions(query) {
             const baseUrl = 'https://autocomplete.geocoder.cit.api.here.com/6.2/suggest.json';
             const requestParams = {
-                app_id: appId,
-                app_code: appCode,
+                app_id: BUILDCONFIG.HERE_APP_ID,
+                app_code: BUILDCONFIG.HERE_APP_CODE,
                 query: query
             };
             return $.get(baseUrl, requestParams);
@@ -20,11 +18,11 @@ export default (app) => {
         getLocation(locationId) {
             const baseUrl = 'https://geocoder.cit.api.here.com/6.2/geocode.json';
             const requestParams = {
+                app_id: BUILDCONFIG.HERE_APP_ID,
+                app_code: BUILDCONFIG.HERE_APP_CODE,
                 locationid: locationId,
                 gen: 9,
-                jsonattributes: 1,
-                app_id: appId,
-                app_code: appCode
+                jsonattributes: 1
             };
             return $.get(baseUrl, requestParams);
         }

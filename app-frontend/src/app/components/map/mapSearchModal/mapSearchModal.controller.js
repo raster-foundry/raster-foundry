@@ -1,4 +1,10 @@
 /* eslint-disable */
+
+const UPARROW = 38;
+const DOWNARROW = 40;
+const TAB = 9;
+const ENTER = 13;
+
 export default class MapSearchModalController {
 
     constructor($scope, $state, $element, $timeout, geocodeService) {
@@ -27,13 +33,13 @@ export default class MapSearchModalController {
     }
 
     handleKeypress(e) {
-        if (e.which == 38) {
+        if (e.which === UPARROW) {
             e.preventDefault();
             this.incrementActiveResultIndex(-1);
-        } else if (e.which == 40 || e.which == 9) {
+        } else if (e.which === DOWNARROW || e.which === TAB) {
             e.preventDefault();
             this.incrementActiveResultIndex(1);
-        } else if (e.which == 13) {
+        } else if (e.which === ENTER) {
             e.preventDefault();
             this.gotoActiveResult();
         }
@@ -47,7 +53,7 @@ export default class MapSearchModalController {
                 if (this.activeResultIndex >= numResults) {
                     this.activeResultIndex = 0;
                 } else if (this.activeResultIndex < 0) {
-                    this.activeResultIndex == numResults - 1;
+                    this.activeResultIndex = numResults - 1;
                 }
             });
         }
