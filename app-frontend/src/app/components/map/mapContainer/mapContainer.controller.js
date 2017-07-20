@@ -2,16 +2,14 @@ import Map from 'es6-map';
 /* globals BUILDCONFIG */
 
 export default class MapContainerController {
-    constructor($log, $document, $element, $scope, $timeout, mapService,
-                $uibModal) {
+    constructor($document, $element, $scope, $timeout, $uibModal, mapService) {
         'ngInject';
         this.$document = $document;
         this.$element = $element;
-        this.$log = $log;
         this.$scope = $scope;
         this.$timeout = $timeout;
-        this.mapService = mapService;
         this.$uibModal = $uibModal;
+        this.mapService = mapService;
         this.getMap = () => this.mapService.getMap(this.mapId);
     }
 
