@@ -10,7 +10,7 @@ from .create_footprints import extract_footprints
 logger = logging.getLogger(__name__)
 
 
-def create_geotiff_scene(tif_path, organizationId, datasource,
+def create_geotiff_scene(tif_path, organizationId, datasource, acquisitionDate=None, cloudCover=0,
                          ingestSizeBytes=0, visibility=Visibility.PRIVATE, tags=[],
                          sceneMetadata=None, name=None, thumbnailStatus=JobStatus.QUEUED,
                          boundaryStatus=JobStatus.QUEUED, ingestStatus=IngestStatus.TOBEINGESTED,
@@ -51,8 +51,8 @@ def create_geotiff_scene(tif_path, organizationId, datasource,
     sceneKwargs = {
         'sunAzimuth': None,  # TODO: Calculate from acquisitionDate and tif center.
         'sunElevation': None,  # TODO: Same
-        'cloudCover': 0,
-        'acquisitionDate': None,
+        'cloudCover': cloudCover,
+        'acquisitionDate': acquisitionDate,
         'id': str(uuid.uuid4()),
         'thumbnails': None,
         'tileFootprint': tile_footprint,
