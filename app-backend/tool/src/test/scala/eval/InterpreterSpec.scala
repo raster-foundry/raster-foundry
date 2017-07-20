@@ -15,6 +15,7 @@ import geotrellis.vector._
 import geotrellis.raster._
 import geotrellis.raster.render._
 import geotrellis.raster.testkit._
+import geotrellis.raster.mapalgebra.focal._
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -373,7 +374,7 @@ class InterpreterSpec
       tileSource = constantSource,
       256
     )
-    println("Simple NDVI calculation: ", ndvi.asJson.noSpaces)
+    println("NDVI calculation: ", ndvi.asJson.noSpaces)
 
     val ret = tms(0, 1, 1)
     val op = Await.result(ret, 10.seconds) match {
@@ -401,7 +402,7 @@ class InterpreterSpec
       tileSource = constantSource,
       256
     )
-    println("Simple Masking calculation: ", masking.asJson.noSpaces)
+    println("Masking calculation: ", masking.asJson.noSpaces)
 
     val ret = tms(1, 0, 0)
     val op = Await.result(ret, 10.seconds) match {
@@ -426,7 +427,7 @@ class InterpreterSpec
       tileSource = ascendingSource,
       256
     )
-    println("Simple focal maximum calculation: ", fmax.asJson.noSpaces)
+    println("focal maximum calculation: ", fmax.asJson.noSpaces)
 
     val ret = tms(1, 0, 0)
     val op = Await.result(ret, 10.seconds) match {
@@ -440,154 +441,75 @@ class InterpreterSpec
   }
 
   it("should evaluate focal minimum") {
-    import geotrellis.raster.mapalgebra.focal._
-    requests = Nil
     val src = randomSourceAST
-    val fmin = FocalMin(List(src), UUID.randomUUID, None, Square(1))
-    val tms = Interpreter.interpretTMS(
-      ast = fmin,
-      sourceMapping = Map(src.id -> tileSource(1)),
-      overrides = Map.empty,
-      tileSource = ascendingSource,
-      256
-    )
-    println("Simple focal minimum calculation: ", fmin.asJson.noSpaces)
 
-    val ret = tms(1, 0, 0)
-    val op = Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val tile = lazytile.evaluate.get
-        requests.length should be (1)
-        tile.get(21, 32) should be (tile.get(20, 32) + 1)
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
+    InterpreterTest.dbl(
+      FocalMin(List(src), UUID.randomUUID, None, Square(1)),
+      Map(src.id -> tileSource(1)),
+      ascendingSource,
+      Map.empty,
+      "A focal minimum calculation"
+    )(((21, 32), 7957))
   }
 
   it("should evaluate focal mean") {
-    import geotrellis.raster.mapalgebra.focal._
-    requests = Nil
     val src = randomSourceAST
-    val fmean = FocalMean(List(src), UUID.randomUUID, None, Square(1))
-    val tms = Interpreter.interpretTMS(
-      ast = fmean,
-      sourceMapping = Map(src.id -> tileSource(1)),
-      overrides = Map.empty,
-      tileSource = ascendingSource,
-      256
-    )
-    println("Simple focal mean calculation: ", fmean.asJson.noSpaces)
 
-    val ret = tms(1, 0, 0)
-    val op = Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val tile = lazytile.evaluateDouble.get
-        requests.length should be (1)
-        tile.get(21, 32) should be (tile.get(20, 32) + 1)
-        tile.get(0, 0) should be (21931)
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
+    InterpreterTest.dbl(
+      FocalMean(List(src), UUID.randomUUID, None, Square(1)),
+      Map(src.id -> tileSource(1)),
+      ascendingSource,
+      Map.empty,
+      "A focal mean calculation"
+    )(((21, 32), 8214))
   }
 
   it("should evaluate focal median") {
-    import geotrellis.raster.mapalgebra.focal._
-    requests = Nil
     val src = randomSourceAST
-    val fmedian = FocalMedian(List(src), UUID.randomUUID, None, Square(1))
-    val tms = Interpreter.interpretTMS(
-      ast = fmedian,
-      sourceMapping = Map(src.id -> tileSource(1)),
-      overrides = Map.empty,
-      tileSource = ascendingSource,
-      256
-    )
-    println("Simple focal median calculation: ", fmedian.asJson.noSpaces)
 
-    val ret = tms(1, 0, 0)
-    val op = Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val tile = lazytile.evaluate.get
-        requests.length should be (1)
-        tile.getDouble(21, 32) should be (tile.getDouble(20, 32) + 1)
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
+    InterpreterTest.dbl(
+      FocalMedian(List(src), UUID.randomUUID, None, Square(1)),
+      Map(src.id -> tileSource(1)),
+      ascendingSource,
+      Map.empty,
+      "A focal median calculation"
+    )(((21, 32), 8214))
   }
 
   it("should evaluate focal mode") {
-    import geotrellis.raster.mapalgebra.focal._
-    requests = Nil
     val src = randomSourceAST
-    val fmode = FocalMode(List(src), UUID.randomUUID, None, Square(1))
-    val tms = Interpreter.interpretTMS(
-      ast = fmode,
-      sourceMapping = Map(src.id -> tileSource(1)),
-      overrides = Map.empty,
-      tileSource = ascendingSource,
-      256
-    )
-    println("Simple focal mode calculation: ", fmode.asJson.noSpaces)
 
-    val ret = tms(1, 0, 0)
-    Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val tile = lazytile.evaluate.get
-        requests.length should be (1)
-        isNoData(tile.get(21, 32)) should be (true)
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
+    InterpreterTest.int(
+      FocalMode(List(src), UUID.randomUUID, None, Square(1)),
+      Map(src.id -> tileSource(1)),
+      ascendingSource,
+      Map.empty,
+      "A focal mode calculation"
+    )(((21, 32), NODATA))
   }
 
-  it("should evaluate focal sum") {
-    import geotrellis.raster.mapalgebra.focal._
-    requests = Nil
-    val src = randomSourceAST
-    val fsum = FocalSum(List(src), UUID.randomUUID, None, Square(1))
-    val tms = Interpreter.interpretTMS(
-      ast = fsum,
-      sourceMapping = Map(src.id -> tileSource(1)),
-      overrides = Map.empty,
-      tileSource = ascendingSource,
-      256
-    )
-    println("Simple focal sum calculation: ", fsum.asJson.noSpaces)
 
-    val ret = tms(1, 0, 0)
-    Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val tile = lazytile.evaluate.get
-        requests.length should be (1)
-        tile.get(0, 0) should be (197385)
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
+  it("should evaluate focal sum") {
+    val src = randomSourceAST
+
+    InterpreterTest.int(
+      FocalSum(List(src), UUID.randomUUID, None, Square(1)),
+      Map(src.id -> tileSource(1)),
+      ascendingSource,
+      Map.empty,
+      "A focal sum calculation"
+    )(((0,0), 197385))
   }
 
   it("should evaluate focal stddev") {
-    import geotrellis.raster.mapalgebra.focal._
-    requests = Nil
     val src = randomSourceAST
-    val fstddev = FocalStdDev(List(src), UUID.randomUUID, None, Square(1))
-    val tms = Interpreter.interpretTMS(
-      ast = fstddev,
-      sourceMapping = Map(src.id -> tileSource(1)),
-      overrides = Map.empty,
-      tileSource = ascendingSource,
-      256
-    )
-    println("Simple focal standard deviation calculation: ", fstddev.asJson.noSpaces)
 
-    val ret = tms(1, 0, 0)
-    Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val tile = lazytile.evaluateDouble.get
-        requests.length should be (1)
-        // GeoTrellis uses the population StdDev (~ 30713) rather than the sample StdDev (~ 32576)
-        tile.get(0, 0) should be (30713)
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
+    InterpreterTest.int(
+      FocalStdDev(List(src), UUID.randomUUID, None, Square(1)),
+      Map(src.id -> tileSource(1)),
+      ascendingSource,
+      Map.empty,
+      "A focal standard deviation calculation"
+    )(((0,0), 30713))
   }
 }
