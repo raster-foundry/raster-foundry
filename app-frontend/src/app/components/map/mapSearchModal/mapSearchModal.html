@@ -1,0 +1,25 @@
+<div class="modal-body">
+  <input class="form-control"
+         type="text"
+         placeholder="Search"
+         ng-model="$ctrl.query"
+         ng-model-options="{debounce: 250}"
+         ng-change="$ctrl.search()">
+  <div>
+    <ul class="map-search-results"
+        ng-if="$ctrl.shouldShowResults()">
+      <li class="map-search-results-item"
+          ng-repeat="location in $ctrl.results.suggestions"
+          ng-class="{ 'active': $ctrl.isActiveResultIndex($index) }"
+          ng-click="$ctrl.selectLocation($index)">
+        <div class="label">{{location.label}}</div>
+        <div class="info-text" ng-if="$ctrl.isActiveResultIndex($index)">
+          <div class="keyboard-shortcut-key">enter</div>
+        </div>
+      </li>
+    </ul>
+    <div class="map-search-prompt" ng-if="$ctrl.shouldShowLoadingMessage()">Searching...</div>
+    <div class="map-search-prompt" ng-if="$ctrl.shouldShowNoResultsMessage()">We can't find anything that matches what you're searching for</div>
+    <div class="map-search-prompt" ng-if="$ctrl.shouldShowSearchPrompt()">Search for a city, town, or address</div>
+  </div>
+</div>

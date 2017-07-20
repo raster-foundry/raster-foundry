@@ -16,6 +16,9 @@ const DEVELOPMENT = NODE_ENV === 'production' ? false : true;
 const stylesLoader = 'css-loader?sourceMap!postcss-loader!sass-loader?' +
         'outputStyle=expanded&sourceMap=true&sourceMapContents=true';
 
+const HERE_APP_ID = '\'mXP4DZFBZGyBmuZBKNeo\'';
+const HERE_APP_CODE = '\'kBWb6Z7ZLcuQanT_RoP60A\'';
+
 const basemaps = JSON.stringify({
     layers: {
         Light: {
@@ -43,8 +46,8 @@ const basemaps = JSON.stringify({
                 attribution: 'Map &copy; 1987-2014 <a href="http://developer.here.com">HERE</a>',
                 subdomains: '1234',
                 mapID: 'newest',
-                app_id: 'mXP4DZFBZGyBmuZBKNeo',
-                app_code: 'kBWb6Z7ZLcuQanT_RoP60A',
+                app_id: HERE_APP_ID,
+                app_code: HERE_APP_CODE,
                 base: 'aerial',
                 maxZoom: 30,
                 maxNativeZoom: 20,
@@ -59,8 +62,8 @@ const basemaps = JSON.stringify({
             properties: {
                 attribution: 'Map &copy; 1987-2014 <a href="http://developer.here.com">HERE</a>',
                 subdomains: '1234',
-                app_id: 'mXP4DZFBZGyBmuZBKNeo',
-                app_code: 'kBWb6Z7ZLcuQanT_RoP60A'
+                app_id: HERE_APP_ID,
+                app_code: HERE_APP_CODE
             }
         }
     },
@@ -259,7 +262,9 @@ module.exports = function (_path) {
                 'BUILDCONFIG': {
                     APP_NAME: '\'RasterFoundry\'',
                     BASEMAPS: basemaps,
-                    API_HOST: '\'\''
+                    API_HOST: '\'\'',
+                    HERE_APP_ID: HERE_APP_ID,
+                    HERE_APP_CODE: HERE_APP_CODE
                 }
             })
         ]
