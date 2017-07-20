@@ -29,7 +29,7 @@ object Mosaic extends KamonTrace {
   val memcached = HeapBackedMemcachedClient(LayerCache.memcachedClient)
 
   def tileLayerMetadata(id: UUID, zoom: Int)(implicit database: Database, sceneIds: Set[UUID]): OptionT[Future, (Int, TileLayerMetadata[SpatialKey])] =
-    traceName(s"Mosaic.tileLayerMetadata($id)") {
+    traceName("Mosaic.tileLayerMetadata") {
       LayerCache.attributeStoreForLayer(id).mapFilter { case (store, pyramidMaxZoom) =>
         // because metadata attributes are cached in AttributeStore itself, there is no point caching this function
         val layerName = id.toString
@@ -43,7 +43,7 @@ object Mosaic extends KamonTrace {
     }
 
   def mosaicDefinition(projectId: UUID, tagttl: Option[TagWithTTL])(implicit database: Database): OptionT[Future, Seq[MosaicDefinition]] =
-    traceName(s"Mosaic.mosaicDefinition($projectId)") {
+    traceName("Mosaic.mosaicDefinition") {
       val cacheKey = tagttl match {
         case Some(t) => s"mosaic-definition-$projectId-${t.tag}"
         case None => s"mosaic-definition-$projectId"
@@ -56,7 +56,7 @@ object Mosaic extends KamonTrace {
 
   /** Fetch the tile for given resolution. If it is not present, use a tile from a lower zoom level */
   def fetch(id: UUID, zoom: Int, col: Int, row: Int)(implicit database: Database, sceneIds: Set[UUID]): OptionT[Future, MultibandTile] =
-    traceName(s"Mosaic.fetch($id)") {
+    traceName("Mosaic.fetch") {
       tileLayerMetadata(id, zoom).flatMap { case (sourceZoom, tlm) =>
         val zoomDiff = zoom - sourceZoom
         val resolutionDiff = 1 << zoomDiff
@@ -84,7 +84,7 @@ object Mosaic extends KamonTrace {
     * If no bbox is specified, it will use the project tileLayerMetadata layoutExtent
     */
   def fetchRenderedExtent(id: UUID, zoom: Int, bbox: Option[Projected[Polygon]])(implicit database: Database, sceneIds: Set[UUID]): OptionT[Future, MultibandTile] =
-    traceName(s"Mosaic.fetchRenderedExtent($id)") {
+    traceName("Mosaic.fetchRenderedExtent") {
       tileLayerMetadata(id, zoom).flatMap { case (sourceZoom, tlm) =>
         val extent: Extent =
           bbox.map { case Projected(poly, srid) =>
@@ -97,7 +97,7 @@ object Mosaic extends KamonTrace {
 
   /** Fetch all bands of a [[MultibandTile]] for the given extent and return them without assuming anything of their semantics */
   def rawForExtent(projectId: UUID, zoom: Int, bbox: Option[Projected[Polygon]])(implicit database: Database): OptionT[Future, MultibandTile] =
-    traceName(s"Mosaic.rawForExtent($projectId)") {
+    traceName("Mosaic.rawForExtent") {
       mosaicDefinition(projectId, None).flatMap { mosaic =>
         implicit val sceneIds = mosaic.map { case MosaicDefinition(sceneId, _) => sceneId }.toSet
 
@@ -119,7 +119,7 @@ object Mosaic extends KamonTrace {
 
   /** Fetch all bands of a [[MultibandTile]] and return them without assuming anything of their semantics */
   def raw(projectId: UUID, zoom: Int, col: Int, row: Int)(implicit database: Database): OptionT[Future, MultibandTile] =
-    traceName(s"Mosaic.raw($projectId)") {
+    traceName("Mosaic.raw") {
       mosaicDefinition(projectId, None).flatMap { mosaic =>
         implicit val sceneIds = mosaic.map { case MosaicDefinition(sceneId, _) => sceneId }.toSet
 
@@ -157,7 +157,7 @@ object Mosaic extends KamonTrace {
   def render(
     projectId: UUID, zoomOption: Option[Int], bboxOption: Option[String],
     colorCorrect: Boolean = true)(implicit database: Database): OptionT[Future, MultibandTile] =
-    traceName(s"Mosaic.render($projectId)") {
+    traceName("Mosaic.render") {
       val bboxPolygon: Option[Projected[Polygon]] =
         try {
           bboxOption map { bbox =>
@@ -215,7 +215,7 @@ object Mosaic extends KamonTrace {
     rgbOnly: Boolean = true
   )(
     implicit database: Database
-  ): OptionT[Future, MultibandTile] = traceName(s"Mosaic.apply($projectId)") {
+  ): OptionT[Future, MultibandTile] = traceName("Mosaic.apply") {
     // Lookup project definition
     // tag present, include in lookup to re-use cache
     // no tag to control cache rollover, so don't cache
