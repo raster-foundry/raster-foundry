@@ -79,24 +79,22 @@ object MosaicRoutes extends LazyLogging with KamonTraceDirectives {
       }
     } ~ pathPrefix (IntNumber / IntNumber / IntNumber ) { (zoom, x, y) =>
       traceName("tiles-zxy") {
-        traceName(s"tiles-zxy-${projectId}") {
-          parameter("tag".?) { tag =>
-            get {
-              complete {
-                val future =
-                  Mosaic(projectId, zoom, x, y, tag)
-                    .map(_.renderPng)
-                    .getOrElse(emptyTilePng)
-                    .map(pngAsHttpResponse)
+        parameter("tag".?) { tag =>
+          get {
+            complete {
+              val future =
+                Mosaic(projectId, zoom, x, y, tag)
+                  .map(_.renderPng)
+                  .getOrElse(emptyTilePng)
+                  .map(pngAsHttpResponse)
 
-                future onComplete {
-                  case Success(s) => s
-                  case Failure(e) =>
-                    logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
-                }
-
-                future
+              future onComplete {
+                case Success(s) => s
+                case Failure(e) =>
+                  logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
               }
+
+              future
             }
           }
         }
