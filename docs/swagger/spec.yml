@@ -4,7 +4,7 @@ info:
   description: An application to find, view, and analyze geospatial data at any scale
   version: "0.1.0"
 
-host: localhost:9000
+host: app.rasterfoundry.com
 
 schemes:
   - http
@@ -497,6 +497,12 @@ paths:
       summary: Create a scene
       tags:
         - Imagery
+      parameters:
+        - name: scene
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Scene'
       responses:
         201:
           description: Successfully created a new scene
@@ -3096,7 +3102,6 @@ definitions:
   CombinedSceneQueryParams:
     type: object
     description: Combined query parameters for filtering scenes
-    discriminator: type
     properties:
       orgParams:
         $ref: '#/definitions/OrgParams'
