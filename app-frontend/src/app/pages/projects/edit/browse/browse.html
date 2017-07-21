@@ -52,11 +52,9 @@
   <rf-scene-item
       ng-click="$ctrl.openSceneDetailModal(scene)"
       scene="scene"
-      selectable
       selected="$ctrl.isSelected(scene)"
       is-disabled="$ctrl.isInProject(scene)"
       on-select="$ctrl.setSelected(scene, selected)"
-      class="selectable"
       ng-mouseenter="$ctrl.setHoveredScene(scene)"
       ng-mouseleave="$ctrl.removeHoveredScene()"
       ng-repeat="scene in $ctrl.sceneList track by scene.id">

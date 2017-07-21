@@ -2102,3 +2102,15 @@ rf-node-selector {
   border-radius: 3px;
   border: 1px solid $shade-light;
 }
+
+.dropdown-menu {
+  > li > a {
+    &.dropdown-danger {
+      color: $danger;
+      &:hover {
+        color: $white;
+        background: $danger;
+      }
+    }
+  }
+}

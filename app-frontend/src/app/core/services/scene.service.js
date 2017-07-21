@@ -29,6 +29,10 @@ export default (app) => {
             return this.Scene.query(validParams).$promise;
         }
 
+        deleteScene(scene) {
+            return this.Scene.delete({id: scene.id}).$promise;
+        }
+
         getSceneBounds(scene) {
             let boundsGeoJson = L.geoJSON();
             boundsGeoJson.addData(scene.dataFootprint);

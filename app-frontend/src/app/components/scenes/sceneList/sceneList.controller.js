@@ -12,6 +12,30 @@ export default class SceneListController {
 
     $onInit() {
         this.populateSceneList(this.$state.params.page || 1);
+        this.sceneActions = [
+            {
+                label: 'View',
+                onClick: this.viewSceneDetail.bind(this)
+            },
+            {
+                label: 'Download',
+                onClick: this.downloadModal.bind(this),
+                iconClass: 'icon-download'
+            },
+            // {
+            //     label: 'Make Public',
+            //     iconClass: 'icon-unlocked'
+            // },
+            {
+                divider: true
+            },
+            {
+                label: 'Delete',
+                textClass: 'dropdown-danger',
+                iconClass: 'icon-trash',
+                onClick: this.deleteModal.bind(this)
+            }
+        ];
     }
 
     populateSceneList(page) {
@@ -104,6 +128,41 @@ export default class SceneListController {
         });
     }
 
+    deleteModal(scene) {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        this.activeModal = this.$uibModal.open({
+            component: 'rfConfirmationModal',
+            resolve: {
+                title: () => 'Delete Imported Scene?',
+                subtitle: () =>
+                    'The scene will be permanently deleted,'
+                    + ' but any projects containing it will remain.',
+                content: () =>
+                    '<div class="text-center color-danger">'
+                    + 'You are about to delete the scene. This action is not reversible.'
+                    + ' Are you sure you wish to continue?'
+                    + '</div>',
+                confirmText: () => 'Delete Scene',
+                cancelText: () => 'Cancel'
+            }
+        });
+
+        this.activeModal.result.then(
+            () => {
+                this.sceneService.deleteScene(scene).then(
+                    () => {
+                        this.$state.reload();
+                    },
+                    (err) => {
+                        this.$log.debug('error deleting scene', err);
+                    }
+                );
+            });
+    }
+
     shouldShowSceneList() {
         return !this.loading && this.lastSceneResult &&
             this.lastSceneResult.count > this.lastSceneResult.pageSize && !this.errorMsg;
@@ -112,5 +171,27 @@ export default class SceneListController {
     shouldShowImportBox() {
         return !this.loading && this.lastSceneResult &&
             this.lastSceneResult.count === 0 && !this.errorMsg;
+    }
+
+    onActionClick(action, scene) {
+        if (action.onClick) {
+            action.onClick(scene);
+        }
+    }
+
+    getActionIcon(action) {
+        let classes = {};
+        if (action.iconClass) {
+            classes[action.iconClass] = true;
+        }
+        return classes;
+    }
+
+    getActionTextClass(action) {
+        let classes = {};
+        if (action.textClass) {
+            classes[action.textClass] = true;
+        }
+        return classes;
     }
 }
