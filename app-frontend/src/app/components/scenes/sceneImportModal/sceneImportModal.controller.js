@@ -30,6 +30,7 @@ export default class SceneImportModalController {
             prefix: ''
         };
         this.selectedFiles = [];
+        this.sceneData = {};
         this.uploadProgressPct = {};
         this.uploadProgressFlexString = {};
         this.datasource = this.resolve.datasource || false;
@@ -62,7 +63,7 @@ export default class SceneImportModalController {
             allowPrevious: () => true,
             next: () => {
                 if (this.importType === 'S3') {
-                    return 'S3_UPLOAD';
+                    return 'METADATA';
                 }
                 return 'LOCAL_UPLOAD';
             },
@@ -83,8 +84,20 @@ export default class SceneImportModalController {
             },
             previous: () => 'IMPORT',
             allowPrevious: () => true,
-            next: () => 'UPLOAD_PROGRESS',
+            next: () => 'METADATA',
             allowNext: () => this.verifyFileCount(),
+            allowClose: () => true
+        }, {
+            name: 'METADATA',
+            next: () => {
+                if (this.importType === 'S3') {
+                    return 'S3_UPLOAD';
+                }
+                return 'UPLOAD_PROGRESS';
+            },
+            previous: () => 'IMPORT',
+            allowNext: () => true,
+            allowPrevious: () => true,
             allowClose: () => true
         }, {
             name: 'UPLOAD_PROGRESS',
@@ -93,8 +106,8 @@ export default class SceneImportModalController {
         }, {
             name: 'S3_UPLOAD',
             previous: () => 'IMPORT',
-            onEnter: () => this.startS3Upload(),
-            next: () => 'IMPORT_SUCCESS'
+            next: () => 'IMPORT_SUCCESS',
+            onEnter: () => this.startS3Upload()
         }, {
             name: 'IMPORT_SUCCESS',
             allowDone: () => true
@@ -252,7 +265,8 @@ export default class SceneImportModalController {
             uploadStatus: 'UPLOADING',
             visibility: 'PRIVATE',
             organizationId: user.organizationId,
-            metadata: {}
+            metadata: {acquisitionDate: this.sceneData.acquisitionDate,
+                       cloudCover: this.sceneData.cloudCover}
         };
 
         if (this.importType === 'local') {
