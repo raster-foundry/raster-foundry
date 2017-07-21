@@ -1,64 +1,57 @@
 const shared = angular.module('core.shared', []);
 
 // auth
-require('./services/auth.service')(shared);
-require('./services/token.service')(shared);
-require('./services/user.service')(shared);
+require('./services/auth/auth.service')(shared);
+require('./services/auth/token.service')(shared);
+require('./services/auth/user.service')(shared);
 
 // settings
-require('./services/config.provider')(shared);
-require('./services/storage.service')(shared);
-require('./services/status.service')(shared);
-require('./services/featureFlagOverrides.service')(shared);
-require('./services/featureFlags.provider')(shared);
-require('./services/featureFlag.directive')(shared);
+require('./services/settings/config.provider')(shared);
+require('./services/settings/storage.service')(shared);
+require('./services/settings/status.service')(shared);
+require('./services/settings/featureFlagOverrides.service')(shared);
+require('./services/settings/featureFlags.provider')(shared);
+require('./services/settings/featureFlag.directive')(shared);
 
-// 3rd party
-require('./services/rollbarWrapper.service')(shared);
-require('./services/dropbox.service')(shared);
-require('./aws-sdk-s3.module.js');
+// vendor
+require('./services/vendor/rollbarWrapper.service')(shared);
+require('./services/vendor/dropbox.service')(shared);
+require('./services/vendor/intercom.service')(shared);
+require('./services/vendor/aws-sdk-s3.module.js');
 
 // projects
-require('./services/colorCorrect.service')(shared);
-require('./services/datasource.service')(shared);
-require('./services/project.service')(shared);
-require('./services/histogram.service')(shared);
-require('./services/aoi.service')(shared);
-require('./services/export.service')(shared);
+require('./services/projects/colorCorrect.service')(shared);
+require('./services/projects/project.service')(shared);
+require('./services/projects/histogram.service')(shared);
+require('./services/projects/aoi.service')(shared);
+require('./services/projects/export.service')(shared);
+require('./services/projects/histogram.service')(shared);
+require('./services/projects/export.service')(shared);
+require('./services/projects/aoi.service')(shared);
 
 // scenes
-require('./services/scene.service')(shared);
-require('./services/thumbnail.service')(shared);
-require('./services/upload.service')(shared);
+require('./services/scenes/scene.service')(shared);
+require('./services/scenes/upload.service')(shared);
+require('./services/scenes/datasource.service')(shared);
 
-// tool
-require('./services/tool.service')(shared);
-require('./services/toolCategory.service')(shared);
-require('./services/toolTag.service')(shared);
-require('./services/labUtils.service')(shared);
+// tools
+require('./services/tools/tool.service')(shared);
+require('./services/tools/toolCategory.service')(shared);
+require('./services/tools/toolTag.service')(shared);
+require('./services/tools/labUtils.service')(shared);
 
 // map
-require('./services/map.service')(shared);
-require('./services/mapUtils.service')(shared);
-require('./services/gridLayer.service')(shared);
-require('./services/imageOverlay.service')(shared);
-require('./services/layer.service')(shared);
-require('./services/geocode.service')(shared);
+require('./services/map/map.service')(shared);
+require('./services/map/mapUtils.service')(shared);
+require('./services/map/gridLayer.service')(shared);
+require('./services/map/imageOverlay.service')(shared);
+require('./services/map/layer.service')(shared);
+require('./services/map/geocode.service')(shared);
 
-// ui
-require('./services/mousetip.service')(shared);
-require('./services/feed.service')(shared);
-require('./services/intercom.service')(shared);
-require('./services/rollbarWrapper.service')(shared);
-require('./services/upload.service')(shared);
-require('./services/status.service')(shared);
-require('./services/histogram.service')(shared);
-require('./services/dropbox.service')(shared);
-require('./services/aoi.service')(shared);
-require('./services/export.service')(shared);
-require('./services/featureFlagOverrides.service')(shared);
-require('./services/featureFlags.provider')(shared);
-require('./services/featureFlag.directive')(shared);
+// common
+require('./services/common/mousetip.service')(shared);
+require('./services/common/feed.service')(shared);
+require('./services/common/thumbnail.service')(shared);
 
 
 export default shared;
