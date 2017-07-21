@@ -7,13 +7,13 @@ const rfSceneItem = {
     controller: 'SceneItemController',
     bindings: {
         scene: '<',
-        selected: '&',
-        isDisabled: '<',
-        onSelect: '&',
-        onAction: '&',
+        actions: '<',
         onView: '&',
         onDownload: '&',
-        actionIcon: '<'
+
+        selected: '<?',
+        onSelect: '&?',
+        isDisabled: '<?'
     }
 };
 

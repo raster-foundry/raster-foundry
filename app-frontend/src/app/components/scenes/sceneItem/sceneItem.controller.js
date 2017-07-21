@@ -3,9 +3,7 @@ export default class SceneItemController {
         'ngInject';
         this.thumbnailService = thumbnailService;
         this.mapService = mapService;
-        this.isSelectable = $attrs.hasOwnProperty('selectable');
         this.isDraggable = $attrs.hasOwnProperty('draggable');
-        this.isEditable = $attrs.hasOwnProperty('editable');
         this.datasourceService = datasourceService;
         this.$scope = $scope;
     }
@@ -17,13 +15,6 @@ export default class SceneItemController {
             this.datasourceLoaded = true;
             this.datasource = d;
         });
-
-        this.$scope.$watch(
-            () => this.selected({scene: this.scene}),
-            (selected) => {
-                this.selectedStatus = selected;
-            }
-        );
 
         if (this.isDraggable) {
             Object.assign(this.$scope.$parent.$treeScope.$callbacks, {
@@ -37,25 +28,18 @@ export default class SceneItemController {
         }
     }
 
-    toggleSelected(event) {
-        this.onSelect({scene: this.scene, selected: !this.selectedStatus});
-        if (event) {
-            event.stopPropagation();
+    $onChanges(changes) {
+        if (changes.selected && changes.selected.hasOwnProperty('currentValue')) {
+            this.selectedStatus = changes.selected.currentValue;
         }
     }
 
-    onAction(event) {
-        this.onAction({scene: this.scene});
-        event.stopPropagation();
-    }
-
-    onView(event) {
-        this.onView({scene: this.scene});
-        event.stopPropagation();
-    }
-
-    onDownload(event) {
-        this.onDownload({scene: this.scene});
-        event.stopPropagation();
+    toggleSelected(event) {
+        if (this.onSelect) {
+            this.onSelect({scene: this.scene, selected: !this.selectedStatus});
+            if (event) {
+                event.stopPropagation();
+            }
+        }
     }
 }

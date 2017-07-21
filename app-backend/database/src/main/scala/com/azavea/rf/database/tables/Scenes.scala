@@ -1,5 +1,7 @@
 package com.azavea.rf.database.tables
 
+import akka.http.scaladsl.model.{IllegalRequestException, StatusCodes}
+
 import com.azavea.rf.database.fields._
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.sort._
@@ -401,11 +403,28 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     * @param user    Results will be limited to user's organization
     */
   def deleteScene(sceneId: UUID, user: User)(implicit database: DB): Future[Int] = {
-    database.db.run {
+    val sceneQuery =
       Scenes
         .filterToSharedOrganizationIfNotInRoot(user)
         .filter(_.id === sceneId)
-        .delete
+    database.db.run {
+      sceneQuery.result
+    } flatMap { (scenes) =>
+      scenes.headOption match {
+        case Some(scene) =>
+          database.db.run {
+            sceneQuery
+              .filterToOwnerIfNotInRootOrganization(user)
+              .delete
+          } map { numDeleted =>
+            numDeleted match {
+              case 0 =>
+                throw IllegalRequestException(StatusCodes.ClientError(403)("Forbidden", "Error deleting scene: not authorized to modify this scene"))
+              case n => n
+            }
+          }
+        case _ => Future(0)
+      }
     }
   }
 
