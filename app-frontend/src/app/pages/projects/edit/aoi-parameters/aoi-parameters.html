@@ -62,13 +62,20 @@
   </li>
 </ul>
 <div class="sidebar-content" ng-if="$ctrl.project">
-  <button class="btn btn-primary btn-block" type="button" ng-click="$ctrl.saveParameters()">
+  <button class="btn btn-primary btn-block"
+          type="button"
+          ng-click="$ctrl.saveParameters()"
+          ng-disabled="!$ctrl.aoiPolygons"
+  >
     Start AOI Monitoring
   </button>
 </div>
 <div class="sidebar sidebar-extended map-filters"
      ng-show="$ctrl.showFilters">
-  <rf-aoi-filter-pane ng-if="$ctrl.showFilters"
-                  data-opened="$ctrl.showFilters"
-                  filters="$ctrl.aoiParameters.filters"></rf-aoi-filter-pane>
+  <rf-aoi-filter-pane
+    ng-if="$ctrl.showFilters"
+    data-opened="$ctrl.showFilters"
+    filters="$ctrl.aoiParameters"
+    on-filter-change="$ctrl.onFilterChange(changes)"
+  ></rf-aoi-filter-pane>
 </div>
