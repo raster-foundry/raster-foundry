@@ -82,6 +82,7 @@
  * safari fix for map not displaying
  */
 .main > rf-map-container {
+  position: relative;
   display: flex;
   flex: 1;
 
