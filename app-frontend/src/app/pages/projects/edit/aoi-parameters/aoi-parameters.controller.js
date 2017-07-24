@@ -70,7 +70,6 @@ export default class AOIParametersController {
         this.projectLoaded = false;
         this.isProjectAoisDrawn = false;
         this.aoiProjectParameters = {};
-        this.aoiParamters = {};
         this.drawOptions = {
             areaType: 'interest',
             requirePolygons: true
@@ -78,18 +77,37 @@ export default class AOIParametersController {
 
         this.$q.all({
             project: this.$parent.fetchProject(),
-            aois: this.fetchProjectAOIs()
+            aoi: this.fetchProjectAOIs()
         }).then((result) => {
             this.project = result.project;
+            if (result.aoi) {
+                this.aoiParameters = result.aoi;
+            } else {
+                this.aoiParameters = {
+                    'orgParams': {
+                        'organizations': []
+                    },
+                    'userParams': {},
+                    'imageParams': {
+                        'scene': []
+                    },
+                    'sceneParams': {
+                        'month': [],
+                        'datasource': [],
+                        'ingestStatus': [],
+                        'maxCloudCover': 10
+                    },
+                    'timestampParams': {}
+                };
+            }
+
             this.aoiProjectParameters = {
+                // Default cadence on frontend
                 aoiCadenceMillis: this.project.aoiCadenceMillis ||
                     604800000,
+                // Default to start of day if not set on project
                 aoisLastChecked: this.Moment(this.project.aoisLastChecked) ||
                     this.Moment().startOf('day')
-            };
-            this.aoiParameters = {
-                filters: {},
-                area: null
             };
             this.projectLoaded = true;
         });
@@ -114,6 +132,7 @@ export default class AOIParametersController {
     }
 
     fetchProjectAOIs() {
+        let deferred = this.$q.defer();
         this.aoiRequest = this.projectService.getProjectAois(
             this.$parent.projectId
         ).then((response) => {
@@ -124,22 +143,27 @@ export default class AOIParametersController {
                 if (!this.isProjectAoisDrawn) {
                     this.drawProjectAois(this.aoiPolygons);
                 }
-                return response.results;
+                deferred.resolve(aoi);
             } else if (response.results && response.results.length > 1) {
                 this.unsupportedAois = true;
-                return this.$q.reject('Multiple AOIs are currently not supported.');
+                return deferred.reject('Multiple AOIs are currently not supported.');
             }
-
-            return [];
+            deferred.resolve([]);
+            return deferred.promise;
         }, (error) => {
             this.$log.error('Error fetching project aois', error);
         });
+        return deferred.promise;
     }
 
     updateProjectAOIs(multipolygon, aoiFilters) {
         if (this.projectAois && this.projectAois.length === 1) {
             let aoiToUpdate = this.projectAois[0];
-            aoiToUpdate.area = multipolygon;
+            aoiToUpdate.area = {
+                'type': multipolygon.geom.type,
+                'coordinates': multipolygon.geom.coordinates,
+                'srid': multipolygon.geom.srid
+            };
             aoiToUpdate.filters = aoiFilters;
             this.aoiService.updateAOI(aoiToUpdate).then(() => {
                 this.fetchProjectAOIs();
@@ -147,7 +171,11 @@ export default class AOIParametersController {
         } else if (this.projectAois && !this.projectAois.length) {
             let newAOI = {
                 owner: this.authService.profile().user_id,
-                area: multipolygon,
+                area: {
+                    'type': multipolygon.geom.type,
+                    'coordinates': multipolygon.geom.coordinates,
+                    'srid': multipolygon.geom.srid
+                },
                 filters: aoiFilters
             };
             this.projectService.createAOI(this.project.id, newAOI).then(() => {
