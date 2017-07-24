@@ -100,7 +100,7 @@ trait ExportRoutes extends Authentication
               val updateExport = user.updateDefaultExportSource(export)
               kickoffProjectExport(updateExport.id)
               update(Exports.updateExport(updateExport, updateExport.id, user))
-              complete(updateExport)
+              complete((StatusCodes.Created, updateExport))
             }
         }
       }

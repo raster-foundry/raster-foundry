@@ -51,7 +51,7 @@ trait MapTokenRoutes extends Authentication
     entity(as[MapToken.Create]) { newMapToken =>
       authorize(user.isInRootOrSameOrganizationAs(newMapToken)) {
         onSuccess(write[MapToken](MapTokens.insertMapToken(newMapToken, user))) { mapToken =>
-          complete(mapToken)
+          complete((StatusCodes.Created, mapToken))
         }
       }
     }
