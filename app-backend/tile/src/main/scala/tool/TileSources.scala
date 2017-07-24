@@ -6,7 +6,6 @@ import com.azavea.rf.tile.image._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.params._
-
 import com.typesafe.scalalogging.LazyLogging
 import cats.data._
 import cats.implicits._
@@ -16,11 +15,15 @@ import geotrellis.spark._
 import geotrellis.spark.io.s3._
 import geotrellis.spark.io._
 import geotrellis.vector.Extent
-
 import java.util.UUID
+
+import akka.dispatch.MessageDispatcher
+import akka.http.scaladsl.server._
+import akka.http.scaladsl.server.Directives._
+import com.azavea.rf.tile.routes.ToolRoutes
+
 import scala.util._
 import scala.concurrent._
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /** Interpreting a [[MapAlgebraAST]] requires providing a function from
   *  (at least) an RFMLRaster (the source/terminal-node type of the AST)
@@ -29,13 +32,19 @@ import scala.concurrent.ExecutionContext.Implicits.global
   */
 object TileSources extends LazyLogging {
 
+  def root(toolRoutes: ToolRoutes)(implicit database: Database, dispatcher: MessageDispatcher): Route =
+    toolRoutes.tms(TileSources.cachedTmsSource) ~
+      toolRoutes.validate ~
+      toolRoutes.histogram ~
+      toolRoutes.preflight
+
   /** Given the data sources for some AST, determine the "data window" for
     * the entire data set. This ensures that global AST interpretation will behave
     * correctly, so that valid  histograms can be generated.
     */
   def fullDataWindow(
     rs: Map[UUID, RFMLRaster]
-  )(implicit database: Database): OptionT[Future, (Extent, Int)] = {
+  )(implicit database: Database, ec: ExecutionContext): OptionT[Future, (Extent, Int)] = {
     rs
       .values
       .toStream
@@ -57,17 +66,13 @@ object TileSources extends LazyLogging {
     * which one could read a Layer for the purpose of calculating a representative
     * histogram.
     */
-  def dataWindow(r: RFMLRaster)(implicit database: Database): OptionT[Future, (Extent, Int)] = r match {
-    case SceneRaster(id, Some(_), _) => {
-      implicit val sceneIds = Set(id)
-      LayerCache.attributeStoreForLayer(id).mapFilter({ case (store, _) =>
+  def dataWindow(r: RFMLRaster)(implicit database: Database, ec: ExecutionContext): OptionT[Future, (Extent, Int)] = r match {
+    case SceneRaster(id, Some(_), _) =>
+      LayerCache.attributeStoreForLayer(id).mapFilter({ store =>
         GlobalSummary.minAcceptableSceneZoom(id, store, 256)  // TODO: 512?
       })
-    }
-    case ProjectRaster(id, Some(_), _) => {
-      implicit val sceneIds = Set(id)
+    case ProjectRaster(id, Some(_), _) =>
       GlobalSummary.minAcceptableProjectZoom(id, 256) // TODO: 512?
-    }
 
     /* Don't attempt work for a RFMLRaster which will fail AST validation anyway */
     case _ => OptionT.none
@@ -81,26 +86,24 @@ object TileSources extends LazyLogging {
     extent: Extent,
     zoom: Int,
     r: RFMLRaster
-  )(implicit database: Database): Future[Option[TileWithNeighbors]] = r match {
+  )(implicit database: Database, ec: ExecutionContext): Future[Option[TileWithNeighbors]] = r match {
     case SceneRaster(id, Some(band), maybeND) =>
       implicit val sceneIds = Set(id)
-      LayerCache.attributeStoreForLayer(id).mapFilter({ case (store, _) =>
-        blocking {
-          Try {
-            val layerId = LayerId(id.toString, zoom)
+      LayerCache.attributeStoreForLayer(id).mapFilter({ store =>
+        Try {
+          val layerId = LayerId(id.toString, zoom)
 
-            S3CollectionLayerReader(store)
-              .query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](layerId)
-              .result
-              .stitch
-              .crop(extent)
-              .tile
-          } match {
-            case Success(tile) => Some(TileWithNeighbors(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)), None))
-            case Failure(e) =>
-              logger.error(s"Query layer $id at zoom $zoom for $extent: ${e.getMessage}")
-              None
-          }
+          S3CollectionLayerReader(store)
+            .query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](layerId)
+            .result
+            .stitch
+            .crop(extent)
+            .tile
+        } match {
+          case Success(tile) => Some(TileWithNeighbors(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)), None))
+          case Failure(e) =>
+            logger.error(s"Query layer $id at zoom $zoom for $extent: ${e.getMessage}")
+            None
         }
       }).value
 
@@ -115,11 +118,11 @@ object TileSources extends LazyLogging {
   }
 
   /** This source provides support for z/x/y TMS tiles */
-  def cachedTmsSource(r: RFMLRaster, hasBuffer: Boolean, z: Int, x: Int, y: Int)(implicit database: Database): Future[Option[TileWithNeighbors]] = {
+  def cachedTmsSource(r: RFMLRaster, hasBuffer: Boolean, z: Int, x: Int, y: Int)
+                     (implicit database: Database, ec: ExecutionContext): Future[Option[TileWithNeighbors]] = {
     lazy val ndtile = IntConstantTile(NODATA, 256, 256)
     r match {
       case scene @ SceneRaster(sceneId, Some(band), maybeND) =>
-        implicit val sceneIds = Set(sceneId)
         if (hasBuffer)
           (for {
             tl <- LayerCache.layerTile(sceneId, z, SpatialKey(x - 1, y - 1))
@@ -157,7 +160,6 @@ object TileSources extends LazyLogging {
             .value
 
       case scene @ SceneRaster(sceneId, None, _) =>
-        implicit val sceneIds = Set(sceneId)
         logger.warn(s"Request for $scene does not contain band index")
         Future.successful(None)
 

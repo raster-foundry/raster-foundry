@@ -15,23 +15,23 @@ import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.dispatch.MessageDispatcher
 import spray.json._
 import com.typesafe.scalalogging.LazyLogging
 import cats.data._
 import cats.implicits._
-import java.util.UUID
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import java.util.UUID
 import scala.concurrent._
 import scala.util._
 
 object SceneRoutes extends LazyLogging with KamonTraceDirectives {
 
-  def root: Route =
+  def root(implicit dispatcher: MessageDispatcher): Route =
     pathPrefix(JavaUUID) { id =>
       pathPrefix("rgb") {
         traceName("rgb") {
-          layerTileAndHistogram(id) { (futureMaybeTile, _) =>
+          layerTileAndHistogram(id)(implicitly[ExecutionContext]) { (futureMaybeTile, _) =>
             imageRoute(futureMaybeTile)
           }
         } ~
@@ -67,17 +67,15 @@ object SceneRoutes extends LazyLogging with KamonTraceDirectives {
       }
     }
 
-  def layerTile(layer: UUID) =
+  def layerTile(layer: UUID)(implicit ec: ExecutionContext) =
     pathPrefix(IntNumber / IntNumber / IntNumber).tmap[Future[Option[MultibandTile]]] {
       case (zoom: Int, x: Int, y: Int) =>
-        implicit val sceneIds = Set(layer)
         LayerCache.layerTile(layer, zoom, SpatialKey(x, y)).value
     }
 
-  def layerTileAndHistogram(id: UUID) =
+  def layerTileAndHistogram(id: UUID)(implicit ec: ExecutionContext) =
     pathPrefix(IntNumber / IntNumber / IntNumber).tmap[(OptionT[Future, MultibandTile], OptionT[Future, Array[Histogram[Double]]])] {
       case (zoom: Int, x: Int, y: Int) =>
-        implicit val sceneIds = Set(id)
         val futureMaybeTile = LayerCache.layerTile(id, zoom, SpatialKey(x, y))
         val futureHistogram = LayerCache.layerHistogram(id, zoom)
         (futureMaybeTile, futureHistogram)
@@ -86,10 +84,9 @@ object SceneRoutes extends LazyLogging with KamonTraceDirectives {
   def pngAsHttpResponse(png: Png): HttpResponse =
     HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/png`), png.bytes))
 
-  def imageThumbnailRoute(id: UUID) =
+  def imageThumbnailRoute(id: UUID)(implicit dispatcher: MessageDispatcher) =
     parameters('size.as[Int].?(256)) { size =>
       complete {
-        implicit val sceneIds = Set(id)
         val futureMaybeTile = StitchLayer(id, size)
         val futureResponse =
           for {
@@ -109,10 +106,9 @@ object SceneRoutes extends LazyLogging with KamonTraceDirectives {
       }
     }
 
-  def imageHistogramRoute(id: UUID) = {
+  def imageHistogramRoute(id: UUID)(implicit dispatcher: MessageDispatcher) = {
     import DefaultJsonProtocol._
     complete {
-      implicit val sceneIds = Set(id)
       val futureResponse =
         for {
           hist <- LayerCache.layerHistogram(id, 0).value
@@ -130,7 +126,7 @@ object SceneRoutes extends LazyLogging with KamonTraceDirectives {
     }
   }
 
-  def imageRoute(futureMaybeTile: OptionT[Future, MultibandTile]): Route =
+  def imageRoute(futureMaybeTile: OptionT[Future, MultibandTile])(implicit dispatcher: MessageDispatcher): Route =
     complete {
       val futureResponse =
         for {
@@ -154,7 +150,7 @@ object SceneRoutes extends LazyLogging with KamonTraceDirectives {
     index: MultibandTile => Tile,
     defaultColorRamp: Option[ColorRamp] = None,
     defaultBreaks: Option[Array[Double]] = None
-  ): Route = {
+  )(implicit dispatcher: MessageDispatcher): Route = {
     toolParams(defaultColorRamp, defaultBreaks) { params =>
       complete {
         val future =

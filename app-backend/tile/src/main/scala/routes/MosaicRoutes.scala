@@ -13,6 +13,8 @@ import geotrellis.raster.render.Png
 import geotrellis.proj4._
 import geotrellis.slick.Projected
 import geotrellis.vector.Extent
+
+import akka.dispatch.MessageDispatcher
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes}
@@ -21,10 +23,10 @@ import de.heikoseeberger.akkahttpcirce.CirceSupport._
 import cats.data.OptionT
 import cats.implicits._
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.util._
 import scala.collection.mutable.ArrayBuffer
+
 import java.util.UUID
 
 object MosaicRoutes extends LazyLogging with KamonTraceDirectives {
@@ -37,7 +39,7 @@ object MosaicRoutes extends LazyLogging with KamonTraceDirectives {
   def tiffAsHttpResponse(tiff: MultibandGeoTiff): HttpResponse =
     HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/tiff`), tiff.toByteArray))
 
-  def mosaicProject(projectId: UUID)(implicit database: Database): Route =
+  def mosaicProject(projectId: UUID)(implicit database: Database, dispatcher: MessageDispatcher): Route =
     pathPrefix("export") {
       optionalHeaderValueByName("Accept") { acceptContentType =>
         traceName("tiles-export-request") {
@@ -104,7 +106,7 @@ object MosaicRoutes extends LazyLogging with KamonTraceDirectives {
     }
 
   /** Return the histogram (with color correction applied) for a list of scenes in a project */
-  def getProjectScenesHistogram(projectId: UUID)(implicit database: Database): Route = {
+  def getProjectScenesHistogram(projectId: UUID)(implicit database: Database, dispatcher: MessageDispatcher): Route = {
     val sceneIdsFuture = OptionT(ScenesToProjects.allScenes(projectId).map(_.toSet.some))
 
     def correctedHistograms(sceneId: UUID, projectId: UUID) = sceneIdsFuture.flatMap { implicit sceneIds =>
