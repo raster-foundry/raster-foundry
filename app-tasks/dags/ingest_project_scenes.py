@@ -236,7 +236,11 @@ def wait_for_status_op(*args, **kwargs):
 
 @wrap_rollbar
 def metadataToPostgres(uri, scene_id):
-    bash_cmd = 'java -cp /opt/raster-foundry/jars/rf-batch.jar com.azavea.rf.batch.Main migration_s3_postgres {} layer_attributes {}'.format(uri, scene_id)
+    bash_cmd = (
+        'java -cp /opt/raster-foundry/jars/rf-batch.jar com.azavea.rf.batch.Main'
+        'migration_s3_postgres {} layer_attributes {}'
+    ).format(uri, scene_id)
+    logger.info('Bash command to store metadata: %s', bash_cmd)
     cmd = subprocess.Popen(bash_cmd, shell=True, stdout=subprocess.PIPE)
     step_id = ''
     for line in cmd.stdout:
