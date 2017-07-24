@@ -18,6 +18,9 @@ class Router extends LazyLogging
   implicit val system = AkkaSystem.system
   implicit val materializer = AkkaSystem.materializer
 
+  lazy val blockingSceneRoutesDispatcher =
+    system.dispatchers.lookup("blocking-io-dispatcher")
+
   val toolRoutes = new ToolRoutes()
 
   val corsSettings = CorsSettings.defaultSettings
@@ -39,7 +42,7 @@ class Router extends LazyLogging
           }
         } ~
         tileAuthenticateOption { _ =>
-          SceneRoutes.root
+          SceneRoutes.root(blockingSceneRoutesDispatcher)
         } ~
         pathPrefix("tools") {
           get {

@@ -53,39 +53,56 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
   private val tileCache = HeapBackedMemcachedClient(memcachedClient)
   private val astCache = HeapBackedMemcachedClient(memcachedClient)
 
-  private val attributeStoreCache: ScaffeineCache[UUID, OptionT[Future, (AttributeStore, Map[String, Int])]] =
+  private val attributeStoreWithMaxZoomsCache: ScaffeineCache[UUID, OptionT[Future, (AttributeStore, Map[String, Int])]] =
     Scaffeine()
       .recordStats()
       .expireAfterAccess(5.minutes)
       .maximumSize(500)
       .build[UUID, OptionT[Future, (AttributeStore, Map[String, Int])]]
 
-  def attributeStoreForLayer(layerId: UUID)(implicit ec: ExecutionContext, projectLayerIds: Set[UUID]): OptionT[Future, (AttributeStore, Map[String, Int])] =
-    traceName(s"LayerCache.attributeStoreForLayer($layerId)") {
-      attributeStoreCache.take(layerId, _ =>
-        traceName(s"LayerCache.attributeStoreForLayer($layerId) (no cache)") {
+  private val attributeStoreCache: ScaffeineCache[UUID, OptionT[Future, AttributeStore]] =
+    Scaffeine()
+      .recordStats()
+      .expireAfterAccess(5.minutes)
+      .maximumSize(500)
+      .build[UUID, OptionT[Future, AttributeStore]]
+
+  // TODO: consider having one attribute store per project, layerId should be removed from here
+  def attributeStoreForLayerWithMaxZooms(layerId: UUID)(implicit ec: ExecutionContext, projectLayerIds: Set[UUID]): OptionT[Future, (AttributeStore, Map[String, Int])] =
+    traceName(s"LayerCache.attributeStoreForLayerWithMaxZooms($layerId)") {
+      attributeStoreWithMaxZoomsCache.take(layerId, _ =>
+        traceName(s"LayerCache.attributeStoreForLayerWithMaxZooms($layerId) (no cache)") {
           val store = PostgresAttributeStore()
-          val maxZooms: Map[String, Int] = blocking { store.maxZoomsForLayers(projectLayerIds.map(_.toString)) }
+          val maxZooms: Map[String, Int] = store.maxZoomsForLayers(projectLayerIds.map(_.toString))
           OptionT.fromOption((store, maxZooms).some)
         }
       )
     }
 
-  def layerHistogram(layerId: UUID, zoom: Int)(implicit projectLayerIds: Set[UUID]): OptionT[Future, Array[Histogram[Double]]] =
+  def attributeStoreForLayer(layerId: UUID)(implicit ec: ExecutionContext): OptionT[Future, AttributeStore] =
+    traceName(s"LayerCache.attributeStoreForLayer($layerId)") {
+      attributeStoreCache.take(layerId, _ =>
+        traceName(s"LayerCache.attributeStoreForLayer($layerId) (no cache)") {
+          OptionT.fromOption(PostgresAttributeStore().some)
+        }
+      )
+    }
+
+  def layerHistogram(layerId: UUID, zoom: Int): OptionT[Future, Array[Histogram[Double]]] =
     traceName(s"LayerCache.layerHistogram($layerId)") {
       histogramCache.cachingOptionT(s"histogram-$layerId-$zoom") { implicit ec =>
-        attributeStoreForLayer(layerId).map { case (store, _) => blocking {
+        attributeStoreForLayer(layerId).map { store =>
           traceName(s"LayerCache.layerHistogram($layerId) (no cache)") {
             store.read[Array[Histogram[Double]]](LayerId(layerId.toString, 0), "histogram")
           }
-        } }
+        }
       }
     }
 
-  def layerTile(layerId: UUID, zoom: Int, key: SpatialKey)(implicit projectLayerIds: Set[UUID]): OptionT[Future, MultibandTile] =
+  def layerTile(layerId: UUID, zoom: Int, key: SpatialKey): OptionT[Future, MultibandTile] =
     traceName(s"LayerCache.layerTile($layerId)") {
       tileCache.cachingOptionT(s"tile-$layerId-$zoom-${key.col}-${key.row}") { implicit ec =>
-        attributeStoreForLayer(layerId).mapFilter { case (store, _) =>
+        attributeStoreForLayer(layerId).mapFilter { store =>
           val reader = new S3ValueReader(store).reader[SpatialKey, MultibandTile](LayerId(layerId.toString, zoom))
           blocking {
             traceName(s"LayerCache.layerTile($layerId) (no cache)") {
@@ -104,10 +121,10 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
       }
     }
 
-  def layerTileForExtent(layerId: UUID, zoom: Int, extent: Extent)(implicit projectLayerIds: Set[UUID]): OptionT[Future, MultibandTile] =
+  def layerTileForExtent(layerId: UUID, zoom: Int, extent: Extent): OptionT[Future, MultibandTile] =
     traceName(s"LayerCache.layerTileForExtent($layerId)") {
       tileCache.cachingOptionT(s"extent-tile-$layerId-$zoom-$extent") { implicit ec =>
-        attributeStoreForLayer(layerId).mapFilter { case (store, _) =>
+        attributeStoreForLayer(layerId).mapFilter { store =>
           blocking {
             traceName(s"LayerCache.layerTileForExtent($layerId) (no cache)") {
               Try {
