@@ -51,7 +51,7 @@ trait ImageRoutes extends Authentication
     entity(as[Image.Banded]) { newImage =>
       authorize(user.isInRootOrSameOrganizationAs(newImage)) {
         onSuccess(Images.insertImage(newImage, user)) { image =>
-          complete(image)
+          complete((StatusCodes.Created, image))
         }
       }
     }

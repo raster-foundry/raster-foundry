@@ -86,7 +86,7 @@ trait UploadRoutes extends Authentication
           if (upload.uploadStatus == UploadStatus.Uploaded) {
             kickoffSceneImport(upload.id)
           }
-          complete(upload)
+          complete((StatusCodes.Created, upload))
         }
       }
     }
