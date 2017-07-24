@@ -42,11 +42,12 @@ const addMethods = [
 
 export default class AOIParametersController {
     constructor(
-        $log, $q, $scope, $state, $uibModal,
+        $log, $q, $scope, $state, $uibModal, $timeout,
         moment, projectService, aoiService, authService, mapService
     ) {
         'ngInject';
         this.$log = $log;
+        this.$timeout = $timeout;
         this.$q = $q;
         this.$scope = $scope;
         this.$parent = $scope.$parent.$ctrl;
@@ -81,7 +82,7 @@ export default class AOIParametersController {
         }).then((result) => {
             this.project = result.project;
             if (result.aoi) {
-                this.aoiParameters = result.aoi;
+                this.aoiParameters = result.aoi.filters;
             } else {
                 this.aoiParameters = {
                     'orgParams': {
@@ -115,45 +116,54 @@ export default class AOIParametersController {
 
     drawProjectAois(multipolygon) {
         this.getMap().then((map) => {
+            let aoiLayer = L.geoJSON(multipolygon, {
+                style: () => {
+                    return {
+                        weight: 2,
+                        fillOpacity: 0.2
+                    };
+                }
+            });
             map.setLayer(
                 'Areas Of Interest',
-                L.geoJSON(multipolygon.geom, {
-                    style: () => {
-                        return {
-                            weight: 2,
-                            fillOpacity: 0.2
-                        };
-                    }
-                }),
+                aoiLayer,
                 true
             );
+            let bounds = aoiLayer.getBounds();
+            if (bounds.isValid()) {
+                map.map.fitBounds(bounds, {
+                    padding: [35, 35]
+                });
+            }
         });
         this.isProjectAoisDrawn = true;
     }
 
     fetchProjectAOIs() {
-        let deferred = this.$q.defer();
-        this.aoiRequest = this.projectService.getProjectAois(
-            this.$parent.projectId
-        ).then((response) => {
-            this.projectAois = response.results || [];
-            if (response.results && response.results.length === 1) {
-                let aoi = _.first(this.projectAois);
-                this.aoiPolygons = aoi.area;
-                if (!this.isProjectAoisDrawn) {
-                    this.drawProjectAois(this.aoiPolygons);
+        let promise = this.$q((resolve, reject) => {
+            this.aoiRequest = this.projectService.getProjectAois(
+                this.$parent.projectId
+            ).then((response) => {
+                this.projectAois = response.results;
+                if (response.count === 1) {
+                    let aoi = _.first(this.projectAois);
+                    this.aoiPolygons = {geom: aoi.area};
+                    if (!this.isProjectAoisDrawn) {
+                        this.drawProjectAois(this.aoiPolygons.geom);
+                    }
+                    resolve(aoi);
+                } else if (response.results && response.results.length > 1) {
+                    this.unsupportedAois = true;
+                    reject('Multiple AOIs are currently not supported.');
+                } else {
+                    resolve();
                 }
-                deferred.resolve(aoi);
-            } else if (response.results && response.results.length > 1) {
-                this.unsupportedAois = true;
-                return deferred.reject('Multiple AOIs are currently not supported.');
-            }
-            deferred.resolve([]);
-            return deferred.promise;
-        }, (error) => {
-            this.$log.error('Error fetching project aois', error);
+            }, (error) => {
+                this.$log.error('Error fetching project aois', error);
+                reject(error);
+            });
         });
-        return deferred.promise;
+        return promise;
     }
 
     updateProjectAOIs(multipolygon, aoiFilters) {
@@ -189,6 +199,18 @@ export default class AOIParametersController {
 
     toggleFilters() {
         this.showFilters = !this.showFilters;
+    }
+
+    onFilterChange(changes) {
+        let newParameters = Object.assign({}, this.aoiParameters);
+        Object.keys(changes).forEach((changeProperty) => {
+            if (changes[changeProperty] !== null) {
+                newParameters.sceneParams[changeProperty] = changes[changeProperty];
+            } else {
+                delete newParameters.sceneParams[changeProperty];
+            }
+        });
+        this.aoiParameters = newParameters;
     }
 
     openDatePickerModal() {
@@ -235,7 +257,7 @@ export default class AOIParametersController {
         this.$parent.fetchProject().then(srcProject => {
             const projectToSave = Object.assign(srcProject, this.aoiProjectParameters);
             this.projectService.updateProject(projectToSave).then(() => {
-                this.updateProjectAOIs(this.savedMultipolygon, this.aoiParameters.filters);
+                this.updateProjectAOIs(this.aoiPolygons, this.aoiParameters);
                 this.$state.go('projects.edit');
             });
         });
@@ -250,8 +272,8 @@ export default class AOIParametersController {
 
     onAoiSave(multipolygon) {
         this.drawing = false;
-        this.savedMultipolygon = multipolygon;
-        this.drawProjectAois(multipolygon);
+        this.aoiPolygons = multipolygon;
+        this.drawProjectAois(multipolygon.geom);
     }
 
     onAoiCancel() {

@@ -4,8 +4,9 @@ const rfAOIFilterPane = {
     templateUrl: aoiFilterTpl,
     controller: 'AOIFilterPaneController',
     bindings: {
-        filters: '=',
-        opened: '='
+        filters: '<',
+        opened: '<',
+        onFilterChange: '&'
     }
 };
 
