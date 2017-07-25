@@ -6,12 +6,10 @@ import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.params._
 import com.azavea.rf.tool.ast.MapAlgebraAST
-import com.azavea.rf.common.ast._
 import com.azavea.rf.common.cache._
 import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables._
-
 import io.circe.syntax._
 import geotrellis.raster._
 import geotrellis.raster.render._
@@ -22,18 +20,15 @@ import geotrellis.spark._
 import geotrellis.spark.io.s3.{S3CollectionLayerReader, S3ValueReader}
 import geotrellis.spark.io.postgres.PostgresAttributeStore
 import geotrellis.vector.Extent
-
-import com.github.blemale.scaffeine.{Scaffeine, Cache => ScaffeineCache}
 import com.typesafe.scalalogging.LazyLogging
 import spray.json.DefaultJsonProtocol._
 import cats.data._
 import cats.implicits._
-
 import java.util.UUID
 
+import com.azavea.rf.common.{Config => CommonConfig}
+
 import scala.concurrent._
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util._
 
 /**
@@ -47,89 +42,80 @@ import scala.util._
   */
 object LayerCache extends Config with LazyLogging with KamonTrace {
   implicit val database = Database.DEFAULT
+  val system = AkkaSystem.system
+  implicit val blockingDispatcher = system.dispatchers.lookup("blocking-dispatcher")
 
   lazy val memcachedClient = KryoMemcachedClient.DEFAULT
-  private val histogramCache = HeapBackedMemcachedClient(memcachedClient)
-  private val tileCache = HeapBackedMemcachedClient(memcachedClient)
-  private val astCache = HeapBackedMemcachedClient(memcachedClient)
 
-  private val attributeStoreCache: ScaffeineCache[UUID, OptionT[Future, (AttributeStore, Map[String, Int])]] =
-    Scaffeine()
-      .recordStats()
-      .expireAfterAccess(5.minutes)
-      .maximumSize(500)
-      .build[UUID, OptionT[Future, (AttributeStore, Map[String, Int])]]
+  val rfCache = new CacheClient(memcachedClient)
+  val store = PostgresAttributeStore()
 
-  def attributeStoreForLayer(layerId: UUID)(implicit ec: ExecutionContext, projectLayerIds: Set[UUID]): OptionT[Future, (AttributeStore, Map[String, Int])] =
-    traceName("LayerCache.attributeStoreForLayer") {
-      attributeStoreCache.take(layerId, _ =>
-        traceName("LayerCache.attributeStoreForLayer (no cache)") {
-          val store = PostgresAttributeStore()
-          val maxZooms: Map[String, Int] = blocking { store.maxZoomsForLayers(projectLayerIds.map(_.toString)) }
-          OptionT.fromOption((store, maxZooms).some)
-        }
+  val cacheConfig = CommonConfig.memcached
+
+  def maxZoomForLayer(layerId: UUID)(implicit ec: ExecutionContext, projectLayerIds: Set[UUID]): OptionT[Future, Map[String, Int]] = {
+    val cacheKey = s"max-zoom-for-layer-${layerId}"
+    rfCache.cachingOptionT(cacheKey, doCache = cacheConfig.layerAttributes.enabled)(
+      OptionT(
+        timedFuture("layer-max-zoom-store")(store.maxZoomsForLayers(projectLayerIds.map(_.toString)))
       )
-    }
+    )
+  }
 
-  def layerHistogram(layerId: UUID, zoom: Int)(implicit projectLayerIds: Set[UUID]): OptionT[Future, Array[Histogram[Double]]] =
-    traceName("LayerCache.layerHistogram") {
-      histogramCache.cachingOptionT(s"histogram-$layerId-$zoom") { implicit ec =>
-        attributeStoreForLayer(layerId).map { case (store, _) => blocking {
-          traceName("LayerCache.layerHistogram (no cache)") {
-            store.read[Array[Histogram[Double]]](LayerId(layerId.toString, 0), "histogram")
-          }
-        } }
-      }
-    }
+  def layerHistogram(layerId: UUID, zoom: Int)(implicit projectLayerIds: Set[UUID]): OptionT[Future, Array[Histogram[Double]]] = {
+    val key = s"layer-histogram-${layerId}-${zoom}"
+    rfCache.cachingOptionT(key, doCache = cacheConfig.layerAttributes.enabled)(
+      OptionT(
+        timedFuture("layer-histogram-source")(store.getHistogram[Array[Histogram[Double]]](LayerId(layerId.toString, 0)))
+      )
+    )
+  }
 
-  def layerTile(layerId: UUID, zoom: Int, key: SpatialKey)(implicit projectLayerIds: Set[UUID]): OptionT[Future, MultibandTile] =
-    traceName("LayerCache.layerTile") {
-      tileCache.cachingOptionT(s"tile-$layerId-$zoom-${key.col}-${key.row}") { implicit ec =>
-        attributeStoreForLayer(layerId).mapFilter { case (store, _) =>
-          val reader = new S3ValueReader(store).reader[SpatialKey, MultibandTile](LayerId(layerId.toString, zoom))
-          blocking {
-            traceName("LayerCache.layerTile (no cache)") {
-              Try {
-                reader.read(key)
-              } match {
-                case Success(tile) => tile.some
-                case Failure(e: ValueNotFoundError) => None
-                case Failure(e) =>
-                  logger.error(s"Reading layer $layerId at $key: ${e.getMessage}")
-                  None
-              }
+  def layerTile(layerId: UUID, zoom: Int, key: SpatialKey)(implicit projectLayerIds: Set[UUID]): OptionT[Future, MultibandTile] = {
+    val cacheKey = s"tile-$layerId-$zoom-${key.col}-${key.row}"
+    OptionT(rfCache.caching(cacheKey, doCache = cacheConfig.layerTile.enabled)(
+      timedFuture("s3-tile-request")(Future {
+        val reader = new S3ValueReader(store).reader[SpatialKey, MultibandTile](LayerId(layerId.toString, zoom))
+        Try {
+          reader.read(key)
+        } match {
+          case Success(tile) => tile.some
+          case Failure(e: ValueNotFoundError) => None
+          case Failure(e) =>
+            logger.error(s"Reading layer $layerId at $key: ${e.getMessage}")
+            None
+        }
+      })
+    ))
+  }
+
+
+  def layerTileForExtent(layerId: UUID, zoom: Int, extent: Extent)(implicit projectLayerIds: Set[UUID]): OptionT[Future, MultibandTile] = {
+    val cacheKey = s"extent-tile-$layerId-$zoom-${extent.xmin}-${extent.ymin}-${extent.xmax}-${extent.ymax}"
+    OptionT(
+      timedFuture("layer-for-tile-extent-cache")(
+        rfCache.caching(cacheKey, doCache = cacheConfig.layerTile.enabled)( timedFuture("layer-for-tile-extent-s3")(
+          Future {
+            Try {
+              S3CollectionLayerReader(store)
+                .query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](LayerId(layerId.toString, zoom))
+                .where(Intersects(extent))
+                .result
+                .stitch
+                .crop(extent)
+                .tile
+                .resample(256, 256)
+            } match {
+              case Success(tile) => Option(tile)
+              case Failure(e) =>
+                logger.error(s"Query layer $layerId at zoom $zoom for $extent: ${e.getMessage}")
+                None
             }
           }
-        }
-      }
-    }
+        ))
+      )
+    )
+  }
 
-  def layerTileForExtent(layerId: UUID, zoom: Int, extent: Extent)(implicit projectLayerIds: Set[UUID]): OptionT[Future, MultibandTile] =
-    traceName("LayerCache.layerTileForExtent") {
-      tileCache.cachingOptionT(s"extent-tile-$layerId-$zoom-$extent") { implicit ec =>
-        attributeStoreForLayer(layerId).mapFilter { case (store, _) =>
-          blocking {
-            traceName("LayerCache.layerTileForExtent (no cache)") {
-              Try {
-                S3CollectionLayerReader(store)
-                  .query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](LayerId(layerId.toString, zoom))
-                  .where(Intersects(extent))
-                  .result
-                  .stitch
-                  .crop(extent)
-                  .tile
-                  .resample(256, 256)
-              } match {
-                case Success(tile) => Option(tile)
-                case Failure(e) =>
-                  logger.error(s"Query layer $layerId at zoom $zoom for $extent: ${e.getMessage}")
-                  None
-              }
-            }
-          }
-        }
-      }
-    }
 
 
   /** Calculate the histogram for the least resolute zoom level to automatically render tiles */
@@ -138,33 +124,34 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     subNode: Option[UUID],
     user: User,
     voidCache: Boolean = false
-  ): OptionT[Future, Histogram[Double]] = traceName("LayerCache.modelLayerGlobalHistogram") {
+  ): OptionT[Future, Histogram[Double]] = {
     val cacheKey = s"histogram-${toolRunId}-${subNode}-${user.id}"
 
-    if (voidCache) histogramCache.delete(cacheKey)
-    histogramCache.cachingOptionT(cacheKey) { implicit ec =>
-      traceName("LayerCache.modelLayerGlobalHistogram (no cache)") {
-        for {
-          (tool, toolRun) <- LayerCache.toolAndToolRun(toolRunId, user, voidCache)
-          (ast, params)   <- LayerCache.toolEvalRequirements(toolRunId, subNode, user, voidCache)
-          (extent, zoom)  <- TileSources.fullDataWindow(params.sources)
-          lztile          <- OptionT(Interpreter.interpretGlobal(ast, params.sources, params.overrides, extent, { r => TileSources.globalSource(extent, zoom, r) }).map(_.toOption))
-          tile            <- OptionT.fromOption[Future](lztile.evaluateDouble)
-        } yield {
-          val hist = StreamingHistogram.fromTile(tile)
-          val currentMetadata = params.metadata.getOrElse(ast.id, NodeMetadata())
-          val updatedMetadata = currentMetadata.copy(histogram = Some(hist))
-          val updatedParams = params.copy(metadata = params.metadata + (ast.id -> updatedMetadata))
-          val updatedToolRun = toolRun.copy(executionParameters = updatedParams.asJson)
-          try {
-            database.db.run { ToolRuns.updateToolRun(updatedToolRun, toolRun.id, user) }
-          } catch {
-            case e: Exception =>
-              logger.error(s"Unable to update ToolRun (${toolRun.id}): ${e.getMessage}")
+    if (voidCache) rfCache.delete(cacheKey)
+    rfCache.cachingOptionT(cacheKey, doCache = cacheConfig.tool.enabled) {
+      for {
+        (tool, toolRun) <- LayerCache.toolAndToolRun(toolRunId, user, voidCache)
+        (ast, params) <- LayerCache.toolEvalRequirements(toolRunId, subNode, user, voidCache)
+        (extent, zoom) <- TileSources.fullDataWindow(params.sources)
+        lztile <- OptionT(Interpreter.interpretGlobal(ast, params.sources, params.overrides,
+          extent, { r => TileSources.globalSource(extent, zoom, r) }).map(_.toOption)
+        )
+        tile <- OptionT.fromOption[Future](lztile.evaluateDouble)
+      } yield {
+        val hist = StreamingHistogram.fromTile(tile)
+        val currentMetadata = params.metadata.getOrElse(ast.id, NodeMetadata())
+        val updatedMetadata = currentMetadata.copy(histogram = Some(hist))
+        val updatedParams = params.copy(metadata = params.metadata + (ast.id -> updatedMetadata))
+        val updatedToolRun = toolRun.copy(executionParameters = updatedParams.asJson)
+        try {
+          database.db.run {
+            ToolRuns.updateToolRun(updatedToolRun, toolRun.id, user)
           }
-
-          hist
+        } catch {
+          case e: Exception =>
+            logger.error(s"Unable to update ToolRun (${toolRun.id}): ${e.getMessage}")
         }
+        hist
       }
     }
   }
@@ -173,19 +160,14 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     toolRunId: UUID,
     user: User,
     voidCache: Boolean = false
-  ): OptionT[Future, (Tool.WithRelated, ToolRun)] =
-    traceName("LayerCache.toolAndToolRun") {
-      astCache.cachingOptionT(s"tool+run-$toolRunId-${user.id}") { implicit ec =>
-        traceName("LayerCache.toolAndToolRun (no cache)") {
-          for {
-            toolRun <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
-            tool <- OptionT(Tools.getTool(toolRun.tool, user))
-          } yield (tool, toolRun)
-        }
-      }
+  ): OptionT[Future, (Tool.WithRelated, ToolRun)] = {
+    rfCache.cachingOptionT(s"tool+run-$toolRunId-${user.id}", doCache = cacheConfig.tool.enabled) {
+      for {
+        toolRun <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
+        tool <- OptionT(Tools.getTool(toolRun.tool, user))
+      } yield (tool, toolRun)
     }
-
-
+  }
 
   /** Calculate all of the prerequisites to evaluation of an AST over a set of tile sources */
   def toolEvalRequirements(
@@ -193,45 +175,42 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     subNode: Option[UUID],
     user: User,
     voidCache: Boolean = false
-  ): OptionT[Future, (MapAlgebraAST, EvalParams)] =
-    traceName("LayerCache.toolEvalRequirements") {
-      val cacheKey = s"ast+params-$toolRunId-${subNode}-${user.id}"
-      if (voidCache) histogramCache.delete(cacheKey)
-      astCache.cachingOptionT(cacheKey) { implicit ec =>
-        traceName("LayerCache.toolEvalRequirements (no cache)") {
-          for {
-            (tool, toolRun) <- toolAndToolRun(toolRunId, user)
-            oldAst   <- OptionT.fromOption[Future]({
-              logger.debug(s"Parsing Tool AST with ${tool.definition}")
-              val entireAST = tool.definition.as[MapAlgebraAST].valueOr(throw _)
-              subNode.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
-            })
-            subs     <- assembleSubstitutions(oldAst, { id: UUID =>
-              OptionT(Tools.getTool(id, user))
-                .map({ referrent => referrent.definition.as[MapAlgebraAST].valueOr(throw _) })
-                .value
-            })
-            ast      <- OptionT.fromOption[Future](oldAst.substitute(subs))
-            nodeId   <- OptionT.pure[Future, UUID](subNode.getOrElse(ast.id))
-            params   <- OptionT.pure[Future, EvalParams]({
-              logger.debug(s"Parsing ToolRun parameters with ${toolRun.executionParameters}")
-              val parsedParams = toolRun.executionParameters.as[EvalParams].valueOr(throw _)
-              val defaults = ast.metadata
-              val overrides = parsedParams.metadata.get(ast.id)
-              val md = (overrides |@| defaults).map(_.fallbackTo(_))
-                .orElse(overrides)
-                .orElse(defaults)
-                .getOrElse(NodeMetadata())
+  ): OptionT[Future, (MapAlgebraAST, EvalParams)] = {
+    val cacheKey = s"ast-params-$toolRunId-${subNode}-${user.id}"
+    if (voidCache) rfCache.delete(cacheKey)
+    rfCache.cachingOptionT(cacheKey, doCache = cacheConfig.tool.enabled) {
+      for {
+        (tool, toolRun) <- toolAndToolRun(toolRunId, user)
+        oldAst   <- OptionT.fromOption[Future]({
+          logger.debug(s"Parsing Tool AST with ${tool.definition}")
+          val entireAST = tool.definition.as[MapAlgebraAST].valueOr(throw _)
+          subNode.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
+        })
+        subs     <- assembleSubstitutions(oldAst, { id: UUID =>
+          OptionT(Tools.getTool(id, user))
+            .map({ referrent => referrent.definition.as[MapAlgebraAST].valueOr(throw _) })
+            .value
+        })
+        ast      <- OptionT.fromOption[Future](oldAst.substitute(subs))
+        nodeId   <- OptionT.pure[Future, UUID](subNode.getOrElse(ast.id))
+        params   <- OptionT.pure[Future, EvalParams]({
+          logger.debug(s"Parsing ToolRun parameters with ${toolRun.executionParameters}")
+          val parsedParams = toolRun.executionParameters.as[EvalParams].valueOr(throw _)
+          val defaults = ast.metadata
+          val overrides = parsedParams.metadata.get(ast.id)
+          val md = (overrides |@| defaults).map(_.fallbackTo(_))
+            .orElse(overrides)
+            .orElse(defaults)
+            .getOrElse(NodeMetadata())
 
-              EvalParams(
-                parsedParams.sources,
-                parsedParams.metadata + (ast.id -> md)
-              )
-            })
-          } yield (ast, params)
-        }
-      }
+          EvalParams(
+            parsedParams.sources,
+            parsedParams.metadata + (ast.id -> md)
+          )
+        })
+      } yield (ast, params)
     }
+  }
 
   /** Calculate all of the prerequisites to evaluation of an AST over a set of tile sources */
   def toolRunColorMap(
@@ -241,8 +220,8 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     voidCache: Boolean = false
   ): OptionT[Future, ColorMap] = traceName("LayerCache.toolRunColorMap") {
     val cacheKey = s"colormap-$toolRunId-${subNode}-${user.id}"
-    if (voidCache) astCache.delete(cacheKey)
-    astCache.cachingOptionT(cacheKey) { implicit ec =>
+    if (voidCache) rfCache.delete(cacheKey)
+    rfCache.cachingOptionT(cacheKey, doCache = cacheConfig.tool.enabled) {
       traceName("LayerCache.toolRunColorMap (no cache)") {
         for {
           (tool, toolRun) <- LayerCache.toolAndToolRun(toolRunId, user, voidCache)
