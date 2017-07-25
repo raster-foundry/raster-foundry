@@ -492,6 +492,17 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) extends LazyLoggin
   import Scenes.datePart
 
 
+  def filterByTileFootprint(polygonOption: Option[Projected[Polygon]]): Scenes.TableQuery = {
+    polygonOption match {
+      case Some(polygon) => {
+        scenes.filter{ scene =>
+          scene.tileFootprint.intersects(polygon)
+        }
+      }
+      case _ => scenes
+    }
+  }
+
   /** TODO: it isn't currently clear how to implement enum type ordering.
     *
     * IngestStatus has a toInt method to facilitate, but Slick is complaining

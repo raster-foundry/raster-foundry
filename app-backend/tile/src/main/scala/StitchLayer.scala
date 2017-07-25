@@ -2,7 +2,6 @@ package com.azavea.rf.tile
 
 import com.azavea.rf.database.Database
 import com.azavea.rf.common.cache._
-
 import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.vector._
@@ -13,15 +12,21 @@ import geotrellis.spark.io.s3._
 import com.typesafe.scalalogging.LazyLogging
 import cats.data._
 import cats.implicits._
-
 import java.util.UUID
+
+import geotrellis.spark.io.postgres.PostgresAttributeStore
+
 import scala.concurrent._
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success, Try}
 
 object StitchLayer extends LazyLogging with Config {
   implicit lazy val memcachedClient = LayerCache.memcachedClient
   implicit val database = Database.DEFAULT
+
+  val system = AkkaSystem.system
+  implicit val blockingDispatcher = system.dispatchers.lookup("blocking-dispatcher")
+  val store = PostgresAttributeStore()
+  val rfCache = new CacheClient(memcachedClient)
 
   /** This function will iterate through zoom levels a layer, starting with 1, until it finds the level
     * at which the data pixels stored in the layer cover at least size pixels in columns or rows.
@@ -35,18 +40,15 @@ object StitchLayer extends LazyLogging with Config {
     * Because this is an expensive operation the stitched tile is cached.
     * For non-cached version use [[stitch]] function.
     */
-  val stitchCache = HeapBackedMemcachedClient(memcachedClient)
   def apply(id: UUID, size: Int)(implicit sceneIds: Set[UUID]): OptionT[Future, MultibandTile] =
-    stitchCache.cachingOptionT(s"stitch-{$size}") { implicit ec =>
-      LayerCache.attributeStoreForLayer(id).mapFilter { case (store, _) =>
-        stitch(store, id.toString, size)
-      }
-    }
+    OptionT(rfCache.caching(s"stitch-${id}-${size}")(
+      stitch(store, id.toString, size)
+    ))
 
-  def stitch(store: AttributeStore, layerName: String, size: Int): Option[MultibandTile] = {
+  def stitch(store: AttributeStore, layerName: String, size: Int): Future[Option[MultibandTile]] = Future {
     require(size < 4096, s"$size is too large to stitch")
     minZoomLevel(store, layerName, size).map { case (layerId, re) =>
-      logger.debug(s"Stitching from $layerId, ${re.extent.reproject(WebMercator, LatLng).toGeoJson}")
+      logger.info(s"Stitching from $layerId, ${re.extent.reproject(WebMercator, LatLng).toGeoJson}")
       S3CollectionLayerReader(store)
         .query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](layerId)
         .where(Intersects(re.extent))

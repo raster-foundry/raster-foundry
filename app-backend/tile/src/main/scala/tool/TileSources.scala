@@ -6,7 +6,6 @@ import com.azavea.rf.tile.image._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.params._
-
 import com.typesafe.scalalogging.LazyLogging
 import cats.data._
 import cats.implicits._
@@ -16,11 +15,12 @@ import geotrellis.spark._
 import geotrellis.spark.io.s3._
 import geotrellis.spark.io._
 import geotrellis.vector.Extent
-
 import java.util.UUID
+
+import geotrellis.spark.io.postgres.PostgresAttributeStore
+
 import scala.util._
 import scala.concurrent._
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /** Interpreting a [[MapAlgebraAST]] requires providing a function from
   *  (at least) an RFMLRaster (the source/terminal-node type of the AST)
@@ -33,6 +33,12 @@ object TileSources extends LazyLogging {
     * the entire data set. This ensures that global AST interpretation will behave
     * correctly, so that valid  histograms can be generated.
     */
+
+  implicit val database = Database.DEFAULT
+  val system = AkkaSystem.system
+  implicit val blockingDispatcher = system.dispatchers.lookup("blocking-dispatcher")
+  val store = PostgresAttributeStore()
+
   def fullDataWindow(
     rs: Map[UUID, RFMLRaster]
   )(implicit database: Database): OptionT[Future, (Extent, Int)] = {
@@ -60,9 +66,7 @@ object TileSources extends LazyLogging {
   def dataWindow(r: RFMLRaster)(implicit database: Database): OptionT[Future, (Extent, Int)] = r match {
     case SceneRaster(id, Some(_), _) => {
       implicit val sceneIds = Set(id)
-      LayerCache.attributeStoreForLayer(id).mapFilter({ case (store, _) =>
-        GlobalSummary.minAcceptableSceneZoom(id, store, 256)  // TODO: 512?
-      })
+      OptionT.fromOption(GlobalSummary.minAcceptableSceneZoom(id, store, 256))  // TODO: 512?
     }
     case ProjectRaster(id, Some(_), _) => {
       implicit val sceneIds = Set(id)
@@ -84,8 +88,7 @@ object TileSources extends LazyLogging {
   )(implicit database: Database): Future[Option[TileWithNeighbors]] = r match {
     case SceneRaster(id, Some(band), maybeND) =>
       implicit val sceneIds = Set(id)
-      LayerCache.attributeStoreForLayer(id).mapFilter({ case (store, _) =>
-        blocking {
+      Future {
           Try {
             val layerId = LayerId(id.toString, zoom)
 
@@ -101,8 +104,7 @@ object TileSources extends LazyLogging {
               logger.error(s"Query layer $id at zoom $zoom for $extent: ${e.getMessage}")
               None
           }
-        }
-      }).value
+      }
 
     case ProjectRaster(projId, Some(band), maybeND) => {
       Mosaic.rawForExtent(projId, zoom, Some(Projected(extent.toPolygon, 3857)))

@@ -2,15 +2,11 @@ package com.azavea.rf.api.healthcheck
 
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server._
-
-import org.postgresql.util.PSQLException
-
 import com.azavea.rf.api.Codec._
 import com.azavea.rf.common.{Authentication, RollbarNotifier}
 import com.azavea.rf.database.Database
-import io.circe._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
-
+import org.postgresql.util.PSQLException
 
 /**
   * Routes for healthchecks -- additional routes for individual healthchecks

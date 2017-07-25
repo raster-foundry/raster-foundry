@@ -32,27 +32,27 @@ import com.azavea.rf.api.utils.Config
   *
   */
 trait Router extends HealthCheckRoutes
-    with UserRoutes
-    with OrganizationRoutes
-    with SceneRoutes
-    with ProjectRoutes
-    with AoiRoutes
-    with ImageRoutes
-    with TokenRoutes
-    with ThumbnailRoutes
-    with ToolRoutes
-    with ToolTagRoutes
-    with ConfigRoutes
-    with ToolCategoryRoutes
-    with ToolRunRoutes
-    with GridRoutes
-    with DatasourceRoutes
-    with MapTokenRoutes
-    with FeedRoutes
-    with UploadRoutes
-    with ExportRoutes
-    with Config
-    with FeatureFlagRoutes {
+  with UserRoutes
+  with OrganizationRoutes
+  with SceneRoutes
+  with ProjectRoutes
+  with AoiRoutes
+  with ImageRoutes
+  with TokenRoutes
+  with ThumbnailRoutes
+  with ToolRoutes
+  with ToolTagRoutes
+  with ConfigRoutes
+  with ToolCategoryRoutes
+  with ToolRunRoutes
+  with GridRoutes
+  with DatasourceRoutes
+  with MapTokenRoutes
+  with FeedRoutes
+  with UploadRoutes
+  with ExportRoutes
+  with Config
+  with FeatureFlagRoutes {
 
   val corsSettings = CorsSettings.defaultSettings
 
@@ -60,34 +60,70 @@ trait Router extends HealthCheckRoutes
     pathPrefix("healthcheck") {
       healthCheckRoutes
     } ~
-    pathPrefix("api") {
-      pathPrefix("projects") { projectRoutes } ~
-      pathPrefix("areas-of-interest") { aoiRoutes } ~
-      pathPrefix("images") { imageRoutes } ~
-      pathPrefix("organizations") { organizationRoutes } ~
-      pathPrefix("scenes") { sceneRoutes } ~
-      pathPrefix("thumbnails") { thumbnailRoutes } ~
-      pathPrefix("tokens") { tokenRoutes } ~
-      pathPrefix("users") { userRoutes } ~
-      pathPrefix("tools") { toolRoutes } ~
-      pathPrefix("tool-tags") { toolTagRoutes } ~
-      pathPrefix("tool-categories") { toolCategoryRoutes } ~
-      pathPrefix("tool-runs") { toolRunRoutes } ~
-      pathPrefix("scene-grid") { gridRoutes } ~
-      pathPrefix("datasources") { datasourceRoutes } ~
-      pathPrefix("map-tokens") { mapTokenRoutes } ~
-      pathPrefix("feed") { feedRoutes } ~
-      pathPrefix("uploads") { uploadRoutes } ~
-      pathPrefix("exports") { exportRoutes }
-    } ~
-    pathPrefix("config") {
-      configRoutes
-    } ~
-    pathPrefix("feature-flags") {
-      featureFlagRoutes
-    } ~
-    pathPrefix("thumbnails") {
-      thumbnailImageRoutes
-    }
+      pathPrefix("api") {
+        pathPrefix("projects") {
+          projectRoutes
+        } ~
+          pathPrefix("areas-of-interest") {
+            aoiRoutes
+          } ~
+          pathPrefix("images") {
+            imageRoutes
+          } ~
+          pathPrefix("organizations") {
+            organizationRoutes
+          } ~
+          pathPrefix("scenes") {
+            sceneRoutes
+          } ~
+          pathPrefix("thumbnails") {
+            thumbnailRoutes
+          } ~
+          pathPrefix("tokens") {
+            tokenRoutes
+          } ~
+          pathPrefix("users") {
+            userRoutes
+          } ~
+          pathPrefix("tools") {
+            toolRoutes
+          } ~
+          pathPrefix("tool-tags") {
+            toolTagRoutes
+          } ~
+          pathPrefix("tool-categories") {
+            toolCategoryRoutes
+          } ~
+          pathPrefix("tool-runs") {
+            toolRunRoutes
+          } ~
+          pathPrefix("scene-grid") {
+            gridRoutes
+          } ~
+          pathPrefix("datasources") {
+            datasourceRoutes
+          } ~
+          pathPrefix("map-tokens") {
+            mapTokenRoutes
+          } ~
+          pathPrefix("feed") {
+            feedRoutes
+          } ~
+          pathPrefix("uploads") {
+            uploadRoutes
+          } ~
+          pathPrefix("exports") {
+            exportRoutes
+          }
+      } ~
+      pathPrefix("config") {
+        configRoutes
+      } ~
+      pathPrefix("feature-flags") {
+        featureFlagRoutes
+      } ~
+      pathPrefix("thumbnails") {
+        thumbnailImageRoutes
+      }
   }
 }
