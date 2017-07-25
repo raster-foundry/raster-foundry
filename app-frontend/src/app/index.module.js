@@ -30,8 +30,8 @@ const App = angular.module(
         '720kb.tooltips',
         'uuid4',
 
-        // core
-        require('./core/core.module').name,
+        // services
+        require('./services/services.module').name,
 
         // components
         require('./index.components').name,

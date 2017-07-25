@@ -2,7 +2,7 @@
 
 /* globals Auth0Lock heap */
 
-import assetLogo from '../../../../assets/images/logo-raster-foundry.png';
+import assetLogo from '../../../assets/images/logo-raster-foundry.png';
 export default (app) => {
     class AuthService {
         constructor( // eslint-disable-line max-params
