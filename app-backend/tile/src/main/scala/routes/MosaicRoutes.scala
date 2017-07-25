@@ -21,13 +21,14 @@ import de.heikoseeberger.akkahttpcirce.CirceSupport._
 import cats.data.OptionT
 import cats.implicits._
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.util._
 import scala.collection.mutable.ArrayBuffer
 import java.util.UUID
 
-object MosaicRoutes extends LazyLogging with KamonTraceDirectives {
+object MosaicRoutes extends LazyLogging with KamonTrace {
+  val system = AkkaSystem.system
+  implicit val blockingDispatcher = system.dispatchers.lookup("blocking-dispatcher")
 
   val emptyTilePng = IntArrayTile.ofDim(256, 256).renderPng
 
@@ -41,33 +42,34 @@ object MosaicRoutes extends LazyLogging with KamonTraceDirectives {
     pathPrefix("export") {
       optionalHeaderValueByName("Accept") { acceptContentType =>
         traceName("tiles-export-request") {
-          parameter("bbox", "zoom".as[Int]?, "colorCorrect".as[Boolean] ? true) {
-            (bbox, zoom, colorCorrect) => get {
-              complete {
-                val mosaic = Mosaic.render(projectId, zoom, Option(bbox), colorCorrect)
-                val poly = Projected(Extent.fromString(bbox).toPolygon(), 4326)
-                  .reproject(LatLng, WebMercator)(3857)
-                val extent = poly.envelope
-                val future = acceptContentType match {
-                  case Some("image/tiff") => mosaic
-                      .map{ m => MultibandGeoTiff(m, extent, WebMercator) }
+          parameter("bbox", "zoom".as[Int] ?, "colorCorrect".as[Boolean] ? true) {
+            (bbox, zoom, colorCorrect) =>
+              get {
+                complete {
+                  val mosaic = Mosaic.render(projectId, zoom, Option(bbox), colorCorrect)
+                  val poly = Projected(Extent.fromString(bbox).toPolygon(), 4326)
+                    .reproject(LatLng, WebMercator)(3857)
+                  val extent = poly.envelope
+                  val future = acceptContentType match {
+                    case Some("image/tiff") => mosaic
+                      .map { m => MultibandGeoTiff(m, extent, WebMercator) }
                       .map(tiffAsHttpResponse)
                       .value
-                  case _ => mosaic.map(_.renderPng)
+                    case _ => mosaic.map(_.renderPng)
                       .map(pngAsHttpResponse)
                       .value
 
-                }
+                  }
 
-                future onComplete {
-                  case Success(s) => s
-                  case Failure(e) =>
-                    logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
-                }
+                  future onComplete {
+                    case Success(s) => s
+                    case Failure(e) =>
+                      logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
+                  }
 
-                future
+                  future
+                }
               }
-            }
           }
         }
       }
@@ -78,25 +80,23 @@ object MosaicRoutes extends LazyLogging with KamonTraceDirectives {
         }
       }
     } ~ pathPrefix (IntNumber / IntNumber / IntNumber ) { (zoom, x, y) =>
-      traceName("tiles-zxy") {
-        parameter("tag".?) { tag =>
-          get {
-            complete {
-              val future =
-                Mosaic(projectId, zoom, x, y, tag)
-                  .map(_.renderPng)
-                  .getOrElse(emptyTilePng)
-                  .map(pngAsHttpResponse)
+      get {
+        complete {
+          val future =
+            timedFuture("tile-zxy") (
+              Mosaic(projectId, zoom, x, y)
+                .map(_.renderPng)
+                .getOrElse(emptyTilePng)
+                .map(pngAsHttpResponse)
+            )
 
-              future onComplete {
-                case Success(s) => s
-                case Failure(e) =>
-                  logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
-              }
-
-              future
-            }
+          future onComplete {
+            case Success(s) => s
+            case Failure(e) =>
+              logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
           }
+
+          future
         }
       }
     }

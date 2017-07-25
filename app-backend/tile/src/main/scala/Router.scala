@@ -15,8 +15,11 @@ class Router extends LazyLogging
     with TileErrorHandler {
 
   implicit lazy val database = Database.DEFAULT
-  implicit val system = AkkaSystem.system
+  val system = AkkaSystem.system
   implicit val materializer = AkkaSystem.materializer
+
+  lazy val blockingSceneRoutesDispatcher =
+    system.dispatchers.lookup("blocking-dispatcher")
 
   val toolRoutes = new ToolRoutes()
 
@@ -37,9 +40,6 @@ class Router extends LazyLogging
               HealthCheckRoute.root
             }
           }
-        } ~
-        tileAuthenticateOption { _ =>
-          SceneRoutes.root
         } ~
         pathPrefix("tools") {
           get {
