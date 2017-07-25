@@ -76,24 +76,6 @@ export default (app) => {
             }
         }
 
-        /** Function to return a promise that resolves into a leaflet tile layer for scenes
-         *
-         * @return {$promise} promise for leaflet tile layer for scenes
-         */
-        getSceneTileLayer() {
-            if (this._sceneTiles) {
-                return this._sceneTiles;
-            }
-            this._sceneTiles = L.tileLayer(
-                this.getSceneLayerURL(),
-                {
-                    maxZoom: 30,
-                    bounds: this.bounds
-                }
-            );
-            return this._sceneTiles;
-        }
-
         /** Function to return a promise that resolves into a leaflet tile layer for mosaic
          *
          * @return {$promise} promise for leaflet tile layer for mosaic
@@ -111,59 +93,11 @@ export default (app) => {
             });
         }
 
-        getNDVILayer(bands = [5, 4]) {
-            if (this._tiles) {
-                return this.$q((resolve) => {
-                    resolve(this._tiles);
-                });
-            }
-            this._tiles = L.tileLayer(
-                this.getNDVIURL(bands),
-                {
-                    maxZoom: 30,
-                    bounds: this.bounds
-                }
-            );
-            return this._tiles;
-        }
-
-        /**
-         * Helper function to return string for a tile layer
-         * @returns {string} URL for this tile layer
-         */
-        getSceneLayerURL() {
-            return `${this.tileServer}/${this.scene.id}/rgb/` +
-                `{z}/{x}/{y}/?${this.formatColorParams()}`;
-        }
-
         getMosaicLayerURL(params = {}) {
             params.token = this.authService.token();
             let formattedParams = L.Util.getParamString(params);
             return this.$q((resolve) => {
                 resolve(`${this.tileServer}/${this.projectId}/{z}/{x}/{y}/${formattedParams}`);
-            });
-        }
-
-        getNDVIURL(bands) {
-            return `${this.tileServer}/${this.scene.id}/` +
-                `ndvi/{z}/{x}/{y}/?bands=${bands[0]},${bands[1]}`;
-        }
-
-        /**
-         * Helper function to return histogram endpoint url for a tile layer
-         * @returns {string} URL for the histogram
-         */
-        getHistogramURL() {
-            return `${this.tileServer}/${this.scene.id}/rgb/histogram/?${this.formatColorParams()}`;
-        }
-
-        /**
-         * Helper function to fetch histogram data for a tile layer
-         * @returns {Promise} which should be resolved with an array
-         */
-        fetchHistogramData() {
-            return this.getHistogramURL().then((url) => {
-                return this.$http.get(url);
             });
         }
 
