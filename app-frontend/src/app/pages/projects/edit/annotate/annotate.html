@@ -1,15 +1,19 @@
+<!-- Annotate Toolbar Component -->
 <rf-annotate-toolbar
   map-id="edit"
-  geom="$ctrl.annoToPass",
+  geom="$ctrl.annoToExport",
   on-save="$ctrl.onAnnotationSave(geoJsonAnnotation)">
 </rf-annotate-toolbar>
-<div class="sidebar-header">
-<a class="btn sidebar-header-nav-btn" ui-sref="projects.edit">
-  <i class="icon-arrow-left"></i>
-</a>
-<h5 class="sidebar-title">Annotations</h5>
-</div>
+<!-- Annotate Toolbar Component -->
+
+<!-- Static Sidebar -->
 <div class="sidebar-project">
+  <div class="sidebar-header">
+    <a class="btn sidebar-header-nav-btn" ui-sref="projects.edit">
+    <i class="icon-arrow-left"></i>
+    </a>
+    <h5 class="sidebar-title">Annotations</h5>
+  </div>
   <ul class="sidebar-list">
     <li>
       <div class="label">
@@ -32,3 +36,47 @@
     </li>
   </ul>
 </div>
+<div class="sidebar-project no-annotation">
+<div class="list-group"
+     ng-if="!$ctrl.annoToExport.features.length">
+  <div class="list-group-item no-annotation">
+    <div class="panel panel-off-white no-annotation">
+      <p>No annotations have been made</p>
+    </div>
+  </div>
+</div>
+</div>
+<!-- Static Sidebar -->
+
+<!-- Scrollable Sidebar -->
+<div class="sidebar-scrollable">
+  <div ng-if="$ctrl.annoToExport.features.length">
+      <div class="list-group">
+        <div class="list-group-item filter-annotations">
+          <div>
+            <span><strong>Filter Placeholder</span></strong>
+          </div>
+        </div>
+      </div>
+      <div class="list-group"
+           ng-repeat="annotation in $ctrl.annoToExport.features">
+        <div class="list-group-item list-sidebar-annotations">
+          <div>
+              <i class="icon-cloud"
+                 ng-if="annotation.geometry.coordinates.length === 1"></i>
+              <i class="icon-sun"
+                 ng-if="annotation.geometry.coordinates.length === 2"></i>
+          </div>
+          <div>
+            <h5>{{annotation.properties.label}}</h5>
+          </div>
+          <div class="list-group-right actions-annotations">
+            <a title="Clone"><i class="icon-arrows-cw"></i></a>
+            <a title="Edit"><i class="icon-pencil"></i></a>
+            <a title="Delete"><i class="icon-trash"></i></a>
+          </div>
+        </div>
+      </div>
+  </div>
+</div>
+<!-- Scrollable Sidebar -->

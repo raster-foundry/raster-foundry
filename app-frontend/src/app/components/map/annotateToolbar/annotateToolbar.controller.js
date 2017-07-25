@@ -72,11 +72,10 @@ export default class AnnotateToolbarController {
         let layer = e.layer;
         let compiled = this.makePopup(layer);
         layer.bindPopup(compiled[0], {
-            'closeButton': false,
-            'pane': 'annotationPopups'
+            'closeButton': false
         });
         this.getMap().then((mapWrapper) => {
-            mapWrapper.addLayer('Annotation', e.layer, true);
+            mapWrapper.addLayer('Annotation', layer, true);
             layer.openPopup();
         });
     }

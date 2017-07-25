@@ -12,17 +12,10 @@ export default class AnnotateController {
 
     $onInit() {
         this.importedAnno = {};
-        this.annoToPass = {
+        this.annoToExport = {
             'type': 'FeatureCollection',
             features: []
         };
-        this.annoToExport = {};
-        this.getMap().then((mapWrapper) => {
-            // TODO figure out why creating and using a new map pane with higher z-index for popups
-            // still can't bring the popups up from the annotate toolbar
-            mapWrapper.map.createPane('annotationPopups');
-            mapWrapper.map.getPane('annotationPopups').style.zIndex = 1050;
-        });
     }
 
     importLocalAnnotations() {
@@ -67,9 +60,7 @@ export default class AnnotateController {
             ]
         };
         this.drawImportedAnnotations(this.importedAnno);
-        this.annoToPass.features = this.importedAnno.features.concat(
-            this.annoToExport.features ? this.annoToExport.features : []
-        );
+        this.annoToExport.features = this.annoToExport.features.concat(this.importedAnno.features);
     }
 
     drawImportedAnnotations(geoJsonData) {
@@ -91,8 +82,7 @@ export default class AnnotateController {
                         <p>${feature.properties.description}</p></label>
                         `,
                         {
-                            'closeButton': false,
-                            'pane': 'annotationPopups'
+                            closeButton: false
                         }
                     );
                 }
@@ -108,16 +98,13 @@ export default class AnnotateController {
     exportAnnotations() {
         if (this.annoToExport.features && this.annoToExport.features.length) {
             this.$log.log(this.annoToExport);
-        } else if (this.annoToPass.features && this.annoToPass.features.length) {
-            this.$log.log(this.annoToPass);
         } else {
             this.$log.log('Nothing to export.');
         }
         this.getMap().then((mapWrapper) => {
             mapWrapper.deleteLayers('Annotation');
         });
-        this.annoToExport = {};
-        this.annoToPass = {
+        this.annoToExport = {
             'type': 'FeatureCollection',
             features: []
         };

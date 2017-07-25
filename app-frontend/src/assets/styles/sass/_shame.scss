@@ -1947,7 +1947,6 @@ rf-node-selector {
     }
   }
 }
-
 .leaflet-frame {
   position: absolute;
   /* border: 1px solid red; */
@@ -1985,4 +1984,73 @@ rf-node-selector {
   height: 40px;
 
   pointer-events: auto;
+}
+
+// page: projects/edit/:project_id/annoate
+.sidebar-project.no-annotation,
+.list-group-item.no-annotation{
+    border-style: none;
+}
+
+.panel.panel-off-white.no-annotation {
+    height: 75px;
+    border: 1px solid #e9e9ea;
+    background-color:#f5f7f7;
+}
+.panel.panel-off-white.no-annotation p {
+    text-align: center;
+    vertical-align: middle;
+    line-height: 75px;
+}
+
+.list-group-item.filter-annotations {
+    border-style: none;
+}
+
+.list-group-item.filter-annotations p {
+    flex-direction: row;
+}
+
+.list-group-item.list-sidebar-annotations div {
+    flex-direction: row;
+}
+
+.list-group-item.list-sidebar-annotations div:nth-child(1) {
+    border: 1px solid #969cac;
+    width: 35px;
+    height: 35px;
+}
+
+.list-group-item.list-sidebar-annotations div:nth-child(1) i {
+    text-align: center;
+    vertical-align: middle;
+    line-height: 35px;
+    font-size: 24px;
+}
+
+.list-group-item.list-sidebar-annotations div:nth-child(2) h5 {
+    font-weight: normal;
+}
+
+.list-group-right.actions-annotations{
+    width: 100%;
+}
+
+.list-group-right.actions-annotations a {
+    text-decoration: none;
+    margin: 2px;
+}
+
+.list-group-right.actions-annotations a:nth-child(1) i,
+.list-group-right.actions-annotations a:nth-child(2) i {
+    border: 1px solid #969cac;
+    border-radius:2px;
+    color: #969cac;
+
+}
+
+.list-group-right.actions-annotations a:nth-child(3) i {
+    border: 1px solid #da7976;
+    border-radius:2px;
+    color: #da7976;
 }
