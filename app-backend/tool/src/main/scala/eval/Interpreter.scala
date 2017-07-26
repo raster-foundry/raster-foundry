@@ -235,28 +235,33 @@ object Interpreter extends LazyLogging {
       case Abs(args, id, _) =>
         logger.debug(s"case abs at $id")
         eval(tiles, args.head).abs
-      case Trigonometry(args, id, _, trigFunc) =>
-        logger.debug(s"case trigFunc at $id with func ${trigFunc}")
-        trigFunc match {
-          case Trig.Sin =>
-            eval(tiles, args.head).sin
-          case Trig.Cos =>
-            eval(tiles, args.head).cos
-          case Trig.Tan =>
-            eval(tiles, args.head).tan
-          case Trig.Asin =>
-            eval(tiles, args.head).asin
-          case Trig.Acos =>
-            eval(tiles, args.head).acos
-          case Trig.Atan =>
-            eval(tiles, args.head).atan
-          case Trig.Sinh =>
-            eval(tiles, args.head).sinh
-          case Trig.Cosh =>
-            eval(tiles, args.head).cosh
-          case Trig.Tanh =>
-            eval(tiles, args.head).tanh
-        }
+      case Sin(args, id, _) =>
+        logger.debug(s"case sin at $id")
+        eval(tiles, args.head).sin
+      case Cos(args, id, _) =>
+        logger.debug(s"case cos at $id")
+        eval(tiles, args.head).cos
+      case Tan(args, id, _) =>
+        logger.debug(s"case tan at $id")
+        eval(tiles, args.head).tan
+      case Sinh(args, id, _) =>
+        logger.debug(s"case sinh at $id")
+        eval(tiles, args.head).sinh
+      case Cosh(args, id, _) =>
+        logger.debug(s"case cosh at $id")
+        eval(tiles, args.head).cosh
+      case Tanh(args, id, _) =>
+        logger.debug(s"case tanh at $id")
+        eval(tiles, args.head).tanh
+      case Asin(args, id, _) =>
+        logger.debug(s"case asin at $id")
+        eval(tiles, args.head).asin
+      case Acos(args, id, _) =>
+        logger.debug(s"case acos at $id")
+        eval(tiles, args.head).acos
+      case Atan(args, id, _) =>
+        logger.debug(s"case atan at $id")
+        eval(tiles, args.head).atan
 
       /* --- FOCAL OPERATIONS --- */
       case FocalMax(args, id, _, neighborhood) =>
@@ -420,28 +425,33 @@ object Interpreter extends LazyLogging {
         case Abs(args, id, _) =>
           logger.debug(s"case abs at $id")
           eval(tiles, args.head, buffer).abs
-        case Trigonometry(args, id, _, trigFunc) =>
-          logger.debug(s"case trigFunc at $id with func ${trigFunc}")
-          trigFunc match {
-            case Trig.Sin =>
-              eval(tiles, args.head, buffer).sin
-            case Trig.Cos =>
-              eval(tiles, args.head, buffer).cos
-            case Trig.Tan =>
-              eval(tiles, args.head, buffer).tan
-            case Trig.Asin =>
-              eval(tiles, args.head, buffer).asin
-            case Trig.Acos =>
-              eval(tiles, args.head, buffer).acos
-            case Trig.Atan =>
-              eval(tiles, args.head, buffer).atan
-            case Trig.Sinh =>
-              eval(tiles, args.head, buffer).sinh
-            case Trig.Cosh =>
-              eval(tiles, args.head, buffer).cosh
-            case Trig.Tanh =>
-              eval(tiles, args.head, buffer).tanh
-          }
+        case Sin(args, id, _) =>
+          logger.debug(s"case sin at $id")
+          eval(tiles, args.head, buffer).sin
+        case Cos(args, id, _) =>
+          logger.debug(s"case cos at $id")
+          eval(tiles, args.head, buffer).cos
+        case Tan(args, id, _) =>
+          logger.debug(s"case tan at $id")
+          eval(tiles, args.head, buffer).tan
+        case Sinh(args, id, _) =>
+          logger.debug(s"case sinh at $id")
+          eval(tiles, args.head, buffer).sinh
+        case Cosh(args, id, _) =>
+          logger.debug(s"case cosh at $id")
+          eval(tiles, args.head, buffer).cosh
+        case Tanh(args, id, _) =>
+          logger.debug(s"case tanh at $id")
+          eval(tiles, args.head, buffer).tanh
+        case Asin(args, id, _) =>
+          logger.debug(s"case asin at $id")
+          eval(tiles, args.head, buffer).asin
+        case Acos(args, id, _) =>
+          logger.debug(s"case acos at $id")
+          eval(tiles, args.head, buffer).acos
+        case Atan(args, id, _) =>
+          logger.debug(s"case atan at $id")
+          eval(tiles, args.head, buffer).atan
 
         /* --- FOCAL OPERATIONS --- */
         case FocalMax(args, id, _, n) =>
