@@ -175,42 +175,46 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     subNode: Option[UUID],
     user: User,
     voidCache: Boolean = false
-  ): OptionT[Future, (MapAlgebraAST, EvalParams)] = {
-    val cacheKey = s"ast-params-$toolRunId-${subNode}-${user.id}"
-    if (voidCache) rfCache.delete(cacheKey)
-    rfCache.cachingOptionT(cacheKey, doCache = cacheConfig.tool.enabled) {
-      for {
-        (tool, toolRun) <- toolAndToolRun(toolRunId, user)
-        oldAst   <- OptionT.fromOption[Future]({
-          logger.debug(s"Parsing Tool AST with ${tool.definition}")
-          val entireAST = tool.definition.as[MapAlgebraAST].valueOr(throw _)
-          subNode.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
-        })
-        subs     <- assembleSubstitutions(oldAst, { id: UUID =>
-          OptionT(Tools.getTool(id, user))
-            .map({ referrent => referrent.definition.as[MapAlgebraAST].valueOr(throw _) })
-            .value
-        })
-        ast      <- OptionT.fromOption[Future](oldAst.substitute(subs))
-        nodeId   <- OptionT.pure[Future, UUID](subNode.getOrElse(ast.id))
-        params   <- OptionT.pure[Future, EvalParams]({
-          logger.debug(s"Parsing ToolRun parameters with ${toolRun.executionParameters}")
-          val parsedParams = toolRun.executionParameters.as[EvalParams].valueOr(throw _)
-          val defaults = ast.metadata
-          val overrides = parsedParams.metadata.get(ast.id)
-          val md = (overrides |@| defaults).map(_.fallbackTo(_))
-            .orElse(overrides)
-            .orElse(defaults)
-            .getOrElse(NodeMetadata())
+  ): OptionT[Future, (MapAlgebraAST, EvalParams)] =
+    traceName("LayerCache.toolEvalRequirements") {
+      val cacheKey = s"ast+params-$toolRunId-${subNode}-${user.id}"
+      if (voidCache) rfCache.delete(cacheKey)
+      rfCache.cachingOptionT(cacheKey) {
+        traceName("LayerCache.toolEvalRequirements (no cache)") {
+          for {
+            (tool, toolRun) <- LayerCache.toolAndToolRun(toolRunId, user)
+            oldAst   <- OptionT.fromOption[Future]({
+              logger.debug(s"Parsing Tool AST with ${tool.definition}")
+              val entireAST = tool.definition.as[MapAlgebraAST].valueOr(throw _)
+              subNode.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
+            })
+            subs     <- assembleSubstitutions(oldAst, { id: UUID =>
+              OptionT(Tools.getTool(id, user))
+                .map({ referrent => referrent.definition.as[MapAlgebraAST].valueOr(throw _) })
+                .value
+            })
+            ast      <- OptionT.fromOption[Future](oldAst.substitute(subs))
+            nodeId   <- OptionT.pure[Future, UUID](subNode.getOrElse(ast.id))
+            params   <- OptionT.pure[Future, EvalParams]({
+              logger.debug(s"Parsing ToolRun parameters with ${toolRun.executionParameters}")
+              val parsedParams = toolRun.executionParameters.as[EvalParams].valueOr(throw _)
+              val metadataOverride = parsedParams.metadata.get(ast.id)
+              val md = (metadataOverride |@| ast.metadata).map(_.fallbackTo(_))
+                .orElse(metadataOverride)
+                .orElse(ast.metadata)
+                .getOrElse(NodeMetadata())
 
-          EvalParams(
-            parsedParams.sources,
-            parsedParams.metadata + (ast.id -> md)
-          )
-        })
-      } yield (ast, params)
+              EvalParams(
+                parsedParams.sources,
+                parsedParams.metadata + (ast.id -> md),
+                parsedParams.overrides
+              )
+            })
+          } yield (ast, params)
+        }
+      }
     }
-  }
+
 
   /** Calculate all of the prerequisites to evaluation of an AST over a set of tile sources */
   def toolRunColorMap(
