@@ -53,9 +53,9 @@ object ParamOverride {
     * (the "Alternative" pattern).
     */
   implicit val dec: Decoder[ParamOverride] = Decoder.instance[ParamOverride]({ po =>
-    po.downField("classify").as[Classification]
-      .orElse(po.downField("constant").as[Constant])
-      .orElse(po.downField("mask").as[Masking])
+    po.as[Classification]
+      .orElse(po.as[Constant])
+      .orElse(po.as[Masking])
   })
 
   implicit val enc: Encoder[ParamOverride] = new Encoder[ParamOverride] {

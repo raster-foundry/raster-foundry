@@ -740,4 +740,28 @@ class InterpreterSpec
     )
     assertEqual(tile, createValueTile(256, 0.7853))
   }
+
+  it("should handle param overrides") {
+    import geotrellis.raster.mapalgebra.focal._
+    requests = Nil
+    val src = randomSourceAST
+    val const = Constant(UUID.randomUUID, 42.0, None)
+    val addition = Addition(List(src, const), UUID.randomUUID, None)
+    val tms = Interpreter.interpretTMS(
+      ast = addition,
+      sourceMapping = Map(src.id -> tileRef(1)),
+      overrides = Map(const.id -> ParamOverride.Constant(33.1)),
+      tileSource = constantSource,
+      256
+    )
+    val ret = tms(1, 0, 0)
+    Await.result(ret, 10.seconds) match {
+      case Valid(lazytile) =>
+        val tile = lazytile.evaluateDouble.get
+        requests.length should be (1)
+        tile.getDouble(0, 0) should be (34.1)
+      case i@Invalid(_) =>
+        fail(s"$i")
+    }
+  }
 }
