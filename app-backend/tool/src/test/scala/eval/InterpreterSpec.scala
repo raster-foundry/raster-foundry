@@ -632,4 +632,112 @@ class InterpreterSpec
     )
     assertEqual(tile, createValueTile(256, 1))
   }
+
+  it("should evaluate sin") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      Sin(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "Mark undefined cells"
+    )
+    assertEqual(tile, createValueTile(256, 0.8414))
+  }
+
+  it("should evaluate cos") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      Cos(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "Mark undefined cells"
+    )
+    assertEqual(tile, createValueTile(256, 0.5403))
+  }
+
+  it("should evaluate tan") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      Tan(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "Mark undefined cells"
+    )
+    assertEqual(tile, createValueTile(256, 1.5574))
+  }
+
+  it("should evaluate sinh") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      Sinh(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "Mark undefined cells"
+    )
+    assertEqual(tile, createValueTile(256, 1.1752))
+  }
+
+  it("should evaluate cosh") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      Cosh(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "Mark undefined cells"
+    )
+    assertEqual(tile, createValueTile(256, 1.54308))
+  }
+
+  it("should evaluate tanh") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      Tanh(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "Mark undefined cells"
+    )
+    assertEqual(tile, createValueTile(256, 0.7615))
+  }
+
+  it("should evaluate asin") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      Asin(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "Mark undefined cells"
+    )
+    assertEqual(tile, createValueTile(256, 1.5707))
+  }
+
+  it("should evaluate acos") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      Acos(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "Mark undefined cells"
+    )
+    assertEqual(tile, createValueTile(256, 0))
+  }
+
+  it("should evaluate atan") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      Atan(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "Mark undefined cells"
+    )
+    assertEqual(tile, createValueTile(256, 0.7853))
+  }
 }

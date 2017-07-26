@@ -127,35 +127,5 @@ trait MapAlgebraUtilityCodecs {
       case Left(fail) => throw fail
     }
   }
-
-  implicit lazy val trigDecoder: Decoder[Trig] =
-    Decoder[String].map {
-      case "sin" => Trig.Sin
-      case "cos" => Trig.Cos
-      case "tan" => Trig.Tan
-      case "asin" => Trig.Asin
-      case "acos" => Trig.Acos
-      case "atan" => Trig.Atan
-      case "sinh" => Trig.Sinh
-      case "cosh" => Trig.Cosh
-      case "tanh" => Trig.Tanh
-      case unrecognized =>
-        throw new InvalidParameterException(s"'$unrecognized' is not a recognized trigonometric function")
-    }
-
-  implicit lazy val trigEncoder: Encoder[Trig] =
-    Encoder.encodeString.contramap[Trig]({ cbType =>
-      cbType match {
-        case Trig.Sin => "sin"
-        case Trig.Cos => "cos"
-        case Trig.Tan => "tan"
-        case Trig.Asin => "asin"
-        case Trig.Acos => "acos"
-        case Trig.Atan => "atan"
-        case Trig.Sinh => "sinh"
-        case Trig.Cosh => "cosh"
-        case Trig.Tanh => "tanh"
-      }
-    })
 }
 

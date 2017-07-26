@@ -241,8 +241,56 @@ object MapAlgebraAST {
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
   }
 
-  case class Trigonometry(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata], function: Trig) extends UnaryOperation {
-    val symbol = "trig"
+  case class Sin(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends UnaryOperation {
+    val symbol = "sin"
+
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
+  }
+
+  case class Cos(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends UnaryOperation {
+    val symbol = "cos"
+
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
+  }
+
+  case class Tan(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends UnaryOperation {
+    val symbol = "tan"
+
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
+  }
+
+  case class Sinh(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends UnaryOperation {
+    val symbol = "sinh"
+
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
+  }
+
+  case class Cosh(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends UnaryOperation {
+    val symbol = "cosh"
+
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
+  }
+
+  case class Tanh(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends UnaryOperation {
+    val symbol = "tanh"
+
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
+  }
+
+  case class Asin(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends UnaryOperation {
+    val symbol = "asin"
+
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
+  }
+
+  case class Acos(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends UnaryOperation {
+    val symbol = "acos"
+
+    def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
+  }
+
+  case class Atan(args: List[MapAlgebraAST], id: UUID, metadata: Option[NodeMetadata]) extends UnaryOperation {
+    val symbol = "atan"
 
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = copy(args = newArgs)
   }
