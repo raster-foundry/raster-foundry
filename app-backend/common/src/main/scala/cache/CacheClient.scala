@@ -44,6 +44,8 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging {
 
     if (cacheEnabled && doCache) {
 
+      // Note this blocks a thread in CacheClientThreadPool while waiting on the client's
+      // own threadpool
       val futureCached = Future { client.asyncGet(cacheKey).get() }
       futureCached.flatMap({ value =>
         if (value != null) {
