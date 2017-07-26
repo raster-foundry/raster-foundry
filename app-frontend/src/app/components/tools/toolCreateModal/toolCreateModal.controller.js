@@ -1,6 +1,18 @@
 /* global mathjs */
 
-const allowedOps = ['+', '-', '*', '/'];
+const allowedOps = [
+    '+', '-', '*', '/',
+    '==', '!=', '>', '<', '>=', '<=',
+    'and', 'or', 'xor',
+    '^',
+    'sqrt', 'log10',
+    'ceil', 'floor', 'round',
+    'abs',
+    'sin', 'cos', 'tan',
+    'asin', 'acos', 'atan',
+    'sinh', 'cosh', 'tanh',
+    'atan2'
+];
 
 export default class ToolCreateModalController {
     constructor(
@@ -69,11 +81,17 @@ export default class ToolCreateModalController {
             metadata: {}
         };
 
-        if (node.op && allowedOps.indexOf(node.op >= 0)) {
+        if (node.op && allowedOps.indexOf(node.op) >= 0) {
             // Op node
             builtNode.id = this.uuid4.generate();
             builtNode.apply = node.op;
             builtNode.metadata.label = node.fn;
+            builtNode.args = node.args.map(n => this.transformNode(n));
+        } else if (node.fn && node.fn.name && allowedOps.indexOf(node.fn.name) >= 0) {
+            // Function node; handle nearly the same as op node, for now
+            builtNode.id = this.uuid4.generate();
+            builtNode.apply = node.fn.name;
+            builtNode.metadata.label = node.fn.name;
             builtNode.args = node.args.map(n => this.transformNode(n));
         } else if (node.name) {
             // Symbol node
