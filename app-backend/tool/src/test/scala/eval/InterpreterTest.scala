@@ -40,7 +40,7 @@ object InterpreterTest
       tileSource = tileSource,
       256
     )
-    if (label.length > 0) println("$label: ", ast.asJson.noSpaces)
+    if (label.length > 0) println(s"$label: ", ast.asJson.noSpaces)
 
     val ret = tms(1, 1, 1)
     Await.result(ret, 10.seconds) match {
@@ -66,7 +66,7 @@ object InterpreterTest
       tileSource = tileSource,
       256
     )
-    if (label.length > 0) println("$label: ", ast.asJson.noSpaces)
+    if (label.length > 0) println(s"$label: ", ast.asJson.noSpaces)
 
     val ret = tms(1, 1, 1)
     Await.result(ret, 10.seconds) match {
