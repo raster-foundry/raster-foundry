@@ -136,18 +136,15 @@ package object ast {
     case NumericNegation(args, id, _) => eval(args.head, rdds).map(_.withContext(_.localNegate))
     case LogicalNegation(args, id, _) => eval(args.head, rdds).map(_.withContext(_.localNot)) // TODO: DO NOT USE THIS
     case Abs(args, id, _) => eval(args.head, rdds).map(_.withContext(_.localAbs))
-    case Trigonometry(args, id, _, trigFunc) =>
-      trigFunc match {
-        case Trig.Sin => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.sin(_))))
-        case Trig.Cos => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.cos(_))))
-        case Trig.Tan => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.tan(_))))
-        case Trig.Asin => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.asin(_))))
-        case Trig.Acos => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.acos(_))))
-        case Trig.Atan => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.atan(_))))
-        case Trig.Sinh => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.sinh(_))))
-        case Trig.Cosh => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.cosh(_))))
-        case Trig.Tanh => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.tanh(_))))
-      }
+    case Sin(args, id, _) => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.sin(_))))
+    case Cos(args, id, _) => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.cos(_))))
+    case Tan(args, id, _) => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.tan(_))))
+    case Asin(args, id, _) => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.asin(_))))
+    case Acos(args, id, _) => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.acos(_))))
+    case Atan(args, id, _) => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.atan(_))))
+    case Sinh(args, id, _) => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.sinh(_))))
+    case Cosh(args, id, _) => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.cosh(_))))
+    case Tanh(args, id, _) => eval(args.head, rdds).map(_.withContext(_.localMapDouble(math.tanh(_))))
 
 
     /* The `head` calls here will never fail, nor will they produce a `Constant` */
