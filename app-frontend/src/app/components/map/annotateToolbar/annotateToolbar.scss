@@ -1,13 +1,19 @@
 @import "../../../../assets/styles/sass/settings/_colors.scss";
-.annotate-toolbar {
-  background: $shade-dark;
+.annotation-toolbar-wrapper{
   position: absolute;
-  top: 2em;
-  left: 50%;
+  left: 40rem;
+  top: 2rem;
+  width: calc(100vw - 40rem);
   z-index: 950;
-  box-shadow: 1px 3px 5px $shade-dark;
+  text-align: center;
+}
+
+.annotate-toolbar {
+  display: inline-block;
+  background: $shade-normal;
+  z-index: 950;
+  box-shadow: 1px 3px 5px $shade-normal;
   border-radius: 5px;
-  display: flex;
   justify-content: center;
 }
 .annotate-toolbar-header {
@@ -26,51 +32,3 @@
     margin: 0 0.5rem 0 0.5rem;
   }
 }
-
-.annotate-marker{
-  background: $brand-primary;
-  border-radius: 50%;
-  border: 2px solid $shade-dark;
-}
-
-.leaflet-popup-tip{
-  background-color: $shade-dark;
-}
-
-.leaflet-popup-content-wrapper,
-.leaflet-popup-content,
- {
-  background-color: $shade-dark;
-  -webkit-border-radius: 5px !important;
-  -moz-border-radius: 5px !important;
-  border-radius: 5px !important;
- }
-
-.leaflet-popup-content-wrapper{
-  width: 250px;
-}
-
-.leaflet-popup-label {
-    color: white;
-    margin-right: 0px;
-    width: 211px;
-}
-
-.leaflet-popup-content-wrapper label:nth-child(1) input,
-.leaflet-popup-content-wrapper label:nth-child(3) textarea{
-    height: 21px;
-    width: 100%;
-}
-.leaflet-popup-content-wrapper label:nth-child(3) textarea{
-    height: 75px;
-}
-// .sidebar-overlay {
-//   background: white;
-//   opacity: 0.5;
-//   width: 40rem;
-//   position: absolute;
-//   top: 0;
-//   left: 0;
-//   bottom: 0;
-//   z-index: 950;
-// }

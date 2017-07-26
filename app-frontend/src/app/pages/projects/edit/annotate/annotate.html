@@ -1,8 +1,8 @@
 <!-- Annotate Toolbar Component -->
-<rf-annotate-toolbar
-  map-id="edit"
-  geom="$ctrl.annoToExport",
-  on-save="$ctrl.onAnnotationSave(geoJsonAnnotation)">
+<rf-annotate-toolbar map-id="edit"
+                   disable-toolbar-action="$ctrl.disableToolbarAction"
+                   on-shape-creating="$ctrl.onShapeCreating(isCreating)"
+                   on-shape-created="$ctrl.onShapeCreated(shapeLayer)">
 </rf-annotate-toolbar>
 <!-- Annotate Toolbar Component -->
 
@@ -20,16 +20,30 @@
         <span class="text">This is some text about annotating.</span>
       </div>
       <div class="list-group-right column-6 nogutter btn-group">
+          <button class="btn btn-primary btn-block"
+                  type="button"
+                  ng-disabled="$ctrl.isCreating || $ctrl.disableSidebarAction">
+            <input type="file"
+                   accept="geojson"
+                   multiple
+                   id="btn-upload"
+                   ng-disabled="$ctrl.isCreating || $ctrl.disableSidebarAction"/>
+            <label for="btn-upload"
+                   ng-show="$ctrl.isUpload"
+                   id="label-upload">
+              Upload
+            </label>
+            <label ng-click="$ctrl.onImportClick()"
+                   ng-show="!$ctrl.isUpload"
+                   id="label-import">
+              Import
+            </label>
+          </button>
         <button
           class="btn btn-primary btn-block"
           type="button"
-          ng-click="$ctrl.importLocalAnnotations()">
-          Import
-        </button>
-        <button
-          class="btn btn-primary btn-block"
-          type="button"
-          ng-click="$ctrl.exportAnnotations(geoJsonAnnotation)">
+          ng-click="$ctrl.onAnnotationsExport($event)"
+          ng-disabled="$ctrl.isCreating || $ctrl.disableSidebarAction">
           Export
         </button>
       </div>
@@ -45,37 +59,49 @@
     </div>
   </div>
 </div>
+<div class="list-group" ng-if="$ctrl.annoToExport.features.length">
+  <div class="list-group-item filter-annotations">
+    <div>
+      <span><strong>Filter by label</span></strong>
+    </div>
+    <div class="list-group-right column-6 nogutter filter-annotations-select">
+      <select
+        ng-init="$ctrl.filterLabel = {'name': 'All'}"
+        ng-model="$ctrl.filterLabel"
+        ng-change="$ctrl.onFilterChange($ctrl.filterLabel)"
+        ng-options="label.name for label in $ctrl.labelInputs track by label.name"
+        ng-disabled="$ctrl.isCreating || $ctrl.disableSidebarAction">
+      </select>
+    </div>
+  </div>
+</div>
 </div>
 <!-- Static Sidebar -->
-
 <!-- Scrollable Sidebar -->
 <div class="sidebar-scrollable">
   <div ng-if="$ctrl.annoToExport.features.length">
-      <div class="list-group">
-        <div class="list-group-item filter-annotations">
-          <div>
-            <span><strong>Filter Placeholder</span></strong>
-          </div>
-        </div>
-      </div>
       <div class="list-group"
-           ng-repeat="annotation in $ctrl.annoToExport.features">
-        <div class="list-group-item list-sidebar-annotations">
-          <div>
-              <i class="icon-cloud"
-                 ng-if="annotation.geometry.coordinates.length === 1"></i>
-              <i class="icon-sun"
-                 ng-if="annotation.geometry.coordinates.length === 2"></i>
-          </div>
-          <div>
-            <h5>{{annotation.properties.label}}</h5>
-          </div>
-          <div class="list-group-right actions-annotations">
-            <a title="Clone"><i class="icon-arrows-cw"></i></a>
-            <a title="Edit"><i class="icon-pencil"></i></a>
-            <a title="Delete"><i class="icon-trash"></i></a>
-          </div>
-        </div>
+           ng-repeat="annotation in $ctrl.annoToExport.features | filter: $ctrl.labelFilter">
+        <rf-annotate-sidebar-item
+          ng-attr-id="{{'anchor' + annotation.properties.id.toString()}}"
+          ng-mouseenter="$ctrl.onSidebarItemMouseIn(annotation)"
+          ng-mouseleave="$ctrl.onSidebarItemMouseOut()"
+          ng-click="$ctrl.toggleSidebarItemClick(annotation)"
+          ng-class="{
+              'sidebar-item-hover': $ctrl.hoveredId === annotation.properties.id,
+              'sidebar-item-click': $ctrl.clickedId === annotation.properties.id
+          }"
+          annotation="annotation"
+          label-inputs="$ctrl.labelInputs"
+          edit-id="$ctrl.editId"
+          disable-sidebar-action="$ctrl.disableSidebarAction"
+          on-clone-annotation="$ctrl.onCloneAnnotation(geometry, label, description)"
+          on-update-annotation-start="$ctrl.onUpdateAnnotationStart(annotation)"
+          on-delete-annotation="$ctrl.onDeleteAnnotation(id, label)"
+          on-update-annotation-finish="$ctrl.onUpdateAnnotationFinish(id, label, description, isEdit)"
+          on-cancel-update-annotation="$ctrl.onCancelUpdateAnnotation(annotation, isEdit)"
+          on-change-annotation-stroke="$ctrl.onChangeAnnotationStroke(annotation)">
+        </rf-annotate-sidebar-item>
       </div>
   </div>
 </div>

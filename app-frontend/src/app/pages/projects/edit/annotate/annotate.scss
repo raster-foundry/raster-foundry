@@ -1,0 +1,109 @@
+@import "../../../../../assets/styles/sass/settings/_colors.scss";
+.sidebar-project.no-annotation,
+.list-group-item.no-annotation{
+    border-style: none;
+}
+
+.panel.panel-off-white.no-annotation {
+    height: 75px;
+    border: 1px solid $gray-lightest;
+    background-color: $off-white;
+}
+.panel.panel-off-white.no-annotation p {
+    text-align: center;
+    vertical-align: middle;
+    line-height: 75px;
+}
+
+.list-group-item.filter-annotations {
+    border-style: none;
+}
+
+.list-group-item.filter-annotations p {
+    flex-direction: row;
+}
+
+.list-group-right.column-6.nogutter.filter-annotations-select select{
+    width: 190px;
+    height: 32px;
+}
+
+.list-group-right.column-6.nogutter.filter-annotations-select select:disabled{
+    cursor: not-allowed;
+}
+
+.leaflet-popup-tip {
+   background-color: $shade-normal;
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-content {
+    background-color: $shade-normal;
+    -webkit-border-radius: 5px !important;
+    -moz-border-radius: 5px !important;
+    border-radius: 5px !important;
+}
+
+.leaflet-popup-content-wrapper{
+    width: 250px;
+}
+
+.leaflet-popup-label {
+    color: white;
+    margin-right: 0px;
+    width: 211px;
+}
+
+#btn-upload {
+    width: 0.1px;
+	height: 0.1px;
+	opacity: 0;
+	overflow: hidden;
+	position: absolute;
+	z-index: -1;
+}
+
+#label-upload,
+#label-import {
+    color: $white;
+    cursor: pointer;
+    font-weight: 500;
+    margin-bottom: 0px;
+    display: inline-block;
+}
+
+.annotate-marker{
+    background: rgba($brand-primary, 0.8);
+    border-radius: 50%;
+    border: 2px solid rgba($shade-dark, 1);
+}
+
+.annotate-clone-marker {
+    background: rgba($red, 0.5);
+    border-radius: 50%;
+    border: 2px solid rgba($red, 0.8);
+}
+
+.annotate-highlight-marker {
+    background: rgba($red, 0);
+    border-radius: 50%;
+    border: 2px solid rgba($red, 0.8);
+}
+
+.annotate-hover-marker {
+    background: rgba($brand-primary, 0.8);
+    border-radius: 50%;
+    border: 2px solid rgba($red, 1);
+}
+
+rf-annotate-sidebar-item{
+    .list-group-item.list-sidebar-drawn-annotations{
+        border: 1px solid $gray-lightest;
+    }
+    &.sidebar-item-hover,
+    &.sidebar-item-click{
+        .list-group-item.list-sidebar-drawn-annotations{
+            border: 2px solid $brand-primary;
+        }
+    }
+}

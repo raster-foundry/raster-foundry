@@ -52,6 +52,7 @@
     "jquery": "~2.1.4",
     "leaflet": "1.0.3",
     "leaflet-draw": "~0.4.9",
+    "leaflet-draw-drag": "~0.4.4",
     "lodash": "~4.5.0",
     "mathjs": "^3.14.2",
     "moment": "^2.18.1",
