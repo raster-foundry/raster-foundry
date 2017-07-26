@@ -99,6 +99,6 @@ node {
   } finally {
     // Pass or fail, ensure that the services and networks
     // created by Docker Compose are torn down.
-    sh 'docker-compose down -v'
+    sh 'docker-compose down -v --remove-orphans'
   }
 }
