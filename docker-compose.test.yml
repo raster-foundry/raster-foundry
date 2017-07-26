@@ -56,10 +56,8 @@ services:
 
   airflow:
     image: raster-foundry-airflow:${GIT_COMMIT:-latest}
-    env_file: .env
     build:
       context: ./app-tasks
       dockerfile: Dockerfile
     volumes:
       - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
-      - ./app-backend/batch/target/scala-2.11/rf-batch.jar:/opt/raster-foundry/jars/rf-batch.jar
