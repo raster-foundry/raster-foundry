@@ -41,6 +41,7 @@ export default angular.module('index.components', [
     require('./components/map/mapSearchModal/mapSearchModal.module.js').name,
 
     require('./components/map/annotateToolbar/annotateToolbar.module.js').name,
+    require('./components/map/annotateSidebarItem/annotateSidebarItem.module.js').name,
 
 
     // settings components

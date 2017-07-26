@@ -1,0 +1,75 @@
+.list-group-item.list-sidebar-drawn-annotations div {
+    display: inline-block;
+}
+
+.list-group-item.list-sidebar-drawn-annotations div:nth-child(1) {
+    border: 1px solid #969cac;
+    width: 35px;
+    height: 35px;
+}
+
+.list-group-item.list-sidebar-drawn-annotations div:nth-child(1) i {
+    text-align: center;
+    vertical-align: middle;
+    line-height: 35px;
+    font-size: 24px;
+}
+
+.list-group-item.list-sidebar-drawn-annotations div:nth-child(2) h5 {
+    font-weight: normal;
+}
+
+.list-group-right.actions-annotations {
+    width: 100%;
+}
+
+.list-group-right.actions-annotations a {
+    text-decoration: none;
+    margin: 2px;
+}
+
+.list-group-right.actions-annotations a:nth-child(1) i,
+.list-group-right.actions-annotations a:nth-child(2) i {
+    border: 1px solid #969cac;
+    border-radius: 2px;
+    color: #969cac;
+
+}
+
+.list-group-right.actions-annotations a:nth-child(3) i {
+    border: 1px solid #da7976;
+    border-radius: 2px;
+    color: #da7976;
+}
+
+.annotation-new {
+    width: 100%;
+    margin: 0px;
+}
+
+.angucomplete-holder {
+    margin-bottom: 10px;
+}
+
+.annotation-new.form-control.annotation-label {
+    height:  35px;
+}
+
+.annotation-new textarea.form-control {
+    height: 150px;
+    margin-bottom: 10px;
+    resize: none;
+}
+
+.annotation-new input.btn.btn-tertiary.annotation-confirm,
+.annotation-new input.btn.btn-tertiary.annotation-cancel {
+    width: 76px;
+}
+
+.annotation-new input.btn.btn-tertiary.annotation-confirm{
+    float: right;
+}
+
+.annotation-highlight {
+    color: #da7976;
+}
