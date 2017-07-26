@@ -28,8 +28,8 @@ then
 
         echo "Verifying that Airflow containers can run the batch jar"
         docker-compose \
-            -f docker-compose.airflow.yml \
-            run --rm airflow-worker \
+            -f docker-compose.test.yml \
+            run --rm airflow \
             bash -c \
             "java -cp /opt/raster-foundry/jars/rf-batch.jar com.azavea.rf.batch.Main healthcheck"
 
