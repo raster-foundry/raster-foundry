@@ -1,0 +1,89 @@
+@import "../../../../assets/styles/sass/settings/_colors.scss";
+.list-group-item.list-sidebar-drawn-annotations div {
+    display: inline-block;
+}
+
+.list-group-item.list-sidebar-drawn-annotations div:nth-child(1) {
+    width: 35px;
+    height: 35px;
+}
+
+.list-group-item.list-sidebar-drawn-annotations div:nth-child(1) i {
+    text-align: center;
+    vertical-align: middle;
+    line-height: 35px;
+    font-size: 35px;
+}
+
+.list-group-item.list-sidebar-drawn-annotations div:nth-child(1) i.icon-cloud::before,
+.list-group-item.list-sidebar-drawn-annotations div:nth-child(1) i.icon-sun::before {
+    margin: 0px;
+}
+
+.list-group-item.list-sidebar-drawn-annotations div:nth-child(2) h5 {
+    font-weight: normal;
+}
+
+.list-group-right.actions-annotations {
+    width: 100%;
+}
+
+.list-group-right.actions-annotations a {
+    text-decoration: none;
+    margin: 2px;
+}
+
+.list-group-right.actions-annotations a:nth-child(1) i,
+.list-group-right.actions-annotations a:nth-child(2) i {
+    border: 1px solid $gray-lighter;
+    border-radius: 2px;
+    color: $gray-lighter;
+
+}
+
+.list-group-right.actions-annotations a:nth-child(3) i {
+    border: 1px solid $red;
+    border-radius: 2px;
+    color: $red;
+}
+
+.annotation-new {
+    width: 100%;
+    margin: 0px;
+}
+
+.angucomplete-holder {
+    margin-bottom: 10px;
+}
+
+angucomplete-alt {
+    &.is-invalid {
+        .angucomplete-holder {
+            border: 1px solid $red;
+            border-radius: 2px;
+        }
+    }
+}
+
+.annotation-new.form-control.annotation-label {
+    height:  35px;
+}
+
+.annotation-new textarea.form-control {
+    height: 150px;
+    margin-bottom: 10px;
+    resize: none;
+}
+
+.annotation-new input.btn.btn-tertiary.annotation-confirm,
+.annotation-new input.btn.btn-tertiary.annotation-cancel {
+    width: 76px;
+}
+
+.annotation-new input.btn.btn-tertiary.annotation-confirm{
+    float: right;
+}
+
+.annotation-highlight {
+    color: $red;
+}

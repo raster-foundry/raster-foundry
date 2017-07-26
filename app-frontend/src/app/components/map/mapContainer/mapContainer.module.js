@@ -5,6 +5,8 @@ import MapContainerController from './mapContainer.controller.js';
 require('leaflet/dist/leaflet.css');
 require('leaflet-draw/dist/leaflet.draw.css');
 require('leaflet-draw/dist/leaflet.draw.js');
+require('leaflet-path-drag/dist/L.Path.Drag-src.js');
+require('leaflet-draw-drag/dist/Leaflet.draw.drag-src.js');
 
 const MapContainerModule = angular.module('components.map.mapContainer', []);
 

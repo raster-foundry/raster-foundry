@@ -53,7 +53,10 @@ export default class MapContainerController {
         }).setView(
             this.initialCenter ? this.initialCenter : [0, 0],
             this.initialZoom ? this.initialZoom : 2
-        );
+        ).on('zoom', () => {
+            this.zoomLevel = this.map.getZoom();
+            this.$scope.$evalAsync();
+        });
 
 
         this.$timeout(() => {
@@ -69,11 +72,13 @@ export default class MapContainerController {
     zoomIn() {
         this.map.zoomIn();
         this.$timeout(() => {}, 500);
+        this.zoomLevel = this.map.getZoom();
     }
 
     zoomOut() {
         this.map.zoomOut();
         this.$timeout(()=> {}, 500);
+        this.zoomLevel = this.map.getZoom();
     }
 
     toggleFullscreen() {

@@ -4108,11 +4108,24 @@ lcid@^1.0.0:
   dependencies:
     invert-kv "^1.0.0"
 
-leaflet-draw@~0.4.9:
+leaflet-draw-drag@~0.4.4:
+  version "0.4.4"
+  resolved "https://registry.yarnpkg.com/leaflet-draw-drag/-/leaflet-draw-drag-0.4.4.tgz#55d21d750ad5a9f554170a5209d7dea910e5152b"
+  dependencies:
+    leaflet-draw "^0.4.3"
+    leaflet-path-drag "~1.0.7"
+
+leaflet-draw@^0.4.3, leaflet-draw@~0.4.9:
   version "0.4.9"
   resolved "https://registry.yarnpkg.com/leaflet-draw/-/leaflet-draw-0.4.9.tgz#44105088310f47e4856d5ede37d47ecfad0cf2d5"
 
-leaflet@1.0.3:
+leaflet-path-drag@~1.0.7:
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/leaflet-path-drag/-/leaflet-path-drag-1.0.7.tgz#d49240efc292e19da961cf74da63e387f7d8324e"
+  dependencies:
+    leaflet "~1.0.2"
+
+leaflet@1.0.3, leaflet@~1.0.2:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/leaflet/-/leaflet-1.0.3.tgz#1f401b98b45c8192134c6c8d69686253805007c8"
 

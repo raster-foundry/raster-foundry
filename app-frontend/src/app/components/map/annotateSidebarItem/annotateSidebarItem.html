@@ -1,0 +1,59 @@
+<div class="list-group-item list-sidebar-drawn-annotations"
+     ng-if="$ctrl.annotation.geometry && !($ctrl.editId === $ctrl.annotation.properties.id)">
+  <div>
+      <i class="icon-cloud"
+         ng-if="$ctrl.annotation.geometry.type === 'Polygon'"></i>
+      <i class="icon-sun"
+         ng-if="$ctrl.annotation.geometry.type === 'Point'"></i>
+  </div>
+  <div>
+    <h5>{{$ctrl.annotation.properties.label}}</h5>
+  </div>
+  <div class="list-group-right actions-annotations">
+    <a title="Clone"
+       ng-click="$ctrl.onAnnotationClone($ctrl.annotation)"
+       ng-disabled="$ctrl.disableSidebarAction">
+       <i class="icon-arrows-cw"></i></a>
+    <a title="Edit"
+       ng-click="$ctrl.onAnnotationEdit($ctrl.annotation)"
+       ng-disabled="$ctrl.disableSidebarAction">
+       <i class="icon-pencil"></i></a>
+    <a title="Delete"
+       ng-click="$ctrl.onAnnotationDelete($ctrl.annotation)"
+       ng-disabled="$ctrl.disableSidebarAction">
+       <i class="icon-trash"></i></a>
+  </div>
+</div>
+<div class="list-group-item" ng-if="!$ctrl.annotation.geometry || ($ctrl.editId === $ctrl.annotation.properties.id)">
+  <div class='annotation-new'>
+    <form>
+    <angucomplete-alt
+         pause="100"
+         initial-value="$ctrl.annotation.properties.label"
+         selected-object="$ctrl.labelObj"
+         placeholder="{{$ctrl.annotation.properties.label || 'Label name...'}}"
+         local-data="$ctrl.labelInputs"
+         search-fields="name"
+         title-field="name"
+         minlength="1"
+         input-class="form-control annotation-label"
+         match-class="annotation-highlight"
+         override-suggestions="true"
+         ng-class="{'is-invalid': $ctrl.isInvalid }">
+    </angucomplete-alt>
+    <textarea class="form-control"
+              ng-init="$ctrl.newLabelDescription = $ctrl.annotation.properties.description"
+              ng-model="$ctrl.newLabelDescription"
+              ng-if="!$ctrl.annotation.geometry || ($ctrl.editId === $ctrl.annotation.properties.id)"
+              placeholder="Description..."></textarea>
+    <input type="button"
+           class="btn btn-light annotation-cancel"
+           value="Cancel"
+           ng-click="$ctrl.cancelAnnotation($ctrl.annotation)"/>
+    <input type="button"
+           class="btn btn-tertiary annotation-confirm"
+           ng-value="$ctrl.editId === $ctrl.annotation.properties.id ? 'Update' : 'Add'"
+           ng-click="$ctrl.updateAnnotation($ctrl.annotation)">
+    </form>
+  </div>
+</div>
