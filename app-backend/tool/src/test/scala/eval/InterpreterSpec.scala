@@ -640,7 +640,7 @@ class InterpreterSpec
       Map(src.id -> tileRef(1)),
       constantSource,
       Map.empty,
-      "Mark undefined cells"
+      "Sin function"
     )
     assertEqual(tile, createValueTile(256, 0.8414))
   }
@@ -652,7 +652,7 @@ class InterpreterSpec
       Map(src.id -> tileRef(1)),
       constantSource,
       Map.empty,
-      "Mark undefined cells"
+      "Cos function"
     )
     assertEqual(tile, createValueTile(256, 0.5403))
   }
@@ -664,7 +664,7 @@ class InterpreterSpec
       Map(src.id -> tileRef(1)),
       constantSource,
       Map.empty,
-      "Mark undefined cells"
+      "Tan function"
     )
     assertEqual(tile, createValueTile(256, 1.5574))
   }
@@ -676,7 +676,7 @@ class InterpreterSpec
       Map(src.id -> tileRef(1)),
       constantSource,
       Map.empty,
-      "Mark undefined cells"
+      "Sinh function"
     )
     assertEqual(tile, createValueTile(256, 1.1752))
   }
@@ -688,7 +688,7 @@ class InterpreterSpec
       Map(src.id -> tileRef(1)),
       constantSource,
       Map.empty,
-      "Mark undefined cells"
+      "Cosh function"
     )
     assertEqual(tile, createValueTile(256, 1.54308))
   }
@@ -700,7 +700,7 @@ class InterpreterSpec
       Map(src.id -> tileRef(1)),
       constantSource,
       Map.empty,
-      "Mark undefined cells"
+      "Tanh function"
     )
     assertEqual(tile, createValueTile(256, 0.7615))
   }
@@ -712,7 +712,7 @@ class InterpreterSpec
       Map(src.id -> tileRef(1)),
       constantSource,
       Map.empty,
-      "Mark undefined cells"
+      "Asin function"
     )
     assertEqual(tile, createValueTile(256, 1.5707))
   }
@@ -724,7 +724,7 @@ class InterpreterSpec
       Map(src.id -> tileRef(1)),
       constantSource,
       Map.empty,
-      "Mark undefined cells"
+      "Acos function"
     )
     assertEqual(tile, createValueTile(256, 0))
   }
@@ -736,7 +736,7 @@ class InterpreterSpec
       Map(src.id -> tileRef(1)),
       constantSource,
       Map.empty,
-      "Mark undefined cells"
+      "atan function"
     )
     assertEqual(tile, createValueTile(256, 0.7853))
   }
