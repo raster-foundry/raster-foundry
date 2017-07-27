@@ -136,7 +136,7 @@ def wait_for_success(response, cluster_id):
             logger.info('Updating status of %s. Old Status: %s New Status: %s',
                         step_id, current_status, status)
             current_status = status
-        time.sleep(30)
+        time.sleep(5)
     is_success = (current_status == 'COMPLETED')
     if is_success:
         logger.info('Successfully completed ingest for %s', step_id)
@@ -238,7 +238,7 @@ def wait_for_status_op(*args, **kwargs):
 def metadata_to_postgres(uri, scene_id):
     bash_cmd = [
         'java',
-        '-cp'
+        '-cp',
         '/opt/raster-foundry/jars/rf-batch.jar',
         'com.azavea.rf.batch.Main',
         'migration_s3_postgres',
