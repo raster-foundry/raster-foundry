@@ -30,9 +30,6 @@ object Config {
     lazy val threads: Int =
       memcachedConfig.getInt("threads")
 
-    lazy val ttl: FiniteDuration =
-      FiniteDuration(memcachedConfig.getDuration("ttl").toNanos, TimeUnit.NANOSECONDS)
-
     lazy val enabled: Boolean =
       memcachedConfig.getBoolean("enabled")
 
