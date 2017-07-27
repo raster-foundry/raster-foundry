@@ -4,8 +4,10 @@ import com.azavea.rf.common.Config
 import net.spy.memcached._
 import net.spy.memcached.transcoders.Transcoder
 
-/** Extends Memcached client configuration object to provide custom (kryo) transcoder. */
-class KryoConnectionFactory extends DefaultConnectionFactory(ClientMode.Static) {
+/** Extends Memcached connection factory configuration object to provide custom configuration. */
+class KryoConnectionFactory extends DefaultConnectionFactory() {
+  override def getClientMode: ClientMode = Config.memcached.clientMode
+
   override def getDefaultTranscoder: Transcoder[AnyRef] = {
     new KryoTranscoder
   }

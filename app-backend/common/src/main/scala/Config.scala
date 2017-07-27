@@ -3,6 +3,7 @@ package com.azavea.rf.common
 import java.util.concurrent.TimeUnit
 
 import com.typesafe.config.ConfigFactory
+import net.spy.memcached.ClientMode
 
 import scala.concurrent.duration._
 
@@ -24,6 +25,13 @@ object Config {
 
     lazy val port: Int =
       memcachedConfig.getInt("port")
+
+    lazy val clientMode: ClientMode =
+      if (memcachedConfig.getBoolean("dynamicClientMode")) {
+        ClientMode.Dynamic
+      } else {
+        ClientMode.Static
+      }
 
     lazy val timeout: Long = memcachedConfig.getLong("timeout")
 
