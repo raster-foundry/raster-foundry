@@ -25,6 +25,8 @@ object Config {
     lazy val port: Int =
       memcachedConfig.getInt("port")
 
+    lazy val timeout: Long = memcachedConfig.getLong("timeout")
+
     lazy val threads: Int =
       memcachedConfig.getInt("threads")
 
