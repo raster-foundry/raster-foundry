@@ -330,14 +330,7 @@ trait ProjectRoutes extends Authentication
       if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
         complete(StatusCodes.RequestEntityTooLarge)
       }
-      val scenesFuture = Projects.addScenesToProject(sceneIds, projectId, user)
-      scenesFuture.map { scenes =>
-        val scenesToKickoff = scenes.filter(_.statusFields.ingestStatus == IngestStatus.ToBeIngested)
-        scenesToKickoff.map(_.id).map(kickoffSceneIngest)
-      }
-      complete {
-        scenesFuture
-      }
+      complete { Projects.addScenesToProject(sceneIds, projectId, user) }
     }
   }
 
