@@ -85,13 +85,15 @@ export default class ProjectsEditController {
 
     getSceneList() {
         this.sceneRequestState = {loading: true};
-        this.sceneListQuery = this.projectService.getAllProjectScenes(
+
+        const sceneListQuery = this.projectService.getAllProjectScenes(
             {
                 projectId: this.projectId,
                 pending: false
             }
         );
-        this.sceneListQuery.then(
+
+        sceneListQuery.then(
             (allScenes) => {
                 this.addUningestedScenesToMap(allScenes.filter(
                     (scene) => scene.statusFields.ingestStatus !== 'INGESTED'
@@ -111,6 +113,8 @@ export default class ProjectsEditController {
         ).finally(() => {
             this.sceneRequestState.loading = false;
         });
+
+        return sceneListQuery;
     }
 
     addUningestedScenesToMap(scenes) {

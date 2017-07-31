@@ -293,6 +293,9 @@ rf-project-editor .leaflet-tile {
   flex-direction: row;
   align-items: start;
   flex: 1;
+  & + .list-group-item-content {
+    margin-top: 1rem;
+  }
   .list-group-overflow {
     flex: 1;
     align-self: stretch;
@@ -398,7 +401,6 @@ rf-project-editor .leaflet-tile {
     .fixedwidth {
       width: 20rem;
     }
-
     .label {
       flex: 1;
       font-weight: 700;
@@ -431,9 +433,12 @@ rf-project-editor .leaflet-tile {
       }
     }
   }
-
-
 }
+
+.list-group-item .sidebar-list {
+  width: 100%;
+}
+
 .sidebar-content {
   padding: 1rem;
 }
@@ -1593,7 +1598,7 @@ table.upload-info {
     }
   }
 }
-.list-group-item {
+.list-group-item.no-border {
   border-bottom: none;
 }
 .list-group-item:last-of-type {
