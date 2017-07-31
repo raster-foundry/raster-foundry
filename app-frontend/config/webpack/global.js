@@ -16,8 +16,8 @@ const DEVELOPMENT = NODE_ENV === 'production' ? false : true;
 const stylesLoader = 'css-loader?sourceMap!postcss-loader!sass-loader?' +
         'outputStyle=expanded&sourceMap=true&sourceMapContents=true';
 
-const HERE_APP_ID = '\'mXP4DZFBZGyBmuZBKNeo\'';
-const HERE_APP_CODE = '\'kBWb6Z7ZLcuQanT_RoP60A\'';
+const HERE_APP_ID = 'mXP4DZFBZGyBmuZBKNeo';
+const HERE_APP_CODE = 'kBWb6Z7ZLcuQanT_RoP60A';
 
 const basemaps = JSON.stringify({
     layers: {
@@ -263,8 +263,8 @@ module.exports = function (_path) {
                     APP_NAME: '\'RasterFoundry\'',
                     BASEMAPS: basemaps,
                     API_HOST: '\'\'',
-                    HERE_APP_ID: HERE_APP_ID,
-                    HERE_APP_CODE: HERE_APP_CODE
+                    HERE_APP_ID: '\'' + HERE_APP_ID + '\'',
+                    HERE_APP_CODE: '\'' + HERE_APP_CODE + '\''
                 }
             })
         ]
