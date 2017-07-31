@@ -90,35 +90,42 @@ export default class ChannelHistogramController {
 
         if ('corrections' in changesObj && changesObj.corrections.currentValue) {
             let corr = changesObj.corrections.currentValue;
+            let tileClipping = {
+                min:
+                Number.isInteger(corr.tileClipping.min) ? corr.tileClipping.min : this.minClip,
+                max:
+                Number.isInteger(corr.tileClipping.max) ? corr.tileClipping.max : this.maxClip
+            };
+
             Object.assign(
                 this.clipping.rgb,
-                {min: corr.tileClipping.min, max: corr.tileClipping.max}
+                {min: tileClipping.min, max: tileClipping.max}
             );
             Object.assign(
                 this.clipping.red,
                 {
                     min: Number.isInteger(corr.bandClipping.redMin) ?
-                        corr.bandClipping.redMin : corr.tileClipping.min,
+                        corr.bandClipping.redMin : tileClipping.min,
                     max: Number.isInteger(corr.bandClipping.redMax) ?
-                        corr.bandClipping.redMax : corr.tileClipping.max
+                        corr.bandClipping.redMax : tileClipping.max
                 }
             );
             Object.assign(
                 this.clipping.green,
                 {
                     min: Number.isInteger(corr.bandClipping.greenMin) ?
-                        corr.bandClipping.greenMin : corr.tileClipping.min,
+                        corr.bandClipping.greenMin : tileClipping.min,
                     max: Number.isInteger(corr.bandClipping.greenMax) ?
-                        corr.bandClipping.greenMax : corr.tileClipping.max
+                        corr.bandClipping.greenMax : tileClipping.max
                 }
             );
             Object.assign(
                 this.clipping.blue,
                 {
                     min: Number.isInteger(corr.bandClipping.blueMin) ?
-                        corr.bandClipping.blueMin : corr.tileClipping.min,
+                        corr.bandClipping.blueMin : tileClipping.min,
                     max: Number.isInteger(corr.bandClipping.blueMax) ?
-                        corr.bandClipping.blueMax : corr.tileClipping.max
+                        corr.bandClipping.blueMax : tileClipping.max
                 }
             );
         }
