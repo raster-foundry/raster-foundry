@@ -30,7 +30,7 @@ class Projects(_tableTag: Tag) extends Table[Project](_tableTag, "projects")
 {
   def * = (id, createdAt, modifiedAt, organizationId, createdBy, modifiedBy, owner, name,
     slugLabel, description, visibility, tileVisibility, isAOIProject, aoiCadenceMillis,
-    aoisLastChecked, tags, extent, manualOrder) <> (Project.tupled, Project.unapply)
+    aoisLastChecked, tags, extent, manualOrder, isSingleBand, singleBandOptions) <> (Project.tupled, Project.unapply)
 
   val id: Rep[UUID] = column[UUID]("id", O.PrimaryKey)
   val createdAt: Rep[Timestamp] = column[Timestamp]("created_at")
@@ -50,6 +50,8 @@ class Projects(_tableTag: Tag) extends Table[Project](_tableTag, "projects")
   val isAOIProject: Rep[Boolean] = column[Boolean]("is_aoi_project", O.Default(false))
   val aoiCadenceMillis: Rep[Long] = column[Long]("aoi_cadence_millis")
   val aoisLastChecked: Rep[Timestamp] = column[Timestamp]("aois_last_checked")
+  val isSingleBand: Rep[Boolean] = column[Boolean]("is_single_band", O.Default(false))
+  val singleBandOptions: Rep[Option[SingleBandOptions.Params]] = column[Option[SingleBandOptions.Params]]("single_band_options")
 
   lazy val organizationsFk = foreignKey("projects_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val createdByUserFK = foreignKey("projects_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
@@ -337,12 +339,12 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
     } yield (
       updateProject.modifiedAt, updateProject.modifiedBy, updateProject.name, updateProject.description,
       updateProject.visibility, updateProject.tileVisibility, updateProject.tags, updateProject.aoiCadenceMillis,
-      updateProject.aoisLastChecked
+      updateProject.aoisLastChecked, updateProject.isSingleBand, updateProject.singleBandOptions
     )
     database.db.run {
       updateProjectQuery.update(
         (updateTime, user.id, project.name, project.description, project.visibility, project.tileVisibility, project.tags,
-         project.aoiCadenceMillis, project.aoisLastChecked)
+         project.aoiCadenceMillis, project.aoisLastChecked, project.isSingleBand, project.singleBandOptions)
       )
     } map {
       case 1 => 1
