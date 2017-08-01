@@ -54,6 +54,7 @@ services:
     image: openjdk:8-jre
     links:
       - postgres:database.service.rasterfoundry.internal
+      - memcached:tile-cache.service.rasterfoundry.internal
     external_links:
       - airflow-webserver:airflow.service.rasterfoundry.internal
       - statsd
