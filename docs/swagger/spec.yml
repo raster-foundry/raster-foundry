@@ -2577,6 +2577,16 @@ definitions:
     - $ref: '#/definitions/BaseModel'
     - $ref: '#/definitions/UserTrackingMixin'
     - type: object
+      required:
+        - name
+        - description
+        - visibility
+        - tileVisibility
+        - tags
+        - extent
+        - manualOrder
+        - isAOIProject
+        - isSingleBand
       properties:
         name:
           type: string
@@ -2615,6 +2625,42 @@ definitions:
         isAOIProject:
           type: boolean
           description: Is true if project is an area-of-interest project
+        isSingleBand:
+          type: boolean
+          description: Is true if the project is being viewed in single band mode
+        singleBandOptions:
+          type: object
+          properties:
+            band:
+              type: number
+              format: integer
+              description: the 0-indexed band to use 
+            dataType:
+              type: string
+              description: How to display the data
+              enum:
+                - DIVERGING
+                - SEQUENTIAL
+                - CATEGORICAL
+            blendMode:
+              type: string
+              description: Blending mode
+              enum:
+                - CONTINUOUS
+                - DISCRETE
+                - NONE
+            colorScheme:
+              type: object
+              description: 'mapping of raster values to pixel colors eg: {"0" : "rgb(255,255,255)"}'
+            legendOrientation:
+              type: string
+              description: Orientation of the color legend
+              enum:
+                - LEFT
+                - RIGHT
+                - TOP
+                - BOTTOM
+                - HIDDEN
   Image:
     allOf:
     - $ref: '#/definitions/BaseModel'
