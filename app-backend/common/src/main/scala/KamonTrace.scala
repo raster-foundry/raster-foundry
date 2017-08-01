@@ -1,4 +1,4 @@
-package com.azavea.rf.tile
+package com.azavea.rf.common
 
 import kamon.Kamon
 import kamon.metric.instrument.Time
@@ -7,7 +7,7 @@ import kamon.trace.Tracer
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-trait KamonTrace {
+trait KamonTraceRF {
   def traceName[T](name: String)(code: => T): T = {
     Kamon.metrics.counter(name).increment()
     Tracer.currentContext.withNewSegment(name, "com.azavea.rf", "tile")(code)
