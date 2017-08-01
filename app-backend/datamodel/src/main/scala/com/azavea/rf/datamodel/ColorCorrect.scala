@@ -170,15 +170,19 @@ object ColorCorrect {
 
   def apply(rgbTile: MultibandTile, rgbHist: Array[Histogram[Double]], params: Params): MultibandTile = {
     var _rgbTile = rgbTile
+    var _rgbHist = rgbHist
     val gammas = params.getGamma
-    if (params.equalize.enabled) _rgbTile = HistogramEqualization(rgbTile, rgbHist)
+    if (params.equalize.enabled) {
+      _rgbTile = HistogramEqualization(rgbTile, rgbHist)
+      _rgbHist = _rgbTile.histogramDouble()
+    }
 
     val layerRgbClipping = {
       val range = 1 until 255
       var isCorrected = true
       val iMaxMin: Array[(Int, Int)] = Array.ofDim(3)
-      cfor(0)(_ < rgbHist.length, _ + 1) { index =>
-        val hst = rgbHist(index)
+      cfor(0)(_ < _rgbHist.length, _ + 1) { index =>
+        val hst = _rgbHist(index)
         val imin = hst.minValue().map(_.toInt).getOrElse(0)
         val imax = hst.maxValue().map(_.toInt).getOrElse(255)
         iMaxMin(index) = (imin, imax)
