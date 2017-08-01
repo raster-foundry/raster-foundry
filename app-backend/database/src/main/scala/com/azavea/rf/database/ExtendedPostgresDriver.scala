@@ -44,6 +44,12 @@ trait ExtendedPostgresDriver extends ExPostgresDriver
         case Left(e) => throw e
       })
 
+    implicit val singleBandOptionsParamsMapper = MappedJdbcType.base[SingleBandOptions.Params, Json](_.asJson,
+      _.as[SingleBandOptions.Params] match {
+        case Right(ast) => ast
+        case Left(e) => throw e
+      })
+
     implicit val userRoleTypeMapper = createEnumJdbcType[UserRole]("UserRole", _.repr,
       UserRole.fromString, quoteName = false)
     implicit val userRoleTypeListMapper = createEnumListJdbcType[UserRole]("UserRole",

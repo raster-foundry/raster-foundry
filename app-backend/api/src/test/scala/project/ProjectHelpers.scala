@@ -21,22 +21,22 @@ trait ProjectSpecHelper {
 
   val newProject1 = Project.Create(
     publicOrgId, "Test One", "This is the first test project", Visibility.Public,
-    Visibility.Private, false, Project.DEFAULT_CADENCE, None, List("testing")
+    Visibility.Private, false, Project.DEFAULT_CADENCE, None, List("testing"), false, None
   )
 
   val newProject2 = Project.Create(
     publicOrgId, "Test Two", "This is the second test project", Visibility.Public,
-    Visibility.Private, false, Project.DEFAULT_CADENCE, None, List("testing")
+    Visibility.Private, false, Project.DEFAULT_CADENCE, None, List("testing"), false, None
   )
 
   val newProject3 = Project.Create(
     publicOrgId, "Test Three", "This is the third test project", Visibility.Public,
-    Visibility.Private, false, Project.DEFAULT_CADENCE, None, List("testing")
+    Visibility.Private, false, Project.DEFAULT_CADENCE, None, List("testing"), false, None
   )
 
   val newProject4 = Project.Create(
     publicOrgId, "Test Three", "This is the third test project", Visibility.Private,
-    Visibility.Private, false, Project.DEFAULT_CADENCE, None, List("testing")
+    Visibility.Private, false, Project.DEFAULT_CADENCE, None, List("testing"), false, None
   )
 
   val landsatId = UUID.fromString("697a0b91-b7a8-446e-842c-97cda155554d")
