@@ -114,7 +114,7 @@ lazy val testDependencies = List(
 )
 
 lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
-    testDependencies ++ metricsDependencies ++ Seq(
+  testDependencies ++ metricsDependencies ++ Seq(
   Dependencies.akka,
   Dependencies.akkahttp,
   Dependencies.akkaHttpCors,
@@ -147,7 +147,8 @@ lazy val api = Project("api", file("api"))
 lazy val common = Project("common", file("common"))
   .dependsOn(database, datamodel)
   .settings(apiSettings:_*)
-  .settings({libraryDependencies ++= testDependencies ++ Seq(
+  .settings({libraryDependencies ++= metricsDependencies ++
+    testDependencies ++ Seq(
     Dependencies.jwtCore,
     Dependencies.json4s,
     Dependencies.jwtJson,
