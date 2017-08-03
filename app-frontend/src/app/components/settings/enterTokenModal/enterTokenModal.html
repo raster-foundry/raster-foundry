@@ -1,0 +1,22 @@
+<div class="modal-content">
+  <div class="modal-header">
+    <h4 class="modal-title">{{$ctrl.resolve.title}}</h4>
+  </div>
+  <div class="modal-body">
+    <input type="text"
+           class="form-control"
+           placeholder="Enter API Token"
+           ng-model="$ctrl.inputValue"
+    >
+  </div>
+  <div class="modal-footer">
+    <div class="pull-left">
+      <button
+        ng-click="$ctrl.dismiss()"
+        class="btn">Cancel</button>
+    </div>
+    <button
+      ng-click="$ctrl.close({$value: $ctrl.inputValue})"
+      class="btn btn-primary">Save</button>
+  </div>
+</div>

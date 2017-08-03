@@ -1,4 +1,4 @@
-export default class SelectedScenesModalController {
+export default class refreshTokenModalController {
     constructor() {
         'ngInject';
         this.refreshToken = this.resolve.refreshToken;

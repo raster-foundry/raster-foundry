@@ -8,14 +8,14 @@
 </div>
 <div class="modal-body">
   <div class="form-group all-in-one stacked">
-    <input class="form-control" 
-           placeholder="Token hidden" 
-           type="text" 
-           ng-if="!$ctrl.showToken" 
+    <input class="form-control"
+           placeholder="Token hidden"
+           type="text"
+           ng-if="!$ctrl.showToken"
            readonly>
-    <input class="form-control" 
-           type="text" 
-           ng-model="$ctrl.refreshToken" 
+    <input class="form-control"
+           type="text"
+           ng-model="$ctrl.refreshToken"
            ng-if="$ctrl.showToken"
            readonly>
     <button class="btn btn-link" ng-click="$ctrl.toggleTokenVisibility()">
