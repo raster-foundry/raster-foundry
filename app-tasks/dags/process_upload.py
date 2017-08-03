@@ -3,11 +3,13 @@ import os
 from datetime import datetime
 
 from airflow.operators.python_operator import PythonOperator
-
 from airflow.models import DAG
+
+import planet
 
 from rf.models import Upload
 from rf.uploads.geotiff.factories import GeoTiffS3SceneFactory
+from rf.uploads.planet.factories import PlanetSceneFactory
 from rf.utils.io import get_session
 from rf.utils.exception_reporting import wrap_rollbar
 
@@ -44,18 +46,36 @@ HOST = os.getenv('RF_HOST')
 def process_upload(*args, **kwargs):
     """Import scenes for a given upload"""
 
-    logger.info('Processing geotiff uploads...')
+    logger.info('Processing uploads...')
     conf = kwargs['dag_run'].conf
 
+    logger.info('Getting upload')
     upload_id = conf.get('uploadId')
     upload = Upload.from_id(upload_id)
+    logger.info('Updating upload status')
     upload.update_upload_status('Processing')
 
     logger.info('Processing upload (%s) for user %s with files %s',
                 upload.id, upload.owner, upload.files)
 
     try:
-        factory = GeoTiffS3SceneFactory(upload)
+        if upload.uploadType.lower() in ['local', 's3']:
+            logger.info('Processing a geotiff upload')
+            factory = GeoTiffS3SceneFactory(upload)
+        elif upload.uploadType.lower() == 'planet':
+            logger.info('Processing a planet upload. This might take a while...')
+            factory = PlanetSceneFactory(
+                upload.files,
+                upload.datasource,
+                upload.organizationId,
+                upload.id,
+                upload.visibility,
+                [],
+                upload.owner,
+                planet.api.ClientV1(upload.metadata.get('planetKey'))
+            )
+        else:
+            raise Exception('upload type didn\'t make any sense')
         scenes = factory.generate_scenes()
         logger.info('Creating scene objects for upload %s, preparing to POST to API', upload.id)
 

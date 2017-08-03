@@ -1,4 +1,4 @@
-# Factories to create scenes from different geotiff upload destinations
+# Factories to create scenes from geotiffs on disk somewhere
 import logging
 import os
 import tempfile
