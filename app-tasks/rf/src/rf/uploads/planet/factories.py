@@ -61,8 +61,6 @@ class PlanetSceneFactory(object):
         s3_client = boto3.client('s3')
         item_type, item_id = planet_id.split(':')
         item = self.client.get_item(item_type, item_id).get()
-        if item_type.startswith('RE'):
-            raise Exception('RapidEye items don\'t have assets. Bailing.')
         item_id = item['id']
         asset_type = 'basic_analytic'
         s3_path = 'user-uploads/{}/{}/{}-{}-{}.tif'.format(
