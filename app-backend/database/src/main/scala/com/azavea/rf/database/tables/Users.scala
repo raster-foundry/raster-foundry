@@ -168,11 +168,27 @@ object Users extends TableQuery(tag => new Users(tag)) with LazyLogging {
     val updateQuery = for {
       u <- Users.filter(_.id === id)
     } yield (
-      u.organizationId, u.role, u.modifiedAt
+      u.organizationId, u.role, u.modifiedAt, u.planetCredential
     )
 
     database.db.run {
-      updateQuery.update((user.organizationId, user.role, now))
+      updateQuery.update((user.organizationId, user.role, now, user.planetCredential))
+    } map {
+      case 1 => 1
+      case _ => throw new IllegalStateException("Error while updating user: Unexpected result")
+    }
+  }
+
+  def updateSelf(user: User, updatedUser: User)(implicit database: DB): Future[Int] = {
+    val now = new Timestamp((new java.util.Date).getTime)
+    val updateQuery = for {
+      u <- Users.filter(_.id === user.id)
+    } yield (
+       u.modifiedAt, u.planetCredential
+    )
+
+    database.db.run {
+      updateQuery.update((now, updatedUser.planetCredential))
     } map {
       case 1 => 1
       case _ => throw new IllegalStateException("Error while updating user: Unexpected result")

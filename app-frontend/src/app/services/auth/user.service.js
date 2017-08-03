@@ -1,9 +1,15 @@
+/* globals BUILDCONFIG */
+
 export default (app) => {
     class UserService {
-        constructor($resource, authService, APP_CONFIG, localStorage) {
+        constructor(
+            $resource, $q, localStorage,
+            authService, APP_CONFIG
+        ) {
             'ngInject';
             this.authService = authService;
             this.localStorage = localStorage;
+            this.$q = $q;
 
             this.UserMetadata = $resource(
                 'https://' + APP_CONFIG.auth0Domain +
@@ -19,6 +25,12 @@ export default (app) => {
                         cache: false
                     }
                 });
+            this.User = $resource(`${BUILDCONFIG.API_HOST}/api/users/me`, { }, {
+                update: {
+                    method: 'PUT',
+                    cache: false
+                }
+            });
         }
 
         updateUserMetadata(userdata) {
@@ -31,6 +43,17 @@ export default (app) => {
                 this.localStorage.set('profile', res);
                 return res;
             }, (err) => err);
+        }
+
+        updatePlanetToken(token) {
+            return this.$q((resolve, reject) => {
+                this.authService.getCurrentUser().then((user) => {
+                    user.planetCredential = token;
+                    this.User.update(user).$promise.then(() => {
+                        resolve();
+                    }, (err) => reject(err));
+                }, (err) => reject(err));
+            });
         }
     }
 
