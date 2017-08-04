@@ -46,19 +46,22 @@ object MosaicRoutes extends LazyLogging with KamonTrace {
             (bbox, zoom, colorCorrect) =>
               get {
                 complete {
-                  val mosaic = Mosaic.render(projectId, zoom, Option(bbox), colorCorrect)
-                  val poly = Projected(Extent.fromString(bbox).toPolygon(), 4326)
-                    .reproject(LatLng, WebMercator)(3857)
-                  val extent = poly.envelope
                   val future = acceptContentType match {
-                    case Some("image/tiff") => mosaic
-                      .map { m => MultibandGeoTiff(m, extent, WebMercator) }
-                      .map(tiffAsHttpResponse)
-                      .value
-                    case _ => mosaic.map(_.renderPng)
-                      .map(pngAsHttpResponse)
-                      .value
-
+                    case Some("image/tiff") =>
+                      val mosaic = Mosaic.render(projectId, zoom, Option(bbox), colorCorrect)
+                      val poly = Projected(Extent.fromString(bbox).toPolygon(), 4326)
+                        .reproject(LatLng, WebMercator)(3857)
+                      val extent = poly.envelope
+                        mosaic
+                        .map { m => MultibandGeoTiff(m, extent, WebMercator) }
+                        .map(tiffAsHttpResponse)
+                        .value
+                    case _ =>
+                      Mosaic
+                        .render(projectId, zoom, Option(bbox), colorCorrect)
+                        .map(_.renderPng)
+                        .map(pngAsHttpResponse)
+                        .value
                   }
 
                   future onComplete {
