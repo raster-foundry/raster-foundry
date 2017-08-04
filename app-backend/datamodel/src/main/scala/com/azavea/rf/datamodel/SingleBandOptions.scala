@@ -3,6 +3,7 @@ package com.azavea.rf.datamodel
 import com.azavea.rf.datamodel.color._
 
 import io.circe.generic.JsonCodec
+import io.circe.Json
 import geotrellis.raster._
 import geotrellis.raster.equalization.HistogramEqualization
 import geotrellis.raster.histogram.Histogram
@@ -16,7 +17,7 @@ object SingleBandOptions {
     band: Int,
     dataType: BandDataType,
     blendMode: BlendMode,
-    colorScheme: Map[Int, String],
+    colorScheme: Json,
     legendOrientation: String
   )
 }

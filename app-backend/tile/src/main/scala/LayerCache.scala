@@ -61,7 +61,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     )
   }
 
-  def layerHistogram(layerId: UUID, zoom: Int)(implicit projectLayerIds: Set[UUID]): OptionT[Future, Array[Histogram[Double]]] = {
+  def layerHistogram(layerId: UUID, zoom: Int): OptionT[Future, Array[Histogram[Double]]] = {
     val key = s"layer-histogram-${layerId}-${zoom}"
     rfCache.cachingOptionT(key, doCache = cacheConfig.layerAttributes.enabled)(
       OptionT(

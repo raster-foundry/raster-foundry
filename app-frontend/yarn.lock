@@ -6576,10 +6576,6 @@ supports-color@^3.1.0, supports-color@^3.1.1, supports-color@^3.1.2:
   dependencies:
     has-flag "^1.0.0"
 
-svg-pan-zoom@ariutta/svg-pan-zoom:
-  version "3.4.1"
-  resolved "https://codeload.github.com/ariutta/svg-pan-zoom/tar.gz/3b799ecc93ac1b3c4094b5455cafbe84ff025339"
-
 svgo@^0.7.0:
   version "0.7.1"
   resolved "https://registry.yarnpkg.com/svgo/-/svgo-0.7.1.tgz#287320fed972cb097e72c2bb1685f96fe08f8034"

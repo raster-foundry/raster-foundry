@@ -150,7 +150,7 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
           .filter(_.id === projectId)
           .map(_.manualOrder)
           .result
-      }.flatMap { p =>
+      }.flatMap { (p: Seq[Boolean]) =>
         p.headOption match {
           case Some(true) =>
             ScenesToProjects.listManualOrder(projectId, pageRequest)
@@ -215,6 +215,17 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
         .result
         .headOption
     }
+  }
+
+  /*
+   * Use to get a project if we already know the user is authorized to get it.
+   * ONLY USE ON TILE SERVER
+   * @param projectId UUID primary key of project to retrieve
+   */
+  def getProjectPreauthorized(projectId: UUID)(implicit database: DB): Future[Option[Project]] = {
+      database.db.run {
+        Projects.filter(_.id === projectId).result.headOption
+      }
   }
 
   /** Get AOI project and its AOI given a projectId and user
