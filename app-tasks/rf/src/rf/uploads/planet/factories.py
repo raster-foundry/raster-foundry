@@ -38,10 +38,12 @@ class PlanetSceneFactory(object):
     def generate_scenes(self):
         """Create a generator to """
         for planet_id in self.planet_ids:
-            planet_feature = self.copy_asset_to_s3(planet_id)
+            planet_feature, temp_tif_file = self.copy_asset_to_s3(planet_id)
             planet_key = self.client.auth.value
-            yield create_planet_scene(planet_feature, self.datasource, self.organizationId, planet_key,
-                                      self.visibility, self.tags, self.owner)
+            planet_scene = create_planet_scene(planet_feature, self.datasource, self.organizationId, planet_key,
+                                              self.visibility, self.tags, self.owner)
+            delete_file(temp_tif_file)
+            yield planet_scene
 
     def copy_asset_to_s3(self, planet_id):
         """Make the Planet tif available to Rater Foundry
@@ -67,13 +69,12 @@ class PlanetSceneFactory(object):
         temp_tif_file = self.download_planet_tif(asset_type, assets, item_id)
         bucket, s3_path = self.upload_planet_tif(asset_type, item_id, item_type, temp_tif_file)
 
-        delete_file(temp_tif_file)
         item['added_props'] = {}
         item['added_props']['localPath'] = temp_tif_file
         item['added_props']['s3Location'] = 's3://{}/{}'.format(bucket, s3_path)
 
         # Return the json representation of the item
-        return item
+        return item, temp_tif_file
 
     @staticmethod
     def get_asset_type(asset_dict):
@@ -118,7 +119,6 @@ class PlanetSceneFactory(object):
 
         logger.info('Asset activated: %s', item_id)
 
-
     def download_planet_tif(self, asset_type, assets, item_id):
         """Downloads asset to local filesystem, returns path
 
@@ -130,9 +130,11 @@ class PlanetSceneFactory(object):
         Returns:
             str
         """
-        logger.info('Downloading asset for %s', item_id)
+
+        _, temp_tif_file = tempfile.mkstemp()
+        logger.info('Downloading asset: %s to %s', item_id, temp_tif_file)
+
         body = self.client.download(assets[asset_type]).get_body()
-        temp_tif_file = tempfile.mktemp()
         with open(temp_tif_file, 'wb') as outf:
             body.write(file=outf)
 
@@ -153,7 +155,7 @@ class PlanetSceneFactory(object):
         s3_client = boto3.client('s3')
         s3_path = 'user-uploads/{}/{}/{}-{}-{}.tif'.format(self.owner, self.upload_id, item_type, item_id, asset_type)
         bucket = os.getenv('DATA_BUCKET')
-        logger.info('Copying asset for %s to s3', item_id)
+        logger.info('Copying asset: %s (%s => s3://%s/%s)', item_id, temp_tif_file, bucket, s3_path)
         with open(temp_tif_file, 'rb') as inf:
             s3_client.put_object(
                 Bucket=bucket,
