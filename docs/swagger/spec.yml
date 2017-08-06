@@ -2996,6 +2996,7 @@ definitions:
             - DROPBOX
             - S3
             - LOCAL
+            - PLANET
         fileType:
           type: string
           description: type of data being uploaded, limited to two options right now

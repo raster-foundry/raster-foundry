@@ -78,6 +78,10 @@ trait UploadRoutes extends Authentication
             if (newUpload.files.nonEmpty) newUpload
             else throw new IllegalStateException("S3 upload must specify a source if no files are specified")
           }
+          case (UploadType.Planet, None) => {
+            if (newUpload.files.nonEmpty) newUpload
+            else throw new IllegalStateException("Planet upload must specify some ids")
+          }
           case (UploadType.Local, _) => newUpload
           case _ => throw new IllegalStateException("Unsupported import type")
         }
