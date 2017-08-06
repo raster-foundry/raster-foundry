@@ -5,7 +5,7 @@ from datetime import datetime
 from airflow.operators.python_operator import PythonOperator
 from airflow.models import DAG
 
-import planet
+from planet import api
 
 from rf.models import Upload
 from rf.uploads.geotiff.factories import GeoTiffS3SceneFactory
@@ -72,7 +72,7 @@ def process_upload(*args, **kwargs):
                 upload.visibility,
                 [],
                 upload.owner,
-                planet.api.ClientV1(upload.metadata.get('planetKey'))
+                api.ClientV1(upload.metadata.get('planetKey'))
             )
         else:
             raise Exception('upload type didn\'t make any sense')
