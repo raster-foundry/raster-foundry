@@ -1,34 +1,72 @@
-import json
 import os
 import uuid
+import tempfile
 
-
-from botocore.errorfactory import ClientError
 import boto3
+import requests
 
+from rf.models import Scene, Footprint, Thumbnail
+from rf.utils.io import Visibility, JobStatus, IngestStatus, delete_file
 
-from rf.models import Scene, Footprint
-from rf.utils.io import Visibility, JobStatus, IngestStatus
 from .create_footprints import bbox_from_planet_feature
 from ..geotiff.create_images import create_geotiff_image
-from ..geotiff.io import get_geotiff_size_bytes
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-def create_planet_scene(planet_feature, datasource, organization_id,
+def get_planet_thumbnail(organization_id, thumbnail_uri, planet_key, scene_id):
+    """Download planet thumbnail, push to S3, create RF thumbnail
+
+    Args:
+        organization_id (str): organization requiring thumbnail
+        thumbnail_uri (str): source thumbnail
+        planet_key (str): planet API key for authentication
+        scene_id (str): scene to attach thumbnail to
+
+    Returns:
+        Thumbnail
+
+    """
+    _, local_filepath = tempfile.mkstemp()
+    params = {'api_key': planet_key}
+
+    logger.info('Downloading thumbnail for Planet scene: %s', thumbnail_uri)
+    response = requests.get(thumbnail_uri, params=params, stream=True)
+
+    with open(local_filepath, 'wb') as filehandle:
+        for chunk in response.iter_content(1024):
+            filehandle.write(chunk)
+
+    thumbnail_key = '/thumbnails/{}.png'.format(scene_id)
+    logger.info('Uploading thumbnails to S3: %s', thumbnail_key)
+    s3_bucket_name = os.getenv('THUMBNAIL_BUCKET')
+    s3_bucket = boto3.resource('s3').Bucket(s3_bucket_name)
+    s3_bucket.upload_file(local_filepath, thumbnail_key, {'ContentType': 'image/png'})
+    delete_file(local_filepath)
+
+    return Thumbnail(
+        organization_id,
+        256,
+        256,
+        'SMALL',
+        thumbnail_key,
+        sceneId=scene_id
+    )
+
+
+def create_planet_scene(planet_feature, datasource, organization_id, planet_key,
                         visibility=Visibility.PRIVATE, tags=[], owner=None):
     """Create a Raster Foundry scene from Planet scenes
 
     Args:
+        planet_key (str): API auth key for planet API
         planet_feature (dict): json response from planet API client
         datasource (str): UUID of the datasource this scene belongs to
         organization_id (str): UUID of the organization that owns the scene
         visibility (Visibility): visibility for created scene
         tags (str[]): list of tags to attach to the created scene
         owner (str): user ID of the user who owns the scene
-        file_loc (str): location of the downloaded tif
 
     Returns:
         Scene
@@ -85,5 +123,8 @@ def create_planet_scene(planet_feature, datasource, organization_id,
         images=images,
         **scene_kwargs
     )
+
+    thumbnail_url = planet_feature['_links']['thumbnail']
+    scene.thumbnails = [get_planet_thumbnail(organization_id, thumbnail_url, planet_key, scene.id)]
 
     return scene
