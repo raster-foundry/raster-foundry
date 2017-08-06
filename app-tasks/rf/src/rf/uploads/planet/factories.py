@@ -5,10 +5,8 @@ import tempfile
 import time
 
 import boto3
-from botocore.errorfactory import ClientError
-from planet import api
 
-from rf.utils.io import Visibility, download_s3_obj_by_key
+from rf.utils.io import Visibility, delete_file
 from .create_scenes import create_planet_scene
 
 
@@ -41,10 +39,9 @@ class PlanetSceneFactory(object):
         """Create a generator to """
         for planet_id in self.planet_ids:
             planet_feature = self.copy_asset_to_s3(planet_id)
-            yield create_planet_scene(
-                planet_feature, self.datasource, self.organizationId, self.visibility,
-                self.tags, self.owner
-            )
+            planet_key = self.client.auth.value
+            yield create_planet_scene(planet_feature, self.datasource, self.organizationId, planet_key,
+                                      self.visibility, self.tags, self.owner)
 
     def copy_asset_to_s3(self, planet_id):
         """Make the Planet tif available to Rater Foundry
@@ -58,59 +55,109 @@ class PlanetSceneFactory(object):
         Returns:
             dict: geojson for the overview of the planet tif
         """
-        s3_client = boto3.client('s3')
+
         item_type, item_id = planet_id.split(':')
         item = self.client.get_item(item_type, item_id).get()
         item_id = item['id']
-        asset_type = 'basic_analytic'
-        s3_path = 'user-uploads/{}/{}/{}-{}-{}.tif'.format(
-            self.owner, self.upload_id, item_type, item_id, asset_type
-        )
-        bucket = os.getenv('DATA_BUCKET')
 
-        # Downloading imagery is costly, so don't bother if someone has already
-        # added this image and asset type
-        try:
-            obj = s3_client.get_object(Bucket=bucket, Key=s3_path)
-            tf = download_s3_obj_by_key(bucket, s3_path)
-            item['added_props'] = {}
-            item['added_props']['localPath'] = tf
-            item['added_props']['s3Location'] = 's3://{}/{}'.format(bucket, s3_path)
-            return item
-        except ClientError:
-            logger.info('%s has never been imported. Downloading and copying',
-                        item_id)
-
-        # Get and activate assets for the desired item
         assets = self.client.get_assets_by_id(item_type, item_id).get()
+        asset_type = PlanetSceneFactory.get_asset_type(assets)
+        self.activate_asset_and_wait(asset_type, assets, item_id, item_type)
+
+        temp_tif_file = self.download_planet_tif(asset_type, assets, item_id)
+        bucket, s3_path = self.upload_planet_tif(asset_type, item_id, item_type, temp_tif_file)
+
+        delete_file(temp_tif_file)
+        item['added_props'] = {}
+        item['added_props']['localPath'] = temp_tif_file
+        item['added_props']['s3Location'] = 's3://{}/{}'.format(bucket, s3_path)
+
+        # Return the json representation of the item
+        return item
+
+    @staticmethod
+    def get_asset_type(asset_dict):
+        """Helper function to get first asset (analytic/basic_analytic)
+
+        This varies by satellite so this covers our bases
+
+        Args:
+            asset_dict (dict): dictionary of assets related to a planet scene ID
+
+        Returns:
+            str
+        """
+        acceptable_types = ['analytic', 'basic_analytic']
+        logger.info('Determining Analytics Asset Type')
+        for acceptable_type in acceptable_types:
+            if acceptable_type in asset_dict:
+                logger.info('Found acceptable type: %s', acceptable_type)
+                return acceptable_type
+        raise Exception('No acceptable asset types found: %s', asset_dict.keys())
+
+    def activate_asset_and_wait(self, asset_type, assets, item_id, item_type):
+        """Activate and asset to prepare for it to download
+
+        Args:
+            asset_type (str): type of asset (analytic/basic_analytic)
+            assets (dict): assets with related info in a dictionary
+            item_id (str): planet id of scene
+            item_type (str): satellite type of scene
+
+        Returns:
+            None
+        """
         self.client.activate(assets[asset_type])
         try_number = 0
         logger.info('Activating asset for %s', item_id)
         while assets[asset_type]['status'] != 'active':
             if try_number % 5 == 0 and try_number > 0:
-                logger.info('Status after %s tries: %s',
-                            try_number,
-                            assets[asset_type]['status'])
+                logger.info('Status after %s tries: %s', try_number, assets[asset_type]['status'])
             assets = self.client.get_assets_by_id(item_type, item_id).get()
             time.sleep(15)
 
-        # Download the assets for the desired item and write to a tempfile
+        logger.info('Asset activated: %s', item_id)
+
+
+    def download_planet_tif(self, asset_type, assets, item_id):
+        """Downloads asset to local filesystem, returns path
+
+        Args:
+            asset_type (str): type of asset to download
+            assets (dict): dictionary of assets
+            item_id (str): planet id of scene
+
+        Returns:
+            str
+        """
         logger.info('Downloading asset for %s', item_id)
         body = self.client.download(assets[asset_type]).get_body()
-        tf = tempfile.mktemp()
-        with open(tf, 'wb') as outf:
+        temp_tif_file = tempfile.mktemp()
+        with open(temp_tif_file, 'wb') as outf:
             body.write(file=outf)
 
-        # Upload assets for the desired item to s3
+        return temp_tif_file
+
+    def upload_planet_tif(self, asset_type, item_id, item_type, temp_tif_file):
+        """Uploads planet tif to S3 -- returns bucket and path of tile
+
+        Args:
+            asset_type (str): type of asset to upload
+            item_id (str): planet id to upload
+            item_type (str): sensor/satellite type of item to upload
+            temp_tif_file (str): path to temp file to upload
+
+        Returns:
+            (str, str)
+        """
+        s3_client = boto3.client('s3')
+        s3_path = 'user-uploads/{}/{}/{}-{}-{}.tif'.format(self.owner, self.upload_id, item_type, item_id, asset_type)
+        bucket = os.getenv('DATA_BUCKET')
         logger.info('Copying asset for %s to s3', item_id)
-        with open(tf, 'rb') as inf:
+        with open(temp_tif_file, 'rb') as inf:
             s3_client.put_object(
                 Bucket=bucket,
                 Body=inf,
                 Key=s3_path
             )
-        item['added_props'] = {}
-        item['added_props']['localPath'] = tf
-        item['added_props']['s3Location'] = 's3://{}/{}'.format(bucket, s3_path)
-        # Return the json representation of the item
-        return item
+        return bucket, s3_path
