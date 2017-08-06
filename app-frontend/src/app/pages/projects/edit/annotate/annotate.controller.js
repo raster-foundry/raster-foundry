@@ -1,4 +1,4 @@
-/* globals L, _ */
+/* globals L, _, $ */
 
 export default class AnnotateController {
     constructor( // eslint-disable-line max-params
@@ -13,7 +13,6 @@ export default class AnnotateController {
     }
 
     $onInit() {
-        this.importedAnno = {};
         this.annoToExport = {
             'type': 'FeatureCollection',
             features: []
@@ -35,7 +34,17 @@ export default class AnnotateController {
             'features': []
         };
 
+        this.isUpload = true;
+
         this.$scope.$on('$destroy', this.$onDestroy.bind(this));
+
+        $('#btn-upload').change((e) => {
+            this.uploadedData = _.values(e.target.files);
+            if (this.uploadedData.length) {
+                this.isUpload = false;
+                this.$scope.$evalAsync();
+            }
+        });
     }
 
     $onDestroy() {
@@ -82,35 +91,28 @@ export default class AnnotateController {
         });
     }
 
-    importLocalAnnotations() {
-        // TODO import should change filter to its corresponding label when the filter mode is on
-        this.importedAnno = {
-            'type': 'FeatureCollection',
-            'features': [
-                {
-                    'type': 'Feature',
-                    'properties': {
-                        'label': 'Philadelphia',
-                        'description': 'This is Philly.',
-                        'id': new Date().getTime()
-                    },
-                    'geometry': {
-                        'type': 'Polygon',
-                        'coordinates': [
-                            [
-                                [-76.97021484375, 39.62261494094297],
-                                [-74.718017578125, 39.62261494094297],
-                                [-74.718017578125, 40.78885994449482],
-                                [-76.97021484375, 40.78885994449482],
-                                [-76.97021484375, 39.62261494094297]
-                            ]
-                        ]
-                    }
-                }
-            ]
-        };
+    /* eslint-disable no-undef */
+    onImportClick() {
+        if (this.uploadedData.length) {
+            _.forEach(this.uploadedData, (datum) => {
+                let reader = new FileReader();
+                reader.onload = (e) => this.importLocalAnnotations(JSON.parse(e.target.result));
+                reader.readAsText(datum);
+            });
+            this.isUpload = true;
+        }
+    }
+    /* eslint-enable no-undef */
 
-        let importedLayer = this.createLayersOneByOne(this.importedAnno.features);
+    importLocalAnnotations(resultData) {
+        this.filterLabel.name = 'All';
+
+        _.forEach(resultData.features, (f, i) => {
+            f.properties.prevId = f.properties.id;
+            f.properties.id = new Date().getTime() + i;
+        });
+
+        let importedLayer = this.createLayersOneByOne(resultData.features);
         this.getMap().then((mapWrapper) => {
             mapWrapper.setLayer(
                 'Annotation',
@@ -118,7 +120,7 @@ export default class AnnotateController {
                 true
             );
         });
-        this.annoToExport.features = this.annoToExport.features.concat(this.importedAnno.features);
+        this.annoToExport.features = this.annoToExport.features.concat(resultData.features);
 
         this.labelInputs = _.chain(this.annoToExport.features)
                             .map((f) => {
@@ -140,18 +142,28 @@ export default class AnnotateController {
         this.labelInputs = [{'name': 'All', 'id': 0}];
     }
 
-    onAnnotationsExport() {
+    onAnnotationsExport(e) {
         if (this.filteredAnnotations.features && this.filteredAnnotations.features.length) {
-            this.$log.log(this.filteredAnnotations);
+            this.onAnnotationsDownload(e, this.filteredAnnotations);
             if (this.filterLabel.name === 'All') {
                 this.onClearAnnotation();
             }
         } else if (this.annoToExport.features && this.annoToExport.features.length) {
-            this.$log.log(this.annoToExport);
+            this.onAnnotationsDownload(e, this.annoToExport);
             this.onClearAnnotation();
         } else {
-            this.$log.log('Nothing to export.');
+            this.onAnnotationsDownload(e, {'result': 'Nothing to export.'});
         }
+    }
+
+    onAnnotationsDownload(e, annotationData) {
+        let href = `data:text/json;charset=utf-8,${encodeURI(JSON.stringify(annotationData))}`;
+        let dl = angular.element(`<a
+                       href="${href}"
+                       download="rf_annotation_export_${new Date().getTime()}.geojson"></a>`);
+        angular.element(e.target).parent().append(dl);
+        dl[0].click();
+        dl.remove();
     }
 
     onShapeCreating(isCreating) {

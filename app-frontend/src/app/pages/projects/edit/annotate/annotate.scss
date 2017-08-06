@@ -53,3 +53,21 @@
     margin-right: 0px;
     width: 211px;
 }
+
+#btn-upload {
+    width: 0.1px;
+	height: 0.1px;
+	opacity: 0;
+	overflow: hidden;
+	position: absolute;
+	z-index: -1;
+}
+
+#label-upload,
+#label-import {
+    color: #fff;
+    cursor: pointer;
+    font-weight: 500;
+    margin-bottom: 0px;
+    display: inline-block;
+}

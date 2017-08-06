@@ -21,17 +21,27 @@
         <span class="text">This is some text about annotating.</span>
       </div>
       <div class="list-group-right column-6 nogutter btn-group">
+          <button class="btn btn-primary btn-block" type="button" ng-disabled="$ctrl.isCreating">
+            <input type="file"
+                   accept="geojson"
+                   multiple
+                   id="btn-upload"
+                   ng-disabled="$ctrl.isCreating"/>
+            <label for="btn-upload"
+                   ng-show="$ctrl.isUpload"
+                   id="label-upload">
+              Upload
+            </label>
+            <label ng-click="$ctrl.onImportClick()"
+                   ng-show="!$ctrl.isUpload"
+                   id="label-import">
+              Import
+            </label>
+          </button>
         <button
           class="btn btn-primary btn-block"
           type="button"
-          ng-click="$ctrl.importLocalAnnotations()"
-          ng-disabled="$ctrl.isCreating">
-          Import
-        </button>
-        <button
-          class="btn btn-primary btn-block"
-          type="button"
-          ng-click="$ctrl.onAnnotationsExport(geoJsonAnnotation)"
+          ng-click="$ctrl.onAnnotationsExport($event)"
           ng-disabled="$ctrl.isCreating">
           Export
         </button>
