@@ -2,13 +2,17 @@
 /* global document */
 /* global window */
 
-const availableImportTypes = ['local', 'S3'];
+import planetLogo from '../../../../assets/images/planet-logo-light.png';
+import awsS3Logo from '../../../../assets/images/aws-s3.png';
+import dropboxIcon from '../../../../assets/images/dropbox-icon.svg';
+
+const availableImportTypes = ['local', 'S3', 'Planet'];
 
 export default class SceneImportModalController {
     constructor(
         $scope, $state,
         projectService, Upload, uploadService, authService,
-        rollbarWrapperService, datasourceService
+        rollbarWrapperService, datasourceService, userService
     ) {
         'ngInject';
         this.$scope = $scope;
@@ -20,6 +24,11 @@ export default class SceneImportModalController {
         this.rollbarWrapperService = rollbarWrapperService;
         this.datasourceService = datasourceService;
         this.availableImportTypes = availableImportTypes;
+        this.userService = userService;
+
+        this.planetLogo = planetLogo;
+        this.awsS3Logo = awsS3Logo;
+        this.dropboxIcon = dropboxIcon;
     }
 
     $onInit() {
@@ -29,6 +38,7 @@ export default class SceneImportModalController {
             bucket: '',
             prefix: ''
         };
+        this.planetSceneIds = '';
         this.selectedFiles = [];
         this.sceneData = {};
         this.uploadProgressPct = {};
@@ -42,6 +52,14 @@ export default class SceneImportModalController {
         this.$scope.$on('$destroy', () => {
             window.removeEventListener('beforeunload', onWindowUnload);
         });
+
+        this.authService
+            .getCurrentUser()
+            .then(user => {
+                this.hasPlanetCredential = Boolean(user.planetCredential);
+                this.planetCredential = user.planetCredential;
+            });
+
         window.addEventListener('beforeunload', onWindowUnload);
     }
 
@@ -64,14 +82,20 @@ export default class SceneImportModalController {
             next: () => {
                 if (this.importType === 'S3') {
                     return 'METADATA';
+                } else if (this.importType === 'Planet') {
+                    return 'IMPORT_PLANET';
                 }
                 return 'LOCAL_UPLOAD';
             },
             allowNext: () => {
                 if (this.importType === 'local') {
                     return true;
+                } else if (this.importType === 'S3') {
+                    return this.validateS3Config();
+                } else if (this.importType === 'Planet') {
+                    return this.validatePlanetConfig();
                 }
-                return this.validateS3Config();
+                return true;
             },
             allowClose: () => true,
             onExit: () => {
@@ -111,6 +135,11 @@ export default class SceneImportModalController {
         }, {
             name: 'IMPORT_SUCCESS',
             allowDone: () => true
+        }, {
+            name: 'IMPORT_PLANET',
+            previous: () => 'IMPORT',
+            onEnter: () => this.startPlanetUpload(),
+            next: () => 'IMPORT_SUCCESS'
         }, {
             name: 'IMPORT_ERROR',
             allowDone: () => true
@@ -166,6 +195,10 @@ export default class SceneImportModalController {
 
     validateS3Config() {
         return Boolean(this.s3Config.bucket);
+    }
+
+    validatePlanetConfig() {
+        return Boolean(this.planetCredential) && Boolean(this.planetSceneIds);
     }
 
     shouldShowFileList() {
@@ -257,6 +290,21 @@ export default class SceneImportModalController {
             });
     }
 
+    startPlanetUpload() {
+        this.preventInterruptions();
+        this.authService
+            .getCurrentUser()
+            .then(this.createUpload.bind(this))
+            .then(upload => {
+                this.upload = upload;
+                this.uploadsDone();
+                return upload;
+            }, err => {
+                this.uploadError(err);
+                this.handlePrevious();
+            });
+    }
+
     createUpload(user) {
         let uploadObject = {
             files: [],
@@ -275,10 +323,19 @@ export default class SceneImportModalController {
         } else if (this.importType === 'S3') {
             uploadObject.uploadType = 'S3';
             uploadObject.source = encodeURI(this.s3Config.bucket);
+        } else if (this.importType === 'Planet') {
+            uploadObject.uploadType = 'PLANET';
+            uploadObject.metadata.planetKey = this.planetCredential;
+            uploadObject.files = this.planetSceneIds.split(',').map(s => s.trim());
+            if (!this.hasPlanetCredential && this.planetCredential) {
+                this.userService.updatePlanetToken(this.planetCredential);
+            }
         }
+
         if (this.resolve.project) {
             uploadObject.projectId = this.resolve.project.id;
         }
+
         return this.uploadService.create(uploadObject);
     }
 

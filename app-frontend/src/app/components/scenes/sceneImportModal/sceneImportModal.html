@@ -53,7 +53,7 @@
   <!--Body for IMPORT-->
   <div class="modal-body" ng-if="$ctrl.currentStepIs('IMPORT')">
     <div class="content">
-      <h3 class="no-margin">Import your Scenes</h3>
+      <h3 class="no-margin">Import your Imagery</h3>
       <p>Select the source you'd like to import your imagery from.</p>
       <p ng-if="$ctrl.resolve.project">Any scenes created from this import will automatically
         be added to the <strong>{{$ctrl.resolve.project.name}}</strong> project.
@@ -64,19 +64,26 @@
           ng-class="{selected: $ctrl.importType === 'local'}"
           ng-click="$ctrl.setImportType('local')"
         >
-          <div class="text-center"><strong>Local Files</strong></div>
+          <div class="text-center"><strong>Local System</strong></div>
         </rf-box-select-item>
         <rf-box-select-item
-          class="small"
-          ng-class="{selected: $ctrl.importType === 'S3'}"
-          ng-click="$ctrl.setImportType('S3')"
+                class="small"
+                ng-class="{selected: $ctrl.importType === 'S3'}"
+                ng-click="$ctrl.setImportType('S3')"
         >
-          <div class="text-center"><strong>AWS S3</strong></div>
+          <img width="100%" ng-attr-src="{{$ctrl.awsS3Logo}}">
+        </rf-box-select-item>
+        <rf-box-select-item
+                class="small"
+                ng-class="{selected: $ctrl.importType === 'Planet'}"
+                ng-click="$ctrl.setImportType('Planet')"
+        >
+          <img width="100%" ng-attr-src="{{$ctrl.planetLogo}}">
         </rf-box-select-item>
         <rf-box-select-item
           class="small disabled"
         >
-          <div class="text-center"><strong>DropBox</strong></div>
+          <img width="100%" ng-attr-src="{{$ctrl.dropboxIcon}}">
         </rf-box-select-item>
       </div>
       <div ng-if="$ctrl.importType === 'S3'">
@@ -88,15 +95,42 @@
           <div class="form-group">
             <label for="name">S3 Bucket</label>
             <input id="name" type="url" class="form-control"
-                  placeholder="s3://<bucket>/<prefix>/" ng-model="$ctrl.s3Config.bucket">
+                   placeholder="s3://<bucket>/<prefix>/" ng-model="$ctrl.s3Config.bucket">
           </div>
           <div class="form-group color-danger"
-              ng-if="$ctrl.showProjectCreateError && $ctrl.projectCreateErrorText"
+               ng-if="$ctrl.showProjectCreateError && $ctrl.projectCreateErrorText"
           >
-              {{$ctrl.projectCreateErrorText}}
+            {{$ctrl.projectCreateErrorText}}
           </div>
         </form>
       </div>
+
+      <div ng-if="$ctrl.importType === 'Planet'">
+        <p>
+          Enter a list of comma-separated Planet Scene IDs into the text box for import. Note these should match the datasource selected in the previous screen.
+
+        </p>
+        <form>
+          <div class="form-group">
+            <label for="name">Scene IDs</label>
+            <input id="name" type="text" class="form-control"
+                   placeholder="REOrthoTile:20160415_..., REOrthoTile:20160..."
+                   ng-model="$ctrl.planetSceneIds">
+            <span ng-if="!$ctrl.hasPlanetCredential">
+              <label for="name">Planet Key</label>
+              <input id="name" type="text" class="form-control"
+                     placeholder="Planet API Key"
+                     ng-model="$ctrl.planetCredential">
+            </span>
+          </div>
+          <div class="form-group color-danger"
+               ng-if="$ctrl.showProjectCreateError && $ctrl.projectCreateErrorText"
+          >
+            {{$ctrl.projectCreateErrorText}}
+          </div>
+        </form>
+      </div>
+
       <div ng-if="$ctrl.currentError" class="color-danger text-center">
         {{$ctrl.currentError.data}}
       </div>
@@ -220,10 +254,17 @@
     </div>
   </div>
 
-  <!--Body for IMPORT_SUCCESS-->
+  <!--Body for S3 IMPORT_SUCCESS-->
   <div class="modal-body" ng-if="$ctrl.currentStepIs('S3_UPLOAD')">
     <div class="content">
       <h3 class="no-margin text-center">Processing your S3 import</h3>
+    </div>
+  </div>
+
+  <!--Body for Planet IMPORT_SUCCESS-->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('Planet')">
+    <div class="content">
+      <h3 class="no-margin text-center">Importing your planet imagery</h3>
     </div>
   </div>
 
