@@ -354,6 +354,24 @@ paths:
       responses:
         200:
           description: SUCCESS
+          schema:
+            $ref: '#/definitions/Datasource'
+    post:
+      summary: Create a datasource
+      description: |
+        Datasources are sensors that share common metadata, like default color corrections. Scenes from
+        a given datasource can be mosaiced and color corrected together.
+      tags:
+        - Datasources
+      parameters:
+        - $ref: '#/parameters/owner'
+        - $ref: '#/parameters/name'
+      # TODO: fill in all possible responses
+      responses:
+        201:
+          description: SUCCESS
+          schema:
+            $ref: '#/definitions/Datasource'
   /uploads/:
     x-resource: Uploads
     get:
@@ -2472,15 +2490,105 @@ definitions:
       required:
         - name
         - id
+  Geometry:
+      type: object
+      description: GeoJSon geometry
+      discriminator: type
+      required:
+        - type
+      externalDocs:
+        url: http://geojson.org/geojson-spec.html#geometry-objects
+      properties:
+        type:
+          type: string
+          enum:
+            - MultiPolygon
+          description: the geometry type
+  Point2D:
+      type: array
+      maxItems: 2
+      minItems: 2
+      items:
+        type: number
+  MultiPolygon:
+      type: object
+      description: GeoJson geometry
+      externalDocs:
+        url: http://geojson.org/geojson-spec.html#id6
+      allOf:
+        - $ref: "#/definitions/Geometry"
+        - properties:
+            coordinates:
+              type: array
+              items:
+                type: array
+                items:
+                  type: array
+                  items:
+                    $ref: '#/definitions/Point2D'
+  Composite:
+    type: object
+    description: mapping of bands to RGB
+    properties:
+      label:
+        type: string
+        description: Human readable label for color composite to describe what it is useful for (e.g. natural color)
+      value:
+        type: object
+        properties:
+          redBand:
+            type: integer
+          greenBand:
+            type: integer
+          blueBand:
+            type: integer
+
+
+  DatasourceCreated:
+    type: object
+    description: Grouping of imagery by creation source
+    allOf:
+      - type: object
+        properties:
+          visibility:
+            type: string
+            description: Level of restriction on viewing
+            enum:
+              - PUBLIC
+              - ORGANIZATION
+              - PRIVATE
+          organizationId:
+            type: string
+            description: uuid for organization
+          name:
+            type: string
+            description: human label name for datasource
+          extras:
+            type: object
+            description: additional related information for a datasource
+          composites:
+            $ref: '#/definitions/Composite'
+
+  Datasource:
+    allOf:
+      - $ref: '#/definitions/BaseModel'
+      - $ref: '#/definitions/UserTrackingMixin'
+      - $ref: '#/definitions/TimeModelMixin'
+      - $ref: '#/definitions/DatasourceCreated'
+
   Scene:
     allOf:
       - $ref: '#/definitions/BaseModel'
       - $ref: '#/definitions/UserTrackingMixin'
+      - $ref: '#/definitions/TimeModelMixin'
       - type: object
         properties:
           name:
             type: string
             description: The display name of the project
+          ingestLocation:
+            type: string
+            description: Where scene is ingested (pyramided/tiled)
           ingestSizeBytes:
             type: integer
             description: Size of ingested data in bytes.
@@ -2495,7 +2603,7 @@ definitions:
             type: array
             description: Tags associated with image
             items:
-              - type: string
+              type: string
           images:
             type: array
             items:
@@ -2508,15 +2616,13 @@ definitions:
             type: string
             format: uuid
             description: Data source scene originated from
-          # TODO: make work with geometry objects
           dataFootprint:
+            $ref: '#/definitions/MultiPolygon'
             description: polygon for which this scene has data
-            type: object
             readOnly: true
-          # TODO: make work with geometry objects
           tileFootprint:
-            type: object
-            description: polygon enclosing this scene
+            $ref: '#/definitions/MultiPolygon'
+            description: polygon for tile
             readOnly: true
           sceneMetadata:
             type: object
@@ -2529,7 +2635,7 @@ definitions:
               Metadata files that should be present for processing all
               images in a scene (e.g. relevant .mtl files or .xml)
             items:
-              - type: string
+              type: string
           filterFields:
             $ref: '#/definitions/FilterFields'
           statusFields:
@@ -2589,8 +2695,8 @@ definitions:
   SceneGrid:
     type: array
     items:
-      - type: number
-        format: integer
+      type: number
+      format: integer
     readOnly: true
 
   Project:
@@ -2598,16 +2704,6 @@ definitions:
     - $ref: '#/definitions/BaseModel'
     - $ref: '#/definitions/UserTrackingMixin'
     - type: object
-      required:
-        - name
-        - description
-        - visibility
-        - tileVisibility
-        - tags
-        - extent
-        - manualOrder
-        - isAOIProject
-        - isSingleBand
       properties:
         name:
           type: string
@@ -2636,7 +2732,7 @@ definitions:
         tags:
           type: array
           items:
-            - type: string
+            type: string
         extent:
           type: object
           description: GeoJSON Geometry of project extent
@@ -2646,42 +2742,6 @@ definitions:
         isAOIProject:
           type: boolean
           description: Is true if project is an area-of-interest project
-        isSingleBand:
-          type: boolean
-          description: Is true if the project is being viewed in single band mode
-        singleBandOptions:
-          type: object
-          properties:
-            band:
-              type: number
-              format: integer
-              description: the 0-indexed band to use 
-            dataType:
-              type: string
-              description: How to display the data
-              enum:
-                - DIVERGING
-                - SEQUENTIAL
-                - CATEGORICAL
-            blendMode:
-              type: string
-              description: Blending mode
-              enum:
-                - CONTINUOUS
-                - DISCRETE
-                - NONE
-            colorScheme:
-              type: object
-              description: 'mapping of raster values to pixel colors eg: {"0" : "rgb(255,255,255)"}'
-            legendOrientation:
-              type: string
-              description: Orientation of the color legend
-              enum:
-                - LEFT
-                - RIGHT
-                - TOP
-                - BOTTOM
-                - HIDDEN
   Image:
     allOf:
     - $ref: '#/definitions/BaseModel'
@@ -2760,6 +2820,9 @@ definitions:
   Band:
     type: object
     properties:
+      id:
+        type: string
+        format: UUID
       image:
         type: string
         format: UUID
@@ -2776,6 +2839,7 @@ definitions:
   Thumbnail:
     allOf:
     - $ref: '#/definitions/BaseModel'
+    - $ref: '#/definitions/TimeModelMixin'
     - type: object
       properties:
         widthPx:
@@ -3017,7 +3081,6 @@ definitions:
             - DROPBOX
             - S3
             - LOCAL
-            - PLANET
         fileType:
           type: string
           description: type of data being uploaded, limited to two options right now
@@ -3042,6 +3105,8 @@ definitions:
         source:
           type: string
           description: for uploads of type S3 and Dropbox, the location of the files to import. If files are specified, this field is ignored
+        sceneMetadata:
+          $ref: '#/definitions/UploadMetadata'
   Upload:
     allOf:
     - $ref: '#/definitions/BaseModel'
@@ -3055,6 +3120,15 @@ definitions:
             type: string
         metadata:
           type: object
+  UploadMetadata:
+    type: object
+    properties:
+      sceneCloudCover:
+        type: number
+        format: float32
+      sceneAcquisitionDate:
+        type: string
+        format: datetime
   UploadPaginated:
     allOf:
     - $ref: '#/definitions/PaginatedResponse'
