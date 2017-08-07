@@ -1,7 +1,7 @@
 /* globals window screen document */
 import dropboxIcon from '../../../../assets/images/dropbox-icon.svg';
 import dropboxWordmark from '../../../../assets/images/dropbox-wordmark.svg';
-import planetLogo from '../../../../assets/images/planetLogo.svg';
+import planetLogo from '../../../../assets/images/planet-logo-light.png';
 
 class ConnectionsController {
     constructor(
