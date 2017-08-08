@@ -124,7 +124,7 @@ def extract_polygon(mask_tif_path):
         mask_tif_path (str): path to tif to extract geojson from
 
     Returns:
-        str: path to geojson file
+        list: transformed coordinates of the polygon
     """
 
     with rasterio.open(mask_tif_path, 'r') as src:

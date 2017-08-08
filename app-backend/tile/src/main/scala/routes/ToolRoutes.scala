@@ -19,12 +19,10 @@ import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 import geotrellis.raster._
 import geotrellis.raster.render._
-import kamon.akka.http.KamonTraceDirectives
 
 import java.util.UUID
 import scala.concurrent._
 import scala.concurrent.ExecutionContext.Implicits.global
-
 
 class ToolRoutes(implicit val database: Database) extends Authentication
     with LazyLogging
@@ -114,7 +112,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
 
   /** The central endpoint for ModelLab; serves TMS tiles given a [[ToolRun]] specification */
   def tms(
-    source: (RFMLRaster, Int, Int, Int) => Future[Option[Tile]]
+    source: (RFMLRaster, Boolean, Int, Int, Int) => Future[Option[TileWithNeighbors]]
   ): Route =
     (handleExceptions(interpreterExceptionHandler) & handleExceptions(circeDecodingError)) {
       pathPrefix(JavaUUID){ (toolRunId) =>
@@ -132,7 +130,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
                     (toolRun, tool) <- LayerCache.toolAndToolRun(toolRunId, user)
                     (ast, params)   <- LayerCache.toolEvalRequirements(toolRunId, nodeId, user)
                     tile            <- OptionT({
-                      val tms = Interpreter.interpretTMS(ast, params.sources, params.overrides, source)
+                      val tms = Interpreter.interpretTMS(ast, params.sources, params.overrides, source, 256)
                       logger.debug(s"Attempting to retrieve TMS tile at $z/$x/$y")
                       tms(z, x, y).map {
                         case Valid(op) => op.evaluateDouble

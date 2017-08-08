@@ -6,6 +6,8 @@ export default {
     bindings: {
         onPreview: '&',
         onShare: '&',
+        onParameterChange: '&',
+        onGraphComplete: '&',
         toolDefinition: '<',
         toolParameters: '<'
     }

@@ -1,8 +1,6 @@
 package com.azavea.rf.tile
 
 import com.typesafe.config.ConfigFactory
-import scala.concurrent.duration._
-import java.util.concurrent.TimeUnit
 
 trait Config {
   val config = ConfigFactory.load().getConfig("tile-server")
@@ -17,4 +15,7 @@ trait Config {
 
   lazy val defaultBucket: String =
     config.getString("bucket")
+
+  lazy val withCaching: Boolean =
+    config.getBoolean("cache.enabled")
 }

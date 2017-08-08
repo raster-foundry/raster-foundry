@@ -47,6 +47,7 @@ export default class ProjectsEditController {
                         this.projectUpdateListeners.forEach((wait) => {
                             wait.resolve(project);
                         });
+                        this.getSceneList();
                         if (this.project.isAOIProject) {
                             this.getPendingSceneList();
                         }
@@ -55,7 +56,6 @@ export default class ProjectsEditController {
                         this.loadingProject = false;
                     }
                 );
-                this.getSceneList();
             } else {
                 this.$state.go('projects.list');
             }

@@ -16,7 +16,7 @@ class AuthSpec extends WordSpec
 
   "tile authentication" should {
     "reject anonymous users" in {
-      Get("/tiles") ~> router.root ~> check {
+      Get("/tiles/tools") ~> router.root ~> check {
         rejection
       }
     }
@@ -24,7 +24,7 @@ class AuthSpec extends WordSpec
 
   "tile authentication" should {
     "reject invalid tokens" in {
-      Get("/tiles?token=not-valid") ~> router.root ~> check {
+      Get("/tiles/tools?token=not-valid") ~> router.root ~> check {
         rejection
       }
     }

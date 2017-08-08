@@ -1,0 +1,68 @@
+<div class="map-container"></div>
+<div class="map-container-controls">
+  <button class="btn btn-default btn-square btn-small"
+          title="Zoom In"
+          ng-click="$ctrl.zoomIn()">
+    <span class="icon-plus"></span>
+  </button>
+  <div class="map-zoom" title="Current Zoom">{{$ctrl.map.getZoom()}}</div>
+  <button class="btn btn-default btn-square btn-small"
+          title="Zoom Out"
+          ng-click="$ctrl.zoomOut()">
+    <span class="icon-minus"></span>
+  </button>
+  <div class="filler"></div>
+  <div class="map-control">
+    <button class="btn btn-default btn-square btn-small"
+            title="Layers"
+            ng-click="$ctrl.toggleLayerPicker($event)">
+      <span class="icon-project"></span>
+    </button>
+    <div class="dropdown-control layer-picker"
+         ng-show="$ctrl.layerPickerOpen"
+         ng-click="$ctrl.cancelPropagation($event)">
+      <div class="layer-picker-title">Basemap and Layers</div>
+      <div class="dropdown-arrow"></div>
+      <div class="layer-picker-body">
+        <div class="layer-picker-option"
+             ng-repeat="layer in $ctrl.basemapKeys"
+             ng-style="$ctrl.getBasemapStyle(layer)"
+             ng-click="$ctrl.setBasemap(layer)"
+             ng-attr-title="{{layer}}"
+        >
+          <div class="layer-picker-label"></div>
+          <button class="btn btn-default btn-square"
+                  ng-class="{'hide-icon': $ctrl.mapWrapper.currentBasemap !== layer}">
+            <span class="icon-check" ></span>
+          </button>
+        </div>
+        <div class="layer-picker-divider"></div>
+        <div class="layer-picker-option"
+             ng-click="$ctrl.toggleLayer(layerId)"
+             ng-repeat="layerId in $ctrl.toggleableLayers()">
+          <div class="layer-picker-label">
+            {{layerId}}
+          </div>
+          <button class="btn btn-default btn-square">
+            <span class="icon-check" ng-class="{'hide-icon': !$ctrl.layerEnabled(layerId)}"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="filler"></div>
+  <button class="btn btn-square btn-small"
+          title="Compare"
+          ng-class="{'btn-default': !$ctrl.comparing,
+                     'btn-tertiary': $ctrl.comparing}"
+          ng-click="$ctrl.onCompareClick()">
+    <span class="icon-compare"></span>
+  </button>
+  <div class="filler"></div>
+  <button class="btn btn-default btn-square btn-small"
+          title="Close"
+          ng-click="$ctrl.onClose()">
+    <span class="icon-close"></span>
+  </button>
+</div>

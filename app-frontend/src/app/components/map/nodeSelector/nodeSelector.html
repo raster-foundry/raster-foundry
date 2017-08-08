@@ -1,0 +1,38 @@
+<div class="node-header-colorblock"
+     ng-class="{'node-type-input': $ctrl.selectedType === 'src',
+                'node-type-function': $ctrl.selectedType === 'function'}"
+></div>
+<div class="node-selector-dropdown">
+  <button
+    class="btn btn-transparent btn-text"
+    ng-if="!$ctrl.showSearch"
+    ng-click="$ctrl.startSelecting()"
+  >
+    {{$ctrl.selectedLabel}}
+    <span class="icon-caret-down"></span>
+  </button>
+  <div class="node-select" ng-if="$ctrl.showSearch">
+    <input
+      type="text"
+      class="node-filter"
+      ng-model="$ctrl.selectFilter"
+      ng-click="$event.stopPropagation()"
+    >
+    <div class="node-selections">
+      <div class="node-option"
+           ng-class="{'selected': node.id === $ctrl.selected}"
+           ng-click="$ctrl.selectNode(node)"
+           ng-attr-title="{{node.label}}"
+           ng-repeat="node in $ctrl.nodes | filter:{label: $ctrl.selectFilter}">
+        {{node.label}}
+      </div>
+    </div>
+  </div>
+</div>
+<div class="node-selector-close">
+  <button type="button"
+          class="btn btn-transparent btn-text"
+          ng-click="$ctrl.onClose({side: $ctrl.side})">
+    <span class="icon-close"></span>close
+  </button>
+</div>

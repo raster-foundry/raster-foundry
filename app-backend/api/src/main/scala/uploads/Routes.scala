@@ -1,12 +1,13 @@
 package com.azavea.rf.api.uploads
 
+import java.net.URI
 import java.util.UUID
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
-import com.azavea.rf.common.{Airflow, Authentication, CommonHandlers, UserErrorHandler}
+import com.azavea.rf.common.{Airflow, Authentication, CommonHandlers, UserErrorHandler, S3}
 import com.azavea.rf.database.tables.Uploads
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.{ActionRunner, Database}
@@ -64,11 +65,32 @@ trait UploadRoutes extends Authentication
   def createUpload: Route = authenticate { user =>
     entity(as[Upload.Create]) { newUpload =>
       authorize(user.isInRootOrSameOrganizationAs(newUpload)) {
-        onSuccess(write[Upload](Uploads.insertUpload(newUpload, user))) { upload =>
+        val uploadToInsert = (newUpload.uploadType, newUpload.source) match {
+          case (UploadType.S3, Some(source)) => {
+            if (newUpload.files.nonEmpty) newUpload
+            else {
+              val files = listAllowedFilesInS3Source(source)
+              if (files.nonEmpty) newUpload.copy(files = files)
+              else throw new IllegalStateException("No acceptable files found in the provided source")
+            }
+          }
+          case (UploadType.S3, None) => {
+            if (newUpload.files.nonEmpty) newUpload
+            else throw new IllegalStateException("S3 upload must specify a source if no files are specified")
+          }
+          case (UploadType.Planet, None) => {
+            if (newUpload.files.nonEmpty) newUpload
+            else throw new IllegalStateException("Planet upload must specify some ids")
+          }
+          case (UploadType.Local, _) => newUpload
+          case _ => throw new IllegalStateException("Unsupported import type")
+        }
+
+        onSuccess(write[Upload](Uploads.insertUpload(uploadToInsert, user))) { upload =>
           if (upload.uploadStatus == UploadStatus.Uploaded) {
             kickoffSceneImport(upload.id)
           }
-          complete(upload)
+          complete((StatusCodes.Created, upload))
         }
       }
     }

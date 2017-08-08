@@ -12,20 +12,21 @@ RUN set -ex \
     && mkdir -p ${AIRFLOW_HOME} \
     && chown airflow:airflow -R ${AIRFLOW_HOME} \
     && buildDeps=' \
-       python-dev \
+       python-dev/sid \
     ' \
     && gdalDeps=' \
-       gdal-bin \
+       gdal-bin/sid \
+       python-gdal/sid \
     ' \
     && javaDeps=' \
        openjdk-8-jre \
        ca-certificates-java \
     ' \
     && echo 'deb http://deb.debian.org/debian jessie-backports main' > /etc/apt/sources.list.d/jessie-backports.list \
-    && echo 'deb http://deb.debian.org/debian testing main contrib non-free' > /etc/apt/sources.list.d/testing.list \
+    && echo 'deb http://http.us.debian.org/debian sid main non-free contrib' > /etc/apt/sources.list.d/sid.list \
     && apt-get update \
     && apt-get install -y --no-install-recommends ${buildDeps} \
-    && apt-get -t testing install -y --no-install-recommends ${gdalDeps} \
+    && apt-get install -y --no-install-recommends ${gdalDeps} \
     && apt-get install -y --no-install-recommends ${javaDeps} \
     && pip install --no-cache-dir \
            numpy==$(grep "numpy" /tmp/requirements.txt | cut -d= -f3) \

@@ -8,7 +8,7 @@ export default class LoginController {
 
     $onInit() {
         const hash = this.$location.hash();
-        if (hash){
+        if (hash) {
             this.authService.onImpersonation(hash);
         }
         if (this.authService.verifyAuthCache()) {

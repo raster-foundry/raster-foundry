@@ -1,0 +1,36 @@
+<div class="node-header">
+  <div class="node-header-colorblock "
+       ng-class="{'node-type-input': $ctrl.cellType === 'src',
+                  'node-type-function': $ctrl.cellType === 'function',
+                  'node-type-constant': $ctrl.cellType === 'const'}">
+  </div>
+  <div class="node-dropdown"
+       ng-class="{'no-outline': $ctrl.showMenu}"
+       ng-click="$ctrl.toggleMenu($event)">
+    <div class="node-dropdown-icon"></div>
+    <div class="node-dropdown-menu" ng-show="$ctrl.showMenu">
+      <ul>
+        <span ng-repeat="menuItem in $ctrl.menuItems">
+        <li ng-if="menuItem.type !== 'divider'"
+            ng-click="menuItem.callback($event, $ctrl.model)">
+            {{menuItem.label}}
+        </li>
+        <li ng-if="menuItem.type === 'divider'" class="divider"></li>
+        </span>
+      </ul>
+    </div>
+  </div>
+  <div class="node-header-text">
+    <div class="node-header-type">
+      <span class="icon-info"
+            ng-if="$ctrl.cellType === 'function'"></span>
+      {{$ctrl.typeMap[$ctrl.cellType]}}
+    </div>
+    <div class="node-header-label">
+      {{$ctrl.cellTitle}}
+    </div>
+  </div>
+  <div class="node-status">
+    <span class="icon-warning color-warning" ng-if="$ctrl.invalid">
+  </div>
+</div>

@@ -22,7 +22,8 @@ lazy val commonSettings = Seq(
     "-language:existentials",
     "-language:experimental.macros",
     "-feature",
-    "-Ypartial-unification"
+    "-Ypartial-unification",
+    "-Ypatmat-exhaust-depth", "100"
   ),
   resolvers ++= Seq(
     Resolver.sonatypeRepo("snapshots"),
@@ -221,7 +222,9 @@ lazy val batch = Project("batch", file("batch"))
       Dependencies.scopt,
       Dependencies.ficus,
       Dependencies.dnsJava,
-      Dependencies.dropbox
+      Dependencies.dropbox,
+      Dependencies.caffeine,
+      Dependencies.scaffeine
     )
   })
   .settings(assemblyShadeRules in assembly := Seq(

@@ -165,7 +165,7 @@ object Ingest extends SparkJob with LazyLogging with Config {
   }
 
   /** Function to add GridBounds buffer */
-  def bufferGrid(gb: GridBounds, by: Int = 2) =
+  def bufferGrid(gb: GridBounds, by: Int = 4) =
     gb.copy(
       colMin = if(gb.colMin < by) 0 else gb.colMin - by,
       colMax = gb.colMax + by,

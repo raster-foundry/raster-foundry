@@ -5,11 +5,28 @@
 </div>
 <div class="list-group">
   <rf-scene-item
-      on-view="$ctrl.viewSceneDetail(scene)"
-      on-download="$ctrl.downloadModal(scene)"
       scene="scene"
-      editable
       ng-repeat="scene in $ctrl.sceneList track by scene.id">
+    <div class="dropdown btn-group" uib-dropdown ng-if="$ctrl.sceneActions && $ctrl.sceneActions.length">
+      <button class="btn" ng-click="$ctrl.onActionClick($ctrl.sceneActions[0])">
+        {{$ctrl.sceneActions[0].label}}
+      </button>
+      <button type="button" class="btn" uib-dropdown-toggle ng-if="$ctrl.sceneActions.length > 1">
+        <i class="icon-caret-down"></i>
+      </button>
+      <ul class="dropdown-menu" uib-dropdown-menu role="menu">
+        <li role="menuitem"
+            ng-class="{'divider': action.divider}"
+            ng-repeat="action in $ctrl.sceneActions | limitTo: (1 - $ctrl.sceneActions.length)">
+          <a href
+             ng-click="$ctrl.onActionClick(action, scene)"
+             ng-class="$ctrl.getActionTextClass(action)">
+            <span ng-class="$ctrl.getActionIcon(action)"></span>
+            {{action.label}}
+          </a>
+        </li>
+      </ul>
+    </div>
   </rf-scene-item>
 </div>
 <div class="list-group text-center"

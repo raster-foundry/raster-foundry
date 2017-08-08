@@ -18,8 +18,8 @@ export default class NavBarController {
         this.projectService = projectService;
     }
 
-    isInProject() {
-        return this.$state.includes('projects.edit');
+    hasSubview() {
+        return this.$state.current.views && this.$state.current.views['navmenu@root'];
     }
 
     $onInit() {

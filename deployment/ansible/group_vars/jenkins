@@ -3,6 +3,4 @@ docker_users:
   - "{{ ansible_user }}"
   - "{{ jenkins_name }}"
 
-terraform_version: "0.9.6"
-
 java_version: "7u121*"

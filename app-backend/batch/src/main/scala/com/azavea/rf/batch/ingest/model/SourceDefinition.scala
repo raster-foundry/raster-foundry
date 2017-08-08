@@ -36,34 +36,36 @@ object SourceDefinition extends LazyLogging {
   @JsonCodec
   case class Overrides(
     uri: URI,
-    extent: Option[Extent],
-    extentCrs: Option[CRS],
-    crs: Option[CRS],
-    cellSize: Option[CellSize],
+    optionExtent: Option[Extent],
+    optionExtentCrs: Option[CRS],
+    optionCrs: Option[CRS],
+    optionCellSize: Option[CellSize],
     bandMaps: Array[BandMapping]
   ) {
-    @SuppressWarnings(Array("OptionGet"))
     def toSourceDefinition: SourceDefinition = {
-      if (extent.isDefined && crs.isDefined && cellSize.isDefined) {
-        SourceDefinition(
-          uri,
-          extent.get,
-          extentCrs.getOrElse(LatLng),
-          crs.get,
-          cellSize.get,
-          bandMaps
-        )
-      } else {
-        logger.debug(s"Reading tiff tags: $uri")
-        lazy val tt = getTiffTags(uri)
-        SourceDefinition(
-          uri,
-          extent.getOrElse(tt.extent),
-          extentCrs.getOrElse(tt.crs),
-          crs.getOrElse(tt.crs),
-          cellSize.getOrElse(tt.cellSize),
-          bandMaps
-        )
+      (optionExtent, optionCrs, optionCellSize, optionExtentCrs) match {
+        case (Some(extent), Some(crs), Some(cellSize), Some(extentCrs)) => {
+          SourceDefinition(
+            uri,
+            extent,
+            extentCrs,
+            crs,
+            cellSize,
+            bandMaps
+          )
+        }
+        case _ => {
+          logger.debug(s"Reading tiff tags: $uri")
+          val tt = getTiffTags(uri)
+          SourceDefinition(
+            uri,
+            tt.extent,
+            tt.crs,
+            tt.crs,
+            tt.cellSize,
+            bandMaps
+          )
+        }
       }
     }
   }

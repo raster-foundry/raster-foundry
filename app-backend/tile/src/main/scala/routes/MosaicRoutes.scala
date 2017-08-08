@@ -1,8 +1,5 @@
 package com.azavea.rf.tile.routes
 
-import cats.data.OptionT
-import cats.implicits._
-
 import com.azavea.rf.common.RfStackTrace
 import com.azavea.rf.tile._
 import com.azavea.rf.tile.image._
@@ -13,29 +10,25 @@ import com.azavea.rf.datamodel.ColorCorrect
 import geotrellis.raster._
 import geotrellis.raster.io.geotiff._
 import geotrellis.raster.render.Png
+import geotrellis.proj4._
+import geotrellis.slick.Projected
+import geotrellis.vector.Extent
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes}
-import akka.http.scaladsl.unmarshalling._
 import com.typesafe.scalalogging.LazyLogging
-import cats.implicits._
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
-import scala.collection.mutable.ArrayBuffer
+import cats.data.OptionT
+import cats.implicits._
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.util._
+import scala.collection.mutable.ArrayBuffer
 import java.util.UUID
 
-import akka.http.scaladsl.marshalling.Marshaller
-import geotrellis.proj4._
-import geotrellis.slick.Projected
-import geotrellis.vector.{Extent, Polygon}
-import kamon.akka.http.KamonTraceDirectives
-
-object MosaicRoutes
-    extends LazyLogging
-    with KamonTraceDirectives {
+object MosaicRoutes extends LazyLogging with KamonTrace {
+  val system = AkkaSystem.system
+  implicit val blockingDispatcher = system.dispatchers.lookup("blocking-dispatcher")
 
   val emptyTilePng = IntArrayTile.ofDim(256, 256).renderPng
 
@@ -49,33 +42,34 @@ object MosaicRoutes
     pathPrefix("export") {
       optionalHeaderValueByName("Accept") { acceptContentType =>
         traceName("tiles-export-request") {
-          parameter("bbox", "zoom".as[Int]?, "colorCorrect".as[Boolean] ? true) {
-            (bbox, zoom, colorCorrect) => get {
-              complete {
-                val mosaic = Mosaic.render(projectId, zoom, Option(bbox), colorCorrect)
-                val poly = Projected(Extent.fromString(bbox).toPolygon(), 4326)
-                  .reproject(LatLng, WebMercator)(3857)
-                val extent = poly.envelope
-                val future = acceptContentType match {
-                  case Some("image/tiff") => mosaic
-                      .map{ m => MultibandGeoTiff(m, extent, WebMercator) }
+          parameter("bbox", "zoom".as[Int] ?, "colorCorrect".as[Boolean] ? true) {
+            (bbox, zoom, colorCorrect) =>
+              get {
+                complete {
+                  val mosaic = Mosaic.render(projectId, zoom, Option(bbox), colorCorrect)
+                  val poly = Projected(Extent.fromString(bbox).toPolygon(), 4326)
+                    .reproject(LatLng, WebMercator)(3857)
+                  val extent = poly.envelope
+                  val future = acceptContentType match {
+                    case Some("image/tiff") => mosaic
+                      .map { m => MultibandGeoTiff(m, extent, WebMercator) }
                       .map(tiffAsHttpResponse)
                       .value
-                  case _ => mosaic.map(_.renderPng)
+                    case _ => mosaic.map(_.renderPng)
                       .map(pngAsHttpResponse)
                       .value
 
-                }
+                  }
 
-                future onComplete {
-                  case Success(s) => s
-                  case Failure(e) =>
-                    logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
-                }
+                  future onComplete {
+                    case Success(s) => s
+                    case Failure(e) =>
+                      logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
+                  }
 
-                future
+                  future
+                }
               }
-            }
           }
         }
       }
@@ -86,34 +80,32 @@ object MosaicRoutes
         }
       }
     } ~ pathPrefix (IntNumber / IntNumber / IntNumber ) { (zoom, x, y) =>
-      traceName("tiles-zxy") {
-        traceName(s"tiles-zxy-${projectId}") {
-          parameter("tag".?) { tag =>
-            get {
-              complete {
-                val future =
-                  Mosaic(projectId, zoom, x, y, tag)
-                    .map(_.renderPng)
-                    .getOrElse(emptyTilePng)
-                    .map(pngAsHttpResponse)
+      get {
+        complete {
+          val future =
+            timedFuture("tile-zxy") (
+              Mosaic(projectId, zoom, x, y)
+                .map(_.renderPng)
+                .getOrElse(emptyTilePng)
+                .map(pngAsHttpResponse)
+            )
 
-                future onComplete {
-                  case Success(s) => s
-                  case Failure(e) =>
-                    logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
-                }
-
-                future
-              }
-            }
+          future onComplete {
+            case Success(s) => s
+            case Failure(e) =>
+              logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
           }
+
+          future
         }
       }
     }
 
   /** Return the histogram (with color correction applied) for a list of scenes in a project */
   def getProjectScenesHistogram(projectId: UUID)(implicit database: Database): Route = {
-    def correctedHistograms(sceneId: UUID, projectId: UUID) = {
+    val sceneIdsFuture = OptionT(ScenesToProjects.allScenes(projectId).map(_.toSet.some))
+
+    def correctedHistograms(sceneId: UUID, projectId: UUID) = sceneIdsFuture.flatMap { implicit sceneIds =>
       val tileFuture = StitchLayer(sceneId, 64)
       // getColorCorrectParams returns a Future[Option[Option]] for some reason
       val ccParamFuture = ScenesToProjects.getColorCorrectParams(projectId, sceneId).map { _.flatten }

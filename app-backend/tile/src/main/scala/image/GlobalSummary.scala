@@ -1,45 +1,30 @@
 package com.azavea.rf.tile.image
 
 import com.azavea.rf.tile._
-import com.azavea.rf.tile.tool.TileSources
-import com.azavea.rf.datamodel.{Tool, ToolRun, User, MosaicDefinition}
-import com.azavea.rf.tool.eval._
-import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.params._
-import com.azavea.rf.tool.ast.MapAlgebraAST
-import com.azavea.rf.common._
-import com.azavea.rf.common.cache._
-import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
+import com.azavea.rf.datamodel.MosaicDefinition
 import com.azavea.rf.database.Database
-import com.azavea.rf.database.tables._
-
-import io.circe._
-import io.circe.syntax._
 import geotrellis.raster._
-import geotrellis.raster.render._
-import geotrellis.raster.histogram._
-import geotrellis.raster.io._
 import geotrellis.vector.io._
 import geotrellis.spark.io._
 import geotrellis.spark._
 import geotrellis.proj4._
-import geotrellis.spark.io.s3.{S3InputFormat, S3AttributeStore, S3CollectionLayerReader, S3ValueReader}
-import com.github.blemale.scaffeine.{Scaffeine, Cache => ScaffeineCache}
 import geotrellis.vector.Extent
 import com.typesafe.scalalogging.LazyLogging
-import spray.json.DefaultJsonProtocol._
-import cats._
 import cats.data._
 import cats.implicits._
-
-import java.security.InvalidParameterException
 import java.util.UUID
+
+import geotrellis.spark.io.postgres.PostgresAttributeStore
+
 import scala.concurrent._
-import scala.concurrent.duration._
 import scala.util._
 
-
 object GlobalSummary extends LazyLogging {
+  val system = AkkaSystem.system
+  implicit val blockingDispatcher = system.dispatchers.lookup("blocking-dispatcher")
+
+  implicit val database = Database.DEFAULT
+  val store = PostgresAttributeStore()
 
   /** Get the [[RasterExtent]] which describes the meaningful subset of a layer from metadata */
   private def getDefinedRasterExtent(md: TileLayerMetadata[_]): RasterExtent = {
@@ -75,12 +60,12 @@ object GlobalSummary extends LazyLogging {
   def minAcceptableProjectZoom(
     projId: UUID,
     size: Int = 512
-  )(implicit database: Database, ec: ExecutionContext): OptionT[Future, (Extent, Int)] =
-    Mosaic.mosaicDefinition(projId, None).semiflatMap({ mosaic =>
+  )(implicit database: Database, ec: ExecutionContext, sceneIds: Set[UUID]): OptionT[Future, (Extent, Int)] =
+    Mosaic.mosaicDefinition(projId).semiflatMap({ mosaic =>
       Future.sequence(mosaic.map { case MosaicDefinition(sceneId, _) =>
-        LayerCache.attributeStoreForLayer(sceneId).mapFilter { case (store, _) =>
+        Future {
           minAcceptableSceneZoom(sceneId, store, 256)
-        }.value
+        }
       })
     }).map({ zoomsAndExtents =>
       zoomsAndExtents.flatten.reduce({ (agg, next) =>

@@ -1,20 +1,24 @@
-<div class="lab-workspace" ng-class="{ 'is-dragging': $ctrl.panActive }">
-  <div class="lab-control-panel">
-    <button class="btn btn-default"
-            ng-click="$ctrl.fitAndCenter()"
-    >
-      <i class="icon-resize-full"></i>
-    </button>
-    <div class="filler"></div>
-    <button class="btn btn-default"
-            ng-click="$ctrl.zoomIn()"
-    >
-      +
-    </button>
-    <button class="btn btn-default"
-            ng-click="$ctrl.zoomOut()"
-    >
-      -
-    </button>
-  </div>
+<div class="lab-workspace"
+     ng-class="{ 'is-dragging': $ctrl.panActive }"
+     ng-style="$ctrl.workspaceStyle"
+>
+</div>
+<div class="map-container-controls">
+  <button class="btn btn-default btn-square btn-small"
+          title="Zoom In"
+          ng-click="$ctrl.zoomIn()">
+    <span class="icon-plus"></span>
+  </button>
+  <div class="map-zoom" title="Current Zoom">{{($ctrl.scale * 100).toFixed(0)}}%</div>
+  <button class="btn btn-default btn-square btn-small"
+          title="Zoom Out"
+          ng-click="$ctrl.zoomOut()">
+    <spam class="icon-minus"></span>
+  </button>
+  <div class="filler"></div>
+  <button class="btn btn-default btn-square btn-small"
+          title="Fit Diagram"
+          ng-click="$ctrl.scaleToContent()">
+    <span class="icon-resize"></span>
+  </button>
 </div>

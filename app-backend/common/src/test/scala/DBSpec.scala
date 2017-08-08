@@ -27,7 +27,7 @@ trait DBSpec extends Suite with BeforeAndAfterAll with DatabaseConfig {
     super.beforeAll()
     PGUtils.dropDB(jdbcNoDBUrl, dbname, dbUser, dbPassword)
     PGUtils.copyDB(jdbcNoDBUrl, InitializeDB.testDB, dbname, dbUser, dbPassword)
-    db = new Database(jdbcNoDBUrl + dbname, dbUser, dbPassword)
+    db = new Database(jdbcNoDBUrl + dbname, dbUser, dbPassword, 5, 5)
   }
 
   // Closes the connection pool and removes the test DB.

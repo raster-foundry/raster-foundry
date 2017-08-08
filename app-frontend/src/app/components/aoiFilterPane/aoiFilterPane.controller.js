@@ -1,239 +1,148 @@
+const cloudCoverRange = {min: 0, max: 100};
+const sunElevationRange = {min: 0, max: 180};
+const sunAzimuthRange = {min: 0, max: 360};
+
 export default class AOIFilterPaneController {
-    constructor(datasourceService, authService, $scope, $rootScope, $timeout,
-                $uibModal, moment) {
+    constructor(
+        $scope, $rootScope, $timeout, $uibModal,
+        datasourceService, authService, moment
+    ) {
         'ngInject';
-        this.datasourceService = datasourceService;
-        this.authService = authService;
         this.$scope = $scope;
         this.$rootScope = $rootScope;
         this.$timeout = $timeout;
         this.$uibModal = $uibModal;
+        this.datasourceService = datasourceService;
+        this.authService = authService;
         this.Moment = moment;
     }
 
     $onInit() {
-        if (this.authService.isLoggedIn) {
-            this.initFilters();
-            this.initDatefilter();
-        }
-
         this.toggleDrag = {toggle: false, enabled: false};
-
-        this.$scope.$watch(() => this.authService.isLoggedIn, (isLoggedIn) => {
-            if (isLoggedIn) {
-                this.initFilters();
-                this.initDatefilter();
-            }
-        });
-
-        this.$scope.$watch('$ctrl.opened', (opened) => {
-            if (opened) {
-                this.$timeout(() => this.$rootScope.$broadcast('reCalcViewDimensions'), 50);
-            }
-        });
     }
 
-    initDatefilter() {
-        this.datefilter = {
-            start: this.Moment().subtract(100, 'years'),
-            end: this.Moment()
+    $onChanges(changes) {
+        if (changes.opened && changes.opened.hasOwnProperty('currentValue')) {
+            if (changes.opened.currentValue) {
+                this.$timeout(() => this.$rootScope.$broadcast('reCalcViewDimensions'), 150);
+            }
+        }
+
+        if (changes.filters && changes.filters.currentValue) {
+            if (!this.filterOptions) {
+                this.initFilterOptions();
+            }
+            this.setFilters(changes.filters.currentValue);
+        }
+    }
+
+    initFilterOptions() {
+        this.filterOptions = {
+            cloudCover: {
+                minModel: cloudCoverRange.min,
+                maxModel: cloudCoverRange.max,
+                options: {
+                    floor: cloudCoverRange.min,
+                    ceil: cloudCoverRange.max,
+                    minRange: 0,
+                    showTicks: 10,
+                    showTicksValues: true,
+                    step: 10,
+                    pushRange: true,
+                    draggableRange: true,
+                    onEnd: (id, minModel, maxModel) => {
+                        this.onFilterChange({changes: {
+                            minCloudCover: minModel !== cloudCoverRange.min ? minModel : null,
+                            maxCloudCover: maxModel !== cloudCoverRange.max ? maxModel : null
+                        }});
+                    }
+                }
+            },
+            sunElevation: {
+                minModel: sunElevationRange.min,
+                maxModel: sunElevationRange.max,
+                options: {
+                    floor: sunElevationRange.min,
+                    ceil: sunElevationRange.max,
+                    minRange: 0,
+                    showTicks: 30,
+                    showTicksValues: true,
+                    step: 10,
+                    pushRange: true,
+                    draggableRange: true,
+                    onEnd: (id, minModel, maxModel) => {
+                        this.onFilterChange({changes: {
+                            minSunElevation: minModel !== sunElevationRange.min ? minModel : null,
+                            maxSunElevation: maxModel !== sunElevationRange.max ? maxModel : null
+                        }});
+                    }
+                }
+            },
+            sunAzimuth: {
+                minModel: sunAzimuthRange.min,
+                maxModel: sunAzimuthRange.max,
+                options: {
+                    floor: sunAzimuthRange.min,
+                    ceil: sunAzimuthRange.max,
+                    minRange: 0,
+                    showTicks: 60,
+                    showTicksValues: true,
+                    step: 10,
+                    pushRange: true,
+                    draggableRange: true,
+                    onEnd: (id, minModel, maxModel) => {
+                        this.onFilterChange({changes: {
+                            minSunAzimuth: minModel !== sunAzimuthRange.min ? minModel : null,
+                            maxSunAzimuth: maxModel !== sunAzimuthRange.max ? maxModel : null
+                        }});
+                    }
+                }
+            }
         };
-        this.dateranges = [
-            {
-                name: 'Today',
-                start: this.Moment(),
-                end: this.Moment()
-            },
-            {
-                name: 'The last month',
-                start: this.Moment().subtract(1, 'months'),
-                end: this.Moment()
-            },
-            {
-                name: 'The last year',
-                start: this.Moment().subtract(1, 'years'),
-                end: this.Moment()
-            },
-            {
-                name: 'All',
-                start: this.Moment().subtract(100, 'years'),
-                end: this.Moment()
-            }
-        ];
+    }
 
-        if (this.filters.minAcquisitionDatetime && this.filters.maxAcquisitionDatetime) {
-            this.datefilter.start = this.Moment(this.filters.minAcquisitionDatetime);
-            this.datefilter.end = this.Moment(this.filters.maxAcquisitionDatetime);
+    setFilters(filters) {
+        let sceneParams = filters.sceneParams;
+
+        if (sceneParams && sceneParams.hasOwnProperty('maxCloudCover')) {
+            this.filterOptions.cloudCover.maxModel = sceneParams.maxCloudCover;
+        } else {
+            this.filterOptions.cloudCover.maxModel = cloudCoverRange.max;
         }
 
-        if (!this.filters.minAcquisitionDatetime || !this.filters.maxAcquisitionDatetime) {
-            this.clearDateFilter();
+        if (sceneParams && sceneParams.hasOwnProperty('minCloudCover')) {
+            this.filterOptions.cloudCover.minModel = sceneParams.minCloudCover;
         } else {
-            this.dateFilterToggle = {value: true};
+            this.filterOptions.cloudCover.minModel = cloudCoverRange.min;
         }
-    }
 
-    clearDateFilter() {
-        delete this.filters.minAcquisitionDatetime;
-        delete this.filters.maxAcquisitionDatetime;
-        this.dateFilterToggle = {value: false};
-    }
-
-    setDateRange(start, end, preset) {
-        this.datefilter.start = start;
-        this.datefilter.end = end;
-        this.datefilterPreset = preset || false;
-        this.dateFilterToggle.value = true;
-        this.filters.minAcquisitionDatetime = start.toISOString();
-        this.filters.maxAcquisitionDatetime = end.toISOString();
-        this.cacheYearFilters();
-    }
-
-    onDateFilterToggle(value) {
-        if (value) {
-            this.filters.minAcquisitionDatetime = this.datefilter.start.toISOString();
-            this.filters.maxAcquisitionDatetime = this.datefilter.end.toISOString();
+        if (sceneParams && sceneParams.hasOwnProperty('maxSunElevation')) {
+            this.filterOptions.sunElevation.maxModel = sceneParams.minSunElevation;
         } else {
-            delete this.filters.minAcquisitionDatetime;
-            delete this.filters.maxAcquisitionDatetime;
+            this.filterOptions.sunElevation.maxModel = sunElevationRange.max;
+        }
+
+        if (sceneParams && sceneParams.hasOwnProperty('minSunElevation')) {
+            this.filterOptions.sunElevation.minModel = sceneParams.minSunElevation;
+        } else {
+            this.filterOptions.sunElevation.minModel = sunElevationRange.min;
+        }
+
+        if (sceneParams && sceneParams.hasOwnProperty('maxSunAzimuth')) {
+            this.filterOptions.sunAzimuth.maxModel = sceneParams.maxSunAzimuth;
+        } else {
+            this.filterOptions.sunAzimuth.maxModel = sunAzimuthRange.max;
+        }
+
+        if (sceneParams && sceneParams.hasOwnProperty('minSunAzimuth')) {
+            this.filterOptions.sunAzimuth.minModel = sceneParams.minSunAzimuth;
+        } else {
+            this.filterOptions.sunAzimuth.minModel = sunAzimuthRange.min;
         }
     }
 
     close() {
         this.opened = false;
-    }
-
-    onCloudCoverFiltersChange(id, minModel, maxModel) {
-        // Some scenes have a cloudCover < 0, which is invalid. filter them out.
-        this.filters.minCloudCover = minModel;
-
-        if (maxModel === this.cloudCoverRange.max) {
-            delete this.filters.maxCloudCover;
-        } else {
-            this.filters.maxCloudCover = maxModel;
-        }
-    }
-
-    onSunElevationFiltersChange(id, minModel, maxModel) {
-        if (minModel === this.sunElevationRange.min) {
-            delete this.filters.minSunElevation;
-        } else {
-            this.filters.minSunElevation = minModel;
-        }
-
-        if (maxModel === this.sunElevationRange.max) {
-            delete this.filters.maxSunElevation;
-        } else {
-            this.filters.maxSunElevation = maxModel;
-        }
-    }
-
-    onSunAzimuthFiltersChange(id, minModel, maxModel) {
-        if (minModel === this.sunAzimuthRange.min) {
-            delete this.filters.minSunAzimuth;
-        } else {
-            this.filters.minSunAzimuth = minModel;
-        }
-
-        if (maxModel === this.sunAzimuthRange.max) {
-            delete this.filters.maxSunAzimuth;
-        } else {
-            this.filters.maxSunAzimuth = maxModel;
-        }
-    }
-
-    initFilters() {
-        this.cachedFilters = {};
-
-        this.cloudCoverRange = {min: 0, max: 100};
-
-        let minCloudCover = this.cloudCoverRange.min;
-        if (this.filters.minCloudCover) {
-            minCloudCover = parseInt(this.filters.minCloudCover, 10);
-        }
-
-        let maxCloudCover = parseInt(this.filters.maxCloudCover, 10) || 10;
-
-        if (!this.filters.minCloudCover && minCloudCover !== this.cloudCoverRange.min) {
-            this.filters.minCloudCover = minCloudCover;
-        }
-
-        if (!this.filters.maxCloudCover && maxCloudCover !== this.cloudCoverRange.max) {
-            this.filters.maxCloudCover = maxCloudCover;
-        }
-
-        this.cloudCoverFilters = {
-            minModel: minCloudCover,
-            maxModel: maxCloudCover,
-            options: {
-                floor: this.cloudCoverRange.min,
-                ceil: this.cloudCoverRange.max,
-                minRange: 0,
-                showTicks: 10,
-                showTicksValues: true,
-                step: 10,
-                pushRange: true,
-                draggableRange: true,
-                onEnd: this.onCloudCoverFiltersChange.bind(this)
-            }
-        };
-
-        this.sunElevationRange = {min: 0, max: 180};
-        let minSunElevation = parseInt(this.filters.minSunElevation, 10) ||
-            this.sunElevationRange.min;
-        let maxSunElevation = parseInt(this.filters.maxSunElevation, 10) ||
-            this.sunElevationRange.max;
-        this.sunElevationFilters = {
-            minModel: minSunElevation,
-            maxModel: maxSunElevation,
-            options: {
-                floor: this.sunElevationRange.min,
-                ceil: this.sunElevationRange.max,
-                minRange: 0,
-                showTicks: 30,
-                showTicksValues: true,
-                step: 10,
-                pushRange: true,
-                draggableRange: true,
-                onEnd: this.onSunElevationFiltersChange.bind(this)
-            }
-        };
-
-        this.sunAzimuthRange = {min: 0, max: 360};
-        let minSunAzimuth = parseInt(this.filters.minSunAzimuth, 10) ||
-            this.sunAzimuthRange.min;
-        let maxSunAzimuth = parseInt(this.filters.maxSunAzimuth, 10) ||
-            this.sunAzimuthRange.max;
-        this.sunAzimuthFilters = {
-            minModel: minSunAzimuth,
-            maxModel: maxSunAzimuth,
-            options: {
-                floor: this.sunAzimuthRange.min,
-                ceil: this.sunAzimuthRange.max,
-                minRange: 0,
-                showTicks: 60,
-                showTicksValues: true,
-                step: 10,
-                pushRange: true,
-                draggableRange: true,
-                onEnd: this.onSunAzimuthFiltersChange.bind(this)
-            }
-        };
-
-        this.initIngestFilter();
-
-        this.initSourceFilters();
-    }
-
-    initIngestFilter() {
-        this.ingestFilter = 'any';
-        if (this.filters.hasOwnProperty('ingest')) {
-            if (this.filters.ingest) {
-                this.ingestFilter = 'ingested';
-            } else {
-                this.ingestFilter = 'uningested';
-            }
-        }
     }
 
     initSourceFilters() {
@@ -246,7 +155,7 @@ export default class AOIFilterPaneController {
                     enabled: false
                 };
             });
-            if (this.filters.datasource) {
+            if (this.filterOptions.datasource) {
                 if (Array.isArray(this.filters.datasource)) {
                     this.filters.datasource.forEach(dsf => {
                         if (this.dynamicSourceFilters[dsf]) {
@@ -291,8 +200,6 @@ export default class AOIFilterPaneController {
     }
 
     resetAllFilters() {
-        this.clearDateFilter();
-
         this.cloudCoverFilters.minModel = this.cloudCoverRange.min;
         this.cloudCoverFilters.maxModel = this.cloudCoverRange.max;
         this.filters.minCloudCover = this.cloudCoverRange.min;
@@ -319,31 +226,7 @@ export default class AOIFilterPaneController {
             });
         this.filters.datasource = [];
 
-        this.ingestFilter = 'any';
-        delete this.filters.ingested;
-
         delete this.filters.datasource;
-    }
-
-    setIngestFilter(mode) {
-        this.ingestFilter = mode;
-        this.onIngestFilterChange();
-    }
-
-    onIngestFilterChange() {
-        if (this.ingestFilter === 'any') {
-            delete this.filters.ingested;
-        } else if (this.ingestFilter === 'uningested') {
-            this.filters.ingested = false;
-        } else {
-            this.filters.ingested = true;
-        }
-    }
-
-
-    cacheYearFilters() {
-        this.cachedFilters.minAcquisitionDatetime = this.filters.minAcquisitionDatetime;
-        this.cachedFilters.maxAcquisitionDatetime = this.filters.maxAcquisitionDatetime;
     }
 
     onSourceFilterChange() {
@@ -367,28 +250,5 @@ export default class AOIFilterPaneController {
                 !this.staticSourceFilters[sourceId].enabled;
         }
         this.onSourceFilterChange();
-    }
-
-    openDatePickerModal() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.$uibModal.open({
-            component: 'rfDatePickerModal',
-            resolve: {
-                config: () => Object({
-                    range: this.datefilter,
-                    ranges: this.dateranges
-                })
-            }
-        });
-
-        this.activeModal.result.then(
-            range => {
-                if (range) {
-                    this.setDateRange(range.start, range.end, range.preset);
-                }
-            });
     }
 }

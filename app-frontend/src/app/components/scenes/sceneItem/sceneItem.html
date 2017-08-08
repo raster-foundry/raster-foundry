@@ -19,34 +19,12 @@
     </div>
   </div>
   <div class="list-group-right">
-    <rf-toggle-old ng-if="$ctrl.isSelectable && !$ctrl.isDisabled" model="$ctrl.selectedStatus" on-change="$ctrl.toggleSelected($event)">
+    <rf-toggle-old
+      ng-if="$ctrl.onSelect && !$ctrl.isDisabled"
+      model="$ctrl.selectedStatus"
+      on-change="$ctrl.toggleSelected($event)">
       <i class="icon-check"></i>
     </rf-toggle-old>
-    <button class="btn btn-square"
-            ng-click="$ctrl.onAction($event)"
-            ng-if="$ctrl.actionIcon">
-      <i ng-class="$ctrl.actionIcon"></i>
-    </button>
-    <div ng-if="$ctrl.isEditable">
-      <div class="dropdown btn-group" uib-dropdown>
-        <button class="btn" ng-click="$ctrl.onView()">View</button>
-        <button type="button" class="btn" uib-dropdown-toggle>
-          <i class="icon-caret-down"></i>
-        </button>
-        <ul class="dropdown-menu" uib-dropdown-menu role="menu">
-          <li role="menuitem">
-            <a href ng-click="$ctrl.onDownload()"><i class="icon-download"></i>Download</a>
-          </li>
-          <li role="menuitem">
-            <a><i class="icon-unlocked"></i>Make public</a>
-          </li>
-          <li class="divider"></li>
-          <li role="menuitem">
-            <a href><i class="icon-trash"></i>Delete</a>
-          </li>
-        </ul>
-      </div>
-    </div>
     <ng-transclude>
     </ng-transclude>
   </div>

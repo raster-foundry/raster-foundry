@@ -1,10 +1,12 @@
 /* globals window screen document */
 import dropboxIcon from '../../../../assets/images/dropbox-icon.svg';
 import dropboxWordmark from '../../../../assets/images/dropbox-wordmark.svg';
+import planetLogo from '../../../../assets/images/planet-logo-light.png';
+
 class ConnectionsController {
     constructor(
         $log, $state, $interval, $uibModal, $location,
-        dropboxService, authService, APP_CONFIG
+        dropboxService, authService, userService, APP_CONFIG
     ) {
         'ngInject';
 
@@ -16,10 +18,12 @@ class ConnectionsController {
         this.config = APP_CONFIG;
 
         this.authService = authService;
+        this.userService = userService;
         this.dropboxService = dropboxService;
 
         this.dropboxIcon = dropboxIcon;
         this.dropboxWordmark = dropboxWordmark;
+        this.planetLogo = planetLogo;
     }
 
     $onInit() {
@@ -152,6 +156,22 @@ class ConnectionsController {
             });
             this.activeModal.result.then(() => {
                 this.connectToDropbox();
+            });
+        });
+    }
+
+    connectToPlanet() {
+        this.activeModal = this.$uibModal.open({
+            component: 'rfEnterTokenModal',
+            resolve: {
+                title: () => 'Enter your Planet API Token'
+            }
+        });
+        this.activeModal.result.then((token) => {
+            this.userService.updatePlanetToken(token).then(() => {
+                this.user.planetCredential = true;
+            }, (err) => {
+                this.$log.log('There was an error updating the user with a planet api token', err);
             });
         });
     }

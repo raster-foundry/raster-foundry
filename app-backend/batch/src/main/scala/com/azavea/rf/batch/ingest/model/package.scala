@@ -166,6 +166,6 @@ package object model {
     Encoder.encodeString.contramap[CellType] { _.toString }
   implicit val cellTypeDecoder: Decoder[CellType] =
     Decoder.decodeString.emap { str =>
-      Either.catchNonFatal(CellType.fromString(str)).leftMap(_ => "CellType")
+      Either.catchNonFatal(CellType.fromName(str)).leftMap(_ => "CellType")
     }
 }

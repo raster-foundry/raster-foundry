@@ -1,5 +1,7 @@
 package com.azavea.rf.database.tables
 
+import akka.http.scaladsl.model.{IllegalRequestException, StatusCodes}
+
 import com.azavea.rf.database.fields._
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.sort._
@@ -401,11 +403,28 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     * @param user    Results will be limited to user's organization
     */
   def deleteScene(sceneId: UUID, user: User)(implicit database: DB): Future[Int] = {
-    database.db.run {
+    val sceneQuery =
       Scenes
         .filterToSharedOrganizationIfNotInRoot(user)
         .filter(_.id === sceneId)
-        .delete
+    database.db.run {
+      sceneQuery.result
+    } flatMap { (scenes) =>
+      scenes.headOption match {
+        case Some(scene) =>
+          database.db.run {
+            sceneQuery
+              .filterToOwnerIfNotInRootOrganization(user)
+              .delete
+          } map { numDeleted =>
+            numDeleted match {
+              case 0 =>
+                throw IllegalRequestException(StatusCodes.ClientError(403)("Forbidden", "Error deleting scene: not authorized to modify this scene"))
+              case n => n
+            }
+          }
+        case _ => Future(0)
+      }
     }
   }
 
@@ -419,29 +438,42 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     * @param user User user performing the update
     */
   def updateScene(scene: Scene, sceneId: UUID, user: User)
-                 (implicit database: DB): Future[Int] = {
+                 (implicit database: DB): Future[(Int, Boolean)] = {
 
     val updateTime = new Timestamp((new java.util.Date).getTime)
 
+    val sceneToUpdate =  Scenes.filterToOwnerIfNotInRootOrganization(user).filter(_.id === sceneId)
+
     val updateSceneQuery = for {
-      updateScene <- Scenes.filterToOwnerIfNotInRootOrganization(user).filter(_.id === sceneId)
+      sceneToUpdate <- sceneToUpdate
     } yield (
-      updateScene.modifiedAt, updateScene.modifiedBy, updateScene.ingestSizeBytes,
-      updateScene.datasource, updateScene.cloudCover,  updateScene.acquisitionDate,
-      updateScene.tags, updateScene.sceneMetadata, updateScene.thumbnailStatus,
-      updateScene.boundaryStatus, updateScene.ingestStatus, updateScene.name, updateScene.tileFootprint,
-      updateScene.dataFootprint, updateScene.metadataFiles, updateScene.ingestLocation
+      sceneToUpdate.modifiedAt, sceneToUpdate.modifiedBy, sceneToUpdate.ingestSizeBytes,
+      sceneToUpdate.datasource, sceneToUpdate.cloudCover,  sceneToUpdate.acquisitionDate,
+      sceneToUpdate.tags, sceneToUpdate.sceneMetadata, sceneToUpdate.thumbnailStatus,
+      sceneToUpdate.boundaryStatus, sceneToUpdate.ingestStatus, sceneToUpdate.name, sceneToUpdate.tileFootprint,
+      sceneToUpdate.dataFootprint, sceneToUpdate.metadataFiles, sceneToUpdate.ingestLocation
     )
+
     database.db.run {
-      updateSceneQuery.update((
-        updateTime, user.id, scene.ingestSizeBytes,
-        scene.datasource, scene.filterFields.cloudCover, scene.filterFields.acquisitionDate,
-        scene.tags, scene.sceneMetadata, scene.statusFields.thumbnailStatus,
-        scene.statusFields.boundaryStatus, scene.statusFields.ingestStatus, scene.name, scene.tileFootprint,
-        scene.dataFootprint, scene.metadataFiles, scene.ingestLocation
-      ))
+      for {
+        originalScene <- sceneToUpdate.result
+        updatedScene <- updateSceneQuery.update((
+          updateTime, user.id, scene.ingestSizeBytes,
+          scene.datasource, scene.filterFields.cloudCover, scene.filterFields.acquisitionDate,
+          scene.tags, scene.sceneMetadata, scene.statusFields.thumbnailStatus,
+          scene.statusFields.boundaryStatus, scene.statusFields.ingestStatus, scene.name, scene.tileFootprint,
+          scene.dataFootprint, scene.metadataFiles, scene.ingestLocation
+        ))
+      } yield (originalScene, updatedScene)
     } map {
-      case 1 => 1
+      case (os, us) => {
+        val kickoffIngest = os.headOption match {
+          case Some(s:Scene) => s.statusFields.ingestStatus != IngestStatus.ToBeIngested &&
+            scene.statusFields.ingestStatus == IngestStatus.ToBeIngested
+          case _ => false
+        }
+        (1, kickoffIngest)
+      }
       case _ => throw new IllegalStateException("Error while updating scene")
     }
   }
@@ -459,6 +491,17 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
 class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) extends LazyLogging {
   import Scenes.datePart
 
+
+  def filterByTileFootprint(polygonOption: Option[Projected[Polygon]]): Scenes.TableQuery = {
+    polygonOption match {
+      case Some(polygon) => {
+        scenes.filter{ scene =>
+          scene.tileFootprint.intersects(polygon)
+        }
+      }
+      case _ => scenes
+    }
+  }
 
   /** TODO: it isn't currently clear how to implement enum type ordering.
     *

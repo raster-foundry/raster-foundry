@@ -1,23 +1,23 @@
 <div class="row content stack-sm">
   <div class="column-10">
     <div class="dashboard-header">
-      <h1 class="page-title">App Connections</h1>
+      <h1 class="page-title">Third Party Connections</h1>
     </div>
     <div class="app-connections-group row">
       <div class="app-connection-container">
-        <div class="app-connection-logo">
+        <a href="https://www.dropbox.com/"
+           target="_blank"
+           class="app-connection-logo">
           <img ng-attr-src="{{$ctrl.dropboxIcon}}">
           <img ng-attr-src="{{$ctrl.dropboxWordmark}}">
-        </div>
+        </a>
         <div class="app-connection-action">
           <div class="app-connection-info">
-            <i class="icon-info"
+            <span class="icon-info"
                tooltips
                tooltip-template="Import Imagery and Export Projects using your dropbox account."
                tooltip-size="small"
-               tooltip-class="rf-tooltip"
-               tooltip-side="bottom"
-            ></i>
+               tooltip-class="rf-tooltip" tooltip-side="bottom" ></span>
           </div>
           <button type="button"
                   class="btn btn-tertiary btn-square"
@@ -39,13 +39,42 @@
 
           </button>
           <button type="button"
-                  class="btn btn-secondary btn-square"
+                  class="btn btn-tertiary btn-square"
                   ng-click="$ctrl.connectToDropbox()"
                   ng-if="!$ctrl.dropboxConnected"
                   ng-disabled="!$ctrl.user">
             Connect
             <span class="button-spacer"> </span>
             <span class="icon-plus"></span>
+          </button>
+        </div>
+      </div>
+      <div class="app-connection-container">
+        <a href="https://www.planet.com/"
+           target="_blank"
+           class="app-connection-logo">
+          <img ng-attr-src="{{$ctrl.planetLogo}}">
+        </a>
+        <div class="app-connection-action">
+          <div class="app-connection-info">
+            <span class="icon-info"
+               tooltips
+               tooltip-template="Search for imagery using Planet API"
+               tooltip-size="small"
+               tooltip-class="rf-tooltip"
+               tooltip-side="bottom"
+            ></span>
+          </div>
+          <button type="button"
+                  class="btn btn-tertiary btn-square"
+                  ng-click="$ctrl.connectToPlanet()"
+                  ng-disabled="!$ctrl.user">
+            <span ng-if="$ctrl.user.planetCredential">
+              Change Api Token
+            </span>
+            <span ng-if="!$ctrl.user.planetCredential">
+              Set Api Token
+            </span>
           </button>
         </div>
       </div>

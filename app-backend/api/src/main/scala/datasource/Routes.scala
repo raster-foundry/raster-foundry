@@ -62,7 +62,7 @@ trait DatasourceRoutes extends Authentication
     entity(as[Datasource.Create]) { newDatasource =>
       authorize(user.isInRootOrSameOrganizationAs(newDatasource)) {
         onSuccess(write[Datasource](Datasources.insertDatasource(newDatasource, user))) { datasource =>
-          complete(datasource)
+          complete((StatusCodes.Created, datasource))
         }
       }
     }

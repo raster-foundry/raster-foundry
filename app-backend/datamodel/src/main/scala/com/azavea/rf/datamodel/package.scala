@@ -18,6 +18,7 @@ import geotrellis.proj4._
 import geotrellis.slick._
 
 import cats.syntax.either._
+import scala.util._
 
 package object datamodel {
 
@@ -88,12 +89,41 @@ package object datamodel {
       }
     }
 
+  implicit val projectedMultiPolygonEncoder: Encoder[Projected[MultiPolygon]] =
+    new Encoder[Projected[MultiPolygon]] {
+      final def apply(g: Projected[MultiPolygon]): Json = {
+        val reprojected = g match {
+          case Projected(geom, 4326) => geom
+          case Projected(geom, 3857) => geom.reproject(WebMercator, LatLng)
+          case Projected(geom, srid) => try {
+            geom.reproject(CRS.fromString(s"EPSG:$srid"), LatLng)
+          } catch {
+            case e: Exception =>
+              throw new InvalidParameterException(s"Unsupported MultiPolygon SRID: $srid").initCause(e)
+          }
+        }
+        parse(reprojected.toGeoJson) match {
+          case Right(js: Json) => js
+          case Left(e) => throw e
+        }
+      }
+    }
+
+
   // TODO: make this tolerate more than one incoming srid
   implicit val projectedGeometryDecoder: Decoder[Projected[Geometry]] = Decoder[Json] map { js =>
-    Projected(js.spaces4.parseGeoJson[Geometry], 4326).reproject(CRS.fromEpsgCode(4326), CRS.fromEpsgCode(3857))(3857)
+    Projected(
+      js.spaces4.parseGeoJson[Geometry], 4326
+    ).reproject(
+      CRS.fromEpsgCode(4326), CRS.fromEpsgCode(3857)
+    )(3857)
   }
 
-  implicit val decodeProjectedMultiPolygon: Decoder[Projected[MultiPolygon]] = deriveDecoder
-  implicit val encodeProjectedMultiPolygon: Encoder[Projected[MultiPolygon]] = deriveEncoder
-
+  implicit val projectedMultiPolygonDecoder: Decoder[Projected[MultiPolygon]] = Decoder[Json] map { js =>
+    Projected(
+      js.spaces4.parseGeoJson[MultiPolygon], 4326
+    ).reproject(
+      CRS.fromEpsgCode(4326), CRS.fromEpsgCode(3857)
+    )(3857)
+  }
 }

@@ -72,8 +72,7 @@ def get_source(image, crs, extent):
     band_maps = [{'source': 1, 'target': get_band_num(image)}]
     cell_size = {'width': image.resolutionMeters,
                  'height': image.resolutionMeters}
-    extent_crs = 'epsg:4326'
-    return Source(uri, extent, band_maps, cell_size, extent_crs, crs)
+    return Source(uri, band_maps, cell_size)
 
 
 def get_landsat8_layer(scene):

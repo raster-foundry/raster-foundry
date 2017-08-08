@@ -1,8 +1,8 @@
 import projectPlaceholder from '../../../../assets/images/transparent.svg';
 
 export default class ProjectItemController {
-    constructor($scope, $state, $attrs, projectService, mapService, mapUtilsService, authService,
-                $uibModal) {
+    constructor($scope, $state, $attrs, $log, projectService, mapService, mapUtilsService,
+                authService, $uibModal) {
         'ngInject';
         this.$scope = $scope;
         this.$state = $state;
@@ -12,6 +12,7 @@ export default class ProjectItemController {
         this.mapUtilsService = mapUtilsService;
         this.authService = authService;
         this.$uibModal = $uibModal;
+        this.$log = $log;
 
         this.projectPlaceholder = projectPlaceholder;
     }
@@ -43,7 +44,9 @@ export default class ProjectItemController {
             this.project,
             this.authService.token()
         );
-        let layer = L.tileLayer(url);
+
+        const tileLayerOptions = {maxZoom: 30};
+        let layer = L.tileLayer(url, tileLayerOptions);
 
         this.getMap().then(m => {
             m.addLayer('share-layer', layer);

@@ -4,7 +4,7 @@ info:
   description: An application to find, view, and analyze geospatial data at any scale
   version: "0.1.0"
 
-host: localhost:9000
+host: app.rasterfoundry.com
 
 schemes:
   - http
@@ -165,7 +165,7 @@ paths:
           schema:
             $ref: '#/definitions/Error'
     patch:
-      summary: Update user profile
+      summary: Update user profile information
       parameters:
         - name: Profile
           in: body
@@ -178,6 +178,27 @@ paths:
           description: Profile updated
           schema:
             $ref: '#/definitions/Auth0User'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+    put:
+      summary:
+        Update user api tokens
+      tags:
+        - Users
+      parameters:
+        - name: User
+          in: body
+          schema:
+            $ref: '#/definitions/User'
+      responses:
+        204:
+          description: No Content
+        404:
+          description: User not found
+          schema:
+            $ref: '#/definitions/Error'
         default:
           description: Unexpected error
           schema:
@@ -497,6 +518,12 @@ paths:
       summary: Create a scene
       tags:
         - Imagery
+      parameters:
+        - name: scene
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Scene'
       responses:
         201:
           description: Successfully created a new scene
@@ -2571,6 +2598,16 @@ definitions:
     - $ref: '#/definitions/BaseModel'
     - $ref: '#/definitions/UserTrackingMixin'
     - type: object
+      required:
+        - name
+        - description
+        - visibility
+        - tileVisibility
+        - tags
+        - extent
+        - manualOrder
+        - isAOIProject
+        - isSingleBand
       properties:
         name:
           type: string
@@ -2609,6 +2646,42 @@ definitions:
         isAOIProject:
           type: boolean
           description: Is true if project is an area-of-interest project
+        isSingleBand:
+          type: boolean
+          description: Is true if the project is being viewed in single band mode
+        singleBandOptions:
+          type: object
+          properties:
+            band:
+              type: number
+              format: integer
+              description: the 0-indexed band to use 
+            dataType:
+              type: string
+              description: How to display the data
+              enum:
+                - DIVERGING
+                - SEQUENTIAL
+                - CATEGORICAL
+            blendMode:
+              type: string
+              description: Blending mode
+              enum:
+                - CONTINUOUS
+                - DISCRETE
+                - NONE
+            colorScheme:
+              type: object
+              description: 'mapping of raster values to pixel colors eg: {"0" : "rgb(255,255,255)"}'
+            legendOrientation:
+              type: string
+              description: Orientation of the color legend
+              enum:
+                - LEFT
+                - RIGHT
+                - TOP
+                - BOTTOM
+                - HIDDEN
   Image:
     allOf:
     - $ref: '#/definitions/BaseModel'
@@ -2936,6 +3009,7 @@ definitions:
           type: array
           items:
             type: string
+          description: An array of strings of file locations. If a source is provided, this can be empty
         uploadType:
           type: string
           description: Source of files and uploads
@@ -2943,6 +3017,7 @@ definitions:
             - DROPBOX
             - S3
             - LOCAL
+            - PLANET
         fileType:
           type: string
           description: type of data being uploaded, limited to two options right now
@@ -2964,6 +3039,9 @@ definitions:
           type: string
           format: uuid
           description: during the import process, add scenes to a project if specified
+        source:
+          type: string
+          description: for uploads of type S3 and Dropbox, the location of the files to import. If files are specified, this field is ignored
   Upload:
     allOf:
     - $ref: '#/definitions/BaseModel'
@@ -3092,7 +3170,6 @@ definitions:
   CombinedSceneQueryParams:
     type: object
     description: Combined query parameters for filtering scenes
-    discriminator: type
     properties:
       orgParams:
         $ref: '#/definitions/OrgParams'

@@ -77,8 +77,8 @@ node {
 
         dir('raster-foundry-deployment') {
           wrap([$class: 'AnsiColorBuildWrapper']) {
-            sh './scripts/infra plan'
-            sh './scripts/infra apply'
+            sh 'docker-compose -f docker-compose.ci.yml run --rm terraform ./scripts/infra plan'
+            sh 'docker-compose -f docker-compose.ci.yml run --rm terraform ./scripts/infra apply'
           }
         }
       }
@@ -99,6 +99,6 @@ node {
   } finally {
     // Pass or fail, ensure that the services and networks
     // created by Docker Compose are torn down.
-    sh 'docker-compose down -v'
+    sh 'docker-compose down -v --remove-orphans'
   }
 }

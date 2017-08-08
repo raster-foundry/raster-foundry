@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import os
+import tempfile
 from urlparse import urlparse
 
 import boto3
@@ -38,6 +39,24 @@ def create_s3_obj(url):
         return s3.Object(bucket, key)
 
 
+def download_s3_obj_by_key(bucket, key):
+    """Helper function to download an object in s3 to /tmp
+
+    Args:
+        bucket (str): an s3 bucket
+        key (str): an s3 key
+
+    Returns:
+        str: the name of the tempfile holding the s3 object
+    """
+
+    client = boto3.client('s3')
+    obj = client.get_object(Bucket=bucket, Key=key)
+    tf = tempfile.mktemp()
+    with open(tf, 'wb') as outf:
+        outf.write(obj['Body'].read())
+    return tf
+
 def s3_obj_exists(url):
     """Helper function to determine whether an s3 object exists
 
@@ -69,7 +88,6 @@ def get_session():
 
     session.headers.update({'Authorization': 'Bearer {}'.format(encoded_jwt)})
     return session
-
 
 
 class JobStatus(object):

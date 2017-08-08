@@ -15,6 +15,7 @@ import geotrellis.vector._
 import geotrellis.raster._
 import geotrellis.raster.render._
 import geotrellis.raster.testkit._
+import geotrellis.raster.mapalgebra.focal._
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -32,9 +33,10 @@ class InterpreterSpec
     val src2 = randomSourceAST
     val tms = Interpreter.interpretTMS(
       ast = src1 - src2,
-      sourceMapping = Map(src1.id -> tileSource(4), src2.id -> tileSource(5)),
+      sourceMapping = Map(src1.id -> tileRef(4), src2.id -> tileRef(5)),
       overrides = Map.empty,
-      source = goodSource
+      tileSource = constantSource,
+      256
     )
 
     val ret = tms(0,1,1)
@@ -55,9 +57,10 @@ class InterpreterSpec
     val src2 = randomSourceAST
     val tms = Interpreter.interpretTMS(
       ast = src1 - src2,
-      sourceMapping = Map(src1.id -> tileSource(4)),
+      sourceMapping = Map(src1.id -> tileRef(4)),
       overrides = Map.empty,
-      source = goodSource
+      tileSource = constantSource,
+      256
     )
 
     val ret = tms(0,1,1)
@@ -67,29 +70,30 @@ class InterpreterSpec
     lt should be (Invalid(NEL.of(MissingParameter(src2.id))))
   }
 
-  /** A failed future is semantically different than successfully returned None. This test
-    *  allows us to simulate a failure encountered while retrieving a tile as opposed to
-    *  an empty region of some tile layout.
-    */
+   /** A failed future is semantically different than successfully returned None. This test
+     *  allows us to simulate a failure encountered while retrieving a tile as opposed to
+     *  an empty region of some tile layout.
+     */
   it("should deal with bad raster sourceMapping and aggregate multiple errors") {
     requests = Nil
     val src1 = randomSourceAST
     val src2 = randomSourceAST
-    val badSource = (raster: RFMLRaster, z: Int, x: Int, y: Int) => Future.failed { new Exception("Some exception") }
+    val badSource = (raster: RFMLRaster, buffer: Boolean, z: Int, x: Int, y: Int) => Future.failed { new Exception("Some exception") }
 
-    val theTileSource = tileSource(4)
+    val thetileRef = tileRef(4)
     val tms = Interpreter.interpretTMS(
       ast = src1 - src2,
-      sourceMapping = Map(src1.id -> theTileSource),
+      sourceMapping = Map(src1.id -> thetileRef),
       overrides = Map.empty,
-      source = badSource
+      tileSource = badSource,
+      256
     )
 
     val ret = tms(0,1,1)
     val lt = Await.result(ret, 10.seconds)
 
     requests should be (empty)
-    lt should be (Invalid(NEL.of(MissingParameter(src2.id), RasterRetrievalError(src1.id, theTileSource.id))))
+    lt should be (Invalid(NEL.of(MissingParameter(src2.id), RasterRetrievalError(src1.id, thetileRef.id))))
   }
 
   it("interpretPure - simple") {
@@ -98,7 +102,7 @@ class InterpreterSpec
 
     val tms = Interpreter.interpretPure[Unit](
       ast = src1 - src2,
-      sourceMapping = Map(src1.id -> tileSource(4), src2.id -> tileSource(5))
+      sourceMapping = Map(src1.id -> tileRef(4), src2.id -> tileRef(5))
     )
 
     tms shouldBe Valid(())
@@ -106,7 +110,7 @@ class InterpreterSpec
   }
 
   it("interpretPure - multiple errors") {
-    val ast: MapAlgebraAST = Addition(List(Source.empty), UUID.randomUUID, None)
+    val ast: MapAlgebraAST = Addition(List(randomSourceAST), UUID.randomUUID, None)
 
     Interpreter.interpretPure[Unit](ast, Map.empty) match {
       case Invalid(nel) => nel.size shouldBe 2
@@ -115,311 +119,625 @@ class InterpreterSpec
   }
 
   it("should evaluate classification (case hit)") {
-    requests = Nil
     // This breakmap should convert all cells (which are set to a value of 5) to 77
     val breakmap = ClassMap(Map(6.0 -> 77))
-    val srcAST = randomSourceAST
-    val tms = Interpreter.interpretTMS(
-      ast = srcAST.classify(breakmap),
-      sourceMapping = Map(srcAST.id -> tileSource(4)),
-      overrides = Map.empty,
-      source = goodSource
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      src.classify(breakmap),
+      Map(src.id -> tileRef(4)),
+      constantSource,
+      Map.empty,
+      "Local classification"
     )
-    println("Classification node: ", srcAST.classify(breakmap).asJson.noSpaces)
-
-    val ret = tms(0, 1, 1)
-    val op = Await.result(ret, 10.seconds) match {
-      case Valid(lazyTile) =>
-        val maybeTile = lazyTile.evaluate
-        requests.length should be (1)
-        assertEqual(maybeTile.get, createValueTile(256, 77))
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
+    assertEqual(tile, createValueTile(256, 77))
   }
 
   it("should evaluate classification (case miss)") {
-    requests = Nil
-    // This breakmap should convert all cells (which are set to a value of 5) to 77
+    // This breakmap should convert all cells (which are set to a value of 5) to NODATA
     val breakmap = ClassMap(Map(2.0 -> 77))
-    val srcAST = randomSourceAST
-    val tms = Interpreter.interpretTMS(
-      ast = srcAST.classify(breakmap),
-      sourceMapping = Map(srcAST.id -> tileSource(4)),
-      overrides = Map.empty,
-      source = goodSource
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      src.classify(breakmap),
+      Map(src.id -> tileRef(4)),
+      constantSource,
+      Map.empty,
+      ""
     )
-
-    val ret = tms(0, 1, 1)
-    val op = Await.result(ret, 10.seconds) match {
-      case Valid(lazyTile) =>
-        val maybeTile = lazyTile.evaluate
-        requests.length should be (1)
-        assertEqual(maybeTile.get, createValueTile(256, NODATA))
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
+    assertEqual(tile, createValueTile(256, NODATA))
   }
 
   it("should evaluate subtraction") {
-    requests = Nil
     val src1 = randomSourceAST
     val src2 = randomSourceAST
-    val tms = Interpreter.interpretTMS(
-      ast = src1 - src2,
-      sourceMapping = Map(src1.id -> tileSource(1), src2.id -> tileSource(5)),
-      overrides = Map.empty,
-      source = goodSource
+    val tile = InterpreterTest.dbl(
+      src1 - src2,
+      Map(src1.id -> tileRef(1), src2.id -> tileRef(5)),
+      constantSource,
+      Map.empty,
+      "Local subtraction"
     )
-    println("Subtraction node: ", (src1 - src2).asJson.noSpaces)
-
-    val ret = tms(0, 1, 1)
-    val op = Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val maybeTile = lazytile.evaluateDouble
-        requests.length should be (2)
-        maybeTile.get.get(0, 0) should be (1 - 5)
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
+    tile.get(0, 0) should be (1 - 5)
   }
 
   it("should preserve order of operations while evaluating subtraction") {
-    requests = Nil
-    // 4, 5, 1
     val src1 = randomSourceAST
     val src2 = randomSourceAST
     val src3 = randomSourceAST
-    val ast = Subtraction(List(src1, src2, src3), UUID.randomUUID(), None)
-    val tms = Interpreter.interpretTMS(
-      ast = ast,
-      sourceMapping = Map(src1.id -> tileSource(5), src2.id -> tileSource(4), src3.id -> tileSource(1)),
-      overrides = Map.empty,
-      source = goodSource
+    val tile = InterpreterTest.dbl(
+      Subtraction(List(src1, src2, src3), UUID.randomUUID(), None),
+      Map(src1.id -> tileRef(5), src2.id -> tileRef(4), src3.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      ""
     )
-
-    val ret = tms(0, 1, 1)
-    val op = Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val maybeTile = lazytile.evaluateDouble
-        requests.length should be (ast.args.length)
-        maybeTile.get.get(0, 0) should be (5 - 4 - 1)
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
+    tile.get(0, 0) should be (5 - 4 - 1)
   }
 
   it("should evaluate division") {
-    requests = Nil
     val src1 = randomSourceAST
     val src2 = randomSourceAST
-    val tms = Interpreter.interpretTMS(
-      ast = src1 / src2,
-      sourceMapping = Map(src1.id -> tileSource(4), src2.id -> tileSource(5)),
-      overrides = Map.empty,
-      source = goodSource
+    val tile = InterpreterTest.dbl(
+      src1 / src2,
+      Map(src1.id -> tileRef(4), src2.id -> tileRef(5)),
+      constantSource,
+      Map.empty,
+      "Local division"
     )
-    println("Division node: ", (src1 / src2).asJson.noSpaces)
-
-    val ret = tms(0, 1, 1)
-    val op = Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val maybeTile = lazytile.evaluateDouble
-        requests.length should be (2)
-        maybeTile.get.getDouble(0, 0) should be (4.0 / 5.0)
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
+    tile.getDouble(0, 0) should be (4.0 / 5.0)
   }
 
   it("should preserve order of operations while evaluating division") {
-    requests = Nil
     val src1 = randomSourceAST
     val src2 = randomSourceAST
     val src3 = randomSourceAST
-    val ast = Division(List(src1, src2, src3), UUID.randomUUID(), None)
-    val tms = Interpreter.interpretTMS(
-      ast = ast,
-      sourceMapping = Map(src1.id -> tileSource(1), src2.id -> tileSource(5), src3.id -> tileSource(4)),
-      overrides = Map.empty,
-      source = goodSource
+    val tile = InterpreterTest.dbl(
+      Division(List(src1, src2, src3), UUID.randomUUID(), None),
+      Map(src1.id -> tileRef(1), src2.id -> tileRef(5), src3.id -> tileRef(4)),
+      constantSource,
+      Map.empty,
+      ""
     )
-
-    val ret = tms(0, 1, 1)
-    val op = Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val maybeTile = lazytile.evaluateDouble
-        requests.length should be (ast.args.length)
-        maybeTile.get.getDouble(0, 0) should be (1.0 / 5.0 / 4.0)
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
+    tile.getDouble(0, 0) should be (1.0 / 5.0 / 4.0)
   }
 
   it("should evaluate multiplication") {
-    requests = Nil
     val src1 = randomSourceAST
     val src2 = randomSourceAST
-    val tms = Interpreter.interpretTMS(
-      ast = src1 * src2,
-      sourceMapping = Map(src1.id -> tileSource(4), src2.id -> tileSource(5)),
-      overrides = Map.empty,
-      source = goodSource
+    val tile = InterpreterTest.dbl(
+      src1 * src2,
+      Map(src1.id -> tileRef(4), src2.id -> tileRef(5)),
+      constantSource,
+      Map.empty,
+      "Local multiplication"
     )
-    println("Multiplication node: ", (src1 * src2).asJson.noSpaces)
-
-    val ret = tms(0, 1, 1)
-    val op = Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val maybeTile = lazytile.evaluateDouble
-        requests.length should be (2)
-        maybeTile.get.getDouble(0, 0) should be (4.0 * 5.0)
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
+    tile.getDouble(0, 0) should be (4.0 * 5.0)
   }
 
   it("should evaluate addition") {
-    requests = Nil
     val src1 = randomSourceAST
     val src2 = randomSourceAST
-    val tms = Interpreter.interpretTMS(
-      ast = src1 + src2,
-      sourceMapping = Map(src1.id -> tileSource(4), src2.id -> tileSource(5)),
-      overrides = Map.empty,
-      source = goodSource
+    val tile = InterpreterTest.int(
+      src1 + src2,
+      Map(src1.id -> tileRef(4), src2.id -> tileRef(5)),
+      constantSource,
+      Map.empty,
+      "Local addition"
     )
-    println("Addition node: ", (src1 + src2).asJson.noSpaces)
-
-    val ret = tms(0, 1, 1)
-    val op = Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val maybeTile = lazytile.evaluateDouble
-        requests.length should be (2)
-        maybeTile.get.getDouble(0, 0) should be (4.0 + 5.0)
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
+    tile.get(0, 0) should be (4.0 + 5.0)
   }
 
   it("should evaluate max") {
-    requests = Nil
     val src1 = randomSourceAST
     val src2 = randomSourceAST
-    val tms = Interpreter.interpretTMS(
-      ast = src1.max(src2),
-      sourceMapping = Map(src1.id -> tileSource(1), src2.id -> tileSource(5)),
-      overrides = Map.empty,
-      source = goodSource
+    val tile = InterpreterTest.int(
+      src1.max(src2),
+      Map(src1.id -> tileRef(1), src2.id -> tileRef(5)),
+      constantSource,
+      Map.empty,
+      "Local maximum"
     )
-    println("LocalMax node: ", (src1.max(src2)).asJson.noSpaces)
-
-    val ret = tms(0, 1, 1)
-    val op = Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val maybeTile = lazytile.evaluateDouble
-        requests.length should be (2)
-        maybeTile.get.get(0, 0) should be (5)
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
+    tile.get(0, 0) should be (5)
   }
 
   it("should evaluate min") {
-    requests = Nil
     val src1 = randomSourceAST
     val src2 = randomSourceAST
-    val tms = Interpreter.interpretTMS(
-      ast = src1.min(src2),
-      sourceMapping = Map(src1.id -> tileSource(1), src2.id -> tileSource(5)),
-      overrides = Map.empty,
-      source = goodSource
+    val tile = InterpreterTest.int(
+      src1.min(src2),
+      Map(src1.id -> tileRef(1), src2.id -> tileRef(5)),
+      constantSource,
+      Map.empty,
+      "Local minimum"
     )
-    println("LocalMin node: ", (src1.min(src2)).asJson.noSpaces)
-
-    val ret = tms(0, 1, 1)
-    val op = Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val maybeTile = lazytile.evaluateDouble
-        requests.length should be (2)
-        maybeTile.get.get(0, 0) should be (1)
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
+    tile.get(0, 0) should be (1)
   }
 
   it("should evaluate multiple operations (ndvi)") {
-    requests = Nil
     val nir = randomSourceAST
     val red = randomSourceAST
-    val ndvi = (nir - red) / (nir + red)
-    val tms = Interpreter.interpretTMS(
-      ast = ndvi,
-      sourceMapping = Map(nir.id -> tileSource(1), red.id -> tileSource(5)),
-      overrides = Map.empty,
-      source = goodSource
+    val tile = InterpreterTest.dbl(
+      (nir - red) / (nir + red),
+      Map(nir.id -> tileRef(1), red.id -> tileRef(5)),
+      constantSource,
+      Map.empty,
+      "Multiple operations (ndvi)"
     )
-    println("Simple NDVI calculation: ", ndvi.asJson.noSpaces)
-
-    val ret = tms(0, 1, 1)
-    val op = Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val maybeTile = lazytile.evaluateDouble
-        requests.length should be (2)
-        maybeTile.get.getDouble(0, 0) should be (-4.0/6.0)
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
-  }
-
-  it("should evaluate using constant tiles") {
-    requests = Nil
-    val forty = Constant(UUID.randomUUID, 40, None)
-    val two = Constant(UUID.randomUUID, 2, None)
-    val lifeUniverseEtc = forty + two
-    val tms = Interpreter.interpretTMS(
-      ast = lifeUniverseEtc,
-      sourceMapping = Map(),
-      overrides = Map.empty,
-      source = goodSource
-    )
-    println("Simple Constant calculation: ", lifeUniverseEtc.asJson.noSpaces)
-
-    val ret = tms(0, 1, 1)
-    val op = Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val maybeTile = lazytile.evaluateDouble
-        requests.length should be (0)
-        maybeTile.get.getDouble(0, 0) should be (42)
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
+    tile.getDouble(0, 0) should be (-4.0/6.0)
   }
 
   it("should evaluate masking") {
-    import geotrellis.proj4._
-    requests = Nil
-    val subExtent: Extent = Interpreter.layouts(2).mapTransform(0, 0)
+    // We need to select a subextent which is under the z/x/y of 1/1/1
+    val subExtent: Extent = Interpreter.layouts(2).mapTransform(2, 2)
     val mask = MultiPolygon(subExtent.toPolygon)
 
     val src = randomSourceAST
-    val masking = Masking(List(src), UUID.randomUUID, None, mask)
-    val tms = Interpreter.interpretTMS(
-      ast = masking,
-      sourceMapping = Map(src.id -> tileSource(1)),
-      overrides = Map.empty,
-      source = goodSource
+    val tile = InterpreterTest.dbl(
+      Masking(List(src), UUID.randomUUID, None, mask),
+      Map(src.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "A masking calculation"
     )
-    println("Simple Masking calculation: ", masking.asJson.noSpaces)
+    tile.getDouble(10, 10) should be (1)
+  }
 
-    val ret = tms(1, 0, 0)
-    val op = Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val maybeTile = lazytile.evaluateDouble
-        requests.length should be (1)
-        maybeTile.get.getDouble(10, 10) should be (1)
-      case i@Invalid(_) =>
-        fail(s"$i")
-    }
+  it("should evaluate focal maximum") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      FocalMax(List(src), UUID.randomUUID, None, Square(1)),
+      Map(src.id -> tileRef(1)),
+      ascendingSource,
+      Map.empty,
+      "A focal maximum calculation"
+    )
+    tile.get(21, 32) should be (8471)
+  }
+
+  it("should evaluate focal minimum") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      FocalMin(List(src), UUID.randomUUID, None, Square(1)),
+      Map(src.id -> tileRef(1)),
+      ascendingSource,
+      Map.empty,
+      "A focal minimum calculation"
+    )
+    tile.get(21, 32) should be (7957)
+  }
+
+  it("should evaluate focal mean") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      FocalMean(List(src), UUID.randomUUID, None, Square(1)),
+      Map(src.id -> tileRef(1)),
+      ascendingSource,
+      Map.empty,
+      "A focal mean calculation"
+    )
+    tile.get(21, 32) should be (8214)
+  }
+
+  it("should evaluate focal median") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      FocalMedian(List(src), UUID.randomUUID, None, Square(1)),
+      Map(src.id -> tileRef(1)),
+      ascendingSource,
+      Map.empty,
+      "A focal median calculation"
+    )
+    tile.get(21, 32) should be (8214)
+  }
+
+  it("should evaluate focal mode") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.int(
+      FocalMode(List(src), UUID.randomUUID, None, Square(1)),
+      Map(src.id -> tileRef(1)),
+      ascendingSource,
+      Map.empty,
+      "A focal mode calculation"
+    )
+    tile.get(21, 32) should be (NODATA)
+  }
+
+
+  it("should evaluate focal sum") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.int(
+      FocalSum(List(src), UUID.randomUUID, None, Square(1)),
+      Map(src.id -> tileRef(1)),
+      ascendingSource,
+      Map.empty,
+      "A focal sum calculation"
+    )
+    tile.get(0, 0) should be (197385)
+  }
+
+  it("should evaluate focal stddev") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.int(
+      FocalStdDev(List(src), UUID.randomUUID, None, Square(1)),
+      Map(src.id -> tileRef(1)),
+      ascendingSource,
+      Map.empty,
+      "A focal standard deviation calculation"
+    )
+    tile.get(0, 0) should be (30713)
+  }
+
+  it("should evaluate pow") {
+    val src1 = randomSourceAST
+    val src2 = randomSourceAST
+    val tile = InterpreterTest.int(
+      Pow(List(src1, src2), UUID.randomUUID, None),
+      Map(src1.id -> tileRef(2), src2.id -> tileRef(7)),
+      constantSource,
+      Map.empty,
+      "Exponentiation"
+    )
+    assertEqual(tile, createValueTile(256, 128))
+  }
+
+  /* --- LOGICAL OPERATIONS --- */
+  it("should evaluate NOT") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.int(
+      LogicalNegation(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(3)),
+      constantSource,
+      Map.empty,
+      "Logical Negation"
+    )
+    assertEqual(tile, createValueTile(256, 0))
+  }
+
+  // These operation don't work in the way I'd expect... It looks like strange behavior coming from the GT implementation
+  ignore("should evaluate And") {
+    val src1 = randomSourceAST
+    val src2 = randomSourceAST
+    val tile = InterpreterTest.int(
+      And(List(src1, src2), UUID.randomUUID, None),
+      Map(src1.id -> tileRef(3), src2.id -> tileRef(4)),
+      moduloSource,
+      Map.empty,
+      "Logical AND"
+    )
+    tile.get(0, 6) should be (0)
+    tile.get(0, 5) should be (1)
+  }
+
+  ignore("should evaluate or") {
+    val src1 = randomSourceAST
+    val src2 = randomSourceAST
+    val tile = InterpreterTest.int(
+      Or(List(src1, src2), UUID.randomUUID, None),
+      Map(src1.id -> tileRef(1), src2.id -> tileRef(1)),
+      ascendingSource,
+      Map.empty,
+      "Logical disjunction (or)"
+    )
+    assertEqual(tile, IntArrayTile((1 to 256 * 256).toArray, 256, 256))
+  }
+
+  ignore("should evaluate xor") {
+    val src1 = randomSourceAST
+    val src2 = randomSourceAST
+    val tile = InterpreterTest.int(
+      Xor(List(src1, src2), UUID.randomUUID, None),
+      Map(src1.id -> tileRef(1), src2.id -> tileRef(1)),
+      ascendingSource,
+      Map.empty,
+      "Logically exclusive disjunction (xor)"
+    )
+    assertEqual(tile, createValueTile(256, 0))
+  }
+
+
+  /* --- Numeric Comparison --- */
+  it("should evaluate greater than") {
+    val src1 = randomSourceAST
+    val src2 = randomSourceAST
+    val tile = InterpreterTest.int(
+      Greater(List(src1, src2), UUID.randomUUID, None),
+      Map(src1.id -> tileRef(2), src2.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "Equality"
+    )
+    assertEqual(tile, createValueTile(256, 1))
+  }
+
+  it("should evaluate greater than or equal to") {
+    val src1 = randomSourceAST
+    val src2 = randomSourceAST
+    val tile = InterpreterTest.int(
+      GreaterOrEqual(List(src1, src2), UUID.randomUUID, None),
+      Map(src1.id -> tileRef(2), src2.id -> tileRef(2)),
+      constantSource,
+      Map.empty,
+      "Equality"
+    )
+    assertEqual(tile, createValueTile(256, 1))
+  }
+
+  it("should evaluate less than") {
+    val src1 = randomSourceAST
+    val src2 = randomSourceAST
+    val tile = InterpreterTest.int(
+      Less(List(src1, src2), UUID.randomUUID, None),
+      Map(src1.id -> tileRef(1), src2.id -> tileRef(2)),
+      constantSource,
+      Map.empty,
+      "Equality"
+    )
+    assertEqual(tile, createValueTile(256, 1))
+  }
+
+  it("should evaluate less than or equal to") {
+    val src1 = randomSourceAST
+    val src2 = randomSourceAST
+    val tile = InterpreterTest.int(
+      LessOrEqual(List(src1, src2), UUID.randomUUID, None),
+      Map(src1.id -> tileRef(2), src2.id -> tileRef(2)),
+      constantSource,
+      Map.empty,
+      "Equality"
+    )
+    assertEqual(tile, createValueTile(256, 1))
+  }
+
+  it("should evaluate equality") {
+    val src1 = randomSourceAST
+    val src2 = randomSourceAST
+    val tile = InterpreterTest.int(
+      Equality(List(src1, src2), UUID.randomUUID, None),
+      Map(src1.id -> tileRef(1), src2.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "Equality"
+    )
+    assertEqual(tile, createValueTile(256, 1))
+  }
+
+  it("should evaluate inequality") {
+    val src1 = randomSourceAST
+    val src2 = randomSourceAST
+    val tile = InterpreterTest.int(
+      Inequality(List(src1, src2), UUID.randomUUID, None),
+      Map(src1.id -> tileRef(1), src2.id -> tileRef(2)),
+      constantSource,
+      Map.empty,
+      "Inequality"
+    )
+    assertEqual(tile, createValueTile(256, 1))
+  }
+
+  it("should evaluate sqrt") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.int(
+      SquareRoot(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(16)),
+      constantSource,
+      Map.empty,
+      "Square root"
+    )
+    assertEqual(tile, createValueTile(256, 4))
+  }
+
+  it("should evaluate natural log") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      Log(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(22)),
+      constantSource,
+      Map.empty,
+      "Log e"
+    )
+    assertEqual(tile, createValueTile(256, 3.091))
+  }
+
+  it("should evaluate log10") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      Log10(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(32)),
+      constantSource,
+      Map.empty,
+      "Log10"
+    )
+    assertEqual(tile, createValueTile(256, 1.505))
+  }
+
+  it("should evaluate round") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      Round(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "Rounding"
+    )
+    assertEqual(tile, createValueTile(256, 1))
+  }
+
+  it("should evaluate floor") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      Floor(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "Floor (rounding)"
+    )
+    assertEqual(tile, createValueTile(256, 1))
+  }
+
+  it("should evaluate ceil") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      Ceil(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "Ceil (rounding)"
+    )
+    assertEqual(tile, createValueTile(256, 1))
+  }
+
+  it("should evaluate abs") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.int(
+      Abs(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(-1)),
+      constantSource,
+      Map.empty,
+      "Absolute value"
+    )
+    assertEqual(tile, createValueTile(256, 1))
+  }
+
+  it("should evaluate numeric negate") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.int(
+      NumericNegation(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "Numeric negation"
+    )
+    assertEqual(tile, createValueTile(256, -1))
+  }
+
+  it("should evaluate isDefined") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.int(
+      IsDefined(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(Int.MinValue)),
+      constantSource,
+      Map.empty,
+      "Mark defined cells"
+    )
+    assertEqual(tile, createValueTile(256, 0))
+  }
+
+  it("should evaluate isUndefined") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.int(
+      IsUndefined(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(Int.MinValue)),
+      constantSource,
+      Map.empty,
+      "Mark undefined cells"
+    )
+    assertEqual(tile, createValueTile(256, 1))
+  }
+
+  it("should evaluate sin") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      Sin(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "Sin function"
+    )
+    assertEqual(tile, createValueTile(256, 0.8414))
+  }
+
+  it("should evaluate cos") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      Cos(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "Cos function"
+    )
+    assertEqual(tile, createValueTile(256, 0.5403))
+  }
+
+  it("should evaluate tan") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      Tan(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "Tan function"
+    )
+    assertEqual(tile, createValueTile(256, 1.5574))
+  }
+
+  it("should evaluate sinh") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      Sinh(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "Sinh function"
+    )
+    assertEqual(tile, createValueTile(256, 1.1752))
+  }
+
+  it("should evaluate cosh") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      Cosh(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "Cosh function"
+    )
+    assertEqual(tile, createValueTile(256, 1.54308))
+  }
+
+  it("should evaluate tanh") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      Tanh(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "Tanh function"
+    )
+    assertEqual(tile, createValueTile(256, 0.7615))
+  }
+
+  it("should evaluate asin") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      Asin(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "Asin function"
+    )
+    assertEqual(tile, createValueTile(256, 1.5707))
+  }
+
+  it("should evaluate acos") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      Acos(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "Acos function"
+    )
+    assertEqual(tile, createValueTile(256, 0))
+  }
+
+  it("should evaluate atan") {
+    val src = randomSourceAST
+    val tile = InterpreterTest.dbl(
+      Atan(List(src), UUID.randomUUID, None),
+      Map(src.id -> tileRef(1)),
+      constantSource,
+      Map.empty,
+      "atan function"
+    )
+    assertEqual(tile, createValueTile(256, 0.7853))
   }
 }

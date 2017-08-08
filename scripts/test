@@ -26,6 +26,13 @@ then
             find ./scripts -type f -print0 | xargs -0 -r shellcheck
         fi
 
+        echo "Verifying that Airflow containers can run the batch jar"
+        docker-compose \
+            -f docker-compose.airflow.yml \
+            run --rm airflow-worker \
+            bash -c \
+            "java -cp /opt/raster-foundry/jars/rf-batch.jar com.azavea.rf.batch.Main healthcheck"
+
         echo "Validating swagger specification"
         docker-compose \
             -f docker-compose.test.yml \

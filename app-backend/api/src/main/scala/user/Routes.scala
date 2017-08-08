@@ -40,12 +40,9 @@ trait UserRoutes extends Authentication
       post { createUser }
     } ~
     pathPrefix("me") {
-      get {
-        getAuth0User
-      } ~
-      patch {
-        updateAuth0User
-      }
+      get { getAuth0User } ~
+      patch { updateAuth0User } ~
+      put { updateOwnUser }
     }  ~
     pathPrefix("dropbox-setup") {
       pathEndOrSingleSlash {
@@ -75,6 +72,14 @@ trait UserRoutes extends Authentication
           case Some(user) => complete((StatusCodes.Created, user))
           case None => throw new IllegalStateException("Unable to create user")
         }
+      }
+    }
+  }
+
+  def updateOwnUser: Route = authenticate { user =>
+    entity(as[User]) { updatedUser =>
+      onSuccess(Users.updateSelf(user, updatedUser)) {
+        completeSingleOrNotFound
       }
     }
   }

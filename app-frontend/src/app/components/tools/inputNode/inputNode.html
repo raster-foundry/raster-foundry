@@ -1,0 +1,25 @@
+<div class="input-node-item">
+  <div class="input-node-label">Project</div>
+  <div class="input-data form-group all-in-one">
+    <button type="button"
+            class="btn fill form-control"
+            ng-click="$ctrl.selectProjectModal()"
+            ng-attr-title="{{$ctrl.selectedProject && $ctrl.selectedProject.name}}"
+    >
+      <span ng-show="!$ctrl.selectedProject">Select a Project</span>
+      {{$ctrl.selectedProject.name | limitTo : 18}}
+      <span ng-show="$ctrl.selectedProject.name.length > 18">...</span>
+    </button>
+    <button type="button" class="btn btn-flat" ng-click="$ctrl.selectProjectModal()">Change</button>
+  </div>
+</div>
+<div class="input-node-item">
+  <div class="input-node-label">Band</div>
+  <input type="number"
+         step="1"
+         class="input-data form-control"
+         ng-model="$ctrl.selectedBand"
+         ng-change="$ctrl.onBandChange()"
+         min="0"
+         placeholder="Enter a band to process">
+</div>

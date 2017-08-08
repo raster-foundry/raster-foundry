@@ -4,13 +4,14 @@ import java.util.UUID
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
 import cats.implicits._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.datamodel._
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import com.typesafe.scalalogging.LazyLogging
+import geotrellis.slick.Projected
+import geotrellis.vector.Polygon
 
 // --- //
 
@@ -150,6 +151,29 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
     }.map(_.headOption)
   }
 
+  def getMosaicDefinition(projectId: UUID, polygonOption: Option[Projected[Polygon]])(implicit database: DB): Future[Option[Seq[MosaicDefinition]]] = {
+    val query = for {
+      (s2p, s) <- ScenesToProjects join Scenes.filterByTileFootprint(polygonOption) on (_.sceneId === _.id)
+    } yield {
+      s2p
+    }
+
+    database.db.run {
+      query
+        .filter(_.projectId === projectId)
+        .sortBy(_.sceneOrder.asc.nullsLast)
+        .result
+    } map { s2p =>
+      if (s2p.length > 0) {
+        Some(s2p.map { sceneToProject =>
+          MosaicDefinition(sceneToProject.sceneId, sceneToProject.colorCorrectParams)
+        })
+      } else {
+        None
+      }
+    }
+  }
+
   /** Get the complete mosaic definition for a giving project */
   def getMosaicDefinition(projectId: UUID)(implicit database: DB): Future[Option[Seq[MosaicDefinition]]] = {
     database.db.run {
@@ -196,5 +220,13 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
     }
 
     sceneIds.flatMap(scenes)
+  }
+
+  def allScenes(projectId: UUID)(implicit database: DB): Future[Seq[UUID]] = database.db.run {
+    ScenesToProjects
+      .filter(_.projectId === projectId)
+      .sortBy(_.sceneOrder.asc.nullsLast)
+      .map(_.sceneId)
+      .result
   }
 }

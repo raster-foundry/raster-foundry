@@ -23,21 +23,15 @@ const availableResolutions = [
 
 const availableTargets = [
     {
-        label: 'Default',
+        label: 'Download',
         value: 'internalS3',
         default: true
     }, {
         label: 'S3 Bucket',
         value: 'externalS3'
-    }
-];
-
-const exportTypes = [
-    {
-        label: 'S3'
-    },
-    {
-        label: 'Dropbox'
+    }, {
+        label: 'Dropbox',
+        value: 'dropbox'
     }
 ];
 
@@ -52,8 +46,6 @@ export default class ExportController {
         this.toolService = toolService;
         this.availableResolutions = availableResolutions;
         this.availableTargets = availableTargets;
-        this.exportTypes = exportTypes;
-        this.exportType = this.exportTypes[0];
         this.availableProcessingOptions = this.projectService.availableProcessingOptions;
         this.getMap = () => mapService.getMap('edit');
     }
@@ -106,14 +98,6 @@ export default class ExportController {
                this.availableTargets[0];
     }
 
-    onExportTypeChange(newExportType) {
-        let newLabel = newExportType.label;
-        this.exportTypes.forEach(exportType => {
-            if (exportType.label === newLabel) {
-                this.exportType = exportType;
-            }
-        });
-    }
 
     getDefaultProcessingOption() {
         return this.availableProcessingOptions.find(o => o.default) ||
@@ -130,20 +114,6 @@ export default class ExportController {
         return this.exportTarget;
     }
 
-    getCurrentExportType() {
-        const exportType = this.exportType;
-        return {
-            exportType: this.exportTypes
-                .find(e => e.label === exportType.label).label
-        };
-    }
-
-    getExportSource() {
-        return this.getCurrentExportType().exportType === 'Dropbox' ?
-            {source: `dropbox:///${this.project.id}`} :
-            {};
-    }
-
     getCurrentProcessingOption() {
         const option = this.exportProcessingOption;
         return this.availableProcessingOptions
@@ -156,7 +126,6 @@ export default class ExportController {
             this.exportOptions,
             this.getCurrentProcessingOption().exportOptions,
             this.mask ? {mask: this.mask} : {},
-            this.getExportSource(),
             options
         );
     }
@@ -234,6 +203,8 @@ export default class ExportController {
     finalizeExportOptions() {
         if (this.getCurrentTarget().value === 'externalS3') {
             this.exportOptions.source = this.exportTargetURI;
+        } else if (this.getCurrentTarget().value === 'dropbox') {
+            this.exportOptions.source = `dropbox:///${this.project.id}`;
         }
     }
 
@@ -275,7 +246,7 @@ export default class ExportController {
     createBasicExport() {
         this.projectService
             .export(this.project,
-                    Object.assign({}, this.getCurrentExportType()),
+                    {exportType: this.getCurrentTarget().value === 'dropbox' ? 'Dropbox' : 'S3' },
                     this.getExportOptions())
             .finally(() => {
                 this.finishExport();

@@ -4,6 +4,7 @@ import loginTpl from './pages/login/login.html';
 import labTpl from './pages/lab/lab.html';
 import labEditTpl from './pages/lab/edit/edit.html';
 import labRunTpl from './pages/lab/run/run.html';
+import labNavbarTpl from './pages/lab/run/navbar/navbar.html';
 import marketTpl from './pages/market/market.html';
 import marketSearchTpl from './pages/market/search/search.html';
 import marketToolTpl from './pages/market/tool/tool.html';
@@ -27,6 +28,7 @@ import projectMaskingDrawTpl from './pages/projects/edit/masking/draw/draw.html'
 import aoiApproveTpl from './pages/projects/edit/aoi-approve/aoi-approve.html';
 import aoiParametersTpl from './pages/projects/edit/aoi-parameters/aoi-parameters.html';
 import exportTpl from './pages/projects/edit/export/export.html';
+import annotateTpl from './pages/projects/edit/annotate/annotate.html';
 
 import settingsTpl from './pages/settings/settings.html';
 import profileTpl from './pages/settings/profile/profile.html';
@@ -147,6 +149,12 @@ function projectEditStates($stateProvider) {
             url: '/export',
             templateUrl: exportTpl,
             controller: 'ExportController',
+            controllerAs: '$ctrl'
+        })
+        .state('projects.edit.annotate', {
+            url: '/annotate',
+            templateUrl: annotateTpl,
+            controller: 'AnnotateController',
             controllerAs: '$ctrl'
         });
 }
@@ -278,12 +286,21 @@ function labStates($stateProvider) {
             controller: 'LabEditController',
             controllerAs: '$ctrl'
         })
-        .state('lab.run', {
-            url: '/run/:projectid?',
-            templateUrl: labRunTpl,
-            controller: 'LabRunController',
-            controllerAs: '$ctrl'
-        });
+       .state('lab.run', {
+           url: '/run/:projectid?',
+           views: {
+               'navmenu@root': {
+                   templateUrl: labNavbarTpl,
+                   controller: 'LabNavbarController',
+                   controllerAs: '$ctrl'
+               },
+               '': {
+                   templateUrl: labRunTpl,
+                   controller: 'LabRunController',
+                   controllerAs: '$ctrl'
+               }
+           }
+       });
 }
 
 function shareStates($stateProvider) {
