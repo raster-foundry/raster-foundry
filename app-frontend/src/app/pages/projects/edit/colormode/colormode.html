@@ -61,6 +61,23 @@
             </div>
             <i class="icon-info"></i>
           </li>
+          <li ng-if="$ctrl.showShowBlendMode()">
+            <span class="label">Blend Mode</span>
+            <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
+              <a class="btn dropdown-label">
+                {{$ctrl.getActiveColorBlendMode().label}}
+              </a>
+              <button type="button" class="btn btn-light dropdown-toggle">
+                <i class="icon-caret-down"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+                <li  ng-repeat="mode in $ctrl.colorSchemeService.defaultColorBlendModes" role="menuitem">
+                  <a ng-click="$ctrl.setActiveColorBlendMode(mode)">{{mode.label}}</a>
+                </li>
+              </ul>
+            </div>
+            <i class="icon-info"></i>
+          </li>
           <li ng-if="$ctrl.shouldShowColorScheme()">
             <span class="label">Color scheme</span>
             <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>

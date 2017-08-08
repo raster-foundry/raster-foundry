@@ -119,11 +119,22 @@ const defaultColorSchemeTypes = [
     }
 ];
 
+const defaultColorBlendModes = [
+    {
+        label: 'Continuous',
+        value: 'CONTINUOUS'
+    }, {
+        label: 'Discrete',
+        value: 'DISCRETE'
+    }
+];
+
 export default (app) => {
     class ColorSchemeService {
         constructor() {
             this.defaultColorSchemes = defaultColorSchemes;
             this.defaultColorSchemeTypes = defaultColorSchemeTypes;
+            this.defaultColorBlendModes = defaultColorBlendModes;
         }
 
         // (colors:string[], bitDepth:int) => { int: string }

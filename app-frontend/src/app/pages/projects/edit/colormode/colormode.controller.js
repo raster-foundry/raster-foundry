@@ -129,6 +129,11 @@ export default class ProjectsEditColormode {
                     this.colorSchemeService.colorsToDiscreteScheme(s.colors)
                 )
             );
+
+        this.activeColorBlendMode =
+            this.colorSchemeService.defaultColorBlendModes.find(
+                m => m.value === this.projectBuffer.singleBandOptions.blendMode
+            );
     }
 
     initSingleBandDefaults() {
@@ -202,7 +207,22 @@ export default class ProjectsEditColormode {
         if (!this.isLoading) {
             return this.activeColorSchemeType;
         }
-        return {};
+        return null;
+    }
+
+    setActiveColorBlendMode(blendMode) {
+        if (this.activeColorBlendMode.value !== blendMode.value) {
+            this.activeColorBlendMode = blendMode;
+            this.projectBuffer.singleBandOptions.blendMode = this.activeColorBlendMode.value;
+            this.updateProjectFromBuffer();
+        }
+    }
+
+    getActiveColorBlendMode() {
+        if (!this.isLoading) {
+            return this.activeColorBlendMode;
+        }
+        return null;
     }
 
     shouldShowColorScheme() {
@@ -216,6 +236,10 @@ export default class ProjectsEditColormode {
 
     shouldShowColorSchemeBuilder() {
         return this.activeColorSchemeType.value === 'CATEGORICAL';
+    }
+
+    shouldShowBlendMode() {
+        return this.activeColorSchemeType.value !== 'CATEGORICAL';
     }
 
     updateProjectFromBuffer() {
