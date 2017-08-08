@@ -1,3 +1,5 @@
+/* global _ */
+
 const availableBands = [
     {
         label: 'Band 0',
@@ -39,11 +41,13 @@ const availableBands = [
 ];
 
 export default class ProjectsEditColormode {
-    constructor($scope, colorCorrectService, projectService) {
+
+    constructor($scope, colorCorrectService, colorSchemeService, projectService) {
         'ngInject';
         this.$scope = $scope;
         this.$parent = $scope.$parent.$ctrl;
         this.colorCorrectService = colorCorrectService;
+        this.colorSchemeService = colorSchemeService;
         this.projectService = projectService;
     }
 
@@ -60,13 +64,6 @@ export default class ProjectsEditColormode {
                     blueBand: 1,
                     redBand: 3,
                     greenBand: 2
-                }
-            },
-            singleband: {
-                label: 'Single Band',
-                value: {
-                    mode: 'single',
-                    band: 0
                 }
             }
         };
@@ -95,39 +92,163 @@ export default class ProjectsEditColormode {
                                 this.$parent.unifiedComposites,
                                 this.defaultColorModes
                             );
-                        this.activeColorModeKey = this.initActiveColorMode();
+                        this.initProjectBuffer();
                         this.isLoading = false;
+                        this.activeColorModeKey = this.initActiveColorMode();
                     });
                 });
             }
         });
     }
 
+    initProjectBuffer() {
+        this.initSingleBandDefaults();
+        this.projectBuffer = Object.assign({}, this.$parent.project);
+        if (this.projectBuffer.isSingleBand) {
+            this.initActiveScheme();
+        }
+    }
+
+    /**
+     * Single-band functions
+     */
+
+    initActiveScheme() {
+        this.projectBuffer.singleBandOptions =
+            Object.assign({}, this.defaultSingleBandOptions, this.projectBuffer.singleBandOptions);
+
+        this.activeColorSchemeType =
+            this.colorSchemeService.defaultColorSchemeTypes.find(
+                t => t.value === this.projectBuffer.singleBandOptions.dataType
+            );
+
+        this.activeColorScheme =
+            this.colorSchemeService.defaultColorSchemes.find(
+                s => _.isEqual(
+                    this.projectBuffer.singleBandOptions.colorScheme,
+                    this.colorSchemeService.colorsToDiscreteScheme(s.colors)
+                )
+            );
+    }
+
+    initSingleBandDefaults() {
+        const scheme = this.activeColorScheme || this.colorSchemeService.defaultColorSchemes[0];
+        this.defaultSingleBandOptions = {
+            band: 0,
+            dataType: scheme.type,
+            colorScheme: this.colorSchemeService.colorsToDiscreteScheme(scheme.colors),
+            blendMode: 'CONTINUOUS',
+            legendOrientation: 'left'
+        };
+    }
+
+    toggleProjectSingleBandMode(state) {
+        this.initSingleBandDefaults();
+        if (typeof state !== 'undefined') {
+            this.projectBuffer.isSingleBand = state;
+        } else {
+            this.projectBuffer.isSingleBand = !this.projectBuffer.isSingleBand;
+        }
+        this.initActiveScheme();
+        this.updateProjectFromBuffer();
+    }
+
+    getActiveBand(bandName) {
+        return this.getActiveColorMode().value[bandName];
+    }
+
+    setActiveSingleBand(bandValue) {
+        this.projectBuffer.singleBandOptions.band = bandValue;
+        this.updateProjectFromBuffer();
+    }
+
+    getActiveSingleBand() {
+        return this.projectBuffer.singleBandOptions.band;
+    }
+
+    getActiveColorScheme() {
+        return this.activeColorScheme;
+    }
+
+    setActiveColorScheme(scheme, save = false) {
+        if (!this.isLoading) {
+            this.activeColorScheme = scheme;
+            this.activeColorSchemeType =
+                this.colorSchemeService.defaultColorSchemeTypes.find(t => t.value === scheme.type);
+            this.projectBuffer.singleBandOptions.dataType = scheme.type;
+            this.projectBuffer.singleBandOptions.colorScheme =
+                this.colorSchemeService.colorsToDiscreteScheme(this.activeColorScheme.colors);
+            if (save) {
+                this.updateProjectFromBuffer();
+            }
+        }
+    }
+
+    setActiveColorSchemeType(type) {
+        if (this.activeColorSchemeType.value !== type.value) {
+            this.activeColorSchemeType = type;
+            if (type.value !== 'CATEGORICAL') {
+                const firstSchemeOfType = this.colorSchemeService.defaultColorSchemes.find(
+                    s => s.type === type.value
+                );
+                this.setActiveColorScheme(firstSchemeOfType, true);
+            } else {
+                // Init cateegorical scheme
+            }
+        }
+    }
+
+    getActiveColorSchemeType() {
+        if (!this.isLoading) {
+            return this.activeColorSchemeType;
+        }
+        return {};
+    }
+
+    shouldShowColorScheme() {
+        return (
+            this.activeColorSchemeType && (
+                this.activeColorSchemeType.value === 'SEQUENTIAL' ||
+                this.activeColorSchemeType.value === 'DIVERGING'
+            )
+        );
+    }
+
+    shouldShowColorSchemeBuilder() {
+        return this.activeColorSchemeType.value === 'CATEGORICAL';
+    }
+
+    updateProjectFromBuffer() {
+        this.projectService.updateProject(this.projectBuffer).then(() => {
+            this.$parent.project = this.projectBuffer;
+            this.redrawMosaic();
+        });
+    }
+
+    /**
+     * RGB-composite functions
+     */
+
     initActiveColorMode() {
         const key = Object.keys(this.unifiedComposites).find(k => {
             const c = this.unifiedComposites[k].value;
 
-            if (!c.mode) {
-                return this.correction.redBand === c.redBand &&
-                    this.correction.greenBand === c.greenBand &&
-                    this.correction.blueBand === c.blueBand;
-            }
-
-            return this.correction.mode === c.mode &&
+            return (
                 this.correction.redBand === c.redBand &&
                 this.correction.greenBand === c.greenBand &&
-                this.correction.blueband === c.blueBand;
+                this.correction.blueBand === c.blueBand
+            );
         });
 
         if (!key) {
-            this.initCustomCorrection();
+            this.initCustomColorMode();
             return 'custom';
         }
 
         return key;
     }
 
-    initCustomCorrection() {
+    initCustomColorMode() {
         this.unifiedComposites.custom.value.redBand = this.correction.redBand;
         this.unifiedComposites.custom.value.greenBand = this.correction.greenBand;
         this.unifiedComposites.custom.value.blueBand = this.correction.blueBand;
@@ -138,49 +259,61 @@ export default class ProjectsEditColormode {
         return this.unifiedComposites[this.activeColorModeKey];
     }
 
-
     setActiveColorMode(key, save = true) {
-        this.activeColorModeKey = key;
-        this.correction = Object.assign({}, this.correction, this.getActiveColorMode().value);
-        if (save) {
-            this.saveCorrection();
+        if (key === 'singleband') {
+            this.toggleProjectSingleBandMode(true);
+        } else {
+            this.toggleProjectSingleBandMode(false);
+            this.activeColorModeKey = key;
+            this.correction = Object.assign({}, this.correction, this.getActiveColorMode().value);
+            if (save) {
+                this.saveCorrection();
+            }
         }
     }
 
     isActiveColorMode(key) {
-        return key === this.activeColorModeKey;
-    }
-
-    getActiveBand(bandName) {
-        return this.getActiveColorMode().value[bandName];
+        if (!this.isLoading) {
+            return (
+                !this.projectBuffer.isSingleBand &&
+                key === this.activeColorModeKey
+            );
+        }
+        return false;
     }
 
     setActiveBand(bandName, bandValue, save = true) {
         this.correction[bandName] = bandValue;
-        this.unifiedComposites.custom.value[bandName] = bandValue;
+
+        if (this.activeColorModeKey === 'custom') {
+            this.unifiedComposites.custom.value[bandName] = bandValue;
+        } else if (this.activeColorModeKey === 'singleband') {
+            this.unifiedComposites.singleband.value[bandName] = bandValue;
+        }
+
         if (save) {
             this.saveCorrection();
         }
     }
 
     saveCorrection() {
-        const promise = this.colorCorrectService.bulkUpdate(
+        this.colorCorrectService.bulkUpdate(
             this.projectService.currentProject.id,
             Array.from(this.$parent.sceneLayers.keys()),
             this.correction
-        );
-        this.redrawMosaic(promise);
+        ).then(() => {
+            this.redrawMosaic();
+        });
     }
 
     /**
      * Trigger the redraw of the mosaic layer with new bands
      *
-     * @param {promise} promise color-correction promise
      * @returns {null} null
      */
-    redrawMosaic(promise) {
-        promise.then(() => {
-            this.$parent.layerFromProject();
-        });
+    redrawMosaic() {
+        this.$parent.layerFromProject();
     }
 }
+
+
