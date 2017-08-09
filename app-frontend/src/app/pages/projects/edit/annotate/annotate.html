@@ -1,8 +1,9 @@
 <!-- Annotate Toolbar Component -->
 <rf-annotate-toolbar
   map-id="edit"
-  geom="$ctrl.annoToExport",
-  on-save="$ctrl.onAnnotationSave(geoJsonAnnotation)">
+  is-labeling="$ctrl.isLabeling"
+  on-shape-creating="$ctrl.onShapeCreating(isCreating)"
+  on-shape-created="$ctrl.onAddShapeToDrawLayer(shapeLayer, shapeType)">
 </rf-annotate-toolbar>
 <!-- Annotate Toolbar Component -->
 
@@ -20,16 +21,28 @@
         <span class="text">This is some text about annotating.</span>
       </div>
       <div class="list-group-right column-6 nogutter btn-group">
+          <button class="btn btn-primary btn-block" type="button" ng-disabled="$ctrl.isCreating">
+            <input type="file"
+                   accept="geojson"
+                   multiple
+                   id="btn-upload"
+                   ng-disabled="$ctrl.isCreating"/>
+            <label for="btn-upload"
+                   ng-show="$ctrl.isUpload"
+                   id="label-upload">
+              Upload
+            </label>
+            <label ng-click="$ctrl.onImportClick()"
+                   ng-show="!$ctrl.isUpload"
+                   id="label-import">
+              Import
+            </label>
+          </button>
         <button
           class="btn btn-primary btn-block"
           type="button"
-          ng-click="$ctrl.importLocalAnnotations()">
-          Import
-        </button>
-        <button
-          class="btn btn-primary btn-block"
-          type="button"
-          ng-click="$ctrl.exportAnnotations(geoJsonAnnotation)">
+          ng-click="$ctrl.onAnnotationsExport($event)"
+          ng-disabled="$ctrl.isCreating">
           Export
         </button>
       </div>
@@ -54,28 +67,36 @@
       <div class="list-group">
         <div class="list-group-item filter-annotations">
           <div>
-            <span><strong>Filter Placeholder</span></strong>
+            <span><strong>Filter by label</span></strong>
+          </div>
+          <div class="list-group-right column-6 nogutter filter-annotations-select">
+            <select
+              ng-init="$ctrl.filterLabel = {'name': 'All'}"
+              ng-model="$ctrl.filterLabel"
+              ng-change="$ctrl.onFilterChange($ctrl.filterLabel)"
+              ng-options="label.name for label in $ctrl.labelInputs track by label.name"
+              ng-disabled="$ctrl.isCreating">
+            </select>
           </div>
         </div>
       </div>
       <div class="list-group"
-           ng-repeat="annotation in $ctrl.annoToExport.features">
-        <div class="list-group-item list-sidebar-annotations">
-          <div>
-              <i class="icon-cloud"
-                 ng-if="annotation.geometry.coordinates.length === 1"></i>
-              <i class="icon-sun"
-                 ng-if="annotation.geometry.coordinates.length === 2"></i>
-          </div>
-          <div>
-            <h5>{{annotation.properties.label}}</h5>
-          </div>
-          <div class="list-group-right actions-annotations">
-            <a title="Clone"><i class="icon-arrows-cw"></i></a>
-            <a title="Edit"><i class="icon-pencil"></i></a>
-            <a title="Delete"><i class="icon-trash"></i></a>
-          </div>
-        </div>
+           ng-repeat="annotation in $ctrl.annoToExport.features | filter: $ctrl.labelFilter"
+           ng-mouseenter="$ctrl.annotationSidebarMouseHover($event, annotation, true)"
+           ng-mouseleave="$ctrl.annotationSidebarMouseHover($event, annotation, false)">
+        <rf-annotate-sidebar-item
+          map-id="edit"
+          data="$ctrl.annoToExport"
+          annotation="annotation"
+          shape-type="$ctrl.drawnShapeType"
+          label-inputs="$ctrl.labelInputs"
+          on-cancel-add-annotation="$ctrl.onCancelAddAnnotation(id)"
+          on-add-annotation="$ctrl.onAddAnnotation(id, label, description)"
+          on-update-annotation-start="$ctrl.onUpdateAnnotationStart()"
+          on-delete-annotation="$ctrl.onDeleteAnnotation(id, label)"
+          on-cancel-update-annotation="$ctrl.onCancelUpdateAnnotation(id)"
+          on-update-annotation-finish="$ctrl.onUpdateAnnotationFinish(layer, id, label, oldLabel, description)">
+        </rf-annotate-sidebar-item>
       </div>
   </div>
 </div>

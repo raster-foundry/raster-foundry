@@ -1,20 +1,34 @@
 <div class="annotate-toolbar">
-  <div class="column">
+  <div class="column" ng-if="!$ctrl.isDrawCancel">
     <div class="annotate-toolbar-header row align-center">
       <span>New annotation</span>
     </div>
     <div class="annotate-toolbar-actions row align-center">
       <button class="btn btn-primary"
-              ng-click="$ctrl.toggleDrawing('rectangle')">
+              ng-click="$ctrl.toggleDrawing('rectangle')"
+              ng-disabled="$ctrl.isLabeling">
         Rectangle
       </button>
       <button class="btn btn-primary"
-              ng-click="$ctrl.toggleDrawing('polygon')">
+              ng-click="$ctrl.toggleDrawing('polygon')"
+              ng-disabled="$ctrl.isLabeling">
         Polygon
       </button>
       <button class="btn btn-primary"
-              ng-click="$ctrl.toggleDrawing('marker')">
+              ng-click="$ctrl.toggleDrawing('marker')"
+              ng-disabled="$ctrl.isLabeling">
         Point
+      </button>
+    </div>
+  </div>
+  <div class="column" ng-if="$ctrl.isDrawCancel">
+    <div class="annotate-toolbar-header row align-center">
+      <span>Draw annotation</span>
+    </div>
+    <div class="annotate-toolbar-actions row align-center">
+      <button class="btn btn-primary"
+              ng-click="$ctrl.onCancelDrawing()">
+        Cancel
       </button>
     </div>
   </div>
