@@ -15,17 +15,16 @@ export default class FilterPaneController {
         if (this.authService.isLoggedIn) {
             this.initFilters();
             this.initDatefilter();
+        } else {
+            this.$scope.$watch(() => this.authService.isLoggedIn, (isLoggedIn) => {
+                if (isLoggedIn) {
+                    this.initFilters();
+                    this.initDatefilter();
+                }
+            });
         }
 
         this.toggleDrag = {toggle: false, enabled: false};
-
-        this.$scope.$watch(() => this.authService.isLoggedIn, (isLoggedIn) => {
-            if (isLoggedIn) {
-                this.initFilters();
-                this.initDatefilter();
-            }
-        });
-
         this.$scope.$watch('$ctrl.opened', (opened) => {
             if (opened) {
                 this.$timeout(() => this.$rootScope.$broadcast('reCalcViewDimensions'), 50);
