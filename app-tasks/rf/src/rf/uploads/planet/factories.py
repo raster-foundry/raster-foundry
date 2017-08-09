@@ -41,7 +41,7 @@ class PlanetSceneFactory(object):
             planet_feature, temp_tif_file = self.copy_asset_to_s3(planet_id)
             planet_key = self.client.auth.value
             planet_scene = create_planet_scene(planet_feature, self.datasource, self.organizationId, planet_key,
-                                              self.visibility, self.tags, self.owner)
+                                               self.visibility, self.tags, self.owner)
             delete_file(temp_tif_file)
             yield planet_scene
 
@@ -64,9 +64,9 @@ class PlanetSceneFactory(object):
 
         assets = self.client.get_assets_by_id(item_type, item_id).get()
         asset_type = PlanetSceneFactory.get_asset_type(assets)
-        self.activate_asset_and_wait(asset_type, assets, item_id, item_type)
+        updated_assets = self.activate_asset_and_wait(asset_type, assets, item_id, item_type)
 
-        temp_tif_file = self.download_planet_tif(asset_type, assets, item_id)
+        temp_tif_file = self.download_planet_tif(asset_type, updated_assets, item_id)
         bucket, s3_path = self.upload_planet_tif(asset_type, item_id, item_type, temp_tif_file)
 
         item['added_props'] = {}
@@ -106,7 +106,7 @@ class PlanetSceneFactory(object):
             item_type (str): satellite type of scene
 
         Returns:
-            None
+            dict
         """
         self.client.activate(assets[asset_type])
         try_number = 0
@@ -118,6 +118,7 @@ class PlanetSceneFactory(object):
             time.sleep(15)
 
         logger.info('Asset activated: %s', item_id)
+        return assets
 
     def download_planet_tif(self, asset_type, assets, item_id):
         """Downloads asset to local filesystem, returns path
@@ -134,7 +135,12 @@ class PlanetSceneFactory(object):
         _, temp_tif_file = tempfile.mkstemp()
         logger.info('Downloading asset: %s to %s', item_id, temp_tif_file)
 
-        body = self.client.download(assets[asset_type]).get_body()
+        try:
+            body = self.client.download(assets[asset_type]).get_body()
+        except:
+            logger.exception('Failed to download asset %s with %s', asset_type, assets)
+            raise
+
         with open(temp_tif_file, 'wb') as outf:
             body.write(file=outf)
 
