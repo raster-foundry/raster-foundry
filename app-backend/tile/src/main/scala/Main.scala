@@ -3,7 +3,6 @@ package com.azavea.rf.tile
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
-import com.azavea.rf.database.Database
 import kamon.Kamon
 
 import scala.util.Try
@@ -20,7 +19,6 @@ object Main extends App
 
   import AkkaSystem._
 
-  val database = Database.DEFAULT
   val router = new Router()
 
   def terminate(): Unit = {
