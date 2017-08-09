@@ -59,6 +59,8 @@ $ ./scripts/server
 
 Use `vagrant up` to provision a virtual machine. During provisioning `docker` and `docker-compose` will be installed on the guest machine. Additionally, docker images will be downloaded for the database and created for the `akka-http` application server.
 
+The guest machine shares folders with the host using `rsync`. In order to sync files from the host to the guest, run `vagrant rsync-auto` in another tab. If you have generated files in the guest that you'd like to copy back into the host machine, run `scripts/rsync-back` from the host.
+
 Once the machine is provisioned you can start services or development by ssh-ing into the machine (`vagrant ssh`) and using the helper scripts in the `/opt/raster-foundry/scripts` directory.
 
 If you do not have a development database to seed your database with, you will need to initialize the database with `mg init` inside an `sbt` console `./scripts/console api-server ./sbt`
@@ -67,9 +69,11 @@ Development workflow varies by developer, but a typical development experience m
 
  - Create a new feature branch
  - Start up the vagrant machine with `vagrant up --provision`
+ - Sync watched files by running `vagrant rsync-auto` in another tab.
  - Get an `sbt` console open using `./scripts/console api-server ./sbt`
  - Make changes to Scala code
  - Try compiling (`~compile`) or running the service to inspect it (`~api/run`)
+ - Extract files generated in the VM with `./scripts/rsync-back`
 
 ### Migrations
 
@@ -149,6 +153,7 @@ Helper and development scripts are located in the `./scripts` directory at the r
 | `cipublish`             | Publish container images to container image repositories.    |
 | `load_development_data` | Load data for development purposes                           |
 | `publish-jars`          | Publish JAR artifacts to S3                                  |
+| `rsync-back`            | Perform a one-way `rsync` from the VM to the host.		 	 |
 
 ## Testing
 
