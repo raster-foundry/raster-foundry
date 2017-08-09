@@ -1,0 +1,49 @@
+<div class="list-group-item list-sidebar-drawn-annotations" ng-if="$ctrl.annotation.geometry && !$ctrl.isEditing">
+  <div>
+      <i class="icon-cloud"
+         ng-if="$ctrl.annotation.geometry.coordinates.length === 1"></i>
+      <i class="icon-sun"
+         ng-if="$ctrl.annotation.geometry.coordinates.length === 2"></i>
+  </div>
+  <div>
+    <h5>{{$ctrl.annotation.properties.label}}</h5>
+  </div>
+  <div class="list-group-right actions-annotations">
+    <a title="Clone" ng-click="$ctrl.onAnnotationClone($ctrl.annotation)"><i class="icon-arrows-cw"></i></a>
+    <a title="Edit" ng-click="$ctrl.onAnnotationEdit($ctrl.annotation)"><i class="icon-pencil"></i></a>
+    <a title="Delete" ng-click="$ctrl.onAnnotationDelete($ctrl.annotation)"><i class="icon-trash"></i></a>
+  </div>
+</div>
+<div class="list-group-item" ng-if="!$ctrl.annotation.geometry || $ctrl.isEditing">
+  <div class='annotation-new'>
+    <div angucomplete-alt
+         pause="100"
+         initial-value='$ctrl.initialLabelName'
+         selected-object="$ctrl.labelObj"
+         local-data="$ctrl.labelInputs"
+         search-fields="name"
+         title-field="name"
+         minlength="1"
+         input-class="form-control annotation-label"
+         match-class="annotation-highlight"
+         override-suggestions="true">
+    </div>
+    <textarea class="form-control"
+              ng-model="$ctrl.newLabelDescription"
+              ng-if="!$ctrl.annotation.geometry || $ctrl.isEditing"></textarea>
+    <input type="button"
+           class="btn btn-light annotation-cancel"
+           value="Cancel"
+           ng-click="$ctrl.cancelAnnotation($ctrl.annotation)"/>
+    <input type="button"
+           class="btn btn-tertiary annotation-confirm"
+           value="Add"
+           ng-click="$ctrl.addAnnotation($ctrl.annotation)"
+           ng-if="!$ctrl.isEditing"/>
+    <input type="button"
+           class="btn btn-tertiary annotation-confirm"
+           value="Update"
+           ng-click="$ctrl.updateAnnotation($ctrl.annotation)"
+           ng-if="$ctrl.isEditing"/>
+  </div>
+</div>
