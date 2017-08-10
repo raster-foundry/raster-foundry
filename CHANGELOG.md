@@ -1,5 +1,12 @@
 # Change Log
 
+## [0.18.1](https://github.com/raster-foundry/raster-foundry/tree/0.18.1) (2017-08-10)
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.18.0...0.18.1)
+
+**Merged pull requests:**
+
+- Clean Up API Spec/Queries/Planet Imports/Autocomplete [\#2378](https://github.com/raster-foundry/raster-foundry/pull/2378)
+
 ## [0.18.0](https://github.com/raster-foundry/raster-foundry/tree/0.18.0) (2017-08-08)
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.17.0...0.18.0)
 
@@ -19,6 +26,7 @@
 - Add Memcached timeout and client mode settings [\#2347](https://github.com/raster-foundry/raster-foundry/pull/2347)
 - Improve bash callout when setting layer metadata in ingest [\#2345](https://github.com/raster-foundry/raster-foundry/pull/2345)
 - Add vague name shame to PR template [\#2342](https://github.com/raster-foundry/raster-foundry/pull/2342)
+- Pass overrides from toolrun to interpreter [\#2340](https://github.com/raster-foundry/raster-foundry/pull/2340)
 - Add frontend parsing for many more local ops [\#2332](https://github.com/raster-foundry/raster-foundry/pull/2332)
 - Add Annotations to Sidebar [\#2320](https://github.com/raster-foundry/raster-foundry/pull/2320)
 - Add Annotation Toolbar Component [\#2313](https://github.com/raster-foundry/raster-foundry/pull/2313)
@@ -40,6 +48,7 @@
 - Angular Service to Query Planet API [\#2272](https://github.com/raster-foundry/raster-foundry/pull/2272)
 - Change edit to view on project list and link thumbnails to edit page [\#2271](https://github.com/raster-foundry/raster-foundry/pull/2271)
 - Change default basemap to light/positron [\#2270](https://github.com/raster-foundry/raster-foundry/pull/2270)
+- Allow for AST validation w/o toolrun [\#2269](https://github.com/raster-foundry/raster-foundry/pull/2269)
 - Add JMX remote support to API and tile server [\#2266](https://github.com/raster-foundry/raster-foundry/pull/2266)
 - Include scene post body params [\#2264](https://github.com/raster-foundry/raster-foundry/pull/2264)
 - Add lab map component and use in lab2 [\#2263](https://github.com/raster-foundry/raster-foundry/pull/2263)
