@@ -6,7 +6,7 @@ import time
 
 import boto3
 
-from rf.utils.io import Visibility, delete_file
+from rf.utils.io import IngestStatus, Visibility, delete_file
 from .create_scenes import create_planet_scene
 
 
@@ -25,9 +25,11 @@ class PlanetSceneFactory(object):
     """
 
     def __init__(self, planet_ids, datasource, organization_id, upload_id,
-                 visibility=Visibility.PRIVATE, tags=[], owner=None, client=None):
+                 project_id=None, visibility=Visibility.PRIVATE, tags=[],
+                 owner=None, client=None):
         self.organizationId = organization_id
         self.upload_id = upload_id
+        self.isProjectUpload = project_id is not None
         self.datasource = datasource
         self.visibility = visibility
         self.tags = tags
@@ -36,12 +38,21 @@ class PlanetSceneFactory(object):
         self.planet_ids = planet_ids
 
     def generate_scenes(self):
-        """Create a generator to """
-        for planet_id in self.planet_ids:
+        # If this upload is not associated with a project, set the scene's
+        # ingest status to TOBEINGESTED so that scene creation will kick off
+        # an ingest. Otherwise, set the status to NOTINGESTED, so that the status
+        # will be updated when the scene is added to this upload's project
+        if self.isProjectUpload:
+            ingest_status = IngestStatus.NOTINGESTED
+        else:
+            ingest_status = IngestStatus.TOBEINGESTED
+        for planet_id in set(self.planet_ids):
             planet_feature, temp_tif_file = self.copy_asset_to_s3(planet_id)
             planet_key = self.client.auth.value
-            planet_scene = create_planet_scene(planet_feature, self.datasource, self.organizationId, planet_key,
-                                               self.visibility, self.tags, self.owner)
+            planet_scene = create_planet_scene(
+                planet_feature, self.datasource, self.organizationId, planet_key,
+                ingest_status, self.visibility, self.tags, self.owner
+            )
             delete_file(temp_tif_file)
             yield planet_scene
 
