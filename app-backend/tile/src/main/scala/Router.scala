@@ -47,6 +47,7 @@ class Router extends LazyLogging
               toolRoutes.tms(TileSources.cachedTmsSource) ~
               toolRoutes.validate ~
               toolRoutes.histogram ~
+              toolRoutes.statistics ~
               toolRoutes.preflight
             }
           }
