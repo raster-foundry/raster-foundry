@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import random
 import time
 
 from airflow.operators.python_operator import PythonOperator
@@ -136,7 +137,7 @@ def wait_for_success(response, cluster_id):
             logger.info('Updating status of %s. Old Status: %s New Status: %s',
                         step_id, current_status, status)
             current_status = status
-        time.sleep(5)
+        time.sleep(45 + random.randint(0, 30))
     is_success = (current_status == 'COMPLETED')
     if is_success:
         logger.info('Successfully completed ingest for %s', step_id)
