@@ -10,7 +10,7 @@ from .create_images import create_geotiff_image
 from .create_scenes import create_geotiff_scene
 from .io import s3_url, s3_bucket_and_key_from_url
 from .utils import is_tif_too_large, split_tif, upload_split_files
-from rf.utils.io import Visibility
+from rf.utils.io import Visibility, IngestStatus
 from rf.uploads.landsat8.io import get_tempdir
 
 logger = logging.getLogger(__name__)
@@ -37,6 +37,7 @@ class GeoTiffS3SceneFactory(object):
             upload (Upload): instance of upload model to create scenes for
         """
         self._upload = upload
+        self.isProjectUpload = upload.projectId is not None
         self.files = self._upload.files
         self.owner = upload.owner
         self.organizationId = self._upload.organizationId
@@ -91,6 +92,14 @@ class GeoTiffS3SceneFactory(object):
                                     filename=filename, visibility=self.visibility, owner=self.owner)
 
     def create_geotiff_scene(self, tif_path, name):
+        # If this upload is not associated with a project, set the scene's
+        # ingest status to TOBEINGESTED so that scene creation will kick off
+        # an ingest. Otherwise, set the status to NOTINGESTED, so that the status
+        # will be updated when the scene is added to this upload's project
+        if not self.isProjectUpload:
+            ingestStatus = IngestStatus.TOBEINGESTED
+        else:
+            ingestStatus = IngestStatus.NOTINGESTED
         return create_geotiff_scene(
             tif_path,
             self.organizationId,
@@ -100,5 +109,6 @@ class GeoTiffS3SceneFactory(object):
             acquisitionDate=self.acquisitionDate,
             cloudCover=self.cloudCover,
             name=name,
-            owner=self.owner
+            owner=self.owner,
+            ingestStatus=ingestStatus
         )
