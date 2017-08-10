@@ -4,12 +4,14 @@ import com.azavea.rf.tool.ast._
 
 import geotrellis.raster.io._
 import geotrellis.raster.histogram._
+import geotrellis.raster.summary.Statistics
 import geotrellis.raster.render._
 import geotrellis.raster.mapalgebra.focal._
 import spray.json._
 import DefaultJsonProtocol._
 import io.circe._
 import io.circe.syntax._
+import io.circe.generic.semiauto._
 import io.circe.parser._
 
 import java.security.InvalidParameterException
@@ -108,7 +110,6 @@ trait MapAlgebraUtilityCodecs {
 
   implicit val colorRampDecoder: Decoder[ColorRamp] =
     Decoder[Vector[Int]].map({ ColorRamp(_) })
-
   implicit val colorRampEncoder: Encoder[ColorRamp] = new Encoder[ColorRamp] {
     final def apply(cRamp: ColorRamp): Json = cRamp.colors.toArray.asJson
   }
@@ -116,10 +117,12 @@ trait MapAlgebraUtilityCodecs {
   implicit val histogramDecoder: Decoder[Histogram[Double]] = Decoder[Json].map { js =>
     js.noSpaces.parseJson.convertTo[Histogram[Double]]
   }
-
   implicit val histogramEncoder: Encoder[Histogram[Double]] = new Encoder[Histogram[Double]] {
     final def apply(hist: Histogram[Double]): Json = hist.toJson.asJson
   }
+
+  implicit val statsDecoder: Decoder[Statistics[Double]] = deriveDecoder
+  implicit val statsEncoder: Encoder[Statistics[Double]] = deriveEncoder
 
   implicit val sprayJsonEncoder: Encoder[JsValue] = new Encoder[JsValue] {
     final def apply(jsvalue: JsValue): Json = parse(jsvalue.compactPrint) match {

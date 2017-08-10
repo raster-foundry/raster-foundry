@@ -110,6 +110,29 @@ class ToolRoutes(implicit val database: Database) extends Authentication
       }
     }
 
+  /** Endpoint used to get a [[ToolRun]] statistics */
+  val statistics =
+    (handleExceptions(interpreterExceptionHandler) & handleExceptions(circeDecodingError)) {
+      pathPrefix(JavaUUID){ (toolRunId) =>
+        traceName("toolrun-statistics") {
+          pathPrefix("statistics") {
+            authenticateWithParameter { user =>
+              parameter(
+                'node.?,
+                'voidCache.as[Boolean].?(false)
+              ) { (node, void) =>
+                complete {
+                  val nodeId = node.map(UUID.fromString(_))
+                  LayerCache.modelLayerGlobalHistogram(toolRunId, nodeId, user, void).mapFilter(_.statistics).value
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+
   /** The central endpoint for ModelLab; serves TMS tiles given a [[ToolRun]] specification */
   def tms(
     source: (RFMLRaster, Boolean, Int, Int, Int) => Future[Option[TileWithNeighbors]]
