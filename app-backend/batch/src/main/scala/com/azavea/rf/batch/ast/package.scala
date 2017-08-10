@@ -170,7 +170,7 @@ package object ast {
   )(implicit sc: SparkContext): Interpreted[TileLayerRDD[SpatialKey]] = {
 
     /* Guarantee correctness before performing Map Algebra */
-    val pure = Interpreter.interpretPure[Unit](ast, sourceMapping)
+    val pure = Interpreter.interpretPure[Unit](ast, sourceMapping, false)
     val over = Interpreter.overrideParams(ast, overrides)
     val rdds = sourceMapping.mapValues(r => fetch(r, zoom, sceneLocs, projLocs)).sequence
 

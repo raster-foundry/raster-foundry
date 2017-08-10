@@ -189,7 +189,7 @@ class SceneSpec extends WordSpec
     }
 
     "filter by acquisition date correctly (no nulls returned)" in {
-      val url = s"$baseScene?minAcquisitionDatetime=2016-09-18T14:41:58.408544z"
+      val url = s"$baseScene?minAcquisitionDatetime=2016-09-18T14:41:58.408544Z"
       Get(url).withHeaders(List(authHeader)) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[Scene.WithRelated]].count shouldEqual 1
       }

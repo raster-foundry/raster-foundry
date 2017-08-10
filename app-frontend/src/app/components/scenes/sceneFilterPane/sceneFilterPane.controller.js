@@ -15,17 +15,16 @@ export default class FilterPaneController {
         if (this.authService.isLoggedIn) {
             this.initFilters();
             this.initDatefilter();
+        } else {
+            this.$scope.$watch(() => this.authService.isLoggedIn, (isLoggedIn) => {
+                if (isLoggedIn) {
+                    this.initFilters();
+                    this.initDatefilter();
+                }
+            });
         }
 
         this.toggleDrag = {toggle: false, enabled: false};
-
-        this.$scope.$watch(() => this.authService.isLoggedIn, (isLoggedIn) => {
-            if (isLoggedIn) {
-                this.initFilters();
-                this.initDatefilter();
-            }
-        });
-
         this.$scope.$watch('$ctrl.opened', (opened) => {
             if (opened) {
                 this.$timeout(() => this.$rootScope.$broadcast('reCalcViewDimensions'), 50);
@@ -241,22 +240,14 @@ export default class FilterPaneController {
     initSourceFilters() {
         this.datasourceService.query().then(d => {
             this.datasources = d.results;
-            this.dynamicSourceFilters = {};
-            d.results.forEach(ds => {
-                this.dynamicSourceFilters[ds.id] = {
-                    datasource: ds,
-                    enabled: false
-                };
-            });
-            if (this.filters.datasource) {
-                if (Array.isArray(this.filters.datasource)) {
-                    this.filters.datasource.forEach(dsf => {
-                        if (this.dynamicSourceFilters[dsf]) {
-                            this.dynamicSourceFilters[dsf].enabled = true;
-                        }
-                    });
-                } else if (this.dynamicSourceFilters[this.filters.datasource]) {
-                    this.dynamicSourceFilters[this.filters.datasource].enabled = true;
+
+            let selectedId = this.filters.datasource[0];
+            if (selectedId) {
+                let matchedSource = this.datasources.find(ds => ds.id === selectedId);
+                if (matchedSource) {
+                    this.selectedDatasource = matchedSource.name;
+                } else {
+                    this.selectedDatasource = '';
                 }
             }
         });
@@ -280,10 +271,6 @@ export default class FilterPaneController {
         delete this.filters.minSunAzimuth;
         delete this.filters.maxSunAzimuth;
 
-        Object.values(this.dynamicSourceFilters)
-            .forEach((ds) => {
-                ds.enabled = false;
-            });
         this.filters.datasource = [];
 
         this.ingestFilter = 'any';
@@ -327,20 +314,14 @@ export default class FilterPaneController {
         this.cachedFilters.maxAcquisitionDatetime = this.filters.maxAcquisitionDatetime;
     }
 
-    onSourceFilterChange() {
+    clearDatasourceFilter() {
         this.filters.datasource = [];
-
-        Object.values(this.dynamicSourceFilters)
-            .filter(ds => ds.enabled)
-            .forEach(ds => this.filters.datasource.push(ds.datasource.id));
+        // Empty string preserves click to open drop-down
+        this.selectedDatasource = '';
     }
 
-    toggleSourceFilter(sourceId) {
-        if (this.dynamicSourceFilters[sourceId]) {
-            this.dynamicSourceFilters[sourceId].enabled =
-                !this.dynamicSourceFilters[sourceId].enabled;
-        }
-        this.onSourceFilterChange();
+    toggleSourceFilter(source) {
+        this.filters.datasource = [source.id];
     }
 
     openDateRangePickerModal() {

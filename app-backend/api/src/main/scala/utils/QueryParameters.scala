@@ -2,7 +2,7 @@ package com.azavea.rf.api.utils.queryparams
 
 import java.util.UUID
 import java.sql.Timestamp
-import java.time.Instant
+import javax.xml.bind.DatatypeConverter
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.ParameterDirectives.parameters
@@ -18,7 +18,7 @@ trait QueryParameterDeserializers {
   }
 
   implicit val deserializerTimestamp: Unmarshaller[String, Timestamp] = Unmarshaller.strict[String, Timestamp] { s =>
-    Timestamp.from(Instant.parse(s))
+    Timestamp.from(DatatypeConverter.parseDateTime(s).getTime().toInstant())
   }
 
 }

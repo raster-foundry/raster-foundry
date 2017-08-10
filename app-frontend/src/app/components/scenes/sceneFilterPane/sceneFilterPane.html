@@ -32,7 +32,7 @@
       <div class="filter-group-option">
         <label>Enabled</label>
         <rf-toggle-old data-model="$ctrl.dateFilterToggle.value"
-                  on-change="$ctrl.onDateFilterToggle(value)"
+                       on-change="$ctrl.onDateFilterToggle(value)"
         ></rf-toggle-old>
       </div>
     </div>
@@ -94,14 +94,17 @@
           ng-mouseleave="$ctrl.toggleDrag.toggle = false"
           ng-mouseup="$ctrl.toggleDrag.toggle = false">
         <label>Imagery sources</label>
-        <div class="filter-item tag-filter">
-          <button class="btn btn-toggle btn-small"
-                  ng-click="$ctrl.toggleSourceFilter(id)"
-                  ng-class="{'active': filter.enabled}"
-                  ng-repeat="(id, filter) in $ctrl.dynamicSourceFilters track by id">
-            {{filter.datasource.name}}
-          </button>
-        </div>
+        <input type="text"
+               placeholder="None"
+               ng-model="$ctrl.selectedDatasource"
+               uib-typeahead="ds.name for ds in $ctrl.datasources | filter:$viewValue | limitTo:8"
+               class="form-control input-dark"
+               typeahead-on-select="$ctrl.toggleSourceFilter($item)"
+               typeahead-min-length="0">
+      </div>
+      <div ng-if="$ctrl.selectedDatasource"
+           ng-click="$ctrl.clearDatasourceFilter()">
+        Clear
       </div>
     </div>
     <div class="filter-group">
