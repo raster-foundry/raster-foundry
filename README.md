@@ -52,12 +52,12 @@ export RF_ARTIFACTS_BUCKET=rasterfoundry-global-artifacts-us-east-1
 After exporting your environment settings, you are ready to get started:
 
 ```bash
-$ vagrant up
+$ ./scripts/setup
 $ vagrant ssh
 $ ./scripts/server
 ```
 
-Use `vagrant up` to provision a virtual machine. During provisioning `docker` and `docker-compose` will be installed on the guest machine. Additionally, docker images will be downloaded for the database and created for the `akka-http` application server.
+Use `./scripts/setup` to provision a virtual machine. During provisioning `docker` and `docker-compose` will be installed on the guest machine. Additionally, docker images will be downloaded for the database and created for the `akka-http` application server.
 
 The guest machine shares folders with the host using `rsync`. In order to sync files from the host to the guest, run `vagrant rsync-auto` in another tab. If you have generated files in the guest that you'd like to copy back into the host machine, run `scripts/rsync-back` from the host.
 
@@ -68,7 +68,7 @@ If you do not have a development database to seed your database with, you will n
 Development workflow varies by developer, but a typical development experience might include the following:
 
  - Create a new feature branch
- - Start up the vagrant machine with `vagrant up --provision`
+ - Start up the vagrant machine with `./scripts/setup`
  - Sync watched files by running `vagrant rsync-auto` in another tab.
  - Get an `sbt` console open using `./scripts/console api-server ./sbt`
  - Make changes to Scala code
@@ -144,7 +144,8 @@ Helper and development scripts are located in the `./scripts` directory at the r
 | Script Name             | Purpose                                                      |
 |-------------------------|--------------------------------------------------------------|
 | `bootstrap`             | Pulls/builds necessary containers                            |
-| `setup`                 | Runs migrations, installs dependencies, etc.                 |
+| `setup`             	  | Provision development VM 									 |
+| `update`                | Runs migrations, installs dependencies, etc.                 |
 | `server`                | Starts a development server                                  |
 | `console`               | Gives access to a running container via `docker-compose run` |
 | `psql`                  | Drops you into a `psql` console.                             |

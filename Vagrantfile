@@ -93,7 +93,7 @@ Vagrant.configure(2) do |config|
       export RF_SETTINGS_BUCKET=#{rf_settings_bucket}
       export RF_ARTIFACTS_BUCKET=#{rf_artifacts_bucket}
       su vagrant ./scripts/bootstrap
-      su vagrant ./scripts/setup
+      su vagrant ./scripts/update
     SHELL
   end
 end
