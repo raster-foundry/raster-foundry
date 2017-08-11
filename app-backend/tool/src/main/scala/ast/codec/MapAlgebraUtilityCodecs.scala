@@ -7,9 +7,11 @@ import geotrellis.raster.histogram._
 import geotrellis.raster.summary.Statistics
 import geotrellis.raster.render._
 import geotrellis.raster.mapalgebra.focal._
+import cats.syntax.either._
 import spray.json._
 import DefaultJsonProtocol._
 import io.circe._
+import io.circe.generic.semiauto._
 import io.circe.syntax._
 import io.circe.generic.semiauto._
 import io.circe.parser._
@@ -130,5 +132,18 @@ trait MapAlgebraUtilityCodecs {
       case Left(fail) => throw fail
     }
   }
+
+  val defaultClassMapDecoder: Decoder[ClassMap] = deriveDecoder[ClassMap]
+  val hexClassMapDecoder: Decoder[ClassMap] = new Decoder[ClassMap] {
+    final def apply(c: HCursor): Decoder.Result[ClassMap] = {
+      for {
+        hexes <- c.downField("classifications").as[Map[Double, String]]
+      } yield {
+        new ClassMap(hexes.mapValues(new java.math.BigInteger(_, 16).intValue()))
+      }
+    }
+  }
+  implicit val classMapDecoder: Decoder[ClassMap] = defaultClassMapDecoder or hexClassMapDecoder
+  implicit val classMapEncoder: Encoder[ClassMap] = deriveEncoder[ClassMap]
 }
 

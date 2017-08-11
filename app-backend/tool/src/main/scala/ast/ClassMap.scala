@@ -5,7 +5,6 @@ import geotrellis.raster._
 import geotrellis.raster.render._
 import spire.std.any._
 
-@JsonCodec
 case class ClassMap(
   classifications: Map[Double, Int]
 ) {
@@ -30,7 +29,6 @@ case class ClassMap(
 }
 
 object ClassMap {
-  @JsonCodec
   case class Options(
     boundaryType: ClassBoundaryType = LessThanOrEqualTo,
     ndValue: Int = NODATA,
