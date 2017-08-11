@@ -1,0 +1,118 @@
+#!/bin/bash
+set -e
+
+if [[ -n "${RF_DEBUG}" ]]; then
+    set -x
+fi
+
+DIR="$(dirname "$0")"
+
+
+function usage() {
+
+    echo -n \
+"Usage: $(basename "$0")
+Setup external project dependencies.
+"
+}
+
+
+function check_database() {
+    # Check if database is set up to continue
+
+    max=21 # 1 minute
+    counter=1
+    while true
+    do
+        echo "Checking if database is up yet (try ${counter})..."
+        set +e
+        docker-compose \
+            exec -T postgres gosu postgres psql -d rasterfoundry -c 'select 1' &>/dev/null
+        status_check=$?
+        if [ $status_check == 0 ]
+        then
+            echo "Connected to database successfully"
+            break
+        fi
+        set -e
+        if [[ ${counter} == "${max}" ]]
+        then
+            echo "Could not connect to database after some time"
+            exit 1
+        fi
+        sleep 3
+        (( counter++ ))
+    done
+}
+
+
+function create_airflow_database() {
+    docker-compose up -d postgres
+    check_database
+
+    set +e
+    # Create database (have to ignore errors if database already exists)
+    docker-compose \
+        exec -T postgres gosu postgres createdb airflow
+    set -e
+
+    docker-compose \
+        -f "${DIR}/../docker-compose.airflow.yml" \
+        -f "${DIR}/../docker-compose.yml" \
+        run --rm airflow-webserver airflow initdb
+}
+
+function run_database_migrations() {
+    # Check if database migrations have already been initialized
+    docker-compose up -d postgres
+    set +e
+    docker-compose \
+        exec -T postgres gosu postgres psql -d rasterfoundry -c 'select 1 from __migrations__' &>/dev/null
+    status_check=$?
+    set -e
+    if [ $status_check == 0 ]
+    then
+        echo "Migrations already initialized"
+    else
+        # Initialize the database for migrations.
+        docker-compose \
+            run --rm api-server "mg init"
+    fi
+
+    # Run database migrations. The way scala-forklift works requires this to be called twice:
+    # the first run figures out the migrations to run and the second run applies them.
+    docker-compose \
+        run --rm api-server "mg update"
+    docker-compose \
+        run --rm api-server "mg apply"
+}
+
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]
+then
+    if [ "${1:-}" = "--help" ]
+    then
+        usage
+    else
+        echo "Attempt to create Airflow database"
+        create_airflow_database
+
+        echo "Updating Scala dependencies"
+        docker-compose \
+            run --rm --no-deps api-server update
+
+        echo "Running application database migrations"
+        run_database_migrations
+
+        echo "Building static asset bundle"
+        docker-compose \
+            -f "${DIR}/../docker-compose.yml" \
+            -f "${DIR}/../docker-compose.test.yml" \
+            run --rm app-frontend install
+        docker-compose \
+            -f "${DIR}/../docker-compose.yml" \
+            -f "${DIR}/../docker-compose.test.yml" \
+            run --rm app-frontend run build
+    fi
+    exit
+fi
