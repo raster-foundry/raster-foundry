@@ -69,6 +69,7 @@ def process_upload(*args, **kwargs):
                 upload.datasource,
                 upload.organizationId,
                 upload.id,
+                upload.projectId,
                 upload.visibility,
                 [],
                 upload.owner,

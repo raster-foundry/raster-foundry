@@ -3,17 +3,14 @@ package com.azavea.rf.database.tables
 import java.sql.Timestamp
 import java.util.UUID
 
-import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.fields._
-import com.azavea.rf.database.query.{CombinedMapTokenQueryParameters, ListQueryResult, MapTokenQueryParameters}
+import com.azavea.rf.database.query.{CombinedMapTokenQueryParameters, ListQueryResult}
+import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.datamodel._
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import com.typesafe.scalalogging.LazyLogging
 import slick.model.ForeignKeyAction
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 
 /** Tokens associated with projects for sharing purposes
   */
@@ -23,7 +20,7 @@ class MapTokens(_tableTag: Tag) extends Table[MapToken](_tableTag, "map_tokens")
   with OrganizationFkFields
   with UserFkFields
 {
-  def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, owner, organizationId, name, projectId) <> (
+  def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, owner, organizationId, name, projectId, toolRunId) <> (
     MapToken.tupled, MapToken.unapply
   )
 
@@ -35,12 +32,14 @@ class MapTokens(_tableTag: Tag) extends Table[MapToken](_tableTag, "map_tokens")
   val modifiedBy: Rep[String] = column[String]("modified_by", O.Length(255,varying=true))
   val organizationId: Rep[java.util.UUID] = column[java.util.UUID]("organization_id")
   val name: Rep[String] = column[String]("name")
-  val projectId: Rep[java.util.UUID] = column[java.util.UUID]("project_id")
+  val projectId: Rep[Option[java.util.UUID]] = column[Option[java.util.UUID]]("project_id")
+  val toolRunId: Rep[Option[java.util.UUID]] = column[Option[java.util.UUID]]("toolrun_id")
 
   lazy val organizationsFk = foreignKey("map_tokens_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val toolRunFk = foreignKey("map_tokens_toolrun_id_fkey", toolRunId, ToolRuns)(r => r.id.?, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
   lazy val createdByUserFK = foreignKey("map_tokens_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val modifiedByUserFK = foreignKey("map_tokens_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
-  lazy val projectsFk = foreignKey("map_tokens_project_id_fkey", projectId, Projects)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+  lazy val projectsFk = foreignKey("map_tokens_project_id_fkey", projectId, Projects)(r => r.id.?, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
   lazy val ownerUserFK = foreignKey("datasources_owner_fkey", owner, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 }
 
@@ -56,6 +55,14 @@ object MapTokens extends TableQuery(tag => new MapTokens(tag)) with LazyLogging 
     MapTokens
       .filterToOwnerIfNotInRootOrganization(user)
       .filter(_.id === mapTokenId)
+      .result
+      .headOption
+  }
+
+  def getMapTokenForTool(mapTokenId: UUID, toolRunId: UUID)(implicit database: DB): DBIO[Option[MapToken]]= {
+    MapTokens
+      .filter(_.id === mapTokenId)
+      .filter(_.toolRunId === toolRunId)
       .result
       .headOption
   }

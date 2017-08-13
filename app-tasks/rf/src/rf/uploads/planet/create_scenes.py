@@ -38,7 +38,8 @@ def get_planet_thumbnail(organization_id, thumbnail_uri, planet_key, scene_id):
         for chunk in response.iter_content(1024):
             filehandle.write(chunk)
 
-    thumbnail_key = '/thumbnails/{}.png'.format(scene_id)
+    thumbnail_key = '{}.png'.format(scene_id)
+    thumbnail_uri = '/thumbnails/{}.png'.format(scene_id)
     logger.info('Uploading thumbnails to S3: %s', thumbnail_key)
     s3_bucket_name = os.getenv('THUMBNAIL_BUCKET')
     s3_bucket = boto3.resource('s3').Bucket(s3_bucket_name)
@@ -50,12 +51,13 @@ def get_planet_thumbnail(organization_id, thumbnail_uri, planet_key, scene_id):
         256,
         256,
         'SMALL',
-        thumbnail_key,
+        thumbnail_uri,
         sceneId=scene_id
     )
 
 
 def create_planet_scene(planet_feature, datasource, organization_id, planet_key,
+                        ingest_status=IngestStatus.TOBEINGESTED,
                         visibility=Visibility.PRIVATE, tags=[], owner=None):
     """Create a Raster Foundry scene from Planet scenes
 
@@ -117,7 +119,7 @@ def create_planet_scene(planet_feature, datasource, organization_id, planet_key,
         name,
         JobStatus.QUEUED,
         JobStatus.QUEUED,
-        IngestStatus.TOBEINGESTED,
+        ingest_status,
         [],
         owner=owner,
         images=images,

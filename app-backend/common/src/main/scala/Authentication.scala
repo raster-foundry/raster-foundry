@@ -1,20 +1,17 @@
 package com.azavea.rf.common
 
+import akka.http.scaladsl.model.headers.HttpChallenge
+import akka.http.scaladsl.server.AuthenticationFailedRejection.CredentialsRejected
+import akka.http.scaladsl.server._
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables._
 import com.azavea.rf.datamodel._
-
-import akka.http.scaladsl.model.headers.{HttpChallenge, _}
-import akka.http.scaladsl.server._
-import akka.http.scaladsl.server.AuthenticationFailedRejection.CredentialsRejected
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.directives.ParameterDirectives.ParamMagnet
 import com.typesafe.config.ConfigFactory
 import org.json4s._
-import pdi.jwt.{Jwt, JwtJson4s, JwtAlgorithm}
+import pdi.jwt.{Jwt, JwtAlgorithm, JwtJson4s}
 
-import scala.util.{Success,Failure}
 import scala.concurrent.Future
+import scala.util.{Failure, Success}
 
 trait Authentication extends Directives {
 
@@ -56,18 +53,32 @@ trait Authentication extends Directives {
     */
   def authenticateWithParameter: Directive1[User] = {
     validateTokenParameter.flatMap { validToken =>
-      JwtJson4s.decodeJson(validToken, auth0Secret, Seq(JwtAlgorithm.HS256)) match {
-        case Success(parts) =>
-          val sub = (parts \ "sub").extract[String]
+      getUserWithJWT(validToken)
+    }
+  }
 
-          onSuccess(Users.getUserById(sub)).flatMap {
-            case Some(user) => provide(user)
-            case None => onSuccess(Users.createUserWithAuthId(sub)).flatMap {
-              user => provide(user)
-            }
+  def authenticateWithToken(token: String): Directive1[User] = {
+    if (Jwt.isValid(token, auth0Secret, Seq(JwtAlgorithm.HS256))) {
+      getUserWithJWT(token)
+    } else {
+      reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
+    }
+  }
+
+  def getUserWithJWT(token: String): Directive1[User] = {
+    JwtJson4s.decodeJson(token, auth0Secret, Seq(JwtAlgorithm.HS256)) match {
+      case Success(parts) =>
+        val sub = (parts \ "sub").extract[String]
+
+        val userFromId = Users.getUserById(sub)
+
+        onSuccess(userFromId).flatMap {
+          case Some(user) => provide(user)
+          case None => onSuccess(Users.createUserWithAuthId(sub)).flatMap {
+            user => provide(user)
           }
-        case Failure(_) => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
-      }
+        }
+      case Failure(_) => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
     }
   }
 

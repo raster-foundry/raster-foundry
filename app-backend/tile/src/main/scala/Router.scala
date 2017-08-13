@@ -1,17 +1,19 @@
 package com.azavea.rf.tile
 
+import akka.http.scaladsl.server._
+import ch.megard.akka.http.cors.CorsDirectives._
+import ch.megard.akka.http.cors.CorsSettings
+import com.azavea.rf.common.CommonHandlers
+import com.azavea.rf.common.ast.InterpreterExceptionHandling
 import com.azavea.rf.database.Database
 import com.azavea.rf.tile.routes._
 import com.azavea.rf.tile.tool._
-
-import ch.megard.akka.http.cors.CorsDirectives._
-import ch.megard.akka.http.cors.CorsSettings
-import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
-import akka.http.scaladsl.server._
 import com.typesafe.scalalogging.LazyLogging
 
 class Router extends LazyLogging
     with TileAuthentication
+    with CommonHandlers
+    with InterpreterExceptionHandling
     with TileErrorHandler {
 
   implicit lazy val database = Database.DEFAULT
@@ -29,7 +31,7 @@ class Router extends LazyLogging
     handleExceptions(tileExceptionHandler) {
       pathPrefix("tiles") {
         pathPrefix(JavaUUID) { projectId =>
-          tileAccessAuthorized(projectId) {
+          projectTileAccessAuthorized(projectId) {
             case true => MosaicRoutes.mosaicProject(projectId)(database)
             case _ => reject(AuthorizationFailedRejection)
           }
@@ -43,11 +45,16 @@ class Router extends LazyLogging
         } ~
         pathPrefix("tools") {
           get {
-            tileAuthenticateOption { _ =>
-              toolRoutes.tms(TileSources.cachedTmsSource) ~
-              toolRoutes.validate ~
-              toolRoutes.histogram ~
-              toolRoutes.preflight
+            (handleExceptions(interpreterExceptionHandler) & handleExceptions(circeDecodingError)) {
+              pathPrefix(JavaUUID) { (toolRunId) =>
+                authenticateToolTileRoutes(toolRunId) { user =>
+                  toolRoutes.tms(toolRunId, user, TileSources.cachedTmsSource) ~
+                    toolRoutes.validate(toolRunId, user) ~
+                    toolRoutes.histogram(toolRunId, user) ~
+                    toolRoutes.preflight(toolRunId, user) ~
+                    toolRoutes.statistics(toolRunId, user)
+                }
+              }
             }
           }
         }

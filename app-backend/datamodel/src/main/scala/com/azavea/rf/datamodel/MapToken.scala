@@ -19,7 +19,8 @@ case class MapToken(
   owner: String,
   organizationId: UUID,
   name: String,
-  project: UUID
+  project: Option[UUID],
+  toolRun: Option[UUID]
 )
 
 
@@ -32,7 +33,8 @@ object MapToken {
   case class Create(
     organizationId: UUID,
     name: String,
-    project: UUID,
+    project: Option[UUID],
+    toolRun: Option[UUID],
     owner: Option[String]
   ) extends OwnerCheck {
     def toMapToken(user: User): MapToken = {
@@ -50,7 +52,8 @@ object MapToken {
         ownerId,
         this.organizationId,
         this.name,
-        this.project
+        this.project,
+        this.toolRun
       )
     }
   }

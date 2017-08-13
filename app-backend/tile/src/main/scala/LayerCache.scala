@@ -221,27 +221,28 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     toolRunId: UUID,
     subNode: Option[UUID],
     user: User,
-    voidCache: Boolean = false
+    colorRamp: ColorRamp,
+    colorRampName: String
   ): OptionT[Future, ColorMap] = traceName("LayerCache.toolRunColorMap") {
-    val cacheKey = s"colormap-$toolRunId-${subNode}-${user.id}"
-    if (voidCache) rfCache.delete(cacheKey)
+    val cacheKey = s"colormap-$toolRunId-${subNode}-${user.id}-${colorRampName}"
     rfCache.cachingOptionT(cacheKey, doCache = cacheConfig.tool.enabled) {
       traceName("LayerCache.toolRunColorMap (no cache)") {
         for {
-          (tool, toolRun) <- LayerCache.toolAndToolRun(toolRunId, user, voidCache)
-          (ast, params) <- LayerCache.toolEvalRequirements(toolRunId, subNode, user, voidCache)
+          (tool, toolRun) <- LayerCache.toolAndToolRun(toolRunId, user)
+          (ast, params) <- LayerCache.toolEvalRequirements(toolRunId, subNode, user)
           nodeId <- OptionT.pure[Future, UUID](subNode.getOrElse(ast.id))
           metadata <- OptionT.fromOption[Future](params.metadata.get(nodeId))
-          cRamp <- OptionT.fromOption[Future](metadata.colorRamp).orElse(OptionT.pure[Future, ColorRamp](geotrellis.raster.render.ColorRamps.Viridis))
-          cmap <- OptionT.fromOption[Future](metadata.classMap.map(_.toColorMap)).orElse({
-            for {
-              breaks <- OptionT.fromOption[Future](metadata.breaks)
-            } yield cRamp.toColorMap(breaks)
-          }).orElse({
-            for {
-              hist <- OptionT.fromOption[Future](metadata.histogram).orElse(LayerCache.modelLayerGlobalHistogram(toolRunId, subNode, user, voidCache))
-            } yield cRamp.toColorMap(hist)
-          })
+          cmap <- OptionT.fromOption[Future](metadata.classMap.map(_.toColorMap))
+                    .orElse({
+                      for {
+                        breaks <- OptionT.fromOption[Future](metadata.breaks)
+                      } yield colorRamp.toColorMap(breaks)
+                    }).orElse({
+                      for {
+                        hist <- OptionT.fromOption[Future](metadata.histogram)
+                                  .orElse(LayerCache.modelLayerGlobalHistogram(toolRunId, subNode, user))
+                      } yield colorRamp.toColorMap(hist)
+                    })
         } yield cmap
       }
     }
