@@ -221,9 +221,10 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     toolRunId: UUID,
     subNode: Option[UUID],
     user: User,
-    colorRamp: ColorRamp
+    colorRamp: ColorRamp,
+    colorRampName: String
   ): OptionT[Future, ColorMap] = traceName("LayerCache.toolRunColorMap") {
-    val cacheKey = s"colormap-$toolRunId-${subNode}-${user.id}-${colorRamp.getClass.getName}"
+    val cacheKey = s"colormap-$toolRunId-${subNode}-${user.id}-${colorRampName}"
     rfCache.cachingOptionT(cacheKey, doCache = cacheConfig.tool.enabled) {
       traceName("LayerCache.toolRunColorMap (no cache)") {
         for {
@@ -231,18 +232,16 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
           (ast, params) <- LayerCache.toolEvalRequirements(toolRunId, subNode, user)
           nodeId <- OptionT.pure[Future, UUID](subNode.getOrElse(ast.id))
           metadata <- OptionT.fromOption[Future](params.metadata.get(nodeId))
-          cRamp <- OptionT.fromOption[Future](metadata.colorRamp)
-                     .orElse(OptionT.pure[Future, ColorRamp](geotrellis.raster.render.ColorRamps.Viridis))
           cmap <- OptionT.fromOption[Future](metadata.classMap.map(_.toColorMap))
                     .orElse({
                       for {
                         breaks <- OptionT.fromOption[Future](metadata.breaks)
-                      } yield cRamp.toColorMap(breaks)
+                      } yield colorRamp.toColorMap(breaks)
                     }).orElse({
                       for {
                         hist <- OptionT.fromOption[Future](metadata.histogram)
                                   .orElse(LayerCache.modelLayerGlobalHistogram(toolRunId, subNode, user))
-                      } yield cRamp.toColorMap(hist)
+                      } yield colorRamp.toColorMap(hist)
                     })
         } yield cmap
       }
