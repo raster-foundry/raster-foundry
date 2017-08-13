@@ -122,10 +122,10 @@ class ToolRoutes(implicit val database: Database) extends Authentication
               parameter(
                 'node.?,
                 'cramp.?("viridis")
-              ) { (node, colorRamp) =>
+              ) { (node, colorRampName) =>
                 complete {
                   val nodeId = node.map(UUID.fromString(_))
-                  val cRamp = providedRamps.get(colorRamp).getOrElse(providedRamps("viridis"))
+                  val colorRamp = providedRamps.get(colorRampName).getOrElse(providedRamps("viridis"))
                   val responsePng = for {
                     (toolRun, tool) <- LayerCache.toolAndToolRun(toolRunId, user)
                     (ast, params)   <- LayerCache.toolEvalRequirements(toolRunId, nodeId, user)
@@ -137,7 +137,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
                         case Invalid(errors) => throw InterpreterException(errors)
                       }
                     })
-                    cMap            <- LayerCache.toolRunColorMap(toolRunId, nodeId, user, cRamp)
+                    cMap            <- LayerCache.toolRunColorMap(toolRunId, nodeId, user, colorRamp, colorRampName)
                   } yield {
                     logger.debug(s"Tile successfully produced at $z/$x/$y")
                     tile.renderPng(cMap)
