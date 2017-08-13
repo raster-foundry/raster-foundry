@@ -2141,13 +2141,11 @@ definitions:
           type: string
           description: Human friendly label for map token
         project:
-          type: object
-          properties:
-            id:
-              type: string
-              format: UUID
-            name:
-              type: string
+          type: string
+          format: UUID
+        toolRun:
+          type: string
+          format: UUID
   MapTokenPaginated:
     allOf:
     - $ref: '#/definitions/PaginatedResponse'
