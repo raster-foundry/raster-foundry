@@ -1,12 +1,7 @@
 package com.azavea.rf.tile
 
+import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.scalatest.{Matchers, WordSpec}
-import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
-import akka.http.scaladsl.model.StatusCodes
-import akka.actor.ActorSystem
-
-import concurrent.duration._
-import akka.http.scaladsl.server.Route
 
 class AuthSpec extends WordSpec
     with Matchers
@@ -16,7 +11,7 @@ class AuthSpec extends WordSpec
 
   "tile authentication" should {
     "reject anonymous users" in {
-      Get("/tiles/tools") ~> router.root ~> check {
+      Get("/tiles/tools/a89ae9bb-47e5-469c-8329-9c491a1011ae") ~> router.root ~> check {
         rejection
       }
     }
@@ -24,7 +19,7 @@ class AuthSpec extends WordSpec
 
   "tile authentication" should {
     "reject invalid tokens" in {
-      Get("/tiles/tools?token=not-valid") ~> router.root ~> check {
+      Get("/tiles/tools/a89ae9bb-47e5-469c-8329-9c491a1011ae/?token=not-valid") ~> router.root ~> check {
         rejection
       }
     }
