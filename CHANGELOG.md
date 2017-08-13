@@ -1,10 +1,21 @@
 # Change Log
 
+## [0.19.0](https://github.com/raster-foundry/raster-foundry/tree/0.19.0) (2017-08-13)
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.18.1...0.19.0)
+
+**Merged pull requests:**
+
+- Add Map Token support for Tool Runs [\#2409](https://github.com/raster-foundry/raster-foundry/pull/2409)
+- Use provided color ramp in tool endpoint [\#2408](https://github.com/raster-foundry/raster-foundry/pull/2408)
+- Jitter ingest status sleep time and kickoff ingests exactly once for uploads [\#2405](https://github.com/raster-foundry/raster-foundry/pull/2405)
+
 ## [0.18.1](https://github.com/raster-foundry/raster-foundry/tree/0.18.1) (2017-08-10)
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.18.0...0.18.1)
 
 **Merged pull requests:**
 
+- Add global statistics endpoint for tool-runs [\#2401](https://github.com/raster-foundry/raster-foundry/pull/2401)
+- Remove mention-bot configuration [\#2394](https://github.com/raster-foundry/raster-foundry/pull/2394)
 - Clean Up API Spec/Queries/Planet Imports/Autocomplete [\#2378](https://github.com/raster-foundry/raster-foundry/pull/2378)
 
 ## [0.18.0](https://github.com/raster-foundry/raster-foundry/tree/0.18.0) (2017-08-08)
