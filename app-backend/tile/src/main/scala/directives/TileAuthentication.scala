@@ -75,7 +75,7 @@ trait TileAuthentication extends Authentication
     val mapTokenId = UUID.fromString(mapToken)
     val mapTokenQuery = rfCache.caching(s"mapToken-$mapTokenId-toolRunId-$toolRunId", 600) {
       database.db.run {
-        MapTokens.getMapToken(mapTokenId, toolRunId)
+        MapTokens.getMapTokenForTool(mapTokenId, toolRunId)
       }
     }
     onSuccess(mapTokenQuery).flatMap {

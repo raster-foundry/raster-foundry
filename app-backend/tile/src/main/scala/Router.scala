@@ -6,7 +6,6 @@ import ch.megard.akka.http.cors.CorsSettings
 import com.azavea.rf.common.CommonHandlers
 import com.azavea.rf.common.ast.InterpreterExceptionHandling
 import com.azavea.rf.database.Database
-import com.azavea.rf.datamodel.User
 import com.azavea.rf.tile.routes._
 import com.azavea.rf.tile.tool._
 import com.typesafe.scalalogging.LazyLogging

@@ -3,8 +3,6 @@ package com.azavea.rf.common
 import akka.http.scaladsl.model.headers.HttpChallenge
 import akka.http.scaladsl.server.AuthenticationFailedRejection.CredentialsRejected
 import akka.http.scaladsl.server._
-import com.azavea.rf.common.cache.CacheClient
-import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables._
 import com.azavea.rf.datamodel._
