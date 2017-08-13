@@ -3,17 +3,14 @@ package com.azavea.rf.database.tables
 import java.sql.Timestamp
 import java.util.UUID
 
-import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.fields._
-import com.azavea.rf.database.query.{CombinedMapTokenQueryParameters, ListQueryResult, MapTokenQueryParameters}
+import com.azavea.rf.database.query.{CombinedMapTokenQueryParameters, ListQueryResult}
+import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.datamodel._
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import com.typesafe.scalalogging.LazyLogging
 import slick.model.ForeignKeyAction
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 
 /** Tokens associated with projects for sharing purposes
   */
@@ -56,6 +53,14 @@ object MapTokens extends TableQuery(tag => new MapTokens(tag)) with LazyLogging 
     MapTokens
       .filterToOwnerIfNotInRootOrganization(user)
       .filter(_.id === mapTokenId)
+      .result
+      .headOption
+  }
+
+  def getMapToken(mapTokenId: UUID, toolRunId: UUID)(implicit database: DB): DBIO[Option[MapToken]]= {
+    MapTokens
+      .filter(_.id === mapTokenId)
+      .filter(_.projectId === toolRunId)
       .result
       .headOption
   }
