@@ -20,7 +20,16 @@ Vagrant.configure(2) do |config|
   end
 
   config.vm.synced_folder ".", "/vagrant", disabled: true
-  config.vm.synced_folder ".", "/opt/raster-foundry"
+  config.vm.synced_folder ".", "/opt/raster-foundry", type: "rsync",
+    rsync__exclude: [".git/", "app-backend/.ensime/",
+                     "app-backend/.ensime_cache/", "app-backend/.idea/",
+                     "app-backend/project/.boot/", "app-backend/project/.ivy/",
+                     "app-backend/project/.sbtboot/", "app-server/**/target/",
+                     "app-backend/**/target/", "worker-tasks/**/target/",
+                     ".sbt/", ".node_modules/",
+                     "deployment/ansible/roles/**/examples"],
+    rsync__args: ["--verbose", "--archive", "-z"],
+    rsync__rsync_path: "sudo rsync"
   config.vm.synced_folder "~/.aws", "/home/vagrant/.aws"
 
   # application server
