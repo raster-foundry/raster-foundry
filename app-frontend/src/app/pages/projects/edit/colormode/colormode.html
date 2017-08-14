@@ -97,31 +97,8 @@
             </div>
             <i class="icon-info"></i>
           </li>
-          <li ng-if="$ctrl.shouldShowColorCategories()">
-            <span class="label">Categories</span>
-            <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
-              <a class="btn dropdown-label gradient-bkg" ng-class="$ctrl.getActiveColorScheme().className">
-              </a>
-              <button type="button" class="btn btn-light dropdown-toggle">
-                <i class="icon-caret-down"></i>
-              </button>
-              <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
-                <li ng-repeat="scheme in $ctrl.availableColorSchemes" role="menuitem">
-                  <div class="gradient-bar gradient-bkg"
-                       ng-click="$ctrl.setActiveColorScheme(scheme)"
-                       ng-class="scheme.className"
-                  >
-                    {{band.label}}
-                  </div>
-                </li>
-              </ul>
-            </div>
-            <i class="icon-info"></i>
-          </li>
-          <li class="text-right">
-            <div class="flex-fill">
-              <span><a>Advanced Configuration</a></span>
-            </div>
+          <li ng-if="$ctrl.shouldShowColorSchemeBuilder()">
+            <rf-color-scheme-builder color-scheme="$ctrl.projectBuffer.singleBandOptions.colorScheme" on-change="$ctrl.onSchemeColorsChange(value)"/>
           </li>
         </ul>
       </div>

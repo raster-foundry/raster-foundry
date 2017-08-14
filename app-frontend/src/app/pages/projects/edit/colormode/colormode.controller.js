@@ -147,6 +147,10 @@ export default class ProjectsEditColormode {
         };
     }
 
+    initCategoricalScheme() {
+
+    }
+
     toggleProjectSingleBandMode(state) {
         this.initSingleBandDefaults();
         if (typeof state !== 'undefined') {
@@ -175,14 +179,30 @@ export default class ProjectsEditColormode {
         return this.activeColorScheme;
     }
 
+    getFullyQualifiedColorScheme() {
+        return this.colorSchemeService.colorsToDiscreteScheme(this.activeColorScheme.colors);
+    }
+
     setActiveColorScheme(scheme, save = false) {
         if (!this.isLoading) {
             this.activeColorScheme = scheme;
             this.activeColorSchemeType =
                 this.colorSchemeService.defaultColorSchemeTypes.find(t => t.value === scheme.type);
             this.projectBuffer.singleBandOptions.dataType = scheme.type;
-            this.projectBuffer.singleBandOptions.colorScheme =
-                this.colorSchemeService.colorsToDiscreteScheme(this.activeColorScheme.colors);
+            if (scheme.type !== 'CATEGORICAL') {
+                this.projectBuffer.singleBandOptions.colorScheme =
+                    this.colorSchemeService.colorsToDiscreteScheme(this.activeColorScheme.colors);
+            } else if (scheme.breaks) {
+                this.projectBuffer.singleBandOptions.colorScheme =
+                    this.colorSchemeService
+                        .schemeFromBreaksAndColors(
+                            this.activeColorScheme.breaks,
+                            this.activeColorScheme.colors
+                        );
+            } else {
+                this.projectBuffer.singleBandOptions.colorScheme =
+                    this.colorSchemeService.colorsToSequentialScheme(this.activeColorScheme.colors);
+            }
             if (save) {
                 this.updateProjectFromBuffer();
             }
@@ -192,14 +212,10 @@ export default class ProjectsEditColormode {
     setActiveColorSchemeType(type) {
         if (this.activeColorSchemeType.value !== type.value) {
             this.activeColorSchemeType = type;
-            if (type.value !== 'CATEGORICAL') {
-                const firstSchemeOfType = this.colorSchemeService.defaultColorSchemes.find(
-                    s => s.type === type.value
-                );
-                this.setActiveColorScheme(firstSchemeOfType, true);
-            } else {
-                // Init cateegorical scheme
-            }
+            const firstSchemeOfType = this.colorSchemeService.defaultColorSchemes.find(
+                s => s.type === type.value
+            );
+            this.setActiveColorScheme(firstSchemeOfType, true);
         }
     }
 
@@ -247,6 +263,19 @@ export default class ProjectsEditColormode {
             this.$parent.project = this.projectBuffer;
             this.redrawMosaic();
         });
+    }
+
+    onSchemeColorsChange(schemeColors) {
+        const breaks = Object.keys(schemeColors);
+        const colors = breaks.map(b => schemeColors[b]);
+
+        this.setActiveColorScheme({
+            label: 'Custom categorical scheme',
+            mappedScheme: schemeColors,
+            colors: colors,
+            breaks: breaks,
+            type: 'CATEGORICAL'
+        }, true);
     }
 
     /**

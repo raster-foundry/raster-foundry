@@ -1,7 +1,6 @@
 const defaultColorSchemes = [
     {
         label: 'Blue to orange',
-        className: 'blue-to-orange',
         colors: [
             '#2586AB', '#4EA3C8', '#7FB8D4', '#ADD8EA',
             '#C8E1E7', '#EDECEA', '#F0E7BB', '#F5CF7D',
@@ -10,7 +9,6 @@ const defaultColorSchemes = [
         type: 'DIVERGING'
     }, {
         label: 'Light yellow to orange',
-        className: 'light-yellow-to-orange',
         colors: [
             '#118C8C', '#429D91', '#61AF96', '#75C59B',
             '#A2CF9F', '#C5DAA3', '#E6E5A7', '#E3D28F',
@@ -20,7 +18,6 @@ const defaultColorSchemes = [
         type: 'DIVERGING'
     }, {
         label: 'Blue to red',
-        className: 'blue-to-red',
         colors: [
             '#2791C3', '#5DA1CA', '#83B2D1', '#A8C5D8',
             '#CCDBE0', '#E9D3C1', '#DCAD92', '#D08B6C',
@@ -29,7 +26,6 @@ const defaultColorSchemes = [
         type: 'DIVERGING'
     }, {
         label: 'Green to red-orange',
-        className: 'green-to-red-orange',
         colors: [
             '#569543', '#9EBD4D', '#BBCA7A', '#D9E2B2',
             '#E4E7C4', '#E6D6BE', '#E3C193', '#DFAC6C',
@@ -38,7 +34,6 @@ const defaultColorSchemes = [
         type: 'DIVERGING'
     }, {
         label: 'Light to dark-sunset',
-        className: 'light-to-dark-sunset',
         colors: [
             '#FFFFFF', '#FBEDD1', '#F7E0A9', '#EFD299',
             '#E8C58B', '#E0B97E', '#F2924D', '#C97877',
@@ -47,7 +42,6 @@ const defaultColorSchemes = [
         type: 'SEQUENTIAL'
     }, {
         label: 'Light to dark-green',
-        className: 'light-to-dark-green',
         colors: [
             '#E8EDDB', '#DCE8D4', '#BEDBAD', '#A0CF88',
             '#81C561', '#4BAF48', '#1CA049', '#3A6D35'
@@ -55,7 +49,6 @@ const defaultColorSchemes = [
         type: 'SEQUENTIAL'
     }, {
         label: 'Heatmap: yellow to red',
-        className: 'heatmap-yellow-to-red',
         colors: [
             '#F7DA22', '#ECBE1D', '#E77124', '#D54927',
             '#CF3A27', '#A33936', '#7F182A', '#68101A'
@@ -63,7 +56,6 @@ const defaultColorSchemes = [
         type: 'SEQUENTIAL'
     }, {
         label: 'Heatmap: blue to yellow to red spectrum',
-        className: 'heatmap-blue-to-yellow-to-red-spectrum',
         colors: [
             '#2A2E7F', '#3D5AA9', '#4698D3', '#39C6F0',
             '#76C9B3', '#A8D050', '#F6EB14', '#FCB017',
@@ -72,7 +64,6 @@ const defaultColorSchemes = [
         type: 'SEQUENTIAL'
     }, {
         label: 'Heatmap: dark-red to yellow-white',
-        className: 'heatmap-dark-red-to-yellow-white',
         colors: [
             '#68101A', '#7F182A', '#A33936', '#CF3A27',
             '#D54927', '#E77124', '#ECBE1D', '#F7DA22',
@@ -81,7 +72,6 @@ const defaultColorSchemes = [
         type: 'SEQUENTIAL'
     }, {
         label: 'Heatmap: light-purple to dark-purple to white',
-        className: 'heatmap-light-purple-to-dark-purple-to-white',
         colors: [
             '#A52278', '#993086', '#8C3C97', '#6D328A',
             '#4E2B81', '#3B264B', '#180B11', '#FFFFFF'
@@ -89,7 +79,6 @@ const defaultColorSchemes = [
         type: 'SEQUENTIAL'
     }, {
         label: 'Classification: Bold land-use',
-        className: 'classification-bold-land-use',
         colors: [
             '#B29CC3', '#4F8EBB', '#8F9238', '#C18437',
             '#B5D6B1', '#D378A6', '#D4563C', '#F9BE47'
@@ -97,12 +86,17 @@ const defaultColorSchemes = [
         type: 'SEQUENTIAL'
     }, {
         label: 'Classification: Muted terrain',
-        className: 'classification-muted-terrain',
         colors: [
             '#CEE1E8', '#7CBCB5', '#82B36D', '#94C279',
             '#D1DE8D', '#EDECC3', '#CCAFB4', '#C99884'
         ],
         type: 'SEQUENTIAL'
+    }, {
+        label: 'Raster Foundry Categorical',
+        colors: [
+            '#FFFFFF', '#959CAC', '#465076'
+        ],
+        type: 'CATEGORICAL'
     }
 ];
 
@@ -148,6 +142,23 @@ export default (app) => {
                 }, {});
             }
             return false;
+        }
+
+        colorsToSequentialScheme(colors) {
+            if (colors && colors.length > 1) {
+                return colors.reduce((acc, color, index) => {
+                    acc[index] = `${color}FF`;
+                    return acc;
+                }, {});
+            }
+            return false;
+        }
+
+        schemeFromBreaksAndColors(breaks, colors) {
+            return breaks.reduce((acc, b, i) => {
+                acc[b] = colors[i];
+                return acc;
+            }, {});
         }
 
         // colors:string[] => { string: string }
