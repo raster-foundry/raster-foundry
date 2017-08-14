@@ -26,7 +26,6 @@ bash_cmd = "java -cp /opt/raster-foundry/jars/rf-batch.jar com.azavea.rf.batch.M
 
 sentinel2_importer = BashOperator(
     task_id='import_sentinel2',
-    provide_context=True,
     bash_command=bash_cmd,
     on_failure_callback=failure_callback,
     dag=dag
