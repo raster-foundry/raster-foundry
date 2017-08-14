@@ -15,7 +15,7 @@ from airflow.bin.cli import trigger_dag
 # Flask Blueprint for Triggering a Dag
 APIBlueprint = Blueprint('api', __name__, url_prefix='/api')
 
-DagArgs = namedtuple('DagArgs', 'dag_id, conf, run_id')
+DagArgs = namedtuple('DagArgs', 'dag_id, conf, run_id, exec_date')
 
 DAG = namedtuple('DAG', 'dag_id, id_field')
 DAGs = {
@@ -49,7 +49,7 @@ def trigger_dag_api(dag_id):
     run_id = 'api_trigger_{}_{}'.format(obj_id, execution_date.isoformat())
 
     conf = json.dumps(json_params)
-    dag_args = DagArgs(dag_id=dag_id, conf=conf, run_id=run_id)
+    dag_args = DagArgs(dag_id=dag_id, conf=conf, run_id=run_id, exec_date=execution_date)
     trigger_dag(dag_args)
     return jsonify(dag_id=dag_id, run_id=run_id)
 

@@ -9,7 +9,7 @@ import dns.resolver
 import boto3
 
 from airflow.models import DAG
-from airflow.operators import PythonOperator
+from airflow.operators.python_operator import PythonOperator
 from airflow.exceptions import AirflowException
 from rf.utils.exception_reporting import wrap_rollbar
 

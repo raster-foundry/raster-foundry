@@ -30,7 +30,7 @@ default_args = {
     'start_date': datetime.datetime(2017, 4, 7)
 }
 
-DagArgs = namedtuple('DagArgs', 'dag_id, conf, run_id')
+DagArgs = namedtuple('DagArgs', 'dag_id, conf, run_id, exec_date')
 
 # TODO: update this schedule to something more reasonable/carefully chosen
 dag = DAG(
@@ -73,9 +73,10 @@ def kickoff_aoi_project_update_checks(**context):
     project_ids = xcom['project_ids']
     logger.info('Found projects to check for updates: %s', project_ids)
     for project_id in project_ids:
-        run_id = 'update_aoi_{}_{}'.format(project_id, datetime.datetime.now().isoformat())
+        exec_date = datetime.datetime.now()
+        run_id = 'update_aoi_{}_{}'.format(project_id, exec_date.isoformat())
         conf = json.dumps({'project_id': project_id})
-        dag_args = DagArgs(dag_id=UPDATE_DAG_ID, conf=conf, run_id=run_id)
+        dag_args = DagArgs(dag_id=UPDATE_DAG_ID, conf=conf, run_id=run_id, exec_date=exec_date)
         trigger_dag(dag_args)
 
 find_operator = PythonOperator(
