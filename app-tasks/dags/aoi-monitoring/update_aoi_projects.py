@@ -19,7 +19,6 @@ ch.setLevel(logging.INFO)
 ch.setFormatter(formatter)
 
 logging.getLogger('rf').addHandler(ch)
-logging.getLogger().addHandler(ch)
 
 logger = logging.getLogger(__name__)
 
