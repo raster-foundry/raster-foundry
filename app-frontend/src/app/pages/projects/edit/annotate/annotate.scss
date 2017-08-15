@@ -1,4 +1,8 @@
 @import "../../../../../assets/styles/sass/settings/_colors.scss";
+.sidebar.annotate {
+    outline: none;
+}
+
 .sidebar-project.no-annotation,
 .list-group-item.no-annotation{
     border-style: none;
@@ -97,13 +101,14 @@
 }
 
 rf-annotate-sidebar-item{
+    outline: none;
     .list-group-item.list-sidebar-drawn-annotations{
         border: 1px solid $gray-lightest;
     }
     &.sidebar-item-hover,
     &.sidebar-item-click{
         .list-group-item.list-sidebar-drawn-annotations{
-            border: 2px solid $brand-primary;
+            border: 1px solid $brand-primary;
         }
     }
 }

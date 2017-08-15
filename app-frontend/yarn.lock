@@ -113,6 +113,10 @@ angular-filter@^0.5.15:
   dependencies:
     angular "*"
 
+angular-hotkeys@^1.7.0:
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/angular-hotkeys/-/angular-hotkeys-1.7.0.tgz#052e6b6f44dfcd824427798b7f10e1917e8700a1"
+
 angular-jwt@0.0.9:
   version "0.0.9"
   resolved "https://registry.yarnpkg.com/angular-jwt/-/angular-jwt-0.0.9.tgz#912587b520189d28d089446c7faaf30ef7534313"
@@ -4119,11 +4123,17 @@ leaflet-draw@^0.4.3, leaflet-draw@~0.4.9:
   version "0.4.9"
   resolved "https://registry.yarnpkg.com/leaflet-draw/-/leaflet-draw-0.4.9.tgz#44105088310f47e4856d5ede37d47ecfad0cf2d5"
 
-leaflet-path-drag@~1.0.7:
+leaflet-path-drag@^1.0.1, leaflet-path-drag@~1.0.7:
   version "1.0.7"
   resolved "https://registry.yarnpkg.com/leaflet-path-drag/-/leaflet-path-drag-1.0.7.tgz#d49240efc292e19da961cf74da63e387f7d8324e"
   dependencies:
     leaflet "~1.0.2"
+
+leaflet-path-transform@1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/leaflet-path-transform/-/leaflet-path-transform-1.0.3.tgz#e15410616274da473449a6851fc7862a178143cc"
+  dependencies:
+    leaflet-path-drag "^1.0.1"
 
 leaflet@1.0.3, leaflet@~1.0.2:
   version "1.0.3"
