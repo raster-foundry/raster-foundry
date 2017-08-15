@@ -20,35 +20,43 @@ object ColorRampMosaic extends LazyLogging {
   def colorMapFromMap(
     colorMap: Map[String, String], options: SingleBandOptions.Params, hist: Histogram[Double]
   ) : ColorMap = {
-    val breaks = colorMap.map(
-      _ match {
-        case (colorBreak, _) =>
-          try {
-            colorBreak.toDouble
-          } catch {
-            case e : Throwable =>
-              val message = "Color Scheme keys could not be parsed to doubles"
-              logger.error(message)
-              throw new IllegalArgumentException(message).initCause(e)
-          }
-        case _ => throw new IllegalArgumentException(
-          "Color Scheme keys do not match expected structure"
-        )
-      }
-    ).toArray
-    val colors = colorMap map {
-      case (_, color: String) =>
-        try {
-          parseColor(color)
-        } catch {
-          case e : Throwable =>
-            val message = s"Color Scheme colors could not be parsed: ${color} ; ${e.getLocalizedMessage}"
-            throw new IllegalArgumentException(message)
-        }
-    }
-    val lastColor = colors.last
+    var fallbackColor: Option[Int] = None
+    var noDataColor: Option[Int] = None
+    val (breaks, colors) = colorMap
+      .toVector
+      .map(
+        {
+          case (break, color) =>
+            try {
+              break match {
+                case "NODATA" =>
+                  noDataColor = Some(parseColor(color))
+                  None
+                case "FALLBACK" =>
+                  fallbackColor = Some(parseColor(color))
+                  None
+                case _ =>
+                  Some((break.toDouble, parseColor(color)))
+              }
+            } catch {
+              case e : Throwable =>
+                val message = s"Error parsing color map"
+                logger.error(message)
+                throw new IllegalArgumentException(message).initCause(e)
+            }
+        })
+      .flatten.sortWith({ case ((b1: Double, _), (b2: Double, _)) => b1 < b2 }).unzip
+
     val colorRamp = ColorRamp(colors)
     ColorMap(breaks, colorRamp)
+      .withNoDataColor(noDataColor.getOrElse(0))
+      .withFallbackColor(
+        fallbackColor match {
+          case Some(color) =>
+            color
+          case _ => colors.last
+        }
+      )
   }
 
   def colorMapFromVector(
