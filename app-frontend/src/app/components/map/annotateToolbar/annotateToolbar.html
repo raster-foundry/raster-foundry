@@ -5,17 +5,17 @@
         <span>New annotation</span>
       </div>
       <div class="annotate-toolbar-actions row align-center">
-        <button class="btn btn-primary"
+        <button class="btn btn-primary btn-anno-rectangle"
                 ng-click="$ctrl.toggleDrawing('rectangle')"
                 ng-disabled="$ctrl.disableToolbarAction">
           Rectangle
         </button>
-        <button class="btn btn-primary"
+        <button class="btn btn-primary btn-anno-polygon"
                 ng-click="$ctrl.toggleDrawing('polygon')"
                 ng-disabled="$ctrl.disableToolbarAction">
           Polygon
         </button>
-        <button class="btn btn-primary"
+        <button class="btn btn-primary btn-anno-point"
                 ng-click="$ctrl.toggleDrawing('marker')"
                 ng-disabled="$ctrl.disableToolbarAction">
           Point
@@ -27,7 +27,7 @@
         <span>Draw annotation</span>
       </div>
       <div class="annotate-toolbar-actions row align-center">
-        <button class="btn btn-primary"
+        <button class="btn btn-primary btn-anno-cancel"
                 ng-click="$ctrl.onCancelDrawing()">
           Cancel
         </button>

@@ -31,6 +31,9 @@ export default class AnnotateToolbarController {
                 mapWrapper.off(listener);
             });
         });
+        this.drawRectangleHandler.disable();
+        this.drawPolygonHandler.disable();
+        this.drawMarkerHandler.disable();
     }
 
     setDrawHandlers(mapWrapper) {

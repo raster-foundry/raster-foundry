@@ -4,15 +4,20 @@ const BLUE = '#3388FF';
 
 export default class AnnotateController {
     constructor( // eslint-disable-line max-params
-        $log, $state, $scope, $anchorScroll, $location,
-        mapService
+        $log, $state, $scope, $rootScope, $anchorScroll, $location, $timeout, $element, $window,
+        mapService, hotkeys
     ) {
         'ngInject';
         this.$log = $log;
         this.$state = $state;
         this.$scope = $scope;
+        this.$rootScope = $rootScope;
         this.$anchorScroll = $anchorScroll;
         this.$location = $location;
+        this.$timeout = $timeout;
+        this.$element = $element;
+        this.$window = $window;
+        this.hotkeys = hotkeys;
 
         this.getMap = () => mapService.getMap('edit');
     }
@@ -27,20 +32,49 @@ export default class AnnotateController {
         this.isUpload = true;
         this.bindUploadEvent();
 
+        this.bindHotkeys();
+
+        this.bindReloadAlert();
+
+        this.$element.on('click', () => {
+            this.deleteClickedHighlight();
+        });
+
         this.$scope.$on('$destroy', this.$onDestroy.bind(this));
     }
 
-    /* eslint-disable no-underscore-dangle */
     $onDestroy() {
         this.getMap().then((mapWrapper) => {
             mapWrapper.deleteLayers('Annotation');
             mapWrapper.deleteLayers('draw');
+            mapWrapper.deleteLayers('highlight');
+
+            if (mapWrapper.getLayers('draw')[0] && mapWrapper.getLayers('draw')[0].transform) {
+                mapWrapper.getLayers('draw')[0].transform.disable();
+            }
         });
-        if (this.editHandler && this.editHandler._enabled) {
-            this.editHandler.disable();
-        }
+        this.disableEditHandler();
+        this.allowInterruptions();
+        this.$window.removeEventListener('beforeunload', this.onWindowUnload);
     }
-    /* eslint-enable no-underscore-dangle */
+
+    bindReloadAlert() {
+        this.onWindowUnload = (event) => {
+            if (this.annoToExport.features.length) {
+                event.returnValue =
+                    'Leaving this page will delete all unexported annotations. Are you sure?';
+            }
+        };
+        this.$window.addEventListener('beforeunload', this.onWindowUnload);
+    }
+
+    deleteClickedHighlight() {
+        delete this.hoveredId;
+        delete this.clickedId;
+        this.getMap().then((mapWrapper) => {
+            mapWrapper.deleteLayers('highlight');
+        });
+    }
 
     setExportDataInitialValues() {
         this.annoToExport = {
@@ -74,6 +108,191 @@ export default class AnnotateController {
                 this.$scope.$evalAsync();
             }
         });
+    }
+
+    bindHotkeys() {
+        this.hotkeys
+            .bindTo(this.$scope)
+            .add({
+                combo: 'n',
+                description: 'Create new rectangle',
+                callback: () => {
+                    if (!this.disableToolbarAction) {
+                        if (angular.element('.btn-anno-rectangle')) {
+                            this.$timeout(() => angular.element('.btn-anno-rectangle').click());
+                        }
+                    }
+                }
+            })
+            .add({
+                combo: 'p',
+                description: 'Create new polygon',
+                callback: () => {
+                    if (!this.disableToolbarAction) {
+                        if (angular.element('.btn-anno-polygon')) {
+                            this.$timeout(() => angular.element('.btn-anno-polygon').click());
+                        }
+                    }
+                }
+            })
+            .add({
+                combo: 'm',
+                description: 'Create new point',
+                callback: () => {
+                    if (!this.disableToolbarAction) {
+                        if (angular.element('.btn-anno-point')) {
+                            this.$timeout(() => angular.element('.btn-anno-point').click());
+                        }
+                    }
+                }
+            })
+            .add({
+                combo: 'c',
+                description: 'Clone annotation',
+                callback: () => {
+                    if (this.clickedId) {
+                        let clickedData = _.filter(this.annoToExport.features, (f) => {
+                            return f.properties.id === this.clickedId;
+                        })[0];
+                        this.onCloneAnnotation(
+                            clickedData.geometry,
+                            clickedData.properties.label,
+                            clickedData.properties.description
+                        );
+                    }
+                }
+            })
+            .add({
+                combo: 'e',
+                description: 'Edit annotation',
+                callback: () => {
+                    if (this.clickedId) {
+                        this.onUpdateAnnotationStart(
+                            _.filter(this.annoToExport.features, (f) => {
+                                return f.properties.id === this.clickedId;
+                            })[0]
+                        );
+                    }
+                }
+            })
+            .add({
+                combo: 'd',
+                description: 'Delete annotation',
+                callback: () => {
+                    if (this.clickedId) {
+                        this.onDeleteAnnotation(
+                            this.clickedId,
+                            _.filter(this.annoToExport.features, (f) => {
+                                return f.properties.id === this.clickedId;
+                            })[0].properties.label
+                        );
+                    }
+                }
+            })
+            .add({
+                combo: 'r',
+                description: 'Rotate/rescale annotation shape',
+                callback: () => {
+                    this.getMap().then((mapWrapper) => {
+                        this.createRotatableLayerFromDrawLayer(mapWrapper);
+                    });
+                }
+            })
+            .add({
+                combo: 'up',
+                description: 'Move annotation north',
+                callback: () => {
+                    this.getMap().then((mapWrapper) => {
+                        this.onMoveAnnotation(mapWrapper, 'up');
+                    });
+                }
+            })
+            .add({
+                combo: 'down',
+                description: 'Move annotation south',
+                callback: () => {
+                    this.getMap().then((mapWrapper) => {
+                        this.onMoveAnnotation(mapWrapper, 'down');
+                    });
+                }
+            })
+            .add({
+                combo: 'left',
+                description: 'Move annotation west',
+                callback: () => {
+                    this.getMap().then((mapWrapper) => {
+                        this.onMoveAnnotation(mapWrapper, 'left');
+                    });
+                }
+            })
+            .add({
+                combo: 'right',
+                description: 'Move annotation east',
+                callback: () => {
+                    this.getMap().then((mapWrapper) => {
+                        this.onMoveAnnotation(mapWrapper, 'right');
+                    });
+                }
+            })
+            .add({
+                combo: 'shift+return',
+                allowIn: ['INPUT', 'TEXTAREA'],
+                description: 'Submit annotation',
+                callback: () => {
+                    if (angular.element('.annotation-confirm')) {
+                        this.$timeout(() => angular.element('.annotation-confirm').click());
+                    }
+                }
+            })
+            .add({
+                combo: 'esc',
+                allowIn: ['INPUT', 'TEXTAREA'],
+                description: 'Cancel submitting annotation',
+                callback: () => {
+                    if (angular.element('.annotation-cancel')) {
+                        this.$timeout(() => angular.element('.annotation-cancel').click());
+                    }
+                    if (!this.disableToolbarAction) {
+                        if (angular.element('.btn-anno-cancel')) {
+                            this.$timeout(() => angular.element('.btn-anno-cancel').click());
+                        }
+                    }
+                }
+            });
+    }
+
+    onMoveAnnotation(mapWrapper, arrowKey) {
+        this.disableEditHandler();
+        let drawLayer = mapWrapper.getLayers('draw')[0];
+        if (drawLayer) {
+            let drawLayerGeojson = drawLayer.toGeoJSON();
+            let coordinates =
+                _.map(drawLayerGeojson.geometry.coordinates[0], (c) => {
+                    let point = mapWrapper.map.latLngToContainerPoint(
+                        L.latLng(c[1], c[0])
+                    );
+                    if (arrowKey === 'up') {
+                        point.y -= 5;
+                    } else if (arrowKey === 'down') {
+                        point.y += 5;
+                    } else if (arrowKey === 'left') {
+                        point.x -= 5;
+                    } else if (arrowKey === 'right') {
+                        point.x += 5;
+                    }
+                    let coors = mapWrapper.map.containerPointToLatLng(point);
+                    return [coors.lng, coors.lat];
+                });
+            drawLayerGeojson.geometry.coordinates = [coordinates];
+            this.createEditableDrawLayer(
+                mapWrapper,
+                drawLayerGeojson.geometry
+            );
+        }
+    }
+
+    showHotkeyTips() {
+        this.hotkeys.get('?').callback();
     }
 
     updateLabelInputs(features) {
@@ -218,6 +437,7 @@ export default class AnnotateController {
     /* eslint-enable no-underscore-dangle */
 
     onShapeCreating(isCreating) {
+        this.preventInterruptions();
         this.isCreating = isCreating;
         this.disableSidebarAction = isCreating;
     }
@@ -228,6 +448,14 @@ export default class AnnotateController {
         });
         this.editHandler.enable();
     }
+
+    /* eslint-disable no-underscore-dangle */
+    disableEditHandler() {
+        if (this.editHandler && this.editHandler._enabled) {
+            this.editHandler.disable();
+        }
+    }
+    /* eslint-enable no-underscore-dangle */
 
     createEditableDrawLayer(mapWrapper, geometry) {
         if (geometry.type === 'Polygon') {
@@ -277,6 +505,7 @@ export default class AnnotateController {
         }
         this.disableToolbarAction = true;
         this.scrollToItem(id);
+        this.$timeout(() => angular.element('#_value').focus());
     }
 
     onShapeCreated(shapeLayer) {
@@ -297,6 +526,7 @@ export default class AnnotateController {
         return geojson;
     }
 
+    /* eslint-disable no-underscore-dangle */
     createLayerWithPopupFromGeojson(geojsonData) {
         return L.geoJSON(geojsonData, {
             style: () => {
@@ -323,42 +553,50 @@ export default class AnnotateController {
                 ).on('mouseover', (e) => {
                     if (!this.disableSidebarAction && !this.clickedId) {
                         this.hoveredId = feature.properties.id;
-                        this.setLayerStyle(feature, e, RED, 'annotate-hover-marker');
+                        this.setLayerStyle(e.target, RED, 'annotate-hover-marker');
                         this.scrollToItem(this.hoveredId);
                         this.$scope.$evalAsync();
                     }
                 }).on('mouseout', (e) => {
                     if (!this.disableSidebarAction && !this.clickedId) {
                         delete this.hoveredId;
-                        this.setLayerStyle(feature, e, BLUE, 'annotate-marker');
+                        this.setLayerStyle(e.target, BLUE, 'annotate-marker');
                         this.$scope.$evalAsync();
                     }
                 }).on('click', (e) => {
                     this.getMap().then((mapWrapper) => {
                         mapWrapper.map.panTo(e.target.getBounds().getCenter());
-                    });
-                    if (!this.disableSidebarAction) {
-                        if (!this.clickedId) {
-                            this.clickedId = feature.properties.id;
-                            this.setLayerStyle(feature, e, RED, 'annotate-hover-marker');
-                            this.scrollToItem(this.clickedId);
-                            this.$scope.$evalAsync();
-                        } else {
-                            delete this.clickedId;
-                            this.setLayerStyle(feature, e, BLUE, 'annotate-marker');
-                            this.$scope.$evalAsync();
+                        if (!this.disableSidebarAction) {
+                            delete this.hoveredId;
+                            if (this.clickedId !== feature.properties.id) {
+                                let prevLayer = Object
+                                    .values(mapWrapper.getLayers('Annotation')[0]._layers)
+                                    .filter((l) => l.feature.properties.id === this.clickedId);
+                                if (prevLayer.length) {
+                                    this.setLayerStyle(prevLayer[0], BLUE, 'annotate-marker');
+                                }
+                                this.clickedId = feature.properties.id;
+                                this.setLayerStyle(e.target, RED, 'annotate-hover-marker');
+                                this.scrollToItem(this.clickedId);
+                                this.$scope.$evalAsync();
+                            } else {
+                                delete this.clickedId;
+                                this.setLayerStyle(e.target, BLUE, 'annotate-marker');
+                                this.$scope.$evalAsync();
+                            }
                         }
-                    }
+                    });
                 });
             }
         });
     }
+    /* eslint-enable no-underscore-dangle */
 
-    setLayerStyle(feature, e, color, iconClass) {
-        if (feature.geometry.type === 'Polygon') {
-            e.target.setStyle({'color': color});
-        } else if (feature.geometry.type === 'Point') {
-            e.target.setIcon(L.divIcon({'className': iconClass}));
+    setLayerStyle(target, color, iconClass) {
+        if (target.feature.geometry.type === 'Polygon') {
+            target.setStyle({'color': color});
+        } else if (target.feature.geometry.type === 'Point') {
+            target.setIcon(L.divIcon({'className': iconClass}));
         }
     }
 
@@ -371,7 +609,6 @@ export default class AnnotateController {
         }
     }
 
-    /* eslint-disable no-underscore-dangle */
     onUpdateAnnotationFinish(id, label, description, isEdit) {
         if (isEdit) {
             delete this.editId;
@@ -380,9 +617,7 @@ export default class AnnotateController {
         this.disableToolbarAction = false;
         this.isCreating = false;
 
-        if (this.editHandler && this.editHandler._enabled) {
-            this.editHandler.disable();
-        }
+        this.disableEditHandler();
 
         this.getMap().then((mapWrapper) => {
             _.forEach(this.annoToExport.features, (f) => {
@@ -398,6 +633,9 @@ export default class AnnotateController {
                 this.createLayerWithPopupFromGeojson(this.annoToExport),
                 true
             );
+            if (mapWrapper.getLayers('draw')[0].transform) {
+                mapWrapper.getLayers('draw')[0].transform.disable();
+            }
             mapWrapper.deleteLayers('draw');
 
             this.labelInputs = this.updateLabelInputs(this.annoToExport.features);
@@ -409,10 +647,13 @@ export default class AnnotateController {
                 this.onFilterChange(this.filterLabel);
             }
         });
+        this.allowInterruptions();
     }
-    /* eslint-enable no-underscore-dangle */
 
     onCloneAnnotation(geometry, label, description) {
+        this.preventInterruptions();
+        this.deleteClickedHighlight();
+
         this.disableSidebarAction = true;
         this.disableToolbarAction = true;
         this.getMap().then((mapWrapper) => {
@@ -428,9 +669,13 @@ export default class AnnotateController {
             }
         });
         this.scrollToItem(id);
+        this.$timeout(() => angular.element('#_values').focus());
     }
 
     onUpdateAnnotationStart(annotation) {
+        this.preventInterruptions();
+        this.deleteClickedHighlight();
+
         this.disableToolbarAction = true;
         this.isCreating = true;
         this.disableSidebarAction = true;
@@ -456,6 +701,7 @@ export default class AnnotateController {
                 true
             );
         });
+        this.$timeout(() => angular.element('#_values').focus());
     }
 
     updateFilterAndMapRender(label) {
@@ -469,17 +715,57 @@ export default class AnnotateController {
         }
     }
 
-    /* eslint-disable no-underscore-dangle */
-    onCancelUpdateAnnotation(annotation, isEdit) {
+    disableActionsOnCancel() {
         this.disableToolbarAction = false;
         this.disableSidebarAction = false;
         this.isCreating = false;
-        if (this.editHandler && this.editHandler._enabled) {
-            this.editHandler.disable();
-        }
+        this.disableEditHandler();
+        this.getMap().then((mapWrapper) => {
+            if (mapWrapper.getLayers('draw')[0].transform) {
+                mapWrapper.getLayers('draw')[0].transform.disable();
+            }
+        });
+    }
+
+    onCancelUpdateAnnotation(annotation, isEdit) {
+        this.isEdit = isEdit;
 
         if (isEdit) {
-            delete this.editId;
+            let answer = this.$window.confirm('Cancel Editing This Annotation?');
+            if (answer) {
+                this.disableActionsOnCancel();
+                delete this.editId;
+                this.getMap().then((mapWrapper) => {
+                    mapWrapper.setLayer(
+                        'Annotation',
+                        this.createLayerWithPopupFromGeojson(this.annoToExport),
+                        true
+                    );
+                    mapWrapper.deleteLayers('draw');
+
+                    this.updateFilterAndMapRender(annotation.properties.label);
+                });
+            }
+        } else {
+            let answer = this.$window.confirm('Cancel Adding This Annotation?');
+            if (answer) {
+                this.disableActionsOnCancel();
+                _.remove(this.annoToExport.features, (f) => {
+                    return f.properties.id === annotation.properties.id;
+                });
+                this.getMap().then((mapWrapper) => mapWrapper.deleteLayers('draw'));
+            }
+        }
+        this.allowInterruptions();
+    }
+
+
+    onDeleteAnnotation(id, label) {
+        let answer = this.$window.confirm('Delete This Annotation?');
+        if (answer) {
+            this.deleteClickedHighlight();
+
+            _.remove(this.annoToExport.features, f => f.properties.id === id);
 
             this.getMap().then((mapWrapper) => {
                 mapWrapper.setLayer(
@@ -487,54 +773,34 @@ export default class AnnotateController {
                     this.createLayerWithPopupFromGeojson(this.annoToExport),
                     true
                 );
-                mapWrapper.deleteLayers('draw');
 
-                this.updateFilterAndMapRender(annotation.properties.label);
+                this.labelInputs = this.updateLabelInputs(this.annoToExport.features);
+
+                if (!_.find(this.labelInputs, i => i.name === label)) {
+                    this.filterLabel = {'name': 'All'};
+                    this.onFilterChange(this.filterLabel);
+                }
+
+                this.updateFilterAndMapRender(label);
+
+                mapWrapper.deleteLayers('highlight');
             });
-        } else {
-            _.remove(this.annoToExport.features, (f) => {
-                return f.properties.id === annotation.properties.id;
-            });
-            this.getMap().then((mapWrapper) => mapWrapper.deleteLayers('draw'));
         }
-    }
-    /* eslint-enable no-underscore-dangle */
-
-    onDeleteAnnotation(id, label) {
-        _.remove(this.annoToExport.features, f => f.properties.id === id);
-
-        this.getMap().then((mapWrapper) => {
-            mapWrapper.setLayer(
-                'Annotation',
-                this.createLayerWithPopupFromGeojson(this.annoToExport),
-                true
-            );
-
-            this.labelInputs = this.updateLabelInputs(this.annoToExport.features);
-
-            if (!_.find(this.labelInputs, i => i.name === label)) {
-                this.filterLabel = {'name': 'All'};
-                this.onFilterChange(this.filterLabel);
-            }
-
-            this.updateFilterAndMapRender(label);
-
-            mapWrapper.deleteLayers('highlight');
-        });
     }
 
     getAnnotationId(annotation) {
         return `anchor${annotation.properties.id}`;
     }
 
-    toggleSidebarItemClick(annotation) {
+    toggleSidebarItemClick($event, annotation) {
+        $event.stopPropagation();
         if (!this.disableSidebarAction) {
-            if (!this.clickedId) {
+            delete this.hoveredId;
+            if (this.clickedId !== annotation.properties.id) {
                 this.clickedId = annotation.properties.id;
                 this.addAndPanToHighlightLayer(annotation, true);
             } else {
-                delete this.clickedId;
-                this.deleteHighlightLayer();
+                this.deleteClickedHighlight();
             }
         }
     }
@@ -548,21 +814,14 @@ export default class AnnotateController {
 
     onSidebarItemMouseOut() {
         if (!this.disableSidebarAction && !this.clickedId) {
-            delete this.hoveredId;
-            this.deleteHighlightLayer();
+            this.deleteClickedHighlight();
         }
-    }
-
-    deleteHighlightLayer() {
-        this.getMap().then((mapWrapper) => {
-            mapWrapper.deleteLayers('highlight');
-        });
     }
 
     createHighlightLayer(data) {
         return L.geoJSON(data, {
             style: () => {
-                return {'color': RED, 'opacity': 0.8, 'fillOpacity': 0};
+                return {'color': RED, 'weight': 2, 'opacity': 0.8, 'fillOpacity': 0};
             },
             pointToLayer: (geoJsonPoint, latlng) => {
                 return L.marker(latlng, {
@@ -580,5 +839,51 @@ export default class AnnotateController {
                 mapWrapper.map.panTo(highlightLayer.getBounds().getCenter(), {'duration': 0.75});
             }
         });
+    }
+
+    createRotatableLayerFromDrawLayer(mapWrapper) {
+        this.disableEditHandler();
+        mapWrapper.deleteLayers('highlight');
+
+        let drawLayer = _.first(mapWrapper.getLayers('draw'));
+        if (drawLayer) {
+            let drawLayerGeojson = drawLayer.toGeoJSON();
+            if (drawLayerGeojson.geometry.type === 'Polygon') {
+                let coordinates = _.map(drawLayerGeojson.geometry.coordinates[0], (c) => {
+                    return [c[1], c[0]];
+                });
+                let polygonLayer = L.polygon(
+                    coordinates,
+                    {
+                        'transform': true,
+                        'fillColor': '#ff4433',
+                        'color': '#ff4433',
+                        'opacity': 0.5
+                    }
+                );
+                mapWrapper.setLayer('draw', polygonLayer, false);
+                polygonLayer.transform.enable({rotation: true, scaling: true});
+                mapWrapper.map.panTo(polygonLayer.getCenter());
+            }
+        }
+    }
+
+    preventInterruptions() {
+        this.stateChangeCanceller = this.$rootScope.$on('$stateChangeStart',
+            (event, toState, toParams, fromState, fromParams) => {
+                let answer = this.$window.confirm('Leave this page?');
+                if (!answer) {
+                    event.preventDefault();
+                    this.$state.go(fromState, fromParams);
+                }
+            }
+        );
+    }
+
+    allowInterruptions() {
+        if (this.stateChangeCanceller) {
+            this.stateChangeCanceller();
+            delete this.stateChangeCanceller();
+        }
     }
 }

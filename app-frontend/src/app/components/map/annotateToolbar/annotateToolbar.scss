@@ -6,6 +6,7 @@
   width: calc(100vw - 40rem);
   z-index: 950;
   text-align: center;
+  pointer-events: none;
 }
 
 .annotate-toolbar {
@@ -15,7 +16,9 @@
   box-shadow: 1px 3px 5px $shade-normal;
   border-radius: 5px;
   justify-content: center;
+  pointer-events: auto;
 }
+
 .annotate-toolbar-header {
   flex: 1;
   color: #fff;

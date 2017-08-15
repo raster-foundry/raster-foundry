@@ -14,7 +14,8 @@ export default class AnnotateSidebarItemController {
     $onInit() {
     }
 
-    onAnnotationClone(annotation) {
+    onAnnotationClone($event, annotation) {
+        $event.stopPropagation();
         this.onCloneAnnotation({
             'geometry': annotation.geometry,
             'label': annotation.properties.label,
@@ -23,12 +24,14 @@ export default class AnnotateSidebarItemController {
     }
 
     /* eslint-disable no-underscore-dangle */
-    onAnnotationEdit(annotation) {
+    onAnnotationEdit($event, annotation) {
+        $event.stopPropagation();
         this.onUpdateAnnotationStart({'annotation': annotation});
     }
     /* eslint-enable no-underscore-dangle */
 
-    onAnnotationDelete(annotation) {
+    onAnnotationDelete($event, annotation) {
+        $event.stopPropagation();
         this.onDeleteAnnotation({
             'id': annotation.properties.id,
             'label': annotation.properties.label

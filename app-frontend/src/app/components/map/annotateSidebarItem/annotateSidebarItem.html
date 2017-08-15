@@ -1,9 +1,9 @@
 <div class="list-group-item list-sidebar-drawn-annotations"
      ng-if="$ctrl.annotation.geometry && !($ctrl.editId === $ctrl.annotation.properties.id)">
   <div>
-      <i class="icon-cloud"
+      <i class="icon-polygon"
          ng-if="$ctrl.annotation.geometry.type === 'Polygon'"></i>
-      <i class="icon-sun"
+      <i class="icon-map-pin"
          ng-if="$ctrl.annotation.geometry.type === 'Point'"></i>
   </div>
   <div>
@@ -11,15 +11,15 @@
   </div>
   <div class="list-group-right actions-annotations">
     <a title="Clone"
-       ng-click="$ctrl.onAnnotationClone($ctrl.annotation)"
+       ng-click="$ctrl.disableSidebarAction || $ctrl.onAnnotationClone($event, $ctrl.annotation)"
        ng-disabled="$ctrl.disableSidebarAction">
-       <i class="icon-arrows-cw"></i></a>
+       <i class="icon-duplicate"></i></a>
     <a title="Edit"
-       ng-click="$ctrl.onAnnotationEdit($ctrl.annotation)"
+       ng-click="$ctrl.disableSidebarAction || $ctrl.onAnnotationEdit($event, $ctrl.annotation)"
        ng-disabled="$ctrl.disableSidebarAction">
        <i class="icon-pencil"></i></a>
     <a title="Delete"
-       ng-click="$ctrl.onAnnotationDelete($ctrl.annotation)"
+       ng-click="$ctrl.disableSidebarAction || $ctrl.onAnnotationDelete($event, $ctrl.annotation)"
        ng-disabled="$ctrl.disableSidebarAction">
        <i class="icon-trash"></i></a>
   </div>
