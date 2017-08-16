@@ -20,7 +20,8 @@ dag = DAG(
     dag_id='find_landsat8_scenes',
     default_args=args,
     schedule_interval=schedule,
-    concurrency=int(os.getenv('AIRFLOW_DAG_CONCURRENCY', 24))
+    concurrency=int(os.getenv('AIRFLOW_DAG_CONCURRENCY', 24)),
+    catchup=False
 )
 
 bash_cmd = "java -cp /opt/raster-foundry/jars/rf-batch.jar com.azavea.rf.batch.Main import_landsat8 {{ yesterday_ds }}"

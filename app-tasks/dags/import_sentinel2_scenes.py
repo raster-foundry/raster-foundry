@@ -19,7 +19,8 @@ dag = DAG(
     dag_id='import_sentinel2_scenes',
     default_args=args,
     schedule_interval=None,
-    concurrency=int(os.getenv('AIRFLOW_DAG_CONCURRENCY', 24))
+    concurrency=int(os.getenv('AIRFLOW_DAG_CONCURRENCY', 24)),
+    catchup=False
 )
 
 bash_cmd = "java -cp /opt/raster-foundry/jars/rf-batch.jar com.azavea.rf.batch.Main import_sentinel2 {{ yesterday_ds }}"

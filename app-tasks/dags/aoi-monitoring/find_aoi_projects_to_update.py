@@ -36,7 +36,8 @@ dag = DAG(
     dag_id='find_aoi_projects_to_update',
     default_args=default_args,
     schedule_interval=datetime.timedelta(hours=6),
-    concurrency=1
+    concurrency=1,
+    catchup=False
 )
 
 #############
