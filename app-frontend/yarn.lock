@@ -95,6 +95,10 @@ angular-aria@~1.5.8:
   version "1.5.11"
   resolved "https://registry.yarnpkg.com/angular-aria/-/angular-aria-1.5.11.tgz#26963ac336891ced7b199e59afd7e9b25e53d6a6"
 
+angular-bootstrap-colorpicker@^3.0.31:
+  version "3.0.31"
+  resolved "https://registry.yarnpkg.com/angular-bootstrap-colorpicker/-/angular-bootstrap-colorpicker-3.0.31.tgz#54c8abee05380ab1faaebedaec222eee277ed0bf"
+
 angular-clipboard@^1.5.0:
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/angular-clipboard/-/angular-clipboard-1.5.0.tgz#5dcfacd8f91184d165852a71c485e675c4233802"

@@ -1,0 +1,15 @@
+<div class="breakpoint-bar top"></div>
+<div class="breakpoint-grabber" ng-mousedown="$ctrl.onGrabberMouseDown()"></div>
+<div class="breakpoint-bar bottom"></div>
+<div class="breakpoint-input"
+     ng-class="{'switched': $ctrl.breakpoint / $ctrl.range.max > .8,
+                'active': $ctrl.dragging || $ctrl.inputFocused}"
+>
+  <input type="number"
+         class="breakpoint-input-field"
+         ng-attr-step="{{'any'}}"
+         ng-attr-max="{{$ctrl.range.max}}"
+         ng-attr-min="{{$ctrl.range.min}}"
+         ng-model="$ctrl.breakpoint"
+         ng-model-options="{updateOn: 'blur change'}">
+</div>
