@@ -31,19 +31,26 @@
       <i class="icon-load"></i>
     </span>
   </div>
+  <rf-histogram-breakpoint
+    ng-mouseover="$ctrl.lastMouseOver = 'min'"
+    ng-class="{'active': $ctrl.lastMouseOver === 'min'}"
+    data-color="black"
+    data-breakpoint="$ctrl.lowerClip"
+    data-range="{min: 0, max: 255}"
+    data-precision="0"
+    on-color-change="$ctrl.changeMinColor(color)"
+    on-breakpoint-change="$ctrl.onMinBreakpointChange(breakpoint)"
+  ></rf-histogram-breakpoint>
+  <rf-histogram-breakpoint
+    ng-mouseover="$ctrl.lastMouseOver = 'max'"
+    ng-class="{'active': $ctrl.lastMouseOver === 'max'}"
+    data-color="white"
+    data-breakpoint="$ctrl.upperClip"
+    data-range="{min: 0, max: 255}"
+    data-precision="0"
+    on-color-change="$ctrl.changeMaxColor(color)"
+    on-breakpoint-change="$ctrl.onMaxBreakpointChange(breakpoint)"
+  ></rf-histogram-breakpoint>
 </div>
-<div class="histogram-input">
-  <input class="filter-adjust-input" type="number"
-         ng-model="$ctrl.currentModeMin"
-         ng-attr-min="{{$ctrl.minClip}}"
-         ng-attr-max="{{$ctrl.maxClip}}"
-         ng-model-options="{ debounce: 500 }"
-         ng-change="$ctrl.onClipInputChange($ctrl.currentModeMin, undefined)">
-  <input class="filter-adjust-input pull-right" type="number"
-         ng-model="$ctrl.currentModeMax"
-         ng-attr-min="{{$ctrl.minClip}}"
-         ng-attr-max="{{$ctrl.maxClip}}"
-         ng-model-options="{ debounce: 500 }"
-         ng-change="$ctrl.onClipInputChange(undefined, $ctrl.currentModeMax)">
-</div>
+<div class="histogram-spacer"></div>
 <div class="color-filters-container">

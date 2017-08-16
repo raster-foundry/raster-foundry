@@ -10,6 +10,8 @@ export default class ChannelHistogramController {
         this.histogramMode = 'rgb';
         this.minClip = 0;
         this.maxClip = 255;
+        this.lowerClip = this.minClip;
+        this.upperClip = this.maxClip;
         this.clipping = {
             rgb: {
                 min: this.minClip, max: this.maxClip,
@@ -36,8 +38,6 @@ export default class ChannelHistogramController {
                 showXAxis: false,
                 showYAxis: false,
                 yScale: d3.scale.log(),
-                useInteractiveGuideline: true,
-                interactive: true,
                 deepWatchData: true,
                 margin: {
                     top: 0,
@@ -54,22 +54,6 @@ export default class ChannelHistogramController {
                 },
                 tooltip: {
                     enabled: false
-                },
-                lines: {
-                    dispatch: {
-                        elementClick: (event) => {
-                            this.onClick({value: this.hoverValue, event: event});
-                        }
-                    }
-                },
-                interactiveLayer: {
-                    tooltip: {
-                        contentGenerator: (data) => {
-                            this.hoverValue = data.value;
-                            return `<p>Value: ${data.value}</p>
-                                    <p>Pixels: ${data.series[0].value}</p>`;
-                        }
-                    }
                 }
             }
         };
@@ -77,6 +61,29 @@ export default class ChannelHistogramController {
         if (this.data && this.data[0] && this.data[1] && this.data[2]) {
             this.plots = this.bandsToPlots(this.data[0], this.data[1], this.data[2]);
         }
+
+        this.$scope.$watch('$ctrl.lowerClip', _.debounce(this.updateClipping.bind(this), 500));
+        this.$scope.$watch('$ctrl.upperClip', _.debounce(this.updateClipping.bind(this), 500));
+    }
+
+    updateClipping() {
+        if (this.histogramMode && this.lastHistogramModeUpdate === this.histogramMode) {
+            let clipping = this.clipping[this.histogramMode];
+            let changed = false;
+            if (clipping.max !== this.upperClip) {
+                clipping.max = this.upperClip;
+                changed = true;
+            }
+            if (clipping.min !== this.lowerClip) {
+                clipping.min = this.lowerClip;
+                changed = true;
+            }
+
+            if (changed) {
+                this.onChange({clipping: this.clipping});
+            }
+        }
+        this.lastHistogramModeUpdate = this.histogramMode;
     }
 
     $onChanges(changesObj) {
@@ -180,8 +187,11 @@ export default class ChannelHistogramController {
 
     setHistogramMode(mode) {
         if (mode) {
+            this.updateClipping();
             this.histogramMode = mode;
         }
+
+
         if (this.histogramMode === 'rgb') {
             this.histData = [{
                 values: this.plots.rgb,
@@ -189,6 +199,8 @@ export default class ChannelHistogramController {
                 color: 'grey',
                 area: true
             }];
+            this.lowerClip = this.clipping.rgb.min;
+            this.upperClip = this.clipping.rgb.max;
         } else if (this.histogramMode === 'red') {
             this.histData = [{
                 values: this.plots.red,
@@ -196,6 +208,8 @@ export default class ChannelHistogramController {
                 color: 'red',
                 area: true
             }];
+            this.lowerClip = this.clipping.red.min;
+            this.upperClip = this.clipping.red.max;
         } else if (this.histogramMode === 'green') {
             this.histData = [{
                 values: this.plots.green,
@@ -203,6 +217,8 @@ export default class ChannelHistogramController {
                 color: 'green',
                 area: true
             }];
+            this.lowerClip = this.clipping.green.min;
+            this.upperClip = this.clipping.green.max;
         } else if (this.histogramMode === 'blue') {
             this.histData = [{
                 values: this.plots.blue,
@@ -210,108 +226,22 @@ export default class ChannelHistogramController {
                 color: 'blue',
                 area: true
             }];
+            this.lowerClip = this.clipping.blue.min;
+            this.upperClip = this.clipping.blue.max;
         }
-
-        this.applyMinMaxBars();
     }
 
-    setMinMaxBars(min, max) {
-        if (this.histogramMode === 'rgb') {
-            Object.keys(this.clipping).map((mode) => {
-                if (Number.isInteger(min)) {
-                    this.clipping[mode].min = min;
-                }
-                if (Number.isInteger(max)) {
-                    this.clipping[mode].max = max;
-                }
-            });
-        } else {
-            if (Number.isInteger(min)) {
-                this.clipping[this.histogramMode].min = min;
-            }
-            if (Number.isInteger(max)) {
-                this.clipping[this.histogramMode].max = max;
-            }
+    onMinBreakpointChange(breakpoint) {
+        this.lowerClip = breakpoint;
+        if (this.lowerClip > this.upperClip) {
+            this.upperClip = this.lowerClip;
         }
-
-        this.applyMinMaxBars();
-        this.onChange({clipping: this.clipping});
     }
 
-    applyMinMaxBars() {
-        let shouldShowModeClipping = (mode) => {
-            let isSameAsRgb = this.clipping[mode].min === this.clipping.rgb.min &&
-                this.clipping[mode].max === this.clipping.rgb.max;
-            return mode === 'rgb' ||
-                !isSameAsRgb && (mode === this.histogramMode || this.histogramMode === 'rgb');
-        };
-
-        this.currentModeMin = this.clipping[this.histogramMode].min;
-        this.currentModeMax = this.clipping[this.histogramMode].max;
-        this.histData = this.histData.filter((plot) => {
-            return !plot.key.contains('min') && !plot.key.contains('max');
-        });
-
-        Object.keys(this.clipping).map((mode) => {
-            let modeSettings = this.clipping[mode];
-
-            if (shouldShowModeClipping(mode)) {
-                let showArea = this.histogramMode === mode;
-                let minvalues = [
-                    {x: modeSettings.min, y: this.plots.maxY},
-                    {x: modeSettings.min, y: 0}
-                ];
-                let maxvalues = [
-                    {x: modeSettings.max, y: 0},
-                    {x: modeSettings.max, y: this.plots.maxY}
-                ];
-
-                if (showArea) {
-                    minvalues.unshift({x: 0, y: this.plots.maxY});
-                    maxvalues.push({x: 255, y: this.plots.maxY});
-                }
-
-                this.histData.push({
-                    key: `${mode}min${showArea ? '+area' : ''}`,
-                    values: minvalues,
-                    color: modeSettings.color,
-                    fillOpacity: 0.1,
-                    area: showArea
-                });
-                this.histData.push({
-                    key: `${mode}max${showArea ? '+area' : ''}`,
-                    values: maxvalues,
-                    color: modeSettings.color,
-                    fillOpacity: 0.1,
-                    area: showArea
-                });
-            }
-        });
-        this.histData = [].concat(this.histData);
-    }
-
-    onClick(event) {
-        let x = event.value;
-        let modeSettings = this.clipping[this.histogramMode];
-        let min = modeSettings.min;
-        let max = modeSettings.max;
-        let minDiff = x - min;
-        let maxDiff = max - x;
-        if (minDiff < maxDiff) {
-            this.setMinMaxBars(x, max);
-        } else {
-            this.setMinMaxBars(min, x);
+    onMaxBreakpointChange(breakpoint) {
+        this.upperClip = breakpoint;
+        if (this.upperClip < this.lowerClip) {
+            this.lowerClip = this.upperClip;
         }
-        this.$scope.$evalAsync();
-    }
-
-    onClipInputChange(currentModeMin, currentModeMax) {
-        if (Number.isInteger(currentModeMin)) {
-            this.currentModeMin = currentModeMin >= this.minClip ? currentModeMin : this.minClip;
-        }
-        if (Number.isInteger(currentModeMax)) {
-            this.currentModeMax = currentModeMax <= this.maxClip ? currentModeMax : this.maxClip;
-        }
-        this.setMinMaxBars(this.currentModeMin, this.currentModeMax);
     }
 }

@@ -2208,3 +2208,83 @@ rf-color-scheme-builder {
 ul.gradient-dropdown {
   padding: 0;
 }
+
+.graph-container {
+  user-select: none;
+}
+
+rf-histogram-breakpoint {
+  position: absolute;
+  height: 100px;
+  top: 0;
+  pointer-events: none;
+  .breakpoint-bar {
+    pointer-events: none;
+    width: 2px;
+    background-color: $brand-primary;
+    height: 25%;
+    &.top {
+      position: absolute;
+      top: 0;
+    }
+    &.bottom {
+      position: absolute;
+      bottom: 0;
+    }
+  }
+  .breakpoint-grabber {
+    position: absolute;
+    top: 50%;
+    transform: translate(calc(-50% + 1px), -50%);
+
+    width: 10px;
+    height: 50%;
+
+    background: transparent; //$brand-primary;
+    border-radius: 5px;
+    border: 2px solid $brand-primary;
+
+    pointer-events: auto;
+    cursor: ew-resize;
+    user-select: none;
+  }
+  .breakpoint-input {
+    position: absolute;
+    top: 100%;
+    transform: translate(-10%, 25%);
+    &.active {
+      z-index: 4000;
+    }
+    input {
+      pointer-events: auto;
+      width: 4em;
+      background: $shade-dark;
+      color: $white;
+      border: 1px solid transparent;
+      padding: 0.25em;
+    }
+    &.switched {
+      transform: translate(-90%, 25%);
+    }
+  }
+}
+
+.graph-container {
+  position: relative;
+  &.dragging {
+    * {
+      pointer-events: none;
+      cursor: ew-resize;
+    }
+  }
+  *.active {
+    z-index: 5000;
+    input {
+      border: 1px solid $brand-primary;
+    }
+  }
+}
+
+.histogram-spacer {
+  height: 3em;
+}
