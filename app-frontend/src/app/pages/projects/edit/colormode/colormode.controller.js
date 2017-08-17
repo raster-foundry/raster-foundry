@@ -137,6 +137,13 @@ export default class ProjectsEditColormode {
         return this.activeColorScheme;
     }
 
+    isActiveColorScheme(scheme) {
+        return this.activeColorScheme.label === scheme.label && _.isEqual(
+            this.activeColorScheme.colors,
+            scheme.colors
+        );
+    }
+
     getFullyQualifiedColorScheme() {
         return this.colorSchemeService.colorsToDiscreteScheme(this.activeColorScheme.colors);
     }

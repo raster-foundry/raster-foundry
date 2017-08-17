@@ -86,10 +86,16 @@
               <button type="button" class="btn btn-light dropdown-toggle">
                 <i class="icon-caret-down"></i>
               </button>
-              <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
-                <li ng-repeat="scheme in $ctrl.colorSchemeService.defaultColorSchemes | filter : {type: $ctrl.getActiveColorSchemeType().value}" role="menuitem">
+              <ul class="dropdown-menu dropdown-menu-light gradient-dropdown" uib-dropdown-menu role="menu">
+                <li ng-repeat="scheme in $ctrl.colorSchemeService.defaultColorSchemes | filter : {type: $ctrl.getActiveColorSchemeType().value}"
+                    ng-click="$ctrl.setActiveColorScheme(scheme, true)"
+                    role="menuitem"
+                    class="gradient-dropdown-item"
+                >
+                  <div class="selected-gradient-indicator">
+                    <i ng-if="$ctrl.isActiveColorScheme(scheme)" class="icon-check"></i>
+                  </div>
                   <div class="gradient-bar gradient-bkg"
-                       ng-click="$ctrl.setActiveColorScheme(scheme, true)"
                        ng-style="$ctrl.colorSchemeService.colorsToBackground(scheme.colors)"
                   ></div>
                 </li>

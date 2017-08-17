@@ -2184,3 +2184,27 @@ rf-color-scheme-builder {
 .color-scheme-break {
   width: 60px;
 }
+
+.dropdown-menu .gradient-dropdown-item {
+  display: flex;
+  padding: 0.5rem 0.66rem 0.5rem 0 !important;
+  margin: 0 !important;
+  &:hover {
+    background: $gray-lightest;
+    cursor: pointer;
+  }
+  .selected-gradient-indicator {
+    width: 1.5em;
+    text-align: center;
+    i {
+      color: $brand-primary;
+    }
+  }
+  .gradient-bar {
+    flex: 1;
+  }
+}
+
+ul.gradient-dropdown {
+  padding: 0;
+}
