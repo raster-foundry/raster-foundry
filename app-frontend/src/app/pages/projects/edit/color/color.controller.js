@@ -11,31 +11,38 @@ export default class ProjectsEditColorController {
 
     $onInit() {
         this.currentBands = null;
-        this.correction = null;
-        this.$parent.sceneListQuery.then(() => {
-            let layer = this.$parent.sceneLayers.values().next();
-            if (layer && layer.value) {
-                layer.value.getColorCorrection().then((correction) => {
-                    this.currentBands = {
-                        redBand: correction.redBand,
-                        greenBand: correction.greenBand,
-                        blueBand: correction.blueBand
-                    };
-                    this.correction = correction;
-                });
-            }
+        this.correction = {};
+        this.$parent.fetchProject().then(() => {
+            this.$parent.getSceneList().then(() => {
+                let layer = this.$parent.sceneLayers.values().next();
+                if (layer && layer.value) {
+                    layer.value.getColorCorrection().then((correction) => {
+                        this.currentBands = {
+                            redBand: correction.redBand,
+                            greenBand: correction.greenBand,
+                            blueBand: correction.blueBand
+                        };
+                        this.correction = correction;
+                    });
+                }
+            });
         });
     }
 
     isActiveAutoColorCorrection(correctionType) {
-        if (this.correction) {
+        if (this.correction && this.correction[correctionType]) {
             return this.correction[correctionType].enabled;
         }
         return false;
     }
 
     setAutoColorCorrection(correctionType) {
-        this.correction[correctionType].enabled = !this.correction[correctionType].enabled;
+        if (correctionType in this.correction) {
+            this.correction[correctionType].enabled = !this.correction[correctionType].enabled;
+        } else {
+            this.correction[correctionType] = {};
+            this.correction[correctionType].enabled = true;
+        }
         const promise = this.colorCorrectService.bulkUpdate(
             this.projectService.currentProject.id,
             Array.from(this.$parent.sceneLayers.keys()),
