@@ -53,7 +53,7 @@ export default class ColorSchemeBuilderController {
         });
 
         if (sort) {
-            scheme.sort((a, b) => a.break - b.break)
+            scheme.sort((a, b) => a.break - b.break);
         }
 
         return scheme;
