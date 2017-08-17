@@ -1,44 +1,6 @@
 /* global _ */
 
-const availableBands = [
-    {
-        label: 'Band 0',
-        value: 0
-    }, {
-        label: 'Band 1',
-        value: 1
-    }, {
-        label: 'Band 2',
-        value: 2
-    }, {
-        label: 'Band 3',
-        value: 3
-    }, {
-        label: 'Band 4',
-        value: 4
-    }, {
-        label: 'Band 5',
-        value: 5
-    }, {
-        label: 'Band 6',
-        value: 6
-    }, {
-        label: 'Band 7',
-        value: 7
-    }, {
-        label: 'Band 8',
-        value: 8
-    }, {
-        label: 'Band 9',
-        value: 9
-    }, {
-        label: 'Band 10',
-        value: 10
-    }, {
-        label: 'Band 11',
-        value: 11
-    }
-];
+const availableBands = require('./bands.json');
 
 export default class ProjectsEditColormode {
 
@@ -145,10 +107,6 @@ export default class ProjectsEditColormode {
             blendMode: 'CONTINUOUS',
             legendOrientation: 'left'
         };
-    }
-
-    initCategoricalScheme() {
-
     }
 
     toggleProjectSingleBandMode(state) {
