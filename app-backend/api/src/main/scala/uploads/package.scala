@@ -12,7 +12,7 @@ package object uploads {
             .filter { p =>
                 val _p = p.toLowerCase
                 _p.endsWith(".tif") ||
-                _p.endsWith(".tif")
+                _p.endsWith(".tiff")
             }
     }
 }

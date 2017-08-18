@@ -61,9 +61,11 @@ package object S3 {
       else get(client.listNextBatchOfObjects(listing), getObjects)
     }
 
-    val prefix = {
-      val p = source.getPath.tail
-      if(!p.endsWith("/")) s"$p/" else p
+    val prefix = source.getPath match {
+      case "" => ""
+      case "/" => ""
+      case p if !p.tail.endsWith("/") => s"${p.tail}/"
+      case p => p.tail
     }
 
     val listObjectsRequest =
@@ -90,9 +92,11 @@ package object S3 {
       else get(client.listNextBatchOfObjects(listing), getObjects)
     }
 
-    val prefix = {
-      val p = source.getPath.tail
-      if(!p.endsWith("/")) s"$p/" else p
+    val prefix = source.getPath match {
+      case "" => ""
+      case "/" => ""
+      case p if !p.tail.endsWith("/") => s"${p.tail}/"
+      case p => p.tail
     }
 
     val listObjectsRequest =
@@ -119,9 +123,11 @@ package object S3 {
       else get(client.listNextBatchOfObjects(listing), getObjects)
     }
 
-    val prefix = {
-      val p = source.getPath.tail
-      if(!p.endsWith("/")) s"$p/" else p
+    val prefix = source.getPath match {
+      case "" => ""
+      case "/" => ""
+      case p if !p.tail.endsWith("/") => s"${p.tail}/"
+      case p => p.tail
     }
 
     val listObjectsRequest =
