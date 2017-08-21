@@ -64,6 +64,7 @@ function projectEditStates($stateProvider) {
 
     $stateProvider
         .state('projects.edit', {
+            title: 'Project: Edit',
             url: '/edit/:projectid',
             params: {project: null},
             views: {
@@ -80,36 +81,42 @@ function projectEditStates($stateProvider) {
             }
         })
         .state('projects.edit.colormode', {
+            title: 'Project: Color Mode',
             url: '/colormode',
             templateUrl: projectsEditColormodeTpl,
             controller: 'ProjectsEditColormodeController',
             controllerAs: '$ctrl'
         })
         .state('projects.edit.color', {
+            title: 'Project: Color Correct',
             url: '/color',
             templateUrl: projectsEditColorTpl,
             controller: 'ProjectsEditColorController',
             controllerAs: '$ctrl'
         })
         .state('projects.edit.advancedcolor', {
+            title: 'Project: Color Correct',
             url: '/advancedcolor',
             templateUrl: projectsAdvancedColorTpl,
             controller: 'ProjectsAdvancedColorController',
             controllerAs: '$ctrl'
         })
         .state('projects.edit.advancedcolor.adjust', {
+            title: 'Project: Color Correct',
             url: '/adjust',
             templateUrl: projectsColorAdjustTpl,
             controller: 'ProjectsColorAdjustController',
             controllerAs: '$ctrl'
         })
         .state('projects.edit.scenes', {
+            title: 'Project: Scenes',
             url: '/scenes',
             templateUrl: projectsScenesTpl,
             controller: 'ProjectsScenesController',
             controllerAs: '$ctrl'
         })
         .state('projects.edit.browse', {
+            title: 'Project Scenes',
             url: '/browse/:sceneid?' + addScenesQueryParams,
             templateUrl: projectsSceneBrowserTpl,
             controller: 'ProjectsSceneBrowserController',
@@ -134,24 +141,28 @@ function projectEditStates($stateProvider) {
             controllerAs: '$ctrl'
         })
         .state('projects.edit.aoi-approve', {
+            title: 'Project: Pending Scenes',
             url: '/aoi-approve',
             templateUrl: aoiApproveTpl,
             controller: 'AOIApproveController',
             controllerAs: '$ctrl'
         })
         .state('projects.edit.aoi-parameters', {
+            title: 'Project: AOI',
             url: '/aoi-parameters',
             templateUrl: aoiParametersTpl,
             controller: 'AOIParametersController',
             controllerAs: '$ctrl'
         })
         .state('projects.edit.export', {
+            title: 'Project: Export',
             url: '/export',
             templateUrl: exportTpl,
             controller: 'ExportController',
             controllerAs: '$ctrl'
         })
         .state('projects.edit.annotate', {
+            title: 'Project: Annotate',
             url: '/annotate',
             templateUrl: annotateTpl,
             controller: 'AnnotateController',
@@ -170,6 +181,7 @@ function projectStates($stateProvider) {
             abstract: true
         })
         .state('projects.list', {
+            title: 'User Projects',
             url: '/list?:page',
             templateUrl: projectsListTpl,
             controller: 'ProjectsListController',
@@ -184,12 +196,14 @@ function projectStates($stateProvider) {
             redirectTo: 'projects.detail.scenes'
         })
         .state('projects.detail.scenes', {
+            title: 'Project: Details',
             url: '/scenes?:page',
             templateUrl: projectsDetailScenesTpl,
             controller: 'ProjectDetailScenesController',
             controllerAs: '$ctrl'
         })
         .state('projects.detail.exports', {
+            title: 'Project: Exports',
             url: '/exports?:page',
             templateUrl: projectsDetailExportsTpl,
             controller: 'ProjectDetailExportsController',
@@ -211,6 +225,7 @@ function settingsStates($stateProvider) {
 
         })
         .state('settings.profile', {
+            title: 'Profile Settings',
             url: '/profile',
             templateUrl: profileTpl,
             controller: 'ProfileController',
@@ -224,18 +239,21 @@ function settingsStates($stateProvider) {
             abstract: true
         })
         .state('settings.tokens.api', {
+            title: 'Settings: API Tokens',
             url: '/api',
             templateUrl: apiTokensTpl,
             controller: 'ApiTokensController',
             controllerAs: '$ctrl'
         })
         .state('settings.tokens.map', {
+            title: 'Settings: Map Tokens',
             url: '/map',
             templateUrl: mapTokensTpl,
             controller: 'MapTokensController',
             controllerAs: '$ctrl'
         })
         .state('settings.connections', {
+            title: 'Settings: API Connections',
             url: '/connections',
             templateUrl: connectionsTpl,
             controller: 'ConnectionsController',
@@ -246,6 +264,7 @@ function settingsStates($stateProvider) {
 function marketStates($stateProvider) {
     $stateProvider
         .state('market', {
+            title: 'Tools',
             parent: 'root',
             url: '/market',
             templateUrl: marketTpl,
@@ -254,12 +273,14 @@ function marketStates($stateProvider) {
             abstract: true
         })
         .state('market.search', {
+            title: 'Tool Search',
             url: '/search?:query?toolcategory&tooltag',
             templateUrl: marketSearchTpl,
             controller: 'MarketSearchController',
             controllerAs: '$ctrl'
         })
         .state('market.tool', {
+            title: 'Tool Details',
             url: '/tool/:id',
             params: {
                 modelData: null
@@ -273,6 +294,7 @@ function marketStates($stateProvider) {
 function labStates($stateProvider) {
     $stateProvider
         .state('lab', {
+            title: 'Tool Lab',
             parent: 'root',
             url: '/lab/:toolid',
             templateUrl: labTpl,
@@ -281,12 +303,14 @@ function labStates($stateProvider) {
             abstract: true
         })
         .state('lab.edit', {
+            title: 'Tool: Edit',
             url: '/edit',
             templateUrl: labEditTpl,
             controller: 'LabEditController',
             controllerAs: '$ctrl'
         })
        .state('lab.run', {
+           title: 'Tool: Run',
            url: '/run/:projectid?',
            views: {
                'navmenu@root': {
@@ -306,6 +330,7 @@ function labStates($stateProvider) {
 function shareStates($stateProvider) {
     $stateProvider
         .state('share', {
+            title: 'Shared Project',
             url: '/share/:projectid',
             templateUrl: shareTpl,
             controller: 'ShareController',
@@ -316,6 +341,7 @@ function shareStates($stateProvider) {
 function loginStates($stateProvider) {
     $stateProvider
         .state('login', {
+            title: 'Login',
             url: '/login',
             templateUrl: loginTpl,
             controller: 'LoginController',
@@ -337,6 +363,7 @@ function homeStates($stateProvider) {
 function importStates($stateProvider) {
     $stateProvider
         .state('imports', {
+            title: 'Imports',
             parent: 'root',
             url: '/imports',
             templateUrl: importsTpl,
@@ -351,26 +378,25 @@ function importStates($stateProvider) {
             abstract: true
         })
         .state('imports.datasources.list', {
+            title: 'Datasources',
             url: '/list?:page',
             templateUrl: importsDatasourcesListTpl,
             controller: 'DatasourceListController',
             controllerAs: '$ctrl'
         })
         .state('imports.datasources.detail', {
+            title: 'Datasource Details',
             url: '/detail/:datasourceid',
             templateUrl: importsDatasourcesDetailTpl,
             controller: 'DatasourceDetailController',
             controllerAs: '$ctrl'
         })
         .state('imports.datasources.detail.colorComposites', {
+            title: 'Datasource Color Composites',
             url: '/color-composites',
             templateUrl: datasourceColorCompositesTpl,
             controller: 'ColorCompositesController',
             controllerAs: '$ctrl'
-        })
-        .state('imports.scenes', {
-            url: '/scenes',
-            template: '<div>Scenes</div>'
         });
 }
 
@@ -398,6 +424,7 @@ function routeConfig($urlRouterProvider, $stateProvider, $urlMatcherFactoryProvi
 
     $stateProvider
         .state('error', {
+            title: 'Server Error',
             url: '/error',
             templateUrl: errorTpl,
             controller: 'ErrorController',
