@@ -1,5 +1,5 @@
 function runBlock(
-    $rootScope, jwtHelper, $state, $location, APP_CONFIG,
+    $rootScope, jwtHelper, $state, $location, $window, APP_CONFIG,
     authService, localStorage, rollbarWrapperService, intercomService,
     featureFlags, perUserFeatureFlags
 ) {
@@ -13,6 +13,8 @@ function runBlock(
 
     $rootScope.$on('$stateChangeStart', function (e, toState, params) {
         function setupState() {
+            $window.document.title = toState.title ?
+                `Raster Foundry - ${toState.title}` : 'Raster Foundry';
             if (APP_CONFIG.error && toState.name !== 'error') {
                 e.preventDefault();
                 $state.go('error');
