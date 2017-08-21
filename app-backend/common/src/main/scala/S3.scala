@@ -33,7 +33,7 @@ package object S3 {
 
     val bucket = (uri.getHost, uri.getAuthority) match {
       case (null, authority) => authority
-      case (host, null) => host
+      case (host, _) => host
       case _ => throw new IllegalStateException(s"Ambiguous bucket parse: $uri")
     }
 
