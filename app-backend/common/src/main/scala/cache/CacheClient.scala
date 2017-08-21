@@ -56,7 +56,13 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging {
           val futureCached: Future[CachedType] = expensiveOperation
           futureCached.foreach { cachedValue =>
             try {
-              setValue(cacheKey, cachedValue)
+              // Don't cache Nones indefinitely -- we might need to tune the None
+              // ttl if it feels like it takes forever for tiles to be available
+              // after an ingest is finished
+              cachedValue match {
+                case Some(v) => setValue(cacheKey, cachedValue)
+                case None => setValue(cacheKey, cachedValue, ttlSeconds = 300)
+              }
             } catch {
               case e: Exception => logger.info(s"Cache Set Error: ${e.getMessage}")
             }
