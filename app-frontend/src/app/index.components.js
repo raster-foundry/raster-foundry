@@ -65,4 +65,7 @@ export default angular.module('index.components', [
     // Single components for new domains
     require('./components/aoiFilterPane/aoiFilterPane.module.js').name,
     require('./components/channelHistogram/channelHistogram.module.js').name,
+
+    // project color composite components
+    require('./components/colorComposites/colorSchemeBuilder/colorSchemeBuilder.module.js').name,
 ]);

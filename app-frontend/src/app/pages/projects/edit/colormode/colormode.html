@@ -15,14 +15,175 @@
   </ul>
 </div>
 <div class="sidebar-scrollable">
-  <div class="list-group">
+  <div class="list-group" ng-if="!$ctrl.isLoading">
+    <div class="list-group-item with-rows">
+      <div class="list-group-item-content">
+        <span title="Single Band"><strong>Single Band</strong></span>
+        <div class="list-group-right">
+          <rf-toggle value="$ctrl.projectBuffer.isSingleBand" on-change="$ctrl.setActiveColorMode('singleband')">
+            <i class="icon-check"></i>
+          </rf-toggle>
+        </div>
+      </div>
+      <div class="list-group-item-content" ng-if="$ctrl.projectBuffer.isSingleBand">
+        <ul class="sidebar-list">
+          <li>
+            <span class="label">Band</span>
+            <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
+              <a class="btn dropdown-label">
+                Band {{$ctrl.getActiveSingleBand()}}
+              </a>
+              <button type="button" class="btn btn-light dropdown-toggle">
+                <i class="icon-caret-down"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+                <li ng-repeat="band in $ctrl.availableBands" role="menuitem">
+                  <a ng-click="$ctrl.setActiveSingleBand(band.value)">{{band.label}}</a>
+                </li>
+              </ul>
+            </div>
+            <i class="icon-info"></i>
+          </li>
+          <li>
+            <span class="label">Nature of Data</span>
+            <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
+              <a class="btn dropdown-label">
+                {{$ctrl.getActiveColorSchemeType().label}}
+              </a>
+              <button type="button" class="btn btn-light dropdown-toggle">
+                <i class="icon-caret-down"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+                <li  ng-repeat="type in $ctrl.colorSchemeService.defaultColorSchemeTypes" role="menuitem">
+                  <a ng-click="$ctrl.setActiveColorSchemeType(type)">{{type.label}}</a>
+                </li>
+              </ul>
+            </div>
+            <i class="icon-info"></i>
+          </li>
+          <li ng-if="$ctrl.showShowBlendMode()">
+            <span class="label">Blend Mode</span>
+            <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
+              <a class="btn dropdown-label">
+                {{$ctrl.getActiveColorBlendMode().label}}
+              </a>
+              <button type="button" class="btn btn-light dropdown-toggle">
+                <i class="icon-caret-down"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+                <li  ng-repeat="mode in $ctrl.colorSchemeService.defaultColorBlendModes" role="menuitem">
+                  <a ng-click="$ctrl.setActiveColorBlendMode(mode)">{{mode.label}}</a>
+                </li>
+              </ul>
+            </div>
+            <i class="icon-info"></i>
+          </li>
+          <li ng-if="$ctrl.shouldShowColorScheme()">
+            <span class="label">Color scheme</span>
+            <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
+              <a class="btn dropdown-label gradient-bkg" ng-style="$ctrl.colorSchemeService.colorsToBackground($ctrl.getActiveColorScheme().colors)">
+              </a>
+              <button type="button" class="btn btn-light dropdown-toggle">
+                <i class="icon-caret-down"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-light gradient-dropdown" uib-dropdown-menu role="menu">
+                <li ng-repeat="scheme in $ctrl.colorSchemeService.defaultColorSchemes | filter : {type: $ctrl.getActiveColorSchemeType().value}"
+                    ng-click="$ctrl.setActiveColorScheme(scheme, true)"
+                    role="menuitem"
+                    class="gradient-dropdown-item"
+                >
+                  <div class="selected-gradient-indicator">
+                    <i ng-if="$ctrl.isActiveColorScheme(scheme)" class="icon-check"></i>
+                  </div>
+                  <div class="gradient-bar gradient-bkg"
+                       ng-style="$ctrl.colorSchemeService.colorsToBackground(scheme.colors)"
+                  ></div>
+                </li>
+              </ul>
+            </div>
+            <i class="icon-info"></i>
+          </li>
+          <li ng-if="$ctrl.shouldShowColorSchemeBuilder()">
+            <rf-color-scheme-builder color-scheme="$ctrl.projectBuffer.singleBandOptions.colorScheme" on-change="$ctrl.onSchemeColorsChange(value)"/>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="list-group-item with-rows">
+      <div class="list-group-item-content">
+        <div>
+          <span title="custom"><strong>Custom</strong></span>
+        </div>
+        <div class="list-group-right">
+          <rf-toggle value="$ctrl.isActiveColorMode('custom')" on-change="$ctrl.setActiveColorMode('custom')">
+            <i class="icon-check"></i>
+          </rf-toggle>
+        </div>
+      </div>
+      <div class="list-group-item-content" ng-if="$ctrl.isActiveColorMode('custom')">
+          <ul class="sidebar-list">
+             <li>
+              <span class="label">Blue</span>
+              <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
+                <a class="btn dropdown-label">
+                  Band {{$ctrl.getActiveBand('blueBand')}}
+                </a>
+                <button type="button" class="btn btn-light dropdown-toggle">
+                  <i class="icon-caret-down"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+                  <li ng-repeat="band in $ctrl.availableBands" role="menuitem">
+                    <a ng-click="$ctrl.setActiveBand('blueBand', band.value)">{{band.label}}</a>
+                  </li>
+                </ul>
+              </div>
+              <i class="icon-info"></i>
+            </li>
+            <li>
+              <span class="label">Green</span>
+              <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
+                <a class="btn dropdown-label">
+                  Band {{$ctrl.getActiveBand('greenBand')}}
+                </a>
+                <button type="button" class="btn btn-light dropdown-toggle">
+                  <i class="icon-caret-down"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+                  <li ng-repeat="band in $ctrl.availableBands" role="menuitem">
+                    <a ng-click="$ctrl.setActiveBand('greenBand', band.value)">{{band.label}}</a>
+                  </li>
+                </ul>
+              </div>
+              <i class="icon-info"></i>
+            </li>
+            <li>
+              <span class="label">Red</span>
+              <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
+                <a class="btn dropdown-label">
+                  Band {{$ctrl.getActiveBand('redBand')}}
+                </a>
+                <button type="button" class="btn btn-light dropdown-toggle">
+                  <i class="icon-caret-down"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+                  <li ng-repeat="band in $ctrl.availableBands" role="menuitem">
+                    <a ng-click="$ctrl.setActiveBand('redBand', band.value)">{{band.label}}</a>
+                  </li>
+                </ul>
+              </div>
+              <i class="icon-info"></i>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
     <div class="list-group-item"
          ng-repeat="(key, composite) in $ctrl.$parent.unifiedComposites track by $index">
       <div style="flex-direction: row;">
         <span title="{{composite.label}}"><strong>{{composite.label}}</strong></span>
       </div>
       <div class="list-group-right">
-        <rf-toggle value="$ctrl.isActiveColorMode(key)" on-change="$ctrl.setBands(key)">
+        <rf-toggle value="$ctrl.isActiveColorMode(key)" on-change="$ctrl.setActiveColorMode(key)">
           <i class="icon-check"></i>
         </rf-toggle>
       </div>
