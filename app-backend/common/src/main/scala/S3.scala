@@ -23,6 +23,23 @@ package object S3 {
     .withRegion(Regions.US_EAST_1)
     .build()
 
+  def bucketAndPrefixFromURI(uri: URI): (String, String) = {
+    val prefix = uri.getPath match {
+      case "" => ""
+      case "/" => ""
+      case p if !p.tail.endsWith("/") => s"${p.tail}/"
+      case p => p.tail
+    }
+
+    val bucket = (uri.getHost, uri.getAuthority) match {
+      case (null, authority) => authority
+      case (host, _) => host
+      case _ => throw new IllegalStateException(s"Ambiguous bucket parse: $uri")
+    }
+
+    (bucket, prefix)
+  }
+
   def getObject(uri: URI): S3Object = {
     val s3uri = new AmazonS3URI(uri)
     client.getObject(s3uri.getBucket, s3uri.getKey)
@@ -61,16 +78,11 @@ package object S3 {
       else get(client.listNextBatchOfObjects(listing), getObjects)
     }
 
-    val prefix = source.getPath match {
-      case "" => ""
-      case "/" => ""
-      case p if !p.tail.endsWith("/") => s"${p.tail}/"
-      case p => p.tail
-    }
+    val (bucket, prefix) = bucketAndPrefixFromURI(source)
 
     val listObjectsRequest =
       new ListObjectsRequest()
-        .withBucketName(source.getHost)
+        .withBucketName(bucket)
         .withPrefix(prefix)
         .withDelimiter("/")
 
@@ -92,16 +104,11 @@ package object S3 {
       else get(client.listNextBatchOfObjects(listing), getObjects)
     }
 
-    val prefix = source.getPath match {
-      case "" => ""
-      case "/" => ""
-      case p if !p.tail.endsWith("/") => s"${p.tail}/"
-      case p => p.tail
-    }
+    val (bucket, prefix) = bucketAndPrefixFromURI(source)
 
     val listObjectsRequest =
       new ListObjectsRequest()
-        .withBucketName(source.getHost)
+        .withBucketName(bucket)
         .withPrefix(prefix)
         .withDelimiter("/")
 
@@ -123,16 +130,11 @@ package object S3 {
       else get(client.listNextBatchOfObjects(listing), getObjects)
     }
 
-    val prefix = source.getPath match {
-      case "" => ""
-      case "/" => ""
-      case p if !p.tail.endsWith("/") => s"${p.tail}/"
-      case p => p.tail
-    }
+    val (bucket, prefix) = bucketAndPrefixFromURI(source)
 
     val listObjectsRequest =
       new ListObjectsRequest()
-        .withBucketName(source.getHost)
+        .withBucketName(bucket)
         .withPrefix(prefix)
         .withDelimiter("/")
 
