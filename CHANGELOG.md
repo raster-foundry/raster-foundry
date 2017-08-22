@@ -1,5 +1,24 @@
 # Change Log
 
+## [0.20.0](https://github.com/raster-foundry/raster-foundry/tree/0.20.0) (2017-08-22)
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.19.0...0.20.0)
+
+**Merged pull requests:**
+
+- Don't cache None tiles forever [\#2430](https://github.com/raster-foundry/raster-foundry/pull/2430)
+- Add page titles for routes to make navigation easier [\#2429](https://github.com/raster-foundry/raster-foundry/pull/2429)
+- Fix thumbnails on import page [\#2428](https://github.com/raster-foundry/raster-foundry/pull/2428)
+- Parse bucket more delicately from upload s3 source [\#2427](https://github.com/raster-foundry/raster-foundry/pull/2427)
+- Parse s3 prefixes more delicately [\#2426](https://github.com/raster-foundry/raster-foundry/pull/2426)
+- Add issue template [\#2424](https://github.com/raster-foundry/raster-foundry/pull/2424)
+- Implement new histogram breakpoints and use for min/max [\#2422](https://github.com/raster-foundry/raster-foundry/pull/2422)
+- Add hotkeys for annotation-related actions. Enable shape rotate/rescale. [\#2420](https://github.com/raster-foundry/raster-foundry/pull/2420)
+- Update Airflow configuration file after 1.8.x upgrade [\#2419](https://github.com/raster-foundry/raster-foundry/pull/2419)
+- Set catchup to false for scheduled DAGs [\#2418](https://github.com/raster-foundry/raster-foundry/pull/2418)
+- Upgrade airflow to 1.8.1 and decrease boto logging verbosity [\#2413](https://github.com/raster-foundry/raster-foundry/pull/2413)
+- Implement color ramps for single band projects [\#2411](https://github.com/raster-foundry/raster-foundry/pull/2411)
+- Implement custom and single band color mode config UI [\#2380](https://github.com/raster-foundry/raster-foundry/pull/2380)
+
 ## [0.19.0](https://github.com/raster-foundry/raster-foundry/tree/0.19.0) (2017-08-13)
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.18.1...0.19.0)
 
@@ -14,6 +33,7 @@
 
 **Merged pull requests:**
 
+- duplicate, map-pin, polygon icons [\#2412](https://github.com/raster-foundry/raster-foundry/pull/2412)
 - Add global statistics endpoint for tool-runs [\#2401](https://github.com/raster-foundry/raster-foundry/pull/2401)
 - Remove mention-bot configuration [\#2394](https://github.com/raster-foundry/raster-foundry/pull/2394)
 - Clean Up API Spec/Queries/Planet Imports/Autocomplete [\#2378](https://github.com/raster-foundry/raster-foundry/pull/2378)
@@ -23,6 +43,7 @@
 
 **Merged pull requests:**
 
+- Add annotations' edit, delete, filter, clone, import, export features [\#2407](https://github.com/raster-foundry/raster-foundry/pull/2407)
 - Add frontend/import support for Planet imagery [\#2376](https://github.com/raster-foundry/raster-foundry/pull/2376)
 - Allow backend handling of planet imagery imports [\#2375](https://github.com/raster-foundry/raster-foundry/pull/2375)
 - Add frontend and API for setting Planet token [\#2373](https://github.com/raster-foundry/raster-foundry/pull/2373)
