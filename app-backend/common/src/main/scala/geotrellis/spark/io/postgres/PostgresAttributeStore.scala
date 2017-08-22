@@ -114,7 +114,10 @@ class PostgresAttributeStore(val attributeTable: String = "layer_attributes")(im
 
   def maxZoomsForLayers(layerNames: Set[String]): Future[Option[Map[String, Int]]] = {
     logger.debug(s"maxZoomsForLayers($layerNames)")
-    LayerAttributes.maxZoomsForLayers(layerNames).map(x => Option(x.toMap))
+    LayerAttributes.maxZoomsForLayers(layerNames).map {
+      case seq if seq.length > 0 => seq.toMap.some
+      case _ => None
+    }
   }
 
   def availableAttributes(id: LayerId): Seq[String] = {
