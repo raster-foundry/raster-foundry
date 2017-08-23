@@ -1,45 +1,63 @@
 <div class="list-group-item list-sidebar-drawn-annotations"
      ng-if="$ctrl.annotation.geometry && !($ctrl.editId === $ctrl.annotation.properties.id)">
-  <div>
+  <div class="sidebar-item">
+    <div class="inner">
       <i class="icon-polygon"
          ng-if="$ctrl.annotation.geometry.type === 'Polygon'"></i>
       <i class="icon-map-pin"
          ng-if="$ctrl.annotation.geometry.type === 'Point'"></i>
-  </div>
-  <div>
-    <h5>{{$ctrl.annotation.properties.label}}</h5>
+      <p class="annotation-confidence" ng-if="$ctrl.annotation.properties.machineGenerated">
+        <i>{{$ctrl.annotation.properties.confidence}}</i>
+      </p>
+    </div>
+    <div class="inner">
+      <div class="annotation-name"><h5>{{$ctrl.annotation.properties.label}}</h5></div>
+      <div class="btn-group" ng-if="$ctrl.annotation.properties.machineGenerated">
+        <button class="btn btn-primary btn-block"
+                type="button"
+                ng-click="$ctrl.onQaCheck($ctrl.annotation, 'fail')"
+                ng-class="{fail: $ctrl.annotation.properties.qualityCheck === 'fail'}">
+          <i class="icon-cross"></i>
+        </button>
+        <button class="btn btn-primary btn-block"
+                type="button"
+                ng-click="$ctrl.onQaCheck($ctrl.annotation, 'pass')"
+                ng-class="{pass: $ctrl.annotation.properties.qualityCheck === 'pass'}">
+          <i class="icon-check"></i>
+        </button>
+      </div>
+    </div>
   </div>
   <div class="list-group-right actions-annotations">
     <a title="Clone"
        ng-click="$ctrl.disableSidebarAction || $ctrl.onAnnotationClone($event, $ctrl.annotation)"
        ng-disabled="$ctrl.disableSidebarAction">
-       <i class="icon-duplicate"></i></a>
+      <i class="icon-duplicate"></i></a>
     <a title="Edit"
        ng-click="$ctrl.disableSidebarAction || $ctrl.onAnnotationEdit($event, $ctrl.annotation)"
        ng-disabled="$ctrl.disableSidebarAction">
-       <i class="icon-pencil"></i></a>
+      <i class="icon-pencil"></i></a>
     <a title="Delete"
        ng-click="$ctrl.disableSidebarAction || $ctrl.onAnnotationDelete($event, $ctrl.annotation)"
        ng-disabled="$ctrl.disableSidebarAction">
-       <i class="icon-trash"></i></a>
+      <i class="icon-trash"></i></a>
   </div>
 </div>
 <div class="list-group-item" ng-if="!$ctrl.annotation.geometry || ($ctrl.editId === $ctrl.annotation.properties.id)">
   <div class='annotation-new'>
     <form>
-    <angucomplete-alt
-         pause="100"
-         initial-value="$ctrl.annotation.properties.label"
-         selected-object="$ctrl.labelObj"
-         placeholder="{{$ctrl.annotation.properties.label || 'Label name...'}}"
-         local-data="$ctrl.labelInputs"
-         search-fields="name"
-         title-field="name"
-         minlength="1"
-         input-class="form-control annotation-label"
-         match-class="annotation-highlight"
-         override-suggestions="true"
-         ng-class="{'is-invalid': $ctrl.isInvalid }">
+    <angucomplete-alt pause="100"
+                      initial-value="$ctrl.annotation.properties.label"
+                      selected-object="$ctrl.labelObj"
+                      placeholder="{{$ctrl.annotation.properties.label || 'Label name...'}}"
+                      local-data="$ctrl.labelInputs"
+                      search-fields="name"
+                      title-field="name"
+                      minlength="1"
+                      input-class="form-control annotation-label"
+                      match-class="annotation-highlight"
+                      override-suggestions="true"
+                      ng-class="{'is-invalid': $ctrl.isInvalid }">
     </angucomplete-alt>
     <textarea class="form-control"
               ng-init="$ctrl.newLabelDescription = $ctrl.annotation.properties.description"

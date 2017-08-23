@@ -12,7 +12,8 @@ const annotateSidebarItem = {
         onUpdateAnnotationStart: '&',
         onDeleteAnnotation: '&',
         onUpdateAnnotationFinish: '&',
-        onCancelUpdateAnnotation: '&'
+        onCancelUpdateAnnotation: '&',
+        onQaChecked: '&'
     }
 };
 

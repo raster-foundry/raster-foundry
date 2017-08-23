@@ -29,9 +29,6 @@ export default class AnnotateController {
 
         this.setLabelNameFilter();
 
-        this.isUpload = true;
-        this.bindUploadEvent();
-
         this.bindHotkeys();
 
         this.bindReloadAlert();
@@ -98,16 +95,6 @@ export default class AnnotateController {
             }
             return false;
         };
-    }
-
-    bindUploadEvent() {
-        $('#btn-upload').change((e) => {
-            this.uploadedData = _.values(e.target.files);
-            if (this.uploadedData.length) {
-                this.isUpload = false;
-                this.$scope.$evalAsync();
-            }
-        });
     }
 
     bindHotkeys() {
@@ -331,74 +318,14 @@ export default class AnnotateController {
         this.labelInputs = this.updateLabelInputs(this.annoToExport.features);
     }
 
-    /* eslint-disable no-undef */
-    onImportClick() {
-        if (this.uploadedData.length) {
-            _.forEach(this.uploadedData, (datum) => {
-                let reader = new FileReader();
-                reader.onload = (e) => this.importLocalAnnotations(JSON.parse(e.target.result));
-                reader.readAsText(datum);
-            });
-            this.isUpload = true;
-        }
-    }
-    /* eslint-enable no-undef */
-
     onClearAnnotation() {
         this.getMap().then((mapWrapper) => {
             mapWrapper.deleteLayers('Annotation');
+            mapWrapper.deleteLayers('draw');
+            mapWrapper.deleteLayers('highlight');
         });
-        this.annoToExport = {
-            'type': 'FeatureCollection',
-            features: []
-        };
-        this.labelInputs = [{'name': 'All', 'id': 0}];
-    }
-
-    onAnnotationsDownload(e, annotationData) {
-        let href = `data:text/json;charset=utf-8,${encodeURI(JSON.stringify(annotationData))}`;
-        let dl = angular.element(`<a href="${href}"
-            download="rf_annotation_export_${new Date().getTime()}.geojson"></a>`);
-        angular.element(e.target).parent().append(dl);
-        dl[0].click();
-        dl.remove();
-    }
-
-    onAnnotationsExport(e) {
-        if (this.filteredAnnotations.features && this.filteredAnnotations.features.length) {
-            this.onAnnotationsDownload(
-                e,
-                this.createExportData(this.filteredAnnotations, ['id', 'prevId'])
-            );
-            if (this.filterLabel.name === 'All') {
-                this.onClearAnnotation();
-            }
-        } else if (this.annoToExport.features && this.annoToExport.features.length) {
-            this.onAnnotationsDownload(
-                e,
-                this.createExportData(this.annoToExport, ['id', 'prevId'])
-            );
-            this.onClearAnnotation();
-        } else {
-            this.onAnnotationsDownload(e, {'result': 'Nothing to export.'});
-        }
-    }
-
-    createExportData(data, omitKeys) {
-        let propertyKeys = _.difference(
-            _.keys(data.features[0].properties),
-            omitKeys
-        );
-        return {
-            features: data.features.map((f) => {
-                return {
-                    geometry: f.geometry,
-                    properties: _.pick(f.properties, propertyKeys),
-                    type: 'Feature'
-                };
-            }),
-            type: 'FeatureCollection'
-        };
+        this.setExportDataInitialValues();
+        this.setLabelNameFilter();
     }
 
     /* eslint-disable no-underscore-dangle */
@@ -521,7 +448,10 @@ export default class AnnotateController {
         geojson.properties = {
             'id': id,
             'label': label,
-            'description': description
+            'description': description,
+            'machineGenerated': false,
+            'confidence': null,
+            'qualityCheck': null
         };
         return geojson;
     }
@@ -633,7 +563,7 @@ export default class AnnotateController {
                 this.createLayerWithPopupFromGeojson(this.annoToExport),
                 true
             );
-            if (mapWrapper.getLayers('draw')[0].transform) {
+            if (mapWrapper.getLayers('draw')[0] && mapWrapper.getLayers('draw')[0].transform) {
                 mapWrapper.getLayers('draw')[0].transform.disable();
             }
             mapWrapper.deleteLayers('draw');
@@ -665,7 +595,10 @@ export default class AnnotateController {
             'properties': {
                 'id': id,
                 'label': label,
-                'description': description
+                'description': description,
+                'machineGenerated': false,
+                'confidence': null,
+                'qualityCheck': null
             }
         });
         this.scrollToItem(id);
@@ -788,10 +721,6 @@ export default class AnnotateController {
         }
     }
 
-    getAnnotationId(annotation) {
-        return `anchor${annotation.properties.id}`;
-    }
-
     toggleSidebarItemClick($event, annotation) {
         $event.stopPropagation();
         if (!this.disableSidebarAction) {
@@ -885,5 +814,13 @@ export default class AnnotateController {
             this.stateChangeCanceller();
             delete this.stateChangeCanceller();
         }
+    }
+
+    onQaChecked(annotation, qa) {
+        this.annoToExport.features.forEach((f) => {
+            if (f.properties.id === annotation.properties.id) {
+                f.properties.qualityCheck = qa;
+            }
+        });
     }
 }

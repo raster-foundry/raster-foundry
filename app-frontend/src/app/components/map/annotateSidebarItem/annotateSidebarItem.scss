@@ -1,89 +1,127 @@
 @import "../../../../assets/styles/sass/settings/_colors.scss";
-.list-group-item.list-sidebar-drawn-annotations div {
-    display: inline-block;
+
+.sidebar-item {
+  height: 100%;
+  width: 100%;
 }
 
-.list-group-item.list-sidebar-drawn-annotations div:nth-child(1) {
-    width: 35px;
-    height: 35px;
+.sidebar-item:before {
+  content: "";
+  display: inline-block;
+  vertical-align: top;
+  height: 100%;
 }
 
-.list-group-item.list-sidebar-drawn-annotations div:nth-child(1) i {
-    text-align: center;
-    vertical-align: middle;
-    line-height: 35px;
-    font-size: 35px;
+.inner {
+  display: inline-block;
+  vertical-align: top;
 }
 
-.list-group-item.list-sidebar-drawn-annotations div:nth-child(1) i.icon-polygon:before,
-.list-group-item.list-sidebar-drawn-annotations div:nth-child(1) i.icon-map-pin:before {
-    margin: 0px;
+.inner i{
+  font-size: 35px;
 }
 
-.list-group-item.list-sidebar-drawn-annotations div:nth-child(2) h5 {
-    font-weight: normal;
+p.annotation-confidence {
+  text-align: center;
+}
+
+p.annotation-confidence i{
+  font-size: 12px;
+}
+
+.inner div.annotation-name h5 {
+  font-weight: normal;
+  margin-bottom: 20px;
+}
+
+
+[id^="anchor"] > div > div.sidebar-item > div:nth-child(2) > div  > button {
+  padding: 2px 12px 2px 12px;
+  background-color: $white;
+  border: 1px solid $gray-lighter;
+  border-radius: 2px;
+  color: $gray-lighter;
+  font-size: 10px;
+  display: inline;
+
+  &.pass {
+    background-color: $green;
+    border: 1px solid $green;
+    border-radius: 2px;
+    color: $white;
+  }
+  &.fail {
+    background-color: $red;
+    border: 1px solid $red;
+    border-radius: 2px;
+    color: $white;
+  }
+}
+
+[id^="anchor"] > div > div.sidebar-item > div:nth-child(2) > div  > button > i{
+  font-size: 10px;
 }
 
 .list-group-right.actions-annotations {
-    width: 100%;
+  width: 25%;
 }
 
 .list-group-right.actions-annotations a {
-    text-decoration: none;
-    margin: 2px;
+  text-decoration: none;
+  margin: 2px;
 }
 
 .list-group-right.actions-annotations a:nth-child(1) i,
 .list-group-right.actions-annotations a:nth-child(2) i {
-    border: 1px solid $gray-lighter;
-    border-radius: 2px;
-    color: $gray-lighter;
+  border: 1px solid $gray-lighter;
+  border-radius: 2px;
+  color: $gray-lighter;
 
 }
 
 .list-group-right.actions-annotations a:nth-child(3) i {
-    border: 1px solid $red;
-    border-radius: 2px;
-    color: $red;
+  border: 1px solid $red;
+  border-radius: 2px;
+  color: $red;
 }
 
 .annotation-new {
-    width: 100%;
-    margin: 0px;
+  width: 100%;
+  margin: 0px;
 }
 
 .angucomplete-holder {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
 }
 
 angucomplete-alt {
-    &.is-invalid {
-        .angucomplete-holder {
-            border: 1px solid $red;
-            border-radius: 2px;
-        }
+  &.is-invalid {
+    .angucomplete-holder {
+      border: 1px solid $red;
+      border-radius: 2px;
     }
+  }
 }
 
 .annotation-new.form-control.annotation-label {
-    height:  35px;
+  height:  35px;
 }
 
 .annotation-new textarea.form-control {
-    height: 150px;
-    margin-bottom: 10px;
-    resize: none;
+  height: 150px;
+  margin-bottom: 10px;
+  resize: none;
 }
 
 .annotation-new input.btn.btn-tertiary.annotation-confirm,
 .annotation-new input.btn.btn-tertiary.annotation-cancel {
-    width: 76px;
+  width: 76px;
 }
 
 .annotation-new input.btn.btn-tertiary.annotation-confirm{
-    float: right;
+  float: right;
 }
 
 .annotation-highlight {
-    color: $red;
+  color: $red;
 }
