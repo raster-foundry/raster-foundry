@@ -29,6 +29,8 @@ import aoiApproveTpl from './pages/projects/edit/aoi-approve/aoi-approve.html';
 import aoiParametersTpl from './pages/projects/edit/aoi-parameters/aoi-parameters.html';
 import exportTpl from './pages/projects/edit/export/export.html';
 import annotateTpl from './pages/projects/edit/annotate/annotate.html';
+import annotateImportTpl from './pages/projects/edit/annotate/import/import.html';
+import annotateExportTpl from './pages/projects/edit/annotate/export/export.html';
 
 import settingsTpl from './pages/settings/settings.html';
 import profileTpl from './pages/settings/profile/profile.html';
@@ -166,6 +168,18 @@ function projectEditStates($stateProvider) {
             url: '/annotate',
             templateUrl: annotateTpl,
             controller: 'AnnotateController',
+            controllerAs: '$ctrl'
+        })
+        .state('projects.edit.annotate.import', {
+            url: '/import',
+            templateUrl: annotateImportTpl,
+            controller: 'AnnotateImportController',
+            controllerAs: '$ctrl'
+        })
+        .state('projects.edit.annotate.export', {
+            url: '/export',
+            templateUrl: annotateExportTpl,
+            controller: 'AnnotateExportController',
             controllerAs: '$ctrl'
         });
 }

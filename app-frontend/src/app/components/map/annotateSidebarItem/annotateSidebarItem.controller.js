@@ -23,12 +23,10 @@ export default class AnnotateSidebarItemController {
         });
     }
 
-    /* eslint-disable no-underscore-dangle */
     onAnnotationEdit($event, annotation) {
         $event.stopPropagation();
         this.onUpdateAnnotationStart({'annotation': annotation});
     }
-    /* eslint-enable no-underscore-dangle */
 
     onAnnotationDelete($event, annotation) {
         $event.stopPropagation();
@@ -65,5 +63,9 @@ export default class AnnotateSidebarItemController {
                 'isEdit': this.editId === annotation.properties.id
             });
         }
+    }
+
+    onQaCheck(annotation, qa) {
+        this.onQaChecked({'annotation': annotation, 'qa': qa});
     }
 }
