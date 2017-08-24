@@ -504,7 +504,7 @@ export default class AnnotateController {
             });
         }
         this.disableToolbarAction = true;
-        this.scrollToItem(id);
+        this.$anchorScroll('anchor' + id.toString());
         this.$timeout(() => angular.element('#_value').focus());
     }
 
@@ -554,7 +554,7 @@ export default class AnnotateController {
                     if (!this.disableSidebarAction && !this.clickedId) {
                         this.hoveredId = feature.properties.id;
                         this.setLayerStyle(e.target, RED, 'annotate-hover-marker');
-                        this.scrollToItem(this.hoveredId);
+                        this.$anchorScroll('anchor' + this.hoveredId.toString());
                         this.$scope.$evalAsync();
                     }
                 }).on('mouseout', (e) => {
@@ -577,7 +577,7 @@ export default class AnnotateController {
                                 }
                                 this.clickedId = feature.properties.id;
                                 this.setLayerStyle(e.target, RED, 'annotate-hover-marker');
-                                this.scrollToItem(this.clickedId);
+                                this.$anchorScroll('anchor' + this.clickedId.toString());
                                 this.$scope.$evalAsync();
                             } else {
                                 delete this.clickedId;
@@ -597,15 +597,6 @@ export default class AnnotateController {
             target.setStyle({'color': color});
         } else if (target.feature.geometry.type === 'Point') {
             target.setIcon(L.divIcon({'className': iconClass}));
-        }
-    }
-
-    scrollToItem(id) {
-        let newHash = 'anchor' + id;
-        if (this.$location.hash() !== newHash) {
-            this.$location.hash(newHash);
-        } else {
-            this.$anchorScroll();
         }
     }
 
@@ -668,8 +659,10 @@ export default class AnnotateController {
                 'description': description
             }
         });
-        this.scrollToItem(id);
-        this.$timeout(() => angular.element('#_values').focus());
+        this.$timeout(() => {
+            this.$anchorScroll('anchor' + id.toString());
+            angular.element('#_values').focus();
+        });
     }
 
     onUpdateAnnotationStart(annotation) {
@@ -681,7 +674,7 @@ export default class AnnotateController {
         this.disableSidebarAction = true;
         this.editId = annotation.properties.id;
 
-        this.scrollToItem(this.editId);
+        this.$anchorScroll('anchor' + this.editId.toString());
 
         this.getMap().then((mapWrapper) => {
             this.createEditableDrawLayer(mapWrapper, annotation.geometry);
