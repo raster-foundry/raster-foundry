@@ -1,5 +1,7 @@
 package com.azavea.rf.api
 
+import akka.http.scaladsl.model.HttpMethods._
+
 import ch.megard.akka.http.cors.CorsDirectives._
 import ch.megard.akka.http.cors.CorsSettings
 import com.azavea.rf.api.aoi.AoiRoutes
@@ -24,6 +26,8 @@ import com.azavea.rf.api.tooltag.ToolTagRoutes
 import com.azavea.rf.api.uploads.UploadRoutes
 import com.azavea.rf.api.user.UserRoutes
 import com.azavea.rf.api.utils.Config
+
+import scala.collection.immutable.Seq
 
 /**
   * Contains all routes for Raster Foundry API/Healthcheck endpoints.
@@ -54,9 +58,10 @@ trait Router extends HealthCheckRoutes
   with Config
   with FeatureFlagRoutes {
 
-  val corsSettings = CorsSettings.defaultSettings
+  val settings = CorsSettings.defaultSettings.copy(
+    allowedMethods = Seq(GET, POST, PUT, HEAD, OPTIONS, DELETE))
 
-  val routes = cors() {
+  val routes = cors(settings) {
     pathPrefix("healthcheck") {
       healthCheckRoutes
     } ~
