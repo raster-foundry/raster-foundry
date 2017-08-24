@@ -1,5 +1,13 @@
 # Change Log
 
+## [0.20.1](https://github.com/raster-foundry/raster-foundry/tree/0.20.1) (2017-08-24)
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.20.0...0.20.1)
+
+**Merged pull requests:**
+
+- Fix password reset button; Allow Intercom APP\_ID to be specified in overrides [\#2455](https://github.com/raster-foundry/raster-foundry/pull/2455)
+- Correctly handle disabled gamma and saturation options in API [\#2434](https://github.com/raster-foundry/raster-foundry/pull/2434)
+
 ## [0.20.0](https://github.com/raster-foundry/raster-foundry/tree/0.20.0) (2017-08-22)
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.19.0...0.20.0)
 
