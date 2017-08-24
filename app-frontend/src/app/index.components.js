@@ -69,4 +69,5 @@ export default angular.module('index.components', [
     require('./components/colorComposites/colorSchemeBuilder/colorSchemeBuilder.module.js').name,
     require('./components/histogram/channelHistogram/channelHistogram.module.js').name,
     require('./components/histogram/histogramBreakpoint/histogramBreakpoint.module.js').name,
+    require('./components/colorComposites/colorSchemeDropdown/colorSchemeDropdown.module.js').name
 ]);
