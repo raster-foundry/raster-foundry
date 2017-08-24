@@ -1,4 +1,4 @@
-/* global Intercom */
+/* global Intercom, BUILDCONFIG */
 export default (app) => {
     class IntercomService {
         constructor($resource, $q, $http, APP_CONFIG, angularLoad) {
@@ -9,7 +9,7 @@ export default (app) => {
             this.angularLoad = angularLoad;
             this.scriptLoaded = false;
             // @TODO: load this value from the APP_CONFIG
-            this.appId = APP_CONFIG.intercomAppId;
+            this.appId = BUILDCONFIG.INTERCOM_APP_ID || APP_CONFIG.intercomAppId;
             this.srcUrl = `https://widget.intercom.io/widget/${this.appId}`;
         }
 

@@ -35,7 +35,11 @@ object ColorCorrect {
     equalize: Equalization,
     autoBalance: AutoWhiteBalance
   ) {
-    def getGamma: Map[Int, Option[Double]] = Map(0 -> gamma.redGamma, 1 -> gamma.greenGamma, 2 -> gamma.blueGamma)
+    def getGamma: Map[Int, Option[Double]] = Map(
+      0 -> (if (gamma.enabled) gamma.redGamma else None),
+      1 -> (if (gamma.enabled) gamma.greenGamma else None),
+      2 -> (if (gamma.enabled) gamma.blueGamma else None)
+    )
 
     def reorderBands(tile: MultibandTile, hist: Seq[Histogram[Double]]): (MultibandTile, Array[Histogram[Double]]) =
       (tile.subsetBands(redBand, greenBand, blueBand), Array(hist(redBand), hist(greenBand), hist(blueBand)))
@@ -94,7 +98,7 @@ object ColorCorrect {
     (specificBand: Option[Int], allBands: Option[Int], tileDefault: Int) =>
       specificBand.fold(allBands)(Some(_)).fold(Some(tileDefault))(x => Some(x))
 
-  def complexColorCorrect(rgbTile: MultibandTile, chromaFactor: Option[Double])
+  def complexColorCorrect(rgbTile: MultibandTile, saturation: Saturation)
                          (layerNormalizeArgs: Map[Int, ClipBounds], gammas: Map[Int, Option[Double]])
                          (sigmoidalContrast: SigmoidalContrast)
                          (colorCorrectArgs: Map[Int, MaybeClipBounds], tileClipping: MultiBandClipping): MultibandTile = {
@@ -147,8 +151,8 @@ object ColorCorrect {
               ColorCorrect.normalizeAndClampAndGammaCorrectPerPixel(green.get(col, row), gclipMin, gclipMax, gnewMin, gnewMax, gg),
               ColorCorrect.normalizeAndClampAndGammaCorrectPerPixel(blue.get(col, row), bclipMin, bclipMax, bnewMin, bnewMax, gb))
 
-          val (nr, ng, nb) = chromaFactor match {
-            case Some(cf) => {
+          val (nr, ng, nb) = (saturation.enabled, saturation.saturation) match {
+            case (true, Some(cf)) => {
               val (hue, chroma, luma) = RGBToHCLuma(r, g, b)
               val newChroma = scaleChroma(chroma, cf)
               val (nr, ng, nb) = HCLumaToRGB(hue, newChroma, luma)
@@ -213,7 +217,7 @@ object ColorCorrect {
       2 -> MaybeClipBounds(params.bandClipping.blueMin, params.bandClipping.blueMax)
     )
 
-    complexColorCorrect(_rgbTile, params.saturation.saturation)(layerNormalizeArgs, gammas)(params.sigmoidalContrast)(colorCorrectArgs, params.tileClipping)
+    complexColorCorrect(_rgbTile, params.saturation)(layerNormalizeArgs, gammas)(params.sigmoidalContrast)(colorCorrectArgs, params.tileClipping)
   }
 
   @inline def clampColor(z: Int): Int = {
