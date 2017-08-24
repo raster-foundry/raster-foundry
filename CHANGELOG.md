@@ -1,5 +1,13 @@
 # Change Log
 
+## [0.20.2](https://github.com/raster-foundry/raster-foundry/tree/0.20.2) (2017-08-24)
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.20.1...0.20.2)
+
+**Merged pull requests:**
+
+- Update CORS to allow requests from other domains [\#2460](https://github.com/raster-foundry/raster-foundry/pull/2460)
+- Add override support for `APP\_NAME` in frontend [\#2458](https://github.com/raster-foundry/raster-foundry/pull/2458)
+
 ## [0.20.1](https://github.com/raster-foundry/raster-foundry/tree/0.20.1) (2017-08-24)
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.20.0...0.20.1)
 
