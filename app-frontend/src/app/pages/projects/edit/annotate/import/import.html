@@ -9,17 +9,16 @@
     </div>
     <div class="list-group">
       <div class="list-group-item">
-        <button class="btn btn-primary btn-block"
-                type="button"
-                ng-click="$ctrl.onUploadClick()">
-          <label for="btn-upload" id="btn-upload-label">
-            <input type="file"
-                   accept="*.geojson"
-                   multiple
-                   id="btn-upload"/>
-            Upload
-          </label>
-        </button>
+        <label class="btn btn-primary btn-block"
+               id="btn-upload-label"
+               for="btn-upload"
+               ng-click="$ctrl.onUploadClick()">
+          <input type="file"
+                 accept="*.geojson"
+                 multiple
+                 id="btn-upload"/>
+          Upload
+        </label>
       </div>
     </div>
   </div>
