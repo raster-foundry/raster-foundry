@@ -19,6 +19,8 @@ const stylesLoader = 'css-loader?sourceMap!postcss-loader!sass-loader?' +
 const HERE_APP_ID = 'mXP4DZFBZGyBmuZBKNeo';
 const HERE_APP_CODE = 'kBWb6Z7ZLcuQanT_RoP60A';
 
+const INTERCOM_APP_ID = '';
+
 const basemaps = JSON.stringify({
     layers: {
         Light: {
@@ -264,7 +266,8 @@ module.exports = function (_path) {
                     BASEMAPS: basemaps,
                     API_HOST: '\'\'',
                     HERE_APP_ID: '\'' + HERE_APP_ID + '\'',
-                    HERE_APP_CODE: '\'' + HERE_APP_CODE + '\''
+                    HERE_APP_CODE: '\'' + HERE_APP_CODE + '\'',
+                    INTERCOM_APP_ID: '\'' + INTERCOM_APP_ID + '\''
                 }
             })
         ]

@@ -33,7 +33,10 @@ module.exports = function () {
                 'BUILDCONFIG': {
                     APP_NAME: '\'RasterFoundry?\'',
                     BASEMAPS: basemaps,
-                    API_HOST: '\'https://app.rasterfoundry.com\''
+                    API_HOST: '\'https://app.rasterfoundry.com\'',
+                    HERE_APP_ID: '\'' + HERE_APP_ID + '\'',
+                    HERE_APP_CODE: '\'' + HERE_APP_CODE + '\'',
+                    INTERCOM_APP_ID: '\'' + INTERCOM_APP_ID + '\''
                 }
             })
         ]
