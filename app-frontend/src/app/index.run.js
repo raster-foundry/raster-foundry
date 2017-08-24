@@ -1,3 +1,4 @@
+/* global BUILDCONFIG */
 function runBlock(
     $rootScope, jwtHelper, $state, $location, $window, APP_CONFIG,
     authService, localStorage, rollbarWrapperService, intercomService,
@@ -13,8 +14,9 @@ function runBlock(
 
     $rootScope.$on('$stateChangeStart', function (e, toState, params) {
         function setupState() {
+            let appName = BUILDCONFIG.APP_NAME;
             $window.document.title = toState.title ?
-                `Raster Foundry - ${toState.title}` : 'Raster Foundry';
+                `${appName} - ${toState.title}` : appName;
             if (APP_CONFIG.error && toState.name !== 'error') {
                 e.preventDefault();
                 $state.go('error');

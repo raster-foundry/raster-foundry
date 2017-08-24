@@ -258,11 +258,12 @@ module.exports = function (_path) {
                 filename: 'index.html',
                 template: path.join(_path, 'src', 'tpl-index.html'),
                 heapLoad: DEVELOPMENT ? '2743344218' : '3505855839',
-                development: DEVELOPMENT
+                development: DEVELOPMENT,
+                APP_NAME: 'Raster Foundry'
             }),
             new webpack.DefinePlugin({
                 'BUILDCONFIG': {
-                    APP_NAME: '\'RasterFoundry\'',
+                    APP_NAME: '\'Raster Foundry\'',
                     BASEMAPS: basemaps,
                     API_HOST: '\'\'',
                     HERE_APP_ID: '\'' + HERE_APP_ID + '\'',
