@@ -3,9 +3,29 @@
   outline: none;
 }
 
+div.list-group-item.btn-clear-annotation {
+  padding-left: 0px;
+  padding-right: 0px;
+}
+
+button.btn.btn-primary.btn-block.btn-clear-annotation {
+  margin-left: 0px;
+  margin-right: 0px;
+}
+
+div.sidebar-project.no-annotation {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
 .sidebar-project.no-annotation,
 .list-group-item.no-annotation{
   border-style: none;
+}
+
+div.list-group-item.no-annotation {
+  padding-left: 0px;
+  padding-right: 0px;
 }
 
 .panel.panel-off-white.no-annotation {
@@ -21,6 +41,8 @@
 
 .list-group-item.filter-annotations {
   border-style: none;
+  padding-left: 0px;
+  padding-right: 0px;
 }
 
 .list-group-item.filter-annotations p {

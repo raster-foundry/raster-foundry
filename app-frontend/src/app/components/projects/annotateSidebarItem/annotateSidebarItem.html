@@ -1,6 +1,6 @@
 <div class="list-group-item list-sidebar-drawn-annotations"
      ng-if="$ctrl.annotation.geometry && !($ctrl.editId === $ctrl.annotation.properties.id)">
-  <div class="sidebar-item">
+  <div class="sidebar-item annotation-item">
     <div class="inner">
       <i class="icon-polygon"
          ng-if="$ctrl.annotation.geometry.type === 'Polygon'"></i>
@@ -13,17 +13,17 @@
     <div class="inner">
       <div class="annotation-name"><h5>{{$ctrl.annotation.properties.label}}</h5></div>
       <div class="btn-group" ng-if="$ctrl.annotation.properties.machineGenerated">
-        <button class="btn btn-primary btn-block"
+        <button class="btn btn-primary btn-block btn-qa-check-button"
                 type="button"
                 ng-click="$ctrl.onQaCheck($ctrl.annotation, 'fail')"
                 ng-class="{fail: $ctrl.annotation.properties.qualityCheck === 'fail'}">
-          <i class="icon-cross"></i>
+          <i class="icon-cross qa-check"></i>
         </button>
-        <button class="btn btn-primary btn-block"
+        <button class="btn btn-primary btn-block btn-qa-check-button"
                 type="button"
                 ng-click="$ctrl.onQaCheck($ctrl.annotation, 'pass')"
                 ng-class="{pass: $ctrl.annotation.properties.qualityCheck === 'pass'}">
-          <i class="icon-check"></i>
+          <i class="icon-check qa-check"></i>
         </button>
       </div>
     </div>

@@ -29,7 +29,7 @@ export default class AnnotateImportController {
         $('#btn-upload').change((e) => {
             let upload = _.values(e.target.files);
             if (upload.length) {
-                _.forEach(upload, (datum) => {
+                upload.forEach((datum) => {
                     let reader = new FileReader();
                     reader.onload = (event) => {
                         this.setSelectionMenuItems(JSON.parse(event.target.result));
