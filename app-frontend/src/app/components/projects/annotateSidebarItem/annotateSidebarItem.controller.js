@@ -66,6 +66,6 @@ export default class AnnotateSidebarItemController {
     }
 
     onQaCheck(annotation, qa) {
-        this.onQaChecked({'annotation': annotation, 'qa': qa});
+        this.onQaChecked({annotation, qa});
     }
 }

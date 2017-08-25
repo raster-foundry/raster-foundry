@@ -16,6 +16,7 @@ export default angular.module('index.components', [
     require('./components/projects/projectSelectModal/projectSelectModal.module.js').name,
     require('./components/projects/projectCreateModal/projectCreateModal.module.js').name,
     require('./components/projects/projectExportModal/projectExportModal.module.js').name,
+    require('./components/projects/annotateSidebarItem/annotateSidebarItem.module.js').name,
 
     // datasource components
     require('./components/datasources/datasourceItem/datasourceItem.module.js').name,
@@ -39,7 +40,6 @@ export default angular.module('index.components', [
     require('./components/map/labMap/labMap.module.js').name,
     require('./components/map/mapSearchModal/mapSearchModal.module.js').name,
     require('./components/map/annotateToolbar/annotateToolbar.module.js').name,
-    require('./components/map/annotateSidebarItem/annotateSidebarItem.module.js').name,
 
     // settings components
     require('./components/settings/refreshTokenModal/refreshTokenModal.module.js').name,

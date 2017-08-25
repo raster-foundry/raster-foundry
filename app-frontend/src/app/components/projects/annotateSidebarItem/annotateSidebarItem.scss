@@ -1,11 +1,15 @@
 @import "../../../../assets/styles/sass/settings/_colors.scss";
 
-.sidebar-item {
+div.list-group-item.list-sidebar-drawn-annotations {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+.sidebar-item.annotation-item {
   height: 100%;
   width: 100%;
 }
 
-.sidebar-item:before {
+.sidebar-item.annotation-item:before {
   content: "";
   display: inline-block;
   vertical-align: top;
@@ -34,8 +38,7 @@ p.annotation-confidence i{
   margin-bottom: 20px;
 }
 
-
-[id^="anchor"] > div > div.sidebar-item > div:nth-child(2) > div  > button {
+button.btn.btn-primary.btn-block.btn-qa-check-button {
   padding: 2px 12px 2px 12px;
   background-color: $white;
   border: 1px solid $gray-lighter;
@@ -58,12 +61,14 @@ p.annotation-confidence i{
   }
 }
 
-[id^="anchor"] > div > div.sidebar-item > div:nth-child(2) > div  > button > i{
+i.icon-cross.qa-check,
+i.icon-check.qa-check {
   font-size: 10px;
 }
 
 .list-group-right.actions-annotations {
   width: 25%;
+  margin-right: 0px;
 }
 
 .list-group-right.actions-annotations a {
