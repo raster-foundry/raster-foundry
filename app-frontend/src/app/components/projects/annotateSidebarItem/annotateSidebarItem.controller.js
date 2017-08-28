@@ -2,13 +2,11 @@
 
 export default class AnnotateSidebarItemController {
     constructor(
-        $log, $scope, $location, $anchorScroll
+        $log, $scope
     ) {
         'ngInject';
         this.$log = $log;
         this.$scope = $scope;
-        this.$location = $location;
-        this.$anchorScroll = $anchorScroll;
     }
 
     $onInit() {

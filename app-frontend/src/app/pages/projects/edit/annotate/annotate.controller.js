@@ -4,7 +4,7 @@ const BLUE = '#3388FF';
 
 export default class AnnotateController {
     constructor( // eslint-disable-line max-params
-        $log, $state, $scope, $rootScope, $anchorScroll, $location, $timeout, $element, $window,
+        $log, $state, $scope, $rootScope, $anchorScroll, $timeout, $element, $window,
         mapService, hotkeys
     ) {
         'ngInject';
@@ -13,7 +13,6 @@ export default class AnnotateController {
         this.$scope = $scope;
         this.$rootScope = $rootScope;
         this.$anchorScroll = $anchorScroll;
-        this.$location = $location;
         this.$timeout = $timeout;
         this.$element = $element;
         this.$window = $window;
@@ -45,10 +44,7 @@ export default class AnnotateController {
             mapWrapper.deleteLayers('Annotation');
             mapWrapper.deleteLayers('draw');
             mapWrapper.deleteLayers('highlight');
-
-            if (mapWrapper.getLayers('draw')[0] && mapWrapper.getLayers('draw')[0].transform) {
-                mapWrapper.getLayers('draw')[0].transform.disable();
-            }
+            this.disableTransformHandler(mapWrapper);
         });
         this.disableEditHandler();
         this.allowInterruptions();
@@ -153,13 +149,20 @@ export default class AnnotateController {
                 combo: 'e',
                 description: 'Edit annotation',
                 callback: () => {
-                    if (this.clickedId) {
-                        this.onUpdateAnnotationStart(
-                            _.filter(this.annoToExport.features, (f) => {
-                                return f.properties.id === this.clickedId;
-                            })[0]
-                        );
-                    }
+                    this.getMap().then((mapWrapper) => {
+                        let drawLayer = mapWrapper.getLayers('draw')[0];
+                        if (!_.isEmpty(drawLayer) && drawLayer.transform) {
+                            this.disableTransformHandler(mapWrapper);
+                            let drawLayerGeometry = drawLayer.toGeoJSON().geometry;
+                            this.createEditableDrawLayer(mapWrapper, drawLayerGeometry);
+                        } else if (this.clickedId) {
+                            this.onUpdateAnnotationStart(
+                              this.annoToExport.features.find((f) => {
+                                  return f.properties.id === this.clickedId;
+                              })
+                            );
+                        }
+                    });
                 }
             })
             .add({
@@ -250,8 +253,9 @@ export default class AnnotateController {
 
     onMoveAnnotation(mapWrapper, arrowKey) {
         this.disableEditHandler();
+        this.disableTransformHandler(mapWrapper);
         let drawLayer = mapWrapper.getLayers('draw')[0];
-        if (drawLayer) {
+        if (!_.isEmpty(drawLayer)) {
             let drawLayerGeojson = drawLayer.toGeoJSON();
             let coordinates =
                 _.map(drawLayerGeojson.geometry.coordinates[0], (c) => {
@@ -554,9 +558,8 @@ export default class AnnotateController {
                 this.createLayerWithPopupFromGeojson(this.annoToExport),
                 true
             );
-            if (mapWrapper.getLayers('draw')[0] && mapWrapper.getLayers('draw')[0].transform) {
-                mapWrapper.getLayers('draw')[0].transform.disable();
-            }
+
+            this.disableTransformHandler(mapWrapper);
             mapWrapper.deleteLayers('draw');
 
             this.labelInputs = this.updateLabelInputs(this.annoToExport.features);
@@ -569,6 +572,13 @@ export default class AnnotateController {
             }
         });
         this.allowInterruptions();
+    }
+
+    disableTransformHandler(mapWrapper) {
+        if (!_.isEmpty(mapWrapper.getLayers('draw')[0])
+            && mapWrapper.getLayers('draw')[0].transform) {
+            mapWrapper.getLayers('draw')[0].transform.disable();
+        }
     }
 
     onCloneAnnotation(geometry, label, description) {
@@ -599,17 +609,18 @@ export default class AnnotateController {
     }
 
     onUpdateAnnotationStart(annotation) {
-        this.preventInterruptions();
-        this.deleteClickedHighlight();
-
-        this.disableToolbarAction = true;
-        this.isCreating = true;
-        this.disableSidebarAction = true;
-        this.editId = annotation.properties.id;
-
-        this.$anchorScroll('anchor' + this.editId.toString());
-
         this.getMap().then((mapWrapper) => {
+            this.preventInterruptions();
+            this.deleteClickedHighlight();
+            this.disableTransformHandler(mapWrapper);
+
+            this.disableToolbarAction = true;
+            this.isCreating = true;
+            this.disableSidebarAction = true;
+            this.editId = annotation.properties.id;
+
+            this.$anchorScroll('anchor' + this.editId.toString());
+
             this.createEditableDrawLayer(mapWrapper, annotation.geometry);
             let otherAnnoGeojson = _.filter(this.annoToExport.features, (f) => {
                 return f.properties.id !== annotation.properties.id;
@@ -647,9 +658,7 @@ export default class AnnotateController {
         this.isCreating = false;
         this.disableEditHandler();
         this.getMap().then((mapWrapper) => {
-            if (mapWrapper.getLayers('draw')[0].transform) {
-                mapWrapper.getLayers('draw')[0].transform.disable();
-            }
+            this.disableTransformHandler(mapWrapper);
         });
     }
 
@@ -765,6 +774,7 @@ export default class AnnotateController {
 
     createRotatableLayerFromDrawLayer(mapWrapper) {
         this.disableEditHandler();
+        this.disableTransformHandler(mapWrapper);
         mapWrapper.deleteLayers('highlight');
 
         let drawLayer = _.first(mapWrapper.getLayers('draw'));
