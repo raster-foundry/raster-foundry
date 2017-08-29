@@ -1,0 +1,18 @@
+<div class="classification-values">
+  <div class="classification-header">
+    <h5>Old values</h5>
+    <h5>New values</h5>
+  </div>
+  <div class="classification-ranges">
+    <div class="classification-range"
+         ng-repeat="pair in $ctrl.enteredRanges">
+      <rf-reclassify-entry
+        class-range="pair[0]"
+        class-value="pair[1]"
+        entry-id="$index"
+        on-range-change="$ctrl.updateEntryRange(range, $index)"
+        on-value-change="$ctrl.updateEntryValue(value, $index)"
+        on-validity-change="$ctrl.trackInvalidEntries(validity)">
+    </div>
+  </div>
+</div>
