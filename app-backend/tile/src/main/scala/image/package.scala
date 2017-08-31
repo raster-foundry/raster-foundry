@@ -21,9 +21,6 @@ package object image {
       val g = (color1.green + (color2.green - color1.green) * proportion).toInt
       val b = (color1.blue + (color2.blue - color1.blue) * proportion).toInt
       val a: Double = (color1.alpha + (color2.alpha - color1.alpha) * proportion).toDouble / 2.55
-      //println("c1", color1.red, color1.blue, color1.green, color1.alpha)
-      //println("c2", color2.red, color2.blue, color2.green, color2.alpha)
-      //println("red", r, "green", g, "blue", b, "alpha", a, RGBA(r, g, b, a))
       RGBA(r, g, b, a)
     }
 
