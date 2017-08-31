@@ -86,15 +86,9 @@ object ColorRampMosaic extends LazyLogging {
         throw new IllegalArgumentException(message)
     }
 
-    val steps = options.blendMode match {
-      case BlendMode.Continuous =>
-        255
-      case _ =>
-        if (colors.length < 255) {
-          colors.length
-        } else {
-          255
-        }
+    val steps = options.colorBins match {
+      case 0 => 255
+      case bins => bins
     }
 
     val step = (max - min) / steps

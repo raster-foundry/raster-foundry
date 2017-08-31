@@ -4,11 +4,12 @@ export default {
     templateUrl: diagramContainerTpl,
     controller: 'DiagramContainerController',
     bindings: {
+        toolDefinition: '<',
+        toolParameters: '<',
+        toolrun: '<',
         onPreview: '&',
         onShare: '&',
         onParameterChange: '&',
-        onGraphComplete: '&',
-        toolDefinition: '<',
-        toolParameters: '<'
+        onGraphComplete: '&'
     }
 };

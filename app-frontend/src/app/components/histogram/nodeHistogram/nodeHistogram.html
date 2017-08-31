@@ -1,0 +1,49 @@
+<div class="node-histogram-header">
+  <div class="mask-controls">
+    <div>
+      Mask values
+    </div>
+    <div class="histogram-checkboxes">
+      <label class="checkbox dark" ng-class="{active: $ctrl._masks.min}">
+          <input type="checkbox"
+                 ng-model="$ctrl._masks.min"
+                 ng-change="$ctrl.onMaskChange()"
+                 ng-disabled="$ctrl.options.discrete" />Min
+      </label>
+      <label class="checkbox dark" ng-class="{active: $ctrl._masks.max}">
+          <input type="checkbox"
+                 ng-model="$ctrl._masks.max"
+                 ng-change="$ctrl.onMaskChange()"
+                 ng-disabled="$ctrl.options.discrete" />Max
+      </label>
+    </div>
+  </div>
+  <div class="gradient"></div>
+</div>
+
+<div class="graph-container">
+  <nvd3 ng-attr-id="chart-{{$ctrl.id}}" options="$ctrl.histOptions" data="$ctrl.plot" api="$ctrl.api"></nvd3>
+  <rf-histogram-breakpoint
+    ng-repeat="bp in $ctrl._breakpoints track by bp.key"
+    ng-mouseover="$ctrl.lastMouseOver = bp.key"
+    ng-class="{'active': $ctrl.lastMouseOver === bp.key}"
+    data-color="bp.breakpoint.color"
+    data-breakpoint="bp.breakpoint.value"
+    data-range="$ctrl.histogramRange"
+    data-precision="$ctrl.precision"
+    data-options="{style: bp.breakpoint.style, alwaysShowNumbers: bp.breakpoint.alwaysShowNumbers}"
+    on-color-change="$ctrl.onColorChange(bp, color)"
+    on-breakpoint-change="$ctrl.onChange(bp.breakpoint, breakpoint)"
+  ></rf-histogram-breakpoint>
+  <div class="histogram-placeholder" ng-show="$ctrl.usingDefaultData">Fill out all input fields and apply changes to view histogram</div>
+  <div class="histogram-placeholder" ng-show="$ctrl.noValidData">A histogram cannot be generated for this data</div>
+</div>
+
+<style ng-if="$ctrl.id">
+ #chart-{{$ctrl.id}} .nv-series-0 {
+   fill: url(#line-gradient-{{$ctrl.id}}) !important;
+   fill-opacity: 1 !important;
+   stroke: url(#line-gradient-{{$ctrl.id}}) !important;
+   stroke-opacity: 1 !important;
+ }
+</style>

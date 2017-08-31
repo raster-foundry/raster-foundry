@@ -18,10 +18,10 @@ object BandDataType {
     case "CATEGORICAL" => Categorical
   }
 
-  implicit val blendModeEncoder: Encoder[BandDataType] =
+  implicit val bandDataTypeEncoder: Encoder[BandDataType] =
     Encoder.encodeString.contramap[BandDataType](_.toString)
 
-  implicit val blendModeDecoder: Decoder[BandDataType] =
+  implicit val bandDataTypeDecoder: Decoder[BandDataType] =
     Decoder.decodeString.emap { str =>
       Either.catchNonFatal(fromString(str)).leftMap(t => "BandDataType")
     }

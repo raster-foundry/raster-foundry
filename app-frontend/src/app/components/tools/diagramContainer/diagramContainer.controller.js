@@ -2,6 +2,7 @@
 
 const Map = require('es6-map');
 
+const defaultBreakpoints = require('./exampleColormap.json');
 const maxZoom = 3;
 const minZoom = 0.025;
 
@@ -27,6 +28,7 @@ export default class DiagramContainerController {
     $onInit() {
         let $scope = this.$scope;
         let $compile = this.$compile;
+        let toolService = this.toolService;
 
         this.scale = 1;
 
@@ -51,27 +53,57 @@ export default class DiagramContainerController {
                   <rf-diagram-node-header
                     data-model="model"
                     data-invalid="model.get('invalid')"
-                    data-menu-options="menuOptions"
                   ></rf-diagram-node-header>
+                  <div class="node-actions">
+                    <div class="node-button-group">
+                      <button class="btn node-button" type="button"
+                              ng-if="onPreview && model.get('cellType') !== 'const'"
+                              ng-click="onPreview($event, this.model)">
+                      <span class="icon-eye"></span>
+                      </button>
+                      <button class="btn node-button" type="button"
+                              ng-if="model.get('cellType') !== 'const'"
+                              ng-class="{'active': showHistogram}"
+                              ng-click="toggleHistogram()">
+                      <span class="icon-histogram"></span>
+                      </button>
+                      <button class="btn node-button" type="button"
+                              ng-click="toggleBody()">
+                      <span ng-class="{'icon-caret-up': showBody,
+                                       'icon-caret-down': !showBody}"></span>
+                      </button>
+                    </div>
+                  </div>
                   <rf-input-node
                     ng-if="model.get('cellType') === 'src'"
+                    ng-show="showBody && !showHistogram"
                     data-model="model"
                     on-change="onChange({sourceId: sourceId, project: project, band: band})"
                   ></rf-input-node>
                   <rf-operation-node
                     ng-if="model.get('cellType') === 'function'"
+                    ng-show="showBody && !showHistogram"
                     data-model="model"
                   ></rf-operation-node>
                   <rf-constant-node
                     ng-if="model.get('cellType') === 'const'"
+                    ng-show="showBody && !showHistogram"
                     data-model="model"
                     on-change="onChange({override: override})"
                   ></rf-constant-node>
                   <rf-classify-node
-                  ng-if="model.get('cellType') === 'classify'"
-                  data-model="model"
-                  on-change="onChange({override: override})"
-                ></rf-classify-node>
+                    ng-if="model.get('cellType') === 'classify'"
+                    data-model="model"
+                    on-change="onChange({override: override})"
+                  ></rf-classify-node>
+                  <rf-node-histogram
+                    ng-if="showHistogram && showBody"
+                    data-histogram="histogram"
+                    data-breakpoints="breakpoints"
+                    data-options="histogramOptions"
+                    data-masks="masks"
+                    on-breakpoint-change="onBreakpointChange(breakpoints, masks)"
+                  ></rf-node-histogram>
                 </div>`,
             initialize: function () {
                 _.bindAll(this, 'updateBox');
@@ -79,6 +111,82 @@ export default class DiagramContainerController {
                 this.model.on('change', this.updateBox, this);
                 this.$box = angular.element(this.template);
                 this.scope = $scope.$new();
+                this.scope.showBody = true;
+                this.scope.breakpoints = defaultBreakpoints.map(o => _.cloneDeep(o));
+                this.scope.histogramOptions = {
+                    min: 0,
+                    max: 255,
+                    discrete: false
+                };
+                this.scope.masks = {
+                    min: false,
+                    max: false
+                };
+                let dropdownHeight = 200;
+                let headerHeight = 50;
+                this.histogramHeight = dropdownHeight + headerHeight;
+
+                this.scope.toggleHistogram = () => {
+                    this.scope.showHistogram = !this.scope.showHistogram;
+                    if (this.scope.showHistogram && !this.scope.showBody) {
+                        this.scope.toggleBody();
+                    } else if (this.scope.showHistogram) {
+                        this.expandedSize = this.model.getBBox();
+                        this.model.resize(this.expandedSize.width, this.histogramHeight);
+                    } else if (this.scope.showBody) {
+                        this.model.resize(this.expandedSize.width, this.expandedSize.height);
+                    }
+                };
+
+                this.scope.onBreakpointChange = (breakpoints, masks) => {
+                    let newBreakpoints = breakpoints.reduce((map, obj) => {
+                        if (obj && obj.breakpoint) {
+                            map[obj.breakpoint.value.toString()] = obj.breakpoint.color;
+                        }
+                        return map;
+                    }, {});
+                    let clip;
+                    if (masks.min && masks.max) {
+                        clip = 'both';
+                    } else if (masks.min) {
+                        clip = 'left';
+                    } else if (masks.max) {
+                        clip = 'right';
+                    } else {
+                        clip = 'none';
+                    }
+                    let renderDef = {
+                        scale: 'Continuous',
+                        breakpoints: newBreakpoints,
+                        clip: clip
+                    };
+                    this.scope.onChange({
+                        renderDef: {
+                            id: this.model.get('id'),
+                            value: renderDef
+                        }
+                    });
+                };
+
+                this.scope.toggleBody = () => {
+                    this.scope.showBody = !this.scope.showBody;
+                    if (!this.scope.showBody) {
+                        if (!this.scope.showHistogram) {
+                            this.expandedSize = this.model.getBBox();
+                        }
+                        this.model.resize(this.expandedSize.width, 50);
+                    } else if (this.scope.showHistogram) {
+                        this.model.resize(this.expandedSize.width, this.histogramHeight);
+                    } else {
+                        this.model.resize(this.expandedSize.width, this.expandedSize.height);
+                    }
+                };
+
+                this.scope.onPreview = _.first(this.model.get('contextMenu')
+                    .filter((item) => item.label === 'View output')
+                    .map((item) => item.callback)
+                );
+
                 $compile(this.$box)(this.scope);
 
                 this.updateBox();
@@ -122,6 +230,22 @@ export default class DiagramContainerController {
                     this.scope.sourceId = this.model.get('id');
                     this.scope.model = this.model;
                 }
+                this.scope.toolrun = this.model.get('toolrun');
+                let histogramToolRun = this.model.get('histogramToolRun');
+                if (this.scope.showHistogram &&
+                    this.scope.toolrun &&
+                    histogramToolRun !== this.scope.toolrun.id
+                   ) {
+                    this.model.prop('histogramToolRun', this.scope.toolrun.id);
+                    toolService
+                        .getNodeHistogram(this.scope.toolrun.id, this.model.attributes.id)
+                        .then((histogram) => {
+                            this.model.prop('histogram', histogram);
+                            this.scope.histogram = histogram;
+                        });
+                } else {
+                    this.scope.histogram = this.model.get('histogram');
+                }
 
                 let origin = this.paper ? this.paper.options.origin : {
                     x: 0,
@@ -156,6 +280,16 @@ export default class DiagramContainerController {
         this.$rootScope.$on('lab.resize', () => {
             this.$timeout(this.onWindowResize, 100);
         });
+    }
+
+    $onChanges(changes) {
+        if (changes.toolrun && this.shapes) {
+            let toolrun = changes.toolrun.currentValue;
+            this.shapes.forEach((shape) => {
+                let model = this.paper.getModelById(shape.attributes.id);
+                model.prop('toolrun', toolrun);
+            });
+        }
     }
 
     $onDestroy() {
@@ -437,9 +571,15 @@ export default class DiagramContainerController {
                             '.marker-target': {
                                 d: 'M 4 0 L 0 2 L 4 4 z'
                             },
-                            'g.link-tools': {display: 'none'},
-                            'g.marker-arrowheads': {display: 'none'},
-                            '.connection-wrap': {display: 'none'}
+                            'g.link-tools': {
+                                display: 'none'
+                            },
+                            'g.marker-arrowheads': {
+                                display: 'none'
+                            },
+                            '.connection-wrap': {
+                                display: 'none'
+                            }
                         }
                     });
 
@@ -447,17 +587,19 @@ export default class DiagramContainerController {
                 }
                 inputs = inputs.concat(
                     this.labUtils.getNodeArgs(input)
-                        .map((a) => {
-                            return Object.assign({
-                                parent: rectangle
-                            }, a);
-                        })
+                    .map((a) => {
+                        return Object.assign({
+                            parent: rectangle
+                        }, a);
+                    })
                 );
             }
         }
         this.shapes = shapes;
         this.nodes = nodes;
-        this.onGraphComplete({nodes: nodes});
+        this.onGraphComplete({
+            nodes: nodes
+        });
     }
 
     constructRect(config) {

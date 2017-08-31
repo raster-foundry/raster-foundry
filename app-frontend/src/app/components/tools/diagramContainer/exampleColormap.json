@@ -1,0 +1,57 @@
+[{
+    "key": 1,
+    "breakpoint": {
+        "value": 0,
+        "style": "bar",
+        "alwaysShowNumbers": true,
+        "color": "#ff0000"
+    }
+}, {
+    "key": 2,
+    "breakpoint": {
+        "value": 42,
+        "style": "arrow",
+        "alwaysShowNumbers": false,
+        "color": "#ffa500"
+    }
+}, {
+    "key": 3,
+    "breakpoint": {
+        "value": 85,
+        "style": "arrow",
+        "alwaysShowNumbers": false,
+        "color": "#ffff00"
+    }
+}, {
+    "key": 4,
+    "breakpoint": {
+        "value": 129,
+        "style": "arrow",
+        "alwaysShowNumbers": false,
+        "color": "#008000"
+    }
+}, {
+    "key": 5,
+    "breakpoint": {
+        "value": 173,
+        "style": "arrow",
+        "alwaysShowNumbers": false,
+        "color": "#0000ff"
+    }
+}, {
+    "key": 6,
+    "breakpoint": {
+        "value": 215,
+        "style": "arrow",
+        "alwaysShowNumbers": false,
+        "color": "#4b0082"
+    }
+}, {
+    "key": 7,
+    "breakpoint": {
+        "value": 255,
+        "style": "bar",
+        "alwaysShowNumbers": true,
+        "color": "#ee82ee"
+    }
+}]
