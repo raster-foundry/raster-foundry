@@ -71,16 +71,27 @@ export default (app) => {
             return Object.assign({
                 id: node.id,
                 label: this.getNodeLabel(node),
-                type: node.type ? node.type : 'function',
+                type: this.getNodeType(node),
                 inputs: rectInputs,
                 outputs: rectOutputs,
                 tag: node.tag,
                 ports: ports
             }, {
                 operation: node.apply,
+                metadata: node.metadata,
+                classMap: node.classMap,
                 value: node.constant,
                 positionOverride: node.metadata && node.metadata.positionOverride
             });
+        }
+
+        getNodeType(node) {
+            if (node.type) {
+                return node.type;
+            } else if (node.apply === 'classify') {
+                return 'classify';
+            }
+            return 'function';
         }
     }
 

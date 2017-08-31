@@ -1604,12 +1604,24 @@ rf-constant-node {
   padding: 1em;
 }
 
-rf-operation-node {
+rf-operation-node{
   flex: 1;
   cursor: auto;
   pointer-events: auto;
   padding: 1em;
   display: flex;
+  align-items: center;
+}
+
+rf-classify-node {
+  flex: 1;
+  cursor: auto;
+  pointer-events: auto;
+  flex-direction: column;
+  align-items: stretch;
+  position: relative;
+  max-height: 222px;
+  overflow: hidden;
 }
 
 .operation-node-body {
@@ -1621,6 +1633,74 @@ rf-operation-node {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+}
+
+
+.classify-node-preview {
+  display: flex;
+  display: flex;
+  flex-direction: column;
+  padding: 1em;
+}
+
+.classify-node-preview-row {
+  display: flex;
+  flex-direction: row;
+  &.with-border {
+    border: 1px solid $gray-lightest;
+    border-bottom: none;
+    &:last-child {
+      border-bottom: 1px solid $gray-lightest;
+    }
+  }
+  &.with-margin {
+    margin-bottom: 1rem;
+  }
+}
+
+.classify-node-setting {
+  background: $off-white;
+  border: 1px solid $gray-lightest;
+  padding: 0.5rem 1rem;
+  text-align: center;
+  flex: 1;
+  margin-right: 0.5rem;
+  &:last-child {
+    margin-left: 0.5rem;
+    margin-right: 0rem;
+  }
+}
+
+.classify-node-class {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  margin-left: 0.5rem;
+  text-align: center;
+  &.header {
+    font-weight: bold;
+  }
+  &:last-child {
+    margin-left: 0;
+    border-left: 1px solid $gray-lightest;
+    margin-right: 0.5rem;
+  }
+}
+
+.node-controls {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: flex-end;
+  flex-direction: column;
+  &.overlayed {
+    background: linear-gradient(0deg, rgba(255,255,255,1) 10%, rgba(255,255,255, 0.15));
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: 1em;
+  }
 }
 
 .btn-operation {

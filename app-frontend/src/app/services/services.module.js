@@ -41,6 +41,7 @@ require('./tools/tool.service')(shared);
 require('./tools/toolCategory.service')(shared);
 require('./tools/toolTag.service')(shared);
 require('./tools/labUtils.service')(shared);
+require('./tools/reclassify.service')(shared);
 
 // map
 require('./map/map.service')(shared);
