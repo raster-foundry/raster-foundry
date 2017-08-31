@@ -16,6 +16,7 @@ import geotrellis.vector._
 import geotrellis.vector.io._
 import geotrellis.proj4._
 import geotrellis.slick._
+import geotrellis.raster.render._
 
 import cats.syntax.either._
 import scala.util._
@@ -127,3 +128,4 @@ package object datamodel {
     )(3857)
   }
 }
+

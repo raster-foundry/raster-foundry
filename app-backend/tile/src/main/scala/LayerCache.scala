@@ -194,7 +194,6 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
                 .value
             })
             ast      <- OptionT.fromOption[Future](oldAst.substitute(subs))
-            nodeId   <- OptionT.pure[Future, UUID](subNode.getOrElse(ast.id))
             params   <- OptionT.pure[Future, EvalParams]({
               logger.debug(s"Parsing ToolRun parameters with ${toolRun.executionParameters}")
               val parsedParams = toolRun.executionParameters.as[EvalParams].valueOr(throw _)

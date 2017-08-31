@@ -2,7 +2,7 @@ package com.azavea.rf.tile.routes
 
 import com.azavea.rf.common.RfStackTrace
 import com.azavea.rf.tile._
-import com.azavea.rf.tile.image._
+import com.azavea.rf.tile.image.Mosaic
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.ScenesToProjects
 import com.azavea.rf.datamodel.ColorCorrect
