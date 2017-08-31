@@ -2,7 +2,7 @@
 
 export default (app) => {
     class ToolService {
-        constructor($resource, $http, authService) {
+        constructor($resource, $http, authService, APP_CONFIG) {
             'ngInject';
             this.$http = $http;
             this.authService = authService;
@@ -31,6 +31,11 @@ export default (app) => {
                         method: 'POST'
                     },
                     get: {
+                        method: 'GET',
+                        cache: false
+                    },
+                    histogram: {
+                        url: `${APP_CONFIG.tileServerLocation}/tools/:toolId/histogram/`,
                         method: 'GET',
                         cache: false
                     }
@@ -75,6 +80,13 @@ export default (app) => {
 
                 }
             );
+        }
+
+        getNodeHistogram(toolRun, nodeId) {
+            return this.ToolRun.histogram({
+                toolId: toolRun, node: nodeId, voidCache: true,
+                token: this.authService.token()
+            }).$promise;
         }
 
         generateSourcesFromTool(tool) {

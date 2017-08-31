@@ -94,7 +94,7 @@ export default class ProjectsEditColormode {
 
         this.activeColorBlendMode =
             this.colorSchemeService.defaultColorBlendModes.find(
-                m => m.value === this.projectBuffer.singleBandOptions.blendMode
+                m => m.value === this.projectBuffer.singleBandOptions.colorBins
             );
     }
 
@@ -104,7 +104,7 @@ export default class ProjectsEditColormode {
             band: 0,
             dataType: scheme.type,
             colorScheme: this.colorSchemeService.colorsToDiscreteScheme(scheme.colors),
-            blendMode: 'CONTINUOUS',
+            colorBins: 0,
             legendOrientation: 'left'
         };
     }

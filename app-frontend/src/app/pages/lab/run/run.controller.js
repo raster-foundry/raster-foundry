@@ -38,7 +38,7 @@ export default class LabRunController {
             this.generatedPreview = false;
         });
         this.setWarning(
-             'You must apply changes after defining inputs.'
+            'You must apply changes after defining inputs.'
         );
 
         this.$scope.$on('$destroy', () => {
@@ -392,7 +392,7 @@ export default class LabRunController {
         });
     }
 
-    onExecutionParametersChange(sourceId, project, band, override) {
+    onExecutionParametersChange(sourceId, project, band, override, renderDef) {
         if (project && typeof band === 'number' && band >= 0) {
             this.toolRun.executionParameters.sources[sourceId].id = project.id;
             this.toolRun.executionParameters.sources[sourceId].band = band;
@@ -402,6 +402,14 @@ export default class LabRunController {
                 this.toolRun.executionParameters.overrides = {};
             }
             this.toolRun.executionParameters.overrides[override.id] = {constant: override.value};
+        }
+        if (renderDef) {
+            if (!this.toolRun.executionParameters.metadata) {
+                this.toolRun.executionParameters.metadata = {};
+            }
+            this.toolRun.executionParameters.metadata[renderDef.id] = {
+                renderDefinition: renderDef.value
+            };
         }
     }
 

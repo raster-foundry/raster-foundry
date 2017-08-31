@@ -1,9 +1,13 @@
-<div class="breakpoint-bar top"></div>
-<div class="breakpoint-grabber" ng-mousedown="$ctrl.onGrabberMouseDown()"></div>
-<div class="breakpoint-bar bottom"></div>
+<div class="breakpoint-bar top" ng-if="$ctrl.options.style === 'bar'"></div>
+<div class="breakpoint-grabber"
+     ng-class="{bar: $ctrl.options.style === 'bar',
+                arrow: $ctrl.options.style === 'arrow'}"
+     ng-mousedown="$ctrl.onGrabberMouseDown()"></div>
+<div class="breakpoint-bar bottom" ng-if="$ctrl.options.style === 'bar'"></div>
 <div class="breakpoint-input"
-     ng-class="{'switched': $ctrl.breakpoint / $ctrl.range.max > .8,
-                'active': $ctrl.dragging || $ctrl.inputFocused}"
+     ng-class="{switched: $ctrl.breakpoint / $ctrl.range.max > .8,
+                active: $ctrl.dragging || $ctrl.inputFocused,
+                alwaysShow: $ctrl.options.alwaysShowNumbers}"
 >
   <input type="number"
          class="breakpoint-input-field"

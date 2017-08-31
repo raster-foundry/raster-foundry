@@ -198,6 +198,13 @@ label.checkbox {
   font-weight: 500;
   margin: 0;
 
+  &.dark {
+    color: $white;
+    &:after {
+      background: $shade-normal;
+      border: 1px solid $shade-dark;
+    }
+  }
   &:after {
     content: '';
     order: -1;
