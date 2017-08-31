@@ -76,7 +76,7 @@ Vagrant.configure(2) do |config|
       if [ ! -x /usr/local/bin/ansible ] || ! ansible --version | grep #{ANSIBLE_VERSION}; then
         sudo apt-get update -qq
         sudo apt-get install python-pip python-dev -y
-        sudo pip install paramiko==1.16.0
+        sudo pip install --upgrade pip
         sudo pip install ansible==#{ANSIBLE_VERSION}
       fi
 
