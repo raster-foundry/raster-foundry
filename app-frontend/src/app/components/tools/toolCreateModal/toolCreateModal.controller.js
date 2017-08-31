@@ -52,7 +52,6 @@ export default class ToolCreateModalController {
                 this.$state.go('lab.run', { toolid: tool.id });
             });
         } catch (e) {
-            console.log(e);
             this.currentError = 'The tool definition is not valid';
             this.isProcessing = false;
         }
@@ -129,59 +128,59 @@ export default class ToolCreateModalController {
 
     expressionTreeToMAML(tree, value, allowCollapse = true) {
         let mamlNode = {
-          id: this.uuid4.generate(),
-          metadata: {}
+            id: this.uuid4.generate(),
+            metadata: {}
         };
 
         switch (tree.type) {
-          case "AssignmentNode":
+        case 'AssignmentNode':
             return this.expressionTreeToMAML(tree.object, tree.value.value);
-          case "ConstantNode":
+        case 'ConstantNode':
             Object.assign(mamlNode, {
-              type: 'const',
-              constant: tree.value,
-              metadata: {
-                label: tree.value
-              }
+                type: 'const',
+                constant: tree.value,
+                metadata: {
+                    label: tree.value
+                }
             });
             break;
-          case "OperatorNode":
+        case 'OperatorNode':
             mamlNode.apply = tree.op;
             mamlNode.metadata.label = tree.fn;
             mamlNode.metadata.collapsable = allowCollapse;
             break;
-          case "FunctionNode":
+        case 'FunctionNode':
             mamlNode.apply = tree.fn.name;
             mamlNode.metadata.label = tree.fn.name;
             if (mamlNode.apply === 'classify') {
-              const classifications = tree.args[1];
-              tree.args = [ tree.args[0] ];
-              mamlNode.classMap = {
-                classifications: this.objectNodeToClassifications(classifications)
-              };
+                const classifications = tree.args[1];
+                tree.args = [ tree.args[0] ];
+                mamlNode.classMap = {
+                    classifications: this.objectNodeToClassifications(classifications)
+                };
             }
             break;
-          case "ParenthesisNode":
+        case 'ParenthesisNode':
             return this.expressionTreeToMAML(tree.content, null, false);
-          case "SymbolNode":
+        case 'SymbolNode':
             if (tree.name.startsWith('_')) {
-              mamlNode.type = 'const';
-              mamlNode.metadata.label = tree.name.substring(1);
-              if (value) {
-                mamlNode.constant = parseFloat(value);
-              }
+                mamlNode.type = 'const';
+                mamlNode.metadata.label = tree.name.substring(1);
+                if (value) {
+                    mamlNode.constant = parseFloat(value);
+                }
             } else {
-              mamlNode.type = 'src';
-              mamlNode.metadata.label = tree.name;
+                mamlNode.type = 'src';
+                mamlNode.metadata.label = tree.name;
             }
             mamlNode.id = this.getSymbolId(mamlNode.metadata.label);
             break;
-          default:
+        default:
             return false;
-        };
+        }
 
         if (tree.args && tree.args.length) {
-          mamlNode.args = tree.args.map(a => this.expressionTreeToMAML(a));
+            mamlNode.args = tree.args.map(a => this.expressionTreeToMAML(a));
         }
 
         if (tree.type === 'OperatorNode' && tree.args) {
@@ -195,16 +194,15 @@ export default class ToolCreateModalController {
                 }
             });
         }
-
         return mamlNode;
-      }
+    }
 
-      objectNodeToClassifications(node) {
+    objectNodeToClassifications(node) {
         return Object.keys(node.properties).reduce((acc, p) => {
-          acc[`${parseFloat(p)}`] = parseInt(node.properties[p].value, 10);
-          return acc;
+            acc[`${parseFloat(p)}`] = parseInt(node.properties[p].value, 10);
+            return acc;
         }, {});
-      }
+    }
 
     isValid() {
         this.currentParsingError = '';
