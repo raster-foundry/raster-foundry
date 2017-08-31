@@ -26,6 +26,9 @@ package object tool {
       case hex if (hex.size == 8) =>
         val bytes = hex.sliding(2, 2).map({ hexByte => Integer.parseInt(hexByte, 16) }).toList
         Right(RGBA(bytes(0), bytes(1), bytes(2), bytes(3)))
+      case hex if (hex.size == 6) =>
+        val bytes = hex.sliding(2, 2).map({ hexByte => Integer.parseInt(hexByte, 16) }).toList
+        Right(RGB(bytes(0), bytes(1), bytes(2)))
       case hex => Left(s"Unable to parse $hex as an RGBA")
     }
   }
