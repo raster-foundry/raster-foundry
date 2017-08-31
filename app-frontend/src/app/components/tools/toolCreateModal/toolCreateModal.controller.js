@@ -207,8 +207,11 @@ export default class ToolCreateModalController {
     isValid() {
         this.currentParsingError = '';
         const parensBalanced = this.validateParenDepth();
+        const bracesBalanced = this.validateBraceDepth();
         if (!parensBalanced) {
             this.currentParsingError = 'The parentheses in this expression are not balanced';
+        } else if (!bracesBalanced) {
+            this.currentParsingError = 'The braces in this expression are not balanced';
         }
         return this.toolBuffer.title && this.definitionExpression && parensBalanced;
     }
@@ -221,6 +224,23 @@ export default class ToolCreateModalController {
                 if (c === '(') {
                     d += 1;
                 } else if (c === ')') {
+                    d -= 1;
+                }
+                return { depth: d, continue: d >= 0};
+            }
+            return acc;
+        }, { depth: 0, continue: true });
+        return result.continue && result.depth === 0;
+    }
+
+    validateBraceDepth() {
+        const expressionArray = this.definitionExpression.split('');
+        const result = expressionArray.reduce((acc, c) => {
+            if (acc.continue) {
+                let d = acc.depth;
+                if (c === '{') {
+                    d += 1;
+                } else if (c === '}') {
                     d -= 1;
                 }
                 return { depth: d, continue: d >= 0};
