@@ -76,56 +76,6 @@ export default class ToolCreateModalController {
         return id;
     }
 
-    transformNode(node, value) {
-        let builtNode = {
-            metadata: {}
-        };
-
-        if (node.op && allowedOps.indexOf(node.op) >= 0) {
-            // Op node
-            builtNode.id = this.uuid4.generate();
-            builtNode.apply = node.op;
-            builtNode.metadata.label = node.fn;
-            builtNode.args = node.args.map(n => this.transformNode(n));
-        } else if (node.fn && node.fn.name && allowedOps.indexOf(node.fn.name) >= 0) {
-            // Function node; handle nearly the same as op node, for now
-            builtNode.id = this.uuid4.generate();
-            builtNode.apply = node.fn.name;
-            builtNode.metadata.label = node.fn.name;
-            builtNode.args = node.args.map(n => this.transformNode(n));
-        } else if (node.name) {
-            // Symbol node
-            if (node.object && node.value) {
-                // Symbol with a default (constant)
-                return this.transformNode(node.object, node.value.value);
-            }
-            // Symbol without a default yet (constant or not)
-            let isConst = node.name.startsWith('_');
-            if (isConst) {
-                // Constant symbols without a default yet
-                builtNode.type = 'const';
-                builtNode.metadata.label = node.name.substring(1);
-                if (value) {
-                    builtNode.constant = parseFloat(value);
-                }
-            } else {
-                // Raster symbolds
-                builtNode.type = 'src';
-                builtNode.metadata.label = node.name;
-            }
-            builtNode.id = this.getSymbolId(builtNode.metadata.label);
-        } else if (node.value) {
-            builtNode.id = this.uuid4.generate();
-            builtNode.type = 'const';
-            builtNode.constant = node.value;
-            builtNode.metadata.label = node.value;
-        } else if (node.content) {
-            return this.transformNode(node.content);
-        }
-
-        return builtNode;
-    }
-
     expressionTreeToMAML(tree, value, allowCollapse = true) {
         let mamlNode = {
             id: this.uuid4.generate(),
@@ -145,10 +95,13 @@ export default class ToolCreateModalController {
             });
             break;
         case 'OperatorNode':
-            mamlNode.apply = tree.op;
-            mamlNode.metadata.label = tree.fn;
-            mamlNode.metadata.collapsable = allowCollapse;
-            break;
+            if (allowedOps.indexOf(tree.op) >= 0) {
+                mamlNode.apply = tree.op;
+                mamlNode.metadata.label = tree.fn;
+                mamlNode.metadata.collapsable = allowCollapse;
+                break;
+            }
+            return false;
         case 'FunctionNode':
             mamlNode.apply = tree.fn.name;
             mamlNode.metadata.label = tree.fn.name;
