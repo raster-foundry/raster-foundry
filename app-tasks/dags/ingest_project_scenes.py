@@ -173,10 +173,14 @@ def create_ingest_definition_op(*args, **kwargs):
     logger.info('Successfully updated scene (%s) status', scene_id)
 
     logger.info('Creating ingest definition')
-    if scene.datasource != landsat_id:
-        ingest_definition = create_ingest_definition(scene)
-    else:
-        ingest_definition = create_landsat8_ingest(scene)
+    try:
+        if scene.datasource != landsat_id:
+            ingest_definition = create_ingest_definition(scene)
+        else:
+            ingest_definition = create_landsat8_ingest(scene)
+    except:
+        scene.ingestStatus = IngestStatus.FAILED
+        scene.update()
     ingest_definition.put_in_s3()
     logger.info('Successfully created and pushed ingest definition for scene %s', scene_id)
 
