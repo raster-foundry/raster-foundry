@@ -22,12 +22,6 @@ then
         # Ensure that a directory exists to house AWS profiles.
         mkdir -p "${HOME}/.aws"
 
-        # Install vagrant-rsync plugin for speedy file watching
-        echo "Checking for vagrant-rsync plugin..."
-        if ! vagrant plugin list | grep -qE "^vagrant-rsync \(.*\)$"; then
-            echo "Installing vagrant-rsync..."
-            vagrant plugin install vagrant-rsync
-        fi
         vagrant up --provision
     fi
 fi
