@@ -2113,6 +2113,18 @@ parameters:
       - ABORTED
 
 definitions:
+  RenderDefinition:
+    type: object
+    properties:
+      breakpoints:
+        type: object
+        description: mapping from a tile cell value to associated color
+      scale:
+        type: string
+        description: The type of scale to use (e.g. 'continuous', 'qualitative', 'diverging'); qualitative strings will contain a hex color (e.g. 'qualitative[#ff00ffff]')
+      clip:
+        type: string
+        description: The clipping strategy to use (e.g. 'left', 'right', 'both', 'none')
   BaseModel:
     type: object
     readOnly: true

@@ -1,6 +1,7 @@
 package com.azavea.rf.tile.routes
 
-import java.util.UUID
+import com.azavea.rf.tile.image._
+import com.azavea.rf.tile._
 
 import akka.http.scaladsl.marshalling._
 import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes, StatusCodes}
@@ -23,6 +24,8 @@ import geotrellis.raster.render._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
+import java.util.UUID
+
 
 class ToolRoutes(implicit val database: Database) extends Authentication
   with LazyLogging
@@ -144,7 +147,12 @@ class ToolRoutes(implicit val database: Database) extends Authentication
                 cMap            <- LayerCache.toolRunColorMap(toolRunId, nodeId, user, colorRamp, colorRampName)
               } yield {
                 logger.debug(s"Tile successfully produced at $z/$x/$y")
-                tile.renderPng(cMap)
+                params.metadata(ast.id).renderDef match {
+                  case Some(renderDef) =>
+                    tile.renderPng(renderDef)
+                  case None =>
+                    tile.renderPng(cMap)
+                }
               }
               responsePng.value
             }
