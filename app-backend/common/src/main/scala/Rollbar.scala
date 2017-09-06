@@ -1,16 +1,16 @@
 package com.azavea.rf.common
 
-import scala.collection.mutable
-import java.io.{PrintStream, ByteArrayOutputStream}
+import java.io.{ByteArrayOutputStream, PrintStream}
 
+import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
-import akka.actor.ActorSystem
 import akka.stream.Materializer
-import spray.json._
-import DefaultJsonProtocol._
-
 import com.typesafe.scalalogging.LazyLogging
+import spray.json.DefaultJsonProtocol._
+import spray.json._
+
+import scala.collection.mutable
 
 trait RollbarNotifier extends LazyLogging {
 
@@ -61,13 +61,13 @@ trait RollbarNotifier extends LazyLogging {
 
   def createTrace(throwable: Throwable): JsObject = {
     val frames = throwable.getStackTrace.map { element =>
-      val lineNo = if(element.getLineNumber > 0) Seq("lineno" -> element.getLineNumber.toJson) else Nil
+      val lineNo = if (element.getLineNumber > 0) Seq("lineno" -> element.getLineNumber.toJson) else Nil
       val frame = Seq(
-          "class_name" -> element.getClassName.toJson,
-          "filename" -> element.getFileName.toJson,
-          "method" -> element.getMethodName.toJson
+        "class_name" -> element.getClassName.toJson,
+        "filename" -> element.getFileName.toJson,
+        "method" -> element.getMethodName.toJson
       ) ++ lineNo
-      JsObject(Map(frame:_*))
+      JsObject(Map(frame: _*))
     }
 
     val raw = try {
@@ -87,8 +87,12 @@ trait RollbarNotifier extends LazyLogging {
     JsObject(
       "frames" -> JsArray(frames.toVector),
       "exception" -> JsObject(
-          "class" -> throwable.getClass.getCanonicalName.toJson,
-          "message" -> throwable.getMessage.toJson),
+        "class" -> throwable.getClass.getCanonicalName.toJson,
+        "message" -> (throwable.getMessage match {
+          case null => "".toJson
+          case _ => throwable.getMessage.toJson
+        })
+      ),
       "raw" -> raw.toJson
     )
   }
