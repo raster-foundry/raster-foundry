@@ -15,3 +15,6 @@
 
 - src: azavea.ntp
   version: 0.1.1
+
+- src: azavea.packer
+  version: 0.2.0
