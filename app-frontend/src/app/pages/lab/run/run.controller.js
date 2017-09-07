@@ -120,7 +120,7 @@ export default class LabRunController {
             if (url0 && url1) {
                 this.previewLayers = [
                     L.tileLayer(url0),
-                    L.tileLayer(url1),
+                    L.tileLayer(url1)
                 ];
             }
         } else {
