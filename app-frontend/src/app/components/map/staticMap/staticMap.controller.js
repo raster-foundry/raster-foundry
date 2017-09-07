@@ -41,7 +41,8 @@ export default class StaticMapController {
             touchZoom: false,
             boxZoom: false,
             keyboard: false,
-            tap: false
+            tap: false,
+            maxZoom: 30
         }).setView(
             this.initialCenter ? this.initialCenter : [0, 0],
             this.initialZoom ? this.initialZoom : 2

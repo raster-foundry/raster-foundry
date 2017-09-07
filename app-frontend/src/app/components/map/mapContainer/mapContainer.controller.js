@@ -49,7 +49,8 @@ export default class MapContainerController {
             touchZoom: !this.options.static,
             boxZoom: !this.options.static,
             keyboard: !this.options.static,
-            tap: !this.options.static
+            tap: !this.options.static,
+            maxZoom: 30
         }).setView(
             this.initialCenter ? this.initialCenter : [0, 0],
             this.initialZoom ? this.initialZoom : 2

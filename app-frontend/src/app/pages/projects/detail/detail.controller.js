@@ -74,8 +74,7 @@ export default class ProjectsDetailController {
             this.authService.token()
         );
 
-        let options = {maxZoom: 30};
-        let layer = L.tileLayer(url, options);
+        let layer = L.tileLayer(url);
 
         this.getMap().then(m => {
             m.addLayer('share-layer', layer);

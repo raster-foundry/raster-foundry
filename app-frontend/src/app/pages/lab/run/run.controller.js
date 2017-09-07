@@ -1,8 +1,6 @@
 /* global L */
 import { FrameView } from '../../../components/map/labMap/frame.module.js';
 
-const tileLayerOptions = {maxZoom: 30};
-
 export default class LabRunController {
     constructor( // eslint-disable-line max-params
         $log, $scope, $timeout, $element, $window, $document, $uibModal, $rootScope,
@@ -121,14 +119,14 @@ export default class LabRunController {
             let url1 = this.getNodeUrl(this.previewData[1]);
             if (url0 && url1) {
                 this.previewLayers = [
-                    L.tileLayer(url0, tileLayerOptions),
-                    L.tileLayer(url1, tileLayerOptions)
+                    L.tileLayer(url0),
+                    L.tileLayer(url1),
                 ];
             }
         } else {
             let url0 = this.getNodeUrl(this.previewData);
             if (url0) {
-                this.previewLayers = [L.tileLayer(url0, tileLayerOptions)];
+                this.previewLayers = [L.tileLayer(url0)];
             }
         }
     }
