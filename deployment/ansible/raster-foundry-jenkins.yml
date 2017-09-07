@@ -9,6 +9,7 @@
 
   roles:
     - { role: azavea.ntp }
+    - { role: azavea.packer }
     - { role: raster-foundry.aws-cli }
     - { role: raster-foundry.docker }
     - { role: raster-foundry.shellcheck }
