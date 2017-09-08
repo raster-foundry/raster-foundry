@@ -130,9 +130,9 @@ export default class LabMapController {
                     {
                         s: options.properties.subdomains && options.properties.subdomains[0] ?
                             options.properties.subdomains[0] : 'a',
-                        z: '4',
-                        x: '9',
-                        y: '7'
+                        z: '17',
+                        x: '38168',
+                        y: '49642'
                     },
                     options.properties
                 )
