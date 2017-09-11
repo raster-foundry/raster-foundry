@@ -17,7 +17,7 @@ export default class MarketSearchController {
     $onInit() {
         this.initFilters();
         this.initSearchTerms();
-        this.fetchToolList();
+        this.fetchToolList(this.$state.params.page || 1);
         this.fetchToolTags();
         this.fetchToolCategories();
 
@@ -57,12 +57,25 @@ export default class MarketSearchController {
         }
     }
 
-    fetchToolList() {
+    fetchToolList(page) {
         this.loadingTools = true;
         this.toolService.query(
-            this.queryParams
+            {
+                pageSize: 10,
+                page: page - 1
+            }
         ).then(d => {
+            this.currentPage = page;
             this.updatePagination(d);
+            let replace = !this.$state.params.page;
+            this.$state.transitionTo(
+                this.$state.$current.name,
+                {page: this.currentPage},
+                {
+                    location: replace ? 'replace' : true,
+                    notify: false
+                }
+            );
             this.lastToolResponse = d;
             this.toolList = d.results;
             this.loadingTools = false;
@@ -175,7 +188,6 @@ export default class MarketSearchController {
         if (this.activeModal) {
             this.activeModal.dismiss();
         }
-
         this.activeModal = this.$uibModal.open({
             component: 'rfToolCreateModal'
         });

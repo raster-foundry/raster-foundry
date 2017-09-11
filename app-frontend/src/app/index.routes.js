@@ -288,7 +288,7 @@ function marketStates($stateProvider) {
         })
         .state('market.search', {
             title: 'Tool Search',
-            url: '/search?:query?toolcategory&tooltag',
+            url: '/search?:page?:query?toolcategory&tooltag',
             templateUrl: marketSearchTpl,
             controller: 'MarketSearchController',
             controllerAs: '$ctrl'

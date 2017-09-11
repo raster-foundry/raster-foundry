@@ -32,16 +32,16 @@
 
       <!-- Pagination -->
       <div class="list-group text-center"
-           ng-show="!$ctrl.loading && $ctrl.queryResult && $ctrl.pagination.show && !$ctrl.errorMsg">
+           ng-show="!$ctrl.loading && $ctrl.lastToolResponse && $ctrl.pagination.show && !$ctrl.errorMsg">
         <ul uib-pagination
-            items-per-page="$ctrl.queryResult.pageSize"
-            total-items="$ctrl.queryResult.count"
+            items-per-page="$ctrl.lastToolResponse.pageSize"
+            total-items="$ctrl.lastToolResponse.count"
             ng-model="$ctrl.currentPage"
             max-size="4"
             rotate="true"
             boundary-link-numbers="true"
             force-ellipses="true"
-            ng-change="$ctrl.populateToolList($ctrl.currentPage)">
+            ng-change="$ctrl.fetchToolList($ctrl.currentPage)">
         </ul>
       </div>
       <!-- Pagination -->
