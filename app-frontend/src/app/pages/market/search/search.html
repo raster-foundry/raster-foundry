@@ -7,7 +7,7 @@
       <div class="dashboard-header">
         <h1 class="h3">Tools</h1>
         <div class="flex-fill"></div>
-        <rf-tool-search on-search="$ctrl.search(text)"></rf-tool-search>
+        <rf-tool-search on-search="$ctrl.search(value)"></rf-tool-search>
         <a class="btn btn-primary" ng-click="$ctrl.openToolCreateModal()">New tool</a>
       </div>
       <!-- Dashboard Header -->
@@ -20,19 +20,29 @@
       </div>
       <!-- Loading indicator -->
 
-      <p class="font-size-small">Showing {{$ctrl.pagination.startingItem}} - {{$ctrl.pagination.endingItem}} of {{$ctrl.pagination.count}} tools</p>
+      <p class="font-size-small"
+         ng-if="!$ctrl.searchString"
+      >
+        Showing {{$ctrl.pagination.startingItem}} - {{$ctrl.pagination.endingItem}} of {{$ctrl.pagination.count}} tools
+      </p>
+
+      <p class="font-size-small"
+         ng-if="$ctrl.searchString"
+      >
+         Showing results for "{{$ctrl.searchString}}"
+      </p>
 
       <!-- Temporarily removed ng-click until after demo done and detail page designed. -->
       <rf-tool-item
           class="panel panel-off-white"
-          ng-repeat="toolData in $ctrl.toolList"
+          ng-repeat="toolData in $ctrl.toolList | filter: {title: $ctrl.searchString}"
           tool-data="toolData"
           ng-click=""
       ></rf-tool-item>
 
       <!-- Pagination -->
       <div class="list-group text-center"
-           ng-show="!$ctrl.loading && $ctrl.lastToolResponse && $ctrl.pagination.show && !$ctrl.errorMsg">
+           ng-show="!$ctrl.loading && $ctrl.lastToolResponse && $ctrl.pagination.show && !$ctrl.errorMsg &&!$ctrl.searchString">
         <ul uib-pagination
             items-per-page="$ctrl.lastToolResponse.pageSize"
             total-items="$ctrl.lastToolResponse.count"

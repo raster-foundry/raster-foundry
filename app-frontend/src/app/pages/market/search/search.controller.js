@@ -17,9 +17,10 @@ export default class MarketSearchController {
     $onInit() {
         this.initFilters();
         this.initSearchTerms();
-        this.fetchToolList(this.$state.params.page || 1);
+        this.fetchToolList(this.$state.params.page);
         this.fetchToolTags();
         this.fetchToolCategories();
+        this.searchString = '';
 
         this.$scope.$on('$destroy', () => {
             if (this.activeModal) {
@@ -57,7 +58,7 @@ export default class MarketSearchController {
         }
     }
 
-    fetchToolList(page) {
+    fetchToolList(page = 1) {
         this.loadingTools = true;
         this.toolService.query(
             {
@@ -164,12 +165,15 @@ export default class MarketSearchController {
         this.search();
     }
 
-    search() {
-        this.$state.go('market.search', {
-            query: this.searchTerms.join(' '),
-            toolcategory: this.selectedToolCategories.join(' '),
-            tooltag: this.selectedToolTags.join(' ')
-        });
+    search(value) {
+        this.searchString = value;
+        if (this.searchString) {
+            this.toolService.searchQuery().then(tools => {
+                this.toolList = tools;
+            });
+        } else {
+            this.fetchToolList();
+        }
     }
 
     toggleTag(index) {
