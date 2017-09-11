@@ -2438,9 +2438,6 @@ rf-histogram-breakpoint {
 }
 
 .colorscheme-selector {
-  min-width: 230px;
-  max-height: 233px;
-  overflow-y: auto;
   padding: 0;
 }
 .dropdown-header {
@@ -2462,9 +2459,10 @@ rf-histogram-breakpoint {
   }
 }
 
-.gradient-dropdown-label {
-  padding: 0 1rem;
-  height: 35px;
+.gradient-dropdown {
+  height: 100%;
+  width: 100%;
+  padding: 0 1em;
   display: flex;
   align-items: center;
 }
@@ -2483,7 +2481,7 @@ rf-histogram-breakpoint {
   .dropdown-title {
     text-align: left;
     font-weight: bold;
-    align-self: center;
+    color: $brand-primary;
   }
 }
 
@@ -2491,6 +2489,10 @@ ul.dropdown-list {
   margin: 0;
   padding: 0;
   list-style: none;
+  max-height: 20em;
+  min-width: 12em;
+  overflow-y: auto;
+
   li.dropdown-list-item {
     margin: 0;
     padding: 1rem 1rem 1rem 0rem;
@@ -2498,6 +2500,7 @@ ul.dropdown-list {
     display: flex;
     align-items: center;
     cursor: pointer;
+    color: $shade-light;
     .label {
       font-weight: normal;
     }
@@ -2566,6 +2569,7 @@ rf-node-histogram {
   align-items: center;
   padding: 0 0 0.5em 0;
   font-weight: 600;
+
   .gradient {
     margin-top: 0.5em;
     width: 12em;
@@ -2578,18 +2582,37 @@ rf-node-histogram {
       border: 1px solid transparent;
     }
   }
+
   .checkbox {
     margin-after: 5px;
     font-weight: 600;
   }
+
   label {
     padding: .2em;
   }
+
   .histogram-checkboxes {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+  }
+
+  rf-color-scheme-dropdown {
+    width: 12em;
+    z-index: 5010;
+    height: 2.4em;
+    .dropdown {
+      height: 100%;
+    }
+    .dropdown-toggle {
+        background: $shade-dark;
+        font-weight: 700;
+        color: white;
+        border: 1px solid $shade-dark;
+        border-radius: 3px;
+    }
   }
 }
 

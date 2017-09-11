@@ -4,39 +4,42 @@
       Mask values
     </div>
     <div class="histogram-checkboxes">
-      <label class="checkbox dark" ng-class="{active: $ctrl._masks.min}">
+      <label class="checkbox dark" ng-class="{active: $ctrl._options.masks.min}">
           <input type="checkbox"
-                 ng-model="$ctrl._masks.min"
+                 ng-model="$ctrl._options.masks.min"
                  ng-change="$ctrl.onMaskChange()"
                  ng-disabled="$ctrl.options.discrete" />Min
       </label>
-      <label class="checkbox dark" ng-class="{active: $ctrl._masks.max}">
+      <label class="checkbox dark" ng-class="{active: $ctrl._options.masks.max}">
           <input type="checkbox"
-                 ng-model="$ctrl._masks.max"
+                 ng-model="$ctrl._options.masks.max"
                  ng-change="$ctrl.onMaskChange()"
                  ng-disabled="$ctrl.options.discrete" />Max
       </label>
     </div>
   </div>
-  <div class="gradient"></div>
+  <rf-color-scheme-dropdown
+      color-scheme-options="$ctrl.baseColorScheme"
+      on-change="$ctrl.onColorSchemeChange(value)"
+  ></rf-color-scheme-dropdown>
 </div>
 
 <div class="graph-container">
   <nvd3 ng-attr-id="chart-{{$ctrl.id}}" options="$ctrl.histOptions" data="$ctrl.plot" api="$ctrl.api"></nvd3>
   <rf-histogram-breakpoint
-    ng-repeat="bp in $ctrl._breakpoints track by bp.key"
-    ng-mouseover="$ctrl.lastMouseOver = bp.key"
-    ng-class="{'active': $ctrl.lastMouseOver === bp.key}"
-    data-color="bp.breakpoint.color"
-    data-breakpoint="bp.breakpoint.value"
+    ng-repeat="bp in $ctrl._breakpoints track by bp.id"
+    ng-mouseover="$ctrl.lastMouseOver = bp.id"
+    ng-class="{'active': $ctrl.lastMouseOver === bp.id}"
+    data-color="bp.color"
+    data-breakpoint="bp.value"
     data-range="$ctrl.histogramRange"
     data-precision="$ctrl.precision"
-    data-options="{style: bp.breakpoint.style, alwaysShowNumbers: bp.breakpoint.alwaysShowNumbers}"
+    data-options="bp.options"
     on-color-change="$ctrl.onColorChange(bp, color)"
-    on-breakpoint-change="$ctrl.onChange(bp.breakpoint, breakpoint)"
+    on-breakpoint-change="$ctrl.onChange(bp, breakpoint)"
   ></rf-histogram-breakpoint>
-  <div class="histogram-placeholder" ng-show="$ctrl.usingDefaultData">Fill out all input fields and apply changes to view histogram</div>
-  <div class="histogram-placeholder" ng-show="$ctrl.noValidData">A histogram cannot be generated for this data</div>
+  <div class="histogram-placeholder" ng-if="$ctrl.usingDefaultData">Fill out all input fields and apply changes to view histogram</div>
+  <div class="histogram-placeholder" ng-if="$ctrl.noValidData">A histogram cannot be generated for this data</div>
 </div>
 
 <style ng-if="$ctrl.id">

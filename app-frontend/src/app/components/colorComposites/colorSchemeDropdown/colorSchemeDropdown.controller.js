@@ -6,27 +6,34 @@ const MAX_BINS = 12;
 const ELASTIC_NAV = true;
 
 export default class ColorSchemeDropdownController {
-    constructor($scope, colorSchemeService) {
+    constructor($scope, $element, colorSchemeService) {
         'ngInject';
         this.$scope = $scope;
+        this.$element = $element;
         this.colorSchemeService = colorSchemeService;
         this.bins = [0, ...[ ...Array(1 + MAX_BINS - MIN_BINS).keys()].map(b => b + MIN_BINS)];
     }
 
+    $onInit() {
+        this.$element.on('wheel', (event) => {
+            event.stopPropagation();
+        });
+    }
+
     $onChanges() {
-        this.deserializeSingleBandOptions();
+        this.deserializeColorSchemeOptions();
         this.mergeStates();
     }
 
-    deserializeSingleBandOptions() {
-        this.singleBandOptions = angular.fromJson(this.serializedSingleBandOptions);
+    deserializeColorSchemeOptions() {
+        this._colorSchemeOptions = angular.fromJson(this.colorSchemeOptions);
     }
 
     mergeStates() {
         this.state = Object.assign(
             {},
             this.getInitialState(),
-            this.getStateFromSingleBandOptions()
+            this.getStateFromColorSchemeOptions()
         );
     }
 
@@ -45,12 +52,12 @@ export default class ColorSchemeDropdownController {
         };
     }
 
-    getStateFromSingleBandOptions() {
+    getStateFromColorSchemeOptions() {
         let stateToReturn = {};
-        if (this.singleBandOptions && this.singleBandOptions.colorScheme) {
+        if (this._colorSchemeOptions && this._colorSchemeOptions.colorScheme) {
             const scheme = this.colorSchemeService.defaultColorSchemes.find(
                 s => _.isEqual(
-                    this.singleBandOptions.colorScheme,
+                    this._colorSchemeOptions.colorScheme,
                     s.colors
                 )
             );
@@ -59,9 +66,9 @@ export default class ColorSchemeDropdownController {
                 stateToReturn.scheme = scheme;
             }
 
-            if (this.singleBandOptions.dataType) {
+            if (this._colorSchemeOptions.dataType) {
                 stateToReturn.schemeType = this.colorSchemeService.defaultColorSchemeTypes.find(
-                    t => this.singleBandOptions.dataType === t.value
+                    t => this._colorSchemeOptions.dataType === t.value
                 );
             }
 
@@ -70,13 +77,13 @@ export default class ColorSchemeDropdownController {
                 bins: 0
             };
 
-            if (Array.isArray(this.singleBandOptions.colorScheme)) {
+            if (Array.isArray(this._colorSchemeOptions.colorScheme)) {
                 blending = {
                     label: this.getBlendingLabel(0),
                     bins: 0
                 };
             } else {
-                let bins = Object.keys(this.singleBandOptions.colorScheme).length;
+                let bins = Object.keys(this._colorSchemeOptions.colorScheme).length;
                 blending = {
                     label: this.getBlendingLabel(bins),
                     bins
@@ -87,7 +94,7 @@ export default class ColorSchemeDropdownController {
         return stateToReturn;
     }
 
-    getSingleBandOptionsFromState() {
+    getColorSchemeOptionsFromState() {
         // @TODO: need to determine way forward for setting bin values?
         if (this.state) {
             return {
@@ -152,7 +159,7 @@ export default class ColorSchemeDropdownController {
     reflectState() {
         if (this.onChange) {
             this.onChange({
-                value: this.getSingleBandOptionsFromState()
+                value: this.getColorSchemeOptionsFromState()
             });
         }
     }

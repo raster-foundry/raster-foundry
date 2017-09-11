@@ -2,14 +2,31 @@
 
 const Map = require('es6-map');
 
-const defaultBreakpoints = require('./exampleColormap.json');
 const maxZoom = 3;
 const minZoom = 0.025;
+
+function linspace(min, max, num) {
+    let n = num;
+    if (typeof n === 'undefined') {
+        n = Math.max(Math.round(max - min) + 1, 1);
+    }
+    if (n < 2) {
+        return n === 1 ? [min] : [];
+    }
+    let i = Array(n);
+    let ret = Array(n);
+    n = n - 1;
+    for (i = n; i >= 0; i = i - 1) {
+        ret[i] = (i * max + (n - i) * min) / n;
+    }
+    return ret;
+}
+
 
 export default class DiagramContainerController {
     constructor( // eslint-disable-line max-params
         $element, $scope, $state, $timeout, $compile, $document, $window, $rootScope,
-        mousetipService, toolService, labUtils
+        mousetipService, toolService, labUtils, colorSchemeService
     ) {
         'ngInject';
         this.$element = $element;
@@ -23,12 +40,14 @@ export default class DiagramContainerController {
         this.mousetipService = mousetipService;
         this.toolService = toolService;
         this.labUtils = labUtils;
+        this.colorSchemeService = colorSchemeService;
     }
 
     $onInit() {
         let $scope = this.$scope;
         let $compile = this.$compile;
         let toolService = this.toolService;
+        let viridis = this.colorSchemeService.defaultColorSchemes.find(s => s.label === 'Viridis');
 
         this.scale = 1;
 
@@ -100,9 +119,9 @@ export default class DiagramContainerController {
                     ng-if="showHistogram && showBody"
                     data-histogram="histogram"
                     data-breakpoints="breakpoints"
-                    data-options="histogramOptions"
                     data-masks="masks"
-                    on-breakpoint-change="onBreakpointChange(breakpoints, masks)"
+                    data-options="histogramOptions"
+                    on-breakpoint-change="onBreakpointChange(breakpoints, options)"
                   ></rf-node-histogram>
                 </div>`,
             initialize: function () {
@@ -112,16 +131,6 @@ export default class DiagramContainerController {
                 this.$box = angular.element(this.template);
                 this.scope = $scope.$new();
                 this.scope.showBody = true;
-                this.scope.breakpoints = defaultBreakpoints.map(o => _.cloneDeep(o));
-                this.scope.histogramOptions = {
-                    min: 0,
-                    max: 255,
-                    discrete: false
-                };
-                this.scope.masks = {
-                    min: false,
-                    max: false
-                };
                 let dropdownHeight = 200;
                 let headerHeight = 50;
                 this.histogramHeight = dropdownHeight + headerHeight;
@@ -138,25 +147,27 @@ export default class DiagramContainerController {
                     }
                 };
 
-                this.scope.onBreakpointChange = (breakpoints, masks) => {
-                    let newBreakpoints = breakpoints.reduce((map, obj) => {
-                        if (obj && obj.breakpoint) {
-                            map[obj.breakpoint.value.toString()] = obj.breakpoint.color;
+                this.scope.updateBreakpoints = () => {
+                    let newBreakpoints = this.scope.breakpoints.reduce((map, obj) => {
+                        if (obj) {
+                            map[obj.value.toString()] = obj.color;
                         }
                         return map;
                     }, {});
-                    let clip;
-                    if (masks.min && masks.max) {
-                        clip = 'both';
-                    } else if (masks.min) {
-                        clip = 'left';
-                    } else if (masks.max) {
-                        clip = 'right';
-                    } else {
-                        clip = 'none';
+                    let clip = 'none';
+                    if (this.scope.histogramOptions.masks) {
+                        if (this.scope.histogramOptions.masks.min &&
+                            this.scope.histogramOptions.masks.max) {
+                            clip = 'both';
+                        } else if (this.scope.histogramOptions.masks.min) {
+                            clip = 'left';
+                        } else if (this.scope.histogramOptions.masks.max) {
+                            clip = 'right';
+                        }
                     }
                     let renderDef = {
-                        scale: 'Continuous',
+                        scale: this.scope.histogramOptions.scale ?
+                            this.scope.histogramOptions.scale : 'SEQUENTIAL',
                         breakpoints: newBreakpoints,
                         clip: clip
                     };
@@ -166,6 +177,12 @@ export default class DiagramContainerController {
                             value: renderDef
                         }
                     });
+                };
+
+                this.scope.onBreakpointChange = (breakpoints, options) => {
+                    this.scope.breakpoints = breakpoints;
+                    this.scope.histogramOptions = options;
+                    this.scope.updateBreakpoints();
                 };
 
                 this.scope.toggleBody = () => {
@@ -230,12 +247,26 @@ export default class DiagramContainerController {
                     this.scope.sourceId = this.model.get('id');
                     this.scope.model = this.model;
                 }
+
+                if (!this.scope.breakpoints) {
+                    let breakpoints = linspace(0, 255, viridis.colors.length);
+                    this.scope.breakpoints = breakpoints.map((value, index) => {
+                        return {value: value, color: viridis.colors[index]};
+                    });
+                    this.scope.histogramOptions = {
+                        min: 0,
+                        max: 255,
+                        masks: {min: false, max: false},
+                        scale: 'SEQUENTIAL'
+                    };
+                    this.scope.updateBreakpoints();
+                }
                 this.scope.toolrun = this.model.get('toolrun');
                 let histogramToolRun = this.model.get('histogramToolRun');
                 if (this.scope.showHistogram &&
                     this.scope.toolrun &&
                     histogramToolRun !== this.scope.toolrun.id
-                   ) {
+                ) {
                     this.model.prop('histogramToolRun', this.scope.toolrun.id);
                     toolService
                         .getNodeHistogram(this.scope.toolrun.id, this.model.attributes.id)
