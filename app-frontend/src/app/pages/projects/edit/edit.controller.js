@@ -141,7 +141,9 @@ export default class ProjectsEditController {
                     mapWrapper.addLayer(
                         'Uningested Scenes',
                         overlay,
-                        true
+                        {
+                            showLayer: false
+                        }
                     );
                 });
             });
