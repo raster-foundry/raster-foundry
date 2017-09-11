@@ -67,6 +67,11 @@ export default class DiagramContainerController {
                     data-model="model"
                     on-change="onChange({override: override})"
                   ></rf-constant-node>
+                  <rf-classify-node
+                  ng-if="model.get('cellType') === 'classify'"
+                  data-model="model"
+                  on-change="onChange({override: override})"
+                ></rf-classify-node>
                 </div>`,
             initialize: function () {
                 _.bindAll(this, 'updateBox');
@@ -465,6 +470,8 @@ export default class DiagramContainerController {
             cellType: config.type,
             title: config.label || config.id.toString(),
             operation: config.operation,
+            metadata: config.metadata,
+            classMap: config.classMap,
             contextMenu: this.defaultContextMenu,
             ports: {
                 groups: {
