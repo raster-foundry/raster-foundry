@@ -103,6 +103,11 @@
             </div>
             <i class="icon-info"></i>
           </li>
+          <li>
+            <span class="label">Color scheme</span>
+            <rf-color-scheme-dropdown serialized-single-band-options="$ctrl.getSerializedSingleBandOptions()"></rf-color-scheme-dropdown>
+            <i class="icon-info"></i>
+          </li>
           <li ng-if="$ctrl.shouldShowColorSchemeBuilder()">
             <rf-color-scheme-builder color-scheme="$ctrl.projectBuffer.singleBandOptions.colorScheme" on-change="$ctrl.onSchemeColorsChange(value)"/>
           </li>

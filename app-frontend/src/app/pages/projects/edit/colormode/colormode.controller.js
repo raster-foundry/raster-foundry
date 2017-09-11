@@ -88,7 +88,7 @@ export default class ProjectsEditColormode {
             this.colorSchemeService.defaultColorSchemes.find(
                 s => _.isEqual(
                     this.projectBuffer.singleBandOptions.colorScheme,
-                    this.colorSchemeService.colorsToDiscreteScheme(s.colors)
+                    s.colors
                 )
             );
 
@@ -107,6 +107,10 @@ export default class ProjectsEditColormode {
             blendMode: 'CONTINUOUS',
             legendOrientation: 'left'
         };
+    }
+
+    getSerializedSingleBandOptions() {
+        return angular.toJson(this.projectBuffer.singleBandOptions);
     }
 
     toggleProjectSingleBandMode(state) {
@@ -156,7 +160,7 @@ export default class ProjectsEditColormode {
             this.projectBuffer.singleBandOptions.dataType = scheme.type;
             if (scheme.type !== 'CATEGORICAL') {
                 this.projectBuffer.singleBandOptions.colorScheme =
-                    this.colorSchemeService.colorsToDiscreteScheme(this.activeColorScheme.colors);
+                    this.activeColorScheme.colors;
             } else if (scheme.breaks) {
                 this.projectBuffer.singleBandOptions.colorScheme =
                     this.colorSchemeService
