@@ -24,7 +24,15 @@ export default class HistogramBreakpointController {
             this.breakpointPosition = '0%';
         }
         this.$scope.$watch('$ctrl.breakpoint', this.setPositionFromBreakpoint.bind(this));
-        this.options = Object.assign({}, defaultOptions, this.options);
+        if (!this._options) {
+            this._options = Object.assign({}, defaultOptions, this.options);
+        }
+    }
+
+    $onChanges(changes) {
+        if (changes.options && changes.options.currentValue) {
+            this._options = Object.assign({}, defaultOptions, changes.options.currentValue);
+        }
     }
 
     validateBreakpoint(value) {

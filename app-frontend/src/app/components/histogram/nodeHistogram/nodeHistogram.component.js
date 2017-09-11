@@ -6,7 +6,6 @@ const nodeHistogram = {
     bindings: {
         histogram: '<',
         breakpoints: '<',
-        masks: '<',
         options: '<',
         onMasksChange: '&',
         onBreakpointChange: '&'

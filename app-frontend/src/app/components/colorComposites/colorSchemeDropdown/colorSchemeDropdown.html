@@ -1,11 +1,12 @@
-<div class="dropdown btn-group" uib-dropdown auto-close="outsideClick">
-  <a class="btn dropdown-label gradient-dropdown-label">
+<div class="dropdown btn-group"
+     uib-dropdown
+     auto-close="outsideClick">
+  <button class="btn dropdown-label gradient-dropdown"
+          uib-dropdown-toggle>
       <div class="gradient-bar gradient-bkg"
           ng-style="$ctrl.colorSchemeService.colorsToBackground($ctrl.state.scheme.colors)"
       ></div>
-  </a>
-  <button type="button" class="btn btn-light dropdown-toggle" uib-dropdown-toggle >
-    <i class="icon-caret-down"></i>
+      <i class="icon-caret-down"></i>
   </button>
   <div class="dropdown-menu dropdown-menu-light colorscheme-selector" uib-dropdown-menu role="menu">
     <div ng-show="$ctrl.shouldShowView('MAIN')">

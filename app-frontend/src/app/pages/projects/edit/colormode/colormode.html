@@ -78,31 +78,6 @@
             </div>
             <i class="icon-info"></i>
           </li>
-          <li ng-if="$ctrl.shouldShowColorScheme()">
-            <span class="label">Color scheme</span>
-            <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
-              <a class="btn dropdown-label gradient-bkg" ng-style="$ctrl.colorSchemeService.colorsToBackground($ctrl.getActiveColorScheme().colors)">
-              </a>
-              <button type="button" class="btn btn-light dropdown-toggle">
-                <i class="icon-caret-down"></i>
-              </button>
-              <ul class="dropdown-menu dropdown-menu-light gradient-dropdown" uib-dropdown-menu role="menu">
-                <li ng-repeat="scheme in $ctrl.colorSchemeService.defaultColorSchemes | filter : {type: $ctrl.getActiveColorSchemeType().value}"
-                    ng-click="$ctrl.setActiveColorScheme(scheme, true)"
-                    role="menuitem"
-                    class="gradient-dropdown-item"
-                >
-                  <div class="selected-gradient-indicator">
-                    <i ng-if="$ctrl.isActiveColorScheme(scheme)" class="icon-check"></i>
-                  </div>
-                  <div class="gradient-bar gradient-bkg"
-                       ng-style="$ctrl.colorSchemeService.colorsToBackground(scheme.colors)"
-                  ></div>
-                </li>
-              </ul>
-            </div>
-            <i class="icon-info"></i>
-          </li>
           <li>
             <span class="label">Color scheme</span>
             <rf-color-scheme-dropdown serialized-single-band-options="$ctrl.getSerializedSingleBandOptions()"></rf-color-scheme-dropdown>

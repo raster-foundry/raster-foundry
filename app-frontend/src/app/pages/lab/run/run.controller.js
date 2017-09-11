@@ -111,6 +111,7 @@ export default class LabRunController {
     }
 
     createPreviewLayers() {
+        const layerOptions = {maxZoom: 30};
         if (this.previewLayers) {
             this.previewLayers.forEach(l => l.remove());
         }
@@ -119,14 +120,14 @@ export default class LabRunController {
             let url1 = this.getNodeUrl(this.previewData[1]);
             if (url0 && url1) {
                 this.previewLayers = [
-                    L.tileLayer(url0),
-                    L.tileLayer(url1)
+                    L.tileLayer(url0, layerOptions),
+                    L.tileLayer(url1, layerOptions)
                 ];
             }
         } else {
             let url0 = this.getNodeUrl(this.previewData);
             if (url0) {
-                this.previewLayers = [L.tileLayer(url0)];
+                this.previewLayers = [L.tileLayer(url0, layerOptions)];
             }
         }
     }

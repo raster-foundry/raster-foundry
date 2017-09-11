@@ -3,7 +3,7 @@
 const uuid = function b(a){return a?(a^Math.random()*16>>a/4).toString(16):([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,b)};
 /* eslint-enable */
 
-const defaultData = {minimum: 0, maximum: 255, buckets: _.range(0, 256).map((x) => {
+const defaultHistogramData = {minimum: 0, maximum: 255, buckets: _.range(0, 256).map((x) => {
     let y = x === 0 || x === 255 ? 0 : 1;
     return [x, y];
 })};
@@ -16,21 +16,11 @@ export default class NodeHistogramController {
         this.$element = $element;
     }
 
-    onMaskChange() {
-        if (this.refreshHistogram) {
-            this.refreshHistogram();
-        }
-        this.onBreakpointChange({breakpoints: this._breakpoints, masks: this._masks});
-    }
-
     $onInit() {
-        this.setDefaults(this.options);
-        this.$scope.$watch('$ctrl.options.discrete', () => {
-            if (this.refreshHistogram) {
-                this.refreshHistogram();
-            }
-            this.onBreakpointChange({breakpoints: this._breakpoints, masks: this._masks});
-        });
+        if (!this._options) {
+            this.setDefaults();
+        }
+
         let cancelApiWatch = this.$scope.$watch('$ctrl.api', (api) => {
             if (api.refresh) {
                 this.refreshHistogram = _.throttle(this.api.refresh, 100);
@@ -40,37 +30,57 @@ export default class NodeHistogramController {
         });
         this.id = uuid();
         this.api = {};
-        this.onBreakpointChange({breakpoints: this._breakpoints, masks: this._masks});
+
+        this.onBreakpointChange({
+            breakpoints: this._breakpoints, options: this._options
+        });
+
         if (!Number.isFinite(this.precision)) {
             this.precision = 0;
         }
         if (!this.histogramRange) {
-            this.histogramRange = {min: this.options.min, max: this.options.max};
+            this.histogramRange = {min: this._options.min, max: this._options.max};
         }
     }
 
     $onChanges(changes) {
-        if (changes.options && changes.options.currentValue) {
+        if (changes.options) {
             this.setDefaults(changes.options.currentValue);
+            this.baseColorScheme = this._options && this._options.baseScheme;
         }
 
         if (changes.histogram && changes.histogram.currentValue) {
             this.processDataToPlot(changes.histogram.currentValue);
             this.usingDefaultData = false;
         } else if (changes.histogram && !changes.histogram.currentValue) {
-            this.processDataToPlot(defaultData);
+            this.processDataToPlot(defaultHistogramData);
             this.usingDefaultData = true;
         }
 
-        if (changes.masks && changes.masks.currentValue) {
-            this._masks = Object.assign({min: false, max: false}, changes.masks.currentValue);
-            this.minChecked = this._masks.min;
-            this.maxChecked = this._masks.max;
-        }
-
         if (changes.breakpoints && changes.breakpoints.currentValue) {
-            this._breakpoints = changes.breakpoints.currentValue;
+            this._breakpoints = changes.breakpoints.currentValue.map((bp, index, arr) => {
+                if (bp.id) {
+                    return bp;
+                }
+                let isEndpoint = index === 0 || index === arr.length - 1;
+                bp.id = uuid();
+                bp.options = {
+                    style: isEndpoint ? 'bar' : 'arrow',
+                    alwaysShowNumbers: isEndpoint
+                };
+
+                return bp;
+            });
         }
+    }
+
+    onMaskChange() {
+        if (this.refreshHistogram) {
+            this.refreshHistogram();
+        }
+        this.onBreakpointChange({
+            breakpoints: this._breakpoints, options: this._options
+        });
     }
 
     updateHistogramColors() {
@@ -86,32 +96,35 @@ export default class NodeHistogramController {
         if (this.histogramRange) {
             range = this.histogramRange.max - this.histogramRange.min;
         } else {
-            range = this.options.max - this.options.min;
+            range = this._options.max - this._options.min;
         }
         let data;
         if (this.histogramRange) {
             data = this._breakpoints.map((bp) => {
-                let offset = (bp.breakpoint.value - this.histogramRange.min) / range * 100;
-                return {offset: `${offset}%`, color: bp.breakpoint.color};
+                let offset = (bp.value - this.histogramRange.min) / range * 100;
+                return {offset: `${offset}%`, color: bp.color};
             });
         } else {
             data = this._breakpoints.map((bp) => {
-                let offset = (bp.breakpoint.value - this.options.min) / range * 100;
-                return {offset: `${offset}%`, color: bp.breakpoint.color};
+                let offset = (bp.value - this._options.min) / range * 100;
+                return {offset: `${offset}%`, color: bp.color};
             });
         }
-        if (this.options.discrete) {
-            let offsetData = data.map((currentValue, index, array) => {
-                if (index !== array.length - 1) {
-                    return {offset: array[index + 1].offset, color: currentValue.color};
-                }
-                return currentValue;
-            });
-            data = _.flatten(_.zip(data, offsetData));
-        }
-        if (this._masks.min || this.options.discrete) {
+
+        // Example code used for displaying discrete colors instead of a gradient
+        // if (this._options.discrete) {
+        //     let offsetData = data.map((currentValue, index, array) => {
+        //         if (index !== array.length - 1) {
+        //             return {offset: array[index + 1].offset, color: currentValue.color};
+        //         }
+        //         return currentValue;
+        //     });
+        //     data = _.flatten(_.zip(data, offsetData));
+        // }
+
+        if (this._options.masks.min || this._options.discrete) {
             let last = _.last(data);
-            if (last.color === 'NODATA' || !this.options.discrete) {
+            if (last.color === 'NODATA' || !this._options.discrete) {
                 data.splice(0, 0, {offset: data[0].offset, color: '#353C58'});
                 data.splice(0, 0, {offset: data[0].offset, color: '#353C58'});
             } else {
@@ -119,9 +132,9 @@ export default class NodeHistogramController {
                 data.splice(0, 0, {offset: data[0].offset, color: last.color});
             }
         }
-        if (this._masks.max || this.options.discrete) {
+        if (this._options.masks.max || this._options.discrete) {
             let last = _.last(data);
-            if (last.color === 'NODATA' || !this.options.discrete) {
+            if (last.color === 'NODATA' || !this._options.discrete) {
                 data.push({offset: _.last(data).offset, color: '#353C58'});
                 data.push({offset: _.last(data).offset, color: '#353C58'});
             } else {
@@ -141,9 +154,14 @@ export default class NodeHistogramController {
     }
 
     setDefaults(options) {
-        this.options = Object.assign({
+        this._options = Object.assign({
             min: 0,
-            max: 255
+            max: 255,
+            masks: {
+                min: false,
+                max: false
+            },
+            scale: 'SEQUENTIAL'
         }, options ? options : {});
 
         this.histOptions = {
@@ -177,48 +195,27 @@ export default class NodeHistogramController {
                 }
             }
         };
-
-        if (!this._breakpoints) {
-            this._breakpoints = [
-                {
-                    key: 'min',
-                    breakpoint: {
-                        value: this.options.min,
-                        style: 'bar',
-                        alwaysShowNumbers: true,
-                        color: '#ff0000'
-                    }
-                }, {
-                    key: 'max',
-                    breakpoint: {
-                        value: this.options.max,
-                        style: 'bar',
-                        alwaysShowNumbers: true,
-                        color: '#ff0000'
-                    }
-                }
-            ];
-        }
     }
 
     rescaleBreakpoints(min, max) {
         let currentRange = this.histogramRange ?
             this.histogramRange.max - this.histogramRange.min :
-            this.options.max - this.options.min;
+            this._options.max - this._options.min;
         let newRange = max - min;
         if (this._breakpoints && currentRange !== newRange && newRange > 0) {
             this._breakpoints.forEach((bp) => {
-                let breakpoint = bp.breakpoint;
                 let percent = (
-                    breakpoint.value -
-                        (this.histogramRange ? this.histogramRange.min : this.options.min)
+                    bp.value -
+                        (this.histogramRange ? this.histogramRange.min : this._options.min)
                 ) / currentRange;
                 let newVal = percent * newRange + min;
-                breakpoint.value = newVal;
-                return breakpoint;
+                bp.value = newVal;
+                return bp;
             });
-            if (this._masks) {
-                this.onBreakpointChange({breakpoints: this._breakpoints, masks: this._masks});
+            if (this._options) {
+                this.onBreakpointChange({
+                    breakpoints: this._breakpoints, options: this._options
+                });
             }
         }
         this.histogramRange = {min: min, max: max};
@@ -229,7 +226,7 @@ export default class NodeHistogramController {
         let range = newHistogram.maximum - newHistogram.minimum;
         if (range === 0) {
             this.noValidData = true;
-            newHistogram = defaultData;
+            newHistogram = defaultHistogramData;
             range = newHistogram.maximum - newHistogram.minimum;
         } else if (this.noValidData) {
             this.noValidData = false;
@@ -283,23 +280,51 @@ export default class NodeHistogramController {
     }
 
     onChange(bp, breakpoint) {
-        let min = _.first(this._breakpoints).breakpoint.value;
-        let max = _.last(this._breakpoints).breakpoint.value;
-        let index = this._breakpoints.findIndex((b) => b.breakpoint === bp);
+        let min = _.first(this._breakpoints).value;
+        let max = _.last(this._breakpoints).value;
+        let index = this._breakpoints.findIndex((b) => b === bp);
         if (index === 0) {
-            let second = this._breakpoints[1].breakpoint.value;
+            let second = this._breakpoints[1].value;
             bp.value = breakpoint < second ? breakpoint : second;
         } else if (index === this._breakpoints.length - 1) {
-            let secondToLast = this._breakpoints[this._breakpoints.length - 2].breakpoint.value;
+            let secondToLast = this._breakpoints[this._breakpoints.length - 2].value;
             bp.value = breakpoint > secondToLast ? breakpoint : secondToLast;
         } else {
             bp.value = Math.min(Math.max(breakpoint, min), max);
-            this._breakpoints.sort((a, b) => a.breakpoint.value - b.breakpoint.value);
+            this._breakpoints.sort((a, b) => a.value - b.value);
         }
 
-        this.onBreakpointChange({breakpoints: this._breakpoints, masks: this._masks});
+        this.onBreakpointChange({
+            breakpoints: this._breakpoints, options: this._options
+        });
         if (this.refreshHistogram) {
             this.refreshHistogram();
         }
+    }
+
+    onColorSchemeChange(colorSchemeOptions) {
+        if (this._options.baseScheme &&
+            JSON.stringify(colorSchemeOptions.colorScheme) ===
+            JSON.stringify(this._options.baseScheme.colorScheme)
+           ) {
+            return;
+        }
+        let currentRange = this.histogramRange;
+        this.rescaleBreakpoints(0, colorSchemeOptions.colorScheme.length - 1);
+        this._breakpoints = colorSchemeOptions.colorScheme.map((color, index, arr) => {
+            let isEndpoint = index === 0 || index === arr.length - 1;
+            return {
+                id: uuid(),
+                value: index,
+                color: color,
+                options: {
+                    style: isEndpoint ? 'bar' : 'arrow',
+                    alwaysShowNumbers: isEndpoint
+                }
+            };
+        });
+        this._options.scale = colorSchemeOptions.dataType;
+        this._options.baseScheme = colorSchemeOptions;
+        this.rescaleBreakpoints(currentRange.min, currentRange.max);
     }
 }

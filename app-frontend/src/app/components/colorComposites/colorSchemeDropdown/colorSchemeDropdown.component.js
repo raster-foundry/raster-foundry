@@ -3,7 +3,7 @@ const rfColorSchemeDropdown = {
     templateUrl: colorSchemeDropdownTpl,
     controller: 'ColorSchemeDropdownController',
     bindings: {
-        serializedSingleBandOptions: '<',
+        colorSchemeOptions: '<',
         onChange: '&'
     },
     controllerAs: '$ctrl'
