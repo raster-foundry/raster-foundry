@@ -59,7 +59,7 @@ export default class DiagramContainerController {
                       <button class="btn node-button" type="button"
                               ng-if="onPreview && model.get('cellType') !== 'const'"
                               ng-click="onPreview($event, this.model)">
-                      <span class="icon-eye"></span>
+                      <span class="icon-map"></span>
                       </button>
                       <button class="btn node-button" type="button"
                               ng-if="model.get('cellType') !== 'const'"
