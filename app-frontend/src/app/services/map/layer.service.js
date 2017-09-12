@@ -87,7 +87,7 @@ export default (app) => {
                 });
             }
             return this.getMosaicLayerURL().then((url) => {
-                let options = {maxZoom: 30, bounds: this.bounds};
+                let options = {bounds: this.bounds};
                 this._mosaicTiles = L.tileLayer(url, options);
                 return this._mosaicTiles;
             });
@@ -99,18 +99,6 @@ export default (app) => {
             return this.$q((resolve) => {
                 resolve(`${this.tileServer}/${this.projectId}/{z}/{x}/{y}/${formattedParams}`);
             });
-        }
-
-        /**
-         * Helper function to inject required tile layer query params into an object
-         *
-         * @param {object} object containing tile query params
-         * @returns {object} initial object with necessary params injected
-         */
-        tileLayerParams() {
-            return {
-                tag: (new Date()).getTime()
-            };
         }
 
         /**
