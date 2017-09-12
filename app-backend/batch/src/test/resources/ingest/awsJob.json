@@ -19,28 +19,28 @@
             "extentCrs": "epsg:32654",
             "cellSize": {"width": 37.151447651062888, "height": -37.151447651062888},
             "crs": "epsg:32654",
-            "bandMaps": [{"source": 1, "target": 1}]
+            "bandMaps": [{"source": 1, "target": {"name": "1", "index": 1}}]
         }, {
             "uri": "http://landsat-pds.s3.amazonaws.com/L8/107/035/LC81070352015218LGN00/LC81070352015218LGN00_B3.TIF",
             "extent": [138.8339238,  34.9569460, 141.4502449,  37.1094577],
             "extentCrs": "epsg:32654",
             "cellSize": {"width": 37.151447651062888, "height": -37.151447651062888},
             "crs": "epsg:32654",
-            "bandMaps": [{"source": 1, "target": 2}]
+            "bandMaps": [{"source": 1, "target": {"name": "2", "index": 2}}]
         }, {
             "uri": "http://landsat-pds.s3.amazonaws.com/L8/107/035/LC81070352015218LGN00/LC81070352015218LGN00_B2.TIF",
             "extent": [138.8339238,  34.9569460, 141.4502449,  37.1094577],
             "extentCrs": "epsg:32654",
             "cellSize": {"width": 37.151447651062888, "height": -37.151447651062888},
             "crs": "epsg:32654",
-            "bandMaps": [{"source": 1, "target": 3}]
+            "bandMaps": [{"source": 1, "target": {"name": "3", "index": 3}}]
         }, {
             "uri": "http://landsat-pds.s3.amazonaws.com/L8/107/035/LC81070352015218LGN00/LC81070352015218LGN00_B5.TIF",
             "extent": [138.8339238,  34.9569460, 141.4502449,  37.1094577],
             "extentCrs": "epsg:32654",
             "cellSize": {"width": 37.151447651062888, "height": -37.151447651062888},
             "crs": "epsg:32654",
-            "bandMaps": [{"source": 1, "target": 4}]
+            "bandMaps": [{"source": 1, "target": {"name": "4", "index": 4}}]
         }]
     }]
 }

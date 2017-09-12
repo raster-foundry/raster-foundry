@@ -8,4 +8,4 @@ import io.circe.generic.JsonCodec
   * @param target The band number in the multibandtile on write
   */
 @JsonCodec
-case class BandMapping(source: Int, target: Int)
+case class BandMapping(source: Int, target: TargetBand)

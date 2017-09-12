@@ -20,7 +20,7 @@ class Band(BaseModel):
         self.wavelength = wavelength
 
     def __repr__(self):
-        return '<Band: {name}-{number}'.format(name=self.name, number=self.number)
+        return '<Band: {name}-{number}>'.format(name=self.name, number=self.number)
 
     @classmethod
     def from_dict(cls, d):
