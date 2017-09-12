@@ -47,7 +47,9 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
           s"${tileInfoPath}/B05.jp2",
           s"${tileInfoPath}/B06.jp2",
           s"${tileInfoPath}/B07.jp2",
-          s"${tileInfoPath}/B8A.jp2"
+          s"${tileInfoPath}/B8A.jp2",
+          s"${tileInfoPath}/B11.jp2",
+          s"${tileInfoPath}/B12.jp2"
         )
       case 60f =>
         List(

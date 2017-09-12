@@ -42,7 +42,7 @@ class IngestDefinitionSpec extends FunSpec with Matchers with BatchSpec {
       |          "bandMaps": [
       |            {
       |              "source": 1,
-      |              "target": 1
+      |              "target": {"name": "1", "index": 1}
       |            }
       |          ]
       |        },
@@ -63,7 +63,7 @@ class IngestDefinitionSpec extends FunSpec with Matchers with BatchSpec {
       |          "bandMaps": [
       |            {
       |              "source": 1,
-      |              "target": 2
+      |              "target": {"name": "2", "index": 2}
       |            }
       |          ]
       |        },
@@ -84,7 +84,7 @@ class IngestDefinitionSpec extends FunSpec with Matchers with BatchSpec {
       |          "bandMaps": [
       |            {
       |              "source": 1,
-      |              "target": 3
+      |              "target": {"name": "3", "index": 3}
       |            }
       |          ]
       |        },
@@ -105,7 +105,7 @@ class IngestDefinitionSpec extends FunSpec with Matchers with BatchSpec {
       |          "bandMaps": [
       |            {
       |              "source": 1,
-      |              "target": 4
+      |              "target": {"name": 4, "index": 4}
       |            }
       |          ]
       |        }
@@ -151,7 +151,7 @@ class IngestDefinitionSpec extends FunSpec with Matchers with BatchSpec {
       |          "bandMaps": [
       |            {
       |              "source": 1,
-      |              "target": 1
+      |              "target": {"name": "1", "index": 1}
       |            }
       |          ]
       |        },
@@ -172,7 +172,7 @@ class IngestDefinitionSpec extends FunSpec with Matchers with BatchSpec {
       |          "bandMaps": [
       |            {
       |              "source": 1,
-      |              "target": 2
+      |              "target": {"name": "2", "index": 2}
       |            }
       |          ]
       |        },
@@ -193,7 +193,7 @@ class IngestDefinitionSpec extends FunSpec with Matchers with BatchSpec {
       |          "bandMaps": [
       |            {
       |              "source": 1,
-      |              "target": 3
+      |              "target": {"name": "3", "index": 3}
       |            }
       |          ]
       |        },
@@ -214,7 +214,7 @@ class IngestDefinitionSpec extends FunSpec with Matchers with BatchSpec {
       |          "bandMaps": [
       |            {
       |              "source": 1,
-      |              "target": 4
+      |              "target": {"name": "4", "index": 4}
       |            }
       |          ]
       |        }
@@ -249,7 +249,7 @@ class IngestDefinitionSpec extends FunSpec with Matchers with BatchSpec {
       |          "bandMaps": [
       |            {
       |              "source": 1,
-      |              "target": 1
+      |              "target": {"name": "1", "index": 1}
       |            }
       |          ]
       |        },
@@ -258,7 +258,7 @@ class IngestDefinitionSpec extends FunSpec with Matchers with BatchSpec {
       |          "bandMaps": [
       |            {
       |              "source": 1,
-      |              "target": 2
+      |              "target": {"name": "2", "index": 2}
       |            }
       |          ]
       |        },
@@ -267,7 +267,7 @@ class IngestDefinitionSpec extends FunSpec with Matchers with BatchSpec {
       |          "bandMaps": [
       |            {
       |              "source": 1,
-      |              "target": 3
+      |              "target": {"name": "3", "index": 3}
       |            }
       |          ]
       |        },
@@ -276,7 +276,7 @@ class IngestDefinitionSpec extends FunSpec with Matchers with BatchSpec {
       |          "bandMaps": [
       |            {
       |              "source": 1,
-      |              "target": 4
+      |              "target": {"name": "4", "index": 4}
       |            }
       |          ]
       |        }

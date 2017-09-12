@@ -8,8 +8,13 @@ import click
 from ..utils.io import IngestStatus
 from ..models import Scene
 from ..ingest.models import Ingest
-from ..ingest import create_landsat8_ingest, create_ingest_definition
+from ..ingest import (
+    create_landsat8_ingest,
+    create_sentinel2_ingest,
+    create_ingest_definition
+)
 from ..uploads.landsat8.settings import datasource_id as landsat_id
+from ..uploads.sentinel2.settings import datasource_id as sentinel2_id
 from ..utils.emr import get_cluster_id, wait_for_emr_success
 
 logger = logging.getLogger(__name__)
@@ -54,10 +59,12 @@ def save_ingest_def_to_s3(scene_id, ignore_previous=False):
     logger.info('Successfully updated scene (%s) status', scene_id)
 
     logger.info('Creating ingest definition')
-    if scene.datasource != landsat_id:
-        ingest_definition = create_ingest_definition(scene)
-    else:
+    if scene.datasource == landsat_id:
         ingest_definition = create_landsat8_ingest(scene)
+    elif scene.datasource == sentinel2_id:
+        ingest_definition = create_sentinel2_ingest(scene)
+    else:
+        ingest_definition = create_ingest_definition(scene)
     ingest_definition.put_in_s3()
     logger.info('Successfully created and pushed ingest definition for scene %s', scene)
 

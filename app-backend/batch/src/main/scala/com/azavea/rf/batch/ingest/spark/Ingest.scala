@@ -212,7 +212,7 @@ object Ingest extends SparkJob with LazyLogging with Config {
     val tileSize = layer.output.tileSize
     val destCRS = layer.output.crs
     val ndPattern = layer.output.ndPattern
-    val bandCount: Int = layer.sources.map(_.bandMaps.map(_.target).max).max
+    val bandCount: Int = layer.sources.map(_.bandMaps.map(_.target.index).max).max
     val layoutScheme = ZoomedLayoutScheme(destCRS, tileSize)
     val s3Client = S3Client.DEFAULT
     val repartitionSize =
@@ -249,7 +249,7 @@ object Ingest extends SparkJob with LazyLogging with Config {
           source.bandMaps.map { bm: BandMapping =>
             // GeoTrellis multi-band tiles are 0 indexed
             val band = maskedChip.band(bm.source - 1).reproject(chipExtent, geotiff.crs, destCRS)
-            (ProjectedExtent(band.extent, destCRS), bm.target - 1) -> band.tile
+            (ProjectedExtent(band.extent, destCRS), bm.target.index - 1) -> band.tile
           }
         }
 

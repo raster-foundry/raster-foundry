@@ -26,23 +26,6 @@ def parse_mtl(mtl_file_str):
     return mtl_dict
 
 
-def get_crs(scene):
-    """Gets MTL file for a scene and calculates CRS
-
-    Notes:
-        This is _fairly_ specific to Landsat8 in S3 right now.
-        All Landsat 8 scenes have UTM codes in the Northern hemisphere (prefix = 326),
-        which obviously isn't correct.
-
-    Returns:
-        str
-    """
-    mtl_url = scene.metadataFiles[0]
-    response = requests.get(mtl_url)
-    mtl_dict = parse_mtl(response.text)
-    return 'epsg:326{}'.format(mtl_dict['UTM_ZONE'])
-
-
 def get_band_num(image):
     """Extract band number from a Landsat 8 image
 
@@ -57,19 +40,22 @@ def get_band_num(image):
     return int(m.group(1))
 
 
-def get_source(image, crs, extent):
+def get_source(image, extent):
     """Constructs source for a Landsat 8 image
 
     Args:
-        image (dict): image representing a tif for Landsat 8
-        crs (str): crs of scene
+        image (Image): image representing a tif for Landsat 8
         extent (list[int]): extent of scene
 
     Return:
         Source
     """
     uri = image.sourceUri
-    band_maps = [{'source': 1, 'target': get_band_num(image)}]
+    band_maps = [
+        {'source': 1,
+         'target': {'name': image.filename,
+                    'index': get_band_num(image)}}
+    ]
     cell_size = {'width': image.resolutionMeters,
                  'height': image.resolutionMeters}
     return Source(uri, band_maps, cell_size)
@@ -85,9 +71,8 @@ def get_landsat8_layer(scene):
         Layer
     """
     extent = scene.get_extent()
-    crs = get_crs(scene)
     output_uri = 's3://{}/layers'.format(layer_s3_bucket)
-    sources = [get_source(image, crs, extent) for image in scene.images]
+    sources = [get_source(image, extent) for image in scene.images]
     cell_size = {'width': 30, 'height': 30}
     return Layer(scene.id, output_uri, sources, cell_size)
 

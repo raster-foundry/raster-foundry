@@ -59,7 +59,7 @@ def s3_url(bucket, key):
 
 
 def s3_bucket_and_key_from_url(s3_url):
-    parts = urlparse.urlparse(s3_url) 
+    parts = urlparse.urlparse(s3_url)
     # parts.path[1:] drops the leading slash that urlparse includes
     return (parts.netloc, parts.path[1:])
 
