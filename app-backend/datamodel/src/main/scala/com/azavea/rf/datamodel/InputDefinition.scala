@@ -5,7 +5,6 @@ import java.util.UUID
 import cats.implicits._
 import com.azavea.rf.bridge._
 import com.azavea.rf.tool.ast.MapAlgebraAST
-import com.azavea.rf.tool.params.EvalParams
 import geotrellis.vector.MultiPolygon
 import io.circe._
 import io.circe.generic.JsonCodec
@@ -51,7 +50,6 @@ case class SimpleInput(layers: Array[ExportLayerDefinition], mask: Option[MultiP
 @JsonCodec
 case class ASTInput(
   ast: MapAlgebraAST,
-  params: EvalParams,
   /* Ingest locations of "singleton" scenes that appear in the EvalParams */
   ingestLocs: Map[UUID, String],
   /* Ingest locations (and implicit ordering) of each scene in each project */

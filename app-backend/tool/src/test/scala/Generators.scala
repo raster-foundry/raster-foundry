@@ -54,7 +54,7 @@ object Generators {
     cMap  <- Gen.option(genClassMap)
   } yield NodeMetadata(label, desc, hist, cRamp, cMap)
 
-  lazy val genRFMLRaster: Gen[RFMLRaster] = for {
+  lazy val genRFMLRaster: Gen[MapAlgebraAST.RFMLRaster] = for {
     band <- arbitrary[Int]
     id <- arbitrary[UUID]
     constructor <- Gen.lzy(Gen.oneOf(SceneRaster.apply _, ProjectRaster.apply _))

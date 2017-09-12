@@ -6,6 +6,7 @@ import com.azavea.rf.database.query.{ExportQueryParameters, ListQueryResult}
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast._
+import MapAlgebraAST._
 import com.azavea.rf.tool.params._
 
 import cats.data._
@@ -250,17 +251,10 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
     for {
       tRun   <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
       tool   <- OptionT(Tools.getTool(tRun.tool, user))
-      oldAst <- OptionT.pure[Future, MapAlgebraAST](tool.definition.as[MapAlgebraAST].valueOr(throw _))
-      subs   <- assembleSubstitutions(oldAst, { id: UUID =>
-                  OptionT(Tools.getTool(id, user))
-                    .map({ referrent => referrent.definition.as[MapAlgebraAST].valueOr(throw _) })
-                    .value
-                })
-      ast    <- OptionT.fromOption[Future](oldAst.substitute(subs))
-      params <- OptionT.pure[Future, EvalParams](tRun.executionParameters.as[EvalParams].valueOr(throw _))
-      (scenes, projects) <- ingestLocs(params, user)
+      ast    <- OptionT.pure[Future, MapAlgebraAST](tRun.executionParameters.as[MapAlgebraAST].valueOr(throw _))
+      (scenes, projects) <- ingestLocs(ast, user)
     } yield {
-      ASTInput(ast, params, scenes, projects)
+      ASTInput(ast, scenes, projects)
     }
   }
 
@@ -269,26 +263,26 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
     * found to have no `ingestLocation` value, the entire operation fails.
     */
   private def ingestLocs(
-    sources: EvalParams,
+    ast: MapAlgebraAST,
     user: User
   )(implicit database: DB): OptionT[Future, (Map[UUID, String], Map[UUID, List[(UUID, String)]])] = {
 
     val (scenes, projects): (Stream[SceneRaster], Stream[ProjectRaster]) =
-      sources.sources.toStream
-        .map(_._2)
+      ast.sources.toStream
         .foldLeft((Stream.empty[SceneRaster], Stream.empty[ProjectRaster]))({
           case ((sacc, pacc), s: SceneRaster) => (s #:: sacc, pacc)
           case ((sacc, pacc), p: ProjectRaster) => (sacc, p #:: pacc)
+          case ((sacc, pacc), _) => (sacc, pacc)
         })
 
-    val scenesF: OptionT[Future, Map[UUID, String]] = scenes.map({ case SceneRaster(id, _, _) =>
-      OptionT(Scenes.getScene(id, user)).flatMap(s =>
+    val scenesF: OptionT[Future, Map[UUID, String]] = scenes.map({ case SceneRaster(_, sceneId, _, _, _) =>
+      OptionT(Scenes.getScene(sceneId, user)).flatMap(s =>
         OptionT.fromOption(s.ingestLocation.map((s.id, _)))
       )
     }).sequence.map(_.toMap)
 
     val projectsF: OptionT[Future, Map[UUID, List[(UUID, String)]]] =
-      projects.map({ case ProjectRaster(id, _, _) =>
+      projects.map({ case ProjectRaster(id, projId, _, _, _) =>
         OptionT(ScenesToProjects.allSceneIngestLocs(id)).map((id, _))
       }).sequence.map(_.toMap)
 

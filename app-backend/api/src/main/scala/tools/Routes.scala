@@ -128,10 +128,10 @@ trait ToolRoutes extends Authentication
   }
 
   def validateAST: Route = authenticate { user =>
-    entity(as[Json]) { ast =>
+    entity(as[MapAlgebraAST]) { ast =>
       handleExceptions(interpreterExceptionHandler) {
         complete {
-          validateOnlyAST[Unit](ast)
+          validateTree[Unit](ast)
           (StatusCodes.OK, ast)
         }
       }

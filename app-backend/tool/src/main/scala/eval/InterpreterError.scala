@@ -1,9 +1,11 @@
 package com.azavea.rf.tool.eval
 
-import java.util.UUID
+import com.azavea.rf.tool.ast._
 
 import io.circe._
 import io.circe.syntax._
+
+import java.util.UUID
 
 
 /** The type [[Interpreter.Interpreted]] is either a successfully interpreted AST
@@ -52,9 +54,9 @@ case class AttributeStoreFetchError(id: UUID) extends InterpreterError {
 }
 
 /** An error encountered when a bound parameter's source can't be resolved */
-case class RasterRetrievalError(id: UUID, refId: UUID) extends InterpreterError {
+case class RasterRetrievalError(rfmlraster: RFMLRaster) extends InterpreterError {
   val scope = "i/o"
-  def repr = s"Unable to retrieve raster for ${refId} on AST node ${id}"
+  def repr = s"Unable to retrieve raster for ${rfmlraster.toString}"
 }
 
 case class DatabaseError(id: UUID) extends InterpreterError {
@@ -70,6 +72,11 @@ case class ASTDecodeError(msg: DecodingFailure) extends InterpreterError {
 case class InvalidOverride(id: UUID) extends InterpreterError {
   val scope = id.toString
   def repr = s"Node ${id} was given an incompatible override value"
+}
+
+case class LazyTileEvaluationError(ast: MapAlgebraAST) extends InterpreterError {
+  val scope = ast.id.toString
+  def repr = s"Unknown error during lazytile evaluation for $ast"
 }
 
 object InterpreterError {

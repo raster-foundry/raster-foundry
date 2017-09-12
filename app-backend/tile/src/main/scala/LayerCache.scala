@@ -130,19 +130,17 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     if (voidCache) rfCache.delete(cacheKey)
     rfCache.cachingOptionT(cacheKey, doCache = cacheConfig.tool.enabled) {
       for {
-        (tool, toolRun) <- LayerCache.toolAndToolRun(toolRunId, user, voidCache)
-        (ast, params) <- LayerCache.toolEvalRequirements(toolRunId, subNode, user, voidCache)
-        (extent, zoom) <- TileSources.fullDataWindow(params.sources)
-        lztile <- OptionT(Interpreter.interpretGlobal(ast, params.sources, params.overrides,
-          extent, { r => TileSources.globalSource(extent, zoom, r) }).map(_.toOption)
-        )
+        toolRun <- LayerCache.toolRun(toolRunId, user, voidCache)
+        ast <- LayerCache.toolEvalRequirements(toolRunId, subNode, user, voidCache)
+        (extent, zoom) <- TileSources.fullDataWindow(ast.tileSources)
+        lztile <- OptionT.fromOption[Future](Interpreter.interpretGlobal(ast, extent).toOption)
         tile <- OptionT.fromOption[Future](lztile.evaluateDouble)
       } yield {
         val hist = StreamingHistogram.fromTile(tile)
-        val currentMetadata = params.metadata.getOrElse(ast.id, NodeMetadata())
+        val currentMetadata = ast.metadata.getOrElse(NodeMetadata())
         val updatedMetadata = currentMetadata.copy(histogram = Some(hist))
-        val updatedParams = params.copy(metadata = params.metadata + (ast.id -> updatedMetadata))
-        val updatedToolRun = toolRun.copy(executionParameters = updatedParams.asJson)
+        val updatedAst = ast.withMetadata(updatedMetadata)
+        val updatedToolRun = toolRun.copy(executionParameters = updatedAst.asJson)
         try {
           database.db.run {
             ToolRuns.updateToolRun(updatedToolRun, toolRun.id, user)
@@ -169,50 +167,82 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     }
   }
 
+  def toolRun(
+    toolRunId: UUID,
+    user: User,
+    voidCache: Boolean = false
+  ): OptionT[Future, ToolRun] = {
+    rfCache.cachingOptionT(s"tool+run-$toolRunId-${user.id}", doCache = cacheConfig.tool.enabled) {
+      for {
+        toolRun <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
+      } yield toolRun
+    }
+  }
+
   /** Calculate all of the prerequisites to evaluation of an AST over a set of tile sources */
   def toolEvalRequirements(
     toolRunId: UUID,
     subNode: Option[UUID],
     user: User,
     voidCache: Boolean = false
-  ): OptionT[Future, (MapAlgebraAST, EvalParams)] =
+  ): OptionT[Future, MapAlgebraAST] =
     traceName("LayerCache.toolEvalRequirements") {
       val cacheKey = s"ast+params-$toolRunId-${subNode}-${user.id}"
       if (voidCache) rfCache.delete(cacheKey)
       rfCache.cachingOptionT(cacheKey) {
         traceName("LayerCache.toolEvalRequirements (no cache)") {
           for {
-            (tool, toolRun) <- LayerCache.toolAndToolRun(toolRunId, user)
-            oldAst   <- OptionT.fromOption[Future]({
-              logger.debug(s"Parsing Tool AST with ${tool.definition}")
-              val entireAST = tool.definition.as[MapAlgebraAST].valueOr(throw _)
-              subNode.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
-            })
-            subs     <- assembleSubstitutions(oldAst, { id: UUID =>
-              OptionT(Tools.getTool(id, user))
-                .map({ referrent => referrent.definition.as[MapAlgebraAST].valueOr(throw _) })
-                .value
-            })
-            ast      <- OptionT.fromOption[Future](oldAst.substitute(subs))
-            params   <- OptionT.pure[Future, EvalParams]({
-              logger.debug(s"Parsing ToolRun parameters with ${toolRun.executionParameters}")
-              val parsedParams = toolRun.executionParameters.as[EvalParams].valueOr(throw _)
-              val metadataOverride = parsedParams.metadata.get(ast.id)
-              val md = (metadataOverride |@| ast.metadata).map(_.fallbackTo(_))
-                .orElse(metadataOverride)
-                .orElse(ast.metadata)
-                .getOrElse(NodeMetadata())
-
-              EvalParams(
-                parsedParams.sources,
-                parsedParams.metadata + (ast.id -> md),
-                parsedParams.overrides
-              )
-            })
-          } yield (ast, params)
+            toolRun <- LayerCache.toolRun(toolRunId, user)
+            ast      <- OptionT.fromOption[Future](toolRun.executionParameters.as[MapAlgebraAST].toOption)
+          } yield ast
         }
       }
     }
+
+  /** Calculate all of the prerequisites to evaluation of an AST over a set of tile sources */
+  //def toolEvalRequirementsOld(
+  //  toolRunId: UUID,
+  //  subNode: Option[UUID],
+  //  user: User,
+  //  voidCache: Boolean = false
+  //): OptionT[Future, MapAlgebraAST] =
+  //  traceName("LayerCache.toolEvalRequirements") {
+  //    val cacheKey = s"ast+params-$toolRunId-${subNode}-${user.id}"
+  //    if (voidCache) rfCache.delete(cacheKey)
+  //    rfCache.cachingOptionT(cacheKey) {
+  //      traceName("LayerCache.toolEvalRequirements (no cache)") {
+  //        for {
+  //          (tool, toolRun) <- LayerCache.toolAndToolRun(toolRunId, user)
+  //          oldAst   <- OptionT.fromOption[Future]({
+  //            logger.debug(s"Parsing Tool AST with ${tool.definition}")
+  //            val entireAST = tool.definition.as[MapAlgebraAST].valueOr(throw _)
+  //            subNode.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
+  //          })
+  //          subs     <- assembleSubstitutions(oldAst, { id: UUID =>
+  //            OptionT(Tools.getTool(id, user))
+  //              .map({ referrent => referrent.definition.as[MapAlgebraAST].valueOr(throw _) })
+  //              .value
+  //          })
+  //          ast      <- OptionT.fromOption[Future](oldAst.substitute(subs))
+  //          params   <- OptionT.pure[Future, EvalParams]({
+  //            logger.debug(s"Parsing ToolRun parameters with ${toolRun.executionParameters}")
+  //            val parsedParams = toolRun.executionParameters.as[EvalParams].valueOr(throw _)
+  //            val metadataOverride = parsedParams.metadata.get(ast.id)
+  //            val md = (metadataOverride |@| ast.metadata).map(_.fallbackTo(_))
+  //              .orElse(metadataOverride)
+  //              .orElse(ast.metadata)
+  //              .getOrElse(NodeMetadata())
+
+  //            EvalParams(
+  //              parsedParams.sources,
+  //              parsedParams.metadata + (ast.id -> md),
+  //              parsedParams.overrides
+  //            )
+  //          })
+  //        } yield (ast, params)
+  //      }
+  //    }
+  //  }
 
 
   /** Calculate all of the prerequisites to evaluation of an AST over a set of tile sources */
@@ -227,10 +257,9 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     rfCache.cachingOptionT(cacheKey, doCache = cacheConfig.tool.enabled) {
       traceName("LayerCache.toolRunColorMap (no cache)") {
         for {
-          (tool, toolRun) <- LayerCache.toolAndToolRun(toolRunId, user)
-          (ast, params) <- LayerCache.toolEvalRequirements(toolRunId, subNode, user)
+          ast <- LayerCache.toolEvalRequirements(toolRunId, subNode, user)
           nodeId <- OptionT.pure[Future, UUID](subNode.getOrElse(ast.id))
-          metadata <- OptionT.fromOption[Future](params.metadata.get(nodeId))
+          metadata <- OptionT.fromOption[Future](ast.find(nodeId).flatMap(_.metadata))
           cmap <- OptionT.fromOption[Future](metadata.classMap.map(_.toColorMap))
                     .orElse({
                       for {

@@ -7,7 +7,8 @@ import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.params._
 import com.typesafe.scalalogging.LazyLogging
-import cats.data._
+import cats.data.{NonEmptyList => NEL, _}
+import cats.data.Validated._
 import cats.implicits._
 import geotrellis.raster._
 import geotrellis.slick.Projected
@@ -15,12 +16,12 @@ import geotrellis.spark._
 import geotrellis.spark.io.s3._
 import geotrellis.spark.io._
 import geotrellis.vector.Extent
-import java.util.UUID
-
 import geotrellis.spark.io.postgres.PostgresAttributeStore
 
 import scala.util._
 import scala.concurrent._
+import java.util.UUID
+
 
 /** Interpreting a [[MapAlgebraAST]] requires providing a function from
   *  (at least) an RFMLRaster (the source/terminal-node type of the AST)
@@ -40,10 +41,9 @@ object TileSources extends LazyLogging {
   val store = PostgresAttributeStore()
 
   def fullDataWindow(
-    rs: Map[UUID, RFMLRaster]
+    rs: Set[RFMLRaster]
   )(implicit database: Database): OptionT[Future, (Extent, Int)] = {
     rs
-      .values
       .toStream
       .map(dataWindow)
       .sequence
@@ -64,13 +64,13 @@ object TileSources extends LazyLogging {
     * histogram.
     */
   def dataWindow(r: RFMLRaster)(implicit database: Database): OptionT[Future, (Extent, Int)] = r match {
-    case SceneRaster(id, Some(_), _) => {
+    case MapAlgebraAST.SceneRaster(id, sceneId, Some(_), _, _) => {
       implicit val sceneIds = Set(id)
-      OptionT.fromOption(GlobalSummary.minAcceptableSceneZoom(id, store, 256))  // TODO: 512?
+      OptionT.fromOption(GlobalSummary.minAcceptableSceneZoom(sceneId, store, 256))  // TODO: 512?
     }
-    case ProjectRaster(id, Some(_), _) => {
+    case MapAlgebraAST.ProjectRaster(id, projId, Some(_), _, _) => {
       implicit val sceneIds = Set(id)
-      GlobalSummary.minAcceptableProjectZoom(id, 256) // TODO: 512?
+      GlobalSummary.minAcceptableProjectZoom(projId, 256) // TODO: 512?
     }
 
     /* Don't attempt work for a RFMLRaster which will fail AST validation anyway */
@@ -86,7 +86,7 @@ object TileSources extends LazyLogging {
     zoom: Int,
     r: RFMLRaster
   )(implicit database: Database): Future[Option[TileWithNeighbors]] = r match {
-    case SceneRaster(id, Some(band), maybeND) =>
+    case MapAlgebraAST.SceneRaster(id, sceneId, Some(band), maybeND, _) =>
       implicit val sceneIds = Set(id)
       Future {
           Try {
@@ -106,7 +106,7 @@ object TileSources extends LazyLogging {
           }
       }
 
-    case ProjectRaster(projId, Some(band), maybeND) => {
+    case MapAlgebraAST.ProjectRaster(id, projId, Some(band), maybeND, _) => {
       Mosaic.rawForExtent(projId, zoom, Some(Projected(extent.toPolygon, 3857)))
         .map({ tile =>
           TileWithNeighbors(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)), None)
@@ -117,12 +117,12 @@ object TileSources extends LazyLogging {
   }
 
   /** This source provides support for z/x/y TMS tiles */
-  def cachedTmsSource(r: RFMLRaster, hasBuffer: Boolean, z: Int, x: Int, y: Int)(implicit database: Database): Future[Option[TileWithNeighbors]] = {
+  def cachedTmsSource(r: RFMLRaster, hasBuffer: Boolean, z: Int, x: Int, y: Int)(implicit database: Database): Future[Interpreted[TileWithNeighbors]] = {
     lazy val ndtile = IntConstantTile(NODATA, 256, 256)
     r match {
-      case scene @ SceneRaster(sceneId, Some(band), maybeND) =>
+      case scene @ MapAlgebraAST.SceneRaster(id, sceneId, Some(band), maybeND, _) =>
         implicit val sceneIds = Set(sceneId)
-        if (hasBuffer)
+        val futureSource = if (hasBuffer)
           (for {
             tl <- LayerCache.layerTile(sceneId, z, SpatialKey(x - 1, y - 1))
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
@@ -157,14 +157,20 @@ object TileSources extends LazyLogging {
           LayerCache.layerTile(sceneId, z, SpatialKey(x, y))
             .map({ tile => TileWithNeighbors(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)), None) })
             .value
+        futureSource.map({ maybeSource =>
+          maybeSource match {
+            case Some(t) => Valid(t)
+            case None => Invalid(NEL.of(RasterRetrievalError(scene)))
+          }
+        })
 
-      case scene @ SceneRaster(sceneId, None, _) =>
+      case scene @ MapAlgebraAST.SceneRaster(id, sceneId, None, _, _) =>
         implicit val sceneIds = Set(sceneId)
         logger.warn(s"Request for $scene does not contain band index")
-        Future.successful(None)
+        Future.successful(Invalid(NEL.of(NoBandGiven(id))))
 
-      case project @ ProjectRaster(projId, Some(band), maybeND) =>
-        if (hasBuffer)
+      case project @ MapAlgebraAST.ProjectRaster(id, projId, Some(band), maybeND, _) =>
+        val futureSource = if (hasBuffer)
           (for {
             tl <- Mosaic.raw(projId, z, x - 1, y - 1)
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
@@ -199,10 +205,17 @@ object TileSources extends LazyLogging {
           Mosaic.raw(projId, z, x, y)
             .map({ tile => TileWithNeighbors(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)), None) })
             .value
+        futureSource.map({ maybeSource =>
+          maybeSource match {
+            case Some(t) => Valid(t)
+            case None => Invalid(NEL.of(RasterRetrievalError(project)))
+          }
+        })
 
-      case project @ ProjectRaster(projId, None, _) =>
+
+      case project @ MapAlgebraAST.ProjectRaster(id, projId, None, _, _) =>
         logger.warn(s"Request for $project does not contain band index")
-        Future.successful(None)
+        Future.successful(Invalid(NEL.of(NoBandGiven(id))))
 
       case _ =>
         Future.failed(new Exception(s"Cannot handle $r"))
