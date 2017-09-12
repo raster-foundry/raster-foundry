@@ -10,7 +10,6 @@ import cats.data.Validated._
 import cats.implicits._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.ast.MapAlgebraAST._
-import com.azavea.rf.tool.params._
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.proj4.WebMercator
 import geotrellis.raster._

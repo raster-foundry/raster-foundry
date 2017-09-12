@@ -6,7 +6,6 @@ import com.azavea.rf.database.query.{ExportQueryParameters, ListQueryResult}
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.params._
 
 import cats.data._
 import cats.implicits._

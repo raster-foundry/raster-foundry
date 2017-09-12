@@ -5,7 +5,6 @@ import com.azavea.rf.datamodel._
 import com.azavea.rf.datamodel.color._
 import com.azavea.rf.tool.ast.MapAlgebraAST._
 import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.params._
 
 import io.circe.parser._
 import io.circe.syntax._
@@ -131,22 +130,14 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
   }
 
   it("ASTInput isomorphism (scene nodes)") {
-    val s0 = Source(UUID.randomUUID, None)
-    val s1 = Source(UUID.randomUUID, None)
+    val s0 = SceneRaster(UUID.randomUUID, UUID.randomUUID, Some(5), None, None)
+    val s1 = SceneRaster(UUID.randomUUID, UUID.randomUUID, Some(5), None, None)
     val ast: MapAlgebraAST = Addition(List(s0, s1), UUID.randomUUID, None)
-
-    val params = EvalParams(
-      Map(
-        s0.id -> SceneRaster(UUID.randomUUID, Some(5), None),
-        s1.id -> SceneRaster(UUID.randomUUID, Some(5), None)
-      ),
-      Map.empty
-    )
 
     val inDef = InputDefinition(
       Some(UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57036")),
       15,
-      Right(ASTInput(ast, params, params.sources.mapValues(_ => "s3://foo/bar/"), Map.empty))
+      Right(ASTInput(ast, ast.tileSources.map(_ => UUID.randomUUID -> "s3://foo/bar/").toMap, Map.empty))
     )
 
     val ed = ExportDefinition(
@@ -155,7 +146,7 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
       outDef
     )
 
-//    println(ed.asJson.spaces2)
+    //println(ed.asJson.spaces2)
 
     decode[ExportDefinition](ed.asJson.spaces2) match {
       case Right(ed2) => ed2 shouldBe ed
@@ -164,23 +155,17 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
   }
 
   it("ASTInput isomorphism (project nodes)") {
-    val s0 = Source(UUID.randomUUID, None)
-    val s1 = Source(UUID.randomUUID, None)
+    val s0 = ProjectRaster(UUID.randomUUID, UUID.randomUUID, Some(5), None, None)
+    val s1 = ProjectRaster(UUID.randomUUID, UUID.randomUUID, Some(5), None, None)
     val ast: MapAlgebraAST = Addition(List(s0, s1), UUID.randomUUID, None)
 
-    val params = EvalParams(
-      Map(
-        s0.id -> ProjectRaster(UUID.randomUUID, Some(5), None),
-        s1.id -> ProjectRaster(UUID.randomUUID, Some(5), None)
-      ),
-      Map.empty
-    )
-
-    val astIn = ASTInput(ast, params, Map.empty, params.sources.map({ case (k, _) => k -> List(
-      (UUID.randomUUID,"s3://foo/bar/1"),
-      (UUID.randomUUID,"s3://foo/bar/2"),
-      (UUID.randomUUID,"s3://foo/bar/3")
-    )}))
+    val astIn = ASTInput(ast, Map.empty, ast.tileSources.map({ src =>
+      src.id -> List(
+        (UUID.randomUUID,"s3://foo/bar/1"),
+        (UUID.randomUUID,"s3://foo/bar/2"),
+        (UUID.randomUUID,"s3://foo/bar/3")
+      )
+    }).toMap)
 
     val inDef = InputDefinition(
       Some(UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57036")),

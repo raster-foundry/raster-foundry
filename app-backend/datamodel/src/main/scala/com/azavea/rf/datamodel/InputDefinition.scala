@@ -55,3 +55,4 @@ case class ASTInput(
   /* Ingest locations (and implicit ordering) of each scene in each project */
   projectScenes: Map[UUID, List[(UUID, String)]]
 )
+

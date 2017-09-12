@@ -5,7 +5,6 @@ import com.azavea.rf.tile._
 import com.azavea.rf.tile.image._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.eval._
-import com.azavea.rf.tool.params._
 import com.typesafe.scalalogging.LazyLogging
 import cats.data.{NonEmptyList => NEL, _}
 import cats.data.Validated._

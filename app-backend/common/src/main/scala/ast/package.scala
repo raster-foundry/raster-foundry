@@ -7,7 +7,6 @@ import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.rf.tool.ast.MapAlgebraAST._
 import com.azavea.rf.tool.ast.assembleSubstitutions
 import com.azavea.rf.tool.eval.{ASTDecodeError, DatabaseError, PureInterpreter}
-import com.azavea.rf.tool.params._
 
 import cats._
 import cats.data._

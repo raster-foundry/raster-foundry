@@ -17,7 +17,6 @@ import com.azavea.rf.tile._
 import com.azavea.rf.tile.tool.TileSources
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.eval._
-import com.azavea.rf.tool.params._
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
 import geotrellis.raster._

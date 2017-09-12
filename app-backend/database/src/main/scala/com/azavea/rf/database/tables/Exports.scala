@@ -7,7 +7,6 @@ import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast._
 import MapAlgebraAST._
-import com.azavea.rf.tool.params._
 
 import cats.data._
 import cats.implicits._
@@ -177,7 +176,7 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
   def getExportStyle(export: Export, exportOptions: ExportOptions, user: User)
                     (implicit database: DB): OptionT[Future, Either[SimpleInput, ASTInput]] = {
     (export.projectId, export.toolRunId) match {
-      case (_, Some(id)) => astInput(id, export, user).map(Right(_))
+      case (_, Some(id)) => astInput(id, user).map(Right(_))
       case (Some(pid), None) => {
         /* Hand-holding the type system */
         val work: Future[Option[Either[SimpleInput, ASTInput]]] =
@@ -244,13 +243,11 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
     */
   private def astInput(
     toolRunId: UUID,
-    export: Export,
     user: User
   )(implicit database: DB): OptionT[Future, ASTInput] = {
 
     for {
       tRun   <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
-      tool   <- OptionT(Tools.getTool(tRun.tool, user))
       ast    <- OptionT.pure[Future, MapAlgebraAST](tRun.executionParameters.as[MapAlgebraAST].valueOr(throw _))
       (scenes, projects) <- ingestLocs(ast, user)
     } yield {
@@ -268,18 +265,20 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
   )(implicit database: DB): OptionT[Future, (Map[UUID, String], Map[UUID, List[(UUID, String)]])] = {
 
     val (scenes, projects): (Stream[SceneRaster], Stream[ProjectRaster]) =
-      ast.sources.toStream
+      ast.tileSources
+        .toStream
         .foldLeft((Stream.empty[SceneRaster], Stream.empty[ProjectRaster]))({
           case ((sacc, pacc), s: SceneRaster) => (s #:: sacc, pacc)
           case ((sacc, pacc), p: ProjectRaster) => (sacc, p #:: pacc)
           case ((sacc, pacc), _) => (sacc, pacc)
         })
 
-    val scenesF: OptionT[Future, Map[UUID, String]] = scenes.map({ case SceneRaster(_, sceneId, _, _, _) =>
-      OptionT(Scenes.getScene(sceneId, user)).flatMap(s =>
-        OptionT.fromOption(s.ingestLocation.map((s.id, _)))
-      )
-    }).sequence.map(_.toMap)
+    val scenesF: OptionT[Future, Map[UUID, String]] =
+      scenes.map({ case SceneRaster(_, sceneId, _, _, _) =>
+        OptionT(Scenes.getScene(sceneId, user)).flatMap(s =>
+          OptionT.fromOption(s.ingestLocation.map((s.id, _)))
+        )
+      }).sequence.map(_.toMap)
 
     val projectsF: OptionT[Future, Map[UUID, List[(UUID, String)]]] =
       projects.map({ case ProjectRaster(id, projId, _, _, _) =>

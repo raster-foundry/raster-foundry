@@ -2,7 +2,6 @@ package com.azavea.rf.batch
 
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.eval._
-import com.azavea.rf.tool.params._
 import com.azavea.rf.tool.ast.MapAlgebraAST._
 import com.azavea.rf.tool.eval.Interpreted
 
