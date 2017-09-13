@@ -399,7 +399,15 @@ export default class LabRunController {
             if (!this.toolRun.executionParameters.overrides) {
                 this.toolRun.executionParameters.overrides = {};
             }
-            this.toolRun.executionParameters.overrides[override.id] = {constant: override.value};
+            if (override.value) {
+                this.toolRun.executionParameters.overrides[override.id] = {
+                    constant: override.value
+                };
+            } else if (override.classMap) {
+                this.toolRun.executionParameters.overrides[override.id] = {
+                    classMap: override.classMap
+                };
+            }
         }
         if (renderDef) {
             if (!this.toolRun.executionParameters.metadata) {

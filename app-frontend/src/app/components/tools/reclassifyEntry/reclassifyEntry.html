@@ -1,0 +1,15 @@
+<input class="class-range-input"
+       type="text"
+       ng-model="$ctrl.classRangeEntry"
+       ng-model-options="{ getterSetter: true }"
+       ng-change="$ctrl.onRangeChange({range: $ctrl._classRange})"
+       rf-validate-range-string>
+<input class="class-value-input"
+       ng-model="$ctrl.classValueEntry"
+       ng-model-options="{ getterSetter: true }"
+       ng-change="$ctrl.onValueChange({value: $ctrl._classValue})"
+       rf-validate-value-string>
+<div class="invalid-entry-warning">
+  <span class="icon-warning"
+        ng-show="!$ctrl.isValid()"></span>
+</div>

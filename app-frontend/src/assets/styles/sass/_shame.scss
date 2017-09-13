@@ -2611,3 +2611,58 @@ nvd3 {
     border: 1px solid rgba(0, 0, 0, 0.5);
     border-radius: 3px;
 }
+
+/* Component: Reclassify Modal */
+rf-reclassify-modal {
+    .classification-options {
+      display: flex;
+      .classification-opt {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        margin: auto 1ex;
+      }
+    }
+
+    .classification-values {
+      margin-top: 1em;
+      table {
+        width: 100%;
+        background-color: white;
+        th, td {
+          padding-left: 2em;
+          border: 1px lightgray solid;
+        }
+      }
+    }
+
+    .classification-header {
+      display: flex;
+      h5 {
+        flex: 1 1 auto;
+      }
+    }
+
+    .classification-ranges {
+
+    }
+
+    .invalid-entry-warning {
+            position: absolute;
+            right: 0;
+            transform: translateX(-100%);
+            color: $warning;
+            pointer-events: none;
+    }
+
+    .invalid-range-warning {
+        display: inline-block;
+    }
+
+    rf-reclassify-entry {
+      display: flex;
+      input {
+        flex: 1 1 auto;
+      }
+    }
+}
