@@ -2,9 +2,10 @@
 
 export default (app) => {
     class ToolService {
-        constructor($resource, $http, authService, APP_CONFIG) {
+        constructor($resource, $http, $q, authService, APP_CONFIG) {
             'ngInject';
             this.$http = $http;
+            this.$q = $q;
             this.authService = authService;
             this.Tool = $resource(
                 `${BUILDCONFIG.API_HOST}/api/tools/:id/`, {
@@ -45,6 +46,55 @@ export default (app) => {
 
         query(params = {}) {
             return this.Tool.query(params).$promise;
+        }
+
+        searchQuery() {
+            let deferred = this.$q.defer();
+            let pageSize = 1000;
+            let firstPageParams = {
+                pageSize: pageSize,
+                page: 0,
+                sort: 'createdAt,desc'
+            };
+
+            let firstRequest = this.query(firstPageParams);
+
+            firstRequest.then((page) => {
+                let self = this;
+                let numTools = page.count;
+                let requests = [firstRequest];
+                if (page.count > pageSize) {
+                    let requestMaker = function *(totalResults) {
+                        let pageNum = 1;
+                        while (pageNum * pageSize <= totalResults) {
+                            let pageParams = {
+                                pageSize: pageSize,
+                                page: pageNum,
+                                sort: 'createdAt,desc'
+                            };
+                            yield self.query(pageParams);
+                            pageNum += 1;
+                        }
+                    };
+
+                    requests = requests.concat(Array.from(requestMaker(numTools)));
+                }
+
+                this.$q.all(requests).then(
+                    (allResponses) => {
+                        deferred.resolve(
+                            allResponses.reduce((res, resp) => res.concat(resp.results), [])
+                        );
+                    },
+                    () => {
+                        deferred.reject('Error loading tools.');
+                    }
+                );
+            }, () => {
+                deferred.reject('Error loading tools.');
+            });
+
+            return deferred.promise;
         }
 
         get(id) {

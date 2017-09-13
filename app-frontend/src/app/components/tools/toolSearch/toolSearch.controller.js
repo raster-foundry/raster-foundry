@@ -10,7 +10,7 @@ export default class ToolSearchController {
     }
 
     onSearchAction() {
-        this.onSearch({text: this.searchText});
+        this.onSearch({value: this.searchText});
     }
 
     clearSearch() {
