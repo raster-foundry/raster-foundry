@@ -84,7 +84,10 @@ export default class HistogramBreakpointController {
     }
 
     onMouseMove(event) {
-        if (event.target && event.target.classList.contains('graph-container')) {
+        if (event.target &&
+            event.target.classList.contains('graph-container') ||
+            event.target.tagName === 'NVD3'
+           ) {
             event.stopPropagation();
             let width = this.parent.width();
             let position = event.offsetX;
