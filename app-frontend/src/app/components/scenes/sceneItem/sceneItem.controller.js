@@ -42,4 +42,9 @@ export default class SceneItemController {
             }
         }
     }
+
+    getReferenceDate() {
+        let acqDate = this.scene.filterFields.acquisitionDate;
+        return acqDate ? acqDate : this.scene.createdAt;
+    }
 }
