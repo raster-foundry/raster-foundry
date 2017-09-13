@@ -31,6 +31,16 @@ class HomeController {
 
         return this.activeModal;
     }
+
+    openToolCreateModal() {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        this.activeModal = this.$uibModal.open({
+            component: 'rfToolCreateModal'
+        });
+    }
 }
 
 export default HomeController;
