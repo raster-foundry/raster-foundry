@@ -26,7 +26,10 @@ object PureInterpreter extends LazyLogging {
 
   /** Does a given AST have at least one source? */
   private def hasSources[M: Monoid](ast: MapAlgebraAST): Interpreted[M] = {
-    if (ast.sources.exists({ case x: Source => true; case _ => false })) Valid(Monoid.empty) else {
+    if (ast.sources.exists({
+      case Source(_, _) | LiteralRaster(_, _, _) | SceneRaster(_, _, _, _, _) | ProjectRaster(_, _, _, _, _) => true
+      case _ => false
+    })) Valid(Monoid.empty) else {
       Invalid(NonEmptyList.of(NoSourceLeaves(ast.id)))
     }
   }
@@ -37,7 +40,7 @@ object PureInterpreter extends LazyLogging {
     *
     * @param allowUnevaluable A boolean flag for determining whether `ToolReference` nodes are valid
     */
-  def interpretPure[M: Monoid](
+  def interpret[M: Monoid](
     ast: MapAlgebraAST,
     allowUnevaluable: Boolean
   ): Interpreted[M] = ast match {
@@ -46,14 +49,15 @@ object PureInterpreter extends LazyLogging {
     case Source(id, _) if allowUnevaluable => Valid(Monoid.empty)
     case ToolReference(id, _) if !allowUnevaluable => Invalid(NonEmptyList.of(UnsubstitutedRef(id)))
     case ToolReference(id, _) if allowUnevaluable => Valid(Monoid.empty)
-    case sr@SceneRaster(id, _,  _, _, _) => Valid(Monoid.empty)
-    case pr@ProjectRaster(id, _, _, _, _) => Valid(Monoid.empty)
+    case SceneRaster(id, _,  _, _, _) => Valid(Monoid.empty)
+    case ProjectRaster(id, _, _, _, _) => Valid(Monoid.empty)
     case Constant(_, _, _) => Valid(Monoid.empty)
+    case LiteralRaster(_, _, _) => Valid(Monoid.empty)
 
     /* Unary operations must have only one arguments */
     case op: UnaryOperation => {
       /* Check for errors further down, first */
-      val kids: Interpreted[M] = op.args.foldMap(a => interpretPure(a, allowUnevaluable))
+      val kids: Interpreted[M] = op.args.foldMap(a => interpret(a, allowUnevaluable))
 
       /* Unary ops must only have one argument */
       val argLen: Interpreted[M] = if (op.args.length == 1) Valid(Monoid.empty) else {
@@ -66,7 +70,7 @@ object PureInterpreter extends LazyLogging {
 
     /* All binary operations must have at least 2 arguments */
     case op: Operation => {
-      val kids: Interpreted[M] = op.args.foldMap(a => interpretPure(a, allowUnevaluable))
+      val kids: Interpreted[M] = op.args.foldMap(a => interpret(a, allowUnevaluable))
 
       val argLen: Interpreted[M] = if (op.args.length > 1) Valid(Monoid.empty) else {
         Invalid(NonEmptyList.of(IncorrectArgCount(op.id, 2, op.args.length)))

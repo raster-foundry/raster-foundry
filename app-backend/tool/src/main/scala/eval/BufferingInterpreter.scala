@@ -5,7 +5,7 @@ import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
 import cats._
-import cats.data._
+import cats.data.{NonEmptyList => NEL, _}
 import cats.data.Validated._
 import cats.implicits._
 import com.azavea.rf.tool.ast._
@@ -17,6 +17,9 @@ import geotrellis.spark.SpatialKey
 import geotrellis.spark.tiling._
 import geotrellis.vector.{Extent, MultiPolygon}
 
+import scala.util.Try
+
+
 /** This interpreter handles resource resolution and compilation of MapAlgebra ASTs */
 object BufferingInterpreter extends LazyLogging {
 
@@ -24,63 +27,73 @@ object BufferingInterpreter extends LazyLogging {
     ZoomedLayoutScheme.layoutForZoom(n, WebMercator.worldExtent, 256)
   ).toArray
 
-  /** Does a given AST have at least one source? */
-  private def hasSources[M: Monoid](ast: MapAlgebraAST): Interpreted[M] = {
-    if (ast.sources.exists({ case x: Source => true; case _ => false })) Valid(Monoid.empty) else {
-      Invalid(NonEmptyList.of(NoSourceLeaves(ast.id)))
-    }
-  }
-
   def literalize(
     ast: MapAlgebraAST,
     tileSource: (RFMLRaster, Boolean, Int, Int, Int) => Future[Interpreted[TileWithNeighbors]],
-    buffer: Int,
     z: Int,
     x: Int,
     y: Int
-  )(implicit ec: ExecutionContext): Future[Interpreted[MapAlgebraAST]] = ast match {
-    case sr@SceneRaster(_, sceneId, band, celltype, md) =>
-      if (buffer > 0)
-        tileSource(sr, true, z, x, y).map({ interp =>
-          interp.map({ tile =>
-            LiteralRaster(sceneId, tile.withBuffer(buffer), md)
-          })
-        })
-      else
-        tileSource(sr, true, z, x, y).map({ interp =>
-          interp.map({ tile =>
-            LiteralRaster(sceneId, tile.centerTile, md)
-          })
-        })
-    case pr@ProjectRaster(_, projId, band, celltype, md) =>
-      if (buffer > 0)
-        tileSource(pr, true, z, x, y).map({ interp =>
-          interp.map({ tile =>
-            LiteralRaster(projId, tile.withBuffer(buffer), md)
-          })
-        })
-      else
-        tileSource(pr, true, z, x, y).map({ interp =>
-          interp.map({ tile =>
-            LiteralRaster(projId, tile.centerTile, md)
-          })
-        })
-    case f: FocalOperation =>
-      ast.args.map(literalize(_, tileSource, buffer + f.neighborhood.extent, z, x, y))
-        .sequence
-        .map(_.sequence)
-        .map({
-          case Valid(args) => Valid(ast.withArgs(args))
-          case i@Invalid(_) => i
-        })
-    case _ =>
-      ast.args.map(literalize(_, tileSource, buffer, z, x, y)) // List[Future[Interpreted[MapAlgebraAST]]]
-        .sequence                                     // Future[List[Interpreted...
-        .map(_.sequence)                              // Future[Interpreted[List[...
-        .map({
-          case Valid(args) => Valid(ast.withArgs(args))
-          case i@Invalid(_) => i
-        })
+  )(implicit ec: ExecutionContext): Future[Interpreted[MapAlgebraAST]] = {
+
+    def eval(ast: MapAlgebraAST, buffer: Int): Future[Interpreted[MapAlgebraAST]] =
+      Try({
+        ast match {
+          case sr@SceneRaster(_, sceneId, band, celltype, md) =>
+            if (buffer > 0)
+              tileSource(sr, true, z, x, y).map({ interp =>
+                interp.map({ tile =>
+                  LiteralRaster(sceneId, tile.withBuffer(buffer), md)
+                })
+              })
+            else
+              tileSource(sr, true, z, x, y).map({ interp =>
+                interp.map({ tile =>
+                  LiteralRaster(sceneId, tile.centerTile, md)
+                })
+              })
+          case pr@ProjectRaster(_, projId, band, celltype, md) =>
+            if (buffer > 0)
+              tileSource(pr, true, z, x, y).map({ interp =>
+                interp.map({ tile =>
+                  LiteralRaster(projId, tile.withBuffer(buffer), md)
+                })
+              })
+            else
+              tileSource(pr, true, z, x, y).map({ interp =>
+                interp.map({ tile =>
+                  LiteralRaster(projId, tile.centerTile, md)
+                })
+              })
+          case f: FocalOperation =>
+            ast.args.map(eval(_, buffer + f.neighborhood.extent))
+              .sequence
+              .map(_.sequence)
+              .map({
+                case Valid(args) => Valid(ast.withArgs(args))
+                case i@Invalid(_) => i
+              })
+          case _ =>
+            ast.args.map(eval(_, buffer))
+              .sequence
+              .map(_.sequence)
+              .map({
+                case Valid(args) => Valid(ast.withArgs(args))
+                case i@Invalid(_) => i
+              })
+        }
+      }).getOrElse(Future.successful(Invalid(NEL.of(RasterRetrievalError(ast)))))
+
+    val pure: Interpreted[Unit] = PureInterpreter.interpret[Unit](ast, false)
+
+    // Aggregate multiple errors here...
+    eval(ast, 0).map({ res =>
+      res.leftMap({ errors =>
+        pure match {
+          case Invalid(e) => e ++ errors.toList
+          case _ => errors
+        }
+      })
+    })
   }
 
 
@@ -102,9 +115,11 @@ object BufferingInterpreter extends LazyLogging {
       def eval(ast: MapAlgebraAST, buffer: Int): LazyTile = ast match {
 
         /* --- LEAVES --- */
+        case Source(_, _) => sys.error("TMS: Attempt to evaluate a ToolReference!")
         case ToolReference(_, _) => sys.error("TMS: Attempt to evaluate a ToolReference!")
         case SceneRaster(_, _, _, _, _) => sys.error("TMS: Attempt to evaluate a SceneRaster!")
         case ProjectRaster(_, _, _, _, _) => sys.error("TMS: Attempt to evaluate a ProjectRaster!")
+        case LiteralRaster(_, lt, _) => lt
         case Constant(_, const, _) => LazyTile.Constant(const)
         /* --- LOCAL OPERATIONS --- */
         case Addition(args, id, _) =>
@@ -264,7 +279,7 @@ object BufferingInterpreter extends LazyLogging {
             .focalStdDev(n, Some(gridbounds))
       }
 
-      val pure: Interpreted[Unit] = PureInterpreter.interpretPure[Unit](ast, false)
+      val pure: Interpreted[Unit] = PureInterpreter.interpret[Unit](ast, false)
 
       pure.map({ case _ => eval(ast, 0) })
     }

@@ -54,9 +54,9 @@ case class AttributeStoreFetchError(id: UUID) extends InterpreterError {
 }
 
 /** An error encountered when a bound parameter's source can't be resolved */
-case class RasterRetrievalError(rfmlraster: RFMLRaster) extends InterpreterError {
+case class RasterRetrievalError(node: MapAlgebraAST) extends InterpreterError {
   val scope = "i/o"
-  def repr = s"Unable to retrieve raster for ${rfmlraster.toString}"
+  def repr = s"Unable to retrieve raster for ${node.asJson.noSpaces}"
 }
 
 case class DatabaseError(id: UUID) extends InterpreterError {

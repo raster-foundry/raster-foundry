@@ -236,7 +236,7 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
   }
 
   /**
-    * An AST could be given `EvalParams` that ask for scenes from the same
+    * An AST could be include nodes that ask for scenes from the same
     * project, from different projects, or all scenes from a project. This can
     * happen at the same time, and there's nothing illegal about this, we just
     * need to make sure to include all the ingest locations.
@@ -258,6 +258,10 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
   /** Obtain the ingest locations for all Scenes and Projects which are
     * referenced in the given [[EvalParams]]. If even a single Scene anywhere is
     * found to have no `ingestLocation` value, the entire operation fails.
+    *
+    * @note Scenes are represented with a map from scene ID to ingest location.
+    * @note Projects are represented with a map from project ID to a map from scene ID to
+    *       ingest location
     */
   private def ingestLocs(
     ast: MapAlgebraAST,

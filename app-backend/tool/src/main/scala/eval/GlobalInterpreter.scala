@@ -24,20 +24,13 @@ object Interpreter extends LazyLogging {
     ZoomedLayoutScheme.layoutForZoom(n, WebMercator.worldExtent, 256)
   ).toArray
 
-  /** Does a given AST have at least one source? */
-  private def hasSources[M: Monoid](ast: MapAlgebraAST): Interpreted[M] = {
-    if (ast.sources.exists({ case x: Source => true; case _ => false })) Valid(Monoid.empty) else {
-      Invalid(NonEmptyList.of(NoSourceLeaves(ast.id)))
-    }
-  }
-
   /** The Interpreter method for producing a global, zoom-level 1 tile
     *
     * @param ast     A [[MapAlgebraAST]] which defines transformations over arbitrary rasters
     * @param source  A function from an [[RFMLRaster]] and z/x/y (tms) integers to possibly
     *                 existing tiles
     */
-  def interpretGlobal(
+  def interpret(
     ast: MapAlgebraAST,
     extent: Extent
   )(implicit ec: ExecutionContext): Interpreted[LazyTile] = {
@@ -195,7 +188,7 @@ object Interpreter extends LazyLogging {
 
     }
 
-    val pure: Interpreted[Unit] = PureInterpreter.interpretPure[Unit](ast, false)
+    val pure: Interpreted[Unit] = PureInterpreter.interpret[Unit](ast, false)
     pure.map({ case _ => eval(ast) })
   }
 }
