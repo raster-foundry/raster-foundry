@@ -9,6 +9,8 @@ import com.azavea.rf.common.cache._
 import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables._
+import com.azavea.rf.common.{Config => CommonConfig}
+
 import io.circe.syntax._
 import geotrellis.raster._
 import geotrellis.raster.render._
@@ -22,10 +24,9 @@ import geotrellis.vector.Extent
 import com.typesafe.scalalogging.LazyLogging
 import spray.json.DefaultJsonProtocol._
 import cats.data._
+import cats.data.Validated._
 import cats.implicits._
 import java.util.UUID
-
-import com.azavea.rf.common.{Config => CommonConfig}
 
 import scala.concurrent._
 import scala.util._
@@ -132,8 +133,14 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
         toolRun <- LayerCache.toolRun(toolRunId, user, voidCache)
         ast <- LayerCache.toolEvalRequirements(toolRunId, subNode, user, voidCache)
         (extent, zoom) <- TileSources.fullDataWindow(ast.tileSources)
-        lztile <- OptionT.fromOption[Future](Interpreter.interpretGlobal(ast, extent).toOption)
-        tile <- OptionT.fromOption[Future](lztile.evaluateDouble)
+        literalAst <- OptionT(
+                        GlobalInterpreter.literalize(ast, extent, { r: RFMLRaster => TileSources.globalSource(extent, zoom, r) })
+                          .map({ validatedAst => validatedAst.toOption })
+                      )
+        tile <- OptionT.fromOption[Future](GlobalInterpreter.interpret(literalAst, extent) match {
+                  case Valid(lztile) => lztile.evaluateDouble
+                  case Invalid(e) => None
+                })
       } yield {
         val hist = StreamingHistogram.fromTile(tile)
         val currentMetadata = ast.metadata.getOrElse(NodeMetadata())

@@ -141,17 +141,16 @@ class ToolRoutes(implicit val database: Database) extends Authentication
               val responsePng: OptionT[Future, Png] = for {
                 ast   <- LayerCache.toolEvalRequirements(toolRunId, nodeId, user)
                 tile  <- OptionT {
-                        val literalAst: Future[Interpreted[MapAlgebraAST]] = BufferingInterpreter.literalize(ast, source, 0, z, x, y)
+                        val literalAst: Future[Interpreted[MapAlgebraAST]] = BufferingInterpreter.literalize(ast, source, z, x, y)
                         val futureTile: Future[Interpreted[Tile]] = literalAst.map({ validatedAst =>
                           validatedAst.andThen({ resolvedAst =>
                             logger.debug(s"Attempting to retrieve TMS tile at $z/$x/$y")
-                            BufferingInterpreter.interpret(resolvedAst, 256)(global)(z, x, y).andThen({ lztile =>
+                            BufferingInterpreter.interpret(resolvedAst, 256)(z, x, y).andThen({ lztile =>
                               lztile.evaluateDouble match {
                                 case Some(t) => Valid(t)
                                 case None => Invalid(NEL.of(LazyTileEvaluationError(ast)))
                               }
                             })
-                            //case Invalid(errors) => throw InterpreterException(errors)
                           })
                         })
                         futureTile.map({ validatedTile =>

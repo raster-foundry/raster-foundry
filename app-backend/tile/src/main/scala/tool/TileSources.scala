@@ -84,8 +84,8 @@ object TileSources extends LazyLogging {
     extent: Extent,
     zoom: Int,
     r: RFMLRaster
-  )(implicit database: Database): Future[Option[TileWithNeighbors]] = r match {
-    case MapAlgebraAST.SceneRaster(id, sceneId, Some(band), maybeND, _) =>
+  )(implicit database: Database): Future[Interpreted[TileWithNeighbors]] = r match {
+    case sr@MapAlgebraAST.SceneRaster(id, sceneId, Some(band), maybeND, _) =>
       implicit val sceneIds = Set(id)
       Future {
           Try {
@@ -98,21 +98,19 @@ object TileSources extends LazyLogging {
               .crop(extent)
               .tile
           } match {
-            case Success(tile) => Some(TileWithNeighbors(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)), None))
-            case Failure(e) =>
-              logger.error(s"Query layer $id at zoom $zoom for $extent: ${e.getMessage}")
-              None
+            case Success(tile) => Valid(TileWithNeighbors(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)), None))
+            case Failure(e) => Invalid(NEL.of(RasterRetrievalError(sr)))
           }
       }
-
-    case MapAlgebraAST.ProjectRaster(id, projId, Some(band), maybeND, _) => {
-      Mosaic.rawForExtent(projId, zoom, Some(Projected(extent.toPolygon, 3857)))
-        .map({ tile =>
-          TileWithNeighbors(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)), None)
-        }).value
-    }
-
-    case _ => Future.successful(None)
+    case pr@MapAlgebraAST.ProjectRaster(id, projId, Some(band), maybeND, _) =>
+      Mosaic.rawForExtent(projId, zoom, Some(Projected(extent.toPolygon, 3857))).value.map({ maybeTile =>
+        maybeTile match {
+          case Some(tile) => Valid(TileWithNeighbors(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)), None))
+          case None => Invalid(NEL.of(RasterRetrievalError(pr)))
+        }
+      })
+    case r: MapAlgebraAST =>
+      Future.successful(Invalid(NEL.of(RasterRetrievalError(r))))
   }
 
   /** This source provides support for z/x/y TMS tiles */
@@ -216,8 +214,8 @@ object TileSources extends LazyLogging {
         logger.warn(s"Request for $project does not contain band index")
         Future.successful(Invalid(NEL.of(NoBandGiven(id))))
 
-      case _ =>
-        Future.failed(new Exception(s"Cannot handle $r"))
+      case r: MapAlgebraAST =>
+        Future.successful(Invalid(NEL.of(RasterRetrievalError(r))))
     }
   }
 }

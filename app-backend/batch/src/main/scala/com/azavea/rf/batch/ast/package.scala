@@ -77,7 +77,11 @@ package object ast {
     rdds: Map[UUID, TileLayerRDD[SpatialKey]]
   ): Either[Double, TileLayerRDD[SpatialKey]] = ast match {
     /* --- LEAVES --- */
+    case SceneRaster(id, _, _, _, _) => Right(rdds(id))
+    case ProjectRaster(id, _, _, _, _) => Right(rdds(id))
     case Source(id, _) => Right(rdds(id))
+    case LiteralRaster(_, _, _) =>
+      sys.error("Export: If you're seeing this, there is an error in the AST validation logic.")
     case Constant(id, const, _) =>
       sys.error("Export: If you're seeing this, there is an error in the AST validation logic.")
     case ToolReference(_, _) =>
@@ -169,7 +173,7 @@ package object ast {
     val rdds = ast.sources.filter({
       case SceneRaster(_, _, _, _, _) | ProjectRaster(_, _, _, _, _) => true
       case _ => false
-    }).map({
+    }).toList.asInstanceOf[List[RFMLRaster]].map({
       case sr@SceneRaster(id, _, _, _, _) => id -> fetch(sr, zoom, sceneLocs, projLocs)
       case pr@ProjectRaster(id, _, _, _, _) => id -> fetch(pr, zoom, sceneLocs, projLocs)
     }).toMap.sequence

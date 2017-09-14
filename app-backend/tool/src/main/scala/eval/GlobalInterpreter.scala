@@ -5,7 +5,7 @@ import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
 import cats._
-import cats.data._
+import cats.data.{NonEmptyList => NEL, _}
 import cats.data.Validated._
 import cats.implicits._
 import com.azavea.rf.tool.ast._
@@ -17,15 +17,61 @@ import geotrellis.spark.SpatialKey
 import geotrellis.spark.tiling._
 import geotrellis.vector.{Extent, MultiPolygon}
 
+import scala.util.Try
+
+
 /** This interpreter handles resource resolution and compilation of MapAlgebra ASTs */
-object Interpreter extends LazyLogging {
+object GlobalInterpreter extends LazyLogging {
 
   val layouts: Array[LayoutDefinition] = (0 to 30).map(n =>
     ZoomedLayoutScheme.layoutForZoom(n, WebMercator.worldExtent, 256)
   ).toArray
 
-  /** The Interpreter method for producing a global, zoom-level 1 tile
-    *
+  def literalize(
+    ast: MapAlgebraAST,
+    extent: Extent,
+    tileSource: RFMLRaster => Future[Interpreted[TileWithNeighbors]]
+  )(implicit ec: ExecutionContext): Future[Interpreted[MapAlgebraAST]]= {
+
+    def eval(ast: MapAlgebraAST): Future[Interpreted[MapAlgebraAST]] =
+      Try({
+        ast match {
+          case sr@SceneRaster(_, sceneId, band, celltype, md) =>
+            tileSource(sr).map({ interp =>
+              interp.map({ tile =>
+                LiteralRaster(sceneId, tile.centerTile, md)
+              })
+            })
+          case pr@ProjectRaster(_, projId, band, celltype, md) =>
+            tileSource(pr).map({ interp =>
+              interp.map({ tile =>
+                LiteralRaster(projId, tile.centerTile, md)
+              })
+            })
+          case _ =>
+            ast.args.map(eval(_))
+              .sequence
+              .map(_.sequence)
+              .map({
+                case Valid(args) => Valid(ast.withArgs(args))
+                case i@Invalid(_) => i
+              })
+        }
+      }).getOrElse(Future.successful(Invalid(NEL.of(RasterRetrievalError(ast)))))
+
+    // Aggregate multiple errors here...
+    eval(ast).map({ res =>
+      val pure: Interpreted[Unit] = PureInterpreter.interpret[Unit](ast, false)
+      res.leftMap({ errors =>
+        pure match {
+          case Invalid(e) => e ++ errors.toList
+          case _ => errors
+        }
+      })
+    })
+  }
+
+   /*
     * @param ast     A [[MapAlgebraAST]] which defines transformations over arbitrary rasters
     * @param source  A function from an [[RFMLRaster]] and z/x/y (tms) integers to possibly
     *                 existing tiles
@@ -33,14 +79,17 @@ object Interpreter extends LazyLogging {
   def interpret(
     ast: MapAlgebraAST,
     extent: Extent
-  )(implicit ec: ExecutionContext): Interpreted[LazyTile] = {
+  ): Interpreted[LazyTile] = {
 
     @SuppressWarnings(Array("TraversableHead"))
     def eval(ast: MapAlgebraAST): LazyTile = ast match {
       /* --- LEAVES --- */
-      case Source(id, _) => sys.error("Attempt to evaluate a variable node!")
       case Constant(_, const, _) => LazyTile.Constant(const)
+      case Source(id, _) => sys.error("Attempt to evaluate a variable node!")
       case ToolReference(_, _) => sys.error("Attempt to evaluate a ToolReference!")
+      case SceneRaster(_, _, _, _, _) => sys.error("TMS: Attempt to evaluate a SceneRaster!")
+      case ProjectRaster(_, _, _, _, _) => sys.error("TMS: Attempt to evaluate a ProjectRaster!")
+      case LiteralRaster(_, lt, _) => lt
 
       /* --- LOCAL OPERATIONS --- */
       case Addition(args, id, _) =>

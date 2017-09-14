@@ -83,10 +83,9 @@ object BufferingInterpreter extends LazyLogging {
         }
       }).getOrElse(Future.successful(Invalid(NEL.of(RasterRetrievalError(ast)))))
 
-    val pure: Interpreted[Unit] = PureInterpreter.interpret[Unit](ast, false)
-
     // Aggregate multiple errors here...
     eval(ast, 0).map({ res =>
+      val pure: Interpreted[Unit] = PureInterpreter.interpret[Unit](ast, false)
       res.leftMap({ errors =>
         pure match {
           case Invalid(e) => e ++ errors.toList
@@ -106,7 +105,7 @@ object BufferingInterpreter extends LazyLogging {
   def interpret(
     ast: MapAlgebraAST,
     expectedTileSize: Int
-  )(implicit ec: ExecutionContext): (Int, Int, Int) => Interpreted[LazyTile] = {
+  ): (Int, Int, Int) => Interpreted[LazyTile] = {
 
     (z: Int, x: Int, y: Int) => {
       lazy val extent = layouts(z).mapTransform(SpatialKey(x,y))
