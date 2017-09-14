@@ -47,13 +47,15 @@
           <li>
             <span class="label">Color scheme</span>
             <rf-color-scheme-dropdown
-                color-scheme-options="$ctrl.getSerializedSingleBandOptions()"
-                on-change="$ctrl.onColorSchemeChange(value)"
+              color-scheme-options="$ctrl.getSerializedSingleBandOptions()"
+              on-change="$ctrl.onColorSchemeChange(value)"
             ></rf-color-scheme-dropdown>
             <i class="icon-info"></i>
           </li>
           <li ng-if="$ctrl.shouldShowColorSchemeBuilder()">
-            <rf-color-scheme-builder color-scheme="$ctrl.projectBuffer.singleBandOptions.colorScheme" on-change="$ctrl.onSchemeColorsChange(value)"/>
+            <rf-color-scheme-builder
+                color-scheme="$ctrl.projectBuffer.singleBandOptions.colorScheme"
+                on-change="$ctrl.onSchemeColorsChange(value)"/>
           </li>
         </ul>
       </div>
