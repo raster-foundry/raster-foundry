@@ -3,19 +3,28 @@ package com.azavea.rf.tile
 import com.azavea.rf.tool._
 
 import geotrellis.raster.Tile
+import geotrellis.raster._
 import geotrellis.raster.render._
+import geotrellis.raster.render.png._
+import geotrellis.raster.histogram.Histogram
 
 import scala.math.abs
 import java.util.Arrays.binarySearch
 
+
 package object image {
   implicit class renderTileWithDefinition(tile: Tile) {
+
+    /** This function produces a function from cell value to color appropriate to the color
+      *  space defined by the provided [[RenderDefinition]]
+      */
     private def buildFn(definition: RenderDefinition): Double => RGBA =
       definition.scale match {
         case Continuous | Sequential | Diverging => continuous(definition)
         case Qualitative(fallback) => qual(definition, fallback)
       }
 
+    /** RGB color interpolation logic */
     private def RgbLerp(color1: RGBA, color2: RGBA, proportion: Double): Int = {
       val r = (color1.red + (color2.red - color1.red) * proportion).toInt
       val g = (color1.green + (color2.green - color1.green) * proportion).toInt
@@ -24,6 +33,7 @@ package object image {
       RGBA(r, g, b, a)
     }
 
+    /** For production of colors along a continuum */
     private def continuous(definition: RenderDefinition): Double => RGBA = { dbl: Double =>
       val decomposed = definition.breakpoints.toArray.sortBy(_._1).unzip
       val breaks: Array[Double] = decomposed._1
@@ -57,6 +67,7 @@ package object image {
       }
     }
 
+    /** For production of colors according to discrete breaks */
     private def qual(definition: RenderDefinition, fallback: RGBA): Double => RGBA = { dbl: Double =>
       val decomposed = definition.breakpoints.toArray.sortBy(_._1).unzip
       val breaks: Array[Double] = decomposed._1
@@ -85,14 +96,16 @@ package object image {
       }
     }
 
-    import geotrellis.raster._
-    import geotrellis.raster.render.png._
-    import geotrellis.raster.histogram.Histogram
-    import geotrellis.util.MethodExtensions
+    /** This method extension provides sugar to match GeoTrellis' renderPng method */
     def renderPng(definition: RenderDefinition): Png = {
-      val toWrite = tile.map({ cellValue: Int => buildFn(definition)(cellValue).int })
-      new PngEncoder(Settings(RgbaPngEncoding, PaethFilter))
-        .writeByteArray(toWrite)
+      val toWrite =
+        if (tile.cellType.isFloatingPoint) {
+          tile.mapDouble({ cellValue: Double => buildFn(definition)(cellValue).int })
+        } else {
+          tile.map({ cellValue: Int => buildFn(definition)(cellValue).int })
+        }
+
+      new PngEncoder(Settings(RgbaPngEncoding, PaethFilter)).writeByteArray(toWrite)
     }
   }
 }
