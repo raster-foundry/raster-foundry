@@ -2670,8 +2670,8 @@ nvd3 {
   .message {
     flex: 1;
   }
-  .icon {
-    margin: 0 1em;
+  > *:not(:last-child) {
+    margin-right: 1em;
   }
 }
 
