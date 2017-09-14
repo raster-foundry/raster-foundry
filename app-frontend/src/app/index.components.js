@@ -35,6 +35,7 @@ export default angular.module('index.components', [
     require('./components/tools/operationNode/operationNode.module.js').name,
     require('./components/tools/constantNode/constantNode.module.js').name,
     require('./components/tools/classifyNode/classifyNode.module.js').name,
+    require('./components/tools/nodeStatistics/nodeStatistics.module.js').name,
     require('./components/map/nodeSelector/nodeSelector.module.js').name,
 
     // map components

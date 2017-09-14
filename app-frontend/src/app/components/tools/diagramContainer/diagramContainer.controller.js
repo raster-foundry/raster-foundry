@@ -82,9 +82,15 @@ export default class DiagramContainerController {
                       </button>
                       <button class="btn node-button" type="button"
                               ng-if="model.get('cellType') !== 'const'"
-                              ng-class="{'active': showHistogram}"
+                              ng-class="{'active': currentView === 'HISTOGRAM'}"
                               ng-click="toggleHistogram()">
                       <span class="icon-histogram"></span>
+                      </button>
+                      <button class="btn node-button" type="button"
+                              ng-if="model.get('cellType') !== 'const'"
+                              ng-class="{'active': currentView === 'STATISTICS'}"
+                              ng-click="toggleStatistics()">
+                        Stats
                       </button>
                       <button class="btn node-button" type="button"
                               ng-click="toggleBody()">
@@ -95,13 +101,13 @@ export default class DiagramContainerController {
                   </div>
                   <rf-input-node
                     ng-if="model.get('cellType') === 'src'"
-                    ng-show="showBody && !showHistogram"
+                    ng-show="currentView === 'BODY'"
                     data-model="model"
                     on-change="onChange({sourceId: sourceId, project: project, band: band})"
                   ></rf-input-node>
                   <rf-operation-node
                     ng-if="model.get('cellType') === 'function'"
-                    ng-show="showBody && !showHistogram"
+                    ng-show="currentView === 'BODY'"
                     data-model="model"
                   ></rf-operation-node>
                   <rf-constant-node
@@ -112,17 +118,24 @@ export default class DiagramContainerController {
                   ></rf-constant-node>
                   <rf-classify-node
                     ng-if="model.get('cellType') === 'classify'"
+                    ng-show="currentView === 'BODY'"
                     data-model="model"
                     on-change="onChange({override: override})"
                   ></rf-classify-node>
                   <rf-node-histogram
-                    ng-if="showHistogram && showBody"
+                    ng-if="currentView === 'HISTOGRAM'"
                     data-histogram="histogram"
                     data-breakpoints="breakpoints"
                     data-masks="masks"
                     data-options="histogramOptions"
                     on-breakpoint-change="onBreakpointChange(breakpoints, options)"
                   ></rf-node-histogram>
+                  <rf-node-statistics
+                    ng-if="currentView === 'STATISTICS'"
+                    data-model="model"
+                    data-toolrun="model.get('toolrun')"
+                    data-size="model.get('size')"
+                  ></rf-node-statistics>
                 </div>`,
             initialize: function () {
                 _.bindAll(this, 'updateBox');
@@ -130,20 +143,30 @@ export default class DiagramContainerController {
                 this.model.on('change', this.updateBox, this);
                 this.$box = angular.element(this.template);
                 this.scope = $scope.$new();
-                this.scope.showBody = true;
+                // Acceptable values are 'BODY', 'HISTOGRAM', and 'STATISTICS'
+                this.scope.currentView = 'BODY';
                 let dropdownHeight = 200;
                 let headerHeight = 50;
                 this.histogramHeight = dropdownHeight + headerHeight;
 
                 this.scope.toggleHistogram = () => {
-                    this.scope.showHistogram = !this.scope.showHistogram;
-                    if (this.scope.showHistogram && !this.scope.showBody) {
-                        this.scope.toggleBody();
-                    } else if (this.scope.showHistogram) {
+                    if (this.scope.currentView === 'HISTOGRAM') {
+                        this.scope.currentView = 'BODY';
+                        this.model.resize(this.expandedSize.width, this.expandedSize.height);
+                    } else {
+                        this.scope.currentView = 'HISTOGRAM';
                         this.expandedSize = this.model.getBBox();
                         this.model.resize(this.expandedSize.width, this.histogramHeight);
-                    } else if (this.scope.showBody) {
+                    }
+                };
+                this.scope.toggleStatistics = () => {
+                    if (this.scope.currentView === 'STATISTICS') {
+                        this.scope.currentView = 'BODY';
                         this.model.resize(this.expandedSize.width, this.expandedSize.height);
+                    } else {
+                        this.scope.currentView = 'STATISTICS';
+                        this.expandedSize = this.model.getBBox();
+                        this.model.resize(this.expandedSize.width, this.histogramHeight);
                     }
                 };
 
@@ -242,7 +265,7 @@ export default class DiagramContainerController {
             },
             updateBox: function () {
                 let bbox = this.model.getBBox();
-                if (this.model !== this.scope.model) {
+                if (!_.isEqual(this.model, this.scope.model)) {
                     this.scope.onChange = this.model.get('onChange');
                     this.scope.sourceId = this.model.get('id');
                     this.scope.model = this.model;

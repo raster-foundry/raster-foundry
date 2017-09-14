@@ -39,6 +39,11 @@ export default (app) => {
                         url: `${APP_CONFIG.tileServerLocation}/tools/:toolId/histogram/`,
                         method: 'GET',
                         cache: false
+                    },
+                    statistics: {
+                        url: `${APP_CONFIG.tileServerLocation}/tools/:toolId/statistics/`,
+                        method: 'GET',
+                        cache: false
                     }
                 }
             );
@@ -135,6 +140,15 @@ export default (app) => {
         getNodeHistogram(toolRun, nodeId) {
             return this.ToolRun.histogram({
                 toolId: toolRun, node: nodeId, voidCache: true,
+                token: this.authService.token()
+            }).$promise;
+        }
+
+        getNodeStatistics(toolRun, nodeId) {
+            return this.ToolRun.statistics({
+                toolId: toolRun,
+                node: nodeId,
+                voidCache: true,
                 token: this.authService.token()
             }).$promise;
         }
