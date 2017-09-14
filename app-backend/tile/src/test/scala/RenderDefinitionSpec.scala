@@ -16,16 +16,25 @@ import scala.util.Try
 
 
 class RenderDefinitionSpec extends FunSpec with Matchers {
-  val renderDef = RenderDefinition(
-    Map(100.0 -> RGBA(0, 255, 0, 255), 200.0 -> RGBA(255, 0, 0, 255), 325.0 -> RGBA(0, 0, 255, 255)),
-    Qualitative(RGBA(255,255,255,255)),
-    ClipLeft
-  )
 
-  ignore("should clip both sides") {
-    val tile = IntArrayTile((0 to 9999 toArray).map { _ % 500}, 500, 20)
-    val cramp = ColorRamps.Viridis
-    //tile.renderPng(renderDef)
+  ignore("should clip both sides (double)") {
+    val renderDef = RenderDefinition(
+      Map(0.1 -> RGBA(0, 255, 0, 255), 0.2 -> RGBA(255, 0, 0, 255), 0.325 -> RGBA(0, 0, 255, 255)),
+      Continuous,
+      ClipLeft
+    )
+    val tile = DoubleArrayTile((0 to 9999 by 1 toArray).map { num => (num.toDouble / 1000.0) % .5}, 500, 20)
+    DisplayTile(tile.renderPng(renderDef).bytes, tile.cols, tile.rows)
+  }
+
+  ignore("should clip both sides (integer)") {
+    val renderDef = RenderDefinition(
+      Map(100.0 -> RGBA(0, 255, 0, 255), 200.0 -> RGBA(255, 0, 0, 255), 325.0 -> RGBA(0, 0, 255, 255)),
+      Continuous,
+      ClipLeft
+    )
+    val tile = IntArrayTile((0 to 9999 by 1 toArray).map { _ % 500}, 500, 20)
+    DisplayTile(tile.renderPng(renderDef).bytes, tile.cols, tile.rows)
   }
 }
 
