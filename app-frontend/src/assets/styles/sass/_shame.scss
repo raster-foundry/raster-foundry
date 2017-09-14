@@ -400,7 +400,6 @@ rf-project-editor .leaflet-tile {
     }
     .fixedwidth,
     rf-color-scheme-dropdown {
-
       width: 20rem;
     }
     .label {
@@ -435,6 +434,39 @@ rf-project-editor .leaflet-tile {
       }
     }
   }
+}
+
+.sidebar {
+    rf-color-scheme-dropdown {
+        //height: 2.4em;
+        .dropdown {
+            padding: 0;
+        }
+        .dropdown-label {
+            border-radius: 2px;
+        }
+        .gradient-dropdown {
+            padding: 0;
+            display: flex;
+            flex-direction: row;
+            align-items: stretch;
+
+            > .gradient-bar {
+                align-self: center;
+                flex: 1;
+                margin: 0 0.5rem 0 0.5rem;
+            }
+            .icon-caret-down {
+                display: block;
+                height: 100%;
+                flex: 0;
+                align-self: stretch;
+                padding: 0.9rem 1rem 0.9rem 1rem;
+                background: $shade-light;
+                color: white;
+            }
+        }
+    }
 }
 
 .list-group-item .sidebar-list {

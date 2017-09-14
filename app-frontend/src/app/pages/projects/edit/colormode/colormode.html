@@ -45,42 +45,11 @@
             <i class="icon-info"></i>
           </li>
           <li>
-            <span class="label">Nature of Data</span>
-            <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
-              <a class="btn dropdown-label">
-                {{$ctrl.getActiveColorSchemeType().label}}
-              </a>
-              <button type="button" class="btn btn-light dropdown-toggle">
-                <i class="icon-caret-down"></i>
-              </button>
-              <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
-                <li  ng-repeat="type in $ctrl.colorSchemeService.defaultColorSchemeTypes" role="menuitem">
-                  <a ng-click="$ctrl.setActiveColorSchemeType(type)">{{type.label}}</a>
-                </li>
-              </ul>
-            </div>
-            <i class="icon-info"></i>
-          </li>
-          <li ng-if="$ctrl.showShowBlendMode()">
-            <span class="label">Blend Mode</span>
-            <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
-              <a class="btn dropdown-label">
-                {{$ctrl.getActiveColorBlendMode().label}}
-              </a>
-              <button type="button" class="btn btn-light dropdown-toggle">
-                <i class="icon-caret-down"></i>
-              </button>
-              <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
-                <li  ng-repeat="mode in $ctrl.colorSchemeService.defaultColorBlendModes" role="menuitem">
-                  <a ng-click="$ctrl.setActiveColorBlendMode(mode)">{{mode.label}}</a>
-                </li>
-              </ul>
-            </div>
-            <i class="icon-info"></i>
-          </li>
-          <li>
             <span class="label">Color scheme</span>
-            <rf-color-scheme-dropdown serialized-single-band-options="$ctrl.getSerializedSingleBandOptions()"></rf-color-scheme-dropdown>
+            <rf-color-scheme-dropdown
+                color-scheme-options="$ctrl.getSerializedSingleBandOptions()"
+                on-change="$ctrl.onColorSchemeChange(value)"
+            ></rf-color-scheme-dropdown>
             <i class="icon-info"></i>
           </li>
           <li ng-if="$ctrl.shouldShowColorSchemeBuilder()">

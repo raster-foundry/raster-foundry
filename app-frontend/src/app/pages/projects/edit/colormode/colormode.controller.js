@@ -178,53 +178,20 @@ export default class ProjectsEditColormode {
         }
     }
 
-    setActiveColorSchemeType(type) {
-        if (this.activeColorSchemeType.value !== type.value) {
-            this.activeColorSchemeType = type;
-            const firstSchemeOfType = this.colorSchemeService.defaultColorSchemes.find(
-                s => s.type === type.value
-            );
-            this.setActiveColorScheme(firstSchemeOfType, true);
-        }
-    }
-
-    getActiveColorSchemeType() {
-        if (!this.isLoading) {
-            return this.activeColorSchemeType;
-        }
-        return null;
-    }
-
-    setActiveColorBlendMode(blendMode) {
-        if (this.activeColorBlendMode.value !== blendMode.value) {
-            this.activeColorBlendMode = blendMode;
-            this.projectBuffer.singleBandOptions.blendMode = this.activeColorBlendMode.value;
-            this.updateProjectFromBuffer();
-        }
-    }
-
-    getActiveColorBlendMode() {
-        if (!this.isLoading) {
-            return this.activeColorBlendMode;
-        }
-        return null;
-    }
-
     shouldShowColorScheme() {
         return (
-            this.activeColorSchemeType && (
-                this.activeColorSchemeType.value === 'SEQUENTIAL' ||
-                this.activeColorSchemeType.value === 'DIVERGING'
-            )
+            this.projectBuffer.singleBandOptions &&
+                this.projectBuffer.singleBandOptions.dataType === 'SEQUENTIAL' ||
+                this.projectBuffer.singleBandOptions.dataType === 'DIVERGING'
         );
     }
 
     shouldShowColorSchemeBuilder() {
-        return this.activeColorSchemeType.value === 'CATEGORICAL';
+        return this.projectBuffer.singleBandOptions.dataType === 'CATEGORICAL';
     }
 
     shouldShowBlendMode() {
-        return this.activeColorSchemeType.value !== 'CATEGORICAL';
+        return this.projectBuffer.singleBandOptions.dataType !== 'CATEGORICAL';
     }
 
     updateProjectFromBuffer() {
@@ -336,6 +303,21 @@ export default class ProjectsEditColormode {
     redrawMosaic() {
         this.$parent.layerFromProject();
     }
+
+    onColorSchemeChange(colorSchemeOptions) {
+        let oldOptions = this.projectBuffer.singleBandOptions;
+        this.activeColorSchemeType = oldOptions.dataType;
+        if (
+            JSON.stringify(colorSchemeOptions.colorScheme) !==
+                JSON.stringify(oldOptions.colorScheme)
+        ) {
+            this.activeColorSchemeType = colorSchemeOptions.dataType;
+            this.projectBuffer.singleBandOptions = Object.assign(
+                {},
+                this.projectBuffer.singleBandOptions,
+                colorSchemeOptions
+            );
+            this.updateProjectFromBuffer();
+        }
+    }
 }
-
-
