@@ -9,7 +9,6 @@ const histogramBreakpoint = {
         range: '<',
         precision: '<',
         options: '<',
-        onColorChange: '&',
         onBreakpointChange: '&'
     }
 };
