@@ -49,7 +49,7 @@ def kickoff_aoi_project_update_checks(project_ids):
     logger.info('Found projects to check for updates: %s', project_ids)
 
     for project_id in project_ids:
-        parameters = {'project': project_id}
+        parameters = {'projectId': project_id}
         client.submit_job(jobName=AWS_BATCH_JOB_NAME_AOI_UPDATE,
                           jobQueue=AWS_BATCH_QUEUE_AOI_UPDATE,
                           jobDefinition=AWS_BATCH_JOB_NAME_AOI_UPDATE,
