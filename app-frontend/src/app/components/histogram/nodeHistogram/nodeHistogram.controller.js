@@ -7,7 +7,6 @@ const defaultHistogramData = {minimum: 0, maximum: 255, buckets: _.range(0, 256)
     let y = x === 0 || x === 255 ? 0 : 1;
     return [x, y];
 })};
-
 export default class NodeHistogramController {
     constructor($log, $scope, $element) {
         'ngInject';
@@ -282,8 +281,20 @@ export default class NodeHistogramController {
     onChange(bp, breakpoint) {
         let min = _.first(this._breakpoints).value;
         let max = _.last(this._breakpoints).value;
+
         let index = this._breakpoints.findIndex((b) => b === bp);
-        if (index === 0) {
+
+        if (!this._options.baseScheme || this._options.baseScheme.dataType !== 'CATEGORICAL') {
+            if (index === 0) {
+                this.recalculateBreakpointsFromRange(breakpoint, max);
+            } else if (index === this._breakpoints.length - 1) {
+                this.recalculateBreakpointsFromRange(min, breakpoint);
+            } else {
+                this.$log.error(
+                    'Tried to change non-endpoint breakpoint for non-categorical color map'
+                );
+            }
+        } else if (index === 0) {
             let second = this._breakpoints[1].value;
             bp.value = breakpoint < second ? breakpoint : second;
         } else if (index === this._breakpoints.length - 1) {
@@ -300,6 +311,30 @@ export default class NodeHistogramController {
         if (this.refreshHistogram) {
             this.refreshHistogram();
         }
+    }
+
+    recalculateBreakpointsFromRange(min, max) {
+        let oldmin = _.first(this._breakpoints).value;
+        let oldmax = _.last(this._breakpoints).value;
+
+        let currentRange = oldmax - oldmin;
+        let newRange = max - min;
+        if (this._breakpoints && currentRange !== newRange && newRange > 0) {
+            this._breakpoints.forEach((bp) => {
+                let percent = (
+                    bp.value - oldmin
+                ) / currentRange;
+                let newVal = percent * newRange + min;
+                bp.value = newVal;
+            });
+        }
+    }
+
+    shouldShowBreakpoint(index) {
+        if (!this._options.baseScheme || this._options.baseScheme.dataType !== 'CATEGORICAL') {
+            return index === 0 || index === this._breakpoints.length - 1;
+        }
+        return true;
     }
 
     onColorSchemeChange(colorSchemeOptions) {

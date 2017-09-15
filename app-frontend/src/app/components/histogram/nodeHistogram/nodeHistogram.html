@@ -28,6 +28,7 @@
   <nvd3 ng-attr-id="chart-{{$ctrl.id}}" options="$ctrl.histOptions" data="$ctrl.plot" api="$ctrl.api"></nvd3>
   <rf-histogram-breakpoint
     ng-repeat="bp in $ctrl._breakpoints track by bp.id"
+    ng-if="$ctrl.shouldShowBreakpoint($index)"
     ng-mouseover="$ctrl.lastMouseOver = bp.id"
     ng-class="{'active': $ctrl.lastMouseOver === bp.id}"
     data-color="bp.color"
@@ -35,7 +36,6 @@
     data-range="$ctrl.histogramRange"
     data-precision="$ctrl.precision"
     data-options="bp.options"
-    on-color-change="$ctrl.onColorChange(bp, color)"
     on-breakpoint-change="$ctrl.onChange(bp, breakpoint)"
   ></rf-histogram-breakpoint>
   <div class="histogram-placeholder" ng-if="$ctrl.usingDefaultData">Fill out all input fields and apply changes to view histogram</div>
