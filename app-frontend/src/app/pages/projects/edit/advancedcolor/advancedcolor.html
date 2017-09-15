@@ -1,34 +1,31 @@
-<div ui-view class="sidebar flex-fill">
-  <div class="sidebar-project">
+<div ui-view class="flex-column">
+  <div class="sidebar-static">
     <div class="sidebar-header">
       <a class="btn sidebar-header-nav-btn" ui-sref="projects.edit.color">
         <i class="icon-arrow-left"></i>
       </a>
       <h5 class="sidebar-title">Advanced Color Correction</h5>
     </div>
-
-    <ul class="sidebar-list">
-      <li>
-        <div class="label">
-          <span class="text">Select scenes to adjust color and click <strong>Color Correct</strong></span>
-        </div>
-        <div class="btn-group fixedwidth">
+    <div class="content">
+      <div class="sidebar-actions-group">
+        <label>Select which scenes to correct</label>
+        <div class="column-6 nogutter btn-group">
           <button type="button"
-                  class="btn btn-primary"
-                  style="width: 12rem;"
+                  class="btn"
+                  ng-class="{'btn-primary': !$ctrl.shouldSelectAll()}"
                   ng-disabled="$ctrl.selectedScenes.size === 0"
                   ui-sref="projects.edit.advancedcolor.adjust">
             Color Correct
           </button>
           <button type="button"
-                  class="btn dropdown-toggle"
-                  ng-class="{'btn-secondary': !$ctrl.shouldSelectAll()}"
+                  class="btn btn-small"
+                  ng-class="{'btn-primary': !$ctrl.shouldSelectAll()}"
                   ng-click="$ctrl.onToggleSelection()">
             <i class="icon-check"></i>
           </button>
         </div>
-      </li>
-    </ul>
+      </div>
+    </div>
   </div>
   <div class="sidebar-scrollable">
     <div class="list-group">

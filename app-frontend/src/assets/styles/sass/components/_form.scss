@@ -15,14 +15,14 @@ form {
     &:focus {
       border-color: $shade-normal;
       outline: 0;
-      box-shadow: 0 0 8px rgba($shade-normal, .5);
+      box-shadow: 0 0 0 3px rgba($shade-normal, .3);
     }
 
     .close {
       color: $shade-light;
     }
     .btn:focus {
-      box-shadow: 0 0 8px rgba($brand-primary, .5);
+      box-shadow: 0 0 0 3px rgba($brand-primary, .3);
     }
   }
 }
@@ -38,7 +38,7 @@ label {
 .form-control {
   display: block;
   width: 100%;
-  height: 4.8rem;
+  height: 3.8rem;
   padding: 6px 12px;
   font-size: 1.4rem;
   color: $text-base;
@@ -56,7 +56,7 @@ label {
   &:focus {
     border-color: $brand-primary;
     outline: 0;
-    box-shadow: 0 0 8px rgba($brand-primary, .5);
+    box-shadow: 0 0 0 3px rgba($brand-primary, .3);
   }
 
   &.input-dark {
@@ -66,7 +66,7 @@ label {
     &:focus {
       border-color: $shade-normal;
       outline: 0;
-      box-shadow: 0 0 8px rgba($shade-normal, .5);
+      box-shadow: 0 0 0 3px rgba($shade-normal, .3);
     }
   }
   // Placeholders
@@ -144,7 +144,7 @@ input[type=radio] {
   label:not(.sr-only) {
     position: relative;
     margin: 0;
-    line-height: 4.8rem;;
+    line-height: 3.8rem;;
     padding: 0 1rem 0 1.5rem;
   }
 
@@ -191,7 +191,8 @@ input[type=radio] {
   }
 }
 
-label.checkbox {
+label.checkbox,
+div.checkbox {
   position: relative;
   display: flex;
   align-items: center;
@@ -224,7 +225,8 @@ label.checkbox {
     font-weight: normal;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    margin-left: -17px;
+    margin-left: -14px;
+    left: -3px;
     position: relative;
     z-index: 1;
     visibility: hidden;
@@ -257,5 +259,101 @@ label.checkbox {
     visibility: visible;
     opacity: .4;
     transform: scale(1);
+  }
+
+  &:focus {
+    outline: none;
+
+    &:after {
+      box-shadow: 0 0 0 2px rgba($brand-primary, .6);
+    }
+
+    &:not(.active):before {
+      visibility: visible;
+      opacity: .6;
+      transform: scale(1);
+    }
+  }
+}
+
+label.checkbox.radio,
+div.checkbox.radio,
+label.radio,
+div.radio {
+  position: relative;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  margin: 0;
+
+  &:after {
+    content: '';
+    order: -1;
+    vertical-align: middle;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50px;
+    border: 1px solid $shade-normal;
+    background: white;
+  }
+
+  &:before {
+    content: '';
+    order: 0;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: $brand-primary;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin-left: -10px;
+    left: -5px;
+    position: relative;
+    z-index: 1;
+    visibility: hidden;
+    opacity: 0;
+    transform: scale(.1);
+    transition: .2s ease-in-out opacity, .4s cubic-bezier(0.68, -0.55, 0.27, 1.55) transform;
+  }
+
+  input[type=checkbox],
+  input[type=radio] {
+    visibility: hidden;
+    margin-left: -1rem;
+  }
+
+  &.active {
+    color: $brand-primary;
+    transition: .2s ease-in-out color;
+
+    &:after {
+      border-color: $brand-primary;
+    }
+
+    &:before {
+      visibility: visible;
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  &:hover:not(.active):before {
+    visibility: visible;
+    opacity: .6;
+    transform: scale(1);
+  }
+
+  &:focus {
+    outline: none;
+
+    &:after {
+      box-shadow: 0 0 0 2px rgba($brand-primary, .6);
+    }
+
+    &:not(.active):before {
+      visibility: visible;
+      opacity: .6;
+      transform: scale(1);
+    }
   }
 }

@@ -196,7 +196,7 @@ export default class ChannelHistogramController {
             this.histData = [{
                 values: this.plots.rgb,
                 key: 'rgb',
-                color: 'grey',
+                color: '#959cad',
                 area: true
             }];
             this.lowerClip = this.clipping.rgb.min;
@@ -205,7 +205,7 @@ export default class ChannelHistogramController {
             this.histData = [{
                 values: this.plots.red,
                 key: 'red',
-                color: 'red',
+                color: '#ed1841',
                 area: true
             }];
             this.lowerClip = this.clipping.red.min;
@@ -214,7 +214,7 @@ export default class ChannelHistogramController {
             this.histData = [{
                 values: this.plots.green,
                 key: 'green',
-                color: 'green',
+                color: '#28af5f',
                 area: true
             }];
             this.lowerClip = this.clipping.green.min;
@@ -223,7 +223,7 @@ export default class ChannelHistogramController {
             this.histData = [{
                 values: this.plots.blue,
                 key: 'blue',
-                color: 'blue',
+                color: '#206fed',
                 area: true
             }];
             this.lowerClip = this.clipping.blue.min;

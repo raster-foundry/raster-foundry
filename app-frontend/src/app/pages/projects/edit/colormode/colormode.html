@@ -1,31 +1,29 @@
-<div class="sidebar-project">
+<div class="sidebar-static">
   <div class="sidebar-header">
-    <a class="btn sidebar-header-nav-btn" ui-sref="projects.edit">
-      <i class="icon-arrow-left"></i>
-    </a>
     <h5 class="sidebar-title">Color Mode</h5>
+    <div class="header-controls">
+      <a ui-sref="projects.edit.color"
+        class="btn btn-primary">Corrections</a>
+    </div>
   </div>
-
-  <ul class="sidebar-list">
-    <li>
-      <div class="label">
-        <span class="text">Color modes determine how various sensor bands are translated into visible color.</span>
-      </div>
-    </li>
-  </ul>
+  <div class="content">
+    <div class="sidebar-actions-group">
+      <label>Change the visual output</label>
+    </div>
+  </div>
 </div>
 <div class="sidebar-scrollable">
   <div class="list-group" ng-if="!$ctrl.isLoading">
-    <div class="list-group-item with-rows">
-      <div class="list-group-item-content">
-        <span title="Single Band"><strong>Single Band</strong></span>
+    <div class="list-group-item list-group-item-stacked"
+         ng-class="{'active': $ctrl.projectBuffer.isSingleBand}">
+      <div class="list-group-item-row">
+        <span class="font-600">Single band</span>
         <div class="list-group-right">
-          <rf-toggle value="$ctrl.projectBuffer.isSingleBand" on-change="$ctrl.setActiveColorMode('singleband')">
-            <i class="icon-check"></i>
+          <rf-toggle radio="true" value="$ctrl.projectBuffer.isSingleBand" on-change="$ctrl.setActiveColorMode('singleband')">
           </rf-toggle>
         </div>
       </div>
-      <div class="list-group-item-content" ng-if="$ctrl.projectBuffer.isSingleBand">
+      <div class="list-group-item-row" ng-if="$ctrl.projectBuffer.isSingleBand">
         <ul class="sidebar-list">
           <li>
             <span class="label">Band</span>
@@ -60,18 +58,16 @@
         </ul>
       </div>
     </div>
-    <div class="list-group-item with-rows">
-      <div class="list-group-item-content">
-        <div>
-          <span title="custom"><strong>Custom</strong></span>
-        </div>
+    <div class="list-group-item list-group-item-stacked"
+         ng-class="{'active': $ctrl.isActiveColorMode('custom')}">
+      <div class="list-group-item-row">
+        <span class="font-600">Custom</span>
         <div class="list-group-right">
-          <rf-toggle value="$ctrl.isActiveColorMode('custom')" on-change="$ctrl.setActiveColorMode('custom')">
-            <i class="icon-check"></i>
+          <rf-toggle radio="true" value="$ctrl.isActiveColorMode('custom')" on-change="$ctrl.setActiveColorMode('custom')">
           </rf-toggle>
         </div>
       </div>
-      <div class="list-group-item-content" ng-if="$ctrl.isActiveColorMode('custom')">
+      <div class="list-group-item-row" ng-if="$ctrl.isActiveColorMode('custom')">
           <ul class="sidebar-list">
              <li>
               <span class="label">Blue</span>
@@ -129,13 +125,11 @@
       </div>
     </div>
     <div class="list-group-item"
-         ng-repeat="(key, composite) in $ctrl.$parent.unifiedComposites track by $index">
-      <div style="flex-direction: row;">
-        <span title="{{composite.label}}"><strong>{{composite.label}}</strong></span>
-      </div>
+         ng-repeat="(key, composite) in $ctrl.$parent.unifiedComposites track by $index"
+         ng-class="{'active': $ctrl.isActiveColorMode(key)}">
+      <span class="font-600">{{composite.label}}</span>
       <div class="list-group-right">
-        <rf-toggle value="$ctrl.isActiveColorMode(key)" on-change="$ctrl.setActiveColorMode(key)">
-          <i class="icon-check"></i>
+        <rf-toggle radio="true" value="$ctrl.isActiveColorMode(key)" on-change="$ctrl.setActiveColorMode(key)">
         </rf-toggle>
       </div>
     </div>

@@ -1,6 +1,14 @@
 <span class="navbar-vertical-divider"></span>
-<span ng-if="$ctrl.projectService.currentProject.name">
+<span class="detail-title-container"
+      ng-if="$ctrl.projectService.currentProject.name"
+      ng-hide="$ctrl.isEditingProjectName">
+  <button class="btn btn-tiny page-title-edit detail-title-edit"
+          ng-click="$ctrl.toggleProjectNameEdit()"
+          ng-show="!$ctrl.$parent.selectedScenes.size && !$ctrl.isEditingProjectName && !$ctrl.isSavingProjectNameEdit">
+    <i class="icon-pencil"></i>
+  </button>
   <span class="navbar-detail-title">{{$ctrl.projectService.currentProject.name}}</span>
+</span>
   <div class="dropdown-navbar-detail"
        uib-dropdown
        on-toggle="toggled($ctrl.optionsOpen)">
@@ -9,18 +17,6 @@
       <i class="icon-caret-down"></i>
     </a>
     <ul class="dropdown-menu" aria-labelledby="dLabel">
-      <li>
-        <a ui-sref="projects.detail({projectid: $ctrl.projectId})">
-          <i class="icon-info"></i>
-          Project details
-        </a>
-      </li>
-      <li>
-        <a ui-sref="projects.edit({projectid: $ctrl.projectId})">
-          <i class="icon-color-correct"></i> Edit Project
-        </a>
-      </li>
-      <li role="separator" class="divider"></li>
       <li><a ng-click="$ctrl.openPublishModal()"><i class="icon-share"></i>Share</a></li>
       <li><a class="color-danger"
              ng-click="$ctrl.deleteProjectModal()">
@@ -33,4 +29,26 @@
         </a></li>
     </ul>
   </div>
+</span>
+
+<span ng-if="$ctrl.isEditingProjectName" style="display: inline-block;">
+  <form class="ng-pristine ng-valid">
+    <div class="form-group all-in-one">
+      <input id="name" type="text" class="form-control"
+             placeholder="Edit project name" ng-model="$ctrl.editedProjectName"
+             ng-attr-autofocus="{{$ctrl.isEditingProjectName || undefined }}">
+      <button class="btn btn-link flex-last" type="submit"
+              ng-click="$ctrl.saveProjectNameEdit()"
+              ng-if="!$ctrl.isSavingProjectNameEdit">
+        <span class="sr-only">Save</span>
+        <i class="icon-save" aria-hidden="true"></i>
+      </button>
+      <button class="btn btn-link" type="submit"
+              ng-click="$ctrl.cancelProjectNameEdit()"
+              ng-if="!$ctrl.isSavingProjectNameEdit">
+        <span class="sr-only">Cancel</span>
+        <i class="icon-cancel" aria-hidden="true"></i>
+      </button>
+    </div>
+  </form>
 </span>

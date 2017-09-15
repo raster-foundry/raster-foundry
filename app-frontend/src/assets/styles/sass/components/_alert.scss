@@ -1,14 +1,21 @@
 .alert {
-  padding: 1rem;
+  padding: .5rem 1rem;
   border-radius: $border-radius-base;
   flex: 1;
   text-align: center;
   color: #fff;
   background-color: $shade-normal;
+  margin-bottom: 1rem;
 }
 
 @mixin alert-state($color) {
   background-color: $color;
+}
+
+.alert-default {
+  @include alert-state($off-white);
+  color: $text-base;
+  border: 1px solid darken($off-white, 10%);
 }
 
 .alert-primary {

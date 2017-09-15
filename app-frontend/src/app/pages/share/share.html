@@ -1,23 +1,15 @@
-<div class="navbar primary-navbar">
-  <div class="navbar-left">
+<div class="navbar">
+  <div class="navbar-section primary">
     <a href="#" class="brand">
       <img ng-attr-src="{{$ctrl.logoAsset}}">
     </a>
+    <span class="navbar-vertical-divider"></span>
     <nav>
-      <a class="active">{{$ctrl.project.name}}</a>
+      <span class="navbar-text">{{$ctrl.project.name}}</span>
     </nav>
   </div>
 
-  <div class="navbar-right">
-    <nav ng-if="!$ctrl.testNoAuth">
-      <a href class="icon-link" title="Help">
-        <i class="icon-help"></i>
-      </a>
-      <a href class="icon-link" title="Processing">
-        <i class="icon-processing"></i>
-      </a>
-    </nav>
-    <span class="navbar-vertical-divider" ng-if="!$ctrl.testNoAuth"></span>
+  <div class="navbar-section secondary">
     <nav>
       <div ng-if="!$ctrl.authService.isLoggedIn || $ctrl.testNoAuth">
         <button class="btn btn-primary">
@@ -27,17 +19,20 @@
       <div ng-if="$ctrl.authService.isLoggedIn && !$ctrl.testNoAuth" uib-dropdown class="dropdown-my-account" on-toggle="toggled($ctrl.optionsOpen)">
         <a href uib-dropdown-toggle>
           <img ng-if="$ctrl.authService.profile().picture" class="avatar" ng-src="{{$ctrl.authService.profile().picture}}">
-          <div ng-if="!$ctrl.authService.profile().picture"
-             class="avatar image-placeholder">
-          </div>
+          <div class="avatar image-placeholder" ng-if="$ctrl.authService.profile() && !$ctrl.authService.profile().picture"></div>
           <span class="username">{{$ctrl.authService.profile().nickname}}</span>
           <i class="icon-caret-down"></i>
         </a>
         <ul class="dropdown-menu" aria-labelledby="dLabel">
-          <li><a href ui-sref="library.scenes.list">My library</a></li>
-          <li><a href ui-sref="settings.profile">Settings</a></li>
+          <li>
+            <a href ui-sref="settings.profile">
+              <i class="icon-settings"></i> Settings
+            </a>
+          </li>
           <li role="separator" class="divider"></li>
-          <li><a href ng-click="$ctrl.logout()">Sign out</a></li>
+          <li><a href ng-click="$ctrl.logout()">
+            <i class="icon-cancel"></i> Sign out
+          </a></li>
         </ul>
       </div>
     </nav>
