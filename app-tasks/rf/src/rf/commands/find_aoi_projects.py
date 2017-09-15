@@ -8,8 +8,8 @@ import boto3
 logger = logging.getLogger(__name__)
 
 ENVIRONMENT = os.getenv('ENVIRONMENT').title()
-AWS_BATCH_JOB_NAME_AOI_UPDATE = os.getenv('AWS_BATCH_JOB_NAME_AOI_UPDATE')
-AWS_BATCH_QUEUE_AOI_UPDATE = os.getenv('AWS_BATCH_QUEUE_AOI_UPDATE', 'queue{}Default'.format(ENVIRONMENT))
+BATCH_JOB_NAME_AOI_UPDATE = os.getenv('BATCH_JOB_NAME_AOI_UPDATE')
+BATCH_QUEUE_AOI_UPDATE = os.getenv('BATCH_QUEUE_AOI_UPDATE', 'queue{}Default'.format(ENVIRONMENT))
 
 
 @click.command(name='find-aoi-projects')
@@ -50,7 +50,7 @@ def kickoff_aoi_project_update_checks(project_ids):
 
     for project_id in project_ids:
         parameters = {'projectId': project_id}
-        client.submit_job(jobName=AWS_BATCH_JOB_NAME_AOI_UPDATE,
-                          jobQueue=AWS_BATCH_QUEUE_AOI_UPDATE,
-                          jobDefinition=AWS_BATCH_JOB_NAME_AOI_UPDATE,
+        client.submit_job(jobName=BATCH_JOB_NAME_AOI_UPDATE,
+                          jobQueue=BATCH_QUEUE_AOI_UPDATE,
+                          jobDefinition=BATCH_JOB_NAME_AOI_UPDATE,
                           parameters=parameters)
