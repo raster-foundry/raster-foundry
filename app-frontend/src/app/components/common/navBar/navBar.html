@@ -12,14 +12,14 @@
          ui-sref="home"
          ui-sref-active="active">
         <i class="icon-home"></i>
-        <span ng-if="!$ctrl.hasSubview()">Home</span>
+        <span ng-if="!$ctrl.hideLabels()">Home</span>
       </a>
       <a href
          ng-class="{'active': $ctrl.$state.includes('projects') }"
          ui-sref="projects.list">
         <i class="icon-project"></i>
         <span ng-if="
-              !$ctrl.hasSubview() || 
+              !$ctrl.hideLabels() ||
               $ctrl.$state.includes('projects')">
               Projects</span>
       </a>
@@ -27,14 +27,14 @@
          ng-class="{'active': $ctrl.$state.includes('imports') }"
          ui-sref="imports">
         <i class="icon-imports"></i>
-        <span ng-if="!$ctrl.hasSubview()">Imports</span>
+        <span ng-if="!$ctrl.hideLabels()">Imports</span>
       </a>
       <a href
          feature-flag="tools-ui"
          ui-sref="market.search"
          ng-class="{active: $ctrl.$state.$current.name.includes('market')}">
         <i class="icon-model"></i>
-        <span ng-if="!$ctrl.hasSubview()">Tools</span>
+        <span ng-if="!$ctrl.hideLabels()">Tools</span>
       </a>
 
       <span ui-view="navmenu"></span>
