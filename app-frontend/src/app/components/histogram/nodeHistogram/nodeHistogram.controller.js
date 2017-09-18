@@ -8,11 +8,12 @@ const defaultHistogramData = {minimum: 0, maximum: 255, buckets: _.range(0, 256)
     return [x, y];
 })};
 export default class NodeHistogramController {
-    constructor($log, $scope, $element) {
+    constructor($log, $scope, $element, histogramService) {
         'ngInject';
         this.$log = $log;
         this.$scope = $scope;
         this.$element = $element;
+        this.histogramService = histogramService;
     }
 
     $onInit() {
@@ -36,9 +37,6 @@ export default class NodeHistogramController {
 
         if (!Number.isFinite(this.precision)) {
             this.precision = 0;
-        }
-        if (!this.histogramRange) {
-            this.histogramRange = {min: this._options.min, max: this._options.max};
         }
     }
 
@@ -91,24 +89,11 @@ export default class NodeHistogramController {
         let defs = svg.select('defs')[0].length ? svg.select('defs') : svg.append('defs');
         let linearGradient = defs.selectAll('linearGradient')[0].length ?
             defs.selectAll('linearGradient') : defs.append('linearGradient');
-        let range = 255;
-        if (this.histogramRange) {
-            range = this.histogramRange.max - this.histogramRange.min;
-        } else {
-            range = this._options.max - this._options.min;
-        }
-        let data;
-        if (this.histogramRange) {
-            data = this._breakpoints.map((bp) => {
-                let offset = (bp.value - this.histogramRange.min) / range * 100;
-                return {offset: `${offset}%`, color: bp.color};
-            });
-        } else {
-            data = this._breakpoints.map((bp) => {
-                let offset = (bp.value - this._options.min) / range * 100;
-                return {offset: `${offset}%`, color: bp.color};
-            });
-        }
+        let range = this._options.range.max - this._options.range.min;
+        let data = this._breakpoints.map((bp) => {
+            let offset = (bp.value - this._options.range.min) / range * 100;
+            return {offset: `${offset}%`, color: bp.color};
+        });
 
         // Example code used for displaying discrete colors instead of a gradient
         // if (this._options.discrete) {
@@ -197,27 +182,29 @@ export default class NodeHistogramController {
     }
 
     rescaleBreakpoints(min, max) {
-        let currentRange = this.histogramRange ?
-            this.histogramRange.max - this.histogramRange.min :
-            this._options.max - this._options.min;
+        let currentRange = this._options.range.max - this._options.range.min;
         let newRange = max - min;
+
+
         if (this._breakpoints && currentRange !== newRange && newRange > 0) {
-            this._breakpoints.forEach((bp) => {
-                let percent = (
-                    bp.value -
-                        (this.histogramRange ? this.histogramRange.min : this._options.min)
-                ) / currentRange;
-                let newVal = percent * newRange + min;
-                bp.value = newVal;
-                return bp;
-            });
+            this.histogramService.scaleBreakpointsToRange(
+                this._breakpoints,
+                {
+                    min: this._options.range.min,
+                    max: this._options.range.max
+                }, {
+                    min: min, max: max
+                }
+            );
             if (this._options) {
+                Object.assign(this._options.range, {
+                    min: min, max: max
+                });
                 this.onBreakpointChange({
                     breakpoints: this._breakpoints, options: this._options
                 });
             }
         }
-        this.histogramRange = {min: min, max: max};
     }
 
     processDataToPlot(data) {
@@ -344,7 +331,6 @@ export default class NodeHistogramController {
            ) {
             return;
         }
-        let currentRange = this.histogramRange;
         this.rescaleBreakpoints(0, colorSchemeOptions.colorScheme.length - 1);
         this._breakpoints = colorSchemeOptions.colorScheme.map((color, index, arr) => {
             let isEndpoint = index === 0 || index === arr.length - 1;
@@ -360,6 +346,6 @@ export default class NodeHistogramController {
         });
         this._options.scale = colorSchemeOptions.dataType;
         this._options.baseScheme = colorSchemeOptions;
-        this.rescaleBreakpoints(currentRange.min, currentRange.max);
+        this.rescaleBreakpoints(this._options.range.min, this._options.range.max);
     }
 }

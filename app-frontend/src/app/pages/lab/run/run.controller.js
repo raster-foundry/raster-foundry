@@ -375,7 +375,8 @@ export default class LabRunController {
     createToolRun() {
         this.applyInProgress = true;
         this.clearWarning();
-        this.toolService.createToolRun(this.toolRun).then(tr => {
+        let toolRunPromise = this.toolService.createToolRun(this.toolRun);
+        toolRunPromise.then(tr => {
             this.lastToolRun = tr;
             this.clearWarning();
             if (this.isShowingPreview) {
@@ -389,6 +390,7 @@ export default class LabRunController {
         }).finally(() => {
             this.applyInProgress = false;
         });
+        return toolRunPromise;
     }
 
     onExecutionParametersChange(sourceId, project, band, override, renderDef) {
