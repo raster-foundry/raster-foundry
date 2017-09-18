@@ -33,7 +33,7 @@ class BufferingInterpreterSpec
     val futureTile: Future[Interpreted[Tile]] =
       BufferingInterpreter.literalize(src1 - src2, constantSource, 0, 1, 1).map({ validatedAst =>
         validatedAst
-          .andThen(BufferingInterpreter.interpret(_, 256)(global)(0, 1, 1))
+          .andThen(BufferingInterpreter.interpret(_, 256)(0, 1, 1))
           .map(_.evaluate.get)
       })
 
@@ -53,7 +53,7 @@ class BufferingInterpreterSpec
     val src2 = randomSourceAST
     val ret = BufferingInterpreter.literalize(src1 - src2, constantSource, 0, 1, 1).map({ validatedAst =>
       validatedAst
-        .andThen(BufferingInterpreter.interpret(_, 256)(global)(0, 1, 1))
+        .andThen(BufferingInterpreter.interpret(_, 256)(0, 1, 1))
     })
 
     val lt = Await.result(ret, 10.seconds)
@@ -73,7 +73,7 @@ class BufferingInterpreterSpec
     val badSource = (raster: RFMLRaster, buffer: Boolean, z: Int, x: Int, y: Int) => Future.failed { throw new Exception("Some exception") }
 
     val ret = BufferingInterpreter.literalize(src1 - src2, badSource, 0, 1, 1).map({ validatedAst =>
-      validatedAst.andThen(BufferingInterpreter.interpret(_, 256)(global)(0, 1, 1))
+      validatedAst.andThen(BufferingInterpreter.interpret(_, 256)(0, 1, 1))
     })
 
     val lt = Await.result(ret, 10.seconds)
@@ -230,7 +230,7 @@ class BufferingInterpreterSpec
 
   it("should evaluate masking") {
     // We need to select a subextent which is under the z/x/y of 1/1/1
-    val subExtent: Extent = Interpreter.layouts(2).mapTransform(2, 2)
+    val subExtent: Extent = BufferingInterpreter.layouts(2).mapTransform(2, 2)
     val mask = MultiPolygon(subExtent.toPolygon)
 
     val src = sceneRaster(1)

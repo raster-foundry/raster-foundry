@@ -32,7 +32,7 @@ object InterpreterTest
   ): Tile = {
     val futureTile = BufferingInterpreter.literalize(ast, tileSource, 1, 1, 1).map({ validatedAst =>
       validatedAst
-        .andThen(BufferingInterpreter.interpret(_, 256)(global)(1, 1, 1))
+        .andThen(BufferingInterpreter.interpret(_, 256)(1, 1, 1))
         .map(_.evaluate.get)
     })
     if (label.length > 0) println(s"$label: ", ast.asJson.noSpaces)
@@ -52,7 +52,7 @@ object InterpreterTest
   ): Tile = {
     val futureTile = BufferingInterpreter.literalize(ast, tileSource, 1, 1, 1).map({ validatedAst =>
       validatedAst
-        .andThen(BufferingInterpreter.interpret(_, 256)(global)(1, 1, 1))
+        .andThen(BufferingInterpreter.interpret(_, 256)(1, 1, 1))
         .map(_.evaluateDouble.get)
     })
     if (label.length > 0) println(s"$label: ", ast.asJson.noSpaces)
