@@ -4,7 +4,7 @@ import java.sql.Timestamp
 import java.util.UUID
 
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
-import com.azavea.rf.database.fields.{OrganizationFkFields, TimestampFields, UserFkFields, NameField, VisibilityField}
+import com.azavea.rf.database.fields.{OrganizationFkFields, TimestampFields, UserFkVisibleFields, NameField, VisibilityField}
 import com.azavea.rf.database.query.{UploadQueryParameters, ListQueryResult}
 import com.azavea.rf.datamodel._
 import com.lonelyplanet.akka.http.extensions.PageRequest
@@ -24,6 +24,7 @@ import io.circe.Json
 class Uploads(_tableTag: Tag) extends Table[Upload](_tableTag, "uploads")
     with TimestampFields
     with OrganizationFkFields
+    with UserFkVisibleFields
 {
   def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, owner,
     organizationId, uploadStatus, fileType, uploadType, files,
@@ -74,7 +75,7 @@ object Uploads extends TableQuery(tag => new Uploads(tag)) with LazyLogging {
   def listUploads(offset: Int, limit: Int, queryParams: UploadQueryParameters, user: User) = {
 
     val dropRecords = limit * offset
-    val accessibleUploads = Uploads.filterToSharedOrganizationIfNotInRoot(user)
+    val accessibleUploads = Uploads.filterUserVisibility(user)
     ListQueryResult[Upload](
       (accessibleUploads
          .filterByUploadParams(queryParams)
@@ -103,7 +104,7 @@ object Uploads extends TableQuery(tag => new Uploads(tag)) with LazyLogging {
     */
   def getUpload(uploadId: UUID, user: User) =
     Uploads
-      .filterToSharedOrganizationIfNotInRoot(user)
+      .filterUserVisibility(user)
       .filter(_.id === uploadId)
       .result
       .headOption
@@ -115,7 +116,7 @@ object Uploads extends TableQuery(tag => new Uploads(tag)) with LazyLogging {
     */
   def deleteUpload(uploadId: UUID, user: User) =
     Uploads
-      .filterToSharedOrganizationIfNotInRoot(user)
+      .filterUserVisibility(user)
       .filter(_.id === uploadId)
       .delete
 
@@ -128,7 +129,7 @@ object Uploads extends TableQuery(tag => new Uploads(tag)) with LazyLogging {
 
     val updateUploadQuery = for {
       updateUpload <- Uploads
-                        .filterToSharedOrganizationIfNotInRoot(user)
+                        .filterUserVisibility(user)
                         .filter(_.id === uploadId)
     } yield (
       updateUpload.modifiedAt,
