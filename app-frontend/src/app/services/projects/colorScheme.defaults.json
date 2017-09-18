@@ -1,21 +1,5 @@
 {
     "colorSchemes": [{
-        "label": "Blue to orange",
-        "colors": ["#2586AB", "#4EA3C8", "#7FB8D4", "#ADD8EA", "#C8E1E7", "#EDECEA", "#F0E7BB", "#F5CF7D", "#F9B737", "#E68F2D", "#D76B27"],
-        "type": "DIVERGING"
-    }, {
-        "label": "Light yellow to orange",
-        "colors": ["#118C8C", "#429D91", "#61AF96", "#75C59B", "#A2CF9F", "#C5DAA3", "#E6E5A7", "#E3D28F", "#E0C078", "#DDAD62", "#D29953", "#CA8746", "#C2773B"],
-        "type": "DIVERGING"
-    }, {
-        "label": "Blue to red",
-        "colors": ["#2791C3", "#5DA1CA", "#83B2D1", "#A8C5D8", "#CCDBE0", "#E9D3C1", "#DCAD92", "#D08B6C", "#C66E4B", "#BD4E2E"],
-        "type": "DIVERGING"
-    }, {
-        "label": "Green to red-orange",
-        "colors": ["#569543", "#9EBD4D", "#BBCA7A", "#D9E2B2", "#E4E7C4", "#E6D6BE", "#E3C193", "#DFAC6C", "#DB9842", "#B96230"],
-        "type": "DIVERGING"
-    }, {
         "label": "Viridis",
         "colors": ["#440154", "#482878", "#3e4989", "#31688e", "#26868e", "#1f9e89", "#35b779", "#6ece58", "#b5de2b", "#F0F921"],
         "type": "SEQUENTIAL"
@@ -51,6 +35,22 @@
         "label": "Classification: Muted terrain",
         "colors": ["#CEE1E8", "#7CBCB5", "#82B36D", "#94C279", "#D1DE8D", "#EDECC3", "#CCAFB4", "#C99884"],
         "type": "SEQUENTIAL"
+    }, {
+        "label": "Blue to orange",
+        "colors": ["#2586AB", "#4EA3C8", "#7FB8D4", "#ADD8EA", "#C8E1E7", "#EDECEA", "#F0E7BB", "#F5CF7D", "#F9B737", "#E68F2D", "#D76B27"],
+        "type": "DIVERGING"
+    }, {
+        "label": "Light yellow to orange",
+        "colors": ["#118C8C", "#429D91", "#61AF96", "#75C59B", "#A2CF9F", "#C5DAA3", "#E6E5A7", "#E3D28F", "#E0C078", "#DDAD62", "#D29953", "#CA8746", "#C2773B"],
+        "type": "DIVERGING"
+    }, {
+        "label": "Blue to red",
+        "colors": ["#2791C3", "#5DA1CA", "#83B2D1", "#A8C5D8", "#CCDBE0", "#E9D3C1", "#DCAD92", "#D08B6C", "#C66E4B", "#BD4E2E"],
+        "type": "DIVERGING"
+    }, {
+        "label": "Green to red-orange",
+        "colors": ["#569543", "#9EBD4D", "#BBCA7A", "#D9E2B2", "#E4E7C4", "#E6D6BE", "#E3C193", "#DFAC6C", "#DB9842", "#B96230"],
+        "type": "DIVERGING"
     }, {
         "label": "Raster Foundry Categorical",
         "colors": ["#FFFFFF", "#959CAC", "#465076"],

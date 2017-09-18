@@ -13,11 +13,13 @@
   <div class="modal-body" ng-if="$ctrl.currentStepIs('TYPE')">
     <div class="content">
       <h3 class="modal-content-header">Name your Project</h3>
-      <form>
+      <form ng-submit="$ctrl.handleNext()">
         <div class="form-group all-in-one">
           <label for="name"><i class="icon-project"></i></label>
           <input id="name" type="text" class="form-control"
-                placeholder="New project name" ng-model="$ctrl.projectBuffer.name">
+                 placeholder="New project name"
+                 ng-model="$ctrl.projectBuffer.name"
+          >
         </div>
         <div class="form-group color-danger"
             ng-if="$ctrl.showProjectCreateError && $ctrl.projectCreateErrorText"
