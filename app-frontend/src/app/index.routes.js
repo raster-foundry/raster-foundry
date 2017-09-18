@@ -80,7 +80,8 @@ function projectEditStates($stateProvider) {
                     controller: 'ProjectsEditController',
                     controllerAs: '$ctrl'
                 }
-            }
+            },
+            redirectTo: 'projects.edit.scenes'
         })
         .state('projects.edit.colormode', {
             title: 'Project: Color Mode',
