@@ -33,7 +33,7 @@
     ng-class="{'active': $ctrl.lastMouseOver === bp.id}"
     data-color="bp.color"
     data-breakpoint="bp.value"
-    data-range="$ctrl.histogramRange"
+    data-range="$ctrl._options.range"
     data-precision="$ctrl.precision"
     data-options="bp.options"
     on-breakpoint-change="$ctrl.onChange(bp, breakpoint)"

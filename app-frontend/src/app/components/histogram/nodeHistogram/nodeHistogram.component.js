@@ -7,7 +7,6 @@ const nodeHistogram = {
         histogram: '<',
         breakpoints: '<',
         options: '<',
-        onMasksChange: '&',
         onBreakpointChange: '&'
     }
 };

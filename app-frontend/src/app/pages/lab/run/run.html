@@ -71,12 +71,13 @@
         ng-if="$ctrl.tool"
         class="with-position"
         toolrun="$ctrl.lastToolRun"
-        on-preview="$ctrl.showPreview(data)"
-        on-share="$ctrl.shareNode(data)"
+        tool-definition="$ctrl.tool.definition"
+        tool-parameters="$ctrl.toolParameters"
+        on-preview="$ctrl.showPreview(nodeId)"
+        on-share="$ctrl.shareNode(nodeId)"
         on-parameter-change="$ctrl.onExecutionParametersChange(sourceId, project, band, override, renderDef)"
         on-graph-complete="$ctrl.onGraphComplete(nodes)"
-        tool-definition="$ctrl.tool.definition"
-        tool-parameters="$ctrl.toolParameters">
+        create-tool-run="$ctrl.createToolRun()">
       </rf-diagram-container>
     </div>
     <div class="lab-footer"

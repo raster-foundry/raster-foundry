@@ -10,6 +10,7 @@ export default {
         onPreview: '&',
         onShare: '&',
         onParameterChange: '&',
-        onGraphComplete: '&'
+        onGraphComplete: '&',
+        createToolRun: '&'
     }
 };
