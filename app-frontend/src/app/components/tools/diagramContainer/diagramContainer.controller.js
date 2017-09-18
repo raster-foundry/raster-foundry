@@ -82,47 +82,60 @@ export default class DiagramContainerController {
                       </button>
                       <button class="btn node-button" type="button"
                               ng-if="model.get('cellType') !== 'const'"
-                              ng-class="{'active': showHistogram}"
+                              ng-class="{'active': currentView === 'HISTOGRAM'}"
                               ng-click="toggleHistogram()">
                       <span class="icon-histogram"></span>
                       </button>
                       <button class="btn node-button" type="button"
-                              ng-click="toggleBody()">
+                              ng-if="model.get('cellType') !== 'const'"
+                              ng-class="{'active': currentView === 'STATISTICS'}"
+                              ng-click="toggleStatistics()">
+                        Stats
+                      </button>
+                      <button class="btn node-button" type="button"
+                              ng-click="toggleCollapse()">
                       <span ng-class="{'icon-caret-up': showBody,
                                        'icon-caret-down': !showBody}"></span>
                       </button>
                     </div>
                   </div>
                   <rf-input-node
-                    ng-if="model.get('cellType') === 'src'"
-                    ng-show="showBody && !showHistogram"
+                    ng-if="ifCellType('src')"
+                    ng-show="showCellBody()"
                     data-model="model"
                     on-change="onChange({sourceId: sourceId, project: project, band: band})"
                   ></rf-input-node>
                   <rf-operation-node
-                    ng-if="model.get('cellType') === 'function'"
-                    ng-show="showBody && !showHistogram"
+                    ng-if="ifCellType('function')"
+                    ng-show="showCellBody()"
                     data-model="model"
                   ></rf-operation-node>
                   <rf-constant-node
-                    ng-if="model.get('cellType') === 'const'"
-                    ng-show="showBody && !showHistogram"
+                    ng-if="ifCellType('const')"
+                    ng-show="showCellBody()"
                     data-model="model"
                     on-change="onChange({override: override})"
                   ></rf-constant-node>
                   <rf-classify-node
-                    ng-if="model.get('cellType') === 'classify'"
+                    ng-if="ifCellType('classify')"
+                    ng-show="showCellBody()"
                     data-model="model"
                     on-change="onChange({override: override})"
                   ></rf-classify-node>
                   <rf-node-histogram
-                    ng-if="showHistogram && showBody"
+                    ng-if="currentView === 'HISTOGRAM' && !isCollapsed"
                     data-histogram="histogram"
                     data-breakpoints="breakpoints"
                     data-masks="masks"
                     data-options="histogramOptions"
                     on-breakpoint-change="onBreakpointChange(breakpoints, options)"
                   ></rf-node-histogram>
+                  <rf-node-statistics
+                    ng-if="currentView === 'STATISTICS' && !isCollapsed"
+                    data-model="model"
+                    data-toolrun="model.get('toolrun')"
+                    data-size="model.get('size')"
+                  ></rf-node-statistics>
                 </div>`,
             initialize: function () {
                 _.bindAll(this, 'updateBox');
@@ -130,21 +143,70 @@ export default class DiagramContainerController {
                 this.model.on('change', this.updateBox, this);
                 this.$box = angular.element(this.template);
                 this.scope = $scope.$new();
-                this.scope.showBody = true;
-                let dropdownHeight = 200;
-                let headerHeight = 50;
-                this.histogramHeight = dropdownHeight + headerHeight;
+                // Acceptable values are 'BODY', 'HISTOGRAM', and 'STATISTICS'
+                this.scope.currentView = 'BODY';
+                this.scope.isCollapsed = false;
+                this.baseWidth = 400;
+                this.histogramHeight = 250;
+                this.statisticsHeight = 200;
+                this.bodyHeight = null;
 
                 this.scope.toggleHistogram = () => {
-                    this.scope.showHistogram = !this.scope.showHistogram;
-                    if (this.scope.showHistogram && !this.scope.showBody) {
-                        this.scope.toggleBody();
-                    } else if (this.scope.showHistogram) {
-                        this.expandedSize = this.model.getBBox();
-                        this.model.resize(this.expandedSize.width, this.histogramHeight);
-                    } else if (this.scope.showBody) {
-                        this.model.resize(this.expandedSize.width, this.expandedSize.height);
+                    if (this.scope.isCollapsed) {
+                        this.scope.toggleCollapse();
                     }
+                    if (this.scope.currentView === 'BODY' && !this.bodyHeight) {
+                        this.bodyHeight = this.model.getBBox().height;
+                    }
+                    if (this.scope.currentView === 'HISTOGRAM') {
+                        this.scope.currentView = 'BODY';
+                        this.model.resize(this.baseWidth, this.bodyHeight);
+                    } else {
+                        this.scope.currentView = 'HISTOGRAM';
+                        this.expandedSize = this.model.getBBox();
+                        this.model.resize(this.baseWidth, this.histogramHeight);
+                    }
+                };
+
+                this.scope.toggleStatistics = () => {
+                    if (this.scope.isCollapsed) {
+                        this.scope.toggleCollapse();
+                    }
+                    if (this.scope.currentView === 'BODY' && !this.bodyHeight) {
+                        this.bodyHeight = this.model.getBBox().height;
+                    }
+                    if (this.scope.currentView === 'STATISTICS') {
+                        this.scope.currentView = 'BODY';
+                        this.model.resize(this.baseWidth, this.bodyHeight);
+                    } else {
+                        this.scope.currentView = 'STATISTICS';
+                        this.model.resize(this.baseWidth, this.statisticsHeight);
+                    }
+                };
+
+                this.scope.toggleCollapse = () => {
+                    if (this.scope.currentView === 'BODY' && !this.bodyHeight) {
+                        this.bodyHeight = this.model.getBBox().height;
+                    }
+                    if (this.scope.isCollapsed) {
+                        this.model.resize(this.baseWidth, this.scope.lastSize.height);
+                        this.scope.isCollapsed = false;
+                    } else {
+                        this.scope.lastSize = this.model.getBBox();
+                        this.model.resize(this.baseWidth, 50);
+                        this.scope.isCollapsed = true;
+                    }
+                };
+
+                this.scope.ifCellType = (type) => {
+                    return this.scope.model.get('cellType') === type;
+                };
+
+                this.scope.showCellBody = () => {
+                    return (
+                        this.scope.currentView === 'BODY' &&
+                        !this.scope.isCollapsed
+                    );
                 };
 
                 this.scope.updateBreakpoints = () => {
@@ -183,20 +245,6 @@ export default class DiagramContainerController {
                     this.scope.breakpoints = breakpoints;
                     this.scope.histogramOptions = options;
                     this.scope.updateBreakpoints();
-                };
-
-                this.scope.toggleBody = () => {
-                    this.scope.showBody = !this.scope.showBody;
-                    if (!this.scope.showBody) {
-                        if (!this.scope.showHistogram) {
-                            this.expandedSize = this.model.getBBox();
-                        }
-                        this.model.resize(this.expandedSize.width, 50);
-                    } else if (this.scope.showHistogram) {
-                        this.model.resize(this.expandedSize.width, this.histogramHeight);
-                    } else {
-                        this.model.resize(this.expandedSize.width, this.expandedSize.height);
-                    }
                 };
 
                 this.scope.onPreview = _.first(this.model.get('contextMenu')
@@ -242,7 +290,7 @@ export default class DiagramContainerController {
             },
             updateBox: function () {
                 let bbox = this.model.getBBox();
-                if (this.model !== this.scope.model) {
+                if (!_.isEqual(this.model, this.scope.model)) {
                     this.scope.onChange = this.model.get('onChange');
                     this.scope.sourceId = this.model.get('id');
                     this.scope.model = this.model;

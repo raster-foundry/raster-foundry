@@ -11,11 +11,11 @@
     <div class="node-dropdown-menu" ng-show="$ctrl.showMenu">
       <ul>
         <span ng-repeat="menuItem in $ctrl.menuItems">
-        <li ng-if="menuItem.type !== 'divider'"
-            ng-click="menuItem.callback($event, $ctrl.model)">
-            {{menuItem.label}}
-        </li>
-        <li ng-if="menuItem.type === 'divider'" class="divider"></li>
+          <li ng-if="menuItem.type !== 'divider'"
+              ng-click="menuItem.callback($event, $ctrl.model)">
+              {{menuItem.label}}
+          </li>
+          <li ng-if="menuItem.type === 'divider'" class="divider"></li>
         </span>
       </ul>
     </div>

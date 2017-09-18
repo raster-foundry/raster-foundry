@@ -1668,6 +1668,18 @@ rf-classify-node {
   overflow: hidden;
 }
 
+rf-node-statistics {
+  flex: 1;
+  cursor: auto;
+  pointer-events: auto;
+  flex-direction: column;
+  align-items: stretch;
+  position: relative;
+  max-height: 240px;
+  overflow: hidden;
+  border-radius: 0 0 5px 5px;
+}
+
 .operation-node-body {
   display: flex;
   flex: 1;
@@ -1681,6 +1693,13 @@ rf-classify-node {
 
 
 .classify-node-preview {
+  display: flex;
+  display: flex;
+  flex-direction: column;
+  padding: 1em;
+}
+
+.node-statistics {
   display: flex;
   display: flex;
   flex-direction: column;
@@ -2576,6 +2595,7 @@ ul.dropdown-list {
   right: 0;
   transform: translateY(-50%);
   margin-right: 1em;
+  z-index: 1;
 }
 .node-button {
   padding: 0.2em;
@@ -2665,6 +2685,27 @@ nvd3 {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(0, 0, 0, 0.5);
     border-radius: 3px;
+    &.light {
+      background: none;
+    }
+}
+
+.node-data-placeholder {
+  font-weight: 700;
+  text-align: center;
+  padding: 1em;
+  width: 90%;
+  background: #fafafa;
+  border: 1px solid $gray-lightest;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  .message {
+    flex: 1;
+  }
+  > *:not(:last-child) {
+    margin-right: 1em;
+  }
 }
 
 /* Component: Reclassify Modal */
