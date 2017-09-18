@@ -128,11 +128,16 @@ trait ToolRoutes extends Authentication
   }
 
   def validateAST: Route = authenticate { user =>
-    entity(as[MapAlgebraAST]) { ast =>
+    entity(as[Json]) { jsonAst =>
       handleExceptions(interpreterExceptionHandler) {
         complete {
-          validateTree[Unit](ast)
-          (StatusCodes.OK, ast)
+          jsonAst.as[MapAlgebraAST] match {
+            case Right(ast) =>
+              validateTree[Unit](ast)
+              (StatusCodes.OK, ast)
+            case Left(msg) =>
+              (StatusCodes.BadRequest, "Unable to parse json as MapAlgebra AST")
+          }
         }
       }
     }
