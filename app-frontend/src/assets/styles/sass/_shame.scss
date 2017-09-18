@@ -1644,7 +1644,8 @@ rf-node-statistics {
   align-items: stretch;
   position: relative;
   max-height: 240px;
-  overflow: visible;
+  overflow: hidden;
+  border-radius: 0 0 5px 5px;
 }
 
 .operation-node-body {
@@ -2659,7 +2660,7 @@ nvd3 {
 
 .node-data-placeholder {
   font-weight: 700;
-  text-align: left;
+  text-align: center;
   padding: 1em;
   width: 90%;
   background: #fafafa;
