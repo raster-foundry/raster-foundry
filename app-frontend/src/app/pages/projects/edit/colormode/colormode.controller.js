@@ -103,7 +103,7 @@ export default class ProjectsEditColormode {
         this.defaultSingleBandOptions = {
             band: 0,
             dataType: scheme.type,
-            colorScheme: this.colorSchemeService.colorsToDiscreteScheme(scheme.colors),
+            colorScheme: scheme.colors,
             colorBins: 0,
             legendOrientation: 'left'
         };
