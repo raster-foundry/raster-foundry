@@ -100,21 +100,25 @@ export default class DiagramContainerController {
                     </div>
                   </div>
                   <rf-input-node
-                    ng-if="showCellBodyType('src')"
+                    ng-if="ifCellType('src')"
+                    ng-show="showCellBody()"
                     data-model="model"
                     on-change="onChange({sourceId: sourceId, project: project, band: band})"
                   ></rf-input-node>
                   <rf-operation-node
-                    ng-if="showCellBodyType('function')"
+                    ng-if="ifCellType('function')"
+                    ng-show="showCellBody()"
                     data-model="model"
                   ></rf-operation-node>
                   <rf-constant-node
-                    ng-if="showCellBodyType('const')"
+                    ng-if="ifCellType('const')"
+                    ng-show="showCellBody()"
                     data-model="model"
                     on-change="onChange({override: override})"
                   ></rf-constant-node>
                   <rf-classify-node
-                    ng-if="showCellBodyType('classify')"
+                    ng-if="ifCellType('classify')"
+                    ng-show="showCellBody()"
                     data-model="model"
                     on-change="onChange({override: override})"
                   ></rf-classify-node>
@@ -194,9 +198,12 @@ export default class DiagramContainerController {
                     }
                 };
 
-                this.scope.showCellBodyType = (type) => {
+                this.scope.ifCellType = (type) => {
+                    return this.scope.model.get('cellType') === type;
+                };
+
+                this.scope.showCellBody = () => {
                     return (
-                        this.scope.model.get('cellType') === type &&
                         this.scope.currentView === 'BODY' &&
                         !this.scope.isCollapsed
                     );
