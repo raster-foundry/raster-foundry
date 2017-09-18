@@ -2,6 +2,8 @@
 
 ## Context
 
+This ADR has been superseded by `ADR-0019`.
+
 Some actions and features of Raster Foundry require a way to manage asynchronous tasks and workflows. 
 For instance, user uploads of imagery or tools may start workflows in an ad hoc manner, while in
 contrast imports of imagery from NASA or partners may need to happen on a schedule. The nature of
