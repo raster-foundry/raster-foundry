@@ -57,6 +57,7 @@ trait ToolRunRoutes extends Authentication
           handleExceptions(interpreterExceptionHandler) {
             complete {
               val ast = newRun.executionParameters.as[MapAlgebraAST].valueOr(throw _)
+              println("here")
               validateTreeWithSources[Unit](ast)
               (StatusCodes.Created, toolRun)
             }

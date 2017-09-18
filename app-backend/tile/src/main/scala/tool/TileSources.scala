@@ -65,11 +65,11 @@ object TileSources extends LazyLogging {
   def dataWindow(r: RFMLRaster)(implicit database: Database): OptionT[Future, (Extent, Int)] = r match {
     case MapAlgebraAST.SceneRaster(id, sceneId, Some(_), _, _) => {
       implicit val sceneIds = Set(id)
-      OptionT.fromOption(GlobalSummary.minAcceptableSceneZoom(sceneId, store, 256))  // TODO: 512?
+      OptionT.fromOption(GlobalSummary.minAcceptableSceneZoom(sceneId, store, 256))
     }
     case MapAlgebraAST.ProjectRaster(id, projId, Some(_), _, _) => {
       implicit val sceneIds = Set(id)
-      GlobalSummary.minAcceptableProjectZoom(projId, 256) // TODO: 512?
+      GlobalSummary.minAcceptableProjectZoom(projId, 256)
     }
 
     /* Don't attempt work for a RFMLRaster which will fail AST validation anyway */
@@ -98,15 +98,19 @@ object TileSources extends LazyLogging {
               .crop(extent)
               .tile
           } match {
-            case Success(tile) => Valid(TileWithNeighbors(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)), None))
-            case Failure(e) => Invalid(NEL.of(RasterRetrievalError(sr)))
+            case Success(tile) =>
+              Valid(TileWithNeighbors(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)), None))
+            case Failure(e) =>
+              Invalid(NEL.of(RasterRetrievalError(sr)))
           }
       }
     case pr@MapAlgebraAST.ProjectRaster(id, projId, Some(band), maybeND, _) =>
       Mosaic.rawForExtent(projId, zoom, Some(Projected(extent.toPolygon, 3857))).value.map({ maybeTile =>
         maybeTile match {
-          case Some(tile) => Valid(TileWithNeighbors(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)), None))
-          case None => Invalid(NEL.of(RasterRetrievalError(pr)))
+          case Some(tile) =>
+            Valid(TileWithNeighbors(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)), None))
+          case None =>
+            Invalid(NEL.of(RasterRetrievalError(pr)))
         }
       })
     case r: MapAlgebraAST =>

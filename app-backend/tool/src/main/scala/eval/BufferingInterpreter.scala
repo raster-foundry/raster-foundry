@@ -38,30 +38,30 @@ object BufferingInterpreter extends LazyLogging {
     def eval(ast: MapAlgebraAST, buffer: Int): Future[Interpreted[MapAlgebraAST]] =
       Try({
         ast match {
-          case sr@SceneRaster(_, sceneId, band, celltype, md) =>
+          case sr@SceneRaster(id, _, band, celltype, md) =>
             if (buffer > 0)
               tileSource(sr, true, z, x, y).map({ interp =>
                 interp.map({ tile =>
-                  LiteralRaster(sceneId, tile.withBuffer(buffer), md)
+                  LiteralRaster(id, tile.withBuffer(buffer), md)
                 })
               })
             else
               tileSource(sr, true, z, x, y).map({ interp =>
                 interp.map({ tile =>
-                  LiteralRaster(sceneId, tile.centerTile, md)
+                  LiteralRaster(id, tile.centerTile, md)
                 })
               })
-          case pr@ProjectRaster(_, projId, band, celltype, md) =>
+          case pr@ProjectRaster(id, _, band, celltype, md) =>
             if (buffer > 0)
               tileSource(pr, true, z, x, y).map({ interp =>
                 interp.map({ tile =>
-                  LiteralRaster(projId, tile.withBuffer(buffer), md)
+                  LiteralRaster(id, tile.withBuffer(buffer), md)
                 })
               })
             else
               tileSource(pr, true, z, x, y).map({ interp =>
                 interp.map({ tile =>
-                  LiteralRaster(projId, tile.centerTile, md)
+                  LiteralRaster(id, tile.centerTile, md)
                 })
               })
           case f: FocalOperation =>

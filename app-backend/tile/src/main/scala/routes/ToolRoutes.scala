@@ -140,15 +140,17 @@ class ToolRoutes(implicit val database: Database) extends Authentication
               val colorRamp = providedRamps.get(colorRampName).getOrElse(providedRamps("viridis"))
               val responsePng: OptionT[Future, Png] = for {
                 ast   <- LayerCache.toolEvalRequirements(toolRunId, nodeId, user)
-                tile  <- OptionT {
+                tile  <- OptionT({
                         val literalAst: Future[Interpreted[MapAlgebraAST]] = BufferingInterpreter.literalize(ast, source, z, x, y)
                         val futureTile: Future[Interpreted[Tile]] = literalAst.map({ validatedAst =>
                           validatedAst.andThen({ resolvedAst =>
                             logger.debug(s"Attempting to retrieve TMS tile at $z/$x/$y")
                             BufferingInterpreter.interpret(resolvedAst, 256)(z, x, y).andThen({ lztile =>
                               lztile.evaluateDouble match {
-                                case Some(t) => Valid(t)
-                                case None => Invalid(NEL.of(LazyTileEvaluationError(ast)))
+                                case Some(t) =>
+                                  Valid(t)
+                                case None =>
+                                  Invalid(NEL.of(LazyTileEvaluationError(ast)))
                               }
                             })
                           })
@@ -159,7 +161,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
                             case Invalid(errors) => throw InterpreterException(errors)
                           }
                         })
-                      }
+                      })
                 cMap  <- LayerCache.toolRunColorMap(toolRunId, nodeId, user, colorRamp, colorRampName)
               } yield {
                 logger.debug(s"Tile successfully produced at $z/$x/$y")
