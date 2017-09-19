@@ -1,0 +1,32 @@
+@import "../../../../assets/styles/sass/settings/_colors.scss";
+
+input.form-control.scene-detail-field {
+    height: 32px;
+    border: none;
+    border-bottom: 3px dotted $gray-lightest;
+    color: $brand-tertiary;
+    font-style: italic;
+}
+
+a.btn.dropdown-label.acq-date {
+    color: $brand-tertiary;
+    font-style: italic;
+    border: none;
+    border-bottom: 3px dotted $gray-lightest;
+}
+
+a.btn.dropdown-label.acq-date:hover {
+    background-color: $gray-lightest;
+}
+
+button.btn.btn-light.dropdown-toggle.acq-date {
+    border: none;
+    border-bottom: 3px dotted $gray-lightest;
+    background-color: white;
+    color: $gray-lightest;
+}
+
+button.btn.btn-light.dropdown-toggle.acq-date:hover{
+    background-color: $gray-lightest;
+    color: white;
+}

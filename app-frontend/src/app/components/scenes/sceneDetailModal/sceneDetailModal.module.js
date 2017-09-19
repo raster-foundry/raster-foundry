@@ -1,6 +1,7 @@
 import angular from 'angular';
 import SceneDetailModalComponent from './sceneDetailModal.component.js';
 import SceneDetailModalController from './sceneDetailModal.controller.js';
+require('./sceneDetailModal.scss');
 
 const SceneDetailModalModule = angular.module('components.scenes.sceneDetailModal', []);
 
