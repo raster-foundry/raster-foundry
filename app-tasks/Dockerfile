@@ -10,7 +10,6 @@ RUN set -ex \
                --shell /usr/sbin/nologin \
                airflow \
     && mkdir -p ${AIRFLOW_HOME} \
-    && chown airflow:airflow -R ${AIRFLOW_HOME} \
     && gdalDeps=' \
        gdal-bin/sid \
        python-gdal/sid \
@@ -32,7 +31,6 @@ RUN set -ex \
 COPY rf/ /tmp/rf
 RUN (cd /tmp/rf && python setup.py install)
 
-USER airflow
 WORKDIR ${AIRFLOW_HOME}
 
 COPY usr/local/airflow/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
