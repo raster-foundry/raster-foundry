@@ -4,11 +4,6 @@ ENV AIRFLOW_HOME /usr/local/airflow
 
 COPY requirements.txt /tmp/
 RUN set -ex \
-    addgroup --system airflow \
-    && adduser --disabled-password --system --group \
-               --uid 1000 --home /var/lib/airflow \
-               --shell /usr/sbin/nologin \
-               airflow \
     && mkdir -p ${AIRFLOW_HOME} \
     && gdalDeps=' \
        gdal-bin/sid \
