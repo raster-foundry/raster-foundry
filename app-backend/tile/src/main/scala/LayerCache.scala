@@ -73,17 +73,16 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
   def layerTile(layerId: UUID, zoom: Int, key: SpatialKey)(implicit projectLayerIds: Set[UUID]): OptionT[Future, MultibandTile] = {
     val cacheKey = s"tile-$layerId-$zoom-${key.col}-${key.row}"
     OptionT(rfCache.caching(cacheKey, doCache = cacheConfig.layerTile.enabled)(
-      timedFuture("s3-tile-request")(Future {
+      timedFuture("s3-tile-request")({
         val reader = new S3ValueReader(store).reader[SpatialKey, MultibandTile](LayerId(layerId.toString, zoom))
-        Try {
-          reader.read(key)
-        } match {
-          case Success(tile) => tile.some
-          case Failure(e: ValueNotFoundError) => None
-          case Failure(e) =>
-            logger.error(s"Reading layer $layerId at $key: ${e.getMessage}")
+        Future(reader.read(key)).map({
+          case tile => Some(tile)
+        }).recover({
+          case e: ValueNotFoundError => None
+          case e: Throwable =>
+            logger.debug(s"Unable to retrieve layer $layerId at zoom $zoom for key $key; ${e.getMessage}")
             None
-        }
+        })
       })
     ))
   }

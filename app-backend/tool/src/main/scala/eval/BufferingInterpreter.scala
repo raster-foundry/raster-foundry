@@ -23,10 +23,6 @@ import scala.util.Try
 /** This interpreter handles resource resolution and compilation of MapAlgebra ASTs */
 object BufferingInterpreter extends LazyLogging {
 
-  val layouts: Array[LayoutDefinition] = (0 to 30).map(n =>
-    ZoomedLayoutScheme.layoutForZoom(n, WebMercator.worldExtent, 256)
-  ).toArray
-
   def literalize(
     ast: MapAlgebraAST,
     tileSource: (RFMLRaster, Boolean, Int, Int, Int) => Future[Interpreted[TileWithNeighbors]],
@@ -108,7 +104,7 @@ object BufferingInterpreter extends LazyLogging {
   ): (Int, Int, Int) => Interpreted[LazyTile] = {
 
     (z: Int, x: Int, y: Int) => {
-      lazy val extent = layouts(z).mapTransform(SpatialKey(x,y))
+      lazy val extent = TileLayouts(z).mapTransform(SpatialKey(x,y))
 
       @SuppressWarnings(Array("TraversableHead"))
       def eval(ast: MapAlgebraAST, buffer: Int): LazyTile = ast match {

@@ -230,7 +230,7 @@ class BufferingInterpreterSpec
 
   it("should evaluate masking") {
     // We need to select a subextent which is under the z/x/y of 1/1/1
-    val subExtent: Extent = BufferingInterpreter.layouts(2).mapTransform(2, 2)
+    val subExtent: Extent = TileLayouts(2).mapTransform(2, 2)
     val mask = MultiPolygon(subExtent.toPolygon)
 
     val src = sceneRaster(1)

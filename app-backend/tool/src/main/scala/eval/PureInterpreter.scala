@@ -20,10 +20,6 @@ import geotrellis.vector.{Extent, MultiPolygon}
 /** This interpreter handles resource resolution and compilation of MapAlgebra ASTs */
 object PureInterpreter extends LazyLogging {
 
-  val layouts: Array[LayoutDefinition] = (0 to 30).map(n =>
-    ZoomedLayoutScheme.layoutForZoom(n, WebMercator.worldExtent, 256)
-  ).toArray
-
   /** Does a given AST have at least one source? */
   private def hasSources[M: Monoid](ast: MapAlgebraAST): Interpreted[M] = {
     if (ast.sources.exists({

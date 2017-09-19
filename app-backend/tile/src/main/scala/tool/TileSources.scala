@@ -123,7 +123,7 @@ object TileSources extends LazyLogging {
     r match {
       case scene @ MapAlgebraAST.SceneRaster(id, sceneId, Some(band), maybeND, _) =>
         implicit val sceneIds = Set(sceneId)
-        val futureSource = if (hasBuffer)
+        val futureSource: OptionT[Future, TileWithNeighbors] = if (hasBuffer)
           (for {
             tl <- LayerCache.layerTile(sceneId, z, SpatialKey(x - 1, y - 1))
                     .map({ tile => tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)) })
@@ -153,17 +153,18 @@ object TileSources extends LazyLogging {
                     .orElse(OptionT.pure[Future, Tile](ndtile))
           } yield {
             TileWithNeighbors(mm, Some(NeighboringTiles(tl, tm, tr, ml, mr,bl, bm, br)))
-          }).value
+          })
         else
-          LayerCache.layerTile(sceneId, z, SpatialKey(x, y))
-            .map({ tile => TileWithNeighbors(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)), None) })
-            .value
-        futureSource.map({ maybeSource =>
-          maybeSource match {
-            case Some(t) => Valid(t)
-            case None => Invalid(NEL.of(RasterRetrievalError(scene)))
+          LayerCache.layerTile(sceneId, z, SpatialKey(x, y)).map({ tile =>
+            TileWithNeighbors(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)), None)
+          })
+        futureSource.value.map({ maybeTile =>
+          maybeTile match {
+            case Some(tile) => Valid(tile)
+            case None => Valid(TileWithNeighbors(ndtile, None))
           }
         })
+
 
       case scene @ MapAlgebraAST.SceneRaster(id, sceneId, None, _, _) =>
         implicit val sceneIds = Set(sceneId)
@@ -201,15 +202,15 @@ object TileSources extends LazyLogging {
                     .orElse(OptionT.pure[Future, Tile](ndtile))
           } yield {
             TileWithNeighbors(mm, Some(NeighboringTiles(tl, tm, tr, ml, mr,bl, bm, br)))
-          }).value
+          })
         else
           Mosaic.raw(projId, z, x, y)
             .map({ tile => TileWithNeighbors(tile.band(band).interpretAs(maybeND.getOrElse(tile.cellType)), None) })
-            .value
-        futureSource.map({ maybeSource =>
+
+        futureSource.value.map({ maybeSource =>
           maybeSource match {
             case Some(t) => Valid(t)
-            case None => Invalid(NEL.of(RasterRetrievalError(project)))
+            case None => Valid(TileWithNeighbors(ndtile, None))
           }
         })
 

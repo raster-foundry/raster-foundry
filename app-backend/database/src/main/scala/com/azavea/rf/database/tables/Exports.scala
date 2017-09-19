@@ -236,7 +236,7 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
   }
 
   /**
-    * An AST could be include nodes that ask for scenes from the same
+    * An AST could include nodes that ask for scenes from the same
     * project, from different projects, or all scenes from a project. This can
     * happen at the same time, and there's nothing illegal about this, we just
     * need to make sure to include all the ingest locations.

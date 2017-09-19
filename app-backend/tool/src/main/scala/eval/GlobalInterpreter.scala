@@ -23,10 +23,6 @@ import scala.util.Try
 /** This interpreter handles resource resolution and compilation of MapAlgebra ASTs */
 object GlobalInterpreter extends LazyLogging {
 
-  val layouts: Array[LayoutDefinition] = (0 to 30).map(n =>
-    ZoomedLayoutScheme.layoutForZoom(n, WebMercator.worldExtent, 256)
-  ).toArray
-
   def literalize(
     ast: MapAlgebraAST,
     extent: Extent,

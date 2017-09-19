@@ -146,8 +146,6 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
       outDef
     )
 
-    //println(ed.asJson.spaces2)
-
     decode[ExportDefinition](ed.asJson.spaces2) match {
       case Right(ed2) => ed2 shouldBe ed
       case Left(err) => throw new Exception(s"EXDEF: ${err}")
