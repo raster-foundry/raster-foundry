@@ -198,7 +198,7 @@ class PlanetSceneFactory(object):
         Returns:
             str
         """
-        acceptable_types = ['analytic', 'basic_analytic']
+        acceptable_types = ['analytic', 'basic_analytic', 'analytic_dn', 'basic_analytic_dn']
         logger.info('Determining Analytics Asset Type')
         for acceptable_type in acceptable_types:
             if acceptable_type in asset_dict:
