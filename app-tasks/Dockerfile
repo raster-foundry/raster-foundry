@@ -4,13 +4,7 @@ ENV AIRFLOW_HOME /usr/local/airflow
 
 COPY requirements.txt /tmp/
 RUN set -ex \
-    addgroup --system airflow \
-    && adduser --disabled-password --system --group \
-               --uid 1000 --home /var/lib/airflow \
-               --shell /usr/sbin/nologin \
-               airflow \
     && mkdir -p ${AIRFLOW_HOME} \
-    && chown airflow:airflow -R ${AIRFLOW_HOME} \
     && gdalDeps=' \
        gdal-bin/sid \
        python-gdal/sid \
@@ -32,7 +26,6 @@ RUN set -ex \
 COPY rf/ /tmp/rf
 RUN (cd /tmp/rf && python setup.py install)
 
-USER airflow
 WORKDIR ${AIRFLOW_HOME}
 
 COPY usr/local/airflow/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
