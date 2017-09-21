@@ -27,7 +27,7 @@
     </a>
     <a href
        class=""
-       ui-sref="projects.edit.export"
+       ui-sref="projects.edit.exports"
        ui-sref-active="active"
        data-title="Exports">
       <i class="icon-download"></i>
@@ -35,7 +35,8 @@
     </a>
     <a href
        class=""
-       ng-click="$ctrl.publishModal()"
+       ui-sref="projects.edit.sharing"
+       ui-sref-active="active"
        data-title="Share">
       <i class="icon-share"></i>
       <span>Share</span>
@@ -45,112 +46,7 @@
 </div>
 <div class="container column-stretch container-not-scrollable">
   <div class="sidebar" ui-view>
-
-    <!-- Sidebar static / non scrolling -->
-    <div class="sidebar-static">
-      <!-- Sidebar Header -->
-      <div class="sidebar-header">
-        <h5 class="sidebar-title text-overflow-ellipsis">{{$ctrl.project.name}}</h5>
-      </div>
-      <!-- Sidebar Header -->
-      <!-- Alert -->
-      <div ng-if="$ctrl.project.isAOIProject && $ctrl.pendingSceneList.length" class="content">
-        <div class="alert alert-secondary">
-          <div class="alert-message">{{$ctrl.pendingSceneList.length}} scenes awaiting approval</div>
-          <button class="alert-action" ui-sref="projects.edit.aoi-approve">Review Scenes</button>
-        </div>
-      </div>
-      <!-- Alert -->
-
-      <!-- List Group -->
-      <div class="list-group">
-        <div class="list-group-item">
-          <label>Scenes</label>
-          <div class="list-group-right column-6 nogutter btn-group">
-            <button class="btn btn-primary btn-block" type="button" ui-sref="projects.edit.scenes">
-              Manage
-            </button>
-            <button class="btn btn-primary btn-block" type="button" ng-click="$ctrl.openImportModal()">
-              Import
-            </button>
-          </div>
-          <i class="icon-info"></i>
-        </div>
-      </div>
-      <!-- List Group -->
-    </div>
-    <!-- Sidebar static / non scrolling -->
-
-    <!-- Sidebar scrollable area -->
-    <div class="sidebar-scrollable">
-      <!-- List Group -->
-      <div class="list-group">
-        <!-- Color Adjustments -->
-        <div class="list-group-item">
-          <label>Color adjustments</label>
-          <div class="list-group-right column-6 nogutter btn-group">
-            <button class="btn btn-light btn-block"
-                  type="button"
-                  ui-sref="projects.edit.colormode">
-              Mode
-            </button>
-            <button class="btn btn-light btn-block"
-                  type="button"
-                  ui-sref="projects.edit.color">
-              Correction
-            </button>
-          </div>
-          <i class="icon-info"></i>
-        </div>
-
-        <!-- Annotations -->
-        <div
-          class="list-group-item">
-          <label>Annotations</label>
-          <div class="list-group-right column-6 nogutter">
-            <button class="btn btn-light btn-block"
-                    type="button"
-                    ui-sref="projects.edit.annotate">
-              Annotate project
-            </button>
-          </div>
-          <i class="icon-info"></i>
-        </div>
-        <!-- Annotations -->
-
-        <!-- Sharing -->
-        <div class="list-group-item">
-          <label>Sharing</label>
-          <div class="list-group-right column-6 nogutter">
-            <button class="btn btn-light btn-block"
-                    type="button"
-                    ng-click="$ctrl.publishModal()">
-              Share project
-            </button>
-          </div>
-          <i class="icon-info"></i>
-        </div>
-        <!-- Sharing -->
-
-        <!-- Export -->
-        <div class="list-group-item">
-          <label>Export</label>
-          <div class="list-group-right column-6 nogutter">
-            <button class="btn btn-light btn-block"
-                    type="button"
-                    ui-sref="projects.edit.export">
-              Export project
-            </button>
-          </div>
-          <i class="icon-info"></i>
-        </div>
-        <!-- Export -->
-      </div>
-      <!-- List Group -->
-    </div>
-    <!-- Sidebar scrollable area -->
   </div>
-  <!-- Sidebar -->
 
   <!-- Main map area -->
   <div class="main">

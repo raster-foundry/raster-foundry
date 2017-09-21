@@ -9,43 +9,23 @@
   </button>
   <span class="navbar-detail-title">{{$ctrl.projectService.currentProject.name}}</span>
 </span>
-  <div class="dropdown-navbar-detail"
-       uib-dropdown
-       on-toggle="toggled($ctrl.optionsOpen)">
-    <a uib-dropdown-toggle>
-      <span class="sr-only">Project options dropdown</span>
-      <i class="icon-caret-down"></i>
-    </a>
-    <ul class="dropdown-menu" aria-labelledby="dLabel">
-      <li><a ng-click="$ctrl.openPublishModal()"><i class="icon-share"></i>Share</a></li>
-      <li><a class="color-danger"
-             ng-click="$ctrl.deleteProjectModal()">
-        <i class="icon-trash"></i>Delete</a>
-      </li>
-      <li role="separator" class="divider"></li>
-      <li>
-        <a ui-sref="projects.list">
-          <i class="icon-project"></i> Switch Projects
-        </a></li>
-    </ul>
-  </div>
-</span>
 
-<span ng-if="$ctrl.isEditingProjectName" style="display: inline-block;">
-  <form class="ng-pristine ng-valid">
+<span ng-if="$ctrl.isEditingProjectName && !$ctrl.isSavingProjectName" style="display: inline-block;">
+  <form class="ng-pristine ng-valid" ng-submit="$ctrl.saveProjectName()">
     <div class="form-group all-in-one">
       <input id="name" type="text" class="form-control"
-             placeholder="Edit project name" ng-model="$ctrl.editedProjectName"
-             ng-attr-autofocus="{{$ctrl.isEditingProjectName || undefined }}">
+             placeholder="Edit project name"
+             ng-model="$ctrl.projectNameBuffer"
+             ng-attr-autofocus="{{$ctrl.isEditingProjectName || undefined }}"
+             >
       <button class="btn btn-link flex-last" type="submit"
-              ng-click="$ctrl.saveProjectNameEdit()"
-              ng-if="!$ctrl.isSavingProjectNameEdit">
+              ng-if="!$ctrl.isSavingProjectName">
         <span class="sr-only">Save</span>
         <i class="icon-save" aria-hidden="true"></i>
       </button>
-      <button class="btn btn-link" type="submit"
-              ng-click="$ctrl.cancelProjectNameEdit()"
-              ng-if="!$ctrl.isSavingProjectNameEdit">
+      <button class="btn btn-link" type="button"
+              ng-click="$ctrl.toggleProjectNameEdit()"
+              ng-if="!$ctrl.isSavingProjectName">
         <span class="sr-only">Cancel</span>
         <i class="icon-cancel" aria-hidden="true"></i>
       </button>

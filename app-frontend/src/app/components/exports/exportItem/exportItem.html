@@ -10,16 +10,13 @@
     </div>
   </div>
   <div class="list-group-right">
-    <button class="btn btn-default"
+    <button class="btn btn-square btn-default"
             ng-click="$ctrl.openDownloadModal()"
             ng-disabled="!$ctrl.isDownloadReady()"
             ng-if="$ctrl.isDownloadAllowed()">
-      Download
+      <i class="icon-download"></i>
     </button>
     <ng-transclude>
     </ng-transclude>
   </div>
-</div>
-<div class="list-group-item" ng-if="$ctrl.isShowingDownloads">
-  Testing
 </div>

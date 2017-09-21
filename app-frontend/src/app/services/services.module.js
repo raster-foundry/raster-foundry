@@ -24,6 +24,7 @@ require('./vendor/aws-sdk-s3.module.js');
 require('./projects/colorCorrect.service')(shared);
 require('./projects/colorScheme.service')(shared);
 require('./projects/project.service')(shared);
+require('./projects/edit.service')(shared);
 require('./projects/histogram.service')(shared);
 require('./projects/aoi.service')(shared);
 require('./projects/export.service')(shared);

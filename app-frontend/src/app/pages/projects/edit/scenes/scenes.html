@@ -1,7 +1,7 @@
 <div class="sidebar-static">
   <div class="sidebar-header">
-    <a ng-if="$ctrl.project.isAOIProject" 
-       class="aoi-tag" 
+    <a ng-if="$ctrl.$parent.project.isAOIProject"
+       class="aoi-tag"
        ui-sref="projects.edit.aoi-parameters">
        <i class="icon-pencil"></i>
        <span>Edit</span>
@@ -34,7 +34,7 @@
                 ui-sref="projects.edit.browse({sceneid: null})">
           Browse
         </button>
-        <button type="button" 
+        <button type="button"
                 ng-click="$ctrl.openImportModal()"
                 class="btn btn-primary">
           Import

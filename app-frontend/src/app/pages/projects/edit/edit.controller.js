@@ -3,9 +3,9 @@ const Map = require('es6-map');
 export default class ProjectsEditController {
     constructor( // eslint-disable-line max-params
         $log, $q, $state, $scope, $uibModal,
-        authService, projectService, mapService,
-        mapUtilsService, layerService, datasourceService,
-        imageOverlayService, thumbnailService
+        authService, projectService, projectEditService,
+        mapService, mapUtilsService, layerService,
+        datasourceService, imageOverlayService, thumbnailService
     ) {
         'ngInject';
         this.$log = $log;
@@ -15,6 +15,7 @@ export default class ProjectsEditController {
         this.$uibModal = $uibModal;
         this.authService = authService;
         this.projectService = projectService;
+        this.projectEditService = projectEditService;
         this.mapUtilsService = mapUtilsService;
         this.layerService = layerService;
         this.datasourceService = datasourceService;
@@ -39,7 +40,7 @@ export default class ProjectsEditController {
             if (this.projectId) {
                 this.loadingProject = true;
                 this.projectUpdateListeners = [];
-                this.fetchProject().then(
+                this.projectEditService.setCurrentProject(this.projectId).then(
                     (project) => {
                         this.project = project;
                         this.fitProjectExtent();
@@ -66,7 +67,7 @@ export default class ProjectsEditController {
 
     waitForProject() {
         return this.$q((resolve, reject) => {
-            this.projectUpdateListeners.push({resolve: resolve, reject: reject});
+            this.projectUpdateListeners.push({resolve, reject});
         });
     }
 
@@ -74,13 +75,6 @@ export default class ProjectsEditController {
         this.getMap().then(m => {
             this.mapUtilsService.fitMapToProject(m, this.project);
         });
-    }
-
-    fetchProject() {
-        if (!this.projectRequest) {
-            this.projectRequest = this.projectService.loadProject(this.projectId);
-        }
-        return this.projectRequest;
     }
 
     getSceneList() {

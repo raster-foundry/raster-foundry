@@ -27,10 +27,12 @@ import projectMaskingTpl from './pages/projects/edit/masking/masking.html';
 import projectMaskingDrawTpl from './pages/projects/edit/masking/draw/draw.html';
 import aoiApproveTpl from './pages/projects/edit/aoi-approve/aoi-approve.html';
 import aoiParametersTpl from './pages/projects/edit/aoi-parameters/aoi-parameters.html';
-import exportTpl from './pages/projects/edit/export/export.html';
+import exportTpl from './pages/projects/edit/exports/exports.html';
+import newExportTpl from './pages/projects/edit/exports/new/new.html';
 import annotateTpl from './pages/projects/edit/annotate/annotate.html';
 import annotateImportTpl from './pages/projects/edit/annotate/import/import.html';
 import annotateExportTpl from './pages/projects/edit/annotate/export/export.html';
+import projectSharingTpl from './pages/projects/edit/sharing/sharing.html';
 
 import settingsTpl from './pages/settings/settings.html';
 import profileTpl from './pages/settings/profile/profile.html';
@@ -157,11 +159,18 @@ function projectEditStates($stateProvider) {
             controller: 'AOIParametersController',
             controllerAs: '$ctrl'
         })
-        .state('projects.edit.export', {
-            title: 'Project: Export',
-            url: '/export',
+        .state('projects.edit.exports', {
+            title: 'Project: Exports',
+            url: '/exports',
             templateUrl: exportTpl,
             controller: 'ExportController',
+            controllerAs: '$ctrl'
+        })
+        .state('projects.edit.exports.new', {
+            title: 'Project: New export',
+            url: '/new',
+            templateUrl: newExportTpl,
+            controller: 'NewExportController',
             controllerAs: '$ctrl'
         })
         .state('projects.edit.annotate', {
@@ -181,6 +190,12 @@ function projectEditStates($stateProvider) {
             url: '/export',
             templateUrl: annotateExportTpl,
             controller: 'AnnotateExportController',
+            controllerAs: '$ctrl'
+        })
+        .state('projects.edit.sharing', {
+            url: '/sharing',
+            templateUrl: projectSharingTpl,
+            controller: 'SharingController',
             controllerAs: '$ctrl'
         });
 }

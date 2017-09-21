@@ -1,0 +1,65 @@
+<div class="sidebar-overlay" ng-show="$ctrl.drawing"></div>
+<div class="sidebar-header">
+  <h5 class="sidebar-title">Sharing</h5>
+</div>
+<ul class="sidebar-list" ng-if="$ctrl.project">
+  <li class="separator">
+    <div class="label">
+      Project Visibility
+    </div>
+    <div class="btn-group inline fixedwidth">
+        <button class="btn btn-default"
+                ng-repeat="policy in $ctrl.sharePolicies"
+                ng-if="policy.enabled"
+                ng-click="$ctrl.onPolicyChange(policy)"
+                ng-class="{'active': policy.active}"
+                ng-disabled="!policy.enabled">
+          {{policy.label}}
+        </button>
+      </div>
+    <i class="icon-info"></i>
+  </li>
+  <li class="separator">
+    <div class="label">
+      Share Page
+    </div>
+    <div class="btn-group inline fixedwidth">
+        <button class="btn btn-default"
+                clipboard text="$ctrl.shareUrl">
+          Copy
+        </button>
+        <button class="btn btn-default"
+                ng-click="$ctrl.onSharePageOpen()">
+          Open
+        </button>
+      </div>
+    <i class="icon-info"></i>
+  </li>
+  <li class="separator">
+    <div class="label">
+      ZXY Tile Layer URL
+    </div>
+    <button clipboard text="$ctrl.tileLayerUrls.standard" class="btn btn-default fixedwidth">
+      Copy
+    </button>
+    <i class="icon-info"></i>
+  </li>
+  <li class="separator">
+    <div class="label">
+      ArcGIS Tile Layer URL
+    </div>
+    <button clipboard text="$ctrl.tileLayerUrls.arcGIS" class="btn btn-default fixedwidth">
+      Copy
+    </button>
+    <i class="icon-info"></i>
+  </li>
+  <li class="separator" ng-if="$ctrl.activePolicy.enum === 'PRIVATE'">
+    <div class="label">
+      Map Token
+    </div>
+    <button clipboard text="$ctrl.mapToken.id" class="btn btn-default fixedwidth">
+      Copy
+    </button>
+    <i class="icon-info"></i>
+  </li>
+</ul>

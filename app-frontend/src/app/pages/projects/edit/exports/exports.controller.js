@@ -1,4 +1,4 @@
-export default class ProjectDetailExportsController {
+export default class ExportController {
     constructor($state, $scope, $timeout, projectService, projectEditService) {
         'ngInject';
         this.$state = $state;
@@ -10,6 +10,7 @@ export default class ProjectDetailExportsController {
 
     $onInit() {
         this.isLoadingProject = true;
+        this.isLoadingExports = false;
         this.projectEditService.fetchCurrentProject().then(p => {
             this.project = p;
             this.isLoadingProject = false;
