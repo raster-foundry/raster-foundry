@@ -188,24 +188,19 @@ export default class NewExportController {
                 this.currentTool = t;
                 this.currentToolSources = this.toolService.generateSourcesFromTool(t);
                 this.currentToolRun = this.toolService.generateToolRun(t);
-                this.initToolRunSources();
                 this.isLoadingTool = false;
             });
     }
 
-    initToolRunSources() {
-        if (this.currentToolRun) {
-            let sources = this.currentToolRun.executionParameters.sources;
-            for (let source in sources) {
-                if (sources.hasOwnProperty(source)) {
-                    sources[source].type = 'project';
-                    sources[source].id = this.project.id;
-                }
-            }
-        }
-    }
-
     finalizeExportOptions() {
+        Object.values(this.currentToolSources).forEach(src => {
+            this.toolService.updateToolRunSource(
+                this.currentToolRun,
+                src.id,
+                this.project.id,
+                src.band
+            );
+        });
         if (this.getCurrentTarget().value === 'externalS3') {
             this.exportOptions.source = this.exportTargetURI;
         } else if (this.getCurrentTarget().value === 'dropbox') {
