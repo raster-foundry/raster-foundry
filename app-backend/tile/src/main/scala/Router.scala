@@ -50,9 +50,9 @@ class Router extends LazyLogging
                 authenticateToolTileRoutes(toolRunId) { user =>
                   toolRoutes.tms(toolRunId, user, TileSources.cachedTmsSource) ~
                     toolRoutes.validate(toolRunId, user) ~
+                    toolRoutes.statistics(toolRunId, user) ~
                     toolRoutes.histogram(toolRunId, user) ~
-                    toolRoutes.preflight(toolRunId, user) ~
-                    toolRoutes.statistics(toolRunId, user)
+                    toolRoutes.preflight(toolRunId, user)
                 }
               }
             }
