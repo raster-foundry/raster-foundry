@@ -198,8 +198,12 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
         traceName("LayerCache.toolEvalRequirements (no cache)") {
           for {
             toolRun <- LayerCache.toolRun(toolRunId, user)
-            ast      <- OptionT.fromOption[Future](toolRun.executionParameters.as[MapAlgebraAST].toOption)
-          } yield ast
+            ast     <- OptionT.fromOption[Future](toolRun.executionParameters.as[MapAlgebraAST].toOption)
+            subAst <- OptionT.fromOption[Future](subNode match {
+                         case Some(id) => ast.find(id)
+                         case None => Some(ast)
+                       })
+          } yield subAst
         }
       }
     }
@@ -217,9 +221,8 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
       traceName("LayerCache.toolRunColorMap (no cache)") {
         for {
           ast    <- LayerCache.toolEvalRequirements(toolRunId, subNode, user)
-          nodeId <- OptionT.pure[Future, UUID](subNode.getOrElse(ast.id))
           cmap   <- {
-                      val metadata: Option[NodeMetadata] = ast.find(nodeId).flatMap(_.metadata)
+                      val metadata: Option[NodeMetadata] = ast.metadata
                       OptionT.fromOption[Future](metadata.flatMap(_.classMap).map(_.toColorMap))
                         .orElse({
                           for {
