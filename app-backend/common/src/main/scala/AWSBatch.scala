@@ -18,9 +18,9 @@ trait AWSBatch extends RollbarNotifier with LazyLogging {
 
   val batchClient = AWSBatchClientBuilder.defaultClient()
 
-  def submitJobRequest(jobDefinition: String, jobQueueName: String, parameters: Map[String, String]) = {
+  def submitJobRequest(jobDefinition: String, jobQueueName: String, parameters: Map[String, String], jobName: String) = {
     val jobRequest = new SubmitJobRequest()
-      .withJobName(jobDefinition)
+      .withJobName(jobName)
       .withJobDefinition(jobDefinition)
       .withJobQueue(jobQueueName)
       .withParameters(parameters)
@@ -32,14 +32,20 @@ trait AWSBatch extends RollbarNotifier with LazyLogging {
   }
 
   def kickoffSceneIngest(sceneId: UUID) = {
-    submitJobRequest(awsbatchConfig.ingestJobName, awsbatchConfig.jobQueue, Map("sceneId" -> s"$sceneId"))
+    val jobDefinition = awsbatchConfig.ingestJobName
+    val jobName = s"jobDefinition-$sceneId"
+    submitJobRequest(jobDefinition, awsbatchConfig.jobQueue, Map("sceneId" -> s"$sceneId"), jobName)
   }
 
   def kickoffSceneImport(uploadId: UUID) = {
-    submitJobRequest(awsbatchConfig.importJobName, awsbatchConfig.jobQueue, Map("uploadId" -> s"$uploadId"))
+    val jobDefinition = awsbatchConfig.importJobName
+    val jobName = s"jobDefinition-$uploadId"
+    submitJobRequest(jobDefinition, awsbatchConfig.jobQueue, Map("uploadId" -> s"$uploadId"), jobName)
   }
 
   def kickoffProjectExport(exportId: UUID) = {
-    submitJobRequest(awsbatchConfig.exportJobName, awsbatchConfig.jobQueue, Map("exportId" -> s"$exportId"))
+    val jobDefinition = awsbatchConfig.exportJobName
+    val jobName = s"jobDefinition-$exportId"
+    submitJobRequest(jobDefinition, awsbatchConfig.jobQueue, Map("exportId" -> s"$exportId"), jobName)
   }
 }
