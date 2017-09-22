@@ -298,16 +298,17 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
                 (implicit database: DB): Future[PaginatedResponse[Scene.WithRelated]] = {
 
     val scenesQueryResult = database.db.run {
-      val action = Scenes.filterUserVisibility(user)
-          .joinWithRelated
-          .page(combinedParams, pageRequest)
-          .result
+      val action = Scenes
+        .joinWithRelated
+        .page(combinedParams, user, pageRequest)
+        .result
       logger.debug(s"Paginated Query for scenes -- SQL: ${action.statements.headOption}")
       action
     } map { Scene.WithRelated.fromRecords }
 
     val totalScenesQueryResult = database.db.run {
-      val action = Scenes.filterScenes(combinedParams)
+      val action = Scenes
+        .filterScenes(combinedParams)
         .filterUserVisibility(user)
         .length
         .result
@@ -681,13 +682,10 @@ class ScenesJoinQuery[M, U, C[_]](sceneJoin: Scenes.JoinQuery) {
    * Filtering has to happen here because we need to filter the paginated results
    * and then do the inner join on those results
    */
-  def page(combinedParams: CombinedSceneQueryParams, pageRequest: PageRequest): Scenes.JoinQuery = {
+  def page(combinedParams: CombinedSceneQueryParams, user: User, pageRequest: PageRequest): Scenes.JoinQuery = {
     val pagedScenes = Scenes
-      .filterByOrganization(combinedParams.orgParams)
-      .filterByUser(combinedParams.userParams)
-      .filterByTimestamp(combinedParams.timestampParams)
-      .filterBySceneParams(combinedParams.sceneParams)
-      .filterByImageParams(combinedParams.imageParams)
+      .filterScenes(combinedParams)
+      .filterUserVisibility(user)
       .sort(pageRequest.sort)
       .drop(pageRequest.offset * pageRequest.limit)
       .take(pageRequest.limit)
