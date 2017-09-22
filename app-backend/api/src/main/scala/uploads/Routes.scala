@@ -7,7 +7,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
-import com.azavea.rf.common.{Airflow, Authentication, CommonHandlers, UserErrorHandler, S3}
+import com.azavea.rf.common.{AWSBatch, Authentication, CommonHandlers, UserErrorHandler, S3}
 import com.azavea.rf.database.tables.Uploads
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.{ActionRunner, Database}
@@ -21,7 +21,7 @@ trait UploadRoutes extends Authentication
     with PaginationDirectives
     with CommonHandlers
     with UserErrorHandler
-    with Airflow
+    with AWSBatch
     with ActionRunner {
   implicit def database: Database
 

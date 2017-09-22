@@ -1,6 +1,6 @@
 package com.azavea.rf.api.scene
 
-import com.azavea.rf.common.{Airflow, Authentication, UserErrorHandler, CommonHandlers}
+import com.azavea.rf.common.{AWSBatch, Authentication, UserErrorHandler, CommonHandlers}
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.Scenes
 import com.azavea.rf.datamodel._
@@ -23,7 +23,7 @@ trait SceneRoutes extends Authentication
     with SceneQueryParameterDirective
     with PaginationDirectives
     with CommonHandlers
-    with Airflow
+    with AWSBatch
     with UserErrorHandler
     with KamonTraceDirectives {
 
