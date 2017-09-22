@@ -8,6 +8,8 @@ export default (app) => {
             'ngInject';
 
             let viridis = colorSchemeService.defaultColorSchemes.find(s => s.label === 'Viridis');
+            let linspace = this.linspace;
+            let getNodeChildren = this.getNodeChildren.bind(this);
 
             joint.shapes.html = {};
             joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
@@ -37,14 +39,14 @@ export default (app) => {
                       <span class="icon-map"></span>
                       </button>
                       <button class="btn node-button" type="button"
-                              ng-if="model.get('cellType') !== 'const' && 
+                              ng-if="model.get('cellType') !== 'const' &&
                                model.get('cellType') !== 'src'"
                               ng-class="{'active': currentView === 'HISTOGRAM'}"
                               ng-click="toggleHistogram()">
                       <span class="icon-histogram"></span>
                       </button>
                       <button class="btn node-button" type="button"
-                              ng-if="model.get('cellType') !== 'const' && 
+                              ng-if="model.get('cellType') !== 'const' &&
                                model.get('cellType') !== 'src'"
                               ng-class="{'active': currentView === 'STATISTICS'}"
                               ng-click="toggleStatistics()">
@@ -76,8 +78,9 @@ export default (app) => {
                   ></rf-constant-node>
                   <rf-classify-node
                     ng-if="ifCellType('classify')"
-                    ng-show="showCellBody"
+                    ng-show="showCellBody()"
                     data-model="model"
+                    data-child="children[0]"
                     on-change="onChange({override: override})"
                   ></rf-classify-node>
                   <rf-node-histogram
@@ -310,6 +313,11 @@ export default (app) => {
                         this.scope.model = this.model;
                     }
 
+                    if (this.model.get('toolrun')) {
+                        this.scope.children =
+                            getNodeChildren(this.model.get('toolrun'), this.model.get('id'));
+                    }
+
                     if (!this.scope.breakpoints) {
                         const mappedBreakpoints = colorSchemeService.colorStopsToRange(
                             viridis.colors, 0, 255
@@ -381,6 +389,23 @@ export default (app) => {
                 }
             }
             return inputsJson;
+        }
+
+        flattenToolDefinition(toolDefinition) {
+            let tool = toolDefinition.executionParameters || toolDefinition;
+            let inQ = [tool];
+            let outQ = [];
+            while (inQ.length) {
+                let node = inQ.pop();
+                outQ.push(node);
+                if (node.args) {
+                    inQ = [
+                        ...inQ,
+                        ...node.args.map(a => Object.assign({}, a, { parent: node }))
+                    ];
+                }
+            }
+            return outQ;
         }
 
         getNodeLabel(json) {
@@ -563,6 +588,11 @@ export default (app) => {
             return {
                 shapes, nodes
             };
+        }
+
+        getNodeChildren(toolDefinition, nodeId) {
+            return this.flattenToolDefinition(toolDefinition)
+                .filter(n => n.parent && n.parent.id === nodeId);
         }
     }
 

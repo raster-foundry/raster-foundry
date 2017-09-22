@@ -5,6 +5,7 @@ export default {
     controller: 'ClassifyNodeController',
     bindings: {
         model: '<',
+        child: '<',
         onChange: '&'
     }
 };

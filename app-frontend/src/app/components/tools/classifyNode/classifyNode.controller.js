@@ -1,8 +1,9 @@
 export default class ClassifyNodeController {
-    constructor($uibModal, reclassifyService) {
+    constructor($uibModal, reclassifyService, toolService) {
         'ngInject';
         this.reclassifyService = reclassifyService;
         this.$uibModal = $uibModal;
+        this.toolService = toolService;
     }
 
     $onInit() {
@@ -12,7 +13,7 @@ export default class ClassifyNodeController {
     }
 
     $onChanges() {
-        this.breaks = Object.keys(this.model.attributes.classMap.classifications);
+        this.breaks = this.model.attributes.classMap.classifications;
         this.ranges = this.getRanges();
     }
 
@@ -26,21 +27,27 @@ export default class ClassifyNodeController {
     }
 
     getRanges() {
-        return this.reclassifyService.breaksToRangeObjects(
-            Object.keys(this.breaks).map((brk) => Number(brk))
-        );
+        const breakList = Object.keys(this.breaks).map(b => +b);
+        return this.reclassifyService.breaksToRangeObjects(breakList);
+    }
+
+    getClassCount() {
+        return Object.keys(this.breaks).length;
     }
 
     showReclassifyModal() {
         this.activeModal = this.$uibModal.open({
             component: 'rfReclassifyModal',
             resolve: {
-                classifications: () => this.breaks
+                classifications: () => this.model.get('classMap').classifications,
+                model: () => this.model,
+                child: () => this.child
             }
         });
 
         this.activeModal.result.then(breaks => {
             this.breaks = breaks;
+            this.model.set('classMap', {classifications: breaks});
             this.ranges = this.getRanges();
             this.onChange({
                 override: {

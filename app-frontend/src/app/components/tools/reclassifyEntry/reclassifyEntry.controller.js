@@ -7,8 +7,8 @@ export default class ReclassifyEntryController {
     $onInit() {
         this._classRange = this.classRange;
         this._classValue = this.classValue;
-        this.rangeValid = !!this._classRange;
-        this.valueValid = !!this._classValue;
+        this.rangeValid = this._classRange !== null;
+        this.valueValid = this._classValue !== null;
         // A nonexistent entry is valid, so if we're just coming into existence with invalid
         // values, we need to notify of a change.
         if (!this.isValid()) {
@@ -29,7 +29,7 @@ export default class ReclassifyEntryController {
     }
 
     get classValueEntry() {
-        if (!this._classValueEntry && this._classValue) {
+        if (!this._classValueEntry && this._classValue !== null) {
             return this._classValue;
         }
         return this._classValueEntry;
@@ -37,7 +37,7 @@ export default class ReclassifyEntryController {
 
     set classValueEntry(newValEntry) {
         let wasValid = this.isValid();
-        if (newValEntry) {
+        if (newValEntry !== null) {
             this.valueValid = true;
             this._classValue = this.reclassifyService.valueFromString(newValEntry);
         } else {

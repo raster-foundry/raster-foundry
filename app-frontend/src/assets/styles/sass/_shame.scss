@@ -2287,13 +2287,31 @@ ul.gradient-dropdown {
 
 .graph-container {
   user-select: none;
+  border-bottom: 1px solid #555;
+}
+
+.graph-labels {
+  position: relative;
+  & > div {
+    position: absolute;
+    top: 0.5em;
+    font-weight: bold;
+  }
+  .min-label {
+    left: 0;
+  }
+  .max-label {
+    right: 0;
+  }
 }
 
 rf-histogram-breakpoint {
   position: absolute;
   height: 100px;
   top: 0;
-  pointer-events: none;
+  pointer-events: auto;
+  padding: 0 5px;
+  margin-left: -6px;
 
   &.active {
     .breakpoint-input {
@@ -2316,14 +2334,21 @@ rf-histogram-breakpoint {
       position: absolute;
       bottom: 0;
     }
+
+    &.full {
+      height: 100%;
+      top: 0;
+      bottom: 0;
+    }
   }
 
   .breakpoint-grabber {
     position: absolute;
-
+    opacity: 0;
     pointer-events: auto;
     cursor: ew-resize;
     user-select: none;
+    transition: all 0.125s;
 
     &.bar {
       top: 50%;
@@ -2332,9 +2357,9 @@ rf-histogram-breakpoint {
       width: 10px;
       height: 50%;
 
-      background: transparent; //$brand-primary;
+      background: $brand-primary; //$brand-primary;
       border-radius: 5px;
-      border: 2px solid $brand-primary;
+      border: 2px solid darken($brand-primary, 10%);
     }
 
     &.arrow {
@@ -2358,6 +2383,14 @@ rf-histogram-breakpoint {
     }
   }
 
+  &:hover .breakpoint-grabber {
+    opacity: 1;
+  }
+
+  .breakpoint-grabber.dragging {
+    opacity: 1;
+  }
+
   .breakpoint-input {
     position: absolute;
     top: 100%;
@@ -2379,7 +2412,7 @@ rf-histogram-breakpoint {
 
     input {
       pointer-events: auto;
-      width: 4em;
+      width: 4.5em;
       background: $shade-normal;
       color: $white;
       border: 1px solid transparent;
@@ -2638,6 +2671,7 @@ nvd3 {
   border-radius: 3px;
   display: flex;
   align-items: center;
+  margin: 0 auto;
   .message {
     flex: 1;
   }
@@ -2648,8 +2682,29 @@ nvd3 {
 
 /* Component: Reclassify Modal */
 rf-reclassify-modal {
-    .classification-options {
+    .modal-body {
       display: flex;
+      flex-direction: column;
+      padding: 0;
+      padding-left: 250px !important;
+    }
+    .classification-data {
+      padding: 2em;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .classification-histogram {
+      padding: 1em 1em 3em;
+      background: $white;
+      border-top: 1px solid $gray-lightest;
+      min-height: 130px;
+      flex-shrink: 0;
+    }
+    .classification-options {
+      flex-shrink: 0;
+      display: flex;
+      margin-bottom: 2em;
       .classification-opt {
         display: flex;
         flex-direction: column;
@@ -2658,35 +2713,69 @@ rf-reclassify-modal {
       }
     }
 
+    rf-reclassify-table {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
     .classification-values {
       margin-top: 1em;
-      table {
-        width: 100%;
-        background-color: white;
-        th, td {
-          padding-left: 2em;
-          border: 1px lightgray solid;
+    }
+
+    .classification-row {
+      background: $white;
+      border: 1px solid $gray-lightest;
+      border-bottom: none;
+      display: flex;
+      flex-shrink: 0;
+      &:last-child {
+        border-bottom: 1px solid $gray-lightest;
+        border-radius: 0  0 $border-radius-base $border-radius-base;
+      }
+      & > div {
+        flex: 1;
+        padding: 0.2em 2em;
+        &:first-child {
+          border-right: 1px solid $gray-lightest;
         }
       }
     }
 
-    .classification-header {
+    .classification-ranges {
       display: flex;
-      h5 {
-        flex: 1 1 auto;
+      flex-direction: column;
+      flex: 1;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .class-header {
+      font-weight: bold;
+    }
+
+    .class-range-input,
+    .class-value-input {
+      border: none;
+      flex: 1;
+      padding: 0.33em 2em;
+      &:first-child {
+        border-right: 1px solid $gray-lightest;
+        flex-shrink: 0;
+        flex-basis: 0.5;
       }
     }
 
-    .classification-ranges {
-
+    .class-value-input {
+      border: none;
     }
 
     .invalid-entry-warning {
-            position: absolute;
-            right: 0;
-            transform: translateX(-100%);
-            color: $warning;
-            pointer-events: none;
+      position: absolute;
+      right: 0;
+      transform: translateX(-100%);
+      color: $warning;
+      pointer-events: none;
     }
 
     .invalid-range-warning {
@@ -2695,8 +2784,15 @@ rf-reclassify-modal {
 
     rf-reclassify-entry {
       display: flex;
+      flex: 1;
+
       input {
-        flex: 1 1 auto;
+        flex: 1 0 auto;
       }
     }
+}
+
+rf-reclassify-table {
+  display: flex;
+  flex-direction: column;
 }

@@ -23,7 +23,7 @@ export default class HistogramBreakpointController {
         if (!this.breakpointPosition) {
             this.breakpointPosition = '0%';
         }
-        this.$scope.$watch('$ctrl.breakpoint', this.setPositionFromBreakpoint.bind(this));
+
         if (!this._options) {
             this._options = Object.assign({}, defaultOptions, this.options);
         }
@@ -33,6 +33,9 @@ export default class HistogramBreakpointController {
         if (changes.options && changes.options.currentValue) {
             this._options = Object.assign({}, defaultOptions, changes.options.currentValue);
         }
+        if (changes.precision && changes.precision.currentValue) {
+            this.setPositionFromBreakpoint();
+        }
     }
 
     validateBreakpoint(value) {
@@ -41,6 +44,12 @@ export default class HistogramBreakpointController {
             breakpoint = this.range.max;
         } else if (breakpoint < this.range.min) {
             breakpoint = this.range.min;
+        }
+
+        if (breakpoint >= this.upperBound) {
+            breakpoint = this.upperBound - 1;
+        } else if (breakpoint <= this.lowerBound) {
+            breakpoint = this.lowerBound + 1;
         }
 
         if (Number.isFinite(this.precision) && this.precision >= 0) {
@@ -55,16 +64,17 @@ export default class HistogramBreakpointController {
         if (this.range &&
             Number.isFinite(this.range.min) &&
             Number.isFinite(this.range.max) &&
-            Number.isFinite(this.breakpoint)) {
-            this.breakpoint = this.validateBreakpoint(this.breakpoint);
+            Number.isFinite(this.breakpoint)
+        ) {
+            this._breakpoint = this.validateBreakpoint(this.breakpoint);
 
             let percent = (
-                this.breakpoint - this.range.min
+                this._breakpoint - this.range.min
             ) / (
                 this.range.max - this.range.min
             ) * 100;
             this.breakpointPosition = `${percent}%`;
-            this.onBreakpointChange({breakpoint: this.breakpoint});
+            // this.onBreakpointChange({breakpoint: this._breakpoint});
         } else {
             this.breakpointPosition = '0%';
         }
@@ -73,6 +83,11 @@ export default class HistogramBreakpointController {
 
     registerEvents() {
         this.$scope.$on('$destroy', this.onDestroy.bind(this));
+    }
+
+    onInputChange() {
+        this.setPositionFromBreakpoint();
+        this.onBreakpointChange();
     }
 
     onGrabberMouseDown() {
@@ -84,10 +99,18 @@ export default class HistogramBreakpointController {
     }
 
     onMouseMove(event) {
-        if (event.target &&
-            event.target.classList.contains('graph-container') ||
-            event.target.tagName === 'NVD3'
-           ) {
+        if (
+            event.target &&
+            (
+                event.target.classList.contains('graph-container') ||
+                event.target.tagName === 'NVD3'
+            ) ||
+            event.target &&
+            (
+                event.target.tagName === 'rf-node-histogram' ||
+                event.target.tagName === 'rf-reclassify-histogram'
+            )
+        ) {
             event.stopPropagation();
             let width = this.parent.width();
             let position = event.offsetX;
@@ -97,26 +120,15 @@ export default class HistogramBreakpointController {
             );
 
             if (this.breakpoint !== breakpoint) {
-                this.onBreakpointChange({breakpoint: breakpoint});
-                this.$scope.$evalAsync();
-            }
-        } else if (event.target && event.target.tagName === 'rf-node-histogram') {
-            event.stopPropagation();
-            let width = this.parent.width();
-            let position = event.offsetX;
-            let percent = position / width;
-            let breakpoint = this.validateBreakpoint(
-                (this.range.max - this.range.min) * percent + this.range.min
-            );
-
-            if (this.breakpoint !== breakpoint) {
-                this.onBreakpointChange({breakpoint: breakpoint});
+                this.breakpoint = breakpoint;
+                this.setPositionFromBreakpoint();
                 this.$scope.$evalAsync();
             }
         }
     }
 
     onMouseUp() {
+        this.onBreakpointChange({breakpoint: this.breakpoint});
         this.documentBody.off('mouseup mouseleave');
         this.parent.off('mousemove mouseleave');
         this.parent.removeClass('dragging');
@@ -125,6 +137,7 @@ export default class HistogramBreakpointController {
     }
 
     onDestroy() {
+        this.parent.removeClass('dragging');
         this.documentBody.off('mouseup mouseleave');
         this.parent.off('mousemove mouseleave');
     }
