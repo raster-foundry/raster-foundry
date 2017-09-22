@@ -72,7 +72,7 @@ class Ingest(object):
         client = boto3.client('s3')
         logger.info('Deleting any existing ingest status from %s/%s',
                     cls.INGEST_STATUS_BUCKET, ingest_id)
-        return client.delete_object(Bucket=cls.INGEST_STATUS_BUCKET, key=ingest_id)
+        return client.delete_object(Bucket=cls.INGEST_STATUS_BUCKET, Key=ingest_id)
 
     @classmethod
     def get_status_from_s3(cls, ingest_id):
