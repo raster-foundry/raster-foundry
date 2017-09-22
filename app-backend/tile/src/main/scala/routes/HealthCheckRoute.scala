@@ -21,8 +21,8 @@ object HealthCheckRoute extends LazyLogging {
   lazy val database = Database.DEFAULT
   def root: Route =
     complete {
-      (checkCacheHealth, checkDatabaseConn) match {
-        case (true, true) =>
+      Seq(checkCacheReadHealth, checkCacheWriteHealth, checkDatabaseConn).flatten match {
+        case noMessage if noMessage.length == 0 =>
           HttpResponse(
             200,
             entity= Map(
@@ -33,12 +33,8 @@ object HealthCheckRoute extends LazyLogging {
               "databaseHealth" -> "OK"
             ).asJson.noSpaces
           )
-        case (false, true) =>
-          HttpResponse(503, entity=Map("failing" -> Seq("cache")).asJson.noSpaces)
-        case (true, false) =>
-          HttpResponse(503, entity=Map("failing" -> Seq("database")).asJson.noSpaces)
-        case (false, false) =>
-          HttpResponse(503, entity=Map("failing" -> Seq("cache", "database")).asJson.noSpaces)
+        case messages =>
+          HttpResponse(503, entity=Map("failing" -> messages).asJson.noSpaces)
       }
     }
 
@@ -47,19 +43,37 @@ object HealthCheckRoute extends LazyLogging {
     * While the key won't actually be present in the cache, if the cache is reachable,
     * the return from the try will be a Success(null), while if the cache is unreachable,
     * the Try will return a Failure
-    *
-    * memcachedClient.get doesn't return a native Future, but some fancy memcached
-    * Future type that doesn't play well with native futures and makes me sad.
     */
-  def checkCacheHealth: Boolean = {
+  def checkCacheReadHealth: Option[String] = {
     val cacheKey = Random.nextString(8)
     Try { memcachedClient.get(cacheKey) } match {
-      case Success(_) => true
+      case Success(_) => None
       case Failure(_) =>
         logger.error(
           s"Failed reading from memcached client for key $cacheKey"
         )
-        false
+        Some("Failed reading from memcached client")
+    }
+  }
+
+  /** Attempt to write a random key to the cache
+    *
+    * If the write fails, report and return the message that
+    * memcached sent back about the failure
+    */
+  def checkCacheWriteHealth: Option[String] = {
+    val cacheKey = Random.nextString(8)
+    val cacheValue = Random.nextInt(1000)
+    Try { memcachedClient.set(cacheKey, cacheValue, 5).getStatus } match {
+      case Success(x) if x.isSuccess => None
+      case Success(x) =>
+        val message = s"Failed writing to memcached client. Message: ${x.getMessage}"
+        logger.error(message)
+        Some(message)
+      case Failure(x) =>
+        val message = s"Failed writing to memcached client. Mesage: ${x.getMessage}"
+        logger.error(message)
+        Some(message)
     }
   }
 
@@ -70,7 +84,7 @@ object HealthCheckRoute extends LazyLogging {
     * Await the result of the database execution to get something that will
     * play more nicely with memcached's Future type in checkCacheHealth
     */
-  def checkDatabaseConn: Boolean = {
+  def checkDatabaseConn: Option[String] = {
     import database.driver.api._
     val countAction = Users.take(1).length.result
     Try {
@@ -78,17 +92,15 @@ object HealthCheckRoute extends LazyLogging {
         database.db.run { countAction }, 3 seconds
       )
     } match {
-      case Success(x) if x > 0 => true
+      case Success(x) if x > 0 => None
       case Success(_) =>
-        logger.error(
-          "No records found for users for some reason"
-        )
-        false
+        val message = "No records found for users for some reason"
+        logger.error(message)
+        Some(message)
       case Failure(_) =>
-        logger.error(
-          "Failed reading from the database"
-        )
-        false
+        val message = "Database unreachable"
+        logger.error(message)
+        Some(message)
     }
   }
 }
