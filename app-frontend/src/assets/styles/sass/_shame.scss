@@ -90,9 +90,6 @@ dl.meta-list > dd {
   margin-bottom: 15px;
 }
 
-.map-filters {
-  z-index: 1001; //puts it above map controls
-}
 //
 
 
@@ -134,20 +131,6 @@ dl.meta-list > dd {
 
 rf-project-editor .leaflet-tile {
   border: none;
-}
-
-.navbar .btn {
-  margin: 12px 0 12px;
-  border: none;
-
-  + .btn,
-  &:last-of-type {
-    margin-left: 20px;
-  }
-
-  &:last-of-type {
-    margin-right: 20px;
-  }
 }
 
 .opacity-slider {
@@ -283,11 +266,6 @@ rf-project-editor .leaflet-tile {
   }
 }
 
-.list-group-item.with-rows {
-  flex-direction: column;
-  align-items: stretch;
-}
-
 .list-group-item-content {
   display: flex;
   flex-direction: row;
@@ -329,37 +307,6 @@ rf-project-editor .leaflet-tile {
       margin-left: 1rem;
       flex: 1;
     }
-  }
-}
-.sidebar-header {
-  padding: 1.25rem 2rem;
-  display: flex;
-  align-items: center;
-  height: 48px;
-  background: $off-white;
-  border-bottom: 1px solid $border-color-default;
-  &.dark {
-    background: $shade-dark;
-    border-bottom: 1px solid $shade-normal;
-  }
-  & > * {
-    margin-top: 0;
-    margin-bottom: 0;
-  }
-  .header-controls {
-    flex: 1;
-    text-align: right;
-    font-size: 1.2rem;
-  }
-  .inline-tag {
-    margin-left: 1rem;
-  }
-  .sidebar-header-nav-btn {
-    padding: 0;
-    border: none;
-    background: none;
-    color: $shade-normal;
-    font-size: 2.8rem;
   }
 }
 
@@ -490,10 +437,6 @@ rf-project-editor .leaflet-tile {
 }
 .banner-secondary {
   background: $brand-secondary;
-}
-.navbar {
-  padding-top: 0.7rem;
-  padding-bottom: 0.8rem;
 }
 
 .icon-load.animated {
@@ -989,11 +932,6 @@ div.lab-workspace.is-dragging {
   cursor: auto;
 }
 
-.btn-square.btn-small {
-  padding: 0.7rem;
-  font-size: 1.7rem;
-}
-
 .filler {
   height: .5em;
 }
@@ -1087,23 +1025,6 @@ rf-map-container:-webkit-full-screen {
   right: 0;
   transform: translateX(100%);
   top: 2.9em;
-}
-
-/*
- * component: mosaicMack
- */
-$navbar-height: 8rem;
-$secondary-navbar-height: 7rem;
-
-.container-not-scrollable {
-  height: calc(100vh - #{$navbar-height});
-  max-height: calc(100vh - #{$navbar-height}); // Fixes flex + height issue in some browsers
-  min-height: calc(100vh - #{$navbar-height}); // Fixes flex + height issue in some browsers
-  &.with-header {
-    height: calc(100vh - #{$navbar-height} - #{$secondary-navbar-height});
-    max-height: calc(100vh - #{$navbar-height} - #{$secondary-navbar-height}); // Fixes flex + height issue in some browsers
-    min-height: calc(100vh - #{$navbar-height} - #{$secondary-navbar-height}); // Fixes flex + height issue in some browsers
-  }
 }
 
 .opacity-slider {

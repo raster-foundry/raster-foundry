@@ -1,19 +1,19 @@
 <div class="map-container"></div>
 <div class="map-container-controls">
-  <button class="btn btn-default btn-square btn-small"
+  <button class="btn btn-default btn-square"
           title="Zoom In"
           ng-click="$ctrl.zoomIn()">
     <i class="icon-plus"></i>
   </button>
   <div class="map-zoom" title="Current Zoom">{{$ctrl.zoomLevel}}</div>
-  <button class="btn btn-default btn-square btn-small"
+  <button class="btn btn-default btn-square"
           title="Zoom Out"
           ng-click="$ctrl.zoomOut()">
     <i class="icon-minus"></i>
   </button>
   <div class="filler"></div>
   <div class="map-control">
-    <button class="btn btn-default btn-square btn-small"
+    <button class="btn btn-default btn-square"
             title="Layers"
             ng-click="$ctrl.openMapSearchModal()">
       <i class="icon-search"></i>
@@ -21,7 +21,7 @@
   </div>
   <div class="filler"></div>
   <div class="map-control">
-    <button class="btn btn-default btn-square btn-small"
+    <button class="btn btn-default btn-square"
             title="Layers"
             ng-click="$ctrl.toggleLayerPicker($event)">
       <i class="icon-project"></i>
@@ -70,7 +70,7 @@
   </div>
   <div feature-flag="fullscreen-map">
     <div class="filler"></div>
-    <button class="btn btn-default btn-square btn-small"
+    <button class="btn btn-default btn-square"
             title="Full Screen"
             ng-click="$ctrl.toggleFullscreen()">
       <i class="icon-resize-full"></i>

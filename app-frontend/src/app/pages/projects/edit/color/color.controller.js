@@ -1,6 +1,6 @@
 export default class ProjectsEditColorController {
     constructor( // eslint-disable-line max-params
-        $scope, projectService, colorCorrectService
+        $scope, projectService, projectEditService, colorCorrectService
     ) {
         'ngInject';
         this.$scope = $scope;
@@ -12,7 +12,7 @@ export default class ProjectsEditColorController {
     $onInit() {
         this.currentBands = null;
         this.correction = {};
-        this.$parent.fetchProject().then(() => {
+        this.projectEditService.fetchCurrentProject().then(() => {
             this.$parent.getSceneList().then(() => {
                 let layer = this.$parent.sceneLayers.values().next();
                 if (layer && layer.value) {

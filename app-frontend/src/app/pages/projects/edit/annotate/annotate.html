@@ -1,25 +1,22 @@
-<div class="sidebar annotate" ui-view>
+<div class="flex-column" ui-view>
   <rf-annotate-toolbar map-id="edit"
                        disable-toolbar-action="$ctrl.disableToolbarAction"
                        on-shape-creating="$ctrl.onShapeCreating(isCreating)"
                        on-shape-created="$ctrl.onShapeCreated(shapeLayer)">
   </rf-annotate-toolbar>
-  <div class="sidebar-project">
+  <div class="sidebar-static">
     <div class="sidebar-header">
-      <a class="btn sidebar-header-nav-btn" ui-sref="projects.edit">
-      <i class="icon-arrow-left"></i>
-      </a>
       <h5 class="sidebar-title">Annotations</h5>
       <div class="header-controls">
-        <a ng-click="$ctrl.showHotkeyTips()">Show Hotkey Tips</a>
+        <button class="btn btn-default btn-small"
+                type="button"
+                ng-click="$ctrl.showHotkeyTips()">Hotkeys</button>
       </div>
     </div>
-    <ul class="sidebar-list">
-      <li>
-        <div class="label">
-          <span class="text">This is some text about annotating.</span>
-        </div>
-        <div class="list-group-right column-6 nogutter btn-group">
+    <div class="content">
+      <div class="sidebar-actions-group">
+        <label>Add notes and highlight your imagery</label>
+        <div class="column-6 nogutter btn-group">
           <button class="btn btn-primary btn-block"
                   type="button"
                   ui-sref="projects.edit.annotate.import"
@@ -33,48 +30,43 @@
             Export
           </button>
         </div>
-      </li>
-    </ul>
+      </div>
+    </div>
   </div>
-  <div class="sidebar-project no-annotation">
-    <div class="list-group"
+  <div class="sidebar-scrollable no-annotation">
+    <div class="content"
          ng-if="!$ctrl.annoToExport.features.length">
-      <div class="list-group-item no-annotation">
-        <div class="panel panel-off-white no-annotation">
-          <p>No annotations have been made</p>
-        </div>
+      <div class="alert alert-default">
+        <p class="">No annotations have been made</p>
       </div>
     </div>
     <div class="list-group"
          ng-if="$ctrl.annoToExport.features.length">
-      <div class="list-group-item btn-clear-annotation">
-        <button class="btn btn-primary btn-block btn-clear-annotation"
-                type="button"
-                ng-click="$ctrl.onClearAnnotation()">
-         Clear Annotations
-        </button>
-      </div>
-    </div>
-    <div class="list-group" ng-if="$ctrl.annoToExport.features.length">
-      <div class="list-group-item filter-annotations">
-        <div>
-          <span><strong>Filter by label</span></strong>
-        </div>
-        <div class="list-group-right column-6 nogutter filter-annotations-select">
-          <select ng-init="$ctrl.filterLabel = {'name': 'All'}"
+      <div class="list-group-item"
+           ng-if="$ctrl.annoToExport.features.length">
+        <div class="list-group-left column-6 no-padding no-margin column-bottom">
+          <label for="annotate-filter">Filter by label</label>
+          <select class="form-control"
+                  id="annotate-filter"
+                  ng-init="$ctrl.filterLabel = {'name': 'All'}"
                   ng-model="$ctrl.filterLabel"
                   ng-change="$ctrl.onFilterChange($ctrl.filterLabel)"
                   ng-options="label.name for label in $ctrl.labelInputs track by label.name"
                   ng-disabled="$ctrl.isCreating || $ctrl.disableSidebarAction">
           </select>
         </div>
+        <div class="list-group-right column-6 no-padding no-margin column-bottom">
+          <button class="btn btn-ghost-danger"
+                type="button"
+                ng-click="$ctrl.onClearAnnotation()">
+           Clear Annotations
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-  <div class="sidebar-scrollable">
-    <div ng-if="$ctrl.annoToExport.features.length">
-      <div class="list-group"
-           ng-repeat="annotation in $ctrl.annoToExport.features | filter: $ctrl.labelFilter">
+    <div class="list-group"
+         ng-repeat="annotation in $ctrl.annoToExport.features | filter: $ctrl.labelFilter"
+         ng-if="$ctrl.annoToExport.features.length">
         <rf-annotate-sidebar-item ng-attr-id="{{'anchor' + annotation.properties.id.toString()}}"
                                   ng-mouseenter="$ctrl.onSidebarItemMouseIn(annotation)"
                                   ng-mouseleave="$ctrl.onSidebarItemMouseOut()"
@@ -96,6 +88,5 @@
                                   on-qa-checked="$ctrl.onQaChecked(annotation, qa)">
         </rf-annotate-sidebar-item>
       </div>
-    </div>
   </div>
 </div>

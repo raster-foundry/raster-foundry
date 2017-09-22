@@ -35,14 +35,19 @@ const availableTargets = [
     }
 ];
 
-export default class ExportController {
-    constructor($scope, $state, $timeout, projectService, toolService, mapService) {
+export default class NewExportController {
+    constructor(
+        $scope, $state, $timeout,
+        projectService, toolService, mapService,
+        projectEditService
+    ) {
         'ngInject';
         this.$scope = $scope;
         this.$parent = this.$scope.$parent.$ctrl;
         this.$state = $state;
         this.$timeout = $timeout;
         this.projectService = projectService;
+        this.projectEditService = projectEditService;
         this.toolService = toolService;
         this.availableResolutions = availableResolutions;
         this.availableTargets = availableTargets;
@@ -80,7 +85,7 @@ export default class ExportController {
         this.exportProcessingOption = this.getDefaultProcessingOption();
         this.exportTarget = this.getDefaultTarget();
 
-        this.$parent.fetchProject().then(project => {
+        this.projectEditService.fetchCurrentProject().then(project => {
             this.project = project;
         });
 
@@ -258,7 +263,8 @@ export default class ExportController {
         // A slight delay ensures the state change of the button
         // which indicates a process is beginning is noticed
         this.$timeout(() => {
-            this.$state.go('projects.edit');
+            this.$parent.populateExportList();
+            this.$state.go('projects.edit.exports');
         }, 500);
     }
 

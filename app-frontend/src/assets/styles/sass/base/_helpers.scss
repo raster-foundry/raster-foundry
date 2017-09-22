@@ -156,5 +156,27 @@
 }
 
 .flex-display {
-  display: flex;
+  display: flex !important;
+}
+
+.flex-none {
+  flex: none !important;
+}
+
+// Text overflow
+.text-overflow-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// spacing
+.nomargin,
+.no-margin {
+  margin: 0 !important;
+}
+
+.nopadding,
+.no-padding {
+  padding: 0 !important;
 }

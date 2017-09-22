@@ -1,7 +1,7 @@
 <div class="panel-body">
   <ng-container ng-if="!$ctrl.slim">
     <rf-status-tag ng-if="$ctrl.status" entity-type="project" status="$ctrl.status"></rf-status-tag>
-    <a href ui-sref="projects.detail({projectid: $ctrl.project.id})" class="h4">
+    <a href ui-sref="projects.edit({projectid: $ctrl.project.id})" class="h4 font-600">
       <h4 class="project-title" data-title="{{$ctrl.project.name}}">{{$ctrl.project.name}}</h4>
     </a>
     <div class="row">
@@ -57,16 +57,6 @@
             <i class="icon-caret-down"></i>
           </button>
           <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
-            <li role="menuitem">
-              <a href ui-sref="projects.detail({projectid: $ctrl.project.id})">
-                <i class="icon-color-correct"></i>Project Details
-              </a>
-            </li>
-            <li role="menuitem">
-              <a href ui-sref="projects.edit.browse({projectid: $ctrl.project.id})">
-                <i class="icon-project"></i>Add Scenes
-              </a>
-            </li>
             <li role="menuitem">
               <a href ng-click="$ctrl.publishModal()"><i class="icon-share"></i>Share</a>
             </li>

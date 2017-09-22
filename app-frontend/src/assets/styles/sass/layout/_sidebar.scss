@@ -40,6 +40,42 @@
   }
 }
 
+.sidebar-header {
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  height: 48px;
+  background: $off-white;
+  border-bottom: 1px solid $gray-lightest;
+
+  & > * {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .header-controls {
+    flex: 1;
+    text-align: right;
+    font-size: 1.2rem;
+  }
+}
+
+.btn.sidebar-header-nav-btn {
+  padding: 4px 1px;
+  background: none;
+  color: $shade-normal;
+  font-size: 2rem;
+  border: 1px solid $shade-normal;
+  margin-right: 5px;
+
+  &:hover,
+  &:focus {
+    background: none;
+    color: $shade-normal;
+    border: 1px solid $shade-normal;
+  }
+}
+
 .sidebar-static {
   flex: none;
   position: relative;
@@ -79,6 +115,17 @@
     button, a {
       margin-left: 5px;
     }
+  }
+}
+
+.sidebar-actions-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  label,
+  .label {
+    margin: 6px 0;
   }
 }
 
@@ -132,10 +179,23 @@
   margin-left: -2px;
   background: $shade-normal;
   border: none;
+  z-index: 1001;
 
-  .sidebar-static {
+  .sidebar-header {
     background: $shade-dark;
-    border-color: $shade-normal;
+    border-bottom: 1px solid $shade-normal;
+  }
+
+  .btn.sidebar-header-nav-btn {
+    color: $white;
+    border-color: $white;
+
+    &:hover,
+    &:focus {
+      background: none;
+      color: $white;
+      border-color: $white;
+    }
   }
 
   h5, .h5,
@@ -155,4 +215,72 @@ rf-scene-filter-pane {
   display: flex;
   flex-flow: column;
   height: 100%; // firefox overflowing fix
+}
+
+// Mini sidebar seen on project edit
+.sidebar.mini {
+  width: 6rem;
+  background: $shade-dark;
+  border-right: 1px solid $shade-dark;
+
+  .list-group-item {
+    border-color: $shade-normal;
+    color: #fff;
+
+    &:hover, &:focus {
+      outline: none;
+      background-color: $shade-normal;
+      transition: .2s ease-in-out background-color;
+    }
+
+    &:after, &:before {
+      content: '';
+      opacity: 0;
+      transition: opacity .2s ease-in-out;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    // Shows the title of the item
+    &:hover:after,
+    &:focus:after {
+      content: attr(data-title);
+      display: block;
+      z-index: 240;
+      background: $shade-dark;
+      padding: .5rem 1rem;
+      border-radius: 2px;
+      font-size: 12px;
+      position: absolute;
+      left: 110%;
+      white-space: nowrap;
+      opacity: 1;
+    }
+    &:hover:before,
+    &:focus:before {
+      content: '';
+      display: block;
+      border: 4px solid transparent;
+      border-right-color: $shade-dark;
+      position: absolute;
+      left: 110%;
+      margin-left: -8px;
+      opacity: 1;
+    }
+  }
+
+  a.active {
+    background-color: $brand-primary;
+
+    &:hover, &:focus {
+      background-color: $brand-primary;
+    }
+
+    /* prevent title from persisting 
+    after clicking tab */
+    &:focus:before,
+    &:focus:after {
+      display: none;
+    }
+  }
 }

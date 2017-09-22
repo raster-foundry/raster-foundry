@@ -6,6 +6,7 @@ const rfToggle = {
     bindings: {
         value: '<',
         onChange: '&',
+        radio: '<',
         className: '@'
     },
     controllerAs: '$ctrl'
