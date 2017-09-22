@@ -1,0 +1,30 @@
+<div class="graph-container">
+  <nvd3 ng-attr-id="chart-rc-{{$ctrl.id}}" options="$ctrl.histOptions" data="$ctrl.plot" api="$ctrl.api"></nvd3>
+  <rf-histogram-breakpoint
+    ng-repeat="bp in $ctrl._breakpoints track by bp.id"
+    ng-mouseover="$ctrl.lastMouseOver = bp.id"
+    ng-class="{'active': $ctrl.lastMouseOver === bp.id}"
+    data-color="bp.color"
+    data-breakpoint="bp.value"
+    data-range="$ctrl.histogramRange"
+    data-precision="$ctrl.precision"
+    data-options="bp.options"
+    data-lower-bound="$ctrl.getLowerBoundForIndex($index)"
+    data-upper-bound="$ctrl.getUpperBoundForIndex($index)"
+    on-breakpoint-change="$ctrl.onChange(bp, breakpoint)"
+  ></rf-histogram-breakpoint>
+</div>
+<div class="graph-labels">
+  <div class="min-label">{{$ctrl.histogram.minimum}}</div>
+  <div class="max-label">{{$ctrl.histogram.maximum}}</div>
+</div>
+
+<style ng-if="$ctrl.id">
+ #chart-rc-{{$ctrl.id}} .nv-series-0 {
+   fill: #ddd !important;
+   fill-opacity: 1 !important;
+   stroke: #999999 !important;
+   stroke-width: 1 !important;
+   stroke-opacity: 1 !important;
+ }
+</style>

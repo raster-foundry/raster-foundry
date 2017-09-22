@@ -6,7 +6,7 @@
        rf-validate-range-string>
 <input class="class-value-input"
        ng-model="$ctrl.classValueEntry"
-       ng-model-options="{ getterSetter: true }"
+       ng-model-options="{ getterSetter: true, debounce: 850 }"
        ng-change="$ctrl.onValueChange({value: $ctrl._classValue})"
        rf-validate-value-string>
 <div class="invalid-entry-warning">

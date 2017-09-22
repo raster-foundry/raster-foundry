@@ -10,36 +10,46 @@
     <p>The resulting value in the output raster for a given input value or range of input values</p>
   </div>
   <div class="modal-body">
-    <div class="classification-options">
-      <div class="classification-opt">
-        <span class="classification-opt-label">
-          Classification method:
-        </span>
-        <button type="button" class="btn"
-                ng-click="$ctrl.equalInterval()">
-          Equal Interval
-        </button>
+    <div class="classification-data">
+      <div class="classification-options">
+        <div class="classification-opt">
+          <span class="classification-opt-label">
+            Classification method:
+          </span>
+          <button type="button" class="btn"
+                  ng-click="$ctrl.equalInterval()">
+            Equal Interval
+          </button>
+        </div>
+        <div class="classification-opt">
+          <label class="classification-opt-label">Classes:</label>
+          <input type="number"
+                 id="class-opt-class-count"
+                 ng-model="$ctrl.classCount"
+                 min="1"
+                 ng-min="1"
+                 ng-model-options="{debounce: 500}"
+                 ng-change="$ctrl.updateClassCount($ctrl.classCount)">
+        </div>
       </div>
-      <div class="classification-opt">
-        <label class="classification-opt-label">Classes:</label>
-        <input type="number"
-               id="class-opt-class-count"
-               ng-model="$ctrl.classCount"
-               min="1"
-               ng-min="1"
-               ng-model-options="{debounce: 500}"
-               ng-change="$ctrl.updateClassCount($ctrl.classCount)">
-      </div>
+
+      <rf-reclassify-table
+        classifications="$ctrl.displayClassifications"
+        on-classifications-change="$ctrl.classifications = classifications"
+        on-no-gaps-overlaps-change="$ctrl.noGapsOverlaps = noGapsOverlaps"
+        on-all-entries-valid-change="$ctrl.allEntriesValid = allEntriesValid" ></rf-reclassify-table>
     </div>
-
-    <rf-reclassify-table
-      classifications="$ctrl.displayClassifications"
-      on-classifications-change="$ctrl.classifications = classifications"
-      on-no-gaps-overlaps-change="$ctrl.noGapsOverlaps = noGapsOverlaps"
-      on-all-entries-valid-change="$ctrl.allEntriesValid = allEntriesValid">
-
     <div class="classification-histogram">
-      <!-- TODO -->
+      <div class="node-data-placeholder" ng-if="!$ctrl.histogram && !$ctrl.isLoadingHistogram">
+          <span class="icon icon-warning color-warning"></span>
+          <div class="message">Fill out all input fields and apply changes to view a histogram</div>
+      </div>
+      <rf-reclassify-histogram
+        ng-if="$ctrl.histogram && !$ctrl.isLoadingHistogram"
+        classifications="$ctrl.classifications"
+        histogram="$ctrl.histogram"
+        on-breakpoint-change="$ctrl.onClassificationsChange(breakpoints)">
+      </rf-reclassify-histogram>
     </div>
   </div>
   <div class="modal-footer">

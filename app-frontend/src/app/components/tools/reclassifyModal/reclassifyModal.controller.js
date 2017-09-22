@@ -1,8 +1,12 @@
+/* global _ */
 export default class ReclassifyModalController {
-    constructor(reclassifyService) {
+    constructor(reclassifyService, toolService) {
         'ngInject';
         this.reclassifyService = reclassifyService;
+        this.toolService = toolService;
         this.classifications = this.resolve.classifications;
+        this.child = this.resolve.child;
+        this.model = this.resolve.model;
     }
 
     $onInit() {
@@ -11,6 +15,24 @@ export default class ReclassifyModalController {
         this.noGapsOverlaps = true;
         this.allEntriesValid = true;
         this.classCount = Object.keys(this.classifications).length;
+        this.isLoadingHistogram = false;
+    }
+
+    $onChanges() {
+        this.initHistogram();
+    }
+
+    initHistogram() {
+        this.isLoadingHistogram = true;
+        if (this.model.get('toolrun')) {
+            this.toolService
+                .getNodeHistogram(this.model.get('toolrun').id, this.child.id)
+                .then((histogram) => {
+                    this.histogram = histogram;
+                }).finally(() => {
+                    this.isLoadingHistogram = false;
+                });
+        }
     }
 
     updateClassCount(newClassCount) {
@@ -32,6 +54,7 @@ export default class ReclassifyModalController {
                 this.classifications[classBreak] = 'NODATA';
             }, this);
             // Copy over to the table
+            this.classifications = angular.copy(this.classifications);
             this.displayClassifications = angular.copy(this.classifications);
         } else if (newClassCount < Object.keys(this.classifications).length) {
             // Lop off classification slots from the end
@@ -43,25 +66,40 @@ export default class ReclassifyModalController {
                 delete this.classifications[classBreak];
             }, this);
             // Copy to table
+            this.classifications = angular.copy(this.classifications);
             this.displayClassifications = angular.copy(this.classifications);
         }
     }
 
     equalInterval() {
-        // TODO: We should be using the histogram max/min because the entered max/min aren't
-        // guaranteed to cover the whole range of the available histogram values. This should be
-        // changed once we add histogram functionality.
-        let orderedKeys = Object.keys(this.classifications).sort((a, b) => a - b);
-        let min = Math.min(...orderedKeys);
-        let max = Math.max(...orderedKeys);
-        let rangeWidth = (max - min) / this.classCount;
-        // Keep each range's associated output value so that output values stay in the same
-        // order when applying the equal interval, but overwrite the range values.
-        let newClassifications = {};
-        orderedKeys.forEach(function (classBreak, index) {
-            newClassifications[rangeWidth * (index + 1)] = this.classifications[classBreak];
-        }, this);
-        this.classifications = newClassifications;
-        this.displayClassifications = angular.copy(this.classifications);
+        if (this.histogram) {
+            const orderedKeys = Object.keys(this.classifications).sort((a, b) => a - b);
+            const min = this.histogram.minimum;
+            const max = this.histogram.maximum;
+            const rangeWidth = (max - min) / this.classCount;
+            // Keep each range's associated output value so that output values stay in the same
+            // order when applying the equal interval, but overwrite the range values.
+            const newClassifications = orderedKeys.reduce((acc, c, idx) => {
+                acc[rangeWidth * (idx + 1)] = this.classifications[c];
+                return acc;
+            }, {});
+            this.classifications = newClassifications;
+            this.displayClassifications = angular.copy(this.classifications);
+        }
+    }
+
+    onClassificationsChange(breakpoints) {
+        const orderedKeys = Object.keys(this.classifications).sort((a, b) => a - b).map(k => +k);
+        const breakpointValues = breakpoints.map(b => b.value).sort((a, b) => a - b).map(k => +k);
+        const updateRequired = !_.isEqual(orderedKeys, breakpointValues);
+
+        if (updateRequired) {
+            const newClassifications = orderedKeys.reduce((acc, c, idx) => {
+                acc[breakpointValues[idx]] = this.classifications[c];
+                return acc;
+            }, {});
+            this.classifications = newClassifications;
+            this.displayClassifications = angular.copy(this.classifications);
+        }
     }
 }
