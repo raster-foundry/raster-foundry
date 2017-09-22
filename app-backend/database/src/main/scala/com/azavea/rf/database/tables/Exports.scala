@@ -75,14 +75,15 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
     */
   def listExports(offset: Int, limit: Int, queryParams: ExportQueryParameters, user: User): ListQueryResult[Export] = {
     val dropRecords = limit * offset
-    val accessibleExports = Exports.filterToSharedOrganizationIfNotInRoot(user)
+    val accessibleExports = Exports
+      .filterToSharedOrganizationIfNotInRoot(user)
+      .filterByExportParams(queryParams)
     ListQueryResult[Export](
       accessibleExports
-        .filterByExportParams(queryParams)
         .drop(dropRecords)
         .take(limit)
         .result: DBIO[Seq[Export]],
-      Exports.length.result
+      accessibleExports.length.result
     )
   }
 
