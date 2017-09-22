@@ -10,6 +10,15 @@ import scala.concurrent.duration._
 object Config {
   private val config = ConfigFactory.load()
 
+  object awsbatch {
+    private val awsBatchConfig = config.getConfig("awsbatch")
+    val jobQueue = awsBatchConfig.getString("jobQueue")
+
+    val ingestJobName = awsBatchConfig.getString("ingestJobName")
+    val importJobName = awsBatchConfig.getString("importJobName")
+    val exportJobName = awsBatchConfig.getString("exportJobName")
+  }
+
   object airflow {
     private val airflowConfig = config.getConfig("airflow")
 

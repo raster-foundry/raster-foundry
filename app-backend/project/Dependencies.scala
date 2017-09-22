@@ -64,4 +64,5 @@ object Dependencies {
   val kamonAkka               = "io.kamon"                    %% "kamon-akka"                        % Version.kamon
   val kamonStatsd             = "io.kamon"                    %% "kamon-statsd"                      % Version.kamon
   val kamonAkkaHttp           = "io.kamon"                    %% "kamon-akka-http"                   % Version.kamonAkkaHttp
+  val awsBatchSdk             = "com.amazonaws"                % "aws-java-sdk-batch"                % Version.awsBatchSdk
 }

@@ -29,7 +29,7 @@ trait ExportRoutes extends Authentication
   with CommonHandlers
   with UserErrorHandler
   with LazyLogging
-  with Airflow
+  with AWSBatch
   with ActionRunner {
   implicit def database: Database
 
