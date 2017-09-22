@@ -16,38 +16,8 @@ Setup external project dependencies.
 "
 }
 
-
-function check_database() {
-    # Check if database is set up to continue
-
-    max=21 # 1 minute
-    counter=1
-    while true
-    do
-        echo "Checking if database is up yet (try ${counter})..."
-        set +e
-        docker-compose \
-            exec -T postgres gosu postgres psql -d rasterfoundry -c 'select 1' &>/dev/null
-        status_check=$?
-        if [ $status_check == 0 ]
-        then
-            echo "Connected to database successfully"
-            break
-        fi
-        set -e
-        if [[ ${counter} == "${max}" ]]
-        then
-            echo "Could not connect to database after some time"
-            exit 1
-        fi
-        sleep 3
-        (( counter++ ))
-    done
-}
-
 function run_database_migrations() {
     # Check if database migrations have already been initialized
-    docker-compose up -d postgres
     set +e
     docker-compose \
         exec -T postgres gosu postgres psql -d rasterfoundry -c 'select 1 from __migrations__' &>/dev/null
@@ -78,8 +48,10 @@ then
         usage
     else
         echo "Updating Scala dependencies"
-        docker-compose \
-            run --rm --no-deps api-server update
+        docker-compose up -d api-server
+
+        docker-compose exec -T api-server ./sbt update
+        docker-compose rm -sf api-server
 
         echo "Running application database migrations"
         run_database_migrations
