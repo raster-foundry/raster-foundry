@@ -63,6 +63,10 @@ export default class NodeHistogramController {
         }
     }
 
+    shouldShowStats() {
+        return !this.isLoading && this.hasStats;
+    }
+
     shouldShowEmptyStats() {
         return !this.isLoading && !this.hasStats;
     }
@@ -74,5 +78,6 @@ export default class NodeHistogramController {
     shouldShowDataMessage() {
         return this.hasToolRun && !this.isLoading && !this.hasStats;
     }
+
 
 }
