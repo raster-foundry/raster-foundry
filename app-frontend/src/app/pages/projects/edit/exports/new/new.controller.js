@@ -270,9 +270,9 @@ export default class NewExportController {
 
     onDrawSave(multipolygon) {
         this.drawing = false;
-        this.mask = multipolygon;
+        this.mask = multipolygon.geom;
         if (multipolygon) {
-            let exportAreaLayer = L.geoJSON(this.mask.geom, {
+            let exportAreaLayer = L.geoJSON(this.mask, {
                 style: () => {
                     return {
                         weight: 2,
