@@ -25,7 +25,7 @@ export default (app) => {
             // the force parameter is set to true
             if (this.currentProjectId !== id || force) {
                 this.currentProjectId = id;
-                this.projectRequest = this.projectService.loadProject(this.currentProjectId)
+                this.projectRequest = this.projectService.loadProject(this.currentProjectId);
                 // Some consumers may have a reference to the inital deferred object
                 this.projectRequest.then(this.deferred.resolve, this.deferred.reject);
             }
