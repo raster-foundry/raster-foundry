@@ -68,6 +68,7 @@ def save_ingest_def_to_s3(scene_id, ignore_previous=False):
     ingest_definition.put_in_s3()
     logger.info('Successfully created and pushed ingest definition for scene %s', scene)
 
+    Ingest.delete_status_from_s3(ingest_definition.id)
     return ingest_definition.s3_uri, ingest_definition.id
 
 
@@ -139,7 +140,6 @@ def execute_ingest_emr_job(scene_id, ingest_s3_uri, ingest_def_id, cluster_id):
     )
     logger.info('Received response from EMR API: %s', response)
     return response
-
 
 def wait_for_status(ingest_def_id):
     """Wait for a result from the Spark job
