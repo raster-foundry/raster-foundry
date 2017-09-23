@@ -13,7 +13,6 @@ import org.scalatest.{FunSpec, Matchers}
 
 @SuppressWarnings(Array("OptionGet"))
 class TileInfoSpec extends FunSpec with Matchers with BatchSpec {
-  import com.azavea.rf.batch.sentinel2.airflow.ImportSentinel2._
 
   it("Should parse sentinel2 tileInfo.json") {
     val json: Option[Json] = parse(getJson("/sentinel2/tileInfo.json")).toOption
@@ -182,10 +181,10 @@ class TileInfoSpec extends FunSpec with Matchers with BatchSpec {
       )
 
     json.map { tileInfo =>
-      multiPolygonFromJson(tileInfo, "tileDataGeometry").get.vertices shouldBe MultiPolygon(tileDataGeometry).vertices
-      multiPolygonFromJson(tileInfo, "tileGeometry").get shouldBe MultiPolygon(tileGeometry)
+      ImportSentinel2.multiPolygonFromJson(tileInfo, "tileDataGeometry").get.vertices shouldBe MultiPolygon(tileDataGeometry).vertices
+      ImportSentinel2.multiPolygonFromJson(tileInfo, "tileGeometry").get shouldBe MultiPolygon(tileGeometry)
 
-      getSceneMetadata(tileInfo) shouldBe sceneMetadata
+      ImportSentinel2.getSceneMetadata(tileInfo) shouldBe sceneMetadata
     }
   }
 }

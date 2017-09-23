@@ -1,9 +1,9 @@
-package com.azavea.rf.batch.export.airflow
+package com.azavea.rf.batch.export
+
+import java.net.URI
 
 import com.azavea.rf.batch.Job
 import com.azavea.rf.batch.util.S3
-
-import java.net.URI
 
 case class S3Copy(source: URI, target: URI, region: Option[String] = None) extends Job {
   val name = S3Copy.name

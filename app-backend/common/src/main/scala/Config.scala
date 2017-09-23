@@ -17,13 +17,8 @@ object Config {
     val ingestJobName = awsBatchConfig.getString("ingestJobName")
     val importJobName = awsBatchConfig.getString("importJobName")
     val exportJobName = awsBatchConfig.getString("exportJobName")
-  }
 
-  object airflow {
-    private val airflowConfig = config.getConfig("airflow")
-
-    val baseUrl = airflowConfig.getString("baseURL")
-
+    val environment = awsBatchConfig.getString("environment")
   }
 
   object memcached {

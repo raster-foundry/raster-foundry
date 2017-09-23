@@ -6,7 +6,7 @@ DIR="$(dirname "$0")"
 
 function usage() {
     echo -n \
-"Usage: $(basename "$0") [--with-airflow]
+"Usage: $(basename "$0") [--with-metrics]
 
 Starts servers using docker-compose
 "
@@ -17,10 +17,6 @@ then
     if [ "${1:-}" = "--help" ]
     then
         usage
-    elif [ "${1:-}" = "--with-airflow" ]
-    then
-        docker-compose -f "${DIR}/../docker-compose.yml" \
-                       -f "${DIR}/../docker-compose.airflow.yml" up
     elif [ "${1:-}" = "--with-metrics" ]
     then
         docker-compose -f "${DIR}/../docker-compose.yml" \

@@ -1,4 +1,4 @@
-package com.azavea.rf.batch.aoi.airflow
+package com.azavea.rf.batch.aoi
 
 import com.azavea.rf.batch.Job
 import com.azavea.rf.database.tables._

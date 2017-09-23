@@ -11,7 +11,7 @@ case class SceneToProject(
   /* Has a Scene been accepted by a user?
    * TRUE if a user added this Scene manually as usual from the UI, or if
    * they accepted this Scene from a list of "pending" Scenes which passed an AOI
-   * check. Defaults to FALSE when added by an AOI check via an Airflow process.
+   * check. Defaults to FALSE when added by an AOI check via a batch process.
    *
    * Scenes marked FALSE here should not appear during normal tiling
    * activities in the UI.

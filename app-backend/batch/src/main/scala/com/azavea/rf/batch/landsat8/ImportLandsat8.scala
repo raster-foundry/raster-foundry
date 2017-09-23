@@ -1,4 +1,4 @@
-package com.azavea.rf.batch.landsat8.airflow
+package com.azavea.rf.batch.landsat8
 
 import com.azavea.rf.batch.Job
 import com.azavea.rf.batch.util._

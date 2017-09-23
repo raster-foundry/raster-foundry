@@ -25,27 +25,38 @@ trait AWSBatch extends RollbarNotifier with LazyLogging {
       .withJobQueue(jobQueueName)
       .withParameters(parameters)
 
-    val submitJobResult = batchClient.submitJob(jobRequest)
+    logger.info(s"Using ${awsbatchConfig.environment} in AWS Batch")
 
-    logger.info("submit job result: {}", submitJobResult)
-    submitJobResult
+    val runBatch:Boolean = {
+      awsbatchConfig.environment.toLowerCase() == "staging" || awsbatchConfig.environment.toLowerCase() == "production"
+    }
+
+    if (runBatch) {
+      val submitJobResult = batchClient.submitJob(jobRequest)
+      logger.info(s"Submit Job Result: ${submitJobResult}")
+      submitJobResult
+    } else {
+      logger.warn(s"Not submitting AWS Batch -- not in production or staging, in ${awsbatchConfig.environment}")
+      logger.warn(s"Job Request: ${jobName} -- ${jobDefinition} -- ${parameters}")
+    }
+
   }
 
   def kickoffSceneIngest(sceneId: UUID) = {
     val jobDefinition = awsbatchConfig.ingestJobName
-    val jobName = s"jobDefinition-$sceneId"
+    val jobName = s"$jobDefinition-$sceneId"
     submitJobRequest(jobDefinition, awsbatchConfig.jobQueue, Map("sceneId" -> s"$sceneId"), jobName)
   }
 
   def kickoffSceneImport(uploadId: UUID) = {
     val jobDefinition = awsbatchConfig.importJobName
-    val jobName = s"jobDefinition-$uploadId"
+    val jobName = s"$jobDefinition-$uploadId"
     submitJobRequest(jobDefinition, awsbatchConfig.jobQueue, Map("uploadId" -> s"$uploadId"), jobName)
   }
 
   def kickoffProjectExport(exportId: UUID) = {
     val jobDefinition = awsbatchConfig.exportJobName
-    val jobName = s"jobDefinition-$exportId"
+    val jobName = s"$jobDefinition-$exportId"
     submitJobRequest(jobDefinition, awsbatchConfig.jobQueue, Map("exportId" -> s"$exportId"), jobName)
   }
 }

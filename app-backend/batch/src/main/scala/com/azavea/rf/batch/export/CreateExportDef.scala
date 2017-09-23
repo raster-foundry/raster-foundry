@@ -1,20 +1,18 @@
-package com.azavea.rf.batch.export.airflow
-
-import com.azavea.rf.batch._
-import com.azavea.rf.batch.util._
-import com.azavea.rf.database.{Database => DB}
-import com.azavea.rf.database.tables._
-import com.azavea.rf.datamodel._
-
-import org.xbill.DNS._
-import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClientBuilder
-import com.amazonaws.services.elasticmapreduce.model.{AddJobFlowStepsRequest, AddJobFlowStepsResult, HadoopJarStepConfig, StepConfig}
-import io.circe.syntax._
-import cats._
-import cats.data._
-import cats.implicits._
+package com.azavea.rf.batch.export
 
 import java.util.UUID
+
+import cats.data._
+import cats.implicits._
+import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClientBuilder
+import com.amazonaws.services.elasticmapreduce.model.{AddJobFlowStepsRequest, AddJobFlowStepsResult, HadoopJarStepConfig, StepConfig}
+import com.azavea.rf.batch._
+import com.azavea.rf.batch.util._
+import com.azavea.rf.database.tables._
+import com.azavea.rf.database.{Database => DB}
+import com.azavea.rf.datamodel._
+import io.circe.syntax._
+import org.xbill.DNS._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
