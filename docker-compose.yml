@@ -20,8 +20,6 @@ services:
     ports:
       - "9100:443"
     extra_hosts:
-      - "airflow-flower:127.0.0.1"
-      - "airflow-webserver:127.0.0.1"
       - "tile-server:127.0.0.1"
     links:
       - api-server
@@ -39,8 +37,6 @@ services:
     ports:
       - "9101:443"
     extra_hosts:
-      - "airflow-flower:127.0.0.1"
-      - "airflow-webserver:127.0.0.1"
       - "api-server:127.0.0.1"
     links:
       - tile-server
@@ -55,7 +51,6 @@ services:
     links:
       - postgres:database.service.rasterfoundry.internal
     external_links:
-      - airflow-webserver:airflow.service.rasterfoundry.internal
       - statsd
     env_file: .env
     ports:
@@ -67,8 +62,6 @@ services:
       - ./.bintray:/root/.bintray
       - $HOME/.aws:/root/.aws:ro
     working_dir: /opt/raster-foundry/app-backend/
-    environment:
-      - AIRFLOW_SERVER_LOCATION=http://airflow.service.rasterfoundry.internal:8080
     entrypoint: ./sbt
     command:
       - "api/run"
@@ -79,6 +72,23 @@ services:
       - "-Dcom.sun.management.jmxremote.authenticate=false"
       - "-Dcom.sun.management.jmxremote.local.only=false"
       - "-Djava.rmi.server.hostname=localhost"
+
+  batch:
+    image: raster-foundry-batch
+    volumes:
+      - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
+      - ./app-backend/batch/target/scala-2.11/rf-batch.jar:/opt/raster-foundry/jars/rf-batch.jar
+      - $HOME/.aws:/root/.aws:ro
+    build:
+      context: ./app-tasks
+      dockerfile: Dockerfile
+    external_links:
+      - postgres:database.service.rasterfoundry.internal
+      - api-server:rasterfoundry.com
+    env_file: .env
+    environment:
+      - RF_HOST=http://rasterfoundry.com:9000
+    command: rf
 
   tile-server:
     image: openjdk:8-jre

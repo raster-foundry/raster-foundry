@@ -1,23 +1,21 @@
-package com.azavea.rf.batch.export.airflow
+package com.azavea.rf.batch.export
 
+import java.util.UUID
+
+import cats.data._
+import cats.implicits._
 import com.azavea.rf.batch._
 import com.azavea.rf.batch.export.json.S3ExportStatus
 import com.azavea.rf.batch.util._
 import com.azavea.rf.database.tables._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.datamodel._
-
-import cats._
-import cats.data._
-import cats.implicits._
 import io.circe.parser.decode
-
-import java.util.UUID
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util._
 import scala.io.Source
+import scala.util._
 
 case class CheckExportStatus(exportId: UUID, statusBucket: String = "rasterfoundry-dataproc-export-status-us-east-1", time: Duration = 60.minutes, region: Option[String] = None)
                             (implicit val database: DB) extends Job {

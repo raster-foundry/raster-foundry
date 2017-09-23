@@ -45,7 +45,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             GIT_COMMIT="${GIT_COMMIT}" docker-compose \
                       -f "${DIR}/../docker-compose.yml" \
                       -f "${DIR}/../docker-compose.test.yml"\
-                      build nginx-api api-server nginx-tiler tile-server nginx-airflow
+                      build nginx-api api-server nginx-tiler tile-server
 
             # Evaluate the return value of the get-login subcommand, which
             # is a docker login command with temporarily ECR credentials.
@@ -55,25 +55,22 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                    "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-api:${GIT_COMMIT}"
             docker tag "raster-foundry-nginx-tiler:${GIT_COMMIT}" \
                    "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-tiler:${GIT_COMMIT}"
-            docker tag "raster-foundry-nginx-airflow:${GIT_COMMIT}" \
-                   "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-airflow:${GIT_COMMIT}"
 
             docker tag "raster-foundry-api-server:${GIT_COMMIT}" \
                    "${AWS_ECR_ENDPOINT}/raster-foundry-api-server:${GIT_COMMIT}"
             docker tag "raster-foundry-tile-server:${GIT_COMMIT}" \
                    "${AWS_ECR_ENDPOINT}/raster-foundry-tile-server:${GIT_COMMIT}"
-            docker tag "raster-foundry-airflow:${GIT_COMMIT}" \
-                   "${AWS_ECR_ENDPOINT}/raster-foundry-airflow:${GIT_COMMIT}"
+            docker tag "raster-foundry-batch:${GIT_COMMIT}" \
+                   "${AWS_ECR_ENDPOINT}/raster-foundry-batch:${GIT_COMMIT}"
             docker tag "raster-foundry-app-migrations:${GIT_COMMIT}" \
                    "${AWS_ECR_ENDPOINT}/raster-foundry-migrations:${GIT_COMMIT}"
 
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-api:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-tiler:${GIT_COMMIT}"
-            docker push "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-airflow:${GIT_COMMIT}"
 
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-api-server:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-tile-server:${GIT_COMMIT}"
-            docker push "${AWS_ECR_ENDPOINT}/raster-foundry-airflow:${GIT_COMMIT}"
+            docker push "${AWS_ECR_ENDPOINT}/raster-foundry-batch:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-migrations:${GIT_COMMIT}"
 
             echo "Uploading Spark Batch JAR to S3"

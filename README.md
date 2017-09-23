@@ -134,8 +134,6 @@ The Vagrant configuration maps the following host ports to services running in t
 | Nginx (tiler)             | [`9101`](http://localhost:9101) | `RF_PORT_9101`       |
 | Application Server (akka) | [`9000`](http://localhost:9000) | `RF_PORT_9000`       |
 | Tile Server (akka)        | [`9900`](http://localhost:9900) | `RF_PORT_9900`       |
-| Airflow UI                | [`8080`](http://localhost:8080) | `RF_PORT_8080`       |
-| Airflow Flower            | [`5555`](http://localhost:5555) | `RF_PORT_5555`       |
 
 ## Scripts
 

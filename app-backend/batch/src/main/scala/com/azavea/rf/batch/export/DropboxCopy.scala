@@ -1,15 +1,15 @@
-package com.azavea.rf.batch.export.airflow
+package com.azavea.rf.batch.export
+
+import java.io.InputStream
+import java.net.URI
 
 import com.amazonaws.services.s3.model.{ListObjectsRequest, ObjectListing}
 import com.azavea.rf.batch.Job
 import com.azavea.rf.batch.util.S3
 import com.dropbox.core.v2.files.{CreateFolderErrorException, WriteMode}
 
-import java.io.InputStream
-import java.net.URI
-
-import scala.collection.JavaConverters._
 import scala.annotation.tailrec
+import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.util._
 

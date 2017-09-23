@@ -25,12 +25,10 @@ function main() {
     echo "Building/Pulling containers..."
     docker-compose \
         -f "${DIR}/../docker-compose.yml" \
-        -f "${DIR}/../docker-compose.airflow.yml" \
         build
     docker-compose \
         -f "${DIR}/../docker-compose.yml" \
-        -f "${DIR}/../docker-compose.airflow.yml" \
-        pull postgres redis memcached
+        pull postgres memcached
 }
 
 

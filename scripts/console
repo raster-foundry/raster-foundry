@@ -20,7 +20,6 @@ then
         usage
     else
         docker-compose -f "${DIR}/../docker-compose.yml" \
-                       -f "${DIR}/../docker-compose.airflow.yml" \
                        run --rm --service-ports --entrypoint \
                        "/bin/bash -c" "$1" "${@:2}"
     fi

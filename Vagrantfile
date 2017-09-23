@@ -40,10 +40,6 @@ Vagrant.configure(2) do |config|
   config.vm.network :forwarded_port, guest: 9100, host: Integer(ENV.fetch("RF_PORT_9100", 9100))
   # nginx-tileserver
   config.vm.network :forwarded_port, guest: 9101, host: Integer(ENV.fetch("RF_PORT_9101", 9101))
-  # airflow webserver editor
-  config.vm.network :forwarded_port, guest: 8080, host: Integer(ENV.fetch("RF_PORT_8080", 8080))
-  # airflow flower editor
-  config.vm.network :forwarded_port, guest: 5555, host: Integer(ENV.fetch("RF_PORT_5555", 5555))
   # spark master
   config.vm.network :forwarded_port, guest: 8888, host: Integer(ENV.fetch("RF_PORT_8888", 8888))
   # spark worker

@@ -50,7 +50,7 @@ def save_ingest_def_to_s3(scene_id, ignore_previous=False):
 
     logger.info('Beginning to create ingest definition for scene %s for user %s...',
                 scene_id, scene.owner)
-    if scene.ingestStatus != IngestStatus.TOBEINGESTED and scene.ingestStatus != IngestStatus.FAILED and not ignore_previous:
+    if scene.ingestStatus not in [IngestStatus.TOBEINGESTED, IngestStatus.FAILED] and not ignore_previous:
         raise Exception('Scene is no longer waiting to be ingested, error error')
 
     scene.ingestStatus = IngestStatus.INGESTING
