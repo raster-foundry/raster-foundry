@@ -3,11 +3,14 @@ import subprocess
 
 import click
 
+from ..utils.exception_reporting import wrap_rollbar
+
 logger = logging.getLogger(__name__)
 
 
 @click.command(name='update-aoi-project')
 @click.argument('project_id')
+@wrap_rollbar
 def update_aoi_project(project_id):
     """Search for and add any new scenes to a given project
 

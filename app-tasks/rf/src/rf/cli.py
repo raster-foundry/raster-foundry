@@ -13,14 +13,12 @@ from .commands import (
     process_upload,
     update_aoi_project
 )
-from .utils.exception_reporting import wrap_rollbar
 
 logger = logging.getLogger('rf')
 
 
 @click.group()
 @click.option('--verbose/--quiet')
-@wrap_rollbar
 def run(verbose):
     """Console script for raster_foundry_batch_tasks."""
     if verbose:
@@ -28,7 +26,6 @@ def run(verbose):
         logger.debug('VERBOSE logging enabled')
     else:
         logger.setLevel(logging.INFO)
-
 
 run.add_command(export)
 run.add_command(process_upload)
