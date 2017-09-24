@@ -5,6 +5,7 @@ import time
 
 import click
 
+from ..utils.exception_reporting import wrap_rollbar
 from ..utils.emr import get_cluster_id, wait_for_emr_success
 
 logger = logging.getLogger(__name__)
@@ -15,6 +16,7 @@ API_PATH = '/api/exports/'
 
 @click.command()
 @click.argument('export_id')
+@wrap_rollbar
 def export(export_id):
     """Perform export configured by user
 

@@ -5,6 +5,8 @@ import subprocess
 import click
 import boto3
 
+from ..utils.exception_reporting import wrap_rollbar
+
 logger = logging.getLogger(__name__)
 
 ENVIRONMENT = os.getenv('ENVIRONMENT').title()
@@ -13,6 +15,7 @@ BATCH_QUEUE_AOI_UPDATE = os.getenv('BATCH_QUEUE_AOI_UPDATE', 'queue{}Default'.fo
 
 
 @click.command(name='find-aoi-projects')
+@wrap_rollbar
 def find_aoi_projects():
     """Find AOI projects that need to be checked for updates and kick off jobs to update"""
     click.echo("Finding AOI projects")

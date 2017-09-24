@@ -15,6 +15,7 @@ from ..ingest import (
 )
 from ..uploads.landsat8.settings import datasource_id as landsat_id
 from ..uploads.sentinel2.settings import datasource_id as sentinel2_id
+from ..utils.exception_reporting import wrap_rollbar
 from ..utils.emr import get_cluster_id, wait_for_emr_success
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,7 @@ BATCH_JAR_PATH = os.getenv('BATCH_JAR_PATH', 'rf-batch-761c316.jar')
 @click.argument('scene_id')
 @click.option('--ignore-previous', is_flag=True,
               help='Boolean to ignore scene status for ingestion')
+@wrap_rollbar
 def ingest_scene(scene_id, ignore_previous):
     """Ingest a scene into Raster Foundry
 

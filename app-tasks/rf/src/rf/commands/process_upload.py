@@ -7,14 +7,15 @@ from planet import api
 from ..models import Upload
 from ..uploads.geotiff import GeoTiffS3SceneFactory
 from ..uploads.planet.factories import PlanetSceneFactory
+from ..utils.exception_reporting import wrap_rollbar
 from ..utils.io import get_session
 
 logger = logging.getLogger(__name__)
 HOST = os.getenv('RF_HOST')
 
-
 @click.command(name='process-upload')
 @click.argument('upload_id')
+@wrap_rollbar
 def process_upload(upload_id):
     """Create Raster Foundry scenes and attach to relevant projects
 
