@@ -14,7 +14,7 @@ HOST = os.getenv('RF_HOST')
 API_PATH = '/api/exports/'
 
 
-@click.command()
+@click.command(name='export')
 @click.argument('export_id')
 @wrap_rollbar
 def export(export_id):
