@@ -1,27 +1,24 @@
-FROM openjdk:8-jre-alpine
+FROM openjdk:8-jre-slim
 
 COPY rf/requirements.txt /tmp/
-
 RUN set -ex \
-        && echo "@edge http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
-        && apk add --update --no-cache --virtual .build-deps \
-               build-base \
-               python-dev \
-        && apk add --no-cache \
-               bash \
-               gdal@edge \
-               gdal-dev@edge \
-               python \
-               imagemagick \
-               py-gdal@edge \
-               py-pip \
-               py-setuptools \
-               proj4-dev@edge \
-        && ln -s /usr/include/locale.h /usr/include/xlocale.h \
-        && pip install --no-cache-dir numpy==$(grep "numpy" /tmp/requirements.txt | cut -d= -f3) \
-        && pip install --no-cache-dir -r /tmp/requirements.txt \
-        && apk del .build-deps \
-        && rm -rf /var/cache/apk/*
+    && gdalDeps=' \
+       gdal-bin/sid \
+       python-gdal/sid \
+       python-pip \
+       python-setuptools \
+       python-dev \
+       build-essential \
+    ' \
+    && echo 'deb http://http.us.debian.org/debian sid main non-free contrib' > /etc/apt/sources.list.d/sid.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends ${gdalDeps} \
+    && pip install --no-cache-dir \
+           numpy==$(grep "numpy" /tmp/requirements.txt | cut -d= -f3) \
+    && pip install --no-cache-dir -r /tmp/requirements.txt \
+    && apt-get purge -y build-essential python-dev \
+    && apt-get -y autoremove \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY jars/ /opt/raster-foundry/jars/
 
