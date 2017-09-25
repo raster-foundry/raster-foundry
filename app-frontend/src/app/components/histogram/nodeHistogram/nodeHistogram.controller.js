@@ -68,6 +68,11 @@ export default class NodeHistogramController {
 
                 return bp;
             });
+            this._baseScheme = {
+                colorScheme: this._breakpoints.map((bp) => bp.color),
+                bins: 0,
+                dataType: 'SEQUENTIAL'
+            };
         }
     }
 
@@ -95,16 +100,15 @@ export default class NodeHistogramController {
             return {offset: `${offset}%`, color: bp.color};
         });
 
-        // Example code used for displaying discrete colors instead of a gradient
-        // if (this._options.discrete) {
-        //     let offsetData = data.map((currentValue, index, array) => {
-        //         if (index !== array.length - 1) {
-        //             return {offset: array[index + 1].offset, color: currentValue.color};
-        //         }
-        //         return currentValue;
-        //     });
-        //     data = _.flatten(_.zip(data, offsetData));
-        // }
+        if (this._options.baseScheme && this._options.baseScheme.colorBins > 0) {
+            let offsetData = data.map((currentValue, index, array) => {
+                if (index !== array.length - 1) {
+                    return {offset: array[index + 1].offset, color: currentValue.color};
+                }
+                return currentValue;
+            });
+            data = _.flatten(_.zip(data, offsetData));
+        }
 
         if (this._options.masks.min || this._options.discrete) {
             let last = _.last(data);
@@ -271,7 +275,7 @@ export default class NodeHistogramController {
 
         let index = this._breakpoints.findIndex((b) => b === bp);
 
-        if (!this._options.baseScheme || this._options.baseScheme.dataType !== 'CATEGORICAL') {
+        if (!this._options.baseScheme || this._options.baseScheme.colorBins === 0) {
             if (index === 0) {
                 this.recalculateBreakpointsFromRange(breakpoint, max);
             } else if (index === this._breakpoints.length - 1) {
@@ -318,21 +322,40 @@ export default class NodeHistogramController {
     }
 
     shouldShowBreakpoint(index) {
-        if (!this._options.baseScheme || this._options.baseScheme.dataType !== 'CATEGORICAL') {
+        if (!this._options.baseScheme ||
+            this._options.baseScheme.colorBins === 0
+           ) {
             return index === 0 || index === this._breakpoints.length - 1;
         }
         return true;
     }
 
+    getColorBins(colors, bins) {
+        const step = (colors.length - 1) / (bins - 1);
+        return _.range(0, bins).map((i) => colors[Math.round(step * i)]);
+    }
+
     onColorSchemeChange(colorSchemeOptions) {
         if (this._options.baseScheme &&
+            colorSchemeOptions.colorBins === this._options.baseScheme.colorBins &&
             JSON.stringify(colorSchemeOptions.colorScheme) ===
             JSON.stringify(this._options.baseScheme.colorScheme)
            ) {
             return;
         }
-        this.rescaleBreakpoints(0, colorSchemeOptions.colorScheme.length - 1);
-        this._breakpoints = colorSchemeOptions.colorScheme.map((color, index, arr) => {
+        let min = this._options.range.min;
+        let max = this._options.range.max;
+
+        const binned = colorSchemeOptions.colorBins > 0;
+
+        let numColors = binned ?
+            colorSchemeOptions.colorBins : colorSchemeOptions.colorScheme.length;
+
+        this.rescaleBreakpoints(0, numColors - 1);
+        let colors = binned ?
+            this.getColorBins(colorSchemeOptions.colorScheme, colorSchemeOptions.colorBins) :
+            colorSchemeOptions.colorScheme;
+        this._breakpoints = colors.map((color, index, arr) => {
             let isEndpoint = index === 0 || index === arr.length - 1;
             return {
                 id: uuid(),
@@ -346,6 +369,6 @@ export default class NodeHistogramController {
         });
         this._options.scale = colorSchemeOptions.dataType;
         this._options.baseScheme = colorSchemeOptions;
-        this.rescaleBreakpoints(this._options.range.min, this._options.range.max);
+        this.rescaleBreakpoints(min, max);
     }
 }

@@ -177,19 +177,29 @@ export default (app) => {
                             return map;
                         }, {});
                         let clip = 'none';
-                        if (this.scope.histogramOptions.masks) {
-                            if (this.scope.histogramOptions.masks.min &&
-                                this.scope.histogramOptions.masks.max) {
+                        let options = this.scope.histogramOptions;
+                        if (options.masks) {
+                            if (options.masks.min &&
+                                options.masks.max) {
                                 clip = 'both';
-                            } else if (this.scope.histogramOptions.masks.min) {
+                            } else if (options.masks.min) {
                                 clip = 'left';
-                            } else if (this.scope.histogramOptions.masks.max) {
+                            } else if (options.masks.max) {
                                 clip = 'right';
                             }
                         }
+                        let scale = options.scale ?
+                            options.scale : 'SEQUENTIAL';
+
+                        if (scale === 'CATEGORICAL') {
+                            scale = 'QUALITATIVE[#000000]';
+                            scale = 'SEQUENTIAL';
+                        } else if (options.baseScheme && options.baseScheme.colorBins > 0) {
+                            scale = `QUALITATIVE[${_.last(this.scope.breakpoints).color}]`;
+                        }
+
                         let renderDef = {
-                            scale: this.scope.histogramOptions.scale ?
-                                this.scope.histogramOptions.scale : 'SEQUENTIAL',
+                            scale: scale,
                             breakpoints: newBreakpoints,
                             clip: clip
                         };

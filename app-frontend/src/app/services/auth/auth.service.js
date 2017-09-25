@@ -189,7 +189,7 @@ export default (app) => {
                     });
                 }
 
-                this.featureFlagOverrides.setUser(profile.user_id);
+                this.featureFlagOverrides.setUser(profile);
                 // Flags set in the `/config` endpoint; default.
                 let configFlags = this.featureFlags.get().map((flag) => flag.key);
                 // Now that we've authenticated, trigger an override of the default
@@ -279,6 +279,7 @@ export default (app) => {
                 );
                 if (this.isLoggedIn) {
                     this.setReauthentication(token);
+                    this.featureFlagOverrides.setUser(this.profile());
                 }
                 return this.isLoggedIn;
             } catch (e) {

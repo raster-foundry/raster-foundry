@@ -2411,6 +2411,7 @@ rf-histogram-breakpoint {
 
 .colorscheme-selector {
   padding: 0;
+  min-width: 24rem;
 }
 .dropdown-header {
   display: flex;
@@ -2454,6 +2455,7 @@ rf-histogram-breakpoint {
     text-align: left;
     font-weight: bold;
     color: $brand-primary;
+    cursor: pointer;
   }
 }
 

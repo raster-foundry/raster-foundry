@@ -84,10 +84,24 @@ export default class DiagramContainerController {
         }
 
         if (!this.paper) {
+            let el = $(this.$element);
+            let height = el.height();
+            if (height === 0) {
+                let resetDimensions = () => {
+                    let elHeight = el.height();
+                    if (elHeight !== 0) {
+                        this.paper.setDimensions(el.width(), elHeight);
+                        this.scaleToContent();
+                    } else {
+                        this.$timeout(resetDimensions, 500);
+                    }
+                };
+                this.$scope.$evalAsync(resetDimensions);
+            }
             this.paper = new joint.dia.Paper({
                 el: this.workspaceElement,
-                height: $(this.workspaceElement).height(),
-                width: $(this.workspaceElement).width(),
+                height: height,
+                width: el.width(),
                 gridSize: 25,
                 drawGrid: {
                     name: 'doubleMesh',
@@ -122,10 +136,10 @@ export default class DiagramContainerController {
             this.paper.$el.on('wheel', this.onMouseWheel.bind(this));
 
             this.onWindowResize = () => {
-                let width = this.$element[0].offsetWidth;
-                let height = this.$element[0].offsetHeight;
+                let owidth = this.$element[0].offsetWidth;
+                let oheight = this.$element[0].offsetHeight;
                 this.paper.setDimensions(
-                    width, height
+                    owidth, oheight
                 );
             };
             this.$window.addEventListener('resize', this.onWindowResize);

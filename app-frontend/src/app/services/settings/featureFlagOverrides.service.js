@@ -1,3 +1,5 @@
+import Map from 'es6-map';
+
 /* Feature Flag Overrides service
  * Feature flags can be set / overridden in a number of ways:
  *    A) In app.config.js, feature flags are read from the /api/config endpoint and set.
@@ -17,6 +19,7 @@ export default app => {
             'ngInject';
             this.localStorage = localStorage;
             this.$log = $log;
+            this.flagCache = new Map();
 
             let keyPrefix = 'featureFlags.';
             this.prefixedKeyForUser = (user) => {
@@ -28,16 +31,27 @@ export default app => {
            This method must be called before setting / fetching any overrides, since overrides
            are stored per user
         */
-        setUser(userId) {
-            this.prefixedKeyFor = this.prefixedKeyForUser(userId);
+        setUser(profile) {
+            this.prefixedKeyFor = this.prefixedKeyForUser(profile.userId);
+            this.userProfile = profile;
         }
 
         isPresent(key) {
             if (!this.prefixedKeyFor) {
                 return false;
             }
-            let val = this.localStorage.get(this.prefixedKeyFor(key));
-            return typeof val !== 'undefined' && val !== null;
+            let prefixed = this.prefixedKeyFor(key);
+            let cached = this.flagCache.get(prefixed);
+            if (!cached) {
+                cached = this.localStorage.get(prefixed);
+            }
+            if (!cached) {
+                let profileFlags = this.userProfile &&
+                    this.userProfile.user_metadata &&
+                    this.userProfile.user_metadata.featureFlags;
+                cached = profileFlags ? profileFlags.find((flag) => flag.key === key) : false;
+            }
+            return typeof cached !== 'undefined' && cached !== null;
         }
 
         get(flagName) {
@@ -45,7 +59,19 @@ export default app => {
                 this.$log.error('featureFlagOverrides.get called before setting a user.');
                 return false;
             }
-            return this.localStorage.get(this.prefixedKeyFor(flagName));
+            let prefixed = this.prefixedKeyFor(flagName);
+            let cached = this.flagCache.get(prefixed);
+            if (!cached) {
+                cached = this.localStorage.get(prefixed);
+            }
+            if (!cached) {
+                let profileFlags = this.userProfile &&
+                    this.userProfile.user_metadata &&
+                    this.userProfile.user_metadata.featureFlags;
+                let f = profileFlags.find((flag) => flag.key === flagName);
+                cached = f ? f.active : false;
+            }
+            return cached;
         }
 
         set(flag, value) {
@@ -54,7 +80,9 @@ export default app => {
                 return;
             }
             let setFlag = (val, flagName) => {
-                this.localStorage.set(this.prefixedKeyFor(flagName), val);
+                let prefixed = this.prefixedKeyFor(flagName);
+                this.flagCache.set(prefixed, val);
+                this.localStorage.set(prefixed, val);
             };
             if (angular.isObject(flag)) {
                 angular.forEach(flag, setFlag);
@@ -68,7 +96,9 @@ export default app => {
                 this.$log.error('featureFlagOverrides.remove called before setting a user.');
                 return;
             }
-            this.localStorage.remove(this.prefixedKeyFor(flagName));
+            let prefixed = this.prefixedKeyFor(flagName);
+            this.localStorage.remove(prefixed);
+            this.flagCache.delete(prefixed);
         }
     }
 
