@@ -16,8 +16,8 @@ const DEVELOPMENT = NODE_ENV === 'production' ? false : true;
 const stylesLoader = 'css-loader?sourceMap!postcss-loader!sass-loader?' +
         'outputStyle=expanded&sourceMap=true&sourceMapContents=true';
 
-const HERE_APP_ID = 'mXP4DZFBZGyBmuZBKNeo';
-const HERE_APP_CODE = 'kBWb6Z7ZLcuQanT_RoP60A';
+const HERE_APP_ID = 'v88MqS5fQgxuHyIWJYX7';
+const HERE_APP_CODE = '5pn07ENomTHOap0u7nQSFA';
 
 const INTERCOM_APP_ID = '';
 
