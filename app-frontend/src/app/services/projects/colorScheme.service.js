@@ -1,3 +1,5 @@
+/* globals _ */
+
 const {
     colorSchemes: defaultColorSchemes,
     colorSchemeTypes: defaultColorSchemeTypes,
@@ -42,11 +44,20 @@ export default (app) => {
             }, {});
         }
 
+        toBinnedColors(colors) {
+            let numColors = colors.length;
+            return _.zip(
+                colors.map((color, index) => `${color} ${index / numColors * 100}%`),
+                colors.map((color, index) => `${color} ${(index + 1) / numColors * 100}%`)
+            ).join(', ');
+        }
+
         // colors:string[] => { string: string }
         // colors are expected in css hex style (#FFFFFF)
-        colorsToBackground(colors, direction = 90) {
+        colorsToBackground(colors, direction = 90, bins = 0) {
+            let colorString = bins > 0 ? this.toBinnedColors(colors) : colors.join(', ');
             const style = {
-                background: `linear-gradient(${direction}deg, ${colors.join(', ')})`
+                background: `linear-gradient(${direction}deg, ${colorString})`
             };
             return style;
         }

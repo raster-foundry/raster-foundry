@@ -8,18 +8,21 @@
     <div class="feature-flags-actions">
       Flag:
       <button id="feature-flag--{{flag.key}}--enable"
+              type="button"
               class="btn"
               ng-click="$ctrl.featureFlags.enable(flag)"
               ng-class="{'btn-primary': $ctrl.featureFlags.isOverridden(flag.key) && $ctrl.featureFlags.isOn(flag.key)}">
         On
       </button>
       <button id="feature-flag--{{flag.key}}--disable"
+              type="button"
               class="btn"
               ng-click="$ctrl.featureFlags.disable(flag)"
               ng-class="{'btn-primary': $ctrl.featureFlags.isOverridden(flag.key) && !$ctrl.featureFlags.isOn(flag.key)}">
         Off
       </button>
       <button id="feature-flag--{{flag.key}}--reset"
+              type="button"
               class="btn"
               ng-click="$ctrl.featureFlags.reset(flag)"
               ng-class="{'btn-primary': !$ctrl.featureFlags.isOverridden(flag.key)}">

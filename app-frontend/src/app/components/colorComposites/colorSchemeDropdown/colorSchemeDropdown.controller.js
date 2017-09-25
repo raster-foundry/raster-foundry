@@ -11,10 +11,14 @@ export default class ColorSchemeDropdownController {
         this.$scope = $scope;
         this.$element = $element;
         this.colorSchemeService = colorSchemeService;
-        this.bins = [0, ...[ ...Array(1 + MAX_BINS - MIN_BINS).keys()].map(b => b + MIN_BINS)];
-    }
 
-    $onInit() {
+        this.bins = [0, ...[ ...Array(1 + MAX_BINS - MIN_BINS).keys()].map(b => b + MIN_BINS)];
+
+        this.filterToValidSchemes = (value) => {
+            return this.state &&
+                value.type === this.state.schemeType.value &&
+                (this.state.blending.bins === 0 || value.colors.length >= this.state.blending.bins);
+        };} $onInit() {
         this.$element.on('wheel', (event) => {
             event.stopPropagation();
         });
@@ -31,6 +35,11 @@ export default class ColorSchemeDropdownController {
 
     mergeStates() {
         this.state = Object.assign(
+            {},
+            this.getInitialState(),
+            this.getStateFromColorSchemeOptions()
+        );
+        this.reflectedState = Object.assign(
             {},
             this.getInitialState(),
             this.getStateFromColorSchemeOptions()
@@ -72,15 +81,18 @@ export default class ColorSchemeDropdownController {
                 );
             }
 
-            let blending = {
-                label: this.getBlendingLabel(0),
-                bins: 0
-            };
+            let blending = {};
 
             if (Array.isArray(this._colorSchemeOptions.colorScheme)) {
+                let hasBins = Number.isFinite(this._colorSchemeOptions.colorBins);
+                let colorSchemeBins = this._colorSchemeOptions.colorScheme.length;
+                let bins = hasBins ? this._colorSchemeOptions.colorBins : 0;
+                if (bins > colorSchemeBins) {
+                    bins = colorSchemeBins;
+                }
                 blending = {
-                    label: this.getBlendingLabel(0),
-                    bins: 0
+                    label: this.getBlendingLabel(bins),
+                    bins: bins
                 };
             } else {
                 let bins = Object.keys(this._colorSchemeOptions.colorScheme).length;
@@ -89,7 +101,7 @@ export default class ColorSchemeDropdownController {
                     bins
                 };
             }
-            stateToReturn[blending] = blending;
+            stateToReturn.blending = blending;
         }
         return stateToReturn;
     }
@@ -119,15 +131,40 @@ export default class ColorSchemeDropdownController {
     }
 
     setSchemeType(schemeType) {
-        this.state = Object.assign(
-            {},
-            this.state,
-            { schemeType }
-        );
+        if (schemeType.value === 'CATEGORICAL' && this.state.blending.bins === 0) {
+            this.state = Object.assign(
+                {},
+                this.state,
+                {
+                    blending: {
+                        label: this.getBlendingLabel(2),
+                        bins: 2
+                    }
+                },
+                { schemeType }
+            );
+        } else if (schemeType.value !== 'CATEGORICAL' && this.state.blending.bins > 0) {
+            this.state = Object.assign(
+                {},
+                this.state,
+                {
+                    blending: {
+                        label: this.getBlendingLabel(0),
+                        bins: 0
+                    }
+                },
+                { schemeType }
+            );
+        } else {
+            this.state = Object.assign(
+                {},
+                this.state,
+                { schemeType }
+            );
+        }
         if (ELASTIC_NAV) {
             this.moveToView('MAIN');
         }
-        this.reflectState();
     }
 
     setBlending(bins) {
@@ -144,7 +181,9 @@ export default class ColorSchemeDropdownController {
         if (ELASTIC_NAV) {
             this.moveToView('MAIN');
         }
-        this.reflectState();
+        if (this.state.schemeType.value === this.reflectedState.schemeType.value) {
+            this.reflectState();
+        }
     }
 
     setScheme(scheme) {
@@ -167,10 +206,11 @@ export default class ColorSchemeDropdownController {
     getSchemeClass(scheme) {
         if (this.state) {
             return {
-                'selected': _.isEqual(
-                                this.state.scheme.colors,
-                                scheme.colors
-                            )
+                selected:
+                _.isEqual(
+                    this.state.scheme.colors,
+                    scheme.colors
+                )
             };
         }
         return {};
@@ -178,14 +218,14 @@ export default class ColorSchemeDropdownController {
 
     getSchemeTypeClass(schemeType) {
         return {
-            'selected': this.isActiveSchemeType(schemeType)
+            selected: this.isActiveSchemeType(schemeType)
         };
     }
 
     getBlendingClass(bin) {
         if (this.state) {
             return {
-                'selected': this.state.blending.bins === bin
+                selected: this.state.blending.bins === bin
             };
         }
         return {};
@@ -210,5 +250,11 @@ export default class ColorSchemeDropdownController {
             return this.state.view === view;
         }
         return false;
+    }
+
+    onDropdownToggle(open) {
+        if (!open) {
+            this.mergeStates();
+        }
     }
 }

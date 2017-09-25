@@ -52,6 +52,10 @@
         "colors": ["#569543", "#9EBD4D", "#BBCA7A", "#D9E2B2", "#E4E7C4", "#E6D6BE", "#E3C193", "#DFAC6C", "#DB9842", "#B96230"],
         "type": "DIVERGING"
     }, {
+        "label": "Pastel1",
+        "colors": ["#fbb4ae", "#b3cde3", "#ccebc5", "#decbe4", "#fed9a6", "#ffffcc", "#e5d8bd", "#fddaec", "#f2f2f2"],
+        "type": "CATEGORICAL"
+    }, {
         "label": "Raster Foundry Categorical",
         "colors": ["#FFFFFF", "#959CAC", "#465076"],
         "type": "CATEGORICAL"

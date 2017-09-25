@@ -1,17 +1,20 @@
 <div class="dropdown btn-group"
      uib-dropdown
-     auto-close="outsideClick">
+     auto-close="outsideClick"
+     on-toggle="$ctrl.onDropdownToggle(open)"
+>
   <button class="btn dropdown-label gradient-dropdown"
           uib-dropdown-toggle>
       <div class="gradient-bar gradient-bkg"
-          ng-style="$ctrl.colorSchemeService.colorsToBackground($ctrl.state.scheme.colors)"
+          ng-style="$ctrl.colorSchemeService.colorsToBackground(
+                      $ctrl.reflectedState.scheme.colors, 90, $ctrl.reflectedState.blending.bins)"
       ></div>
       <i class="icon-caret-down"></i>
   </button>
   <div class="dropdown-menu dropdown-menu-light colorscheme-selector" uib-dropdown-menu role="menu">
     <div ng-show="$ctrl.shouldShowView('MAIN')">
       <div class="dropdown-header">
-        <div class="dropdown-header-link-container">
+        <div class="dropdown-header-link-container" feature-flag="colorscheme-blendmodes">
           <a class="dropdown-header-link" ng-click="$ctrl.moveToView('BLENDING')">{{$ctrl.state.blending.label}}...</a>
         </div>
         <div class="dropdown-header-link-container">
@@ -19,7 +22,7 @@
         </div>
       </div>
       <ul class="dropdown-list">
-        <li ng-repeat="scheme in $ctrl.colorSchemeService.defaultColorSchemes | filter : {type: $ctrl.state.schemeType.value}"
+        <li ng-repeat="scheme in $ctrl.colorSchemeService.defaultColorSchemes | filter : $ctrl.filterToValidSchemes"
             ng-click="$ctrl.setScheme(scheme)"
             ng-class="$ctrl.getSchemeClass(scheme)"
             role="menuitem"
@@ -28,7 +31,8 @@
           <div class="selection-indicator"><i class="icon-check"></i></div>
           <div class="gradient-container" ng-class="$ctrl.getSchemeClass(scheme)">
             <div class="gradient-bar gradient-bkg"
-                 ng-style="$ctrl.colorSchemeService.colorsToBackground(scheme.colors)"
+                 ng-style="$ctrl.colorSchemeService.colorsToBackground(
+                             scheme.colors, 90, $ctrl.state.blending.bins)"
             ></div>
           </div>
         </li>
@@ -40,7 +44,7 @@
           <button class="navigation-button" ng-click="$ctrl.moveToView('MAIN')">
             <i class="icon-arrow-left"></i>
           </button>
-          <div class="dropdown-title flex-fill">
+          <div ng-click="$ctrl.moveToView('MAIN')" class="dropdown-title flex-fill">
             Color Scheme
           </div>
         </div>
@@ -64,7 +68,7 @@
           <button class="navigation-button" ng-click="$ctrl.moveToView('MAIN')">
             <i class="icon-arrow-left"></i>
           </button>
-          <div class="dropdown-title flex-fill">
+          <div ng-click="$ctrl.moveToView('MAIN')" class="dropdown-title flex-fill">
             Color Blending
           </div>
         </div>
