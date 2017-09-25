@@ -1,5 +1,5 @@
 export default (app) => {
-    class HistogramService {
+    class ProjectHistogramService {
         constructor($http, authService, APP_CONFIG) {
             'ngInject';
             this.authService = authService;
@@ -17,5 +17,5 @@ export default (app) => {
 
     }
 
-    app.service('histogramService', HistogramService);
+    app.service('projectHistogramService', ProjectHistogramService);
 };
