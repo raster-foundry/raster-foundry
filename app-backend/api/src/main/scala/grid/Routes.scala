@@ -34,11 +34,11 @@ trait GridRoutes extends Authentication
     }
   }
 
-  def getGrid(z: Int, x: Int, y: Int): Route = authenticate { _ =>
+  def getGrid(z: Int, x: Int, y: Int): Route = authenticate { user =>
     gridQueryParameters { gridParams =>
       complete {
         val tileBounds = TileUtils.TileCoordinates(z, x, y).childrenTileBounds
-        Future.sequence(Scenes.sceneGrid(gridParams, tileBounds))
+        Future.sequence(Scenes.sceneGrid(gridParams, user, tileBounds))
       }
     }
   }
