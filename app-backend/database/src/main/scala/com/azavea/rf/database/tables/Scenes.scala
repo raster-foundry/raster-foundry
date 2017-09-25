@@ -338,8 +338,9 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     }
   }
 
-  def sceneGrid(params: CombinedGridQueryParams, bboxes: Seq[Projected[Polygon]])(implicit database: DB) = {
+  def sceneGrid(params: CombinedGridQueryParams, user: User, bboxes: Seq[Projected[Polygon]])(implicit database: DB) = {
     val filteredScenes = Scenes
+      .filterUserVisibility(user)
       .filterByOrganization(params.orgParams)
       .filterByUser(params.userParams)
       .filterByTimestamp(params.timestampParams)
