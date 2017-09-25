@@ -49,7 +49,8 @@ export default class MapContainerController {
             touchZoom: !this.options.static,
             boxZoom: !this.options.static,
             keyboard: !this.options.static,
-            tap: !this.options.static
+            tap: !this.options.static,
+            maxZoom: 30
         }).setView(
             this.initialCenter ? this.initialCenter : [0, 0],
             this.initialZoom ? this.initialZoom : 2
@@ -191,9 +192,9 @@ export default class MapContainerController {
                     {
                         s: options.properties.subdomains && options.properties.subdomains[0] ?
                             options.properties.subdomains[0] : 'a',
-                        z: '4',
-                        x: '8',
-                        y: '6'
+                        z: '17',
+                        x: '38168',
+                        y: '49642'
                     },
                     options.properties
                 )

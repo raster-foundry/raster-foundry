@@ -241,7 +241,7 @@ export default class FilterPaneController {
         this.datasourceService.query().then(d => {
             this.datasources = d.results;
 
-            let selectedId = this.filters.datasource[0];
+            let selectedId = this.filters && this.filters.datasource && this.filters.datasource[0];
             if (selectedId) {
                 let matchedSource = this.datasources.find(ds => ds.id === selectedId);
                 if (matchedSource) {

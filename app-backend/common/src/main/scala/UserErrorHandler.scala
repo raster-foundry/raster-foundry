@@ -27,6 +27,7 @@ trait UserErrorHandler extends Directives
       // Status code and error message are expected to be contained within
       complete(e)
     case e: Exception =>
+      logger.error(RfStackTrace(e))
       sendError(e)
       complete(StatusCodes.ServerError(501)("An unknown error occurred", ""))
   }

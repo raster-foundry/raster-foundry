@@ -18,13 +18,13 @@ export default class NavBarController {
         this.projectService = projectService;
     }
 
-    hasSubview() {
-        return this.$state.current.views && this.$state.current.views['navmenu@root'];
-    }
-
     $onInit() {
         this.optionsOpen = false;
         this.assetLogo = assetLogo;
+    }
+
+    hideLabels() {
+        return this.$state.current.name.startsWith('projects.edit');
     }
 
     signin() {

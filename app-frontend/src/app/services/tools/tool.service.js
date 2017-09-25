@@ -2,9 +2,10 @@
 
 export default (app) => {
     class ToolService {
-        constructor($resource, $http, authService) {
+        constructor($resource, $http, $q, authService, APP_CONFIG) {
             'ngInject';
             this.$http = $http;
+            this.$q = $q;
             this.authService = authService;
             this.Tool = $resource(
                 `${BUILDCONFIG.API_HOST}/api/tools/:id/`, {
@@ -33,6 +34,16 @@ export default (app) => {
                     get: {
                         method: 'GET',
                         cache: false
+                    },
+                    histogram: {
+                        url: `${APP_CONFIG.tileServerLocation}/tools/:toolId/histogram/`,
+                        method: 'GET',
+                        cache: false
+                    },
+                    statistics: {
+                        url: `${APP_CONFIG.tileServerLocation}/tools/:toolId/statistics/`,
+                        method: 'GET',
+                        cache: false
                     }
                 }
             );
@@ -40,6 +51,55 @@ export default (app) => {
 
         query(params = {}) {
             return this.Tool.query(params).$promise;
+        }
+
+        searchQuery() {
+            let deferred = this.$q.defer();
+            let pageSize = 1000;
+            let firstPageParams = {
+                pageSize: pageSize,
+                page: 0,
+                sort: 'createdAt,desc'
+            };
+
+            let firstRequest = this.query(firstPageParams);
+
+            firstRequest.then((page) => {
+                let self = this;
+                let numTools = page.count;
+                let requests = [firstRequest];
+                if (page.count > pageSize) {
+                    let requestMaker = function *(totalResults) {
+                        let pageNum = 1;
+                        while (pageNum * pageSize <= totalResults) {
+                            let pageParams = {
+                                pageSize: pageSize,
+                                page: pageNum,
+                                sort: 'createdAt,desc'
+                            };
+                            yield self.query(pageParams);
+                            pageNum += 1;
+                        }
+                    };
+
+                    requests = requests.concat(Array.from(requestMaker(numTools)));
+                }
+
+                this.$q.all(requests).then(
+                    (allResponses) => {
+                        deferred.resolve(
+                            allResponses.reduce((res, resp) => res.concat(resp.results), [])
+                        );
+                    },
+                    () => {
+                        deferred.reject('Error loading tools.');
+                    }
+                );
+            }, () => {
+                deferred.reject('Error loading tools.');
+            });
+
+            return deferred.promise;
         }
 
         get(id) {
@@ -75,6 +135,22 @@ export default (app) => {
 
                 }
             );
+        }
+
+        getNodeHistogram(toolRun, nodeId) {
+            return this.ToolRun.histogram({
+                toolId: toolRun, node: nodeId, voidCache: true,
+                token: this.authService.token()
+            }).$promise;
+        }
+
+        getNodeStatistics(toolRun, nodeId) {
+            return this.ToolRun.statistics({
+                toolId: toolRun,
+                node: nodeId,
+                voidCache: true,
+                token: this.authService.token()
+            }).$promise;
         }
 
         generateSourcesFromTool(tool) {

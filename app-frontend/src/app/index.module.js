@@ -73,8 +73,12 @@ const App = angular.module(
         require('./pages/projects/edit/masking/draw/draw.module.js').name,
         require('./pages/projects/edit/aoi-approve/aoi-approve.module.js').name,
         require('./pages/projects/edit/aoi-parameters/aoi-parameters.module.js').name,
-        require('./pages/projects/edit/export/export.module.js').name,
+        require('./pages/projects/edit/exports/exports.module.js').name,
+        require('./pages/projects/edit/exports/new/new.module.js').name,
         require('./pages/projects/edit/annotate/annotate.module.js').name,
+        require('./pages/projects/edit/annotate/import/import.module.js').name,
+        require('./pages/projects/edit/annotate/export/export.module.js').name,
+        require('./pages/projects/edit/sharing/sharing.module.js').name,
 
         require('./pages/imports/imports.module.js').name,
         require('./pages/imports/datasources/datasources.module.js').name,

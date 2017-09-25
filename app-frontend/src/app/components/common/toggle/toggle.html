@@ -1,5 +1,8 @@
-<div class="checkbox-container {{$ctrl.className}}"
-     ng-class="{'is-checked': $ctrl.currentValue}"
+<div class="checkbox {{$ctrl.className}}"
+     ng-class="{
+       'active': $ctrl.currentValue, 
+       'radio': $ctrl.radio
+     }"
      ng-click="$ctrl.toggle($event)"
      ng-transclude>
 </div>

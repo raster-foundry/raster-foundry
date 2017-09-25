@@ -170,7 +170,7 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
     *   Note:
     *   Currently, if the render takes too long, it will time out. Given enough requests, this
     *   could cause us to essentially ddos ourselves, so we probably want to change
-    *   this from a simple endpoint to an airflow operation: IE the request kicks off
+    *   this from a simple endpoint to a batch operation: IE the request kicks off
     *   a render job then returns the job id
     *
     *   @param zoomOption  the zoom level to use

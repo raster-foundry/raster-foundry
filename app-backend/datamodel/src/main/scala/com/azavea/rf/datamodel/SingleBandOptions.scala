@@ -16,7 +16,7 @@ object SingleBandOptions {
   case class Params(
     band: Int,
     dataType: BandDataType,
-    blendMode: BlendMode,
+    colorBins: Int,
     colorScheme: Json,
     legendOrientation: String
   )

@@ -1,15 +1,16 @@
 export default class ProjectDetailExportsController {
-    constructor($state, $scope, $timeout, projectService) {
+    constructor($state, $scope, $timeout, projectService, projectEditService) {
         'ngInject';
         this.$state = $state;
         this.$scope = $scope;
         this.$timeout = $timeout;
         this.projectService = projectService;
+        this.projectEditService = projectEditService;
     }
 
     $onInit() {
         this.isLoadingProject = true;
-        this.$scope.$parent.$ctrl.fetchProject().then(p => {
+        this.projectEditService.fetchCurrentProject().then(p => {
             this.project = p;
             this.isLoadingProject = false;
             this.populateExportList(this.$state.params.page);

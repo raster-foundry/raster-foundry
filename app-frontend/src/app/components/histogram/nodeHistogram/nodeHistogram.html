@@ -1,0 +1,52 @@
+<div class="node-histogram-header">
+  <div class="mask-controls">
+    <div>
+      Mask values
+    </div>
+    <div class="histogram-checkboxes">
+      <label class="checkbox dark" ng-class="{active: $ctrl._options.masks.min}">
+          <input type="checkbox"
+                 ng-model="$ctrl._options.masks.min"
+                 ng-change="$ctrl.onMaskChange()"
+                 ng-disabled="$ctrl.options.discrete" />Min
+      </label>
+      <label class="checkbox dark" ng-class="{active: $ctrl._options.masks.max}">
+          <input type="checkbox"
+                 ng-model="$ctrl._options.masks.max"
+                 ng-change="$ctrl.onMaskChange()"
+                 ng-disabled="$ctrl.options.discrete" />Max
+      </label>
+    </div>
+  </div>
+  <rf-color-scheme-dropdown
+      color-scheme-options="$ctrl.baseColorScheme"
+      on-change="$ctrl.onColorSchemeChange(value)"
+  ></rf-color-scheme-dropdown>
+</div>
+
+<div class="graph-container">
+  <nvd3 ng-attr-id="chart-{{$ctrl.id}}" options="$ctrl.histOptions" data="$ctrl.plot" api="$ctrl.api"></nvd3>
+  <rf-histogram-breakpoint
+    ng-repeat="bp in $ctrl._breakpoints track by bp.id"
+    ng-if="$ctrl.shouldShowBreakpoint($index)"
+    ng-mouseover="$ctrl.lastMouseOver = bp.id"
+    ng-class="{'active': $ctrl.lastMouseOver === bp.id}"
+    data-color="bp.color"
+    data-breakpoint="bp.value"
+    data-range="$ctrl._options.range"
+    data-precision="$ctrl.precision"
+    data-options="bp.options"
+    on-breakpoint-change="$ctrl.onChange(bp, breakpoint)"
+  ></rf-histogram-breakpoint>
+  <div class="histogram-placeholder" ng-if="$ctrl.usingDefaultData">Fill out all input fields and apply changes to view histogram</div>
+  <div class="histogram-placeholder" ng-if="$ctrl.noValidData">A histogram cannot be generated for this data</div>
+</div>
+
+<style ng-if="$ctrl.id">
+ #chart-{{$ctrl.id}} .nv-series-0 {
+   fill: url(#line-gradient-{{$ctrl.id}}) !important;
+   fill-opacity: 1 !important;
+   stroke: url(#line-gradient-{{$ctrl.id}}) !important;
+   stroke-opacity: 1 !important;
+ }
+</style>

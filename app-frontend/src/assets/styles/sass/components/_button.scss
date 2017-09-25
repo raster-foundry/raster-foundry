@@ -11,7 +11,7 @@
 
   &:focus, &.focus {
     outline: none;
-    box-shadow: 0 1px 2px -1px $brand-primary;
+    box-shadow: 0 0 0 3px rgba($brand-primary, .3);
   }
 
   // Note: <buttons> and <a> handle active+focus differently. This will normalize behaviour.
@@ -39,7 +39,7 @@
 
   &:focus, &.focus {
     outline: none;
-    box-shadow: 0 1px 2px -1px $brand-primary;
+    box-shadow: 0 0 0 3px rgba($brand-primary, .3);
   }
 
   // Note: <buttons> and <a> handle active+focus differently. This will normalize behaviour.
@@ -68,7 +68,8 @@
   user-select: none;
   background: #fff;
   border: 1px solid $shade-light;
-  color: $shade-light;;
+  color: $shade-light;
+  will-change: opacity, border;
 
   &:hover, &.hover,
   &:active, &.active, {
@@ -82,7 +83,7 @@
 
   &:focus, &.focus {
     outline: none;
-    box-shadow: 0 1px 2px -1px $brand-primary;
+    box-shadow: 0 0 0 3px rgba($brand-primary, .3);
   }
 
   // Note: <buttons> and <a> handle active+focus differently. This will normalize behaviour.
@@ -96,7 +97,7 @@
   }
 }
 
-/* 
+/*
  * Solid bg-color buttons
  */
 .btn-default {
@@ -160,11 +161,13 @@
   border-color: transparent;
 }
 
-/* 
+/*
  * Ghost buttons, borders only
  */
 .btn-ghost {
   background-color: transparent;
+
+  @include ghost-button-states(transparent, $white);
 }
 
 .btn-ghost-white {
@@ -183,7 +186,15 @@
   @include ghost-button-states($shade-normal, #fff);
 }
 
-/* 
+.btn-ghost-danger {
+  background-color: transparent;
+  color: $danger;
+  border-color: $danger;
+
+  @include ghost-button-states($danger, $shade-normal);
+}
+
+/*
  * Button styled link a link
  */
 .btn-link {
@@ -268,8 +279,9 @@
     box-shadow: inset 0 2px 2px 0px rgba(black, .2);
   }
 
-  &:disabled, &.disabled {
+  &:disabled, &.disabled, &[disabled] {
     opacity: .5;
+    cursor: not-allowed;
   }
 
   &.active {
@@ -333,5 +345,7 @@
     padding-right: 1rem;
     flex-grow: 0;
     flex-shrink: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
   }
 }

@@ -4,6 +4,7 @@ export default class ToggleController {
     }
     $onInit() {
         this.currentValue = this.value || false;
+        this.radio = this.radio || false;
     }
     $onChanges(changes) {
         if ('value' in changes) {

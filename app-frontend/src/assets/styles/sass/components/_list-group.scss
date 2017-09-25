@@ -37,6 +37,11 @@
   font-weight: bold;
 }
 
+
+/* 
+ * Status: deprecated
+ * Currently only used on download modal 
+*/
 .list-group-subitem {
   padding: 1.5rem;
   margin: 0 0 0 3rem;
@@ -110,6 +115,20 @@
   &.selectable {
     cursor: pointer;
   }
+
+  &.active {
+    background-color: $off-white;
+  }
+}
+
+
+.list-group-item-row {
+  display: flex;
+  flex: 1;
+
+  ~ .list-group-item-row {
+    margin-top: 5px;
+  }
 }
 
 // List group item with stacked children
@@ -119,8 +138,9 @@
   align-items: flex-start;
 
   > * {
-    margin: 5px 0;
-    width: 100%;
+    flex: none;
+    flex-basis: 100%;
+    align-self: stretch;
   }
 }
 

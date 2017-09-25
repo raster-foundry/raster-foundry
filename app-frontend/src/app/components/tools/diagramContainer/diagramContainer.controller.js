@@ -1,6 +1,4 @@
-/* global joint, $, _ */
-
-const Map = require('es6-map');
+/* global joint $ */
 
 const maxZoom = 3;
 const minZoom = 0.025;
@@ -8,7 +6,7 @@ const minZoom = 0.025;
 export default class DiagramContainerController {
     constructor( // eslint-disable-line max-params
         $element, $scope, $state, $timeout, $compile, $document, $window, $rootScope,
-        mousetipService, toolService, labUtils
+        mousetipService, toolService, labUtils, colorSchemeService
     ) {
         'ngInject';
         this.$element = $element;
@@ -22,122 +20,17 @@ export default class DiagramContainerController {
         this.mousetipService = mousetipService;
         this.toolService = toolService;
         this.labUtils = labUtils;
+        this.colorSchemeService = colorSchemeService;
     }
 
     $onInit() {
-        let $scope = this.$scope;
-        let $compile = this.$compile;
-
         this.scale = 1;
 
-        $scope.$on('$destroy', this.$onDestroy.bind(this));
-
-        joint.shapes.html = {};
-        joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
-            defaults: joint.util.deepSupplement({
-                type: 'html.Element',
-                attrs: {
-                    rect: {
-                        stroke: 'none',
-                        'fill-opacity': 0
-                    }
-                }
-            }, joint.shapes.basic.Rect.prototype.defaults)
-        });
-
-        joint.shapes.html.ElementView = joint.dia.ElementView.extend({
-            template: `
-                <div class="diagram-cell">
-                  <rf-diagram-node-header
-                    data-model="model"
-                    data-invalid="model.get('invalid')"
-                    data-menu-options="menuOptions"
-                  ></rf-diagram-node-header>
-                  <rf-input-node
-                    ng-if="model.get('cellType') === 'src'"
-                    data-model="model"
-                    on-change="onChange({sourceId: sourceId, project: project, band: band})"
-                  ></rf-input-node>
-                  <rf-operation-node
-                    ng-if="model.get('cellType') === 'function'"
-                    data-model="model"
-                  ></rf-operation-node>
-                  <rf-constant-node
-                    ng-if="model.get('cellType') === 'const'"
-                    data-model="model"
-                    on-change="onChange({override: override})"
-                  ></rf-constant-node>
-                </div>`,
-            initialize: function () {
-                _.bindAll(this, 'updateBox');
-                joint.dia.ElementView.prototype.initialize.apply(this, arguments);
-                this.model.on('change', this.updateBox, this);
-                this.$box = angular.element(this.template);
-                this.scope = $scope.$new();
-                $compile(this.$box)(this.scope);
-
-                this.updateBox();
-            },
-            render: function () {
-                joint.dia.ElementView.prototype.render.apply(this, arguments);
-                this.paper.$el.prepend(this.$box);
-                this.updateBox();
-                this.listenTo(this.paper, 'translate', () => {
-                    let bbox = this.model.getBBox();
-                    let origin = this.paper ? this.paper.options.origin : {
-                        x: 0,
-                        y: 0
-                    };
-                    this.$box.css({
-                        left: bbox.x * this.scale + origin.x,
-                        top: bbox.y * this.scale + origin.y
-                    });
-                });
-                this.scale = 1;
-                this.listenTo(this.paper, 'scale', (scale) => {
-                    this.scale = scale;
-                    let bbox = this.model.getBBox();
-                    let origin = this.paper ? this.paper.options.origin : {
-                        x: 0,
-                        y: 0
-                    };
-                    this.$box.css({
-                        left: bbox.x * this.scale + origin.x,
-                        top: bbox.y * this.scale + origin.y,
-                        transform: `scale(${scale})`,
-                        'transform-origin': '0 0'
-                    });
-                });
-                return this;
-            },
-            updateBox: function () {
-                let bbox = this.model.getBBox();
-                if (this.model !== this.scope.model) {
-                    this.scope.onChange = this.model.get('onChange');
-                    this.scope.sourceId = this.model.get('id');
-                    this.scope.model = this.model;
-                }
-
-                let origin = this.paper ? this.paper.options.origin : {
-                    x: 0,
-                    y: 0
-                };
-
-                this.$box.css({
-                    width: bbox.width,
-                    height: bbox.height,
-                    left: bbox.x * this.scale + origin.x,
-                    top: bbox.y * this.scale + origin.y
-                });
-            },
-            removeBox: function () {
-                this.$box.remove();
-            }
-        });
+        this.$scope.$on('$destroy', this.$onDestroy.bind(this));
 
         this.workspaceElement = this.$element[0].children[0];
         this.comparison = [false, false];
-        this.cellSize = [400, 200];
+        this.cellDimensions = {width: 400, height: 200 };
         this.paddingFactor = 0.8;
         this.nodeSeparationFactor = 0.2;
         this.panActive = false;
@@ -145,12 +38,33 @@ export default class DiagramContainerController {
 
         this.inputsJson = this.labUtils.getToolImports(this.toolDefinition);
 
-        this.extractShapes();
+        let extract = this.labUtils.extractShapes(
+            this.toolDefinition,
+            this.defaultContextMenu,
+            this.onParameterChange,
+            this.cellDimensions,
+            this.createToolRun
+        );
+        this.shapes = extract.shapes;
+        this.nodes = extract.nodes;
+        this.onGraphComplete({nodes: this.nodes});
+
+
         this.initDiagram();
 
         this.$rootScope.$on('lab.resize', () => {
             this.$timeout(this.onWindowResize, 100);
         });
+    }
+
+    $onChanges(changes) {
+        if (changes.toolrun && this.shapes) {
+            let toolrun = changes.toolrun.currentValue;
+            this.shapes.forEach((shape) => {
+                let model = this.paper.getModelById(shape.attributes.id);
+                model.prop('toolrun', toolrun);
+            });
+        }
     }
 
     $onDestroy() {
@@ -219,7 +133,7 @@ export default class DiagramContainerController {
         }
 
         if (this.shapes) {
-            let padding = this.cellSize[0] * this.nodeSeparationFactor;
+            let padding = this.cellDimensions.width * this.nodeSeparationFactor;
             this.shapes.forEach(s => this.graph.addCell(s));
             joint.layout.DirectedGraph.layout(this.graph, {
                 setLinkVertices: false,
@@ -353,8 +267,8 @@ export default class DiagramContainerController {
         }, {
             label: 'View output',
             callback: ($event, model) => {
-                this.onPreview({
-                    data: model.get('id')
+                return this.onPreview({
+                    nodeId: model.get('id')
                 });
             }
         }, {
@@ -362,8 +276,8 @@ export default class DiagramContainerController {
         }, {
             label: 'Share',
             callback: ($event, model) => {
-                this.onShare({
-                    data: model.get('id')
+                return this.onShare({
+                    nodeId: model.get('id')
                 });
             }
         }];
@@ -390,102 +304,6 @@ export default class DiagramContainerController {
                 this.continueComparison(cv);
             }
         });
-    }
-
-    extractShapes() {
-        let nodes = new Map();
-        let shapes = [];
-        let json = Object.assign({}, this.toolDefinition);
-        let inputs = [json];
-
-        while (inputs.length) {
-            let input = inputs.pop();
-            let rectangle;
-
-            // Input nodes not of the layer type are not made into rectangles
-            if (!input.type || input.type === 'src' || input.type === 'const') {
-                let rectAttrs = this.labUtils.getNodeAttributes(input);
-
-                rectangle = this.constructRect(rectAttrs);
-
-                nodes.set(input.id, rectAttrs);
-
-                shapes.push(rectangle);
-
-                if (input.parent) {
-                    let firstPort = input.parent.attributes.ports.items.filter(i => {
-                        return i.group === 'inputs' && !i.isConnected;
-                    })[0];
-
-                    firstPort.isConnected = true;
-
-                    let link = new joint.dia.Link({
-                        source: {
-                            id: rectangle.id,
-                            port: 'Output'
-                        },
-                        target: {
-                            id: input.parent.id,
-                            port: firstPort.id
-                        },
-                        attrs: {
-                            '.marker-target': {
-                                d: 'M 4 0 L 0 2 L 4 4 z'
-                            },
-                            'g.link-tools': {display: 'none'},
-                            'g.marker-arrowheads': {display: 'none'},
-                            '.connection-wrap': {display: 'none'}
-                        }
-                    });
-
-                    shapes.push(link);
-                }
-                inputs = inputs.concat(
-                    this.labUtils.getNodeArgs(input)
-                        .map((a) => {
-                            return Object.assign({
-                                parent: rectangle
-                            }, a);
-                        })
-                );
-            }
-        }
-        this.shapes = shapes;
-        this.nodes = nodes;
-        this.onGraphComplete({nodes: nodes});
-    }
-
-    constructRect(config) {
-        return new joint.shapes.html.Element(Object.assign({
-            id: config.id,
-            size: {
-                width: this.cellSize[0],
-                height: this.cellSize[1]
-            },
-            cellType: config.type,
-            title: config.label || config.id.toString(),
-            operation: config.operation,
-            contextMenu: this.defaultContextMenu,
-            ports: {
-                groups: {
-                    inputs: {
-                        position: {
-                            name: 'left'
-                        }
-                    },
-                    outputs: {
-                        position: {
-                            name: 'right'
-                        }
-                    }
-                },
-                items: config.ports
-            }
-        }, {
-            onChange: this.onParameterChange,
-            value: config.value,
-            positionOverride: config.positionOverride
-        }));
     }
 
     startComparison(id) {

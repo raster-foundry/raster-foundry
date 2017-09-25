@@ -1,0 +1,14 @@
+@import "../../../../../../assets/styles/sass/settings/_colors.scss";
+
+.btn-upload {
+  width: 0.1px;
+	height: 0.1px;
+	opacity: 0;
+	overflow: hidden;
+	position: absolute;
+	z-index: -1;
+}
+
+div.dropdown.btn-group.fixedwidth.upload {
+  width: 20rem;
+}

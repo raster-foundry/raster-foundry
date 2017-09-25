@@ -1,0 +1,59 @@
+#!/bin/bash
+#
+# Adapted from https://gist.github.com/colindean/5213685/#gistcomment-1565750
+#
+set -e
+
+RSYNC_OPTIONS="-az"
+
+if [[ -n "${RF_DEBUG}" ]]; then
+    set -x
+
+    # Add rsync progress bar, output summary, and verbose output
+    # in debug mode
+    RSYNC_OPTIONS="${RSYNC_OPTIONS}vi --progress"
+fi
+
+function usage() {
+    echo -n \
+"Usage: $(basename "$0") [remote-dir]
+Wrapper around rsync that moves generated files out of the VM.
+"
+}
+
+function check_hostname() {
+    # Make sure this script isn't running in a vagrant VM
+    set +e
+    hostname | grep -q "vagrant"
+    RC=$?
+    if [ "${RC}" -eq 0 ]; then
+        echo -n \
+            "This command should only be run outside of the VM.
+Please logout of the VM and try again."
+        echo
+        usage
+        exit $RC
+    fi
+    set -e
+}
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    if [ "${1:-}" = "--help" ]; then
+        usage
+    else
+        check_hostname
+        SSH_OPTIONS=$(vagrant ssh-config | grep -v ^Host | awk -v ORS=' ' 'NF {print "-o " $1 "=" $2}')
+        if [ "${#}" -le 1 ]; then
+            echo "Syncing /opt/raster-foundry/${1} with ${PWD}/${1}"
+
+            # shellcheck disable=SC2086
+            rsync ${RSYNC_OPTIONS} -e "ssh ${SSH_OPTIONS}" "default:/opt/raster-foundry/${1}/" "./${1}"
+            echo "Sync complete!"
+        else
+            echo "Too many arguments."
+            echo
+            usage
+            exit 1
+        fi
+    fi
+fi

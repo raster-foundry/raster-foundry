@@ -5,7 +5,7 @@ if [[ -n "${RF_DEBUG}" ]]; then
     set -x
 fi
 
-source "scripts/setup"
+source "scripts/update"
 
 DIR="$(dirname "$0")"
 

@@ -1,41 +1,46 @@
-<div class="sidebar-header">
-  <a class="btn sidebar-header-nav-btn" ui-sref="projects.edit">
-    <i class="icon-arrow-left"></i>
-  </a>
-  <h5 class="sidebar-title">Add or Remove Scenes</h5>
-</div>
-<div class="sidebar-project">
-  <ul class="sidebar-list">
-    <li ng-if="$ctrl.$parent.project.isAOIProject && $ctrl.$parent.pendingSceneList.length">
+<div class="sidebar-static">
+  <div class="sidebar-header">
+    <a ng-if="$ctrl.$parent.project.isAOIProject"
+       class="aoi-tag"
+       ui-sref="projects.edit.aoi-parameters">
+       <i class="icon-pencil"></i>
+       <span>Edit</span>
+       AOI Parameters
+    </a>
+    <h5 class="sidebar-title">
+      Scenes
+      <ng-pluralize count="$ctrl.$parent.sceneList.length"
+                    when="{'0': '(0)',
+                          'one': '(1)',
+                          'other': '({})'
+                          }">
+      </ng-pluralize>
+    </h5>
+  </div>
+  <div class="content">
+    <div ng-if="$ctrl.$parent.project.isAOIProject && $ctrl.$parent.pendingSceneList.length">
+      <!-- Alert -->
       <div class="alert alert-secondary">
         <div class="alert-message">{{$ctrl.$parent.pendingSceneList.length}} scenes awaiting approval</div>
         <button class="alert-action" ui-sref="projects.edit.aoi-approve">Review Scenes</button>
       </div>
-    </li>
-    <li>
-      <div class="label">
-        <span class="text">Remove scenes by clicking <i class="icon-trash"></i>
-        or browse scenes to add.</span>
+      <!-- Alert -->
+    </div>
+    <div class="sidebar-actions-group">
+      <label>Add scenes</label>
+      <div class="column-6 nogutter btn-group">
+        <button type="button"
+                class="btn btn-primary"
+                ui-sref="projects.edit.browse({sceneid: null})">
+          Browse
+        </button>
+        <button type="button"
+                ng-click="$ctrl.openImportModal()"
+                class="btn btn-primary">
+          Import
+        </button>
       </div>
-      <button type="button"
-              class="btn btn-primary fixedwidth"
-              ui-sref="projects.edit.browse({sceneid: null})">
-        Browse scenes to add
-      </button>
-    </li>
-  </ul>
-</div>
-<div class="list-group" ng-if="$ctrl.$parent.sceneList">
-  <div class="list-group-item">
-    <strong class="color-dark">
-      <ng-pluralize count="$ctrl.$parent.sceneList.length"
-                    when="{'0': 'No scenes',
-                          'one': '1 scene',
-                          'other': '{} scenes'
-                          }">
-      </ng-pluralize>
-    </strong>
-    in this project
+    </div>
   </div>
 </div>
 <div class="sidebar-scrollable">

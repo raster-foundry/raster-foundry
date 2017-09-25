@@ -16,6 +16,7 @@ export default angular.module('index.components', [
     require('./components/projects/projectSelectModal/projectSelectModal.module.js').name,
     require('./components/projects/projectCreateModal/projectCreateModal.module.js').name,
     require('./components/projects/projectExportModal/projectExportModal.module.js').name,
+    require('./components/projects/annotateSidebarItem/annotateSidebarItem.module.js').name,
 
     // datasource components
     require('./components/datasources/datasourceItem/datasourceItem.module.js').name,
@@ -25,11 +26,16 @@ export default angular.module('index.components', [
     require('./components/tools/toolSearch/toolSearch.module.js').name,
     require('./components/tools/toolItem/toolItem.module.js').name,
     require('./components/tools/toolCreateModal/toolCreateModal.module.js').name,
+    require('./components/tools/reclassifyModal/reclassifyModal.module.js').name,
+    require('./components/tools/reclassifyTable/reclassifyTable.module.js').name,
+    require('./components/tools/reclassifyEntry/reclassifyEntry.module.js').name,
     require('./components/tools/diagramContainer/diagramContainer.module.js').name,
     require('./components/tools/diagramNodeHeader/diagramNodeHeader.module.js').name,
     require('./components/tools/inputNode/inputNode.module.js').name,
     require('./components/tools/operationNode/operationNode.module.js').name,
     require('./components/tools/constantNode/constantNode.module.js').name,
+    require('./components/tools/classifyNode/classifyNode.module.js').name,
+    require('./components/tools/nodeStatistics/nodeStatistics.module.js').name,
     require('./components/map/nodeSelector/nodeSelector.module.js').name,
 
     // map components
@@ -39,7 +45,6 @@ export default angular.module('index.components', [
     require('./components/map/labMap/labMap.module.js').name,
     require('./components/map/mapSearchModal/mapSearchModal.module.js').name,
     require('./components/map/annotateToolbar/annotateToolbar.module.js').name,
-    require('./components/map/annotateSidebarItem/annotateSidebarItem.module.js').name,
 
     // settings components
     require('./components/settings/refreshTokenModal/refreshTokenModal.module.js').name,
@@ -68,5 +73,7 @@ export default angular.module('index.components', [
     // project color composite components
     require('./components/colorComposites/colorSchemeBuilder/colorSchemeBuilder.module.js').name,
     require('./components/histogram/channelHistogram/channelHistogram.module.js').name,
+    require('./components/histogram/nodeHistogram/nodeHistogram.module.js').name,
     require('./components/histogram/histogramBreakpoint/histogramBreakpoint.module.js').name,
+    require('./components/colorComposites/colorSchemeDropdown/colorSchemeDropdown.module.js').name
 ]);

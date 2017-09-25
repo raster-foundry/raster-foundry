@@ -44,7 +44,7 @@ class Image(BaseModel):
         return cls(
             d.get('organizationId'), d.get('rawDataBytes'), d.get('visibility'), d.get('filename'),
             d.get('sourceUri'), bands, d.get('imageMetadata'), d.get('resolutionMeters'),
-            d.get('scene'), d.get('owner')
+            d.get('metadataFiles'), d.get('scene'), d.get('owner')
         )
 
     def to_dict(self):

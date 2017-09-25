@@ -16,7 +16,7 @@ import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.tables._
-import com.azavea.rf.common.Airflow
+import com.azavea.rf.common.AWSBatch
 import com.azavea.rf.datamodel._
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.CirceSupport._
@@ -32,7 +32,7 @@ trait ProjectRoutes extends Authentication
     with SceneQueryParameterDirective
     with PaginationDirectives
     with CommonHandlers
-    with Airflow
+    with AWSBatch
     with UserErrorHandler
     with KamonTraceDirectives {
 

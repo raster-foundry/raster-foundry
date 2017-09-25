@@ -1,42 +1,35 @@
-<div class="sidebar-project">
+<div class="sidebar-static">
   <div class="sidebar-header">
-    <a class="btn sidebar-header-nav-btn" ui-sref="projects.edit">
+    <a class="btn sidebar-header-nav-btn" ui-sref="projects.edit.colormode">
       <i class="icon-arrow-left"></i>
     </a>
     <h5 class="sidebar-title">Color Correction</h5>
     <div class="header-controls">
-      <a ui-sref="projects.edit.advancedcolor">Advanced</a>
+      <a class="btn btn-default btn-small"
+         ui-sref="projects.edit.advancedcolor">
+         Advanced</a>
     </div>
   </div>
-
-  <ul class="sidebar-list">
-    <li>
-      <div class="label">
-        <span class="text">Auto correct project or click <strong>Advanced</strong> for more control</span>
-      </div>
-    </li>
-  </ul>
+  <div class="content">
+    <div class="sidebar-actions-group">
+      <label>Auto correct project or click <strong>Advanced</strong> for more control</label>
+    </div>
+  </div>
 </div>
 
 <div class="sidebar-scrollable">
   <div class="list-group">
     <div class="list-group-item">
-      <div>
-        <span title="Auto Contrast"><strong>Auto Contrast</strong></span>
-      </div>
+      <span class="font-600">Auto Contrast</span>
       <div class="list-group-right">
         <rf-toggle value="$ctrl.isActiveAutoColorCorrection('equalize')" on-change="$ctrl.setAutoColorCorrection('equalize')">
-          <i class="icon-check"></i>
         </rf-toggle>
       </div>
     </div>
     <div class="list-group-item">
-      <div>
-        <span title="Auto Color"><strong>Auto Color</strong></span>
-      </div>
+      <span class="font-600">Auto Color</span>
       <div class="list-group-right">
         <rf-toggle value="$ctrl.isActiveAutoColorCorrection('autoBalance')" on-change="$ctrl.setAutoColorCorrection('autoBalance')">
-          <i class="icon-check"></i>
         </rf-toggle>
       </div>
     </div>

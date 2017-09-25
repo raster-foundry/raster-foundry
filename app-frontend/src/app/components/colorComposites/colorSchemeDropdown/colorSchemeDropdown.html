@@ -1,0 +1,91 @@
+<div class="dropdown btn-group"
+     uib-dropdown
+     auto-close="outsideClick">
+  <button class="btn dropdown-label gradient-dropdown"
+          uib-dropdown-toggle>
+      <div class="gradient-bar gradient-bkg"
+          ng-style="$ctrl.colorSchemeService.colorsToBackground($ctrl.state.scheme.colors)"
+      ></div>
+      <i class="icon-caret-down"></i>
+  </button>
+  <div class="dropdown-menu dropdown-menu-light colorscheme-selector" uib-dropdown-menu role="menu">
+    <div ng-show="$ctrl.shouldShowView('MAIN')">
+      <div class="dropdown-header">
+        <div class="dropdown-header-link-container">
+          <a class="dropdown-header-link" ng-click="$ctrl.moveToView('BLENDING')">{{$ctrl.state.blending.label}}...</a>
+        </div>
+        <div class="dropdown-header-link-container">
+          <a class="dropdown-header-link" ng-click="$ctrl.moveToView('SCHEME')">{{$ctrl.state.schemeType.label}}...</a>
+        </div>
+      </div>
+      <ul class="dropdown-list">
+        <li ng-repeat="scheme in $ctrl.colorSchemeService.defaultColorSchemes | filter : {type: $ctrl.state.schemeType.value}"
+            ng-click="$ctrl.setScheme(scheme)"
+            ng-class="$ctrl.getSchemeClass(scheme)"
+            role="menuitem"
+            class="dropdown-list-item"
+        >
+          <div class="selection-indicator"><i class="icon-check"></i></div>
+          <div class="gradient-container" ng-class="$ctrl.getSchemeClass(scheme)">
+            <div class="gradient-bar gradient-bkg"
+                 ng-style="$ctrl.colorSchemeService.colorsToBackground(scheme.colors)"
+            ></div>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div ng-show="$ctrl.shouldShowView('SCHEME')">
+      <div class="dropdown-header">
+        <div class="dropdown-titlebar">
+          <button class="navigation-button" ng-click="$ctrl.moveToView('MAIN')">
+            <i class="icon-arrow-left"></i>
+          </button>
+          <div class="dropdown-title flex-fill">
+            Color Scheme
+          </div>
+        </div>
+      </div>
+      <ul class="dropdown-list">
+        <li class="dropdown-list-item"
+            ng-repeat="schemeType in $ctrl.colorSchemeService.defaultColorSchemeTypes"
+            ng-class="$ctrl.getSchemeTypeClass(schemeType)"
+            ng-click="$ctrl.setSchemeType(schemeType)"
+        >
+          <div class="selection-indicator">
+            <i class="icon-check"></i>
+          </div>
+          {{schemeType.label}} <span ng-if="$ctrl.isActiveSchemeType('CATEGORICAL')">(needs discrete bins)</span>
+        </li>
+      </ul>
+    </div>
+    <div ng-show="$ctrl.shouldShowView('BLENDING')">
+      <div class="dropdown-header">
+        <div class="dropdown-titlebar">
+          <button class="navigation-button" ng-click="$ctrl.moveToView('MAIN')">
+            <i class="icon-arrow-left"></i>
+          </button>
+          <div class="dropdown-title flex-fill">
+            Color Blending
+          </div>
+        </div>
+      </div>
+      <ul class="dropdown-list">
+        <li class="dropdown-list-item"
+            ng-repeat="bin in $ctrl.bins"
+            ng-class="$ctrl.getBlendingClass(bin)"
+            ng-click="$ctrl.setBlending(bin)"
+        >
+          <div class="selection-indicator"><i class="icon-check"></i></div>
+          <div class="label">
+            <ng-pluralize count="bin"
+                          when="{
+                            '0': 'Continuous',
+                            'other': '{} discrete bins'
+                          }">
+            </ng-pluralize>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

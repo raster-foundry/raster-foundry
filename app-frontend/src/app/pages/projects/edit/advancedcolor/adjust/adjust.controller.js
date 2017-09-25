@@ -1,6 +1,6 @@
 export default class ProjectsColorAdjustController {
     constructor( // eslint-disable-line max-params
-        $log, $state, $scope, $timeout, histogramService
+        $log, $state, $scope, $timeout, projectHistogramService
     ) {
         'ngInject';
         this.$log = $log;
@@ -8,7 +8,7 @@ export default class ProjectsColorAdjustController {
         this.$parent = $scope.$parent.$ctrl;
         this.$scope = $scope;
         this.$timeout = $timeout;
-        this.histogramService = histogramService;
+        this.histogramService = projectHistogramService;
 
         let baseGammaOptions = {
             floor: 0,

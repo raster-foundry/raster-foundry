@@ -12,12 +12,6 @@ services:
       context: ./nginx
       dockerfile: Dockerfile.tiler
 
-  nginx-airflow:
-    image: raster-foundry-nginx-airflow:${GIT_COMMIT:-latest}
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile.airflow
-
   app-frontend:
     image: kkarczmarczyk/node-yarn:6.9-wheezy
     working_dir: /opt/raster-foundry/app-frontend/
@@ -54,8 +48,8 @@ services:
       context: ./app-backend
       dockerfile: Dockerfile
 
-  airflow:
-    image: raster-foundry-airflow:${GIT_COMMIT:-latest}
+  batch:
+    image: raster-foundry-batch:${GIT_COMMIT:-latest}
     build:
       context: ./app-tasks
       dockerfile: Dockerfile

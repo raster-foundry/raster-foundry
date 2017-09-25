@@ -1,13 +1,14 @@
 package com.azavea.rf.batch
 
+import com.azavea.rf.batch.aoi.FindAOIProjects
 import com.azavea.rf.batch.export.spark.Export
-import com.azavea.rf.batch.export.airflow.{CreateExportDef, DropboxCopy, S3Copy, CheckExportStatus}
+import com.azavea.rf.batch.export.{CheckExportStatus, CreateExportDef, DropboxCopy, S3Copy}
 import com.azavea.rf.batch.healthcheck.HealthCheck
 import com.azavea.rf.batch.ingest.spark.Ingest
-import com.azavea.rf.batch.landsat8.airflow.{ImportLandsat8, ImportLandsat8C1}
-import com.azavea.rf.batch.sentinel2.airflow.ImportSentinel2
-import com.azavea.rf.batch.aoi.airflow.{FindAOIProjects, UpdateAOIProject}
+import com.azavea.rf.batch.aoi.UpdateAOIProject
+import com.azavea.rf.batch.landsat8.{ImportLandsat8, ImportLandsat8C1}
 import com.azavea.rf.batch.migration.S3ToPostgres
+import com.azavea.rf.batch.sentinel2.ImportSentinel2
 
 object Main {
   val modules = Map[String, Array[String] => Unit](

@@ -44,7 +44,8 @@ def get_source_definition(image):
 
     uri = get_safe_uri(image.sourceUri)
 
-    band_maps = [{'source': band.number, 'target': band.number} for band in image.bands]
+    band_maps = [{'source': band.number,
+                  'target': {'name': band.name, 'index': band.number}} for band in image.bands]
     if image.resolutionMeters < MIN_RESOLUTION_METERS:
         width = MIN_RESOLUTION_METERS
         height = MIN_RESOLUTION_METERS

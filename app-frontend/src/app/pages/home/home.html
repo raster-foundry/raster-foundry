@@ -21,10 +21,13 @@
               </p>
               <a class="btn btn-secondary" ui-sref="market.search">Browse Tools</a>
               <div class="hide-sm"></div>
-              <button class="btn btn-default">Create a new Tool</button>
-              <p>
-                <a href="https://help.rasterfoundry.com/working-with-tools" target="_blank">Getting started with Tools</a>
-              </p>
+              <button class="btn btn-default"
+                      ng-click="$ctrl.openToolCreateModal()">
+                Create a new Tool
+              </button>
+              <!-- <p> -->
+              <!-- <a href="https://help.rasterfoundry.com/working-with-tools" target="_blank">Getting started with Tools</a> -->
+              <!-- </p> -->
             </rf-call-to-action-item>
           </div>
           <div class="column-6 flex-display">
@@ -34,9 +37,10 @@
               </p>
               <a class="btn btn-tertiary" ui-sref="settings.tokens.api">Manage API Tokens</a>
               <div class="hide-sm"></div>
-              <button class="btn btn-default">API Documentation</button>
               <p>
                 <a href="https://help.rasterfoundry.com/developer-resources" target="_blank">Developer Resources</a>
+                <br>
+                <a href="https://docs.rasterfoundry.com/" target="_blank">API Documentation</a>
               </p>
             </rf-call-to-action-item>
           </div>
@@ -65,7 +69,6 @@
             <h5>Help</h5>
             <ul class="list-unstyled">
               <li><a href="https://help.rasterfoundry.com/" target="_blank">Help Center</a></li>
-              <li><a href="https://docs.rasterfoundry.com/" target="_blank">API Documentation</a></li>
             </ul>
           </section>
         </div>

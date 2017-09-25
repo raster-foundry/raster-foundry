@@ -52,12 +52,14 @@ export RF_ARTIFACTS_BUCKET=rasterfoundry-global-artifacts-us-east-1
 After exporting your environment settings, you are ready to get started:
 
 ```bash
-$ vagrant up
+$ ./scripts/setup
 $ vagrant ssh
 $ ./scripts/server
 ```
 
-Use `vagrant up` to provision a virtual machine. During provisioning `docker` and `docker-compose` will be installed on the guest machine. Additionally, docker images will be downloaded for the database and created for the `akka-http` application server.
+Use `./scripts/setup` to provision a virtual machine. During provisioning `docker` and `docker-compose` will be installed on the guest machine. Additionally, docker images will be downloaded for the database and created for the `akka-http` application server.
+
+The guest machine shares folders with the host using `rsync`. In order to sync files from the host to the guest, run `vagrant rsync-auto` in another tab. If you have generated files in the guest that you'd like to copy back into the host machine, run `scripts/rsync-back` from the host.
 
 Once the machine is provisioned you can start services or development by ssh-ing into the machine (`vagrant ssh`) and using the helper scripts in the `/opt/raster-foundry/scripts` directory.
 
@@ -66,10 +68,12 @@ If you do not have a development database to seed your database with, you will n
 Development workflow varies by developer, but a typical development experience might include the following:
 
  - Create a new feature branch
- - Start up the vagrant machine with `vagrant up --provision`
+ - Start up the vagrant machine with `./scripts/setup`
+ - Sync watched files by running `vagrant rsync-auto` in another tab.
  - Get an `sbt` console open using `./scripts/console api-server ./sbt`
  - Make changes to Scala code
  - Try compiling (`~compile`) or running the service to inspect it (`~api/run`)
+ - Extract files generated in the VM with `./scripts/rsync-back`
 
 ### Migrations
 
@@ -130,8 +134,6 @@ The Vagrant configuration maps the following host ports to services running in t
 | Nginx (tiler)             | [`9101`](http://localhost:9101) | `RF_PORT_9101`       |
 | Application Server (akka) | [`9000`](http://localhost:9000) | `RF_PORT_9000`       |
 | Tile Server (akka)        | [`9900`](http://localhost:9900) | `RF_PORT_9900`       |
-| Airflow UI                | [`8080`](http://localhost:8080) | `RF_PORT_8080`       |
-| Airflow Flower            | [`5555`](http://localhost:5555) | `RF_PORT_5555`       |
 
 ## Scripts
 
@@ -140,7 +142,8 @@ Helper and development scripts are located in the `./scripts` directory at the r
 | Script Name             | Purpose                                                      |
 |-------------------------|--------------------------------------------------------------|
 | `bootstrap`             | Pulls/builds necessary containers                            |
-| `setup`                 | Runs migrations, installs dependencies, etc.                 |
+| `setup`             	  | Provision development VM 									 |
+| `update`                | Runs migrations, installs dependencies, etc.                 |
 | `server`                | Starts a development server                                  |
 | `console`               | Gives access to a running container via `docker-compose run` |
 | `psql`                  | Drops you into a `psql` console.                             |
@@ -149,6 +152,7 @@ Helper and development scripts are located in the `./scripts` directory at the r
 | `cipublish`             | Publish container images to container image repositories.    |
 | `load_development_data` | Load data for development purposes                           |
 | `publish-jars`          | Publish JAR artifacts to S3                                  |
+| `rsync-back`            | Perform a one-way `rsync` from the VM to the host.		 	 |
 
 ## Testing
 

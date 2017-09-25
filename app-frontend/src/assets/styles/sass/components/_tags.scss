@@ -59,19 +59,38 @@
   }
 }
 
-.inline-tag.aoi-tag {
-  color: $brand-secondary;
-  border: 1px solid $brand-secondary;
+.aoi-tag {
+  color: $white;
+  background-color: $brand-secondary;
   text-transform: uppercase;
   position: relative;
-  left: inherit;
-  top: inherit;
-  transform: none;
-  text-indent: 0;
-  box-shadow: none;
   line-height: 1;
   font-size: 10px;
   font-weight: 700;
   height: auto;
   width: auto;
+  padding: 4px 10px;
+  border-radius: 0 50px 50px 0;
+  margin-left: -20px;
+  margin-right: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+
+  span {
+    text-indent: -30rem;
+    display: inline-block;
+    transition: .2s .1s ease-in-out text-indent, .2s ease-in-out opacity;
+    opacity: 0;
+  }
+
+  &:hover,
+  &:focus {
+    color: $white;
+
+    span {
+      opacity: 1;
+      text-indent: 0;
+      transition: .2s ease-in-out text-indent, .2s .1s ease-in-out opacity;
+    }
+  }
 }

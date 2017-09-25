@@ -43,7 +43,8 @@ const addMethods = [
 export default class AOIParametersController {
     constructor(
         $log, $q, $scope, $state, $uibModal, $timeout,
-        moment, projectService, aoiService, authService, mapService
+        moment, projectService, aoiService, authService, mapService,
+        projectEditService
     ) {
         'ngInject';
         this.$log = $log;
@@ -56,6 +57,7 @@ export default class AOIParametersController {
         this.Moment = moment;
         this.updateFrequencies = updateFrequencies;
         this.projectService = projectService;
+        this.projectEditService = projectEditService;
         this.aoiService = aoiService;
         this.authService = authService;
 
@@ -77,7 +79,7 @@ export default class AOIParametersController {
         };
 
         this.$q.all({
-            project: this.$parent.fetchProject(),
+            project: this.projectEditService.fetchCurrentProject(),
             aoi: this.fetchProjectAOIs()
         }).then((result) => {
             this.project = result.project;
@@ -254,7 +256,7 @@ export default class AOIParametersController {
     }
 
     saveParameters() {
-        this.$parent.fetchProject().then(srcProject => {
+        this.projectEditService.fetchCurrentProject().then(srcProject => {
             const projectToSave = Object.assign(srcProject, this.aoiProjectParameters);
             this.projectService.updateProject(projectToSave).then(() => {
                 this.updateProjectAOIs(this.aoiPolygons, this.aoiParameters);

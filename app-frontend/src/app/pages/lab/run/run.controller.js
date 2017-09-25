@@ -1,8 +1,6 @@
 /* global L */
 import { FrameView } from '../../../components/map/labMap/frame.module.js';
 
-const tileLayerOptions = {maxZoom: 30};
-
 export default class LabRunController {
     constructor( // eslint-disable-line max-params
         $log, $scope, $timeout, $element, $window, $document, $uibModal, $rootScope,
@@ -38,7 +36,7 @@ export default class LabRunController {
             this.generatedPreview = false;
         });
         this.setWarning(
-             'You must apply changes after defining inputs.'
+            'You must apply changes after defining inputs.'
         );
 
         this.$scope.$on('$destroy', () => {
@@ -113,6 +111,7 @@ export default class LabRunController {
     }
 
     createPreviewLayers() {
+        const layerOptions = {maxZoom: 30};
         if (this.previewLayers) {
             this.previewLayers.forEach(l => l.remove());
         }
@@ -121,14 +120,14 @@ export default class LabRunController {
             let url1 = this.getNodeUrl(this.previewData[1]);
             if (url0 && url1) {
                 this.previewLayers = [
-                    L.tileLayer(url0, tileLayerOptions),
-                    L.tileLayer(url1, tileLayerOptions)
+                    L.tileLayer(url0, layerOptions),
+                    L.tileLayer(url1, layerOptions)
                 ];
             }
         } else {
             let url0 = this.getNodeUrl(this.previewData);
             if (url0) {
-                this.previewLayers = [L.tileLayer(url0, tileLayerOptions)];
+                this.previewLayers = [L.tileLayer(url0, layerOptions)];
             }
         }
     }
@@ -376,7 +375,8 @@ export default class LabRunController {
     createToolRun() {
         this.applyInProgress = true;
         this.clearWarning();
-        this.toolService.createToolRun(this.toolRun).then(tr => {
+        let toolRunPromise = this.toolService.createToolRun(this.toolRun);
+        toolRunPromise.then(tr => {
             this.lastToolRun = tr;
             this.clearWarning();
             if (this.isShowingPreview) {
@@ -390,9 +390,10 @@ export default class LabRunController {
         }).finally(() => {
             this.applyInProgress = false;
         });
+        return toolRunPromise;
     }
 
-    onExecutionParametersChange(sourceId, project, band, override) {
+    onExecutionParametersChange(sourceId, project, band, override, renderDef) {
         if (project && typeof band === 'number' && band >= 0) {
             this.toolRun.executionParameters.sources[sourceId].id = project.id;
             this.toolRun.executionParameters.sources[sourceId].band = band;
@@ -401,7 +402,23 @@ export default class LabRunController {
             if (!this.toolRun.executionParameters.overrides) {
                 this.toolRun.executionParameters.overrides = {};
             }
-            this.toolRun.executionParameters.overrides[override.id] = {constant: override.value};
+            if (override.value) {
+                this.toolRun.executionParameters.overrides[override.id] = {
+                    constant: override.value
+                };
+            } else if (override.classMap) {
+                this.toolRun.executionParameters.overrides[override.id] = {
+                    classMap: override.classMap
+                };
+            }
+        }
+        if (renderDef) {
+            if (!this.toolRun.executionParameters.metadata) {
+                this.toolRun.executionParameters.metadata = {};
+            }
+            this.toolRun.executionParameters.metadata[renderDef.id] = {
+                renderDefinition: renderDef.value
+            };
         }
     }
 

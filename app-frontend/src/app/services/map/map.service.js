@@ -271,23 +271,32 @@ class MapWrapper {
     /** Add a layer to the set of layers identified by an id
      * @param {string} id layer id
      * @param {L.Layer} layer layer to add
-     * @param {Boolean?} showToggle show a toggle in the layer picker
+     * @param {Object} opts various options to configure the layer
      * @returns {this} this
      */
-    addLayer(id, layer, showToggle) {
-        if (showToggle) {
+    addLayer(id, layer, opts) {
+        const options = Object.assign(
+            {
+                showToggle: true,
+                showLayer: true
+            },
+            opts
+        );
+        if (options.showToggle) {
             this._toggleableLayers.add(id);
-        } else if (showToggle === false) {
+        } else {
             this._toggleableLayers.delete(id);
         }
 
-        this._layerGroup.addLayer(layer);
-        let layerList = this.getLayers(id);
-        if (layerList && layerList.length) {
-            layerList.push(layer);
+        let layerList = [
+            ...this.getLayers(id),
+            ...[layer]
+        ];
+        if (options.showLayer) {
+            this._layerGroup.addLayer(layer);
             this._layerMap.set(id, layerList);
         } else {
-            this._layerMap.set(id, [layer]);
+            this._hiddenLayerMap.set(id, layerList);
         }
         return this;
     }

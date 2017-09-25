@@ -31,6 +31,8 @@ export default class ColorSchemeBuilderController {
             )
         ) {
             this.buffer = [ ...incomingSchemeAsArray ];
+            // coerce color scheme to map, since it's initially set as an array in the dropdown
+            this.onChange({ value: this.getBufferAsObject() });
         }
         this.isValid = true;
     }

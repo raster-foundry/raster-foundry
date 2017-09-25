@@ -10,11 +10,15 @@ import scala.concurrent.duration._
 object Config {
   private val config = ConfigFactory.load()
 
-  object airflow {
-    private val airflowConfig = config.getConfig("airflow")
+  object awsbatch {
+    private val awsBatchConfig = config.getConfig("awsbatch")
+    val jobQueue = awsBatchConfig.getString("jobQueue")
 
-    val baseUrl = airflowConfig.getString("baseURL")
+    val ingestJobName = awsBatchConfig.getString("ingestJobName")
+    val importJobName = awsBatchConfig.getString("importJobName")
+    val exportJobName = awsBatchConfig.getString("exportJobName")
 
+    val environment = awsBatchConfig.getString("environment")
   }
 
   object memcached {

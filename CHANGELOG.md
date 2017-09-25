@@ -1,6 +1,65 @@
 # Change Log
 
+## [0.21.0](https://github.com/raster-foundry/raster-foundry/tree/0.21.0) (2017-09-25)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.20.2...0.21.0)
+
+**Merged pull requests:**
+
+- Replace old HERE codes with up-to-date ones [\#2563](https://github.com/raster-foundry/raster-foundry/pull/2563)
+- Ensure export command is visible in `rf` command line tool [\#2562](https://github.com/raster-foundry/raster-foundry/pull/2562)
+- Filter scene grid endpoint on user visibility [\#2561](https://github.com/raster-foundry/raster-foundry/pull/2561)
+- Use debian base for raster-foundry-batch image [\#2560](https://github.com/raster-foundry/raster-foundry/pull/2560)
+- Minor Frontend Fixups after Design Refactor [\#2559](https://github.com/raster-foundry/raster-foundry/pull/2559)
+- Remove All References to Airflow [\#2558](https://github.com/raster-foundry/raster-foundry/pull/2558)
+- Fix typo in Boto3 S3 delete call [\#2556](https://github.com/raster-foundry/raster-foundry/pull/2556)
+- Fix join of filtered scenes to paged scenes [\#2552](https://github.com/raster-foundry/raster-foundry/pull/2552)
+- Add method to enable displaying returned stats in tool node UI [\#2550](https://github.com/raster-foundry/raster-foundry/pull/2550)
+- Replace Airflow with AWS Batch Calls in API Server [\#2549](https://github.com/raster-foundry/raster-foundry/pull/2549)
+- Check database and memcached reachability in tile server healthcheck [\#2547](https://github.com/raster-foundry/raster-foundry/pull/2547)
+- Enable ToolRun Statistics [\#2544](https://github.com/raster-foundry/raster-foundry/pull/2544)
+- Add '\_dn' analytic types for Planet import [\#2541](https://github.com/raster-foundry/raster-foundry/pull/2541)
+- Run airflow container as root instead of airflow [\#2536](https://github.com/raster-foundry/raster-foundry/pull/2536)
+- Scale color map to histogram on first preview in lab [\#2535](https://github.com/raster-foundry/raster-foundry/pull/2535)
+- Limit Uploads API responses to the requesting user [\#2534](https://github.com/raster-foundry/raster-foundry/pull/2534)
+- ADR-00019: Replace Airflow with AWS Batch [\#2532](https://github.com/raster-foundry/raster-foundry/pull/2532)
+- WIP: cleans up large portions of the projects interface [\#2531](https://github.com/raster-foundry/raster-foundry/pull/2531)
+- Update project environment variable template [\#2530](https://github.com/raster-foundry/raster-foundry/pull/2530)
+- Hide non-endpoint breakpoints for continuous node color schemes [\#2528](https://github.com/raster-foundry/raster-foundry/pull/2528)
+- Rename Batch environment variables for AoI commands [\#2525](https://github.com/raster-foundry/raster-foundry/pull/2525)
+- Rename jobUpdateAoiProject parameter to projectId [\#2523](https://github.com/raster-foundry/raster-foundry/pull/2523)
+- Use color scheme dropdown selector for single band projects [\#2522](https://github.com/raster-foundry/raster-foundry/pull/2522)
+- Implement statistics node display in lab UI [\#2520](https://github.com/raster-foundry/raster-foundry/pull/2520)
+- Use mapDouble in interpolation logic [\#2519](https://github.com/raster-foundry/raster-foundry/pull/2519)
+- Fix share page zoom levels [\#2517](https://github.com/raster-foundry/raster-foundry/pull/2517)
+- Use acquisitionDate instead of createdAt if available on scene [\#2516](https://github.com/raster-foundry/raster-foundry/pull/2516)
+- Add color scheme dropdown to lab histograms [\#2513](https://github.com/raster-foundry/raster-foundry/pull/2513)
+- Add ingest handling for Sentinel-2 Jpeg2000 images [\#2511](https://github.com/raster-foundry/raster-foundry/pull/2511)
+- Add `rf` command line client to process asynchronous tasks [\#2505](https://github.com/raster-foundry/raster-foundry/pull/2505)
+- Enable pagination and searching for Tools [\#2504](https://github.com/raster-foundry/raster-foundry/pull/2504)
+- Do not show uningested scene thumbnails in project edit by default [\#2503](https://github.com/raster-foundry/raster-foundry/pull/2503)
+- Change basemap image coordinates [\#2499](https://github.com/raster-foundry/raster-foundry/pull/2499)
+- Set maxZoom at map level [\#2497](https://github.com/raster-foundry/raster-foundry/pull/2497)
+- Add Packer to Jenkins deployment configuration [\#2496](https://github.com/raster-foundry/raster-foundry/pull/2496)
+- Fix batch job exception handling [\#2494](https://github.com/raster-foundry/raster-foundry/pull/2494)
+- Remove installation of third-party vagrant-rsync plugin [\#2493](https://github.com/raster-foundry/raster-foundry/pull/2493)
+- Add modal for editing reclassification values in reclassify tool nodes [\#2484](https://github.com/raster-foundry/raster-foundry/pull/2484)
+- Fix undefined datasource js error in filter pane [\#2482](https://github.com/raster-foundry/raster-foundry/pull/2482)
+- Add lab node histograms and a default color ramp [\#2481](https://github.com/raster-foundry/raster-foundry/pull/2481)
+- Mark Scene as failed if ingest definition fails [\#2478](https://github.com/raster-foundry/raster-foundry/pull/2478)
+- Remove unnecessary python-dev build dependency [\#2477](https://github.com/raster-foundry/raster-foundry/pull/2477)
+- Implement `classify` node in lab UI [\#2476](https://github.com/raster-foundry/raster-foundry/pull/2476)
+- Support new rendering definition on the backend [\#2475](https://github.com/raster-foundry/raster-foundry/pull/2475)
+- Add parsing of `classify` function in mamlscript [\#2474](https://github.com/raster-foundry/raster-foundry/pull/2474)
+- Color scheme dropdown [\#2467](https://github.com/raster-foundry/raster-foundry/pull/2467)
+- Staging Bug Fix - Annotation page refresh upon new shape creation in a new project [\#2461](https://github.com/raster-foundry/raster-foundry/pull/2461)
+- Rebuild CHANGELOG [\#2456](https://github.com/raster-foundry/raster-foundry/pull/2456)
+- Staging Bug Fix - the persistence of annotation rotate handles [\#2452](https://github.com/raster-foundry/raster-foundry/pull/2452)
+- Add and update new fields annotation UI. Update import and export UI. [\#2435](https://github.com/raster-foundry/raster-foundry/pull/2435)
+- \[WIP\] Use Rsync shared folders [\#2415](https://github.com/raster-foundry/raster-foundry/pull/2415)
+
 ## [0.20.2](https://github.com/raster-foundry/raster-foundry/tree/0.20.2) (2017-08-24)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.20.1...0.20.2)
 
 **Merged pull requests:**
@@ -9,6 +68,7 @@
 - Add override support for `APP\_NAME` in frontend [\#2458](https://github.com/raster-foundry/raster-foundry/pull/2458)
 
 ## [0.20.1](https://github.com/raster-foundry/raster-foundry/tree/0.20.1) (2017-08-24)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.20.0...0.20.1)
 
 **Merged pull requests:**
@@ -17,6 +77,7 @@
 - Correctly handle disabled gamma and saturation options in API [\#2434](https://github.com/raster-foundry/raster-foundry/pull/2434)
 
 ## [0.20.0](https://github.com/raster-foundry/raster-foundry/tree/0.20.0) (2017-08-22)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.19.0...0.20.0)
 
 **Merged pull requests:**
@@ -32,10 +93,13 @@
 - Update Airflow configuration file after 1.8.x upgrade [\#2419](https://github.com/raster-foundry/raster-foundry/pull/2419)
 - Set catchup to false for scheduled DAGs [\#2418](https://github.com/raster-foundry/raster-foundry/pull/2418)
 - Upgrade airflow to 1.8.1 and decrease boto logging verbosity [\#2413](https://github.com/raster-foundry/raster-foundry/pull/2413)
+- duplicate, map-pin, polygon icons [\#2412](https://github.com/raster-foundry/raster-foundry/pull/2412)
 - Implement color ramps for single band projects [\#2411](https://github.com/raster-foundry/raster-foundry/pull/2411)
+- Add annotations' edit, delete, filter, clone, import, export features [\#2407](https://github.com/raster-foundry/raster-foundry/pull/2407)
 - Implement custom and single band color mode config UI [\#2380](https://github.com/raster-foundry/raster-foundry/pull/2380)
 
 ## [0.19.0](https://github.com/raster-foundry/raster-foundry/tree/0.19.0) (2017-08-13)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.18.1...0.19.0)
 
 **Merged pull requests:**
@@ -43,23 +107,25 @@
 - Add Map Token support for Tool Runs [\#2409](https://github.com/raster-foundry/raster-foundry/pull/2409)
 - Use provided color ramp in tool endpoint [\#2408](https://github.com/raster-foundry/raster-foundry/pull/2408)
 - Jitter ingest status sleep time and kickoff ingests exactly once for uploads [\#2405](https://github.com/raster-foundry/raster-foundry/pull/2405)
+- Add global statistics endpoint for tool-runs [\#2401](https://github.com/raster-foundry/raster-foundry/pull/2401)
+- Remove mention-bot configuration [\#2394](https://github.com/raster-foundry/raster-foundry/pull/2394)
 
 ## [0.18.1](https://github.com/raster-foundry/raster-foundry/tree/0.18.1) (2017-08-10)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.18.0...0.18.1)
 
 **Merged pull requests:**
 
-- duplicate, map-pin, polygon icons [\#2412](https://github.com/raster-foundry/raster-foundry/pull/2412)
-- Add global statistics endpoint for tool-runs [\#2401](https://github.com/raster-foundry/raster-foundry/pull/2401)
-- Remove mention-bot configuration [\#2394](https://github.com/raster-foundry/raster-foundry/pull/2394)
 - Clean Up API Spec/Queries/Planet Imports/Autocomplete [\#2378](https://github.com/raster-foundry/raster-foundry/pull/2378)
+- Pass overrides from toolrun to interpreter [\#2340](https://github.com/raster-foundry/raster-foundry/pull/2340)
+- Allow for AST validation w/o toolrun [\#2269](https://github.com/raster-foundry/raster-foundry/pull/2269)
 
 ## [0.18.0](https://github.com/raster-foundry/raster-foundry/tree/0.18.0) (2017-08-08)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.17.0...0.18.0)
 
 **Merged pull requests:**
 
-- Add annotations' edit, delete, filter, clone, import, export features [\#2407](https://github.com/raster-foundry/raster-foundry/pull/2407)
 - Add frontend/import support for Planet imagery [\#2376](https://github.com/raster-foundry/raster-foundry/pull/2376)
 - Allow backend handling of planet imagery imports [\#2375](https://github.com/raster-foundry/raster-foundry/pull/2375)
 - Add frontend and API for setting Planet token [\#2373](https://github.com/raster-foundry/raster-foundry/pull/2373)
@@ -74,7 +140,6 @@
 - Add Memcached timeout and client mode settings [\#2347](https://github.com/raster-foundry/raster-foundry/pull/2347)
 - Improve bash callout when setting layer metadata in ingest [\#2345](https://github.com/raster-foundry/raster-foundry/pull/2345)
 - Add vague name shame to PR template [\#2342](https://github.com/raster-foundry/raster-foundry/pull/2342)
-- Pass overrides from toolrun to interpreter [\#2340](https://github.com/raster-foundry/raster-foundry/pull/2340)
 - Add frontend parsing for many more local ops [\#2332](https://github.com/raster-foundry/raster-foundry/pull/2332)
 - Add Annotations to Sidebar [\#2320](https://github.com/raster-foundry/raster-foundry/pull/2320)
 - Add Annotation Toolbar Component [\#2313](https://github.com/raster-foundry/raster-foundry/pull/2313)
@@ -96,7 +161,6 @@
 - Angular Service to Query Planet API [\#2272](https://github.com/raster-foundry/raster-foundry/pull/2272)
 - Change edit to view on project list and link thumbnails to edit page [\#2271](https://github.com/raster-foundry/raster-foundry/pull/2271)
 - Change default basemap to light/positron [\#2270](https://github.com/raster-foundry/raster-foundry/pull/2270)
-- Allow for AST validation w/o toolrun [\#2269](https://github.com/raster-foundry/raster-foundry/pull/2269)
 - Add JMX remote support to API and tile server [\#2266](https://github.com/raster-foundry/raster-foundry/pull/2266)
 - Include scene post body params [\#2264](https://github.com/raster-foundry/raster-foundry/pull/2264)
 - Add lab map component and use in lab2 [\#2263](https://github.com/raster-foundry/raster-foundry/pull/2263)
@@ -120,23 +184,25 @@
 - So You Wanna Extend the AST? [\#2204](https://github.com/raster-foundry/raster-foundry/pull/2204)
 - Add tool refs within exports [\#2202](https://github.com/raster-foundry/raster-foundry/pull/2202)
 - \[Experiment\] PostgresAttribute Store [\#2200](https://github.com/raster-foundry/raster-foundry/pull/2200)
+- Improved metrics and caching [\#2198](https://github.com/raster-foundry/raster-foundry/pull/2198)
 - Account for `Constant` tiles in Export AST evaluation [\#2197](https://github.com/raster-foundry/raster-foundry/pull/2197)
+- Feature/lk/jointjs foreign element [\#2192](https://github.com/raster-foundry/raster-foundry/pull/2192)
+- Add route for new tool run \(run2\), tool navbar [\#2188](https://github.com/raster-foundry/raster-foundry/pull/2188)
 
 ## [0.17.0](https://github.com/raster-foundry/raster-foundry/tree/0.17.0) (2017-07-05)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.16.0...0.17.0)
 
 **Merged pull requests:**
 
-- Improved metrics and caching [\#2198](https://github.com/raster-foundry/raster-foundry/pull/2198)
 - Add `planetCredential` field to user model [\#2196](https://github.com/raster-foundry/raster-foundry/pull/2196)
-- Feature/lk/jointjs foreign element [\#2192](https://github.com/raster-foundry/raster-foundry/pull/2192)
 - Add redirection and throttling for downloads [\#2191](https://github.com/raster-foundry/raster-foundry/pull/2191)
 - Disable running tests during assembly [\#2190](https://github.com/raster-foundry/raster-foundry/pull/2190)
-- Add route for new tool run \(run2\), tool navbar [\#2188](https://github.com/raster-foundry/raster-foundry/pull/2188)
 - Allow Auth0 user impersonation [\#2186](https://github.com/raster-foundry/raster-foundry/pull/2186)
 - Add PostgreSQL 9.6 support [\#2184](https://github.com/raster-foundry/raster-foundry/pull/2184)
 - Minor Fixes/Frontend Customization for API Server [\#2181](https://github.com/raster-foundry/raster-foundry/pull/2181)
 - Fix scene removal from project on project details page [\#2180](https://github.com/raster-foundry/raster-foundry/pull/2180)
+- Enable changing datasource visibility on datasource detail page [\#2138](https://github.com/raster-foundry/raster-foundry/pull/2138)
 - Make polygons visible after saving AOIs/loading AOI parameters page [\#2132](https://github.com/raster-foundry/raster-foundry/pull/2132)
 - Add tools and enable some for export [\#2129](https://github.com/raster-foundry/raster-foundry/pull/2129)
 - \[WIP\] Add Kamon metrics tracking [\#2120](https://github.com/raster-foundry/raster-foundry/pull/2120)
@@ -146,37 +212,40 @@
 - Tool Reference nodes [\#2020](https://github.com/raster-foundry/raster-foundry/pull/2020)
 
 ## [0.16.0](https://github.com/raster-foundry/raster-foundry/tree/0.16.0) (2017-06-27)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.15.0...0.16.0)
 
 **Merged pull requests:**
 
 - Add nodata specification to ToolRun sources [\#2131](https://github.com/raster-foundry/raster-foundry/pull/2131)
 - Promote Image.rawDataBytes to a Long [\#2128](https://github.com/raster-foundry/raster-foundry/pull/2128)
+- Ingest seams fix [\#2118](https://github.com/raster-foundry/raster-foundry/pull/2118)
+- Feature/lk/export mask [\#2116](https://github.com/raster-foundry/raster-foundry/pull/2116)
 - List exports and download from project details [\#2105](https://github.com/raster-foundry/raster-foundry/pull/2105)
+- Enable front end color auto correction. [\#2092](https://github.com/raster-foundry/raster-foundry/pull/2092)
 
 ## [0.15.0](https://github.com/raster-foundry/raster-foundry/tree/0.15.0) (2017-06-26)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.14.0...0.15.0)
 
 **Merged pull requests:**
 
-- Enable changing datasource visibility on datasource detail page [\#2138](https://github.com/raster-foundry/raster-foundry/pull/2138)
-- Ingest seams fix [\#2118](https://github.com/raster-foundry/raster-foundry/pull/2118)
-- Feature/lk/export mask [\#2116](https://github.com/raster-foundry/raster-foundry/pull/2116)
 - Hide project navbar while project is loading [\#2108](https://github.com/raster-foundry/raster-foundry/pull/2108)
 - Fix auth0 issues by upgrading lock library [\#2107](https://github.com/raster-foundry/raster-foundry/pull/2107)
 - Add Algae Bloom Indices [\#2104](https://github.com/raster-foundry/raster-foundry/pull/2104)
 - Improve Airflow DAG/Task Logging [\#2101](https://github.com/raster-foundry/raster-foundry/pull/2101)
+- ColorCorrection improvements [\#2094](https://github.com/raster-foundry/raster-foundry/pull/2094)
 - Link logo to home page [\#2093](https://github.com/raster-foundry/raster-foundry/pull/2093)
-- Enable front end color auto correction. [\#2092](https://github.com/raster-foundry/raster-foundry/pull/2092)
 - Prompt before closing window while in upload [\#2088](https://github.com/raster-foundry/raster-foundry/pull/2088)
 - Add  field to sources [\#2085](https://github.com/raster-foundry/raster-foundry/pull/2085)
+- Document tool rendering options [\#2068](https://github.com/raster-foundry/raster-foundry/pull/2068)
 
 ## [0.14.0](https://github.com/raster-foundry/raster-foundry/tree/0.14.0) (2017-06-21)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.13.0...0.14.0)
 
 **Merged pull requests:**
 
-- Document tool rendering options [\#2068](https://github.com/raster-foundry/raster-foundry/pull/2068)
 - Fix bad css merge [\#2067](https://github.com/raster-foundry/raster-foundry/pull/2067)
 - Check for bad shape extraction [\#2065](https://github.com/raster-foundry/raster-foundry/pull/2065)
 - AST: Overrides for "extra params" [\#2064](https://github.com/raster-foundry/raster-foundry/pull/2064)
@@ -188,17 +257,18 @@
 - Introduce new project export pane [\#2022](https://github.com/raster-foundry/raster-foundry/pull/2022)
 
 ## [0.13.0](https://github.com/raster-foundry/raster-foundry/tree/0.13.0) (2017-06-19)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.12.0...0.13.0)
 
 **Merged pull requests:**
 
-- ColorCorrection improvements [\#2094](https://github.com/raster-foundry/raster-foundry/pull/2094)
 - Add compressed project-item [\#2051](https://github.com/raster-foundry/raster-foundry/pull/2051)
 - updates the project page layout [\#2046](https://github.com/raster-foundry/raster-foundry/pull/2046)
 - Fix Nginx HTTP virtual host collision [\#2045](https://github.com/raster-foundry/raster-foundry/pull/2045)
 - Safer interpreters [\#1860](https://github.com/raster-foundry/raster-foundry/pull/1860)
 
 ## [0.12.0](https://github.com/raster-foundry/raster-foundry/tree/0.12.0) (2017-06-16)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.11.0...0.12.0)
 
 **Merged pull requests:**
@@ -257,9 +327,12 @@
 - Fix bad Thumbnail urls in LC8 Imports [\#1899](https://github.com/raster-foundry/raster-foundry/pull/1899)
 - Change AOI redirect. Show both tile url formats [\#1894](https://github.com/raster-foundry/raster-foundry/pull/1894)
 - Remove unique constraint and update importers [\#1867](https://github.com/raster-foundry/raster-foundry/pull/1867)
+- Add thread count on tile healthcheck [\#1865](https://github.com/raster-foundry/raster-foundry/pull/1865)
 - Add multi-scene accept endpoint [\#1829](https://github.com/raster-foundry/raster-foundry/pull/1829)
+- Feature/lk/put tiler behind nginx in dev [\#1806](https://github.com/raster-foundry/raster-foundry/pull/1806)
 
 ## [0.11.0](https://github.com/raster-foundry/raster-foundry/tree/0.11.0) (2017-06-01)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.10.1...0.11.0)
 
 **Merged pull requests:**
@@ -271,14 +344,15 @@
 - Don't cache color-corrections [\#1870](https://github.com/raster-foundry/raster-foundry/pull/1870)
 - Fix max zoom level [\#1868](https://github.com/raster-foundry/raster-foundry/pull/1868)
 - Add Intercom websocket endpoints to content security policy [\#1866](https://github.com/raster-foundry/raster-foundry/pull/1866)
-- Add thread count on tile healthcheck [\#1865](https://github.com/raster-foundry/raster-foundry/pull/1865)
 - Remove color corrections from datasources [\#1863](https://github.com/raster-foundry/raster-foundry/pull/1863)
 - Fix typo in logger \(infoi =\> info\) [\#1859](https://github.com/raster-foundry/raster-foundry/pull/1859)
 - Allow downloading of completed exports [\#1855](https://github.com/raster-foundry/raster-foundry/pull/1855)
+- Bump Terraform version on Jenkins to 0.9.6 [\#1851](https://github.com/raster-foundry/raster-foundry/pull/1851)
 - Check JSON parameters before writing them to DB [\#1812](https://github.com/raster-foundry/raster-foundry/pull/1812)
 - Exports via RDD-based ASTs [\#1728](https://github.com/raster-foundry/raster-foundry/pull/1728)
 
 ## [0.10.1](https://github.com/raster-foundry/raster-foundry/tree/0.10.1) (2017-05-27)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.10.0...0.10.1)
 
 **Merged pull requests:**
@@ -286,30 +360,42 @@
 - Remove unecessary from\_string method [\#1853](https://github.com/raster-foundry/raster-foundry/pull/1853)
 
 ## [0.10.0](https://github.com/raster-foundry/raster-foundry/tree/0.10.0) (2017-05-26)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.9.1...0.10.0)
 
+**Merged pull requests:**
+
+- Feature/lk/default projects [\#1850](https://github.com/raster-foundry/raster-foundry/pull/1850)
+
 ## [0.9.1](https://github.com/raster-foundry/raster-foundry/tree/0.9.1) (2017-05-26)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.9.0...0.9.1)
 
 **Merged pull requests:**
 
-- Bump Terraform version on Jenkins to 0.9.6 [\#1851](https://github.com/raster-foundry/raster-foundry/pull/1851)
-- Feature/lk/default projects [\#1850](https://github.com/raster-foundry/raster-foundry/pull/1850)
 - Fix method call to get ingest status [\#1849](https://github.com/raster-foundry/raster-foundry/pull/1849)
 - Update/fix color-mode selection [\#1846](https://github.com/raster-foundry/raster-foundry/pull/1846)
 - Handle possible undefined return from project create modal [\#1845](https://github.com/raster-foundry/raster-foundry/pull/1845)
+- Refactor color correction storage [\#1843](https://github.com/raster-foundry/raster-foundry/pull/1843)
+- Fix object copied to clipboard in share modal [\#1842](https://github.com/raster-foundry/raster-foundry/pull/1842)
+- Cleans up main project edit page [\#1827](https://github.com/raster-foundry/raster-foundry/pull/1827)
+- C1 Scala Landsat8 import  [\#1821](https://github.com/raster-foundry/raster-foundry/pull/1821)
+- Dropbox export [\#1809](https://github.com/raster-foundry/raster-foundry/pull/1809)
 
 ## [0.9.0](https://github.com/raster-foundry/raster-foundry/tree/0.9.0) (2017-05-25)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.8.0...0.9.0)
 
 **Merged pull requests:**
 
-- Fix object copied to clipboard in share modal [\#1842](https://github.com/raster-foundry/raster-foundry/pull/1842)
 - Avoid reducing over empty list [\#1840](https://github.com/raster-foundry/raster-foundry/pull/1840)
 - Set data value explicitly [\#1831](https://github.com/raster-foundry/raster-foundry/pull/1831)
+- Fix imports view dropdown menus [\#1814](https://github.com/raster-foundry/raster-foundry/pull/1814)
 - Allow import into existing project [\#1813](https://github.com/raster-foundry/raster-foundry/pull/1813)
+- Add approval\_required and start\_time fields to AoisToProjects model [\#1794](https://github.com/raster-foundry/raster-foundry/pull/1794)
 
 ## [0.8.0](https://github.com/raster-foundry/raster-foundry/tree/0.8.0) (2017-05-25)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.7.0...0.8.0)
 
 **Merged pull requests:**
@@ -317,30 +403,24 @@
 - Make the lab work [\#1833](https://github.com/raster-foundry/raster-foundry/pull/1833)
 - Add tiffs to acceptable file patterns [\#1832](https://github.com/raster-foundry/raster-foundry/pull/1832)
 - Tool source endpoint [\#1828](https://github.com/raster-foundry/raster-foundry/pull/1828)
-- Cleans up main project edit page [\#1827](https://github.com/raster-foundry/raster-foundry/pull/1827)
 - Add function to get raw tile for extent [\#1825](https://github.com/raster-foundry/raster-foundry/pull/1825)
 - Fix Alex's merge conflict [\#1823](https://github.com/raster-foundry/raster-foundry/pull/1823)
-- C1 Scala Landsat8 import  [\#1821](https://github.com/raster-foundry/raster-foundry/pull/1821)
 - Change `ingested` filters to use`scene.ingestStatus` [\#1815](https://github.com/raster-foundry/raster-foundry/pull/1815)
-- Fix imports view dropdown menus [\#1814](https://github.com/raster-foundry/raster-foundry/pull/1814)
 - Use bulk-update for color mode changes [\#1810](https://github.com/raster-foundry/raster-foundry/pull/1810)
-- Dropbox export [\#1809](https://github.com/raster-foundry/raster-foundry/pull/1809)
-- Feature/lk/put tiler behind nginx in dev [\#1806](https://github.com/raster-foundry/raster-foundry/pull/1806)
 - Update color corrections on field blur, make debounce longer [\#1803](https://github.com/raster-foundry/raster-foundry/pull/1803)
+- Add support for external S3 export [\#1799](https://github.com/raster-foundry/raster-foundry/pull/1799)
+- New histogram with clipping [\#1793](https://github.com/raster-foundry/raster-foundry/pull/1793)
 - Implement Robust Auto White-Balance [\#1787](https://github.com/raster-foundry/raster-foundry/pull/1787)
 - Connect AOI front-end to API [\#1769](https://github.com/raster-foundry/raster-foundry/pull/1769)
 - Make parallel ingest cooperate [\#1739](https://github.com/raster-foundry/raster-foundry/pull/1739)
 
 ## [0.7.0](https://github.com/raster-foundry/raster-foundry/tree/0.7.0) (2017-05-19)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.6.0...0.7.0)
 
 **Merged pull requests:**
 
-- Refactor color correction storage [\#1843](https://github.com/raster-foundry/raster-foundry/pull/1843)
-- Add support for external S3 export [\#1799](https://github.com/raster-foundry/raster-foundry/pull/1799)
 - Various Upload Processing Fixes [\#1795](https://github.com/raster-foundry/raster-foundry/pull/1795)
-- Add approval\_required and start\_time fields to AoisToProjects model [\#1794](https://github.com/raster-foundry/raster-foundry/pull/1794)
-- New histogram with clipping [\#1793](https://github.com/raster-foundry/raster-foundry/pull/1793)
 - Respond with 400 for interpreter errors [\#1786](https://github.com/raster-foundry/raster-foundry/pull/1786)
 - Update swagger Spec Copy [\#1771](https://github.com/raster-foundry/raster-foundry/pull/1771)
 - Use thumbnails in project list [\#1770](https://github.com/raster-foundry/raster-foundry/pull/1770)
@@ -350,30 +430,32 @@
 - fixes styling for aoi tag [\#1762](https://github.com/raster-foundry/raster-foundry/pull/1762)
 - cleans up status tags styling [\#1759](https://github.com/raster-foundry/raster-foundry/pull/1759)
 - Update swagger spec [\#1758](https://github.com/raster-foundry/raster-foundry/pull/1758)
+- Add a scene owner filter to the browse view [\#1752](https://github.com/raster-foundry/raster-foundry/pull/1752)
+- Add Dropbox credential field [\#1742](https://github.com/raster-foundry/raster-foundry/pull/1742)
 - Feature/ak/single date picker [\#1733](https://github.com/raster-foundry/raster-foundry/pull/1733)
+- Tool Metadata + ToolRun Overrides [\#1712](https://github.com/raster-foundry/raster-foundry/pull/1712)
 - Refactor RGB clipping [\#1708](https://github.com/raster-foundry/raster-foundry/pull/1708)
 - Map Algebra AST evaluation [\#1441](https://github.com/raster-foundry/raster-foundry/pull/1441)
 
 ## [0.6.0](https://github.com/raster-foundry/raster-foundry/tree/0.6.0) (2017-05-15)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.5.0...0.6.0)
 
 **Merged pull requests:**
 
-- Add a scene owner filter to the browse view [\#1752](https://github.com/raster-foundry/raster-foundry/pull/1752)
 - Add `pending` boolean query parameter to project scenes endpoint [\#1743](https://github.com/raster-foundry/raster-foundry/pull/1743)
-- Add Dropbox credential field [\#1742](https://github.com/raster-foundry/raster-foundry/pull/1742)
 - Minor frontend cleanup [\#1734](https://github.com/raster-foundry/raster-foundry/pull/1734)
 - Add tiff as option for tile export [\#1725](https://github.com/raster-foundry/raster-foundry/pull/1725)
 - Add initial UI for Area of Interest projects [\#1722](https://github.com/raster-foundry/raster-foundry/pull/1722)
 - Fix Ingest Status Update [\#1716](https://github.com/raster-foundry/raster-foundry/pull/1716)
 - adds a new calendar icon to icon-font [\#1714](https://github.com/raster-foundry/raster-foundry/pull/1714)
 - Add Dropbox Setup [\#1713](https://github.com/raster-foundry/raster-foundry/pull/1713)
-- Tool Metadata + ToolRun Overrides [\#1712](https://github.com/raster-foundry/raster-foundry/pull/1712)
 - AOI Scala airflow jobs implementation [\#1710](https://github.com/raster-foundry/raster-foundry/pull/1710)
 - Copy plugins into airflow webserver when building [\#1709](https://github.com/raster-foundry/raster-foundry/pull/1709)
 - updates project list and project detail ui [\#1706](https://github.com/raster-foundry/raster-foundry/pull/1706)
 - Add state tags to various UI items [\#1703](https://github.com/raster-foundry/raster-foundry/pull/1703)
 - Add Airflow Dag Trigger Endpoint [\#1702](https://github.com/raster-foundry/raster-foundry/pull/1702)
+- Add per-scenes histogram endpoint [\#1701](https://github.com/raster-foundry/raster-foundry/pull/1701)
 - Frontend fixes [\#1700](https://github.com/raster-foundry/raster-foundry/pull/1700)
 - updates fontello. updates homedashboar. className changes [\#1699](https://github.com/raster-foundry/raster-foundry/pull/1699)
 - Implement data-down pattern for tool def [\#1688](https://github.com/raster-foundry/raster-foundry/pull/1688)
@@ -381,11 +463,11 @@
 - Make project list reload when project created [\#1661](https://github.com/raster-foundry/raster-foundry/pull/1661)
 
 ## [0.5.0](https://github.com/raster-foundry/raster-foundry/tree/0.5.0) (2017-05-05)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.4.0...0.5.0)
 
 **Merged pull requests:**
 
-- Add per-scenes histogram endpoint [\#1701](https://github.com/raster-foundry/raster-foundry/pull/1701)
 - Few Small Bugfixes [\#1686](https://github.com/raster-foundry/raster-foundry/pull/1686)
 - Remove remaining references to app-clients [\#1684](https://github.com/raster-foundry/raster-foundry/pull/1684)
 - Remove Python API client from main repository [\#1681](https://github.com/raster-foundry/raster-foundry/pull/1681)
@@ -396,6 +478,7 @@
 - Implement export workflow [\#1609](https://github.com/raster-foundry/raster-foundry/pull/1609)
 
 ## [0.4.0](https://github.com/raster-foundry/raster-foundry/tree/0.4.0) (2017-05-03)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.3.0...0.4.0)
 
 **Merged pull requests:**
@@ -405,6 +488,7 @@
 - Update scala dockerignore to include new subprojects [\#1612](https://github.com/raster-foundry/raster-foundry/pull/1612)
 
 ## [0.3.0](https://github.com/raster-foundry/raster-foundry/tree/0.3.0) (2017-04-28)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.2.0...0.3.0)
 
 **Merged pull requests:**
@@ -527,14 +611,16 @@
 - Add spec for map token to swagger [\#1228](https://github.com/raster-foundry/raster-foundry/pull/1228)
 - Windowed GeoTiff Ingest [\#1224](https://github.com/raster-foundry/raster-foundry/pull/1224)
 - Remove call to get JWT in airflow scheduler [\#1223](https://github.com/raster-foundry/raster-foundry/pull/1223)
+- Fix token deletion [\#1211](https://github.com/raster-foundry/raster-foundry/pull/1211)
 - Tiler handle missing Histogram, Ingest Location \(introduces OptionT usage\) [\#1193](https://github.com/raster-foundry/raster-foundry/pull/1193)
+- Add ADR on refactoring tests for convenience [\#1188](https://github.com/raster-foundry/raster-foundry/pull/1188)
 
 ## [0.2.0](https://github.com/raster-foundry/raster-foundry/tree/0.2.0) (2017-03-09)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.1.0...0.2.0)
 
 **Merged pull requests:**
 
-- Fix token deletion [\#1211](https://github.com/raster-foundry/raster-foundry/pull/1211)
 - Update Color Correct API [\#1199](https://github.com/raster-foundry/raster-foundry/pull/1199)
 - Fixup swagger spec [\#1198](https://github.com/raster-foundry/raster-foundry/pull/1198)
 - Remove default values for ingest env vars [\#1196](https://github.com/raster-foundry/raster-foundry/pull/1196)
@@ -542,7 +628,6 @@
 - RFML tool AST and Parser [\#1192](https://github.com/raster-foundry/raster-foundry/pull/1192)
 - Increase memcached max object size in development [\#1191](https://github.com/raster-foundry/raster-foundry/pull/1191)
 - Return empty png rather than empty response [\#1189](https://github.com/raster-foundry/raster-foundry/pull/1189)
-- Add ADR on refactoring tests for convenience [\#1188](https://github.com/raster-foundry/raster-foundry/pull/1188)
 - Fix docker-compose typo [\#1186](https://github.com/raster-foundry/raster-foundry/pull/1186)
 - ADR 0014 Revisiting api documentation [\#1185](https://github.com/raster-foundry/raster-foundry/pull/1185)
 - Fix ingest definition parsing and add tests [\#1184](https://github.com/raster-foundry/raster-foundry/pull/1184)
@@ -573,16 +658,17 @@
 - ToolRun API [\#1137](https://github.com/raster-foundry/raster-foundry/pull/1137)
 - Fix metadata urls in sentinel2 import [\#1134](https://github.com/raster-foundry/raster-foundry/pull/1134)
 - Upgrade akka-http [\#1133](https://github.com/raster-foundry/raster-foundry/pull/1133)
+- Add extent field and computation to project [\#1132](https://github.com/raster-foundry/raster-foundry/pull/1132)
 - Return 409 response on duplicate scene creation [\#1131](https://github.com/raster-foundry/raster-foundry/pull/1131)
 - Memcached wrapper for safe getOrElseUpdate [\#1127](https://github.com/raster-foundry/raster-foundry/pull/1127)
+- Bulk add scenes to a project based on a query [\#1125](https://github.com/raster-foundry/raster-foundry/pull/1125)
 
 ## [0.1.0](https://github.com/raster-foundry/raster-foundry/tree/0.1.0) (2017-02-16)
+
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.0.1...0.1.0)
 
 **Merged pull requests:**
 
-- Add extent field and computation to project [\#1132](https://github.com/raster-foundry/raster-foundry/pull/1132)
-- Bulk add scenes to a project based on a query [\#1125](https://github.com/raster-foundry/raster-foundry/pull/1125)
 - Add Scene Ingest Trigger [\#1122](https://github.com/raster-foundry/raster-foundry/pull/1122)
 - Avoid division by 0 in color correction [\#1121](https://github.com/raster-foundry/raster-foundry/pull/1121)
 - Add json definition to tool model [\#1114](https://github.com/raster-foundry/raster-foundry/pull/1114)
@@ -873,6 +959,9 @@
 - Reset to blank project to start Phase II [\#372](https://github.com/raster-foundry/raster-foundry/pull/372)
 
 ## [0.0.1](https://github.com/raster-foundry/raster-foundry/tree/0.0.1) (2016-07-14)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/31e56cea5aaa742dbcf162900326afbcf9adb497...0.0.1)
+
 **Merged pull requests:**
 
 - Add favicon [\#355](https://github.com/raster-foundry/raster-foundry/pull/355)
@@ -1014,4 +1103,4 @@
 
 
 
-\* *This Change Log was automatically generated by [github_changelog_generator](https://github.com/skywinder/Github-Changelog-Generator)*
+* *This Change Log was automatically generated by [github_changelog_generator](https://github.com/skywinder/Github-Changelog-Generator)*

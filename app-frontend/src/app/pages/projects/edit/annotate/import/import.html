@@ -1,0 +1,110 @@
+<!-- Static Sidebar -->
+<div class="sidebar-project">
+  <div class="sidebar-static">
+    <div class="sidebar-header">
+      <a class="btn sidebar-header-nav-btn" ui-sref="projects.edit.annotate">
+        <i class="icon-arrow-left"></i>
+      </a>
+      <h5 class="sidebar-title">Import Annotations</h5>
+    </div>
+    <div class="list-group">
+      <div class="list-group-item">
+        <label class="btn btn-primary btn-block btn-upload-label"
+               for="btn-upload"
+               ng-click="$ctrl.onUploadClick()">
+          <input type="file"
+                 accept="*.geojson"
+                 multiple
+                 id="btn-upload"
+                 class="btn-upload"/>
+          Upload
+        </label>
+      </div>
+    </div>
+  </div>
+    <div class="list-group" ng-if="$ctrl.dataProperties.length">
+        <div class="list-group-item">
+          <div>
+            <span title="Machine made"><strong>Machine made</strong></span>
+          </div>
+          <div class="list-group-right">
+            <rf-toggle value="$ctrl.isMachineData" on-change="$ctrl.isMachineMade()">
+              <i class="icon-check"></i>
+            </rf-toggle>
+          </div>
+        </div>
+      <div class="list-group-item">
+          <span title="Label name"><strong>Label name</strong></span>
+          <div class="list-group-right">
+            <div class="dropdown btn-group fixedwidth upload" uib-dropdown uib-dropdown-toggle>
+              <a class="btn dropdown-label">{{$ctrl.matchKeys.label}}</a>
+              <button type="button" class="btn btn-primary dropdown-toggle">
+                <i class="icon-caret-down"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+                <li ng-repeat="p in $ctrl.dataProperties" role="menuitem">
+                  <a ng-click="$ctrl.updateKeySelection('label', p)">{{p}}</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+      </div>
+      <div class="list-group-item">
+          <span title="Description"><strong>Description</strong></span>
+          <div class="list-group-right">
+            <div class="dropdown btn-group fixedwidth upload" uib-dropdown uib-dropdown-toggle>
+              <a class="btn dropdown-label">{{$ctrl.matchKeys.description}}</a>
+              <button type="button" class="btn btn-primary dropdown-toggle">
+                <i class="icon-caret-down"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+                <li ng-repeat="p in $ctrl.dataProperties" role="menuitem">
+                  <a ng-click="$ctrl.updateKeySelection('description', p)">{{p}}</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+      </div>
+      <div class="list-group-item" ng-if="$ctrl.isMachineData">
+          <span title="Confidence"><strong>Confidence</strong></span>
+          <div class="list-group-right">
+            <div class="dropdown btn-group fixedwidth upload" uib-dropdown uib-dropdown-toggle>
+              <a class="btn dropdown-label">{{$ctrl.matchKeys.confidence}}</a>
+              <button type="button" class="btn btn-primary dropdown-toggle">
+                <i class="icon-caret-down"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+                <li ng-repeat="p in $ctrl.dataProperties" role="menuitem">
+                  <a ng-click="$ctrl.updateKeySelection('confidence', p)">{{p}}</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+      </div>
+      <div class="list-group-item"  ng-if="$ctrl.isMachineData">
+          <span title="Quality"><strong>Quality</strong></span>
+          <div class="list-group-right">
+            <div class="dropdown btn-group fixedwidth upload" uib-dropdown uib-dropdown-toggle>
+              <a class="btn dropdown-label">{{$ctrl.matchKeys.qualityCheck}}</a>
+              <button type="button" class="btn btn-primary dropdown-toggle">
+                <i class="icon-caret-down"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+                <li ng-repeat="p in $ctrl.dataProperties" role="menuitem">
+                  <a ng-click="$ctrl.updateKeySelection('qualityCheck', p)">{{p}}</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+      </div>
+    </div>
+    <div class="list-group" ng-if="$ctrl.enableImport">
+      <div class="list-group-item">
+        <button class="btn btn-primary btn-block"
+                type="button"
+                ng-click="$ctrl.onImportClick()">
+          Import
+        </button>
+      </div>
+    </div>
+</div>

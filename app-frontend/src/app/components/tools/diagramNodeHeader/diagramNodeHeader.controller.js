@@ -17,7 +17,8 @@ export default class DiagramNodeHeaderController {
         return {
             'function': 'Function',
             'src': 'Input',
-            'const': 'Constant'
+            'const': 'Constant',
+            'classify': 'Classify'
         };
     }
 

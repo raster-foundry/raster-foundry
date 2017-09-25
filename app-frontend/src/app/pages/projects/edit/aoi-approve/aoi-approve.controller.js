@@ -1,11 +1,12 @@
 export default class AOIApproveController {
-    constructor($scope, $state, $q, $log, projectService, mapService) {
+    constructor($scope, $state, $q, $log, projectService, projectEditService, mapService) {
         'ngInject';
         this.$parent = $scope.$parent.$ctrl;
         this.$state = $state;
         this.$q = $q;
         this.$log = $log;
         this.projectService = projectService;
+        this.projectEditService = projectEditService;
         this.mapService = mapService;
         this.getMap = () => this.mapService.getMap('edit');
     }
@@ -123,7 +124,7 @@ export default class AOIApproveController {
     }
 
     applySceneStatuses() {
-        this.$parent.fetchProject().then(project => {
+        this.projectEditService.fetchCurrentProject().then(project => {
             const scenesToHandle = this.getScenesStatusIds();
             const requests = [];
             requests.push(

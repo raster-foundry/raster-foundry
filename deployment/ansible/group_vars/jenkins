@@ -4,3 +4,5 @@ docker_users:
   - "{{ jenkins_name }}"
 
 java_version: "7u121*"
+
+packer_verison: "1.0.4"
