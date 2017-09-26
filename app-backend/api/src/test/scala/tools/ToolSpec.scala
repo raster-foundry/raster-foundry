@@ -112,9 +112,9 @@ class ToolSpec extends WordSpec
         List(authorization),
         HttpEntity(
           ContentTypes.`application/json`,
-          """{
+          s"""{
             "type": "src",
-            "id": 123
+            "id": "123"
           }"""
         )
       ) ~> baseRoutes ~> check {

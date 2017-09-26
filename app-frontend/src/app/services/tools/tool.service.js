@@ -153,9 +153,74 @@ export default (app) => {
             }).$promise;
         }
 
+        _assignTargetInToolRun(toolRun, targetId, assignment) {
+            // If toolRun isn't an operator, it must be an identity tool; just edit the source
+            // and return it.
+            if (!toolRun.executionParameters.apply) {
+                Object.assign(toolRun.executionParameters, assignment);
+                return;
+            }
+            // Otherwise, update toolRun in place
+            // We're doing a depth-first graph traversal on the arguments here.
+            // Start "before the beginning" of the arguments of the root operator.
+            let parents = [{node: toolRun.executionParameters, argIdx: -1}];
+            if (toolRun.executionParameters.id === targetId) {
+                Object.assign(toolRun.executionParameters, assignment);
+            }
+            while (parents.length > 0) {
+                // Always consider the end of the parents stack; this is the current parent.
+                let currParent = parents[parents.length - 1];
+                // Then move to the next argument of the current parent
+                currParent.argIdx += 1;
+                // Now we have two options
+                // 1. We're past the end of current parent's arguments. Pop parents and continue
+                if (currParent.argIdx >= currParent.node.args.length) {
+                    parents.pop();
+                } else {
+                    // 2. This parent still has arguments we haven't touched yet, so consider next
+                    let currChild = currParent.node.args[currParent.argIdx];
+                    let args = currChild.args || false;
+                    // This child node is itself a parent. Push onto parents
+                    if (args) {
+                        parents.push({node: currChild, argIdx: -1});
+                    }
+                    // Edit it if it matches target. Usually this is leaf nodes, but not always
+                    // (e.g. render definitions).
+                    if (currChild.id === targetId) {
+                        Object.assign(currChild, assignment);
+                    }
+                }
+            }
+        }
+
+        updateToolRunSource(toolRun, sourceId, projectId, band) {
+            this._assignTargetInToolRun(toolRun, sourceId, {
+                band: band,
+                type: 'projectSrc',
+                projId: projectId,
+                cellType: null
+            });
+        }
+
+        updateToolRunConstant(toolRun, nodeId, constant) {
+            this._assignTargetInToolRun(toolRun, nodeId, constant);
+        }
+
+        updateToolRunMetadata(toolRun, nodeId, metadata) {
+            this._assignTargetInToolRun(toolRun, nodeId, {
+                metadata: metadata
+            });
+        }
+
         generateSourcesFromTool(tool) {
-            let nodes = [tool.definition];
-            let sources = [];
+            // Accepts a tool or tool run since they are pretty similar objects now.
+            let nodes = [];
+            if (tool.definition) {
+                nodes.push(tool.definition);
+            } else {
+                nodes.push(tool.executionParameters);
+            }
+            let sources = {};
             let sourceIds = [];
             let currentNode = 0;
             let shouldContinue = true;
@@ -168,10 +233,11 @@ export default (app) => {
                 shouldContinue = currentNode < nodes.length;
             }
             nodes.forEach(n => {
-                if (!n.apply) {
+                // Only use projects, because constant nodes also have no apply.
+                if (!n.apply && (n.type === 'src' || n.type === 'projectSrc')) {
                     if (sourceIds.indexOf(n.id) < 0) {
                         sourceIds.push(n.id);
-                        sources.push(n);
+                        sources[n.id] = n;
                     }
                 }
             });
@@ -179,21 +245,13 @@ export default (app) => {
         }
 
         generateToolRun(tool) {
-            const sources = this.generateSourcesFromTool(tool);
-            return sources.reduce((tr, s) => {
-                tr.executionParameters.sources[s.id] = {
-                    id: false,
-                    band: null,
-                    type: 'project'
-                };
-                return tr;
-            }, {
+            // A tool run is quite similar to a tool except that the definition lives under
+            // 'executionParameters' instead.
+            return {
                 visibility: 'PUBLIC',
                 tool: tool.id,
-                executionParameters: {
-                    sources: {}
-                }
-            });
+                executionParameters: angular.copy(tool.definition)
+            };
         }
 
         loadTool(toolId) {

@@ -14,6 +14,6 @@ export default class ConstantNodeController {
     }
 
     onValueChange() {
-        this.onChange({override: {id: this.model.get('id'), value: this.value}});
+        this.onChange({override: {id: this.model.get('id'), constant: this.value}});
     }
 }

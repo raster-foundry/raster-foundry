@@ -2,7 +2,6 @@ package com.azavea.rf.tool
 
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.eval._
-import com.azavea.rf.tool.params._
 
 import org.scalacheck._
 import org.scalacheck.Gen._
@@ -57,7 +56,8 @@ object Generators {
   lazy val genRFMLRaster: Gen[RFMLRaster] = for {
     band <- arbitrary[Int]
     id <- arbitrary[UUID]
-    constructor <- Gen.lzy(Gen.oneOf(SceneRaster.apply _, ProjectRaster.apply _))
+    imageId <- arbitrary[UUID]
+    constructor <- Gen.lzy(Gen.oneOf(MapAlgebraAST.SceneRaster.apply _, MapAlgebraAST.ProjectRaster.apply _))
     celltype <- Gen.lzy(Gen.oneOf(
       BitCellType, ByteCellType, UByteCellType, ShortCellType, UShortCellType, IntCellType,
       FloatCellType, DoubleCellType, ByteConstantNoDataCellType, UByteConstantNoDataCellType,
@@ -67,12 +67,8 @@ object Generators {
       UShortUserDefinedNoDataCellType(42), IntUserDefinedNoDataCellType(42),
       FloatUserDefinedNoDataCellType(42), DoubleUserDefinedNoDataCellType(42)
     ))
-  } yield constructor(id, Some(band), None)
-
-  lazy val genEvalParams: Gen[EvalParams] = for {
-    astIds  <- containerOfN[List, UUID](12, arbitrary[UUID])
-    rasters <- containerOfN[List, RFMLRaster](12, genRFMLRaster)
-  } yield EvalParams(astIds.zip(rasters).toMap)
+    nmd <- Gen.option(genNodeMetadata)
+  } yield constructor(id, imageId, Some(band), None, nmd)
 
   lazy val genSourceAST = for {
     id <- arbitrary[UUID]
@@ -154,7 +150,7 @@ object Generators {
   def genLeafAST = Gen.oneOf(genConstantAST, genSourceAST, genRefAST)
 
   /** We are forced to manually control flow in this generator to prevent stack overflows
-    *  See: http://stackoverflow.com/questions/19829293/scalacheck-arbitrary-implicits-and-recursive-generators
+    * See: http://stackoverflow.com/questions/19829293/scalacheck-arbitrary-implicits-and-recursive-generators
     */
   def genMapAlgebraAST(depth: Int = 1): Gen[MapAlgebraAST] =
     if (depth >= 100) genLeafAST

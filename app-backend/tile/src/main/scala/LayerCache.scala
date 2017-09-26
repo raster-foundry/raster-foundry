@@ -4,12 +4,13 @@ import com.azavea.rf.tile.tool.TileSources
 import com.azavea.rf.datamodel.{Tool, ToolRun, User}
 import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.params._
 import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.rf.common.cache._
 import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables._
+import com.azavea.rf.common.{Config => CommonConfig}
+
 import io.circe.syntax._
 import geotrellis.raster._
 import geotrellis.raster.render._
@@ -23,10 +24,9 @@ import geotrellis.vector.Extent
 import com.typesafe.scalalogging.LazyLogging
 import spray.json.DefaultJsonProtocol._
 import cats.data._
+import cats.data.Validated._
 import cats.implicits._
 import java.util.UUID
-
-import com.azavea.rf.common.{Config => CommonConfig}
 
 import scala.concurrent._
 import scala.util._
@@ -73,17 +73,16 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
   def layerTile(layerId: UUID, zoom: Int, key: SpatialKey)(implicit projectLayerIds: Set[UUID]): OptionT[Future, MultibandTile] = {
     val cacheKey = s"tile-$layerId-$zoom-${key.col}-${key.row}"
     OptionT(rfCache.caching(cacheKey, doCache = cacheConfig.layerTile.enabled)(
-      timedFuture("s3-tile-request")(Future {
+      timedFuture("s3-tile-request")({
         val reader = new S3ValueReader(store).reader[SpatialKey, MultibandTile](LayerId(layerId.toString, zoom))
-        Try {
-          reader.read(key)
-        } match {
-          case Success(tile) => tile.some
-          case Failure(e: ValueNotFoundError) => None
-          case Failure(e) =>
-            logger.error(s"Reading layer $layerId at $key: ${e.getMessage}")
+        Future(reader.read(key)).map({
+          case tile => Some(tile)
+        }).recover({
+          case e: ValueNotFoundError => None
+          case e: Throwable =>
+            logger.debug(s"Unable to retrieve layer $layerId at zoom $zoom for key $key; ${e.getMessage}")
             None
-        }
+        })
       })
     ))
   }
@@ -130,19 +129,23 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     if (voidCache) rfCache.delete(cacheKey)
     rfCache.cachingOptionT(cacheKey, doCache = cacheConfig.tool.enabled) {
       for {
-        (tool, toolRun) <- LayerCache.toolAndToolRun(toolRunId, user, voidCache)
-        (ast, params) <- LayerCache.toolEvalRequirements(toolRunId, subNode, user, voidCache)
-        (extent, zoom) <- TileSources.fullDataWindow(params.sources)
-        lztile <- OptionT(Interpreter.interpretGlobal(ast, params.sources, params.overrides,
-          extent, { r => TileSources.globalSource(extent, zoom, r) }).map(_.toOption)
-        )
-        tile <- OptionT.fromOption[Future](lztile.evaluateDouble)
+        toolRun <- LayerCache.toolRun(toolRunId, user, voidCache)
+        ast <- LayerCache.toolEvalRequirements(toolRunId, subNode, user, voidCache)
+        (extent, zoom) <- TileSources.fullDataWindow(ast.tileSources)
+        literalAst <- OptionT(
+                        GlobalInterpreter.literalize(ast, extent, { r: RFMLRaster => TileSources.globalSource(extent, zoom, r) })
+                          .map({ validatedAst => validatedAst.toOption })
+                      )
+        tile <- OptionT.fromOption[Future](GlobalInterpreter.interpret(literalAst, extent) match {
+                  case Valid(lztile) => lztile.evaluateDouble
+                  case Invalid(e) => None
+                })
       } yield {
         val hist = StreamingHistogram.fromTile(tile)
-        val currentMetadata = params.metadata.getOrElse(ast.id, NodeMetadata())
+        val currentMetadata = ast.metadata.getOrElse(NodeMetadata())
         val updatedMetadata = currentMetadata.copy(histogram = Some(hist))
-        val updatedParams = params.copy(metadata = params.metadata + (ast.id -> updatedMetadata))
-        val updatedToolRun = toolRun.copy(executionParameters = updatedParams.asJson)
+        val updatedAst = ast.withMetadata(updatedMetadata)
+        val updatedToolRun = toolRun.copy(executionParameters = updatedAst.asJson)
         try {
           database.db.run {
             ToolRuns.updateToolRun(updatedToolRun, toolRun.id, user)
@@ -169,51 +172,41 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     }
   }
 
+  def toolRun(
+    toolRunId: UUID,
+    user: User,
+    voidCache: Boolean = false
+  ): OptionT[Future, ToolRun] = {
+    rfCache.cachingOptionT(s"tool+run-$toolRunId-${user.id}", doCache = cacheConfig.tool.enabled) {
+      for {
+        toolRun <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
+      } yield toolRun
+    }
+  }
+
   /** Calculate all of the prerequisites to evaluation of an AST over a set of tile sources */
   def toolEvalRequirements(
     toolRunId: UUID,
     subNode: Option[UUID],
     user: User,
     voidCache: Boolean = false
-  ): OptionT[Future, (MapAlgebraAST, EvalParams)] =
+  ): OptionT[Future, MapAlgebraAST] =
     traceName("LayerCache.toolEvalRequirements") {
       val cacheKey = s"ast+params-$toolRunId-${subNode}-${user.id}"
       if (voidCache) rfCache.delete(cacheKey)
       rfCache.cachingOptionT(cacheKey) {
         traceName("LayerCache.toolEvalRequirements (no cache)") {
           for {
-            (tool, toolRun) <- LayerCache.toolAndToolRun(toolRunId, user)
-            oldAst   <- OptionT.fromOption[Future]({
-              logger.debug(s"Parsing Tool AST with ${tool.definition}")
-              val entireAST = tool.definition.as[MapAlgebraAST].valueOr(throw _)
-              subNode.flatMap(id => entireAST.find(id)).orElse(Some(entireAST))
-            })
-            subs     <- assembleSubstitutions(oldAst, { id: UUID =>
-              OptionT(Tools.getTool(id, user))
-                .map({ referrent => referrent.definition.as[MapAlgebraAST].valueOr(throw _) })
-                .value
-            })
-            ast      <- OptionT.fromOption[Future](oldAst.substitute(subs))
-            params   <- OptionT.pure[Future, EvalParams]({
-              logger.debug(s"Parsing ToolRun parameters with ${toolRun.executionParameters}")
-              val parsedParams = toolRun.executionParameters.as[EvalParams].valueOr(throw _)
-              val metadataOverride = parsedParams.metadata.get(ast.id)
-              val md = (metadataOverride |@| ast.metadata).map(_.fallbackTo(_))
-                .orElse(metadataOverride)
-                .orElse(ast.metadata)
-                .getOrElse(NodeMetadata())
-
-              EvalParams(
-                parsedParams.sources,
-                parsedParams.metadata + (ast.id -> md),
-                parsedParams.overrides
-              )
-            })
-          } yield (ast, params)
+            toolRun <- LayerCache.toolRun(toolRunId, user)
+            ast     <- OptionT.fromOption[Future](toolRun.executionParameters.as[MapAlgebraAST].toOption)
+            subAst <- OptionT.fromOption[Future](subNode match {
+                         case Some(id) => ast.find(id)
+                         case None => Some(ast)
+                       })
+          } yield subAst
         }
       }
     }
-
 
   /** Calculate all of the prerequisites to evaluation of an AST over a set of tile sources */
   def toolRunColorMap(
@@ -227,21 +220,26 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     rfCache.cachingOptionT(cacheKey, doCache = cacheConfig.tool.enabled) {
       traceName("LayerCache.toolRunColorMap (no cache)") {
         for {
-          (tool, toolRun) <- LayerCache.toolAndToolRun(toolRunId, user)
-          (ast, params) <- LayerCache.toolEvalRequirements(toolRunId, subNode, user)
-          nodeId <- OptionT.pure[Future, UUID](subNode.getOrElse(ast.id))
-          metadata <- OptionT.fromOption[Future](params.metadata.get(nodeId))
-          cmap <- OptionT.fromOption[Future](metadata.classMap.map(_.toColorMap))
-                    .orElse({
-                      for {
-                        breaks <- OptionT.fromOption[Future](metadata.breaks)
-                      } yield colorRamp.toColorMap(breaks)
-                    }).orElse({
-                      for {
-                        hist <- OptionT.fromOption[Future](metadata.histogram)
-                                  .orElse(LayerCache.modelLayerGlobalHistogram(toolRunId, subNode, user))
-                      } yield colorRamp.toColorMap(hist)
-                    })
+          ast    <- LayerCache.toolEvalRequirements(toolRunId, subNode, user)
+          cmap   <- {
+                      val metadata: Option[NodeMetadata] = ast.metadata
+                      OptionT.fromOption[Future](metadata.flatMap(_.classMap).map(_.toColorMap))
+                        .orElse({
+                          for {
+                            md <- OptionT.fromOption[Future](metadata)
+                            breaks <- OptionT.fromOption[Future](md.breaks)
+                          } yield colorRamp.toColorMap(breaks)
+                        }).orElse({
+                          for {
+                            md <- OptionT.fromOption[Future](metadata)
+                            hist <- OptionT.fromOption[Future](md.histogram)
+                          } yield colorRamp.toColorMap(hist)
+                        }).orElse({
+                          for {
+                            hist <- LayerCache.modelLayerGlobalHistogram(toolRunId, subNode, user)
+                          } yield colorRamp.toColorMap(hist)
+                        })
+                    }
         } yield cmap
       }
     }

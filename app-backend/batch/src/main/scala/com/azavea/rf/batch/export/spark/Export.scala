@@ -10,7 +10,6 @@ import com.azavea.rf.batch.util.conf._
 import com.azavea.rf.common.ast.InterpreterException
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast.MapAlgebraAST
-import com.azavea.rf.tool.params.EvalParams
 import com.azavea.rf.common.S3.putObject
 
 import com.dropbox.core.v2.DbxClientV2
@@ -50,12 +49,11 @@ object Export extends SparkJob with Config with LazyLogging {
   def astExport(
     ed: ExportDefinition,
     ast: MapAlgebraAST,
-    params: EvalParams,
     sceneLocs: Map[UUID, String],
     projLocs: Map[UUID, List[(UUID, String)]],
     conf: HadoopConfiguration
   )(implicit sc: SparkContext): Unit = {
-    interpretRDD(ast, params.sources, params.overrides, ed.input.resolution, sceneLocs, projLocs) match {
+    interpretRDD(ast, ed.input.resolution, sceneLocs, projLocs) match {
       case Invalid(errs) => throw InterpreterException(errs)
       case Valid(rdd) => {
 
@@ -252,8 +250,8 @@ object Export extends SparkJob with Config with LazyLogging {
       exportDef.input.style match {
         case Left(SimpleInput(layers, mask)) =>
           multibandExport(exportDef, layers, mask, conf)
-        case Right(ASTInput(ast, params, sceneLocs, projLocs)) =>
-          astExport(exportDef, ast, params, sceneLocs, projLocs, conf)
+        case Right(ASTInput(ast, sceneLocs, projLocs)) =>
+          astExport(exportDef, ast, sceneLocs, projLocs, conf)
       }
 
       logger.info(s"Writing status into the ${params.statusBucket}/${exportDef.id}")

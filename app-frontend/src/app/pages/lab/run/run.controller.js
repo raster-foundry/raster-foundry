@@ -31,8 +31,7 @@ export default class LabRunController {
         this.$parent.toolRequest.then(tool => {
             this.tool = tool;
             // This will be a call to the API
-            this.sources = this.generateSourcesFromTool();
-            this.toolRun = this.generateToolRun();
+            this.toolRun = this.toolService.generateToolRun(this.tool);
             this.generatedPreview = false;
         });
         this.setWarning(
@@ -45,48 +44,6 @@ export default class LabRunController {
         $('body').css({overflow: 'hidden'});
 
         this.singlePreviewPosition = {x: 0, offset: 10, side: 'none'};
-    }
-
-    generateSourcesFromTool() {
-        let nodes = [this.tool.definition];
-        let sources = [];
-        let sourceIds = [];
-        let currentNode = 0;
-        let shouldContinue = true;
-        while (shouldContinue) {
-            let args = nodes[currentNode].args || false;
-            if (args) {
-                nodes = nodes.concat(args);
-            }
-            currentNode += 1;
-            shouldContinue = currentNode < nodes.length;
-        }
-        nodes.forEach(n => {
-            if (!n.apply && n.type === 'src') {
-                if (sourceIds.indexOf(n.id) < 0) {
-                    sourceIds.push(n.id);
-                    sources.push(n);
-                }
-            }
-        });
-        return sources;
-    }
-
-    generateToolRun() {
-        return this.sources.reduce((tr, s) => {
-            tr.executionParameters.sources[s.id] = {
-                id: false,
-                band: null,
-                type: 'project'
-            };
-            return tr;
-        }, {
-            visibility: 'PUBLIC',
-            tool: this.tool.id,
-            executionParameters: {
-                sources: {}
-            }
-        });
     }
 
     getNodeUrl(node) {
@@ -205,9 +162,9 @@ export default class LabRunController {
                     if (!this.alreadyPreviewed) {
                         this.alreadyPreviewed = true;
                         this.$timeout(() => {
-                            let s = this.lastToolRun.executionParameters.sources;
+                            let s = this.toolService.generateSourcesFromTool(this.lastToolRun);
                             let firstSourceId = Object.keys(s)[0];
-                            this.projectService.get(s[firstSourceId].id).then(p => {
+                            this.projectService.get(s[firstSourceId].projId).then(p => {
                                 this.fitProjectExtent(p);
                             });
                         });
@@ -395,30 +352,15 @@ export default class LabRunController {
 
     onExecutionParametersChange(sourceId, project, band, override, renderDef) {
         if (project && typeof band === 'number' && band >= 0) {
-            this.toolRun.executionParameters.sources[sourceId].id = project.id;
-            this.toolRun.executionParameters.sources[sourceId].band = band;
+            this.toolService.updateToolRunSource(this.toolRun, sourceId, project.id, band);
         }
         if (override) {
-            if (!this.toolRun.executionParameters.overrides) {
-                this.toolRun.executionParameters.overrides = {};
-            }
-            if (override.value) {
-                this.toolRun.executionParameters.overrides[override.id] = {
-                    constant: override.value
-                };
-            } else if (override.classMap) {
-                this.toolRun.executionParameters.overrides[override.id] = {
-                    classMap: override.classMap
-                };
-            }
+            this.toolService.updateToolRunConstant(this.toolRun, override.id, override);
         }
         if (renderDef) {
-            if (!this.toolRun.executionParameters.metadata) {
-                this.toolRun.executionParameters.metadata = {};
-            }
-            this.toolRun.executionParameters.metadata[renderDef.id] = {
+            this.toolService.updateToolRunMetadata(this.toolRun, renderDef.id, {
                 renderDefinition: renderDef.value
-            };
+            });
         }
     }
 

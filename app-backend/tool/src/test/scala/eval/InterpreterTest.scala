@@ -2,7 +2,6 @@ package com.azavea.rf.tool.eval
 
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.eval._
-import com.azavea.rf.tool.params._
 import com.azavea.rf.tool.ast.MapAlgebraAST._
 
 import io.circe._
@@ -28,24 +27,18 @@ object InterpreterTest
 
   def int(
     ast: MapAlgebraAST,
-    srcMap: Map[UUID, RFMLRaster],
-    tileSource: (RFMLRaster, Boolean, Int, Int, Int) => Future[Option[TileWithNeighbors]],
-    overrides: Map[UUID, ParamOverride],
+    tileSource: (RFMLRaster, Boolean, Int, Int, Int) => Future[Interpreted[TileWithNeighbors]],
     label: String
   ): Tile = {
-    val tms = Interpreter.interpretTMS(
-      ast = ast,
-      sourceMapping = srcMap,
-      overrides = overrides,
-      tileSource = tileSource,
-      256
-    )
+    val futureTile = BufferingInterpreter.literalize(ast, tileSource, 1, 1, 1).map({ validatedAst =>
+      validatedAst
+        .andThen(BufferingInterpreter.interpret(_, 256)(1, 1, 1))
+        .map(_.evaluate.get)
+    })
     if (label.length > 0) println(s"$label: ", ast.asJson.noSpaces)
 
-    val ret = tms(1, 1, 1)
-    Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val tile = lazytile.evaluate.get
+    Await.result(futureTile, 10.seconds) match {
+      case Valid(tile) =>
         tile
       case i@Invalid(_) =>
         fail(s"$i")
@@ -54,24 +47,18 @@ object InterpreterTest
 
   def dbl(
     ast: MapAlgebraAST,
-    srcMap: Map[UUID, RFMLRaster],
-    tileSource: (RFMLRaster, Boolean, Int, Int, Int) => Future[Option[TileWithNeighbors]],
-    overrides: Map[UUID, ParamOverride],
+    tileSource: (RFMLRaster, Boolean, Int, Int, Int) => Future[Interpreted[TileWithNeighbors]],
     label: String
   ): Tile = {
-    val tms = Interpreter.interpretTMS(
-      ast = ast,
-      sourceMapping = srcMap,
-      overrides = overrides,
-      tileSource = tileSource,
-      256
-    )
+    val futureTile = BufferingInterpreter.literalize(ast, tileSource, 1, 1, 1).map({ validatedAst =>
+      validatedAst
+        .andThen(BufferingInterpreter.interpret(_, 256)(1, 1, 1))
+        .map(_.evaluateDouble.get)
+    })
     if (label.length > 0) println(s"$label: ", ast.asJson.noSpaces)
 
-    val ret = tms(1, 1, 1)
-    Await.result(ret, 10.seconds) match {
-      case Valid(lazytile) =>
-        val tile = lazytile.evaluateDouble.get
+    Await.result(futureTile, 10.seconds) match {
+      case Valid(tile) =>
         tile
       case i@Invalid(_) =>
         fail(s"$i")
