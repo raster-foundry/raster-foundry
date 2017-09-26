@@ -2,7 +2,7 @@ package com.rasterfoundry.batch
 
 import java.io._
 import java.net._
-import java.util.Scanner
+import java.nio.charset.Charset
 
 import cats.implicits._
 import com.amazonaws.services.s3.{AmazonS3ClientBuilder, AmazonS3URI}
@@ -104,10 +104,7 @@ package object util extends LazyLogging {
   def readString(fileUri: URI): String = {
     val is = getStream(fileUri)
     try {
-      // A jdk [input stream -> string] method which avoids the IOUtils' 'toString' deprecation:
-      // https://community.oracle.com/blogs/pat/2004/10/23/stupid-scanner-tricks
-      val scan: Scanner = new Scanner(is).useDelimiter("\\A")
-      if (scan.hasNext()) scan.next() else ""
+      IOUtils.toString(is, Charset.defaultCharset())
     } finally {
       is.close()
     }
