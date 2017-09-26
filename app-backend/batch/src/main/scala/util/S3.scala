@@ -16,20 +16,12 @@ import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
-final case class S3(
-    credentialsProviderChain: AWSCredentialsProvider =
-      new DefaultAWSCredentialsProviderChain,
-    region: Option[String] = None
-) extends Serializable {
+final case class S3(credentialsProviderChain: AWSCredentialsProvider =
+                      new DefaultAWSCredentialsProviderChain,
+                    region: Option[String] = None)
+    extends Serializable {
 
-  lazy val client: AmazonS3 = {
-    val builder =
-      AmazonS3ClientBuilder
-        .standard()
-        .withCredentials(credentialsProviderChain)
-
-    region.fold(builder)(builder.withRegion).build()
-  }
+  lazy val client: AmazonS3 = AmazonS3ClientBuilder.defaultClient()
 
   /** Copy buckets */
   @tailrec
@@ -40,17 +32,21 @@ final case class S3(
                   listing: ObjectListing): Unit = {
     listing.getObjectSummaries.asScala.foreach { os =>
       val key = os.getKey
-      client.copyObject(bucket,
-                        key,
-                        destBucket,
-                        key.replace(sourcePrefix, destPrefix))
+      client.copyObject(
+        bucket,
+        key,
+        destBucket,
+        key.replace(sourcePrefix, destPrefix)
+      )
     }
     if (listing.isTruncated)
-      copyListing(bucket,
-                  destBucket,
-                  sourcePrefix,
-                  destPrefix,
-                  client.listNextBatchOfObjects(listing))
+      copyListing(
+        bucket,
+        destBucket,
+        sourcePrefix,
+        destPrefix,
+        client.listNextBatchOfObjects(listing)
+      )
   }
 
   def listObjects(bucketName: String, prefix: String): ObjectListing =
@@ -150,7 +146,8 @@ object S3 {
   def setCredentials(
       conf: Configuration,
       credentialsProviderChain: AWSCredentialsProvider =
-        new DefaultAWSCredentialsProviderChain): Configuration = {
+        new DefaultAWSCredentialsProviderChain
+  ): Configuration = {
 
     /**
       * Identify whether function is called on EMR
@@ -160,11 +157,16 @@ object S3 {
     if (conf.isKeyUnset("fs.AbstractFileSystem.s3a.impl")) {
       conf.set(
         "fs.s3.impl",
-        classOf[org.apache.hadoop.fs.s3native.NativeS3FileSystem].getName)
-      conf.set("fs.s3.awsAccessKeyId",
-               credentialsProviderChain.getCredentials.getAWSAccessKeyId)
-      conf.set("fs.s3.awsSecretAccessKey",
-               credentialsProviderChain.getCredentials.getAWSSecretKey)
+        classOf[org.apache.hadoop.fs.s3native.NativeS3FileSystem].getName
+      )
+      conf.set(
+        "fs.s3.awsAccessKeyId",
+        credentialsProviderChain.getCredentials.getAWSAccessKeyId
+      )
+      conf.set(
+        "fs.s3.awsSecretAccessKey",
+        credentialsProviderChain.getCredentials.getAWSSecretKey
+      )
     }
     conf
   }

@@ -1,34 +1,23 @@
 package com.rasterfoundry.common
 
-import jp.ne.opt.chronoscala.Imports._
-import org.apache.commons.io.IOUtils
-import com.amazonaws.auth._
-import com.amazonaws.regions._
-import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder, AmazonS3URI}
-import com.amazonaws.services.s3.model.{
-  ListObjectsRequest,
-  ObjectListing,
-  ObjectMetadata,
-  S3Object
-}
-import com.amazonaws.HttpMethod
-import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest
-import java.io._
+import java.io.File
 import java.net._
 import java.time.{Duration, ZoneOffset}
 import java.util.Date
+
+import com.amazonaws.HttpMethod
+import com.amazonaws.regions._
+import com.amazonaws.services.s3.model._
+import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder, AmazonS3URI}
+import jp.ne.opt.chronoscala.Imports._
+import org.apache.commons.io.IOUtils
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.util.Properties
 
 package object S3 {
-
-  lazy val client = AmazonS3ClientBuilder
-    .standard()
-    .withCredentials(new DefaultAWSCredentialsProviderChain())
-    .withForceGlobalBucketAccessEnabled(true)
-    .build()
+  lazy val client: AmazonS3 = AmazonS3ClientBuilder.defaultClient()
 
   def clientWithRegion(region: Regions): AmazonS3 =
     AmazonS3ClientBuilder
@@ -81,7 +70,8 @@ package object S3 {
       new GeneratePresignedUrlRequest(bucket, key)
     generatePresignedUrlRequest.setMethod(HttpMethod.GET)
     generatePresignedUrlRequest.setExpiration(
-      Date.from(expiration.toInstant(ZoneOffset.UTC)))
+      Date.from(expiration.toInstant(ZoneOffset.UTC))
+    )
     client.generatePresignedUrl(generatePresignedUrlRequest)
   }
 
