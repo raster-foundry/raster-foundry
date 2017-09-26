@@ -46,11 +46,37 @@ export default class LabRunController {
         this.singlePreviewPosition = {x: 0, offset: 10, side: 'none'};
     }
 
+    flattenToolDefinition(toolDefinition) {
+        let inQ = [toolDefinition];
+        let outQ = [];
+        while (inQ.length) {
+            let node = inQ.pop();
+            outQ.push(node);
+            if (node.args) {
+                inQ = [
+                    ...inQ,
+                    ...node.args.map(a => Object.assign({}, a, { parent: node }))
+                ];
+            }
+        }
+        return outQ;
+    }
+
+    findNodeinToolDefinition(node, toolDefinition) {
+        let flattenedToolDefinition = this.flattenToolDefinition(toolDefinition);
+        return flattenedToolDefinition.find((n) => n.id === node);
+    }
+
     getNodeUrl(node) {
         let token = this.authService.token();
         if (this.lastToolRun) {
             // eslint-disable-next-line max-len
-            return `${this.tileServer}/tools/${this.lastToolRun.id}/{z}/{x}/{y}?token=${token}&node=${node}`;
+            let toolNode = this.findNodeinToolDefinition(node, this.lastToolRun.executionParameters);
+            if (toolNode.type === 'projectSrc') {
+                return this.projectService.getProjectLayerURL(toolNode.projId, token);
+            }
+            return `${this.tileServer}/tools/${this.lastToolRun.id}/` +
+                `{z}/{x}/{y}?token=${token}&node=${node}`;
         }
         return false;
     }
