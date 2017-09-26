@@ -26,7 +26,7 @@ export default class SceneDetailModalController {
             this.datasourceLoaded = true;
             this.datasource = d;
         });
-        this.acqDateDisplay = this.setAqcDateDisplay();
+        this.accDateDisplay = this.setAccDateDisplay();
         this.isUploadDone = true;
     }
 
@@ -71,7 +71,7 @@ export default class SceneDetailModalController {
         }
     }
 
-    setAqcDateDisplay() {
+    setAccDateDisplay() {
         return this.scene.filterFields && this.scene.filterFields.acquisitionDate ?
             this.formatAcqDate(this.scene.filterFields.acquisitionDate) :
             'MM/DD/YYYY';
@@ -79,7 +79,6 @@ export default class SceneDetailModalController {
 
     updateMetadata() {
         // TODO: visibility and data source should be editable eventually
-        // TODO: sunAzimuth and sunElevation can't be changed, might be backend issue?
         this.isUploadDone = false;
         if (!this.newFilterFields.acquisitionDate) {
             this.newFilterFields.acquisitionDate = this.scene.filterFields.acquisitionDate;
@@ -126,8 +125,10 @@ export default class SceneDetailModalController {
     }
 
     updateAcquisitionDate(selectedDay) {
-        this.newFilterFields.acquisitionDate = selectedDay.toISOString();
-        this.acqDateDisplay = selectedDay.format('MM/DD/YYYY');
+        if (selectedDay) {
+            this.newFilterFields.acquisitionDate = selectedDay.toISOString();
+            this.accDateDisplay = selectedDay.format('MM/DD/YYYY');
+        }
     }
 
     /* eslint-disable consistent-return */

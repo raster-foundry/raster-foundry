@@ -21,7 +21,7 @@
           <dt ng-repeat-start="(field, value) in $ctrl.scene.filterFields">
             {{field}}
           </dt>
-          <dd ng-repeat-end>{{field !== 'acquisitionDate' ? value : $ctrl.acqDateDisplay}}</dd>
+          <dd ng-repeat-end>{{field !== 'acquisitionDate' ? value : $ctrl.accDateDisplay}}</dd>
           <dt ng-if-start="$ctrl.scene.createdAt">Created Date</dt>
           <dd ng-if-end>{{$ctrl.scene.createdAt | date}}</dd>
           <dt ng-if-start="$ctrl.scene.modifiedAt">Modified Date</dt>
@@ -47,13 +47,13 @@
                    placeholder="{{field}}"
                    ng-if="field !== 'acquisitionDate'"
                    ng-change="$ctrl.onFilterValChange(field)">
-            <div class="dropdown btn-group fixedwidth acq-date"
+            <div class="dropdown btn-group fixedwidth acc-date-field"
                  ng-click="$ctrl.openDatePickerModal(value)"
                  ng-if="field === 'acquisitionDate'">
-              <a class="btn dropdown-label acq-date">
-                {{$ctrl.acqDateDisplay}}
+              <a class="btn dropdown-label acc-date-label">
+                {{$ctrl.accDateDisplay}}
               </a>
-              <button type="button" class="btn btn-light dropdown-toggle acq-date">
+              <button type="button" class="btn btn-light dropdown-toggle acc-date-toggle">
                 <i class="icon-calendar"></i>
               </button>
             </div>
