@@ -18,5 +18,11 @@ object UserFkVisibleFields {
         user.isInRootOrganization }
       }
     }
+
+    def filterToOwnerOrRoot(user: User) = {
+      that.filter { rec => {
+        rec.owner === user.id || user.isInRootOrganization }
+      }
+    }
   }
 }

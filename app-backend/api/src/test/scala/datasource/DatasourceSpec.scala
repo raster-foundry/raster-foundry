@@ -42,6 +42,7 @@ class DatasourceSpec extends WordSpec
     Visibility.Public,
     None: Option[String],
     ().asJson,
+    ().asJson,
     ().asJson
   )
 
@@ -50,6 +51,7 @@ class DatasourceSpec extends WordSpec
     "Datasource2",
     Visibility.Public,
     None: Option[String],
+    ().asJson,
     ().asJson,
     ().asJson
   )
@@ -60,6 +62,7 @@ class DatasourceSpec extends WordSpec
     "Datasource3",
     Visibility.Private,
     None: Option[String],
+    ().asJson,
     ().asJson,
     ().asJson
   )
