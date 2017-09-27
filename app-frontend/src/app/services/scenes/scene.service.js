@@ -7,7 +7,7 @@ export default (app) => {
 
             this.Scene = $resource(
                 `${BUILDCONFIG.API_HOST}/api/scenes/:id/`, {
-                    id: '@properties.id'
+                    id: '@id'
                 }, {
                     query: {
                         method: 'GET',
@@ -15,6 +15,10 @@ export default (app) => {
                     },
                     get: {
                         method: 'GET',
+                        cache: false
+                    },
+                    update: {
+                        method: 'PUT',
                         cache: false
                     }
                 }
@@ -57,6 +61,9 @@ export default (app) => {
             return styledGeojson;
         }
 
+        update(sceneParams = {}) {
+            return this.Scene.update(sceneParams).$promise;
+        }
     }
 
     app.service('sceneService', SceneService);
