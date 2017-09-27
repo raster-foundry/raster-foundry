@@ -17,7 +17,7 @@ export default class ColorSchemeDropdownController {
         this.filterToValidSchemes = (value) => {
             return this.state &&
                 value.type === this.state.schemeType.value &&
-                (this.state.blending.bins === 0 || value.colors.length >= this.state.blending.bins);
+                (this.state.blending.bins === 0 || Object.keys(value).length >= this.state.blending.bins);
         };
     }
 
@@ -68,11 +68,8 @@ export default class ColorSchemeDropdownController {
     getStateFromColorSchemeOptions() {
         let stateToReturn = {};
         if (this._colorSchemeOptions && this._colorSchemeOptions.colorScheme) {
-            const scheme = this.colorSchemeService.defaultColorSchemes.find(
-                s => _.isEqual(
-                    this._colorSchemeOptions.colorScheme,
-                    s.colors
-                )
+            const scheme = this.colorSchemeService.matchSingleBandOptions(
+                this._colorSchemeOptions
             );
 
             if (scheme) {
@@ -115,7 +112,9 @@ export default class ColorSchemeDropdownController {
         // @TODO: need to determine way forward for setting bin values?
         if (this.state) {
             return {
-                colorScheme: this.state.scheme.colors,
+                colorScheme: this.colorSchemeService.colorStopsToProportionalArray(
+                    this.state.scheme.colors, this.state.reversed
+                ),
                 dataType: this.state.schemeType.value,
                 colorBins: this.state.blending.bins,
                 reversed: this.state.reversed
@@ -266,5 +265,6 @@ export default class ColorSchemeDropdownController {
 
     reverseColors() {
         this.state.reversed = !this.state.reversed;
+        this.reflectState();
     }
 }

@@ -84,13 +84,9 @@ export default class ProjectsEditColormode {
                 t => t.value === this.projectBuffer.singleBandOptions.dataType
             );
 
-        this.activeColorScheme =
-            this.colorSchemeService.defaultColorSchemes.find(
-                s => _.isEqual(
-                    this.projectBuffer.singleBandOptions.colorScheme,
-                    s.colors
-                )
-            );
+        this.activeColorScheme = this.colorSchemeService.matchSingleBandOptions(
+            this.projectBuffer.singleBandOptions
+        );
 
         this.activeColorBlendMode =
             this.colorSchemeService.defaultColorBlendModes.find(
@@ -103,7 +99,7 @@ export default class ProjectsEditColormode {
         this.defaultSingleBandOptions = {
             band: 0,
             dataType: scheme.type,
-            colorScheme: scheme.colors,
+            colorScheme: this.colorSchemeService.colorStopsToProportionalArray(scheme.colors),
             colorBins: 0,
             legendOrientation: 'left'
         };
@@ -160,7 +156,9 @@ export default class ProjectsEditColormode {
             this.projectBuffer.singleBandOptions.dataType = scheme.type;
             if (scheme.type !== 'CATEGORICAL') {
                 this.projectBuffer.singleBandOptions.colorScheme =
-                    this.activeColorScheme.colors;
+                    this.colorSchemeService.colorStopsToProportionalArray(
+                        this.activeColorScheme.colors
+                    );
             } else if (scheme.breaks) {
                 this.projectBuffer.singleBandOptions.colorScheme =
                     this.colorSchemeService
@@ -170,7 +168,11 @@ export default class ProjectsEditColormode {
                         );
             } else {
                 this.projectBuffer.singleBandOptions.colorScheme =
-                    this.colorSchemeService.colorsToSequentialScheme(this.activeColorScheme.colors);
+                    this.colorSchemeService.colorsToSequentialScheme(
+                        this.colorSchemeService.colorStopsToProportionalArray(
+                            this.activeColorScheme.colors
+                        )
+                    );
             }
             if (save) {
                 this.updateProjectFromBuffer();

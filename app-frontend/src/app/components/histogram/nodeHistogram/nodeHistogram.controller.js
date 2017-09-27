@@ -360,9 +360,6 @@ export default class NodeHistogramController {
         let colors = binned ?
             this.getColorBins(colorSchemeOptions.colorScheme, colorSchemeOptions.colorBins) :
             colorSchemeOptions.colorScheme;
-        if (colorSchemeOptions.reversed) {
-            colors = colors.slice().reverse();
-        }
         this._breakpoints = colors.map((color, index, arr) => {
             let isEndpoint = index === 0 || index === arr.length - 1;
             return {
