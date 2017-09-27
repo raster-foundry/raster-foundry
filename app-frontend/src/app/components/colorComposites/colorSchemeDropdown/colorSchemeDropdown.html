@@ -7,7 +7,10 @@
           uib-dropdown-toggle>
       <div class="gradient-bar gradient-bkg"
           ng-style="$ctrl.colorSchemeService.colorsToBackground(
-                      $ctrl.reflectedState.scheme.colors, 90, $ctrl.reflectedState.blending.bins)"
+                      $ctrl.reflectedState.scheme.colors,
+                      90,
+                      $ctrl.reflectedState.blending.bins,
+                      $ctrl.state.reversed)"
       ></div>
       <i class="icon-caret-down"></i>
   </button>
@@ -32,8 +35,16 @@
           <div class="gradient-container" ng-class="$ctrl.getSchemeClass(scheme)">
             <div class="gradient-bar gradient-bkg"
                  ng-style="$ctrl.colorSchemeService.colorsToBackground(
-                             scheme.colors, 90, $ctrl.state.blending.bins)"
+                             scheme.colors,
+                             90,
+                             $ctrl.state.blending.bins,
+                             $ctrl.state.reversed)"
             ></div>
+          </div>
+          <div class="reverse-indicator"
+               ng-class="{'active': $ctrl.state.reversed}"
+               ng-click="$ctrl.reverseColors()">
+            <i class="icon-exchange"></i>
           </div>
         </li>
       </ul>

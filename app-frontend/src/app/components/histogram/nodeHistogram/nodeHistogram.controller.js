@@ -185,7 +185,7 @@ export default class NodeHistogramController {
         };
     }
 
-    rescaleBreakpoints(min, max) {
+    rescaleHistogram(min, max) {
         let currentRange = this._options.range.max - this._options.range.min;
         let newRange = max - min;
 
@@ -225,7 +225,7 @@ export default class NodeHistogramController {
         let magnitude = Math.round(Math.log10(diff));
         this.precision = Math.pow(10, magnitude);
 
-        this.rescaleBreakpoints(newHistogram.minimum, newHistogram.maximum);
+        this.rescaleHistogram(newHistogram.minimum, newHistogram.maximum);
 
         let buckets = newHistogram.buckets;
         let plot;
@@ -338,11 +338,16 @@ export default class NodeHistogramController {
     onColorSchemeChange(colorSchemeOptions) {
         if (this._options.baseScheme &&
             colorSchemeOptions.colorBins === this._options.baseScheme.colorBins &&
+            colorSchemeOptions.reversed === this._options.baseScheme.reversed &&
             JSON.stringify(colorSchemeOptions.colorScheme) ===
             JSON.stringify(this._options.baseScheme.colorScheme)
            ) {
             return;
         }
+
+        let minVal = _.first(this._breakpoints).value;
+        let maxVal = _.last(this._breakpoints).value;
+
         let min = this._options.range.min;
         let max = this._options.range.max;
 
@@ -351,10 +356,13 @@ export default class NodeHistogramController {
         let numColors = binned ?
             colorSchemeOptions.colorBins : colorSchemeOptions.colorScheme.length;
 
-        this.rescaleBreakpoints(0, numColors - 1);
+        this.rescaleHistogram(0, numColors - 1);
         let colors = binned ?
             this.getColorBins(colorSchemeOptions.colorScheme, colorSchemeOptions.colorBins) :
             colorSchemeOptions.colorScheme;
+        if (colorSchemeOptions.reversed) {
+            colors = colors.slice().reverse();
+        }
         this._breakpoints = colors.map((color, index, arr) => {
             let isEndpoint = index === 0 || index === arr.length - 1;
             return {
@@ -369,6 +377,14 @@ export default class NodeHistogramController {
         });
         this._options.scale = colorSchemeOptions.dataType;
         this._options.baseScheme = colorSchemeOptions;
-        this.rescaleBreakpoints(min, max);
+        this.rescaleHistogram(min, max);
+        this.histogramService.scaleBreakpointsToRange(
+            this._breakpoints,
+            {
+                min: min, max: max
+            }, {
+                min: minVal, max: maxVal
+            }
+        );
     }
 }

@@ -54,8 +54,11 @@ export default (app) => {
 
         // colors:string[] => { string: string }
         // colors are expected in css hex style (#FFFFFF)
-        colorsToBackground(colors, direction = 90, bins = 0) {
-            let colorString = bins > 0 ? this.toBinnedColors(colors) : colors.join(', ');
+        colorsToBackground(colors, direction = 90, bins = 0, reversed) {
+            let orderedColors = reversed ? colors.slice().reverse() : colors;
+            let colorString = bins > 0 ?
+                this.toBinnedColors(orderedColors) :
+                orderedColors.join(', ');
             const style = {
                 background: `linear-gradient(${direction}deg, ${colorString})`
             };
