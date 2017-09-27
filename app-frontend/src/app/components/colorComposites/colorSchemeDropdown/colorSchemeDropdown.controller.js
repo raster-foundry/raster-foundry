@@ -57,7 +57,8 @@ export default class ColorSchemeDropdownController {
                 label: 'Sequential',
                 value: 'SEQUENTIAL'
             },
-            scheme: this.colorSchemeService.defaultColorSchemes.find(s => s.type === 'SEQUENTIAL')
+            scheme: this.colorSchemeService.defaultColorSchemes.find(s => s.type === 'SEQUENTIAL'),
+            reversed: false
         };
     }
 
@@ -102,6 +103,7 @@ export default class ColorSchemeDropdownController {
                 };
             }
             stateToReturn.blending = blending;
+            stateToReturn.reversed = this._colorSchemeOptions.reversed;
         }
         return stateToReturn;
     }
@@ -112,7 +114,8 @@ export default class ColorSchemeDropdownController {
             return {
                 colorScheme: this.state.scheme.colors,
                 dataType: this.state.schemeType.value,
-                colorBins: this.state.blending.bins
+                colorBins: this.state.blending.bins,
+                reversed: this.state.reversed
             };
         }
         return {};
@@ -256,5 +259,9 @@ export default class ColorSchemeDropdownController {
         if (!open) {
             this.mergeStates();
         }
+    }
+
+    reverseColors() {
+        this.state.reversed = !this.state.reversed;
     }
 }
