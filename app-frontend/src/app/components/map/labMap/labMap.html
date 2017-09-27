@@ -49,8 +49,32 @@
         </div>
       </div>
     </div>
+    <div class="filler"></div>
+    <button class="btn btn-default btn-square btn-small"
+            title="Measure"
+            ng-click="$ctrl.toggleMeasurePicker($event)">
+      <span class="icon-check"></span>
+    </button>
+    <div class="measure-dropdown-control layer-picker"
+         ng-show="$ctrl.measurePickerOpen">
+      <div class="layer-picker-title">Pick Measurement</div>
+      <div class="dropdown-arrow"></div>
+      <div class="layer-picker-body">
+        <div class="layer-picker-option"
+             ng-click="$ctrl.toggleMeasure('Polygon')">
+          <div class="layer-picker-label">
+            Polygon
+          </div>
+        </div>
+        <div class="layer-picker-option"
+             ng-click="$ctrl.toggleMeasure('Polyline')">
+          <div class="layer-picker-label">
+            Polyline
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-
   <div class="filler"></div>
   <button class="btn btn-square btn-small"
           title="Compare"
@@ -62,7 +86,7 @@
   <div class="filler"></div>
   <button class="btn btn-default btn-square btn-small"
           title="Close"
-          ng-click="$ctrl.onClose()">
+          ng-click="$ctrl.onLabMapClose()">
     <span class="icon-close"></span>
   </button>
 </div>
