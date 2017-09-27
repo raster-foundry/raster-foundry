@@ -70,7 +70,7 @@ trait DatasourceRoutes extends Authentication
 
   def updateDatasource(datasourceId: UUID): Route = authenticate { user =>
     entity(as[Datasource]) { updateDatasource =>
-      authorize(user.isInRootOrSameOrganizationAs(updateDatasource)) {
+      authorize(user.isInRootOrOwner(updateDatasource)) {
         onSuccess(update(Datasources.updateDatasource(updateDatasource, datasourceId, user))) {
           completeSingleOrNotFound
         }

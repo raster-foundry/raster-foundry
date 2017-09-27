@@ -28,7 +28,7 @@ class Datasources(_tableTag: Tag) extends Table[Datasource](_tableTag, "datasour
     with OrgFkVisibleFields
 {
   def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, owner, organizationId, name,
-           visibility, composites, extras) <> (
+           visibility, composites, extras, bands) <> (
     Datasource.tupled, Datasource.unapply
   )
 
@@ -43,6 +43,7 @@ class Datasources(_tableTag: Tag) extends Table[Datasource](_tableTag, "datasour
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
   val composites: Rep[Json] = column[Json]("composites", O.Length(2147483647, varying=false))
   val extras: Rep[Json] = column[Json]("extras", O.Length(2147483647,varying=false))
+  val bands: Rep[Json] = column[Json]("bands", O.Length(2147483647, varying=false))
 
   lazy val organizationsFk = foreignKey("datasources_organization_id_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val createdByUserFK = foreignKey("datasources_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
@@ -111,7 +112,7 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
     */
   def deleteDatasource(datasourceId: UUID, user: User) =
     Datasources
-      .filterToSharedOrganizationIfNotInRoot(user)
+      .filterToOwnerOrRoot(user)
       .filter(_.id === datasourceId)
       .delete
 
@@ -133,7 +134,8 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
       updateDatasource.name,
       updateDatasource.visibility,
       updateDatasource.composites,
-      updateDatasource.extras
+      updateDatasource.extras,
+      updateDatasource.bands
     )
 
     updateDatasourceQuery.update(
@@ -143,7 +145,8 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
       datasource.name,
       datasource.visibility,
       datasource.composites,
-      datasource.extras
+      datasource.extras,
+      datasource.bands
     )
   }
 }

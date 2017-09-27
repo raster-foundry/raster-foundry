@@ -49,7 +49,8 @@ export default (app) => {
                         name: name,
                         visibility: params.visibility || 'PRIVATE',
                         composites: composites,
-                        extras: params.extras || {}
+                        extras: params.extras || {},
+                        bands: params.bands || {}
                     }).$promise;
                 },
                 (error) => {

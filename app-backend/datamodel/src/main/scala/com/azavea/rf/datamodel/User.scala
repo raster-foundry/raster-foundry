@@ -50,6 +50,10 @@ case class User(
     this.isInRootOrganization || this.organizationId == target.organizationId
   }
 
+  def isInRootOrOwner(target: { def owner: String }): Boolean = {
+    this.isInRootOrganization || this.id == target.owner
+  }
+
   def getDefaultExportSource(export: Export, dataBucket: String): URI =
     new URI(s"s3://$dataBucket/user-exports/${URLEncoder.encode(id, "UTF-8")}/${export.id}")
 }
