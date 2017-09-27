@@ -9,6 +9,7 @@ RUN set -ex \
        python-setuptools \
        python-dev \
        build-essential \
+       imagemagick \
     ' \
     && echo 'deb http://http.us.debian.org/debian sid main non-free contrib' > /etc/apt/sources.list.d/sid.list \
     && apt-get update \

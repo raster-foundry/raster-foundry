@@ -2,7 +2,6 @@ package com.azavea.rf.tool.eval
 
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.eval._
-import com.azavea.rf.tool.params._
 import com.azavea.rf.tool.ast.codec.MapAlgebraCodec._
 import com.azavea.rf.tool.ast.MapAlgebraAST._
 
@@ -25,7 +24,7 @@ trait MockInterpreterResources extends TileBuilders with RasterMatchers {
 
   def randomSourceAST = MapAlgebraAST.Source(UUID.randomUUID, None)
 
-  def tileRef(band: Int) = SceneRaster(UUID.randomUUID, Some(band), None)
+  def sceneRaster(band: Int) = SceneRaster(UUID.randomUUID, UUID.randomUUID, Some(band), None, None)
 
   def tile(value: Int): Tile = createValueTile(d = 256, v = value)
 
@@ -33,11 +32,11 @@ trait MockInterpreterResources extends TileBuilders with RasterMatchers {
 
   val constantSource = (raster: RFMLRaster, buffer: Boolean, z: Int, x: Int, y: Int) => {
     raster match {
-      case r@SceneRaster(id, Some(band), maybeND) =>
+      case SceneRaster(_, _, Some(band), maybeND, _) =>
         requests = raster :: requests
         if (buffer)
           Future {
-            Some(TileWithNeighbors(
+            Valid(TileWithNeighbors(
               tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)),
               Some(NeighboringTiles(
                 tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)),
@@ -52,7 +51,27 @@ trait MockInterpreterResources extends TileBuilders with RasterMatchers {
             ))
           }
         else
-          Future { Some(TileWithNeighbors(tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)), None)) }
+          Future { Valid(TileWithNeighbors(tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)), None)) }
+      case ProjectRaster(_, _, Some(band), maybeND, _) =>
+        requests = raster :: requests
+        if (buffer)
+          Future {
+            Valid(TileWithNeighbors(
+              tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)),
+              Some(NeighboringTiles(
+                tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)),
+                tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)),
+                tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)),
+                tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)),
+                tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)),
+                tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)),
+                tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)),
+                tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType))
+              ))
+            ))
+          }
+        else
+          Future { Valid(TileWithNeighbors(tile(band).interpretAs(maybeND.getOrElse(tile(band).cellType)), None)) }
       case _ => Future.failed(new Exception("can't find that"))
     }
   }
@@ -60,11 +79,11 @@ trait MockInterpreterResources extends TileBuilders with RasterMatchers {
   val ascendingSource = (raster: RFMLRaster, buffer: Boolean, z: Int, x: Int, y: Int) => {
     val ascending = IntArrayTile(1 to 256*256 toArray, 256, 256)
     raster match {
-      case r@SceneRaster(id, _, maybeND) =>
+      case SceneRaster(_, _, Some(band), maybeND, _) =>
         requests = raster :: requests
         if (buffer)
           Future {
-            Some(TileWithNeighbors(
+            Valid(TileWithNeighbors(
               ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
               Some(NeighboringTiles(
                 ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
@@ -79,7 +98,27 @@ trait MockInterpreterResources extends TileBuilders with RasterMatchers {
             ))
           }
         else
-          Future { Some(TileWithNeighbors(ascending.interpretAs(maybeND.getOrElse(ascending.cellType)), None)) }
+          Future { Valid(TileWithNeighbors(ascending.interpretAs(maybeND.getOrElse(ascending.cellType)), None)) }
+      case ProjectRaster(_, _, Some(band), maybeND, _) =>
+        requests = raster :: requests
+        if (buffer)
+          Future {
+            Valid(TileWithNeighbors(
+              ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
+              Some(NeighboringTiles(
+                ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
+                ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
+                ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
+                ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
+                ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
+                ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
+                ascending.interpretAs(maybeND.getOrElse(ascending.cellType)),
+                ascending.interpretAs(maybeND.getOrElse(ascending.cellType))
+              ))
+            ))
+          }
+        else
+          Future { Valid(TileWithNeighbors(ascending.interpretAs(maybeND.getOrElse(ascending.cellType)), None)) }
       case _ => Future.failed(new Exception("can't find that"))
     }
   }
@@ -87,11 +126,11 @@ trait MockInterpreterResources extends TileBuilders with RasterMatchers {
   val moduloSource = (raster: RFMLRaster, buffer: Boolean, z: Int, x: Int, y: Int) => {
     def mod(modWhat: Int) = IntArrayTile((1 to 256*256).map(_ % modWhat) toArray, 256, 256)
     raster match {
-      case r@SceneRaster(id, Some(band), maybeND) =>
+      case ProjectRaster(_, _, Some(band), maybeND, _) =>
         requests = raster :: requests
         if (buffer)
           Future {
-            Some(TileWithNeighbors(
+            Valid(TileWithNeighbors(
               mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType)),
               Some(NeighboringTiles(
                 mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType)),
@@ -106,7 +145,27 @@ trait MockInterpreterResources extends TileBuilders with RasterMatchers {
             ))
           }
         else
-          Future { Some(TileWithNeighbors(mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType)), None)) }
+          Future { Valid(TileWithNeighbors(mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType)), None)) }
+      case SceneRaster(_, _, Some(band), maybeND, _) =>
+        requests = raster :: requests
+        if (buffer)
+          Future {
+            Valid(TileWithNeighbors(
+              mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType)),
+              Some(NeighboringTiles(
+                mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType)),
+                mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType)),
+                mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType)),
+                mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType)),
+                mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType)),
+                mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType)),
+                mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType)),
+                mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType))
+              ))
+            ))
+          }
+        else
+          Future { Valid(TileWithNeighbors(mod(band).interpretAs(maybeND.getOrElse(mod(band).cellType)), None)) }
       case _ => Future.failed(new Exception("can't find that"))
     }
   }

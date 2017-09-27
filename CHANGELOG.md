@@ -1,5 +1,15 @@
 # Change Log
 
+## [0.22.0](https://github.com/raster-foundry/raster-foundry/tree/0.22.0) (2017-09-27)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.21.0...0.22.0)
+
+**Merged pull requests:**
+
+- Install imagemagick in batch container [\#2574](https://github.com/raster-foundry/raster-foundry/pull/2574)
+- Replace check\_database with docker-compose healthcheck [\#2551](https://github.com/raster-foundry/raster-foundry/pull/2551)
+- Full AST on toolrun [\#2509](https://github.com/raster-foundry/raster-foundry/pull/2509)
+
 ## [0.21.0](https://github.com/raster-foundry/raster-foundry/tree/0.21.0) (2017-09-25)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.20.2...0.21.0)

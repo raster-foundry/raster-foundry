@@ -6,7 +6,7 @@ import com.azavea.rf.database.query.{ExportQueryParameters, ListQueryResult}
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.params._
+import MapAlgebraAST._
 
 import cats.data._
 import cats.implicits._
@@ -177,7 +177,7 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
   def getExportStyle(export: Export, exportOptions: ExportOptions, user: User)
                     (implicit database: DB): OptionT[Future, Either[SimpleInput, ASTInput]] = {
     (export.projectId, export.toolRunId) match {
-      case (_, Some(id)) => astInput(id, export, user).map(Right(_))
+      case (_, Some(id)) => astInput(id, user).map(Right(_))
       case (Some(pid), None) => {
         /* Hand-holding the type system */
         val work: Future[Option[Either[SimpleInput, ASTInput]]] =
@@ -237,59 +237,56 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
   }
 
   /**
-    * An AST could be given `EvalParams` that ask for scenes from the same
+    * An AST could include nodes that ask for scenes from the same
     * project, from different projects, or all scenes from a project. This can
     * happen at the same time, and there's nothing illegal about this, we just
     * need to make sure to include all the ingest locations.
     */
   private def astInput(
     toolRunId: UUID,
-    export: Export,
     user: User
   )(implicit database: DB): OptionT[Future, ASTInput] = {
 
     for {
       tRun   <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
-      tool   <- OptionT(Tools.getTool(tRun.tool, user))
-      oldAst <- OptionT.pure[Future, MapAlgebraAST](tool.definition.as[MapAlgebraAST].valueOr(throw _))
-      subs   <- assembleSubstitutions(oldAst, { id: UUID =>
-                  OptionT(Tools.getTool(id, user))
-                    .map({ referrent => referrent.definition.as[MapAlgebraAST].valueOr(throw _) })
-                    .value
-                })
-      ast    <- OptionT.fromOption[Future](oldAst.substitute(subs))
-      params <- OptionT.pure[Future, EvalParams](tRun.executionParameters.as[EvalParams].valueOr(throw _))
-      (scenes, projects) <- ingestLocs(params, user)
+      ast    <- OptionT.pure[Future, MapAlgebraAST](tRun.executionParameters.as[MapAlgebraAST].valueOr(throw _))
+      (scenes, projects) <- ingestLocs(ast, user)
     } yield {
-      ASTInput(ast, params, scenes, projects)
+      ASTInput(ast, scenes, projects)
     }
   }
 
   /** Obtain the ingest locations for all Scenes and Projects which are
     * referenced in the given [[EvalParams]]. If even a single Scene anywhere is
     * found to have no `ingestLocation` value, the entire operation fails.
+    *
+    * @note Scenes are represented with a map from scene ID to ingest location.
+    * @note Projects are represented with a map from project ID to a map from scene ID to
+    *       ingest location
     */
   private def ingestLocs(
-    sources: EvalParams,
+    ast: MapAlgebraAST,
     user: User
   )(implicit database: DB): OptionT[Future, (Map[UUID, String], Map[UUID, List[(UUID, String)]])] = {
 
     val (scenes, projects): (Stream[SceneRaster], Stream[ProjectRaster]) =
-      sources.sources.toStream
-        .map(_._2)
+      ast.tileSources
+        .toStream
         .foldLeft((Stream.empty[SceneRaster], Stream.empty[ProjectRaster]))({
           case ((sacc, pacc), s: SceneRaster) => (s #:: sacc, pacc)
           case ((sacc, pacc), p: ProjectRaster) => (sacc, p #:: pacc)
+          case ((sacc, pacc), _) => (sacc, pacc)
         })
 
-    val scenesF: OptionT[Future, Map[UUID, String]] = scenes.map({ case SceneRaster(id, _, _) =>
-      OptionT(Scenes.getScene(id, user)).flatMap(s =>
-        OptionT.fromOption(s.ingestLocation.map((s.id, _)))
-      )
-    }).sequence.map(_.toMap)
+    val scenesF: OptionT[Future, Map[UUID, String]] =
+      scenes.map({ case SceneRaster(_, sceneId, _, _, _) =>
+        OptionT(Scenes.getScene(sceneId, user)).flatMap(s =>
+          OptionT.fromOption(s.ingestLocation.map((s.id, _)))
+        )
+      }).sequence.map(_.toMap)
 
     val projectsF: OptionT[Future, Map[UUID, List[(UUID, String)]]] =
-      projects.map({ case ProjectRaster(id, _, _) =>
+      projects.map({ case ProjectRaster(id, projId, _, _, _) =>
         OptionT(ScenesToProjects.allSceneIngestLocs(id)).map((id, _))
       }).sequence.map(_.toMap)
 

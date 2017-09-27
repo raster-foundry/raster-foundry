@@ -42,7 +42,14 @@ export default class ClassifyNodeController {
         this.activeModal.result.then(breaks => {
             this.breaks = breaks;
             this.ranges = this.getRanges();
-            this.onChange({override: {id: this.model.get('id'), classMap: breaks}});
+            this.onChange({
+                override: {
+                    id: this.model.get('id'),
+                    classMap: {
+                        classifications: breaks
+                    }
+                }
+            });
         });
     }
 }
