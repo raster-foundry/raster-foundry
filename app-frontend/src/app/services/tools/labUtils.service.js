@@ -38,13 +38,15 @@ export default (app) => {
                       <span class="icon-map"></span>
                       </button>
                       <button class="btn node-button" type="button"
-                              ng-if="model.get('cellType') !== 'const'"
+                              ng-if="model.get('cellType') !== 'const' && 
+                               model.get('cellType') !== 'src'"
                               ng-class="{'active': currentView === 'HISTOGRAM'}"
                               ng-click="toggleHistogram()">
                       <span class="icon-histogram"></span>
                       </button>
                       <button class="btn node-button" type="button"
-                              ng-if="model.get('cellType') !== 'const'"
+                              ng-if="model.get('cellType') !== 'const' && 
+                               model.get('cellType') !== 'src'"
                               ng-class="{'active': currentView === 'STATISTICS'}"
                               ng-click="toggleStatistics()">
                           Stats
