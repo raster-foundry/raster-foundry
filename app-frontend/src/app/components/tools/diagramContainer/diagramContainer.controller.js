@@ -6,7 +6,7 @@ const minZoom = 0.025;
 export default class DiagramContainerController {
     constructor( // eslint-disable-line max-params
         $element, $scope, $state, $timeout, $compile, $document, $window, $rootScope,
-        mousetipService, toolService, labUtils, colorSchemeService
+        mousetipService, toolService, labUtils
     ) {
         'ngInject';
         this.$element = $element;
@@ -20,7 +20,6 @@ export default class DiagramContainerController {
         this.mousetipService = mousetipService;
         this.toolService = toolService;
         this.labUtils = labUtils;
-        this.colorSchemeService = colorSchemeService;
     }
 
     $onInit() {

@@ -8,7 +8,6 @@ export default (app) => {
             'ngInject';
 
             let viridis = colorSchemeService.defaultColorSchemes.find(s => s.label === 'Viridis');
-            let linspace = this.linspace;
 
             joint.shapes.html = {};
             joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
@@ -312,10 +311,12 @@ export default (app) => {
                     }
 
                     if (!this.scope.breakpoints) {
-                        let breakpoints = linspace(0, 255, viridis.colors.length);
-                        this.scope.breakpoints = breakpoints.map((value, index) => {
-                            return {value: value, color: viridis.colors[index]};
-                        });
+                        const mappedBreakpoints = colorSchemeService.colorStopsToRange(
+                            viridis.colors, 0, 255
+                        );
+                        this.scope.breakpoints = Object.entries(mappedBreakpoints).map(
+                            ([stop, color]) => Object({value: Number(stop), color: color})
+                        );
                         this.scope.histogramOptions = {
                             range: {min: 0, max: 255},
                             masks: {min: false, max: false},
@@ -485,23 +486,6 @@ export default (app) => {
                 value: config.value,
                 positionOverride: config.positionOverride
             }));
-        }
-
-        linspace(min, max, num) {
-            let n = num;
-            if (typeof n === 'undefined') {
-                n = Math.max(Math.round(max - min) + 1, 1);
-            }
-            if (n < 2) {
-                return n === 1 ? [min] : [];
-            }
-            let i = Array(n);
-            let ret = Array(n);
-            n = n - 1;
-            for (i = n; i >= 0; i = i - 1) {
-                ret[i] = (i * max + (n - i) * min) / n;
-            }
-            return ret;
         }
 
         extractShapes(
