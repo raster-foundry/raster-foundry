@@ -68,7 +68,7 @@ export default app => {
                 let profileFlags = this.userProfile &&
                     this.userProfile.user_metadata &&
                     this.userProfile.user_metadata.featureFlags;
-                let f = profileFlags.find((flag) => flag.key === flagName);
+                let f = profileFlags && profileFlags.find((flag) => flag.key === flagName);
                 cached = f ? f.active : false;
             }
             return cached;
