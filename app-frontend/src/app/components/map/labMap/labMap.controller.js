@@ -211,7 +211,7 @@ export default class LabMapController {
 
     setPopupContent(shapeType, measurement, layer) {
         let popupScope = this.$scope.$new();
-        let type = shapeType === 'polyline' ? 'Length ' : 'Area ';
+        let type = shapeType === 'polyline' ? 'Distance ' : 'Area ';
         let unit = shapeType === 'polyline' ? ' Meters ' : ' Sq. Meters ';
         let popupContent = angular.element(
             `
