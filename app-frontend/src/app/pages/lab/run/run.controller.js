@@ -4,7 +4,7 @@ import { FrameView } from '../../../components/map/labMap/frame.module.js';
 export default class LabRunController {
     constructor( // eslint-disable-line max-params
         $log, $scope, $timeout, $element, $window, $document, $uibModal, $rootScope,
-        mapService, projectService, authService, mapUtilsService, toolService,
+        mapService, projectService, authService, mapUtilsService, toolService, tokenService,
         APP_CONFIG
     ) {
         'ngInject';
@@ -21,6 +21,7 @@ export default class LabRunController {
         this.projectService = projectService;
         this.mapUtilsService = mapUtilsService;
         this.toolService = toolService;
+        this.tokenService = tokenService;
         this.getMap = () => mapService.getMap('lab-preview');
         this.tileServer = `${APP_CONFIG.tileServerLocation}`;
 
@@ -338,9 +339,17 @@ export default class LabRunController {
     }
 
     shareNode(data) {
-        if (data) {
-            let tileUrl = this.getNodeUrl(data);
-            this.publishModal(tileUrl);
+        if (data && this.lastToolRun) {
+            this.tokenService.getOrCreateToolMapToken({
+                organizationId: this.lastToolRun.organizationId,
+                name: this.tool.title,
+                toolRun: this.lastToolRun.id
+            }).then((mapToken) => {
+                this.publishModal(
+                    // eslint-disable-next-line max-len
+                    `${this.tileServer}/tools/${this.lastToolRun.id}/{z}/{x}/{y}?token=${mapToken.id}&node=${data}`
+                );
+            });
         }
     }
 
@@ -422,8 +431,9 @@ export default class LabRunController {
             this.activeModal = this.$uibModal.open({
                 component: 'rfProjectPublishModal',
                 resolve: {
-                    tileUrl: () => this.projectService.getBaseURL() + tileUrl,
-                    noDownload: () => true
+                    tileUrl: () => tileUrl,
+                    noDownload: () => true,
+                    toolTitle: () => this.tool.title
                 }
             });
         }
