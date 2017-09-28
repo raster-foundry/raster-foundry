@@ -414,7 +414,9 @@ export default (app) => {
 
         getNodeArgs(node) {
             if (node.args) {
-                return Array.isArray(node.args) ? [...node.args].reverse() : Object.values(node.args).reverse();
+                return Array.isArray(node.args) ?
+                    [...node.args].reverse() :
+                    Object.values(node.args).reverse();
             }
             return [];
         }
