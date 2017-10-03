@@ -160,7 +160,7 @@ export default class ProjectsEditController {
     layerFromProject() {
         let url = this.projectService.getProjectLayerURL(
             this.project,
-            this.authService.token()
+            {token: this.authService.token()}
         );
         let layer = L.tileLayer(url, {
             maxZoom: 30

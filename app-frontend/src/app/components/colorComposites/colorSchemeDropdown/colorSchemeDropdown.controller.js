@@ -18,7 +18,10 @@ export default class ColorSchemeDropdownController {
             return this.state &&
                 value.type === this.state.schemeType.value &&
                 (this.state.blending.bins === 0 || value.colors.length >= this.state.blending.bins);
-        };} $onInit() {
+        };
+    }
+
+    $onInit() {
         this.$element.on('wheel', (event) => {
             event.stopPropagation();
         });

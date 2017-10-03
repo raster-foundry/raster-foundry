@@ -110,10 +110,19 @@ export default (app) => {
             return this.toolMapToken.get().$promise;
         }
 
+        findToken(tokens, params) {
+            if (params.project) {
+                return tokens.results.find(t => t.project === params.project);
+            } else if (params.toolRun) {
+                return tokens.results.find(t => t.toolRun === params.toolRun);
+            }
+            return null;
+        }
+
         getOrCreateToolMapToken(params) {
             let deferred = this.$q.defer();
             this.getToolMapTokens().then((res) => {
-                let token = res.results.find(t => t.name === params.name);
+                let token = this.findToken(res, params);
                 if (token) {
                     deferred.resolve(token);
                 } else {

@@ -132,7 +132,7 @@ export default class ProjectPublishModalController {
         if (this.resolve.toolTitle) {
             this.tileLayerUrls.arcGIS = `${arcGISUrl}`;
             this.tileLayerUrls.standard = `${zxyUrl}`;
-            this.toolToken = this.resolve.tileUrl.split('?token=')[1].split('&node=')[0];
+            this.toolToken = this.resolve.tileUrl.split('?mapToken=')[1].split('&node=')[0];
         } else {
             // eslint-disable-next-line no-lonely-if
             if (this.activePolicy && this.activePolicy.enum !== 'PRIVATE') {

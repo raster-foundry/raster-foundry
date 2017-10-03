@@ -74,7 +74,7 @@ export default class LabRunController {
             // eslint-disable-next-line max-len
             let toolNode = this.findNodeinToolDefinition(node, this.lastToolRun.executionParameters);
             if (toolNode.type === 'projectSrc') {
-                return this.projectService.getProjectLayerURL(toolNode.projId, token);
+                return this.projectService.getProjectLayerURL(toolNode.projId, {token: token});
             }
             return `${this.tileServer}/tools/${this.lastToolRun.id}/` +
                 `{z}/{x}/{y}?token=${token}&node=${node}`;
@@ -338,18 +338,33 @@ export default class LabRunController {
         this.$rootScope.$broadcast('lab.resize');
     }
 
-    shareNode(data) {
-        if (data && this.lastToolRun) {
-            this.tokenService.getOrCreateToolMapToken({
-                organizationId: this.lastToolRun.organizationId,
-                name: this.tool.title,
-                toolRun: this.lastToolRun.id
-            }).then((mapToken) => {
-                this.publishModal(
-                    // eslint-disable-next-line max-len
-                    `${this.tileServer}/tools/${this.lastToolRun.id}/{z}/{x}/{y}?token=${mapToken.id}&node=${data}`
-                );
-            });
+    shareNode(nodeId) {
+        if (nodeId && this.lastToolRun) {
+            let node = this.findNodeinToolDefinition(nodeId, this.lastToolRun.executionParameters);
+            if (node.type === 'projectSrc') {
+                this.tokenService.getOrCreateToolMapToken({
+                    organizationId: this.lastToolRun.organizationId,
+                    name: this.tool.title + ' - ' + this.lastToolRun.id,
+                    project: node.projId
+                }).then((mapToken) => {
+                    this.publishModal(
+                        this.projectService.getProjectLayerURL(
+                            node.projId, {mapToken: mapToken.id}
+                        )
+                    );
+                });
+            } else {
+                this.tokenService.getOrCreateToolMapToken({
+                    organizationId: this.lastToolRun.organizationId,
+                    name: this.tool.title + ' - ' + this.lastToolRun.id,
+                    toolRun: this.lastToolRun.id
+                }).then((mapToken) => {
+                    this.publishModal(
+                        // eslint-disable-next-line max-len
+                        `${this.tileServer}/tools/${this.lastToolRun.id}/{z}/{x}/{y}?mapToken=${mapToken.id}&node=${nodeId}`
+                    );
+                });
+            }
         }
     }
 
