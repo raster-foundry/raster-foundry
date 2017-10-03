@@ -28,14 +28,14 @@
                  ng-model="$ctrl.classCount"
                  min="1"
                  ng-min="1"
-                 ng-model-options="{debounce: 500}"
-                 ng-change="$ctrl.updateClassCount($ctrl.classCount)">
+                 ng-model-options="{debounce: 500, getterSetter: true}">
         </div>
       </div>
 
       <rf-reclassify-table
-        classifications="$ctrl.displayClassifications"
-        on-classifications-change="$ctrl.classifications = classifications"
+        classifications="$ctrl.breaks"
+        on-classifications-change="$ctrl.updateBreaks(breakpoints)"
+        on-breaks-change="$ctrl.updateBreaks(breakpoints)"
         on-no-gaps-overlaps-change="$ctrl.noGapsOverlaps = noGapsOverlaps"
         on-all-entries-valid-change="$ctrl.allEntriesValid = allEntriesValid" ></rf-reclassify-table>
     </div>
@@ -46,9 +46,9 @@
       </div>
       <rf-reclassify-histogram
         ng-if="$ctrl.histogram && !$ctrl.isLoadingHistogram"
-        classifications="$ctrl.classifications"
+        classifications="$ctrl.breaks"
         histogram="$ctrl.histogram"
-        on-breakpoint-change="$ctrl.onClassificationsChange(breakpoints)">
+        on-breakpoint-change="$ctrl.updateBreaks(breakpoints)">
       </rf-reclassify-histogram>
     </div>
   </div>
@@ -61,7 +61,7 @@
       Cancel
     </button>
     <button type="button" class="btn btn-primary"
-      ng-click="$ctrl.close({$value: $ctrl.classifications})"
+            ng-click="$ctrl.closeAndUpdate()"
             ng-disabled="!$ctrl.noGapsOverlaps || !$ctrl.allEntriesValid">
       Update
     </button>

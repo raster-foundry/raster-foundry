@@ -5,9 +5,11 @@ const rfReclassifyEntry = {
     bindings: {
         classRange: '<',
         classValue: '<',
+        break: '<',
         entryId: '@',
         onRangeChange: '&',
         onValueChange: '&',
+        onBreakChange: '&',
         onValidityChange: '&'
     },
     controller: 'ReclassifyEntryController'

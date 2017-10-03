@@ -4,6 +4,8 @@ export default {
     templateUrl: inputNodeTpl,
     controller: 'InputNodeController',
     bindings: {
+        node: '<',
+        tick: '<',
         model: '<',
         onChange: '&'
     }

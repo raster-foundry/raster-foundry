@@ -10,6 +10,7 @@ export default class LabRunController {
         'ngInject';
         this.$log = $log;
         this.$scope = $scope;
+        this.$state = $state;
         this.$rootScope = $rootScope;
         this.$parent = $scope.$parent.$ctrl;
         this.$timeout = $timeout;
@@ -34,6 +35,11 @@ export default class LabRunController {
             // This will be a call to the API
             this.toolRun = this.toolService.generateToolRun(this.tool);
             this.generatedPreview = false;
+            if (this.$state.params.runid) {
+                this.toolService
+                    .getToolRun(this.$state.params.runid)
+                    .then(t => this.setToolRun(t));
+            }
         });
         this.setWarning(
             'You must apply changes after defining inputs.'
@@ -70,7 +76,7 @@ export default class LabRunController {
 
     getNodeUrl(node) {
         let token = this.authService.token();
-        if (this.lastToolRun) {
+        if (this.toolRun) {
             // eslint-disable-next-line max-len
             let toolNode = this.findNodeinToolDefinition(node, this.lastToolRun.executionParameters);
             if (toolNode.type === 'projectSrc') {
@@ -163,7 +169,7 @@ export default class LabRunController {
 
     showPreview(data) {
         let defaultSplit = 40;
-        if (!this.lastToolRun) {
+        if (!this.toolRun) {
             return;
         }
 
@@ -189,7 +195,7 @@ export default class LabRunController {
                     if (!this.alreadyPreviewed) {
                         this.alreadyPreviewed = true;
                         this.$timeout(() => {
-                            let s = this.toolService.generateSourcesFromTool(this.lastToolRun);
+                            let s = this.toolService.generateSourcesFromTool(this.toolRun);
                             let firstSourceId = Object.keys(s)[0];
                             this.projectService.get(s[firstSourceId].projId).then(p => {
                                 this.fitProjectExtent(p);
@@ -384,20 +390,57 @@ export default class LabRunController {
         this.clearWarning();
         let toolRunPromise = this.toolService.createToolRun(this.toolRun);
         toolRunPromise.then(tr => {
-            this.lastToolRun = tr;
+            this.setToolRun(tr);
             this.clearWarning();
             if (this.isShowingPreview) {
                 this.showPreview(this.previewData);
             }
         }, () => {
             this.setWarning(
-                'There was an error applying your changes. ' +
-                    'Please verify that all inputs are defined.'
+                `There was an error applying your changes.
+                Please verify that all inputs are defined.`
             );
         }).finally(() => {
             this.applyInProgress = false;
         });
         return toolRunPromise;
+    }
+
+    updateToolRun() {
+        this.applyInProgress = true;
+        this.clearWarning();
+        const toolRunPromise = this.toolService.updateToolRun(
+            Object.assign(
+                {},
+                this.toolRun,
+                { id: this.$state.params.runid }
+            )
+        ).finally(() => {
+            this.applyInProgress = false;
+        });
+        return toolRunPromise;
+    }
+
+    createOrUpdateToolRun() {
+        this.applyInProgress = true;
+        this.clearWarning();
+        if (this.$state.params.runid) {
+            return this.updateToolRun();
+        }
+        return this.createToolRun();
+    }
+
+    setToolRun(toolrun) {
+        this.toolRun = toolrun;
+        this.$state.params.runid = toolrun.id;
+        this.$state.transitionTo(
+            this.$state.$current.name,
+            this.$state.params,
+            {
+                location: true,
+                notify: false
+            }
+        );
     }
 
     onExecutionParametersChange(sourceId, project, band, override, renderDef) {

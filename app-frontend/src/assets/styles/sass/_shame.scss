@@ -2700,6 +2700,7 @@ rf-reclassify-modal {
       border-top: 1px solid $gray-lightest;
       min-height: 130px;
       flex-shrink: 0;
+      overflow: hidden;
     }
     .classification-options {
       flex-shrink: 0;
@@ -2759,6 +2760,7 @@ rf-reclassify-modal {
       border: none;
       flex: 1;
       padding: 0.33em 2em;
+      cursor: text;
       &:first-child {
         border-right: 1px solid $gray-lightest;
         flex-shrink: 0;

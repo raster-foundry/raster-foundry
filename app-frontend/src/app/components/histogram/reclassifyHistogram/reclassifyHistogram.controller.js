@@ -24,10 +24,6 @@ export default class ReclassifyHistogramController {
         this.id = this.uuid4.generate();
         this.api = {};
 
-        this.onBreakpointChange({
-            breakpoints: this._breakpoints, options: this._options
-        });
-
         if (!Number.isFinite(this.precision)) {
             this.precision = 1;
         }
@@ -47,10 +43,7 @@ export default class ReclassifyHistogramController {
         }
 
         if (changes.classifications && changes.classifications.currentValue) {
-            let breakpoints = Object.keys(changes.classifications.currentValue).map(b => {
-                return { value: +b };
-            });
-            this._breakpoints = breakpoints.map(bp => {
+            this._breakpoints = changes.classifications.currentValue.map(bp => {
                 if (bp.id) {
                     return bp;
                 }
@@ -104,13 +97,17 @@ export default class ReclassifyHistogramController {
     }
 
     processDataToPlot(data) {
+        let bufferConstant = 1.1;
         let newHistogram = data;
-        let range = newHistogram.maximum - newHistogram.minimum;
+        let breakpoints = this.classifications.map(b => b.break);
+        let min = Math.min(newHistogram.minimum, ...breakpoints, 0) * bufferConstant;
+        let max = Math.max(newHistogram.maximum, ...breakpoints) * bufferConstant;
+        let range = max - min;
         let diff = range / 100;
         let magnitude = Math.round(Math.log10(diff));
         this.precision = Math.pow(10, magnitude);
         if (range) {
-            this.rescaleBreakpoints(newHistogram.minimum, newHistogram.maximum);
+            this.histogramRange = { min, max };
         }
 
         let buckets = newHistogram.buckets;
@@ -144,11 +141,11 @@ export default class ReclassifyHistogramController {
         }
 
         if (plot) {
-            if (_.first(plot).x !== newHistogram.minimum) {
-                plot.splice(0, 0, {x: newHistogram.minimum, y: 0});
+            if (_.first(plot).x > min) {
+                plot.splice(0, 0, {x: min, y: 0});
             }
-            if (_.last(plot).x !== newHistogram.maximum) {
-                plot.push({x: newHistogram.maximum, y: 0});
+            if (_.last(plot).x < max) {
+                plot.push({x: max, y: 0});
             }
             this.plot = [{
                 values: plot,
@@ -157,54 +154,30 @@ export default class ReclassifyHistogramController {
         }
     }
 
-    rescaleBreakpoints(min, max) {
-        let currentRange = this.histogramRange ?
-            this.histogramRange.max - this.histogramRange.min :
-            this._options.max - this._options.min;
-        let newRange = max - min;
-        if (this._breakpoints && currentRange !== newRange && newRange > 0) {
-            if (this._options) {
-                this.onBreakpointChange({
-                    breakpoints: this._breakpoints, options: this._options
-                });
-            }
-        }
-        this.histogramRange = {min: min, max: max};
-    }
-
-    onChange(bp, breakpoint) {
-        bp.value = breakpoint;
+    onChange(breakpoint, index) {
+        this._breakpoints[index].break = breakpoint;
+        this.sendBreakpoints(this._breakpoints);
         this.onBreakpointChange({
             breakpoints: this._breakpoints, options: this._options
         });
     }
 
-    recalculateBreakpointsFromRange(min, max) {
-        let oldmin = _.first(this._breakpoints).value;
-        let oldmax = _.last(this._breakpoints).value;
-
-        let currentRange = oldmax - oldmin;
-        let newRange = max - min;
-        if (this._breakpoints && currentRange !== newRange && newRange > 0) {
-            this._breakpoints.forEach((bp) => {
-                let percent = (
-                    bp.value - oldmin
-                ) / currentRange;
-                let newVal = percent * newRange + min;
-                bp.value = newVal;
-            });
-        }
+    sendBreakpoints(breakpoints) {
+        this.onBreakpointChange({
+            breakpoints,
+            options: this._options
+        });
     }
 
     getLowerBoundForIndex(index) {
         return index === 0 ?
-            Math.min(0, this.histogram.minimum) :
-            this._breakpoints[index - 1].value;
+            Math.min(this.histogramRange.min, this.histogram.minimum) :
+            this._breakpoints[index - 1].break;
     }
 
     getUpperBoundForIndex(index) {
         return index === this._breakpoints.length - 1 ?
-            this.histogram.maximum :
-            this._breakpoints[index + 1].value;
+            Math.max(this.histogramRange.max, this.histogram.maximum) :
+            this._breakpoints[index + 1].break;
     }
 }

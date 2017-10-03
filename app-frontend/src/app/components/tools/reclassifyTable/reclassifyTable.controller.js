@@ -46,11 +46,7 @@ export default class ReclassifyTableController {
         let rangeValuePairs = angular.copy(internalRep);
         // Assume that the range representation as a whole is valid
         rangeValuePairs.sort((pair1, pair2) => pair1[0].start - pair2[0].start);
-        let breaksMap = {};
-        rangeValuePairs.forEach(function (pair) {
-            breaksMap[pair[0].end.toString()] = pair[1];
-        });
-        return breaksMap;
+        return rangeValuePairs.map(p => p[1]);
     }
 
     updateEntryRange(range, id) {
@@ -72,10 +68,15 @@ export default class ReclassifyTableController {
             this.checkGapsOverlaps();
             if (this.noGapsOverlaps) {
                 this.onClassificationsChange({
-                    classifications: this.internalToBreaks(this.enteredRanges)
+                    breakpoints: this.internalToBreaks(this.enteredRanges)
                 });
             }
         }
+    }
+
+    updateBreak(breakpoint, index) {
+        this.classifications[index] = breakpoint;
+        this.onBreaksChange({breakpoints: this.classifications});
     }
 
     trackInvalidEntries(validity, count = 1) {
@@ -100,6 +101,4 @@ export default class ReclassifyTableController {
             this.onNoGapsOverlapsChange({noGapsOverlaps: this.noGapsOverlaps});
         }
     }
-
-
 }

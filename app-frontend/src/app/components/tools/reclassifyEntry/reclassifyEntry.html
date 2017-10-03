@@ -1,14 +1,17 @@
 <input class="class-range-input"
-       type="text"
-       ng-model="$ctrl.classRangeEntry"
-       ng-model-options="{ getterSetter: true }"
-       ng-change="$ctrl.onRangeChange({range: $ctrl._classRange})"
-       rf-validate-range-string>
+       step="$ctrl.precision"
+       ng-if="!$ctrl.isShowingRange"
+       ng-model="$ctrl.break.break"
+       ng-model-options="{ debounce: 850 }"
+       ng-change="$ctrl._onBreakChange()"
+       ng-blur="$ctrl.toggleRange(true)">
+<div class="class-range-input" ng-click="$ctrl.toggleRange(false)" ng-if="$ctrl.isShowingRange">
+  {{$ctrl.classRange}}
+</div>
 <input class="class-value-input"
-       ng-model="$ctrl.classValueEntry"
-       ng-model-options="{ getterSetter: true, debounce: 850 }"
-       ng-change="$ctrl.onValueChange({value: $ctrl._classValue})"
-       rf-validate-value-string>
+       ng-model="$ctrl.break.value"
+       ng-model-options="{ debounce: 850 }"
+       ng-change="$ctrl._onBreakChange()">
 <div class="invalid-entry-warning">
   <span class="icon-warning"
         ng-show="!$ctrl.isValid()"></span>

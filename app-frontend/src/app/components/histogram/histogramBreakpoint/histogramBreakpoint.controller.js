@@ -46,10 +46,10 @@ export default class HistogramBreakpointController {
             breakpoint = this.range.min;
         }
 
-        if (breakpoint >= this.upperBound) {
-            breakpoint = this.upperBound - 1;
-        } else if (breakpoint <= this.lowerBound) {
-            breakpoint = this.lowerBound + 1;
+        if (breakpoint > this.upperBound - this.precision) {
+            breakpoint = this.upperBound - this.precision;
+        } else if (breakpoint < this.lowerBound + this.precision) {
+            breakpoint = this.lowerBound + this.precision;
         }
 
         if (Number.isFinite(this.precision) && this.precision >= 0) {
@@ -73,8 +73,8 @@ export default class HistogramBreakpointController {
             ) / (
                 this.range.max - this.range.min
             ) * 100;
+
             this.breakpointPosition = `${percent}%`;
-            // this.onBreakpointChange({breakpoint: this._breakpoint});
         } else {
             this.breakpointPosition = '0%';
         }
@@ -87,7 +87,7 @@ export default class HistogramBreakpointController {
 
     onInputChange() {
         this.setPositionFromBreakpoint();
-        this.onBreakpointChange();
+        this.onBreakpointChange({breakpoint: this._breakpoint});
     }
 
     onGrabberMouseDown() {
