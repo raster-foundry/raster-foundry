@@ -4,9 +4,9 @@
       <span aria-hidden="true">&times;</span>
     </button>
     <h4 class="modal-title">
-      Publish Project - {{$ctrl.resolve.project.name}}
+      Publish {{$ctrl.resolve.toolTitle ? 'Tool - ' + $ctrl.resolve.toolTitle : 'Project - ' + $ctrl.resolve.project.name}}
     </h4>
-    <p>Publish or export your project</p>
+    <p>Publish or export your {{$ctrl.resolve.toolTitle ? 'tool' : 'project'}}</p>
   </div>
   <div class="modal-body">
     <div class="content" ng-show="$ctrl.shareUrl">
@@ -42,7 +42,6 @@
           </button>
         </div>
       </div>
-
       <div class="form-group">
         <label for="tile-link">ZXY Tile Layer URL</label>
         <div class="form-group all-in-one">
@@ -68,6 +67,36 @@
                  value="{{$ctrl.mapToken.id}}" readonly>
           <button class="btn btn-link"
                   clipboard text="$ctrl.mapToken.id">
+            Copy
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="content" ng-show="$ctrl.resolve.toolTitle">
+      <h4>Sharing</h4>
+      <div class="form-group">
+        <label for="tile-link">ZXY Tile Layer URL</label>
+        <div class="form-group all-in-one">
+          <input id="tile-link" type="text" class="form-control"
+                  value="{{$ctrl.tileLayerUrls.standard}}" readonly>
+          <button clipboard text="$ctrl.tileLayerUrls.standard" class="btn btn-link">
+            Copy
+          </button>
+        </div>
+        <label for="tile-link">ArcGIS Tile Layer URL</label>
+        <div class="form-group all-in-one">
+          <input id="tile-link" type="text" class="form-control"
+                  value="{{$ctrl.tileLayerUrls.arcGIS}}" readonly>
+          <button clipboard text="$ctrl.tileLayerUrls.arcGIS" class="btn btn-link">
+            Copy
+          </button>
+        </div>
+        <label>Token</label>
+        <div class="form-group all-in-one">
+          <input id="tile-link" type="text" class="form-control"
+                 value="{{$ctrl.toolToken}}" readonly>
+          <button class="btn btn-link"
+                  clipboard text="$ctrl.toolToken">
             Copy
           </button>
         </div>
