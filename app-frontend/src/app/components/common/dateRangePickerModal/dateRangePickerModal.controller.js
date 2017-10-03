@@ -1,6 +1,8 @@
+/* globals _ */
 export default class DateRangePickerModalController {
-    constructor(moment, dateRangePickerConf) {
+    constructor($log, moment, dateRangePickerConf) {
         'ngInject';
+        this.$log = $log;
         this.Moment = moment;
         this.dateRangePickerConf = dateRangePickerConf;
     }
@@ -22,12 +24,22 @@ export default class DateRangePickerModalController {
     }
 
     matchesSelectedRange(range) {
-        return range.start.isSame(this._range.start) && range.end.isSame(this._range.end);
+        if (_.isEmpty(range.start) || _.isEmpty(range.end)) {
+            return true;
+        // eslint-disable-next-line no-else-return
+        } else {
+            return range.start.isSame(this._range.start) && range.end.isSame(this._range.end);
+        }
     }
 
     onPresetSelect(range, index) {
-        this._range.start = range.start;
-        this._range.end = range.end;
+        if (!_.isEmpty(range.start) && !_.isEmpty(range.end)) {
+            this._range.start = range.start;
+            this._range.end = range.end;
+            this.isRangeEmpty = false;
+        } else {
+            this.isRangeEmpty = true;
+        }
         this.selectedRangeIndex = index;
     }
 
@@ -47,8 +59,8 @@ export default class DateRangePickerModalController {
 
     apply() {
         let data = {
-            start: this._range.start,
-            end: this._range.end
+            start: this.isRangeEmpty ? {} : this._range.start,
+            end: this.isRangeEmpty ? {} : this._range.end
         };
         const selectedRange = this.getSelectedPreset();
         if (selectedRange) {

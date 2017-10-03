@@ -16,8 +16,7 @@
     <div class="filter-group">
       <div class="filter">
         <label>Date Range</label>
-        <div class="flex-fill"
-             ng-class="{'color-white': $ctrl.dateFilterToggle.value}">
+        <div class="flex-fill">
           <span ng-if="$ctrl.datefilterPreset">{{$ctrl.datefilterPreset}}</span>
           <span ng-if="!$ctrl.datefilterPreset">{{$ctrl.datefilter.start.calendar()}} to {{$ctrl.datefilter.end.calendar()}}</span>
         </div>
@@ -25,15 +24,7 @@
       <div class="filter">
         <label></label>
         <button class="btn btn-small btn-primary flex-fill"
-                ng-click="$ctrl.openDateRangePickerModal()"
-                ng-class="{'disabled': !$ctrl.dateFilterToggle.value}">Select a Date</button>
-
-      </div>
-      <div class="filter-group-option">
-        <label>Enabled</label>
-        <rf-toggle-old data-model="$ctrl.dateFilterToggle.value"
-                       on-change="$ctrl.onDateFilterToggle(value)"
-        ></rf-toggle-old>
+                ng-click="$ctrl.openDateRangePickerModal()">{{$ctrl.hasDatetimeFilter ? 'Update ' : 'Set '}}Date Filter</button>
       </div>
     </div>
     <div class="filter-group">
