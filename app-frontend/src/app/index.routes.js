@@ -341,7 +341,7 @@ function labStates($stateProvider) {
         })
        .state('lab.run', {
            title: 'Tool: Run',
-           url: '/run/:projectid?',
+           url: '/run/:runid?',
            views: {
                'navmenu@root': {
                    templateUrl: labNavbarTpl,

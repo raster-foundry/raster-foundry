@@ -26,7 +26,7 @@ export default (app) => {
             );
             this.ToolRun = $resource(
                 `${BUILDCONFIG.API_HOST}/api/tool-runs/:id/`, {
-                    id: '@properties.id'
+                    id: '@id'
                 }, {
                     create: {
                         method: 'POST'
@@ -34,6 +34,9 @@ export default (app) => {
                     get: {
                         method: 'GET',
                         cache: false
+                    },
+                    update: {
+                        method: 'PUT'
                     },
                     histogram: {
                         url: `${APP_CONFIG.tileServerLocation}/tools/:toolId/histogram/`,
@@ -106,6 +109,10 @@ export default (app) => {
             return this.Tool.get({id}).$promise;
         }
 
+        getToolRun(id) {
+            return this.ToolRun.get({id}).$promise;
+        }
+
         createTool(toolBuffer) {
             return this.authService.getCurrentUser().then(
                 user => {
@@ -135,6 +142,10 @@ export default (app) => {
 
                 }
             );
+        }
+
+        updateToolRun(toolrun) {
+            return this.ToolRun.update(toolrun).$promise;
         }
 
         getNodeHistogram(toolRun, nodeId) {

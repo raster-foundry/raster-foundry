@@ -5,6 +5,7 @@ const rfReclassifyTable = {
     bindings: {
         classifications: '<',
         onClassificationsChange: '&',
+        onBreaksChange: '&',
         onAllEntriesValidChange: '&',
         onNoGapsOverlapsChange: '&'
     },

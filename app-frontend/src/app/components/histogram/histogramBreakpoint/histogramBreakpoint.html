@@ -13,7 +13,7 @@
 >
   <input type="number"
          class="breakpoint-input-field"
-         ng-attr-step="{{'any'}}"
+         ng-attr-step="{{$ctrl.precision}}"
          ng-model="$ctrl.breakpoint"
          ng-model-options="{updateOn: 'blur change'}"
          ng-change="$ctrl.onInputChange(value)">

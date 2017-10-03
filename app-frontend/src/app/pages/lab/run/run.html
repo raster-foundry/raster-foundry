@@ -62,7 +62,7 @@
       <div class="lab-action-controls">
         <!-- button class="btn btn-light">Add Note</button -->
         <button class="btn btn-secondary"
-                ng-click="$ctrl.createToolRun()"
+                ng-click="$ctrl.createOrUpdateToolRun()"
                 ng-disabled="$ctrl.applyInProgress">
           Apply Changes
         </button>
@@ -70,14 +70,14 @@
       <rf-diagram-container
         ng-if="$ctrl.tool"
         class="with-position"
-        toolrun="$ctrl.lastToolRun"
+        toolrun="$ctrl.toolRun"
         tool-definition="$ctrl.tool.definition"
-        tool-parameters="$ctrl.toolParameters"
+        tool-parameters="$ctrl.toolrun.executionParameters"
         on-preview="$ctrl.showPreview(nodeId)"
         on-share="$ctrl.shareNode(nodeId)"
         on-parameter-change="$ctrl.onExecutionParametersChange(sourceId, project, band, override, renderDef)"
         on-graph-complete="$ctrl.onGraphComplete(nodes)"
-        create-tool-run="$ctrl.createToolRun()">
+        create-tool-run="$ctrl.createOrUpdateToolRun()">
       </rf-diagram-container>
     </div>
     <div class="lab-footer"

@@ -1,23 +1,48 @@
 export default class ReclassifyEntryController {
-    constructor(reclassifyService) {
+    constructor($element, $timeout, reclassifyService) {
         'ngInject';
+        this.$element = $element;
+        this.$timeout = $timeout;
         this.reclassifyService = reclassifyService;
     }
 
     $onInit() {
-        this._classRange = this.classRange;
-        this._classValue = this.classValue;
-        this.rangeValid = this._classRange !== null;
-        this.valueValid = this._classValue !== null;
+        this.isShowingRange = true;
         // A nonexistent entry is valid, so if we're just coming into existence with invalid
         // values, we need to notify of a change.
-        if (!this.isValid()) {
-            this.onValidityChange({validity: false});
+        this.onValidityChange({validity: this.isValid()});
+    }
+
+    $onChanges() {
+        if (this.break) {
+            this.computeRange();
+        }
+    }
+
+    computeRange() {
+        this.classRange = `${this.break.start} - ${this.break.break}`;
+    }
+
+    toggleRange(value) {
+        // eslint-disable-next-line eqeqeq
+        if (value != null) {
+            this.isShowingRange = value;
+        } else {
+            this.isShowingRange = !this.isShowingRange;
+        }
+        if (!this.isShowingRange) {
+            this.$timeout(() => {
+                const el = $(this.$element[0]).find('input').get(0);
+                el.focus();
+            }, 200);
         }
     }
 
     isValid() {
-        return this.rangeValid && this.valueValid;
+        const s = +this.break.start;
+        const b = +this.break.break;
+        const v = +this.break.value;
+        return !isNaN(b) && !isNaN(v) && (b > s || isNaN(s));
     }
 
     // A nonexistent entry is valid, so we need to notify of a change when we're destroyed if we're
@@ -28,54 +53,12 @@ export default class ReclassifyEntryController {
         }
     }
 
-    get classValueEntry() {
-        if (!this._classValueEntry && this._classValue !== null) {
-            return this._classValue;
+    _onBreakChange() {
+        this.break.break = +this.break.break;
+        this.break.value = +this.break.value;
+        this.computeRange();
+        if (this.isValid()) {
+            this.onBreakChange({break: this.break});
         }
-        return this._classValueEntry;
-    }
-
-    set classValueEntry(newValEntry) {
-        let wasValid = this.isValid();
-        if (newValEntry !== null) {
-            this.valueValid = true;
-            this._classValue = this.reclassifyService.valueFromString(newValEntry);
-        } else {
-            this.valueValid = false;
-            this._classValue = newValEntry;
-        }
-        // Check for validity changes
-        if (this.isValid() !== wasValid) {
-            this.onValidityChange({validity: this.isValid()});
-        }
-        this._classValueEntry = newValEntry;
-    }
-
-    get classRangeEntry() {
-        if (!this._classRangeEntry && this._classRange) {
-            return this.reclassifyService.rangeObjectToString(this._classRange);
-        }
-        return this._classRangeEntry;
-    }
-
-    set classRangeEntry(newEntry) {
-        let wasValid = this.isValid();
-        // Valid
-        if (newEntry) {
-            this.rangeValid = true;
-            this._classRange = this.reclassifyService.rangeObjectFromString(newEntry);
-        // Invalid
-        } else {
-            this.rangeValid = false;
-            this._classRange = newEntry;
-        }
-        // Only fire on changes in validity
-        if (this.isValid() !== wasValid) {
-            this.onValidityChange({validity: this.isValid()});
-        }
-        // Always store the entry because similar entries will map to the same range, e.g.
-        // 0.0 and 0.000, so we always display whatever the user has typed, not the normalized
-        // formatting.
-        this._classRangeEntry = newEntry;
     }
 }

@@ -1,8 +1,7 @@
 <div class="classify-node-preview">
   <div class="classify-node-preview-row with-margin">
-    <div class="classify-node-setting">Manual</div>
     <div class="classify-node-setting">
-      <ng-pluralize count="$ctrl.getClassCount()"
+      <ng-pluralize count="$ctrl.breaks.length"
                     when="{
                       'one': '1 Class',
                       'other': '{} Classes'
@@ -15,10 +14,10 @@
     <div class="classify-node-class header">Output Value</div>
   </div>
   <div class="classify-node-preview-row with-border"
-       ng-repeat="range in $ctrl.ranges"
+       ng-repeat="class in $ctrl.breaks"
   >
-    <div class="classify-node-class">{{$ctrl.reclassifyService.rangeObjectToString(range)}}</div>
-    <div class="classify-node-class">{{$ctrl.breaks[range.end]}}</div>
+    <div class="classify-node-class">{{class.start}} - {{class.break}}</div>
+    <div class="classify-node-class">{{class.value}}</div>
   </div>
 </div>
 <div class="node-controls overlayed">

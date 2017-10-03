@@ -5,13 +5,13 @@
   </div>
   <div class="classification-ranges">
     <div class="classification-row"
-         ng-repeat="pair in $ctrl.enteredRanges">
+         ng-repeat="break in $ctrl.classifications">
       <rf-reclassify-entry
-        class-range="pair[0]"
-        class-value="pair[1]"
+        break="break"
         entry-id="$index"
-        on-range-change="$ctrl.updateEntryRange(range, $index)"
-        on-value-change="$ctrl.updateEntryValue(value, $index)"
+        on-range-change="$ctrl.updateEntryRange(break, $index)"
+        on-value-change="$ctrl.updateEntryValue(break, $index)"
+        on-break-change="$ctrl.updateBreak(break, $index)"
         on-validity-change="$ctrl.trackInvalidEntries(validity)">
     </div>
   </div>
