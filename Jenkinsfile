@@ -47,8 +47,7 @@ node {
       }
 
       // Plan and apply the current state of the instracture as
-      // outlined by the `env.BRANCH_NAME` branch of the
-      // `raster-foundry-deployment` repository.
+      // outlined by the `master` branch of the deployment repository.
       //
       // Also, use the container image revision referenced above to
       // cycle in the newest version of the application into Amazon
@@ -59,7 +58,7 @@ node {
         env.GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
 
         checkout scm: [$class: 'GitSCM',
-                       branches: [[name: env.BRANCH_NAME]],
+                       branches: [[name: 'master']],
                        extensions: [[$class: 'RelativeTargetDirectory',
                                      relativeTargetDir: 'raster-foundry-deployment']],
                        userRemoteConfigs: [[credentialsId: '3bc1e878-814a-43d1-864e-2e378ebddb0f',
