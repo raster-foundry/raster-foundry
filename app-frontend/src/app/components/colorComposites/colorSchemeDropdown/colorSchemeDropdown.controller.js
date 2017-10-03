@@ -17,7 +17,8 @@ export default class ColorSchemeDropdownController {
         this.filterToValidSchemes = (value) => {
             return this.state &&
                 value.type === this.state.schemeType.value &&
-                (this.state.blending.bins === 0 || Object.keys(value).length >= this.state.blending.bins);
+                (this.state.blending.bins === 0 ||
+                 Object.keys(value).length >= this.state.blending.bins);
         };
     }
 
