@@ -20,7 +20,7 @@ export default class ReclassifyEntryController {
     }
 
     computeRange() {
-        this.classRange = `${this.break.start} - ${this.break.break}`;
+        this.classRange = `${this.break.start}\u00a0\u00a0-\u00a0\u00a0${this.break.break}`;
     }
 
     toggleRange(value) {
