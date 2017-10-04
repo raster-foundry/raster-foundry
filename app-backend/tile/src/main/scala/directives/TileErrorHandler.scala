@@ -30,6 +30,7 @@ trait TileErrorHandler extends Directives
       logger.error(RfStackTrace(e))
       complete(StatusCodes.ClientError(404)("Scene or Scene tile data not found", e.getMessage))
     case e: Exception =>
+      logger.error(RfStackTrace(e))
       sendError(e)
       complete(StatusCodes.ServerError(500)("An unknown error occurred", ""))
   }
