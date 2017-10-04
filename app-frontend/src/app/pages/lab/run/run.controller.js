@@ -36,6 +36,7 @@ export default class LabRunController {
             this.toolRun = this.toolService.generateToolRun(this.tool);
             this.generatedPreview = false;
             if (this.$state.params.runid) {
+                this.clearWarning();
                 this.toolService
                     .getToolRun(this.$state.params.runid)
                     .then(t => this.setToolRun(t));
