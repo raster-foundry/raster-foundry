@@ -3,7 +3,7 @@ import { FrameView } from '../../../components/map/labMap/frame.module.js';
 
 export default class LabRunController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, $timeout, $element, $window, $document, $uibModal, $rootScope,
+        $log, $scope, $state, $timeout, $element, $window, $document, $uibModal, $rootScope,
         mapService, projectService, authService, mapUtilsService, toolService, tokenService,
         APP_CONFIG
     ) {
@@ -78,12 +78,12 @@ export default class LabRunController {
         let token = this.authService.token();
         if (this.toolRun) {
             // eslint-disable-next-line max-len
-            let toolNode = this.findNodeinToolDefinition(node, this.lastToolRun.executionParameters);
+            let toolNode = this.findNodeinToolDefinition(node, this.toolRun.executionParameters);
             if (toolNode.type === 'projectSrc') {
                 return this.projectService.getProjectLayerURL(toolNode.projId, {token: token});
             }
-            return `${this.tileServer}/tools/${this.lastToolRun.id}/` +
-                `{z}/{x}/{y}?token=${token}&node=${node}`;
+            return `${this.tileServer}/tools/${this.toolRun.id}/{z}/{x}/{y}
+                    ?token=${token}&node=${node}&tag=${new Date().getTime()}`;
         }
         return false;
     }
@@ -345,12 +345,12 @@ export default class LabRunController {
     }
 
     shareNode(nodeId) {
-        if (nodeId && this.lastToolRun) {
-            let node = this.findNodeinToolDefinition(nodeId, this.lastToolRun.executionParameters);
+        if (nodeId && this.toolRun) {
+            let node = this.findNodeinToolDefinition(nodeId, this.toolRun.executionParameters);
             if (node.type === 'projectSrc') {
                 this.tokenService.getOrCreateToolMapToken({
-                    organizationId: this.lastToolRun.organizationId,
-                    name: this.tool.title + ' - ' + this.lastToolRun.id,
+                    organizationId: this.toolRun.organizationId,
+                    name: this.tool.title + ' - ' + this.toolRun.id,
                     project: node.projId
                 }).then((mapToken) => {
                     this.publishModal(
@@ -361,13 +361,13 @@ export default class LabRunController {
                 });
             } else {
                 this.tokenService.getOrCreateToolMapToken({
-                    organizationId: this.lastToolRun.organizationId,
-                    name: this.tool.title + ' - ' + this.lastToolRun.id,
-                    toolRun: this.lastToolRun.id
+                    organizationId: this.toolRun.organizationId,
+                    name: this.tool.title + ' - ' + this.toolRun.id,
+                    toolRun: this.toolRun.id
                 }).then((mapToken) => {
                     this.publishModal(
                         // eslint-disable-next-line max-len
-                        `${this.tileServer}/tools/${this.lastToolRun.id}/{z}/{x}/{y}?mapToken=${mapToken.id}&node=${nodeId}`
+                        `${this.tileServer}/tools/${this.toolRun.id}/{z}/{x}/{y}?mapToken=${mapToken.id}&node=${nodeId}`
                     );
                 });
             }
@@ -415,7 +415,12 @@ export default class LabRunController {
                 this.toolRun,
                 { id: this.$state.params.runid }
             )
-        ).finally(() => {
+        ).then(() => {
+            if (this.isShowingPreview) {
+                this.createPreviewLayers();
+                this.showPreview(this.previewData);
+            }
+        }).finally(() => {
             this.applyInProgress = false;
         });
         return toolRunPromise;
