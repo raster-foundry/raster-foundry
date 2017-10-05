@@ -11,10 +11,27 @@
     <p>Select a project to color correct and mosaic within the editor.</p>
   </div>
   <div class="modal-body">
+    <div class="text-right">
+      <rf-search on-search="$ctrl.search(value)"
+                 placeholder="Search for projects"
+                 auto-focus="true">
+      </rf-search>
+    </div>
+    <p class="font-size-small"
+       ng-if="!$ctrl.searchString"
+    >
+      Showing {{$ctrl.pagination.startingItem}} - {{$ctrl.pagination.endingItem}} of {{$ctrl.pagination.count}} tools
+    </p>
+
+    <p class="font-size-small"
+       ng-if="$ctrl.searchString"
+    >
+      Showing results for "{{$ctrl.searchString}}"
+    </p>
     <div class="list-group">
       <rf-project-item
           project="project"
-          ng-repeat="project in $ctrl.projectList track by project.id"
+          ng-repeat="project in $ctrl.projectList | filter: {name: $ctrl.searchString}"
           slim="true">
           <button class="btn btn-default" ng-click="$ctrl.setSelected(project)">Select</button>
       </rf-project-item>
@@ -31,7 +48,7 @@
       </span>
     </div>
     <div class="list-group text-center"
-          ng-show="!$ctrl.loading && $ctrl.lastProjectResult && $ctrl.lastProjectResult.count > $ctrl.lastProjectResult.pageSize && !$ctrl.errorMsg">
+          ng-show="!$ctrl.loading && $ctrl.lastProjectResult && $ctrl.pagination.show && !$ctrl.errorMsg && !$ctrl.searchString">
       <ul uib-pagination
           items-per-page="$ctrl.lastProjectResult.pageSize"
           total-items="$ctrl.lastProjectResult.count"

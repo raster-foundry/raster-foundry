@@ -6,7 +6,10 @@
       <div class="dashboard-header">
         <h1 class="h3">Projects</h1>
         <div class="flex-fill"></div>
-        <rf-search on-search="$ctrl.search(value)" placeholder="Search for projects"></rf-search>
+        <rf-search on-search="$ctrl.search(value)"
+                   placeholder="Search for projects"
+                   auto-focus="true">
+        </rf-search>
         <a class="btn btn-primary" ng-click="$ctrl.createNewProject()" ng-if="!$ctrl.loading && $ctrl.projectList.length > 0">
           New project
         </a>

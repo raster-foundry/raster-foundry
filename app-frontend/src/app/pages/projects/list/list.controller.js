@@ -14,7 +14,7 @@ class ProjectsListController {
         this.populateProjectList($state.params.page || 1);
     }
 
-    populateProjectList(page) {
+    populateProjectList(page = 1) {
         if (this.loading) {
             return;
         }
