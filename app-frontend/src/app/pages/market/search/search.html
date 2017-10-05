@@ -45,7 +45,7 @@
            ng-show="!$ctrl.loading && $ctrl.lastToolResponse && $ctrl.pagination.show && !$ctrl.errorMsg &&!$ctrl.searchString">
         <ul uib-pagination
             items-per-page="$ctrl.lastToolResponse.pageSize"
-            total-items="$ctrl.lastToolResponse.count"
+            total-items="$ctrl.pagination.count"
             ng-model="$ctrl.currentPage"
             max-size="4"
             rotate="true"
