@@ -19,7 +19,6 @@ Load a database dump from S3
 }
 
 function load_database_backup() {
-    check_database
 
     pushd "${DIR}/.."
     echo "Downloading database from s3"
@@ -47,8 +46,11 @@ then
     then
         usage
     else
-        docker-compose up -d postgres
+
+        # API server won't start until Postgres is passing Health Checks
+        docker-compose up -d api-server
         load_database_backup
+        docker-compose rm -sf api-server
     fi
     exit
 fi

@@ -41,6 +41,17 @@ export default (app) => {
                         method: 'PUT'
                     }
                 });
+
+            this.toolMapToken = $resource(
+                `${BUILDCONFIG.API_HOST}/api/map-tokens/`, {}, {
+                    create: {
+                        method: 'POST'
+                    },
+                    get: {
+                        method: 'GET'
+                    }
+                }
+            );
         }
 
         queryApiTokens(params = {}) {
@@ -85,6 +96,41 @@ export default (app) => {
                     }, (err) => {
                         // TODO: Toast this
                         deferred.reject('error creating token', err);
+                    });
+                }
+            });
+            return deferred.promise;
+        }
+
+        createToolMapToken(params) {
+            return this.toolMapToken.create(params).$promise;
+        }
+
+        getToolMapTokens() {
+            return this.toolMapToken.get().$promise;
+        }
+
+        findToken(tokens, params) {
+            if (params.project) {
+                return tokens.results.find(t => t.project === params.project);
+            } else if (params.toolRun) {
+                return tokens.results.find(t => t.toolRun === params.toolRun);
+            }
+            return null;
+        }
+
+        getOrCreateToolMapToken(params) {
+            let deferred = this.$q.defer();
+            this.getToolMapTokens().then((res) => {
+                let token = this.findToken(res, params);
+                if (token) {
+                    deferred.resolve(token);
+                } else {
+                    this.createToolMapToken(params).then((response) => {
+                        this.$log.debug('token created!', response);
+                        deferred.resolve(response);
+                    }, (error) => {
+                        deferred.reject('error creating token', error);
                     });
                 }
             });

@@ -3,12 +3,6 @@
 
 Vagrant.require_version ">= 1.8"
 
-if ["up", "provision", "status"].include?(ARGV.first)
-  require_relative "deployment/vagrant/ansible_galaxy_helper"
-
-  AnsibleGalaxyHelper.install_dependent_roles("deployment/ansible")
-end
-
 ANSIBLE_VERSION = "2.3.1.0"
 
 Vagrant.configure(2) do |config|
@@ -27,7 +21,7 @@ Vagrant.configure(2) do |config|
                      "app-backend/project/.sbtboot/", "app-server/**/target/",
                      "app-backend/**/target/", "worker-tasks/**/target/",
                      ".sbt/", ".node_modules/",
-                     "deployment/ansible/roles/**/examples"],
+                     "deployment/ansible/roles/azavea*/"],
     rsync__args: ["--verbose", "--archive", "-z"],
     rsync__rsync_path: "sudo rsync"
   config.vm.synced_folder "~/.aws", "/home/vagrant/.aws"
@@ -77,6 +71,7 @@ Vagrant.configure(2) do |config|
       fi
 
       cd /opt/raster-foundry/deployment/ansible && \
+      ruby ../vagrant/run_ansible_galaxy.rb
       ANSIBLE_FORCE_COLOR=1 PYTHONUNBUFFERED=1 ANSIBLE_CALLBACK_WHITELIST=profile_tasks \
       ansible-playbook -u vagrant -i 'localhost,' \
           --extra-vars "host_user=#{host_user} aws_profile=#{aws_profile} \

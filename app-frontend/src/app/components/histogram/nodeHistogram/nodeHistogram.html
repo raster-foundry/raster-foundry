@@ -25,7 +25,10 @@
 </div>
 
 <div class="graph-container">
-  <nvd3 ng-attr-id="chart-{{$ctrl.id}}" options="$ctrl.histOptions" data="$ctrl.plot" api="$ctrl.api"></nvd3>
+  <nvd3 ng-attr-id="chart-{{$ctrl.id}}"
+        options="$ctrl.histOptions"
+        data="$ctrl.plot"
+        api="$ctrl.api"></nvd3>
   <rf-histogram-breakpoint
     ng-repeat="bp in $ctrl._breakpoints track by bp.id"
     ng-if="$ctrl.shouldShowBreakpoint($index)"

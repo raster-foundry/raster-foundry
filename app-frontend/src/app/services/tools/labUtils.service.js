@@ -8,7 +8,6 @@ export default (app) => {
             'ngInject';
 
             let viridis = colorSchemeService.defaultColorSchemes.find(s => s.label === 'Viridis');
-            let linspace = this.linspace;
 
             joint.shapes.html = {};
             joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
@@ -38,13 +37,15 @@ export default (app) => {
                       <span class="icon-map"></span>
                       </button>
                       <button class="btn node-button" type="button"
-                              ng-if="model.get('cellType') !== 'const'"
+                              ng-if="model.get('cellType') !== 'const' && 
+                               model.get('cellType') !== 'src'"
                               ng-class="{'active': currentView === 'HISTOGRAM'}"
                               ng-click="toggleHistogram()">
                       <span class="icon-histogram"></span>
                       </button>
                       <button class="btn node-button" type="button"
-                              ng-if="model.get('cellType') !== 'const'"
+                              ng-if="model.get('cellType') !== 'const' && 
+                               model.get('cellType') !== 'src'"
                               ng-class="{'active': currentView === 'STATISTICS'}"
                               ng-click="toggleStatistics()">
                           Stats
@@ -175,19 +176,29 @@ export default (app) => {
                             return map;
                         }, {});
                         let clip = 'none';
-                        if (this.scope.histogramOptions.masks) {
-                            if (this.scope.histogramOptions.masks.min &&
-                                this.scope.histogramOptions.masks.max) {
+                        let options = this.scope.histogramOptions;
+                        if (options.masks) {
+                            if (options.masks.min &&
+                                options.masks.max) {
                                 clip = 'both';
-                            } else if (this.scope.histogramOptions.masks.min) {
+                            } else if (options.masks.min) {
                                 clip = 'left';
-                            } else if (this.scope.histogramOptions.masks.max) {
+                            } else if (options.masks.max) {
                                 clip = 'right';
                             }
                         }
+                        let scale = options.scale ?
+                            options.scale : 'SEQUENTIAL';
+
+                        if (scale === 'CATEGORICAL') {
+                            scale = 'QUALITATIVE[#000000]';
+                            scale = 'SEQUENTIAL';
+                        } else if (options.baseScheme && options.baseScheme.colorBins > 0) {
+                            scale = `QUALITATIVE[${_.last(this.scope.breakpoints).color}]`;
+                        }
+
                         let renderDef = {
-                            scale: this.scope.histogramOptions.scale ?
-                                this.scope.histogramOptions.scale : 'SEQUENTIAL',
+                            scale: scale,
                             breakpoints: newBreakpoints,
                             clip: clip
                         };
@@ -300,10 +311,12 @@ export default (app) => {
                     }
 
                     if (!this.scope.breakpoints) {
-                        let breakpoints = linspace(0, 255, viridis.colors.length);
-                        this.scope.breakpoints = breakpoints.map((value, index) => {
-                            return {value: value, color: viridis.colors[index]};
-                        });
+                        const mappedBreakpoints = colorSchemeService.colorStopsToRange(
+                            viridis.colors, 0, 255
+                        );
+                        this.scope.breakpoints = Object.entries(mappedBreakpoints).map(
+                            ([stop, color]) => Object({value: Number(stop), color: color})
+                        );
                         this.scope.histogramOptions = {
                             range: {min: 0, max: 255},
                             masks: {min: false, max: false},
@@ -402,7 +415,9 @@ export default (app) => {
 
         getNodeArgs(node) {
             if (node.args) {
-                return Array.isArray(node.args) ? node.args : Object.values(node.args);
+                return Array.isArray(node.args) ?
+                    [...node.args].reverse() :
+                    Object.values(node.args).reverse();
             }
             return [];
         }
@@ -471,23 +486,6 @@ export default (app) => {
                 value: config.value,
                 positionOverride: config.positionOverride
             }));
-        }
-
-        linspace(min, max, num) {
-            let n = num;
-            if (typeof n === 'undefined') {
-                n = Math.max(Math.round(max - min) + 1, 1);
-            }
-            if (n < 2) {
-                return n === 1 ? [min] : [];
-            }
-            let i = Array(n);
-            let ret = Array(n);
-            n = n - 1;
-            for (i = n; i >= 0; i = i - 1) {
-                ret[i] = (i * max + (n - i) * min) / n;
-            }
-            return ret;
         }
 
         extractShapes(

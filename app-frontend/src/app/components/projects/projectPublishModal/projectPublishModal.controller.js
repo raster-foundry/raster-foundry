@@ -59,22 +59,24 @@ export default class ProjectPublishModalController {
             }
         ];
 
-        this.project = this.resolve.project;
+        if (!this.resolve.toolTitle) {
+            this.project = this.resolve.project;
+            this.sharePolicies = sharePolicies.map(
+                (policy) => {
+                    let isActive = policy.enum === this.resolve.project.tileVisibility;
+                    policy.active = isActive;
+                    return policy;
+                }
+            );
+            this.activePolicy = this.sharePolicies.find((policy) => policy.active);
+            this.updateShareUrl();
+        }
 
-        this.sharePolicies = sharePolicies.map(
-            (policy) => {
-                let isActive = policy.enum === this.resolve.project.tileVisibility;
-                policy.active = isActive;
-                return policy;
-            }
-        );
-
-        this.activePolicy = this.sharePolicies.find((policy) => policy.active);
         this.tileLayerUrls = {
             standard: null,
             arcGIS: null
         };
-        this.updateShareUrl();
+
         this.hydrateTileUrls();
     }
 
@@ -126,16 +128,25 @@ export default class ProjectPublishModalController {
             .replace('{z}', `{${this.urlMappings.arcGIS.z}}`)
             .replace('{x}', `{${this.urlMappings.arcGIS.x}}`)
             .replace('{y}', `{${this.urlMappings.arcGIS.y}}`);
-        if (this.activePolicy.enum !== 'PRIVATE') {
+
+        if (this.resolve.toolTitle) {
             this.tileLayerUrls.arcGIS = `${arcGISUrl}`;
             this.tileLayerUrls.standard = `${zxyUrl}`;
+            this.toolToken = this.resolve.tileUrl.split('?mapToken=')[1].split('&node=')[0];
         } else {
-            this.tokenService.getOrCreateProjectMapToken(this.project).then(
-                (mapToken) => {
-                    this.mapToken = mapToken;
-                    this.tileLayerUrls.standard = `${zxyUrl}&mapToken=${mapToken.id}`;
-                    this.tileLayerUrls.arcGIS = `${arcGISUrl}&mapToken=${mapToken.id}`;
-                });
+            // eslint-disable-next-line no-lonely-if
+            if (this.activePolicy && this.activePolicy.enum !== 'PRIVATE') {
+                this.tileLayerUrls.arcGIS = `${arcGISUrl}`;
+                this.tileLayerUrls.standard = `${zxyUrl}`;
+            } else {
+                this.tokenService.getOrCreateProjectMapToken(this.project).then(
+                    (mapToken) => {
+                        this.mapToken = mapToken;
+                        this.tileLayerUrls.standard = `${zxyUrl}&mapToken=${mapToken.id}`;
+                        this.tileLayerUrls.arcGIS = `${arcGISUrl}&mapToken=${mapToken.id}`;
+                    }
+                );
+            }
         }
     }
 }

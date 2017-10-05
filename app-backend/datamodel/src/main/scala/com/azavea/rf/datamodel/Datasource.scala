@@ -18,7 +18,8 @@ case class Datasource(
   name: String,
   visibility: Visibility,
   composites: Json,
-  extras: Json
+  extras: Json,
+  bands: Json
 )
 
 object Datasource {
@@ -35,7 +36,8 @@ object Datasource {
     visibility: Visibility,
     owner: Option[String],
     composites: Json,
-    extras: Json
+    extras: Json,
+    bands: Json
   ) extends OwnerCheck  {
     def toDatasource(user: User): Datasource = {
       val id = java.util.UUID.randomUUID()
@@ -54,7 +56,8 @@ object Datasource {
         this.name,
         this.visibility,
         this.composites,
-        this.extras
+        this.extras,
+        this.bands
       )
     }
   }

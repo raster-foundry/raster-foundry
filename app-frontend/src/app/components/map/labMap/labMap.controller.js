@@ -1,9 +1,12 @@
 // import Map from 'es6-map';
-/* globals BUILDCONFIG */
+/* globals BUILDCONFIG, mathjs*/
+
+import turfArea from '@turf/area';
+import turfDistance from '@turf/distance';
 
 export default class LabMapController {
     constructor(
-        $log, $document, $element, $scope, $timeout,
+        $log, $document, $element, $scope, $timeout, $compile,
         mapService
     ) {
         'ngInject';
@@ -12,6 +15,7 @@ export default class LabMapController {
         this.$element = $element;
         this.$scope = $scope;
         this.$timeout = $timeout;
+        this.$compile = $compile;
         this.mapService = mapService;
         this.getMap = () => this.mapService.getMap(this.mapId);
     }
@@ -29,6 +33,10 @@ export default class LabMapController {
     }
 
     $onDestroy() {
+        this.mapWrapper.deleteLayers('Measurement');
+        this.drawListener.forEach((listener) => this.map.off(listener));
+        this.disableDrawHandlers();
+
         this.mapService.deregisterMap(this.mapId);
         delete this.mapWrapper;
         if (this.clickListener) {
@@ -59,10 +67,33 @@ export default class LabMapController {
         this.$timeout(() => {
             this.map.invalidateSize();
             this.mapWrapper = this.mapService.registerMap(this.map, this.mapId, this.options);
+            this.setDrawListeners();
+            this.setDrawHandlers();
         }, 400);
 
         this.basemapOptions = BUILDCONFIG.BASEMAPS.layers;
         this.basemapKeys = Object.keys(this.basemapOptions);
+    }
+
+    setDrawListeners() {
+        this.drawListener = [
+            this.mapWrapper.on(L.Draw.Event.CREATED, this.createMeasureShape.bind(this))
+        ];
+    }
+
+    setDrawHandlers() {
+        this.drawPolygonHandler = new L.Draw.Polygon(this.mapWrapper.map, {
+            allowIntersection: false,
+            shapeOptions: {
+                weight: 2,
+                fillOpacity: 0.2
+            }
+        });
+        this.drawPolylineHandler = new L.Draw.Polyline(this.mapWrapper.map, {
+            shapeOptions: {
+                weight: 2
+            }
+        });
     }
 
     zoomIn() {
@@ -141,5 +172,105 @@ export default class LabMapController {
             return {'background': `url(${url}) no-repeat center`};
         }
         return {};
+    }
+
+    createMeasureShape(e) {
+        this.disableDrawHandlers();
+        this.addMeasureShapeToMap(e.layer, e.layerType);
+    }
+
+    disableDrawHandlers() {
+        this.drawPolygonHandler.disable();
+        this.drawPolylineHandler.disable();
+    }
+
+    addMeasureShapeToMap(layer, type) {
+        let measurement = this.measureCal(type, layer);
+        let compiledPopup = this.setPopupContent(type, measurement, layer);
+        let measureLayers = this.mapWrapper.getLayers('Measurement');
+        measureLayers.push(layer.bindPopup(compiledPopup[0]));
+        this.mapWrapper.setLayer('Measurement', measureLayers, false);
+        layer.openPopup();
+    }
+
+    measureCal(shapeType, layer) {
+        let dataGeojson = layer.toGeoJSON();
+        if (shapeType === 'polygon') {
+            return mathjs.round(turfArea(dataGeojson), 2).toString();
+        } else if (shapeType === 'polyline') {
+            let length = 0;
+            dataGeojson.geometry.coordinates.forEach((v, i, a) => {
+                if (i !== a.length - 1) {
+                    length += turfDistance(v, a[i + 1], 'kilometers');
+                }
+            });
+            return mathjs.round(length * 1000, 2).toString();
+        }
+        return '';
+    }
+
+    setPopupContent(shapeType, measurement, layer) {
+        let popupScope = this.$scope.$new();
+        let type = shapeType === 'polyline' ? 'Distance ' : 'Area ';
+        let unit = shapeType === 'polyline' ? ' Meters ' : ' Sq. Meters ';
+        let popupContent = angular.element(
+            `
+                <div>
+                    <label class="leaflet-popup-label m-popup-title">${type} Measurement</label><hr>
+                    <label class="leaflet-popup-label m-popup-result">
+                        <span class="m-popup-number">${measurement}</span>&nbsp;&nbsp;${unit}
+                    </label>
+                    <input type="button" class="btn btn-secondary measure-delete-btn"
+                           ng-click="deleteMeasureShape()" value="Delete" />
+                </div>
+            `
+        );
+        popupScope.deleteMeasureShape = () => {
+            this.removeMeasureLayer(layer);
+        };
+        return this.$compile(popupContent)(popupScope);
+    }
+
+    removeMeasureLayer(layer) {
+        let measureLayers = this.mapWrapper.getLayers('Measurement');
+        let indexOfLayer = measureLayers.indexOf(layer);
+        if (indexOfLayer !== -1) {
+            measureLayers.splice(indexOfLayer, 1);
+        }
+        this.mapWrapper.setLayer('Measurement', measureLayers, false);
+    }
+
+    toggleMeasurePicker(event) {
+        event.stopPropagation();
+        const onClick = () => {
+            this.measurePickerOpen = false;
+            this.$document.off('click', this.clickListener);
+            this.$scope.$evalAsync();
+        };
+        if (!this.measurePickerOpen) {
+            this.measurePickerOpen = true;
+            this.clickListener = onClick;
+            this.$document.on('click', onClick);
+        } else {
+            this.measurePickerOpen = false;
+            this.$document.off('click', this.clickListener);
+            delete this.clickListener;
+        }
+    }
+
+    toggleMeasure(shapeType) {
+        if (shapeType === 'Polygon') {
+            this.drawPolygonHandler.enable();
+            this.drawPolylineHandler.disable();
+        } else if (shapeType === 'Polyline') {
+            this.drawPolylineHandler.enable();
+            this.drawPolygonHandler.disable();
+        }
+    }
+
+    onLabMapClose() {
+        this.mapWrapper.deleteLayers('Measurement');
+        this.disableDrawHandlers();
+        this.onClose();
     }
 }

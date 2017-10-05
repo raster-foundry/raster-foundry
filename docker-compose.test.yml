@@ -1,4 +1,4 @@
-version: '2.1'
+version: '2.3'
 services:
   nginx-api:
     image: raster-foundry-nginx-api:${GIT_COMMIT:-latest}

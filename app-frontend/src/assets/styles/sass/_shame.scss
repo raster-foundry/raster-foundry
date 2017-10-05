@@ -2411,6 +2411,7 @@ rf-histogram-breakpoint {
 
 .colorscheme-selector {
   padding: 0;
+  min-width: 24rem;
 }
 .dropdown-header {
   display: flex;
@@ -2454,6 +2455,7 @@ rf-histogram-breakpoint {
     text-align: left;
     font-weight: bold;
     color: $brand-primary;
+    cursor: pointer;
   }
 }
 
@@ -2484,6 +2486,18 @@ ul.dropdown-list {
         display: none;
       }
     }
+    .reverse-indicator {
+      padding: .25em;
+      margin: .25em 0 .25em .25em;
+      text-align: center;
+      border-radius: 3px;
+      color: $brand-primary;
+      visibility: hidden;
+      &.active {
+          background: $brand-primary;
+          color: $white;
+      }
+    }
     span {
       font-style: italic;
       margin-left: 1rem;
@@ -2495,6 +2509,9 @@ ul.dropdown-list {
       color: $brand-primary;
       .selection-indicator i {
         display: inline;
+      }
+      .reverse-indicator {
+        visibility: initial;
       }
     }
     &:last-child {

@@ -8,7 +8,7 @@
       scene="scene"
       ng-repeat="scene in $ctrl.sceneList track by scene.id">
     <div class="dropdown btn-group" uib-dropdown ng-if="$ctrl.sceneActions && $ctrl.sceneActions.length">
-      <button class="btn" ng-click="$ctrl.onActionClick($ctrl.sceneActions[0])">
+      <button class="btn" ng-click="$ctrl.onActionClick($ctrl.sceneActions[0], scene)">
         {{$ctrl.sceneActions[0].label}}
       </button>
       <button type="button" class="btn" uib-dropdown-toggle ng-if="$ctrl.sceneActions.length > 1">
@@ -62,4 +62,3 @@
     <a href ng-click="$ctrl.populateSceneList(1)">Try again</a>
   </span>
 </div>
-

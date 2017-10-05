@@ -1,28 +1,25 @@
 package com.azavea.rf.database.tables
 
 import akka.http.scaladsl.model.{IllegalRequestException, StatusCodes}
-
 import com.azavea.rf.database.fields._
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.sort._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.datamodel._
-
 import geotrellis.slick.Projected
-import geotrellis.vector.{Geometry, Point, Polygon, Extent}
+import geotrellis.vector.{Extent, Geometry, Point, Polygon}
 import com.typesafe.scalalogging.LazyLogging
 import com.lonelyplanet.akka.http.extensions.PageRequest
-
 import slick.collection.heterogeneous.HNil
 import slick.collection.heterogeneous.syntax._
-
 import java.lang.SuppressWarnings
 import java.util.UUID
 import java.sql.Timestamp
+import java.time.LocalDate
+
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import io.circe.Json
 
 
@@ -338,6 +335,19 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     }
   }
 
+  def getDatasourceScenesForDay(date: LocalDate, datasourceId: UUID)(implicit database: DB): Future[Seq[String]] = {
+    database.db.run {
+      Scenes
+        .filterByDate(date)
+        .filter{scene =>
+          scene.datasource === datasourceId
+        }
+        .map(_.name)
+        .result
+    }
+  }
+
+
   def sceneGrid(params: CombinedGridQueryParams, user: User, bboxes: Seq[Projected[Polygon]])(implicit database: DB) = {
     val filteredScenes = Scenes
       .filterUserVisibility(user)
@@ -593,6 +603,17 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) extends LazyLoggin
       }
     }
   }
+
+  def filterByDate(date: LocalDate): Scenes.TableQuery = {
+    scenes.filter{ scene =>
+      datePart("day", scene.acquisitionDate) === date.getDayOfMonth
+    }.filter { scene =>
+      datePart("year", scene.acquisitionDate) === date.getYear
+    }.filter { scene =>
+      datePart("month", scene.acquisitionDate) === date.getMonthValue
+    }
+  }
+
 
   def filterByGridParams(gridParams: GridQueryParameters): Scenes.TableQuery = {
     val filteredScenes = scenes.filter{ scene =>

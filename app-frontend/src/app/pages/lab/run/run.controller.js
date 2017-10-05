@@ -4,7 +4,7 @@ import { FrameView } from '../../../components/map/labMap/frame.module.js';
 export default class LabRunController {
     constructor( // eslint-disable-line max-params
         $log, $scope, $timeout, $element, $window, $document, $uibModal, $rootScope,
-        mapService, projectService, authService, mapUtilsService, toolService,
+        mapService, projectService, authService, mapUtilsService, toolService, tokenService,
         APP_CONFIG
     ) {
         'ngInject';
@@ -21,6 +21,7 @@ export default class LabRunController {
         this.projectService = projectService;
         this.mapUtilsService = mapUtilsService;
         this.toolService = toolService;
+        this.tokenService = tokenService;
         this.getMap = () => mapService.getMap('lab-preview');
         this.tileServer = `${APP_CONFIG.tileServerLocation}`;
 
@@ -46,11 +47,37 @@ export default class LabRunController {
         this.singlePreviewPosition = {x: 0, offset: 10, side: 'none'};
     }
 
+    flattenToolDefinition(toolDefinition) {
+        let inQ = [toolDefinition];
+        let outQ = [];
+        while (inQ.length) {
+            let node = inQ.pop();
+            outQ.push(node);
+            if (node.args) {
+                inQ = [
+                    ...inQ,
+                    ...node.args.map(a => Object.assign({}, a, { parent: node }))
+                ];
+            }
+        }
+        return outQ;
+    }
+
+    findNodeinToolDefinition(node, toolDefinition) {
+        let flattenedToolDefinition = this.flattenToolDefinition(toolDefinition);
+        return flattenedToolDefinition.find((n) => n.id === node);
+    }
+
     getNodeUrl(node) {
         let token = this.authService.token();
         if (this.lastToolRun) {
             // eslint-disable-next-line max-len
-            return `${this.tileServer}/tools/${this.lastToolRun.id}/{z}/{x}/{y}?token=${token}&node=${node}`;
+            let toolNode = this.findNodeinToolDefinition(node, this.lastToolRun.executionParameters);
+            if (toolNode.type === 'projectSrc') {
+                return this.projectService.getProjectLayerURL(toolNode.projId, {token: token});
+            }
+            return `${this.tileServer}/tools/${this.lastToolRun.id}/` +
+                `{z}/{x}/{y}?token=${token}&node=${node}`;
         }
         return false;
     }
@@ -311,10 +338,33 @@ export default class LabRunController {
         this.$rootScope.$broadcast('lab.resize');
     }
 
-    shareNode(data) {
-        if (data) {
-            let tileUrl = this.getNodeUrl(data);
-            this.publishModal(tileUrl);
+    shareNode(nodeId) {
+        if (nodeId && this.lastToolRun) {
+            let node = this.findNodeinToolDefinition(nodeId, this.lastToolRun.executionParameters);
+            if (node.type === 'projectSrc') {
+                this.tokenService.getOrCreateToolMapToken({
+                    organizationId: this.lastToolRun.organizationId,
+                    name: this.tool.title + ' - ' + this.lastToolRun.id,
+                    project: node.projId
+                }).then((mapToken) => {
+                    this.publishModal(
+                        this.projectService.getProjectLayerURL(
+                            node.projId, {mapToken: mapToken.id}
+                        )
+                    );
+                });
+            } else {
+                this.tokenService.getOrCreateToolMapToken({
+                    organizationId: this.lastToolRun.organizationId,
+                    name: this.tool.title + ' - ' + this.lastToolRun.id,
+                    toolRun: this.lastToolRun.id
+                }).then((mapToken) => {
+                    this.publishModal(
+                        // eslint-disable-next-line max-len
+                        `${this.tileServer}/tools/${this.lastToolRun.id}/{z}/{x}/{y}?mapToken=${mapToken.id}&node=${nodeId}`
+                    );
+                });
+            }
         }
     }
 
@@ -396,8 +446,9 @@ export default class LabRunController {
             this.activeModal = this.$uibModal.open({
                 component: 'rfProjectPublishModal',
                 resolve: {
-                    tileUrl: () => this.projectService.getBaseURL() + tileUrl,
-                    noDownload: () => true
+                    tileUrl: () => tileUrl,
+                    noDownload: () => true,
+                    toolTitle: () => this.tool.title
                 }
             });
         }

@@ -1,0 +1,34 @@
+@import "../../../../assets/styles/sass/settings/_colors.scss";
+
+.form-control.scene-detail-field {
+    height: 32px;
+    border: none;
+    border-bottom: 3px dotted $gray-lightest;
+    color: $brand-tertiary;
+    font-style: italic;
+}
+
+.acc-date-field{
+    border-bottom: 3px dotted $gray-lightest;
+}
+
+.dropdown-label.acc-date-label {
+    color: $brand-tertiary;
+    font-style: italic;
+    border: none;
+}
+
+.dropdown-label.acc-date-label:hover {
+    background-color: $gray-lightest;
+}
+
+.dropdown-toggle.acc-date-toggle {
+    border: none;
+    background-color: white;
+    color: $gray-lightest;
+}
+
+.dropdown-toggle.acc-date-toggle:hover{
+    background-color: $gray-lightest;
+    color: white;
+}

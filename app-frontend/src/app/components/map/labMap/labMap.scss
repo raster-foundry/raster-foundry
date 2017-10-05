@@ -1,0 +1,27 @@
+@import "../../../../assets/styles/sass/settings/_colors.scss";
+
+.measure-dropdown-control {
+  position: absolute;
+  transform: translateX(-100%);
+  left: -1em;
+  top: 1em;
+}
+
+.m-popup-title{
+    font-size: 18px;
+}
+
+.m-popup-result {
+    margin-bottom: 20px;
+    margin-top: 10px;
+    font-weight: normal;
+}
+
+.m-popup-number{
+    font-size: 18px;
+    font-style: italic;
+}
+
+.measure-delete-btn{
+    width: 100%;
+}

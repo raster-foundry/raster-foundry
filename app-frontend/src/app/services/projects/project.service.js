@@ -375,7 +375,18 @@ export default (app) => {
             return `${protocol}://${host}${formattedPort}`;
         }
 
-        getProjectLayerURL(project, token) {
+        getProjectLayerURL(project, params) {
+            let projectId = typeof project === 'object' ? project.id : project;
+            let queryParams = params || {};
+            queryParams.tag = new Date().getTime();
+            let formattedParams = L.Util.getParamString(queryParams);
+
+            return `${this.tileServer}/${projectId}/{z}/{x}/{y}/${formattedParams}`;
+        }
+
+        getProjectShareLayerURL(project, token) {
+            let projectId = typeof project === 'object' ? project.id : project;
+
             let params = {
                 tag: new Date().getTime()
             };
@@ -386,7 +397,7 @@ export default (app) => {
 
             let formattedParams = L.Util.getParamString(params);
 
-            return `${this.tileServer}/${project.id}/{z}/{x}/{y}/${formattedParams}`;
+            return `${this.tileServer}/${projectId}/{z}/{x}/{y}/${formattedParams}`;
         }
 
         getZoomLevel(bbox) {
