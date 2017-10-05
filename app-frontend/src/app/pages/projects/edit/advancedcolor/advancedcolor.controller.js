@@ -3,7 +3,7 @@ const Map = require('es6-map');
 export default class ProjectsAdvancedColorController {
     constructor( // eslint-disable-line max-params
         $log, $scope, $q, projectService, layerService, sceneService, $state, mapService,
-        datasourceService, mapUtilsService, colorCorrectService
+        datasourceService, mapUtilsService, colorCorrectService, projectEditService
     ) {
         'ngInject';
         this.projectService = projectService;
@@ -12,6 +12,7 @@ export default class ProjectsAdvancedColorController {
         this.datasourceService = datasourceService;
         this.mapUtilsService = mapUtilsService;
         this.colorCorrectService = colorCorrectService;
+        this.projectEditService = projectEditService;
         this.$state = $state;
         this.$scope = $scope;
         this.$parent = $scope.$parent.$ctrl;
@@ -216,7 +217,7 @@ export default class ProjectsAdvancedColorController {
 
         if (newCorrection) {
             const promise = this.colorCorrectService.bulkUpdate(
-                this.projectService.currentProject.id,
+                this.projectEditService.currentProject.id,
                 sceneIds,
                 newCorrection
             );
@@ -229,7 +230,7 @@ export default class ProjectsAdvancedColorController {
     resetCorrection() {
         const sceneIds = Array.from(this.selectedScenes.keys());
         const promise = this.colorCorrectService.bulkUpdate(
-            this.projectService.currentProject.id,
+            this.projectEditService.currentProject.id,
             sceneIds
         );
         const defaultCorrection = this.colorCorrectService.getDefaultColorCorrection();

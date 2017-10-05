@@ -1,12 +1,12 @@
 export default class ProjectsNavbarController {
-    constructor(projectService, projectEditService, $state, $uibModal) {
+    constructor(projectService, projectEditService, $state, $uibModal, $scope) {
         'ngInject';
 
         this.projectService = projectService;
         this.projectEditService = projectEditService;
         this.$state = $state;
         this.$uibModal = $uibModal;
-        this.projectId = this.$state.params.projectid;
+        this.$scope = $scope;
     }
 
     $onInit() {
@@ -16,14 +16,19 @@ export default class ProjectsNavbarController {
             .then((project) => {
                 this.project = project;
             });
+        this.$scope.$watch('$ctrl.projectEditService.currentProject', (project) => {
+            this.project = project;
+        });
     }
 
     toggleProjectNameEdit() {
         if (this.project) {
             if (!this.isEditingProjectName) {
-                this.projectNameBuffer = this.project.name;
+                this.projectEditService.fetchCurrentProject().then((project) => {
+                    this.projectNameBuffer = project.name;
+                    this.isEditingProjectName = !this.isEditingProjectName;
+                });
             }
-            this.isEditingProjectName = !this.isEditingProjectName;
         }
     }
 
@@ -33,8 +38,8 @@ export default class ProjectsNavbarController {
             let lastProjectName = this.project.name;
             this.isSavingProjectName = true;
             this.project.name = this.projectNameBuffer;
-            this.projectService.updateProject(this.project).then(() => {
-                // Noop, we assume this succeeds
+            this.projectEditService.updateCurrentProject(this.project).then((project) => {
+                this.project = project;
             }, () => {
                 // Revert if the update fails
                 this.project.name = lastProjectName;

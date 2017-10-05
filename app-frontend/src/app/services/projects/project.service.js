@@ -52,8 +52,6 @@ export default (app) => {
             this.$q = $q;
             this.availableProcessingOptions = availableProcessingOptions;
 
-            this.currentProject = null;
-
             this.tileServer = `${APP_CONFIG.tileServerLocation}`;
 
             this.Project = $resource(
@@ -196,7 +194,7 @@ export default (app) => {
             });
         }
 
-        get(id) {
+        fetchProject(id) {
             return this.Project.get({id}).$promise;
         }
 
@@ -306,54 +304,53 @@ export default (app) => {
          * @return {Promise} promise that will resolve when all scenes are available
          */
         getAllProjectScenes(params) {
-            let deferred = this.$q.defer();
-            let pageSize = 30;
-            let firstPageParams = Object.assign({}, params, {
-                pageSize: pageSize,
-                page: 0,
-                sort: 'createdAt,desc'
-            });
-            let firstRequest = this.getProjectScenes(firstPageParams);
+            return this.$q((resolve, reject) => {
+                let pageSize = 30;
+                let firstPageParams = Object.assign({}, params, {
+                    pageSize: pageSize,
+                    page: 0,
+                    sort: 'createdAt,desc'
+                });
+                let firstRequest = this.getProjectScenes(firstPageParams);
 
-            firstRequest.then((page) => {
-                let self = this;
-                let numScenes = page.count;
-                let requests = [firstRequest];
-                if (page.count > pageSize) {
-                    let requestMaker = function *(totalResults) {
-                        let pageNum = 1;
-                        while (pageNum * pageSize <= totalResults) {
-                            let pageParams = Object.assign({}, params, {
-                                pageSize: pageSize,
-                                page: pageNum,
-                                sort: 'createdAt,desc'
-                            });
-                            yield self.getProjectScenes(pageParams);
-                            pageNum = pageNum + 1;
-                        }
-                    };
+                firstRequest.then((page) => {
+                    let self = this;
+                    let numScenes = page.count;
+                    let requests = [firstRequest];
+                    if (page.count > pageSize) {
+                        let requestMaker = function *(totalResults) {
+                            let pageNum = 1;
+                            while (pageNum * pageSize <= totalResults) {
+                                let pageParams = Object.assign({}, params, {
+                                    pageSize: pageSize,
+                                    page: pageNum,
+                                    sort: 'createdAt,desc'
+                                });
+                                yield self.getProjectScenes(pageParams);
+                                pageNum = pageNum + 1;
+                            }
+                        };
 
-                    requests = requests.concat(Array.from(requestMaker(numScenes)));
-                    // Unpack responses into a single scene list.
-                    // The structure to unpack is:
-                    // [{ results: [{},{},...] }, { results: [{},{},...]},...]
-                }
-
-                this.$q.all(requests).then(
-                    (allResponses) => {
-                        deferred.resolve(
-                            allResponses.reduce((res, resp) => res.concat(resp.results), [])
-                        );
-                    },
-                    () => {
-                        deferred.reject('Error loading scenes.');
+                        requests = requests.concat(Array.from(requestMaker(numScenes)));
+                        // Unpack responses into a single scene list.
+                        // The structure to unpack is:
+                        // [{ results: [{},{},...] }, { results: [{},{},...]},...]
                     }
-                );
-            }, () => {
-                deferred.reject('Error loading scenes.');
-            });
 
-            return deferred.promise;
+                    this.$q.all(requests).then(
+                        (allResponses) => {
+                            resolve(
+                                allResponses.reduce((res, resp) => res.concat(resp.results), [])
+                            );
+                        },
+                        () => {
+                            reject('Error loading scenes.');
+                        }
+                    );
+                }, () => {
+                    reject('Error loading scenes.');
+                });
+            });
         }
 
         getProjectStatus(projectId) {
@@ -485,33 +482,16 @@ export default (app) => {
         }
 
         getProjectShareURL(project) {
-            let deferred = this.$q.defer();
-            let shareUrl = `${this.getBaseURL()}/#/share/${project.id}`;
-            if (project.tileVisibility === 'PRIVATE') {
-                this.tokenService.getOrCreateProjectMapToken(project).then((token) => {
-                    deferred.resolve(`${shareUrl}/?mapToken=${token.id}`);
-                });
-            } else {
-                deferred.resolve(shareUrl);
-            }
-            return deferred.promise;
-        }
-
-        loadProject(id) {
-            this.isLoadingProject = true;
-            this.currentProjectId = id;
-            const request = this.get(id);
-            request.then(
-                p => {
-                    this.currentProject = p;
-                },
-                () => {
-                    this.currentProjectId = null;
+            return this.$q((resolve, reject) => {
+                let shareUrl = `${this.getBaseURL()}/#/share/${project.id}`;
+                if (project.tileVisibility === 'PRIVATE') {
+                    this.tokenService.getOrCreateProjectMapToken(project).then((token) => {
+                        resolve(`${shareUrl}/?mapToken=${token.id}`);
+                    }, (error) => reject(error));
+                } else {
+                    resolve(shareUrl);
                 }
-            ).finally(() => {
-                this.isLoadingProject = false;
             });
-            return request;
         }
 
         getProjectAois(projectId) {
