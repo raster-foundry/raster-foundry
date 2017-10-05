@@ -1,0 +1,15 @@
+<ng-submit ng-submit="$ctrl.onSearchAction()">
+  <div class="form-group search-form">
+    <input id="search-input"
+           class="form-control"
+           placeholder="{{$ctrl.placeholder || 'Search'}}"
+           ng-model="$ctrl.searchText"
+           ng-model-options="{
+             debounce: 500
+           }"
+           ng-change="$ctrl.onSearchAction()"/>
+    <button ng-click="$ctrl.onSearchAction()" type="button" class="btn btn-link">
+      <i class="icon-search"></i>
+    </button>
+  </div>
+</ng-submit>

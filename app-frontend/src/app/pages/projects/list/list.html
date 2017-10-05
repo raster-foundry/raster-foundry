@@ -4,8 +4,9 @@
 
       <!-- Dashboard Header -->
       <div class="dashboard-header">
-        <h1 class="h3"><i class="icon-project color-light"></i>Projects</h1>
+        <h1 class="h3">Projects</h1>
         <div class="flex-fill"></div>
+        <rf-search on-search="$ctrl.search(value)" placeholder="Search for projects"></rf-search>
         <a class="btn btn-primary" ng-click="$ctrl.createNewProject()" ng-if="!$ctrl.loading && $ctrl.projectList.length > 0">
           New project
         </a>
@@ -29,6 +30,7 @@
             Then you can <strong>edit</strong> your project to color-correct the scenes and arrange
             them into a perfectly mosaicked basemap.
           </p>
+
           <a class="btn btn-primary" ng-click="$ctrl.createNewProject()">New project</a>
           <p>
             <a>Getting started with Projects</a>
