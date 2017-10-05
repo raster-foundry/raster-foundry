@@ -6,7 +6,7 @@ export default class ProjectSelectModalController {
         this.populateProjectList(1);
     }
 
-    populateProjectList(page) {
+    populateProjectList(page = 1) {
         if (this.loading) {
             return;
         }
@@ -19,18 +19,38 @@ export default class ProjectSelectModalController {
                 page: page - 1
             }
         ).then((projectResult) => {
+            this.updatePagination(projectResult);
             this.lastProjectResult = projectResult;
-            this.numPaginationButtons = 6 - projectResult.page % 5;
-            if (this.numPaginationButtons < 3) {
-                this.numPaginationButtons = 3;
-            }
-            this.currentPage = projectResult.page + 1;
+            this.currentPage = page;
             this.projectList = this.lastProjectResult.results;
             this.loading = false;
         }, () => {
             this.errorMsg = 'Server error.';
             this.loading = false;
         });
+    }
+
+    updatePagination(data) {
+        this.pagination = {
+            show: data.count > data.pageSize,
+            count: data.count,
+            currentPage: data.page + 1,
+            startingItem: data.page * data.pageSize + 1,
+            endingItem: Math.min((data.page + 1) * data.pageSize, data.count),
+            hasNext: data.hasNext,
+            hasPrevious: data.hasPrevious
+        };
+    }
+
+    search(value) {
+        this.searchString = value;
+        if (this.searchString) {
+            this.projectService.searchQuery().then(projects => {
+                this.projectList = projects;
+            });
+        } else {
+            this.populateProjectList();
+        }
     }
 
     setSelected(project) {

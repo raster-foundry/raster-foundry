@@ -7,7 +7,10 @@
       <div class="dashboard-header">
         <h1 class="h3">Tools</h1>
         <div class="flex-fill"></div>
-        <rf-tool-search on-search="$ctrl.search(value)"></rf-tool-search>
+        <rf-search on-search="$ctrl.search(value)"
+                   placeholder="Search for tools"
+                   auto-focus="true">
+        </rf-search>
         <a class="btn btn-primary" ng-click="$ctrl.openToolCreateModal()">New tool</a>
       </div>
       <!-- Dashboard Header -->
@@ -45,7 +48,7 @@
            ng-show="!$ctrl.loading && $ctrl.lastToolResponse && $ctrl.pagination.show && !$ctrl.errorMsg &&!$ctrl.searchString">
         <ul uib-pagination
             items-per-page="$ctrl.lastToolResponse.pageSize"
-            total-items="$ctrl.lastToolResponse.count"
+            total-items="$ctrl.pagination.count"
             ng-model="$ctrl.currentPage"
             max-size="4"
             rotate="true"

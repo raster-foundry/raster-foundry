@@ -1,67 +1,113 @@
+/* global _ */
 export default class ReclassifyModalController {
-    constructor(reclassifyService) {
+    constructor(reclassifyService, toolService) {
         'ngInject';
         this.reclassifyService = reclassifyService;
-        this.classifications = this.resolve.classifications;
+        this.toolService = toolService;
+        this.breaks = this.resolve.breaks;
+        this.child = this.resolve.child;
+        this.model = this.resolve.model;
     }
 
     $onInit() {
-        // Give the table a new object to break update cycles
-        this.displayClassifications = angular.copy(this.classifications);
         this.noGapsOverlaps = true;
         this.allEntriesValid = true;
-        this.classCount = Object.keys(this.classifications).length;
+        this.isLoadingHistogram = false;
+
+        // Give the table a new object to break update cycles
+        this.updateBreaks(this.breaks);
     }
 
-    updateClassCount(newClassCount) {
-        if (!newClassCount || newClassCount === Object.keys(this.classifications).length) {
+    $onChanges() {
+        this.initHistogram();
+    }
+
+    get classCount() {
+        if (this.breaks) {
+            return this.breaks.length;
+        }
+        return 0;
+    }
+
+    set classCount(newClassCount) {
+        if (!newClassCount || newClassCount === this.classCount) {
             // Don't do anything on invalid numbers or if the number hasn't changed
             return;
         }
-        if (newClassCount > Object.keys(this.classifications).length) {
+        if (newClassCount > this.classCount) {
             // Add more empty classification slots
-            let breaksToAdd = newClassCount - Object.keys(this.classifications).length;
-            let lastBreak = Object.keys(this.classifications).sort((a, b) => a - b).slice(-1)[0];
+            let breaksToAdd = newClassCount - this.classCount;
+            let lastBreak = this.breaks.slice(-1)[0];
+
+            // Scale the step size to the histogram range if possible
+            let step = this.histogram ?
+                Math.pow(10,
+                    Math.round(
+                        Math.log10((this.histogram.maximum - this.histogram.minimum) / 100)
+                    )
+                ) :
+                1;
+
             // Fill them with values above the highest break
-            // TODO: This needs to be made smarter; right now we don't have any way of knowing what
-            // the maximum allowable value in our histograms is.
             let newBreaks = Array(breaksToAdd).fill(1).map(
-                (_, index) => index + 1 + Number(lastBreak)
+                (_, index) => (index + 1) * step + Number(lastBreak.break)
             );
-            newBreaks.forEach(function (classBreak) {
-                this.classifications[classBreak] = 'NODATA';
-            }, this);
-            // Copy over to the table
-            this.displayClassifications = angular.copy(this.classifications);
-        } else if (newClassCount < Object.keys(this.classifications).length) {
-            // Lop off classification slots from the end
-            let orderedBreaks = Object.keys(this.classifications).sort((a, b) => a - b);
-            let breaksToRemove = orderedBreaks.slice(
-                newClassCount - Object.keys(this.classifications).length
-            );
-            breaksToRemove.forEach(function (classBreak) {
-                delete this.classifications[classBreak];
-            }, this);
-            // Copy to table
-            this.displayClassifications = angular.copy(this.classifications);
+
+            this.updateBreaks([
+                ...this.breaks,
+                ...newBreaks.map(b => {
+                    return {
+                        break: b,
+                        start: lastBreak.break,
+                        value: 'NODATA'
+                    };
+                })
+            ]);
+        } else if (newClassCount < this.classCount) {
+            this.updateBreaks(this.breaks.slice(0, newClassCount));
+        }
+    }
+
+    initHistogram() {
+        this.isLoadingHistogram = true;
+        if (this.model.get('toolrun') && this.child) {
+            this.toolService
+                .getNodeHistogram(this.model.get('toolrun').id, this.child.id)
+                .then((histogram) => {
+                    this.histogram = histogram;
+                }).finally(() => {
+                    this.isLoadingHistogram = false;
+                });
+        } else {
+            this.isLoadingHistogram = false;
         }
     }
 
     equalInterval() {
-        // TODO: We should be using the histogram max/min because the entered max/min aren't
-        // guaranteed to cover the whole range of the available histogram values. This should be
-        // changed once we add histogram functionality.
-        let orderedKeys = Object.keys(this.classifications).sort((a, b) => a - b);
-        let min = Math.min(...orderedKeys);
-        let max = Math.max(...orderedKeys);
-        let rangeWidth = (max - min) / this.classCount;
-        // Keep each range's associated output value so that output values stay in the same
-        // order when applying the equal interval, but overwrite the range values.
-        let newClassifications = {};
-        orderedKeys.forEach(function (classBreak, index) {
-            newClassifications[rangeWidth * (index + 1)] = this.classifications[classBreak];
-        }, this);
-        this.classifications = newClassifications;
-        this.displayClassifications = angular.copy(this.classifications);
+        if (this.histogram) {
+            const min = this.histogram.minimum;
+            const max = this.histogram.maximum;
+            const rangeWidth = (max - min) / this.classCount;
+
+            // Keep each range's associated output value so that output values stay in the same
+            // order when applying the equal interval, but overwrite the range values.
+            this.updateBreaks(this.breaks.map((b, i) => {
+                return Object.assign({}, b, {
+                    break: rangeWidth * (i + 1)
+                });
+            }));
+        }
+    }
+
+    updateBreaks(breaks) {
+        const alignedBreaks = this.reclassifyService.alignBreakpoints(breaks);
+        if (!_.isEqual(alignedBreaks, this.breaks)) {
+            this.breaks = angular.copy(alignedBreaks);
+            this.displayClassifications = angular.copy(alignedBreaks);
+        }
+    }
+
+    closeAndUpdate() {
+        this.close({$value: this.breaks});
     }
 }

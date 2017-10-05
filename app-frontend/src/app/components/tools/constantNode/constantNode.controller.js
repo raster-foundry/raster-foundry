@@ -8,6 +8,12 @@ export default class ConstantNodeController {
         this.value = parseFloat(this.model.get('value'));
     }
 
+    $onChanges(changes) {
+        if (changes.node && changes.node.currentValue) {
+            this.value = changes.node.currentValue.constant;
+        }
+    }
+
     resetValue() {
         this.value = parseFloat(this.model.get('value'));
         this.onValueChange();

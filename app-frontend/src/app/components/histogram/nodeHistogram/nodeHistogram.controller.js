@@ -383,5 +383,8 @@ export default class NodeHistogramController {
                 min: minVal, max: maxVal
             }
         );
+        if (this.refreshHistogram) {
+            this.refreshHistogram();
+        }
     }
 }

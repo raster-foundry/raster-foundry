@@ -23,7 +23,6 @@ export default angular.module('index.components', [
     require('./components/datasources/datasourceCreateModal/datasourceCreateModal.module.js').name,
 
     // tool components
-    require('./components/tools/toolSearch/toolSearch.module.js').name,
     require('./components/tools/toolItem/toolItem.module.js').name,
     require('./components/tools/toolCreateModal/toolCreateModal.module.js').name,
     require('./components/tools/reclassifyModal/reclassifyModal.module.js').name,
@@ -66,14 +65,19 @@ export default angular.module('index.components', [
     require('./components/common/dateRangePickerModal/dateRangePickerModal.module.js').name,
     require('./components/common/datePickerModal/datePickerModal.module.js').name,
     require('./components/common/statusTag/statusTag.module.js').name,
+    require('./components/common/search/search.module.js').name,
+
 
     // Single components for new domains
     require('./components/aoiFilterPane/aoiFilterPane.module.js').name,
 
     // project color composite components
     require('./components/colorComposites/colorSchemeBuilder/colorSchemeBuilder.module.js').name,
+    require('./components/colorComposites/colorSchemeDropdown/colorSchemeDropdown.module.js').name,
+
+    // histogram components
     require('./components/histogram/channelHistogram/channelHistogram.module.js').name,
     require('./components/histogram/nodeHistogram/nodeHistogram.module.js').name,
     require('./components/histogram/histogramBreakpoint/histogramBreakpoint.module.js').name,
-    require('./components/colorComposites/colorSchemeDropdown/colorSchemeDropdown.module.js').name
+    require('./components/histogram/reclassifyHistogram/reclassifyHistogram.module.js').name
 ]);

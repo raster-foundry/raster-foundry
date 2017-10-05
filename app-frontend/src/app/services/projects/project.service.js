@@ -148,6 +148,54 @@ export default (app) => {
             return this.Project.query(params).$promise;
         }
 
+        searchQuery() {
+            return this.$q((resolve, reject) => {
+                let pageSize = 1000;
+                let firstPageParams = {
+                    pageSize: pageSize,
+                    page: 0,
+                    sort: 'createdAt,desc'
+                };
+
+                let firstRequest = this.query(firstPageParams);
+
+                firstRequest.then((page) => {
+                    let self = this;
+                    let num = page.count;
+                    let requests = [firstRequest];
+                    if (page.count > pageSize) {
+                        let requestMaker = function *(totalResults) {
+                            let pageNum = 1;
+                            while (pageNum * pageSize <= totalResults) {
+                                let pageParams = {
+                                    pageSize: pageSize,
+                                    page: pageNum,
+                                    sort: 'createdAt,desc'
+                                };
+                                yield self.query(pageParams);
+                                pageNum += 1;
+                            }
+                        };
+
+                        requests = requests.concat(Array.from(requestMaker(num)));
+                    }
+
+                    this.$q.all(requests).then(
+                        (allResponses) => {
+                            resolve(
+                                allResponses.reduce((res, resp) => res.concat(resp.results), [])
+                            );
+                        },
+                        () => {
+                            reject('Error loading projects.');
+                        }
+                    );
+                }, () => {
+                    reject('Error loading projects.');
+                });
+            });
+        }
+
         get(id) {
             return this.Project.get({id}).$promise;
         }

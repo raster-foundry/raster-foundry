@@ -14,7 +14,7 @@ class ProjectsListController {
         this.populateProjectList($state.params.page || 1);
     }
 
-    populateProjectList(page) {
+    populateProjectList(page = 1) {
         if (this.loading) {
             return;
         }
@@ -28,12 +28,8 @@ class ProjectsListController {
             }
         ).then(
             (projectResult) => {
-                this.lastProjectResult = projectResult;
-                this.numPaginationButtons = 6 - projectResult.page % 10;
-                if (this.numPaginationButtons < 3) {
-                    this.numPaginationButtons = 3;
-                }
-                this.currentPage = projectResult.page + 1;
+                this.updatePagination(projectResult);
+                this.currentPage = page;
                 let replace = !this.$state.params.page;
                 this.$state.transitionTo(
                     this.$state.$current.name,
@@ -43,7 +39,8 @@ class ProjectsListController {
                         notify: false
                     }
                 );
-                this.projectList = this.lastProjectResult.results;
+                this.lastProjectResult = projectResult;
+                this.projectList = projectResult.results;
                 this.loading = false;
                 this.projectList.forEach((project) => {
                     this.getProjectScenesCount(project);
@@ -54,6 +51,29 @@ class ProjectsListController {
                 this.loading = false;
             }
         );
+    }
+
+    updatePagination(data) {
+        this.pagination = {
+            show: data.count > data.pageSize,
+            count: data.count,
+            currentPage: data.page + 1,
+            startingItem: data.page * data.pageSize + 1,
+            endingItem: Math.min((data.page + 1) * data.pageSize, data.count),
+            hasNext: data.hasNext,
+            hasPrevious: data.hasPrevious
+        };
+    }
+
+    search(value) {
+        this.searchString = value;
+        if (this.searchString) {
+            this.projectService.searchQuery().then(projects => {
+                this.projectList = projects;
+            });
+        } else {
+            this.populateProjectList();
+        }
     }
 
     getProjectScenesCount(project) {

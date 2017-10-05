@@ -92,7 +92,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     val cacheKey = s"extent-tile-$layerId-$zoom-${extent.xmin}-${extent.ymin}-${extent.xmax}-${extent.ymax}"
     OptionT(
       timedFuture("layer-for-tile-extent-cache")(
-        rfCache.caching(cacheKey, doCache = cacheConfig.layerTile.enabled)( timedFuture("layer-for-tile-extent-s3")(
+        rfCache.caching(cacheKey, doCache = cacheConfig.layerTile.enabled)(timedFuture("layer-for-tile-extent-s3")(
           Future {
             Try {
               S3CollectionLayerReader(store)
@@ -116,14 +116,13 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
   }
 
 
-
   /** Calculate the histogram for the least resolute zoom level to automatically render tiles */
   def modelLayerGlobalHistogram(
-    toolRunId: UUID,
-    subNode: Option[UUID],
-    user: User,
-    voidCache: Boolean = false
-  ): OptionT[Future, Histogram[Double]] = {
+                                 toolRunId: UUID,
+                                 subNode: Option[UUID],
+                                 user: User,
+                                 voidCache: Boolean = false
+                               ): OptionT[Future, Histogram[Double]] = {
     val cacheKey = s"histogram-${toolRunId}-${subNode}-${user.id}"
 
     if (voidCache) rfCache.delete(cacheKey)
@@ -133,80 +132,38 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
         ast <- LayerCache.toolEvalRequirements(toolRunId, subNode, user, voidCache)
         (extent, zoom) <- TileSources.fullDataWindow(ast.tileSources)
         literalAst <- OptionT(
-                        GlobalInterpreter.literalize(ast, extent, { r: RFMLRaster => TileSources.globalSource(extent, zoom, r) })
-                          .map({ validatedAst => validatedAst.toOption })
-                      )
+          GlobalInterpreter.literalize(ast, extent, { r: RFMLRaster => TileSources.globalSource(extent, zoom, r) })
+            .map({ validatedAst => validatedAst.toOption })
+        )
         tile <- OptionT.fromOption[Future](GlobalInterpreter.interpret(literalAst, extent) match {
-                  case Valid(lztile) => lztile.evaluateDouble
-                  case Invalid(e) => None
-                })
+          case Valid(lztile) => lztile.evaluateDouble
+          case Invalid(e) => None
+        })
       } yield {
         val hist = StreamingHistogram.fromTile(tile)
-        val currentMetadata = ast.metadata.getOrElse(NodeMetadata())
-        val updatedMetadata = currentMetadata.copy(histogram = Some(hist))
-        val updatedAst = ast.withMetadata(updatedMetadata)
-        val updatedToolRun = toolRun.copy(executionParameters = updatedAst.asJson)
-        try {
-          database.db.run {
-            ToolRuns.updateToolRun(updatedToolRun, toolRun.id, user)
-          }
-        } catch {
-          case e: Exception =>
-            logger.error(s"Unable to update ToolRun (${toolRun.id}): ${e.getMessage}")
-        }
         hist
       }
     }
   }
 
-  def toolAndToolRun(
-    toolRunId: UUID,
-    user: User,
-    voidCache: Boolean = false
-  ): OptionT[Future, (Tool.WithRelated, ToolRun)] = {
-    rfCache.cachingOptionT(s"tool+run-$toolRunId-${user.id}", doCache = cacheConfig.tool.enabled) {
-      for {
-        toolRun <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
-        tool <- OptionT(Tools.getTool(toolRun.tool, user))
-      } yield (tool, toolRun)
-    }
-  }
-
-  def toolRun(
-    toolRunId: UUID,
-    user: User,
-    voidCache: Boolean = false
-  ): OptionT[Future, ToolRun] = {
-    rfCache.cachingOptionT(s"tool+run-$toolRunId-${user.id}", doCache = cacheConfig.tool.enabled) {
-      for {
-        toolRun <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
-      } yield toolRun
-    }
+  def toolRun(toolRunId: UUID, user: User, voidCache: Boolean = false): OptionT[Future, ToolRun] = {
+    OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
   }
 
   /** Calculate all of the prerequisites to evaluation of an AST over a set of tile sources */
   def toolEvalRequirements(
-    toolRunId: UUID,
-    subNode: Option[UUID],
-    user: User,
-    voidCache: Boolean = false
-  ): OptionT[Future, MapAlgebraAST] =
-    traceName("LayerCache.toolEvalRequirements") {
-      val cacheKey = s"ast+params-$toolRunId-${subNode}-${user.id}"
-      if (voidCache) rfCache.delete(cacheKey)
-      rfCache.cachingOptionT(cacheKey) {
-        traceName("LayerCache.toolEvalRequirements (no cache)") {
-          for {
-            toolRun <- LayerCache.toolRun(toolRunId, user)
-            ast     <- OptionT.fromOption[Future](toolRun.executionParameters.as[MapAlgebraAST].toOption)
-            subAst <- OptionT.fromOption[Future](subNode match {
-                         case Some(id) => ast.find(id)
-                         case None => Some(ast)
-                       })
-          } yield subAst
-        }
-      }
-    }
+    toolRunId: UUID, subNode: Option[UUID], user: User, voidCache: Boolean = false
+  ): OptionT[Future, MapAlgebraAST] = {
+    for {
+      toolRun <- LayerCache.toolRun(toolRunId, user)
+      ast <- OptionT.fromOption[Future](toolRun.executionParameters.as[MapAlgebraAST].toOption)
+      subAst <- OptionT.fromOption[Future](subNode match {
+        case Some(id) => ast.find(id)
+        case None => Some(ast)
+      })
+    } yield subAst
+  }
+
 
   /** Calculate all of the prerequisites to evaluation of an AST over a set of tile sources */
   def toolRunColorMap(

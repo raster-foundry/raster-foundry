@@ -1,11 +1,41 @@
 export default class InputNodeController {
-    constructor($uibModal, $scope) {
+    constructor($uibModal, $scope, projectService) {
         'ngInject';
         this.$uibModal = $uibModal;
         this.$scope = $scope;
+        this.projectService = projectService;
     }
 
     $onInit() {
+        this.model.set('invalid', !this.allInputsDefined());
+    }
+
+    $onChanges(changes) {
+        if (changes.node) {
+            this.updateFromModel();
+        }
+    }
+
+    updateFromModel() {
+        if (this.node) {
+            if (
+
+                    this.selectedProject &&
+                    this.node.projId &&
+                    this.node.projId !== this.selectedProject.id ||
+                    this.node.projId
+            ) {
+                this.projectService.get(this.node.projId).then(p => {
+                    this.selectedProject = p;
+                    this.checkValidity();
+                });
+            }
+            this.selectedBand = +this.node.band;
+            this.checkValidity();
+        }
+    }
+
+    checkValidity() {
         this.model.set('invalid', !this.allInputsDefined());
     }
 
@@ -25,14 +55,14 @@ export default class InputNodeController {
         this.activeModal.result.then(project => {
             this.selectedProject = project;
             this.onChange({project: project, band: this.selectedBand});
-            this.model.set('invalid', !this.allInputsDefined());
+            this.checkValidity();
             this.$scope.$evalAsync();
         });
     }
 
     onBandChange() {
         this.onChange({project: this.selectedProject, band: this.selectedBand});
-        this.model.set('invalid', !this.allInputsDefined());
+        this.checkValidity();
         this.$scope.$evalAsync();
     }
 
