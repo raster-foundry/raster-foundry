@@ -1,5 +1,24 @@
 # Change Log
 
+## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/HEAD)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.22.0...HEAD)
+
+**Merged pull requests:**
+
+- Reduce Database Load during Sentinel 2 Import [\#2600](https://github.com/raster-foundry/raster-foundry/pull/2600)
+- Add tool share modal [\#2599](https://github.com/raster-foundry/raster-foundry/pull/2599)
+- Use deployment repository master branch for production [\#2598](https://github.com/raster-foundry/raster-foundry/pull/2598)
+- Allow specifying color ramps using percentage breakpoints [\#2596](https://github.com/raster-foundry/raster-foundry/pull/2596)
+- Make Sentinel Import More Robust [\#2594](https://github.com/raster-foundry/raster-foundry/pull/2594)
+- Lab UI - Fix node ordering [\#2589](https://github.com/raster-foundry/raster-foundry/pull/2589)
+- Add bands jsonb property to datasources [\#2584](https://github.com/raster-foundry/raster-foundry/pull/2584)
+- Add button to reverse lab node color schemes [\#2583](https://github.com/raster-foundry/raster-foundry/pull/2583)
+- Add measurement tool to lab map [\#2582](https://github.com/raster-foundry/raster-foundry/pull/2582)
+- Color scheme dropdown qualitative support [\#2573](https://github.com/raster-foundry/raster-foundry/pull/2573)
+- Use project tiles to preview node if node is a source [\#2572](https://github.com/raster-foundry/raster-foundry/pull/2572)
+- Allow editing uploaded scene's properties and metadata. [\#2545](https://github.com/raster-foundry/raster-foundry/pull/2545)
+
 ## [0.22.0](https://github.com/raster-foundry/raster-foundry/tree/0.22.0) (2017-09-27)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.21.0...0.22.0)
