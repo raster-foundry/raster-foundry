@@ -4,6 +4,7 @@ const rfSearch = {
     templateUrl: searchTpl,
     controller: 'SearchController',
     bindings: {
+        autoFocus: '<',
         placeholder: '@',
         onSearch: '&'
     }
