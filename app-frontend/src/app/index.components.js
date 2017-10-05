@@ -65,7 +65,7 @@ export default angular.module('index.components', [
     require('./components/common/dateRangePickerModal/dateRangePickerModal.module.js').name,
     require('./components/common/datePickerModal/datePickerModal.module.js').name,
     require('./components/common/statusTag/statusTag.module.js').name,
-    require('./components/common/search/search.module.js').name,
+    require('./components/common/search/search.js').name,
 
 
     // Single components for new domains
