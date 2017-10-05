@@ -1,5 +1,7 @@
 /* global _ */
 
+const visibleStats = ['mean', 'median', 'mode', 'stddev', 'zmin', 'zmax'];
+
 export default class NodeHistogramController {
     constructor($scope, toolService) {
         'ngInject';
@@ -12,20 +14,15 @@ export default class NodeHistogramController {
         this.isLoading = false;
         this.hasStats = false;
         this.digitCount = 5;
-        this.emptyStats = {
-            dataCells: '',
-            mean: '',
-            median: '',
-            mode: '',
-            stddev: '',
-            zmin: '',
-            zmax: ''
-        };
+        this.emptyStats = { };
+        visibleStats.forEach((stat) => {
+            this.emptyStats[stat] = '';
+        });
     }
 
     initSize() {
         let size = this.size;
-        this.model.set('size', {width: size.width, height: 290});
+        this.model.set('size', {width: size.width, height: 260});
     }
 
     $onChanges() {
@@ -46,12 +43,14 @@ export default class NodeHistogramController {
 
             this.toolService.getNodeStatistics(runId, nodeId).then(stats => {
                 // Scrub the response of angular remnants to tell if it's actually empty
-                this.stats = Object.keys(stats).reduce((acc, s) => {
-                    if (!s.startsWith('$')) {
-                        acc[s] = stats[s];
-                    }
-                    return acc;
-                }, {});
+                this.stats = Object.keys(stats)
+                    .filter((key) => visibleStats.indexOf(key) > -1)
+                    .reduce((acc, s) => {
+                        if (!s.startsWith('$')) {
+                            acc[s] = stats[s];
+                        }
+                        return acc;
+                    }, {});
 
                 this.hasStats = !_.isEmpty(this.stats);
                 this.isLoading = false;
