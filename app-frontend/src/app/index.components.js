@@ -44,6 +44,7 @@ export default angular.module('index.components', [
     require('./components/map/labMap/labMap.module.js').name,
     require('./components/map/mapSearchModal/mapSearchModal.module.js').name,
     require('./components/map/annotateToolbar/annotateToolbar.module.js').name,
+    require('./components/map/measurementPopup/measurementPopup.module.js').name,
 
     // settings components
     require('./components/settings/refreshTokenModal/refreshTokenModal.module.js').name,

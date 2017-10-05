@@ -1,0 +1,13 @@
+<div>
+    <label class="leaflet-popup-label m-popup-title">{{$ctrl.measurementType}} Measurement</label>
+    <hr>
+    <label class="leaflet-popup-label m-popup-result">
+      <span class="m-popup-number">
+        {{ $ctrl.calculatedMeasurment | number }}
+      </span>&nbsp;&nbsp;{{$ctrl.unit}}
+    </label>
+    <input type="button"
+           class="btn btn-secondary measure-delete-btn"
+           ng-click="$ctrl.delete()"
+           value="Delete" />
+</div>
