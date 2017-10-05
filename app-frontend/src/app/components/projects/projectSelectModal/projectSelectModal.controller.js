@@ -53,8 +53,6 @@ export default class ProjectSelectModalController {
         }
     }
 
-
-
     setSelected(project) {
         this.close({$value: project});
     }

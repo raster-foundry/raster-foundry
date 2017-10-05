@@ -2,7 +2,7 @@
   <div class="form-group search-form">
     <input id="search-input"
            class="form-control"
-           placeholder="{{$ctrl.placeholder || 'Search'}}"
+           ng-attr-placeholder="{{$ctrl.placeholder || 'Search'}}"
            ng-model="$ctrl.searchText"
            ng-model-options="{
              debounce: 500

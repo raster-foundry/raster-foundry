@@ -12,7 +12,6 @@ export default class SearchController {
 
     $postLink() {
         if (this.autoFocus) {
-            console.log('autofocus');
             this.$timeout(() => {
                 const el = $(this.$element[0]).find('input').get(0);
                 el.focus();
