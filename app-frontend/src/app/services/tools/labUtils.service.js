@@ -8,7 +8,6 @@ export default (app) => {
             'ngInject';
 
             let viridis = colorSchemeService.defaultColorSchemes.find(s => s.label === 'Viridis');
-            let linspace = this.linspace;
             let getNodeChildren = this.getNodeChildren.bind(this);
             let findInToolDefinition = this.findInToolDefinition;
 
@@ -90,6 +89,7 @@ export default (app) => {
                   ></rf-classify-node>
                   <rf-node-histogram
                     ng-if="currentView === 'HISTOGRAM' && !isCollapsed"
+                    data-ast-node="node"
                     data-histogram="histogram"
                     data-breakpoints="breakpoints"
                     data-masks="masks"
