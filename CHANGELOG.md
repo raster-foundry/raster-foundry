@@ -2,7 +2,17 @@
 
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/HEAD)
 
-[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.22.0...HEAD)
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.23.0...HEAD)
+
+**Merged pull requests:**
+
+- Add search to project list page and project select modal [\#2614](https://github.com/raster-foundry/raster-foundry/pull/2614)
+- Remove feature flag for tools [\#2605](https://github.com/raster-foundry/raster-foundry/pull/2605)
+- Lab UI - Implement reclassify modal histogram [\#2579](https://github.com/raster-foundry/raster-foundry/pull/2579)
+
+## [0.23.0](https://github.com/raster-foundry/raster-foundry/tree/0.23.0) (2017-10-05)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.22.0...0.23.0)
 
 **Merged pull requests:**
 
