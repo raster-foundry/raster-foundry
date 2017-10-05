@@ -211,20 +211,17 @@ export default class LabMapController {
 
     setPopupContent(shapeType, measurement, layer) {
         let popupScope = this.$scope.$new();
-        let type = shapeType === 'polyline' ? 'Distance ' : 'Area ';
-        let unit = shapeType === 'polyline' ? ' Meters ' : ' Sq. Meters ';
         let popupContent = angular.element(
             `
-                <div>
-                    <label class="leaflet-popup-label m-popup-title">${type} Measurement</label><hr>
-                    <label class="leaflet-popup-label m-popup-result">
-                        <span class="m-popup-number">${measurement}</span>&nbsp;&nbsp;${unit}
-                    </label>
-                    <input type="button" class="btn btn-secondary measure-delete-btn"
-                           ng-click="deleteMeasureShape()" value="Delete" />
-                </div>
+            <rf-measurement-popup
+                delete="deleteMeasureShape()"
+                type="type"
+                measurement="measurement">
+            </rf-measurement-popup>
             `
         );
+        popupScope.type = shapeType;
+        popupScope.measurement = measurement;
         popupScope.deleteMeasureShape = () => {
             this.removeMeasureLayer(layer);
         };
