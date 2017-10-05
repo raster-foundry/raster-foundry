@@ -198,7 +198,7 @@ export default class LabRunController {
                         this.$timeout(() => {
                             let s = this.toolService.generateSourcesFromTool(this.toolRun);
                             let firstSourceId = Object.keys(s)[0];
-                            this.projectService.get(s[firstSourceId].projId).then(p => {
+                            this.projectService.fetchProject(s[firstSourceId].projId).then(p => {
                                 this.fitProjectExtent(p);
                             });
                         });

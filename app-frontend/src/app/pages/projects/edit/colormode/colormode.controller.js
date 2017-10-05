@@ -4,13 +4,16 @@ const availableBands = require('./bands.json');
 
 export default class ProjectsEditColormode {
 
-    constructor($scope, colorCorrectService, colorSchemeService, projectService) {
+    constructor(
+        $scope, colorCorrectService, colorSchemeService, projectService, projectEditService
+    ) {
         'ngInject';
         this.$scope = $scope;
         this.$parent = $scope.$parent.$ctrl;
         this.colorCorrectService = colorCorrectService;
         this.colorSchemeService = colorSchemeService;
         this.projectService = projectService;
+        this.projectEditService = projectEditService;
     }
 
     $onInit() {
@@ -197,7 +200,7 @@ export default class ProjectsEditColormode {
     }
 
     updateProjectFromBuffer() {
-        this.projectService.updateProject(this.projectBuffer).then(() => {
+        this.projectEditService.updateCurrentProject(this.projectBuffer).then(() => {
             this.$parent.project = this.projectBuffer;
             this.redrawMosaic();
         });
@@ -289,7 +292,7 @@ export default class ProjectsEditColormode {
 
     saveCorrection() {
         this.colorCorrectService.bulkUpdate(
-            this.projectService.currentProject.id,
+            this.projectEditService.currentProject.id,
             Array.from(this.$parent.sceneLayers.keys()),
             this.correction
         ).then(() => {

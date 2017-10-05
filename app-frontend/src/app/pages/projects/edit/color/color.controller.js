@@ -46,7 +46,7 @@ export default class ProjectsEditColorController {
             this.correction[correctionType].enabled = true;
         }
         const promise = this.colorCorrectService.bulkUpdate(
-            this.projectService.currentProject.id,
+            this.projectEditService.currentProject.id,
             Array.from(this.$parent.sceneLayers.keys()),
             this.correction
         );
