@@ -99,17 +99,11 @@ export default class HistogramBreakpointController {
     }
 
     onMouseMove(event) {
-        if (
-            event.target &&
-            (
-                event.target.classList.contains('graph-container') ||
-                event.target.tagName === 'NVD3'
-            ) ||
-            event.target &&
-            (
-                event.target.tagName === 'rf-node-histogram' ||
-                event.target.tagName === 'rf-reclassify-histogram'
-            )
+        if (event.target &&
+            event.target.classList.contains('graph-container') ||
+            event.target.tagName === 'NVD3' ||
+            event.target.tagName === 'rf-node-histogram' ||
+            event.target.tagName === 'rf-reclassify-histogram'
         ) {
             event.stopPropagation();
             let width = this.parent.width();

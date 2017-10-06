@@ -97,7 +97,9 @@ export default class NodeHistogramController {
         let range = this._options.range.max - this._options.range.min;
         let data = this._breakpoints.map((bp) => {
             let offset = (bp.value - this._options.range.min) / range * 100;
-            return {offset: `${offset}%`, color: bp.color};
+            return {offset: offset, color: bp.color};
+        }).sort((a, b) => a.offset - b.offset).map((bp) => {
+            return {offset: `${bp.offset}%`, color: bp.color};
         });
 
         if (this._options.baseScheme && this._options.baseScheme.colorBins > 0) {
