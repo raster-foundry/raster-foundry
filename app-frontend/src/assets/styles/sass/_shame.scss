@@ -1630,6 +1630,7 @@ rf-node-statistics {
 .classify-node-preview-row {
   display: flex;
   flex-direction: row;
+  user-select: text;
   &.with-border {
     border: 1px solid $gray-lightest;
     border-bottom: none;

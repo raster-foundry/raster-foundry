@@ -57,6 +57,7 @@ require('./map/geocode.service')(shared);
 require('./common/mousetip.service')(shared);
 require('./common/feed.service')(shared);
 require('./common/thumbnail.service')(shared);
+require('./common/decimal.filter')(shared);
 
 
 export default shared;
