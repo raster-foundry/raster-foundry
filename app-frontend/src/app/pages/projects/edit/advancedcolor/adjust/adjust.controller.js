@@ -27,6 +27,7 @@ export default class ProjectsColorAdjustController {
         };
 
         let alphaOptions = {
+            value: 1,
             floor: 0,
             ceil: 1,
             step: 0.01,
@@ -35,7 +36,7 @@ export default class ProjectsColorAdjustController {
         };
 
         let betaOptions = {
-            value: 0.6,
+            value: 1,
             floor: 0,
             ceil: 10,
             step: 0.1,
