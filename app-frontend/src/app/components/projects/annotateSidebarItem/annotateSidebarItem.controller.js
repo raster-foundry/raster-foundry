@@ -34,6 +34,11 @@ export default class AnnotateSidebarItemController {
         });
     }
 
+    onAnnotationBulkCreate($event, annotation) {
+        $event.stopPropagation();
+        this.onBulkCreate({'annotation': annotation});
+    }
+
     cancelAnnotation(annotation) {
         this.onCancelUpdateAnnotation({
             'annotation': annotation,
