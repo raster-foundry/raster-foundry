@@ -807,6 +807,8 @@ export default class AnnotateController {
                 if (!answer) {
                     event.preventDefault();
                     this.$state.go(fromState, fromParams);
+                } else {
+                    this.allowInterruptions();
                 }
             }
         );
