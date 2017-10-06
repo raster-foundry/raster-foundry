@@ -97,9 +97,15 @@ export default class AnnotateToolbarController {
 
     onCancelDrawing() {
         this.isDrawCancel = false;
-        this.drawRectangleHandler.disable();
-        this.drawPolygonHandler.disable();
-        this.drawMarkerHandler.disable();
+        if (this.drawRectangleHandle) {
+            this.drawRectangleHandler.disable();
+        }
+        if (this.drawPolygonHandler) {
+            this.drawPolygonHandler.disable();
+        }
+        if (this.drawMarkerHandler) {
+            this.drawMarkerHandler.disable();
+        }
         this.onShapeCreating({'isCreating': false});
         this.onDrawingCanceled();
     }
