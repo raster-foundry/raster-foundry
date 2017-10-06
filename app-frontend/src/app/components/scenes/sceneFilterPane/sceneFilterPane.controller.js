@@ -1,9 +1,8 @@
 /* globals _*/
 export default class FilterPaneController {
-    constructor($log, $scope, $rootScope, $timeout, $uibModal,
+    constructor($scope, $rootScope, $timeout, $uibModal,
         datasourceService, authService, moment) {
         'ngInject';
-        this.$log = $log;
         this.$scope = $scope;
         this.$rootScope = $rootScope;
         this.$timeout = $timeout;
