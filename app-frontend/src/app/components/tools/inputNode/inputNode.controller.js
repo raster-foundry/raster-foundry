@@ -19,13 +19,12 @@ export default class InputNodeController {
     updateFromModel() {
         if (this.node) {
             if (
-
-                    this.selectedProject &&
-                    this.node.projId &&
-                    this.node.projId !== this.selectedProject.id ||
-                    this.node.projId
+                this.selectedProject &&
+                this.node.projId &&
+                this.node.projId !== this.selectedProject.id ||
+                this.node.projId
             ) {
-                this.projectService.get(this.node.projId).then(p => {
+                this.projectService.fetchProject(this.node.projId).then(p => {
                     this.selectedProject = p;
                     this.checkValidity();
                 });
