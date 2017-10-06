@@ -118,6 +118,10 @@ export default (app) => {
                 }
                 return Number(stop) - Number(stops[index - 1]);
             });
+            if (Number(orderedStops[0]) === 0) {
+                // remove first stop since it has no width if it's 0
+                stopWidths.splice(0, 1);
+            }
             const minWidth = Math.min(...stopWidths);
             // Normalize smallest width to 1 and then round to head off floating point issues
             const integerWidths = stopWidths.map(width => Math.round(1.0 / minWidth * width));
