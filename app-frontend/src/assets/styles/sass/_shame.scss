@@ -1464,6 +1464,14 @@ rf-export-item {
   position: relative;
 }
 
+.is-comparing {
+    .diagram-cell {
+        * {
+            pointer-events: none;
+        }
+    }
+}
+
 .diagram-cell {
   position: absolute;
   background: white;
