@@ -444,6 +444,14 @@ export default class AnnotateController {
             let geojsonData = shapeLayer.toGeoJSON();
             this.createEditableDrawLayer(mapWrapper, geojsonData.geometry);
             this.addNewAnnotationIdToData();
+            if (this.bulkTemplate) {
+                this.onUpdateAnnotationFinish(
+                    this.annoToExport.features.slice(-1)[0].properties.id,
+                    this.bulkTemplate.properties.label,
+                    this.bulkTemplate.properties.description,
+                    false
+                );
+            }
         });
     }
 
@@ -639,6 +647,14 @@ export default class AnnotateController {
             );
         });
         this.$timeout(() => angular.element('#_values').focus());
+    }
+
+    onBulkCreate(annotation) {
+        this.bulkTemplate = annotation;
+    }
+
+    onBulkCreateFinish() {
+        this.bulkTemplate = false;
     }
 
     updateFilterAndMapRender(label) {

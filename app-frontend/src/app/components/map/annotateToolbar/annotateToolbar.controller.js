@@ -14,6 +14,8 @@ export default class AnnotateToolbarController {
 
     $onInit() {
         this.isDrawCancel = false;
+        this.inBulkMode = false;
+        this.lastHandler = null;
 
         this.getMap().then((mapWrapper) => {
             this.listeners = [
@@ -23,6 +25,14 @@ export default class AnnotateToolbarController {
         });
 
         this.$scope.$on('$destroy', this.$onDestroy.bind(this));
+    }
+
+    $onChanges(changes) {
+        if (changes.bulkMode && changes.bulkMode.currentValue) {
+            this.enableBulkCreate();
+        } else if (changes.bulkMode) {
+            this.disableBulkCreate();
+        }
     }
 
     $onDestroy() {
@@ -59,18 +69,30 @@ export default class AnnotateToolbarController {
         this.isDrawCancel = true;
         if (shapeType === 'rectangle') {
             this.drawRectangleHandler.enable();
+            this.lastHandler = this.drawRectangleHandler;
             this.drawPolygonHandler.disable();
             this.drawMarkerHandler.disable();
         } else if (shapeType === 'polygon') {
             this.drawPolygonHandler.enable();
+            this.lastHandler = this.drawPolygonHandler;
             this.drawRectangleHandler.disable();
             this.drawMarkerHandler.disable();
         } else {
             this.drawMarkerHandler.enable();
+            this.lastHandler = this.drawMarkerHandler;
             this.drawPolygonHandler.disable();
             this.drawRectangleHandler.disable();
         }
         this.onShapeCreating({'isCreating': true});
+    }
+
+    enableBulkCreate() {
+        this.inBulkMode = true;
+    }
+
+    disableBulkCreate() {
+        this.inBulkMode = false;
+        this.onCancelDrawing();
     }
 
     onCancelDrawing() {
@@ -79,6 +101,7 @@ export default class AnnotateToolbarController {
         this.drawPolygonHandler.disable();
         this.drawMarkerHandler.disable();
         this.onShapeCreating({'isCreating': false});
+        this.onDrawingCanceled();
     }
 
     createShape(e) {
@@ -87,5 +110,13 @@ export default class AnnotateToolbarController {
         this.onShapeCreated({
             'shapeLayer': e.layer
         });
+
+        if (this.inBulkMode && this.lastHandler) {
+            this.$scope.$evalAsync(() => {
+                this.isDrawCancel = true;
+                this.lastHandler.enable();
+                this.onShapeCreating({isCreating: true});
+            });
+        }
     }
 }

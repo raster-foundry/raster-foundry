@@ -2,7 +2,8 @@
   <div class="annotate-toolbar">
     <div class="column" ng-if="!$ctrl.isDrawCancel">
       <div class="annotate-toolbar-header row align-center">
-        <span>New annotation</span>
+        <span ng-if="!$ctrl.inBulkMode">New annotation</span>
+        <span ng-if="$ctrl.inBulkMode">New bulk annotation</span>
       </div>
       <div class="annotate-toolbar-actions row align-center">
         <button class="btn btn-primary btn-anno-rectangle"
@@ -24,12 +25,14 @@
     </div>
     <div class="column" ng-if="$ctrl.isDrawCancel">
       <div class="annotate-toolbar-header row align-center">
-        <span>Draw annotation</span>
+          <span ng-if="!$ctrl.inBulkMode">Draw annotation</span>
+          <span ng-if="$ctrl.inBulkMode">Draw bulk annotation</span>
       </div>
       <div class="annotate-toolbar-actions row align-center">
         <button class="btn btn-primary btn-anno-cancel"
                 ng-click="$ctrl.onCancelDrawing()">
-          Cancel
+                <span ng-if="!$ctrl.inBulkMode">Cancel</span>
+                <span ng-if="$ctrl.inBulkMode">Finish</span>
         </button>
       </div>
     </div>
