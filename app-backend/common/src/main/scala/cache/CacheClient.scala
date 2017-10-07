@@ -7,7 +7,7 @@ import net.spy.memcached._
 import scala.concurrent._
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import com.azavea.rf.common.Config
+import com.azavea.rf.common.{Config, RfStackTrace, RollbarNotifier}
 import cats.data._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.typesafe.scalalogging.LazyLogging
@@ -22,7 +22,7 @@ object CacheClientThreadPool {
     )
 }
 
-class CacheClient(client: => MemcachedClient) extends LazyLogging {
+class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNotifier {
 
   import CacheClientThreadPool._
 
@@ -64,7 +64,10 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging {
                 case None => setValue(cacheKey, cachedValue, ttlSeconds = 300)
               }
             } catch {
-              case e: Exception => logger.info(s"Cache Set Error: ${e.getMessage}")
+              case e: Exception => {
+                sendError(RfStackTrace(e))
+                logger.error(s"Cache Set Error: ${RfStackTrace(e)}")
+              }
             }
           }
           futureCached

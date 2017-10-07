@@ -5,17 +5,19 @@ import java.io.{ByteArrayOutputStream, PrintStream}
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
-import akka.stream.Materializer
+import akka.stream.ActorMaterializer
 import com.typesafe.scalalogging.LazyLogging
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
 import scala.collection.mutable
 
+
 trait RollbarNotifier extends LazyLogging {
 
-  implicit val system: ActorSystem
-  implicit val materializer: Materializer
+  implicit val rollbarSystem = ActorSystem("rollbar-notifier")
+  implicit val rollbarMaterializer = ActorMaterializer()
+
 
   val rollbarApiToken = sys.env.get("ROLLBAR_SERVER_TOKEN") match {
     case Some(t) => t
