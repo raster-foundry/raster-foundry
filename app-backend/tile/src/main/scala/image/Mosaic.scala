@@ -12,6 +12,8 @@ import cats.data._
 import cats.implicits._
 import java.util.UUID
 
+import com.azavea.rf.common.cache.CacheClient
+import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 
 import scala.concurrent._
@@ -23,6 +25,9 @@ case class TagWithTTL(tag: String, ttl: Duration)
 
 object Mosaic extends LazyLogging with KamonTrace {
   implicit val database = Database.DEFAULT
+
+  lazy val memcachedClient = KryoMemcachedClient.DEFAULT
+  val rfCache = new CacheClient(memcachedClient)
 
   def apply(
       projectId: UUID,
@@ -64,7 +69,9 @@ object Mosaic extends LazyLogging with KamonTrace {
     col: Int,
     row: Int
   )(implicit database: Database): OptionT[Future, MultibandTile] = {
-    MultiBandMosaic.raw(projectId, zoom, col, row)
+    rfCache.cachingOptionT(s"mosaic-raw-$projectId-$zoom-$col-$row") {
+      MultiBandMosaic.raw(projectId, zoom, col, row)
+    }
   }
 
   def rawForExtent(
@@ -72,6 +79,8 @@ object Mosaic extends LazyLogging with KamonTrace {
     zoom: Int,
     bbox: Option[Projected[Polygon]]
   )(implicit database: Database) : OptionT[Future, MultibandTile] = {
-    MultiBandMosaic.rawForExtent(projectId, zoom, bbox)
+    rfCache.cachingOptionT(s"mosaic-extent-raw-$projectId-$zoom-$bbox") {
+      MultiBandMosaic.rawForExtent(projectId, zoom, bbox)
+    }
   }
 }
