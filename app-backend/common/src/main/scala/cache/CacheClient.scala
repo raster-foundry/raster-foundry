@@ -7,12 +7,14 @@ import net.spy.memcached._
 import scala.concurrent._
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import com.azavea.rf.common.Config
+import com.azavea.rf.common.{Config, RfStackTrace, RollbarNotifier}
 import cats.data._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.typesafe.scalalogging.LazyLogging
 
-object CacheClientThreadPool {
+import scala.util.{Failure, Success}
+
+object CacheClientThreadPool extends RollbarNotifier {
   implicit lazy val ec: ExecutionContext =
     ExecutionContext.fromExecutor(
       Executors.newFixedThreadPool(
@@ -20,6 +22,9 @@ object CacheClientThreadPool {
         new ThreadFactoryBuilder().setNameFormat("cache-client-%d").build()
       )
     )
+
+  implicit val system = ActorSystem("rollbar-notifier")
+  implicit val materializer = ActorMaterializer()
 }
 
 class CacheClient(client: => MemcachedClient) extends LazyLogging {
@@ -54,17 +59,16 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging {
         } else {
           // cache miss
           val futureCached: Future[CachedType] = expensiveOperation
-          futureCached.foreach { cachedValue =>
-            try {
-              // Don't cache Nones indefinitely -- we might need to tune the None
-              // ttl if it feels like it takes forever for tiles to be available
-              // after an ingest is finished
+          futureCached.onComplete {
+            case Success(cachedValue) => {
               cachedValue match {
                 case Some(v) => setValue(cacheKey, cachedValue)
                 case None => setValue(cacheKey, cachedValue, ttlSeconds = 300)
               }
-            } catch {
-              case e: Exception => logger.info(s"Cache Set Error: ${e.getMessage}")
+            }
+            case Failure(e) => {
+              sendError(RfStackTrace(e))
+              logger.error(s"Cache Set Error: ${RfStackTrace(e)}")
             }
           }
           futureCached

@@ -38,3 +38,17 @@ In this case, the check can be disabled for one line with:
 ```javascript
 // eslint-disable-next-line no-underscore-dangle
 ```
+
+
+Promises
+---------
+Use
+```
+$q((resolve, reject) => {...})
+```
+instead of
+```
+let deferred = $q.defer()
+```
+The former avoids the common promise pitfall of not having a failure condition on a promise,  
+since most linters will complain if you don't use a defined function parameter

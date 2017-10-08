@@ -44,6 +44,7 @@ export default angular.module('index.components', [
     require('./components/map/labMap/labMap.module.js').name,
     require('./components/map/mapSearchModal/mapSearchModal.module.js').name,
     require('./components/map/annotateToolbar/annotateToolbar.module.js').name,
+    require('./components/map/measurementPopup/measurementPopup.module.js').name,
 
     // settings components
     require('./components/settings/refreshTokenModal/refreshTokenModal.module.js').name,
@@ -65,7 +66,7 @@ export default angular.module('index.components', [
     require('./components/common/dateRangePickerModal/dateRangePickerModal.module.js').name,
     require('./components/common/datePickerModal/datePickerModal.module.js').name,
     require('./components/common/statusTag/statusTag.module.js').name,
-    require('./components/common/search/search.module.js').name,
+    require('./components/common/search/search.js').name,
 
 
     // Single components for new domains

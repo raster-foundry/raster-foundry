@@ -47,7 +47,6 @@ export default class AnnotateController {
             this.disableTransformHandler(mapWrapper);
         });
         this.disableEditHandler();
-        this.allowInterruptions();
         this.$window.removeEventListener('beforeunload', this.onWindowUnload);
     }
 
@@ -368,7 +367,6 @@ export default class AnnotateController {
     /* eslint-enable no-underscore-dangle */
 
     onShapeCreating(isCreating) {
-        this.preventInterruptions();
         this.isCreating = isCreating;
         this.disableSidebarAction = isCreating;
     }
@@ -444,6 +442,14 @@ export default class AnnotateController {
             let geojsonData = shapeLayer.toGeoJSON();
             this.createEditableDrawLayer(mapWrapper, geojsonData.geometry);
             this.addNewAnnotationIdToData();
+            if (this.bulkTemplate) {
+                this.onUpdateAnnotationFinish(
+                    this.annoToExport.features.slice(-1)[0].properties.id,
+                    this.bulkTemplate.properties.label,
+                    this.bulkTemplate.properties.description,
+                    false
+                );
+            }
         });
     }
 
@@ -571,7 +577,6 @@ export default class AnnotateController {
                 this.onFilterChange(this.filterLabel);
             }
         });
-        this.allowInterruptions();
     }
 
     disableTransformHandler(mapWrapper) {
@@ -582,7 +587,6 @@ export default class AnnotateController {
     }
 
     onCloneAnnotation(geometry, label, description) {
-        this.preventInterruptions();
         this.deleteClickedHighlight();
 
         this.disableSidebarAction = true;
@@ -610,7 +614,6 @@ export default class AnnotateController {
 
     onUpdateAnnotationStart(annotation) {
         this.getMap().then((mapWrapper) => {
-            this.preventInterruptions();
             this.deleteClickedHighlight();
             this.disableTransformHandler(mapWrapper);
 
@@ -639,6 +642,14 @@ export default class AnnotateController {
             );
         });
         this.$timeout(() => angular.element('#_values').focus());
+    }
+
+    onBulkCreate(annotation) {
+        this.bulkTemplate = annotation;
+    }
+
+    onBulkCreateFinish() {
+        this.bulkTemplate = false;
     }
 
     updateFilterAndMapRender(label) {
@@ -691,7 +702,6 @@ export default class AnnotateController {
                 this.getMap().then((mapWrapper) => mapWrapper.deleteLayers('draw'));
             }
         }
-        this.allowInterruptions();
     }
 
 
@@ -797,25 +807,6 @@ export default class AnnotateController {
                 polygonLayer.transform.enable({rotation: true, scaling: true});
                 mapWrapper.map.panTo(polygonLayer.getCenter());
             }
-        }
-    }
-
-    preventInterruptions() {
-        this.stateChangeCanceller = this.$rootScope.$on('$stateChangeStart',
-            (event, toState, toParams, fromState, fromParams) => {
-                let answer = this.$window.confirm('Leave this page?');
-                if (!answer) {
-                    event.preventDefault();
-                    this.$state.go(fromState, fromParams);
-                }
-            }
-        );
-    }
-
-    allowInterruptions() {
-        if (this.stateChangeCanceller) {
-            this.stateChangeCanceller();
-            delete this.stateChangeCanceller();
         }
     }
 

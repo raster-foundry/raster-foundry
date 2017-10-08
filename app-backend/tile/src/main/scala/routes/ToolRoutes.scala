@@ -2,7 +2,6 @@ package com.azavea.rf.tile.routes
 
 import com.azavea.rf.tile.image._
 import com.azavea.rf.tile._
-
 import akka.http.scaladsl.marshalling._
 import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes, StatusCodes}
 import akka.http.scaladsl.server._
@@ -26,6 +25,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import java.util.UUID
 
+import com.azavea.rf.common.cache.CacheClient
+import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
+
 
 class ToolRoutes(implicit val database: Database) extends Authentication
   with LazyLogging
@@ -34,6 +36,9 @@ class ToolRoutes(implicit val database: Database) extends Authentication
   with KamonTraceDirectives {
 
   val userId: String = "rf_airflow-user"
+
+  lazy val memcachedClient = KryoMemcachedClient.DEFAULT
+  val rfCache = new CacheClient(memcachedClient)
 
   val providedRamps = Map(
     "viridis" -> geotrellis.raster.render.ColorRamps.Viridis,
@@ -80,7 +85,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
       pathPrefix("validate") {
         complete {
           for {
-            ast <- LayerCache.toolEvalRequirements(toolRunId, None, user)
+            (_, ast) <- LayerCache.toolEvalRequirements(toolRunId, None, user)
           } yield validateTreeWithSources[Unit](ast)
           StatusCodes.NoContent
         }
@@ -139,29 +144,34 @@ class ToolRoutes(implicit val database: Database) extends Authentication
               val nodeId = node.map(UUID.fromString(_))
               val colorRamp = providedRamps.get(colorRampName).getOrElse(providedRamps("viridis"))
               val responsePng: OptionT[Future, Png] = for {
-                ast   <- LayerCache.toolEvalRequirements(toolRunId, nodeId, user)
-                tile  <- OptionT({
-                        val literalAst: Future[Interpreted[MapAlgebraAST]] = BufferingInterpreter.literalize(ast, source, z, x, y)
-                        val futureTile: Future[Interpreted[Tile]] = literalAst.map({ validatedAst =>
-                          validatedAst.andThen({ resolvedAst =>
-                            logger.debug(s"Attempting to retrieve TMS tile at $z/$x/$y")
-                            BufferingInterpreter.interpret(resolvedAst, 256)(z, x, y).andThen({ lztile =>
-                              lztile.evaluateDouble match {
-                                case Some(t) =>
-                                  Valid(t)
-                                case None =>
-                                  Invalid(NEL.of(LazyTileEvaluationError(ast)))
-                              }
-                            })
+                (lastUpdateTime, ast) <- LayerCache.toolEvalRequirements(toolRunId, nodeId, user)
+                tile <- {
+                  val cacheKey = s"toolrun-tms-${toolRunId}-${nodeId}-$z-$x-$y-${lastUpdateTime.getTime}"
+                  rfCache.cachingOptionT(cacheKey) {
+                    OptionT({
+                      val literalAst: Future[Interpreted[MapAlgebraAST]] = BufferingInterpreter.literalize(ast, source, z, x, y)
+                      val futureTile: Future[Interpreted[Tile]] = literalAst.map({ validatedAst =>
+                        validatedAst.andThen({ resolvedAst =>
+                          logger.debug(s"Attempting to retrieve TMS tile at $z/$x/$y")
+                          BufferingInterpreter.interpret(resolvedAst, 256)(z, x, y).andThen({ lztile =>
+                            lztile.evaluateDouble match {
+                              case Some(t) =>
+                                Valid(t)
+                              case None =>
+                                Invalid(NEL.of(LazyTileEvaluationError(ast)))
+                            }
                           })
                         })
-                        futureTile.map({ validatedTile =>
-                          validatedTile match {
-                            case Valid(t) => Option(t)
-                            case Invalid(errors) => throw InterpreterException(errors)
-                          }
-                        })
                       })
+                      futureTile.map({ validatedTile =>
+                        validatedTile match {
+                          case Valid(t) => Option(t)
+                          case Invalid(errors) => throw InterpreterException(errors)
+                        }
+                      })
+                    })
+                  }
+                }
                 cMap  <- LayerCache.toolRunColorMap(toolRunId, nodeId, user, colorRamp, colorRampName)
               } yield {
                 logger.debug(s"Tile successfully produced at $z/$x/$y")

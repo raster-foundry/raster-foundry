@@ -1,5 +1,7 @@
 package com.azavea.rf.tile
 
+import java.sql.Timestamp
+
 import com.azavea.rf.tile.tool.TileSources
 import com.azavea.rf.datamodel.{Tool, ToolRun, User}
 import com.azavea.rf.tool.eval._
@@ -10,7 +12,6 @@ import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables._
 import com.azavea.rf.common.{Config => CommonConfig}
-
 import io.circe.syntax._
 import geotrellis.raster._
 import geotrellis.raster.render._
@@ -129,7 +130,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     rfCache.cachingOptionT(cacheKey, doCache = cacheConfig.tool.enabled) {
       for {
         toolRun <- LayerCache.toolRun(toolRunId, user, voidCache)
-        ast <- LayerCache.toolEvalRequirements(toolRunId, subNode, user, voidCache)
+        (_, ast) <- LayerCache.toolEvalRequirements(toolRunId, subNode, user, voidCache)
         (extent, zoom) <- TileSources.fullDataWindow(ast.tileSources)
         literalAst <- OptionT(
           GlobalInterpreter.literalize(ast, extent, { r: RFMLRaster => TileSources.globalSource(extent, zoom, r) })
@@ -153,7 +154,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
   /** Calculate all of the prerequisites to evaluation of an AST over a set of tile sources */
   def toolEvalRequirements(
     toolRunId: UUID, subNode: Option[UUID], user: User, voidCache: Boolean = false
-  ): OptionT[Future, MapAlgebraAST] = {
+  ): OptionT[Future, (Timestamp, MapAlgebraAST)] = {
     for {
       toolRun <- LayerCache.toolRun(toolRunId, user)
       ast <- OptionT.fromOption[Future](toolRun.executionParameters.as[MapAlgebraAST].toOption)
@@ -161,7 +162,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
         case Some(id) => ast.find(id)
         case None => Some(ast)
       })
-    } yield subAst
+    } yield (toolRun.modifiedAt, subAst)
   }
 
 
@@ -177,7 +178,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     rfCache.cachingOptionT(cacheKey, doCache = cacheConfig.tool.enabled) {
       traceName("LayerCache.toolRunColorMap (no cache)") {
         for {
-          ast    <- LayerCache.toolEvalRequirements(toolRunId, subNode, user)
+          (_, ast)    <- LayerCache.toolEvalRequirements(toolRunId, subNode, user)
           cmap   <- {
                       val metadata: Option[NodeMetadata] = ast.metadata
                       OptionT.fromOption[Future](metadata.flatMap(_.classMap).map(_.toColorMap))

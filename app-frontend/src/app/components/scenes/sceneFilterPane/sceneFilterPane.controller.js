@@ -1,13 +1,14 @@
+/* globals _*/
 export default class FilterPaneController {
-    constructor(datasourceService, authService, $scope, $rootScope, $timeout,
-                $uibModal, moment) {
+    constructor($scope, $rootScope, $timeout, $uibModal,
+        datasourceService, authService, moment) {
         'ngInject';
-        this.datasourceService = datasourceService;
-        this.authService = authService;
         this.$scope = $scope;
         this.$rootScope = $rootScope;
         this.$timeout = $timeout;
         this.$uibModal = $uibModal;
+        this.datasourceService = datasourceService;
+        this.authService = authService;
         this.Moment = moment;
     }
 
@@ -54,48 +55,46 @@ export default class FilterPaneController {
                 end: this.Moment()
             },
             {
-                name: 'All',
-                start: this.Moment().subtract(100, 'years'),
-                end: this.Moment()
+                name: 'None',
+                start: {},
+                end: {}
             }
         ];
 
         if (this.filters.minAcquisitionDatetime && this.filters.maxAcquisitionDatetime) {
             this.datefilter.start = this.Moment(this.filters.minAcquisitionDatetime);
             this.datefilter.end = this.Moment(this.filters.maxAcquisitionDatetime);
+            this.hasDatetimeFilter = true;
         }
 
         if (!this.filters.minAcquisitionDatetime || !this.filters.maxAcquisitionDatetime) {
             this.clearDateFilter();
         } else {
-            this.dateFilterToggle = {value: true};
+            this.datefilterPreset = '';
+            this.hasDatetimeFilter = true;
         }
     }
 
     clearDateFilter() {
         delete this.filters.minAcquisitionDatetime;
         delete this.filters.maxAcquisitionDatetime;
-        this.dateFilterToggle = {value: false};
+        this.datefilterPreset = 'None';
+        this.hasDatetimeFilter = false;
     }
 
     setDateRange(start, end, preset) {
-        this.datefilter.start = start;
-        this.datefilter.end = end;
-        this.datefilterPreset = preset || false;
-        this.dateFilterToggle.value = true;
-        this.filters.minAcquisitionDatetime = start.toISOString();
-        this.filters.maxAcquisitionDatetime = end.toISOString();
-        this.cacheYearFilters();
-    }
-
-    onDateFilterToggle(value) {
-        if (value) {
-            this.filters.minAcquisitionDatetime = this.datefilter.start.toISOString();
-            this.filters.maxAcquisitionDatetime = this.datefilter.end.toISOString();
+        if (_.isEmpty({start}) || _.isEmpty(end)) {
+            this.clearDateFilter();
         } else {
-            delete this.filters.minAcquisitionDatetime;
-            delete this.filters.maxAcquisitionDatetime;
+            this.datefilter.start = start;
+            this.datefilter.end = end;
+            this.datefilterPreset = preset || false;
+            this.hasDatetimeFilter = true;
+            this.filters.minAcquisitionDatetime = start.toISOString();
+            this.filters.maxAcquisitionDatetime = end.toISOString();
         }
+
+        this.cacheYearFilters();
     }
 
     close() {

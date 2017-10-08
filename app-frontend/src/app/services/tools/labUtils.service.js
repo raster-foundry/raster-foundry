@@ -331,7 +331,7 @@ export default (app) => {
                         );
                         this.scope.breakpoints = Object.entries(mappedBreakpoints).map(
                             ([stop, color]) => Object({value: Number(stop), color: color})
-                        );
+                        ).sort((a, b) => a.value - b.value);
                         this.scope.histogramOptions = {
                             range: {min: 0, max: 255},
                             masks: {min: false, max: false},

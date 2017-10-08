@@ -281,7 +281,7 @@ export default class DiagramContainerController {
             label: 'View output',
             callback: ($event, model) => {
                 return this.onPreview({
-                    nodeId: model.get('id')
+                    data: model.get('id')
                 });
             }
         }, {
@@ -364,7 +364,7 @@ export default class DiagramContainerController {
         model.attr({
             rect: {
                 stroke: '#738FFC',
-                'stroke-width': '1'
+                'stroke-width': '5'
             }
         });
     }

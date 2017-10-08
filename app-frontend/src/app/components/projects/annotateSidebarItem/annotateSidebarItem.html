@@ -29,6 +29,10 @@
     </div>
   </div>
   <div class="list-group-right actions-annotations">
+      <a title="Bulk Create"
+      ng-click="$ctrl.disableSidebarAction || $ctrl.onAnnotationBulkCreate($event, $ctrl.annotation)"
+      ng-disabled="$ctrl.disableSidebarAction">
+     Bulk Create</a>
     <a title="Clone"
        ng-click="$ctrl.disableSidebarAction || $ctrl.onAnnotationClone($event, $ctrl.annotation)"
        ng-disabled="$ctrl.disableSidebarAction">

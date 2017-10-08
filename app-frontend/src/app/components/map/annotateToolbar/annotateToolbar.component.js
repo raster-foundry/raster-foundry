@@ -6,6 +6,8 @@ const annotateToolbar = {
     bindings: {
         mapId: '@',
         disableToolbarAction: '<',
+        bulkMode: '<',
+        onDrawingCanceled: '&',
         onShapeCreating: '&',
         onShapeCreated: '&'
     }
