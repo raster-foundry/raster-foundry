@@ -59,18 +59,16 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging {
         } else {
           // cache miss
           val futureCached: Future[CachedType] = expensiveOperation
-          futureCached.foreach { cachedValue =>
-            futureCached.onComplete {
-              case Success(cachedValue) => {
-                cachedValue match {
-                  case Some(v) => setValue(cacheKey, cachedValue)
-                  case None => setValue(cacheKey, cachedValue, ttlSeconds = 300)
-                }
+          futureCached.onComplete {
+            case Success(cachedValue) => {
+              cachedValue match {
+                case Some(v) => setValue(cacheKey, cachedValue)
+                case None => setValue(cacheKey, cachedValue, ttlSeconds = 300)
               }
-              case Failure(e) => {
-                sendError(RfStackTrace(e))
-                logger.error(s"Cache Set Error: ${RfStackTrace(e)}")
-              }
+            }
+            case Failure(e) => {
+              sendError(RfStackTrace(e))
+              logger.error(s"Cache Set Error: ${RfStackTrace(e)}")
             }
           }
           futureCached
