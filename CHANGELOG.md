@@ -2,7 +2,23 @@
 
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/HEAD)
 
-[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.23.0...HEAD)
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.24.0...HEAD)
+
+**Merged pull requests:**
+
+- Add rollbar support for cache errors [\#2625](https://github.com/raster-foundry/raster-foundry/pull/2625)
+- Fix comparing lab nodes [\#2623](https://github.com/raster-foundry/raster-foundry/pull/2623)
+- Fix annotate draw handler existence issue [\#2622](https://github.com/raster-foundry/raster-foundry/pull/2622)
+- Fix node histogram color schemes [\#2621](https://github.com/raster-foundry/raster-foundry/pull/2621)
+- Bulk annotation mode and interrupt fix [\#2620](https://github.com/raster-foundry/raster-foundry/pull/2620)
+- Fix date selection button bug on scene filter pane. [\#2619](https://github.com/raster-foundry/raster-foundry/pull/2619)
+- Remove ability to apply auto color corrections [\#2618](https://github.com/raster-foundry/raster-foundry/pull/2618)
+- Move `search` component to single-file component style [\#2615](https://github.com/raster-foundry/raster-foundry/pull/2615)
+- Misc project and lab usability fixes [\#2613](https://github.com/raster-foundry/raster-foundry/pull/2613)
+
+## [0.24.0](https://github.com/raster-foundry/raster-foundry/tree/0.24.0) (2017-10-05)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.23.0...0.24.0)
 
 **Merged pull requests:**
 

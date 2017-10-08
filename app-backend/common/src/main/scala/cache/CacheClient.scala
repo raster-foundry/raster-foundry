@@ -12,6 +12,8 @@ import cats.data._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.typesafe.scalalogging.LazyLogging
 
+import scala.util.{Failure, Success}
+
 object CacheClientThreadPool extends RollbarNotifier {
   implicit lazy val ec: ExecutionContext =
     ExecutionContext.fromExecutor(
@@ -57,20 +59,16 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging {
         } else {
           // cache miss
           val futureCached: Future[CachedType] = expensiveOperation
-          futureCached.foreach { cachedValue =>
-            try {
-              // Don't cache Nones indefinitely -- we might need to tune the None
-              // ttl if it feels like it takes forever for tiles to be available
-              // after an ingest is finished
+          futureCached.onComplete {
+            case Success(cachedValue) => {
               cachedValue match {
                 case Some(v) => setValue(cacheKey, cachedValue)
                 case None => setValue(cacheKey, cachedValue, ttlSeconds = 300)
               }
-            } catch {
-              case e: Exception => {
-                sendError(RfStackTrace(e))
-                logger.error(s"Cache Set Error: ${RfStackTrace(e)}")
-              }
+            }
+            case Failure(e) => {
+              sendError(RfStackTrace(e))
+              logger.error(s"Cache Set Error: ${RfStackTrace(e)}")
             }
           }
           futureCached
