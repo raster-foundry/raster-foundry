@@ -12,7 +12,7 @@ import cats.data._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.typesafe.scalalogging.LazyLogging
 
-object CacheClientThreadPool {
+object CacheClientThreadPool extends RollbarNotifier {
   implicit lazy val ec: ExecutionContext =
     ExecutionContext.fromExecutor(
       Executors.newFixedThreadPool(
@@ -20,9 +20,12 @@ object CacheClientThreadPool {
         new ThreadFactoryBuilder().setNameFormat("cache-client-%d").build()
       )
     )
+
+  implicit val system = ActorSystem("rollbar-notifier")
+  implicit val materializer = ActorMaterializer()
 }
 
-class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNotifier {
+class CacheClient(client: => MemcachedClient) extends LazyLogging {
 
   import CacheClientThreadPool._
 
