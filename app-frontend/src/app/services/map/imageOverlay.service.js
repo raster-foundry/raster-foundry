@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import Konva from 'konva';
+import d3 from 'd3';
 
 /* eslint no-unused-vars: 0 */
 /* eslint spaced-comment: 0 */
@@ -7,15 +7,20 @@ import Konva from 'konva';
 export default (app) => {
     class ImageOverlayService {
 
+        constructor(uuid4) {
+            this.uuid4 = uuid4;
+        }
+
         /** Returns a new Image overlay layer that clips to a datamask
          *
          * @param {string} url location to request tiles from
-         * @param {L.Bounds} bounds leaflet bounds for image
+         * @param {L.Bounds} bounds leaflet tileBounds for image
          * @param {Object} options additional parameters to create image overlay
          *
          * @returns {L.Layer} image layer to put on map for thumbnails
          */
         createNewImageOverlay(url, bounds, options) {
+            let uuid4 = this.uuid4;
             let ImageOverlayLayer = L.ImageOverlay.extend({
                 options: {
                     opacity: 1,
@@ -27,80 +32,71 @@ export default (app) => {
                 },
 
                 _initImage: function () {
+                    // create layer container element
                     this._image = L.DomUtil.create('div', 'leaflet-image-layer ' +
                         (this._zoomAnimated ? 'leaflet-zoom-animated' : ''));
-                },
+                    // create svg
+                    let svg = this.svg = d3.select(this._image).append('svg');
+                    // create defs - clipping will go here
+                    let defs = svg.append('defs');
 
-                _reset: function () {
-                    let tile = this._image;
+                    // create unique id for clipping
+                    this.id = uuid4.generate();
+
+                    // calculate image element coordinate etc
                     let tileBounds = new L.Bounds(
                         this._map.latLngToLayerPoint(this._bounds.getNorthWest()),
                         this._map.latLngToLayerPoint(this._bounds.getSouthEast())
-                        );
+                    );
                     let size = this.size = tileBounds.getSize();
 
-                    L.DomUtil.setPosition(tile, tileBounds.min);
+                    svg.attr('width', size.x)
+                        .attr('height', size.y)
+                        .attr('viewBox', `0 0 ${size.x} ${size.y}`);
+                    // create image element
+                    let img = this.img = svg.append('svg:image')
+                        .attr('x', 0)
+                        .attr('y', 0)
+                        .attr('width', size.x)
+                        .attr('height', size.y)
+                        .attr('clip-path', `url(#${this.id})`)
+                        .attr('href', this.options.thumbnail);
 
-                    tile.style.width = size.x + 'px';
-                    tile.style.height = size.y + 'px';
-
+                    // add mask data
                     let dataMask = this.options.dataMask;
-
                     let result = dataMask.coordinates[0][0].map((lngLat) => {
-                        let point = this._map.latLngToLayerPoint([lngLat[1], lngLat[0]],
-                            this._map.getZoom()
+                        const point = this._map.latLngToLayerPoint(
+                            [lngLat[1], lngLat[0]], this._map.getZoom()
                         );
                         return [point.x - tileBounds.min.x, point.y - tileBounds.min.y];
                     });
 
-                    let points = _.flatten(result);
+                    let points = result.map((point) => `${point[0]},${point[1]}`).join(' ');
+                    let clipPath = defs.append('clipPath')
+                        .attr('id', this.id)
+                        .append('polygon')
+                        .attr('points', points);
+                },
 
-
-                    let stage = this.stage = new Konva.Stage({
-                        container: tile,
-                        width: size.x,
-                        height: size.y
-                    });
-
-                    let layer = this.layer = new Konva.Layer();
-
-                    let img = this.img = L.DomUtil.create('img');
-                    img.src = this.options.thumbnail;
-
-                    let lineConfig = {
-                        points: points,
-                        width: size.x,
-                        height: size.y,
-                        fillPriority: 'pattern',
-                        fillPatternImage: img,
-                        fillPatternRepeat: 'no-repeat',
-                        fillPatternX: 0,
-                        fillPatternY: 0,
-                        closed: true
-                    };
-
-                    this.lineImage = new Konva.Line(lineConfig);
-
-                    // @TODO: Replace once #897 is closed
-                    img.onload = () => {
-                        let scale = {
-                            x: this.size.x / this.img.naturalWidth,
-                            y: this.size.y / this.img.naturalHeight
-                        };
-                        this.lineImage.fillPatternScale(scale);
-                        this.layer.add(this.lineImage);
-                        this.layer.draw();
-                    };
-                    stage.add(layer);
+                _reset: function () {
+                    let tileBounds = new L.Bounds(
+                        this._map.latLngToLayerPoint(this._bounds.getNorthWest()),
+                        this._map.latLngToLayerPoint(this._bounds.getSouthEast())
+                    );
+                    let size = this.size = tileBounds.getSize();
+                    // update container size
+                    this._image.style.width = `${size.x}px`;
+                    this._image.style.height = `${size.y}px`;
+                    L.DomUtil.setPosition(this._image, tileBounds.min);
+                    // update svg size and location
+                    this.svg.attr('width', size.x)
+                        .attr('height', size.y);
                 },
                 onRemove: function () {
                     L.DomUtil.remove(this._image);
                     if (this.options.interactive) {
                         this.removeInteractiveTarget(this._image);
                     }
-                    this.stage.destroy();
-                    this.layer.destroy();
-                    this.lineImage.destroy();
                 }
 
             });
