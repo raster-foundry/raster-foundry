@@ -1,8 +1,7 @@
-import angular from 'angular';
-import searchTpl from './search.html';
+import searchTemplate from './search.html';
 
 const searchComponent = {
-    templateUrl: searchTpl,
+    templateUrl: searchTemplate,
     controller: 'SearchController',
     bindings: {
         autoFocus: '<',
@@ -27,14 +26,6 @@ class SearchController {
                 el.focus();
             }, 0);
         }
-    }
-
-    onSearchAction() {
-        this.onSearch({value: this.searchText});
-    }
-
-    clearSearch() {
-        this.searchText = '';
     }
 }
 
