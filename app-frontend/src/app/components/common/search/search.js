@@ -5,6 +5,7 @@ const searchComponent = {
     controller: 'SearchController',
     bindings: {
         autoFocus: '<',
+        disabled: '<',
         placeholder: '@',
         onSearch: '&'
     }

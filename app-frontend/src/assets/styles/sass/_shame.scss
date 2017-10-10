@@ -1433,14 +1433,19 @@ table.upload-info {
 }
 
 .tabbed-list-header {
-  list-style: none;
-  display: flex;
-  margin: 0;
-  padding: 0;
   border-bottom: 1px solid $gray-lightest;
+  &.with-background {
+    background: #f1f1f1;
+  }
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+  }
   li a {
     display: block;
-    padding: 1rem 3rem;
+    padding: 1.66rem 3rem;
     margin-bottom: -1px;
     font-weight: bold;
     color: $text-base;
@@ -2806,4 +2811,30 @@ rf-reclassify-modal {
 rf-reclassify-table {
   display: flex;
   flex-direction: column;
+}
+
+.app-width-container {
+  max-width: 1200px;
+  margin: 0 auto !important;
+}
+
+.paginated-results-table {
+  $cell-padding: 0.75em 1.5em;
+  width: 100%;
+  border-radius: $border-radius-base;
+  tr:not(.header) {
+    border: 1px solid $gray-lightest;
+    background: $off-white;
+  }
+  th {
+    text-align: left;
+    padding: $cell-padding;
+  }
+  td {
+    padding: $cell-padding;
+  }
+}
+
+.pagination-count {
+  margin-bottom: 1em;
 }

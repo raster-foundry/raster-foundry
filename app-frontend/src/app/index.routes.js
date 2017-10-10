@@ -1,13 +1,14 @@
 /* eslint max-len: 0 */
 import rootTpl from './pages/root/root.html';
 import loginTpl from './pages/login/login.html';
+
 import labTpl from './pages/lab/lab.html';
+import labBrowseTpl from './pages/lab/browse/browse.html';
+import labBrowseToolsTpl from './pages/lab/browse/tools/tools.html';
+import labBrowseTemplatesTpl from './pages/lab/browse/templates/templates.html';
 import labEditTpl from './pages/lab/edit/edit.html';
 import labRunTpl from './pages/lab/run/run.html';
 import labNavbarTpl from './pages/lab/run/navbar/navbar.html';
-import marketTpl from './pages/market/market.html';
-import marketSearchTpl from './pages/market/search/search.html';
-import marketToolTpl from './pages/market/tool/tool.html';
 
 import projectsTpl from './pages/projects/projects.html';
 import projectsNavbarTpl from './pages/projects/navbar/navbar.html';
@@ -291,70 +292,69 @@ function settingsStates($stateProvider) {
         });
 }
 
-function marketStates($stateProvider) {
-    $stateProvider
-        .state('market', {
-            title: 'Tools',
-            parent: 'root',
-            url: '/market',
-            templateUrl: marketTpl,
-            controller: 'MarketController',
-            controllerAs: '$ctrl',
-            abstract: true
-        })
-        .state('market.search', {
-            title: 'Tool Search',
-            url: '/search?:page?:query?toolcategory&tooltag',
-            templateUrl: marketSearchTpl,
-            controller: 'MarketSearchController',
-            controllerAs: '$ctrl'
-        })
-        .state('market.tool', {
-            title: 'Tool Details',
-            url: '/tool/:id',
-            params: {
-                modelData: null
-            },
-            templateUrl: marketToolTpl,
-            controller: 'MarketToolController',
-            controllerAs: '$ctrl'
-        });
-}
-
 function labStates($stateProvider) {
     $stateProvider
         .state('lab', {
-            title: 'Tool Lab',
+            title: 'Lab',
+            template: '<ui-view></ui-view>',
             parent: 'root',
-            url: '/lab/:toolid',
+            url: '/lab',
+            redirectTo: 'lab.browse'
+        })
+        .state('lab.build', {
+            title: 'Build a Tool',
+            url: '/build/:toolid',
+            parent: 'lab',
             templateUrl: labTpl,
             controller: 'LabController',
             controllerAs: '$ctrl',
-            abstract: true
+            redirectTo: 'lab.build.run'
+        })
+        .state('lab.build.run', {
+            title: 'Run',
+            url: '/run/:runid?',
+            parent: 'lab.build',
+            views: {
+                'navmenu@root': {
+                    templateUrl: labNavbarTpl,
+                    controller: 'LabNavbarController',
+                    controllerAs: '$ctrl'
+                },
+                '': {
+                    templateUrl: labRunTpl,
+                    controller: 'LabRunController',
+                    controllerAs: '$ctrl'
+                }
+            }
         })
         .state('lab.edit', {
-            title: 'Tool: Edit',
+            title: 'Edit',
             url: '/edit',
             templateUrl: labEditTpl,
             controller: 'LabEditController',
             controllerAs: '$ctrl'
         })
-       .state('lab.run', {
-           title: 'Tool: Run',
-           url: '/run/:runid?',
-           views: {
-               'navmenu@root': {
-                   templateUrl: labNavbarTpl,
-                   controller: 'LabNavbarController',
-                   controllerAs: '$ctrl'
-               },
-               '': {
-                   templateUrl: labRunTpl,
-                   controller: 'LabRunController',
-                   controllerAs: '$ctrl'
-               }
-           }
-       });
+        .state('lab.browse', {
+            url: '/browse',
+            templateUrl: labBrowseTpl,
+            controller: 'LabBrowseController',
+            controllerAs: '$ctrl',
+            redirectTo: 'lab.browse.tools'
+        })
+        .state('lab.browse.templates', {
+            title: 'Tool Search',
+            url: '/templates?:page?:query?toolcategory&tooltag',
+            templateUrl: labBrowseTemplatesTpl,
+            controller: 'LabBrowseTemplatesController',
+            controllerAs: '$ctrl'
+        })
+        .state('lab.browse.tools', {
+            title: 'Tools',
+            url: '/tools?:page',
+            templateUrl: labBrowseToolsTpl,
+            controller: 'LabBrowseToolsController',
+            controllerAs: '$ctrl'
+        });
 }
 
 function shareStates($stateProvider) {
@@ -444,7 +444,6 @@ function routeConfig($urlRouterProvider, $stateProvider, $urlMatcherFactoryProvi
     });
 
     loginStates($stateProvider);
-    marketStates($stateProvider);
     projectStates($stateProvider);
     settingsStates($stateProvider);
     labStates($stateProvider);
@@ -461,7 +460,7 @@ function routeConfig($urlRouterProvider, $stateProvider, $urlMatcherFactoryProvi
             controllerAs: '$ctrl'
         });
 
-    $urlRouterProvider.otherwise('/home');
+    // $urlRouterProvider.otherwise('/home');
 }
 
 

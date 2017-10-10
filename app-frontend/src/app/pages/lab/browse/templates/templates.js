@@ -1,6 +1,6 @@
 /* global _ */
 
-export default class MarketSearchController {
+class LabBrowseTemplatesController {
     constructor( // eslint-disable-line max-params
         $log, $scope, $state, toolService, toolTagService, toolCategoryService, $uibModal
     ) {
@@ -197,3 +197,6 @@ export default class MarketSearchController {
         });
     }
 }
+
+export default angular.module('pages.lab.browse.templates', [])
+    .controller('LabBrowseTemplatesController', LabBrowseTemplatesController);

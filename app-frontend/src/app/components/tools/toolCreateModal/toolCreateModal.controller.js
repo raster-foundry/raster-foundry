@@ -49,7 +49,7 @@ export default class ToolCreateModalController {
             this.toolBuffer.definition = this.expressionTreeToMAML(expressionTree);
             this.toolService.createTool(this.toolBuffer).then(tool => {
                 this.dismiss();
-                this.$state.go('lab.run', { toolid: tool.id });
+                this.$state.go('lab.build.run', { toolid: tool.id });
             });
         } catch (e) {
             this.currentError = 'The tool definition is not valid';
