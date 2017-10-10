@@ -187,7 +187,7 @@ export default class ProjectAddScenesBrowseController {
         delete params.sceneid;
         this.sceneService.query(
             Object.assign({
-                sort: 'createdAt,desc',
+                sort: 'acquisitionDatetime,desc',
                 pageSize: '20',
                 maxCreateDatetime: this.sceneLoadingTime
             }, params)
@@ -225,7 +225,7 @@ export default class ProjectAddScenesBrowseController {
         delete params.sceneid;
         this.sceneService.query(
             Object.assign({
-                sort: 'createdAt,desc',
+                sort: 'acquisitionDatetime,desc',
                 pageSize: '20',
                 page: this.infScrollPage,
                 maxCreateDatetime: this.sceneLoadingTime

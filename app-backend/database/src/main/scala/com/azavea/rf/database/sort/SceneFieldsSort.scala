@@ -19,7 +19,9 @@ class SceneFieldsSort[E, D <: SceneFields](f: E => D) extends QuerySort[E] {
       case "month" =>
         query.sortBy(q => datePart("month", f(q).acquisitionDate).byOrder(ord))
       case "acquisitionDatetime" =>
-        query.sortBy(f(_).acquisitionDate.byOrder(ord))
+        query.sortBy(q =>
+          f(q).acquisitionDate.getOrElse(f(q).createdAt).byOrder(ord)
+        )
       case "sunAzimuth" =>
         query.sortBy(f(_).sunAzimuth.byOrder(ord))
       case "sunElevation" =>
