@@ -11,6 +11,7 @@ import io.circe.Json
 
 trait SceneFields  { self: Table[_] =>
   def name: Rep[String]
+  def createdAt: Rep[java.sql.Timestamp]
   def datasource: Rep[UUID]
   def sceneMetadata: Rep[Json]
   def cloudCover: Rep[Option[Float]]
