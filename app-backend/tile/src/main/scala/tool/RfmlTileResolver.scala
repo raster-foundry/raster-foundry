@@ -46,8 +46,6 @@ class RfmlTileResolver(db: Database, ec: ExecutionContext) extends LazyLogging {
       exp match {
         case pr@ProjectRaster(projId, None, celltype) =>
           Future.successful(Invalid(NEL.of(NonEvaluableNode(exp, Some("no band given")))))
-        case sr@SceneRaster(sceneId, None, celltype) =>
-          Future.successful(Invalid(NEL.of(NonEvaluableNode(exp, Some("no band given")))))
         case pr@ProjectRaster(projId, Some(band), celltype) =>
           lazy val ndtile = celltype match {
             case Some(ct) => intNdTile.convert(ct)
@@ -96,7 +94,8 @@ class RfmlTileResolver(db: Database, ec: ExecutionContext) extends LazyLogging {
               case None => Invalid(NEL.of(UnknownTileResolutionError(exp, Some((z, x, y)))))
             }
           })
-
+        case sr@SceneRaster(sceneId, None, celltype) =>
+          Future.successful(Invalid(NEL.of(NonEvaluableNode(exp, Some("no band given")))))
         case sr@SceneRaster(sceneId, Some(band), celltype) =>
           lazy val ndtile = celltype match {
             case Some(ct) => intNdTile.convert(ct)

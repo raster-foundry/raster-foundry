@@ -135,6 +135,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
 
   val tileResolver = new RfmlTileResolver(implicitly[Database], implicitly[ExecutionContext])
   val tmsInterpreter = BufferingInterpreter.DEFAULT
+  val emptyTile = DoubleConstantNoDataArrayTile(Array(Double.NaN), 1, 1)
 
   /** The central endpoint for ModelLab; serves TMS tiles given a [[ToolRun]] specification */
   def tms(
@@ -160,7 +161,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
                 val result: Future[Option[Png]] = data match {
                   case Some((expression, metadata, cMap, updateTime)) =>
                     val cacheKey = s"toolrun-tms-${toolRunId}-${nodeId}-$z-$x-$y-${updateTime.getTime}"
-                    rfCache.cachingOptionT(cacheKey) {
+                    rfCache.cachingOptionT(cacheKey)({
                       val literalTree = tileResolver.resolveBuffered(expression)(z, x, y)
                       val interpretedTile: Future[Interpreted[Tile]] =
                         literalTree.map({ resolvedAst =>
@@ -168,18 +169,37 @@ class ToolRoutes(implicit val database: Database) extends Authentication
                             .andThen({ tmsInterpreter(_) })
                             .andThen({ _.as[Tile] })
                         })
-                      OptionT(interpretedTile.map({
-                        case Valid(tile) =>
-                          logger.debug(s"Tile successfully produced at $z/$x/$y")
-                          metadata.flatMap({ md =>
-                            md.renderDef.map({ renderDef => tile.renderPng(renderDef) })
-                          }).orElse({
-                            Some(tile.renderPng(cMap))
-                          })
-                        case Invalid(nel) =>
-                          throw new InterpreterException(nel)
-                      }))
-                    }.value
+                      OptionT({
+                        interpretedTile.map({
+                          case Valid(tile) =>
+                            logger.debug(s"Tile successfully produced at $z/$x/$y")
+                            metadata.flatMap({ md =>
+                              md.renderDef.map({ renderDef => tile.renderPng(renderDef) })
+                            }).orElse({
+                              Some(tile.renderPng(cMap))
+                            })
+                          case Invalid(nel) =>
+                            // We'll remove tile retrieval errors and return an empty tile
+                            val exceptions = nel.filter({ e =>
+                              e match {
+                                case S3TileResolutionError(_, _) => false
+                                case UnknownTileResolutionError(_, _) => false
+                                case _ => true
+                              }
+                            })
+                            NEL.fromList(exceptions) match {
+                              case Some(errors) =>
+                                throw new InterpreterException(errors)
+                              case None =>
+                                metadata.flatMap({ md =>
+                                  md.renderDef.map({ renderDef => emptyTile.renderPng(renderDef) })
+                                }).orElse({
+                                  Some(emptyTile.renderPng(cMap))
+                                })
+                            }
+                        })
+                      })
+                    }).value
                     case _ => Future.successful(None)
                 }
                 result
