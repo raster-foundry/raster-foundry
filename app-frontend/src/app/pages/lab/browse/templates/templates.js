@@ -63,7 +63,8 @@ class LabBrowseTemplatesController {
         this.toolService.query(
             {
                 pageSize: 10,
-                page: page - 1
+                page: page - 1,
+                sort: 'createdAt,desc'
             }
         ).then(d => {
             this.currentPage = page;
