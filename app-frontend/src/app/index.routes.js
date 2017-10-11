@@ -460,7 +460,7 @@ function routeConfig($urlRouterProvider, $stateProvider, $urlMatcherFactoryProvi
             controllerAs: '$ctrl'
         });
 
-    // $urlRouterProvider.otherwise('/home');
+    $urlRouterProvider.otherwise('/home');
 }
 
 
