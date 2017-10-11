@@ -50,10 +50,9 @@ const App = angular.module(
         require('./pages/lab/edit/edit.module.js').name,
         require('./pages/lab/run/run.module.js').name,
         require('./pages/lab/run/navbar/navbar.module.js').name,
-
-        require('./pages/market/market.module.js').name,
-        require('./pages/market/search/search.module.js').name,
-        require('./pages/market/tool/tool.module.js').name,
+        require('./pages/lab/browse/browse.js').name,
+        require('./pages/lab/browse/tools/tools.js').name,
+        require('./pages/lab/browse/templates/templates.js').name,
 
         require('./pages/projects/projects.module.js').name,
         require('./pages/projects/navbar/navbar.module.js').name,

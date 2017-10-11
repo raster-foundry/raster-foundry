@@ -35,6 +35,10 @@ export default (app) => {
                         method: 'GET',
                         cache: false
                     },
+                    query: {
+                        method: 'GET',
+                        cache: false
+                    },
                     update: {
                         method: 'PUT'
                     },
@@ -54,6 +58,10 @@ export default (app) => {
 
         query(params = {}) {
             return this.Tool.query(params).$promise;
+        }
+
+        toolRunQuery(params = {}) {
+            return this.ToolRun.query(params).$promise;
         }
 
         searchQuery() {

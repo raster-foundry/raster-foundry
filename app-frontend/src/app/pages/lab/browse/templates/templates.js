@@ -1,6 +1,6 @@
 /* global _ */
 
-export default class MarketSearchController {
+class LabBrowseTemplatesController {
     constructor( // eslint-disable-line max-params
         $log, $scope, $state, toolService, toolTagService, toolCategoryService, $uibModal
     ) {
@@ -184,10 +184,6 @@ export default class MarketSearchController {
         this.categories[index].selected = !this.categories[index].selected;
     }
 
-    navTool(tool) {
-        this.$state.go('market.tool', {id: tool.id, toolData: tool});
-    }
-
     openToolCreateModal() {
         if (this.activeModal) {
             this.activeModal.dismiss();
@@ -197,3 +193,6 @@ export default class MarketSearchController {
         });
     }
 }
+
+export default angular.module('pages.lab.browse.templates', [])
+    .controller('LabBrowseTemplatesController', LabBrowseTemplatesController);
