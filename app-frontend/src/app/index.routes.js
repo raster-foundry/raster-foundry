@@ -6,7 +6,6 @@ import labTpl from './pages/lab/lab.html';
 import labBrowseTpl from './pages/lab/browse/browse.html';
 import labBrowseToolsTpl from './pages/lab/browse/tools/tools.html';
 import labBrowseTemplatesTpl from './pages/lab/browse/templates/templates.html';
-import labEditTpl from './pages/lab/edit/edit.html';
 import labRunTpl from './pages/lab/run/run.html';
 import labNavbarTpl from './pages/lab/run/navbar/navbar.html';
 
