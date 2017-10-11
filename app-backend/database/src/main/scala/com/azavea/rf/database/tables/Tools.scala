@@ -121,6 +121,40 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
       )
     }.toSeq
 
+  def sortTools(tools: Seq[Tool.WithRelated], sort: Map[String, Order]) = {
+      sort.keys.headOption match {
+        case Some("title") =>
+          sort.get("title") match {
+            case Some(Order.Asc) =>
+              tools.sortWith((tool1, tool2) => tool1.title.toLowerCase < tool2.title.toLowerCase)
+            case Some(Order.Desc) =>
+              tools.sortWith((tool1, tool2) => tool1.title.toLowerCase > tool2.title.toLowerCase)
+            case _ =>
+              tools.sortWith((tool1, tool2) => tool1.title.toLowerCase > tool2.title.toLowerCase)
+          }
+        case Some("modifiedAt") =>
+          sort.get("modifiedAt") match {
+            case Some(Order.Asc) =>
+              tools.sortWith((tool1, tool2) => tool1.modifiedAt.before(tool2.modifiedAt))
+            case Some(Order.Desc) =>
+              tools.sortWith((tool1, tool2) => tool1.modifiedAt.after(tool2.modifiedAt))
+            case _ =>
+              tools.sortWith((tool1, tool2) => tool1.modifiedAt.after(tool2.modifiedAt))
+          }
+        case Some("createdAt") =>
+          sort.get("createdAt") match {
+            case Some(Order.Asc) =>
+              tools.sortWith((tool1, tool2) => tool1.createdAt.before(tool2.createdAt))
+            case Some(Order.Desc) =>
+              tools.sortWith((tool1, tool2) => tool1.createdAt.after(tool2.createdAt))
+            case _ =>
+              tools.sortWith((tool1, tool2) => tool1.createdAt.after(tool2.createdAt))
+          }
+        case _ =>
+          tools
+      }
+  }
+
   /**
     * Returns a paginated result with Tools
     *
@@ -147,6 +181,8 @@ object Tools extends TableQuery(tag => new Tools(tag)) with LazyLogging {
       joinTuples => joinTuples.map(joinTuple => Tool.ToolRelationshipJoin.tupled(joinTuple))
     } map {
       groupByTool
+    } map {
+      sortTools(_, page.sort)
     }
 
     val nToolsAction = accessibleTools.length.result
