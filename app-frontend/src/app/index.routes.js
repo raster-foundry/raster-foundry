@@ -327,13 +327,6 @@ function labStates($stateProvider) {
                 }
             }
         })
-        .state('lab.edit', {
-            title: 'Edit',
-            url: '/edit',
-            templateUrl: labEditTpl,
-            controller: 'LabEditController',
-            controllerAs: '$ctrl'
-        })
         .state('lab.browse', {
             url: '/browse',
             templateUrl: labBrowseTpl,

@@ -184,10 +184,6 @@ class LabBrowseTemplatesController {
         this.categories[index].selected = !this.categories[index].selected;
     }
 
-    navTool(tool) {
-        this.$state.go('market.tool', {id: tool.id, toolData: tool});
-    }
-
     openToolCreateModal() {
         if (this.activeModal) {
             this.activeModal.dismiss();
