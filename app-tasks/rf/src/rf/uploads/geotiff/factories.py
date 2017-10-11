@@ -71,7 +71,8 @@ class GeoTiffS3SceneFactory(object):
                 if is_tif_too_large(local_tif.name):
                     with get_tempdir() as tempdir:
                         split_files = split_tif(local_tif.name, tempdir)
-                        keys_and_filepaths = upload_split_files(key, bucket_name, split_files)
+                        target_key = 'user-uploads/{USER}/{UPLOAD}/'.format(USER=self.owner, UPLOAD=self._upload.id)
+                        keys_and_filepaths = upload_split_files(target_key, os.getenv('DATA_BUCKET'), split_files)
 
                         images = [self.create_geotiff_image(filepath, s3_url(bucket_name, s3_key),
                                                             scene, os.path.basename(s3_key))
