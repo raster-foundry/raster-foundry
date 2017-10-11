@@ -3,6 +3,9 @@ package com.azavea.rf.api.user
 import com.azavea.rf.datamodel.User
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.utils.{Auth0Exception, ManagementBearerToken}
+import com.azavea.rf.database.{Database => DB}
+import com.azavea.rf.database.tables.Users
+
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model._
@@ -14,14 +17,13 @@ import com.typesafe.scalalogging.LazyLogging
 import io.circe._
 import io.circe.syntax._
 import io.circe.generic.JsonCodec
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.Future
-import com.azavea.rf.database.{Database => DB}
-import com.azavea.rf.database.tables.Users
-import com.typesafe.scalalogging.LazyLogging
+
 
 @JsonCodec
 case class Auth0User(

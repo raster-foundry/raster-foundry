@@ -15,7 +15,7 @@ import org.scalatest.{Matchers, WordSpec}
 
 import io.circe._
 import io.circe.syntax._
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
 class ToolRunSpec extends WordSpec
     with Matchers

@@ -6,7 +6,7 @@ import com.typesafe.scalalogging.LazyLogging
 import cats.data._
 import cats.implicits._
 import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import io.circe._
 import io.circe.syntax._
 

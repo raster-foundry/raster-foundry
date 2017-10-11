@@ -14,7 +14,8 @@ import com.azavea.rf.api._
 import com.azavea.rf.common._
 
 import io.circe._
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
+
 
 class AuthSpec extends WordSpec
     with Matchers

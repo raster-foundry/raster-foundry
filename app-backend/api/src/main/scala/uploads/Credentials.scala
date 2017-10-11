@@ -17,7 +17,7 @@ import scala.concurrent.Future
 import io.circe.generic.JsonCodec
 import io.circe.optics.JsonPath._
 import io.circe.Json
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
 
 @JsonCodec

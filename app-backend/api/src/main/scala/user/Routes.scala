@@ -14,7 +14,7 @@ import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.Users
 import com.azavea.rf.datamodel._
 import io.circe._
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
 import com.typesafe.scalalogging.LazyLogging
 

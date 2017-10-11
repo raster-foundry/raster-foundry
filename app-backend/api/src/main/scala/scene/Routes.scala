@@ -5,7 +5,6 @@ import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.Scenes
 import com.azavea.rf.datamodel._
 
-
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
@@ -13,11 +12,12 @@ import io.circe._
 import io.circe.syntax._
 import io.circe.parser._
 import kamon.akka.http.KamonTraceDirectives
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Success, Failure}
 import java.util.UUID
+
 
 trait SceneRoutes extends Authentication
     with SceneQueryParameterDirective

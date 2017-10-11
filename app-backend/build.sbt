@@ -201,6 +201,7 @@ lazy val database = Project("database", file("database"))
 lazy val batch = Project("batch", file("batch"))
   .dependsOn(common, datamodel, database, tool, bridge)
   .settings(commonSettings:_*)
+  .settings(resolvers += Resolver.bintrayRepo("azavea", "maven"))
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({
     libraryDependencies ++= testDependencies ++ Seq(
@@ -225,7 +226,9 @@ lazy val batch = Project("batch", file("batch"))
       Dependencies.dnsJava,
       Dependencies.dropbox,
       Dependencies.caffeine,
-      Dependencies.scaffeine
+      Dependencies.scaffeine,
+      Dependencies.mamlJvm,
+      Dependencies.mamlSpark
     )
   })
   .settings(assemblyShadeRules in assembly := Seq(
@@ -278,6 +281,7 @@ lazy val tile = Project("tile", file("tile"))
 lazy val tool = Project("tool", file("tool"))
   .dependsOn(bridge)
   .settings(commonSettings:_*)
+  .settings(resolvers += Resolver.bintrayRepo("azavea", "maven"))
   .settings({
     libraryDependencies ++= loggingDependencies ++ Seq(
       Dependencies.spark,
@@ -290,7 +294,8 @@ lazy val tool = Project("tool", file("tool"))
       Dependencies.circeGeneric,
       Dependencies.circeParser,
       Dependencies.circeOptics,
-      Dependencies.scalaCheck
+      Dependencies.scalaCheck,
+      Dependencies.mamlJvm
     )
   })
 

@@ -13,6 +13,7 @@ import com.amazonaws.services.s3.{AmazonS3URI, AmazonS3Client => AWSAmazonS3Clie
 import org.apache.commons.io.IOUtils
 import org.apache.hadoop.conf.Configuration
 
+import java.util.Scanner
 import java.io._
 import java.net._
 
@@ -80,7 +81,10 @@ package object util {
   def readString(fileUri: URI): String = {
     val is = getStream(fileUri)
     try {
-      IOUtils.toString(is)
+      // A jdk [input stream -> string] method which avoids the IOUtils' 'toString' deprecation:
+      // https://community.oracle.com/blogs/pat/2004/10/23/stupid-scanner-tricks
+      val scan: Scanner = new Scanner(is).useDelimiter("\\A")
+      if (scan.hasNext()) scan.next() else ""
     } finally {
       is.close()
     }

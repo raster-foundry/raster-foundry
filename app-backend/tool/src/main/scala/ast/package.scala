@@ -15,32 +15,6 @@ import java.util.UUID
 
 package object ast extends MapAlgebraCodec {
 
-  /** Collect resources necessary to carry out substitutions on  ASTs while avoiding cycles */
-  def assembleSubstitutions(
-    ast: MapAlgebraAST,
-    substitutionResolver: UUID => Future[Option[MapAlgebraAST]],
-    assembled: Map[UUID, MapAlgebraAST] = Map()
-  )(implicit ec: ExecutionContext): OptionT[Future, Map[UUID, MapAlgebraAST]] =
-    ast match {
-      case ToolReference(id, refId) =>
-        OptionT(substitutionResolver(refId)).flatMap({ astPatch =>
-          // Here's where we can hope to catch cycles as we traverse down
-          //  the tree (keeping track of previously encountered references)
-          if (assembled.get(refId).isDefined)
-            // TODO: EitherT this thing
-            throw new IllegalArgumentException(s"Repeated substitution $refId found; likely cyclical reference")
-          else
-            assembleSubstitutions(astPatch, substitutionResolver, assembled ++ Map(refId -> astPatch))
-        })
-      case op: MapAlgebraAST.Operation =>
-        val childSubstitutions = op.args.map({ arg => assembleSubstitutions(arg, substitutionResolver, assembled) }).sequence
-        childSubstitutions.map({ substitutions =>
-          substitutions.foldLeft(Map[UUID, MapAlgebraAST]())({ case (map, subs) => map ++ subs }) ++ assembled
-        })
-      case _ =>
-        OptionT.pure[Future, Map[UUID, MapAlgebraAST]](assembled)
-      }
-
   implicit class CirceMapAlgebraJsonMethods(val self: Json) {
     def _id: Option[UUID] = root.id.string.getOption(self).map(UUID.fromString(_))
     def _type: Option[String] = root.`type`.string.getOption(self)

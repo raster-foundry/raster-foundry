@@ -8,7 +8,7 @@ import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
 import com.azavea.rf.database.tables.AOIs
 import com.azavea.rf.datamodel._
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
 // --- //
 

@@ -1,11 +1,5 @@
 package com.azavea.rf.tile.image
 
-import scala.concurrent._
-import java.util.UUID
-import com.typesafe.scalalogging.LazyLogging
-import cats.data._
-import cats.implicits._
-
 import com.azavea.rf.common.utils.TileUtils
 import com.azavea.rf.common.cache.CacheClient
 import com.azavea.rf.database.Database
@@ -14,6 +8,9 @@ import com.azavea.rf.database.tables.ScenesToProjects
 import com.azavea.rf.datamodel.{Project, SingleBandOptions, ColorRampMosaic}
 import com.azavea.rf.tile._
 
+import com.typesafe.scalalogging.LazyLogging
+import cats.data._
+import cats.implicits._
 import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.raster.GridBounds
@@ -23,6 +20,9 @@ import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.postgres.PostgresAttributeStore
 import geotrellis.vector.{Extent, Polygon}
+
+import scala.concurrent._
+import java.util.UUID
 
 
 object SingleBandMosaic extends LazyLogging with KamonTrace {
@@ -40,7 +40,7 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
     implicit database: Database, sceneIds: Set[UUID]
   ): OptionT[Future, (Int, TileLayerMetadata[SpatialKey])] = {
     logger.debug(s"Requesting tile layer metadata (layer: $id, zoom: $zoom")
-    LayerCache.maxZoomForLayer(id).mapFilter {
+    LayerCache.maxZoomForLayers(Set(id)).mapFilter {
       case (pyramidMaxZoom) =>
         val layerName = id.toString
         for (maxZoom <- pyramidMaxZoom.get(layerName)) yield {
@@ -203,3 +203,4 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
         } yield (t, h)
     }
 }
+

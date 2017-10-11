@@ -15,7 +15,7 @@ import com.azavea.rf.api.project.ProjectSpecHelper
 
 import io.circe._
 import io.circe.syntax._
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
 import scala.concurrent.duration._
 

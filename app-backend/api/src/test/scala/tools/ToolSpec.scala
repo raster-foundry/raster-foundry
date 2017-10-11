@@ -17,7 +17,7 @@ import cats.syntax.either._
 import io.circe._
 import io.circe.syntax._
 import io.circe.parser._
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
 import java.sql.Timestamp
 import java.util.UUID

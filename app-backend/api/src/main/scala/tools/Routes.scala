@@ -8,12 +8,13 @@ import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.ast.codec._
 
+import com.azavea.maml.serve._
 import io.circe._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import cats.implicits._
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import kamon.akka.http.KamonTraceDirectives
 import kamon.akka.http.KamonTraceDirectives.traceName
 

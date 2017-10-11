@@ -22,7 +22,7 @@ import geotrellis.slick.Projected
 
 import io.circe._
 import io.circe.syntax._
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
 class SceneSpec extends WordSpec
     with Matchers

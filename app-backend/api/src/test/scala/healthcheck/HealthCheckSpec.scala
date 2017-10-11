@@ -11,7 +11,7 @@ import com.azavea.rf.common._
 import com.azavea.rf.api.Codec._
 
 import io.circe._
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
 class HealthCheckSpec extends WordSpec
     with Matchers

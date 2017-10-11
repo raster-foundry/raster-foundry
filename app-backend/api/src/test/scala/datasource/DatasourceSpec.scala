@@ -19,7 +19,7 @@ import java.time.Instant
 
 import io.circe._
 import io.circe.syntax._
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
 class DatasourceSpec extends WordSpec
     with Matchers

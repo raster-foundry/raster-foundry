@@ -15,7 +15,7 @@ import com.azavea.rf.database.query._
 import com.azavea.rf.database.{Database, ActionRunner}
 import com.azavea.rf.datamodel._
 import io.circe._
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
 trait DatasourceRoutes extends Authentication
     with DatasourceQueryParameterDirective
