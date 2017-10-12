@@ -31,7 +31,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 
 /** This interpreter handles resource resolution and compilation of MapAlgebra ASTs */
-class RfmlTileResolver(db: Database, ec: ExecutionContext) extends LazyLogging {
+class TileResolver(db: Database, ec: ExecutionContext) extends LazyLogging {
 
   implicit val database: Database = db
   implicit val execution: ExecutionContext = ec
