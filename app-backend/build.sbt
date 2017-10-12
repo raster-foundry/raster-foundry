@@ -12,7 +12,6 @@ lazy val commonSettings = Seq(
   scapegoatIgnoredFiles := Seq(".*/datamodel/.*"),
   scalaVersion := Version.scala,
   scalacOptions := Seq(
-    "-Xmax-classfile-name","128",
     "-deprecation",
     "-unchecked",
     "-feature",
@@ -168,7 +167,6 @@ lazy val common = Project("common", file("common"))
   )})
 
 lazy val migrations = Project("migrations", file("migrations"))
-  .dependsOn(datamodel)
   .settings(commonSettings:_*)
   .settings({
     libraryDependencies ++= migrationsDependencies
