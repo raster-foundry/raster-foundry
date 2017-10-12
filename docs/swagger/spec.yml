@@ -2989,14 +2989,8 @@ definitions:
         execution_parameters:
           type: object
           description: Parameters for running the tool
-        project:
+        name:
           type: string
-          format: uuid
-          description: Project with which this run is associated
-        tool:
-          type: string
-          format: uuid
-          description: Tool being run
         visibility:
           type: string
           description: Level of restriction on viewing
