@@ -60,7 +60,7 @@ object GlobalSummary extends LazyLogging {
   def minAcceptableProjectZoom(
     projId: UUID,
     size: Int = 512
-  )(implicit database: Database, ec: ExecutionContext, sceneIds: Set[UUID]): OptionT[Future, (Extent, Int)] =
+  )(implicit database: Database, ec: ExecutionContext): OptionT[Future, (Extent, Int)] =
     // TODO this should be updated to handle both multi band and single band mosaics
     MultiBandMosaic.mosaicDefinition(projId).semiflatMap({ mosaic =>
       Future.sequence(mosaic.map { case MosaicDefinition(sceneId, _) =>

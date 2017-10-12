@@ -5,7 +5,7 @@ import com.azavea.rf.api.utils.{Auth0ErrorHandler}
 
 import akka.http.scaladsl.server.Route
 import io.circe._
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
 
 /**

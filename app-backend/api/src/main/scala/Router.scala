@@ -2,8 +2,6 @@ package com.azavea.rf.api
 
 import akka.http.scaladsl.model.HttpMethods._
 
-import ch.megard.akka.http.cors.CorsDirectives._
-import ch.megard.akka.http.cors.CorsSettings
 import com.azavea.rf.api.aoi.AoiRoutes
 import com.azavea.rf.api.config.ConfigRoutes
 import com.azavea.rf.api.datasource.DatasourceRoutes
@@ -26,6 +24,9 @@ import com.azavea.rf.api.tooltag.ToolTagRoutes
 import com.azavea.rf.api.uploads.UploadRoutes
 import com.azavea.rf.api.user.UserRoutes
 import com.azavea.rf.api.utils.Config
+
+import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
+import ch.megard.akka.http.cors.scaladsl.settings._
 
 import scala.collection.immutable.Seq
 

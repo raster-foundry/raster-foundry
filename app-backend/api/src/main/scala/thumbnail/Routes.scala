@@ -9,11 +9,12 @@ import com.azavea.rf.api.utils.Config
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.{StatusCodes, ContentType, HttpEntity, HttpResponse, MediaType, MediaTypes}
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import kamon.akka.http.KamonTraceDirectives
 
 import java.util.UUID
 import java.net.URI
+
 
 trait ThumbnailRoutes extends Authentication
     with ThumbnailQueryParameterDirective

@@ -39,7 +39,7 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
     sceneIds: Set[UUID]): OptionT[Future, (Int, TileLayerMetadata[SpatialKey])] = {
 
     logger.debug(s"Requesting tile layer metadata (layer: $id, zoom: $zoom")
-    LayerCache.maxZoomForLayer(id).mapFilter {
+    LayerCache.maxZoomForLayers(Set(id)).mapFilter {
       case (pyramidMaxZoom) =>
         val layerName = id.toString
         for (maxZoom <- pyramidMaxZoom.get(layerName)) yield {

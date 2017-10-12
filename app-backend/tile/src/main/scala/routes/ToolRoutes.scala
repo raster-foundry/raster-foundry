@@ -1,25 +1,32 @@
 package com.azavea.rf.tile.routes
 
-import com.azavea.rf.tile.image._
+import com.azavea.rf.common._
+import com.azavea.rf.common.ast._
+import com.azavea.rf.database.Database
+import com.azavea.rf.datamodel.User
 import com.azavea.rf.tile._
+import com.azavea.rf.tile.image._
+import com.azavea.rf.tile.tool._
+import com.azavea.rf.tool.ast._
+import com.azavea.rf.tool.eval._
+import com.azavea.rf.tool.maml._
+
+import com.azavea.maml.ast._
+import com.azavea.maml.eval._
+import com.azavea.maml.eval.directive._
+import com.azavea.maml.util._
+import com.azavea.maml.serve._
+import com.typesafe.scalalogging.LazyLogging
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
+import geotrellis.raster._
+import geotrellis.raster.render._
+import geotrellis.raster.render.png._
 import akka.http.scaladsl.marshalling._
 import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes, StatusCodes}
 import akka.http.scaladsl.server._
 import cats.data.Validated._
 import cats.data.{NonEmptyList => NEL, _}
 import cats.implicits._
-import com.azavea.rf.common._
-import com.azavea.rf.common.ast._
-import com.azavea.rf.database.Database
-import com.azavea.rf.datamodel.User
-import com.azavea.rf.tile._
-import com.azavea.rf.tile.tool.TileSources
-import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.eval._
-import com.typesafe.scalalogging.LazyLogging
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
-import geotrellis.raster._
-import geotrellis.raster.render._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
@@ -127,11 +134,13 @@ class ToolRoutes(implicit val database: Database) extends Authentication
     }
   }
 
+  val tileResolver = new RfmlTileResolver(implicitly[Database], implicitly[ExecutionContext])
+  val tmsInterpreter = BufferingInterpreter.DEFAULT
+  val emptyPng = IntConstantNoDataArrayTile(Array(0), 1, 1).renderPng(RgbaPngEncoding)
 
   /** The central endpoint for ModelLab; serves TMS tiles given a [[ToolRun]] specification */
   def tms(
-    toolRunId: UUID, user: User,
-    source: (RFMLRaster, Boolean, Int, Int, Int) => Future[Interpreted[TileWithNeighbors]]
+    toolRunId: UUID, user: User
   ): Route =
     (handleExceptions(interpreterExceptionHandler) & handleExceptions(circeDecodingError)) {
       traceName("toolrun-tms") {
@@ -140,46 +149,58 @@ class ToolRoutes(implicit val database: Database) extends Authentication
             'node.?,
             'cramp.?("viridis")
           ) { (node, colorRampName) =>
+            val nodeId = node.map(UUID.fromString(_))
+            val colorRamp = providedRamps.get(colorRampName).getOrElse(providedRamps("viridis"))
+            val components = for {
+              (lastUpdateTime, ast) <- LayerCache.toolEvalRequirements(toolRunId, nodeId, user)
+              (expression, metadata) <- OptionT.pure[Future, (Expression, Option[NodeMetadata])](ast.asMaml)
+              cMap  <- LayerCache.toolRunColorMap(toolRunId, nodeId, user, colorRamp, colorRampName)
+            } yield (expression, metadata, cMap, lastUpdateTime)
+
             complete {
-              val nodeId = node.map(UUID.fromString(_))
-              val colorRamp = providedRamps.get(colorRampName).getOrElse(providedRamps("viridis"))
-              val responsePng: OptionT[Future, Png] = for {
-                (lastUpdateTime, ast) <- LayerCache.toolEvalRequirements(toolRunId, nodeId, user)
-                tile <- {
-                  val cacheKey = s"toolrun-tms-${toolRunId}-${nodeId}-$z-$x-$y-${lastUpdateTime.getTime}"
-                  rfCache.cachingOptionT(cacheKey) {
-                    OptionT({
-                      val literalAst: Future[Interpreted[MapAlgebraAST]] = BufferingInterpreter.literalize(ast, source, z, x, y)
-                      val futureTile: Future[Interpreted[Tile]] = literalAst.map({ validatedAst =>
-                        validatedAst.andThen({ resolvedAst =>
-                          logger.debug(s"Attempting to retrieve TMS tile at $z/$x/$y")
-                          BufferingInterpreter.interpret(resolvedAst, 256)(z, x, y).andThen({ lztile =>
-                            lztile.evaluateDouble match {
-                              case Some(t) =>
-                                Valid(t)
+              components.value.flatMap({ data =>
+                val result: Future[Option[Png]] = data match {
+                  case Some((expression, metadata, cMap, updateTime)) =>
+                    val cacheKey = s"toolrun-tms-${toolRunId}-${nodeId}-$z-$x-$y-${updateTime.getTime}"
+                    rfCache.cachingOptionT(cacheKey)({
+                      val literalTree = tileResolver.resolveBuffered(expression)(z, x, y)
+                      val interpretedTile: Future[Interpreted[Tile]] =
+                        literalTree.map({ resolvedAst =>
+                          resolvedAst
+                            .andThen({ tmsInterpreter(_) })
+                            .andThen({ _.as[Tile] })
+                        })
+                      OptionT({
+                        interpretedTile.map({
+                          case Valid(tile) =>
+                            logger.debug(s"Tile successfully produced at $z/$x/$y")
+                            metadata.flatMap({ md =>
+                              md.renderDef.map({ renderDef => tile.renderPng(renderDef) })
+                            }).orElse({
+                              Some(tile.renderPng(cMap))
+                            })
+                          case Invalid(nel) =>
+                            // We'll remove tile retrieval errors and return an empty tile
+                            val exceptions = nel.filter({ e =>
+                              e match {
+                                case S3TileResolutionError(_, _) => false
+                                case UnknownTileResolutionError(_, _) => false
+                                case _ => true
+                              }
+                            })
+                            NEL.fromList(exceptions) match {
+                              case Some(errors) =>
+                                throw new InterpreterException(errors)
                               case None =>
-                                Invalid(NEL.of(LazyTileEvaluationError(ast)))
+                                Some(emptyPng)
                             }
-                          })
                         })
                       })
-                      futureTile.map({ validatedTile =>
-                        validatedTile match {
-                          case Valid(t) => Option(t)
-                          case Invalid(errors) => throw InterpreterException(errors)
-                        }
-                      })
-                    })
-                  }
+                    }).value
+                    case _ => Future.successful(None)
                 }
-                cMap  <- LayerCache.toolRunColorMap(toolRunId, nodeId, user, colorRamp, colorRampName)
-              } yield {
-                logger.debug(s"Tile successfully produced at $z/$x/$y")
-                ast.metadata.flatMap({ md =>
-                  md.renderDef.map({ renderDef => tile.renderPng(renderDef) })
-                }).getOrElse(tile.renderPng(cMap))
-              }
-              responsePng.value
+                result
+              })
             }
           }
         }

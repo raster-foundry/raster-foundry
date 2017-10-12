@@ -2,18 +2,20 @@ package com.azavea.rf.api.aois
 
 import scala.concurrent.duration._
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
-import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import com.azavea.rf.api.{AuthUtils, Router}
 import com.azavea.rf.common._
 import com.azavea.rf.api.project.ProjectSpecHelper
 import com.azavea.rf.api.utils.Config
-import com.azavea.rf.datamodel.{AOI, PaginatedResponse, Project}
+import com.azavea.rf.datamodel._
+
+import akka.actor.ActorSystem
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
+import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import geotrellis.slick.Projected
 import geotrellis.vector.MultiPolygon
 import io.circe.Json
 import io.circe.syntax._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import org.scalatest.{Matchers, WordSpec}
 
 // --- //

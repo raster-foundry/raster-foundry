@@ -19,7 +19,7 @@ import com.azavea.rf.database.tables._
 import com.azavea.rf.common.AWSBatch
 import com.azavea.rf.datamodel._
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import io.circe._
 import io.circe.generic.JsonCodec
 import kamon.akka.http.KamonTraceDirectives
