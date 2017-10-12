@@ -31,12 +31,11 @@ class ToolRunSpec extends WordSpec
   val authorization = AuthUtils.generateAuthHeader("Default")
   val publicOrgId = UUID.fromString("dfac6307-b5ef-43f7-beda-b9f208bb7726")
   // Non-functional UUIDs
-  val toolId = UUID.fromString("e609629f-05f5-4b18-a0e9-ea612b3c9ed7")
   val baseToolRun = "/tool-runs/"
   val newToolRun = ToolRun.Create(
+    "A Tool Run",
     Visibility.Public,
     publicOrgId,
-    toolId,
     ().asJson,
     None: Option[String]
   )

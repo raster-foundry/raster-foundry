@@ -20,10 +20,11 @@ class ToolRuns(_TableTag: Tag) extends Table[ToolRun](_TableTag, "tool_runs")
     with OrganizationFkFields
     with TimestampFields {
 
-  def * = (id, createdAt, createdBy, modifiedAt, modifiedBy, owner, visibility,
-           organizationId, toolId, executionParameters) <> (ToolRun.tupled, ToolRun.unapply _)
+  def * = (id, name, createdAt, createdBy, modifiedAt, modifiedBy, owner, visibility,
+           organizationId, executionParameters) <> (ToolRun.tupled, ToolRun.unapply _)
 
   val id: Rep[UUID]  = column[UUID]("id", O.PrimaryKey)
+  val name: Rep[String] = column[String]("name")
   val createdAt: Rep[Timestamp] = column[Timestamp]("created_at")
   val createdBy: Rep[String] = column[String]("created_by")
   val modifiedAt: Rep[Timestamp] = column[Timestamp]("modified_at")
@@ -31,13 +32,11 @@ class ToolRuns(_TableTag: Tag) extends Table[ToolRun](_TableTag, "tool_runs")
   val owner: Rep[String] = column[String]("owner", O.Length(255,varying=true))
   val visibility: Rep[Visibility] = column[Visibility]("visibility")
   val organizationId: Rep[UUID] = column[UUID]("organization")
-  val toolId: Rep[UUID] = column[UUID]("tool")
   val executionParameters: Rep[Json] = column[Json]("execution_parameters")
 
   lazy val createdByUserFK = foreignKey("tool_runs_created_by_fkey", createdBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val modifiedByUserFK = foreignKey("tool_runs_modified_by_fkey", modifiedBy, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val organizationsFk = foreignKey("tool_runs_organization_fkey", organizationId, Organizations)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
-  lazy val toolFK = foreignKey("tool_runs_tool_fkey", toolId, Tools)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   lazy val ownerUserFK = foreignKey("tool_runs_owner_fkey", owner, Users)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
 }
 
@@ -106,11 +105,6 @@ class ToolRunDefaultQuery[M, U, C[_]](toolruns: ToolRuns.TableQuery) {
     toolruns.filter { toolRun =>
       toolRunParams.createdBy
         .map(toolRun.createdBy === _)
-        .reduceLeftOption(_ || _)
-        .getOrElse(true: Rep[Boolean])
-    }.filter { toolRun =>
-      toolRunParams.toolId
-        .map(toolRun.toolId === _)
         .reduceLeftOption(_ || _)
         .getOrElse(true: Rep[Boolean])
     }
