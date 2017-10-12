@@ -122,7 +122,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
   }
 
 
-  val tileResolver = new RfmlTileResolver(implicitly[Database], implicitly[ExecutionContext])
+  val tileResolver = new TileResolver(implicitly[Database], implicitly[ExecutionContext])
 
   /** Calculate the histogram for the least resolute zoom level to automatically render tiles */
   def modelLayerGlobalHistogram(
