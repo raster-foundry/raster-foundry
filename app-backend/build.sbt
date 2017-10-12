@@ -12,6 +12,7 @@ lazy val commonSettings = Seq(
   scapegoatIgnoredFiles := Seq(".*/datamodel/.*"),
   scalaVersion := Version.scala,
   scalacOptions := Seq(
+    "-Xmax-classfile-name","128",
     "-deprecation",
     "-unchecked",
     "-feature",
