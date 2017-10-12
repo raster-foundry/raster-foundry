@@ -20,6 +20,7 @@ import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import geotrellis.raster._
 import geotrellis.raster.render._
+import geotrellis.raster.render.png._
 import akka.http.scaladsl.marshalling._
 import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes, StatusCodes}
 import akka.http.scaladsl.server._
@@ -135,7 +136,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
 
   val tileResolver = new RfmlTileResolver(implicitly[Database], implicitly[ExecutionContext])
   val tmsInterpreter = BufferingInterpreter.DEFAULT
-  val emptyTile = DoubleConstantNoDataArrayTile(Array(Double.NaN), 1, 1)
+  val emptyPng = IntConstantNoDataArrayTile(Array(0), 1, 1).renderPng(RgbaPngEncoding)
 
   /** The central endpoint for ModelLab; serves TMS tiles given a [[ToolRun]] specification */
   def tms(
@@ -191,11 +192,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
                               case Some(errors) =>
                                 throw new InterpreterException(errors)
                               case None =>
-                                metadata.flatMap({ md =>
-                                  md.renderDef.map({ renderDef => emptyTile.renderPng(renderDef) })
-                                }).orElse({
-                                  Some(emptyTile.renderPng(cMap))
-                                })
+                                Some(emptyPng)
                             }
                         })
                       })
