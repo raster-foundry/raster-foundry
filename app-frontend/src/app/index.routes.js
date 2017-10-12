@@ -2,12 +2,13 @@
 import rootTpl from './pages/root/root.html';
 import loginTpl from './pages/login/login.html';
 
-import labTpl from './pages/lab/lab.html';
 import labBrowseTpl from './pages/lab/browse/browse.html';
 import labBrowseToolsTpl from './pages/lab/browse/tools/tools.html';
 import labBrowseTemplatesTpl from './pages/lab/browse/templates/templates.html';
-import labRunTpl from './pages/lab/run/run.html';
-import labNavbarTpl from './pages/lab/run/navbar/navbar.html';
+import labTemplateTpl from './pages/lab/template/template.html';
+import labToolTpl from './pages/lab/tool/tool.html';
+import labCreateToolTpl from './pages/lab/createTool/createTool.html';
+// import labNavbarTpl from './pages/lab/navbar/navbar.html';
 
 import projectsTpl from './pages/projects/projects.html';
 import projectsNavbarTpl from './pages/projects/navbar/navbar.html';
@@ -300,31 +301,36 @@ function labStates($stateProvider) {
             url: '/lab',
             redirectTo: 'lab.browse'
         })
-        .state('lab.build', {
-            title: 'Build a Tool',
-            url: '/build/:toolid',
+        // later on we'll use this to view / edit user templates
+        .state('lab.template', {
+            title: 'View a Template',
+            url: '/template/:templateid',
             parent: 'lab',
-            templateUrl: labTpl,
-            controller: 'LabController',
-            controllerAs: '$ctrl',
-            redirectTo: 'lab.build.run'
+            templateUrl: labTemplateTpl,
+            controller: 'LabTemplateController',
+            controllerAs: '$ctrl'
         })
-        .state('lab.build.run', {
-            title: 'Run',
-            url: '/run/:runid?',
-            parent: 'lab.build',
-            views: {
-                'navmenu@root': {
-                    templateUrl: labNavbarTpl,
-                    controller: 'LabNavbarController',
-                    controllerAs: '$ctrl'
-                },
-                '': {
-                    templateUrl: labRunTpl,
-                    controller: 'LabRunController',
-                    controllerAs: '$ctrl'
-                }
-            }
+        .state('lab.createTool', {
+            title: 'Create a tool',
+            url: '/create-tool/:templateid',
+            parent: 'lab',
+            params: {
+                'template': null
+            },
+            templateUrl: labCreateToolTpl,
+            controller: 'LabCreateToolController',
+            controllerAs: '$ctrl'
+        })
+        .state('lab.tool', {
+            title: 'Tool details',
+            url: '/tool/:toolid',
+            parent: 'lab',
+            params: {
+                'tool': null
+            },
+            templateUrl: labToolTpl,
+            controller: 'LabToolController',
+            controllerAs: '$ctrl'
         })
         .state('lab.browse', {
             url: '/browse',

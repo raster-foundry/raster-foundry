@@ -1802,7 +1802,12 @@ rf-node-statistics {
   .btn {
     margin: 0.5em;
     pointer-events: auto;
-    box-shadow: 4px 4px 4px rgba(0,0,0,0.25);
+    box-shadow: 2px 2px 2px rgba(0,0,0,0.25);
+  }
+  .form-control {
+      pointer-events: auto;
+      margin: 0.5em;
+      box-shadow: 2px 2px 2px rgba(0,0,0,0.25);
   }
   pointer-events: none;
 }
@@ -2837,4 +2842,14 @@ rf-reclassify-table {
 
 .pagination-count {
   margin-bottom: 1em;
+}
+
+.lab-info-dialogue {
+    position: absolute;
+    top: 25%;
+    text-align: center;
+    padding: 2em;
+    border: 1px solid rgba(0, 0, 0, 0.7);
+    box-shadow: 2px 2px 4px rgba(0,0,0,0.25);
+    border-radius: 3px;
 }

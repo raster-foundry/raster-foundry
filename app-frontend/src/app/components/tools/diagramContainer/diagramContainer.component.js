@@ -7,10 +7,10 @@ export default {
         toolDefinition: '<',
         toolParameters: '<',
         toolrun: '<',
-        onPreview: '&',
+        onPreview: '&?',
         onShare: '&',
         onParameterChange: '&',
         onGraphComplete: '&',
-        createToolRun: '&'
+        createToolRun: '&?'
     }
 };

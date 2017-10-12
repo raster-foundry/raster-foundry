@@ -10,8 +10,12 @@ export default class NodeSelectorController {
         this.$document = $document;
     }
 
-    $onInit() {
-        this.$timeout(() => this.setPosition(this.position), 100);
+    $postLink() {
+        this.$timeout(() => {
+            if (this.position) {
+                this.setPosition(this.position);
+            }
+        }, 0);
     }
 
     $onChanges(changes) {
@@ -79,11 +83,13 @@ export default class NodeSelectorController {
     }
 
     get selectedLabel() {
-        return this.nodeMap.get(this.selected).label;
+        let selectedNode = this.nodeMap.get(this.selected);
+        return selectedNode ? selectedNode.label : null;
     }
 
     get selectedType() {
-        return this.nodeMap.get(this.selected).type;
+        let selectedNode = this.nodeMap.get(this.selected);
+        return selectedNode ? selectedNode.type : null;
     }
 
     selectNode(node) {

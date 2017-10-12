@@ -39,15 +39,17 @@ export default (app) => {
                       <span class="icon-map"></span>
                       </button>
                       <button class="btn node-button" type="button"
-                              ng-if="model.get('cellType') !== 'const' &&
-                               model.get('cellType') !== 'src'"
+                              ng-if="onPreview &&
+                                     model.get('cellType') !== 'const' &&
+                                     model.get('cellType') !== 'projectSrc'"
                               ng-class="{'active': currentView === 'HISTOGRAM'}"
                               ng-click="toggleHistogram()">
                       <span class="icon-histogram"></span>
                       </button>
                       <button class="btn node-button" type="button"
-                              ng-if="model.get('cellType') !== 'const' &&
-                               model.get('cellType') !== 'src'"
+                              ng-if="onPreview &&
+                                     model.get('cellType') !== 'const' &&
+                                     model.get('cellType') !== 'projectSrc'"
                               ng-class="{'active': currentView === 'STATISTICS'}"
                               ng-click="toggleStatistics()">
                           Stats
@@ -60,12 +62,12 @@ export default (app) => {
                     </div>
                   </div>
                   <rf-input-node
-                    ng-if="ifCellType('src')"
+                    ng-if="ifCellType('projectSrc')"
                     ng-show="showCellBody()"
                     data-model="model"
                     data-node="node"
                     data-tick="updateTick"
-                    on-change="onChange({sourceId: sourceId, project: project, band: band})"
+                    on-change="onChange({nodeId: sourceId, project: project, band: band})"
                   ></rf-input-node>
                   <rf-operation-node
                     ng-if="ifCellType('function')"
@@ -244,14 +246,15 @@ export default (app) => {
                             .map((item) => item.callback)
                     );
 
-                    this.scope.onPreview = () => {
-                        let histogramToolRun = this.scope.model.get('histogramToolRun');
-                        if (!histogramToolRun) {
-                            let updateToolRun = this.scope.model.get('updateToolRun');
-                            this.model.prop('histogramToolRun', this.scope.toolrun.id);
-                            toolService
-                                .getNodeHistogram(this.scope.toolrun.id, this.model.attributes.id)
-                                .then((histogram) => {
+                    if (previewCallback) {
+                        this.scope.onPreview = () => {
+                            let histogramToolRun = this.scope.model.get('histogramToolRun');
+                            if (!histogramToolRun) {
+                                let updateToolRun = this.scope.model.get('updateToolRun');
+                                this.model.prop('histogramToolRun', this.scope.toolrun.id);
+                                toolService.getNodeHistogram(
+                                    this.scope.toolrun.id, this.model.attributes.id
+                                ).then((histogram) => {
                                     this.model.prop('histogram', histogram);
                                     this.scope.histogram = histogram;
                                     let newRange = {min: histogram.minimum, max: histogram.maximum};
@@ -269,10 +272,11 @@ export default (app) => {
                                             );
                                         });
                                 });
-                        } else if (histogramToolRun) {
-                            previewCallback(null, this.scope.model);
-                        }
-                    };
+                            } else if (histogramToolRun) {
+                                previewCallback(null, this.scope.model);
+                            }
+                        };
+                    }
 
                     $compile(this.$box)(this.scope);
 
@@ -552,8 +556,14 @@ export default (app) => {
                 let input = inputs.pop();
                 let rectangle;
 
+                // Old tools name 'projectSrc' input nodes as 'src'. New tools use 'projectSrc'
+                // In the future, we may want to write a migration to move them over.
+                if (input.type === 'src') {
+                    input.type = 'projectSrc';
+                }
+
                 // Input nodes not of the layer type are not made into rectangles
-                if (!input.type || input.type === 'src' || input.type === 'const') {
+                if (!input.type || input.type === 'projectSrc' || input.type === 'const') {
                     let rectAttrs = this.getNodeAttributes(input);
 
                     rectangle = this.constructRect(

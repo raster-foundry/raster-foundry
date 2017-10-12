@@ -46,10 +46,11 @@ const App = angular.module(
         require('./pages/error/error.module.js').name,
         require('./pages/share/share.module.js').name,
 
-        require('./pages/lab/lab.module.js').name,
-        require('./pages/lab/edit/edit.module.js').name,
-        require('./pages/lab/run/run.module.js').name,
-        require('./pages/lab/run/navbar/navbar.module.js').name,
+        require('./pages/lab/tool/tool.js').name,
+        require('./pages/lab/createTool/createTool.js').name,
+        require('./pages/lab/template/template.js').name,
+
+        require('./pages/lab/navbar/navbar.module.js').name,
         require('./pages/lab/browse/browse.js').name,
         require('./pages/lab/browse/tools/tools.js').name,
         require('./pages/lab/browse/templates/templates.js').name,

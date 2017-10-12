@@ -6,7 +6,7 @@ const minZoom = 0.025;
 export default class DiagramContainerController {
     constructor( // eslint-disable-line max-params
         $element, $scope, $state, $timeout, $compile, $document, $window, $rootScope,
-        mousetipService, toolService, labUtils
+        mousetipService, labUtils
     ) {
         'ngInject';
         this.$element = $element;
@@ -18,7 +18,6 @@ export default class DiagramContainerController {
         this.$document = $document;
         this.$window = $window;
         this.mousetipService = mousetipService;
-        this.toolService = toolService;
         this.labUtils = labUtils;
     }
 
@@ -35,6 +34,29 @@ export default class DiagramContainerController {
         this.panActive = false;
         this.initContextMenus();
 
+        this.contextInitialized = true;
+
+        if (this.toolDefinition && !this.shapes) {
+            this.initDiagram();
+        }
+    }
+
+    $onChanges(changes) {
+        if (changes.toolDefinition && changes.toolDefinition.currentValue) {
+            if (this.contextInitialized && !this.shapes) {
+                this.initDiagram();
+            }
+        }
+        if (changes.toolrun && this.shapes) {
+            let toolrun = changes.toolrun.currentValue;
+            this.shapes.forEach((shape) => {
+                let model = this.paper.getModelById(shape.attributes.id);
+                model.prop('toolrun', toolrun);
+            });
+        }
+    }
+
+    initDiagram() {
         this.inputsJson = this.labUtils.getToolImports(this.toolDefinition);
 
         let extract = this.labUtils.extractShapes(
@@ -45,37 +67,16 @@ export default class DiagramContainerController {
             this.createToolRun
         );
         this.shapes = extract.shapes;
+        this.shapes.forEach((shape) => {
+            shape.on('change:position', (node, position) => {
+                if (this.nodePositionsSet) {
+                    this.onShapeMove(shape.id, position);
+                }
+            });
+        });
         this.nodes = extract.nodes;
         this.onGraphComplete({nodes: this.nodes});
 
-
-        this.initDiagram();
-
-        this.$rootScope.$on('lab.resize', () => {
-            this.$timeout(this.onWindowResize, 100);
-        });
-    }
-
-    $onChanges(changes) {
-        if (changes.toolrun && this.shapes) {
-            let toolrun = changes.toolrun.currentValue;
-            this.shapes.forEach((shape) => {
-                let model = this.paper.getModelById(shape.attributes.id);
-                model.prop('toolrun', toolrun);
-            });
-        }
-    }
-
-    $onDestroy() {
-        if (this.isComparing) {
-            this.cancelComparison();
-        }
-        if (this.onWindowResize) {
-            this.$window.removeEventListener('resize', this.onWindowResize);
-        }
-    }
-
-    initDiagram() {
         if (!this.graph) {
             this.graph = new joint.dia.Graph();
         } else {
@@ -115,7 +116,7 @@ export default class DiagramContainerController {
                 },
                 model: this.graph,
                 clickThreshold: 4,
-                interactive: false
+                interactive: true
             });
             this.paper.drawGrid({
                 color: '#aaa',
@@ -141,6 +142,9 @@ export default class DiagramContainerController {
                     owidth, oheight
                 );
             };
+            this.$rootScope.$on('lab.resize', () => {
+                this.$timeout(this.onWindowResize, 100);
+            });
             this.$window.addEventListener('resize', this.onWindowResize);
             this.$element.on('mousemove', this.onMouseMove.bind(this));
         }
@@ -156,23 +160,34 @@ export default class DiagramContainerController {
                 marginX: padding,
                 marginY: padding
             });
-            this.overridePositions(this.graph);
+            this.applyPositionOverrides(this.graph);
             this.scaleToContent();
         }
     }
 
-    overridePositions(graph) {
+    $onDestroy() {
+        if (this.isComparing) {
+            this.cancelComparison();
+        }
+        if (this.onWindowResize) {
+            this.$window.removeEventListener('resize', this.onWindowResize);
+        }
+    }
+
+    applyPositionOverrides(graph) {
         // eslint-disable-next-line
         Object.keys(graph._nodes)
             .map((modelid) => this.paper.getModelById(modelid))
             .forEach((model) => {
-                if (model.attributes.positionOverride) {
+                let metadata = model.attributes.metadata;
+                if (metadata && metadata.positionOverride) {
                     model.position(
-                        model.attributes.positionOverride.x,
-                        model.attributes.positionOverride.y
+                        model.attributes.metadata.positionOverride.x,
+                        model.attributes.metadata.positionOverride.y
                     );
                 }
             });
+        this.nodePositionsSet = true;
     }
 
     scaleToContent() {
@@ -271,35 +286,38 @@ export default class DiagramContainerController {
     }
 
     initContextMenus() {
-        this.defaultContextMenu = [{
-            label: 'Compare to...',
-            callback: ($event, model) => {
-                this.selectCell(model);
-                this.startComparison(model.get('id'));
-            }
-        }, {
-            label: 'View output',
-            callback: ($event, model) => {
-                return this.onPreview({
-                    data: model.get('id')
-                });
-            }
-        }, {
-            type: 'divider'
-        }, {
-            label: 'Share',
-            callback: ($event, model) => {
-                return this.onShare({
-                    nodeId: model.get('id')
-                });
-            }
-        }];
-        this.cancelComparisonMenu = [{
-            label: 'Cancel',
-            callback: () => {
-                this.cancelComparison();
-            }
-        }];
+        this.defaultContextMenu = [];
+        if (this.onPreview) {
+            this.defaultContextMenu = [{
+                label: 'Compare to...',
+                callback: ($event, model) => {
+                    this.selectCell(model);
+                    this.startComparison(model.get('id'));
+                }
+            }, {
+                label: 'View output',
+                callback: ($event, model) => {
+                    return this.onPreview({
+                        data: model.get('id')
+                    });
+                }
+            }, {
+                type: 'divider'
+            }, {
+                label: 'Share',
+                callback: ($event, model) => {
+                    return this.onShare({
+                        nodeId: model.get('id')
+                    });
+                }
+            }];
+            this.cancelComparisonMenu = [{
+                label: 'Cancel',
+                callback: () => {
+                    this.cancelComparison();
+                }
+            }];
+        }
     }
 
     onPaperClick() {
@@ -317,6 +335,10 @@ export default class DiagramContainerController {
                 this.continueComparison(cv);
             }
         });
+    }
+
+    onShapeMove(nodeid, position) {
+        this.onParameterChange({nodeId: nodeid, position: position});
     }
 
     startComparison(id) {
