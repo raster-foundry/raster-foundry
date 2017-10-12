@@ -83,13 +83,15 @@ object ToolRuns extends TableQuery(tag => new ToolRuns(tag)) with LazyLogging {
     } yield (
       updateToolRun.modifiedAt,
       updateToolRun.modifiedBy,
-      updateToolRun.executionParameters
+      updateToolRun.executionParameters,
+      updateToolRun.name
     )
 
     updateToolRunQuery.update(
       updateTime,
       user.id,
-      tr.executionParameters
+      tr.executionParameters,
+      tr.name
     )
   }
 

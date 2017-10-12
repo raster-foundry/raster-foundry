@@ -16,7 +16,7 @@ export default class DiagramNodeHeaderController {
     get typeMap() {
         return {
             'function': 'Function',
-            'src': 'Input',
+            'projectSrc': 'Input',
             'const': 'Constant',
             'classify': 'Classify'
         };

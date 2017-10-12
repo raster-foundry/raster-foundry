@@ -1,50 +1,44 @@
 /* global L */
 import { FrameView } from '../../../components/map/labMap/frame.module.js';
 
-export default class LabRunController {
-    constructor( // eslint-disable-line max-params
-        $log, $scope, $state, $timeout, $element, $window, $document, $uibModal, $rootScope,
+class LabToolController {
+    constructor(
+        $scope, $rootScope, $state, $timeout, $element, $window, $document, $uibModal,
         mapService, projectService, authService, mapUtilsService, toolService, tokenService,
         APP_CONFIG
     ) {
         'ngInject';
-        this.$log = $log;
         this.$scope = $scope;
-        this.$state = $state;
         this.$rootScope = $rootScope;
-        this.$parent = $scope.$parent.$ctrl;
+        this.$state = $state;
         this.$timeout = $timeout;
         this.$element = $element;
         this.$window = $window;
         this.$document = $document;
         this.$uibModal = $uibModal;
-        this.authService = authService;
+
+        this.getMap = () => mapService.getMap('tool-preview');
         this.projectService = projectService;
+        this.authService = authService;
         this.mapUtilsService = mapUtilsService;
         this.toolService = toolService;
         this.tokenService = tokenService;
-        this.getMap = () => mapService.getMap('lab-preview');
-        this.tileServer = `${APP_CONFIG.tileServerLocation}`;
 
-        this.showDiagram = true;
+        this.tileServer = `${APP_CONFIG.tileServerLocation}`;
     }
 
     $onInit() {
-        this.$parent.toolRequest.then(tool => {
-            this.tool = tool;
-            // This will be a call to the API
-            this.toolRun = this.toolService.generateToolRun(this.tool);
-            this.generatedPreview = false;
-            if (this.$state.params.runid) {
-                this.clearWarning();
-                this.toolService
-                    .getToolRun(this.$state.params.runid)
-                    .then(t => this.setToolRun(t));
-            }
-        });
-        this.setWarning(
-            'You must apply changes after defining inputs.'
-        );
+        this.showDiagram = true;
+        // request tool-run
+        this.tool = this.$state.params.tool;
+        this.toolId = this.$state.params.toolid;
+        this.toolName = '';
+
+        if (this.toolId && !this.tool) {
+            this.fetchTool();
+        } else if (!this.toolId) {
+            this.$state.go('lab.browse.tools');
+        }
 
         this.$scope.$on('$destroy', () => {
             $('body').css({overflow: ''});
@@ -52,6 +46,154 @@ export default class LabRunController {
         $('body').css({overflow: 'hidden'});
 
         this.singlePreviewPosition = {x: 0, offset: 10, side: 'none'};
+    }
+
+    fetchTool() {
+        this.loadingTool = true;
+        this.toolRequest = this.toolService.getToolRun(this.toolId);
+        this.toolRequest.then(tool => {
+            this.tool = tool;
+            this.toolName = this.tool.name;
+            this.loadingTool = false;
+        }, err => {
+            this.$log.error('There was an error fetching your tool', err);
+        });
+    }
+
+    onGraphComplete(nodes) {
+        this.nodeMap = nodes;
+    }
+
+    onToolParameterChange(nodeid, project, band, override, renderDef, position) {
+        if (project && typeof band === 'number' && band >= 0) {
+            this.toolService.updateToolRunSource(this.tool, nodeid, project.id, band);
+        }
+        if (override) {
+            this.toolService.updateToolRunConstant(this.tool, override.id, override);
+        }
+        if (renderDef) {
+            let metadata = this.toolService.getToolRunMetadata(this.tool, renderDef.id);
+            this.toolService.updateToolRunMetadata(
+                this.tool,
+                renderDef.id,
+                Object.assign({}, metadata, {
+                    renderDefinition: renderDef.value
+                })
+            );
+        }
+        if (position) {
+            let metadata = this.toolService.getToolRunMetadata(this.tool, nodeid);
+            this.toolService.updateToolRunMetadata(
+                this.tool,
+                nodeid,
+                Object.assign({}, metadata, {
+                    positionOverride: position
+                })
+            );
+        }
+    }
+
+    saveTool() {
+        this.saveInProgress = true;
+        this.clearWarning();
+        const toolSavePromise = this.toolService.updateToolRun(
+            Object.assign(
+                {},
+                this.tool,
+                { id: this.$state.params.toolid, name: this.toolName }
+            )
+        ).then(() => {
+            if (this.isShowingPreview) {
+                this.createPreviewLayers();
+                this.showPreview(this.previewData);
+            }
+        }).finally(() => {
+            this.applyInProgress = false;
+        });
+        return toolSavePromise;
+    }
+
+    shareNode(nodeId) {
+        if (nodeId && this.tool) {
+            let node = this.findNodeinToolDefinition(nodeId, this.tool.executionParameters);
+            if (node.type === 'projectSrc') {
+                this.tokenService.getOrCreateToolMapToken({
+                    organizationId: this.tool.organizationId,
+                    name: this.tool.title + ' - ' + this.tool.id,
+                    project: node.projId
+                }).then((mapToken) => {
+                    this.publishModal(
+                        this.projectService.getProjectLayerURL(
+                            node.projId, {mapToken: mapToken.id}
+                        )
+                    );
+                });
+            } else {
+                this.tokenService.getOrCreateToolMapToken({
+                    organizationId: this.tool.organizationId,
+                    name: this.tool.title + ' - ' + this.tool.id,
+                    toolRun: this.tool.id
+                }).then((mapToken) => {
+                    this.publishModal(
+                        // eslint-disable-next-line max-len
+                        `${this.tileServer}/tools/${this.tool.id}/{z}/{x}/{y}?mapToken=${mapToken.id}&node=${nodeId}`
+                    );
+                });
+            }
+        }
+    }
+
+    publishModal(tileUrl) {
+        if (this.activeModal) {
+            this.activeModal.dismiss();
+        }
+
+        if (tileUrl) {
+            this.activeModal = this.$uibModal.open({
+                component: 'rfProjectPublishModal',
+                resolve: {
+                    tileUrl: () => tileUrl,
+                    noDownload: () => true,
+                    toolTitle: () => this.tool.name
+                }
+            });
+        }
+        return this.activeModal;
+    }
+
+    fitProjectExtent(project) {
+        this.getMap().then(m => {
+            m.map.invalidateSize();
+            this.mapUtilsService.fitMapToProject(m, project);
+        });
+    }
+
+    onPreviewClose() {
+        this.isShowingPreview = false;
+        this.resetPartitionStyles();
+        this.$rootScope.$broadcast('lab.resize');
+    }
+
+    closePreview() {
+        this.isShowingPreview = false;
+    }
+
+    setWarning(text) {
+        this.warning = text;
+    }
+
+    clearWarning() {
+        delete this.warning;
+    }
+
+    clearTextSelections() {
+        if (this.$window.getSelection && this.$window.getSelection().empty) {
+            this.$window.getSelection().empty();
+        } else if (this.$window.getSelection().removeAllRanges) {
+            this.$window.getSelection().removeAllRanges();
+        } else if (this.$document.selection) {
+            this.$document.selection.empty();
+        }
     }
 
     flattenToolDefinition(toolDefinition) {
@@ -77,13 +219,13 @@ export default class LabRunController {
 
     getNodeUrl(node) {
         let token = this.authService.token();
-        if (this.toolRun) {
+        if (this.tool) {
             // eslint-disable-next-line max-len
-            let toolNode = this.findNodeinToolDefinition(node, this.toolRun.executionParameters);
+            let toolNode = this.findNodeinToolDefinition(node, this.tool.executionParameters);
             if (toolNode.type === 'projectSrc') {
                 return this.projectService.getProjectLayerURL(toolNode.projId, {token: token});
             }
-            return `${this.tileServer}/tools/${this.toolRun.id}/{z}/{x}/{y}
+            return `${this.tileServer}/tools/${this.tool.id}/{z}/{x}/{y}
                     ?token=${token}&node=${node}&tag=${new Date().getTime()}`;
         }
         return false;
@@ -170,7 +312,7 @@ export default class LabRunController {
 
     showPreview(data) {
         let defaultSplit = 40;
-        if (!this.toolRun) {
+        if (!this.tool) {
             return;
         }
 
@@ -196,7 +338,7 @@ export default class LabRunController {
                     if (!this.alreadyPreviewed) {
                         this.alreadyPreviewed = true;
                         this.$timeout(() => {
-                            let s = this.toolService.generateSourcesFromTool(this.toolRun);
+                            let s = this.toolService.generateSourcesFromTool(this.tool);
                             let firstSourceId = Object.keys(s)[0];
                             this.projectService.fetchProject(s[firstSourceId].projId).then(p => {
                                 this.fitProjectExtent(p);
@@ -234,16 +376,6 @@ export default class LabRunController {
                 mapWrapper.map.invalidateSize();
             }, 100);
         });
-    }
-
-    clearTextSelections() {
-        if (this.$window.getSelection && this.$window.getSelection().empty) {
-            this.$window.getSelection().empty();
-        } else if (this.$window.getSelection().removeAllRanges) {
-            this.$window.getSelection().removeAllRanges();
-        } else if (this.$document.selection) {
-            this.$document.selection.empty();
-        }
     }
 
     startLabSplitDrag(event) {
@@ -339,188 +471,6 @@ export default class LabRunController {
         this.$element.on('mouseup', this.resizeStopListener);
     }
 
-    onPreviewClose() {
-        this.isShowingPreview = false;
-        this.resetPartitionStyles();
-        this.$rootScope.$broadcast('lab.resize');
-    }
-
-    shareNode(nodeId) {
-        if (nodeId && this.toolRun) {
-            let node = this.findNodeinToolDefinition(nodeId, this.toolRun.executionParameters);
-            if (node.type === 'projectSrc') {
-                this.tokenService.getOrCreateToolMapToken({
-                    organizationId: this.toolRun.organizationId,
-                    name: this.tool.title + ' - ' + this.toolRun.id,
-                    project: node.projId
-                }).then((mapToken) => {
-                    this.publishModal(
-                        this.projectService.getProjectLayerURL(
-                            node.projId, {mapToken: mapToken.id}
-                        )
-                    );
-                });
-            } else {
-                this.tokenService.getOrCreateToolMapToken({
-                    organizationId: this.toolRun.organizationId,
-                    name: this.tool.title + ' - ' + this.toolRun.id,
-                    toolRun: this.toolRun.id
-                }).then((mapToken) => {
-                    this.publishModal(
-                        // eslint-disable-next-line max-len
-                        `${this.tileServer}/tools/${this.toolRun.id}/{z}/{x}/{y}?mapToken=${mapToken.id}&node=${nodeId}`
-                    );
-                });
-            }
-        }
-    }
-
-    fitProjectExtent(project) {
-        this.getMap().then(m => {
-            m.map.invalidateSize();
-            this.mapUtilsService.fitMapToProject(m, project);
-        });
-    }
-
-    closePreview() {
-        this.isShowingPreview = false;
-    }
-
-    createToolRun() {
-        this.applyInProgress = true;
-        this.clearWarning();
-        let toolRunPromise = this.toolService.createToolRun(this.toolRun);
-        toolRunPromise.then(tr => {
-            this.setToolRun(tr);
-            this.clearWarning();
-            if (this.isShowingPreview) {
-                this.showPreview(this.previewData);
-            }
-        }, () => {
-            this.setWarning(
-                `There was an error applying your changes.
-                Please verify that all inputs are defined.`
-            );
-        }).finally(() => {
-            this.applyInProgress = false;
-        });
-        return toolRunPromise;
-    }
-
-    updateToolRun() {
-        this.applyInProgress = true;
-        this.clearWarning();
-        const toolRunPromise = this.toolService.updateToolRun(
-            Object.assign(
-                {},
-                this.toolRun,
-                { id: this.$state.params.runid }
-            )
-        ).then(() => {
-            if (this.isShowingPreview) {
-                this.createPreviewLayers();
-                this.showPreview(this.previewData);
-            }
-        }).finally(() => {
-            this.applyInProgress = false;
-        });
-        return toolRunPromise;
-    }
-
-    createOrUpdateToolRun() {
-        this.applyInProgress = true;
-        this.clearWarning();
-        if (this.$state.params.runid) {
-            return this.updateToolRun();
-        }
-        return this.createToolRun();
-    }
-
-    setToolRun(toolrun) {
-        this.toolRun = toolrun;
-        this.$state.params.runid = toolrun.id;
-        this.$state.transitionTo(
-            this.$state.$current.name,
-            this.$state.params,
-            {
-                location: true,
-                notify: false
-            }
-        );
-    }
-
-    onExecutionParametersChange(sourceId, project, band, override, renderDef) {
-        if (project && typeof band === 'number' && band >= 0) {
-            this.toolService.updateToolRunSource(this.toolRun, sourceId, project.id, band);
-        }
-        if (override) {
-            this.toolService.updateToolRunConstant(this.toolRun, override.id, override);
-        }
-        if (renderDef) {
-            this.toolService.updateToolRunMetadata(this.toolRun, renderDef.id, {
-                renderDefinition: renderDef.value
-            });
-        }
-    }
-
-    selectProjectModal(sourceId) {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.$uibModal.open({
-            component: 'rfProjectSelectModal',
-            resolve: {
-                project: () => this.toolRun.executionParameters.sources[sourceId].id || false,
-                content: () => ({
-                    title: 'Select a project'
-                })
-            }
-        });
-
-        this.activeModal.result.then(p => {
-            this.toolRun.executionParameters.sources[sourceId].id = p.id;
-            // eslint-disable-next-line no-underscore-dangle
-            this.toolRun.executionParameters.sources[sourceId]._name = p.name;
-            this.$scope.$evalAsync();
-        });
-    }
-
-    publishModal(tileUrl) {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        if (tileUrl) {
-            this.activeModal = this.$uibModal.open({
-                component: 'rfProjectPublishModal',
-                resolve: {
-                    tileUrl: () => tileUrl,
-                    noDownload: () => true,
-                    toolTitle: () => this.tool.title
-                }
-            });
-        }
-        return this.activeModal;
-    }
-
-    setWarning(text) {
-        this.warning = text;
-    }
-
-    clearWarning() {
-        delete this.warning;
-    }
-
-    onCompareClick() {
-        if (this.frameControlAdded) {
-            this.previewData = this.previewData[0];
-        } else {
-            this.previewData = [this.previewData, this.previewData];
-        }
-        this.showPreview(this.previewData);
-    }
-
     get leftPreviewSelection() {
         return Array.isArray(this.previewData) && this.previewData[0];
     }
@@ -585,3 +535,7 @@ export default class LabRunController {
         this.onPreviewClose();
     }
 }
+
+
+export default angular.module('pages.lab.tool', [])
+    .controller('LabToolController', LabToolController);

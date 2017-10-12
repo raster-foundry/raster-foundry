@@ -46,7 +46,7 @@
           <th>Privacy</th>
         </tr>
         <tr ng-repeat="tool in $ctrl.toolList | filter: {title: $ctrl.searchString}">
-          <td><a ui-sref="lab.build.run({toolid: null, runid: tool.id})">{{tool.name}}</a></td>
+          <td><a ui-sref="lab.tool({toolid: tool.id, tool: tool})">{{tool.name}}</a></td>
           <td>{{tool.modifiedAt | date : 'longDate'}}</td>
           <td>{{$ctrl.formatToolVisibility(tool.visibility)}}</td>
         </tr>
