@@ -81,11 +81,15 @@ class Ingest(object):
             cls.INGEST_STATUS_BUCKET, ingest_id
         )
 
-        total_time = 0
+        start_time = time.time()
         while True:
+            run_time = time.time() - start_time
+            if run_time > 60 * 60:
+                raise Exception('Waiting for over an hour for ingest to complete, assuming failed')
             try:
                 s3resp = client.get_object(Bucket=cls.INGEST_STATUS_BUCKET, Key=ingest_id)
                 result = json.loads(s3resp['Body'].read())
+                logger.info('Took %s seconds to get ingest status', run_time)
                 break
             except ClientError:
                 logger.info('Ingest %s has not yet completed', ingest_id)
