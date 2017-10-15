@@ -3,6 +3,7 @@ import time
 
 import boto3
 import dns.resolver
+from retrying import retry
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +15,7 @@ def get_cluster_id():
     return cluster_id.to_text().strip('"')
 
 
+@retry(wait_exponential_multiplier=2000, wait_exponential_max=30000, stop_max_attempt_number=5)
 def wait_for_emr_success(step_id, cluster_id):
     """Wait for batch success/failure given an initial EMR response
 
