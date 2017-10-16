@@ -34,15 +34,27 @@ def process_jp2000(scene_id, jp2_source):
                            scene_id,
                            fname_part.replace('.jp2', '.tif'))
     jp2_fname = os.path.join('/tmp', fname_part)
+    temp_tif_fname = jp2_fname.replace('.jp2', '-temp.tif')
     tif_fname = jp2_fname.replace('.jp2', '.tif')
+
     # Explicitly setting nbits is necessary because geotrellis only likes
     # powers of 2, and for some reason the value on the jpeg 2000 files
     # after translation is 15
-    cmd = ['gdal_translate',
+    temp_translate_cmd = ['gdal_translate',
            '-a_nodata', '0', # set 0 to nodata value
            '-co', 'NBITS=16', # explicitly set nbits = 16
+           '-co', 'COMPRESS=LZW',
+           '-co', 'TILED=YES',
            jp2_fname,
-           tif_fname]
+           temp_tif_fname]
+
+    warp_cmd = [
+        'gdalwarp',
+        '-co', 'COMPRESS=LZW',
+        '-co', 'TILED=YES',
+        '-t_srs', 'epsg:3857',
+        temp_tif_fname, tif_fname
+    ]
 
     dst_url = geotiff_io.s3_url(out_bucket, out_key)
 
@@ -65,7 +77,8 @@ def process_jp2000(scene_id, jp2_source):
             src.write(body.read())
 
         # Translate the original file and add 0 as a nodata value
-        subprocess.check_call(cmd)
+        subprocess.check_call(temp_translate_cmd)
+        subprocess.check_call(warp_cmd)
 
         # Upload the converted tif
         with open(tif_fname, 'r') as dst:
