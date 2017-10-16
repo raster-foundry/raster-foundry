@@ -692,6 +692,12 @@ rf-box-select-item{
   transition: flex-grow .5s;
   flex: 0 0;
   margin-top: 10px !important;
+  &.cancelled {
+      background: $shade-light;
+  }
+  &.failed {
+      background: $danger;
+  }
 }
 
 
