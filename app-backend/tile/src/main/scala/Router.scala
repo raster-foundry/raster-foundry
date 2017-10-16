@@ -31,31 +31,29 @@ class Router extends LazyLogging
 
   def root = cors() {
     handleExceptions(tileExceptionHandler) {
-      pathPrefix("tiles") {
-        pathPrefix(JavaUUID) { projectId =>
-          projectTileAccessAuthorized(projectId) {
-            case true => MosaicRoutes.mosaicProject(projectId)(database)
-            case _ => reject(AuthorizationFailedRejection)
-          }
-        } ~
-        pathPrefix("healthcheck") {
-          pathEndOrSingleSlash {
-            get {
-              HealthCheckRoute.root
-            }
-          }
-        } ~
-        pathPrefix("tools") {
+      pathPrefix(JavaUUID) { projectId =>
+        projectTileAccessAuthorized(projectId) {
+          case true => MosaicRoutes.mosaicProject(projectId)(database)
+          case _ => reject(AuthorizationFailedRejection)
+        }
+      } ~
+      pathPrefix("healthcheck") {
+        pathEndOrSingleSlash {
           get {
-            (handleExceptions(interpreterExceptionHandler) & handleExceptions(circeDecodingError)) {
-              pathPrefix(JavaUUID) { (toolRunId) =>
-                authenticateToolTileRoutes(toolRunId) { user =>
-                  toolRoutes.tms(toolRunId, user) ~
-                    toolRoutes.validate(toolRunId, user) ~
-                    toolRoutes.statistics(toolRunId, user) ~
-                    toolRoutes.histogram(toolRunId, user) ~
-                    toolRoutes.preflight(toolRunId, user)
-                }
+            HealthCheckRoute.root
+          }
+        }
+      } ~
+      pathPrefix("tools") {
+        get {
+          (handleExceptions(interpreterExceptionHandler) & handleExceptions(circeDecodingError)) {
+            pathPrefix(JavaUUID) { (toolRunId) =>
+              authenticateToolTileRoutes(toolRunId) { user =>
+                toolRoutes.tms(toolRunId, user) ~
+                  toolRoutes.validate(toolRunId, user) ~
+                  toolRoutes.statistics(toolRunId, user) ~
+                  toolRoutes.histogram(toolRunId, user) ~
+                  toolRoutes.preflight(toolRunId, user)
               }
             }
           }
