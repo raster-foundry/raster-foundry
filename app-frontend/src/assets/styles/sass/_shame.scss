@@ -819,7 +819,6 @@ div.lab-workspace.is-dragging {
   }
 }
 
-
 .lab-control-panel {
   position: absolute;
   z-index: 500;
@@ -920,7 +919,12 @@ div.lab-workspace.is-dragging {
   background: $shade-dark;
   padding: .5em;
   border-radius: 3px;
-  pointer-event: none;
+  &.is-dragging {
+      pointer-events: none;
+      * {
+          pointer-events: none;
+      }
+  }
 }
 
 .map-zoom {

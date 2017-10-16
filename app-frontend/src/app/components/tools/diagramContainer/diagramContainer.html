@@ -3,7 +3,8 @@
      ng-style="$ctrl.workspaceStyle"
 >
 </div>
-<div class="map-container-controls">
+<div class="map-container-controls"
+     ng-class="{ 'is-dragging': $ctrl.panActive }">
   <button class="btn btn-default btn-square btn-small"
           title="Zoom In"
           ng-click="$ctrl.zoomIn()">
