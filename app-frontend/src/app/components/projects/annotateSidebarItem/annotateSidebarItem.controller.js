@@ -47,16 +47,14 @@ export default class AnnotateSidebarItemController {
     }
 
     updateAnnotation(annotation) {
-        if (this.labelObj) {
+        if (this.labelNameInput) {
             this.isInvalid = false;
-            this.newLabelName
-                = this.labelObj.originalObject.name || this.labelObj.originalObject;
-        } else if (annotation.properties.label) {
-            this.isInvalid = false;
-            this.newLabelName = annotation.properties.label;
+            this.newLabelName = this.labelNameInput;
         } else {
             this.isInvalid = true;
         }
+
+        this.showMatchedLabels = false;
 
         if (this.newLabelName) {
             this.onUpdateAnnotationFinish({
@@ -70,5 +68,33 @@ export default class AnnotateSidebarItemController {
 
     onQaCheck(annotation, qa) {
         this.onQaChecked({annotation, qa});
+    }
+
+    onLabelNameChange() {
+        if (this.labelNameInput.length >= 3) {
+            this.matchLabelName(this.labelNameInput);
+        }
+        this.isInvalid = false;
+    }
+
+    matchLabelName(labelName) {
+        this.labelInputsMatch = this.labelInputs.reduce((accu, label) => {
+            if (label.name.includes(labelName)) {
+                accu.push(label);
+            }
+            return accu;
+        }, []);
+        if (this.labelInputsMatch.length) {
+            this.showMatchedLabels = true;
+        }
+    }
+
+    onSelectLabelName(labelName) {
+        this.labelNameInput = labelName.name;
+        this.showMatchedLabels = false;
+    }
+
+    onTextFieldClick() {
+        this.showMatchedLabels = false;
     }
 }

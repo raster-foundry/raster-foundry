@@ -33,7 +33,6 @@ import 'angular-filter';
 import 'angular-tooltips';
 import 'mathjs';
 import 'angular-uuid4';
-import 'angucomplete-alt';
 import 'angular-hotkeys';
 
 // local scripts
