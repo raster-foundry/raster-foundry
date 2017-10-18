@@ -14,8 +14,6 @@ object Version {
   val slick              = "3.1.1.2"
   val slickPG            = "0.14.6"
   val json4s             = "3.5.0"
-  val jwtCore            = "0.10.0"
-  val jwtJson            = "0.10.0"
   val akkaHttpExtensions = "0.4.13"
   val akkaHttpCors       = "0.2.2"
   val akkaSlf4j          = "2.4.11"
@@ -45,4 +43,5 @@ object Version {
   val kamon              = "0.6.7"
   val kamonAkkaHttp      = "0.6.8"
   val maml               = "0.0.2-fba7908"
+  val nimbusJose         = "0.6.0"
 }

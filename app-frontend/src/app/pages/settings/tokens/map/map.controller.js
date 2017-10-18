@@ -14,9 +14,9 @@ class MapTokensController {
 
     fetchTokens() {
         this.loading = true;
-        let profile = this.authService.profile();
+        let profile = this.authService.getProfile();
         if (profile) {
-            this.tokenService.queryMapTokens({user: profile.user_id}).then(
+            this.tokenService.queryMapTokens({user: profile.sub}).then(
                 (paginatedResponse) => {
                     delete this.error;
                     this.tokens = paginatedResponse.results;

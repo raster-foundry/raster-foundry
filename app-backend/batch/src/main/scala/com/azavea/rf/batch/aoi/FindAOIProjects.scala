@@ -19,9 +19,9 @@ case class FindAOIProjects(implicit val database: DB) extends Job {
 
   def run: Unit = {
     logger.info("Finding AOI projects...")
-    Users.getUserById(airflowUser).flatMap { userOpt =>
+    Users.getUserById(systemUser).flatMap { userOpt =>
       val user = userOpt.getOrElse {
-        val e = new Exception(s"User $airflowUser doesn't exist.")
+        val e = new Exception(s"User $systemUser doesn't exist.")
         sendError(e)
         throw e
       }

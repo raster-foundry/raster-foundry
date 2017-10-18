@@ -245,7 +245,7 @@ function settingsStates($stateProvider) {
         })
         .state('settings.tokens.api', {
             title: 'Settings: API Tokens',
-            url: '/api',
+            url: '/api?code&state',
             templateUrl: apiTokensTpl,
             controller: 'ApiTokensController',
             controllerAs: '$ctrl'

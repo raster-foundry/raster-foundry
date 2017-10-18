@@ -57,6 +57,7 @@ def download_s3_obj_by_key(bucket, key):
         outf.write(obj['Body'].read())
     return tf
 
+
 def s3_obj_exists(url):
     """Helper function to determine whether an s3 object exists
 
@@ -68,16 +69,20 @@ def s3_obj_exists(url):
 
 
 def get_jwt():
-    """Construct JSON web token for auth purposes"""
-
-    jwt_secret = os.getenv('AUTH0_CLIENT_SECRET')
-    claims = {
-        'sub': 'rf|airflow-user',
-        'iat': datetime.utcnow(),
-        'exp': datetime.utcnow() + timedelta(hours=3)
-    }
-    encoded_jwt = jwt.encode(claims, jwt_secret, algorithm='HS256')
-    return encoded_jwt
+    """Fetch an access token from the Auth0 API"""
+    r = requests.post(
+        'https://{}/oauth/token'.format(
+            os.getenv('AUTH0_DOMAIN')
+        ),
+        data={
+            'grant_type': 'refresh_token',
+            'client_id': os.getenv('AUTH0_CLIENT_ID'),
+            'refresh_token': os.getenv('AUTH0_SYSTEM_REFRESH_TOKEN')
+        }
+    )
+    r.raise_for_status()
+    json = r.json()
+    return json['id_token']
 
 
 def get_session():

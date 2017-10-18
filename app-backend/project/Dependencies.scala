@@ -31,9 +31,6 @@ object Dependencies {
   val slickPG                 = "com.github.tminglei"         %% "slick-pg"                          % Version.slickPG
   val slickPGSpray            = "com.github.tminglei"         %% "slick-pg_spray-json"               % Version.slickPG
   val slickPGCirce            = "com.github.tminglei"         %% "slick-pg_circe-json"               % Version.slickPG
-  val json4s                  = "org.json4s"                  %% "json4s-jackson"                    % Version.json4s
-  val jwtCore                 = "com.pauldijou"               %% "jwt-core"                          % Version.jwtCore
-  val jwtJson                 = "com.pauldijou"               %% "jwt-json4s-jackson"                % Version.jwtJson
   val akkaHttpExtensions      = "com.lonelyplanet"            %% "akka-http-extensions"              % Version.akkaHttpExtensions
   val akkaHttpCors            = "ch.megard"                   %% "akka-http-cors"                    % Version.akkaHttpCors
   val ammoniteOps             = "com.lihaoyi"                 %% "ammonite-ops"                      % Version.ammoniteOps
@@ -68,4 +65,5 @@ object Dependencies {
   val awsStsSdk               = "com.amazonaws"                % "aws-java-sdk-sts"                  % Version.awsStsSdk
   val mamlJvm                 = "com.azavea"                  %% "maml-jvm"                          % Version.maml
   val mamlSpark               = "com.azavea"                  %% "maml-spark"                        % Version.maml
+  val nimbusJose              = "com.guizmaii"                %% "scala-nimbus-jose-jwt"             % Version.nimbusJose
 }

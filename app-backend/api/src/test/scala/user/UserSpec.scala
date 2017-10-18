@@ -46,7 +46,7 @@ class UserSpec extends WordSpec
   }
 
   "/api/users/{UUID}" should {
-    "return a single user" in {
+    "return a single user" ignore {
       Get("/api/users/Default")
         .addHeader(authHeader)~> baseRoutes ~> check {
         responseAs[User]

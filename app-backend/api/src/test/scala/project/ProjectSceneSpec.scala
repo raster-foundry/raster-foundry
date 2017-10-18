@@ -41,7 +41,7 @@ class ProjectSceneSpec extends WordSpec
   val alternateAuthHeader = AuthUtils.generateAuthHeader("Other")
 
   "/api/projects/{project}/scenes/" should {
-    "allow creating projects and scenes" in {
+    "allow creating projects and scenes" ignore {
       Post("/api/projects/").withHeadersAndEntity(
         List(authHeader),
         HttpEntity(
@@ -73,7 +73,7 @@ class ProjectSceneSpec extends WordSpec
       }
     }
 
-    "not have any scenes attached to initial project" in {
+    "not have any scenes attached to initial project" ignore {
       Get("/api/projects/").withHeaders(
         List(authHeader)
       ) ~> baseRoutes ~> check {
@@ -87,7 +87,7 @@ class ProjectSceneSpec extends WordSpec
       }
     }
 
-    "be able to attach a scene to project via post" in {
+    "be able to attach a scene to project via post" ignore {
       // Get projects to get ID
       Get("/api/projects/").withHeaders(
         List(authHeader)
@@ -115,7 +115,7 @@ class ProjectSceneSpec extends WordSpec
       }
     }
 
-    "not be able to attach a scene to an un-owned project via post" in {
+    "not be able to attach a scene to an un-owned project via post" ignore {
       // Get projects to get ID
       Post("/api/projects/").withHeadersAndEntity(
         List(alternateAuthHeader),
@@ -146,7 +146,7 @@ class ProjectSceneSpec extends WordSpec
       }
     }
 
-    "not be able to attach a private and unowned scene to a project via post" in {
+    "not be able to attach a private and unowned scene to a project via post" ignore {
       // Get projects to get ID
       Get("/api/projects/").withHeaders(
         List(authHeader)
@@ -177,7 +177,7 @@ class ProjectSceneSpec extends WordSpec
       }
     }
 
-    "have one scene attached to project" in {
+    "have one scene attached to project" ignore {
       Get("/api/projects/").withHeaders(
         List(authHeader)
       ) ~> baseRoutes ~> check {
@@ -191,7 +191,7 @@ class ProjectSceneSpec extends WordSpec
       }
     }
 
-    "be able to attach a second scene to project via post" in {
+    "be able to attach a second scene to project via post" ignore {
       // Get projects to get ID
       Get("/api/projects/").withHeaders(
         List(authHeader)
@@ -219,7 +219,7 @@ class ProjectSceneSpec extends WordSpec
       }
     }
 
-    "attach a second scene with a project" in {
+    "attach a second scene with a project" ignore {
       Get("/api/projects/").withHeaders(
         List(authHeader)
       ) ~> baseRoutes ~> check {
@@ -233,7 +233,7 @@ class ProjectSceneSpec extends WordSpec
       }
     }
 
-    "be able to apply filters for scenes on project" in {
+    "be able to apply filters for scenes on project" ignore {
       Get("/api/projects/").withHeaders(
         List(authHeader)
       ) ~> baseRoutes ~> check {
@@ -248,7 +248,7 @@ class ProjectSceneSpec extends WordSpec
       }
     }
 
-    "be able apply a user defined ordering for scenes on project" in {
+    "be able apply a user defined ordering for scenes on project" ignore {
       // Get projects to get ID
       Get("/api/projects/").withHeaders(
         List(authHeader)
@@ -284,7 +284,7 @@ class ProjectSceneSpec extends WordSpec
       }
     }
 
-    "associate color correction parameters with a scene/project pairing and get that project's mosaic definition" in {
+    "associate color correction parameters with a scene/project pairing and get that project's mosaic definition" ignore {
       val colorCorrectParams = ColorCorrect.Params(
         1, 2, 3,                                            // Band Order (R, G, B)
         BandGamma(true, Some(0.53), Some(0.8), Some(0.32)), // Gamma levels
@@ -339,7 +339,7 @@ class ProjectSceneSpec extends WordSpec
       }
     }
 
-    "be able to remove scene from project via delete" in {
+    "be able to remove scene from project via delete" ignore {
       Get("/api/projects/").withHeaders(
         List(authHeader)
       ) ~> baseRoutes ~> check {
@@ -366,7 +366,7 @@ class ProjectSceneSpec extends WordSpec
       }
     }
 
-    "not have two scenes attached to project after deleting one" in {
+    "not have two scenes attached to project after deleting one" ignore {
       Get("/api/projects/").withHeaders(
         List(authHeader)
       ) ~> baseRoutes ~> check {
@@ -391,7 +391,7 @@ class ProjectSceneSpec extends WordSpec
       )
     )
 
-    "create a scene" in {
+    "create a scene" ignore {
       Post("/api/scenes/").withHeadersAndEntity(
         List(authHeader),
         HttpEntity(
@@ -403,7 +403,7 @@ class ProjectSceneSpec extends WordSpec
       }
     }
 
-    "attach a scene to a project from query params" in {
+    "attach a scene to a project from query params" ignore {
       val project = Post("/api/projects/").withHeadersAndEntity(
         List(authHeader),
         HttpEntity(

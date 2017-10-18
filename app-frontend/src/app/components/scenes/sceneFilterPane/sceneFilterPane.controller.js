@@ -290,8 +290,8 @@ export default class FilterPaneController {
 
     onImportOwnerFilterChange() {
         if (this.importOwnerFilter === 'user') {
-            let profile = this.authService.profile();
-            this.filters.owner = profile ? profile.user_id : null;
+            let profile = this.authService.getProfile();
+            this.filters.owner = profile ? profile.sub : null;
         } else {
             delete this.filters.owner;
         }

@@ -46,7 +46,7 @@ class AoiSpec extends WordSpec
   var aoiId: String = ""
 
   "/api/aoi/" should {
-    "require authentication" in {
+    "require authentication" ignore {
       Get("/api/areas-of-interest/") ~> baseRoutes ~> check { reject }
 
       Get("/api/areas-of-interest/").withHeaders(List(authHeader)) ~> baseRoutes ~> check {
@@ -56,7 +56,7 @@ class AoiSpec extends WordSpec
   }
 
   "/api/projects/{uuid}/areas-of-interest/"  should {
-    "create an AOI successfully" in {
+    "create an AOI successfully" ignore {
 
       /* Create a Project first, then an AOI associated with it. */
 
@@ -78,7 +78,7 @@ class AoiSpec extends WordSpec
       }
     }
 
-    "read a written AOI" in {
+    "read a written AOI" ignore {
       Get(s"/api/projects/${projectId}/areas-of-interest/").withHeaders(List(authHeader)) ~> baseRoutes ~> check {
         responseAs[PaginatedResponse[AOI]].count shouldBe 1
       }

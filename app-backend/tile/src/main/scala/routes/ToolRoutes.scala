@@ -42,8 +42,6 @@ class ToolRoutes(implicit val database: Database) extends Authentication
   with CommonHandlers
   with KamonTraceDirectives {
 
-  val userId: String = "rf_airflow-user"
-
   lazy val memcachedClient = KryoMemcachedClient.DEFAULT
   val rfCache = new CacheClient(memcachedClient)
 
