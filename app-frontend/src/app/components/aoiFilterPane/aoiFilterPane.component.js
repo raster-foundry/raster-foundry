@@ -6,7 +6,8 @@ const rfAOIFilterPane = {
     bindings: {
         filters: '<',
         opened: '<',
-        onFilterChange: '&'
+        onFilterChange: '&',
+        onCloseFilterPane: '&'
     }
 };
 
