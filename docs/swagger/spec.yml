@@ -2505,9 +2505,9 @@ definitions:
   AuthToken:
     type: object
     properties:
-      id_token:
+      access_token:
         type: string
-        description: JSON Web Token that can be used for authenticating API requests
+        description: Token that can be used for authenticating API requests
       token_type:
         type: string
         description: Type of token returned by using the refresh token

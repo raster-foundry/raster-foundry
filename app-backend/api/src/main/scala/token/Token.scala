@@ -25,7 +25,7 @@ case class RefreshToken(refresh_token: String)
 @JsonCodec
 case class DeviceCredential(id: String, device_name: String)
 @JsonCodec
-case class AuthorizedToken(id_token: String, expires_in: Int, token_type: String)
+case class AuthorizedToken(access_token: String, expires_in: Int, token_type: String)
 
 object TokenService extends Config {
 
@@ -100,7 +100,7 @@ object TokenService extends Config {
 
     val params = FormData(
       "api_type" -> "app",
-      "grant_type" -> "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      "grant_type" -> "refresh_token",
       "scope" -> "openid",
       "refresh_token" -> rt.refresh_token,
       "client_id" -> auth0ClientId,
@@ -110,7 +110,7 @@ object TokenService extends Config {
     Http()
       .singleRequest(HttpRequest(
         method = POST,
-        uri = uri.withPath(Path("/delegation")),
+        uri = uri.withPath(Path("/oauth/token")),
         entity = params
       ))
       .flatMap {
