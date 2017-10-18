@@ -17,7 +17,8 @@ const SceneDetailModalComponent = {
 class SceneDetailModalController {
     constructor(
         $log, $state, $uibModal, $scope,
-        moment, sceneService, datasourceService, mapService
+        moment, sceneService, datasourceService, mapService,
+        authService
     ) {
         'ngInject';
         this.$log = $log;
@@ -27,6 +28,7 @@ class SceneDetailModalController {
         this.Moment = moment;
         this.sceneService = sceneService;
         this.datasourceService = datasourceService;
+        this.authService = authService;
         this.scene = this.resolve.scene;
         this.getMap = () => mapService.getMap('scene-preview-map');
         $scope.$on('$destroy', () => {

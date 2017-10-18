@@ -94,7 +94,7 @@ trait Config {
   private lazy val config = ConfigFactory.load()
   protected lazy val landsat8Config = config.as[Landsat8]("landsat8")
   protected lazy val sentinel2Config = config.as[Sentinel2]("sentinel2")
-  protected lazy val airflowUser = config.as[String]("airflow.user")
+  protected lazy val systemUser = config.as[String]("auth0.systemUser")
   protected lazy val exportDefConfig = config.as[ExportDef]("export-def")
   protected lazy val dropboxConfig = config.as[Dropbox]("dropbox")
   val jarPath = "s3://us-east-1.elasticmapreduce/libs/script-runner/script-runner.jar"

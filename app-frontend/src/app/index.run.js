@@ -33,8 +33,8 @@ function runBlock(
                 intercomService.shutdown();
                 $state.go('login');
             } else if (toState.name !== 'login' && toState.name !== 'callback') {
-                rollbarWrapperService.init(authService.profile());
-                intercomService.bootWithUser(authService.profile());
+                rollbarWrapperService.init(authService.getProfile());
+                intercomService.bootWithUser(authService.getProfile());
                 if (toState.redirectTo) {
                     e.preventDefault();
                     $state.go(toState.redirectTo, params);
@@ -54,11 +54,12 @@ function runBlock(
 
     $rootScope.$on('$locationChangeStart', function () {
         function setupState() {
-            let token = localStorage.get('id_token');
-            if (token) {
+            let idToken = localStorage.get('idToken');
+            let accessToken = localStorage.get('accessToken');
+            if (idToken && accessToken) {
                 if (!authService.verifyAuthCache()) {
                     rollbarWrapperService.init();
-                    authService.login(token);
+                    authService.login(accessToken, idToken);
                 }
             } else {
                 intercomService.shutdown();

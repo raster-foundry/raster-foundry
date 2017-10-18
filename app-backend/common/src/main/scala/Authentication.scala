@@ -6,21 +6,26 @@ import akka.http.scaladsl.server._
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables._
 import com.azavea.rf.datamodel._
+import com.guizmaii.scalajwt.JwtToken
+import com.guizmaii.scalajwt.ConfigurableJwtValidator
+import com.nimbusds.jose.jwk.source.{JWKSource, RemoteJWKSet}
+import com.nimbusds.jose.proc.SecurityContext
+import com.nimbusds.jwt.JWTClaimsSet
+import com.nimbusds.jwt.proc.BadJWTException
 import com.typesafe.config.ConfigFactory
-import org.json4s._
-import pdi.jwt.{Jwt, JwtAlgorithm, JwtJson4s}
 
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
+import java.net.URL
 
 trait Authentication extends Directives {
 
   implicit def database: Database
-  implicit val formats = DefaultFormats
 
   val configAuth = ConfigFactory.load()
   private val auth0Config = configAuth.getConfig("auth0")
-  private val auth0Secret = auth0Config.getString("secret")
+
+  private val jwksURL = auth0Config.getString("jwksURL")
+  private val jwkSet: JWKSource[SecurityContext] = new RemoteJWKSet(new URL(jwksURL))
 
   // Default user returned when no credentials are provided
   lazy val anonymousUser:Future[Option[User]] = Users.getUserById("default")
@@ -32,19 +37,8 @@ trait Authentication extends Directives {
     * Authenticates user based on bearer token (JWT)
     */
   def authenticate: Directive1[User] = {
-    validateTokenHeader.flatMap { validToken =>
-      JwtJson4s.decodeJson(validToken, auth0Secret, Seq(JwtAlgorithm.HS256)) match {
-        case Success(parts) =>
-          val sub = (parts \ "sub").extract[String]
-
-          onSuccess(Users.getUserById(sub)).flatMap {
-            case Some(user) => provide(user)
-            case None => onSuccess(Users.createUserWithAuthId(sub)).flatMap {
-              user => provide(user)
-            }
-          }
-        case Failure(_) => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
-      }
+    extractTokenHeader.flatMap { token =>
+      authenticateWithToken(token)
     }
   }
 
@@ -52,62 +46,30 @@ trait Authentication extends Directives {
     * Authenticates user based on bearer token (JWT)
     */
   def authenticateWithParameter: Directive1[User] = {
-    validateTokenParameter.flatMap { validToken =>
-      getUserWithJWT(validToken)
+    parameter('token).flatMap { token =>
+      authenticateWithToken(token)
     }
   }
 
-  def authenticateWithToken(token: String): Directive1[User] = {
-    if (Jwt.isValid(token, auth0Secret, Seq(JwtAlgorithm.HS256))) {
-      getUserWithJWT(token)
-    } else {
-      reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
-    }
+  def verifyJWT(tokenString: String): Either[BadJWTException, (JwtToken, JWTClaimsSet)] = {
+    val token: JwtToken = JwtToken(content = tokenString)
+
+    ConfigurableJwtValidator(jwkSet).validate(token)
   }
 
-  def getUserWithJWT(token: String): Directive1[User] = {
-    JwtJson4s.decodeJson(token, auth0Secret, Seq(JwtAlgorithm.HS256)) match {
-      case Success(parts) =>
-        val sub = (parts \ "sub").extract[String]
-
-        val userFromId = Users.getUserById(sub)
-
-        onSuccess(userFromId).flatMap {
+  def authenticateWithToken(tokenString: String): Directive1[User] = {
+    val result = verifyJWT(tokenString)
+    result match {
+      case Left(e) => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
+      case Right((_, jwtClaims)) => {
+        val userId = jwtClaims.getStringClaim("sub")
+        onSuccess(Users.getUserById(userId)).flatMap {
           case Some(user) => provide(user)
-          case None => onSuccess(Users.createUserWithAuthId(sub)).flatMap {
+          case None => onSuccess(Users.createUserWithAuthId(userId)).flatMap {
             user => provide(user)
           }
         }
-      case Failure(_) => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
-    }
-  }
-
-  /**
-    * Validates a token parameter and optionally returns it if valid, else rejects request
-    */
-  def validateTokenParameter: Directive1[String] = {
-    parameter('token).flatMap { token =>
-      if(Jwt.isValid(token, auth0Secret, Seq(JwtAlgorithm.HS256))) { provide(token) }
-      else { reject(AuthenticationFailedRejection(CredentialsRejected, challenge)) }
-    }
-  }
-
-  /**
-    * Validates a token parameter and returns true if valid, false otherwise
-    */
-  def isTokenParameterValid: Directive1[Boolean] = {
-    parameter('token).flatMap { token =>
-      provide(Jwt.isValid(token, auth0Secret, Seq(JwtAlgorithm.HS256)))
-    }
-  }
-
-  /**
-    * Validates token header, if valid returns token else rejects request
-    */
-  def validateTokenHeader: Directive1[String] = {
-    extractTokenHeader.flatMap { token =>
-      if(Jwt.isValid(token, auth0Secret, Seq(JwtAlgorithm.HS256))) { provide(token) }
-      else { reject(AuthenticationFailedRejection(CredentialsRejected, challenge)) }
+      }
     }
   }
 

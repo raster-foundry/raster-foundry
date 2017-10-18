@@ -3,7 +3,7 @@ package com.azavea.rf.api
 import com.azavea.rf.api.utils.Config
 
 import akka.http.scaladsl.model.headers.{Authorization, OAuth2BearerToken}
-import pdi.jwt.{Jwt, JwtJson4s, JwtAlgorithm, JwtClaim}
+//import pdi.jwt.{Jwt, JwtJson4s, JwtAlgorithm, JwtClaim}
 import spray.json._
 
 /** Utility functions for testing endpoints that require authentication / authorization
@@ -20,27 +20,7 @@ object AuthUtils extends Config {
   def generateToken(
     sub: String, claims: Map[String, JsValue] = Map(), created: java.util.Date = null,
     expires: java.util.Date = null
-  ): String = {
-    val createdAt = created match {
-      case null => {
-        new java.util.Date()
-      }
-      case _ => created
-    }
-    val expiresAt = expires match {
-      case null => {
-        val cal = java.util.Calendar.getInstance();
-        cal.setTime(createdAt);
-        cal.add(java.util.Calendar.DATE, 1)
-        cal.getTime()
-      }
-      case _ => expires
-    }
-    val claims = JwtClaim().about(sub).issuedAt(createdAt.getTime).expiresAt(expiresAt.getTime)
-    val encodedToken = JwtJson4s.encode(claims, auth0Secret, JwtAlgorithm.HS256)
-    val authorization = Authorization(OAuth2BearerToken(encodedToken))
-    encodedToken
-  }
+  ): String = "encodedToken"
 
   /** Generate an authentication header containing a valid JWT token
     *

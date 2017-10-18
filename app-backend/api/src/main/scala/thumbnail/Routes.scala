@@ -87,7 +87,7 @@ trait ThumbnailRoutes extends Authentication
     }
   }
 
-  def getThumbnailImage(thumbnailPath: String): Route = validateTokenParameter { token =>
+  def getThumbnailImage(thumbnailPath: String): Route = authenticateWithParameter { _ =>
     var uriString = s"http://s3.amazonaws.com/${thumbnailBucket}/${thumbnailPath}"
     val uri = new URI(uriString)
     val s3Object = S3.getObject(uri)

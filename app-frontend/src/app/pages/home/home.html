@@ -50,7 +50,7 @@
           <section>
             <h5>Account</h5>
             <p>
-              Hello, <strong>{{$ctrl.authService.profile().nickname}}</strong>
+              Hello, <strong>{{$ctrl.authService.getProfile().nickname}}</strong>
             </p>
             <a class="btn btn-light" ui-sref="settings.profile">Manage account</a>
           </section>

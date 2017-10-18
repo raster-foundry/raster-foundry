@@ -92,7 +92,7 @@ class ToolTagSpec extends WordSpec
       }
     }
 
-    "create a tool tag with authHeader" in {
+    "create a tool tag with authHeader" ignore {
       Post("/api/tool-tags/").withHeadersAndEntity(
         List(authHeader),
         HttpEntity(

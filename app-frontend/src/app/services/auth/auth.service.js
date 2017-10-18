@@ -12,7 +12,7 @@ export default (app) => {
         constructor( // eslint-disable-line max-params
             jwtHelper, $q, $timeout, featureFlagOverrides, featureFlags,
             perUserFeatureFlags, $state, APP_CONFIG, localStorage,
-            rollbarWrapperService, intercomService, $resource, $ngRedux
+            rollbarWrapperService, intercomService, $resource, $ngRedux, $location
         ) {
             this.localStorage = localStorage;
             this.jwtHelper = jwtHelper;
@@ -25,7 +25,6 @@ export default (app) => {
             this.intercomService = intercomService;
             this.rollbarWrapperService = rollbarWrapperService;
             this.APP_CONFIG = APP_CONFIG;
-
             this._redux = {};
             $ngRedux.connect((state) => {
                 return {
@@ -34,6 +33,7 @@ export default (app) => {
                     tileUrl: state.api.tileUrl
                 };
             }, ApiActions)(this._redux);
+            this.$location = $location;
 
             if (!APP_CONFIG.error) {
                 this.initAuth0(APP_CONFIG);
@@ -58,9 +58,17 @@ export default (app) => {
         initAuth0(APP_CONFIG) {
             let loginOptions = {
                 closable: false,
+                oidcConformant: true,
                 auth: {
-                    redirect: false,
-                    sso: true
+                    autoParseHash: false,
+                    redirect: true,
+                    sso: true,
+                    responseType: 'token id_token',
+                    redirectUrl: `${this.getBaseURL()}/login`,
+                    params: {
+                        scope: 'openid profile email',
+                        audience: `https://${this.APP_CONFIG.auth0Domain}/api/v2/`
+                    }
                 },
                 theme: {
                     logo: assetLogo,
@@ -85,12 +93,17 @@ export default (app) => {
                 initialScreen: 'forgotPassword',
                 allowLogin: false,
                 closable: true,
+                oidcConformant: true,
                 prefill: {
-                    email: this.profile() && this.profile().email
+                    email: this.getProfile() && this.getProfile().email
                 },
                 auth: {
-                    redirect: false,
-                    sso: true
+                    redirect: true,
+                    redirectUrl: `${this.getBaseURL()}/login`,
+                    sso: true,
+                    params: {
+                        audience: `https://${this.APP_CONFIG.auth0Domain}/api/v2/`
+                    }
                 },
                 theme: {
                     logo: assetLogo,
@@ -107,6 +120,7 @@ export default (app) => {
             );
 
             let tokenCreateOptions = {
+                oidcConformant: true,
                 initialScreen: 'login',
                 allowLogin: true,
                 allowSignUp: false,
@@ -115,13 +129,34 @@ export default (app) => {
                 rememberLastLogin: false,
                 closable: true,
                 auth: {
-                    redirect: false,
-                    sso: true
+                    // eslint-disable-next-line
+                    grant_type: 'authorization_code',
+                    redirect: true,
+                    sso: true,
+                    redirectUrl: `${this.getBaseURL()}/settings/tokens/api`,
+                    params: {
+                        scope: 'openid offline_access',
+                        responseType: 'code',
+                        audience: `https://${this.APP_CONFIG.auth0Domain}/api/v2/`
+                    }
                 },
                 theme: {
                     logo: assetLogo,
                     primaryColor: BUILDCONFIG.AUTH0_PRIMARY_COLOR
-                }
+                },
+                additionalSignUpFields: [{
+                    name: 'companyName',
+                    placeholder: 'Company name'
+                }, {
+                    name: 'companySize',
+                    placeholder: 'How large is your company?'
+                }, {
+                    name: 'reference',
+                    placeholder: 'How\'d you find out about us?'
+                }, {
+                    name: 'phoneNumber',
+                    placeholder: 'Phone Number'
+                }]
             };
 
             this.tokenCreateLock = new Auth0Lock(
@@ -135,14 +170,22 @@ export default (app) => {
             this.loginLock.on('authorization_error', this.onLoginFail.bind(this));
         }
 
-        login(token) {
+        getBaseURL() {
+            let host = BUILDCONFIG.API_HOST || this.$location.host();
+            let protocol = this.$location.protocol();
+            let port = this.$location.port();
+            let formattedPort = port !== 80 && port !== 443 ? ':' + port : '';
+            return `${protocol}://${host}${formattedPort}`;
+        }
+
+        login(accessToken, idToken) {
             try {
-                if (!token) {
+                if (!accessToken) {
                     this.loginLock.show();
-                } else if (!this.jwtHelper.isTokenExpired(token)) {
-                    this.onLogin({idToken: token});
-                } else if (this.jwtHelper.isTokenExpired(token)) {
-                    this.localStorage.remove('item_token');
+                } else if (!this.jwtHelper.isTokenExpired(accessToken)) {
+                    this.onLogin({accessToken, idToken});
+                } else if (this.jwtHelper.isTokenExpired(accessToken)) {
+                    this.localStorage.remove('accessToken');
                     this.$state.go('login');
                 } else {
                     this.loginLock.show();
@@ -171,82 +214,86 @@ export default (app) => {
         }
 
         getCurrentUser() {
-            let id = this.profile().user_id;
+            let id = this.getProfile().sub;
             return this.User.get({id: id}).$promise;
         }
 
         onLogin(authResult) {
-            this.localStorage.set('id_token', authResult.idToken);
+            this.localStorage.set('accessToken', authResult.accessToken);
+            this.localStorage.set('idToken', authResult.idToken);
             this._redux.initApi({
                 apiToken: authResult.idToken,
                 apiUrl: BUILDCONFIG.API_HOST,
                 tileUrl: this.APP_CONFIG.tileServerLocation
             });
 
-            this.setReauthentication(authResult.idToken);
+            this.setReauthentication(authResult.accessToken);
 
-            this.loginLock.getProfile(authResult.idToken, (error, profile) => {
-                if (error) {
-                    return;
-                }
+            this.profile = this.jwtHelper.decodeToken(authResult.idToken);
 
-                this.localStorage.set('profile', profile);
-
-                if (typeof heap !== 'undefined' &&
-                    typeof heap.identify === 'function' &&
-                    typeof heap.addUserProperties === 'function' &&
-                    typeof heap.addEventProperties === 'function'
-                   ) {
-                    heap.identify(profile.email);
-                    this.getCurrentUser().then((user) => {
-                        heap.addUserProperties({
-                            'organization': user.organizationId,
-                            'impersonated': profile.impersonated || false,
-                            'impersonator': profile.impersonated ? profile.impersonator.email : null
-                        });
-                        heap.addEventProperties({'Logged In': 'true'});
+            if (typeof heap !== 'undefined' &&
+                typeof heap.identify === 'function' &&
+                typeof heap.addUserProperties === 'function' &&
+                typeof heap.addEventProperties === 'function'
+               ) {
+                heap.identify(this.profile.email);
+                this.getCurrentUser().then((user) => {
+                    heap.addUserProperties({
+                        'organization': user.organizationId,
+                        'impersonated': this.profile.impersonated || false,
+                        'impersonator': this.profile.impersonated ?
+                            this.profile.impersonator.email : null
                     });
-                }
-
-                this.featureFlagOverrides.setUser(profile);
-                // Flags set in the `/config` endpoint; default.
-                let configFlags = this.featureFlags.get().map((flag) => flag.key);
-                // Now that we've authenticated, trigger an override of the default
-                // feature flags from `/conf` with per-user flags from `/feature-flags
-                this.featureFlags.set(this.perUserFeatureFlags.load()).then(() => {
-                    // Override API-specified feature flags with flags from Auth0 metadata
-                    // TODO: We may want to remove this feature and provide all per-user
-                    // feature flags from the `/feature-flags` endpoint, but at the moment
-                    // the only per-user flags that the endpoint supports are based on the
-                    // user's organization, so we need to keep this around to provide more
-                    // granular control over per-user feature flags.
-                    let userFlags = profile.user_metadata && profile.user_metadata.featureFlags ?
-                        profile.user_metadata.featureFlags : [];
-                    let flagOverrides = userFlags.filter((flag) => {
-                        return configFlags.includes(flag.key);
-                    });
-                    this.featureFlags.set(flagOverrides);
+                    heap.addEventProperties({'Logged In': 'true'});
                 });
-                this.rollbarWrapperService.init(profile);
-                this.isLoggedIn = true;
-                this.loginLock.hide();
-                if (authResult.refreshToken) {
-                    this.promise.resolve(authResult);
-                    delete this.promise;
-                }
-                this.$state.go('home');
-                this.intercomService.bootWithUser(profile);
+            }
+
+            this.featureFlagOverrides.setUser(this.profile);
+            // Flags set in the `/config` endpoint; default.
+            let configFlags = this.featureFlags.get().map((flag) => flag.key);
+            // Now that we've authenticated, trigger an override of the default
+            // feature flags from `/conf` with per-user flags from `/feature-flags
+            this.featureFlags.set(this.perUserFeatureFlags.load()).then(() => {
+                // Override API-specified feature flags with flags from Auth0 metadata
+                // TODO: We may want to remove this feature and provide all per-user
+                // feature flags from the `/feature-flags` endpoint, but at the moment
+                // the only per-user flags that the endpoint supports are based on the
+                // user's organization, so we need to keep this around to provide more
+                // granular control over per-user feature flags.
+                let userFlags = this.profile.user_metadata &&
+                    this.profile.user_metadata.featureFlags ?
+                    this.profile.user_metadata.featureFlags : [];
+                let flagOverrides = userFlags.filter((flag) => {
+                    return configFlags.includes(flag.key);
+                });
+                this.featureFlags.set(flagOverrides);
             });
+            this.rollbarWrapperService.init(this.profile);
+            this.isLoggedIn = true;
+            this.loginLock.hide();
+            if (authResult.refreshToken) {
+                this.promise.resolve(authResult);
+                delete this.promise;
+            }
+            this.$state.go('home');
+            this.intercomService.bootWithUser(this.profile);
         }
 
-        onImpersonation(hash) {
+        extractRedirectParams(hash) {
             const rawParams = hash.split('&');
+            let params = {};
             rawParams.forEach(p => {
                 const [k, v] = p.split('=');
-                if (k === 'id_token') {
-                    this.onLogin({ idToken: v});
-                }
+                params[k] = v;
             });
+            return params;
+        }
+
+        onRedirectComplete(hash) {
+            let params = this.extractRedirectParams(hash);
+            if (params.access_token) {
+                this.onLogin({ accessToken: params.access_token, idToken: params.id_token });
+            }
         }
 
         onLoginFail(error) {
@@ -256,20 +303,29 @@ export default (app) => {
             }
         }
 
-        profile() {
-            return this.localStorage.get('profile');
+        getProfile() {
+            if (!this.profile) {
+                let idToken = this.localStorage.get('idToken');
+                this.profile = idToken && this.jwtHelper.decodeToken(idToken);
+            }
+            return this.profile;
         }
 
         token() {
-            return this.localStorage.get('id_token', this.token);
+            if (!this.accessToken) {
+                this.accessToken = this.localStorage.get('accessToken');
+            }
+            return this.accessToken;
         }
 
         logout() {
             if (typeof heap !== 'undefined' && typeof heap.removeEventProperty === 'function') {
                 heap.removeEventProperty('Logged In');
             }
-            this.localStorage.remove('id_token');
-            this.localStorage.remove('profile');
+            delete this.accessToken;
+            delete this.profile;
+            this.localStorage.remove('idToken');
+            this.localStorage.remove('accessToken');
             this.rollbarWrapperService.init();
             this.isLoggedIn = false;
             this.intercomService.shutdown();
@@ -294,7 +350,7 @@ export default (app) => {
             try {
                 const token = this.token();
                 this.isLoggedIn = Boolean(
-                    token && this.profile() && !this.jwtHelper.isTokenExpired(token)
+                    token && this.getProfile() && !this.jwtHelper.isTokenExpired(token)
                 );
                 if (this.isLoggedIn) {
                     if (!this._redux.apiToken) {
@@ -306,7 +362,7 @@ export default (app) => {
                     }
 
                     this.setReauthentication(token);
-                    this.featureFlagOverrides.setUser(this.profile());
+                    this.featureFlagOverrides.setUser(this.getProfile());
                 }
                 return this.isLoggedIn;
             } catch (e) {
@@ -315,11 +371,11 @@ export default (app) => {
             }
         }
 
-        setReauthentication(token) {
+        setReauthentication(accessToken) {
             if (!this.pendingReauth) {
                 // Set up a $timeout to reauthenticate 5 minutes before the token will expire
                 try {
-                    const expDate = this.jwtHelper.getTokenExpirationDate(token);
+                    const expDate = this.jwtHelper.getTokenExpirationDate(accessToken);
                     const nowDate = new Date();
                     const timeoutMillis = expDate.getTime() - nowDate.getTime() - 5 * 60 * 1000;
                     // Store in case we need to cancel for some reason

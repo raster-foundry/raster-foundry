@@ -34,7 +34,7 @@ trait TileAuthentication extends Authentication
     val requireAuth = Try(tileAuthSetting.toBoolean).getOrElse(true)
 
     if (requireAuth) {
-      validateTokenParameter.flatMap {
+      authenticateWithParameter.flatMap {
         case _ => provide(true)
       }
     } else {
@@ -107,5 +107,5 @@ trait TileAuthentication extends Authentication
     * This order guarantees that at most one database call is made in every case.
     */
   def projectTileAccessAuthorized(projectId: UUID): Directive1[Boolean] =
-    isTokenParameterValid | isProjectMapTokenValid(projectId) | isProjectPublic(projectId)
+    tileAuthenticateOption | isProjectMapTokenValid(projectId) | isProjectPublic(projectId)
 }
