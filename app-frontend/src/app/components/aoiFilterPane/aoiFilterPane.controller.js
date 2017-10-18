@@ -19,6 +19,7 @@ export default class AOIFilterPaneController {
 
     $onInit() {
         this.toggleDrag = {toggle: false, enabled: false};
+        this.initFilterOptions();
     }
 
     $onChanges(changes) {
@@ -142,7 +143,7 @@ export default class AOIFilterPaneController {
     }
 
     close() {
-        this.opened = false;
+        this.onCloseFilterPane({showFilterPane: false});
     }
 
     initSourceFilters() {
