@@ -1,0 +1,16 @@
+@import "../../../assets/styles/sass/settings/_colors.scss";
+
+.clear-image-source-filter{
+  border-radius: 50%;
+  color: $gray;
+  border: 1px solid $gray-lighter;
+  background: $gray-lighter;
+  position: absolute;
+  z-index: 1000;
+  right: 2rem;
+  transform: translateY(50%);
+}
+
+.form-control.input-dark.image-source{
+  margin-right: 0rem !important;
+}

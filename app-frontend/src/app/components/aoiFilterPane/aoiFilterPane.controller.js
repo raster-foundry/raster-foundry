@@ -19,7 +19,7 @@ export default class AOIFilterPaneController {
 
     $onInit() {
         this.toggleDrag = {toggle: false, enabled: false};
-        this.initFilterOptions();
+        this.initSourceFilters();
     }
 
     $onChanges(changes) {
@@ -118,7 +118,7 @@ export default class AOIFilterPaneController {
         }
 
         if (sceneParams && sceneParams.hasOwnProperty('maxSunElevation')) {
-            this.filterOptions.sunElevation.maxModel = sceneParams.minSunElevation;
+            this.filterOptions.sunElevation.maxModel = sceneParams.maxSunElevation;
         } else {
             this.filterOptions.sunElevation.maxModel = sunElevationRange.max;
         }
@@ -149,107 +149,48 @@ export default class AOIFilterPaneController {
     initSourceFilters() {
         this.datasourceService.query().then(d => {
             this.datasources = d.results;
-            this.dynamicSourceFilters = {};
-            d.results.forEach(ds => {
-                this.dynamicSourceFilters[ds.id] = {
-                    datasource: ds,
-                    enabled: false
-                };
-            });
-            if (this.filterOptions.datasource) {
-                if (Array.isArray(this.filters.datasource)) {
-                    this.filters.datasource.forEach(dsf => {
-                        if (this.dynamicSourceFilters[dsf]) {
-                            this.dynamicSourceFilters[dsf].enabled = true;
-                        }
-                    });
-                } else if (this.dynamicSourceFilters[this.filters.datasource]) {
-                    this.dynamicSourceFilters[this.filters.datasource].enabled = true;
+            if (this.filters && this.filters.sceneParams &&
+                this.filters.sceneParams.datasource && this.filters.sceneParams.datasource[0]) {
+                let matchedSource = this.datasources.find((ds) => {
+                    return ds.id === this.filters.sceneParams.datasource[0];
+                });
+                if (matchedSource) {
+                    this.selectedDatasource = matchedSource.name;
+                } else {
+                    this.selectedDatasource = '';
                 }
             }
         });
-
-        // Define static source filters
-        this.staticSourceFilters = {
-            mine: {
-                datasource: {
-                    id: 'mine',
-                    name: 'My Imports'
-                },
-                enabled: false
-            },
-            users: {
-                datasource: {
-                    id: 'users',
-                    name: 'Raster Foundry Users'
-                },
-                enabled: false
-            }
-        };
-
-        if (this.filters.datasource) {
-            if (Array.isArray(this.filters.datasource)) {
-                this.filters.datasource.forEach(dsf => {
-                    if (this.staticSourceFilters[dsf]) {
-                        this.staticSourceFilters[dsf].enabled = true;
-                    }
-                });
-            } else if (this.staticSourceFilters[this.filters.datasource]) {
-                this.staticSourceFilters[this.filters.datasource].enabled = true;
-            }
-        }
     }
 
     resetAllFilters() {
-        this.cloudCoverFilters.minModel = this.cloudCoverRange.min;
-        this.cloudCoverFilters.maxModel = this.cloudCoverRange.max;
-        this.filters.minCloudCover = this.cloudCoverRange.min;
-        delete this.filters.maxCloudCover;
+        this.filterOptions.cloudCover.minModel = cloudCoverRange.min;
+        this.filterOptions.cloudCover.maxModel = cloudCoverRange.max;
 
+        this.filterOptions.sunElevation.minModel = sunElevationRange.min;
+        this.filterOptions.sunElevation.maxModel = sunElevationRange.max;
 
-        this.sunElevationFilters.minModel = this.sunElevationRange.min;
-        this.sunElevationFilters.maxModel = this.sunElevationRange.max;
-        delete this.filters.minSunElevation;
-        delete this.filters.maxSunElevation;
+        this.filterOptions.sunAzimuth.minModel = sunAzimuthRange.min;
+        this.filterOptions.sunAzimuth.maxModel = sunAzimuthRange.max;
 
-        this.sunAzimuthFilters.minModel = this.sunAzimuthRange.min;
-        this.sunAzimuthFilters.maxModel = this.sunAzimuthRange.max;
-        delete this.filters.minSunAzimuth;
-        delete this.filters.maxSunAzimuth;
-
-        Object.values(this.dynamicSourceFilters)
-            .forEach((ds) => {
-                ds.enabled = false;
-            });
-        Object.values(this.staticSourceFilters)
-            .forEach((ds) => {
-                ds.enabled = false;
-            });
-        this.filters.datasource = [];
-
-        delete this.filters.datasource;
+        this.selectedDatasource = '';
+        this.onFilterChange({changes: {
+            datasource: [],
+            minCloudCover: null,
+            maxCloudCover: null,
+            minSunElevation: null,
+            maxSunElevation: null,
+            minSunAzimuth: null,
+            maxSunAzimuth: null
+        }});
     }
 
-    onSourceFilterChange() {
-        this.filters.datasource = [];
-
-        Object.values(this.dynamicSourceFilters)
-            .filter(ds => ds.enabled)
-            .forEach(ds => this.filters.datasource.push(ds.datasource.id));
-
-        Object.values(this.staticSourceFilters)
-            .filter(ds => ds.enabled)
-            .forEach(ds => this.filters.datasource.push(ds.datasource.id));
+    toggleSourceFilter(source) {
+        this.onFilterChange({changes: {datasource: [source.id]}});
     }
 
-    toggleSourceFilter(sourceId) {
-        if (this.dynamicSourceFilters[sourceId]) {
-            this.dynamicSourceFilters[sourceId].enabled =
-                !this.dynamicSourceFilters[sourceId].enabled;
-        } else if (this.staticSourceFilters[sourceId]) {
-            this.staticSourceFilters[sourceId].enabled =
-                !this.staticSourceFilters[sourceId].enabled;
-        }
-        this.onSourceFilterChange();
+    clearDatasourceFilter() {
+        this.selectedDatasource = '';
+        this.onFilterChange({changes: {datasource: []}});
     }
 }
