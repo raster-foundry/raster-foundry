@@ -3,9 +3,10 @@
 const visibleStats = ['mean', 'median', 'mode', 'stddev', 'zmin', 'zmax'];
 
 export default class NodeHistogramController {
-    constructor($scope, toolService) {
+    constructor($scope, $filter, toolService) {
         'ngInject';
         this.$scope = $scope;
+        this.$filter = $filter;
         this.toolService = toolService;
     }
 
@@ -78,5 +79,11 @@ export default class NodeHistogramController {
         return this.hasToolRun && !this.isLoading && !this.hasStats;
     }
 
-
+    parseStatValDisplay(val) {
+        let result = this.$filter('number')(val, 5);
+        if (result && result.length && result !== '-∞' && result !== '∞') {
+            result = result.split(',').join('');
+        }
+        return result;
+    }
 }
