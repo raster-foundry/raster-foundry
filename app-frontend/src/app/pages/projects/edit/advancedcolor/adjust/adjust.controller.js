@@ -155,8 +155,11 @@ export default class ProjectsColorAdjustController {
         this.onFilterChange();
     }
 
-    storeToggle(value, correctionName) {
+    storeToggle(value, correctionName, paramsArray) {
         this.correction[correctionName].enabled = value;
+        if (value) {
+            this.setCorrectionDefault(correctionName, paramsArray);
+        }
         this.onFilterChange();
     }
 
@@ -182,5 +185,11 @@ export default class ProjectsColorAdjustController {
             typeof clipping.blue.min !== 'undefined' ||
             typeof clipping.blue.max !== 'undefined';
         this.onFilterChange();
+    }
+
+    setCorrectionDefault(correctionName, paramsArray) {
+        paramsArray.forEach((param) => {
+            this.correction[correctionName][param] = 1;
+        });
     }
 }

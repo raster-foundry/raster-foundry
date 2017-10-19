@@ -39,7 +39,7 @@
         <div class="filter-group">
           <div class="filter-group-header">
             <rf-toggle-old data-model="$ctrl.correction.sigmoidalContrast.enabled"
-                       on-change="$ctrl.storeToggle(value, 'sigmoidalContrast')">
+                       on-change="$ctrl.storeToggle(value, 'sigmoidalContrast', ['alpha', 'beta'])">
             </rf-toggle-old>
             <h5>Sigmoidal Contrast</h5>
             <i class="icon-info"
@@ -90,7 +90,7 @@
         <div class="filter-group">
           <div class="filter-group-header">
             <rf-toggle-old data-model="$ctrl.correction.gamma.enabled"
-                       on-change="$ctrl.storeToggle(value, 'gamma')">
+                       on-change="$ctrl.storeToggle(value, 'gamma', ['redGamma', 'greenGamma', 'blueGamma'])">
             </rf-toggle-old>
             <h5>Color Balance</h5>
             <i class="icon-info"
@@ -169,7 +169,7 @@
         <div class="filter-group">
           <div class="filter-group-header">
             <rf-toggle-old data-model="$ctrl.correction.saturation.enabled"
-                       on-change="$ctrl.storeToggle(value, 'saturation')">
+                       on-change="$ctrl.storeToggle(value, 'saturation', ['saturation'])">
             </rf-toggle-old>
             <h5 class="h5">Saturation</h5>
           </div>
