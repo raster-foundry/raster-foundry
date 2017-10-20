@@ -33,7 +33,7 @@ class ToolRunSpec extends WordSpec
   // Non-functional UUIDs
   val baseToolRun = "/tool-runs/"
   val newToolRun = ToolRun.Create(
-    "A Tool Run",
+    Option("A Tool Run"),
     Visibility.Public,
     publicOrgId,
     ().asJson,

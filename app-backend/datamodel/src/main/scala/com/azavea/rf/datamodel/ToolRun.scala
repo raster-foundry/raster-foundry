@@ -9,7 +9,7 @@ import io.circe.generic.JsonCodec
 @JsonCodec
 case class ToolRun(
   id: UUID,
-  name: String,
+  name: Option[String],
   createdAt: Timestamp,
   createdBy: String,
   modifiedAt: Timestamp,
@@ -26,7 +26,7 @@ object ToolRun {
 
   @JsonCodec
   case class Create(
-    name: String,
+    name: Option[String],
     visibility: Visibility,
     organizationId: UUID,
     executionParameters: Json,

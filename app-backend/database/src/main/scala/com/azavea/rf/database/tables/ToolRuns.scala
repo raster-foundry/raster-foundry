@@ -24,7 +24,7 @@ class ToolRuns(_TableTag: Tag) extends Table[ToolRun](_TableTag, "tool_runs")
            organizationId, executionParameters) <> (ToolRun.tupled, ToolRun.unapply _)
 
   val id: Rep[UUID]  = column[UUID]("id", O.PrimaryKey)
-  val name: Rep[String] = column[String]("name")
+  val name: Rep[Option[String]] = column[Option[String]]("name", O.Default(None))
   val createdAt: Rep[Timestamp] = column[Timestamp]("created_at")
   val createdBy: Rep[String] = column[String]("created_by")
   val modifiedAt: Rep[Timestamp] = column[Timestamp]("modified_at")
