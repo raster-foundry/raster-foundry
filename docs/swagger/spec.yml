@@ -2338,6 +2338,9 @@ definitions:
         planetCredential:
           type: string
           description: Contains the user's planet credential if a connection has been configured
+        emailNotifications:
+          type: boolean,
+          description: An opt-in (defaults to false) setting to recieve email notifications
   UserWithOAuth:
     type: object
     properties:
