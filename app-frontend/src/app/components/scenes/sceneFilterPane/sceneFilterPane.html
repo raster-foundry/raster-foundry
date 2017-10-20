@@ -1,16 +1,61 @@
 <div class="sidebar-header dark">
   <h5>Filters</h5>
   <div class="header-controls">
-    <button class="btn btn-default btn-small" ng-click="$ctrl.close()">
+    <button class="btn btn-default btn-small"
+            ng-click="$ctrl.onClose()">
       Close
     </button>
   </div>
 </div>
-<div class="sidebar-scrollable" >
+<div class="sidebar-scrollable">
+  <div class="content">
+    <div class="filter-group">
+      <div class="filter">
+        <label>Browse from</label>
+        <div class="btn-group" uib-dropdown keyboard-nav>
+          <button type="button" class="btn btn-default browse-source-drop-down " uib-dropdown-toggle>
+            {{$ctrl.selectedBrowseSource}}
+            <span><i class="icon-caret-down"></i></span>
+          </button>
+          <ul class="dropdown-menu" uib-dropdown-menu role="menu">
+            <li role="menuitem"
+                ng-click="$ctrl.onSelectBrowseSource('Raster Foundry')">
+              <a>Raster Foundry</a>
+            </li>
+            <li role="menuitem"
+                class="browse-source-option"
+                ng-click="$ctrl.onSelectBrowseSource('Planet Labs')">
+                <!-- feature-flag="browse-planet-data"> -->
+              <a>Planet Labs</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="content">
     <div class="filter-group">
       <div class="filter">
         <button ng-click="$ctrl.resetAllFilters()" class="btn btn-toggle btn-small btn-block">Clear all filters</button>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter"
+          ng-mouseleave="$ctrl.toggleDrag.toggle = false"
+          ng-mouseup="$ctrl.toggleDrag.toggle = false">
+        <label>Imagery sources</label>
+        <input type="text"
+               placeholder="All"
+               ng-model="$ctrl.selectedDatasource"
+               uib-typeahead="ds.name for ds in $ctrl.datasources | filter:$viewValue | limitTo:8"
+               class="form-control input-dark image-source"
+               typeahead-on-select="$ctrl.toggleSourceFilter($item)"
+               typeahead-min-length="0">
+        <div class="clear-image-source-filter"
+             ng-if="$ctrl.selectedDatasource"
+             ng-click="$ctrl.clearDatasourceFilter()">
+          <i class="icon-cross"></i>
+        </div>
       </div>
     </div>
     <div class="filter-group">
@@ -30,31 +75,32 @@
     <div class="filter-group">
       <div class="filter">
         <label>Cloud cover</label>
-        <rzslider rz-slider-model="$ctrl.cloudCoverFilters.minModel"
-                  rz-slider-high="$ctrl.cloudCoverFilters.maxModel"
-                  rz-slider-options="$ctrl.cloudCoverFilters.options"></rzslider>
+        <rzslider rz-slider-model="$ctrl.filterOptions.cloudCover.minModel"
+                    rz-slider-high="$ctrl.filterOptions.cloudCover.maxModel"
+                    rz-slider-options="$ctrl.filterOptions.cloudCover.options"></rzslider>
       </div>
     </div>
     <div class="filter-group">
       <div class="filter">
         <label>Sun elevation</label>
-        <rzslider rz-slider-model="$ctrl.sunElevationFilters.minModel"
-                  rz-slider-high="$ctrl.sunElevationFilters.maxModel"
-                  rz-slider-options="$ctrl.sunElevationFilters.options"></rzslider>
+        <rzslider rz-slider-model="$ctrl.filterOptions.sunElevation.minModel"
+                    rz-slider-high="$ctrl.filterOptions.sunElevation.maxModel"
+                    rz-slider-options="$ctrl.filterOptions.sunElevation.options"></rzslider>
       </div>
     </div>
     <div class="filter-group">
       <div class="filter">
         <label>Sun azimuth</label>
-        <rzslider rz-slider-model="$ctrl.sunAzimuthFilters.minModel"
-                  rz-slider-high="$ctrl.sunAzimuthFilters.maxModel"
-                  rz-slider-options="$ctrl.sunAzimuthFilters.options"></rzslider>
+        <rzslider rz-slider-model="$ctrl.filterOptions.sunAzimuth.minModel"
+                    rz-slider-high="$ctrl.filterOptions.sunAzimuth.maxModel"
+                    rz-slider-options="$ctrl.filterOptions.sunAzimuth.options"></rzslider>
       </div>
     </div>
-    <div class="filter-group">
+    <div class="filter-group"
+         ng-if="$ctrl.selectedBrowseSource === 'Raster Foundry'">
       <div class="filter"
-          ng-mouseleave="$ctrl.toggleDrag.toggle = false"
-          ng-mouseup="$ctrl.toggleDrag.toggle = false">
+           ng-mouseleave="$ctrl.toggleDrag.toggle = false"
+           ng-mouseup="$ctrl.toggleDrag.toggle = false">
         <label>Ingest Status</label>
         <div class="filter-item tag-filter">
           <div class="btn-group">
@@ -80,25 +126,8 @@
         </div>
       </div>
     </div>
-    <div class="filter-group">
-      <div class="filter"
-          ng-mouseleave="$ctrl.toggleDrag.toggle = false"
-          ng-mouseup="$ctrl.toggleDrag.toggle = false">
-        <label>Imagery sources</label>
-        <input type="text"
-               placeholder="None"
-               ng-model="$ctrl.selectedDatasource"
-               uib-typeahead="ds.name for ds in $ctrl.datasources | filter:$viewValue | limitTo:8"
-               class="form-control input-dark"
-               typeahead-on-select="$ctrl.toggleSourceFilter($item)"
-               typeahead-min-length="0">
-      </div>
-      <div ng-if="$ctrl.selectedDatasource"
-           ng-click="$ctrl.clearDatasourceFilter()">
-        Clear
-      </div>
-    </div>
-    <div class="filter-group">
+    <div class="filter-group"
+         ng-if="$ctrl.selectedBrowseSource === 'Raster Foundry'">
       <div class="filter">
         <label>Owner</label>
         <div class="filter-item tag-filter">

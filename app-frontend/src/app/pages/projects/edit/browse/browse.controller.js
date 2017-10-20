@@ -51,7 +51,12 @@ export default class ProjectAddScenesBrowseController {
             this.getProjectSceneIds();
             this.initWatchers();
             this.initMap();
-            this.requestNewSceneList();
+            if (this.queryParams && this.queryParams.dataRepo
+              && this.queryParams.dataRepo === 'Planet Labs') {
+                  // TODO: load planet data
+            } else {
+                this.requestNewSceneList();
+            }
         }
 
         this.$scope.$on('$destroy', () => {
@@ -110,8 +115,6 @@ export default class ProjectAddScenesBrowseController {
 
     initWatchers() {
         this.$scope.$on('$stateChangeStart', this.onStateChangeStart.bind(this));
-        // TODO: Switch to one-way &-binding from child component
-        this.$scope.$watchCollection('$ctrl.filters', this.onFilterChange.bind(this));
     }
 
     initMap() {
@@ -286,14 +289,23 @@ export default class ProjectAddScenesBrowseController {
     }
 
     onQueryParamsChange() {
-        const filterObject = Object.assign(this.queryParams, { forProjectId: this.project.id });
-        this.sessionStorage.set('filters', filterObject);
-        this.$state.go('.', this.getCombinedParams(), {
-            notify: false,
-            inherit: false,
-            location: 'replace'
+        const filterObject = Object.assign(this.queryParams, {
+            forProjectId: this.project.id,
+            dataRepo: this.sourceRepo
         });
-        this.requestNewSceneList();
+        this.sessionStorage.set('filters', filterObject);
+        if (this.sourceRepo === 'Raster Foundry') {
+            this.$state.go('.', this.getCombinedParams(), {
+                notify: false,
+                inherit: false,
+                location: 'replace'
+            });
+            this.requestNewSceneList();
+        } else if (this.sourceRepo === 'Planet Labs') {
+            this.sceneList = [];
+            delete this.lastSceneResult;
+            // TODO: call methods that use planet service to get scenes
+        }
     }
 
     getCombinedParams() {
@@ -306,12 +318,21 @@ export default class ProjectAddScenesBrowseController {
         }
     }
 
-    // TODO: This should be refactored to use a one-way binding from the filter controller
-    // rather than a scope watch.
-    onFilterChange(newFilters) {
+    onFilterChange(newFilters, sourceRepo) {
+        this.sourceRepo = sourceRepo;
+        let newParams = Object.assign({}, this.filters);
+        Object.keys(newFilters).forEach((filterProperty) => {
+            if (newFilters[filterProperty] !== null) {
+                newParams[filterProperty] = newFilters[filterProperty];
+            } else {
+                delete newParams[filterProperty];
+            }
+        });
+
         this.queryParams = Object.assign({
             bbox: this.queryParams.bbox
-        }, newFilters);
+        }, newParams);
+
         this.onQueryParamsChange();
         this.updateSceneGrid();
     }
@@ -502,5 +523,9 @@ export default class ProjectAddScenesBrowseController {
                 scene: () => scene
             }
         });
+    }
+
+    onCloseFilterPane(showFilterPane) {
+        this.showFilterPane = showFilterPane;
     }
 }
