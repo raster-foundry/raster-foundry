@@ -150,6 +150,22 @@ export default (app) => {
             ).$promise;
         }
 
+        bulkUpdateColorMode(projectId, corrections, bands) {
+            const resolvedBands = bands ||
+                  (({redBand, greenBand, blueBand, mode}) =>
+                   ({redBand, greenBand, blueBand, mode}))(this.getDefaultColorCorrection());
+            const bulkData = corrections.map(({id, correction}) => {
+                return {
+                    sceneId: id,
+                    params: Object.assign({}, correction, resolvedBands)
+                };
+            });
+            return this.bulkColorCorrect.create(
+                { projectId },
+                { items: bulkData }
+            ).$promise;
+        }
+
     }
 
     app.service('colorCorrectService', ColorCorrectService);
