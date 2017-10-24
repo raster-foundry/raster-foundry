@@ -1,11 +1,18 @@
 /* global BUILDCONFIG */
 function runBlock(
     $rootScope, jwtHelper, $state, $location, $window, APP_CONFIG,
+    $ngRedux, $timeout,
     authService, localStorage, rollbarWrapperService, intercomService,
     featureFlags, perUserFeatureFlags
 ) {
     'ngInject';
     let flagsPromise;
+
+    $ngRedux.subscribe(() => {
+        $timeout(() => {
+            $rootScope.$apply(() => {});
+        }, 100);
+    });
 
     if (authService.verifyAuthCache()) {
         flagsPromise = perUserFeatureFlags.load();

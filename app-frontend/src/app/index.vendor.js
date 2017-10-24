@@ -23,6 +23,7 @@ import 'angular-touch';
 import 'angular-sanitize';
 import 'angular-messages';
 import 'angular-aria';
+import 'ng-redux';
 import 'angular-resource';
 import 'leaflet';
 import 'jointjs';

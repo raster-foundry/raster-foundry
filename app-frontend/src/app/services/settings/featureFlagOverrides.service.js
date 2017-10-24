@@ -1,4 +1,4 @@
-import Map from 'es6-map';
+import {Map} from 'immutable';
 
 /* Feature Flag Overrides service
  * Feature flags can be set / overridden in a number of ways:
@@ -81,7 +81,7 @@ export default app => {
             }
             let setFlag = (val, flagName) => {
                 let prefixed = this.prefixedKeyFor(flagName);
-                this.flagCache.set(prefixed, val);
+                this.flagCache = this.flagCache.set(prefixed, val);
                 this.localStorage.set(prefixed, val);
             };
             if (angular.isObject(flag)) {
@@ -98,7 +98,7 @@ export default app => {
             }
             let prefixed = this.prefixedKeyFor(flagName);
             this.localStorage.remove(prefixed);
-            this.flagCache.delete(prefixed);
+            this.flagCache = this.flagCache.delete(prefixed);
         }
     }
 

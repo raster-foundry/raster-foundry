@@ -57,13 +57,7 @@ trait ToolRunRoutes extends Authentication
         onSuccess(write(ToolRuns.insertToolRun(newRun, user))) { toolRun =>
           handleExceptions(interpreterExceptionHandler) {
             complete {
-              newRun.executionParameters.as[MapAlgebraAST] match {
-                case Right(ast) =>
-                  validateTreeWithSources[Unit](ast)
-                  (StatusCodes.Created, toolRun)
-                case Left(err) =>
-                  (StatusCodes.BadRequest, "Unable to parse json as MapAlgebra AST")
-              }
+              (StatusCodes.Created, toolRun)
             }
           }
         }

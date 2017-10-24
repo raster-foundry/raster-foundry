@@ -1,6 +1,5 @@
-/* globals BUILDCONFIG */
-
-/* globals Auth0Lock heap */
+/* globals BUILDCONFIG Auth0Lock heap */
+import ApiActions from '../../redux/actions/api-actions';
 
 let assetLogo = BUILDCONFIG.LOGOFILE ?
     require(`../../../assets/images/${BUILDCONFIG.LOGOFILE}`) :
@@ -13,7 +12,7 @@ export default (app) => {
         constructor( // eslint-disable-line max-params
             jwtHelper, $q, $timeout, featureFlagOverrides, featureFlags,
             perUserFeatureFlags, $state, APP_CONFIG, localStorage,
-            rollbarWrapperService, intercomService, $resource
+            rollbarWrapperService, intercomService, $resource, $ngRedux
         ) {
             this.localStorage = localStorage;
             this.jwtHelper = jwtHelper;
@@ -25,6 +24,16 @@ export default (app) => {
             this.featureFlagOverrides = featureFlagOverrides;
             this.intercomService = intercomService;
             this.rollbarWrapperService = rollbarWrapperService;
+            this.APP_CONFIG = APP_CONFIG;
+
+            this._redux = {};
+            $ngRedux.connect((state) => {
+                return {
+                    apiToken: state.api.apiToken,
+                    apiUrl: state.api.apiUrl,
+                    tileUrl: state.api.tileUrl
+                };
+            }, ApiActions)(this._redux);
 
             if (!APP_CONFIG.error) {
                 this.initAuth0(APP_CONFIG);
@@ -168,6 +177,11 @@ export default (app) => {
 
         onLogin(authResult) {
             this.localStorage.set('id_token', authResult.idToken);
+            this._redux.initApi({
+                apiToken: authResult.idToken,
+                apiUrl: BUILDCONFIG.API_HOST,
+                tileUrl: this.APP_CONFIG.tileServerLocation
+            });
 
             this.setReauthentication(authResult.idToken);
 
@@ -283,6 +297,14 @@ export default (app) => {
                     token && this.profile() && !this.jwtHelper.isTokenExpired(token)
                 );
                 if (this.isLoggedIn) {
+                    if (!this._redux.apiToken) {
+                        this._redux.initApi({
+                            apiToken: this.token(),
+                            apiUrl: BUILDCONFIG.API_HOST,
+                            tileUrl: this.APP_CONFIG.tileServerLocation
+                        });
+                    }
+
                     this.setReauthentication(token);
                     this.featureFlagOverrides.setUser(this.profile());
                 }

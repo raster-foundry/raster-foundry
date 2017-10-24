@@ -40,14 +40,14 @@
         on-all-entries-valid-change="$ctrl.allEntriesValid = allEntriesValid" ></rf-reclassify-table>
     </div>
     <div class="classification-histogram">
-      <div class="node-data-placeholder" ng-if="!$ctrl.histogram && !$ctrl.isLoadingHistogram">
+      <div class="node-data-placeholder" ng-if="!$ctrl.histogram && !$ctrl.histogram.loading">
           <span class="icon icon-warning color-warning"></span>
           <div class="message">Fill out all input fields and apply changes to view a histogram</div>
       </div>
       <rf-reclassify-histogram
-        ng-if="$ctrl.histogram && !$ctrl.isLoadingHistogram"
+        ng-if="$ctrl.histogram && $ctrl.histogram.data"
         classifications="$ctrl.breaks"
-        histogram="$ctrl.histogram"
+        histogram="$ctrl.histogram.data"
         on-breakpoint-change="$ctrl.updateBreaks(breakpoints)">
       </rf-reclassify-histogram>
     </div>

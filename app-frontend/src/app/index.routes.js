@@ -8,7 +8,7 @@ import labBrowseTemplatesTpl from './pages/lab/browse/templates/templates.html';
 import labTemplateTpl from './pages/lab/template/template.html';
 import labToolTpl from './pages/lab/tool/tool.html';
 import labCreateToolTpl from './pages/lab/createTool/createTool.html';
-// import labNavbarTpl from './pages/lab/navbar/navbar.html';
+import labNavbarTpl from './pages/lab/navbar/navbar.html';
 
 import projectsTpl from './pages/projects/projects.html';
 import projectsNavbarTpl from './pages/projects/navbar/navbar.html';
@@ -328,9 +328,18 @@ function labStates($stateProvider) {
             params: {
                 'tool': null
             },
-            templateUrl: labToolTpl,
-            controller: 'LabToolController',
-            controllerAs: '$ctrl'
+            views: {
+                'navmenu@root': {
+                    templateUrl: labNavbarTpl,
+                    controller: 'LabNavbarController',
+                    controllerAs: '$ctrl'
+                },
+                '': {
+                    templateUrl: labToolTpl,
+                    controller: 'LabToolController',
+                    controllerAs: '$ctrl'
+                }
+            }
         })
         .state('lab.browse', {
             url: '/browse',

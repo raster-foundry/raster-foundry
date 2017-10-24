@@ -1,4 +1,4 @@
-const Map = require('es6-map');
+import {Map} from 'immutable';
 
 export default class ProjectsAdvancedColorController {
     constructor( // eslint-disable-line max-params
@@ -161,8 +161,10 @@ export default class ProjectsAdvancedColorController {
 
     setSelected(scene, selected) {
         if (selected) {
-            this.selectedScenes.set(scene.id, scene);
-            this.selectedLayers.set(scene.id, this.$parent.sceneLayers.get(scene.id));
+            this.selectedScenes = this.selectedScenes.set(scene.id, scene);
+            this.selectedLayers = this.selectedLayers.set(
+                scene.id, this.$parent.sceneLayers.get(scene.id)
+            );
             this.getMap().then((map) => {
                 map.setGeojson(scene.id, this.sceneService.getStyledFootprint(scene));
             });

@@ -1,12 +1,17 @@
+import LabActions from '../../../redux/actions/lab-actions';
+
 class LabCreateToolController {
     constructor(
-        $log, $state,
+        $log, $state, $scope, $ngRedux,
         toolService
     ) {
         this.$log = $log;
         this.$state = $state;
 
         this.toolService = toolService;
+
+        let unsubscribe = $ngRedux.connect(this.mapStateToThis, LabActions)(this);
+        $scope.$on('$destroy', unsubscribe);
     }
 
     $onInit() {
@@ -21,6 +26,7 @@ class LabCreateToolController {
         } else {
             this.templateDefinition = this.template.definition;
             this.tool = this.toolService.generateToolRun(this.template);
+            this.loadTool(this.tool, true);
         }
     }
 
@@ -32,31 +38,12 @@ class LabCreateToolController {
             this.templateDefinition = template.definition;
             this.loadingTemplate = false;
             this.tool = this.toolService.generateToolRun(this.template);
+            this.loadTool(this.tool, true);
         });
-    }
-
-    onToolParameterChange(nodeid, project, band, override, position) {
-        if (project && typeof band === 'number' && band >= 0) {
-            this.toolService.updateToolRunSource(this.tool, nodeid, project.id, band);
-        }
-        if (override) {
-            this.toolService.updateToolRunConstant(this.tool, override.id, override);
-        }
-        if (position) {
-            let metadata = this.toolService.getToolRunMetadata(this.tool, nodeid);
-            this.toolService.updateToolRunMetadata(
-                this.tool,
-                nodeid,
-                Object.assign({}, metadata, {
-                    positionOverride: position
-                })
-            );
-        }
     }
 
     createTool() {
         this.createInProgress = true;
-        this.clearWarning();
         if (this.toolName.length) {
             this.tool.name = this.toolName;
         } else {
@@ -74,14 +61,6 @@ class LabCreateToolController {
             this.createInProgress = false;
         });
         return toolRunPromise;
-    }
-
-    setWarning(text) {
-        this.warning = text;
-    }
-
-    clearWarning() {
-        delete this.warning;
     }
 }
 

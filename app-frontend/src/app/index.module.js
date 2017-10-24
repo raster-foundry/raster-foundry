@@ -21,6 +21,7 @@ const App = angular.module(
         'ngSanitize',
         'ngMessages',
         'ngAria',
+        'ngRedux',
         'infinite-scroll',
         'ngResource',
         'oc.lazyLoad',

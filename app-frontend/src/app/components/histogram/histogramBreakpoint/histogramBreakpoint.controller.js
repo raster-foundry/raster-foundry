@@ -30,8 +30,12 @@ export default class HistogramBreakpointController {
     }
 
     $onChanges(changes) {
+        if (changes.range && changes.range.currentValue) {
+            this.setPositionFromBreakpoint();
+        }
         if (changes.options && changes.options.currentValue) {
             this._options = Object.assign({}, defaultOptions, changes.options.currentValue);
+            this.setPositionFromBreakpoint();
         }
         if (changes.precision && changes.precision.currentValue) {
             this.setPositionFromBreakpoint();
@@ -61,6 +65,7 @@ export default class HistogramBreakpointController {
     }
 
     setPositionFromBreakpoint() {
+        let hide = false;
         if (this.range &&
             Number.isFinite(this.range.min) &&
             Number.isFinite(this.range.max) &&
@@ -75,10 +80,13 @@ export default class HistogramBreakpointController {
             ) * 100;
 
             this.breakpointPosition = `${percent}%`;
+            if (percent < 0) {
+                hide = true;
+            }
         } else {
             this.breakpointPosition = '0%';
         }
-        this.$element.css({left: this.breakpointPosition});
+        this.$element.css({left: this.breakpointPosition, display: hide ? 'none' : 'initial'});
     }
 
     registerEvents() {

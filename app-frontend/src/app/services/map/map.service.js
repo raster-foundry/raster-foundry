@@ -1,5 +1,5 @@
-import Map from 'es6-map';
-import Set from 'es6-set';
+import {Map, Set} from 'immutable';
+
 /* eslint no-unused-vars: 0 */
 /* eslint spaced-comment: 0 */
 /* globals BUILDCONFIG _ console */
@@ -111,7 +111,7 @@ class MapWrapper {
     onLayerGroupEvent(event, callback, scope = this) {
         let callbackId = this._callbackCounter;
         this._callbackCounter += 1;
-        this._callbacks.set(callbackId, [event, callback]);
+        this._callbacks = this._callbacks.set(callbackId, [event, callback]);
         this._layerGroup.on(event, callback, scope);
         return callbackId;
     }
@@ -120,7 +120,7 @@ class MapWrapper {
         if (this._callbacks.has(callbackId)) {
             let offPair = this._callbacks.get(callbackId);
             this._layerGroup.off(offPair[0], offPair[1]);
-            this._callbacks.delete(callbackId);
+            this._callbacks = this._callbacks.delete(callbackId);
         }
     }
 
@@ -146,7 +146,7 @@ class MapWrapper {
         let callbackWrapper = (e) => callback(e, this);
         let callbackId = this._callbackCounter;
         this._callbackCounter = this._callbackCounter + 1;
-        this._callbacks.set(callbackId, [event, callbackWrapper]);
+        this._callbacks = this._callbacks.set(callbackId, [event, callbackWrapper]);
         // create listener for map event
         this.map.on(event, callbackWrapper);
         return callbackId;
@@ -162,7 +162,7 @@ class MapWrapper {
         if (this._callbacks.has(callbackId)) {
             let offPair = this._callbacks.get(callbackId);
             this.map.off(offPair[0], offPair[1]);
-            this._callbacks.delete(callbackId);
+            this._callbacks = this._callbacks.delete(callbackId);
         } else {
             // throw exception
         }
@@ -211,7 +211,7 @@ class MapWrapper {
             let layerList = this._geoJsonMap.get(id);
             layerList.push(layer);
         } else {
-            this._geoJsonMap.set(id, [layer]);
+            this.geoJsonMap = this._geoJsonMap.set(id, [layer]);
         }
         return this;
     }
@@ -245,7 +245,7 @@ class MapWrapper {
             for (let layer of layerList) {
                 this._geoJsonLayerGroup.removeLayer(layer);
             }
-            this._geoJsonMap.delete(id);
+            this._geoJsonMap = this._geoJsonMap.delete(id);
         }
         return this;
     }
@@ -283,9 +283,9 @@ class MapWrapper {
             opts
         );
         if (options.showToggle) {
-            this._toggleableLayers.add(id);
+            this._toggleableLayers = this._toggleableLayers.add(id);
         } else {
-            this._toggleableLayers.delete(id);
+            this._toggleableLayers = this._toggleableLayers.delete(id);
         }
 
         let layerList = [
@@ -294,9 +294,9 @@ class MapWrapper {
         ];
         if (options.showLayer) {
             this._layerGroup.addLayer(layer);
-            this._layerMap.set(id, layerList);
+            this._layerMap = this._layerMap.set(id, layerList);
         } else {
-            this._hiddenLayerMap.set(id, layerList);
+            this._hiddenLayerMap = this._hiddenLayerMap.set(id, layerList);
         }
         return this;
     }
@@ -309,9 +309,9 @@ class MapWrapper {
      */
     setLayer(id, layer, showToggle) {
         if (showToggle) {
-            this._toggleableLayers.add(id);
+            this._toggleableLayers = this._toggleableLayers.add(id);
         } else if (showToggle === false) {
-            this._toggleableLayers.delete(id);
+            this._toggleableLayers = this._toggleableLayers.delete(id);
         }
 
         let toggle = this._toggleableLayers.has(id);
@@ -319,11 +319,11 @@ class MapWrapper {
         this.deleteLayers(id);
 
         if (toggle) {
-            this._toggleableLayers.add(id);
+            this._toggleableLayers = this._toggleableLayers.add(id);
         }
 
         if (Array.isArray(layer)) {
-            this._layerMap.set(id, layer);
+            this._layerMap = this._layerMap.set(id, layer);
             layer.map((layerItem) => {
                 this._layerGroup.addLayer(layerItem);
             });
@@ -343,19 +343,19 @@ class MapWrapper {
 
         if (layers) {
             if (showToggle) {
-                this._toggleableLayers.add(id);
+                this._toggleableLayers = this._toggleableLayers.add(id);
             } else if (showToggle === false) {
-                this._toggleableLayers.delete(id);
+                this._toggleableLayers = this._toggleableLayers.delete(id);
             }
 
             let allLayers = hiddenLayers ? layers.concat(hiddenLayers) : layers;
             // add layers to this._hiddenLayerMap
-            this._hiddenLayerMap.set(id, allLayers);
+            this._hiddenLayerMap = this._hiddenLayerMap.set(id, allLayers);
             // remove layers from this._layerMap
             layers.forEach((layer) => {
                 this._layerGroup.removeLayer(layer);
             });
-            this._layerMap.delete(id);
+            this._layerMap = this._layerMap.delete(id);
         }
 
         return this;
@@ -373,18 +373,18 @@ class MapWrapper {
         if (hiddenLayers) {
             allLayers = layers ? hiddenLayers.concat(layers) : hiddenLayers;
             // add layers to this._layerMap
-            this._layerMap.set(id, allLayers);
+            this._layerMap = this._layerMap.set(id, allLayers);
             hiddenLayers.forEach((layer) => {
                 this._layerGroup.addLayer(layer);
             });
             // remove layers from this._hiddenLayerMap
-            this._hiddenLayerMap.delete(id);
+            this._hiddenLayerMap = this._hiddenLayerMap.delete(id);
         }
 
         if (allLayers.length && showToggle) {
-            this._toggleableLayers.add(id);
+            this._toggleableLayers = this._toggleableLayers.add(id);
         } else if (showToggle === false) {
-            this._toggleableLayers.delete(id);
+            this._toggleableLayers = this._toggleableLayers.delete(id);
         }
 
         return this;
@@ -431,14 +431,14 @@ class MapWrapper {
      * @returns {this} this
      */
     deleteLayers(id) {
-        this._toggleableLayers.delete(id);
+        this._toggleableLayers = this._toggleableLayers.delete(id);
         let layerList = this.getLayers(id);
         if (layerList && layerList.length) {
             for (const layer of layerList) {
                 this._layerGroup.removeLayer(layer);
             }
-            this._layerMap.delete(id);
-            this._hiddenLayerMap.delete(id);
+            this._layerMap = this._layerMap.delete(id);
+            this._hiddenLayerMap = this._hiddenLayerMap.delete(id);
         }
         return this;
     }
@@ -484,10 +484,10 @@ class MapWrapper {
                 if (!persist) {
                     this.setLayer('thumbnail', overlay);
                 } else {
-                    this.persistedThumbnails.set(scene.id, overlay);
+                    this.persistedThumbnails = this.persistedThumbnails.set(scene.id, overlay);
                     this.setLayer(
                         'Selected Scenes',
-                        Array.from(this.persistedThumbnails.values()),
+                        this.persistedThumbnails.toArray(),
                         true
                     );
                 }
@@ -515,8 +515,8 @@ class MapWrapper {
             this.deleteLayers('thumbnail');
             this.deleteGeojson('thumbnail');
         } else if (this.persistedThumbnails.has(scene.id)) {
-            this.persistedThumbnails.delete(scene.id);
-            this.setLayer('Selected Scenes', Array.from(this.persistedThumbnails.values()));
+            this.persistedThumbnails = this.persistedThumbnails.delete(scene.id);
+            this.setLayer('Selected Scenes', this.persistedThumbnails.toArray());
         }
         return this;
     }
@@ -549,7 +549,7 @@ export default (app) => {
                 new MapWrapper(
                     map, id, this.imageOverlayService, this.datasourceService,
                     options, this.thumbnailService);
-            this.maps.set(id, mapWrapper);
+            this.maps = this.maps.set(id, mapWrapper);
             // if any promises , resolve them
             if (this._mapPromises.has(id)) {
                 this._mapPromises.get(id).forEach((promise) => {
@@ -592,9 +592,9 @@ export default (app) => {
                 // is registered
                 let promises = this._mapPromises.get(id);
                 promises.push(deferred);
-                this._mapPromises.set(id, promises);
+                this._mapPromises = this._mapPromises.set(id, promises);
             } else {
-                this._mapPromises.set(id, [deferred]);
+                this._mapPromises = this._mapPromises.set(id, [deferred]);
             }
             return mapPromise;
         }
