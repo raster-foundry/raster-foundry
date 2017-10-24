@@ -59,27 +59,17 @@
          ng-style="$ctrl.labRightStyle"
          ng-show="!!$ctrl.showDiagram || !$ctrl.isShowingPreview">
         <div class="lab-action-controls">
-          <button class="btn btn-secondary"
-                  ng-click="$ctrl.saveTool()"
-                  ng-disabled="$ctrl.updateInProgress">
-            Save&nbsp;Changes
-          </button>
-          <input type="text"
-                 ng-attr-placeholder="{{$ctrl.template.title}}"
-                 ng-model="$ctrl.toolName"
-                 class="form-control">
+          <!-- Left toolbar goes here -->
         </div>
         <rf-diagram-container
+            ng-if="$ctrl.tool && $ctrl.tool.id === $ctrl.toolId"
             class="with-position"
-            tool-definition="$ctrl.tool.executionParameters"
-            tool-parameters="$ctrl.tool.executionParameters"
-            toolrun="$ctrl.tool"
+            tool-definition="$ctrl.tool"
             on-preview="$ctrl.showPreview(data)"
             on-share="$ctrl.shareNode(nodeId)"
             on-parameter-change="$ctrl.onToolParameterChange(
                    nodeId, project, band, override, renderDef, position
                    )"
-            on-graph-complete="$ctrl.onGraphComplete(nodes)"
             create-tool-run="$ctrl.saveTool()"
         >
         </rf-diagram-container>

@@ -1,4 +1,8 @@
-/* globals process, BUILDCONFIG */
+/* globals process BUILDCONFIG */
+import reducers from './redux/reducers';
+import { combineReducers } from 'redux';
+import promiseMiddleware from 'redux-promise-middleware';
+import thunk from 'redux-thunk';
 
 if (BUILDCONFIG.LOGOFILE) {
     require(`../assets/images/${BUILDCONFIG.LOGOFILE}`);
@@ -6,14 +10,23 @@ if (BUILDCONFIG.LOGOFILE) {
     require('../assets/images/logo-raster-foundry.png');
 }
 
-
 function config( // eslint-disable-line max-params
     $logProvider, $compileProvider,
-    jwtInterceptorProvider,
+    jwtInterceptorProvider, $ngReduxProvider,
     $httpProvider, configProvider, APP_CONFIG,
     featureFlagsProvider, RollbarProvider
 ) {
     'ngInject';
+    // redux
+    $ngReduxProvider.createStoreWith(
+        combineReducers(reducers),
+        [thunk, promiseMiddleware()],
+        // redux devtools chrome extension:
+        // https://chrome.google.com/webstore/detail/redux-devtools/lmhkpmbekcpmknklioeibfkpmmfibljd
+        // eslint-disable-next-line
+        window.__REDUX_DEVTOOLS_EXTENSION__ ? [window.__REDUX_DEVTOOLS_EXTENSION__()] : []
+    );
+
 
     // Enable log
     $logProvider.debugEnabled(true);

@@ -817,7 +817,7 @@ div.lab-workspace.is-dragging {
   svg {
     cursor: grabbing;
   }
-  .diagram-cell {
+  rf-tool-node {
     pointer-events: none;
     * {
       pointer-events: none;
@@ -1480,14 +1480,14 @@ rf-export-item {
 }
 
 .is-comparing {
-    .diagram-cell {
+    rf-tool-node {
         * {
             pointer-events: none;
         }
     }
 }
 
-.diagram-cell {
+rf-tool-node {
   position: absolute;
   background: white;
   /* Make sure events are propagated to the JointJS element so, e.g. dragging works.*/
@@ -1498,6 +1498,13 @@ rf-export-item {
   z-index: 1;
   box-shadow: 4px 4px 4px rgba(0,0,0,0.25);
   user-select: none;
+}
+
+.readonly {
+    .node-header {
+        // don't allow moving node when in readonly mode
+        pointer-events: auto;
+    }
 }
 
 .node-header {
@@ -1562,6 +1569,7 @@ rf-export-item {
 
 .node-status {
   padding: .25em;
+  pointer-events: auto;
 }
 
 .node-header-colorblock {
@@ -2380,6 +2388,17 @@ rf-histogram-breakpoint {
     user-select: none;
     transition: all 0.125s;
 
+    &.point {
+        top: 50%;
+        width: 10px;
+        height: 10px;
+        opacity: 1;
+        transform: translate(calc(-50% + 1px), -50%);
+        background: white;
+        border-radius: 50%;
+        border: 2px solid $brand-primary;
+    }
+
     &.bar {
       top: 50%;
       transform: translate(calc(-50% + 1px), -50%);
@@ -2874,4 +2893,9 @@ rf-reclassify-table {
     display: flex;
     justify-content: center;
     flex-direction: column;
+}
+
+.inline-form {
+    display: inline-block;
+    margin-bottom: 0;
 }

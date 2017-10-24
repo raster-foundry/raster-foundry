@@ -1,9 +1,10 @@
 /* global L */
 import { FrameView } from '../../../components/map/labMap/frame.module.js';
+import LabActions from '../../../redux/actions/lab-actions';
 
 class LabToolController {
     constructor(
-        $scope, $rootScope, $state, $timeout, $element, $window, $document, $uibModal,
+        $ngRedux, $scope, $rootScope, $state, $timeout, $element, $window, $document, $uibModal,
         mapService, projectService, authService, mapUtilsService, toolService, tokenService,
         APP_CONFIG
     ) {
@@ -17,6 +18,9 @@ class LabToolController {
         this.$document = $document;
         this.$uibModal = $uibModal;
 
+        let unsubscribe = $ngRedux.connect(this.mapStateToThis, LabActions)(this);
+        $scope.$on('$destroy', unsubscribe);
+
         this.getMap = () => mapService.getMap('tool-preview');
         this.projectService = projectService;
         this.authService = authService;
@@ -27,17 +31,26 @@ class LabToolController {
         this.tileServer = `${APP_CONFIG.tileServerLocation}`;
     }
 
+    mapStateToThis(state) {
+        return {
+            tool: state.lab.tool,
+            previewNodes: state.lab.previewNodes,
+            apiToken: state.api.apiToken
+        };
+    }
+
     $onInit() {
         this.showDiagram = true;
-        // request tool-run
-        this.tool = this.$state.params.tool;
-        this.toolId = this.$state.params.toolid;
-        this.toolName = '';
 
-        if (this.toolId && !this.tool) {
-            this.fetchTool();
-        } else if (!this.toolId) {
-            this.$state.go('lab.browse.tools');
+        this.toolId = this.$state.params.toolid;
+
+        if (this.apiToken) {
+            this.initTool();
+        } else {
+            const tokenWatch = this.$scope.$watch('$ctrl.apiToken', () => {
+                this.initTool();
+                tokenWatch();
+            });
         }
 
         this.$scope.$on('$destroy', () => {
@@ -46,25 +59,29 @@ class LabToolController {
         $('body').css({overflow: 'hidden'});
 
         this.singlePreviewPosition = {x: 0, offset: 10, side: 'none'};
-    }
 
-    fetchTool() {
-        this.loadingTool = true;
-        this.toolRequest = this.toolService.getToolRun(this.toolId);
-        this.toolRequest.then(tool => {
-            this.tool = tool;
-            this.toolName = this.tool.name;
-            this.loadingTool = false;
-        }, err => {
-            this.$log.error('There was an error fetching your tool', err);
+        this.$scope.$watch('$ctrl.previewNodes', (nodes) => {
+            if (nodes && nodes.length) {
+                this.showPreview(nodes.length > 1 ? nodes : nodes[0]);
+            } else {
+                this.onSingleClose();
+            }
         });
     }
 
-    onGraphComplete(nodes) {
-        this.nodeMap = nodes;
+    initTool() {
+        let tool = this.$state.params.tool;
+        if (this.toolId && !tool) {
+            this.fetchTool(this.toolId);
+        } else if (tool) {
+            this.loadTool(tool);
+        } else if (!this.toolId) {
+            this.$state.go('lab.browse.tools');
+        }
     }
 
     onToolParameterChange(nodeid, project, band, override, renderDef, position) {
+        // TODO re-write this for redux pattern
         if (project && typeof band === 'number' && band >= 0) {
             this.toolService.updateToolRunSource(this.tool, nodeid, project.id, band);
         }
@@ -99,8 +116,7 @@ class LabToolController {
         const toolSavePromise = this.toolService.updateToolRun(
             Object.assign(
                 {},
-                this.tool,
-                { id: this.$state.params.toolid, name: this.toolName }
+                this.tool
             )
         ).then(() => {
             if (this.isShowingPreview) {
@@ -223,7 +239,11 @@ class LabToolController {
             // eslint-disable-next-line max-len
             let toolNode = this.findNodeinToolDefinition(node, this.tool.executionParameters);
             if (toolNode.type === 'projectSrc') {
-                return this.projectService.getProjectLayerURL(toolNode.projId, {token: token});
+                return this.projectService.getProjectLayerURL({
+                    id: toolNode.projId
+                }, {
+                    token: token
+                });
             }
             return `${this.tileServer}/tools/${this.tool.id}/{z}/{x}/{y}
                     ?token=${token}&node=${node}&tag=${new Date().getTime()}`;
@@ -311,6 +331,8 @@ class LabToolController {
     }
 
     showPreview(data) {
+        // TODO adjust lab diagram center so when the preview opens,
+        //      the center of the lab stays at the center of the div
         let defaultSplit = 40;
         if (!this.tool) {
             return;
@@ -502,10 +524,6 @@ class LabToolController {
         this.showPreview(this.previewData);
     }
 
-    onGraphComplete(nodes) {
-        this.nodeMap = nodes;
-    }
-
     onLeftSelect(id) {
         this.previewData[0] = id;
         this.showPreview(this.previewData);
@@ -533,6 +551,16 @@ class LabToolController {
 
     onSingleClose() {
         this.onPreviewClose();
+    }
+
+    onCompareClick() {
+        if (!Array.isArray(this.previewData)) {
+            this.previewData = [this.previewData, this.previewData];
+            this.showPreview(this.previewData);
+        } else {
+            this.previewData = this.previewData[0];
+            this.showPreview(this.previewData);
+        }
     }
 }
 

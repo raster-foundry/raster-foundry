@@ -15,11 +15,8 @@
         </div>
         <rf-diagram-container
             class="with-position"
-            tool-definition="$ctrl.templateDefinition"
-            on-parameter-change="$ctrl.onToolParameterChange(
-                   nodeId, project, band, override, position
-                   )">
-        </rf-diagram-container>
+            ng-if="$ctrl.tool"
+        ></rf-diagram-container>
       </div>
     </div>
     <div class="lab-footer"
