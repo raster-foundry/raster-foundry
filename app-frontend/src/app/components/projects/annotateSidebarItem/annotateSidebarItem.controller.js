@@ -73,19 +73,22 @@ export default class AnnotateSidebarItemController {
     onLabelNameChange() {
         if (this.labelNameInput.length >= 3) {
             this.matchLabelName(this.labelNameInput);
+        } else {
+            this.showMatchedLabels = false;
         }
         this.isInvalid = false;
     }
 
     matchLabelName(labelName) {
-        this.labelInputsMatch = this.labelInputs.reduce((accu, label) => {
-            if (label.name.includes(labelName)) {
-                accu.push(label);
-            }
-            return accu;
-        }, []);
+        this.labelInputsMatch = this.labelInputs.filter((label) => {
+            return label.name.toString().toUpperCase().includes(labelName.toString().toUpperCase());
+        });
         if (this.labelInputsMatch.length) {
             this.showMatchedLabels = true;
+            this.labelInputsMatch.sort((a, b) => a.name.length - b.name.length);
+            if (this.labelInputsMatch.length >= 4) {
+                this.labelInputsMatch = this.labelInputsMatch.slice(0, 4);
+            }
         }
     }
 
