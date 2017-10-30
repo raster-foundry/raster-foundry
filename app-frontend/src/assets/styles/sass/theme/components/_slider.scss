@@ -1,0 +1,24 @@
+.rzslider {
+
+  .rz-bar {
+    background: $shade-light;
+    height: 7px;
+  }
+
+  .rz-pointer {
+    top: -5px;
+    border-radius: 50%;
+    background-color: $brand-primary;
+    width: 17px;
+    height: 17px;
+  }
+
+  .rz-ticks .rz-tick {
+    top: 2px;
+    background-color: darken($shade-light, 10%);
+
+    .rz-tick-value {
+      color: rgba($text-base, .5);
+    }
+  }
+}
