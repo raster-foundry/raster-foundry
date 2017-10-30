@@ -750,9 +750,9 @@ paths:
         - $ref: '#/parameters/AnnotationQualityCheck'
       responses:
         200:
-          description: Geojson feature collection containing paginated annotations of this project
+          description: GeoJSON feature collection containing paginated annotations of this project
           schema:
-            $ref: '#/definitions/AnnotationFeatureCollection'
+            $ref: '#/definitions/AnnotationFeatureCollectionPaginated'
 
     post:
       summary: Create annotations of this project
@@ -767,7 +767,7 @@ paths:
             $ref: '#/definitions/AnnotationFeatureCollectionCreate'
       responses:
         201:
-          description: Geojson annotations successfully created
+          description: GeoJSON annotations successfully created
           schema:
             $ref: '#/definitions/AnnotationFeatureCollection'
         default:
@@ -786,7 +786,7 @@ paths:
         - $ref: '#/parameters/uuid2'
       responses:
         200:
-          description: Geojson feature containing one annotation from this project
+          description: GeoJSON feature containing one annotation from this project
           schema:
             $ref: '#/definitions/AnnotationFeature'
 
@@ -2601,7 +2601,7 @@ definitions:
         - id
   Geometry:
       type: object
-      description: GeoJSon geometry
+      description: GeoJSON geometry
       discriminator: type
       required:
         - type
@@ -2626,7 +2626,7 @@ definitions:
         type: number
   MultiPolygon:
       type: object
-      description: GeoJson geometry
+      description: GeoJSON geometry
       externalDocs:
         url: https://tools.ietf.org/html/rfc7946#section-3.1
       allOf:
@@ -3473,7 +3473,7 @@ definitions:
         description: epsg projection code
       mask:
         type: object
-        description: geojson multipolygon
+        description: GeoJSON multipolygon
       stitch:
         type: boolean
         description: stitch tiles into a single geotiff if possible
@@ -3510,7 +3510,7 @@ definitions:
         description: "required resolution (currently it's zoom level)"
       mask:
         type: object
-        description: geojson multipolygon
+        description: GeoJSON multipolygon
       layers:
         type: object
         properties:
@@ -3663,7 +3663,20 @@ definitions:
       features:
         type: array
         items:
-          $ref: "#/definitions/AnnotationFeature"
+          $ref: '#/definitions/AnnotationFeature'
+
+  AnnotationFeatureCollectionPaginated:
+    type: object
+    allOf:
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          type:
+            type: string
+          features:
+            type: array
+            items:
+              $ref: '#/definitions/AnnotationFeature'
 
   AnnotationFeatureCollectionCreate:
     type: object
@@ -3673,4 +3686,4 @@ definitions:
       features:
         type: array
         items:
-          $ref: "#/definitions/AnnotationFeatureCreate"
+          $ref: '#/definitions/AnnotationFeatureCreate'
