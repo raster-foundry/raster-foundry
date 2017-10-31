@@ -25,7 +25,6 @@
   "dependencies": {
     "@turf/area": "^4.7.3",
     "@turf/distance": "^4.7.3",
-    "angucomplete-alt": "^3.0.0",
     "angular": "~1.5.8",
     "angular-animate": "~1.5.8",
     "angular-aria": "~1.5.8",

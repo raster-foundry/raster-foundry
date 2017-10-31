@@ -124,10 +124,6 @@ amdefine@>=0.0.4:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/amdefine/-/amdefine-1.0.1.tgz#4a5282ac164729e93619bcfd3ad151f817ce91f5"
 
-angucomplete-alt@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/angucomplete-alt/-/angucomplete-alt-3.0.0.tgz#7c59bec4e9b7f9563a0dc6153c83386e4ac251df"
-
 angular-animate@~1.5.8:
   version "1.5.11"
   resolved "https://registry.yarnpkg.com/angular-animate/-/angular-animate-1.5.11.tgz#1baa43c303d1b93c4e6aa89453b39114b7a1c669"
