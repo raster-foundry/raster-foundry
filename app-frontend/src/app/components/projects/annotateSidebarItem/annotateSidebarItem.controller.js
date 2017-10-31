@@ -1,15 +1,16 @@
-/* globals L, $*/
-
 export default class AnnotateSidebarItemController {
     constructor(
-        $log, $scope
+        $log, $scope, $timeout
     ) {
         'ngInject';
         this.$log = $log;
         this.$scope = $scope;
+        this.$timeout = $timeout;
     }
 
     $onInit() {
+        this.minMatchedLabelLength = 3;
+        this.maxMatchedLabels = 4;
     }
 
     onAnnotationClone($event, annotation) {
@@ -71,23 +72,23 @@ export default class AnnotateSidebarItemController {
     }
 
     onLabelNameChange() {
-        if (this.labelNameInput.length >= 3) {
-            this.matchLabelName(this.labelNameInput);
-        } else {
-            this.showMatchedLabels = false;
-        }
+        this.showMatchedLabels = false;
         this.isInvalid = false;
+        if (this.labelNameInput.length >= this.minMatchedLabelLength) {
+            this.matchLabelName(this.labelNameInput);
+        }
     }
 
     matchLabelName(labelName) {
+        let normalizedLabel = labelName.toString().toUpperCase();
         this.labelInputsMatch = this.labelInputs.filter((label) => {
-            return label.name.toString().toUpperCase().includes(labelName.toString().toUpperCase());
+            return label.name.toString().toUpperCase().includes(normalizedLabel);
         });
         if (this.labelInputsMatch.length) {
             this.showMatchedLabels = true;
             this.labelInputsMatch.sort((a, b) => a.name.length - b.name.length);
-            if (this.labelInputsMatch.length >= 4) {
-                this.labelInputsMatch = this.labelInputsMatch.slice(0, 4);
+            if (this.labelInputsMatch.length >= this.maxMatchedLabels) {
+                this.labelInputsMatch = this.labelInputsMatch.slice(0, this.maxMatchedLabels);
             }
         }
     }
@@ -95,9 +96,22 @@ export default class AnnotateSidebarItemController {
     onSelectLabelName(labelName) {
         this.labelNameInput = labelName.name;
         this.showMatchedLabels = false;
+        this.isMouseOnLabelOption = false;
     }
 
-    onTextFieldClick() {
-        this.showMatchedLabels = false;
+    onLabelFieldBlur() {
+        if (!this.isMouseOnLabelOption) {
+            this.showMatchedLabels = false;
+        }
+    }
+
+    onLabelFieldFocus() {
+        if (this.labelNameInput.length >= this.minMatchedLabelLength) {
+            this.matchLabelName(this.labelNameInput);
+        }
+    }
+
+    onHoverOption(isMouseHovered) {
+        this.isMouseOnLabelOption = isMouseHovered;
     }
 }

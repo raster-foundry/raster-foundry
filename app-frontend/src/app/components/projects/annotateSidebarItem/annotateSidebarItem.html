@@ -56,20 +56,22 @@
              ng-model="$ctrl.labelNameInput"
              ng-change="$ctrl.onLabelNameChange()"
              ng-class="{'is-invalid': $ctrl.isInvalid }"
-             ng-blur="$ctrl.showMatchedLabels = false"
-             ng-focus="$ctrl.showMatchedLabels = true"
+             ng-blur="$ctrl.onLabelFieldBlur()"
+             ng-focus="$ctrl.onLabelFieldFocus()"
              placeholder="{{$ctrl.annotation.properties.label || 'Label name...'}}">
       <div class="label-name-selections"
            ng-if="$ctrl.showMatchedLabels">
         <div class="label-name-option"
              ng-repeat="label in $ctrl.labelInputsMatch"
-             ng-click="$ctrl.onSelectLabelName(label)">
+             ng-click="$ctrl.onSelectLabelName(label)"
+             ng-mouseover="$ctrl.onHoverOption(true)"
+             ng-mouseleave="$ctrl.onHoverOption(false)">
              {{label.name}}
         </div>
       </div>
     <textarea class="form-control label-text"
               ng-init="$ctrl.newLabelDescription = $ctrl.annotation.properties.description"
-              ng-click="$ctrl.onTextFieldClick()"
+
               ng-model="$ctrl.newLabelDescription"
               ng-if="!$ctrl.annotation.geometry || ($ctrl.editId === $ctrl.annotation.properties.id)"
               placeholder="Description..."></textarea>
