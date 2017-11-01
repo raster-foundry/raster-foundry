@@ -3592,9 +3592,10 @@ definitions:
           qualityCheck:
             type: string
             enum:
-              - PASS
-              - FAIL
-              - NEUTRAL
+              - YES
+              - NO
+              - MISS
+              - MATCH
           projectId:
             type: string
             format: uuid
@@ -3621,9 +3622,10 @@ definitions:
           qualityCheck:
             type: string
             enum:
-              - PASS
-              - FAIL
-              - NEUTRAL
+              - YES
+              - NO
+              - MISS
+              - MATCH
       geometry:
         $ref: "#/definitions/Geometry"
 
@@ -3649,9 +3651,10 @@ definitions:
           qualityCheck:
             type: string
             enum:
-              - PASS
-              - FAIL
-              - NEUTRAL
+              - YES
+              - NO
+              - MISS
+              - MATCH
       geometry:
         $ref: "#/definitions/Geometry"
 
