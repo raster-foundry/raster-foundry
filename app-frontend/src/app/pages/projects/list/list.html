@@ -42,15 +42,14 @@
       </div>
       <!-- No project placeholder -->
 
-
       <p class="font-size-small"
-         ng-if="!$ctrl.searchString"
+         ng-if="(!$ctrl.searchString && $ctrl.pagination.count > 0)"
       >
        Showing {{$ctrl.pagination.startingItem}} - {{$ctrl.pagination.endingItem}} of {{$ctrl.pagination.count}} projects
       </p>
 
       <p class="font-size-small"
-         ng-if="$ctrl.searchString"
+         ng-if="($ctrl.searchString && $ctrl.pagination.count > 0)"
       >
         Showing results for "{{$ctrl.searchString}}"
       </p>
