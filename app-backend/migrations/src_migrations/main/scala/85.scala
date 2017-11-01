@@ -2,7 +2,7 @@ import slick.driver.PostgresDriver.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M85 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(84)(List(
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(85)(List(
     sqlu"""
 UPDATE datasources SET (composites) = (
   '{
