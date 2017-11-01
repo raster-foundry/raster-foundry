@@ -45,7 +45,7 @@ trait AWSBatch extends RollbarNotifier with LazyLogging {
   def kickoffSceneIngest(sceneId: UUID) = {
     val jobDefinition = awsbatchConfig.ingestJobName
     val jobName = s"$jobDefinition-$sceneId"
-    submitJobRequest(jobDefinition, awsbatchConfig.jobQueue, Map("sceneId" -> s"$sceneId"), jobName)
+    submitJobRequest(jobDefinition, awsbatchConfig.ingestJobQueue, Map("sceneId" -> s"$sceneId"), jobName)
   }
 
   def kickoffSceneImport(uploadId: UUID) = {
