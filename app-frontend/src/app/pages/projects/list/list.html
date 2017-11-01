@@ -42,17 +42,17 @@
       </div>
       <!-- No project placeholder -->
 
-      <p class="font-size-small"
+      <div class="result-stats"
          ng-if="(!$ctrl.searchString && $ctrl.pagination.count > 0)"
       >
        Showing {{$ctrl.pagination.startingItem}} - {{$ctrl.pagination.endingItem}} of {{$ctrl.pagination.count}} projects
-      </p>
+      </div>
 
-      <p class="font-size-small"
+      <div class="result-stats"
          ng-if="($ctrl.searchString && $ctrl.pagination.count > 0)"
       >
         Showing results for "{{$ctrl.searchString}}"
-      </p>
+      </div>
 
       <!-- Project List -->
       <div ng-if="!$ctrl.loading && $ctrl.projectList.length > 0" class="row stack-xs">
