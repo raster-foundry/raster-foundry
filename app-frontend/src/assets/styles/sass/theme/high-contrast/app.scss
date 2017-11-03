@@ -1,23 +1,24 @@
 /* 
- * Raster Foundry theming
- * Be sure to uncomment the theme declarations in 
- * styles/sass/app.scss
-
- * To override default variables see theme settings
- * Theme settings: styles/sass/theme/settings
-
- * Use this file to declare overrides to default theme
- * example: .btn {padding: 50px;}
+ * High contrast theme
  */
 
 /* * * *
  * Settings
  * * * */
 @import
- "theme/settings/colors",
- "theme/settings/fonts",
- "theme/settings/variables";
+ "settings/colors",
+ "settings/fonts",
+ "settings/variables";
 
+/* * * *
+ * All required imports
+ * * * */
+@import "../../imports";
+
+
+/* * * *
+ * Import overrides
+ * * * */
 @import
   "base/typography";
 
