@@ -2,6 +2,12 @@
 const cloudCoverRange = {min: 0, max: 100};
 const sunElevationRange = {min: 0, max: 180};
 const sunAzimuthRange = {min: 0, max: 360};
+const planetItemTypes = [
+  {itemType: 'PSScene3Band', name: 'PlanetScope Scenes - 3 band'},
+  {itemType: 'PSScene4Band', name: 'PlanetScope Scenes - 4 band'},
+  {itemType: 'PSOrthoTile', name: 'PlanetScope OrthoTiles'},
+  {itemType: 'REOrthoTile', name: 'RapidEye OrthoTiles'}
+];
 
 export default class FilterPaneController {
     constructor($log, $scope, $rootScope, $timeout, modalService,
@@ -47,11 +53,13 @@ export default class FilterPaneController {
 
     onSelectBrowseSource(browseSource) {
         if (browseSource !== this.selectedBrowseSource) {
-            if (browseSource === 'Planet Labs' && !this.userPlanetCredential) {
-                this.connectToPlanet();
-            } else {
-                this.selectedBrowseSource = browseSource;
+            if (browseSource === 'Planet Labs') {
+                if (!this.userPlanetCredential) {
+                    this.connectToPlanet();
+                }
+                this.onPassPlanetToken({planetToken: this.userPlanetCredential});
             }
+            this.selectedBrowseSource = browseSource;
             this.clearDatasourceFilter();
             this.initDataSourceFilters();
             this.onFilterChange({
@@ -99,9 +107,17 @@ export default class FilterPaneController {
                 }
             });
         } else if (this.selectedBrowseSource === 'Planet Labs') {
-            // TODO: use planet service to get planet imagery datasource
-            this.datasources = [];
-            this.selectedDatasource = '';
+            this.datasources = planetItemTypes;
+            if (this.filters && this.filters.datasource && this.filters.datasource[0]) {
+                let matchedSource = this.datasources.find((ds) => {
+                    return ds.itemType === this.filters.datasource[0];
+                });
+                if (matchedSource) {
+                    this.selectedDatasource = matchedSource.name;
+                } else {
+                    this.selectedDatasource = '';
+                }
+            }
         }
     }
 
@@ -263,7 +279,11 @@ export default class FilterPaneController {
     }
 
     toggleSourceFilter(source) {
-        this.onFilterUpdate({datasource: [source.id]});
+        if (this.selectedBrowseSource === 'Raster Foundry') {
+            this.onFilterUpdate({datasource: [source.id]});
+        } else if (this.selectedBrowseSource === 'Planet Labs') {
+            this.onFilterUpdate({datasource: [source.itemType]});
+        }
     }
 
     clearDatasourceFilter() {

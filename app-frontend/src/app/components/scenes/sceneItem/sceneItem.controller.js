@@ -11,10 +11,12 @@ export default class SceneItemController {
     $onInit() {
         this.datasourceLoaded = false;
 
-        this.datasourceService.get(this.scene.datasource).then(d => {
-            this.datasourceLoaded = true;
-            this.datasource = d;
-        });
+        if (this.isRfScene) {
+            this.datasourceService.get(this.scene.datasource).then(d => {
+                this.datasourceLoaded = true;
+                this.datasource = d;
+            });
+        }
 
         if (this.isDraggable) {
             Object.assign(this.$scope.$parent.$treeScope.$callbacks, {

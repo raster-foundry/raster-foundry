@@ -20,12 +20,14 @@ export default (app) => {
         }
 
         filterScenes(apiKey, requestBody) {
+            // eslint-disable-next-line no-undef
+            let token = btoa(apiKey + ':');
             let req = {
                 'method': 'POST',
                 'url': 'https://api.planet.com/data/v1/quick-search',
                 'headers': {
                     'Content-Type': 'application/json',
-                    'Authorization': 'Basic ' + apiKey
+                    'Authorization': 'Basic ' + token
                 },
                 data: requestBody
             };
@@ -34,11 +36,13 @@ export default (app) => {
         }
 
         getFilteredScenesNextPage(apiKey, link) {
+            // eslint-disable-next-line no-undef
+            let token = btoa(apiKey + ':');
             let req = {
                 'method': 'GET',
                 'url': link,
                 'headers': {
-                    'Authorization': 'Basic ' + apiKey
+                    'Authorization': 'Basic ' + token
                 }
             };
 
@@ -46,11 +50,13 @@ export default (app) => {
         }
 
         getThumbnail(apiKey, link) {
+            // eslint-disable-next-line no-undef
+            let token = btoa(apiKey + ':');
             let req = {
                 'method': 'GET',
                 'url': link,
                 'headers': {
-                    'Authorization': 'Basic ' + apiKey,
+                    'Authorization': 'Basic ' + token,
                     'Content-Type': 'arraybuffer'
                 }
             };

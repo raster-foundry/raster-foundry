@@ -13,7 +13,8 @@ const rfSceneItem = {
 
         selected: '<?',
         onSelect: '&?',
-        isDisabled: '<?'
+        isDisabled: '<?',
+        isRfScene: '<?'
     }
 };
 

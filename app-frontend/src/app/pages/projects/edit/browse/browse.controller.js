@@ -5,10 +5,9 @@ const _ = require('lodash');
 export default class ProjectAddScenesBrowseController {
     constructor( // eslint-disable-line max-params
         $log, $state, modalService, $scope, $timeout, mapService, sceneService,
-        projectService, gridLayerService, sessionStorage
+        projectService, gridLayerService, sessionStorage, planetLabsService, authService
     ) {
         'ngInject';
-        this.mapService = mapService;
         this.$parent = $scope.$parent.$ctrl;
         this.$log = $log;
         this.$state = $state;
@@ -20,6 +19,8 @@ export default class ProjectAddScenesBrowseController {
         this.gridLayerService = gridLayerService;
         this.sessionStorage = sessionStorage;
         this.mapService = mapService;
+        this.planetLabsService = planetLabsService;
+        this.authService = authService;
 
         this.getMap = () => this.mapService.getMap('edit');
         this.getPreviewMap = () => this.mapService.getMap('preview');
@@ -52,9 +53,7 @@ export default class ProjectAddScenesBrowseController {
             this.initWatchers();
             this.initMap();
             if (this.queryParams && this.queryParams.dataRepo
-              && this.queryParams.dataRepo === 'Planet Labs') {
-                  // TODO: load planet data
-            } else {
+              && this.queryParams.dataRepo === 'Raster Foundry') {
                 this.requestNewSceneList();
             }
         }
@@ -68,6 +67,13 @@ export default class ProjectAddScenesBrowseController {
             });
             this.selectNoScenes();
         });
+
+        this.authService.getCurrentUser().then((user) => {
+            this.planetKey = user.planetCredential;
+        });
+
+        this.isRfScene = true;
+        this.sourceRepo = 'Raster Foundry';
     }
 
     initParams() {
@@ -254,13 +260,17 @@ export default class ProjectAddScenesBrowseController {
      * @return {array} lat/lon coordinates specifying bounding box corners ([[0,0], [1.0, 1.0]])
      */
     parseBBoxString(bboxString) {
-        let coordsStrings = bboxString.split(',');
-        let coords = _.map(coordsStrings, str => parseFloat(str));
-        // Leaflet expects nested coordinate arrays
-        return [
-            [coords[1], coords[0]],
-            [coords[3], coords[2]]
-        ];
+        let bbox = [];
+        if (bboxString && bboxString.length) {
+            let coordsStrings = bboxString.split(',');
+            let coords = _.map(coordsStrings, str => parseFloat(str));
+            // Leaflet expects nested coordinate arrays
+            bbox = [
+                [coords[1], coords[0]],
+                [coords[3], coords[2]]
+            ];
+        }
+        return bbox;
     }
 
     onStateChangeStart(event, toState, toParams, fromState) {
@@ -289,12 +299,14 @@ export default class ProjectAddScenesBrowseController {
     }
 
     onQueryParamsChange() {
-        const filterObject = Object.assign(this.queryParams, {
+        let filterObject = Object.assign(this.queryParams, {
             forProjectId: this.project.id,
             dataRepo: this.sourceRepo
         });
-        this.sessionStorage.set('filters', filterObject);
+
         if (this.sourceRepo === 'Raster Foundry') {
+            this.isRfScene = true;
+            this.sessionStorage.set('filters', filterObject);
             this.$state.go('.', this.getCombinedParams(), {
                 notify: false,
                 inherit: false,
@@ -302,10 +314,154 @@ export default class ProjectAddScenesBrowseController {
             });
             this.requestNewSceneList();
         } else if (this.sourceRepo === 'Planet Labs') {
+            this.planetSceneCounts = 0;
+            this.isRfScene = false;
             this.sceneList = [];
+            this.currentSceneList = [];
             delete this.lastSceneResult;
-            // TODO: call methods that use planet service to get scenes
+            this.requestPlanetSceneList();
         }
+    }
+
+    constructRequestBody(params, bbox) {
+        let ds = params.datasource && params.datasource.length ? params.datasource :
+            ['PSScene3Band', 'PSScene4Band', 'PSOrthoTile', 'REOrthoTile'];
+        let config = Object.keys(params).map((key) => {
+            if (key === 'maxAcquisitionDatetime' && params[key]) {
+                return {
+                    'type': 'DateRangeFilter',
+                    'field_name': 'acquired',
+                    'config': {
+                        'gte': params.minAcquisitionDatetime,
+                        'lte': params.maxAcquisitionDatetime
+                    }
+                };
+            } else if (key === 'maxCloudCover' && params[key]) {
+                return {
+                    'type': 'RangeFilter',
+                    'field_name': 'cloud_cover',
+                    'config': {
+                        'gte': params.minCloudCover || 0,
+                        'lte': params.maxCloudCover || 100
+                    }
+                };
+            } else if (key === 'maxSunAzimuth' && params[key]) {
+                return {
+                    'type': 'RangeFilter',
+                    'field_name': 'sun_azimuth',
+                    'config': {
+                        'gte': params.minSunAzimuth || 0,
+                        'lte': params.maxSunAzimuth || 360
+                    }
+                };
+            } else if (key === 'maxSunElevation' && params[key]) {
+                return {
+                    'type': 'RangeFilter',
+                    'field_name': 'sun_elevation',
+                    'config': {
+                        'gte': params.minSunElevation || 0,
+                        'lte': params.maxSunElevation || 180
+                    }
+                };
+            }
+            return null;
+        });
+
+        let permission = [{
+            'type': 'PermissionFilter',
+            'config': ['assets.analytic:download']
+        }];
+
+        let bboxFilter = [{
+            'type': 'GeometryFilter',
+            'field_name': 'geometry',
+            'config': {
+                'type': 'Polygon',
+                'coordinates': [
+                    [
+                        [bbox.getNorthEast().lng, bbox.getNorthEast().lat],
+                        [bbox.getSouthEast().lng, bbox.getSouthEast().lat],
+                        [bbox.getSouthWest().lng, bbox.getSouthWest().lat],
+                        [bbox.getNorthWest().lng, bbox.getNorthWest().lat],
+                        [bbox.getNorthEast().lng, bbox.getNorthEast().lat]
+                    ]
+                ]
+            }
+        }];
+
+        return {
+            'item_types': ds,
+            'filter': {
+                'type': 'AndFilter',
+                'config': _.compact(config.concat(permission).concat(bboxFilter))
+            }
+        };
+    }
+
+    requestPlanetSceneList() {
+        this.isLoadingPlanetScenes = true;
+        let params = Object.assign({}, this.queryParams);
+        let bbox = params.bbox ? L.latLngBounds(this.parseBBoxString(params.bbox)) :
+            L.latLngBounds(this.parseBBoxString(this.bboxCoords));
+
+        let requestBody = this.constructRequestBody(params, bbox);
+
+        this.planetLabsService.filterScenes(
+          this.planetKey, requestBody
+        ).then((res) => {
+            if (res.status === 200) {
+                this.isLoadingPlanetScenes = false;
+                this.planetSceneCounts = res.data.features.length;
+                this.planetSceneChunks = this.reshapePlanetSceneData(res.data);
+                this.sceneList = _.head(this.planetSceneChunks);
+                this.currentSceneList = _.cloneDeep(this.sceneList);
+            }
+        }, (err) => {
+            this.$log.log(err);
+        });
+    }
+
+    reshapePlanetSceneData(planetScenes) {
+        // TODO: may need to further reshape planet data property to match RF data properties
+        // eslint-disable-next-line no-underscore-dangle
+        this.planetScenesNextPageLink = planetScenes._links._next;
+        if (this.planetScenesNextPageLink && this.planetScenesNextPageLink.length) {
+            this.hasMorePlanetPages = true;
+        } else {
+            this.hasMorePlanetPages = false;
+        }
+        let scenes = planetScenes.features.map((feature) => {
+            return {
+                id: feature.id,
+                createdAt: feature.properties.acquired,
+                createdBy: 'planet',
+                modifiedAt: feature.properties.published,
+                modifiedBy: 'planet',
+                owner: 'planet',
+                datasource: feature.properties.provider,
+                sceneMetadata: feature.properties,
+                name: feature.properties.item_type,
+                tileFootprint: {
+                    type: 'Polygon',
+                    coordinates: feature.geometry.coordinates
+                },
+                dataFootprint: {
+                    type: 'Polygon',
+                    coordinates: feature.geometry.coordinates
+                },
+                // eslint-disable-next-line no-underscore-dangle
+                thumbnails: [{url: feature._links.thumbnail}],
+                filterFields: {
+                    cloudCover: feature.properties.cloud_cover,
+                    acquisitionDate: feature.properties.acquired,
+                    sunAzimuth: feature.properties.sun_azimuth,
+                    sunElevation: feature.properties.sun_elevation
+                },
+                statusFields: {}
+            };
+        });
+
+        return _.chunk(scenes, 15);
     }
 
     getCombinedParams() {
@@ -313,13 +469,25 @@ export default class ProjectAddScenesBrowseController {
     }
 
     updateSceneGrid() {
-        if (this.gridLayer) {
-            this.gridLayer.updateParams(this.queryParams);
+        if (this.sourceRepo === 'Raster Foundry') {
+            if (this.gridLayer) {
+                this.gridLayer.updateParams(this.queryParams);
+            }
         }
     }
 
     onFilterChange(newFilters, sourceRepo) {
         this.sourceRepo = sourceRepo;
+
+        this.getMap().then(mapWrapper => {
+            if (this.sourceRepo === 'Planet Labs' && mapWrapper.getLayers('canvasGrid')) {
+                mapWrapper.hideLayers('canvasGrid', false);
+            } else if (this.sourceRepo === 'Raster Foundry' && mapWrapper.getLayers('canvasGrid')
+                  && mapWrapper.getLayerVisibility('canvasGrid') === 'hidden') {
+                mapWrapper.showLayers('canvasGrid', true);
+            }
+        });
+
         let newParams = Object.assign({}, this.filters);
         Object.keys(newFilters).forEach((filterProperty) => {
             if (newFilters[filterProperty] !== null) {
@@ -332,12 +500,12 @@ export default class ProjectAddScenesBrowseController {
         this.queryParams = Object.assign({
             bbox: this.queryParams.bbox
         }, newParams);
-
         this.onQueryParamsChange();
         this.updateSceneGrid();
     }
 
     onViewChange(newBounds, newCenter, zoom) {
+        // This sometimes gives 400 status code under planet data filter.
         this.bboxCoords = newBounds.toBBoxString();
         this.$parent.zoom = zoom;
         this.$parent.center = newCenter;
@@ -350,31 +518,37 @@ export default class ProjectAddScenesBrowseController {
     }
 
     setHoveredScene(scene) {
-        if (scene !== this.hoveredScene) {
-            this.hoveredScene = scene;
-            this.getMap().then((map) => {
-                map.setThumbnail(scene);
-            });
+        if (this.sourceRepo === 'Raster Foundry') {
+            if (scene !== this.hoveredScene) {
+                this.hoveredScene = scene;
+                this.getMap().then((map) => {
+                    map.setThumbnail(scene);
+                });
+            }
         }
     }
 
     removeHoveredScene() {
-        this.getMap().then((map) => {
-            delete this.hoveredScene;
-            map.deleteThumbnail();
-        });
+        if (this.sourceRepo === 'Raster Foundry') {
+            this.getMap().then((map) => {
+                delete this.hoveredScene;
+                map.deleteThumbnail();
+            });
+        }
     }
 
     setSelected(scene, selected) {
-        this.getMap().then((map) => {
-            if (selected) {
-                this.selectedScenes = this.selectedScenes.set(scene.id, scene);
-                map.setThumbnail(scene, false, true);
-            } else {
-                this.selectedScenes = this.selectedScenes.delete(scene.id);
-                map.deleteThumbnail(scene);
-            }
-        });
+        if (this.sourceRepo === 'Raster Foundry') {
+            this.getMap().then((map) => {
+                if (selected) {
+                    this.selectedScenes.set(scene.id, scene);
+                    map.setThumbnail(scene, false, true);
+                } else {
+                    this.selectedScenes.delete(scene.id);
+                    map.deleteThumbnail(scene);
+                }
+            });
+        }
     }
 
     isSelected(scene) {
@@ -517,15 +691,66 @@ export default class ProjectAddScenesBrowseController {
     }
 
     openSceneDetailModal(scene) {
-        this.modalService.open({
-            component: 'rfSceneDetailModal',
-            resolve: {
-                scene: () => scene
+        if (this.sourceRepo === 'Raster Foundry') {
+            if (this.activeModal) {
+                this.activeModal.dismiss();
             }
-        });
+
+            this.activeModal = this.modalService.open({
+                component: 'rfSceneDetailModal',
+                resolve: {
+                    scene: () => scene
+                }
+            });
+        }
     }
 
     onCloseFilterPane(showFilterPane) {
         this.showFilterPane = showFilterPane;
+    }
+
+    onPassPlanetToken(planetToken) {
+        this.planetKey = planetToken;
+    }
+
+    loadMorePlanetScenes() {
+        if (this.planetSceneChunks.length && this.sceneList.length) {
+            let currentListIndex = this.planetSceneChunks.indexOf(this.currentSceneList);
+            let isLastListInBatch = currentListIndex === this.planetSceneChunks.length - 1;
+
+            if (isLastListInBatch) {
+                this.requestMorePlanetScenes();
+            } else {
+                this.currentSceneList = this.planetSceneChunks[currentListIndex + 1];
+                // TODO: get thumbnails of these new scenes here
+                this.sceneList = _.uniqBy(this.sceneList.concat(this.currentSceneList), 'id');
+            }
+        }
+    }
+
+    requestMorePlanetScenes() {
+        if (this.hasMorePlanetPages) {
+            this.isLoadingPlanetScenes = true;
+            this.planetLabsService.getFilteredScenesNextPage(
+              this.planetKey, this.planetScenesNextPageLink).then(
+                  (res) => {
+                      if (res.status === 200) {
+                          let newPlanetSceneChunks = this.reshapePlanetSceneData(res.data);
+
+                          this.isLoadingPlanetScenes = false;
+                          this.planetSceneCounts += res.data.features.length;
+                          this.planetSceneChunks = this.planetSceneChunks
+                            .concat(newPlanetSceneChunks);
+                          this.currentSceneList = _.head(newPlanetSceneChunks);
+                          this.sceneList = _.uniqBy(
+                            this.sceneList.concat(this.currentSceneList),
+                            'id');
+                      }
+                  },
+                  (err) => {
+                      this.$log.log(err);
+                  }
+              );
+        }
     }
 }

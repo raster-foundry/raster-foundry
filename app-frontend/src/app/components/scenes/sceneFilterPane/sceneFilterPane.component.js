@@ -7,7 +7,8 @@ const rfSceneFilterPane = {
         filters: '<',
         opened: '<',
         onFilterChange: '&',
-        onCloseFilterPane: '&'
+        onCloseFilterPane: '&',
+        onPassPlanetToken: '&'
     }
 };
 

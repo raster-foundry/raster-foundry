@@ -2,11 +2,15 @@
   <div ng-if="$ctrl.isDraggable" ui-tree-handle>
     <i class="icon-gripper"></i>
   </div>
-  <rf-status-tag entity-type="scene" status="$ctrl.scene.statusFields.ingestStatus"></rf-status-tag>
-  <img ng-if="$ctrl.scene.thumbnails[0]"
+  <rf-status-tag entity-type="scene"
+                 status="$ctrl.scene.statusFields.ingestStatus"
+                 ng-if="$ctrl.isRfScene"></rf-status-tag>
+  <img ng-if="$ctrl.isRfScene && $ctrl.scene.thumbnails[0]"
        ng-attr-src="{{$ctrl.thumbnailService.getBestFitUrl($ctrl.scene.thumbnails, 75)}}"
        class="rounded-img item-img">
-  <div ng-if="!$ctrl.scene.thumbnails.length"
+  <div ng-if="$ctrl.isRfScene && !$ctrl.scene.thumbnails.length"
+       class="rounded-img item-img image-placeholder"></div>
+  <div ng-if="!$ctrl.isRfScene"
        class="rounded-img item-img image-placeholder"></div>
   <div class="list-group-overflow">
     <div>
@@ -17,7 +21,10 @@
       </span>
     </div>
     <div>
-      <span title="{{$ctrl.datasource.name}}">{{$ctrl.datasourceLoaded ? $ctrl.datasource.name : 'Loading datasource'}}</span>
+      <span title="{{$ctrl.datasource.name}}"
+            ng-if="$ctrl.isRfScene">{{$ctrl.datasourceLoaded ? $ctrl.datasource.name : 'Loading datasource'}}</span>
+      <span title="{{$ctrl.scene.name}}"
+            ng-if="!$ctrl.isRfScene">{{$ctrl.scene.name}}</span>
     </div>
   </div>
   <div class="list-group-right">
