@@ -8,7 +8,7 @@
   <div class="list-group">
     <div class="list-group-item sidebar-actions-group">
       <label>Project Visibility</label>
-      <div class="column-6 nogutter btn-group">
+      <div class="list-group-right btn-group">
         <button class="btn btn-default"
                 ng-repeat="policy in $ctrl.sharePolicies"
                 ng-if="policy.enabled"
@@ -21,7 +21,7 @@
     </div>
     <div class="list-group-item sidebar-actions-group">
       <label>Share Page</label>
-      <div class="column-6 nogutter btn-group">
+      <div class="list-group-right btn-group">
         <button class="btn btn-default"
                 clipboard text="$ctrl.shareUrl">
           Copy
@@ -34,7 +34,7 @@
     </div>
     <div class="list-group-item sidebar-actions-group">
       <label>ZXY Tile Layer URL</label>
-      <div class="column-6 nogutter btn-group">
+      <div class="list-group-right btn-group">
         <button clipboard text="$ctrl.tileLayerUrls.standard" class="btn btn-default">
           Copy
         </button>
@@ -42,7 +42,7 @@
     </div>
     <div class="list-group-item sidebar-actions-group">
       <label>ArcGIS Tile Layer URL</label>
-      <div class="column-6 nogutter btn-group">
+      <div class="list-group-right btn-group">
         <button clipboard text="$ctrl.tileLayerUrls.arcGIS" class="btn btn-default">
           Copy
         </button>
@@ -50,7 +50,7 @@
     </div>
     <div class="list-group-item sidebar-actions-group">
       <label>Map Token</label>
-      <div class="column-6 nogutter btn-group">
+      <div class="list-group-right btn-group">
         <button clipboard text="$ctrl.mapToken.id" class="btn btn-default">
           Copy
         </button>
