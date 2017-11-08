@@ -17,7 +17,7 @@
           {{policy.label}}
         </button>
       </div>
-    <i class="icon-info"></i>
+    <i class="icon-info" title="Allow your project to be viewed without a map token"></i>
   </li>
   <li class="separator">
     <div class="label">
@@ -33,7 +33,7 @@
           Open
         </button>
       </div>
-    <i class="icon-info"></i>
+    <i class="icon-info" ng-attr-title="{{$ctrl.shareUrl}}"></i>
   </li>
   <li class="separator">
     <div class="label">
@@ -42,7 +42,7 @@
     <button clipboard text="$ctrl.tileLayerUrls.standard" class="btn btn-default fixedwidth">
       Copy
     </button>
-    <i class="icon-info"></i>
+    <i class="icon-info" ng-attr-title="{{$ctrl.tileLayerUrls.standard}}"></i>
   </li>
   <li class="separator">
     <div class="label">
@@ -51,7 +51,7 @@
     <button clipboard text="$ctrl.tileLayerUrls.arcGIS" class="btn btn-default fixedwidth">
       Copy
     </button>
-    <i class="icon-info"></i>
+    <i class="icon-info" ng-attr-title="{{$ctrl.tileLayerUrls.arcGIS}}"></i>
   </li>
   <li class="separator" ng-if="$ctrl.activePolicy.enum === 'PRIVATE'">
     <div class="label">
@@ -60,6 +60,6 @@
     <button clipboard text="$ctrl.mapToken.id" class="btn btn-default fixedwidth">
       Copy
     </button>
-    <i class="icon-info"></i>
+    <i class="icon-info" ng-attr-title="{{$ctrl.mapToken.id}}"></i>
   </li>
 </ul>
