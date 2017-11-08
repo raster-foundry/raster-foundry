@@ -12,6 +12,11 @@
     </div>
   </div>
 </div>
+<div class="sidebar-overlay" ng-show="!$ctrl.corrections || $ctrl.isLoading">
+  <div class="sidebar-loading">
+    <span class="icon-load animate-spin"></span>
+  </div>
+</div>
 <div class="sidebar-scrollable">
   <div class="list-group" ng-if="!$ctrl.isLoading">
     <div class="list-group-item list-group-item-stacked"

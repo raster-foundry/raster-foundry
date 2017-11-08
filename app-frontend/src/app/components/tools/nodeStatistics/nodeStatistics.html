@@ -4,7 +4,7 @@
          ng-if="$ctrl.shouldShowStats()"
     >
         <div class="classify-node-class header">{{label}}</div>
-        <div class="classify-node-class">{{value | setDecimal : 5}}</div>
+        <div class="classify-node-class">{{$ctrl.parseStatValDisplay(value)}}</div>
     </div>
 
     <div class="classify-node-preview-row with-border"
@@ -12,7 +12,7 @@
         ng-if="$ctrl.shouldShowEmptyStats()"
     >
        <div class="classify-node-class header">{{label}}</div>
-       <div class="classify-node-class">{{value | setDecimal : 5}}</div>
+       <div class="classify-node-class">{{$ctrl.parseStatValDisplay(value)}}</div>
     </div>
 </div>
 <div class="node-controls overlayed" ng-if="$ctrl.shouldShowEmptyStats()">

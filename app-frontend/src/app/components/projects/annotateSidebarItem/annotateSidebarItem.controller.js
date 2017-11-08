@@ -1,15 +1,16 @@
-/* globals L, $*/
-
 export default class AnnotateSidebarItemController {
     constructor(
-        $log, $scope
+        $log, $scope, $timeout
     ) {
         'ngInject';
         this.$log = $log;
         this.$scope = $scope;
+        this.$timeout = $timeout;
     }
 
     $onInit() {
+        this.minMatchedLabelLength = 3;
+        this.maxMatchedLabels = 4;
     }
 
     onAnnotationClone($event, annotation) {
@@ -47,16 +48,14 @@ export default class AnnotateSidebarItemController {
     }
 
     updateAnnotation(annotation) {
-        if (this.labelObj) {
+        if (this.labelNameInput) {
             this.isInvalid = false;
-            this.newLabelName
-                = this.labelObj.originalObject.name || this.labelObj.originalObject;
-        } else if (annotation.properties.label) {
-            this.isInvalid = false;
-            this.newLabelName = annotation.properties.label;
+            this.newLabelName = this.labelNameInput;
         } else {
             this.isInvalid = true;
         }
+
+        this.showMatchedLabels = false;
 
         if (this.newLabelName) {
             this.onUpdateAnnotationFinish({
@@ -70,5 +69,49 @@ export default class AnnotateSidebarItemController {
 
     onQaCheck(annotation, qa) {
         this.onQaChecked({annotation, qa});
+    }
+
+    onLabelNameChange() {
+        this.showMatchedLabels = false;
+        this.isInvalid = false;
+        if (this.labelNameInput.length >= this.minMatchedLabelLength) {
+            this.matchLabelName(this.labelNameInput);
+        }
+    }
+
+    matchLabelName(labelName) {
+        let normalizedLabel = labelName.toString().toUpperCase();
+        this.labelInputsMatch = this.labelInputs.filter((label) => {
+            return label.name.toString().toUpperCase().includes(normalizedLabel);
+        });
+        if (this.labelInputsMatch.length) {
+            this.showMatchedLabels = true;
+            this.labelInputsMatch.sort((a, b) => a.name.length - b.name.length);
+            if (this.labelInputsMatch.length >= this.maxMatchedLabels) {
+                this.labelInputsMatch = this.labelInputsMatch.slice(0, this.maxMatchedLabels);
+            }
+        }
+    }
+
+    onSelectLabelName(labelName) {
+        this.labelNameInput = labelName.name;
+        this.showMatchedLabels = false;
+        this.isMouseOnLabelOption = false;
+    }
+
+    onLabelFieldBlur() {
+        if (!this.isMouseOnLabelOption) {
+            this.showMatchedLabels = false;
+        }
+    }
+
+    onLabelFieldFocus() {
+        if (this.labelNameInput.length >= this.minMatchedLabelLength) {
+            this.matchLabelName(this.labelNameInput);
+        }
+    }
+
+    onHoverOption(isMouseHovered) {
+        this.isMouseOnLabelOption = isMouseHovered;
     }
 }
