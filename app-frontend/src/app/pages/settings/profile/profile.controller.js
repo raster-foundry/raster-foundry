@@ -18,8 +18,8 @@ class ProfileController {
             facebook: 'Facebook',
             twitter: 'Twitter'
         };
-        this.provider = this.profile.identities[0].provider;
-        this.providerName = providerMap[this.provider];
+        // this.provider = this.profile.identities[0].provider;
+        // this.providerName = providerMap[this.provider];
 
         this.env = process.env.NODE_ENV;
     }

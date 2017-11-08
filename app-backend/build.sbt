@@ -28,6 +28,7 @@ lazy val commonSettings = Seq(
   resolvers ++= Seq(
     Resolver.sonatypeRepo("snapshots"),
     Resolver.bintrayRepo("lonelyplanet", "maven"),
+    Resolver.bintrayRepo("guizmaii", "maven"),
     Resolver.bintrayRepo("kwark", "maven") // Required for Slick 3.1.1.2, see https://github.com/azavea/raster-foundry/pull/1576
   ),
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
@@ -150,6 +151,8 @@ lazy val common = Project("common", file("common"))
   .settings({libraryDependencies ++= testDependencies ++ Seq(
     Dependencies.jwtCore,
     Dependencies.json4s,
+    Dependencies.jwtCirce,
+    "com.guizmaii" %% "scala-nimbus-jose-jwt" % "0.6.0",
     Dependencies.jwtJson,
     Dependencies.akka,
     Dependencies.akkahttp,

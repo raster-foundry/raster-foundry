@@ -126,9 +126,9 @@ trait UploadRoutes extends Authentication
   }
 
   def getUploadCredentials(uploadId: UUID): Route = authenticate { user =>
-    validateTokenHeader { jwt =>
+    authenticateWithParameter { jwt =>
       onSuccess(readOne[Upload](Uploads.getUpload(uploadId, user))) {
-        case Some(_) => complete(Auth0DelegationService.getCredentials(user, uploadId, jwt))
+        case Some(_) => complete(Auth0DelegationService.getCredentials(user, uploadId, jwt.toString))
         case None => complete(StatusCodes.NotFound)
       }
     }

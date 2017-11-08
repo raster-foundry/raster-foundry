@@ -101,7 +101,7 @@ object TokenService extends Config {
     val params = FormData(
       "api_type" -> "app",
       "grant_type" -> "refresh_token",
-      "scope" -> "openid",
+      "scope" -> "openid offline_access",
       "refresh_token" -> rt.refresh_token,
       "client_id" -> auth0ClientId,
       "target" -> auth0ClientId

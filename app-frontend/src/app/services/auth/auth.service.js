@@ -20,6 +20,7 @@ export default (app) => {
             this.featureFlagOverrides = featureFlagOverrides;
             this.intercomService = intercomService;
             this.rollbarWrapperService = rollbarWrapperService;
+            this.APP_CONFIG = APP_CONFIG;
 
             if (!APP_CONFIG.error) {
                 this.initAuth0(APP_CONFIG);
@@ -44,9 +45,14 @@ export default (app) => {
         initAuth0(APP_CONFIG) {
             let loginOptions = {
                 closable: false,
+                oidcConformant: true,
                 auth: {
-                    redirect: false,
-                    sso: true
+                    redirect: true,
+                    sso: true,
+                    params: {
+                        scope: 'openid',
+                        audience: 'https://raster-foundry-dev.auth0.com/api/v2/'
+                    }
                 },
                 theme: {
                     logo: assetLogo,
@@ -71,11 +77,13 @@ export default (app) => {
                 initialScreen: 'forgotPassword',
                 allowLogin: false,
                 closable: true,
+                oidcConformant: true,
                 prefill: {
                     email: this.profile() && this.profile().email
                 },
                 auth: {
-                    redirect: false,
+                    redirect: true,
+                    audience: 'https://raster-foundry-dev.auth0.com/api/v2/',
                     sso: true
                 },
                 theme: {
@@ -93,6 +101,7 @@ export default (app) => {
             );
 
             let tokenCreateOptions = {
+                oidcConformant: true,
                 initialScreen: 'login',
                 allowLogin: true,
                 allowSignUp: false,
@@ -101,13 +110,33 @@ export default (app) => {
                 rememberLastLogin: false,
                 closable: true,
                 auth: {
-                    redirect: false,
-                    sso: true
+                    grant_type: 'authorization_code',
+                    redirect: true,
+                    sso: true,
+                    audience: 'https://' + APP_CONFIG.auth0Domain + '/api/v2/',
+                    params: {
+                        scope: 'openid offline_access',
+                        responseType: 'code',
+                        audience: 'https://raster-foundry-dev.auth0.com/api/v2/'
+                    }
                 },
                 theme: {
                     logo: assetLogo,
                     primaryColor: '#5e509b'
-                }
+                },
+                additionalSignUpFields: [{
+                    name: 'companyName',
+                    placeholder: 'Company name'
+                }, {
+                    name: 'companySize',
+                    placeholder: 'How large is your company?'
+                }, {
+                    name: 'reference',
+                    placeholder: 'How\'d you find out about us?'
+                }, {
+                    name: 'phoneNumber',
+                    placeholder: 'Phone Number'
+                }]
             };
 
             this.tokenCreateLock = new Auth0Lock(
@@ -165,12 +194,11 @@ export default (app) => {
             this.localStorage.set('id_token', authResult.idToken);
 
             this.setReauthentication(authResult.idToken);
-
-            this.loginLock.getProfile(authResult.idToken, (error, profile) => {
+            this.loginLock.getUserInfo(authResult.accessToken, (error, profile) => {
                 if (error) {
                     return;
                 }
-
+                
                 this.localStorage.set('profile', profile);
 
                 if (typeof heap !== 'undefined' &&
@@ -260,6 +288,7 @@ export default (app) => {
         createRefreshToken(name) {
             this.promise = this.$q.defer();
             this.lastTokenName = name;
+            console.log(name);
             this.tokenCreateLock.show({
                 auth: {
                     params: {
