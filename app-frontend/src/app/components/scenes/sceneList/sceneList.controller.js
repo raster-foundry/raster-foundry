@@ -16,7 +16,6 @@ export default class SceneListController {
             {
                 label: 'Download',
                 onClick: this.downloadModal.bind(this),
-                buttonClass: 'btn-secondary',
                 iconClass: 'icon-download'
             },
             {
