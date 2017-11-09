@@ -45,9 +45,9 @@
     <nav>
       <div ng-if="$ctrl.authService.isLoggedIn" uib-dropdown class="dropdown-my-account" on-toggle="toggled($ctrl.optionsOpen)">
         <a href uib-dropdown-toggle>
-          <img ng-if="$ctrl.authService.profile().picture" class="avatar" ng-src="{{$ctrl.authService.profile().picture}}">
-          <div class="avatar image-placeholder" ng-if="$ctrl.authService.profile() && !$ctrl.authService.profile().picture"></div>
-          <span class="username">{{$ctrl.authService.profile().nickname}}</span>
+          <img ng-if="$ctrl.authService.getProfile().picture" class="avatar" ng-src="{{$ctrl.authService.getProfile().picture}}">
+          <div class="avatar image-placeholder" ng-if="$ctrl.authService.getProfile() && !$ctrl.authService.getProfile().picture"></div>
+          <span class="username">{{$ctrl.authService.getProfile().nickname}}</span>
           <i class="icon-caret-down"></i>
         </a>
         <ul class="dropdown-menu" aria-labelledby="dLabel">

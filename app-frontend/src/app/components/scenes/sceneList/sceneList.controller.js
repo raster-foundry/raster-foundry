@@ -51,7 +51,7 @@ export default class SceneListController {
                 sort: 'createdAt,desc',
                 pageSize: '10',
                 page: page - 1,
-                owner: this.authService.profile().user_id
+                owner: this.authService.getProfile().sub
             }
         ).then((sceneResult) => {
             this.lastSceneResult = sceneResult;

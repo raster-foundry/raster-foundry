@@ -34,7 +34,7 @@ export default (app) => {
         }
 
         updateUserMetadata(userdata) {
-            let id = this.authService.profile().user_id;
+            let id = this.authService.getProfile().sub;
             return this.UserMetadata.patch(
                 {userid: id},
                 {user_metadata: userdata} // eslint-disable-line camelcase
