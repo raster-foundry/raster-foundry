@@ -17,7 +17,7 @@
 
 
 /* * * *
- * Import overrides
+ * Default theme overrides
  * * * */
 @import
   "base/typography";
@@ -29,11 +29,13 @@
   "layout/sidebar";
 
 @import
+  "components/annotation",
   "components/button",
   "components/dropdown",
   "components/filter",
   "components/form",
   "components/map-controls",
+  "components/lab-node",
   "components/pagination",
   "components/panel",
   "components/slider";
