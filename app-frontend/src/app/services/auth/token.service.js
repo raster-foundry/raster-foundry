@@ -2,10 +2,12 @@
 
 export default (app) => {
     class TokenService {
-        constructor($resource, $q, $log) {
+        constructor($resource, $q, $log, APP_CONFIG, authService) {
             'ngInject';
             this.$q = $q;
             this.$log = $log;
+            this.APP_CONFIG = APP_CONFIG;
+            this.authService = authService;
 
             this.ApiToken = $resource(
                 `${BUILDCONFIG.API_HOST}/api/tokens/:id`, {
@@ -52,6 +54,24 @@ export default (app) => {
                     }
                 }
             );
+
+            this.auth0Token = $resource(
+                `https://${APP_CONFIG.auth0Domain}/oauth/token`,
+                {}, {
+                    create: {
+                        method: 'POST'
+                    }
+                }
+            );
+        }
+
+        createApiToken(code) {
+            return this.auth0Token.create({
+                'grant_type': 'authorization_code',
+                'client_id': this.APP_CONFIG.clientId,
+                'redirect_uri': `${this.authService.getBaseURL()}/settings/tokens/api`,
+                code
+            }).$promise;
         }
 
         queryApiTokens(params = {}) {

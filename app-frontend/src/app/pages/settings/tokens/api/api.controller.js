@@ -1,14 +1,34 @@
 class ApiTokensController {
-    constructor($log, $uibModal, tokenService, authService) {
+    constructor($log, $uibModal, $stateParams, $state, tokenService, authService, APP_CONFIG) {
         'ngInject';
         this.$log = $log;
 
         this.tokenService = tokenService;
         this.authService = authService;
         this.$uibModal = $uibModal;
+        this.$stateParams = $stateParams;
+        this.APP_CONFIG = APP_CONFIG;
+        this.$state = $state;
         this.loading = true;
 
         this.fetchTokens();
+    }
+
+    $onInit() {
+        if (this.$stateParams.code) {
+            this.tokenService
+                .createApiToken(this.$stateParams.code)
+                .then((authResult) => {
+                    this.$uibModal.open({
+                        component: 'rfRefreshTokenModal',
+                        resolve: {
+                            refreshToken: () => authResult.refresh_token,
+                            name: () => 'Refresh Token'
+                        }
+                    });
+                });
+            this.$state.go('.', {code: null, state: null}, {notify: false});
+        }
     }
 
     fetchTokens() {
