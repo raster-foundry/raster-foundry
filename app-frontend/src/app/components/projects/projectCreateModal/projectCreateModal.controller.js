@@ -1,3 +1,5 @@
+/* global BUILDCONFIG */
+
 export default class ProjectCreateModalController {
     constructor($state, projectService, $uibModal) {
         'ngInject';
@@ -7,6 +9,7 @@ export default class ProjectCreateModalController {
     }
 
     $onInit() {
+        this.BUILDCONFIG = BUILDCONFIG;
         this.steps = [
             'TYPE',
             'ADD_SCENES'

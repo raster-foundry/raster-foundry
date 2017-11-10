@@ -55,7 +55,7 @@ export default (app) => {
                 },
                 theme: {
                     logo: assetLogo,
-                    primaryColor: '#5e509b'
+                    primaryColor: BUILDCONFIG.AUTH0_PRIMARY_COLOR
                 },
                 additionalSignUpFields: [{
                     name: 'companyName',
@@ -85,7 +85,7 @@ export default (app) => {
                 },
                 theme: {
                     logo: assetLogo,
-                    primaryColor: '#5e509b'
+                    primaryColor: BUILDCONFIG.AUTH0_PRIMARY_COLOR
                 }
             };
 
@@ -111,7 +111,7 @@ export default (app) => {
                 },
                 theme: {
                     logo: assetLogo,
-                    primaryColor: '#5e509b'
+                    primaryColor: BUILDCONFIG.AUTH0_PRIMARY_COLOR
                 }
             };
 

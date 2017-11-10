@@ -1,3 +1,4 @@
+/* global BUILDCONFIG */
 class LabBrowseToolsController {
     constructor($state, toolService) {
         'ngInject';
@@ -6,6 +7,7 @@ class LabBrowseToolsController {
     }
 
     $onInit() {
+        this.BUILDCONFIG = BUILDCONFIG;
         this.fetchToolList(this.$state.params.page);
     }
 

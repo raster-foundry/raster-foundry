@@ -89,7 +89,7 @@
       <div ng-if="$ctrl.importType === 'S3'">
         <p>
           Enter the the S3 URI that points to where imagery is located.
-          The import process will import any imagery found in that location into Raster Foundry.
+          The import process will import any imagery found in that location into {{$ctrl.BUILDCONFIG.APP_NAME}}.
         </p>
         <form>
           <div class="form-group">
@@ -150,7 +150,7 @@
     <div class="content">
       <h3 class="no-margin">Local File Import</h3>
       <ng-container ng-if="!$ctrl.shouldShowFileList()">
-        <p>Select imagery files from your computer and we'll import them into Raster Foundry Scenes. Raster Foundry currently allows for uploading GeoTIFF files only.</p>
+        <p>Select imagery files from your computer and we'll import them into {{$ctrl.BUILDCONFIG.APP_NAME}} Scenes. {{$ctrl.BUILDCONFIG.APP_NAME}} currently allows for uploading GeoTIFF files only.</p>
         <div class="text-center">
           <button class="btn btn-primary"
                   ngf-multiple=true
@@ -297,7 +297,7 @@
     <div class="content">
       <h3 class="no-margin">Success!</h3>
       <p>
-        Your scenes are importing into Raster Foundry now.
+        Your scenes are importing into {{$ctrl.BUILDCONFIG.APP_NAME}} now.
         This may take some time and we will notify you when the process is complete.
         In the meantime checkout your Notification Center for up to date information on all of your projects.
       </p>

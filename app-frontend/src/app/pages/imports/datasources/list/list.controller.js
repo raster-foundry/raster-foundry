@@ -1,3 +1,5 @@
+/* global BUILDCONFIG */
+
 class DatasourceListController {
     constructor($state, datasourceService) {
         'ngInject';
@@ -6,6 +8,7 @@ class DatasourceListController {
     }
 
     $onInit() {
+        this.BUILDCONFIG = BUILDCONFIG;
         this.datasources = {};
         this.currentPage = 1;
         this.pageSize = 10;

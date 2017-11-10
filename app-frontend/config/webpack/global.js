@@ -270,6 +270,7 @@ module.exports = function (_path) {
                     HERE_APP_CODE: JSON.stringify(HERE_APP_CODE),
                     INTERCOM_APP_ID: JSON.stringify(INTERCOM_APP_ID),
                     THEME: JSON.stringify('default'),
+                    AUTH0_PRIMARY_COLOR: JSON.stringify('#465076'),
                     LOGOFILE: JSON.stringify(false),
                     LOGOURL: JSON.stringify(false)
                 }
