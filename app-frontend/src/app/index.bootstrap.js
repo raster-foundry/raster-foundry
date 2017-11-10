@@ -6,7 +6,11 @@ import '!!file-loader?name=[name].[ext]!../favicon.ico';
 // main App module
 import './index.module';
 
-import '../assets/styles/sass/app.scss';
+if (!BUILDCONFIG.THEME || BUILDCONFIG.THEME === 'default') {
+    require('../assets/styles/sass/app.scss');
+} else if (BUILDCONFIG.THEME) {
+    require(`../assets/styles/sass/theme/${BUILDCONFIG.THEME}/app.scss`);
+}
 
 import deferredBootstrapper from 'angular-deferred-bootstrap';
 

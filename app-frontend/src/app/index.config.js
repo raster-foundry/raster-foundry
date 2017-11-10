@@ -1,6 +1,10 @@
-/* globals process */
+/* globals process, BUILDCONFIG */
 
-import assetLogo from '../assets/images/logo-raster-foundry.png';
+if (BUILDCONFIG.LOGOFILE) {
+    require(`../assets/images/${BUILDCONFIG.LOGOFILE}`);
+} else {
+    require('../assets/images/logo-raster-foundry.png');
+}
 
 
 function config( // eslint-disable-line max-params

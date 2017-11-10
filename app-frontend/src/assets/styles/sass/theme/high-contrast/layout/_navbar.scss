@@ -108,9 +108,7 @@ $logoBase64: #{'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcm
 .brand {
   padding: 1rem 1.9rem;
   img {
-    content: url($logoBase64);
-    width: 50px;
+    max-width: 50px;
     height: 3.9rem;
-    max-width: none;
   }
 }

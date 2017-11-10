@@ -263,12 +263,15 @@ module.exports = function (_path) {
             }),
             new webpack.DefinePlugin({
                 'BUILDCONFIG': {
-                    APP_NAME: '\'Raster Foundry\'',
+                    APP_NAME: JSON.stringify('Raster Foundry'),
                     BASEMAPS: basemaps,
-                    API_HOST: '\'\'',
-                    HERE_APP_ID: '\'' + HERE_APP_ID + '\'',
-                    HERE_APP_CODE: '\'' + HERE_APP_CODE + '\'',
-                    INTERCOM_APP_ID: '\'' + INTERCOM_APP_ID + '\''
+                    API_HOST: JSON.stringify(''),
+                    HERE_APP_ID: JSON.stringify(HERE_APP_ID),
+                    HERE_APP_CODE: JSON.stringify(HERE_APP_CODE),
+                    INTERCOM_APP_ID: JSON.stringify(INTERCOM_APP_ID),
+                    THEME: JSON.stringify('default'),
+                    LOGOFILE: JSON.stringify(false),
+                    LOGOURL: JSON.stringify(false)
                 }
             })
         ]
