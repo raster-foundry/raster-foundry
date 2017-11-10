@@ -273,7 +273,8 @@ module.exports = function (_path) {
                     AUTH0_PRIMARY_COLOR: JSON.stringify('#465076'),
                     LOGOFILE: JSON.stringify('raster-foundry-logo.svg'),
                     LOGOURL: JSON.stringify(false),
-                    FAVICON_DIR: JSON.stringify('/favicon')
+                    FAVICON_DIR: JSON.stringify('/favicon'),
+                    FEED_SOURCE: JSON.stringify('https://blog.rasterfoundry.com/latest?format=json')
                 }
             })
         ]

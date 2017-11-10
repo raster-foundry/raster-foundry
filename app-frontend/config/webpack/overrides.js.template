@@ -1,12 +1,18 @@
 'use strict';
-/* globals module */
+/* globals process module */
 /* no-console: 0 */
 
-const webpack = require('webpack');
 const path = require('path');
+const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+
 const NODE_ENV = process.env.NODE_ENV || 'production';
 const DEVELOPMENT = NODE_ENV === 'production' ? false : true;
+
+const HERE_APP_ID = 'v88MqS5fQgxuHyIWJYX7';
+const HERE_APP_CODE = '5pn07ENomTHOap0u7nQSFA';
+
+const INTERCOM_APP_ID = '';
 
 const basemaps = JSON.stringify({
     layers: {

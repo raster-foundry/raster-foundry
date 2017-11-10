@@ -267,3 +267,8 @@ case class AnnotationQueryParameters(
   maxConfidence: Option[Double] = None,
   quality: Option[String] = None
 )
+
+@JsonCodec
+case class FeedQueryParameters(
+  source: Option[String] = None
+)
