@@ -56,7 +56,7 @@
             </p>
             <a class="btn btn-light" ui-sref="settings.profile">Manage account</a>
           </section>
-          <section>
+          <section ng-if="$ctrl.blogPosts && $ctrl.blogPosts.length">
             <h5>From our blog</h5>
             <ul class="list-unstyled">
               <li ng-repeat="post in $ctrl.blogPosts">

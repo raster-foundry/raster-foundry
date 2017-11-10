@@ -13,7 +13,8 @@ export default (app) => {
             return this.$q((resolve, reject) => {
                 this.$http({
                     method: 'GET',
-                    url: `${BUILDCONFIG.API_HOST}/api/feed`
+                    url: `${BUILDCONFIG.API_HOST}/api/feed/` +
+                        `?source=${BUILDCONFIG.FEED_SOURCE}`
                 }).then(response => {
                     let raw = response.data;
                     try {

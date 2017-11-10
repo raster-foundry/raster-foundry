@@ -1671,6 +1671,8 @@ paths:
   /feed/:
     get:
       summary: Get the cached RSS feed
+      parameters:
+        - $ref: '#/parameters/source'
       tags:
         - Users
       responses:
@@ -2210,6 +2212,12 @@ parameters:
       - COMPLETE
       - FAILED
       - ABORTED
+  source:
+    name: source
+    description: Feed source URI
+    in: query
+    type: string
+    required: false
 
 definitions:
   RenderDefinition:
