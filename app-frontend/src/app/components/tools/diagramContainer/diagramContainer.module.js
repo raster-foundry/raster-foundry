@@ -48,6 +48,8 @@ class DiagramContainerController {
     mapStateToThis(state) {
         return {
             tool: state.lab.tool,
+            readonly: state.lab.readonly,
+            selectingNode: state.lab.selectingNode,
             selectedNode: state.lab.selectedNode,
             reduxState: state
         };
@@ -153,7 +155,7 @@ class DiagramContainerController {
                 thickness: 1
             });
             // this.paper.on('cell:pointerdown', this.onCellClick.bind(this));
-            this.paper.on('blank:pointerclick', this.onPaperClick.bind(this));
+            // this.paper.on('blank:pointerclick', this.onPaperClick.bind(this));
             this.paper.on('blank:pointerdown', () => {
                 this.panActive = true;
                 this.$scope.$evalAsync();
@@ -306,13 +308,6 @@ class DiagramContainerController {
         }
     }
 
-    onPaperClick() {
-        if (this.selectedNode) {
-            this.finishNodeCompare({nodeId: null});
-        }
-    }
-
-
     onShapeMove(nodeId, position) {
         // TODO redux update node position
         let node = getNodeDefinition(this.reduxState, {nodeId});
@@ -328,6 +323,36 @@ class DiagramContainerController {
             }
         );
         this.debouncedUpdateNode({payload: updatedNode});
+    }
+
+    onPreviewClick() {
+        if (!this.selectingNode) {
+            this.startNodePreview();
+        } else {
+            this.cancelNodeSelect();
+        }
+    }
+
+    onCompareClick() {
+        if (!this.selectingNode) {
+            this.startNodeCompare();
+        } else {
+            this.cancelNodeSelect();
+        }
+    }
+
+    canUseAction(action) {
+        switch (action) {
+        case 'preview':
+            return !this.selectingNode || this.selectingNode === 'preview';
+        case 'compare':
+        case 'select':
+            return !this.selectingNode ||
+                this.selectingNode === 'compare' ||
+                this.selectingNode === 'select';
+        default:
+            return false;
+        }
     }
 }
 

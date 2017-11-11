@@ -9,21 +9,46 @@ export const nodeReducer = typeToReducer({
         return Object.assign({}, state, {nodes: action.payload});
     },
     [NODE_PREVIEWS]: {
-        START_COMPARE: (state, action) => {
-            return Object.assign({}, state, {selectedNode: action.nodeId});
+        START_PREVIEW: (state) => {
+            return Object.assign({}, state, {selectingNode: 'preview'});
         },
-        FINISH_COMPARE: (state, action) => {
+        START_COMPARE: (state) => {
+            return Object.assign({}, state, {selectingNode: 'compare'});
+        },
+        SELECT_NODE: (state, action) => {
+            if (state.selectingNode === 'compare') {
+                return Object.assign({}, state, {
+                    selectingNode: 'select',
+                    selectedNode: action.nodeId
+                });
+            } else if (state.selectingNode === 'select') {
+                return Object.assign({}, state, {
+                    selectingNode: null,
+                    selectedNode: null,
+                    showMap: true,
+                    previewNodes: [state.selectedNode, action.nodeId]
+                });
+            }
             return Object.assign({}, state, {
-                previewNodes: [state.selectedNode, action.nodeId],
+                selectingNode: null,
+                selectedNode: null,
                 showMap: true,
-                selectedNode: null
+                previewNodes: [action.nodeId]
             });
         },
-        CANCEL_COMPARE: (state) => {
-            return Object.assign({}, state, {selectedNode: null});
+        COMPARE_NODES: (state, action) => {
+            return Object.assign({}, state, {
+                selectingNodes: null,
+                selectedNode: null,
+                showMap: true,
+                previewNodes: [...action.nodes]
+            });
         },
-        SINGLE: (state, action) => {
-            return Object.assign({}, state, {showMap: true, previewNodes: [action.payload]});
+        CANCEL_SELECT: (state) => {
+            return Object.assign({}, state, {
+                selectingNode: null,
+                selectedNode: null
+            });
         }
     },
     [NODE_SET_ERROR]: (state, action) => {

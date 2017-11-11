@@ -39,7 +39,7 @@ class NodeSelectorController {
                 return node.type !== 'const';
             }).map(({id, metadata}) => ({id, label: metadata.label})) :
             [];
-        this.updateSelected(nodes, this.selected);
+        this.updateSelected(nodes, this.selected.id ? this.selected.id : this.selected);
 
         return {
             nodes,
@@ -60,7 +60,8 @@ class NodeSelectorController {
             this.setPosition(changes.position.currentValue);
         }
         if (changes.selected && changes.selected.currentValue) {
-            this.updateSelected(this.nodes, changes.selected.currentValue);
+            let selected = changes.selected.currentValue;
+            this.updateSelected(this.nodes, selected.id ? selected.id : selected);
             this.$scope.$evalAsync();
             if (this.position) {
                 this.$scope.$evalAsync(() => {
@@ -131,9 +132,9 @@ class NodeSelectorController {
         }
     }
 
-    selectNode(node) {
+    onNodeSelect(node) {
         this.selected = node.id;
-        this.onSelect({node: node.id, side: this.side});
+        this.onSelect({node: node.id});
         this.showSearch = false;
         this.selectFilter = '';
         this.$timeout(() => this.setPosition(this.position), 100);

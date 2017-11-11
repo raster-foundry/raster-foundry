@@ -21,7 +21,7 @@
     <div class="node-selections">
       <div class="node-option"
            ng-class="{'selected': node.id === $ctrl.selected}"
-           ng-click="$ctrl.selectNode(node)"
+           ng-click="$ctrl.onNodeSelect(node)"
            ng-attr-title="{{node.label}}"
            ng-repeat="node in $ctrl.nodeArray | filter:{label: $ctrl.selectFilter}">
         {{node.label}}

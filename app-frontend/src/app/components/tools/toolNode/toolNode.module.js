@@ -6,26 +6,47 @@ import NodeActions from '../../../redux/actions/node-actions';
 import { getNodeDefinition } from '../../../redux/node-utils';
 
 class ToolNodeController {
-    constructor($ngRedux, $scope, $log) {
+    constructor($ngRedux, $scope, $log, $element) {
         'ngInject';
         this.$log = $log;
+        this.$element = $element;
 
         let unsubscribe = $ngRedux.connect(
             this.mapStateToThis.bind(this),
             Object.assign({}, LabActions, NodeActions)
         )(this);
         $scope.$on('$destroy', unsubscribe);
+
         $scope.$watch('$ctrl.readonly', (readonly) => {
             if (readonly && !this.isCollapsed) {
                 this.toggleCollapse();
             }
         });
+        $scope.$watch('$ctrl.selectingNode', (selectingNode) => {
+            if (selectingNode) {
+                this.$element.addClass('selectable');
+            } else {
+                this.$element.removeClass('selectable');
+            }
+        });
+        $scope.$watch('$ctrl.selectedNode', (selectedNode) => {
+            if (selectedNode === this.nodeId) {
+                this.$element.addClass('selected');
+            } else {
+                this.$element.removeClass('selected');
+            }
+        });
+    }
+
+    $postLink() {
+        this.$element.bind('click', this.onNodeClick.bind(this));
     }
 
     mapStateToThis(state) {
         return {
             readonly: state.lab.readonly,
             tool: state.lab.tool,
+            selectingNode: state.lab.selectingNode,
             selectedNode: state.lab.selectedNode,
             toolErrors: state.lab.toolErrors,
             node: getNodeDefinition(state, this)
@@ -47,7 +68,9 @@ class ToolNodeController {
     }
 
     preview() {
-        this.previewNode(this.nodeId);
+        if (!this.selectingNode) {
+            this.selectNode(this.nodeId);
+        }
     }
 
     toggleHistogram() {
@@ -120,6 +143,13 @@ class ToolNodeController {
             this.currentView === 'BODY' &&
                 !this.isCollapsed
         );
+    }
+
+    onNodeClick(event) {
+        if (this.selectingNode && this.selectedNode !== this.nodeId) {
+            event.stopPropagation();
+            this.selectNode(this.nodeId);
+        }
     }
 }
 

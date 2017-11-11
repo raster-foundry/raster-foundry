@@ -1,6 +1,7 @@
 /* global L */
 import { FrameView } from '../../../components/map/labMap/frame.module.js';
 import LabActions from '../../../redux/actions/lab-actions';
+import NodeActions from '../../../redux/actions/node-actions';
 
 class LabToolController {
     constructor(
@@ -18,7 +19,10 @@ class LabToolController {
         this.$document = $document;
         this.$uibModal = $uibModal;
 
-        let unsubscribe = $ngRedux.connect(this.mapStateToThis, LabActions)(this);
+        let unsubscribe = $ngRedux.connect(
+            this.mapStateToThis,
+            Object.assign({}, LabActions, NodeActions)
+        )(this);
         $scope.$on('$destroy', unsubscribe);
 
         this.getMap = () => mapService.getMap('tool-preview');
@@ -34,6 +38,7 @@ class LabToolController {
     mapStateToThis(state) {
         return {
             tool: state.lab.tool,
+            nodes: state.lab.nodes,
             previewNodes: state.lab.previewNodes,
             apiToken: state.api.apiToken
         };
@@ -228,16 +233,18 @@ class LabToolController {
         return outQ;
     }
 
-    findNodeinToolDefinition(node, toolDefinition) {
+    findNodeinToolDefinition(nodeId, toolDefinition) {
         let flattenedToolDefinition = this.flattenToolDefinition(toolDefinition);
-        return flattenedToolDefinition.find((n) => n.id === node);
+        return flattenedToolDefinition.find((n) => n.id === nodeId);
     }
 
     getNodeUrl(node) {
         let token = this.authService.token();
         if (this.tool) {
             // eslint-disable-next-line max-len
-            let toolNode = this.findNodeinToolDefinition(node, this.tool.executionParameters);
+            let id = node.id ? node.id : node;
+            let toolNode = this.nodes.get(id);
+            // let toolNode = this.findNodeinToolDefinition(id, this.tool.executionParameters);
             if (toolNode.type === 'projectSrc') {
                 return this.projectService.getProjectLayerURL({
                     id: toolNode.projId
@@ -516,7 +523,7 @@ class LabToolController {
     }
 
     get singlePreviewSelection() {
-        return this.previewData;
+        return !Array.isArray(this.previewData) && this.previewData;
     }
 
     onNodeClose(side) {

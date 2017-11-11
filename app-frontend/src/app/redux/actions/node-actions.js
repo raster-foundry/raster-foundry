@@ -14,29 +14,35 @@ import { toolFromNodes } from '../node-utils';
 
 // Node ActionCreators
 
-export function previewNode(nodeId) {
+export function startNodePreview() {
     return {
-        type: `${NODE_PREVIEWS}_SINGLE`,
-        payload: nodeId
+        type: `${NODE_PREVIEWS}_START_PREVIEW`
     };
 }
 
-export function startNodeCompare({nodeId}) {
+export function startNodeCompare() {
     return {
-        type: `${NODE_PREVIEWS}_START_COMPARE`,
+        type: `${NODE_PREVIEWS}_START_COMPARE`
+    };
+}
+
+export function selectNode(nodeId) {
+    return {
+        type: `${NODE_PREVIEWS}_SELECT_NODE`,
         nodeId
     };
 }
 
-export function finishNodeCompare({nodeId}) {
-    if (nodeId) {
-        return {
-            type: `${NODE_PREVIEWS}_FINISH_COMPARE`,
-            nodeId
-        };
-    }
+export function compareNodes(nodes) {
     return {
-        type: `${NODE_PREVIEWS}_CANCEL_COMPARE`
+        type: `${NODE_PREVIEWS}_COMPARE_NODES`,
+        nodes
+    };
+}
+
+export function cancelNodeSelect() {
+    return {
+        type: `${NODE_PREVIEWS}_CANCEL_SELECT`
     };
 }
 
@@ -86,6 +92,6 @@ export function initNodes(payload) {
 }
 
 export default {
-    previewNode, startNodeCompare, finishNodeCompare,
+    startNodePreview, startNodeCompare, selectNode, cancelNodeSelect,
     setNodeError, updateNode, initNodes
 };

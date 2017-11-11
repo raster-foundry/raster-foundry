@@ -12,11 +12,16 @@ import { histogramReducer } from './reducers/histogram-reducer';
 import { statisticsReducer } from './reducers/statistics-reducer';
 
 const INITIAL_LAB_STATE = {
+    // tool state
     lastToolSave: null, lastToolRefresh: null, tool: null, toolErrors: new Map(),
+    updating: false, fetching: false, error: null,
     readonly: null,
-    nodes: new Map(), previewNodes: [], selectedNode: null,
-    histograms: new Map(), statistics: new Map(),
-    updating: false, fetching: false, error: null
+
+    // node state
+    nodes: new Map(), previewNodes: [], selectingNode: null, selectedNode: null,
+
+    // histogram & statistics state
+    histograms: new Map(), statistics: new Map()
 };
 
 function lab(state = INITIAL_LAB_STATE, action) {

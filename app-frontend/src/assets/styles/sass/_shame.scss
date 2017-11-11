@@ -931,6 +931,10 @@ div.lab-workspace.is-dragging {
           pointer-events: none;
       }
   }
+  &.align-left {
+      left: 0.5rem;
+      right: initial;
+  }
 }
 
 .map-zoom {
@@ -2898,4 +2902,27 @@ rf-reclassify-table {
 .inline-form {
     display: inline-block;
     margin-bottom: 0;
+}
+
+.selectable {
+    pointer-events: auto;
+    cursor: pointer;
+    * {
+        pointer-events: none;
+    }
+    &:hover {
+        /* outline: 2px solid $brand-secondary; */
+        /* outline-radius: 5px; */
+        box-shadow: 0 0 3pt 2pt $brand-secondary;
+    }
+}
+
+.selected {
+    pointer-events: auto;
+    cursor: not-allowed;
+    box-shadow: 0 0 3pt 2pt $brand-secondary;
+
+    * {
+        pointer-events: none;
+    }
 }
