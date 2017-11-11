@@ -33,8 +33,7 @@ export default class FilterPaneController {
         this.initDataRepoFilter();
         this.initDataSourceFilters();
         this.initDatefilter();
-        this.initFilterSlideOptions();
-        this.setFilters(this.filters);
+        this.initFilterSlideOptions(false);
         this.initIngestFilter();
         this.importOwnerFilter = this.filters.owner ? 'user' : 'any';
     }
@@ -163,106 +162,78 @@ export default class FilterPaneController {
         }
     }
 
-    initFilterSlideOptions() {
-        this.filterOptions = {
-            cloudCover: {
-                minModel: cloudCoverRange.min,
-                maxModel: cloudCoverRange.max,
-                options: {
-                    floor: cloudCoverRange.min,
-                    ceil: cloudCoverRange.max,
-                    minRange: 0,
-                    showTicks: 10,
-                    showTicksValues: true,
-                    step: 10,
-                    pushRange: true,
-                    draggableRange: true,
-                    onEnd: (id, minModel, maxModel) => {
-                        this.onFilterUpdate({
-                            minCloudCover: minModel !== cloudCoverRange.min ? minModel : null,
-                            maxCloudCover: maxModel !== cloudCoverRange.max ? maxModel : null
-                        });
+    initFilterSlideOptions(isReset) {
+        if (this.filters) {
+            this.filterOptions = {
+                cloudCover: {
+                    minModel: isReset ? cloudCoverRange.min :
+                      this.filters.minCloudCover || cloudCoverRange.min,
+                    maxModel: isReset ? cloudCoverRange.max :
+                      this.filters.maxCloudCover || cloudCoverRange.max,
+                    options: {
+                        floor: cloudCoverRange.min,
+                        ceil: cloudCoverRange.max,
+                        minRange: 0,
+                        showTicks: 10,
+                        showTicksValues: true,
+                        step: 10,
+                        pushRange: true,
+                        draggableRange: true,
+                        onEnd: (id, minModel, maxModel) => {
+                            this.onFilterUpdate({
+                                minCloudCover: minModel !== cloudCoverRange.min ? minModel : null,
+                                maxCloudCover: maxModel !== cloudCoverRange.max ? maxModel : null
+                            });
+                        }
+                    }
+                },
+                sunElevation: {
+                    minModel: isReset ? sunElevationRange.min :
+                      this.filters.minSunElevation || sunElevationRange.min,
+                    maxModel: isReset ? sunElevationRange.max :
+                      this.filters.maxSunElevation || sunElevationRange.max,
+                    options: {
+                        floor: sunElevationRange.min,
+                        ceil: sunElevationRange.max,
+                        minRange: 0,
+                        showTicks: 30,
+                        showTicksValues: true,
+                        step: 10,
+                        pushRange: true,
+                        draggableRange: true,
+                        onEnd: (id, minModel, maxModel) => {
+                            this.onFilterUpdate({
+                                minSunElevation:
+                                  minModel !== sunElevationRange.min ? minModel : null,
+                                maxSunElevation:
+                                  maxModel !== sunElevationRange.max ? maxModel : null
+                            });
+                        }
+                    }
+                },
+                sunAzimuth: {
+                    minModel: isReset ? sunAzimuthRange.min :
+                      this.filters.minSunAzimuth || sunAzimuthRange.min,
+                    maxModel: isReset ? sunAzimuthRange.max :
+                      this.filters.maxSunAzimuth || sunAzimuthRange.max,
+                    options: {
+                        floor: sunAzimuthRange.min,
+                        ceil: sunAzimuthRange.max,
+                        minRange: 0,
+                        showTicks: 60,
+                        showTicksValues: true,
+                        step: 10,
+                        pushRange: true,
+                        draggableRange: true,
+                        onEnd: (id, minModel, maxModel) => {
+                            this.onFilterUpdate({
+                                minSunAzimuth: minModel !== sunAzimuthRange.min ? minModel : null,
+                                maxSunAzimuth: maxModel !== sunAzimuthRange.max ? maxModel : null
+                            });
+                        }
                     }
                 }
-            },
-            sunElevation: {
-                minModel: sunElevationRange.min,
-                maxModel: sunElevationRange.max,
-                options: {
-                    floor: sunElevationRange.min,
-                    ceil: sunElevationRange.max,
-                    minRange: 0,
-                    showTicks: 30,
-                    showTicksValues: true,
-                    step: 10,
-                    pushRange: true,
-                    draggableRange: true,
-                    onEnd: (id, minModel, maxModel) => {
-                        this.onFilterUpdate({
-                            minSunElevation: minModel !== sunElevationRange.min ? minModel : null,
-                            maxSunElevation: maxModel !== sunElevationRange.max ? maxModel : null
-                        });
-                    }
-                }
-            },
-            sunAzimuth: {
-                minModel: sunAzimuthRange.min,
-                maxModel: sunAzimuthRange.max,
-                options: {
-                    floor: sunAzimuthRange.min,
-                    ceil: sunAzimuthRange.max,
-                    minRange: 0,
-                    showTicks: 60,
-                    showTicksValues: true,
-                    step: 10,
-                    pushRange: true,
-                    draggableRange: true,
-                    onEnd: (id, minModel, maxModel) => {
-                        this.onFilterUpdate({
-                            minSunAzimuth: minModel !== sunAzimuthRange.min ? minModel : null,
-                            maxSunAzimuth: maxModel !== sunAzimuthRange.max ? maxModel : null
-                        });
-                    }
-                }
-            }
-        };
-    }
-
-    setFilters(filters) {
-        if (filters && filters.maxCloudCover) {
-            this.filterOptions.cloudCover.maxModel = filters.maxCloudCover;
-        } else {
-            this.filterOptions.cloudCover.maxModel = cloudCoverRange.max;
-        }
-
-        if (filters && filters.minCloudCover) {
-            this.filterOptions.cloudCover.minModel = filters.minCloudCover;
-        } else {
-            this.filterOptions.cloudCover.minModel = cloudCoverRange.min;
-        }
-
-        if (filters && filters.maxSunElevation) {
-            this.filterOptions.sunElevation.maxModel = filters.maxSunElevation;
-        } else {
-            this.filterOptions.sunElevation.maxModel = sunElevationRange.max;
-        }
-
-        if (filters && filters.minSunElevation) {
-            this.filterOptions.sunElevation.minModel = filters.minSunElevation;
-        } else {
-            this.filterOptions.sunElevation.minModel = sunElevationRange.min;
-        }
-
-        if (filters && filters.maxSunAzimuth) {
-            this.filterOptions.sunAzimuth.maxModel = filters.maxSunAzimuth;
-        } else {
-            this.filterOptions.sunAzimuth.maxModel = sunAzimuthRange.max;
-        }
-
-        if (filters && filters.minSunAzimuth) {
-            this.filterOptions.sunAzimuth.minModel = filters.minSunAzimuth;
-        } else {
-            this.filterOptions.sunAzimuth.minModel = sunAzimuthRange.min;
+            };
         }
     }
 
@@ -373,7 +344,7 @@ export default class FilterPaneController {
     resetAllFilters() {
         this.clearDatasourceFilter();
         this.clearDateFilter();
-        this.initFilterSlideOptions();
+        this.initFilterSlideOptions(true);
         if (this.selectedBrowseSource === 'Raster Foundry') {
             this.ingestFilter = 'any';
             this.importOwnerFilter = 'any';

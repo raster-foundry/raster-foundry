@@ -5,8 +5,6 @@ import typeahead from 'angular-ui-bootstrap/src/typeahead';
 import SceneFilterPaneComponent from './sceneFilterPane.component.js';
 import SceneFilterPaneController from './sceneFilterPane.controller.js';
 
-require('./sceneFilterPane.scss');
-
 const SceneFilterPaneModule = angular.module('components.scenes.sceneFilterPane',
     [slider, typeahead]);
 
