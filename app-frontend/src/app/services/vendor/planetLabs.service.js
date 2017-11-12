@@ -58,10 +58,18 @@ export default (app) => {
                 'headers': {
                     'Authorization': 'Basic ' + token,
                     'Content-Type': 'arraybuffer'
-                }
+                },
+                'responseType': 'arraybuffer'
             };
 
-            return this.sendHttpRequest(req);
+            return this.$http(req).then(
+                (response) => {
+                    return response;
+                },
+                (error) => {
+                    return error;
+                }
+            );
         }
     }
 

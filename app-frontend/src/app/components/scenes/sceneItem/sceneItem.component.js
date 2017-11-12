@@ -14,7 +14,8 @@ const rfSceneItem = {
         selected: '<?',
         onSelect: '&?',
         isDisabled: '<?',
-        isRfScene: '<?'
+        isRfScene: '<?',
+        planetKey: '<?'
     }
 };
 

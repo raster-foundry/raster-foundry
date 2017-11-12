@@ -6,9 +6,10 @@ import {Map, Set} from 'immutable';
 
 class MapWrapper {
     // MapWrapper is a bare es6 class, so does not use angular injections
-    constructor( // eslint-disable-line max-params
-        leafletMap, mapId, imageOverlayService, datasourceService, options, thumbnailService
+    constructor( // eslint-disable-next-line
+        leafletMap, mapId, imageOverlayService, datasourceService, options, thumbnailService, planetLabsService
     ) {
+        this.planetLabsService = planetLabsService;
         this.thumbnailService = thumbnailService;
         this.map = leafletMap;
         this.mapId = mapId;
@@ -530,11 +531,76 @@ class MapWrapper {
         this.heldState = state;
         return this;
     }
+
+    setPlanetThumbnail(scene, persist, planetKey) {
+        if (this.persistedThumbnails.has(scene.id)) {
+            return this;
+        }
+        let footprintGeojson = Object.assign({
+            properties: {
+                options: {
+                    fillOpacity: 0,
+                    weight: 0,
+                    interactive: false
+                }
+            }
+        }, scene.dataFootprint);
+        if (scene.tileFootprint && scene.thumbnails && scene.thumbnails.length) {
+            this.planetLabsService.getThumbnail(
+                planetKey, scene.thumbnails[0].url
+            ).then(
+                (res) => {
+                    if (res.status === 200) {
+                        /* eslint-disable */
+                        let arr = new Uint8Array(res.data);
+                        let raw = String.fromCharCode.apply(null, arr);
+                        let planetThumbnailUrl = 'data:image/png;base64,' + btoa(raw);
+                        /* eslint-enable */
+                        let boundsGeoJson = L.geoJSON();
+                        boundsGeoJson.addData(scene.tileFootprint);
+                        let overlay = this.imageOverlayService.createNewImageOverlay(
+                            planetThumbnailUrl,
+                            boundsGeoJson.getBounds(),
+                            {
+                                opacity: 1,
+                                dataMask: scene.dataFootprint,
+                                thumbnail: planetThumbnailUrl,
+                                attribution: `©${scene.datasource} `
+                            }
+                        );
+                        if (!persist) {
+                            this.setLayer('thumbnail', overlay);
+                        } else {
+                            this.persistedThumbnails.set(scene.id, overlay);
+                            this.setLayer(
+                                'Selected Scenes',
+                                Array.from(this.persistedThumbnails.values()),
+                                true
+                            );
+                        }
+                        this.setGeojson(
+                            'thumbnail',
+                            footprintGeojson
+                        );
+                    }
+                }
+            );
+        } else if (scene.dataFootprint) {
+            this.deleteLayers('thumbnail');
+            this.setGeojson(
+                'thumbnail',
+                footprintGeojson
+            );
+        }
+        return this;
+    }
 }
 
 export default (app) => {
     class MapService {
-        constructor($q, imageOverlayService, datasourceService, thumbnailService) {
+        constructor(
+          $q, imageOverlayService, datasourceService, thumbnailService, planetLabsService
+        ) {
             'ngInject';
             this.maps = new Map();
             this._mapPromises = new Map();
@@ -542,6 +608,7 @@ export default (app) => {
             this.imageOverlayService = imageOverlayService;
             this.datasourceService = datasourceService;
             this.thumbnailService = thumbnailService;
+            this.planetLabsService = planetLabsService;
         }
 
         // Leaflet components should self-register using this method.
@@ -549,8 +616,8 @@ export default (app) => {
             let mapWrapper =
                 new MapWrapper(
                     map, id, this.imageOverlayService, this.datasourceService,
-                    options, this.thumbnailService);
-            this.maps = this.maps.set(id, mapWrapper);
+                    options, this.thumbnailService, this.planetLabsService);
+            this.maps.set(id, mapWrapper);
             // if any promises , resolve them
             if (this._mapPromises.has(id)) {
                 this._mapPromises.get(id).forEach((promise) => {

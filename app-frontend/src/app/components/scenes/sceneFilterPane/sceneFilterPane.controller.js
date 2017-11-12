@@ -78,7 +78,9 @@ export default class FilterPaneController {
         this.activeModal.result.then((token) => {
             this.userService.updatePlanetToken(token).then(() => {
                 this.userPlanetCredential = token;
-                this.selectedBrowseSource = 'Planet Labs';
+                if (this.userPlanetCredential) {
+                    this.selectedBrowseSource = 'Planet Labs';
+                }
             }, (err) => {
                 this.$log.log('There was an error updating the user with a planet api token', err);
             });

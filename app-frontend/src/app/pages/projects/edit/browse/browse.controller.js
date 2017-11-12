@@ -421,6 +421,30 @@ export default class ProjectAddScenesBrowseController {
         });
     }
 
+    requestPlanetSceneThumbnails(scenes) {
+        let scenesList = _.cloneDeep(scenes);
+        if (scenesList.length) {
+            scenesList.forEach((scene) => {
+                if (scene && scene.thumbnails && scene.thumbnails[0]
+                    && scene.thumbnails[0].url) {
+                    this.planetLabsService.getThumbnail(
+                        this.planetKey, scene.thumbnails[0].url
+                    ).then(
+                        (res) => {
+                            if (res.status === 200) {
+                                /* eslint-disable */
+                                let arr = new Uint8Array(res.data);
+                                let raw = String.fromCharCode.apply(null, arr);
+                                let base64 = btoa(raw);
+                                /* eslint-enable */
+                            }
+                        }
+                    );
+                }
+            });
+        }
+    }
+
     reshapePlanetSceneData(planetScenes) {
         // TODO: may need to further reshape planet data property to match RF data properties
         // eslint-disable-next-line no-underscore-dangle
@@ -442,12 +466,12 @@ export default class ProjectAddScenesBrowseController {
                 sceneMetadata: feature.properties,
                 name: feature.properties.item_type,
                 tileFootprint: {
-                    type: 'Polygon',
-                    coordinates: feature.geometry.coordinates
+                    type: 'MultiPolygon',
+                    coordinates: [feature.geometry.coordinates]
                 },
                 dataFootprint: {
-                    type: 'Polygon',
-                    coordinates: feature.geometry.coordinates
+                    type: 'MultiPolygon',
+                    coordinates: [feature.geometry.coordinates]
                 },
                 // eslint-disable-next-line no-underscore-dangle
                 thumbnails: [{url: feature._links.thumbnail}],
@@ -505,7 +529,8 @@ export default class ProjectAddScenesBrowseController {
     }
 
     onViewChange(newBounds, newCenter, zoom) {
-        // This sometimes gives 400 status code under planet data filter.
+        // This gives 400 status code under planet data filter
+        // when the map extent is at a too big area
         this.bboxCoords = newBounds.toBBoxString();
         this.$parent.zoom = zoom;
         this.$parent.center = newCenter;
@@ -518,37 +543,39 @@ export default class ProjectAddScenesBrowseController {
     }
 
     setHoveredScene(scene) {
-        if (this.sourceRepo === 'Raster Foundry') {
-            if (scene !== this.hoveredScene) {
-                this.hoveredScene = scene;
-                this.getMap().then((map) => {
+        if (scene !== this.hoveredScene) {
+            this.hoveredScene = scene;
+            this.getMap().then((map) => {
+                if (this.sourceRepo === 'Raster Foundry') {
                     map.setThumbnail(scene);
-                });
-            }
+                } else if (this.sourceRepo === 'Planet Labs') {
+                    map.setPlanetThumbnail(scene, false, this.planetKey);
+                }
+            });
         }
     }
 
     removeHoveredScene() {
-        if (this.sourceRepo === 'Raster Foundry') {
-            this.getMap().then((map) => {
-                delete this.hoveredScene;
-                map.deleteThumbnail();
-            });
-        }
+        this.getMap().then((map) => {
+            delete this.hoveredScene;
+            map.deleteThumbnail();
+        });
     }
 
     setSelected(scene, selected) {
-        if (this.sourceRepo === 'Raster Foundry') {
-            this.getMap().then((map) => {
-                if (selected) {
-                    this.selectedScenes.set(scene.id, scene);
+        this.getMap().then((map) => {
+            if (selected) {
+                this.selectedScenes.set(scene.id, scene);
+                if (this.sourceRepo === 'Raster Foundry') {
                     map.setThumbnail(scene, false, true);
-                } else {
-                    this.selectedScenes.delete(scene.id);
-                    map.deleteThumbnail(scene);
+                } else if (this.sourceRepo === 'Planet Labs') {
+                    map.setPlanetThumbnail(scene, true, this.planetKey);
                 }
-            });
-        }
+            } else {
+                this.selectedScenes.delete(scene.id);
+                map.deleteThumbnail(scene);
+            }
+        });
     }
 
     isSelected(scene) {
@@ -619,12 +646,16 @@ export default class ProjectAddScenesBrowseController {
     }
 
     sceneModal() {
-        if (!this.selectedScenes || this.selectedScenes.size === 0) {
-            return;
-        }
+        if (this.sourceRepo === 'Raster Foundry') {
+            if (!this.selectedScenes || this.selectedScenes.size === 0) {
+                return;
+            }
 
-        this.modalService
-            .open({
+            if (this.activeModal) {
+                this.activeModal.dismiss();
+            }
+
+            this.activeModal = this.$uibModal.open({
                 component: 'rfProjectAddScenesModal',
                 resolve: {
                     scenes: () => this.selectedScenes,
@@ -632,12 +663,16 @@ export default class ProjectAddScenesBrowseController {
                     selectNoScenes: () => this.selectNoScenes.bind(this),
                     project: () => this.project
                 }
-            }).result.then(sceneIds => {
+            });
+
+            this.activeModal.result.then(sceneIds => {
                 this.projectSceneIds = this.projectSceneIds.concat(sceneIds);
                 this.selectNoScenes();
             }).finally(() => {
+                delete this.activeModal;
                 this.$parent.getSceneList();
             });
+        }
     }
 
     openDetailPane(scene) {
@@ -702,6 +737,18 @@ export default class ProjectAddScenesBrowseController {
                     scene: () => scene
                 }
             });
+        } else if (this.sourceRepo === 'Planet Labs') {
+            if (this.activeModal) {
+                this.activeModal.dismiss();
+            }
+
+            this.activeModal = this.$uibModal.open({
+                component: 'rfPlanetSceneDetailModal',
+                resolve: {
+                    scene: () => scene,
+                    planetKey: () => this.planetKey
+                }
+            });
         }
     }
 
@@ -722,7 +769,6 @@ export default class ProjectAddScenesBrowseController {
                 this.requestMorePlanetScenes();
             } else {
                 this.currentSceneList = this.planetSceneChunks[currentListIndex + 1];
-                // TODO: get thumbnails of these new scenes here
                 this.sceneList = _.uniqBy(this.sceneList.concat(this.currentSceneList), 'id');
             }
         }

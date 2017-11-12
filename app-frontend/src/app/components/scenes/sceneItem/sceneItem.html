@@ -8,9 +8,12 @@
   <img ng-if="$ctrl.isRfScene && $ctrl.scene.thumbnails[0]"
        ng-attr-src="{{$ctrl.thumbnailService.getBestFitUrl($ctrl.scene.thumbnails, 75)}}"
        class="rounded-img item-img">
+  <img ng-if="!$ctrl.isRfScene && $ctrl.planetThumbnail"
+       ng-src="{{'data:image/png;base64,' + $ctrl.planetThumbnail}}"
+       class="rounded-img item-img">
   <div ng-if="$ctrl.isRfScene && !$ctrl.scene.thumbnails.length"
        class="rounded-img item-img image-placeholder"></div>
-  <div ng-if="!$ctrl.isRfScene"
+  <div ng-if="!$ctrl.isRfScene && !$ctrl.planetThumbnail"
        class="rounded-img item-img image-placeholder"></div>
   <div class="list-group-overflow">
     <div>

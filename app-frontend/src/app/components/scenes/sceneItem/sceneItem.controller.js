@@ -1,11 +1,13 @@
 export default class SceneItemController {
-    constructor($scope, $attrs, thumbnailService, mapService, datasourceService) {
+    constructor($scope, $attrs,
+      thumbnailService, mapService, datasourceService, planetLabsService) {
         'ngInject';
         this.thumbnailService = thumbnailService;
         this.mapService = mapService;
         this.isDraggable = $attrs.hasOwnProperty('draggable');
         this.datasourceService = datasourceService;
         this.$scope = $scope;
+        this.planetLabsService = planetLabsService;
     }
 
     $onInit() {
@@ -28,6 +30,8 @@ export default class SceneItemController {
                 }
             });
         }
+
+        this.getPlanetThumbnail();
     }
 
     $onChanges(changes) {
@@ -48,5 +52,21 @@ export default class SceneItemController {
     getReferenceDate() {
         let acqDate = this.scene.filterFields.acquisitionDate;
         return acqDate ? acqDate : this.scene.createdAt;
+    }
+
+    getPlanetThumbnail() {
+        this.planetLabsService.getThumbnail(
+            this.planetKey, this.scene.thumbnails[0].url
+        ).then(
+            (res) => {
+                if (res.status === 200) {
+                    /* eslint-disable */
+                    let arr = new Uint8Array(res.data);
+                    let raw = String.fromCharCode.apply(null, arr);
+                    this.planetThumbnail = btoa(raw);
+                    /* eslint-enable */
+                }
+            }
+        );
     }
 }

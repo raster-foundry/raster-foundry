@@ -62,12 +62,12 @@
   </div>
 </div>
 <div class="sidebar-scrollable list-group">
-  <div></div>
   <rf-scene-item
       scene="scene"
       selected="$ctrl.isSelected(scene)"
       is-disabled="$ctrl.isInProject(scene)"
       is-rf-scene="$ctrl.isRfScene"
+      planet-key="$ctrl.planetKey"
       on-select="$ctrl.setSelected(scene, selected)"
       ng-click="$ctrl.openSceneDetailModal(scene)"
       ng-mouseenter="$ctrl.setHoveredScene(scene)"
