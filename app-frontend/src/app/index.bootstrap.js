@@ -1,7 +1,12 @@
 /* globals document BUILDCONFIG */
 
-// index.html page to dist folder
-import '!!file-loader?name=[name].[ext]!../favicon.ico';
+const faviconsContext = require.context(
+    `!!file-loader?name=favicons/[name].[ext]!..${BUILDCONFIG.FAVICON_DIR || '/favicon'}`,
+    true,
+    /\.(svg|png|ico|xml|json)$/
+);
+
+faviconsContext.keys().forEach(faviconsContext);
 
 // main App module
 import './index.module';

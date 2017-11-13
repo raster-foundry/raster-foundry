@@ -272,7 +272,8 @@ module.exports = function (_path) {
                     THEME: JSON.stringify('default'),
                     AUTH0_PRIMARY_COLOR: JSON.stringify('#465076'),
                     LOGOFILE: JSON.stringify(false),
-                    LOGOURL: JSON.stringify(false)
+                    LOGOURL: JSON.stringify(false),
+                    FAVICON_DIR: JSON.stringify('/favicon')
                 }
             })
         ]
