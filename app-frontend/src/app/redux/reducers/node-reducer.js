@@ -10,10 +10,16 @@ export const nodeReducer = typeToReducer({
     },
     [NODE_PREVIEWS]: {
         START_PREVIEW: (state) => {
-            return Object.assign({}, state, {selectingNode: 'preview'});
+            return Object.assign({}, state, {
+                selectingNode: 'preview',
+                selectedNode: null
+            });
         },
         START_COMPARE: (state) => {
-            return Object.assign({}, state, {selectingNode: 'compare'});
+            return Object.assign({}, state, {
+                selectingNode: 'compare',
+                selectedNode: null
+            });
         },
         SELECT_NODE: (state, action) => {
             if (state.selectingNode === 'compare') {

@@ -326,18 +326,18 @@ class DiagramContainerController {
     }
 
     onPreviewClick() {
-        if (!this.selectingNode) {
-            this.startNodePreview();
-        } else {
+        if (this.selectingNode === 'preview') {
             this.cancelNodeSelect();
+        } else {
+            this.startNodePreview();
         }
     }
 
     onCompareClick() {
-        if (!this.selectingNode) {
-            this.startNodeCompare();
-        } else {
+        if (['compare', 'select'].includes(this.selectingNode)) {
             this.cancelNodeSelect();
+        } else {
+            this.startNodeCompare();
         }
     }
 

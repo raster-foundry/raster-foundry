@@ -24,7 +24,6 @@
           title="Preview Node"
           ng-click="$ctrl.onPreviewClick()"
           ng-class="{'btn-secondary': $ctrl.selectingNode === 'preview'}"
-          ng-disabled="!$ctrl.canUseAction('preview')"
   >
     <i class="icon-map"></i>
   </button>
@@ -33,7 +32,6 @@
           type="button"
           ng-click="$ctrl.onCompareClick()"
           ng-class="{'btn-secondary': $ctrl.selectingNode === 'compare' || $ctrl.selectingNode === 'select'}"
-          ng-disabled="!$ctrl.canUseAction('compare')"
   >
     <i class="icon-compare"></i>
   </button>
