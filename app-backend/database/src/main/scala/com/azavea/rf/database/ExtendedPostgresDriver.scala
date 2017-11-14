@@ -143,6 +143,15 @@ trait ExtendedPostgresDriver extends ExPostgresDriver
       createEnumColumnExtensionMethodsBuilder[ThumbnailSize]
     implicit val thumbnailDimOptionColumnExtensionMethodsBuilder =
       createEnumOptionColumnExtensionMethodsBuilder[ThumbnailSize]
+
+    implicit val annotationQualityTypeMapper = createEnumJdbcType[AnnotationQuality]("AnnotationQuality", _.repr,
+      AnnotationQuality.fromString, quoteName = false)
+    implicit val annotationQualityTypeListMapper = createEnumListJdbcType[AnnotationQuality]("AnnotationQuality", _.repr,
+      AnnotationQuality.fromString, quoteName = false)
+    implicit val annotationQualityColumnExtensionMethodsBuilder =
+      createEnumColumnExtensionMethodsBuilder[AnnotationQuality]
+    implicit val annotationQualityOptionColumnExtensionMethodsBuilder =
+      createEnumOptionColumnExtensionMethodsBuilder[AnnotationQuality]
   }
 }
 
