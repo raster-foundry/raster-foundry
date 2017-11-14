@@ -1,13 +1,14 @@
 <div class="sidebar-overlay" ng-show="$ctrl.drawing"></div>
-<div class="sidebar-header">
-  <h5 class="sidebar-title">Sharing</h5>
+<div class="sidebar-static">
+  <div class="sidebar-header">
+    <h5 class="sidebar-title">Sharing</h5>
+  </div>
 </div>
-<ul class="sidebar-list" ng-if="$ctrl.project">
-  <li class="separator">
-    <div class="label">
-      Project Visibility
-    </div>
-    <div class="btn-group inline fixedwidth">
+<div class="sidebar-scrollable">
+  <div class="list-group">
+    <div class="list-group-item sidebar-actions-group">
+      <label>Project Visibility</label>
+      <div class="list-group-right btn-group">
         <button class="btn btn-default"
                 ng-repeat="policy in $ctrl.sharePolicies"
                 ng-if="policy.enabled"
@@ -17,13 +18,10 @@
           {{policy.label}}
         </button>
       </div>
-    <i class="icon-info" title="Allow your project to be viewed without a map token"></i>
-  </li>
-  <li class="separator">
-    <div class="label">
-      Share Page
     </div>
-    <div class="btn-group inline fixedwidth">
+    <div class="list-group-item sidebar-actions-group">
+      <label>Share Page</label>
+      <div class="list-group-right btn-group">
         <button class="btn btn-default"
                 clipboard text="$ctrl.shareUrl">
           Copy
@@ -33,33 +31,30 @@
           Open
         </button>
       </div>
-    <i class="icon-info" ng-attr-title="{{$ctrl.shareUrl}}"></i>
-  </li>
-  <li class="separator">
-    <div class="label">
-      ZXY Tile Layer URL
     </div>
-    <button clipboard text="$ctrl.tileLayerUrls.standard" class="btn btn-default fixedwidth">
-      Copy
-    </button>
-    <i class="icon-info" ng-attr-title="{{$ctrl.tileLayerUrls.standard}}"></i>
-  </li>
-  <li class="separator">
-    <div class="label">
-      ArcGIS Tile Layer URL
+    <div class="list-group-item sidebar-actions-group">
+      <label>ZXY Tile Layer URL</label>
+      <div class="list-group-right btn-group">
+        <button clipboard text="$ctrl.tileLayerUrls.standard" class="btn btn-default">
+          Copy
+        </button>
+      </div>
     </div>
-    <button clipboard text="$ctrl.tileLayerUrls.arcGIS" class="btn btn-default fixedwidth">
-      Copy
-    </button>
-    <i class="icon-info" ng-attr-title="{{$ctrl.tileLayerUrls.arcGIS}}"></i>
-  </li>
-  <li class="separator" ng-if="$ctrl.activePolicy.enum === 'PRIVATE'">
-    <div class="label">
-      Map Token
+    <div class="list-group-item sidebar-actions-group">
+      <label>ArcGIS Tile Layer URL</label>
+      <div class="list-group-right btn-group">
+        <button clipboard text="$ctrl.tileLayerUrls.arcGIS" class="btn btn-default">
+          Copy
+        </button>
+      </div>
     </div>
-    <button clipboard text="$ctrl.mapToken.id" class="btn btn-default fixedwidth">
-      Copy
-    </button>
-    <i class="icon-info" ng-attr-title="{{$ctrl.mapToken.id}}"></i>
-  </li>
-</ul>
+    <div class="list-group-item sidebar-actions-group">
+      <label>Map Token</label>
+      <div class="list-group-right btn-group">
+        <button clipboard text="$ctrl.mapToken.id" class="btn btn-default">
+          Copy
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
