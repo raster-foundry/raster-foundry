@@ -1,4 +1,10 @@
-import assetLogo from '../../../../assets/images/logo-raster-foundry.png';
+/* global BUILDCONFIG */
+
+let assetLogo = BUILDCONFIG.LOGOFILE ?
+    require(`../../../../assets/images/${BUILDCONFIG.LOGOFILE}`) :
+    require('../../../../assets/images/logo-raster-foundry.png');
+
+assetLogo = BUILDCONFIG.LOGOURL || assetLogo;
 
 export default class NavBarController {
     constructor( // eslint-disable-line max-params

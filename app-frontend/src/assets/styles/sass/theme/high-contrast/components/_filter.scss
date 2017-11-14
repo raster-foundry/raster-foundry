@@ -1,0 +1,15 @@
+.filter-group {
+  border-color: $border-color-default;
+}
+
+.filter {
+  flex-direction: column;
+
+  label {
+    color: $shade-normal;
+    width: auto;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+}

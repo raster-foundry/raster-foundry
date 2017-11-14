@@ -1,6 +1,4 @@
-/* global AWS */
-/* global document */
-/* global window */
+/* global AWS, document, window, BUILDCONFIG */
 
 import planetLogo from '../../../../assets/images/planet-logo-light.png';
 import awsS3Logo from '../../../../assets/images/aws-s3.png';
@@ -15,6 +13,7 @@ export default class SceneImportModalController {
         rollbarWrapperService, datasourceService, userService
     ) {
         'ngInject';
+        this.BUILDCONFIG = BUILDCONFIG;
         this.$scope = $scope;
         this.$state = $state;
         this.projectService = projectService;

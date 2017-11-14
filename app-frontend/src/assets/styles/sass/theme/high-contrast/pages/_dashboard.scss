@@ -1,0 +1,35 @@
+.dashboard-header {
+
+  .h3 {
+    font-size: 3.1rem;
+  }
+}
+
+.project-preview {
+
+  .project-title {
+
+    &:after {
+      background: #fff;
+    }
+  }
+
+  // Force view btn to be blue
+  .btn.btn-default:not(.dropdown-toggle) {
+    @extend .btn-primary;
+  }
+
+  .dropdown-menu {
+    top: 6px;
+    padding: 0;
+    border-radius: $border-radius-base;
+
+    .divider {
+      margin: 0;
+    }
+
+    li > a {
+      padding: 1.3rem;
+    }
+  }
+}

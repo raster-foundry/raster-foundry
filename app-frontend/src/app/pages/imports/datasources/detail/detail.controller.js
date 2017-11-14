@@ -1,3 +1,5 @@
+/* global BUILDCONFIG */
+
 class DatasourceDetailController {
     constructor(
         $stateParams, $uibModal, datasourceService
@@ -9,6 +11,7 @@ class DatasourceDetailController {
     }
 
     $onInit() {
+        this.BUILDCONFIG = BUILDCONFIG;
         this.loadDatasource();
     }
 

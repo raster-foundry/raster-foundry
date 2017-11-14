@@ -2,7 +2,12 @@
 
 /* globals Auth0Lock heap */
 
-import assetLogo from '../../../assets/images/logo-raster-foundry.png';
+let assetLogo = BUILDCONFIG.LOGOFILE ?
+    require(`../../../assets/images/${BUILDCONFIG.LOGOFILE}`) :
+    require('../../../assets/images/logo-raster-foundry.png');
+
+assetLogo = BUILDCONFIG.LOGOURL || assetLogo;
+
 export default (app) => {
     class AuthService {
         constructor( // eslint-disable-line max-params
@@ -50,7 +55,7 @@ export default (app) => {
                 },
                 theme: {
                     logo: assetLogo,
-                    primaryColor: '#5e509b'
+                    primaryColor: BUILDCONFIG.AUTH0_PRIMARY_COLOR
                 },
                 additionalSignUpFields: [{
                     name: 'companyName',
@@ -80,7 +85,7 @@ export default (app) => {
                 },
                 theme: {
                     logo: assetLogo,
-                    primaryColor: '#5e509b'
+                    primaryColor: BUILDCONFIG.AUTH0_PRIMARY_COLOR
                 }
             };
 
@@ -106,7 +111,7 @@ export default (app) => {
                 },
                 theme: {
                     logo: assetLogo,
-                    primaryColor: '#5e509b'
+                    primaryColor: BUILDCONFIG.AUTH0_PRIMARY_COLOR
                 }
             };
 
