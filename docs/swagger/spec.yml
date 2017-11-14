@@ -23,7 +23,7 @@ x-top-matter:
     content: |
       The Raster Foundry API allows developers to find, view, and analyze geospatial data in Raster Foundry. As the name implies, it's especially useful for working with large raster datasets like satellite imagery.
 
-      Raster Foundry is built with an openly licensed, open source code base. If you'd like to peek under the hood, make a request, or become a contributor, <a href="https://github.com/azavea/raster-foundry/issues" target="_blank">find us on Github</a>.
+      Raster Foundry is built with an openly licensed, open source code base. If you'd like to peek under the hood, make a request, or become a contributor, <a href="https://github.com/raster-foundry/raster-foundry/issues" target="_blank">find us on Github</a>.
   - title: Authentication
     level: 2
     content: |
@@ -355,7 +355,7 @@ paths:
         200:
           description: SUCCESS
           schema:
-            $ref: '#/definitions/Datasource'
+            $ref: '#/definitions/DatasourcePaginated'
     post:
       summary: Create a datasource
       description: |
@@ -527,6 +527,7 @@ paths:
         - $ref: '#/parameters/project'
         - $ref: '#/parameters/ingested'
         - $ref: '#/parameters/ingestStatus'
+        - $ref: '#/parameters/forProjectId'
       responses:
         200:
           description: Paginated list of scenes
@@ -679,7 +680,7 @@ paths:
           schema:
             $ref: '#/definitions/Project'
       responses:
-        202:
+        201:
           description: Project details; at this point scene processes may be in-progress
           schema:
             $ref: '#/definitions/Project'
@@ -1163,6 +1164,8 @@ paths:
         - $ref: '#/parameters/projectId'
         - $ref: '#/parameters/organization'
         - $ref: '#/parameters/createdBy'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/project'
       responses:
         200:
           description: Paginated list of map tokens
@@ -1922,6 +1925,13 @@ parameters:
     in: path
     required: true
     type: string
+  forProjectId:
+    name: forProjectId
+    description: UUID of the project to search for scenes to add
+    in: query
+    type: string
+    format: uuid
+    required: false
   minCloudCover:
     name: minCloudCover
     description: Only return results with cloud cover greater than this number
@@ -2693,6 +2703,16 @@ definitions:
       - $ref: '#/definitions/TimeModelMixin'
       - $ref: '#/definitions/DatasourceCreated'
 
+  DatasourcePaginated:
+    allOf:
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/Datasource'
+
   Scene:
     allOf:
       - $ref: '#/definitions/BaseModel'
@@ -3192,6 +3212,7 @@ definitions:
             - DROPBOX
             - S3
             - LOCAL
+            - PLANET
         fileType:
           type: string
           description: type of data being uploaded, limited to two options right now
