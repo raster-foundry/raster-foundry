@@ -3,7 +3,7 @@ import ApiActions from '../../redux/actions/api-actions';
 
 let assetLogo = BUILDCONFIG.LOGOFILE ?
     require(`../../../assets/images/${BUILDCONFIG.LOGOFILE}`) :
-    require('../../../assets/images/logo-raster-foundry.png');
+    require('../../../assets/images/raster-foundry-logo.svg');
 
 assetLogo = BUILDCONFIG.LOGOURL || assetLogo;
 

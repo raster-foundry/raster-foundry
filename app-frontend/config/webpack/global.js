@@ -271,7 +271,7 @@ module.exports = function (_path) {
                     INTERCOM_APP_ID: JSON.stringify(INTERCOM_APP_ID),
                     THEME: JSON.stringify('default'),
                     AUTH0_PRIMARY_COLOR: JSON.stringify('#465076'),
-                    LOGOFILE: JSON.stringify(false),
+                    LOGOFILE: JSON.stringify('raster-foundry-logo.svg'),
                     LOGOURL: JSON.stringify(false),
                     FAVICON_DIR: JSON.stringify('/favicon')
                 }
