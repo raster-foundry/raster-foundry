@@ -46,8 +46,8 @@
   display: flex;
 }
 
-$navbar-height: 6rem;
-$navbar-secondary-height: 4.7rem;
+$navbar-height: 6rem !default;
+$navbar-secondary-height: 4.7rem !default;
 
 .container-not-scrollable {
   height: calc(100vh - #{$navbar-height});

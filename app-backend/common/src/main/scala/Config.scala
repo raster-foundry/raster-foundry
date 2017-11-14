@@ -13,6 +13,7 @@ object Config {
   object awsbatch {
     private val awsBatchConfig = config.getConfig("awsbatch")
     val jobQueue = awsBatchConfig.getString("jobQueue")
+    val ingestJobQueue = awsBatchConfig.getString("ingestJobQueue")
 
     val ingestJobName = awsBatchConfig.getString("ingestJobName")
     val importJobName = awsBatchConfig.getString("importJobName")

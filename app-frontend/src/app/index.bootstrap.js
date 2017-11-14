@@ -1,12 +1,21 @@
 /* globals document BUILDCONFIG */
 
-// index.html page to dist folder
-import '!!file-loader?name=[name].[ext]!../favicon.ico';
+const faviconsContext = require.context(
+    `!!file-loader?name=favicons/[name].[ext]!..${BUILDCONFIG.FAVICON_DIR || '/favicon'}`,
+    true,
+    /\.(svg|png|ico|xml|json)$/
+);
+
+faviconsContext.keys().forEach(faviconsContext);
 
 // main App module
 import './index.module';
 
-import '../assets/styles/sass/app.scss';
+if (!BUILDCONFIG.THEME || BUILDCONFIG.THEME === 'default') {
+    require('../assets/styles/sass/app.scss');
+} else if (BUILDCONFIG.THEME) {
+    require(`../assets/styles/sass/theme/${BUILDCONFIG.THEME}/app.scss`);
+}
 
 import deferredBootstrapper from 'angular-deferred-bootstrap';
 

@@ -286,4 +286,8 @@ export default class AOIParametersController {
             }
         });
     }
+
+    onCloseFilterPane(showFilterPane) {
+        this.showFilters = showFilterPane;
+    }
 }

@@ -1,3 +1,5 @@
+/* global BUILDCONFIG */
+
 class ProjectsListController {
     constructor( // eslint-disable-line max-params
         $log, $state, $uibModal, $scope, projectService, userService
@@ -9,9 +11,12 @@ class ProjectsListController {
         this.projectService = projectService;
         this.userService = userService;
         this.$scope = $scope;
+    }
 
+    $onInit() {
         this.projectList = [];
-        this.populateProjectList($state.params.page || 1);
+        this.populateProjectList(this.$state.params.page || 1);
+        this.BUILDCONFIG = BUILDCONFIG;
     }
 
     populateProjectList(page = 1) {

@@ -1,3 +1,5 @@
+/* global BUILDCONFIG */
+
 class HomeController {
     constructor(authService, $uibModal, feedService) {
         'ngInject';
@@ -7,6 +9,7 @@ class HomeController {
     }
 
     $onInit() {
+        this.BUILDCONFIG = BUILDCONFIG;
         this.feedService.getPosts().then(posts => {
             this.blogPosts = posts;
         });

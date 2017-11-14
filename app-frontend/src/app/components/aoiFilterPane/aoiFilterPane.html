@@ -1,6 +1,6 @@
-<div class="sidebar-static" >
+<div class="sidebar-header dark" >
   <h5>Filters</h5>
-  <div class="sidebar-actions">
+  <div class="header-controls">
     <button class="btn btn-default btn-small" ng-click="$ctrl.close()">
       Close
     </button>
@@ -18,13 +18,17 @@
           ng-mouseleave="$ctrl.toggleDrag.toggle = false"
           ng-mouseup="$ctrl.toggleDrag.toggle = false">
         <label>Imagery sources</label>
-        <div class="filter-item tag-filter">
-          <button class="btn btn-toggle btn-small"
-                  ng-click="$ctrl.toggleSourceFilter(id)"
-                  ng-class="{'active': filter.enabled}"
-                  ng-repeat="(id, filter) in $ctrl.dynamicSourceFilters track by id">
-            {{filter.datasource.name}}
-          </button>
+        <input type="text"
+               placeholder="All"
+               class="form-control input-dark image-source"
+               ng-model="$ctrl.selectedDatasource"
+               uib-typeahead="ds.name for ds in $ctrl.datasources | filter:$viewValue | limitTo:8"
+               typeahead-on-select="$ctrl.toggleSourceFilter($item)"
+               typeahead-min-length="0">
+        <div class="clear-image-source-filter"
+             ng-if="$ctrl.selectedDatasource"
+             ng-click="$ctrl.clearDatasourceFilter()">
+          <i class="icon-cross"></i>
         </div>
       </div>
     </div>

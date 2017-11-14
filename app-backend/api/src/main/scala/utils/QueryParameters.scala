@@ -52,4 +52,15 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
       'maxModifiedDatetime.as(deserializerTimestamp).?
     )
   ).as(TimestampQueryParameters.apply _)
+
+  def annotationQueryParams = (
+    orgQueryParams &
+    userQueryParameters &
+    parameters((
+      'label.as[String].?,
+      'machineGenerated.as[Boolean].?,
+      'minConfidence.as[Double].?,
+      'maxConfidence.as[Double].?,
+      'quality.as[String].?
+    ))).as(AnnotationQueryParameters.apply _)
 }
