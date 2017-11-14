@@ -414,7 +414,7 @@ export default class ProjectAddScenesBrowseController {
                 this.planetSceneCounts = res.data.features.length;
                 this.planetSceneChunks = this.reshapePlanetSceneData(res.data);
                 this.sceneList = _.head(this.planetSceneChunks);
-                this.currentSceneList = _.cloneDeep(this.sceneList);
+                this.currentSceneList = _.head(this.planetSceneChunks);
             }
         }, (err) => {
             this.$log.log(err);
@@ -503,11 +503,13 @@ export default class ProjectAddScenesBrowseController {
     onFilterChange(newFilters, sourceRepo) {
         this.sourceRepo = sourceRepo;
 
-        this.getMap().then(mapWrapper => {
-            if (this.sourceRepo === 'Planet Labs' && mapWrapper.getLayers('canvasGrid')) {
+        this.getMap().then((mapWrapper) => {
+            if (this.sourceRepo === 'Planet Labs'
+              && mapWrapper.getLayers('canvasGrid')) {
                 mapWrapper.hideLayers('canvasGrid', false);
-            } else if (this.sourceRepo === 'Raster Foundry' && mapWrapper.getLayers('canvasGrid')
-                  && mapWrapper.getLayerVisibility('canvasGrid') === 'hidden') {
+            } else if (this.sourceRepo === 'Raster Foundry'
+              && mapWrapper.getLayers('canvasGrid')
+              && mapWrapper.getLayerVisibility('canvasGrid') === 'hidden') {
                 mapWrapper.showLayers('canvasGrid', true);
             }
         });
@@ -534,7 +536,7 @@ export default class ProjectAddScenesBrowseController {
         this.bboxCoords = newBounds.toBBoxString();
         this.$parent.zoom = zoom;
         this.$parent.center = newCenter;
-        this.queryParams = Object.assign(this.filters, {bbox: this.bboxCoords});
+        this.queryParams = Object.assign({}, this.filters, {bbox: this.bboxCoords});
         this.onQueryParamsChange();
     }
 

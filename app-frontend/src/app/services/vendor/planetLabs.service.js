@@ -64,6 +64,13 @@ export default (app) => {
 
             return this.$http(req).then(
                 (response) => {
+                    if (response.status === 200) {
+                        /* eslint-disable */
+                        let arr = new Uint8Array(response.data);
+                        let raw = String.fromCharCode.apply(null, arr);
+                        response.base64 = btoa(raw);
+                        /* eslint-enable */
+                    }
                     return response;
                 },
                 (error) => {

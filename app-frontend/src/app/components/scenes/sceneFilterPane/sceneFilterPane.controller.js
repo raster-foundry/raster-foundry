@@ -59,8 +59,9 @@ export default class FilterPaneController {
                 this.onPassPlanetToken({planetToken: this.userPlanetCredential});
             }
             this.selectedBrowseSource = browseSource;
-            this.clearDatasourceFilter();
+            this.selectedDatasource = '';
             this.initDataSourceFilters();
+            this.newParams.datasource = [];
             this.onFilterChange({
                 newFilters: this.newParams,
                 sourceRepo: this.selectedBrowseSource
@@ -157,7 +158,7 @@ export default class FilterPaneController {
         }
 
         if (!this.filters.minAcquisitionDatetime || !this.filters.maxAcquisitionDatetime) {
-            this.clearDateFilter();
+            this.clearDateFilter(false);
         } else {
             this.datefilterPreset = '';
             this.hasDatetimeFilter = true;
@@ -289,7 +290,7 @@ export default class FilterPaneController {
 
     setDateRange(start, end, preset) {
         if (_.isEmpty({start}) || _.isEmpty(end)) {
-            this.clearDateFilter();
+            this.clearDateFilter(false);
         } else {
             this.datefilter.start = start;
             this.datefilter.end = end;
@@ -302,13 +303,15 @@ export default class FilterPaneController {
         }
     }
 
-    clearDateFilter() {
+    clearDateFilter(isResetAll) {
         this.datefilterPreset = 'None';
         this.hasDatetimeFilter = false;
-        this.onFilterUpdate({
-            minAcquisitionDatetime: null,
-            maxAcquisitionDatetime: null
-        });
+        if (!isResetAll) {
+            this.onFilterUpdate({
+                minAcquisitionDatetime: null,
+                maxAcquisitionDatetime: null
+            });
+        }
     }
 
     setIngestFilter(mode) {
@@ -344,31 +347,26 @@ export default class FilterPaneController {
     // this.filters.owner = profile ? profile.sub : null;
 
     resetAllFilters() {
-        this.clearDatasourceFilter();
-        this.clearDateFilter();
+        this.selectedDatasource = '';
+        this.clearDateFilter(true);
         this.initFilterSlideOptions(true);
+        let emptyFilter = {
+            datasource: [],
+            minCloudCover: null,
+            maxCloudCover: null,
+            minSunElevation: null,
+            maxSunElevation: null,
+            minSunAzimuth: null,
+            maxSunAzimuth: null,
+            minAcquisitionDatetime: null,
+            maxAcquisitionDatetime: null
+        };
         if (this.selectedBrowseSource === 'Raster Foundry') {
             this.ingestFilter = 'any';
             this.importOwnerFilter = 'any';
-            this.onFilterUpdate({
-                minCloudCover: null,
-                maxCloudCover: null,
-                minSunElevation: null,
-                maxSunElevation: null,
-                minSunAzimuth: null,
-                maxSunAzimuth: null,
-                ingested: null,
-                owner: null
-            });
+            this.onFilterUpdate(Object.assign({}, emptyFilter, {ingested: null, owner: null}));
         } else if (this.selectedBrowseSource === 'Planet Labs') {
-            this.onFilterUpdate({
-                minCloudCover: null,
-                maxCloudCover: null,
-                minSunElevation: null,
-                maxSunElevation: null,
-                minSunAzimuth: null,
-                maxSunAzimuth: null
-            });
+            this.onFilterUpdate(emptyFilter);
         }
     }
 

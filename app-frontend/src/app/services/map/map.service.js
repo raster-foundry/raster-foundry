@@ -617,7 +617,7 @@ export default (app) => {
                 new MapWrapper(
                     map, id, this.imageOverlayService, this.datasourceService,
                     options, this.thumbnailService, this.planetLabsService);
-            this.maps.set(id, mapWrapper);
+            this.maps = this.maps.set(id, mapWrapper);
             // if any promises , resolve them
             if (this._mapPromises.has(id)) {
                 this._mapPromises.get(id).forEach((promise) => {

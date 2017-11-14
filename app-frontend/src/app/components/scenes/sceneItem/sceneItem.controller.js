@@ -1,5 +1,6 @@
 export default class SceneItemController {
-    constructor($scope, $attrs,
+    constructor(
+      $scope, $attrs,
       thumbnailService, mapService, datasourceService, planetLabsService) {
         'ngInject';
         this.thumbnailService = thumbnailService;
@@ -31,7 +32,9 @@ export default class SceneItemController {
             });
         }
 
-        this.getPlanetThumbnail();
+        if (!this.isRfScene) {
+            this.getPlanetThumbnail();
+        }
     }
 
     $onChanges(changes) {
@@ -60,11 +63,7 @@ export default class SceneItemController {
         ).then(
             (res) => {
                 if (res.status === 200) {
-                    /* eslint-disable */
-                    let arr = new Uint8Array(res.data);
-                    let raw = String.fromCharCode.apply(null, arr);
-                    this.planetThumbnail = btoa(raw);
-                    /* eslint-enable */
+                    this.planetThumbnail = res.base64;
                 }
             }
         );
