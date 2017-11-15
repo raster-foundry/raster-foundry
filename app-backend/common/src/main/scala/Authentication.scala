@@ -27,6 +27,9 @@ trait Authentication extends Directives {
   private val auth0Config = configAuth.getConfig("auth0")
   private val auth0Secret = auth0Config.getString("secret")
 
+  private val jwksURL = auth0Config.getString("jwksURL")
+  private val jwkSet: JWKSource[SecurityContext] = new RemoteJWKSet(new URL(jwksURL))
+
   // Default user returned when no credentials are provided
   lazy val anonymousUser:Future[Option[User]] = Users.getUserById("default")
 
@@ -53,8 +56,7 @@ trait Authentication extends Directives {
 
   def verifyJWT(tokenString: String): Either[BadJWTException, (JwtToken, JWTClaimsSet)] = {
     val token: JwtToken = JwtToken(content = tokenString)
-    val url = "https://raster-foundry-dev.auth0.com/.well-known/jwks.json"
-    val jwkSet: JWKSource[SecurityContext] = new RemoteJWKSet(new URL(url))
+
     ConfigurableJwtValidator(jwkSet).validate(token)
   }
 
