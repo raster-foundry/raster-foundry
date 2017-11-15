@@ -2598,6 +2598,7 @@ ul.dropdown-list {
       }
       .reverse-indicator {
         visibility: initial;
+        pointer-events: auto;
       }
     }
     &:last-child {
