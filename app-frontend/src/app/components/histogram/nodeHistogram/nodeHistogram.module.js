@@ -1,6 +1,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import d3 from 'd3';
+import {Map} from 'immutable';
 import nodeHistogramTpl from './nodeHistogram.html';
 import LabActions from '../../../redux/actions/lab-actions';
 import HistogramActions from '../../../redux/actions/histogram-actions';
@@ -170,6 +171,10 @@ class NodeHistogramController {
         });
     }
 
+    roundToPrecision(val, precision) {
+        return Math.round(val / precision) * precision;
+    }
+
     /*
       Args:
       Histogram object with form {data, ...} (only data is relevant)
@@ -196,33 +201,41 @@ class NodeHistogramController {
         } else if (this.noValidData) {
             this.noValidData = false;
         }
+
         let diff = rangeSize / 100;
         let magnitude = Math.round(Math.log10(diff));
         this.precision = Math.pow(10, magnitude);
 
+        // recalibrate
+        this.options.viewRange = {
+            min: this.roundToPrecision(this.options.viewRange.min, this.precision),
+            max: this.roundToPrecision(this.options.viewRange.max, this.precision)
+        };
+
+        diff = (this.options.viewRange.max - this.options.viewRange.min) / 100;
+
         let buckets = histogram.buckets;
         let plot;
         if (buckets.length < 100) {
-            let valMap = {};
-            _.range(0, 100).map((mult) => {
-                let key = mult * diff + histogram.minimum;
-                let roundedkey = Math.round(key / this.precision) * this.precision;
-                valMap[roundedkey] = 0;
+            let valueMap = new Map();
+            buckets.forEach(([bucket, value]) => {
+                let roundedBucket = Math.round(bucket / this.precision) * this.precision;
+                valueMap = valueMap.set(roundedBucket, value);
             });
-            buckets.forEach((bucket) => {
-                let key = bucket[0];
-                let roundedkey = Math.round(key / this.precision) * this.precision;
-                valMap[roundedkey] = bucket[1];
+            _.range(0, 100).forEach((mult) => {
+                let key = Math.round(
+                    (mult * diff + this.options.viewRange.min) / this.precision
+                ) * this.precision;
+                let value = valueMap.get(key, 0);
+                valueMap = valueMap.set(key, value);
             });
-            plot = Object.keys(valMap)
-                .map(key => parseFloat(key))
-                .sort((a, b) => a - b)
-                .map((key) => {
-                    return {
-                        x: key, y: valMap[key]
-                    };
-                });
+
+            plot = valueMap.entrySeq()
+                .sort(([K1], [K2]) => K1 - K2)
+                .map(([key, value]) => ({x: key, y: value}))
+                .toArray();
         } else {
+            // TODO fix this so it acts like above
             plot = buckets.map((bucket) => {
                 return {
                     x: Math.round(bucket[0]), y: bucket[1]
@@ -230,12 +243,6 @@ class NodeHistogramController {
             });
         }
 
-        if (_.first(plot).x !== histogram.minimum) {
-            plot.splice(0, 0, {x: histogram.minimum, y: 0});
-        }
-        if (_.last(plot).x !== histogram.maximum) {
-            plot.push({x: histogram.maximum, y: 0});
-        }
         this.plot = [{
             values: plot,
             key: 'Value',
@@ -372,9 +379,12 @@ class NodeHistogramController {
             });
         }
         this.api.refresh();
-        let {nodeId, breakpoints, node, options} = this;
+        let {nodeId, breakpoints, options} = this;
         let renderDefinition = renderDefinitionFromState(options, breakpoints);
-        this.updateRenderDefinition({nodeId, renderDefinition, node});
+        let histogramOptions = Object.assign({}, this.histogramOptions, {
+            range: this.options.breakpointRange
+        });
+        this.updateRenderDefinition({nodeId, renderDefinition, histogramOptions});
     }
 
     getBreakpointRange(breakpoints) {
@@ -431,9 +441,9 @@ class NodeHistogramController {
         this.updateRenderDefinition({
             nodeId: this.nodeId,
             renderDefinition,
-            histogramOptions: {
-                range: this.options.dataRange, baseScheme: baseScheme
-            }
+            histogramOptions: Object.assign({}, this.histogramOptions, {
+                baseScheme
+            })
         });
     }
 }
