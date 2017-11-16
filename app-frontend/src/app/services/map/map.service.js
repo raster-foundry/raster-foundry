@@ -574,7 +574,7 @@ export default (app) => {
                         mapWrapper.off(key);
                     }
                 );
-                this.maps.delete(id);
+                this.maps = this.maps.delete(id);
             });
             // delete reference to map
             // if any promises, resolve them with a failure
