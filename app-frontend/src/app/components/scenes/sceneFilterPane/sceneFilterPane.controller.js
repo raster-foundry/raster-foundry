@@ -61,7 +61,19 @@ export default class FilterPaneController {
             this.selectedBrowseSource = browseSource;
             this.selectedDatasource = '';
             this.initDataSourceFilters();
-            this.newParams.datasource = [];
+            this.datefilter = {
+                start: this.Moment().subtract(1, 'months'),
+                end: this.Moment()
+            };
+            this.hasDatetimeFilter = true;
+            this.datefilterPreset = 'The last month';
+
+            this.newParams = Object.assign({}, {
+                datasource: [],
+                minAcquisitionDatetime: this.datefilter.start.toISOString(),
+                maxAcquisitionDatetime: this.datefilter.end.toISOString()
+            });
+
             this.onFilterChange({
                 newFilters: this.newParams,
                 sourceRepo: this.selectedBrowseSource
@@ -70,13 +82,12 @@ export default class FilterPaneController {
     }
 
     connectToPlanet() {
-        this.activeModal = this.modalSevice.open({
+        this.modalService.open({
             component: 'rfEnterTokenModal',
             resolve: {
                 title: () => 'Enter your Planet API Token'
             }
-        });
-        this.activeModal.result.then((token) => {
+        }).result.then((token) => {
             this.userService.updatePlanetToken(token).then(() => {
                 this.userPlanetCredential = token;
                 if (this.userPlanetCredential) {
@@ -124,10 +135,18 @@ export default class FilterPaneController {
     }
 
     initDatefilter() {
-        this.datefilter = {
-            start: this.Moment().subtract(100, 'years'),
-            end: this.Moment()
-        };
+        if (this.selectedBrowseSource === 'Planet Labs') {
+            this.datefilter = {
+                start: this.Moment().subtract(1, 'months'),
+                end: this.Moment()
+            };
+        } else {
+            this.datefilter = {
+                start: this.Moment().subtract(100, 'years'),
+                end: this.Moment()
+            };
+        }
+
         this.dateranges = [
             {
                 name: 'Today',
@@ -266,11 +285,7 @@ export default class FilterPaneController {
     }
 
     openDateRangePickerModal() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.modalSevice.open({
+        this.modalService.open({
             component: 'rfDateRangePickerModal',
             resolve: {
                 config: () => Object({
@@ -278,14 +293,11 @@ export default class FilterPaneController {
                     ranges: this.dateranges
                 })
             }
+        }).result.then((range) => {
+            if (range) {
+                this.setDateRange(range.start, range.end, range.preset);
+            }
         });
-
-        this.activeModal.result.then(
-            range => {
-                if (range) {
-                    this.setDateRange(range.start, range.end, range.preset);
-                }
-            });
     }
 
     setDateRange(start, end, preset) {
@@ -342,9 +354,6 @@ export default class FilterPaneController {
             this.onFilterUpdate({owner: null});
         }
     }
-
-    // let profile = this.authService.getProfile();
-    // this.filters.owner = profile ? profile.sub : null;
 
     resetAllFilters() {
         this.selectedDatasource = '';

@@ -39,7 +39,7 @@ class SceneDetailModalController {
     $postLink() {
         this.datasourceLoaded = false;
         this.getMap().then(mapWrapper => {
-            mapWrapper.setThumbnail(this.scene, false, true);
+            mapWrapper.setThumbnail(this.scene, {persist: true});
             mapWrapper.map.fitBounds(this.getSceneBounds());
         });
         this.datasourceService.get(this.scene.dataSource).then(d => {

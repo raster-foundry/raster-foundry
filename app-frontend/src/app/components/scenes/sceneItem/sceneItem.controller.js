@@ -14,7 +14,7 @@ export default class SceneItemController {
     $onInit() {
         this.datasourceLoaded = false;
 
-        if (this.isRfScene) {
+        if (this.apiSource === 'Raster Foundry') {
             this.datasourceService.get(this.scene.datasource).then(d => {
                 this.datasourceLoaded = true;
                 this.datasource = d;
@@ -32,7 +32,7 @@ export default class SceneItemController {
             });
         }
 
-        if (!this.isRfScene) {
+        if (this.apiSource === 'Planet Labs') {
             this.getPlanetThumbnail();
         }
     }
@@ -44,8 +44,9 @@ export default class SceneItemController {
     }
 
     toggleSelected(event) {
+        this.selectedStatus = !this.selectedStatus;
         if (this.onSelect) {
-            this.onSelect({scene: this.scene, selected: !this.selectedStatus});
+            this.onSelect({scene: this.scene, selected: this.selectedStatus});
             if (event) {
                 event.stopPropagation();
             }
@@ -61,10 +62,9 @@ export default class SceneItemController {
         this.planetLabsService.getThumbnail(
             this.planetKey, this.scene.thumbnails[0].url
         ).then(
-            (res) => {
-                if (res.status === 200) {
-                    this.planetThumbnail = res.base64;
-                }
+            (thumbnail) => {
+                this.planetThumbnail = thumbnail;
+                this.onPassPlanetThumbnail({url: thumbnail, id: this.scene.id});
             }
         );
     }

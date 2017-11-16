@@ -43,22 +43,18 @@
     </li>
   </ul>
 </div>
-<div class="list-group" ng-if="$ctrl.isRfScene && $ctrl.lastSceneResult && $ctrl.projectScenesReady">
+<div class="list-group" ng-if="$ctrl.sourceRepo === 'Raster Foundry' && $ctrl.lastSceneResult && $ctrl.projectScenesReady">
   <div class="list-group-item">
     <strong class="color-dark">{{$ctrl.lastSceneResult.count | number}} scenes found</strong>
   </div>
 </div>
-<div class="list-group" ng-if="!$ctrl.isRfScene && $ctrl.isLoadingPlanetScenes">
-  <div class="list-group-item">
+<div class="list-group" ng-if="$ctrl.sourceRepo === 'Planet Labs'">
+  <div class="list-group-item" ng-if="$ctrl.isLoadingPlanetScenes">
     <strong class="color-dark">Loading Planet Scenes...</strong>
   </div>
-</div>
-<div class="list-group" ng-if="!$ctrl.isRfScene && $ctrl.planetSceneCounts && !$ctrl.isLoadingPlanetScenes">
-  <div class="list-group-item" ng-if="$ctrl.hasMorePlanetPages">
-    <strong class="color-dark">{{$ctrl.planetSceneCounts | number}}+ scenes found</strong>
-  </div>
-  <div class="list-group-item" ng-if="!$ctrl.hasMorePlanetPages">
-    <strong class="color-dark">{{$ctrl.planetSceneCounts | number}} scenes found</strong>
+  <div class="list-group-item" ng-if="!$ctrl.isLoadingPlanetScenes">
+    <strong class="color-dark" ng-if="$ctrl.hasMorePlanetPages">{{$ctrl.planetSceneCounts | number}}+ scenes found</strong>
+    <strong class="color-dark" ng-if="!$ctrl.hasMorePlanetPages">{{$ctrl.planetSceneCounts | number}} scenes found</strong>
   </div>
 </div>
 <div class="sidebar-scrollable list-group">
@@ -66,9 +62,10 @@
       scene="scene"
       selected="$ctrl.isSelected(scene)"
       is-disabled="$ctrl.isInProject(scene)"
-      is-rf-scene="$ctrl.isRfScene"
+      api-source="$ctrl.sourceRepo"
       planet-key="$ctrl.planetKey"
       on-select="$ctrl.setSelected(scene, selected)"
+      on-pass-planet-thumbnail="$ctrl.onPassPlanetThumbnail(url, id)"
       ng-click="$ctrl.openSceneDetailModal(scene)"
       ng-mouseenter="$ctrl.setHoveredScene(scene)"
       ng-mouseleave="$ctrl.removeHoveredScene()"
@@ -77,12 +74,12 @@
   <img ng-attr-src="{{$ctrl.base64Uri}}">
   <div class="sidebar-content">
     <button class="btn btn-block btn-secondary"
-            ng-if="$ctrl.sourceRepo === 'Raster Foundry' && !$ctrl.loadingScenes && $ctrl.lastSceneResult && $ctrl.lastSceneResult.hasNext && !$ctrl.errorMsg"
+            ng-if="$ctrl.isLoadingRfScene()"
             ng-click="$ctrl.getMoreScenes()">
       Load More Scenes
     </button>
     <button class="btn btn-block btn-secondary"
-            ng-if="$ctrl.sourceRepo === 'Planet Labs' && $ctrl.sceneList.length && $ctrl.hasMorePlanetPages"
+            ng-if="$ctrl.isLoadingPlanetScene()"
             ng-click="$ctrl.loadMorePlanetScenes()">
       Load More Scenes
     </button>

@@ -16,14 +16,15 @@
           <dt ng-repeat-start="(field, value) in $ctrl.scene.filterFields">
             {{field}}
           </dt>
-          <dd ng-repeat-end>{{field !== 'acquisitionDate' ? value : (value | date)}}</dd>
-          <dd ng-repeat-end>{{value}}</dd>
-          <dt ng-if-start="$ctrl.scene.createdAt">Created Date</dt>
-          <dd ng-if-end>{{$ctrl.scene.createdAt | date}}</dd>
-          <dt ng-if-start="$ctrl.scene.modifiedAt">Modified Date</dt>
-          <dd ng-if-end>{{$ctrl.scene.modifiedAt | date}}</dd>
-          <dt ng-if-start="$ctrl.scene.datasource">Datasource</dt>
-          <dd ng-if-end>{{$ctrl.scene.datasource}}</dd>
+          <dd ng-repeat-end>
+            {{field == 'acquisitionDate' ? (value | date) : value}}
+          </dd>
+          <dt>Created Date</dt>
+          <dd>{{$ctrl.scene.createdAt | date}}</dd>
+          <dt>Modified Date</dt>
+          <dd>{{$ctrl.scene.modifiedAt | date}}</dd>
+          <dt>Datasource</dt>
+          <dd>{{$ctrl.scene.datasource}}</dd>
         </dl>
         <h5 class="color-dark">Scene metadata</h5>
         <dl class="meta-list">
@@ -42,12 +43,8 @@
 
   <div class="modal-footer">
     <button type="button" class="btn pull-left"
-            ng-click="$ctrl.closeWithData(1)">
+            ng-click="$ctrl.dismiss()">
       Close
-    </button>
-    <button type="button" class="btn btn-default pull-right"
-            ng-click="$ctrl.openDownloadModal()">
-      <i class="icon-download"></i> Download
     </button>
   </div>
 </div>

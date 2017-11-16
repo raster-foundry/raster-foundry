@@ -7,9 +7,8 @@ import {Map, Set} from 'immutable';
 class MapWrapper {
     // MapWrapper is a bare es6 class, so does not use angular injections
     constructor( // eslint-disable-next-line
-        leafletMap, mapId, imageOverlayService, datasourceService, options, thumbnailService, planetLabsService
+        leafletMap, mapId, imageOverlayService, datasourceService, options, thumbnailService
     ) {
-        this.planetLabsService = planetLabsService;
         this.thumbnailService = thumbnailService;
         this.map = leafletMap;
         this.mapId = mapId;
@@ -447,14 +446,17 @@ class MapWrapper {
 
     /** Display a thumbnail of the scene
      * @param {object} scene Scene with footprint to display on the map
-     * @param {boolean?} useSmall Use the smallest thumbnail
-     * @param {boolean?} persist Whether to persist this thumbnail on the map
+     * @param {object} thumbnailOptions options for displaying the thumbnail
+     *                                  valid properties: persist, useSmall, dataRepo, url
      * @returns {this} this
      */
-    setThumbnail(scene, useSmall, persist) {
+    setThumbnail(scene, thumbnailOptions) {
         if (this.persistedThumbnails.has(scene.id)) {
             return this;
         }
+
+        let options = Object.assign({dataRepo: 'Raster Foundry'}, thumbnailOptions);
+
         let footprintGeojson = Object.assign({
             properties: {
                 options: {
@@ -466,24 +468,51 @@ class MapWrapper {
         }, scene.dataFootprint);
         if (scene.tileFootprint && scene.thumbnails && scene.thumbnails.length) {
             // get smallest thumbnail - it's a small map
-            let thumbUrl = this.thumbnailService.getBestFitUrl(
-                scene.thumbnails, useSmall ? 100 : 1000
-            );
-
             let boundsGeoJson = L.geoJSON();
             boundsGeoJson.addData(scene.tileFootprint);
             let imageBounds = boundsGeoJson.getBounds();
-            this.datasourceService.get(scene.datasource).then(d => {
+
+            if (options.dataRepo === 'Raster Foundry') {
+                let thumbUrl = this.thumbnailService.getBestFitUrl(
+                    scene.thumbnails, options.useSmall ? 100 : 1000
+                );
+                this.datasourceService.get(scene.datasource).then(d => {
+                    let overlay = this.imageOverlayService.createNewImageOverlay(
+                        thumbUrl,
+                        imageBounds, {
+                            opacity: 1,
+                            dataMask: scene.dataFootprint,
+                            thumbnail: thumbUrl,
+                            attribution: `©${d.name} `
+                        }
+                    );
+                    if (!options.persist) {
+                        this.setLayer('thumbnail', overlay);
+                    } else {
+                        this.persistedThumbnails = this.persistedThumbnails.set(scene.id, overlay);
+                        this.setLayer(
+                            'Selected Scenes',
+                            this.persistedThumbnails.toArray(),
+                            true
+                        );
+                    }
+                    this.setGeojson(
+                        'thumbnail',
+                        footprintGeojson
+                    );
+                });
+            } else if (options.dataRepo === 'Planet Labs' && options.url) {
                 let overlay = this.imageOverlayService.createNewImageOverlay(
-                    thumbUrl,
-                    imageBounds, {
+                    options.url,
+                    imageBounds,
+                    {
                         opacity: 1,
                         dataMask: scene.dataFootprint,
-                        thumbnail: thumbUrl,
-                        attribution: `©${d.name} `
+                        thumbnail: options.url,
+                        attribution: `©${scene.datasource} `
                     }
                 );
-                if (!persist) {
+                if (!options.persist) {
                     this.setLayer('thumbnail', overlay);
                 } else {
                     this.persistedThumbnails = this.persistedThumbnails.set(scene.id, overlay);
@@ -497,7 +526,7 @@ class MapWrapper {
                     'thumbnail',
                     footprintGeojson
                 );
-            });
+            }
         } else if (scene.dataFootprint) {
             this.deleteLayers('thumbnail');
             this.setGeojson(
@@ -531,75 +560,12 @@ class MapWrapper {
         this.heldState = state;
         return this;
     }
-
-    setPlanetThumbnail(scene, persist, planetKey) {
-        if (this.persistedThumbnails.has(scene.id)) {
-            return this;
-        }
-        let footprintGeojson = Object.assign({
-            properties: {
-                options: {
-                    fillOpacity: 0,
-                    weight: 0,
-                    interactive: false
-                }
-            }
-        }, scene.dataFootprint);
-        if (scene.tileFootprint && scene.thumbnails && scene.thumbnails.length) {
-            this.planetLabsService.getThumbnail(
-                planetKey, scene.thumbnails[0].url
-            ).then(
-                (res) => {
-                    if (res.status === 200) {
-                        /* eslint-disable */
-                        let arr = new Uint8Array(res.data);
-                        let raw = String.fromCharCode.apply(null, arr);
-                        let planetThumbnailUrl = 'data:image/png;base64,' + btoa(raw);
-                        /* eslint-enable */
-                        let boundsGeoJson = L.geoJSON();
-                        boundsGeoJson.addData(scene.tileFootprint);
-                        let overlay = this.imageOverlayService.createNewImageOverlay(
-                            planetThumbnailUrl,
-                            boundsGeoJson.getBounds(),
-                            {
-                                opacity: 1,
-                                dataMask: scene.dataFootprint,
-                                thumbnail: planetThumbnailUrl,
-                                attribution: `©${scene.datasource} `
-                            }
-                        );
-                        if (!persist) {
-                            this.setLayer('thumbnail', overlay);
-                        } else {
-                            this.persistedThumbnails.set(scene.id, overlay);
-                            this.setLayer(
-                                'Selected Scenes',
-                                Array.from(this.persistedThumbnails.values()),
-                                true
-                            );
-                        }
-                        this.setGeojson(
-                            'thumbnail',
-                            footprintGeojson
-                        );
-                    }
-                }
-            );
-        } else if (scene.dataFootprint) {
-            this.deleteLayers('thumbnail');
-            this.setGeojson(
-                'thumbnail',
-                footprintGeojson
-            );
-        }
-        return this;
-    }
 }
 
 export default (app) => {
     class MapService {
         constructor(
-          $q, imageOverlayService, datasourceService, thumbnailService, planetLabsService
+          $q, imageOverlayService, datasourceService, thumbnailService
         ) {
             'ngInject';
             this.maps = new Map();
@@ -608,7 +574,6 @@ export default (app) => {
             this.imageOverlayService = imageOverlayService;
             this.datasourceService = datasourceService;
             this.thumbnailService = thumbnailService;
-            this.planetLabsService = planetLabsService;
         }
 
         // Leaflet components should self-register using this method.
@@ -616,7 +581,7 @@ export default (app) => {
             let mapWrapper =
                 new MapWrapper(
                     map, id, this.imageOverlayService, this.datasourceService,
-                    options, this.thumbnailService, this.planetLabsService);
+                    options, this.thumbnailService);
             this.maps = this.maps.set(id, mapWrapper);
             // if any promises , resolve them
             if (this._mapPromises.has(id)) {

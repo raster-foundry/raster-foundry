@@ -2,39 +2,30 @@
 
 export default class PlanetSceneDetailModalController {
     constructor(
-        $log, $state, $uibModal,
-        moment, sceneService, datasourceService, mapService
+        $scope, mapService
     ) {
         'ngInject';
-        this.$log = $log;
-        this.$state = $state;
-        this.$uibModal = $uibModal;
-        this.Moment = moment;
-        this.sceneService = sceneService;
-        this.datasourceService = datasourceService;
         this.scene = this.resolve.scene;
-        this.planetKey = this.resolve.planetKey;
+        this.planetThumbnailUrl = this.resolve.planetThumbnailUrl;
         this.getMap = () => mapService.getMap('scene-preview-map');
+        $scope.$on('$destroy', () => {
+            mapService.deregisterMap('scene-preview-map');
+        });
     }
 
     $onInit() {
         this.getMap().then(mapWrapper => {
-            mapWrapper.setPlanetThumbnail(this.scene, true, this.planetKey);
+            // the order of the below two function calls is important
             mapWrapper.map.fitBounds(this.getSceneBounds());
+            mapWrapper.setThumbnail(this.scene, {
+                persist: true,
+                dataRepo: 'Planet Labs',
+                url: this.planetThumbnailUrl
+            });
         });
     }
 
     getSceneBounds() {
-        const bounds = L.geoJSON(this.scene.dataFootprint).getBounds();
-        return bounds;
+        return L.geoJSON(this.scene.dataFootprint).getBounds();
     }
-
-    closeWithData(data) {
-        this.close({$value: data});
-    }
-
-    openDownloadModal() {
-       // Do we implement planet scene download?
-    }
-
 }
