@@ -1447,27 +1447,25 @@ table.upload-info {
 }
 
 .tabbed-list-header {
-  border-bottom: 1px solid $gray-lightest;
-  &.with-background {
-    background: #f1f1f1;
-  }
-  ul {
     list-style: none;
     margin: 0;
     padding: 0;
     display: flex;
-  }
-  li a {
-    display: block;
-    padding: 1.66rem 3rem;
-    margin-bottom: -1px;
-    font-weight: bold;
-    color: $text-base;
-    &.active {
-      color: $brand-primary;
-      border-bottom: 2px solid $brand-primary;
+    border-bottom: 1px solid $gray-lightest;
+    &.with-background {
+        background: #f1f1f1;
     }
-  }
+    li a {
+        display: block;
+        padding: 1.66rem 3rem;
+        margin-bottom: -1px;
+        font-weight: bold;
+        color: $text-base;
+        &.active {
+            color: $brand-primary;
+            border-bottom: 2px solid $brand-primary;
+        }
+    }
 }
 .list-group-item.no-border {
   border-bottom: none;
