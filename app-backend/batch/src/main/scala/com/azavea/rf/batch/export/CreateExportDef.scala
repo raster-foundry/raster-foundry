@@ -87,7 +87,7 @@ case class CreateExportDef(exportId: UUID, region: Option[String] = None)(implic
     val startEmr = (ed: ExportDefinition, edu: String) => Future { startExportEmrJob(ed, edu) }
 
     val createExportDef = for {
-      user <- fromOptionF[Future, String, User](Users.getUserById(airflowUser), "DB: Failed to fetch User.")
+      user <- fromOptionF[Future, String, User](Users.getUserById(systemUser), "DB: Failed to fetch User.")
       export <- fromOptionF[Future, String, Export](
         database.db.run(Exports.getExport(exportId, user)), "DB: Failed to fetch Export."
       )

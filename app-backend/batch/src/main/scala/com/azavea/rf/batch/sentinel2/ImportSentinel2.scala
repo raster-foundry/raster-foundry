@@ -71,7 +71,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
         visibility       = Visibility.Public,
         filename         = filename,
         sourceUri        = s"${sentinel2Config.baseHttpPath}${obj}",
-        owner            = airflowUser.some,
+        owner            = systemUser.some,
         scene            = sceneId,
         imageMetadata    = Json.Null,
         resolutionMeters = resolution,
@@ -176,7 +176,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
                         datasource = sentinel2Config.datasourceUUID,
                         sceneMetadata = sceneMetadata.asJson,
                         name = sceneName,
-                        owner = airflowUser.some,
+                        owner = systemUser.some,
                         tileFootprint = (sentinel2Config.targetProjCRS.epsgCode |@| tileFootprint).map {
                           case (code, mp) => Projected(mp, code)
                         },
@@ -246,9 +246,9 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
 
   def run: Unit = {
     logger.info("Importing scenes...")
-    Users.getUserById(airflowUser).flatMap { userOpt =>
+    Users.getUserById(systemUser).flatMap { userOpt =>
       findScenes(startDate, userOpt.getOrElse {
-        val e = new Exception(s"User $airflowUser doesn't exist.")
+        val e = new Exception(s"User $systemUser doesn't exist.")
         sendError(e)
         throw e
       })

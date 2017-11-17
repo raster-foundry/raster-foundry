@@ -24,7 +24,7 @@ case class UpdateAOIProject(projectId: UUID)(implicit val database: DB) extends 
   def run: Unit = {
     logger.info(s"Updating Project $projectId AOI...")
     val result = for {
-      user: User                   <- OptionT(Users.getUserById(airflowUser))
+      user: User                   <- OptionT(Users.getUserById(systemUser))
       (project: Project, aoi: AOI) <- OptionT(Projects.getAOIProject(projectId, user))
       scenes: Iterable[UUID]       <- OptionT({
         val area = aoi.area
