@@ -1,4 +1,4 @@
-/* global BUILDCONFIG */
+/* global BUILDCONFIG HELPCONFIG */
 
 class HomeController {
     constructor(authService, $uibModal, feedService) {
@@ -10,6 +10,7 @@ class HomeController {
 
     $onInit() {
         this.BUILDCONFIG = BUILDCONFIG;
+        this.HELPCONFIG = HELPCONFIG;
         this.feedService.getPosts().then(posts => {
             this.blogPosts = posts;
         });
