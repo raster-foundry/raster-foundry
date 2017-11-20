@@ -275,6 +275,12 @@ module.exports = function (_path) {
                     LOGOURL: JSON.stringify(false),
                     FAVICON_DIR: JSON.stringify('/favicon'),
                     FEED_SOURCE: JSON.stringify('https://blog.rasterfoundry.com/latest?format=json')
+                },
+                'HELPCONFIG': {
+                    API_DOCS_URL: JSON.stringify('https://docs.rasterfoundry.com/'),
+                    HELP_HOME: JSON.stringify('https://help.rasterfoundry.com/'),
+                    GETTING_STARTED_WITH_PROJECTS: JSON.stringify('https://help.rasterfoundry.com/creating-projects'),
+                    DEVELOPER_RESOURCES: JSON.stringify('https://help.rasterfoundry.com/developer-resources')
                 }
             })
         ]

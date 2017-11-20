@@ -11,7 +11,7 @@
           </p>
           <a class="btn btn-primary" ui-sref="projects.list">View Projects</a>
           <button class="btn btn-default" ng-click="$ctrl.openCreateProjectModal()">Create a new Project</button>
-          <p><a href="https://help.rasterfoundry.com/creating-projects" target="_blank">Getting started with Projects</a></p>
+          <p><a ng-href="{{$ctrl.HELPCONFIG.GETTING_STARTED_WITH_PROJECTS}}" target="_blank">Getting started with Projects</a></p>
         </rf-call-to-action-item>
         <div class="row stack-sm">
           <div class="column-6 flex-display">
@@ -25,9 +25,6 @@
                       ng-click="$ctrl.openToolCreateModal()">
                 Create a new Tool
               </button>
-              <!-- <p> -->
-              <!-- <a href="https://help.rasterfoundry.com/working-with-tools" target="_blank">Getting started with Tools</a> -->
-              <!-- </p> -->
             </rf-call-to-action-item>
           </div>
           <div class="column-6 flex-display">
@@ -38,9 +35,9 @@
               <a class="btn btn-tertiary" ui-sref="settings.tokens.api">Manage API Tokens</a>
               <div class="hide-sm"></div>
               <p>
-                <a href="https://help.rasterfoundry.com/developer-resources" target="_blank">Developer Resources</a>
+                <a ng-href="{{$ctrl.HELPCONFIG.DEVELOPER_RESOURCES}}" target="_blank">Developer Resources</a>
                 <br>
-                <a href="https://docs.rasterfoundry.com/" target="_blank">API Documentation</a>
+                <a ng-href="{{$ctrl.HELPCONFIG.API_DOCS_URL}}" target="_blank">API Documentation</a>
               </p>
             </rf-call-to-action-item>
           </div>
@@ -68,7 +65,7 @@
           <section class="aside-footer">
             <h5>Help</h5>
             <ul class="list-unstyled">
-              <li><a href="https://help.rasterfoundry.com/" target="_blank">Help Center</a></li>
+              <li><a ng-href="{{$ctrl.HELPCONFIG.HELP_HOME}}" target="_blank">Help Center</a></li>
             </ul>
           </section>
         </div>
