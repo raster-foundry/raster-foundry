@@ -44,8 +44,7 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging {
     }
   }
 
-  def getOrElseUpdate[CachedType](cacheKey: String, expensiveOperation: => Future[CachedType],
-    ttlSeconds: Int = 0, doCache: Boolean = true): Future[CachedType] = {
+  def getOrElseUpdate[CachedType](cacheKey: String, expensiveOperation: => Future[Option[CachedType]], ttlSeconds: Int = 0, doCache: Boolean = true): Future[Option[CachedType]] = {
 
     if (cacheEnabled && doCache) {
 
@@ -55,14 +54,14 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging {
       futureCached.flatMap({ value =>
         if (value != null) {
           // cache hit
-          Future.successful(value.asInstanceOf[CachedType])
+          Future.successful(Some(value.asInstanceOf[CachedType]))
         } else {
           // cache miss
-          val futureCached: Future[CachedType] = expensiveOperation
+          val futureCached: Future[Option[CachedType]] = expensiveOperation
           futureCached.onComplete {
             case Success(cachedValue) => {
               cachedValue match {
-                case Some(v) => setValue(cacheKey, cachedValue)
+                case Some(v) => setValue(cacheKey, v)
                 case None => setValue(cacheKey, cachedValue, ttlSeconds = 300)
               }
             }
@@ -80,15 +79,14 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging {
   }
 
   def caching[T](cacheKey: String, ttlSeconds: Int = 0,
-    doCache: Boolean = true)(mappingFunction: => Future[T]): Future[T] = {
+    doCache: Boolean = true)(mappingFunction: => Future[Option[T]]): Future[Option[T]] = {
 
     getOrElseUpdate[T](cacheKey, mappingFunction, ttlSeconds, doCache)
   }
 
-  def cachingOptionT[T](cacheKey: String, ttlSeconds: Int = 0,
-    doCache: Boolean = true)(mappingFunction: => OptionT[Future, T]): OptionT[Future, T] = {
+  def cachingOptionT[T](cacheKey: String, ttlSeconds: Int = 0, doCache: Boolean = true)(mappingFunction: => OptionT[Future, T]): OptionT[Future, T] = {
 
-    val futureOption = getOrElseUpdate[Option[T]](cacheKey, mappingFunction.value, ttlSeconds, doCache)
+    val futureOption = getOrElseUpdate[T](cacheKey, mappingFunction.value, ttlSeconds, doCache)
     OptionT(futureOption)
   }
 

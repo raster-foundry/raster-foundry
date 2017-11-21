@@ -52,9 +52,7 @@ trait TileAuthentication extends Authentication
     parameter('mapToken).flatMap { mapToken =>
       val mapTokenId = UUID.fromString(mapToken)
 
-      val doesTokenExist = rfCache.caching(s"project-$projectId-token-$mapToken", 300) {
-        readOneDirect(MapTokens.validateMapToken(projectId, mapTokenId))
-      }
+      val doesTokenExist = readOneDirect(MapTokens.validateMapToken(projectId, mapTokenId))
 
       onSuccess(doesTokenExist).flatMap {
         case 1 => provide(true)
