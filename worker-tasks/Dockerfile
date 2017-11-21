@@ -5,5 +5,3 @@ USER root
 RUN \
       mkdir -p /spark-state \
       && chown spark:spark -R /spark-state
-
-USER spark
