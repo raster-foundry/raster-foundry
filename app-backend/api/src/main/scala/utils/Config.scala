@@ -36,4 +36,6 @@ trait Config {
   val tileServerLocation = tileServerConfig.getString("location")
 
   val dropboxClientId = dropboxConfig.getString("appKey")
+
+  val scopedUploadRoleArn = s3Config.getString("scopedUploadRoleArn")
 }

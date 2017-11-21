@@ -38,6 +38,7 @@ object Version {
   val ficus              = "1.4.0"
   val awsSdk             = "1.11.92"
   val awsBatchSdk        = "1.11.196"
+  val awsStsSdk          = "1.11.232"
   val dnsJava            = "2.1.8"
   val dropbox            = "2.1.1"
   val scalaCheck         = "1.13.4"
