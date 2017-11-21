@@ -70,7 +70,7 @@ services:
       - ./worker-tasks/:/opt/raster-foundry/worker-tasks/
       - ./.ivy2:/root/.ivy2
       - ./.sbt:/root/.sbt
-      - $HOME/.aws:/var/lib/spark/.aws:ro
+      - $HOME/.aws:/root/.aws:ro
       # Spark scratch space
       - /tmp
     working_dir: /opt/raster-foundry/worker-tasks
