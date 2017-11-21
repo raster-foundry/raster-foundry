@@ -163,7 +163,8 @@ lazy val common = Project("common", file("common"))
     Dependencies.ammoniteOps,
     Dependencies.chill,
     Dependencies.cats,
-    Dependencies.awsBatchSdk
+    Dependencies.awsBatchSdk,
+    Dependencies.awsStsSdk
   )})
 
 lazy val migrations = Project("migrations", file("migrations"))
