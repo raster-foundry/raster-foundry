@@ -112,7 +112,7 @@ object Export extends SparkJob with Config with LazyLogging {
 
       val query: ContextRDD[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]] =
         mask
-          .fold(q)(mp => q.where(Intersects(mp.reproject(LatLng, md.crs))))
+          .fold(q)(mp => q.where(Intersects(mp)))
           .result
           .withContext({ rdd => rdd.mapValues({ tile =>
             val ctile = (ld.colorCorrections |@| hist) map { _.colorCorrect(tile, _) } getOrElse tile
