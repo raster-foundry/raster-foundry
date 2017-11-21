@@ -11,7 +11,7 @@
         </p>
         <button class="btn btn-default"
                 ng-click="$ctrl.toggleMetadataEdit()"
-                ng-if="$ctrl.scene.owner !== 'rf|airflow-user'">
+                ng-if="$ctrl.scene.owner === $ctrl.authService.getProfile().sub">
                 {{$ctrl.isEditMetadata ? 'Save ' : 'Edit '}}metadata
         </button>
       </div>
