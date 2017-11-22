@@ -1,6 +1,5 @@
 <div class="flex-column" ui-view>
   <rf-annotate-toolbar map-id="edit"
-                       disable-toolbar-action="$ctrl.disableToolbarAction"
                        bulk-mode="$ctrl.bulkTemplate"
                        on-drawing-canceled="$ctrl.onBulkCreateFinish()"
                        on-shape-creating="$ctrl.onShapeCreating(isCreating)"
@@ -22,13 +21,13 @@
           <button class="btn btn-primary btn-block"
                   type="button"
                   ui-sref="projects.edit.annotate.import"
-                  ng-disabled="$ctrl.isCreating || $ctrl.disableSidebarAction">
+                  ng-disabled="$ctrl.editingAnnotation || $ctrl.sidebarDisabled">
             Import
           </button>
           <button class="btn btn-primary btn-block"
                   type="button"
                   ui-sref="projects.edit.annotate.export"
-                  ng-disabled="$ctrl.isCreating || $ctrl.disableSidebarAction">
+                  ng-disabled="$ctrl.editingAnnotation || $ctrl.sidebarDisabled">
             Export
           </button>
         </div>
@@ -38,24 +37,37 @@
 
   <div class="sidebar-scrollable no-annotation">
       <div class="content"
-          ng-if="$ctrl.bulkTemplate">
+          ng-if="$ctrl.annotationTemplate">
        <div class="alert alert-default">
          <p class="">You're currently in bulk create mode</p>
          <div class="text-center">
-           <button class="btn btn-primary" ng-click="$ctrl.onBulkCreateFinish()">Finish</button>
+           <button class="btn btn-primary" ng-click="$ctrl.finishBulkCreate()">Finish</button>
          </div>
        </div>
      </div>
     <div class="content"
-         ng-if="!$ctrl.annoToExport.features.length">
+         ng-if="!$ctrl.annotations.size &&
+                !$ctrl.fetchingAnnotations &&
+                !$ctrl.fetchingAnnotationsError">
       <div class="alert alert-default">
         <p class="">No annotations have been made</p>
       </div>
     </div>
+    <div class="content"
+         ng-if="$ctrl.fetchingAnnotationsError">
+      <div class="alert alert-default">
+        <p class="">There was an error fetching your annotations</p>
+      </div>
+      <button
+          ng-click="$ctrl.retryFetches()"
+          type="button"
+          class="btn btn-primary">
+        Retry
+      </button>
+    </div>
     <div class="list-group"
-         ng-if="$ctrl.annoToExport.features.length">
-      <div class="list-group-item"
-           ng-if="$ctrl.annoToExport.features.length">
+         ng-if="$ctrl.annotations.size">
+      <div class="list-group-item">
         <div class="list-group-left column-6 no-padding no-margin column-bottom">
           <label for="annotate-filter">Filter by label</label>
           <select class="form-control"
@@ -63,42 +75,38 @@
                   ng-init="$ctrl.filterLabel = {'name': 'All'}"
                   ng-model="$ctrl.filterLabel"
                   ng-change="$ctrl.onFilterChange($ctrl.filterLabel)"
-                  ng-options="label.name for label in $ctrl.labelInputs track by label.name"
-                  ng-disabled="$ctrl.isCreating || $ctrl.disableSidebarAction">
+                  ng-options="label.name for label in $ctrl.labels track by label.name"
+                  ng-disabled="$ctrl.editingAnnotation || $ctrl.sidebarDisabled">
           </select>
         </div>
         <div class="list-group-right column-6 no-padding no-margin column-bottom">
           <button class="btn btn-ghost-danger"
-                type="button"
-                ng-click="$ctrl.onClearAnnotation()">
+                  type="button"
+                  ng-disabled="$ctrl.editingAnnotation || $ctrl.sidebarDisabled"
+                  ng-click="$ctrl.onClearAnnotation()">
            Clear Annotations
           </button>
         </div>
       </div>
     </div>
+    <div class="content"
+         ng-if="$ctrl.fetchingAnnotations">
+      <div class="alert alert-default">
+        <p class="">Loading Annotations <span class="icon-load animate-spin"></span></p>
+      </div>
+    </div>
     <div class="list-group"
-         ng-repeat="annotation in $ctrl.annoToExport.features | filter: $ctrl.labelFilter"
-         ng-if="$ctrl.annoToExport.features.length">
-        <rf-annotate-sidebar-item ng-attr-id="{{'anchor' + annotation.properties.id.toString()}}"
+         ng-repeat="annotation in $ctrl.visibleAnnotations"
+         ng-if="$ctrl.visibleAnnotations.length">
+        <rf-annotate-sidebar-item ng-attr-id="{{'anchor' + annotation.id}}"
                                   ng-mouseenter="$ctrl.onSidebarItemMouseIn(annotation)"
                                   ng-mouseleave="$ctrl.onSidebarItemMouseOut()"
                                   ng-click="$ctrl.toggleSidebarItemClick($event, annotation)"
                                   ng-class="{
-                                      'sidebar-item-hover': $ctrl.hoveredId === annotation.properties.id,
-                                      'sidebar-item-click': $ctrl.clickedId === annotation.properties.id
+                                      'sidebar-item-hover': $ctrl.hoveredId === annotation.id,
+                                      'sidebar-item-click': $ctrl.clickedId === annotation.id
                                   }"
-                                  annotation="annotation"
-                                  label-inputs="$ctrl.labelInputs"
-                                  edit-id="$ctrl.editId"
-                                  disable-sidebar-action="$ctrl.disableSidebarAction"
-                                  on-bulk-create="$ctrl.onBulkCreate(annotation)"
-                                  on-clone-annotation="$ctrl.onCloneAnnotation(geometry, label, description)"
-                                  on-update-annotation-start="$ctrl.onUpdateAnnotationStart(annotation)"
-                                  on-delete-annotation="$ctrl.onDeleteAnnotation(id, label)"
-                                  on-update-annotation-finish="$ctrl.onUpdateAnnotationFinish(id, label, description, isEdit)"
-                                  on-cancel-update-annotation="$ctrl.onCancelUpdateAnnotation(annotation, isEdit)"
-                                  on-change-annotation-stroke="$ctrl.onChangeAnnotationStroke(annotation)"
-                                  on-qa-checked="$ctrl.onQaChecked(annotation, qa)">
+                                  annotation-id="annotation.id"
         </rf-annotate-sidebar-item>
       </div>
   </div>

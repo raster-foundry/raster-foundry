@@ -98,7 +98,9 @@ module.exports = function (_path) {
                 _appRoot: path.join(_path, 'src', 'app'),
                 _images: path.join(_path, 'src', 'app', 'assets', 'images'),
                 _stylesheets: path.join(_path, 'src', 'app', 'assets', 'styles'),
-                _scripts: path.join(_path, 'src', 'app', 'assets', 'js')
+                _scripts: path.join(_path, 'src', 'app', 'assets', 'js'),
+                _api: path.join(_path, 'src', 'app', 'api'),
+                _redux: path.join(_path, 'src', 'app', 'redux')
             }
         },
 

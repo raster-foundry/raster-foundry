@@ -1,9 +1,9 @@
 import angular from 'angular';
 
 import inputNodeTpl from './inputNode.html';
-import LabActions from '../../../redux/actions/lab-actions';
-import NodeActions from '../../../redux/actions/node-actions';
-import { getNodeDefinition } from '../../../redux/node-utils';
+import LabActions from '_redux/actions/lab-actions';
+import NodeActions from '_redux/actions/node-actions';
+import { getNodeDefinition } from '_redux/node-utils';
 
 const InputNodeComponent = {
     templateUrl: inputNodeTpl,

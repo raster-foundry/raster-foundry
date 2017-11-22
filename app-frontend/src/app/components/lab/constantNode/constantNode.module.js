@@ -1,8 +1,8 @@
 import angular from 'angular';
 import constantNodeTpl from './constantNode.html';
 
-import NodeActions from '../../../redux/actions/node-actions';
-import {getNodeDefinition} from '../../../redux/node-utils';
+import NodeActions from '_redux/actions/node-actions';
+import {getNodeDefinition} from '_redux/node-utils';
 
 const ConstantNodeComponent = {
     templateUrl: constantNodeTpl,

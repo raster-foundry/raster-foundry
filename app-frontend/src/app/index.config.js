@@ -1,6 +1,7 @@
 /* globals process BUILDCONFIG */
 import reducers from './redux/reducers';
 import { combineReducers } from 'redux';
+import { asyncDispatchMiddleware } from '_redux/middleware/asyncDispatch';
 import promiseMiddleware from 'redux-promise-middleware';
 import thunk from 'redux-thunk';
 
@@ -20,7 +21,7 @@ function config( // eslint-disable-line max-params
     // redux
     $ngReduxProvider.createStoreWith(
         combineReducers(reducers),
-        [thunk, promiseMiddleware()],
+        [thunk, promiseMiddleware(), asyncDispatchMiddleware],
         // redux devtools chrome extension:
         // https://chrome.google.com/webstore/detail/redux-devtools/lmhkpmbekcpmknklioeibfkpmmfibljd
         // eslint-disable-next-line

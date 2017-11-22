@@ -3,8 +3,8 @@ import _ from 'lodash';
 
 import reclassifyModalTpl from './reclassifyModal.html';
 
-import { getNodeDefinition, getNodeHistogram } from '../../../redux/node-utils';
-import HistogramActions from '../../../redux/actions/histogram-actions';
+import { getNodeDefinition, getNodeHistogram } from '_redux/node-utils';
+import HistogramActions from '_redux/actions/histogram-actions';
 
 const ReclassifyModalComponent = {
     templateUrl: reclassifyModalTpl,

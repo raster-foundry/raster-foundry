@@ -1,9 +1,9 @@
 import angular from 'angular';
 
 import labNodeTpl from './labNode.html';
-import LabActions from '../../../redux/actions/lab-actions';
-import NodeActions from '../../../redux/actions/node-actions';
-import { getNodeDefinition } from '../../../redux/node-utils';
+import LabActions from '_redux/actions/lab-actions';
+import NodeActions from '_redux/actions/node-actions';
+import { getNodeDefinition } from '_redux/node-utils';
 
 class LabNodeController {
     constructor($ngRedux, $scope, $log, $element) {

@@ -1,8 +1,8 @@
 import angular from 'angular';
 import classifyNodeTpl from './classifyNode.html';
 
-import { getNodeDefinition} from '../../../redux/node-utils';
-import NodeActions from '../../../redux/actions/node-actions';
+import { getNodeDefinition} from '_redux/node-utils';
+import NodeActions from '_redux/actions/node-actions';
 
 const ClassifyNodeComponent = {
     templateUrl: classifyNodeTpl,

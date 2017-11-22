@@ -1,8 +1,8 @@
 import angular from 'angular';
 
 import diagramNodeHeaderTpl from './diagramNodeHeader.html';
-import LabActions from '../../../redux/actions/lab-actions';
-import { getNodeDefinition } from '../../../redux/node-utils';
+import LabActions from '_redux/actions/lab-actions';
+import { getNodeDefinition } from '_redux/node-utils';
 
 const DiagramNodeHeaderComponent = {
     templateUrl: diagramNodeHeaderTpl,

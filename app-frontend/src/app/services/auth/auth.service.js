@@ -1,5 +1,5 @@
 /* globals BUILDCONFIG Auth0Lock heap */
-import ApiActions from '../../redux/actions/api-actions';
+import ApiActions from '_redux/actions/api-actions';
 
 let assetLogo = BUILDCONFIG.LOGOFILE ?
     require(`../../../assets/images/${BUILDCONFIG.LOGOFILE}`) :
@@ -221,23 +221,25 @@ export default (app) => {
         onLogin(authResult) {
             this.localStorage.set('accessToken', authResult.accessToken);
             this.localStorage.set('idToken', authResult.idToken);
-            this._redux.initApi({
-                apiToken: authResult.idToken,
-                apiUrl: BUILDCONFIG.API_HOST,
-                tileUrl: this.APP_CONFIG.tileServerLocation
-            });
-
-            this.setReauthentication(authResult.accessToken);
-
             this.profile = this.jwtHelper.decodeToken(authResult.idToken);
 
-            if (typeof heap !== 'undefined' &&
-                typeof heap.identify === 'function' &&
-                typeof heap.addUserProperties === 'function' &&
-                typeof heap.addEventProperties === 'function'
-               ) {
+            if (typeof heap !== 'undefined' && typeof heap.identify === 'function') {
                 heap.identify(this.profile.email);
-                this.getCurrentUser().then((user) => {
+            }
+
+            this.getCurrentUser().then(user => {
+                this._redux.initApi({
+                    apiToken: authResult.idToken,
+                    apiUrl: BUILDCONFIG.API_HOST,
+                    tileUrl: this.APP_CONFIG.tileServerLocation,
+                    user
+                });
+                if (typeof heap !== 'undefined' &&
+                    typeof heap.identify === 'function' &&
+                    typeof heap.addUserProperties === 'function' &&
+                    typeof heap.addEventProperties === 'function'
+                   ) {
+                    heap.identify(this.profile.email);
                     heap.addUserProperties({
                         'organization': user.organizationId,
                         'impersonated': this.profile.impersonated || false,
@@ -245,8 +247,10 @@ export default (app) => {
                             this.profile.impersonator.email : null
                     });
                     heap.addEventProperties({'Logged In': 'true'});
-                });
-            }
+                }
+            });
+
+            this.setReauthentication(authResult.accessToken);
 
             this.featureFlagOverrides.setUser(this.profile);
             // Flags set in the `/config` endpoint; default.
@@ -354,10 +358,13 @@ export default (app) => {
                 );
                 if (this.isLoggedIn) {
                     if (!this._redux.apiToken) {
-                        this._redux.initApi({
-                            apiToken: this.token(),
-                            apiUrl: BUILDCONFIG.API_HOST,
-                            tileUrl: this.APP_CONFIG.tileServerLocation
+                        this.getCurrentUser().then(user => {
+                            this._redux.initApi({
+                                apiToken: this.token(),
+                                apiUrl: BUILDCONFIG.API_HOST,
+                                tileUrl: this.APP_CONFIG.tileServerLocation,
+                                user: user
+                            });
                         });
                     }
 

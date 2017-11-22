@@ -1,9 +1,11 @@
 import angular from 'angular';
 import {Map} from 'immutable';
+import ProjectActions from '_redux/actions/project-actions';
+import AnnotationActions from '_redux/actions/annotation-actions';
 
 class ProjectsEditController {
     constructor( // eslint-disable-line max-params
-        $log, $q, $state, $scope, modalService, $timeout,
+        $log, $q, $state, $scope, modalService, $timeout, $ngRedux,
         authService, projectService, projectEditService,
         mapService, mapUtilsService, layerService,
         datasourceService, imageOverlayService, thumbnailService
@@ -23,9 +25,16 @@ class ProjectsEditController {
         this.imageOverlayService = imageOverlayService;
         this.thumbnailService = thumbnailService;
         this.getMap = () => mapService.getMap('edit');
+
+        let unsubscribe = $ngRedux.connect(
+            () => ({}),
+            Object.assign({}, ProjectActions, AnnotationActions)
+        )(this);
+        $scope.$on('$destroy', unsubscribe);
     }
 
     $onInit() {
+        this.getMap().then(map => this.setProjectMap(map));
         this.mosaicLayer = new Map();
         this.sceneLayers = new Map();
         this.projectId = this.$state.params.projectid;
@@ -57,6 +66,10 @@ class ProjectsEditController {
             }
         } else if (this.project.isAOIProject) {
             this.getPendingSceneList();
+        }
+        this.resetAnnotations();
+        if (this.projectId) {
+            this.setProjectId(this.projectId);
         }
     }
 

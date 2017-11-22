@@ -3,9 +3,9 @@ import angular from 'angular';
 import _ from 'lodash';
 import diagramContainerTpl from './diagramContainer.html';
 
-import LabActions from '../../../redux/actions/lab-actions';
-import NodeActions from '../../../redux/actions/node-actions';
-import { nodesFromAst, getNodeDefinition } from '../../../redux/node-utils';
+import LabActions from '_redux/actions/lab-actions';
+import NodeActions from '_redux/actions/node-actions';
+import { nodesFromAst, getNodeDefinition } from '_redux/node-utils';
 
 const DiagramContainerComponent = {
     templateUrl: diagramContainerTpl,

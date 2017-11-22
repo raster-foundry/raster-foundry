@@ -1,6 +1,6 @@
-import {authedRequest} from '../api-utils';
-import {colorStopsToRange} from '../histogram-utils';
-import {getNodeDefinition, astFromNodes} from '../node-utils';
+import {authedRequest} from '_api/authentication';
+import {colorStopsToRange} from '_redux/histogram-utils';
+import {getNodeDefinition, astFromNodes} from '_redux/node-utils';
 import {NODE_UPDATE_HARD} from './node-actions';
 
 const { colorSchemes: colorSchemes } = require('../../services/projects/colorScheme.defaults.json');

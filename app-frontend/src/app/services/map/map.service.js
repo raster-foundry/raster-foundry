@@ -32,6 +32,7 @@ class MapWrapper {
         this.disableFootprints = false;
 
         this.map.createPane('basemap').style.zIndex = 199;
+        this.map.createPane('editable').style.zIndex = 500;
         this.baseMaps = {};
 
         let basemapLayers = BUILDCONFIG.BASEMAPS.layers;
@@ -52,6 +53,12 @@ class MapWrapper {
         this.setBasemap(defaultBasemap);
 
         this.changeOptions(this.options);
+    }
+
+    toJSON() {
+        return {
+            mapId: this.mapId
+        };
     }
 
     changeOptions(options) {
@@ -220,11 +227,12 @@ class MapWrapper {
     /** Update a geojson layer. Overwrites current contents
      *  @param {string} id unique identifier for the geojson layer.
      *  @param {Object} geoJson geojson feature(s) to replace with
+     *  @param {Object} options options for the geojson object
      *  @returns {this} map wrapper
      */
-    setGeojson(id, geoJson) {
+    setGeojson(id, geoJson, options) {
         this.deleteGeojson(id);
-        this.addGeojson(id, geoJson);
+        this.addGeojson(id, geoJson, options);
     }
 
     /** Get geojson layers for an id

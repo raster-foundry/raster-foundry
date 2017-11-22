@@ -47,6 +47,7 @@ label {
   background-image: none;
   border: 1px solid $border-color-default;
   border-radius: $border-radius-base;
+  -moz-appearance: none;
 
   &.slim {
     height: auto;
