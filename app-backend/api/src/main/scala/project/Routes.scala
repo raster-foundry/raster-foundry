@@ -80,6 +80,15 @@ trait ProjectRoutes extends Authentication
             deleteProject(projectId) }
         }
       } ~
+      pathPrefix("labels") {
+        pathEndOrSingleSlash {
+          get {
+            traceName("project-list-labels") {
+              listLabels(projectId)
+            }
+          }
+        }
+      } ~
       pathPrefix("annotations") {
         pathEndOrSingleSlash {
           get {
@@ -91,7 +100,12 @@ trait ProjectRoutes extends Authentication
             traceName("projects-create-annotations") {
               createAnnotation(projectId)
             }
-          }
+          } ~
+            delete {
+              traceName("projects-delete-annotations") {
+                deleteProjectAnnotations(projectId)
+              }
+            }
         } ~
         pathPrefix(JavaUUID) { annotationId =>
           pathEndOrSingleSlash {
@@ -265,6 +279,12 @@ trait ProjectRoutes extends Authentication
     }
   }
 
+  def listLabels(projectId: UUID): Route = authenticate { user =>
+    complete {
+      Annotations.listProjectLabels(projectId, user)
+    }
+  }
+
   def listAnnotations(projectId: UUID): Route = authenticate { user =>
     (withPagination & annotationQueryParams) { (page: PageRequest, queryParams: AnnotationQueryParameters) =>
       complete {
@@ -297,8 +317,8 @@ trait ProjectRoutes extends Authentication
   }
 
   def updateAnnotation(annotationId: UUID): Route = authenticate { user =>
-    entity(as[Annotation]) { updatedAnnotation =>
-      authorize(user.isInRootOrSameOrganizationAs(updatedAnnotation)) {
+    entity(as[Annotation.GeoJSON]) { updatedAnnotation: Annotation.GeoJSON =>
+      authorize(user.isInRootOrSameOrganizationAs(updatedAnnotation.properties)) {
         onSuccess(update(Annotations.updateAnnotation(updatedAnnotation, annotationId, user))) {
           completeSingleOrNotFound
         }
@@ -309,6 +329,12 @@ trait ProjectRoutes extends Authentication
   def deleteAnnotation(annotationId: UUID): Route = authenticate { user =>
     onSuccess(drop(Annotations.deleteAnnotation(annotationId, user))) {
       completeSingleOrNotFound
+    }
+  }
+
+  def deleteProjectAnnotations(projectId: UUID): Route = authenticate { user =>
+    onSuccess(drop(Annotations.deleteProjectAnnotations(projectId, user))) {
+      completeSomeOrNotFound
     }
   }
 

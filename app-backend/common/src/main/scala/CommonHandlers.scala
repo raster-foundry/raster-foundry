@@ -14,6 +14,12 @@ trait CommonHandlers extends RouteDirectives {
     case _ => throw new IllegalStateException(s"Result expected to be 1, was $count")
   }
 
+  def completeSomeOrNotFound(count: Int): StandardRoute = count match {
+    case 0 => complete(StatusCodes.NotFound)
+    case x if x > 0 => complete(StatusCodes.NoContent)
+    case _ => throw new IllegalStateException(s"Result expected to be 0 or positive, was $count")
+  }
+
   def circeDecodingError = ExceptionHandler {
     case df: DecodingFailure => complete { (StatusCodes.InternalServerError, DecodingFailure.showDecodingFailure.show(df)) }
   }
