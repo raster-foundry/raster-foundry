@@ -1,4 +1,4 @@
-import LabActions from '../../../redux/actions/lab-actions';
+import LabActions from '_redux/actions/lab-actions';
 
 class LabStartAnalysisController {
     constructor(

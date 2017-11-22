@@ -1,6 +1,6 @@
 import angular from 'angular';
 import operationNodeTpl from './operationNode.html';
-import { getNodeDefinition } from '../../../redux/node-utils';
+import { getNodeDefinition } from '_redux/node-utils';
 
 const OperationNodeComponent = {
     templateUrl: operationNodeTpl,

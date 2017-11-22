@@ -1,4 +1,4 @@
-import {authedRequest} from '../api-utils';
+import {authedRequest} from '_api/authentication';
 
 export const NODE_PREVIEWS = 'NODE_PREVIEWS';
 export const NODE_SET_ERROR = 'NODE_SET_ERROR';

@@ -1,6 +1,6 @@
 import angular from 'angular';
 
-import StatisticsActions from '../../../redux/actions/statistics-actions';
+import StatisticsActions from '_redux/actions/statistics-actions';
 
 import nodeStatisticsTpl from './nodeStatistics.html';
 

@@ -1,4 +1,4 @@
-import {authedRequest} from '../api-utils';
+import {authedRequest} from '_api/authentication';
 
 export const STATISTICS_FETCH = 'STATISTICS_FETCH';
 

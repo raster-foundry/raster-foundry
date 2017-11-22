@@ -3,29 +3,40 @@ import angular from 'angular';
 import annotateToolbarTpl from './annotateToolbar.html';
 require('./annotateToolbar.scss');
 
+import AnnotationActions from '_redux/actions/annotation-actions';
+
 const AnnotateToolbarComponent = {
     templateUrl: annotateToolbarTpl,
     controller: 'AnnotateToolbarController',
     bindings: {
         mapId: '@',
-        disableToolbarAction: '<',
-        bulkMode: '<',
-        onDrawingCanceled: '&',
-        onShapeCreating: '&',
         onShapeCreated: '&'
     }
 };
 
 class AnnotateToolbarController {
     constructor(
-        $log, $scope,
+        $log, $scope, $ngRedux,
         mapService
     ) {
         'ngInject';
         this.$log = $log;
         this.$scope = $scope;
 
+        let unsubscribe = $ngRedux.connect(
+            this.mapStateToThis,
+            AnnotationActions
+        )(this);
+        $scope.$on('$destroy', unsubscribe);
+
         this.getMap = () => mapService.getMap(this.mapId);
+    }
+
+    mapStateToThis(state) {
+        return {
+            editingAnnotation: state.projects.editingAnnotation,
+            annotationTemplate: state.projects.annotationTemplate
+        };
     }
 
     $onInit() {
@@ -41,14 +52,14 @@ class AnnotateToolbarController {
         });
 
         this.$scope.$on('$destroy', this.$onDestroy.bind(this));
-    }
 
-    $onChanges(changes) {
-        if (changes.bulkMode && changes.bulkMode.currentValue) {
-            this.enableBulkCreate();
-        } else if (changes.bulkMode) {
-            this.disableBulkCreate();
-        }
+        this.$scope.$watch('$ctrl.annotationTemplate', (template) => {
+            if (template) {
+                this.enableBulkCreate();
+            } else {
+                this.disableBulkCreate();
+            }
+        });
     }
 
     $onDestroy() {
@@ -99,7 +110,7 @@ class AnnotateToolbarController {
             this.drawPolygonHandler.disable();
             this.drawRectangleHandler.disable();
         }
-        this.onShapeCreating({'isCreating': true});
+        this.disableSidebar();
     }
 
     enableBulkCreate() {
@@ -122,8 +133,7 @@ class AnnotateToolbarController {
         if (this.drawMarkerHandler) {
             this.drawMarkerHandler.disable();
         }
-        this.onShapeCreating({'isCreating': false});
-        this.onDrawingCanceled();
+        this.enableSidebar();
     }
 
     createShape(e) {
@@ -137,7 +147,7 @@ class AnnotateToolbarController {
             this.$scope.$evalAsync(() => {
                 this.isDrawCancel = true;
                 this.lastHandler.enable();
-                this.onShapeCreating({isCreating: true});
+                this.disableSidebar();
             });
         }
     }

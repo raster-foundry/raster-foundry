@@ -1,4 +1,4 @@
-import * as LabActions from '../../../redux/actions/lab-actions';
+import * as LabActions from '_redux/actions/lab-actions';
 
 class LabNavbarController {
     constructor(analysisService, $state, $ngRedux, $scope) {

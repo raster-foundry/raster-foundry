@@ -2,32 +2,47 @@ import angular from 'angular';
 import annotateSidebarItemTpl from './annotateSidebarItem.html';
 require('./annotateSidebarItem.scss');
 
+import AnnotationActions from '_redux/actions/annotation-actions';
+import {wrapFeatureCollection} from '_redux/annotation-utils';
+
 const AnnotateSidebarItemComponent = {
     templateUrl: annotateSidebarItemTpl,
     controller: 'AnnotateSidebarItemController',
     bindings: {
-        annotation: '<',
-        labelInputs: '<',
-        editId: '<',
-        disableSidebarAction: '<',
-        onCloneAnnotation: '&',
-        onUpdateAnnotationStart: '&',
-        onDeleteAnnotation: '&',
-        onUpdateAnnotationFinish: '&',
-        onCancelUpdateAnnotation: '&',
-        onBulkCreate: '&',
-        onQaChecked: '&'
+        annotationId: '<',
+        onBulkCreate: '&'
     }
 };
 
 class AnnotateSidebarItemController {
     constructor(
-        $log, $scope, $timeout
+        $log, $scope, $timeout, $ngRedux, $window
     ) {
         'ngInject';
         this.$log = $log;
         this.$scope = $scope;
         this.$timeout = $timeout;
+        this.$window = $window;
+
+        let unsubscribe = $ngRedux.connect(
+            this.mapStateToThis.bind(this),
+            AnnotationActions
+        )(this);
+        $scope.$on('$destroy', unsubscribe);
+    }
+
+    mapStateToThis(state) {
+        let annotation;
+        if (this.annotationId) {
+            annotation = state.projects.annotations.get(this.annotationId);
+        }
+
+        return {
+            annotation,
+            editingAnnotation: state.projects.editingAnnotation,
+            sidebarDisabled: state.projects.sidebarDisabled,
+            labels: state.projects.labels
+        };
     }
 
     $onInit() {
@@ -35,41 +50,30 @@ class AnnotateSidebarItemController {
         this.maxMatchedLabels = 4;
     }
 
-    onAnnotationClone($event, annotation) {
+    onAnnotationClone($event) {
         $event.stopPropagation();
-        this.onCloneAnnotation({
-            'geometry': annotation.geometry,
-            'label': annotation.properties.label,
-            'description': annotation.properties.description
-        });
+        this.createAnnotations(wrapFeatureCollection(this.annotation), true);
     }
 
-    onAnnotationEdit($event, annotation) {
+    onAnnotationEdit($event) {
         $event.stopPropagation();
-        this.onUpdateAnnotationStart({'annotation': annotation});
+        this.editAnnotation(this.annotationId);
     }
 
-    onAnnotationDelete($event, annotation) {
+    onAnnotationDelete($event) {
         $event.stopPropagation();
-        this.onDeleteAnnotation({
-            'id': annotation.properties.id,
-            'label': annotation.properties.label
-        });
+        let answer = this.$window.confirm('Delete this annotation?');
+        if (answer) {
+            this.deleteAnnotation(this.annotationId);
+        }
     }
 
-    onAnnotationBulkCreate($event, annotation) {
+    onBulkCreateClick($event) {
         $event.stopPropagation();
-        this.onBulkCreate({'annotation': annotation});
+        this.bulkCreateAnnotations(this.annotation);
     }
 
-    cancelAnnotation(annotation) {
-        this.onCancelUpdateAnnotation({
-            'annotation': annotation,
-            'isEdit': this.editId === annotation.properties.id
-        });
-    }
-
-    updateAnnotation(annotation) {
+    onSaveClick() {
         if (this.labelNameInput) {
             this.isInvalid = false;
             this.newLabelName = this.labelNameInput;
@@ -79,18 +83,21 @@ class AnnotateSidebarItemController {
 
         this.showMatchedLabels = false;
 
-        if (this.newLabelName) {
-            this.onUpdateAnnotationFinish({
-                'id': annotation.properties.id,
-                'label': this.newLabelName,
-                'description': this.newLabelDescription,
-                'isEdit': this.editId === annotation.properties.id
-            });
-        }
+        let annotation = Object.assign({}, this.annotation, {
+            properties: Object.assign({}, this.annotation.properties, {
+                label: this.newLabelName,
+                description: this.newLabelDescription
+            })
+        });
+        this.finishEditingAnnotation(annotation);
     }
 
-    onQaCheck(annotation, qa) {
-        this.onQaChecked({annotation, qa});
+    onQaCheck(qa) {
+        this.updateAnnotation(Object.assign({}, this.annotation, {
+            properties: Object.assign({}, this.annotation.properties, {
+                quality: qa
+            })
+        }));
     }
 
     onLabelNameChange() {
@@ -103,12 +110,12 @@ class AnnotateSidebarItemController {
 
     matchLabelName(labelName) {
         let normalizedLabel = labelName.toString().toUpperCase();
-        this.labelInputsMatch = this.labelInputs.filter((label) => {
-            return label.name.toString().toUpperCase().includes(normalizedLabel);
+        this.labelInputsMatch = this.labels.filter((label) => {
+            return label.toUpperCase().includes(normalizedLabel);
         });
         if (this.labelInputsMatch.length) {
             this.showMatchedLabels = true;
-            this.labelInputsMatch.sort((a, b) => a.name.length - b.name.length);
+            this.labelInputsMatch.sort((a, b) => a.length - b.length);
             if (this.labelInputsMatch.length >= this.maxMatchedLabels) {
                 this.labelInputsMatch = this.labelInputsMatch.slice(0, this.maxMatchedLabels);
             }
@@ -116,7 +123,7 @@ class AnnotateSidebarItemController {
     }
 
     onSelectLabelName(labelName) {
-        this.labelNameInput = labelName.name;
+        this.labelNameInput = labelName;
         this.showMatchedLabels = false;
         this.isMouseOnLabelOption = false;
     }

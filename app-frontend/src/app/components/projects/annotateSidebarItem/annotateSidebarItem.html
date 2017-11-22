@@ -1,5 +1,5 @@
 <div class="list-group-item list-sidebar-drawn-annotations"
-     ng-if="$ctrl.annotation.geometry && !($ctrl.editId === $ctrl.annotation.properties.id)">
+     ng-if="$ctrl.annotation.geometry && !($ctrl.editingAnnotation === $ctrl.annotation.id)">
   <div class="sidebar-item annotation-item">
     <div class="inner">
       <i class="icon-polygon"
@@ -11,18 +11,25 @@
       </p>
     </div>
     <div class="inner">
-      <div class="annotation-name"><h5>{{$ctrl.annotation.properties.label}}</h5></div>
+      <div class="annotation-name"
+           ng-if="$ctrl.annotation.properties.label.length">
+        <h5>{{$ctrl.annotation.properties.label}}</h5>
+      </div>
+      <div class="annotation-name "
+           ng-if="!$ctrl.annotation.properties.label.length">
+        <h5><dfn>Unlabeled</dfn></h5>
+      </div>
       <div class="btn-group" ng-if="$ctrl.annotation.properties.machineGenerated">
         <button class="btn btn-primary btn-block btn-qa-check-button"
                 type="button"
-                ng-click="$ctrl.onQaCheck($ctrl.annotation, 'fail')"
-                ng-class="{fail: $ctrl.annotation.properties.qualityCheck === 'fail'}">
+                ng-click="$ctrl.onQaCheck('NO')"
+                ng-class="{fail: $ctrl.annotation.properties.quality === 'NO'}">
           <i class="icon-cross qa-check"></i>
         </button>
         <button class="btn btn-primary btn-block btn-qa-check-button"
                 type="button"
-                ng-click="$ctrl.onQaCheck($ctrl.annotation, 'pass')"
-                ng-class="{pass: $ctrl.annotation.properties.qualityCheck === 'pass'}">
+                ng-click="$ctrl.onQaCheck('YES')"
+                ng-class="{pass: $ctrl.annotation.properties.quality === 'YES'}">
           <i class="icon-check qa-check"></i>
         </button>
       </div>
@@ -30,24 +37,25 @@
   </div>
   <div class="list-group-right actions-annotations">
       <a title="Bulk Create"
-      ng-click="$ctrl.disableSidebarAction || $ctrl.onAnnotationBulkCreate($event, $ctrl.annotation)"
-      ng-disabled="$ctrl.disableSidebarAction">
+         ng-click="$ctrl.sidebarDisabled || $ctrl.onBulkCreateClick($event)"
+         ng-disabled="$ctrl.sidebarDisabled">
      Bulk Create</a>
     <a title="Clone"
-       ng-click="$ctrl.disableSidebarAction || $ctrl.onAnnotationClone($event, $ctrl.annotation)"
-       ng-disabled="$ctrl.disableSidebarAction">
+       ng-click="$ctrl.sidebarDisabled || $ctrl.onAnnotationClone($event)"
+       ng-disabled="$ctrl.sidebarDisabled">
       <i class="icon-duplicate"></i></a>
     <a title="Edit"
-       ng-click="$ctrl.disableSidebarAction || $ctrl.onAnnotationEdit($event, $ctrl.annotation)"
-       ng-disabled="$ctrl.disableSidebarAction">
+       ng-click="$ctrl.sidebarDisabled || $ctrl.onAnnotationEdit($event)"
+       ng-disabled="$ctrl.sidebarDisabled">
       <i class="icon-pencil"></i></a>
     <a title="Delete"
-       ng-click="$ctrl.disableSidebarAction || $ctrl.onAnnotationDelete($event, $ctrl.annotation)"
-       ng-disabled="$ctrl.disableSidebarAction">
+       ng-click="$ctrl.sidebarDisabled || $ctrl.onAnnotationDelete($event)"
+       ng-disabled="$ctrl.sidebarDisabled">
       <i class="icon-trash"></i></a>
   </div>
 </div>
-<div class="list-group-item" ng-if="!$ctrl.annotation.geometry || ($ctrl.editId === $ctrl.annotation.properties.id)">
+<div class="list-group-item"
+     ng-if="!$ctrl.annotation.geometry || ($ctrl.editingAnnotation === $ctrl.annotationId)">
   <div class='annotation-new'>
     <form>
       <input type="text"
@@ -66,23 +74,26 @@
              ng-click="$ctrl.onSelectLabelName(label)"
              ng-mouseover="$ctrl.onHoverOption(true)"
              ng-mouseleave="$ctrl.onHoverOption(false)">
-             {{label.name}}
+             {{label}}
         </div>
       </div>
     <textarea class="form-control label-text"
               ng-init="$ctrl.newLabelDescription = $ctrl.annotation.properties.description"
 
               ng-model="$ctrl.newLabelDescription"
-              ng-if="!$ctrl.annotation.geometry || ($ctrl.editId === $ctrl.annotation.properties.id)"
+              ng-if="!$ctrl.annotation.geometry || ($ctrl.editingAnnotation === $ctrl.annotation.id)"
               placeholder="Description..."></textarea>
-    <input type="button"
-           class="btn btn-light annotation-cancel"
-           value="Cancel"
-           ng-click="$ctrl.cancelAnnotation($ctrl.annotation)"/>
-    <input type="button"
+    <button
+        class="btn btn-light annotation-cancel"
+        ng-click="$ctrl.finishEditingAnnotation()">
+      Cancel
+    </button>
+    <button type="button"
            class="btn btn-tertiary annotation-confirm"
-           ng-value="$ctrl.editId === $ctrl.annotation.properties.id ? 'Update' : 'Add'"
-           ng-click="$ctrl.updateAnnotation($ctrl.annotation)">
+           ng-disabled="$ctrl.labelNameInput.length < 1"
+           ng-click="$ctrl.onSaveClick()">
+      Save
+    </button>
     </form>
   </div>
 </div>

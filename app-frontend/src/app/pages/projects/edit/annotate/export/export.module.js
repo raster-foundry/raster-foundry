@@ -1,20 +1,31 @@
-/* globals _*/
 import angular from 'angular';
+
+import {annotationsToFeatureCollection} from '_redux/annotation-utils';
 
 class AnnotateExportController {
     constructor( // eslint-disable-line max-params
-        $log, $state, $scope
+        $log, $state, $scope, $ngRedux
     ) {
         'ngInject';
         this.$log = $log;
         this.$state = $state;
         this.$scope = $scope;
         this.$parent = $scope.$parent.$ctrl;
+
+        let unsubscribe = $ngRedux.connect(
+            this.mapStateToThis
+        )(this);
+        $scope.$on('$destroy', unsubscribe);
+    }
+
+    mapStateToThis(state) {
+        return {
+            annotations: state.projects.annotations
+        };
     }
 
     $onInit() {
-        this.filteredAnnotations = this.$parent.filteredAnnotations;
-        this.annoToExport = this.$parent.annoToExport;
+        this.visibleAnnotations = this.$parent.visibleAnnotations;
     }
 
     onAnnotationsDownload(e, annotationData) {
@@ -26,39 +37,21 @@ class AnnotateExportController {
         dl.remove();
     }
 
-    createExportData(data, omitKeys) {
-        let propertyKeys = _.difference(
-            _.keys(data.features[0].properties),
-            omitKeys
-        );
-        return {
-            features: data.features.map((f) => {
-                return {
-                    geometry: f.geometry,
-                    properties: _.pick(f.properties, propertyKeys),
-                    type: 'Feature'
-                };
-            }),
-            type: 'FeatureCollection'
-        };
-    }
-
     onExportClick(e) {
-        if (this.filteredAnnotations.features && this.filteredAnnotations.features.length) {
+        if (this.visibleAnnotations && this.visibleAnnotations.length) {
             this.onAnnotationsDownload(
                 e,
-                this.createExportData(this.filteredAnnotations, ['id', 'prevId'])
+                annotationsToFeatureCollection(this.visibleAnnotations)
             );
-        } else if (this.annoToExport.features && this.annoToExport.features.length) {
+        } else if (this.annotations && this.annotations.size) {
             this.onAnnotationsDownload(
                 e,
-                this.createExportData(this.annoToExport, ['id', 'prevId'])
+                annotationsToFeatureCollection(this.annotations)
             );
         } else {
             this.onAnnotationsDownload(e, {'result': 'Nothing to export.'});
         }
 
-        this.$parent.onFilterChange({'name': 'All'});
         this.$state.go('projects.edit.annotate');
     }
 }

@@ -3650,7 +3650,7 @@ definitions:
           confidence:
             type: number
             format: float
-          qualityCheck:
+          quality:
             type: string
             enum:
               - YES
@@ -3680,7 +3680,7 @@ definitions:
           confidence:
             type: number
             format: float
-          qualityCheck:
+          quality:
             type: string
             enum:
               - YES
@@ -3709,7 +3709,7 @@ definitions:
           confidence:
             type: number
             format: float
-          qualityCheck:
+          quality:
             type: string
             enum:
               - YES

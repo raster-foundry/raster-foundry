@@ -1,7 +1,7 @@
 /* global L */
 import { FrameView } from '../../../components/map/labMap/frame.module.js';
-import LabActions from '../../../redux/actions/lab-actions';
-import NodeActions from '../../../redux/actions/node-actions';
+import LabActions from '_redux/actions/lab-actions';
+import NodeActions from '_redux/actions/node-actions';
 
 class LabAnalysisController {
     constructor(
@@ -40,7 +40,7 @@ class LabAnalysisController {
             analysis: state.lab.analysis,
             nodes: state.lab.nodes,
             previewNodes: state.lab.previewNodes,
-            apiToken: state.api.apiToken
+            user: state.api.user
         };
     }
 
@@ -49,14 +49,12 @@ class LabAnalysisController {
 
         this.analysisId = this.$state.params.analysisid;
 
-        if (this.apiToken) {
-            this.initAnalysis();
-        } else {
-            const tokenWatch = this.$scope.$watch('$ctrl.apiToken', () => {
+        let userWatch = this.$scope.$watch('$ctrl.user', user => {
+            if (user) {
                 this.initAnalysis();
-                tokenWatch();
-            });
-        }
+                userWatch();
+            }
+        });
 
         this.$scope.$on('$destroy', () => {
             $('body').css({overflow: ''});

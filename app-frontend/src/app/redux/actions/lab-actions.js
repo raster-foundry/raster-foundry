@@ -1,4 +1,4 @@
-import { authedRequest } from '../api-utils';
+import { authedRequest } from '_api/authentication';
 
 export const ANALYSIS_LOAD = 'ANALYSIS_LOAD';
 export const ANALYSIS_UPDATE_NAME = 'ANALYSIS_UPDATE_NAME';

@@ -1,4 +1,4 @@
-/* globals _, $ */
+/* globals _, $, FileReader */
 import angular from 'angular';
 
 require('./import.scss');
@@ -27,7 +27,6 @@ class AnnotateImportController {
         this.isMachineData = false;
     }
 
-    /* eslint-disable no-undef */
     bindUploadEvent() {
         $('#btn-upload').change((e) => {
             let upload = _.values(e.target.files);
@@ -42,7 +41,6 @@ class AnnotateImportController {
             }
         });
     }
-    /* eslint-enable no-undef */
 
     isMachineMade() {
         this.isMachineData = !this.isMachineData;
@@ -80,14 +78,14 @@ class AnnotateImportController {
             'type': 'FeatureCollection',
             'features': this.uploadData.features.map((f) => {
                 let con = this.isMachineData ? f.properties[this.matchKeys.confidence] : null;
-                let qa = this.isMachineData ? f.properties[this.matchKeys.qualityCheck] : null;
+                let qa = this.isMachineData ? f.properties[this.matchKeys.quality] : null;
                 return {
                     'properties': {
                         'label': f.properties[this.matchKeys.label],
                         'description': f.properties[this.matchKeys.description],
                         'machineGenerated': this.isMachineData,
                         'confidence': con,
-                        'qualityCheck': qa
+                        'quality': qa
                     },
                     'geometry': f.geometry,
                     'type': 'Feature'

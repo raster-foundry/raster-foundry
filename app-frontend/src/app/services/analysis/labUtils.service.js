@@ -1,7 +1,7 @@
 /* globals joint $ _ */
 // TODO tear out all references to tool run - it should use redux to pull in the correct stuff
 import {Map} from 'immutable';
-import {getNodeArgs} from '../../redux/node-utils';
+import {getNodeArgs} from '_redux/node-utils';
 
 export default (app) => {
     class LabUtils {
