@@ -8,7 +8,7 @@ lazy val commonSettings = Seq(
   organization := "com.azavea",
   version := Version.rasterFoundry,
   cancelable in Global := true,
-  scapegoatVersion := Version.scapegoat,
+  scapegoatVersion in ThisBuild := Version.scapegoat,
   scapegoatIgnoredFiles := Seq(".*/datamodel/.*"),
   scalaVersion := Version.scala,
   scalacOptions := Seq(
@@ -243,7 +243,7 @@ lazy val batch = Project("batch", file("batch"))
     )
   )
 
-import io.gatling.sbt.GatlingPlugin
+import _root_.io.gatling.sbt.GatlingPlugin
 lazy val tile = Project("tile", file("tile"))
   .dependsOn(database, datamodel, common % "test->test;compile->compile")
   .dependsOn(tool)

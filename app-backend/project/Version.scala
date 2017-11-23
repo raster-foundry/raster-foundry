@@ -8,7 +8,7 @@ object Version {
   val scala              = "2.11.11"
   val scalaForklift      = "0.2.2"
   val scalaTest          = "3.0.1"
-  val scapegoat          = "1.2.0"
+  val scapegoat          = "1.3.3"
   val slf4j              = "1.6.4"
   val scalaLogging       = "3.5.0"
   val slick              = "3.1.1.2"
