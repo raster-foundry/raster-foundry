@@ -208,18 +208,14 @@ object Ingest extends SparkJob with LazyLogging with Config {
     */
   @SuppressWarnings(Array("TraversableHead"))
   def ingestLayer(params: CommandLine.Params, layer: IngestLayer)(implicit sc: SparkContext): Unit = {
+
     val resampleMethod = layer.output.resampleMethod
     val tileSize = layer.output.tileSize
     val destCRS = layer.output.crs
     val ndPattern = layer.output.ndPattern
     val bandCount: Int = layer.sources.map(_.bandMaps.map(_.target.index).max).max
     val layoutScheme = ZoomedLayoutScheme(destCRS, tileSize)
-    val s3Client = S3Client.DEFAULT
-    val repartitionSize =
-      layer.sources.map { s =>
-        // Convert partitionsSize from megabytes to bytes
-        math.max(params.partitionsPerFile, getSizeFromURI(s.uri, s3Client) / (params.partitionsSize * 1024 * 1024))
-      }.sum.toInt
+    val options = S3GeoTiffRDD.Options(maxTileSize = Some(tileSize))
 
     val (maxZoom, layerMeta): (Int, TileLayerMetadata[SpatialKey]) =
       Ingest.calculateTileLayerMetadata(layer, layoutScheme)
@@ -234,7 +230,7 @@ object Ingest extends SparkJob with LazyLogging with Config {
        * we are potentially reading many source TIFFs which could have different band counts,
        * and we want them all to agree on band count in the end.
        */
-      S3GeoTiffRDD.multiband[ProjectedExtent](uri.getBucket, uri.getKey, S3GeoTiffRDD.Options.DEFAULT)
+      S3GeoTiffRDD.multiband[ProjectedExtent](uri.getBucket, uri.getKey, options)
         .mapValues { mbt =>
 
           val tiles: Vector[Tile] = mbt.bands
