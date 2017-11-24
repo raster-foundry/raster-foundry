@@ -143,64 +143,6 @@ object Ingest extends SparkJob with LazyLogging with Config {
       hs1.zip(hs2).map { case (a, b) => a merge b }
     })
 
-
-  def uriRangReader(uri: URI): RangeReader = {
-    uri.getScheme match {
-      case "hdfs" =>
-        HdfsRangeReader(new Path(uri), new Configuration)
-      case "file" =>
-        FileRangeReader(new File(uri))
-      case "s3" | "s3a" | "s3n" =>
-        val (bucket, prefix) = S3.parse(uri)
-        val decodedPrefix = java.net.URLDecoder.decode(prefix, "UTF-8")
-        S3RangeReader(bucket, decodedPrefix, S3Client.DEFAULT)
-      case "http" | "https"
-          if uri.getAuthority == "s3.amazonaws.com"
-          && uri.getQuery.contains("AWSAccessKeyId") =>
-        // Signed S3 URLs don't support HEAD requests
-        new HttpRangeReader(uri.toURL(), useHeadRequest = false)
-      case "http" | "https" =>
-        new HttpRangeReader(uri.toURL(), useHeadRequest = true)
-    }
-  }
-
-  /** Function to add GridBounds buffer */
-  def bufferGrid(gb: GridBounds, by: Int = 4) =
-    gb.copy(
-      colMin = if(gb.colMin < by) 0 else gb.colMin - by,
-      colMax = gb.colMax + by,
-      rowMin = if(gb.rowMax < by) 0 else gb.rowMin - by,
-      rowMax = gb.rowMax + by
-    )
-
-  /** Chip out a grid bounds into component pieces of at least given size */
-  def gridBoundChips(gb: GridBounds, chipWidth: Int, chipHeight: Int): Iterator[GridBounds] = {
-    val cw = math.min(chipWidth, gb.width)
-    val ch = math.min(chipHeight, gb.height)
-
-    // To avoid thin chips on the right/bottom borders merge to left/top
-    val chipCols: Int = gb.width / cw
-    val chipRows: Int = gb.height / ch
-
-    for {
-      col <- Iterator.range(start = 0, end = chipCols)
-      row <- Iterator.range(start = 0, end = chipRows)
-    } yield {
-      bufferGrid(GridBounds(
-        colMin = col * cw,
-        rowMin = row * cw,
-        colMax = if (col == chipCols - 1) gb.colMax else col * cw + cw - 1,
-        rowMax = if (row == chipRows - 1) gb.rowMax else row * ch + ch - 1
-      ))
-    }
-  }
-
-  def getSizeFromURI(uri: URI, s3Client: S3Client): Long = {
-    val amazonURI = new AmazonS3URI(uri)
-    val obj = s3Client.getObject(amazonURI.getBucket, amazonURI.getKey)
-    obj.getObjectMetadata.getContentLength
-  }
-
   /** We need to suppress this warning because there's a perfectly safe `head` call being
     *  made here. The compiler just isn't smart enough to figure that out
     *
@@ -218,7 +160,7 @@ object Ingest extends SparkJob with LazyLogging with Config {
     val options = S3GeoTiffRDD.Options(maxTileSize = Some(tileSize))
 
     val (maxZoom, layerMeta): (Int, TileLayerMetadata[SpatialKey]) =
-      Ingest.calculateTileLayerMetadata(layer, layoutScheme)
+      calculateTileLayerMetadata(layer, layoutScheme)
 
     val rawMultis: Array[RDD[(ProjectedExtent, MultibandTile)]] = layer.sources.map { source =>
       val uri: AmazonS3URI = new AmazonS3URI(source.uri)
