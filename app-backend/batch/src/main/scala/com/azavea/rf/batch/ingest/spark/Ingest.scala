@@ -66,7 +66,7 @@ object Ingest extends SparkJob with LazyLogging with Config {
       (writer, deleter, fileWriter.attributeStore)
   }
 
-  def deleteLayer(deleter: RfLayerDeleter)(layerId: LayerId): Unit = {
+  def deleteLayer(deleter: RfLayerDeleter, layerId: LayerId): Unit = {
     try {
       deleter.delete(layerId)
     } catch { case _: Throwable =>
@@ -207,7 +207,7 @@ object Ingest extends SparkJob with LazyLogging with Config {
     *  @param layer An ingest layer specification
     */
   @SuppressWarnings(Array("TraversableHead"))
-  def ingestLayer(params: CommandLine.Params)(layer: IngestLayer)(implicit sc: SparkContext) = {
+  def ingestLayer(params: CommandLine.Params, layer: IngestLayer)(implicit sc: SparkContext): Unit = {
     val resampleMethod = layer.output.resampleMethod
     val tileSize = layer.output.tileSize
     val destCRS = layer.output.crs
@@ -221,66 +221,31 @@ object Ingest extends SparkJob with LazyLogging with Config {
         math.max(params.partitionsPerFile, getSizeFromURI(s.uri, s3Client) / (params.partitionsSize * 1024 * 1024))
       }.sum.toInt
 
-    // Read source tiles and reproject them to desired CRS
-    val sourceTiles: RDD[((ProjectedExtent, Int), Tile)] =
-      sc.parallelize(layer.sources, layer.sources.length)
-        .flatMap ({ source =>
-          val geotiff = MultibandGeoTiff(
-            byteReader = uriRangReader(source.uri),
-            decompress = false,
-            streaming = true
-          )
+    val (maxZoom, layerMeta): (Int, TileLayerMetadata[SpatialKey]) =
+      Ingest.calculateTileLayerMetadata(layer, layoutScheme)
 
-          gridBoundChips(geotiff.tile.gridBounds, params.windowSize, params.windowSize)
-            .map { chipBounds => (source, geotiff.rasterExtent.extentFor(chipBounds)) }
-        })
-        .repartition(repartitionSize)
-        .flatMap { case (source, chipExtent) =>
-          val geotiff = MultibandGeoTiff(
-            byteReader = uriRangReader(source.uri),
-            e = Some(chipExtent)
-          )
+    val rawMultis: Array[RDD[(ProjectedExtent, MultibandTile)]] = layer.sources.map { source =>
+      val uri: AmazonS3URI = new AmazonS3URI(source.uri)
 
-          val chip = geotiff.tile
+      S3GeoTiffRDD.multiband[ProjectedExtent](uri.getBucket, uri.getKey, S3GeoTiffRDD.Options.DEFAULT)
+    }
 
-          // Set NoData values if a pattern has been specified
-          val maskedChip = ndPattern.fold(chip)(mask => mask(chip))
+    val griddedMultis: RDD[(SpatialKey, MultibandTile)] =
+      sc.union(rawMultis)
+        .reproject(destCRS)
+        .tileToLayout(layerMeta.cellType, layerMeta.layout, resampleMethod)
 
-          source.bandMaps.map { bm: BandMapping =>
-            // GeoTrellis multi-band tiles are 0 indexed
-            val band = maskedChip.band(bm.source - 1).reproject(chipExtent, geotiff.crs, destCRS)
-            (ProjectedExtent(band.extent, destCRS), bm.target.index - 1) -> band.tile
-          }
-        }
+    val layerRdd: RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] =
+      ContextRDD(griddedMultis, layerMeta)
 
-    val (maxZoom, tileLayerMetadata) = Ingest.calculateTileLayerMetadata(layer, layoutScheme)
-
-    val tiledRdd = sourceTiles.tileToLayout[(SpatialKey, Int)](
-      tileLayerMetadata.cellType,
-      tileLayerMetadata.layout,
-      resampleMethod)
-
-    // Merge Tiles into MultibandTile and fill in bands that aren't listed
-    val multibandTiledRdd: RDD[(SpatialKey, MultibandTile)] = tiledRdd
-      .map { case ((key, band), tile) => key -> (tile, band) }
-      .groupByKey
-      .map { case (key, tiles) =>
-        val prototype: Tile = tiles.head._1
-        val emptyTile: Tile = ArrayTile.empty(prototype.cellType, prototype.cols, prototype.rows)
-        val arr = tiles.toArray
-        val bands: Seq[Tile] =
-          for (band <- 0 until bandCount) yield
-            arr.find(_._2 == band).map(_._1).getOrElse(emptyTile)
-        key -> MultibandTile(bands)
-      }
-
-    val layerRdd = ContextRDD(multibandTiledRdd, tileLayerMetadata)
     val (writer, deleter, attributeStore) = getRfLayerManagement(layer.output)
 
-    val sharedId = LayerId(layer.id.toString, 0)
-    val failsafeDeleteLayer = deleteLayer(deleter)(_)
+    val sharedId: LayerId = LayerId(layer.id.toString, 0)
 
-    if (params.overwrite && attributeStore.layerExists(sharedId)) { failsafeDeleteLayer(sharedId) }
+    /* If a layer of the same already exists and we've decided to overwrite it,
+     * then we go ahead and do so.
+     */
+    if (params.overwrite && attributeStore.layerExists(sharedId)) { deleteLayer(deleter, sharedId) }
 
     logger.info("Writing layers")
     attributeStore.write(sharedId, "ingestComplete", false)
@@ -288,7 +253,7 @@ object Ingest extends SparkJob with LazyLogging with Config {
       Pyramid.upLevels(layerRdd, layoutScheme, maxZoom, 1, resampleMethod) { (rdd, zoom) =>
         logger.info(s"Writing zoom level $zoom in ${layer.id.toString}")
         val layerId = LayerId(layer.id.toString, zoom)
-        if (params.overwrite && attributeStore.layerExists(layerId)) { failsafeDeleteLayer(layerId) }
+        if (params.overwrite && attributeStore.layerExists(layerId)) { deleteLayer(deleter, layerId) }
         attributeStore.write(layerId, "layerComplete", false)
         writer.write(layerId, rdd)
 
@@ -332,7 +297,7 @@ object Ingest extends SparkJob with LazyLogging with Config {
     implicit def asS3Payload(status: IngestStatus): String = S3IngestStatus(sceneId, status).asJson.noSpaces
 
     try {
-      ingestDefinition.layers.foreach(ingestLayer(params))
+      ingestDefinition.layers.foreach(ingestLayer(params, _))
       if (params.testRun) ingestDefinition.layers.foreach(Validation.validateCatalogEntry)
       putObject(
         params.statusBucket,
