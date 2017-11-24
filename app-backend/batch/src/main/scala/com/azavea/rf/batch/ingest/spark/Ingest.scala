@@ -227,7 +227,30 @@ object Ingest extends SparkJob with LazyLogging with Config {
     val rawMultis: Array[RDD[(ProjectedExtent, MultibandTile)]] = layer.sources.map { source =>
       val uri: AmazonS3URI = new AmazonS3URI(source.uri)
 
+      /* The target band number is reduced by one, since those start at 1 to match Landsat. */
+      val bandMap: Map[Int, Int] = source.bandMaps.map(bm => (bm.source, bm.target.index - 1)).toMap
+
+      /* After reading imagery from S3, we need to fill out any missing bands. This is because
+       * we are potentially reading many source TIFFs which could have different band counts,
+       * and we want them all to agree on band count in the end.
+       */
       S3GeoTiffRDD.multiband[ProjectedExtent](uri.getBucket, uri.getKey, S3GeoTiffRDD.Options.DEFAULT)
+        .mapValues { mbt =>
+
+          val tiles: Vector[Tile] = mbt.bands
+          val prototype: Tile = tiles.head
+          val emptyTile: Tile = ArrayTile.empty(prototype.cellType, prototype.cols, prototype.rows)
+
+          /* If some band had no corresponding `TargetBand`, then we have to discard it. */
+          val fixed: Map[Int, Tile] =
+            tiles.iterator.zipWithIndex.foldLeft(Nil: List[(Int, Tile)]) { case (acc, (tile, index)) =>
+              bandMap.get(index).map(i => (i, tile) :: acc).getOrElse(acc)
+            }.toMap
+
+          val bands: List[Tile] = List.range(0, bandCount).map(i => fixed.get(i).getOrElse(emptyTile))
+
+          MultibandTile(bands)
+        }
     }
 
     val griddedMultis: RDD[(SpatialKey, MultibandTile)] =
