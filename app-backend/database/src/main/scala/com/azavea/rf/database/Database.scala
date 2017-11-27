@@ -40,7 +40,13 @@ class Database(jdbcUrl: String, dbUser: String, dbPassword: String, slickThreadC
 
   val db = {
     val executor = AsyncExecutor("slick", numThreads = slickThreadCount, queueSize = slickQueueSize)
-    driver.api.Database.forDataSource(dataSource, executor)
+
+    driver.api.Database.forDataSource(
+      ds = dataSource,
+      maxConnections = None,
+      executor = executor,
+      keepAliveConnection = false
+    )
   }
 }
 
