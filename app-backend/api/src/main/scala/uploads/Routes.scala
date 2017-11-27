@@ -126,12 +126,10 @@ trait UploadRoutes extends Authentication
   }
 
   def getUploadCredentials(uploadId: UUID): Route = authenticate { user =>
-    authenticateWithParameter { _ =>
-      parameter('token) { jwt =>
-        onSuccess(readOne[Upload](Uploads.getUpload(uploadId, user))) {
-          case Some(_) => complete(CredentialsService.getCredentials(user, uploadId, jwt.toString))
-          case None => complete(StatusCodes.NotFound)
-        }
+    extractTokenHeader { jwt =>
+      onSuccess(readOne[Upload](Uploads.getUpload(uploadId, user))) {
+        case Some(_) => complete(CredentialsService.getCredentials(user, uploadId, jwt.toString))
+        case None => complete(StatusCodes.NotFound)
       }
     }
   }
