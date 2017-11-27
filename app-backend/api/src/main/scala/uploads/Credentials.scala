@@ -45,7 +45,7 @@ object CredentialsService extends Config with LazyLogging {
 
   def getCredentials(user: User, uploadId: UUID, jwt: String): CredentialsWithBucketPath = {
     val path = s"user-uploads/${user.id}/${uploadId.toString}"
-    val stsClient = AWSSecurityTokenServiceClientBuilder.defaultClient;
+    val stsClient = AWSSecurityTokenServiceClientBuilder.defaultClient
     val stsRequest = new AssumeRoleWithWebIdentityRequest
 
     stsRequest.setRoleArn(scopedUploadRoleArn)
