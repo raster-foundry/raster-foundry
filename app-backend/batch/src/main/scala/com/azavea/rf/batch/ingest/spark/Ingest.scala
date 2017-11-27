@@ -247,11 +247,18 @@ object Ingest extends SparkJob with LazyLogging with Config {
       case None =>
         throw new Exception("Unable to parse command line arguments")
     }
+
     val ingestDefinition = decode[IngestDefinition](readString(params.jobDefinition)) match {
       case Right(r) => r
       case _ => throw new Exception("Incorrect IngestDefinition JSON")
     }
+
     val sceneId = UUID.fromString(params.sceneId)
+
+    /* Warn about ignored flags */
+    if (params.windowSize.isDefined) logger.warn("windowSize parameter was explicitely set, but will be ignored.")
+    if (params.partitionsPerFile.isDefined) logger.warn("partitionsPerFile parameter was explicitely set, but will be ignored.")
+    if (params.partitionsSize.isDefined) logger.warn("partitionsSize parameter was explicitely set, but will be ignored.")
 
     implicit val sc = new SparkContext(conf)
 
