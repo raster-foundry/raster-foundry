@@ -9,9 +9,9 @@ object CommandLine {
     jobDefinition: URI = new URI(""),
     testRun: Boolean = false,
     overwrite: Boolean = false,
-    windowSize: Int = 1024,
-    partitionsPerFile: Int = 8,
-    partitionsSize: Int = 50, // partition size in mb to calculate repartitioning
+    windowSize: Option[Int] = None,
+    partitionsPerFile: Option[Int] = None,
+    partitionsSize: Option[Int] = None, // partition size in mb to calculate repartitioning
     statusBucket: String = "rasterfoundry-dataproc-ingest-status-us-east-1"
   )
 
@@ -42,16 +42,16 @@ object CommandLine {
       .required
 
     opt[Int]('w',"windowSize")
-      .action( (s, conf) => conf.copy(windowSize = s) )
-      .text("Pixel window size for streaming GeoTiff reads")
+      .action( (s, conf) => conf.copy(windowSize = Some(s)) )
+      .text("[UNUSED] Pixel window size for streaming GeoTiff reads")
 
     opt[Int]('p',"partitionsPerFile")
-      .action( (s, conf) => conf.copy(partitionsPerFile = s) )
-      .text("Min number of RDD partitions to create per each source file")
+      .action( (s, conf) => conf.copy(partitionsPerFile = Some(s)) )
+      .text("[UNUSED] Min number of RDD partitions to create per each source file")
 
     opt[Int]('z',"partitionsSize")
-      .action( (s, conf) => conf.copy(partitionsSize = s) )
-      .text("Partition size to calculate repartitioning (object size / partition size)")
+      .action( (s, conf) => conf.copy(partitionsSize = Some(s)) )
+      .text("[UNUSED] Partition size to calculate repartitioning (object size / partition size)")
 
     opt[String]('b',"statusBucket")
       .action( (s, conf) => conf.copy(statusBucket = s) )
