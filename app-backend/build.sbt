@@ -10,7 +10,7 @@ lazy val commonSettings = Seq(
   cancelable in Global := true,
   scapegoatVersion in ThisBuild := Version.scapegoat,
   scapegoatIgnoredFiles := Seq(".*/datamodel/.*"),
-  scalaVersion := Version.scala,
+  scalaVersion in ThisBuild := Version.scala,
   scalacOptions := Seq(
     "-deprecation",
     "-unchecked",
@@ -21,7 +21,6 @@ lazy val commonSettings = Seq(
     "-language:postfixOps",
     "-language:existentials",
     "-language:experimental.macros",
-    "-feature",
     "-Ypartial-unification",
     "-Ypatmat-exhaust-depth", "100"
   ),
@@ -29,7 +28,8 @@ lazy val commonSettings = Seq(
     Resolver.sonatypeRepo("snapshots"),
     Resolver.bintrayRepo("lonelyplanet", "maven"),
     Resolver.bintrayRepo("guizmaii", "maven"),
-    Resolver.bintrayRepo("kwark", "maven") // Required for Slick 3.1.1.2, see https://github.com/azavea/raster-foundry/pull/1576
+    Resolver.bintrayRepo("kwark", "maven"), // Required for Slick 3.1.1.2, see https://github.com/azavea/raster-foundry/pull/1576
+    "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases"
   ),
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
   addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
@@ -72,7 +72,6 @@ lazy val apiSettings = commonSettings ++ Seq(
     case _ => MergeStrategy.first
   },
   resolvers += "Open Source Geospatial Foundation Repo" at "http://download.osgeo.org/webdav/geotools/",
-  resolvers += "LocationTech GeoTrellis Releases" at "https://repo.locationtech.org/content/repositories/geotrellis-releases",
   resolvers += Resolver.bintrayRepo("azavea", "maven"),
   resolvers += Resolver.bintrayRepo("lonelyplanet", "maven"),
   test in assembly := {}

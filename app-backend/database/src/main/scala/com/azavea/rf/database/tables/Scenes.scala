@@ -160,7 +160,7 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
     ingestLocation,
     (cloudCover, acquisitionDate, sunAzimuth, sunElevation),
     (thumbnailStatus, boundaryStatus, ingestStatus)
-  ).shaped[SceneTupleType]
+  ).shaped
 
   def * = sceneShapedValue <> (toModel, toTuple)
 
