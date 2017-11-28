@@ -208,10 +208,11 @@ class MapWrapper {
         }
         this._geoJsonLayerGroup.addLayer(layer);
         if (this._geoJsonMap.has(id)) {
-            let layerList = this._geoJsonMap.get(id);
-            layerList.push(layer);
+            this._geoJsonMap = this._geoJsonMap.set(
+                id, this._geoJsonMap.get(id).concat(layer)
+            );
         } else {
-            this.geoJsonMap = this._geoJsonMap.set(id, [layer]);
+            this._geoJsonMap = this._geoJsonMap.set(id, [layer]);
         }
         return this;
     }
