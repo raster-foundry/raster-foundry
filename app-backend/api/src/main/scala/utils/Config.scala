@@ -18,7 +18,6 @@ trait Config {
 
   val auth0Domain = auth0Config.getString("domain")
   val auth0Bearer = auth0Config.getString("bearer")
-  val auth0Secret = auth0Config.getString("secret")
   val auth0ClientId = auth0Config.getString("clientId")
   val auth0ManagementClientId = auth0Config.getString("managementClientId")
   val auth0ManagementSecret = auth0Config.getString("managementSecret")
