@@ -25,7 +25,8 @@ export default (app) => {
         getFiles(exportObject) {
             const token = this.authService.token();
             return this.$q((resolve) => {
-                this.Export.getFiles({ exportId: exportObject.id })
+                this.Export
+                    .getFiles({ exportId: exportObject.id }).$promise
                     .then(files => {
                         resolve(files.map(f => {
                             return `/api/exports/${exportObject.id}/files/${f}?token=${token}`;

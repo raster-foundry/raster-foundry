@@ -16,7 +16,7 @@ export default (app) => {
                     });
                 } else {
                     // eslint-disable-next-line
-                    setTimeout(this.fitMapToProject(mapWrapper, project, offset).bind(this));
+                    setTimeout(this.fitMapToProject(mapWrapper, project, offset).bind(this), 125);
                 }
             }
             return this;
