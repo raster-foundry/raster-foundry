@@ -171,7 +171,7 @@ export default (app) => {
         }
 
         getBaseURL() {
-            let host = BUILDCONFIG.API_HOST || this.$location.host();
+            let host = this.$location.host();
             let protocol = this.$location.protocol();
             let port = this.$location.port();
             let formattedPort = port !== 80 && port !== 443 ? ':' + port : '';
