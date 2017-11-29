@@ -3,7 +3,7 @@
 const statusMapping = {
     "export": {
         "NOTEXPORTED": {
-            "label": "Export not yet complete",
+            "label": "Export in progress",
             "color": "grey"
         },
         "TOBEEXPORTED": {
