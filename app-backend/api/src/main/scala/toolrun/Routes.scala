@@ -46,7 +46,7 @@ trait ToolRunRoutes extends Authentication
   def listToolRuns: Route = authenticate { user =>
     (withPagination & toolRunQueryParameters) { (page, runParams) =>
       complete {
-        list(ToolRuns.listToolRuns(page.offset, page.limit, runParams, user), page.offset, page.limit)
+        list(ToolRuns.listToolRuns(page.offset, page.limit, page.sort, runParams, user), page.offset, page.limit)
       }
     }
   }
