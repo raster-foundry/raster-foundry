@@ -8,6 +8,10 @@ class LabBrowseToolsController {
 
     $onInit() {
         this.BUILDCONFIG = BUILDCONFIG;
+        this.sortingField = 'modifiedAt';
+        this.defaultSortingDirection = 'desc';
+        this.sortingDirection = this.defaultSortingDirection;
+
         this.fetchToolList(this.$state.params.page);
     }
 
@@ -16,7 +20,8 @@ class LabBrowseToolsController {
         this.toolService.toolRunQuery(
             {
                 pageSize: 10,
-                page: page - 1
+                page: page - 1,
+                sort: this.serializedSort()
             }
         ).then(d => {
             this.currentPage = page;
@@ -54,6 +59,22 @@ class LabBrowseToolsController {
             return 'Public';
         }
         return 'Private';
+    }
+
+    serializedSort() {
+        return `${this.sortingField},${this.sortingDirection}`;
+    }
+
+    onSortChange(field) {
+        if (field === this.sortingField) {
+            // Toggle sorting direction if the same field is being used
+            this.sortingDirection =
+                this.sortingDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            this.sortingField = field;
+            this.sortingDirection = this.defaultSortingDirection;
+        }
+        this.fetchToolList(this.currentPage);
     }
 }
 
