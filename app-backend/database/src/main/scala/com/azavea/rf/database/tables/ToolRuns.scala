@@ -1,21 +1,25 @@
 package com.azavea.rf.database.tables
 
 import java.util.UUID
+import java.util.Date
 import java.sql.Timestamp
 
 import com.typesafe.scalalogging.LazyLogging
 
 import slick.model.ForeignKeyAction
 import slick.dbio.DBIO
+import com.lonelyplanet.akka.http.extensions.Order
 
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
+import com.azavea.rf.database.sort._
 import com.azavea.rf.database.fields._
 import com.azavea.rf.database.query._
 
 import io.circe.Json
 
 class ToolRuns(_TableTag: Tag) extends Table[ToolRun](_TableTag, "tool_runs")
+    with ToolRunFields
     with UserFkVisibleFields
     with OrganizationFkFields
     with TimestampFields {
@@ -43,8 +47,46 @@ class ToolRuns(_TableTag: Tag) extends Table[ToolRun](_TableTag, "tool_runs")
 object ToolRuns extends TableQuery(tag => new ToolRuns(tag)) with LazyLogging {
   type TableQuery = Query[ToolRuns, ToolRun, Seq]
 
+  implicit val toolRunsSorter: QuerySorter[ToolRuns] =
+    new QuerySorter(
+      new ToolRunFieldsSort(identity[ToolRuns]),
+      new OrganizationFkSort(identity[ToolRuns]),
+      new VisibilitySort(identity[ToolRuns]),
+      new TimestampSort(identity[ToolRuns])
+    )
+
   implicit class withToolRunsTableQuery[M, U, C[_]](toolruns: ToolRuns.TableQuery) extends
       ToolRunDefaultQuery[M, U, C](toolruns)
+
+  def sortToolRuns(toolRuns: Seq[ToolRun], sort: Map[String, Order])= {
+    sort.keys.headOption match {
+      case Some("name") => {
+        sort.get("name") match {
+          case Some(Order.Asc) =>
+            toolRuns.sortWith((toolRun1, toolRun2) => toolRun1.name.getOrElse("").toLowerCase < toolRun2.name.getOrElse("").toLowerCase)
+          case _ =>
+            toolRuns.sortWith((toolRun1, toolRun2) => toolRun1.name.getOrElse("").toLowerCase > toolRun2.name.getOrElse("").toLowerCase)
+        }
+      }
+      case Some("createdAt") => {
+        sort.get("createdAt") match {
+          case Some(Order.Asc) =>
+            toolRuns.sortWith((toolRun1, toolRun2) => toolRun1.createdAt.before(toolRun2.createdAt))
+          case _ =>
+            toolRuns.sortWith((toolRun1, toolRun2) => toolRun1.createdAt.after(toolRun2.createdAt))
+        }
+      }
+      case Some("modifiedAt") => {
+        sort.get("modifiedAt") match {
+          case Some(Order.Asc) =>
+            toolRuns.sortWith((toolRun1, toolRun2) => toolRun1.modifiedAt.before(toolRun2.modifiedAt))
+          case _ =>
+            toolRuns.sortWith((toolRun1, toolRun2) => toolRun1.modifiedAt.after(toolRun2.modifiedAt))
+        }
+      }
+      case _ => toolRuns
+    }
+  }
 
   def insertToolRun(tr: ToolRun.Create, user: User): DBIO[ToolRun] =
     (ToolRuns returning ToolRuns).forceInsert(tr.toToolRun(user))
@@ -56,13 +98,14 @@ object ToolRuns extends TableQuery(tag => new ToolRuns(tag)) with LazyLogging {
       .result
       .headOption
 
-  def listToolRuns(offset: Int, limit: Int,
-                   toolRunParams: CombinedToolRunQueryParameters, user: User): ListQueryResult[ToolRun] = {
+  def listToolRuns(offset: Int, limit: Int, sort: Map[String, Order], toolRunParams: CombinedToolRunQueryParameters,
+                   user: User): ListQueryResult[ToolRun] = {
     val dropRecords = limit * offset
     val accessibleToolRuns = ToolRuns.filterToOwner(user)
     val toolRunFilterQuery = accessibleToolRuns
       .filterByTimestamp(toolRunParams.timestampParams)
       .filterByToolRunParams(toolRunParams.toolRunParams)
+      .sort(sort)
 
     ListQueryResult[ToolRun](
       (toolRunFilterQuery
