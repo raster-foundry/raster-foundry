@@ -2868,6 +2868,10 @@ rf-reclassify-table {
   th {
     text-align: left;
     padding: $cell-padding;
+    font-weight: bold;
+    a {
+      font-weight: bold;
+    }
   }
   td {
     padding: $cell-padding;

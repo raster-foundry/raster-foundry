@@ -41,8 +41,18 @@
       <!-- Temporarily removed ng-click until after demo done and detail page designed. -->
       <table class="paginated-results-table">
         <tr class="header">
-          <th>Name</th>
-          <th>Last Modified</th>
+          <th>
+            <rf-sorting-header direction="$ctrl.sortingDirection"
+                               on-sort-change="$ctrl.onSortChange('name')"
+                               is-active="$ctrl.sortingField === 'name'"
+            >Name</rf-sorting-header>
+          </th>
+          <th>
+            <rf-sorting-header direction="$ctrl.sortingDirection"
+                               on-sort-change="$ctrl.onSortChange('modifiedAt')"
+                               is-active="$ctrl.sortingField === 'modifiedAt'"
+            >Last Modified</rf-sorting-header>
+          </th>
           <th>Privacy</th>
         </tr>
         <tr ng-repeat="tool in $ctrl.toolList | filter: {title: $ctrl.searchString}">
