@@ -1,34 +1,20 @@
 /* global BUILDCONFIG */
 
 class ImportsController {
-    constructor(authService, $uibModal) {
+    constructor(authService, modalService) {
         'ngInject';
         this.authService = authService;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
     }
 
     $onInit() {
         this.BUILDCONFIG = BUILDCONFIG;
     }
 
-    $onDestroy() {
-
-    }
-
     openCreateDatasourceModal() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.$uibModal.open({
+        return this.modalService.open({
             component: 'rfDatasourceCreateModal'
         });
-
-        this.activeModal.result.then(() => {
-
-        });
-
-        return this.activeModal;
     }
 
 }

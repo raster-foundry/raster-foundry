@@ -1,11 +1,11 @@
 export default class ProjectsScenesController {
     constructor( // eslint-disable-line max-params
-        $log, $state, $scope, $uibModal, projectService
+        $log, $state, $scope, modalService, projectService
     ) {
         'ngInject';
         this.$log = $log;
         this.$state = $state;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
         this.projectId = $state.params.projectid;
         this.$parent = $scope.$parent.$ctrl;
         this.projectService = projectService;
@@ -28,11 +28,7 @@ export default class ProjectsScenesController {
     openSceneDetailModal(scene) {
         this.$parent.removeHoveredScene();
 
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.$uibModal.open({
+        return this.modalService.open({
             component: 'rfSceneDetailModal',
             resolve: {
                 scene: () => scene
@@ -42,21 +38,11 @@ export default class ProjectsScenesController {
 
 
     openImportModal() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.$uibModal.open({
+        return this.modalService.open({
             component: 'rfSceneImportModal',
             resolve: {
                 project: () => this.project
             }
         });
-
-        this.activeModal.result.then(() => {
-
-        });
-
-        return this.activeModal;
     }
 }

@@ -2,7 +2,7 @@ import projectPlaceholder from '../../../../assets/images/transparent.svg';
 
 export default class ProjectItemController {
     constructor($scope, $state, $attrs, $log, projectService, mapService, mapUtilsService,
-                authService, $uibModal) {
+                authService, modalService) {
         'ngInject';
         this.$scope = $scope;
         this.$state = $state;
@@ -11,7 +11,7 @@ export default class ProjectItemController {
         this.mapService = mapService;
         this.mapUtilsService = mapUtilsService;
         this.authService = authService;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
         this.$log = $log;
 
         this.projectPlaceholder = projectPlaceholder;
@@ -74,11 +74,7 @@ export default class ProjectItemController {
     }
 
     publishModal() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.$uibModal.open({
+        return this.modalService.open({
             component: 'rfProjectPublishModal',
             resolve: {
                 project: () => this.project,
@@ -86,14 +82,9 @@ export default class ProjectItemController {
                 shareUrl: () => this.projectService.getProjectShareURL(this.project)
             }
         });
-
-        return this.activeModal;
     }
     deleteModal() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-        this.activeModal = this.$uibModal.open({
+        const modal = this.modalService.open({
             component: 'rfConfirmationModal',
             resolve: {
                 title: () => 'Delete Project?',
@@ -109,16 +100,18 @@ export default class ProjectItemController {
                 cancelText: () => 'Cancel'
             }
         });
-        this.activeModal.result.then(
-            () => {
-                this.projectService.deleteProject(this.project.id).then(
-                    () => {
-                        this.$state.reload();
-                    },
-                    (err) => {
-                        this.$log.debug('error deleting project', err);
-                    }
-                );
-            });
+
+        modal.result.then(() => {
+            this.projectService.deleteProject(this.project.id).then(
+                () => {
+                    this.$state.reload();
+                },
+                (err) => {
+                    this.$log.debug('error deleting project', err);
+                }
+            );
+        });
+
+        return modal;
     }
 }

@@ -5,7 +5,7 @@ import NodeActions from '../../../redux/actions/node-actions';
 
 class LabToolController {
     constructor(
-        $ngRedux, $scope, $rootScope, $state, $timeout, $element, $window, $document, $uibModal,
+        $ngRedux, $scope, $rootScope, $state, $timeout, $element, $window, $document, modalService,
         mapService, projectService, authService, mapUtilsService, toolService, tokenService,
         APP_CONFIG
     ) {
@@ -17,7 +17,7 @@ class LabToolController {
         this.$element = $element;
         this.$window = $window;
         this.$document = $document;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
 
         let unsubscribe = $ngRedux.connect(
             this.mapStateToThis,
@@ -165,12 +165,8 @@ class LabToolController {
     }
 
     publishModal(tileUrl) {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
         if (tileUrl) {
-            this.activeModal = this.$uibModal.open({
+            return this.modalService.open({
                 component: 'rfProjectPublishModal',
                 resolve: {
                     tileUrl: () => tileUrl,
@@ -179,7 +175,7 @@ class LabToolController {
                 }
             });
         }
-        return this.activeModal;
+        return false;
     }
 
     fitProjectExtent(project) {

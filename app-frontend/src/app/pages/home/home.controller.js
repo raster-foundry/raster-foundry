@@ -1,10 +1,10 @@
 /* global BUILDCONFIG HELPCONFIG */
 
 class HomeController {
-    constructor(authService, $uibModal, feedService) {
+    constructor(authService, modalService, feedService) {
         'ngInject';
         this.authService = authService;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
         this.feedService = feedService;
     }
 
@@ -16,32 +16,14 @@ class HomeController {
         });
     }
 
-    $onDestroy() {
-
-    }
-
     openCreateProjectModal() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.$uibModal.open({
+        return this.modalService.open({
             component: 'rfProjectCreateModal'
         });
-
-        this.activeModal.result.then(() => {
-
-        });
-
-        return this.activeModal;
     }
 
     openToolCreateModal() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.$uibModal.open({
+        return this.modalService.open({
             component: 'rfToolCreateModal'
         });
     }

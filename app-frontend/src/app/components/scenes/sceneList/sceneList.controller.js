@@ -1,13 +1,13 @@
 export default class SceneListController {
     constructor( // eslint-disable-line max-params
-        $log, sceneService, $state, authService, $uibModal
+        $log, sceneService, $state, authService, modalService
     ) {
         'ngInject';
         this.$log = $log;
         this.sceneService = sceneService;
         this.$state = $state;
         this.authService = authService;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
     }
 
     $onInit() {
@@ -67,11 +67,7 @@ export default class SceneListController {
     }
 
     viewSceneDetail(scene) {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.$uibModal.open({
+        return this.modalService.open({
             component: 'rfSceneDetailModal',
             resolve: {
                 scene: () => scene
@@ -80,21 +76,13 @@ export default class SceneListController {
     }
 
     importModal() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.$uibModal.open({
+        return this.modalService.open({
             component: 'rfSceneImportModal',
             resolve: {}
         });
     }
 
     downloadModal(scene) {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
         let images = scene.images.map((image) => {
             return {
                 filename: image.filename,
@@ -109,7 +97,7 @@ export default class SceneListController {
             images: images
         }];
 
-        this.activeModal = this.$uibModal.open({
+        return this.modalService.open({
             component: 'rfSceneDownloadModal',
             resolve: {
                 downloads: () => downloadSets
@@ -118,11 +106,7 @@ export default class SceneListController {
     }
 
     deleteModal(scene) {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.$uibModal.open({
+        const modal = this.modalService.open({
             component: 'rfConfirmationModal',
             resolve: {
                 title: () => 'Delete Imported Scene?',
@@ -139,17 +123,18 @@ export default class SceneListController {
             }
         });
 
-        this.activeModal.result.then(
-            () => {
-                this.sceneService.deleteScene(scene).then(
-                    () => {
-                        this.$state.reload();
-                    },
-                    (err) => {
-                        this.$log.debug('error deleting scene', err);
-                    }
-                );
-            });
+        modal.result.then(() => {
+            this.sceneService.deleteScene(scene).then(
+                () => {
+                    this.$state.reload();
+                },
+                (err) => {
+                    this.$log.debug('error deleting scene', err);
+                }
+            );
+        });
+
+        return modal;
     }
 
     shouldShowSceneList() {

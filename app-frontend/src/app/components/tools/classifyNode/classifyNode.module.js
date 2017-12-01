@@ -14,12 +14,12 @@ const ClassifyNodeComponent = {
 
 class ClassifyNodeController {
     constructor(
-        $log, $scope, $ngRedux, $uibModal,
+        $log, $scope, $ngRedux, modalService,
         reclassifyService, toolService
     ) {
         'ngInject';
         this.$log = $log;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
         this.reclassifyService = reclassifyService;
         this.toolService = toolService;
 
@@ -86,7 +86,7 @@ class ClassifyNodeController {
     }
 
     showReclassifyModal() {
-        this.activeModal = this.$uibModal.open({
+        const modal = this.modalService.open({
             component: 'rfReclassifyModal',
             resolve: {
                 breaks: () => this.breaks.map(b => Object.assign({}, b)),
@@ -94,7 +94,7 @@ class ClassifyNodeController {
             }
         });
 
-        this.activeModal.result.then(breaks => {
+        modal.result.then(breaks => {
             const classmap = this.breaksToClassmap(breaks);
             this.updateNode({
                 payload: Object.assign({}, this.node, {
@@ -105,6 +105,8 @@ class ClassifyNodeController {
                 hard: true
             });
         });
+
+        return modal;
     }
 }
 

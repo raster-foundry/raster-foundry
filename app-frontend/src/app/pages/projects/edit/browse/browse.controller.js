@@ -4,7 +4,7 @@ const _ = require('lodash');
 
 export default class ProjectAddScenesBrowseController {
     constructor( // eslint-disable-line max-params
-        $log, $state, $uibModal, $scope, $timeout, mapService, sceneService,
+        $log, $state, modalService, $scope, $timeout, mapService, sceneService,
         projectService, gridLayerService, sessionStorage
     ) {
         'ngInject';
@@ -12,7 +12,7 @@ export default class ProjectAddScenesBrowseController {
         this.$parent = $scope.$parent.$ctrl;
         this.$log = $log;
         this.$state = $state;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
         this.$scope = $scope;
         this.$timeout = $timeout;
         this.sceneService = sceneService;
@@ -428,27 +428,21 @@ export default class ProjectAddScenesBrowseController {
             return;
         }
 
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.$uibModal.open({
-            component: 'rfProjectAddScenesModal',
-            resolve: {
-                scenes: () => this.selectedScenes,
-                selectScene: () => this.setSelected.bind(this),
-                selectNoScenes: () => this.selectNoScenes.bind(this),
-                project: () => this.project
-            }
-        });
-
-        this.activeModal.result.then(sceneIds => {
-            this.projectSceneIds = this.projectSceneIds.concat(sceneIds);
-            this.selectNoScenes();
-        }).finally(() => {
-            delete this.activeModal;
-            this.$parent.getSceneList();
-        });
+        this.modalService
+            .open({
+                component: 'rfProjectAddScenesModal',
+                resolve: {
+                    scenes: () => this.selectedScenes,
+                    selectScene: () => this.setSelected.bind(this),
+                    selectNoScenes: () => this.selectNoScenes.bind(this),
+                    project: () => this.project
+                }
+            }).result.then(sceneIds => {
+                this.projectSceneIds = this.projectSceneIds.concat(sceneIds);
+                this.selectNoScenes();
+            }).finally(() => {
+                this.$parent.getSceneList();
+            });
     }
 
     openDetailPane(scene) {
@@ -502,11 +496,7 @@ export default class ProjectAddScenesBrowseController {
     }
 
     openSceneDetailModal(scene) {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.$uibModal.open({
+        return this.modalService.open({
             component: 'rfSceneDetailModal',
             resolve: {
                 scene: () => scene

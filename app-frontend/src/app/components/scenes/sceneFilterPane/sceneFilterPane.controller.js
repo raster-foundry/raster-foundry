@@ -1,12 +1,12 @@
 /* globals _*/
 export default class FilterPaneController {
-    constructor($scope, $rootScope, $timeout, $uibModal,
+    constructor($scope, $rootScope, $timeout, modalService,
         datasourceService, authService, moment) {
         'ngInject';
         this.$scope = $scope;
         this.$rootScope = $rootScope;
         this.$timeout = $timeout;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
         this.datasourceService = datasourceService;
         this.authService = authService;
         this.Moment = moment;
@@ -324,11 +324,7 @@ export default class FilterPaneController {
     }
 
     openDateRangePickerModal() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.$uibModal.open({
+        const modal = this.modalService.open({
             component: 'rfDateRangePickerModal',
             resolve: {
                 config: () => Object({
@@ -338,11 +334,12 @@ export default class FilterPaneController {
             }
         });
 
-        this.activeModal.result.then(
-            range => {
-                if (range) {
-                    this.setDateRange(range.start, range.end, range.preset);
-                }
-            });
+        modal.result.then(range => {
+            if (range) {
+                this.setDateRange(range.start, range.end, range.preset);
+            }
+        });
+
+        return modal;
     }
 }

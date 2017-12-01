@@ -1,12 +1,12 @@
 class MapTokensController {
-    constructor($log, $q, $uibModal, tokenService, authService) {
+    constructor($log, $q, modalService, tokenService, authService) {
         'ngInject';
         this.$log = $log;
         this.$q = $q;
 
         this.tokenService = tokenService;
         this.authService = authService;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
         this.loading = true;
 
         this.fetchTokens();
@@ -33,7 +33,7 @@ class MapTokensController {
     }
 
     deleteToken(token) {
-        let deleteModal = this.$uibModal.open({
+        const modal = this.modalService.open({
             component: 'rfConfirmationModal',
             resolve: {
                 title: () => 'Delete map token?',
@@ -43,18 +43,18 @@ class MapTokensController {
                 cancelText: () => 'Cancel'
             }
         });
-        deleteModal.result.then(
-            () => {
-                this.tokenService.deleteMapToken({id: token.id}).then(
-                    () => {
-                        this.fetchTokens();
-                    },
-                    (err) => {
-                        this.$log.debug('error deleting map token', err);
-                        this.fetchTokens();
-                    }
-                );
-            });
+
+        modal.result.then(() => {
+            this.tokenService.deleteMapToken({id: token.id}).then(
+                () => {
+                    this.fetchTokens();
+                },
+                (err) => {
+                    this.$log.debug('error deleting map token', err);
+                    this.fetchTokens();
+                }
+            );
+        });
     }
 
     updateToken(token, name) {

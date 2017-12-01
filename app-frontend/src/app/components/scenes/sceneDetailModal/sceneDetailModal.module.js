@@ -16,14 +16,14 @@ const SceneDetailModalComponent = {
 
 class SceneDetailModalController {
     constructor(
-        $log, $state, $uibModal, $scope,
+        $log, $state, modalService, $scope,
         moment, sceneService, datasourceService, mapService,
         authService
     ) {
         'ngInject';
         this.$log = $log;
         this.$state = $state;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
         this.$scope = $scope;
         this.Moment = moment;
         this.sceneService = sceneService;
@@ -63,16 +63,12 @@ class SceneDetailModalController {
             images: images
         }];
 
-        this.activeModal = this.$uibModal.open({
+        return this.modalService.open({
             component: 'rfSceneDownloadModal',
             resolve: {
                 downloads: () => downloadSets
             }
         });
-
-        this.dismiss();
-
-        return this.activeModal;
     }
 
     getSceneBounds() {
@@ -124,22 +120,16 @@ class SceneDetailModalController {
     }
 
     openDatePickerModal(date) {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.$uibModal.open({
-            component: 'rfDatePickerModal',
-            windowClass: 'auto-width-modal',
-            resolve: {
-                config: () => Object({
-                    selectedDay: this.Moment(date)
-                })
-            }
-        });
-
-        this.activeModal.result.then(
-            selectedDay => {
+        this.modalService
+            .open({
+                component: 'rfDatePickerModal',
+                windowClass: 'auto-width-modal',
+                resolve: {
+                    config: () => Object({
+                        selectedDay: this.Moment(date)
+                    })
+                }
+            }).result.then(selectedDay => {
                 this.updateAcquisitionDate(selectedDay);
             });
     }

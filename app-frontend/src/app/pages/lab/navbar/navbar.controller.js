@@ -1,12 +1,12 @@
 import * as LabActions from '../../../redux/actions/lab-actions';
 
 export default class LabNavbarController {
-    constructor(toolService, $state, $uibModal, $ngRedux, $scope) {
+    constructor(toolService, $state, modalService, $ngRedux, $scope) {
         'ngInject';
 
         this.toolService = toolService;
         this.$state = $state;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
         this.$ngRedux = $ngRedux;
 
         let unsubscribe = $ngRedux.connect(this.mapStateToThis, LabActions)(this);
