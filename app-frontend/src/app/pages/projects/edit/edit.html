@@ -12,7 +12,10 @@
     <a href
        class=""
        ui-sref="projects.edit.colormode"
-       ui-sref-active="active"
+       ng-class="{
+         active: ('projects.edit.colormode' | includedByState) ||
+                 ('projects.edit.advancedcolor' | includedByState)
+       }"
        data-title="Color mode">
       <i class="icon-color-correct"></i>
       <span>Color mode</span>

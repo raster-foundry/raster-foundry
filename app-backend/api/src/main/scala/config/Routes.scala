@@ -4,7 +4,7 @@ import akka.http.scaladsl.server.Route
 import com.azavea.rf.api.Codec._
 import com.azavea.rf.common.Authentication
 import com.azavea.rf.database.Database
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import io.circe._
 import io.circe.generic.auto._
 

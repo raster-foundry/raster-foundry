@@ -5,7 +5,7 @@ import akka.http.scaladsl.server._
 import com.azavea.rf.api.Codec._
 import com.azavea.rf.common.{Authentication, RollbarNotifier}
 import com.azavea.rf.database.Database
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import org.postgresql.util.PSQLException
 
 /**

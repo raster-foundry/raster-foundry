@@ -9,7 +9,7 @@
       <div class="text-center" ng-show="$ctrl.isLoadingDatasources">
         <div>Loading Datasources</div>
         <span class="list-placeholder h3">
-          <i class="icon-load"></i>
+          <i class="icon-load animate-spin"></i>
         </span>
       </div>
 
@@ -46,7 +46,7 @@
       <div class="cta-row" ng-if="$ctrl.shouldShowPlaceholder()">
         <rf-call-to-action-item title="You haven't created any datasources yet">
           <div class="cta-flex-text">
-            You can create a new datasource by linking Raster Foundry with various kinds of imagery sources like your comptuer, Amazon S3 Buckets, DropBox, and many other sources.
+            You can create a new datasource by linking {{$ctrl.BUILDCONFIG.APP_NAME}} with various kinds of imagery sources like your comptuer, Amazon S3 Buckets, DropBox, and many other sources.
           </div>
           <div class="cta-button-row">
             <a class="btn btn-primary">Create a new Datasource</a>

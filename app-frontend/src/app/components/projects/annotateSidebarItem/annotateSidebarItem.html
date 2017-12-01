@@ -50,21 +50,28 @@
 <div class="list-group-item" ng-if="!$ctrl.annotation.geometry || ($ctrl.editId === $ctrl.annotation.properties.id)">
   <div class='annotation-new'>
     <form>
-    <angucomplete-alt pause="100"
-                      initial-value="$ctrl.annotation.properties.label"
-                      selected-object="$ctrl.labelObj"
-                      placeholder="{{$ctrl.annotation.properties.label || 'Label name...'}}"
-                      local-data="$ctrl.labelInputs"
-                      search-fields="name"
-                      title-field="name"
-                      minlength="1"
-                      input-class="form-control annotation-label"
-                      match-class="annotation-highlight"
-                      override-suggestions="true"
-                      ng-class="{'is-invalid': $ctrl.isInvalid }">
-    </angucomplete-alt>
-    <textarea class="form-control"
+      <input type="text"
+             class="form-control label-name-input"
+             ng-init="$ctrl.labelNameInput = $ctrl.annotation.properties.label"
+             ng-model="$ctrl.labelNameInput"
+             ng-change="$ctrl.onLabelNameChange()"
+             ng-class="{'is-invalid': $ctrl.isInvalid }"
+             ng-blur="$ctrl.onLabelFieldBlur()"
+             ng-focus="$ctrl.onLabelFieldFocus()"
+             placeholder="{{$ctrl.annotation.properties.label || 'Label name...'}}">
+      <div class="label-name-selections"
+           ng-if="$ctrl.showMatchedLabels">
+        <div class="label-name-option"
+             ng-repeat="label in $ctrl.labelInputsMatch"
+             ng-click="$ctrl.onSelectLabelName(label)"
+             ng-mouseover="$ctrl.onHoverOption(true)"
+             ng-mouseleave="$ctrl.onHoverOption(false)">
+             {{label.name}}
+        </div>
+      </div>
+    <textarea class="form-control label-text"
               ng-init="$ctrl.newLabelDescription = $ctrl.annotation.properties.description"
+
               ng-model="$ctrl.newLabelDescription"
               ng-if="!$ctrl.annotation.geometry || ($ctrl.editId === $ctrl.annotation.properties.id)"
               placeholder="Description..."></textarea>

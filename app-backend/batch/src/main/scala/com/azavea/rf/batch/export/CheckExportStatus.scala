@@ -55,7 +55,7 @@ case class CheckExportStatus(exportId: UUID, statusBucket: String = "rasterfound
       }
 
     val result = for {
-      user <- fromOptionF[Future, String, User](Users.getUserById(airflowUser), "DB: Failed to fetch User.")
+      user <- fromOptionF[Future, String, User](Users.getUserById(systemUser), "DB: Failed to fetch User.")
       export <- fromOptionF[Future, String, Export](database.db.run(Exports.getExport(exportId, user)), "DB: Failed to fetch Export.")
       exportStatus <- EitherT.right[Future, String, Int](
         database.db.run(

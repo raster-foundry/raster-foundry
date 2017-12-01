@@ -412,14 +412,6 @@ export default (app) => {
             return this.Project.approveScene({ projectId, sceneId }).$promise;
         }
 
-        getBaseURL() {
-            let host = BUILDCONFIG.API_HOST || this.$location.host();
-            let protocol = this.$location.protocol();
-            let port = this.$location.port();
-            let formattedPort = port !== 80 && port !== 443 ? ':' + port : '';
-            return `${protocol}://${host}${formattedPort}`;
-        }
-
         getProjectLayerURL(project, params) {
             let projectId = typeof project === 'object' ? project.id : project;
             let queryParams = params || {};
@@ -481,9 +473,17 @@ export default (app) => {
             return null;
         }
 
+        getBaseURL() {
+            let host = this.$location.host();
+            let protocol = this.$location.protocol();
+            let port = this.$location.port();
+            let formattedPort = port !== 80 && port !== 443 ? ':' + port : '';
+            return `${protocol}://${host}${formattedPort}`;
+        }
+
         getProjectShareURL(project) {
             return this.$q((resolve, reject) => {
-                let shareUrl = `${this.getBaseURL()}/#/share/${project.id}`;
+                let shareUrl = `${this.getBaseURL()}/share/${project.id}`;
                 if (project.tileVisibility === 'PRIVATE') {
                     this.tokenService.getOrCreateProjectMapToken(project).then((token) => {
                         resolve(`${shareUrl}/?mapToken=${token.id}`);

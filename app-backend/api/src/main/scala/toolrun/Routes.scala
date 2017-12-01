@@ -8,8 +8,9 @@ import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.rf.tool.eval.PureInterpreter
 
+import com.azavea.maml.serve.InterpreterExceptionHandling
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import cats.implicits._
@@ -45,7 +46,7 @@ trait ToolRunRoutes extends Authentication
   def listToolRuns: Route = authenticate { user =>
     (withPagination & toolRunQueryParameters) { (page, runParams) =>
       complete {
-        list(ToolRuns.listToolRuns(page.offset, page.limit, runParams, user), page.offset, page.limit)
+        list(ToolRuns.listToolRuns(page.offset, page.limit, page.sort, runParams, user), page.offset, page.limit)
       }
     }
   }
@@ -56,13 +57,7 @@ trait ToolRunRoutes extends Authentication
         onSuccess(write(ToolRuns.insertToolRun(newRun, user))) { toolRun =>
           handleExceptions(interpreterExceptionHandler) {
             complete {
-              newRun.executionParameters.as[MapAlgebraAST] match {
-                case Right(ast) =>
-                  validateTreeWithSources[Unit](ast)
-                  (StatusCodes.Created, toolRun)
-                case Left(err) =>
-                  (StatusCodes.BadRequest, "Unable to parse json as MapAlgebra AST")
-              }
+              (StatusCodes.Created, toolRun)
             }
           }
         }

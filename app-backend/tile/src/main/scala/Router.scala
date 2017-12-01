@@ -1,14 +1,16 @@
 package com.azavea.rf.tile
 
-import akka.http.scaladsl.server._
-import ch.megard.akka.http.cors.CorsDirectives._
-import ch.megard.akka.http.cors.CorsSettings
 import com.azavea.rf.common.CommonHandlers
-import com.azavea.rf.common.ast.InterpreterExceptionHandling
 import com.azavea.rf.database.Database
 import com.azavea.rf.tile.routes._
 import com.azavea.rf.tile.tool._
+
+import com.azavea.maml.serve.InterpreterExceptionHandling
+import akka.http.scaladsl.server._
+import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
+import ch.megard.akka.http.cors.scaladsl.settings._
 import com.typesafe.scalalogging.LazyLogging
+
 
 class Router extends LazyLogging
     with TileAuthentication
@@ -29,31 +31,29 @@ class Router extends LazyLogging
 
   def root = cors() {
     handleExceptions(tileExceptionHandler) {
-      pathPrefix("tiles") {
-        pathPrefix(JavaUUID) { projectId =>
-          projectTileAccessAuthorized(projectId) {
-            case true => MosaicRoutes.mosaicProject(projectId)(database)
-            case _ => reject(AuthorizationFailedRejection)
-          }
-        } ~
-        pathPrefix("healthcheck") {
-          pathEndOrSingleSlash {
-            get {
-              HealthCheckRoute.root
-            }
-          }
-        } ~
-        pathPrefix("tools") {
+      pathPrefix(JavaUUID) { projectId =>
+        projectTileAccessAuthorized(projectId) {
+          case true => MosaicRoutes.mosaicProject(projectId)(database)
+          case _ => reject(AuthorizationFailedRejection)
+        }
+      } ~
+      pathPrefix("healthcheck") {
+        pathEndOrSingleSlash {
           get {
-            (handleExceptions(interpreterExceptionHandler) & handleExceptions(circeDecodingError)) {
-              pathPrefix(JavaUUID) { (toolRunId) =>
-                authenticateToolTileRoutes(toolRunId) { user =>
-                  toolRoutes.tms(toolRunId, user, TileSources.cachedTmsSource) ~
-                    toolRoutes.validate(toolRunId, user) ~
-                    toolRoutes.statistics(toolRunId, user) ~
-                    toolRoutes.histogram(toolRunId, user) ~
-                    toolRoutes.preflight(toolRunId, user)
-                }
+            HealthCheckRoute.root
+          }
+        }
+      } ~
+      pathPrefix("tools") {
+        get {
+          (handleExceptions(interpreterExceptionHandler) & handleExceptions(circeDecodingError)) {
+            pathPrefix(JavaUUID) { (toolRunId) =>
+              authenticateToolTileRoutes(toolRunId) { user =>
+                toolRoutes.tms(toolRunId, user) ~
+                  toolRoutes.validate(toolRunId, user) ~
+                  toolRoutes.statistics(toolRunId, user) ~
+                  toolRoutes.histogram(toolRunId, user) ~
+                  toolRoutes.preflight(toolRunId, user)
               }
             }
           }

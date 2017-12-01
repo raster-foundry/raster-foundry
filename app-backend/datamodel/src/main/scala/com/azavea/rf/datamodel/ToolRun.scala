@@ -9,6 +9,7 @@ import io.circe.generic.JsonCodec
 @JsonCodec
 case class ToolRun(
   id: UUID,
+  name: Option[String],
   createdAt: Timestamp,
   createdBy: String,
   modifiedAt: Timestamp,
@@ -16,7 +17,6 @@ case class ToolRun(
   owner: String,
   visibility: Visibility,
   organizationId: UUID,
-  tool: UUID,
   executionParameters: Json
 )
 
@@ -26,9 +26,9 @@ object ToolRun {
 
   @JsonCodec
   case class Create(
+    name: Option[String],
     visibility: Visibility,
     organizationId: UUID,
-    tool: UUID,
     executionParameters: Json,
     owner: Option[String]
   ) extends OwnerCheck {
@@ -40,6 +40,7 @@ object ToolRun {
 
       ToolRun(
         UUID.randomUUID,
+        name,
         now,
         user.id,
         now,
@@ -47,7 +48,6 @@ object ToolRun {
         ownerId,
         visibility,
         organizationId,
-        tool,
         executionParameters
       )
     }

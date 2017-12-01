@@ -1,3 +1,4 @@
+import logging
 import os
 import subprocess
 
@@ -8,10 +9,13 @@ import rf.uploads.geotiff.io as geotiff_io
 from rf.utils.io import s3_obj_exists
 from rf.ingest import geotiff_ingest
 from rf.models import Image, Scene
+from rf.uploads.landsat8.io import get_tempdir
 
 from .models import Ingest, Layer, Source
 
 layer_s3_bucket = os.getenv('TILE_SERVER_BUCKET')
+
+logger = logging.getLogger(__name__)
 
 
 def process_jp2000(scene_id, jp2_source):
@@ -25,58 +29,59 @@ def process_jp2000(scene_id, jp2_source):
         str: s3 url to the converted tif
     """
 
-    s3client = boto3.client('s3')
-    in_bucket, in_key = geotiff_io.s3_bucket_and_key_from_url(jp2_source)
-    in_bucket = in_bucket.replace(r'.s3.amazonaws.com', '')
-    fname_part = os.path.split(in_key)[-1]
-    out_bucket = os.getenv('DATA_BUCKET')
-    out_key = os.path.join('sentinel-2-tifs',
-                           scene_id,
-                           fname_part.replace('.jp2', '.tif'))
-    jp2_fname = os.path.join('/tmp', fname_part)
-    tif_fname = jp2_fname.replace('.jp2', '.tif')
-    # Explicitly setting nbits is necessary because geotrellis only likes
-    # powers of 2, and for some reason the value on the jpeg 2000 files
-    # after translation is 15
-    cmd = ['gdal_translate',
-           '-a_nodata', '0', # set 0 to nodata value
-           '-co', 'NBITS=16', # explicitly set nbits = 16
-           jp2_fname,
-           tif_fname]
+    with get_tempdir() as temp_dir:
 
-    dst_url = geotiff_io.s3_url(out_bucket, out_key)
+        s3client = boto3.client('s3')
+        in_bucket, in_key = geotiff_io.s3_bucket_and_key_from_url(jp2_source)
+        in_bucket = in_bucket.replace(r'.s3.amazonaws.com', '')
+        fname_part = os.path.split(in_key)[-1]
+        out_bucket = os.getenv('DATA_BUCKET')
+        out_key = os.path.join('sentinel-2-tifs', scene_id, fname_part.replace('.jp2', '.tif'))
+        jp2_fname = os.path.join(temp_dir, fname_part)
+        temp_tif_fname = jp2_fname.replace('.jp2', '-temp.tif')
+        tif_fname = jp2_fname.replace('.jp2', '.tif')
 
-    # check if the object is already there
-    try:
-        s3client.head_object(Bucket=out_bucket, Key=out_key)
-        processed = True
-    except ClientError:
-        processed = False
+        # Explicitly setting nbits is necessary because geotrellis only likes
+        # powers of 2, and for some reason the value on the jpeg 2000 files
+        # after translation is 15
+        temp_translate_cmd = ['gdal_translate',
+                              '-a_nodata', '0', # set 0 to nodata value
+                              '-co', 'NBITS=16', # explicitly set nbits = 16
+                              '-co', 'COMPRESS=LZW',
+                              '-co', 'TILED=YES',
+                              jp2_fname,
+                              temp_tif_fname]
 
-    # If the object is already there, we've converted this scene
-    # before
-    if not processed:
+        warp_cmd = [
+            'gdalwarp',
+            '-co', 'COMPRESS=LZW',
+            '-co', 'TILED=YES',
+            '-t_srs', 'epsg:3857',
+            temp_tif_fname, tif_fname
+        ]
+
+        dst_url = geotiff_io.s3_url(out_bucket, out_key)
+
         # Download the original jp2000 file
+        logger.info('Downloading JPEG2000 file locally (%s/%s => %s)',
+                    in_bucket, in_key, jp2_fname)
         with open(jp2_fname, 'wb') as src:
-            body = s3client.get_object(
-                Bucket=in_bucket,
-                Key=in_key
-            )['Body']
+            body = s3client.get_object(Bucket=in_bucket, Key=in_key)['Body']
             src.write(body.read())
 
+        logger.info('Running translate command to convert to TIF')
         # Translate the original file and add 0 as a nodata value
-        subprocess.check_call(cmd)
+        subprocess.check_call(temp_translate_cmd)
+        logger.info('Running warp command to convert to web mercator')
+        subprocess.check_call(warp_cmd)
 
         # Upload the converted tif
+        logger.info('Uploading TIF to S3 (%s => %s/%s)', tif_fname, out_bucket, out_key)
         with open(tif_fname, 'r') as dst:
-            s3client.put_object(
-                Bucket=out_bucket,
-                Key=out_key,
-                Body=dst
-            )
+            s3client.put_object(Bucket=out_bucket, Key=out_key, Body=dst)
 
-    # Return the s3 url to the converted image
-    return dst_url
+        # Return the s3 url to the converted image
+        return dst_url
 
 
 def make_tif_image_copy(image):

@@ -2,6 +2,7 @@
 <div class="breakpoint-grabber"
      ng-class="{bar: $ctrl._options.style === 'bar',
                 arrow: $ctrl._options.style === 'arrow',
+                point: $ctrl._options.style === 'point',
                 dragging: $ctrl.dragging || $ctrl.active}"
      ng-mousedown="$ctrl.onGrabberMouseDown()"></div>
 <div class="breakpoint-bar bottom" ng-if="$ctrl._options.style === 'bar'"></div>

@@ -1,8 +1,8 @@
-const Map = require('es6-map');
+import {Map} from 'immutable';
 
 export default class ProjectsEditController {
     constructor( // eslint-disable-line max-params
-        $log, $q, $state, $scope, $uibModal,
+        $log, $q, $state, $scope, $uibModal, $timeout,
         authService, projectService, projectEditService,
         mapService, mapUtilsService, layerService,
         datasourceService, imageOverlayService, thumbnailService
@@ -40,7 +40,7 @@ export default class ProjectsEditController {
             if (this.projectId) {
                 this.loadingProject = true;
                 this.projectUpdateListeners = [];
-                this.projectEditService.setCurrentProject(this.projectId).then(
+                this.projectEditService.setCurrentProject(this.projectId, true).then(
                     (project) => {
                         this.project = project;
                         this.fitProjectExtent();
@@ -62,6 +62,12 @@ export default class ProjectsEditController {
             }
         } else if (this.project.isAOIProject) {
             this.getPendingSceneList();
+        }
+    }
+
+    $postLink() {
+        if (this.project) {
+            this.$timeout(this.fitProjectExtent(), 100);
         }
     }
 
@@ -96,7 +102,7 @@ export default class ProjectsEditController {
                 this.sceneList = allScenes;
                 for (const scene of this.sceneList) {
                     let scenelayer = this.layerService.layerFromScene(scene, this.projectId);
-                    this.sceneLayers.set(scene.id, scenelayer);
+                    this.sceneLayers = this.sceneLayers.set(scene.id, scenelayer);
                 }
                 this.layerFromProject();
                 this.initColorComposites();
@@ -169,7 +175,7 @@ export default class ProjectsEditController {
         this.getMap().then(m => {
             m.setLayer('Ingested Scenes', layer, true);
         });
-        this.mosaicLayer.set(this.projectId, layer);
+        this.mosaicLayer = this.mosaicLayer.set(this.projectId, layer);
     }
 
     setHoveredScene(scene) {

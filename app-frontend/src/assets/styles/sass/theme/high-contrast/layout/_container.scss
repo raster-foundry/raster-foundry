@@ -1,0 +1,14 @@
+$navbar-height: 6rem;
+$navbar-secondary-height: 4.3rem;
+
+.container-not-scrollable {
+  height: calc(100vh - #{$navbar-height});
+  max-height: calc(100vh - #{$navbar-height}); // Fixes flex + height issue in some browsers
+  min-height: calc(100vh - #{$navbar-height}); // Fixes flex + height issue in some browsers
+
+  .secondary-navbar ~ & {
+    height: calc(100vh - #{$navbar-height + $navbar-secondary-height});
+    max-height: calc(100vh - #{$navbar-height + $navbar-secondary-height}); // Fixes flex + height issue in some browsers
+    min-height: calc(100vh - #{$navbar-height + $navbar-secondary-height}); // Fixes flex + height issue in some browsers
+  }
+}

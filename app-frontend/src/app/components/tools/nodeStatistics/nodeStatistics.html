@@ -1,18 +1,18 @@
 <div class="node-statistics">
     <div class="classify-node-preview-row with-border"
-         ng-repeat="(label, value) in $ctrl.stats"
-         ng-if="$ctrl.shouldShowStats()"
+         ng-repeat="(label, value) in $ctrl.statistics.data"
+         ng-if="$ctrl.statistics && $ctrl.statistics.data && $ctrl.visibleStats.includes(label)"
     >
         <div class="classify-node-class header">{{label}}</div>
-        <div class="classify-node-class">{{value | setDecimal : 5}}</div>
+        <div class="classify-node-class">{{$ctrl.parseStatValDisplay(value)}}</div>
     </div>
 
     <div class="classify-node-preview-row with-border"
         ng-repeat="(label, value) in $ctrl.emptyStats"
-        ng-if="$ctrl.shouldShowEmptyStats()"
+        ng-if="$ctrl.statistics && $ctrl.statistics.loading"
     >
        <div class="classify-node-class header">{{label}}</div>
-       <div class="classify-node-class">{{value | setDecimal : 5}}</div>
+       <div class="classify-node-class">{{$ctrl.parseStatValDisplay(value)}}</div>
     </div>
 </div>
 <div class="node-controls overlayed" ng-if="$ctrl.shouldShowEmptyStats()">

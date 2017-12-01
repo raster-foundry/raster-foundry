@@ -17,7 +17,7 @@ import com.azavea.rf.common._
 
 import io.circe._
 import io.circe.syntax._
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
 class ToolTagSpec extends WordSpec
     with Matchers
@@ -92,7 +92,7 @@ class ToolTagSpec extends WordSpec
       }
     }
 
-    "create a tool tag with authHeader" in {
+    "create a tool tag with authHeader" ignore {
       Post("/api/tool-tags/").withHeadersAndEntity(
         List(authHeader),
         HttpEntity(

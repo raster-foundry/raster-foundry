@@ -9,7 +9,6 @@ node {
 
     env.AWS_DEFAULT_REGION = 'us-east-1'
     env.RF_ARTIFACTS_BUCKET = 'rasterfoundry-global-artifacts-us-east-1'
-    env.RF_DOCS_BUCKET = 'rasterfoundry-staging-docs-site-us-east-1'
 
     // Execute `cibuild` wrapped within a plugin that translates
     // ANSI color codes to something that renders inside the Jenkins
@@ -26,9 +25,13 @@ node {
 
     if (env.BRANCH_NAME == 'develop' || env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('hotfix/')) {
       // When a release branch is used, override `env.RF_DOCS_BUCKET`
-      // so that the production documentation site is published by `cipublish`.
+      // and `env.RF_DEPLOYMENT_BRANCH`.
       if (env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('hotfix/')) {
         env.RF_DOCS_BUCKET = 'rasterfoundry-production-docs-site-us-east-1'
+        env.RF_DEPLOYMENT_BRANCH = 'master'
+      } else {
+        env.RF_DOCS_BUCKET = 'rasterfoundry-staging-docs-site-us-east-1'
+        env.RF_DEPLOYMENT_BRANCH = 'develop'
       }
 
       // Publish container images built and tested during `cibuild`
@@ -52,35 +55,30 @@ node {
       // Also, use the container image revision referenced above to
       // cycle in the newest version of the application into Amazon
       // ECS.
-      stage('infra') {
-        // Use `git` to get the primary repository's current commmit SHA and
-        // set it as the value of the `GIT_COMMIT` environment variable.
-        env.GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+      // stage('infra') {
+      //   env.GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
 
-        checkout scm: [$class: 'GitSCM',
-                       branches: [[name: 'master']],
-                       extensions: [[$class: 'RelativeTargetDirectory',
-                                     relativeTargetDir: 'raster-foundry-deployment']],
-                       userRemoteConfigs: [[credentialsId: '3bc1e878-814a-43d1-864e-2e378ebddb0f',
-                                            url: 'https://github.com/azavea/raster-foundry-deployment.git']]]
+      //   checkout scm: [$class: 'GitSCM',
+      //                  branches: [[name: env.RF_DEPLOYMENT_BRANCH]],
+      //                  extensions: [[$class: 'RelativeTargetDirectory',
+      //                                relativeTargetDir: 'raster-foundry-deployment']],
+      //                  userRemoteConfigs: [[credentialsId: '3bc1e878-814a-43d1-864e-2e378ebddb0f',
+      //                                       url: 'https://github.com/azavea/raster-foundry-deployment.git']]]
 
-        // When a release branch is used, override `env.RF_SETTINGS_BUCKET`
-        // so that it uses the production infrastructure configuration
-        // settings.
-        if (env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('hotfix/')) {
-          env.RF_SETTINGS_BUCKET = 'rasterfoundry-production-config-us-east-1'
+      //   if (env.BRANCH_NAME.startsWith('release/') || env.BRANCH_NAME.startsWith('hotfix/')) {
+      //     env.RF_SETTINGS_BUCKET = 'rasterfoundry-production-config-us-east-1'
 
-          def slackMessage = ":rasterfoundry: production deployment in-progress... <${env.BUILD_URL}|View Build>"
-          slackSend color: 'warning', message: slackMessage
-        }
+      //     def slackMessage = ":rasterfoundry: production deployment in-progress... <${env.BUILD_URL}|View Build>"
+      //     slackSend color: 'warning', message: slackMessage
+      //   }
 
-        dir('raster-foundry-deployment') {
-          wrap([$class: 'AnsiColorBuildWrapper']) {
-            sh 'docker-compose -f docker-compose.ci.yml run --rm terraform ./scripts/infra plan'
-            sh 'docker-compose -f docker-compose.ci.yml run --rm terraform ./scripts/infra apply'
-          }
-        }
-      }
+      //   dir('raster-foundry-deployment') {
+      //     wrap([$class: 'AnsiColorBuildWrapper']) {
+      //       sh 'docker-compose -f docker-compose.ci.yml run --rm terraform ./scripts/infra plan'
+      //       sh 'docker-compose -f docker-compose.ci.yml run --rm terraform ./scripts/infra apply'
+      //     }
+      //   }
+      // }
     }
   } catch (err) {
     // Some exception was raised in the `try` block above. Assemble

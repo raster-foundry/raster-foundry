@@ -1,11 +1,18 @@
 /* global BUILDCONFIG */
 function runBlock(
     $rootScope, jwtHelper, $state, $location, $window, APP_CONFIG,
+    $ngRedux, $timeout,
     authService, localStorage, rollbarWrapperService, intercomService,
     featureFlags, perUserFeatureFlags
 ) {
     'ngInject';
     let flagsPromise;
+
+    $ngRedux.subscribe(() => {
+        $timeout(() => {
+            $rootScope.$apply(() => {});
+        }, 100);
+    });
 
     if (authService.verifyAuthCache()) {
         flagsPromise = perUserFeatureFlags.load();
@@ -26,8 +33,8 @@ function runBlock(
                 intercomService.shutdown();
                 $state.go('login');
             } else if (toState.name !== 'login' && toState.name !== 'callback') {
-                rollbarWrapperService.init(authService.profile());
-                intercomService.bootWithUser(authService.profile());
+                rollbarWrapperService.init(authService.getProfile());
+                intercomService.bootWithUser(authService.getProfile());
                 if (toState.redirectTo) {
                     e.preventDefault();
                     $state.go(toState.redirectTo, params);
@@ -47,11 +54,12 @@ function runBlock(
 
     $rootScope.$on('$locationChangeStart', function () {
         function setupState() {
-            let token = localStorage.get('id_token');
-            if (token) {
+            let idToken = localStorage.get('idToken');
+            let accessToken = localStorage.get('accessToken');
+            if (idToken && accessToken) {
                 if (!authService.verifyAuthCache()) {
                     rollbarWrapperService.init();
-                    authService.login(token);
+                    authService.login(accessToken, idToken);
                 }
             } else {
                 intercomService.shutdown();

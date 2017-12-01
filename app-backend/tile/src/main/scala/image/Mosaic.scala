@@ -7,7 +7,8 @@ import com.azavea.rf.datamodel.Project
 import geotrellis.raster._
 import geotrellis.raster.render.Png
 import geotrellis.slick.Projected
-import geotrellis.vector.Polygon
+import geotrellis.proj4._
+import geotrellis.vector.{Extent, Polygon}
 import cats.data._
 import cats.implicits._
 import java.util.UUID
@@ -53,12 +54,26 @@ object Mosaic extends LazyLogging with KamonTrace {
     colorCorrect: Boolean
   )(implicit database: Database): OptionT[Future, MultibandTile] = {
     OptionT(Projects.getProjectPreauthorized(projectId)) flatMap { project =>
-      project.isSingleBand match {
-        case true =>
-          /* TODO: handle single band mosaics*/
-          SingleBandMosaic.render(project, zoomOption, bboxOption, colorCorrect)
-        case false =>
-          MultiBandMosaic.render(projectId, zoomOption, bboxOption, colorCorrect)
+      if (colorCorrect) {
+        if (project.isSingleBand) {
+            SingleBandMosaic.render(project, zoomOption, bboxOption, true)
+        } else {
+            MultiBandMosaic.render(projectId, zoomOption, bboxOption, true)
+        }
+      } else {
+        val bboxPolygon: Option[Projected[Polygon]] =
+          try {
+            bboxOption map { bbox =>
+              Projected(Extent.fromString(bbox).toPolygon(), 4326)
+                .reproject(LatLng, WebMercator)(3857)
+            }
+          } catch {
+            case e: Exception =>
+              throw new IllegalArgumentException(
+                "Four comma separated coordinates must be given for bbox")
+                .initCause(e)
+          }
+        rawForExtent(projectId, zoomOption.getOrElse(8), bboxPolygon)
       }
     }
   }

@@ -1,21 +1,22 @@
-import assetLogo from '../../../../assets/images/logo-raster-foundry.png';
+/* global BUILDCONFIG */
+
+let assetLogo = BUILDCONFIG.LOGOFILE ?
+    require(`../../../../assets/images/${BUILDCONFIG.LOGOFILE}`) :
+    require('../../../../assets/images/raster-foundry-logo.svg');
+
+assetLogo = BUILDCONFIG.LOGOURL || assetLogo;
 
 export default class NavBarController {
     constructor( // eslint-disable-line max-params
-        $log, $state, $scope, $uibModal, APP_CONFIG, authService, localStorage, projectService
+        $state, APP_CONFIG, authService
     ) {
         'ngInject';
         if (APP_CONFIG.error) {
             this.loadError = true;
         }
 
-        this.$log = $log;
         this.$state = $state;
-        this.$scope = $scope;
-        this.$uibModal = $uibModal;
-        this.localStorage = localStorage;
         this.authService = authService;
-        this.projectService = projectService;
     }
 
     $onInit() {

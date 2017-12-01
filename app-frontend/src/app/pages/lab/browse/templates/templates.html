@@ -1,0 +1,67 @@
+<div class="container dashboard app-width-container">
+  <div class="main">
+    <div class="row content stack-sm">
+      <div class="column-3">
+          <rf-search on-search="$ctrl.search(value)"
+                     placeholder="Search for templates"
+                     auto-focus="true">
+          </rf-search>
+          <div class="aside aside-filters">
+            <section>
+              <h5>Create a new template</h5>
+              <p>
+                Build a custom template that you can use to execute powerful analyses.
+              </p>
+              <a class="btn btn-default btn-block" ng-click="$ctrl.openToolCreateModal()">New template</a>
+            </section>
+          </div>
+      </div>
+      <div class="column-9">
+
+        <!-- Loading indicator -->
+        <div ng-show="$ctrl.loading">
+          <span class="list-placeholder h3">
+            <i class="icon-load animate-spin"></i>
+          </span>
+        </div>
+        <!-- Loading indicator -->
+
+        <div class="font-size-small pagination-count"
+           ng-if="!$ctrl.searchString"
+        >
+          Showing <strong>{{$ctrl.pagination.startingItem}} - {{$ctrl.pagination.endingItem}}</strong> of <strong>{{$ctrl.pagination.count}}</strong> templates
+        </div>
+
+        <div class="font-size-small pagination-count"
+           ng-if="$ctrl.searchString"
+        >
+           Showing results for "<strong>{{$ctrl.searchString}}</strong>"
+        </div>
+
+        <!-- Temporarily removed ng-click until after demo done and detail page designed. -->
+        <rf-tool-item
+            class="panel panel-off-white"
+            ng-repeat="toolData in $ctrl.toolList | filter: {title: $ctrl.searchString}"
+            tool-data="toolData"
+            ng-click=""
+        ></rf-tool-item>
+
+        <!-- Pagination -->
+        <div class="list-group text-center"
+             ng-show="!$ctrl.loading && $ctrl.lastToolResponse && $ctrl.pagination.show && !$ctrl.errorMsg &&!$ctrl.searchString">
+          <ul uib-pagination
+              items-per-page="$ctrl.lastToolResponse.pageSize"
+              total-items="$ctrl.pagination.count"
+              ng-model="$ctrl.currentPage"
+              max-size="4"
+              rotate="true"
+              boundary-link-numbers="true"
+              force-ellipses="true"
+              ng-change="$ctrl.fetchToolList($ctrl.currentPage)">
+          </ul>
+        </div>
+        <!-- Pagination -->
+      </div>
+    </div>
+  </div>
+</div>

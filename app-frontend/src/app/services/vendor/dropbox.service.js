@@ -21,7 +21,7 @@ export default (app) => {
             uri.href = href;
             let code = _.last(uri.search.split('='));
             return this.DropboxSetup.confirm({
-                userid: this.authService.profile().user_id
+                userid: this.authService.getProfile().sub
             }, {
                 authorizationCode: code,
                 redirectURI: uri.origin + uri.pathname

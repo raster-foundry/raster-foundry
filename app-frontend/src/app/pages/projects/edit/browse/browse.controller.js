@@ -1,4 +1,5 @@
-const Map = require('es6-map');
+import { Map } from 'immutable';
+
 const _ = require('lodash');
 
 export default class ProjectAddScenesBrowseController {
@@ -187,7 +188,7 @@ export default class ProjectAddScenesBrowseController {
         delete params.sceneid;
         this.sceneService.query(
             Object.assign({
-                sort: 'createdAt,desc',
+                sort: 'acquisitionDatetime,desc',
                 pageSize: '20',
                 maxCreateDatetime: this.sceneLoadingTime
             }, params)
@@ -225,7 +226,7 @@ export default class ProjectAddScenesBrowseController {
         delete params.sceneid;
         this.sceneService.query(
             Object.assign({
-                sort: 'createdAt,desc',
+                sort: 'acquisitionDatetime,desc',
                 pageSize: '20',
                 page: this.infScrollPage,
                 maxCreateDatetime: this.sceneLoadingTime
@@ -346,10 +347,10 @@ export default class ProjectAddScenesBrowseController {
     setSelected(scene, selected) {
         this.getMap().then((map) => {
             if (selected) {
-                this.selectedScenes.set(scene.id, scene);
+                this.selectedScenes = this.selectedScenes.set(scene.id, scene);
                 map.setThumbnail(scene, false, true);
             } else {
-                this.selectedScenes.delete(scene.id);
+                this.selectedScenes = this.selectedScenes.delete(scene.id);
                 map.deleteThumbnail(scene);
             }
         });

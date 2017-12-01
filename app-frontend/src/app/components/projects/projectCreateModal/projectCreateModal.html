@@ -43,7 +43,7 @@
           ng-class="{selected: $ctrl.projectAttributeIs('isAOIProject', true)}"
           ng-click="$ctrl.setProjectAttribute('isAOIProject',true)"
         >
-          Set an area of interest on the map, an update frequency and automatically add new scenes to the project as they are added to Raster Foundry.
+          Set an area of interest on the map, an update frequency and automatically add new scenes to the project as they are added to {{$ctrl.BUILDCONFIG.APP_NAME}}.
         </rf-box-select-item>
       </div>
     </div>

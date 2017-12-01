@@ -89,7 +89,7 @@
       <div ng-if="$ctrl.importType === 'S3'">
         <p>
           Enter the the S3 URI that points to where imagery is located.
-          The import process will import any imagery found in that location into Raster Foundry.
+          The import process will import any imagery found in that location into {{$ctrl.BUILDCONFIG.APP_NAME}}.
         </p>
         <form>
           <div class="form-group">
@@ -150,7 +150,7 @@
     <div class="content">
       <h3 class="no-margin">Local File Import</h3>
       <ng-container ng-if="!$ctrl.shouldShowFileList()">
-        <p>Select imagery files from your computer and we'll import them into Raster Foundry Scenes. Raster Foundry currently allows for uploading GeoTIFF files only.</p>
+        <p>Select imagery files from your computer and we'll import them into {{$ctrl.BUILDCONFIG.APP_NAME}} Scenes. {{$ctrl.BUILDCONFIG.APP_NAME}} currently allows for uploading GeoTIFF files only.</p>
         <div class="text-center">
           <button class="btn btn-primary"
                   ngf-multiple=true
@@ -233,21 +233,45 @@
     <div class="content">
       <h3 class="no-margin">Upload in progress...</h3>
       <div class="list-group">
-          <div class="list-group-item no-flex" ng-repeat="file in $ctrl.selectedFiles">
+          <div class="list-group-item no-flex" ng-repeat="upload in $ctrl.fileUploads track by upload.file.name">
             <div class="list-group-item-contents">
               <div class="list-group-overflow">
                 <span title="{{$ctrl.scene.name}}">
-                  <strong class="color-dark">{{file.name}}</strong>
+                  <strong class="color-dark">{{upload.file.name}}</strong>
                 </span>
                 <br>
-                <span>{{file.size | byteFmt: 2}}</span>
+                <span ng-if="upload.progress">
+                  {{upload.file.size * (upload.progress.loaded / upload.progress.total) | byteFmt: 2}} /
+                </span>
+                <span>{{upload.file.size | byteFmt: 2}}</span>
               </div>
               <div class="list-group-right">
-                {{$ctrl.uploadProgressPct[file.name] || '0%'}}
+                {{$ctrl.uploadProgressPct[upload.file.name] || '0%'}}
+                <button title="Retry Upload"
+                        class="btn btn-square"
+                        ng-if="upload.api.failed"
+                        ng-click="$ctrl.retryUpload(upload)">
+                  <i class="icon-arrows-cw"></i>
+                </button>
+                <button title="Cancel Upload"
+                        class="btn btn-square btn-danger"
+                        ng-if="!upload.aborted && !upload.finished"
+                        ng-click="$ctrl.abortUpload(upload)">
+                  <i class="icon-cross"></i>
+                </button>
+                <button disabled="true"
+                        ng-if="upload.finished"
+                        class="btn btn-square btn-secondary">
+                  <i class="icon-check"></i>
+                </button>
               </div>
             </div>
             <div class="list-group-item-contents">
-              <div class="upload-progress-bar" ng-style="{ 'flex': $ctrl.uploadProgressFlexString[file.name] || '0 0' }"></div>
+              <div class="upload-progress-bar"
+                   ng-style="{ 'flex': $ctrl.uploadProgressFlexString[upload.file.name] || '0 0' }"
+                   ng-class="{ 'cancelled': upload.aborted, 'failed': upload.error }"
+              >
+              </div>
             </div>
           </div>
         </div>
@@ -273,7 +297,7 @@
     <div class="content">
       <h3 class="no-margin">Success!</h3>
       <p>
-        Your scenes are importing into Raster Foundry now.
+        Your scenes are importing into {{$ctrl.BUILDCONFIG.APP_NAME}} now.
         This may take some time and we will notify you when the process is complete.
         In the meantime checkout your Notification Center for up to date information on all of your projects.
       </p>

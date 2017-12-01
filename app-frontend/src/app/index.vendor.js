@@ -23,6 +23,7 @@ import 'angular-touch';
 import 'angular-sanitize';
 import 'angular-messages';
 import 'angular-aria';
+import 'ng-redux';
 import 'angular-resource';
 import 'leaflet';
 import 'jointjs';
@@ -33,7 +34,6 @@ import 'angular-filter';
 import 'angular-tooltips';
 import 'mathjs';
 import 'angular-uuid4';
-import 'angucomplete-alt';
 import 'angular-hotkeys';
 
 // local scripts

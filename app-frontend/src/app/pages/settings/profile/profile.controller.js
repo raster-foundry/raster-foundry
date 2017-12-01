@@ -12,14 +12,14 @@ class ProfileController {
     }
 
     $onInit() {
-        let providerMap = {
-            'google-oauth2': 'Google',
-            auth0: 'Gravatar',
-            facebook: 'Facebook',
-            twitter: 'Twitter'
-        };
-        this.provider = this.profile.identities[0].provider;
-        this.providerName = providerMap[this.provider];
+        // let providerMap = {
+        //     'google-oauth2': 'Google',
+        //     auth0: 'Gravatar',
+        //     facebook: 'Facebook',
+        //     twitter: 'Twitter'
+        // };
+        // this.provider = this.profile.identities[0].provider;
+        // this.providerName = providerMap[this.provider];
 
         this.env = process.env.NODE_ENV;
     }

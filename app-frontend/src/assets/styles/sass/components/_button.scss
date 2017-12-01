@@ -1,8 +1,10 @@
-@mixin button-states($color) {
+@mixin button-states($color, $textColor) {
   &:hover, &.hover,
-  &:active, &.active, {
+  &:active, &.active {
+    color: $textColor;
     background-color: darken($color, 5%);
     border-color: darken($color, 5%);
+    z-index: 1;
   }
 
   &:active, &.active {
@@ -12,6 +14,7 @@
   &:focus, &.focus {
     outline: none;
     box-shadow: 0 0 0 3px rgba($brand-primary, .3);
+    z-index: 1;
   }
 
   // Note: <buttons> and <a> handle active+focus differently. This will normalize behaviour.
@@ -31,6 +34,7 @@
     color: $textColor;
     background-color: rgba($color, .25);
     border-color: darken($color, 5%);
+    z-index: 1;
   }
 
   &:active, &.active {
@@ -40,6 +44,7 @@
   &:focus, &.focus {
     outline: none;
     box-shadow: 0 0 0 3px rgba($brand-primary, .3);
+    z-index: 1;
   }
 
   // Note: <buttons> and <a> handle active+focus differently. This will normalize behaviour.
@@ -75,6 +80,7 @@
   &:active, &.active, {
     color: #fff;
     background-color: lighten($shade-light, 10%);
+    z-index: 1;
   }
 
   &:active, &.active {
@@ -84,6 +90,7 @@
   &:focus, &.focus {
     outline: none;
     box-shadow: 0 0 0 3px rgba($brand-primary, .3);
+    z-index: 1;
   }
 
   // Note: <buttons> and <a> handle active+focus differently. This will normalize behaviour.
@@ -105,7 +112,7 @@
   border-color: darken($shade-normal, 5%);
   color: #fff;
 
-  @include button-states($shade-normal);
+  @include button-states($shade-normal, $white);
 }
 
 .btn-light {
@@ -113,7 +120,7 @@
   border-color: darken($shade-light, 5%);
   color: #fff;
 
-  @include button-states($shade-light);
+  @include button-states($shade-light, $white);
 }
 
 .btn-primary {
@@ -121,7 +128,7 @@
   border-color: darken($brand-primary, 5%);
   color: #fff;
 
-  @include button-states($brand-primary);
+  @include button-states($brand-primary, $white);
 }
 
 .btn-secondary {
@@ -129,7 +136,7 @@
   border-color: darken($brand-secondary, 5%);
   color: #fff;
 
-  @include button-states($brand-secondary);
+  @include button-states($brand-secondary, $white);
 }
 
 .btn-tertiary {
@@ -137,7 +144,7 @@
   border-color: darken($brand-tertiary, 5%);
   color: #fff;
 
-  @include button-states($brand-tertiary);
+  @include button-states($brand-tertiary, $white);
 }
 
 .btn-warning {
@@ -145,7 +152,7 @@
   border-color: darken($warning, 5%);
   color: #fff;
 
-  @include button-states($warning);
+  @include button-states($warning, $white);
 }
 
 .btn-danger {
@@ -153,7 +160,7 @@
   border-color: darken($danger, 5%);
   color: #fff;
 
-  @include button-states($danger);
+  @include button-states($danger, $white);
 }
 
 .btn-transparent {

@@ -190,7 +190,7 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
                 visibility = Visibility.Public,
                 filename = tiffPath,
                 sourceUri = s"${getLandsatUrl(productId)}/${tiffPath}",
-                owner = Some(airflowUser),
+                owner = Some(systemUser),
                 scene = sceneId,
                 imageMetadata = Json.Null,
                 resolutionMeters = resolution,
@@ -208,7 +208,7 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
             datasource = landsat8Config.datasourceUUID,
             sceneMetadata = sceneMetadata.asJson,
             name = sceneName,
-            owner = Some(airflowUser),
+            owner = Some(systemUser),
             tileFootprint = targetProj.epsgCode.map(Projected(MultiPolygon(transformedExtent.toPolygon()), _)),
             dataFootprint = targetProj.epsgCode.map(Projected(MultiPolygon(transformedCoords), _)),
             metadataFiles = List(s"${landsat8Config.awsLandsatBase}${landsatPath}/${productId}_MTL.txt"),
@@ -254,10 +254,10 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
 
   def run: Unit = {
     logger.info("Importing scenes...")
-    Users.getUserById(airflowUser).flatMap { (userOpt) =>
+    Users.getUserById(systemUser).flatMap { (userOpt) =>
       scenesFromCsv(
         userOpt.getOrElse {
-          val e = new Exception(s"User $airflowUser doesn't exist.")
+          val e = new Exception(s"User $systemUser doesn't exist.")
           sendError(e)
           throw e
         })

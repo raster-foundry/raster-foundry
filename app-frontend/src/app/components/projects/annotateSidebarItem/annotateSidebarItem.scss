@@ -95,23 +95,6 @@ i.icon-check.qa-check {
   margin: 0px;
 }
 
-.angucomplete-holder {
-  margin-bottom: 10px;
-}
-
-angucomplete-alt {
-  &.is-invalid {
-    .angucomplete-holder {
-      border: 1px solid $red;
-      border-radius: 2px;
-    }
-  }
-}
-
-.annotation-new.form-control.annotation-label {
-  height:  35px;
-}
-
 .annotation-new textarea.form-control {
   height: 150px;
   margin-bottom: 10px;
@@ -127,6 +110,32 @@ angucomplete-alt {
   float: right;
 }
 
-.annotation-highlight {
-  color: $red;
+.label-name-input {
+  &.is-invalid {
+    border: 1px solid $red;
+    border-radius: 2px;
+  }
+}
+
+.label-name-selections {
+  border: 1px solid $gray-lighter;
+  display: block;
+  z-index: 1000;
+  position: absolute;
+  background-color: $white;
+  width: 100%;
+}
+
+.label-name-option {
+  padding: 6px 12px;
+}
+
+.label-name-option:hover{
+  color: $white;
+  background-color: $shade-normal;
+  cursor: pointer;
+}
+
+.label-text{
+  margin-top: 10px;
 }

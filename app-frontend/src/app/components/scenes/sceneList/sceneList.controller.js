@@ -14,24 +14,13 @@ export default class SceneListController {
         this.populateSceneList(this.$state.params.page || 1);
         this.sceneActions = [
             {
-                label: 'View',
-                onClick: this.viewSceneDetail.bind(this)
-            },
-            {
                 label: 'Download',
                 onClick: this.downloadModal.bind(this),
                 iconClass: 'icon-download'
             },
-            // {
-            //     label: 'Make Public',
-            //     iconClass: 'icon-unlocked'
-            // },
-            {
-                divider: true
-            },
             {
                 label: 'Delete',
-                textClass: 'dropdown-danger',
+                buttonClass: 'btn-danger',
                 iconClass: 'icon-trash',
                 onClick: this.deleteModal.bind(this)
             }
@@ -51,7 +40,7 @@ export default class SceneListController {
                 sort: 'createdAt,desc',
                 pageSize: '10',
                 page: page - 1,
-                owner: this.authService.profile().user_id
+                owner: this.authService.getProfile().sub
             }
         ).then((sceneResult) => {
             this.lastSceneResult = sceneResult;
@@ -173,7 +162,8 @@ export default class SceneListController {
             this.lastSceneResult.count === 0 && !this.errorMsg;
     }
 
-    onActionClick(action, scene) {
+    onActionClick(event, action, scene) {
+        event.stopPropagation();
         if (action.onClick) {
             action.onClick(scene);
         }
@@ -187,10 +177,10 @@ export default class SceneListController {
         return classes;
     }
 
-    getActionTextClass(action) {
+    getActionButtonClass(action) {
         let classes = {};
-        if (action.textClass) {
-            classes[action.textClass] = true;
+        if (action.buttonClass) {
+            classes[action.buttonClass] = true;
         }
         return classes;
     }

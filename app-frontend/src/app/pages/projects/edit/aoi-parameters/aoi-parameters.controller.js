@@ -182,7 +182,7 @@ export default class AOIParametersController {
             });
         } else if (this.projectAois && !this.projectAois.length) {
             let newAOI = {
-                owner: this.authService.profile().user_id,
+                owner: this.authService.getProfile().sub,
                 area: {
                     'type': multipolygon.geom.type,
                     'coordinates': multipolygon.geom.coordinates,
@@ -285,5 +285,9 @@ export default class AOIParametersController {
                 mapWrapper.showLayers('Areas Of Interest', true);
             }
         });
+    }
+
+    onCloseFilterPane(showFilterPane) {
+        this.showFilters = showFilterPane;
     }
 }

@@ -67,12 +67,12 @@ object MapTokens extends TableQuery(tag => new MapTokens(tag)) with LazyLogging 
       .headOption
   }
 
-  def validateMapToken(projectId: UUID, mapTokenId: UUID): DBIO[Int] = {
+  def validateMapToken(projectId: UUID, mapTokenId: UUID): DBIO[Option[MapToken]] = {
     MapTokens
       .filter(_.id === mapTokenId)
       .filter(_.projectId === projectId)
-      .length
       .result
+      .headOption
   }
 
   def listMapTokens(offset: Int, limit: Int, user: User, queryParameters: CombinedMapTokenQueryParameters):ListQueryResult[MapToken] = {

@@ -4,6 +4,7 @@ import subprocess
 
 import boto3
 import click
+from retrying import retry
 
 from ..utils.io import IngestStatus
 from ..models import Scene
@@ -96,7 +97,7 @@ def launch_spark_ingest_job(ingest_def_uri, ingest_def_id, scene_id):
     is_success = wait_for_emr_success(step_id, cluster_id)
     return is_success
 
-
+@retry(wait_exponential_multiplier=2000, wait_exponential_max=30000, stop_max_attempt_number=5)
 def execute_ingest_emr_job(scene_id, ingest_s3_uri, ingest_def_id, cluster_id):
     """Kick off ingest in AWS EMR
 
@@ -143,6 +144,8 @@ def execute_ingest_emr_job(scene_id, ingest_s3_uri, ingest_def_id, cluster_id):
     logger.info('Received response from EMR API: %s', response)
     return response
 
+
+@retry(wait_exponential_multiplier=2000, wait_exponential_max=30000, stop_max_attempt_number=2)
 def wait_for_status(ingest_def_id):
     """Wait for a result from the Spark job
 

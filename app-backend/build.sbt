@@ -28,6 +28,7 @@ lazy val commonSettings = Seq(
   resolvers ++= Seq(
     Resolver.sonatypeRepo("snapshots"),
     Resolver.bintrayRepo("lonelyplanet", "maven"),
+    Resolver.bintrayRepo("guizmaii", "maven"),
     Resolver.bintrayRepo("kwark", "maven") // Required for Slick 3.1.1.2, see https://github.com/azavea/raster-foundry/pull/1576
   ),
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
@@ -129,7 +130,8 @@ lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
   Dependencies.caffeine,
   Dependencies.scaffeine,
   Dependencies.findbugAnnotations,
-  Dependencies.dropbox
+  Dependencies.dropbox,
+  Dependencies.awsStsSdk
 )
 
 lazy val root = Project("root", file("."))
@@ -148,9 +150,7 @@ lazy val common = Project("common", file("common"))
   .dependsOn(database, datamodel)
   .settings(apiSettings:_*)
   .settings({libraryDependencies ++= testDependencies ++ Seq(
-    Dependencies.jwtCore,
-    Dependencies.json4s,
-    Dependencies.jwtJson,
+    Dependencies.nimbusJose,
     Dependencies.akka,
     Dependencies.akkahttp,
     Dependencies.akkaCirceJson,
@@ -163,11 +163,11 @@ lazy val common = Project("common", file("common"))
     Dependencies.ammoniteOps,
     Dependencies.chill,
     Dependencies.cats,
-    Dependencies.awsBatchSdk
+    Dependencies.awsBatchSdk,
+    Dependencies.awsStsSdk
   )})
 
 lazy val migrations = Project("migrations", file("migrations"))
-  .dependsOn(datamodel)
   .settings(commonSettings:_*)
   .settings({
     libraryDependencies ++= migrationsDependencies
@@ -201,6 +201,7 @@ lazy val database = Project("database", file("database"))
 lazy val batch = Project("batch", file("batch"))
   .dependsOn(common, datamodel, database, tool, bridge)
   .settings(commonSettings:_*)
+  .settings(resolvers += Resolver.bintrayRepo("azavea", "maven"))
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({
     libraryDependencies ++= testDependencies ++ Seq(
@@ -225,7 +226,9 @@ lazy val batch = Project("batch", file("batch"))
       Dependencies.dnsJava,
       Dependencies.dropbox,
       Dependencies.caffeine,
-      Dependencies.scaffeine
+      Dependencies.scaffeine,
+      Dependencies.mamlJvm,
+      Dependencies.mamlSpark
     )
   })
   .settings(assemblyShadeRules in assembly := Seq(
@@ -278,6 +281,7 @@ lazy val tile = Project("tile", file("tile"))
 lazy val tool = Project("tool", file("tool"))
   .dependsOn(bridge)
   .settings(commonSettings:_*)
+  .settings(resolvers += Resolver.bintrayRepo("azavea", "maven"))
   .settings({
     libraryDependencies ++= loggingDependencies ++ Seq(
       Dependencies.spark,
@@ -290,7 +294,8 @@ lazy val tool = Project("tool", file("tool"))
       Dependencies.circeGeneric,
       Dependencies.circeParser,
       Dependencies.circeOptics,
-      Dependencies.scalaCheck
+      Dependencies.scalaCheck,
+      Dependencies.mamlJvm
     )
   })
 

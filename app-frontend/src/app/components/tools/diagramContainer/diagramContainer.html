@@ -3,13 +3,53 @@
      ng-style="$ctrl.workspaceStyle"
 >
 </div>
-<div class="map-container-controls">
+<div class="map-container-controls align-left"
+     ng-class="{ 'is-dragging': $ctrl.panActive }"
+     ng-if="!$ctrl.readonly"
+>
+  <!-- <button class="btn btn-default btn-square btn-small" -->
+  <!-- type="button" -->
+  <!-- title="Add Node" -->
+  <!-- disabled> -->
+  <!-- <i class="icon-plus"></i> -->
+  <!-- </button> -->
+  <!-- <button class="btn btn-default btn-square btn-small" -->
+  <!-- type="button" -->
+  <!-- title="Add Equation" -->
+  <!-- disabled> -->
+  <!-- &#x3C;/&#x3E; -->
+  <!-- </button> -->
+  <button class="btn btn-default btn-square btn-small"
+          type="button"
+          title="Preview Node"
+          ng-click="$ctrl.onPreviewClick()"
+          ng-class="{'btn-secondary': $ctrl.selectingNode === 'preview'}"
+  >
+    <i class="icon-map"></i>
+  </button>
+  <button class="btn btn-default btn-square btn-small"
+          title="Compare Nodes"
+          type="button"
+          ng-click="$ctrl.onCompareClick()"
+          ng-class="{'btn-secondary': $ctrl.selectingNode === 'compare' || $ctrl.selectingNode === 'select'}"
+  >
+    <i class="icon-compare"></i>
+  </button>
+  <!-- <button class="btn btn-default btn-square btn-small" -->
+  <!-- type="button" -->
+  <!-- title="Add Comment" -->
+  <!-- disabled> -->
+  <!-- <i class="icon-edit"></i> -->
+  <!-- </button> -->
+</div>
+<div class="map-container-controls"
+     ng-class="{ 'is-dragging': $ctrl.panActive }">
+  <div class="map-zoom" title="Current Zoom">{{($ctrl.scale * 100).toFixed(0)}}%</div>
   <button class="btn btn-default btn-square btn-small"
           title="Zoom In"
           ng-click="$ctrl.zoomIn()">
     <span class="icon-plus"></span>
   </button>
-  <div class="map-zoom" title="Current Zoom">{{($ctrl.scale * 100).toFixed(0)}}%</div>
   <button class="btn btn-default btn-square btn-small"
           title="Zoom Out"
           ng-click="$ctrl.zoomOut()">

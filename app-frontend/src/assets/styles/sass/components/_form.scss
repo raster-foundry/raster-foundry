@@ -180,14 +180,24 @@ input[type=radio] {
   align-items: stretch;
   border-radius: $border-radius-base;
   border: 1px solid $border-color-default;
+  position: relative;
 
   .form-control {
     border: none;
     height: 3.2rem;
+    padding-left: 34px;
   }
 
   .btn-link {
     border: none;
+  }
+
+  .input-icon {
+    left: 8px;
+    position: absolute;
+    align-self: center;
+    margin-top: -1px;
+    opacity: 0.5;
   }
 }
 

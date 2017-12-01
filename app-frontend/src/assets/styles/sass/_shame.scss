@@ -692,6 +692,12 @@ rf-box-select-item{
   transition: flex-grow .5s;
   flex: 0 0;
   margin-top: 10px !important;
+  &.cancelled {
+      background: $shade-light;
+  }
+  &.failed {
+      background: $danger;
+  }
 }
 
 
@@ -811,14 +817,13 @@ div.lab-workspace.is-dragging {
   svg {
     cursor: grabbing;
   }
-  .diagram-cell {
+  rf-tool-node {
     pointer-events: none;
     * {
       pointer-events: none;
     }
   }
 }
-
 
 .lab-control-panel {
   position: absolute;
@@ -920,7 +925,16 @@ div.lab-workspace.is-dragging {
   background: $shade-dark;
   padding: .5em;
   border-radius: 3px;
-  pointer-event: none;
+  &.is-dragging {
+      pointer-events: none;
+      * {
+          pointer-events: none;
+      }
+  }
+  &.align-left {
+      left: 0.5rem;
+      right: initial;
+  }
 }
 
 .map-zoom {
@@ -1432,23 +1446,27 @@ table.upload-info {
   margin-bottom: 1rem;
 }
 
+.tabbed-list-header-container {
+  background: $off-white;
+}
+
 .tabbed-list-header {
-  list-style: none;
-  display: flex;
-  margin: 0;
-  padding: 0;
-  border-bottom: 1px solid $gray-lightest;
-  li a {
-    display: block;
-    padding: 1rem 3rem;
-    margin-bottom: -1px;
-    font-weight: bold;
-    color: $text-base;
-    &.active {
-      color: $brand-primary;
-      border-bottom: 2px solid $brand-primary;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    border-bottom: 1px solid $gray-lightest;
+    li a {
+        display: block;
+        padding: 1.66rem 3rem;
+        margin-bottom: -1px;
+        font-weight: bold;
+        color: $text-base;
+        &.active {
+            color: $brand-primary;
+            border-bottom: 2px solid $brand-primary;
+        }
     }
-  }
 }
 .list-group-item.no-border {
   border-bottom: none;
@@ -1465,14 +1483,14 @@ rf-export-item {
 }
 
 .is-comparing {
-    .diagram-cell {
+    rf-tool-node {
         * {
             pointer-events: none;
         }
     }
 }
 
-.diagram-cell {
+rf-tool-node {
   position: absolute;
   background: white;
   /* Make sure events are propagated to the JointJS element so, e.g. dragging works.*/
@@ -1483,6 +1501,13 @@ rf-export-item {
   z-index: 1;
   box-shadow: 4px 4px 4px rgba(0,0,0,0.25);
   user-select: none;
+}
+
+.readonly {
+    .node-header {
+        // don't allow moving node when in readonly mode
+        pointer-events: auto;
+    }
 }
 
 .node-header {
@@ -1547,6 +1572,7 @@ rf-export-item {
 
 .node-status {
   padding: .25em;
+  pointer-events: auto;
 }
 
 .node-header-colorblock {
@@ -1677,6 +1703,7 @@ rf-node-statistics {
     border-left: 1px solid $gray-lightest;
     margin-right: 0.5rem;
   }
+  text-align:right;
 }
 
 .node-controls {
@@ -1797,7 +1824,12 @@ rf-node-statistics {
   .btn {
     margin: 0.5em;
     pointer-events: auto;
-    box-shadow: 4px 4px 4px rgba(0,0,0,0.25);
+    box-shadow: 2px 2px 2px rgba(0,0,0,0.25);
+  }
+  .form-control {
+      pointer-events: auto;
+      margin: 0.5em;
+      box-shadow: 2px 2px 2px rgba(0,0,0,0.25);
   }
   pointer-events: none;
 }
@@ -2359,6 +2391,17 @@ rf-histogram-breakpoint {
     user-select: none;
     transition: all 0.125s;
 
+    &.point {
+        top: 50%;
+        width: 10px;
+        height: 10px;
+        opacity: 1;
+        transform: translate(calc(-50% + 1px), -50%);
+        background: white;
+        border-radius: 50%;
+        border: 2px solid $brand-primary;
+    }
+
     &.bar {
       top: 50%;
       transform: translate(calc(-50% + 1px), -50%);
@@ -2554,6 +2597,7 @@ ul.dropdown-list {
       }
       .reverse-indicator {
         visibility: initial;
+        pointer-events: auto;
       }
     }
     &:last-child {
@@ -2806,4 +2850,83 @@ rf-reclassify-modal {
 rf-reclassify-table {
   display: flex;
   flex-direction: column;
+}
+
+.app-width-container {
+  max-width: 1200px;
+  margin: 0 auto !important;
+}
+
+.paginated-results-table {
+  $cell-padding: 0.75em 1.5em;
+  width: 100%;
+  border-radius: $border-radius-base;
+  tr:not(.header) {
+    border: 1px solid $gray-lightest;
+    background: $off-white;
+  }
+  th {
+    text-align: left;
+    padding: $cell-padding;
+    font-weight: bold;
+    a {
+      font-weight: bold;
+    }
+  }
+  td {
+    padding: $cell-padding;
+  }
+}
+
+.pagination-count {
+  margin-bottom: 1em;
+}
+
+.lab-info-dialogue {
+    position: absolute;
+    top: 25%;
+    text-align: center;
+    padding: 2em;
+    border: 1px solid rgba(0, 0, 0, 0.7);
+    box-shadow: 2px 2px 4px rgba(0,0,0,0.25);
+    border-radius: 3px;
+}
+
+.sidebar-loading {
+    font-size: 3rem;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    vertical-align: center;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.inline-form {
+    display: inline-block;
+    margin-bottom: 0;
+}
+
+.selectable {
+    pointer-events: auto;
+    cursor: pointer;
+    * {
+        pointer-events: none;
+    }
+    &:hover {
+        /* outline: 2px solid $brand-secondary; */
+        /* outline-radius: 5px; */
+        box-shadow: 0 0 3pt 2pt $brand-secondary;
+    }
+}
+
+.selected {
+    pointer-events: auto;
+    cursor: not-allowed;
+    box-shadow: 0 0 3pt 2pt $brand-secondary;
+
+    * {
+        pointer-events: none;
+    }
 }

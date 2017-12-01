@@ -1,0 +1,31 @@
+// Brand Colors:
+$brand-primary: #0B5FBF;
+$brand-secondary: #0B5FBF;
+$brand-tertiary: #0B5FBF;
+
+// Base Colors:
+$text-base: #2F343B;
+$shade-light: #ccd4dc;
+$shade-normal: #2F343B;
+$shade-dark: #353C58;
+
+// grays:
+$gray: #38394f;
+$gray-light: lighten($gray, 10%); //#4d4f6d
+$gray-lighter: lighten($gray, 35%); //#8c8dad
+$gray-lightest: #ddd;
+$gray-dark: darken($gray, 2%); //#343549
+$gray-darker: #1b1c31;
+$link-color: $brand-primary;
+
+// whites
+$white: #fff;
+$off-white: #F4F5F5;
+
+// Action Colors:
+$warning: #E69348;
+$danger: #F98094;
+
+$green: #81C784;
+$yellow: #FFCA28;
+$red: #E57373;

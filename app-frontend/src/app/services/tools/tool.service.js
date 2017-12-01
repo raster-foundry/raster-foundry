@@ -35,6 +35,10 @@ export default (app) => {
                         method: 'GET',
                         cache: false
                     },
+                    query: {
+                        method: 'GET',
+                        cache: false
+                    },
                     update: {
                         method: 'PUT'
                     },
@@ -54,6 +58,10 @@ export default (app) => {
 
         query(params = {}) {
             return this.Tool.query(params).$promise;
+        }
+
+        toolRunQuery(params = {}) {
+            return this.ToolRun.query(params).$promise;
         }
 
         searchQuery() {
@@ -221,6 +229,44 @@ export default (app) => {
             this._assignTargetInToolRun(toolRun, nodeId, {
                 metadata: metadata
             });
+        }
+
+        getToolRunMetadata(toolRun, nodeId) {
+            // If toolRun isn't an operator, it must be an identity tool; return the metadata
+            if (!toolRun.executionParameters.apply) {
+                return Object.assign({}, toolRun.executionParameters.metadata);
+            }
+            // We're doing a depth-first graph traversal on the arguments here.
+            // Start "before the beginning" of the arguments of the root operator.
+            let parents = [{node: toolRun.executionParameters, argIdx: -1}];
+            if (toolRun.executionParameters.id === nodeId) {
+                return Object.assign({}, toolRun.executionParameters.metadata);
+            }
+            while (parents.length > 0) {
+                // Always consider the end of the parents stack; this is the current parent.
+                let currParent = parents[parents.length - 1];
+                // Then move to the next argument of the current parent
+                currParent.argIdx += 1;
+                // Now we have two options
+                // 1. We're past the end of current parent's arguments. Pop parents and continue
+                if (currParent.argIdx >= currParent.node.args.length) {
+                    parents.pop();
+                } else {
+                    // 2. This parent still has arguments we haven't touched yet, so consider next
+                    let currChild = currParent.node.args[currParent.argIdx];
+                    let args = currChild.args || false;
+                    // This child node is itself a parent. Push onto parents
+                    if (args) {
+                        parents.push({node: currChild, argIdx: -1});
+                    }
+                    // Edit it if it matches target. Usually this is leaf nodes, but not always
+                    // (e.g. render definitions).
+                    if (currChild.id === nodeId) {
+                        return Object.assign({}, currChild.metadata);
+                    }
+                }
+            }
+            return {};
         }
 
         generateSourcesFromTool(tool) {

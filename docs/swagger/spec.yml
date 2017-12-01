@@ -23,7 +23,7 @@ x-top-matter:
     content: |
       The Raster Foundry API allows developers to find, view, and analyze geospatial data in Raster Foundry. As the name implies, it's especially useful for working with large raster datasets like satellite imagery.
 
-      Raster Foundry is built with an openly licensed, open source code base. If you'd like to peek under the hood, make a request, or become a contributor, <a href="https://github.com/azavea/raster-foundry/issues" target="_blank">find us on Github</a>.
+      Raster Foundry is built with an openly licensed, open source code base. If you'd like to peek under the hood, make a request, or become a contributor, <a href="https://github.com/raster-foundry/raster-foundry/issues" target="_blank">find us on Github</a>.
   - title: Authentication
     level: 2
     content: |
@@ -355,7 +355,7 @@ paths:
         200:
           description: SUCCESS
           schema:
-            $ref: '#/definitions/Datasource'
+            $ref: '#/definitions/DatasourcePaginated'
     post:
       summary: Create a datasource
       description: |
@@ -527,6 +527,7 @@ paths:
         - $ref: '#/parameters/project'
         - $ref: '#/parameters/ingested'
         - $ref: '#/parameters/ingestStatus'
+        - $ref: '#/parameters/forProjectId'
       responses:
         200:
           description: Paginated list of scenes
@@ -679,7 +680,7 @@ paths:
           schema:
             $ref: '#/definitions/Project'
       responses:
-        202:
+        201:
           description: Project details; at this point scene processes may be in-progress
           schema:
             $ref: '#/definitions/Project'
@@ -737,6 +738,90 @@ paths:
           description: The UUID parameter does not refer to a project or the user does not have access to the project it refers to
           schema:
             $ref: '#/definitions/Error'
+
+  /projects/{uuid}/annotations/:
+    x-resource: Projects
+    get:
+      summary: Get all annotations belonging to a project
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/AnnotationLabel'
+        - $ref: '#/parameters/AnnotationQualityCheck'
+      responses:
+        200:
+          description: GeoJSON feature collection containing paginated annotations of this project
+          schema:
+            $ref: '#/definitions/AnnotationFeatureCollectionPaginated'
+
+    post:
+      summary: Create annotations of this project
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - name: annotations
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/AnnotationFeatureCollectionCreate'
+      responses:
+        201:
+          description: GeoJSON annotations successfully created
+          schema:
+            $ref: '#/definitions/AnnotationFeatureCollection'
+        default:
+          description: Unexpected error.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /projects/{uuid}/annotations/{uuid2}:
+    x-resouce: Projects
+    get:
+      summary: Get an annotation belonging to a project
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/uuid2'
+      responses:
+        200:
+          description: GeoJSON feature containing one annotation from this project
+          schema:
+            $ref: '#/definitions/AnnotationFeature'
+
+    put:
+      summary: Update an annotation of this project
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/uuid2'
+        - name: annotation
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/AnnotationFeatureUpdate'
+      responses:
+        204:
+          description: No content, update successful
+
+    delete:
+      summary: Delete an annotation
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - $ref: '#/parameters/uuid2'
+      responses:
+        204:
+          description: Deletion successful.
+        404:
+          description: The UUID parameter does not refer to an annotation or the user does not have access to the project it refers to.
+          schema:
+            $ref: '#/definitions/Error'
+
 
   /projects/{uuid}/areas-of-interest/:
     x-resource: Projects
@@ -1079,6 +1164,8 @@ paths:
         - $ref: '#/parameters/projectId'
         - $ref: '#/parameters/organization'
         - $ref: '#/parameters/createdBy'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/project'
       responses:
         200:
           description: Paginated list of map tokens
@@ -1587,6 +1674,8 @@ paths:
   /feed/:
     get:
       summary: Get the cached RSS feed
+      parameters:
+        - $ref: '#/parameters/source'
       tags:
         - Users
       responses:
@@ -1770,6 +1859,21 @@ parameters:
         - createdAt,asc
         - modifiedAt,desc
         - modifiedAt,asc
+  AnnotationQualityCheck:
+    name: AnnotationQualityCheck
+    description: Quality check on annotations
+    in: query
+    type: string
+    required: true
+    enum:
+      - PASS
+      - FAIL
+      - NEUTRAL
+  AnnotationLabel:
+    name: AnnotationLabel
+    in: query
+    description: name of a label
+    type: string
   name:
     name: name
     in: query
@@ -1823,6 +1927,13 @@ parameters:
     in: path
     required: true
     type: string
+  forProjectId:
+    name: forProjectId
+    description: UUID of the project to search for scenes to add
+    in: query
+    type: string
+    format: uuid
+    required: false
   minCloudCover:
     name: minCloudCover
     description: Only return results with cloud cover greater than this number
@@ -2111,6 +2222,12 @@ parameters:
       - COMPLETE
       - FAILED
       - ABORTED
+  source:
+    name: source
+    description: Feed source URI
+    in: query
+    type: string
+    required: false
 
 definitions:
   RenderDefinition:
@@ -2338,6 +2455,9 @@ definitions:
         planetCredential:
           type: string
           description: Contains the user's planet credential if a connection has been configured
+        emailNotifications:
+          type: boolean
+          description: An opt-in (defaults to false) setting to recieve email notifications
   UserWithOAuth:
     type: object
     properties:
@@ -2403,9 +2523,9 @@ definitions:
   AuthToken:
     type: object
     properties:
-      id_token:
+      access_token:
         type: string
-        description: JSON Web Token that can be used for authenticating API requests
+        description: Token that can be used for authenticating API requests
       token_type:
         type: string
         description: Type of token returned by using the refresh token
@@ -2502,17 +2622,22 @@ definitions:
         - id
   Geometry:
       type: object
-      description: GeoJSon geometry
+      description: GeoJSON geometry
       discriminator: type
       required:
         - type
       externalDocs:
-        url: http://geojson.org/geojson-spec.html#geometry-objects
+        url: https://tools.ietf.org/html/rfc7946#section-3.1
       properties:
         type:
           type: string
           enum:
             - MultiPolygon
+            - Polygon
+            - MultiLineString
+            - LineString
+            - MuliPoint
+            - Point
           description: the geometry type
   Point2D:
       type: array
@@ -2522,9 +2647,9 @@ definitions:
         type: number
   MultiPolygon:
       type: object
-      description: GeoJson geometry
+      description: GeoJSON geometry
       externalDocs:
-        url: http://geojson.org/geojson-spec.html#id6
+        url: https://tools.ietf.org/html/rfc7946#section-3.1
       allOf:
         - $ref: "#/definitions/Geometry"
         - properties:
@@ -2585,6 +2710,16 @@ definitions:
       - $ref: '#/definitions/UserTrackingMixin'
       - $ref: '#/definitions/TimeModelMixin'
       - $ref: '#/definitions/DatasourceCreated'
+
+  DatasourcePaginated:
+    allOf:
+    - $ref: '#/definitions/PaginatedResponse'
+    - type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/definitions/Datasource'
 
   Scene:
     allOf:
@@ -2989,14 +3124,8 @@ definitions:
         execution_parameters:
           type: object
           description: Parameters for running the tool
-        project:
+        name:
           type: string
-          format: uuid
-          description: Project with which this run is associated
-        tool:
-          type: string
-          format: uuid
-          description: Tool being run
         visibility:
           type: string
           description: Level of restriction on viewing
@@ -3091,6 +3220,7 @@ definitions:
             - DROPBOX
             - S3
             - LOCAL
+            - PLANET
         fileType:
           type: string
           description: type of data being uploaded, limited to two options right now
@@ -3375,7 +3505,7 @@ definitions:
         description: epsg projection code
       mask:
         type: object
-        description: geojson multipolygon
+        description: GeoJSON multipolygon
       stitch:
         type: boolean
         description: stitch tiles into a single geotiff if possible
@@ -3412,7 +3542,7 @@ definitions:
         description: "required resolution (currently it's zoom level)"
       mask:
         type: object
-        description: geojson multipolygon
+        description: GeoJSON multipolygon
       layers:
         type: object
         properties:
@@ -3469,3 +3599,126 @@ definitions:
         items:
           type: string
           format: uuid
+
+  AnnotationFeature:
+    type: object
+    properties:
+      type:
+        type: string
+      properties:
+        allOf:
+        - $ref: '#/definitions/BaseModel'
+        - $ref: '#/definitions/TimeModelMixin'
+        - $ref: '#/definitions/UserTrackingMixin'
+        - type: object
+        properties:
+          label:
+            type: string
+          description:
+            type: string
+          machineGenerated:
+            type: boolean
+          confidence:
+            type: number
+            format: float
+          qualityCheck:
+            type: string
+            enum:
+              - YES
+              - NO
+              - MISS
+              - MATCH
+          projectId:
+            type: string
+            format: uuid
+      geometry:
+        $ref: "#/definitions/Geometry"
+
+  AnnotationFeatureUpdate:
+    type: object
+    properties:
+      type:
+        type: string
+      properties:
+        type: object
+        properties:
+          label:
+            type: string
+          description:
+            type: string
+          machineGenerated:
+            type: boolean
+          confidence:
+            type: number
+            format: float
+          qualityCheck:
+            type: string
+            enum:
+              - YES
+              - NO
+              - MISS
+              - MATCH
+      geometry:
+        $ref: "#/definitions/Geometry"
+
+  AnnotationFeatureCreate:
+    type: object
+    properties:
+      type:
+        type: string
+      properties:
+        allOf:
+        - $ref: '#/definitions/BaseCreate'
+        - type: object
+        properties:
+          label:
+            type: string
+          description:
+            type: string
+          machineGenerated:
+            type: boolean
+          confidence:
+            type: number
+            format: float
+          qualityCheck:
+            type: string
+            enum:
+              - YES
+              - NO
+              - MISS
+              - MATCH
+      geometry:
+        $ref: "#/definitions/Geometry"
+
+  AnnotationFeatureCollection:
+    type: object
+    properties:
+      type:
+        type: string
+      features:
+        type: array
+        items:
+          $ref: '#/definitions/AnnotationFeature'
+
+  AnnotationFeatureCollectionPaginated:
+    type: object
+    allOf:
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          type:
+            type: string
+          features:
+            type: array
+            items:
+              $ref: '#/definitions/AnnotationFeature'
+
+  AnnotationFeatureCollectionCreate:
+    type: object
+    properties:
+      type:
+        type: string
+      features:
+        type: array
+        items:
+          $ref: '#/definitions/AnnotationFeatureCreate'

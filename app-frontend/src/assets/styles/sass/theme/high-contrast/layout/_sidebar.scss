@@ -1,0 +1,29 @@
+.sidebar {
+
+  .btn {
+    padding: .8rem 2rem;
+  }
+}
+
+.btn.sidebar-header-nav-btn {
+  padding: 4px 1px;
+}
+
+.map-filters,
+.sidebar-dark {
+  background: $off-white;
+
+  h5, .h5,
+  p {
+    color: $text-base;
+  }
+
+  .sidebar-header {
+    background: $shade-light;
+    border-color: darken($border-color-default, 10%);
+  }
+
+  .header-controls .btn-default {
+    @extend .btn-light;
+  }
+}

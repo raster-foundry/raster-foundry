@@ -9,12 +9,15 @@
            style="height: 75px; width: 75px;">
       </div><br>
       <!-- Temporarily add execute btn until detail page designed -->
-        <a ui-sref="lab.run({toolid: $ctrl.toolData.id})" class="btn btn-primary btn-tiny btn-block">Execute</a>
+      <a ui-sref="lab.createTool({templateid: $ctrl.toolData.id, template: $ctrl.toolData})"
+         class="btn btn-primary btn-tiny btn-block">
+        Create Tool
+      </a>
     </div>
     <div class="column">
       <h4 class="panel-title">{{$ctrl.toolData.title}}</h4>
       <p>{{$ctrl.toolData.description}}</p>
-      <strong>Created by: Raster Foundry</strong>
+      <strong>Created by: {{$ctrl.BUILDCONFIG.APP_NAME}}</strong>
     </div>
   </div>
 </div>

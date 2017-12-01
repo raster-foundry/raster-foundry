@@ -1,17 +1,21 @@
 package com.azavea.rf.tile
 
-import java.sql.Timestamp
-
-import com.azavea.rf.tile.tool.TileSources
 import com.azavea.rf.datamodel.{Tool, ToolRun, User}
+import com.azavea.rf.tile.tool._
 import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.ast.MapAlgebraAST
+import com.azavea.rf.tool.maml._
 import com.azavea.rf.common.cache._
 import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables._
 import com.azavea.rf.common.{Config => CommonConfig}
+
+
+import com.azavea.maml.eval._
+import com.azavea.maml.ast.Expression
+import com.azavea.maml.eval.directive.SourceDirectives._
+import com.azavea.maml.eval.directive.OpDirectives._
 import io.circe.syntax._
 import geotrellis.raster._
 import geotrellis.raster.render._
@@ -27,8 +31,9 @@ import spray.json.DefaultJsonProtocol._
 import cats.data._
 import cats.data.Validated._
 import cats.implicits._
-import java.util.UUID
 
+import java.util.UUID
+import java.sql.Timestamp
 import scala.concurrent._
 import scala.util._
 
@@ -53,11 +58,11 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
 
   val cacheConfig = CommonConfig.memcached
 
-  def maxZoomForLayer(layerId: UUID)(implicit ec: ExecutionContext, projectLayerIds: Set[UUID]): OptionT[Future, Map[String, Int]] = {
-    val cacheKey = s"max-zoom-for-layer-${layerId}"
+  def maxZoomForLayers(layerIds: Set[UUID])(implicit ec: ExecutionContext): OptionT[Future, Map[String, Int]] = {
+    val cacheKey = s"max-zoom-for-layer-${layerIds}"
     rfCache.cachingOptionT(cacheKey, doCache = cacheConfig.layerAttributes.enabled)(
       OptionT(
-        timedFuture("layer-max-zoom-store")(store.maxZoomsForLayers(projectLayerIds.map(_.toString)))
+        timedFuture("layer-max-zoom-store")(store.maxZoomsForLayers(layerIds.map(_.toString)))
       )
     )
   }
@@ -71,7 +76,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     )
   }
 
-  def layerTile(layerId: UUID, zoom: Int, key: SpatialKey)(implicit projectLayerIds: Set[UUID]): OptionT[Future, MultibandTile] = {
+  def layerTile(layerId: UUID, zoom: Int, key: SpatialKey): OptionT[Future, MultibandTile] = {
     val cacheKey = s"tile-$layerId-$zoom-${key.col}-${key.row}"
     OptionT(rfCache.caching(cacheKey, doCache = cacheConfig.layerTile.enabled)(
       timedFuture("s3-tile-request")({
@@ -89,7 +94,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
   }
 
 
-  def layerTileForExtent(layerId: UUID, zoom: Int, extent: Extent)(implicit projectLayerIds: Set[UUID]): OptionT[Future, MultibandTile] = {
+  def layerTileForExtent(layerId: UUID, zoom: Int, extent: Extent): OptionT[Future, MultibandTile] = {
     val cacheKey = s"extent-tile-$layerId-$zoom-${extent.xmin}-${extent.ymin}-${extent.xmax}-${extent.ymax}"
     OptionT(
       timedFuture("layer-for-tile-extent-cache")(
@@ -117,6 +122,8 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
   }
 
 
+  val tileResolver = new TileResolver(implicitly[Database], implicitly[ExecutionContext])
+
   /** Calculate the histogram for the least resolute zoom level to automatically render tiles */
   def modelLayerGlobalHistogram(
                                  toolRunId: UUID,
@@ -133,13 +140,14 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
         (_, ast) <- LayerCache.toolEvalRequirements(toolRunId, subNode, user, voidCache)
         (extent, zoom) <- TileSources.fullDataWindow(ast.tileSources)
         literalAst <- OptionT(
-          GlobalInterpreter.literalize(ast, extent, { r: RFMLRaster => TileSources.globalSource(extent, zoom, r) })
-            .map({ validatedAst => validatedAst.toOption })
-        )
-        tile <- OptionT.fromOption[Future](GlobalInterpreter.interpret(literalAst, extent) match {
-          case Valid(lztile) => lztile.evaluateDouble
-          case Invalid(e) => None
-        })
+                        tileResolver.resolveForExtent(ast.asMaml._1, zoom, extent)
+                          .map({ validatedAst => validatedAst.toOption })
+                      )
+        tile <- OptionT.fromOption[Future](
+                  NaiveInterpreter.DEFAULT(literalAst).andThen({ _.as[Tile] }) match {
+                  case Valid(tile) => Some(tile)
+                  case Invalid(e) => None
+                })
       } yield {
         val hist = StreamingHistogram.fromTile(tile)
         hist

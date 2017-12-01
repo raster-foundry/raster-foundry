@@ -49,7 +49,7 @@ export default class ToolCreateModalController {
             this.toolBuffer.definition = this.expressionTreeToMAML(expressionTree);
             this.toolService.createTool(this.toolBuffer).then(tool => {
                 this.dismiss();
-                this.$state.go('lab.run', { toolid: tool.id });
+                this.$state.go('lab.createTool', { templateid: tool.id });
             });
         } catch (e) {
             this.currentError = 'The tool definition is not valid';
@@ -123,7 +123,7 @@ export default class ToolCreateModalController {
                     mamlNode.constant = parseFloat(value);
                 }
             } else {
-                mamlNode.type = 'src';
+                mamlNode.type = 'projectSrc';
                 mamlNode.metadata.label = tree.name;
             }
             mamlNode.id = this.getSymbolId(mamlNode.metadata.label);

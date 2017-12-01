@@ -4,10 +4,9 @@ import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.{ToolRuns, Tools}
 import com.azavea.rf.datamodel.{Tool, ToolRun, User}
 import com.azavea.rf.tool.ast.MapAlgebraAST
-import com.azavea.rf.tool.ast.MapAlgebraAST._
-import com.azavea.rf.tool.ast.assembleSubstitutions
-import com.azavea.rf.tool.eval.{ASTDecodeError, DatabaseError, PureInterpreter}
+import com.azavea.rf.tool.eval._
 
+import com.azavea.maml.eval._
 import cats._
 import cats.data._
 import cats.implicits._

@@ -17,7 +17,8 @@ import io.circe.generic.JsonCodec
   * the Scene will be added to the user's Project in a "pending" state. If the
   * user then accepts a "pending" Scene, it will be added to their project.
   */
-@JsonCodec case class AOI(
+@JsonCodec
+case class AOI(
   /* Database fields */
   id: UUID,
   createdAt: Timestamp,

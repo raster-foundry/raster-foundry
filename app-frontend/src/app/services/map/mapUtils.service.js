@@ -9,9 +9,15 @@ export default (app) => {
           */
         fitMapToProject(mapWrapper, project, offset = 0) {
             if (project.extent) {
-                mapWrapper.map.fitBounds(L.geoJSON(project.extent).getBounds(), {
-                    padding: [offset, offset]
-                });
+                let mapBounds = mapWrapper.map.getPixelBounds();
+                if (mapBounds.min.y !== mapBounds.max.y) {
+                    mapWrapper.map.fitBounds(L.geoJSON(project.extent).getBounds(), {
+                        padding: [offset, offset]
+                    });
+                } else {
+                    // eslint-disable-next-line
+                    setTimeout(this.fitMapToProject(mapWrapper, project, offset).bind(this), 125);
+                }
             }
             return this;
         }

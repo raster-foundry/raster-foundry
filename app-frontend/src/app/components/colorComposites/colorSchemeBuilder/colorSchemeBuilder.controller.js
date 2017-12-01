@@ -1,5 +1,5 @@
 /* global _ */
-import Set from 'es6-set';
+import {Set} from 'immutable';
 
 export default class ColorSchemeBuilderController {
     constructor($scope) {

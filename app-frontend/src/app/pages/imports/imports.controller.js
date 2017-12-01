@@ -1,3 +1,5 @@
+/* global BUILDCONFIG */
+
 class ImportsController {
     constructor(authService, $uibModal) {
         'ngInject';
@@ -6,7 +8,7 @@ class ImportsController {
     }
 
     $onInit() {
-
+        this.BUILDCONFIG = BUILDCONFIG;
     }
 
     $onDestroy() {

@@ -1,13 +1,14 @@
 /* eslint max-len: 0 */
 import rootTpl from './pages/root/root.html';
 import loginTpl from './pages/login/login.html';
-import labTpl from './pages/lab/lab.html';
-import labEditTpl from './pages/lab/edit/edit.html';
-import labRunTpl from './pages/lab/run/run.html';
-import labNavbarTpl from './pages/lab/run/navbar/navbar.html';
-import marketTpl from './pages/market/market.html';
-import marketSearchTpl from './pages/market/search/search.html';
-import marketToolTpl from './pages/market/tool/tool.html';
+
+import labBrowseTpl from './pages/lab/browse/browse.html';
+import labBrowseToolsTpl from './pages/lab/browse/tools/tools.html';
+import labBrowseTemplatesTpl from './pages/lab/browse/templates/templates.html';
+import labTemplateTpl from './pages/lab/template/template.html';
+import labToolTpl from './pages/lab/tool/tool.html';
+import labCreateToolTpl from './pages/lab/createTool/createTool.html';
+import labNavbarTpl from './pages/lab/navbar/navbar.html';
 
 import projectsTpl from './pages/projects/projects.html';
 import projectsNavbarTpl from './pages/projects/navbar/navbar.html';
@@ -17,9 +18,6 @@ import projectsEditColormodeTpl from './pages/projects/edit/colormode/colormode.
 import projectsAdvancedColorTpl from './pages/projects/edit/advancedcolor/advancedcolor.html';
 import projectsColorAdjustTpl from './pages/projects/edit/advancedcolor/adjust/adjust.html';
 import projectsListTpl from './pages/projects/list/list.html';
-import projectsDetailTpl from './pages/projects/detail/detail.html';
-import projectsDetailScenesTpl from './pages/projects/detail/scenes/scenes.html';
-import projectsDetailExportsTpl from './pages/projects/detail/exports/exports.html';
 import projectsScenesTpl from './pages/projects/edit/scenes/scenes.html';
 import projectsSceneBrowserTpl from './pages/projects/edit/browse/browse.html';
 import projectOrderScenesTpl from './pages/projects/edit/order/order.html';
@@ -216,30 +214,7 @@ function projectStates($stateProvider) {
             templateUrl: projectsListTpl,
             controller: 'ProjectsListController',
             controllerAs: '$ctrl'
-        })
-        .state('projects.detail', {
-            url: '/detail/:projectid',
-            params: {project: null},
-            templateUrl: projectsDetailTpl,
-            controller: 'ProjectsDetailController',
-            controllerAs: '$ctrl',
-            redirectTo: 'projects.detail.scenes'
-        })
-        .state('projects.detail.scenes', {
-            title: 'Project: Details',
-            url: '/scenes?:page',
-            templateUrl: projectsDetailScenesTpl,
-            controller: 'ProjectDetailScenesController',
-            controllerAs: '$ctrl'
-        })
-        .state('projects.detail.exports', {
-            title: 'Project: Exports',
-            url: '/exports?:page',
-            templateUrl: projectsDetailExportsTpl,
-            controller: 'ProjectDetailExportsController',
-            controllerAs: '$ctrl'
         });
-
     projectEditStates($stateProvider);
 }
 
@@ -270,7 +245,7 @@ function settingsStates($stateProvider) {
         })
         .state('settings.tokens.api', {
             title: 'Settings: API Tokens',
-            url: '/api',
+            url: '/api?code&state',
             templateUrl: apiTokensTpl,
             controller: 'ApiTokensController',
             controllerAs: '$ctrl'
@@ -291,70 +266,76 @@ function settingsStates($stateProvider) {
         });
 }
 
-function marketStates($stateProvider) {
-    $stateProvider
-        .state('market', {
-            title: 'Tools',
-            parent: 'root',
-            url: '/market',
-            templateUrl: marketTpl,
-            controller: 'MarketController',
-            controllerAs: '$ctrl',
-            abstract: true
-        })
-        .state('market.search', {
-            title: 'Tool Search',
-            url: '/search?:page?:query?toolcategory&tooltag',
-            templateUrl: marketSearchTpl,
-            controller: 'MarketSearchController',
-            controllerAs: '$ctrl'
-        })
-        .state('market.tool', {
-            title: 'Tool Details',
-            url: '/tool/:id',
-            params: {
-                modelData: null
-            },
-            templateUrl: marketToolTpl,
-            controller: 'MarketToolController',
-            controllerAs: '$ctrl'
-        });
-}
-
 function labStates($stateProvider) {
     $stateProvider
         .state('lab', {
-            title: 'Tool Lab',
+            title: 'Lab',
+            template: '<ui-view></ui-view>',
             parent: 'root',
-            url: '/lab/:toolid',
-            templateUrl: labTpl,
-            controller: 'LabController',
-            controllerAs: '$ctrl',
-            abstract: true
+            url: '/lab',
+            redirectTo: 'lab.browse'
         })
-        .state('lab.edit', {
-            title: 'Tool: Edit',
-            url: '/edit',
-            templateUrl: labEditTpl,
-            controller: 'LabEditController',
+        // later on we'll use this to view / edit user templates
+        .state('lab.template', {
+            title: 'View a Template',
+            url: '/template/:templateid',
+            parent: 'lab',
+            templateUrl: labTemplateTpl,
+            controller: 'LabTemplateController',
             controllerAs: '$ctrl'
         })
-       .state('lab.run', {
-           title: 'Tool: Run',
-           url: '/run/:runid?',
-           views: {
-               'navmenu@root': {
-                   templateUrl: labNavbarTpl,
-                   controller: 'LabNavbarController',
-                   controllerAs: '$ctrl'
-               },
-               '': {
-                   templateUrl: labRunTpl,
-                   controller: 'LabRunController',
-                   controllerAs: '$ctrl'
-               }
-           }
-       });
+        .state('lab.createTool', {
+            title: 'Create a tool',
+            url: '/create-tool/:templateid',
+            parent: 'lab',
+            params: {
+                'template': null
+            },
+            templateUrl: labCreateToolTpl,
+            controller: 'LabCreateToolController',
+            controllerAs: '$ctrl'
+        })
+        .state('lab.tool', {
+            title: 'Tool details',
+            url: '/tool/:toolid',
+            parent: 'lab',
+            params: {
+                'tool': null
+            },
+            views: {
+                'navmenu@root': {
+                    templateUrl: labNavbarTpl,
+                    controller: 'LabNavbarController',
+                    controllerAs: '$ctrl'
+                },
+                '': {
+                    templateUrl: labToolTpl,
+                    controller: 'LabToolController',
+                    controllerAs: '$ctrl'
+                }
+            }
+        })
+        .state('lab.browse', {
+            url: '/browse',
+            templateUrl: labBrowseTpl,
+            controller: 'LabBrowseController',
+            controllerAs: '$ctrl',
+            redirectTo: 'lab.browse.tools'
+        })
+        .state('lab.browse.templates', {
+            title: 'Tool Search',
+            url: '/templates?:page?:query?toolcategory&tooltag',
+            templateUrl: labBrowseTemplatesTpl,
+            controller: 'LabBrowseTemplatesController',
+            controllerAs: '$ctrl'
+        })
+        .state('lab.browse.tools', {
+            title: 'Tools',
+            url: '/tools?:page',
+            templateUrl: labBrowseToolsTpl,
+            controller: 'LabBrowseToolsController',
+            controllerAs: '$ctrl'
+        });
 }
 
 function shareStates($stateProvider) {
@@ -444,7 +425,6 @@ function routeConfig($urlRouterProvider, $stateProvider, $urlMatcherFactoryProvi
     });
 
     loginStates($stateProvider);
-    marketStates($stateProvider);
     projectStates($stateProvider);
     settingsStates($stateProvider);
     labStates($stateProvider);

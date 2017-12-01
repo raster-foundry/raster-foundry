@@ -263,12 +263,24 @@ module.exports = function (_path) {
             }),
             new webpack.DefinePlugin({
                 'BUILDCONFIG': {
-                    APP_NAME: '\'Raster Foundry\'',
+                    APP_NAME: JSON.stringify('Raster Foundry'),
                     BASEMAPS: basemaps,
-                    API_HOST: '\'\'',
-                    HERE_APP_ID: '\'' + HERE_APP_ID + '\'',
-                    HERE_APP_CODE: '\'' + HERE_APP_CODE + '\'',
-                    INTERCOM_APP_ID: '\'' + INTERCOM_APP_ID + '\''
+                    API_HOST: JSON.stringify(''),
+                    HERE_APP_ID: JSON.stringify(HERE_APP_ID),
+                    HERE_APP_CODE: JSON.stringify(HERE_APP_CODE),
+                    INTERCOM_APP_ID: JSON.stringify(INTERCOM_APP_ID),
+                    THEME: JSON.stringify('default'),
+                    AUTH0_PRIMARY_COLOR: JSON.stringify('#465076'),
+                    LOGOFILE: JSON.stringify('raster-foundry-logo.svg'),
+                    LOGOURL: JSON.stringify(false),
+                    FAVICON_DIR: JSON.stringify('/favicon'),
+                    FEED_SOURCE: JSON.stringify('https://blog.rasterfoundry.com/latest?format=json')
+                },
+                'HELPCONFIG': {
+                    API_DOCS_URL: JSON.stringify('https://docs.rasterfoundry.com/'),
+                    HELP_HOME: JSON.stringify('https://help.rasterfoundry.com/'),
+                    GETTING_STARTED_WITH_PROJECTS: JSON.stringify('https://help.rasterfoundry.com/creating-projects'),
+                    DEVELOPER_RESOURCES: JSON.stringify('https://help.rasterfoundry.com/developer-resources')
                 }
             })
         ]

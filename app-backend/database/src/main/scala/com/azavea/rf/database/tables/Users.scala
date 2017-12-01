@@ -20,7 +20,7 @@ class Users(_tableTag: Tag) extends Table[User](_tableTag, "users")
                                     with UserFields
                                     with TimestampFields
 {
-  def * = (id, organizationId, role, createdAt, modifiedAt, dropboxCredential, planetCredential) <>
+  def * = (id, organizationId, role, createdAt, modifiedAt, dropboxCredential, planetCredential, emailNotifications) <>
     (User.tupled, User.unapply)
 
   val id: Rep[String] = column[String]("id", O.PrimaryKey, O.Length(255,varying=true))
@@ -30,6 +30,7 @@ class Users(_tableTag: Tag) extends Table[User](_tableTag, "users")
   val modifiedAt: Rep[Timestamp] = column[Timestamp]("modified_at")
   val dropboxCredential: Rep[Option[String]] = column[Option[String]]("dropbox_credential")
   val planetCredential: Rep[Option[String]] = column[Option[String]]("planet_credential")
+  val emailNotifications: Rep[Boolean] = column[Boolean]("email_notifications", O.Default(false))
 }
 
 object Users extends TableQuery(tag => new Users(tag)) with LazyLogging {
@@ -168,11 +169,11 @@ object Users extends TableQuery(tag => new Users(tag)) with LazyLogging {
     val updateQuery = for {
       u <- Users.filter(_.id === id)
     } yield (
-      u.organizationId, u.role, u.modifiedAt, u.planetCredential
+      u.organizationId, u.role, u.modifiedAt, u.planetCredential, u.emailNotifications
     )
 
     database.db.run {
-      updateQuery.update((user.organizationId, user.role, now, user.planetCredential))
+      updateQuery.update((user.organizationId, user.role, now, user.planetCredential, user.emailNotifications))
     } map {
       case 1 => 1
       case _ => throw new IllegalStateException("Error while updating user: Unexpected result")

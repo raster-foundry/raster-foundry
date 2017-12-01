@@ -278,11 +278,8 @@
   }
   .content-row {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     min-height: 0;
-    @include respond-to('md-up') {
-      flex-direction: row;
-    }
   }
   .scene-metadata {
     max-width: 350px;

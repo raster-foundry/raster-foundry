@@ -1,6 +1,4 @@
-/* global AWS */
-/* global document */
-/* global window */
+/* global AWS, document, window, BUILDCONFIG */
 
 import planetLogo from '../../../../assets/images/planet-logo-light.png';
 import awsS3Logo from '../../../../assets/images/aws-s3.png';
@@ -15,6 +13,7 @@ export default class SceneImportModalController {
         rollbarWrapperService, datasourceService, userService
     ) {
         'ngInject';
+        this.BUILDCONFIG = BUILDCONFIG;
         this.$scope = $scope;
         this.$state = $state;
         this.projectService = projectService;
@@ -43,6 +42,9 @@ export default class SceneImportModalController {
         this.sceneData = {};
         this.uploadProgressPct = {};
         this.uploadProgressFlexString = {};
+        this.abortedUploadCount = 0;
+        this.uploadedFileCount = 0;
+
         this.datasource = this.resolve.datasource || false;
         const onWindowUnload = (event) => {
             if (this.closeCanceller) {
@@ -126,7 +128,12 @@ export default class SceneImportModalController {
         }, {
             name: 'UPLOAD_PROGRESS',
             onEnter: () => this.startLocalUpload(),
-            next: () => 'IMPORT_SUCCESS'
+            next: () => 'IMPORT_SUCCESS',
+            allowNext: () => {
+                return this.fileUploads &&
+                    this.uploadedFileCount + this.abortedUploadCount === this.fileUploads.length;
+            },
+            onExit: () => this.finishS3Upload()
         }, {
             name: 'S3_UPLOAD',
             previous: () => 'IMPORT',
@@ -290,6 +297,13 @@ export default class SceneImportModalController {
             });
     }
 
+    finishS3Upload() {
+        this.upload.uploadStatus = 'UPLOADED';
+        this.uploadService.update(this.upload).then(() => {
+            this.allowInterruptions();
+        });
+    }
+
     startPlanetUpload() {
         this.preventInterruptions();
         this.authService
@@ -355,7 +369,8 @@ export default class SceneImportModalController {
             sessionToken: credentialData.credentials.SessionToken
         });
         const s3 = new AWS.S3(config);
-        this.selectedFiles.forEach(f => this.sendFile(s3, bucket, f));
+        this.cachedUploadConfig = {s3, bucket};
+        this.fileUploads = this.selectedFiles.map(file => this.sendFile(s3, bucket, file));
     }
 
     sendFile(s3, bucket, file) {
@@ -367,40 +382,90 @@ export default class SceneImportModalController {
             },
             service: s3
         });
-        const uploadPromise = managedUpload.promise();
+        let upload = {
+            file: file,
+            api: managedUpload,
+            promise: managedUpload.promise(),
+            finished: false,
+            aborted: false
+        };
 
-        managedUpload.on('httpUploadProgress', this.handleUploadProgress.bind(this));
-        uploadPromise.then(() => {
-            this.$scope.$evalAsync(() => {
-                this.uploadDone();
-            });
-        }, err => {
-            this.uploadError(err);
+        let filePath = `s3://${bucket}/${file.name}`;
+        if (!this.upload.files.includes(filePath)) {
+            this.upload.files.push(filePath);
+        }
+
+        managedUpload.on('httpUploadProgress', (progress) => {
+            this.handleUploadProgress(upload, progress);
         });
+
+        upload.promise.then(() => {
+            this.$scope.$evalAsync(() => {
+                this.uploadDone(upload);
+            });
+        }, (err) => {
+            this.uploadError(err, upload);
+        });
+
+        this.$scope.$evalAsync(() => {
+            this.uploadProgressPct[upload.file.name] = '0%';
+            this.uploadProgressFlexString[upload.file.name] = '0 0';
+        });
+        return upload;
     }
 
-    uploadDone() {
-        this.uploadedFileCount += 1;
-        if (this.uploadedFileCount === this.selectedFiles.length) {
+    retryUpload(upload) {
+        this.preventInterruptions();
+
+        let uploadIndex = this.fileUploads.findIndex((u) => u === upload);
+        this.fileUploads[uploadIndex] = this.sendFile(
+            this.cachedUploadConfig.s3, this.cachedUploadConfig.bucket, upload.file
+        );
+        this.abortedUploadCount = this.fileUploads.filter(u => u.aborted).length;
+    }
+
+    abortUpload(upload) {
+        upload.api.abort();
+        upload.aborted = true;
+
+        this.upload.files = this.upload.files.filter(path => !path.includes(upload.file.name));
+
+        this.$scope.$evalAsync(() => {
+            this.uploadProgressPct[upload.file.name] = 'Aborted';
+            this.uploadProgressFlexString[upload.file.name] = '1 0';
+        });
+
+        this.abortedUploadCount = this.fileUploads.filter(u => u.aborted).length;
+    }
+
+    uploadDone(upload) {
+        upload.finished = true;
+        this.uploadedFileCount = this.fileUploads.filter(u => u.finished).length;
+        if (this.abortedUploadCount + this.uploadedFileCount === this.fileUploads.length) {
             this.uploadsDone();
         }
+        this.$scope.$evalAsync();
     }
 
     uploadsDone() {
-        this.upload.uploadStatus = 'UPLOADED';
-        this.uploadService.update(this.upload).then(() => {
+        if (!this.abortedUploadCount) {
             this.handleNext();
-        });
-
-        this.allowInterruptions();
+        }
     }
 
-    uploadError(err) {
-        this.allowInterruptions();
-        this.currentError = err;
+    uploadError(err, upload) {
+        if (!upload.aborted) {
+            Object.assign(upload, {error: err});
+            this.$scope.$evalAsync(() => {
+                this.uploadProgressPct[upload.file.name] = 'Errored';
+                this.uploadProgressFlexString[upload.file.name] = '1 0';
+            });
+            this.$scope.$evalAsync();
+        }
     }
 
-    handleUploadProgress(progress) {
+    handleUploadProgress(upload, progress) {
+        upload.progress = progress;
         this.$scope.$evalAsync(() => {
             this.uploadProgressPct[progress.key] =
                 `${(progress.loaded / progress.total * 100).toFixed(1)}%`;
@@ -467,11 +532,13 @@ export default class SceneImportModalController {
     }
 
     allowInterruptions() {
-        if (this.closeCanceller || this.locationChangeCanceller) {
+        if (this.closeCanceller) {
             this.closeCanceller();
             delete this.closeCanceller;
+        }
+        if (this.locationChangeCanceller) {
             this.locationChangeCanceller();
-            delete this.locationChangeCanceller();
+            delete this.locationChangeCanceller;
         }
     }
 }

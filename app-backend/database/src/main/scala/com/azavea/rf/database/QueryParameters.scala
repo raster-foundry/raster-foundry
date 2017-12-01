@@ -256,3 +256,19 @@ case class ExportQueryParameters(
 case class DropboxAuthQueryParameters(
   code: Option[String] = None
 )
+
+@JsonCodec
+case class AnnotationQueryParameters(
+  orgParams: OrgQueryParameters = OrgQueryParameters(),
+  userParams: UserQueryParameters = UserQueryParameters(),
+  label: Option[String] = None,
+  machineGenerated: Option[Boolean] = None,
+  minConfidence: Option[Double] = None,
+  maxConfidence: Option[Double] = None,
+  quality: Option[String] = None
+)
+
+@JsonCodec
+case class FeedQueryParameters(
+  source: Option[String] = None
+)

@@ -11,21 +11,30 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling._
 import com.azavea.rf.api.scene._
+
 import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
 import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
-import com.azavea.rf.database.Database
+import com.azavea.rf.database.{ActionRunner, Database}
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.tables._
 import com.azavea.rf.common.AWSBatch
 import com.azavea.rf.datamodel._
-import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import com.azavea.rf.datamodel.GeoJsonCodec._
+import com.lonelyplanet.akka.http.extensions.{PaginationDirectives, PageRequest}
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import io.circe._
+import io.circe.Json
 import io.circe.generic.JsonCodec
+import io.circe.optics.JsonPath._
 import kamon.akka.http.KamonTraceDirectives
 
 @JsonCodec
 case class BulkAcceptParams(sceneIds: List[UUID])
+
+@JsonCodec
+case class AnnotationFeatureCollectionCreate (
+  features: Seq[Annotation.GeoJSONFeatureCreate]
+)
 
 trait ProjectRoutes extends Authentication
     with QueryParametersCommon
@@ -34,7 +43,8 @@ trait ProjectRoutes extends Authentication
     with CommonHandlers
     with AWSBatch
     with UserErrorHandler
-    with KamonTraceDirectives {
+    with KamonTraceDirectives
+    with ActionRunner {
 
   implicit def database: Database
 
@@ -70,6 +80,39 @@ trait ProjectRoutes extends Authentication
             deleteProject(projectId) }
         }
       } ~
+      pathPrefix("annotations") {
+        pathEndOrSingleSlash {
+          get {
+            traceName("projects-list-annotations") {
+              listAnnotations(projectId)
+            }
+          } ~
+          post {
+            traceName("projects-create-annotations") {
+              createAnnotation(projectId)
+            }
+          }
+        } ~
+        pathPrefix(JavaUUID) { annotationId =>
+          pathEndOrSingleSlash {
+            get {
+              traceName("projects-get-annotation") {
+                getAnnotation(annotationId)
+              }
+            } ~
+            put {
+              traceName("projects-update-annotation") {
+                updateAnnotation(annotationId)
+              }
+            } ~
+            delete {
+              traceName("projects-delete-annotation") {
+                deleteAnnotation(annotationId)
+              }
+            }
+          }
+        }
+      } ~
       pathPrefix("areas-of-interest") {
         pathEndOrSingleSlash {
           get {
@@ -79,7 +122,8 @@ trait ProjectRoutes extends Authentication
           } ~
           post {
             traceName("projects-create-areas-of-interest") {
-              createAOI(projectId) }
+              createAOI(projectId)
+            }
           }
         }
       } ~
@@ -217,6 +261,53 @@ trait ProjectRoutes extends Authentication
 
   def deleteProject(projectId: UUID): Route = authenticate { user =>
     onSuccess(Projects.deleteProject(projectId, user)) {
+      completeSingleOrNotFound
+    }
+  }
+
+  def listAnnotations(projectId: UUID): Route = authenticate { user =>
+    (withPagination & annotationQueryParams) { (page: PageRequest, queryParams: AnnotationQueryParameters) =>
+      complete {
+        list[Annotation](
+          Annotations.listAnnotations(page.offset, page.limit, queryParams, projectId, user),
+          page.offset, page.limit
+        ) map { p => {
+            fromPaginatedResponseToGeoJson[Annotation, Annotation.GeoJSON](p)
+          }
+        }
+      }
+    }
+  }
+
+  def createAnnotation(projectId: UUID): Route = authenticate { user =>
+    entity(as[AnnotationFeatureCollectionCreate]) { fc =>
+      val annotationsCreate = fc.features map { _.toAnnotationCreate }
+      complete {
+        Annotations.insertAnnotations(annotationsCreate, projectId, user)
+      }
+    }
+  }
+
+  def getAnnotation(annotationId: UUID): Route = authenticate { user =>
+    rejectEmptyResponse {
+      complete {
+        readOne[Annotation](Annotations.getAnnotation(annotationId, user)) map { _ map { _.toGeoJSONFeature } }
+      }
+    }
+  }
+
+  def updateAnnotation(annotationId: UUID): Route = authenticate { user =>
+    entity(as[Annotation]) { updatedAnnotation =>
+      authorize(user.isInRootOrSameOrganizationAs(updatedAnnotation)) {
+        onSuccess(update(Annotations.updateAnnotation(updatedAnnotation, annotationId, user))) {
+          completeSingleOrNotFound
+        }
+      }
+    }
+  }
+
+  def deleteAnnotation(annotationId: UUID): Route = authenticate { user =>
+    onSuccess(drop(Annotations.deleteAnnotation(annotationId, user))) {
       completeSingleOrNotFound
     }
   }

@@ -1,0 +1,48 @@
+/* * * *
+ * Screen Sizes
+ * Used in tools/_mixins.scss > @mixin respond-to($breakpoint)
+ * * * */
+$breakpoints: (
+
+  'xxs': (max-width: 480px),
+
+  'xs': (max-width: 767px),
+
+  'sm': "(min-width: 768px) and (max-width: 991px)",
+  'sm-up': (min-width: 768px),
+  'sm-down': (max-width: 991px),
+
+  'md': "(min-width: 992px) and (max-width: 1200px)",
+  'md-up': (min-width: 992px),
+  'md-down': (max-width: 1200px),
+
+  'lg': (min-width: 1201px),
+);
+
+
+/* * * *
+ * Columns
+ * * * */
+$column-count: 12;
+$column-padding: 1rem;
+
+
+/* * * *
+ * Fonts
+ * * * */
+$font-base: 'ProximaNova', sans-serif;
+$font-header: 'ProximaNova', sans-serif;
+
+/* * * *
+ * Focus state
+ * * * */
+$focus-shadow: 0 0 0 3px rgba($brand-primary, .3);
+
+
+/* * * *
+ * Borders 
+ * * * */
+// Border Radius
+$border-radius-base: 3px;
+// Border color
+$border-color-default: #c0c2c4;

@@ -7,11 +7,12 @@ import com.azavea.rf.batch.dropbox._
 import com.azavea.rf.batch.export._
 import com.azavea.rf.batch.util._
 import com.azavea.rf.batch.util.conf._
-import com.azavea.rf.common.ast.InterpreterException
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.rf.common.S3.putObject
 
+import com.azavea.maml.serve._
+import com.azavea.maml.eval._
 import com.dropbox.core.v2.DbxClientV2
 import com.dropbox.core.v2.files.{CreateFolderErrorException, WriteMode}
 import com.typesafe.scalalogging.LazyLogging
@@ -111,7 +112,7 @@ object Export extends SparkJob with Config with LazyLogging {
 
       val query: ContextRDD[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]] =
         mask
-          .fold(q)(mp => q.where(Intersects(mp.reproject(LatLng, md.crs))))
+          .fold(q)(mp => q.where(Intersects(mp)))
           .result
           .withContext({ rdd => rdd.mapValues({ tile =>
             val ctile = (ld.colorCorrections |@| hist) map { _.colorCorrect(tile, _) } getOrElse tile
@@ -211,7 +212,7 @@ object Export extends SparkJob with Config with LazyLogging {
     conf: HadoopConfiguration
   ): Unit = {
     def path(key: SpatialKey): ExportDefinition => String = { ed =>
-      s"/${ed.output.getURLDecodedSource}/${ed.input.resolution}-${key.col}-${key.row}-${ed.id}.tiff"
+      s"${ed.output.getURLDecodedSource}/${ed.input.resolution}-${key.col}-${key.row}-${ed.id}.tiff"
     }
 
     rdd.foreachPartition({ iter =>

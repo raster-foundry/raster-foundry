@@ -9,11 +9,12 @@ import com.azavea.rf.api.utils.Config
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.{StatusCodes, ContentType, HttpEntity, HttpResponse, MediaType, MediaTypes}
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-import de.heikoseeberger.akkahttpcirce.CirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import kamon.akka.http.KamonTraceDirectives
 
 import java.util.UUID
 import java.net.URI
+
 
 trait ThumbnailRoutes extends Authentication
     with ThumbnailQueryParameterDirective
@@ -86,7 +87,7 @@ trait ThumbnailRoutes extends Authentication
     }
   }
 
-  def getThumbnailImage(thumbnailPath: String): Route = validateTokenParameter { token =>
+  def getThumbnailImage(thumbnailPath: String): Route = authenticateWithParameter { _ =>
     var uriString = s"http://s3.amazonaws.com/${thumbnailBucket}/${thumbnailPath}"
     val uri = new URI(uriString)
     val s3Object = S3.getObject(uri)

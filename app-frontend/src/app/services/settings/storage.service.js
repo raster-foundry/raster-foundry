@@ -12,7 +12,7 @@ export default (app) => {
 
         get(key) {
             let value = this.storage.getItem(key);
-            return value && JSON.parse(value);
+            return value && value !== 'undefined' && JSON.parse(value);
         }
 
         set(key, value) {
