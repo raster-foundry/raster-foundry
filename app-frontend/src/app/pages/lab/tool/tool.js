@@ -166,7 +166,7 @@ class LabToolController {
 
     publishModal(tileUrl) {
         if (tileUrl) {
-            return this.modalService.open({
+            this.modalService.open({
                 component: 'rfProjectPublishModal',
                 resolve: {
                     tileUrl: () => tileUrl,

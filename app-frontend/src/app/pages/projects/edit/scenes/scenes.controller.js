@@ -28,7 +28,7 @@ export default class ProjectsScenesController {
     openSceneDetailModal(scene) {
         this.$parent.removeHoveredScene();
 
-        return this.modalService.open({
+        this.modalService.open({
             component: 'rfSceneDetailModal',
             resolve: {
                 scene: () => scene
@@ -38,7 +38,7 @@ export default class ProjectsScenesController {
 
 
     openImportModal() {
-        return this.modalService.open({
+        this.modalService.open({
             component: 'rfSceneImportModal',
             resolve: {
                 project: () => this.project

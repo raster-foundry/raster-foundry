@@ -101,7 +101,7 @@ export default class ProjectCreateModalController {
     startImport() {
         this.closeWithData();
 
-        return this.modalService.open({
+        this.modalService.open({
             component: 'rfSceneImportModal',
             resolve: {
                 project: () => this.project

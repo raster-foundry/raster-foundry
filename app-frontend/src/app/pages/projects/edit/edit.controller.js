@@ -236,7 +236,7 @@ export default class ProjectsEditController {
     }
 
     publishModal() {
-        return this.modalService.open({
+        this.modalService.open({
             component: 'rfProjectPublishModal',
             resolve: {
                 project: () => this.project,
@@ -250,7 +250,7 @@ export default class ProjectsEditController {
         return this.getMap().then(m => {
             return m.map.getZoom();
         }).then(zoom => {
-            return this.modalService.open({
+            this.modalService.open({
                 component: 'rfProjectExportModal',
                 resolve: {
                     project: () => this.project,

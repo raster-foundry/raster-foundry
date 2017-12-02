@@ -104,8 +104,6 @@ class ProjectsListController {
                 this.populateProjectList(1);
             }
         });
-
-        return modal;
     }
 }
 

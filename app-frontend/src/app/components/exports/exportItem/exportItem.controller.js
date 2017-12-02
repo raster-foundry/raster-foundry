@@ -15,7 +15,7 @@ export default class ExportItemController {
     }
 
     openDownloadModal() {
-        return this.modalService.open({
+        this.modalService.open({
             component: 'rfExportDownloadModal',
             resolve: {
                 export: () => this.export

@@ -105,8 +105,6 @@ class ClassifyNodeController {
                 hard: true
             });
         });
-
-        return modal;
     }
 }
 

@@ -339,7 +339,5 @@ export default class FilterPaneController {
                 this.setDateRange(range.start, range.end, range.preset);
             }
         });
-
-        return modal;
     }
 }

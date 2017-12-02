@@ -180,7 +180,7 @@ class LabBrowseTemplatesController {
     }
 
     openToolCreateModal() {
-        return this.modalService.open({
+        this.modalService.open({
             component: 'rfToolCreateModal'
         });
     }

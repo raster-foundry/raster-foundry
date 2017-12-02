@@ -38,7 +38,7 @@ class DatasourceDetailController {
     }
 
     openImportModal() {
-        return this.modalService.open({
+        this.modalService.open({
             component: 'rfSceneImportModal',
             resolve: {
                 datasource: () => this.datasource

@@ -111,8 +111,6 @@ class ConnectionsController {
         modal.result.then(() => {
             this.connectToDropbox();
         });
-
-        return modal;
     }
 
     onDropboxError(uri) {

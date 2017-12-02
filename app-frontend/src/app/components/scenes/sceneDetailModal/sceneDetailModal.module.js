@@ -63,7 +63,7 @@ class SceneDetailModalController {
             images: images
         }];
 
-        return this.modalService.open({
+        this.modalService.open({
             component: 'rfSceneDownloadModal',
             resolve: {
                 downloads: () => downloadSets

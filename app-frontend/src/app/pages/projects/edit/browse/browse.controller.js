@@ -496,7 +496,7 @@ export default class ProjectAddScenesBrowseController {
     }
 
     openSceneDetailModal(scene) {
-        return this.modalService.open({
+        this.modalService.open({
             component: 'rfSceneDetailModal',
             resolve: {
                 scene: () => scene

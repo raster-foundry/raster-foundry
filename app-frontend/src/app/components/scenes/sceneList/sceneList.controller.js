@@ -67,7 +67,7 @@ export default class SceneListController {
     }
 
     viewSceneDetail(scene) {
-        return this.modalService.open({
+        this.modalService.open({
             component: 'rfSceneDetailModal',
             resolve: {
                 scene: () => scene
@@ -76,7 +76,7 @@ export default class SceneListController {
     }
 
     importModal() {
-        return this.modalService.open({
+        this.modalService.open({
             component: 'rfSceneImportModal',
             resolve: {}
         });
@@ -97,7 +97,7 @@ export default class SceneListController {
             images: images
         }];
 
-        return this.modalService.open({
+        this.modalService.open({
             component: 'rfSceneDownloadModal',
             resolve: {
                 downloads: () => downloadSets
@@ -133,8 +133,6 @@ export default class SceneListController {
                 }
             );
         });
-
-        return modal;
     }
 
     shouldShowSceneList() {

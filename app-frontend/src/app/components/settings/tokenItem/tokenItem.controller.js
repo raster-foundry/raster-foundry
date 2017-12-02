@@ -34,7 +34,7 @@ export default class TokenItem {
     }
 
     publishModal() {
-        return this.modalService.open({
+        this.modalService.open({
             component: 'rfProjectPublishModal',
             resolve: {
                 project: () => this.project,

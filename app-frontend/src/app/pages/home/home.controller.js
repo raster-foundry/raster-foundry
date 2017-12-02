@@ -17,13 +17,13 @@ class HomeController {
     }
 
     openCreateProjectModal() {
-        return this.modalService.open({
+        this.modalService.open({
             component: 'rfProjectCreateModal'
         });
     }
 
     openToolCreateModal() {
-        return this.modalService.open({
+        this.modalService.open({
             component: 'rfToolCreateModal'
         });
     }

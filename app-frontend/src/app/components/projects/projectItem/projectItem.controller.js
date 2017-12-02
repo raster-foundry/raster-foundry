@@ -74,7 +74,7 @@ export default class ProjectItemController {
     }
 
     publishModal() {
-        return this.modalService.open({
+        this.modalService.open({
             component: 'rfProjectPublishModal',
             resolve: {
                 project: () => this.project,
@@ -111,7 +111,5 @@ export default class ProjectItemController {
                 }
             );
         });
-
-        return modal;
     }
 }
