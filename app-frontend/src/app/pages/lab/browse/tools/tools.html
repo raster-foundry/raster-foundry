@@ -39,7 +39,7 @@
       </div>
 
       <!-- Temporarily removed ng-click until after demo done and detail page designed. -->
-      <table class="paginated-results-table">
+      <table class="paginated-results-table" ng-show="!$ctrl.loading">
         <tr class="header">
           <th>
             <rf-sorting-header direction="$ctrl.sortingDirection"
