@@ -185,7 +185,7 @@ object Ingest extends SparkJob with LazyLogging with Config {
               bandMap.get(index).map(i => (i, tile) :: acc).getOrElse(acc)
             }.toMap
 
-          val bands: List[Tile] = List.range(0, bandCount).map(i => fixed.get(i).getOrElse(emptyTile))
+          val bands: List[Tile] = List.range(0, bandCount).map(i => fixed.getOrElse(i, emptyTile))
 
           MultibandTile(bands)
         }
