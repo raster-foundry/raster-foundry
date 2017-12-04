@@ -17,7 +17,7 @@ import io.circe.syntax._
   *  - Visibility (enum)
   *  - text[] (array text)
   */
-trait ExtendedPostgresDriver extends ExPostgresDriver
+trait ExtendedPostgresDriver extends ExPostgresProfile
   with PgArraySupport
   with PgRangeSupport
   with PgCirceJsonSupport
