@@ -148,7 +148,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
             'cramp.?("viridis")
           ) { (node, colorRampName) =>
             val nodeId = node.map(UUID.fromString(_))
-            val colorRamp = providedRamps.get(colorRampName).getOrElse(providedRamps("viridis"))
+            val colorRamp = providedRamps.getOrElse(colorRampName, providedRamps("viridis"))
             val components = for {
               (lastUpdateTime, ast) <- LayerCache.toolEvalRequirements(toolRunId, nodeId, user)
               (expression, metadata) <- OptionT.pure[Future, (Expression, Option[NodeMetadata])](ast.asMaml)
