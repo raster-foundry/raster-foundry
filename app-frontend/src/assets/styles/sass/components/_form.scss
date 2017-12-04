@@ -265,10 +265,15 @@ div.checkbox {
     }
   }
 
-  &:hover:not(.active):before {
+  &:hover:not(.active):before:not([disabled]) {
     visibility: visible;
     opacity: .4;
     transform: scale(1);
+  }
+
+  &[disabled] {
+      opacity: 0.4;
+      cursor: not-allowed;
   }
 
   &:focus {

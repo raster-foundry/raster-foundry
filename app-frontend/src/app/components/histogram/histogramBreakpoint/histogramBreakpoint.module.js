@@ -12,7 +12,7 @@ const HistogramBreakpointComponent = {
         options: '<',
         upperBound: '<',
         lowerBound: '<',
-        onBreakpointChange: '&'
+        onBreakpointChange: '&?'
     }
 };
 
@@ -66,16 +66,18 @@ class HistogramBreakpointController {
             breakpoint = this.range.min;
         }
 
-        if (breakpoint > this.upperBound - this.precision) {
+        if (this.precision && breakpoint > this.upperBound - this.precision) {
             breakpoint = this.upperBound - this.precision;
-        } else if (breakpoint < this.lowerBound + this.precision) {
+        } else if (breakpoint > this.upperBound) {
+            breakpoint = this.upperBound;
+        } else if (this.precision && breakpoint < this.lowerBound + this.precision) {
             breakpoint = this.lowerBound + this.precision;
+        } else if (breakpoint < this.lowerBound) {
+            breakpoint = this.lowerBound;
         }
 
         if (Number.isFinite(this.precision) && this.precision >= 0) {
             breakpoint = Math.round(breakpoint / this.precision) * this.precision;
-        } else {
-            this.$log.error(`Invalid histogram breakpoint precision: ${this.precision}`);
         }
         return breakpoint;
     }

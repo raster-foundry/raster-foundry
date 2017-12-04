@@ -4,7 +4,9 @@
      on-toggle="$ctrl.onDropdownToggle(open)"
 >
   <button class="btn dropdown-label gradient-dropdown"
-          uib-dropdown-toggle>
+          uib-dropdown-toggle
+          ng-disabled="$ctrl.disabled"
+  >
       <div class="gradient-bar gradient-bkg"
            title="{{ $ctrl.state.scheme.label }}"
           ng-style="$ctrl.colorSchemeService.colorsToBackground(
