@@ -68,7 +68,7 @@ export function updateNode({payload, hard = false}) {
         let updatedAnalysis = astFromNodes(labState, updatedNode);
         promise = authedRequest({
             method: 'put',
-            url: `${state.api.apiUrl}/api/tool-runs/${labState.tool.id}`,
+            url: `${state.api.apiUrl}/api/tool-runs/${labState.analysis.id}`,
             data: updatedAnalysis
         }, getState()).then(() => {
             return updatedAnalysis;
