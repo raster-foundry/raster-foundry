@@ -12,16 +12,14 @@
     </button>
     <button class="btn node-button" type="button"
             ng-if="!$ctrl.analysisErrors.size &&
-                   $ctrl.model.get('cellType') !== 'const' &&
-                   $ctrl.model.get('cellType') !== 'projectSrc'"
+                   $ctrl.model.get('cellType') !== 'const'"
             ng-class="{'active': $ctrl.currentView === 'HISTOGRAM'}"
             ng-click="$ctrl.toggleHistogram()">
       <span class="icon-histogram"></span>
     </button>
     <button class="btn node-button" type="button"
             ng-if="!$ctrl.analysisErrors.size &&
-                   $ctrl.model.get('cellType') !== 'const' &&
-                   $ctrl.model.get('cellType') !== 'projectSrc'"
+                   $ctrl.model.get('cellType') !== 'const'"
             ng-class="{'active': $ctrl.currentView === 'STATISTICS'}"
             ng-click="$ctrl.toggleStatistics()">
       Stats

@@ -2475,6 +2475,9 @@ rf-histogram-breakpoint {
 
 .graph-container {
   position: relative;
+  &[disabled] {
+      cursor: not-allowed;
+  }
 
   &.dragging {
     * {
@@ -2929,4 +2932,8 @@ rf-reclassify-table {
     * {
         pointer-events: none;
     }
+}
+
+.no-visibility {
+    visibility: hidden !important;
 }

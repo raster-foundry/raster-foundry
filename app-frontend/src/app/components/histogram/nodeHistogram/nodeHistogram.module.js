@@ -59,6 +59,7 @@ class NodeHistogramController {
         let nodeMetadata = node && node.metadata;
         let renderDefinition = nodeMetadata && nodeMetadata.renderDefinition;
         let histogramOptions = nodeMetadata && nodeMetadata.histogramOptions;
+        let isSource = node.type && node.type.toLowerCase().includes('src');
         return {
             analysis: state.lab.analysis,
             analysisErrors: state.lab.analysisErrors,
@@ -67,7 +68,8 @@ class NodeHistogramController {
             histogramOptions,
             renderDefinition,
             lastAnalysisRefresh: state.lab.lastAnalysisRefresh,
-            histogram: getNodeHistogram(state, this)
+            histogram: getNodeHistogram(state, this),
+            isSource
         };
     }
 
