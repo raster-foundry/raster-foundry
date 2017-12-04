@@ -1,8 +1,8 @@
 export default class ExportItemController {
-    constructor($scope, $uibModal, exportService) {
+    constructor($scope, modalService, exportService) {
         'ngInject';
         this.$scope = $scope;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
         this.exportService = exportService;
     }
 
@@ -15,11 +15,7 @@ export default class ExportItemController {
     }
 
     openDownloadModal() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.$uibModal.open({
+        this.modalService.open({
             component: 'rfExportDownloadModal',
             resolve: {
                 export: () => this.export

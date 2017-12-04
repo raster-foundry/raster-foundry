@@ -15,11 +15,11 @@ const InputNodeComponent = {
 
 class InputNodeController {
     constructor(
-        $uibModal, $scope, $ngRedux, $log,
+        modalService, $scope, $ngRedux, $log,
         projectService, toolService
     ) {
         'ngInject';
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
         this.$scope = $scope;
         this.$log = $log;
         this.projectService = projectService;
@@ -84,28 +84,23 @@ class InputNodeController {
     }
 
     selectProjectModal() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.$uibModal.open({
-            component: 'rfProjectSelectModal',
-            resolve: {
-                project: () => this.selectedProject && this.selectedProject.id || false,
-                content: () => ({title: 'Select a project'})
-            }
-        });
-
-        this.activeModal.result.then(project => {
-            this.selectedProject = project;
-            this.checkValidity();
-            this.updateNode({
-                payload: Object.assign({}, this.node, {
-                    projId: project.id
-                }),
-                hard: !this.toolErrors.size
+        this.modalService
+            .open({
+                component: 'rfProjectSelectModal',
+                resolve: {
+                    project: () => this.selectedProject && this.selectedProject.id || false,
+                    content: () => ({title: 'Select a project'})
+                }
+            }).result.then(project => {
+                this.selectedProject = project;
+                this.checkValidity();
+                this.updateNode({
+                    payload: Object.assign({}, this.node, {
+                        projId: project.id
+                    }),
+                    hard: !this.toolErrors.size
+                });
             });
-        });
     }
 
     onBandChange() {

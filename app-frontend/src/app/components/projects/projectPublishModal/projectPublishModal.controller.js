@@ -1,12 +1,13 @@
 export default class ProjectPublishModalController {
-    constructor($q, projectService, $log, tokenService, authService, $uibModal, $window, $state) {
+    constructor($q, projectService, $log, tokenService, authService,
+                modalService, $window, $state) {
         'ngInject';
 
         this.authService = authService;
         this.projectService = projectService;
         this.$log = $log;
         this.tokenService = tokenService;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
         this.$q = $q;
         this.$window = $window;
         this.$state = $state;

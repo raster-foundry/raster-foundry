@@ -3,7 +3,7 @@ function runBlock(
     $rootScope, jwtHelper, $state, $location, $window, APP_CONFIG,
     $ngRedux, $timeout,
     authService, localStorage, rollbarWrapperService, intercomService,
-    featureFlags, perUserFeatureFlags
+    featureFlags, perUserFeatureFlags, modalService
 ) {
     'ngInject';
     let flagsPromise;
@@ -56,6 +56,9 @@ function runBlock(
         function setupState() {
             let idToken = localStorage.get('idToken');
             let accessToken = localStorage.get('accessToken');
+
+            modalService.closeActiveModal();
+
             if (idToken && accessToken) {
                 if (!authService.verifyAuthCache()) {
                     rollbarWrapperService.init();

@@ -4,14 +4,14 @@ const sunAzimuthRange = {min: 0, max: 360};
 
 export default class AOIFilterPaneController {
     constructor(
-        $scope, $rootScope, $timeout, $uibModal,
+        $scope, $rootScope, $timeout, modalService,
         datasourceService, authService, moment
     ) {
         'ngInject';
         this.$scope = $scope;
         this.$rootScope = $rootScope;
         this.$timeout = $timeout;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
         this.datasourceService = datasourceService;
         this.authService = authService;
         this.Moment = moment;

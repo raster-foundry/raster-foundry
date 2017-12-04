@@ -1,11 +1,11 @@
 export default class ProjectsNavbarController {
-    constructor(projectService, projectEditService, $state, $uibModal, $scope) {
+    constructor(projectService, projectEditService, $state, modalService, $scope) {
         'ngInject';
 
         this.projectService = projectService;
         this.projectEditService = projectEditService;
         this.$state = $state;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
         this.$scope = $scope;
     }
 

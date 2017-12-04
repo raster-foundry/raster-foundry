@@ -1,8 +1,8 @@
 export default class TokenItem {
-    constructor(projectService, $uibModal) {
+    constructor(projectService, modalService) {
         'ngInject';
         this.projectService = projectService;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
     }
 
     $onInit() {
@@ -34,11 +34,7 @@ export default class TokenItem {
     }
 
     publishModal() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.$uibModal.open({
+        this.modalService.open({
             component: 'rfProjectPublishModal',
             resolve: {
                 project: () => this.project,
@@ -46,7 +42,5 @@ export default class TokenItem {
                 shareUrl: () => this.projectService.getProjectShareURL(this.project)
             }
         });
-
-        return this.activeModal;
     }
 }

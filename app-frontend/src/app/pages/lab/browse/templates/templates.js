@@ -2,7 +2,7 @@
 
 class LabBrowseTemplatesController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, $state, toolService, toolTagService, toolCategoryService, $uibModal
+        $log, $scope, $state, toolService, toolTagService, toolCategoryService, modalService
     ) {
         'ngInject';
         this.toolService = toolService;
@@ -11,7 +11,7 @@ class LabBrowseTemplatesController {
         this.$scope = $scope;
         this.$state = $state;
         this.$log = $log;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
     }
 
     $onInit() {
@@ -21,12 +21,6 @@ class LabBrowseTemplatesController {
         this.fetchToolTags();
         this.fetchToolCategories();
         this.searchString = '';
-
-        this.$scope.$on('$destroy', () => {
-            if (this.activeModal) {
-                this.activeModal.dismiss();
-            }
-        });
     }
 
     initFilters() {
@@ -186,10 +180,7 @@ class LabBrowseTemplatesController {
     }
 
     openToolCreateModal() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-        this.activeModal = this.$uibModal.open({
+        this.modalService.open({
             component: 'rfToolCreateModal'
         });
     }

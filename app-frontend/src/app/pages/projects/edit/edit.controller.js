@@ -2,7 +2,7 @@ import {Map} from 'immutable';
 
 export default class ProjectsEditController {
     constructor( // eslint-disable-line max-params
-        $log, $q, $state, $scope, $uibModal, $timeout,
+        $log, $q, $state, $scope, modalService, $timeout,
         authService, projectService, projectEditService,
         mapService, mapUtilsService, layerService,
         datasourceService, imageOverlayService, thumbnailService
@@ -12,7 +12,7 @@ export default class ProjectsEditController {
         this.$q = $q;
         this.$state = $state;
         this.$scope = $scope;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
         this.authService = authService;
         this.projectService = projectService;
         this.projectEditService = projectEditService;
@@ -25,12 +25,6 @@ export default class ProjectsEditController {
     }
 
     $onInit() {
-        this.$scope.$on('$destroy', () => {
-            if (this.activeModal) {
-                this.activeModal.dismiss();
-            }
-        });
-
         this.mosaicLayer = new Map();
         this.sceneLayers = new Map();
         this.projectId = this.$state.params.projectid;
@@ -242,11 +236,7 @@ export default class ProjectsEditController {
     }
 
     publishModal() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.$uibModal.open({
+        this.modalService.open({
             component: 'rfProjectPublishModal',
             resolve: {
                 project: () => this.project,
@@ -257,14 +247,10 @@ export default class ProjectsEditController {
     }
 
     openExportModal() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.getMap().then(m => {
+        return this.getMap().then(m => {
             return m.map.getZoom();
         }).then(zoom => {
-            this.activeModal = this.$uibModal.open({
+            this.modalService.open({
                 component: 'rfProjectExportModal',
                 resolve: {
                     project: () => this.project,
