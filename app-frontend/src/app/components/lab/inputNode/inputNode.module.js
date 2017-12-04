@@ -97,7 +97,7 @@ class InputNodeController {
                     payload: Object.assign({}, this.node, {
                         projId: project.id
                     }),
-                    hard: !this.toolErrors.size
+                    hard: !this.analysisErrors.size
                 });
             });
     }
