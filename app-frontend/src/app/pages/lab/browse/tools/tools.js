@@ -1,18 +1,32 @@
 /* global BUILDCONFIG */
 class LabBrowseToolsController {
-    constructor($state, toolService) {
+    constructor($state, toolService, authService, localStorage) {
         'ngInject';
         this.$state = $state;
         this.toolService = toolService;
+        this.authService = authService;
+        this.localStorage = localStorage;
     }
 
     $onInit() {
         this.BUILDCONFIG = BUILDCONFIG;
-        this.sortingField = 'modifiedAt';
         this.defaultSortingDirection = 'desc';
-        this.sortingDirection = this.defaultSortingDirection;
+        this.defaultSortingField = 'modifiedAt';
 
+        this.initSorting();
         this.fetchToolList(this.$state.params.page);
+    }
+
+    initSorting() {
+        const sortString = this.fetchSorting();
+        if (sortString) {
+            const sort = this.deserializeSort(sortString);
+            this.sortingField = sort.field || this.defaultSortingField;
+            this.sortingDirection = sort.direction || this.defaultSortingDirection;
+        } else {
+            this.sortingField = this.defaultSortingField;
+            this.sortingDirection = this.defaultSortingDirection;
+        }
     }
 
     fetchToolList(page = 1) {
@@ -21,7 +35,7 @@ class LabBrowseToolsController {
             {
                 pageSize: 10,
                 page: page - 1,
-                sort: this.serializedSort()
+                sort: this.serializeSort()
             }
         ).then(d => {
             this.currentPage = page;
@@ -61,8 +75,26 @@ class LabBrowseToolsController {
         return 'Private';
     }
 
-    serializedSort() {
+    serializeSort() {
         return `${this.sortingField},${this.sortingDirection}`;
+    }
+
+    deserializeSort(sortString) {
+        const splitSortString = sortString.split(',');
+        return {
+            field: splitSortString[0],
+            direction: splitSortString[1]
+        };
+    }
+
+    fetchSorting() {
+        const k = `${this.authService.getProfile().nickname}-analysis-sort`;
+        return this.localStorage.getString(k);
+    }
+
+    storeSorting() {
+        const k = `${this.authService.getProfile().nickname}-analysis-sort`;
+        return this.localStorage.setString(k, this.serializeSort());
     }
 
     onSortChange(field) {
@@ -74,6 +106,7 @@ class LabBrowseToolsController {
             this.sortingField = field;
             this.sortingDirection = this.defaultSortingDirection;
         }
+        this.storeSorting();
         this.fetchToolList(this.currentPage);
     }
 }
