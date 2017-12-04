@@ -116,14 +116,14 @@
           </div>
         </div>
         <div class="output-processing-option-row output-params"
-             ng-repeat="(srcId, src) in $ctrl.currentToolSources"
+             ng-repeat="(srcId, src) in $ctrl.currentAnalysisSources"
              ng-if="$ctrl.shouldShowProcessingParams(option)">
           <div class="label">
             {{src.metadata.label}}
           </div>
           <input class="fixedwidth form-control slim"
                  type="number"
-                 ng-model="$ctrl.currentToolSources[srcId].band"
+                 ng-model="$ctrl.currentAnalysisSources[srcId].band"
                  min=0
                  step=1>
           <i class="icon-info"></i>

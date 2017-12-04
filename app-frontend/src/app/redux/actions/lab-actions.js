@@ -1,51 +1,51 @@
 import { authedRequest } from '../api-utils';
 
-export const TOOL_LOAD = 'TOOL_LOAD';
-export const TOOL_UPDATE_NAME = 'TOOL_UPDATE_NAME';
-export const TOOL_FETCH = 'TOOL_FETCH';
+export const ANALYSIS_LOAD = 'ANALYSIS_LOAD';
+export const ANALYSIS_UPDATE_NAME = 'ANALYSIS_UPDATE_NAME';
+export const ANALYSIS_FETCH = 'ANALYSIS_FETCH';
 
-export const TOOL_ACTION_PREFIX = 'TOOL';
+export const ANALYSIS_ACTION_PREFIX = 'ANALYSIS';
 
-// Tool ActionCreators
+// Analysis ActionCreators
 
-export function loadTool(payload, readonly) {
-    let action = {type: TOOL_LOAD, payload};
+export function loadAnalysis(payload, readonly) {
+    let action = {type: ANALYSIS_LOAD, payload};
     if (readonly) {
         Object.assign(action, {readonly: true});
     }
     return action;
 }
 
-export function updateToolName(name) {
+export function updateAnalysisName(name) {
     // TODO update this to use redux-promise instead of the removed middleware
     return (dispatch, getState) => {
         let state = getState();
-        let updatedTool = Object.assign({}, state.lab.tool, {name});
+        let updatedAnalysis = Object.assign({}, state.lab.analysis, {name});
         dispatch({
-            type: TOOL_UPDATE_NAME,
+            type: ANALYSIS_UPDATE_NAME,
             payload: authedRequest({
                 method: 'put',
                 url: `${state.api.apiUrl}` +
-                    `/api/tool-runs/${state.lab.tool.id}`,
-                data: updatedTool
+                    `/api/tool-runs/${state.lab.analysis.id}`,
+                data: updatedAnalysis
             }, getState()),
             meta: {
-                tool: updatedTool,
-                oldTool: Object.assign({}, state.lab.tool)
+                analysis: updatedAnalysis,
+                oldAnalysis: Object.assign({}, state.lab.analysis)
             }
         });
     };
 }
 
-export function fetchTool(toolId) {
+export function fetchAnalysis(analysisId) {
     return (dispatch, getState) => {
         let state = getState();
         dispatch({
-            type: TOOL_FETCH,
+            type: ANALYSIS_FETCH,
             payload: authedRequest(
                 {
                     method: 'get',
-                    url: `${state.api.apiUrl}/api/tool-runs/${toolId}`
+                    url: `${state.api.apiUrl}/api/tool-runs/${analysisId}`
                 },
                 state
             )
@@ -54,5 +54,5 @@ export function fetchTool(toolId) {
 }
 
 export default {
-    loadTool, updateToolName, fetchTool
+    loadAnalysis, updateAnalysisName, fetchAnalysis
 };

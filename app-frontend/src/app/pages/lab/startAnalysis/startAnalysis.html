@@ -1,0 +1,36 @@
+<div class="container column-stretch container-not-scrollable">
+  <div class="main with-position">
+    <div class="lab-container">
+      <div class="lab-right" draggable="false">
+        <div class="lab-action-controls">
+          <button class="btn btn-secondary"
+                  ng-click="$ctrl.createAnalysis()"
+                  ng-disabled="$ctrl.createInProgress">
+            Create&nbsp;Analysis
+          </button>
+          <input type="text"
+                 ng-attr-placeholder="{{$ctrl.template.title}}"
+                 ng-model="$ctrl.analysisName"
+                 class="form-control">
+        </div>
+        <rf-diagram-container
+            class="with-position"
+            ng-if="$ctrl.template"
+        ></rf-diagram-container>
+      </div>
+    </div>
+    <div class="lab-footer"
+         ng-show="$ctrl.warning">
+      <span class="icon-warning"></span>
+      {{$ctrl.warning}}
+      <button class="btn-transparent btn-text" ng-click="$ctrl.clearWarning()">
+        <span class="icon-close"></span>
+      </button>
+    </div>
+  </div>
+  <div class="lab-info-dialogue" ng-if="$ctrl.fromScratch">
+    <p>Hi there!</p>
+    <p>We'll be supporting the creation of analyses from scratch soon.</p>
+    <p>In the meantime, choose or create a template <a ui-sref="lab.browse.templates">Here</a>!</p>
+  </div>
+</div>

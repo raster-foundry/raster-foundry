@@ -3,11 +3,11 @@ import rootTpl from './pages/root/root.html';
 import loginTpl from './pages/login/login.html';
 
 import labBrowseTpl from './pages/lab/browse/browse.html';
-import labBrowseToolsTpl from './pages/lab/browse/tools/tools.html';
+import labBrowseAnalysesTpl from './pages/lab/browse/analyses/analyses.html';
 import labBrowseTemplatesTpl from './pages/lab/browse/templates/templates.html';
 import labTemplateTpl from './pages/lab/template/template.html';
-import labToolTpl from './pages/lab/tool/tool.html';
-import labCreateToolTpl from './pages/lab/createTool/createTool.html';
+import labAnalysisTpl from './pages/lab/analysis/analysis.html';
+import labStartAnalysisTpl from './pages/lab/startAnalysis/startAnalysis.html';
 import labNavbarTpl from './pages/lab/navbar/navbar.html';
 
 import projectsTpl from './pages/projects/projects.html';
@@ -284,23 +284,23 @@ function labStates($stateProvider) {
             controller: 'LabTemplateController',
             controllerAs: '$ctrl'
         })
-        .state('lab.createTool', {
-            title: 'Create a tool',
-            url: '/create-tool/:templateid',
+        .state('lab.startAnalysis', {
+            title: 'Start an analysis',
+            url: '/start-analysis/:templateid',
             parent: 'lab',
             params: {
                 'template': null
             },
-            templateUrl: labCreateToolTpl,
-            controller: 'LabCreateToolController',
+            templateUrl: labStartAnalysisTpl,
+            controller: 'LabStartAnalysisController',
             controllerAs: '$ctrl'
         })
-        .state('lab.tool', {
-            title: 'Tool details',
-            url: '/tool/:toolid',
+        .state('lab.analysis', {
+            title: 'Analysis details',
+            url: '/analysis/:analysisid',
             parent: 'lab',
             params: {
-                'tool': null
+                'analysis': null
             },
             views: {
                 'navmenu@root': {
@@ -309,8 +309,8 @@ function labStates($stateProvider) {
                     controllerAs: '$ctrl'
                 },
                 '': {
-                    templateUrl: labToolTpl,
-                    controller: 'LabToolController',
+                    templateUrl: labAnalysisTpl,
+                    controller: 'LabAnalysisController',
                     controllerAs: '$ctrl'
                 }
             }
@@ -320,20 +320,20 @@ function labStates($stateProvider) {
             templateUrl: labBrowseTpl,
             controller: 'LabBrowseController',
             controllerAs: '$ctrl',
-            redirectTo: 'lab.browse.tools'
+            redirectTo: 'lab.browse.analyses'
         })
         .state('lab.browse.templates', {
-            title: 'Tool Search',
-            url: '/templates?:page?:query?toolcategory&tooltag',
+            title: 'Analysis Search',
+            url: '/templates?:page?:query?analysiscategory&analysistag',
             templateUrl: labBrowseTemplatesTpl,
             controller: 'LabBrowseTemplatesController',
             controllerAs: '$ctrl'
         })
-        .state('lab.browse.tools', {
-            title: 'Tools',
-            url: '/tools?:page',
-            templateUrl: labBrowseToolsTpl,
-            controller: 'LabBrowseToolsController',
+        .state('lab.browse.analyses', {
+            title: 'Analyses',
+            url: '/analyses?:page',
+            templateUrl: labBrowseAnalysesTpl,
+            controller: 'LabBrowseAnalysesController',
             controllerAs: '$ctrl'
         });
 }

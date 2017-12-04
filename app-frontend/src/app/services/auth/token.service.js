@@ -44,7 +44,7 @@ export default (app) => {
                     }
                 });
 
-            this.toolMapToken = $resource(
+            this.analysisMapToken = $resource(
                 `${BUILDCONFIG.API_HOST}/api/map-tokens/`, {}, {
                     create: {
                         method: 'POST'
@@ -122,31 +122,32 @@ export default (app) => {
             });
         }
 
-        createToolMapToken(params) {
-            return this.toolMapToken.create(params).$promise;
+        createAnalysisMapToken(params) {
+            return this.analysisMapToken.create(params).$promise;
         }
 
-        getToolMapTokens() {
-            return this.toolMapToken.get().$promise;
+        getAnalysisMapTokens() {
+            return this.analysisMapToken.get().$promise;
         }
 
         findToken(tokens, params) {
             if (params.project) {
                 return tokens.results.find(t => t.project === params.project);
-            } else if (params.toolRun) {
-                return tokens.results.find(t => t.toolRun === params.toolRun);
+            } else if (params.analysis) {
+                // TODO swithc this to t.analysis once the backend is updated
+                return tokens.results.find(t => t.toolRun === params.analysis);
             }
             return null;
         }
 
-        getOrCreateToolMapToken(params) {
+        getOrCreateAnalysisMapToken(params) {
             let deferred = this.$q.defer();
-            this.getToolMapTokens().then((res) => {
+            this.getAnalysisMapTokens().then((res) => {
                 let token = this.findToken(res, params);
                 if (token) {
                     deferred.resolve(token);
                 } else {
-                    this.createToolMapToken(params).then((response) => {
+                    this.createAnalysisMapToken(params).then((response) => {
                         this.$log.debug('token created!', response);
                         deferred.resolve(response);
                     }, (error) => {

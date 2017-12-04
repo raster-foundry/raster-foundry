@@ -1,19 +1,20 @@
 import _ from 'lodash';
 import {Map} from 'immutable';
 import { API_INIT } from './actions/api-actions';
-import { TOOL_ACTION_PREFIX } from './actions/lab-actions';
+import { ANALYSIS_ACTION_PREFIX } from './actions/lab-actions';
 import { NODE_ACTION_PREFIX } from './actions/node-actions';
 import { HISTOGRAM_ACTION_PREFIX } from './actions/histogram-actions';
 import { STATISTICS_ACTION_PREFIX } from './actions/statistics-actions';
 
-import { toolReducer } from './reducers/tool-reducer';
+import { analysisReducer } from './reducers/analysis-reducer';
 import { nodeReducer } from './reducers/node-reducer';
 import { histogramReducer } from './reducers/histogram-reducer';
 import { statisticsReducer } from './reducers/statistics-reducer';
 
 const INITIAL_LAB_STATE = {
-    // tool state
-    lastToolSave: null, lastToolRefresh: null, tool: null, toolErrors: new Map(),
+    // analysis state
+    lastAnalysisSave: null, lastAnalysisRefresh: null, analysis: null,
+    analysisErrors: new Map(),
     updating: false, fetching: false, error: null,
     readonly: null,
 
@@ -32,8 +33,8 @@ function lab(state = INITIAL_LAB_STATE, action) {
     const prefix = _.first(action.type.split('_'));
 
     switch (prefix) {
-    case TOOL_ACTION_PREFIX:
-        return toolReducer(state, action);
+    case ANALYSIS_ACTION_PREFIX:
+        return analysisReducer(state, action);
     case NODE_ACTION_PREFIX:
         return nodeReducer(state, action);
     case HISTOGRAM_ACTION_PREFIX:
