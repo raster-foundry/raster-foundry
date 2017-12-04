@@ -1,8 +1,8 @@
 import _ from 'lodash';
 import {Map} from 'immutable';
 
-export function toolFromNodes(labState, updatedNode) {
-    let tool = labState.tool;
+export function astFromNodes(labState, updatedNode) {
+    let analysis = labState.analysis;
     let nodes = labState.nodes;
     let root = Object.assign({}, _.first(nodes.filter((node) => !node.parent).toArray()));
     let stack = [root];
@@ -29,7 +29,7 @@ export function toolFromNodes(labState, updatedNode) {
         }
     }
 
-    return Object.assign({}, tool, {executionParameters: root});
+    return Object.assign({}, analysis, {executionParameters: root});
 }
 
 export function getNodeArgs(node) {
@@ -42,9 +42,12 @@ export function getNodeArgs(node) {
     return [];
 }
 
-export function nodesFromTool(tool) {
+export function nodesFromAst(ast) {
     let nodes = new Map();
-    let json = Object.assign({}, tool.executionParameters ? tool.executionParameters : tool);
+    let json = Object.assign(
+        {},
+        ast.executionParameters ? ast.executionParameters : ast
+    );
     let stack = [json];
     while (stack.length) {
         let node = Object.assign({}, stack.pop());

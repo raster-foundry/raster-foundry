@@ -46,13 +46,13 @@ const App = angular.module(
         require('./pages/error/error.module.js').name,
         require('./pages/share/share.module.js').name,
 
-        require('./pages/lab/tool/tool.js').name,
-        require('./pages/lab/createTool/createTool.js').name,
+        require('./pages/lab/analysis/analysis.js').name,
+        require('./pages/lab/startAnalysis/startAnalysis.js').name,
         require('./pages/lab/template/template.js').name,
 
         require('./pages/lab/navbar/navbar.module.js').name,
         require('./pages/lab/browse/browse.js').name,
-        require('./pages/lab/browse/tools/tools.js').name,
+        require('./pages/lab/browse/analyses/analyses.js').name,
         require('./pages/lab/browse/templates/templates.js').name,
 
         require('./pages/projects/projects.module.js').name,

@@ -60,13 +60,13 @@ class NodeHistogramController {
         let renderDefinition = nodeMetadata && nodeMetadata.renderDefinition;
         let histogramOptions = nodeMetadata && nodeMetadata.histogramOptions;
         return {
-            tool: state.lab.tool,
-            toolErrors: state.lab.toolErrors,
+            analysis: state.lab.analysis,
+            analysisErrors: state.lab.analysisErrors,
             node,
             nodeMetadata,
             histogramOptions,
             renderDefinition,
-            lastToolRefresh: state.lab.lastToolRefresh,
+            lastAnalysisRefresh: state.lab.lastAnalysisRefresh,
             histogram: getNodeHistogram(state, this)
         };
     }
@@ -166,7 +166,7 @@ class NodeHistogramController {
             }
         });
         // re-fetch histogram any time there's a hard update
-        this.$scope.$watch('$ctrl.lastToolRefresh', () => {
+        this.$scope.$watch('$ctrl.lastAnalysisRefresh', () => {
             this.fetchHistogram(this.nodeId);
         });
     }

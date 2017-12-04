@@ -7,7 +7,7 @@
         </div>
         <rf-call-to-action-item title="Projects & Imports" class="panel panel-off-white">
           <p class="pb-25">
-            <strong>Import</strong> your own observation imagery or <strong>find</strong> publicly available imagery for use in a project. Use the Editor to color correct and arrange imagery, creating the perfect basemap.
+            Import your own geospatial imagery or browse publicly available data to use in a project.
           </p>
           <a class="btn btn-primary" ui-sref="projects.list">View Projects</a>
           <button class="btn btn-default" ng-click="$ctrl.openCreateProjectModal()">Create a new Project</button>
@@ -15,25 +15,28 @@
         </rf-call-to-action-item>
         <div class="row stack-sm">
           <div class="column-6 flex-display">
-            <rf-call-to-action-item title="Tools" class="panel panel-off-white">
+            <rf-call-to-action-item title="Analyze" class="panel panel-off-white">
               <p class="pb-25">
-                Use the {{$ctrl.BUILDCONFIG.APP_NAME}} Tools to build custom processing tasks and get the most out of your imagery.
+                Use on-demand analysis and get the most out of your imagery.
               </p>
-              <a class="btn btn-primary" ui-sref="lab.browse.templates">Browse Templates</a>
-              <a class="btn btn-primary" ui-sref="lab.browse.tools">Browse Tools</a>
-              <div class="hide-sm"></div>
               <button class="btn btn-default"
-                      ng-click="$ctrl.openToolCreateModal()">
+                      ng-click="$ctrl.openTemplateCreateModal()">
                 Create a new Template
               </button>
+              <div class="hide-sm"></div>
+              <p>
+                <a ui-sref="lab.browse.templates">Browse Templates</a>
+                <br>
+                <a ui-sref="lab.browse.analyses">Browse your Analyses</a>
+              </p>
             </rf-call-to-action-item>
           </div>
           <div class="column-6 flex-display">
             <rf-call-to-action-item title="Develop" class="panel panel-off-white">
               <p class="pb-25">
-                Leverage {{$ctrl.BUILDCONFIG.APP_NAME}}'s powerful API and infrastructure to create your own imagery application.
+                Leverage {{$ctrl.BUILDCONFIG.APP_NAME}}'s powerful API to create your own imagery applications.
               </p>
-              <a class="btn btn-tertiary" ui-sref="settings.tokens.api">Manage API Tokens</a>
+              <a class="btn btn-default" ui-sref="settings.tokens.api">Manage API Tokens</a>
               <div class="hide-sm"></div>
               <p>
                 <a ng-href="{{$ctrl.HELPCONFIG.DEVELOPER_RESOURCES}}" target="_blank">Developer Resources</a>

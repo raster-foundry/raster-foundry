@@ -38,7 +38,7 @@ const availableTargets = [
 export default class NewExportController {
     constructor(
         $scope, $state, $timeout,
-        projectService, toolService, mapService,
+        projectService, analysisService, mapService,
         projectEditService
     ) {
         'ngInject';
@@ -48,7 +48,7 @@ export default class NewExportController {
         this.$timeout = $timeout;
         this.projectService = projectService;
         this.projectEditService = projectEditService;
-        this.toolService = toolService;
+        this.analysisService = analysisService;
         this.availableResolutions = availableResolutions;
         this.availableTargets = availableTargets;
         this.availableProcessingOptions = this.projectService.availableProcessingOptions;
@@ -141,8 +141,8 @@ export default class NewExportController {
 
     shouldShowProcessingParams(option) {
         return this.isCurrentProcessingOption(option) &&
-               option.toolId &&
-               !this.isLoadingTool;
+               option.templateId &&
+               !this.isAnalysis;
     }
 
     shouldShowTargetParams() {
@@ -164,39 +164,39 @@ export default class NewExportController {
     handleOptionChange(state, option) {
         if (state) {
             this.exportProcessingOption = option;
-            this.clearToolSettings();
-            if (option.toolId) {
-                this.loadTool(option.toolId);
+            this.clearAnalysisSettings();
+            if (option.templateId) {
+                this.loadTemplate(option.templateId);
             }
         }
     }
 
-    clearToolSettings() {
-        this.toolRequest = null;
-        this.isLoadingTool = false;
-        this.currentTool = null;
-        this.currentToolSources = null;
-        this.currentToolRun = null;
+    clearAnalysisSettings() {
+        this.templateRequest = null;
+        this.isAnalysis = false;
+        this.currentAnalysis = null;
+        this.currentAnalysisSources = null;
+        this.currentAnalysis = null;
     }
 
-    loadTool(toolId) {
-        this.isLoadingTool = true;
-        this.currentToolSources = null;
-        this.toolRequest = this.toolService.get(toolId);
-        this.toolRequest
+    loadTemplate(templateId) {
+        this.isAnalysis = true;
+        this.currentAnalysisSources = null;
+        this.templateRequest = this.analysisService.getTemplate(templateId);
+        this.templateRequest
             .then(t => {
-                this.currentTool = t;
-                this.currentToolSources = this.toolService.generateSourcesFromTool(t);
-                this.currentToolRun = this.toolService.generateToolRun(t);
-                this.isLoadingTool = false;
+                this.currentTemplate = t;
+                this.currentAnalysisSources = this.analysisService.generateSourcesFromAST(t);
+                this.currentAnalysis = this.analysisService.generateAnalysis(t);
+                this.isAnalysis = false;
             });
     }
 
     finalizeExportOptions() {
-        if (this.currentToolSources) {
-            Object.values(this.currentToolSources).forEach(src => {
-                this.toolService.updateToolRunSource(
-                    this.currentToolRun,
+        if (this.currentAnalysisSources) {
+            Object.values(this.currentAnalysisSources).forEach(src => {
+                this.analysisService.updateAnalysisSource(
+                    this.currentAnalysis,
                     src.id,
                     this.project.id,
                     src.band
@@ -221,21 +221,21 @@ export default class NewExportController {
     startExport() {
         this.isExporting = true;
         this.finalizeExportOptions();
-        if (this.currentToolRun) {
-            this.createToolRunExport();
+        if (this.currentAnalysis) {
+            this.createAnalysisExport();
         } else {
             this.createBasicExport();
         }
     }
 
-    createToolRunExport() {
-        this.toolService
-            .createToolRun(this.currentToolRun)
+    createAnalysisExport() {
+        this.analysisService
+            .createAnalysis(this.currentAnalysis)
             .then(tr => {
                 this.projectService
                     .export(
                         this.project, {
-                            toolRunId: tr.id
+                            analysisId: tr.id
                         },
                         this.getExportOptions()
                     )

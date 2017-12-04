@@ -24,7 +24,7 @@ class HomeController {
 
     openToolCreateModal() {
         this.modalService.open({
-            component: 'rfToolCreateModal'
+            component: 'rfTemplateCreateModal'
         });
     }
 }

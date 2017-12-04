@@ -4,9 +4,9 @@
       <span aria-hidden="true">&times;</span>
     </button>
     <h4 class="modal-title">
-      Publish {{$ctrl.resolve.toolTitle ? 'Tool - ' + $ctrl.resolve.toolTitle : 'Project - ' + $ctrl.resolve.project.name}}
+      Publish {{$ctrl.resolve.templateTitle ? 'Analysis - ' + $ctrl.resolve.templateTitle : 'Project - ' + $ctrl.resolve.project.name}}
     </h4>
-    <p>Publish or export your {{$ctrl.resolve.toolTitle ? 'tool' : 'project'}}</p>
+    <p>Publish or export your {{$ctrl.resolve.templateTitle ? 'analysis' : 'project'}}</p>
   </div>
   <div class="modal-body">
     <div class="content" ng-show="$ctrl.shareUrl">
@@ -72,7 +72,7 @@
         </div>
       </div>
     </div>
-    <div class="content" ng-show="$ctrl.resolve.toolTitle">
+    <div class="content" ng-show="$ctrl.resolve.templateTitle">
       <h4>Sharing</h4>
       <div class="form-group">
         <label for="tile-link">ZXY Tile Layer URL</label>
@@ -94,9 +94,9 @@
         <label>Token</label>
         <div class="form-group all-in-one">
           <input id="tile-link" type="text" class="form-control"
-                 value="{{$ctrl.toolToken}}" readonly>
+                 value="{{$ctrl.analysisToken}}" readonly>
           <button class="btn btn-link"
-                  clipboard text="$ctrl.toolToken">
+                  clipboard text="$ctrl.analysisToken">
             Copy
           </button>
         </div>

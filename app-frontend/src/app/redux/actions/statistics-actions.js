@@ -8,7 +8,7 @@ export const STATISTICS_ACTION_PREFIX = 'STATISTICS';
 export function fetchStatistics(nodeId) {
     return (dispatch, getState) => {
         const state = getState();
-        let lastUpdate = state.lab.lastToolRefresh;
+        let lastUpdate = state.lab.lastAnalysisRefresh;
         let cachedStats = state.lab.statistics.get(nodeId);
         if (!cachedStats ||
             cachedStats.error ||
@@ -19,7 +19,7 @@ export function fetchStatistics(nodeId) {
                 meta: {nodeId},
                 payload: authedRequest({
                     method: 'get',
-                    url: `${state.api.tileUrl}/tools/${state.lab.tool.id}` +
+                    url: `${state.api.tileUrl}/tools/${state.lab.analysis.id}` +
                         `/statistics/?node=${nodeId}&voidCache=true&token=${state.api.apiToken}`
                 }, state)
             });

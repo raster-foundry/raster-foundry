@@ -1,6 +1,6 @@
 import {authedRequest} from '../api-utils';
 import {colorStopsToRange} from '../histogram-utils';
-import {getNodeDefinition, toolFromNodes} from '../node-utils';
+import {getNodeDefinition, astFromNodes} from '../node-utils';
 import {NODE_UPDATE_HARD} from './node-actions';
 
 const { colorSchemes: colorSchemes } = require('../../services/projects/colorScheme.defaults.json');
@@ -38,7 +38,7 @@ function createRenderDefinition(histogram) {
 export function fetchHistogram(nodeId) {
     return (dispatch, getState) => {
         let state = getState();
-        let lastUpdate = state.lab.lastToolRefresh;
+        let lastUpdate = state.lab.lastAnalysisRefresh;
         let cachedHistogram = state.lab.histograms.get(nodeId);
 
         if (!cachedHistogram ||
@@ -51,7 +51,7 @@ export function fetchHistogram(nodeId) {
                 payload: authedRequest(
                     {
                         method: 'get',
-                        url: `${state.api.tileUrl}/tools/${state.lab.tool.id}`
+                        url: `${state.api.tileUrl}/tools/${state.lab.analysis.id}`
                             + `/histogram?node=${nodeId}&voidCache=true&token=${state.api.apiToken}`
                     },
                     state
@@ -75,19 +75,19 @@ export function fetchHistogram(nodeId) {
                                 })
                             }
                         );
-                        let updatedTool = toolFromNodes(callbackState.lab, newNodeDefinition);
+                        let updatedAnalysis = astFromNodes(callbackState.lab, newNodeDefinition);
                         let promise = authedRequest({
                             method: 'put',
                             url: `${callbackState.api.apiUrl}` +
-                                `/api/tool-runs/${callbackState.lab.tool.id}`,
-                            data: updatedTool
+                                `/api/tool-runs/${callbackState.lab.analysis.id}`,
+                            data: updatedAnalysis
                         }, callbackState);
                         dispatch({
                             type: NODE_UPDATE_HARD,
                             payload: promise,
                             meta: {
                                 node: newNodeDefinition,
-                                tool: updatedTool
+                                analysis: updatedAnalysis
                             }
                         });
                     }
@@ -101,7 +101,7 @@ export function fetchHistogram(nodeId) {
 /**
   * Args:
   * Object {
-  *     nodeId: node id in the tool tree
+  *     nodeId: node id in the ast
   *     renderDefinition: render definition to update with
   *     histogramOptions (optional)
   * }
@@ -119,18 +119,18 @@ export function updateRenderDefinition({nodeId, renderDefinition, histogramOptio
             })
         });
 
-        const updatedTool = toolFromNodes(state.lab, newNodeDefinition);
+        const updatedAnalysis = astFromNodes(state.lab, newNodeDefinition);
         dispatch({
             type: NODE_UPDATE_HARD,
             payload: authedRequest({
                 method: 'put',
                 url: `${state.api.apiUrl}` +
-                    `/api/tool-runs/${state.lab.tool.id}`,
-                data: updatedTool
+                    `/api/tool-runs/${state.lab.analysis.id}`,
+                data: updatedAnalysis
             }, state),
             meta: {
                 node: newNodeDefinition,
-                tool: updatedTool
+                analysis: updatedAnalysis
             }
         });
     };
