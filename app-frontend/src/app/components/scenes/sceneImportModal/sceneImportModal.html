@@ -151,6 +151,10 @@
       <h3 class="no-margin">Local File Import</h3>
       <ng-container ng-if="!$ctrl.shouldShowFileList()">
         <p>Select imagery files from your computer and we'll import them into {{$ctrl.BUILDCONFIG.APP_NAME}} Scenes. {{$ctrl.BUILDCONFIG.APP_NAME}} currently allows for uploading GeoTIFF files only.</p>
+
+        <br/>
+        <br/>
+
         <div class="text-center">
           <button class="btn btn-primary"
                   ngf-multiple=true
@@ -162,6 +166,11 @@
           >
             Select Files
           </button>
+
+          <br/>
+          <br/>
+
+          or drag and drop files
         </div>
       </ng-container>
       <ng-container ng-show="$ctrl.shouldShowFileList()">
