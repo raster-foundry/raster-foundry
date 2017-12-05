@@ -9,6 +9,7 @@ import com.azavea.rf.batch.aoi.UpdateAOIProject
 import com.azavea.rf.batch.landsat8.{ImportLandsat8, ImportLandsat8C1}
 import com.azavea.rf.batch.migration.S3ToPostgres
 import com.azavea.rf.batch.sentinel2.ImportSentinel2
+import com.azavea.rf.batch.stac.{ReadStacFeature}
 
 object Main {
   val modules = Map[String, Array[String] => Unit](
@@ -24,7 +25,8 @@ object Main {
     ImportLandsat8C1.name  -> (ImportLandsat8C1.main(_)),
     CheckExportStatus.name -> (CheckExportStatus.main(_)),
     S3ToPostgres.name      -> (S3ToPostgres.main(_)),
-    HealthCheck.name       -> (HealthCheck.main(_))
+    HealthCheck.name       -> (HealthCheck.main(_)),
+    ReadStacFeature.name   -> (ReadStacFeature.main(_))
   )
 
   def main(args: Array[String]): Unit = {
