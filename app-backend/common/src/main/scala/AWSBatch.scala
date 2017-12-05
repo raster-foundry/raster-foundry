@@ -32,9 +32,18 @@ trait AWSBatch extends RollbarNotifier with LazyLogging {
     }
 
     if (runBatch) {
-      val submitJobResult = batchClient.submitJob(jobRequest)
-      logger.info(s"Submit Job Result: ${submitJobResult}")
-      submitJobResult
+      logger.info(s"Trying to submit job: ${jobName}")
+      try {
+        val submitJobResult = batchClient.submitJob(jobRequest)
+        logger.info(s"Submit Job Result: ${submitJobResult}")
+        submitJobResult
+      } catch {
+        case e: Exception =>
+          logger.error(
+            s"There was an error submitting ${jobName}; Exception: ${e.getLocalizedMessage}"
+          )
+          throw e
+      }
     } else {
       logger.warn(s"Not submitting AWS Batch -- not in production or staging, in ${awsbatchConfig.environment}")
       logger.warn(s"Job Request: ${jobName} -- ${jobDefinition} -- ${parameters}")

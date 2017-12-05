@@ -423,7 +423,14 @@ trait ProjectRoutes extends Authentication
       }
       val scenesFuture = Projects.addScenesToProject(sceneIds, projectId, user)
       scenesFuture.map { scenes =>
-        val scenesToKickoff = scenes.filter(_.statusFields.ingestStatus == IngestStatus.ToBeIngested)
+        val scenesToKickoff = scenes.filter(scene =>
+          scene.statusFields.ingestStatus == IngestStatus.ToBeIngested || (
+            scene.statusFields.ingestStatus == IngestStatus.Ingesting &&
+              scene.modifiedAt.before(
+                new Timestamp((new Date(System.currentTimeMillis()-1*24*60*60*1000)).getTime)
+              )
+          )
+        )
         scenesToKickoff.map(_.id).map(kickoffSceneIngest)
       }
       complete {

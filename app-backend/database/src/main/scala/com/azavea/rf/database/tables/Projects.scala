@@ -479,10 +479,12 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
                   val scenesNotIngestedQuery = for {
                     s <- Scenes if s.id.inSet(sceneIds) && s.ingestStatus.inSet(
                       Set(IngestStatus.NotIngested, IngestStatus.Failed))
-                  } yield (s.ingestStatus)
+                  } yield (s.ingestStatus, s.modifiedAt)
 
                   database.db.run {
-                    scenesNotIngestedQuery.update((IngestStatus.ToBeIngested))
+                    scenesNotIngestedQuery.update(
+                      (IngestStatus.ToBeIngested, new Timestamp((new Date).getTime))
+                    )
                   }
 
                   logger.info(s"Scene IDs right at the end: $sceneIds")
