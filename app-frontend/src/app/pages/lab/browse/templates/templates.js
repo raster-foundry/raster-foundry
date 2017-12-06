@@ -100,7 +100,7 @@ class LabBrowseTemplatesController {
         this.categories[index].selected = !this.categories[index].selected;
     }
 
-    openToolCreateModal() {
+    openTemplateCreateModal() {
         this.modalService.open({
             component: 'rfTemplateCreateModal'
         });
