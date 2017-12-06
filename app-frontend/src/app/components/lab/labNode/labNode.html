@@ -25,6 +25,12 @@
       Stats
     </button>
     <button class="btn node-button" type="button"
+            ng-if="!$ctrl.toolErrors.size &&
+                   $ctrl.model.get('cellType') !== 'const'"
+            ng-click="$ctrl.onNodeShare()">
+        <span class="icon-share"></span>
+    </button>
+    <button class="btn node-button" type="button"
             ng-click="$ctrl.toggleCollapse()">
       <span ng-class="{'icon-caret-up': $ctrl.showBody,
                       'icon-caret-down': !$ctrl.showBody}"></span>
