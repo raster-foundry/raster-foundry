@@ -6,10 +6,16 @@ import NodeActions from '_redux/actions/node-actions';
 import { getNodeDefinition } from '_redux/node-utils';
 
 class LabNodeController {
-    constructor($ngRedux, $scope, $log, $element) {
+    constructor($ngRedux, $scope, $log, $element, modalService, tokenService,
+                projectService, APP_CONFIG) {
         'ngInject';
         this.$log = $log;
         this.$element = $element;
+        this.modalService = modalService;
+        this.tokenService = tokenService;
+        this.projectService = projectService;
+
+        this.tileServer = `${APP_CONFIG.tileServerLocation}`;
 
         let unsubscribe = $ngRedux.connect(
             this.mapStateToThis.bind(this),
@@ -150,6 +156,50 @@ class LabNodeController {
             event.stopPropagation();
             this.selectNode(this.nodeId);
         }
+    }
+
+    onNodeShare() {
+        const nodeType = this.model.get('cellType');
+        if (this.nodeId && this.analysis.id) {
+            if (nodeType === 'projectSrc') {
+                this.tokenService.getOrCreateAnalysisMapToken({
+                    organizationId: this.analysis.organizationId,
+                    name: this.analysis.name + ' - ' + this.analysis.id,
+                    project: this.node.projId
+                }).then((mapToken) => {
+                    this.publishModal(
+                        this.projectService.getProjectLayerURL(
+                            this.node.projId, {mapToken: mapToken.id}
+                        )
+                    );
+                });
+            } else {
+                this.tokenService.getOrCreateAnalysisMapToken({
+                    organizationId: this.analysis.organizationId,
+                    name: this.analysis.name + ' - ' + this.analysis.id,
+                    toolRun: this.analysis.id
+                }).then((mapToken) => {
+                    this.publishModal(
+                        // eslint-disable-next-line max-len
+                        `${this.tileServer}/tools/${this.analysis.id}/{z}/{x}/{y}?mapToken=${mapToken.id}&node=${this.nodeId}`
+                    );
+                });
+            }
+        }
+    }
+
+    publishModal(tileUrl) {
+        if (tileUrl) {
+            this.modalService.open({
+                component: 'rfProjectPublishModal',
+                resolve: {
+                    tileUrl: () => tileUrl,
+                    noDownload: () => true,
+                    templateTitle: () => this.analysis.name
+                }
+            });
+        }
+        return false;
     }
 }
 
