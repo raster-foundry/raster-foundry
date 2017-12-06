@@ -153,7 +153,7 @@ object Annotations extends TableQuery(tag => new Annotations(tag)) with LazyLogg
       .filter(_.id === annotationId)
       .delete
 
-  /** Given a Project ID, attempt to all associated annotations from the database
+  /** Given a Project ID, attempt to delete all associated annotations from the database
     *
     * @param projectId UUID ID of project to remove annotations from
     * @param user     Results will be limited to user's organization
