@@ -46,7 +46,8 @@ class AnnotateToolbarController {
 
         this.getMap().then((mapWrapper) => {
             this.listeners = [
-                mapWrapper.on(L.Draw.Event.CREATED, this.createShape.bind(this))
+                mapWrapper.on(L.Draw.Event.CREATED, this.createShape.bind(this)),
+                mapWrapper.on('click', this.onMapClick.bind(this))
             ];
             this.setDrawHandlers(mapWrapper);
         });
@@ -73,6 +74,12 @@ class AnnotateToolbarController {
         this.drawMarkerHandler.disable();
     }
 
+    onMapClick() {
+        if (this.isDrawCancel && this.isDrawingRectangle) {
+            this.drawRectangleHandler.enable();
+        }
+    }
+
     setDrawHandlers(mapWrapper) {
         this.drawRectangleHandler = new L.Draw.Rectangle(mapWrapper.map, {
             shapeOptions: {
@@ -95,6 +102,7 @@ class AnnotateToolbarController {
     toggleDrawing(shapeType) {
         this.isDrawCancel = true;
         if (shapeType === 'rectangle') {
+            this.isDrawingRectangle = true;
             this.drawRectangleHandler.enable();
             this.lastHandler = this.drawRectangleHandler;
             this.drawPolygonHandler.disable();
@@ -138,6 +146,10 @@ class AnnotateToolbarController {
 
     createShape(e) {
         this.isDrawCancel = false;
+
+        if (this.isDrawingRectangle && e.layerType === 'rectangle') {
+            this.isDrawingRectangle = false;
+        }
 
         this.onShapeCreated({
             'shapeLayer': e.layer
