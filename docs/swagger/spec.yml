@@ -2552,6 +2552,9 @@ definitions:
   AuthToken:
     type: object
     properties:
+      id_token:
+        type: string
+        description: Token that can be used for authenticating API requests
       access_token:
         type: string
         description: Token that can be used for authenticating API requests

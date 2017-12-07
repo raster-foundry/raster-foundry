@@ -1,6 +1,7 @@
 package com.azavea.rf.api.token
 
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.Uri.{Path, Query}
@@ -11,13 +12,12 @@ import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.Future
-
 import com.azavea.rf.datamodel.User
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.utils.{Auth0Exception, ManagementBearerToken}
-
-import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
+import de.heikoseeberger.akkahttpcirce._
 import io.circe.generic.JsonCodec
+import io.circe.generic.auto._
 
 // TODO: this sort of case class definition should live in datamodel
 @JsonCodec
@@ -25,9 +25,11 @@ case class RefreshToken(refresh_token: String)
 @JsonCodec
 case class DeviceCredential(id: String, device_name: String)
 @JsonCodec
-case class AuthorizedToken(access_token: String, expires_in: Int, token_type: String)
+case class AuthorizedToken(id_token: String, access_token: String, expires_in: Int, token_type: String)
+@JsonCodec
+case class RefreshTokenRequest(grant_type: String, client_id: String, refresh_token: String)
 
-object TokenService extends Config {
+object TokenService extends Config with ErrorAccumulatingCirceSupport {
 
   import com.azavea.rf.api.AkkaSystem._
 
@@ -98,33 +100,29 @@ object TokenService extends Config {
 
   def getAuthorizedToken(rt: RefreshToken): Future[AuthorizedToken] = {
 
-    val params = FormData(
-      "api_type" -> "app",
-      "grant_type" -> "refresh_token",
-      "scope" -> "openid offline_access",
-      "refresh_token" -> rt.refresh_token,
-      "client_id" -> auth0ClientId,
-      "target" -> auth0ClientId
-    ).toEntity
+    val body = RefreshTokenRequest("refresh_token", auth0ClientId, rt.refresh_token)
 
-    Http()
-      .singleRequest(HttpRequest(
-        method = POST,
-        uri = uri.withPath(Path("/oauth/token")),
-        entity = params
-      ))
-      .flatMap {
-        case HttpResponse(StatusCodes.OK, _, entity, _) =>
-          Unmarshal(entity).to[AuthorizedToken]
-        case HttpResponse(StatusCodes.Unauthorized, _, error, _) =>
-          if (error.toString.contains("invalid_refresh_token")) {
-            throw new IllegalArgumentException("Refresh token not recognized")
-          } else {
-            throw new Auth0Exception(StatusCodes.Unauthorized, error.toString)
-          }
-        case HttpResponse(errCode, _, error, _) =>
-          throw new Auth0Exception(errCode, error.toString)
-      }
+    val tokenUri = Uri(s"https://$auth0Domain")
+    Marshal(body).to[RequestEntity].flatMap { re =>
+      Http()
+        .singleRequest(HttpRequest(
+          method = POST,
+          uri = tokenUri.withPath(Path("/oauth/token")),
+          entity = re
+        ))
+        .flatMap {
+          case HttpResponse(StatusCodes.OK, _, entity, _) =>
+            Unmarshal(entity).to[AuthorizedToken]
+          case HttpResponse(StatusCodes.Unauthorized, _, error, _) =>
+            if (error.toString.contains("invalid_refresh_token")) {
+              throw new IllegalArgumentException("Refresh token not recognized")
+            } else {
+              throw new Auth0Exception(StatusCodes.Unauthorized, error.toString)
+            }
+          case HttpResponse(errCode, _, error, _) =>
+            throw new Auth0Exception(errCode, error.toString)
+        }
+    }
   }
 
   def revokeRefreshToken(user: User, deviceId: String): Future[StatusCode] = {
