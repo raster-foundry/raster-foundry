@@ -347,6 +347,18 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     }
   }
 
+  def getDatasourcesScenesForDay(date: LocalDate, datasourceIds: Seq[UUID])(implicit database: DB): Future[Seq[String]] = {
+    database.db.run {
+      Scenes
+        .filterByDate(date)
+        .filter{scene =>
+          scene.datasource inSetBind datasourceIds
+        }
+        .map(_.name)
+        .result
+    }
+  }
+
 
   def sceneGrid(params: CombinedGridQueryParams, user: User, bboxes: Seq[Projected[Polygon]])(implicit database: DB) = {
     val filteredScenes = Scenes
