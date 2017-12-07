@@ -1,5 +1,24 @@
 # Change Log
 
+## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/HEAD)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.26.0...HEAD)
+
+**Merged pull requests:**
+
+- Fix support for handling refresh tokens [\#2783](https://github.com/raster-foundry/raster-foundry/pull/2783)
+- Re-add lab node share [\#2781](https://github.com/raster-foundry/raster-foundry/pull/2781)
+- Fix caching to avoid cached NODATA tile errors [\#2777](https://github.com/raster-foundry/raster-foundry/pull/2777)
+- Fix squished login header [\#2776](https://github.com/raster-foundry/raster-foundry/pull/2776)
+- Stub out batch jar cli for reading Stac asset [\#2774](https://github.com/raster-foundry/raster-foundry/pull/2774)
+- Log errors when batch submitJob fails [\#2772](https://github.com/raster-foundry/raster-foundry/pull/2772)
+- Add text to indicate drag and drop upload [\#2770](https://github.com/raster-foundry/raster-foundry/pull/2770)
+- Show histogram and stats on inputs [\#2769](https://github.com/raster-foundry/raster-foundry/pull/2769)
+- Rename tool -\> template, tool-run -\> analysis [\#2768](https://github.com/raster-foundry/raster-foundry/pull/2768)
+- Store analysis sort order in local storage [\#2765](https://github.com/raster-foundry/raster-foundry/pull/2765)
+- Use annotations API on the frontend [\#2763](https://github.com/raster-foundry/raster-foundry/pull/2763)
+- Create modal service to centralize modal state [\#2762](https://github.com/raster-foundry/raster-foundry/pull/2762)
+
 ## [0.26.0](https://github.com/raster-foundry/raster-foundry/tree/0.26.0) (2017-12-01)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.25.0...0.26.0)
