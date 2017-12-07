@@ -28,8 +28,36 @@
             ng-if="$ctrl.node.apply"></span>
       {{$ctrl.typeMap[$ctrl.node.type]}}
     </div>
-    <div class="node-header-label">
-      {{$ctrl.node.metadata.label}}
+    <div>
+      <span ng-if="!$ctrl.isEditNodeLabel">
+        <button class="btn node-button pate-title-edit detail-title-edit"
+                type="button"
+                ng-click="$ctrl.toggleNodeLabelEdit()">
+          <span class="icon-pencil"></span>
+        </button>
+        <span class="node-header-label">{{$ctrl.node.metadata.label}}</span>
+      </span>
+      <span ng-if="$ctrl.isEditNodeLabel">
+        <form class="inline-form" ng-submit="$ctrl.finishNodelabelEdit()">
+          <div class="form-group all-in-one">
+            <input id="name"
+                   type="text"
+                   class="form-control"
+                   placeholder="Edit Analysis Name"
+                   ng-model="$ctrl.nameBuffer"
+                   ng-init="$ctrl.nameBuffer = $ctrl.node.metadata.label"
+                   ng-attr-autofocus="{{$ctrl.isEditNodeLabel || undefined }}">
+            <button class="btn btn-link flex-last">
+              <span class="sr-only">Save</span>
+              <span class="icon-save node-label-name"</span>
+            </button>
+            <button type="button" class="btn btn-link" ng-click="$ctrl.toggleNodeLabelEdit()">
+              <span class="sr-only">Cancel</span>
+              <span class="icon-cancel node-label-name"></span>
+            </button>
+          </div>
+        </form>
+      </span>
     </div>
   </div>
   <div class="node-status" ng-attr-title="{{$ctrl.analysisErrors.get($ctrl.nodeId)}}">
