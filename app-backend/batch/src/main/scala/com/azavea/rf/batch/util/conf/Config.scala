@@ -68,14 +68,14 @@ trait Config {
   protected case class Sentinel2(
     organization: String,
     bandLookup: Sentinel2Bands,
-    datasourceId: String,
+    datasourceIds: Map[String, String],
     baseHttpPath: String,
     awsRegion: Option[String],
     bucketName: String,
     targetProj: String
   ) {
     def organizationUUID = UUID.fromString(organization)
-    def datasourceUUID = UUID.fromString(datasourceId)
+    def datasourceUUIDs = datasourceIds
     def targetProjCRS = CRS.fromName(targetProj)
     def bandByName(key: String): Option[Band.Create] =
       bandLookup.getClass.getDeclaredFields.toList.filter(_.getName == key).map { field =>
