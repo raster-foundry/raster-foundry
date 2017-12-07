@@ -1256,6 +1256,13 @@ rf-diagram-container {
   overflow: hidden;
 }
 
+.icon-save.node-label-name,
+.icon-cancel.node-label-name {
+  color: $gray-lighter;
+  font-size: 1.8rem;
+}
+
+
 /*
  * page: lab/run
  */
@@ -1521,6 +1528,10 @@ rf-lab-node {
 
   .node-header-colorblock {
     border-radius: 5px 0 0 0;
+  }
+
+  button, input {
+    pointer-events: auto;
   }
 }
 
