@@ -2,31 +2,21 @@
 
 class LabBrowseTemplatesController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, $state, toolService, toolTagService, toolCategoryService, $uibModal
+        $log, $scope, $state, analysisService, modalService
     ) {
         'ngInject';
-        this.toolService = toolService;
-        this.toolTagService = toolTagService;
-        this.toolCategoryService = toolCategoryService;
+        this.analysisService = analysisService;
         this.$scope = $scope;
         this.$state = $state;
         this.$log = $log;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
     }
 
     $onInit() {
         this.initFilters();
         this.initSearchTerms();
-        this.fetchToolList(this.$state.params.page);
-        this.fetchToolTags();
-        this.fetchToolCategories();
+        this.fetchTemplateList(this.$state.params.page);
         this.searchString = '';
-
-        this.$scope.$on('$destroy', () => {
-            if (this.activeModal) {
-                this.activeModal.dismiss();
-            }
-        });
     }
 
     initFilters() {
@@ -43,24 +33,9 @@ class LabBrowseTemplatesController {
         }
     }
 
-    initSelectedToolTags() {
-        this.selectedToolTags = [];
-        if (this.queryParams.tooltag) {
-            this.selectedToolTags = this.queryParams.tooltag.split(' ');
-        }
-    }
-
-    initSelectedToolCategories() {
-        this.selectedToolCategories = [];
-        if (this.queryParams.toolcategory) {
-            this.selectedToolCategories =
-                this.queryParams.toolcategory.split(' ');
-        }
-    }
-
-    fetchToolList(page = 1) {
-        this.loadingTools = true;
-        this.toolService.query(
+    fetchTemplateList(page = 1) {
+        this.loadingTemplates = true;
+        this.analysisService.fetchTemplates(
             {
                 pageSize: 10,
                 page: page - 1,
@@ -78,70 +53,10 @@ class LabBrowseTemplatesController {
                     notify: false
                 }
             );
-            this.lastToolResponse = d;
-            this.toolList = d.results;
-            this.loadingTools = false;
+            this.lastTemplateResponse = d;
+            this.templateList = d.results;
+            this.loadingTemplates = false;
         });
-    }
-
-    fetchToolTags() {
-        this.loadingToolTags = true;
-        this.toolTagService.query().then(d => {
-            this.lastToolTagResponse = d;
-            this.processToolTags(d);
-            this.loadingToolTags = false;
-        });
-    }
-
-    processToolTags(data) {
-        this.initSelectedToolTags();
-        this.toolTagList = data.results.map(t => {
-            t.selected = false;
-            if (this.selectedToolTags.indexOf(t.id) >= 0) {
-                t.selected = true;
-            }
-            return t;
-        });
-    }
-
-    fetchToolCategories() {
-        this.loadingToolCategories = true;
-        this.toolCategoryService.query().then(d => {
-            this.lastToolCategoryResponse = d;
-            this.processToolCategories(d);
-            this.loadingToolCategories = false;
-        });
-    }
-
-    processToolCategories(data) {
-        this.initSelectedToolCategories();
-        this.toolCategoryList = data.results.map(c => {
-            c.selected = false;
-            if (this.selectedToolCategories.indexOf(c.slugLabel) >= 0) {
-                c.selected = true;
-            }
-            return c;
-        });
-    }
-
-    handleTagChange(tag) {
-        const tagIndex = this.selectedToolTags.indexOf(tag.id);
-        if (tagIndex >= 0) {
-            this.selectedToolTags.splice(tagIndex, 1);
-        } else {
-            this.selectedToolTags.push(tag.id);
-        }
-        this.search();
-    }
-
-    handleCategoryChange(category) {
-        const categoryIndex = this.selectedToolCategories.indexOf(category.slugLabel);
-        if (categoryIndex >= 0) {
-            this.selectedToolCategories.splice(categoryIndex, 1);
-        } else {
-            this.selectedToolCategories.push(category.slugLabel);
-        }
-        this.search();
     }
 
     updatePagination(data) {
@@ -169,11 +84,11 @@ class LabBrowseTemplatesController {
     search(value) {
         this.searchString = value;
         if (this.searchString) {
-            this.toolService.searchQuery().then(tools => {
-                this.toolList = tools;
+            this.analysisService.searchQuery().then(templates => {
+                this.templateList = templates;
             });
         } else {
-            this.fetchToolList();
+            this.fetchTemplateList();
         }
     }
 
@@ -185,12 +100,9 @@ class LabBrowseTemplatesController {
         this.categories[index].selected = !this.categories[index].selected;
     }
 
-    openToolCreateModal() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-        this.activeModal = this.$uibModal.open({
-            component: 'rfToolCreateModal'
+    openTemplateCreateModal() {
+        this.modalService.open({
+            component: 'rfTemplateCreateModal'
         });
     }
 }

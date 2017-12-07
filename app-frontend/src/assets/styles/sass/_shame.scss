@@ -817,7 +817,7 @@ div.lab-workspace.is-dragging {
   svg {
     cursor: grabbing;
   }
-  rf-tool-node {
+  rf-lab-node {
     pointer-events: none;
     * {
       pointer-events: none;
@@ -1483,14 +1483,14 @@ rf-export-item {
 }
 
 .is-comparing {
-    rf-tool-node {
+    rf-lab-node {
         * {
             pointer-events: none;
         }
     }
 }
 
-rf-tool-node {
+rf-lab-node {
   position: absolute;
   background: white;
   /* Make sure events are propagated to the JointJS element so, e.g. dragging works.*/
@@ -2475,6 +2475,9 @@ rf-histogram-breakpoint {
 
 .graph-container {
   position: relative;
+  &[disabled] {
+      cursor: not-allowed;
+  }
 
   &.dragging {
     * {
@@ -2929,4 +2932,8 @@ rf-reclassify-table {
     * {
         pointer-events: none;
     }
+}
+
+.no-visibility {
+    visibility: hidden !important;
 }

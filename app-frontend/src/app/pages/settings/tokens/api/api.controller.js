@@ -1,11 +1,11 @@
 class ApiTokensController {
-    constructor($log, $uibModal, $stateParams, $state, tokenService, authService, APP_CONFIG) {
+    constructor($log, modalService, $stateParams, $state, tokenService, authService, APP_CONFIG) {
         'ngInject';
         this.$log = $log;
 
         this.tokenService = tokenService;
         this.authService = authService;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
         this.$stateParams = $stateParams;
         this.APP_CONFIG = APP_CONFIG;
         this.$state = $state;
@@ -19,7 +19,7 @@ class ApiTokensController {
             this.tokenService
                 .createApiToken(this.$stateParams.code)
                 .then((authResult) => {
-                    this.$uibModal.open({
+                    this.modalService.open({
                         component: 'rfRefreshTokenModal',
                         resolve: {
                             refreshToken: () => authResult.refresh_token,
@@ -47,7 +47,7 @@ class ApiTokensController {
 
     createToken(name) {
         this.authService.createRefreshToken(name).then((authResult) => {
-            this.$uibModal.open({
+            this.modalService.open({
                 component: 'rfRefreshTokenModal',
                 resolve: {
                     refreshToken: () => authResult.refreshToken,
@@ -64,7 +64,8 @@ class ApiTokensController {
 
     deleteToken(token) {
         let id = token.id;
-        let deleteModal = this.$uibModal.open({
+
+        const modal = this.modalService.open({
             component: 'rfConfirmationModal',
             resolve: {
                 title: () => 'Delete refresh token?',
@@ -74,18 +75,18 @@ class ApiTokensController {
                 cancelText: () => 'Cancel'
             }
         });
-        deleteModal.result.then(
-            () => {
-                this.tokenService.deleteApiToken({id: id}).then(
-                    () => {
-                        this.fetchTokens();
-                    },
-                    (err) => {
-                        this.$log.debug('error deleting refresh token', err);
-                        this.fetchTokens();
-                    }
-                );
-            });
+
+        modal.result.then(() => {
+            this.tokenService.deleteApiToken({id: id}).then(
+                () => {
+                    this.fetchTokens();
+                },
+                (err) => {
+                    this.$log.debug('error deleting refresh token', err);
+                    this.fetchTokens();
+                }
+            );
+        });
     }
 }
 

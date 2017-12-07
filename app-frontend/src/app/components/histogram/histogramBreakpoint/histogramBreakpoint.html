@@ -4,7 +4,7 @@
                 arrow: $ctrl._options.style === 'arrow',
                 point: $ctrl._options.style === 'point',
                 dragging: $ctrl.dragging || $ctrl.active}"
-     ng-mousedown="$ctrl.onGrabberMouseDown()"></div>
+     ng-mousedown="$ctrl.onBreakpointChange && $ctrl.onGrabberMouseDown()"></div>
 <div class="breakpoint-bar bottom" ng-if="$ctrl._options.style === 'bar'"></div>
 <div class="breakpoint-bar full" ng-if="$ctrl._options.style === 'bar'"></div>
 <div class="breakpoint-input"
@@ -17,5 +17,7 @@
          ng-attr-step="{{$ctrl.precision}}"
          ng-model="$ctrl.breakpoint"
          ng-model-options="{updateOn: 'blur change'}"
-         ng-change="$ctrl.onInputChange(value)">
+         ng-change="$ctrl.onInputChange(value)"
+         ng-disabled="!$ctrl.onBreakpointChange"
+  >
 </div>

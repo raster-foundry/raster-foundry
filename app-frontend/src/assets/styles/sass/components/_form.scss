@@ -47,6 +47,7 @@ label {
   background-image: none;
   border: 1px solid $border-color-default;
   border-radius: $border-radius-base;
+  -moz-appearance: none;
 
   &.slim {
     height: auto;
@@ -265,10 +266,15 @@ div.checkbox {
     }
   }
 
-  &:hover:not(.active):before {
+  &:hover:not(.active):before:not([disabled]) {
     visibility: visible;
     opacity: .4;
     transform: scale(1);
+  }
+
+  &[disabled] {
+      opacity: 0.4;
+      cursor: not-allowed;
   }
 
   &:focus {

@@ -3,12 +3,12 @@ import _ from 'lodash';
 import d3 from 'd3';
 import {Map} from 'immutable';
 import nodeHistogramTpl from './nodeHistogram.html';
-import LabActions from '../../../redux/actions/lab-actions';
-import HistogramActions from '../../../redux/actions/histogram-actions';
-import { getNodeDefinition, getNodeHistogram } from '../../../redux/node-utils';
+import LabActions from '_redux/actions/lab-actions';
+import HistogramActions from '_redux/actions/histogram-actions';
+import { getNodeDefinition, getNodeHistogram } from '_redux/node-utils';
 import {
     breakpointsFromRenderDefinition, renderDefinitionFromState, colorStopsToRange
-} from '../../../redux/histogram-utils';
+} from '_redux/histogram-utils';
 
 const NodeHistogram = {
     templateUrl: nodeHistogramTpl,
@@ -31,7 +31,7 @@ class NodeHistogramController {
         this.uuid4 = uuid4;
 
         let unsubscribe = $ngRedux.connect(
-            this.mapState.bind(this),
+            this.mapStateToThis.bind(this),
             Object.assign({}, LabActions, HistogramActions)
         )(this);
         $scope.$on('$destroy', unsubscribe);
@@ -54,20 +54,22 @@ class NodeHistogramController {
         });
     }
 
-    mapState(state) {
+    mapStateToThis(state) {
         let node = getNodeDefinition(state, this);
         let nodeMetadata = node && node.metadata;
         let renderDefinition = nodeMetadata && nodeMetadata.renderDefinition;
         let histogramOptions = nodeMetadata && nodeMetadata.histogramOptions;
+        let isSource = node.type && node.type.toLowerCase().includes('src');
         return {
-            tool: state.lab.tool,
-            toolErrors: state.lab.toolErrors,
+            analysis: state.lab.analysis,
+            analysisErrors: state.lab.analysisErrors,
             node,
             nodeMetadata,
             histogramOptions,
             renderDefinition,
-            lastToolRefresh: state.lab.lastToolRefresh,
-            histogram: getNodeHistogram(state, this)
+            lastAnalysisRefresh: state.lab.lastAnalysisRefresh,
+            histogram: getNodeHistogram(state, this),
+            isSource
         };
     }
 
@@ -166,7 +168,7 @@ class NodeHistogramController {
             }
         });
         // re-fetch histogram any time there's a hard update
-        this.$scope.$watch('$ctrl.lastToolRefresh', () => {
+        this.$scope.$watch('$ctrl.lastAnalysisRefresh', () => {
             this.fetchHistogram(this.nodeId);
         });
     }

@@ -2,12 +2,12 @@
 
 class ProjectsListController {
     constructor( // eslint-disable-line max-params
-        $log, $state, $uibModal, $scope, projectService, userService
+        $log, $state, modalService, $scope, projectService, userService
     ) {
         'ngInject';
         this.$log = $log;
         this.$state = $state;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
         this.projectService = projectService;
         this.userService = userService;
         this.$scope = $scope;
@@ -95,21 +95,15 @@ class ProjectsListController {
     }
 
     createNewProject() {
-        if (this.newProjectModal) {
-            this.newProjectModal.dismiss();
-        }
-
-        this.newProjectModal = this.$uibModal.open({
+        const modal = this.modalService.open({
             component: 'rfProjectCreateModal'
         });
 
-        this.newProjectModal.result.then((data) => {
+        modal.result.then((data) => {
             if (data && data.reloadProjectList) {
                 this.populateProjectList(1);
             }
         });
-
-        return this.newProjectModal;
     }
 }
 

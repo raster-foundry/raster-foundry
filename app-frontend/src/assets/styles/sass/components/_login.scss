@@ -38,6 +38,9 @@
 #auth0-lock-container-1,
 #auth0-lock-container-2,
 #auth0-lock-container-3 {
+  .auth0-lock-header-logo {
+    margin: 18px 0px 11px;
+  }
   .auth0-lock-widget {
     box-shadow: 0 0 40px -5px #111118;
   }
@@ -50,15 +53,11 @@
         display: none;
       }
     }
-    .auth0-lock-header {
-      height: 85px;
-    }
   }
   .auth0-lock-widget-container {
     .auth0-lock-header-bg {
       background: $gray-dark;
       color: $white;
-      height: 85px;
       .auth0-lock-header-bg-blur {
         display: none;
       }

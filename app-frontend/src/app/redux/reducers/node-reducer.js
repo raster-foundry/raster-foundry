@@ -60,11 +60,11 @@ export const nodeReducer = typeToReducer({
     [NODE_SET_ERROR]: (state, action) => {
         if (action.payload) {
             return Object.assign({}, state, {
-                toolErrors: state.toolErrors.set(action.nodeId, action.payload)
+                analysisErrors: state.analysisErrors.set(action.nodeId, action.payload)
             });
         }
         return Object.assign({}, state, {
-            toolErrors: state.toolErrors.delete(action.nodeId)
+            analysisErrors: state.analysisErrors.delete(action.nodeId)
         });
     },
     [NODE_UPDATE_HARD]: {
@@ -77,10 +77,10 @@ export const nodeReducer = typeToReducer({
         FULFILLED: (state, action) => {
             return Object.assign({}, state, {
                 previewNodes: state.previewNodes.concat([]),
-                tool: action.meta.tool,
+                analysis: action.meta.analysis,
                 nodes: state.nodes.set(action.meta.node.id, action.meta.node),
-                lastToolSave: new Date(),
-                lastToolRefresh: new Date()
+                lastAnalysisSave: new Date(),
+                lastAnalysisRefresh: new Date()
             });
         }
     },
@@ -93,9 +93,9 @@ export const nodeReducer = typeToReducer({
         },
         FULFILLED: (state, action) => {
             return Object.assign({}, state, {
-                lastToolSave: new Date(),
+                lastAnalysisSave: new Date(),
                 nodes: state.nodes.set(action.meta.node.id, action.meta.node),
-                tool: action.meta.tool
+                analysis: action.meta.analysis
             });
         }
     }

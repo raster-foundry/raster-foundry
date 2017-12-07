@@ -8,7 +8,8 @@ const ColorSchemeDropdownComponent = {
     controller: 'ColorSchemeDropdownController',
     bindings: {
         colorSchemeOptions: '<',
-        onChange: '&'
+        onChange: '&',
+        disabled: '<'
     },
     controllerAs: '$ctrl'
 };

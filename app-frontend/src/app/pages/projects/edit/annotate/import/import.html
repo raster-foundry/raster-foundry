@@ -85,13 +85,13 @@
           <span title="Quality"><strong>Quality</strong></span>
           <div class="list-group-right">
             <div class="dropdown btn-group fixedwidth upload" uib-dropdown uib-dropdown-toggle>
-              <a class="btn dropdown-label">{{$ctrl.matchKeys.qualityCheck}}</a>
+              <a class="btn dropdown-label">{{$ctrl.matchKeys.quality}}</a>
               <button type="button" class="btn btn-primary dropdown-toggle">
                 <i class="icon-caret-down"></i>
               </button>
               <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
                 <li ng-repeat="p in $ctrl.dataProperties" role="menuitem">
-                  <a ng-click="$ctrl.updateKeySelection('qualityCheck', p)">{{p}}</a>
+                  <a ng-click="$ctrl.updateKeySelection('quality', p)">{{p}}</a>
                 </li>
               </ul>
             </div>

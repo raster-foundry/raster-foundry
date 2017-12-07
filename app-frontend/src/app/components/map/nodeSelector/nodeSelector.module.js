@@ -1,5 +1,5 @@
 import angular from 'angular';
-import NodeActions from '../../../redux/actions/node-actions';
+import NodeActions from '_redux/actions/node-actions';
 import nodeSelectorTpl from './nodeSelector.html';
 
 const NodeSelectorComponent = {
@@ -25,13 +25,13 @@ class NodeSelectorController {
         this.$document = $document;
 
         let unsubscribe = $ngRedux.connect(
-            this.mapState.bind(this),
+            this.mapStateToThis.bind(this),
             NodeActions
         )(this);
         $scope.$on('$destroy', unsubscribe);
     }
 
-    mapState(state) {
+    mapStateToThis(state) {
         const nodes = state.lab.nodes;
 
         let nodeArray = nodes ?

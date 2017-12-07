@@ -75,16 +75,17 @@ object Annotations extends TableQuery(tag => new Annotations(tag)) with LazyLogg
   def listAnnotations(offset: Int, limit: Int, queryParams: AnnotationQueryParameters, projectId: UUID, user: User) = {
 
     val dropRecords = limit * offset
-    val accessibleAnnotations = Annotations.filterByUser(queryParams.userParams)
-    val returnedAnnotations = accessibleAnnotations
-         .filter(_.projectId === projectId)
-         .filterByAnnotationParams(queryParams)
+    val filteredAnnotations = Annotations
+      .filterByUser(queryParams.userParams)
+      .filter(_.projectId === projectId)
+      .filterByAnnotationParams(queryParams)
+    val pagedAnnotations = filteredAnnotations
          .drop(dropRecords)
          .take(limit)
 
     ListQueryResult[Annotation](
-      (returnedAnnotations.result):DBIO[Seq[Annotation]],
-      returnedAnnotations.length.result
+      (pagedAnnotations.result):DBIO[Seq[Annotation]],
+      filteredAnnotations.length.result
     )
   }
 
@@ -105,9 +106,14 @@ object Annotations extends TableQuery(tag => new Annotations(tag)) with LazyLogg
     */
   def insertAnnotations(annotationsToCreate: Seq[Annotation.Create], projectId: UUID, user: User)
                        (implicit database: DB) = {
-    database.db.run { Annotations.forceInsertAll(
-      annotationsToCreate map { _.toAnnotation(projectId, user) }
-    )}
+    val annotationsToInsert = annotationsToCreate map { _.toAnnotation(projectId, user) }
+    database.db.run {
+      Annotations.forceInsertAll(
+        annotationsToInsert
+      )
+    } map { res =>
+      annotationsToInsert.map(_.toGeoJSONFeature)
+    }
   }
 
 
@@ -123,6 +129,19 @@ object Annotations extends TableQuery(tag => new Annotations(tag)) with LazyLogg
       .result
       .headOption
 
+  /** Given a Project ID, attempt to list all applicable labels
+    */
+  def listProjectLabels(projectId: UUID, user: User)(implicit database: DB) = {
+    database.db.run {
+      Annotations
+        .filterToSharedOrganizationIfNotInRoot(user)
+        .filter(_.projectId === projectId)
+        .map(_.label)
+        .distinct
+        .result
+    }
+  }
+
   /** Given a Annotation ID, attempt to remove it from the database
     *
     * @param annotationId UUID ID of annotation to remove
@@ -134,12 +153,23 @@ object Annotations extends TableQuery(tag => new Annotations(tag)) with LazyLogg
       .filter(_.id === annotationId)
       .delete
 
+  /** Given a Project ID, attempt to delete all associated annotations from the database
+    *
+    * @param projectId UUID ID of project to remove annotations from
+    * @param user     Results will be limited to user's organization
+    */
+  def deleteProjectAnnotations(projectId: UUID, user: User) =
+    Annotations
+      .filterToSharedOrganizationIfNotInRoot(user)
+      .filter(_.projectId === projectId)
+      .delete
+
   /** Update a Annotation
     * @param annotation Annotation to use for update
     * @param annotationId UUID of Annotation to update
     * @param user User to use to update Annotation
     */
-  def updateAnnotation(annotation: Annotation, annotationId: UUID, user: User) = {
+  def updateAnnotation(annotation: Annotation.GeoJSON, annotationId: UUID, user: User) = {
     val updateTime = new Timestamp((new java.util.Date).getTime)
     val updateAnnotationQuery = for {
         updateAnnotation <- Annotations
@@ -159,11 +189,11 @@ object Annotations extends TableQuery(tag => new Annotations(tag)) with LazyLogg
     updateAnnotationQuery.update(
         updateTime, // modifiedAt
         user.id, // modifiedBy
-        annotation.label,
-        annotation.description,
-        annotation.machineGenerated,
-        annotation.confidence,
-        annotation.quality,
+        annotation.properties.label,
+        annotation.properties.description,
+        annotation.properties.machineGenerated,
+        annotation.properties.confidence,
+        annotation.properties.quality,
         annotation.geometry
     )
   }

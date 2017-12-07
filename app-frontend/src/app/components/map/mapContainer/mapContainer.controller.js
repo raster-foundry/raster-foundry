@@ -1,13 +1,13 @@
 /* globals BUILDCONFIG */
 
 export default class MapContainerController {
-    constructor($document, $element, $scope, $timeout, $uibModal, mapService) {
+    constructor($document, $element, $scope, $timeout, modalService, mapService) {
         'ngInject';
         this.$document = $document;
         this.$element = $element;
         this.$scope = $scope;
         this.$timeout = $timeout;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
         this.mapService = mapService;
         this.getMap = () => this.mapService.getMap(this.mapId);
     }
@@ -203,17 +203,11 @@ export default class MapContainerController {
     }
 
     openMapSearchModal() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.$uibModal.open({
-            component: 'rfMapSearchModal',
-            resolve: { }
-        });
-
-        this.activeModal.result.then(
-            location => {
+        this.modalService
+            .open({
+                component: 'rfMapSearchModal',
+                resolve: { }
+            }).result.then(location => {
                 const mapView = location.mapView;
                 this.map.fitBounds([
                     [mapView.bottomRight.latitude, mapView.bottomRight.longitude],

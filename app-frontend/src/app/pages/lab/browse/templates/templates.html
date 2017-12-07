@@ -12,7 +12,11 @@
               <p>
                 Build a custom template that you can use to execute powerful analyses.
               </p>
-              <a class="btn btn-default btn-block" ng-click="$ctrl.openToolCreateModal()">New template</a>
+              <button type="button"
+                      class="btn btn-default btn-block"
+                      ng-click="$ctrl.openTemplateCreateModal()">
+                New template
+              </button>
             </section>
           </div>
       </div>
@@ -39,25 +43,25 @@
         </div>
 
         <!-- Temporarily removed ng-click until after demo done and detail page designed. -->
-        <rf-tool-item
+        <rf-template-item
             class="panel panel-off-white"
-            ng-repeat="toolData in $ctrl.toolList | filter: {title: $ctrl.searchString}"
-            tool-data="toolData"
+            ng-repeat="templateData in $ctrl.templateList | filter: {title: $ctrl.searchString}"
+            template-data="templateData"
             ng-click=""
-        ></rf-tool-item>
+        ></rf-template-item>
 
         <!-- Pagination -->
         <div class="list-group text-center"
-             ng-show="!$ctrl.loading && $ctrl.lastToolResponse && $ctrl.pagination.show && !$ctrl.errorMsg &&!$ctrl.searchString">
+             ng-show="!$ctrl.loading && $ctrl.lastTemplateResponse && $ctrl.pagination.show && !$ctrl.errorMsg &&!$ctrl.searchString">
           <ul uib-pagination
-              items-per-page="$ctrl.lastToolResponse.pageSize"
+              items-per-page="$ctrl.lastTemplateResponse.pageSize"
               total-items="$ctrl.pagination.count"
               ng-model="$ctrl.currentPage"
               max-size="4"
               rotate="true"
               boundary-link-numbers="true"
               force-ellipses="true"
-              ng-change="$ctrl.fetchToolList($ctrl.currentPage)">
+              ng-change="$ctrl.fetchTemplateList($ctrl.currentPage)">
           </ul>
         </div>
         <!-- Pagination -->

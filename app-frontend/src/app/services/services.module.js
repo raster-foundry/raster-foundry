@@ -1,4 +1,11 @@
-const shared = angular.module('sevices', []);
+const shared = angular.module('services', []);
+
+// analyses
+require('./analysis/analysis.service')(shared);
+require('./analysis/labUtils.service')(shared);
+require('./analysis/reclassify.service')(shared);
+require('./analysis/histogram.service')(shared);
+require('./tools/toolTag.service')(shared);
 
 // auth
 require('./auth/auth.service')(shared);
@@ -37,14 +44,6 @@ require('./scenes/scene.service')(shared);
 require('./scenes/upload.service')(shared);
 require('./scenes/datasource.service')(shared);
 
-// tools
-require('./tools/tool.service')(shared);
-require('./tools/toolCategory.service')(shared);
-require('./tools/toolTag.service')(shared);
-require('./tools/labUtils.service')(shared);
-require('./tools/reclassify.service')(shared);
-require('./tools/histogram.service')(shared);
-
 // map
 require('./map/map.service')(shared);
 require('./map/mapUtils.service')(shared);
@@ -58,6 +57,7 @@ require('./common/mousetip.service')(shared);
 require('./common/feed.service')(shared);
 require('./common/thumbnail.service')(shared);
 require('./common/decimal.filter')(shared);
+require('./common/modal.service')(shared);
 
 
 export default shared;

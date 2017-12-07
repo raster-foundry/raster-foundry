@@ -1,4 +1,4 @@
-import {authedRequest} from '../api-utils';
+import {authedRequest} from '_api/authentication';
 
 export const NODE_PREVIEWS = 'NODE_PREVIEWS';
 export const NODE_SET_ERROR = 'NODE_SET_ERROR';
@@ -10,7 +10,7 @@ export const NODE_UPDATE_HARD = 'NODE_UPDATE_HARD';
 
 export const NODE_ACTION_PREFIX = 'NODE';
 
-import { toolFromNodes } from '../node-utils';
+import { astFromNodes } from '../node-utils';
 
 // Node ActionCreators
 
@@ -65,19 +65,19 @@ export function updateNode({payload, hard = false}) {
         let labState = getState().lab;
         let promise;
         let updatedNode = payload;
-        let updatedTool = toolFromNodes(labState, updatedNode);
+        let updatedAnalysis = astFromNodes(labState, updatedNode);
         promise = authedRequest({
             method: 'put',
-            url: `${state.api.apiUrl}/api/tool-runs/${labState.tool.id}`,
-            data: updatedTool
+            url: `${state.api.apiUrl}/api/tool-runs/${labState.analysis.id}`,
+            data: updatedAnalysis
         }, getState()).then(() => {
-            return updatedTool;
+            return updatedAnalysis;
         });
         dispatch({
             type: hard ? NODE_UPDATE_HARD : NODE_UPDATE_SOFT,
             meta: {
                 node: updatedNode,
-                tool: updatedTool
+                analysis: updatedAnalysis
             },
             payload: promise
         });

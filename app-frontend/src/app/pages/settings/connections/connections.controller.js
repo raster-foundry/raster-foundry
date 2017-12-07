@@ -5,7 +5,7 @@ import planetLogo from '../../../../assets/images/planet-logo-light.png';
 
 class ConnectionsController {
     constructor(
-        $log, $state, $interval, $uibModal, $location,
+        $log, $state, $interval, modalService, $location,
         dropboxService, authService, userService, APP_CONFIG
     ) {
         'ngInject';
@@ -13,7 +13,7 @@ class ConnectionsController {
         this.$log = $log;
         this.$state = $state;
         this.$interval = $interval;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
         this.$location = $location;
         this.config = APP_CONFIG;
 
@@ -93,10 +93,7 @@ class ConnectionsController {
     }
 
     reconnectToDropbox() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-        this.activeModal = this.$uibModal.open({
+        const modal = this.modalService.open({
             component: 'rfConfirmationModal',
             resolve: {
                 title: () => 'Reconnect to Dropbox?',
@@ -110,15 +107,16 @@ class ConnectionsController {
                 cancelText: () => 'Cancel'
             }
         });
-        this.activeModal.result.then(
-            () => {
-                this.connectToDropbox();
-            });
+
+        modal.result.then(() => {
+            this.connectToDropbox();
+        });
     }
 
     onDropboxError(uri) {
-        this.$log.log(uri);
-        this.activeModal = this.$uibModal.open({
+        this.$log.error('Dropbox setup failed.', uri);
+
+        const modal = this.modalService.open({
             component: 'rfConfirmationModal',
             resolve: {
                 title: () => 'Dropbox Error',
@@ -131,7 +129,8 @@ class ConnectionsController {
                 cancelText: () => 'Cancel'
             }
         });
-        this.activeModal.result.then(() => {
+
+        modal.result.then(() => {
             this.connectToDropbox();
         });
     }
@@ -139,35 +138,18 @@ class ConnectionsController {
     onDropboxCallback(uri) {
         this.dropboxService.confirmCode(uri).then(() => {
             this.dropboxConnected = true;
-        }, () => {
-            this.$log.error('Dropbox setup failed.', uri);
-            this.activeModal = this.$uibModal.open({
-                component: 'rfConfirmationModal',
-                resolve: {
-                    title: () => 'API Error',
-                    subtitle: () => '',
-                    content: () =>
-                        '<div class="text-center color-danger">' +
-                        'There was an error while connecting your account to dropbox' +
-                        '</div>',
-                    confirmText: () => 'Try Again',
-                    cancelText: () => 'Cancel'
-                }
-            });
-            this.activeModal.result.then(() => {
-                this.connectToDropbox();
-            });
-        });
+        }, () => this.onDropboxError(uri));
     }
 
     connectToPlanet() {
-        this.activeModal = this.$uibModal.open({
+        const modal = this.modalService.open({
             component: 'rfEnterTokenModal',
             resolve: {
                 title: () => 'Enter your Planet API Token'
             }
         });
-        this.activeModal.result.then((token) => {
+
+        modal.result.then((token) => {
             this.userService.updatePlanetToken(token).then(() => {
                 this.user.planetCredential = true;
             }, (err) => {

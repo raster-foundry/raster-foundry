@@ -54,14 +54,14 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging {
       futureCached.flatMap({ value =>
         if (value != null) {
           // cache hit
-          Future.successful(Some(value.asInstanceOf[CachedType]))
+          Future.successful(value.asInstanceOf[Option[CachedType]])
         } else {
           // cache miss
           val futureCached: Future[Option[CachedType]] = expensiveOperation
           futureCached.onComplete {
             case Success(cachedValue) => {
               cachedValue match {
-                case Some(v) => setValue(cacheKey, v)
+                case Some(v) => setValue(cacheKey, cachedValue)
                 case None => setValue(cacheKey, cachedValue, ttlSeconds = 300)
               }
             }

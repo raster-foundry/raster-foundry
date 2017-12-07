@@ -42,7 +42,7 @@ const addMethods = [
 
 export default class AOIParametersController {
     constructor(
-        $log, $q, $scope, $state, $uibModal, $timeout,
+        $log, $q, $scope, $state, modalService, $timeout,
         moment, projectService, aoiService, authService, mapService,
         projectEditService
     ) {
@@ -53,7 +53,7 @@ export default class AOIParametersController {
         this.$scope = $scope;
         this.$parent = $scope.$parent.$ctrl;
         this.$state = $state;
-        this.$uibModal = $uibModal;
+        this.modalService = modalService;
         this.Moment = moment;
         this.updateFrequencies = updateFrequencies;
         this.projectService = projectService;
@@ -216,22 +216,16 @@ export default class AOIParametersController {
     }
 
     openDatePickerModal() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.$uibModal.open({
-            component: 'rfDatePickerModal',
-            windowClass: 'auto-width-modal',
-            resolve: {
-                config: () => Object({
-                    selectedDay: this.aoiProjectParameters.aoisLastChecked
-                })
-            }
-        });
-
-        this.activeModal.result.then(
-            selectedDay => {
+        this.modalService
+            .open({
+                component: 'rfDatePickerModal',
+                windowClass: 'auto-width-modal',
+                resolve: {
+                    config: () => Object({
+                        selectedDay: this.aoiProjectParameters.aoisLastChecked
+                    })
+                }
+            }).result.then(selectedDay => {
                 this.updateStartDate(selectedDay);
             });
     }

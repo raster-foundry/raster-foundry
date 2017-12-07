@@ -738,17 +738,33 @@ paths:
           description: The UUID parameter does not refer to a project or the user does not have access to the project it refers to
           schema:
             $ref: '#/definitions/Error'
-
+  /projects/{uuid}/labels/:
+    x-resource: Projects
+    get:
+      summary: Get a list of the labels used on a project
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: A list of labels
+          schema:
+            type: array
+            items:
+              type: string
   /projects/{uuid}/annotations/:
     x-resource: Projects
     get:
-      summary: Get all annotations belonging to a project
+      summary: Get annotations belonging to a project
       tags:
         - Imagery
       parameters:
         - $ref: '#/parameters/uuid'
         - $ref: '#/parameters/AnnotationLabel'
         - $ref: '#/parameters/AnnotationQualityCheck'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/pageSize'
       responses:
         200:
           description: GeoJSON feature collection containing paginated annotations of this project
@@ -756,7 +772,7 @@ paths:
             $ref: '#/definitions/AnnotationFeatureCollectionPaginated'
 
     post:
-      summary: Create annotations of this project
+      summary: Create annotations for a project
       tags:
         - Imagery
       parameters:
@@ -771,6 +787,19 @@ paths:
           description: GeoJSON annotations successfully created
           schema:
             $ref: '#/definitions/AnnotationFeatureCollection'
+        default:
+          description: Unexpected error.
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      summary: Delete all annotations from a project
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        201:
+          description: Annotations Deleted
         default:
           description: Unexpected error.
           schema:
@@ -2523,6 +2552,9 @@ definitions:
   AuthToken:
     type: object
     properties:
+      id_token:
+        type: string
+        description: Token that can be used for authenticating API requests
       access_token:
         type: string
         description: Token that can be used for authenticating API requests
@@ -3621,7 +3653,7 @@ definitions:
           confidence:
             type: number
             format: float
-          qualityCheck:
+          quality:
             type: string
             enum:
               - YES
@@ -3651,7 +3683,7 @@ definitions:
           confidence:
             type: number
             format: float
-          qualityCheck:
+          quality:
             type: string
             enum:
               - YES
@@ -3680,7 +3712,7 @@ definitions:
           confidence:
             type: number
             format: float
-          qualityCheck:
+          quality:
             type: string
             enum:
               - YES
