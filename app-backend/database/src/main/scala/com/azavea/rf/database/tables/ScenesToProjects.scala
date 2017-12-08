@@ -153,7 +153,7 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
 
   def getMosaicDefinition(projectId: UUID, polygonOption: Option[Projected[Polygon]])(implicit database: DB): Future[Option[Seq[MosaicDefinition]]] = {
     val query = for {
-      (s2p, s) <- ScenesToProjects join Scenes.filterByTileFootprint(polygonOption) on (_.sceneId === _.id)
+      (s2p, s) <- ScenesToProjects join Scenes.getMosaicScenes(polygonOption) on (_.sceneId === _.id)
     } yield {
       s2p
     }
