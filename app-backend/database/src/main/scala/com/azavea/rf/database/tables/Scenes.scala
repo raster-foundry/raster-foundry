@@ -516,8 +516,14 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) extends LazyLoggin
   import Scenes.datePart
 
 
-  def filterByTileFootprint(polygonOption: Option[Projected[Polygon]]): Scenes.TableQuery = {
-    polygonOption match {
+  /** Filters scenes by ingest status and intersection to guarantee that we are not
+    * returning non-ingested scenes
+    *
+    * @param polygonOption
+    * @return
+    */
+  def getMosaicScenes(polygonOption: Option[Projected[Polygon]]): Scenes.TableQuery = {
+    val polygonFilteredScenes = polygonOption match {
       case Some(polygon) => {
         scenes.filter{ scene =>
           scene.tileFootprint.intersects(polygon)
@@ -525,6 +531,7 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) extends LazyLoggin
       }
       case _ => scenes
     }
+    polygonFilteredScenes.filter(scene => scene.ingestStatus === IngestStatus.fromString("INGESTED"))
   }
 
   /** TODO: it isn't currently clear how to implement enum type ordering.
