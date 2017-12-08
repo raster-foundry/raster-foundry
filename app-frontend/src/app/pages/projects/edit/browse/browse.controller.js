@@ -144,7 +144,7 @@ export default class ProjectAddScenesBrowseController {
             });
 
             this.gridLayer = this.gridLayerService.createNewGridLayer(
-                Object.assign({}, this.queryParams)
+                Object.assign({}, this.queryParams), true
             );
             // 100 is just a placeholder "big" number to leave plenty of space for basemaps
             this.gridLayer.setZIndex(100);
