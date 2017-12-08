@@ -42,6 +42,7 @@ import errorTpl from './pages/error/error.html';
 import shareTpl from './pages/share/share.html';
 import homeTpl from './pages/home/home.html';
 import importsTpl from './pages/imports/imports.html';
+import importsListTpl from './pages/imports/list/list.html';
 import importsDatasourcesTpl from './pages/imports/datasources/datasources.html';
 import importsDatasourcesListTpl from './pages/imports/datasources/list/list.html';
 import importsDatasourcesDetailTpl from './pages/imports/datasources/detail/detail.html';
@@ -379,6 +380,14 @@ function importStates($stateProvider) {
             url: '/imports',
             templateUrl: importsTpl,
             controller: 'ImportsController',
+            controllerAs: '$ctrl',
+            abstract: true
+        })
+        .state('imports.list', {
+            title: 'Imports',
+            url: '/list?:page',
+            templateUrl: importsListTpl,
+            controller: 'ImportsListController',
             controllerAs: '$ctrl'
         })
         .state('imports.datasources', {

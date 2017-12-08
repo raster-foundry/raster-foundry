@@ -16,7 +16,6 @@ class ImportsController {
             component: 'rfDatasourceCreateModal'
         });
     }
-
 }
 
 export default ImportsController;

@@ -78,6 +78,7 @@ const App = angular.module(
         require('./pages/projects/edit/sharing/sharing.module.js').name,
 
         require('./pages/imports/imports.module.js').name,
+        require('./pages/imports/list/list.module.js').name,
         require('./pages/imports/datasources/datasources.module.js').name,
         require('./pages/imports/datasources/list/list.module.js').name,
         require('./pages/imports/datasources/detail/detail.module.js').name,
