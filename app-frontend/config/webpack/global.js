@@ -155,7 +155,7 @@ module.exports = function (_path) {
                 loader: DEVELOPMENT ? 'style-loader!' + stylesLoader
                     : ExtractTextPlugin.extract('style-loader', stylesLoader)
             }, {
-                test: /\.(woff2|woff|ttf|eot|svg)(\?[0-9]+)?(#[0-9a-zA-Z]+)?$/,
+                test: /\.(woff2|woff|ttf|eot|svg)(\?[a-z0-9]+)?$/,
                 loaders: [
                     'url-loader?name=assets/fonts/[name]_[hash].[ext]'
                 ]
