@@ -1,9 +1,20 @@
-<div class="main">
-  <div class="content stack-sm">
-    <h2>Datasources</h2>
-  </div>
+<div class="container dashboard">
   <div class="row content stack-sm">
-    <div class="column-9">
+    <div class="column-8">
+      
+      <!-- Dashboard Header -->
+      <div class="dashboard-header">
+        <h1 class="h3">Datasources</h1>
+        <div class="flex-fill"></div>
+        <rf-search on-search="$ctrl.search(value)"
+                   placeholder="Search for datasources"
+                   auto-focus="true">
+        </rf-search>
+        <a class="btn btn-primary" ng-click="$ctrl.datasourcesModal()">
+          New datasource
+        </a>
+      </div>
+      <!-- Dashboard Header -->
 
       <!-- Loading Indicator, show only when loading datasources-->
       <div class="text-center" ng-show="$ctrl.isLoadingDatasources">
@@ -12,22 +23,37 @@
           <i class="icon-load animate-spin"></i>
         </span>
       </div>
+      <!-- Loading indicator -->
 
-      <!-- Datasource List, show only when there are datasources-->
+      <!-- Datasources empty state -->
+      <div class="cta-row" ng-if="$ctrl.shouldShowPlaceholder()">
+        <rf-call-to-action-item 
+          title="You haven't created any datasources yet"
+          class="panel panel-off-white">
+          <div class="cta-flex-text">
+            You can create a new datasource by linking Raster Foundry with various kinds of imagery sources like your comptuer, Amazon S3 Buckets, DropBox, and many other sources.
+          </div>
+          <div class="cta-button-row">
+            <a class="btn btn-primary">Create a new Datasource</a>
+          </div>
+          <div class="cta-text">
+            <a>Getting started with Datasources</a>
+          </div>
+        </rf-call-to-action-item>
+      </div>
+      <!-- Datasources empty state -->
+
+      <!-- Datasource List -->
       <div class="list-group" ng-show="$ctrl.shouldShowList()">
-        <div class="form-group all-in-one">
-          <label for="search"><i class="icon-search"></i></label>
-          <input id="search" type="text" class="form-control"
-                placeholder="Search Datasources" ng-model="$ctrl.searchString">
-        </div>
         <rf-datasource-item
           ng-repeat="datasource in $ctrl.datasources.results | filter: {name: $ctrl.searchString}"
           datasource="datasource"
         >
         </rf-datasource-item>
       </div>
+      <!-- Datasource List -->
 
-      <!-- Datasource pagination, show only when item count exceeds page size-->
+      <!-- Datasource pagination -->
       <div class="list-group text-center"
           ng-show="$ctrl.shouldShowPagination()">
         <ul uib-pagination
@@ -41,7 +67,7 @@
             ng-change="$ctrl.loadDatasources($ctrl.currentPage)">
         </ul>
       </div>
-
+      
       <!-- Placeholder, show only when loading is complete and no datasources were found-->
       <div class="cta-row" ng-if="$ctrl.shouldShowPlaceholder()">
         <rf-call-to-action-item title="You haven't created any datasources yet">
@@ -58,24 +84,13 @@
       </div>
 
     </div>
-    <div class="column-3">
-      <div class="content">
-        <!-- We aren't creating datasources outside of the import process for now -->
-        <!--<div class="sidebar-section">
-          <button class="btn btn-primary">Create a new Datasource</button>
-        </div>-->
-        <div class="sidebar-section">
+    <div class="column spacer"></div>
+    <div class="column">
+      <div class="aside">
+        <section>
           <h5>What is a datasource?</h5>
-          <p class="font-size-small">
-            A project is a collection of scenes from many different sources where you can then run color corrections and mosaic into a basemap.
-          </p>
-        </div>
-        <div class="sidebar-section">
-          <h5>What is a datasource?</h5>
-          <p class="font-size-small">
-            A project is a collection of scenes from many different sources where you can then run color corrections and mosaic into a basemap.
-          </p>
-        </div>
+          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Voluptatum, ea! Minus magni impedit.</p>
+        </section>
       </div>
     </div>
   </div>

@@ -16,11 +16,15 @@
                    }">
       </i>
     </button>
-    <a class="btn btn-square"
+    <a class="btn btn-small"
        ui-sref="imports.datasources.detail({ datasourceid: $ctrl.datasource.id })"
        ui-sref-opts="{inherit: false}"
        ng-if="!$ctrl.isSelectable">
       View
+    </a>
+    <a class="btn btn-small">
+      <span class="sr-only">Delete</span>
+      <i class="icon-trash"></i>
     </a>
   </div>
 </div>

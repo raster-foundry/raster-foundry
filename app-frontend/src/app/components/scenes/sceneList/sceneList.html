@@ -8,14 +8,16 @@
       scene="scene"
       ng-click="$ctrl.viewSceneDetail(scene)"
       ng-repeat="scene in $ctrl.sceneList track by scene.id">
-    <div class="dropdown btn-group" uib-dropdown ng-if="$ctrl.sceneActions && $ctrl.sceneActions.length">
+    <div class="btn-group" ng-if="$ctrl.sceneActions && $ctrl.sceneActions.length">
       <button type="button"
-              class="btn"
+              class="btn btn-small"
               ng-class="$ctrl.getActionButtonClass(action)"
-              ng-click="$ctrl.onActionClick($event, action, scene)"
-              ng-repeat="action in $ctrl.sceneActions">
-        <span ng-class="$ctrl.getActionIcon(action)"></span>
-        {{action.label}}
+              ng-repeat="action in $ctrl.sceneActions"
+              ng-click="$ctrl.onActionClick($event, action, scene)">
+        <span class="sr-only">
+          {{action.label}}
+        </span>
+        <i class="{{action.iconClass}}"></i>
       </button>
     </div>
   </rf-scene-item>
@@ -33,20 +35,25 @@
       ng-change="$ctrl.populateSceneList($ctrl.currentPage)">
   </ul>
 </div>
-<div ng-if="$ctrl.shouldShowImportBox()" class="list-group">
-    <rf-call-to-action-item title="You haven't imported any scenes">
-      <div class="cta-flex-text">
-        Every scene that you import will be listed here. After you have imported one or more scenes,
-        you can return to this page to view them.
-      </div>
-      <div class="cta-button-row">
-        <a class="btn btn-primary" ng-click="$ctrl.importModal()">Import scenes</a>
-      </div>
-      <div class="cta-text">
-        <a>Getting started with Imports</a>
-      </div>
-    </rf-call-to-action-item>
+
+<!-- No imports placeholder -->
+<div ng-if="$ctrl.shouldShowImportBox()">
+  <rf-call-to-action-item 
+    title="You haven't imported any scenes"
+    class="panel panel-off-white">
+    <p class="pb-25">
+      Every scene that you import will be listed here. After you have imported one or more scenes,
+      you can return to this page to view them.
+    </p>
+
+    <a class="btn btn-primary" ng-click="$ctrl.importModal()">Import scenes</a>
+    <p>
+      <a>Getting started with Imports</a>
+    </p>
+  </rf-call-to-action-item>
 </div>
+<!-- No imports placeholder -->
+
 <div class="list-group" ng-if="$ctrl.errorMsg">
   <span class="list-placeholder">
     {{$ctrl.errorMsg}}
