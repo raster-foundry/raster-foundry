@@ -1,6 +1,11 @@
 export default (app) => {
     class MapUtilsService {
 
+        constructor($timeout) {
+            'ngInject';
+            this.$timeout = $timeout;
+        }
+
         /** Get the extent from a project (if it exists) and fit the map to it
           * @param {MapWrapper} mapWrapper mapWrapper object of map to interact with
           * @param {Project} project to hold, e.g. specifying latlng center and zoom
@@ -9,15 +14,13 @@ export default (app) => {
           */
         fitMapToProject(mapWrapper, project, offset = 0) {
             if (project.extent) {
-                let mapBounds = mapWrapper.map.getPixelBounds();
-                if (mapBounds.min.y !== mapBounds.max.y) {
+                mapWrapper.map.invalidateSize();
+                this.$timeout(() => {
                     mapWrapper.map.fitBounds(L.geoJSON(project.extent).getBounds(), {
-                        padding: [offset, offset]
+                        padding: [offset, offset],
+                        animate: false
                     });
-                } else {
-                    // eslint-disable-next-line
-                    setTimeout(this.fitMapToProject(mapWrapper, project, offset).bind(this), 125);
-                }
+                }, 250);
             }
             return this;
         }

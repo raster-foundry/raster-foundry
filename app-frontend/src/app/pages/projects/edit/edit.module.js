@@ -75,7 +75,7 @@ class ProjectsEditController {
 
     $postLink() {
         if (this.project) {
-            this.$timeout(this.fitProjectExtent(), 100);
+            this.fitProjectExtent();
         }
     }
 

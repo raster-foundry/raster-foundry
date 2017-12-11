@@ -12,7 +12,7 @@ export default class MapContainerController {
         this.getMap = () => this.mapService.getMap(this.mapId);
     }
 
-    $onInit() {
+    $postLink() {
         this.initMap();
     }
 
@@ -58,7 +58,7 @@ export default class MapContainerController {
         this.$timeout(() => {
             this.map.invalidateSize();
             this.mapWrapper = this.mapService.registerMap(this.map, this.mapId, this.options);
-        }, 400);
+        }, 750);
 
         this.basemapOptions = BUILDCONFIG.BASEMAPS.layers;
         this.basemapKeys = Object.keys(this.basemapOptions);

@@ -4343,7 +4343,11 @@ leaflet-path-transform@1.0.3:
   dependencies:
     leaflet-path-drag "^1.0.1"
 
-leaflet@1.0.3, leaflet@~1.0.2:
+leaflet@1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/leaflet/-/leaflet-1.2.0.tgz#fd5d93d9cb00091f5f8a69206d0d6744c1c82697"
+
+leaflet@~1.0.2:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/leaflet/-/leaflet-1.0.3.tgz#1f401b98b45c8192134c6c8d69686253805007c8"
 
