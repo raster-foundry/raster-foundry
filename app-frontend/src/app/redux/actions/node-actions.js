@@ -92,6 +92,6 @@ export function initNodes(payload) {
 }
 
 export default {
-    startNodePreview, startNodeCompare, selectNode, cancelNodeSelect,
+    startNodePreview, startNodeCompare, selectNode, cancelNodeSelect, compareNodes,
     setNodeError, updateNode, initNodes
 };

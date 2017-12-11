@@ -108,6 +108,12 @@ class LabBrowseAnalysesController {
         this.storeSorting();
         this.fetchAnalysesList(this.currentPage);
     }
+
+    onAnalysisDelete(analysisId) {
+        this.analysisService.deleteAnalysis(analysisId).then(() => {
+            this.fetchAnalysesList(this.currentPage);
+        });
+    }
 }
 
 export default angular.module('pages.lab.browse.analyses', [])

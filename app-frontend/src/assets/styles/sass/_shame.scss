@@ -2937,3 +2937,18 @@ rf-reclassify-table {
 .no-visibility {
     visibility: hidden !important;
 }
+
+.row-hover-controls {
+  .row-controls {
+    padding: 0 0.25em;
+    button {
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.125s;
+    }
+  }
+  &:hover .row-controls button {
+    opacity: 1;
+    pointer-events: all;
+  }
+}
