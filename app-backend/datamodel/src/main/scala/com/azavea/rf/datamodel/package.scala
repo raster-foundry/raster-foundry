@@ -21,34 +21,7 @@ import geotrellis.raster.render._
 import cats.syntax.either._
 import scala.util._
 
-package object datamodel {
-
-  trait OwnerCheck {
-    def checkOwner(createUser: User, ownerUserId: Option[String]): String = {
-      (createUser, ownerUserId) match {
-        case (user, Some(id)) if user.id == id => user.id
-        case (user, Some(id)) if user.isInRootOrganization => id
-        case (user, Some(id)) if !user.isInRootOrganization =>
-          throw new IllegalArgumentException("Insufficient permissions to set owner on object")
-        case (user, _) => user.id
-      }
-    }
-  }
-
-  implicit def encodePaginated[A: Encoder] =
-    Encoder.forProduct6(
-      "count",
-      "hasPrevious",
-      "hasNext",
-      "page",
-      "pageSize",
-      "results"
-    )({
-      pr: PaginatedResponse[A] =>
-      (pr.count, pr.hasPrevious, pr.hasNext, pr.page, pr.pageSize, pr.results)
-    }
-    )
-
+trait JsonCodecs {
   implicit val timestampEncoder: Encoder[Timestamp] =
     Encoder.encodeString.contramap[Timestamp](_.toInstant.toString)
   implicit val timestampDecoder: Decoder[Timestamp] =
@@ -129,3 +102,16 @@ package object datamodel {
   }
 }
 
+package object datamodel extends JsonCodecs{
+  trait OwnerCheck {
+    def checkOwner(createUser: User, ownerUserId: Option[String]): String = {
+      (createUser, ownerUserId) match {
+        case (user, Some(id)) if user.id == id => user.id
+        case (user, Some(id)) if user.isInRootOrganization => id
+        case (user, Some(id)) if !user.isInRootOrganization =>
+          throw new IllegalArgumentException("Insufficient permissions to set owner on object")
+        case (user, _) => user.id
+      }
+    }
+  }
+}
