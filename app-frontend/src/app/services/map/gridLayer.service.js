@@ -5,9 +5,10 @@ export default (app) => {
     /** Service to create a Leaflet grid layer for scenes
      */
     class GridLayerService {
-        constructor($http) {
+        constructor($http, $q) {
             'ngInject';
             this.$http = $http;
+            this.$q = $q;
         }
 
         /** Request grid from grom scene grid endpoint
@@ -25,10 +26,11 @@ export default (app) => {
         /** Create grid layer given a set of filter parameters
          *
          * @param {object} params filter parameters for scene grid
+         * @param {boolean} empty (defaults to false) if empty is true, an empty grid is generated
          *
          * @returns {GridLayer} grid layer used to control display of scene summary for tiles
          */
-        createNewGridLayer(params) {
+        createNewGridLayer(params, empty = false) {
             let self = this;
             let gridParams = Object.assign(params);
 
@@ -36,7 +38,9 @@ export default (app) => {
 
             let GridLayer = L.GridLayer.extend({
 
-                requestGrid: self.requestGrid.bind(self),
+                requestGrid: empty ?
+                    () => this.$q((resolve) => resolve({ data: [0, 0, 0, 0]})) :
+                    self.requestGrid.bind(self),
 
                 params: gridParams,
 
@@ -212,6 +216,7 @@ export default (app) => {
                         width: 127,
                         height: 127
                     });
+
                     layer.add(topLeft);
                     layer.add(bottomLeft);
                     layer.add(topRight);
@@ -221,53 +226,55 @@ export default (app) => {
 
                     this.requestGrid(coords, this.params).then((result) => {
                         let data = result.data;
+
+                        if (!empty) {
+                            topLeft.on('mouseover', function () {
+                                writeMessage(data[0].toString(), 64, 64, true);
+                            });
+                            topLeft.on('mouseout', function () {
+                                writeMessage('', 64, 64, false);
+                            });
+                            topRight.on('mouseover', function () {
+                                writeMessage(data[1].toString(), 192, 64, true);
+                            });
+                            topRight.on('mouseout', function () {
+                                writeMessage('', 192, 64, false);
+                            });
+                            bottomLeft.on('mouseover', function () {
+                                writeMessage(data[3].toString(), 64, 192, true);
+                            });
+                            bottomLeft.on('mouseout', function () {
+                                writeMessage('', 64, 192, false);
+                            });
+                            bottomRight.on('mouseover', function () {
+                                writeMessage(data[2].toString(), 192, 192, true);
+                            });
+                            bottomRight.on('mouseout', function () {
+                                writeMessage('', 192, 192, false);
+                            });
+                        }
+
+                        topLeft.fill(this.getColor(data[0]));
+                        topRight.fill(this.getColor(data[1]));
+                        bottomLeft.fill(this.getColor(data[3]));
+                        bottomRight.fill(this.getColor(data[2]));
+
                         topLeft.on('click', (e) => {
                             const bounds = this.getRectBounds(coords, 0);
                             this.onClick(e, bounds);
                         });
-                        topLeft.on('mouseover', function () {
-                            writeMessage(data[0].toString(), 64, 64, true);
-                        });
-                        topLeft.on('mouseout', function () {
-                            writeMessage('', 64, 64, false);
-                        });
-                        topLeft.fill(this.getColor(data[0]));
-
                         topRight.on('click', (e) => {
                             const bounds = this.getRectBounds(coords, 1);
                             this.onClick(e, bounds);
                         });
-                        topRight.on('mouseover', function () {
-                            writeMessage(data[1].toString(), 192, 64, true);
-                        });
-                        topRight.on('mouseout', function () {
-                            writeMessage('', 192, 64, false);
-                        });
-                        topRight.fill(this.getColor(data[1]));
-
                         bottomLeft.on('click', (e) => {
                             const bounds = this.getRectBounds(coords, 3);
                             this.onClick(e, bounds);
                         });
-                        bottomLeft.on('mouseover', function () {
-                            writeMessage(data[3].toString(), 64, 192, true);
-                        });
-                        bottomLeft.on('mouseout', function () {
-                            writeMessage('', 64, 192, false);
-                        });
-                        bottomLeft.fill(this.getColor(data[3]));
-
                         bottomRight.on('click', (e) => {
                             const bounds = this.getRectBounds(coords, 2);
                             this.onClick(e, bounds);
                         });
-                        bottomRight.on('mouseover', function () {
-                            writeMessage(data[2].toString(), 192, 192, true);
-                        });
-                        bottomRight.on('mouseout', function () {
-                            writeMessage('', 192, 192, false);
-                        });
-                        bottomRight.fill(this.getColor(data[2]));
 
                         stage.add(layer);
                         done(null, tile);

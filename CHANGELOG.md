@@ -2,7 +2,21 @@
 
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/HEAD)
 
-[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.26.0...HEAD)
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.27.0...HEAD)
+
+**Merged pull requests:**
+
+- Workaround for map init timing [\#2800](https://github.com/raster-foundry/raster-foundry/pull/2800)
+- Use ingest status filter when constructing mosaics [\#2799](https://github.com/raster-foundry/raster-foundry/pull/2799)
+- Moved our icon font from fontello to icomoon and added missing icons [\#2798](https://github.com/raster-foundry/raster-foundry/pull/2798)
+- Explicitly set tile-server log level to `INFO` [\#2796](https://github.com/raster-foundry/raster-foundry/pull/2796)
+- Add param to generate empty grid layer [\#2795](https://github.com/raster-foundry/raster-foundry/pull/2795)
+- Modify importer to separate Sentinel-2A and 2B scenes [\#2793](https://github.com/raster-foundry/raster-foundry/pull/2793)
+- Migration to split Sentinel-2A and Sentinel-2B datasources [\#2787](https://github.com/raster-foundry/raster-foundry/pull/2787)
+
+## [0.27.0](https://github.com/raster-foundry/raster-foundry/tree/0.27.0) (2017-12-07)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.26.0...0.27.0)
 
 **Merged pull requests:**
 

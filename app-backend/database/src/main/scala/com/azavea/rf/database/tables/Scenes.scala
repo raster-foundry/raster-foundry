@@ -347,6 +347,18 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     }
   }
 
+  def getDatasourcesScenesForDay(date: LocalDate, datasourceIds: Seq[UUID])(implicit database: DB): Future[Seq[String]] = {
+    database.db.run {
+      Scenes
+        .filterByDate(date)
+        .filter{scene =>
+          scene.datasource inSetBind datasourceIds
+        }
+        .map(_.name)
+        .result
+    }
+  }
+
 
   def sceneGrid(params: CombinedGridQueryParams, user: User, bboxes: Seq[Projected[Polygon]])(implicit database: DB) = {
     val filteredScenes = Scenes
@@ -504,8 +516,14 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) extends LazyLoggin
   import Scenes.datePart
 
 
-  def filterByTileFootprint(polygonOption: Option[Projected[Polygon]]): Scenes.TableQuery = {
-    polygonOption match {
+  /** Filters scenes by ingest status and intersection to guarantee that we are not
+    * returning non-ingested scenes
+    *
+    * @param polygonOption
+    * @return
+    */
+  def getMosaicScenes(polygonOption: Option[Projected[Polygon]]): Scenes.TableQuery = {
+    val polygonFilteredScenes = polygonOption match {
       case Some(polygon) => {
         scenes.filter{ scene =>
           scene.tileFootprint.intersects(polygon)
@@ -513,6 +531,7 @@ class ScenesTableQuery[M, U, C[_]](scenes: Scenes.TableQuery) extends LazyLoggin
       }
       case _ => scenes
     }
+    polygonFilteredScenes.filter(scene => scene.ingestStatus === IngestStatus.fromString("INGESTED"))
   }
 
   /** TODO: it isn't currently clear how to implement enum type ordering.
