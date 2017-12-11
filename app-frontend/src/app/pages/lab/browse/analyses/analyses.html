@@ -54,17 +54,15 @@
                                is-active="$ctrl.sortingField === 'modifiedAt'"
             >Last Modified</rf-sorting-header>
           </th>
-          <th>Privacy</th>
           <th></th>
         </tr>
-        <tr ng-repeat="analysis in $ctrl.analysesList | filter: {title: $ctrl.searchString}">
+        <tr ng-repeat="analysis in $ctrl.analysesList | filter: {title: $ctrl.searchString}" class="row-hover-controls">
           <td><a ui-sref="lab.analysis({analysisid: analysis.id, analysis: analysis})">
             {{analysis.name || 'Untitled analysis'}}
           </a></td>
           <td>{{analysis.modifiedAt | date : 'longDate'}}</td>
-          <td>{{$ctrl.formatAnalysisVisibility(analysis.visibility)}}</td>
-          <td class="text-right row-hover-controls">
-            <button><i class="icon-trash"></i></button>
+          <td class="text-right row-controls">
+            <button class="btn btn-danger" ng-click="$ctrl.onAnalysisDelete(analysis.id)"><i class="icon-trash"></i></button>
           </td>
         </tr>
       </table>
