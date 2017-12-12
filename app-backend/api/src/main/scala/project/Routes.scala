@@ -28,6 +28,8 @@ import io.circe.generic.JsonCodec
 import io.circe.optics.JsonPath._
 import kamon.akka.http.KamonTraceDirectives
 
+import com.typesafe.scalalogging.LazyLogging
+
 @JsonCodec
 case class BulkAcceptParams(sceneIds: List[UUID])
 
@@ -44,7 +46,8 @@ trait ProjectRoutes extends Authentication
     with AWSBatch
     with UserErrorHandler
     with KamonTraceDirectives
-    with ActionRunner {
+    with ActionRunner
+    with LazyLogging {
 
   implicit def database: Database
 
@@ -457,6 +460,7 @@ trait ProjectRoutes extends Authentication
               )
           )
         )
+        logger.info(s"Kicking off ${scenesToKickoff.size} scene ingests")
         scenesToKickoff.map(_.id).map(kickoffSceneIngest)
       }
       complete {
