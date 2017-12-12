@@ -106,13 +106,13 @@ object Auth0UserService extends Config with LazyLogging{
       }
   }
 
-  def getAuth0User(user: User)(implicit database: DB) : Future[UserWithOAuth] = {
+  def getAuth0User(userId: String)(implicit database: DB) : Future[UserWithOAuth] = {
      val query: Future[Auth0User] = for {
       bearerToken <- authBearerTokenCache.get(1)
-      auth0User <- requestAuth0User(user, bearerToken)
+      auth0User <- requestAuth0User(userId, bearerToken)
     } yield auth0User
     query.flatMap { auth0User =>
-      Users.getUserById(user.id).map { user =>
+      Users.getUserById(userId).map { user =>
         user match {
           case Some(user: User) =>
             UserWithOAuth(user, auth0User)
@@ -123,13 +123,13 @@ object Auth0UserService extends Config with LazyLogging{
     }
   }
 
-  def requestAuth0User(user: User, bearerToken: ManagementBearerToken): Future[Auth0User] = {
+  def requestAuth0User(userId: String, bearerToken: ManagementBearerToken): Future[Auth0User] = {
     val auth0UserBearerHeader = List(
       Authorization(GenericHttpCredentials("Bearer", bearerToken.access_token))
     )
     Http().singleRequest(HttpRequest(
         method = GET,
-        uri = s"$userUri/${user.id}",
+        uri = s"$userUri/${userId}",
         headers = auth0UserBearerHeader
       ))
       .flatMap {
@@ -147,21 +147,21 @@ object Auth0UserService extends Config with LazyLogging{
     }
   }
 
-  def updateAuth0User(user: User, auth0UserUpdate: Auth0UserUpdate): Future[Auth0User] = {
+  def updateAuth0User(userId: String, auth0UserUpdate: Auth0UserUpdate): Future[Auth0User] = {
     for {
       bearerToken <- authBearerTokenCache.get(1)
-      auth0User <- requestAuth0UserUpdate(user, auth0UserUpdate, bearerToken)
+      auth0User <- requestAuth0UserUpdate(userId, auth0UserUpdate, bearerToken)
     } yield auth0User
   }
 
-  def requestAuth0UserUpdate(user: User, auth0UserUpdate: Auth0UserUpdate, bearerToken: ManagementBearerToken):
+  def requestAuth0UserUpdate(userId: String, auth0UserUpdate: Auth0UserUpdate, bearerToken: ManagementBearerToken):
       Future[Auth0User] = {
     val auth0UserBearerHeader = List(
       Authorization(GenericHttpCredentials("Bearer", bearerToken.access_token))
     )
     Http().singleRequest(HttpRequest(
                            method = PATCH,
-                           uri = s"$userUri/${user.id}",
+                           uri = s"$userUri/${userId}",
                            headers = auth0UserBearerHeader,
                            entity = HttpEntity(
                              ContentTypes.`application/json`,
