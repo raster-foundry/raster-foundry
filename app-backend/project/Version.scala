@@ -44,4 +44,5 @@ object Version {
   val kamonAkkaHttp      = "0.6.8"
   val maml               = "0.0.2-fba7908"
   val nimbusJose         = "0.6.0"
+  val auth0              = "1.5.0"
 }

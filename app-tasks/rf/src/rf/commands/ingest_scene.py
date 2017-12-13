@@ -174,6 +174,8 @@ def wait_for_status(ingest_def_id):
     scene.update()
     logger.info('Successfully updated scene %s\'s ingest status', scene.id)
 
+    notify_for_scene_ingest_status(scene.id)
+
     if scene.ingestStatus == IngestStatus.FAILED:
         raise Exception('Failed to ingest {} for user {}'.format(scene_id, scene.owner))
 
@@ -197,4 +199,22 @@ def metadata_to_postgres(uri, scene_id):
     logger.debug('Bash command to store metadata: %s', ' '.join(bash_cmd))
     subprocess.check_call(bash_cmd, stdout=subprocess.PIPE)
     logger.info('Successfully completed metadata postgres write for scene %s', scene_id)
+    return True
+
+def notify_for_scene_ingest_status(scene_id):
+    """Notify users that are using this scene as well as the scene owner that
+    the ingest status of this scene has changed
+
+    Args:
+        scene_id (Scene): the scene which has an updated status
+    """
+
+    bash_cmd = [
+        'java', '-cp',
+        '/opt/raster-foundry/jars/rf-batch.jar',
+        'com.azavea.rf.batch.Main',
+        'notify_ingest_status',
+        scene_id
+    ]
+    subprocess.check_call(bash_cmd, stdout=subprocess.PIPE)
     return True

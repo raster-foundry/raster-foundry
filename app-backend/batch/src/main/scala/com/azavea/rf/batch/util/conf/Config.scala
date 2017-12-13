@@ -91,10 +91,19 @@ trait Config {
     def client(accessToken: String) = new DbxClientV2(config, accessToken)
   }
 
+  case class Auth0(
+    clientId: String,
+    clientSecret: String,
+    systemUser: String,
+    domain: String
+  )
+
+
   private lazy val config = ConfigFactory.load()
   protected lazy val landsat8Config = config.as[Landsat8]("landsat8")
   protected lazy val sentinel2Config = config.as[Sentinel2]("sentinel2")
   protected lazy val systemUser = config.as[String]("auth0.systemUser")
+  protected lazy val auth0Config = config.as[Auth0]("auth0")
   protected lazy val exportDefConfig = config.as[ExportDef]("export-def")
   protected lazy val dropboxConfig = config.as[Dropbox]("dropbox")
   val jarPath = "s3://us-east-1.elasticmapreduce/libs/script-runner/script-runner.jar"

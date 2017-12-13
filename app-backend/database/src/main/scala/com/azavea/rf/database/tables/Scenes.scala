@@ -260,6 +260,21 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     }
   }
 
+  def getScenePreauthorized(sceneId: UUID)
+              (implicit database: DB): Future[Option[Scene.WithRelated]] = {
+
+    database.db.run {
+      val action = Scenes
+        .filter(_.id === sceneId)
+        .joinWithRelated
+        .result
+      logger.debug(s"Total Query for scenes -- SQL: ${action.statements.headOption}")
+      action
+    } map { result =>
+      Scene.WithRelated.fromRecords(result).headOption
+    }
+  }
+
   /** Retrieve single scene from database for caching purposes
     * This does not filter by user and should not be used by standard routes.
     *
