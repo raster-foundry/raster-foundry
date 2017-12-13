@@ -28,8 +28,10 @@ BATCH_JAR_PATH = os.getenv('BATCH_JAR_PATH', 'rf-batch-761c316.jar')
 @click.argument('scene_id')
 @click.option('--ignore-previous', is_flag=True,
               help='Boolean to ignore scene status for ingestion')
+@click.option('--local', is_flag=True,
+              help='Boolean to run using a spark local cluster rather than EMR job')
 @wrap_rollbar
-def ingest_scene(scene_id, ignore_previous):
+def ingest_scene(scene_id, ignore_previous, local):
     """Ingest a scene into Raster Foundry
 
     Args:
@@ -38,7 +40,7 @@ def ingest_scene(scene_id, ignore_previous):
     """
     logger.info("Ingesting Scene: %s", scene_id)
     s3_uri, ingest_definition_id = save_ingest_def_to_s3(scene_id, ignore_previous)
-    launch_spark_ingest_job(s3_uri, ingest_definition_id, scene_id)
+    launch_spark_ingest_job(s3_uri, ingest_definition_id, scene_id, local)
     wait_for_status(ingest_definition_id)
 
 
@@ -75,13 +77,14 @@ def save_ingest_def_to_s3(scene_id, ignore_previous=False):
     return ingest_definition.s3_uri, ingest_definition.id
 
 
-def launch_spark_ingest_job(ingest_def_uri, ingest_def_id, scene_id):
+def launch_spark_ingest_job(ingest_def_uri, ingest_def_id, scene_id, local=False):
     """Launch ingest job and wait for success/failure
 
     Args:
         ingest_def_uri (str): S3 URI for location of ingest definition
         ingest_def_id (str): ID for ingest definition
         scene_id (str): ID for scene to be ingested
+        local (bool): whether to execute ingest as a spark local job
 
     Returns:
         bool
@@ -89,13 +92,31 @@ def launch_spark_ingest_job(ingest_def_uri, ingest_def_id, scene_id):
 
     logger.info('Launching Spark ingest job with ingest definition %s for scene %s',
                 ingest_def_uri, scene_id)
-    cluster_id = get_cluster_id()
-    emr_response = execute_ingest_emr_job(scene_id, ingest_def_uri, ingest_def_id, cluster_id)
-    logger.info('Launched Spark ingest job for %s with ingest ID %s. Waiting for status changes.',
-                scene_id, ingest_def_id)
-    step_id = emr_response['StepIds'][0]
-    is_success = wait_for_emr_success(step_id, cluster_id)
-    return is_success
+    if local:
+        return execute_local_ingest_job(scene_id, ingest_def_uri)
+    else:
+        cluster_id = get_cluster_id()
+        emr_response = execute_ingest_emr_job(scene_id, ingest_def_uri, ingest_def_id, cluster_id)
+        logger.info('Launched Spark ingest job for %s with ingest ID %s. Waiting for status changes.',
+                    scene_id, ingest_def_id)
+        step_id = emr_response['StepIds'][0]
+        is_success = wait_for_emr_success(step_id, cluster_id)
+        return is_success
+
+
+def execute_local_ingest_job(scene_id, ingest_s3_uri):
+    """Execute ingest job locally with a spark local cluster"""
+
+    command = ['spark-submit',
+               '--master', 'local[32]', '--driver-memory', '48g',
+               '--class', 'com.azavea.rf.batch.ingest.spark.Ingest',
+               '/opt/raster-foundry/jars/rf-batch.jar',
+               '-t', '--overwrite', '-s', scene_id, '-j', ingest_s3_uri
+    ]
+    subprocess.check_call(command)
+    logger.info('Finished Ingesting %s in spark local', scene_id)
+    return True
+
 
 @retry(wait_exponential_multiplier=2000, wait_exponential_max=30000, stop_max_attempt_number=5)
 def execute_ingest_emr_job(scene_id, ingest_s3_uri, ingest_def_id, cluster_id):
