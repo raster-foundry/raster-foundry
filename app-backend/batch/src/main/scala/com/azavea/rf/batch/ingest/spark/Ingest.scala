@@ -113,7 +113,7 @@ object Ingest extends SparkJob with LazyLogging with Config {
         scheme.levelFor(overallExtent, source.cellSize)
       }).maxBy(_.zoom)
 
-    maxZoom -> TileLayerMetadata(
+    val meta = TileLayerMetadata(
       cellType = layer.output.cellType,
       layout = baseLayoutDefinition,
       extent = overallExtent,
@@ -127,6 +127,8 @@ object Ingest extends SparkJob with LazyLogging with Config {
         )
       }
     )
+
+    (maxZoom, meta)
   }
 
   /** Produce a multiband histogram
@@ -135,13 +137,9 @@ object Ingest extends SparkJob with LazyLogging with Config {
     * @param numBuckets The number of histogram 'buckets' in which to bin values
     */
   def multibandHistogram(rdd: RDD[(SpatialKey, MultibandTile)], numBuckets: Int): Vector[Histogram[Double]] =
-    rdd.map({ case (key, mbt) =>
-      mbt.bands.map { tile =>
-        tile.histogramDouble(numBuckets)
-      }
-    }).reduce({ (hs1, hs2) =>
-      hs1.zip(hs2).map { case (a, b) => a merge b }
-    })
+    rdd.map { case (_, mbt) => mbt.bands.map(_.histogramDouble(numBuckets)) }
+      .reduce((hs1, hs2) => hs1.zip(hs2).map { case (a, b) => a merge b })
+  // .reduce((hs1, hs2) => (hs1, hs2).parMap2(_ merge _))  // Once Cats 1.0 is released.
 
   /** We need to suppress this warning because there's a perfectly safe `head` call being
     *  made here. The compiler just isn't smart enough to figure that out
