@@ -450,8 +450,7 @@ trait ProjectRoutes extends Authentication
       if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
         complete(StatusCodes.RequestEntityTooLarge)
       }
-      val scenesFuture = Projects.addScenesToProject(sceneIds, projectId, user)
-      scenesFuture.map { scenes =>
+      val scenesFuture = Projects.addScenesToProject(sceneIds, projectId, user).map { scenes =>
         val scenesToKickoff = scenes.filter(scene =>
           scene.statusFields.ingestStatus == IngestStatus.ToBeIngested || (
             scene.statusFields.ingestStatus == IngestStatus.Ingesting &&
@@ -462,6 +461,7 @@ trait ProjectRoutes extends Authentication
         )
         logger.info(s"Kicking off ${scenesToKickoff.size} scene ingests")
         scenesToKickoff.map(_.id).map(kickoffSceneIngest)
+        scenes
       }
       complete {
         scenesFuture
