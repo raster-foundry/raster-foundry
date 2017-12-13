@@ -228,7 +228,8 @@ lazy val batch = Project("batch", file("batch"))
       Dependencies.caffeine,
       Dependencies.scaffeine,
       Dependencies.mamlJvm,
-      Dependencies.mamlSpark
+      Dependencies.mamlSpark,
+      Dependencies.auth0
     )
   })
   .settings(assemblyShadeRules in assembly := Seq(
