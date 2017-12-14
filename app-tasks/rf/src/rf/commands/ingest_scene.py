@@ -15,13 +15,13 @@ from ..ingest import (
     create_ingest_definition
 )
 from ..uploads.landsat8.settings import datasource_id as landsat_id
-from ..uploads.sentinel2.settings import datasource_ids as sentinel2_ids
 from ..utils.exception_reporting import wrap_rollbar
 from ..utils.emr import get_cluster_id, wait_for_emr_success
 
 logger = logging.getLogger(__name__)
 
 BATCH_JAR_PATH = os.getenv('BATCH_JAR_PATH', 'rf-batch-761c316.jar')
+SENTINEL2_DATASOURCE_IDS = ['4a50cb75-815d-4fe5-8bc1-144729ce5b42', 'c33db82d-afdb-43cb-a6ac-ba899e48638d']
 
 
 @click.command(name='ingest-scene')
@@ -66,7 +66,7 @@ def save_ingest_def_to_s3(scene_id, ignore_previous=False):
     logger.info('Creating ingest definition')
     if scene.datasource == landsat_id:
         ingest_definition = create_landsat8_ingest(scene)
-    elif scene.datasource in sentinel2_ids:
+    elif scene.datasource in SENTINEL2_DATASOURCE_IDS:
         ingest_definition = create_sentinel2_ingest(scene)
     else:
         ingest_definition = create_ingest_definition(scene)
