@@ -316,6 +316,8 @@ export default class SceneImportModalController {
             }, err => {
                 this.uploadError(err);
                 this.handlePrevious();
+            }).finally(() => {
+                this.allowInterruptions();
             });
     }
 
