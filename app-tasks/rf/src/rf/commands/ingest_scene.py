@@ -15,7 +15,7 @@ from ..ingest import (
     create_ingest_definition
 )
 from ..uploads.landsat8.settings import datasource_id as landsat_id
-from ..uploads.sentinel2.settings import datasource_id as sentinel2_id
+from ..uploads.sentinel2.settings import datasource_ids as sentinel2_ids
 from ..utils.exception_reporting import wrap_rollbar
 from ..utils.emr import get_cluster_id, wait_for_emr_success
 
@@ -66,7 +66,7 @@ def save_ingest_def_to_s3(scene_id, ignore_previous=False):
     logger.info('Creating ingest definition')
     if scene.datasource == landsat_id:
         ingest_definition = create_landsat8_ingest(scene)
-    elif scene.datasource == sentinel2_id:
+    elif scene.datasource in sentinel2_ids:
         ingest_definition = create_sentinel2_ingest(scene)
     else:
         ingest_definition = create_ingest_definition(scene)
