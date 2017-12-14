@@ -118,7 +118,7 @@ trait SceneRoutes extends Authentication
     onSuccess(Scenes.getScene(sceneId, user)) { scene =>
       complete {
         scene.getOrElse {
-          throw new Exception(s"Scene does not exist or is not accessible by this user")
+          throw new Exception("Scene does not exist or is not accessible by this user")
         }.images map { image =>
           val downloadUri: String = {
             image.sourceUri match {
