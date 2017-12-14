@@ -105,10 +105,18 @@ def launch_spark_ingest_job(ingest_def_uri, ingest_def_id, scene_id, local=False
 
 
 def execute_local_ingest_job(scene_id, ingest_s3_uri):
-    """Execute ingest job locally with a spark local cluster"""
+    """Execute ingest job locally with a spark local cluster
 
+    Args:
+        scene_id (str): ID of scene to ingest
+        ingest_s3_uri (str): S3 location for ingest definition
+    """
+
+    ingest_cores = os.getenv('LOCAL_INGEST_CORES', 32)
+    ingest_memory = os.getenv('LOCAL_INGEST_MEM_GB', 48)
     command = ['spark-submit',
-               '--master', 'local[32]', '--driver-memory', '48g',
+               '--master', 'local[{}]'.format(ingest_cores),
+               '--driver-memory', '{}g'.format(ingest_memory),
                '--class', 'com.azavea.rf.batch.ingest.spark.Ingest',
                '/opt/raster-foundry/jars/rf-batch.jar',
                '-t', '--overwrite', '-s', scene_id, '-j', ingest_s3_uri
