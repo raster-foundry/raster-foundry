@@ -485,10 +485,12 @@ object Projects extends TableQuery(tag => new Projects(tag)) with LazyLogging {
                     scenesNotIngestedQuery.update(
                       (IngestStatus.ToBeIngested, new Timestamp((new Date).getTime))
                     )
+                  }.flatMap {
+                    _ => {
+                      logger.info(s"Scene IDs right at the end: $sceneIds")
+                      listSelectProjectScenes(projectId, sceneIds)
+                    }
                   }
-
-                  logger.info(s"Scene IDs right at the end: $sceneIds")
-                  listSelectProjectScenes(projectId, sceneIds)
                 }
               }
             }
