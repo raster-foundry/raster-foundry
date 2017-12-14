@@ -156,7 +156,28 @@ object Image {
       resolutionMeters,
       metadataFiles
     )
+
+    def toDownloadable(downloadUri: String): Image.WithRelatedDownladable = Image.WithRelatedDownladable(
+      this.id,
+      this.createdAt,
+      this.modifiedAt,
+      this.organizationId,
+      this.createdBy,
+      this.modifiedBy,
+      this.owner,
+      this.rawDataBytes,
+      this.visibility,
+      this.filename,
+      this.sourceUri,
+      this.scene,
+      this.imageMetadata,
+      this.resolutionMeters,
+      this.metadataFiles,
+      this.bands,
+      downloadUri
+    )
   }
+
 
   object WithRelated {
     /** Helper function to create Iterable[Image.WithRelated] from join
@@ -171,4 +192,26 @@ object Image {
       }
     }
   }
+
+  @JsonCodec
+  case class WithRelatedDownladable(
+    id: UUID,
+    createdAt: Timestamp,
+    modifiedAt: Timestamp,
+    organizationId: UUID,
+    createdBy: String,
+    modifiedBy: String,
+    owner: String,
+    rawDataBytes: Long,
+    visibility: Visibility,
+    filename: String,
+    sourceUri: String,
+    scene: UUID,
+    imageMetadata: Json,
+    resolutionMeters: Float,
+    metadataFiles: List[String],
+    bands: Seq[Band],
+    downloadUri: String
+  )
 }
+
