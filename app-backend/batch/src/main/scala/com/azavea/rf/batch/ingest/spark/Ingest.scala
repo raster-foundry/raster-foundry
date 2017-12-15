@@ -164,7 +164,7 @@ object Ingest extends SparkJob with LazyLogging with Config {
       val uri: AmazonS3URI = new AmazonS3URI(source.uri)
 
       /* The target band number is reduced by one, since those start at 1 to match Landsat. */
-      val bandMap: Map[Int, Int] = source.bandMaps.map(bm => (bm.source, bm.target.index - 1)).toMap
+      val bandMap: Map[Int, Int] = source.bandMaps.map(bm => (bm.source - 1, bm.target.index - 1)).toMap
 
       /* After reading imagery from S3, we need to fill out any missing bands. This is because
        * we are potentially reading many source TIFFs which could have different band counts,
