@@ -155,7 +155,7 @@ object Ingest extends SparkJob with LazyLogging with Config {
     val ndPattern = layer.output.ndPattern
     val bandCount: Int = layer.sources.map(_.bandMaps.map(_.target.index).max).max
     val layoutScheme = ZoomedLayoutScheme(destCRS, tileSize)
-    val options = S3GeoTiffRDD.Options(maxTileSize = Some(tileSize))
+    val options = S3GeoTiffRDD.Options(maxTileSize = Some(tileSize), partitionBytes = Some(16 * 1024 * 1024))
 
     val (maxZoom, layerMeta): (Int, TileLayerMetadata[SpatialKey]) =
       calculateTileLayerMetadata(layer, layoutScheme)
