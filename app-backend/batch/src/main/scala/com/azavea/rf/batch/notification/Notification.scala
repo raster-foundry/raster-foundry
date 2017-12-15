@@ -12,10 +12,11 @@ import com.azavea.rf.batch.Job
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.tables.{ScenesToProjects, Projects, Scenes}
 import com.azavea.rf.datamodel._
-import com.azavea.rf.common.S3
+import com.azavea.rf.common.{RollbarNotifier, S3}
 
+case class NotifyIngestStatus(sceneId: UUID)(implicit val database: DB) extends Job
+  with RollbarNotifier {
 
-case class NotifyIngestStatus(sceneId: UUID)(implicit val database: DB) extends Job {
   val name = NotifyIngestStatus.name
 
   def getSceneConsumers(sceneId: UUID): Future[Seq[String]] = {
@@ -60,7 +61,10 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val database: DB) extends 
             val user = mgmtApi.users().get(uid, new UserFilter()).execute()
             logger.info(s"Notification stub - ${uid} -> ${user.getEmail}")
           } catch {
-            case e: Throwable => logger.info(s"No user found for this id: ${uid}")
+            case e: Throwable => {
+              sendError(e)
+              logger.warn(s"No user found for this id: ${uid}")
+            }
           }
         }
       stop
