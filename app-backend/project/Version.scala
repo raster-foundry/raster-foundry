@@ -6,7 +6,7 @@ object Version {
   val hikariCP           = "3.2.0"
   val postgres           = "42.1.1"
   val scala              = "2.11.11"
-  val scalaForklift      = "0.2.2"
+  val scalaForklift      = "0.3.1"
   val scalaTest          = "3.0.1"
   val scapegoat          = "1.3.3"
   val slf4j              = "1.6.4"
@@ -45,4 +45,5 @@ object Version {
   val maml               = "0.0.2-fba7908"
   val nimbusJose         = "0.6.0"
   val auth0              = "1.5.0"
+  val slickMigrationAPI  = "0.4.0"
 }

@@ -29,7 +29,8 @@ lazy val commonSettings = Seq(
     Resolver.bintrayRepo("lonelyplanet", "maven"),
     Resolver.bintrayRepo("guizmaii", "maven"),
     Resolver.bintrayRepo("kwark", "maven"), // Required for Slick 3.1.1.2, see https://github.com/azavea/raster-foundry/pull/1576
-    "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases"
+    "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
+    Resolver.bintrayRepo("naftoligug", "maven")
   ),
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
   addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
@@ -101,7 +102,8 @@ lazy val dbDependencies = List(
 )
 
 lazy val forkliftDependencies = List(
-  Dependencies.scalaforklift
+  Dependencies.scalaforklift,
+  Dependencies.slickMigrationAPI
 )
 
 lazy val migrationsDependencies =
