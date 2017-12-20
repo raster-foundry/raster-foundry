@@ -133,12 +133,13 @@ export default class SceneImportModalController {
                 return this.fileUploads &&
                     this.uploadedFileCount + this.abortedUploadCount === this.fileUploads.length;
             },
-            onExit: () => this.finishS3Upload()
+            onExit: () => this.finishUpload()
         }, {
             name: 'S3_UPLOAD',
             previous: () => 'IMPORT',
             next: () => 'IMPORT_SUCCESS',
-            onEnter: () => this.startS3Upload()
+            onEnter: () => this.startS3Upload(),
+            onExit: () => this.finishUpload()
         }, {
             name: 'IMPORT_SUCCESS',
             allowDone: () => true
@@ -146,6 +147,7 @@ export default class SceneImportModalController {
             name: 'IMPORT_PLANET',
             previous: () => 'IMPORT',
             onEnter: () => this.startPlanetUpload(),
+            onExit: () => this.finishUpload(),
             next: () => 'IMPORT_SUCCESS'
         }, {
             name: 'IMPORT_ERROR',
@@ -297,7 +299,7 @@ export default class SceneImportModalController {
             });
     }
 
-    finishS3Upload() {
+    finishUpload() {
         this.upload.uploadStatus = 'UPLOADED';
         this.uploadService.update(this.upload).then(() => {
             this.allowInterruptions();
@@ -316,8 +318,6 @@ export default class SceneImportModalController {
             }, err => {
                 this.uploadError(err);
                 this.handlePrevious();
-            }).finally(() => {
-                this.allowInterruptions();
             });
     }
 
