@@ -82,6 +82,9 @@ x-resources:
   - name: Exports
     description: |
       Projects can be exported, but individual scenes and images cannot.
+  - name: Shapes
+    description: |
+      "Shapes are vectors that each user can create and manage. These shapes can then be used in various ways within the Raster Foundry platform."
 
 tags:
   - name: Users
@@ -1871,6 +1874,84 @@ paths:
             $ref: '#/definitions/Error'
         503:
           description: The request rate has been exceeded.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /shapes/:
+    x-resource: Projects
+    get:
+      summary: Get shapes belonging to the current user
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/pageSize'
+      responses:
+        200:
+          description: GeoJSON feature collection containing paginated shapes
+          schema:
+            $ref: '#/definitions/ShapeFeatureCollectionPaginated'
+
+    post:
+      summary: Create shapes belonging to the current user
+      tags:
+        - Imagery
+      parameters:
+        - name: shapes
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/ShapeFeatureCollectionCreate'
+      responses:
+        201:
+          description: GeoJSON shapes successfully created
+          schema:
+            $ref: '#/definitions/ShapeFeatureCollection'
+        default:
+          description: Unexpected error.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /shapes/{uuid}:
+    x-resouce: Projects
+    get:
+      summary: Get a specific shape
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: GeoJSON feature containing one shape
+          schema:
+            $ref: '#/definitions/ShapeFeature'
+
+    put:
+      summary: Update a specific shape
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+        - name: shape
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/ShapeFeatureUpdate'
+      responses:
+        204:
+          description: No content, update successful
+
+    delete:
+      summary: Delete a shape
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        204:
+          description: Deletion successful.
+        404:
+          description: The UUID parameter does not refer to a shape or the user does not have access to it.
           schema:
             $ref: '#/definitions/Error'
 
@@ -3754,3 +3835,86 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/AnnotationFeatureCreate'
+  ShapeFeature:
+    type: object
+    properties:
+      type:
+        type: string
+      properties:
+        allOf:
+        - $ref: '#/definitions/BaseModel'
+        - $ref: '#/definitions/TimeModelMixin'
+        - $ref: '#/definitions/UserTrackingMixin'
+        - type: object
+        properties:
+          name:
+            type: string
+          description:
+            type: string
+      geometry:
+        $ref: "#/definitions/Geometry"
+
+  ShapeFeatureUpdate:
+    type: object
+    properties:
+      type:
+        type: string
+      properties:
+        type: object
+        properties:
+          name:
+            type: string
+          description:
+            type: string
+      geometry:
+        $ref: "#/definitions/Geometry"
+
+  ShapeFeatureCreate:
+    type: object
+    properties:
+      type:
+        type: string
+      properties:
+        allOf:
+        - $ref: '#/definitions/BaseCreate'
+        - type: object
+        properties:
+          name:
+            type: string
+          description:
+            type: string
+      geometry:
+        $ref: "#/definitions/Geometry"
+
+  ShapeFeatureCollection:
+    type: object
+    properties:
+      type:
+        type: string
+      features:
+        type: array
+        items:
+          $ref: '#/definitions/ShapeFeature'
+
+  ShapeFeatureCollectionPaginated:
+    type: object
+    allOf:
+      - $ref: '#/definitions/PaginatedResponse'
+      - type: object
+        properties:
+          type:
+            type: string
+          features:
+            type: array
+            items:
+              $ref: '#/definitions/ShapeFeature'
+
+  ShapeFeatureCollectionCreate:
+    type: object
+    properties:
+      type:
+        type: string
+      features:
+        type: array
+        items:
+          $ref: '#/definitions/ShapeFeatureCreate'
