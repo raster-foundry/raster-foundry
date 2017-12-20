@@ -103,6 +103,8 @@ export default class ProjectCreateModalController {
 
         this.modalService.open({
             component: 'rfSceneImportModal',
+            backdrop: 'static',
+            keyboard: false,
             resolve: {
                 project: () => this.project
             }
