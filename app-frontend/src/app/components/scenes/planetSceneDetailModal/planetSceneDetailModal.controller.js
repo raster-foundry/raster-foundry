@@ -13,7 +13,7 @@ export default class PlanetSceneDetailModalController {
         });
     }
 
-    $onInit() {
+    $postLink() {
         this.getMap().then(mapWrapper => {
             // the order of the below two function calls is important
             mapWrapper.map.fitBounds(this.getSceneBounds());
@@ -26,6 +26,6 @@ export default class PlanetSceneDetailModalController {
     }
 
     getSceneBounds() {
-        return L.geoJSON(this.scene.dataFootprint).getBounds();
+        return L.geoJSON(this.scene.tileFootprint).getBounds();
     }
 }

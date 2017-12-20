@@ -37,6 +37,14 @@ export default class ProjectAddScenesBrowseController {
         this.selectedScenes = new Map();
         this.sceneList = [];
         this.gridFilterActive = false;
+
+        this.sourceRepo = 'Raster Foundry';
+        this.planetThumbnailUrls = new Map();
+        this.authService.getCurrentUser().then((user) => {
+            this.planetKey = user.planetCredential;
+        });
+        this.debouncedRequestPlanetSceneList = _.debounce(this.requestPlanetSceneList, 1000);
+
         if (!this.$parent.project) {
             this.project = this.$parent.project;
             this.$parent.waitForProject().then((project) => {
@@ -54,6 +62,8 @@ export default class ProjectAddScenesBrowseController {
             this.initMap();
             if (this.queryParams && this.queryParams.dataRepo === 'Raster Foundry') {
                 this.requestNewSceneList();
+            } else if (this.queryParams && this.queryParams.dataRepo === 'Planet Labs') {
+                this.requestPlanetSceneList();
             }
         }
 
@@ -66,13 +76,6 @@ export default class ProjectAddScenesBrowseController {
             });
             this.selectNoScenes();
         });
-
-        this.authService.getCurrentUser().then((user) => {
-            this.planetKey = user.planetCredential;
-        });
-
-        this.sourceRepo = 'Raster Foundry';
-        this.planetThumbnailUrls = new Map();
     }
 
     initParams() {
@@ -303,8 +306,9 @@ export default class ProjectAddScenesBrowseController {
             dataRepo: this.sourceRepo
         });
 
+        this.sessionStorage.set('filters', filterObject);
+
         if (this.sourceRepo === 'Raster Foundry') {
-            this.sessionStorage.set('filters', filterObject);
             this.$state.go('.', this.getCombinedParams(), {
                 notify: false,
                 inherit: false,
@@ -313,14 +317,17 @@ export default class ProjectAddScenesBrowseController {
             this.requestNewSceneList();
         } else if (this.sourceRepo === 'Planet Labs') {
             this.planetSceneCounts = 0;
-            this.requestPlanetSceneList();
+            this.sceneList = [];
+            this.currentSceneList = [];
+            delete this.lastSceneResult;
+            this.debouncedRequestPlanetSceneList();
         }
     }
 
     requestPlanetSceneList() {
-        this.sceneList = [];
-        this.currentSceneList = [];
-        delete this.lastSceneResult;
+        const currentTime = new Date().getTime();
+        this.lastRequestTime = currentTime;
+
         this.isLoadingPlanetScenes = true;
         let params = Object.assign({}, this.queryParams);
         let bbox = params.bbox ? L.latLngBounds(this.parseBBoxString(params.bbox)) :
@@ -332,12 +339,15 @@ export default class ProjectAddScenesBrowseController {
           this.planetKey, requestBody
         ).then((res) => {
             if (res.status === 200) {
-                this.isLoadingPlanetScenes = false;
-                this.planetSceneCounts = res.data.features.length;
-                this.storePlanetNextPageLink(res.data);
-                this.planetSceneChunks = this.planetLabsService.planetFeatureToScene(res.data);
-                this.sceneList = _.uniqBy(_.head(this.planetSceneChunks), 'id');
-                this.currentSceneList = _.head(this.planetSceneChunks);
+                if (currentTime === this.lastRequestTime) {
+                    this.isLoadingPlanetScenes = false;
+                    this.planetSceneCounts = res.data.features.length;
+                    this.storePlanetNextPageLink(res.data);
+                    this.planetSceneChunks = this.planetLabsService
+                        .planetFeatureToScene(res.data);
+                    this.sceneList = _.uniqBy(_.head(this.planetSceneChunks), 'id');
+                    this.currentSceneList = _.head(this.planetSceneChunks);
+                }
             }
         }, (err) => {
             this.$log.log(err);
