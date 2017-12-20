@@ -8,6 +8,7 @@ export default angular.module('index.components', [
     require('./components/scenes/sceneImportModal/sceneImportModal.module.js').name,
     require('./components/scenes/sceneDownloadModal/sceneDownloadModal.module.js').name,
     require('./components/scenes/sceneFilterPane/sceneFilterPane.module.js').name,
+    require('./components/scenes/planetSceneDetailModal/planetSceneDetailModal.module.js').name,
 
     // project components
     require('./components/projects/projectItem/projectItem.module.js').name,

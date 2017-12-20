@@ -1,0 +1,50 @@
+<div class="scene-detail-modal-body">
+  <div class="content-row">
+    <div class="scene-metadata text-left">
+      <div class="scene-metadata-fixed">
+        <button type="button" class="close" aria-label="Close" ng-click="$ctrl.dismiss()">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <p>
+        <strong class="color-dark">{{$ctrl.scene.name}}</strong><br>
+          {{$ctrl.scene.datasource}}
+        </p>
+      </div>
+      <div class="scene-metadata-scrollable">
+        <h5 class="color-dark">Scene properties</h5>
+        <dl class="meta-list">
+          <dt ng-repeat-start="(field, value) in $ctrl.scene.filterFields">
+            {{field}}
+          </dt>
+          <dd ng-repeat-end>
+            {{field == 'acquisitionDate' ? (value | date) : value}}
+          </dd>
+          <dt>Created Date</dt>
+          <dd>{{$ctrl.scene.createdAt | date}}</dd>
+          <dt>Modified Date</dt>
+          <dd>{{$ctrl.scene.modifiedAt | date}}</dd>
+          <dt>Datasource</dt>
+          <dd>{{$ctrl.scene.datasource}}</dd>
+        </dl>
+        <h5 class="color-dark">Scene metadata</h5>
+        <dl class="meta-list">
+          <dt ng-repeat-start="(metaKey, metaVal) in $ctrl.scene.sceneMetadata">
+            {{metaKey}}
+          </dt>
+          <dd ng-repeat-end>{{metaVal}}</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="scene-preview-container">
+      <rf-map-container map-id="scene-preview-map">
+      </rf-map-container>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn pull-left"
+            ng-click="$ctrl.dismiss()">
+      Close
+    </button>
+  </div>
+</div>
