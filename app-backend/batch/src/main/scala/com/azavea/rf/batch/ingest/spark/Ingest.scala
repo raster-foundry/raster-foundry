@@ -173,7 +173,10 @@ object Ingest extends SparkJob with LazyLogging with Config {
       S3GeoTiffRDD.multiband[ProjectedExtent](uri.getBucket, uri.getKey, options)
         .mapValues { mbt =>
 
-          val tiles: Vector[Tile] = mbt.bands
+          // Set NoData values if a pattern has been specified
+          val ndCorrectedTile = ndPattern.fold(mbt)(mask => mask(mbt))
+
+          val tiles: Vector[Tile] = ndCorrectedTile.bands
           val prototype: Tile = tiles.head
           val emptyTile: Tile = ArrayTile.empty(prototype.cellType, prototype.cols, prototype.rows)
 
