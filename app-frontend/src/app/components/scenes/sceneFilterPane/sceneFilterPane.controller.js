@@ -55,30 +55,37 @@ export default class FilterPaneController {
             if (browseSource === 'Planet Labs') {
                 if (!this.userPlanetCredential) {
                     this.connectToPlanet();
+                } else {
+                    this.onPassPlanetToken({planetToken: this.userPlanetCredential});
+                    this.onBrowseSourceChange(browseSource);
                 }
-                this.onPassPlanetToken({planetToken: this.userPlanetCredential});
+            } else {
+                this.onBrowseSourceChange(browseSource);
             }
-            this.selectedBrowseSource = browseSource;
-            this.selectedDatasource = '';
-            this.initDataSourceFilters();
-            this.datefilter = {
-                start: this.Moment().subtract(1, 'months'),
-                end: this.Moment()
-            };
-            this.hasDatetimeFilter = true;
-            this.datefilterPreset = 'The last month';
-
-            this.newParams = Object.assign({}, {
-                datasource: [],
-                minAcquisitionDatetime: this.datefilter.start.toISOString(),
-                maxAcquisitionDatetime: this.datefilter.end.toISOString()
-            });
-
-            this.onFilterChange({
-                newFilters: this.newParams,
-                sourceRepo: this.selectedBrowseSource
-            });
         }
+    }
+
+    onBrowseSourceChange(browseSource) {
+        this.selectedBrowseSource = browseSource;
+        this.selectedDatasource = '';
+        this.initDataSourceFilters();
+        this.datefilter = {
+            start: this.Moment().subtract(1, 'months'),
+            end: this.Moment()
+        };
+        this.hasDatetimeFilter = true;
+        this.datefilterPreset = 'The last month';
+
+        this.newParams = Object.assign({}, {
+            datasource: [],
+            minAcquisitionDatetime: this.datefilter.start.toISOString(),
+            maxAcquisitionDatetime: this.datefilter.end.toISOString()
+        });
+
+        this.onFilterChange({
+            newFilters: this.newParams,
+            sourceRepo: this.selectedBrowseSource
+        });
     }
 
     connectToPlanet() {
@@ -91,7 +98,8 @@ export default class FilterPaneController {
             this.userService.updatePlanetToken(token).then(() => {
                 this.userPlanetCredential = token;
                 if (this.userPlanetCredential) {
-                    this.selectedBrowseSource = 'Planet Labs';
+                    this.onPassPlanetToken({planetToken: this.userPlanetCredential});
+                    this.onBrowseSourceChange('Planet Labs');
                 }
             }, (err) => {
                 this.$log.log('There was an error updating the user with a planet api token', err);
