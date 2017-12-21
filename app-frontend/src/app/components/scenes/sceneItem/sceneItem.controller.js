@@ -14,11 +14,13 @@ export default class SceneItemController {
     $onInit() {
         this.datasourceLoaded = false;
 
-        if (this.apiSource === 'Raster Foundry') {
+        if (!this.apiSource || this.apiSource === 'Raster Foundry') {
             this.datasourceService.get(this.scene.datasource).then(d => {
                 this.datasourceLoaded = true;
                 this.datasource = d;
             });
+        } else if (this.apiSource === 'Planet Labs') {
+            this.getPlanetThumbnail();
         }
 
         if (this.isDraggable) {
@@ -30,10 +32,6 @@ export default class SceneItemController {
                     this.mapService.disableFootprints = false;
                 }
             });
-        }
-
-        if (this.apiSource === 'Planet Labs') {
-            this.getPlanetThumbnail();
         }
     }
 

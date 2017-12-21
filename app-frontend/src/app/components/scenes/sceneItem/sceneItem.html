@@ -2,7 +2,7 @@
   <div ng-if="$ctrl.isDraggable" ui-tree-handle>
     <i class="icon-gripper"></i>
   </div>
-  <div ng-if="$ctrl.apiSource === 'Raster Foundry'">
+  <div ng-if="!$ctrl.apiSource || $ctrl.apiSource === 'Raster Foundry'">
     <rf-status-tag entity-type="scene"
                    status="$ctrl.scene.statusFields.ingestStatus"></rf-status-tag>
     <img ng-if="$ctrl.scene.thumbnails[0]"
