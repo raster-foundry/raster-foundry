@@ -51,8 +51,8 @@
         ng-mouseover="$ctrl.$parent.setHoveredScene(scene)"
         ng-mouseleave="$ctrl.$parent.removeHoveredScene()"
         ng-repeat="scene in $ctrl.$parent.sceneList track by scene.id">
-      <button class="btn btn-square btn-danger" ng-click="$ctrl.removeSceneFromProject(scene, $event)">
-        <i class="icon-trash"></i>
+      <button class="btn btn-square btn-ghost" ng-click="$ctrl.removeSceneFromProject(scene, $event)">
+        Remove
       </button>
     </rf-scene-item>
   </div>
