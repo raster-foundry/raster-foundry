@@ -15,9 +15,7 @@ const AnnotateToolbarComponent = {
 };
 
 class AnnotateToolbarController {
-    constructor(
-        $scope, $ngRedux,
-        mapService
+    constructor($scope, $ngRedux, mapService
     ) {
         'ngInject';
         this.$scope = $scope;
