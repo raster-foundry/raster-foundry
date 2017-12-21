@@ -610,6 +610,26 @@ paths:
             The UUID parameter does not refer to a scene or the user does not have access to the scene it refers to
           schema:
             $ref: '#/definitions/Error'
+  /scenes/{uuid}/download:
+    x-resource: Scenes
+    get:
+      summary: Get list of downloadable Images
+      tags:
+        - Imagery
+      parameters:
+        - $ref: '#/parameters/uuid'
+      responses:
+        200:
+          description: An array of downloadable images. Each image has a `downloadUri` property.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ImageWithDownloadUri'
+        404:
+          description: |
+            UUID parameter does not refer to an scene or the user is not able to view the scene it refers to
+          schema:
+            $ref: '#/definitions/Error'
   /scene-grid/{zoom}/{column}/{row}/:
     x-resource: Scenes
     get:
@@ -2964,6 +2984,57 @@ definitions:
           description: |
             Metadata files that should be present for processing all
             images in a scene (e.g. relevant .mtl files or .xml)
+      required:
+        - filename
+        - sourceUri
+  ImageWithDownloadUri:
+    allOf:
+    - $ref: '#/definitions/BaseModel'
+    - $ref: '#/definitions/UserTrackingMixin'
+    - type: object
+      properties:
+        visibility:
+          type: string
+          description: Level of restriction on viewing
+          enum:
+            - PUBLIC
+            - ORGANIZATION
+            - PRIVATE
+        filename:
+          type: string
+          description: Name of the image file
+        resolutionMeters:
+          type: number
+          description: Size of pixel in meters
+        sourceUri:
+          type: string
+          description: URI to original source. This should include a protocol-like prefix to identify where it is located http://, s3://, etc.
+        rawDataBytes:
+          type: integer
+          format: int64
+          description: Size of original uploaded imagery in bytes
+        bands:
+          type: array
+          description: list of band types for image; a single band denotes a single band image, multiple bands should be listed in order (e.g if it is an RGB tiff then bands should be [red, green blue])
+          items:
+            $ref: '#/definitions/Band'
+        scene:
+          type: string
+          format: uuid
+          description: Scene that image is associated with
+        image_metadata:
+          type: object
+          description: Metadata about this image
+        metadataFiles:
+          type: array
+          items:
+            type: string
+          description: |
+            Metadata files that should be present for processing all
+            images in a scene (e.g. relevant .mtl files or .xml)
+        downloadUri:
+          type: string
+          description: URI to downloadable resource. This is not always the same as `sourceUri`.
       required:
         - filename
         - sourceUri
