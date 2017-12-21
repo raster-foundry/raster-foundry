@@ -37,8 +37,6 @@ export default class ProjectAddScenesBrowseController {
         this.selectedScenes = new Map();
         this.sceneList = [];
         this.gridFilterActive = false;
-
-        this.sourceRepo = 'Raster Foundry';
         this.planetThumbnailUrls = new Map();
         this.authService.getCurrentUser().then((user) => {
             this.planetKey = user.planetCredential;
@@ -63,7 +61,14 @@ export default class ProjectAddScenesBrowseController {
             if (this.queryParams && this.queryParams.dataRepo === 'Raster Foundry') {
                 this.requestNewSceneList();
             } else if (this.queryParams && this.queryParams.dataRepo === 'Planet Labs') {
-                this.requestPlanetSceneList();
+                if (this.planetKey) {
+                    this.debouncedRequestPlanetSceneList();
+                } else {
+                    this.authService.getCurrentUser().then((user) => {
+                        this.planetKey = user.planetCredential;
+                        this.debouncedRequestPlanetSceneList();
+                    });
+                }
             }
         }
 
@@ -106,6 +111,9 @@ export default class ProjectAddScenesBrowseController {
 
         this.filters = Object.assign({}, this.queryParams);
         delete this.filters.bbox;
+
+        this.sourceRepo = this.queryParams && this.queryParams.dataRepo ?
+          this.queryParams.dataRepo : 'Raster Foundry';
     }
 
     initSelectedScene() {
@@ -398,10 +406,7 @@ export default class ProjectAddScenesBrowseController {
                 delete newParams[filterProperty];
             }
         });
-
-        this.queryParams = Object.assign({
-            bbox: this.queryParams.bbox
-        }, newParams);
+        this.queryParams = Object.assign(newParams, {bbox: this.bboxCoords});
         this.filters = Object.assign({}, this.queryParams);
         this.onQueryParamsChange();
         this.updateSceneGrid();
