@@ -83,27 +83,11 @@ export default class SceneListController {
     }
 
     downloadModal(scene) {
-        this.sceneService.getDownloadableImages(scene).then(images => {
-            const imageSet = images.map(image => {
-                return {
-                    filename: image.filename,
-                    uri: image.downloadUri,
-                    metadata: image.metadataFiles || []
-                };
-            });
-
-            let downloadSets = [{
-                label: scene.name,
-                metadata: scene.metadataFiles || [],
-                images: imageSet
-            }];
-
-            this.modalService.open({
-                component: 'rfSceneDownloadModal',
-                resolve: {
-                    downloads: () => downloadSets
-                }
-            });
+        this.modalService.open({
+            component: 'rfSceneDownloadModal',
+            resolve: {
+                scene: () => scene
+            }
         });
     }
 

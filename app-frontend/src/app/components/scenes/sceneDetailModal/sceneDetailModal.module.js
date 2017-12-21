@@ -51,22 +51,10 @@ class SceneDetailModalController {
     }
 
     openDownloadModal() {
-        const images = this.scene.images.map(i => Object({
-            filename: i.filename,
-            uri: i.sourceUri,
-            metadata: i.metadataFiles || []
-        }));
-
-        const downloadSets = [{
-            label: this.scene.name,
-            metadata: this.scene.metadataFiles || [],
-            images: images
-        }];
-
         this.modalService.open({
             component: 'rfSceneDownloadModal',
             resolve: {
-                downloads: () => downloadSets
+                scene: () => this.scene
             }
         });
     }
