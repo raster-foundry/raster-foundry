@@ -402,6 +402,7 @@ export default class ProjectAddScenesBrowseController {
         this.queryParams = Object.assign({
             bbox: this.queryParams.bbox
         }, newParams);
+        this.filters = Object.assign({}, this.queryParams);
         this.onQueryParamsChange();
         this.updateSceneGrid();
     }
