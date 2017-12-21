@@ -51,21 +51,20 @@ export default class FilterPaneController {
     }
 
     onSelectBrowseSource(browseSource) {
-        if (browseSource !== this.selectedBrowseSource) {
-            if (browseSource === 'Planet Labs') {
-                if (!this.userPlanetCredential) {
-                    this.connectToPlanet();
-                } else {
-                    this.onPassPlanetToken({planetToken: this.userPlanetCredential});
-                    this.onBrowseSourceChange(browseSource);
-                }
+        let isBrowseSourceChanged = browseSource !== this.selectedBrowseSource;
+        if (isBrowseSourceChanged && browseSource === 'Planet Labs') {
+            if (!this.userPlanetCredential) {
+                this.connectToPlanet();
             } else {
-                this.onBrowseSourceChange(browseSource);
+                this.onPassPlanetToken({planetToken: this.userPlanetCredential});
+                this.onBrowseSourceChanged(browseSource);
             }
+        } else if (isBrowseSourceChanged && browseSource === 'Raster Foundry') {
+            this.onBrowseSourceChanged(browseSource);
         }
     }
 
-    onBrowseSourceChange(browseSource) {
+    onBrowseSourceChanged(browseSource) {
         this.selectedBrowseSource = browseSource;
         this.selectedDatasource = '';
         this.initDataSourceFilters();
@@ -99,7 +98,7 @@ export default class FilterPaneController {
                 this.userPlanetCredential = token;
                 if (this.userPlanetCredential) {
                     this.onPassPlanetToken({planetToken: this.userPlanetCredential});
-                    this.onBrowseSourceChange('Planet Labs');
+                    this.onBrowseSourceChanged('Planet Labs');
                 }
             }, (err) => {
                 this.$log.log('There was an error updating the user with a planet api token', err);
