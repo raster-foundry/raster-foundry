@@ -21,7 +21,7 @@ class DiagramNodeHeaderController {
 
         let unsubscribe = $ngRedux.connect(
             this.mapStateToThis.bind(this),
-              Object.assign({}, LabActions, NodeActions)
+            Object.assign({}, LabActions, NodeActions)
         )(this);
         $scope.$on('$destroy', unsubscribe);
     }
@@ -71,14 +71,14 @@ class DiagramNodeHeaderController {
     }
 
     toggleNodeLabelEdit() {
-        this.isEditNodeLabel = !this.isEditNodeLabel;
+        this.isEditingNodeLabel = !this.isEditingNodeLabel;
     }
 
     finishNodelabelEdit() {
         if (this.nameBuffer) {
             this.node = Object.assign(this.node, {metadata: {label: this.nameBuffer}});
             this.updateNode({ payload: this.node, hard: true});
-            this.isEditNodeLabel = !this.isEditNodeLabel;
+            this.isEditingNodeLabel = !this.isEditingNodeLabel;
         }
     }
 }

@@ -1259,7 +1259,7 @@ rf-diagram-container {
 .icon-save.node-label-name,
 .icon-cancel.node-label-name {
   color: $gray-lighter;
-  font-size: 1.8rem;
+  font-size: 1.5rem;
 }
 
 
@@ -1567,6 +1567,10 @@ rf-lab-node {
     display: flex;
     flex-direction: row;
     color: $gray-lighter;
+    flex-shrink: 0;
+    margin-bottom: 0.25em;
+    height: 18px;
+    align-items: center;
 
     [class^="icon-"]:before, [class*=" icon-"]:before {
       width: 1em;
@@ -1575,9 +1579,31 @@ rf-lab-node {
     }
   }
 
+  .node-header-name-container {
+    flex-direction: row;
+    flex-grow: 1;
+
+    .node-header-edit{
+      padding: 0;
+      font-size: 1rem;
+    }
+
+    .form-group.all-in-one.node-header-eidt-group {
+      height: 2rem;
+      z-index: 10000;
+
+      input, button {
+        padding-top: 0px;
+        padding-bottom: 0px;
+        height: 1.8rem;
+      }
+    }
+  }
+
   .node-header-label {
     font-weight: 700;
     color: rgba(73, 78, 105, 1);
+    margin-right: 0.25em;
   }
 }
 
