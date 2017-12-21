@@ -51,15 +51,17 @@ export default class FilterPaneController {
     }
 
     onSelectBrowseSource(browseSource) {
-        let isBrowseSourceChanged = browseSource !== this.selectedBrowseSource;
-        if (isBrowseSourceChanged && browseSource === 'Planet Labs') {
+        if (browseSource === this.selectedBrowseSource) {
+            return;
+        }
+        if (browseSource === 'Planet Labs') {
             if (!this.userPlanetCredential) {
                 this.connectToPlanet();
             } else {
                 this.onPassPlanetToken({planetToken: this.userPlanetCredential});
                 this.onBrowseSourceChanged(browseSource);
             }
-        } else if (isBrowseSourceChanged && browseSource === 'Raster Foundry') {
+        } else if (browseSource === 'Raster Foundry') {
             this.onBrowseSourceChanged(browseSource);
         }
     }
