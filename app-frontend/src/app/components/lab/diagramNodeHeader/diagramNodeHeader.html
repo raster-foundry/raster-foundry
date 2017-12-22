@@ -4,7 +4,6 @@
                   'node-type-function': $ctrl.node.apply,
                   'node-type-constant': $ctrl.node.type === 'const'}">
   </div>
-  <!-- this will be added back later once we figure out what goes in it -->
   <div class="node-dropdown"
        ng-if="false"
        ng-class="{'no-outline': $ctrl.showMenu}"
@@ -24,12 +23,40 @@
   </div>
   <div class="node-header-text">
     <div class="node-header-type">
-      <span class="icon-info"
-            ng-if="$ctrl.node.apply"></span>
-      {{$ctrl.typeMap[$ctrl.node.type]}}
+      <!-- <span class="icon-info"
+            ng-if="$ctrl.node.apply"></span> -->
+      {{$ctrl.typeMap[$ctrl.node.type] || 'Operation'}}
     </div>
-    <div class="node-header-label">
-      {{$ctrl.node.metadata.label}}
+    <div class="node-header-name-container">
+      <span ng-if="!$ctrl.isEditingNodeLabel">
+        <span class="node-header-label">{{$ctrl.node.metadata.label}}</span>
+        <button class="btn node-button node-header-edit"
+                type="button"
+                ng-click="$ctrl.toggleNodeLabelEdit()">
+          <span class="icon-pencil"></span>
+        </button>
+      </span>
+      <span ng-if="$ctrl.isEditingNodeLabel">
+        <form class="inline-form" ng-submit="$ctrl.finishNodelabelEdit()">
+          <div class="form-group all-in-one node-header-edit-group">
+            <input id="name"
+                   type="text"
+                   class="form-control"
+                   placeholder="Edit Analysis Name"
+                   ng-model="$ctrl.nameBuffer"
+                   ng-init="$ctrl.nameBuffer = $ctrl.node.metadata.label"
+                   ng-attr-autofocus="{{$ctrl.isEditingNodeLabel || undefined }}">
+            <button class="btn btn-link flex-last node-header-eidt-group">
+              <span class="sr-only">Save</span>
+              <span class="icon-save node-label-name"</span>
+            </button>
+            <button type="button" class="btn btn-link node-header-eidt-group" ng-click="$ctrl.toggleNodeLabelEdit()">
+              <span class="sr-only">Cancel</span>
+              <span class="icon-cancel node-label-name"></span>
+            </button>
+          </div>
+        </form>
+      </span>
     </div>
   </div>
   <div class="node-status" ng-attr-title="{{$ctrl.analysisErrors.get($ctrl.nodeId)}}">

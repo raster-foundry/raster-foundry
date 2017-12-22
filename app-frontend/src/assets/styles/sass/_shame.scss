@@ -1271,6 +1271,13 @@ rf-diagram-container {
   overflow: hidden;
 }
 
+.icon-save.node-label-name,
+.icon-cancel.node-label-name {
+  color: $gray-lighter;
+  font-size: 1.5rem;
+}
+
+
 /*
  * page: lab/run
  */
@@ -1537,6 +1544,10 @@ rf-lab-node {
   .node-header-colorblock {
     border-radius: 5px 0 0 0;
   }
+
+  button, input {
+    pointer-events: auto;
+  }
 }
 
 .node-dropdown {
@@ -1571,6 +1582,10 @@ rf-lab-node {
     display: flex;
     flex-direction: row;
     color: $gray-lighter;
+    flex-shrink: 0;
+    margin-bottom: 0.25em;
+    height: 18px;
+    align-items: center;
 
     [class^="icon-"]:before, [class*=" icon-"]:before {
       width: 1em;
@@ -1579,9 +1594,34 @@ rf-lab-node {
     }
   }
 
+  .node-header-name-container {
+    flex-direction: row;
+    flex-grow: 1;
+
+    .node-header-edit{
+      padding: 2px;
+      font-size: 1rem;
+    }
+
+    .form-group.all-in-one.node-header-edit-group {
+      height: 2rem;
+      z-index: 10000;
+
+      input, button {
+        padding: 2px;
+        height: 1.8rem;
+      }
+
+      input {
+        width: 142px;
+      }
+    }
+  }
+
   .node-header-label {
     font-weight: 700;
     color: rgba(73, 78, 105, 1);
+    margin-right: 0.25em;
   }
 }
 
