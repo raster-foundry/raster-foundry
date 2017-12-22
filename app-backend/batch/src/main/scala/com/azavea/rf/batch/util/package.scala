@@ -2,6 +2,7 @@ package com.azavea.rf.batch
 
 import io.circe.parser.parse
 import cats.implicits._
+import com.typesafe.scalalogging.LazyLogging
 
 import geotrellis.raster.io.geotiff.reader.TiffTagsReader
 import geotrellis.raster.io.geotiff.tags.TiffTags
@@ -17,7 +18,7 @@ import java.util.Scanner
 import java.io._
 import java.net._
 
-package object util {
+package object util extends LazyLogging {
   implicit class ConfigurationMethods(conf: Configuration) {
     def isKeyUnset(key: String): Boolean = conf.get(key) == null
   }
@@ -54,10 +55,15 @@ package object util {
   /** Convert URIs into input streams, branching based on URI type */
   def getStream(uri: URI): InputStream = uri.getScheme match {
     case "file" =>
-      new FileInputStream(new File(uri))
-    case "http" =>
-      uri.toURL.openStream
-    case "https" =>
+      uri.getAuthority match {
+        case relRoot: String =>
+          val absolute = new File(new File("./"), relRoot + uri.getPath)
+          logger.debug(s"relative route detected: ${absolute}")
+          new FileInputStream(absolute)
+        case _ =>
+          new FileInputStream(new File(uri))
+      }
+    case "http" | "https" =>
       uri.toURL.openStream
     case "s3" =>
       val client = new AWSAmazonS3Client(new DefaultAWSCredentialsProviderChain)
@@ -65,6 +71,18 @@ package object util {
       client.getObject(s3uri.getBucket, s3uri.getKey).getObjectContent
     case _ =>
       throw new IllegalArgumentException(s"Resource at $uri is not valid")
+  }
+
+  /** Converts URI's into input streams, branching on URI type. Handles relative URIs given a root URI */
+  def getStream(uri: URI, rootUri: URI): InputStream = {
+    uri.getScheme match {
+      case "file" | "http" | "https" | "s3" =>
+        getStream(uri)
+      case _ =>
+        // relative routes with a root uri
+        val prefix = if (rootUri.toString.last != '/') rootUri.toString + '/' else rootUri.toString
+        getStream((new URI(prefix + uri)).normalize)
+    }
   }
 
   /** Use a provided URI to get an array of bytes */
