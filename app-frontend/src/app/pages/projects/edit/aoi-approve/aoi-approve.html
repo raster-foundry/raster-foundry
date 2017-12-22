@@ -63,9 +63,8 @@
       ng-mouseleave="$ctrl.removeHoveredScene()"
       ng-repeat="scene in $ctrl.pendingSceneList track by scene.id">
     <rf-toggle value="$ctrl.isSceneApproved(scene)" on-change="$ctrl.toggleSceneApproval(scene, $event)">
-      <i class="icon-check"></i>
     </rf-toggle>
-    <rf-toggle value="$ctrl.isSceneRejected(scene)" on-change="$ctrl.toggleSceneRejection(scene, $event)" class-name="danger">
+    <rf-toggle value="$ctrl.isSceneRejected(scene)" on-change="$ctrl.toggleSceneRejection(scene, $event)" custom-icon="true" class-name="danger">
       <i class="icon-cross"></i>
     </rf-toggle>
   </rf-scene-item>

@@ -228,7 +228,8 @@ div.checkbox {
     background: white;
   }
 
-  &:before {
+  &:not(.custom-icon):before,
+  &.custom-icon i {
     content: "\e911"; // see fontello.css .icon-check:before
     order: 0;
     font-family: "icomoon";
@@ -259,7 +260,8 @@ div.checkbox {
       border-color: $brand-primary;
     }
 
-    &:before {
+    &:not(.custom-icon):before,
+    &.custom-icon i {
       visibility: visible;
       opacity: 1;
       transform: scale(1);
