@@ -2,6 +2,7 @@ import angular from 'angular';
 
 import diagramNodeHeaderTpl from './diagramNodeHeader.html';
 import LabActions from '_redux/actions/lab-actions';
+import NodeActions from '_redux/actions/node-actions';
 import { getNodeDefinition } from '_redux/node-utils';
 
 const DiagramNodeHeaderComponent = {
@@ -18,7 +19,10 @@ class DiagramNodeHeaderController {
         this.$document = $document;
         this.$scope = $scope;
 
-        let unsubscribe = $ngRedux.connect(this.mapStateToThis.bind(this), LabActions)(this);
+        let unsubscribe = $ngRedux.connect(
+            this.mapStateToThis.bind(this),
+            Object.assign({}, LabActions, NodeActions)
+        )(this);
         $scope.$on('$destroy', unsubscribe);
     }
 
@@ -64,6 +68,18 @@ class DiagramNodeHeaderController {
 
     setHeight(height) {
         this.model.set('size', {width: 300, height: height});
+    }
+
+    toggleNodeLabelEdit() {
+        this.isEditingNodeLabel = !this.isEditingNodeLabel;
+    }
+
+    finishNodelabelEdit() {
+        if (this.nameBuffer) {
+            this.node = Object.assign(this.node, {metadata: {label: this.nameBuffer}});
+            this.updateNode({ payload: this.node, hard: true});
+            this.isEditingNodeLabel = !this.isEditingNodeLabel;
+        }
     }
 }
 
