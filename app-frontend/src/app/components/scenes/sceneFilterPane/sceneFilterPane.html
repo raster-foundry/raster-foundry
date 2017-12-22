@@ -51,7 +51,8 @@
                  uib-typeahead="ds.name for ds in $ctrl.datasources | filter:$viewValue | limitTo:8"
                  class="form-control input-dark image-source"
                  typeahead-on-select="$ctrl.toggleSourceFilter($item)"
-                 typeahead-min-length="0">
+                 typeahead-min-length="0"
+                 typeahead-focus-on-select="false">
            <i class="icon-caret-down"
               ng-if="!$ctrl.selectedDatasource"></i>
           <div class="searchselect-clear"

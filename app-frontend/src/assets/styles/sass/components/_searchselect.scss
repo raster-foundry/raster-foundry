@@ -1,7 +1,10 @@
 .searchselect {
   width: 100%;
   position: relative;
-  cursor: pointer;
+
+  & > input {
+    cursor: pointer;
+  }
 
   & > .icon-caret-down {
     position: absolute;
