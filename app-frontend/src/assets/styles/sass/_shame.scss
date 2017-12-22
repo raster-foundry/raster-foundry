@@ -1584,18 +1584,21 @@ rf-lab-node {
     flex-grow: 1;
 
     .node-header-edit{
-      padding: 0;
+      padding: 2px;
       font-size: 1rem;
     }
 
-    .form-group.all-in-one.node-header-eidt-group {
+    .form-group.all-in-one.node-header-edit-group {
       height: 2rem;
       z-index: 10000;
 
       input, button {
-        padding-top: 0px;
-        padding-bottom: 0px;
+        padding: 2px;
         height: 1.8rem;
+      }
+
+      input {
+        width: 142px;
       }
     }
   }
