@@ -356,3 +356,17 @@
     border-bottom-left-radius: 0;
   }
 }
+
+.btn-dropdown-transitional {
+  text-align: left;
+  position: relative;
+  padding-left: 9px;
+  width: 100%;
+
+  .icon-caret-down {
+    position: absolute;
+    right: 3px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+}
