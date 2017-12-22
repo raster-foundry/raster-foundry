@@ -10,7 +10,7 @@ case class Asset (
   href: String,
   name: Option[String] ,
   product: Option[String],
-  fileFormat: Option[String]
+  format: Option[String]
 )
 
 object Asset {

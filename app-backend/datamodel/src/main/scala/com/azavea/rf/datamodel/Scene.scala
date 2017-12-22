@@ -4,7 +4,7 @@ import java.sql.Timestamp
 import java.util.UUID
 
 import com.azavea.rf.bridge._
-import geotrellis.vector.Geometry
+import geotrellis.vector.MultiPolygon
 import geotrellis.slick.Projected
 
 import io.circe._
@@ -61,8 +61,8 @@ case class Scene(
   datasource: UUID,
   sceneMetadata: Json,
   name: String,
-  tileFootprint: Option[Projected[Geometry]] = None,
-  dataFootprint: Option[Projected[Geometry]] = None,
+  tileFootprint: Option[Projected[MultiPolygon]] = None,
+  dataFootprint: Option[Projected[MultiPolygon]] = None,
   metadataFiles: List[String],
   ingestLocation: Option[String] = None,
   filterFields: SceneFilterFields = new SceneFilterFields(),
@@ -112,8 +112,8 @@ object Scene {
     sceneMetadata: Json,
     name: String,
     owner: Option[String],
-    tileFootprint: Option[Projected[Geometry]],
-    dataFootprint: Option[Projected[Geometry]],
+    tileFootprint: Option[Projected[MultiPolygon]],
+    dataFootprint: Option[Projected[MultiPolygon]],
     metadataFiles: List[String],
     images: List[Image.Banded],
     thumbnails: List[Thumbnail.Identified],
@@ -165,8 +165,8 @@ object Scene {
     datasource: UUID,
     sceneMetadata: Json,
     name: String,
-    tileFootprint: Option[Projected[Geometry]],
-    dataFootprint: Option[Projected[Geometry]],
+    tileFootprint: Option[Projected[MultiPolygon]],
+    dataFootprint: Option[Projected[MultiPolygon]],
     metadataFiles: List[String],
     images: Seq[Image.WithRelated],
     thumbnails: Seq[Thumbnail],
