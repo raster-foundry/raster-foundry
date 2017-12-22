@@ -1,0 +1,45 @@
+.gradient-dropdown {
+
+  & > button {
+    background-color: #fff;
+    padding: 5px 3px 5px 9px;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    line-height: 2;
+
+    .gradient-bar {
+      margin-right: 3px;
+    }
+
+    &:hover {
+      color: #fff;
+    }
+  }
+
+  .icon-caret-down {
+    display: block;
+    height: 100%;
+    flex: 0;
+    align-self: stretch;
+    position: relative;
+    top: 4px;
+  }
+
+  .dropdown {
+      padding: 0;
+  }
+
+  .dropdown-label {
+      border-radius: 2px;
+  }
+
+  .dropdown-list-item {
+    padding: 0.2rem 1rem 0.2rem 0.6rem !important;
+    height: 34px;
+  }
+
+}
+
+
