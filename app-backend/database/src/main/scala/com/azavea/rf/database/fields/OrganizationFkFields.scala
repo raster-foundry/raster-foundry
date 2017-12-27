@@ -1,5 +1,7 @@
 package com.azavea.rf.database.fields
 
+import java.util.UUID
+
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.query.OrgQueryParameters
 import com.azavea.rf.database.tables.Organizations
@@ -7,7 +9,8 @@ import com.azavea.rf.datamodel.{Organization, User}
 import slick.lifted.ForeignKeyQuery
 
 trait OrganizationFkFields  { self: Table[_] =>
-  def organizationId: Rep[java.util.UUID]
+  def id: Rep[UUID]
+  def organizationId: Rep[UUID]
   def organizationsFk: ForeignKeyQuery[Organizations, Organization]
 }
 

@@ -12,7 +12,7 @@ class ToolRunFieldsSort[E, D <: ToolRunFields](f: E => D) extends QuerySort[E] {
   ): Query[E, U, C] = {
     field match {
       case "name" =>
-        query.sortBy(f(_).name.byOrder(ord))
+        query.sortBy(q => (f(q).name.byOrder(ord), f(q).id))
       case _ => query
     }
   }

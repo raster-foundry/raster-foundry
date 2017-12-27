@@ -10,6 +10,7 @@ import geotrellis.vector.MultiPolygon
 import io.circe.Json
 
 trait SceneFields  { self: Table[_] =>
+  def id: Rep[UUID]
   def name: Rep[String]
   def createdAt: Rep[java.sql.Timestamp]
   def datasource: Rep[UUID]

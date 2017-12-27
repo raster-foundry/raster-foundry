@@ -12,7 +12,7 @@ class ToolCategoryFieldsSort[E, D <: ToolCategoryFields](f: E => D) extends Quer
   ): Query[E, U, C] = {
     field match {
       case "category" =>
-        query.sortBy(f(_).category.byOrder(ord))
+        query.sortBy(q => (f(q).category.byOrder(ord), f(q).slugLabel))
       case _ => query
     }
   }

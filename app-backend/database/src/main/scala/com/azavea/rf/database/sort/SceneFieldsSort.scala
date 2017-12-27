@@ -15,19 +15,19 @@ class SceneFieldsSort[E, D <: SceneFields](f: E => D) extends QuerySort[E] {
   ): Query[E, U, C] = {
     field match {
       case "datasource" =>
-        query.sortBy(f(_).datasource.byOrder(ord))
+        query.sortBy(q => (f(q).datasource.byOrder(ord), f(q).id))
       case "month" =>
-        query.sortBy(q => datePart("month", f(q).acquisitionDate).byOrder(ord))
+        query.sortBy(q => (datePart("month", f(q).acquisitionDate).byOrder(ord), f(q).id))
       case "acquisitionDatetime" =>
         query.sortBy(q =>
-          f(q).acquisitionDate.getOrElse(f(q).createdAt).byOrder(ord)
+          (f(q).acquisitionDate.getOrElse(f(q).createdAt).byOrder(ord), f(q).createdAt.byOrder(ord), f(q).id)
         )
       case "sunAzimuth" =>
-        query.sortBy(f(_).sunAzimuth.byOrder(ord))
+        query.sortBy(q => (f(q).sunAzimuth.byOrder(ord), f(q).id))
       case "sunElevation" =>
-        query.sortBy(f(_).sunElevation.byOrder(ord))
+        query.sortBy(q => (f(q).sunElevation.byOrder(ord), f(q).id))
       case "cloudCover" =>
-        query.sortBy(f(_).cloudCover.byOrder(ord))
+        query.sortBy(q => (f(q).cloudCover.byOrder(ord), f(q).id))
       case _ => query
     }
   }
