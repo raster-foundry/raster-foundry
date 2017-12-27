@@ -14,7 +14,7 @@ class UserFieldSort[E, D <: UserFields](f: E => D) extends QuerySort[E] {
       case "id" =>
         query.sortBy(f(_).id.byOrder(ord))
       case "role" =>
-        query.sortBy(f(_).role.byOrder(ord))
+        query.sortBy(q => (f(q).role.byOrder(ord), f(q).id))
       case _ => query
     }
   }
