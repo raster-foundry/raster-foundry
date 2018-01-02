@@ -70,8 +70,8 @@ object Shapes extends TableQuery(tag => new Shapes(tag)) with LazyLogging {
     val filteredShapes = Shapes
       .filterByUser(queryParams.userParams)
     val pagedShapes = filteredShapes
-         .drop(dropRecords)
-         .take(limit)
+      .drop(dropRecords)
+      .take(limit)
 
     ListQueryResult[ShapeModel](
       (pagedShapes.result):DBIO[Seq[ShapeModel]],
@@ -114,8 +114,8 @@ object Shapes extends TableQuery(tag => new Shapes(tag)) with LazyLogging {
     */
   def getShape(shapeId: UUID, user: User) =
     Shapes
-      .filterToSharedOrganizationIfNotInRoot(user)
       .filter(_.id === shapeId)
+      .filterToOwnerIfNotInRootOrganization(user)
       .result
       .headOption
 
@@ -126,17 +126,8 @@ object Shapes extends TableQuery(tag => new Shapes(tag)) with LazyLogging {
     */
   def deleteShape(shapeId: UUID, user: User) =
     Shapes
-      .filterToSharedOrganizationIfNotInRoot(user)
       .filter(_.id === shapeId)
-      .delete
-
-  /** Given a Project ID, attempt to delete all associated shapes from the database
-    *
-    * @param user     Results will be limited to user's organization
-    */
-  def deleteProjectShapes(user: User) =
-    Shapes
-      .filterToSharedOrganizationIfNotInRoot(user)
+      .filterToOwnerIfNotInRootOrganization(user)
       .delete
 
   /** Update a Shape
@@ -148,8 +139,8 @@ object Shapes extends TableQuery(tag => new Shapes(tag)) with LazyLogging {
     val updateTime = new Timestamp((new java.util.Date).getTime)
     val updateShapeQuery = for {
         updateShape <- Shapes
-                        .filterToSharedOrganizationIfNotInRoot(user)
                         .filter(_.id === shapeId)
+                        .filterToOwnerIfNotInRootOrganization(user)
     } yield (
         updateShape.modifiedAt,
         updateShape.modifiedBy,
