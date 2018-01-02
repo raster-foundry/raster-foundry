@@ -16,6 +16,7 @@ import geotrellis.raster._
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io._
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
+import geotrellis.raster.io.geotiff.reader.GeoTiffReader
 import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.file._
@@ -23,8 +24,10 @@ import geotrellis.spark.io.hadoop.HdfsRangeReader
 import geotrellis.spark.io.http.util.HttpRangeReader
 import geotrellis.spark.io.s3._
 import geotrellis.spark.io.s3.util.S3RangeReader
+import geotrellis.spark.util.KryoWrapper
 import geotrellis.spark.pyramid.Pyramid
 import geotrellis.spark.tiling._
+import geotrellis.proj4.CRS
 import geotrellis.util.{FileRangeReader, RangeReader}
 import geotrellis.vector.ProjectedExtent
 
@@ -141,6 +144,55 @@ object Ingest extends SparkJob with LazyLogging with Config {
       .reduce((hs1, hs2) => hs1.zip(hs2).map { case (a, b) => a merge b })
   // .reduce((hs1, hs2) => (hs1, hs2).parMap2(_ merge _))  // Once Cats 1.0 is released.
 
+
+  /** Read a single GeoTiff into an RDD
+    * The RDD will have number of partitions dictated by the maximum partition byte size.
+    * The RDD records will be windows over the segment layout, buffered by some pixels.
+    * If pixelBuffer is greater than 0 the windows will overlap by that many pixels.
+    * Each partition will only read those segments which intersect the windows it  contains.
+    */
+  def readGeoTiffToRDD(
+    uri: String,
+    maxTileSize:Int,
+    pixelBuffer: Int,
+    partitionBytes: Long
+  )(implicit sc: SparkContext): RDD[(ProjectedExtent, MultibandTile)] = {
+    def readInfo = {
+      val s3uri = new AmazonS3URI(uri)
+      GeoTiffReader.readGeoTiffInfo(
+      S3RangeReader(
+        bucket = s3uri.getBucket,
+        key = s3uri.getKey,
+        client = S3Client.DEFAULT),
+      decompress = false, streaming = true)
+    }
+
+    val info = readInfo
+
+    // This listing can be masked by Geometry if desired
+    val windows: Array[GridBounds] = info
+      .segmentLayout
+      .listWindows(maxTileSize)
+      .map(_.buffer(pixelBuffer))
+
+    val partitions: Array[Array[GridBounds]] = info.segmentLayout.partitionWindowsBySegments(
+      windows, partitionBytes / math.max(info.cellType.bytes, 1))
+
+    val kryoInfo = KryoWrapper(info)
+
+    sc.parallelize(partitions, partitions.length).flatMap { bounds =>
+      // re-constructing here to avoid serialization pit-falls
+      val info = readInfo
+      val geoTiff = GeoTiffReader.geoTiffMultibandTile(info)
+      val windows = geoTiff.crop(bounds.filter(geoTiff.gridBounds.intersects))
+
+      windows.map { case (bound, tile) =>
+        val extent = info.rasterExtent.extentFor(bound, clamp = false)
+        ProjectedExtent(extent, info.crs) -> tile
+      }
+    }
+  }
+
   /** We need to suppress this warning because there's a perfectly safe `head` call being
     *  made here. The compiler just isn't smart enough to figure that out
     *
@@ -155,32 +207,32 @@ object Ingest extends SparkJob with LazyLogging with Config {
     val ndPattern = layer.output.ndPattern
     val bandCount: Int = layer.sources.map(_.bandMaps.map(_.target.index).max).max
     val layoutScheme = ZoomedLayoutScheme(destCRS, tileSize)
-    val options = S3GeoTiffRDD.Options(maxTileSize = Some(tileSize), partitionBytes = Some(16 * 1024 * 1024))
 
     val (maxZoom, layerMeta): (Int, TileLayerMetadata[SpatialKey]) =
       calculateTileLayerMetadata(layer, layoutScheme)
 
     val rawMultis: Array[RDD[((ProjectedExtent, Int), Tile)]] = layer.sources.map { source =>
-      val uri: AmazonS3URI = new AmazonS3URI(source.uri)
-
       /* The target band number is reduced by one, since those start at 1 to match Landsat. */
       val bandMap: Map[Int, Int] = source.bandMaps.map(bm => (bm.source - 1, bm.target.index - 1)).toMap
 
-      S3GeoTiffRDD.multiband[ProjectedExtent](uri.getBucket, uri.getKey, options)
-        .flatMap { case (ProjectedExtent(extent, srcCRS), mbt) =>
-
+      readGeoTiffToRDD(
+        uri = source.uri.toString,
+        maxTileSize = tileSize,
+        pixelBuffer = 0,
+        partitionBytes = 16 * 1024 * 1024
+      ).flatMap { case (ProjectedExtent(extent, srcCRS), mbt) =>
           // Set NoData values if a pattern has been specified
           val maskedChip = ndPattern.fold(mbt)(mask => mask(mbt))
 
           bandMap.flatMap { case (sourceIndex, targetIndex) =>
             maskedChip.bandSafe(sourceIndex).map { tile =>
-              val reprojected = Raster(tile, extent).reproject(srcCRS, destCRS)
+              val reprojected = Raster(tile, extent).reproject(srcCRS, destCRS, resampleMethod)
               val reprojectedExtent = ProjectedExtent(reprojected.extent, destCRS)
 
               (reprojectedExtent, targetIndex) -> reprojected.tile
             }
           }
-        }
+      }
     }
 
     val tiledChips: RDD[((SpatialKey, Int), Tile)] =
@@ -281,11 +333,11 @@ object Ingest extends SparkJob with LazyLogging with Config {
     } catch {
       case t: Throwable =>
         logger.error(t.stackTraceString)
-        putObject(
+        /*putObject(
           params.statusBucket,
           ingestDefinition.id.toString,
           IngestStatus.Failed
-        )
+        )*/
     } finally {
       sc.stop
     }
