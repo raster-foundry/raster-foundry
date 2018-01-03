@@ -30,6 +30,7 @@ lazy val commonSettings = Seq(
     Resolver.bintrayRepo("guizmaii", "maven"),
     Resolver.bintrayRepo("kwark", "maven"), // Required for Slick 3.1.1.2, see https://github.com/azavea/raster-foundry/pull/1576
     "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
+    "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
     Resolver.bintrayRepo("naftoligug", "maven")
   ),
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
