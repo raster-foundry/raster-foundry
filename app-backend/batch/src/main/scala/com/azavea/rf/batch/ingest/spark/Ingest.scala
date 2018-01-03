@@ -218,7 +218,7 @@ object Ingest extends SparkJob with LazyLogging with Config {
       readGeoTiffToRDD(
         uri = source.uri.toString,
         maxTileSize = tileSize,
-        pixelBuffer = 0,
+        pixelBuffer = 4,
         partitionBytes = 16 * 1024 * 1024
       ).flatMap { case (ProjectedExtent(extent, srcCRS), mbt) =>
           // Set NoData values if a pattern has been specified
@@ -333,11 +333,11 @@ object Ingest extends SparkJob with LazyLogging with Config {
     } catch {
       case t: Throwable =>
         logger.error(t.stackTraceString)
-        /*putObject(
+        putObject(
           params.statusBucket,
           ingestDefinition.id.toString,
           IngestStatus.Failed
-        )*/
+        )
     } finally {
       sc.stop
     }
