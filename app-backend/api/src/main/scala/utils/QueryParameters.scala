@@ -63,4 +63,8 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
       'maxConfidence.as[Double].?,
       'quality.as[String].?
     ))).as(AnnotationQueryParameters.apply _)
+
+  def shapeQueryParams = (
+    orgQueryParams & userQueryParameters & timestampQueryParameters
+  ).as(ShapeQueryParameters.apply _)
 }
