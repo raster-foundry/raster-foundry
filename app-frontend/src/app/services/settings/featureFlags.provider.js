@@ -4,7 +4,7 @@ function updateFlagsAndGetAll(newFlags) {
     let flagsList = angular.isArray(newFlags) ? newFlags : Object.values(newFlags);
     flagsList.forEach(flag => {
         this.serverFlagCache[flag.key] = flag.active;
-        flag.active = this.isOn(flag.key);
+        flag.active = this.isOnByDefault(flag.key);
     });
     angular.extend(this.flags, newFlags);
     return this.flags;

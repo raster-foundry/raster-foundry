@@ -8,7 +8,7 @@
   </div>
 </div>
 <div class="sidebar-scrollable">
-  <div class="content">
+  <div class="content" feature-flag="external-source-browse">
     <!-- feature-flag="browse-planet-data"> -->
     <div class="filter-group">
       <div class="filter">
@@ -25,7 +25,8 @@
             </li>
             <li role="menuitem"
                 class="browse-source-option"
-                ng-click="$ctrl.onSelectBrowseSource('Planet Labs')">
+                ng-click="$ctrl.onSelectBrowseSource('Planet Labs')"
+                feature-flag="external-source-browse-planet">
               <a>Planet Labs</a>
             </li>
           </ul>
