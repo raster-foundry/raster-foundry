@@ -139,7 +139,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
   val tileResolver = new TileResolver(implicitly[Database], implicitly[ExecutionContext])
   val tmsInterpreter = BufferingInterpreter.DEFAULT
   val emptyPng = IntConstantNoDataArrayTile(Array(0), 1, 1).renderPng(RgbaPngEncoding)
-  //val emptyTiff = IntConstantNoDataArrayTile(Array(0), 1, 1).
+  val emptyTile = IntConstantNoDataArrayTile(Array(0), 1, 1)
 
   /** The central endpoint for ModelLab; serves TMS tiles given a [[ToolRun]] specification */
   def tms(
@@ -258,7 +258,9 @@ class ToolRoutes(implicit val database: Database) extends Authentication
                             NEL.fromList(exceptions) match {
                               case Some(errors) =>
                                 throw new InterpreterException(errors)
-                              case None => None
+                              case None =>
+                                val tiff = SinglebandGeoTiff(emptyTile, extent, WebMercator)
+                                Some(HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/tiff`), tiff.toByteArray)))
                             }
                         })
                     case _ => Future.successful(None)
