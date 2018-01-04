@@ -216,7 +216,7 @@ object Ingest extends SparkJob with LazyLogging with Config {
       val bandMap: Map[Int, Int] = source.bandMaps.map(bm => (bm.source - 1, bm.target.index - 1)).toMap
 
       readGeoTiffToRDD(
-        uri = source.uri.toString,
+        uri = java.net.URLDecoder.decode(source.uri.toString, "UTF-8"),
         maxTileSize = tileSize,
         pixelBuffer = 4,
         partitionBytes = 16 * 1024 * 1024
