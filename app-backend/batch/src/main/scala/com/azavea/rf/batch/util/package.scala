@@ -43,7 +43,7 @@ package object util {
     case "file" =>
       TiffTagsReader.read(uri.toString)
     case "s3" | "https" | "http" =>
-      val s3Uri = new AmazonS3URI(uri)
+      val s3Uri = new AmazonS3URI(java.net.URLDecoder.decode(uri.toString, "UTF-8"))
       val s3Client = new AmazonS3Client(new AWSAmazonS3Client(new DefaultAWSCredentialsProviderChain))
       val s3RangeReader = S3RangeReader(s3Uri.getBucket, s3Uri.getKey, s3Client)
       TiffTagsReader.read(s3RangeReader)
