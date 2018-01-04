@@ -2,7 +2,42 @@
 
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/HEAD)
 
-[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.27.0...HEAD)
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.28.0...HEAD)
+
+**Merged pull requests:**
+
+- Add feature flags for browsing external imagery sources [\#2866](https://github.com/raster-foundry/raster-foundry/pull/2866)
+- Cache datasource get requests [\#2864](https://github.com/raster-foundry/raster-foundry/pull/2864)
+- Fix sort order being indeterminate when objects have the same value [\#2861](https://github.com/raster-foundry/raster-foundry/pull/2861)
+- Use combination of 2 Docker Compose configurations for CI [\#2860](https://github.com/raster-foundry/raster-foundry/pull/2860)
+- Adjust styles to handle custom checkbox icons [\#2859](https://github.com/raster-foundry/raster-foundry/pull/2859)
+- Clean up gradient dropdown style [\#2858](https://github.com/raster-foundry/raster-foundry/pull/2858)
+- Allow renaming of nodes in the lab [\#2856](https://github.com/raster-foundry/raster-foundry/pull/2856)
+- Fixes style issues with imagery sources dropdown [\#2854](https://github.com/raster-foundry/raster-foundry/pull/2854)
+- Remove 'trash' buttons from Scenes list [\#2853](https://github.com/raster-foundry/raster-foundry/pull/2853)
+- Fix project list when project name is long [\#2852](https://github.com/raster-foundry/raster-foundry/pull/2852)
+- Implement Shapes API [\#2851](https://github.com/raster-foundry/raster-foundry/pull/2851)
+- Read stac feature from geojson and output scene [\#2850](https://github.com/raster-foundry/raster-foundry/pull/2850)
+- Consistently use upload completion method [\#2848](https://github.com/raster-foundry/raster-foundry/pull/2848)
+- Download support for uploads [\#2832](https://github.com/raster-foundry/raster-foundry/pull/2832)
+- Allow map drag when drawing polygonal annotations w/o adding new nodes [\#2831](https://github.com/raster-foundry/raster-foundry/pull/2831)
+- Remove race condition for ingest queuing [\#2830](https://github.com/raster-foundry/raster-foundry/pull/2830)
+- Remove unused sentinel2 upload processing [\#2828](https://github.com/raster-foundry/raster-foundry/pull/2828)
+- Check for all sentinel datasource ids in ingest process [\#2826](https://github.com/raster-foundry/raster-foundry/pull/2826)
+- Planet import fix, checkbox update for icomoon [\#2825](https://github.com/raster-foundry/raster-foundry/pull/2825)
+- Add new fix for kicking off ingests when new scenes added to project [\#2822](https://github.com/raster-foundry/raster-foundry/pull/2822)
+- Add notification step to ingest process with stubbed notifications [\#2811](https://github.com/raster-foundry/raster-foundry/pull/2811)
+- Add spark local ingest option to `rf` [\#2806](https://github.com/raster-foundry/raster-foundry/pull/2806)
+- Add another log during ingestion process [\#2804](https://github.com/raster-foundry/raster-foundry/pull/2804)
+- Create stac datamodels [\#2803](https://github.com/raster-foundry/raster-foundry/pull/2803)
+- Use redux actions for lab map and allow deletion of analyses [\#2802](https://github.com/raster-foundry/raster-foundry/pull/2802)
+- Bug fix - can't draw rectangular annotation after single click on map [\#2789](https://github.com/raster-foundry/raster-foundry/pull/2789)
+- Clean up planet filters and browsing [\#2782](https://github.com/raster-foundry/raster-foundry/pull/2782)
+- Enable RF/Planet data switch, planet data filter, and planet data browse [\#2675](https://github.com/raster-foundry/raster-foundry/pull/2675)
+
+## [0.28.0](https://github.com/raster-foundry/raster-foundry/tree/0.28.0) (2017-12-11)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.27.0...0.28.0)
 
 **Merged pull requests:**
 
