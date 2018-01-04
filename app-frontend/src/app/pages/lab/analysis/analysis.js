@@ -521,33 +521,34 @@ class LabAnalysisController {
     }
 
     onNodeClose(side) {
-        this.previewData = this.previewData[side === 'left' ? 1 : 0];
-        this.showPreview(this.previewData);
+        this.selectNode(this.previewData[side === 'left' ? 1 : 0]);
     }
 
     onLeftSelect(id) {
-        this.previewData[0] = id;
-        this.showPreview(this.previewData);
+        this.compareNodes([
+            id,
+            this.previewData[1]
+        ]);
     }
 
     onRightSelect(id) {
-        this.previewData[1] = id;
-        this.showPreview(this.previewData);
+        this.compareNodes([
+            this.previewData[0],
+            id
+        ]);
     }
 
     onSingleSelect(id) {
         this.previewData = id;
-        this.showPreview(this.previewData);
+        this.selectNode(id);
     }
 
     onLeftClose() {
-        this.previewData = this.previewData[1];
-        this.showPreview(this.previewData);
+        this.selectNode(this.previewData[1]);
     }
 
     onRightClose() {
-        this.previewData = this.previewData[0];
-        this.showPreview(this.previewData);
+        this.selectNode(this.previewData[0]);
     }
 
     onSingleClose() {
@@ -556,11 +557,9 @@ class LabAnalysisController {
 
     onCompareClick() {
         if (!Array.isArray(this.previewData)) {
-            this.previewData = [this.previewData, this.previewData];
-            this.showPreview(this.previewData);
+            this.compareNodes([this.previewData, this.previewData]);
         } else {
-            this.previewData = this.previewData[0];
-            this.showPreview(this.previewData);
+            this.selectNode(this.previewData[0]);
         }
     }
 }

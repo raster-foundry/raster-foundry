@@ -86,7 +86,7 @@ trait UserRoutes extends Authentication
 
   def getAuth0User: Route = authenticate { user =>
     complete {
-      Auth0UserService.getAuth0User(user)
+      Auth0UserService.getAuth0User(user.id)
     }
   }
 
@@ -94,7 +94,7 @@ trait UserRoutes extends Authentication
     user =>
     entity(as[Auth0UserUpdate]) { userUpdate =>
       complete {
-        Auth0UserService.updateAuth0User(user, userUpdate)
+        Auth0UserService.updateAuth0User(user.id, userUpdate)
       }
     }
   }

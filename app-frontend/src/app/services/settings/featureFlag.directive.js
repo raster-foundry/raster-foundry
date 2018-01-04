@@ -35,7 +35,7 @@ export default (app) => {
                 let childScope;
                 $scope.$watch(() => {
                     let featureFlag = this.$interpolate(attrs.featureFlag)($scope);
-                    return this.featureFlags.isOn(featureFlag);
+                    return this.featureFlags.isOnByDefault(featureFlag);
                 }, (isEnabled) => {
                     let showElement = hasHideAttribute ? !isEnabled : isEnabled;
 

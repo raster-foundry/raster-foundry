@@ -1,9 +1,9 @@
-<div class="dropdown btn-group"
+<div class="dropdown gradient-dropdown"
      uib-dropdown
      auto-close="outsideClick"
      on-toggle="$ctrl.onDropdownToggle(open)"
 >
-  <button class="btn dropdown-label gradient-dropdown"
+  <button class="btn"
           uib-dropdown-toggle
           ng-disabled="$ctrl.disabled"
   >
@@ -35,7 +35,6 @@
             class="dropdown-list-item"
             title="{{scheme.label}}"
         >
-          <div class="selection-indicator"><i class="icon-check"></i></div>
           <div class="gradient-container" ng-class="$ctrl.getSchemeClass(scheme)">
             <div class="gradient-bar gradient-bkg"
                  ng-style="$ctrl.colorSchemeService.colorsToBackground(
@@ -70,9 +69,6 @@
             ng-class="$ctrl.getSchemeTypeClass(schemeType)"
             ng-click="$ctrl.setSchemeType(schemeType)"
         >
-          <div class="selection-indicator">
-            <i class="icon-check"></i>
-          </div>
           {{schemeType.label}} <span ng-if="$ctrl.isActiveSchemeType('CATEGORICAL')">(needs discrete bins)</span>
         </li>
       </ul>
@@ -94,7 +90,6 @@
             ng-class="$ctrl.getBlendingClass(bin)"
             ng-click="$ctrl.setBlending(bin)"
         >
-          <div class="selection-indicator"><i class="icon-check"></i></div>
           <div class="label">
             <ng-pluralize count="bin"
                           when="{

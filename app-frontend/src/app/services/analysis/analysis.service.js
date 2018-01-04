@@ -51,6 +51,9 @@ export default (app) => {
                         url: `${APP_CONFIG.tileServerLocation}/tools/:analysisId/statistics/`,
                         method: 'GET',
                         cache: false
+                    },
+                    delete: {
+                        method: 'DELETE'
                     }
                 }
             );
@@ -115,6 +118,10 @@ export default (app) => {
 
         getTemplate(id) {
             return this.Template.get({id}).$promise;
+        }
+
+        deleteAnalysis(id) {
+            return this.Analysis.delete({id}).$promise;
         }
 
         getAnalysis(id) {

@@ -15,6 +15,7 @@ import com.azavea.rf.api.maptoken.MapTokenRoutes
 import com.azavea.rf.api.organization.OrganizationRoutes
 import com.azavea.rf.api.project.ProjectRoutes
 import com.azavea.rf.api.scene.SceneRoutes
+import com.azavea.rf.api.shape.ShapeRoutes
 import com.azavea.rf.api.thumbnail.ThumbnailRoutes
 import com.azavea.rf.api.token.TokenRoutes
 import com.azavea.rf.api.tool.ToolRoutes
@@ -57,7 +58,8 @@ trait Router extends HealthCheckRoutes
   with UploadRoutes
   with ExportRoutes
   with Config
-  with FeatureFlagRoutes {
+  with FeatureFlagRoutes
+  with ShapeRoutes {
 
   val settings = CorsSettings.defaultSettings.copy(
     allowedMethods = Seq(GET, POST, PUT, HEAD, OPTIONS, DELETE))
@@ -120,6 +122,9 @@ trait Router extends HealthCheckRoutes
           } ~
           pathPrefix("exports") {
             exportRoutes
+          } ~
+          pathPrefix("shapes") {
+            shapeRoutes
           }
       } ~
       pathPrefix("config") {

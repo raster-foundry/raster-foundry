@@ -39,7 +39,7 @@ class SceneDetailModalController {
     $postLink() {
         this.datasourceLoaded = false;
         this.getMap().then(mapWrapper => {
-            mapWrapper.setThumbnail(this.scene, false, true);
+            mapWrapper.setThumbnail(this.scene, {persist: true});
             mapWrapper.map.fitBounds(this.getSceneBounds());
         });
         this.datasourceService.get(this.scene.dataSource).then(d => {
@@ -51,22 +51,10 @@ class SceneDetailModalController {
     }
 
     openDownloadModal() {
-        const images = this.scene.images.map(i => Object({
-            filename: i.filename,
-            uri: i.sourceUri,
-            metadata: i.metadataFiles || []
-        }));
-
-        const downloadSets = [{
-            label: this.scene.name,
-            metadata: this.scene.metadataFiles || [],
-            images: images
-        }];
-
         this.modalService.open({
             component: 'rfSceneDownloadModal',
             resolve: {
-                downloads: () => downloadSets
+                scene: () => this.scene
             }
         });
     }

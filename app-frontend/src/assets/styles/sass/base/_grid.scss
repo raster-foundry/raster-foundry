@@ -3,6 +3,7 @@
   display: flex;
   flex-wrap: wrap;
   margin-bottom: 1rem;
+  max-width: 100%;
 
   &.nowrap {
     flex-wrap: nowrap;
@@ -12,7 +13,7 @@
   &.no-margin {
     margin-bottom: 0;
   }
-  
+
   .row {
     margin-left: -1rem;
     margin-right: -1rem;

@@ -5,11 +5,12 @@ import java.util.UUID
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.datamodel.{JobStatus, IngestStatus}
 import geotrellis.slick.Projected
-import geotrellis.vector.Geometry
+import geotrellis.vector.MultiPolygon
 
 import io.circe.Json
 
 trait SceneFields  { self: Table[_] =>
+  def id: Rep[UUID]
   def name: Rep[String]
   def createdAt: Rep[java.sql.Timestamp]
   def datasource: Rep[UUID]
@@ -20,8 +21,8 @@ trait SceneFields  { self: Table[_] =>
   def boundaryStatus: Rep[JobStatus]
   def sunAzimuth: Rep[Option[Float]]
   def sunElevation: Rep[Option[Float]]
-  def tileFootprint: Rep[Option[Projected[Geometry]]]
-  def dataFootprint: Rep[Option[Projected[Geometry]]]
+  def tileFootprint: Rep[Option[Projected[MultiPolygon]]]
+  def dataFootprint: Rep[Option[Projected[MultiPolygon]]]
   def ingestLocation: Rep[Option[String]]
   def ingestStatus: Rep[IngestStatus]
 }

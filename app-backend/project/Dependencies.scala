@@ -66,4 +66,5 @@ object Dependencies {
   val mamlJvm                 = "com.azavea"                  %% "maml-jvm"                          % Version.maml
   val mamlSpark               = "com.azavea"                  %% "maml-spark"                        % Version.maml
   val nimbusJose              = "com.guizmaii"                %% "scala-nimbus-jose-jwt"             % Version.nimbusJose
+  val auth0                   = "com.auth0"                    % "auth0"                             % Version.auth0
 }

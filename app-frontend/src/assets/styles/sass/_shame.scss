@@ -90,6 +90,21 @@ dl.meta-list > dd {
   margin-bottom: 15px;
 }
 
+.clear-image-source-filter{
+  border-radius: 50%;
+  color: $gray;
+  border: 1px solid $gray-lighter;
+  background: $gray-lighter;
+  position: absolute;
+  z-index: 1000;
+  right: 2rem;
+  transform: translateY(50%);
+}
+
+.form-control.input-dark.image-source{
+  margin-right: 0rem
+}
+
 //
 
 
@@ -381,39 +396,6 @@ rf-project-editor .leaflet-tile {
       }
     }
   }
-}
-
-.sidebar {
-    rf-color-scheme-dropdown {
-        //height: 2.4em;
-        .dropdown {
-            padding: 0;
-        }
-        .dropdown-label {
-            border-radius: 2px;
-        }
-        .gradient-dropdown {
-            padding: 0;
-            display: flex;
-            flex-direction: row;
-            align-items: stretch;
-
-            > .gradient-bar {
-                align-self: center;
-                flex: 1;
-                margin: 0 0.5rem 0 0.5rem;
-            }
-            .icon-caret-down {
-                display: block;
-                height: 100%;
-                flex: 0;
-                align-self: stretch;
-                padding: 0.9rem 1rem 0.9rem 1rem;
-                background: $shade-light;
-                color: white;
-            }
-        }
-    }
 }
 
 .list-group-item .sidebar-list {
@@ -1256,6 +1238,13 @@ rf-diagram-container {
   overflow: hidden;
 }
 
+.icon-save.node-label-name,
+.icon-cancel.node-label-name {
+  color: $gray-lighter;
+  font-size: 1.5rem;
+}
+
+
 /*
  * page: lab/run
  */
@@ -1522,6 +1511,10 @@ rf-lab-node {
   .node-header-colorblock {
     border-radius: 5px 0 0 0;
   }
+
+  button, input {
+    pointer-events: auto;
+  }
 }
 
 .node-dropdown {
@@ -1556,6 +1549,10 @@ rf-lab-node {
     display: flex;
     flex-direction: row;
     color: $gray-lighter;
+    flex-shrink: 0;
+    margin-bottom: 0.25em;
+    height: 18px;
+    align-items: center;
 
     [class^="icon-"]:before, [class*=" icon-"]:before {
       width: 1em;
@@ -1564,9 +1561,34 @@ rf-lab-node {
     }
   }
 
+  .node-header-name-container {
+    flex-direction: row;
+    flex-grow: 1;
+
+    .node-header-edit{
+      padding: 2px;
+      font-size: 1rem;
+    }
+
+    .form-group.all-in-one.node-header-edit-group {
+      height: 2rem;
+      z-index: 10000;
+
+      input, button {
+        padding: 2px;
+        height: 1.8rem;
+      }
+
+      input {
+        width: 142px;
+      }
+    }
+  }
+
   .node-header-label {
     font-weight: 700;
     color: rgba(73, 78, 105, 1);
+    margin-right: 0.25em;
   }
 }
 
@@ -2306,20 +2328,6 @@ rf-color-scheme-builder {
     }
   }
 }
-.gradient-bar {
-  flex: 1;
-  border-radius: 12px;
-  border: 1px solid #999;
-}
-.gradient-container {
-  border: 2px solid rgba(0,0,0,0);
-  border-radius: 15px;
-  padding: 2px;
-  flex: 1;
-  &.selected {
-    border: 2px solid $brand-primary;
-  }
-}
 
 ul.gradient-dropdown {
   padding: 0;
@@ -2520,14 +2528,6 @@ rf-histogram-breakpoint {
   }
 }
 
-.gradient-dropdown {
-  height: 100%;
-  width: 100%;
-  padding: 0 1em;
-  display: flex;
-  align-items: center;
-}
-
 .dropdown-titlebar {
   display: flex;
   align-items: center;
@@ -2606,7 +2606,7 @@ ul.dropdown-list {
     &:last-child {
       border-bottom: none;
     }
-    &:focus, &:active {
+    &:active {
       outline: none;
     }
   }
@@ -2686,11 +2686,14 @@ rf-node-histogram {
       height: 100%;
     }
     .dropdown-toggle {
-        background: $shade-dark;
-        font-weight: 700;
-        color: white;
-        border: 1px solid $shade-dark;
-        border-radius: 3px;
+      background: $shade-dark;
+      font-weight: 700;
+      color: white;
+      border: 1px solid $shade-dark;
+      border-radius: 3px;
+      &.dropdown:hover {
+        background-color: inherit;
+      }
     }
   }
 }
@@ -2924,16 +2927,21 @@ rf-reclassify-table {
     }
 }
 
-.selected {
-    pointer-events: auto;
-    cursor: not-allowed;
-    box-shadow: 0 0 3pt 2pt $brand-secondary;
-
-    * {
-        pointer-events: none;
-    }
-}
-
 .no-visibility {
     visibility: hidden !important;
+}
+
+.row-hover-controls {
+  .row-controls {
+    padding: 0 0.25em;
+    button {
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.125s;
+    }
+  }
+  &:hover .row-controls button {
+    opacity: 1;
+    pointer-events: all;
+  }
 }

@@ -20,6 +20,14 @@ export default (app) => {
                     update: {
                         method: 'PUT',
                         cache: false
+                    },
+                    download: {
+                        method: 'GET',
+                        url: '/api/scenes/:id/download',
+                        isArray: true,
+                        params: {
+                            id: '@id'
+                        }
                     }
                 }
             );
@@ -63,6 +71,10 @@ export default (app) => {
 
         update(sceneParams = {}) {
             return this.Scene.update(sceneParams).$promise;
+        }
+
+        getDownloadableImages(scene) {
+            return this.Scene.download({id: scene.id}).$promise;
         }
     }
 

@@ -102,3 +102,7 @@ dist/
 .ensime_cache
 /app-tasks/jars/rf-batch.jar
 /data
+
+# Patch files
+*.patch
+scratch/

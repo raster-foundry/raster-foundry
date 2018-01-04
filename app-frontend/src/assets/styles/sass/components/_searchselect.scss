@@ -1,0 +1,31 @@
+.searchselect {
+  width: 100%;
+  position: relative;
+
+  & > input {
+    cursor: pointer;
+  }
+
+  & > .icon-caret-down {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  & > .searchselect-clear {
+    border-radius: 50%;
+    color: $gray;
+    border: 1px solid $gray-lighter;
+    background: $gray-lighter;
+    position: absolute;
+    z-index: 1000;
+    right: 1rem;
+    top: 50%;
+    width: 2rem;
+    height: 2rem;
+    transform: translateY(-50%);
+  }
+
+}

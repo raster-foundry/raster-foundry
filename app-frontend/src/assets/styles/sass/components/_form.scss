@@ -228,10 +228,11 @@ div.checkbox {
     background: white;
   }
 
-  &:before {
-    content: '\e803'; // see fontello.css .icon-check:before
+  &:not(.custom-icon):before,
+  &.custom-icon i {
+    content: "\e911"; // see fontello.css .icon-check:before
     order: 0;
-    font-family: "fontello";
+    font-family: "icomoon";
     font-style: normal;
     font-weight: normal;
     -webkit-font-smoothing: antialiased;
@@ -259,7 +260,8 @@ div.checkbox {
       border-color: $brand-primary;
     }
 
-    &:before {
+    &:not(.custom-icon):before,
+    &.custom-icon i {
       visibility: visible;
       opacity: 1;
       transform: scale(1);
@@ -286,7 +288,7 @@ div.checkbox {
 
     &:not(.active):before {
       visibility: visible;
-      opacity: .6;
+      opacity: 0;
       transform: scale(1);
     }
   }

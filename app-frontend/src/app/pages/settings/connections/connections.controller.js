@@ -30,6 +30,7 @@ class ConnectionsController {
         this.authService.getCurrentUser().then((user) => {
             this.user = user;
             this.dropboxConnected = Boolean(user.dropboxCredential);
+            this.userPlanetCredential = user.planetCredential;
         });
     }
 
@@ -145,13 +146,14 @@ class ConnectionsController {
         const modal = this.modalService.open({
             component: 'rfEnterTokenModal',
             resolve: {
-                title: () => 'Enter your Planet API Token'
+                title: () => 'Enter your Planet API Token',
+                token: () => this.userPlanetCredential
             }
         });
 
         modal.result.then((token) => {
             this.userService.updatePlanetToken(token).then(() => {
-                this.user.planetCredential = true;
+                this.userPlanetCredential = token;
             }, (err) => {
                 this.$log.log('There was an error updating the user with a planet api token', err);
             });

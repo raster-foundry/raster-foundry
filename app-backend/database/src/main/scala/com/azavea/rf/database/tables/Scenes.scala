@@ -8,7 +8,7 @@ import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.datamodel._
 import geotrellis.slick.Projected
-import geotrellis.vector.{Extent, Geometry, Point, Polygon}
+import geotrellis.vector.{Extent, MultiPolygon, Point, Polygon}
 import com.typesafe.scalalogging.LazyLogging
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import slick.collection.heterogeneous.HNil
@@ -49,8 +49,8 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
   val sunAzimuth: Rep[Option[Float]] = column[Option[Float]]("sun_azimuth", O.Default(None))
   val sunElevation: Rep[Option[Float]] = column[Option[Float]]("sun_elevation", O.Default(None))
   val name: Rep[String] = column[String]("name", O.Length(255,varying=true))
-  val tileFootprint: Rep[Option[Projected[Geometry]]] = column[Option[Projected[Geometry]]]("tile_footprint", O.Length(2147483647,varying=false), O.Default(None))
-  val dataFootprint: Rep[Option[Projected[Geometry]]] = column [Option[Projected[Geometry]]]("data_footprint", O.Length(2147483647,varying=false), O.Default(None))
+  val tileFootprint: Rep[Option[Projected[MultiPolygon]]] = column[Option[Projected[MultiPolygon]]]("tile_footprint", O.Length(2147483647,varying=false), O.Default(None))
+  val dataFootprint: Rep[Option[Projected[MultiPolygon]]] = column [Option[Projected[MultiPolygon]]]("data_footprint", O.Length(2147483647,varying=false), O.Default(None))
   val metadataFiles: Rep[List[String]] = column[List[String]]("metadata_files", O.Length(2147483647,varying=false), O.Default(List.empty))
   val ingestLocation: Rep[Option[String]] = column[Option[String]]("ingest_location", O.Default(None))
   val ingestStatus: Rep[IngestStatus] = column[IngestStatus]("ingest_status")
@@ -79,8 +79,8 @@ class Scenes(_tableTag: Tag) extends Table[Scene](_tableTag, "scenes")
     UUID,
     Json,
     String,
-    Option[Projected[Geometry]],
-    Option[Projected[Geometry]],
+    Option[Projected[MultiPolygon]],
+    Option[Projected[MultiPolygon]],
     List[String],
     Option[String],
     SceneFilterFields.TupleType,
@@ -250,6 +250,21 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     database.db.run {
       val action = Scenes
         .filterToSharedOrganizationIfNotInRoot(user)
+        .filter(_.id === sceneId)
+        .joinWithRelated
+        .result
+      logger.debug(s"Total Query for scenes -- SQL: ${action.statements.headOption}")
+      action
+    } map { result =>
+      Scene.WithRelated.fromRecords(result).headOption
+    }
+  }
+
+  def getScenePreauthorized(sceneId: UUID)
+              (implicit database: DB): Future[Option[Scene.WithRelated]] = {
+
+    database.db.run {
+      val action = Scenes
         .filter(_.id === sceneId)
         .joinWithRelated
         .result
@@ -502,7 +517,7 @@ object Scenes extends TableQuery(tag => new Scenes(tag)) with LazyLogging {
     }
   }
 
-  def getScenesFootprints(sceneIds: Seq[UUID]):DBIO[Seq[Option[Projected[Geometry]]]] = {
+  def getScenesFootprints(sceneIds: Seq[UUID]):DBIO[Seq[Option[Projected[MultiPolygon]]]] = {
     Scenes
       .filter(scene => scene.id inSet sceneIds)
       .map(_.dataFootprint)

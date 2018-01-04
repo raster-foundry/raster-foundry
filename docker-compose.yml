@@ -67,6 +67,7 @@ services:
       - "9010:9010"
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/
+      - ./scratch/:/opt/raster-foundry/scratch/
       - ./.sbt:/root/.sbt
       - ./.bintray:/root/.bintray
       - $HOME/.aws:/root/.aws:ro
@@ -97,6 +98,8 @@ services:
     env_file: .env
     environment:
       - RF_HOST=http://rasterfoundry.com:9000
+      - LOCAL_INGEST_CORES=2
+      - LOCAL_INGEST_MEM_GB=4
     command: rf
 
   tile-server:

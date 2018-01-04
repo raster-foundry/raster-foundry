@@ -11,7 +11,7 @@ class OrganizationFkSort[E, D <: OrganizationFkFields](f: E => D) extends QueryS
     ord: Order
   ): Query[E, U, C] = {
     field match {
-      case "organization" => query.sortBy(f(_).organizationId.byOrder(ord))
+      case "organization" => query.sortBy(q => (f(q).organizationId.byOrder(ord), f(q).id))
       case _ => query
     }
   }

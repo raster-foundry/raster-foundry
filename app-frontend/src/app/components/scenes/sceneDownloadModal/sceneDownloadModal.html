@@ -9,7 +9,12 @@
   </h4>
 </div>
 <div class="modal-body">
-  <div class="list-group" ng-repeat=" downloadSet in $ctrl.resolve.downloads">
+  <div class="list-group" ng-show="$ctrl.isLoading">
+    <span class="list-placeholder">
+      <i class="icon-load animate-spin"></i>
+    </span>
+  </div>
+  <div class="list-group" ng-if="!$ctrl.isLoading" ng-repeat="downloadSet in $ctrl.downloads">
     <div class="list-group-item">
       <div class="list-group-overflow">
         <strong class="color-dark">{{downloadSet.label}}</strong>

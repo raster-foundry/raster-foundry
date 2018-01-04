@@ -4,8 +4,11 @@ const rfSceneFilterPane = {
     templateUrl: sceneFilterTpl,
     controller: 'SceneFilterPaneController',
     bindings: {
-        filters: '=',
-        opened: '='
+        filters: '<',
+        opened: '<',
+        onFilterChange: '&',
+        onCloseFilterPane: '&',
+        onPassPlanetToken: '&'
     }
 };
 

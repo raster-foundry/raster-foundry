@@ -17,7 +17,7 @@ export default (app) => {
                     },
                     get: {
                         method: 'GET',
-                        cache: false
+                        cache: true
                     },
                     create: {
                         method: 'POST'

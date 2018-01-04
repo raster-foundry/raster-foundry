@@ -12,11 +12,11 @@ class ImageFieldsSort[E, D <: ImageFields](f: E => D) extends QuerySort[E] {
   ): Query[E, U, C] = {
     field match {
       case "name" =>
-        query.sortBy(f(_).rawDataBytes.byOrder(ord))
+        query.sortBy(q => (f(q).rawDataBytes.byOrder(ord), f(q).id))
       case "filename" =>
-        query.sortBy(f(_).filename.byOrder(ord))
+        query.sortBy(q => (f(q).filename.byOrder(ord), f(q).id))
       case "sourceuri" =>
-        query.sortBy(f(_).filename.byOrder(ord))
+        query.sortBy(q => (f(q).filename.byOrder(ord), f(q).id))
       case _ => query
     }
   }

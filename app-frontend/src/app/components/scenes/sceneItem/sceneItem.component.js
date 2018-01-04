@@ -13,7 +13,10 @@ const rfSceneItem = {
 
         selected: '<?',
         onSelect: '&?',
-        isDisabled: '<?'
+        isDisabled: '<?',
+        apiSource: '<?',
+        planetKey: '<?',
+        onPassPlanetThumbnail: '&?'
     }
 };
 

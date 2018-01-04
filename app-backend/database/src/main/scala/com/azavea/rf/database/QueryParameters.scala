@@ -269,6 +269,13 @@ case class AnnotationQueryParameters(
 )
 
 @JsonCodec
+case class ShapeQueryParameters(
+  orgParams: OrgQueryParameters = OrgQueryParameters(),
+  userParams: UserQueryParameters = UserQueryParameters(),
+  timestampParams: TimestampQueryParameters = TimestampQueryParameters()
+)
+
+@JsonCodec
 case class FeedQueryParameters(
   source: Option[String] = None
 )

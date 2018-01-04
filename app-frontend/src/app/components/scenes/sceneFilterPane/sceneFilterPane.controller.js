@@ -1,43 +1,161 @@
 /* globals _*/
+const cloudCoverRange = {min: 0, max: 100};
+const sunElevationRange = {min: 0, max: 180};
+const sunAzimuthRange = {min: 0, max: 360};
+const planetItemTypes = [
+  {itemType: 'PSScene3Band', name: 'PlanetScope Scenes - 3 band'},
+  {itemType: 'PSScene4Band', name: 'PlanetScope Scenes - 4 band'},
+  {itemType: 'PSOrthoTile', name: 'PlanetScope OrthoTiles'},
+  {itemType: 'REOrthoTile', name: 'RapidEye OrthoTiles'}
+];
+
 export default class FilterPaneController {
-    constructor($scope, $rootScope, $timeout, modalService,
-        datasourceService, authService, moment) {
+    constructor($log, $scope, $rootScope, $timeout, modalService,
+        datasourceService, authService, userService, moment) {
         'ngInject';
+        this.$log = $log;
         this.$scope = $scope;
         this.$rootScope = $rootScope;
         this.$timeout = $timeout;
         this.modalService = modalService;
         this.datasourceService = datasourceService;
         this.authService = authService;
+        this.userService = userService;
         this.Moment = moment;
     }
 
     $onInit() {
-        if (this.authService.isLoggedIn) {
-            this.initFilters();
-            this.initDatefilter();
-        } else {
-            this.$scope.$watch(() => this.authService.isLoggedIn, (isLoggedIn) => {
-                if (isLoggedIn) {
-                    this.initFilters();
-                    this.initDatefilter();
-                }
-            });
-        }
-
+        this.newParams = Object.assign({}, this.filters);
+        this.authService.getCurrentUser().then((user) => {
+            this.userPlanetCredential = user.planetCredential;
+        });
         this.toggleDrag = {toggle: false, enabled: false};
-        this.$scope.$watch('$ctrl.opened', (opened) => {
-            if (opened) {
+        this.initDataRepoFilter();
+        this.initDataSourceFilters();
+        this.initDatefilter();
+        this.initFilterSlideOptions(false);
+        this.initIngestFilter();
+        this.importOwnerFilter = this.filters.owner ? 'user' : 'any';
+    }
+
+    $onChanges(changes) {
+        if (changes.opened && changes.opened.hasOwnProperty('currentValue')) {
+            if (changes.opened.currentValue) {
                 this.$timeout(() => this.$rootScope.$broadcast('reCalcViewDimensions'), 50);
             }
+        }
+    }
+
+    onClose() {
+        this.onCloseFilterPane({showFilterPane: false});
+    }
+
+    onSelectBrowseSource(browseSource) {
+        if (browseSource === this.selectedBrowseSource) {
+            return;
+        }
+        if (browseSource === 'Planet Labs') {
+            if (!this.userPlanetCredential) {
+                this.connectToPlanet();
+            } else {
+                this.onPassPlanetToken({planetToken: this.userPlanetCredential});
+                this.onBrowseSourceChanged(browseSource);
+            }
+        } else if (browseSource === 'Raster Foundry') {
+            this.onBrowseSourceChanged(browseSource);
+        }
+    }
+
+    onBrowseSourceChanged(browseSource) {
+        this.selectedBrowseSource = browseSource;
+        this.selectedDatasource = '';
+        this.initDataSourceFilters();
+        this.datefilter = {
+            start: this.Moment().subtract(1, 'months'),
+            end: this.Moment()
+        };
+        this.hasDatetimeFilter = true;
+        this.datefilterPreset = 'The last month';
+
+        this.newParams = Object.assign({}, {
+            datasource: [],
+            minAcquisitionDatetime: this.datefilter.start.toISOString(),
+            maxAcquisitionDatetime: this.datefilter.end.toISOString()
+        });
+
+        this.onFilterChange({
+            newFilters: this.newParams,
+            sourceRepo: this.selectedBrowseSource
         });
     }
 
+    connectToPlanet() {
+        this.modalService.open({
+            component: 'rfEnterTokenModal',
+            resolve: {
+                title: () => 'Enter your Planet API Token'
+            }
+        }).result.then((token) => {
+            this.userService.updatePlanetToken(token).then(() => {
+                this.userPlanetCredential = token;
+                if (this.userPlanetCredential) {
+                    this.onPassPlanetToken({planetToken: this.userPlanetCredential});
+                    this.onBrowseSourceChanged('Planet Labs');
+                }
+            }, (err) => {
+                this.$log.log('There was an error updating the user with a planet api token', err);
+            });
+        });
+    }
+
+    initDataRepoFilter() {
+        this.selectedBrowseSource = this.filters && this.filters.dataRepo ?
+          this.filters.dataRepo : 'Raster Foundry';
+    }
+
+    initDataSourceFilters() {
+        if (this.selectedBrowseSource === 'Raster Foundry') {
+            this.datasourceService.query().then(d => {
+                this.datasources = d.results;
+                if (this.filters && this.filters.datasource && this.filters.datasource[0]) {
+                    let matchedSource = this.datasources.find((ds) => {
+                        return ds.id === this.filters.datasource[0];
+                    });
+                    if (matchedSource) {
+                        this.selectedDatasource = matchedSource.name;
+                    } else {
+                        this.selectedDatasource = '';
+                    }
+                }
+            });
+        } else if (this.selectedBrowseSource === 'Planet Labs') {
+            this.datasources = planetItemTypes;
+            if (this.filters && this.filters.datasource && this.filters.datasource[0]) {
+                let matchedSource = this.datasources.find((ds) => {
+                    return ds.itemType === this.filters.datasource[0];
+                });
+                if (matchedSource) {
+                    this.selectedDatasource = matchedSource.name;
+                } else {
+                    this.selectedDatasource = '';
+                }
+            }
+        }
+    }
+
     initDatefilter() {
-        this.datefilter = {
-            start: this.Moment().subtract(100, 'years'),
-            end: this.Moment()
-        };
+        if (this.selectedBrowseSource === 'Planet Labs') {
+            this.datefilter = {
+                start: this.Moment().subtract(1, 'months'),
+                end: this.Moment()
+            };
+        } else {
+            this.datefilter = {
+                start: this.Moment().subtract(100, 'years'),
+                end: this.Moment()
+            };
+        }
+
         this.dateranges = [
             {
                 name: 'Today',
@@ -68,219 +186,168 @@ export default class FilterPaneController {
         }
 
         if (!this.filters.minAcquisitionDatetime || !this.filters.maxAcquisitionDatetime) {
-            this.clearDateFilter();
+            this.clearDateFilter(false);
         } else {
             this.datefilterPreset = '';
             this.hasDatetimeFilter = true;
         }
     }
 
-    clearDateFilter() {
-        delete this.filters.minAcquisitionDatetime;
-        delete this.filters.maxAcquisitionDatetime;
-        this.datefilterPreset = 'None';
-        this.hasDatetimeFilter = false;
-    }
-
-    setDateRange(start, end, preset) {
-        if (_.isEmpty({start}) || _.isEmpty(end)) {
-            this.clearDateFilter();
-        } else {
-            this.datefilter.start = start;
-            this.datefilter.end = end;
-            this.datefilterPreset = preset || false;
-            this.hasDatetimeFilter = true;
-            this.filters.minAcquisitionDatetime = start.toISOString();
-            this.filters.maxAcquisitionDatetime = end.toISOString();
+    initFilterSlideOptions(isReset) {
+        if (this.filters) {
+            this.filterOptions = {
+                cloudCover: {
+                    minModel: isReset ? cloudCoverRange.min :
+                      this.filters.minCloudCover || cloudCoverRange.min,
+                    maxModel: isReset ? cloudCoverRange.max :
+                      this.filters.maxCloudCover || cloudCoverRange.max,
+                    options: {
+                        floor: cloudCoverRange.min,
+                        ceil: cloudCoverRange.max,
+                        minRange: 0,
+                        showTicks: 10,
+                        showTicksValues: true,
+                        step: 10,
+                        pushRange: true,
+                        draggableRange: true,
+                        onEnd: (id, minModel, maxModel) => {
+                            this.onFilterUpdate({
+                                minCloudCover: minModel !== cloudCoverRange.min ? minModel : null,
+                                maxCloudCover: maxModel !== cloudCoverRange.max ? maxModel : null
+                            });
+                        }
+                    }
+                },
+                sunElevation: {
+                    minModel: isReset ? sunElevationRange.min :
+                      this.filters.minSunElevation || sunElevationRange.min,
+                    maxModel: isReset ? sunElevationRange.max :
+                      this.filters.maxSunElevation || sunElevationRange.max,
+                    options: {
+                        floor: sunElevationRange.min,
+                        ceil: sunElevationRange.max,
+                        minRange: 0,
+                        showTicks: 30,
+                        showTicksValues: true,
+                        step: 10,
+                        pushRange: true,
+                        draggableRange: true,
+                        onEnd: (id, minModel, maxModel) => {
+                            this.onFilterUpdate({
+                                minSunElevation:
+                                  minModel !== sunElevationRange.min ? minModel : null,
+                                maxSunElevation:
+                                  maxModel !== sunElevationRange.max ? maxModel : null
+                            });
+                        }
+                    }
+                },
+                sunAzimuth: {
+                    minModel: isReset ? sunAzimuthRange.min :
+                      this.filters.minSunAzimuth || sunAzimuthRange.min,
+                    maxModel: isReset ? sunAzimuthRange.max :
+                      this.filters.maxSunAzimuth || sunAzimuthRange.max,
+                    options: {
+                        floor: sunAzimuthRange.min,
+                        ceil: sunAzimuthRange.max,
+                        minRange: 0,
+                        showTicks: 60,
+                        showTicksValues: true,
+                        step: 10,
+                        pushRange: true,
+                        draggableRange: true,
+                        onEnd: (id, minModel, maxModel) => {
+                            this.onFilterUpdate({
+                                minSunAzimuth: minModel !== sunAzimuthRange.min ? minModel : null,
+                                maxSunAzimuth: maxModel !== sunAzimuthRange.max ? maxModel : null
+                            });
+                        }
+                    }
+                }
+            };
         }
-
-        this.cacheYearFilters();
-    }
-
-    close() {
-        this.opened = false;
-    }
-
-    onCloudCoverFiltersChange(id, minModel, maxModel) {
-        // Some scenes have a cloudCover < 0, which is invalid. filter them out.
-        this.filters.minCloudCover = minModel;
-
-        if (maxModel === this.cloudCoverRange.max) {
-            delete this.filters.maxCloudCover;
-        } else {
-            this.filters.maxCloudCover = maxModel;
-        }
-    }
-
-    onSunElevationFiltersChange(id, minModel, maxModel) {
-        if (minModel === this.sunElevationRange.min) {
-            delete this.filters.minSunElevation;
-        } else {
-            this.filters.minSunElevation = minModel;
-        }
-
-        if (maxModel === this.sunElevationRange.max) {
-            delete this.filters.maxSunElevation;
-        } else {
-            this.filters.maxSunElevation = maxModel;
-        }
-    }
-
-    onSunAzimuthFiltersChange(id, minModel, maxModel) {
-        if (minModel === this.sunAzimuthRange.min) {
-            delete this.filters.minSunAzimuth;
-        } else {
-            this.filters.minSunAzimuth = minModel;
-        }
-
-        if (maxModel === this.sunAzimuthRange.max) {
-            delete this.filters.maxSunAzimuth;
-        } else {
-            this.filters.maxSunAzimuth = maxModel;
-        }
-    }
-
-    initFilters() {
-        this.cachedFilters = {};
-
-        this.cloudCoverRange = {min: 0, max: 100};
-
-        let minCloudCover = this.cloudCoverRange.min;
-        if (this.filters.minCloudCover) {
-            minCloudCover = parseInt(this.filters.minCloudCover, 10);
-        }
-
-        let maxCloudCover = parseInt(this.filters.maxCloudCover, 10) || 10;
-
-        if (!this.filters.minCloudCover && minCloudCover !== this.cloudCoverRange.min) {
-            this.filters.minCloudCover = minCloudCover;
-        }
-
-        if (!this.filters.maxCloudCover && maxCloudCover !== this.cloudCoverRange.max) {
-            this.filters.maxCloudCover = maxCloudCover;
-        }
-
-        this.cloudCoverFilters = {
-            minModel: minCloudCover,
-            maxModel: maxCloudCover,
-            options: {
-                floor: this.cloudCoverRange.min,
-                ceil: this.cloudCoverRange.max,
-                minRange: 0,
-                showTicks: 10,
-                showTicksValues: true,
-                step: 10,
-                pushRange: true,
-                draggableRange: true,
-                onEnd: this.onCloudCoverFiltersChange.bind(this)
-            }
-        };
-
-        this.sunElevationRange = {min: 0, max: 180};
-        let minSunElevation = parseInt(this.filters.minSunElevation, 10) ||
-            this.sunElevationRange.min;
-        let maxSunElevation = parseInt(this.filters.maxSunElevation, 10) ||
-            this.sunElevationRange.max;
-        this.sunElevationFilters = {
-            minModel: minSunElevation,
-            maxModel: maxSunElevation,
-            options: {
-                floor: this.sunElevationRange.min,
-                ceil: this.sunElevationRange.max,
-                minRange: 0,
-                showTicks: 30,
-                showTicksValues: true,
-                step: 10,
-                pushRange: true,
-                draggableRange: true,
-                onEnd: this.onSunElevationFiltersChange.bind(this)
-            }
-        };
-
-        this.sunAzimuthRange = {min: 0, max: 360};
-        let minSunAzimuth = parseInt(this.filters.minSunAzimuth, 10) ||
-            this.sunAzimuthRange.min;
-        let maxSunAzimuth = parseInt(this.filters.maxSunAzimuth, 10) ||
-            this.sunAzimuthRange.max;
-        this.sunAzimuthFilters = {
-            minModel: minSunAzimuth,
-            maxModel: maxSunAzimuth,
-            options: {
-                floor: this.sunAzimuthRange.min,
-                ceil: this.sunAzimuthRange.max,
-                minRange: 0,
-                showTicks: 60,
-                showTicksValues: true,
-                step: 10,
-                pushRange: true,
-                draggableRange: true,
-                onEnd: this.onSunAzimuthFiltersChange.bind(this)
-            }
-        };
-
-        this.initIngestFilter();
-
-        this.initSourceFilters();
-
-        this.importOwnerFilter = this.filters.owner ? 'user' : 'any';
     }
 
     initIngestFilter() {
-        this.ingestFilter = 'any';
-        if (this.filters.hasOwnProperty('ingest')) {
-            if (this.filters.ingest) {
+        if (this.filters.hasOwnProperty('ingested')) {
+            if (this.filters.ingested) {
                 this.ingestFilter = 'ingested';
+            } else if (this.filters.ingested === null) {
+                this.ingestFilter = 'any';
             } else {
                 this.ingestFilter = 'uningested';
             }
         }
     }
 
-    initSourceFilters() {
-        this.datasourceService.query().then(d => {
-            this.datasources = d.results;
+    toggleSourceFilter(source) {
+        if (this.selectedBrowseSource === 'Raster Foundry') {
+            this.onFilterUpdate({datasource: [source.id]});
+        } else if (this.selectedBrowseSource === 'Planet Labs') {
+            this.onFilterUpdate({datasource: [source.itemType]});
+        }
+    }
 
-            let selectedId = this.filters && this.filters.datasource && this.filters.datasource[0];
-            if (selectedId) {
-                let matchedSource = this.datasources.find(ds => ds.id === selectedId);
-                if (matchedSource) {
-                    this.selectedDatasource = matchedSource.name;
-                } else {
-                    this.selectedDatasource = '';
-                }
+    clearDatasourceFilter() {
+        this.selectedDatasource = '';
+        this.onFilterUpdate({datasource: []});
+    }
+
+    openDateRangePickerModal() {
+        this.modalService.open({
+            component: 'rfDateRangePickerModal',
+            resolve: {
+                config: () => Object({
+                    range: this.datefilter,
+                    ranges: this.dateranges
+                })
+            }
+        }).result.then((range) => {
+            if (range) {
+                this.setDateRange(range.start, range.end, range.preset);
             }
         });
     }
 
-    resetAllFilters() {
-        this.clearDateFilter();
+    setDateRange(start, end, preset) {
+        if (_.isEmpty({start}) || _.isEmpty(end)) {
+            this.clearDateFilter(false);
+        } else {
+            this.datefilter.start = start;
+            this.datefilter.end = end;
+            this.datefilterPreset = preset || false;
+            this.hasDatetimeFilter = true;
+            this.onFilterUpdate({
+                minAcquisitionDatetime: start.toISOString(),
+                maxAcquisitionDatetime: end.toISOString()
+            });
+        }
+    }
 
-        this.cloudCoverFilters.minModel = this.cloudCoverRange.min;
-        this.cloudCoverFilters.maxModel = this.cloudCoverRange.max;
-        this.filters.minCloudCover = this.cloudCoverRange.min;
-        delete this.filters.maxCloudCover;
-
-        this.sunElevationFilters.minModel = this.sunElevationRange.min;
-        this.sunElevationFilters.maxModel = this.sunElevationRange.max;
-        delete this.filters.minSunElevation;
-        delete this.filters.maxSunElevation;
-
-        this.sunAzimuthFilters.minModel = this.sunAzimuthRange.min;
-        this.sunAzimuthFilters.maxModel = this.sunAzimuthRange.max;
-        delete this.filters.minSunAzimuth;
-        delete this.filters.maxSunAzimuth;
-
-        this.filters.datasource = [];
-
-        this.ingestFilter = 'any';
-        delete this.filters.ingested;
-
-        delete this.filters.datasource;
+    clearDateFilter(isResetAll) {
+        this.datefilterPreset = 'None';
+        this.hasDatetimeFilter = false;
+        if (!isResetAll) {
+            this.onFilterUpdate({
+                minAcquisitionDatetime: null,
+                maxAcquisitionDatetime: null
+            });
+        }
     }
 
     setIngestFilter(mode) {
         this.ingestFilter = mode;
         this.onIngestFilterChange();
+    }
+
+    onIngestFilterChange() {
+        if (this.ingestFilter === 'any') {
+            this.onFilterUpdate({ingested: null});
+        } else if (this.ingestFilter === 'uningested') {
+            this.onFilterUpdate({ingested: false});
+        } else {
+            this.onFilterUpdate({ingested: true});
+        }
     }
 
     setImportOwnerFilter(mode) {
@@ -290,54 +357,42 @@ export default class FilterPaneController {
 
     onImportOwnerFilterChange() {
         if (this.importOwnerFilter === 'user') {
-            let profile = this.authService.getProfile();
-            this.filters.owner = profile ? profile.sub : null;
+            let profile = this.authService.profile();
+            this.onFilterUpdate({owner: profile ? profile.user_id : null});
         } else {
-            delete this.filters.owner;
+            this.onFilterUpdate({owner: null});
         }
     }
 
-    onIngestFilterChange() {
-        if (this.ingestFilter === 'any') {
-            delete this.filters.ingested;
-        } else if (this.ingestFilter === 'uningested') {
-            this.filters.ingested = false;
-        } else {
-            this.filters.ingested = true;
-        }
-    }
-
-
-    cacheYearFilters() {
-        this.cachedFilters.minAcquisitionDatetime = this.filters.minAcquisitionDatetime;
-        this.cachedFilters.maxAcquisitionDatetime = this.filters.maxAcquisitionDatetime;
-    }
-
-    clearDatasourceFilter() {
-        this.filters.datasource = [];
-        // Empty string preserves click to open drop-down
+    resetAllFilters() {
         this.selectedDatasource = '';
+        this.clearDateFilter(true);
+        this.initFilterSlideOptions(true);
+        let emptyFilter = {
+            datasource: [],
+            minCloudCover: null,
+            maxCloudCover: null,
+            minSunElevation: null,
+            maxSunElevation: null,
+            minSunAzimuth: null,
+            maxSunAzimuth: null,
+            minAcquisitionDatetime: null,
+            maxAcquisitionDatetime: null
+        };
+        if (this.selectedBrowseSource === 'Raster Foundry') {
+            this.ingestFilter = 'any';
+            this.importOwnerFilter = 'any';
+            this.onFilterUpdate(Object.assign({}, emptyFilter, {ingested: null, owner: null}));
+        } else if (this.selectedBrowseSource === 'Planet Labs') {
+            this.onFilterUpdate(emptyFilter);
+        }
     }
 
-    toggleSourceFilter(source) {
-        this.filters.datasource = [source.id];
-    }
-
-    openDateRangePickerModal() {
-        const modal = this.modalService.open({
-            component: 'rfDateRangePickerModal',
-            resolve: {
-                config: () => Object({
-                    range: this.datefilter,
-                    ranges: this.dateranges
-                })
-            }
-        });
-
-        modal.result.then(range => {
-            if (range) {
-                this.setDateRange(range.start, range.end, range.preset);
-            }
+    onFilterUpdate(changesObj) {
+        this.newParams = Object.assign(this.newParams, changesObj);
+        this.onFilterChange({
+            newFilters: this.newParams,
+            sourceRepo: this.selectedBrowseSource
         });
     }
 }

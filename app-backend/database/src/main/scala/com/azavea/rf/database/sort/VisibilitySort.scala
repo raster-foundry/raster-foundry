@@ -11,7 +11,7 @@ class VisibilitySort[E, D <: VisibilityField](f: E => D) extends QuerySort[E] {
     ord: Order
   ): Query[E, U, C] = {
     field match {
-      case "visibility" => query.sortBy(f(_).visibility.byOrder(ord))
+      case "visibility" => query.sortBy(q => (f(q).visibility.byOrder(ord), f(q).id))
       case _ => query
     }
   }
