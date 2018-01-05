@@ -1,71 +1,37 @@
 <div class="container dashboard">
   <div class="row content stack-sm">
     <div class="column-8">
-      
       <!-- Dashboard Header -->
       <div class="dashboard-header">
         <h1 class="h3">{{$ctrl.datasource.name}}</h1>
         <div class="flex-fill"></div>
+        <rf-toggle value="$ctrl.isPublic" on-change="$ctrl.changeVisibility()">
+          <label>Share publicly</label>
+        </rf-toggle>
         <button class="btn btn-primary" ng-click="$ctrl.openImportModal()">Start an Import</button>
       </div>
       <!-- Dashboard Header -->
 
-      <h2 class="h4">Color modes</h2>
+      <div class="cta-row">
+        <rf-call-to-action-item title="Color modes" class="panel panel-off-white">
+          <div class="cta-flex-text">
+            Create preset false color composites that will be available for all imagery from the <strong>{{$ctrl.datasource.name}}</strong> datasource.
+          </div>
+          <ui-view>
+              <a class="btn btn-primary" ui-sref="imports.datasources.detail.colorComposites">Edit color modes</a>
+          </ui-view>
+        </rf-call-to-action-item>
+      </div>
     </div>
     <div class="column spacer"></div>
-  </div>
-</div>
-
-<div class="main">
-  <div class="content stack-sm">
-    <h2><a class="text-dark" ui-sref="imports.datasources.detail">{{$ctrl.datasource.name}}</a></h2>
-  </div>
-  <div class="row content stack-sm">
-    <div class="column-9">
-      <ui-view>
-        <div class="cta-row">
-          <rf-call-to-action-item title="False Color Composites">
-            <div class="cta-flex-text">
-              {{$ctrl.BUILDCONFIG.APP_NAME}} allows you to create preset false color composites that will be available for all imagery from the <strong>{{$ctrl.datasource.name}}</strong> datasource.
-            </div>
-            <div class="cta-button-row">
-              <a class="btn btn-primary" ui-sref="imports.datasources.detail.colorComposites">Edit composite presets</a>
-            </div>
-            <div class="cta-text">
-              <a>Getting started with color composites</a>
-            </div>
-          </rf-call-to-action-item>
-        </div>
-        <div class="cta-row" ng-show="$ctrl.notDefaultDatasource()">
-          <rf-call-to-action-item title="Visibility">
-            <div class="cta-flex-text">
-              <div>
-                <rf-toggle value="$ctrl.isPublic" on-change="$ctrl.changeVisibility()">
-                </rf-toggle>
-                <span title="Public">Public</span>
-              </div>
-            </div>
-          </rf-call-to-action-item>
-        </div>
-      </ui-view>
-    </div>
-    <div class="column-3">
-      <div class="content">
-        <div class="sidebar-section">
-          <button class="btn btn-primary" ng-click="$ctrl.openImportModal()">Start an Import</button>
-        </div>
-        <div class="sidebar-section">
-          <h5>What is a datasource?</h5>
-          <p class="font-size-small">
-            A project is a collection of scenes from many different sources where you can then run color corrections and mosaic into a basemap.
-          </p>
-        </div>
-        <div class="sidebar-section">
-          <h5>What is a datasource?</h5>
-          <p class="font-size-small">
-            A project is a collection of scenes from many different sources where you can then run color corrections and mosaic into a basemap.
-          </p>
-        </div>
+    <div class="column">
+      <div class="aside">
+        <section>
+          <h5>What is a color mode?</h5>
+          <p class="font-size-small">Color modes create a color image by allowing you to assign monochromatic wavelength bands to the red, green, and blue color spectrum.</p>
+          <h5>Why combine different bands?</h5>
+          <p class="font-size-small">False color composites, as they are called, are useful for highlighting features within imagery. For instance, you could combine bands to highlight plant growth.</p>
+        </section>
       </div>
     </div>
   </div>
