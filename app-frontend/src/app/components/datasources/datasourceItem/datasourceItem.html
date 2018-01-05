@@ -4,27 +4,13 @@
     Modified on {{$ctrl.datasource.modifiedAt | date}}
   </div>
   <div class="list-group-right">
-
-    <button class="btn btn-square"
-            ng-click="$ctrl.toggleSelected($event)"
-            ng-if="$ctrl.isSelectable"
-            ng-class="{'btn-secondary': $ctrl.selectedStatus}">
-      <i ng-class="{
-                   'icon-plus': !$ctrl.selectedStatus,
-                   'icon-cross': $ctrl.selectedStatus,
-                   'icon-check': $ctrl.selectedStatus === 'added'
-                   }">
-      </i>
-    </button>
-    <a class="btn btn-small"
-       ui-sref="imports.datasources.detail({ datasourceid: $ctrl.datasource.id })"
-       ui-sref-opts="{inherit: false}"
-       ng-if="!$ctrl.isSelectable">
-      View
-    </a>
-    <a class="btn btn-small">
-      <span class="sr-only">Delete</span>
-      <i class="icon-trash"></i>
-    </a>
+    <div class="btn-group">
+      <a class="btn btn-small"
+         ui-sref="imports.datasources.detail({ datasourceid: $ctrl.datasource.id })"
+         ui-sref-opts="{inherit: false}"
+         ng-if="!$ctrl.isSelectable">
+        View
+      </a>
+    </div>
   </div>
 </div>

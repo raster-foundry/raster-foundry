@@ -210,6 +210,10 @@ div.checkbox {
   font-weight: 500;
   margin: 0;
 
+  label {
+    margin: 0 5px;
+  } 
+
   &.dark {
     color: $white;
     &:after {

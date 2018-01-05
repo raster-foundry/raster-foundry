@@ -1120,37 +1120,6 @@ input:checked + .slider:before {
   border-radius: 50%;
 }
 
-
-/*
- * page: home
- * page: imports
- * page: imports/datasources
- */
-h2.no-margin, h3.no-margin {
-  margin: 0;
-}
-.sidebar-section {
-  margin-bottom: 3rem;
-}
-.sidebar-row {
-  margin-bottom: 1rem;
-}
-.sidebar-section .btn {
-  display: block;
-  width: 100%;
-}
-.flex-header {
-  display: flex;
-  align-items: center;
-  h1, h2, h3, h4, h5 {
-    flex: 1;
-  }
-}
-.color-composite-item {
-  margin-bottom: 4rem;
-}
-
-
 /*
  * page: lab
  */
