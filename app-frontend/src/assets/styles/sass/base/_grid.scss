@@ -3,7 +3,6 @@
   display: flex;
   flex-wrap: wrap;
   margin-bottom: 1rem;
-  max-width: 100%;
 
   &.nowrap {
     flex-wrap: nowrap;
@@ -17,10 +16,6 @@
   .row {
     margin-left: -1rem;
     margin-right: -1rem;
-  }
-
-  @include respond-to(md-down) {
-    max-width: 100%;
   }
 }
 
