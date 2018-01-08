@@ -1,7 +1,7 @@
 /* eslint-disable */
 export default angular.module('index.components', [
     // scene components
-    require('./components/scenes/sceneList/sceneList.module.js').name,
+    require('./components/scenes/importList/importList.module.js').name,
     require('./components/scenes/sceneItem/sceneItem.module.js').name,
     require('./components/scenes/sceneDetail/sceneDetail.module.js').name,
     require('./components/scenes/sceneDetailModal/sceneDetailModal.module.js').name,

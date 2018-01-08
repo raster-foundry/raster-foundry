@@ -6,8 +6,8 @@
            ui-sref-active="active">
           Raster
         </a>
-        <a ui-sref=""
-           ui-sref-active="active">
+        <a ui-sref="imports.vectors"
+           ui-sref-active="active" feature-flag="user-vectors">
           Vector
         </a>
         <a ui-sref="imports.datasources.list"
@@ -16,7 +16,6 @@
         </a>
       </nav>
     </div>
-    
   </div>
 </div>
 <ui-view>
