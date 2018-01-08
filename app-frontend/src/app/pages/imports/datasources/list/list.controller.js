@@ -1,10 +1,11 @@
 /* global BUILDCONFIG */
 
 class DatasourceListController {
-    constructor($state, datasourceService) {
+    constructor($state, datasourceService, modalService) {
         'ngInject';
         this.$state = $state;
         this.datasourceService = datasourceService;
+        this.modalService = modalService;
     }
 
     $onInit() {
@@ -72,6 +73,14 @@ class DatasourceListController {
                 this.isLoadingDatasources = false;
             }
         );
+    }
+
+    createDatasourceModal() {
+        this.modalService.open({
+            component: 'rfDatasourceCreateModal'
+        }).result.then(() => {
+            this.loadDatasources();
+        });
     }
 }
 
