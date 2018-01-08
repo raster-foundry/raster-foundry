@@ -1,4 +1,16 @@
-export default class SceneListController {
+import angular from 'angular';
+import importListTpl from './importList.html';
+
+const ImportListComponent = {
+    templateUrl: importListTpl,
+    controller: 'ImportListController',
+    bindings: {
+    }
+};
+
+const pageSize = '10';
+
+class ImportListController {
     constructor( // eslint-disable-line max-params
         $log, sceneService, $state, authService, modalService
     ) {
@@ -11,7 +23,7 @@ export default class SceneListController {
     }
 
     $onInit() {
-        this.populateSceneList(this.$state.params.page || 1);
+        this.populateImportList(this.$state.params.page || 1);
         this.sceneActions = [
             {
                 label: 'Download',
@@ -27,18 +39,18 @@ export default class SceneListController {
         ];
     }
 
-    populateSceneList(page) {
+    populateImportList(page) {
         if (this.loading) {
             return;
         }
         delete this.errorMsg;
         this.loading = true;
         // save off selected scenes so you don't lose them during the refresh
-        this.sceneList = [];
+        this.importList = [];
         this.sceneService.query(
             {
                 sort: 'createdAt,desc',
-                pageSize: '10',
+                pageSize: pageSize,
                 page: page - 1,
                 owner: this.authService.getProfile().sub
             }
@@ -58,7 +70,7 @@ export default class SceneListController {
                     notify: false
                 }
             );
-            this.sceneList = this.lastSceneResult.results;
+            this.importList = this.lastSceneResult.results;
             this.loading = false;
         }, () => {
             this.errorMsg = 'Server error.';
@@ -121,7 +133,7 @@ export default class SceneListController {
         });
     }
 
-    shouldShowSceneList() {
+    shouldShowImportList() {
         return !this.loading && this.lastSceneResult &&
             this.lastSceneResult.count > this.lastSceneResult.pageSize && !this.errorMsg;
     }
@@ -154,3 +166,11 @@ export default class SceneListController {
         return classes;
     }
 }
+
+const ImportListModule = angular.module('components.scenes.importList', []);
+
+ImportListModule.component('rfImportList', ImportListComponent);
+ImportListModule.controller('ImportListController', ImportListController);
+
+export default ImportListModule;
+

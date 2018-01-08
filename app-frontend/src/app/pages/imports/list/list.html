@@ -10,17 +10,8 @@
         </a>
       </div>
       <!-- Dashboard Header -->
-
-      <!-- Loading indicator -->
-      <div ng-show="$ctrl.loading">
-        <span class="list-placeholder h3">
-          <i class="icon-load"></i>
-        </span>
-      </div>
-      <!-- Loading indicator -->
-      
       <!-- Imports list -->
-      <rf-scene-list></rf-scene-list>
+      <rf-import-list></rf-import-list>
       <!-- Imports list -->
     </div>
 
@@ -30,15 +21,15 @@
         <section>
           <h5>What are imports?</h5>
           <p class="font-size-small">
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aspernatur sequi laborum, corporis magnam vero totam.
+            Imports are scenes that have been created from imagery that you've uploaded.
           </p>
           <h5>What imagery sources am I limited to?</h5>
           <p class="font-size-small">
-            Talk about datasources in the answer.
+            Raster Foundry can currently ingest multi or single band geotiffs.
           </p>
           <h5>What is a datasource?</h5>
           <p class="font-size-small">
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aspernatur sequi laborum, corporis magnam vero totam.
+            Datasources are how Raster Foundry stores common information about scenes that share similar structure - typically metadata such as band information that is useful to carry across scenes.
             <ul class="list-unstyled">
               <li><a href="#">View your datasources</a></li>
               <li><a href="#">Create a datasources</a></li>

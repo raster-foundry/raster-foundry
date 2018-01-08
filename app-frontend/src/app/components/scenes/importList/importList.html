@@ -1,5 +1,6 @@
-<div class="list-group" ng-if="$ctrl.loading">
-  <span class="list-placeholder">
+<div class="text-center" ng-show="$ctrl.loading">
+  <div>Loading Imports</div>
+  <span class="list-placeholder h3">
     <i class="icon-load animate-spin"></i>
   </span>
 </div>
@@ -7,7 +8,7 @@
   <rf-scene-item
       scene="scene"
       ng-click="$ctrl.viewSceneDetail(scene)"
-      ng-repeat="scene in $ctrl.sceneList track by scene.id">
+      ng-repeat="scene in $ctrl.importList track by scene.id">
     <div class="btn-group" ng-if="$ctrl.sceneActions && $ctrl.sceneActions.length">
       <button type="button"
               class="btn btn-small"
@@ -23,7 +24,7 @@
   </rf-scene-item>
 </div>
 <div class="list-group text-center"
-     ng-if="$ctrl.shouldShowSceneList()">
+     ng-if="$ctrl.shouldShowImportList()">
   <ul uib-pagination
       items-per-page="$ctrl.lastSceneResult.pageSize"
       total-items="$ctrl.lastSceneResult.count"
@@ -32,13 +33,13 @@
       rotate="true"
       boundary-link-numbers="true"
       force-ellipses="true"
-      ng-change="$ctrl.populateSceneList($ctrl.currentPage)">
+      ng-change="$ctrl.populateImportList($ctrl.currentPage)">
   </ul>
 </div>
 
 <!-- No imports placeholder -->
 <div ng-if="$ctrl.shouldShowImportBox()">
-  <rf-call-to-action-item 
+  <rf-call-to-action-item
     title="You haven't imported any scenes"
     class="panel panel-off-white">
     <p class="pb-25">
@@ -57,6 +58,6 @@
 <div class="list-group" ng-if="$ctrl.errorMsg">
   <span class="list-placeholder">
     {{$ctrl.errorMsg}}
-    <a href ng-click="$ctrl.populateSceneList(1)">Try again</a>
+    <a href ng-click="$ctrl.populateImportList(1)">Try again</a>
   </span>
 </div>
