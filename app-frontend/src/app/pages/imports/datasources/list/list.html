@@ -27,11 +27,12 @@
 
       <!-- Datasources empty state -->
       <div class="cta-row" ng-if="$ctrl.shouldShowPlaceholder()">
-        <rf-call-to-action-item 
+        <rf-call-to-action-item
           title="You haven't created any datasources yet"
           class="panel panel-off-white">
           <div class="cta-flex-text">
-            You can create a new datasource by linking Raster Foundry with various kinds of imagery sources like your comptuer, Amazon S3 Buckets, DropBox, and many other sources.
+            You can create a new datasource by linking Raster Foundry with various kinds of imagery sources
+            like your computer, Amazon S3 Buckets, DropBox, and many other sources.
           </div>
           <div class="cta-button-row">
             <a class="btn btn-primary">Create a new Datasource</a>
@@ -46,12 +47,23 @@
       <!-- Datasource List -->
       <div class="list-group" ng-show="$ctrl.shouldShowList()">
         <rf-datasource-item
-          ng-repeat="datasource in $ctrl.datasources.results | filter: {name: $ctrl.searchString}"
+          ng-repeat="datasource in $ctrl.datasources.results"
           datasource="datasource"
         >
         </rf-datasource-item>
       </div>
+      <div class="list-group"
+           ng-if="$ctrl.searchString">
+        <rf-datasource-item
+          ng-repeat="datasource in $ctrl.filteredSources | limitTo : 10"
+          datasource="datasource"
+        >
+        </rf-datasource-item>
+        showing {{ $ctrl.filteredSources.length > 10 ? 10 : $ctrl.filteredSources.length}} of {{$ctrl.filteredSources.length}}
+        matching datasources
+      </div>
       <!-- Datasource List -->
+
 
       <!-- Datasource pagination -->
       <div class="list-group text-center"
@@ -67,7 +79,7 @@
             ng-change="$ctrl.loadDatasources($ctrl.currentPage)">
         </ul>
       </div>
-      
+
       <!-- Placeholder, show only when loading is complete and no datasources were found-->
       <div class="cta-row" ng-if="$ctrl.shouldShowPlaceholder()">
         <rf-call-to-action-item title="You haven't created any datasources yet">
@@ -89,7 +101,10 @@
       <div class="aside">
         <section>
           <h5>What is a datasource?</h5>
-          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Voluptatum, ea! Minus magni impedit.</p>
+          <p>
+            Datasources contain information that is common to imagery that comes from a set of published imagery. Right now we store
+            sets of band selections for common visualizations on them.
+          </p>
         </section>
       </div>
     </div>
