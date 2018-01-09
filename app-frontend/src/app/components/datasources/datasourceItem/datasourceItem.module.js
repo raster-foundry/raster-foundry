@@ -1,6 +1,37 @@
 import angular from 'angular';
-import DatasourceItemComponent from './datasourceItem.component.js';
-import DatasourceItemController from './datasourceItem.controller.js';
+import datasourceItemTpl from './datasourceItem.html';
+
+const DatasourceItemComponent = {
+    templateUrl: datasourceItemTpl,
+    controller: 'DatasourceItemController',
+    bindings: {
+        datasource: '<',
+        selected: '&',
+        onSelect: '&'
+    }
+};
+
+class DatasourceItemController {
+    constructor($scope, $attrs, authService) {
+        'ngInject';
+        let id = authService.getProfile().sub;
+        this.isOwner = id === this.datasource.owner;
+
+
+        this.isSelectable = $attrs.hasOwnProperty('selectable');
+        $scope.$watch(
+            () => this.selected({project: this.project}),
+            (selected) => {
+                this.selectedStatus = selected;
+            }
+        );
+    }
+
+    toggleSelected(event) {
+        this.onSelect({project: this.project, selected: !this.selectedStatus});
+        event.stopPropagation();
+    }
+}
 
 const DatasourceItemModule = angular.module('components.datasourceItem', []);
 

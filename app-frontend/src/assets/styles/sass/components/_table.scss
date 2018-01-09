@@ -6,6 +6,14 @@ table.table {
   text-align: left;
   border: 1px solid $border-color-default;
 
+  .table-row-changed {
+      border: 1px solid $warning;
+      th, td {
+          border-top: 1px solid $warning;
+          border-bottom: 1px solid $warning;
+      }
+  }
+
   th {
     vertical-align: bottom;
     font-weight: 600;

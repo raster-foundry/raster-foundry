@@ -46,7 +46,6 @@ import importsListTpl from './pages/imports/list/list.html';
 import importsDatasourcesTpl from './pages/imports/datasources/datasources.html';
 import importsDatasourcesListTpl from './pages/imports/datasources/list/list.html';
 import importsDatasourcesDetailTpl from './pages/imports/datasources/detail/detail.html';
-import datasourceColorCompositesTpl from './pages/imports/datasources/detail/colorComposites/colorComposites.html';
 
 function projectEditStates($stateProvider) {
     let addScenesQueryParams = [
@@ -409,13 +408,6 @@ function importStates($stateProvider) {
             url: '/detail/:datasourceid',
             templateUrl: importsDatasourcesDetailTpl,
             controller: 'DatasourceDetailController',
-            controllerAs: '$ctrl'
-        })
-        .state('imports.datasources.detail.colorComposites', {
-            title: 'Datasource Color Composites',
-            url: '/color-composites',
-            templateUrl: datasourceColorCompositesTpl,
-            controller: 'ColorCompositesController',
             controllerAs: '$ctrl'
         });
 }
