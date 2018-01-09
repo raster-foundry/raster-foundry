@@ -113,7 +113,7 @@ export default (app) => {
                     },
                     export: {
                         method: 'POST',
-                        url: '/api/exports/'
+                        url: `${BUILDCONFIG.API_HOST}/api/exports/`
                     },
                     listExports: {
                         method: 'GET',
