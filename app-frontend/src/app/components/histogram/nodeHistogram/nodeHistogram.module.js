@@ -448,6 +448,12 @@ class NodeHistogramController {
             })
         });
     }
+
+    onBpMouseover({id}) {
+        if (!this.isSource) {
+            this.lastMouseOver = id;
+        }
+    }
 }
 
 const NodeHistogramModule = angular.module('components.histogram.nodeHistogram', []);

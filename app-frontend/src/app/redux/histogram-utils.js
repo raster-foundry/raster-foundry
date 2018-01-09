@@ -16,11 +16,11 @@ export function breakpointsFromRenderDefinition(renderDefinition, idGenerator) {
             }).sort((a, b) => a.value - b.value);
         _.first(breakpoints).options = {
             style: 'bar',
-            alwaysShowNumbers: true
+            alwaysShowNumbers: false
         };
         _.last(breakpoints).options = {
             style: 'bar',
-            alwaysShowNumbers: true
+            alwaysShowNumbers: false
         };
         return breakpoints;
     }

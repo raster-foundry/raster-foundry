@@ -43,7 +43,7 @@
   <rf-histogram-breakpoint
       ng-if="$ctrl.plot && bp.options.style !== 'hidden' && !$ctrl.isSource"
       ng-repeat="bp in $ctrl.breakpoints track by bp.id"
-      ng-mouseover="!$ctrl.isSource && $ctrl.lastMouseOver = bp.id"
+      ng-mouseover="$ctrl.onBpMouseover(bp)"
       ng-class="{'active': $ctrl.lastMouseOver === bp.id}"
       data-color="bp.color"
       data-breakpoint="bp.value"
