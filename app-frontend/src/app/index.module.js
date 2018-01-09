@@ -82,7 +82,6 @@ const App = angular.module(
         require('./pages/imports/datasources/datasources.module.js').name,
         require('./pages/imports/datasources/list/list.module.js').name,
         require('./pages/imports/datasources/detail/detail.module.js').name,
-        require('./pages/imports/datasources/detail/colorComposites/colorComposites.module').name,
 
         require('./pages/settings/settings.module.js').name,
         require('./pages/settings/profile/profile.module.js').name,

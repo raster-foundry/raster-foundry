@@ -89,12 +89,18 @@
   }
 
   .list-group-right {
+    display: flex;
     margin-left: auto;
     text-align: right;
 
     > * {
       vertical-align: middle;
     }
+  }
+
+  .list-group-left {
+    display: flex;
+    flex-direction: column;
   }
 
   .list-group-link {

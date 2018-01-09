@@ -1,7 +1,21 @@
 <div class="list-group-item">
   <div class="list-group-overflow">
-    <strong class="color-dark">{{$ctrl.datasource.name}}</strong><br>
-    Modified on {{$ctrl.datasource.modifiedAt | date}}
+    <div class="list-group-left">
+      <div><strong class="color-dark">{{$ctrl.datasource.name}}</strong></div>
+      <div>
+        <div class="visibility"
+             ng-if="$ctrl.isOwner"
+             ng-class="{'private': $ctrl.datasource.visibility === 'PRIVATE',
+                    'public': $ctrl.datasource.visibility === 'PUBLIC'}">
+          {{$ctrl.datasource.visibility.toLowerCase()}}
+        </div>
+        <div class="visibility global"
+             ng-if="!$ctrl.isOwner">
+          global
+        </div>
+        Modified on {{$ctrl.datasource.modifiedAt | date}}
+      </div>
+    </div>
   </div>
   <div class="list-group-right">
     <div class="btn-group">
