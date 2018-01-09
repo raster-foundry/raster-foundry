@@ -1,13 +1,27 @@
 <div>
-    <label class="leaflet-popup-label m-popup-title">{{$ctrl.measurementType}} Measurement</label>
+    <div class="leaflet-popup-label m-popup-title">{{$ctrl.measurementType}} Measurement</div>
     <hr>
-    <label class="leaflet-popup-label m-popup-result">
+    <div class="leaflet-popup-label measurement-result">
       <span class="m-popup-number">
         {{ $ctrl.calculatedMeasurment | number }}
-      </span>&nbsp;&nbsp;{{$ctrl.unit}}
-    </label>
-    <input type="button"
-           class="btn btn-secondary measure-delete-btn"
-           ng-click="$ctrl.delete()"
-           value="Delete" />
+      </span>
+      {{$ctrl.unit}}
+      <button type="button"
+              class="btn btn-primary"
+              ng-show="$ctrl.unitType === 'metric'"
+              ng-click="$ctrl.toggleUnits()">
+        to imperial
+      </button>
+      <button type="button"
+              class="btn btn-primary"
+              ng-show="$ctrl.unitType === 'imperial'"
+              ng-click="$ctrl.toggleUnits()">
+        to metric
+      </button>
+    </div>
+    <button type="button"
+            class="btn btn-secondary measure-delete-btn"
+            ng-click="$ctrl.delete()">
+      Delete
+    </button>
 </div>
