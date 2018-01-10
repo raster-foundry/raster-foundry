@@ -17,13 +17,12 @@ class AnnotateImportController {
 
     $onInit() {
         this.matchKeys = {};
+        this.defaultKeys = {
+            label: '',
+            description: '',
+            quality: null
+        };
         this.bindUploadEvent();
-        this.isMachineData = false;
-        this.$scope.$on('$destroy', this.$onDestroy.bind(this));
-    }
-
-    $onDestroy() {
-        this.matchKeys = {};
         this.isMachineData = false;
     }
 
@@ -58,8 +57,8 @@ class AnnotateImportController {
 
     setSelectionMenuItems(data) {
         this.uploadData = data;
-        this.dataProperties = data.features.reduce((accu, f) => {
-            return _.intersection(accu, Object.keys(f.properties));
+        this.dataProperties = data.features.reduce((accu, feature) => {
+            return _.intersection(accu, Object.keys(feature.properties));
         }, Object.keys(data.features[0].properties));
         this.$scope.$apply();
     }
@@ -73,21 +72,43 @@ class AnnotateImportController {
         }
     }
 
+    hasDefaultVal(appKey) {
+        return typeof this.defaultKeys[appKey] !== 'undefined';
+    }
+
+    defaultKeySelection(appKey, defaultVal) {
+        this.defaultKeys[appKey] = defaultVal;
+    }
+
+    getValOrDefault(appKey, feature) {
+        if (this.matchKeys[appKey]) {
+            return feature.properties[this.matchKeys[appKey]];
+        }
+        return this.defaultKeys[appKey];
+    }
+
     onImportClick() {
         this.$parent.importLocalAnnotations({
             'type': 'FeatureCollection',
-            'features': this.uploadData.features.map((f) => {
-                let con = this.isMachineData ? f.properties[this.matchKeys.confidence] : null;
-                let qa = this.isMachineData ? f.properties[this.matchKeys.quality] : null;
+            'features': this.uploadData.features.map((feature) => {
+                let confidence = null;
+                let quality = null;
+                if (this.isMachineData) {
+                    confidence = this.matchKeys.confidence ?
+                        feature.properties[this.matchKeys.confidence] : null;
+                    quality = this.getValOrDefault('quality', feature);
+                }
                 return {
                     'properties': {
-                        'label': f.properties[this.matchKeys.label],
-                        'description': f.properties[this.matchKeys.description],
+                        'label': this.getValOrDefault('label', feature).toString(),
+                        'description': (
+                            this.getValOrDefault('description', feature) || ''
+                        ).toString(),
                         'machineGenerated': this.isMachineData,
-                        'confidence': con,
-                        'quality': qa
+                        'confidence': confidence,
+                        'quality': quality
                     },
-                    'geometry': f.geometry,
+                    'geometry': feature.geometry,
                     'type': 'Feature'
                 };
             })
