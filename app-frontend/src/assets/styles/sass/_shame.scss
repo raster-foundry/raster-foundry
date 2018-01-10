@@ -2862,6 +2862,12 @@ rf-reclassify-table {
   td {
     padding: $cell-padding;
   }
+  .date-column {
+      width: 13em;
+  }
+  .action-column {
+      width: 0;
+  }
 }
 
 .pagination-count {
@@ -2913,11 +2919,14 @@ rf-reclassify-table {
 
 .row-hover-controls {
   .row-controls {
-    padding: 0 0.25em;
+    padding: 1em 0.25em;
     button {
-      opacity: 0;
+      opacity: 0.2;
       pointer-events: none;
       transition: all 0.125s;
+    }
+    label {
+        justify-content: flex-end;
     }
   }
   &:hover .row-controls button {

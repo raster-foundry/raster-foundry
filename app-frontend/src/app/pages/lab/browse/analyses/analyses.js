@@ -1,11 +1,13 @@
 /* global BUILDCONFIG */
+import {Set} from 'immutable';
 class LabBrowseAnalysesController {
-    constructor($state, analysisService, authService, localStorage) {
+    constructor($state, analysisService, authService, localStorage, modalService) {
         'ngInject';
         this.$state = $state;
         this.analysisService = analysisService;
         this.authService = authService;
         this.localStorage = localStorage;
+        this.modalService = modalService;
     }
 
     $onInit() {
@@ -14,6 +16,7 @@ class LabBrowseAnalysesController {
         this.defaultSortingField = 'modifiedAt';
         this.initSorting();
         this.fetchAnalysesList(this.$state.params.page);
+        this.selected = new Set();
     }
 
     initSorting() {
@@ -109,10 +112,38 @@ class LabBrowseAnalysesController {
         this.fetchAnalysesList(this.currentPage);
     }
 
-    onAnalysisDelete(analysisId) {
-        this.analysisService.deleteAnalysis(analysisId).then(() => {
-            this.fetchAnalysesList(this.currentPage);
+    deleteSelected() {
+        const modal = this.modalService.open({
+            component: 'rfConfirmationModal',
+            resolve: {
+                title: () => `Delete ${this.selected.size} analyses?`,
+                content: () => 'Deleting analyses will make any ' +
+                    'further tile requests with them fail',
+                confirmText: () => 'Delete Analyses',
+                cancelText: () => 'Cancel'
+            }
         });
+
+        modal.result.then(() => {
+            this.selected.forEach((id) => {
+                this.analysisService.deleteAnalysis(id).then(() => {
+                    this.selected = this.selected.delete(id);
+                    if (this.selected.size === 0) {
+                        this.fetchAnalysesList();
+                    }
+                }, () => {
+                    this.fetchAnalysesList();
+                });
+            });
+        });
+    }
+
+    toggleAnalysisSelection(id) {
+        if (this.selected.has(id)) {
+            this.selected = this.selected.delete(id);
+        } else {
+            this.selected = this.selected.add(id);
+        }
     }
 }
 
