@@ -1,5 +1,9 @@
 export default class AOIApproveController {
-    constructor($scope, $state, $q, $log, projectService, projectEditService, mapService) {
+    constructor(
+        $scope, $state, $q, $log,
+        projectService, projectEditService, mapService,
+        RasterFoundryRepository
+    ) {
         'ngInject';
         this.$parent = $scope.$parent.$ctrl;
         this.$state = $state;
@@ -8,6 +12,10 @@ export default class AOIApproveController {
         this.projectService = projectService;
         this.projectEditService = projectEditService;
         this.mapService = mapService;
+        this.repository = {
+            name: 'Raster Foundry',
+            service: RasterFoundryRepository
+        };
         this.getMap = () => this.mapService.getMap('edit');
     }
 
@@ -79,7 +87,7 @@ export default class AOIApproveController {
         if (scene !== this.hoveredScene) {
             this.hoveredScene = scene;
             this.getMap().then((map) => {
-                map.setThumbnail(scene);
+                map.setThumbnail(scene, this.repository);
             });
         }
     }

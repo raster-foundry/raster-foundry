@@ -1,7 +1,9 @@
+/* globals document */
 import angular from 'angular';
 import slider from 'angularjs-slider';
 import typeahead from 'angular-ui-bootstrap/src/typeahead';
 import _ from 'lodash';
+import {Set} from 'immutable';
 
 import sceneFilterTpl from './sceneFilterPane.html';
 
@@ -9,416 +11,197 @@ const SceneFilterPaneComponent = {
     templateUrl: sceneFilterTpl,
     controller: 'SceneFilterPaneController',
     bindings: {
-        filters: '<',
-        opened: '<',
-        onFilterChange: '&',
-        onCloseFilterPane: '&',
-        onPassPlanetToken: '&'
+        opened: '=',
+        // array of repository name + service objects
+        repositories: '<',
+        // returns function fetchScenes(page, bbox, timestamp)
+        onRepositoryChange: '&?'
     }
 };
 
-const cloudCoverRange = {min: 0, max: 100};
-const sunElevationRange = {min: 0, max: 180};
-const sunAzimuthRange = {min: 0, max: 360};
-const planetItemTypes = [
-  {itemType: 'PSScene3Band', name: 'PlanetScope Scenes - 3 band'},
-  {itemType: 'PSScene4Band', name: 'PlanetScope Scenes - 4 band'},
-  {itemType: 'PSOrthoTile', name: 'PlanetScope OrthoTiles'},
-  {itemType: 'REOrthoTile', name: 'RapidEye OrthoTiles'}
-];
-
 class FilterPaneController {
-    constructor($log, $scope, $rootScope, $timeout, modalService,
-        datasourceService, authService, userService, moment) {
+    constructor(
+        $log, $q, $scope, $rootScope, $compile, $element, $timeout, $location
+    ) {
         'ngInject';
         this.$log = $log;
+        this.$q = $q;
         this.$scope = $scope;
         this.$rootScope = $rootScope;
         this.$timeout = $timeout;
-        this.modalService = modalService;
-        this.datasourceService = datasourceService;
-        this.authService = authService;
-        this.userService = userService;
-        this.Moment = moment;
-    }
+        this.$compile = $compile;
+        this.$location = $location;
+        this.currentRepository = _.first(this.repositories);
+        this.filterComponents = [];
+        this.initializedFilters = new Set();
+        this.firstReset = true;
 
-    $onInit() {
-        this.newParams = Object.assign({}, this.filters);
-        this.authService.getCurrentUser().then((user) => {
-            this.userPlanetCredential = user.planetCredential;
+        this.$scope.$watch('$ctrl.opened', (opened) => {
+            if (opened) {
+                this.$timeout(() => this.$rootScope.$broadcast('reCalcViewDimensions'), 50);
+            }
         });
-        this.toggleDrag = {toggle: false, enabled: false};
-        this.initDataRepoFilter();
-        this.initDataSourceFilters();
-        this.initDatefilter();
-        this.initFilterSlideOptions(false);
-        this.initIngestFilter();
-        this.importOwnerFilter = this.filters.owner ? 'user' : 'any';
     }
 
     $onChanges(changes) {
-        if (changes.opened && changes.opened.hasOwnProperty('currentValue')) {
-            if (changes.opened.currentValue) {
-                this.$timeout(() => this.$rootScope.$broadcast('reCalcViewDimensions'), 50);
+        if (changes.onRepositoryChange && changes.onRepositoryChange.currentValue) {
+            if (this.currentRepository) {
+                this.onFilterChange();
+            }
+        }
+        if (changes.repositories && changes.repositories.currentValue) {
+            const repositories = changes.repositories.currentValue;
+            if (repositories.length) {
+                let repository = _.first(repositories);
+                const repositoryParam = this.$location.search().repository;
+                if (repositoryParam) {
+                    repository = _.first(
+                        _.filter(repositories, (repo) => repo.label === repositoryParam)
+                    );
+                }
+                this.setRepository(repository);
             }
         }
     }
 
     onClose() {
-        this.onCloseFilterPane({showFilterPane: false});
+        this.opened = false;
     }
 
-    onSelectBrowseSource(browseSource) {
-        if (browseSource === this.selectedBrowseSource) {
-            return;
+    setRepository(repository) {
+        this.repositoryError = false;
+        this.settingRepository = true;
+        repository.service.initRepository().then(() => {
+            this.settingRepository = false;
+            this.$location.search('repository', repository.label);
+            this.currentRepository = repository;
+            this.resetFilters();
+        }, () => {
+            this.repositoryError = true;
+            this.settingRepository = false;
+        });
+    }
+
+    resetFilters() {
+        if (!this.firstReset) {
+            let resetParams = _.keys(_.omit(this.$location.search(), ['bbox', 'repository']));
+            resetParams.forEach((param) => this.$location.search(param, null));
+        } else {
+            this.firstReset = false;
         }
-        if (browseSource === 'Planet Labs') {
-            if (!this.userPlanetCredential) {
-                this.connectToPlanet();
-            } else {
-                this.onPassPlanetToken({planetToken: this.userPlanetCredential});
-                this.onBrowseSourceChanged(browseSource);
+
+        this.filters = this.currentRepository.service.getFilters();
+        this.filterParams = {};
+        this.initializedFilters = this.initializedFilters.clear();
+        this.filterComponents.forEach(({element, componentScope}) => {
+            componentScope.$destroy();
+            element.remove();
+        });
+        this.filterComponents = this.filters.map((filter) => {
+            switch (filter.type) {
+            case 'searchSelect':
+                return this.createSearchSelectComponent(filter);
+            case 'daterange':
+                return this.createDateRangeComponent(filter);
+            case 'slider':
+                return this.createSliderComponent(filter);
+            case 'tagFilter':
+                return this.createTagFilterComponent(filter);
+            default:
+                throw new Error(`Unrecognized filter type: ${filter.type}`);
             }
-        } else if (browseSource === 'Raster Foundry') {
-            this.onBrowseSourceChanged(browseSource);
+        });
+        const container = angular.element(document.querySelector('#filters'));
+        this.filterComponents.forEach((filterComponent) => {
+            container.append(filterComponent.element);
+        });
+    }
+
+    onFilterChange(filter, filterParams) {
+        if (filter) {
+            this.filterParams = Object.assign({}, this.filterParams, filterParams);
+            this.initializedFilters = this.initializedFilters.add(filter.label);
+        }
+
+        if (this.initializedFilters.size === this.filterComponents.length) {
+            _.toPairs(this.filterParams).forEach(([param, val]) => {
+                this.$location.search(param, val);
+            });
+            this.onRepositoryChange({
+                fetchScenes: this.currentRepository.service.fetchScenes(this.filterParams),
+                repository: this.currentRepository
+            });
         }
     }
 
-    onBrowseSourceChanged(browseSource) {
-        this.selectedBrowseSource = browseSource;
-        this.selectedDatasource = '';
-        this.initDataSourceFilters();
-        this.datefilter = {
-            start: this.Moment().subtract(1, 'months'),
-            end: this.Moment()
+    createSearchSelectComponent(filter) {
+        const componentScope = this.$scope.$new(true, this.$scope);
+        componentScope.filter = filter;
+        componentScope.onFilterChange = this.onFilterChange.bind(this);
+        const template = `<rf-search-select-filter
+                            class="filter-group"
+                            data-filter="filter"
+                            on-filter-change="onFilterChange(filter, filterParams)">
+                          </rf-search-select-filter>`;
+        const element = this.$compile(template)(componentScope);
+        return {
+            element,
+            componentScope
         };
-        this.hasDatetimeFilter = true;
-        this.datefilterPreset = 'The last month';
-
-        this.newParams = Object.assign({}, {
-            datasource: [],
-            minAcquisitionDatetime: this.datefilter.start.toISOString(),
-            maxAcquisitionDatetime: this.datefilter.end.toISOString()
-        });
-
-        this.onFilterChange({
-            newFilters: this.newParams,
-            sourceRepo: this.selectedBrowseSource
-        });
     }
 
-    connectToPlanet() {
-        this.modalService.open({
-            component: 'rfEnterTokenModal',
-            resolve: {
-                title: () => 'Enter your Planet API Token'
-            }
-        }).result.then((token) => {
-            this.userService.updatePlanetToken(token).then(() => {
-                this.userPlanetCredential = token;
-                if (this.userPlanetCredential) {
-                    this.onPassPlanetToken({planetToken: this.userPlanetCredential});
-                    this.onBrowseSourceChanged('Planet Labs');
-                }
-            }, (err) => {
-                this.$log.log('There was an error updating the user with a planet api token', err);
-            });
-        });
-    }
-
-    initDataRepoFilter() {
-        this.selectedBrowseSource = this.filters && this.filters.dataRepo ?
-          this.filters.dataRepo : 'Raster Foundry';
-    }
-
-    initDataSourceFilters() {
-        if (this.selectedBrowseSource === 'Raster Foundry') {
-            this.datasourceService.query({
-                sort: 'name,asc'
-            }).then(d => {
-                this.datasources = d.results;
-                if (this.filters && this.filters.datasource && this.filters.datasource[0]) {
-                    let matchedSource = this.datasources.find((ds) => {
-                        return ds.id === this.filters.datasource[0];
-                    });
-                    if (matchedSource) {
-                        this.selectedDatasource = matchedSource.name;
-                    } else {
-                        this.selectedDatasource = '';
-                    }
-                }
-            });
-        } else if (this.selectedBrowseSource === 'Planet Labs') {
-            this.datasources = planetItemTypes;
-            if (this.filters && this.filters.datasource && this.filters.datasource[0]) {
-                let matchedSource = this.datasources.find((ds) => {
-                    return ds.itemType === this.filters.datasource[0];
-                });
-                if (matchedSource) {
-                    this.selectedDatasource = matchedSource.name;
-                } else {
-                    this.selectedDatasource = '';
-                }
-            }
-        }
-    }
-
-    initDatefilter() {
-        if (this.selectedBrowseSource === 'Planet Labs') {
-            this.datefilter = {
-                start: this.Moment().subtract(1, 'months'),
-                end: this.Moment()
-            };
-        } else {
-            this.datefilter = {
-                start: this.Moment().subtract(100, 'years'),
-                end: this.Moment()
-            };
-        }
-
-        this.dateranges = [
-            {
-                name: 'Today',
-                start: this.Moment(),
-                end: this.Moment()
-            },
-            {
-                name: 'The last month',
-                start: this.Moment().subtract(1, 'months'),
-                end: this.Moment()
-            },
-            {
-                name: 'The last year',
-                start: this.Moment().subtract(1, 'years'),
-                end: this.Moment()
-            },
-            {
-                name: 'None',
-                start: {},
-                end: {}
-            }
-        ];
-
-        if (this.filters.minAcquisitionDatetime && this.filters.maxAcquisitionDatetime) {
-            this.datefilter.start = this.Moment(this.filters.minAcquisitionDatetime);
-            this.datefilter.end = this.Moment(this.filters.maxAcquisitionDatetime);
-            this.hasDatetimeFilter = true;
-        }
-
-        if (!this.filters.minAcquisitionDatetime || !this.filters.maxAcquisitionDatetime) {
-            this.clearDateFilter(false);
-        } else {
-            this.datefilterPreset = '';
-            this.hasDatetimeFilter = true;
-        }
-    }
-
-    initFilterSlideOptions(isReset) {
-        if (this.filters) {
-            this.filterOptions = {
-                cloudCover: {
-                    minModel: isReset ? cloudCoverRange.min :
-                      this.filters.minCloudCover || cloudCoverRange.min,
-                    maxModel: isReset ? cloudCoverRange.max :
-                      this.filters.maxCloudCover || cloudCoverRange.max,
-                    options: {
-                        floor: cloudCoverRange.min,
-                        ceil: cloudCoverRange.max,
-                        minRange: 0,
-                        showTicks: 10,
-                        showTicksValues: true,
-                        step: 10,
-                        pushRange: true,
-                        draggableRange: true,
-                        onEnd: (id, minModel, maxModel) => {
-                            this.onFilterUpdate({
-                                minCloudCover: minModel !== cloudCoverRange.min ? minModel : null,
-                                maxCloudCover: maxModel !== cloudCoverRange.max ? maxModel : null
-                            });
-                        }
-                    }
-                },
-                sunElevation: {
-                    minModel: isReset ? sunElevationRange.min :
-                      this.filters.minSunElevation || sunElevationRange.min,
-                    maxModel: isReset ? sunElevationRange.max :
-                      this.filters.maxSunElevation || sunElevationRange.max,
-                    options: {
-                        floor: sunElevationRange.min,
-                        ceil: sunElevationRange.max,
-                        minRange: 0,
-                        showTicks: 30,
-                        showTicksValues: true,
-                        step: 10,
-                        pushRange: true,
-                        draggableRange: true,
-                        onEnd: (id, minModel, maxModel) => {
-                            this.onFilterUpdate({
-                                minSunElevation:
-                                  minModel !== sunElevationRange.min ? minModel : null,
-                                maxSunElevation:
-                                  maxModel !== sunElevationRange.max ? maxModel : null
-                            });
-                        }
-                    }
-                },
-                sunAzimuth: {
-                    minModel: isReset ? sunAzimuthRange.min :
-                      this.filters.minSunAzimuth || sunAzimuthRange.min,
-                    maxModel: isReset ? sunAzimuthRange.max :
-                      this.filters.maxSunAzimuth || sunAzimuthRange.max,
-                    options: {
-                        floor: sunAzimuthRange.min,
-                        ceil: sunAzimuthRange.max,
-                        minRange: 0,
-                        showTicks: 60,
-                        showTicksValues: true,
-                        step: 10,
-                        pushRange: true,
-                        draggableRange: true,
-                        onEnd: (id, minModel, maxModel) => {
-                            this.onFilterUpdate({
-                                minSunAzimuth: minModel !== sunAzimuthRange.min ? minModel : null,
-                                maxSunAzimuth: maxModel !== sunAzimuthRange.max ? maxModel : null
-                            });
-                        }
-                    }
-                }
-            };
-        }
-    }
-
-    initIngestFilter() {
-        if (this.filters.hasOwnProperty('ingested')) {
-            if (this.filters.ingested) {
-                this.ingestFilter = 'ingested';
-            } else if (this.filters.ingested === null) {
-                this.ingestFilter = 'any';
-            } else {
-                this.ingestFilter = 'uningested';
-            }
-        }
-    }
-
-    toggleSourceFilter(source) {
-        if (this.selectedBrowseSource === 'Raster Foundry') {
-            this.onFilterUpdate({datasource: [source.id]});
-        } else if (this.selectedBrowseSource === 'Planet Labs') {
-            this.onFilterUpdate({datasource: [source.itemType]});
-        }
-    }
-
-    clearDatasourceFilter() {
-        this.selectedDatasource = '';
-        this.onFilterUpdate({datasource: []});
-    }
-
-    openDateRangePickerModal() {
-        this.modalService.open({
-            component: 'rfDateRangePickerModal',
-            resolve: {
-                config: () => Object({
-                    range: this.datefilter,
-                    ranges: this.dateranges
-                })
-            }
-        }).result.then((range) => {
-            if (range) {
-                this.setDateRange(range.start, range.end, range.preset);
-            }
-        });
-    }
-
-    setDateRange(start, end, preset) {
-        if (_.isEmpty({start}) || _.isEmpty(end)) {
-            this.clearDateFilter(false);
-        } else {
-            this.datefilter.start = start;
-            this.datefilter.end = end;
-            this.datefilterPreset = preset || false;
-            this.hasDatetimeFilter = true;
-            this.onFilterUpdate({
-                minAcquisitionDatetime: start.toISOString(),
-                maxAcquisitionDatetime: end.toISOString()
-            });
-        }
-    }
-
-    clearDateFilter(isResetAll) {
-        this.datefilterPreset = 'None';
-        this.hasDatetimeFilter = false;
-        if (!isResetAll) {
-            this.onFilterUpdate({
-                minAcquisitionDatetime: null,
-                maxAcquisitionDatetime: null
-            });
-        }
-    }
-
-    setIngestFilter(mode) {
-        this.ingestFilter = mode;
-        this.onIngestFilterChange();
-    }
-
-    onIngestFilterChange() {
-        if (this.ingestFilter === 'any') {
-            this.onFilterUpdate({ingested: null});
-        } else if (this.ingestFilter === 'uningested') {
-            this.onFilterUpdate({ingested: false});
-        } else {
-            this.onFilterUpdate({ingested: true});
-        }
-    }
-
-    setImportOwnerFilter(mode) {
-        this.importOwnerFilter = mode;
-        this.onImportOwnerFilterChange();
-    }
-
-    onImportOwnerFilterChange() {
-        if (this.importOwnerFilter === 'user') {
-            let profile = this.authService.profile();
-            this.onFilterUpdate({owner: profile ? profile.user_id : null});
-        } else {
-            this.onFilterUpdate({owner: null});
-        }
-    }
-
-    resetAllFilters() {
-        this.selectedDatasource = '';
-        this.clearDateFilter(true);
-        this.initFilterSlideOptions(true);
-        let emptyFilter = {
-            datasource: [],
-            minCloudCover: null,
-            maxCloudCover: null,
-            minSunElevation: null,
-            maxSunElevation: null,
-            minSunAzimuth: null,
-            maxSunAzimuth: null,
-            minAcquisitionDatetime: null,
-            maxAcquisitionDatetime: null
+    createDateRangeComponent(filter) {
+        const componentScope = this.$scope.$new(true, this.$scope);
+        componentScope.filter = filter;
+        componentScope.onFilterChange = this.onFilterChange.bind(this);
+        const template = `<rf-daterange-filter
+                            class="filter-group"
+                            data-filter="filter"
+                            on-filter-change="onFilterChange(filter, filterParams)">
+                          </rf-daterange-filter>`;
+        const element = this.$compile(template)(componentScope);
+        return {
+            element,
+            componentScope
         };
-        if (this.selectedBrowseSource === 'Raster Foundry') {
-            this.ingestFilter = 'any';
-            this.importOwnerFilter = 'any';
-            this.onFilterUpdate(Object.assign({}, emptyFilter, {ingested: null, owner: null}));
-        } else if (this.selectedBrowseSource === 'Planet Labs') {
-            this.onFilterUpdate(emptyFilter);
-        }
     }
 
-    onFilterUpdate(changesObj) {
-        this.newParams = Object.assign(this.newParams, changesObj);
-        this.onFilterChange({
-            newFilters: this.newParams,
-            sourceRepo: this.selectedBrowseSource
-        });
+    createSliderComponent(filter) {
+        const componentScope = this.$scope.$new(true, this.$scope);
+        componentScope.filter = filter;
+        componentScope.onFilterChange = this.onFilterChange.bind(this);
+        const template = `<rf-slider-filter
+                            class="filter-group"
+                            data-filter="filter"
+                            on-filter-change="onFilterChange(filter, filterParams)">
+                          </rf-slider-filter>`;
+        const element = this.$compile(template)(componentScope);
+        return {
+            element,
+            componentScope
+        };
     }
+
+    createTagFilterComponent(filter) {
+        const componentScope = this.$scope.$new(true, this.$scope);
+        componentScope.filter = filter;
+        componentScope.onFilterChange = this.onFilterChange.bind(this);
+        const template = `<rf-tag-filter
+                            class="filter-group"
+                            data-filter="filter"
+                            on-filter-change="onFilterChange(filter, filterParams)">
+                          </rf-tag-filter>`;
+        const element = this.$compile(template)(componentScope);
+        return {
+            element,
+            componentScope
+        };
+    }
+
 }
 
 const SceneFilterPaneModule = angular.module('components.scenes.sceneFilterPane',
-    [slider, typeahead]);
+                                             [slider, typeahead]);
 
 SceneFilterPaneModule.component('rfSceneFilterPane', SceneFilterPaneComponent);
 SceneFilterPaneModule.controller('SceneFilterPaneController', FilterPaneController);

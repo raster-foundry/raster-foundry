@@ -2,20 +2,14 @@
   <div ng-if="$ctrl.isDraggable" ui-tree-handle>
     <i class="icon-gripper"></i>
   </div>
-  <div ng-if="!$ctrl.apiSource || $ctrl.apiSource === 'Raster Foundry'">
+  <div>
     <rf-status-tag entity-type="scene"
+                   ng-if="$ctrl.scene.statusFields.ingestStatus"
                    status="$ctrl.scene.statusFields.ingestStatus"></rf-status-tag>
-    <img ng-if="$ctrl.scene.thumbnails[0]"
-         ng-attr-src="{{$ctrl.thumbnailService.getBestFitUrl($ctrl.scene.thumbnails, 75)}}"
+    <img ng-attr-src="{{$ctrl.thumbnail}}"
+         ng-if="$ctrl.thumbnail"
          class="rounded-img item-img">
-    <div ng-if="!$ctrl.scene.thumbnails.length"
-         class="rounded-img item-img image-placeholder"></div>
-  </div>
-  <div ng-if="$ctrl.apiSource === 'Planet Labs'">
-    <img ng-if="$ctrl.planetThumbnail"
-         ng-attr-src="{{'data:image/png;base64,' + $ctrl.planetThumbnail}}"
-         class="rounded-img item-img">
-    <div ng-if="!$ctrl.planetThumbnail"
+    <div ng-if="!$ctrl.thumbnail"
         class="rounded-img item-img image-placeholder"></div>
   </div>
   <div class="list-group-overflow">
@@ -27,10 +21,8 @@
       </span>
     </div>
     <div>
-      <span ng-attr-title="{{$ctrl.datasource.name}}"
-            ng-if="$ctrl.apiSource === 'Raster Foundry'">{{$ctrl.datasourceLoaded ? $ctrl.datasource.name : 'Loading datasource'}}</span>
-      <span ng-attr-title="{{$ctrl.scene.name}}"
-            ng-if="$ctrl.apiSource === 'Planet Labs'">{{$ctrl.scene.name}}</span>
+      <span ng-attr-title="{{$ctrl.datasource}}">
+            {{$ctrl.datasource ? $ctrl.datasource : 'Loading datasource'}}</span>
     </div>
   </div>
   <div class="list-group-right">

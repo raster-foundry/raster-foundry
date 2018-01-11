@@ -5,7 +5,7 @@ import AnnotationActions from '_redux/actions/annotation-actions';
 
 class ProjectsEditController {
     constructor( // eslint-disable-line max-params
-        $log, $q, $state, $scope, modalService, $timeout, $ngRedux,
+        $log, $q, $state, $scope, modalService, $timeout, $ngRedux, $location,
         authService, projectService, projectEditService,
         mapService, mapUtilsService, layerService,
         datasourceService, imageOverlayService, thumbnailService
@@ -15,6 +15,7 @@ class ProjectsEditController {
         this.$q = $q;
         this.$state = $state;
         this.$scope = $scope;
+        this.$location = $location;
         this.modalService = modalService;
         this.authService = authService;
         this.projectService = projectService;
@@ -47,7 +48,9 @@ class ProjectsEditController {
                 this.projectEditService.setCurrentProject(this.projectId, true).then(
                     (project) => {
                         this.project = project;
-                        this.fitProjectExtent();
+                        if (!this.$location.search().bbox) {
+                            this.fitProjectExtent();
+                        }
                         this.loadingProject = false;
                         this.projectUpdateListeners.forEach((wait) => {
                             wait.resolve(project);
@@ -77,7 +80,9 @@ class ProjectsEditController {
 
     $postLink() {
         if (this.project) {
-            this.fitProjectExtent();
+            if (!this.$location.search().bbox) {
+                this.fitProjectExtent();
+            }
         }
     }
 

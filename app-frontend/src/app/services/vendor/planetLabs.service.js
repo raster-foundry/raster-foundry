@@ -73,7 +73,6 @@ export default (app) => {
         }
 
         planetFeatureToScene(planetScenes) {
-            // TODO: may need to further reshape planet data property to match RF data properties
             let scenes = planetScenes.features.map((feature) => {
                 return {
                     id: feature.id,
@@ -82,9 +81,9 @@ export default (app) => {
                     modifiedAt: feature.properties.published,
                     modifiedBy: 'planet',
                     owner: 'planet',
-                    datasource: feature.properties.provider,
+                    datasource: feature.properties.item_type,
                     sceneMetadata: feature.properties,
-                    name: feature.properties.item_type,
+                    name: feature.id,
                     tileFootprint: {
                         type: 'MultiPolygon',
                         coordinates: [feature.geometry.coordinates]
@@ -109,8 +108,9 @@ export default (app) => {
         }
 
         constructRequestBody(params, bbox) {
-            let ds = params.datasource && params.datasource.length ? params.datasource :
-                ['PSScene3Band', 'PSScene4Band', 'PSOrthoTile', 'REOrthoTile'];
+            let ds = params.datasource && params.datasource.length ?
+                [params.datasource] :
+                ['PSScene4Band', 'REOrthoTile'];
             let config = Object.keys(params).map((key) => {
                 if (key === 'maxAcquisitionDatetime' && params[key]) {
                     return {

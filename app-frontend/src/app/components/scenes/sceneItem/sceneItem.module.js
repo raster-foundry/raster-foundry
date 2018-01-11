@@ -8,43 +8,26 @@ const SceneItemComponent = {
     bindings: {
         scene: '<',
         actions: '<',
-        onView: '&',
-        onDownload: '&',
-
         selected: '<?',
         onSelect: '&?',
         isDisabled: '<?',
-        apiSource: '<?',
-        planetKey: '<?',
-        onPassPlanetThumbnail: '&?'
+        repository: '<'
     }
 };
 
 class SceneItemController {
     constructor(
       $scope, $attrs,
-      thumbnailService, mapService, datasourceService, planetLabsService) {
+      thumbnailService, mapService, datasourceService) {
         'ngInject';
         this.thumbnailService = thumbnailService;
         this.mapService = mapService;
         this.isDraggable = $attrs.hasOwnProperty('draggable');
         this.datasourceService = datasourceService;
         this.$scope = $scope;
-        this.planetLabsService = planetLabsService;
     }
 
     $onInit() {
-        this.datasourceLoaded = false;
-
-        if (!this.apiSource || this.apiSource === 'Raster Foundry') {
-            this.datasourceService.get(this.scene.datasource).then(d => {
-                this.datasourceLoaded = true;
-                this.datasource = d;
-            });
-        } else if (this.apiSource === 'Planet Labs') {
-            this.getPlanetThumbnail();
-        }
-
         if (this.isDraggable) {
             Object.assign(this.$scope.$parent.$treeScope.$callbacks, {
                 dragStart: function () {
@@ -60,6 +43,15 @@ class SceneItemController {
     $onChanges(changes) {
         if (changes.selected && changes.selected.hasOwnProperty('currentValue')) {
             this.selectedStatus = changes.selected.currentValue;
+        }
+        if (changes.repository && changes.repository.currentValue) {
+            this.repository = changes.repository.currentValue;
+            this.repository.service.getDatasource(this.scene).then((datasource) => {
+                this.datasource = datasource;
+            });
+            this.repository.service.getThumbnail(this.scene).then((thumbnail) => {
+                this.thumbnail = thumbnail;
+            });
         }
     }
 

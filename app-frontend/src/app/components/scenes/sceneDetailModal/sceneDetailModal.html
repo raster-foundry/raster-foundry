@@ -5,15 +5,19 @@
         <button type="button" class="close" aria-label="Close" ng-click="$ctrl.dismiss()">
           <span aria-hidden="true">&times;</span>
         </button>
-        <p>
-        <strong class="color-dark">{{$ctrl.scene.name}}</strong><br>
-          {{$ctrl.datasourceLoaded ? $ctrl.datasource.name : 'Loading datasource'}}
-        </p>
-        <button class="btn btn-default"
-                ng-click="$ctrl.toggleMetadataEdit()"
-                ng-if="$ctrl.scene.owner === $ctrl.authService.getProfile().sub">
-                {{$ctrl.isEditMetadata ? 'Save ' : 'Edit '}}metadata
-        </button>
+        <dl>
+          <input type="text" class="form-control" ng-model="$ctrl.scene.name" readonly>
+        </dl>
+        <dl>
+          <strong>{{$ctrl.datasource ? $ctrl.datasource : 'Loading datasource'}}</strong>
+        </dl>
+        <dl>
+          <button class="btn btn-default"
+                  ng-click="$ctrl.toggleMetadataEdit()"
+                  ng-if="$ctrl.scene.owner === $ctrl.authService.getProfile().sub">
+            {{$ctrl.isEditMetadata ? 'Save ' : 'Edit '}}metadata
+          </button>
+        </dl>
       </div>
       <div class="scene-metadata-scrollable">
         <h5 class="color-dark">Scene properties</h5>

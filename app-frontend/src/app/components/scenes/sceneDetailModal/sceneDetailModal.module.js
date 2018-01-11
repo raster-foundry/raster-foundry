@@ -17,7 +17,7 @@ const SceneDetailModalComponent = {
 class SceneDetailModalController {
     constructor(
         $log, $state, modalService, $scope,
-        moment, sceneService, datasourceService, mapService,
+        moment, sceneService, mapService,
         authService
     ) {
         'ngInject';
@@ -25,11 +25,11 @@ class SceneDetailModalController {
         this.$state = $state;
         this.modalService = modalService;
         this.$scope = $scope;
-        this.Moment = moment;
+        this.moment = moment;
         this.sceneService = sceneService;
-        this.datasourceService = datasourceService;
         this.authService = authService;
         this.scene = this.resolve.scene;
+        this.repository = this.resolve.repository;
         this.getMap = () => mapService.getMap('scene-preview-map');
         $scope.$on('$destroy', () => {
             mapService.deregisterMap('scene-preview-map');
@@ -37,13 +37,17 @@ class SceneDetailModalController {
     }
 
     $postLink() {
-        this.datasourceLoaded = false;
         this.getMap().then(mapWrapper => {
-            mapWrapper.setThumbnail(this.scene, {persist: true});
+            mapWrapper.setThumbnail(
+                this.scene,
+                this.repository,
+                {
+                    persist: true
+                }
+            );
             mapWrapper.map.fitBounds(this.getSceneBounds());
         });
-        this.datasourceService.get(this.scene.dataSource).then(d => {
-            this.datasourceLoaded = true;
+        this.repository.service.getDatasource(this.scene).then(d => {
             this.datasource = d;
         });
         this.accDateDisplay = this.setAccDateDisplay();
@@ -88,7 +92,7 @@ class SceneDetailModalController {
             this.newFilterFields.acquisitionDate = this.scene.filterFields.acquisitionDate;
         }
         this.scene = Object.assign(this.scene, {
-            'modifiedAt': this.Moment().toISOString(),
+            'modifiedAt': this.moment().toISOString(),
             'modifiedBy': this.scene.owner,
             'sceneMetadata': this.newSceneMetadata,
             'filterFields': this.newFilterFields
@@ -104,7 +108,7 @@ class SceneDetailModalController {
     }
 
     formatAcqDate(date) {
-        return date.length ? this.Moment(date).format('MM/DD/YYYY') : 'MM/DD/YYYY';
+        return date.length ? this.moment(date).format('MM/DD/YYYY') : 'MM/DD/YYYY';
     }
 
     openDatePickerModal(date) {
@@ -114,7 +118,7 @@ class SceneDetailModalController {
                 windowClass: 'auto-width-modal',
                 resolve: {
                     config: () => Object({
-                        selectedDay: this.Moment(date)
+                        selectedDay: this.moment(date)
                     })
                 }
             }).result.then(selectedDay => {

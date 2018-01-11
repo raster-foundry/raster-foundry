@@ -7,8 +7,9 @@ import {Map, Set} from 'immutable';
 class MapWrapper {
     // MapWrapper is a bare es6 class, so does not use angular injections
     constructor( // eslint-disable-next-line
-        leafletMap, mapId, imageOverlayService, datasourceService, options, thumbnailService
+        $q, leafletMap, mapId, imageOverlayService, datasourceService, options, thumbnailService
     ) {
+        this.$q = $q;
         this.thumbnailService = thumbnailService;
         this.map = leafletMap;
         this.mapId = mapId;
@@ -66,6 +67,7 @@ class MapWrapper {
             this.map.scrollWheelZoom,
             this.map.doubleClickZoom,
             this.map.dragging,
+
             this.map.touchZoom,
             this.map.boxZoom,
             this.map.keyboard
@@ -454,16 +456,17 @@ class MapWrapper {
 
     /** Display a thumbnail of the scene
      * @param {object} scene Scene with footprint to display on the map
+     * @param {object} repository {label, service} repository object
      * @param {object} thumbnailOptions options for displaying the thumbnail
      *                                  valid properties: persist, useSmall, dataRepo, url
      * @returns {this} this
      */
-    setThumbnail(scene, thumbnailOptions) {
+    setThumbnail(scene, repository, thumbnailOptions) {
         if (this.persistedThumbnails.has(scene.id)) {
             return this;
         }
 
-        let options = Object.assign({dataRepo: 'Raster Foundry'}, thumbnailOptions);
+        let options = Object.assign({}, thumbnailOptions);
 
         let footprintGeojson = Object.assign({
             properties: {
@@ -480,44 +483,18 @@ class MapWrapper {
             boundsGeoJson.addData(scene.tileFootprint);
             let imageBounds = boundsGeoJson.getBounds();
 
-            if (options.dataRepo === 'Raster Foundry') {
-                let thumbUrl = this.thumbnailService.getBestFitUrl(
-                    scene.thumbnails, options.useSmall ? 100 : 1000
-                );
-                this.datasourceService.get(scene.datasource).then(d => {
-                    let overlay = this.imageOverlayService.createNewImageOverlay(
-                        thumbUrl,
-                        imageBounds, {
-                            opacity: 1,
-                            dataMask: scene.dataFootprint,
-                            thumbnail: thumbUrl,
-                            attribution: `©${d.name} `
-                        }
-                    );
-                    if (!options.persist) {
-                        this.setLayer('thumbnail', overlay);
-                    } else {
-                        this.persistedThumbnails = this.persistedThumbnails.set(scene.id, overlay);
-                        this.setLayer(
-                            'Selected Scenes',
-                            this.persistedThumbnails.toArray(),
-                            true
-                        );
-                    }
-                    this.setGeojson(
-                        'thumbnail',
-                        footprintGeojson
-                    );
-                });
-            } else if (options.dataRepo === 'Planet Labs' && options.url) {
+            this.$q.all({
+                url: repository.service.getPreview(scene),
+                datasource: repository.service.getDatasource(scene)
+            }).then(({url, datasource}) => {
                 let overlay = this.imageOverlayService.createNewImageOverlay(
-                    options.url,
+                    url,
                     imageBounds,
                     {
                         opacity: 1,
                         dataMask: scene.dataFootprint,
-                        thumbnail: options.url,
-                        attribution: `©${scene.datasource} `
+                        thumbnail: url,
+                        attribution: `${datasource} `
                     }
                 );
                 if (!options.persist) {
@@ -534,7 +511,7 @@ class MapWrapper {
                     'thumbnail',
                     footprintGeojson
                 );
-            }
+            });
         } else if (scene.dataFootprint) {
             this.deleteLayers('thumbnail');
             this.setGeojson(
@@ -588,7 +565,7 @@ export default (app) => {
         registerMap(map, id, options) {
             let mapWrapper =
                 new MapWrapper(
-                    map, id, this.imageOverlayService, this.datasourceService,
+                    this.$q, map, id, this.imageOverlayService, this.datasourceService,
                     options, this.thumbnailService);
             this.maps = this.maps.set(id, mapWrapper);
             // if any promises , resolve them
