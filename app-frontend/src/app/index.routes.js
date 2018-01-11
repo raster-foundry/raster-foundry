@@ -123,7 +123,8 @@ function projectEditStates($stateProvider) {
             url: '/browse/:sceneid?' + addScenesQueryParams,
             templateUrl: projectsSceneBrowserTpl,
             controller: 'ProjectsSceneBrowserController',
-            controllerAs: '$ctrl'
+            controllerAs: '$ctrl',
+            reloadOnSearch: false
         })
         .state('projects.edit.order', {
             url: '/order',

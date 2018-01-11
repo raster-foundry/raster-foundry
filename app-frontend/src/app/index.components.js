@@ -58,6 +58,13 @@ export default angular.module('index.components', [
     require('./components/exports/exportItem/exportItem.module.js').name,
     require('./components/exports/exportDownloadModal/exportDownloadModal.module.js').name,
 
+    // filter components
+    require('./components/filters/daterangeFilter/daterangeFilter.module.js').name,
+    require('./components/filters/searchSelectFilter/searchSelectFilter.module.js').name,
+    require('./components/filters/sliderFilter/sliderFilter.module.js').name,
+    require('./components/filters/tagFilter/tagFilter.module.js').name,
+
+
     // common components (no domain)
     require('./components/common/navBar/navBar.module.js').name,
     require('./components/common/toggle-old/toggle-old.module.js').name,

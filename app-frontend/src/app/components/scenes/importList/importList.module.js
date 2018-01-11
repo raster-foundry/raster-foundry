@@ -12,7 +12,8 @@ const pageSize = '10';
 
 class ImportListController {
     constructor( // eslint-disable-line max-params
-        $log, sceneService, $state, authService, modalService
+        $log, sceneService, $state, authService, modalService,
+        RasterFoundryRepository
     ) {
         'ngInject';
         this.$log = $log;
@@ -20,6 +21,10 @@ class ImportListController {
         this.$state = $state;
         this.authService = authService;
         this.modalService = modalService;
+        this.repository = {
+            name: 'Raster Foundry',
+            service: RasterFoundryRepository
+        };
     }
 
     $onInit() {

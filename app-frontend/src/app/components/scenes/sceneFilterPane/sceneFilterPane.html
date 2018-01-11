@@ -1,6 +1,12 @@
 <div class="sidebar-header dark">
   <h5>Filters</h5>
   <div class="header-controls">
+    <button type="button"
+            class="btn btn-default"
+            ng-show="!$ctrl.settingRepository"
+            ng-click="$ctrl.resetFilters()">
+      Reset Filters
+    </button>
     <button class="btn btn-default btn-small"
             ng-click="$ctrl.onClose()">
       Close
@@ -9,146 +15,32 @@
 </div>
 <div class="sidebar-scrollable">
   <div class="content" feature-flag="external-source-browse">
-    <!-- feature-flag="browse-planet-data"> -->
     <div class="filter-group">
       <div class="filter">
-        <label>Browse from</label>
-        <div class="btn-group" uib-dropdown keyboard-nav>
-          <button type="button" class="btn btn-default browse-source-drop-down " uib-dropdown-toggle>
-            {{$ctrl.selectedBrowseSource}}
+        <label>Repository</label>
+        <div class="btn-group" uib-dropdown keyboard-nav ng-show="!$ctrl.settingRepository">
+          <button type="button" class="btn btn-default browse-source-drop-down" uib-dropdown-toggle>
+            {{$ctrl.currentRepository.label}}
             <i class="icon-caret-down"></i>
           </button>
           <ul class="dropdown-menu" uib-dropdown-menu role="menu">
             <li role="menuitem"
-                ng-click="$ctrl.onSelectBrowseSource('Raster Foundry')">
-              <a>Raster Foundry</a>
-            </li>
-            <li role="menuitem"
-                class="browse-source-option"
-                ng-click="$ctrl.onSelectBrowseSource('Planet Labs')"
-                feature-flag="external-source-browse-planet">
-              <a>Planet Labs</a>
+                ng-repeat="repository in $ctrl.repositories"
+                ng-click="$ctrl.setRepository(repository)">
+              <a>{{repository.label}}</a>
             </li>
           </ul>
+        </div>
+        <div class="btn-group" ng-show="$ctrl.settingRepository">
+          <button type="button" class="btn btn-default browse-source-drop-down" disabled="true">
+            Changing Repository
+            <i class="icon-load animate-spin"
+               ng-class="{'stop': !$ctrl.settingRepository}"></i>
+          </button>
         </div>
       </div>
     </div>
   </div>
-  <div class="content">
-    <div class="filter-group">
-      <div class="filter">
-        <button ng-click="$ctrl.resetAllFilters()" class="btn btn-toggle btn-small btn-block">Clear all filters</button>
-      </div>
-    </div>
-    <div class="filter-group">
-      <div class="filter"
-          ng-mouseleave="$ctrl.toggleDrag.toggle = false"
-          ng-mouseup="$ctrl.toggleDrag.toggle = false">
-        <label>Imagery sources</label>
-        <ui-select ng-model="$ctrl.selectedDatasource"
-                   theme="selectize"
-                   title="All datasources"
-                   on-select="$ctrl.toggleSourceFilter($item, $model)">
-          <ui-select-match placeholder="Search datasources" allow-clear="true">{{$select.selected.name}}</ui-select-match>
-          <ui-select-choices repeat="ds in $ctrl.datasources | filter: $select.search">
-            {{ds.name}}
-          </ui-select-choices>
-        </ui-select>
-        <div class="searchselect-clear"
-             ng-click="$ctrl.selectedDatasource && $ctrl.clearDatasourceFilter()">
-          <i class="icon-cross"></i>
-        </div>
-      </div>
-    </div>
-    <div class="filter-group">
-      <div class="filter">
-        <label>Date Range</label>
-        <div class="flex-fill">
-          <span ng-if="$ctrl.datefilterPreset">{{$ctrl.datefilterPreset}}</span>
-          <span ng-if="!$ctrl.datefilterPreset">{{$ctrl.datefilter.start.calendar()}} to {{$ctrl.datefilter.end.calendar()}}</span>
-        </div>
-      </div>
-      <div class="filter">
-        <label></label>
-        <button class="btn btn-small btn-primary flex-fill"
-                ng-click="$ctrl.openDateRangePickerModal()">{{$ctrl.hasDatetimeFilter ? 'Update ' : 'Set '}}Date Filter</button>
-      </div>
-    </div>
-    <div class="filter-group">
-      <div class="filter">
-        <label>Cloud cover</label>
-        <rzslider rz-slider-model="$ctrl.filterOptions.cloudCover.minModel"
-                    rz-slider-high="$ctrl.filterOptions.cloudCover.maxModel"
-                    rz-slider-options="$ctrl.filterOptions.cloudCover.options"></rzslider>
-      </div>
-    </div>
-    <div class="filter-group">
-      <div class="filter">
-        <label>Sun elevation</label>
-        <rzslider rz-slider-model="$ctrl.filterOptions.sunElevation.minModel"
-                    rz-slider-high="$ctrl.filterOptions.sunElevation.maxModel"
-                    rz-slider-options="$ctrl.filterOptions.sunElevation.options"></rzslider>
-      </div>
-    </div>
-    <div class="filter-group">
-      <div class="filter">
-        <label>Sun azimuth</label>
-        <rzslider rz-slider-model="$ctrl.filterOptions.sunAzimuth.minModel"
-                    rz-slider-high="$ctrl.filterOptions.sunAzimuth.maxModel"
-                    rz-slider-options="$ctrl.filterOptions.sunAzimuth.options"></rzslider>
-      </div>
-    </div>
-    <div class="filter-group"
-         ng-if="$ctrl.selectedBrowseSource === 'Raster Foundry'">
-      <div class="filter"
-           ng-mouseleave="$ctrl.toggleDrag.toggle = false"
-           ng-mouseup="$ctrl.toggleDrag.toggle = false">
-        <label>Ingest Status</label>
-        <div class="filter-item tag-filter">
-          <div class="btn-group">
-            <button type="button"
-                    class="btn btn-toggle btn-small"
-                    ng-class="{'active': $ctrl.ingestFilter === 'any'}"
-                    ng-click="$ctrl.setIngestFilter('any')">
-              Show All
-            </button>
-            <button type="button"
-                    class="btn btn-toggle btn-small"
-                    ng-class="{'active': $ctrl.ingestFilter === 'uningested'}"
-                    ng-click="$ctrl.setIngestFilter('uningested')">
-              Uningested Only
-            </button>
-            <button type="button"
-                    class="btn btn-toggle btn-small"
-                    ng-class="{'active': $ctrl.ingestFilter === 'ingested'}"
-                    ng-click="$ctrl.setIngestFilter('ingested')">
-              Ingested Only
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="filter-group"
-         ng-if="$ctrl.selectedBrowseSource === 'Raster Foundry'">
-      <div class="filter">
-        <label>Owner</label>
-        <div class="filter-item tag-filter">
-          <div class="btn-group">
-            <button type="button"
-                    class="btn btn-toggle btn-small"
-                    ng-class="{'active': $ctrl.importOwnerFilter === 'any'}"
-                    ng-click="$ctrl.setImportOwnerFilter('any')">
-              All Users
-            </button>
-            <button type="button"
-                    class="btn btn-toggle btn-small"
-                    ng-class="{'active': $ctrl.importOwnerFilter === 'user'}"
-                    ng-click="$ctrl.setImportOwnerFilter('user')">
-              My Imports
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+  <div id="filters" class="content">
   </div>
 </div>

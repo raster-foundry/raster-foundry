@@ -1,0 +1,14 @@
+<div class="filter">
+  <label>{{$ctrl.filter.label}}</label>
+  <div class="filter-item tag-filter">
+    <div class="btn-group">
+      <button type="button"
+              class="btn btn-toggle btn-small"
+              ng-repeat="option in $ctrl.filter.options"
+              ng-class="{'active': $ctrl.selectedOption.value === option.value}"
+              ng-click="$ctrl.selectOption(option)">
+        {{option.label}}
+      </button>
+    </div>
+  </div>
+</div>

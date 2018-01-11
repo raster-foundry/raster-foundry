@@ -426,6 +426,7 @@ rf-project-editor .leaflet-tile {
   animation: 2s linear 0s normal none infinite spin;
 }
 .filter-group {
+  display: block;
   border-bottom: 1px solid $shade-dark;
   padding-top: 1rem;
   padding-bottom: 1rem;

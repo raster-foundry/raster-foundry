@@ -43,6 +43,8 @@ require('./projects/aoi.service')(shared);
 require('./scenes/scene.service')(shared);
 require('./scenes/upload.service')(shared);
 require('./scenes/datasource.service')(shared);
+require('./scenes/rasterFoundryRepository.service')(shared);
+require('./scenes/planetRepository.service')(shared);
 
 // map
 require('./map/map.service')(shared);

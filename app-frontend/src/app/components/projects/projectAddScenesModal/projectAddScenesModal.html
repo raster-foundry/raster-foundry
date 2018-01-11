@@ -1,5 +1,5 @@
 <div class="modal-scrollable-body modal-sidebar-header">
-  <div class="modal-header">
+  <div class="modal-header" ng-if="!$ctrl.finished">
   	<button type="button" class="close" aria-label="Close"
             ng-click="$ctrl.dismiss()">
       <span aria-hidden="true">&times;</span>
@@ -16,19 +16,20 @@
     </h4>
   	<p>Review your selections, add them to projects, or open them in the editor.</p>
   </div>
-  <div class="modal-body">
+  <div class="modal-body" ng-if="!$ctrl.finished">
   	<div class="list-group">
       <rf-scene-item
-          ng-click="$ctrl.viewSceneDetail(scene)"
-          scene="scene" selected="$ctrl.isSelected(scene)"
-          selectable="true"
-          on-select="$ctrl.resolve.selectScene(scene, selected)"
           class="selectable"
-          ng-repeat="scene in $ctrl.scenes track by scene.id">
+          scene="selection.scene"
+          selected="$ctrl.isSelected(selection.scene)"
+          on-select="$ctrl.resolve.selectScene(selection.scene, selected)"
+          data-repository="selection.repository"
+          ng-click="$ctrl.viewSceneDetail(selection)"
+          ng-repeat="selection in $ctrl.scenes.valueSeq().toArray()">
       </rf-scene-item>
   	</div>
   </div>
-  <div class="modal-footer">
+  <div class="modal-footer" ng-if="!$ctrl.finished">
   	<div class="pull-left">
       <button type="button" class="btn" data-dismiss="modal"
               ng-click="$ctrl.dismiss();">
@@ -42,5 +43,25 @@
         <i class="icon-bucket"></i>
         Add to <strong>{{$ctrl.resolve.project.name}}</strong>
       </button>
+  </div>
+  <div class="modal-header" ng-if="$ctrl.finished">
+    <h4 class="modal-title">
+      Scenes added to project
+    </h4>
+  </div>
+  <div class="modal-body" ng-if="$ctrl.finished">
+    <div ng-repeat="result in $ctrl.repositoryCounts track by result.repository">
+      <div class="repository">
+        Repository: <strong>{{result.repository}}</strong>
+      </div>
+      <div class="repository-count">
+        Added {{result.sceneCount}} scenes to project
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer" ng-if="$ctrl.finished">
+    <button type="button" class="btn" ng-click="$ctrl.close({$value: $ctrl.sceneIds})">
+      Close
+    </button>
   </div>
 </div>
