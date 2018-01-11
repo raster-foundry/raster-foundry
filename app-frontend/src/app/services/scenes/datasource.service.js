@@ -24,7 +24,7 @@ export default (app) => {
                     },
                     update: {
                         method: 'PUT',
-                        url: '/api/datasources/:id',
+                        url: `${BUILDCONFIG.API_HOST}/api/datasources/:id`,
                         params: {
                             id: '@id'
                         }
