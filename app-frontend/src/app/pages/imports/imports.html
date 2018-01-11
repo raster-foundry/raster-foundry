@@ -11,7 +11,10 @@
           Vector
         </a>
         <a ui-sref="imports.datasources.list"
-           ui-sref-active="active">
+           ng-class="{
+             active: ('imports.datasources.list' | includedByState) ||
+                    ('imports.datasources.detail' | includedByState)
+             }">
           Datasources
         </a>
       </nav>

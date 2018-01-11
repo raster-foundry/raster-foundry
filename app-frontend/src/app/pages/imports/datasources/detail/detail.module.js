@@ -41,6 +41,7 @@ class DatasourceDetailController {
 
     initBuffers() {
         this.colorCompositesBuffer = _.cloneDeep(this.datasource.composites);
+        this.bandsBuffer = _.cloneDeep(this.datasource.bands);
     }
 
     openImportModal() {
@@ -60,7 +61,8 @@ class DatasourceDetailController {
         });
         this.datasourceService.updateDatasource(Object.assign(this.datasource, {
             composites: newBuffer
-        })).then(() => {
+        })).then((ds) => {
+            this.datasource = ds;
             this.changedBuffer = false;
             this.colorCompositesBuffer = newBuffer;
         }, (err) => {
@@ -97,6 +99,46 @@ class DatasourceDetailController {
                 this.isDatasourceVisibilityUpdated = false;
             }
         );
+    }
+
+    addBand() {
+        this.bandsBuffer = [
+            ...this.bandsBuffer,
+            {
+                name: '',
+                number: ''
+            }
+        ];
+        this.changedBandsBuffer = true;
+    }
+
+    removeBand(index) {
+        this.bandsBuffer = [
+            ...this.bandsBuffer.slice(0, index),
+            ...this.bandsBuffer.slice(index + 1, this.bandsBuffer.length)
+        ];
+        this.changedBandsBuffer = true;
+    }
+
+    updateBandBuffer(index, band) {
+        this.bandsBuffer[index] = band;
+        this.changedBandsBuffer = true;
+    }
+
+    saveBufferedBands() {
+        this.datasourceService.updateDatasource(Object.assign(this.datasource, {
+            bands: this.bandsBuffer
+        })).then((ds) => {
+            this.datasource = ds;
+            this.resetBandsBuffer();
+        }, (err) => {
+            this.$log.log('Error saving datasource', err);
+        });
+    }
+
+    resetBandsBuffer() {
+        this.bandsBuffer = _.cloneDeep(this.datasource.bands);
+        this.changedBandsBuffer = false;
     }
 
     addCompositeRow() {

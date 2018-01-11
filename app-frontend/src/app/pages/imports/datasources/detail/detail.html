@@ -12,6 +12,70 @@
       </div>
       <!-- Dashboard Header -->
       <div class="cta-row">
+        <rf-call-to-action-item title="Bands" class="panel panel-off-white">
+          <div class="cta-flex-text">
+            Add or change the names and numbers of bands for the <strong>{{$ctrl.datasource.name}}</strong> datasource.
+          </div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Index</th>
+                <th>Number</th>
+                <th>Name</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="band in $ctrl.bandsBuffer"
+                  ng-class="{'table-row-changed': val.changed}"
+              >
+                <td>
+                  {{$index}}
+                </td>
+                <td>
+                  <input type="text" class="form-control" placeholder="Band Number"
+                         ng-model="band.number"
+                         ng-model-options="{ debounce: 500 }"
+                         ng-change="$ctrl.updateBandBuffer($index, band)"
+                         ng-disabled="!$ctrl.isOwner">
+                </td>
+                <td>
+                  <input type="text" class="form-control" placeholder="Band name"
+                         ng-model="band.name"
+                         ng-model-options="{ debounce: 500 }"
+                         ng-change="$ctrl.updateBandBuffer($index, band)"
+                         ng-disabled="!$ctrl.isOwner">
+                </td>
+                <td class="text-right">
+                  <div ng-show="$ctrl.isOwner">
+                    <button class="btn btn-small" ng-click="$ctrl.removeBand($index)">
+                      <span class="sr-only">Delete</span>
+                      <i class="icon-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="colormode-actions" ng-show="$ctrl.isOwner">
+            <div>
+              <button type="button" class="btn btn-outline"
+                      ng-click="$ctrl.addBand()">
+                + Add an additional band
+              </button>
+            </div>
+            <div ng-show="$ctrl.changedBandsBuffer">
+              <button class="btn" ng-click="$ctrl.resetBandsBuffer()">
+                Cancel
+              </button>
+              <button class="btn btn-default" ng-click="$ctrl.saveBufferedBands()">
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </rf-call-to-action-item>
+      </div>
+      <div class="cta-row">
         <rf-call-to-action-item title="Color modes" class="panel panel-off-white">
           <div class="cta-flex-text">
             Create preset false color composites that will be available for all imagery from the <strong>{{$ctrl.datasource.name}}</strong> datasource.
@@ -20,9 +84,9 @@
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Red band</th>
-                <th>Green band</th>
-                <th>Blue band</th>
+                <th>Red band index</th>
+                <th>Green band index</th>
+                <th>Blue band index</th>
               </tr>
             </thead>
             <tbody>
@@ -32,23 +96,27 @@
                 <td>
                   <input type="text" class="form-control" placeholder="Color mode name"
                          ng-model="val.label"
+                         ng-model-options="{ debounce: 500 }"
                          ng-change="$ctrl.onBufferChange(preset)" ng-disabled="!$ctrl.isOwner">
                 </td>
                 <td>
                   <input type="text" class="form-control" placeholder="Red Band"
                          ng-model="val.value.redBand"
+                         ng-model-options="{ debounce: 500 }"
                          ng-change="$ctrl.updateBuffer(preset, 'redBand', val.value.redBand)"
                          ng-disabled="!$ctrl.isOwner">
                 </td>
                 <td>
                   <input type="text" class="form-control" placeholder="Green Band"
                          ng-model="val.value.greenBand"
+                         ng-model-options="{ debounce: 500 }"
                          ng-change="$ctrl.updateBuffer(preset, 'greenBand', val.value.greenBand)"
                          ng-disabled="!$ctrl.isOwner">
                 </td>
                 <td>
                   <input type="text" class="form-control" placeholder="Blue Band"
                          ng-model="val.value.blueBand"
+                         ng-model-options="{ debounce: 500 }"
                          ng-change="$ctrl.updateBuffer(preset, 'blueBand', val.value.blueBand)"
                          ng-disabled="!$ctrl.isOwner">
                 </td>
