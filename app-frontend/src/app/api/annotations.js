@@ -18,7 +18,7 @@ export function getProjectLabelsRequest(state) {
     }, state);
 }
 
-export function createProjectAnnotationsRequest(annotationGeojson, state) {
+export function createProjectAnnotationsRequest(state, annotationGeojson) {
     return authedRequest({
         method: 'post',
         url: `${state.api.apiUrl}` +
@@ -27,7 +27,7 @@ export function createProjectAnnotationsRequest(annotationGeojson, state) {
     }, state);
 }
 
-export function updateProjectAnnotationRequest(annotation, state) {
+export function updateProjectAnnotationRequest(state, annotation) {
     return authedRequest({
         method: 'put',
         url: `${state.api.apiUrl}` +
@@ -36,7 +36,7 @@ export function updateProjectAnnotationRequest(annotation, state) {
     }, state);
 }
 
-export function deleteProjectAnnotationRequest(annotationId, state) {
+export function deleteProjectAnnotationRequest(state, annotationId) {
     return authedRequest({
         method: 'delete',
         url: `${state.api.apiUrl}` +

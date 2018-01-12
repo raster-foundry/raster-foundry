@@ -67,7 +67,7 @@ export function createAnnotations(annotations, edit) {
     return (dispatch, getState) => {
         dispatch({
             type: ANNOTATIONS_CREATE,
-            payload: createProjectAnnotationsRequest(annotations, getState()),
+            payload: createProjectAnnotationsRequest(getState(), annotations),
             meta: {
                 edit
             }
@@ -80,7 +80,7 @@ export function updateAnnotation(annotation) {
         let state = getState();
         dispatch({
             type: ANNOTATIONS_UPDATE,
-            payload: updateProjectAnnotationRequest(annotation, state),
+            payload: updateProjectAnnotationRequest(state, annotation),
             meta: {
                 annotation,
                 state
@@ -135,7 +135,7 @@ export function deleteAnnotation(annotationId) {
             let state = getState();
             dispatch({
                 type: ANNOTATIONS_DELETE,
-                payload: deleteProjectAnnotationRequest(annotationId, state),
+                payload: deleteProjectAnnotationRequest(state, annotationId),
                 meta: {
                     annotationId,
                     state
