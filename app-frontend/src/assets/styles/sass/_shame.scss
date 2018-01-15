@@ -361,7 +361,8 @@ rf-project-editor .leaflet-tile {
       padding: 1rem 0 1rem 0;
     }
     .fixedwidth,
-    rf-color-scheme-dropdown {
+    rf-color-scheme-dropdown,
+    rf-band-select {
       width: 20rem;
     }
     .label {
@@ -1727,6 +1728,8 @@ rf-node-statistics {
   display: flex;
   flex-direction: row;
   flex-basis: fill;
+  margin-bottom: 2rem;
+  align-items: center;
 }
 .input-node-label {
   padding: 1em;
@@ -1734,8 +1737,16 @@ rf-node-statistics {
   flex: 1;
 }
 
+.input-node-input-label {
+  display: flex;
+  align-items: center;
+  padding: .8rem 1rem;
+  font-weight: 600;
+}
+
 .input-data {
   width: 20em;
+  align-items: center;
 }
 
 .node-dropdown-menu {

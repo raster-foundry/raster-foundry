@@ -25,6 +25,10 @@ form {
       box-shadow: 0 0 0 3px rgba($brand-primary, .3);
     }
   }
+
+  &.no-margin {
+    margin-bottom: 0;
+  }
 }
 
 label {
@@ -169,6 +173,9 @@ input[type=radio] {
       border-left-color: $shade-dark;
     }
   }
+  .btn:first-child {
+    border: none;
+  }
 }
 
 .form-group.all-in-one.stacked {
@@ -212,7 +219,7 @@ div.checkbox {
 
   label {
     margin: 0 5px;
-  } 
+  }
 
   &.dark {
     color: $white;

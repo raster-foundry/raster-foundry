@@ -19,30 +19,38 @@
 </div>
 <div class="sidebar-scrollable">
   <div class="list-group" ng-if="!$ctrl.isLoading">
+    <div class="list-group-item flex-column" ng-if="!$ctrl.$parent.bands.length">
+        There are currently no bands defined for one or more datasources used in this project.
+        Some color options are not available unless bands are defined.
+        <br/>
+        <br/>
+
+        <div ng-repeat="datasource in $ctrl.$parent.datasources | filter: $ctrl.hasNoBands">
+          <a class="btn btn-default btn-block" ui-sref="imports.datasources.detail({
+            datasourceid: datasource.id
+          })">Define bands for {{datasource.name}}</a>
+        </div>
+    </div>
     <div class="list-group-item list-group-item-stacked"
          ng-class="{'active': $ctrl.projectBuffer.isSingleBand}">
       <div class="list-group-item-row">
         <span class="font-600">Single band</span>
-        <div class="list-group-right">
+        <div class="list-group-right" ng-if="$ctrl.$parent.bands.length">
           <rf-toggle radio="true" value="$ctrl.projectBuffer.isSingleBand" on-change="$ctrl.setActiveColorMode('singleband')">
           </rf-toggle>
         </div>
+        <div class="list-group-right" ng-if="!$ctrl.$parent.bands.length">
+            Requires defined bands
+        </div>
       </div>
-      <div class="list-group-item-row" ng-if="$ctrl.projectBuffer.isSingleBand">
+      <div class="list-group-item-row" ng-if="$ctrl.$parent.bands.length && $ctrl.projectBuffer.isSingleBand">
         <ul class="sidebar-list">
-          <li>
+          <li ng-if="$ctrl.$parent.bands">
             <span class="label">Band</span>
-            <div class="dropdown fixedwidth" uib-dropdown uib-dropdown-toggle>
-              <button class="btn btn-dropdown-transitional dropdown-label">
-                Band {{$ctrl.getActiveSingleBand()}}
-                <i class="icon-caret-down"></i>
-              </button>
-              <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
-                <li ng-repeat="band in $ctrl.availableBands" role="menuitem">
-                  <a ng-click="$ctrl.setActiveSingleBand(band.value)">{{band.label}}</a>
-                </li>
-              </ul>
-            </div>
+            <rf-band-select selected-band="$ctrl.getActiveSingleBand()"
+                            bands="$ctrl.$parent.bands"
+                            on-band-select="$ctrl.setActiveSingleBand(index)">
+            </rf-band-select>
             <i class="icon-info"></i>
           </li>
           <li>
@@ -65,56 +73,38 @@
          ng-class="{'active': $ctrl.isActiveColorMode('custom')}">
       <div class="list-group-item-row">
         <span class="font-600">Custom</span>
-        <div class="list-group-right">
+        <div class="list-group-right" ng-if="$ctrl.$parent.bands.length">
           <rf-toggle radio="true" value="$ctrl.isActiveColorMode('custom')" on-change="$ctrl.setActiveColorMode('custom')">
           </rf-toggle>
         </div>
+        <div class="list-group-right" ng-if="!$ctrl.$parent.bands.length">
+            Requires defined bands
+        </div>
       </div>
-      <div class="list-group-item-row" ng-if="$ctrl.isActiveColorMode('custom')">
+      <div class="list-group-item-row" ng-if="$ctrl.$parent.bands.length && $ctrl.isActiveColorMode('custom')">
           <ul class="sidebar-list">
-             <li>
+             <li ng-if="$ctrl.$parent.bands">
               <span class="label">Blue</span>
-              <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
-                <button class="btn btn-dropdown-transitional dropdown-label">
-                  Band {{$ctrl.getActiveBand('blueBand')}}
-                  <i class="icon-caret-down"></i>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
-                  <li ng-repeat="band in $ctrl.availableBands" role="menuitem">
-                    <a ng-click="$ctrl.setActiveBand('blueBand', band.value)">{{band.label}}</a>
-                  </li>
-                </ul>
-              </div>
+              <rf-band-select selected-band="$ctrl.getActiveBand('blueBand')"
+                              bands="$ctrl.$parent.bands"
+                              on-band-select="$ctrl.setActiveBand(index, 'blueBand')">
+              </rf-band-select>
               <i class="icon-info"></i>
             </li>
-            <li>
+            <li ng-if="$ctrl.$parent.bands">
               <span class="label">Green</span>
-              <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
-                <button class="btn btn-dropdown-transitional dropdown-label">
-                  Band {{$ctrl.getActiveBand('greenBand')}}
-                  <i class="icon-caret-down"></i>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
-                  <li ng-repeat="band in $ctrl.availableBands" role="menuitem">
-                    <a ng-click="$ctrl.setActiveBand('greenBand', band.value)">{{band.label}}</a>
-                  </li>
-                </ul>
-              </div>
+              <rf-band-select selected-band="$ctrl.getActiveBand('greenBand')"
+                              bands="$ctrl.$parent.bands"
+                              on-band-select="$ctrl.setActiveBand(index, 'greenBand')">
+              </rf-band-select>
               <i class="icon-info"></i>
             </li>
-            <li>
+            <li ng-if="$ctrl.$parent.bands">
               <span class="label">Red</span>
-              <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
-                <button class="btn btn-dropdown-transitional dropdown-label">
-                  Band {{$ctrl.getActiveBand('redBand')}}
-                  <i class="icon-caret-down"></i>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
-                  <li ng-repeat="band in $ctrl.availableBands" role="menuitem">
-                    <a ng-click="$ctrl.setActiveBand('redBand', band.value)">{{band.label}}</a>
-                  </li>
-                </ul>
-              </div>
+              <rf-band-select selected-band="$ctrl.getActiveBand('redBand')"
+                              bands="$ctrl.$parent.bands"
+                              on-band-select="$ctrl.setActiveBand(index, 'redBand')">
+              </rf-band-select>
               <i class="icon-info"></i>
             </li>
           </ul>

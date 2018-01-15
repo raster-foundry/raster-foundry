@@ -1,9 +1,6 @@
 /* global _ */
 
-const availableBands = require('./bands.json');
-
 export default class ProjectsEditColormode {
-
     constructor(
         $scope, $q,
         colorCorrectService, colorSchemeService, projectService, projectEditService
@@ -20,7 +17,6 @@ export default class ProjectsEditColormode {
 
     $onInit() {
         this.isLoading = true;
-        this.availableBands = availableBands;
         this.currentBands = null;
         this.defaultColorModes = {
             custom: {
@@ -28,8 +24,8 @@ export default class ProjectsEditColormode {
                 value: {
                     mode: 'custom-rgb',
                     blueBand: 1,
-                    redBand: 3,
-                    greenBand: 2
+                    greenBand: 2,
+                    redBand: 3
                 }
             }
         };
@@ -67,16 +63,30 @@ export default class ProjectsEditColormode {
         });
     }
 
-    fetchAllColorCorrections(layers) {
-        let requests = layers.map(({id, layer}) => {
-            return layer.getColorCorrection().then(result => ({id: id, correction: result}));
+    initActiveColorMode() {
+        const key = Object.keys(this.unifiedComposites).find(k => {
+            const c = this.unifiedComposites[k].value;
+
+            return (
+                this.currentBands.redBand === c.redBand &&
+                this.currentBands.greenBand === c.greenBand &&
+                this.currentBands.blueBand === c.blueBand
+            );
         });
-        this.correctionsRequest = this.$q.all(requests).then(results => {
-            this.corrections = results;
-            delete this.correctionsRequest;
-        }, error => {
-            this.$log.error('Error fetching color corrections', error);
-        });
+
+        if (!key) {
+            this.initCustomColorMode();
+            return 'custom';
+        }
+
+        return key;
+    }
+
+    initCustomColorMode() {
+        this.unifiedComposites.custom.value.redBand = this.currentBands.redBand;
+        this.unifiedComposites.custom.value.greenBand = this.currentBands.greenBand;
+        this.unifiedComposites.custom.value.blueBand = this.currentBands.blueBand;
+        this.currentBands.mode = 'custom-rgb';
     }
 
     initProjectBuffer() {
@@ -86,10 +96,6 @@ export default class ProjectsEditColormode {
             this.initActiveScheme();
         }
     }
-
-    /**
-     * Single-band functions
-     */
 
     initActiveScheme() {
         this.projectBuffer.singleBandOptions =
@@ -119,6 +125,22 @@ export default class ProjectsEditColormode {
             colorBins: 0,
             legendOrientation: 'left'
         };
+    }
+
+    hasNoBands(datasource) {
+        return !datasource.bands.length;
+    }
+
+    fetchAllColorCorrections(layers) {
+        let requests = layers.map(({id, layer}) => {
+            return layer.getColorCorrection().then(result => ({id: id, correction: result}));
+        });
+        this.correctionsRequest = this.$q.all(requests).then(results => {
+            this.corrections = results;
+            delete this.correctionsRequest;
+        }, error => {
+            this.$log.error('Error fetching color corrections', error);
+        });
     }
 
     getSerializedSingleBandOptions() {
@@ -232,36 +254,6 @@ export default class ProjectsEditColormode {
         }, true);
     }
 
-    /**
-     * RGB-composite functions
-     */
-
-    initActiveColorMode() {
-        const key = Object.keys(this.unifiedComposites).find(k => {
-            const c = this.unifiedComposites[k].value;
-
-            return (
-                this.currentBands.redBand === c.redBand &&
-                this.currentBands.greenBand === c.greenBand &&
-                this.currentBands.blueBand === c.blueBand
-            );
-        });
-
-        if (!key) {
-            this.initCustomColorMode();
-            return 'custom';
-        }
-
-        return key;
-    }
-
-    initCustomColorMode() {
-        this.unifiedComposites.custom.value.redBand = this.currentBands.redBand;
-        this.unifiedComposites.custom.value.greenBand = this.currentBands.greenBand;
-        this.unifiedComposites.custom.value.blueBand = this.currentBands.blueBand;
-        this.currentBands.mode = 'custom-rgb';
-    }
-
     getActiveColorMode() {
         return this.unifiedComposites[this.activeColorModeKey];
     }
@@ -289,7 +281,7 @@ export default class ProjectsEditColormode {
         return false;
     }
 
-    setActiveBand(bandName, bandValue, save = true) {
+    setActiveBand(bandValue, bandName, save = true) {
         this.currentBands[bandName] = bandValue;
 
         if (this.activeColorModeKey === 'custom') {
