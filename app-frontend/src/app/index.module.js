@@ -30,6 +30,8 @@ const App = angular.module(
         'angular.filter',
         '720kb.tooltips',
         'uuid4',
+        'ui.select',
+        'ngSanitize',
 
         // services
         require('./services/services.module').name,

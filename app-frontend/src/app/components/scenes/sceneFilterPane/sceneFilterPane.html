@@ -45,22 +45,18 @@
           ng-mouseleave="$ctrl.toggleDrag.toggle = false"
           ng-mouseup="$ctrl.toggleDrag.toggle = false">
         <label>Imagery sources</label>
-        <div class="searchselect">
-          <input type="text"
-                 placeholder="All"
-                 ng-model="$ctrl.selectedDatasource"
-                 uib-typeahead="ds.name for ds in $ctrl.datasources | filter:$viewValue | limitTo:8"
-                 class="form-control input-dark image-source"
-                 typeahead-on-select="$ctrl.toggleSourceFilter($item)"
-                 typeahead-min-length="0"
-                 typeahead-focus-on-select="false">
-           <i class="icon-caret-down"
-              ng-if="!$ctrl.selectedDatasource"></i>
-          <div class="searchselect-clear"
-               ng-if="$ctrl.selectedDatasource"
-               ng-click="$ctrl.clearDatasourceFilter()">
-            <i class="icon-cross"></i>
-          </div>
+        <ui-select ng-model="$ctrl.selectedDatasource"
+                   theme="selectize"
+                   title="All datasources"
+                   on-select="$ctrl.toggleSourceFilter($item, $model)">
+          <ui-select-match placeholder="Search datasources" allow-clear="true">{{$select.selected.name}}</ui-select-match>
+          <ui-select-choices repeat="ds in $ctrl.datasources | filter: $select.search">
+            {{ds.name}}
+          </ui-select-choices>
+        </ui-select>
+        <div class="searchselect-clear"
+             ng-click="$ctrl.selectedDatasource && $ctrl.clearDatasourceFilter()">
+          <i class="icon-cross"></i>
         </div>
       </div>
     </div>

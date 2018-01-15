@@ -35,6 +35,7 @@ import 'angular-tooltips';
 import 'mathjs';
 import 'angular-uuid4';
 import 'angular-hotkeys';
+import 'ui-select';
 
 // local scripts
 // import '../assets/js/...';
