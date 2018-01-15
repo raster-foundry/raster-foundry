@@ -14,7 +14,7 @@ export default class DatasourceCreateModalController {
             name: null,
             composites: {
                 natural: {
-                    label: 'Natural Color',
+                    label: 'Default',
                     value: {
                         redBand: 0,
                         greenBand: 1,

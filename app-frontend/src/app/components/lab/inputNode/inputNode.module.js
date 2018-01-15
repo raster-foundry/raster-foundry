@@ -1,9 +1,12 @@
+/* globals _ */
+
 import angular from 'angular';
 
 import inputNodeTpl from './inputNode.html';
 import LabActions from '_redux/actions/lab-actions';
 import NodeActions from '_redux/actions/node-actions';
 import { getNodeDefinition } from '_redux/node-utils';
+import { Set } from 'immutable';
 
 const InputNodeComponent = {
     templateUrl: inputNodeTpl,
@@ -15,14 +18,15 @@ const InputNodeComponent = {
 
 class InputNodeController {
     constructor(
-        modalService, $scope, $ngRedux, $log,
-        projectService
+        modalService, datasourceService, projectService,
+        $scope, $ngRedux, $log
     ) {
         'ngInject';
         this.modalService = modalService;
+        this.datasourceService = datasourceService;
+        this.projectService = projectService;
         this.$scope = $scope;
         this.$log = $log;
-        this.projectService = projectService;
 
         let unsubscribe = $ngRedux.connect(
             this.mapStateToThis.bind(this),
@@ -53,19 +57,63 @@ class InputNodeController {
         if (this.node) {
             this.initialized = true;
             if (
-                this.selectedProject &&
                 this.node.projId &&
-                this.node.projId !== this.selectedProject.id ||
-                this.node.projId
+                !this.selectedProject ||
+                this.selectedProject &&
+                this.node.projId !== this.selectedProject.id
             ) {
                 this.projectService.fetchProject(this.node.projId).then(p => {
                     this.selectedProject = p;
+                    this.fetchDatasources(p.id);
                     this.checkValidity();
                 });
             }
-            this.selectedBand = +this.node.band;
+
+            this.selectedBand = this.node.band ?
+                +this.node.band :
+                this.node.band;
             this.checkValidity();
         }
+    }
+
+    fetchDatasources(projectId) {
+        if (this.selectedProject) {
+            this.fetchingDatasources = true;
+            this.projectService.getAllProjectScenes(
+                {
+                    projectId: projectId,
+                    pending: false
+                }
+            ).then(scenes => {
+                const datasourceIds = [
+                    ...new Set(
+                        scenes.map(s => s.datasource)
+                    )
+                ];
+                this.datasourceService.get(datasourceIds).then(datasources => {
+                    const previousBands = this.bands ? this.bands.slice(0) : false;
+                    this.datasources = datasources;
+                    this.bands = this.datasourceService.getUnifiedBands(this.datasources);
+                    if (
+                        previousBands &&
+                        !_.isEqual(
+                            angular.toJson(previousBands),
+                            angular.toJson(this.bands)
+                        )
+                    ) {
+                        this.removeBand();
+                    }
+                    this.fetchingDatasources = false;
+                });
+            });
+        }
+    }
+
+    firstDatasourceWithoutBands() {
+        if (this.datasources) {
+            return this.datasources.find(d => !d.bands.length);
+        }
+        return false;
     }
 
     checkValidity() {
@@ -91,7 +139,6 @@ class InputNodeController {
                     content: () => ({title: 'Select a project'})
                 }
             }).result.then(project => {
-                this.selectedProject = project;
                 this.checkValidity();
                 this.updateNode({
                     payload: Object.assign({}, this.node, {
@@ -102,12 +149,26 @@ class InputNodeController {
             });
     }
 
-    onBandChange() {
+    onBandChange(index) {
+        this.selectedBand = index;
         this.checkValidity();
         this.updateNode({
             payload: Object.assign({}, this.node, {
-                band: this.selectedBand
+                band: index
             }),
+            hard: !this.analysisErrors.size
+        });
+    }
+
+    removeBand() {
+        const payload = Object.assign({}, this.node);
+
+        delete payload.band;
+        delete this.selectedBand;
+
+        this.checkValidity();
+        this.updateNode({
+            payload,
             hard: !this.analysisErrors.size
         });
     }

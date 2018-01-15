@@ -460,7 +460,7 @@ export default (app) => {
             if (project.extent) {
                 let coords = project.extent.coordinates[0];
                 // Lower left and upper right coordinates in extent
-                let bbox = [... coords[0], ... coords[2]];
+                let bbox = [...coords[0], ...coords[2]];
                 let params = {
                     bbox: bbox,
                     zoom: this.getZoomLevel(bbox),

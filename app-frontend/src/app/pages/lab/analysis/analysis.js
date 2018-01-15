@@ -246,8 +246,8 @@ class LabAnalysisController {
                     token: token
                 });
             }
-            return `${this.tileServer}/tools/${this.analysis.id}/{z}/{x}/{y}
-                    ?token=${token}&node=${node}&tag=${new Date().getTime()}`;
+            return `${this.tileServer}/tools/${this.analysis.id}/{z}/{x}/{y}` +
+                    `?token=${token}&node=${node}&tag=${new Date().getTime()}`;
         }
         return false;
     }
