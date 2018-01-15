@@ -41,7 +41,7 @@ trait DatasourceRoutes extends Authentication
     (withPagination & datasourceQueryParams) {
       (page: PageRequest, datasourceParams: DatasourceQueryParameters) =>
       complete {
-        list[Datasource](Datasources.listDatasources(page.offset, page.limit, datasourceParams, user),
+        list[Datasource](Datasources.listDatasources(page, datasourceParams, user),
                          page.offset,
                          page.limit)
       }
