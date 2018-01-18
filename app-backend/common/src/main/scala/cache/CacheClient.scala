@@ -27,9 +27,11 @@ object CacheClientThreadPool extends RollbarNotifier {
   implicit val materializer = ActorMaterializer()
 }
 
-class CacheClient(client: => MemcachedClient) extends LazyLogging {
+class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNotifier {
 
   import CacheClientThreadPool._
+  implicit val system = ActorSystem("rollbar-notifier")
+  implicit val materializer = ActorMaterializer()
 
   val cacheEnabled = Config.memcached.enabled
 
@@ -39,8 +41,17 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging {
     }
 
   def setValue[T](key: String, value: T, ttlSeconds: Int = 0): Unit = {
-    Future {
+    logger.debug(s"Setting Key: ${key} with TTL ${ttlSeconds}")
+    val f = Future {
       client.set(key, ttlSeconds, value)
+
+    }
+
+    f.onFailure{
+      case e => {
+        logger.error(s"Error ${e.getMessage}")
+        sendError(e)
+      }
     }
   }
 
@@ -54,9 +65,11 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging {
       futureCached.flatMap({ value =>
         if (value != null) {
           // cache hit
+          logger.debug(s"Cache Hit: ${cacheKey}")
           Future.successful(value.asInstanceOf[Option[CachedType]])
         } else {
           // cache miss
+          logger.debug(s"Cache Miss: ${cacheKey}")
           val futureCached: Future[Option[CachedType]] = expensiveOperation
           futureCached.onComplete {
             case Success(cachedValue) => {
