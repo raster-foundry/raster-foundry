@@ -26,4 +26,16 @@
   .header-controls .btn-default {
     @extend .btn-light;
   }
+
+  .sidebar-list-item {
+    border-bottom-color: $border-color-default;
+
+    &.selected {
+      background-color: $off-white;
+    }
+
+    p.color-light {
+      color: $text-base !important;
+    }
+  }
 }

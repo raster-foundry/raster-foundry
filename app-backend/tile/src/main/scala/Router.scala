@@ -50,6 +50,7 @@ class Router extends LazyLogging
             pathPrefix(JavaUUID) { (toolRunId) =>
               authenticateToolTileRoutes(toolRunId) { user =>
                 toolRoutes.tms(toolRunId, user) ~
+                  toolRoutes.raw(toolRunId, user) ~
                   toolRoutes.validate(toolRunId, user) ~
                   toolRoutes.statistics(toolRunId, user) ~
                   toolRoutes.histogram(toolRunId, user) ~

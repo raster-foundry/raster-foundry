@@ -70,6 +70,7 @@
   "components/content",
   "components/instructions",
   "components/tags",
+  "components/table",
   "components/slider",
   "components/gradient-bar",
   "components/searchselect",
@@ -80,7 +81,8 @@
  * * * */
 @import
   "pages/dashboard",
-  "pages/editor";
+  "pages/editor",
+  "pages/datasources";
 
 /* * * *
  * Shame

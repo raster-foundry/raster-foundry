@@ -23,7 +23,7 @@ export default (app) => {
                     },
                     download: {
                         method: 'GET',
-                        url: '/api/scenes/:id/download',
+                        url: `${BUILDCONFIG.API_HOST}/api/scenes/:id/download`,
                         isArray: true,
                         params: {
                             id: '@id'

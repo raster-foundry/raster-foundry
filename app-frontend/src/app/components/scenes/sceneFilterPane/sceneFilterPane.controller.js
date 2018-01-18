@@ -115,7 +115,9 @@ export default class FilterPaneController {
 
     initDataSourceFilters() {
         if (this.selectedBrowseSource === 'Raster Foundry') {
-            this.datasourceService.query().then(d => {
+            this.datasourceService.query({
+                sort: 'name,asc'
+            }).then(d => {
                 this.datasources = d.results;
                 if (this.filters && this.filters.datasource && this.filters.datasource[0]) {
                     let matchedSource = this.datasources.find((ds) => {

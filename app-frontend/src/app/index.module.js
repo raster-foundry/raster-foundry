@@ -30,6 +30,8 @@ const App = angular.module(
         'angular.filter',
         '720kb.tooltips',
         'uuid4',
+        'ui.select',
+        'ngSanitize',
 
         // services
         require('./services/services.module').name,
@@ -78,10 +80,10 @@ const App = angular.module(
         require('./pages/projects/edit/sharing/sharing.module.js').name,
 
         require('./pages/imports/imports.module.js').name,
+        require('./pages/imports/list/list.module.js').name,
         require('./pages/imports/datasources/datasources.module.js').name,
         require('./pages/imports/datasources/list/list.module.js').name,
         require('./pages/imports/datasources/detail/detail.module.js').name,
-        require('./pages/imports/datasources/detail/colorComposites/colorComposites.module').name,
 
         require('./pages/settings/settings.module.js').name,
         require('./pages/settings/profile/profile.module.js').name,

@@ -2,7 +2,31 @@
 
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/HEAD)
 
-[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.28.0...HEAD)
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.29.0...HEAD)
+
+**Merged pull requests:**
+
+- Fix Development Caching [\#2913](https://github.com/raster-foundry/raster-foundry/pull/2913)
+- Styles project export's output sidebar for high-contrast theme [\#2906](https://github.com/raster-foundry/raster-foundry/pull/2906)
+- Use `ui-select` component for datasource filter on browse page [\#2905](https://github.com/raster-foundry/raster-foundry/pull/2905)
+- Add band editing to datasource detail UI [\#2903](https://github.com/raster-foundry/raster-foundry/pull/2903)
+- Remove unique constraint on tools \(org + title\) [\#2902](https://github.com/raster-foundry/raster-foundry/pull/2902)
+- Use `API\_HOST` in all API url construction [\#2900](https://github.com/raster-foundry/raster-foundry/pull/2900)
+- Handle edge cases when uploading annotations better [\#2895](https://github.com/raster-foundry/raster-foundry/pull/2895)
+- Re-index datasource color composites starting at 0 [\#2882](https://github.com/raster-foundry/raster-foundry/pull/2882)
+- Add unit conversions button to lab measurements [\#2881](https://github.com/raster-foundry/raster-foundry/pull/2881)
+- Hide node histogram breakpoints until they are hovered [\#2880](https://github.com/raster-foundry/raster-foundry/pull/2880)
+- Use gdal for footprint extraction [\#2879](https://github.com/raster-foundry/raster-foundry/pull/2879)
+- Use `API\_HOST` for project export url [\#2878](https://github.com/raster-foundry/raster-foundry/pull/2878)
+- Fixed a layout bug in high-contract theme introduced with \#2852 [\#2876](https://github.com/raster-foundry/raster-foundry/pull/2876)
+- Add additional datasources [\#2875](https://github.com/raster-foundry/raster-foundry/pull/2875)
+- Improves ux and design for imports and datasource pages [\#2873](https://github.com/raster-foundry/raster-foundry/pull/2873)
+- Add a "raw" endpoint to render analyses as single band tifs [\#2867](https://github.com/raster-foundry/raster-foundry/pull/2867)
+- Use GeoTrellis 1.2.0 [\#2734](https://github.com/raster-foundry/raster-foundry/pull/2734)
+
+## [0.29.0](https://github.com/raster-foundry/raster-foundry/tree/0.29.0) (2018-01-04)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.28.0...0.29.0)
 
 **Merged pull requests:**
 

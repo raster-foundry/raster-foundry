@@ -1,0 +1,49 @@
+<div class="container dashboard">
+  <div class="row content stack-sm">
+    <div class="column-8">
+      <!-- Dashboard Header -->
+      <div class="dashboard-header">
+        <h1 class="h3">Imports</h1>
+        <div class="flex-fill"></div>
+        <a class="btn btn-primary" ng-click="$ctrl.importModal()">
+          Import scenes
+        </a>
+      </div>
+      <!-- Dashboard Header -->
+      <!-- Imports list -->
+      <rf-import-list></rf-import-list>
+      <!-- Imports list -->
+    </div>
+
+    <div class="column spacer"></div>
+    <div class="column">
+      <div class="aside">
+        <section>
+          <h5>What are imports?</h5>
+          <p class="font-size-small">
+            Imports are scenes that have been created from imagery that you've uploaded.
+          </p>
+          <h5>What imagery sources am I limited to?</h5>
+          <p class="font-size-small">
+            Raster Foundry can currently ingest multi or single band geotiffs.
+          </p>
+          <h5>What is a datasource?</h5>
+          <p class="font-size-small">
+            Datasources are how Raster Foundry stores common information about scenes that share similar structure - typically metadata such as band information that is useful to carry across scenes.
+            <ul class="list-unstyled">
+              <li><a href="#">View your datasources</a></li>
+              <li><a href="#">Create a datasources</a></li>
+            </ul>
+          </p>
+        </section>
+        <section class="aside-footer">
+          <h5>Have other questions?</h5>
+          <ul class="list-unstyled">
+            <li><a>Getting started with imports</a></li>
+            <li><a>How to create a datasource</a></li>
+          </ul>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>

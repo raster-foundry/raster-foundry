@@ -18,11 +18,15 @@ import com.azavea.maml.util._
 import com.azavea.maml.serve._
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
+import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.raster.render._
 import geotrellis.raster.render.png._
+import geotrellis.raster.io.geotiff.SinglebandGeoTiff
+import geotrellis.vector.{Extent}
+import geotrellis.slick.Projected
 import akka.http.scaladsl.marshalling._
-import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes, StatusCodes}
+import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes, StatusCodes, HttpResponse}
 import akka.http.scaladsl.server._
 import cats.data.Validated._
 import cats.data.{NonEmptyList => NEL, _}
@@ -135,6 +139,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
   val tileResolver = new TileResolver(implicitly[Database], implicitly[ExecutionContext])
   val tmsInterpreter = BufferingInterpreter.DEFAULT
   val emptyPng = IntConstantNoDataArrayTile(Array(0), 1, 1).renderPng(RgbaPngEncoding)
+  val emptyTile = IntConstantNoDataArrayTile(Array(0), 1, 1)
 
   /** The central endpoint for ModelLab; serves TMS tiles given a [[ToolRun]] specification */
   def tms(
@@ -148,7 +153,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
             'cramp.?("viridis")
           ) { (node, colorRampName) =>
             val nodeId = node.map(UUID.fromString(_))
-            val colorRamp = providedRamps.get(colorRampName).getOrElse(providedRamps("viridis"))
+            val colorRamp = providedRamps.getOrElse(colorRampName, providedRamps("viridis"))
             val components = for {
               (lastUpdateTime, ast) <- LayerCache.toolEvalRequirements(toolRunId, nodeId, user)
               (expression, metadata) <- OptionT.pure[Future, (Expression, Option[NodeMetadata])](ast.asMaml)
@@ -199,6 +204,69 @@ class ToolRoutes(implicit val database: Database) extends Authentication
                 }
                 result
               })
+            }
+          }
+        }
+      }
+    }
+
+  def raw (
+    toolRunId: UUID, user: User
+  ): Route =
+    (handleExceptions(interpreterExceptionHandler) & handleExceptions(circeDecodingError)) {
+      traceName("analysis-raw") {
+        pathPrefix("raw") {
+          parameter("bbox", "zoom".as[Int], "node".?) {
+            (bbox, zoom, node) =>
+            val nodeId = node.map(UUID.fromString(_))
+            val components = for {
+              (lastUpdateTime, ast) <- LayerCache.toolEvalRequirements(toolRunId, nodeId, user)
+              (expression, metadata) <- OptionT.pure[Future, (Expression, Option[NodeMetadata])](ast.asMaml)
+            } yield (expression, metadata, lastUpdateTime)
+            complete {
+              components.value.flatMap(
+                { data =>
+                  val result: Future[Option[HttpResponse]] = data match {
+                    case Some((expression, metadata, updateTime)) =>
+                      val extent = Projected(
+                        Extent.fromString(bbox).toPolygon, 4326
+                      ).reproject(LatLng, WebMercator)(3857).envelope
+                      val literalTree = tileResolver.resolveForExtent(expression, zoom, extent)
+                      val interpretedTile: Future[Interpreted[Tile]] =
+                        literalTree.map({ resolvedAst =>
+                                          resolvedAst
+                                            .andThen({ tmsInterpreter(_) })
+                                            .andThen({ _.as[Tile] })
+                                        })
+                      interpretedTile.map(
+                        {
+                          case Valid(tile: Tile) =>
+                            logger.debug(s"Tile successfully produced at $zoom, $extent")
+                            val tiff = SinglebandGeoTiff(tile, extent, WebMercator)
+                            Some(HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/tiff`), tiff.toByteArray)))
+                          case Invalid(nel) =>
+                            // We'll remove tile retrieval errors and return an empty tile
+                            val exceptions = nel.filter(
+                              { e =>
+                                e match {
+                                  case S3TileResolutionError(_, _) => false
+                                  case UnknownTileResolutionError(_, _) => false
+                                  case _ => true
+                                }
+                              }
+                            )
+                            NEL.fromList(exceptions) match {
+                              case Some(errors) =>
+                                throw new InterpreterException(errors)
+                              case None =>
+                                val tiff = SinglebandGeoTiff(emptyTile, extent, WebMercator)
+                                Some(HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/tiff`), tiff.toByteArray)))
+                            }
+                        })
+                    case _ => Future.successful(None)
+                  }
+                  result
+                })
             }
           }
         }

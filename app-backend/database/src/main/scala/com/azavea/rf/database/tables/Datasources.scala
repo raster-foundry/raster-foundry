@@ -2,6 +2,7 @@ package com.azavea.rf.database.tables
 
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.fields.{OrgFkVisibleFields, TimestampFields, UserFkVisibleFields, NameField}
+import com.azavea.rf.database.sort._
 import com.azavea.rf.database.query.{DatasourceQueryParameters, ListQueryResult}
 import com.azavea.rf.datamodel._
 
@@ -56,6 +57,10 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
   val tq = TableQuery[Datasources]
   type TableQuery = Query[Datasources, Datasource, Seq]
 
+  implicit val sorter =
+    new QuerySorter[Datasources](
+      new NameFieldSort(identity[Datasources]))
+
 
   implicit class withDatasourcesTableQuery[M, U, C[_]](datasources: Datasources.TableQuery) extends
     DatasourceTableQuery[M, U, C](datasources)
@@ -64,9 +69,9 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
     *
     * @param pageRequest PageRequest information about sorting and page size
     */
-  def listDatasources(offset: Int, limit: Int, datasourceParams: DatasourceQueryParameters, user: User) = {
+  def listDatasources(page: PageRequest, datasourceParams: DatasourceQueryParameters, user: User) = {
 
-    val dropRecords = limit * offset
+    val dropRecords = page.limit * page.offset
     val accessibleDatasources = Datasources.filterUserVisibility(user)
     val datasourceFilterQuery = datasourceParams.name match {
       case Some(n) => accessibleDatasources.filter(_.name === n)
@@ -76,8 +81,10 @@ object Datasources extends TableQuery(tag => new Datasources(tag)) with LazyLogg
     ListQueryResult[Datasource](
       (datasourceFilterQuery
          .drop(dropRecords)
-         .take(limit)
-         .result):DBIO[Seq[Datasource]],
+         .sort(page.sort)
+         .take(page.limit)
+         .result
+      ):DBIO[Seq[Datasource]],
       datasourceFilterQuery.length.result
     )
   }

@@ -1,0 +1,28 @@
+table.table {
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 1rem;
+  background-color: $white;
+  text-align: left;
+  border: 1px solid $border-color-default;
+
+  .table-row-changed {
+      border: 1px solid $warning;
+      th, td {
+          border-top: 1px solid $warning;
+          border-bottom: 1px solid $warning;
+      }
+  }
+
+  th {
+    vertical-align: bottom;
+    font-weight: 600;
+    color: $shade-dark;
+  }
+
+  th,
+  td {
+    padding: 1rem;
+    border-top: 1px solid $border-color-default;
+  }
+}

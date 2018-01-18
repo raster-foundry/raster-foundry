@@ -83,6 +83,7 @@ package object model {
         case Median => "Median"
         case Max => "Max"
         case Min => "Min"
+        case Sum => "Sum"
       }
     }
 
@@ -99,6 +100,7 @@ package object model {
         case rm if rm.toLowerCase == "median" => Median
         case rm if rm.toLowerCase == "max" => Max
         case rm if rm.toLowerCase == "min" => Min
+        case rm if rm.toLowerCase == "sum" => Sum
         case rm => throw new Exception(s"Unable to deserialize ResampleMethod: ${rm}")
       }
 

@@ -29,7 +29,8 @@ export default (app) => {
                     .getFiles({ exportId: exportObject.id }).$promise
                     .then(files => {
                         resolve(files.map(f => {
-                            return `/api/exports/${exportObject.id}/files/${f}?token=${token}`;
+                            //eslint-disable-next-line
+                            return `${BUILDCONFIG.API_HOST}/api/exports/${exportObject.id}/files/${f}?token=${token}`;
                         }));
                     });
             });

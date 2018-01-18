@@ -4,7 +4,7 @@
     <a href
        ui-sref="home"
        class="brand">
-      <img ng-attr-src="{{$ctrl.assetLogo}}">
+      <img ng-attr-src="{{$ctrl.assetLogo}}" style="max-width: 50px;">
     </a>
     <span class="navbar-vertical-divider"></span>
     <nav>
@@ -25,9 +25,9 @@
       </a>
       <a href
          ng-class="{'active': $ctrl.$state.includes('imports') }"
-         ui-sref="imports">
+         ui-sref="imports.list">
         <i class="icon-imports"></i>
-        <span ng-if="!$ctrl.hideLabels()">Imports</span>
+        <span ng-if="!$ctrl.hideLabels()">Data</span>
       </a>
       <a href
          ui-sref="lab"
