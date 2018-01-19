@@ -88,7 +88,7 @@ class AnnotateImportController {
     }
 
     onImportClick() {
-        this.$parent.importLocalAnnotations({
+        this.$parent.createAnnotations({
             'type': 'FeatureCollection',
             'features': this.uploadData.features.map((feature) => {
                 let confidence = null;

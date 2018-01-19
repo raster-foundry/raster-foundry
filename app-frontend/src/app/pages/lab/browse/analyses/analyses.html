@@ -48,21 +48,32 @@
                                is-active="$ctrl.sortingField === 'name'"
             >Name</rf-sorting-header>
           </th>
-          <th>
+          <th class="date-column">
             <rf-sorting-header direction="$ctrl.sortingDirection"
                                on-sort-change="$ctrl.onSortChange('modifiedAt')"
-                               is-active="$ctrl.sortingField === 'modifiedAt'"
-            >Last Modified</rf-sorting-header>
+                               is-active="$ctrl.sortingField === 'modifiedAt'">
+              Last Modified
+            </rf-sorting-header>
           </th>
-          <th></th>
+          <th class="action-column">
+            <button type="button" class="btn btn-danger"
+                    ng-click="$ctrl.deleteSelected()"
+                    ng-disabled="!$ctrl.selected.size"
+            >Delete selected</button>
+          </th>
         </tr>
         <tr ng-repeat="analysis in $ctrl.analysesList | filter: {title: $ctrl.searchString}" class="row-hover-controls">
           <td><a ui-sref="lab.analysis({analysisid: analysis.id, analysis: analysis})">
             {{analysis.name || 'Untitled analysis'}}
           </a></td>
           <td>{{analysis.modifiedAt | date : 'longDate'}}</td>
-          <td class="text-right row-controls">
-            <button class="btn btn-danger" ng-click="$ctrl.onAnalysisDelete(analysis.id)"><i class="icon-trash"></i></button>
+          <td class="row-controls">
+            <label class="checkbox" ng-class="{active: $ctrl.selected.has(analysis.id)}">
+              <input type="checkbox"
+                     ng-checked="$ctrl.selected.has(analysis.id)"
+                     ng-click="$ctrl.toggleAnalysisSelection(analysis.id)"
+              >
+            </label>
           </td>
         </tr>
       </table>

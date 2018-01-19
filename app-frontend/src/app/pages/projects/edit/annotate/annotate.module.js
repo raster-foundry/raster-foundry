@@ -228,21 +228,6 @@ class AnnotateController {
         );
     }
 
-    importLocalAnnotations(annotationGeojson) {
-        let newAnnotations = {
-            type: 'FeatureCollection',
-            features: annotationGeojson.features.map(annotation => {
-                return Object.assign({}, annotation, {
-                    properties: Object.assign({}, annotation.properties, {
-                        organizationId: this.user.organizationId
-                    })
-                });
-            })
-        };
-
-        this.createAnnotations(newAnnotations);
-    }
-
     onClearAnnotation() {
         let answer = this.$window.confirm('Delete ALL annotations from this project?');
         if (answer) {
@@ -282,7 +267,6 @@ class AnnotateController {
         let annotationCollection = wrapFeatureCollection(
             propertiesToAnnotationFeature({
                 geometry: shape.geometry,
-                organizationId: this.user.organizationId,
                 label,
                 description
             })

@@ -69,7 +69,6 @@ case class AnnotationProperties(
 @JsonCodec
 case class AnnotationPropertiesCreate(
     owner: Option[String],
-    organizationId: UUID,
     label: String,
     description: Option[String],
     machineGenerated: Option[Boolean],
@@ -102,7 +101,6 @@ object Annotation {
     @JsonCodec
     case class Create(
         owner: Option[String],
-        organizationId: UUID,
         label: String,
         description: Option[String],
         machineGenerated: Option[Boolean],
@@ -122,7 +120,7 @@ object Annotation {
                 now, // modifiedAt
                 user.id, // modifiedBy
                 ownerId, // owner
-                organizationId,
+                user.organizationId,
                 label,
                 description,
                 machineGenerated,
@@ -141,7 +139,6 @@ object Annotation {
         def toAnnotationCreate(): Annotation.Create = {
             Annotation.Create(
                 properties.owner,
-                properties.organizationId,
                 properties.label,
                 properties.description,
                 properties.machineGenerated,

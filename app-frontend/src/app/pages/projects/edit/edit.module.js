@@ -1,5 +1,5 @@
 import angular from 'angular';
-import {Map} from 'immutable';
+import {Map, Set} from 'immutable';
 import ProjectActions from '_redux/actions/project-actions';
 import AnnotationActions from '_redux/actions/annotation-actions';
 
@@ -52,7 +52,9 @@ class ProjectsEditController {
                         this.projectUpdateListeners.forEach((wait) => {
                             wait.resolve(project);
                         });
-                        this.getSceneList();
+                        this.getSceneList().then(() => {
+                            this.getDatasources();
+                        });
                         if (this.project.isAOIProject) {
                             this.getPendingSceneList();
                         }
@@ -123,6 +125,20 @@ class ProjectsEditController {
         });
 
         return sceneListQuery;
+    }
+
+    getDatasources() {
+        if (this.sceneList) {
+            const datasourceIds = [
+                ...new Set(
+                    this.sceneList.map(s => s.datasource)
+                )
+            ];
+            this.datasourceService.get(datasourceIds).then(datasources => {
+                this.datasources = datasources;
+                this.bands = this.datasourceService.getUnifiedBands(this.datasources);
+            });
+        }
     }
 
     addUningestedScenesToMap(scenes) {
@@ -217,18 +233,6 @@ class ProjectsEditController {
         );
     }
 
-    unifyComposites(datasources) {
-        let composites = datasources.map(d => d.composites);
-        return composites.reduce((union, comp) => {
-            return Object.keys(comp).reduce((ao, ck) => {
-                if (ck in union) {
-                    ao[ck] = union[ck];
-                }
-                return ao;
-            }, {});
-        }, composites[0]);
-    }
-
     fetchDatasources(force = false) {
         if (!this.datasourceRequest || force) {
             this.datasourceRequest = this.$q.all(
@@ -240,11 +244,9 @@ class ProjectsEditController {
 
     fetchUnifiedComposites(force = false) {
         if (!this.unifiedCompositeRequest || force) {
-            this.unifiedCompositeRequest = this.fetchDatasources(force).then(
-                datasources => {
-                    return this.unifyComposites(datasources);
-                }
-            );
+            this.unifiedCompositeRequest = this.fetchDatasources(force).then(datasources => {
+                return this.datasourceService.getUnifiedColorComposites(datasources);
+            });
         }
         return this.unifiedCompositeRequest;
     }

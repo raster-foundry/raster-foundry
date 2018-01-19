@@ -2,7 +2,17 @@
 
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/HEAD)
 
-[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.29.0...HEAD)
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.30.0...HEAD)
+
+**Merged pull requests:**
+
+- Determine annotation organization from user [\#2916](https://github.com/raster-foundry/raster-foundry/pull/2916)
+- Datasource band support [\#2909](https://github.com/raster-foundry/raster-foundry/pull/2909)
+- Set constant column width for analysis modified date and deletion [\#2884](https://github.com/raster-foundry/raster-foundry/pull/2884)
+
+## [0.30.0](https://github.com/raster-foundry/raster-foundry/tree/0.30.0) (2018-01-18)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.29.0...0.30.0)
 
 **Merged pull requests:**
 

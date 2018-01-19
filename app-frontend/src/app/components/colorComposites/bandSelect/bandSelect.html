@@ -1,0 +1,7 @@
+<select class="form-control"
+        ng-model="$ctrl.activeBand"
+        ng-model-options="{ getterSetter: true }"
+        ng-disabled="$ctrl.disabled"
+>
+  <option ng-repeat="band in $ctrl.bands" value="{{$index}}">{{band.number}}: {{band.name}}</option>
+</select>
