@@ -1932,6 +1932,29 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
+  /shapes/upload:
+    x-resource: Projects
+    post:
+      summary: Create shapes belonging to the current user using POSTed data
+      tags:
+        - Imagery
+      consumes:
+        - multipart/form-data
+      parameters:
+        - name: name
+          in: formData
+          type: file
+          required: true
+      responses:
+        201:
+          description: GeoJSON shapes successfully created
+          schema:
+            $ref: '#/definitions/ShapeFeatureCollection'
+        default:
+          description: Unexpected error.
+          schema:
+            $ref: '#/definitions/Error'
+
   /shapes/{uuid}:
     x-resouce: Projects
     get:
