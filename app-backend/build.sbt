@@ -129,6 +129,8 @@ lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
   Dependencies.ammoniteOps,
   Dependencies.geotrellisSlick,
   Dependencies.geotrellisS3,
+  Dependencies.geotrellisShapefile,
+  Dependencies.betterFiles,
   Dependencies.caffeine,
   Dependencies.scaffeine,
   Dependencies.findbugAnnotations,

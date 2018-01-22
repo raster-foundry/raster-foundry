@@ -1,7 +1,7 @@
 object Version {
   val rasterFoundry      = "0.1"
   val akka               = "2.5.6"
-  val akkaHttp           = "10.0.10"
+  val akkaHttp           = "10.1.0-RC1"
   val geotrellis         = "1.2.1-SNAPSHOT"
   val hikariCP           = "3.2.0"
   val postgres           = "42.1.1"
@@ -46,4 +46,5 @@ object Version {
   val nimbusJose         = "0.6.0"
   val auth0              = "1.5.0"
   val slickMigrationAPI  = "0.4.0"
+  val betterFiles        = "3.4.0"
 }

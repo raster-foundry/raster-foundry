@@ -17,6 +17,7 @@ object Dependencies {
   val geotrellisSlick         = "org.locationtech.geotrellis" %% "geotrellis-slick"                  % Version.geotrellis
   val geotrellisVector        = "org.locationtech.geotrellis" %% "geotrellis-vector"                 % Version.geotrellis
   val geotrellisUtil          = "org.locationtech.geotrellis" %% "geotrellis-util"                   % Version.geotrellis
+  val geotrellisShapefile     = "org.locationtech.geotrellis" %% "geotrellis-shapefile"              % Version.geotrellis
   val spark                   = "org.apache.spark"            %% "spark-core"                        % Version.spark % "provided"
   val sparkCore               = "org.apache.spark"            %% "spark-core"                        % Version.spark
   val hadoopAws               = "org.apache.hadoop"            % "hadoop-aws"                        % Version.hadoop
@@ -68,4 +69,5 @@ object Dependencies {
   val nimbusJose              = "com.guizmaii"                %% "scala-nimbus-jose-jwt"             % Version.nimbusJose
   val auth0                   = "com.auth0"                    % "auth0"                             % Version.auth0
   val slickMigrationAPI       = "io.github.nafg"              %% "slick-migration-api"               % Version.slickMigrationAPI
+  val betterFiles             = "com.github.pathikrit"        %% "better-files"                      % Version.betterFiles
 }
