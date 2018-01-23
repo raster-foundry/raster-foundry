@@ -4065,13 +4065,9 @@ jointjs@~1.1.0:
     jquery "3.1.1"
     lodash "3.10.1"
 
-jquery@3.1.1:
+jquery@3.1.1, jquery@~3.1.1:
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.1.1.tgz#347c1c21c7e004115e0a4da32cece041fad3c8a3"
-
-jquery@~2.1.4:
-  version "2.1.4"
-  resolved "https://registry.yarnpkg.com/jquery/-/jquery-2.1.4.tgz#228bde698a0c61431dc2630a6a154f15890d2317"
 
 js-base64@^2.1.9, js-base64@~2.1.8:
   version "2.1.9"
