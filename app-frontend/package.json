@@ -53,7 +53,7 @@
     "d3": "3.4.4",
     "immutable": "^3.8.2",
     "jointjs": "~1.1.0",
-    "jquery": "~2.1.4",
+    "jquery": "~3.1.1",
     "leaflet": "1.2.0",
     "leaflet-draw": "~0.4.9",
     "leaflet-draw-drag": "~0.4.4",
