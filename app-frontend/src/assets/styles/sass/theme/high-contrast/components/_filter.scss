@@ -12,4 +12,38 @@
     font-weight: 700;
     margin-bottom: 1rem;
   }
+
+  .selectize-control {
+    width: 90%;
+    margin-right: 0 !important;
+  }
+
+  .selectize-input {
+    border: 1px solid $shade-light;
+    background-color: $white;
+    color: $text-base;
+  }
+
+  .searchselect-clear {
+    background: $white;
+    border-color: $shade-light;
+    width: 3rem;
+    height: 3rem;
+    line-height: 3rem;
+    text-align: center;
+    position: absolute;
+    bottom: -8px;
+    right: 0;
+    margin: 0;
+  }
+
+  .selectize-dropdown {
+    background-color: $white;
+    color: $text-base;
+
+    .active {
+      background-color: $off-white;
+      color: $brand-primary
+    }
+  }
 }
