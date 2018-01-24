@@ -16,7 +16,7 @@ export default (app) => {
             return this.$q((resolve, reject) => {
                 this.sources = [{
                     id: 'PSScene4Band',
-                    uuid: '7a150247-8b12-4174-bbae-7b11c2a268cd',
+                    uuid: 'e4d1b0a0-99ee-493d-8548-53df8e20d2aa',
                     name: 'PlanetScope - 4 band'
                 }, {
                     id: 'REOrthoTile',
