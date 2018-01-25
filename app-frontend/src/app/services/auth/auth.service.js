@@ -384,9 +384,11 @@ export default (app) => {
                 try {
                     const expDate = this.jwtHelper.getTokenExpirationDate(accessToken);
                     const nowDate = new Date();
-                    const timeoutMillis = expDate.getTime() - nowDate.getTime() - 5 * 60 * 1000;
+                    const timeoutMillis = expDate.getTime() - nowDate.getTime();
                     // Store in case we need to cancel for some reason
-                    this.pendingReauth = this.$timeout(() => this.login(null), timeoutMillis);
+                    this.pendingReauth = this.$timeout(() => {
+                        this.logout();
+                    }, timeoutMillis);
                 } catch (e) {
                     this.$state.go('login');
                 }
