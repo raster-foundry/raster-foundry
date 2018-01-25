@@ -60,14 +60,14 @@ trait ShapeRoutes extends Authentication
               response
             }
           }
-        } ~
-          pathPrefix(JavaUUID) { shapeId =>
-            pathEndOrSingleSlash {
-              get { getShape(shapeId) } ~
-                put { updateShape(shapeId) } ~
-                delete { deleteShape(shapeId) }
-            }
-          }
+        }
+      } ~
+      pathPrefix(JavaUUID) { shapeId =>
+        pathEndOrSingleSlash {
+          get { getShape(shapeId) } ~
+            put { updateShape(shapeId) } ~
+            delete { deleteShape(shapeId) }
+        }
       }
   }
 

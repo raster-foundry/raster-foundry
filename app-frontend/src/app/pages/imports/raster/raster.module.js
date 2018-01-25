@@ -1,4 +1,4 @@
-class ImportsListController {
+class RasterListController {
     constructor(authService, $uibModal) {
         'ngInject';
         this.authService = authService;
@@ -41,4 +41,8 @@ class ImportsListController {
     }
 }
 
-export default ImportsListController;
+const RasterListModule = angular.module('pages.imports.rasters', []);
+
+RasterListModule.controller('RasterListController', RasterListController);
+
+export default RasterListModule;

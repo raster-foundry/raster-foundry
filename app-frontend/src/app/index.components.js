@@ -10,6 +10,10 @@ export default angular.module('index.components', [
     require('./components/scenes/sceneFilterPane/sceneFilterPane.module.js').name,
     require('./components/scenes/planetSceneDetailModal/planetSceneDetailModal.module.js').name,
 
+    // vector components
+    require('./components/vectors/vectorImportModal/vectorImportModal.module.js').name,
+    require('./components/vectors/shapeItem/shapeItem.module.js').name,
+
     // project components
     require('./components/projects/projectItem/projectItem.module.js').name,
     require('./components/projects/projectPublishModal/projectPublishModal.module.js').name,

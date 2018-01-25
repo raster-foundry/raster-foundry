@@ -42,7 +42,8 @@ import errorTpl from './pages/error/error.html';
 import shareTpl from './pages/share/share.html';
 import homeTpl from './pages/home/home.html';
 import importsTpl from './pages/imports/imports.html';
-import importsListTpl from './pages/imports/list/list.html';
+import rasterListTpl from './pages/imports/raster/raster.html';
+import vectorListTpl from './pages/imports/vector/vector.html';
 import importsDatasourcesTpl from './pages/imports/datasources/datasources.html';
 import importsDatasourcesListTpl from './pages/imports/datasources/list/list.html';
 import importsDatasourcesDetailTpl from './pages/imports/datasources/detail/detail.html';
@@ -383,11 +384,18 @@ function importStates($stateProvider) {
             controllerAs: '$ctrl',
             abstract: true
         })
-        .state('imports.list', {
-            title: 'Imports',
-            url: '/list?:page',
-            templateUrl: importsListTpl,
-            controller: 'ImportsListController',
+        .state('imports.rasters', {
+            title: 'Rasters',
+            url: '/rasters?:page',
+            templateUrl: rasterListTpl,
+            controller: 'RasterListController',
+            controllerAs: '$ctrl'
+        })
+        .state('imports.vectors', {
+            title: 'Vectors',
+            url: '/vectors?:page',
+            templateUrl: vectorListTpl,
+            controller: 'VectorListController',
             controllerAs: '$ctrl'
         })
         .state('imports.datasources', {
