@@ -1,0 +1,79 @@
+.panel.project-item {
+  border-radius: $border-radius-base;
+  
+  .panel-body {
+    padding: 1rem;
+  }
+}
+
+.project-title {
+  @extend .font-base;
+  font-size: 1.6rem;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  padding-right: 6rem;
+
+  &:after {
+    content: attr(data-title);
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 1rem;
+    max-width: 100%;
+    white-space: normal;
+    background: $off-white;
+    z-index: 1;
+    visibility: hidden;
+    opacity: 0;
+  }
+
+  &:hover:after {
+    visibility: visible;
+    opacity: 1;
+    transition: .5s ease opacity;
+    transition-delay: .5s;
+  }
+}
+
+.project-status {
+  
+  .inline-tag {
+    text-indent: 0;
+    top: 50%;
+    left: 50%;
+    margin-top: 10px;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+
+    &:not(.red-tag) {
+      color: $shade-dark;
+    }
+  }
+}
+
+.project-actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+
+  a {
+    font-size: 1.3rem;
+    color: $shade-dark;
+    padding: 1.1rem .5rem;
+    display: inline-block;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: none;
+    }
+  }
+}
+
+.project-preview {
+  margin: 1rem 0 0;
+  border-radius: $border-radius-base;
+  overflow: hidden;
+}

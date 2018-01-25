@@ -1,74 +1,45 @@
 <div class="panel-body">
   <ng-container ng-if="!$ctrl.slim">
-    <rf-status-tag ng-if="$ctrl.status" entity-type="project" status="$ctrl.status"></rf-status-tag>
+    <rf-status-tag ng-if="$ctrl.status && $ctrl.status != 'CURRENT' " entity-type="project" status="$ctrl.status" class="project-status"></rf-status-tag>
     <a href ui-sref="projects.edit({projectid: $ctrl.project.id})" class="h4 font-600">
       <h4 class="project-title" data-title="{{$ctrl.project.name}}">{{$ctrl.project.name}}</h4>
     </a>
-    <div class="row">
-      <div class="column-12">
-
-        <!-- IF project has no scenes -->
-        <a ui-sref="projects.edit({projectid: $ctrl.project.id})" style="text-decoration: none">
-          <div class="project-preview-container placeholder"
-               ng-if="!$ctrl.project.scenes"
-               style="background-image: url({{$ctrl.projectPlaceholder}})">
-            <span>This project doesn't have any scenes yet</span>
-          </div>
-        </a>
-
-         <!-- IF not all scenes ingested: -->
-        <a ui-sref="projects.edit({projectid: $ctrl.project.id})" style="text-decoration: none">
-          <div class="project-preview-container placeholder"
-               ng-if="$ctrl.project.scenes && $ctrl.status !== 'CURRENT'"
-               style="background-image: url({{$ctrl.projectPlaceholder}})">
-               <span>Preview unavailable</span>
-          </div>
-        </a>
-
-        <!-- IF using a project's thumbnail: -->
-        <a ui-sref="projects.edit({projectid: $ctrl.project.id})" style="text-decoration: none">
-          <div class="project-preview-container placeholder"
-               ng-if="$ctrl.project.scenes && $ctrl.thumbnailUrl && $ctrl.status === 'CURRENT'"
-               style="background-image: url({{$ctrl.projectPlaceholder}})">
-            <div class="thumbnail"
-                 style="background-image: url({{$ctrl.thumbnailUrl}})"></div>
-          </div>
-        </a>
-      </div>
+    <div class="project-actions">
+      <a href ng-click="$ctrl.publishModal()">
+        <i class="icon-share"></i>
+        <span class="sr-only">Share</span>
+      </a>
+      <a href class="color-danger" ng-click="$ctrl.deleteModal()">
+        <i class="icon-trash"></i>
+        <span class="sr-only">Delete</span>
+      </a>
     </div>
-    <div class="row">
-      <div class="column-6">
-        <ul class="list-unstyled color-dark">
-          <li>
-            <ng-pluralize count="$ctrl.project.scenes"
-                          when="{'one': '1 Scene',
-                                'other': '{} Scenes'}">
-            </ng-pluralize>
-          </li>
-          <li>Edited {{$ctrl.project.modifiedAt | date : 'shortDate'}}</li>
-        </ul>
-      </div>
-      <div class="column-6 text-right">
-        <a class="btn btn-default" ui-sref="projects.edit({projectid: $ctrl.project.id})">
-          View
-        </a>
-        <div uib-dropdown ng-if="!$ctrl.isSelectable">
-          <button type="button" class="btn btn-default" uib-dropdown-toggle>
-            <i class="icon-caret-down"></i>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
-            <li role="menuitem">
-              <a href ng-click="$ctrl.publishModal()"><i class="icon-share"></i>Share</a>
-            </li>
-            <li class="divider"></li>
-            <li role="menuitem">
-              <a href class="color-danger" ng-click="$ctrl.deleteModal()">
-                <i class="icon-trash"></i>Delete
-              </a>
-            </li>
-          </ul>
+    <div class="project-preview">
+      <!-- IF project has no scenes -->
+      <a ui-sref="projects.edit({projectid: $ctrl.project.id})" style="text-decoration: none">
+        <div class="project-preview-container placeholder"
+             ng-if="!$ctrl.project.scenes"
+             style="background-image: url({{$ctrl.projectPlaceholder}})">
         </div>
-      </div>
+      </a>
+
+       <!-- IF not all scenes ingested: -->
+      <a ui-sref="projects.edit({projectid: $ctrl.project.id})" style="text-decoration: none">
+        <div class="project-preview-container placeholder"
+             ng-if="$ctrl.project.scenes && $ctrl.status !== 'CURRENT'"
+             style="background-image: url({{$ctrl.projectPlaceholder}})">
+        </div>
+      </a>
+
+      <!-- IF using a project's thumbnail: -->
+      <a ui-sref="projects.edit({projectid: $ctrl.project.id})" style="text-decoration: none">
+        <div class="project-preview-container placeholder"
+             ng-if="$ctrl.project.scenes && $ctrl.thumbnailUrl && $ctrl.status === 'CURRENT'"
+             style="background-image: url({{$ctrl.projectPlaceholder}})">
+          <div class="thumbnail"
+               style="background-image: url({{$ctrl.thumbnailUrl}})"></div>
+        </div>
+      </a>
     </div>
   </ng-container>
 
