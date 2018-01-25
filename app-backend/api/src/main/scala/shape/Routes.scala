@@ -52,6 +52,7 @@ trait ShapeRoutes extends Authentication
           pathEndOrSingleSlash {
             authenticate { user =>
               val tempFile = ScalaFile.newTemporaryFile()
+              tempFile.deleteOnExit()
               val response = storeUploadedFile("name", (_) => tempFile.toJava) { (m, _) =>
                 processShapefile(user, tempFile, m)
               }
@@ -93,7 +94,7 @@ trait ShapeRoutes extends Authentication
                   None,
                   Some(reprojectedGeometry)
                 )
-                complete(Shapes.insertShapes(Seq(shape), user))
+                complete(StatusCodes.Created, Shapes.insertShapes(Seq(shape), user))
               }
               case _ => {
                 val reason = "No valid MultiPolygons found, please ensure coordinates are in EPSG:4326 before uploading"
