@@ -54,6 +54,9 @@ require('./map/imageOverlay.service')(shared);
 require('./map/layer.service')(shared);
 require('./map/geocode.service')(shared);
 
+// vectors
+require('./vectors/shapes.service.js')(shared);
+
 // common
 require('./common/mousetip.service')(shared);
 require('./common/feed.service')(shared);
