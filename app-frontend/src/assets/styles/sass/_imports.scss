@@ -24,65 +24,66 @@
   "base/normalize",
   "base/animation",
   "base/base",
-  "base/typography",
-  "base/list",
   "base/grid",
+  "base/list",
+  "base/typography",
   "base/helpers";
 
 /* * * *
  * Layout
  * * * */
 @import
+  "layout/aside",
   "layout/container",
+  "layout/header",
+  "layout/footer",
   "layout/main",
   "layout/navbar",
-  "layout/header",
-  "layout/sidebar",
-  "layout/aside",
-  "layout/footer";
+  "layout/sidebar";
 
 /* * * *
  * Components
  * * * */
 @import
   "components/alert",
-  "components/spacing",
+  "components/avatar",
+  "components/badge",
   "components/breadcrumb",
   "components/button",
-  "components/icons",
-  "components/image",
-  "components/form",
-  "components/nav",
-  "components/color-correct",
-  "components/avatar",
-  "components/dropdown",
-  "components/tooltip",
-  "components/modal",
-  "components/close",
-  "components/list-group",
-  "components/filter",
-  "components/panel",
-  "components/badge",
-  "components/map",
-  "components/login",
-  "components/pagination",
   "components/carousel",
+  "components/close",
+  "components/color-correct",
   "components/content",
-  "components/instructions",
-  "components/tags",
-  "components/table",
-  "components/slider",
+  "components/dropdown",
+  "components/filter",
+  "components/form",
+  "components/icons",
   "components/gradient-bar",
+  "components/gradient-dropdown",
+  "components/image",
+  "components/instructions",
+  "components/list-group",
+  "components/login",
+  "components/map",
+  "components/modal",
+  "components/nav",
+  "components/pagination",
+  "components/panel",
+  "components/project-item",
   "components/searchselect",
-  "components/gradient-dropdown";
+  "components/slider",
+  "components/spacing",
+  "components/table",
+  "components/tags",
+  "components/tooltip";
 
 /* * * *
  * Pages
  * * * */
 @import
   "pages/dashboard",
-  "pages/editor",
-  "pages/datasources";
+  "pages/datasources",
+  "pages/editor";
 
 /* * * *
  * Shame
