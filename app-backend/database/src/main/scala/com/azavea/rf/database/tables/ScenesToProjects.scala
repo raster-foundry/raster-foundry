@@ -34,6 +34,9 @@ class ScenesToProjects(_tableTag: Tag) extends Table[SceneToProject](_tableTag, 
 /** Collection-like TableQuery object for table ScenesToProjects */
 object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) with LazyLogging {
 
+  implicit class withScenesToProjectsQuery[M, U, C[_]](scenesToProjects: ScenesToProjects.TableQuery) extends ScenesToProjectesTableQuery[M, U, C](scenesToProjects)
+  type TableQuery = Query[ScenesToProjects, SceneToProject, Seq]
+
   /** Update a scene's location in a given project's ordering */
   def setManualOrder(projectId: UUID, ordering: Seq[UUID])(implicit database: DB) = {
     val toOrderS2P =
@@ -71,7 +74,7 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
 
     val s2pQuery = ScenesToProjects
       .filter(_.projectId === projectId)
-      .sortBy(_.sceneOrder.asc.nullsLast)
+      .sortDefault
       .map(_.sceneId)
       .drop(pageRequest.offset * pageRequest.limit)
       .take(pageRequest.limit)
@@ -161,7 +164,7 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
     database.db.run {
       query
         .filter(_.projectId === projectId)
-        .sortBy(_.sceneOrder.asc.nullsLast)
+        .sortDefault
         .result
     } map { s2p =>
       if (s2p.length > 0) {
@@ -179,7 +182,7 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
     database.db.run {
       ScenesToProjects
         .filter(_.projectId === projectId)
-        .sortBy(_.sceneOrder.asc.nullsLast)
+        .sortDefault
         .result
     }.map({ s2p =>
       if (s2p.length > 0)
@@ -236,5 +239,14 @@ object ScenesToProjects extends TableQuery(tag => new ScenesToProjects(tag)) wit
       .sortBy(_.sceneOrder.asc.nullsLast)
       .map(_.projectId)
       .result
+  }
+}
+
+class ScenesToProjectesTableQuery[M, U, C[_]](scenesToProjects: ScenesToProjects.TableQuery) extends LazyLogging {
+
+  def sortDefault: ScenesToProjects.TableQuery = {
+    scenesToProjects
+      .sortBy(_.sceneOrder.asc.nullsLast)
+      .sortBy(_.sceneId.asc)
   }
 }
