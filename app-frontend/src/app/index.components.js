@@ -13,6 +13,7 @@ export default angular.module('index.components', [
     // vector components
     require('./components/vectors/vectorImportModal/vectorImportModal.module.js').name,
     require('./components/vectors/shapeItem/shapeItem.module.js').name,
+    require('./components/vectors/vectorNameModal/vectorNameModal.module.js').name,
 
     // project components
     require('./components/projects/projectItem/projectItem.module.js').name,
@@ -68,6 +69,7 @@ export default angular.module('index.components', [
     // filter components
     require('./components/filters/daterangeFilter/daterangeFilter.module.js').name,
     require('./components/filters/searchSelectFilter/searchSelectFilter.module.js').name,
+    require('./components/filters/shapeFilter/shapeFilter.module.js').name,
     require('./components/filters/sliderFilter/sliderFilter.module.js').name,
     require('./components/filters/tagFilter/tagFilter.module.js').name,
 

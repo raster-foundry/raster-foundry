@@ -61,49 +61,53 @@ export default (app) => {
 
         getFilters() {
             return [{
-                param: 'datasource',
+                type: 'search-select',
                 label: 'Imagery Sources',
-                type: 'searchSelect',
+                param: 'datasource',
                 getSources: this.getSources.bind(this)
             }, {
+                type: 'daterange',
                 params: {
                     min: 'minAcquisitionDatetime',
                     max: 'maxAcquisitionDatetime'
                 },
                 label: 'Date Range',
-                type: 'daterange',
                 default: 'The last month'
             }, {
+                type: 'shape',
+                label: 'Area of Interest',
+                param: 'shape'
+            }, {
+                type: 'slider',
+                label: 'Cloud Cover',
                 params: {
                     min: 'minCloudCover',
                     max: 'maxCloudCover'
                 },
-                label: 'Cloud Cover',
-                type: 'slider',
                 min: 0,
                 max: 100,
                 ticks: 10,
                 step: 10,
                 scale: 0.01
             }, {
+                type: 'slider',
+                label: 'Sun Elevation',
                 params: {
                     min: 'minSunElevation',
                     max: 'maxSunElevation'
                 },
-                label: 'Sun Elevation',
-                type: 'slider',
                 min: 0,
                 max: 180,
                 ticks: 30,
                 step: 10,
                 scale: 1
             }, {
+                type: 'slider',
+                label: 'Sun Azimuth',
                 params: {
                     min: 'minSunAzimuth',
                     max: 'maxSunAzimuth'
                 },
-                label: 'Sun Azimuth',
-                type: 'slider',
                 min: 0,
                 max: 360,
                 ticks: 60,

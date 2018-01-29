@@ -98,18 +98,7 @@ class FilterPaneController {
             element.remove();
         });
         this.filterComponents = this.filters.map((filter) => {
-            switch (filter.type) {
-            case 'searchSelect':
-                return this.createSearchSelectComponent(filter);
-            case 'daterange':
-                return this.createDateRangeComponent(filter);
-            case 'slider':
-                return this.createSliderComponent(filter);
-            case 'tagFilter':
-                return this.createTagFilterComponent(filter);
-            default:
-                throw new Error(`Unrecognized filter type: ${filter.type}`);
-            }
+            return this.createFilterComponent(filter);
         });
         const container = angular.element(document.querySelector('#filters'));
         this.filterComponents.forEach((filterComponent) => {
@@ -134,70 +123,21 @@ class FilterPaneController {
         }
     }
 
-    createSearchSelectComponent(filter) {
+    createFilterComponent(filter) {
         const componentScope = this.$scope.$new(true, this.$scope);
         componentScope.filter = filter;
         componentScope.onFilterChange = this.onFilterChange.bind(this);
-        const template = `<rf-search-select-filter
-                            class="filter-group"
-                            data-filter="filter"
-                            on-filter-change="onFilterChange(filter, filterParams)">
-                          </rf-search-select-filter>`;
+        const template = `<rf-${filter.type}-filter
+                           class="filter-group"
+                           data-filter="filter"
+                           on-filter-change="onFilterChange(filter, filterParams)">
+                          </rf-${filter.type}-filter>`;
         const element = this.$compile(template)(componentScope);
         return {
             element,
             componentScope
         };
     }
-
-    createDateRangeComponent(filter) {
-        const componentScope = this.$scope.$new(true, this.$scope);
-        componentScope.filter = filter;
-        componentScope.onFilterChange = this.onFilterChange.bind(this);
-        const template = `<rf-daterange-filter
-                            class="filter-group"
-                            data-filter="filter"
-                            on-filter-change="onFilterChange(filter, filterParams)">
-                          </rf-daterange-filter>`;
-        const element = this.$compile(template)(componentScope);
-        return {
-            element,
-            componentScope
-        };
-    }
-
-    createSliderComponent(filter) {
-        const componentScope = this.$scope.$new(true, this.$scope);
-        componentScope.filter = filter;
-        componentScope.onFilterChange = this.onFilterChange.bind(this);
-        const template = `<rf-slider-filter
-                            class="filter-group"
-                            data-filter="filter"
-                            on-filter-change="onFilterChange(filter, filterParams)">
-                          </rf-slider-filter>`;
-        const element = this.$compile(template)(componentScope);
-        return {
-            element,
-            componentScope
-        };
-    }
-
-    createTagFilterComponent(filter) {
-        const componentScope = this.$scope.$new(true, this.$scope);
-        componentScope.filter = filter;
-        componentScope.onFilterChange = this.onFilterChange.bind(this);
-        const template = `<rf-tag-filter
-                            class="filter-group"
-                            data-filter="filter"
-                            on-filter-change="onFilterChange(filter, filterParams)">
-                          </rf-tag-filter>`;
-        const element = this.$compile(template)(componentScope);
-        return {
-            element,
-            componentScope
-        };
-    }
-
 }
 
 const SceneFilterPaneModule = angular.module('components.scenes.sceneFilterPane',

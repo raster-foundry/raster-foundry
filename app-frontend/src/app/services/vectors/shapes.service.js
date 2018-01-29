@@ -9,6 +9,10 @@ export default (app) => {
                 },
                 delete: {
                     method: 'DELETE'
+                },
+                create: {
+                    method: 'POST',
+                    isArray: true
                 }
             });
         }
@@ -19,6 +23,10 @@ export default (app) => {
 
         deleteShape(params) {
             return this.shapeApi.delete(params).$promise;
+        }
+
+        createShape(shape) {
+            return this.shapeApi.create(shape).$promise;
         }
     }
 

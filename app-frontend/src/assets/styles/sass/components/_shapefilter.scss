@@ -1,0 +1,85 @@
+.shapefilter-container {
+    width: 100%;
+}
+
+.shapefilter-box {
+    width: 100%;
+    padding: 0.5em 1em;
+    background: $shade-dark;
+    display: flex;
+    flex-direction: row;
+    border-radius: 3px;
+    cursor: pointer;
+
+    &:hover {
+        background: darken($shade-dark, 5%);
+    }
+}
+
+.shapefilter-button-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+}
+
+.shapefilter-text {
+    color: $white;
+}
+
+.shapefilter-input-actions {
+    padding: 0.2em;
+    display: flex;
+    flex-direction: row;
+    flex: 0;
+}
+
+.shapefilter-dropdown {
+    position: absolute;
+    bottom: -0.5em;
+    right: 0;
+    height: 25em;
+    width: 23.2em;
+    transform: translateY(100%);
+    z-index: 100;
+    background: $white;
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+}
+
+.shapefilter-dropdown-content {
+    flex: 1;
+    border-bottom: 1px solid #ddd;
+    border-top: 1px solid #ddd;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0.5em;
+}
+
+.shapefilter-search {
+    padding: 0.5em;
+
+    .search-form {
+        margin-bottom: 0;
+
+        .btn-link {
+            padding: 0.8em;
+        }
+    }
+}
+
+.shapefilter-actions {
+    padding: .5em;
+    display: flex;
+    justify-content: space-around;
+}
+
+.shapefilter-option {
+    padding: 0.5em;
+    cursor: pointer;
+
+    &:hover {
+        background: lighten($shade-light, 30%);
+    }
+}

@@ -1,0 +1,60 @@
+<div class="filter">
+  <label>{{$ctrl.filter.label}}</label>
+
+  <div class="shapefilter-container">
+    <div class="shapefilter-box" ng-click="$ctrl.toggleDropdown($event)">
+      <div class="shapefilter-button-content">
+        <strong class="shapefilter-text" ng-if="$ctrl.selectedShape">
+          {{$ctrl.selectedShape.properties.name}}
+        </strong>
+        <strong ng-if="!$ctrl.selectedShape">
+          Select an area
+        </strong>
+      </div>
+      <div class="shapefilter-input-actions">
+        <button type="button"
+                class="btn btn-text btn-transparent">
+          <i class="icon-caret-down"></i>
+        </button>
+        <button type="button"
+                class="btn btn-text btn-transparent"
+                ng-if="$ctrl.selectedShape"
+                ng-click="$ctrl.onClearShapeClick($event)">
+          <i class="icon-cross"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="shapefilter-dropdown" ng-if="$ctrl.open">
+      <!-- TODO: show placeholder when there aren't any shapes to list -->
+      <div class="shapefilter-search">
+        <span class="form-group search-form">
+          <input type="text"
+                 class="form-control"
+                 placeholder="Filter by shape name"
+                 ng-model="$ctrl.shapeSearch"
+                 ng-click="$event.stopPropagation()"
+                 ng-change="$ctrl.onSearchChange()">
+          <button class="btn btn-link">
+            <i class="icon-cross" ng-click="$ctrl.onClearSearch($event)"></i>
+          </button>
+        </span>
+      </div>
+      <div class="shapefilter-dropdown-content">
+        <div class="shapefilter-option"
+             ng-click="$ctrl.onSelectShape(shape, $event)"
+             ng-repeat="shape in $ctrl.filteredShapes | limitTo: 20">
+          <strong>{{shape.properties.name}}</strong>
+        </div>
+      </div>
+      <div class="shapefilter-actions">
+        <button class="btn btn-default" ng-click="$ctrl.shapeImportModal()">
+          Import shape
+        </button>
+        <button class="btn btn-default" ng-click="$ctrl.startCreateShape()">
+          Draw shape
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

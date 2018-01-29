@@ -52,12 +52,14 @@ function runBlock(
         }
     });
 
+    $rootScope.$on('$stateChangeSuccess', () => {
+        modalService.closeActiveModal();
+    });
+
     $rootScope.$on('$locationChangeStart', function () {
         function setupState() {
             let idToken = localStorage.get('idToken');
             let accessToken = localStorage.get('accessToken');
-
-            modalService.closeActiveModal();
 
             if (idToken && accessToken) {
                 if (!authService.verifyAuthCache()) {

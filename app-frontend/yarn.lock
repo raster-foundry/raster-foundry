@@ -4328,36 +4328,34 @@ lcid@^1.0.0:
   dependencies:
     invert-kv "^1.0.0"
 
-leaflet-draw-drag@~0.4.4:
-  version "0.4.4"
-  resolved "https://registry.yarnpkg.com/leaflet-draw-drag/-/leaflet-draw-drag-0.4.4.tgz#55d21d750ad5a9f554170a5209d7dea910e5152b"
+leaflet-draw-drag@~0.4.5:
+  version "0.4.5"
+  resolved "https://registry.yarnpkg.com/leaflet-draw-drag/-/leaflet-draw-drag-0.4.5.tgz#c40eb1b21caed263b7db3dfc34017144f865ff31"
   dependencies:
-    leaflet-draw "^0.4.3"
-    leaflet-path-drag "~1.0.7"
+    leaflet-draw "^0.4.12"
+    leaflet-path-drag "^1.1.0"
 
-leaflet-draw@^0.4.3, leaflet-draw@~0.4.9:
-  version "0.4.9"
-  resolved "https://registry.yarnpkg.com/leaflet-draw/-/leaflet-draw-0.4.9.tgz#44105088310f47e4856d5ede37d47ecfad0cf2d5"
+leaflet-draw@^0.4.12:
+  version "0.4.14"
+  resolved "https://registry.yarnpkg.com/leaflet-draw/-/leaflet-draw-0.4.14.tgz#1b5b06d570873a015aa96b80d664dab496c45a4a"
 
-leaflet-path-drag@^1.0.1, leaflet-path-drag@~1.0.7:
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/leaflet-path-drag/-/leaflet-path-drag-1.0.7.tgz#d49240efc292e19da961cf74da63e387f7d8324e"
+leaflet-draw@~1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/leaflet-draw/-/leaflet-draw-1.0.2.tgz#212d1d958a53b849bec19a2135d39c13ed012559"
+
+leaflet-path-drag@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/leaflet-path-drag/-/leaflet-path-drag-1.1.0.tgz#586e464b51ee3b712e74b4a92dc10a259f0eb9ff"
+
+leaflet-path-transform@1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/leaflet-path-transform/-/leaflet-path-transform-1.1.0.tgz#ad3dd49ab85c6483a971861643a38a863e2dadf5"
   dependencies:
-    leaflet "~1.0.2"
+    leaflet-path-drag "^1.1.0"
 
-leaflet-path-transform@1.0.3:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/leaflet-path-transform/-/leaflet-path-transform-1.0.3.tgz#e15410616274da473449a6851fc7862a178143cc"
-  dependencies:
-    leaflet-path-drag "^1.0.1"
-
-leaflet@1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/leaflet/-/leaflet-1.2.0.tgz#fd5d93d9cb00091f5f8a69206d0d6744c1c82697"
-
-leaflet@~1.0.2:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/leaflet/-/leaflet-1.0.3.tgz#1f401b98b45c8192134c6c8d69686253805007c8"
+leaflet@1.3.0:
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/leaflet/-/leaflet-1.3.0.tgz#2bffd8b1a5a4d3048d6ed9d0a13c61a895da6be8"
 
 leven@^2.0.0:
   version "2.0.0"

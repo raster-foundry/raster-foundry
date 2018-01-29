@@ -4,7 +4,8 @@ import _ from 'lodash';
 
 class ProjectsSceneBrowserController {
     constructor( // eslint-disable-line max-params
-        $log, $state, $location, $scope, $timeout, modalService, mapService, sceneService,
+        $log, $state, $location, $scope, $timeout,
+        modalService, mapService, sceneService,
         projectService, sessionStorage, planetLabsService, authService, featureFlags,
         RasterFoundryRepository, PlanetRepository, CMRRepository
     ) {
@@ -58,7 +59,7 @@ class ProjectsSceneBrowserController {
         this.planetThumbnailUrls = new Map();
 
         this.setBboxParam = _.debounce((bbox) => {
-            this.$location.search('bbox', bbox);
+            this.$location.search('bbox', bbox).replace();
         }, 500);
         this.debouncedSceneFetch = _.debounce(this.fetchNextScenes.bind(this), 500);
 

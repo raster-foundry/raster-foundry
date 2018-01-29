@@ -27,7 +27,7 @@ export default (app) => {
             return [{
                 param: 'datasource',
                 label: 'Imagery Sources',
-                type: 'searchSelect',
+                type: 'search-select',
                 getSources: this.getSources.bind(this)
             }, {
                 params: {
@@ -37,6 +37,10 @@ export default (app) => {
                 label: 'Date Range',
                 type: 'daterange',
                 default: 'None'
+            }, {
+                type: 'shape',
+                label: 'Area of Interest',
+                param: 'shape'
             }, {
                 params: {
                     min: 'minCloudCover',
@@ -76,7 +80,7 @@ export default (app) => {
             }, {
                 param: 'ingested',
                 label: 'Ingest Status',
-                type: 'tagFilter',
+                type: 'tag',
                 options: [{
                     label: 'Show all',
                     value: null
@@ -90,7 +94,7 @@ export default (app) => {
             }, {
                 param: 'owner',
                 label: 'Owner',
-                type: 'tagFilter',
+                type: 'tag',
                 options: [{
                     label: 'All',
                     value: null

@@ -2,7 +2,7 @@ import {Map, Set} from 'immutable';
 
 /* eslint no-unused-vars: 0 */
 /* eslint spaced-comment: 0 */
-/* globals BUILDCONFIG _ console */
+/* globals BUILDCONFIG _ console setTimeout*/
 
 class MapWrapper {
     // MapWrapper is a bare es6 class, so does not use angular injections
@@ -13,6 +13,7 @@ class MapWrapper {
         this.thumbnailService = thumbnailService;
         this.map = leafletMap;
         this.mapId = mapId;
+
         this.imageOverlayService = imageOverlayService;
         this.datasourceService = datasourceService;
         this.options = options;
@@ -544,13 +545,77 @@ class MapWrapper {
         return this;
     }
 
-    /** Hold the state of the map in case it's needed later
-      * @param {state} state to hold, e.g. specifying latlng center and zoom
-      * @returns {this} this
-      */
-    holdState(state) {
-        this.heldState = state;
-        return this;
+    /*
+      Args:
+        options: {
+        }
+      Returns: {promise: Promise, cancel: Function}
+      Promise is resolved when a shape is drawn
+     */
+    drawShape(options) {
+        return {
+            promise: this.$q((resolve, reject) => {
+                console.log('Start drawing shape', options);
+            }),
+            cancel: () => {
+                console.log('Cancel drawing shape');
+            }
+        };
+    }
+
+    /*
+      Args:
+
+      Return a promise and cancel function
+      Returns: {promise: Promise, cancel: Function}
+     */
+    editShape(options) {
+        return {
+            promise: this.$q((resolve, reject) => {
+                console.log('Start editing geojson shape layer');
+            }),
+            cancel: () => {
+                console.log('Cancel editing geojson shape layer');
+            }
+        };
+    }
+
+    toggleFullscreen(force) {
+        // eslint-disable-next-line
+        let parent = this.map._mapPane.parentElement.parentElement;
+        const setMaxStyle = () => {
+            let style = `
+                position: fixed;
+                width: 100vw;
+                height: calc(100vh - 4.3em);
+                z-index: 1002;
+                top: 4.3em;
+                left: 0;
+            `.replace(/\s+/g, ' ');
+            parent.style.cssText = style;
+        };
+
+        const setNormalStyle = () => {
+            parent.style.cssText = 'position: relative;';
+        };
+
+        if (typeof force !== 'undefined') {
+            if (force) {
+                this.maximized = true;
+                setMaxStyle();
+            } else {
+                this.maximized = false;
+                setNormalStyle();
+            }
+        } else if (this.maximized) {
+            this.maximized = false;
+            setNormalStyle();
+        } else {
+            this.maximized = true;
+            setMaxStyle();
+        }
+
+        setTimeout(() => this.map.invalidateSize(), 150);
     }
 }
 
