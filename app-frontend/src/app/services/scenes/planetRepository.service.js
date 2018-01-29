@@ -241,6 +241,24 @@ export default (app) => {
 
         // assumes thumbnail is 256x256, which is true for planet thumbnails
         trimThumbnail(thumbnail) {
+            function rowBlank(imageData, width, y) {
+                for (let x = 0; x < width; x = x + 1) {
+                    if (imageData.data[y * width * 4 + x * 4 + 3] !== 0) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            function columnBlank(imageData, width, x, top, bottom) {
+                for (let y = top; y < bottom; y = y + 1) {
+                    if (imageData.data[y * width * 4 + x * 4 + 3] !== 0) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
             return this.$q((resolve, reject) => {
                 const width = 256;
                 const height = 256;
@@ -249,37 +267,41 @@ export default (app) => {
                 canvas.height = height;
                 const context = canvas.getContext('2d');
                 const image = document.createElement('img');
+
                 image.onload = () => {
                     context.drawImage(image, 0, 0);
                     const pixels = context.getImageData(0, 0, width, height);
-                    let l = pixels.data.length;
-                    let x = 0;
-                    let y = 0;
                     const bound = {
-                        top: null,
-                        left: null,
-                        right: null,
-                        bottom: null
+                        top: 0,
+                        left: 0,
+                        right: pixels.width,
+                        bottom: pixels.height
                     };
-                    for (let i = 0; i < l; i += 4) {
-                        if (pixels.data[i + 3] !== 0) {
-                            x = i / 4 % width;
-                            y = ~~(i / 4 / height);
-                            if (bound.top === null) {
-                                bound.top = y;
-                            }
-                            if (bound.bottom === null || bound.bottom < y) {
-                                bound.bottom = y;
-                            }
-                            if (bound.left === null || x < bound.left) {
-                                bound.left = x;
-                            }
-                            if (bound.right === null || bound.right < x) {
-                                bound.right = x;
-                            }
-                        }
+
+                    while (
+                        bound.top < bound.bottom && rowBlank(pixels, width, bound.top)
+                    ) {
+                        bound.top = bound.top + 1;
                     }
-                    if (bound.top !== null) {
+                    while (
+                        bound.bottom - 1 > bound.top && rowBlank(pixels, width, bound.bottom - 1)
+                    ) {
+                        bound.bottom = bound.bottom - 1;
+                    }
+                    while (
+                        bound.left < bound.right &&
+                            columnBlank(pixels, width, bound.left, bound.top, bound.bottom)
+                    ) {
+                        bound.left = bound.left + 1;
+                    }
+                    while (
+                        bound.right - 1 > bound.left &&
+                            columnBlank(pixels, width, bound.right - 1, bound.top, bound.bottom)
+                    ) {
+                        bound.top = bound.top + 1;
+                    }
+
+                    if (bound.top !== bound.bottom) {
                         let trimHeight = bound.bottom - bound.top;
                         let trimWidth = bound.right - bound.left;
                         const trimmedData = context.getImageData(
