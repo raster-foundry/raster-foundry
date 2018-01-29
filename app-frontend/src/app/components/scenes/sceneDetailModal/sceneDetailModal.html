@@ -6,7 +6,8 @@
           <span aria-hidden="true">&times;</span>
         </button>
         <dl>
-          <input type="text" class="form-control" ng-model="$ctrl.scene.name" readonly>
+          <input type="text" class="form-control"
+                 ng-attr-title="{{$ctrl.scene.name}}" ng-model="$ctrl.scene.name" readonly>
         </dl>
         <dl>
           <strong>{{$ctrl.datasource ? $ctrl.datasource : 'Loading datasource'}}</strong>

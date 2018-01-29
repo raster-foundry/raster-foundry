@@ -1,3 +1,4 @@
+/* globals document */
 import _ from 'lodash';
 
 export default (app) => {
@@ -225,11 +226,76 @@ export default (app) => {
             return this.$q((resolve, reject) => {
                 this.planetLabsService.getThumbnail(
                     this.planetToken, scene.thumbnails[0].url
-                ).then((thumbnail) => {
-                    resolve('data:image/png;base64,' + thumbnail);
+                ).then((response) => {
+                    let thumbnail = `data:image/png;base64,${response}`;
+                    this.trimThumbnail(thumbnail).then((trimmed) => {
+                        resolve(trimmed);
+                    }, (err) => {
+                        reject(err);
+                    });
                 }, (err) => {
                     reject(err);
                 });
+            });
+        }
+
+        // assumes thumbnail is 256x256, which is true for planet thumbnails
+        trimThumbnail(thumbnail) {
+            return this.$q((resolve, reject) => {
+                const width = 256;
+                const height = 256;
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const context = canvas.getContext('2d');
+                const image = document.createElement('img');
+                image.onload = () => {
+                    context.drawImage(image, 0, 0);
+                    const pixels = context.getImageData(0, 0, width, height);
+                    let l = pixels.data.length;
+                    let x = 0;
+                    let y = 0;
+                    const bound = {
+                        top: null,
+                        left: null,
+                        right: null,
+                        bottom: null
+                    };
+                    for (let i = 0; i < l; i += 4) {
+                        if (pixels.data[i + 3] !== 0) {
+                            x = i / 4 % width;
+                            y = ~~(i / 4 / height);
+                            if (bound.top === null) {
+                                bound.top = y;
+                            }
+                            if (bound.bottom === null || bound.bottom < y) {
+                                bound.bottom = y;
+                            }
+                            if (bound.left === null || x < bound.left) {
+                                bound.left = x;
+                            }
+                            if (bound.right === null || bound.right < x) {
+                                bound.right = x;
+                            }
+                        }
+                    }
+                    if (bound.top !== null) {
+                        let trimHeight = bound.bottom - bound.top;
+                        let trimWidth = bound.right - bound.left;
+                        const trimmedData = context.getImageData(
+                            bound.left, bound.top, trimWidth, trimHeight
+                        );
+                        const trimmedCanvas = document.createElement('canvas');
+                        trimmedCanvas.width = trimWidth;
+                        trimmedCanvas.height = trimHeight;
+                        const trimmedContext = trimmedCanvas.getContext('2d');
+                        trimmedContext.putImageData(trimmedData, 0, 0);
+                        resolve(trimmedCanvas.toDataURL());
+                    } else {
+                        reject('empty image');
+                    }
+                };
+                image.src = thumbnail;
             });
         }
 
