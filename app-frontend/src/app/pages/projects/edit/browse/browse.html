@@ -44,7 +44,7 @@
   </ul>
 </div>
 <div class="list-group" ng-if="!$ctrl.fetchingScenes">
-  <div class="list-group-item" ng-if="$ctrl.$ctrl.sceneCount">
+  <div class="list-group-item" ng-if="$ctrl.sceneCount">
     <strong class="color-dark">
       {{$ctrl.sceneCount}} scenes found. Showing {{$ctrl.sceneList.length}}.
     </strong>
@@ -68,7 +68,15 @@
     </strong>
   </div>
 </div>
-<div class="sidebar-scrollable list-group">
+<div class="list-group"
+     ng-if="$ctrl.sceneList && $ctrl.sceneList.length === 0 && !$ctrl.fetchingScenes && !$ctrl.fetchError">
+  <div class="list-group-item">
+    <strong class="color-dark">
+      No scenes match this filter
+    </strong>
+  </div>
+</div>
+<div class="sidebar-scrollable list-group" ng-if="$ctrl.sceneList.length">
   <rf-scene-item
       scene="scene"
       repository="$ctrl.currentRepository"

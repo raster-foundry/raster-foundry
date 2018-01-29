@@ -66,19 +66,11 @@ class SceneItemController {
     }
 
     getReferenceDate() {
+        if (!this.scene) {
+            return '';
+        }
         let acqDate = this.scene.filterFields.acquisitionDate;
         return acqDate ? acqDate : this.scene.createdAt;
-    }
-
-    getPlanetThumbnail() {
-        this.planetLabsService.getThumbnail(
-            this.planetKey, this.scene.thumbnails[0].url
-        ).then(
-            (thumbnail) => {
-                this.planetThumbnail = thumbnail;
-                this.onPassPlanetThumbnail({url: thumbnail, id: this.scene.id});
-            }
-        );
     }
 }
 
