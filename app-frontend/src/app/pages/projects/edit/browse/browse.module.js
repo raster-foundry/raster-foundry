@@ -143,7 +143,7 @@ class ProjectsSceneBrowserController {
         this.currentRepository = repository;
 
         this.sceneList = [];
-        if (this.bboxCoords || this.queryParams.bbox) {
+        if (this.bboxCoords || this.queryParams && this.queryParams.bbox) {
             this.fetchNextScenesForBbox = this.bboxFetchFactory(
                 this.bboxCoords || this.queryParams.bbox
             );
