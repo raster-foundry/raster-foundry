@@ -237,7 +237,7 @@ class ProjectsSceneBrowserController {
     }
 
     isSelected(scene) {
-        return this.selectedScenes.has(scene.id);
+        return scene && scene.id && this.selectedScenes.has(scene.id);
     }
 
     selectAllScenes() {
@@ -276,7 +276,7 @@ class ProjectsSceneBrowserController {
     }
 
     isInProject(scene) {
-        if (this.projectScenesReady) {
+        if (scene && scene.id && this.projectScenesReady) {
             const index = this.projectSceneIds.indexOf(scene.id);
             return index >= 0;
         }

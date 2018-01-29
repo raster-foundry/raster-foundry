@@ -154,7 +154,7 @@ export default (app) => {
                                     fetchedScenes = res.data.features.length;
                                     scenePages = this.planetLabsService
                                         .planetFeatureToScene(res.data);
-                                    let scenes = scenePages.shift();
+                                    let scenes = scenePages.shift() || [];
                                     // eslint-disable-next-line
                                     nextLink = res.data.features.length === 250 && res.data._links._next;
                                     resolve({
@@ -222,17 +222,21 @@ export default (app) => {
             return fetchForBbox;
         }
 
-        getThumbnail(scene) {
+        getThumbnail(scene, trim = false) {
             return this.$q((resolve, reject) => {
                 this.planetLabsService.getThumbnail(
                     this.planetToken, scene.thumbnails[0].url
                 ).then((response) => {
                     let thumbnail = `data:image/png;base64,${response}`;
-                    this.trimThumbnail(thumbnail).then((trimmed) => {
-                        resolve(trimmed);
-                    }, (err) => {
-                        reject(err);
-                    });
+                    if (trim) {
+                        this.trimThumbnail(thumbnail).then((trimmed) => {
+                            resolve(trimmed);
+                        }, (err) => {
+                            reject(err);
+                        });
+                    } else {
+                        resolve(thumbnail);
+                    }
                 }, (err) => {
                     reject(err);
                 });
@@ -322,7 +326,7 @@ export default (app) => {
         }
 
         getPreview(scene) {
-            return this.getThumbnail(scene);
+            return this.getThumbnail(scene, true);
         }
 
         getDatasource(scene) {

@@ -73,7 +73,11 @@ class DaterangeFilterController {
                 this.dateFilterPreset = null;
             }
 
-            this.setDateRange(this.datefilter.start, this.datefilter.end, this.dateFilterPreset);
+            this.setDateRange(
+                this.datefilter.start.startOf('day'),
+                this.datefilter.end.endOf('day'),
+                this.dateFilterPreset
+            );
         }
     }
 
@@ -97,8 +101,8 @@ class DaterangeFilterController {
         if (_.isEmpty({start}) || _.isEmpty(end)) {
             this.clearDateFilter(false);
         } else {
-            this.datefilter.start = start;
-            this.datefilter.end = end;
+            this.datefilter.start = start.startOf('day');
+            this.datefilter.end = end.endOf('day');
             this.datefilterPreset = preset || false;
             this.hasDatetimeFilter = true;
             const filterParams = {};
