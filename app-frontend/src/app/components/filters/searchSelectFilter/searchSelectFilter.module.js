@@ -24,9 +24,10 @@ class SearchSelectFilterController {
             const paramValue = this.$location.search()[this.filter.param];
             this.filter.getSources().then((sources) => {
                 this.sources = sources;
+
                 let paramSource = _.first(
                     this.sources.filter((source) => source.id === paramValue)
-                );
+                ) || this.sources.find(s => s.default);
                 this.selectOption(paramSource);
             }, (err) => {
                 this.error = err;

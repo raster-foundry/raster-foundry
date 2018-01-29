@@ -471,14 +471,16 @@ class MapWrapper {
         let footprintGeojson = Object.assign({
             properties: {
                 options: {
+                    stroke: 1,
                     fillOpacity: 0,
-                    weight: 0,
+                    weight: 2,
                     interactive: false
                 }
             }
         }, scene.dataFootprint);
         if (scene.tileFootprint && scene.thumbnails && scene.thumbnails.length) {
             // get smallest thumbnail - it's a small map
+
             let boundsGeoJson = L.geoJSON();
             boundsGeoJson.addData(scene.tileFootprint);
             let imageBounds = boundsGeoJson.getBounds();

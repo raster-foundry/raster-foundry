@@ -5,8 +5,8 @@ import _ from 'lodash';
 class ProjectsSceneBrowserController {
     constructor( // eslint-disable-line max-params
         $log, $state, $location, $scope, $timeout, modalService, mapService, sceneService,
-        projectService, sessionStorage, planetLabsService, authService,
-        RasterFoundryRepository, PlanetRepository
+        projectService, sessionStorage, planetLabsService, authService, featureFlags,
+        RasterFoundryRepository, PlanetRepository, CMRRepository
     ) {
         'ngInject';
         this.$parent = $scope.$parent.$ctrl;
@@ -27,12 +27,22 @@ class ProjectsSceneBrowserController {
             {
                 label: 'Raster Foundry',
                 service: RasterFoundryRepository
-            },
-            {
-                label: 'Planet Labs',
-                service: PlanetRepository
             }
         ];
+
+        if (featureFlags.isOnByDefault('external-source-browse-planet')) {
+            this.repositories.push({
+                label: 'Planet Labs',
+                service: PlanetRepository
+            });
+        }
+
+        if (featureFlags.isOnByDefault('external-source-browse-cmr')) {
+            this.repositories.push({
+                label: 'NASA CMR',
+                service: CMRRepository
+            });
+        }
 
         this.getMap = () => this.mapService.getMap('edit');
         this.getPreviewMap = () => this.mapService.getMap('preview');

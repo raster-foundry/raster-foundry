@@ -50,6 +50,10 @@ class SceneDetailModalController {
         this.repository.service.getDatasource(this.scene).then(d => {
             this.datasource = d;
         });
+        this.thumbnail = false;
+        this.repository.service.getThumbnail(this.scene).then(t => {
+            this.thumbnail = t;
+        });
         this.accDateDisplay = this.setAccDateDisplay();
         this.isUploadDone = true;
     }
