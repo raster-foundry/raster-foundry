@@ -7,6 +7,7 @@ import { NODE_ACTION_PREFIX } from './actions/node-actions';
 import { HISTOGRAM_ACTION_PREFIX } from './actions/histogram-actions';
 import { STATISTICS_ACTION_PREFIX } from './actions/statistics-actions';
 import { PROJECT_ACTION_PREFIX } from './actions/project-actions';
+import { SHAPES_ACTION_PREFIX } from './actions/shape-actions';
 
 import { ANNOTATIONS_ACTION_PREFIX } from './actions/annotation-actions';
 
@@ -17,6 +18,7 @@ import { statisticsReducer } from './reducers/statistics-reducer';
 
 import { annotationReducer } from './reducers/annotation-reducer';
 import { projectReducer} from './reducers/project-reducer';
+import { shapeReducer} from './reducers/shape-reducer';
 
 const INITIAL_LAB_STATE = {
     // analysis state
@@ -79,6 +81,28 @@ function projects(state = INITIAL_PROJECTS_STATE, action) {
     }
 }
 
+const INITIAL_SHAPE_STATE = {
+    mapId: null,
+    resolve: null,
+    reject: null,
+    resolveEdit: null,
+    rejectEdit: null
+};
+
+function shape(state = INITIAL_SHAPE_STATE, action) {
+    if (!action || !action.type) {
+        return state;
+    }
+    const prefix = _.first(action.type.split('_'));
+
+    switch (prefix) {
+    case SHAPES_ACTION_PREFIX:
+        return shapeReducer(state, action);
+    default:
+        return state;
+    }
+}
+
 const INITIAL_API_STATE = {
     apiToken: null, apiUrl: null, tileUrl: null,
     user: null
@@ -102,5 +126,5 @@ function api(state = INITIAL_API_STATE, action) {
 }
 
 export default {
-    lab, projects, api
+    lab, projects, shape, api
 };

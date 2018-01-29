@@ -1,4 +1,44 @@
 <div class="map-container"></div>
+<div class="map-container-draw-controls" ng-if="$ctrl.drawing">
+  <div class="map-draw-title">
+    <div ng-if="!$ctrl.editingStage"><strong>Draw a shape</strong></div>
+    <div ng-if="$ctrl.editingStage === 'select'"><strong>Select a shape to edit</strong></div>
+    <div ng-if="$ctrl.editingStage === 'modify'"><strong>Edit shape</strong></div>
+  </div>
+  <div class="map-draw-actions">
+    <button class="btn"
+            ng-class="{
+                   'btn-transparent': !$ctrl.shapeInProgress && !$ctrl.editingStage,
+                   'btn-light': $ctrl.shapeInProgress || $ctrl.editingStage
+                   }"
+            ng-click="$ctrl.onCancelDrawing()">
+      <span ng-if="!$ctrl.shapes.features.length || $ctrl.shapeInProgress || $ctrl.editingStage">Cancel</span>
+      <span ng-if="$ctrl.shapes.features.length && !$ctrl.shapeInProgress && !$ctrl.editingStage">Reset</span>
+    </button>
+    <button class="btn btn-light"
+            ng-if="$ctrl.shapes.features.length && !$ctrl.shapeInProgress && !$ctrl.editingStage"
+            ng-click="$ctrl.onEditStart()">Edit</button>
+    <button class="btn"
+            ng-class="{
+                   'btn-default': !ctrl.shapes.features.length,
+                   'btn-light': $ctrl.shapes.features.length
+                   }"
+            ng-click="$ctrl.startDrawingShape()"
+            ng-if="!$ctrl.shapeInProgress && !$ctrl.editingStage"
+    >
+      <span ng-if="!$ctrl.shapes.features.length">Start Drawing</span>
+      <span ng-if="$ctrl.shapes.features.length">Draw More</span>
+    </button>
+    <button class="btn btn-default"
+            ng-if="$ctrl.editingStage === 'modify'"
+            ng-click="$ctrl.onEditFinish()">
+            Save
+    </button>
+    <button class="btn btn-default"
+            ng-if="$ctrl.shapes.features.length && !$ctrl.shapeInProgress && !$ctrl.editingStage"
+            ng-click="$ctrl.onFinishDrawing()">Finish</button>
+  </div>
+</div>
 <div class="map-container-controls">
   <button class="btn btn-default btn-square"
           title="Zoom In"
@@ -66,14 +106,6 @@
                    'btn-default': !$ctrl.geojsonEnabled()}"
             ng-click="$ctrl.toggleGeojson()">
       <span class="icon-mosaic"></span>
-    </button>
-  </div>
-  <div feature-flag="fullscreen-map">
-    <div class="filler"></div>
-    <button class="btn btn-default btn-square"
-            title="Full Screen"
-            ng-click="$ctrl.toggleFullscreen()">
-      <i class="icon-resize"></i>
     </button>
   </div>
 </div>

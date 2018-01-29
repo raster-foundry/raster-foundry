@@ -190,14 +190,29 @@ input[type=radio] {
   border: 1px solid $border-color-default;
   position: relative;
 
+  :nth-child(1) {
+      &.form-control {
+          padding-left: 1em;
+      }
+  }
+
   .form-control {
     border: none;
     height: 3.2rem;
     padding-left: 34px;
+    padding-right: 3em;
   }
 
   .btn-link {
     border: none;
+    position: absolute;
+    right: 0;
+    padding: 0.7em;
+    color: $shade-light;
+    pointer-events: none;
+    i {
+        pointer-events: auto;
+    }
   }
 
   .input-icon {

@@ -909,6 +909,37 @@ div.lab-workspace.is-dragging {
   }
 }
 
+.map-container-draw-controls {
+  position: absolute;
+  top: 2em;
+  left: 50%;
+  transform: translateX(-50%);
+  background: $white;
+  border: 1px solid $shade-light;
+  border-radius: 3px;
+  padding: 1em;
+  z-index: 1049;
+  width: 40em;
+
+  display: flex;
+  flex-direction: row;
+
+  .map-draw-title {
+    flex: 1;
+    display: flex;
+    justify-content: space-around;
+    flex-direction: column;
+  }
+
+  .map-draw-actions {
+    display: flex;
+    justify-content: space-between;
+    :not(:last-child) {
+      margin-right: 0.5em;
+    }
+  }
+}
+
 .map-container-controls {
   position: absolute;
   top: .5rem;
@@ -2954,4 +2985,11 @@ rf-reclassify-table {
 
 .list-group-overflow p, .list-group-overflow span {
   white-space: initial;
+}
+
+.leaflet-div-icon {
+    background: $green;
+    border: none;
+    opacity: 0.9;
+    border-radius: 50%;
 }
