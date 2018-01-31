@@ -24,14 +24,21 @@ lazy val commonSettings = Seq(
     "-Ypartial-unification",
     "-Ypatmat-exhaust-depth", "100"
   ),
-  resolvers ++= Seq(
+  externalResolvers := Seq(
+    "Geotoolkit Repo" at "http://maven.geotoolkit.org",
+    "Open Source Geospatial Foundation Repo" at "http://download.osgeo.org/webdav/geotools/",
+    DefaultMavenRepository,
     Resolver.sonatypeRepo("snapshots"),
+    Resolver.bintrayRepo("azavea", "maven"),
     Resolver.bintrayRepo("lonelyplanet", "maven"),
     Resolver.bintrayRepo("guizmaii", "maven"),
     Resolver.bintrayRepo("kwark", "maven"), // Required for Slick 3.1.1.2, see https://github.com/azavea/raster-foundry/pull/1576
     "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
     "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
-    Resolver.bintrayRepo("naftoligug", "maven")
+    Resolver.bintrayRepo("naftoligug", "maven"),
+    Classpaths.sbtPluginReleases,
+    Opts.resolver.sonatypeReleases,
+    Resolver.bintrayIvyRepo("kamon-io", "sbt-plugins")
   ),
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
   addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
