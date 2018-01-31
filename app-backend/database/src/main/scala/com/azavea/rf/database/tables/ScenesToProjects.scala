@@ -246,7 +246,6 @@ class ScenesToProjectesTableQuery[M, U, C[_]](scenesToProjects: ScenesToProjects
 
   def sortDefault: ScenesToProjects.TableQuery = {
     scenesToProjects
-      .sortBy(_.sceneOrder.asc.nullsLast)
-      .sortBy(_.sceneId.asc)
+      .sortBy(s2p => (s2p.sceneOrder.asc.nullsLast, s2p.sceneId.asc))
   }
 }
