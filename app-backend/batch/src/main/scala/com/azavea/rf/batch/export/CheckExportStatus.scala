@@ -54,10 +54,12 @@ case class CheckExportStatus(exportId: UUID, statusBucket: String = "rasterfound
         }
       }
 
+    // This changed to OptionT because of strange compilation behavior after bumping the cats version
+    // I'd like to investigate further, but it looks like it might be a bug
     val result = for {
-      user <- fromOptionF[Future, String, User](Users.getUserById(systemUser), "DB: Failed to fetch User.")
-      export <- fromOptionF[Future, String, Export](database.db.run(Exports.getExport(exportId, user)), "DB: Failed to fetch Export.")
-      exportStatus <- EitherT.right[Future, String, Int](
+      user <- OptionT[Future, User](Users.getUserById(systemUser))
+      export <- OptionT[Future, Export](database.db.run(Exports.getExport(exportId, user)))
+      exportStatus <- OptionT.liftF({
         database.db.run(
           Exports.updateExport(
             updateExportStatus(export, s3ExportStatus.exportStatus),
@@ -65,13 +67,13 @@ case class CheckExportStatus(exportId: UUID, statusBucket: String = "rasterfound
             user
           )
         )
-      )
+      })
     } yield exportStatus
 
     result.value.onComplete {
-      case Success(Left(e)) => {
-        logger.error(e)
-        sendError(e)
+      case Success(None) => {
+        logger.error("DB: Failed to fetch user or export")
+        sendError("DB: Failed to fetch user or export")
         stop
         sys.exit(1)
       }
