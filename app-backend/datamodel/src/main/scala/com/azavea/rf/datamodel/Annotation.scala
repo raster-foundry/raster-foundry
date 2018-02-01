@@ -80,7 +80,7 @@ case class AnnotationPropertiesCreate(
 object Annotation {
 
     implicit val config: Configuration = Configuration.default.copy(
-      transformKeys = {
+      transformMemberNames = {
         case "_type" => "type"
         case other => other
       }
