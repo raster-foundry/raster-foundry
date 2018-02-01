@@ -173,7 +173,7 @@ lazy val common = Project("common", file("common"))
     Dependencies.findbugAnnotations,
     Dependencies.ammoniteOps,
     Dependencies.chill,
-    Dependencies.cats,
+    Dependencies.catsCore,
     Dependencies.awsBatchSdk,
     Dependencies.awsStsSdk
   )})
