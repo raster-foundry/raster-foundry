@@ -5,7 +5,6 @@ import java.util.UUID
 
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.fields.{OrganizationFkFields, TimestampFields, UserFkVisibleFields, NameField, VisibilityField}
-import com.azavea.rf.database.query.{UploadQueryParameters, ListQueryResult}
 import com.azavea.rf.datamodel._
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import com.typesafe.scalalogging.LazyLogging

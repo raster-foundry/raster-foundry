@@ -12,7 +12,6 @@ import io.circe.syntax._
 
 import com.azavea.rf.common._
 import com.azavea.rf.database.tables.{Exports, Users}
-import com.azavea.rf.database.query._
 import com.azavea.rf.database.{ActionRunner, Database}
 import com.azavea.rf.datamodel._
 

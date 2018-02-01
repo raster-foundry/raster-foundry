@@ -18,7 +18,6 @@ import com.azavea.rf.api.utils.Config
 import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
 import com.azavea.rf.common.S3.{putObject, getSignedUrl}
 import com.azavea.rf.database.{ActionRunner, Database}
-import com.azavea.rf.database.query._
 import com.azavea.rf.database.tables._
 import com.azavea.rf.common.AWSBatch
 import com.azavea.rf.datamodel._

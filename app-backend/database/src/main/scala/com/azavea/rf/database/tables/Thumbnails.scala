@@ -1,7 +1,6 @@
 package com.azavea.rf.database.tables
 
 import com.azavea.rf.database.fields.{OrganizationFkFields, TimestampFields, VisibilityField}
-import com.azavea.rf.database.query._
 import com.azavea.rf.database.sort._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._

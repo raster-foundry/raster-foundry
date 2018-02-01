@@ -5,7 +5,6 @@ import java.util.UUID
 
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.fields._
-import com.azavea.rf.database.query.{CombinedMapTokenQueryParameters, ListQueryResult}
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.datamodel._
 import com.lonelyplanet.akka.http.extensions.PageRequest

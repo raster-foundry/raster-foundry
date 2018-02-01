@@ -6,10 +6,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import slick.lifted.Rep
 import slick.dbio.{DBIO, StreamingDBIO, Streaming}
 
-import com.azavea.rf.datamodel.PaginatedResponse
+import com.azavea.rf.datamodel._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api.TableQuery
-import com.azavea.rf.database.query.ListQueryResult
+
 
 trait ActionRunner {
 

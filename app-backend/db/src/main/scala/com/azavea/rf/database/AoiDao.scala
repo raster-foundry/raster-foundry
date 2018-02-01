@@ -30,30 +30,6 @@ object AoiDao extends Dao[AOI]("aois") {
   def select(id: UUID) =
     (selectF ++ fr"WHERE id = $id").query[AOI].unique
 
-  def listFilters(params: AoiQueryParameters, user: User) =
-    Filters.organization(params.orgParams) ++
-    Filters.user(params.userParams) ++
-    Filters.timestamp(params.timestampParams) ++
-    Filters.filterToSharedIfNotInRoot(user)
-
-  def list(
-    params: AoiQueryParameters,
-    user: User,
-    pageRequest: Option[PageRequest]
-  ): ConnectionIO[List[AOI]] = {
-    val filters: List[Option[Fragment]] = listFilters(params, user)
-    list(filters, pageRequest)
-  }
-
-  def page(
-    params: AoiQueryParameters,
-    user: User,
-    pageRequest: PageRequest
-  )(implicit xa: Transactor[IO]): Future[PaginatedResponse[AOI]] = {
-    val filters: List[Option[Fragment]] = listFilters(params, user)
-    page(filters, pageRequest)
-  }
-
   def create(
     user: User,
     owner: Option[String],

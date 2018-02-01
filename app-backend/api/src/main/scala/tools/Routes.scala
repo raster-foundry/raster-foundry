@@ -16,7 +16,6 @@ import cats.implicits._
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import kamon.akka.http.KamonTraceDirectives
-import kamon.akka.http.KamonTraceDirectives.traceName
 
 import java.util.UUID
 

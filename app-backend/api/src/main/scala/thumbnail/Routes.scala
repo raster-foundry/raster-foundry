@@ -6,6 +6,7 @@ import com.azavea.rf.database.Database
 import com.azavea.rf.datamodel._
 import com.azavea.rf.api.utils.Config
 
+import io.circe._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.{StatusCodes, ContentType, HttpEntity, HttpResponse, MediaType, MediaTypes}
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives

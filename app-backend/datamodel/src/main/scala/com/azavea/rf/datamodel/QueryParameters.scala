@@ -1,6 +1,4 @@
-package com.azavea.rf.database
-
-import com.azavea.rf.datamodel._
+package com.azavea.rf.datamodel
 
 import io.circe.generic.JsonCodec
 import geotrellis.proj4._
