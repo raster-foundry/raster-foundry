@@ -70,4 +70,9 @@ object Dependencies {
   val auth0                   = "com.auth0"                    % "auth0"                             % Version.auth0
   val slickMigrationAPI       = "io.github.nafg"              %% "slick-migration-api"               % Version.slickMigrationAPI
   val betterFiles             = "com.github.pathikrit"        %% "better-files"                      % Version.betterFiles
+  val doobieCore              = "org.tpolecat"                %% "doobie-core"                       % Version.doobie
+  val doobieHikari            = "org.tpolecat"                %% "doobie-hikari"                     % Version.doobie
+  val doobiePostgres          = "org.tpolecat"                %% "doobie-postgres"                   % Version.doobie
+  val doobieSpecs             = "org.tpolecat"                %% "doobie-specs2"                     % Version.doobie
+  val doobieScalatest         = "org.tpolecat"                %% "doobie-scalatest"                  % Version.doobie
 }

@@ -14,7 +14,6 @@ import com.azavea.rf.datamodel._
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.sort._
 import com.azavea.rf.database.fields._
-import com.azavea.rf.database.query._
 
 import io.circe.Json
 

@@ -150,7 +150,7 @@ lazy val root = Project("root", file("."))
   .settings(commonSettings:_*)
 
 lazy val api = Project("api", file("api"))
-  .dependsOn(database, datamodel, common % "test->test;compile->compile")
+  .dependsOn(database, db, datamodel, common % "test->test;compile->compile")
   .settings(apiSettings:_*)
   .settings(resolvers += Resolver.bintrayRepo("hseeberger", "maven"))
   .settings({
@@ -177,6 +177,26 @@ lazy val common = Project("common", file("common"))
     Dependencies.awsBatchSdk,
     Dependencies.awsStsSdk
   )})
+
+lazy val db = Project("db", file("db"))
+  .dependsOn(datamodel)
+  .settings(commonSettings:_*)
+  .settings({
+     libraryDependencies ++= dbDependencies ++ loggingDependencies ++ Seq(
+       Dependencies.scalatest,
+       Dependencies.doobieCore,
+       Dependencies.doobieHikari,
+       Dependencies.doobieSpecs,
+       Dependencies.doobieScalatest,
+       Dependencies.doobiePostgres,
+       "net.postgis" % "postgis-jdbc" % "2.2.1",
+       "net.postgis" % "postgis-jdbc-jtsparser" % "2.2.1",
+       "org.locationtech.jts" % "jts-core" % "1.15.0",
+       "com.lonelyplanet" %% "akka-http-extensions" % "0.4.15",
+       Dependencies.geotrellisSlick.exclude("postgresql", "postgresql")
+     )
+  })
+
 
 lazy val migrations = Project("migrations", file("migrations"))
   .settings(commonSettings:_*)

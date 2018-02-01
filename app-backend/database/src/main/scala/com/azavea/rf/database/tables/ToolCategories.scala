@@ -2,7 +2,6 @@ package com.azavea.rf.database.tables
 
 import java.sql.Timestamp
 
-import com.azavea.rf.database.query._
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.fields.{TimestampFields, UserFkFields, ToolCategoryFields}
 import com.azavea.rf.database.{Database => DB}

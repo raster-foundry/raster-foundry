@@ -2,7 +2,6 @@ package com.azavea.rf.database.tables
 
 import akka.http.scaladsl.model.{IllegalRequestException, StatusCodes}
 import com.azavea.rf.database.fields._
-import com.azavea.rf.database.query._
 import com.azavea.rf.database.sort._
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._

@@ -11,7 +11,6 @@ import com.lonelyplanet.akka.http.extensions.{PaginationDirectives, PageRequest}
 
 import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
 import com.azavea.rf.database.tables.Datasources
-import com.azavea.rf.database.query._
 import com.azavea.rf.database.{Database, ActionRunner}
 import com.azavea.rf.datamodel._
 import io.circe._

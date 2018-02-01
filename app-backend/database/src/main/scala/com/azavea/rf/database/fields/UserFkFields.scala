@@ -1,9 +1,8 @@
 package com.azavea.rf.database.fields
 
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
-import com.azavea.rf.database.query.UserQueryParameters
 import com.azavea.rf.database.tables.Users
-import com.azavea.rf.datamodel.{User, Visibility}
+import com.azavea.rf.datamodel._
 import slick.lifted.ForeignKeyQuery
 
 trait UserFkFields { self: Table[_] =>

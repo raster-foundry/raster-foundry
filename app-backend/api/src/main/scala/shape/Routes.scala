@@ -14,7 +14,6 @@ import io.circe.syntax._
 import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
 import com.azavea.rf.common._
 import com.azavea.rf.database.tables.{Shapes, Users}
-import com.azavea.rf.database.query._
 import com.azavea.rf.database.{ActionRunner, Database}
 import com.azavea.rf.datamodel._
 import com.azavea.rf.datamodel.GeoJsonCodec._

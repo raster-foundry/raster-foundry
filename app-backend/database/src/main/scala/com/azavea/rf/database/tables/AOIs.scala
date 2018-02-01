@@ -10,9 +10,8 @@ import cats.data.OptionT
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.fields.{OrganizationFkFields, TimestampFields, UserFkFields}
-import com.azavea.rf.database.query.AoiQueryParameters
 import com.azavea.rf.database.sort._
-import com.azavea.rf.datamodel.{AOI, AoiToProject, PaginatedResponse, User}
+import com.azavea.rf.datamodel._
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.slick.Projected

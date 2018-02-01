@@ -15,7 +15,6 @@ import com.azavea.rf.api.scene._
 import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
 import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
 import com.azavea.rf.database.{ActionRunner, Database}
-import com.azavea.rf.database.query._
 import com.azavea.rf.database.tables._
 import com.azavea.rf.common.AWSBatch
 import com.azavea.rf.datamodel._

@@ -1,7 +1,7 @@
 package com.azavea.rf.database.fields
 
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
-import com.azavea.rf.database.query.TimestampQueryParameters
+import com.azavea.rf.datamodel._
 
 trait TimestampFields  { self: Table[_] =>
   def createdAt: Rep[java.sql.Timestamp]
