@@ -9,7 +9,15 @@
   </div>
 
   <!-- Body for SELECT_FILE -->
-  <div class="modal-body" ng-if="$ctrl.currentStepIs('SELECT_FILE')">
+  <div class="modal-body"
+       ngf-multiple=false
+       ngf-pattern="'*.zip'"
+       ngf-drop-available=true
+       ng-model="$ctrl.selectedFile"
+       ngf-keep="'distinct'"
+       ngf-change="$ctrl.fileSelected($file)"
+       ngf-drop
+       ng-if="$ctrl.currentStepIs('SELECT_FILE')">
     <div class="content">
       <h3 class="no-margin">Select a zipped shapefile</h3>
       <ng-container ng-if="!$ctrl.selectedFile">
@@ -113,6 +121,14 @@
         <rf-shape-item shape="$ctrl.shape">
         </rf-shape-item>
       </div>
+    </div>
+  </div>
+
+  <!-- Body for FAILED -->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('FAILED')">
+    <div class="content">
+      Upload failed.<br>
+      {{$ctrl.uploadError}}
     </div>
   </div>
 

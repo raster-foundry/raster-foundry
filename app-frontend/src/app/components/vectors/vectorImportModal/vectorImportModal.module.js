@@ -39,7 +39,7 @@ class VectorImportModalController {
             {
                 name: 'UPLOADING_FILE',
                 onEnter: () => this.startUpload(),
-                next: () => 'FINISH',
+                next: () => this.uploadError ? 'FAILED' : 'FINISH',
                 allowNext: () => {
                     return this.fileUploads &&
                         this.uploadedFileCount + this.abortedUploadCount
@@ -52,6 +52,12 @@ class VectorImportModalController {
                 name: 'FINISH',
                 previous: () => false,
                 allowDone: () => true,
+                allowClose: () => true
+            },
+            {
+                name: 'FAILED',
+                previous: () => false,
+                allowDone: () => false,
                 allowClose: () => true
             }
         ];
@@ -166,6 +172,7 @@ class VectorImportModalController {
 
     removeFile() {
         delete this.selectedFile;
+        delete this.shapeName;
     }
 
     // UPLOADING_FILE
@@ -188,7 +195,12 @@ class VectorImportModalController {
             this.shape = _.first(resp.data);
             this.handleNext();
         }, (err) => {
-            this.upload.error = err;
+            if (err.status === 400) {
+                this.uploadError = err.data;
+            } else {
+                this.uploadError = `Error: ${err.status} ${err.statusText}`;
+            }
+            this.handleNext();
         }, (evt) => {
             this.uploadProgress = evt;
             this.progressKB = parseInt(
@@ -220,19 +232,6 @@ class VectorImportModalController {
             this.handleNext();
         }
     }
-
-    uploadError(err, upload) {
-        if (!upload.aborted) {
-            Object.assign(upload, {error: err});
-            this.$scope.$evalAsync(() => {
-                this.uploadProgressPct[upload.file.name] = 'Errored';
-                this.uploadProgressFlexString[upload.file.name] = '1 0';
-            });
-            this.$scope.$evalAsync();
-        }
-    }
-
-    // FINISH
 }
 
 const VectorImportModalModule = angular.module(
