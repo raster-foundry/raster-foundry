@@ -114,7 +114,11 @@ class FilterPaneController {
 
         if (this.initializedFilters.size === this.filterComponents.length) {
             _.toPairs(this.filterParams).forEach(([param, val]) => {
-                this.$location.search(param, val);
+                if (val !== null && typeof val === 'object') {
+                    this.$location.search(param, val.id);
+                } else {
+                    this.$location.search(param, val);
+                }
             });
             this.onRepositoryChange({
                 fetchScenes: this.currentRepository.service.fetchScenes(this.filterParams),

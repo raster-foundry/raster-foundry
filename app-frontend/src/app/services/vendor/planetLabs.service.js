@@ -161,17 +161,22 @@ export default (app) => {
                 return null;
             });
 
-            let permission = [{
+            let permissionFilter = {
                 'type': 'PermissionFilter',
                 'config': ['assets.analytic:download']
-            }];
+            };
 
-            let bboxFilter = [{
+            let geometryFilter = {
                 'type': 'GeometryFilter',
-                'field_name': 'geometry',
-                'config': {
+                'field_name': 'geometry'
+            };
+
+            if (params.shape) {
+                geometryFilter.config = params.shape.geometry;
+            } else {
+                geometryFilter.config = {
                     'type': 'Polygon',
-                    'coordinates': [
+                    coordinates: [
                         [
                             [bbox.getNorthEast().lng, bbox.getNorthEast().lat],
                             [bbox.getSouthEast().lng, bbox.getSouthEast().lat],
@@ -180,14 +185,14 @@ export default (app) => {
                             [bbox.getNorthEast().lng, bbox.getNorthEast().lat]
                         ]
                     ]
-                }
-            }];
+                };
+            }
 
             return {
                 'item_types': ds,
                 'filter': {
                     'type': 'AndFilter',
-                    'config': _.compact(config.concat(permission).concat(bboxFilter))
+                    'config': _.compact(config.concat([permissionFilter, geometryFilter]))
                 }
             };
         }

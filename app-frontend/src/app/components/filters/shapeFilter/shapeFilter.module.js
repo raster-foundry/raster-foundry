@@ -108,7 +108,7 @@ class ShapeFilterController {
         this.selectedShape = shape;
 
         const filterParams = {};
-        filterParams[this.filter.param] = shape && shape.id ? shape.id : null;
+        filterParams[this.filter.param] = shape;
         this.onFilterChange({filter: this.filter, filterParams});
         if (this.selectedShape) {
             this.getMap().then((m) => {
