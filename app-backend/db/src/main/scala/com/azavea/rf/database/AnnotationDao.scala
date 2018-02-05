@@ -16,7 +16,9 @@ import java.sql.Timestamp
 import java.util.{Date, UUID}
 
 
-object AnnotationDao extends Dao[Annotation]("annotations") {
+object AnnotationDao extends Dao[Annotation] {
+
+  val tableName = "annotations"
 
   val selectF =
     fr"""
@@ -40,26 +42,6 @@ object AnnotationDao extends Dao[Annotation]("annotations") {
       params.quality.map({ quality => fr"quality = $quality" }),
       projectId.map({ pid => fr"project_id = $pid" })
     )
-
-  def list(
-    params: AnnotationQueryParameters,
-    user: User,
-    projectId: UUID,
-    pageRequest: Option[PageRequest]
-  ): ConnectionIO[List[Annotation]] = {
-    val filters: List[Option[Fragment]] = listFilters(params, user, Some(projectId))
-    list(filters, pageRequest)
-  }
-
-  def page(
-    params: AnnotationQueryParameters,
-    user: User,
-    projectId: UUID,
-    pageRequest: PageRequest
-  )(implicit xa: Transactor[IO]): Future[PaginatedResponse[Annotation]] = {
-    val filters: List[Option[Fragment]] = listFilters(params, user, Some(projectId))
-    page(filters, pageRequest)
-  }
 
   def create(
     projectId: UUID,

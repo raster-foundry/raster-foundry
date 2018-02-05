@@ -15,7 +15,9 @@ import java.sql.Timestamp
 import java.util.{Date, UUID}
 
 
-object ExportDao extends Dao[Export]("exports") {
+object ExportDao extends Dao[Export] {
+
+  val tableName = "exports"
 
   val selectF = fr"""
     SELECT
@@ -42,24 +44,6 @@ object ExportDao extends Dao[Export]("exports") {
         Fragments.in(fr"export_status", exportStatuses)
       })
     )
-
-  def list(
-    params: ExportQueryParameters,
-    user: User,
-    pageRequest: Option[PageRequest]
-  ): ConnectionIO[List[Export]] = {
-    val filters: List[Option[Fragment]] = listFilters(params, user)
-    list(filters, pageRequest)
-  }
-
-  def page(
-    params: ExportQueryParameters,
-    user: User,
-    pageRequest: PageRequest
-  )(implicit xa: Transactor[IO]): Future[PaginatedResponse[Export]] = {
-    val filters: List[Option[Fragment]] = listFilters(params, user)
-    page(filters, pageRequest)
-  }
 
   def create(
     user: User,

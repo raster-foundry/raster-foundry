@@ -11,7 +11,9 @@ import java.sql.Timestamp
 import java.util.{Date, UUID}
 
 
-object MapTokenDao extends Dao[MapToken]("map_tokens") {
+object MapTokenDao extends Dao[MapToken] {
+
+  val tableName = "map_tokens"
 
   val selectF =
     sql"""

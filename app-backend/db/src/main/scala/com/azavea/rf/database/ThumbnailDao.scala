@@ -10,7 +10,9 @@ import cats._, cats.data._, cats.effect.IO, cats.implicits._
 import java.util.UUID
 
 
-object ThumbnailDao extends Dao[Thumbnail]("thumbnails") {
+object ThumbnailDao extends Dao[Thumbnail] {
+
+  val tableName = "thumbnails"
 
   val selectF = sql"""
     SELECT

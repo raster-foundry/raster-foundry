@@ -13,7 +13,9 @@ import java.util.UUID
 import java.sql.Timestamp
 
 
-object ProjectDao extends Dao[Project]("projects") {
+object ProjectDao extends Dao[Project] {
+
+  val tableName = "projects"
 
   val selectF = sql"""
     SELECT
