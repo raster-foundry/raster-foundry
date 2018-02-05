@@ -107,7 +107,9 @@ export default (app) => {
                         sunAzimuth: feature.properties.sun_azimuth,
                         sunElevation: feature.properties.sun_elevation
                     },
-                    statusFields: {}
+                    statusFields: {},
+                    // eslint-disable-next-line no-underscore-dangle
+                    permissions: feature._permissions
                 };
             });
 

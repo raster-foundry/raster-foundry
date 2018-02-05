@@ -27,10 +27,19 @@
   </div>
   <div class="list-group-right">
     <rf-toggle-old
-      ng-if="$ctrl.onSelect && !$ctrl.isDisabled"
+      ng-if="$ctrl.onSelect && !$ctrl.isDisabled && $ctrl.hasDownloadPermission()"
       model="$ctrl.selectedStatus"
       on-change="$ctrl.toggleSelected($event)">
     </rf-toggle-old>
+    <div class="scene-item-lock"
+      tooltips
+      tooltip-template="This imagery requires additional access{{$ctrl.repository.service.permissionSource}}."
+      tooltip-size="small"
+      tooltip-class="rf-tooltip"
+      tooltip-side="left"
+      ng-if="!$ctrl.hasDownloadPermission()">
+      <span class="icon-locked"></span>
+    </div>
     <ng-transclude>
     </ng-transclude>
   </div>
