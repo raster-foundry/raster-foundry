@@ -10,7 +10,9 @@ import cats._, cats.data._, cats.effect.IO, cats.implicits._
 import java.util.UUID
 
 
-object ShapeDao extends Dao[Shape]("shapes") {
+object ShapeDao extends Dao[Shape] {
+
+  val tableName = "shapes"
 
   val selectF = sql"""
     SELECT

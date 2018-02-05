@@ -10,7 +10,9 @@ import cats._, cats.data._, cats.effect.IO, cats.implicits._
 import java.util.UUID
 
 
-object BandDao extends Dao[Band]("bands") {
+object BandDao extends Dao[Band] {
+
+  val tableName = "bands"
 
   val selectF =
     sql"""

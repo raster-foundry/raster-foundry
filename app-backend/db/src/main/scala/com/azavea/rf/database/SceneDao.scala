@@ -10,7 +10,10 @@ import cats._, cats.data._, cats.effect.IO, cats.implicits._
 import java.util.UUID
 
 
-object SceneDao extends Dao[Scene]("scenes") {
+object SceneDao extends Dao[Scene] {
+
+  val tableName = "scenes"
+
   val selectF = sql"""
     SELECT
       id, created_at, created_by, modified_at, modified_by, owner,

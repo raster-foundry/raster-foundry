@@ -10,7 +10,9 @@ import cats._, cats.data._, cats.effect.IO, cats.implicits._
 import java.util.UUID
 
 
-object ToolRunDao extends Dao[ToolRun]("tool_runs") {
+object ToolRunDao extends Dao[ToolRun] {
+
+  val tableName = "tool_runs"
 
   val selectF = sql"""
     SELECT

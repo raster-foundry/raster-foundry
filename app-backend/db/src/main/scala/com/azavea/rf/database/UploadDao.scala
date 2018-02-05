@@ -10,7 +10,9 @@ import cats._, cats.data._, cats.effect.IO, cats.implicits._
 import java.util.UUID
 
 
-object UploadDao extends Dao[Upload]("uploads") {
+object UploadDao extends Dao[Upload] {
+
+  val tableName = "uploads"
 
   val selectF = sql"""
     SELECT

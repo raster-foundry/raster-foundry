@@ -17,7 +17,9 @@ import java.sql.Timestamp
 import java.util.{Date, UUID}
 
 
-object AoiDao extends Dao[AOI]("aois") {
+object AoiDao extends Dao[AOI] with PagedDao[AOI] {
+
+  val tableName = "aois"
 
   val selectF =
     sql"""

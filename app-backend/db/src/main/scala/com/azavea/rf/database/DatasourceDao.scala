@@ -16,7 +16,9 @@ import java.sql.Timestamp
 import java.util.{Date, UUID}
 
 
-object DatasourceDao extends Dao[Datasource]("datasources") {
+object DatasourceDao extends Dao[Datasource] {
+
+  val tableName = "datasources"
 
   val selectF = sql"""
       SELECT
@@ -30,26 +32,6 @@ object DatasourceDao extends Dao[Datasource]("datasources") {
 
   def listFilters(params: DatasourceQueryParameters, user: User): List[Option[Fragment]] =
     List(params.name.map({ name => fr"name = $name" }))
-
-  def list(
-    datasourceParams: DatasourceQueryParameters,
-    user: User,
-    pageRequest: Option[PageRequest]
-  ): ConnectionIO[List[Datasource]] = {
-    val filters: List[Option[Fragment]] = listFilters(datasourceParams, user)
-
-    list(filters, pageRequest)
-  }
-
-  def page(
-    datasourceParams: DatasourceQueryParameters,
-    user: User,
-    pageRequest: PageRequest
-  )(implicit xa: Transactor[IO]): Future[PaginatedResponse[Datasource]] = {
-    val filters: List[Option[Fragment]] = listFilters(datasourceParams, user)
-
-    page(filters, pageRequest)
-  }
 
   def create(
     user: User,

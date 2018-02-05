@@ -12,7 +12,9 @@ import java.sql.Timestamp
 import java.util.{Date, UUID}
 
 
-object ImageDao extends Dao[Image]("images") {
+object ImageDao extends Dao[Image] {
+
+  val tableName = "images"
 
   val selectF = sql"""
     SELECT
