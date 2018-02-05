@@ -182,7 +182,8 @@ class ProjectsSceneBrowserController {
     }
 
     onBboxChange() {
-        if (this.bboxFetchFactory) {
+        let queryParams = this.$location.search();
+        if (this.bboxFetchFactory && !queryParams.shape) {
             this.fetchNextScenesForBbox = this.bboxFetchFactory(this.bboxCoords);
             this.sceneList = [];
             this.debouncedSceneFetch();
@@ -194,17 +195,19 @@ class ProjectsSceneBrowserController {
         this.fetchError = false;
         this.hasNext = false;
         this.sceneCount = null;
-        let bbox = this.bboxCoords;
         let factoryFn = this.bboxFetchFactory;
+        let fetchScenes = this.fetchNextScenesForBbox;
         this.fetchNextScenesForBbox().then(({scenes, hasNext, count}) => {
-            if (this.bboxCoords === bbox && factoryFn === this.bboxFetchFactory) {
+            if (fetchScenes === this.fetchNextScenesForBbox &&
+                factoryFn === this.bboxFetchFactory) {
                 this.fetchingScenes = false;
                 this.sceneList = this.sceneList.concat(scenes);
                 this.hasNext = hasNext;
                 this.sceneCount = count;
             }
         }, (err) => {
-            if (this.bboxCoords === bbox && factoryFn === this.bboxFetchFactory) {
+            if (fetchScenes === this.fetchNextScenesForBbox &&
+                factoryFn === this.bboxFetchFactory) {
                 this.fetchingScenes = false;
                 this.fetchError = err;
                 this.hasNext = false;
