@@ -1,4 +1,7 @@
 /* globals btoa, Uint8Array, _ */
+import turfBbox from '@turf/bbox';
+import turfBboxPolygon from '@turf/bbox-polygon';
+
 export default (app) => {
     class PlanetLabsService {
         constructor(
@@ -21,6 +24,7 @@ export default (app) => {
         }
 
         filterScenes(apiKey, requestBody) {
+            // TODO figure out how to use the browser cache for this
             let token = btoa(apiKey + ':');
             let req = {
                 'method': 'POST',
@@ -74,6 +78,7 @@ export default (app) => {
 
         planetFeatureToScene(planetScenes) {
             let scenes = planetScenes.features.map((feature) => {
+                const tileFootprint = turfBboxPolygon(turfBbox(feature));
                 return {
                     id: feature.id,
                     createdAt: feature.properties.acquired,
@@ -86,11 +91,13 @@ export default (app) => {
                     name: feature.id,
                     tileFootprint: {
                         type: 'MultiPolygon',
-                        coordinates: [feature.geometry.coordinates]
+                        coordinates: [tileFootprint.geometry.coordinates]
                     },
                     dataFootprint: {
                         type: 'MultiPolygon',
-                        coordinates: [feature.geometry.coordinates]
+                        coordinates: feature.geometry.type === 'MultiPolygon' ?
+                            feature.geometry.coordinates :
+                            [feature.geometry.coordinates]
                     },
                     // eslint-disable-next-line no-underscore-dangle
                     thumbnails: [{url: feature._links.thumbnail}],

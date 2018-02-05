@@ -10,9 +10,9 @@ export default (app) => {
             this.uploadService = uploadService;
             this.modalService = modalService;
             this.$state = $state;
+            this.skipThumbnailClipping = true;
         }
 
-        // returns Promise()
         initRepository() {
             return this.$q((resolve, reject) => {
                 this.sources = [{
@@ -302,7 +302,7 @@ export default (app) => {
                         bound.right - 1 > bound.left &&
                             columnBlank(pixels, width, bound.right - 1, bound.top, bound.bottom)
                     ) {
-                        bound.top = bound.top + 1;
+                        bound.right = bound.right - 1;
                     }
 
                     if (bound.top !== bound.bottom) {

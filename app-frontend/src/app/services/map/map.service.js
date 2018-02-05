@@ -492,7 +492,8 @@ class MapWrapper {
                     imageBounds,
                     {
                         opacity: 1,
-                        dataMask: scene.dataFootprint,
+                        dataMask: repository.service.skipThumbnailClipping ?
+                            scene.tileFootprint : scene.dataFootprint,
                         thumbnail: url,
                         attribution: `${datasource} `
                     }
