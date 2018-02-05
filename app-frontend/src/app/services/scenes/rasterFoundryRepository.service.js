@@ -214,6 +214,14 @@ export default (app) => {
         addToProject(projectId, scenes) {
             return this.projectService.addScenes(projectId, scenes.map(scene => scene.id));
         }
+
+        getScenePermissions(scene) {
+            let result = [];
+            if (scene) {
+                result.push('download');
+            }
+            return result;
+        }
     }
 
     app.service('RasterFoundryRepository', RasterFoundryRepository);

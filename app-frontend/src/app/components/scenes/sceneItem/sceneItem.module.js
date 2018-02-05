@@ -72,6 +72,13 @@ class SceneItemController {
         let acqDate = this.scene.filterFields.acquisitionDate;
         return acqDate ? acqDate : this.scene.createdAt;
     }
+
+    hasDownloadPermission() {
+        if (this.repository.service.getScenePermissions(this.scene).includes('download')) {
+            return true;
+        }
+        return false;
+    }
 }
 
 const SceneItemModule = angular.module('components.scenes.sceneItem', []);

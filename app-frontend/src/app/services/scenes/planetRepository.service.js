@@ -10,6 +10,8 @@ export default (app) => {
             this.uploadService = uploadService;
             this.modalService = modalService;
             this.$state = $state;
+
+            this.permissionSource = ' from planet.com';
             this.skipThumbnailClipping = true;
         }
 
@@ -376,6 +378,15 @@ export default (app) => {
                     });
                 });
             });
+        }
+
+        getScenePermissions(scene) {
+            let result = [];
+            if (scene && scene.permissions
+                && scene.permissions.includes('assets.analytic:download')) {
+                result.push('download');
+            }
+            return result;
         }
     }
 
