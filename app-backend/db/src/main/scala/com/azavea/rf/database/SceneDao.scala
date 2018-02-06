@@ -25,9 +25,5 @@ object SceneDao extends Dao[Scene] {
     FROM
   """ ++ tableF
 
-
-  def select(id: UUID) =
-    (selectF ++ fr"WHERE id = $id").query[Scene].unique
-
 }
 

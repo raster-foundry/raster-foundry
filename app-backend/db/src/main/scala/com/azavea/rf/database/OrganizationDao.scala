@@ -35,8 +35,5 @@ object OrganizationDao extends Dao[Organization] {
     )
   }
 
-  def select(id: UUID) =
-    (selectF ++ fr"WHERE id = $id").query[Organization].unique
-
 }
 

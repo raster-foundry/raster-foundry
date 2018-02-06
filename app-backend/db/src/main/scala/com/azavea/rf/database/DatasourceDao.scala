@@ -27,12 +27,6 @@ object DatasourceDao extends Dao[Datasource] {
       FROM
     """ ++ tableF
 
-  def select(id: UUID) =
-    (selectF ++ fr"WHERE id = $id").query[Datasource].unique
-
-  def listFilters(params: DatasourceQueryParameters, user: User): List[Option[Fragment]] =
-    List(params.name.map({ name => fr"name = $name" }))
-
   def create(
     user: User,
     organizationId: UUID,

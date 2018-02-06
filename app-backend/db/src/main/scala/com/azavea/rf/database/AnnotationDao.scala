@@ -29,20 +29,6 @@ object AnnotationDao extends Dao[Annotation] {
       FROM
     """ ++ tableF
 
-  def select(id: UUID) =
-    (selectF ++ fr"WHERE id = $id").query[Annotation].unique
-
-  def listFilters(params: AnnotationQueryParameters, user: User, projectId: Option[UUID]) =
-    Filters.organization(params.orgParams) ++
-    Filters.user(params.userParams) ++ List(
-      params.label.map({ label => fr"label = $label" }),
-      params.machineGenerated.map({ mg => fr"machine_generated = $mg" }),
-      params.minConfidence.map({ minc => fr"min_confidence = $minc" }),
-      params.maxConfidence.map({ maxc => fr"max_confidence = $maxc" }),
-      params.quality.map({ quality => fr"quality = $quality" }),
-      projectId.map({ pid => fr"project_id = $pid" })
-    )
-
   def create(
     projectId: UUID,
     user: User,

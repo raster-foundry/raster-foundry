@@ -21,8 +21,5 @@ object FeatureFlagDao extends Dao[FeatureFlag] {
       FROM
     """ ++ tableF
 
-  def select(id: UUID) =
-    (selectF ++ fr"WHERE id = $id").query[FeatureFlag].unique
-
 }
 

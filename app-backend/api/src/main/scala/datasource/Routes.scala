@@ -1,20 +1,22 @@
 package com.azavea.rf.api.datasource
 
-import java.util.UUID
-
-import scala.util.{Success, Failure}
+import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
+import com.azavea.rf.database.tables.Datasources
+import com.azavea.rf.database._
+import com.azavea.rf.database.filters._
+import com.azavea.rf.datamodel._
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
-
 import com.lonelyplanet.akka.http.extensions.{PaginationDirectives, PageRequest}
-
-import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
-import com.azavea.rf.database.tables.Datasources
-import com.azavea.rf.database.{Database, ActionRunner}
-import com.azavea.rf.datamodel._
 import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
+import doobie._
+import cats.effect.IO
+
+import java.util.UUID
+import scala.util.{Success, Failure}
+
 
 trait DatasourceRoutes extends Authentication
     with DatasourceQueryParameterDirective
@@ -23,6 +25,7 @@ trait DatasourceRoutes extends Authentication
     with CommonHandlers
     with ActionRunner {
   implicit def database: Database
+  implicit def xa: Transactor[IO]
 
   val datasourceRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
@@ -37,12 +40,9 @@ trait DatasourceRoutes extends Authentication
   }
 
   def listDatasources: Route = authenticate { user =>
-    (withPagination & datasourceQueryParams) {
-      (page: PageRequest, datasourceParams: DatasourceQueryParameters) =>
+    (withPagination & datasourceQueryParams) { (page: PageRequest, datasourceParams: DatasourceQueryParameters) =>
       complete {
-        list[Datasource](Datasources.listDatasources(page, datasourceParams, user),
-                         page.offset,
-                         page.limit)
+        DatasourceDao.query.filter(datasourceParams).filter(user).list(page)
       }
     }
   }
