@@ -24,9 +24,6 @@ object ImageDao extends Dao[Image] {
     FROM
   """ ++ tableF
 
-  def select(id: UUID) =
-    (selectF ++ fr"WHERE id = $id").query[Image].unique
-
   def create(
     user: User,
     organizationId: UUID,

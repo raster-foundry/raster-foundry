@@ -21,8 +21,5 @@ object ToolTagDao extends Dao[ToolTag] {
     FROM
   """ ++ tableF
 
-  def select(id: UUID) =
-    (selectF ++ fr"WHERE id = $id").query[ToolTag].unique
-
 }
 

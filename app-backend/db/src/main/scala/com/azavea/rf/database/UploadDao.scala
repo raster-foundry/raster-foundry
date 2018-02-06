@@ -23,8 +23,5 @@ object UploadDao extends Dao[Upload] {
     FROM
   """ ++ tableF
 
-  def select(id: UUID) =
-    (selectF ++ fr"WHERE id = $id").query[Upload].unique
-
 }
 

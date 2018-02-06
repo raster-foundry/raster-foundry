@@ -21,7 +21,5 @@ object ThumbnailDao extends Dao[Thumbnail] {
     FROM
   """ ++ tableF
 
-  def select(id: UUID) =
-    (selectF ++ fr"WHERE id = $id").query[Thumbnail].unique
 }
 

@@ -25,6 +25,9 @@ object Main extends App
   implicit val system = AkkaSystem.system
   implicit val materializer = AkkaSystem.materializer
 
+  // TODO: something here
+  implicit lazy val xa = ???
+
   def terminate(): Unit = {
     Try(system.terminate())
     Try(Kamon.shutdown())

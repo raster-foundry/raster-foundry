@@ -23,9 +23,6 @@ object MapTokenDao extends Dao[MapToken] {
       FROM
     """ ++ tableF
 
-  def select(id: UUID) =
-    (selectF ++ fr"WHERE id = $id").query[MapToken].unique
-
   def create(
     user: User,
     owner: Option[String],

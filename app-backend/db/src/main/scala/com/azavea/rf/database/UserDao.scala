@@ -21,8 +21,5 @@ object UserDao extends Dao[User] {
     FROM
   """ ++ tableF
 
-  def select(id: String) =
-    (selectF ++ fr"WHERE id = $id").query[User].unique
-
 }
 

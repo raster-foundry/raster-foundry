@@ -21,9 +21,6 @@ object BandDao extends Dao[Band] {
       FROM
     """ ++ tableF
 
-  def select(id: UUID) =
-    (selectF ++ fr"WHERE id = $id").query[Band].unique
-
   def create(
     imageId: UUID,
     name: String,

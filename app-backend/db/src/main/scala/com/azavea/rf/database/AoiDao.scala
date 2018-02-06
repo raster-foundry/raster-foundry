@@ -10,14 +10,13 @@ import cats._, cats.data._, cats.effect.IO, cats.implicits._
 import io.circe._
 import geotrellis.slick.Projected
 import geotrellis.vector.MultiPolygon
-import com.lonelyplanet.akka.http.extensions.PageRequest
 
 import scala.concurrent.Future
 import java.sql.Timestamp
 import java.util.{Date, UUID}
 
 
-object AoiDao extends Dao[AOI] with PagedDao[AOI] {
+object AoiDao extends Dao[AOI] {
 
   val tableName = "aois"
 
@@ -28,9 +27,6 @@ object AoiDao extends Dao[AOI] with PagedDao[AOI] {
         organization_id, owner, area, filters
       FROM
     """ ++ tableF
-
-  def select(id: UUID) =
-    (selectF ++ fr"WHERE id = $id").query[AOI].unique
 
   def create(
     user: User,

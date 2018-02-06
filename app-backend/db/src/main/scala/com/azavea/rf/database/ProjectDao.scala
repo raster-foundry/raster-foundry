@@ -27,9 +27,6 @@ object ProjectDao extends Dao[Project] {
     FROM
   """ ++ tableF
 
-  def select(id: UUID) =
-    (selectF ++ fr"WHERE id = $id").query[Project].unique
-
   def create(
     user: User,
     owner: Option[String],

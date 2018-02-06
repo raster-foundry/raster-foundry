@@ -1,22 +1,28 @@
 package com.azavea.rf.api.toolcategory
 
-import scala.util.{Success, Failure}
+import com.azavea.rf.common.{Authentication, UserErrorHandler}
+import com.azavea.rf.database.tables.ToolCategories
+import com.azavea.rf.database._
+import com.azavea.rf.database.filters._
+import com.azavea.rf.datamodel._
+
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
-import com.azavea.rf.common.{Authentication, UserErrorHandler}
-import com.azavea.rf.database.Database
-import com.azavea.rf.database.tables.ToolCategories
-import com.azavea.rf.datamodel._
-import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
+import com.lonelyplanet.akka.http.extensions.PaginationDirectives
+import doobie._
+import doobie.implicits._
+import cats.effect.IO
 
+import scala.util.{Success, Failure}
 
 trait ToolCategoryRoutes extends Authentication
     with PaginationDirectives
     with ToolCategoryQueryParametersDirective
     with UserErrorHandler {
   implicit def database: Database
+  implicit def xa: Transactor[IO]
 
   // Not implementing an update function, since it's an emergency operation and should probably be done
   // in the database directly to avoid orphaning categorized tools. Eventually, we should remove the ability
@@ -38,7 +44,7 @@ trait ToolCategoryRoutes extends Authentication
   def listToolCategories: Route = authenticate { user =>
     (withPagination & toolCategoryQueryParameters) { (page, combinedParams) =>
       complete {
-        ToolCategories.listToolCategories(page, combinedParams)
+        ToolCategoryDao.query.filter(combinedParams).page(page)
       }
     }
   }
@@ -56,7 +62,9 @@ trait ToolCategoryRoutes extends Authentication
 
   def getToolCategory(toolCategorySlug: String): Route = authenticate { user =>
     rejectEmptyResponse {
-      complete(ToolCategories.getToolCategory(toolCategorySlug))
+      complete {
+        ToolCategoryDao.query.filter(fr"slug_label = $toolCategorySlug").selectOption(None)
+      }
     }
   }
 

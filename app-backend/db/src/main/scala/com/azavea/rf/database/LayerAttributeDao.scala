@@ -20,7 +20,5 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
       FROM
     """ ++ tableF
 
-  def select(id: UUID) =
-    (selectF ++ fr"WHERE id = $id").query[LayerAttribute].unique
 }
 

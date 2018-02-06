@@ -27,24 +27,6 @@ object ExportDao extends Dao[Export] {
     FROM
   """ ++ tableF
 
-  def select(id: UUID) =
-    (selectF ++ fr"WHERE id = $id").query[Export].unique
-
-  def listFilters(params: ExportQueryParameters, user: User) =
-    List(
-      params.organization.map({ orgId => fr"organization = $orgId"}),
-      params.project.map({ projId => fr"project_id = $projId"}),
-      params.exportStatus.toList.toNel.map({ statuses =>
-        val exportStatuses = statuses.map({ status =>
-          try ExportStatus.fromString(status)
-          catch {
-            case e : Exception => throw new IllegalArgumentException(s"Invalid Ingest Status: $status")
-          }
-        })
-        Fragments.in(fr"export_status", exportStatuses)
-      })
-    )
-
   def create(
     user: User,
     organizationId: UUID,
