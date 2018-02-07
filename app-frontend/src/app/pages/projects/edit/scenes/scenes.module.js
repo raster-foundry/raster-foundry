@@ -36,7 +36,8 @@ class ProjectsScenesController {
         this.modalService.open({
             component: 'rfSceneDetailModal',
             resolve: {
-                scene: () => scene
+                scene: () => scene,
+                repository: () => this.repository
             }
         });
     }
