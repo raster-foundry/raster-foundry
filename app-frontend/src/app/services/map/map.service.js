@@ -501,7 +501,7 @@ class MapWrapper {
                         dataMask: repository.service.skipThumbnailClipping ?
                             scene.tileFootprint : scene.dataFootprint,
                         thumbnail: url,
-                        attribution: `${datasource} `
+                        attribution: `${datasource.name} `
                     }
                 );
                 if (!options.persist) {

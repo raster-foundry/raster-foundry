@@ -38,6 +38,13 @@ class SceneItemController {
                 }
             });
         }
+        this.$scope.$watch('$ctrl.scene.datasource', () => {
+            if (this.repository) {
+                this.repository.service.getDatasource(this.scene).then((datasource) => {
+                    this.datasource = datasource;
+                });
+            }
+        });
     }
 
     $onChanges(changes) {
