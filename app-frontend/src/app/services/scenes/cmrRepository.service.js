@@ -69,7 +69,7 @@ export default (app) => {
         }
 
         getDatasource(scene) {
-            return this.$q(resolve => resolve(scene.sceneMetadata.dataset_id));
+            return this.$q(resolve => resolve({name: scene.sceneMetadata.dataset_id}));
         }
 
         getThumbnail(scene) {

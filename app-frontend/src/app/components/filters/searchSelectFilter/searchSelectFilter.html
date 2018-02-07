@@ -5,7 +5,9 @@
              theme="selectize"
              title="All datasources"
              on-select="$ctrl.selectOption($item, $model)">
-    <ui-select-match placeholder="Search datasources" allow-clear="true">{{$select.selected.name}}</ui-select-match>
+    <ui-select-match
+        placeholder="Search datasources"
+        allow-clear="true">{{$select.selected.name}}</ui-select-match>
     <ui-select-choices
         repeat="source in $ctrl.sources | filter: $select.search"
     >

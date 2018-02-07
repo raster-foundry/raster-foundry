@@ -186,8 +186,8 @@ export default (app) => {
                 if (this.datasourceCache.has(scene.datasource)) {
                     let datasource = this.datasourceCache.get(scene.datasource);
                     if (datasource.then) {
-                        datasource.then((name) => {
-                            resolve(name);
+                        datasource.then((d) => {
+                            resolve(d);
                         });
                     } else {
                         resolve(datasource);
@@ -198,8 +198,8 @@ export default (app) => {
                         this.datasourceService
                             .get(scene.datasource)
                             .then((datasource) => {
-                                resolve(datasource.name);
-                                return datasource.name;
+                                resolve(datasource);
+                                return datasource;
                             }, (err) => {
                                 reject(err);
                             })

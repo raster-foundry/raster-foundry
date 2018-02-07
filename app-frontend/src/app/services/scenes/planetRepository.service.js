@@ -336,9 +336,9 @@ export default (app) => {
             return this.$q((resolve) => {
                 let source = _.first(this.sources.filter((s) => s.name === scene.datasource));
                 if (source) {
-                    resolve(source.label);
+                    resolve({name: source.name});
                 } else {
-                    resolve(scene.datasource);
+                    resolve({name: scene.datasource});
                 }
             });
         }

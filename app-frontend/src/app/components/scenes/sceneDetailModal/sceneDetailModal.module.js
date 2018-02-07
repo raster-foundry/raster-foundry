@@ -56,6 +56,7 @@ class SceneDetailModalController {
         });
         this.accDateDisplay = this.setAccDateDisplay();
         this.isUploadDone = true;
+        this.isOwner = this.scene.owner === this.authService.getProfile().sub;
     }
 
     openDownloadModal() {
@@ -76,11 +77,29 @@ class SceneDetailModalController {
         this.close({$value: data});
     }
 
-    toggleMetadataEdit() {
-        this.isEditMetadata = !this.isEditMetadata;
-        if (!this.isEditMetadata) {
-            this.updateMetadata();
+    cancelEditing() {
+        this.editingMetadata = false;
+    }
+
+    startEditing() {
+        if (!this.sources) {
+            this.repository.service.getSources().then((sources) => {
+                this.sources = sources;
+                this.selectedDatasource = this.datasource;
+                this.editingMetadata = true;
+            }, (err) => {
+                this.selectedDatasource = this.datasource;
+                this.datasourceError = err;
+            });
+        } else {
+            this.selectedDatasource = this.datasource;
+            this.editingMetadata = true;
         }
+    }
+
+    finishEditing() {
+        this.editingMetadata = false;
+        this.updateMetadata();
     }
 
     setAccDateDisplay() {
@@ -90,17 +109,19 @@ class SceneDetailModalController {
     }
 
     updateMetadata() {
-        // TODO: visibility and data source should be editable eventually
+        // TODO: visibility should be editable eventually
         this.isUploadDone = false;
         if (!this.newFilterFields.acquisitionDate) {
             this.newFilterFields.acquisitionDate = this.scene.filterFields.acquisitionDate;
         }
         this.scene = Object.assign(this.scene, {
+            datasource: this.selectedDatasource.id,
             'modifiedAt': this.moment().toISOString(),
             'modifiedBy': this.scene.owner,
             'sceneMetadata': this.newSceneMetadata,
             'filterFields': this.newFilterFields
         });
+        this.datasource = this.selectedDatasource;
         this.sceneService.update(this.scene).then(
             () => {
                 this.isUploadDone = true;
@@ -152,6 +173,26 @@ class SceneDetailModalController {
         } else if (this.newFilterFields[field] > this.getMaxBound(field)) {
             this.newFilterFields[field] = this.getMaxBound(field);
         }
+    }
+
+    selectDatasource(item) {
+        this.selectedDatasource = item;
+    }
+
+    saveDatasourceEdit() {
+        this.scene = Object.assign(this.scene, {
+            datasource: this.selectedDatasource.id,
+            'modifiedAt': this.moment().toISOString(),
+            'modifiedBy': this.scene.owner
+        });
+        this.sceneService.update(this.scene).then(
+            () => {
+                this.isUploadDone = true;
+            },
+            () => {
+                this.isUploadDone = false;
+            }
+        );
     }
 }
 const SceneDetailModalModule = angular.module('components.scenes.sceneDetailModal', []);
