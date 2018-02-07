@@ -13,6 +13,7 @@ export default (app) => {
 
             this.permissionSource = ' from planet.com';
             this.skipThumbnailClipping = true;
+            this.previewOnMap = true;
         }
 
         initRepository() {
