@@ -95,6 +95,10 @@ export default (app) => {
             return scene.sceneMetadata.time_start;
         }
 
+        getScenePermissions() {
+            return [];
+        }
+
         /*
           Returns a function which fetches scenes
 
@@ -189,6 +193,9 @@ export default (app) => {
                 dataFootprint: {
                     type: 'MultiPolygon',
                     coordinates: this.footprintAdapter(scene.polygons)
+                },
+                filterFields: {
+                    acquisitionDate: scene.time_start
                 },
                 thumbnails: this.getThumbnails(scene)
             };
