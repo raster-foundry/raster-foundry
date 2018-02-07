@@ -1,6 +1,7 @@
 package com.azavea.rf.database
 
 import com.azavea.rf.datamodel._
+import com.azavea.rf.database.Implicits._
 
 import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
@@ -17,17 +18,17 @@ class AnnotationDaoSpec extends FunSuite with Matchers with IOChecker with DBTes
     val testLabel: String = "this is a test!"
 
     val transaction = for {
-      usr <- UserDao.select("default")
-      org <- OrganizationDao.select(UUID.fromString("9e2bef18-3f46-426b-a5bd-9913ee1ff840"))
-      proj <- ProjectDao.select(UUID.fromString("30fd336a-d360-4c9f-9f99-bb7ac4b372c4"))
+      usr <- defaultUserQ
+      org <- rootOrgQ
+      proj <- changeDetectionProjQ
       annotationIn <- AnnotationDao.create(proj.id, usr, None, org.id, testLabel, None, None, None, None, None)
-      annotationOut <- AnnotationDao.select(annotation1.id)
-    } yield annotation2
+      annotationOut <- AnnotationDao.query.filter(fr"id = ${annotationIn.id}").selectQ.unique
+    } yield annotationOut
 
     val result = transaction.transact(xa).unsafeRunSync
     result.label shouldBe testLabel
   }
 
-  test("select typecheck") { check(AnnotationDao.Statements.select.query[Annotation]) }
+  test("types") { check(AnnotationDao.selectF.query[Annotation]) }
 }
 

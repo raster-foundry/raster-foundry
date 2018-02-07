@@ -23,8 +23,8 @@ object AoiDao extends Dao[AOI] {
   val selectF =
     sql"""
       SELECT
-        id, created_at, created_by, modified_at, modified_by,
-        organization_id, owner, area, filters
+        id, created_at, modified_at, organization_id,
+        created_by, modified_by, owner, area, filters
       FROM
     """ ++ tableF
 
@@ -39,15 +39,16 @@ object AoiDao extends Dao[AOI] {
     val now = new Timestamp((new java.util.Date()).getTime())
     val ownerId = Ownership.checkOwner(user, owner)
     val userId = user.id
+    println(id, now, ownerId, userId)
     (fr"INSERT INTO" ++ tableF ++ fr"""
-        (id, created_at, created_by, modified_at, modified_by,
-        organization_id, owner, area, filters)
+        (id, created_at, modified_at, organization_id,
+        created_by, modified_by, owner, area, filters)
       VALUES
-        ($id, $now, $userId, $now, $userId,
-        $organizationId, $ownerId, $area, $filters)
+        ($id, $now, $now, $organizationId,
+        $userId, $userId, $ownerId, $area, $filters)
     """).update.withUniqueGeneratedKeys[AOI](
-      "id", "created_at", "created_by", "modified_at", "modified_by",
-      "organization_id", "owner", "area", "filters"
+      "id", "created_at", "modified_at", "organization_id",
+      "created_by", "modified_by", "owner", "area", "filters"
     )
   }
 }

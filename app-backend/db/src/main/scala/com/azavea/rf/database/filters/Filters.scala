@@ -1,4 +1,4 @@
-package com.azavea.rf.database.util
+package com.azavea.rf.database.filter
 
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database._

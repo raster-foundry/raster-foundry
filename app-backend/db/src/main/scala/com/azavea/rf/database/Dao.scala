@@ -12,18 +12,15 @@ import com.lonelyplanet.akka.http.extensions.PageRequest
 import scala.concurrent.Future
 import java.util.UUID
 
-
 /**
  * This is abstraction over the listing of arbitrary types from the DB with filters/pagination
  */
-trait Dao[Model] {
-
-  implicit val composite: Composite[Model] = implicitly[Composite[Model]]
+abstract class Dao[Model: Composite] {
 
   val tableName: String
 
   /** The fragment which holds the associated table's name */
-  val tableF = Fragment.const(tableName)
+  def tableF = Fragment.const(tableName)
 
   /** An abstract select statement to be used for constructing queries */
   def selectF: Fragment
@@ -85,31 +82,17 @@ object Dao {
       query.transact(xa).unsafeToFuture
     }
 
-    /** Select a single value - throw on failure */
-    def select(id: Option[UUID])(implicit xa: Transactor[IO]): Future[Model] = {
-      val updatedFilters = filters :+ id.map({ identity => fr"id = $id"})
-      val query = (selectF ++ Fragments.whereAndOpt(updatedFilters: _*)).query[Model].unique
-      query.transact(xa).unsafeToFuture
-    }
+    def selectQ: Query0[Model] =
+      (selectF ++ Fragments.whereAndOpt(filters: _*)).query[Model]
 
     /** Select a single value - throw on failure */
-    def select(id: UUID)(implicit xa: Transactor[IO]): Future[Model] = select(Some(id))
-
-    /** Select a single value - throw on failure */
-    def select(implicit xa: Transactor[IO]): Future[Model] = select(None)
+    def select(implicit xa: Transactor[IO]): Future[Model] =
+      selectQ.unique.transact(xa).unsafeToFuture
 
     /** Select a single value - returning an Optional value */
-    def selectOption(id: Option[UUID])(implicit xa: Transactor[IO]): Future[Option[Model]] = {
-      val updatedFilters = filters :+ id.map({ identity => fr"id = $id"})
-      val query = (selectF ++ Fragments.whereAndOpt(updatedFilters: _*)).query[Model].option
-      query.transact(xa).unsafeToFuture
-    }
+    def selectOption(implicit xa: Transactor[IO]): Future[Option[Model]] =
+      selectQ.option.transact(xa).unsafeToFuture
 
-    /** Select a single value - returning an Optional value */
-    def selectOption(id: UUID)(implicit xa: Transactor[IO]): Future[Option[Model]] = selectOption(Some(id))
-
-    /** Select a single value - returning an Optional value */
-    def selectOption(implicit xa: Transactor[IO]): Future[Option[Model]] = selectOption(None)
   }
 }
 

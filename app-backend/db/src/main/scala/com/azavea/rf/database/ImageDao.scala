@@ -18,7 +18,7 @@ object ImageDao extends Dao[Image] {
 
   val selectF = sql"""
     SELECT
-      id, created_at, created_by, modified_at, modified_by, organization_id,
+      id, created_at, modified_at, created_by, modified_by, organization_id,
       owner, raw_data_bytes, visibility, filename, sourceuri, scene,
       image_metadata, resolution_meters, metadata_files
     FROM

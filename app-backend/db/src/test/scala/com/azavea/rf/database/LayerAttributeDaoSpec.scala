@@ -1,7 +1,7 @@
 package com.azavea.rf.database
 
 import com.azavea.rf.datamodel.LayerAttribute
-import com.azavea.rf.database.meta.RFMeta._
+import com.azavea.rf.database.Implicits._
 
 import doobie._, doobie.implicits._
 import cats._, cats.data._, cats.effect.IO
@@ -17,6 +17,6 @@ class LayerAttributeDaoSpec extends FunSuite with Matchers with IOChecker {
     "org.postgresql.Driver", "jdbc:postgresql://database.service.rasterfoundry.internal/", "rasterfoundry", "rasterfoundry"
   )
 
-  test("select") { check(LayerAttributeDao.Statements.select.query[LayerAttribute]) }
+  test("select") { check(LayerAttributeDao.selectF.query[LayerAttribute]) }
 }
 
