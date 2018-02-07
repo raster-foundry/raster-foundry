@@ -146,11 +146,11 @@ lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
 )
 
 lazy val root = Project("root", file("."))
-  .aggregate(api, common, migrations, datamodel, database, batch, tile, tool, bridge)
+  .aggregate(api, common, migrations, datamodel, batch, tile, tool, bridge)
   .settings(commonSettings:_*)
 
 lazy val api = Project("api", file("api"))
-  .dependsOn(database, db, datamodel, common % "test->test;compile->compile")
+  .dependsOn(db, datamodel, common % "test->test;compile->compile")
   .settings(apiSettings:_*)
   .settings(resolvers += Resolver.bintrayRepo("hseeberger", "maven"))
   .settings({
@@ -158,7 +158,7 @@ lazy val api = Project("api", file("api"))
   })
 
 lazy val common = Project("common", file("common"))
-  .dependsOn(database, datamodel)
+  .dependsOn(db, datamodel)
   .settings(apiSettings:_*)
   .settings({libraryDependencies ++= testDependencies ++ Seq(
     Dependencies.nimbusJose,
@@ -219,18 +219,18 @@ lazy val datamodel = Project("datamodel", file("datamodel"))
     )
   })
 
-lazy val database = Project("database", file("database"))
-  .dependsOn(datamodel)
-  .settings(commonSettings:_*)
-  .settings({
-     libraryDependencies ++= slickDependencies ++ dbDependencies ++ loggingDependencies ++ Seq(
-       Dependencies.akkaHttpExtensions,
-       Dependencies.slickPGCirce
-     )
-  })
+/*lazy val database = Project("database", file("database"))*/
+/*  .dependsOn(datamodel)*/
+/*  .settings(commonSettings:_*)*/
+/*  .settings({*/
+/*     libraryDependencies ++= slickDependencies ++ dbDependencies ++ loggingDependencies ++ Seq(*/
+/*       Dependencies.akkaHttpExtensions,*/
+/*       Dependencies.slickPGCirce*/
+/*     )*/
+/*  })*/
 
 lazy val batch = Project("batch", file("batch"))
-  .dependsOn(common, datamodel, database, tool, bridge)
+  .dependsOn(common, datamodel, tool, bridge)
   .settings(commonSettings:_*)
   .settings(resolvers += Resolver.bintrayRepo("azavea", "maven"))
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
@@ -276,7 +276,7 @@ lazy val batch = Project("batch", file("batch"))
 
 import _root_.io.gatling.sbt.GatlingPlugin
 lazy val tile = Project("tile", file("tile"))
-  .dependsOn(database, datamodel, common % "test->test;compile->compile")
+  .dependsOn(datamodel, common % "test->test;compile->compile")
   .dependsOn(tool)
   .dependsOn(batch)
   .enablePlugins(GatlingPlugin)

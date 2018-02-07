@@ -1,7 +1,7 @@
-package com.azavea.rf.database
+package com.azavea.rf.database.filter
 
-import com.azavea.rf.database.util.Filters
 import com.azavea.rf.database.meta.RFMeta._
+import com.azavea.rf.database.Filterable
 import com.azavea.rf.datamodel._
 
 import cats.implicits._
@@ -9,7 +9,7 @@ import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
 
 
-package object filters {
+trait Filterables {
 
   implicit val aoiQueryParamsFilter = Filterable[Any, AoiQueryParameters] { qp: AoiQueryParameters =>
       Filters.organizationQP(qp.orgParams) ++
@@ -85,7 +85,7 @@ package object filters {
       })
     )
   }
-
 }
 
+object Filterables extends Filterables
 
