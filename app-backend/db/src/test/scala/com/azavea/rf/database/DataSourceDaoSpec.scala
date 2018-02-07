@@ -24,7 +24,7 @@ class DatasourceDaoSpec extends FunSuite with Matchers with IOChecker with DBTes
     val transaction = for {
       usr <- defaultUserQ
       org <- rootOrgQ
-      dsIn <- DatasourceDao.create(usr, UUID.randomUUID, testName, Visibility.Public, Some(usr.id), dummyJson, dummyJson, dummyJson)
+      dsIn <- DatasourceDao.create(usr, org.id, testName, Visibility.Public, Some(usr.id), dummyJson, dummyJson, dummyJson)
       dsOut <- DatasourceDao.query.filter(fr"id = ${dsIn.id}").selectQ.unique
     } yield dsOut
 
