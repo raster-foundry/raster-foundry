@@ -236,15 +236,16 @@ Using the Akka `authorize` directive ([authorize • Akka HTTP](https://doc.akka
 
 #### ACL
 
-We should treat ACLs as object level attributes. ~~ Giving each entity in the DB an ACL column (as opposed to a separate ACL table) would allow for simpler querying and ensure consistency across the DB. Our access-control logic will not reside in the DB and so storing ACLs as JSON content may make sense. ~
+From an ABAC perspective we should treat ACLs as object level attributes. From an architectural perspective, an ACL table would enable queries to better leverage the ACLs and improve performance for list queries. A possible schema for this table could be:
+
+* **id** - UUID
+* **object_type** - enum of object types: `PROJECT`, `ANALYSIS`, etc.
+* **object_id** UUID pointing to a specific object
+* **subject_type** - enum of possible control levels `PUBLIC`, `PLATFORM`, `ORGANIZATION`, `TEAM`, `USER`
+* **subject_id** - UUID pointing to the specific subject (nullable as `PUBLIC` would have no id)
+* **allowed_actions** - this field could be handled several ways. If it was limited to an enum of action types there could be multiple rows to fully represent an access rule (one row for read, one for write, etc). If we used a bit mask we could represent all possible permissions in a single column. The other option is a separate boolean column for each action.
 
 While most ACLs operate at a subject level — they relate specific permissions to specific users. I propose that we implement a multi-level ACL that reflects our user-organization structure. This means allowing an ACL entry to reference any one of the following: platform, organization, team, or user.
-
-The ACL would be a list of individual access-control entries. The basic structure of an entry would look like:
-
-* **subject_level** - `PLATFORM`, `ORGANIZATION`, `TEAM`, `USER`
-* **subject_id** - uuid of specific subject
-* **actions** - list of actions - `VIEW`, `EDIT`, `DELETE`
 
 ACLs should be the first access-control check done, as they would override any other policies.
 
