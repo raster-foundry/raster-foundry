@@ -57,6 +57,9 @@ export default angular.module('index.components', [
     require('./components/settings/enterTokenModal/enterTokenModal.module.js').name,
     require('./components/settings/featureFlagOverrides/featureFlagOverrides.module.js').name,
     require('./components/settings/tokenItem/tokenItem.module.js').name,
+    require('./components/settings/userModal/userModal.module.js').name,
+    require('./components/settings/teamModal/teamModal.module.js').name,
+    require('./components/settings/organizationModal/organizationModal.module.js').name,
 
     // export components
     require('./components/exports/exportItem/exportItem.module.js').name,

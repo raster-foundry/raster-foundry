@@ -1,0 +1,29 @@
+<div class="vertical-modal">
+  <div class="header">
+    <div class="header-title">
+      Add Team
+    </div>
+    <span
+        class="modal-close icon-cross"
+        ng-click="$ctrl.dismiss()"
+    ></span>
+  </div>
+  <div class="modal-body">
+    <form name="$ctrl.form" class="form-group">
+      <label>
+        Team name
+        <input
+            type="text"
+            class="form-control"
+            name="name"
+            ng-model="name"
+        >
+      </label>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-light">Cancel</button>
+    <button type="button" class="btn btn-primary">Add</button>
+  </div>
+</div>
+
