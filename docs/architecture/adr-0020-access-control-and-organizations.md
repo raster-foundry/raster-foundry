@@ -258,7 +258,7 @@ ACLs would also effectively eliminate the need for the `visibility` field that i
 * Are all those subject levels necessary?
 * Are there any actions missing?
 * Can we eliminate the `visibility` field on all resources and instead use the ACL exclusively?
-* How can we replicate the `PUBLIC` visibility setting? Is a `PLATFORM` level ACL entry equivalent?
+* ~~How can we replicate the `PUBLIC` visibility setting? Is a `PLATFORM` level ACL entry equivalent?~~
 * Is there any need for negative permissions? For example, specifically denying access to a certain person or team?
 
 #### Roles
