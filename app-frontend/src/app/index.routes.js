@@ -38,6 +38,8 @@ import tokensTpl from './pages/settings/tokens/tokens.html';
 import apiTokensTpl from './pages/settings/tokens/api/api.html';
 import mapTokensTpl from './pages/settings/tokens/map/map.html';
 import connectionsTpl from './pages/settings/connections/connections.html';
+import organizationsTpl from './pages/settings/organizations/organizations.html';
+
 import errorTpl from './pages/error/error.html';
 import shareTpl from './pages/share/share.html';
 import homeTpl from './pages/home/home.html';
@@ -264,6 +266,13 @@ function settingsStates($stateProvider) {
             url: '/connections',
             templateUrl: connectionsTpl,
             controller: 'ConnectionsController',
+            controllerAs: '$ctrl'
+        })
+        .state('settings.organizations', {
+            title: 'Organizations test page',
+            url: '/organizations',
+            templateUrl: organizationsTpl,
+            controller: 'OrganizationSettingsController',
             controllerAs: '$ctrl'
         });
 }

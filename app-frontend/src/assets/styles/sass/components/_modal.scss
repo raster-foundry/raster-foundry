@@ -313,3 +313,46 @@
     }
   }
 }
+
+.vertical-modal {
+    .header {
+        display: flex;
+        flex-direction: row;
+        border-bottom: 1px solid $gray-lightest;
+
+        .header-title {
+            flex: 1;
+            padding: 1em;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            cursor: pointer;
+            padding: 1em;
+            border-radius: 3px;
+            margin-right: 0;
+            font-size: 1.2em;
+
+            &:hover {
+                background: rgba($shade-light, 0.1);
+            }
+        }
+    }
+
+    .modal-body .form-group {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 0;
+        :not(:last-child) {
+            margin-bottom: 1em;
+        }
+
+        .form-control {
+            margin-top: 0.5em;
+        }
+    }
+
+    .modal-footer {
+        border-radius: 0 0 3px 3px;
+    }
+}
