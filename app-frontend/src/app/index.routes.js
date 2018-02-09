@@ -50,6 +50,13 @@ import importsDatasourcesTpl from './pages/imports/datasources/datasources.html'
 import importsDatasourcesListTpl from './pages/imports/datasources/list/list.html';
 import importsDatasourcesDetailTpl from './pages/imports/datasources/detail/detail.html';
 
+import organizationTpl from './pages/organization/organization.html';
+import organizationMetricsTpl from './pages/organization/metrics/metrics.html';
+import organizationUsersTpl from './pages/organization/users/users.html';
+import organizationTeamsTpl from './pages/organization/teams/teams.html';
+import organizationSettingsTpl from './pages/organization/settings/settings.html';
+
+
 function projectEditStates($stateProvider) {
     let addScenesQueryParams = [
         'maxCloudCover',
@@ -430,6 +437,47 @@ function importStates($stateProvider) {
         });
 }
 
+function adminStates($stateProvider) {
+    $stateProvider
+        .state('organization', {
+            parent: 'root',
+            title: 'Organization',
+            url: '/organization/:id',
+            templateUrl: organizationTpl,
+            controller: 'OrganizationController',
+            controllerAs: '$ctrl',
+            abstract: true
+        })
+        .state('organization.metrics', {
+            title: 'Organization Metrics',
+            url: '/metrics',
+            templateUrl: organizationMetricsTpl,
+            controller: 'OrganizationMetricsController',
+            controllerAs: '$ctrl'
+        })
+        .state('organization.users', {
+            title: 'Organization Users',
+            url: '/users',
+            templateUrl: organizationUsersTpl,
+            controller: 'OrganizationUsersController',
+            controllerAs: '$ctrl'
+        })
+        .state('organization.teams', {
+            title: 'Organization Teams',
+            url: '/teams',
+            templateUrl: organizationTeamsTpl,
+            controller: 'OrganizationTeamsController',
+            controllerAs: '$ctrl'
+        })
+        .state('organization.settings', {
+            title: 'Organization Settings',
+            url: '/settings',
+            templateUrl: organizationSettingsTpl,
+            controller: 'OrganizationSettingsController',
+            controllerAs: '$ctrl'
+        });
+}
+
 function routeConfig($urlRouterProvider, $stateProvider, $urlMatcherFactoryProvider, $locationProvider) {
     'ngInject';
 
@@ -450,6 +498,7 @@ function routeConfig($urlRouterProvider, $stateProvider, $urlMatcherFactoryProvi
     shareStates($stateProvider);
     homeStates($stateProvider);
     importStates($stateProvider);
+    adminStates($stateProvider);
 
     $stateProvider
         .state('error', {

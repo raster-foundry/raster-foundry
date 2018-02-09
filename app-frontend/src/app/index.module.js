@@ -92,7 +92,13 @@ const App = angular.module(
         require('./pages/settings/tokens/api/api.module.js').name,
         require('./pages/settings/tokens/map/map.module.js').name,
         require('./pages/settings/connections/connections.module.js').name,
-        require('./pages/settings/organizations/organizations.module.js').name
+        require('./pages/settings/organizations/organizations.module.js').name,
+
+        require('./pages/organization/organization.module.js').name,
+        require('./pages/organization/metrics/metrics.module.js').name,
+        require('./pages/organization/teams/teams.module.js').name,
+        require('./pages/organization/users/users.module.js').name,
+        require('./pages/organization/settings/settings.module.js').name
     ]
 );
 

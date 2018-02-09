@@ -84,6 +84,7 @@ export default angular.module('index.components', [
     require('./components/common/statusTag/statusTag.module.js').name,
     require('./components/common/search/search.js').name,
     require('./components/common/sortingHeader/sortingHeader.js').name,
+    require('./components/common/dropdown/dropdown.module.js').name,
 
 
     // Single components for new domains

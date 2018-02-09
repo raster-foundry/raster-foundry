@@ -1,0 +1,35 @@
+<div class="admin-header">
+  <div class="admin-logo">
+  </div>
+  <div class="admin-logo-name">
+    Administration
+  </div>
+</div>
+
+<div class="admin-tabs">
+  <div class="admin-tab"
+       ui-sref="organization.metrics"
+       ui-sref-active="active"
+  >
+    Metrics
+  </div>
+  <div class="admin-tab"
+       ui-sref="organization.users"
+       ui-sref-active="active"
+  >
+    User Management
+  </div>
+  <div class="admin-tab"
+       ui-sref="organization.teams"
+       ui-sref-active="active"
+  >
+    Teams
+  </div>
+  <div class="admin-tab"
+       ui-sref="organization.settings"
+       ui-sref-active="active"
+  >
+    Organization Settings
+  </div>
+</div>
+<ui-view></ui-view>
