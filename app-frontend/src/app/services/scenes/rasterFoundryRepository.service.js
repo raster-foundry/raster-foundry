@@ -14,6 +14,7 @@ export default (app) => {
             this.thumbnailService = thumbnailService;
             this.projectService = projectService;
             this.datasourceCache = new Map();
+            this.previewOnMap = true;
         }
 
         initRepository() {

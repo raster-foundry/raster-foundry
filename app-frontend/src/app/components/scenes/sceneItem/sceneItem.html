@@ -10,7 +10,9 @@
          ng-if="$ctrl.thumbnail"
          class="rounded-img item-img">
     <div ng-if="!$ctrl.thumbnail"
-        class="rounded-img item-img image-placeholder"></div>
+        class="rounded-img item-img image-placeholder">
+        <div>No preview available</div>
+    </div>
   </div>
   <div class="list-group-overflow">
     <div>

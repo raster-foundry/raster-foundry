@@ -85,9 +85,11 @@
         </dl>
       </div>
     </div>
-    <div class="scene-preview-container">
-      <rf-map-container map-id="scene-preview-map">
+    <div class="scene-preview-container" ng-class="{'image-preview': !$ctrl.repository.service.previewOnMap && $ctrl.thumbnail}">
+      <rf-map-container map-id="scene-preview-map" ng-if="$ctrl.repository.service.previewOnMap">
       </rf-map-container>
+      <img ng-if="!$ctrl.repository.service.previewOnMap && $ctrl.thumbnail"
+           ng-src="{{$ctrl.thumbnail}}">
     </div>
   </div>
 

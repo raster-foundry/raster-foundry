@@ -91,7 +91,8 @@ const App = angular.module(
         require('./pages/settings/tokens/tokens.module.js').name,
         require('./pages/settings/tokens/api/api.module.js').name,
         require('./pages/settings/tokens/map/map.module.js').name,
-        require('./pages/settings/connections/connections.module.js').name
+        require('./pages/settings/connections/connections.module.js').name,
+        require('./pages/settings/organizations/organizations.module.js').name
     ]
 );
 

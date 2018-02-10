@@ -49,7 +49,13 @@ def extract_footprints(organization_id, tif_path):
 
         data_footprint = [feature['geometry']['coordinates'] for feature in geojson['features'] if feature['properties']['DN'] == 255]
 
-        xs, ys = zip(*data_footprint[0][0])
+        xs = []
+        ys = []
+
+        for area in data_footprint:
+          xst, yst = zip(*area[0])
+          xs += xst
+          ys += yst
 
         xmin = min(xs)
         xmax = max(xs)
