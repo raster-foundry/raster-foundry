@@ -1,8 +1,0 @@
----
-docker_users:
-  - "{{ ansible_user }}"
-  - "{{ jenkins_name }}"
-
-java_version: "7u121*"
-
-packer_verison: "1.0.4"

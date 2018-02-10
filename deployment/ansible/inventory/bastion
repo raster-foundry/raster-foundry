@@ -1,4 +1,2 @@
-bastion_server ansible_host=bastion.rasterfoundry.com ansible_user=ec2-user
-
 [bastion]
-bastion_server
+bastion_server ansible_host=bastion.rasterfoundry.com ansible_user=ec2-user
