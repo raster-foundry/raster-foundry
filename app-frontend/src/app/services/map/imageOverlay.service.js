@@ -64,18 +64,26 @@ export default (app) => {
 
                     // add mask data
                     let dataMask = this.options.dataMask;
-                    let result = dataMask.coordinates[0][0].map((lngLat) => {
-                        const point = this._map.latLngToLayerPoint(
-                            [lngLat[1], lngLat[0]], this._map.getZoom()
-                        );
-                        return [point.x - tileBounds.min.x, point.y - tileBounds.min.y];
+
+                    let results = dataMask.coordinates.map(coords => {
+                        return coords[0]
+                            .map((lngLat) => {
+                                const point = this._map.latLngToLayerPoint(
+                                    [lngLat[1], lngLat[0]], this._map.getZoom()
+                                );
+                                return [point.x - tileBounds.min.x, point.y - tileBounds.min.y];
+                            })
+                            .map((point) => `${point[0]},${point[1]}`).join(' ');
                     });
 
-                    let points = result.map((point) => `${point[0]},${point[1]}`).join(' ');
                     let clipPath = defs.append('clipPath')
-                        .attr('id', this.id)
-                        .append('polygon')
-                        .attr('points', points);
+                        .attr('id', this.id);
+
+                    results.forEach(r => {
+                        clipPath
+                            .append('polygon')
+                            .attr('points', r);
+                    });
                 },
 
                 _reset: function () {

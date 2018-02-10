@@ -472,7 +472,7 @@ class MapWrapper {
             properties: {
                 options: {
                     fillOpacity: 0,
-                    weight: 0,
+                    weight: 1,
                     interactive: false
                 }
             }
