@@ -11,12 +11,8 @@ import doobie.scalatest.imports._
 import org.scalatest._
 
 
-class LayerAttributeDaoSpec extends FunSuite with Matchers with IOChecker {
+class LayerAttributeDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig {
 
-  val transactor = Transactor.fromDriverManager[IO](
-    "org.postgresql.Driver", "jdbc:postgresql://database.service.rasterfoundry.internal/", "rasterfoundry", "rasterfoundry"
-  )
-
-  test("select") { check(LayerAttributeDao.selectF.query[LayerAttribute]) }
+  test("types") { check(LayerAttributeDao.selectF.query[LayerAttribute]) }
 }
 

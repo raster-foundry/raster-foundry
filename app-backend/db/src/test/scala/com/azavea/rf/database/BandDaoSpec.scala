@@ -27,6 +27,6 @@ class BandDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfi
     result.name shouldBe testName
   }
 
-  test("select") { check(BandDao.selectF.query[Band]) }
+  test("types") { check(BandDao.selectF.query[Band]) }
 }
 

@@ -56,7 +56,7 @@ object ProjectDao extends Dao[Project] {
         ($id, $now, $now, $organizationId, $userId,
         $userId, $ownerId, $name, $slug, $description,
         $visibility, $tileVisibility, $isAOIProject,
-        $aoiCadenceMillis, $aoiCadenceMillis, $tags, null,
+        $aoiCadenceMillis, $now, $tags, null,
         TRUE, $isSingleBand, $singleBandOptions)
     """).update.withUniqueGeneratedKeys[Project](
       "id", "created_at", "modified_at", "organization_id", "created_by",

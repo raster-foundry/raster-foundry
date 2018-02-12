@@ -18,7 +18,7 @@ object ImageDao extends Dao[Image] {
 
   val selectF = sql"""
     SELECT
-      id, created_at, modified_at, created_by, modified_by, organization_id,
+      id, created_at, modified_at, organization_id, created_by, modified_by,
       owner, raw_data_bytes, visibility, filename, sourceuri, scene,
       image_metadata, resolution_meters, metadata_files
     FROM
@@ -40,16 +40,16 @@ object ImageDao extends Dao[Image] {
     val id = UUID.randomUUID
     val now = new Timestamp((new java.util.Date()).getTime())
     val ownerId = util.Ownership.checkOwner(user, owner)
-    (sql"INSERT INTO" ++ tableF ++ fr"""
-        (id, created_at, created_by, modified_at, modified_by, organization_id,
+    (fr"INSERT INTO" ++ tableF ++ fr"""
+        (id, created_at, modified_at, organization_id, created_by, modified_by,
         owner, raw_data_bytes, visibility, filename, sourceuri, scene,
         image_metadata, resolution_meters, metadata_files)
       VALUES
-        ($id, $now, ${user.id}, $now, ${user.id}, $organizationId,
+        ($id, $now, $now, $organizationId, ${user.id}, ${user.id},
         $ownerId, $rawDataBytes, $visibility, $filename, $sourceUri, $scene,
         $imageMetadata, $resolutionMeters, $metadataFiles)
     """).update.withUniqueGeneratedKeys[Image](
-        "id", "created_at", "created_by", "modified_at", "modified_by", "organization_id",
+        "id", "created_at", "modified_at", "organization_id", "created_by", "modified_by",
         "owner", "raw_data_bytes", "visibility", "filename", "sourceuri", "scene",
         "image_metadata", "resolution_meters", "metadata_files"
     )

@@ -11,12 +11,7 @@ import doobie.scalatest.imports._
 import org.scalatest._
 
 
-class FeatureFlagDaoSpec extends FunSuite with Matchers with IOChecker {
-
-  val transactor = Transactor.fromDriverManager[IO](
-    "org.postgresql.Driver", "jdbc:postgresql://database.service.rasterfoundry.internal/", "rasterfoundry", "rasterfoundry"
-  )
-
-  test("select") { check(FeatureFlagDao.selectF.query[FeatureFlag]) }
+class FeatureFlagDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig {
+  test("types") { check(FeatureFlagDao.selectF.query[FeatureFlag]) }
 }
 

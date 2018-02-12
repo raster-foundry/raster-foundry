@@ -13,6 +13,6 @@ import org.scalatest._
 
 class UserDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig {
 
-  test("select") { check(UserDao.selectF.query[User]) }
+  test("types") { check(UserDao.selectF.query[User]) }
 }
 

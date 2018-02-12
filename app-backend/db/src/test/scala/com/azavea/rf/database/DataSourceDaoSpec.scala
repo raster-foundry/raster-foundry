@@ -32,6 +32,6 @@ class DatasourceDaoSpec extends FunSuite with Matchers with IOChecker with DBTes
     result.name shouldBe testName
   }
 
-  test("select") { check(DatasourceDao.selectF.query[Datasource]) }
+  test("types") { check(DatasourceDao.selectF.query[Datasource]) }
 }
 

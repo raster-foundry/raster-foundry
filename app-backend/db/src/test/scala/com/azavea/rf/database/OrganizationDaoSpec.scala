@@ -11,12 +11,20 @@ import doobie.scalatest.imports._
 import org.scalatest._
 
 
-class OrganizationDaoSpec extends FunSuite with Matchers with IOChecker {
+class OrganizationDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig {
 
-  val transactor = Transactor.fromDriverManager[IO](
-    "org.postgresql.Driver", "jdbc:postgresql://database.service.rasterfoundry.internal/", "rasterfoundry", "rasterfoundry"
-  )
+  test("insertion") {
+    val testName = "test org"
 
-  test("select") { check(OrganizationDao.selectF.query[Organization]) }
+    val transaction = for {
+      orgIn <- OrganizationDao.create(testName)
+      orgOut <- OrganizationDao.query.filter(fr"id = ${orgIn.id}").selectQ.unique
+    } yield orgOut
+
+    val result = transaction.transact(xa).unsafeRunSync
+    result.name shouldBe testName
+  }
+
+  test("types") { check(OrganizationDao.selectF.query[Organization]) }
 }
 
