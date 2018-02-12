@@ -55,30 +55,30 @@ object Dao {
       transaction.transact(xa).unsafeToFuture
     }
 
+    def listQ(pageRequest: PageRequest)(implicit xa: Transactor[IO]): Query0[Model] =
+      (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(Some(pageRequest))).query[Model]
+
     /** Provide a list of responses */
     def list(pageRequest: PageRequest)(implicit xa: Transactor[IO]): Future[List[Model]] = {
-      val query = (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(Some(pageRequest)))
-        .query[Model]
-        .list
-
+      val query = listQ(pageRequest).list
       query.transact(xa).unsafeToFuture
     }
+
+    def listQ(limit: Int)(implicit xa: Transactor[IO]): Query0[Model] =
+      (selectF ++ Fragments.whereAndOpt(filters: _*) ++ fr"LIMIT $limit").query[Model]
 
     /** Provide a list of responses */
     def list(limit: Int)(implicit xa: Transactor[IO]): Future[List[Model]] = {
-      val query = (selectF ++ Fragments.whereAndOpt(filters: _*) ++ fr"LIMIT $limit")
-        .query[Model]
-        .list
-
+      val query = listQ(limit).list
       query.transact(xa).unsafeToFuture
     }
 
+    def listQ(offset: Int, limit: Int)(implicit xa: Transactor[IO]): Query0[Model] =
+      (selectF ++ Fragments.whereAndOpt(filters: _*) ++ fr"OFFSET $offset" ++ fr"LIMIT $limit").query[Model]
+
     /** Provide a list of responses */
     def list(offset: Int, limit: Int)(implicit xa: Transactor[IO]): Future[List[Model]] = {
-      val query = (selectF ++ Fragments.whereAndOpt(filters: _*) ++ fr"OFFSET $offset" ++ fr"LIMIT $limit")
-        .query[Model]
-        .list
-
+      val query = listQ(offset, limit).list
       query.transact(xa).unsafeToFuture
     }
 
