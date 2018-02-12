@@ -181,9 +181,7 @@ class SceneDetailModalController {
 
     saveDatasourceEdit() {
         this.scene = Object.assign(this.scene, {
-            datasource: this.selectedDatasource.id,
-            'modifiedAt': this.moment().toISOString(),
-            'modifiedBy': this.scene.owner
+            datasource: this.selectedDatasource.id
         });
         this.sceneService.update(this.scene).then(
             () => {
