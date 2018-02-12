@@ -545,41 +545,6 @@ class MapWrapper {
         return this;
     }
 
-    /*
-      Args:
-        options: {
-        }
-      Returns: {promise: Promise, cancel: Function}
-      Promise is resolved when a shape is drawn
-     */
-    drawShape(options) {
-        return {
-            promise: this.$q((resolve, reject) => {
-                console.log('Start drawing shape', options);
-            }),
-            cancel: () => {
-                console.log('Cancel drawing shape');
-            }
-        };
-    }
-
-    /*
-      Args:
-
-      Return a promise and cancel function
-      Returns: {promise: Promise, cancel: Function}
-     */
-    editShape(options) {
-        return {
-            promise: this.$q((resolve, reject) => {
-                console.log('Start editing geojson shape layer');
-            }),
-            cancel: () => {
-                console.log('Cancel editing geojson shape layer');
-            }
-        };
-    }
-
     toggleFullscreen(force) {
         // eslint-disable-next-line
         let parent = this.map._mapPane.parentElement.parentElement;
