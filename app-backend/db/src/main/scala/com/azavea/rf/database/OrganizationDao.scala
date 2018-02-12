@@ -34,6 +34,5 @@ object OrganizationDao extends Dao[Organization] {
       "id", "created_at", "modified_at", "name"
     )
   }
-
 }
 

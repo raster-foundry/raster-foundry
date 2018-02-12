@@ -11,12 +11,8 @@ import doobie.scalatest.imports._
 import org.scalatest._
 
 
-class ThumbnailDaoSpec extends FunSuite with Matchers with IOChecker {
+class ThumbnailDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig {
 
-  val transactor = Transactor.fromDriverManager[IO](
-    "org.postgresql.Driver", "jdbc:postgresql://database.service.rasterfoundry.internal/", "rasterfoundry", "rasterfoundry"
-  )
-
-  test("select") { check(ThumbnailDao.selectF.query[Thumbnail]) }
+  test("types") { check(ThumbnailDao.selectF.query[Thumbnail]) }
 }
 

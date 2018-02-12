@@ -11,12 +11,8 @@ import doobie.scalatest.imports._
 import org.scalatest._
 
 
-class ShapeDaoSpec extends FunSuite with Matchers with IOChecker {
+class ShapeDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig {
 
-  val transactor = Transactor.fromDriverManager[IO](
-    "org.postgresql.Driver", "jdbc:postgresql://database.service.rasterfoundry.internal/", "rasterfoundry", "rasterfoundry"
-  )
-
-  test("select") { check(ShapeDao.selectF.query[Shape]) }
+  test("types") { check(ShapeDao.selectF.query[Shape]) }
 }
 

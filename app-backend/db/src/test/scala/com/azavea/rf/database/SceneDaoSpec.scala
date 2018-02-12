@@ -11,12 +11,8 @@ import doobie.scalatest.imports._
 import org.scalatest._
 
 
-class SceneDaoSpec extends FunSuite with Matchers with IOChecker {
+class SceneDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig {
 
-  val transactor = Transactor.fromDriverManager[IO](
-    "org.postgresql.Driver", "jdbc:postgresql://database.service.rasterfoundry.internal/", "rasterfoundry", "rasterfoundry"
-  )
-
-  test("select") { check(SceneDao.selectF.query[Scene]) }
+  test("types") { check(SceneDao.selectF.query[Scene]) }
 }
 

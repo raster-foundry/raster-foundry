@@ -30,6 +30,6 @@ class ExportDaoSpec extends FunSuite with Matchers with IOChecker with DBTestCon
     result.exportStatus shouldBe testStatus
   }
 
-  test("select") { check(ExportDao.selectF.query[Export]) }
+  test("types") { check(ExportDao.selectF.query[Export]) }
 }
 

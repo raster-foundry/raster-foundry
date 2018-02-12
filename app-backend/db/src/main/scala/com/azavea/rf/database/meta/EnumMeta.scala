@@ -22,10 +22,10 @@ trait EnumMeta {
     pgEnumString("IngestStatus", IngestStatus.fromString, _.repr)
 
   implicit val exportStatusMeta: Meta[ExportStatus] =
-    pgEnumString("ExportStatus", ExportStatus.fromString, _.repr)
+    pgEnumString("export_status", ExportStatus.fromString, _.repr)
 
   implicit val exportTypeMeta: Meta[ExportType] =
-    pgEnumString("ExportType", ExportType.fromString, _.repr)
+    pgEnumString("export_type", ExportType.fromString, _.repr)
 
   implicit val fileTypeMeta: Meta[FileType] =
     pgEnumString("FileType", FileType.fromString, _.repr)

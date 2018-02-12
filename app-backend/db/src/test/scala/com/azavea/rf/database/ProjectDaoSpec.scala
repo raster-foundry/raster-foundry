@@ -1,6 +1,6 @@
 package com.azavea.rf.database
 
-import com.azavea.rf.datamodel.Project
+import com.azavea.rf.datamodel._
 import com.azavea.rf.database.Implicits._
 
 import doobie._, doobie.implicits._
@@ -11,12 +11,25 @@ import doobie.scalatest.imports._
 import org.scalatest._
 
 
-class ProjectDaoSpec extends FunSuite with Matchers with IOChecker {
+class ProjectDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig {
 
-  val transactor = Transactor.fromDriverManager[IO](
-    "org.postgresql.Driver", "jdbc:postgresql://database.service.rasterfoundry.internal/", "rasterfoundry", "rasterfoundry"
-  )
+  test("insertion") {
+    val testName = "test project name"
 
-  test("select") { check(ProjectDao.selectF.query[Project]) }
+    val transaction = for {
+      usr <- defaultUserQ
+      org <- rootOrgQ
+      projectIn <- ProjectDao.create(
+        usr, Some(usr.id), org.id, testName, "description", Visibility.Public,
+        Visibility.Public, true, 123L, List("tags"), false, None
+      )
+      projectOut <- ProjectDao.query.filter(fr"id = ${projectIn.id}").selectQ.unique
+    } yield projectOut
+
+    val result = transaction.transact(xa).unsafeRunSync
+    result.name shouldBe testName
+  }
+
+  test("types") { check(ProjectDao.selectF.query[Project]) }
 }
 
