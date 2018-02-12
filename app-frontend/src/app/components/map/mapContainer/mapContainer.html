@@ -29,6 +29,11 @@
       <span ng-if="!$ctrl.shapes.features.length">Start Drawing</span>
       <span ng-if="$ctrl.shapes.features.length">Draw More</span>
     </button>
+    <button class="btn btn-danger"
+            ng-if="$ctrl.editingStage === 'modify'"
+            ng-click="$ctrl.onEditDelete()">
+      Delete
+    </button>
     <button class="btn btn-default"
             ng-if="$ctrl.editingStage === 'modify'"
             ng-click="$ctrl.onEditFinish()">

@@ -347,6 +347,15 @@ class MapContainerController {
         this.finishEditingShape(geometry);
     }
 
+    onEditDelete() {
+        this.editingStage = null;
+        let drawLayer = _.first(this.mapWrapper.getLayers('draw'));
+        if (drawLayer.transform) {
+            drawLayer.transform.disable();
+        }
+        this.finishEditingShape();
+    }
+
     onShapeMouseover(e) {
         if (this.editingStage === 'select') {
             let layer = e.target;
@@ -388,8 +397,12 @@ class MapContainerController {
         });
 
         editPromise.then((geojson) => {
-            this.shapes.features[editIndex].geometry = geojson;
-            this.addShapeToMap(this.mapWrapper, this.shapes.features[editIndex]);
+            if (geojson) {
+                this.shapes.features[editIndex].geometry = geojson;
+                this.addShapeToMap(this.mapWrapper, this.shapes.features[editIndex]);
+            } else {
+                this.shapes.features.splice(editIndex, 1);
+            }
         }, () => {
             this.addShapeToMap(this.mapWrapper, this.shapes.features[editIndex]);
         });
