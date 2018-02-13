@@ -51,6 +51,8 @@ object CredentialsService extends Config with LazyLogging {
     stsRequest.setRoleArn(scopedUploadRoleArn)
     stsRequest.setRoleSessionName(s"upload${uploadId}")
     stsRequest.setWebIdentityToken(jwt)
+    // Sessions for AWS account owners are restricted to a maximum of 3600 seconds. Longer durations seemed to give 501.
+    // https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/securitytoken/model/GetSessionTokenRequest.html
     stsRequest.setDurationSeconds(3600)
 
     val stsCredentials = stsClient.assumeRoleWithWebIdentity(stsRequest).getCredentials
