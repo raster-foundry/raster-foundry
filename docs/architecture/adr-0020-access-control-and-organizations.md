@@ -267,8 +267,8 @@ We should handle roles as subject attributes. This would best be accomplished vi
 
 * **id** - uuid
 * **user** - uuid of user role applies to
-* **type** -  `PLATFORM`, `ORGANIZATION`, `TEAM`
-* **type_id** - uuid of specific group
+* **group_type** -  `PLATFORM`, `ORGANIZATION`, `TEAM`
+* **group_id** - uuid of specific group
 * **role** - `ADMIN`, `MEMBER` (using enums rather than an `is_admin` fields leaves room for more roles)
 
 This could also be done with separate tables for each `type` rather than combining all into one table.
@@ -276,5 +276,363 @@ This could also be done with separate tables for each `type` rather than combini
 ##### Questions + Comments
 
 * Currently, we think that a user should only belong to one organization and that if a user would need to move to a different organization, they would need to create another account. This may be a problematic approach as we currently authenticate via email which would then be the same for both accounts (which we can’t support).
-* Can we think of a better name than `type` and `type_id` which are not descriptive at all?
+* ~~Can we think of a better name than `type` and `type_id` which are not descriptive at all?~~
 * Does this eliminate the need for the `organization` and `role`  columns on users? I lean towards yes.
+
+## Sample Implementation
+
+The sample implementation makes several changes:
+
+* Adds tables for `platforms`, `teams`, `user_group_roles`, and `access_controls`
+* Adds enums for `group_type`, `group_role`, `object_type`, `subject_type`, `access_control_action`
+* Adds a `platform_id` column to `organizations`
+* Removes `role` and `organization_id` from `users`
+* Seeds the database with testable users, orgs, teams, and AC rules for existing projects
+
+All projects in the tests are owned by User A, who is in Platform A, Organization A, and Team A.
+
+Users are assigned some platform, organization, and team roles:
+
+* User B is in Platform A, in Organization A, and is on Team A
+* User C is in Platform A, in Organization A, and is on Team B
+* User D is in Platform A, in Organization B
+* User E is in platform B, in Organization C
+
+For this test the following access control rules have been applied:
+
+* Project A is set to viewable for Organization A
+* Project B is set to viewable for Team A
+* Project B is set to viewable for User D
+* Project C is set to viewable for Platform A
+* Project D is set to viewable for Platform B
+
+We'll test it by looking at what projects show up for each user. Here's what is expected:
+
+* User B should be able to view Project A, Project B, and Project C
+* User C should be able to view Project A and Project C
+* User D should be able to view Project B and Project C
+* User E should be able to view Project D
+
+
+The following SQL will allow the proposed solution to be tested
+
+```sql
+CREATE TABLE platforms (
+    id UUID PRIMARY KEY NOT NULL,
+    name text NOT NULL
+);
+
+ALTER TABLE organizations
+ADD platform_id UUID REFERENCES platforms(id);
+
+CREATE TABLE teams (
+    id UUID PRIMARY KEY NOT NULL,
+    organization_id UUID REFERENCES organizations(id) NOT NULL,
+    name text NOT NULL
+);
+
+CREATE TYPE group_type AS ENUM ('PLATFORM', 'ORGANIZATION', 'TEAM');
+CREATE TYPE group_role AS ENUM ('ADMIN', 'MEMBER');
+
+CREATE TABLE user_group_roles (
+    id UUID PRIMARY KEY NOT NULL,
+    user_id VARCHAR(255) REFERENCES users(id) NOT NULL,
+    group_type group_type NOT NULL,
+    group_id UUID NOT NULL,
+    group_role group_role NOT NULL
+);
+
+CREATE TYPE object_type AS ENUM ('PROJECT', 'SCENE');
+CREATE TYPE subject_type AS ENUM ('ALL', 'PLATFORM', 'ORGANIZATION', 'TEAM', 'USER');
+CREATE TYPE access_control_action AS ENUM ('VIEW', 'EDIT');
+
+CREATE TABLE access_controls (
+    id UUID PRIMARY KEY NOT NULL,
+    object_type object_type NOT NULL,
+    object_id UUID NOT NULL,
+    subject_type subject_type NOT NULL,
+    subject_id text,
+    allowed_action access_control_action NOT NULL
+);
+
+ALTER TABLE users
+    DROP COLUMN role,
+    DROP COLUMN organization_id;
+
+-- Create a platform (A)
+INSERT INTO platforms VALUES (
+    'e9a78d11-9aec-4e5b-b0ef-4390b9a4d6be',
+    'Platform A'
+);
+
+-- Create Platform B
+INSERT INTO platforms VALUES (
+    '6d2da834-ed3a-415c-bddc-5367d35d187b',
+    'Platform B'
+);
+
+-- Create Organizations A + B in Platform A
+INSERT INTO organizations VALUES (
+    '964c0b39-880c-4b0d-8dc7-2f376902bc8a',
+    NOW(),
+    NOW(),
+    'Organization A',
+    'e9a78d11-9aec-4e5b-b0ef-4390b9a4d6be'
+);
+
+INSERT INTO organizations VALUES (
+    'f589b957-5063-400b-a831-00828e965f32',
+    NOW(),
+    NOW(),
+    'Organization B',
+    'e9a78d11-9aec-4e5b-b0ef-4390b9a4d6be'
+);
+
+-- Create Organization C in Platform B
+INSERT INTO organizations VALUES (
+    '8d9262bc-a71b-4601-988f-80e7b8d18c2c',
+    NOW(),
+    NOW(),
+    'Organization C',
+    '6d2da834-ed3a-415c-bddc-5367d35d187b'
+);
+
+-- Create Team A in Organization A
+INSERT INTO teams VALUES (
+    '05d22066-e3c3-4aa4-9f0f-8529ccee237f',
+    '964c0b39-880c-4b0d-8dc7-2f376902bc8a',
+    'Team A'
+);
+
+-- Create Team B in Organization A
+INSERT INTO teams VALUES (
+    '22570baf-4520-43db-a00d-708c71a5c619',
+    '964c0b39-880c-4b0d-8dc7-2f376902bc8a',
+    'Team B'
+);
+
+-- Create Team C in Organization B
+INSERT INTO teams VALUES (
+    'ee1bc085-e066-4b37-93df-cb3649f74e58',
+    'f589b957-5063-400b-a831-00828e965f32',
+    'Team C'
+);
+
+-- Inserting fixture users
+INSERT INTO users (id, created_at, modified_at) VALUES (
+    '5b42822c-3b78-4009-80cd-ac00d272e952',
+    NOW(),
+    NOW()
+), (
+    '71ecbce0-78fb-420a-bf8e-3cfa4f186150',
+    NOW(),
+    NOW()
+), (
+    '34107534-95ad-40d8-b02c-d067b1e23c88',
+    NOW(),
+    NOW()
+), (
+    '4f4cc230-413c-47e5-87ae-775d90e1f41c',
+    NOW(),
+    NOW()
+);
+
+-- Make User A admin of platform
+INSERT INTO user_group_roles VALUES (
+    '087ed9dc-e561-456c-80ce-229b930ee393',
+    'auth0|59318a9d2fbbca3e16bcfc92',
+    'PLATFORM',
+    'e9a78d11-9aec-4e5b-b0ef-4390b9a4d6be',
+    'ADMIN'
+);
+
+-- Make User A admin of organization
+-- The organization is not directly connected to the platform in this prototype
+INSERT INTO user_group_roles VALUES (
+    '35b968b8-52a4-42fb-a28f-bf9dfd3e42af',
+    'auth0|59318a9d2fbbca3e16bcfc92',
+    'ORGANIZATION',
+    '964c0b39-880c-4b0d-8dc7-2f376902bc8a',
+    'ADMIN'
+);
+
+-- Make User A admin of Team A
+INSERT INTO user_group_roles VALUES (
+    '60e97de2-f306-4526-9904-679cdf660e86',
+    'auth0|59318a9d2fbbca3e16bcfc92',
+    'TEAM',
+    '05d22066-e3c3-4aa4-9f0f-8529ccee237f',
+    'ADMIN'
+);
+
+-- Make User B a member of Platform A
+INSERT INTO user_group_roles VALUES (
+    '6268cb4d-b0d8-4a40-a296-cf58908e9de3',
+    '5b42822c-3b78-4009-80cd-ac00d272e952',
+    'PLATFORM',
+    'e9a78d11-9aec-4e5b-b0ef-4390b9a4d6be',
+    'MEMBER'
+);
+
+-- Make User B a member of Organization A
+INSERT INTO user_group_roles VALUES (
+    'f46522e7-642b-40f5-a597-379af8c59659',
+    '5b42822c-3b78-4009-80cd-ac00d272e952',
+    'ORGANIZATION',
+    '964c0b39-880c-4b0d-8dc7-2f376902bc8a',
+    'MEMBER'
+);
+
+-- Make User B a member of Team A
+INSERT INTO user_group_roles VALUES (
+    '9648d6b8-6adf-42b7-b800-31bc6e2dcff3',
+    '5b42822c-3b78-4009-80cd-ac00d272e952',
+    'TEAM',
+    '05d22066-e3c3-4aa4-9f0f-8529ccee237f',
+    'MEMBER'
+);
+
+-- Make User C a member of Platform A
+INSERT INTO user_group_roles VALUES (
+    '7ff5f698-e857-4939-a84e-8ff00423d418',
+    '71ecbce0-78fb-420a-bf8e-3cfa4f186150',
+    'PLATFORM',
+    'e9a78d11-9aec-4e5b-b0ef-4390b9a4d6be',
+    'MEMBER'
+);
+
+-- Make User C a member of Organization A
+INSERT INTO user_group_roles VALUES (
+    '8e0cf268-53a7-4484-a012-25568f9f518c',
+    '71ecbce0-78fb-420a-bf8e-3cfa4f186150',
+    'ORGANIZATION',
+    '964c0b39-880c-4b0d-8dc7-2f376902bc8a',
+    'MEMBER'
+);
+
+-- Make User C a member of Team B
+INSERT INTO user_group_roles VALUES (
+    '8ed5a905-070c-4219-84da-738e6446be18',
+    '71ecbce0-78fb-420a-bf8e-3cfa4f186150',
+    'TEAM',
+    '22570baf-4520-43db-a00d-708c71a5c619',
+    'MEMBER'
+);
+
+-- Make User D a member of Platform A
+INSERT INTO user_group_roles VALUES (
+    'd5a919b4-f10c-46db-9d3e-ab0ef8f44ead',
+    '34107534-95ad-40d8-b02c-d067b1e23c88',
+    'PLATFORM',
+    'e9a78d11-9aec-4e5b-b0ef-4390b9a4d6be',
+    'MEMBER'
+);
+
+-- Make User D a member of Organization B
+INSERT INTO user_group_roles VALUES (
+    '486a4474-1bdb-4c71-a7df-b2b2c46a75d8',
+    '34107534-95ad-40d8-b02c-d067b1e23c88',
+    'ORGANIZATION',
+    '8d9262bc-a71b-4601-988f-80e7b8d18c2c',
+    'MEMBER'
+);
+
+-- Make User D a member of Platform A
+INSERT INTO user_group_roles VALUES (
+    '1ecf1a0b-b37c-4832-bd62-1e3f59d4ddb8',
+    '4f4cc230-413c-47e5-87ae-775d90e1f41c',
+    'PLATFORM',
+    '6d2da834-ed3a-415c-bddc-5367d35d187b',
+    'MEMBER'
+);
+
+-- Make User D a member of Organization A
+INSERT INTO user_group_roles VALUES (
+    '9309231b-289b-4c13-a3ee-7ea72e1e86e3',
+    '4f4cc230-413c-47e5-87ae-775d90e1f41c',
+    'ORGANIZATION',
+    'f589b957-5063-400b-a831-00828e965f32',
+    'MEMBER'
+);
+
+
+INSERT INTO access_controls VALUES
+-- Allow Project C to be viewed by those in Platform A
+(
+    '3a644710-a2b6-4473-bffd-7c5997735697',
+    'PROJECT',
+    '2cc59c57-568d-4ced-99db-221eb6b4ca3d',
+    'PLATFORM',
+    'e9a78d11-9aec-4e5b-b0ef-4390b9a4d6be',
+    'VIEW'
+),
+-- Allow Project A to be viewed by those in Organization A
+(
+    '9c2a8a20-9575-4439-bd6b-4a812c0258f7',
+    'PROJECT',
+    '91ba3348-f7ca-4b66-bacb-a119ca614742',
+    'ORGANIZATION',
+    '964c0b39-880c-4b0d-8dc7-2f376902bc8a',
+    'VIEW'
+),
+-- Allow Project B to be viewed by those on Team A
+(
+    'f3d69c65-0ead-4916-ba7c-c42eb2bd38d4',
+    'PROJECT',
+    '30ee749c-7bf3-4d28-838a-d4aeeb451911',
+    'TEAM',
+    '05d22066-e3c3-4aa4-9f0f-8529ccee237f',
+    'VIEW'
+),
+-- Allow Project D to be viewed by those in Platform B
+(
+    '3dfbf05b-b239-4eae-ab43-fd4e7f1c3259',
+    'PROJECT',
+    '3bc4ca13-d63e-4d62-ba22-363f28144ed2',
+    'PLATFORM',
+    '6d2da834-ed3a-415c-bddc-5367d35d187b',
+    'VIEW'
+),
+-- Allow Project B to be viewed by User D
+(
+    'd68f926f-bd70-4c25-8fec-8de8ff388719',
+    'PROJECT',
+    '30ee749c-7bf3-4d28-838a-d4aeeb451911',
+    'USER',
+    '34107534-95ad-40d8-b02c-d067b1e23c88',
+    'VIEW'
+);
+
+UPDATE projects SET name = 'Project A' WHERE id='91ba3348-f7ca-4b66-bacb-a119ca614742';
+UPDATE projects SET name = 'Project B' WHERE id='30ee749c-7bf3-4d28-838a-d4aeeb451911';
+UPDATE projects SET name = 'Project C' WHERE id='2cc59c57-568d-4ced-99db-221eb6b4ca3d';
+UPDATE projects SET name = 'Project D' WHERE id='3bc4ca13-d63e-4d62-ba22-363f28144ed2';
+```
+
+The following SQL is a template for listing specific objects that a user has access to.
+It takes three parameters, `$OBJECT_TYPE`, `$ACTION_TYPE`, and `$USER_ID`.
+This sql doesn't currently handle ownership since we want to display the applied AC rule.
+
+```sql
+SELECT
+  DISTINCT ON (p.id, acl.allowed_action)
+  acl.subject_type, acl.subject_id, acl.allowed_action, p.name
+FROM user_group_roles ugr
+JOIN access_controls acl
+    ON acl.object_type = $OBJECT_TYPE
+    AND acl.allowed_action = $ACTION_TYPE
+    AND
+    ( acl.subject_type = 'ALL' OR (
+            acl.subject_type::text = ugr.group_type::text
+            AND acl.subject_id::text = ugr.group_id::text
+        ) OR (
+            acl.subject_type = 'USER'
+            AND acl.subject_id = ugr.user_id
+        )
+    )
+JOIN projects p
+    ON p.id::text = acl.object_id::text
+WHERE ugr.user_id = $USER_ID;
+```
+
+For these tests, `$OBJECT_TYPE` and `$ACTION TYPE` will always be `PROJECT` and `VIEW` respectively. Change `$USER_ID` to see what projects that user would be able to view (other than their own).
