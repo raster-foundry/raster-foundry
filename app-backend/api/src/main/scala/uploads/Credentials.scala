@@ -51,7 +51,7 @@ object CredentialsService extends Config with LazyLogging {
     stsRequest.setRoleArn(scopedUploadRoleArn)
     stsRequest.setRoleSessionName(s"upload${uploadId}")
     stsRequest.setWebIdentityToken(jwt)
-    stsRequest.setDurationSeconds(900)
+    stsRequest.setDurationSeconds(3600)
 
     val stsCredentials = stsClient.assumeRoleWithWebIdentity(stsRequest).getCredentials
 
