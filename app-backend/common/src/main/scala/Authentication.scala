@@ -3,8 +3,6 @@ package com.azavea.rf.common
 import akka.http.scaladsl.model.headers.HttpChallenge
 import akka.http.scaladsl.server.AuthenticationFailedRejection.CredentialsRejected
 import akka.http.scaladsl.server._
-import com.azavea.rf.database.Database
-import com.azavea.rf.database.tables._
 import com.azavea.rf.datamodel._
 import com.guizmaii.scalajwt.JwtToken
 import com.guizmaii.scalajwt.ConfigurableJwtValidator
@@ -17,9 +15,13 @@ import com.typesafe.config.ConfigFactory
 import scala.concurrent.Future
 import java.net.URL
 
+import cats.effect.IO
+import com.azavea.rf.database.UserDao
+import doobie.util.transactor.Transactor
+
 trait Authentication extends Directives {
 
-  implicit def database: Database
+  implicit def xa: Transactor[IO]
 
   val configAuth = ConfigFactory.load()
   private val auth0Config = configAuth.getConfig("auth0")
@@ -28,7 +30,7 @@ trait Authentication extends Directives {
   private val jwkSet: JWKSource[SecurityContext] = new RemoteJWKSet(new URL(jwksURL))
 
   // Default user returned when no credentials are provided
-  lazy val anonymousUser:Future[Option[User]] = Users.getUserById("default")
+  lazy val anonymousUser:Future[Option[User]] = UserDao.getUserById("default")
 
   // HTTP Challenge to use for Authentication failures
   lazy val challenge = HttpChallenge("Bearer", "https://rasterfoundry.com")
@@ -63,9 +65,9 @@ trait Authentication extends Directives {
       case Left(e) => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
       case Right((_, jwtClaims)) => {
         val userId = jwtClaims.getStringClaim("sub")
-        onSuccess(Users.getUserById(userId)).flatMap {
+        onSuccess(UserDao.getUserById(userId)).flatMap {
           case Some(user) => provide(user)
-          case None => onSuccess(Users.createUserWithAuthId(userId)).flatMap {
+          case None => onSuccess(UserDao.createUserWithAuthId(userId)).flatMap {
             user => provide(user)
           }
         }

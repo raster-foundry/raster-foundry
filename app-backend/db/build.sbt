@@ -13,7 +13,7 @@ import doobie.util.log.LogHandler
 implicit val han = LogHandler({ e => println("*** " + e) })
 
 // implicit transactor for console testing
-val xa = Transactor.fromDriverManager[IO](
+implicit val xa = Transactor.fromDriverManager[IO](
   "org.postgresql.Driver", "jdbc:postgresql://database.service.rasterfoundry.internal/", "rasterfoundry", "rasterfoundry"
 )
 val y = xa.yolo; import y._

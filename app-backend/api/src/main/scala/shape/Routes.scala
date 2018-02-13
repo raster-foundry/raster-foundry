@@ -13,14 +13,15 @@ import io.circe.generic.JsonCodec
 import io.circe.syntax._
 import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
 import com.azavea.rf.common._
-import com.azavea.rf.database.tables.{Shapes, Users}
-import com.azavea.rf.database.{ActionRunner, Database}
 import com.azavea.rf.datamodel._
+import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel.GeoJsonCodec._
 import geotrellis.shapefile.ShapeFileReader
 import better.files.{File => ScalaFile, _}
-
 import akka.http.scaladsl.server.directives.FileInfo
+import cats.effect.IO
+import com.azavea.rf.database.ShapeDao
+import doobie.util.transactor.Transactor
 import geotrellis.proj4.{CRS, LatLng, WebMercator}
 import geotrellis.slick.Projected
 import geotrellis.vector.reproject.Reproject
@@ -36,10 +37,9 @@ trait ShapeRoutes extends Authentication
   with PaginationDirectives
   with CommonHandlers
   with UserErrorHandler
-  with LazyLogging
-  with ActionRunner {
+  with LazyLogging {
 
-  implicit def database: Database
+  implicit def xa: Transactor[IO]
 
   val shapeRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
@@ -110,10 +110,7 @@ trait ShapeRoutes extends Authentication
   def listShapes: Route = authenticate { user =>
     (withPagination & shapeQueryParams) { (page: PageRequest, queryParams: ShapeQueryParameters) =>
       complete {
-        list[Shape](
-          Shapes.listShapes(page.offset, page.limit, queryParams, user),
-          page.offset, page.limit
-        ) map { p => {
+        ShapeDao.query.filter(queryParams).filter(user).page(page).map { p => {
             fromPaginatedResponseToGeoJson[Shape, Shape.GeoJSON](p)
           }
         }

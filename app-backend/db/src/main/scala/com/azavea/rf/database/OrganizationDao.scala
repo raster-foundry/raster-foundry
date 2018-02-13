@@ -2,13 +2,18 @@ package com.azavea.rf.database
 
 import com.azavea.rf.database.meta.RFMeta._
 import com.azavea.rf.datamodel._
-
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
-
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
+import cats._
+import cats.data._
+import cats.effect.IO
+import cats.implicits._
 import java.util.UUID
 import java.sql.Timestamp
+
+import scala.concurrent.Future
 
 
 object OrganizationDao extends Dao[Organization] {
@@ -34,5 +39,10 @@ object OrganizationDao extends Dao[Organization] {
       "id", "created_at", "modified_at", "name"
     )
   }
+
+  def createOrganization(newOrg: Organization.Create): Future[Organization] = ???
+
+  def updateOrganization(org: Organization, id: UUID): Future[Int] = ???
+
 }
 

@@ -5,7 +5,6 @@ import com.azavea.rf.tile.image.Mosaic
 import com.azavea.rf.database.Database
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.maml._
-
 import com.azavea.maml.ast._
 import com.azavea.maml.eval._
 import com.azavea.maml.eval.tile._
@@ -25,16 +24,22 @@ import geotrellis.vector.{Extent, MultiPolygon}
 import geotrellis.slick.Projected
 import geotrellis.spark.io.postgres.PostgresAttributeStore
 
-import scala.util.{Try, Failure, Success}
+import scala.util.{Failure, Success, Try}
 import java.util.UUID
+
+import cats.effect.IO
+import com.azavea.rf.database.util.RFTransactor
+import doobie.util.transactor.Transactor
+
 import scala.concurrent.{ExecutionContext, Future}
 
 
 /** This interpreter handles resource resolution and compilation of MapAlgebra ASTs */
-class TileResolver(db: Database, ec: ExecutionContext) extends LazyLogging {
+class TileResolver(xa: Transactor[IO], ec: ExecutionContext) extends LazyLogging {
 
-  implicit val database: Database = db
   implicit val execution: ExecutionContext = ec
+  implicit val xa = RFTransactor.xa
+
   val store = PostgresAttributeStore()
 
   val intNdTile = IntConstantTile(NODATA, 256, 256)

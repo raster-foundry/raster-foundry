@@ -1,12 +1,16 @@
 package com.azavea.rf.database.filter
 
+import java.util.UUID
+
 import com.azavea.rf.database.meta.RFMeta._
 import com.azavea.rf.database.Filterable
 import com.azavea.rf.datamodel._
-
 import cats.implicits._
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
+import doobie._
+import doobie.implicits._
+import doobie.Fragments.in
+import doobie.postgres._
+import doobie.postgres.implicits._
 
 
 trait Filterables {
@@ -20,11 +24,16 @@ trait Filterables {
   implicit val permissionsFilter = Filterable[Any, User] { user: User =>
     val filter =
       if (!user.isInRootOrganization) {
-        Some(fr"organizationId = ${user.organizationId}")
+        Some(fr"organization_id = ${user.organizationId}")
       } else {
         None
       }
     List(filter)
+  }
+
+  implicit val orgFilters = Filterable[Any, List[UUID]] { orgIds: List[UUID] =>
+    val f1: Option[doobie.Fragment] = orgIds.toNel.map(ids => in(fr"organization_id", ids))
+    List(f1)
   }
 
   implicit val userQueryParamsFilter = Filterable[Any, UserQueryParameters] { userParams: UserQueryParameters =>
@@ -43,6 +52,12 @@ trait Filterables {
     Filters.imageQP(imgParams)
   }
 
+  implicit val projectQueryParametersFilter = Filterable[Any, ProjectQueryParameters] { projectParams: ProjectQueryParameters =>
+    Filters.organizationQP(projectParams.orgParams) ++
+      Filters.timestampQP(projectParams.timestampParams) ++
+      Filters.userQP(projectParams.userParams)
+  }
+
   implicit val annotationQueryparamsFilter = Filterable[Any, AnnotationQueryParameters] { annotParams: AnnotationQueryParameters =>
     Filters.organizationQP(annotParams.orgParams) ++
     Filters.userQP(annotParams.userParams) ++ List(
@@ -52,6 +67,12 @@ trait Filterables {
       annotParams.maxConfidence.map({ maxc => fr"max_confidence = $maxc" }),
       annotParams.quality.map({ quality => fr"quality = $quality" })
     )
+  }
+
+  implicit val mapTokenQueryParametersFilter = Filterable[Any, CombinedMapTokenQueryParameters] { mapTokenParams: CombinedMapTokenQueryParameters =>
+    Filters.organizationQP(mapTokenParams.orgParams) ++
+    Filters.userQP(mapTokenParams.userParams) ++
+    Filters.mapTokenQP(mapTokenParams.mapTokenParams)
   }
 
   implicit val combinedToolCategoryParamsFilter =
@@ -84,6 +105,12 @@ trait Filterables {
         Fragments.in(fr"export_status", exportStatuses)
       })
     )
+  }
+
+  implicit val shapeQueryparamsFilter = Filterable[Any, ShapeQueryParameters] { shapeParams: ShapeQueryParameters =>
+    Filters.organizationQP(shapeParams.orgParams) ++
+    Filters.timestampQP(shapeParams.timestampParams) ++
+    Filters.userQP(shapeParams.userParams)
   }
 }
 

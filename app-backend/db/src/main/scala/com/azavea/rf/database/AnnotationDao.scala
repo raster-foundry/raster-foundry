@@ -56,6 +56,17 @@ object AnnotationDao extends Dao[Annotation] {
       "quality", "geometry"
     )
   }
+
+  def insertAnnotations(annotations: Seq[Annotation.Create], projectId: UUID, user: User): Seq[Annotation] = ???
+
+  def updateAnnotation(updatedAnnotation: Annotation.GeoJSON, id: UUID, user: User): Future[Int] = ???
+
+  def deleteAnnotation(id: UUID, user: User): Future[Int] = ???
+
+  def deleteProjectAnnotations(projectId: UUID, user: User): Future[Int] = ???
+
+  // Double check the return type here
+  def listProjectLabels(projectId: UUID, user: User): Future[PaginatedResponse[String]] = ???
 }
 
 object AnnotationJson {

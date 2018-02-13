@@ -1,17 +1,17 @@
 package com.azavea.rf.api.image
 
-import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
-import com.azavea.rf.database.tables.Images
-import com.azavea.rf.database.Database
+import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
+import com.azavea.rf.database.ImageDao
 import com.azavea.rf.datamodel._
-
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-
 import java.util.UUID
+
+import cats.effect.IO
+import doobie.util.transactor.Transactor
 
 
 trait ImageRoutes extends Authentication
@@ -20,7 +20,7 @@ trait ImageRoutes extends Authentication
     with CommonHandlers
     with UserErrorHandler {
 
-  implicit def database: Database
+  implicit def xa: Transactor[IO]
 
   val imageRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
@@ -38,7 +38,7 @@ trait ImageRoutes extends Authentication
   def listImages: Route = authenticate { user =>
     (withPagination & imageQueryParameters) { (page, imageParams) =>
       complete {
-        Images.listImages(page, imageParams, user)
+        ImageDao.query.filter(imageParams).filter(user).page(page)
       }
     }
   }
@@ -57,7 +57,7 @@ trait ImageRoutes extends Authentication
     get {
       rejectEmptyResponse {
         complete {
-          Images.getImage(imageId, user)
+          ImageDao.query.filter(user).selectOption(imageId)
         }
       }
     }

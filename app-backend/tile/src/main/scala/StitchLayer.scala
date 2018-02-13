@@ -14,6 +14,7 @@ import cats.data._
 import cats.implicits._
 import java.util.UUID
 
+import com.azavea.rf.database.util.RFTransactor
 import geotrellis.spark.io.postgres.PostgresAttributeStore
 
 import scala.concurrent._
@@ -21,7 +22,7 @@ import scala.util.{Failure, Success, Try}
 
 object StitchLayer extends LazyLogging with Config {
   implicit lazy val memcachedClient = LayerCache.memcachedClient
-  implicit val database = Database.DEFAULT
+  implicit val xa = RFTransactor.xa
 
   val system = AkkaSystem.system
   implicit val blockingDispatcher = system.dispatchers.lookup("blocking-dispatcher")

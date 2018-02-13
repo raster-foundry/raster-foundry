@@ -10,8 +10,6 @@ import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables._
 import com.azavea.rf.common.{Config => CommonConfig}
-
-
 import com.azavea.maml.eval._
 import com.azavea.maml.ast.Expression
 import com.azavea.maml.eval.directive.SourceDirectives._
@@ -31,9 +29,11 @@ import spray.json.DefaultJsonProtocol._
 import cats.data._
 import cats.data.Validated._
 import cats.implicits._
-
 import java.util.UUID
 import java.sql.Timestamp
+
+import com.azavea.rf.database.util.RFTransactor
+
 import scala.concurrent._
 import scala.util._
 
@@ -47,7 +47,7 @@ import scala.util._
   * things that require time to generate, usually a network fetch, use AsyncLoadingCache
   */
 object LayerCache extends Config with LazyLogging with KamonTrace {
-  implicit val database = Database.DEFAULT
+  implicit lazy val xa = RFTransactor.xa
   val system = AkkaSystem.system
   implicit val blockingDispatcher = system.dispatchers.lookup("blocking-dispatcher")
 

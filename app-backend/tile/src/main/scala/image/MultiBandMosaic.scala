@@ -18,6 +18,7 @@ import cats.implicits._
 import java.util.UUID
 
 import com.azavea.rf.common.utils.TileUtils
+import com.azavea.rf.database.util.RFTransactor
 
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -27,10 +28,10 @@ import com.typesafe.scalalogging.LazyLogging
 
 object MultiBandMosaic extends LazyLogging with KamonTrace {
   lazy val memcachedClient = LayerCache.memcachedClient
-  implicit val database = Database.DEFAULT
   val system = AkkaSystem.system
   implicit val blockingDispatcher =
     system.dispatchers.lookup("blocking-dispatcher")
+  implicit lazy val xa = RFTransactor.xa
 
   val store = PostgresAttributeStore()
   val rfCache = new CacheClient(memcachedClient)

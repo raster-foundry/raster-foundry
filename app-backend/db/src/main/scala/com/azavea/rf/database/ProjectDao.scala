@@ -2,15 +2,22 @@ package com.azavea.rf.database
 
 import com.azavea.rf.database.meta.RFMeta._
 import com.azavea.rf.datamodel._
-
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
+import cats._
+import cats.data._
+import cats.effect.IO
+import cats.implicits._
 import geotrellis.slick.Projected
 import geotrellis.vector.Polygon
-
 import java.util.UUID
 import java.sql.Timestamp
+
+import com.lonelyplanet.akka.http.extensions.PageRequest
+
+import scala.concurrent.Future
 
 
 object ProjectDao extends Dao[Project] {
@@ -26,6 +33,28 @@ object ProjectDao extends Dao[Project] {
       manual_order, is_single_band, single_band_options
     FROM
   """ ++ tableF
+
+  def insertProject(newProject: Project.Create, user: User): Future[Project] = ???
+
+  def updateProject(project: Project, id: UUID, user: User): Future[Int] = ???
+
+  def deleteProject(id: UUID, user: User): Future[Int] = ???
+
+  def listAOIs(projectId: UUID, page: PageRequest, user: User): Future[PaginatedResponse[Project]] = ???
+
+  def listProjectScenes(projectId: UUID, page: PageRequest, sceneParams: CombinedSceneQueryParams, user: User): Future[PaginatedResponse[Scene]] = ???
+
+  def listProjectSceneOrder(projectId: UUID, page: PageRequest, user: User): Future[PaginatedResponse[UUID]] = ???
+
+  // Check swagger spec for proper return type
+  def replaceScenesInProject(sceneIds: Seq[UUID], projectId: UUID): Future[PaginatedResponse[Scene]] = ???
+
+  // Check swagger spec for proper return type
+  def deleteScenesFromProject(sceneIds: Seq[UUID], projectId: UUID): Future[Int] = ???
+
+  def addScenesToProjectFromQuery(combinedSceneQueryParams: CombinedSceneQueryParams, projectId: UUID, user: User): Future[PaginatedResponse[Scene]] = ???
+
+  def addScenesToProject(sceneIds: Seq[UUID], projectId: UUID, user: User): Future[Seq[Scene]] = ???
 
   def create(
     user: User,

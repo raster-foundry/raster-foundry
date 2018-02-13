@@ -51,6 +51,27 @@ object AoiDao extends Dao[AOI] {
       "created_by", "modified_by", "owner", "area", "filters"
     )
   }
+
+  def updateAOI(aoi: AOI, id: UUID, user: User) = ???
+
+  def deleteAOI(id: UUID, user: User) = ???
+
+  /** Create an AOI - note has to replicate some of this logic here:
+    *
+    *  for {
+            a <- AOIs.insertAOI(aoi.toAOI(user))
+            _ <- AoisToProjects.insert(AoiToProject(a.id, projectId, true, new Timestamp((new Date).getTime)))
+          } yield a
+        }) { a =>
+          complete(StatusCodes.Created, a)
+        }
+
+    * @param aoi
+    * @param projectId
+    * @return
+    */
+  def createAOI(aoi: AOI, projectId: UUID, user: User): Future[AOI] = ???
+
 }
 
 object AoiJson {

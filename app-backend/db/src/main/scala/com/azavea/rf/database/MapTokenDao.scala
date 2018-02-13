@@ -2,13 +2,18 @@ package com.azavea.rf.database
 
 import com.azavea.rf.database.meta.RFMeta._
 import com.azavea.rf.datamodel._
-
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
-
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
+import cats._
+import cats.data._
+import cats.effect.IO
+import cats.implicits._
 import java.sql.Timestamp
 import java.util.{Date, UUID}
+
+import scala.concurrent.Future
 
 
 object MapTokenDao extends Dao[MapToken] {
@@ -22,6 +27,12 @@ object MapTokenDao extends Dao[MapToken] {
         owner, organization_id, name, project_id, toolrun_id
       FROM
     """ ++ tableF
+
+  def insertMapToken(newMapToken: MapToken.Create, user: User): Future[MapToken] = ???
+
+  def updateMapToken(mapToken: MapToken, id: UUID, user: User): Future[Int] = ???
+
+  def deleteMapToken(id: UUID, user: User): Future[Int] = ???
 
   def create(
     user: User,

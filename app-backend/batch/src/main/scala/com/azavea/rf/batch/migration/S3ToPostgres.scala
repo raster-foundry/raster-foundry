@@ -1,10 +1,9 @@
 package com.azavea.rf.batch.migration
 
+import cats.effect.IO
 import com.azavea.rf.batch._
 import com.azavea.rf.batch.util._
 import com.azavea.rf.batch.ingest.model._
-import com.azavea.rf.database.{Database => DB}
-
 import geotrellis.proj4.CRS
 import geotrellis.raster.io._
 import geotrellis.raster.histogram._
@@ -14,15 +13,15 @@ import geotrellis.spark.io.LayerAttributes
 import geotrellis.spark.io.postgres.PostgresAttributeStore
 import geotrellis.spark.io.s3._
 import geotrellis.vector._
-
 import com.amazonaws.services.s3.AmazonS3URI
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
+import doobie.util.transactor.Transactor
 import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
-case class S3ToPostgres(uri: AmazonS3URI, attributeTable: String = "layer_attributes", layerName: Option[String] = None)(implicit val database: DB) extends Job {
+case class S3ToPostgres(uri: AmazonS3URI, attributeTable: String = "layer_attributes", layerName: Option[String] = None)(implicit val xa: Transactor[IO]) extends Job {
   val name = S3ToPostgres.name
 
   private implicit val cache: Cache[(LayerId, String), Any] = Scaffeine().softValues().build()

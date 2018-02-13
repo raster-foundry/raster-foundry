@@ -40,5 +40,11 @@ object Filters {
     val f5 = imageParams.scene.toList.toNel.map(scenes => in(fr"scene", scenes))
     List(f1, f2, f3, f4, f5)
   }
+
+  def mapTokenQP(mapTokenParams: MapTokenQueryParameters): List[Option[Fragment]] = {
+    val f1 = mapTokenParams.name.map(name => fr"name = $name")
+    val f2 = mapTokenParams.projectId.map(projectId => fr"project_id = $projectId")
+    List(f1, f2)
+  }
 }
 

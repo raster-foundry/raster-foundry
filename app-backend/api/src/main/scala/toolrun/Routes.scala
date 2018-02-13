@@ -2,20 +2,22 @@ package com.azavea.rf.api.toolrun
 
 import com.azavea.rf.common._
 import com.azavea.rf.common.ast._
-import com.azavea.rf.database.{ActionRunner, Database}
-import com.azavea.rf.database.tables.ToolRuns
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.rf.tool.eval.PureInterpreter
-
+import com.azavea.rf.database.filter.Filterables._
 import com.azavea.maml.serve.InterpreterExceptionHandling
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import cats.implicits._
-
 import java.util.UUID
+
+import cats.effect.IO
+import com.azavea.rf.database.ToolRunDao
+import doobie.util.transactor.Transactor
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 
@@ -24,10 +26,9 @@ trait ToolRunRoutes extends Authentication
     with ToolRunQueryParametersDirective
     with CommonHandlers
     with UserErrorHandler
-    with InterpreterExceptionHandling
-    with ActionRunner {
+    with InterpreterExceptionHandling {
 
-  implicit def database: Database
+  implicit def xa: Transactor[IO]
 
   val toolRunRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
@@ -46,7 +47,7 @@ trait ToolRunRoutes extends Authentication
   def listToolRuns: Route = authenticate { user =>
     (withPagination & toolRunQueryParameters) { (page, runParams) =>
       complete {
-        list(ToolRuns.listToolRuns(page.offset, page.limit, page.sort, runParams, user), page.offset, page.limit)
+        ToolRunDao.query.filter(runParams).filter(user).page(page)
       }
     }
   }
@@ -54,7 +55,7 @@ trait ToolRunRoutes extends Authentication
   def createToolRun: Route = authenticate { user =>
     entity(as[ToolRun.Create]) { newRun =>
       authorize(user.isInRootOrSameOrganizationAs(newRun)) {
-        onSuccess(write(ToolRuns.insertToolRun(newRun, user))) { toolRun =>
+        onSuccess(ToolRunDao.insertToolRun(newRun, user)) { toolRun =>
           handleExceptions(interpreterExceptionHandler) {
             complete {
               (StatusCodes.Created, toolRun)

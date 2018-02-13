@@ -2,12 +2,17 @@ package com.azavea.rf.database
 
 import com.azavea.rf.database.meta.RFMeta._
 import com.azavea.rf.datamodel.User
-
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
-
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
+import cats._
+import cats.data._
+import cats.effect.IO
+import cats.implicits._
 import java.util.UUID
+
+import scala.concurrent.Future
 
 
 object UserDao extends Dao[User] {
@@ -21,5 +26,8 @@ object UserDao extends Dao[User] {
     FROM
   """ ++ tableF
 
+  def getUserById(id: String): Future[Option[User]] = ???
+
+  def createUserWithAuthId(id: String): Future[User] = ???
 }
 

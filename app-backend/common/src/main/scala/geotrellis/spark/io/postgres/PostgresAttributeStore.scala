@@ -2,13 +2,14 @@ package geotrellis.spark.io.postgres
 
 import java.util.concurrent.Executors
 
+import cats.effect.IO
 import cats.implicits._
 import com.azavea.rf.common.Config
-import com.azavea.rf.database.tables._
-import com.azavea.rf.database.{Database => DB}
+import com.azavea.rf.database.LayerAttributeDao
 import com.azavea.rf.datamodel.LayerAttribute
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.typesafe.scalalogging.LazyLogging
+import doobie.util.transactor.Transactor
 import geotrellis.raster.io.json._
 import geotrellis.spark.LayerId
 import geotrellis.spark.io.DiscreteLayerAttributeStore
@@ -29,12 +30,12 @@ object PostgresAttributeStoreThreadPool {
 }
 
 object PostgresAttributeStore {
-  def apply(attributeTable: String = "layer_attributes")(implicit database: DB): PostgresAttributeStore =
+  def apply(attributeTable: String = "layer_attributes")(implicit xa: Transactor[IO]): PostgresAttributeStore =
     new PostgresAttributeStore(attributeTable)
 }
 
 /** A blocking GeoTrellis attribute store */
-class PostgresAttributeStore(val attributeTable: String = "layer_attributes")(implicit val database: DB)
+class PostgresAttributeStore(val attributeTable: String = "layer_attributes")(implicit xa: Transactor[IO])
   extends DiscreteLayerAttributeStore with HistogramJsonFormats with LazyLogging {
 
   import PostgresAttributeStoreThreadPool._
@@ -43,28 +44,22 @@ class PostgresAttributeStore(val attributeTable: String = "layer_attributes")(im
 
   def read[T: JsonFormat](layerId: LayerId, attributeName: String): T = {
     logger.debug(s"read($layerId-$attributeName)")
-    Await.result(LayerAttributes.read(layerId.name, layerId.zoom, attributeName).map { opt =>
-      opt
-        .map(_.value)
-        .getOrElse(throw new Exception(s"No attribute: $layerId, $attributeName"))
-        .noSpaces
-        .parseJson
-        .convertTo[T]
-    }, awaitTimeout)
+    Await.result(LayerAttributeDao.getAttribute(layerId, attributeName)
+      .map(_.value.noSpaces.parseJson.convertTo[T]), awaitTimeout)
   }
 
   def readAll[T: JsonFormat](attributeName: String): Map[LayerId, T] = {
     logger.debug(s"readAll($attributeName)")
-    Await.result(LayerAttributes.readAll(attributeName).map {
-      _.map { la =>
-        la.layerId -> la.value.noSpaces.parseJson.convertTo[T]
+    Await.result(LayerAttributeDao.getAllAttributes(attributeName).map {
+      _.map { attribute =>
+        attribute.layerId -> attribute.value.noSpaces.parseJson.convertTo[T]
       }.toMap
     }, awaitTimeout)
   }
 
   def write[T: JsonFormat](layerId: LayerId, attributeName: String, value: T): Unit = {
     logger.debug(s"write($layerId-$attributeName)")
-    Await.result(LayerAttributes.insertLayerAttribute(
+    Await.result(LayerAttributeDao.insertLayerAttribute(
       LayerAttribute(
         layerName = layerId.name,
         zoom = layerId.zoom,
@@ -76,45 +71,40 @@ class PostgresAttributeStore(val attributeTable: String = "layer_attributes")(im
 
   def getHistogram[T: JsonFormat](layerId: LayerId): Future[Option[T]] = {
     logger.debug(s"getHistogram($layerId)")
-    LayerAttributes.read(layerId.name, layerId.zoom, "histogram").map { opt =>
-      Option(opt
-        .map(_.value)
-        .getOrElse(throw new Exception(s"No attribute: $layerId, Histogram"))
-        .noSpaces
-        .parseJson
-        .convertTo[T])
+    LayerAttributeDao.getAttribute(layerId, "histogram").map{ attribute =>
+      Option(attribute.value.noSpaces.parseJson.convertTo[T])
     }
   }
 
   def layerExists(layerId: LayerId): Boolean = {
     logger.debug(s"layerExists($layerId)")
-    Await.result(LayerAttributes.layerExists(layerId.name, layerId.zoom), awaitTimeout)
+    Await.result(LayerAttributeDao.layerExists(layerId), awaitTimeout)
   }
 
   def delete(layerId: LayerId): Unit = {
     logger.debug(s"delete($layerId)")
-    Await.result(LayerAttributes.delete(layerId.name, layerId.zoom), awaitTimeout)
+    Await.result(LayerAttributeDao.delete(layerId), awaitTimeout)
   }
 
   def delete(layerId: LayerId, attributeName: String): Unit = {
     logger.debug(s"delete($layerId-$attributeName)")
-    Await.result(LayerAttributes.delete(layerId.name, layerId.zoom, attributeName), awaitTimeout)
+    Await.result(LayerAttributeDao.delete(layerId, attributeName), awaitTimeout)
   }
 
   def layerIds: Seq[LayerId] = {
     logger.debug(s"layerIds($layerIds)")
-    Await.result(LayerAttributes.layerIds.map(_.map { case (name, zoom) => LayerId(name, zoom) }.toSeq), awaitTimeout)
+    Await.result(LayerAttributeDao.layerIds.map(_.map { case (name, zoom) => LayerId(name, zoom) }.toSeq), awaitTimeout)
   }
 
   def layerIds(layerNames: Set[String]): Seq[LayerId] = {
     logger.debug(s"layerIdsWithLayerNames($layerNames)")
-    Await.result(LayerAttributes.layerIds(layerNames).map(
+    Await.result(LayerAttributeDao.layerIds(layerNames).map(
       _.map { case (name, zoom) => LayerId(name, zoom) }.toSeq), awaitTimeout)
   }
 
   def maxZoomsForLayers(layerNames: Set[String]): Future[Option[Map[String, Int]]] = {
     logger.debug(s"maxZoomsForLayers($layerNames)")
-    LayerAttributes.maxZoomsForLayers(layerNames).map {
+    LayerAttributeDao.maxZoomsForLayers(layerNames).map {
       case seq if seq.length > 0 => seq.toMap.some
       case _ => None
     }
@@ -122,6 +112,6 @@ class PostgresAttributeStore(val attributeTable: String = "layer_attributes")(im
 
   def availableAttributes(id: LayerId): Seq[String] = {
     logger.debug(s"availableAttributes($id")
-    Await.result(LayerAttributes.availableAttributes(id.name, id.zoom).map(_.toSeq), awaitTimeout)
+    Await.result(LayerAttributeDao.availableAttributes(id.name, id.zoom).map(_.toSeq), awaitTimeout)
   }
 }

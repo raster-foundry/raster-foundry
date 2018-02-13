@@ -14,6 +14,7 @@ import cats.data._
 import cats.implicits._
 import java.util.UUID
 
+import com.azavea.rf.database.util.RFTransactor
 import geotrellis.spark.io.postgres.PostgresAttributeStore
 
 import scala.concurrent._
@@ -22,8 +23,8 @@ import scala.util._
 object GlobalSummary extends LazyLogging {
   val system = AkkaSystem.system
   implicit val blockingDispatcher = system.dispatchers.lookup("blocking-dispatcher")
+  implicit lazy val xa = RFTransactor.xa
 
-  implicit val database = Database.DEFAULT
   val store = PostgresAttributeStore()
 
   /** Get the [[RasterExtent]] which describes the meaningful subset of a layer from metadata */

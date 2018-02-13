@@ -1,7 +1,5 @@
 package com.azavea.rf.common
 
-import com.azavea.rf.database.Database
-import com.azavea.rf.database.tables.{ToolRuns, Tools}
 import com.azavea.rf.datamodel.{Tool, ToolRun, User}
 import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.rf.tool.eval._

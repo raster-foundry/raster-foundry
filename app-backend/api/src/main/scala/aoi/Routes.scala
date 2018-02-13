@@ -2,8 +2,6 @@ package com.azavea.rf.api.aoi
 
 import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
 import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
-import com.azavea.rf.database.tables.AOIs
-import com.azavea.rf.database.filters._
 import com.azavea.rf.database._
 import com.azavea.rf.datamodel._
 
@@ -55,7 +53,7 @@ trait AoiRoutes extends Authentication
   def updateAOI(id: UUID): Route = authenticate { user =>
     entity(as[AOI]) { aoi =>
       authorize(user.isInRootOrSameOrganizationAs(aoi)) {
-        onSuccess(AOIs.updateAOI(aoi, id, user)) {
+        onSuccess(AoiDao.updateAOI(aoi, id, user)) {
           completeSingleOrNotFound
         }
       }
@@ -63,7 +61,7 @@ trait AoiRoutes extends Authentication
   }
 
   def deleteAOI(id: UUID): Route = authenticate { user =>
-    onSuccess(AOIs.deleteAOI(id, user)) {
+    onSuccess(AoiDao.deleteAOI(id, user)) {
       completeSingleOrNotFound
     }
   }

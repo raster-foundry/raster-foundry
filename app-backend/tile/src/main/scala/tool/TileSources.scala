@@ -6,7 +6,6 @@ import com.azavea.rf.tile.image._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.maml._
-
 import com.azavea.maml.ast._
 import com.azavea.maml.eval._
 import com.typesafe.scalalogging.LazyLogging
@@ -25,6 +24,10 @@ import scala.util._
 import scala.concurrent._
 import java.util.UUID
 
+import cats.effect.IO
+import com.azavea.rf.database.util.RFTransactor
+import doobie.util.transactor.Transactor
+
 
 /** Interpreting a [[MapAlgebraAST]] requires providing a function from
   *  (at least) an RFMLRaster (the source/terminal-node type of the AST)
@@ -38,14 +41,15 @@ object TileSources extends LazyLogging {
     * correctly, so that valid  histograms can be generated.
     */
 
-  implicit val database = Database.DEFAULT
+
+  implicit val xa = RFTransactor.xa
   val system = AkkaSystem.system
   implicit val blockingDispatcher = system.dispatchers.lookup("blocking-dispatcher")
   val store = PostgresAttributeStore()
 
   def fullDataWindow(
     rs: Set[RFMLRaster]
-  )(implicit database: Database): OptionT[Future, (Extent, Int)] = {
+  )(implicit xa: Transactor[IO]): OptionT[Future, (Extent, Int)] = {
     rs
       .toStream
       .map(dataWindow)

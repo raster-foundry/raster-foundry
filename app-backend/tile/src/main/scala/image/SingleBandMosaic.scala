@@ -5,9 +5,8 @@ import com.azavea.rf.common.cache.CacheClient
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.tables.ScenesToProjects
-import com.azavea.rf.datamodel.{Project, SingleBandOptions, ColorRampMosaic}
+import com.azavea.rf.datamodel.{ColorRampMosaic, Project, SingleBandOptions}
 import com.azavea.rf.tile._
-
 import com.typesafe.scalalogging.LazyLogging
 import cats.data._
 import cats.implicits._
@@ -24,11 +23,12 @@ import geotrellis.vector.{Extent, Polygon}
 import scala.concurrent._
 import java.util.UUID
 
+import com.azavea.rf.database.util.RFTransactor
+
 
 object SingleBandMosaic extends LazyLogging with KamonTrace {
   lazy val memcachedClient = LayerCache.memcachedClient
-  implicit val database = Database.DEFAULT
-
+  implicit val xa = RFTransactor.xa
   val system = AkkaSystem.system
   implicit val blockingDispatcher =
     system.dispatchers.lookup("blocking-dispatcher")

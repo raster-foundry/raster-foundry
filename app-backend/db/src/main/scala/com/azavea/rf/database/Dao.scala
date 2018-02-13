@@ -77,6 +77,15 @@ object Dao {
       (selectF ++ Fragments.whereAndOpt(filters: _*) ++ fr"OFFSET $offset" ++ fr"LIMIT $limit").query[Model]
 
     /** Provide a list of responses */
+    def list(implicit xa: Transactor[IO]): Future[List[Model]] = {
+      val query = (selectF ++ Fragments.whereAndOpt(filters: _*))
+        .query[Model]
+        .list
+
+      query.transact(xa).unsafeToFuture
+    }
+
+    /** Provide a list of responses */
     def list(offset: Int, limit: Int)(implicit xa: Transactor[IO]): Future[List[Model]] = {
       val query = listQ(offset, limit).list
       query.transact(xa).unsafeToFuture
@@ -92,6 +101,11 @@ object Dao {
     /** Select a single value - returning an Optional value */
     def selectOption(implicit xa: Transactor[IO]): Future[Option[Model]] =
       selectQ.option.transact(xa).unsafeToFuture
+
+    def selectOption(id: UUID)(implicit xa: Transactor[IO]): Future[Option[Model]] = {
+      val selectStatement = selectF ++ fr"id = $id"
+      selectStatement.query[Model].option.transact(xa).unsafeToFuture
+    }
 
   }
 }
