@@ -91,6 +91,8 @@ dl.meta-list > dt {
 
 dl.meta-list > dd {
   margin-bottom: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .clear-image-source-filter{
@@ -943,6 +945,7 @@ div.lab-workspace.is-dragging {
 .map-container-controls {
   position: absolute;
   top: .5rem;
+
   right: .5rem;
   z-index: 1025;
   display: flex;
@@ -958,6 +961,7 @@ div.lab-workspace.is-dragging {
   }
   &.align-left {
       left: 0.5rem;
+      right: auto; // ie11 fix
       right: initial;
   }
 }
@@ -1643,7 +1647,7 @@ rf-operation-node{
   pointer-events: auto;
   padding: 1em;
   display: flex;
-  align-items: center;
+  align-items: stretch; //ie 11 fix uses stretch instead of center
 }
 
 rf-classify-node {
@@ -2042,19 +2046,18 @@ rf-node-selector {
   height: 2.5em;
   display: flex;
 
-
   .btn {
     color: $white;
     font-weight: 700;
-    width: 15em;
-    flex: 1;
+    width: 21rem;
+    flex: none; // ie11 fix, we use width so dont need flex
     display: flex;
     justify-content: space-between;
   }
 }
 
 .node-selector-close {
-  flex: 0;
+  flex: none; // ie11 fix uses none instead of 0
   display: flex;
   flex-direction: column;
   .btn {
@@ -2064,7 +2067,7 @@ rf-node-selector {
 
 .node-select {
   position: relative;
-  width: 15em;
+  width: 21rem;
   height: 1em;
   background: $shade-dark;
 }
@@ -2073,7 +2076,7 @@ rf-node-selector {
   position: absolute;
   top: 2em;
   background: $shade-dark;
-  width: 15em;
+  width: 21rem;
   max-height: 16em;
   overflow-x: hidden;
   overflow-y: auto;

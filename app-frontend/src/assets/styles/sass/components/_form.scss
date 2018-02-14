@@ -183,9 +183,6 @@ input[type=radio] {
 }
 
 .form-group.search-form {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
   border-radius: $border-radius-base;
   border: 1px solid $border-color-default;
   position: relative;
@@ -218,9 +215,10 @@ input[type=radio] {
   .input-icon {
     left: 8px;
     position: absolute;
-    align-self: center;
-    margin-top: -1px;
     opacity: 0.5;
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0;
   }
 }
 
