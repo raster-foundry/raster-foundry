@@ -1,21 +1,19 @@
-<div class="container column-stretch dashboard">
+<div class="container dashboard">
   <div class="sidebar">
-    <div class="sidebar-scrollable">
-      <nav>
-        <a ui-sref="settings.profile" ui-sref-active="active">Profile</a>
-        <a ui-sref="settings.tokens.api"
-           ng-class="{
-                     'active': $ctrl.$state.$current.name.includes('settings.tokens')
-                     }">
-          Tokens/Shared Maps
-        </a>
-        <a ui-sref="settings.connections" ui-sref-active="active">Third Party Connections</a>
-        <a ui-sref="settings.organizations"
-           ui-sref-active="active"
-           feature-flag="profile-org-edit"
-        >Organizations</a>
-      </nav>
-    </div>
+    <nav>
+      <a ui-sref="settings.profile" ui-sref-active="active">Profile</a>
+      <a ui-sref="settings.tokens.api"
+         ng-class="{
+                   'active': $ctrl.$state.$current.name.includes('settings.tokens')
+                   }">
+        Tokens/Shared Maps
+      </a>
+      <a ui-sref="settings.connections" ui-sref-active="active">Third Party Connections</a>
+      <a ui-sref="settings.organizations"
+         ui-sref-active="active"
+         feature-flag="profile-org-edit"
+      >Organizations</a>
+    </nav>
   </div>
   <ui-view class="main"></ui-view>
 </div>

@@ -283,6 +283,8 @@
   }
   .scene-metadata {
     max-width: 350px;
+    width: 100%; // ie11 fix
+    max-height: 100vh; // ie11 fix
     display: flex;
     flex-direction: column;
     border-right: 1px solid $border-color-default;
@@ -294,8 +296,7 @@
       border-bottom: 1px solid $border-color-default;
     }
     .scene-metadata-scrollable {
-      overflow-y: auto;
-      overflow-x: hidden;
+      overflow: auto;
     }
   }
   .scene-preview-container {

@@ -144,7 +144,7 @@
 
   > * {
     flex: none;
-    flex-basis: 100%;
+    flex-basis: auto; // ie11 fix, use auto instead of 100%
     align-self: stretch;
   }
 }
