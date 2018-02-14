@@ -54,7 +54,7 @@
   cron:
     name: "docker-prune"
     user: "{{ jenkins_name }}"
-    special_time: "hourly"
+    special_time: "daily"
     job: docker system prune -af
     state: "present"
   changed_when: False
