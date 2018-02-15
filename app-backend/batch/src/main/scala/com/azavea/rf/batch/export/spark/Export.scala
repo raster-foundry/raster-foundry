@@ -33,6 +33,7 @@ import geotrellis.spark.io._
 import geotrellis.spark.io.file._
 import geotrellis.spark.io.hadoop._
 import geotrellis.spark.io.s3._
+import geotrellis.spark.regrid._
 import geotrellis.spark.tiling._
 import geotrellis.vector.MultiPolygon
 import org.apache.hadoop.fs.Path
@@ -57,11 +58,17 @@ object Export extends SparkJob with Config with LazyLogging {
     interpretRDD(ast, ed.input.resolution, sceneLocs, projLocs) match {
       case Invalid(errs) => throw InterpreterException(errs)
       case Valid(rdd) => {
-
-        val mt: MapKeyTransform = rdd.metadata.layout.mapTransform
         val crs: CRS = rdd.metadata.crs
 
         if(!ed.output.stitch) {
+          val targetRDD: TileLayerRDD[SpatialKey] =
+            ed.output.rasterSize match {
+              case Some(size) => rdd.regrid(size)
+              case None => rdd
+            }
+
+          val mt: MapKeyTransform = targetRDD.metadata.layout.mapTransform
+
           /* Create GeoTiffs and output them */
           val singles: RDD[(SpatialKey, SinglebandGeoTiff)] =
             rdd.map({ case (key, tile) => (key, SinglebandGeoTiff(tile, mt(key), crs)) })
@@ -106,7 +113,6 @@ object Export extends SparkJob with Config with LazyLogging {
       val layerId = LayerId(ld.layerId.toString, ed.input.resolution)
       val md = store.readMetadata[TileLayerMetadata[SpatialKey]](layerId)
       val hist = ld.colorCorrections.map { _ => store.read[Array[Histogram[Double]]](LayerId(layerId.name, 0), "histogram") }
-      val crs = ed.output.crs.getOrElse(md.crs)
 
       val q = reader.query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](layerId)
 
@@ -123,12 +129,15 @@ object Export extends SparkJob with Config with LazyLogging {
             }
           })})
 
-      ed.output.rasterSize match {
-        case Some(rs) if md.crs != crs || rs != md.tileCols || rs != md.tileRows =>
+      (ed.output.rasterSize, ed.output.crs) match {
+        case (Some(rs), Some(crs)) =>
           query.reproject(ZoomedLayoutScheme(crs, rs))._2
-        case _ if md.crs != crs =>
+        case (None, Some(crs)) =>
           query.reproject(ZoomedLayoutScheme(crs, math.min(md.tileCols, md.tileRows)))._2
-        case _ => query
+        case (Some(rs), None) =>
+          query.regrid(rs)
+        case (None, None) =>
+          query
       }
     }
 
