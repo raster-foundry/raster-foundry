@@ -28,7 +28,6 @@ object Datasource {
 
   def create = Create.apply _
 
-
   @JsonCodec
   case class Create (
     organizationId: UUID,

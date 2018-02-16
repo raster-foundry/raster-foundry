@@ -1,9 +1,7 @@
 package com.azavea.rf.api.datasource
 
 import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
-import com.azavea.rf.database.tables.Datasources
 import com.azavea.rf.database._
-import com.azavea.rf.database.filters._
 import com.azavea.rf.datamodel._
 
 import akka.http.scaladsl.server.Route
@@ -22,9 +20,7 @@ trait DatasourceRoutes extends Authentication
     with DatasourceQueryParameterDirective
     with PaginationDirectives
     with UserErrorHandler
-    with CommonHandlers
-    with ActionRunner {
-  implicit def database: Database
+    with CommonHandlers {
   implicit def xa: Transactor[IO]
 
   val datasourceRoutes: Route = handleExceptions(userExceptionHandler) {
@@ -51,7 +47,7 @@ trait DatasourceRoutes extends Authentication
     get {
       rejectEmptyResponse {
         complete {
-          readOne[Datasource](Datasources.getDatasource(datasourceId, user))
+          DatasourceDao.getDatasource(datasourceId, user)
         }
       }
     }
@@ -60,7 +56,7 @@ trait DatasourceRoutes extends Authentication
   def createDatasource: Route = authenticate { user =>
     entity(as[Datasource.Create]) { newDatasource =>
       authorize(user.isInRootOrSameOrganizationAs(newDatasource)) {
-        onSuccess(write[Datasource](Datasources.insertDatasource(newDatasource, user))) { datasource =>
+        onSuccess(DatasourceDao.createDatasource(newDatasource, user)) { datasource =>
           complete((StatusCodes.Created, datasource))
         }
       }
@@ -70,7 +66,7 @@ trait DatasourceRoutes extends Authentication
   def updateDatasource(datasourceId: UUID): Route = authenticate { user =>
     entity(as[Datasource]) { updateDatasource =>
       authorize(user.isInRootOrOwner(updateDatasource)) {
-        onSuccess(update(Datasources.updateDatasource(updateDatasource, datasourceId, user))) {
+        onSuccess(DatasourceDao.updateDatasource(updateDatasource, datasourceId, user)) {
           completeSingleOrNotFound
         }
       }
@@ -78,8 +74,9 @@ trait DatasourceRoutes extends Authentication
   }
 
   def deleteDatasource(datasourceId: UUID): Route = authenticate { user =>
-    onSuccess(drop(Datasources.deleteDatasource(datasourceId, user))) {
-      completeSingleOrNotFound
-    }
+    ???
+    // onSuccess(drop(Datasources.deleteDatasource(datasourceId, user))) {
+    //   completeSingleOrNotFound
+    // }
   }
 }
