@@ -63,12 +63,12 @@ object DatasourceDao extends Dao[Datasource] {
       composites = ${datasource.composites},
       extras = ${datasource.extras},
       bands = ${datasource.bands}
-      where id = $id
+      where id = ${id}
       """
 
     for {
       scenes <- {
-        (fr"SELECT count(*) from" ++ this.tableF ++ fr"WHERE id = $id AND owner = ${user.id}")
+        (fr"SELECT count(*) from" ++ this.tableF ++ fr"WHERE id = ${id} AND owner = ${user.id}")
           .query[Int].unique.transact(xa).unsafeToFuture
       }
       updateApplied <- updateQuery.update.run.transact(xa).unsafeToFuture if scenes == 1
@@ -77,7 +77,7 @@ object DatasourceDao extends Dao[Datasource] {
 
   def deleteDatasource(id: UUID, user: User)
                       (implicit xa: Transactor[IO]): Future[Boolean] = {
-    (fr"DELETE FROM " ++ this.tableF ++ fr" WHERE owner = ${user.id} AND id = $id")
+    (fr"DELETE FROM " ++ this.tableF ++ fr" WHERE owner = ${user.id} AND id = ${id}")
       .update
       .run
       .transact(xa)
