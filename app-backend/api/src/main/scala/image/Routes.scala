@@ -38,7 +38,7 @@ trait ImageRoutes extends Authentication
   def listImages: Route = authenticate { user =>
     (withPagination & imageQueryParameters) { (page, imageParams) =>
       complete {
-        ImageDao.query.filter(imageParams).filter(user).page(page)
+        ImageDao.query.filter(imageParams).filter(user).page(page).transact(xa).unsafeToFuture
       }
     }
   }
@@ -46,7 +46,7 @@ trait ImageRoutes extends Authentication
   def createImage: Route = authenticate { user =>
     entity(as[Image.Banded]) { newImage =>
       authorize(user.isInRootOrSameOrganizationAs(newImage)) {
-        onSuccess(Images.insertImage(newImage, user)) { image =>
+        onSuccess(ImageDao.insertImage(newImage, user)) { image =>
           complete((StatusCodes.Created, image))
         }
       }
@@ -66,7 +66,7 @@ trait ImageRoutes extends Authentication
   def updateImage(imageId: UUID): Route = authenticate { user =>
     entity(as[Image.WithRelated]) { updatedImage =>
       authorize(user.isInRootOrSameOrganizationAs(updatedImage)) {
-        onSuccess(Images.updateImage(updatedImage, imageId, user)) {
+        onSuccess(ImageDao.updateImage(updatedImage, imageId, user)) {
           completeSingleOrNotFound
         }
       }
@@ -74,7 +74,10 @@ trait ImageRoutes extends Authentication
   }
 
   def deleteImage(imageId: UUID): Route = authenticate { user =>
-    onSuccess(Images.deleteImage(imageId, user)) {
+    onSuccess(
+      ImageDao.deleteImage(imageId, user)
+        .transact(xa).unsafeToFuture
+    ) {
       completeSingleOrNotFound
     }
   }

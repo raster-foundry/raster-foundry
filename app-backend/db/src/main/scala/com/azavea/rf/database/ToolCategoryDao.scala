@@ -1,6 +1,7 @@
 package com.azavea.rf.database
 
 import com.azavea.rf.database.meta.RFMeta._
+import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.datamodel.{ ToolCategory, User }
 
 import doobie._, doobie.implicits._
