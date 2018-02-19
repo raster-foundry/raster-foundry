@@ -34,6 +34,7 @@ import geotrellis.spark.io.file._
 import geotrellis.spark.io.hadoop._
 import geotrellis.spark.io.s3._
 import geotrellis.spark.regrid._
+import geotrellis.spark.resample._
 import geotrellis.spark.tiling._
 import geotrellis.vector.MultiPolygon
 import org.apache.hadoop.fs.Path
@@ -112,13 +113,32 @@ object Export extends SparkJob with Config with LazyLogging {
   )(implicit @transient sc: SparkContext): Unit = {
     val rdds = layers.map { ld =>
       val (reader, store) = getRfLayerManagement(ld)
-      val layerId = LayerId(ld.layerId.toString, ed.input.resolution)
-      val md = store.readMetadata[TileLayerMetadata[SpatialKey]](layerId)
-      val hist = ld.colorCorrections.map { _ => store.read[Array[Histogram[Double]]](LayerId(layerId.name, 0), "histogram") }
+      val requestedLayerId = LayerId(ld.layerId.toString, ed.input.resolution)
 
-      val q = reader.query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](layerId)
+      val maxAvailableZoom =
+        store
+          .layerIds
+          .filter { case LayerId(name, _) => name == requestedLayerId.name }
+          .map { _.zoom }
+          .max
 
-      val query: ContextRDD[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]] =
+      val maxLayerId = requestedLayerId.copy(zoom = maxAvailableZoom)
+      val maxMetadata = store.readMetadata[TileLayerMetadata[SpatialKey]](maxLayerId)
+      val maxMapTransform = maxMetadata.mapTransform
+
+      val layoutScheme = ZoomedLayoutScheme(maxMetadata.crs, math.min(maxMetadata.tileCols, maxMetadata.tileRows))
+
+      val requestedMapTransform = layoutScheme.levelForZoom(requestedLayerId.zoom).layout.mapTransform
+
+      lazy val requestedQuery = reader.query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](requestedLayerId)
+      lazy val maxQuery = reader.query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](maxLayerId)
+
+      val hist =
+        ld
+          .colorCorrections
+          .map { _ => store.read[Array[Histogram[Double]]](requestedLayerId.copy(zoom = 0), "histogram") }
+
+      val queryLayer = (q: BoundLayerQuery[SpatialKey, TileLayerMetadata[SpatialKey], RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]]]) =>
         mask
           .fold(q)(mp => q.where(Intersects(mp)))
           .result
@@ -130,6 +150,14 @@ object Export extends SparkJob with Config with LazyLogging {
               case _ => ctile
             }
           })})
+
+      val query: MultibandTileLayerRDD[SpatialKey] =
+        if (requestedLayerId.zoom <= maxAvailableZoom)
+          queryLayer(requestedQuery)
+        else
+          queryLayer(maxQuery).resample(maxAvailableZoom, requestedLayerId.zoom)
+
+      val md = query.metadata
 
       (ed.output.rasterSize, ed.output.crs) match {
         case (Some(rs), Some(crs)) =>
