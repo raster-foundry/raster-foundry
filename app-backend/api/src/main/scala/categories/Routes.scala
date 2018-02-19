@@ -66,7 +66,7 @@ trait ToolCategoryRoutes extends Authentication
   }
 
   def deleteToolCategory(toolCategorySlug: String): Route = authenticate { user =>
-    onSuccess(ToolCategoryDao.deleteToolCategory(toolCategorySlug)) {
+    onSuccess(ToolCategoryDao.query.filter(fr"slug_label = $toolCategoryslug").delete) {
       case 1 => complete(StatusCodes.NoContent)
       case 0 => complete(StatusCodes.NotFound)
       case count => throw new IllegalStateException(

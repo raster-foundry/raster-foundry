@@ -25,16 +25,16 @@ abstract class Dao[Model: Composite] {
   /** An abstract select statement to be used for constructing queries */
   def selectF: Fragment
 
-  /** A fragment which holds count SQL */
-  val countF = (sql"SELECT count(*) FROM" ++ tableF)
-
   /** Begin construction of a complex, filtered query */
-  def query: Dao.QueryBuilder[Model] = Dao.QueryBuilder[Model](selectF, countF, List.empty)
+  def query: Dao.QueryBuilder[Model] = Dao.QueryBuilder[Model](selectF, tableF, List.empty)
 }
 
 object Dao {
 
-  case class QueryBuilder[Model: Composite](selectF: Fragment, countF: Fragment, filters: List[Option[Fragment]]) {
+  case class QueryBuilder[Model: Composite](selectF: Fragment, tableF: Fragment, filters: List[Option[Fragment]]) {
+
+    val countF = fr"SELECT count(*) FROM" ++ tableF
+    val deleteF = fr"DELETE FROM" ++ tableF
 
     /** Add another filter to the query being constructed */
     def filter[M >: Model, T](thing: T)(implicit filterable: Filterable[M, T]): QueryBuilder[Model] =
@@ -107,6 +107,17 @@ object Dao {
       selectStatement.query[Model].option.transact(xa).unsafeToFuture
     }
 
+    def deleteQOption: Option[Update0] = {
+      if (filters.length > 0) {
+        Some((deleteF ++ Fragments.whereAndOpt(filters: _*)).update)
+      }
+      None
+    }
+
+    def delete(implicit xa: Transactor[IO]): Future[Int] =
+      deleteQOption
+        .getOrElse(throw new Exception("Unsafe delete - delete requires filters"))
+        .run.transact(xa).unsafeToFuture
   }
 }
 
