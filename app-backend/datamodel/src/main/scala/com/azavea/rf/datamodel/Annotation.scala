@@ -42,7 +42,7 @@ case class Annotation(
   label: String,
   description: Option[String],
   machineGenerated: Option[Boolean],
-  confidence: Option[Double],
+  confidence: Option[Float],
   quality: Option[AnnotationQuality],
   geometry: Option[Projected[Geometry]]
 ) extends GeoJSONSerializable[Annotation.GeoJSON] {
@@ -81,7 +81,7 @@ case class AnnotationProperties(
     label: String,
     description: Option[String],
     machineGenerated: Option[Boolean],
-    confidence: Option[Double],
+    confidence: Option[Float],
     quality: Option[AnnotationQuality]
 )
 
@@ -91,7 +91,7 @@ case class AnnotationPropertiesCreate(
     label: String,
     description: Option[String],
     machineGenerated: Option[Boolean],
-    confidence: Option[Double],
+    confidence: Option[Float],
     quality: Option[AnnotationQuality]
 )
 
@@ -123,7 +123,7 @@ object Annotation {
         label: String,
         description: Option[String],
         machineGenerated: Option[Boolean],
-        confidence: Option[Double],
+        confidence: Option[Float],
         quality: Option[AnnotationQuality],
         geometry: Option[Projected[Geometry]]
     ) extends OwnerCheck {
