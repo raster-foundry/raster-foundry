@@ -78,6 +78,5 @@ object AoiDao extends Dao[AOI] {
 
     transaction
   }
-
 }
 

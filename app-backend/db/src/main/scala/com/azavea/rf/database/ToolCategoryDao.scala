@@ -10,7 +10,6 @@ import cats._, cats.data._, cats.effect.IO, cats.implicits._
 import java.sql.Timestamp
 import java.util.UUID
 
-
 object ToolCategoryDao extends Dao[ToolCategory] {
 
   val tableName = "tool_categories"
@@ -23,6 +22,7 @@ object ToolCategoryDao extends Dao[ToolCategory] {
 
   def insertToolCategory(category: ToolCategory, user: User): ConnectionIO[ToolCategory] = {
     val id = UUID.randomUUID
+
     (fr"INSERT INTO" ++ tableF ++ fr"""
         (slug_label, created_at, created_by, modified_at, modified_by, category)
         VALUE
@@ -30,6 +30,10 @@ object ToolCategoryDao extends Dao[ToolCategory] {
     """).update.withUniqueGeneratedKeys[ToolCategory](
       "slug_label", "created_at", "created_by", "modified_at", "modified_by", "category"
     )
+  }
+
+  def deleteToolCategory(slug: String, user: User): ConnectionIO[Int] = {
+    this.query.filter(fr"slug_label = $slug AND created_by = ${user.id}").delete
   }
 }
 

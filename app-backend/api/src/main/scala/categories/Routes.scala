@@ -3,6 +3,7 @@ package com.azavea.rf.api.toolcategory
 import com.azavea.rf.common.{Authentication, UserErrorHandler}
 import com.azavea.rf.database._
 import com.azavea.rf.datamodel._
+import com.azavea.rf.database.filter.Filterables._
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
@@ -50,7 +51,11 @@ trait ToolCategoryRoutes extends Authentication
     handleExceptions(userExceptionHandler) {
       authenticate { user =>
         entity(as[ToolCategory.Create]) { newToolCategory =>
-          onSuccess(ToolCategoryDao.insertToolCategory(newToolCategory, user.id)) { toolCategory =>
+          onSuccess(
+            ToolCategoryDao.insertToolCategory(
+              newToolCategory.toToolCategory(user.id), user
+            ).transact(xa).unsafeToFuture()
+          ) { toolCategory =>
             complete((StatusCodes.Created, toolCategory))
           }
         }
@@ -60,13 +65,16 @@ trait ToolCategoryRoutes extends Authentication
   def getToolCategory(toolCategorySlug: String): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        ToolCategoryDao.query.filter(fr"slug_label = $toolCategorySlug").selectOption(None)
+        ToolCategoryDao.query.filter(fr"slug_label = $toolCategorySlug").selectOption
       }
     }
   }
 
   def deleteToolCategory(toolCategorySlug: String): Route = authenticate { user =>
-    onSuccess(ToolCategoryDao.query.filter(fr"slug_label = $toolCategoryslug").delete) {
+    onSuccess(
+      ToolCategoryDao.deleteToolCategory(toolCategorySlug, user)
+        .transact(xa).unsafeToFuture
+    ) {
       case 1 => complete(StatusCodes.NoContent)
       case 0 => complete(StatusCodes.NotFound)
       case count => throw new IllegalStateException(
