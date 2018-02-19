@@ -21,7 +21,7 @@ object ToolCategoryDao extends Dao[ToolCategory] {
     FROM
   """ ++ tableF
 
-  def insertToolCategory(category: ToolCategory, user: User) = {
+  def insertToolCategory(category: ToolCategory, user: User): ConnectionIO[ToolCategory] = {
     val id = UUID.randomUUID
     (fr"INSERT INTO" ++ tableF ++ fr"""
         (slug_label, created_at, created_by, modified_at, modified_by, category)

@@ -28,7 +28,7 @@ object AoiDao extends Dao[AOI] {
       FROM
     """ ++ tableF
 
-  def updateAOI(aoi: AOI, id: UUID, user: User)(implicit xa: Transactor[IO]): Future[Int] = {
+  def updateAOI(aoi: AOI, id: UUID, user: User): ConnectionIO[Int] = {
     (fr"UPDATE" ++ tableF ++ fr"SET" ++ fr"""
         modified_at = NOW(),
         modified_by = ${user.id},
@@ -36,10 +36,10 @@ object AoiDao extends Dao[AOI] {
         filters = ${aoi.filters}
       WHERE
         id = ${aoi.id}
-    """).update.run.transact(xa).unsafeToFuture
+    """).update.run
   }
 
-  def createAOI(aoi: AOI, projectId: UUID, user: User)(implicit xa: Transactor[IO]): Future[AOI] = {
+  def createAOI(aoi: AOI, projectId: UUID, user: User): ConnectionIO[AOI] = {
     val id = UUID.randomUUID
     val ownerId = Ownership.checkOwner(user, Some(aoi.owner))
 
@@ -59,10 +59,10 @@ object AoiDao extends Dao[AOI] {
       _ <- AoiToProjectDao.create(createdAoi, projectId)
     } yield aoi
 
-    transaction.transact(xa).unsafeToFuture
+    transaction
   }
 
-  def deleteAOI(id: UUID, user: User)(implicit xa: Transactor[IO]): Future[Int]={
+  def deleteAOI(id: UUID, user: User): ConnectionIO[Int]={
     val deleteAoiToProject = (
       fr"DELETE FROM" ++ AoiToProjectDao.tableF ++ fr"WHERE aoi_id = ${id}"
     ).update.run
@@ -76,7 +76,7 @@ object AoiDao extends Dao[AOI] {
       del <- deleteAoi
     } yield del
 
-    transaction.transact(xa).unsafeToFuture
+    transaction
   }
 
 }

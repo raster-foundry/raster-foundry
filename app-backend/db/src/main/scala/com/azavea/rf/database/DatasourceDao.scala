@@ -49,8 +49,7 @@ object DatasourceDao extends Dao[Datasource] {
     )
   }
 
-  def updateDatasource(datasource: Datasource, id: UUID, user: User)
-                      (implicit xa: Transactor[IO]): Future[Int] = {
+  def updateDatasource(datasource: Datasource, id: UUID, user: User): ConnectionIO[Int] = {
     // fetch datasource so we can check if user is allowed to update (access control)
     val now = new Timestamp((new java.util.Date()).getTime())
     val updateQuery =
@@ -63,38 +62,26 @@ object DatasourceDao extends Dao[Datasource] {
       composites = ${datasource.composites},
       extras = ${datasource.extras},
       bands = ${datasource.bands}
-      where id = ${id}
+      where id = ${id} AND owner = ${user.id}
       """
-
-    for {
-      scenes <- {
-        (fr"SELECT count(*) from" ++ this.tableF ++ fr"WHERE id = ${id} AND owner = ${user.id}")
-          .query[Int].unique.transact(xa).unsafeToFuture
-      }
-      updateApplied <- updateQuery.update.run.transact(xa).unsafeToFuture if scenes == 1
-    } yield updateApplied
+    updateQuery.update.run
   }
 
-  def deleteDatasource(id: UUID, user: User)
-                      (implicit xa: Transactor[IO]): Future[Boolean] = {
+  def deleteDatasource(id: UUID, user: User): ConnectionIO[Int] = {
     (fr"DELETE FROM " ++ this.tableF ++ fr" WHERE owner = ${user.id} AND id = ${id}")
       .update
       .run
-      .transact(xa)
-      .unsafeToFuture.map((count: Int) => count > 0)
   }
 
-  def getDatasource(id: UUID, user: User)
-                   (implicit xa: Transactor[IO]): Future[Option[Datasource]] = {
+  def getDatasource(id: UUID, user: User): ConnectionIO[Option[Datasource]] = {
     this.query
       .filter(fr"owner = ${user.id} or owner = 'default'")
       .selectOption
   }
 
-  def createDatasource(dsCreate: Datasource.Create, user: User)
-                      (implicit xa: Transactor[IO]): Future[Datasource] = {
+  def createDatasource(dsCreate: Datasource.Create, user: User): ConnectionIO[Datasource] = {
     val datasource = dsCreate.toDatasource(user)
-    this.create(datasource, user).transact(xa).unsafeToFuture().map(_ => datasource)
+    this.create(datasource, user)
   }
 }
 

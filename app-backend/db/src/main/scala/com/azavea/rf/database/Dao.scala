@@ -41,8 +41,8 @@ object Dao {
       this.copy(filters = filters ++ filterable.toFilters(thing))
 
     /** Provide a list of responses within the PaginatedResponse wrapper */
-    def page(pageRequest:  PageRequest)(implicit xa: Transactor[IO]): Future[PaginatedResponse[Model]] = {
-      val transaction = for {
+    def page(pageRequest: PageRequest): ConnectionIO[PaginatedResponse[Model]] = {
+      for {
         page <- (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(pageRequest)).query[Model].list
         count <- (countF ++ Fragments.whereAndOpt(filters: _*)).query[Int].unique
       } yield {
@@ -51,60 +51,54 @@ object Dao {
 
         PaginatedResponse[Model](count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, page)
       }
-
-      transaction.transact(xa).unsafeToFuture
     }
 
-    def listQ(pageRequest: PageRequest)(implicit xa: Transactor[IO]): Query0[Model] =
+
+    def listQ(pageRequest: PageRequest): Query0[Model] =
       (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(Some(pageRequest))).query[Model]
 
     /** Provide a list of responses */
-    def list(pageRequest: PageRequest)(implicit xa: Transactor[IO]): Future[List[Model]] = {
-      val query = listQ(pageRequest).list
-      query.transact(xa).unsafeToFuture
+    def list(pageRequest: PageRequest): ConnectionIO[List[Model]] = {
+      listQ(pageRequest).list
     }
 
-    def listQ(limit: Int)(implicit xa: Transactor[IO]): Query0[Model] =
+    def listQ(limit: Int): Query0[Model] =
       (selectF ++ Fragments.whereAndOpt(filters: _*) ++ fr"LIMIT $limit").query[Model]
 
     /** Provide a list of responses */
-    def list(limit: Int)(implicit xa: Transactor[IO]): Future[List[Model]] = {
-      val query = listQ(limit).list
-      query.transact(xa).unsafeToFuture
+    def list(limit: Int): ConnectionIO[List[Model]] = {
+      listQ(limit).list
     }
 
-    def listQ(offset: Int, limit: Int)(implicit xa: Transactor[IO]): Query0[Model] =
+    def listQ(offset: Int, limit: Int): Query0[Model] =
       (selectF ++ Fragments.whereAndOpt(filters: _*) ++ fr"OFFSET $offset" ++ fr"LIMIT $limit").query[Model]
 
     /** Provide a list of responses */
-    def list(implicit xa: Transactor[IO]): Future[List[Model]] = {
-      val query = (selectF ++ Fragments.whereAndOpt(filters: _*))
+    def list: ConnectionIO[List[Model]] = {
+      (selectF ++ Fragments.whereAndOpt(filters: _*))
         .query[Model]
         .list
-
-      query.transact(xa).unsafeToFuture
     }
 
     /** Provide a list of responses */
-    def list(offset: Int, limit: Int)(implicit xa: Transactor[IO]): Future[List[Model]] = {
-      val query = listQ(offset, limit).list
-      query.transact(xa).unsafeToFuture
+    def list(offset: Int, limit: Int): ConnectionIO[List[Model]] = {
+      listQ(offset, limit).list
     }
 
     def selectQ: Query0[Model] =
       (selectF ++ Fragments.whereAndOpt(filters: _*)).query[Model]
 
-    /** Select a single value - throw on failure */
-    def select(implicit xa: Transactor[IO]): Future[Model] =
-      selectQ.unique.transact(xa).unsafeToFuture
-
     /** Select a single value - returning an Optional value */
-    def selectOption(implicit xa: Transactor[IO]): Future[Option[Model]] =
-      selectQ.option.transact(xa).unsafeToFuture
+    def selectOption: ConnectionIO[Option[Model]] =
+      selectQ.option
 
-    def selectOption(id: UUID)(implicit xa: Transactor[IO]): Future[Option[Model]] = {
-      val selectStatement = selectF ++ fr"id = $id"
-      selectStatement.query[Model].option.transact(xa).unsafeToFuture
+    def selectOption(id: UUID): ConnectionIO[Option[Model]] = {
+      (selectF ++ fr"id = $id").query[Model].option
+    }
+
+    /** Select a single value - throw on failure */
+    def select: ConnectionIO[Model] = {
+      selectQ.unique
     }
 
     def deleteQOption: Option[Update0] = {
@@ -114,10 +108,10 @@ object Dao {
       None
     }
 
-    def delete(implicit xa: Transactor[IO]): Future[Int] =
+    def delete: ConnectionIO[Int] =
       deleteQOption
         .getOrElse(throw new Exception("Unsafe delete - delete requires filters"))
-        .run.transact(xa).unsafeToFuture
+        .run
   }
 }
 
