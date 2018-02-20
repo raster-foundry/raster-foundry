@@ -55,7 +55,7 @@ trait ImageRoutes extends Authentication
   def createImage: Route = authenticate { user =>
     entity(as[Image.Banded]) { newImage =>
       authorize(user.isInRootOrSameOrganizationAs(newImage)) {
-        onSuccess(ImageDao.insertImage(newImage, user)) { image =>
+        onSuccess(ImageDao.insertImage(newImage, user).transact(xa).unsafeToFuture) { image =>
           complete((StatusCodes.Created, image))
         }
       }
@@ -66,7 +66,7 @@ trait ImageRoutes extends Authentication
     get {
       rejectEmptyResponse {
         complete {
-          ImageDao.query.filter(user).selectOption(imageId)
+          ImageDao.query.filter(user).selectOption(imageId).transact(xa).unsafeToFuture
         }
       }
     }
@@ -75,7 +75,7 @@ trait ImageRoutes extends Authentication
   def updateImage(imageId: UUID): Route = authenticate { user =>
     entity(as[Image.WithRelated]) { updatedImage =>
       authorize(user.isInRootOrSameOrganizationAs(updatedImage)) {
-        onSuccess(ImageDao.updateImage(updatedImage, imageId, user)) {
+        onSuccess(ImageDao.updateImage(updatedImage.toImage, imageId, user).transact(xa).unsafeToFuture) {
           completeSingleOrNotFound
         }
       }
