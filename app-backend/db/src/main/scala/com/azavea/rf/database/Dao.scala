@@ -117,8 +117,6 @@ object Dao {
         None
       } else {
         Some((deleteF ++ Fragments.whereAndOpt(filters: _*)).update)
-      } else {
-        None
       }
     }
 

@@ -62,6 +62,14 @@ object AoiDao extends Dao[AOI] {
     transaction
   }
 
+  def listAOIs(projectId: UUID, user: User): ConnectionIO[List[AOI]] = {
+      (selectF ++
+      fr"INNER JOIN" ++ AoiToProjectDao.tableF ++ fr"a2p" ++
+      fr"ON a2p.aoi_id = id" ++ Fragments.whereAndOpt(
+        Some(fr"a2p.project_id = ${projectId}")
+      )).query[AOI].list
+  }
+
   def deleteAOI(id: UUID, user: User): ConnectionIO[Int]={
     val deleteAoiToProject = (
       fr"DELETE FROM" ++ AoiToProjectDao.tableF ++ fr"WHERE aoi_id = ${id}"
