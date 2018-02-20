@@ -24,6 +24,7 @@ lazy val commonSettings = Seq(
     "-Ypartial-unification",
     "-Ypatmat-exhaust-depth", "100"
   ),
+  updateOptions := updateOptions.value.withGigahorse(false),
   externalResolvers := Seq(
     "Geotoolkit Repo" at "http://maven.geotoolkit.org",
     "Open Source Geospatial Foundation Repo" at "http://download.osgeo.org/webdav/geotools/",
