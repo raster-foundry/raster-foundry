@@ -30,6 +30,11 @@ import com.typesafe.scalalogging.LazyLogging
 import doobie.util.transactor.Transactor
 import com.azavea.rf.database.filter.Filterables._
 
+
+import doobie._, doobie.implicits._
+import doobie.postgres._, doobie.postgres.implicits._
+
+
 @JsonCodec
 case class BulkAcceptParams(sceneIds: List[UUID])
 
@@ -250,7 +255,7 @@ trait ProjectRoutes extends Authentication
   def listProjects: Route = authenticate { user =>
     (withPagination & projectQueryParameters) { (page, projectQueryParameters) =>
       complete {
-        ProjectDao.query.filter(projectQueryParameters).filter(user).page(page)
+        ProjectDao.query.filter(projectQueryParameters).filter(user).page(page).transact(xa).unsafeToFuture
       }
     }
   }
@@ -258,7 +263,7 @@ trait ProjectRoutes extends Authentication
   def createProject: Route = authenticate { user =>
     entity(as[Project.Create]) { newProject =>
       authorize(user.isInRootOrSameOrganizationAs(newProject)) {
-        onSuccess(ProjectDao.insertProject(newProject, user)) { project =>
+        onSuccess(ProjectDao.insertProject(newProject, user).transact(xa).unsafeToFuture) { project =>
           complete(StatusCodes.Created, project)
         }
       }
@@ -268,7 +273,7 @@ trait ProjectRoutes extends Authentication
   def getProject(projectId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        ProjectDao.query.filter(user).selectOption(projectId)
+        ProjectDao.query.filter(user).selectOption(projectId).transact(xa).unsafeToFuture
       }
     }
   }
@@ -276,7 +281,7 @@ trait ProjectRoutes extends Authentication
   def updateProject(projectId: UUID): Route = authenticate { user =>
     entity(as[Project]) { updatedProject =>
       authorize(user.isInRootOrSameOrganizationAs(updatedProject)) {
-        onSuccess(ProjectDao.updateProject(updatedProject, projectId, user)) {
+        onSuccess(ProjectDao.updateProject(updatedProject, projectId, user).transact(xa).unsafeToFuture) {
           completeSingleOrNotFound
         }
       }
@@ -284,21 +289,21 @@ trait ProjectRoutes extends Authentication
   }
 
   def deleteProject(projectId: UUID): Route = authenticate { user =>
-    onSuccess(ProjectDao.deleteProject(projectId, user)) {
+    onSuccess(ProjectDao.deleteProject(projectId, user).transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }
 
   def listLabels(projectId: UUID): Route = authenticate { user =>
     complete {
-      AnnotationDao.listProjectLabels(projectId, user)
+      AnnotationDao.listProjectLabels(projectId, user).transact(xa).unsafeToFuture
     }
   }
 
   def listAnnotations(projectId: UUID): Route = authenticate { user =>
     (withPagination & annotationQueryParams) { (page: PageRequest, queryParams: AnotationQueryParameters) =>
       complete {
-        AnnotationDao.query.filter(queryParams).filter(user).page(page)
+        AnnotationDao.query.filter(queryParams).filter(user).page(page).transact(xa).unsafeToFuture
           .map { p => {
             fromPaginatedResponseToGeoJson[Annotation, Annotation.GeoJSON](p)
           }
@@ -311,7 +316,7 @@ trait ProjectRoutes extends Authentication
     entity(as[AnnotationFeatureCollectionCreate]) { fc =>
       val annotationsCreate = fc.features map { _.toAnnotationCreate }
       complete {
-        AnnotationDao.insertAnnotations(annotationsCreate, projectId, user)
+        AnnotationDao.insertAnnotations(annotationsCreate, projectId, user).transact(xa).unsafeToFuture
           .map { as => fromSeqToFeatureCollection(as)}
       }
     }
@@ -345,7 +350,7 @@ trait ProjectRoutes extends Authentication
   def getAnnotation(annotationId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        AnnotationDao.query.filter(user).selectOption(annotationId).map {
+        AnnotationDao.query.filter(user).selectOption(annotationId).transact(xa).unsafeToFuture.map {
           _ map { _.toGeoJSONFeature }
         }
       }
@@ -355,7 +360,7 @@ trait ProjectRoutes extends Authentication
   def updateAnnotation(annotationId: UUID): Route = authenticate { user =>
     entity(as[Annotation.GeoJSON]) { updatedAnnotation: Annotation.GeoJSON =>
       authorize(user.isInRootOrSameOrganizationAs(updatedAnnotation.properties)) {
-        onSuccess(AnnotationDao.updateAnnotation(updatedAnnotation, annotationId, user)) { count =>
+        onSuccess(AnnotationDao.updateAnnotation(updatedAnnotation, annotationId, user).transact(xa).unsafeToFuture) { count =>
           completeSingleOrNotFound(count)
         }
       }
@@ -363,13 +368,13 @@ trait ProjectRoutes extends Authentication
   }
 
   def deleteAnnotation(annotationId: UUID): Route = authenticate { user =>
-    onSuccess(AnnotationDao.deleteAnnotation(annotationId, user)) {
+    onSuccess(AnnotationDao.deleteAnnotation(annotationId, user).transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }
 
   def deleteProjectAnnotations(projectId: UUID): Route = authenticate { user =>
-    onSuccess(AnnotationDao.query.filter(fr"").deletedeleteProjectAnnotations(projectId, user)) {
+    onSuccess(AnnotationDao.query.filter(fr"").deletedeleteProjectAnnotations(projectId, user).transact(xa).unsafeToFuture) {
       completeSomeOrNotFound
     }
   }
@@ -377,7 +382,7 @@ trait ProjectRoutes extends Authentication
   def listAOIs(projectId: UUID): Route = authenticate { user =>
     withPagination { page =>
       complete {
-        ProjectDao.listAOIs(projectId, page, user)
+        AoiDao.query.filter(fr"project_id = ${projectId}").page(page).transact(xa).unsafeToFuture
       }
     }
   }
@@ -385,7 +390,7 @@ trait ProjectRoutes extends Authentication
   def createAOI(projectId: UUID): Route = authenticate { user =>
     entity(as[AOI.Create]) { aoi =>
       authorize(user.isInRootOrSameOrganizationAs(aoi)) {
-        onSuccess(AoiDao.createAOI(aoi.toAOI(user), projectId, user: User)) { a =>
+        onSuccess(AoiDao.createAOI(aoi.toAOI(user), projectId, user: User).transact(xa).unsafeToFuture()) { a =>
           complete(StatusCodes.Created, a)
         }
       }

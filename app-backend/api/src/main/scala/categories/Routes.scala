@@ -13,6 +13,13 @@ import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import doobie._
 import doobie.implicits._
 import cats.effect.IO
+import com.azavea.rf.database.filter.Filterables._
+
+import doobie._
+import doobie.implicits._
+import doobie.Fragments.in
+import doobie.postgres._
+import doobie.postgres.implicits._
 
 import scala.util.{Success, Failure}
 
@@ -42,7 +49,7 @@ trait ToolCategoryRoutes extends Authentication
   def listToolCategories: Route = authenticate { user =>
     (withPagination & toolCategoryQueryParameters) { (page, combinedParams) =>
       complete {
-        ToolCategoryDao.query.filter(combinedParams).page(page)
+        ToolCategoryDao.query.filter(combinedParams).page(page).transact(xa).unsafeToFuture
       }
     }
   }
@@ -65,7 +72,7 @@ trait ToolCategoryRoutes extends Authentication
   def getToolCategory(toolCategorySlug: String): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        ToolCategoryDao.query.filter(fr"slug_label = $toolCategorySlug").selectOption
+        ToolCategoryDao.query.filter(fr"slug_label = $toolCategorySlug").selectOption.transact(xa).unsafeToFuture
       }
     }
   }

@@ -10,6 +10,12 @@ import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import cats.effect.IO
+import com.azavea.rf.database.filter.Filterables._
+import doobie._
+import doobie.implicits._
+import doobie.Fragments.in
+import doobie.postgres._
+import doobie.postgres.implicits._
 
 import java.util.UUID
 
@@ -37,7 +43,7 @@ trait AoiRoutes extends Authentication
   def listAOIs: Route = authenticate { user =>
     (withPagination & aoiQueryParameters) { (page, aoiQueryParams) =>
       complete {
-        AoiDao.query.filter(aoiQueryParams).filter(user).page(page)
+        AoiDao.query.filter(aoiQueryParams).filter(user).page(page).transact(xa).unsafeToFuture
       }
     }
   }
@@ -45,7 +51,7 @@ trait AoiRoutes extends Authentication
   def getAOI(id: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        AoiDao.query.filter(user).selectOption(id)
+        AoiDao.query.filter(user).selectOption(id).transact(xa).unsafeToFuture
       }
     }
   }
@@ -53,7 +59,7 @@ trait AoiRoutes extends Authentication
   def updateAOI(id: UUID): Route = authenticate { user =>
     entity(as[AOI]) { aoi =>
       authorize(user.isInRootOrSameOrganizationAs(aoi)) {
-        onSuccess(AoiDao.updateAOI(aoi, id, user)) {
+        onSuccess(AoiDao.updateAOI(aoi, id, user).transact(xa).unsafeToFuture) {
           completeSingleOrNotFound
         }
       }
@@ -61,7 +67,7 @@ trait AoiRoutes extends Authentication
   }
 
   def deleteAOI(id: UUID): Route = authenticate { user =>
-    onSuccess(AoiDao.deleteAOI(id, user)) {
+    onSuccess(AoiDao.deleteAOI(id, user).transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }

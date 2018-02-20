@@ -12,6 +12,15 @@ import java.util.UUID
 
 import cats.effect.IO
 import doobie.util.transactor.Transactor
+import com.azavea.rf.database.filter.Filterables._
+import com.azavea.rf.datamodel._
+import cats.implicits._
+import doobie._
+import doobie.implicits._
+import doobie.Fragments.in
+import doobie.postgres._
+import doobie.postgres.implicits._
+
 
 
 trait ImageRoutes extends Authentication

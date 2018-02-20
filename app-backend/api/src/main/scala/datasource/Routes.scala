@@ -15,6 +15,12 @@ import cats.effect.IO
 
 import java.util.UUID
 import scala.util.{Success, Failure}
+import doobie._
+import doobie.implicits._
+import doobie.Fragments.in
+import doobie.postgres._
+import doobie.postgres.implicits._
+
 
 
 trait DatasourceRoutes extends Authentication
@@ -48,7 +54,7 @@ trait DatasourceRoutes extends Authentication
     get {
       rejectEmptyResponse {
         complete {
-          DatasourceDao.getDatasource(datasourceId, user)
+          DatasourceDao.getDatasource(datasourceId, user).transact(xa).unsafeToFuture
         }
       }
     }
@@ -57,7 +63,7 @@ trait DatasourceRoutes extends Authentication
   def createDatasource: Route = authenticate { user =>
     entity(as[Datasource.Create]) { newDatasource =>
       authorize(user.isInRootOrSameOrganizationAs(newDatasource)) {
-        onSuccess(DatasourceDao.createDatasource(newDatasource, user)) { datasource =>
+        onSuccess(DatasourceDao.createDatasource(newDatasource, user).transact(xa).unsafeToFuture) { datasource =>
           complete((StatusCodes.Created, datasource))
         }
       }
@@ -67,7 +73,7 @@ trait DatasourceRoutes extends Authentication
   def updateDatasource(datasourceId: UUID): Route = authenticate { user =>
     entity(as[Datasource]) { updateDatasource =>
       authorize(user.isInRootOrOwner(updateDatasource)) {
-        onSuccess(DatasourceDao.updateDatasource(updateDatasource, datasourceId, user)) {
+        onSuccess(DatasourceDao.updateDatasource(updateDatasource, datasourceId, user).transact(xa).unsafeToFuture) {
           completeSingleOrNotFound
         }
       }

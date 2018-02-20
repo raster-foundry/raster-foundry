@@ -45,7 +45,7 @@ class Annotations(_tableTag: Tag) extends Table[Annotation](_tableTag, "annotati
   val label: Rep[String] = column[String]("label")
   val description: Rep[Option[String]] = column[Option[String]]("description")
   val machineGenerated: Rep[Option[Boolean]] = column[Option[Boolean]]("machine_generated", O.Default(None))
-  val confidence: Rep[Option[Double]] = column[Option[Double]]("confidence")
+  val confidence: Rep[Option[Float]] = column[Option[Float]]("confidence")
   val quality: Rep[Option[AnnotationQuality]] = column[Option[AnnotationQuality]]("quality")
   val geometry: Rep[Option[Projected[Geometry]]] = column[Option[Projected[Geometry]]]("geometry")
 
@@ -223,12 +223,12 @@ class AnnotationTableQuery[M, U, C[_]](annotations: Annotations.TableQuery) {
       }
 
       val filteredByMinConfidence = queryParams.minConfidence match {
-          case Some(mc) => filteredByMachineGenerated.filter(_.confidence >= mc)
+          case Some(mc) => filteredByMachineGenerated.filter(_.confidence >= mc.asInstanceOf[Float])
           case _        => filteredByMachineGenerated
       }
 
       val filteredByMaxConfidence = queryParams.maxConfidence match {
-          case Some(mc) => filteredByMinConfidence.filter(_.confidence <= mc)
+          case Some(mc) => filteredByMinConfidence.filter(_.confidence <= mc.asInstanceOf[Float])
           case _        => filteredByMinConfidence
       }
 

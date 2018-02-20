@@ -4,6 +4,7 @@ import cats.effect.IO
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.database.FeatureFlagDao
 import com.azavea.rf.datamodel.FeatureFlag
+import doobie.free.connection.ConnectionIO
 import doobie.util.transactor.Transactor
 import io.circe.generic.JsonCodec
 
@@ -22,8 +23,8 @@ case class AngularConfig(
                         )
 
 object AngularConfigService extends Config {
-  def getConfig()(implicit xa: Transactor[IO]) = for {
-    features: Seq[FeatureFlag] <- FeatureFlagDao.query.list
+  def getConfig(): ConnectionIO[AngularConfig] = for {
+    features <- FeatureFlagDao.query.list
   } yield AngularConfig(
     auth0ClientId, clientEnvironment, auth0Domain, rollbarClientToken,
     intercomAppId, features, tileServerLocation, dropboxClientId
