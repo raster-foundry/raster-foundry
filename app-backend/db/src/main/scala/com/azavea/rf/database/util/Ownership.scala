@@ -1,6 +1,10 @@
 package com.azavea.rf.database.util
 
+import com.azavea.rf.database.meta.RFMeta._
 import com.azavea.rf.datamodel._
+
+import doobie._
+import doobie.implicits._
 
 object Ownership {
 
@@ -13,5 +17,4 @@ object Ownership {
       case (user, _) => user.id
     }
   }
-
 }

@@ -15,18 +15,38 @@ import java.util.UUID
 class AnnotationDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig {
 
   test("insertion") {
-    val testLabel: String = "this is a test!"
+
+    val testLabels = ("Label 1", "label 2")
+
+    val testAnnotation1 = Annotation.Create(
+      None,
+      testLabels._1,
+      None,
+      None,
+      None,
+      None,
+      None
+    )
+    val testAnnotation2 = Annotation.Create(
+      None,
+      testLabels._2,
+      None,
+      None,
+      None,
+      None,
+      None
+    )
 
     val transaction = for {
       usr <- defaultUserQ
       org <- rootOrgQ
       proj <- changeDetectionProjQ
-      annotationIn <- AnnotationDao.create(proj.id, usr, None, org.id, testLabel, None, None, None, None, None)
-      annotationOut <- AnnotationDao.query.filter(fr"id = ${annotationIn.id}").selectQ.unique
-    } yield annotationOut
+      annotationsIn <- AnnotationDao.insertAnnotations(List(testAnnotation1, testAnnotation2), proj.id, usr)
+    } yield annotationsIn
 
     val result = transaction.transact(xa).unsafeRunSync
-    result.label shouldBe testLabel
+
+    result.length shouldBe 2
   }
 
   test("types") { check(AnnotationDao.selectF.query[Annotation]) }

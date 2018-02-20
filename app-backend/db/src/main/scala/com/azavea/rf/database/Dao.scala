@@ -40,6 +40,18 @@ object Dao {
     def filter[M >: Model, T](thing: T)(implicit filterable: Filterable[M, T]): QueryBuilder[Model] =
       this.copy(filters = filters ++ filterable.toFilters(thing))
 
+    def ownerFilterF(user: User): Option[Fragment] = {
+      if (user.isInRootOrganization) {
+        None
+      } else {
+        Some(fr"(organization_id = ${user.organizationId} OR owner = ${user.id})")
+      }
+    }
+
+    def ownerFilter[M >: Model](user: User)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
+      this.copy(filters = filters ++ filterable.toFilters(ownerFilterF(user)))
+    }
+
     /** Provide a list of responses within the PaginatedResponse wrapper */
     def page(pageRequest: PageRequest): ConnectionIO[PaginatedResponse[Model]] = {
       for {
@@ -52,7 +64,6 @@ object Dao {
         PaginatedResponse[Model](count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, page)
       }
     }
-
 
     def listQ(pageRequest: PageRequest): Query0[Model] =
       (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(Some(pageRequest))).query[Model]
@@ -106,6 +117,8 @@ object Dao {
         None
       } else {
         Some((deleteF ++ Fragments.whereAndOpt(filters: _*)).update)
+      } else {
+        None
       }
     }
 

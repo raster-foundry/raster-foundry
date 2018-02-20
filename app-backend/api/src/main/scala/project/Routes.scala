@@ -296,7 +296,7 @@ trait ProjectRoutes extends Authentication
   }
 
   def listAnnotations(projectId: UUID): Route = authenticate { user =>
-    (withPagination & annotationQueryParams) { (page: PageRequest, queryParams: AnnotationQueryParameters) =>
+    (withPagination & annotationQueryParams) { (page: PageRequest, queryParams: AnotationQueryParameters) =>
       complete {
         AnnotationDao.query.filter(queryParams).filter(user).page(page)
           .map { p => {
@@ -312,6 +312,7 @@ trait ProjectRoutes extends Authentication
       val annotationsCreate = fc.features map { _.toAnnotationCreate }
       complete {
         AnnotationDao.insertAnnotations(annotationsCreate, projectId, user)
+          .map { as => fromSeqToFeatureCollection(as)}
       }
     }
   }
@@ -368,7 +369,7 @@ trait ProjectRoutes extends Authentication
   }
 
   def deleteProjectAnnotations(projectId: UUID): Route = authenticate { user =>
-    onSuccess(AnnotationDao.deleteProjectAnnotations(projectId, user)) {
+    onSuccess(AnnotationDao.query.filter(fr"").deletedeleteProjectAnnotations(projectId, user)) {
       completeSomeOrNotFound
     }
   }
