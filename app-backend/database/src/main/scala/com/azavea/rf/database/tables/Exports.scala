@@ -2,7 +2,6 @@ package com.azavea.rf.database.tables
 
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.fields._
-import com.azavea.rf.database.query.{ExportQueryParameters, ListQueryResult}
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast._

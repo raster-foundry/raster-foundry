@@ -3,9 +3,8 @@ package com.azavea.rf.database.fields
 import java.util.UUID
 
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
-import com.azavea.rf.database.query.OrgQueryParameters
 import com.azavea.rf.database.tables.Organizations
-import com.azavea.rf.datamodel.{Organization, User}
+import com.azavea.rf.datamodel._
 import slick.lifted.ForeignKeyQuery
 
 trait OrganizationFkFields  { self: Table[_] =>

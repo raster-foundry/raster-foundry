@@ -6,8 +6,7 @@ import java.util.UUID
 import com.azavea.rf.database.{Database => DB}
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.fields.{OrganizationFkFields, TimestampFields, UserFkFields}
-import com.azavea.rf.database.query.{ShapeQueryParameters, ListQueryResult}
-import com.azavea.rf.datamodel.{Shape => ShapeModel, User}
+import com.azavea.rf.datamodel.{Shape => ShapeModel, _}
 
 import geotrellis.slick.Projected
 import geotrellis.vector.Geometry

@@ -1,6 +1,6 @@
 package com.azavea.rf.api.exports
 
-import com.azavea.rf.database.query._
+import com.azavea.rf.datamodel._
 import com.azavea.rf.api.utils.queryparams._
 
 import akka.http.scaladsl.server.Directives._

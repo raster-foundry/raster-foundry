@@ -1,4 +1,4 @@
-package com.azavea.rf.database.query
+package com.azavea.rf.datamodel
 
 import slick.dbio.DBIO
 

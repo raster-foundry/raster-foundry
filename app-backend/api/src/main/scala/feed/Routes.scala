@@ -8,20 +8,20 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling._
 import kamon.akka.http.KamonTraceDirectives
 import com.lonelyplanet.akka.http.extensions.PageRequest
-
-import com.azavea.rf.common.UserErrorHandler
-import com.azavea.rf.database.query._
-import com.azavea.rf.api.utils.queryparams._
+import com.typesafe.scalalogging.LazyLogging
+import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.ParameterDirectives.parameters
-
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
+
+import com.azavea.rf.common.UserErrorHandler
+import com.azavea.rf.api.utils.queryparams._
+import com.azavea.rf.datamodel._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-import com.typesafe.scalalogging.LazyLogging
-import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 
 trait FeedRoutes extends UserErrorHandler
     with FeedQueryParametersDirective

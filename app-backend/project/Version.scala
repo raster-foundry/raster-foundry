@@ -47,4 +47,5 @@ object Version {
   val auth0              = "1.5.0"
   val slickMigrationAPI  = "0.4.0"
   val betterFiles        = "3.4.0"
+  val doobie             = "0.5.0-M14"
 }

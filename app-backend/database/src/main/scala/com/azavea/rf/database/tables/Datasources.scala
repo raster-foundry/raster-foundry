@@ -3,7 +3,6 @@ package com.azavea.rf.database.tables
 import com.azavea.rf.database.ExtendedPostgresDriver.api._
 import com.azavea.rf.database.fields.{OrgFkVisibleFields, TimestampFields, UserFkVisibleFields, NameField}
 import com.azavea.rf.database.sort._
-import com.azavea.rf.database.query.{DatasourceQueryParameters, ListQueryResult}
 import com.azavea.rf.datamodel._
 
 import com.lonelyplanet.akka.http.extensions.PageRequest

@@ -2,7 +2,6 @@ package com.azavea.rf.api.uploads
 
 import com.azavea.rf.common.{AWSBatch, Authentication, CommonHandlers, UserErrorHandler, S3}
 import com.azavea.rf.database.tables.Uploads
-import com.azavea.rf.database.query._
 import com.azavea.rf.database.{ActionRunner, Database}
 import com.azavea.rf.datamodel._
 

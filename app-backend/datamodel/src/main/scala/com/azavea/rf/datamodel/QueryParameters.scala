@@ -1,14 +1,14 @@
-package com.azavea.rf.database.query
+package com.azavea.rf.datamodel
+
+import io.circe.generic.JsonCodec
+import geotrellis.proj4._
+import geotrellis.slick.Projected
+import geotrellis.vector.{Extent, Point, Polygon}
 
 import java.util.UUID
 import java.sql.Timestamp
 import java.time.Instant
 
-import com.azavea.rf.datamodel._
-import io.circe.generic.JsonCodec
-import geotrellis.proj4._
-import geotrellis.slick.Projected
-import geotrellis.vector.{Extent, Point, Polygon}
 
 /** Case class representing all /thumbnail query parameters */
 @JsonCodec

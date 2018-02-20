@@ -8,7 +8,6 @@ import com.auth0.json.auth.TokenHolder
 import com.azavea.rf.batch.Job
 import com.azavea.rf.database.tables._
 import com.azavea.rf.database.{Database => DB}
-import com.azavea.rf.database.query._
 import com.azavea.rf.datamodel._
 
 import cats.data._
