@@ -102,16 +102,18 @@ object Dao {
     }
 
     def deleteQOption: Option[Update0] = {
-      if (filters.length > 0) {
+      if (filters.isEmpty) {
+        None
+      } else {
         Some((deleteF ++ Fragments.whereAndOpt(filters: _*)).update)
       }
-      None
     }
 
-    def delete: ConnectionIO[Int] =
+    def delete: ConnectionIO[Int] = {
       deleteQOption
         .getOrElse(throw new Exception("Unsafe delete - delete requires filters"))
         .run
+    }
   }
 }
 
