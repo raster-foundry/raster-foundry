@@ -20,7 +20,10 @@ class BandDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfi
 
     val transaction = for {
       img <- ImageDao.query.listQ(1).unique
-      bandIn <- BandDao.create(img.id, testName, 123, Array(1, 2, 3))
+      bandIn <- {
+        val band = Band(UUID.randomUUID(), img.id, testName, 123, List(1, 2, 3))
+        BandDao.create(band)
+      }
       bandOut <- BandDao.query.filter(fr"id = ${bandIn.id}").selectQ.unique
     } yield bandOut
 
