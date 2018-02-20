@@ -48,7 +48,7 @@ trait Filterables {
     Filters.timestampQP(tsParams)
   }
 
-  implicit val orgQueryparamsFilter = Filterable[Any, ImageQueryParameters] { imgParams: ImageQueryParameters =>
+  implicit val imageQueryparamsFilter = Filterable[Any, ImageQueryParameters] { imgParams: ImageQueryParameters =>
     Filters.imageQP(imgParams)
   }
 
@@ -111,6 +111,12 @@ trait Filterables {
     Filters.organizationQP(shapeParams.orgParams) ++
     Filters.timestampQP(shapeParams.timestampParams) ++
     Filters.userQP(shapeParams.userParams)
+  }
+
+  implicit val combinedImageQueryparamsFilter = Filterable[Any, CombinedImageQueryParams] { cips: CombinedImageQueryParams =>
+    Filters.organizationQP(cips.orgParams) ++
+    Filters.timestampQP(cips.timestampParams) ++
+    Filters.imageQP(cips.imageParams)
   }
 }
 
