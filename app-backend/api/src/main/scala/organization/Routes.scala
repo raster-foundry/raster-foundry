@@ -14,6 +14,16 @@ import java.util.UUID
 import cats.effect.IO
 import doobie.util.transactor.Transactor
 
+import doobie.util.transactor.Transactor
+import com.azavea.rf.database.filter.Filterables._
+import com.azavea.rf.datamodel._
+import cats.implicits._
+import doobie._
+import doobie.implicits._
+import doobie.Fragments.in
+import doobie.postgres._
+import doobie.postgres.implicits._
+
 
 /**
   * Routes for Organizations
@@ -41,16 +51,16 @@ trait OrganizationRoutes extends Authentication
   def listOrganizations: Route = authenticate { user =>
     withPagination { page =>
       if (user.isInRootOrganization) {
-        complete(OrganizationDao.query.page(page))
+        complete(OrganizationDao.query.page(page).transact(xa).unsafeToFuture)
       } else {
-        complete(OrganizationDao.query.filter(List(user.organizationId)).page(page))
+        complete(OrganizationDao.query.filter(List(user.organizationId)).page(page).transact(xa).unsafeToFuture())
       }
     }
   }
 
   def createOrganization: Route = authenticateRootMember { root =>
     entity(as[Organization.Create]) { newOrg =>
-      onSuccess(OrganizationDao.createOrganization(newOrg)) { org =>
+      onSuccess(OrganizationDao.createOrganization(newOrg).transact(xa).unsafeToFuture()) { org =>
         complete(StatusCodes.Created, org)
       }
     }
@@ -59,7 +69,7 @@ trait OrganizationRoutes extends Authentication
   def getOrganization(orgId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       if (user.isInRootOrSameOrganizationAs(new { val organizationId = orgId })) {
-        complete(OrganizationDao.query.selectOption(orgId))
+        complete(OrganizationDao.query.selectOption(orgId).transact(xa).unsafeToFuture())
       } else {
         complete(StatusCodes.NotFound)
       }
@@ -68,7 +78,7 @@ trait OrganizationRoutes extends Authentication
 
   def updateOrganization(orgId: UUID): Route = authenticateRootMember { root =>
     entity(as[Organization]) { updatedOrg =>
-      onSuccess(OrganizationDao.updateOrganization(updatedOrg, orgId)) {
+      onSuccess(OrganizationDao.updateOrganization(updatedOrg, orgId).transact(xa).unsafeToFuture()) {
         completeSingleOrNotFound
       }
     }
