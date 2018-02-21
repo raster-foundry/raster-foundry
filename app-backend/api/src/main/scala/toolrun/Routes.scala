@@ -20,6 +20,13 @@ import doobie.util.transactor.Transactor
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import doobie._
+import doobie.implicits._
+import doobie.Fragments.in
+import doobie.postgres._
+import doobie.postgres.implicits._
+
+
 
 trait ToolRunRoutes extends Authentication
     with PaginationDirectives
@@ -47,7 +54,7 @@ trait ToolRunRoutes extends Authentication
   def listToolRuns: Route = authenticate { user =>
     (withPagination & toolRunQueryParameters) { (page, runParams) =>
       complete {
-        ToolRunDao.query.filter(runParams).filter(user).page(page)
+        ToolRunDao.query.filter(runParams).filter(user).page(page).transact(xa).unsafeToFuture
       }
     }
   }
@@ -55,7 +62,7 @@ trait ToolRunRoutes extends Authentication
   def createToolRun: Route = authenticate { user =>
     entity(as[ToolRun.Create]) { newRun =>
       authorize(user.isInRootOrSameOrganizationAs(newRun)) {
-        onSuccess(ToolRunDao.insertToolRun(newRun, user)) { toolRun =>
+        onSuccess(ToolRunDao.insertToolRun(newRun, user).transact(xa).unsafeToFuture) { toolRun =>
           handleExceptions(interpreterExceptionHandler) {
             complete {
               (StatusCodes.Created, toolRun)
@@ -68,14 +75,14 @@ trait ToolRunRoutes extends Authentication
 
   def getToolRun(runId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
-      complete(readOne(ToolRuns.getToolRun(runId, user)))
+      complete(ToolRunDao.query.filter(fr"id = ${runId}").selectOption.transact(xa).unsafeToFuture)
     }
   }
 
   def updateToolRun(runId: UUID): Route = authenticate { user =>
     entity(as[ToolRun]) { updatedRun =>
       authorize(user.isInRootOrSameOrganizationAs(updatedRun)) {
-        onSuccess(update(ToolRuns.updateToolRun(updatedRun, runId, user))) {
+        onSuccess(ToolRunDao.updateToolRun(updatedRun, runId, user).transact(xa).unsafeToFuture) {
           completeSingleOrNotFound
         }
       }
@@ -83,7 +90,7 @@ trait ToolRunRoutes extends Authentication
   }
 
   def deleteToolRun(runId: UUID): Route = authenticate { user =>
-    onSuccess(database.db.run(ToolRuns.deleteToolRun(runId, user))) {
+    onSuccess(ToolRunDao.query.filter(fr"id = ${runId}").ownerFilter(user).delete.transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }

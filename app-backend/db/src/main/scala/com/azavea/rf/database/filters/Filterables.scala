@@ -81,6 +81,15 @@ trait Filterables {
       ctcQP.toolCategoryParams.search.map({ search => fr"category ILIKE $search" })
     }
 
+  implicit val combinedToolRunQueryParameters =
+    Filterable[Any, CombinedToolRunQueryParameters] { combinedToolRunParams: CombinedToolRunQueryParameters =>
+      Filters.timestampQP(combinedToolRunParams.timestampParams) ++ List(
+        combinedToolRunParams.toolRunParams.createdBy.map({createdBy => fr"created_by = ${createdBy}"}),
+        combinedToolRunParams.toolRunParams.projectId.map({projectId => fr"project_id = ${projectId}"}),
+        combinedToolRunParams.toolRunParams.toolId.map({toolId => fr"tool_id = ${toolId}"})
+      )
+    }
+
   implicit val fragmentFilter = Filterable[Any, Fragment] { fragment: Fragment => List(Some(fragment)) }
 
   implicit val maybeFragmentFilter = Filterable[Any, Option[Fragment]] { maybeFragment: Option[Fragment] =>
@@ -90,6 +99,7 @@ trait Filterables {
   implicit val datasourceQueryparamsFilter = Filterable[Any, DatasourceQueryParameters] { dsParams: DatasourceQueryParameters =>
     List(dsParams.name.map({ name => fr"name = $name" }))
   }
+
 
   implicit val exportQueryparamsFilter = Filterable[Any, ExportQueryParameters] { exportParams: ExportQueryParameters =>
     List(
