@@ -18,6 +18,11 @@ import java.net.URL
 import cats.effect.IO
 import com.azavea.rf.database.UserDao
 import doobie.util.transactor.Transactor
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
+
 
 trait Authentication extends Directives {
 
@@ -30,7 +35,7 @@ trait Authentication extends Directives {
   private val jwkSet: JWKSource[SecurityContext] = new RemoteJWKSet(new URL(jwksURL))
 
   // Default user returned when no credentials are provided
-  lazy val anonymousUser:Future[Option[User]] = UserDao.getUserById("default")
+  lazy val anonymousUser:Future[Option[User]] = UserDao.getUserById("default").transact(xa).unsafeToFuture
 
   // HTTP Challenge to use for Authentication failures
   lazy val challenge = HttpChallenge("Bearer", "https://rasterfoundry.com")
@@ -65,9 +70,9 @@ trait Authentication extends Directives {
       case Left(e) => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
       case Right((_, jwtClaims)) => {
         val userId = jwtClaims.getStringClaim("sub")
-        onSuccess(UserDao.getUserById(userId)).flatMap {
+        onSuccess(UserDao.getUserById(userId).transact(xa).unsafeToFuture).flatMap {
           case Some(user) => provide(user)
-          case None => onSuccess(UserDao.createUserWithAuthId(userId)).flatMap {
+          case None => onSuccess(UserDao.createUserWithAuthId(userId).transact(xa).unsafeToFuture).flatMap {
             user => provide(user)
           }
         }

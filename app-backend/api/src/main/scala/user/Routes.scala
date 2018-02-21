@@ -4,23 +4,27 @@ import java.net.URLDecoder
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
-
+import cats.effect.IO
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-
 import com.dropbox.core.{DbxAppInfo, DbxRequestConfig, DbxWebAuth}
-
-import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
-import com.azavea.rf.database.Database
-import com.azavea.rf.database.tables.Users
+import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
+import com.azavea.rf.database.UserDao
+import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.datamodel._
 import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-
 import com.typesafe.scalalogging.LazyLogging
+import doobie.util.transactor.Transactor
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+
+import doobie._
+import doobie.implicits._
+import doobie.Fragments.in
+import doobie.postgres._
+import doobie.postgres.implicits._
 
 
 /**
@@ -32,7 +36,7 @@ trait UserRoutes extends Authentication
     with UserErrorHandler
     with LazyLogging {
 
-  implicit def database: Database
+  implicit def xa: Transactor[IO]
 
   val userRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
@@ -60,15 +64,15 @@ trait UserRoutes extends Authentication
   def listUsers: Route = authenticateRootMember { user =>
     withPagination { page =>
       complete {
-        Users.listUsers(page)
+        UserDao.query.page(page).transact(xa).unsafeToFuture
       }
     }
   }
 
   def createUser: Route = authenticateRootMember { root =>
     entity(as[User.Create]) { newUser =>
-      onSuccess(Users.createUser(newUser)) { createdUser =>
-        onSuccess(Users.getUserById(createdUser.id)) {
+      onSuccess(UserDao.create(newUser).transact(xa).unsafeToFuture()) { createdUser =>
+        onSuccess(UserDao.query.filter(fr"id = ${createdUser.id}").selectOption.transact(xa).unsafeToFuture()) {
           case Some(user) => complete((StatusCodes.Created, user))
           case None => throw new IllegalStateException("Unable to create user")
         }
@@ -78,7 +82,7 @@ trait UserRoutes extends Authentication
 
   def updateOwnUser: Route = authenticate { user =>
     entity(as[User]) { updatedUser =>
-      onSuccess(Users.updateSelf(user, updatedUser)) {
+      onSuccess(UserDao.updateSelf(user, updatedUser).transact(xa).unsafeToFuture()) {
         completeSingleOrNotFound
       }
     }
@@ -120,7 +124,7 @@ trait UserRoutes extends Authentication
         dbxAuthRequest.redirectURI, session, queryParams
       )
       logger.debug("Auth finish from Dropbox successful")
-      complete(Users.storeDropboxAccessToken(user.id, authFinish.getAccessToken))
+      complete(UserDao.storeDropboxAccessToken(user.id, authFinish.getAccessToken).transact(xa).unsafeToFuture())
     }
   }
 
@@ -128,7 +132,7 @@ trait UserRoutes extends Authentication
     rejectEmptyResponse {
       val authId = URLDecoder.decode(authIdEncoded, "US_ASCII")
       if (user.isInRootOrganization || user.id == authId) {
-        complete(Users.getUserById(authId))
+        complete(UserDao.query.filter(fr"id = ${authId}").select.transact(xa).unsafeToFuture())
       } else {
         complete(StatusCodes.NotFound)
       }
@@ -137,7 +141,7 @@ trait UserRoutes extends Authentication
 
   def updateUserByEncodedAuthId(authIdEncoded: String): Route = authenticateRootMember { root =>
     entity(as[User]) { updatedUser =>
-      onSuccess(Users.updateUser(updatedUser, authIdEncoded)) {
+      onSuccess(UserDao.updateUser(updatedUser, authIdEncoded).transact(xa).unsafeToFuture()) {
         completeSingleOrNotFound
       }
     }
