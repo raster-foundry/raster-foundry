@@ -1,11 +1,20 @@
 package com.azavea.rf.api.healthcheck
 
+import cats.free.Free
 import com.azavea.rf.api.Codec._
 import com.azavea.rf.database.Database
 import com.azavea.rf.database.tables.Users
 import io.circe.generic.JsonCodec
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import cats.implicits._
+import doobie._
+import doobie.implicits._
+import doobie.Fragments.in
+import doobie.free.connection
+import doobie.postgres._
+import doobie.postgres.implicits._
+
 
 /**
   * Available healthcheck values
@@ -50,16 +59,12 @@ object HealthCheckService {
 
   /**
     * Perform healthcheck by verifying at least the following:
-    *   - database is up and users can be queried
+    *   - database is up and can make a select query
     *
     */
-  def healthCheck()(implicit database: Database) = {
-    import database.driver.api._
-
-    val countAction = Users.take(1).length.result
-    database.db.run {
-      countAction
-    } map {
+  def healthCheck(): ConnectionIO[HealthCheck] = {
+    val query = sql"SELECT 1".query[Int].unique
+    query.map {
       case count: Int if count > 0 =>
         HealthCheck(
           HealthCheckStatus.OK,

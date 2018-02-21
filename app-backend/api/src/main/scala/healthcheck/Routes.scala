@@ -2,11 +2,17 @@ package com.azavea.rf.api.healthcheck
 
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server._
+import cats.effect.IO
 import com.azavea.rf.api.Codec._
 import com.azavea.rf.common.{Authentication, RollbarNotifier}
-import com.azavea.rf.database.Database
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
+import doobie.util.transactor.Transactor
 import org.postgresql.util.PSQLException
+import doobie._
+import doobie.implicits._
+import doobie.Fragments.in
+import doobie.postgres._
+import doobie.postgres.implicits._
 
 /**
   * Routes for healthchecks -- additional routes for individual healthchecks
@@ -15,7 +21,7 @@ import org.postgresql.util.PSQLException
   */
 trait HealthCheckRoutes extends Authentication with RollbarNotifier {
 
-  implicit def database: Database
+  implicit def xa: Transactor[IO]
 
   val healthCheckExceptionHandler = ExceptionHandler {
     case e: PSQLException =>
@@ -34,7 +40,7 @@ trait HealthCheckRoutes extends Authentication with RollbarNotifier {
     pathEndOrSingleSlash {
       get {
         complete {
-          HealthCheckService.healthCheck
+          HealthCheckService.healthCheck.transact(xa).unsafeToFuture
         }
       }
     }
