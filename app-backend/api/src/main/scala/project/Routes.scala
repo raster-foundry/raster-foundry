@@ -360,7 +360,7 @@ trait ProjectRoutes extends Authentication
   def updateAnnotation(annotationId: UUID): Route = authenticate { user =>
     entity(as[Annotation.GeoJSON]) { updatedAnnotation: Annotation.GeoJSON =>
       authorize(user.isInRootOrSameOrganizationAs(updatedAnnotation.properties)) {
-        onSuccess(AnnotationDao.updateAnnotation(updatedAnnotation, annotationId, user).transact(xa).unsafeToFuture) { count =>
+        onSuccess(AnnotationDao.updateAnnotation(updatedAnnotation.toAnnotation, annotationId, user).transact(xa).unsafeToFuture) { count =>
           completeSingleOrNotFound(count)
         }
       }
