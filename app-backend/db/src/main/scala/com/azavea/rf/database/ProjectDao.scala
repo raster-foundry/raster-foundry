@@ -73,13 +73,6 @@ object ProjectDao extends Dao[Project] {
     )
   }
 
-  def ownerEditFilter(user: User): Option[Fragment] = {
-    user.isInRootOrganization match {
-      case true => None
-      case _ => Some(fr"(organization_id = ${user.organizationId} OR owner = ${user.id})")
-    }
-  }
-
   def filterUserVisibility(user: User) = {
     user.isInRootOrganization match {
       case true => None
