@@ -27,6 +27,15 @@ abstract class Dao[Model: Composite] {
 
   /** Begin construction of a complex, filtered query */
   def query: Dao.QueryBuilder[Model] = Dao.QueryBuilder[Model](selectF, tableF, List.empty)
+
+
+  def ownerEditFilter(user: User): Option[Fragment] = {
+    user.isInRootOrganization match {
+      case true => None
+      case _ => Some(fr"(organization_id = ${user.organizationId} OR owner = ${user.id})")
+    }
+  }
+
 }
 
 object Dao {
