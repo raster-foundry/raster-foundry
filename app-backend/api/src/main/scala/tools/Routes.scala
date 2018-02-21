@@ -2,12 +2,10 @@ package com.azavea.rf.api.tool
 
 import com.azavea.rf.common._
 import com.azavea.rf.common.ast._
-import com.azavea.rf.database.Database
-import com.azavea.rf.database.tables.Tools
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.ast.codec._
-
+import com.azavea.rf.database.filter.Filterables._
 import com.azavea.maml.serve._
 import io.circe._
 import akka.http.scaladsl.model.StatusCodes
@@ -16,8 +14,17 @@ import cats.implicits._
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import kamon.akka.http.KamonTraceDirectives
-
 import java.util.UUID
+
+import cats.effect.IO
+import cats.implicits._
+import com.azavea.rf.database.ToolDao
+import doobie._
+import doobie.implicits._
+import doobie.Fragments.in
+import doobie.postgres._
+import doobie.postgres.implicits._
+
 
 
 trait ToolRoutes extends Authentication
@@ -27,7 +34,7 @@ trait ToolRoutes extends Authentication
     with InterpreterExceptionHandling
     with UserErrorHandler {
 
-  implicit def database: Database
+  implicit def xa: Transactor[IO]
 
   val toolRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
@@ -80,7 +87,7 @@ trait ToolRoutes extends Authentication
 
   def getToolSources(toolId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
-      onSuccess(Tools.getTool(toolId, user)) { maybeTool =>
+      onSuccess(ToolDao.query.filter(fr"id = ${toolId}").ownerFilter(user).selectOption.transact(xa).unsafeToFuture) { maybeTool =>
         val sources = maybeTool.map(_.definition.as[MapAlgebraAST].valueOr(throw _).sources)
         complete(sources)
       }
@@ -90,7 +97,7 @@ trait ToolRoutes extends Authentication
   def listTools: Route = authenticate { user =>
     (withPagination) { (page) =>
       complete {
-        Tools.listTools(page, user)
+        ToolDao.query.ownerFilter(user).page(page).transact(xa).unsafeToFuture
       }
     }
   }
@@ -98,7 +105,7 @@ trait ToolRoutes extends Authentication
   def createTool: Route = authenticate { user =>
     entity(as[Tool.Create]) { newTool =>
       authorize(user.isInRootOrSameOrganizationAs(newTool)) {
-        onSuccess(Tools.insertTool(newTool, user)) { tool =>
+        onSuccess(ToolDao.insert(newTool, user).transact(xa).unsafeToFuture) { tool =>
           complete(StatusCodes.Created, tool)
         }
       }
@@ -107,14 +114,14 @@ trait ToolRoutes extends Authentication
 
   def getTool(toolId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
-      complete(Tools.getTool(toolId, user))
+      complete(ToolDao.query.filter(fr"id = ${toolId}").ownerFilter(user).selectOption.transact(xa).unsafeToFuture)
     }
   }
 
   def updateTool(toolId: UUID): Route = authenticate { user =>
     entity(as[Tool]) { updatedTool =>
       authorize(user.isInRootOrSameOrganizationAs(updatedTool)) {
-        onSuccess(Tools.updateTool(updatedTool, toolId, user)) {
+        onSuccess(ToolDao.update(updatedTool, toolId, user).transact(xa).unsafeToFuture) {
           completeSingleOrNotFound
         }
       }
@@ -122,7 +129,7 @@ trait ToolRoutes extends Authentication
   }
 
   def deleteTool(toolId: UUID): Route = authenticate { user =>
-    onSuccess(Tools.deleteTool(toolId, user)) {
+    onSuccess(ToolDao.query.filter(fr"id = ${toolId}").ownerFilter(user).delete.transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }
