@@ -28,11 +28,11 @@ object MapTokenDao extends Dao[MapToken] {
       FROM
     """ ++ tableF
 
-  def insertMapToken(newMapToken: MapToken.Create, user: User): Future[MapToken] = ???
+  def insertMapToken(newMapToken: MapToken.Create, user: User): ConnectionIO[MapToken] = ???
 
-  def updateMapToken(mapToken: MapToken, id: UUID, user: User): Future[Int] = ???
+  def updateMapToken(mapToken: MapToken, id: UUID, user: User): ConnectionIO[Int] = ???
 
-  def deleteMapToken(id: UUID, user: User): Future[Int] = ???
+  def deleteMapToken(id: UUID, user: User): ConnectionIO[Int] = ???
 
   def create(
     user: User,
