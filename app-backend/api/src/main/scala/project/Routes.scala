@@ -301,7 +301,7 @@ trait ProjectRoutes extends Authentication
   }
 
   def listAnnotations(projectId: UUID): Route = authenticate { user =>
-    (withPagination & annotationQueryParams) { (page: PageRequest, queryParams: AnotationQueryParameters) =>
+    (withPagination & annotationQueryParams) { (page: PageRequest, queryParams: AnnotationQueryParameters) =>
       complete {
         AnnotationDao.query.filter(queryParams).filter(user).page(page).transact(xa).unsafeToFuture
           .map { p => {
@@ -316,8 +316,8 @@ trait ProjectRoutes extends Authentication
     entity(as[AnnotationFeatureCollectionCreate]) { fc =>
       val annotationsCreate = fc.features map { _.toAnnotationCreate }
       complete {
-        AnnotationDao.insertAnnotations(annotationsCreate, projectId, user).transact(xa).unsafeToFuture
-          .map { as => fromSeqToFeatureCollection(as)}
+        AnnotationDao.insertAnnotations(annotationsCreate.toList, projectId, user).transact(xa).unsafeToFuture
+          .map { as => fromSeqToFeatureCollection(as.toSeq)}
       }
     }
   }
@@ -368,13 +368,13 @@ trait ProjectRoutes extends Authentication
   }
 
   def deleteAnnotation(annotationId: UUID): Route = authenticate { user =>
-    onSuccess(AnnotationDao.deleteAnnotation(annotationId, user).transact(xa).unsafeToFuture) {
+    onSuccess(AnnotationDao.query.filter(fr"id = ${annotationId}").delete.transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }
 
   def deleteProjectAnnotations(projectId: UUID): Route = authenticate { user =>
-    onSuccess(AnnotationDao.query.filter(fr"").deletedeleteProjectAnnotations(projectId, user).transact(xa).unsafeToFuture) {
+    onSuccess(AnnotationDao.query.filter(fr"project_id = ${projectId}").delete.transact(xa).unsafeToFuture) {
       completeSomeOrNotFound
     }
   }
@@ -405,7 +405,7 @@ trait ProjectRoutes extends Authentication
 
   def acceptScenes(projectId: UUID): Route = authenticate { user =>
     entity(as[BulkAcceptParams]) { sceneParams =>
-      SceneToProjectDao.bulkAddScenes(projectId, sceneParams.sceneIds).map{ sceneIds =>
+      SceneToProjectDao.bulkAddScenes(projectId, sceneParams.sceneIds).transact(xa).unsafeToFuture().map { sceneIds =>
         complete(sceneIds)
       }
     }
@@ -414,7 +414,7 @@ trait ProjectRoutes extends Authentication
   def listProjectScenes(projectId: UUID): Route = authenticate { user =>
     (withPagination & sceneQueryParameters) { (page, sceneParams) =>
       complete {
-        ProjectDao.listProjectScenes(projectId, page, sceneParams, user)
+        ProjectDao.listProjectScenes(projectId, page, sceneParams, user).transact(xa).unsafeToFuture
       }
     }
   }
@@ -423,7 +423,7 @@ trait ProjectRoutes extends Authentication
   def listProjectSceneOrder(projectId: UUID): Route = authenticate { user =>
     withPagination { page =>
       complete {
-        ProjectDao.listProjectSceneOrder(projectId, page, user)
+        ProjectDao.listProjectSceneOrder(projectId, page, user).transact(xa).unsafeToFuture
       }
     }
   }
@@ -435,7 +435,7 @@ trait ProjectRoutes extends Authentication
         complete(StatusCodes.RequestEntityTooLarge)
       }
 
-      onSuccess(SceneToProjectDao.setManualOrder(projectId, sceneIds)) { updatedOrder =>
+      onSuccess(SceneToProjectDao.setManualOrder(projectId, sceneIds).transact(xa).unsafeToFuture) { updatedOrder =>
         complete(StatusCodes.NoContent)
       }
     }
@@ -444,14 +444,14 @@ trait ProjectRoutes extends Authentication
   /** Get the color correction paramters for a project/scene pairing */
   def getProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) = authenticate { user =>
     complete {
-      SceneToProjectDao.getColorCorrectParams(projectId, sceneId)
+      SceneToProjectDao.getColorCorrectParams(projectId, sceneId).transact(xa).unsafeToFuture
     }
   }
 
   /** Set color correction parameters for a project/scene pairing */
   def setProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) = authenticate { user =>
     entity(as[ColorCorrect.Params]) { ccParams =>
-      onSuccess(SceneToProjectDao.setColorCorrectParams(projectId, sceneId, ccParams)) { sceneToProject =>
+      onSuccess(SceneToProjectDao.setColorCorrectParams(projectId, sceneId, ccParams).transact(xa).unsafeToFuture) { sceneToProject =>
         complete(StatusCodes.NoContent)
       }
     }
@@ -460,7 +460,7 @@ trait ProjectRoutes extends Authentication
   /** Set color correction parameters for a list of scenes */
   def setProjectScenesColorCorrectParams(projectId: UUID) = authenticate { user =>
     entity(as[BatchParams]) { params =>
-      onSuccess(SceneToProjectDao.setColorCorrectParamsBatch(projectId, params)) { scenesToProject =>
+      onSuccess(SceneToProjectDao.setColorCorrectParamsBatch(projectId, params).transact(xa).unsafeToFuture) { scenesToProject =>
         complete(StatusCodes.NoContent)
       }
     }
@@ -470,7 +470,7 @@ trait ProjectRoutes extends Authentication
   def getProjectMosaicDefinition(projectId: UUID) = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        SceneToProjectDao.getMosaicDefinition(projectId)
+        SceneToProjectDao.getMosaicDefinition(projectId).transact(xa).unsafeToFuture
       }
     }
   }
@@ -480,7 +480,7 @@ trait ProjectRoutes extends Authentication
       if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
         complete(StatusCodes.RequestEntityTooLarge)
       }
-      val scenesFuture = ProjectDao.addScenesToProject(sceneIds, projectId, user).map { scenes =>
+      val scenesFuture = ProjectDao.addScenesToProject(sceneIds, projectId, user).transact(xa).unsafeToFuture().map { scenes =>
         val scenesToKickoff = scenes.filter(scene =>
           scene.statusFields.ingestStatus == IngestStatus.ToBeIngested || (
             scene.statusFields.ingestStatus == IngestStatus.Ingesting &&
@@ -501,7 +501,7 @@ trait ProjectRoutes extends Authentication
 
   def addProjectScenesFromQueryParams(projectId: UUID): Route = authenticate { user =>
     entity(as[CombinedSceneQueryParams]) { combinedSceneQueryParams =>
-      onSuccess(ProjectDao.addScenesToProjectFromQuery(combinedSceneQueryParams, projectId, user)) {
+      onSuccess(ProjectDao.addScenesToProjectFromQuery(combinedSceneQueryParams, projectId, user).transact(xa).unsafeToFuture()) {
         scenesAdded => complete((StatusCodes.Created, scenesAdded))
       }
     }
@@ -513,7 +513,7 @@ trait ProjectRoutes extends Authentication
         complete(StatusCodes.RequestEntityTooLarge)
       }
       complete {
-        ProjectDao.replaceScenesInProject(sceneIds, projectId)
+        ProjectDao.replaceScenesInProject(sceneIds, projectId).transact(xa).unsafeToFuture()
       }
     }
   }
@@ -524,7 +524,7 @@ trait ProjectRoutes extends Authentication
         complete(StatusCodes.RequestEntityTooLarge)
       }
 
-      onSuccess(ProjectDao.deleteScenesFromProject(sceneIds, projectId)) {
+      onSuccess(ProjectDao.deleteScenesFromProject(sceneIds.toList, projectId).transact(xa).unsafeToFuture()) {
         _ => complete(StatusCodes.NoContent)
       }
     }
