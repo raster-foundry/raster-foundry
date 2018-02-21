@@ -115,7 +115,26 @@ object Annotation {
         geometry: Option[Projected[Geometry]],
         properties: AnnotationProperties,
         _type: String = "Feature"
-    ) extends GeoJSONFeature
+    ) extends GeoJSONFeature {
+        def toAnnotation: Annotation = {
+            Annotation(
+                id,
+                properties.projectId,
+                properties.createdAt,
+                properties.createdBy,
+                properties.modifiedAt,
+                properties.modifiedBy,
+                properties.owner,
+                properties.organizationId,
+                properties.label,
+                properties.description,
+                properties.machineGenerated,
+                properties.confidence,
+                properties.quality,
+                geometry
+            )
+        }
+    }
 
     @JsonCodec
     case class Create(
