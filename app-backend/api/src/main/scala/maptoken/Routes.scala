@@ -58,7 +58,7 @@ trait MapTokenRoutes extends Authentication
   def createMapToken: Route = authenticate { user =>
     entity(as[MapToken.Create]) { newMapToken =>
       authorize(user.isInRootOrSameOrganizationAs(newMapToken)) {
-        onSuccess(MapTokenDao.insertMapToken(newMapToken, user).transact(xa).unsafeToFuture) { mapToken =>
+        onSuccess(MapTokenDao.insert(newMapToken, user).transact(xa).unsafeToFuture) { mapToken =>
           complete((StatusCodes.Created, mapToken))
         }
       }
@@ -78,7 +78,7 @@ trait MapTokenRoutes extends Authentication
   def updateMapToken(mapTokenId: UUID): Route = authenticate { user =>
     entity(as[MapToken]) { updatedMapToken =>
       authorize(user.isInRootOrSameOrganizationAs(updatedMapToken)) {
-        onSuccess(MapTokenDao.updateMapToken(updatedMapToken, mapTokenId, user).transact(xa).unsafeToFuture) {
+        onSuccess(MapTokenDao.update(updatedMapToken, mapTokenId, user).transact(xa).unsafeToFuture) {
           completeSingleOrNotFound
         }
       }
@@ -86,7 +86,7 @@ trait MapTokenRoutes extends Authentication
   }
 
   def deleteMapToken(mapTokenId: UUID): Route = authenticate { user =>
-    onSuccess(MapTokenDao.deleteMapToken(mapTokenId, user).transact(xa).unsafeToFuture) {
+    onSuccess(MapTokenDao.query.ownerFilter(user).filter(fr"id = ${mapTokenId}").delete.transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }
