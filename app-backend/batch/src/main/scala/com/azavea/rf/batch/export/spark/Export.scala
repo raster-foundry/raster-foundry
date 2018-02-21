@@ -48,6 +48,8 @@ object Export extends SparkJob with Config with LazyLogging {
 
   val jobName = "Export"
 
+  val defaultRasterSize = 4000
+
   def astExport(
     ed: ExportDefinition,
     ast: MapAlgebraAST,
@@ -64,7 +66,7 @@ object Export extends SparkJob with Config with LazyLogging {
           val targetRDD: TileLayerRDD[SpatialKey] =
             ed.output.rasterSize match {
               case Some(size) => rdd.regrid(size)
-              case None => rdd
+              case None => rdd.regrid(defaultRasterSize)
             }
 
           val mt: MapKeyTransform = targetRDD.metadata.layout.mapTransform
@@ -133,11 +135,11 @@ object Export extends SparkJob with Config with LazyLogging {
         case (Some(rs), Some(crs)) =>
           query.reproject(ZoomedLayoutScheme(crs, rs))._2
         case (None, Some(crs)) =>
-          query.reproject(ZoomedLayoutScheme(crs, math.min(md.tileCols, md.tileRows)))._2
+          query.reproject(ZoomedLayoutScheme(crs, defaultRasterSize))._2
         case (Some(rs), None) =>
           query.regrid(rs)
         case (None, None) =>
-          query
+          query.regrid(defaultRasterSize)
       }
     }
 
