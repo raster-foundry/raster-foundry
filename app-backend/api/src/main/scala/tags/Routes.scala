@@ -1,25 +1,31 @@
 package com.azavea.rf.api.tooltag
 
-import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
-import com.azavea.rf.database.Database
-import com.azavea.rf.database.tables.ToolTags
+import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
+import com.azavea.rf.database.ToolTagDao
 import com.azavea.rf.datamodel._
-
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
-import scala.util.{Success, Failure}
+import scala.util.{Failure, Success}
 import java.util.UUID
+
+import cats.effect.IO
+import com.azavea.rf.database.filter.Filterables._
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
+
 
 
 trait ToolTagRoutes extends Authentication
     with PaginationDirectives
     with CommonHandlers
     with UserErrorHandler {
-  implicit def database: Database
+  implicit def xa: Transactor[IO]
 
   val toolTagRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
@@ -38,7 +44,7 @@ trait ToolTagRoutes extends Authentication
   def listToolTags: Route = authenticate { user =>
     (withPagination) { (page) =>
       complete {
-        ToolTags.listToolTags(page, user)
+        ToolTagDao.query.ownerFilter(user).page(page).transact(xa).unsafeToFuture()
       }
     }
   }
@@ -46,7 +52,7 @@ trait ToolTagRoutes extends Authentication
   def createToolTag: Route = authenticate { user =>
     entity(as[ToolTag.Create]) { newToolTag =>
       authorize(user.isInRootOrSameOrganizationAs(newToolTag)) {
-        onSuccess(ToolTags.insertToolTag(newToolTag, user)) { toolTag =>
+        onSuccess(ToolTagDao.insert(newToolTag, user).transact(xa).unsafeToFuture()) { toolTag =>
           complete(StatusCodes.Created, toolTag)
         }
       }
@@ -55,14 +61,14 @@ trait ToolTagRoutes extends Authentication
 
   def getToolTag(toolTagId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
-      complete(ToolTags.getToolTag(toolTagId, user))
+      complete(ToolTagDao.query.ownerFilter(user).filter(fr"id = ${toolTagId}").select.transact(xa).unsafeToFuture)
     }
   }
 
   def updateToolTag(toolTagId: UUID): Route = authenticate { user =>
     entity(as[ToolTag]) { updatedToolTag =>
       authorize(user.isInRootOrSameOrganizationAs(updatedToolTag)) {
-        onSuccess(ToolTags.updateToolTag(updatedToolTag, toolTagId, user)) {
+        onSuccess(ToolTagDao.update(updatedToolTag, toolTagId, user).transact(xa).unsafeToFuture()) {
           completeSingleOrNotFound
         }
       }
@@ -70,7 +76,7 @@ trait ToolTagRoutes extends Authentication
   }
 
   def deleteToolTag(toolTagId: UUID): Route = authenticate { user =>
-    onSuccess(ToolTags.deleteToolTag(toolTagId, user)) {
+    onSuccess(ToolTagDao.query.ownerFilter(user).filter(fr"id = ${toolTagId}").delete.transact(xa).unsafeToFuture()) {
       completeSingleOrNotFound
     }
   }
