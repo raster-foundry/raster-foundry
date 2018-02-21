@@ -14,6 +14,17 @@ import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import com.azavea.rf.database.filter.Filterables._
 import doobie.util.transactor.Transactor
 
+import doobie.util.transactor.Transactor
+import com.azavea.rf.database.filter.Filterables._
+import com.azavea.rf.datamodel._
+import cats.implicits._
+import doobie._
+import doobie.implicits._
+import doobie.Fragments.in
+import doobie.postgres._
+import doobie.postgres.implicits._
+
+
 
 trait MapTokenRoutes extends Authentication
     with MapTokensQueryParameterDirective
@@ -39,7 +50,7 @@ trait MapTokenRoutes extends Authentication
   def listMapTokens: Route = authenticate { user =>
     (withPagination & mapTokenQueryParams) { (page, mapTokenParams) =>
       complete {
-        MapTokenDao.query.filter(mapTokenParams).filter(user).page(page)
+        MapTokenDao.query.filter(mapTokenParams).filter(user).page(page).transact(xa).unsafeToFuture
       }
     }
   }
@@ -47,7 +58,7 @@ trait MapTokenRoutes extends Authentication
   def createMapToken: Route = authenticate { user =>
     entity(as[MapToken.Create]) { newMapToken =>
       authorize(user.isInRootOrSameOrganizationAs(newMapToken)) {
-        onSuccess(MapTokenDao.insertMapToken(newMapToken, user)) { mapToken =>
+        onSuccess(MapTokenDao.insertMapToken(newMapToken, user).transact(xa).unsafeToFuture) { mapToken =>
           complete((StatusCodes.Created, mapToken))
         }
       }
@@ -58,7 +69,7 @@ trait MapTokenRoutes extends Authentication
     get {
       rejectEmptyResponse {
         complete {
-          MapTokenDao.query.filter(user).selectOption(mapTokenId)
+          MapTokenDao.query.filter(user).selectOption(mapTokenId).transact(xa).unsafeToFuture
         }
       }
     }
@@ -67,7 +78,7 @@ trait MapTokenRoutes extends Authentication
   def updateMapToken(mapTokenId: UUID): Route = authenticate { user =>
     entity(as[MapToken]) { updatedMapToken =>
       authorize(user.isInRootOrSameOrganizationAs(updatedMapToken)) {
-        onSuccess(MapTokenDao.updateMapToken(updatedMapToken, mapTokenId, user)) {
+        onSuccess(MapTokenDao.updateMapToken(updatedMapToken, mapTokenId, user).transact(xa).unsafeToFuture) {
           completeSingleOrNotFound
         }
       }
@@ -75,7 +86,7 @@ trait MapTokenRoutes extends Authentication
   }
 
   def deleteMapToken(mapTokenId: UUID): Route = authenticate { user =>
-    onSuccess(MapTokenDao.deleteMapToken(mapTokenId, user)) {
+    onSuccess(MapTokenDao.deleteMapToken(mapTokenId, user).transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }
